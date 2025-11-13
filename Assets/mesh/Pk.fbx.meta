@@ -3,7 +3,37 @@ guid: 044ea321459b87e4f8de6adf688e96ef
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 01 - Default
+    second: {fileID: 2100000, guid: c82e96637104eb74885240830852d7b7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material #0
+    second: {fileID: 2100000, guid: a2f09f53279d437429be3a2a2ae9db46, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: mat_chair2Lvl4
+    second: {fileID: 2100000, guid: 609636f8b6c94ce48bae927ebe1155c5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: mat_macbook1
+    second: {fileID: 2100000, guid: a9e9509f1f5cb414d9caefdfcc3e2450, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: mat_macbook1Mouse1
+    second: {fileID: 2100000, guid: e35fbf04b4d6b3b4a8e73ff979fc6a29, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: mat_macbook1Screen1
+    second: {fileID: 2100000, guid: 2d3c20b1c792f53428c40b15c9945bac, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
