@@ -13,6 +13,8 @@ public class PlayerMovement : MonoBehaviour
     public Vector2 moveDir;
 
 
+    [SerializeField] private FixedJoystick joystick;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -49,5 +51,7 @@ public class PlayerMovement : MonoBehaviour
     void Move()
     {
         rb.linearVelocity = new Vector2(moveDir.x * moveSpeed, moveDir.y * moveSpeed);
+     //   rb.AddForce(moveSpeed * joystick.Horizontal * Time.deltaTime, 0, 0);
+     //   rb.AddForce(0, 0 , moveSpeed * joystick.Vertical * Time.deltaTime);
     }
 }

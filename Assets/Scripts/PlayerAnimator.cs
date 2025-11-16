@@ -14,7 +14,7 @@ public class PlayerAnimator : MonoBehaviour
         pm = GetComponent<PlayerMovement>();
         sr = GetComponent<SpriteRenderer>();
     }
-
+    
     // Update is called once per frame
     void Update()
     {
@@ -29,7 +29,6 @@ public class PlayerAnimator : MonoBehaviour
             am.SetBool("Move", false);
         }
     }
-
     void SpriteDirectionChecker()
     {
         if (pm.lastHorizontalVector < 0)
