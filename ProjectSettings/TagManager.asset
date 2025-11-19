@@ -11,7 +11,7 @@ TagManager:
   - 
   - Water
   - UI
-  - Player
+  - Terrarin
   - 
   - 
   - 
@@ -41,9 +41,21 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: Player
-    uniqueID: 1499592501
+  - name: Background
+    uniqueID: 2661268219
+    locked: 0
+  - name: Midground
+    uniqueID: 1745937391
+    locked: 0
+  - name: Foreground
+    uniqueID: 733340025
     locked: 0
   m_RenderingLayers:
   - Default
-  - Player
+  - Light Layer 1
+  - Light Layer 2
+  - Light Layer 3
+  - Light Layer 4
+  - Light Layer 5
+  - Light Layer 6
+  - Light Layer 7
