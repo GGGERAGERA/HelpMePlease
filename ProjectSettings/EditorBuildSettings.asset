@@ -6,6 +6,49 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Settings/Scenes/2D URP Scene Template.unity
-    guid: 2cda990e2423bbf4892e6590ba056729
+    path: Assets/Scenes/PreLoadingScene.unity
+    guid: 50bcba1c185fb364ea9c1caabcc5c6c0
+  - enabled: 1
+    path: Assets/Scenes/LoadingScene.unity
+    guid: 1fea45f7e2391af46802e555d13e53ff
+  - enabled: 1
+    path: Assets/Scenes/LobbyScene.unity
+    guid: 6b67137066a016a478f7ed2adaa45be1
+  - enabled: 1
+    path: Assets/Scenes/Cutscene1.unity
+    guid: 532225f092e48c3488b067d88a30a8af
+  - enabled: 1
+    path: Assets/Scenes/SceneLvl1.unity
+    guid: ea55a584aac70734092c78e8c560dc57
+  - enabled: 1
+    path: Assets/Scenes/SceneLvl2.unity
+    guid: b1ff2aa4d635a4e40b4946595df4f089
+  - enabled: 1
+    path: Assets/Scenes/SceneLvl3.unity
+    guid: 56d943bb70bb2a74ab8ee45136a102fa
+  - enabled: 1
+    path: Assets/Scenes/SceneLvl4.unity
+    guid: 386f91c6f3bc78f4aa13ce5a0b9262d3
+  - enabled: 1
+    path: Assets/Scenes/SceneLvl5.unity
+    guid: 9605097d960aeb64faeb51d7ee1903fc
+  - enabled: 1
+    path: Assets/Scenes/SceneLvl6.unity
+    guid: d52e9e9dc0b9ae7499ff242508d06712
+  - enabled: 1
+    path: Assets/Scenes/SceneLvl7.unity
+    guid: 375f5ce5132621042804b66c5bffe5e3
+  - enabled: 1
+    path: Assets/Scenes/SceneLvl8.unity
+    guid: 7da925175026ef54eb1027cf5e954245
+  - enabled: 1
+    path: Assets/Scenes/SceneLvl9.unity
+    guid: 7b31080364687234bbe342a1fc30f737
+  - enabled: 1
+    path: Assets/Scenes/SceneLvl10.unity
+    guid: 35c1b2886c650c549956aa4ef63d1c1a
+  - enabled: 1
+    path: Assets/Scenes/Cutscene2.unity
+    guid: 151fca2ef0f88f04b8a35af2b4858449
   m_configObjects: {}
+  m_UseUCBPForAssetBundles: 0
