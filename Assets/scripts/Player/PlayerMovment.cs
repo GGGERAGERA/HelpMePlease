@@ -5,9 +5,11 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     // Movement
+    [HideInInspector]
     public float moveSpeed;
-    Rigidbody2D rb;
+    [HideInInspector]
     public float lastHorizontalVector;
+    [HideInInspector]
     public float lastVerticalVector;
     [HideInInspector]
     public Vector2 moveDir;
@@ -15,10 +17,12 @@ public class PlayerMovement : MonoBehaviour
     public Vector2 lastMoveVector;
 
 
-    [SerializeField] private FixedJoystick joystick;
-
+    // References
+    Rigidbody2D rb;
+    PlayerStats player;
     void Start()
     {
+        player = GetComponent<PlayerStats>();
         rb = GetComponent<Rigidbody2D>();
         lastMoveVector = new Vector2(1, 0f);
     }
@@ -60,7 +64,7 @@ public class PlayerMovement : MonoBehaviour
 
     void Move()
     {
-        rb.linearVelocity = new Vector2(moveDir.x * moveSpeed, moveDir.y * moveSpeed);
+        rb.linearVelocity = new Vector2(moveDir.x * player.currentMoveSpeed, moveDir.y * player.currentMoveSpeed);
      //   rb.AddForce(moveSpeed * joystick.Horizontal * Time.deltaTime, 0, 0);
      //   rb.AddForce(0, 0 , moveSpeed * joystick.Vertical * Time.deltaTime);
     }
