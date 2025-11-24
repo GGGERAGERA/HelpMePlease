@@ -27,9 +27,16 @@ public class EnemySpawner : MonoBehaviour
     public int currentWaveCount;
     [Header("Spawner Attributes")]
     float spawnTimer;
+    public int enemiesAlive;
+    public int maxEnemiesAllowed;
+    public bool maxEnemiesReached = false;
     public float waveInterval; // interval between wave
 
     Transform player;
+
+
+    [Header("Spawn Position")]
+    public List<Transform> relativeSpawnPoints; // A list to store all the relative spawn points of enemies
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -79,19 +86,35 @@ public class EnemySpawner : MonoBehaviour
 
     void SpawnEnemies()
     {
-        if (waves[currentWaveCount].spawnCount < waves[currentWaveCount].waveQuota)
+        if (waves[currentWaveCount].spawnCount < waves[currentWaveCount].waveQuota &&!maxEnemiesReached)
         {
             foreach (var enemyGroup in waves[currentWaveCount].enemyGroups)
             {
                 if (enemyGroup.spawnCount < enemyGroup.enemyCount)
                 {
-                    Vector2 spawnPosition = new Vector2(player.transform.position.x + Random.Range(-10f, 10f), player.transform.position.y + Random.Range(-10f, 10f));
-                    Instantiate(enemyGroup.enemyPrefab, spawnPosition, Quaternion.identity);   
+                    if(enemiesAlive >= maxEnemiesAllowed)
+                    {
+                        maxEnemiesReached = true;
+                        return;
+                    }
+
+                    Instantiate(enemyGroup.enemyPrefab, player.position + relativeSpawnPoints[Random.Range(0, relativeSpawnPoints.Count)].position, Quaternion.identity);
                     
                     enemyGroup.spawnCount++;
                     waves[currentWaveCount].spawnCount++;
+                    enemiesAlive++;
                 }
             }
         }
+
+        if( enemiesAlive < maxEnemiesAllowed)
+        {
+            maxEnemiesReached = false;
+        }
+    }
+
+    public void onEnemyKilled()
+    {
+        enemiesAlive--;
     }
 }
