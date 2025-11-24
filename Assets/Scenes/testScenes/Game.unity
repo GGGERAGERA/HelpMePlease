@@ -2022,20 +2022,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   waves:
-  - waveName: 
+  - waveName: Wave 1
     enemyGroups:
     - enemyName: Bat
-      enemyCount: 200
+      enemyCount: 3
       spawnCount: 0
       enemyPrefab: {fileID: 5684857175977896125, guid: c0ba4a6e344ae3543b6b9a5f64b89d09, type: 3}
+    waveQuota: 0
+    spawnInterval: 0.5
+    spawnCount: 0
+  - waveName: Wave 2
+    enemyGroups:
     - enemyName: Red Bat
-      enemyCount: 200
+      enemyCount: 2
       spawnCount: 0
       enemyPrefab: {fileID: 5684857175977896125, guid: 719d19dc2ac1ccf4fbb8fe8d1bc555e2, type: 3}
     waveQuota: 0
     spawnInterval: 0.5
     spawnCount: 0
   currentWaveCount: 0
+  waveInterval: 0
 --- !u!4 &1953074340
 Transform:
   m_ObjectHideFlags: 0
