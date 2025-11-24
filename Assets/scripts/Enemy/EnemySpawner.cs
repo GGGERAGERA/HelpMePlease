@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -26,7 +27,7 @@ public class EnemySpawner : MonoBehaviour
     public int currentWaveCount;
     [Header("Spawner Attributes")]
     float spawnTimer;
-
+    public float waveInterval; // interval between wave
 
     Transform player;
 
@@ -40,11 +41,26 @@ public class EnemySpawner : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(currentWaveCount < waves.Count && waves[currentWaveCount].spawnCount == 0)
+        {
+            StartCoroutine(BeginNexWave());
+        }
+
         spawnTimer += Time.deltaTime;
         if(spawnTimer >= waves[currentWaveCount].spawnInterval)
         {
             spawnTimer = 0f;
             SpawnEnemies();      
+        }
+    }
+
+    IEnumerator BeginNexWave()
+    {
+        yield return new WaitForSeconds(waveInterval);
+        if (currentWaveCount < waves.Count - 1)
+        {
+            currentWaveCount++;
+            CalculateWaveQuota();
         }
     }
 
