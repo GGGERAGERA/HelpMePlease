@@ -1249,7 +1249,7 @@ AudioSource:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 976945277}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
@@ -1562,6 +1562,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7041992793216212607, guid: c18ad228327091243ace9304e465cfc1, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1959576302}
+    - targetCorrespondingSourceObject: {fileID: 7041992793216212607, guid: c18ad228327091243ace9304e465cfc1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1959576303}
   m_SourcePrefab: {fileID: 100100000, guid: c18ad228327091243ace9304e465cfc1, type: 3}
 --- !u!1 &1094117118 stripped
 GameObject:
@@ -2080,7 +2083,6 @@ MonoBehaviour:
   currentMight: 0
   currentProjectileSpeed: 0
   currentMagnet: 0
-  spawnedWeapons: []
   experience: 0
   level: 1
   experienceCap: 0
@@ -2092,6 +2094,37 @@ MonoBehaviour:
   - startLevel: 4
     endLevel: 5
     experienceCapIncrease: 100
+  weaponIndex: 0
+  passiveItem: 0
+  secondWeaponTest: {fileID: 4314582553760683601, guid: 51ae1b4c33f9e0c4ca5135455f267ca4, type: 3}
+--- !u!114 &1959576303
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1094117118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97d5215475012724593f30f1608472a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  weaponSlots:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  weaponLevels: 000000000000000000000000000000000000000000000000
+  passiveItemSlots:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  passiveItemLevels: 000000000000000000000000000000000000000000000000
 --- !u!1 &2013212994
 GameObject:
   m_ObjectHideFlags: 0
