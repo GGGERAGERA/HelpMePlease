@@ -9,13 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aef7154f08fc70f488151ea6c89a8c07, type: 3}
-  m_Name: Knife Character
+  m_Script: {fileID: 11500000, guid: 2393f67a79114d7429d6fa6d2ce9f789, type: 3}
+  m_Name: WingsPassiveItems Level 2
   m_EditorClassIdentifier: 
-  startingWeapon: {fileID: 3150086855776026140, guid: 479494e80c3ed76449b2e728dd9389e5, type: 3}
-  maxHealth: 50
-  recovery: 1
-  moveSpeed: 13
-  might: 1
-  projectileSpeed: 15
-  magnet: 5
+  multipler: 200
+  level: 2
+  nextLevelPrefab: {fileID: 0}
+  icon: {fileID: 1221959195, guid: 922315f9648688e47aa67864b2ce50af, type: 3}

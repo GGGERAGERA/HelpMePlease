@@ -19,8 +19,6 @@ public class PlayerStats : MonoBehaviour
     [HideInInspector]
     public float currentMagnet;
 
-    //Spawned Weapon
-    public List<GameObject> spawnedWeapons;
 
 
     [Header("Experience/Level")]
@@ -44,10 +42,17 @@ public class PlayerStats : MonoBehaviour
 
     public List<LevelRange> levelRanges;
 
+     InventoryManager inventory;
+    public int weaponIndex;
+    public int passiveItemIndex;
 
+    public GameObject secondWeaponTest;
+    public GameObject firstPassiveItemTest, secondPassiveItemTest;
     void Start()
     {
         experienceCap = levelRanges[0].experienceCapIncrease;
+
+      
     }
 
     void Update()
@@ -69,6 +74,8 @@ public class PlayerStats : MonoBehaviour
         characterData = CharacterSelector.GetData();
         CharacterSelector.instance.DestroySingleton();
 
+        inventory = GetComponent<InventoryManager>();
+
         currentHealth = characterData.MaxHealth;
         currentRecovery = characterData.Recovery;
         currentMoveSpeed = characterData.MoveSpeed;
@@ -77,6 +84,9 @@ public class PlayerStats : MonoBehaviour
         currentMagnet = characterData.Magnet;
 
         SpawnWeapon(characterData.StartingWeapon);
+        SpawnWeapon(secondWeaponTest);
+        SpawnPassiveItem(firstPassiveItemTest);
+        SpawnPassiveItem(secondPassiveItemTest);
     }
 
     public void IncreaseExperience(int amount)
@@ -147,9 +157,31 @@ public class PlayerStats : MonoBehaviour
 
     public void SpawnWeapon(GameObject weapon)
     {
+        if (weaponIndex >= inventory.weaponSlots.Count - 1)
+        {
+            Debug.LogError("Inventory slots already full");
+            return;
+        }
+
         // Spawn the starting weapon
         GameObject spawnedWeapon = Instantiate(weapon, transform.position, Quaternion.identity);
         spawnedWeapon.transform.SetParent(transform);
-        spawnedWeapons.Add(spawnedWeapon);
+        inventory.AddWeapon(weaponIndex,  spawnedWeapon.GetComponent<WeaponController>());
+        weaponIndex++;
+    }
+
+    public void SpawnPassiveItem(GameObject passiveItem)
+    {
+        if (passiveItemIndex >= inventory.passiveItemSlots.Count - 1)
+        {
+            Debug.LogError("Inventory slots already full");
+            return;
+        }
+
+        // Spawn the starting passive item
+        GameObject spawnedPassiveItem = Instantiate(passiveItem, transform.position, Quaternion.identity);
+        spawnedPassiveItem.transform.SetParent(transform);
+        inventory.AddPassiveItem(passiveItemIndex, spawnedPassiveItem.GetComponent<PassiveItem>());
+        passiveItemIndex++;
     }
 }
