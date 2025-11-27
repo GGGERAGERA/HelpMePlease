@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &4314582553760683601
+--- !u!1 &1440948715745687128
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,22 +8,22 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 3496228984127416252}
-  - component: {fileID: 306647739597492985}
+  - component: {fileID: 917009124520596707}
+  - component: {fileID: 6627261283080183639}
   m_Layer: 0
-  m_Name: Garlic Controller
+  m_Name: Spinach level 2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &3496228984127416252
+--- !u!4 &917009124520596707
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4314582553760683601}
+  m_GameObject: {fileID: 1440948715745687128}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -32,16 +32,16 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &306647739597492985
+--- !u!114 &6627261283080183639
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4314582553760683601}
+  m_GameObject: {fileID: 1440948715745687128}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e51d393c1f5df9146bbed0f8acb501aa, type: 3}
+  m_Script: {fileID: 11500000, guid: 2666c3024d3f1784ea4a862d05c8335c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weaponData: {fileID: 11400000, guid: a81c4aec9d3d3024887140e115ee862f, type: 2}
+  passiveItemData: {fileID: 11400000, guid: 564dc264b73488a4c9dc61313257d91c, type: 2}
