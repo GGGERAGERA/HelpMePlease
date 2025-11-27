@@ -19,6 +19,7 @@ public class PlayerMovement : MonoBehaviour
 
     // References
     Rigidbody2D rb;
+    
     PlayerStats player;
     void Start()
     {
