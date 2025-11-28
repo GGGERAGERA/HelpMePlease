@@ -3609,7 +3609,11 @@ MonoBehaviour:
     spawnInterval: 0.5
     spawnCount: 0
   currentWaveCount: 0
+  enemiesAlive: 0
+  maxEnemiesAllowed: 0
+  maxEnemiesReached: 0
   waveInterval: 0
+  relativeSpawnPoints: []
 --- !u!4 &1953074340
 Transform:
   m_ObjectHideFlags: 0
@@ -3863,6 +3867,52 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pullSpeed: 300
+--- !u!1 &2025971580
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2025971582}
+  - component: {fileID: 2025971581}
+  m_Layer: 0
+  m_Name: Game Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2025971581
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2025971580}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69610f6140250d84e8f181f9fad9b11b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentState: 0
+  previousState: 0
+--- !u!4 &2025971582
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2025971580}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 250.51024, y: 129.06174, z: -1.9476521}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2097048807
 GameObject:
   m_ObjectHideFlags: 0
@@ -4011,3 +4061,4 @@ SceneRoots:
   - {fileID: 721926402}
   - {fileID: 1953074340}
   - {fileID: 1442264111}
+  - {fileID: 2025971582}
