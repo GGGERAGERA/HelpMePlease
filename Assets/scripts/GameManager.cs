@@ -1,7 +1,9 @@
 using UnityEngine;
-
+using UnityEngine.Rendering;
+using UnityEngine.UI;
 public class GameManager : MonoBehaviour
 {
+    public static GameManager instance;
 
     public enum GameState
     {
@@ -13,6 +15,40 @@ public class GameManager : MonoBehaviour
     public GameState currentState;
 
     public GameState previousState;
+
+    [Header("Screens")]
+    public GameObject pauseScreen;
+    public GameObject resultScreen;
+
+    [Header("Current Stat Displays")]
+    public Text currentHealthDisplay;
+    public Text currentRecoveryDisplay;
+    public Text currentMoveSpeedDisplay;
+    public Text currentMightDisplay;
+    public Text currentProjectileSpeedDisplay;
+    public Text currentMagnetDisplay;
+
+    [Header("Results Screen Displays")]
+    public Image chosenCharacterImage;
+    public Text chosenCharacterName;
+
+    public bool isGameOver = false;
+
+    void Awake()
+    {
+        if(instance == null)
+        {
+            instance = this;
+        }
+        else
+        {
+            Debug.Log("EXTRA " + this + "DELETED");
+            Destroy(gameObject);
+        }
+            DisableScreens();
+
+    }
+
 
     void Update()
     {
@@ -27,6 +63,13 @@ public class GameManager : MonoBehaviour
                 break;
 
             case GameState.GameOver:
+                if(!isGameOver)
+                {
+                    isGameOver = true;
+                    Time.timeScale = 0f;
+                    Debug.Log("GAME IS OVER!");
+                    DisplayResult();
+                }
                 break;
 
             default:
@@ -48,6 +91,7 @@ public class GameManager : MonoBehaviour
             previousState = currentState;
             ChangeState(GameState.Paused);
             Time.timeScale = 0f;
+            pauseScreen.SetActive(true);
             Debug.Log("Game is paused");
         }
         
@@ -59,6 +103,7 @@ public class GameManager : MonoBehaviour
         {
             ChangeState(previousState);
             Time.timeScale = 1f;
+            pauseScreen.SetActive(false);
             Debug.Log("Game is Resumed");
         }
     }
@@ -77,4 +122,28 @@ public class GameManager : MonoBehaviour
             }
         }
     }
+
+    void DisableScreens()
+    {
+        pauseScreen.SetActive(false);
+        resultScreen.SetActive(false);
+    }
+
+    public void GameOver()
+    {
+        ChangeState(GameState.GameOver);
+    }
+
+    void DisplayResult()
+    {
+        resultScreen.SetActive(true);
+    }
+
+
+    public void AssignChosenCharacterUI(CharacterScriptableObject chosenCharacterData)
+    {
+        chosenCharacterImage.sprite = chosenCharacterData.Icon;
+        chosenCharacterName.text = chosenCharacterData.name;
+    }
+
 }

@@ -28,7 +28,7 @@ public class ProjectileWeaponBehaviour : MonoBehaviour
 
     public float GetCurrentDamage()
     {
-        return currentDamage *= FindAnyObjectByType<PlayerStats>().currentMight;
+        return currentDamage *= FindAnyObjectByType<PlayerStats>().CurrentMight;
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
