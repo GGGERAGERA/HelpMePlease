@@ -6,10 +6,19 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/testScenes/Menu.unity
-    guid: 42604209168e76543ae53352d1c8ff3d
+    path: Assets/Scenes/LoadingScene.unity
+    guid: 1fea45f7e2391af46802e555d13e53ff
   - enabled: 1
-    path: Assets/Scenes/testScenes/Game.unity
-    guid: 6a052a40bfdd2ad4fb0e426aa92846bc
+    path: Assets/Scenes/LobbyScene.unity
+    guid: 6b67137066a016a478f7ed2adaa45be1
+  - enabled: 1
+    path: Assets/Scenes/SceneLvl1.unity
+    guid: ea55a584aac70734092c78e8c560dc57
+  - enabled: 1
+    path: Assets/Scenes/SceneLvl2.unity
+    guid: b1ff2aa4d635a4e40b4946595df4f089
+  - enabled: 1
+    path: Assets/Scenes/SceneLvl3.unity
+    guid: 56d943bb70bb2a74ab8ee45136a102fa
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
