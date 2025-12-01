@@ -1232,6 +1232,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   loadingSlider: {fileID: 1214538612}
   minLoadTime: 2
+  GlobalSceneSelectionSO: {fileID: 11400000, guid: 7bb749a2020faf649a2a6d0be7e9c6c9, type: 2}
+  LobbyScene: {fileID: 102900000, guid: 6b67137066a016a478f7ed2adaa45be1, type: 3}
+  LoadingScene: {fileID: 102900000, guid: 1fea45f7e2391af46802e555d13e53ff, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

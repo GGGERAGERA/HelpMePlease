@@ -1,30 +1,29 @@
+using System.Collections;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using System.Collections.Generic;
 
 public class LobbyManager : MonoBehaviour
 {
+    public SceneAsset LobbyScene;
+    public SceneAsset LoadingScene;
+    [SerializeField] public SceneSelectionSO GlobalSceneSelectionSO; // Ссылка на наш SO
     void Start()
     {
         Debug.Log("Lobby scene loaded");
     }
 
-    public void OnLevel1Clicked()
+    public void OnLevelClicked()
     {
-        Debug.Log("Starting Level 1...");
-        SceneLoader.LoadLevel1();
+        Debug.Log("Starting Level...");
+        SceneLoader.LoadLevel(GlobalSceneSelectionSO.selectedScene, GlobalSceneSelectionSO, LoadingScene);
     }
-    
-    public void OnLevel2Clicked()
+
+    public void OnLobbyClicked()
     {
-        Debug.Log("Starting Level 2...");
-        SceneLoader.LoadLevel2();
-    }
-    
-    public void OnLevel3Clicked()
-    {
-        Debug.Log("Starting Level 3...");
-        SceneLoader.LoadLevel3();
+        Debug.Log("Starting Level...");
+        SceneLoader.LoadLobby(LobbyScene, GlobalSceneSelectionSO, LoadingScene);
     }
     
     public void OnExitClicked()

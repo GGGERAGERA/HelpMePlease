@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d3a351b88cfb63458c577c3aa0612fa, type: 3}
+  m_Name: GlobalPleerPercs
+  m_EditorClassIdentifier: 
+  GlobalplayerName: Hero1
+  GlobalplayerMaxHealth: 0
+  GlobalHPrecover: 0
+  GlobalShield: 0
+  GlobalplayerSpeed: 0
+  Globalpower: 0
+  GlobalprojectileSpeed: 0
+  Globalrange: 0
+  Globalreload: 0
+  GlobalReanimate: 0
+  Globalmagnet: 0
+  GlobalLuck: 0
+  Globalupgrade: 0
+  Globalskip: 0

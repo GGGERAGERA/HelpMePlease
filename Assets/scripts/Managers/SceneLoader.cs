@@ -1,4 +1,5 @@
 using System.Collections;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -8,6 +9,8 @@ public class SceneLoader : MonoBehaviour
     [Header("Loading Settings")]
     [SerializeField] private Slider loadingSlider;
     [SerializeField] private float minLoadTime = 2f; // Минимальное время анимации
+    [SerializeField] private SceneSelectionSO GlobalSceneSelectionSO; // Ссылка на наш SO
+    public SceneAsset LobbyScene, LoadingScene;
     
     private AsyncOperation loadingOperation;
     private float loadingProgress;
@@ -15,7 +18,7 @@ public class SceneLoader : MonoBehaviour
     private bool isLoadingComplete = false;
     
     // Ключ для сохранения имени следующей сцены
-    private const string NEXT_SCENE_KEY = "NextSceneToLoad";
+    //private const string NEXT_SCENE_KEY = "NextSceneToLoad";
     
     void Start()
     {
@@ -69,7 +72,7 @@ public class SceneLoader : MonoBehaviour
     string GetTargetSceneName()
     {
         // Пытаемся получить следующую сцену из PlayerPrefs
-        string nextScene = PlayerPrefs.GetString(NEXT_SCENE_KEY, "");
+        string nextScene = GlobalSceneSelectionSO.selectedScene.name;
         
         // Если следующая сцена не указана, загружаем лобби по умолчанию
         if (string.IsNullOrEmpty(nextScene))
@@ -112,24 +115,28 @@ public class SceneLoader : MonoBehaviour
     // === СТАТИЧЕСКИЕ МЕТОДЫ ДЛЯ ПЕРЕХОДА МЕЖДУ СЦЕНАМИ ===
     
     // Метод для перехода на любую сцену через LoadingScene
-    public static void LoadScene(string sceneName)
+    public static void LoadScene(SceneAsset scene, SceneSelectionSO GlobalSceneSelectionSO, SceneAsset LoadingScene)
     {
         // Сохраняем следующую сцену
-        PlayerPrefs.SetString(NEXT_SCENE_KEY, sceneName);
-        PlayerPrefs.Save();
-        
+        //PlayerPrefs.SetString(NEXT_SCENE_KEY, sceneName);
+        //PlayerPrefs.Save();
+        GlobalSceneSelectionSO.selectedScene = scene;
         // Загружаем сцену загрузки
-        SceneManager.LoadScene("LoadingScene");
+        SceneManager.LoadScene(LoadingScene.name);
     }
-    
+
     // Метод для перехода на лобби
-    public static void LoadLobby()
+    public static void LoadLobby(SceneAsset LobbyScene, SceneSelectionSO GlobalSceneSelectionSO, SceneAsset LoadingScene)
     {
-        LoadScene("LobbyScene");
+        LoadScene(LobbyScene, GlobalSceneSelectionSO, LoadingScene);
     }
     
+    public static void LoadLevel(SceneAsset scene, SceneSelectionSO GlobalSceneSelectionSO, SceneAsset LoadingScene)
+    {
+        LoadScene(scene, GlobalSceneSelectionSO, LoadingScene);
+    }
     // Методы для загрузки уровней
-    public static void LoadLevel1()
+    /*public static void LoadLevel1()
     {
         LoadScene("SceneLvl1");
     }
@@ -142,5 +149,5 @@ public class SceneLoader : MonoBehaviour
     public static void LoadLevel3()
     {
         LoadScene("SceneLvl3");
-    }
+    }*/
 }
