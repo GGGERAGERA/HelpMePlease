@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.Rendering;
+using System.Collections.Generic;
 using UnityEngine.UI;
 public class GameManager : MonoBehaviour
 {
@@ -31,6 +31,10 @@ public class GameManager : MonoBehaviour
     [Header("Results Screen Displays")]
     public Image chosenCharacterImage;
     public Text chosenCharacterName;
+    public Text levelReachedDisplay;
+    public List<Image> chosenWeaponUI = new List<Image>(6);
+    public List<Image> chosenPassiveItemsUI = new List<Image>(6);
+
 
     public bool isGameOver = false;
 
@@ -144,6 +148,55 @@ public class GameManager : MonoBehaviour
     {
         chosenCharacterImage.sprite = chosenCharacterData.Icon;
         chosenCharacterName.text = chosenCharacterData.name;
+    }
+
+    public void AssignLevelReachedUI(int levelReachedData)
+    {
+        levelReachedDisplay.text = levelReachedData.ToString();
+    }
+
+    public void AssignChosenWeaponsAndPassiveItemsUI(List<Image> chosenWeaponsData, List<Image> chosenPassiveItemsData)
+    {
+        if(chosenWeaponsData.Count != chosenWeaponUI.Count || chosenPassiveItemsData.Count != chosenPassiveItemsUI.Count)
+        {
+            Debug.Log("Chosen weapons and passive items data lists have different lengths");
+            return;
+        }
+
+        // Assign chosen weapons data to chosenWeaponsUI
+        for (int i = 0; i < chosenWeaponsData.Count; i++)
+        {
+            // Check that the sprite of the corresponding element in chosenWeaponsData is not null
+            if (chosenWeaponsData[i].sprite)
+            {
+                // Enable the corresponding element in chosenWeaponsUI and set its sprite to the corresponding sprite in chosenWeaponsData
+                chosenWeaponUI[i].enabled = true;
+                chosenWeaponUI[i].sprite = chosenWeaponsData[i].sprite;
+            }
+            else
+            {
+                // If the sprite is null, disable the corresponding element in chosenWeaponsUI
+                chosenWeaponUI[i].enabled = false;
+            }
+        }
+
+
+        // Assign chosen passive items data to chosenPassiveItemsUI
+        for (int i = 0; i < chosenPassiveItemsUI.Count; i++)
+        {
+            // Check that the sprite of the corresponding element in chosenPassiveItemsData is not null
+            if (chosenPassiveItemsUI[i].sprite)
+            {
+                // Enable the corresponding element in chosenPassiveItemsUI and set its sprite to the corresponding sprite in chosenPassiveItemsData
+                chosenPassiveItemsUI[i].enabled = true;
+                chosenPassiveItemsUI[i].sprite = chosenPassiveItemsData[i].sprite;
+            }
+            else
+            {
+                // If the sprite is null, disable the corresponding element in chosenPassiveItemsUI
+                chosenPassiveItemsUI[i].enabled = false;
+            }
+        }
     }
 
 }
