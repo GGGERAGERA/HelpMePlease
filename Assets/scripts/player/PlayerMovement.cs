@@ -7,7 +7,7 @@ public class PlayerMovement : MonoBehaviour
 {
     [Header("Настройки")]
     [Tooltip("Ссылка на ScriptableObject с параметрами игрока")]
-    public PlayerStatsSO playerStats;
+    [SerializeField] private PlayerStatsSO playerStats;
 
     [Tooltip("Скорость перемещения")]
     [SerializeField] private float currentMoveSpeed = 5f;

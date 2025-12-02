@@ -19,6 +19,7 @@ public class PlayerStatsSO : ScriptableObject
     public float HPrecover = 0.6f;
     public float Shield = 3;
     public float playerSpeed = 5f;
+    public int playerWeight = 100;
 
     public float power = 25f;
     public float projectileSpeed = 20f;

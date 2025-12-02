@@ -1,23 +1,22 @@
 using UnityEngine;
 
 // Это создаст пункт в меню создания ассетов
-[CreateAssetMenu(fileName = "Buffs", menuName = "ScriptableObject/Buffses/Buffs")]
-public class BuffsSO : ScriptableObject
+[CreateAssetMenu(fileName = "EnemySpawn", menuName = "ScriptableObject/EnemySpawns/EnemySpawn")]
+public class EnemySpawnSO : ScriptableObject
 {
     // Это публичное поле будет хранить наш выбор
     // Можно хранить индекс, имя, префаб - что угодно!
     
-    [Header("Buffs")]
-    public GameObject BuffsPrefab; // Префаб персонажа для спавна
-    public GameObject BuffsPrefabDefaultWeapon; // Префаб персонажа для спавна
+    [Header("EnemySpawn")]
+    public GameObject EnemySpawnPrefab; // Префаб персонажа для спавна
 
     
-    [Header("BuffsStats")]
-    public string BuffsName = "Buffs1";
-    public int BuffsMaxHealth = 100;
+    [Header("EnemySpawnStats")]
+    public string EnemySpawnName = "EnemySpawn1";
+    public int EnemySpawnMaxHealth = 100;
     public float HPrecover = 0.6f;
     public float Shield = 3;
-    public float BuffsSpeed = 5f;
+    public float EnemySpawnSpeed = 5f;
 
     public float power = 25f;
     public float projectileSpeed = 20f;
@@ -34,13 +33,13 @@ public class BuffsSO : ScriptableObject
     // Метод для сброса выбора (опционально)
     public void ClearSelection()
     {
-        BuffsPrefab = null;
-        //BuffsName = "Not Selected";
+        EnemySpawnPrefab = null;
+        //EnemySpawnName = "Not Selected";
     }
     
     // Метод для проверки, выбран ли персонаж
     public bool HasSelection()
     {
-        return BuffsPrefab != null;
+        return EnemySpawnPrefab != null;
     }
 }
