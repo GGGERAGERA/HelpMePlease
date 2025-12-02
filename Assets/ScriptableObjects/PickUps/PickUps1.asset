@@ -9,22 +9,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e735d42feb61b654abe5bfb71ee2b0a5, type: 3}
-  m_Name: Player1
+  m_Script: {fileID: 11500000, guid: 92529721f27c2ed4a972f456d3c4a9bf, type: 3}
+  m_Name: PickUps1
   m_EditorClassIdentifier: 
-  PlayerPrefab: {fileID: 4146352723010300728, guid: 3ed9842c4749c414d8b1297090b94947, type: 3}
-  PlayerPrefabDefaultWeapon: {fileID: 0}
-  playerName: Hero1
-  playerMaxHealth: 100
+  PickUpsPrefab: {fileID: 0}
+  PickUpsPrefabDefaultWeapon: {fileID: 0}
+  PickUpsName: PickUps1
+  PickUpsMaxHealth: 100
   HPrecover: 0.6
   Shield: 3
-  playerSpeed: 5
+  PickUpsSpeed: 5
   power: 25
   projectileSpeed: 20
   range: 11
   reload: -5
-  Reanimate: 1
-  magnet: 50
-  Luck: 32
-  upgrade: 15
-  skip: 3

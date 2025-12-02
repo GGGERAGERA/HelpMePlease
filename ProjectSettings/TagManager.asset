@@ -6,18 +6,21 @@ TagManager:
   tags:
   - Enemy
   - Prop
+  - Weapon
+  - Projectile
+  - Experience
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Player
   - Water
   - UI
   - Terrarin
-  - 
-  - 
-  - 
-  - 
+  - Weapon
+  - Enemy
+  - Projectile
+  - Experience
   - 
   - 
   - 

@@ -9,22 +9,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e735d42feb61b654abe5bfb71ee2b0a5, type: 3}
-  m_Name: Player1
+  m_Script: {fileID: 11500000, guid: 4330216233a50f44294884d4bb7e6674, type: 3}
+  m_Name: Enemy1
   m_EditorClassIdentifier: 
-  PlayerPrefab: {fileID: 4146352723010300728, guid: 3ed9842c4749c414d8b1297090b94947, type: 3}
-  PlayerPrefabDefaultWeapon: {fileID: 0}
-  playerName: Hero1
-  playerMaxHealth: 100
+  EnemyPrefab: {fileID: 0}
+  EnemyPrefabDefaultWeapon: {fileID: 0}
+  EnemyName: Enemy1
+  EnemyMaxHealth: 100
   HPrecover: 0.6
   Shield: 3
-  playerSpeed: 5
+  EnemySpeed: 5
   power: 25
   projectileSpeed: 20
   range: 11
   reload: -5
-  Reanimate: 1
-  magnet: 50
-  Luck: 32
-  upgrade: 15
-  skip: 3
