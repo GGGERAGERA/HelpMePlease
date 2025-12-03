@@ -3,54 +3,74 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class Projectile : MonoBehaviour
 {
-    [Header("Projectile")]
-    [Tooltip("Ссылка на ScriptableObject с параметрами projectile")]
-    public ProjectileSO projectileSO1;
-    private ProjectileSO.EProjectileType projectileType1;
-    public int Damage1 { get; private set; }
-    //public ProjectileType Type; // enum: Direct, Homing, Melee
-    [SerializeField] private float Speed1 = 10f;
-    [SerializeField] private float Lifetime1 = 5f;
+    [Header("Параметры")]
+    public int Damage { get; private set; }
+    public ProjectileSO.EProjectileType Type { get; private set; } // ← ВАЖНО: тип хранится здесь!
+    public float Speed = 10f;
+    public float Lifetime = 5f;
 
-    //private ProjectileSO.EProjectileType projectileType; // → выпадающий список из 4 вариантов!
-
-    private Transform target; // для Homing
+    private Transform target; // Для Homing
     private Rigidbody2D rb;
+    private Collider2D col;
 
     private void Awake()
-    {   
-
-        projectileType1 = projectileSO1.projectileType;
-        
+    {
         rb = GetComponent<Rigidbody2D>();
-        Destroy(gameObject, Lifetime1); // самоликвидация
+        col = GetComponent<Collider2D>();
+        Destroy(gameObject, Lifetime); // Самоликвидация
     }
 
-    public void Initialize(int damage, ProjectileSO.EProjectileType projectileType2, Vector2 direction, Transform homingTarget = null)
+    /// <summary>
+    /// Инициализирует снаряд. Вызывать ОБЯЗАТЕЛЬНО после получения из пула.
+    /// </summary>
+    public void Initialize(int damage, Vector2 spawnPosition, ProjectileSO.EProjectileType type, Vector2? direction = null, Transform homingTarget = null)
     {
-        //public EProjectileType projectileType = EProjectileType.Homing;
-        Damage1 = damage;
-        projectileType1 = projectileType2;
+        Damage = damage;
+        Type = type;
+        transform.position = spawnPosition;
+        gameObject.SetActive(true);
 
-        if (projectileType1 == ProjectileSO.EProjectileType.Homing && homingTarget != null)
+        // Настройка поведения
+        if (type == ProjectileSO.EProjectileType.Melee)
         {
-            this.target = homingTarget;
+            // Melee: сразу активируем коллайдер, уничтожаем через 0.1 сек
+            col.enabled = true;
+            Invoke(nameof(Deactivate), 0.1f);
         }
         else
         {
-            rb.linearVelocity = direction * Speed1;
+            // Direct или Homing: включаем физику
+            col.enabled = true;
+            //rb.isKinematic = false;
+            rb.bodyType = RigidbodyType2D.Dynamic;
+            //rb.velocity = Vector2.zero;
+            rb.linearVelocity = Vector2.zero;
+
+            if (direction.HasValue)
+            {
+                if (type == ProjectileSO.EProjectileType.Direct)
+                {
+                    rb.linearVelocity = direction.Value * Speed;
+                }
+                else if (type == ProjectileSO.EProjectileType.Homing)
+                {
+                    rb.linearVelocity = direction.Value * Speed;
+                    this.target = homingTarget;
+                }
+            }
         }
     }
 
     private void Update()
     {
-        if (projectileType1 == ProjectileSO.EProjectileType.Homing && target != null)
+        if (Type == ProjectileSO.EProjectileType.Homing && target != null)
         {
             Vector2 dir = (target.position - transform.position).normalized;
-            rb.linearVelocity = Vector2.Lerp(rb.linearVelocity, dir * Speed1, Time.deltaTime * 5f);
+            rb.linearVelocity = Vector2.Lerp(rb.linearVelocity, dir * Speed, Time.deltaTime * 8f);
         }
     }
 
@@ -59,15 +79,17 @@ public class Projectile : MonoBehaviour
         IDamageable damageable = other.GetComponent<IDamageable>();
         if (damageable != null)
         {
-            // Наносим урон ТОЛЬКО один раз
-            damageable.TakeDamage(Damage1, rb.linearVelocity, gameObject);
-            ReturnToPool(); // или Destroy(gameObject);
+            // Наносим урон
+            Vector2 hitDirection = rb.linearVelocity.normalized;
+            damageable.TakeDamage(Damage, hitDirection, gameObject);
+
+            // Возвращаем в пул
+            ProjectilePool.Instance.ReturnProjectile(this);
         }
     }
 
-    private void ReturnToPool()
+    private void Deactivate()
     {
-        // ObjectPool.Return(this);
-        Destroy(gameObject);
+        ProjectilePool.Instance.ReturnProjectile(this);
     }
 }

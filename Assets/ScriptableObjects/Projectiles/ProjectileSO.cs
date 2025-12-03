@@ -27,6 +27,8 @@ public class ProjectileSO : ScriptableObject
     public float ProjectileReload = -5f;
     public float ProjectileBurstTime = 5f;
 
+    public int initialSize = 30;
+
     // Метод для сброса выбора (опционально)
     public void ClearSelection()
     {

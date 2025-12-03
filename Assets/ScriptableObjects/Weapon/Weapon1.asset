@@ -12,10 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b8d27c715732364883f53f35fb41276, type: 3}
   m_Name: Weapon1
   m_EditorClassIdentifier: 
-  WeaponPrefab: {fileID: 0}
-  WeaponProjectilePrefab: {fileID: 0}
+  WeaponPrefab: {fileID: 5140586632038054343, guid: 436488eceb8157c4ea8493e43a07c853, type: 3}
+  WeaponProjectilePrefab: {fileID: 8967899627406726442, guid: 790760c985dc7ec49805ebf82ac1a96c, type: 3}
   WeaponName: Weapon1
   WeaponRange: 5
   WeaponDamage: 100
   WeaponReload: -5
   WeaponBurstTime: 5
+  FireRate: 1

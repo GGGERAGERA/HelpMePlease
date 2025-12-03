@@ -15,7 +15,7 @@ public class GlobalPleerPercsSO : ScriptableObject
     public int GlobalplayerMoney = 0;
     public int GlobalplayerMaxHealth = 0;
     public float GlobalHPrecover = 0;
-    public float GlobalShield = 0;
+    public int GlobalShield = 0;
     public float GlobalplayerSpeed = 0f;
 
     public float Globalpower = 0f;

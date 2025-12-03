@@ -16,10 +16,10 @@ public class GameBuffsSO : ScriptableObject
     public string GameBuffsName = "Buffs1";
     public int GameBuffsMaxHealth = 100;
     public float GameHPrecover = 0.6f;
-    public float GameShield = 3;
+    public int GameShield = 3;
     public float GameBuffsSpeed = 5f;
 
-    public float Gamepower = 25f;
+    public int Gamepower = 25;
     public float GameprojectileSpeed = 20f;
     public float Gamerange = 11f;
     public float Gamereload = -5f;

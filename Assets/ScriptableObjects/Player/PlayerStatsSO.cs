@@ -21,7 +21,7 @@ public class PlayerStatsSO : ScriptableObject
     public float playerSpeed = 5f;
     public int playerWeight = 100;
 
-    public float power = 25f;
+    public int power = 25;
     public float projectileSpeed = 20f;
     public float range = 11f;
     public float reload = -5f;
