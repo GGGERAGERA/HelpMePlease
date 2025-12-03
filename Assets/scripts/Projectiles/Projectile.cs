@@ -10,18 +10,20 @@ public class Projectile : MonoBehaviour
     [Header("Параметры")]
     public int Damage { get; private set; }
     public ProjectileSO.EProjectileType Type { get; private set; } // ← ВАЖНО: тип хранится здесь!
+    public ProjectileSO projectileSO1;
     public float Speed = 10f;
     public float Lifetime = 5f;
 
     private Transform target; // Для Homing
     private Rigidbody2D rb;
     private Collider2D col;
-
+    public int CurrentPrefabsForSpawn = 5;
     private void Awake()
     {
+        CurrentPrefabsForSpawn = projectileSO1.ProjectileSpawnPoolCount;
         rb = GetComponent<Rigidbody2D>();
         col = GetComponent<Collider2D>();
-        Destroy(gameObject, Lifetime); // Самоликвидация
+        //Destroy(gameObject, Lifetime); // Самоликвидация
     }
 
     /// <summary>
@@ -84,12 +86,12 @@ public class Projectile : MonoBehaviour
             damageable.TakeDamage(Damage, hitDirection, gameObject);
 
             // Возвращаем в пул
-            ProjectilePool.Instance.ReturnProjectile(this);
+            ProjectilePool.InstancePoolParent.ReturnProjectile2(this);
         }
     }
 
     private void Deactivate()
     {
-        ProjectilePool.Instance.ReturnProjectile(this);
+        ProjectilePool.InstancePoolParent.ReturnProjectile2(this);
     }
 }

@@ -10,7 +10,7 @@ public class PlayerStatsSO : ScriptableObject
     [Header("Player")]
     public GameObject PlayerPrefab; // Префаб персонажа для спавна
     
-    public GameObject PlayerPrefabDefaultWeapon; // Префаб персонажа для спавна
+    public GameObject PlayerPrefabDefaultWeapon; // Префаб дефолтного оружия для спавна!
 
     
     [Header("PlayerStats")]

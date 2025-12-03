@@ -179,8 +179,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 588741b191ac74e4cb1436fe21e9bd02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  weaponProjectile1: {fileID: 4364266391790939063, guid: a3114bef07823844f95b1d0e9f588d81, type: 3}
   weaponData: {fileID: 11400000, guid: a73ef667a28aa134eb53772e326a00b4, type: 2}
   firePoint: {fileID: 280026071807094002}
+  playerTransform: {fileID: 0}
 --- !u!1 &7824449292564853068
 GameObject:
   m_ObjectHideFlags: 0

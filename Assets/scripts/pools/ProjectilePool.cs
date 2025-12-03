@@ -1,15 +1,17 @@
 // ProjectilePool.cs
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEditor;
 
 public class ProjectilePool : MonoBehaviour
 {
-    public static ProjectilePool Instance;
+    public static ProjectilePool InstancePoolParent;
+    //public GameObject ProjectilePrefabForPool;
 
+    //System.Serializable для стракта
     [System.Serializable]
     public struct PoolConfig
     {
-        //public ProjectileSO.EProjectileType type;
         public ProjectileSO.EProjectileType type;
         public Projectile prefab;
         //public int initialSize;
@@ -17,7 +19,13 @@ public class ProjectilePool : MonoBehaviour
     }
 
     [Header("Настройка пулов по типам")]
+    
     public List<PoolConfig> poolConfigs;
+    public List<GameObject> ProjectilePrefabsForPool;
+    public List<GameObject> ProjectilePrefabsPooled;
+    private ProjectileSO SpawnProjectileCountFromSO;
+    private int SpawnProjectileCount;
+    //public int ProjectilePrefabForPoolPlace = 0;
 
     // Словарь: тип → очередь снарядов
     private Dictionary<ProjectileSO.EProjectileType, Queue<Projectile>> pools = new Dictionary<ProjectileSO.EProjectileType, Queue<Projectile>>();
@@ -25,20 +33,24 @@ public class ProjectilePool : MonoBehaviour
     // Кэш префабов для быстрого доступа
     private Dictionary<ProjectileSO.EProjectileType, Projectile> prefabCache = new Dictionary<ProjectileSO.EProjectileType, Projectile>();
 
+    //private Dictionary<GameObject, ProjectileSO.EProjectileType> ProjectilePrefabsForPool2 = new Dictionary<GameObject, ProjectileSO.EProjectileType>();
+    //Если уже есть пулл объект на сцене- уничтожаем его
     private void Awake()
     {
-        if (Instance == null)
+        
+        if (InstancePoolParent == null)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-            InitializePools();
+            InstancePoolParent = this;
+            DontDestroyOnLoad(InstancePoolParent);
+            InitializePools2();
         }
         else
         {
-            Destroy(gameObject);
+            Destroy(InstancePoolParent);
         }
     }
 
+    //Инициализация пула через стракт
     private void InitializePools()
     {
         foreach (var config in poolConfigs)
@@ -59,6 +71,33 @@ public class ProjectilePool : MonoBehaviour
                 proj.gameObject.SetActive(false);
                 pool.Enqueue(proj);
             }
+        }
+    }
+
+    //Инициализация пула через префаб пули (projectile)
+    public void InitializePools2()
+    {
+        
+        //if(ProjectilePrefabsForPool == null) return;
+        Debug.LogWarning($"Попытка инициализировать пулл2");
+        GameObject ObjectPoolContainer;
+        for(int i = 0; i < ProjectilePrefabsForPool.Count; i++)
+        {
+            //Пипец.. Забираем данные SO из ячеек префабов в пулле
+            SpawnProjectileCountFromSO = ProjectilePrefabsForPool[i].GetComponent<Projectile>().projectileSO1;
+            //Пипец.. Какой бред, считать SO не можем, и типа забиваем всё в конкретную переменную...
+            SpawnProjectileCount = SpawnProjectileCountFromSO.ProjectileSpawnPoolCount;
+            int k = SpawnProjectileCount;
+
+            Debug.LogWarning($"Попытка инициализировать пулл3 {i }, {k }");
+            //if (InstancePoolParent.GetComponentInChildren<Projectile>() == ProjectilePrefabsForPool[i]) return;
+                for (int j = 0; j < SpawnProjectileCount; j++)
+            //ProjectilePrefabsForPool[i].GetComponent<ProjectileConfig>().projectileData.ProjectileSpawnPoolCount
+                {
+                ObjectPoolContainer = Instantiate(ProjectilePrefabsForPool[i]);
+                ObjectPoolContainer.SetActive(false);
+                ProjectilePrefabsPooled.Add(ObjectPoolContainer);
+                }
         }
     }
 
@@ -91,23 +130,65 @@ public class ProjectilePool : MonoBehaviour
         }
     }
 
+    /// Получить снаряд указанного типа через префаб снаряда!
+    public GameObject GetProjectile2(GameObject GetProjectilePrefab)
+    {
+
+        // Если пул исчерпан — создаём новый    
+                for(int j = 0; j < ProjectilePrefabsForPool[j].GetComponent<Projectile>().CurrentPrefabsForSpawn; j++)
+                {
+                    if(!ProjectilePrefabsPooled[j].activeInHierarchy)
+                    {
+                    return ProjectilePrefabsPooled[j];
+                    }
+
+                    if(ProjectilePrefabsPooled[j] == null)
+                    {
+                    Debug.LogWarning($"Пул для {GetProjectilePrefab} исчерпан. Создаём новый.");
+                    return Instantiate(GetProjectilePrefab, transform);
+                    }
+
+                }
+                return null;
+        
+    }
 
     /// Вернуть снаряд в пул
-    public void ReturnProjectile(Projectile proj)
+    public void ReturnProjectile(Projectile Returnproj)
     {
-        if (proj == null) return;
+        if (Returnproj == null) return;
 
-        ProjectileSO.EProjectileType type = proj.Type; // ← Берём тип из самого снаряда
+        ProjectileSO.EProjectileType type = Returnproj.Type; // ← Берём тип из самого снаряда
 
         if (pools.ContainsKey(type))
         {
-            proj.gameObject.SetActive(false);
-            proj.transform.SetParent(transform);
-            pools[type].Enqueue(proj);
+            Returnproj.gameObject.SetActive(false);
+            Returnproj.transform.SetParent(transform);
+            pools[type].Enqueue(Returnproj);
         }
         else
         {
-            Destroy(proj.gameObject);
+            Destroy(Returnproj.gameObject);
         }
     }
+
+    /// Вернуть снаряд в пул через префаб!
+    public void ReturnProjectile2(Projectile ReturnProjectile1)
+    {
+        if (ReturnProjectile1 == null) return;
+
+        ProjectileSO.EProjectileType type = ReturnProjectile1.Type; // ← Берём тип из самого снаряда
+
+        if (pools.ContainsKey(type))
+        {
+            ReturnProjectile1.gameObject.SetActive(false);
+            ReturnProjectile1.transform.SetParent(transform);
+            pools[type].Enqueue(ReturnProjectile1);
+        }
+        else
+        {
+            Destroy(ReturnProjectile1.gameObject);
+        }
+    }
+
 }

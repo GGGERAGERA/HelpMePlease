@@ -4,10 +4,14 @@ using UnityEngine;
 public class WeaponAttack : MonoBehaviour
 {
     [Header("Оружие")]
+    [SerializeField] private GameObject weaponProjectile1;
     [SerializeField] private WeaponSO weaponData;
 
     private ProjectileSO ProjectileSO1;
     private ProjectileSO.EProjectileType ProjectileType1;
+
+    public GameObject projectileContainer;
+    
 
     //private WeaponSO.E weaponData;
 
@@ -15,12 +19,14 @@ public class WeaponAttack : MonoBehaviour
     [SerializeField] private Transform firePoint;
 
     private float timer = 0f;
-    private Transform playerTransform;
+    public Transform playerTransform;
 
     private void Awake()
     {
+        //playerTransform = transform.parent;
         playerTransform = transform.parent;
-
+        weaponProjectile1 = weaponData.WeaponProjectilePrefab;
+        
         if (weaponData == null)
         {
             Debug.LogError("WeaponSO не задан на " + name, this);
@@ -31,9 +37,9 @@ public class WeaponAttack : MonoBehaviour
 
     private void Update()
     {
-        timer += Time.deltaTime;
+        timer += Time.fixedDeltaTime;
 
-        float timeBetweenShots = 1f / weaponData.FireRate;
+        float timeBetweenShots = weaponData.FireRate;
         if (timer >= timeBetweenShots)
         {
             Fire();
@@ -44,39 +50,44 @@ public class WeaponAttack : MonoBehaviour
     private void Fire()
     {
         // Получаем итоговый урон
-        int totalDamage = GetPlayerTotalAttack();
+        //int totalDamage = GetPlayerTotalAttack();
 
         // Определяем точку и направление
         Vector2 spawnPos = (firePoint != null) ? firePoint.position : transform.position;
         Vector2 direction = Vector2.zero;
 
-        if (ProjectileType1 != ProjectileSO.EProjectileType.Melee)
+        /*//if (ProjectileType1 != ProjectileSO.EProjectileType.Melee)
+        if (weaponData.WeaponProjectilePrefab.GetComponent<ProjectileSO.EProjectileType>() != ProjectileSO.EProjectileType.Melee)
         {
             direction = (playerTransform != null) ? playerTransform.right : transform.right;
-        }
+        }*/
 
-        // Получаем снаряд из пула
-        Projectile projectile = ProjectilePool.Instance.GetProjectile(ProjectileType1);
-
-        if (projectile == null)
+        //Получаем снаряд из пула
+        //projectileContainer = ProjectilePool.InstancePoolParent.GetProjectile2(weaponProjectile1);
+        //projectileContainer = ProjectilePool.InstancePoolParent.GetProjectile2(weaponProjectile1);
+        /*
+        if (projectileContainer == null)
         {
             Debug.LogError("Не удалось получить снаряд!");
             return;
-        }
+        }*/
 
-        // Инициализируем
+        /*//Инициализируем
         projectile.Initialize(
             damage: totalDamage,
             spawnPosition: spawnPos,
             type: ProjectileType1,
             direction: (ProjectileType1 != ProjectileSO.EProjectileType.Melee) ? direction : null,
             homingTarget: (ProjectileType1 == ProjectileSO.EProjectileType.Homing) ? FindClosestEnemy() : null
-        );
+        );*/
+
+        //Инициализируем адекватнее... Пока не понял, как инициализировать((
     }
 
     private int GetPlayerTotalAttack()
     {
         PlayerStatsSO playerStats = playerTransform?.GetComponent<PlayerStatsSO>();
+
         if (playerStats != null)
         {
             return playerStats.power + weaponData.WeaponDamage;

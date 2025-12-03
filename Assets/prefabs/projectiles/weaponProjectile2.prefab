@@ -51,26 +51,22 @@ PrefabInstance:
     - target: {fileID: 3942419567066940313, guid: a3114bef07823844f95b1d0e9f588d81, type: 3}
       propertyPath: projectileSO1
       value: 
-      objectReference: {fileID: 11400000, guid: 55ff70ae902b93c46bd1893e275d7d69, type: 2}
+      objectReference: {fileID: 11400000, guid: 21f494ed4ddb95d48948b201aeb3698e, type: 2}
     - target: {fileID: 3942419567066940313, guid: a3114bef07823844f95b1d0e9f588d81, type: 3}
       propertyPath: CurrentPrefabsForSpawn
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 4364266391790939063, guid: a3114bef07823844f95b1d0e9f588d81, type: 3}
       propertyPath: m_Name
-      value: weaponProjectile1 Variant
+      value: weaponProjectile2
       objectReference: {fileID: 0}
     - target: {fileID: 4423590050086034142, guid: a3114bef07823844f95b1d0e9f588d81, type: 3}
       propertyPath: m_Color.b
-      value: 0
+      value: 0.45882356
       objectReference: {fileID: 0}
     - target: {fileID: 4423590050086034142, guid: a3114bef07823844f95b1d0e9f588d81, type: 3}
       propertyPath: m_Color.g
-      value: 0.65517235
-      objectReference: {fileID: 0}
-    - target: {fileID: 4423590050086034142, guid: a3114bef07823844f95b1d0e9f588d81, type: 3}
-      propertyPath: m_Color.r
-      value: 1
+      value: 0.50293314
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
