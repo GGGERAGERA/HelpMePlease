@@ -24,6 +24,7 @@ public class EnemySO : ScriptableObject
     public int projectileSpeed = 0;
     public float range = 11f;
     public float reload = 0.5f;
+    public int EnemySpawnPoolCount = 0;
     //public int Reanimate = 1;
     //public float magnet = 50f;
     //public float Luck = 32f;

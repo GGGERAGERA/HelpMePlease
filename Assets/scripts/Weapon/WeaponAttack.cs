@@ -5,31 +5,19 @@ public class WeaponAttack : MonoBehaviour
 {
     [Header("Оружие")]
     [SerializeField] private GameObject weaponProjectile1;
-    [SerializeField] private WeaponSO weaponData;
-
-    private ProjectileSO ProjectileSO1;
-    private ProjectileSO.EProjectileType ProjectileType1;
-
-    public GameObject projectileContainer;
-    
-
-    //private WeaponSO.E weaponData;
-
-    [Header("Точка выстрела")]
+    [SerializeField] private WeaponSO WeaponSO1;
     [SerializeField] private Transform firePoint;
+    private GameObject projectilePrefab => WeaponSO1.WeaponProjectilePrefab;
+    private Transform playerTransform;
 
     private float timer = 0f;
-    public Transform playerTransform;
 
     private void Awake()
     {
-        //playerTransform = transform.parent;
         playerTransform = transform.parent;
-        weaponProjectile1 = weaponData.WeaponProjectilePrefab;
-        
-        if (weaponData == null)
+        if (WeaponSO1 == null || projectilePrefab == null)
         {
-            Debug.LogError("WeaponSO не задан на " + name, this);
+            Debug.LogError($"Weapon {name} не настроен!");
             enabled = false;
             return;
         }
@@ -37,75 +25,99 @@ public class WeaponAttack : MonoBehaviour
 
     private void Update()
     {
+        //float finalFireRate = GetFinalFireRate(WeaponSO1.FireRate);
         timer += Time.fixedDeltaTime;
 
-        float timeBetweenShots = weaponData.FireRate;
-        if (timer >= timeBetweenShots)
+        if (timer >= WeaponSO1.FireRate)
         {
             Fire();
             timer = 0f;
         }
     }
 
+    private void Fire()
+    {
+        // Рассчитываем урон
+        int totalDamage = CalculateTotalDamage();
 
-private void Fire()
-{
-    // Получаем данные снаряда
-    ProjectileSO projectileData = weaponData.WeaponProjectilePrefab.GetComponent<Projectile>().projectileSO1;
 
-    // Получаем урон
-    int totalDamage = CalculateTotalDamage();
+        // Получаем снаряд из пула (по префабу!)
+        Projectile proj = ProjectilePool.InstancePoolParent.GetProjectile(projectilePrefab);
+        if (proj == null) return;
 
-    // Получаем снаряд из пула
-    Projectile proj = ProjectilePool.InstancePoolParent.GetProjectile(projectileData.projectileType);
-    if (proj == null) return;
+        // Настраиваем
+        Vector2 spawnPos = firePoint != null ? firePoint.position : transform.position;
+        Vector2? direction = null;
+        Transform homingTarget = null;
 
-    // Инициализируем снаряд
-    Vector2 spawnPos = firePoint.position;
-    Vector2? direction = firePoint.right; // или null, если Homing
-    Transform homingTarget = null;
+        ProjectileSO so = projectilePrefab.GetComponent<Projectile>().projectileSO1;
+        float baseSpeed = so.ProjectileSpeed;
+        float finalSpeed = GetFinalProjectileSpeed(baseSpeed);
 
-    if (projectileData.projectileType == ProjectileSO.EProjectileType.Homing)
-        homingTarget = FindClosestEnemy();
+        if (so.projectileType != ProjectileSO.EProjectileType.Homing)
+            direction = firePoint != null ? firePoint.right : transform.right;
+        else
+            homingTarget = FindClosestEnemy();
 
-    proj.Initialize(
-        data: projectileData,
-        spawnPosition: spawnPos,
-        direction: direction,
-        homingTarget: homingTarget
-    );
-
-    // Передаём урон в снаряд (если нужно)
-    proj.SetDamage(totalDamage);
-}
+        // Инициализируем снаряд
+        proj.Initialize(
+            prefab: projectilePrefab,
+             so,
+            spawnPosition: spawnPos,
+            overrideDamage: totalDamage,
+            overrideSpeed: finalSpeed,        // ← передаём!
+            direction: direction,
+            homingTarget: homingTarget
+        );
+    }
 
     private int CalculateTotalDamage()
+    {
+        int baseDamage = WeaponSO1.WeaponDamage;
+        int bonus = 0;
+
+        // Получаем статы игрока
+        if (playerTransform != null)
+        {
+            PlayerStatsSO stats = playerTransform.GetComponent<PlayerStatsSO>();
+            if (stats != null) bonus += stats.power;
+
+            PlayerBuffsSO buffs = playerTransform.GetComponent<PlayerBuffsSO>();
+            if (buffs != null) bonus += buffs.PlayerBuffsPower;
+        }
+
+        return baseDamage + bonus;
+    }
+
+    // Рассчитывает итоговую скорость снаряда с учётом баффов
+private float GetFinalProjectileSpeed(float baseSpeed)
 {
-    PlayerStatsSO playerStats = playerTransform?.GetComponent<PlayerStatsSO>();
-    int baseDamage = weaponData.WeaponDamage;
-    int bonusDamage = 0;
+    float multiplier = 1f;
 
-    if (playerStats != null)
-        bonusDamage = playerStats.power;
+    if (playerTransform != null)
+    {
+        PlayerBuffsSO buffs = playerTransform.GetComponent<PlayerBuffsSO>();
+        if (buffs != null)
+            multiplier += buffs.PlayerBuffsProjectileSpeed; // например, +0.5f = +50%
+    }
 
-    // Можно добавить бонусы от баффов
-    PlayerBuffsSO buffs = playerTransform?.GetComponent<PlayerBuffsSO>();
-    if (buffs != null)
-        bonusDamage += buffs.PlayerBuffsPower;
-
-    return baseDamage + bonusDamage;
+    return baseSpeed * multiplier;
 }
 
-    private int GetPlayerTotalAttack()
-    {
-        PlayerStatsSO playerStats = playerTransform?.GetComponent<PlayerStatsSO>();
+// Рассчитывает итоговую перезарядку с учётом баффов
+private float GetFinalFireRate(float baseFireRate)
+{
+    float multiplier = 1f;
 
-        if (playerStats != null)
-        {
-            return playerStats.power + weaponData.WeaponDamage;
-        }
-        return weaponData.WeaponDamage;
+    if (playerTransform != null)
+    {
+        PlayerBuffsSO buffs = playerTransform.GetComponent<PlayerBuffsSO>();
+        if (buffs != null)
+            multiplier -= buffs.PlayerBuffsReload; // например, +0.2f = -20% времени
     }
+
+    return baseFireRate * Mathf.Max(0.1f, multiplier); // минимум 0.1 сек
+}
 
     private Transform FindClosestEnemy()
     {
@@ -114,8 +126,7 @@ private void Fire()
 
         Transform closest = null;
         float minDist = Mathf.Infinity;
-
-        foreach (GameObject enemy in enemies)
+        foreach (var enemy in enemies)
         {
             float dist = Vector2.Distance(transform.position, enemy.transform.position);
             if (dist < minDist)

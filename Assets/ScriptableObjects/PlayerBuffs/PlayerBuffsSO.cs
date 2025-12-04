@@ -19,7 +19,7 @@ public class PlayerBuffsSO : ScriptableObject
     public float PlayerBuffsShield = 3;
     public float PlayerBuffsSpeed = 5f;
 
-    public float PlayerBuffsPower = 25f;
+    public int PlayerBuffsPower = 25;
     public float PlayerBuffsProjectileSpeed = 20f;
     public float PlayerBuffsRrange = 11f;
     public float PlayerBuffsReload = -5f;

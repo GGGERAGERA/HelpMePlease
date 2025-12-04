@@ -14,10 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   WeaponPrefab1: {fileID: 0}
   ProjectileProjectilePrefab1: {fileID: 0}
-  projectileType: 2
+  projectileType: 1
   ProjectileName: Projectile1
   ProjectileRange: 5
   ProjectileDamage: 100
   ProjectileReload: -5
   ProjectileBurstTime: 5
   ProjectileSpawnPoolCount: 5
+  ProjectileSpeed: 1

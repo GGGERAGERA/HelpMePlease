@@ -10,7 +10,7 @@ public class ProjectilePool : MonoBehaviour
     public List<GameObject> projectilePrefabs; // ← сюда перетаскиваешь все префабы
 
     // Пул: тип → очередь снарядов
-    private Dictionary<ProjectileSO.EProjectileType, Queue<Projectile>> pools = new();
+    private Dictionary<GameObject, Queue<Projectile>> pools = new();
 
     private void Awake()
     {
@@ -30,76 +30,98 @@ public class ProjectilePool : MonoBehaviour
     {
         foreach (var prefab in projectilePrefabs)
         {
-            Projectile projectileComponent = prefab.GetComponent<Projectile>();
-            if (projectileComponent == null || projectileComponent.projectileSO1 == null)
+            if (prefab == null)
+            {
+                Debug.LogWarning("Пустой префаб в списке!");
+                continue;
+            }
+
+            Projectile projComp = prefab.GetComponent<Projectile>();
+            if (projComp == null || projComp.projectileSO1 == null)
             {
                 Debug.LogError($"Префаб {prefab.name} не имеет Projectile или projectileSO1!");
                 continue;
             }
 
-            ProjectileSO data = projectileComponent.projectileSO1;
-            ProjectileSO.EProjectileType type = data.projectileType;
+            // Получаем количество объектов из SO
+            int count = projComp.projectileSO1.ProjectileSpawnPoolCount;
 
-            if (!pools.ContainsKey(type))
-                pools[type] = new Queue<Projectile>();
+            // Создаём пул для этого префаба
+            pools[prefab] = new Queue<Projectile>();
 
-            for (int i = 0; i < data.ProjectileSpawnPoolCount; i++)
+            for (int i = 0; i < count; i++)
             {
-                GameObject obj = Instantiate(prefab, transform);
-                obj.SetActive(false);
-                Projectile proj = obj.GetComponent<Projectile>();
-                pools[type].Enqueue(proj);
+                GameObject instance = Instantiate(prefab, transform);
+                instance.SetActive(false);
+                Projectile proj = instance.GetComponent<Projectile>();
+                pools[prefab].Enqueue(proj);
             }
 
-            Debug.Log($"Пул для {type}: {data.ProjectileSpawnPoolCount} снарядов");
+            Debug.Log($"✅ Пул для {prefab.name}: {count} снарядов");
         }
     }
 
-    public Projectile GetProjectile(ProjectileSO.EProjectileType type)
+    /// Получить снаряд из пула для указанного префаба.
+    /// Если пул исчерпан — создаёт новый (динамический пул).
+    public Projectile GetProjectile(GameObject prefab)
     {
-        if (!pools.TryGetValue(type, out var pool))
+        if (prefab == null)
         {
-            Debug.LogError($"Пул для {type} не найден!");
+            Debug.LogError("GetProjectile: передан null-префаб!");
             return null;
         }
 
+        // Проверяем, есть ли пул для этого префаба
+        if (!pools.TryGetValue(prefab, out var pool))
+        {
+            Debug.LogError($"Пул для префаба {prefab.name} не инициализирован! Добавь его в projectilePrefabs.");
+            return null;
+        }
+
+        // Если есть свободные снаряды — берём
         if (pool.Count > 0)
         {
             var proj = pool.Dequeue();
             proj.gameObject.SetActive(true);
             return proj;
         }
-        else
-        {
-            Debug.LogWarning($"Пул для {type} пуст. Создаём новый (но это плохо для производительности!).");
-            // Лучше не создавать новые! Но на крайний случай:
-            return Instantiate(GetPrefabByType(type), transform).GetComponent<Projectile>();
-        }
+
+        // 🔥 Экстренный случай: создаём новый снаряд
+        Debug.LogWarning($"Пул для {prefab.name} пуст. Создаём дополнительный снаряд (динамический пул).");
+        GameObject newProjGO = Instantiate(prefab, transform);
+        newProjGO.SetActive(true);
+        return newProjGO.GetComponent<Projectile>();
     }
 
+    /// Вернуть снаряд в пул. Если снаряд создан динамически — уничтожаем или игнорируем.
     public void ReturnProjectile(Projectile projectile)
     {
         if (projectile == null) return;
-        projectile.gameObject.SetActive(false);
-        ProjectileSO.EProjectileType type = projectile.projectileSO1.projectileType;
-        if (pools.TryGetValue(type, out var pool))
+
+        // 💡 Определяем, из какого префаба этот снаряд
+        // Поскольку у нас нет прямой ссылки — ищем вручную
+        // Но у нас есть projectileSO1 → а у SO есть ссылка на свой префаб? Нет.
+        // Поэтому — храним префаб в самом Projectile!
+
+        // 👇 ЭТО КЛЮЧ КО ВСЕМУ!
+        GameObject sourcePrefab = projectile.GetSourcePrefab();
+        if (sourcePrefab == null)
         {
+            Debug.LogWarning($"Не могу вернуть снаряд — неизвестный префаб.");
+            projectile.gameObject.SetActive(false);
+            return;
+        }
+
+        if (pools.TryGetValue(sourcePrefab, out var pool))
+        {
+            projectile.gameObject.SetActive(false);
             pool.Enqueue(projectile);
         }
         else
         {
-            Debug.LogWarning($"Невозможно вернуть снаряд типа {type} — пул не найден!");
+            // Если префаб не в пуле — это динамический снаряд → просто деактивируем
+            projectile.gameObject.SetActive(false);
+            // Можно уничтожить через пару секунд, но лучше вернуть в пул.
         }
-    }
-
-    // Вспомогательный метод: найти префаб по типу (нужен только для emergency-создания)
-    private GameObject GetPrefabByType(ProjectileSO.EProjectileType type)
-    {
-        foreach (var prefab in projectilePrefabs)
-        {
-            if (prefab.GetComponent<Projectile>()?.projectileSO1?.projectileType == type)
-                return prefab;
-        }
-        return null;
     }
 }
