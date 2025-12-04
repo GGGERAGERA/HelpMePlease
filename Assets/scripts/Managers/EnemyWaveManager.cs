@@ -8,6 +8,7 @@ using System.Collections.Generic;
 public class EnemyWaveManager : MonoBehaviour
 {
     public List<EnemySO> enemiesToSpawn; // Список врагов для волны
+    //private Dictionary<int, Queue<Projectile>> pools = new();
 
     private void Start()
     {

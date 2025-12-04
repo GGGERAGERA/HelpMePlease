@@ -14,6 +14,7 @@ public class Projectile : MonoBehaviour
     private Rigidbody2D rb;
     private Collider2D col;
     private int damageOverride = -1; // если > -1 — используем его вместо projectileSO1.ProjectileDamage
+    private float finalSpeed = 0;
 
         // Инициализирует снаряд. Вызывать ОБЯЗАТЕЛЬНО после получения из пула!
 private void Awake()
@@ -36,7 +37,7 @@ private void Awake()
         sourcePrefab = prefab; // ← ЗАПОМИНАЕМ префаб!
         projectileSO1 = data;
         damageOverride = overrideDamage ?? -1;
-
+        overrideSpeed = data.ProjectileSpeed;
         transform.position = spawnPosition;
         gameObject.SetActive(true);
 
@@ -51,8 +52,9 @@ private void Awake()
             rb.bodyType = RigidbodyType2D.Dynamic;
             rb.linearVelocity = Vector2.zero;
 
-            if (direction.HasValue)
-                rb.linearVelocity = direction.Value.normalized * data.ProjectileSpeed;
+            if (direction.HasValue) {
+                finalSpeed = overrideSpeed ?? data.ProjectileSpeed;
+                rb.linearVelocity = direction.Value.normalized * finalSpeed; }
             else
                 rb.linearVelocity = transform.right * data.ProjectileSpeed;
 
