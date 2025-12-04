@@ -10,19 +10,20 @@ public class EnemySO : ScriptableObject
     [Header("Enemy")]
     public GameObject EnemyPrefab; // Префаб персонажа для спавна
     public GameObject EnemyPrefabDefaultWeapon; // Префаб персонажа для спавна
-
+    public enum EEnemyType { Basic, Boss, Flying }
+    public EEnemyType enemyType = EEnemyType.Basic;
     
     [Header("EnemyStats")]
     public string EnemyName = "Enemy1";
     public int EnemyMaxHealth = 100;
-    public float HPrecover = 0.6f;
-    public float Shield = 3;
+    //public float HPrecover = 0.6f;
+    //public float Shield = 3;
     public float EnemySpeed = 5f;
 
-    public float power = 25f;
-    public float projectileSpeed = 20f;
+    public int EnemyPower = 5;
+    public int projectileSpeed = 0;
     public float range = 11f;
-    public float reload = -5f;
+    public float reload = 0.5f;
     //public int Reanimate = 1;
     //public float magnet = 50f;
     //public float Luck = 32f;

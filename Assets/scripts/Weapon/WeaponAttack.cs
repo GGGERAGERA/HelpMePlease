@@ -47,42 +47,54 @@ public class WeaponAttack : MonoBehaviour
         }
     }
 
-    private void Fire()
-    {
-        // Получаем итоговый урон
-        //int totalDamage = GetPlayerTotalAttack();
 
-        // Определяем точку и направление
-        Vector2 spawnPos = (firePoint != null) ? firePoint.position : transform.position;
-        Vector2 direction = Vector2.zero;
+private void Fire()
+{
+    // Получаем данные снаряда
+    ProjectileSO projectileData = weaponData.WeaponProjectilePrefab.GetComponent<Projectile>().projectileSO1;
 
-        /*//if (ProjectileType1 != ProjectileSO.EProjectileType.Melee)
-        if (weaponData.WeaponProjectilePrefab.GetComponent<ProjectileSO.EProjectileType>() != ProjectileSO.EProjectileType.Melee)
-        {
-            direction = (playerTransform != null) ? playerTransform.right : transform.right;
-        }*/
+    // Получаем урон
+    int totalDamage = CalculateTotalDamage();
 
-        //Получаем снаряд из пула
-        //projectileContainer = ProjectilePool.InstancePoolParent.GetProjectile2(weaponProjectile1);
-        //projectileContainer = ProjectilePool.InstancePoolParent.GetProjectile2(weaponProjectile1);
-        /*
-        if (projectileContainer == null)
-        {
-            Debug.LogError("Не удалось получить снаряд!");
-            return;
-        }*/
+    // Получаем снаряд из пула
+    Projectile proj = ProjectilePool.InstancePoolParent.GetProjectile(projectileData.projectileType);
+    if (proj == null) return;
 
-        /*//Инициализируем
-        projectile.Initialize(
-            damage: totalDamage,
-            spawnPosition: spawnPos,
-            type: ProjectileType1,
-            direction: (ProjectileType1 != ProjectileSO.EProjectileType.Melee) ? direction : null,
-            homingTarget: (ProjectileType1 == ProjectileSO.EProjectileType.Homing) ? FindClosestEnemy() : null
-        );*/
+    // Инициализируем снаряд
+    Vector2 spawnPos = firePoint.position;
+    Vector2? direction = firePoint.right; // или null, если Homing
+    Transform homingTarget = null;
 
-        //Инициализируем адекватнее... Пока не понял, как инициализировать((
-    }
+    if (projectileData.projectileType == ProjectileSO.EProjectileType.Homing)
+        homingTarget = FindClosestEnemy();
+
+    proj.Initialize(
+        data: projectileData,
+        spawnPosition: spawnPos,
+        direction: direction,
+        homingTarget: homingTarget
+    );
+
+    // Передаём урон в снаряд (если нужно)
+    proj.SetDamage(totalDamage);
+}
+
+    private int CalculateTotalDamage()
+{
+    PlayerStatsSO playerStats = playerTransform?.GetComponent<PlayerStatsSO>();
+    int baseDamage = weaponData.WeaponDamage;
+    int bonusDamage = 0;
+
+    if (playerStats != null)
+        bonusDamage = playerStats.power;
+
+    // Можно добавить бонусы от баффов
+    PlayerBuffsSO buffs = playerTransform?.GetComponent<PlayerBuffsSO>();
+    if (buffs != null)
+        bonusDamage += buffs.PlayerBuffsPower;
+
+    return baseDamage + bonusDamage;
+}
 
     private int GetPlayerTotalAttack()
     {

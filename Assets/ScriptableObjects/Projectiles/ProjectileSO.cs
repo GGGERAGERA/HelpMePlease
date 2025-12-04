@@ -19,11 +19,11 @@ public class ProjectileSO : ScriptableObject
     public EProjectileType projectileType = EProjectileType.Homing;
     public string ProjectileName = "Projectile1";
     public float ProjectileRange = 5f;
-    public float ProjectileDamage = 100f;
+    public int ProjectileDamage = 10;
     public float ProjectileReload = -5f;
     public float ProjectileBurstTime = 5f;
-    //public int initialSize = 30;
     public int ProjectileSpawnPoolCount = 30;
+    public float ProjectileSpeed = 1f;
 
 
     // Метод для сброса выбора (опционально)

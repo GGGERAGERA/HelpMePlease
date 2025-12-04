@@ -8032,11 +8032,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eeb2b146235dd1946bc0888e35907e3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  poolConfigs: []
-  ProjectilePrefabsForPool:
+  projectilePrefabs:
   - {fileID: 8967899627406726442, guid: 790760c985dc7ec49805ebf82ac1a96c, type: 3}
   - {fileID: 8967899627406726442, guid: c5bf20c978bb7464597b35616bacc032, type: 3}
-  ProjectilePrefabsPooled: []
 --- !u!1001 &807437653993415062
 PrefabInstance:
   m_ObjectHideFlags: 0

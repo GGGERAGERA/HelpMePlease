@@ -15,14 +15,14 @@ public class PlayerBuffsSO : ScriptableObject
     [Header("BuffsStats")]
     public string PlayerBuffsName = "Buffs1";
     public int PlayerBuffsMaxHealth = 100;
-    public float PlayerHPrecover = 0.6f;
-    public float PlayerShield = 3;
+    public float PlayerBuffsHPrecover = 0.6f;
+    public float PlayerBuffsShield = 3;
     public float PlayerBuffsSpeed = 5f;
 
-    public float PlayerPower = 25f;
-    public float PlayerProjectileSpeed = 20f;
-    public float PlayeRrange = 11f;
-    public float PlayerReload = -5f;
+    public float PlayerBuffsPower = 25f;
+    public float PlayerBuffsProjectileSpeed = 20f;
+    public float PlayerBuffsRrange = 11f;
+    public float PlayerBuffsReload = -5f;
     //public int Reanimate = 1;
     //public float magnet = 50f;
     //public float Luck = 32f;

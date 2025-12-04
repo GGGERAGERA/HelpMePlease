@@ -8,71 +8,66 @@ using System.Collections.Generic;
 public class Projectile : MonoBehaviour
 {
     [Header("Параметры")]
-    public int Damage { get; private set; }
-    public ProjectileSO.EProjectileType Type { get; private set; } // ← ВАЖНО: тип хранится здесь!
     public ProjectileSO projectileSO1;
-    public float Speed = 10f;
-    public float Lifetime = 5f;
-
     private Transform target; // Для Homing
     private Rigidbody2D rb;
     private Collider2D col;
-    public int CurrentPrefabsForSpawn = 5;
+
+        // Инициализирует снаряд. Вызывать ОБЯЗАТЕЛЬНО после получения из пула!
+    public void Initialize(ProjectileSO data, Vector2 spawnPosition, Vector2? direction = null, Transform homingTarget = null)
+    {
+        projectileSO1 = data; // Сохраняем ссылку на данные
+        int totalDamage = 0;
+
+        transform.position = spawnPosition;
+        gameObject.SetActive(true);
+        // Настройка поведения
+        if (data.projectileType == ProjectileSO.EProjectileType.Melee)
+        {
+            col.enabled = true;
+            Invoke(nameof(Deactivate), 0.1f); // Самоликвидация через 0.1 сек
+        }
+        else
+        {
+            col.enabled = true;
+            rb.bodyType = RigidbodyType2D.Dynamic;
+            rb.linearVelocity = Vector2.zero;
+
+            if (direction.HasValue)
+                rb.linearVelocity = direction.Value.normalized * data.ProjectileSpeed;
+            else
+                rb.linearVelocity = transform.right * data.ProjectileSpeed;
+
+            if (data.projectileType == ProjectileSO.EProjectileType.Homing && homingTarget != null)
+                target = homingTarget;
+        }
+    } 
+
+        public void SetDamage(int damage)
+    {
+        damage = damage;
+    }
+    
+    private void Deactivate()
+    {
+        gameObject.SetActive(false);
+        // Если нужно — вернуть в пул
+        ProjectilePool.InstancePoolParent.ReturnProjectile(this);
+    }
+
     private void Awake()
     {
-        CurrentPrefabsForSpawn = projectileSO1.ProjectileSpawnPoolCount;
         rb = GetComponent<Rigidbody2D>();
         col = GetComponent<Collider2D>();
         //Destroy(gameObject, Lifetime); // Самоликвидация
     }
 
-    /// <summary>
-    /// Инициализирует снаряд. Вызывать ОБЯЗАТЕЛЬНО после получения из пула.
-    /// </summary>
-    public void Initialize(int damage, Vector2 spawnPosition, ProjectileSO.EProjectileType type, Vector2? direction = null, Transform homingTarget = null)
-    {
-        Damage = damage;
-        Type = type;
-        transform.position = spawnPosition;
-        gameObject.SetActive(true);
-
-        // Настройка поведения
-        if (type == ProjectileSO.EProjectileType.Melee)
-        {
-            // Melee: сразу активируем коллайдер, уничтожаем через 0.1 сек
-            col.enabled = true;
-            Invoke(nameof(Deactivate), 0.1f);
-        }
-        else
-        {
-            // Direct или Homing: включаем физику
-            col.enabled = true;
-            //rb.isKinematic = false;
-            rb.bodyType = RigidbodyType2D.Dynamic;
-            //rb.velocity = Vector2.zero;
-            rb.linearVelocity = Vector2.zero;
-
-            if (direction.HasValue)
-            {
-                if (type == ProjectileSO.EProjectileType.Direct)
-                {
-                    rb.linearVelocity = direction.Value * Speed;
-                }
-                else if (type == ProjectileSO.EProjectileType.Homing)
-                {
-                    rb.linearVelocity = direction.Value * Speed;
-                    this.target = homingTarget;
-                }
-            }
-        }
-    }
-
     private void Update()
     {
-        if (Type == ProjectileSO.EProjectileType.Homing && target != null)
+        if (projectileSO1.projectileType == ProjectileSO.EProjectileType.Homing && target != null)
         {
-            Vector2 dir = (target.position - transform.position).normalized;
-            rb.linearVelocity = Vector2.Lerp(rb.linearVelocity, dir * Speed, Time.deltaTime * 8f);
+            Vector2 direction = (target.position - transform.position).normalized;
+            rb.linearVelocity = direction * projectileSO1.ProjectileSpeed;
         }
     }
 
@@ -83,15 +78,11 @@ public class Projectile : MonoBehaviour
         {
             // Наносим урон
             Vector2 hitDirection = rb.linearVelocity.normalized;
-            damageable.TakeDamage(Damage, hitDirection, gameObject);
+            damageable.TakeDamage(projectileSO1.ProjectileDamage, hitDirection, gameObject);
 
             // Возвращаем в пул
-            ProjectilePool.InstancePoolParent.ReturnProjectile2(this);
+            ProjectilePool.InstancePoolParent.ReturnProjectile(this);
         }
     }
 
-    private void Deactivate()
-    {
-        ProjectilePool.InstancePoolParent.ReturnProjectile2(this);
-    }
 }
