@@ -1,36 +1,11 @@
 using UnityEngine;
-
-public class PlayerHealth : MonoBehaviour, IDamageable
+public class PlayerHealth : MonoBehaviour
 {
-    [Header("Здоровье")]
-    [Tooltip("Ссылка на ScriptableObject с параметрами игрока")]
-    [SerializeField] private PlayerStatsSO playerStatsSO;
-    //[SerializeField] private PlayerBuffs PleerBuffs;
-    private int currentHealth;
+    private PlayerContext _context;
 
-    public void Initialize()
+    public void Initialize(PlayerContext context)
     {
-        currentHealth = playerStatsSO.playerMaxHealth;
-        //currentHealth = maxHealth;
-    }
-
-    public void TakeDamage(int damage, Vector2 attackDirection, GameObject attacker)
-    {
-        currentHealth -= damage;
-        Debug.Log($"{name} получил {damage} урона. Осталось: {currentHealth}");
-
-        // Можно добавить: отдачу (rb.AddForce), визуальные эффекты, звук
-
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
-    }
-
-    public void Die()
-    {
-        Debug.Log($"{name} умер!");
-        // Анимация смерти, спавн частиц, отключение управления...
-        gameObject.SetActive(false); // или Destroy(gameObject);
+        _context = context;
+        // Можно подписаться на события, обновить UI и т.д.
     }
 }

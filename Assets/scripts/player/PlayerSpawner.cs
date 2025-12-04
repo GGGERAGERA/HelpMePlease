@@ -1,15 +1,9 @@
 using UnityEngine;
 
-/// <summary>
-/// Спавнер игрока. Берет выбранный персонаж из ScriptableObject и создает его на сцене.
-/// </summary>
 public class PlayerSpawner : MonoBehaviour
 {
     [Header("Настройки спавна")]
-    [Tooltip("Ссылка на ScriptableObject с данными выбранного игрока")]
     [SerializeField] private PlayerSelectionSO selectedPlayerSO;
-
-    [Tooltip("Точка спавна (пустой GameObject на сцене)")]
     [SerializeField] private Transform spawnPoint;
 
     [Header("Для отладки")]
@@ -19,6 +13,7 @@ public class PlayerSpawner : MonoBehaviour
     {
         DestroyAllObjectsWithTag("Player");
     }
+
     private void Start()
     {
         if (autoSpawnOnStart && selectedPlayerSO != null)
@@ -27,63 +22,48 @@ public class PlayerSpawner : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Метод для ручного спавна игрока (можно вызывать из UI или другого скрипта)
-    /// </summary>
+    /// Метод для ручного спавна игрока
     public void SpawnPlayer()
     {
-        if (selectedPlayerSO == null || selectedPlayerSO.selectedPlayerPrefab == null)
+        if (selectedPlayerSO == null)
         {
-            Debug.LogError("Не задан PlayerPrefab в PlayerStatsSO!");
+            Debug.LogError("Не задан PlayerSelectionSO!");
             return;
         }
 
-        if(spawnPoint==null)
-        spawnPoint = selectedPlayerSO.selectedPlayerPrefab.transform;
-
-
-        // Создаем игрока в точке спавна
-        GameObject playerInstance = Instantiate(selectedPlayerSO.selectedPlayerPrefab, spawnPoint.position, spawnPoint.rotation);
-        playerInstance.tag = "Player"; // На всякий случай (если prefab не имеет тега)
-        
-        // Добавляем компоненты движения и анимаций (если их нет)
-        if (playerInstance.GetComponent<PlayerMovement>() == null)
+        if (spawnPoint == null)
         {
-            playerInstance.AddComponent<PlayerMovement>();
-        }
-        if (playerInstance.GetComponent<PlayerAnimation>() == null)
-        {
-            playerInstance.AddComponent<PlayerAnimation>();
+            Debug.LogWarning("Точка спавна не задана. Используем (0,0,0).");
+            spawnPoint = transform;
         }
 
-        // Передаем ссылку на SO в компоненты (если нужно)
-        /*PlayerMovement movement = playerInstance.GetComponent<PlayerMovement>();
-        if (movement != null)
+        // 👇 ДЕЛЕГИРУЕМ СПАВН PlayerManager'у!
+        if (PlayerManager.Instance != null)
         {
-            movement.playerStats = selectedPlayerSO;
+            PlayerManager.Instance.SpawnPlayer(selectedPlayerSO, spawnPoint);
         }
-
-        PlayerAnimation animation = playerInstance.GetComponent<PlayerAnimation>();
-        if (animation != null)
+        else
         {
-            animation.playerStats = selectedPlayerSO;
-        }*/
-
-        Debug.Log($"Игрок {selectedPlayerSO.name} spawned!");
+            Debug.LogError("PlayerManager не найден на сцене!");
+        }
     }
 
-    /// <summary>
-/// Уничтожает все объекты на сцене с указанным тегом.
-/// </summary>
-public static void DestroyAllObjectsWithTag(string tag)
-{
-    GameObject[] objects = GameObject.FindGameObjectsWithTag(tag);
-    foreach (GameObject obj in objects)
+    public static void DestroyAllObjectsWithTag(string tag)
     {
-        if (obj != null)
+        GameObject[] objects = GameObject.FindGameObjectsWithTag(tag);
+        foreach (GameObject obj in objects)
         {
-            Destroy(obj);
+            if (obj != null)
+            {
+                Destroy(obj);
+            }
         }
     }
-}
+    public void OnCharacterSelected(PlayerSelectionSO character)
+    {
+    // Сохраняем выбранный персонаж
+    PlayerPrefs.SetString("SelectedCharacter", character.name);
+    // Спавним
+    SpawnPlayer(); // или через PlayerManager напрямую
+    }
 }

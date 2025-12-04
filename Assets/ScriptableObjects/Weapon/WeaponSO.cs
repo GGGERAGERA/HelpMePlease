@@ -15,8 +15,8 @@ public class WeaponSO : ScriptableObject
     [Header("WeaponStats")]
     public string WeaponName = "Weapon1";
     public float WeaponRange = 5f;
-    public int WeaponDamage = 100;
-    public float WeaponReload = -5f;
+    public int WeaponDamage = 26;
+    public float WeaponReload = 0.5f;
     public float WeaponBurstTime = 5f;
     public float FireRate = 1f;
 

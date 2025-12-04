@@ -23,6 +23,7 @@ public class PlayerBuffsSO : ScriptableObject
     public float PlayerBuffsProjectileSpeed = 20f;
     public float PlayerBuffsRrange = 11f;
     public float PlayerBuffsReload = -5f;
+    public float Duration = 1f;
     //public int Reanimate = 1;
     //public float magnet = 50f;
     //public float Luck = 32f;

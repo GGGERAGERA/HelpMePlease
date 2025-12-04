@@ -21,15 +21,15 @@ public class PlayerStatsSO : ScriptableObject
     public float playerSpeed = 5f;
     public int playerWeight = 100;
 
-    public int power = 25;
-    public float projectileSpeed = 20f;
-    public float range = 11f;
-    public float reload = -5f;
-    public int Reanimate = 1;
-    public float magnet = 50f;
-    public float Luck = 32f;
-    public float upgrade = 15f;
-    public int skip = 3;
+    public int playerpower = 25;
+    public float playerprojectileSpeed = 20f;
+    public float playerrange = 11f;
+    public float playerreload = -5f;
+    public int playerReanimate = 1;
+    public float playermagnet = 50f;
+    public float playerLuck = 32f;
+    public float playerupgrade = 15f;
+    public int playerskip = 3;
 
 
     

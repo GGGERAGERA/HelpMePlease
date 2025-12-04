@@ -1,25 +1,15 @@
-using System.Collections;
-using UnityEditor;
-using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UI;
+
+// PlayerBuffs.cs
 public class PlayerBuffs
 {
-    [Header("Buffs")]
-    [Tooltip("Ссылка на ScriptableObject с параметрами игрока")]
-    [SerializeField] private PlayerBuffsSO PlayerBuffs1;
     public int AttackBonus { get; private set; }
-    private float duration;
+    public float ProjectileSpeedBonus { get; private set; }
+    public float Duration { get; private set; }
 
-    public PlayerBuffs(PlayerBuffsSO PlayerBuffs1)
+    public PlayerBuffs(PlayerBuffsSO so)
     {
-        AttackBonus = PlayerBuffs1.PlayerBuffsMaxHealth;
-        //duration = so.Duration;
-    }
-
-    public IEnumerator DeleteBuff()
-    {
-        yield return new WaitForSeconds(duration);
-        // Удаляем из списка активных баффов (в PlayerStats)
+        AttackBonus = so.PlayerBuffsPower;
+        ProjectileSpeedBonus = so.PlayerBuffsProjectileSpeed;
+        Duration = so.Duration;
     }
 }

@@ -722,6 +722,8 @@ GameObject:
   - component: {fileID: 5248062358232505403}
   - component: {fileID: 3022403135543169941}
   - component: {fileID: 58108241096132805}
+  - component: {fileID: 8001710918477531825}
+  - component: {fileID: 4794486754514632549}
   m_Layer: 3
   m_Name: playerTemplate
   m_TagString: Player
@@ -848,6 +850,30 @@ MonoBehaviour:
   playerStats: {fileID: 11400000, guid: 183520329bafda64ab22e99486b31062, type: 2}
   animator: {fileID: 4079684002017866091}
   walkThreshold: 0.1
+--- !u!114 &8001710918477531825
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7087221720511815677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36ab2e693e1c2ed40bcba97a391a60ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &4794486754514632549
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7087221720511815677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15f54770067349f49837abcfad45c825, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &7123930342125086064
 GameObject:
   m_ObjectHideFlags: 0
