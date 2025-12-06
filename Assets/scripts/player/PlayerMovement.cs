@@ -17,6 +17,8 @@ public class PlayerMovement : MonoBehaviour
 
     //[Tooltip("Максимальное расстояние от мыши до центра экрана для управления")]
     [SerializeField] private float maxMouseDistance = 100f;
+    private Vector3 left = new Vector3(-1, 1, 1);
+    private Vector3 right = new Vector3(1, 1, 1);
 
     public Rigidbody2D rb;
     private Vector2 inputDirection;
@@ -80,12 +82,14 @@ public class PlayerMovement : MonoBehaviour
         // Двигаемся через Rigidbody2D
         rb.linearVelocityX = inputDirection.x * currentMoveSpeed;
         rb.linearVelocityY = inputDirection.y * currentMoveSpeed;
-        //rb.linearVelocity = inputDirection * currentMoveSpeed;
+        
+        if(inputDirection.x > 0)
+        gameObject.transform.localScale = left;
+        if(inputDirection.x < 0)
+        gameObject.transform.localScale = right;
     }
-
-    /// <summary>
+    
     /// Получаем текущее направление движения (для анимаций)
-    /// </summary>
     public Vector2 GetMovementDirection()
     {
         return inputDirection;

@@ -23,6 +23,7 @@ public class WeaponAttack : MonoBehaviour
         PlayerAttack playerAttack = GetComponentInParent<PlayerAttack>();
         if (playerAttack != null)
         {
+            Debug.Log("Player attack is finded");
             _context = playerAttack.GetContext(); // ← Нужно добавить метод GetContext в PlayerAttack
         }
 

@@ -1,0 +1,650 @@
+fileFormatVersion: 2
+guid: 7c0bef65aa737934b991f360a4a7c2b4
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3813559813865541471
+    second: Sketchi3_0
+  - first:
+      213: -496549955303528330
+    second: Sketchi3_1
+  - first:
+      213: -6564811955838263544
+    second: Sketchi3_2
+  - first:
+      213: 1179129459131134252
+    second: Sketchi3_3
+  - first:
+      213: 2755926801028768406
+    second: Sketchi3_4
+  - first:
+      213: -4787310517786611424
+    second: Sketchi3_5
+  - first:
+      213: -357294018976841510
+    second: Sketchi3_6
+  - first:
+      213: 9096584783986791769
+    second: Sketchi3_7
+  - first:
+      213: 3957819853852408841
+    second: Sketchi3_8
+  - first:
+      213: -346138053413863133
+    second: Sketchi3_9
+  - first:
+      213: 1545333429591358504
+    second: Sketchi3_10
+  - first:
+      213: -5370786780477138932
+    second: Sketchi3_11
+  - first:
+      213: -2102237243939675776
+    second: Sketchi3_12
+  - first:
+      213: -535013790205836043
+    second: Sketchi3_13
+  - first:
+      213: 4172643155567354288
+    second: Sketchi3_14
+  - first:
+      213: -2868188676045277014
+    second: Sketchi3_15
+  - first:
+      213: 2090835259271356076
+    second: Sketchi3_16
+  - first:
+      213: -2064524881489965211
+    second: Sketchi3_17
+  - first:
+      213: -7223366154535246529
+    second: Sketchi3_18
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WindowsStoreApps
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Sketchi3_0
+      rect:
+        serializedVersion: 2
+        x: 61
+        y: 1692
+        width: 164
+        height: 238
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1a0f6dced83831bc0800000000000000
+      internalID: -3813559813865541471
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sketchi3_1
+      rect:
+        serializedVersion: 2
+        x: 29
+        y: 1430
+        width: 39
+        height: 51
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 678a5ec4276eb19f0800000000000000
+      internalID: -496549955303528330
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sketchi3_2
+      rect:
+        serializedVersion: 2
+        x: 79
+        y: 1459
+        width: 131
+        height: 114
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 80fd50bde4a15e4a0800000000000000
+      internalID: -6564811955838263544
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sketchi3_3
+      rect:
+        serializedVersion: 2
+        x: 270
+        y: 1475
+        width: 65
+        height: 84
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c21b5bbeefb1d5010800000000000000
+      internalID: 1179129459131134252
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sketchi3_4
+      rect:
+        serializedVersion: 2
+        x: 372
+        y: 1477
+        width: 140
+        height: 96
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6926c42f2d40f3620800000000000000
+      internalID: 2755926801028768406
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sketchi3_5
+      rect:
+        serializedVersion: 2
+        x: 27
+        y: 1368
+        width: 45
+        height: 59
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 02176d5c27e009db0800000000000000
+      internalID: -4787310517786611424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sketchi3_6
+      rect:
+        serializedVersion: 2
+        x: 105
+        y: 1379
+        width: 61
+        height: 78
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ad083869bf2aa0bf0800000000000000
+      internalID: -357294018976841510
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sketchi3_7
+      rect:
+        serializedVersion: 2
+        x: 215
+        y: 1391
+        width: 45
+        height: 59
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 95591ce4aaf8d3e70800000000000000
+      internalID: 9096584783986791769
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sketchi3_8
+      rect:
+        serializedVersion: 2
+        x: 284
+        y: 1395
+        width: 39
+        height: 51
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 90c7cd900300de630800000000000000
+      internalID: 3957819853852408841
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sketchi3_9
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 1324
+        width: 45
+        height: 52
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 321850b3645423bf0800000000000000
+      internalID: -346138053413863133
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sketchi3_10
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 1178
+        width: 125
+        height: 112
+      alignment: 9
+      pivot: {x: 0.4072385, y: 0.20783864}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 82c34521190227510800000000000000
+      internalID: 1545333429591358504
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sketchi3_11
+      rect:
+        serializedVersion: 2
+        x: 271
+        y: 1198
+        width: 59
+        height: 74
+      alignment: 9
+      pivot: {x: 0.89305556, y: 0.3433079}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c08db49f0e12775b0800000000000000
+      internalID: -5370786780477138932
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sketchi3_12
+      rect:
+        serializedVersion: 2
+        x: 372
+        y: 1204
+        width: 126
+        height: 77
+      alignment: 9
+      pivot: {x: 0.34815857, y: 0.311766}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 08121616d5a53d2e0800000000000000
+      internalID: -2102237243939675776
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sketchi3_13
+      rect:
+        serializedVersion: 2
+        x: 26
+        y: 1152
+        width: 34
+        height: 46
+      alignment: 9
+      pivot: {x: 0.48294798, y: 0.7772747}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5f488dcdacf3398f0800000000000000
+      internalID: -535013790205836043
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sketchi3_14
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 1099
+        width: 58
+        height: 76
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b1ae06a7d438e930800000000000000
+      internalID: 4172643155567354288
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sketchi3_15
+      rect:
+        serializedVersion: 2
+        x: 212
+        y: 1112
+        width: 40
+        height: 55
+      alignment: 9
+      pivot: {x: 0.47101173, y: 0.82677114}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa8f58f68952238d0800000000000000
+      internalID: -2868188676045277014
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sketchi3_16
+      rect:
+        serializedVersion: 2
+        x: 280
+        y: 1116
+        width: 34
+        height: 47
+      alignment: 9
+      pivot: {x: 0.4658957, y: 0.759041}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cae1bb03793240d10800000000000000
+      internalID: 2090835259271356076
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sketchi3_17
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 1090
+        width: 38
+        height: 53
+      alignment: 9
+      pivot: {x: 0.53051317, y: 0.82816416}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 56fc5d00f855953e0800000000000000
+      internalID: -2064524881489965211
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sketchi3_18
+      rect:
+        serializedVersion: 2
+        x: 167
+        y: 1045
+        width: 38
+        height: 43
+      alignment: 9
+      pivot: {x: 0.53051275, y: 0.7966195}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f35e854e0c271cb90800000000000000
+      internalID: -7223366154535246529
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: a4f63554de74c2f4b9b1c7a9131dc189
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Sketchi3_0: -3813559813865541471
+      Sketchi3_1: -496549955303528330
+      Sketchi3_10: 1545333429591358504
+      Sketchi3_11: -5370786780477138932
+      Sketchi3_12: -2102237243939675776
+      Sketchi3_13: -535013790205836043
+      Sketchi3_14: 4172643155567354288
+      Sketchi3_15: -2868188676045277014
+      Sketchi3_16: 2090835259271356076
+      Sketchi3_17: -2064524881489965211
+      Sketchi3_18: -7223366154535246529
+      Sketchi3_2: -6564811955838263544
+      Sketchi3_3: 1179129459131134252
+      Sketchi3_4: 2755926801028768406
+      Sketchi3_5: -4787310517786611424
+      Sketchi3_6: -357294018976841510
+      Sketchi3_7: 9096584783986791769
+      Sketchi3_8: 3957819853852408841
+      Sketchi3_9: -346138053413863133
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
