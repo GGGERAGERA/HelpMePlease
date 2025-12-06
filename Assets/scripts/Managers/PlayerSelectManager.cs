@@ -5,11 +5,11 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 
 
-public class CharacterSelector : MonoBehaviour
+public class PlayerSelectManager : MonoBehaviour
 {
     [Header("Настройки")]
-    [SerializeField] private PlayerSelectionSO playerSelectionSO; // Ссылка на наш SO
-    //[SerializeField] private GameObject playerPrefab; // Какой префаб выбирает эта кнопка
+    [SerializeField] private PlayerSelectManagerSO playerSelectionSO; // Ссылка на наш SO
+    [SerializeField] private GameObject playerPrefab; // Какой префаб выбирает эта кнопка
     
     //[Header("UI")]
     [SerializeField] public Button selectButton;

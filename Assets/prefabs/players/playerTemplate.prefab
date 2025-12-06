@@ -597,7 +597,7 @@ GameObject:
   - component: {fileID: 930633173182785072}
   - component: {fileID: 2793234137570153724}
   m_Layer: 0
-  m_Name: Main Camera
+  m_Name: playerCamera1
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -653,7 +653,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 3
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -1957,8 +1957,8 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_Size: {x: 0.47, y: 0.7}
+  m_Offset: {x: 0, y: 0.1}
+  m_Size: {x: 0.26, y: 0.46}
   m_Direction: 0
 --- !u!114 &3022403135543169941
 MonoBehaviour:
@@ -1990,9 +1990,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spriteRenderer: {fileID: 7669861676463713293}
+  localtransform1: {fileID: 7759509938211912925}
   playerStats: {fileID: 11400000, guid: 183520329bafda64ab22e99486b31062, type: 2}
   animator: {fileID: 4079684002017866091}
-  walkThreshold: 0.1
 --- !u!114 &8001710918477531825
 MonoBehaviour:
   m_ObjectHideFlags: 0

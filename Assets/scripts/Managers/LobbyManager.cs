@@ -8,7 +8,7 @@ public class LobbyManager : MonoBehaviour
 {
     public SceneAsset LobbyScene;
     public SceneAsset LoadingScene;
-    [SerializeField] public SceneSelectionSO GlobalSceneSelectionSO; // Ссылка на наш SO
+    [SerializeField] public SceneSelectManagerSO GlobalSceneSelectionSO; // Ссылка на наш SO
     void Start()
     {
         Debug.Log("Lobby scene loaded");
@@ -17,13 +17,13 @@ public class LobbyManager : MonoBehaviour
     public void OnLevelClicked()
     {
         Debug.Log("Starting Level...");
-        SceneLoader.LoadLevel(GlobalSceneSelectionSO.selectedScene, GlobalSceneSelectionSO, LoadingScene);
+        SceneLoaderManager.LoadLevel(GlobalSceneSelectionSO.selectedScene, GlobalSceneSelectionSO, LoadingScene);
     }
 
     public void OnLobbyClicked()
     {
         Debug.Log("Starting Level...");
-        SceneLoader.LoadLobby(LobbyScene, GlobalSceneSelectionSO, LoadingScene);
+        SceneLoaderManager.LoadLobby(LobbyScene, GlobalSceneSelectionSO, LoadingScene);
     }
     
     public void OnExitClicked()

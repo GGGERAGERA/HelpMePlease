@@ -6,14 +6,15 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using NUnit.Framework;
 
-public class ScenesSelector : MonoBehaviour
+public class ScenesSelectManager : MonoBehaviour
 {
     //[Header("Настройки")]
-    [SerializeField] private SceneSelectionSO GlobalSceneSelectionSO; // Ссылка на наш SO
+    [SerializeField] private SceneSelectManagerSO GlobalSceneSelectionSO; // Ссылка на наш SO
     private const string NEXT_SCENE_KEY = "NextSceneToLoad";
     //[SerializeField] private GameObject ScenePrefab; // Какой префаб выбирает эта кнопка
 
     [Header("UI")]
+    [SerializeField] public List<Button> AllScenesBtns;
     [SerializeField] public List<Button> OpenedScenesBtns;
 
     void Start()

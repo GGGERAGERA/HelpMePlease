@@ -14,9 +14,6 @@ public class PlayerAnimation : MonoBehaviour
     [Tooltip("Аниматор игрока")]
     [SerializeField] private Animator animator;
 
-    [Tooltip("Порог скорости для перехода в ходьбу")]
-    [SerializeField] private float walkThreshold = 0.1f;
-
     private PlayerMovement playerMovement;
     private Vector3 left = new Vector3(-1, 1, 1);
     private void Awake()

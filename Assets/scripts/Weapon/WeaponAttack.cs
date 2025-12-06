@@ -1,17 +1,18 @@
-// WeaponAttack.cs
 using UnityEngine;
 
+// Компонент оружия. Прикрепляется к каждому оружию.
 public class WeaponAttack : MonoBehaviour
 {
     [Header("Оружие")]
     [SerializeField] private WeaponSO WeaponSO1;
     [SerializeField] private Transform firePoint;
 
-    private PlayerContext _context; // ← Ссылка на контекст игрока
+    private PlayerContext _context; // Ссылка на данные владельца (игрока)
     private float timer = 0f;
 
     private void Awake()
     {
+        // Проверка настроек оружия
         if (WeaponSO1 == null || WeaponSO1.WeaponProjectilePrefab == null)
         {
             Debug.LogError($"Weapon {name} не настроен!");
@@ -19,14 +20,14 @@ public class WeaponAttack : MonoBehaviour
             return;
         }
 
-        // Ищем PlayerContext через PlayerAttack
+        // Ищем владельца оружия (игрока) и получаем его контекст
         PlayerAttack playerAttack = GetComponentInParent<PlayerAttack>();
         if (playerAttack != null)
         {
-            Debug.Log("Player attack is finded");
-            _context = playerAttack.GetContext(); // ← Нужно добавить метод GetContext в PlayerAttack
+            _context = playerAttack.GetContext();
         }
 
+        // Без контекста оружие бесполезно
         if (_context == null)
         {
             Debug.LogError("Не найден PlayerContext для оружия!");

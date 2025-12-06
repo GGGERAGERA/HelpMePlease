@@ -1,43 +1,49 @@
-// PlayerContext.cs
 using UnityEngine;
 using System.Collections.Generic;
 
+// Контейнер данных игрока. Не MonoBehaviour!
+// Хранит ВСЁ: статы, баффы, здоровье, деньги.
 public class PlayerContext
 {
-    // 🔑 Уникальный ID игрока (для мультиплеера)
+    // Уникальный ID игрока. В синглплеере = 0, в мультиплеере — уникальный номер.
     public int PlayerID { get; private set; }
 
-    // 🎮 Ссылка на GameObject (только для удобства)
+    // Ссылка на реальный GameObject игрока на сцене (для корутин, тегов и т.д.)
     public GameObject PlayerObject { get; private set; }
 
-    // 📊 Данные
-    public PlayerSelectionSO SelectedCharacter => _selectedCharacter;
-    private PlayerSelectionSO _selectedCharacter;
+    // Данные персонажа (префаб + статы)
 
-    public PlayerStatsSO BaseStats => _selectedCharacter?.selectedPlayerStats;
+    private PlayerSelectManagerSO _selectedCharacter;
+    private PlayerStatsSO _baseStats;
     public GlobalPlayerStatsSO GlobalStats { get; private set; }
-    public List<PlayerBuffs> ActiveBuffs { get; private set; } = new();
 
-    // 💰 Состояние
+    // Активные баффы (временные улучшения)
+    public List<PlayerBuffs> ActiveBuffs { get; private set; } = new List<PlayerBuffs>();
+
+    // Состояние игрока
     public int Money { get; set; }
     public int Health { get; set; }
 
-    // 🛠 Конструктор
-    public PlayerContext(int playerId, GameObject playerObject, PlayerSelectionSO character, GlobalPlayerStatsSO globalStats)
-{
-    PlayerID = playerId;
-    PlayerObject = playerObject;
-    _selectedCharacter = character;
-    GlobalStats = globalStats; // ← ДОБАВЬ ЭТО!
+    // Конструктор: вызывается при спавне игрока
+    public PlayerContext(int playerId, GameObject playerObject, PlayerSelectManagerSO character, GlobalPlayerStatsSO globalStats)
+    {
+        PlayerID = playerId;
+        PlayerObject = playerObject;
+        _selectedCharacter = character;
+        GlobalStats = globalStats;
+        
+        // 🔑 Инициализация статов из SO
+        PlayerStatsComponent statsComp = playerObject.GetComponent<PlayerStatsComponent>();
+        _baseStats = statsComp != null ? statsComp.playerStatsSO : null;
 
-    // Инициализация
-    Money = 0;
-    Health = BaseStats?.playerMaxHealth ?? 100;
-}
-    // 🧪 Удобные методы
+        Money = 0;
+        Health = _baseStats?.playerMaxHealth ?? 100;
+    }
+
+    // Рассчитывает итоговый урон игрока
     public int GetTotalAttack()
     {
-        int total = BaseStats?.playerpower ?? 0;
+        int total = _baseStats?.playerpower ?? 0;
         total += GlobalStats?.GlobalAttackBonus ?? 0;
 
         foreach (var buff in ActiveBuffs)
@@ -47,6 +53,7 @@ public class PlayerContext
         return total;
     }
 
+    // Рассчитывает множитель скорости снарядов
     public float GetProjectileSpeedMultiplier()
     {
         float mult = 1f;
@@ -58,13 +65,14 @@ public class PlayerContext
         return mult;
     }
 
+    // Добавляет бафф (вызывается при подборе предмета)
     public void AddBuff(PlayerBuffsSO buffSO)
     {
         var buff = new PlayerBuffs(buffSO);
         ActiveBuffs.Add(buff);
-        // Запуск корутины на PlayerObject, если нужен таймер
     }
 
+    // Удаляет бафф (например, по истечении времени)
     public void RemoveBuff(PlayerBuffs buff)
     {
         ActiveBuffs.Remove(buff);

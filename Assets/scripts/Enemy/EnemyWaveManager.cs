@@ -9,7 +9,7 @@ public class EnemyWaveManager : MonoBehaviour
 {
     private List<EnemyWaveSO> enemiesToSpawn;
     public List<EnemyWaveSO> allWaves;
-    private int _currentWave = 0;
+    //private int _currentWave = 0;
 
     private void Start()
     {

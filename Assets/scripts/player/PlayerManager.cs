@@ -27,7 +27,7 @@ public class PlayerManager : MonoBehaviour
     }
 
     /// Спавн нового игрока
-    public PlayerContext SpawnPlayer(PlayerSelectionSO character, Transform spawnPoint)
+    public PlayerContext SpawnPlayer(PlayerSelectManagerSO character, Transform spawnPoint)
     {
         if (character?.selectedPlayerPrefab == null) return null;
 
@@ -35,6 +35,7 @@ public class PlayerManager : MonoBehaviour
         playerObj.tag = "Player";
 
         // Добавляем обязательные компоненты
+        
         playerObj.GetOrAddComponent<PlayerHealth>();
         playerObj.GetOrAddComponent<PlayerMovement>();
         playerObj.GetOrAddComponent<PlayerAttack>();

@@ -4,12 +4,12 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class SceneLoader : MonoBehaviour
+public class SceneLoaderManager : MonoBehaviour
 {
     [Header("Loading Settings")]
     [SerializeField] private Slider loadingSlider;
     [SerializeField] private float minLoadTime = 2f; // Минимальное время анимации
-    [SerializeField] private SceneSelectionSO GlobalSceneSelectionSO; // Ссылка на наш SO
+    [SerializeField] private SceneSelectManagerSO GlobalSceneSelectionSO; // Ссылка на наш SO
     public SceneAsset LobbyScene, LoadingScene;
     
     private AsyncOperation loadingOperation;
@@ -115,7 +115,7 @@ public class SceneLoader : MonoBehaviour
     // === СТАТИЧЕСКИЕ МЕТОДЫ ДЛЯ ПЕРЕХОДА МЕЖДУ СЦЕНАМИ ===
     
     // Метод для перехода на любую сцену через LoadingScene
-    public static void LoadScene(SceneAsset scene, SceneSelectionSO GlobalSceneSelectionSO, SceneAsset LoadingScene)
+    public static void LoadScene(SceneAsset scene, SceneSelectManagerSO GlobalSceneSelectionSO, SceneAsset LoadingScene)
     {
         // Сохраняем следующую сцену
         //PlayerPrefs.SetString(NEXT_SCENE_KEY, sceneName);
@@ -126,12 +126,12 @@ public class SceneLoader : MonoBehaviour
     }
 
     // Метод для перехода на лобби
-    public static void LoadLobby(SceneAsset LobbyScene, SceneSelectionSO GlobalSceneSelectionSO, SceneAsset LoadingScene)
+    public static void LoadLobby(SceneAsset LobbyScene, SceneSelectManagerSO GlobalSceneSelectionSO, SceneAsset LoadingScene)
     {
         LoadScene(LobbyScene, GlobalSceneSelectionSO, LoadingScene);
     }
     
-    public static void LoadLevel(SceneAsset scene, SceneSelectionSO GlobalSceneSelectionSO, SceneAsset LoadingScene)
+    public static void LoadLevel(SceneAsset scene, SceneSelectManagerSO GlobalSceneSelectionSO, SceneAsset LoadingScene)
     {
         LoadScene(scene, GlobalSceneSelectionSO, LoadingScene);
     }

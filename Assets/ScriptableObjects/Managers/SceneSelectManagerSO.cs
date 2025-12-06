@@ -5,7 +5,7 @@ using UnityEngine;
 
 // Это создаст пункт в меню создания ассетов
 [CreateAssetMenu(fileName = "SceneSelection", menuName = "ScriptableObject/Selection/SceneSelection")]
-public class SceneSelectionSO : ScriptableObject
+public class SceneSelectManagerSO : ScriptableObject
 {
     // Это публичное поле будет хранить наш выбор
     // Можно хранить индекс, имя, префаб - что угодно!
