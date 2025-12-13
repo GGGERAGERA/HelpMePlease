@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4330216233a50f44294884d4bb7e6674, type: 3}
   m_Name: Enemy1
   m_EditorClassIdentifier: 
-  EnemyPrefab: {fileID: 0}
+  EnemyPrefab: {fileID: 6656776835044197688, guid: 5625adc2b3c399648a448d550d87682a, type: 3}
   EnemyPrefabDefaultWeapon: {fileID: 0}
+  enemyType: 0
   EnemyName: Enemy1
   EnemyMaxHealth: 100
-  HPrecover: 0.6
-  Shield: 3
   EnemySpeed: 5
-  power: 25
+  EnemyPower: 5
   projectileSpeed: 20
   range: 11
   reload: -5
+  EnemySpawnPoolCount: 0

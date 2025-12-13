@@ -4,15 +4,19 @@ using System.Collections.Generic;
 // Компонент игрока, отвечающий за управление оружием.
 public class PlayerAttack : MonoBehaviour
 {
-    private PlayerContext _context; // Ссылка на данные игрока
 
+    public PlayerContext _context; // Ссылка на данные игрока
+
+    //public GameObject test;
     // Список оружий этого игрока (ключ = слот, значение = GameObject оружия)
     public Dictionary<int, GameObject> WeaponsList = new Dictionary<int, GameObject>();
+
 
     // Вызывается из PlayerSpawner после спавна
     public void Initialize(PlayerContext context)
     {
         _context = context;
+        Debug.Log($"Контекст в PlayerAttack инициализирован! {context.ToString()} ");
     }
 
     // Возвращает контекст для дочерних компонентов (например, WeaponAttack)

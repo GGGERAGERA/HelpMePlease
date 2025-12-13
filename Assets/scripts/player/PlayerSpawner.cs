@@ -57,6 +57,7 @@ public class PlayerSpawner : MonoBehaviour
         // Добавляем обязательные компоненты, если их нет
         playerInstance.GetOrAddComponent<PlayerAttack>();
         playerInstance.GetOrAddComponent<PlayerHealth>();
+        //playerInstance.GetOrAddComponent<PlayerBuffs>();
 
         // Создаём контекст данных для этого игрока
         var context = new PlayerContext(
@@ -72,6 +73,7 @@ public class PlayerSpawner : MonoBehaviour
         // Передаём контекст компонентам игрока
         playerInstance.GetComponent<PlayerAttack>().Initialize(context);
         playerInstance.GetComponent<PlayerHealth>().Initialize(context);
+        //playerInstance.GetComponent<PlayerBuffs>().Initialize(context);
 
         return context;
     }

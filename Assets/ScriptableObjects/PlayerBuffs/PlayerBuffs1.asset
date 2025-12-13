@@ -12,14 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abc11d9e462b56648a0f585b152d9331, type: 3}
   m_Name: PlayerBuffs1
   m_EditorClassIdentifier: 
-  BuffsPrefab: {fileID: 0}
-  BuffsPrefabDefaultWeapon: {fileID: 0}
-  BuffsName: Buff1
-  BuffsMaxHealth: 100
-  HPrecover: 0.6
-  Shield: 3
-  BuffsSpeed: 5
-  power: 25
-  projectileSpeed: 20
-  range: 11
-  reload: -5
+  PlayerBuffsPrefab: {fileID: 1272789678274060307, guid: 906a254f0bb3ea147801879dfb198bdf, type: 3}
+  PlayerBuffsPrefabDefaultWeapon: {fileID: 0}
+  PlayerBuffsName: Buffs1
+  PlayerBuffsMaxHealth: 100
+  PlayerBuffsHPrecover: 0.6
+  PlayerBuffsShield: 3
+  PlayerBuffsSpeed: 5
+  PlayerBuffsPower: 25
+  PlayerBuffsProjectileSpeed: 20
+  PlayerBuffsRrange: 11
+  PlayerBuffsReload: -5
+  Duration: 1

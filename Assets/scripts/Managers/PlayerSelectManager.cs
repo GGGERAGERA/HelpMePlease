@@ -9,13 +9,11 @@ public class PlayerSelectManager : MonoBehaviour
 {
     [Header("Настройки")]
     [SerializeField] private PlayerSelectManagerSO playerSelectionSO; // Ссылка на наш SO
-    [SerializeField] private GameObject playerPrefab; // Какой префаб выбирает эта кнопка
+    public GameObject playerPrefab; // Какой префаб выбирает эта кнопка
     
-    //[Header("UI")]
+    [Header("UI")]
     [SerializeField] public Button selectButton;
-    
 
-    
     public void SelectCharacter(GameObject playerPrefab)
     {
         // Сохраняем выбранный префаб в ScriptableObject
@@ -26,14 +24,11 @@ public class PlayerSelectManager : MonoBehaviour
             Debug.LogError("PlayerSelectionSO не назначен!");
             return;
         }
-        
-        // Можно сохранить и другие данные
-        //playerSelectionSO.playerName = playerPrefab.name;
-        
         Debug.Log($"Выбран персонаж: {playerPrefab.name}");
-        
         // Здесь можно добавить визуальную обратную связь
         // Например, подсветку выбранной кнопки
     }
 }
+
+
 

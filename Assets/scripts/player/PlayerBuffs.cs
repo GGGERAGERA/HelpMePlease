@@ -1,6 +1,6 @@
-
+using UnityEngine;
 // PlayerBuffs.cs
-public class PlayerBuffs
+public class PlayerBuffs : MonoBehaviour
 {
     public int AttackBonus { get; private set; }
     public float ProjectileSpeedBonus { get; private set; }
@@ -12,4 +12,12 @@ public class PlayerBuffs
         ProjectileSpeedBonus = so.PlayerBuffsProjectileSpeed;
         Duration = so.Duration;
     }
+    private PlayerContext _context;
+
+    public void Initialize(PlayerContext context)
+    {
+        _context = context;
+        // Можно подписаться на события, обновить UI и т.д.
+    }
+    
 }

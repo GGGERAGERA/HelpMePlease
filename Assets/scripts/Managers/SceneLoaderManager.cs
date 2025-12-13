@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+
 public class SceneLoaderManager : MonoBehaviour
 {
     [Header("Loading Settings")]
@@ -16,7 +17,7 @@ public class SceneLoaderManager : MonoBehaviour
     private float loadingProgress;
     private float loadingTime;
     private bool isLoadingComplete = false;
-    
+
     // Ключ для сохранения имени следующей сцены
     //private const string NEXT_SCENE_KEY = "NextSceneToLoad";
     
@@ -111,15 +112,11 @@ public class SceneLoaderManager : MonoBehaviour
         // Разрешаем активацию сцены
         loadingOperation.allowSceneActivation = true;
     }
-    
     // === СТАТИЧЕСКИЕ МЕТОДЫ ДЛЯ ПЕРЕХОДА МЕЖДУ СЦЕНАМИ ===
-    
     // Метод для перехода на любую сцену через LoadingScene
     public static void LoadScene(SceneAsset scene, SceneSelectManagerSO GlobalSceneSelectionSO, SceneAsset LoadingScene)
     {
         // Сохраняем следующую сцену
-        //PlayerPrefs.SetString(NEXT_SCENE_KEY, sceneName);
-        //PlayerPrefs.Save();
         GlobalSceneSelectionSO.selectedScene = scene;
         // Загружаем сцену загрузки
         SceneManager.LoadScene(LoadingScene.name);
@@ -135,19 +132,4 @@ public class SceneLoaderManager : MonoBehaviour
     {
         LoadScene(scene, GlobalSceneSelectionSO, LoadingScene);
     }
-    // Методы для загрузки уровней
-    /*public static void LoadLevel1()
-    {
-        LoadScene("SceneLvl1");
-    }
-    
-    public static void LoadLevel2()
-    {
-        LoadScene("SceneLvl2");
-    }
-    
-    public static void LoadLevel3()
-    {
-        LoadScene("SceneLvl3");
-    }*/
 }

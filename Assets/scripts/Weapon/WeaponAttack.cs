@@ -6,11 +6,10 @@ public class WeaponAttack : MonoBehaviour
     [Header("Оружие")]
     [SerializeField] private WeaponSO WeaponSO1;
     [SerializeField] private Transform firePoint;
-
-    private PlayerContext _context; // Ссылка на данные владельца (игрока)
+    public PlayerContext _context; // Ссылка на данные владельца (игрока)
     private float timer = 0f;
 
-    private void Awake()
+    private void Start()
     {
         // Проверка настроек оружия
         if (WeaponSO1 == null || WeaponSO1.WeaponProjectilePrefab == null)
@@ -24,6 +23,9 @@ public class WeaponAttack : MonoBehaviour
         PlayerAttack playerAttack = GetComponentInParent<PlayerAttack>();
         if (playerAttack != null)
         {
+            //Debug.LogWarning("найден PlayerAttack в родителях!");
+            playerAttack.AddWeapon(gameObject);
+
             _context = playerAttack.GetContext();
         }
 

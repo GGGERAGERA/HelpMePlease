@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 66767fe8d3bb25843ab7005d5561a986, type: 3}
   m_Name: GlobalProgress1
   m_EditorClassIdentifier: 
-  selectedScene: {fileID: 0}
-  openedScenes: []
+  selectedScene: {fileID: 102900000, guid: ea55a584aac70734092c78e8c560dc57, type: 3}
+  openedScenes:
+  - {fileID: 102900000, guid: ea55a584aac70734092c78e8c560dc57, type: 3}
+  - {fileID: 102900000, guid: b1ff2aa4d635a4e40b4946595df4f089, type: 3}
   openedPlayers: []
   openedCards: []
