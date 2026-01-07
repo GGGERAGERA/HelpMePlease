@@ -6,13 +6,13 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Настройки")]
-    [Tooltip("Ссылка на ScriptableObject с параметрами игрока")]
-    [SerializeField] private PlayerStatsSO playerStats;
+    [Tooltip("Ссылка на ScriptableObject с GLOBAL parameters of player")]
+    private ProgressSO GlobalProgressSO;
 
     [Tooltip("Скорость перемещения")]
-    [SerializeField] private float currentMoveSpeed = 5f;
+    public float currentMoveSpeed = 5f;
 
-    [Tooltip("Чувствительность мыши (для управления как джойстиком)")]
+    //[Tooltip("Чувствительность мыши (для управления как джойстиком)")]
     //[SerializeField] private float mouseSensitivity = 2f;
 
     //[Tooltip("Максимальное расстояние от мыши до центра экрана для управления")]
@@ -27,9 +27,9 @@ public class PlayerMovement : MonoBehaviour
     private void Awake()
     {
         // Применяем скорость из SO, если она задана
-        if (playerStats != null)
+        if (GlobalProgressSO != null)
         {
-            currentMoveSpeed = playerStats.playerSpeed;
+            currentMoveSpeed = GlobalProgressSO.SpeedBonus;
         }
 
         rb = GetComponent<Rigidbody2D>();

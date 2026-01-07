@@ -6,7 +6,7 @@ using System.Collections.Generic;
 public class PlayerSpawner : MonoBehaviour
 {
     [Header("Настройки спавна")]
-    public GlobalPlayerStatsSO globalPlayerStatsSO1; // Глобальные улучшения (покупки)
+    public ProgressSO globalPlayerStatsSO1; // Глобальные улучшения (покупки)
     public PlayerSelectManagerSO selectedPlayerPrefabSO1; // Выбранный персонаж
     public Transform spawnPoint; // Точка спавна
 
@@ -15,7 +15,7 @@ public class PlayerSpawner : MonoBehaviour
 
     // 🔮 Мультиплеер: этот словарь позже перенесётся в PlayerManager
     private Dictionary<int, PlayerContext> _players = new Dictionary<int, PlayerContext>();
-    private int _nextPlayerId = 0;
+    //private int _nextPlayerId = 0;
 
     private void Awake()
     {
@@ -57,8 +57,9 @@ public class PlayerSpawner : MonoBehaviour
         // Добавляем обязательные компоненты, если их нет
         playerInstance.GetOrAddComponent<PlayerAttack>();
         playerInstance.GetOrAddComponent<PlayerHealth>();
-        //playerInstance.GetOrAddComponent<PlayerBuffs>();
+        playerInstance.GetOrAddComponent<PlayerBuffs>();
 
+        /*
         // Создаём контекст данных для этого игрока
         var context = new PlayerContext(
             playerId: _nextPlayerId++,
@@ -73,9 +74,12 @@ public class PlayerSpawner : MonoBehaviour
         // Передаём контекст компонентам игрока
         playerInstance.GetComponent<PlayerAttack>().Initialize(context);
         playerInstance.GetComponent<PlayerHealth>().Initialize(context);
-        //playerInstance.GetComponent<PlayerBuffs>().Initialize(context);
+        playerInstance.GetComponent<PlayerBuffs>().Initialize(context);
 
         return context;
+        */
+        int iD1 = characterSO.selectedPlayerPrefab.GetInstanceID();
+        return null;
     }
 
     // Получить игрока по ID (пригодится в мультиплеере)

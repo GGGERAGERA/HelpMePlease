@@ -12,7 +12,7 @@ public class EnemyPool : MonoBehaviour
 
     [Header("Префабы врагов")]
     public List<GameObject> enemyPrefabs;
-
+/*
     private Dictionary<EnemySO.EEnemyType, Queue<EnemyBehavior>> pools = new();
 
     private void Awake()
@@ -88,5 +88,5 @@ public class EnemyPool : MonoBehaviour
         {
             pool.Enqueue(enemy);
         }
-    }
+    }*/
 }

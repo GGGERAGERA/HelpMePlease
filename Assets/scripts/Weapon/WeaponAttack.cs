@@ -1,97 +1,72 @@
 using UnityEngine;
 
-// Компонент оружия. Прикрепляется к каждому оружию.
 public class WeaponAttack : MonoBehaviour
 {
-    [Header("Оружие")]
-    [SerializeField] private WeaponSO WeaponSO1;
-    [SerializeField] private Transform firePoint;
-    public PlayerContext _context; // Ссылка на данные владельца (игрока)
-    private float timer = 0f;
+    public GameObject projectileToShoot; // ← префаб снаряда (с компонентом Projectile!)
+    public Transform firePoint;
+    public float fireRate = 0.25f;
+
+    private ProjectilePool _myPool;
+    private float _timer;
 
     private void Start()
     {
-        // Проверка настроек оружия
-        if (WeaponSO1 == null || WeaponSO1.WeaponProjectilePrefab == null)
+        // Ищем пул у игрока (в родительской иерархии)
+        _myPool = GetComponentInParent<ProjectilePool>();
+        if (_myPool == null)
         {
-            Debug.LogError($"Weapon {name} не настроен!");
-            enabled = false;
-            return;
+            GameObject player = transform.root.gameObject;
+            _myPool = player.GetComponent<ProjectilePool>() ?? player.AddComponent<ProjectilePool>();
         }
 
-        // Ищем владельца оружия (игрока) и получаем его контекст
-        PlayerAttack playerAttack = GetComponentInParent<PlayerAttack>();
-        if (playerAttack != null)
-        {
-            //Debug.LogWarning("найден PlayerAttack в родителях!");
-            playerAttack.AddWeapon(gameObject);
-
-            _context = playerAttack.GetContext();
-        }
-
-        // Без контекста оружие бесполезно
-        if (_context == null)
-        {
-            Debug.LogError("Не найден PlayerContext для оружия!");
-            enabled = false;
-            return;
-        }
+        if (projectileToShoot != null)
+            _myPool.AddProjectileType(projectileToShoot);
     }
 
     private void Update()
     {
-        timer += Time.fixedDeltaTime;
-        if (timer >= WeaponSO1.FireRate)
+        _timer += Time.deltaTime;
+        if (_timer >= fireRate)
         {
             Fire();
-            timer = 0f;
+            _timer = 0f;
         }
     }
 
     private void Fire()
     {
-        int totalDamage = CalculateTotalDamage();
+        if (projectileToShoot == null || firePoint == null || _myPool == null) return;
 
-        Projectile proj = ProjectilePool.InstancePoolParent.GetProjectile(WeaponSO1.WeaponProjectilePrefab);
-        if (proj == null) return;
+        Projectile proj = _myPool.GetProjectile(projectileToShoot);
+        if (proj != null)
+        {
+            // Тут можешь брать урон из PlayerStats, Progress и т.д.
+            int finalDamage = CalculateFinalDamage();
 
-        Vector2 spawnPos = firePoint != null ? firePoint.position : transform.position;
-        Vector2? direction = null;
-        Transform homingTarget = null;
+            Vector2 direction = FindClosestEnemyDirection() ?? firePoint.right;
 
-        ProjectileSO so = WeaponSO1.WeaponProjectilePrefab.GetComponent<Projectile>().projectileSO1;
-        float baseSpeed = so.ProjectileSpeed;
-        float finalSpeed = GetFinalProjectileSpeed(baseSpeed);
-
-        if (so.projectileType != ProjectileSO.EProjectileType.Homing)
-            direction = firePoint != null ? firePoint.right : transform.right;
-        else
-            homingTarget = FindClosestEnemy();
-
-        proj.Initialize(
-            prefab: WeaponSO1.WeaponProjectilePrefab,
-            data: so,
-            spawnPosition: spawnPos,
-            overrideDamage: totalDamage,
-            overrideSpeed: finalSpeed,
-            direction: direction,
-            homingTarget: homingTarget
-        );
+            proj.Initialize(
+                prefab: projectileToShoot,
+                spawnPosition: firePoint.position,
+                overrideDamage: finalDamage,
+                direction: direction
+            );
+        }
     }
 
-    private int CalculateTotalDamage()
+    private int CalculateFinalDamage()
     {
-        if (_context == null) return WeaponSO1.WeaponDamage;
-        return WeaponSO1.WeaponDamage + _context.GetTotalAttack();
+        // Пример: базовый урон снаряда + бонус от игрока
+        int baseDmg = projectileToShoot.GetComponent<Projectile>().baseDamage;
+
+        // Если у тебя есть PlayerContext или статы — бери оттуда:
+        // PlayerAttack player = GetComponentInParent<PlayerAttack>();
+        // int bonus = player?.GetContext()?.playerStats?.damageBonus ?? 0;
+
+        return baseDmg; // пока без бонусов
     }
 
-    private float GetFinalProjectileSpeed(float baseSpeed)
-    {
-        if (_context == null) return baseSpeed;
-        return baseSpeed * _context.GetProjectileSpeedMultiplier();
-    }
-
-    private Transform FindClosestEnemy()
+    private Vector2? FindClosestEnemyDirection()
     {
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
         if (enemies.Length == 0) return null;
@@ -107,6 +82,6 @@ public class WeaponAttack : MonoBehaviour
                 closest = enemy.transform;
             }
         }
-        return closest;
+        return (closest.position - firePoint.position).normalized;
     }
 }

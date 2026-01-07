@@ -8,8 +8,8 @@ public class PlayerAnimation : MonoBehaviour
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private Transform localtransform1;
     [Header("Настройки")]
-    [Tooltip("Ссылка на ScriptableObject с параметрами игрока")]
-    public PlayerStatsSO playerStats;
+    //[Tooltip("Ссылка на ScriptableObject с параметрами игрока")]
+    //public PlayerStatsSO playerStats;
 
     [Tooltip("Аниматор игрока")]
     [SerializeField] private Animator animator;

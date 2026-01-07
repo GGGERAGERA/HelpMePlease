@@ -6,12 +6,12 @@ public class PlayerBuffs : MonoBehaviour
     public float ProjectileSpeedBonus { get; private set; }
     public float Duration { get; private set; }
 
-    public PlayerBuffs(PlayerBuffsSO so)
+    /*public PlayerBuffs(PlayerBuffsSO so)
     {
         AttackBonus = so.PlayerBuffsPower;
         ProjectileSpeedBonus = so.PlayerBuffsProjectileSpeed;
         Duration = so.Duration;
-    }
+    }*/
     private PlayerContext _context;
 
     public void Initialize(PlayerContext context)

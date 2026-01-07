@@ -7,7 +7,7 @@ public class EnemyWaveSO : ScriptableObject
     [System.Serializable]
     public class EnemyGroup
     {
-        public EnemySO enemyType;
+        //public EnemySO enemyType;
         public int count;
         public float spawnDelay; // между спавнами
     }

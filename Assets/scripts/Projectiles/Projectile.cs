@@ -1,47 +1,61 @@
-using System.Collections;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UI;
-using System.Collections.Generic;
 
+// Снаряд. Все данные — прямо здесь, на компоненте.
+// Не нужно ScriptableObject — всё в инспекторе!
 public class Projectile : MonoBehaviour
 {
-    [Header("Параметры")]
-    [HideInInspector] public GameObject sourcePrefab; // ← храним префаб, из которого создан
-    public ProjectileSO projectileSO1;
-    private Transform target; // Для Homing
+    [Header("Основные параметры")]
+    public int baseDamage = 10;
+    public float speed = 10f;
+    public float lifetime = 5f; // авто-деактивация, если не попал
+
+    [Header("Тип снаряда")]
+    public ProjectileType projectileType = ProjectileType.Normal;
+
+    public enum ProjectileType
+    {
+        Normal,
+        Melee,
+        Homing
+    }
+
+    // Для пула
+    [HideInInspector] public GameObject sourcePrefab;
+
+    // Внутренние
+    private Transform homingTarget;
     private Rigidbody2D rb;
     private Collider2D col;
-    private int damageOverride = -1; // если > -1 — используем его вместо projectileSO1.ProjectileDamage
-    private float finalSpeed = 0;
+    private int damageOverride = -1; // если нужно изменить урон при выстреле
 
-        // Инициализирует снаряд. Вызывать ОБЯЗАТЕЛЬНО после получения из пула!
-private void Awake()
+    private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         col = GetComponent<Collider2D>();
     }
 
-    /// Инициализация снаряда. Обязательно вызывать при получении из пула или Instantiate.
+    // Инициализация при каждом использовании (из пула или Instantiate)
     public void Initialize(
         GameObject prefab,
-        ProjectileSO data,
         Vector2 spawnPosition,
         int? overrideDamage = null,
-        float? overrideSpeed = null,      // ← новое!
+        float? overrideSpeed = null,
         Vector2? direction = null,
         Transform homingTarget = null
     )
     {
-        sourcePrefab = prefab; // ← ЗАПОМИНАЕМ префаб!
-        projectileSO1 = data;
+        sourcePrefab = prefab;
         damageOverride = overrideDamage ?? -1;
-        overrideSpeed = data.ProjectileSpeed;
+        this.homingTarget = homingTarget;
+
         transform.position = spawnPosition;
         gameObject.SetActive(true);
 
-        if (data.projectileType == ProjectileSO.EProjectileType.Melee)
+        // Сброс скорости
+        rb.bodyType = RigidbodyType2D.Dynamic;
+        rb.linearVelocity = Vector2.zero;
+
+        if (projectileType == ProjectileType.Melee)
         {
             col.enabled = true;
             Invoke(nameof(Deactivate), 0.1f);
@@ -49,46 +63,38 @@ private void Awake()
         else
         {
             col.enabled = true;
-            rb.bodyType = RigidbodyType2D.Dynamic;
-            rb.linearVelocity = Vector2.zero;
-
-            if (direction.HasValue) {
-                finalSpeed = overrideSpeed ?? data.ProjectileSpeed;
-                rb.linearVelocity = direction.Value.normalized * finalSpeed; }
+            float finalSpeed = overrideSpeed ?? speed;
+            if (direction.HasValue)
+                rb.linearVelocity = direction.Value.normalized * finalSpeed;
             else
-                rb.linearVelocity = transform.right * data.ProjectileSpeed;
+                rb.linearVelocity = transform.right * finalSpeed;
 
-            if (data.projectileType == ProjectileSO.EProjectileType.Homing && homingTarget != null)
-                target = homingTarget;
+            // Автодеактивация по таймеру (защита от зависших снарядов)
+            CancelInvoke(nameof(Deactivate));
+            Invoke(nameof(Deactivate), lifetime);
         }
     }
 
-    /// Вспомогательный метод для пула: по какому префабу был создан?
-    public GameObject GetSourcePrefab()
-    {
-        return sourcePrefab;
-    }
-
-    /// Получить урон снаряда (с учётом override)
-    public int GetDamage()
-    {
-        if (damageOverride >= 0)
-            return damageOverride;
-        return projectileSO1?.ProjectileDamage ?? 0;
-    }
+    public GameObject GetSourcePrefab() => sourcePrefab;
+    public int GetDamage() => damageOverride >= 0 ? damageOverride : baseDamage;
 
     private void Deactivate()
     {
+        CancelInvoke();
         gameObject.SetActive(false);
-        ProjectilePool.InstancePoolParent.ReturnProjectile(this);
+        ProjectilePool pool = GetComponentInParent<ProjectilePool>();
+        if (pool != null)
+            pool.ReturnProjectile(this);
+        else
+            Debug.LogWarning("Снаряд не может найти пул для возврата!");
     }
 
     private void Update()
     {
-        if (projectileSO1?.projectileType == ProjectileSO.EProjectileType.Homing && target != null)
+        if (projectileType == ProjectileType.Homing && homingTarget != null)
         {
-            Vector2 direction = (target.position - transform.position).normalized;
-            rb.linearVelocity = direction * projectileSO1.ProjectileSpeed;
+            Vector2 dir = (homingTarget.position - transform.position).normalized;
+            rb.linearVelocity = dir * speed;
         }
     }
 

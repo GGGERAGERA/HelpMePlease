@@ -1863,6 +1863,7 @@ GameObject:
   - component: {fileID: 7759509938211912925}
   - component: {fileID: 7935719737552783552}
   - component: {fileID: 5248062358232505403}
+  - component: {fileID: -2558945087727620532}
   - component: {fileID: 3022403135543169941}
   - component: {fileID: 58108241096132805}
   - component: {fileID: 8001710918477531825}
@@ -1960,6 +1961,25 @@ CapsuleCollider2D:
   m_Offset: {x: 0, y: 0.1}
   m_Size: {x: 0.26, y: 0.46}
   m_Direction: 0
+--- !u!114 &-2558945087727620532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7087221720511815677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c09c52f0e7022b449877373139dcf2b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  CharacterHealth: 100
+  CharacterShield: 5
+  CharacterDamage: 10
+  CharacterSpeed: 1.5
+  CharacterWeaponRate: 0.5
+  CharacterMoneyBonus: 2.5
+  Luck: 0
 --- !u!114 &3022403135543169941
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1972,11 +1992,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3479db7b25505ce41b99ca092f824d21, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerStats: {fileID: 11400000, guid: 183520329bafda64ab22e99486b31062, type: 2}
   currentMoveSpeed: 5
   maxMouseDistance: 100
   rb: {fileID: 7935719737552783552}
-  mainCamera: {fileID: 0}
+  mainCamera: {fileID: 6160883892715887167}
 --- !u!114 &58108241096132805
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1991,7 +2010,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spriteRenderer: {fileID: 7669861676463713293}
   localtransform1: {fileID: 7759509938211912925}
-  playerStats: {fileID: 11400000, guid: 183520329bafda64ab22e99486b31062, type: 2}
   animator: {fileID: 4079684002017866091}
 --- !u!114 &8001710918477531825
 MonoBehaviour:

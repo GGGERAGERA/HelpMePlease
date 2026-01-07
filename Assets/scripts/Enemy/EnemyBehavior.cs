@@ -7,7 +7,7 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 public class EnemyBehavior : MonoBehaviour
 {
-    public EnemySO EnemySO1;
+    /*public EnemySO EnemySO1;
     private int EnemyCurrentHealth;
 
     public void Initialize(EnemySO data, Vector2 spawnPosition)
@@ -29,5 +29,5 @@ public class EnemyBehavior : MonoBehaviour
     {
         gameObject.SetActive(false);
         EnemyPool.InstanceEnemyPoolParent.ReturnEnemy(this);
-    }
+    }*/
 }

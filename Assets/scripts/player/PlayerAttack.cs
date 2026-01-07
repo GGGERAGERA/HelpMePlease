@@ -16,7 +16,7 @@ public class PlayerAttack : MonoBehaviour
     public void Initialize(PlayerContext context)
     {
         _context = context;
-        Debug.Log($"Контекст в PlayerAttack инициализирован! {context.ToString()} ");
+        //Debug.Log($"Контекст в PlayerAttack инициализирован! {context.ToString()} ");
     }
 
     // Возвращает контекст для дочерних компонентов (например, WeaponAttack)

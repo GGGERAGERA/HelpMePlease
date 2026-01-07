@@ -7,11 +7,11 @@ public class PlayerManager : MonoBehaviour
     public static PlayerManager Instance;
 
     [Header("Глобальные данные (общие для всех игроков)")]
-    public GlobalPlayerStatsSO globalStats;
+    public ProgressSO globalStats;
 
     [Header("Список активных игроков")]
     private Dictionary<int, PlayerContext> _players = new();
-    private int _nextPlayerId = 0;
+    //private int _nextPlayerId = 0;
 
     private void Awake()
     {
@@ -39,7 +39,7 @@ public class PlayerManager : MonoBehaviour
         playerObj.GetOrAddComponent<PlayerHealth>();
         playerObj.GetOrAddComponent<PlayerMovement>();
         playerObj.GetOrAddComponent<PlayerAttack>();
-
+        /*
         // Создаём контекст
         var context = new PlayerContext(_nextPlayerId++, playerObj, character, globalStats);
         _players[context.PlayerID] = context;
@@ -50,6 +50,8 @@ public class PlayerManager : MonoBehaviour
 
         Debug.Log($"Игрок {context.PlayerID} создан!");
         return context;
+        */
+        return null;
     }
 
     public PlayerContext GetPlayer(int playerId) => _players.GetValueOrDefault(playerId);

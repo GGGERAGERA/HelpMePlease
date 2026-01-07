@@ -4,7 +4,7 @@ using System.Collections.Generic;
 // Контейнер данных игрока. Не MonoBehaviour!
 // Хранит ВСЁ: статы, баффы, здоровье, деньги.
 public class PlayerContext
-{
+{/*
     // Уникальный ID игрока. В синглплеере = 0, в мультиплеере — уникальный номер.
     public int PlayerID { get; private set; }
 
@@ -77,4 +77,5 @@ public class PlayerContext
     {
         ActiveBuffs.Remove(buff);
     }
+    */
 }

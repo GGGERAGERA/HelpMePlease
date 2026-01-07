@@ -1,7 +1,7 @@
 using UnityEngine;
 
-public class EnemyHealth : MonoBehaviour, IDamageable
-{
+public class EnemyHealth : MonoBehaviour //IDamageable
+{/*
     [Header("Здоровье")]
     [Tooltip("Ссылка на ScriptableObject с параметрами игрока")]
     [SerializeField] private EnemySO EnemyStats;
@@ -32,4 +32,5 @@ public class EnemyHealth : MonoBehaviour, IDamageable
         //gameObject.SetActive(false); // или Destroy(gameObject);
         Destroy(gameObject);
     }
+    */
 }
