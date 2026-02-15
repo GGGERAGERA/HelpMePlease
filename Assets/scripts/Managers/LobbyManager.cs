@@ -8,7 +8,7 @@ public class LobbyManager : MonoBehaviour
 {
     public SceneAsset LobbyScene;
     public SceneAsset LoadingScene;
-    [SerializeField] public SceneSelectManagerSO GlobalSceneSelectionSO; // Ссылка на наш SO
+    [SerializeField] public ProgressSO GlobalSceneSelectionSO; // Ссылка на наш SO
     void Start()
     {
         Debug.Log("Lobby scene loaded");

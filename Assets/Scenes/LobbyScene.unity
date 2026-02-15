@@ -482,7 +482,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 38e8915cee1b42d4fb2ad243b75efd47, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerSelectionSO: {fileID: 11400000, guid: c2f83084f113b15489251de4def1a885, type: 2}
+  playerSelectionSO: {fileID: 11400000, guid: 8923e585d4c00c24991f35439689e67c, type: 2}
   playerPrefab: {fileID: 4146352723010300728, guid: 3ed9842c4749c414d8b1297090b94947, type: 3}
   selectButton: {fileID: 1781941890}
 --- !u!4 &58864858
@@ -1245,7 +1245,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33e4bf02a92322e41b9b7f75a5391167, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalSceneSelectionSO: {fileID: 11400000, guid: 7bb749a2020faf649a2a6d0be7e9c6c9, type: 2}
+  GlobalSceneSelectionSO: {fileID: 11400000, guid: 8923e585d4c00c24991f35439689e67c, type: 2}
   AllScenesBtns:
   - {fileID: 958587102}
   - {fileID: 1579403864}
@@ -3893,7 +3893,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   LobbyScene: {fileID: 102900000, guid: 6b67137066a016a478f7ed2adaa45be1, type: 3}
   LoadingScene: {fileID: 102900000, guid: 1fea45f7e2391af46802e555d13e53ff, type: 3}
-  GlobalSceneSelectionSO: {fileID: 11400000, guid: 7bb749a2020faf649a2a6d0be7e9c6c9, type: 2}
+  GlobalSceneSelectionSO: {fileID: 11400000, guid: 8923e585d4c00c24991f35439689e67c, type: 2}
 --- !u!1001 &1129715348
 PrefabInstance:
   m_ObjectHideFlags: 0

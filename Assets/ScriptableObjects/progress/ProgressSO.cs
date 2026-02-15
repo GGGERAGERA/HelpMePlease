@@ -13,12 +13,12 @@ public class ProgressSO : ScriptableObject
     [Header("Выбранная сцена")]
     public SceneAsset selectedScene; // Scene для выбора
     [Header("Выбранный персонаж")]
-    public GameObject SelectedPlayer;
+    public GameObject SelectedCharacter;
     
 
     public List<SceneAsset> openedScenes;
-    public List<SceneAsset> openedPlayers; 
-    public List<SceneAsset> openedCards; 
+    public List<GameObject> openedCharacters; 
+    public List<GameObject> openedCards; 
     
     public float SpeedBonus = 0.5f;
     public int HealthBonus= 50;

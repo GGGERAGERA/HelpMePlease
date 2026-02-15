@@ -8,7 +8,7 @@ using System.Collections.Generic;
 public class PlayerSelectManager : MonoBehaviour
 {
     [Header("Настройки")]
-    [SerializeField] private PlayerSelectManagerSO playerSelectionSO; // Ссылка на наш SO
+    [SerializeField] private ProgressSO playerSelectionSO; // Ссылка на наш SO
     public GameObject playerPrefab; // Какой префаб выбирает эта кнопка
     
     [Header("UI")]
@@ -17,7 +17,7 @@ public class PlayerSelectManager : MonoBehaviour
     public void SelectCharacter(GameObject playerPrefab)
     {
         // Сохраняем выбранный префаб в ScriptableObject
-        playerSelectionSO.selectedPlayerPrefab = playerPrefab;
+        playerSelectionSO.SelectedCharacter = playerPrefab;
 
         if (playerSelectionSO == null)
         {

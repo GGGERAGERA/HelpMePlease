@@ -10,8 +10,8 @@ public class SceneLoaderManager : MonoBehaviour
     [Header("Loading Settings")]
     [SerializeField] private Slider loadingSlider;
     [SerializeField] private float minLoadTime = 2f; // Минимальное время анимации
-    [SerializeField] private SceneSelectManagerSO GlobalSceneSelectionSO; // Ссылка на наш SO
-    public SceneAsset LobbyScene, LoadingScene;
+    public ProgressSO GlobalPlayerProgress1; // Ссылка на наш SO
+    public SceneAsset LobbyScene, LoadingScene, SelectedScene;
     
     private AsyncOperation loadingOperation;
     private float loadingProgress;
@@ -73,7 +73,7 @@ public class SceneLoaderManager : MonoBehaviour
     string GetTargetSceneName()
     {
         // Пытаемся получить следующую сцену из PlayerPrefs
-        string nextScene = GlobalSceneSelectionSO.selectedScene.name;
+        string nextScene = GlobalPlayerProgress1.selectedScene.name;
         
         // Если следующая сцена не указана, загружаем лобби по умолчанию
         if (string.IsNullOrEmpty(nextScene))
@@ -114,7 +114,7 @@ public class SceneLoaderManager : MonoBehaviour
     }
     // === СТАТИЧЕСКИЕ МЕТОДЫ ДЛЯ ПЕРЕХОДА МЕЖДУ СЦЕНАМИ ===
     // Метод для перехода на любую сцену через LoadingScene
-    public static void LoadScene(SceneAsset scene, SceneSelectManagerSO GlobalSceneSelectionSO, SceneAsset LoadingScene)
+    public static void LoadScene(SceneAsset scene, ProgressSO GlobalSceneSelectionSO, SceneAsset LoadingScene)
     {
         // Сохраняем следующую сцену
         GlobalSceneSelectionSO.selectedScene = scene;
@@ -123,12 +123,12 @@ public class SceneLoaderManager : MonoBehaviour
     }
 
     // Метод для перехода на лобби
-    public static void LoadLobby(SceneAsset LobbyScene, SceneSelectManagerSO GlobalSceneSelectionSO, SceneAsset LoadingScene)
+    public static void LoadLobby(SceneAsset LobbyScene, ProgressSO GlobalSceneSelectionSO, SceneAsset LoadingScene)
     {
         LoadScene(LobbyScene, GlobalSceneSelectionSO, LoadingScene);
     }
     
-    public static void LoadLevel(SceneAsset scene, SceneSelectManagerSO GlobalSceneSelectionSO, SceneAsset LoadingScene)
+    public static void LoadLevel(SceneAsset scene, ProgressSO GlobalSceneSelectionSO, SceneAsset LoadingScene)
     {
         LoadScene(scene, GlobalSceneSelectionSO, LoadingScene);
     }

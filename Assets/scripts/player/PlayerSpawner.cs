@@ -6,8 +6,7 @@ using System.Collections.Generic;
 public class PlayerSpawner : MonoBehaviour
 {
     [Header("Настройки спавна")]
-    public ProgressSO globalPlayerStatsSO1; // Глобальные улучшения (покупки)
-    public PlayerSelectManagerSO selectedPlayerPrefabSO1; // Выбранный персонаж
+    public ProgressSO ProgressSO1; // Глобальный прогресс
     public Transform spawnPoint; // Точка спавна
 
     [Header("Для отладки")]
@@ -24,17 +23,17 @@ public class PlayerSpawner : MonoBehaviour
 
     private void Start()
     {
-        if (autoSpawnOnStart && selectedPlayerPrefabSO1 != null)
+        if (autoSpawnOnStart && ProgressSO1 != null)
         {
-            SpawnPlayer(selectedPlayerPrefabSO1, spawnPoint);
+            SpawnPlayer(ProgressSO1, spawnPoint);
             Debug.Log("Player spawned");
         }
     }
 
     // Спавнит одного игрока. В мультиплеере вызывается для каждого игрока.
-    public PlayerContext SpawnPlayer(PlayerSelectManagerSO characterSO, Transform spawnPoint)
+    public PlayerContext SpawnPlayer(ProgressSO characterSO, Transform spawnPoint)
     {
-        if (characterSO?.selectedPlayerPrefab == null)
+        if (characterSO?.SelectedCharacter == null)
         {
             Debug.LogError("Не задан префаб игрока в PlayerSelectManagerSO!");
             return null;
@@ -48,7 +47,7 @@ public class PlayerSpawner : MonoBehaviour
 
         // Создаём ИНСТАНС игрока на сцене
         GameObject playerInstance = Instantiate(
-            characterSO.selectedPlayerPrefab,
+            characterSO.SelectedCharacter,
             spawnPoint.position,
             spawnPoint.rotation
         );
@@ -78,7 +77,7 @@ public class PlayerSpawner : MonoBehaviour
 
         return context;
         */
-        int iD1 = characterSO.selectedPlayerPrefab.GetInstanceID();
+        int iD1 = characterSO.SelectedCharacter.GetInstanceID();
         return null;
     }
 

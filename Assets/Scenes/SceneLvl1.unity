@@ -451,8 +451,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19a4a597c8942184c90d7234ccb2f8f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  globalPlayerStatsSO1: {fileID: 11400000, guid: 47f17829b323b554682edc5df6bd8760, type: 2}
-  selectedPlayerPrefabSO1: {fileID: 11400000, guid: c2f83084f113b15489251de4def1a885, type: 2}
+  ProgressSO1: {fileID: 11400000, guid: 8923e585d4c00c24991f35439689e67c, type: 2}
   spawnPoint: {fileID: 141500166}
   autoSpawnOnStart: 1
 --- !u!4 &141500166
@@ -1879,7 +1878,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   LobbyScene: {fileID: 102900000, guid: 6b67137066a016a478f7ed2adaa45be1, type: 3}
   LoadingScene: {fileID: 102900000, guid: 1fea45f7e2391af46802e555d13e53ff, type: 3}
-  GlobalSceneSelectionSO: {fileID: 11400000, guid: 7bb749a2020faf649a2a6d0be7e9c6c9, type: 2}
+  GlobalSceneSelectionSO: {fileID: 11400000, guid: 8923e585d4c00c24991f35439689e67c, type: 2}
 --- !u!4 &572417850
 Transform:
   m_ObjectHideFlags: 0
@@ -2652,7 +2651,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d1bb99a095029843b0e5dd97b2e61db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  globalStats: {fileID: 11400000, guid: 47f17829b323b554682edc5df6bd8760, type: 2}
+  globalStats: {fileID: 11400000, guid: 8923e585d4c00c24991f35439689e67c, type: 2}
 --- !u!4 &698201521
 Transform:
   m_ObjectHideFlags: 0
@@ -5194,7 +5193,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33e4bf02a92322e41b9b7f75a5391167, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalSceneSelectionSO: {fileID: 11400000, guid: 7bb749a2020faf649a2a6d0be7e9c6c9, type: 2}
+  GlobalSceneSelectionSO: {fileID: 11400000, guid: 8923e585d4c00c24991f35439689e67c, type: 2}
   AllScenesBtns: []
   OpenedScenesBtns: []
 --- !u!1 &1304186944
@@ -6594,6 +6593,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1659029423}
+  - component: {fileID: 1659029424}
   m_Layer: 0
   m_Name: projectilesPool1
   m_TagString: Untagged
@@ -6616,6 +6616,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1659029424
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1659029422}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82bb110bf0a8a784c88c12bf927fc7ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1664624375
 GameObject:
   m_ObjectHideFlags: 0
@@ -6890,8 +6902,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 38e8915cee1b42d4fb2ad243b75efd47, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerSelectionSO: {fileID: 11400000, guid: c2f83084f113b15489251de4def1a885, type: 2}
-  playerPrefab: {fileID: 0}
+  playerSelectionSO: {fileID: 11400000, guid: 8923e585d4c00c24991f35439689e67c, type: 2}
+  playerPrefab: {fileID: 4146352723010300728, guid: 3ed9842c4749c414d8b1297090b94947, type: 3}
   selectButton: {fileID: 0}
 --- !u!1001 &1780787136
 PrefabInstance:

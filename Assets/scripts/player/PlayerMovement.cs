@@ -21,7 +21,7 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 right = new Vector3(1, 1, 1);
 
     public Rigidbody2D rb;
-    private Vector2 inputDirection;
+    public Vector2 inputDirection;
     public Camera mainCamera;
 
     private void Awake()

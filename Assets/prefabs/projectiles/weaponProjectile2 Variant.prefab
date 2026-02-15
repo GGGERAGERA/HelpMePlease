@@ -48,6 +48,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2777856397086301255, guid: a3114bef07823844f95b1d0e9f588d81, type: 3}
+      propertyPath: m_BodyType
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2777856397086301255, guid: a3114bef07823844f95b1d0e9f588d81, type: 3}
+      propertyPath: m_GravityScale
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2777856397086301255, guid: a3114bef07823844f95b1d0e9f588d81, type: 3}
+      propertyPath: m_SleepingMode
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3942419567066940313, guid: a3114bef07823844f95b1d0e9f588d81, type: 3}
       propertyPath: projectileSO1
       value: 
@@ -58,7 +70,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4364266391790939063, guid: a3114bef07823844f95b1d0e9f588d81, type: 3}
       propertyPath: m_Name
-      value: weaponProjectile2
+      value: weaponProjectile2 Variant
       objectReference: {fileID: 0}
     - target: {fileID: 4423590050086034142, guid: a3114bef07823844f95b1d0e9f588d81, type: 3}
       propertyPath: m_Color.b

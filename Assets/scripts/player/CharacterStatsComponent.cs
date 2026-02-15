@@ -10,5 +10,5 @@ public class CharacterStatsComponent : MonoBehaviour
     public float CharacterSpeed = 1.5f;
     public float CharacterWeaponRate = 0.5f;
     public float CharacterMoneyBonus = 2.5f;
-    public float Luck;
+    public int Luck = 1;
 }

@@ -9,7 +9,7 @@ using NUnit.Framework;
 public class ScenesSelectManager : MonoBehaviour
 {
     //[Header("Настройки")]
-    [SerializeField] private SceneSelectManagerSO GlobalSceneSelectionSO; // Ссылка на наш SO
+    [SerializeField] private ProgressSO GlobalSceneSelectionSO; // Ссылка на наш SO
     private const string NEXT_SCENE_KEY = "NextSceneToLoad";
     //[SerializeField] private GameObject ScenePrefab; // Какой префаб выбирает эта кнопка
 
