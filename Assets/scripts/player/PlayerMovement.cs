@@ -22,6 +22,7 @@ public class PlayerMovement : MonoBehaviour
 
     public Rigidbody2D rb;
     public Vector2 inputDirection;
+    public Vector2 LastInputDirection;
     public Camera mainCamera;
 
     private void Awake()

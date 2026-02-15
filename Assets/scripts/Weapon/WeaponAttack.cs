@@ -22,25 +22,27 @@ public class WeaponAttack : MonoBehaviour
 
     void Update()
     {
-            timer += Time.deltaTime;
-            if (timer >= fireRate)
-            {
-                Shoot();
-                timer = 0f;
-            }
-            
+        Vector2 inputDirection = playerMovement.GetMovementDirection();
+
+        if (inputDirection == Vector2.zero)
+            inputDirection = direction;
+
+        direction = inputDirection;
+
+        timer += Time.deltaTime;
+        if (timer >= fireRate)
+        {
+            Shoot();
+            timer = 0f;
+        }
+
     }
 
     void Shoot()
     {
         int finalDamage = 25; // ← ПОТОМ ЗАМЕНИШЬ НА НАСТОЯЩИЙ РАСЧЁТ
         Projectile proj = pool.GetProjectile();
-        Vector2 inputDirection = playerMovement.inputDirection;
-        
-            if (inputDirection == Vector2.zero)
-            inputDirection = direction;
-        
-        direction = inputDirection;
+
         proj.Launch(firePoint.position, direction, finalDamage);
     }
 }
