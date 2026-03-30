@@ -1,49 +1,83 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using TMPro;
 using System.Collections;
 
 public class SceneLoader : MonoBehaviour
 {
-    [Header("UI Элементы")]
-    public Slider progressSlider;
-    //public Text progressText;
-    //public GameObject logo;
-    private float smoothVelocity = 0f; // ← Обязательно!
+    [Header("UI References")]
+    [SerializeField] private Slider loadingSlider;
+    [SerializeField] private TextMeshProUGUI loadingText;
+    [SerializeField] private TextMeshProUGUI percentText;
 
-    [Header("Настройки")]
-    public float minLoadTime = 2.5f; // Мин. время анимации (чтобы не мелькало)
-    public string nextSceneName = "LobbyScene";
+    // STATIС переменная — доступна ВСЕГДА, даже между сценами
+    private static bool _isGameStartCorrect = false;
 
-    void Start()
+    [Header("Settings")]
+    [SerializeField] private float minLoadTime = 2f;
+
+    private string _targetSceneName;
+
+    public void Start()
     {
-        StartCoroutine(LoadNextScene());
+        if (SceneManager.GetActiveScene().name == "PreLoadingScene")
+        {
+            Debug.Log("Мы в стартовой сцене, игра запущена правильно!");
+            _isGameStartCorrect = true; // Сохраняем флаг
+        }
+        else
+        {
+            if (_isGameStartCorrect)
+            {
+                Debug.Log("Мы в другой сцене! Но игра была запущена корректно!");
+            }
+            else
+            {
+                Debug.LogWarning("ИГРА ЗАПУЩЕНА НЕПРАВИЛЬНО!");
+                SceneManager.LoadScene("PreLoadingScene");
+            }
+        }
     }
 
-    IEnumerator LoadNextScene()
+    // === МЕТОДЫ ЗАГРУЗКИ — проверяют флаг ===
+
+    public void LoadLevel(string sceneName)
     {
-        // 1. Сначала показываем логотип
-        //logo.SetActive(true);
-
-        // 2. Начинаем асинхронную загрузку
-        AsyncOperation operation = SceneManager.LoadSceneAsync(nextSceneName);
-        operation.allowSceneActivation = false; // Не активируем сцену сразу
-
-        // 3. Ждём мин. время (чтобы анимация не мелькала)
-        yield return new WaitForSeconds(minLoadTime);
-
-        // 4. Показываем прогресс загрузки
-        float currentProgress = 0f;
-        while (!operation.isDone)
+        // Проверяем перед загрузкой
+        if (!_isGameStartCorrect)
         {
-            float targetProgress = Mathf.Clamp01(operation.progress / 0.9f);
-            currentProgress = Mathf.SmoothDamp(currentProgress, targetProgress, ref smoothVelocity, 0.2f);
-            progressSlider.value = currentProgress;
-            //progressText.text = Mathf.Round(currentProgress * 100) + "%";
-            yield return null;
+            Debug.LogError("Нельзя загружать уровень — игра запущена неправильно!");
+            return;
         }
 
-        // 5. Активируем сцену
-        operation.allowSceneActivation = true;
+        _targetSceneName = sceneName;
+        StartCoroutine(LoadAsync());
+    }
+
+    public void LoadLobby()
+    {
+        if (!_isGameStartCorrect)
+        {
+            Debug.LogError("Нельзя загрузить лобби — игра запущена неправильно!");
+            return;
+        }
+
+        _targetSceneName = "LobbyScene";
+        StartCoroutine(LoadAsync());
+    }
+
+    private IEnumerator LoadAsync()
+    {
+        // Твоя логика загрузки
+        Debug.Log($"Загружаем: {_targetSceneName}");
+        
+        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(_targetSceneName);
+        
+        while (!asyncLoad.isDone)
+        {
+            // Обновляй слайдер тут
+            yield return null;
+        }
     }
 }
