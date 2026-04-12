@@ -7,17 +7,17 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: New Material
+  m_Name: mat_Test1
   m_Shader: {fileID: 4800000, guid: 44d183a2c9e9a664dbf47b19897e25d1, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _ALPHAMODE_CUTOUT
-  - _MAINTEXMAPPING_UV
+  - _MAINTEXMAPPING_TRIPLANAROBJECT
   - _SECONDLAYERBLEND_MIX
   - _SHADOWTYPE_CRISP
   - _SPECULARTYPE_PAINTCRISP
-  - _USEOUTLINE_ON
+  - _USERIMLIGHT_ON
   - _USESPECULAR_ON
   m_InvalidKeywords:
   - _MAPPING_UV
@@ -95,7 +95,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _MaskTex:
         m_Texture: {fileID: 10300, guid: 0000000000000000f000000000000000, type: 0}
-        m_Scale: {x: 5, y: 7.73}
+        m_Scale: {x: 5, y: 5}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
         m_Texture: {fileID: 0}
@@ -195,7 +195,7 @@ Material:
     - _HardTriplanar: 0
     - _HighlightIntensity: 0.62
     - _METALNESS: 0
-    - _MainTexMapping: 0
+    - _MainTexMapping: 2
     - _Mapping: 0
     - _MaskChannel: 0.3
     - _MaskMapping: 1
@@ -224,8 +224,8 @@ Material:
     - _ReceiveShadows: 1
     - _RimIntensity: 2
     - _RimPower: 0.1
-    - _RimSmoothness: 1
-    - _RimWidth: 20
+    - _RimSmoothness: 0.87
+    - _RimWidth: 3.4
     - _SPECULAR_IOR: 1.5
     - _SPECULAR_ROUGHNESS: 0
     - _Saturation: 1
@@ -233,20 +233,20 @@ Material:
     - _SecondLayerBlend: 0
     - _SecondLayerEmission: 1
     - _ShadowSmooth: 0.0447
-    - _ShadowSmoothness: 0.217
-    - _ShadowSteps: 5
-    - _ShadowThreshold: 0.53
+    - _ShadowSmoothness: 0.444
+    - _ShadowSteps: 4.93
+    - _ShadowThreshold: 0.505
     - _ShadowType: 1
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
-    - _SpecularIntensity: 1.15
-    - _SpecularNoiseScale: 13.7
+    - _SpecularIntensity: 1.01
+    - _SpecularNoiseScale: 20
     - _SpecularNoiseStrength: 1
-    - _SpecularPower: 1
+    - _SpecularPower: 2.6
     - _SpecularSize: 500
-    - _SpecularSmoothness: 0.604
-    - _SpecularThreshold: 1
+    - _SpecularSmoothness: 0.552
+    - _SpecularThreshold: 0.696
     - _SpecularType: 2
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
@@ -264,9 +264,9 @@ Material:
     - _UseCrispNoise: 0
     - _UseCutout: 0
     - _UseEmission: 0
-    - _UseOutline: 1
+    - _UseOutline: 0
     - _UseRim: 1
-    - _UseRimLight: 0
+    - _UseRimLight: 1
     - _UseSecondLayer: 0
     - _UseSpecular: 1
     - _UseTransparency: 1
@@ -277,7 +277,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BASE_COLOR: {r: 0, g: 0, b: 0, a: 0}
-    - _BaseColor: {r: 0.9245283, g: 0.46730322, b: 0.2660199, a: 1}
+    - _BaseColor: {r: 0.8867924, g: 0.33306485, b: 0.08784264, a: 1}
     - _Color: {r: 0.8396226, g: 0.39489892, b: 0.20198467, a: 1}
     - _EMISSION_COLOR: {r: 0, g: 0, b: 0, a: 0}
     - _EmissionColor: {r: 0.3443396, g: 1, b: 0.3817649, a: 1}
@@ -286,9 +286,9 @@ Material:
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
     - _RimColor: {r: 1, g: 1, b: 1, a: 1}
     - _SPECULAR_COLOR: {r: 1, g: 1, b: 1, a: 0}
-    - _SecondColor: {r: 0.6132076, g: 0.32106623, b: 0.32106623, a: 1}
+    - _SecondColor: {r: 0, g: 0.7571249, b: 4, a: 1}
     - _SecondLayerEmissionColor: {r: 1, g: 0, b: 0, a: 0}
-    - _ShadowColor: {r: 0.6698113, g: 0.15481488, b: 0.15481488, a: 1}
+    - _ShadowColor: {r: 0.3773585, g: 0.029805578, b: 0, a: 1}
     - _SpecColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
     - _SpecularColor: {r: 1, g: 0.8349056, b: 0.8349056, a: 1}
   m_BuildTextureStacks: []
