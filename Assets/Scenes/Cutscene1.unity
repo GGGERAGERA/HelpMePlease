@@ -131,6 +131,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: char2
       objectReference: {fileID: 0}
+    - target: {fileID: 3626916397498700004, guid: f9df7fa9cd9bda24d9bb4fc1ea8c98d6, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3626916397498700004, guid: f9df7fa9cd9bda24d9bb4fc1ea8c98d6, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3626916397498700004, guid: f9df7fa9cd9bda24d9bb4fc1ea8c98d6, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7878350319992209165, guid: f9df7fa9cd9bda24d9bb4fc1ea8c98d6, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.437
