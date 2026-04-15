@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 89405238c908967489329df66d71e860
+guid: 3d44a764404609e4cbf0b68741f078d4
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -74,7 +74,7 @@ ScriptedImporter:
   previousAsepriteImporterSettings:
     fileImportMode: 1
     importHiddenLayers: 0
-    layerImportMode: 0
+    layerImportMode: 1
     defaultPivotSpace: 0
     defaultPivotAlignment: 0
     customPivotPosition: {x: 0.5, y: 0.5}
@@ -89,7 +89,7 @@ ScriptedImporter:
   asepriteImporterSettings:
     fileImportMode: 1
     importHiddenLayers: 0
-    layerImportMode: 0
+    layerImportMode: 1
     defaultPivotSpace: 0
     defaultPivotAlignment: 0
     customPivotPosition: {x: 0.5, y: 0.5}
@@ -102,7 +102,7 @@ ScriptedImporter:
     generateIndividualEvents: 1
     generateSpriteAtlas: 1
   importFileNodeState: 1
-  platformSettingsDirtyTick: 639118871210061068
+  platformSettingsDirtyTick: 639118873402432922
   textureAssetName: 
   singleSpriteImportData:
   - name: 
@@ -127,9 +127,9 @@ ScriptedImporter:
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
   animatedSpriteImportData:
-  - name: Sleeve
+  - name: PistolBullet1
     originalName: 
-    pivot: {x: 0.47826087, y: 0.5}
+    pivot: {x: 0.54545456, y: 0.5}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -137,9 +137,9 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 23
-      height: 10
-    spriteID: 29a6a21b209cda143be8641e6f7a380c
+      width: 11
+      height: 8
+    spriteID: 83a7c10837bc0b14780d5fccb0eabe5c
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -149,50 +149,29 @@ ScriptedImporter:
     tessellationDetail: 0
     uvTransform: {x: 4, y: 4}
   spriteSheetImportData: []
-  tileSetImportData:
-  - name: Sleeve
-    originalName: 
-    pivot: {x: 0.6956522, y: 1.6}
-    alignment: 9
-    border: {x: 0, y: 0, z: 0, w: 0}
-    customData: 
-    rect:
-      serializedVersion: 2
-      x: 4
-      y: 4
-      width: 23
-      height: 10
-    spriteID: 29a6a21b209cda143be8641e6f7a380c
-    spriteBone: []
-    spriteOutline: []
-    vertices: []
-    spritePhysicsOutline: []
-    indices: 
-    edges: []
-    tessellationDetail: 0
-    uvTransform: {x: 4, y: 4}
+  tileSetImportData: []
   asepriteLayers:
-  - layerIndex: 2
+  - layerIndex: 0
     uuid:
-      value0: 1358265266
+      value0: 1105071312
       value1: 0
       value2: 0
       value3: 0
     guid: 0
-    name: Sleeve
-    layerFlags: 3
+    name: PistolBullet1
+    layerFlags: 0
     layerType: 0
     blendMode: 0
     cells:
-    - name: Sleeve
+    - name: PistolBullet1
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:
-        x: 5
-        y: 11
-        width: 23
-        height: 10
-      spriteId: 29a6a21b209cda143be8641e6f7a380c
+        x: 10
+        y: 12
+        width: 11
+        height: 8
+      spriteId: 83a7c10837bc0b14780d5fccb0eabe5c
     linkedCells: []
     tileCells: []
     tileSetIndex: 0
@@ -239,4 +218,4 @@ ScriptedImporter:
   secondarySpriteTextures: []
   spritePackingTag: 
   canvasSize: {x: 32, y: 32}
-  previousTextureSize: {x: 32, y: 32}
+  previousTextureSize: {x: 32, y: 16}
