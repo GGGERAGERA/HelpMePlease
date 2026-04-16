@@ -6,7 +6,7 @@ AnimationClip:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: WalkLeft
+  m_Name: death
   serializedVersion: 7
   m_Legacy: 0
   m_Compressed: 0
@@ -30,6 +30,15 @@ AnimationClip:
         weightedMode: 0
         inWeight: 0
         outWeight: 0
+      - serializedVersion: 3
+        time: 0.39999998
+        value: 0
+        inSlope: Infinity
+        outSlope: Infinity
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
@@ -51,6 +60,15 @@ AnimationClip:
         weightedMode: 0
         inWeight: 0
         outWeight: 0
+      - serializedVersion: 3
+        time: 0.39999998
+        value: 0
+        inSlope: Infinity
+        outSlope: Infinity
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
@@ -63,15 +81,15 @@ AnimationClip:
   - serializedVersion: 2
     curve:
     - time: 0
-      value: {fileID: 8746618258489974736, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.1
-      value: {fileID: -7585875906754769888, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.20000002
-      value: {fileID: 272197832252839925, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+      value: {fileID: 5060938309559628148, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+    - time: 0.100000024
+      value: {fileID: 2985928957525770766, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+    - time: 0.19999999
+      value: {fileID: -5825916582360318437, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
     - time: 0.3
-      value: {fileID: 5832896164393231513, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+      value: {fileID: -8444659359593933201, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
     - time: 0.39000002
-      value: {fileID: 5832896164393231513, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+      value: {fileID: -8444659359593933201, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
     attribute: m_Sprite
     path: Zombie/foot
     classID: 212
@@ -80,15 +98,17 @@ AnimationClip:
   - serializedVersion: 2
     curve:
     - time: 0
-      value: {fileID: 7529413315876186396, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.1
-      value: {fileID: -8878043037541337621, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.20000002
-      value: {fileID: -5688592086802665594, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+      value: {fileID: -946616731032303030, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+    - time: 0.100000024
+      value: {fileID: 8281561167697087804, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+    - time: 0.19999999
+      value: {fileID: 741266513268836501, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
     - time: 0.3
-      value: {fileID: -5926075819615582181, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.39000002
-      value: {fileID: -5926075819615582181, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+      value: {fileID: -4738097672661312579, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+    - time: 0.39999998
+      value: {fileID: -8272369328224832385, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+    - time: 0.48999998
+      value: {fileID: -8272369328224832385, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
     attribute: m_Sprite
     path: Zombie/body
     classID: 212
@@ -97,15 +117,15 @@ AnimationClip:
   - serializedVersion: 2
     curve:
     - time: 0
-      value: {fileID: -610300720161378363, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.1
-      value: {fileID: 2355679935386904536, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.20000002
-      value: {fileID: 4821595900986359964, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+      value: {fileID: 7552652431964638552, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+    - time: 0.100000024
+      value: {fileID: 8584205744622255493, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+    - time: 0.19999999
+      value: {fileID: -9173319536949119621, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
     - time: 0.3
-      value: {fileID: -1353513424091178445, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+      value: {fileID: 8715339481606392434, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
     - time: 0.39000002
-      value: {fileID: -1353513424091178445, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+      value: {fileID: 8715339481606392434, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
     attribute: m_Sprite
     path: Zombie/head
     classID: 212
@@ -124,7 +144,7 @@ AnimationClip:
     m_AdditiveReferencePoseClip: {fileID: 0}
     m_AdditiveReferencePoseTime: 0
     m_StartTime: 0
-    m_StopTime: 0.4
+    m_StopTime: 0.49999997
     m_OrientationOffsetY: 0
     m_Level: 0
     m_CycleOffset: 0
@@ -153,6 +173,15 @@ AnimationClip:
         weightedMode: 0
         inWeight: 0
         outWeight: 0
+      - serializedVersion: 3
+        time: 0.39999998
+        value: 0
+        inSlope: Infinity
+        outSlope: Infinity
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
@@ -168,6 +197,15 @@ AnimationClip:
       - serializedVersion: 3
         time: 0
         value: 1
+        inSlope: Infinity
+        outSlope: Infinity
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.39999998
+        value: 0
         inSlope: Infinity
         outSlope: Infinity
         tangentMode: 0
