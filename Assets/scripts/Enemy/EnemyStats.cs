@@ -66,13 +66,13 @@ public class EnemyStats : MonoBehaviour
     private void OnDestroy()
     {
         EnemySpawner es = FindAnyObjectByType<EnemySpawner>();
-        es.onEnemyKilled();
+      //  es.onEnemyKilled();
     }
 
     void ReturnEnemy()
     {
         EnemySpawner es = FindAnyObjectByType<EnemySpawner>();
-        transform.position = player.position + es.relativeSpawnPoints[Random.Range(0, es.relativeSpawnPoints.Count)].position;
+     //   transform.position = player.position + es.relativeSpawnPoints[Random.Range(0, es.relativeSpawnPoints.Count)].position;
     }
 
 }
