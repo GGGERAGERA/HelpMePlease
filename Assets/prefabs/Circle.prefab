@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: -5508003051562362105}
   m_Layer: 0
   m_Name: Circle
-  m_TagString: Untagged
+  m_TagString: Bullet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -106,7 +106,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3597049f130ffd4daec430510399f8f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Bullet
-  speed: 10
 --- !u!65 &-2404353894824190525
 BoxCollider:
   m_ObjectHideFlags: 0

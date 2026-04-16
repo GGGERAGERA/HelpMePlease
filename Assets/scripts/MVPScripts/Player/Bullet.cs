@@ -38,7 +38,6 @@ public class Bullet : MonoBehaviour
     {
         if (other.CompareTag("Enemy"))
         {
-            Destroy(other.gameObject);
             Destroy(gameObject);
         }
         // Можно добавить, чтобы пуля исчезала при попадании в стену или игрока
