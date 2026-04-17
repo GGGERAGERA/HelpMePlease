@@ -25,9 +25,9 @@ public class CharacterMovement2D : MonoBehaviour
     void Update()
     {
         float moveX = Input.GetAxisRaw("Horizontal");
-        float moveZ = Input.GetAxisRaw("Vertical");
+        float moveY = Input.GetAxisRaw("Vertical");
 
-        movement = new Vector3(moveX, 0, moveZ).normalized;
+        movement = new Vector3(moveX, moveY, 0).normalized;
         transform.Translate(movement * speed * Time.deltaTime, Space.World);
 
         // Зеркалирование по горизонтали

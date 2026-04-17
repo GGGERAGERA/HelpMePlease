@@ -4,13 +4,13 @@ public class CameraFollow : MonoBehaviour
 {
     public Transform target;
     public Vector3 offset;
-    public float smoothSpeed = 0.125f; // Скорость следования
+    public float smoothSpeed = 0.125f; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
     void LateUpdate()
     {
         if (target == null) return;
         Vector3 desiredPosition = target.position + offset;
-        desiredPosition.y = transform.position.y; // фиксируем высоту камеры
+        desiredPosition.z = transform.position.z; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
         Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
         transform.position = smoothedPosition;
     }
