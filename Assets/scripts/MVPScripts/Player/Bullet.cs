@@ -6,7 +6,7 @@ public class Bullet : MonoBehaviour
     private float speed;
     private bool hasTarget = false;
 
-    // Этот метод будет вызывать скрипт Shoot
+    // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ Shoot
     public void SetTarget(Transform enemyTarget, float bulletSpeed)
     {
         target = enemyTarget;
@@ -22,29 +22,29 @@ public class Bullet : MonoBehaviour
             return;
         }
 
-        // Если цель уничтожена, самоуничтожаемся
+        // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         if (target == null)
         {
             Destroy(gameObject);
             return;
         }
 
-        // Направление к цели
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ
         Vector3 direction = (target.position - transform.position).normalized;
         transform.Translate(direction * speed * Time.deltaTime, Space.World);
     }
 
-    void OnTriggerEnter(Collider other)
+    void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Enemy"))
         {
             Destroy(gameObject);
         }
-        // Можно добавить, чтобы пуля исчезала при попадании в стену или игрока
+        // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
     }
     void Start()
     {
-        // Самоуничтожение через 2 секунды, чтобы пули не накапливались
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ 2 пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         Destroy(gameObject, 2f);
     }
 }

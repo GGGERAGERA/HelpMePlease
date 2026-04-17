@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
 {
-    public GameObject enemyPrefab;   // ПРЕФАБ врага (перетащите из Assets)
+    public GameObject enemyPrefab;   // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ Assets)
     public float spawnRadius = 10f;
     public float spawnInterval = 2f;
     public int maxEnemies = 10;
@@ -17,30 +17,30 @@ public class EnemySpawner : MonoBehaviour
 
     void SpawnEnemy()
     {
-        // Проверяем, что префаб существует
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         if (enemyPrefab == null)
         {
-            Debug.LogError("enemyPrefab не назначен в спавнере!");
+            Debug.LogError("enemyPrefab пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ!");
             return;
         }
 
-        // Проверяем, что игрок существует
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         if (player == null)
         {
             player = GameObject.FindGameObjectWithTag("Player")?.transform;
             if (player == null) return;
         }
 
-        // Считаем врагов на сцене
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
         if (enemies.Length >= maxEnemies) return;
 
-        // Выбираем случайную позицию вокруг игрока
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
         Vector3 randomDirection = Random.insideUnitSphere * spawnRadius;
-        randomDirection.y = 0; // фиксируем Y, чтобы враги не появлялись в воздухе
+        randomDirection.z = 0; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Y, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         Vector3 spawnPos = player.position + randomDirection;
 
-        // Создаём врага
+        // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
         Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
     }
 }

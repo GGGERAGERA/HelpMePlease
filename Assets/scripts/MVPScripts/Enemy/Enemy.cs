@@ -3,7 +3,7 @@ using UnityEngine;
 public class Enemy : MonoBehaviour
 {
     public float speed = 2f;
-    public float destroyDelay = 3f; // Время до полного удаления после смерти
+    public float destroyDelay = 3f; // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
     private Transform player;
     private Animator anim;
     private bool isDead = false;
@@ -16,7 +16,7 @@ public class Enemy : MonoBehaviour
 
     void Update()
     {
-        if (isDead) return; // Не двигаемся, если умираем
+        if (isDead) return; // пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         if (player == null) return;
 
         Vector3 direction = (player.position - transform.position).normalized;
@@ -28,34 +28,34 @@ public class Enemy : MonoBehaviour
     {
         if (isDead) return;
         isDead = true;
-        // Отключаем движение, коллайдер, чтобы враг не мешал
-        GetComponent<Collider>().enabled = false;
-        // Запускаем анимацию смерти
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+        GetComponent<Collider2D>().enabled = false;
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
         if (anim != null)
         {
             anim.SetTrigger("Die");
             Debug.Log("Enemy DIE! Animation triggered.");
         }
         else
-            Destroy(gameObject, 0.01f); // если аниматора нет — удаляем почти сразу
+            Destroy(gameObject, 0.01f); // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 
-        // Удаляем объект после окончания анимации (длина анимации + задержка)
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ + пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
         Destroy(gameObject, destroyDelay);
     }
 
-    void OnTriggerEnter(Collider other)
+    void OnTriggerEnter2D(Collider2D other)
     {
         if (isDead) return;
         if (other.CompareTag("Player"))
         {
             Debug.Log("Enemy DIE!");
-            Die(); // вместо Destroy(gameObject)
-            // Дополнительно: нанести урон игроку
+            Die(); // пїЅпїЅпїЅпїЅпїЅпїЅ Destroy(gameObject)
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
         }
         else if (other.CompareTag("Bullet"))
         {
-            Die(); // вместо Destroy
-            Destroy(other.gameObject); // пуля тоже исчезает
+            Die(); // пїЅпїЅпїЅпїЅпїЅпїЅ Destroy
+            Destroy(other.gameObject); // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         }
     }
 }

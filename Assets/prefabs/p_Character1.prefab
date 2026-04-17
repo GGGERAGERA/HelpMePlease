@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4583023003438230290}
   - component: {fileID: 4325086801245655206}
   - component: {fileID: 8488144525096105199}
-  - component: {fileID: 2759607110385472260}
+  - component: {fileID: 7771479494129676935}
   m_Layer: 0
   m_Name: p_Character1
   m_TagString: Player
@@ -65,13 +65,16 @@ MonoBehaviour:
   spawnRadius: 10
   spawnInterval: 2
   maxEnemies: 20
---- !u!136 &2759607110385472260
-CapsuleCollider:
+--- !u!70 &7771479494129676935
+CapsuleCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 602157039170639563}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -80,14 +83,25 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5
-  m_Height: 1
-  m_Direction: 1
-  m_Center: {x: 0, y: 0.5, z: 0}
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0.5}
+  m_Size: {x: 0.5, y: 1}
+  m_Direction: 0
 --- !u!1 &8796822734284958537
 GameObject:
   m_ObjectHideFlags: 0
