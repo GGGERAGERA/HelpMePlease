@@ -5,6 +5,7 @@ public class Shoot : MonoBehaviour
     public GameObject bulletPrefab;   // префаб пули
     public Transform firePoint;       // точка, откуда вылетает пуля (можно создать дочерний объект)
     public float bulletSpeed = 10f;
+    public float bulletDamage = 20f;
     public float shootInterval = 2f;   // Интервал между выстрелами
     public float searchRadius = 20f; // радиус поиска врагов
 
@@ -36,7 +37,7 @@ public class Shoot : MonoBehaviour
         Bullet bulletScript = bullet.GetComponent<Bullet>();
         if (bulletScript != null)
         {
-            bulletScript.SetTarget(nearestEnemy, bulletSpeed);
+            bulletScript.Initialize(bulletDamage, bulletSpeed, nearestEnemy);
         }
     }
 
