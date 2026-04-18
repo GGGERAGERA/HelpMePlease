@@ -73,7 +73,7 @@ AnimationClip:
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
-        time: 0.4
+        time: 0.23
         value: 0
         inSlope: Infinity
         outSlope: Infinity
@@ -103,7 +103,7 @@ AnimationClip:
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
-        time: 0.4
+        time: 0.23
         value: 0
         inSlope: Infinity
         outSlope: Infinity
@@ -159,21 +159,23 @@ AnimationClip:
     curve:
     - time: 0
       value: {fileID: 8281561167697087804, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.1
+    - time: 0.06
       value: {fileID: 741266513268836501, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.2
+    - time: 0.11
       value: {fileID: -4738097672661312579, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.3
+    - time: 0.17
       value: {fileID: -8272369328224832385, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.4
+    - time: 0.23
       value: {fileID: -1076814146289271925, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.5
+    - time: 0.28
       value: {fileID: -5669804831372507881, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.6
+    - time: 0.34
       value: {fileID: -1171836608274050355, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.7
+    - time: 0.4
       value: {fileID: 6125618459098542483, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.79
+    - time: 0.45
+      value: {fileID: 6125618459098542483, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+    - time: 0.5
       value: {fileID: 6125618459098542483, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
     attribute: m_Sprite
     path: Zombie/body
@@ -184,13 +186,13 @@ AnimationClip:
     curve:
     - time: 0
       value: {fileID: -4349705755013022076, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.1
+    - time: 0.06
       value: {fileID: -4704706523321477171, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.2
+    - time: 0.11
       value: {fileID: -6024868742934169731, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.3
+    - time: 0.17
       value: {fileID: -4160073925374177981, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.39
+    - time: 0.22
       value: {fileID: -4160073925374177981, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
     attribute: m_Sprite
     path: Zombie/head
@@ -201,13 +203,13 @@ AnimationClip:
     curve:
     - time: 0
       value: {fileID: -1943867520091957615, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.1
+    - time: 0.06
       value: {fileID: -2643328345790754558, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.2
+    - time: 0.11
       value: {fileID: -8269400445514350541, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.3
+    - time: 0.17
       value: {fileID: 3388067295138814901, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
-    - time: 0.39
+    - time: 0.22
       value: {fileID: 3388067295138814901, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
     attribute: m_Sprite
     path: Zombie/Lfoot
@@ -310,6 +312,7 @@ AnimationClip:
     - {fileID: -1171836608274050355, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
     - {fileID: 6125618459098542483, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
     - {fileID: 6125618459098542483, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+    - {fileID: 6125618459098542483, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
     - {fileID: -4349705755013022076, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
     - {fileID: -4704706523321477171, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
     - {fileID: -6024868742934169731, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
@@ -325,7 +328,7 @@ AnimationClip:
     m_AdditiveReferencePoseClip: {fileID: 0}
     m_AdditiveReferencePoseTime: 0
     m_StartTime: 0
-    m_StopTime: 0.8
+    m_StopTime: 0.51
     m_OrientationOffsetY: 0
     m_Level: 0
     m_CycleOffset: 0
@@ -397,7 +400,7 @@ AnimationClip:
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
-        time: 0.4
+        time: 0.23
         value: 0
         inSlope: Infinity
         outSlope: Infinity
@@ -427,7 +430,7 @@ AnimationClip:
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
-        time: 0.4
+        time: 0.23
         value: 0
         inSlope: Infinity
         outSlope: Infinity
