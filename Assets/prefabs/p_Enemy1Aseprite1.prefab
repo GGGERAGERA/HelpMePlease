@@ -9,8 +9,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2671083716182587235}
-  - component: {fileID: 4863053208054664869}
   - component: {fileID: -5624981238059027454}
+  - component: {fileID: 4831376453459486560}
+  - component: {fileID: 6045726002428409456}
+  - component: {fileID: 4442309911056970652}
+  - component: {fileID: 5140618788807294408}
   m_Layer: 0
   m_Name: p_Enemy1Aseprite1
   m_TagString: Enemy
@@ -34,21 +37,6 @@ Transform:
   - {fileID: 3644557882799905132}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4863053208054664869
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1362265803452333836}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 10013e623788ec24f8a4e423372ce42f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Enemy
-  speed: 1
-  destroyDelay: 0.5
-  damage: 20
 --- !u!61 &-5624981238059027454
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -95,6 +83,64 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
+--- !u!114 &4831376453459486560
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1362265803452333836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad6fdb0c3d59a914b89ef539d221c709, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyMovement
+  speed: 2
+--- !u!114 &6045726002428409456
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1362265803452333836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19136a5a9a8407f4bad025abe8a5570b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
+  maxHealth: 100
+  onDamageTaken:
+    m_PersistentCalls:
+      m_Calls: []
+  onDeath:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &4442309911056970652
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1362265803452333836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f2baa59fe0a6924abd6325b9fac1624, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDeathHandler
+  anim: {fileID: 5754472316754357161}
+  destroyDelay: 0.5
+--- !u!114 &5140618788807294408
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1362265803452333836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f398493d588f764ebc02a9de3fe96a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyCollisionHandler
 --- !u!1001 &6899962999031408225
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -105,7 +151,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8137813610356888312, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
       propertyPath: m_SortingLayer
-      value: 4
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: -8137813610356888312, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
       propertyPath: m_SortingLayerID
@@ -223,5 +269,10 @@ PrefabInstance:
 --- !u!4 &3644557882799905132 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7878350319992209165, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+  m_PrefabInstance: {fileID: 6899962999031408225}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &5754472316754357161 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 1160356261127867848, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
   m_PrefabInstance: {fileID: 6899962999031408225}
   m_PrefabAsset: {fileID: 0}
