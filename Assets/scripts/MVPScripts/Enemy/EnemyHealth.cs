@@ -1,29 +1,31 @@
 using UnityEngine;
-using UnityEngine.Events;
+using UnityEngine.Events; // обязательно добавить
 
 public class EnemyHealth : MonoBehaviour
 {
-    public float maxHealth = 100f;
+    public float maxHealth = 30f;
     private float currentHealth;
-    public UnityEvent<float> onDamageTaken; // событие при уроне для обновления UI
-    public UnityEvent onDeath; // событие при смерти для уничтожения врага
+
+    public UnityEvent<float, float> OnHealthChanged; // (current, max)
+    public UnityEvent onDeath;
+
     void Start()
     {
         currentHealth = maxHealth;
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
 
-  
     public void TakeDamage(float damage)
     {
+        if (currentHealth <= 0) return;
         currentHealth -= damage;
-        onDamageTaken.Invoke(currentHealth); // вызываем событие при уроне
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
         if (currentHealth <= 0)
-        {
             Die();
-        }
     }
+
     void Die()
     {
-        onDeath.Invoke(); // вызываем событие при смерти
+        onDeath?.Invoke();
     }
 }
