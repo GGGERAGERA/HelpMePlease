@@ -10,10 +10,10 @@ GameObject:
   m_Component:
   - component: {fileID: 3113296557672515878}
   - component: {fileID: 7126802871426614343}
-  - component: {fileID: 4093561616202041533}
   - component: {fileID: 7944159258292420328}
   - component: {fileID: 2830050788046075774}
   - component: {fileID: 7047592990425370015}
+  - component: {fileID: -1264113028602070438}
   m_Layer: 0
   m_Name: Circle
   m_TagString: Bullet
@@ -95,18 +95,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!114 &4093561616202041533
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7002385577872787753}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e3597049f130ffd4daec430510399f8f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Bullet
 --- !u!58 &7944159258292420328
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -179,7 +167,22 @@ SortingGroup:
   m_GameObject: {fileID: 7002385577872787753}
   m_Enabled: 1
   m_SortingLayerID: -1183170747
-  m_SortingLayer: 4
+  m_SortingLayer: 3
   m_SortingOrder: 0
   m_SortAtRoot: 0
   m_Sort3DAs2D: 0
+--- !u!114 &-1264113028602070438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7002385577872787753}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba5522523bf24da409bf62545b5ce818, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Bullet
+  damage: 20
+  speed: 2
+  timeBulletDestroy: 5

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class EnemyMovement : MonoBehaviour
+public class EnemyMovement_ : MonoBehaviour
 {
     EnemyStats enemy;
     Transform player;
