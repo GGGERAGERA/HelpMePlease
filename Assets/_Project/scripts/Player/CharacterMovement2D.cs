@@ -37,6 +37,8 @@ public class CharacterMovement2D : MonoBehaviour
             scale.x = Mathf.Abs(scale.x) * -Mathf.Sign(moveX);
             transform.localScale = scale;
         }
+        if (animator != null)
+            animator.SetFloat("Speed", movement.magnitude);
     }
 
     void FixedUpdate()
