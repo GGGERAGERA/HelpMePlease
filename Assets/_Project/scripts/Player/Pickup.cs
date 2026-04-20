@@ -2,20 +2,19 @@ using UnityEngine;
 
 public class Pickup : MonoBehaviour
 {
-    public int value = 1;        // количество опыта/монет
-    public float pickupRadius = 0.5f; // радиус подбора (опционально)
+    public enum LootType { Crystal, Gems }
+    public LootType lootType;
+    public int value = 1;
 
     void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Player"))
         {
-            Debug.Log($"Loot triggered with: {other.name}, tag = {other.tag}");
-            // Здесь можно добавить логику: увеличить счёт, опыт, здоровье и т.д.
-            Debug.Log($"Loot picked up! Value: {value}");
-
-            // Пример: увеличиваем счёт игрока
-            ScoreManager.Instance.AddScore(value);
-            // Можно добавить звук, эффект и т.д.
+            Debug.Log("Player picked up: " + lootType + " with value: " + value);
+            if (lootType == LootType.Crystal)
+                ScoreManager.Instance.AddCrystal(value);
+            else if (lootType == LootType.Gems)
+                ScoreManager.Instance.AddGems(value);
             Destroy(gameObject);
         }
     }

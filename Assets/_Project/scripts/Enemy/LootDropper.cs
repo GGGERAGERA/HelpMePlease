@@ -3,11 +3,11 @@ using UnityEngine;
 public class LootDropper : MonoBehaviour
 {
     [Header("Loot Settings")]
-    public GameObject lootPrefab;      // префаб лута (монета, опыт и т.д.)
-    public float dropChance = 1f;      // 1 = 100%, 0.5 = 50%
+    public GameObject[] lootPrefabs;   // массив префабов (два или больше)
     public Vector3 dropOffset = Vector3.zero; // смещение от позиции врага
 
     private EnemyHealth enemyHealth;
+
     void Start()
     {
         enemyHealth = GetComponent<EnemyHealth>();
@@ -19,17 +19,18 @@ public class LootDropper : MonoBehaviour
 
     void DropLoot()
     {
-        // Проверяем шанс выпадения
-        if (Random.value > dropChance) return;
-
-        if (lootPrefab == null)
+        if (lootPrefabs == null || lootPrefabs.Length == 0)
         {
-            Debug.LogWarning("LootDropper: lootPrefab is null on " + name);
+            Debug.LogWarning("LootDropper: no loot prefabs assigned!");
             return;
         }
 
-        // Создаём лут в позиции врага + смещение
+        // Выбираем случайный префаб из массива (равная вероятность для каждого)
+        int randomIndex = Random.Range(0, lootPrefabs.Length);
+        GameObject selectedLoot = lootPrefabs[randomIndex];
+
+        // Создаём выбранный лут
         Vector3 dropPosition = transform.position + dropOffset;
-        Instantiate(lootPrefab, dropPosition, Quaternion.identity);
+        Instantiate(selectedLoot, dropPosition, Quaternion.identity);
     }
 }

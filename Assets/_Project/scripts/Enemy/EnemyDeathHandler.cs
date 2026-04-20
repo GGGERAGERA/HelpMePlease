@@ -27,7 +27,6 @@ public class EnemyDeathHandler : MonoBehaviour
         if (anim != null)
         {
             anim.SetTrigger("Die");
-            Debug.Log("Death animation triggered for " + name);
         }
         else
             Debug.LogWarning("Animator is null, cannot play death animation");

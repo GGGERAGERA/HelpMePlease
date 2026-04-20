@@ -3,36 +3,38 @@ using UnityEngine.UI;
 
 public class ScoreManager : MonoBehaviour
 {
-    public static ScoreManager Instance; // синглтон для простого доступа
+    public static ScoreManager Instance;
 
-    public Text scoreText;               // перетащите сюда ScoreText
-    private int currentScore = 0;
+    [Header("UI References")]
+    public Text crystal;
+    public Text gemsText;
+
+    private int crystalCount = 0;
+    private int gems = 0;
 
     void Awake()
     {
-        // Реализуем синглтон
-        if (Instance == null)
-            Instance = this;
-        else
-            Destroy(gameObject);
-    }
-
-    void Start()
-    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
         UpdateUI();
     }
 
-    public void AddScore(int amount)
+    public void AddCrystal(int amount)
     {
-        currentScore += amount;
+        crystalCount += amount;
+        UpdateUI();
+    }
+
+    public void AddGems(int amount)
+    {
+        
+        gems += amount;
         UpdateUI();
     }
 
     private void UpdateUI()
     {
-        if (scoreText != null)
-            scoreText.text = "Score: " + currentScore;
-        else
-            Debug.LogError("ScoreManager: scoreText not assigned!");
+        if (crystal != null) crystal.text = "Crystals: " + crystalCount;
+        if (gemsText != null) gemsText.text = "Gems: " + gems;
     }
 }

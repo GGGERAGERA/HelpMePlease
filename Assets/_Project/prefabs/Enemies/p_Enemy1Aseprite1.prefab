@@ -434,8 +434,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c41473ef92b617144b1bb76b83c7ddf2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootDropper
-  lootPrefab: {fileID: 7013613547225063832, guid: af8c07181226c72428723251e92170da, type: 3}
-  dropChance: 1
+  lootPrefabs:
+  - {fileID: 8927180452970597320, guid: 568301bd43bfcef49aa858e8372f81be, type: 3}
+  - {fileID: 7435288801949326821, guid: 6570a9d2e7e1553419610b5771ad4650, type: 3}
   dropOffset: {x: 0, y: 0.55, z: 0}
 --- !u!1 &4548343093565794949
 GameObject:
