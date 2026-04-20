@@ -694,7 +694,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2216303574660860588, guid: 169b5772155b17842b8cd9604fcf1eb7, type: 3}
       propertyPath: bulletDamage
-      value: 0
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 2216303574660860588, guid: 169b5772155b17842b8cd9604fcf1eb7, type: 3}
       propertyPath: shootInterval
@@ -748,6 +748,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4726604075001662714, guid: 169b5772155b17842b8cd9604fcf1eb7, type: 3}
+      propertyPath: maxHealth
+      value: 200
+      objectReference: {fileID: 0}
     - target: {fileID: 5075261396694275525, guid: 169b5772155b17842b8cd9604fcf1eb7, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -782,7 +786,7 @@ PrefabInstance:
       objectReference: {fileID: 11400000, guid: cc52f56eb0cf6de4fb7d93336f0494d5, type: 2}
     - target: {fileID: 8488144525096105199, guid: 169b5772155b17842b8cd9604fcf1eb7, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8488144525096105199, guid: 169b5772155b17842b8cd9604fcf1eb7, type: 3}
       propertyPath: spawnRadius
