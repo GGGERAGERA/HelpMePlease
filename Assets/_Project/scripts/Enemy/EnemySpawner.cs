@@ -21,7 +21,7 @@ public class EnemySpawner : MonoBehaviour
         if (GameObject.FindGameObjectsWithTag("Enemy").Length >= maxEnemies) return;
 
         Vector3 randomPos = player.position + Random.insideUnitSphere * spawnRadius;
-        randomPos.y = 0; // для 3D; для 2D можно randomPos.z = 0
+        randomPos.z = 0; 
 
         // Создаём врага из префаба, который лежит в enemyData.prefab
         Instantiate(enemyData.prefab, randomPos, Quaternion.identity);
