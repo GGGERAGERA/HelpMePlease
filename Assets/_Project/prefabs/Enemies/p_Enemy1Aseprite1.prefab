@@ -295,6 +295,7 @@ GameObject:
   - component: {fileID: 4442309911056970652}
   - component: {fileID: 5140618788807294408}
   - component: {fileID: 4861312589711261340}
+  - component: {fileID: 826003451788788162}
   m_Layer: 0
   m_Name: p_Enemy1Aseprite1
   m_TagString: Enemy
@@ -425,6 +426,9 @@ MonoBehaviour:
   onDeath:
     m_PersistentCalls:
       m_Calls: []
+  OnDamageTaken:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &4442309911056970652
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -467,6 +471,20 @@ MonoBehaviour:
   - {fileID: 8927180452970597320, guid: 568301bd43bfcef49aa858e8372f81be, type: 3}
   - {fileID: 7435288801949326821, guid: 6570a9d2e7e1553419610b5771ad4650, type: 3}
   dropOffset: {x: 0, y: 0.55, z: 0}
+--- !u!114 &826003451788788162
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1362265803452333836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f037d8720ecb5b44ca7651ef6babf7f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DamageFlash
+  flashDuration: 0.1
+  flashColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!1 &4548343093565794949
 GameObject:
   m_ObjectHideFlags: 0
