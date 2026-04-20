@@ -781,6 +781,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 11400000, guid: cc52f56eb0cf6de4fb7d93336f0494d5, type: 2}
     - target: {fileID: 8488144525096105199, guid: 169b5772155b17842b8cd9604fcf1eb7, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8488144525096105199, guid: 169b5772155b17842b8cd9604fcf1eb7, type: 3}
       propertyPath: spawnRadius
       value: 10
       objectReference: {fileID: 0}
