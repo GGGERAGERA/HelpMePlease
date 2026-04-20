@@ -5,37 +5,36 @@ public class EnemyMovement : MonoBehaviour
     public float speed = 2f;
     private Transform target;
     private SpriteRenderer spriteRenderer;
+    private Rigidbody2D rb;
 
     void Start()
     {
+        rb = GetComponent<Rigidbody2D>();
+        if (rb == null)
+            Debug.LogError("EnemyMovement: Rigidbody2D is required for smooth collisions!");
+
         spriteRenderer = GetComponent<SpriteRenderer>();
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if (playerObj != null)
-        {
-            EnemyMovement movement = GetComponent<EnemyMovement>();
-            if (movement != null)
-                movement.SetTarget(playerObj.transform);
-        }
+            SetTarget(playerObj.transform);
     }
 
     public void SetTarget(Transform newTarget)
     {
         target = newTarget;
     }
-    
-    // Update is called once per frame
-    void Update()
+
+    void FixedUpdate()
     {
-        if (target != null)
+        if (target == null || rb == null) return;
+
+        Vector2 direction = (target.position - transform.position).normalized;
+        Vector2 newPosition = rb.position + direction * speed * Time.fixedDeltaTime;
+        rb.MovePosition(newPosition);
+
+        if (spriteRenderer != null)
         {
-            Vector2 direction = (target.position - transform.position).normalized;
-            transform.position += (Vector3)(direction * speed * Time.deltaTime);
-            if (spriteRenderer != null)
-            {
-                // ≈сли движетс€ влево (direction.x < 0), зеркалим спрайт по X
-                spriteRenderer.flipX = direction.x < 0;
-            }
+            spriteRenderer.flipX = direction.x < 0;
         }
-        
     }
 }
