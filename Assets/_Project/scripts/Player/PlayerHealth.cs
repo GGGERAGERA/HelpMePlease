@@ -27,6 +27,13 @@ public class PlayerHealth : MonoBehaviour
     void Die()
     {
         Debug.Log("Player died");
+
+        GameOverManager gameOverManager = FindFirstObjectByType<GameOverManager>();
+        if (gameOverManager != null)
+            gameOverManager.GameOver();
+        else
+            Debug.LogError("GameOverManager not found!");
+
         gameObject.SetActive(false);
     }
 }

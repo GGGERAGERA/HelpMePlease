@@ -16,5 +16,16 @@ public class EnemyCollisionHandler : MonoBehaviour
             Destroy(collision.gameObject); // уничтожаем пулю после столкновения
         }
     }
-    
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.collider.CompareTag("Player"))
+        {
+            PlayerHealth playerHealth = collision.gameObject.GetComponent<PlayerHealth>();
+            if (playerHealth != null) {
+                    playerHealth.TakeDamage(20f); // наносим урон игроку, если он столкнулся с врагом
+            }
+        }
+    }
+
 }
