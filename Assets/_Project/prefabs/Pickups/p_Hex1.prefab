@@ -125,7 +125,7 @@ GameObject:
   - component: {fileID: 2018168798333333012}
   - component: {fileID: 6569879454277525199}
   - component: {fileID: 8273852411345551171}
-  - component: {fileID: 4349364936041057128}
+  - component: {fileID: -4668309256965736741}
   m_Layer: 0
   m_Name: p_Hex1
   m_TagString: Untagged
@@ -225,7 +225,7 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &4349364936041057128
+--- !u!114 &-4668309256965736741
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -234,11 +234,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 8927180452970597320}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b1ebd0ae0fb625a4e98b9c808a775eab, type: 3}
+  m_Script: {fileID: 11500000, guid: 9ad8bbc6afbdf6d4bb2824fb076cbdc4, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pickup
-  lootType: 1
-  value: 1
+  m_EditorClassIdentifier: Assembly-CSharp::ExperiencePickup
+  expValue: 20
 --- !u!1001 &1501581940933915821
 PrefabInstance:
   m_ObjectHideFlags: 0
