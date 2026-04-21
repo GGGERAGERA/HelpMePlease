@@ -10,7 +10,6 @@ public class Pickup : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            Debug.Log("Player picked up: " + lootType + " with value: " + value);
             if (lootType == LootType.Crystal)
                 ScoreManager.Instance.AddCrystal(value);
             else if (lootType == LootType.Gems)
