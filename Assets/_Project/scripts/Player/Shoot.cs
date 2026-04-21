@@ -27,18 +27,12 @@ public class Shoot : MonoBehaviour
     void ShootBullet()
     {
         if (firePoint == null || bulletPrefab == null) return;
-
-        // Находим ближайшего врага
         Transform nearestEnemy = FindNearestEnemy();
-        if (nearestEnemy == null) return; // нет врагов — не стреляем
+        if (nearestEnemy == null) return;
 
-        // Создаём пулю
+        Vector2 direction = (nearestEnemy.position - firePoint.position).normalized;
         GameObject bullet = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
-        Bullet bulletScript = bullet.GetComponent<Bullet>();
-        if (bulletScript != null)
-        {
-            bulletScript.Initialize(bulletDamage, bulletSpeed, nearestEnemy);
-        }
+        bullet.GetComponent<Bullet>().Initialize(bulletDamage, bulletSpeed, direction);
     }
 
     Transform FindNearestEnemy()

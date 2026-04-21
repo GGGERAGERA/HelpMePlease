@@ -2,37 +2,31 @@ using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-    public float damage;
-    public float speed;
-    private Transform target;
+    public float speed = 10f;
+    public float damage = 20f;
+    public float destroyDuration = 5f;
+    private Vector2 direction;
 
-    public float timeBulletDestroy = 5f;
 
-    public void Initialize(float damage, float speed, Transform target)
+    public void Initialize(float bulletDamage, float bulletSpeed, Vector2 dir)
     {
-        this.damage = damage;
-        this.speed = speed;
-        this.target = target;
-        Destroy(gameObject, timeBulletDestroy); // Destroy the bullet after the specified time if it doesn't hit anything
+        speed = bulletSpeed;
+        damage = bulletDamage;
+        direction = dir.normalized;
+        Destroy(gameObject, destroyDuration);
     }
 
     void Update()
     {
-        if (target == null)
-        {
-            Destroy(gameObject); // Destroy the bullet if the target is destroyed
-            return;
-        }
-        Vector3 direction = (target.position - transform.position).normalized;
-        transform.Translate(direction * speed * Time.deltaTime, Space.World);
+        transform.Translate(direction * speed * Time.deltaTime);
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    void OnTriggerEnter2D(Collider2D other)
     {
-        if(collision.CompareTag("Enemy"))
+        if (other.CompareTag("Enemy"))
         {
-            collision.GetComponent<EnemyHealth>().TakeDamage(damage);
-            Destroy(gameObject); // Destroy the bullet after hitting an enemy
+            other.GetComponent<EnemyHealth>()?.TakeDamage(20f);
+            Destroy(gameObject);
         }
     }
 }
