@@ -26,13 +26,10 @@ public class Shoot : MonoBehaviour
 
     void ShootBullet()
     {
+        Debug.Log($"FirePoint position: {firePoint.position}");
         if (firePoint == null || bulletPrefab == null) return;
-
-        // Находим ближайшего врага
         Transform nearestEnemy = FindNearestEnemy();
-        if (nearestEnemy == null) return; // нет врагов — не стреляем
-
-        // Создаём пулю
+        if (nearestEnemy == null) return;
         GameObject bullet = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
         Bullet bulletScript = bullet.GetComponent<Bullet>();
         if (bulletScript != null)
