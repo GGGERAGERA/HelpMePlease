@@ -9,12 +9,17 @@ public class EnemyCollisionHandler : MonoBehaviour
         {
          collision.GetComponent<PlayerHealth>()?.TakeDamage(10); // наносим урон игроку, если он столкнулся с врагом
         }
-        else if (collision.CompareTag("Bullet"))
+    }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.collider.CompareTag("Player"))
         {
-            var bullet = collision.GetComponent<Bullet>();
-            GetComponent<EnemyHealth>()?.TakeDamage(bullet.damage); // наносим урон врагу, если он столкнулся с пулей
-            Destroy(collision.gameObject); // уничтожаем пулю после столкновения
+            PlayerHealth playerHealth = collision.gameObject.GetComponent<PlayerHealth>();
+            if (playerHealth != null) {
+                    playerHealth.TakeDamage(20f); // наносим урон игроку, если он столкнулся с врагом
+            }
         }
     }
-    
+
 }
