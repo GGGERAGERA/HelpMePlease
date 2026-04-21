@@ -7,10 +7,8 @@ public class ScoreManager : MonoBehaviour
 
     [Header("UI References")]
     public Text crystal;
-    public Text gemsText;
 
     private int crystalCount = 0;
-    private int gems = 0;
 
     void Awake()
     {
@@ -25,16 +23,8 @@ public class ScoreManager : MonoBehaviour
         UpdateUI();
     }
 
-    public void AddGems(int amount)
-    {
-        
-        gems += amount;
-        UpdateUI();
-    }
-
     private void UpdateUI()
     {
         if (crystal != null) crystal.text = "Crystals: " + crystalCount;
-        if (gemsText != null) gemsText.text = "Gems: " + gems;
     }
 }

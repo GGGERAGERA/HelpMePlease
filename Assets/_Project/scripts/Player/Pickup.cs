@@ -12,8 +12,6 @@ public class Pickup : MonoBehaviour
         {
             if (lootType == LootType.Crystal)
                 ScoreManager.Instance.AddCrystal(value);
-            else if (lootType == LootType.Gems)
-                ScoreManager.Instance.AddGems(value);
             Destroy(gameObject);
         }
     }
