@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 01f341564bdbcbf44ae8a2ae5e640b8e
+guid: 1796515ee26b66d47b80bbda4791b1d2
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -126,52 +126,22 @@ ScriptedImporter:
     edges: []
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
-  animatedSpriteImportData:
-  - name: Weapons1
-    originalName: 
-    pivot: {x: 0.5, y: 0.007751938}
-    alignment: 9
-    border: {x: 0, y: 0, z: 0, w: 0}
-    customData: 
-    rect:
-      serializedVersion: 2
-      x: 4
-      y: 4
-      width: 128
-      height: 129
-    spriteID: ed989fd7a74a35e43ac27ec4cb426e9d
-    spriteBone: []
-    spriteOutline: []
-    vertices: []
-    spritePhysicsOutline: []
-    indices: 
-    edges: []
-    tessellationDetail: 0
-    uvTransform: {x: 4, y: 4}
+  animatedSpriteImportData: []
   spriteSheetImportData: []
   tileSetImportData: []
   asepriteLayers:
   - layerIndex: 0
     uuid:
-      value0: 2044321594
+      value0: 3496976540
       value1: 0
       value2: 0
       value3: 0
     guid: 0
-    name: Weapons1
+    name: mosquito1
     layerFlags: 0
     layerType: 0
     blendMode: 0
-    cells:
-    - name: Weapons1
-      frameIndex: 0
-      additiveSortOrder: 0
-      cellRect:
-        x: 0
-        y: -1
-        width: 128
-        height: 129
-      spriteId: ed989fd7a74a35e43ac27ec4cb426e9d
+    cells: []
     linkedCells: []
     tileCells: []
     tileSetIndex: 0
@@ -182,4 +152,4 @@ ScriptedImporter:
   secondarySpriteTextures: []
   spritePackingTag: 
   canvasSize: {x: 128, y: 128}
-  previousTextureSize: {x: 256, y: 256}
+  previousTextureSize: {x: 0, y: 0}
