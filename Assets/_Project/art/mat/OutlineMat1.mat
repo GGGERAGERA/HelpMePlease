@@ -7,18 +7,25 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: SpriteFx1
-  m_Shader: {fileID: 4800000, guid: e260cfa7296ee7642b167f1eb5be5023, type: 3}
+  m_Name: OutlineMat1
+  m_Shader: {fileID: 4800000, guid: e9af32491c562f948857ef22c0a66cdd, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
   - ETC1_EXTERNAL_ALPHA
   - _ALPHAMODE_OPAQUE
+  - _EMISSIONENABLED_ON
+  - _EMISSIONENABLE_ON
   - _MAINTEXMAPPING_UV
+  - _OUTLINEENABLED_ON
+  - _OUTLINEENABLE_ON
+  - _OUTLINEMODE_SOLID
+  - _OUTLINETYPE_SOLID
   - _SECONDLAYERBLEND_MIX
   - _SHADOWTYPE_SMOOTH
   - _SPECULARTYPE_SMOOTH
+  - _USEOUTLINE_ON
   - _USESPECULAR_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -35,10 +42,14 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BaseMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: -8328923581568760697, guid: 01f341564bdbcbf44ae8a2ae5e640b8e, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMask:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -64,30 +75,36 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - PixelSnap: 0
     - _AlphaMode: 0
-    - _Brightness: 1
-    - _Contrast: 1
+    - _Brightness: 2.22
+    - _Contrast: 1.93
     - _Cutoff: 0.5
     - _DisableShadows: 0
-    - _EmissionEnabled: 0
-    - _EmissionStrength: 1
+    - _EmissionEnable: 1
+    - _EmissionEnabled: 1
+    - _EmissionStrength: 2.65
     - _EmissionUseMask: 0
     - _EnableExternalAlpha: 0
     - _Glossiness: 0.5
     - _HardTriplanar: 0
+    - _LightPosterization: 8
+    - _LightPosterizationEnabled: 0
     - _MainTexMapping: 0
     - _Metallic: 0
     - _NoiseScale: 5
     - _NoiseStrength: 0.5
     - _OutlineBehind: 0
-    - _OutlineBrightness: 1
-    - _OutlineDarken: 0.6
+    - _OutlineBrightness: 1.92
+    - _OutlineDarken: 0.5
+    - _OutlineEnable: 1
     - _OutlineEnabled: 1
-    - _OutlineFade: 0
-    - _OutlineGlow: 0
-    - _OutlineThickness: 2
+    - _OutlineFade: 0.5
+    - _OutlineGlow: 1
+    - _OutlineMode: 0
+    - _OutlineThickness: 1
     - _OutlineType: 0
-    - _OutlineWidth: 0.02
+    - _OutlineWidth: 6.5
     - _RimIntensity: 1
     - _RimSmoothness: 0.1
     - _RimWidth: 3
@@ -105,8 +122,10 @@ Material:
     - _SpecularSmoothness: 0.1
     - _SpecularThreshold: 0.8
     - _SpecularType: 0
+    - _TextureHeight: 64
+    - _TextureWidth: 64
     - _UseEmission: 0
-    - _UseOutline: 0
+    - _UseOutline: 1
     - _UseRimLight: 0
     - _UseSecondLayer: 0
     - _UseSpecular: 1
@@ -115,9 +134,9 @@ Material:
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 1, g: 0.16509432, b: 0.16509432, a: 0.36862746}
     - _Flip: {r: 1, g: 1, b: 1, a: 1}
-    - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
+    - _OutlineColor: {r: 1, g: 0.10849059, b: 0.10849059, a: 0.3882353}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
     - _RimColor: {r: 1, g: 1, b: 1, a: 1}
     - _SecondColor: {r: 1, g: 1, b: 1, a: 1}
