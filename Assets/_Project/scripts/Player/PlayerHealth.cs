@@ -27,7 +27,8 @@ public class PlayerHealth : MonoBehaviour
     void Die()
     {
         Debug.Log("Player died");
-
+        Stopwatch stopwatch = FindFirstObjectByType<Stopwatch>();
+        if (stopwatch != null) stopwatch.Stop();
         GameOverManager gameOverManager = FindFirstObjectByType<GameOverManager>();
         if (gameOverManager != null)
             gameOverManager.GameOver();
