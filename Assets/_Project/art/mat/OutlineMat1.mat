@@ -11,9 +11,10 @@ Material:
   m_Shader: {fileID: 4800000, guid: e9af32491c562f948857ef22c0a66cdd, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords:
+  m_ValidKeywords:
   - ETC1_EXTERNAL_ALPHA
+  - _OUTLINETYPE_SOLID
+  m_InvalidKeywords:
   - _ALPHAMODE_OPAQUE
   - _EMISSIONENABLED_ON
   - _EMISSIONENABLE_ON
@@ -21,7 +22,6 @@ Material:
   - _OUTLINEENABLED_ON
   - _OUTLINEENABLE_ON
   - _OUTLINEMODE_SOLID
-  - _OUTLINETYPE_SOLID
   - _SECONDLAYERBLEND_MIX
   - _SHADOWTYPE_SMOOTH
   - _SPECULARTYPE_SMOOTH
@@ -96,7 +96,7 @@ Material:
     - _NoiseStrength: 0.5
     - _OutlineBehind: 0
     - _OutlineBrightness: 1.92
-    - _OutlineDarken: 0.5
+    - _OutlineDarken: 0.35
     - _OutlineEnable: 1
     - _OutlineEnabled: 1
     - _OutlineFade: 0.5
