@@ -1,340 +1,180 @@
-Shader "Custom/2D/PixelSpriteLit"
+Shader "Custom/Sprite-PixelOutline"
 {
     Properties
     {
         [MainTexture] _MainTex("Diffuse", 2D) = "white" {}
-        _MaskTex("Mask", 2D) = "white" {}
-        _NormalMap("Normal Map", 2D) = "bump" {}
+        _Color("Tint", Color) = (1,1,1,1)
 
-        [Toggle] _ZWrite("ZWrite", Float) = 0
+        _Brightness("Brightness", Range(0, 2)) = 1.0
+        _Saturation("Saturation", Range(-2, 2)) = 1.0
 
-        _Brightness("Brightness", Range(0,3)) = 1
-        _Saturation("Saturation", Range(-2,2)) = 0
-
-        [Toggle] _OutlineEnable("Enable Outline", Float) = 0
-        _OutlineWidth("Outline Width (px)", Range(0,16)) = 2
-        [KeywordEnum(Solid, NeighborColor)] _OutlineMode("Outline Mode", Float) = 0
-        _OutlineColor("Outline Color", Color) = (0,0,0,1)
-        _OutlineDarken("Neighbor Darken", Range(0,1)) = 0.3
-        _OutlineBrightness("Outline Brightness", Range(0,5)) = 1
-        _OutlineFade("Edge Fade", Range(0,1)) = 0
+        [Toggle] _OutlineEnabled("Enable Outline", Float) = 1
+        _OutlineThickness("Thickness (px)", Range(1, 16)) = 2
+        [KeywordEnum(Solid, DarkenEdges)] _OutlineType("Type", Float) = 0
+        _OutlineColor("Color", Color) = (0,0,0,1)
+        _OutlineDarken("Darken Amount", Range(0, 1)) = 0.6
         [Toggle] _OutlineBehind("Draw Behind Sprite", Float) = 0
-
-        [HideInInspector] _Color("Tint", Color) = (1,1,1,1)
-        [HideInInspector] _RendererColor("RendererColor", Color) = (1,1,1,1)
-        [HideInInspector] _AlphaTex("External Alpha", 2D) = "white" {}
-        [HideInInspector] _EnableExternalAlpha("Enable External Alpha", Float) = 0
     }
 
     SubShader
     {
-        Tags { "Queue"="Transparent" "RenderType"="Transparent" "RenderPipeline"="UniversalPipeline" }
-        Blend SrcAlpha OneMinusSrcAlpha, One OneMinusSrcAlpha
-        Cull Off
-        ZWrite [_ZWrite]
-
-        // === Проход 1: основной спрайт (с освещением) ===
-        Pass
+        Tags
         {
-            Name "Sprite"
-            Tags { "LightMode" = "Universal2D" }
-
-            HLSLPROGRAM
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Core2D.hlsl"
-
-            #pragma vertex LitVertex
-            #pragma fragment LitFragment
-
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/ShapeLightShared.hlsl"
-
-            #pragma multi_compile_instancing
-            #pragma multi_compile _ DEBUG_DISPLAY
-            #pragma multi_compile _ SKINNED_SPRITE
-
-            struct Attributes
-            {
-                COMMON_2D_INPUTS
-                half4 color : COLOR;
-                UNITY_SKINNED_VERTEX_INPUTS
-            };
-
-            struct Varyings
-            {
-                COMMON_2D_LIT_OUTPUTS
-                half4 color : COLOR;
-            };
-
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Lit2DCommon.hlsl"
-
-            CBUFFER_START(UnityPerMaterial)
-                half4 _Color;
-                float _Brightness;
-                float _Saturation;
-            CBUFFER_END
-
-            half3 AdjustSaturation(half3 c, float s)
-            {
-                half gray = dot(c, half3(0.2125, 0.7154, 0.0721));
-                if (s < 0.0)
-                {
-                    float t = saturate(-s * 0.5);
-                    return lerp(c, gray.xxx, t);
-                }
-                else
-                {
-                    half3 diff = c - gray.xxx;
-                    return gray.xxx + diff * (1.0 + s);
-                }
-            }
-
-            Varyings LitVertex(Attributes input)
-            {
-                UNITY_SKINNED_VERTEX_COMPUTE(input);
-                SetUpSpriteInstanceProperties();
-                input.positionOS = UnityFlipSprite(input.positionOS, unity_SpriteProps.xy);
-
-                Varyings o = CommonLitVertex(input);
-                o.color = input.color * _Color * unity_SpriteColor;
-                return o;
-            }
-
-            half4 LitFragment(Varyings input) : SV_Target
-            {
-                half4 mainTex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
-                half4 baseColor = input.color * mainTex;
-                half4 lit = CommonLitFragment(input, baseColor);
-                half3 col = lit.rgb * _Brightness;
-                col = AdjustSaturation(col, _Saturation);
-                return half4(col, lit.a);
-            }
-            ENDHLSL
+            "Queue" = "Transparent"
+            "RenderType" = "Transparent"
+            "RenderPipeline" = "UniversalPipeline"
         }
 
-        // === Проход 2: Обводка (расширенная геометрия) ===
+        Cull Off
+        ZWrite Off
+        Blend SrcAlpha OneMinusSrcAlpha
+
         Pass
         {
-            Name "Outline"
-            Tags { "LightMode" = "Universal2D" }
-            Cull Front
-
             HLSLPROGRAM
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Core2D.hlsl"
-
-            #pragma vertex OutlineVertex
-            #pragma fragment OutlineFragment
+            #pragma vertex vert
+            #pragma fragment frag
 
             #pragma multi_compile_instancing
-            #pragma multi_compile _ SKINNED_SPRITE
+            #pragma shader_feature_local _OUTLINETYPE_SOLID _OUTLINETYPE_DARKENEDGES
 
-            // Явное объявление текстуры и сэмплера
-            TEXTURE2D(_MainTex);
-            SAMPLER(sampler_MainTex);
-            uniform float4 _MainTex_TexelSize;
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
             struct Attributes
             {
-                COMMON_2D_INPUTS
-                half4 color : COLOR;
-                UNITY_SKINNED_VERTEX_INPUTS
+                float4 positionOS : POSITION;
+                float2 uv : TEXCOORD0;
+                float4 color : COLOR;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct Varyings
             {
                 float4 positionCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
+                float4 color : COLOR;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
+            TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
+            float4 _MainTex_TexelSize;
+            float4 _MainTex_ST;
+
             CBUFFER_START(UnityPerMaterial)
-                float _OutlineEnable;
-                float _OutlineWidth;
+                float4 _Color;
+                float _Brightness;
+                float _Saturation;
+
+                float _OutlineEnabled;
+                float _OutlineThickness;
+                float4 _OutlineColor;
                 float _OutlineDarken;
-                float _OutlineBrightness;
-                float _OutlineFade;
-                half4 _OutlineColor;
                 float _OutlineBehind;
-                float _OutlineMode;
             CBUFFER_END
 
-            Varyings OutlineVertex(Attributes input)
+            Varyings vert(Attributes input)
             {
-                UNITY_SKINNED_VERTEX_COMPUTE(input);
-                SetUpSpriteInstanceProperties();
+                Varyings o;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, o);
 
-                float3 posOS = UnityFlipSprite(input.positionOS, unity_SpriteProps.xy);
+                float3 positionOS = input.positionOS.xyz;
                 float2 uv = input.uv;
 
-                // Направление от центра спрайта (0.5,0.5)
-                float2 dir = uv - 0.5;
-                float len = length(dir);
-                if (len > 0.0001) dir /= len;
+                // Расширение вершин по сторонам прямоугольника без деформации
+                if (_OutlineEnabled > 0.5)
+                {
+                    float thickness = max(1.0, round(_OutlineThickness));
+                    float2 texelSize = _MainTex_TexelSize.xy;
 
-                // Размер одного пикселя в object space
-                float2 pixelSizeOS = _MainTex_TexelSize.xy;
-                float outlineWidthOS = _OutlineWidth * length(pixelSizeOS);
+                    // Определяем, к какой стороне принадлежит вершина
+                    // Предполагаем, что pivot в центре и вершины имеют координаты ±0.5 по X и Y
+                    // (стандартный спрайт размером 1x1 юнит)
+                    float2 offset = float2(0, 0);
 
-                posOS.xy += dir * outlineWidthOS;
+                    // Сторона X
+                    if (abs(positionOS.x) > 0.49) // близко к краю
+                    {
+                        offset.x = sign(positionOS.x) * thickness * texelSize.x * 100.0;
+                    }
+                    // Сторона Y
+                    if (abs(positionOS.y) > 0.49)
+                    {
+                        offset.y = sign(positionOS.y) * thickness * texelSize.y * 100.0;
+                    }
 
-                Varyings o;
-                o.positionCS = TransformObjectToHClip(posOS);
-                o.uv = uv;
+                    positionOS.xy += offset;
+                }
+
+                o.positionCS = TransformObjectToHClip(positionOS);
+                o.uv = TRANSFORM_TEX(input.uv, _MainTex);
+                o.color = input.color * _Color;
                 return o;
             }
 
-            half4 OutlineFragment(Varyings input) : SV_Target
+            half3 AdjustSaturation(half3 color, float saturation)
             {
-                if (_OutlineEnable < 0.5) discard;
+                float gray = dot(color, half3(0.2125, 0.7154, 0.0721));
+                return lerp(half3(gray, gray, gray), color, saturation);
+            }
 
-                float2 uv = input.uv;
-                float2 texelSize = _MainTex_TexelSize.xy * _OutlineWidth;
+            half4 frag(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                half4 spriteColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
+                spriteColor.rgb = AdjustSaturation(spriteColor.rgb, _Saturation);
+                spriteColor.rgb *= _Brightness;
+                spriteColor *= input.color;
 
-                bool hasOpaque = false;
-                half4 neighborSum = half4(0,0,0,0);
-                float count = 0;
+                // Если пиксель спрайта непрозрачный – рисуем его
+                if (spriteColor.a > 0.01)
+                    return spriteColor;
 
-                float2 offsets[4] = { float2(-1,0), float2(1,0), float2(0,1), float2(0,-1) };
+                // Обводка отключена
+                if (_OutlineEnabled < 0.5)
+                    discard;
+
+                float2 texelSize = _MainTex_TexelSize.xy;
+                float thickness = max(1.0, round(_OutlineThickness));
+
+                float2 offsets[4] = {
+                    float2( 1,  0), float2(-1,  0), float2( 0,  1), float2( 0, -1)
+                };
+
+                float found = 0.0;
+                half3 edgeColor = half3(0,0,0);
+
                 for (int i = 0; i < 4; i++)
                 {
-                    float2 sampleUV = uv + offsets[i] * texelSize;
-                    half4 n = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, sampleUV);
-                    if (n.a > 0.01)
+                    float2 offset = offsets[i] * thickness * texelSize;
+                    float2 sampleUV = input.uv + offset;
+
+                    half4 sampleCol = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_MainTex, sampleUV, 0);
+                    if (sampleCol.a > 0.01)
                     {
-                        hasOpaque = true;
-                        neighborSum += n;
-                        count++;
+                        found = 1.0;
+                        edgeColor = sampleCol.rgb;
+                        break;
                     }
                 }
 
-                if (!hasOpaque) discard;
-
-                half4 outlineCol;
-                if (_OutlineMode < 0.5)
+                if (found > 0.5)
                 {
-                    outlineCol = _OutlineColor;
-                }
-                else
-                {
-                    outlineCol = neighborSum / count;
-                    outlineCol.rgb *= (1.0 - _OutlineDarken);
-                    outlineCol.a = 1.0;
+                    half4 outlineCol;
+                    #if defined(_OUTLINETYPE_DARKENEDGES)
+                        outlineCol = half4(edgeColor * _OutlineDarken, 1.0);
+                    #else
+                        outlineCol = half4(_OutlineColor.rgb, 1.0);
+                    #endif
+                    return outlineCol * input.color;
                 }
 
-                outlineCol.rgb *= _OutlineBrightness;
-
-                if (_OutlineFade > 0.0)
-                {
-                    float2 d = abs(uv - 0.5) * 2.0;
-                    float edgeDist = max(d.x, d.y);
-                    float fade = saturate(1.0 - edgeDist * _OutlineFade);
-                    outlineCol.rgb *= fade;
-                }
-
-                return outlineCol;
-            }
-            ENDHLSL
-        }
-
-        // === Проход нормалей ===
-        Pass
-        {
-            Name "NormalsRendering"
-            Tags { "LightMode" = "NormalsRendering" }
-
-            HLSLPROGRAM
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Core2D.hlsl"
-
-            #pragma vertex NormalsRenderingVertex
-            #pragma fragment NormalsRenderingFragment
-
-            #pragma multi_compile_instancing
-            #pragma multi_compile _ SKINNED_SPRITE
-
-            struct Attributes
-            {
-                COMMON_2D_NORMALS_INPUTS
-                float4 color : COLOR;
-                UNITY_SKINNED_VERTEX_INPUTS
-            };
-
-            struct Varyings
-            {
-                COMMON_2D_NORMALS_OUTPUTS
-                half4 color : COLOR;
-            };
-
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Normals2DCommon.hlsl"
-
-            CBUFFER_START(UnityPerMaterial)
-                half4 _Color;
-            CBUFFER_END
-
-            Varyings NormalsRenderingVertex(Attributes input)
-            {
-                UNITY_SKINNED_VERTEX_COMPUTE(input);
-                SetUpSpriteInstanceProperties();
-                input.positionOS = UnityFlipSprite(input.positionOS, unity_SpriteProps.xy);
-
-                Varyings o = CommonNormalsVertex(input);
-                o.color = input.color * _Color * unity_SpriteColor;
-                return o;
-            }
-
-            half4 NormalsRenderingFragment(Varyings input) : SV_Target
-            {
-                return CommonNormalsFragment(input, input.color);
-            }
-            ENDHLSL
-        }
-
-        // === Forward проход ===
-        Pass
-        {
-            Name "UniversalForward"
-            Tags { "LightMode" = "UniversalForward" }
-
-            HLSLPROGRAM
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Core2D.hlsl"
-
-            #pragma vertex UnlitVertex
-            #pragma fragment UnlitFragment
-
-            #pragma multi_compile_instancing
-            #pragma multi_compile _ DEBUG_DISPLAY SKINNED_SPRITE
-
-            struct Attributes
-            {
-                COMMON_2D_INPUTS
-                half4 color : COLOR;
-                UNITY_SKINNED_VERTEX_INPUTS
-            };
-
-            struct Varyings
-            {
-                COMMON_2D_OUTPUTS
-                half4 color : COLOR;
-            };
-
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/2DCommon.hlsl"
-
-            CBUFFER_START(UnityPerMaterial)
-                half4 _Color;
-            CBUFFER_END
-
-            Varyings UnlitVertex(Attributes input)
-            {
-                UNITY_SKINNED_VERTEX_COMPUTE(input);
-                SetUpSpriteInstanceProperties();
-                input.positionOS = UnityFlipSprite(input.positionOS, unity_SpriteProps.xy);
-
-                Varyings o = CommonUnlitVertex(input);
-                o.color = input.color * _Color * unity_SpriteColor;
-                return o;
-            }
-
-            half4 UnlitFragment(Varyings input) : SV_Target
-            {
-                return CommonUnlitFragment(input, input.color);
+                discard;
+                return half4(0,0,0,0);
             }
             ENDHLSL
         }
     }
+
+    Fallback "Sprites/Default"
 }
