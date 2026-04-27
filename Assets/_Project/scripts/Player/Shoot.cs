@@ -12,7 +12,8 @@ public class Shoot : MonoBehaviour
     void Start()
     {
         // Начинаем стрельбу с задержкой 1 секунда, затем каждые shootInterval секунд
-        InvokeRepeating("ShootBullet", 1f, shootInterval);
+
+        //InvokeRepeating("ShootBullet", 1f, shootInterval);
     }
 
     void Update()
