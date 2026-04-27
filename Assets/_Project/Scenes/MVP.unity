@@ -4430,7 +4430,7 @@ MonoBehaviour:
   damage: 30
   attackCooldown: 0.5
   slashEffect: {fileID: 0}
-  slashSound: {fileID: 0}
+  slashSound: {fileID: 8300000, guid: e3164229730f70742904e306605d22d3, type: 3}
 --- !u!50 &2122643306
 Rigidbody2D:
   serializedVersion: 5
