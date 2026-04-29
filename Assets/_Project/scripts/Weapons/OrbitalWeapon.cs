@@ -13,12 +13,11 @@ public class OrbitalWeapon : MonoBehaviour
 
     [Header("Combat")]
     public float laserRange = 10f;
-    public int laserDamage = 20;
     public LayerMask enemyLayer;
 
     [Header("Audio")]
-    public AudioClip laserSound;          // ← сюда перетащите звук
-    public float soundVolume = 0.7f;      // громкость звука
+    public AudioClip laserSound;
+    public float soundVolume = 0.7f;
 
     private Camera cam;
     private Vector3 targetPosition;
@@ -29,14 +28,10 @@ public class OrbitalWeapon : MonoBehaviour
         cam = Camera.main;
         targetPosition = transform.position;
 
-        // Инициализация AudioSource (добавьте компонент на объект оружия!)
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
-        {
             audioSource = gameObject.AddComponent<AudioSource>();
-        }
         audioSource.playOnAwake = false;
-        audioSource.loop = false;
     }
 
     void Update()
@@ -66,27 +61,22 @@ public class OrbitalWeapon : MonoBehaviour
 
     void Shoot(Vector2 direction)
     {
-        // Визуальные эффекты
         if (muzzleFlash != null) muzzleFlash.Play();
         if (laserBeam != null) laserBeam.Play();
 
-        // 🔊 Воспроизведение звука выстрела
-        if (audioSource != null && laserSound != null)
-        {
+        if (laserSound != null && audioSource != null)
             audioSource.PlayOneShot(laserSound, soundVolume);
-        }
 
-        // Нанесение урона
         Vector2 origin = transform.position;
         RaycastHit2D[] hits = Physics2D.RaycastAll(origin, direction, laserRange, enemyLayer);
+
+        int damage = PlayerStats.Instance != null ? PlayerStats.Instance.GetDamage() : 20;
 
         foreach (RaycastHit2D hit in hits)
         {
             EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
             if (enemy != null)
-            {
-                enemy.TakeDamage(laserDamage);
-            }
+                enemy.TakeDamage(damage);
         }
     }
 }
