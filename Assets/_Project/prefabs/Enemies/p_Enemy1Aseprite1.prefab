@@ -429,6 +429,8 @@ MonoBehaviour:
   OnDamageTaken:
     m_PersistentCalls:
       m_Calls: []
+  damagePopupPrefab: {fileID: 9169945786982687630, guid: 93f186151a59ce24fa30dac2ce325309, type: 3}
+  popupOffset: {x: 0, y: 1, z: 0}
 --- !u!114 &4442309911056970652
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -469,7 +471,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LootDropper
   lootPrefabs:
   - {fileID: 8927180452970597320, guid: 568301bd43bfcef49aa858e8372f81be, type: 3}
-  - {fileID: 7435288801949326821, guid: 6570a9d2e7e1553419610b5771ad4650, type: 3}
   dropOffset: {x: 0, y: 0.55, z: 0}
 --- !u!114 &826003451788788162
 MonoBehaviour:

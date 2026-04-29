@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 2269188935417763403}
   - component: {fileID: 1804723157739752670}
   - component: {fileID: 4575423889512570941}
-  - component: {fileID: 6878016769724255896}
   m_Layer: 0
   m_Name: p_crystall1
   m_TagString: Untagged
@@ -111,20 +110,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &6878016769724255896
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7435288801949326821}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b1ebd0ae0fb625a4e98b9c808a775eab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pickup
-  lootType: 0
-  value: 1
 --- !u!1 &8934983534791824512
 GameObject:
   m_ObjectHideFlags: 0
