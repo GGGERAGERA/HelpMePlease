@@ -129,8 +129,8 @@ TextureImporter:
       name: IsoTileTest1_0
       rect:
         serializedVersion: 2
-        x: 4
-        y: 188
+        x: 0
+        y: 512
         width: 128
         height: 64
       alignment: 0
@@ -139,10 +139,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 0f5ea91e0f245adc0800000000000000
-      internalID: -3628420322432457232
+      spriteID: f4e5cbfb40fba094188190c283f07565
+      internalID: -1182535382
       vertices: []
       indices: 
       edges: []
@@ -151,8 +151,8 @@ TextureImporter:
       name: IsoTileTest1_1
       rect:
         serializedVersion: 2
-        x: 4
-        y: 118
+        x: 0
+        y: 448
         width: 128
         height: 64
       alignment: 0
@@ -163,8 +163,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: f26fb7ff877af3241957d25605876cc3
-      internalID: -1536147674
+      spriteID: ae8ed5b0cc8f7d540a263ac2d4d0de81
+      internalID: 1452269875
       vertices: []
       indices: 
       edges: []
@@ -173,8 +173,8 @@ TextureImporter:
       name: IsoTileTest1_2
       rect:
         serializedVersion: 2
-        x: 4
-        y: 48
+        x: 0
+        y: 384
         width: 128
         height: 64
       alignment: 0
@@ -185,8 +185,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: bee5c9487340ff04ea81a3d709f44243
-      internalID: 1384996430
+      spriteID: c2255acee8bbf0a4caa12f481ef94288
+      internalID: -1651151985
       vertices: []
       indices: 
       edges: []
@@ -195,10 +195,10 @@ TextureImporter:
       name: IsoTileTest1_3
       rect:
         serializedVersion: 2
-        x: 4
-        y: 19
-        width: 39
-        height: 23
+        x: 0
+        y: 320
+        width: 128
+        height: 64
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -207,8 +207,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 1f9d6bbe7dedaf648b47bdf35fa9d80c
-      internalID: -967805721
+      spriteID: 662c8a5e294c4a74b8b1af019d34ae51
+      internalID: 1648127234
       vertices: []
       indices: 
       edges: []
@@ -217,10 +217,10 @@ TextureImporter:
       name: IsoTileTest1_4
       rect:
         serializedVersion: 2
-        x: 4
-        y: 4
-        width: 16
-        height: 9
+        x: 0
+        y: 256
+        width: 128
+        height: 64
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -229,8 +229,96 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: c014e291ffe1f734b87acdb9d2c18e51
-      internalID: 301777841
+      spriteID: 9ec416b05f00e9145a02bb3ecc7b43ec
+      internalID: -2012486515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: IsoTileTest1_5
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 192
+        width: 128
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5b687c2bc0c297246afbda254734d25c
+      internalID: -320314553
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: IsoTileTest1_6
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 128
+        width: 128
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8c4fd2c416e25fb45928b46a3a1b299f
+      internalID: 1264915075
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: IsoTileTest1_7
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 64
+        width: 128
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8124bf3d6ff5a3d48a4ab5d066f52af2
+      internalID: -1268496352
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: IsoTileTest1_8
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 128
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e4cc416afbe72f44c9abbd95627aca42
+      internalID: -904872909
       vertices: []
       indices: 
       edges: []
@@ -249,13 +337,17 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":128.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":1,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      IsoTileTest1_0: -3628420322432457232
-      IsoTileTest1_1: -1536147674
-      IsoTileTest1_2: 1384996430
-      IsoTileTest1_3: -967805721
-      IsoTileTest1_4: 301777841
+      IsoTileTest1_0: -1182535382
+      IsoTileTest1_1: 1452269875
+      IsoTileTest1_2: -1651151985
+      IsoTileTest1_3: 1648127234
+      IsoTileTest1_4: -2012486515
+      IsoTileTest1_5: -320314553
+      IsoTileTest1_6: 1264915075
+      IsoTileTest1_7: -1268496352
+      IsoTileTest1_8: -904872909
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
