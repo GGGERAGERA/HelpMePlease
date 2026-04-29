@@ -8,29 +8,38 @@ public class LaserSword : MonoBehaviour
     public float rotationSpeed = 720f;
 
     [Header("Combat")]
-    public int damage = 30;
     public float attackCooldown = 0.5f;
     private float lastAttackTime;
-    private HashSet<EnemyHealth> recentlyHit = new HashSet<EnemyHealth>();
+    private HashSet<EnemyHealth> hitEnemies = new HashSet<EnemyHealth>();
 
     [Header("Effects")]
     public ParticleSystem slashEffect;
     public AudioClip slashSound;
+    public float soundVolume = 0.7f;
 
     private Camera cam;
     private Vector2 targetPosition;
     private Rigidbody2D rb;
+    private AudioSource audioSource;
 
     void Start()
     {
         cam = Camera.main;
         rb = GetComponent<Rigidbody2D>();
+        if (rb == null)
+            rb = gameObject.AddComponent<Rigidbody2D>();
+        rb.bodyType = RigidbodyType2D.Kinematic;
+
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
+        audioSource.playOnAwake = false;
+
         targetPosition = transform.position;
     }
 
     void Update()
     {
-        // Получить позицию мыши
         Vector3 mousePos = Input.mousePosition;
         if (mousePos.x >= 0 && mousePos.x <= Screen.width && mousePos.y >= 0 && mousePos.y <= Screen.height)
         {
@@ -38,49 +47,45 @@ public class LaserSword : MonoBehaviour
             worldMousePos.z = 0;
             targetPosition = worldMousePos;
         }
-
-        // Весь код перемещения и поворота перенесём в FixedUpdate
     }
 
     void FixedUpdate()
     {
-        // Движение
-        Vector2 newPosition = Vector2.Lerp(rb.position, targetPosition, followSpeed * Time.fixedDeltaTime);
-        rb.MovePosition(newPosition);
+        rb.MovePosition(Vector2.Lerp(rb.position, targetPosition, followSpeed * Time.fixedDeltaTime));
 
-        // Поворот (правильный способ через угол)
         Vector2 direction = (targetPosition - rb.position).normalized;
         if (direction.magnitude > 0.1f)
         {
             float targetAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            float newAngle = Mathf.LerpAngle(rb.rotation, targetAngle, rotationSpeed * Time.fixedDeltaTime);
-            rb.rotation = newAngle;
+            rb.rotation = Mathf.LerpAngle(rb.rotation, targetAngle, rotationSpeed * Time.fixedDeltaTime);
         }
     }
 
-    void OnCollisionEnter2D(Collision2D collision)
+    void OnTriggerEnter2D(Collider2D other)
     {
-        if (collision.collider.CompareTag("Enemy") && Time.time >= lastAttackTime + attackCooldown)
+        if (other.CompareTag("Enemy") && Time.time >= lastAttackTime + attackCooldown)
         {
-            EnemyHealth enemy = collision.collider.GetComponent<EnemyHealth>();
-            if (enemy != null && !recentlyHit.Contains(enemy))
+            EnemyHealth enemy = other.GetComponent<EnemyHealth>();
+            if (enemy != null && !hitEnemies.Contains(enemy))
             {
-                recentlyHit.Add(enemy);
+                hitEnemies.Add(enemy);
                 lastAttackTime = Time.time;
+
+                int damage = PlayerStats.Instance != null ? PlayerStats.Instance.GetDamage() : 30;
                 enemy.TakeDamage(damage);
 
                 if (slashEffect != null)
                 {
                     var effect = Instantiate(slashEffect, transform.position, Quaternion.identity);
-                    Destroy(effect.gameObject, 1f);
+                    Destroy(effect.gameObject, 0.5f);
                 }
-                if (slashSound != null)
-                    AudioSource.PlayClipAtPoint(slashSound, transform.position);
+                if (slashSound != null && audioSource != null)
+                    audioSource.PlayOneShot(slashSound, soundVolume);
 
                 Invoke(nameof(ClearHitList), 0.2f);
             }
         }
     }
 
-    void ClearHitList() => recentlyHit.Clear();
+    void ClearHitList() => hitEnemies.Clear();
 }
