@@ -348,8 +348,8 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: 3de6d0a5a72571e4699be14ea3abf826, type: 2}
   normalSize: 0
   hoverSize: 0.01
-  targetImage: {fileID: 0}
-  hoverSprite: {fileID: 0}
+  targetImage: {fileID: 1233297425}
+  hoverSprite: {fileID: 7393528917531895692, guid: 325a7f7251bba684c8c3b3c974daa774, type: 3}
   normalSprite: {fileID: 0}
 --- !u!114 &1233297428
 MonoBehaviour:
@@ -360,10 +360,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1233297423}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 505400b0212780549bf594181d22718b, type: 3}
+  m_Script: {fileID: 11500000, guid: ae7ffea8e90cd764a9074dbee87e7a32, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UIClickLoadScene
-  sceneName: MVP
+  m_EditorClassIdentifier: Assembly-CSharp::SceneLoader
+  gameSceneName: MVP
 --- !u!1 &1691011683
 GameObject:
   m_ObjectHideFlags: 0
@@ -376,7 +376,7 @@ GameObject:
   - component: {fileID: 1691011686}
   - component: {fileID: 1691011685}
   - component: {fileID: 1691011687}
-  - component: {fileID: 1691011689}
+  - component: {fileID: 1691011688}
   m_Layer: 5
   m_Name: Ger
   m_TagString: Untagged
@@ -459,7 +459,7 @@ MonoBehaviour:
   targetImage: {fileID: 1691011685}
   hoverSprite: {fileID: -1355447741393180930, guid: e4a213a041071994daa5664d7c0e1020, type: 3}
   normalSprite: {fileID: -5201879853164906163, guid: d05144af5ab3f4a4c839aa9fefe1a7b8, type: 3}
---- !u!114 &1691011689
+--- !u!114 &1691011688
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -468,10 +468,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1691011683}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 505400b0212780549bf594181d22718b, type: 3}
+  m_Script: {fileID: 11500000, guid: ae7ffea8e90cd764a9074dbee87e7a32, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UIClickLoadScene
-  sceneName: MVP
+  m_EditorClassIdentifier: Assembly-CSharp::SceneLoader
+  gameSceneName: MVP
 --- !u!1 &1718809042
 GameObject:
   m_ObjectHideFlags: 0

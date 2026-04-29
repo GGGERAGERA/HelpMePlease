@@ -35,6 +35,16 @@ public class PlayerHealth : MonoBehaviour
         else
             Debug.LogError("GameOverManager not found!");
 
+        if (GameOverManager.Instance != null)
+        {
+            GameOverManager.Instance.GameOver();
+            Debug.Log("GameOver вызван!");
+        }
+        else
+        {
+            Debug.LogError("GameOverManager.Instance не найден!");
+        }
+
         gameObject.SetActive(false);
     }
 }
