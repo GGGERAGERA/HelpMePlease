@@ -232,7 +232,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 994301344786553034}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.5584684
+  m_Size: 0.47407186
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -491,7 +491,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5927391735885640014}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -613,8 +613,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.0007324203, y: 182.6877}
-  m_SizeDelta: {x: 541.04, y: 499.1744}
+  m_AnchoredPosition: {x: 0.0007324203, y: 166.08022}
+  m_SizeDelta: {x: 541.04, y: 444.4303}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4871324044131942094
 CanvasRenderer:
