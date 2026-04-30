@@ -2,28 +2,44 @@ using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
 {
-    public EnemyData enemyData;   // сюда перетащите созданный ассет (GoblinData)
-    public float spawnRadius = 10f;
-    public float spawnInterval = 2f;
-    public int maxEnemies = 10;
+    [Header("Spawn Settings")]
+    public GameObject[] enemyPrefabs;      // массив префабов врагов
+    public float spawnInterval = 2f;       // интервал между спавнами
+    public int maxEnemies = 10;            // максимум врагов на сцене
+
+    [Header("Spawn Distance")]
+    public float minSpawnDistance = 5f;    // минимальное расстояние от игрока
+    public float maxSpawnDistance = 12f;   // максимальное расстояние от игрока
+    public float spawnRadius = 360f;       // угол разброса (по кругу)
+
     private Transform player;
 
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
-        InvokeRepeating("SpawnEnemy", 1f, spawnInterval);
+        InvokeRepeating(nameof(SpawnEnemy), 1f, spawnInterval);
     }
 
     void SpawnEnemy()
     {
-        if (enemyData == null || player == null) return;
-        // проверка количества врагов (по тегу "Enemy")
-        if (GameObject.FindGameObjectsWithTag("Enemy").Length >= maxEnemies) return;
+        if (player == null) return;
 
-        Vector3 randomPos = player.position + Random.insideUnitSphere * spawnRadius;
-        randomPos.z = 0; 
+        // Проверяем количество врагов на сцене
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        if (enemies.Length >= maxEnemies) return;
 
-        // Создаём врага из префаба, который лежит в enemyData.prefab
-        Instantiate(enemyData.prefab, randomPos, Quaternion.identity);
+        if (enemyPrefabs.Length == 0) return;
+        GameObject selectedEnemy = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
+
+        // Выбираем случайное направление
+        Vector2 randomDirection = Random.insideUnitCircle.normalized;
+
+        // Выбираем случайное расстояние (от min до max)
+        float distance = Random.Range(minSpawnDistance, maxSpawnDistance);
+
+        // Вычисляем позицию спавна
+        Vector3 spawnPos = player.position + (Vector3)(randomDirection * distance);
+
+        Instantiate(selectedEnemy, spawnPos, Quaternion.identity);
     }
 }

@@ -3,45 +3,56 @@ using UnityEngine.SceneManagement;
 
 public class PauseManager : MonoBehaviour
 {
-    public GameObject pauseCanvas; // перетащите PauseCanvas в инспекторе
+    public static PauseManager Instance;
+    public GameObject pauseCanvas;
     private bool isPaused = false;
+    public bool IsPaused => isPaused;
+
+
+    // Ссылка на здоровье игрока
+    private PlayerHealth playerHealth;
+    void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+    }
 
     void Update()
     {
-        // Нажатие на Escape
+        // Если игрок мёртв — не даём открыть паузу
+        if (playerHealth != null && playerHealth.IsDead) return;
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (isPaused)
-                ResumeGame();
-            else
-                PauseGame();
+            if (isPaused) ResumeGame();
+            else PauseGame();
         }
+    }
+    void Start()
+    {
+        // Найдём игрока при старте
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+            playerHealth = player.GetComponent<PlayerHealth>();
     }
 
     public void PauseGame()
     {
         isPaused = true;
-        Time.timeScale = 0f;      // останавливаем время
-        pauseCanvas.SetActive(true);
+        Time.timeScale = 0f;
+        if (pauseCanvas != null) pauseCanvas.SetActive(true);
     }
 
     public void ResumeGame()
     {
         isPaused = false;
         Time.timeScale = 1f;
-        pauseCanvas.SetActive(false);
+        if (pauseCanvas != null) pauseCanvas.SetActive(false);
     }
 
     public void RestartGame()
     {
         Time.timeScale = 1f;
+        isPaused = false;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
-
-    public void MenuGame()
-    {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene("MainMenu"); // Убедитесь, что у вас есть сцена с именем "MainMenu"
-    }
 }
-
