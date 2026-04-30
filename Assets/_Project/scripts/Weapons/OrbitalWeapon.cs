@@ -37,7 +37,7 @@ public class OrbitalWeapon : MonoBehaviour
     void Update()
     {
         if (cam == null) return;
-
+        if (PauseManager.Instance != null && PauseManager.Instance.IsPaused) return;
         Vector3 mousePos = Input.mousePosition;
         if (mousePos.x < 0 || mousePos.x > Screen.width || mousePos.y < 0 || mousePos.y > Screen.height)
             return;
@@ -76,7 +76,11 @@ public class OrbitalWeapon : MonoBehaviour
         {
             EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
             if (enemy != null)
+            {
                 enemy.TakeDamage(damage);
+                CameraShake.Instance?.Shake(0.1f, 0.01f); // слабая тряска при ударе по врагу
+            }
+                
         }
     }
 }
