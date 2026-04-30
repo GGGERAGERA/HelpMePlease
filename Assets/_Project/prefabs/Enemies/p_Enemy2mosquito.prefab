@@ -430,6 +430,8 @@ MonoBehaviour:
   OnDamageTaken:
     m_PersistentCalls:
       m_Calls: []
+  damagePopupPrefab: {fileID: 9169945786982687630, guid: 93f186151a59ce24fa30dac2ce325309, type: 3}
+  popupOffset: {x: 0, y: 1, z: 0}
 --- !u!114 &4442309911056970652
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -456,6 +458,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f398493d588f764ebc02a9de3fe96a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCollisionHandler
+  damage: 15
+  damageCooldown: 1
 --- !u!114 &4861312589711261340
 MonoBehaviour:
   m_ObjectHideFlags: 0
