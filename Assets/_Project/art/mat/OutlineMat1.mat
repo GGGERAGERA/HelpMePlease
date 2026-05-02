@@ -8,13 +8,12 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: OutlineMat1
-  m_Shader: {fileID: 4800000, guid: e9af32491c562f948857ef22c0a66cdd, type: 3}
+  m_Shader: {fileID: 4800000, guid: 87e404a8c7caf274a8e66609d7abc4eb, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - ETC1_EXTERNAL_ALPHA
-  - _OUTLINETYPE_SOLID
+  m_ValidKeywords: []
   m_InvalidKeywords:
+  - ETC1_EXTERNAL_ALPHA
   - _ALPHAMODE_OPAQUE
   - _EMISSIONENABLED_ON
   - _EMISSIONENABLE_ON
@@ -22,6 +21,7 @@ Material:
   - _OUTLINEENABLED_ON
   - _OUTLINEENABLE_ON
   - _OUTLINEMODE_SOLID
+  - _OUTLINETYPE_SOLID
   - _SECONDLAYERBLEND_MIX
   - _SHADOWTYPE_SMOOTH
   - _SPECULARTYPE_SMOOTH
@@ -102,6 +102,7 @@ Material:
     - _OutlineFade: 0.5
     - _OutlineGlow: 1
     - _OutlineMode: 0
+    - _OutlineSize: 0.032
     - _OutlineThickness: 1
     - _OutlineType: 0
     - _OutlineWidth: 6.5
