@@ -134,7 +134,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   enemyPrefabs:
   - {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-  - {fileID: 1362265803452333836, guid: 19fbb5d4b3225fc41a3dfed7b46e4e08, type: 3}
   spawnInterval: 1
   maxEnemies: 5
   minSpawnDistance: 5
