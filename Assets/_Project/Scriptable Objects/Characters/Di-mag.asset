@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04a7e74498436d1449ee5d992e5bfc6a, type: 3}
+  m_Name: Di-mag
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterName: Di-mag
+  description: GIGACHAD_2
+  portrait: {fileID: 7393528917531895692, guid: 325a7f7251bba684c8c3b3c974daa774, type: 3}
+  characterPrefab: {fileID: 3267337206729473661, guid: d454a110e5c63d64f90569865c165982, type: 3}
+  startingWeapon: {fileID: 11400000, guid: a0a46b236f3b65c40b5c4cc5573d7c47, type: 2}
+  damage: 10
+  maxHealth: 150
+  moveSpeed: 15

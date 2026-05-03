@@ -22,6 +22,8 @@ public class LaserSword : MonoBehaviour
     private Rigidbody2D rb;
     private AudioSource audioSource;
 
+    public WeaponData weaponData;
+
     void Start()
     {
         cam = Camera.main;
@@ -71,7 +73,7 @@ public class LaserSword : MonoBehaviour
                 hitEnemies.Add(enemy);
                 lastAttackTime = Time.time;
 
-                int damage = PlayerStats.Instance != null ? PlayerStats.Instance.GetDamage() : 30;
+                int damage = weaponData != null ? weaponData.damage : 30;
                 enemy.TakeDamage(damage);
 
                 if (slashEffect != null)
