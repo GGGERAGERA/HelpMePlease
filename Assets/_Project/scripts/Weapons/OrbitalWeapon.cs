@@ -23,10 +23,18 @@ public class OrbitalWeapon : MonoBehaviour
     private Vector3 targetPosition;
     private AudioSource audioSource;
 
+    public WeaponData weaponData;
+
     void Start()
     {
         cam = Camera.main;
         targetPosition = transform.position;
+
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null)
+            player = playerObj.transform;
+        else
+            Debug.LogError("OrbitalWeapon: Player not found in scene!", this);
 
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
@@ -70,7 +78,7 @@ public class OrbitalWeapon : MonoBehaviour
         Vector2 origin = transform.position;
         RaycastHit2D[] hits = Physics2D.RaycastAll(origin, direction, laserRange, enemyLayer);
 
-        int damage = PlayerStats.Instance != null ? PlayerStats.Instance.GetDamage() : 20;
+        int damage = weaponData != null ? weaponData.damage : 20;
 
         foreach (RaycastHit2D hit in hits)
         {
