@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04a7e74498436d1449ee5d992e5bfc6a, type: 3}
+  m_Name: Gera
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterName: Gera
+  description: GIGACHAD
+  portrait: {fileID: -1355447741393180930, guid: e4a213a041071994daa5664d7c0e1020, type: 3}
+  characterPrefab: {fileID: 602157039170639563, guid: 169b5772155b17842b8cd9604fcf1eb7, type: 3}
+  startingWeapon: {fileID: 11400000, guid: acd6c980f3b758a409e5285b329a175a, type: 2}
+  damage: 10
+  maxHealth: 100
+  moveSpeed: 5

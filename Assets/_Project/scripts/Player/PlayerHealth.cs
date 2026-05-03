@@ -4,7 +4,7 @@ using UnityEngine.UI;
 public class PlayerHealth : MonoBehaviour
 {
     public float maxHealth = 100f;
-    private float currentHealth;
+    public float currentHealth;
     public Slider healthSlider; // —юда перетащите HealthSlider из Canvas
 
     private bool isDead = false;
@@ -29,6 +29,21 @@ public class PlayerHealth : MonoBehaviour
         if (currentHealth <= 0) Die();
     }
 
+    public void SetCurrentHealth(int value)
+    {
+        currentHealth = Mathf.Clamp(value, 0, maxHealth);
+        if (healthSlider != null)
+            healthSlider.value = currentHealth;
+    }
+    public void Heal(int amount)
+    {
+        currentHealth += amount;
+        if (currentHealth > maxHealth)
+            currentHealth = maxHealth;
+
+        if (healthSlider != null)
+            healthSlider.value = currentHealth;
+    }
     void Die()
     {
         Debug.Log("Player died");
