@@ -26,6 +26,7 @@ Material:
   - _SHADOWTYPE_SMOOTH
   - _SMOOTHOUTLINE_ON
   - _SPECULARTYPE_SMOOTH
+  - _USEEMISSION_ON
   - _USEOUTLINE_ON
   - _USESPECULAR_ON
   - _USETEXTUREOUTLINE_ON
@@ -85,7 +86,7 @@ Material:
     - _DisableShadows: 0
     - _EmissionEnable: 1
     - _EmissionEnabled: 1
-    - _EmissionStrength: 4.1
+    - _EmissionStrength: 1
     - _EmissionUseMask: 0
     - _EnableExternalAlpha: 0
     - _Glossiness: 0.5
@@ -129,7 +130,7 @@ Material:
     - _SpecularType: 0
     - _TextureHeight: 64
     - _TextureWidth: 64
-    - _UseEmission: 0
+    - _UseEmission: 1
     - _UseOutline: 1
     - _UseRimLight: 0
     - _UseSecondLayer: 0
@@ -140,7 +141,7 @@ Material:
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 1.4980394, g: 0, b: 0, a: 0.36862746}
+    - _EmissionColor: {r: 0.34943002, g: 0.34943002, b: 0.34943002, a: 0.36862746}
     - _Flip: {r: 1, g: 1, b: 1, a: 1}
     - _OutlineColor: {r: 1, g: 1, b: 1, a: 1}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
