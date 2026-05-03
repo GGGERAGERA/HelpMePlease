@@ -297,6 +297,7 @@ GameObject:
   - component: {fileID: 4861312589711261340}
   - component: {fileID: 826003451788788162}
   - component: {fileID: 6261945912111484072}
+  - component: {fileID: 863887883602179691}
   m_Layer: 0
   m_Name: p_Enemy1Aseprite1
   m_TagString: Enemy
@@ -502,6 +503,26 @@ SortingGroup:
   m_SortingOrder: 0
   m_SortAtRoot: 0
   m_Sort3DAs2D: 0
+--- !u!249 &863887883602179691
+AreaEffector2D:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1362265803452333836}
+  m_Enabled: 1
+  m_UseColliderMask: 1
+  m_ColliderMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_UseGlobalAngle: 0
+  m_ForceAngle: 0
+  m_ForceMagnitude: 10
+  m_ForceVariation: 0
+  m_ForceTarget: 0
+  m_LinearDamping: 0
+  m_AngularDamping: 0
 --- !u!1 &4548343093565794949
 GameObject:
   m_ObjectHideFlags: 0
