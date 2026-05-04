@@ -46,6 +46,7 @@ public class CharactersSelectionManager : MonoBehaviour
     // Загрузить сцену (опционально)
     public void LoadGameScene()
     {
+        Time.timeScale = 1f; // сбросить время, если было замедлено
         SceneManager.LoadScene("MVP"); // имя твоей игровой сцены
     }
 }
