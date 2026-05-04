@@ -1,3 +1,4 @@
+using UnityEditor.U2D.Animation;
 using UnityEngine;
 
 public class CharacterSpawner : MonoBehaviour
@@ -13,6 +14,7 @@ public class CharacterSpawner : MonoBehaviour
 
     private void Start()
     {
+        Time.timeScale= 1f;
         SpawnCharacter();
     }
 
@@ -155,22 +157,15 @@ public class CharacterSpawner : MonoBehaviour
 
     private void AssignWeaponData(GameObject weapon, WeaponData weaponData)
     {
-        OrbitalWeapon orbital = weapon.GetComponent<OrbitalWeapon>();
-        if (orbital != null)
-        {
-            orbital.weaponData = weaponData;
-        }
+        BaseWeapon baseWeapon = weapon.GetComponent<BaseWeapon>();
 
-        Shoot shoot = weapon.GetComponent<Shoot>();
-        if (shoot != null)
+        if (baseWeapon != null)
         {
-            shoot.weaponData = weaponData;
+            baseWeapon.weaponData = weaponData;
         }
-
-        LaserSword sword = weapon.GetComponent<LaserSword>();
-        if (sword != null)
+        else
         {
-            sword.weaponData = weaponData;
+            Debug.LogWarning("CharacterSpawner: spawned weapon has no BaseWeapon component.");
         }
     }
 }

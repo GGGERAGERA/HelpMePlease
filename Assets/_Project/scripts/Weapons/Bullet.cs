@@ -5,28 +5,35 @@ public class Bullet : MonoBehaviour
     public float speed = 10f;
     public float damage = 20f;
     public float destroyDuration = 5f;
-    private Vector2 direction;
 
+    private Vector2 direction;
 
     public void Initialize(float bulletDamage, float bulletSpeed, Vector2 dir)
     {
-        speed = bulletSpeed;
         damage = bulletDamage;
+        speed = bulletSpeed;
         direction = dir.normalized;
+
         Destroy(gameObject, destroyDuration);
     }
 
-    void Update()
+    private void Update()
     {
-        transform.Translate(direction * speed * Time.deltaTime);
+        transform.Translate(direction * speed * Time.deltaTime, Space.World);
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Enemy"))
+        if (!other.CompareTag("Enemy"))
+            return;
+
+        EnemyHealth enemyHealth = other.GetComponent<EnemyHealth>();
+
+        if (enemyHealth != null)
         {
-            other.GetComponent<EnemyHealth>()?.TakeDamage(20f);
-            Destroy(gameObject);
+            enemyHealth.TakeDamage(damage);
         }
+
+        Destroy(gameObject);
     }
 }

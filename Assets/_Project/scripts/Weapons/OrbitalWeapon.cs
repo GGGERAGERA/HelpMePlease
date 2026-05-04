@@ -1,94 +1,314 @@
 ﻿using UnityEngine;
 
-public class OrbitalWeapon : MonoBehaviour
+public class OrbitalWeapon : BaseWeapon
 {
-    [Header("Movement")]
+    [Header("Orbit Settings")]
     public Transform player;
     public float orbitRadius = 1.2f;
-    public float smoothSpeed = 10f;
+    public float smoothSpeed = 15f;
 
-    [Header("Visual Effects")]
-    public ParticleSystem muzzleFlash;
-    public ParticleSystem laserBeam;
+    [Header("Laser Line Visual")]
+    public LineRenderer laserLine;
+    public float laserVisibleTime = 0.08f;
+    public float laserWidth = 0.08f;
+
+    [Header("Optional Particle Visuals")]
+    public ParticleSystem muzzleFlashParticles;
+    public ParticleSystem hitParticles;
 
     [Header("Combat")]
-    public float laserRange = 10f;
     public LayerMask enemyLayer;
 
-    [Header("Audio")]
-    public AudioClip laserSound;
-    public float soundVolume = 0.7f;
+    private Camera mainCamera;
+    private Vector3 lastMouseWorldPosition;
+    private float laserHideTime;
 
-    private Camera cam;
-    private Vector3 targetPosition;
-    private AudioSource audioSource;
-
-    public WeaponData weaponData;
-
-    void Start()
+    protected override void Start()
     {
-        cam = Camera.main;
-        targetPosition = transform.position;
+        base.Start();
 
-        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-        if (playerObj != null)
-            player = playerObj.transform;
-        else
-            Debug.LogError("OrbitalWeapon: Player not found in scene!", this);
+        mainCamera = Camera.main;
 
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
-            audioSource = gameObject.AddComponent<AudioSource>();
-        audioSource.playOnAwake = false;
+        if (firePoint == null)
+        {
+            firePoint = transform;
+        }
+
+        if (player == null)
+        {
+            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+
+            if (playerObject != null)
+            {
+                player = playerObject.transform;
+            }
+        }
+
+        if (laserLine == null)
+        {
+            laserLine = GetComponentInChildren<LineRenderer>(true);
+        }
+
+        SetupLaserLine();
+        HideLaserLine();
+
+        StopParticles(muzzleFlashParticles);
+        StopParticles(hitParticles);
     }
 
-    void Update()
+    protected override void Update()
     {
-        if (cam == null) return;
-        if (PauseManager.Instance != null && PauseManager.Instance.IsPaused) return;
-        Vector3 mousePos = Input.mousePosition;
-        if (mousePos.x < 0 || mousePos.x > Screen.width || mousePos.y < 0 || mousePos.y > Screen.height)
-            return;
+        base.Update();
 
-        Vector3 worldMousePos = cam.ScreenToWorldPoint(mousePos);
-        worldMousePos.z = 0;
-        Vector2 direction = (worldMousePos - player.position).normalized;
-
-        Vector3 wantedPos = player.position + (Vector3)direction * orbitRadius;
-        targetPosition = wantedPos;
-        transform.position = Vector3.Lerp(transform.position, targetPosition, smoothSpeed * Time.deltaTime);
-
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg + 180f;
-        transform.rotation = Quaternion.Euler(0, 0, angle);
-
-        if (Input.GetMouseButtonDown(0))
+        if (Time.timeScale == 0f)
         {
-            Shoot(direction);
+            return;
+        }
+
+        if (mainCamera == null)
+        {
+            mainCamera = Camera.main;
+
+            if (mainCamera == null)
+            {
+                return;
+            }
+        }
+
+        if (player == null)
+        {
+            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+
+            if (playerObject != null)
+            {
+                player = playerObject.transform;
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        UpdateMousePosition();
+        UpdateOrbitPosition();
+
+        if (Input.GetMouseButton(0) && CanAttack())
+        {
+            Attack();
+        }
+
+        if (laserLine != null && laserLine.enabled && Time.time >= laserHideTime)
+        {
+            HideLaserLine();
         }
     }
 
-    void Shoot(Vector2 direction)
+    public override void Attack()
     {
-        if (muzzleFlash != null) muzzleFlash.Play();
-        if (laserBeam != null) laserBeam.Play();
+        if (firePoint == null)
+        {
+            firePoint = transform;
+        }
 
-        if (laserSound != null && audioSource != null)
-            audioSource.PlayOneShot(laserSound, soundVolume);
+        Vector3 origin = firePoint.position;
 
-        Vector2 origin = transform.position;
-        RaycastHit2D[] hits = Physics2D.RaycastAll(origin, direction, laserRange, enemyLayer);
+        Vector3 direction = lastMouseWorldPosition - origin;
+        direction.z = 0f;
 
-        int damage = weaponData != null ? weaponData.damage : 20;
+        if (direction.sqrMagnitude < 0.001f)
+        {
+            return;
+        }
+
+        direction.Normalize();
+
+        float range = GetRange();
+        int damage = GetDamage();
+
+        Vector3 endPoint = origin + direction * range;
+
+        RaycastHit2D hit = FindFirstEnemyHit(origin, direction, range);
+
+        if (hit.collider != null)
+        {
+            endPoint = hit.point;
+
+            EnemyHealth enemyHealth = hit.collider.GetComponent<EnemyHealth>();
+
+            if (enemyHealth == null)
+            {
+                enemyHealth = hit.collider.GetComponentInParent<EnemyHealth>();
+            }
+
+            if (enemyHealth != null)
+            {
+                enemyHealth.TakeDamage(damage);
+            }
+
+            PlayHitParticles(endPoint, direction);
+        }
+
+        ShowLaserLine(origin, endPoint);
+        PlayMuzzleFlash(origin, direction);
+
+        MarkAttackTime();
+
+        Debug.DrawLine(origin, endPoint, Color.red, 0.15f);
+    }
+
+    private void UpdateMousePosition()
+    {
+        lastMouseWorldPosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        lastMouseWorldPosition.z = 0f;
+    }
+
+    private void UpdateOrbitPosition()
+    {
+        Vector3 directionFromPlayer = lastMouseWorldPosition - player.position;
+        directionFromPlayer.z = 0f;
+
+        if (directionFromPlayer.sqrMagnitude < 0.001f)
+        {
+            return;
+        }
+
+        directionFromPlayer.Normalize();
+
+        Vector3 targetPosition = player.position + directionFromPlayer * orbitRadius;
+
+        transform.position = Vector3.Lerp(
+            transform.position,
+            targetPosition,
+            smoothSpeed * Time.deltaTime
+        );
+
+        Vector3 directionToMouse = lastMouseWorldPosition - transform.position;
+        directionToMouse.z = 0f;
+
+        if (directionToMouse.sqrMagnitude < 0.001f)
+        {
+            return;
+        }
+
+        directionToMouse.Normalize();
+
+        float angle = Mathf.Atan2(directionToMouse.y, directionToMouse.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0f, 0f, angle);
+
+        transform.localScale = Vector3.one;
+    }
+
+    private RaycastHit2D FindFirstEnemyHit(Vector3 origin, Vector3 direction, float range)
+    {
+        RaycastHit2D[] hits;
+
+        if (enemyLayer.value == 0)
+        {
+            hits = Physics2D.RaycastAll(origin, direction, range);
+        }
+        else
+        {
+            hits = Physics2D.RaycastAll(origin, direction, range, enemyLayer);
+        }
 
         foreach (RaycastHit2D hit in hits)
         {
-            EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
-            if (enemy != null)
+            if (hit.collider == null)
             {
-                enemy.TakeDamage(damage);
-                CameraShake.Instance?.Shake(0.1f, 0.01f); // слабая тряска при ударе по врагу
+                continue;
             }
-                
+
+            EnemyHealth enemyHealth = hit.collider.GetComponent<EnemyHealth>();
+
+            if (enemyHealth == null)
+            {
+                enemyHealth = hit.collider.GetComponentInParent<EnemyHealth>();
+            }
+
+            if (enemyHealth != null)
+            {
+                return hit;
+            }
         }
+
+        return new RaycastHit2D();
+    }
+
+    private void SetupLaserLine()
+    {
+        if (laserLine == null)
+        {
+            Debug.LogWarning("OrbitalWeapon: Laser Line is not assigned. Laser damage will work, but line will not be visible.");
+            return;
+        }
+
+        laserLine.positionCount = 2;
+        laserLine.useWorldSpace = true;
+
+        laserLine.startWidth = laserWidth;
+        laserLine.endWidth = laserWidth;
+
+        laserLine.enabled = false;
+    }
+
+    private void ShowLaserLine(Vector3 startPoint, Vector3 endPoint)
+    {
+        if (laserLine == null)
+        {
+            return;
+        }
+
+        laserLine.enabled = true;
+
+        laserLine.SetPosition(0, startPoint);
+        laserLine.SetPosition(1, endPoint);
+
+        laserHideTime = Time.time + laserVisibleTime;
+    }
+
+    private void HideLaserLine()
+    {
+        if (laserLine != null)
+        {
+            laserLine.enabled = false;
+        }
+    }
+
+    private void PlayMuzzleFlash(Vector3 position, Vector3 direction)
+    {
+        if (muzzleFlashParticles == null)
+        {
+            return;
+        }
+
+        muzzleFlashParticles.transform.position = position;
+        muzzleFlashParticles.transform.right = direction;
+
+        muzzleFlashParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        muzzleFlashParticles.Play(true);
+    }
+
+    private void PlayHitParticles(Vector3 position, Vector3 direction)
+    {
+        if (hitParticles == null)
+        {
+            return;
+        }
+
+        hitParticles.transform.position = position;
+        hitParticles.transform.right = direction;
+
+        hitParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        hitParticles.Play(true);
+    }
+
+    private void StopParticles(ParticleSystem particles)
+    {
+        if (particles == null)
+        {
+            return;
+        }
+
+        particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
     }
 }
