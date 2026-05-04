@@ -1,75 +1,64 @@
 using UnityEngine;
 
-public class Shoot : MonoBehaviour
+public class Shoot : BaseWeapon
 {
-    [Header("Weapon Data")]
-    public WeaponData weaponData; // ссылка на ScriptableObject с параметрами оружия
+    [Header("Shoot Settings")]
+    public GameObject bulletPrefab;
 
-    [Header("References")]
-    public Transform firePoint;    // точка вылета пули (лучше назначить в префабе)
-    public GameObject bulletPrefab; // префаб пули (можно указать в WeaponData, но для простоты оставим)
-
-    private float lastShootTime;
-
-    void Start()
+    protected override void Update()
     {
+        base.Update();
 
-        if (weaponData == null)
-            Debug.LogError("Shoot: WeaponData not assigned!", this);
-    }
-
-    void Update()
-    {
-        // Не стреляем на паузе
-        if (Time.timeScale == 0f) return;
-        if (weaponData == null) return;
-
-
-        if(Input.GetMouseButtonDown(0))
-        {
-            if (Time.time >= lastShootTime + weaponData.fireRate)
-            {
-                ShootBullet();
-                lastShootTime = Time.time;
-            }
-        }
-    }
-
-    void ShootBullet()
-    {
-        if (firePoint == null)
-        {
-           
+        if (Time.timeScale == 0f)
             return;
+
+        if (Input.GetMouseButton(0) && CanAttack())
+        {
+            Attack();
         }
+    }
+
+    public override void Attack()
+    {
         if (bulletPrefab == null)
         {
-           
+            Debug.LogWarning("Shoot: bulletPrefab is not assigned.");
             return;
+        }
+
+        if (firePoint == null)
+        {
+            firePoint = transform;
         }
 
         Vector2 direction = GetShootDirection();
 
-        // Создаём пулю
-        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
+        GameObject bullet = Instantiate(
+            bulletPrefab,
+            firePoint.position,
+            Quaternion.identity
+        );
+
         Bullet bulletScript = bullet.GetComponent<Bullet>();
+
         if (bulletScript != null)
         {
-            // Передаём урон из WeaponData
-            bulletScript.Initialize(weaponData.damage, weaponData.range, direction);
+            bulletScript.Initialize(GetDamage(), GetRange(), direction);
         }
-        else
+
+        if (weaponData != null)
         {
-            Debug.LogError("Bullet prefab must have Bullet component!");
+            PlaySound(weaponData.attackSound);
         }
+
+        MarkAttackTime();
     }
 
-
-    Vector2 GetShootDirection()
+    private Vector2 GetShootDirection()
     {
-        // Получаем позицию мыши в мировых координатах
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePos.z = 0f; // обнуляем z, так как мы работаем в 2D
-        return (mousePos - firePoint.position).normalized;
+        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mousePosition.z = 0f;
+
+        return (mousePosition - firePoint.position).normalized;
     }
 }

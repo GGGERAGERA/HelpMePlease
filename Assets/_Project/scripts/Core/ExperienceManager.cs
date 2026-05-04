@@ -6,19 +6,14 @@ public class ExperienceManager : MonoBehaviour
     public static ExperienceManager Instance;
 
     [Header("Level Settings")]
-    public LevelData levelData;          // ScriptableObject с настройками опыта
+    public LevelData levelData;
     public int currentLevel = 1;
     public int currentExp = 0;
 
-    [Header("Upgrade Settings")]
-    public int healthPerLevel = 10;      // +10 к макс. здоровью за уровень
-    public float speedPerLevel = 0.2f;   // +0.2 к скорости за уровень
-    public float damageMultiplierPerLevel = 0.1f; // +10% к урону за уровень
-
     private int expToNextLevel;
 
-    public UnityEvent<int, int> OnExperienceChanged; // (currentExp, requiredExp)
-    public UnityEvent<int> OnLevelUp;                 // (newLevel)
+    public UnityEvent<int, int> OnExperienceChanged;
+    public UnityEvent<int> OnLevelUp;
 
     private void Awake()
     {
@@ -36,6 +31,12 @@ public class ExperienceManager : MonoBehaviour
 
     public void AddExperience(int amount)
     {
+        if (levelData == null)
+        {
+            Debug.LogWarning("ExperienceManager: levelData is not assigned.");
+            return;
+        }
+
         currentExp += amount;
 
         while (currentExp >= expToNextLevel && currentLevel < levelData.maxLevel)
@@ -52,51 +53,28 @@ public class ExperienceManager : MonoBehaviour
         currentLevel++;
         expToNextLevel = GetRequiredExpForLevel(currentLevel);
 
-        // Применяем улучшения к игроку
-        ApplyUpgrades();
-
         OnLevelUp?.Invoke(currentLevel);
-        Debug.Log($"Level up! Now level {currentLevel}");
-    }
 
-    private void ApplyUpgrades()
-{
-    // Находим компоненты
-    PlayerHealth health = FindFirstObjectByType<PlayerHealth>();
-    CharacterMovement2D movement = FindFirstObjectByType<CharacterMovement2D>();
-    PlayerStats stats = PlayerStats.Instance;
-    
-    // 1. Увеличиваем здоровье
-    if (health != null)
-    {
-        health.maxHealth += healthPerLevel;
-        health.currentHealth += healthPerLevel; // теперь должно работать
-        // или health.Heal(healthPerLevel);
-    }
-    
-    // 2. Увеличиваем скорость
-    if (movement != null)
-    {
-        movement.speed += speedPerLevel;
-    }
-    
-    // 3. Увеличиваем множитель урона
-    if (stats != null)
-    {
-            stats.IncreaseDamageMultiplier(damageMultiplierPerLevel);
+        if (UpgradeManager.Instance != null)
+        {
+            UpgradeManager.Instance.ShowUpgradeChoices();
         }
-    
-    // 4. Обновляем UI
-    if (health != null && health.healthSlider != null)
-    {
-        health.healthSlider.maxValue = health.maxHealth;
-        health.healthSlider.value = health.currentHealth;
+        else
+        {
+            Debug.LogWarning("ExperienceManager: UpgradeManager not found.");
+        }
+
+        Debug.Log("Level up! Now level " + currentLevel);
     }
-}
 
     private int GetRequiredExpForLevel(int level)
     {
-        return Mathf.FloorToInt(levelData.baseExpToNextLevel * Mathf.Pow(levelData.expGrowth, level - 1));
+        if (levelData == null)
+            return 100;
+
+        return Mathf.FloorToInt(
+            levelData.baseExpToNextLevel * Mathf.Pow(levelData.expGrowth, level - 1)
+        );
     }
 
     public int GetRequiredExpForCurrentLevel()
