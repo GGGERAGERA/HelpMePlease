@@ -1,93 +1,109 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
-public class LaserSword : MonoBehaviour
+public class LaserSword : BaseWeapon
 {
-    [Header("Movement")]
-    public float followSpeed = 30f;
-    public float rotationSpeed = 720f;
+    [Header("Sword Settings")]
+    public float moveSpeed = 10f;
+    public float returnSpeed = 12f;
+    public float maxDistanceFromPlayer = 3f;
 
-    [Header("Combat")]
-    public float attackCooldown = 0.5f;
-    private float lastAttackTime;
+    private Transform player;
+    private Vector3 targetPosition;
+    private bool isAttacking;
     private HashSet<EnemyHealth> hitEnemies = new HashSet<EnemyHealth>();
 
-    [Header("Effects")]
-    public ParticleSystem slashEffect;
-    public AudioClip slashSound;
-    public float soundVolume = 0.7f;
-
-    private Camera cam;
-    private Vector2 targetPosition;
-    private Rigidbody2D rb;
-    private AudioSource audioSource;
-
-    public WeaponData weaponData;
-
-    void Start()
+    protected override void Start()
     {
-        cam = Camera.main;
-        rb = GetComponent<Rigidbody2D>();
-        if (rb == null)
-            rb = gameObject.AddComponent<Rigidbody2D>();
-        rb.bodyType = RigidbodyType2D.Kinematic;
+        base.Start();
 
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
-            audioSource = gameObject.AddComponent<AudioSource>();
-        audioSource.playOnAwake = false;
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+
+        if (playerObject != null)
+        {
+            player = playerObject.transform;
+        }
 
         targetPosition = transform.position;
     }
 
-    void Update()
+    protected override void Update()
     {
-        Vector3 mousePos = Input.mousePosition;
-        if (mousePos.x >= 0 && mousePos.x <= Screen.width && mousePos.y >= 0 && mousePos.y <= Screen.height)
+        base.Update();
+
+        if (Time.timeScale == 0f)
+            return;
+
+        if (player == null)
+            return;
+
+        if (Input.GetMouseButtonDown(0) && CanAttack())
         {
-            Vector3 worldMousePos = cam.ScreenToWorldPoint(mousePos);
-            worldMousePos.z = 0;
-            targetPosition = worldMousePos;
+            Attack();
         }
+
+        MoveSword();
     }
 
-    void FixedUpdate()
+    public override void Attack()
     {
-        rb.MovePosition(Vector2.Lerp(rb.position, targetPosition, followSpeed * Time.fixedDeltaTime));
+        if (player == null)
+            return;
 
-        Vector2 direction = (targetPosition - rb.position).normalized;
-        if (direction.magnitude > 0.1f)
+        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mousePosition.z = 0f;
+
+        Vector3 direction = (mousePosition - player.position).normalized;
+
+        targetPosition = player.position + direction * Mathf.Min(GetRange(), maxDistanceFromPlayer);
+
+        isAttacking = true;
+        hitEnemies.Clear();
+
+        if (weaponData != null)
         {
-            float targetAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            rb.rotation = Mathf.LerpAngle(rb.rotation, targetAngle, rotationSpeed * Time.fixedDeltaTime);
+            PlaySound(weaponData.attackSound);
         }
+
+        MarkAttackTime();
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    private void MoveSword()
     {
-        if (other.CompareTag("Enemy") && Time.time >= lastAttackTime + attackCooldown)
+        if (isAttacking)
         {
-            EnemyHealth enemy = other.GetComponent<EnemyHealth>();
-            if (enemy != null && !hitEnemies.Contains(enemy))
+            transform.position = Vector3.MoveTowards(
+                transform.position,
+                targetPosition,
+                moveSpeed * Time.deltaTime
+            );
+
+            if (Vector3.Distance(transform.position, targetPosition) < 0.05f)
             {
-                hitEnemies.Add(enemy);
-                lastAttackTime = Time.time;
-
-                int damage = weaponData != null ? weaponData.damage : 30;
-                enemy.TakeDamage(damage);
-
-                if (slashEffect != null)
-                {
-                    var effect = Instantiate(slashEffect, transform.position, Quaternion.identity);
-                    Destroy(effect.gameObject, 0.5f);
-                }
-                if (slashSound != null && audioSource != null)
-                    audioSource.PlayOneShot(slashSound, soundVolume);
-
-                Invoke(nameof(ClearHitList), 0.2f);
+                isAttacking = false;
             }
         }
+        else
+        {
+            transform.position = Vector3.MoveTowards(
+                transform.position,
+                player.position,
+                returnSpeed * Time.deltaTime
+            );
+        }
     }
 
-    void ClearHitList() => hitEnemies.Clear();
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        EnemyHealth enemyHealth = other.GetComponent<EnemyHealth>();
+
+        if (enemyHealth == null)
+            return;
+
+        if (hitEnemies.Contains(enemyHealth))
+            return;
+
+        hitEnemies.Add(enemyHealth);
+        enemyHealth.TakeDamage(GetDamage());
+    }
 }

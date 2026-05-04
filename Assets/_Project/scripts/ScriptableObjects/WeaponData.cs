@@ -9,4 +9,5 @@ public class WeaponData : ScriptableObject
     public float fireRate = 0.5f;
     public float range = 10f;
     public Sprite icon;
+    public AudioClip attackSound;
 }
