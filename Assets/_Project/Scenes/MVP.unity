@@ -230,6 +230,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 50b27f361106c424ba3a16bb4fed840c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterSpawner
+  defaultCharacter: {fileID: 11400000, guid: 6aad8e558b07e8243b3b79a85aefa335, type: 2}
+  spawnPoint: {fileID: 0}
 --- !u!1 &50998817
 GameObject:
   m_ObjectHideFlags: 0

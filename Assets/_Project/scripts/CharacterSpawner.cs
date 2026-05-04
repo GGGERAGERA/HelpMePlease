@@ -2,67 +2,175 @@ using UnityEngine;
 
 public class CharacterSpawner : MonoBehaviour
 {
-    void Start()
+    [Header("Default character for direct MVP launch")]
+    [SerializeField] private CharacterData defaultCharacter;
+
+    [Header("Spawn settings")]
+    [SerializeField] private Transform spawnPoint;
+
+    [Header("Weapon spawn settings")]
+    [SerializeField] private string weaponPointName = "WeaponPoint";
+
+    private void Start()
     {
         SpawnCharacter();
     }
 
-    void SpawnCharacter()
+    private void SpawnCharacter()
     {
-        // Получаем выбранного персонажа из меню
-        int selectedIndex = PlayerPrefs.GetInt("SelectedCharacter", 0);
-        CharacterData[] allCharacters = CharactersSelectionManager.Instance?.allCharacters;
+        CharacterData selectedCharacter = GetSelectedCharacter();
 
-        if (allCharacters == null || allCharacters.Length == 0)
+        if (selectedCharacter == null)
         {
-            Debug.LogError("No characters found!");
+            Debug.LogError("CharacterSpawner: No selected character and no defaultCharacter assigned.");
             return;
         }
 
-        CharacterData selectedCharacter = allCharacters[selectedIndex];
-        if (selectedCharacter == null || selectedCharacter.characterPrefab == null)
+        if (selectedCharacter.characterPrefab == null)
         {
-            Debug.LogError("Selected character or its prefab is null!");
+            Debug.LogError("CharacterSpawner: characterPrefab is not assigned in CharacterData: " + selectedCharacter.characterName);
             return;
         }
 
-        // Создаём персонажа
-        GameObject player = Instantiate(selectedCharacter.characterPrefab, Vector3.zero, Quaternion.identity);
+        Vector3 spawnPosition = spawnPoint != null ? spawnPoint.position : transform.position;
+
+        GameObject player = Instantiate(
+            selectedCharacter.characterPrefab,
+            spawnPosition,
+            Quaternion.identity
+        );
+
         player.tag = "Player";
 
-        // Настраиваем характеристики
+        ApplyCharacterStats(player, selectedCharacter);
+        SpawnStartingWeapon(player, selectedCharacter);
+    }
+
+    private CharacterData GetSelectedCharacter()
+    {
+        if (CharactersSelectionManager.Instance != null)
+        {
+            CharacterData selectedFromManager = CharactersSelectionManager.Instance.GetSelectedCharacter();
+
+            if (selectedFromManager != null)
+            {
+                return selectedFromManager;
+            }
+
+            CharacterData[] allCharacters = CharactersSelectionManager.Instance.allCharacters;
+
+            if (allCharacters != null && allCharacters.Length > 0)
+            {
+                int selectedIndex = PlayerPrefs.GetInt("SelectedCharacter", 0);
+
+                if (selectedIndex >= 0 && selectedIndex < allCharacters.Length)
+                {
+                    if (allCharacters[selectedIndex] != null)
+                    {
+                        return allCharacters[selectedIndex];
+                    }
+                }
+            }
+        }
+
+        return defaultCharacter;
+    }
+
+    private void ApplyCharacterStats(GameObject player, CharacterData characterData)
+    {
         PlayerStats stats = player.GetComponent<PlayerStats>();
-        PlayerHealth health = player.GetComponent<PlayerHealth>();
-        CharacterMovement2D movement = player.GetComponent<CharacterMovement2D>();
 
         if (stats != null)
         {
-            stats.baseDamage = selectedCharacter.damage;
-            stats.moveSpeed = selectedCharacter.moveSpeed;
+            stats.baseDamage = characterData.damage;
+            stats.moveSpeed = characterData.moveSpeed;
         }
+        else
+        {
+            Debug.LogWarning("CharacterSpawner: PlayerStats component not found on spawned player.");
+        }
+
+        PlayerHealth health = player.GetComponent<PlayerHealth>();
+
         if (health != null)
         {
-            health.maxHealth = selectedCharacter.maxHealth;
-            health.currentHealth = selectedCharacter.maxHealth;
+            health.maxHealth = characterData.maxHealth;
+            health.currentHealth = characterData.maxHealth;
         }
+        else
+        {
+            Debug.LogWarning("CharacterSpawner: PlayerHealth component not found on spawned player.");
+        }
+
+        CharacterMovement2D movement = player.GetComponent<CharacterMovement2D>();
+
         if (movement != null)
         {
-            movement.speed = selectedCharacter.moveSpeed;
+            movement.speed = characterData.moveSpeed;
+        }
+        else
+        {
+            Debug.LogWarning("CharacterSpawner: CharacterMovement2D component not found on spawned player.");
+        }
+    }
+
+    private void SpawnStartingWeapon(GameObject player, CharacterData characterData)
+    {
+        if (characterData.startingWeapon == null)
+        {
+            Debug.LogWarning("CharacterSpawner: startingWeapon is not assigned for character: " + characterData.characterName);
+            return;
         }
 
-        // Спавним стартовое оружие
-        if (selectedCharacter.startingWeapon != null && selectedCharacter.startingWeapon.weaponPrefab != null)
+        if (characterData.startingWeapon.weaponPrefab == null)
         {
-            GameObject weapon = Instantiate(selectedCharacter.startingWeapon.weaponPrefab, player.transform);
-            // Если на оружии есть скрипт с WeaponData — передаём данные
-            OrbitalWeapon orbital = weapon.GetComponent<OrbitalWeapon>();
-            if (orbital != null) orbital.weaponData = selectedCharacter.startingWeapon;
+            Debug.LogWarning("CharacterSpawner: weaponPrefab is not assigned in startingWeapon for character: " + characterData.characterName);
+            return;
+        }
 
-            Shoot shoot = weapon.GetComponent<Shoot>();
-            if (shoot != null) shoot.weaponData = selectedCharacter.startingWeapon;
+        Transform weaponPoint = player.transform.Find(weaponPointName);
 
-            LaserSword sword = weapon.GetComponent<LaserSword>();
-            if (sword != null) sword.weaponData = selectedCharacter.startingWeapon;
+        if (weaponPoint == null)
+        {
+            Debug.LogWarning(
+                "CharacterSpawner: WeaponPoint not found on player prefab. Weapon will spawn in player center. " +
+                "Create empty child object named '" + weaponPointName + "' inside player prefab."
+            );
+
+            weaponPoint = player.transform;
+        }
+
+        GameObject weapon = Instantiate(
+            characterData.startingWeapon.weaponPrefab,
+            weaponPoint.position,
+            weaponPoint.rotation,
+            player.transform
+        );
+
+        weapon.transform.position = weaponPoint.position;
+        weapon.transform.rotation = weaponPoint.rotation;
+
+        AssignWeaponData(weapon, characterData.startingWeapon);
+    }
+
+    private void AssignWeaponData(GameObject weapon, WeaponData weaponData)
+    {
+        OrbitalWeapon orbital = weapon.GetComponent<OrbitalWeapon>();
+        if (orbital != null)
+        {
+            orbital.weaponData = weaponData;
+        }
+
+        Shoot shoot = weapon.GetComponent<Shoot>();
+        if (shoot != null)
+        {
+            shoot.weaponData = weaponData;
+        }
+
+        LaserSword sword = weapon.GetComponent<LaserSword>();
+        if (sword != null)
+        {
+            sword.weaponData = weaponData;
         }
     }
 }
