@@ -129,7 +129,7 @@ ScriptedImporter:
   animatedSpriteImportData:
   - name: AseLocation1
     originalName: 
-    pivot: {x: 1.3333334, y: -4.3333335}
+    pivot: {x: 1.3333334, y: -2.2}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -138,7 +138,7 @@ ScriptedImporter:
       x: 4
       y: 4
       width: 384
-      height: 192
+      height: 320
     spriteID: f036317c4b09f9942bb34b3d0a309379
     spriteBone: []
     spriteOutline: []
@@ -168,9 +168,9 @@ ScriptedImporter:
       additiveSortOrder: 0
       cellRect:
         x: 0
-        y: 832
+        y: 704
         width: 384
-        height: 192
+        height: 320
       spriteId: f036317c4b09f9942bb34b3d0a309379
     linkedCells: []
     tileCells: []
@@ -182,4 +182,4 @@ ScriptedImporter:
   secondarySpriteTextures: []
   spritePackingTag: 
   canvasSize: {x: 1024, y: 1024}
-  previousTextureSize: {x: 512, y: 256}
+  previousTextureSize: {x: 512, y: 512}
