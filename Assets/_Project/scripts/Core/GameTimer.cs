@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class Stopwatch : MonoBehaviour
+public class GameTimer : MonoBehaviour
 {
     public Text timerText;           // UI Text для отображения времени
     private float elapsedTime = 0f;  // прошедшее время в секундах

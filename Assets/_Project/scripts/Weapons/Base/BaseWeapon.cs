@@ -6,28 +6,29 @@ public abstract class BaseWeapon : MonoBehaviour
     public WeaponData weaponData;
     public Transform firePoint;
 
-    protected AudioSource audioSource;
     protected float lastAttackTime;
 
     private float runtimeDamageBonus = 0f;
     private float runtimeRangeBonus = 0f;
     private float fireRateMultiplier = 1f;
 
+
+    [SerializeField] protected AudioSource weaponAudioSource;
+
     protected virtual void Start()
     {
-        audioSource = GetComponent<AudioSource>();
+        if (weaponAudioSource == null)
+            weaponAudioSource = GetComponent<AudioSource>();
 
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-        }
+        if (weaponAudioSource == null)
+            weaponAudioSource = gameObject.AddComponent<AudioSource>();
 
-        audioSource.playOnAwake = false;
+        weaponAudioSource.playOnAwake = false;
+        weaponAudioSource.loop = false;
+        weaponAudioSource.spatialBlend = 0f;
 
         if (firePoint == null)
-        {
             firePoint = transform;
-        }
     }
 
     protected virtual void Update()
@@ -47,14 +48,6 @@ public abstract class BaseWeapon : MonoBehaviour
     protected void MarkAttackTime()
     {
         lastAttackTime = Time.time;
-    }
-
-    protected void PlaySound(AudioClip clip, float volume = 0.7f)
-    {
-        if (clip != null && audioSource != null)
-        {
-            audioSource.PlayOneShot(clip, volume);
-        }
     }
 
     public int GetDamage()
@@ -92,4 +85,20 @@ public abstract class BaseWeapon : MonoBehaviour
     {
         fireRateMultiplier *= Mathf.Clamp(1f - percent, 0.1f, 10f);
     }
+    protected void PlaySound(AudioClip clip)
+    {
+        if (clip == null || weaponAudioSource == null)
+            return;
+
+        weaponAudioSource.pitch = Random.Range(
+            weaponData.pitchRange.x,
+            weaponData.pitchRange.y
+        );
+
+        weaponAudioSource.PlayOneShot(
+            clip,
+            weaponData.soundVolume
+        );
+    }
+
 }

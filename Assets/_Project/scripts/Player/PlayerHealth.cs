@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class PlayerHealth : MonoBehaviour
 {
@@ -9,9 +10,18 @@ public class PlayerHealth : MonoBehaviour
 
     private bool isDead = false;
     public bool IsDead => isDead;
+    private PlayerWhiteFlash whiteFlash;
+    private PlayerHitSound hitSound;
+
+
+    [SerializeField] private float invulnerabilityTime = 0.5f;
+
+    private bool isInvulnerable;
 
     void Start()
     {
+        whiteFlash = GetComponent<PlayerWhiteFlash>();
+        hitSound = GetComponent<PlayerHitSound>();
         currentHealth = maxHealth;
         if (healthSlider != null)
         {
@@ -22,13 +32,24 @@ public class PlayerHealth : MonoBehaviour
 
     public void TakeDamage(float damage)
     {
+        if (isInvulnerable)
+            return;
+        isInvulnerable = true;
         currentHealth -= damage;
+        whiteFlash?.Flash();
+        hitSound?.Play();
         // Сильная тряска при получении урона
-        CameraShake.Instance?.Shake(0.2f, 0.15f);
+        CameraShake.Instance?.Shake(0.12f, 0.08f);
         if (healthSlider != null) healthSlider.value = currentHealth;
         if (currentHealth <= 0) Die();
-    }
 
+        StartCoroutine(InvulnerabilityRoutine());
+    }
+    private IEnumerator InvulnerabilityRoutine()
+    {
+        yield return new WaitForSeconds(invulnerabilityTime);
+        isInvulnerable = false;
+    }
     public void SetCurrentHealth(int value)
     {
         currentHealth = Mathf.Clamp(value, 0, maxHealth);

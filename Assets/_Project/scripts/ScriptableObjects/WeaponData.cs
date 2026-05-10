@@ -10,4 +10,8 @@ public class WeaponData : ScriptableObject
     public float range = 10f;
     public Sprite icon;
     public AudioClip attackSound;
+
+    [Header("Sound Settings")]
+    public Vector2 pitchRange = new Vector2(0.96f, 1.04f);
+    public float soundVolume = 0.35f;
 }

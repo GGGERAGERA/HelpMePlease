@@ -17,3 +17,7 @@ MonoBehaviour:
   damage: 15
   fireRate: 0.5
   range: 10
+  icon: {fileID: 0}
+  attackSound: {fileID: 8300000, guid: 6ee737a6592c10a4d93a9836b01c1378, type: 3}
+  pitchRange: {x: 0.96, y: 1.04}
+  soundVolume: 0.11
