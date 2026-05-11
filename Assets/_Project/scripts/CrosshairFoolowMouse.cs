@@ -1,26 +1,20 @@
 using UnityEngine;
 
-public class CrosshairFollowMouse : MonoBehaviour
+public class UICrosshairFollowMouse : MonoBehaviour
 {
-    [SerializeField] private Camera targetCamera;
+    [SerializeField] private RectTransform crosshairRect;
 
     private void Awake()
     {
-        if (targetCamera == null)
-            targetCamera = Camera.main;
+        if (crosshairRect == null)
+            crosshairRect = GetComponent<RectTransform>();
 
         Cursor.visible = false;
     }
 
     private void Update()
     {
-        if (targetCamera == null)
-            return;
-
-        Vector3 mousePosition = targetCamera.ScreenToWorldPoint(Input.mousePosition);
-        mousePosition.z = 0f;
-
-        transform.position = mousePosition;
+        crosshairRect.position = Input.mousePosition;
     }
 
     private void OnDisable()
