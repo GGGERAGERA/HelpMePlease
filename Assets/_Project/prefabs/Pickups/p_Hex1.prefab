@@ -323,6 +323,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExperiencePickup
   expValue: 20
+  magnetRadius: 3
+  magnetSpeed: 5
+  collectDistance: 0.25
+  pickupSound: {fileID: 8300000, guid: b9b0bd14a48640140a280ebd1048c7be, type: 3}
+  pickupVolume: 0.25
 --- !u!1001 &1501581940933915821
 PrefabInstance:
   m_ObjectHideFlags: 0
