@@ -104,6 +104,7 @@ public class LaserSword : BaseWeapon
             return;
 
         hitEnemies.Add(enemyHealth);
-        enemyHealth.TakeDamage(GetDamage());
+
+        enemyHealth.TakeDamage(GetDamage(), transform.position);
     }
 }

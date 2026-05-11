@@ -142,7 +142,8 @@ public class OrbitalWeapon : BaseWeapon
 
             if (enemyHealth != null)
             {
-                enemyHealth.TakeDamage(damage);
+                //Vector2 hitPoint = transform.position;
+                enemyHealth.TakeDamage(damage, transform.position);
             }
 
             PlayHitParticles(endPoint, direction);

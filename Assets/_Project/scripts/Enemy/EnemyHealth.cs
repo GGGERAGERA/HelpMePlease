@@ -14,18 +14,42 @@ public class EnemyHealth : MonoBehaviour
     public GameObject damagePopupPrefab;  // перетащите префаб DamagePopup
     public Vector3 popupOffset = new Vector3(0, 1f, 0); // смещение над врагом
 
+    [Header("Hit Sound")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip hitSound;
+    [SerializeField] private Vector2 hitPitchRange = new Vector2(0.95f, 1.05f);
+    [SerializeField] private float hitVolume = 0.35f;
+
+
+    [Header("Hit FX")]
+    [SerializeField] private ParticleSystem bloodHitPrefab;
     void Start()
     {
         currentHealth = maxHealth;
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
 
-    public void TakeDamage(float damage)
+    private void Awake()
+    {
+        currentHealth = maxHealth;
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
+
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
+
+        audioSource.playOnAwake = false;
+        audioSource.spatialBlend = 0f;
+    }
+
+    public void TakeDamage(float damage, Vector2 hitPoint)
     {
         if (isDead) return;
         if (currentHealth <= 0) return;
 
         currentHealth -= damage;
+        SpawnBlood(hitPoint);
+        PlayHitSound();
         // Показать цифру урона
         ShowDamagePopup(Mathf.RoundToInt(damage));
 
@@ -35,7 +59,21 @@ public class EnemyHealth : MonoBehaviour
         if (currentHealth <= 0)
             Die();
     }
+    private void SpawnBlood(Vector2 hitPoint)
+    {
+        if (bloodHitPrefab == null)
+            return;
 
+        ParticleSystem blood = Instantiate(
+            bloodHitPrefab,
+            hitPoint,
+            Quaternion.identity
+        );
+
+        blood.Play();
+
+        Destroy(blood.gameObject, 2f);
+    }
     void Die()
     {
         if (isDead) return;
@@ -66,6 +104,15 @@ public class EnemyHealth : MonoBehaviour
         {
             Debug.LogError("DamagePopup component not found on prefab!");
         }
+    }
+
+    private void PlayHitSound()
+    {
+        if (hitSound == null || audioSource == null)
+            return;
+
+        audioSource.pitch = Random.Range(hitPitchRange.x, hitPitchRange.y);
+        audioSource.PlayOneShot(hitSound, hitVolume);
     }
 
 }
