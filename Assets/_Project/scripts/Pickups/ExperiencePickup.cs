@@ -1,7 +1,5 @@
 using UnityEngine;
 
-using UnityEngine;
-
 public class ExperiencePickup : MonoBehaviour
 {
     [Header("Experience")]

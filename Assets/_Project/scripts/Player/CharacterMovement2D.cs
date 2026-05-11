@@ -9,6 +9,8 @@ public class CharacterMovement2D : MonoBehaviour
     private Rigidbody rb;                  
     private Animator animator;
 
+    [SerializeField] private Transform visualRoot;
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -31,11 +33,11 @@ public class CharacterMovement2D : MonoBehaviour
         transform.Translate(movement * speed * Time.deltaTime, Space.World);
 
         // Зеркалирование по горизонтали
-        if (moveX != 0)
+        if (moveX != 0 && visualRoot != null)
         {
-            Vector3 scale = transform.localScale;
+            Vector3 scale = visualRoot.localScale;
             scale.x = Mathf.Abs(scale.x) * -Mathf.Sign(moveX);
-            transform.localScale = scale;
+            visualRoot.localScale = scale;
         }
         if (animator != null)
             animator.SetFloat("Speed", movement.magnitude);
