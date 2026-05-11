@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 8086555095424090216}
   - component: {fileID: 7247157058213565267}
   - component: {fileID: 8879689176886374828}
-  - component: {fileID: 8990954120688566904}
   m_Layer: 5
   m_Name: ChooseUpgradeBtn1
   m_TagString: Untagged
@@ -163,22 +162,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &8990954120688566904
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 375827724733231027}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f498a1c3f839f5640aa08ea9aba46bf6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UpgradeButtonUI
-  button: {fileID: 8086555095424090216}
-  titleText: {fileID: 208771093502774288}
-  descriptionText: {fileID: 0}
-  iconImage: {fileID: 653887800678947919}
 --- !u!1 &1360440211229835728
 GameObject:
   m_ObjectHideFlags: 0

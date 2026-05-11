@@ -5,6 +5,7 @@ public class ExperienceManager : MonoBehaviour
 {
     public static ExperienceManager Instance;
 
+
     [Header("Level Settings")]
     public LevelData levelData;
     public int currentLevel = 1;
@@ -14,6 +15,10 @@ public class ExperienceManager : MonoBehaviour
 
     public UnityEvent<int, int> OnExperienceChanged;
     public UnityEvent<int> OnLevelUp;
+
+    [SerializeField] private AudioClip levelUpSound;
+    [SerializeField] private float levelUpVolume = 0.5f;
+
 
     private void Awake()
     {
@@ -58,6 +63,15 @@ public class ExperienceManager : MonoBehaviour
         if (UpgradeManager.Instance != null)
         {
             UpgradeManager.Instance.ShowUpgradeChoices();
+        }
+
+        if (levelUpSound != null)
+        {
+            AudioSource.PlayClipAtPoint(
+                levelUpSound,
+                Camera.main.transform.position,
+                levelUpVolume
+            );
         }
         else
         {
