@@ -1,15 +1,16 @@
 using UnityEngine;
-using UnityEngine.UI;
 using System.Collections;
 
 public class PlayerHealth : MonoBehaviour
 {
+
     public float maxHealth = 100f;
     public float currentHealth;
-    public Slider healthSlider; // —юда перетащите HealthSlider из Canvas
-
     private bool isDead = false;
     public bool IsDead => isDead;
+    public float CurrentHealth => currentHealth;
+    public float MaxHealth => maxHealth;
+
     private PlayerWhiteFlash whiteFlash;
     private PlayerHitSound hitSound;
 
@@ -23,11 +24,7 @@ public class PlayerHealth : MonoBehaviour
         whiteFlash = GetComponent<PlayerWhiteFlash>();
         hitSound = GetComponent<PlayerHitSound>();
         currentHealth = maxHealth;
-        if (healthSlider != null)
-        {
-            healthSlider.maxValue = maxHealth;
-            healthSlider.value = currentHealth;
-        }
+        HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
     }
 
     public void TakeDamage(float damage)
@@ -40,7 +37,7 @@ public class PlayerHealth : MonoBehaviour
         hitSound?.Play();
         // —ильна€ тр€ска при получении урона
         CameraShake.Instance?.Shake(0.12f, 0.08f);
-        if (healthSlider != null) healthSlider.value = currentHealth;
+        HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
         if (currentHealth <= 0) Die();
 
         StartCoroutine(InvulnerabilityRoutine());
@@ -53,8 +50,7 @@ public class PlayerHealth : MonoBehaviour
     public void SetCurrentHealth(int value)
     {
         currentHealth = Mathf.Clamp(value, 0, maxHealth);
-        if (healthSlider != null)
-            healthSlider.value = currentHealth;
+        HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
     }
     public void Heal(int amount)
     {
@@ -62,8 +58,7 @@ public class PlayerHealth : MonoBehaviour
         if (currentHealth > maxHealth)
             currentHealth = maxHealth;
 
-        if (healthSlider != null)
-            healthSlider.value = currentHealth;
+        HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
     }
     void Die()
     {

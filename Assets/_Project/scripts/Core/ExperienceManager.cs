@@ -5,7 +5,6 @@ public class ExperienceManager : MonoBehaviour
 {
     public static ExperienceManager Instance;
 
-
     [Header("Level Settings")]
     public LevelData levelData;
     public int currentLevel = 1;
@@ -19,7 +18,6 @@ public class ExperienceManager : MonoBehaviour
     [SerializeField] private AudioClip levelUpSound;
     [SerializeField] private float levelUpVolume = 0.5f;
 
-
     private void Awake()
     {
         if (Instance == null)
@@ -31,7 +29,7 @@ public class ExperienceManager : MonoBehaviour
     private void Start()
     {
         expToNextLevel = GetRequiredExpForLevel(currentLevel);
-        OnExperienceChanged?.Invoke(currentExp, expToNextLevel);
+        UpdateExperienceHUD();
     }
 
     public void AddExperience(int amount)
@@ -50,6 +48,7 @@ public class ExperienceManager : MonoBehaviour
             LevelUp();
         }
 
+        UpdateExperienceHUD();
         OnExperienceChanged?.Invoke(currentExp, expToNextLevel);
     }
 
@@ -61,24 +60,21 @@ public class ExperienceManager : MonoBehaviour
         OnLevelUp?.Invoke(currentLevel);
 
         if (UpgradeManager.Instance != null)
-        {
             UpgradeManager.Instance.ShowUpgradeChoices();
-        }
 
-        if (levelUpSound != null)
-        {
-            AudioSource.PlayClipAtPoint(
-                levelUpSound,
-                Camera.main.transform.position,
-                levelUpVolume
-            );
-        }
-        else
-        {
-            Debug.LogWarning("ExperienceManager: UpgradeManager not found.");
-        }
+        if (levelUpSound != null && Camera.main != null)
+            AudioSource.PlayClipAtPoint(levelUpSound, Camera.main.transform.position, levelUpVolume);
 
         Debug.Log("Level up! Now level " + currentLevel);
+    }
+
+    private void UpdateExperienceHUD()
+    {
+        HUDManager.Instance?.SetExperience(
+            currentExp,
+            expToNextLevel,
+            currentLevel
+        );
     }
 
     private int GetRequiredExpForLevel(int level)

@@ -160,11 +160,10 @@ public class UpgradeManager : MonoBehaviour
             health.maxHealth += value;
             health.currentHealth += value;
 
-            if (health.healthSlider != null)
-            {
-                health.healthSlider.maxValue = health.maxHealth;
-                health.healthSlider.value = health.currentHealth;
-            }
+            HUDManager.Instance?.SetHealth(
+             health.CurrentHealth,
+             health.MaxHealth
+        );
         }
 
         if (stats != null)
