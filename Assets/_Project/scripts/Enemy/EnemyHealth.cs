@@ -1,12 +1,11 @@
-﻿using UnityEditor.Experimental.GraphView;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
+using System.Collections;
 
 public class EnemyHealth : MonoBehaviour
 {
     public float maxHealth = 30f;
     private float currentHealth;
-    private bool isDead = false;
 
     public UnityEvent<float, float> OnHealthChanged;
     public UnityEvent onDeath;
@@ -24,6 +23,13 @@ public class EnemyHealth : MonoBehaviour
 
     [Header("Hit FX")]
     [SerializeField] private ParticleSystem bloodHitPrefab;
+
+    [Header("Boss")]
+    [SerializeField] private bool isBoss;
+
+    [Header("Death")]
+    [SerializeField] private float deathDelay = 0.5f;
+    private bool isDead;
     void Start()
     {
         currentHealth = maxHealth;
@@ -82,12 +88,15 @@ public class EnemyHealth : MonoBehaviour
 
         Destroy(blood.gameObject, 2f);
     }
-    void Die()
+    private void Die()
     {
         if (isDead) return;
+
         isDead = true;
+
         KillManager.Instance?.AddKill();
-        onDeath?.Invoke();
+
+        StartCoroutine(DeathRoutine());
     }
 
     void ShowDamagePopup(int damage)
@@ -122,6 +131,38 @@ public class EnemyHealth : MonoBehaviour
 
         audioSource.pitch = Random.Range(hitPitchRange.x, hitPitchRange.y);
         audioSource.PlayOneShot(hitSound, hitVolume);
+    }
+
+    private IEnumerator DeathRoutine()
+    {
+        Animator animator = GetComponentInChildren<Animator>();
+
+        if (animator != null)
+        {
+            Debug.Log("Animator found, trigger Die");
+            animator.SetTrigger("Die");
+        }
+        else
+        {
+            Debug.LogWarning("Animator not found on enemy");
+        }
+
+        Collider2D collider = GetComponent<Collider2D>();
+        if (collider != null)
+            collider.enabled = false;
+
+        EnemyMovement movement = GetComponent<EnemyMovement>();
+        if (movement != null)
+            movement.enabled = false;
+
+        yield return new WaitForSeconds(deathDelay);
+
+        if (isBoss)
+        {
+            VictoryManager.Instance?.Victory();
+        }
+
+        Destroy(gameObject);
     }
 
 }

@@ -21,6 +21,10 @@ public class GameOverManager : MonoBehaviour
 
     public void GameOver()
     {
+        RunResultView resultView = gameOverPanel.GetComponent<RunResultView>();
+
+        if (resultView != null)
+            resultView.Show();
         Time.timeScale = 0f;
         if (gameOverPanel != null)
             gameOverPanel.SetActive(true);
