@@ -180,6 +180,20 @@ MonoBehaviour:
   minSpawnDistance: 5
   maxSpawnDistance: 12
   spawnRadius: 10
+  difficultyIncreaseInterval: 5
+  spawnRateMultiplier: 0.9
+  enemyHealthMultiplier: 1.1
+  enemySpeedMultiplier: 1.1
+  minSpawnInterval: 0.4
+  maxHealthMultiplier: 3
+  maxSpeedMultiplier: 1.8
+  spawnStages:
+  - startTime: 0
+    enemyPrefabs:
+    - {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+  - startTime: 5
+    enemyPrefabs:
+    - {fileID: 2386701846899708389, guid: d2e2eb4e042b77b46ab1052107be0aff, type: 3}
 --- !u!114 &4726604075001662714
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using UnityEditor.Experimental.GraphView;
+using UnityEngine;
 using UnityEngine.Events;
 
 public class EnemyHealth : MonoBehaviour
@@ -27,6 +28,7 @@ public class EnemyHealth : MonoBehaviour
     {
         currentHealth = maxHealth;
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
+        
     }
 
     private void Awake()
@@ -40,6 +42,12 @@ public class EnemyHealth : MonoBehaviour
 
         audioSource.playOnAwake = false;
         audioSource.spatialBlend = 0f;
+    }
+
+    public void SetMaxHealthMultiplier(float multiplier)
+    {
+        maxHealth *= multiplier;
+        currentHealth = maxHealth;
     }
 
     public void TakeDamage(float damage, Vector2 hitPoint)
@@ -78,6 +86,7 @@ public class EnemyHealth : MonoBehaviour
     {
         if (isDead) return;
         isDead = true;
+        KillManager.Instance?.AddKill();
         onDeath?.Invoke();
     }
 
