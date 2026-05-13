@@ -9,7 +9,8 @@ public enum UpgradeType
     WeaponDamage,
     FireRatePercent,
     WeaponRange,
-    OrbitRadius
+    OrbitRadius,
+    ProjectileCount
 }
 
 [CreateAssetMenu(fileName = "New UpgradeData", menuName = "Game/Upgrade Data")]
