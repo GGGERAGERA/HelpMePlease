@@ -20,6 +20,11 @@ public class EnemyHealth : MonoBehaviour
     [SerializeField] private Vector2 hitPitchRange = new Vector2(0.95f, 1.05f);
     [SerializeField] private float hitVolume = 0.35f;
 
+    [Header("Loot")]
+    [SerializeField] private GameObject lootPrefab;
+    [SerializeField] private int lootAmount = 1;
+    [SerializeField] private float lootScatterRadius = 0.4f;
+
 
     [Header("Hit FX")]
     [SerializeField] private ParticleSystem bloodHitPrefab;
@@ -136,6 +141,7 @@ public class EnemyHealth : MonoBehaviour
     private IEnumerator DeathRoutine()
     {
         Animator animator = GetComponentInChildren<Animator>();
+        
 
         if (animator != null)
         {
@@ -161,8 +167,24 @@ public class EnemyHealth : MonoBehaviour
         {
             VictoryManager.Instance?.Victory();
         }
-
+        DropLoot();
         Destroy(gameObject);
+    }
+
+    private void DropLoot()
+    {
+        if (lootPrefab == null)
+            return;
+
+        for (int i = 0; i < lootAmount; i++)
+        {
+            Vector2 randomOffset = Random.insideUnitCircle * lootScatterRadius;
+            Instantiate(
+                lootPrefab,
+                (Vector2)transform.position + randomOffset,
+                Quaternion.identity
+            );
+        }
     }
 
 }
