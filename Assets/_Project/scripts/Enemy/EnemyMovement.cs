@@ -37,4 +37,8 @@ public class EnemyMovement : MonoBehaviour
             spriteRenderer.flipX = direction.x < 0;
         }
     }
+    public void SetSpeedMultiplier(float multiplier)
+    {
+        speed *= multiplier;
+    }
 }
