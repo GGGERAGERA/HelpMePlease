@@ -14,6 +14,7 @@ public abstract class BaseWeapon : MonoBehaviour
 
 
     [SerializeField] protected AudioSource weaponAudioSource;
+    [SerializeField] protected int projectileCount = 1;
 
     protected virtual void Start()
     {
@@ -99,6 +100,10 @@ public abstract class BaseWeapon : MonoBehaviour
             clip,
             weaponData.soundVolume
         );
+    }
+    public void AddProjectileCount(int amount)
+    {
+        projectileCount += amount;
     }
 
 }
