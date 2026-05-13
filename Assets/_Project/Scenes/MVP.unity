@@ -134,6 +134,8 @@ GameObject:
   - component: {fileID: 46915846}
   - component: {fileID: 46915847}
   - component: {fileID: 46915848}
+  - component: {fileID: 46915849}
+  - component: {fileID: 46915850}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -255,6 +257,30 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VictoryManager
   victoryPanel: {fileID: 396919077}
+--- !u!114 &46915849
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 46915840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 340d862b2bcac784a892211c949d067c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RunStatsManager
+--- !u!114 &46915850
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 46915840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fadccabbb26fd2c49947f058b1f81d42, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KillManager
 --- !u!1 &50998817
 GameObject:
   m_ObjectHideFlags: 0
@@ -1365,7 +1391,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cdab4ae1f5ae5ae44b6751c109826ecf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunResultView
-  resultText: {fileID: 997956656}
+  resultText: {fileID: 1937750547}
 --- !u!1 &458832743
 GameObject:
   m_ObjectHideFlags: 0

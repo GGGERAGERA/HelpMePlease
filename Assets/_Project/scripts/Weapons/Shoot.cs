@@ -47,35 +47,62 @@ public class Shoot : BaseWeapon
     public override void Attack()
     {
         if (bulletPrefab == null)
-        {
-            Debug.LogWarning("Shoot: bulletPrefab is not assigned.");
             return;
-        }
 
         if (firePoint == null)
             firePoint = transform;
 
-        Vector2 direction = GetShootDirection();
+        Vector2 baseDirection = GetShootDirection();
 
-        GameObject bullet = Instantiate(
-            bulletPrefab,
-            firePoint.position,
-            Quaternion.identity
-        );
+        float spreadAngle = 12f;
+        int count = Mathf.Max(1, projectileCount);
 
-        Bullet bulletScript = bullet.GetComponent<Bullet>();
-
-        if (bulletScript != null)
+        for (int i = 0; i < count; i++)
         {
-            bulletScript.Initialize(GetDamage(), GetRange(), direction);
+            float angleOffset = 0f;
+
+            if (count > 1)
+            {
+                angleOffset = Mathf.Lerp(
+                    -spreadAngle,
+                    spreadAngle,
+                    (float)i / (count - 1)
+                );
+            }
+
+            Vector2 direction = RotateVector(baseDirection, angleOffset);
+
+            GameObject bullet = Instantiate(
+                bulletPrefab,
+                firePoint.position,
+                Quaternion.identity
+            );
+
+            Bullet bulletScript = bullet.GetComponent<Bullet>();
+
+            if (bulletScript != null)
+            {
+                bulletScript.Initialize(GetDamage(), GetRange(), direction);
+            }
         }
 
         if (weaponData != null)
-        {
             PlaySound(weaponData.attackSound);
-        }
 
         MarkAttackTime();
+    }
+
+    private Vector2 RotateVector(Vector2 vector, float angle)
+    {
+        float radians = angle * Mathf.Deg2Rad;
+
+        float cos = Mathf.Cos(radians);
+        float sin = Mathf.Sin(radians);
+
+        return new Vector2(
+            vector.x * cos - vector.y * sin,
+            vector.x * sin + vector.y * cos
+        ).normalized;
     }
 
     private void MoveAroundOwner()
