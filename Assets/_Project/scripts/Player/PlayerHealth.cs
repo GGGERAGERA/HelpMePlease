@@ -63,7 +63,8 @@ public class PlayerHealth : MonoBehaviour
     void Die()
     {
         Debug.Log("Player died");
-
+        if (isDead) return;
+        isDead = true;
         // Останавливаем тряску камеры
         if (CameraShake.Instance != null)
             CameraShake.Instance.StopAllShakes();
@@ -72,18 +73,13 @@ public class PlayerHealth : MonoBehaviour
         CharacterMovement2D movement = GetComponent<CharacterMovement2D>();
         if (movement != null) movement.enabled = false;
 
-        // Отключаем стрельбу (все оружия)
-        Shoot shoot = GetComponent<Shoot>();
-        if (shoot != null) shoot.enabled = false;
-
         OrbitalWeapon orbital = GetComponentInChildren<OrbitalWeapon>();
         if (orbital != null) orbital.enabled = false;
 
         LaserSword sword = GetComponentInChildren<LaserSword>();
         if (sword != null) sword.enabled = false;
 
-        if (isDead) return;
-        isDead = true;
+
 
         // Скрываем спрайт игрока (ищем на дочерних объектах!)
         SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>();

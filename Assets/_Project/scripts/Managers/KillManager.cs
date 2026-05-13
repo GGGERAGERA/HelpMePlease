@@ -21,7 +21,7 @@ public class KillManager : MonoBehaviour
     public void AddKill()
     {
         Kills++;
-
+        RunStatsManager.Instance?.AddKill();
         HUDManager.Instance?.SetKills(Kills);
     }
 }
