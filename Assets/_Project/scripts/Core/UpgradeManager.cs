@@ -148,6 +148,9 @@ public class UpgradeManager : MonoBehaviour
             case UpgradeType.OrbitRadius:
                 ApplyOrbitRadiusUpgrade(weapons, upgrade.value);
                 break;
+            case UpgradeType.ProjectileCount:
+                ApplyProjectileCountUpgrade(weapons, upgrade.value);
+                break;
         }
 
         Debug.Log("Upgrade selected: " + upgrade.upgradeName);
@@ -237,6 +240,16 @@ public class UpgradeManager : MonoBehaviour
 
             if (orbitalWeapon != null)
                 orbitalWeapon.orbitRadius += value;
+        }
+    }
+    private void ApplyProjectileCountUpgrade(BaseWeapon[] weapons, float value)
+    {
+        foreach (BaseWeapon weapon in weapons)
+        {
+            if (weapon != null)
+            {
+                weapon.AddProjectileCount(Mathf.RoundToInt(value));
+            }
         }
     }
 }
