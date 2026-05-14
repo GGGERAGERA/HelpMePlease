@@ -175,8 +175,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   enemyPrefabs:
   - {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-  spawnInterval: 1
-  maxEnemies: 6
+  spawnInterval: 0.5
+  maxEnemies: 30
   minSpawnDistance: 5
   maxSpawnDistance: 12
   spawnRadius: 10
@@ -376,7 +376,7 @@ MonoBehaviour:
   audioSource: {fileID: 7978632351014768105}
   hitClips:
   - {fileID: 8300000, guid: 6ee737a6592c10a4d93a9836b01c1378, type: 3}
-  volume: 0.7
+  volume: -0.17
 --- !u!1 &1923807598211432782
 GameObject:
   m_ObjectHideFlags: 0
