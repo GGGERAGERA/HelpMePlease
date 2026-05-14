@@ -460,8 +460,12 @@ MonoBehaviour:
   hitSound: {fileID: 0}
   hitPitchRange: {x: 0.95, y: 1.05}
   hitVolume: 0.35
-  bloodHitPrefab: {fileID: 0}
+  lootPrefab: {fileID: 0}
+  lootAmount: 1
+  lootScatterRadius: 0.4
+  bloodHitPrefab: {fileID: 1219979587113692529, guid: e2fbd784016920342afe91db1e5c70d9, type: 3}
   isBoss: 1
+  deathDelay: 0.5
 --- !u!114 &4800658178263053125
 MonoBehaviour:
   m_ObjectHideFlags: 0
