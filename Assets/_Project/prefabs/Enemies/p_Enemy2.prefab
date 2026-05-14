@@ -332,6 +332,16 @@ MonoBehaviour:
       m_Calls: []
   damagePopupPrefab: {fileID: 9169945786982687630, guid: 93f186151a59ce24fa30dac2ce325309, type: 3}
   popupOffset: {x: 0, y: 1, z: 0}
+  audioSource: {fileID: 0}
+  hitSound: {fileID: 0}
+  hitPitchRange: {x: 0.95, y: 1.05}
+  hitVolume: 0.35
+  lootPrefab: {fileID: 0}
+  lootAmount: 1
+  lootScatterRadius: 0.4
+  bloodHitPrefab: {fileID: 8471479244625784341, guid: c9ef6978e0aec7749ac3b55cad40bc5d, type: 3}
+  isBoss: 0
+  deathDelay: 0.5
 --- !u!114 &7341093619323010244
 MonoBehaviour:
   m_ObjectHideFlags: 0

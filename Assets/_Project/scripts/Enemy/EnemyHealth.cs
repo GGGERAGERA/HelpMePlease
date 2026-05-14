@@ -28,7 +28,6 @@ public class EnemyHealth : MonoBehaviour
 
     [Header("Hit FX")]
     [SerializeField] private ParticleSystem bloodHitPrefab;
-
     [Header("Boss")]
     [SerializeField] private bool isBoss;
 
@@ -39,7 +38,7 @@ public class EnemyHealth : MonoBehaviour
     {
         currentHealth = maxHealth;
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
-        
+
     }
 
     private void Awake()
@@ -82,7 +81,7 @@ public class EnemyHealth : MonoBehaviour
     {
         if (bloodHitPrefab == null)
             return;
-
+        float bloodHitDestroyTime = bloodHitPrefab.main.duration;
         ParticleSystem blood = Instantiate(
             bloodHitPrefab,
             hitPoint,
@@ -91,7 +90,7 @@ public class EnemyHealth : MonoBehaviour
 
         blood.Play();
 
-        Destroy(blood.gameObject, 2f);
+        Destroy(blood.gameObject, bloodHitDestroyTime);
     }
     private void Die()
     {
@@ -141,7 +140,7 @@ public class EnemyHealth : MonoBehaviour
     private IEnumerator DeathRoutine()
     {
         Animator animator = GetComponentInChildren<Animator>();
-        
+
 
         if (animator != null)
         {
