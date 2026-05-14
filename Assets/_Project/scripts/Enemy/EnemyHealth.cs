@@ -105,7 +105,6 @@ public class EnemyHealth : MonoBehaviour
 
     void ShowDamagePopup(int damage)
     {
-        Debug.Log($"ShowDamagePopup called with damage = {damage}");
 
         if (damagePopupPrefab == null)
         {
@@ -120,7 +119,6 @@ public class EnemyHealth : MonoBehaviour
         if (dp != null)
         {
             dp.SetDamage(damage);
-            Debug.Log($"DamagePopup created and SetDamage({damage}) called");
         }
         else
         {

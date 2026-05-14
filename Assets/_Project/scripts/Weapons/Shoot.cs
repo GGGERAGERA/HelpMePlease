@@ -82,7 +82,7 @@ public class Shoot : BaseWeapon
 
             if (bulletScript != null)
             {
-                bulletScript.Initialize(GetDamage(), GetRange(), direction);
+                bulletScript.Initialize(GetDamage(), GetRange(), direction, projectilePierce);
             }
         }
 

@@ -7,13 +7,15 @@ public class Bullet : MonoBehaviour
     public float destroyDuration = 5f;
 
     private Vector2 direction;
+    private int pierceCount;
 
-    public void Initialize(float bulletDamage, float bulletSpeed, Vector2 dir)
+    public void Initialize(float bulletDamage, float bulletSpeed, Vector2 dir, int pierce = 0)
     {
         damage = bulletDamage;
         speed = bulletSpeed;
+        pierceCount = pierce;
         direction = dir.normalized;
-
+        Debug.Log("Bullet pierce: " + pierce);
         Destroy(gameObject, destroyDuration);
     }
 
@@ -32,8 +34,16 @@ public class Bullet : MonoBehaviour
         if (enemyHealth != null)
         {
             enemyHealth.TakeDamage(damage, transform.position);
+            if (pierceCount > 0)
+            {
+                pierceCount--;
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
         }
 
-        Destroy(gameObject);
+
     }
 }

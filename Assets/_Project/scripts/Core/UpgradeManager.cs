@@ -151,6 +151,9 @@ public class UpgradeManager : MonoBehaviour
             case UpgradeType.ProjectileCount:
                 ApplyProjectileCountUpgrade(weapons, upgrade.value);
                 break;
+            case UpgradeType.ProjectilePierce:
+                ApplyPierceUpgrade(weapons, upgrade.value);
+                break;
         }
 
         Debug.Log("Upgrade selected: " + upgrade.upgradeName);
@@ -249,6 +252,16 @@ public class UpgradeManager : MonoBehaviour
             if (weapon != null)
             {
                 weapon.AddProjectileCount(Mathf.RoundToInt(value));
+            }
+        }
+    }
+    private void ApplyPierceUpgrade(BaseWeapon[] weapons, float value)
+    {
+        foreach (BaseWeapon weapon in weapons)
+        {
+            if (weapon != null)
+            {
+                weapon.AddPierce(Mathf.RoundToInt(value));
             }
         }
     }
