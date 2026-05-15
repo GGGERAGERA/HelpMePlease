@@ -433,7 +433,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad6fdb0c3d59a914b89ef539d221c709, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMovement
-  speed: 2
+  visualRoot: {fileID: 3644557882799905132}
+  runDistance: 3
+  walkSpeed: 1.5
+  runSpeed: 3
+  animator: {fileID: 0}
 --- !u!114 &6045726002428409456
 MonoBehaviour:
   m_ObjectHideFlags: 0
