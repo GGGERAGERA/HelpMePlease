@@ -5,46 +5,65 @@ public class CharacterMovement2D : MonoBehaviour
     [Header("Движение")]
     public float speed = 5f;
 
-    private Vector3 movement;
-    private Rigidbody rb;                  
+    private Rigidbody2D rb;
     private Animator animator;
+
+    [Header("Movement Feel")]
+    [SerializeField] private float acceleration = 18f;
+    [SerializeField] private float deceleration = 22f;
+
+    private Vector2 moveInput;
+    private Vector2 currentVelocity;
 
     [SerializeField] private Transform visualRoot;
 
     void Start()
     {
-        rb = GetComponent<Rigidbody>();
+        rb = GetComponent<Rigidbody2D>();
         animator = GetComponentInChildren<Animator>();
 
-        // замораживаем вращение и движение по Y
         if (rb != null)
         {
+            rb.gravityScale = 0f;
             rb.freezeRotation = true;
-            rb.constraints = RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotation;
         }
     }
 
     void Update()
     {
-        float moveX = Input.GetAxisRaw("Horizontal");
-        float moveY = Input.GetAxisRaw("Vertical");
+        moveInput = new Vector2(
+            Input.GetAxisRaw("Horizontal"),
+            Input.GetAxisRaw("Vertical")
+        ).normalized;
 
-        movement = new Vector3(moveX, moveY, 0).normalized;
-        transform.Translate(movement * speed * Time.deltaTime, Space.World);
-
-        // Зеркалирование по горизонтали
-        if (moveX != 0 && visualRoot != null)
+        if (moveInput.x != 0 && visualRoot != null)
         {
             Vector3 scale = visualRoot.localScale;
-            scale.x = Mathf.Abs(scale.x) * -Mathf.Sign(moveX);
+            scale.x = Mathf.Abs(scale.x) * -Mathf.Sign(moveInput.x);
             visualRoot.localScale = scale;
         }
+
         if (animator != null)
-            animator.SetFloat("Speed", movement.magnitude);
+            animator.SetFloat("Speed", moveInput.magnitude);
     }
 
-    void FixedUpdate()
+    private void FixedUpdate()
     {
-    }
+        if (rb == null)
+            return;
 
+        Vector2 targetVelocity = moveInput * speed;
+
+        float rate = moveInput.sqrMagnitude > 0.01f
+            ? acceleration
+            : deceleration;
+
+        currentVelocity = Vector2.MoveTowards(
+            currentVelocity,
+            targetVelocity,
+            rate * Time.fixedDeltaTime
+        );
+
+        rb.MovePosition(rb.position + currentVelocity * Time.fixedDeltaTime);
+    }
 }

@@ -3,7 +3,6 @@ using UnityEngine;
 public class EnemyMovement : MonoBehaviour
 {
     private Transform target;
-    private SpriteRenderer spriteRenderer;
     private Rigidbody2D rb;
 
     [SerializeField] private Transform visualRoot;
@@ -13,6 +12,21 @@ public class EnemyMovement : MonoBehaviour
     [SerializeField] private float walkSpeed = 1.5f;
     [SerializeField] private float runSpeed = 3f;
     [SerializeField] private Animator animator;
+
+    [Header("Movement Feel")]
+    [SerializeField] private float acceleration = 12f;
+    [SerializeField] private float deceleration = 16f;
+
+    [Header("Knockback")]
+    [SerializeField] private float knockbackDecay = 18f;
+
+    [Header("Hit Stun")]
+    [SerializeField] private float hitStunDuration = 0.06f;
+
+    private float hitStunTimer;
+
+    private Vector2 knockbackVelocity;
+    private Vector2 currentVelocity;
     private bool isRunning;
 
     void Start()
@@ -23,7 +37,6 @@ public class EnemyMovement : MonoBehaviour
         if (rb == null)
             Debug.LogError("EnemyMovement: Rigidbody2D is required for smooth collisions!");
 
-        spriteRenderer = GetComponent<SpriteRenderer>();
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if (playerObj != null)
             SetTarget(playerObj.transform);
@@ -38,20 +51,52 @@ public class EnemyMovement : MonoBehaviour
     {
         if (target == null || rb == null) return;
 
-        Vector2 direction = (target.position - transform.position).normalized;
+        if (hitStunTimer > 0f)
+        {
+            hitStunTimer -= Time.fixedDeltaTime;
 
-        float distanceToPlayer = Vector2.Distance(transform.position, target.position);
+            Vector2 stunVelocity = knockbackVelocity;
+
+            rb.MovePosition(rb.position + stunVelocity * Time.fixedDeltaTime);
+
+            knockbackVelocity = Vector2.MoveTowards(
+                knockbackVelocity,
+                Vector2.zero,
+                knockbackDecay * Time.fixedDeltaTime
+            );
+
+            return;
+        }
+
+        Vector2 direction = ((Vector2)target.position - rb.position).normalized;
+
+        float distanceToPlayer = Vector2.Distance(rb.position, target.position);
         isRunning = distanceToPlayer <= runDistance;
 
-        float currentSpeed = isRunning ? runSpeed : walkSpeed;
+        float targetSpeed = isRunning ? runSpeed : walkSpeed;
 
         if (animator != null)
             animator.SetBool("IsRunning", isRunning);
 
-        Vector2 newPosition = rb.position + direction * currentSpeed * Time.fixedDeltaTime;
+        Vector2 targetVelocity = direction * targetSpeed;
 
-        FlipVisual(direction.x);
-        rb.MovePosition(newPosition);
+        currentVelocity = Vector2.MoveTowards(
+            currentVelocity,
+            targetVelocity,
+            acceleration * Time.fixedDeltaTime
+        );
+
+        Vector2 finalVelocity = currentVelocity + knockbackVelocity;
+
+        rb.MovePosition(rb.position + finalVelocity * Time.fixedDeltaTime);
+
+        knockbackVelocity = Vector2.MoveTowards(
+            knockbackVelocity,
+            Vector2.zero,
+            knockbackDecay * Time.fixedDeltaTime
+        );
+
+        FlipVisual(currentVelocity.x);
     }
     public void SetSpeedMultiplier(float multiplier)
     {
@@ -72,5 +117,10 @@ public class EnemyMovement : MonoBehaviour
         scale.x = directionX > 0 ? -Mathf.Abs(scale.x) : Mathf.Abs(scale.x);
 
         visualRoot.localScale = scale;
+    }
+    public void ApplyKnockback(Vector2 direction, float force)
+    {
+        knockbackVelocity += direction.normalized * force;
+        hitStunTimer = hitStunDuration;
     }
 }

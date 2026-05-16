@@ -82,7 +82,8 @@ MonoBehaviour:
   weaponData: {fileID: 11400000, guid: acd6c980f3b758a409e5285b329a175a, type: 2}
   firePoint: {fileID: 2457338491928526576}
   weaponAudioSource: {fileID: 817849802606587231}
-  projectileCount: 3
+  projectileCount: 1
+  projectilePierce: 0
   bulletPrefab: {fileID: 1168613123775889235, guid: c85e1d8ec23ffba47836a61f5644eb61, type: 3}
   rotateToMouse: 1
   moveAroundOwner: 1

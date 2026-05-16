@@ -160,7 +160,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 879dc705f86e1f84c91ba97bfffc9dfa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Movement2D
-  speed: 3
+  speed: 2
   visualRoot: {fileID: 6923507146766420414}
 --- !u!114 &8488144525096105199
 MonoBehaviour:
@@ -176,12 +176,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   enemyPrefabs:
   - {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-  spawnInterval: 0.5
+  spawnInterval: 1
   maxEnemies: 30
   minSpawnDistance: 5
   maxSpawnDistance: 12
   spawnRadius: 10
-  difficultyIncreaseInterval: 5
+  difficultyIncreaseInterval: 10
   spawnRateMultiplier: 0.9
   enemyHealthMultiplier: 1.1
   enemySpeedMultiplier: 1.1
@@ -225,7 +225,7 @@ MonoBehaviour:
   baseDamage: 15
   maxHealth: 100
   currentHealth: 0
-  moveSpeed: 5
+  moveSpeed: 2
 --- !u!210 &6742118338655256636
 SortingGroup:
   m_ObjectHideFlags: 0

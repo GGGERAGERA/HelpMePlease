@@ -5,6 +5,7 @@ public class Bullet : MonoBehaviour
     public float speed = 10f;
     public float damage = 20f;
     public float destroyDuration = 5f;
+    [SerializeField] private float knockbackForce = 4f;
 
     private Vector2 direction;
     private int pierceCount;
@@ -34,6 +35,12 @@ public class Bullet : MonoBehaviour
         if (enemyHealth != null)
         {
             enemyHealth.TakeDamage(damage, transform.position);
+            EnemyMovement enemyMovement = other.GetComponentInParent<EnemyMovement>();
+
+            if (enemyMovement != null)
+            {
+                enemyMovement.ApplyKnockback(direction, knockbackForce);
+            }
             if (pierceCount > 0)
             {
                 pierceCount--;
