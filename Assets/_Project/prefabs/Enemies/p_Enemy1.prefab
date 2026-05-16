@@ -437,7 +437,7 @@ MonoBehaviour:
   runDistance: 3
   walkSpeed: 1.5
   runSpeed: 3
-  animator: {fileID: 0}
+  animator: {fileID: 5754472316754357161}
 --- !u!114 &6045726002428409456
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -781,6 +781,11 @@ PrefabInstance:
 --- !u!4 &3644557882799905132 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7878350319992209165, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+  m_PrefabInstance: {fileID: 6899962999031408225}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &5754472316754357161 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 1160356261127867848, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
   m_PrefabInstance: {fileID: 6899962999031408225}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8638756393351849707
