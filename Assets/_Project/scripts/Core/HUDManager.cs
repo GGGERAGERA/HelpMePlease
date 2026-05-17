@@ -25,6 +25,10 @@ public class HUDManager : MonoBehaviour
     [Header("Boss")]
     [SerializeField] private TextMeshProUGUI bossText;
 
+    [Header("Low HP")]
+    [SerializeField] private CanvasGroup lowHpVignette;
+    [SerializeField] private float lowHpThreshold = 0.3f;
+
     private void Awake()
     {
         Instance = this;
@@ -42,6 +46,7 @@ public class HUDManager : MonoBehaviour
         {
             healthText.text = $"{Mathf.CeilToInt(currentHealth)} / {Mathf.CeilToInt(maxHealth)}";
         }
+        UpdateLowHpVignette(currentHealth, maxHealth);
     }
 
     public void SetTimer(float timeLeft)
@@ -64,7 +69,6 @@ public class HUDManager : MonoBehaviour
     }
     public void SetExperience(int currentExp, int requiredExp, int level)
     {
-        Debug.Log($"HUD XP: {currentExp}/{requiredExp}, level {level}");
         if (experienceSlider != null)
         {
             experienceSlider.maxValue = requiredExp;
@@ -85,6 +89,23 @@ public class HUDManager : MonoBehaviour
     {
         StartCoroutine(ShowBossTextRoutine(text, duration));
     }
+    private void UpdateLowHpVignette(float currentHealth, float maxHealth)
+    {
+        if (lowHpVignette == null || maxHealth <= 0f)
+            return;
+
+        float healthPercent = currentHealth / maxHealth;
+
+        if (healthPercent > lowHpThreshold)
+        {
+            lowHpVignette.alpha = 0f;
+            return;
+        }
+
+        float danger = 1f - (healthPercent / lowHpThreshold);
+        lowHpVignette.alpha = Mathf.Lerp(0.15f, 0.55f, danger);
+    }
+
 
     private IEnumerator ShowBossTextRoutine(string text, float duration)
     {

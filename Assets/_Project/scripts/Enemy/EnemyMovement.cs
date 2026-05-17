@@ -15,7 +15,6 @@ public class EnemyMovement : MonoBehaviour
 
     [Header("Movement Feel")]
     [SerializeField] private float acceleration = 12f;
-    [SerializeField] private float deceleration = 16f;
 
     [Header("Knockback")]
     [SerializeField] private float knockbackDecay = 18f;
@@ -28,9 +27,21 @@ public class EnemyMovement : MonoBehaviour
     private Vector2 knockbackVelocity;
     private Vector2 currentVelocity;
     private bool isRunning;
+    private bool hasIsRunningParameter;
 
     void Start()
     {
+        if (animator != null)
+        {
+            foreach (AnimatorControllerParameter parameter in animator.parameters)
+            {
+                if (parameter.name == "IsRunning")
+                {
+                    hasIsRunningParameter = true;
+                    break;
+                }
+            }
+        }
         rb = GetComponent<Rigidbody2D>();
         if (animator == null)
             animator = GetComponentInChildren<Animator>();
@@ -75,7 +86,7 @@ public class EnemyMovement : MonoBehaviour
 
         float targetSpeed = isRunning ? runSpeed : walkSpeed;
 
-        if (animator != null)
+        if (animator != null && hasIsRunningParameter)
             animator.SetBool("IsRunning", isRunning);
 
         Vector2 targetVelocity = direction * targetSpeed;

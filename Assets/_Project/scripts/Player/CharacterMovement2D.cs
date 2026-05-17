@@ -12,6 +12,8 @@ public class CharacterMovement2D : MonoBehaviour
     [SerializeField] private float acceleration = 18f;
     [SerializeField] private float deceleration = 22f;
 
+
+
     private Vector2 moveInput;
     private Vector2 currentVelocity;
 
@@ -46,6 +48,10 @@ public class CharacterMovement2D : MonoBehaviour
         if (animator != null)
             animator.SetFloat("Speed", moveInput.magnitude);
     }
+    public void AddMoveSpeed(float amount)
+    {
+        speed += amount;
+    }
 
     private void FixedUpdate()
     {
@@ -64,6 +70,8 @@ public class CharacterMovement2D : MonoBehaviour
             rate * Time.fixedDeltaTime
         );
 
+
         rb.MovePosition(rb.position + currentVelocity * Time.fixedDeltaTime);
+
     }
 }

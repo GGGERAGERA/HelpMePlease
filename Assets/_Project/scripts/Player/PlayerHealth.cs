@@ -27,12 +27,13 @@ public class PlayerHealth : MonoBehaviour
         HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
     }
 
-    public void TakeDamage(float damage)
+    public void TakeDamage(float damage, Vector2 hitDirection)
     {
         if (isInvulnerable)
             return;
         isInvulnerable = true;
         currentHealth -= damage;
+
         whiteFlash?.Flash();
         hitSound?.Play();
         // Сильная тряска при получении урона
@@ -94,5 +95,13 @@ public class PlayerHealth : MonoBehaviour
         // Показываем панель GameOver
         if (GameOverManager.Instance != null)
             GameOverManager.Instance.GameOver();
+    }
+
+    public void AddMaxHealth(float amount)
+    {
+        maxHealth += amount;
+        currentHealth += amount;
+
+        HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
     }
 }

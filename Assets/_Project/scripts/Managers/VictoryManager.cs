@@ -30,7 +30,7 @@ public class VictoryManager : MonoBehaviour
         RunResultView resultView = victoryPanel.GetComponent<RunResultView>();
 
         if (resultView != null)
-            resultView.Show();
+            resultView.Show(true);
         Time.timeScale = 0f;
     }
 

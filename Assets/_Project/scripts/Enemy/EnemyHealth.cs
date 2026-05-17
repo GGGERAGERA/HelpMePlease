@@ -142,12 +142,7 @@ public class EnemyHealth : MonoBehaviour
 
         if (animator != null)
         {
-            Debug.Log("Animator found, trigger Die");
             animator.SetTrigger("Die");
-        }
-        else
-        {
-            Debug.LogWarning("Animator not found on enemy");
         }
 
         Collider2D collider = GetComponent<Collider2D>();

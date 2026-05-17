@@ -289,9 +289,7 @@ GameObject:
   - component: {fileID: 6818522612246032092}
   - component: {fileID: 4212892666427228458}
   - component: {fileID: 8634306207331902935}
-  - component: {fileID: 4800658178263053125}
   - component: {fileID: 8498786568601226095}
-  - component: {fileID: 3717731515294265200}
   - component: {fileID: 6369032562082802702}
   - component: {fileID: 1329760117982389465}
   m_Layer: 0
@@ -436,6 +434,9 @@ MonoBehaviour:
   walkSpeed: 1.5
   runSpeed: 3
   animator: {fileID: 3366665653291635405}
+  acceleration: 12
+  knockbackDecay: 18
+  hitStunDuration: 0.06
 --- !u!114 &8634306207331902935
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -470,20 +471,6 @@ MonoBehaviour:
   bloodHitPrefab: {fileID: 1219979587113692529, guid: e2fbd784016920342afe91db1e5c70d9, type: 3}
   isBoss: 1
   deathDelay: 0.5
---- !u!114 &4800658178263053125
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8074722678228422782}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3f2baa59fe0a6924abd6325b9fac1624, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyDeathHandler
-  anim: {fileID: 3366665653291635405}
-  destroyDelay: 3
 --- !u!114 &8498786568601226095
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -498,21 +485,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCollisionHandler
   damage: 15
   damageCooldown: 1
---- !u!114 &3717731515294265200
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8074722678228422782}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c41473ef92b617144b1bb76b83c7ddf2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LootDropper
-  lootPrefabs:
-  - {fileID: 8927180452970597320, guid: 568301bd43bfcef49aa858e8372f81be, type: 3}
-  dropOffset: {x: 0, y: 0.55, z: 0}
 --- !u!114 &6369032562082802702
 MonoBehaviour:
   m_ObjectHideFlags: 0
