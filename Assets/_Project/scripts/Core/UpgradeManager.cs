@@ -155,8 +155,6 @@ public class UpgradeManager : MonoBehaviour
                 ApplyPierceUpgrade(weapons, upgrade.value);
                 break;
         }
-
-        Debug.Log("Upgrade selected: " + upgrade.upgradeName);
     }
 
     private void ApplyMaxHealthUpgrade(PlayerHealth health, PlayerStats stats, float value)
