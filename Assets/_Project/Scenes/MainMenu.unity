@@ -3089,9 +3089,7 @@ GameObject:
   - component: {fileID: 335627026}
   - component: {fileID: 335627025}
   - component: {fileID: 335627024}
-  - component: {fileID: 335627023}
   - component: {fileID: 335627028}
-  - component: {fileID: 335627029}
   m_Layer: 5
   m_Name: MainCanvas
   m_TagString: Untagged
@@ -3099,20 +3097,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &335627023
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 335627022}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 01770ca280a03264d960fb134ebc239c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ExperienceUI
-  levelText: {fileID: 0}
-  levelSlider: {fileID: 0}
 --- !u!114 &335627024
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3228,19 +3212,6 @@ MonoBehaviour:
   descriptionText: {fileID: 0}
   portraitImage: {fileID: 0}
   statsText: {fileID: 0}
---- !u!114 &335627029
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 335627022}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: de9317ee077603d4ba35275953c42c5f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GoldUI
-  goldText: {fileID: 1298904613}
 --- !u!1 &345446713
 GameObject:
   m_ObjectHideFlags: 0
@@ -7086,8 +7057,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1829715355}
-        m_TargetAssemblyTypeName: MetaProgressionManager, Assembly-CSharp
+      - m_Target: {fileID: 1829715356}
+        m_TargetAssemblyTypeName: MetaUpgradeShopUI, Assembly-CSharp
         m_MethodName: BuyHp
         m_Mode: 1
         m_Arguments:
@@ -11748,8 +11719,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1829715355}
-        m_TargetAssemblyTypeName: MetaProgressionManager, Assembly-CSharp
+      - m_Target: {fileID: 1829715356}
+        m_TargetAssemblyTypeName: MetaUpgradeShopUI, Assembly-CSharp
         m_MethodName: BuyMoveSpeed
         m_Mode: 1
         m_Arguments:
@@ -17781,8 +17752,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1829715355}
-        m_TargetAssemblyTypeName: MetaProgressionManager, Assembly-CSharp
+      - m_Target: {fileID: 1829715356}
+        m_TargetAssemblyTypeName: MetaUpgradeShopUI, Assembly-CSharp
         m_MethodName: BuyDamage
         m_Mode: 1
         m_Arguments:
