@@ -25,11 +25,9 @@ public class DamagePopup : MonoBehaviour
         if (text != null)
         {
             text.text = damage.ToString();
-            Debug.Log($"DamagePopup: set text to {damage}"); // ← отладка
         }
         else
         {
-            Debug.LogError("DamagePopup: text is null, cannot set damage!");
         }
     }
 

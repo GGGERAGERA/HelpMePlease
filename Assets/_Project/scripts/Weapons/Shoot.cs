@@ -14,6 +14,12 @@ public class Shoot : BaseWeapon
     [Header("Sprite")]
     [SerializeField] private SpriteRenderer weaponSprite;
 
+    [Header("Recoil")]
+    [SerializeField] private float recoilDistance = 0.12f;
+    [SerializeField] private float recoilReturnSpeed = 14f;
+
+    private float currentRecoil;
+
     protected override void Start()
     {
         base.Start();
@@ -23,6 +29,8 @@ public class Shoot : BaseWeapon
 
         if (owner == null && transform.parent != null)
             owner = transform.parent;
+
+       
     }
 
     protected override void Update()
@@ -42,6 +50,12 @@ public class Shoot : BaseWeapon
         {
             Attack();
         }
+
+        currentRecoil = Mathf.MoveTowards(
+        currentRecoil,
+        0f,
+        recoilReturnSpeed * Time.deltaTime
+);
     }
 
     public override void Attack()
@@ -77,6 +91,7 @@ public class Shoot : BaseWeapon
                 firePoint.position,
                 Quaternion.identity
             );
+           
 
             Bullet bulletScript = bullet.GetComponent<Bullet>();
 
@@ -89,6 +104,7 @@ public class Shoot : BaseWeapon
         if (weaponData != null)
             PlaySound(weaponData.attackSound);
 
+        currentRecoil = recoilDistance;
         MarkAttackTime();
     }
 
@@ -112,7 +128,11 @@ public class Shoot : BaseWeapon
 
         Vector2 direction = GetMouseDirectionFromOwner();
 
-        transform.position = (Vector2)owner.position + direction * orbitRadius;
+        Vector2 recoilOffset = -direction * currentRecoil;
+
+        transform.position = (Vector2)owner.position
+            + direction * orbitRadius
+            + recoilOffset;
     }
 
     private void RotateToMouse()

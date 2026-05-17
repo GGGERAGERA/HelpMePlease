@@ -90,6 +90,8 @@ MonoBehaviour:
   owner: {fileID: 0}
   orbitRadius: 0.5
   weaponSprite: {fileID: 0}
+  recoilDistance: 0.3
+  recoilReturnSpeed: 1
 --- !u!82 &817849802606587231
 AudioSource:
   m_ObjectHideFlags: 0
