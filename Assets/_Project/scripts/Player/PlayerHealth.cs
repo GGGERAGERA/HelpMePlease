@@ -27,12 +27,19 @@ public class PlayerHealth : MonoBehaviour
         HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
     }
 
-    public void TakeDamage(float damage)
+    public void TakeDamage(float damage, Vector2 hitDirection)
     {
         if (isInvulnerable)
             return;
         isInvulnerable = true;
         currentHealth -= damage;
+
+        // Применяем отталкивание
+        CharacterMovement2D movement = GetComponent<CharacterMovement2D>();
+        if (movement != null)
+        {
+            movement.ApplyKnockback(hitDirection, 12f);
+        }
         whiteFlash?.Flash();
         hitSound?.Play();
         // Сильная тряска при получении урона

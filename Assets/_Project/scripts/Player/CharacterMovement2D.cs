@@ -12,6 +12,11 @@ public class CharacterMovement2D : MonoBehaviour
     [SerializeField] private float acceleration = 18f;
     [SerializeField] private float deceleration = 22f;
 
+    [Header("Knockback")]
+    [SerializeField] private float knockbackDecay = 18f;
+
+    private Vector2 knockbackVelocity;
+
     private Vector2 moveInput;
     private Vector2 currentVelocity;
 
@@ -64,6 +69,21 @@ public class CharacterMovement2D : MonoBehaviour
             rate * Time.fixedDeltaTime
         );
 
-        rb.MovePosition(rb.position + currentVelocity * Time.fixedDeltaTime);
+        Vector2 finalVelocity = currentVelocity + knockbackVelocity;
+
+        rb.MovePosition(rb.position + finalVelocity * Time.fixedDeltaTime);
+
+        knockbackVelocity = Vector2.MoveTowards(
+            knockbackVelocity,
+            Vector2.zero,
+            knockbackDecay * Time.fixedDeltaTime
+        );
+    }
+    public void ApplyKnockback(Vector2 direction, float force)
+    {
+        if (direction.sqrMagnitude < 0.001f)
+            return;
+
+        knockbackVelocity = direction.normalized * force;
     }
 }

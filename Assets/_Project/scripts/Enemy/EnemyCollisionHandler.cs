@@ -46,7 +46,8 @@ public class EnemyCollisionHandler : MonoBehaviour
 
         if (Time.time >= lastDamageTime + damageCooldown)
         {
-            playerHealth.TakeDamage(damage);
+            Vector2 hitDirection = playerHealth.transform.position - transform.position;
+            playerHealth.TakeDamage(damage, hitDirection);
             lastDamageTime = Time.time;
         }
     }
