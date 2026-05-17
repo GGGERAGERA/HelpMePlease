@@ -111,4 +111,5 @@ public abstract class BaseWeapon : MonoBehaviour
         projectilePierce += amount;
     }
 
+
 }

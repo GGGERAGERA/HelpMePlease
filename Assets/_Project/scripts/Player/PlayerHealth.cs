@@ -96,4 +96,12 @@ public class PlayerHealth : MonoBehaviour
         if (GameOverManager.Instance != null)
             GameOverManager.Instance.GameOver();
     }
+
+    public void AddMaxHealth(float amount)
+    {
+        maxHealth += amount;
+        currentHealth += amount;
+
+        HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
+    }
 }

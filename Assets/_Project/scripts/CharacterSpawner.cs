@@ -11,26 +11,39 @@ public class CharacterSpawner : MonoBehaviour
     [Header("Weapon spawn settings")]
     [SerializeField] private string weaponPointName = "WeaponPoint";
 
+    [SerializeField] private MetaUpgradeApplier metaUpgradeApplier;
+
     private void Start()
     {
-        Time.timeScale= 1f;
-        SpawnCharacter();
+        Time.timeScale = 1f;
+
+        GameObject player = SpawnCharacter();
+
+        if (player == null)
+            return;
+
+        BaseWeapon[] weapons = player.GetComponentsInChildren<BaseWeapon>();
+
+        if (metaUpgradeApplier != null)
+        {
+            metaUpgradeApplier.ApplyTo(player, weapons);
+        }
     }
 
-    private void SpawnCharacter()
+    private GameObject SpawnCharacter()
     {
         CharacterData selectedCharacter = GetSelectedCharacter();
 
         if (selectedCharacter == null)
         {
             Debug.LogError("CharacterSpawner: No selected character and no defaultCharacter assigned.");
-            return;
+            return null;
         }
 
         if (selectedCharacter.characterPrefab == null)
         {
             Debug.LogError("CharacterSpawner: characterPrefab is not assigned in CharacterData: " + selectedCharacter.characterName);
-            return;
+            return null;
         }
 
         Vector3 spawnPosition = spawnPoint != null ? spawnPoint.position : transform.position;
@@ -45,6 +58,7 @@ public class CharacterSpawner : MonoBehaviour
 
         ApplyCharacterStats(player, selectedCharacter);
         SpawnStartingWeapon(player, selectedCharacter);
+        return player;
     }
 
     private CharacterData GetSelectedCharacter()

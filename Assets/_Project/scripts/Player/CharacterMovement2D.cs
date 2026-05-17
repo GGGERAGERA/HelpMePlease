@@ -48,6 +48,10 @@ public class CharacterMovement2D : MonoBehaviour
         if (animator != null)
             animator.SetFloat("Speed", moveInput.magnitude);
     }
+    public void AddMoveSpeed(float amount)
+    {
+        speed += amount;
+    }
 
     private void FixedUpdate()
     {
