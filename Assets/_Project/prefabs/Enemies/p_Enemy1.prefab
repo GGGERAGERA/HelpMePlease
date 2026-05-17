@@ -434,10 +434,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMovement
   visualRoot: {fileID: 3644557882799905132}
-  runDistance: 3
-  walkSpeed: 1.5
-  runSpeed: 3
+  runDistance: 4
+  walkSpeed: 1
+  runSpeed: 2
   animator: {fileID: 5754472316754357161}
+  acceleration: 12
+  deceleration: 16
+  knockbackDecay: 25
+  hitStunDuration: 0.06
 --- !u!114 &6045726002428409456
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -468,7 +472,7 @@ MonoBehaviour:
   hitVolume: 0.35
   lootPrefab: {fileID: 8927180452970597320, guid: 568301bd43bfcef49aa858e8372f81be, type: 3}
   lootAmount: 1
-  lootScatterRadius: 0.4
+  lootScatterRadius: 0.2
   bloodHitPrefab: {fileID: 1219979587113692529, guid: e2fbd784016920342afe91db1e5c70d9, type: 3}
   isBoss: 0
   deathDelay: 0.5

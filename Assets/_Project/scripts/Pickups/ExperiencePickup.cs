@@ -14,6 +14,8 @@ public class ExperiencePickup : MonoBehaviour
     [SerializeField] private AudioClip pickupSound;
     [SerializeField] private float pickupVolume = 0.25f;
 
+
+
     private Transform player;
     private bool isCollected;
 

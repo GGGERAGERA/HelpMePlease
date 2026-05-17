@@ -16,7 +16,6 @@ public class Bullet : MonoBehaviour
         speed = bulletSpeed;
         pierceCount = pierce;
         direction = dir.normalized;
-        Debug.Log("Bullet pierce: " + pierce);
         Destroy(gameObject, destroyDuration);
     }
 
