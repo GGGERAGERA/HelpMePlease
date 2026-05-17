@@ -9,7 +9,7 @@ public static class RunRewardCalculator
 
         int minutes = Mathf.FloorToInt(runTime / 60f);
 
-        int gold = kills + minutes * 10;
+        int gold = kills + minutes * 10 + 500; // для отладки базовая награда 500, чтобы не было 0 при коротких забегах
 
         if (victory)
             gold = Mathf.RoundToInt(gold * 1.25f);

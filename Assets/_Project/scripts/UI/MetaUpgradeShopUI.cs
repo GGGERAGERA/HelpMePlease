@@ -60,7 +60,23 @@ public class MetaUpgradeShopUI : MonoBehaviour
     {
         int cost = MetaProgressionManager.Instance.GetUpgradeCost(level);
 
-        text.text = $"{name}\nLVL: {level}\nCOST: {cost}";
+        string effect = "";
+
+        if (name == "HP")
+            effect = $"+{level * 5} здоровья";
+
+        if (name == "DAMAGE")
+            effect = $"+{level} урона";
+
+        if (name == "MOVE SPEED")
+            effect = $"+{level * 0.15f:0.00} скорости";
+
+        text.text =
+            $"{name}\n" +
+            $"Ур.: {level}\n" +
+            $"{effect}\n" +
+            $"Цена: {cost}";
+
         button.interactable = gold >= cost;
     }
 }
