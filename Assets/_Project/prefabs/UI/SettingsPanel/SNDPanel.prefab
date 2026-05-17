@@ -1749,18 +1749,6 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2380105714635962489, guid: a5bc09acbc8697a47a92f5fd4f14d421, type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2380105714635962489, guid: a5bc09acbc8697a47a92f5fd4f14d421, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2380105714635962489, guid: a5bc09acbc8697a47a92f5fd4f14d421, type: 3}
-      propertyPath: m_AnchorMin.x
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 3142434159463385268, guid: a5bc09acbc8697a47a92f5fd4f14d421, type: 3}
       propertyPath: m_Name
       value: Slider
@@ -1795,7 +1783,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4380313317619777071, guid: a5bc09acbc8697a47a92f5fd4f14d421, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 90
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 4380313317619777071, guid: a5bc09acbc8697a47a92f5fd4f14d421, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2023,7 +2011,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4380313317619777071, guid: a5bc09acbc8697a47a92f5fd4f14d421, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 90
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 4380313317619777071, guid: a5bc09acbc8697a47a92f5fd4f14d421, type: 3}
       propertyPath: m_LocalPosition.x
