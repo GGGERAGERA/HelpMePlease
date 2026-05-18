@@ -13,17 +13,17 @@ public class CharacterClickHandler : MonoBehaviour
 
         btn.onClick.AddListener(OnCharacterClick);
     }
-
-    void OnCharacterClick()
+    public void OnCharacterClick()
     {
-        if (CharactersSelectionManager.Instance != null)
+        if (character == null)
         {
-            CharactersSelectionManager.Instance.SelectCharacter(character);
-            Debug.Log($"Клик по персонажу: {character.characterName}");
+            Debug.LogWarning("CharacterClickHandler: characterData is null.");
+            return;
         }
-        else
-        {
-            Debug.LogError("CharactersSelectionManager.Instance не найден!");
-        }
+
+        CharactersSelectionManager.Instance.SelectCharacter(character);
+
+        Debug.Log("Клик по персонажу: " + character.characterName);
     }
 }
+
