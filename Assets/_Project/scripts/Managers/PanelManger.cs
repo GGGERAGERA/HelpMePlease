@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 
 public class PanelManagerSimple : MonoBehaviour
-{
+{   [SerializeField] private float delayAlfaDraw = 0.02f;
     // 💡 Просто перетащи сюда ВСЕ панели из этой сцены — сколько угодно!
     [SerializeField] private List<GameObject> panels = new List<GameObject>();
     //[SerializeField] private List<GameObject> btns = new List<GameObject>();
@@ -21,10 +21,14 @@ public class PanelManagerSimple : MonoBehaviour
 
             var cg = panel.GetComponent<CanvasGroup>();
             if (cg == null) cg = panel.AddComponent<CanvasGroup>();
-
             canvasGroups.Add(cg);
+            
             HidePanel(cg);
         }
+
+        // Показываем первую панель из списка
+        ShowPanel(canvasGroups[0]);
+        
     }
 
     private CanvasGroup GetCanvasGroup(GameObject panel)
@@ -35,8 +39,18 @@ public class PanelManagerSimple : MonoBehaviour
         return cg;
     }
 
+    /// Скрыть все панели
+    public void HideAllPanels()
+    {
+        // Скрываем все панели
+        foreach (var cg in canvasGroups)
+        {
+            if (cg != null) HidePanel(cg);
+        }
+    }
+
     /// Показать одну панель, остальные скрыть
-    public void ShowPanel(GameObject panelToShow)
+    public void ShowPanelAndHideOthers(GameObject panelToShow)
     {
         var targetCG = GetCanvasGroup(panelToShow);
         if (targetCG == null) return;
@@ -48,13 +62,20 @@ public class PanelManagerSimple : MonoBehaviour
         }
 
         // Показываем нужную
-        targetCG.alpha = 1f;
-        targetCG.interactable = true;
-        targetCG.blocksRaycasts = true;
+        ShowPanel (targetCG);
+    }
+
+    /// Показать одну панель, остальные не скрывать
+    public void ShowPanels(GameObject panelToShow)
+    {
+        var targetCG = GetCanvasGroup(panelToShow);
+        if (targetCG == null) return;
+        // Показываем нужную
+        ShowPanel (targetCG);
     }
 
     /// Скрыть конкретную панель
-    public void HidePanel(GameObject panelToHide)
+    public void HideOnePanel(GameObject panelToHide)
     {
         var cg = GetCanvasGroup(panelToHide);
         if (cg != null) HidePanel(cg);
@@ -65,5 +86,12 @@ public class PanelManagerSimple : MonoBehaviour
         cg.alpha = 0f;
         cg.interactable = false;
         cg.blocksRaycasts = false;
+    }
+
+    private void ShowPanel(CanvasGroup cg)
+    {
+        cg.alpha = 1f;
+        cg.interactable = true;
+        cg.blocksRaycasts = true;
     }
 }
