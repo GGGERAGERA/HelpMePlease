@@ -3,11 +3,14 @@ using UnityEngine;
 
 public class RunResultView : MonoBehaviour
 {
-    [SerializeField] private TextMeshProUGUI resultText;
-    private bool goldAdded;
+    [Header("UI")]
+    [SerializeField] private TextMeshProUGUI titleText;
+    [SerializeField] private TextMeshProUGUI statsText;
 
     public void Show(bool victory)
     {
+        gameObject.SetActive(true);
+
         int kills = RunStatsManager.Instance != null ? RunStatsManager.Instance.Kills : 0;
         float time = RunStatsManager.Instance != null ? RunStatsManager.Instance.RunTime : 0f;
         int level = ExperienceManager.Instance != null ? ExperienceManager.Instance.currentLevel : 1;
@@ -17,21 +20,20 @@ public class RunResultView : MonoBehaviour
 
         int goldEarned = RunRewardCalculator.CalculateGold(victory);
 
-        if (!goldAdded)
-        {
-            CurrencyManager.Instance?.AddGold(goldEarned);
-            goldAdded = true;
-        }
+        CurrencyManager.Instance?.AddGold(goldEarned);
 
         int totalGold = CurrencyManager.Instance != null ? CurrencyManager.Instance.TotalGold : 0;
 
-        if (resultText != null)
+        if (titleText != null)
+            titleText.text = victory ? "VICTORY" : "YOU DIED";
+
+        if (statsText != null)
         {
-            resultText.text =
+            statsText.text =
                 $"TIME: {minutes:00}:{seconds:00}\n" +
                 $"KILLS: {kills}\n" +
                 $"LEVEL: {level}\n" +
-                $"GOLD: +{goldEarned}\n" +
+                $"GOLD EARNED: +{goldEarned}\n" +
                 $"TOTAL GOLD: {totalGold}";
         }
     }
