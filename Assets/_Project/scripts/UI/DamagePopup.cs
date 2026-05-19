@@ -20,14 +20,16 @@ public class DamagePopup : MonoBehaviour
         Destroy(gameObject, 1.2f);
     }
 
-    public void SetDamage(int damage)
+    public void SetDamage(int damage, bool isCritical = false)
     {
         if (text != null)
         {
             text.text = damage.ToString();
-        }
-        else
-        {
+            if (isCritical)
+            {
+                text.color = Color.red; // Изменяем цвет текста для критического удара
+                text.fontSize *= 1.2f; // Увеличиваем размер текста для критического удара
+            }
         }
     }
 

@@ -9,13 +9,22 @@ public class Bullet : MonoBehaviour
 
     private Vector2 direction;
     private int pierceCount;
+    private bool isCritical;
 
-    public void Initialize(float bulletDamage, float bulletSpeed, Vector2 dir, int pierce = 0)
+    public void Initialize(
+        float bulletDamage,
+        float bulletSpeed,
+        Vector2 dir,
+        int pierce = 0,
+        bool critical = false
+    )
     {
         damage = bulletDamage;
         speed = bulletSpeed;
         pierceCount = pierce;
         direction = dir.normalized;
+        isCritical = critical;
+
         Destroy(gameObject, destroyDuration);
     }
 
@@ -33,7 +42,7 @@ public class Bullet : MonoBehaviour
 
         if (enemyHealth != null)
         {
-            enemyHealth.TakeDamage(damage, transform.position);
+            enemyHealth.TakeDamage(damage, transform.position, isCritical);
             EnemyMovement enemyMovement = other.GetComponentInParent<EnemyMovement>();
 
             if (enemyMovement != null)

@@ -16,6 +16,8 @@ public abstract class BaseWeapon : MonoBehaviour
     [SerializeField] protected AudioSource weaponAudioSource;
     [SerializeField] protected int projectileCount = 1;
     [SerializeField] protected int projectilePierce = 0;
+    [SerializeField] protected float critChance = 50f;
+    [SerializeField] protected float critMultiplier = 2f;
 
     protected virtual void Start()
     {
@@ -109,6 +111,15 @@ public abstract class BaseWeapon : MonoBehaviour
     public void AddPierce(int amount)
     {
         projectilePierce += amount;
+    }
+    public bool RollCritical()
+    {
+        return Random.value < critChance;
+    }
+
+    public float GetCritMultiplier()
+    {
+        return critMultiplier;
     }
 
 

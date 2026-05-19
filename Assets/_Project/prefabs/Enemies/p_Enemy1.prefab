@@ -439,7 +439,6 @@ MonoBehaviour:
   runSpeed: 2
   animator: {fileID: 5754472316754357161}
   acceleration: 12
-  deceleration: 16
   knockbackDecay: 25
   hitStunDuration: 0.06
 --- !u!114 &6045726002428409456
@@ -466,6 +465,7 @@ MonoBehaviour:
       m_Calls: []
   damagePopupPrefab: {fileID: 9169945786982687630, guid: 93f186151a59ce24fa30dac2ce325309, type: 3}
   popupOffset: {x: 0, y: 1, z: 0}
+  critSound: {fileID: 8300000, guid: 418d270b861135f4cadc5fbafd2ea2e6, type: 3}
   audioSource: {fileID: 0}
   hitSound: {fileID: 8300000, guid: e50a2f18f5399c74c9bad9dacb667c3c, type: 3}
   hitPitchRange: {x: 0.95, y: 1.05}

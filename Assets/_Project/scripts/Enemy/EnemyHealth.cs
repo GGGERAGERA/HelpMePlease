@@ -14,6 +14,9 @@ public class EnemyHealth : MonoBehaviour
     public GameObject damagePopupPrefab;  // перетащите префаб DamagePopup
     public Vector3 popupOffset = new Vector3(0, 1f, 0); // смещение над врагом
 
+    [SerializeField] private AudioClip critSound;
+
+    
     [Header("Hit Sound")]
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip hitSound;
@@ -34,6 +37,8 @@ public class EnemyHealth : MonoBehaviour
     [Header("Death")]
     [SerializeField] private float deathDelay = 0.5f;
     private bool isDead;
+
+    private static float lastCritSoundTime;
     void Start()
     {
         currentHealth = maxHealth;
@@ -60,24 +65,24 @@ public class EnemyHealth : MonoBehaviour
         currentHealth = maxHealth;
     }
 
-    public void TakeDamage(float damage, Vector2 hitPoint)
+    public void TakeDamage(float damage, Vector2 hitPoint, bool isCritical = false)
     {
         if (isDead) return;
         if (currentHealth <= 0) return;
 
         currentHealth -= damage;
-        SpawnBlood(hitPoint);
+        SpawnBlood(hitPoint, isCritical);
         PlayHitSound();
         // Показать цифру урона
-        ShowDamagePopup(Mathf.RoundToInt(damage));
-
+        ShowDamagePopup(Mathf.RoundToInt(damage), isCritical);
+        Debug.Log("EnemyHealth crit received: " + isCritical);
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
         OnDamageTaken?.Invoke(); // вызываем эффект урона
 
         if (currentHealth <= 0)
             Die();
     }
-    private void SpawnBlood(Vector2 hitPoint)
+    private void SpawnBlood(Vector2 hitPoint, bool isCritical)
     {
         if (bloodHitPrefab == null)
             return;
@@ -87,6 +92,28 @@ public class EnemyHealth : MonoBehaviour
             hitPoint,
             Quaternion.identity
         );
+        if (isCritical)
+        {
+            if (critSound != null)
+            {
+                if (Time.time > lastCritSoundTime + 0.08f)
+                {
+                    AudioSource.PlayClipAtPoint(
+                        critSound,
+                        transform.position,
+                        0.7f
+                    );
+
+                    lastCritSoundTime = Time.time;
+                }
+            }
+            var main = blood.main;
+            main.startSizeMultiplier *= 1.4f;
+            main.startSpeedMultiplier *= 1.3f;
+
+            var emission = blood.emission;
+            emission.rateOverTimeMultiplier *= 1.5f;
+        }
 
         blood.Play();
 
@@ -103,7 +130,7 @@ public class EnemyHealth : MonoBehaviour
         StartCoroutine(DeathRoutine());
     }
 
-    void ShowDamagePopup(int damage)
+    void ShowDamagePopup(int damage, bool isCritical)
     {
 
         if (damagePopupPrefab == null)
@@ -118,7 +145,7 @@ public class EnemyHealth : MonoBehaviour
         DamagePopup dp = popup.GetComponent<DamagePopup>();
         if (dp != null)
         {
-            dp.SetDamage(damage);
+            dp.SetDamage(damage, isCritical);
         }
         else
         {

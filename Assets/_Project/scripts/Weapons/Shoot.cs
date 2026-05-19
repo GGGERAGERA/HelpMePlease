@@ -97,7 +97,22 @@ public class Shoot : BaseWeapon
 
             if (bulletScript != null)
             {
-                bulletScript.Initialize(GetDamage(), GetRange(), direction, projectilePierce);
+                bool isCritical = RollCritical();
+
+                float finalDamage = GetDamage();
+
+                if (isCritical)
+                {
+                    finalDamage *= GetCritMultiplier();
+                }
+
+                bulletScript.Initialize(
+                    finalDamage,
+                    GetRange(),
+                    direction,
+                    projectilePierce,
+                    isCritical
+                );
             }
         }
 
