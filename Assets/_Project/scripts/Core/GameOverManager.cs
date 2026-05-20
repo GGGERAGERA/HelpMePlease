@@ -5,7 +5,7 @@ public class GameOverManager : MonoBehaviour
 {
     public static GameOverManager Instance;
 
-    public GameObject gameOverPanel; // сюда перетащите GameOverCanvas (который неактивен)
+    [SerializeField] private RunResultView runResultView;
 
     void Awake()
     {
@@ -14,20 +14,14 @@ public class GameOverManager : MonoBehaviour
         else
             Destroy(gameObject);
 
-        // Убедимся, что панель скрыта при старте
-        if (gameOverPanel != null)
-            gameOverPanel.SetActive(false);
     }
 
     public void GameOver()
     {
-        RunResultView resultView = gameOverPanel.GetComponent<RunResultView>();
+        if (runResultView != null)
+            runResultView.Show(false);
 
-        if (resultView != null)
-            resultView.Show(false);
         Time.timeScale = 0f;
-        if (gameOverPanel != null)
-            gameOverPanel.SetActive(true);
     }
 
     public void RestartGame()

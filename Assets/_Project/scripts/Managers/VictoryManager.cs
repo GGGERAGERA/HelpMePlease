@@ -5,16 +5,19 @@ public class VictoryManager : MonoBehaviour
 {
     public static VictoryManager Instance { get; private set; }
 
-    [SerializeField] private GameObject victoryPanel;
+    [SerializeField] private RunResultView runResultView;
 
     private bool isVictory;
 
     private void Awake()
     {
-        Instance = this;
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
 
-        if (victoryPanel != null)
-            victoryPanel.SetActive(false);
+        Instance = this;
     }
 
     public void Victory()
@@ -24,13 +27,9 @@ public class VictoryManager : MonoBehaviour
 
         isVictory = true;
 
-        if (victoryPanel != null)
-            victoryPanel.SetActive(true);
+        if (runResultView != null)
+            runResultView.Show(true);
 
-        RunResultView resultView = victoryPanel.GetComponent<RunResultView>();
-
-        if (resultView != null)
-            resultView.Show(true);
         Time.timeScale = 0f;
     }
 

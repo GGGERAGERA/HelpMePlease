@@ -29,6 +29,11 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private CanvasGroup lowHpVignette;
     [SerializeField] private float lowHpThreshold = 0.3f;
 
+    [Header("Boss HP")]
+    [SerializeField] private GameObject bossHpPanel;
+    [SerializeField] private Slider bossHpSlider;
+    [SerializeField] private TextMeshProUGUI bossNameText;
+
     private void Awake()
     {
         Instance = this;
@@ -119,5 +124,31 @@ public class HUDManager : MonoBehaviour
 
         bossText.text = "";
         bossText.gameObject.SetActive(false);
+    }
+
+    public void ShowBossHp(string bossName, float currentHp, float maxHp)
+    {
+        if (bossHpPanel != null)
+            bossHpPanel.SetActive(true);
+
+        if (bossNameText != null)
+            bossNameText.text = bossName;
+
+        UpdateBossHp(currentHp, maxHp);
+    }
+
+    public void UpdateBossHp(float currentHp, float maxHp)
+    {
+        if (bossHpSlider == null)
+            return;
+
+        bossHpSlider.maxValue = maxHp;
+        bossHpSlider.value = currentHp;
+    }
+
+    public void HideBossHp()
+    {
+        if (bossHpPanel != null)
+            bossHpPanel.SetActive(false);
     }
 }

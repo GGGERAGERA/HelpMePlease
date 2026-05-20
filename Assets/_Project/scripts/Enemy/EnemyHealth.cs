@@ -33,6 +33,8 @@ public class EnemyHealth : MonoBehaviour
     [SerializeField] private ParticleSystem bloodHitPrefab;
     [Header("Boss")]
     [SerializeField] private bool isBoss;
+    [Header("Boss UI")]
+    [SerializeField] private string bossName = "BOSS";
 
     [Header("Death")]
     [SerializeField] private float deathDelay = 0.5f;
@@ -42,6 +44,10 @@ public class EnemyHealth : MonoBehaviour
     void Start()
     {
         currentHealth = maxHealth;
+        if (isBoss)
+        {
+            HUDManager.Instance?.ShowBossHp(bossName, currentHealth, maxHealth);
+        }
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
 
     }
@@ -71,6 +77,10 @@ public class EnemyHealth : MonoBehaviour
         if (currentHealth <= 0) return;
 
         currentHealth -= damage;
+        if (isBoss)
+        {
+            HUDManager.Instance?.UpdateBossHp(currentHealth, maxHealth);
+        }
         SpawnBlood(hitPoint, isCritical);
         PlayHitSound();
         // Показать цифру урона
@@ -166,7 +176,6 @@ public class EnemyHealth : MonoBehaviour
     {
         Animator animator = GetComponentInChildren<Animator>();
 
-
         if (animator != null)
         {
             animator.SetTrigger("Die");
@@ -184,6 +193,7 @@ public class EnemyHealth : MonoBehaviour
 
         if (isBoss)
         {
+            HUDManager.Instance?.HideBossHp();
             VictoryManager.Instance?.Victory();
         }
         DropLoot();
