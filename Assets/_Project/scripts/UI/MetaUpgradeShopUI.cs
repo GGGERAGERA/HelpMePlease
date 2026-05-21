@@ -19,6 +19,30 @@ public class MetaUpgradeShopUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI moveSpeedText;
     [SerializeField] private Button moveSpeedButton;
 
+    [Header("Crit Damage")]
+    [SerializeField] private TextMeshProUGUI CritDamageText;
+    [SerializeField] private Button CritDamageBtn;
+
+    [Header("Crit Probability")]
+    [SerializeField] private TextMeshProUGUI CritProbabilityText;
+    [SerializeField] private Button CritProbabilityBtn;
+
+    [Header("Pierce")]
+    [SerializeField] private TextMeshProUGUI PierceText;
+    [SerializeField] private Button PierceButton;
+
+    [Header("Multishot")]
+    [SerializeField] private TextMeshProUGUI MultishotText;
+    [SerializeField] private Button MultishotButton;
+
+    [Header("Attack Speed")]
+    [SerializeField] private TextMeshProUGUI AttackSpeedText;
+    [SerializeField] private Button AttackSpeedButton;
+
+    [Header("Ricochet")]
+    [SerializeField] private TextMeshProUGUI RicochetText;
+    [SerializeField] private Button RicochetButton;
+
     private void Start()
     {
         Refresh();
@@ -63,19 +87,19 @@ public class MetaUpgradeShopUI : MonoBehaviour
         string effect = "";
 
         if (name == "HP")
-            effect = $"+{level * 5} здоровья";
+            effect = $"+{level * 5} пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
 
         if (name == "DAMAGE")
-            effect = $"+{level} урона";
+            effect = $"+{level} пїЅпїЅпїЅпїЅпїЅ";
 
         if (name == "MOVE SPEED")
-            effect = $"+{level * 0.15f:0.00} скорости";
+            effect = $"+{level * 0.15f:0.00} пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
 
         text.text =
             $"{name}\n" +
-            $"Ур.: {level}\n" +
+            $"пїЅпїЅ.: {level}\n" +
             $"{effect}\n" +
-            $"Цена: {cost}";
+            $"пїЅпїЅпїЅпїЅ: {cost}";
 
         button.interactable = gold >= cost;
     }

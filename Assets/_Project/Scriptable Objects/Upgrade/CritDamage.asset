@@ -10,10 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2029363319d1b9741a19ac5963bb5155, type: 3}
-  m_Name: Damage
+  m_Name: CritDamage
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
-  upgradeName: "+5 \u043A \u0443\u0440\u043E\u043D\u0443"
-  description: "\u0423\u0440\u043E\u043D"
-  icon: {fileID: -1860428558, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
-  upgradeType: 3
-  value: 5
+  upgradeName: "\u041A\u0440\u0438\u0442 \u0443\u0440\u043E\u043D"
+  description: "\u041F\u043E\u0432\u044B\u0448\u0430\u0435\u0442 \u043A\u0440\u0438\u0442
+    \u0443\u0440\u043E\u043D \u043D\u0430 15"
+  icon: {fileID: -1999676519, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
+  upgradeType: 13
+  value: 15

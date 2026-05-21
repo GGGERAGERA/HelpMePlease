@@ -12,7 +12,9 @@ public enum UpgradeType
     OrbitRadius,
     ProjectileCount,
     ProjectilePierce,
-    ProjectileRicochet
+    ProjectileRicochet,
+    CritProbability,
+    CritDamage
 }
 
 [CreateAssetMenu(fileName = "New UpgradeData", menuName = "Game/Upgrade Data")]
@@ -27,7 +29,7 @@ public class UpgradeData : ScriptableObject
     public UpgradeType upgradeType;
 
 
-    [Tooltip("Число улучшения. Например: 20 здоровья, 0.5f к урону, 0.2f к скорости и т.д.")]
+    [Tooltip("пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: 20 пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, 0.5f пїЅ пїЅпїЅпїЅпїЅпїЅ, 0.2f пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅ.пїЅ.")]
     public float value = 1f;
 
 }
