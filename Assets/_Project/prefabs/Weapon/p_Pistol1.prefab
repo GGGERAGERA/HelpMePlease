@@ -84,6 +84,7 @@ MonoBehaviour:
   weaponAudioSource: {fileID: 817849802606587231}
   projectileCount: 1
   projectilePierce: 0
+  projectileRicochet: 0
   critChance: 0.8
   critMultiplier: 2
   bulletPrefab: {fileID: 1168613123775889235, guid: c85e1d8ec23ffba47836a61f5644eb61, type: 3}
@@ -105,7 +106,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 6ee737a6592c10a4d93a9836b01c1378, type: 3}
+  m_Resource: {fileID: 8300000, guid: 907d3442b4fc4244ea4e9c020e3966d6, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
