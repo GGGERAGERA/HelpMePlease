@@ -25,7 +25,10 @@ public class RunResultView : MonoBehaviour
         int totalGold = CurrencyManager.Instance != null ? CurrencyManager.Instance.TotalGold : 0;
 
         if (titleText != null)
+        {
             titleText.text = victory ? "VICTORY" : "YOU DIED";
+            titleText.color = victory ? Color.green : Color.red;
+        }
 
         if (statsText != null)
         {
