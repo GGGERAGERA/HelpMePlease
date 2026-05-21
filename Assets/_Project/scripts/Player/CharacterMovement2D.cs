@@ -43,6 +43,11 @@ public class CharacterMovement2D : MonoBehaviour
             Vector3 scale = visualRoot.localScale;
             scale.x = Mathf.Abs(scale.x) * -Mathf.Sign(moveInput.x);
             visualRoot.localScale = scale;
+
+            if (scale.x < 0)
+                visualRoot.GetComponent<SpriteRenderer>().flipX = true;
+            else
+                visualRoot.GetComponent<SpriteRenderer>().flipX = false;
         }
 
         if (animator != null)
