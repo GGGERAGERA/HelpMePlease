@@ -449,7 +449,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19136a5a9a8407f4bad025abe8a5570b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
-  maxHealth: 100
+  maxHealth: 700
   OnHealthChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -461,6 +461,7 @@ MonoBehaviour:
       m_Calls: []
   damagePopupPrefab: {fileID: 9169945786982687630, guid: 93f186151a59ce24fa30dac2ce325309, type: 3}
   popupOffset: {x: 0, y: 1, z: 0}
+  critSound: {fileID: 0}
   audioSource: {fileID: 0}
   hitSound: {fileID: 0}
   hitPitchRange: {x: 0.95, y: 1.05}
@@ -470,6 +471,7 @@ MonoBehaviour:
   lootScatterRadius: 0.4
   bloodHitPrefab: {fileID: 1219979587113692529, guid: e2fbd784016920342afe91db1e5c70d9, type: 3}
   isBoss: 1
+  bossName: BOSS
   deathDelay: 0.5
 --- !u!114 &8498786568601226095
 MonoBehaviour:
