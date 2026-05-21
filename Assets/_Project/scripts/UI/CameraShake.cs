@@ -1,62 +1,58 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using System.Collections;
+using UnityEngine;
 
 public class CameraShake : MonoBehaviour
 {
-    public static CameraShake Instance;
+    public static CameraShake Instance { get; private set; }
 
-    private Coroutine shakeCoroutine;
-    private bool isGameOver = false;
+    private Vector3 originalLocalPosition;
+    private Coroutine shakeRoutine;
 
-    void Awake()
+    private void Awake()
     {
-        if (Instance == null)
-            Instance = this;
-        else
-            Destroy(gameObject);
+        Instance = this;
+        originalLocalPosition = transform.localPosition;
     }
 
     public void Shake(float duration, float magnitude)
     {
-        if (isGameOver) return; // не трясём, если игра окончена
+        if (shakeRoutine != null)
+            StopCoroutine(shakeRoutine);
 
-
-        if (shakeCoroutine != null)
-            StopCoroutine(shakeCoroutine);
-        shakeCoroutine = StartCoroutine(DoShake(duration, magnitude));
+        shakeRoutine = StartCoroutine(ShakeRoutine(duration, magnitude));
     }
 
-    public void StopAllShakes()
+    private IEnumerator ShakeRoutine(float duration, float magnitude)
     {
-        isGameOver = true;
-        if (shakeCoroutine != null)
-        {
-            StopCoroutine(shakeCoroutine);
-            shakeCoroutine = null;
-        }
-        // Возвращаем камеру на место
-        transform.position = new Vector3(transform.position.x, transform.position.y, -10f);
-    }
-
-    public void ResetShake()
-    {
-        isGameOver = false;
-    }
-
-    IEnumerator DoShake(float duration, float magnitude)
-    {
-        Vector3 originalPosition = transform.position; // ← берём текущую позицию камеры
+        Vector3 basePosition = transform.localPosition;
 
         float elapsed = 0f;
-        while (elapsed < duration && !isGameOver)
+
+        while (elapsed < duration)
         {
-            float x = Random.Range(-1f, 1f) * magnitude;
-            float y = Random.Range(-1f, 1f) * magnitude;
-            transform.position = originalPosition + new Vector3(x, y, 0);
+            float progress = elapsed / duration;
+            float damping = 1f - progress;
+
+            float x = Mathf.PerlinNoise(Time.time * 25f, 0f) * 2f - 1f;
+            float y = Mathf.PerlinNoise(0f, Time.time * 25f) * 2f - 1f;
+
+            Vector3 offset = new Vector3(x, y, 0f) * magnitude * damping;
+
+            transform.localPosition = basePosition + offset;
+
             elapsed += Time.deltaTime;
             yield return null;
         }
-        transform.position = originalPosition; // возврат к позиции, которая была до тряски
-        shakeCoroutine = null;
+
+        transform.localPosition = basePosition;
+        shakeRoutine = null;
+    }
+    public void StopAllShakes()
+    {
+        if (shakeRoutine != null)
+        {
+            StopCoroutine(shakeRoutine);
+            shakeRoutine = null;
+        }
     }
 }

@@ -18,7 +18,6 @@ GameObject:
   - component: {fileID: 6017399571323920041}
   - component: {fileID: 6742118338655256636}
   - component: {fileID: 9013446077024987045}
-  - component: {fileID: 6605802876296458800}
   - component: {fileID: 7978632351014768105}
   - component: {fileID: -6587262309609574107}
   m_Layer: 0
@@ -161,8 +160,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Movement2D
   speed: 1
-  acceleration: 40
-  deceleration: 30
+  acceleration: 50
+  deceleration: 40
   visualRoot: {fileID: 6923507146766420414}
 --- !u!114 &8488144525096105199
 MonoBehaviour:
@@ -255,18 +254,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerWhiteFlash
   flashMaterial: {fileID: 2100000, guid: 2ff410d6175258e4086acff183a82c3b, type: 2}
   flashDuration: 0.08
---- !u!114 &6605802876296458800
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 602157039170639563}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6f38c3b22297d3242a4fbcef4d030c8c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CameraShake
 --- !u!82 &7978632351014768105
 AudioSource:
   m_ObjectHideFlags: 0

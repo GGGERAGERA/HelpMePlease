@@ -76,7 +76,7 @@ public class RunTimer : MonoBehaviour
             );
         }
 
-        CameraShake.Instance?.Shake(0.3f, 0.4f);
+        CameraShake.Instance?.Shake(2f, 0.05f);
 
         yield return new WaitForSeconds(bossSpawnDelay);
 
