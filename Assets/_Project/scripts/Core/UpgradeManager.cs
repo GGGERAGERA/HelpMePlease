@@ -154,6 +154,9 @@ public class UpgradeManager : MonoBehaviour
             case UpgradeType.ProjectilePierce:
                 ApplyPierceUpgrade(weapons, upgrade.value);
                 break;
+            case UpgradeType.ProjectileRicochet:
+                ApplyRicochetUpgrade(weapons, upgrade.value);
+                break;
         }
     }
 
@@ -260,6 +263,16 @@ public class UpgradeManager : MonoBehaviour
             if (weapon != null)
             {
                 weapon.AddPierce(Mathf.RoundToInt(value));
+            }
+        }
+    }
+    private void ApplyRicochetUpgrade(BaseWeapon[] weapons, float value)
+    {
+        foreach (BaseWeapon weapon in weapons)
+        {
+            if (weapon != null)
+            {
+                weapon.AddRicochet(Mathf.RoundToInt(value));
             }
         }
     }

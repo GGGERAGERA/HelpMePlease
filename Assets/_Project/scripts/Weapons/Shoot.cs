@@ -111,7 +111,8 @@ public class Shoot : BaseWeapon
                     GetRange(),
                     direction,
                     projectilePierce,
-                    isCritical
+                    isCritical,
+                    projectileRicochet
                 );
             }
         }

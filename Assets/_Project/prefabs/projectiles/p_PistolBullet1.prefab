@@ -55,6 +55,8 @@ MonoBehaviour:
   speed: 3
   damage: 15
   destroyDuration: 5
+  ricochetSearchRadius: 15
+  knockbackForce: 4
 --- !u!61 &6245927344960744017
 BoxCollider2D:
   m_ObjectHideFlags: 0

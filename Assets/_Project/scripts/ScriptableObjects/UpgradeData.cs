@@ -11,7 +11,8 @@ public enum UpgradeType
     WeaponRange,
     OrbitRadius,
     ProjectileCount,
-    ProjectilePierce
+    ProjectilePierce,
+    ProjectileRicochet
 }
 
 [CreateAssetMenu(fileName = "New UpgradeData", menuName = "Game/Upgrade Data")]
@@ -24,6 +25,7 @@ public class UpgradeData : ScriptableObject
     public Sprite icon;
     [Header("Effect")]
     public UpgradeType upgradeType;
+
 
     [Tooltip("Число улучшения. Например: 20 здоровья, 0.5f к урону, 0.2f к скорости и т.д.")]
     public float value = 1f;

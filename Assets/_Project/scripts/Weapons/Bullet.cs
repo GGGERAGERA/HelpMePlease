@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Bullet : MonoBehaviour
@@ -5,25 +6,32 @@ public class Bullet : MonoBehaviour
     public float speed = 10f;
     public float damage = 20f;
     public float destroyDuration = 5f;
+
     [SerializeField] private float knockbackForce = 4f;
+    [SerializeField] private float ricochetSearchRadius = 4f;
 
     private Vector2 direction;
     private int pierceCount;
+    private int ricochetCount;
     private bool isCritical;
+
+    private readonly HashSet<EnemyHealth> hitEnemies = new HashSet<EnemyHealth>();
 
     public void Initialize(
         float bulletDamage,
         float bulletSpeed,
         Vector2 dir,
         int pierce = 0,
-        bool critical = false
+        bool critical = false,
+        int ricochet = 0
     )
     {
         damage = bulletDamage;
         speed = bulletSpeed;
-        pierceCount = pierce;
         direction = dir.normalized;
+        pierceCount = pierce;
         isCritical = critical;
+        ricochetCount = ricochet;
 
         Destroy(gameObject, destroyDuration);
     }
@@ -35,30 +43,78 @@ public class Bullet : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (!other.CompareTag("Enemy"))
+        EnemyHealth enemyHealth = other.GetComponentInParent<EnemyHealth>();
+
+        if (enemyHealth == null)
             return;
 
-        EnemyHealth enemyHealth = other.GetComponent<EnemyHealth>();
+        if (hitEnemies.Contains(enemyHealth))
+            return;
 
-        if (enemyHealth != null)
+        hitEnemies.Add(enemyHealth);
+
+        enemyHealth.TakeDamage(damage, transform.position, isCritical);
+
+        EnemyMovement enemyMovement = enemyHealth.GetComponent<EnemyMovement>();
+
+        if (enemyMovement != null)
+            enemyMovement.ApplyKnockback(direction, knockbackForce);
+
+        if (ricochetCount > 0 && TryRicochet(enemyHealth))
         {
-            enemyHealth.TakeDamage(damage, transform.position, isCritical);
-            EnemyMovement enemyMovement = other.GetComponentInParent<EnemyMovement>();
+            ricochetCount--;
+            return;
+        }
 
-            if (enemyMovement != null)
+        if (pierceCount > 0)
+        {
+            pierceCount--;
+            return;
+        }
+
+        Destroy(gameObject);
+    }
+
+    private bool TryRicochet(EnemyHealth currentEnemy)
+    {
+        EnemyHealth target = FindNearestEnemy(currentEnemy);
+
+        if (target == null)
+            return false;
+
+        direction = ((Vector2)target.transform.position - (Vector2)transform.position).normalized;
+        return true;
+    }
+
+    private EnemyHealth FindNearestEnemy(EnemyHealth ignoredEnemy)
+    {
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, ricochetSearchRadius);
+
+        EnemyHealth nearestEnemy = null;
+        float nearestDistance = float.MaxValue;
+
+        foreach (Collider2D hit in hits)
+        {
+            EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
+
+            if (enemy == null)
+                continue;
+
+            if (enemy == ignoredEnemy)
+                continue;
+
+            if (hitEnemies.Contains(enemy))
+                continue;
+
+            float distance = Vector2.Distance(transform.position, enemy.transform.position);
+
+            if (distance < nearestDistance)
             {
-                enemyMovement.ApplyKnockback(direction, knockbackForce);
-            }
-            if (pierceCount > 0)
-            {
-                pierceCount--;
-            }
-            else
-            {
-                Destroy(gameObject);
+                nearestDistance = distance;
+                nearestEnemy = enemy;
             }
         }
 
-
+        return nearestEnemy;
     }
 }

@@ -2,8 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
-public class PanelManagerSimple : MonoBehaviour
-{   [SerializeField] private float delayAlfaDraw = 0.02f;
+public class PanelManager : MonoBehaviour
+{ 
     // 💡 Просто перетащи сюда ВСЕ панели из этой сцены — сколько угодно!
     [SerializeField] private List<GameObject> panels = new List<GameObject>();
     //[SerializeField] private List<GameObject> btns = new List<GameObject>();
