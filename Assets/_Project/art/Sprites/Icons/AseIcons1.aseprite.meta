@@ -129,7 +129,7 @@ ScriptedImporter:
   animatedSpriteImportData:
   - name: AseIcons1
     originalName: 
-    pivot: {x: 0.849162, y: -1.2857143}
+    pivot: {x: 0.5714286, y: -0.6}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -137,8 +137,8 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 358
-      height: 266
+      width: 448
+      height: 320
     spriteID: 03c58510560b0b446971e3d42463a7ea
     spriteBone: []
     spriteOutline: []
@@ -167,10 +167,10 @@ ScriptedImporter:
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:
-        x: -48
-        y: 342
-        width: 358
-        height: 266
+        x: 0
+        y: 192
+        width: 448
+        height: 320
       spriteId: 03c58510560b0b446971e3d42463a7ea
     linkedCells: []
     tileCells: []
