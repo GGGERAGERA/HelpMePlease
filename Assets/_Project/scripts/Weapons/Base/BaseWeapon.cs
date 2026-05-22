@@ -17,7 +17,8 @@ public abstract class BaseWeapon : MonoBehaviour
     [SerializeField] protected int projectileCount = 1;
     [SerializeField] protected int projectilePierce = 0;
     [SerializeField] protected int projectileRicochet = 0;
-    [SerializeField] protected float critChance = 50f;
+    [Range(0f, 1f)]
+    [SerializeField] protected float critChance = 0.05f;
     [SerializeField] protected float critMultiplier = 2f;
 
     protected virtual void Start()
@@ -44,8 +45,7 @@ public abstract class BaseWeapon : MonoBehaviour
 
     protected virtual bool CanAttack()
     {
-        float fireRate = weaponData != null ? weaponData.fireRate : 0.5f;
-        return Time.time >= lastAttackTime + fireRate;
+        return Time.time >= lastAttackTime + GetFireRate();
     }
 
     public abstract void Attack();
@@ -89,6 +89,15 @@ public abstract class BaseWeapon : MonoBehaviour
     public void AddFireRatePercent(float percent)
     {
         fireRateMultiplier *= Mathf.Clamp(1f - percent, 0.1f, 10f);
+    }
+    public void AddCritChance(float amount)
+    {
+        critChance = Mathf.Clamp01(critChance + amount);
+    }
+
+    public void AddCritMultiplier(float amount)
+    {
+        critMultiplier += amount;
     }
     protected void PlaySound(AudioClip clip)
     {

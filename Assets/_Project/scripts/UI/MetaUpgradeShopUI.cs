@@ -66,6 +66,37 @@ public class MetaUpgradeShopUI : MonoBehaviour
         Refresh();
     }
 
+    public void BuyAttackSpeed()
+    {
+        MetaProgressionManager.Instance.BuyAttackSpeed();
+        Refresh();
+    }
+    public void BuyCritDamage()
+    {
+        MetaProgressionManager.Instance.BuyCritDamage();
+        Refresh();
+    }
+    public void BuyCritProbability()
+    {
+        MetaProgressionManager.Instance.BuyCritProbability();
+        Refresh();
+    }
+    public void BuyRicochet()
+    {
+        MetaProgressionManager.Instance.BuyRicochet();
+        Refresh();
+    }
+    public void BuyMultishot()
+    {
+        MetaProgressionManager.Instance.BuyMultishot();
+        Refresh();
+    }
+    public void BuyPiercing()
+    {
+        MetaProgressionManager.Instance.BuyPiercing();
+        Refresh();
+    }
+
     public void Refresh()
     {
         if (CurrencyManager.Instance == null || MetaProgressionManager.Instance == null)
@@ -78,6 +109,12 @@ public class MetaUpgradeShopUI : MonoBehaviour
         SetUpgradeText(hpText, hpButton, "HP", MetaProgressionManager.Instance.HpLevel, gold);
         SetUpgradeText(damageText, damageButton, "DAMAGE", MetaProgressionManager.Instance.DamageLevel, gold);
         SetUpgradeText(moveSpeedText, moveSpeedButton, "MOVE SPEED", MetaProgressionManager.Instance.MoveSpeedLevel, gold);
+        SetUpgradeText(AttackSpeedText, AttackSpeedButton, "ATTACK SPEED", MetaProgressionManager.Instance.AttackSpeedLevel, gold);
+        SetUpgradeText(CritDamageText, CritDamageBtn, "CRIT DAMAGE", MetaProgressionManager.Instance.CritDamageLevel, gold);
+        SetUpgradeText(CritProbabilityText, CritProbabilityBtn, "CRIT PROBABILITY", MetaProgressionManager.Instance.CritProbabilityLevel, gold);
+        SetUpgradeText(RicochetText, RicochetButton, "RICOCHET", MetaProgressionManager.Instance.RicochetLevel, gold);
+        SetUpgradeText(MultishotText, MultishotButton, "MULTISHOT", MetaProgressionManager.Instance.MultishotLevel, gold);
+        SetUpgradeText(PierceText, PierceButton, "PIERCING", MetaProgressionManager.Instance.PiercingLevel, gold);
     }
 
     private void SetUpgradeText(TextMeshProUGUI text, Button button, string name, int level, int gold)
@@ -86,20 +123,32 @@ public class MetaUpgradeShopUI : MonoBehaviour
 
         string effect = "";
 
-        if (name == "HP")
-            effect = $"+{level * 5} ��������";
+        if (name == "HP");
+            effect = $"+{level * 5}";
 
         if (name == "DAMAGE")
-            effect = $"+{level} �����";
+            effect = $"+{level}";
 
         if (name == "MOVE SPEED")
-            effect = $"+{level * 0.15f:0.00} ��������";
+            effect = $"+{level * 0.15f:0.00}";
+        if (name == "ATTACK SPEED")
+            effect = $"+{level * 0.1f:0.00}";
+        if (name == "CRIT DAMAGE")
+            effect = $"+{level * 0.5f:0.00}";
+        if (name == "CRIT PROBABILITY")
+            effect = $"+{level * 2}%";
+        if (name == "RICOCHET")
+            effect = $"+{level}";
+        if (name == "MULTISHOT")
+            effect = $"+{level}";
+        if (name == "PIERCING")
+            effect = $"+{level}";
 
         text.text =
             $"{name}\n" +
-            $"��.: {level}\n" +
+            $"lvl: {level}\n" +
             $"{effect}\n" +
-            $"����: {cost}";
+            $"cost: {cost}";
 
         button.interactable = gold >= cost;
     }
