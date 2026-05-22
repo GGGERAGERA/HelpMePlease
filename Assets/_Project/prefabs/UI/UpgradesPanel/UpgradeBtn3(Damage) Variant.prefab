@@ -26,27 +26,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4860938817782186349, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4860938817782186349, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4860938817782186349, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4860938817782186349, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4860938817782186349, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 300
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4860938817782186349, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 300
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4860938817782186349, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
       propertyPath: m_LocalPosition.x
@@ -66,15 +66,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4860938817782186349, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4860938817782186349, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4860938817782186349, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4860938817782186349, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -98,14 +98,39 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6181275472389493772, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
       propertyPath: m_Name
-      value: UpgradeBtn3 Variant
+      value: UpgradeBtn3(Damage) Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 6683649948660014693, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: -1860428558, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
+    - target: {fileID: 6957162722402756309, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6957162722402756309, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6957162722402756309, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: BuyDamage
+      objectReference: {fileID: 0}
+    - target: {fileID: 6957162722402756309, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: MetaUpgradeShopUI, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 6957162722402756309, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     - target: {fileID: 7556661025566423357, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 5226088587699745793, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
+      objectReference: {fileID: -851190274, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 5841123786883702470, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
