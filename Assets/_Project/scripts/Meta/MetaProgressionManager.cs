@@ -45,19 +45,37 @@ public class MetaProgressionManager : MonoBehaviour
         return 25 + currentLevel * 25;
     }
 
-    public void BuyHp()
+    public bool BuyHp()
     {
-        HpLevel = TryBuy(HpLevel, HpLevelKey);
+        int newLevel = TryBuy(HpLevel, HpLevelKey);
+
+        if (newLevel == HpLevel)
+            return false;
+
+        HpLevel = newLevel;
+        return true;
     }
 
-    public void BuyDamage()
+    public bool BuyDamage()
     {
-        DamageLevel = TryBuy(DamageLevel, DamageLevelKey);
+        int newLevel = TryBuy(DamageLevel, DamageLevelKey);
+
+        if (newLevel == DamageLevel)
+            return false;
+
+        DamageLevel = newLevel;
+        return true;
     }
 
-    public void BuyMoveSpeed()
+    public bool BuyMoveSpeed()
     {
-        MoveSpeedLevel = TryBuy(MoveSpeedLevel, MoveSpeedLevelKey);
+        int newLevel = TryBuy(MoveSpeedLevel, MoveSpeedLevelKey);
+
+        if (newLevel == MoveSpeedLevel)
+            return false;
+
+        MoveSpeedLevel = newLevel;
+        return true;
     }
 
     public void BuyAttackSpeed()

@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 
 public class MetaUpgradeShopUI : MonoBehaviour
 {
@@ -43,6 +44,11 @@ public class MetaUpgradeShopUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI RicochetText;
     [SerializeField] private Button RicochetButton;
 
+    [Header("Sounds")]
+    [SerializeField] private AudioClip purchaseSound;
+    [SerializeField] private float purchaseVolume = 0.6f;
+
+
     private void Start()
     {
         Refresh();
@@ -50,20 +56,17 @@ public class MetaUpgradeShopUI : MonoBehaviour
 
     public void BuyHp()
     {
-        MetaProgressionManager.Instance.BuyHp();
-        Refresh();
+        Buy(MetaProgressionManager.Instance.BuyHp);
     }
 
     public void BuyDamage()
     {
-        MetaProgressionManager.Instance.BuyDamage();
-        Refresh();
+        Buy(MetaProgressionManager.Instance.BuyDamage);
     }
 
     public void BuyMoveSpeed()
     {
-        MetaProgressionManager.Instance.BuyMoveSpeed();
-        Refresh();
+        Buy(MetaProgressionManager.Instance.BuyMoveSpeed);
     }
 
     public void BuyAttackSpeed()
@@ -152,4 +155,23 @@ public class MetaUpgradeShopUI : MonoBehaviour
 
         button.interactable = gold >= cost;
     }
+
+    private void Buy(Func<bool> buyAction)
+    {
+        if (buyAction == null)
+            return;
+
+        bool success = buyAction.Invoke();
+
+        if (success)
+            PlayPurchaseSound();
+
+        Refresh();
+    }
+
+    private void PlayPurchaseSound()
+    {
+        UISoundPlayer.Instance?.Play(purchaseSound, purchaseVolume);
+    }
+
 }

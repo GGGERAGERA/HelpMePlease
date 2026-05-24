@@ -465,10 +465,10 @@ MonoBehaviour:
       m_Calls: []
   damagePopupPrefab: {fileID: 9169945786982687630, guid: 93f186151a59ce24fa30dac2ce325309, type: 3}
   popupOffset: {x: 0, y: 1, z: 0}
-  critSound: {fileID: 8300000, guid: 418d270b861135f4cadc5fbafd2ea2e6, type: 3}
+  critSound: {fileID: 8300000, guid: cb9ef2091d665b9438b7924877b996fa, type: 3}
   audioSource: {fileID: 0}
-  hitSound: {fileID: 0}
-  hitPitchRange: {x: 0.95, y: 1.05}
+  hitSound: {fileID: 8300000, guid: cb9ef2091d665b9438b7924877b996fa, type: 3}
+  hitPitchRange: {x: 0.85, y: 1.05}
   hitVolume: 0.35
   lootPrefab: {fileID: 8927180452970597320, guid: 568301bd43bfcef49aa858e8372f81be, type: 3}
   lootAmount: 1
