@@ -92,12 +92,27 @@ PrefabInstance:
       propertyPath: m_Name
       value: UpgradeBtn1(Health) Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 6683649948660014693, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: -1317306447, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
     - target: {fileID: 6957162722402756309, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
       propertyPath: m_TargetGraphic
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 2396944152844142615}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
+--- !u!114 &2396944152844142615 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 395744882794954946, guid: 0d8d2491b2280c449a8d5058a10f3ee1, type: 3}
+  m_PrefabInstance: {fileID: 2611630241547126997}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
