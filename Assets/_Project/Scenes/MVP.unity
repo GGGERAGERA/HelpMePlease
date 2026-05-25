@@ -308,9 +308,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e08d23dbcf89e834685555523515e927, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PauseManager
-  pauseCanvas: {fileID: 774438294}
-  isPaused: 0
-  playerHealth: {fileID: 0}
 --- !u!114 &46915844
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1767,6 +1764,7 @@ GameObject:
   - component: {fileID: 774438298}
   - component: {fileID: 774438297}
   - component: {fileID: 774438296}
+  - component: {fileID: 774438299}
   m_Layer: 5
   m_Name: PausePanel
   m_TagString: Untagged
@@ -1847,6 +1845,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 774438294}
   m_CullTransparentMesh: 1
+--- !u!114 &774438299
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 774438294}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c52585952d10925409729fb102355695, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PanelAppearAnimation
+  canvasGroup: {fileID: 774438296}
+  window: {fileID: 1635164420}
+  duration: 0.15
 --- !u!1 &810154275
 GameObject:
   m_ObjectHideFlags: 0
@@ -5820,6 +5833,7 @@ GameObject:
   - component: {fileID: 1871413739}
   - component: {fileID: 1871413738}
   - component: {fileID: 1871413741}
+  - component: {fileID: 1871413742}
   m_Layer: 5
   m_Name: RunResultPanel
   m_TagString: Untagged
@@ -5915,6 +5929,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunResultButtons
   mainMenuSceneName: MainMenu
+--- !u!114 &1871413742
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1871413736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c52585952d10925409729fb102355695, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PanelAppearAnimation
+  canvasGroup: {fileID: 0}
+  window: {fileID: 1635164420}
+  duration: 0.15
 --- !u!1 &1900013188
 GameObject:
   m_ObjectHideFlags: 0
