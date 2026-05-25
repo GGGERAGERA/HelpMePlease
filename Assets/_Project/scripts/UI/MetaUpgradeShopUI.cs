@@ -71,33 +71,29 @@ public class MetaUpgradeShopUI : MonoBehaviour
 
     public void BuyAttackSpeed()
     {
-        MetaProgressionManager.Instance.BuyAttackSpeed();
-        Refresh();
+
+       Buy(MetaProgressionManager.Instance.BuyAttackSpeed);
     }
     public void BuyCritDamage()
     {
-        MetaProgressionManager.Instance.BuyCritDamage();
-        Refresh();
+       Buy(MetaProgressionManager.Instance.BuyCritDamage);
     }
     public void BuyCritProbability()
     {
-        MetaProgressionManager.Instance.BuyCritProbability();
-        Refresh();
+        Buy(MetaProgressionManager.Instance.BuyCritProbability);
     }
     public void BuyRicochet()
     {
-        MetaProgressionManager.Instance.BuyRicochet();
-        Refresh();
+        Buy(MetaProgressionManager.Instance.BuyRicochet);
     }
     public void BuyMultishot()
     {
-        MetaProgressionManager.Instance.BuyMultishot();
-        Refresh();
+        Buy(MetaProgressionManager.Instance.BuyMultishot);
+       ;
     }
     public void BuyPiercing()
     {
-        MetaProgressionManager.Instance.BuyPiercing();
-        Refresh();
+        Buy(MetaProgressionManager.Instance.BuyPiercing);
     }
 
     public void Refresh()

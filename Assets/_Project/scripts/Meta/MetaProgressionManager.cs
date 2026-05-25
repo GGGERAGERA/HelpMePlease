@@ -78,29 +78,66 @@ public class MetaProgressionManager : MonoBehaviour
         return true;
     }
 
-    public void BuyAttackSpeed()
+    public bool BuyAttackSpeed()
     {
-        AttackSpeedLevel = TryBuy(AttackSpeedLevel, AttackSpeedLevelKey);
+        int newLevel = TryBuy(AttackSpeedLevel, AttackSpeedLevelKey);
+
+        if (newLevel == AttackSpeedLevel)
+            return false;
+
+        AttackSpeedLevel = newLevel;
+        return true;
     }
-    public void BuyCritDamage()
+    public bool BuyCritDamage()
     {
-        CritDamageLevel = TryBuy(CritDamageLevel, CritDamageLevelKey);
+        int newLevel = TryBuy(CritDamageLevel, CritDamageLevelKey);
+
+        if (newLevel == CritDamageLevel)
+            return false;
+
+        CritDamageLevel = newLevel;
+        return true;
+
     }
-    public void BuyCritProbability()
+    public bool BuyCritProbability()
     {
-        CritProbabilityLevel = TryBuy(CritProbabilityLevel, CritProbabilityLevelKey);
+        int newLevel = TryBuy(CritProbabilityLevel, CritProbabilityLevelKey);
+
+        if (newLevel == CritProbabilityLevel)
+            return false;
+
+        CritProbabilityLevel = newLevel;
+        return true;
     }
-    public void BuyRicochet()
+    public bool BuyRicochet()
     {
-        RicochetLevel = TryBuy(RicochetLevel, RicochetLevelKey);
+        int newLevel = TryBuy(RicochetLevel, RicochetLevelKey);
+
+        if (newLevel == RicochetLevel)
+            return false;
+
+        RicochetLevel = newLevel;
+        return true;
     }
-    public void BuyPiercing()
+    public bool BuyPiercing()
     {
-        PiercingLevel = TryBuy(PiercingLevel, PiercingLevelKey);
+        int newLevel = TryBuy(PiercingLevel, PiercingLevelKey);
+
+        if (newLevel == PiercingLevel)
+            return false;
+
+        PiercingLevel = newLevel;
+        return true;
     }
-    public void BuyMultishot()
+    public bool BuyMultishot()
     {
-        MultishotLevel = TryBuy(MultishotLevel, MultishotLevelKey);
+        int newLevel = TryBuy(MultishotLevel, MultishotLevelKey);
+
+        if (newLevel == MultishotLevel)
+            return false;
+
+        MultishotLevel = newLevel;
+        return true;
     }
 
 
