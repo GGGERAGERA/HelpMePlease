@@ -7,6 +7,8 @@ public class RunResultView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI statsText;
 
+    private bool goldAdded;
+
     public void Show(bool victory)
     {
         gameObject.SetActive(true);
@@ -38,6 +40,12 @@ public class RunResultView : MonoBehaviour
                 $"LEVEL: {level}\n" +
                 $"GOLD EARNED: +{goldEarned}\n" +
                 $"TOTAL GOLD: {totalGold}";
+        }
+
+        if (!goldAdded)
+        {
+            CurrencyManager.Instance?.AddGold(goldEarned);
+            goldAdded = true;
         }
     }
 }
