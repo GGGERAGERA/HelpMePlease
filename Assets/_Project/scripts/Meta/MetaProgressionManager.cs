@@ -9,21 +9,22 @@ public class MetaProgressionManager : MonoBehaviour
     private const string MoveSpeedLevelKey = "META_MOVE_SPEED_LEVEL";
     private const string AttackSpeedLevelKey = "META_ATTACK_SPEED_LEVEL";
     private const string CritDamageLevelKey = "META_CRIT_DAMAGE_LEVEL";
-    private const string CritProbabilityLevelKey = "META_CRIT_PROBABILITY_LEVEL";
+    private const string CritChanceLevelKey = "META_CRIT_CHANCE_LEVEL";
     private const string RicochetLevelKey = "META_RICOCHET_LEVEL";
     private const string PiercingLevelKey = "META_PIERCING_LEVEL";
     private const string MultishotLevelKey = "META_MULTISHOT_LEVEL";
-
+    private const string KnockbackLevelKey = "META_KNOCKBACK_LEVEL";
 
     public int HpLevel { get; private set; }
     public int DamageLevel { get; private set; }
     public int MoveSpeedLevel { get; private set; }
     public int AttackSpeedLevel { get; private set; }
     public int CritDamageLevel { get; private set; }
-    public int CritProbabilityLevel { get; private set; }
+    public int CritChanceLevel { get; private set; }
     public int RicochetLevel { get; private set; }
     public int PiercingLevel { get; private set; }
     public int MultishotLevel { get; private set; }
+    public int KnockbackLevel { get; private set; }
 
 
     private void Awake()
@@ -99,14 +100,14 @@ public class MetaProgressionManager : MonoBehaviour
         return true;
 
     }
-    public bool BuyCritProbability()
+    public bool BuyCritChance()
     {
-        int newLevel = TryBuy(CritProbabilityLevel, CritProbabilityLevelKey);
+        int newLevel = TryBuy(CritChanceLevel, CritChanceLevelKey);
 
-        if (newLevel == CritProbabilityLevel)
+        if (newLevel == CritChanceLevel)
             return false;
 
-        CritProbabilityLevel = newLevel;
+        CritChanceLevel = newLevel;
         return true;
     }
     public bool BuyRicochet()
@@ -139,7 +140,16 @@ public class MetaProgressionManager : MonoBehaviour
         MultishotLevel = newLevel;
         return true;
     }
+    public bool BuyKnockback()
+    {
+        int newLevel = TryBuy(KnockbackLevel, KnockbackLevelKey);
 
+        if (newLevel == KnockbackLevel)
+            return false;
+
+        KnockbackLevel = newLevel;
+        return true;
+    }
 
     private int TryBuy(int currentLevel, string key)
     {
@@ -166,9 +176,10 @@ public class MetaProgressionManager : MonoBehaviour
         MoveSpeedLevel = PlayerPrefs.GetInt(MoveSpeedLevelKey, 0);
         AttackSpeedLevel = PlayerPrefs.GetInt(AttackSpeedLevelKey, 0);
         CritDamageLevel = PlayerPrefs.GetInt(CritDamageLevelKey, 0);
-        CritProbabilityLevel = PlayerPrefs.GetInt(CritProbabilityLevelKey, 0);
+        CritChanceLevel = PlayerPrefs.GetInt(CritChanceLevelKey, 0);
         RicochetLevel = PlayerPrefs.GetInt(RicochetLevelKey, 0);
         PiercingLevel = PlayerPrefs.GetInt(PiercingLevelKey, 0);
         MultishotLevel = PlayerPrefs.GetInt(MultishotLevelKey, 0);
+        KnockbackLevel = PlayerPrefs.GetInt(KnockbackLevelKey, 0);  
     }
 }
