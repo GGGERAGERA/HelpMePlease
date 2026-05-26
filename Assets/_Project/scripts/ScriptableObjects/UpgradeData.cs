@@ -13,8 +13,9 @@ public enum UpgradeType
     ProjectileCount,
     ProjectilePierce,
     ProjectileRicochet,
-    CritProbability,
-    CritDamage
+    CritChance,
+    CritDamage,
+    Knockback
 }
 
 [CreateAssetMenu(fileName = "New UpgradeData", menuName = "Game/Upgrade Data")]
