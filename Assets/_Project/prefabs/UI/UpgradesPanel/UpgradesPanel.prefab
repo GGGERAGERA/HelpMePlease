@@ -845,6 +845,8 @@ MonoBehaviour:
   AttackSpeedButton: {fileID: 2039613437329892255}
   RicochetText: {fileID: 3092850864352213176}
   RicochetButton: {fileID: 6308052710288879967}
+  KnockbackText: {fileID: 0}
+  KnockbackButton: {fileID: 0}
   purchaseSound: {fileID: 0}
   purchaseVolume: 0.6
   summaryUI: {fileID: 0}
@@ -860,6 +862,7 @@ GameObject:
   - component: {fileID: 6404797664438066923}
   - component: {fileID: 1959646497595447919}
   - component: {fileID: 1578025739243221021}
+  - component: {fileID: 376996623190845564}
   m_Layer: 5
   m_Name: UpgradesDiscriptionPanels
   m_TagString: Untagged
@@ -937,6 +940,20 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &376996623190845564
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8549003207196828817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae66bc0d16f9d1e4988c89230f17aaa9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MetaUpgradeDescriptionUI
+  iconImage: {fileID: 8462775811586927695}
+  descriptionText: {fileID: 7662703341282951439}
 --- !u!1001 &189324530208464276
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1181,6 +1198,28 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 14d44609306506f4b8374111c29ac094, type: 3}
+--- !u!114 &7662703341282951439 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7158192961655551720, guid: 14d44609306506f4b8374111c29ac094, type: 3}
+  m_PrefabInstance: {fileID: 648631070936315879}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+--- !u!114 &8462775811586927695 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8967149848408660904, guid: 14d44609306506f4b8374111c29ac094, type: 3}
+  m_PrefabInstance: {fileID: 648631070936315879}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!224 &9141060861028533941 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8636766014771933522, guid: 14d44609306506f4b8374111c29ac094, type: 3}
