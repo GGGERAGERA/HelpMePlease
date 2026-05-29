@@ -1,73 +1,40 @@
 fileFormatVersion: 2
-guid: b9850ecf6bf62904fa347e050235fe2c
+guid: 312e5ee941dcd974196295fcf0f22c3b
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8419578459710268114
-    second: LaserShootFX1_0
+      213: 3285797220986068474
+    second: PistolShootFX2_0
   - first:
-      213: -6988527577924985118
-    second: LaserShootFX1_1
+      213: 1665178604094825245
+    second: PistolShootFX2_1
   - first:
-      213: -6094401164127475260
-    second: LaserShootFX1_2
+      213: 8518862416807346369
+    second: PistolShootFX2_2
   - first:
-      213: -3347522563750735194
-    second: LaserShootFX1_3
+      213: 5912131199374104686
+    second: PistolShootFX2_3
   - first:
-      213: 619251310902132314
-    second: LaserShootFX1_4
+      213: -8105536226732571051
+    second: PistolShootFX2_4
   - first:
-      213: -4715145950537404249
-    second: LaserShootFX1_5
+      213: 3706456757788988735
+    second: PistolShootFX2_5
   - first:
-      213: 7659495393564778038
-    second: LaserShootFX1_6
+      213: 5156510303507398015
+    second: PistolShootFX2_6
   - first:
-      213: -8663881138847108002
-    second: LaserShootFX1_7
+      213: -4812526569794750546
+    second: PistolShootFX2_7
   - first:
-      213: 6086110301469520257
-    second: LaserShootFX1_8
+      213: -5715357930254717314
+    second: PistolShootFX2_8
   - first:
-      213: 920643729112859019
-    second: LaserShootFX1_9
+      213: 7681805178373347427
+    second: PistolShootFX2_9
   - first:
-      213: 6676165198388095454
-    second: LaserShootFX1_10
-  - first:
-      213: -8351585721305325683
-    second: LaserShootFX1_11
-  - first:
-      213: -6278819343465532127
-    second: LaserShootFX1_12
-  - first:
-      213: -2860254299161649164
-    second: LaserShootFX1_13
-  - first:
-      213: 777625633734855237
-    second: LaserShootFX1_14
-  - first:
-      213: 1171438514166258181
-    second: LaserShootFX1_15
-  - first:
-      213: -1124630411336738786
-    second: LaserShootFX1_16
-  - first:
-      213: 7230277835790095651
-    second: LaserShootFX1_17
-  - first:
-      213: -5402662270691805060
-    second: LaserShootFX1_18
-  - first:
-      213: -3995774474083552949
-    second: LaserShootFX1_19
-  - first:
-      213: -2513945721895641360
-    second: LaserShootFX1_20
-  - first:
-      213: -7722939474330959113
-    second: LaserShootFX1_21
+      213: 1766359449272035772
+    second: PistolShootFX2_10
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -138,7 +105,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -189,221 +156,199 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: LaserShootFX1_0
+      name: PistolShootFX2_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 128
+        y: 448
         width: 64
         height: 64
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      alignment: 4
+      pivot: {x: 0, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 2d2af81100a58d470800000000000000
-      internalID: 8419578459710268114
+      spriteID: afd17d0e92f799d20800000000000000
+      internalID: 3285797220986068474
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: LaserShootFX1_1
+      name: PistolShootFX2_1
       rect:
         serializedVersion: 2
         x: 64
-        y: 128
+        y: 448
         width: 64
         height: 64
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      alignment: 4
+      pivot: {x: 0, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 2ee92c6d133c30f90800000000000000
-      internalID: -6988527577924985118
+      spriteID: d1327a03e17eb1710800000000000000
+      internalID: 1665178604094825245
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: LaserShootFX1_2
+      name: PistolShootFX2_2
       rect:
         serializedVersion: 2
         x: 128
-        y: 128
+        y: 448
         width: 64
         height: 64
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      alignment: 4
+      pivot: {x: 0, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 4c964754e665c6ba0800000000000000
-      internalID: -6094401164127475260
+      spriteID: 1c04a34bb34193670800000000000000
+      internalID: 8518862416807346369
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: LaserShootFX1_3
+      name: PistolShootFX2_3
       rect:
         serializedVersion: 2
         x: 192
-        y: 128
+        y: 448
         width: 64
         height: 64
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      alignment: 4
+      pivot: {x: 0, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 6a25806d6f53b81d0800000000000000
-      internalID: -3347522563750735194
+      spriteID: e689234800c1c0250800000000000000
+      internalID: 5912131199374104686
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: LaserShootFX1_4
+      name: PistolShootFX2_4
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 448
+        width: 64
+        height: 64
+      alignment: 4
+      pivot: {x: 0, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5568b8b2fb9538f80800000000000000
+      internalID: -8105536226732571051
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX2_5
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 448
+        width: 64
+        height: 64
+      alignment: 4
+      pivot: {x: 0, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f35db5798caff6330800000000000000
+      internalID: 3706456757788988735
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX2_6
       rect:
         serializedVersion: 2
         x: 0
-        y: 64
+        y: 384
         width: 64
         height: 64
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      alignment: 4
+      pivot: {x: 0, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a5e340d49c5089800800000000000000
-      internalID: 619251310902132314
+      spriteID: f7d3339fcca9f8740800000000000000
+      internalID: 5156510303507398015
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: LaserShootFX1_5
+      name: PistolShootFX2_7
       rect:
         serializedVersion: 2
         x: 64
-        y: 64
+        y: 384
         width: 64
         height: 64
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      alignment: 4
+      pivot: {x: 0, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 7a0b81a6dbf609eb0800000000000000
-      internalID: -4715145950537404249
+      spriteID: ea731472598763db0800000000000000
+      internalID: -4812526569794750546
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: LaserShootFX1_6
+      name: PistolShootFX2_8
       rect:
         serializedVersion: 2
         x: 128
-        y: 64
+        y: 384
         width: 64
         height: 64
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      alignment: 4
+      pivot: {x: 0, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 63e5b2c8a7efb4a60800000000000000
-      internalID: 7659495393564778038
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: LaserShootFX1_7
-      rect:
-        serializedVersion: 2
-        x: 192
-        y: 64
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: e54bfc6e106b3c780800000000000000
-      internalID: -8663881138847108002
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: LaserShootFX1_8
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 0
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 181bfe6d215367450800000000000000
-      internalID: 6086110301469520257
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: LaserShootFX1_9
-      rect:
-        serializedVersion: 2
-        x: 64
-        y: 0
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: b8186760898c6cc00800000000000000
-      internalID: 920643729112859019
+      spriteID: e7ea4f26e38fea0b0800000000000000
+      internalID: -5715357930254717314
       vertices: []
       indices: 
       edges: []
@@ -412,7 +357,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 74c5233e064ae8e458ae03cab85ec9a1
+    spriteID: 1409a701e229e3546a510aa7eea5736a
     internalID: 0
     vertices: []
     indices: 
@@ -422,18 +367,17 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.0,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":4,"pivotUnitMode":1,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      LaserShootFX1_0: 8419578459710268114
-      LaserShootFX1_1: -6988527577924985118
-      LaserShootFX1_2: -6094401164127475260
-      LaserShootFX1_3: -3347522563750735194
-      LaserShootFX1_4: 619251310902132314
-      LaserShootFX1_5: -4715145950537404249
-      LaserShootFX1_6: 7659495393564778038
-      LaserShootFX1_7: -8663881138847108002
-      LaserShootFX1_8: 6086110301469520257
-      LaserShootFX1_9: 920643729112859019
+      PistolShootFX2_0: 3285797220986068474
+      PistolShootFX2_1: 1665178604094825245
+      PistolShootFX2_2: 8518862416807346369
+      PistolShootFX2_3: 5912131199374104686
+      PistolShootFX2_4: -8105536226732571051
+      PistolShootFX2_5: 3706456757788988735
+      PistolShootFX2_6: 5156510303507398015
+      PistolShootFX2_7: -4812526569794750546
+      PistolShootFX2_8: -5715357930254717314
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -1,9 +1,12 @@
+using Unity.Mathematics;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class Shoot : BaseWeapon
 {
     [Header("Shoot Settings")]
     public GameObject bulletPrefab;
+    public GameObject ShootFX;
 
     [Header("Aim")]
     [SerializeField] private bool rotateToMouse = true;
@@ -22,6 +25,9 @@ public class Shoot : BaseWeapon
 
     protected override void Start()
     {
+        if (bulletPrefab == null)
+        return;
+        bulletPrefab.SetActive(true);
         base.Start();
 
         if (weaponSprite == null)
@@ -30,7 +36,7 @@ public class Shoot : BaseWeapon
         if (owner == null && transform.parent != null)
             owner = transform.parent;
 
-       
+
     }
 
     protected override void Update()
@@ -91,7 +97,7 @@ public class Shoot : BaseWeapon
                 firePoint.position,
                 Quaternion.identity
             );
-           
+
 
             Bullet bulletScript = bullet.GetComponent<Bullet>();
 
@@ -122,6 +128,24 @@ public class Shoot : BaseWeapon
 
         currentRecoil = recoilDistance;
         MarkAttackTime();
+
+        //РЎРїР°РІРЅ СЌС„С„РµРєС‚Р°
+        if (ShootFX == null)
+            return;
+        
+        float destroyFXTime = ShootFX.GetComponent<ParticleSystem>().main.startLifetime.constantMax;
+        Quaternion fxDirection = this.transform.rotation;
+
+        GameObject ShootFX1 = Instantiate(
+                ShootFX,
+                firePoint.position,
+                fxDirection,
+                this.transform
+                //direction
+            );
+        ShootFX1.SetActive(true);
+        Destroy(ShootFX1, destroyFXTime);
+        //РЎРїР°РІРЅ СЌС„С„РµРєС‚Р°    
     }
 
     private Vector2 RotateVector(Vector2 vector, float angle)
@@ -157,10 +181,10 @@ public class Shoot : BaseWeapon
 
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
 
-        // ВАЖНО:
-        // твой спрайт пистолета изначально смотрит ВЛЕВО,
-        // а Unity angle 0 смотрит ВПРАВО.
-        // Поэтому добавляем 180 градусов.
+        // пїЅпїЅпїЅпїЅпїЅ:
+        // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ,
+        // пїЅ Unity angle 0 пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 180 пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
         transform.rotation = Quaternion.Euler(0f, 0f, angle + 180f);
     }
 
