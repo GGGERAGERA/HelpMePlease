@@ -1,25 +1,10 @@
 fileFormatVersion: 2
-guid: 0acad2d9d64084142afb30841010a67b
+guid: dd535909c4ee585499d40fe24fdddcdc
 TextureImporter:
   internalIDToNameTable:
   - first:
       213: 3345508739736421500
     second: Player2_0
-  - first:
-      213: 1889441527787109331
-    second: Player2_1
-  - first:
-      213: -1187915874858794847
-    second: Player2_2
-  - first:
-      213: 7381125764319795907
-    second: Player2_3
-  - first:
-      213: 6066618297632046879
-    second: Player2_4
-  - first:
-      213: -7643089743209882586
-    second: Player2_5
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -52,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -144,12 +129,12 @@ TextureImporter:
       name: Player2_0
       rect:
         serializedVersion: 2
-        x: 18
-        y: 388
-        width: 88
-        height: 116
-      alignment: 9
-      pivot: {x: 0.5113636, y: -0.00862069}
+        x: 0
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -162,121 +147,11 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
-    - serializedVersion: 2
-      name: Player2_1
-      rect:
-        serializedVersion: 2
-        x: 149
-        y: 388
-        width: 88
-        height: 116
-      alignment: 9
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 3db3f9f0f05a83a10800000000000000
-      internalID: 1889441527787109331
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Player2_2
-      rect:
-        serializedVersion: 2
-        x: 23
-        y: 258
-        width: 84
-        height: 115
-      alignment: 9
-      pivot: {x: 0.48809525, y: 0.008695652}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 1a08eff3ecca38fe0800000000000000
-      internalID: -1187915874858794847
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Player2_3
-      rect:
-        serializedVersion: 2
-        x: 151
-        y: 257
-        width: 84
-        height: 118
-      alignment: 9
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 3cad3c896c60f6660800000000000000
-      internalID: 7381125764319795907
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Player2_4
-      rect:
-        serializedVersion: 2
-        x: 279
-        y: 257
-        width: 84
-        height: 116
-      alignment: 9
-      pivot: {x: 0.5, y: -0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: f1f3e3a0335f03450800000000000000
-      internalID: 6066618297632046879
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Player2_5
-      rect:
-        serializedVersion: 2
-        x: 407
-        y: 257
-        width: 84
-        height: 120
-      alignment: 9
-      pivot: {x: 0.5, y: -0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 62c1b859f5a4ee590800000000000000
-      internalID: -7643089743209882586
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 484b2d6e21c761748ba9c803c9199b0b
+    spriteID: d8b2e8c0ed18ce44092f8c1281598ddf
     internalID: 0
     vertices: []
     indices: 
@@ -284,14 +159,11 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":128.0,"y":128.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Player2_0: 3345508739736421500
-      Player2_1: 1889441527787109331
-      Player2_2: -1187915874858794847
-      Player2_3: 7381125764319795907
-      Player2_4: 6066618297632046879
-      Player2_5: -7643089743209882586
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
