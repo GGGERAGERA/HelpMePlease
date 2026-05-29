@@ -17,8 +17,11 @@ public class MainMenuController : MonoBehaviour
     [Header("Scene")]
     [SerializeField] private string gameSceneName = "MVP";
 
+    private GameObject currentRootPanel;
+
     private void Start()
     {
+        currentRootPanel = mainPanel;
         OpenMainPanel();
     }
 
@@ -69,6 +72,15 @@ public class MainMenuController : MonoBehaviour
 
     private void ShowRootPanel(GameObject target)
     {
+        if (target == null)
+            return;
+
+        if (currentRootPanel != target)
+        {
+            UISoundPlayer.Instance?.PlayPanelSwitch();
+            currentRootPanel = target;
+        }
+
         SetActive(mainPanel, target == mainPanel);
         SetActive(metaShopPanel, target == metaShopPanel);
         SetActive(selectionPanel, target == selectionPanel);

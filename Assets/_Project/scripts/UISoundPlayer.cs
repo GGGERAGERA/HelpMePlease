@@ -6,6 +6,14 @@ public class UISoundPlayer : MonoBehaviour
 
     [SerializeField] private AudioSource audioSource;
 
+    [SerializeField] private AudioClip panelSwitchSound;
+    [SerializeField] private float panelSwitchVolume = 0.4f;
+
+    public void PlayPanelSwitch()
+    {
+        Play(panelSwitchSound, panelSwitchVolume);
+    }
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
