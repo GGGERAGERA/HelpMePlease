@@ -435,7 +435,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMovement
   visualRoot: {fileID: 3644557882799905132}
   runDistance: 4
-  walkSpeed: 1
+  walkSpeed: 0.5
   runSpeed: 2
   animator: {fileID: 5754472316754357161}
   acceleration: 12
@@ -465,9 +465,9 @@ MonoBehaviour:
       m_Calls: []
   damagePopupPrefab: {fileID: 9169945786982687630, guid: 93f186151a59ce24fa30dac2ce325309, type: 3}
   popupOffset: {x: 0, y: 1, z: 0}
-  critSound: {fileID: 8300000, guid: cb9ef2091d665b9438b7924877b996fa, type: 3}
+  critSound: {fileID: 0}
   audioSource: {fileID: 0}
-  hitSound: {fileID: 8300000, guid: cb9ef2091d665b9438b7924877b996fa, type: 3}
+  hitSound: {fileID: 0}
   hitPitchRange: {x: 0.85, y: 1.05}
   hitVolume: 0.35
   lootPrefab: {fileID: 8927180452970597320, guid: 568301bd43bfcef49aa858e8372f81be, type: 3}
@@ -514,7 +514,7 @@ SortingGroup:
   m_GameObject: {fileID: 1362265803452333836}
   m_Enabled: 1
   m_SortingLayerID: -1183170747
-  m_SortingLayer: 3
+  m_SortingLayer: 2
   m_SortingOrder: 0
   m_SortAtRoot: 0
   m_Sort3DAs2D: 0

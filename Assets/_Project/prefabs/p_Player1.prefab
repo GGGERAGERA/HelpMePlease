@@ -177,15 +177,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   enemyPrefabs:
   - {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-  spawnInterval: 2
-  maxEnemies: 6
-  minSpawnDistance: 5
-  maxSpawnDistance: 12
+  spawnInterval: 0.4
+  maxEnemies: 100
+  minSpawnDistance: 10
+  maxSpawnDistance: 15
   spawnRadius: 10
   difficultyIncreaseInterval: 10
   spawnRateMultiplier: 0.9
   enemyHealthMultiplier: 1.1
-  enemySpeedMultiplier: 1.1
+  enemySpeedMultiplier: 1.5
   minSpawnInterval: 0.4
   maxHealthMultiplier: 3
   maxSpeedMultiplier: 1.8
@@ -193,7 +193,10 @@ MonoBehaviour:
   - startTime: 0
     enemyPrefabs:
     - {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-  - startTime: 5
+  - startTime: 20
+    enemyPrefabs:
+    - {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+  - startTime: 50
     enemyPrefabs:
     - {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
 --- !u!114 &4726604075001662714
@@ -226,7 +229,7 @@ MonoBehaviour:
   baseDamage: 15
   maxHealth: 100
   currentHealth: 0
-  moveSpeed: 2
+  moveSpeed: 1
 --- !u!210 &6742118338655256636
 SortingGroup:
   m_ObjectHideFlags: 0

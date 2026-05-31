@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.EventSystems;
 
-public class UpgradeButtonUI : MonoBehaviour
+public class UpgradeButtonUI : MonoBehaviour, IPointerEnterHandler
 {
     [Header("UI References")]
     public Button button;
@@ -12,7 +13,7 @@ public class UpgradeButtonUI : MonoBehaviour
 
     private UpgradeData currentUpgrade;
     private UpgradeManager upgradeManager;
-    
+
     private void Awake()
     {
         if (button == null)
@@ -23,11 +24,9 @@ public class UpgradeButtonUI : MonoBehaviour
     {
         currentUpgrade = upgrade;
         upgradeManager = manager;
+
         if (titleText != null)
             titleText.text = upgrade.upgradeName;
-
-        if (descriptionText != null)
-            descriptionText.text = upgrade.description;
 
         if (iconImage != null)
         {
@@ -44,11 +43,28 @@ public class UpgradeButtonUI : MonoBehaviour
         gameObject.SetActive(true);
     }
 
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        ShowDescription();
+    }
+
+    public void ShowDescription()
+    {
+        if (upgradeManager == null)
+            return;
+
+        if (upgradeManager.descriptionUI == null)
+            return;
+
+        if (currentUpgrade == null)
+            return;
+
+        upgradeManager.descriptionUI.Show(currentUpgrade);
+    }
+
     private void ChooseUpgrade()
     {
         if (upgradeManager != null && currentUpgrade != null)
-        {
             upgradeManager.SelectUpgrade(currentUpgrade);
-        }
     }
 }

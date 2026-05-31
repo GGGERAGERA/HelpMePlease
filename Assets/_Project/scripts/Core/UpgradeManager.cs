@@ -8,6 +8,7 @@ public class UpgradeManager : MonoBehaviour
     [Header("UI")]
     public GameObject chooseUpgradesPanel;
     public UpgradeButtonUI[] upgradeButtons;
+    public GameUpgradeDescriptionUI descriptionUI;
 
     [Header("Available Upgrades")]
     public UpgradeData[] allUpgrades;
@@ -60,6 +61,10 @@ public class UpgradeManager : MonoBehaviour
             {
                 upgradeButtons[i].gameObject.SetActive(false);
             }
+        }
+        if (upgradeButtons.Length > 0 && upgradeButtons[0] != null)
+        {
+            upgradeButtons[0].ShowDescription();
         }
     }
 

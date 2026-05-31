@@ -37,6 +37,11 @@ public class HUDManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        if (bossHpPanel != null)
+            bossHpPanel.SetActive(false);
+
+        if (bossText != null)
+            bossText.gameObject.SetActive(false);
     }
 
     public void SetHealth(float currentHealth, float maxHealth)
