@@ -1795,7 +1795,7 @@ ParticleSystem:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
         key1: {r: 1, g: 1, b: 1, a: 1}
-        key2: {r: 1, g: 0.71440905, b: 0, a: 0}
+        key2: {r: 1, g: 0.71440905, b: 0, a: 0.43137255}
         key3: {r: 0, g: 0, b: 0, a: 0}
         key4: {r: 0, g: 0, b: 0, a: 0}
         key5: {r: 0, g: 0, b: 0, a: 0}
@@ -1810,17 +1810,17 @@ ParticleSystem:
         ctime6: 0
         ctime7: 0
         atime0: 0
-        atime1: 43947
-        atime2: 65535
+        atime1: 29876
+        atime2: 44718
         atime3: 65535
         atime4: 0
         atime5: 0
         atime6: 0
         atime7: 0
-        m_Mode: 0
+        m_Mode: 2
         m_ColorSpace: 0
         m_NumColorKeys: 2
-        m_NumAlphaKeys: 3
+        m_NumAlphaKeys: 4
       minGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
@@ -1977,7 +1977,6 @@ ParticleSystem:
     - sprite: {fileID: 8518862416807346369, guid: 312e5ee941dcd974196295fcf0f22c3b, type: 3}
     - sprite: {fileID: 5912131199374104686, guid: 312e5ee941dcd974196295fcf0f22c3b, type: 3}
     - sprite: {fileID: -8105536226732571051, guid: 312e5ee941dcd974196295fcf0f22c3b, type: 3}
-    - sprite: {fileID: 3706456757788988735, guid: 312e5ee941dcd974196295fcf0f22c3b, type: 3}
     flipU: 0
     flipV: 0
   VelocityModule:
