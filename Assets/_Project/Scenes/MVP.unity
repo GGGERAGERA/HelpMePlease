@@ -273,6 +273,7 @@ GameObject:
   - component: {fileID: 46915849}
   - component: {fileID: 46915850}
   - component: {fileID: 46915851}
+  - component: {fileID: 46915852}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -405,6 +406,24 @@ MonoBehaviour:
   piercingPerLevel: 1
   multishotPerLevel: 1
   ricochetPerLevel: 1
+--- !u!114 &46915852
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 46915840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bddeb846b618d9e4f8e3f0aee017ce4a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RunTimer
+  runDuration: 300
+  bossPrefab: {fileID: 8074722678228422782, guid: 8f73b608ef0309744b732a66e85e86d7, type: 3}
+  spawnDistanceFromPlayer: 25
+  bossWarningSound: {fileID: 0}
+  bossWarningVolume: 0.8
+  bossSpawnDelay: 2
 --- !u!1 &183225829
 GameObject:
   m_ObjectHideFlags: 0
@@ -611,7 +630,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &352398373
 RectTransform:
   m_ObjectHideFlags: 0
@@ -730,8 +749,8 @@ MonoBehaviour:
   experienceSlider: {fileID: 1038790912}
   levelText: {fileID: 762402986}
   experienceText: {fileID: 668022352}
-  killsText: {fileID: 0}
-  timerText: {fileID: 0}
+  killsText: {fileID: 740100735}
+  timerText: {fileID: 1439890534}
   bossText: {fileID: 1452251761}
   lowHpVignette: {fileID: 2079903374}
   lowHpThreshold: 0.4
@@ -981,6 +1000,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 731117446}
   m_CullTransparentMesh: 1
+--- !u!114 &740100735 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2724233205326563190, guid: b25412182c3c6a04dbf13f702056cbed, type: 3}
+  m_PrefabInstance: {fileID: 1044910695}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!114 &742317091 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2793839634937062724, guid: a9731abb88f88a24cbedea9fd237060d, type: 3}
@@ -2426,6 +2456,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 2957302266162652696, guid: 91f4010ea0aa138478c6f3700bd76fa3, type: 3}
   m_PrefabInstance: {fileID: 1149490071522610028}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1439890534 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2724233205326563190, guid: b25412182c3c6a04dbf13f702056cbed, type: 3}
+  m_PrefabInstance: {fileID: 128942197263490214}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &1452251759
 GameObject:
   m_ObjectHideFlags: 0
@@ -4105,7 +4146,7 @@ RectTransform:
   m_Father: {fileID: 1771207006}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0.372, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
