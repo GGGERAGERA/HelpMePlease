@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: DefaultLevelData
   m_EditorClassIdentifier: Assembly-CSharp::LevelData
   baseExpToNextLevel: 50
-  expGrowthRate: 1.5
-  maxLevel: 10
+  expGrowth: 1.2
+  maxLevel: 100
