@@ -22,7 +22,6 @@ public class RunResultView : MonoBehaviour
 
         int goldEarned = RunRewardCalculator.CalculateGold(victory);
 
-        CurrencyManager.Instance?.AddGold(goldEarned);
 
         int totalGold = CurrencyManager.Instance != null ? CurrencyManager.Instance.TotalGold : 0;
 
