@@ -156,4 +156,9 @@ public class HUDManager : MonoBehaviour
         if (bossHpPanel != null)
             bossHpPanel.SetActive(false);
     }
+    public void HideLowHpVignette()
+    {
+        if (lowHpVignette != null)
+            lowHpVignette.alpha = 0f;
+    }
 }

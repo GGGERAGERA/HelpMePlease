@@ -18,6 +18,8 @@ public class GameOverManager : MonoBehaviour
 
     public void GameOver()
     {
+        HUDManager.Instance?.HideLowHpVignette();
+
         if (runResultView != null)
             runResultView.Show(false);
 

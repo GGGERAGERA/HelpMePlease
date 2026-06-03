@@ -293,7 +293,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bddeb846b618d9e4f8e3f0aee017ce4a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunTimer
-  runDuration: 300
+  runDuration: 10
   bossPrefab: {fileID: 8074722678228422782, guid: 8f73b608ef0309744b732a66e85e86d7, type: 3}
   spawnDistanceFromPlayer: 25
   bossWarningSound: {fileID: 0}
@@ -2162,6 +2162,14 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1468390027723279637, guid: e36da77c05807364a98635bdd25ecb1a, type: 3}
+      propertyPath: m_fontSize
+      value: 72
+      objectReference: {fileID: 0}
+    - target: {fileID: 3154388082751390131, guid: e36da77c05807364a98635bdd25ecb1a, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 400
+      objectReference: {fileID: 0}
     - target: {fileID: 6369292200804980205, guid: e36da77c05807364a98635bdd25ecb1a, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2832,7 +2840,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 2799224460384334903, guid: d9d805d1d48c6ec48b2b6ed6bacf63b1, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
