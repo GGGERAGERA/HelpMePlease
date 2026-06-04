@@ -9580,7 +9580,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -1183170747
-  m_SortingLayer: 3
+  m_SortingLayer: 2
   m_SortingOrder: 5
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
@@ -11073,6 +11073,7 @@ GameObject:
   - component: {fileID: 6045393064663919115}
   - component: {fileID: 6842675041507654502}
   - component: {fileID: 5008850385057599274}
+  - component: {fileID: 2667488830441752574}
   m_Layer: 0
   m_Name: p_Enemy1
   m_TagString: Enemy
@@ -11211,6 +11212,27 @@ SortingGroup:
   m_SortingOrder: -8
   m_SortAtRoot: 0
   m_Sort3DAs2D: 0
+--- !u!114 &2667488830441752574
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8392090497389486740}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 044d0afa8a0b42f43bd9dce9f200fb20, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MenuZombieWalker
+  moveSpeed: 0.5
+  direction: {x: 1, y: 0}
+  animator: {fileID: 0}
+  syncAnimationWithMoveSpeed: 1
+  animationSpeedAtMoveSpeedOne: 1
+  manualAnimationSpeed: 1
+  loopByX: 1
+  leftX: -12
+  rightX: 12
 --- !u!1 &8465035184224319835
 GameObject:
   m_ObjectHideFlags: 0
