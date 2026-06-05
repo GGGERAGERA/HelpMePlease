@@ -97,7 +97,7 @@ public class CharacterSpawner : MonoBehaviour
 
         if (stats != null)
         {
-            stats.baseDamage = characterData.damage;
+            stats.baseDamage = characterData.baseAttack;
             stats.moveSpeed = characterData.moveSpeed;
         }
         else

@@ -1,80 +1,133 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class CharacterSelectionUI : MonoBehaviour
 {
-    [Header("Buttons")]
-    public Button nextButton;
-    public Button previousButton;
-    public Button selectButton;
+    [Header("Navigation")]
+    [SerializeField] private Button nextButton;
 
-    [Header("UI Elements")]
-    public TextMeshProUGUI nameText;
-    public TextMeshProUGUI descriptionText;
-    public Image portraitImage;
-    public TextMeshProUGUI statsText;
+    [Header("Top Text")]
+    [SerializeField] private TextMeshProUGUI selectedPlayerText;
 
+    [Header("Right Info Panel")]
+    [SerializeField] private Image portraitImage;
+    [SerializeField] private TextMeshProUGUI characterNameText;
+    [SerializeField] private TextMeshProUGUI descriptionText;
+
+    [Header("Left Base Stats Panel")]
+    [SerializeField] private TextMeshProUGUI hpText;
+    [SerializeField] private TextMeshProUGUI speedText;
+    [SerializeField] private TextMeshProUGUI attackText;
+    [SerializeField] private TextMeshProUGUI specialText;
+
+    [Header("Next Button Visual")]
+    [SerializeField] private Color enabledColor = Color.white;
+    [SerializeField] private Color disabledColor = new Color(0.45f, 0.45f, 0.45f, 1f);
+
+    private CharacterData selectedCharacter;
     private CharactersSelectionManager selectionManager;
-    private int currentIndex = 0;
 
-    void Start()
+    private void Awake()
     {
         selectionManager = CharactersSelectionManager.Instance;
-        if (selectionManager == null)
+    }
+
+    private void Start()
+    {
+        ClearSelection();
+    }
+
+    public void SelectCharacter(CharacterData character)
+    {
+        if (character == null)
         {
-            Debug.LogError("CharacterSelectionManager not found!");
+            Debug.LogWarning("CharacterSelectionUI: selected character is null.");
             return;
         }
 
-        // Подписываемся на кнопки
-        if (nextButton != null)
-            nextButton.onClick.AddListener(NextCharacter);
-        if (previousButton != null)
-            previousButton.onClick.AddListener(PreviousCharacter);
-        if (selectButton != null)
-            selectButton.onClick.AddListener(SelectCharacter);
+        selectedCharacter = character;
 
-        // Показываем первого персонажа
-        UpdateUI();
+        if (selectionManager != null)
+            selectionManager.SelectCharacter(character);
+
+        UpdateTopText(character);
+        UpdateRightPanel(character);
+        UpdateStatsPanel(character);
+        SetNextButtonState(true);
     }
 
-    void NextCharacter()
+    private void ClearSelection()
     {
-        currentIndex++;
-        if (currentIndex >= selectionManager.allCharacters.Length)
-            currentIndex = 0;
-        UpdateUI();
+        selectedCharacter = null;
+
+        if (selectedPlayerText != null)
+            selectedPlayerText.text = "Selected Player: none";
+
+        if (portraitImage != null)
+        {
+            portraitImage.sprite = null;
+            portraitImage.enabled = false;
+        }
+
+        if (characterNameText != null)
+            characterNameText.text = "";
+
+        if (descriptionText != null)
+            descriptionText.text = "Select a character to see details.";
+
+        SetText(hpText, "HP: -");
+        SetText(speedText, "Speed: -");
+        SetText(attackText, "Attack: -");
+        SetText(specialText, "Special: -");
+
+        SetNextButtonState(false);
     }
 
-    void PreviousCharacter()
+    private void UpdateTopText(CharacterData character)
     {
-        currentIndex--;
-        if (currentIndex < 0)
-            currentIndex = selectionManager.allCharacters.Length - 1;
-        UpdateUI();
+        if (selectedPlayerText != null)
+            selectedPlayerText.text = "Selected Player: " + character.characterName;
     }
 
-    void UpdateUI()
+    private void UpdateRightPanel(CharacterData character)
     {
-        CharacterData character = selectionManager.allCharacters[currentIndex];
-        if (character == null) return;
+        if (portraitImage != null)
+        {
+            portraitImage.sprite = character.portrait;
+            portraitImage.enabled = character.portrait != null;
+        }
 
-        if (nameText != null)
-            nameText.text = character.characterName;
+        if (characterNameText != null)
+            characterNameText.text = character.characterName;
+
         if (descriptionText != null)
             descriptionText.text = character.description;
-        if (portraitImage != null && character.portrait != null)
-            portraitImage.sprite = character.portrait;
-        if (statsText != null)
-            statsText.text = $"Damage: {character.damage}\nHealth: {character.maxHealth}\nSpeed: {character.moveSpeed}";
     }
 
-    void SelectCharacter()
+    private void UpdateStatsPanel(CharacterData character)
     {
-        CharacterData selected = selectionManager.allCharacters[currentIndex];
-        selectionManager.SelectCharacter(selected);
-        //selectionManager.LoadGameScene();
-        Debug.Log($"Выбран персонаж: {selected.characterName}");
+        SetText(hpText, "HP: " + character.maxHealth);
+        SetText(speedText, "Speed: " + character.moveSpeed);
+        SetText(attackText, "Attack: " + character.baseAttack);
+        SetText(specialText, "Special: " + character.specialDescription);
+    }
+
+    private void SetNextButtonState(bool isEnabled)
+    {
+        if (nextButton == null)
+            return;
+
+        nextButton.interactable = isEnabled;
+
+        Image buttonImage = nextButton.GetComponent<Image>();
+        if (buttonImage != null)
+            buttonImage.color = isEnabled ? enabledColor : disabledColor;
+    }
+
+    private void SetText(TextMeshProUGUI text, string value)
+    {
+        if (text != null)
+            text.text = value;
     }
 }

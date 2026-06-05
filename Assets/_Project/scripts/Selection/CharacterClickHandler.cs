@@ -3,27 +3,34 @@ using UnityEngine.UI;
 
 public class CharacterClickHandler : MonoBehaviour
 {
-    public CharacterData character;
+    [SerializeField] private CharacterData character;
+    [SerializeField] private CharacterSelectionUI selectionUI;
 
-    void Start()
+    private void Awake()
     {
-        Button btn = GetComponent<Button>();
-        if (btn == null)
-            btn = gameObject.AddComponent<Button>();
+        Button button = GetComponent<Button>();
 
-        btn.onClick.AddListener(OnCharacterClick);
+        if (button == null)
+            button = gameObject.AddComponent<Button>();
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(OnCharacterClick);
     }
-    public void OnCharacterClick()
+
+    private void OnCharacterClick()
     {
         if (character == null)
         {
-            Debug.LogWarning("CharacterClickHandler: characterData is null.");
+            Debug.LogWarning("CharacterClickHandler: character is null.");
             return;
         }
 
-        CharactersSelectionManager.Instance.SelectCharacter(character);
+        if (selectionUI == null)
+        {
+            Debug.LogWarning("CharacterClickHandler: selectionUI is null.");
+            return;
+        }
 
-        Debug.Log("Клик по персонажу: " + character.characterName);
+        selectionUI.SelectCharacter(character);
     }
 }
-
