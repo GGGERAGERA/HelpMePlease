@@ -18,6 +18,13 @@ public class RunResultView : MonoBehaviour
         int level = ExperienceManager.Instance != null ? ExperienceManager.Instance.currentLevel : 1;
 
         int goldEarned = RunRewardCalculator.CalculateGold(victory);
+
+        if (!goldAdded)
+        {
+            CurrencyManager.Instance?.AddGold(goldEarned);
+            goldAdded = true;
+        }
+
         int totalGold = CurrencyManager.Instance != null ? CurrencyManager.Instance.TotalGold : 0;
 
         if (titleText != null)
@@ -45,12 +52,6 @@ public class RunResultView : MonoBehaviour
                 $"TOTAL GOLD: {totalGold}";
 
             statsText.text = result;
-        }
-
-        if (!goldAdded)
-        {
-            CurrencyManager.Instance?.AddGold(goldEarned);
-            goldAdded = true;
         }
     }
 
