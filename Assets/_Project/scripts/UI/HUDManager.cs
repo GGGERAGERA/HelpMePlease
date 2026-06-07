@@ -42,6 +42,8 @@ public class HUDManager : MonoBehaviour
 
         if (bossText != null)
             bossText.gameObject.SetActive(false);
+
+        HideLowHpVignette();
     }
 
     public void SetHealth(float currentHealth, float maxHealth)

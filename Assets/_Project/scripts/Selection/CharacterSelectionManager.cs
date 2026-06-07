@@ -1,45 +1,60 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class CharactersSelectionManager : MonoBehaviour
 {
-    public static CharactersSelectionManager Instance;
+    public static CharactersSelectionManager Instance { get; private set; }
 
     [Header("All Characters")]
-    public CharacterData[] allCharacters; // массив всех персонажей
+    public CharacterData[] allCharacters;
 
-    // Храним ВЕСЬ объект CharacterData, а не индекс
     private CharacterData selectedCharacterData;
 
-    void Awake()
+    private const string SelectedCharacterKey = "SelectedCharacter";
+
+    private void Awake()
     {
-        if (Instance == null)
+        if (Instance != null && Instance != this)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+
+    public void SelectCharacter(CharacterData character)
+    {
+        if (character == null)
+            return;
+
+        selectedCharacterData = character;
+
+        int index = System.Array.IndexOf(allCharacters, character);
+
+        if (index >= 0)
+        {
+            PlayerPrefs.SetInt(SelectedCharacterKey, index);
+            PlayerPrefs.Save();
         }
         else
         {
-            Destroy(gameObject);
+            Debug.LogWarning("CharactersSelectionManager: selected character is not in allCharacters array: " + character.characterName);
         }
+
+        Debug.Log("Selected character: " + character.characterName);
     }
 
-    // Новый метод: выбираем персонажа по объекту CharacterData
-    public void SelectCharacter(CharacterData character)
-    {
-        selectedCharacterData = character;
-
-        // Сохраняем индекс в PlayerPrefs (чтобы загрузить в следующей сцене)
-        int index = System.Array.IndexOf(allCharacters, character);
-        PlayerPrefs.SetInt("SelectedCharacter", index);
-        PlayerPrefs.Save();
-
-        Debug.Log($"Выбран персонаж: {character.characterName}");
-    }
-
-    // Получить выбранного персонажа
     public CharacterData GetSelectedCharacter()
     {
+        if (selectedCharacterData != null)
+            return selectedCharacterData;
+
+        int index = PlayerPrefs.GetInt(SelectedCharacterKey, -1);
+
+        if (allCharacters != null && index >= 0 && index < allCharacters.Length)
+            selectedCharacterData = allCharacters[index];
+
         return selectedCharacterData;
     }
 }

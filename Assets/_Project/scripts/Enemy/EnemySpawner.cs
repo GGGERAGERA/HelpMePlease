@@ -40,6 +40,11 @@ public class EnemySpawner : MonoBehaviour
     [Header("Spawn Stages")]
     [SerializeField] private EnemySpawnStage[] spawnStages;
 
+    private float baseSpawnInterval;
+    private int baseMaxEnemies;
+    private float baseHealthMultiplier;
+    private float baseSpeedMultiplier;
+
     private float runTime;
 
     private Transform player;
@@ -48,6 +53,10 @@ public class EnemySpawner : MonoBehaviour
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        baseSpawnInterval = spawnInterval;
+        baseMaxEnemies = maxEnemies;
+        baseHealthMultiplier = currentHealthMultiplier;
+        baseSpeedMultiplier = currentSpeedMultiplier;
     }
     private void Update()
     {
@@ -158,5 +167,13 @@ public class EnemySpawner : MonoBehaviour
         currentSpeedMultiplier *= 3.0f;
 
         Debug.Log("EnemySpawner: Survival mode started.");
+    }
+
+    public void ResetSpawner()
+    {
+        spawnInterval = baseSpawnInterval;
+        maxEnemies = baseMaxEnemies;
+        currentHealthMultiplier = baseHealthMultiplier;
+        currentSpeedMultiplier = baseSpeedMultiplier;
     }
 }

@@ -18,6 +18,13 @@ public class RunResultView : MonoBehaviour
         int level = ExperienceManager.Instance != null ? ExperienceManager.Instance.currentLevel : 1;
 
         int goldEarned = RunRewardCalculator.CalculateGold(victory);
+
+        if (!goldAdded)
+        {
+            CurrencyManager.Instance?.AddGold(goldEarned);
+            goldAdded = true;
+        }
+
         int totalGold = CurrencyManager.Instance != null ? CurrencyManager.Instance.TotalGold : 0;
 
         if (titleText != null)
@@ -46,18 +53,19 @@ public class RunResultView : MonoBehaviour
 
             statsText.text = result;
         }
-
-        if (!goldAdded)
-        {
-            CurrencyManager.Instance?.AddGold(goldEarned);
-            goldAdded = true;
-        }
     }
-
+    private void Awake()
+    {
+        goldAdded = false;
+    }
     private string FormatTime(float time)
     {
         int minutes = Mathf.FloorToInt(time / 60f);
         int seconds = Mathf.FloorToInt(time % 60f);
         return $"{minutes:00}:{seconds:00}";
+    }
+    private void OnEnable()
+    {
+        goldAdded = false;
     }
 }
