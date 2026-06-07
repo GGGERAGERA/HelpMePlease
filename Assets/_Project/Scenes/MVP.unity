@@ -192,7 +192,7 @@ MonoBehaviour:
   levelUpSound: {fileID: 8300000, guid: 4a096681f8b9aff46b98f111d2553d86, type: 3}
   levelUpVolume: 0.5
   levelUpFX: {fileID: 5832780733298168298, guid: a8519acdf6ef73b41ae1c5e4c2df7c5a, type: 3}
-  FXPauseTime: 1.2
+  FXPauseTime: 0.8
   playerTransform: {fileID: 0}
 --- !u!114 &46915846
 MonoBehaviour:
@@ -3180,6 +3180,10 @@ PrefabInstance:
     - target: {fileID: 964490483744790263, guid: a9731abb88f88a24cbedea9fd237060d, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -150
+      objectReference: {fileID: 0}
+    - target: {fileID: 3049005873161964385, guid: a9731abb88f88a24cbedea9fd237060d, type: 3}
+      propertyPath: duration
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: 4183794637569800567, guid: a9731abb88f88a24cbedea9fd237060d, type: 3}
       propertyPath: m_Name
