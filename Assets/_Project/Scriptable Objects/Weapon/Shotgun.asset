@@ -12,17 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1e6ff315515d2b4f97d01778aae1e8f, type: 3}
   m_Name: Shotgun
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  weaponName: 
-  description: 
-  icon: {fileID: 0}
-  weaponPrefab: {fileID: 0}
+  weaponName: Shotgun
+  description: "Shotgun \u041C\u0410\u0417\u0410\u0424\u0410\u041A\u0410"
+  icon: {fileID: 697226151520779348, guid: 7552172a543b68f47b7b0cb76cc5692e, type: 3}
+  weaponPrefab: {fileID: 6402601627014762991, guid: 338fd0b1501754248883ab472f948ec9, type: 3}
   damage: 10
   fireRate: 0.5
   range: 10
-  bulletsPerShot: 1
+  bulletsPerShot: 3
   pierce: 0
   fireRateRPM: 180
-  specialDescription: 
+  specialDescription: Not Found
   attackSound: {fileID: 0}
   pitchRange: {x: 0.96, y: 1.04}
   soundVolume: 0.35

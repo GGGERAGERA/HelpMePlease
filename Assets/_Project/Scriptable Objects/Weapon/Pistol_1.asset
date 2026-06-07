@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1e6ff315515d2b4f97d01778aae1e8f, type: 3}
   m_Name: Pistol_1
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  weaponName: Pistol_1
+  weaponName: Pistol
   description: "\u041F\u0418\u0421\u0422\u041E\u041B\u0415\u0422 \u041C\u0410\u0417\u0410\u0424\u0410\u041A\u0410"
-  icon: {fileID: 0}
+  icon: {fileID: -4674427897357997025, guid: 7552172a543b68f47b7b0cb76cc5692e, type: 3}
   weaponPrefab: {fileID: 4188297587154588541, guid: 3aa8dacf946c88e4791e363c6730928b, type: 3}
   damage: 15
   fireRate: 0.5
@@ -22,7 +22,7 @@ MonoBehaviour:
   bulletsPerShot: 1
   pierce: 0
   fireRateRPM: 180
-  specialDescription: 
+  specialDescription: Spectial not found
   attackSound: {fileID: 8300000, guid: 907d3442b4fc4244ea4e9c020e3966d6, type: 3}
   pitchRange: {x: 1, y: 1.5}
   soundVolume: 0.02
