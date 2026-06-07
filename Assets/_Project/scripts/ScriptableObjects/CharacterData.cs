@@ -13,7 +13,6 @@ public class CharacterData : ScriptableObject
 
     [Header("Prefabs")]
     public GameObject characterPrefab;
-    public WeaponData startingWeapon;
 
     [Header("Base Character Stats")]
     public int maxHealth = 100;

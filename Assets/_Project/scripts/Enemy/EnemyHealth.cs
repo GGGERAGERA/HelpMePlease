@@ -186,7 +186,10 @@ public class EnemyHealth : MonoBehaviour
         if (isBoss)
         {
             HUDManager.Instance?.HideBossHp();
-            VictoryManager.Instance?.Victory();
+            RunTimer runTimer = FindAnyObjectByType<RunTimer>();
+
+            if (runTimer != null)
+                runTimer.StartSurvivalPhase();
         }
 
         DropLoot();
@@ -209,5 +212,6 @@ public class EnemyHealth : MonoBehaviour
             );
         }
     }
+
 
 }

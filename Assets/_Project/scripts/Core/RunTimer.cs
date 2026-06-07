@@ -15,6 +15,9 @@ public class RunTimer : MonoBehaviour
     private float timeLeft;
     private bool bossSpawned;
 
+    private bool survivalPhaseStarted;
+    private float survivalTime;
+
     private void Start()
     {
         timeLeft = runDuration;
@@ -23,6 +26,13 @@ public class RunTimer : MonoBehaviour
 
     private void Update()
     {
+        if (survivalPhaseStarted)
+        {
+            survivalTime += Time.deltaTime;
+            HUDManager.Instance?.SetTimer(survivalTime);
+            return;
+        }
+
         if (bossSpawned)
             return;
 
@@ -38,6 +48,8 @@ public class RunTimer : MonoBehaviour
 
     private void SpawnBossObject()
     {
+        Debug.Log("BOSS SPAWNED");
+
         GameObject player = GameObject.FindGameObjectWithTag("Player");
 
         if (bossPrefab != null && player != null)
@@ -82,4 +94,29 @@ public class RunTimer : MonoBehaviour
 
         SpawnBossObject();
     }
+    public void StartSurvivalPhase()
+    {
+        survivalPhaseStarted = true;
+        survivalTime = 0f;
+
+        HUDManager.Instance?.SetTimer(0f);
+
+        EnemySpawner spawner = FindAnyObjectByType<EnemySpawner>();
+
+        if (spawner != null)
+            spawner.StartSurvivalMode();
+
+        Debug.Log("Survival phase started.");
+    }
+    public float GetSurvivalTime()
+    {
+        return survivalTime;
+    }
+
+    public bool IsSurvivalPhaseStarted()
+    {
+        return survivalPhaseStarted;
+    }
+
+
 }

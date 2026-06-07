@@ -149,4 +149,14 @@ public class EnemySpawner : MonoBehaviour
 
         return result;
     }
+    public void StartSurvivalMode()
+    {
+        spawnInterval = 0.1f;
+        maxEnemies = 300;
+
+        currentHealthMultiplier *= 2.0f;
+        currentSpeedMultiplier *= 2.0f;
+
+        Debug.Log("EnemySpawner: Survival mode started.");
+    }
 }

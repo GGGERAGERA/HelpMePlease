@@ -13,6 +13,9 @@ public class CharacterSpawner : MonoBehaviour
 
     [SerializeField] private MetaUpgradeApplier metaUpgradeApplier;
 
+    [Header("Default weapon for direct MVP launch")]
+    [SerializeField] private WeaponData defaultWeapon;
+
     private void Start()
     {
         Time.timeScale = 1f;
@@ -56,7 +59,7 @@ public class CharacterSpawner : MonoBehaviour
 
         ApplyCharacterStats(player, selectedCharacter);
 
-        WeaponData selectedWeapon = GetSelectedWeapon(selectedCharacter);
+        WeaponData selectedWeapon = GetSelectedWeapon();
         SpawnWeapon(player, selectedWeapon);
 
         return player;
@@ -86,19 +89,6 @@ public class CharacterSpawner : MonoBehaviour
         }
 
         return defaultCharacter;
-    }
-
-    private WeaponData GetSelectedWeapon(CharacterData selectedCharacter)
-    {
-        if (WeaponSelectionManager.Instance != null)
-        {
-            WeaponData selectedWeapon = WeaponSelectionManager.Instance.GetSelectedWeapon();
-
-            if (selectedWeapon != null)
-                return selectedWeapon;
-        }
-
-        return selectedCharacter.startingWeapon;
     }
 
     private void ApplyCharacterStats(GameObject player, CharacterData characterData)
@@ -167,5 +157,18 @@ public class CharacterSpawner : MonoBehaviour
             baseWeapon.weaponData = weaponData;
         else
             Debug.LogWarning("CharacterSpawner: spawned weapon has no BaseWeapon component.");
+    }
+
+    private WeaponData GetSelectedWeapon()
+    {
+        if (WeaponSelectionManager.Instance != null)
+        {
+            WeaponData selectedWeapon = WeaponSelectionManager.Instance.GetSelectedWeapon();
+
+            if (selectedWeapon != null)
+                return selectedWeapon;
+        }
+
+        return defaultWeapon;
     }
 }

@@ -17,12 +17,7 @@ public class RunResultView : MonoBehaviour
         float time = RunStatsManager.Instance != null ? RunStatsManager.Instance.RunTime : 0f;
         int level = ExperienceManager.Instance != null ? ExperienceManager.Instance.currentLevel : 1;
 
-        int minutes = Mathf.FloorToInt(time / 60f);
-        int seconds = Mathf.FloorToInt(time % 60f);
-
         int goldEarned = RunRewardCalculator.CalculateGold(victory);
-
-
         int totalGold = CurrencyManager.Instance != null ? CurrencyManager.Instance.TotalGold : 0;
 
         if (titleText != null)
@@ -33,12 +28,23 @@ public class RunResultView : MonoBehaviour
 
         if (statsText != null)
         {
-            statsText.text =
-                $"TIME: {minutes:00}:{seconds:00}\n" +
+            string result =
+                $"TIME: {FormatTime(time)}\n" +
                 $"KILLS: {kills}\n" +
-                $"LEVEL: {level}\n" +
+                $"LEVEL: {level}\n";
+
+            RunTimer runTimer = FindAnyObjectByType<RunTimer>();
+
+            if (runTimer != null && runTimer.IsSurvivalPhaseStarted())
+            {
+                result += $"SURVIVED: {FormatTime(runTimer.GetSurvivalTime())}\n";
+            }
+
+            result +=
                 $"GOLD EARNED: +{goldEarned}\n" +
                 $"TOTAL GOLD: {totalGold}";
+
+            statsText.text = result;
         }
 
         if (!goldAdded)
@@ -46,5 +52,12 @@ public class RunResultView : MonoBehaviour
             CurrencyManager.Instance?.AddGold(goldEarned);
             goldAdded = true;
         }
+    }
+
+    private string FormatTime(float time)
+    {
+        int minutes = Mathf.FloorToInt(time / 60f);
+        int seconds = Mathf.FloorToInt(time % 60f);
+        return $"{minutes:00}:{seconds:00}";
     }
 }
