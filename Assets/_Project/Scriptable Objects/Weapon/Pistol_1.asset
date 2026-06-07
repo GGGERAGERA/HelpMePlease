@@ -13,12 +13,16 @@ MonoBehaviour:
   m_Name: Pistol_1
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: Pistol
-  description: "\u041F\u0418\u0421\u0422\u041E\u041B\u0415\u0422 \u041C\u0410\u0417\u0410\u0424\u0410\u041A\u0410"
+  description: "\u0421\u0442\u0430\u0440\u044B\u0439, \u043F\u043E\u0442\u0440\u0451\u043F\u0430\u043D\u043D\u044B\u0439,
+    \u043D\u043E \u0432\u0441\u0451 \u0435\u0449\u0451 \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442.\r\n\u0412
+    \u043E\u0442\u043B\u0438\u0447\u0438\u0435 \u043E\u0442 \u0431\u043E\u043B\u044C\u0448\u0438\u043D\u0441\u0442\u0432\u0430
+    \u043B\u044E\u0434\u0435\u0439 \u043F\u043E\u0441\u043B\u0435 \u0430\u043F\u043E\u043A\u0430\u043B\u0438\u043F\u0441\u0438\u0441\u0430.\r\n"
   icon: {fileID: -4674427897357997025, guid: 7552172a543b68f47b7b0cb76cc5692e, type: 3}
   weaponPrefab: {fileID: 4188297587154588541, guid: 3aa8dacf946c88e4791e363c6730928b, type: 3}
   damage: 15
   fireRate: 0.5
   range: 10
+  projectileSpeed: 10
   bulletsPerShot: 1
   pierce: 0
   fireRateRPM: 180
