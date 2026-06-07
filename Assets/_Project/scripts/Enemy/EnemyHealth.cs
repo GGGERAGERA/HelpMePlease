@@ -53,7 +53,6 @@ public class EnemyHealth : MonoBehaviour
 
     private void Awake()
     {
-        currentHealth = maxHealth;
         if (audioSource == null)
             audioSource = GetComponent<AudioSource>();
 
@@ -68,6 +67,11 @@ public class EnemyHealth : MonoBehaviour
     {
         maxHealth *= multiplier;
         currentHealth = maxHealth;
+
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+
+        if (isBoss)
+            HUDManager.Instance?.UpdateBossHp(currentHealth, maxHealth);
     }
 
     public void TakeDamage(float damage, Vector2 hitPoint, bool isCritical = false)

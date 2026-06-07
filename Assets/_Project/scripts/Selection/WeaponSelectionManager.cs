@@ -55,4 +55,9 @@ public class WeaponSelectionManager : MonoBehaviour
 
         return selectedWeapon;
     }
+    public void ClearSelection()
+    {
+        selectedWeapon = null;
+        PlayerPrefs.DeleteKey("SelectedWeapon");
+    }
 }

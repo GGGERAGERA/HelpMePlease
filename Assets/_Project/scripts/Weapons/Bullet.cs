@@ -9,6 +9,7 @@ public class Bullet : MonoBehaviour
 
     [SerializeField] private float knockbackForce = 4f;
     [SerializeField] private float ricochetSearchRadius = 4f;
+    [SerializeField] private float maxLifetime = 5f;
 
     private Vector2 direction;
     private Vector3 startPosition;
@@ -37,7 +38,10 @@ public class Bullet : MonoBehaviour
         ricochetCount = ricochet;
         startPosition = transform.position;
     }
-
+    private void Start()
+    {
+        Destroy(gameObject, maxLifetime);
+    }
     private void Update()
     {
         transform.Translate(direction * speed * Time.deltaTime, Space.World);

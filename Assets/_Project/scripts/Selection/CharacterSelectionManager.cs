@@ -57,4 +57,9 @@ public class CharactersSelectionManager : MonoBehaviour
 
         return selectedCharacterData;
     }
+    public void ClearSelection()
+    {
+        selectedCharacterData = null;
+        PlayerPrefs.DeleteKey("SelectedCharacter");
+    }
 }

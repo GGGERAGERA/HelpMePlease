@@ -53,6 +53,8 @@ public class EnemySpawner : MonoBehaviour
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        if (player == null)
+            return;
         baseSpawnInterval = spawnInterval;
         baseMaxEnemies = maxEnemies;
         baseHealthMultiplier = currentHealthMultiplier;
@@ -60,6 +62,9 @@ public class EnemySpawner : MonoBehaviour
     }
     private void Update()
     {
+        if (Time.timeScale == 0f)
+            return;
+
         runTime += Time.deltaTime;
         difficultyTimer += Time.deltaTime;
 

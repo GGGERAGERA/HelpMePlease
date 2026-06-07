@@ -3118,6 +3118,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1547699877}
   - component: {fileID: 1547699875}
+  - component: {fileID: 1547699878}
   m_Layer: 0
   m_Name: MusicTheme
   m_TagString: Untagged
@@ -3132,11 +3133,11 @@ AudioSource:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1547699874}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 4a4fedcf97ec9de48b486f3c4604a666, type: 3}
+  m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 0.15
   m_Pitch: 1
@@ -3237,6 +3238,28 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1547699878
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1547699874}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99cb9406dbbaaac448b0729a38cb2d22, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MusicPlayer
+  audioSource: {fileID: 1547699875}
+  tracks:
+  - {fileID: 8300000, guid: ec655ae4ec9dfb942baa3fed9d66df1f, type: 3}
+  - {fileID: 8300000, guid: 1a08757c9966a3244881b21a3e061426, type: 3}
+  - {fileID: 8300000, guid: 86fa5061025552b4b9951ece5fe14349, type: 3}
+  - {fileID: 8300000, guid: 49023555999389e4e92c9d70fd3eccd4, type: 3}
+  - {fileID: 8300000, guid: 26c1fab41a360204694ff964595d24a8, type: 3}
+  playOnStart: 1
+  randomTrack: 1
+  volume: 0.4
 --- !u!1 &1547953131
 GameObject:
   m_ObjectHideFlags: 0
