@@ -130,14 +130,6 @@ public class UpgradeManager : MonoBehaviour
                 ApplyMoveSpeedUpgrade(movement, stats, upgrade.value);
                 break;
 
-            case UpgradeType.BaseDamage:
-                ApplyBaseDamageUpgrade(stats, upgrade.value);
-                break;
-
-            case UpgradeType.DamageMultiplier:
-                ApplyDamageMultiplierUpgrade(stats, upgrade.value);
-                break;
-
             case UpgradeType.WeaponDamage:
                 ApplyWeaponDamageUpgrade(weapons, upgrade.value);
                 break;
@@ -200,18 +192,6 @@ public class UpgradeManager : MonoBehaviour
 
         if (stats != null)
             stats.moveSpeed += value;
-    }
-
-    private void ApplyBaseDamageUpgrade(PlayerStats stats, float value)
-    {
-        if (stats != null)
-            stats.IncreaseDamage(Mathf.RoundToInt(value));
-    }
-
-    private void ApplyDamageMultiplierUpgrade(PlayerStats stats, float value)
-    {
-        if (stats != null)
-            stats.IncreaseDamageMultiplier(value);
     }
 
     private void ApplyWeaponDamageUpgrade(BaseWeapon[] weapons, float value)

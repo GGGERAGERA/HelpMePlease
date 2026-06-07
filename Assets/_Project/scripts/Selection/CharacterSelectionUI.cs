@@ -18,7 +18,6 @@ public class CharacterSelectionUI : MonoBehaviour
     [Header("Left Base Stats Panel")]
     [SerializeField] private TextMeshProUGUI hpText;
     [SerializeField] private TextMeshProUGUI speedText;
-    [SerializeField] private TextMeshProUGUI attackText;
     [SerializeField] private TextMeshProUGUI specialText;
 
     [Header("Next Button Visual")]
@@ -78,7 +77,6 @@ public class CharacterSelectionUI : MonoBehaviour
 
         SetText(hpText, "HP: -");
         SetText(speedText, "Speed: -");
-        SetText(attackText, "Attack: -");
         SetText(specialText, "Special: -");
 
         SetNextButtonState(false);
@@ -109,7 +107,6 @@ public class CharacterSelectionUI : MonoBehaviour
     {
         SetText(hpText, "HP: " + character.maxHealth);
         SetText(speedText, "Speed: " + character.moveSpeed);
-        SetText(attackText, "Attack: " + character.baseAttack);
         SetText(specialText, "Special: " + character.specialDescription);
     }
 

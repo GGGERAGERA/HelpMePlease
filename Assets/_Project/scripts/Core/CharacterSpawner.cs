@@ -25,9 +25,7 @@ public class CharacterSpawner : MonoBehaviour
         BaseWeapon[] weapons = player.GetComponentsInChildren<BaseWeapon>();
 
         if (metaUpgradeApplier != null)
-        {
             metaUpgradeApplier.ApplyTo(player, weapons);
-        }
     }
 
     private GameObject SpawnCharacter()
@@ -57,7 +55,10 @@ public class CharacterSpawner : MonoBehaviour
         player.tag = "Player";
 
         ApplyCharacterStats(player, selectedCharacter);
-        SpawnStartingWeapon(player, selectedCharacter);
+
+        WeaponData selectedWeapon = GetSelectedWeapon(selectedCharacter);
+        SpawnWeapon(player, selectedWeapon);
+
         return player;
     }
 
@@ -68,9 +69,7 @@ public class CharacterSpawner : MonoBehaviour
             CharacterData selectedFromManager = CharactersSelectionManager.Instance.GetSelectedCharacter();
 
             if (selectedFromManager != null)
-            {
                 return selectedFromManager;
-            }
 
             CharacterData[] allCharacters = CharactersSelectionManager.Instance.allCharacters;
 
@@ -81,9 +80,7 @@ public class CharacterSpawner : MonoBehaviour
                 if (selectedIndex >= 0 && selectedIndex < allCharacters.Length)
                 {
                     if (allCharacters[selectedIndex] != null)
-                    {
                         return allCharacters[selectedIndex];
-                    }
                 }
             }
         }
@@ -91,19 +88,25 @@ public class CharacterSpawner : MonoBehaviour
         return defaultCharacter;
     }
 
+    private WeaponData GetSelectedWeapon(CharacterData selectedCharacter)
+    {
+        if (WeaponSelectionManager.Instance != null)
+        {
+            WeaponData selectedWeapon = WeaponSelectionManager.Instance.GetSelectedWeapon();
+
+            if (selectedWeapon != null)
+                return selectedWeapon;
+        }
+
+        return selectedCharacter.startingWeapon;
+    }
+
     private void ApplyCharacterStats(GameObject player, CharacterData characterData)
     {
         PlayerStats stats = player.GetComponent<PlayerStats>();
 
         if (stats != null)
-        {
-            stats.baseDamage = characterData.baseAttack;
             stats.moveSpeed = characterData.moveSpeed;
-        }
-        else
-        {
-            Debug.LogWarning("CharacterSpawner: PlayerStats component not found on spawned player.");
-        }
 
         PlayerHealth health = player.GetComponent<PlayerHealth>();
 
@@ -112,34 +115,24 @@ public class CharacterSpawner : MonoBehaviour
             health.maxHealth = characterData.maxHealth;
             health.currentHealth = characterData.maxHealth;
         }
-        else
-        {
-            Debug.LogWarning("CharacterSpawner: PlayerHealth component not found on spawned player.");
-        }
 
         CharacterMovement2D movement = player.GetComponent<CharacterMovement2D>();
 
         if (movement != null)
-        {
             movement.speed = characterData.moveSpeed;
-        }
-        else
-        {
-            Debug.LogWarning("CharacterSpawner: CharacterMovement2D component not found on spawned player.");
-        }
     }
 
-    private void SpawnStartingWeapon(GameObject player, CharacterData characterData)
+    private void SpawnWeapon(GameObject player, WeaponData weaponData)
     {
-        if (characterData.startingWeapon == null)
+        if (weaponData == null)
         {
-            Debug.LogWarning("CharacterSpawner: startingWeapon is not assigned for character: " + characterData.characterName);
+            Debug.LogWarning("CharacterSpawner: weaponData is null.");
             return;
         }
 
-        if (characterData.startingWeapon.weaponPrefab == null)
+        if (weaponData.weaponPrefab == null)
         {
-            Debug.LogWarning("CharacterSpawner: weaponPrefab is not assigned in startingWeapon for character: " + characterData.characterName);
+            Debug.LogWarning("CharacterSpawner: weaponPrefab is not assigned in WeaponData: " + weaponData.weaponName);
             return;
         }
 
@@ -147,16 +140,12 @@ public class CharacterSpawner : MonoBehaviour
 
         if (weaponPoint == null)
         {
-            Debug.LogWarning(
-                "CharacterSpawner: WeaponPoint not found on player prefab. Weapon will spawn in player center. " +
-                "Create empty child object named '" + weaponPointName + "' inside player prefab."
-            );
-
+            Debug.LogWarning("CharacterSpawner: WeaponPoint not found. Weapon will spawn in player center.");
             weaponPoint = player.transform;
         }
 
         GameObject weapon = Instantiate(
-            characterData.startingWeapon.weaponPrefab,
+            weaponData.weaponPrefab,
             weaponPoint.position,
             weaponPoint.rotation,
             player.transform
@@ -165,7 +154,9 @@ public class CharacterSpawner : MonoBehaviour
         weapon.transform.position = weaponPoint.position;
         weapon.transform.rotation = weaponPoint.rotation;
 
-        AssignWeaponData(weapon, characterData.startingWeapon);
+        AssignWeaponData(weapon, weaponData);
+
+        Debug.Log("Spawned weapon: " + weaponData.weaponName);
     }
 
     private void AssignWeaponData(GameObject weapon, WeaponData weaponData)
@@ -173,12 +164,8 @@ public class CharacterSpawner : MonoBehaviour
         BaseWeapon baseWeapon = weapon.GetComponent<BaseWeapon>();
 
         if (baseWeapon != null)
-        {
             baseWeapon.weaponData = weaponData;
-        }
         else
-        {
             Debug.LogWarning("CharacterSpawner: spawned weapon has no BaseWeapon component.");
-        }
     }
 }

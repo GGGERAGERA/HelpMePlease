@@ -18,7 +18,6 @@ public class CharacterData : ScriptableObject
     [Header("Base Character Stats")]
     public int maxHealth = 100;
     public float moveSpeed = 5f;
-    public int baseAttack = 5;
 
     [Header("Special")]
     [TextArea(2, 4)]

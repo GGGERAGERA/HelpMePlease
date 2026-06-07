@@ -4,8 +4,6 @@ public enum UpgradeType
     MaxHealth,
     Heal,
     MoveSpeed,
-    BaseDamage,
-    DamageMultiplier,
     WeaponDamage,
     FireRatePercent,
     WeaponRange,

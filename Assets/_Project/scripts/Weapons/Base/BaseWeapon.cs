@@ -58,9 +58,7 @@ public abstract class BaseWeapon : MonoBehaviour
     public int GetDamage()
     {
         float weaponDamage = weaponData != null ? weaponData.damage : 10f;
-        float playerDamage = PlayerStats.Instance != null ? PlayerStats.Instance.GetDamage() : 0f;
-
-        return Mathf.RoundToInt(weaponDamage + playerDamage + runtimeDamageBonus);
+        return Mathf.RoundToInt(weaponDamage + runtimeDamageBonus);
     }
 
     public float GetRange()
