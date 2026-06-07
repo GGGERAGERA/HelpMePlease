@@ -17,10 +17,14 @@ public class MainMenuController : MonoBehaviour
     [Header("Scene")]
     [SerializeField] private string gameSceneName = "MVP";
 
+    private bool isStartingGame;
+
     private GameObject currentRootPanel;
 
     private void Start()
     {
+        CharactersSelectionManager.Instance?.ClearSelection();
+        WeaponSelectionManager.Instance?.ClearSelection();
         currentRootPanel = mainPanel;
         OpenMainPanel();
     }
@@ -60,6 +64,8 @@ public class MainMenuController : MonoBehaviour
 
     public void StartGame()
     {
+        if (isStartingGame)
+            return;
         CharacterData selectedCharacter = CharactersSelectionManager.Instance != null
             ? CharactersSelectionManager.Instance.GetSelectedCharacter()
             : null;
@@ -79,7 +85,7 @@ public class MainMenuController : MonoBehaviour
             Debug.LogWarning("StartGame blocked: no weapon selected.");
             return;
         }
-
+        isStartingGame = true;
         Time.timeScale = 1f;
         SceneManager.LoadScene("MVP");
     }

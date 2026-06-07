@@ -39,9 +39,10 @@ public class RunTimer : MonoBehaviour
         timeLeft -= Time.deltaTime;
         HUDManager.Instance?.SetTimer(timeLeft);
 
-        if (timeLeft <= 0f)
+        if (timeLeft <= 0f && !bossSpawned)
         {
             timeLeft = 0f;
+            bossSpawned = true;
             StartCoroutine(BossSpawnRoutine());
         }
     }

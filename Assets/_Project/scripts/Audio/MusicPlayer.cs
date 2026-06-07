@@ -37,7 +37,6 @@ public class MusicPlayer : MonoBehaviour
     {
         if (tracks == null || tracks.Length == 0)
         {
-            Debug.LogWarning("MusicPlayer: список треков пуст.");
             return;
         }
 
