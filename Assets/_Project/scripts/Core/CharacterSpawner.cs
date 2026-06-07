@@ -154,9 +154,13 @@ public class CharacterSpawner : MonoBehaviour
         BaseWeapon baseWeapon = weapon.GetComponent<BaseWeapon>();
 
         if (baseWeapon != null)
-            baseWeapon.weaponData = weaponData;
+        {
+            baseWeapon.Initialize(weaponData);
+        }
         else
+        {
             Debug.LogWarning("CharacterSpawner: spawned weapon has no BaseWeapon component.");
+        }
     }
 
     private WeaponData GetSelectedWeapon()
