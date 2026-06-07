@@ -544,11 +544,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad6fdb0c3d59a914b89ef539d221c709, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMovement
-  visualRoot: {fileID: 6050340443611324424}
+  visualRoot: {fileID: 4810206244595897769}
   runDistance: 6
   walkSpeed: 1.5
   runSpeed: 3
-  animator: {fileID: 3366665653291635405}
+  animator: {fileID: 8106179503796228276}
   acceleration: 12
   knockbackDecay: 18
   hitStunDuration: 0.06
@@ -841,11 +841,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: -8435245712485981826, guid: 679cbc577bacbe14789c9118b5c4d533, type: 3}
---- !u!95 &3366665653291635405 stripped
-Animator:
-  m_CorrespondingSourceObject: {fileID: 1160356261127867848, guid: 679cbc577bacbe14789c9118b5c4d533, type: 3}
-  m_PrefabInstance: {fileID: 4513351522961694469}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &6050340443611324424 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7878350319992209165, guid: 679cbc577bacbe14789c9118b5c4d533, type: 3}
