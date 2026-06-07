@@ -96,6 +96,9 @@ public class RunTimer : MonoBehaviour
     }
     public void StartSurvivalPhase()
     {
+        if (survivalPhaseStarted)
+            return;
+
         survivalPhaseStarted = true;
         survivalTime = 0f;
 

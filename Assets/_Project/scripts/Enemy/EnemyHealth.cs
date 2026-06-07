@@ -84,7 +84,6 @@ public class EnemyHealth : MonoBehaviour
         PlayHitSound();
         // Показать цифру урона
         ShowDamagePopup(Mathf.RoundToInt(damage), isCritical);
-        Debug.Log("EnemyHealth crit received: " + isCritical);
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
         OnDamageTaken?.Invoke(); // вызываем эффект урона
 
@@ -141,25 +140,15 @@ public class EnemyHealth : MonoBehaviour
 
     void ShowDamagePopup(int damage, bool isCritical)
     {
-
         if (damagePopupPrefab == null)
-        {
-            Debug.LogError("damagePopupPrefab is null!");
             return;
-        }
 
         Vector3 spawnPos = transform.position + popupOffset;
         GameObject popup = Instantiate(damagePopupPrefab, spawnPos, Quaternion.identity);
 
         DamagePopup dp = popup.GetComponent<DamagePopup>();
         if (dp != null)
-        {
             dp.SetDamage(damage, isCritical);
-        }
-        else
-        {
-            Debug.LogError("DamagePopup component not found on prefab!");
-        }
     }
 
     private void PlayHitSound()
@@ -173,27 +162,29 @@ public class EnemyHealth : MonoBehaviour
 
     private void Death()
     {
-        if (deathFXPrefab == null)
-            return;
-        float bloodHitDestroyTime = deathFXPrefab.main.duration;
-
-        ParticleSystem blood = Instantiate(
-            deathFXPrefab,
-            this.transform.position,
-            Quaternion.identity
-        );
-        
         if (isBoss)
         {
             HUDManager.Instance?.HideBossHp();
-            RunTimer runTimer = FindAnyObjectByType<RunTimer>();
 
+            RunTimer runTimer = FindAnyObjectByType<RunTimer>();
             if (runTimer != null)
                 runTimer.StartSurvivalPhase();
         }
 
+        if (deathFXPrefab != null)
+        {
+            ParticleSystem blood = Instantiate(
+                deathFXPrefab,
+                transform.position,
+                Quaternion.identity
+            );
+
+            float destroyTime = blood.main.duration;
+            blood.Play();
+            Destroy(blood.gameObject, destroyTime);
+        }
+
         DropLoot();
-        Destroy(blood.gameObject, bloodHitDestroyTime);
         Destroy(gameObject);
     }
 
