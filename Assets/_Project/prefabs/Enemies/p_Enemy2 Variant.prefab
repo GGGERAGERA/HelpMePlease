@@ -166,6 +166,10 @@ PrefabInstance:
       propertyPath: bloodHitPrefab
       value: 
       objectReference: {fileID: 8471479244625784341, guid: c9ef6978e0aec7749ac3b55cad40bc5d, type: 3}
+    - target: {fileID: 8784528909655463409, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 4573942645665362185, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
