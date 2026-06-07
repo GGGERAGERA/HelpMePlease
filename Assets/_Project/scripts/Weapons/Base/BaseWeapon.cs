@@ -121,6 +121,9 @@ public abstract class BaseWeapon : MonoBehaviour
     public void AddProjectileCount(int amount)
     {
         projectileCount += amount;
+        projectileCount = Mathf.Max(1, projectileCount);
+
+        Debug.Log($"{name}: Projectile count upgraded to {projectileCount}");
     }
     public void AddPierce(int amount)
     {
