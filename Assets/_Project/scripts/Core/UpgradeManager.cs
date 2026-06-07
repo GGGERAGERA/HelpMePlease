@@ -233,12 +233,14 @@ public class UpgradeManager : MonoBehaviour
     }
     private void ApplyProjectileCountUpgrade(BaseWeapon[] weapons, float value)
     {
+        int amount = Mathf.RoundToInt(value);
+
         foreach (BaseWeapon weapon in weapons)
         {
-            if (weapon != null)
-            {
-                weapon.AddProjectileCount(Mathf.RoundToInt(value));
-            }
+            if (weapon == null)
+                continue;
+
+            weapon.AddProjectileCount(amount);
         }
     }
     private void ApplyPierceUpgrade(BaseWeapon[] weapons, float value)
