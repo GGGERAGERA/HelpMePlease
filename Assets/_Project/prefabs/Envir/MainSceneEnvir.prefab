@@ -11226,13 +11226,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MenuZombieWalker
   moveSpeed: 0.5
   direction: {x: 1, y: 0}
+  visualRoot: {fileID: 0}
   animator: {fileID: 0}
   syncAnimationWithMoveSpeed: 1
-  animationSpeedAtMoveSpeedOne: 1
-  manualAnimationSpeed: 1
-  loopByX: 1
+  animationSpeed: 1
+  animationSpeedMultiplier: 2
   leftX: -12
   rightX: 12
+  spriteFacesRightByDefault: 0
+  flipByDirection: 1
+  useRunAnimation: 0
+  runParameterName: IsRunning
 --- !u!1 &8465035184224319835
 GameObject:
   m_ObjectHideFlags: 0

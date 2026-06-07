@@ -473,7 +473,8 @@ MonoBehaviour:
   lootPrefab: {fileID: 8927180452970597320, guid: 568301bd43bfcef49aa858e8372f81be, type: 3}
   lootAmount: 1
   lootScatterRadius: 0.2
-  bloodHitPrefab: {fileID: 1219979587113692529, guid: e2fbd784016920342afe91db1e5c70d9, type: 3}
+  bloodHitPrefab: {fileID: 125031105077979307, guid: eb16fb47744e2184f9a71bc456707725, type: 3}
+  deathFXPrefab: {fileID: 8928692237468947480, guid: dce35554bd0bf694e8c080fae452ca84, type: 3}
   isBoss: 0
   bossName: BOSS
   deathDelay: 0.5
@@ -639,7 +640,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8137813610356888312, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
       propertyPath: m_SortingLayer
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: -8137813610356888312, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
       propertyPath: m_SortingLayerID
@@ -777,8 +778,7 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: -8137813610356888312, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
+    m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

@@ -31,6 +31,7 @@ public class EnemyHealth : MonoBehaviour
 
     [Header("Hit FX")]
     [SerializeField] private ParticleSystem bloodHitPrefab;
+    [SerializeField] private ParticleSystem deathFXPrefab;
     [Header("Boss")]
     [SerializeField] private bool isBoss;
     [Header("Boss UI")]
@@ -137,7 +138,7 @@ public class EnemyHealth : MonoBehaviour
 
         KillManager.Instance?.AddKill();
 
-        StartCoroutine(DeathRoutine());
+        Death();
     }
 
     void ShowDamagePopup(int damage, bool isCritical)
@@ -172,31 +173,26 @@ public class EnemyHealth : MonoBehaviour
         audioSource.PlayOneShot(hitSound, hitVolume);
     }
 
-    private IEnumerator DeathRoutine()
+    private void Death()
     {
-        Animator animator = GetComponentInChildren<Animator>();
+        if (deathFXPrefab == null)
+            return;
+        float bloodHitDestroyTime = deathFXPrefab.main.duration;
 
-        if (animator != null)
-        {
-            animator.SetTrigger("Die");
-        }
-
-        Collider2D collider = GetComponent<Collider2D>();
-        if (collider != null)
-            collider.enabled = false;
-
-        EnemyMovement movement = GetComponent<EnemyMovement>();
-        if (movement != null)
-            movement.enabled = false;
-
-        yield return new WaitForSeconds(deathDelay);
-
+        ParticleSystem blood = Instantiate(
+            deathFXPrefab,
+            this.transform.position,
+            Quaternion.identity
+        );
+        
         if (isBoss)
         {
             HUDManager.Instance?.HideBossHp();
             VictoryManager.Instance?.Victory();
         }
+
         DropLoot();
+        Destroy(blood.gameObject, bloodHitDestroyTime);
         Destroy(gameObject);
     }
 

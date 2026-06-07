@@ -466,10 +466,11 @@ MonoBehaviour:
   hitSound: {fileID: 0}
   hitPitchRange: {x: 0.95, y: 1.05}
   hitVolume: 0.35
-  lootPrefab: {fileID: 0}
+  lootPrefab: {fileID: 8927180452970597320, guid: 568301bd43bfcef49aa858e8372f81be, type: 3}
   lootAmount: 1
   lootScatterRadius: 0.4
-  bloodHitPrefab: {fileID: 1219979587113692529, guid: e2fbd784016920342afe91db1e5c70d9, type: 3}
+  bloodHitPrefab: {fileID: 125031105077979307, guid: eb16fb47744e2184f9a71bc456707725, type: 3}
+  deathFXPrefab: {fileID: 8928692237468947480, guid: 214f1954046dffb4ca1fe34c079e7f6e, type: 3}
   isBoss: 1
   bossName: Deadline
   deathDelay: 0.5
@@ -510,7 +511,7 @@ SortingGroup:
   m_GameObject: {fileID: 8074722678228422782}
   m_Enabled: 1
   m_SortingLayerID: -1183170747
-  m_SortingLayer: 3
+  m_SortingLayer: 2
   m_SortingOrder: 0
   m_SortAtRoot: 0
   m_Sort3DAs2D: 0
