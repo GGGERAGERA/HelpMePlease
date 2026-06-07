@@ -18,6 +18,7 @@ public class WeaponData : ScriptableObject
     public int damage = 10;
     public float fireRate = 0.5f;
     public float range = 10f;
+    public float projectileSpeed = 10f;
     public int bulletsPerShot = 1;
     public int pierce = 0;
 

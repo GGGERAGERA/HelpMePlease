@@ -114,6 +114,7 @@ public class Shoot : BaseWeapon
 
                 bulletScript.Initialize(
                     finalDamage,
+                    GetProjectileSpeed(),
                     GetRange(),
                     direction,
                     projectilePierce,

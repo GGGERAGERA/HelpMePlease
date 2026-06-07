@@ -23,6 +23,7 @@ public abstract class BaseWeapon : MonoBehaviour
 
     protected virtual void Start()
     {
+        
         if (weaponAudioSource == null)
             weaponAudioSource = GetComponent<AudioSource>();
 
@@ -35,6 +36,8 @@ public abstract class BaseWeapon : MonoBehaviour
 
         if (firePoint == null)
             firePoint = transform;
+
+        ApplyWeaponDataStats();
     }
 
     protected virtual void Update()
@@ -66,7 +69,10 @@ public abstract class BaseWeapon : MonoBehaviour
         float weaponRange = weaponData != null ? weaponData.range : 5f;
         return weaponRange + runtimeRangeBonus;
     }
-
+    public float GetProjectileSpeed()
+    {
+        return weaponData != null ? weaponData.projectileSpeed : 10f;
+    }
     public float GetFireRate()
     {
         float baseFireRate = weaponData != null ? weaponData.fireRate : 1f;
@@ -132,6 +138,14 @@ public abstract class BaseWeapon : MonoBehaviour
     public void AddRicochet(int amount)
     {
         projectileRicochet += amount;
+    }
+    private void ApplyWeaponDataStats()
+    {
+        if (weaponData == null)
+            return;
+
+        projectileCount = Mathf.Max(1, weaponData.bulletsPerShot);
+        projectilePierce = Mathf.Max(0, weaponData.pierce);
     }
 
 

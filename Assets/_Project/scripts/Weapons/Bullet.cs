@@ -5,12 +5,13 @@ public class Bullet : MonoBehaviour
 {
     public float speed = 10f;
     public float damage = 20f;
-    public float destroyDuration = 5f;
+    public float range = 10f;
 
     [SerializeField] private float knockbackForce = 4f;
     [SerializeField] private float ricochetSearchRadius = 4f;
 
     private Vector2 direction;
+    private Vector3 startPosition;
     private int pierceCount;
     private int ricochetCount;
     private bool isCritical;
@@ -20,6 +21,7 @@ public class Bullet : MonoBehaviour
     public void Initialize(
         float bulletDamage,
         float bulletSpeed,
+        float bulletRange,
         Vector2 dir,
         int pierce = 0,
         bool critical = false,
@@ -28,17 +30,20 @@ public class Bullet : MonoBehaviour
     {
         damage = bulletDamage;
         speed = bulletSpeed;
+        range = bulletRange;
         direction = dir.normalized;
         pierceCount = pierce;
         isCritical = critical;
         ricochetCount = ricochet;
-
-        Destroy(gameObject, destroyDuration);
+        startPosition = transform.position;
     }
 
     private void Update()
     {
         transform.Translate(direction * speed * Time.deltaTime, Space.World);
+
+        if (Vector3.Distance(startPosition, transform.position) >= range)
+            Destroy(gameObject);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -83,6 +88,8 @@ public class Bullet : MonoBehaviour
             return false;
 
         direction = ((Vector2)target.transform.position - (Vector2)transform.position).normalized;
+        startPosition = transform.position;
+
         return true;
     }
 
