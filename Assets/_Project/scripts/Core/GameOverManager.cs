@@ -29,10 +29,11 @@ public class GameOverManager : MonoBehaviour
     public void RestartGame()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
     public void MainMenu()
     {
         SceneManager.LoadScene("MainMenu"); // Замените "MainMenu" на имя вашей сцены главного меню
+        Time.timeScale = 1f;
     }
 }

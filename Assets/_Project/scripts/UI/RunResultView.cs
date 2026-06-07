@@ -54,11 +54,18 @@ public class RunResultView : MonoBehaviour
             statsText.text = result;
         }
     }
-
+    private void Awake()
+    {
+        goldAdded = false;
+    }
     private string FormatTime(float time)
     {
         int minutes = Mathf.FloorToInt(time / 60f);
         int seconds = Mathf.FloorToInt(time % 60f);
         return $"{minutes:00}:{seconds:00}";
+    }
+    private void OnEnable()
+    {
+        goldAdded = false;
     }
 }

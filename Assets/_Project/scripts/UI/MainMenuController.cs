@@ -60,8 +60,28 @@ public class MainMenuController : MonoBehaviour
 
     public void StartGame()
     {
+        CharacterData selectedCharacter = CharactersSelectionManager.Instance != null
+            ? CharactersSelectionManager.Instance.GetSelectedCharacter()
+            : null;
+
+        WeaponData selectedWeapon = WeaponSelectionManager.Instance != null
+            ? WeaponSelectionManager.Instance.GetSelectedWeapon()
+            : null;
+
+        if (selectedCharacter == null)
+        {
+            Debug.LogWarning("StartGame blocked: no character selected.");
+            return;
+        }
+
+        if (selectedWeapon == null)
+        {
+            Debug.LogWarning("StartGame blocked: no weapon selected.");
+            return;
+        }
+
         Time.timeScale = 1f;
-        SceneManager.LoadScene(gameSceneName);
+        SceneManager.LoadScene("MVP");
     }
 
     public void QuitGame()
