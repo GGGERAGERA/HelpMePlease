@@ -14,9 +14,6 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private GameObject weaponSelectPanel;
     [SerializeField] private GameObject sceneSelectPanel;
 
-    [Header("Scene")]
-    [SerializeField] private string gameSceneName = "MVP";
-
     private bool isStartingGame;
 
     private GameObject currentRootPanel;

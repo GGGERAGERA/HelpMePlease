@@ -146,6 +146,7 @@ GameObject:
   - component: {fileID: 46915850}
   - component: {fileID: 46915851}
   - component: {fileID: 46915852}
+  - component: {fileID: 46915853}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -300,6 +301,25 @@ MonoBehaviour:
   bossWarningSound: {fileID: 0}
   bossWarningVolume: 0.8
   bossSpawnDelay: 2
+--- !u!114 &46915853
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 46915840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96ba6e89b92df4e4e88cff17519952d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldEventSpawner
+  eventPrefabs:
+  - {fileID: 350149527517610057, guid: 176dbf5e68a24ca49b3595472b14d121, type: 3}
+  firstEventDelay: 5
+  eventInterval: 90
+  minDistanceFromPlayer: 7
+  maxDistanceFromPlayer: 12
+  maxActiveEvents: 1
 --- !u!114 &257852870 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 405991897473213084, guid: 512f006fbd66d46458ec27714e29d6f8, type: 3}

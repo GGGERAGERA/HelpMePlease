@@ -1,0 +1,74 @@
+using UnityEngine;
+
+public class WorldEventSpawner : MonoBehaviour
+{
+    [Header("Event Prefabs")]
+    [SerializeField] private WorldEvent[] eventPrefabs;
+
+    [Header("Spawn Timing")]
+    [SerializeField] private float firstEventDelay = 45f;
+    [SerializeField] private float eventInterval = 90f;
+
+    [Header("Spawn Area")]
+    [SerializeField] private float minDistanceFromPlayer = 8f;
+    [SerializeField] private float maxDistanceFromPlayer = 14f;
+
+    [Header("Limits")]
+    [SerializeField] private int maxActiveEvents = 1;
+
+    private float timer;
+    private int activeEvents;
+
+    private void Start()
+    {
+        timer = firstEventDelay;
+    }
+
+    private void Update()
+    {
+        if (Time.timeScale == 0f)
+            return;
+
+        if (eventPrefabs == null || eventPrefabs.Length == 0)
+            return;
+
+        if (activeEvents >= maxActiveEvents)
+            return;
+
+        timer -= Time.deltaTime;
+
+        if (timer <= 0f)
+        {
+            SpawnRandomEvent();
+            timer = eventInterval;
+        }
+    }
+
+    private void SpawnRandomEvent()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+
+        if (player == null)
+            return;
+
+        WorldEvent prefab = eventPrefabs[Random.Range(0, eventPrefabs.Length)];
+
+        if (prefab == null)
+            return;
+
+        Vector2 direction = Random.insideUnitCircle.normalized;
+        float distance = Random.Range(minDistanceFromPlayer, maxDistanceFromPlayer);
+
+        Vector3 spawnPosition = player.transform.position + (Vector3)(direction * distance);
+
+        WorldEvent spawnedEvent = Instantiate(prefab, spawnPosition, Quaternion.identity);
+        spawnedEvent.Initialize(this);
+
+        activeEvents++;
+    }
+
+    public void NotifyEventCompleted(WorldEvent worldEvent)
+    {
+        activeEvents = Mathf.Max(0, activeEvents - 1);
+    }
+}
