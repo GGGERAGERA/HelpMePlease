@@ -68,6 +68,7 @@ public class CaptureZoneEvent : WorldEvent
         if (giveUpgradeChoice && UpgradeManager.Instance != null)
             UpgradeManager.Instance.ShowUpgradeChoices();
 
+        HUDManager.Instance?.HideWorldEventMarker();
         CompleteEvent();
     }
 
@@ -84,5 +85,19 @@ public class CaptureZoneEvent : WorldEvent
 
         float timeLeft = Mathf.Max(0f, requiredHoldTime - currentHoldTime);
         timerText.text = $"{Mathf.CeilToInt(timeLeft)}s";
+    }
+    public override void Initialize(WorldEventSpawner spawner)
+    {
+        base.Initialize(spawner);
+
+        HUDManager.Instance?.ShowBossText(
+            "CAPTURE ZONE DETECTED",
+            3f
+        );
+
+        HUDManager.Instance?.ShowWorldEventMarker(
+            transform,
+            "CAPTURE"
+        );
     }
 }

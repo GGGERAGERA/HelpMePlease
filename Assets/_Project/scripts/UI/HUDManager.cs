@@ -34,6 +34,9 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private Slider bossHpSlider;
     [SerializeField] private TextMeshProUGUI bossNameText;
 
+    [Header("World Event Marker")]
+    [SerializeField] private WorldEventMarker worldEventMarker;
+
     private void Awake()
     {
         Instance = this;
@@ -162,5 +165,17 @@ public class HUDManager : MonoBehaviour
     {
         if (lowHpVignette != null)
             lowHpVignette.alpha = 0f;
+    }
+
+    public void ShowWorldEventMarker(Transform target, string label)
+    {
+        if (worldEventMarker != null)
+            worldEventMarker.Show(target, label);
+    }
+
+    public void HideWorldEventMarker()
+    {
+        if (worldEventMarker != null)
+            worldEventMarker.Hide();
     }
 }
