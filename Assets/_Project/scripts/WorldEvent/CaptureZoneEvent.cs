@@ -91,7 +91,7 @@ public class CaptureZoneEvent : WorldEvent
         base.Initialize(spawner);
 
         HUDManager.Instance?.ShowBossText(
-            "CAPTURE ZONE DETECTED",
+            "ÃÄÅ-ÒÎ ÇÎÍÀ ÇÀÕÂÀÒÀ",
             3f
         );
 
