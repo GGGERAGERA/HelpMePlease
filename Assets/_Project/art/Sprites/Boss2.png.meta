@@ -141,12 +141,12 @@ TextureImporter:
       name: Boss2_0
       rect:
         serializedVersion: 2
-        x: 22
-        y: 387
-        width: 87
+        x: 12
+        y: 392
+        width: 98
         height: 117
-      alignment: 9
-      pivot: {x: 0.49425286, y: 0}
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -163,12 +163,12 @@ TextureImporter:
       name: Boss2_1
       rect:
         serializedVersion: 2
-        x: 34
-        y: 260
-        width: 66
-        height: 116
-      alignment: 9
-      pivot: {x: 0.4848485, y: 0}
+        x: 26
+        y: 258
+        width: 63
+        height: 121
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -185,12 +185,12 @@ TextureImporter:
       name: Boss2_2
       rect:
         serializedVersion: 2
-        x: 145
-        y: 266
-        width: 107
-        height: 117
-      alignment: 9
-      pivot: {x: 0.5046729, y: 0}
+        x: 155
+        y: 259
+        width: 73
+        height: 125
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -207,11 +207,11 @@ TextureImporter:
       name: Boss2_3
       rect:
         serializedVersion: 2
-        x: 290
-        y: 260
-        width: 66
-        height: 116
-      alignment: 9
+        x: 282
+        y: 258
+        width: 63
+        height: 121
+      alignment: 7
       pivot: {x: 0.5, y: -0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -229,12 +229,12 @@ TextureImporter:
       name: Boss2_4
       rect:
         serializedVersion: 2
-        x: 413
-        y: 266
-        width: 94
-        height: 117
-      alignment: 9
-      pivot: {x: 0.49999997, y: -0}
+        x: 397
+        y: 258
+        width: 108
+        height: 126
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -261,7 +261,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.0},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":7,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Boss2_0: -808112923674609043
       Boss2_1: 6642691135006647050
