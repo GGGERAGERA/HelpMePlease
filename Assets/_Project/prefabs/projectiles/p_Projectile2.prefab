@@ -6326,7 +6326,7 @@ ParticleSystem:
     uvChannelMask: -1
     rowMode: 1
     sprites:
-    - sprite: {fileID: -4258012062802705795, guid: 2e937eab19110724e8b5bf3e820da035, type: 3}
+    - sprite: {fileID: 7591593981024556795, guid: 2e937eab19110724e8b5bf3e820da035, type: 3}
     flipU: 0
     flipV: 0
   VelocityModule:
@@ -9689,7 +9689,7 @@ GameObject:
   - component: {fileID: 8430317784528591767}
   - component: {fileID: 3704988293996068704}
   m_Layer: 0
-  m_Name: p_MineProjectile1
+  m_Name: p_Projectile2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9841,7 +9841,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2555713409700941589
 Transform:
   m_ObjectHideFlags: 0
@@ -9932,7 +9932,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &5563735373793247134
 Transform:
   m_ObjectHideFlags: 0
@@ -9974,7 +9974,7 @@ TrailRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: badf3e928dce83b4fb27a5f1ca59bfa1, type: 2}
+  - {fileID: 2100000, guid: abff8d6882f6bbc4aab783338756a428, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -10019,8 +10019,8 @@ TrailRenderer:
       m_RotationOrder: 4
     colorGradient:
       serializedVersion: 2
-      key0: {r: 1, g: 0.495283, b: 0.495283, a: 1}
-      key1: {r: 1, g: 0.495283, b: 0.495283, a: 0}
+      key0: {r: 1, g: 1, b: 1, a: 1}
+      key1: {r: 1, g: 1, b: 1, a: 0}
       key2: {r: 0, g: 0, b: 0, a: 0}
       key3: {r: 0, g: 0, b: 0, a: 0}
       key4: {r: 0, g: 0, b: 0, a: 0}
@@ -10106,7 +10106,7 @@ MonoBehaviour:
   m_LightType: 3
   m_BlendStyleIndex: 0
   m_FalloffIntensity: 0.5
-  m_Color: {r: 1, g: 0.24056602, b: 0.28523865, a: 1}
+  m_Color: {r: 0.23921567, g: 0.8055156, b: 1, a: 1}
   m_Intensity: 2
   m_LightVolumeIntensity: 1
   m_LightVolumeEnabled: 0
