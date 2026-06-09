@@ -372,7 +372,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bddeb846b618d9e4f8e3f0aee017ce4a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunTimer
-  runDuration: 3
+  runDuration: 60
   bossPrefab: {fileID: 8074722678228422782, guid: 8f73b608ef0309744b732a66e85e86d7, type: 3}
   spawnDistanceFromPlayer: 25
   bossWarningSound: {fileID: 0}
@@ -393,8 +393,8 @@ MonoBehaviour:
   eventPrefabs:
   - {fileID: 6791068172033243482, guid: 9be37b9069b011249924ba5f3b412aa3, type: 3}
   - {fileID: 350149527517610057, guid: 176dbf5e68a24ca49b3595472b14d121, type: 3}
-  firstEventDelay: 5
-  eventInterval: 5
+  firstEventDelay: 10
+  eventInterval: 20
   minDistanceFromPlayer: 7
   maxDistanceFromPlayer: 12
   maxActiveEvents: 2
@@ -417,6 +417,9 @@ MonoBehaviour:
   enemyHealthMultiplierPerLevel: 1.5
   enemySpeedMultiplierPerLevel: 3
   spawnRateMultiplierPerLevel: 0.85
+  globalLight: {fileID: 1123768654}
+  darkLevel: 2
+  darkLevelIntensity: 0.1
 --- !u!1 &101118583
 GameObject:
   m_ObjectHideFlags: 0

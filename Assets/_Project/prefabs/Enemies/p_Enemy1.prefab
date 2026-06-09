@@ -454,7 +454,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19136a5a9a8407f4bad025abe8a5570b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
-  maxHealth: 60
+  maxHealth: 30
   OnHealthChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -478,6 +478,9 @@ MonoBehaviour:
   deathFXPrefab: {fileID: 8928692237468947480, guid: dce35554bd0bf694e8c080fae452ca84, type: 3}
   isBoss: 0
   bossName: "\u0421\u043A\u0443\u0444"
+  menuPortalPrefab: {fileID: 0}
+  nextLevelPortalPrefab: {fileID: 0}
+  portalSpawnDistance: 2
 --- !u!114 &5140618788807294408
 MonoBehaviour:
   m_ObjectHideFlags: 0

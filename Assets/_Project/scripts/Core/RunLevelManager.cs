@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 public class RunLevelManager : MonoBehaviour
 {
@@ -17,12 +18,23 @@ public class RunLevelManager : MonoBehaviour
     [SerializeField] private float enemySpeedMultiplierPerLevel = 1.12f;
     [SerializeField] private float spawnRateMultiplierPerLevel = 0.85f;
 
+    [Header("Level Lighting")]
+    [SerializeField] private Light2D globalLight;
+    [SerializeField] private int darkLevel = 2;
+    [SerializeField] private float darkLevelIntensity = 0.1f;
+
     public int CurrentLevel => currentLevel;
 
     private bool isChangingLevel;
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         Instance = this;
     }
 
@@ -39,6 +51,7 @@ public class RunLevelManager : MonoBehaviour
 
         currentLevel++;
         Debug.Log("After level up: " + currentLevel);
+        ApplyLevelLighting();
         ClearLevelObjects();
         MovePlayerToStart();
         OptionallyHealPlayer();
@@ -136,5 +149,13 @@ public class RunLevelManager : MonoBehaviour
     public int GetNextLevelNumber()
     {
         return currentLevel + 1;
+    }
+    private void ApplyLevelLighting()
+    {
+        if (globalLight == null)
+            return;
+
+        if (currentLevel >= darkLevel)
+            globalLight.intensity = darkLevelIntensity;
     }
 }
