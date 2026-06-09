@@ -133,4 +133,8 @@ public class RunLevelManager : MonoBehaviour
         float healAmount = health.maxHealth * healPercentOnNextLevel;
         health.Heal(healAmount);
     }
+    public int GetNextLevelNumber()
+    {
+        return currentLevel + 1;
+    }
 }

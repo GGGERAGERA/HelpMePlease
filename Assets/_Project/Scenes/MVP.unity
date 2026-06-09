@@ -414,8 +414,8 @@ MonoBehaviour:
   levelStartPoint: {fileID: 101118584}
   healPlayerOnNextLevel: 0
   healPercentOnNextLevel: 0.35
-  enemyHealthMultiplierPerLevel: 1.35
-  enemySpeedMultiplierPerLevel: 10
+  enemyHealthMultiplierPerLevel: 1.5
+  enemySpeedMultiplierPerLevel: 3
   spawnRateMultiplierPerLevel: 0.85
 --- !u!1 &101118583
 GameObject:

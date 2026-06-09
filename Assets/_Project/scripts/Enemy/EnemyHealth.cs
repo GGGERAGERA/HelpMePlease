@@ -224,11 +224,19 @@ public class EnemyHealth : MonoBehaviour
 
         if (nextLevelPortalPrefab != null)
         {
-            Instantiate(
+            GameObject nextPortal = Instantiate(
                 nextLevelPortalPrefab,
                 basePosition + Vector3.right * portalSpawnDistance,
                 Quaternion.identity
             );
+
+            PortalLabel label = nextPortal.GetComponentInChildren<PortalLabel>();
+
+            if (label != null && RunLevelManager.Instance != null)
+            {
+                int nextLevel = RunLevelManager.Instance.GetNextLevelNumber();
+                label.SetText($"LEVEL {nextLevel}");
+            }
         }
     }
 

@@ -406,7 +406,6 @@ GameObject:
   - component: {fileID: 8498786568601226095}
   - component: {fileID: 6369032562082802702}
   - component: {fileID: 1329760117982389465}
-  - component: {fileID: -9092875524711060463}
   m_Layer: 0
   m_Name: p_Boss1
   m_TagString: Enemy
@@ -633,22 +632,6 @@ SortingGroup:
   m_SortingOrder: 0
   m_SortAtRoot: 0
   m_Sort3DAs2D: 0
---- !u!114 &-9092875524711060463
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8074722678228422782}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 05f9856f3deee0e47bd27dc97ca8e7f0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RunLevelManager
-  currentLevel: 1
-  enemyHealthMultiplierPerLevel: 1.35
-  enemySpeedMultiplierPerLevel: 1.12
-  spawnRateMultiplierPerLevel: 0.85
 --- !u!1 &8544399060549448286
 GameObject:
   m_ObjectHideFlags: 0
