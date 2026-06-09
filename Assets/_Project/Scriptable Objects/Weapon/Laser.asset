@@ -13,7 +13,17 @@ MonoBehaviour:
   m_Name: Laser
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: Laser
+  description: 
+  icon: {fileID: 0}
   weaponPrefab: {fileID: 8358305211716246302, guid: 81f5729e3f36f2e47a75c448e52af26a, type: 3}
   damage: 30
   fireRate: 0.5
   range: 10
+  projectileSpeed: 10
+  bulletsPerShot: 1
+  pierce: 0
+  fireRateRPM: 180
+  specialDescription: 
+  attackSound: {fileID: 0}
+  pitchRange: {x: 0.96, y: 1.04}
+  soundVolume: 0.35

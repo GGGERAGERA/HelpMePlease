@@ -37,13 +37,11 @@ public class CharacterSpawner : MonoBehaviour
 
         if (selectedCharacter == null)
         {
-            Debug.LogError("CharacterSpawner: No selected character and no defaultCharacter assigned.");
             return null;
         }
 
         if (selectedCharacter.characterPrefab == null)
         {
-            Debug.LogError("CharacterSpawner: characterPrefab is not assigned in CharacterData: " + selectedCharacter.characterName);
             return null;
         }
 
@@ -116,13 +114,11 @@ public class CharacterSpawner : MonoBehaviour
     {
         if (weaponData == null)
         {
-            Debug.LogWarning("CharacterSpawner: weaponData is null.");
             return;
         }
 
         if (weaponData.weaponPrefab == null)
         {
-            Debug.LogWarning("CharacterSpawner: weaponPrefab is not assigned in WeaponData: " + weaponData.weaponName);
             return;
         }
 
@@ -130,7 +126,6 @@ public class CharacterSpawner : MonoBehaviour
 
         if (weaponPoint == null)
         {
-            Debug.LogWarning("CharacterSpawner: WeaponPoint not found. Weapon will spawn in player center.");
             weaponPoint = player.transform;
         }
 
@@ -145,8 +140,6 @@ public class CharacterSpawner : MonoBehaviour
         weapon.transform.rotation = weaponPoint.rotation;
 
         AssignWeaponData(weapon, weaponData);
-
-        Debug.Log("Spawned weapon: " + weaponData.weaponName);
     }
 
     private void AssignWeaponData(GameObject weapon, WeaponData weaponData)

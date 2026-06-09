@@ -588,6 +588,9 @@ MonoBehaviour:
   deathFXPrefab: {fileID: 8928692237468947480, guid: 214f1954046dffb4ca1fe34c079e7f6e, type: 3}
   isBoss: 1
   bossName: "\u0416\u0438\u0440\u043D\u044B\u0439 \u0421\u043A\u0443\u0444"
+  menuPortalPrefab: {fileID: 3594706724080515630, guid: e63dc6d8ef643aa49a2a333be476509f, type: 3}
+  nextLevelPortalPrefab: {fileID: 3594706724080515630, guid: 3a70fe764ad306841b8b95207c27399e, type: 3}
+  portalSpawnDistance: 2
 --- !u!114 &8498786568601226095
 MonoBehaviour:
   m_ObjectHideFlags: 0

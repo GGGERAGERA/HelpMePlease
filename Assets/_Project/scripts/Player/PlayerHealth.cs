@@ -53,7 +53,7 @@ public class PlayerHealth : MonoBehaviour
         currentHealth = Mathf.Clamp(value, 0, maxHealth);
         HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
     }
-    public void Heal(int amount)
+    public void Heal(float amount)
     {
         currentHealth += amount;
         if (currentHealth > maxHealth)

@@ -37,6 +37,11 @@ public class EnemyHealth : MonoBehaviour
     [Header("Boss UI")]
     [SerializeField] private string bossName = "BOSS";
 
+    [Header("Boss Portals")]
+    [SerializeField] private GameObject menuPortalPrefab;
+    [SerializeField] private GameObject nextLevelPortalPrefab;
+    [SerializeField] private float portalSpawnDistance = 2f;
+
     private bool isDead;
 
     private static float lastCritSoundTime;
@@ -169,10 +174,7 @@ public class EnemyHealth : MonoBehaviour
         if (isBoss)
         {
             HUDManager.Instance?.HideBossHp();
-
-            RunTimer runTimer = FindAnyObjectByType<RunTimer>();
-            if (runTimer != null)
-                runTimer.StartSurvivalPhase();
+            SpawnExitPortals();
         }
 
         if (deathFXPrefab != null)
@@ -205,6 +207,36 @@ public class EnemyHealth : MonoBehaviour
                 (Vector2)transform.position + randomOffset,
                 Quaternion.identity
             );
+        }
+    }
+    private void SpawnExitPortals()
+    {
+        Vector3 basePosition = transform.position;
+
+        if (menuPortalPrefab != null)
+        {
+            Instantiate(
+                menuPortalPrefab,
+                basePosition + Vector3.left * portalSpawnDistance,
+                Quaternion.identity
+            );
+        }
+
+        if (nextLevelPortalPrefab != null)
+        {
+            GameObject nextPortal = Instantiate(
+                nextLevelPortalPrefab,
+                basePosition + Vector3.right * portalSpawnDistance,
+                Quaternion.identity
+            );
+
+            PortalLabel label = nextPortal.GetComponentInChildren<PortalLabel>();
+
+            if (label != null && RunLevelManager.Instance != null)
+            {
+                int nextLevel = RunLevelManager.Instance.GetNextLevelNumber();
+                label.SetText($"LEVEL {nextLevel}");
+            }
         }
     }
 

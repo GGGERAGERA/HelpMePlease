@@ -22,10 +22,10 @@ MonoBehaviour:
   damage: 15
   fireRate: 0.5
   range: 10
-  projectileSpeed: 10
+  projectileSpeed: 25
   bulletsPerShot: 1
   pierce: 0
-  fireRateRPM: 180
+  fireRateRPM: 418
   specialDescription: Spectial not found
   attackSound: {fileID: 8300000, guid: 907d3442b4fc4244ea4e9c020e3966d6, type: 3}
   pitchRange: {x: 1, y: 1.5}

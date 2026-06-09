@@ -223,6 +223,7 @@ GameObject:
   - component: {fileID: 46915851}
   - component: {fileID: 46915852}
   - component: {fileID: 46915853}
+  - component: {fileID: 46915854}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -371,7 +372,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bddeb846b618d9e4f8e3f0aee017ce4a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunTimer
-  runDuration: 20
+  runDuration: 60
   bossPrefab: {fileID: 8074722678228422782, guid: 8f73b608ef0309744b732a66e85e86d7, type: 3}
   spawnDistanceFromPlayer: 25
   bossWarningSound: {fileID: 0}
@@ -392,11 +393,64 @@ MonoBehaviour:
   eventPrefabs:
   - {fileID: 6791068172033243482, guid: 9be37b9069b011249924ba5f3b412aa3, type: 3}
   - {fileID: 350149527517610057, guid: 176dbf5e68a24ca49b3595472b14d121, type: 3}
-  firstEventDelay: 5
-  eventInterval: 5
+  firstEventDelay: 10
+  eventInterval: 20
   minDistanceFromPlayer: 7
   maxDistanceFromPlayer: 12
   maxActiveEvents: 2
+--- !u!114 &46915854
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 46915840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05f9856f3deee0e47bd27dc97ca8e7f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RunLevelManager
+  currentLevel: 1
+  levelStartPoint: {fileID: 101118584}
+  healPlayerOnNextLevel: 0
+  healPercentOnNextLevel: 0.35
+  enemyHealthMultiplierPerLevel: 1.5
+  enemySpeedMultiplierPerLevel: 3
+  spawnRateMultiplierPerLevel: 0.85
+  globalLight: {fileID: 1123768654}
+  darkLevel: 2
+  darkLevelIntensity: 0.1
+--- !u!1 &101118583
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 101118584}
+  m_Layer: 0
+  m_Name: LevelStartPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &101118584
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101118583}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &232676495
 GameObject:
   m_ObjectHideFlags: 0
@@ -3786,3 +3840,4 @@ SceneRoots:
   - {fileID: 1994632612}
   - {fileID: 337075033}
   - {fileID: 1586499094}
+  - {fileID: 101118584}
