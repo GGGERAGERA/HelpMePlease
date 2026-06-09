@@ -61,6 +61,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: -8435245712485981826, guid: e8187d6add6a3fa42b464197b8b143e4, type: 3}
+--- !u!95 &3864776377488718927 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 1160356261127867848, guid: e8187d6add6a3fa42b464197b8b143e4, type: 3}
+  m_PrefabInstance: {fileID: 2717949298823426439}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5255029664805293706 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7878350319992209165, guid: e8187d6add6a3fa42b464197b8b143e4, type: 3}
@@ -145,11 +150,11 @@ PrefabInstance:
     - target: {fileID: 4831376453459486560, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: animator
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 3864776377488718927}
     - target: {fileID: 4831376453459486560, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: visualRoot
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 5255029664805293706}
     - target: {fileID: 4831376453459486560, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: runDistance
       value: 6
@@ -165,7 +170,7 @@ PrefabInstance:
     - target: {fileID: 6045726002428409456, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: bloodHitPrefab
       value: 
-      objectReference: {fileID: 8471479244625784341, guid: c9ef6978e0aec7749ac3b55cad40bc5d, type: 3}
+      objectReference: {fileID: 3226737680464784108, guid: 8d7e135ba758a64499dd14283c8c6574, type: 3}
     - target: {fileID: 8784528909655463409, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: m_IsActive
       value: 0
