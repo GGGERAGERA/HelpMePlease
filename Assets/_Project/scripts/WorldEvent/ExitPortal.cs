@@ -26,7 +26,6 @@ public class ExitPortal : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        Debug.Log("Portal trigger entered by: " + other.name);
         if (!canActivate || used)
             return;
 
@@ -43,7 +42,6 @@ public class ExitPortal : MonoBehaviour
 
             case PortalAction.NextLevel:
                 RunLevelManager.Instance?.GoToNextLevel();
-                Destroy(gameObject);
                 break;
         }
     }
