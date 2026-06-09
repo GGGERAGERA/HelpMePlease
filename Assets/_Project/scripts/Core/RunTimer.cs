@@ -121,6 +121,16 @@ public class RunTimer : MonoBehaviour
     {
         return survivalPhaseStarted;
     }
+    public void RestartBossTimer()
+    {
+        survivalPhaseStarted = false;
+        survivalTime = 0f;
+
+        bossSpawned = false;
+        timeLeft = runDuration;
+
+        HUDManager.Instance?.SetTimer(timeLeft);
+    }
 
 
 }

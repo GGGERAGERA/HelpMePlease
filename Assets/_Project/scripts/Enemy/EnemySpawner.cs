@@ -181,4 +181,18 @@ public class EnemySpawner : MonoBehaviour
         currentHealthMultiplier = baseHealthMultiplier;
         currentSpeedMultiplier = baseSpeedMultiplier;
     }
+    public void ApplyLevelScaling(
+    float healthMultiplier,
+    float speedMultiplier,
+    float spawnRateMultiplier
+)
+    {
+        currentHealthMultiplier *= healthMultiplier;
+        currentSpeedMultiplier *= speedMultiplier;
+        spawnInterval *= spawnRateMultiplier;
+
+        spawnInterval = Mathf.Max(0.15f, spawnInterval);
+
+        Debug.Log("EnemySpawner: level scaling applied.");
+    }
 }

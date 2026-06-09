@@ -41,7 +41,6 @@ public class ExperienceManager : MonoBehaviour
     {
         if (levelData == null)
         {
-            Debug.LogWarning("ExperienceManager: levelData is not assigned.");
             return;
         }
 
