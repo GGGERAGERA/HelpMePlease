@@ -16,6 +16,8 @@ public class WorldEventSpawner : MonoBehaviour
     [Header("Limits")]
     [SerializeField] private int maxActiveEvents = 1;
 
+    private int nextEventIndex;
+
     private float timer;
     private int activeEvents;
 
@@ -51,7 +53,11 @@ public class WorldEventSpawner : MonoBehaviour
         if (player == null)
             return;
 
-        WorldEvent prefab = eventPrefabs[Random.Range(0, eventPrefabs.Length)];
+        WorldEvent prefab = eventPrefabs[nextEventIndex];
+
+        nextEventIndex++;
+        if (nextEventIndex >= eventPrefabs.Length)
+            nextEventIndex = 0;
 
         if (prefab == null)
             return;
