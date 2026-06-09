@@ -1,27 +1,43 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CaptureZoneEvent : WorldEvent
 {
     [Header("Capture Settings")]
     [SerializeField] private float requiredHoldTime = 30f;
+    [SerializeField] private float captureRadius = 3f;
     [SerializeField] private bool resetProgressOnExit = false;
 
     [Header("UI")]
     [SerializeField] private TextMeshProUGUI timerText;
-    [SerializeField] private GameObject visualRoot;
+    [SerializeField] private Slider progressSlider;
 
     [Header("Reward")]
     [SerializeField] private bool giveUpgradeChoice = true;
 
     private float currentHoldTime;
+    private Transform player;
     private bool playerInside;
+
+    public override void Initialize(WorldEventSpawner spawner)
+    {
+        base.Initialize(spawner);
+
+        HUDManager.Instance?.ShowBossText("CAPTURE ZONE DETECTED", 3f);
+        HUDManager.Instance?.ShowWorldEventMarker(transform, "CAPTURE");
+    }
 
     private void Start()
     {
-        playerInside = false;
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        if (playerObject != null)
+            player = playerObject.transform;
+
         currentHoldTime = 0f;
-        UpdateTimerText();
+        playerInside = false;
+
+        UpdateUI();
     }
 
     private void Update()
@@ -29,75 +45,78 @@ public class CaptureZoneEvent : WorldEvent
         if (Time.timeScale == 0f)
             return;
 
-        if (!playerInside)
+        UpdatePlayerInsideState();
+
+        if (playerInside)
         {
-            UpdateTimerText();
-            return;
+            currentHoldTime += Time.deltaTime;
+
+            if (currentHoldTime >= requiredHoldTime)
+            {
+                CompleteCapture();
+                return;
+            }
         }
 
-        currentHoldTime += Time.deltaTime;
-        UpdateTimerText();
-
-        if (currentHoldTime >= requiredHoldTime)
-            CompleteCapture();
+        UpdateUI();
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    private void UpdatePlayerInsideState()
     {
-        if (!other.CompareTag("Player"))
-            return;
+        if (player == null)
+        {
+            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
 
-        playerInside = true;
-    }
+            if (playerObject == null)
+            {
+                playerInside = false;
+                return;
+            }
 
-    private void OnTriggerExit2D(Collider2D other)
-    {
-        if (!other.CompareTag("Player"))
-            return;
+            player = playerObject.transform;
+        }
 
-        playerInside = false;
+        float distance = Vector2.Distance(transform.position, player.position);
+        bool wasInside = playerInside;
 
-        if (resetProgressOnExit)
+        playerInside = distance <= captureRadius;
+
+        if (wasInside && !playerInside && resetProgressOnExit)
             currentHoldTime = 0f;
-
-        UpdateTimerText();
     }
 
     private void CompleteCapture()
     {
+        HUDManager.Instance?.HideWorldEventMarker();
+
         if (giveUpgradeChoice && UpgradeManager.Instance != null)
             UpgradeManager.Instance.ShowUpgradeChoices();
 
-        HUDManager.Instance?.HideWorldEventMarker();
         CompleteEvent();
     }
 
-    private void UpdateTimerText()
+    private void UpdateUI()
     {
-        if (timerText == null)
-            return;
-
-        if (!playerInside && currentHoldTime <= 0f)
-        {
-            timerText.text = "ENTER";
-            return;
-        }
-
+        float progress = Mathf.Clamp01(currentHoldTime / requiredHoldTime);
         float timeLeft = Mathf.Max(0f, requiredHoldTime - currentHoldTime);
-        timerText.text = $"{Mathf.CeilToInt(timeLeft)}s";
+
+        if (timerText != null)
+            timerText.text = playerInside || currentHoldTime > 0f
+                ? $"{Mathf.CeilToInt(timeLeft)}s"
+                : "ENTER";
+
+        if (progressSlider != null)
+            progressSlider.value = progress;
     }
-    public override void Initialize(WorldEventSpawner spawner)
+
+    private void OnDestroy()
     {
-        base.Initialize(spawner);
+        HUDManager.Instance?.HideWorldEventMarker();
+    }
 
-        HUDManager.Instance?.ShowBossText(
-            "√ƒ≈-“Œ «ŒÕ¿ «¿’¬¿“¿",
-            3f
-        );
-
-        HUDManager.Instance?.ShowWorldEventMarker(
-            transform,
-            "CAPTURE"
-        );
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, captureRadius);
     }
 }
