@@ -1214,6 +1214,25 @@ Animator:
   m_CorrespondingSourceObject: {fileID: 1160356261127867848, guid: 229575227b0c7eb4cabe54eb192cc94c, type: 3}
   m_PrefabInstance: {fileID: 1299665850}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &594632431 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9071640650026410194, guid: 7691ec4bfd8bbe745b3b6067ece65cc2, type: 3}
+  m_PrefabInstance: {fileID: 1846747579043978965}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &594632438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 594632431}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 151c9b3206a12934dba3931eae115973, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponClickHandler
+  weapon: {fileID: 11400000, guid: a0a46b236f3b65c40b5c4cc5573d7c47, type: 2}
+  selectionUI: {fileID: 1254907478}
 --- !u!1001 &595893079
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2818,6 +2837,25 @@ MonoBehaviour:
   flipByDirection: 1
   useRunAnimation: 1
   runParameterName: IsRunning
+--- !u!1 &1400189856 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5953268569255583256, guid: 7691ec4bfd8bbe745b3b6067ece65cc2, type: 3}
+  m_PrefabInstance: {fileID: 1846747579043978965}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1400189863
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1400189856}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 151c9b3206a12934dba3931eae115973, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponClickHandler
+  weapon: {fileID: 11400000, guid: a0a46b236f3b65c40b5c4cc5573d7c47, type: 2}
+  selectionUI: {fileID: 1254907478}
 --- !u!1 &1516591359
 GameObject:
   m_ObjectHideFlags: 0
@@ -2871,7 +2909,6 @@ MonoBehaviour:
   playerSelectPanel: {fileID: 1740005503}
   weaponSelectPanel: {fileID: 1254907473}
   sceneSelectPanel: {fileID: 620178136}
-  gameSceneName: MVP
 --- !u!82 &1516591362
 AudioSource:
   m_ObjectHideFlags: 0
@@ -4915,7 +4952,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponSelectionManager
   allWeapons:
   - {fileID: 11400000, guid: acd6c980f3b758a409e5285b329a175a, type: 2}
-  - {fileID: 11400000, guid: 42bcd666ad155d14f9775ed613ac7e8c, type: 2}
+  - {fileID: 11400000, guid: a0a46b236f3b65c40b5c4cc5573d7c47, type: 2}
 --- !u!4 &2134099345
 Transform:
   m_ObjectHideFlags: 0
@@ -5586,6 +5623,10 @@ PrefabInstance:
     - target: {fileID: 5179867314985607459, guid: 7691ec4bfd8bbe745b3b6067ece65cc2, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5233309159120359947, guid: 7691ec4bfd8bbe745b3b6067ece65cc2, type: 3}
+      propertyPath: m_Interactable
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5298689924698086241, guid: 7691ec4bfd8bbe745b3b6067ece65cc2, type: 3}
       propertyPath: m_AnchorMax.y
@@ -6435,6 +6476,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1412283806953746499, guid: 7691ec4bfd8bbe745b3b6067ece65cc2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 148430290}
+    - targetCorrespondingSourceObject: {fileID: 9071640650026410194, guid: 7691ec4bfd8bbe745b3b6067ece65cc2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 594632438}
+    - targetCorrespondingSourceObject: {fileID: 5953268569255583256, guid: 7691ec4bfd8bbe745b3b6067ece65cc2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1400189863}
     - targetCorrespondingSourceObject: {fileID: 3974356513155304136, guid: 7691ec4bfd8bbe745b3b6067ece65cc2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2056233151}

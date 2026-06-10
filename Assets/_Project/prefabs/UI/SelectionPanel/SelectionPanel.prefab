@@ -1209,7 +1209,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 5685723491156530448}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.5498928
+  m_Size: 0.5498927
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2367,7 +2367,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 7807766978150430186}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.5498928
+  m_Size: 0.5498927
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -6588,6 +6588,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterClickHandler
   character: {fileID: 11400000, guid: 6957f9cb24cd10646b1d8c718701e654, type: 2}
+  selectionUI: {fileID: 0}
 --- !u!224 &8375734297397718711 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4806060227944189492, guid: 63160bda7609811499676be6d473d491, type: 3}
@@ -7987,6 +7988,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterClickHandler
   character: {fileID: 11400000, guid: 6aad8e558b07e8243b3b79a85aefa335, type: 2}
+  selectionUI: {fileID: 0}
 --- !u!224 &4211014185483283550 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4806060227944189492, guid: 63160bda7609811499676be6d473d491, type: 3}

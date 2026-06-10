@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d1e6ff315515d2b4f97d01778aae1e8f, type: 3}
-  m_Name: Laser
+  m_Name: LaserCannon
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  weaponName: Laser
-  description: 
-  icon: {fileID: 0}
-  weaponPrefab: {fileID: 8358305211716246302, guid: 81f5729e3f36f2e47a75c448e52af26a, type: 3}
+  weaponName: LaserCannon
+  description: "\u041F\u0438\u0443 \u043F\u0438\u0443"
+  icon: {fileID: 7713403004733705672, guid: 7552172a543b68f47b7b0cb76cc5692e, type: 3}
+  weaponPrefab: {fileID: 4188297587154588541, guid: 589120ad41bde2e43b22d8a80503a9b9, type: 3}
   damage: 30
   fireRate: 0.5
   range: 10
@@ -23,7 +23,7 @@ MonoBehaviour:
   bulletsPerShot: 1
   pierce: 0
   fireRateRPM: 180
-  specialDescription: 
+  specialDescription: No
   attackSound: {fileID: 0}
   pitchRange: {x: 0.96, y: 1.04}
   soundVolume: 0.35
