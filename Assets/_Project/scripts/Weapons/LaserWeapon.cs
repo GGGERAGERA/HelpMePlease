@@ -25,6 +25,18 @@ public class LaserWeapon : BaseWeapon
         if (weaponData != null)
             PlaySound(weaponData.attackSound);
     }
+    protected override void Update()
+    {
+        base.Update();
+
+        if (Time.timeScale == 0f)
+            return;
+
+        if (Input.GetMouseButton(0) && CanAttack())
+        {
+            Attack();
+        }
+    }
 
     private Vector2 GetAimDirection()
     {
@@ -79,18 +91,22 @@ public class LaserWeapon : BaseWeapon
 
     private void SpawnLaserFx(Vector2 origin, Vector2 endPoint, Vector2 direction)
     {
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        float distance = Vector2.Distance(origin, endPoint);
+
         if (laserBeamFxPrefab != null)
         {
-            GameObject beam = Instantiate(
-                laserBeamFxPrefab,
-                origin,
-                Quaternion.identity
-            );
+            GameObject beam = Instantiate(laserBeamFxPrefab, firePoint);
 
-            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            beam.transform.localPosition = Vector3.zero;
+            beam.transform.localRotation = Quaternion.identity;
+            beam.transform.localScale = Vector3.one;
+
+            beam.transform.SetParent(null, true);
+
+            beam.transform.position = origin;
             beam.transform.rotation = Quaternion.Euler(0f, 0f, angle);
 
-            float distance = Vector2.Distance(origin, endPoint);
             beam.transform.localScale = new Vector3(distance, 1f, 1f);
 
             Destroy(beam, laserFxLifetime);
