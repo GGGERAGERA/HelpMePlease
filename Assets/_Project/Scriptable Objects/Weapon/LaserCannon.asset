@@ -21,8 +21,8 @@ MonoBehaviour:
   range: 10
   projectileSpeed: 10
   bulletsPerShot: 1
-  pierce: 0
-  fireRateRPM: 180
+  pierce: 999
+  fireRateRPM: 50
   specialDescription: No
   attackSound: {fileID: 0}
   pitchRange: {x: 0.96, y: 1.04}
