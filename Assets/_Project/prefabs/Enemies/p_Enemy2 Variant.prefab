@@ -12,6 +12,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Enemy2Aseprite1
       objectReference: {fileID: 0}
+    - target: {fileID: -2253911629886400664, guid: e8187d6add6a3fa42b464197b8b143e4, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1160356261127867848, guid: e8187d6add6a3fa42b464197b8b143e4, type: 3}
       propertyPath: m_Controller
       value: 
@@ -133,6 +137,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2671083716182587235, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3641181362516454963, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3956652093294759234, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
