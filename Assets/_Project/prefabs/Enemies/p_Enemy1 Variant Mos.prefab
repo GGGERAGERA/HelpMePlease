@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1001 &7953675453013507408
+--- !u!1001 &1956773879100266256
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -10,12 +10,12 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: m_Name
-      value: p_Enemy1 Variant
+      value: p_Enemy1 Variant Mos
       objectReference: {fileID: 0}
     - target: {fileID: 2082517689598342890, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: a00c6b57824f0e241a289f8cba2f666d, type: 2}
+      objectReference: {fileID: 9100000, guid: 52e57a308912a1a45910b6e2b4c8813e, type: 2}
     - target: {fileID: 2671083716182587235, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -56,18 +56,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4831376453459486560, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-      propertyPath: visualRoot
-      value: 
-      objectReference: {fileID: 5436049069480446515}
     - target: {fileID: 8563352013519037183, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: m_Size.x
-      value: 0.96875
+      value: 2.56
+      objectReference: {fileID: 0}
+    - target: {fileID: 8563352013519037183, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: m_Size.y
+      value: 2.56
       objectReference: {fileID: 0}
     - target: {fileID: 8563352013519037183, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 5830694933855508796, guid: e1f639c2cd1c26242a566060b6c8b961, type: 3}
+      objectReference: {fileID: 2239754200739551234, guid: 32e8895dd9ab4ea47a25ac857be8f2c5, type: 3}
     - target: {fileID: 8563352013519037183, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: m_WasSpriteAssigned
       value: 1
@@ -77,8 +77,3 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
---- !u!4 &5436049069480446515 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 2671083716182587235, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-  m_PrefabInstance: {fileID: 7953675453013507408}
-  m_PrefabAsset: {fileID: 0}

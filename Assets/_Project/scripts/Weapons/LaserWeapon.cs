@@ -1,30 +1,53 @@
-using System.Collections;
 using UnityEngine;
 
 public class LaserWeapon : BaseWeapon
 {
-    [Header("Laser FX")]
-    [SerializeField] private GameObject laserBeamFxPrefab; // fx_Laser1
-    [SerializeField] private GameObject laserHitFxPrefab;  // fx_Laser2
-    [SerializeField] private float laserFxLifetime = 0.12f;
+    [Header("Orbit")]
+    [SerializeField] private Transform player;
+    [SerializeField] private float orbitRadius = 1.2f;
+    [SerializeField] private float smoothSpeed = 15f;
 
-    [Header("Laser Hit")]
-    [SerializeField] private LayerMask enemyLayerMask;
-    [SerializeField] private float laserWidth = 0.6f;
+    [Header("Laser Visual")]
+    [SerializeField] private LineRenderer laserLine;
+    [SerializeField] private float laserVisibleTime = 0.08f;
+    [SerializeField] private float laserWidth = 0.08f;
 
-    public override void Attack()
+    [Header("FX")]
+    [SerializeField] private ParticleSystem hitParticles;
+
+    [Header("Hit")]
+    [SerializeField] private LayerMask hitMask;
+
+    private Camera mainCamera;
+    private Vector3 lastMouseWorldPosition;
+    private float laserHideTime;
+
+    protected override void Start()
     {
-        if (!CanAttack())
-            return;
+        base.Start();
 
-        MarkAttackTime();
+        mainCamera = Camera.main;
 
-        Vector2 direction = GetAimDirection();
-        FireLaser(direction);
+        if (firePoint == null)
+            firePoint = transform;
 
-        if (weaponData != null)
-            PlaySound(weaponData.attackSound);
+        if (player == null)
+        {
+            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+            if (playerObject != null)
+                player = playerObject.transform;
+        }
+
+        if (laserLine == null)
+            laserLine = GetComponentInChildren<LineRenderer>(true);
+
+        SetupLaserLine();
+        HideLaserLine();
+
+        if (hitParticles != null)
+            hitParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
     }
+
     protected override void Update()
     {
         base.Update();
@@ -32,95 +55,178 @@ public class LaserWeapon : BaseWeapon
         if (Time.timeScale == 0f)
             return;
 
-        if (Input.GetMouseButton(0) && CanAttack())
+        if (mainCamera == null)
+            mainCamera = Camera.main;
+
+        if (mainCamera == null)
+            return;
+
+        if (player == null)
         {
-            Attack();
+            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+            if (playerObject != null)
+                player = playerObject.transform;
+            else
+                return;
         }
+
+        UpdateMousePosition();
+        UpdateOrbitPosition();
+
+        if (Input.GetMouseButton(0) && CanAttack())
+            Attack();
+
+        if (laserLine != null && laserLine.enabled && Time.time >= laserHideTime)
+            HideLaserLine();
     }
 
-    private Vector2 GetAimDirection()
+    public override void Attack()
     {
-        Vector3 mouseWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mouseWorldPosition.z = 0f;
+        Vector3 origin = firePoint.position;
 
-        Vector2 direction = mouseWorldPosition - firePoint.position;
+        Vector3 direction = lastMouseWorldPosition - origin;
+        direction.z = 0f;
 
         if (direction.sqrMagnitude < 0.001f)
-            direction = transform.right;
+            return;
 
-        return direction.normalized;
-    }
+        direction.Normalize();
 
-    private void FireLaser(Vector2 direction)
-    {
         float range = GetRange();
         float damage = GetDamage();
 
-        bool isCritical = RollCritical();
+        Vector3 endPoint = origin + direction * range;
 
-        if (isCritical)
-            damage *= GetCritMultiplier();
+        RaycastHit2D hit = FindFirstHit(origin, direction, range);
 
-        Vector2 origin = firePoint.position;
-        Vector2 endPoint = origin + direction * range;
+        if (hit.collider != null)
+        {
+            endPoint = hit.point;
 
-        SpawnLaserFx(origin, endPoint, direction);
-        DamageEnemies(origin, direction, range, damage, isCritical);
+            EnemyHealth enemy = hit.collider.GetComponentInParent<EnemyHealth>();
+
+            if (enemy != null)
+            {
+                bool isCritical = RollCritical();
+
+                if (isCritical)
+                    damage *= GetCritMultiplier();
+
+                enemy.TakeDamage(damage, hit.point, isCritical);
+            }
+
+            PlayHitParticles(endPoint, direction);
+        }
+
+        ShowLaserLine(origin, endPoint);
+
+        if (weaponData != null)
+            PlaySound(weaponData.attackSound);
+
+        MarkAttackTime();
     }
 
-    private void DamageEnemies(Vector2 origin, Vector2 direction, float range, float damage, bool isCritical)
+    private void UpdateMousePosition()
     {
-        RaycastHit2D[] hits = Physics2D.CircleCastAll(
-            origin,
-            laserWidth * 0.5f,
-            direction,
-            range,
-            enemyLayerMask
+        lastMouseWorldPosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        lastMouseWorldPosition.z = 0f;
+    }
+
+    private void UpdateOrbitPosition()
+    {
+        Vector3 directionFromPlayer = lastMouseWorldPosition - player.position;
+        directionFromPlayer.z = 0f;
+
+        if (directionFromPlayer.sqrMagnitude < 0.001f)
+            return;
+
+        directionFromPlayer.Normalize();
+
+        Vector3 targetPosition = player.position + directionFromPlayer * orbitRadius;
+
+        transform.position = Vector3.Lerp(
+            transform.position,
+            targetPosition,
+            smoothSpeed * Time.deltaTime
         );
+
+        Vector3 directionToMouse = lastMouseWorldPosition - transform.position;
+        directionToMouse.z = 0f;
+
+        if (directionToMouse.sqrMagnitude < 0.001f)
+            return;
+
+        directionToMouse.Normalize();
+
+        float angle = Mathf.Atan2(directionToMouse.y, directionToMouse.x) * Mathf.Rad2Deg;
+
+        // Все оружия теперь смотрят вправо, поэтому без +180.
+        transform.rotation = Quaternion.Euler(0f, 0f, angle);
+
+        transform.localScale = Vector3.one;
+    }
+
+    private RaycastHit2D FindFirstHit(Vector3 origin, Vector3 direction, float range)
+    {
+        RaycastHit2D[] hits = Physics2D.RaycastAll(origin, direction, range, hitMask);
+
+        RaycastHit2D closestHit = new RaycastHit2D();
+        float closestDistance = float.MaxValue;
 
         foreach (RaycastHit2D hit in hits)
         {
-            EnemyHealth enemy = hit.collider.GetComponentInParent<EnemyHealth>();
-
-            if (enemy == null)
+            if (hit.collider == null)
                 continue;
 
-            enemy.TakeDamage(damage, hit.point, isCritical);
+            if (hit.distance < closestDistance)
+            {
+                closestDistance = hit.distance;
+                closestHit = hit;
+            }
         }
+
+        return closestHit;
     }
 
-    private void SpawnLaserFx(Vector2 origin, Vector2 endPoint, Vector2 direction)
+    private void SetupLaserLine()
     {
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        float distance = Vector2.Distance(origin, endPoint);
+        if (laserLine == null)
+            return;
 
-        if (laserBeamFxPrefab != null)
-        {
-            GameObject beam = Instantiate(laserBeamFxPrefab, firePoint);
+        laserLine.positionCount = 2;
+        laserLine.useWorldSpace = true;
+        laserLine.startWidth = laserWidth;
+        laserLine.endWidth = laserWidth;
+        laserLine.enabled = false;
+    }
 
-            beam.transform.localPosition = Vector3.zero;
-            beam.transform.localRotation = Quaternion.identity;
-            beam.transform.localScale = Vector3.one;
+    private void ShowLaserLine(Vector3 startPoint, Vector3 endPoint)
+    {
+        if (laserLine == null)
+            return;
 
-            beam.transform.SetParent(null, true);
+        laserLine.enabled = true;
+        laserLine.SetPosition(0, startPoint);
+        laserLine.SetPosition(1, endPoint);
 
-            beam.transform.position = origin;
-            beam.transform.rotation = Quaternion.Euler(0f, 0f, angle);
+        laserHideTime = Time.time + laserVisibleTime;
+    }
 
-            beam.transform.localScale = new Vector3(distance, 1f, 1f);
+    private void HideLaserLine()
+    {
+        if (laserLine != null)
+            laserLine.enabled = false;
+    }
 
-            Destroy(beam, laserFxLifetime);
-        }
+    private void PlayHitParticles(Vector3 position, Vector3 direction)
+    {
+        if (hitParticles == null)
+            return;
 
-        if (laserHitFxPrefab != null)
-        {
-            GameObject hitFx = Instantiate(
-                laserHitFxPrefab,
-                endPoint,
-                Quaternion.identity
-            );
+        hitParticles.transform.position = position;
+        hitParticles.transform.right = direction;
 
-            Destroy(hitFx, laserFxLifetime);
-        }
+        hitParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        hitParticles.Play(true);
     }
 }
