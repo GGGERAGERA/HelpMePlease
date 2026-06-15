@@ -14,8 +14,8 @@ GameObject:
   - component: {fileID: 2094796459639615001}
   - component: {fileID: 6045726002428409456}
   - component: {fileID: 5140618788807294408}
-  - component: {fileID: 826003451788788162}
   - component: {fileID: 6261945912111484072}
+  - component: {fileID: 6986819420519733013}
   m_Layer: 0
   m_Name: p_Enemy
   m_TagString: Enemy
@@ -192,20 +192,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCollisionHandler
   damage: 15
   damageCooldown: 1
---- !u!114 &826003451788788162
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1362265803452333836}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f037d8720ecb5b44ca7651ef6babf7f6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DamageFlash
-  flashDuration: 0.1
-  flashColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!210 &6261945912111484072
 SortingGroup:
   m_ObjectHideFlags: 0
@@ -219,6 +205,21 @@ SortingGroup:
   m_SortingOrder: 0
   m_SortAtRoot: 0
   m_Sort3DAs2D: 0
+--- !u!114 &6986819420519733013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1362265803452333836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521b7b5f1c0953542a0fdea451de698c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyWhiteFlash
+  flashMaterial: {fileID: 2100000, guid: 2ff410d6175258e4086acff183a82c3b, type: 2}
+  flashDuration: 0.08
+  targetRenderer: {fileID: 0}
 --- !u!1001 &3551778678943232031
 PrefabInstance:
   m_ObjectHideFlags: 0

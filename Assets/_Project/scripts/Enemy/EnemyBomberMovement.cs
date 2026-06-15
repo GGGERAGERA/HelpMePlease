@@ -10,6 +10,9 @@ public class EnemyBomberMovement : EnemyMovement
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 4.5f;
 
+    [Header("Knockback")]
+    [SerializeField] private float knockbackDecay = 18f;
+
     [Header("Explosion")]
     [SerializeField] private float triggerRadius = 1.4f;
     [SerializeField] private float explosionRadius = 2f;
@@ -26,6 +29,7 @@ public class EnemyBomberMovement : EnemyMovement
     private bool isExploding;
     private bool exploded;
     private float speedMultiplier = 1f;
+    private Vector2 knockbackVelocity;
 
     private void Awake()
     {
@@ -49,7 +53,16 @@ public class EnemyBomberMovement : EnemyMovement
             return;
 
         Vector2 direction = ((Vector2)player.position - rb.position).normalized;
-        rb.MovePosition(rb.position + direction * moveSpeed * speedMultiplier * Time.fixedDeltaTime);
+
+        knockbackVelocity = Vector2.MoveTowards(
+            knockbackVelocity,
+            Vector2.zero,
+            knockbackDecay * Time.fixedDeltaTime
+        );
+
+        Vector2 movement = direction * moveSpeed * speedMultiplier + knockbackVelocity;
+
+        rb.MovePosition(rb.position + movement * Time.fixedDeltaTime);
 
         float distance = Vector2.Distance(rb.position, player.position);
 
@@ -148,7 +161,10 @@ public class EnemyBomberMovement : EnemyMovement
 
     public override void ApplyKnockback(Vector2 direction, float force)
     {
-        // Подрывник пока не отлетает, чтобы поведение было читаемым.
+        if (isExploding || exploded)
+            return;
+
+        knockbackVelocity = direction.normalized * force;
     }
 
     public override void StopAfterHit()
