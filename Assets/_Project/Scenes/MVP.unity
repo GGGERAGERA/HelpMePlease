@@ -130,6 +130,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+--- !u!114 &14381512 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3379036226893427838, guid: e36da77c05807364a98635bdd25ecb1a, type: 3}
+  m_PrefabInstance: {fileID: 1844714994}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &33760151
 GameObject:
   m_ObjectHideFlags: 0
@@ -2491,6 +2502,10 @@ PrefabInstance:
       propertyPath: m_fontSize
       value: 72
       objectReference: {fileID: 0}
+    - target: {fileID: 1636477228742549215, guid: e36da77c05807364a98635bdd25ecb1a, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 700
+      objectReference: {fileID: 0}
     - target: {fileID: 3154388082751390131, guid: e36da77c05807364a98635bdd25ecb1a, type: 3}
       propertyPath: m_SizeDelta.x
       value: 400
@@ -2604,6 +2619,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RunResultView
   titleText: {fileID: 2091041980}
   statsText: {fileID: 999632657}
+  aiCommentText: {fileID: 14381512}
 --- !u!1 &1850910728
 GameObject:
   m_ObjectHideFlags: 0

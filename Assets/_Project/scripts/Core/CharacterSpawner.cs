@@ -65,25 +65,10 @@ public class CharacterSpawner : MonoBehaviour
 
     private CharacterData GetSelectedCharacter()
     {
-        if (CharactersSelectionManager.Instance != null)
+        if (RunSelectionManager.Instance != null &&
+            RunSelectionManager.Instance.SelectedCharacter != null)
         {
-            CharacterData selectedFromManager = CharactersSelectionManager.Instance.GetSelectedCharacter();
-
-            if (selectedFromManager != null)
-                return selectedFromManager;
-
-            CharacterData[] allCharacters = CharactersSelectionManager.Instance.allCharacters;
-
-            if (allCharacters != null && allCharacters.Length > 0)
-            {
-                int selectedIndex = PlayerPrefs.GetInt("SelectedCharacter", 0);
-
-                if (selectedIndex >= 0 && selectedIndex < allCharacters.Length)
-                {
-                    if (allCharacters[selectedIndex] != null)
-                        return allCharacters[selectedIndex];
-                }
-            }
+            return RunSelectionManager.Instance.SelectedCharacter;
         }
 
         return defaultCharacter;
@@ -158,12 +143,10 @@ public class CharacterSpawner : MonoBehaviour
 
     private WeaponData GetSelectedWeapon()
     {
-        if (WeaponSelectionManager.Instance != null)
+        if (RunSelectionManager.Instance != null &&
+            RunSelectionManager.Instance.SelectedWeapon != null)
         {
-            WeaponData selectedWeapon = WeaponSelectionManager.Instance.GetSelectedWeapon();
-
-            if (selectedWeapon != null)
-                return selectedWeapon;
+            return RunSelectionManager.Instance.SelectedWeapon;
         }
 
         return defaultWeapon;

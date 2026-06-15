@@ -32,13 +32,11 @@ public class WeaponSelectionUI : MonoBehaviour
 
     public void SelectWeapon(WeaponData weapon)
     {
-        if (weapon == null)
-            return;
+    if (weapon == null)
+        return;
 
-        if (WeaponSelectionManager.Instance != null)
-            WeaponSelectionManager.Instance.SelectWeapon(weapon);
+    RunSelectionManager.Instance.SelectWeapon(weapon);
 
-        SetText(selectedWeaponText, "Selected Weapon: " + weapon.weaponName);
 
         if (weaponIconImage != null)
         {

@@ -6,6 +6,7 @@ public class RunResultView : MonoBehaviour
     [Header("UI")]
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI statsText;
+    [SerializeField] private TextMeshProUGUI aiCommentText;
 
     private bool goldAdded;
 
@@ -52,6 +53,10 @@ public class RunResultView : MonoBehaviour
                 $"TOTAL GOLD: {totalGold}";
 
             statsText.text = result;
+        }
+        if (aiCommentText != null)
+        {
+            aiCommentText.text = AICommentGenerator.GetComment(victory);
         }
     }
     private void Awake()

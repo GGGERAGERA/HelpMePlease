@@ -24,13 +24,8 @@ public class CharacterSelectionUI : MonoBehaviour
     [SerializeField] private Color enabledColor = Color.white;
     [SerializeField] private Color disabledColor = new Color(0.45f, 0.45f, 0.45f, 1f);
 
-    private CharacterData selectedCharacter;
-    private CharactersSelectionManager selectionManager;
 
-    private void Awake()
-    {
-        selectionManager = CharactersSelectionManager.Instance;
-    }
+
 
     private void Start()
     {
@@ -40,15 +35,9 @@ public class CharacterSelectionUI : MonoBehaviour
     public void SelectCharacter(CharacterData character)
     {
         if (character == null)
-        {
-            Debug.LogWarning("CharacterSelectionUI: selected character is null.");
             return;
-        }
 
-        selectedCharacter = character;
-
-        if (selectionManager != null)
-            selectionManager.SelectCharacter(character);
+        RunSelectionManager.Instance.SelectCharacter(character);
 
         UpdateTopText(character);
         UpdateRightPanel(character);
@@ -58,7 +47,6 @@ public class CharacterSelectionUI : MonoBehaviour
 
     private void ClearSelection()
     {
-        selectedCharacter = null;
 
         if (selectedPlayerText != null)
             selectedPlayerText.text = "Selected Player: none";

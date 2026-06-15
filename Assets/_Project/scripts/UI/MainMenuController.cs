@@ -20,8 +20,7 @@ public class MainMenuController : MonoBehaviour
 
     private void Start()
     {
-        CharactersSelectionManager.Instance?.ClearSelection();
-        WeaponSelectionManager.Instance?.ClearSelection();
+        RunSelectionManager.Instance?.ClearRunSelection();
         currentRootPanel = mainPanel;
         OpenMainPanel();
     }
@@ -63,26 +62,27 @@ public class MainMenuController : MonoBehaviour
     {
         if (isStartingGame)
             return;
-        CharacterData selectedCharacter = CharactersSelectionManager.Instance != null
-            ? CharactersSelectionManager.Instance.GetSelectedCharacter()
-            : null;
 
-        WeaponData selectedWeapon = WeaponSelectionManager.Instance != null
-            ? WeaponSelectionManager.Instance.GetSelectedWeapon()
-            : null;
+        if (RunSelectionManager.Instance == null)
+        {
+            Debug.LogWarning("StartGame blocked: RunSelectionManager not found.");
+            return;
+        }
 
-        if (selectedCharacter == null)
+        if (!RunSelectionManager.Instance.HasCharacter())
         {
             Debug.LogWarning("StartGame blocked: no character selected.");
             return;
         }
 
-        if (selectedWeapon == null)
+        if (!RunSelectionManager.Instance.HasWeapon())
         {
             Debug.LogWarning("StartGame blocked: no weapon selected.");
             return;
         }
+
         isStartingGame = true;
+
         Time.timeScale = 1f;
         SceneManager.LoadScene("MVP");
     }

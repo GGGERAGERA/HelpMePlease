@@ -19,6 +19,8 @@ public class CharacterClickHandler : MonoBehaviour
 
     private void OnCharacterClick()
     {
+        Debug.Log("UI SELECT CHARACTER: " + character.characterName);
+        Debug.Log("Character CARD CLICKED: " + gameObject.name);
         if (character == null)
         {
             Debug.LogWarning("CharacterClickHandler: character is null.");
