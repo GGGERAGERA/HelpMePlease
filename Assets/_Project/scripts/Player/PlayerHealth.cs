@@ -27,10 +27,12 @@ public class PlayerHealth : MonoBehaviour
         HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
     }
 
-    public void TakeDamage(float damage, Vector2 hitDirection)
+    public bool TakeDamage(float damage, Vector2 hitDirection)
     {
+        if (isDead)
+            return false;
         if (isInvulnerable)
-            return;
+            return false;
         isInvulnerable = true;
         currentHealth -= damage;
 
@@ -42,6 +44,8 @@ public class PlayerHealth : MonoBehaviour
         if (currentHealth <= 0) Die();
 
         StartCoroutine(InvulnerabilityRoutine());
+
+        return true;
     }
     private IEnumerator InvulnerabilityRoutine()
     {

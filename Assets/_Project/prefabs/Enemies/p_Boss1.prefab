@@ -126,7 +126,6 @@ GameObject:
   - component: {fileID: 8630987378559288050}
   - component: {fileID: 532965985150247817}
   - component: {fileID: 6818522612246032092}
-  - component: {fileID: 4212892666427228458}
   - component: {fileID: 8634306207331902935}
   - component: {fileID: 8498786568601226095}
   - component: {fileID: 6369032562082802702}
@@ -255,26 +254,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 4
---- !u!114 &4212892666427228458
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8074722678228422782}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ad6fdb0c3d59a914b89ef539d221c709, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyMovement
-  visualRoot: {fileID: 4810206244595897769}
-  runDistance: 6
-  walkSpeed: 1.5
-  runSpeed: 3
-  animator: {fileID: 8106179503796228276}
-  acceleration: 12
-  knockbackDecay: 18
-  hitStunDuration: 0.06
 --- !u!114 &8634306207331902935
 MonoBehaviour:
   m_ObjectHideFlags: 0

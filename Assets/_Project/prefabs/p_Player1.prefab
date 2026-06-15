@@ -174,7 +174,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   enemyPrefabs:
   - {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
-  - {fileID: 702674783413266460, guid: 2b1fdfa0bbfc2aa4aaff479041bebd52, type: 3}
+  - {fileID: 1432338969431510999, guid: 46ef0098ace1f0e4585348645e131dff, type: 3}
+  - {fileID: 2513438768801038890, guid: c234c537ed1fdfe489feaf994e3dbca7, type: 3}
   spawnInterval: 0.4
   maxEnemies: 100
   minSpawnDistance: 10
@@ -188,15 +189,15 @@ MonoBehaviour:
   maxHealthMultiplier: 3
   maxSpeedMultiplier: 1.8
   spawnStages:
-  - startTime: 0
-    enemyPrefabs:
-    - {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
   - startTime: 10
     enemyPrefabs:
-    - {fileID: 702674783413266460, guid: 2b1fdfa0bbfc2aa4aaff479041bebd52, type: 3}
-  - startTime: 50
-    enemyPrefabs:
     - {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
+  - startTime: 1
+    enemyPrefabs:
+    - {fileID: 1432338969431510999, guid: 46ef0098ace1f0e4585348645e131dff, type: 3}
+  - startTime: 20
+    enemyPrefabs:
+    - {fileID: 2513438768801038890, guid: c234c537ed1fdfe489feaf994e3dbca7, type: 3}
 --- !u!114 &4726604075001662714
 MonoBehaviour:
   m_ObjectHideFlags: 0
