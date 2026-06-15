@@ -166,6 +166,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2671083716182587235, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -196,9 +200,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBomberMovement
   playerTag: Player
   moveSpeed: 2
-  explosionRadius: 1
+  triggerRadius: 1
+  explosionRadius: 2
+  explosionDelay: 1
   explosionDamage: 15
+  explosionRadiusPrefab: {fileID: 3431147270733573790, guid: b55be29f2b455a247af6b6c19b37afd7, type: 3}
   explosionFxPrefab: {fileID: 1774385019753254698, guid: f91913de896646447a357936450e42c5, type: 3}
+  shockwaveFxPrefab: {fileID: 1557866962218771819, guid: b8f18a3e8db90c84982afced42fab101, type: 3}
 --- !u!4 &2600430001706665912 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2671083716182587235, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -10,12 +11,19 @@ public class EnemyBomberMovement : EnemyMovement
     [SerializeField] private float moveSpeed = 4.5f;
 
     [Header("Explosion")]
+    [SerializeField] private float triggerRadius = 1.4f;
     [SerializeField] private float explosionRadius = 2f;
+    [SerializeField] private float explosionDelay = 1f;
     [SerializeField] private int explosionDamage = 25;
+
+    [Header("FX")]
+    [SerializeField] private GameObject explosionRadiusPrefab;
     [SerializeField] private ParticleSystem explosionFxPrefab;
+    [SerializeField] private GameObject shockwaveFxPrefab;
 
     private Rigidbody2D rb;
     private Transform player;
+    private bool isExploding;
     private bool exploded;
     private float speedMultiplier = 1f;
 
@@ -31,7 +39,7 @@ public class EnemyBomberMovement : EnemyMovement
 
     private void FixedUpdate()
     {
-        if (Time.timeScale == 0f || exploded)
+        if (Time.timeScale == 0f || exploded || isExploding)
             return;
 
         if (player == null)
@@ -45,8 +53,8 @@ public class EnemyBomberMovement : EnemyMovement
 
         float distance = Vector2.Distance(rb.position, player.position);
 
-        if (distance <= explosionRadius)
-            Explode();
+        if (distance <= triggerRadius)
+            StartExplosionSequence();
     }
 
     private void FindPlayer()
@@ -55,6 +63,41 @@ public class EnemyBomberMovement : EnemyMovement
 
         if (playerObject != null)
             player = playerObject.transform;
+    }
+
+    private void StartExplosionSequence()
+    {
+        if (isExploding || exploded)
+            return;
+
+        isExploding = true;
+        rb.linearVelocity = Vector2.zero;
+
+        StartCoroutine(ExplosionSequence());
+    }
+
+    private IEnumerator ExplosionSequence()
+    {
+        GameObject radiusVisual = null;
+
+        if (explosionRadiusPrefab != null)
+        {
+            radiusVisual = Instantiate(
+                explosionRadiusPrefab,
+                transform.position,
+                Quaternion.identity
+            );
+
+            float diameter = explosionRadius * 2f;
+            radiusVisual.transform.localScale = new Vector3(diameter, diameter, 1f);
+        }
+
+        yield return new WaitForSeconds(explosionDelay);
+
+        if (radiusVisual != null)
+            Destroy(radiusVisual);
+
+        Explode();
     }
 
     private void Explode()
@@ -82,10 +125,18 @@ public class EnemyBomberMovement : EnemyMovement
 
         if (explosionFxPrefab != null)
         {
-            ParticleSystem fx = Instantiate(explosionFxPrefab, transform.position, Quaternion.identity);
+            ParticleSystem fx = Instantiate(
+                explosionFxPrefab,
+                transform.position,
+                Quaternion.identity
+            );
+
             fx.Play();
             Destroy(fx.gameObject, fx.main.duration);
         }
+
+        if (shockwaveFxPrefab != null)
+            Instantiate(shockwaveFxPrefab, transform.position, Quaternion.identity);
 
         Destroy(gameObject);
     }
@@ -97,16 +148,19 @@ public class EnemyBomberMovement : EnemyMovement
 
     public override void ApplyKnockback(Vector2 direction, float force)
     {
-        // ѕодрывник пока не отлетает, чтобы надЄжно исполн€л роль.
+        // ѕодрывник пока не отлетает, чтобы поведение было читаемым.
     }
 
     public override void StopAfterHit()
     {
-        // ѕодрывник не останавливаетс€ после контакта.
+        // ѕодрывник не останавливаетс€ от контактного удара.
     }
 
     private void OnDrawGizmosSelected()
     {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, triggerRadius);
+
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, explosionRadius);
     }
