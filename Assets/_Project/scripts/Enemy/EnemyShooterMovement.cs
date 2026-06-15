@@ -16,6 +16,10 @@ public class EnemyShooterMovement : EnemyMovement
     [SerializeField] private Transform firePoint;
     [SerializeField] private float fireInterval = 1.8f;
 
+    [Header("Visual")]
+    [SerializeField] private Transform visualRoot;
+    [SerializeField] private bool flipVisual = true;
+
     private Rigidbody2D rb;
     private Transform player;
     private float fireTimer;
@@ -82,6 +86,7 @@ public class EnemyShooterMovement : EnemyMovement
             moveDirection = -directionToPlayer;
 
         rb.MovePosition(rb.position + moveDirection * moveSpeed * speedMultiplier * Time.fixedDeltaTime);
+        UpdateVisual(directionToPlayer);
     }
 
     private void Shoot()
@@ -112,5 +117,18 @@ public class EnemyShooterMovement : EnemyMovement
     public override void StopAfterHit()
     {
         // Стрелок не контактный враг.
+    }
+
+    private void UpdateVisual(Vector2 direction)
+    {
+        if (!flipVisual || visualRoot == null)
+            return;
+
+        if (Mathf.Abs(direction.x) < 0.05f)
+            return;
+
+        Vector3 scale = visualRoot.localScale;
+        scale.x = direction.x > 0f ? -Mathf.Abs(scale.x) : Mathf.Abs(scale.x);
+        visualRoot.localScale = scale;
     }
 }

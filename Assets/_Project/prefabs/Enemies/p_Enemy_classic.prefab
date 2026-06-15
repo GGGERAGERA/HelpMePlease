@@ -242,6 +242,10 @@ PrefabInstance:
       propertyPath: flashDuration
       value: 0.2
       objectReference: {fileID: 0}
+    - target: {fileID: 6986819420519733013, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: targetRenderer
+      value: 
+      objectReference: {fileID: 4545573587818066523}
     - target: {fileID: 8563352013519037183, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: m_Size.x
       value: 0.96875

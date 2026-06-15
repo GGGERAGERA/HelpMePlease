@@ -229,6 +229,10 @@ PrefabInstance:
       propertyPath: flashDuration
       value: 0.2
       objectReference: {fileID: 0}
+    - target: {fileID: 6986819420519733013, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: targetRenderer
+      value: 
+      objectReference: {fileID: 8383845657613111524}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -272,6 +276,8 @@ MonoBehaviour:
   projectilePrefab: {fileID: 1168613123775889235, guid: 3cd5630d49123414ba68ea2d0d673765, type: 3}
   firePoint: {fileID: 7560407389168839262}
   fireInterval: 4
+  visualRoot: {fileID: 6834189439628486322}
+  flipVisual: 1
 --- !u!114 &5832180790280448563 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6986819420519733013, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
