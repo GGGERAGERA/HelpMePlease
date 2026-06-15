@@ -196,9 +196,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBomberMovement
   playerTag: Player
   moveSpeed: 2
-  explosionRadius: 2
-  explosionDamage: 25
-  explosionFxPrefab: {fileID: 1219979587113692529, guid: e2fbd784016920342afe91db1e5c70d9, type: 3}
+  explosionRadius: 1
+  explosionDamage: 15
+  explosionFxPrefab: {fileID: 1774385019753254698, guid: f91913de896646447a357936450e42c5, type: 3}
 --- !u!4 &2600430001706665912 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2671083716182587235, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
