@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 543439076410041965}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.45, y: 0.09800005, z: 0}
+  m_LocalPosition: {x: 0.75, y: 0.056, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -57,7 +57,7 @@ Transform:
   m_GameObject: {fileID: 592375032635030297}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.45, y: 0.09800005, z: 0}
+  m_LocalPosition: {x: 0.75, y: 0.056, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -91,7 +91,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: -0.8, y: -0.8, z: -0.8}
+  m_LocalScale: {x: -1, y: -1, z: -1}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2790059930353412029}
@@ -4972,9 +4972,8 @@ GameObject:
   - component: {fileID: 5930085788941886523}
   - component: {fileID: 817849802606587231}
   - component: {fileID: 5458628035998651764}
-  - component: {fileID: -2851344532050293130}
   m_Layer: 0
-  m_Name: Pistol
+  m_Name: Rocket
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5109,35 +5108,6 @@ SortingGroup:
   m_SortingOrder: 0
   m_SortAtRoot: 0
   m_Sort3DAs2D: 0
---- !u!114 &-2851344532050293130
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4188297587154588541}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a9357282658ad6f4c9a7f56d7b50bf96, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Shoot
-  weaponData: {fileID: 11400000, guid: acd6c980f3b758a409e5285b329a175a, type: 2}
-  firePoint: {fileID: 5930085788941886523}
-  weaponAudioSource: {fileID: 0}
-  projectileCount: 1
-  projectilePierce: 0
-  projectileRicochet: 0
-  critChance: 0.05
-  critMultiplier: 2
-  bulletPrefab: {fileID: 1168613123775889235, guid: c85e1d8ec23ffba47836a61f5644eb61, type: 3}
-  ShootFX: {fileID: 4188297587154588541}
-  rotateToMouse: 1
-  moveAroundOwner: 1
-  owner: {fileID: 0}
-  orbitRadius: 0.5
-  weaponSprite: {fileID: 0}
-  recoilDistance: 0.12
-  recoilReturnSpeed: 14
 --- !u!1 &6937470469222571850
 GameObject:
   m_ObjectHideFlags: 0
@@ -5250,7 +5220,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
-  m_ConstrainProportionsScale: 1
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5930085788941886523}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -5303,7 +5273,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -4674427897357997025, guid: 7552172a543b68f47b7b0cb76cc5692e, type: 3}
+  m_Sprite: {fileID: 728457941966510583, guid: 7552172a543b68f47b7b0cb76cc5692e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0

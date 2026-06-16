@@ -185,7 +185,7 @@ public class Shoot : BaseWeapon
         // ���� ������ ��������� ���������� ������� �����,
         // � Unity angle 0 ������� ������.
         // ������� ��������� 180 ��������.
-        transform.rotation = Quaternion.Euler(0f, 0f, angle + 180f);
+        transform.rotation = Quaternion.Euler(0f, 0f, angle);
     }
 
     private Vector2 GetMouseDirectionFromOwner()
