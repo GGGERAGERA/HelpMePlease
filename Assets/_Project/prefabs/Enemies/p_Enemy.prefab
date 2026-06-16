@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 5140618788807294408}
   - component: {fileID: 6261945912111484072}
   - component: {fileID: 6986819420519733013}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: p_Enemy
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -232,6 +232,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: p_shadow1
       objectReference: {fileID: 0}
+    - target: {fileID: 551380718664416474, guid: e1e11e6161b3eb14fb0dd9b457971742, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 3161433651102554937, guid: e1e11e6161b3eb14fb0dd9b457971742, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -271,6 +275,10 @@ PrefabInstance:
     - target: {fileID: 3161433651102554937, guid: e1e11e6161b3eb14fb0dd9b457971742, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3900297725665032394, guid: e1e11e6161b3eb14fb0dd9b457971742, type: 3}
+      propertyPath: m_Layer
+      value: 8
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
