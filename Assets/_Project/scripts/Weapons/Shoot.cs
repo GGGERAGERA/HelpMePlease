@@ -98,9 +98,9 @@ public class Shoot : BaseWeapon
             );
 
 
-            Bullet bulletScript = bullet.GetComponent<Bullet>();
+            IWeaponProjectile projectile = bullet.GetComponent<IWeaponProjectile>();
 
-            if (bulletScript != null)
+            if (projectile != null)
             {
                 bool isCritical = RollCritical();
 
@@ -111,7 +111,7 @@ public class Shoot : BaseWeapon
                     finalDamage *= GetCritMultiplier();
                 }
 
-                bulletScript.Initialize(
+                projectile.Initialize(
                     finalDamage,
                     GetProjectileSpeed(),
                     GetRange(),
@@ -120,6 +120,10 @@ public class Shoot : BaseWeapon
                     isCritical,
                     projectileRicochet
                 );
+            }
+            else
+            {
+                Debug.LogWarning("Shoot: spawned projectile has no IWeaponProjectile component.");
             }
         }
 
