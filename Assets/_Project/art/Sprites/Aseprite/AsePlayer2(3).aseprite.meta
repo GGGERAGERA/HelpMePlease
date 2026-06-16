@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 3c854884fccd9604f99037283ede2b47
+guid: 928fc5017b1e8374784f4b16b7dabc21
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -127,9 +127,9 @@ ScriptedImporter:
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
   animatedSpriteImportData:
-  - name: AsePlayer2(2)
+  - name: AsePlayer2(3)
     originalName: 
-    pivot: {x: 0.49003986, y: -1.0238096}
+    pivot: {x: 0.49206352, y: -1}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -137,9 +137,9 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 251
-      height: 126
-    spriteID: 11acf460aa447834a9b94d565b5c907f
+      width: 252
+      height: 128
+    spriteID: b3625b8f71e17684e889478edce04945
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -153,25 +153,25 @@ ScriptedImporter:
   asepriteLayers:
   - layerIndex: 0
     uuid:
-      value0: 3903713297
+      value0: 1174829942
       value1: 0
       value2: 0
       value3: 0
     guid: 0
-    name: AsePlayer2(2)
+    name: AsePlayer2(3)
     layerFlags: 0
     layerType: 0
     blendMode: 0
     cells:
-    - name: AsePlayer2(2)
+    - name: AsePlayer2(3)
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:
-        x: 5
-        y: 129
-        width: 251
-        height: 126
-      spriteId: 11acf460aa447834a9b94d565b5c907f
+        x: 4
+        y: 128
+        width: 252
+        height: 128
+      spriteId: b3625b8f71e17684e889478edce04945
     linkedCells: []
     tileCells: []
     tileSetIndex: 0
