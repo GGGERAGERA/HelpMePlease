@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Bullet : MonoBehaviour
+public class Bullet : MonoBehaviour, IWeaponProjectile
 {
     public float speed = 10f;
     public float damage = 20f;

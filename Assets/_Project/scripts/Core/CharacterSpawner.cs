@@ -99,13 +99,16 @@ public class CharacterSpawner : MonoBehaviour
     {
         if (weaponData == null)
         {
+            Debug.LogWarning("CharacterSpawner: weaponData is null.");
             return;
         }
-
+        Debug.Log("CharacterSpawner: selected weapon = " + weaponData.weaponName);
         if (weaponData.weaponPrefab == null)
         {
+            Debug.LogWarning("CharacterSpawner: weaponPrefab is NULL in WeaponData: " + weaponData.weaponName);
             return;
         }
+        Debug.Log("CharacterSpawner: spawning weapon prefab = " + weaponData.weaponPrefab.name);
 
         Transform weaponPoint = player.transform.Find(weaponPointName);
 

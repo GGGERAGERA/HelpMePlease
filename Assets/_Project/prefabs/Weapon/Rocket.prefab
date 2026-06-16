@@ -4972,6 +4972,7 @@ GameObject:
   - component: {fileID: 5930085788941886523}
   - component: {fileID: 817849802606587231}
   - component: {fileID: 5458628035998651764}
+  - component: {fileID: 2027112042107839579}
   m_Layer: 0
   m_Name: Rocket
   m_TagString: Untagged
@@ -5108,6 +5109,35 @@ SortingGroup:
   m_SortingOrder: 0
   m_SortAtRoot: 0
   m_Sort3DAs2D: 0
+--- !u!114 &2027112042107839579
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4188297587154588541}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9357282658ad6f4c9a7f56d7b50bf96, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Shoot
+  weaponData: {fileID: 11400000, guid: 45a606d5ce8c2a940bca74ee9c5c1843, type: 2}
+  firePoint: {fileID: 2457338491928526576}
+  weaponAudioSource: {fileID: 0}
+  projectileCount: 1
+  projectilePierce: 0
+  projectileRicochet: 0
+  critChance: 0.05
+  critMultiplier: 2
+  bulletPrefab: {fileID: 1388127652163498701, guid: fe1338c73f5b5fd49b0c276734aa73ba, type: 3}
+  ShootFX: {fileID: 0}
+  rotateToMouse: 1
+  moveAroundOwner: 1
+  owner: {fileID: 0}
+  orbitRadius: 0.5
+  weaponSprite: {fileID: 0}
+  recoilDistance: 0.12
+  recoilReturnSpeed: 14
 --- !u!1 &6937470469222571850
 GameObject:
   m_ObjectHideFlags: 0
@@ -5203,7 +5233,7 @@ GameObject:
   - component: {fileID: 6904778869510139721}
   - component: {fileID: 6903499822289758278}
   m_Layer: 0
-  m_Name: Pistol
+  m_Name: Sprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
