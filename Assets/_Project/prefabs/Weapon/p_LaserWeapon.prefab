@@ -94,9 +94,11 @@ MonoBehaviour:
     m_Bits: 256
   beamWidth: 0.25
   drawDebugLine: 1
-  beamMaterial: {fileID: 0}
+  beamMaterial: {fileID: 2100000, guid: 995e2324eb1b03f4babb8105764afa89, type: 2}
   beamVisibleTime: 0.08
-  beamWidthVisual: 0.08
+  muzzleFxPrefab: {fileID: 3104720723642426815, guid: d9e86f94329e03f43bde3976d85ebb1a, type: 3}
+  hitFxPrefab: {fileID: 7998235011682297928, guid: 271779233902d0443a2052d8a6cee89b, type: 3}
+  fxLifetime: 0.25
 --- !u!82 &2175164308714764740
 AudioSource:
   m_ObjectHideFlags: 0

@@ -17,7 +17,11 @@ public class LaserWeapon : BaseWeapon
     [Header("Visual Beam")]
     [SerializeField] private Material beamMaterial;
     [SerializeField] private float beamVisibleTime = 0.08f;
-    [SerializeField] private float beamWidthVisual = 0.08f;
+
+
+    [SerializeField] private ParticleSystem muzzleFxPrefab;
+    [SerializeField] private ParticleSystem hitFxPrefab;
+    [SerializeField] private float fxLifetime = 0.25f;
 
     private Camera mainCamera;
 
@@ -54,11 +58,8 @@ public class LaserWeapon : BaseWeapon
 
         if (Input.GetMouseButton(0))
         {
-            Debug.Log("LASER LMB");
-
             if (CanAttack())
             {
-                Debug.Log("LASER CAN ATTACK");
                 Attack();
             }
         }
@@ -66,7 +67,6 @@ public class LaserWeapon : BaseWeapon
 
     public override void Attack()
     {
-        Debug.Log("LASER ATTACK");
         Vector2 origin = firePoint.position;
         Vector2 direction = GetAimDirectionFromFirePoint();
 
@@ -104,6 +104,8 @@ public class LaserWeapon : BaseWeapon
             Debug.DrawLine(origin, endPoint, Color.cyan, 0.12f);
 
         ShowBeam(origin, endPoint);
+        SpawnBeamFx(muzzleFxPrefab, origin, direction);
+        SpawnBeamFx(hitFxPrefab, endPoint, -direction);
 
         if (weaponData != null)
             PlaySound(weaponData.attackSound);
@@ -158,29 +160,51 @@ public class LaserWeapon : BaseWeapon
     }
     private void ShowBeam(Vector2 origin, Vector2 endPoint)
     {
-        GameObject beamObject = new GameObject("LaserBeam_Runtime");
+        CreateBeamLine(origin, endPoint, 0.22f, new Color(0f, 0.8f, 1f, 0.35f), "LaserGlow");
+        CreateBeamLine(origin, endPoint, 0.07f, Color.white, "LaserCore");
+    }
+
+    private void CreateBeamLine(Vector2 origin, Vector2 endPoint, float width, Color color, string name)
+    {
+        GameObject beamObject = new(name);
 
         LineRenderer line = beamObject.AddComponent<LineRenderer>();
 
         line.useWorldSpace = true;
         line.positionCount = 2;
-        line.startWidth = beamWidthVisual;
-        line.endWidth = beamWidthVisual;
-        line.numCapVertices = 4;
-        line.numCornerVertices = 4;
+        line.startWidth = width;
+        line.endWidth = width;
+        line.numCapVertices = 6;
+        line.numCornerVertices = 6;
         line.sortingOrder = 100;
 
-        if (beamMaterial != null)
-            line.material = beamMaterial;
-        else
-            line.material = new Material(Shader.Find("Sprites/Default"));
+        Material material = new Material(Shader.Find("Sprites/Default"));
+        material.color = color;
+        line.material = material;
 
-        line.startColor = Color.cyan;
-        line.endColor = Color.cyan;
+        line.startColor = color;
+        line.endColor = color;
 
         line.SetPosition(0, new Vector3(origin.x, origin.y, 0f));
         line.SetPosition(1, new Vector3(endPoint.x, endPoint.y, 0f));
 
         Destroy(beamObject, beamVisibleTime);
+    }
+
+    private void SpawnBeamFx(ParticleSystem prefab, Vector2 position, Vector2 direction)
+    {
+        if (prefab == null)
+            return;
+
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+
+        ParticleSystem fx = Instantiate(
+            prefab,
+            position,
+            Quaternion.Euler(0f, 0f, angle)
+        );
+
+        fx.Play();
+        Destroy(fx.gameObject, fxLifetime);
     }
 }
