@@ -5,6 +5,7 @@ public class CurrencyManager : MonoBehaviour
     public static CurrencyManager Instance;
 
     public int TotalGold { get; private set; }
+    private float goldGainMultiplier = 1f;
 
     private const string GoldKey = "TOTAL_GOLD";
 
@@ -25,7 +26,8 @@ public class CurrencyManager : MonoBehaviour
 
     public void AddGold(int amount)
     {
-        TotalGold += amount;
+        int finalAmount = Mathf.RoundToInt(amount * goldGainMultiplier);
+        TotalGold += finalAmount;
         SaveGold();
     }
 
@@ -49,5 +51,9 @@ public class CurrencyManager : MonoBehaviour
     private void LoadGold()
     {
         TotalGold = PlayerPrefs.GetInt(GoldKey, 0);
+    }
+    public void AddGoldGainPercent(float percent)
+    {
+        goldGainMultiplier *= 1f + percent;
     }
 }

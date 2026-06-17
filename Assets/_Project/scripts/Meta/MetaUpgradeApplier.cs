@@ -3,16 +3,12 @@ using UnityEngine;
 public class MetaUpgradeApplier : MonoBehaviour
 {
     [Header("Bonuses Per Level")]
-    [SerializeField] private float hpPerLevel = 5f;
-    [SerializeField] private float damagePerLevel = 1f;
-    [SerializeField] private float moveSpeedPerLevel = 0.15f;
-    [SerializeField] private float attackSpeedPerLevel = 0.1f;
-    [SerializeField] private float critDamagePerLevel = 0.25f;
-    [SerializeField] private float critChancePerLevel = 0.02f;
-    [SerializeField] private float piercingPerLevel = 1f;
-    [SerializeField] private float multishotPerLevel = 1f;
-    [SerializeField] private float ricochetPerLevel = 1f;
-
+    [SerializeField] private float hpPerLevel = 1f;
+    [SerializeField] private float damagePercentPerLevel = 0.05f;
+    [SerializeField] private float moveSpeedPercentPerLevel = 0.03f;
+    [SerializeField] private float xpGainPercentPerLevel = 0.05f;
+    [SerializeField] private float goldGainPercentPerLevel = 0.10f;
+    [SerializeField] private float pickupRadiusPercentPerLevel = 0.05f;
 
     public void ApplyTo(GameObject player, BaseWeapon[] weapons)
     {
@@ -28,26 +24,16 @@ public class MetaUpgradeApplier : MonoBehaviour
             return;
         }
 
-        int hpLevel = MetaProgressionManager.Instance.HpLevel;
-        int damageLevel = MetaProgressionManager.Instance.DamageLevel;
-        int moveSpeedLevel = MetaProgressionManager.Instance.MoveSpeedLevel;
-        int attackSpeedLevel = MetaProgressionManager.Instance.AttackSpeedLevel;
-        int critDamageLevel = MetaProgressionManager.Instance.CritDamageLevel;
-        int critChanceLevel = MetaProgressionManager.Instance.CritChanceLevel;
-        int piercingLevel = MetaProgressionManager.Instance.PiercingLevel;
-        int multishotLevel = MetaProgressionManager.Instance.MultishotLevel;
-        int ricochetLevel = MetaProgressionManager.Instance.RicochetLevel;
-
-
+        MetaProgressionManager meta = MetaProgressionManager.Instance;
 
         PlayerHealth health = player.GetComponent<PlayerHealth>();
         CharacterMovement2D movement = player.GetComponent<CharacterMovement2D>();
 
         if (health != null)
-            health.AddMaxHealth(hpLevel * hpPerLevel);
+            health.AddMaxHealth(meta.HpLevel * hpPerLevel);
 
         if (movement != null)
-            movement.AddMoveSpeed(moveSpeedLevel * moveSpeedPerLevel);
+            movement.AddMoveSpeedPercent(meta.MoveSpeedLevel * moveSpeedPercentPerLevel);
 
         if (weapons != null)
         {
@@ -56,28 +42,23 @@ public class MetaUpgradeApplier : MonoBehaviour
                 if (weapon == null)
                     continue;
 
-                weapon.AddRuntimeDamage(damageLevel * damagePerLevel);
-                weapon.AddFireRatePercent(attackSpeedLevel * attackSpeedPerLevel);
-                weapon.AddCritMultiplier(critDamageLevel * critDamagePerLevel);
-                weapon.AddCritChance(critChanceLevel * critChancePerLevel);
-                weapon.AddPierce(Mathf.RoundToInt(piercingLevel * piercingPerLevel));
-                weapon.AddProjectileCount(Mathf.RoundToInt(multishotLevel * multishotPerLevel));
-                weapon.AddRicochet(Mathf.RoundToInt(ricochetLevel * ricochetPerLevel));
+                weapon.AddDamagePercent(meta.DamageLevel * damagePercentPerLevel);
             }
         }
 
-        Debug.Log(
-            $"Meta applied: HP +{hpLevel * hpPerLevel}, " +
-            $"Damage +{damageLevel * damagePerLevel}, " +
-            $"MoveSpeed +{moveSpeedLevel * moveSpeedPerLevel}" +
-            $"AttackSpeed +{attackSpeedLevel * attackSpeedPerLevel}, " +
-            $"CritDamage +{critDamageLevel * critDamagePerLevel}, " +
-            $"CritChance +{critChanceLevel * critChancePerLevel}, " +
-            $"Piercing +{piercingLevel * piercingPerLevel}, " +
-            $"Multishot +{multishotLevel * multishotPerLevel}, " +
-            $"Ricochet +{ricochetLevel * ricochetPerLevel}"
+        ApplyXpGain(meta.XpGainLevel * xpGainPercentPerLevel);
+        ApplyGoldGain(meta.GoldGainLevel * goldGainPercentPerLevel);
+    }
 
+    private void ApplyXpGain(float percent)
+    {
+        if (ExperienceManager.Instance != null)
+            ExperienceManager.Instance.AddXpGainPercent(percent);
+    }
 
-        );
+    private void ApplyGoldGain(float percent)
+    {
+        if (CurrencyManager.Instance != null)
+            CurrencyManager.Instance.AddGoldGainPercent(percent);
     }
 }

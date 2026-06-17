@@ -12,6 +12,7 @@ public class ExperienceManager : MonoBehaviour
     public int currentExp = 0;
 
     private int expToNextLevel;
+    private float xpGainMultiplier = 1f;
 
     public UnityEvent<int, int> OnExperienceChanged;
     public UnityEvent<int> OnLevelUp;
@@ -44,7 +45,7 @@ public class ExperienceManager : MonoBehaviour
             return;
         }
 
-        currentExp += amount;
+        currentExp += Mathf.RoundToInt(amount * xpGainMultiplier);
 
         while (currentExp >= expToNextLevel && currentLevel < levelData.maxLevel)
         {
@@ -54,6 +55,8 @@ public class ExperienceManager : MonoBehaviour
 
         UpdateExperienceHUD();
         OnExperienceChanged?.Invoke(currentExp, expToNextLevel);
+
+
     }
 
     private void LevelUp()
@@ -131,5 +134,10 @@ public class ExperienceManager : MonoBehaviour
     public int GetRequiredExpForCurrentLevel()
     {
         return GetRequiredExpForLevel(currentLevel);
+    }
+
+    public void AddXpGainPercent(float percent)
+    {
+        xpGainMultiplier *= 1f + percent;
     }
 }

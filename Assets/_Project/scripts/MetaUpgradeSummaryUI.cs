@@ -9,13 +9,9 @@ public class MetaUpgradeSummaryUI : MonoBehaviour
     [SerializeField] private Sprite hpIcon;
     [SerializeField] private Sprite damageIcon;
     [SerializeField] private Sprite moveSpeedIcon;
-    [SerializeField] private Sprite attackSpeedIcon;
-    [SerializeField] private Sprite critDamageIcon;
-    [SerializeField] private Sprite critChanceIcon;
-    [SerializeField] private Sprite piercingIcon;
-    [SerializeField] private Sprite multishotIcon;
-    [SerializeField] private Sprite ricochetIcon;
-    [SerializeField] private Sprite knockbackIcon;
+    [SerializeField] private Sprite xpGainIcon;
+    [SerializeField] private Sprite goldGainIcon;
+    [SerializeField] private Sprite pickupRadiusIcon;
 
     private void OnEnable()
     {
@@ -30,16 +26,11 @@ public class MetaUpgradeSummaryUI : MonoBehaviour
             return;
 
         AddIfOwned(hpIcon, "HP", MetaProgressionManager.Instance.HpLevel);
-        AddIfOwned(moveSpeedIcon, "SPD", MetaProgressionManager.Instance.MoveSpeedLevel);
         AddIfOwned(damageIcon, "DMG", MetaProgressionManager.Instance.DamageLevel);
-        AddIfOwned(attackSpeedIcon, "ATK SPD", MetaProgressionManager.Instance.AttackSpeedLevel);
-        AddIfOwned(critDamageIcon, "CRIT DMG", MetaProgressionManager.Instance.CritDamageLevel);
-        AddIfOwned(critChanceIcon, "CRIT %", MetaProgressionManager.Instance.CritChanceLevel);
-        AddIfOwned(ricochetIcon, "RICO", MetaProgressionManager.Instance.RicochetLevel);
-        AddIfOwned(piercingIcon, "PIERCE", MetaProgressionManager.Instance.PiercingLevel);
-        AddIfOwned(multishotIcon, "BULLETS", MetaProgressionManager.Instance.MultishotLevel);
-        AddIfOwned(knockbackIcon, "KNOCKBACK", MetaProgressionManager.Instance.KnockbackLevel);
-
+        AddIfOwned(moveSpeedIcon, "SPD", MetaProgressionManager.Instance.MoveSpeedLevel);
+        AddIfOwned(xpGainIcon, "XP", MetaProgressionManager.Instance.XpGainLevel);
+        AddIfOwned(goldGainIcon, "GOLD", MetaProgressionManager.Instance.GoldGainLevel);
+        AddIfOwned(pickupRadiusIcon, "PICKUP", MetaProgressionManager.Instance.PickupRadiusLevel);
     }
 
     private void AddIfOwned(Sprite icon, string upgradeName, int level)
@@ -54,8 +45,6 @@ public class MetaUpgradeSummaryUI : MonoBehaviour
     private void Clear()
     {
         foreach (Transform child in container)
-        {
             Destroy(child.gameObject);
-        }
     }
 }

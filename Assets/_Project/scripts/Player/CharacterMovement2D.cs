@@ -59,6 +59,10 @@ public class CharacterMovement2D : MonoBehaviour
     {
         speed += amount;
     }
+    public void AddMoveSpeedPercent(float percent)
+    {
+        speed *= 1f + percent;
+    }
 
     private void FixedUpdate()
     {
