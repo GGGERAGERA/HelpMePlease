@@ -9,6 +9,7 @@ public interface IWeaponProjectile
         Vector2 direction,
         int pierce = 0,
         bool isCritical = false,
-        int ricochet = 0
+        int ricochet = 0,
+        float knockbackForce = 0f
     );
 }

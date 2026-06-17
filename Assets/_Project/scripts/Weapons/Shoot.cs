@@ -6,6 +6,7 @@ public class Shoot : BaseWeapon
     [Header("Shoot Settings")]
     public GameObject bulletPrefab;
     public GameObject ShootFX;
+    [SerializeField] private float baseKnockbackForce = 4f;
 
     [Header("Aim")]
     [SerializeField] private bool rotateToMouse = true;
@@ -19,6 +20,7 @@ public class Shoot : BaseWeapon
     [Header("Recoil")]
     [SerializeField] private float recoilDistance = 0.12f;
     [SerializeField] private float recoilReturnSpeed = 14f;
+
 
     private float currentRecoil;
 
@@ -118,7 +120,8 @@ public class Shoot : BaseWeapon
                     direction,
                     projectilePierce,
                     isCritical,
-                    projectileRicochet
+                    projectileRicochet,
+                   GetKnockbackForce(baseKnockbackForce)
                 );
             }
             else

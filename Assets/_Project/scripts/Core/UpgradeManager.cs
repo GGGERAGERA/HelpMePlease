@@ -83,10 +83,32 @@ public class UpgradeManager : MonoBehaviour
     {
         List<UpgradeData> available = new List<UpgradeData>();
 
+        int playerLevel = ExperienceManager.Instance != null
+            ? ExperienceManager.Instance.currentLevel
+            : 1;
+
+        bool legendaryLevel = playerLevel == 10;
+
         foreach (UpgradeData upgrade in allUpgrades)
         {
-            if (upgrade != null)
-                available.Add(upgrade);
+            if (upgrade == null)
+                continue;
+
+            if (legendaryLevel)
+            {
+                if (upgrade.rarity == UpgradeRarity.Legendary)
+                    available.Add(upgrade);
+
+                continue;
+            }
+
+            if (upgrade.rarity == UpgradeRarity.Legendary)
+                continue;
+
+            if (playerLevel < upgrade.minPlayerLevel)
+                continue;
+
+            available.Add(upgrade);
         }
 
         List<UpgradeData> result = new List<UpgradeData>();
@@ -118,41 +140,40 @@ public class UpgradeManager : MonoBehaviour
 
         switch (upgrade.upgradeType)
         {
-            case UpgradeType.MaxHealth:
+            case UpgradeType.MaxHealthFlat:
                 ApplyMaxHealthUpgrade(health, stats, upgrade.value);
                 break;
 
-            case UpgradeType.Heal:
-                ApplyHealUpgrade(health, upgrade.value);
+            case UpgradeType.MoveSpeedPercent:
+                ApplyMoveSpeedPercentUpgrade(movement, stats, upgrade.value);
                 break;
 
-            case UpgradeType.MoveSpeed:
-                ApplyMoveSpeedUpgrade(movement, stats, upgrade.value);
-                break;
-
-            case UpgradeType.WeaponDamage:
-                ApplyWeaponDamageUpgrade(weapons, upgrade.value);
+            case UpgradeType.WeaponDamagePercent:
+                ApplyWeaponDamagePercentUpgrade(weapons, upgrade.value);
                 break;
 
             case UpgradeType.FireRatePercent:
                 ApplyFireRateUpgrade(weapons, upgrade.value);
                 break;
 
-            case UpgradeType.WeaponRange:
-                ApplyWeaponRangeUpgrade(weapons, upgrade.value);
-                break;
-
-            case UpgradeType.OrbitRadius:
-                ApplyOrbitRadiusUpgrade(weapons, upgrade.value);
-                break;
-            case UpgradeType.ProjectileCount:
+            case UpgradeType.ExtraShot:
                 ApplyProjectileCountUpgrade(weapons, upgrade.value);
                 break;
-            case UpgradeType.ProjectilePierce:
-                ApplyPierceUpgrade(weapons, upgrade.value);
+
+            case UpgradeType.CritChance:
+                ApplyCritChanceUpgrade(weapons, upgrade.value);
                 break;
-            case UpgradeType.ProjectileRicochet:
-                ApplyRicochetUpgrade(weapons, upgrade.value);
+
+            case UpgradeType.CritDamage:
+                ApplyCritDamageUpgrade(weapons, upgrade.value);
+                break;
+
+            case UpgradeType.KnockbackPercent:
+                ApplyKnockbackUpgrade(weapons, upgrade.value);
+                break;
+
+            default:
+                Debug.LogWarning("UpgradeManager: upgrade not implemented yet: " + upgrade.upgradeType);
                 break;
         }
     }
@@ -261,6 +282,51 @@ public class UpgradeManager : MonoBehaviour
             {
                 weapon.AddRicochet(Mathf.RoundToInt(value));
             }
+        }
+    }
+
+    private void ApplyMoveSpeedPercentUpgrade(CharacterMovement2D movement, PlayerStats stats, float value)
+    {
+        if (movement != null)
+            movement.speed *= 1f + value;
+
+        if (stats != null)
+            stats.moveSpeed *= 1f + value;
+    }
+
+    private void ApplyWeaponDamagePercentUpgrade(BaseWeapon[] weapons, float value)
+    {
+        foreach (BaseWeapon weapon in weapons)
+        {
+            if (weapon != null)
+                weapon.AddDamagePercent(value);
+        }
+    }
+
+    private void ApplyCritChanceUpgrade(BaseWeapon[] weapons, float value)
+    {
+        foreach (BaseWeapon weapon in weapons)
+        {
+            if (weapon != null)
+                weapon.AddCritChance(value);
+        }
+    }
+
+    private void ApplyCritDamageUpgrade(BaseWeapon[] weapons, float value)
+    {
+        foreach (BaseWeapon weapon in weapons)
+        {
+            if (weapon != null)
+                weapon.AddCritMultiplier(value);
+        }
+    }
+
+    private void ApplyKnockbackUpgrade(BaseWeapon[] weapons, float value)
+    {
+        foreach (BaseWeapon weapon in weapons)
+        {
+            if (weapon != null)
+                weapon.AddKnockbackPercent(value);
         }
     }
 }

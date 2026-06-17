@@ -7,7 +7,6 @@ public class Bullet : MonoBehaviour, IWeaponProjectile
     public float damage = 20f;
     public float range = 10f;
 
-    [SerializeField] private float knockbackForce = 4f;
     [SerializeField] private float ricochetSearchRadius = 4f;
     [SerializeField] private float maxLifetime = 5f;
 
@@ -16,6 +15,7 @@ public class Bullet : MonoBehaviour, IWeaponProjectile
     private int pierceCount;
     private int ricochetCount;
     private bool isCritical;
+    private float runtimeKnockbackForce;
 
     private readonly HashSet<EnemyHealth> hitEnemies = new HashSet<EnemyHealth>();
 
@@ -26,7 +26,8 @@ public class Bullet : MonoBehaviour, IWeaponProjectile
         Vector2 dir,
         int pierce = 0,
         bool critical = false,
-        int ricochet = 0
+        int ricochet = 0,
+        float knockbackForce = 0f
     )
     {
         damage = bulletDamage;
@@ -37,6 +38,7 @@ public class Bullet : MonoBehaviour, IWeaponProjectile
         isCritical = critical;
         ricochetCount = ricochet;
         startPosition = transform.position;
+        runtimeKnockbackForce = knockbackForce;
     }
     private void Start()
     {
@@ -67,7 +69,7 @@ public class Bullet : MonoBehaviour, IWeaponProjectile
         EnemyMovement enemyMovement = enemyHealth.GetComponent<EnemyMovement>();
 
         if (enemyMovement != null)
-            enemyMovement.ApplyKnockback(direction, knockbackForce);
+            enemyMovement.ApplyKnockback(direction, runtimeKnockbackForce);
 
         if (ricochetCount > 0 && TryRicochet(enemyHealth))
         {

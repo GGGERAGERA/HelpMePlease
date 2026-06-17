@@ -11,6 +11,8 @@ public abstract class BaseWeapon : MonoBehaviour
     private float runtimeDamageBonus = 0f;
     private float runtimeRangeBonus = 0f;
     private float fireRateMultiplier = 1f;
+    private float damageMultiplier = 1f;
+    private float knockbackMultiplier = 1f;
 
     [SerializeField] protected AudioSource weaponAudioSource;
 
@@ -22,6 +24,8 @@ public abstract class BaseWeapon : MonoBehaviour
     [SerializeField] protected float critChance = 0.05f;
 
     [SerializeField] protected float critMultiplier = 2f;
+
+
 
     private bool weaponDataApplied;
 
@@ -89,7 +93,9 @@ public abstract class BaseWeapon : MonoBehaviour
     public int GetDamage()
     {
         float weaponDamage = weaponData != null ? weaponData.damage : 10f;
-        return Mathf.RoundToInt(weaponDamage + runtimeDamageBonus);
+        float finalDamage = (weaponDamage + runtimeDamageBonus) * damageMultiplier;
+
+        return Mathf.RoundToInt(finalDamage);
     }
 
     public float GetRange()
@@ -176,5 +182,24 @@ public abstract class BaseWeapon : MonoBehaviour
             clip,
             weaponData.soundVolume
         );
+    }
+
+    public void AddDamagePercent(float percent)
+    {
+        damageMultiplier *= 1f + percent;
+    }
+
+    public void AddKnockbackPercent(float percent)
+    {
+        knockbackMultiplier *= 1f + percent;
+    }
+
+    public float GetKnockbackMultiplier()
+    {
+        return knockbackMultiplier;
+    }
+    public float GetKnockbackForce(float baseForce)
+    {
+        return baseForce * knockbackMultiplier;
     }
 }

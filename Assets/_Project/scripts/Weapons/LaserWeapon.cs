@@ -97,6 +97,16 @@ public class LaserWeapon : BaseWeapon
                     finalDamage *= GetCritMultiplier();
 
                 enemy.TakeDamage(finalDamage, hit.point, isCritical);
+                EnemyMovement movement = enemy.GetComponent<EnemyMovement>();
+
+                if (movement != null)
+                {
+                    Vector2 knockbackDirection = enemy.transform.position - transform.position;
+                    movement.ApplyKnockback(
+                        knockbackDirection,
+                        GetKnockbackForce(3f)
+                    );
+                }
             }
         }
 

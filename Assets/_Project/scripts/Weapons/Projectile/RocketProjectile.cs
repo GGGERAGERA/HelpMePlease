@@ -14,6 +14,7 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile
     private Vector3 startPosition;
     private bool exploded;
     private bool isCritical;
+    private float knockbackForce;
 
     public void Initialize(
         float damage,
@@ -22,7 +23,8 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile
         Vector2 direction,
         int pierce = 0,
         bool isCritical = false,
-        int ricochet = 0
+        int ricochet = 0,
+        float knockbackForce = 0f
     )
     {
         this.damage = damage;
@@ -30,6 +32,7 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile
         this.range = range;
         this.direction = direction.normalized;
         this.isCritical = isCritical;
+        this.knockbackForce = knockbackForce;
 
         startPosition = transform.position;
 
@@ -86,6 +89,11 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile
 
             damagedEnemies.Add(enemy);
             enemy.TakeDamage(damage, transform.position, isCritical);
+
+            EnemyMovement enemyMovement = enemy.GetComponent<EnemyMovement>();
+
+            if (enemyMovement != null)
+                enemyMovement.ApplyKnockback(direction, knockbackForce);
         }
 
         Destroy(gameObject);
