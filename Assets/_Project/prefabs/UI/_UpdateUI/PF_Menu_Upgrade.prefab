@@ -753,6 +753,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2927790094461835394}
+  - component: {fileID: 5334853512679212056}
   m_Layer: 5
   m_Name: PF_Menu_Upgrade
   m_TagString: Untagged
@@ -783,6 +784,28 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 450, y: 250}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &5334853512679212056
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4854466668232017033}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a461a7adb329bf24d95d103248a78258, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MetaUpgradeCardUI
+  type: 0
+  title: HP
+  description: +1 HP per level
+  bonusFormat: 
+  titleText: {fileID: 8046905182655399024}
+  levelText: {fileID: 5724752436639027944}
+  descriptionText: {fileID: 7444289123775053653}
+  currentBonusText: {fileID: 2528590321030036180}
+  costText: {fileID: 5407280484389938595}
+  buyButton: {fileID: 5026967671392126442}
 --- !u!1 &5068095108841277065
 GameObject:
   m_ObjectHideFlags: 0
@@ -1162,6 +1185,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 63160bda7609811499676be6d473d491, type: 3}
+--- !u!114 &5026967671392126442 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7010915958928206220, guid: 63160bda7609811499676be6d473d491, type: 3}
+  m_PrefabInstance: {fileID: 2632537179141385318}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!224 &7366245003917795922 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4806060227944189492, guid: 63160bda7609811499676be6d473d491, type: 3}

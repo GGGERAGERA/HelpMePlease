@@ -119,6 +119,17 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!114 &231705310 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1498835640838865321, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
+  m_PrefabInstance: {fileID: 6017932440003891895}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a461a7adb329bf24d95d103248a78258, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MetaUpgradeCardUI
 --- !u!1 &335627022
 GameObject:
   m_ObjectHideFlags: 0
@@ -422,6 +433,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &592239212 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3225192179649833771, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
+  m_PrefabInstance: {fileID: 6017932440003891895}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a461a7adb329bf24d95d103248a78258, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MetaUpgradeCardUI
 --- !u!1 &620178136 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4733027200043929766, guid: 7691ec4bfd8bbe745b3b6067ece65cc2, type: 3}
@@ -555,6 +577,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
+--- !u!114 &1122520862 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7003440441298646858, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
+  m_PrefabInstance: {fileID: 6017932440003891895}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a461a7adb329bf24d95d103248a78258, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MetaUpgradeCardUI
 --- !u!1 &1153879076
 GameObject:
   m_ObjectHideFlags: 0
@@ -615,6 +648,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 893cecb3a2348f84086914e8a8ac6582, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponSelectionUI
+--- !u!114 &1277586047 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4300814021346422136, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
+  m_PrefabInstance: {fileID: 6017932440003891895}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a461a7adb329bf24d95d103248a78258, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MetaUpgradeCardUI
 --- !u!1 &1315709379
 GameObject:
   m_ObjectHideFlags: 0
@@ -659,6 +703,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1478489931 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3057382853159278288, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
+  m_PrefabInstance: {fileID: 6017932440003891895}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &1516591359
 GameObject:
   m_ObjectHideFlags: 0
@@ -1040,11 +1095,43 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 5150865801329721749, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
   m_PrefabInstance: {fileID: 6017932440003891895}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1575888038
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1575888029}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5263070b54ccde458b11ef7982fcda0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MetaUpgradeShopUI
+  goldText: {fileID: 1478489931}
+  upgradeCards:
+  - {fileID: 592239212}
+  - {fileID: 1277586047}
+  - {fileID: 1122520862}
+  - {fileID: 1788873984}
+  - {fileID: 231705310}
+  - {fileID: 2068439631}
+  summaryUI: {fileID: 0}
 --- !u!1 &1740005503 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5639899345732557663, guid: 7691ec4bfd8bbe745b3b6067ece65cc2, type: 3}
   m_PrefabInstance: {fileID: 1846747579043978965}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1788873984 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3401831162805387345, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
+  m_PrefabInstance: {fileID: 6017932440003891895}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a461a7adb329bf24d95d103248a78258, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MetaUpgradeCardUI
 --- !u!1 &1801975173
 GameObject:
   m_ObjectHideFlags: 0
@@ -1113,6 +1200,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2068439631 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2436347883328729376, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
+  m_PrefabInstance: {fileID: 6017932440003891895}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a461a7adb329bf24d95d103248a78258, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MetaUpgradeCardUI
 --- !u!1001 &1846747579043978965
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2357,6 +2455,18 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1498835640838865321, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
+      propertyPath: type
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1498835640838865321, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
+      propertyPath: title
+      value: Move Speed
+      objectReference: {fileID: 0}
+    - target: {fileID: 1498835640838865321, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
+      propertyPath: description
+      value: +3% move speed per level
+      objectReference: {fileID: 0}
     - target: {fileID: 2125752270979522070, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -2380,6 +2490,14 @@ PrefabInstance:
     - target: {fileID: 2125752270979522070, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2133401812528103736, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
+      propertyPath: m_Name
+      value: PF_Menu_Upgrade (Move Speed)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2708243944590388154, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
+      propertyPath: m_Name
+      value: PF_Menu_Upgrade (HP)
       objectReference: {fileID: 0}
     - target: {fileID: 3666863511982371527, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
       propertyPath: m_AnchorMax.y
@@ -2801,6 +2919,18 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7003440441298646858, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
+      propertyPath: type
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7003440441298646858, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
+      propertyPath: title
+      value: DAMAGE
+      objectReference: {fileID: 0}
+    - target: {fileID: 7003440441298646858, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
+      propertyPath: description
+      value: +5% damage per level
+      objectReference: {fileID: 0}
     - target: {fileID: 7312830640823036910, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -2825,6 +2955,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7522846799488956379, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
+      propertyPath: m_Name
+      value: PF_Menu_Upgrade (Damage)
+      objectReference: {fileID: 0}
     - target: {fileID: 8103170214790634094, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -2873,10 +3007,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 8677697931504578591, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5759412740961163090, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1575888038}
   m_SourcePrefab: {fileID: 100100000, guid: 14ab3f1864d341d41b597ca79864509a, type: 3}
 --- !u!1 &6423577524848021185 stripped
 GameObject:

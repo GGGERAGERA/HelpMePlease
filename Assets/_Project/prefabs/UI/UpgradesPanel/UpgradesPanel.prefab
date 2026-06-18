@@ -292,7 +292,6 @@ GameObject:
   - component: {fileID: 5072065862962324830}
   - component: {fileID: 2074068312851776449}
   - component: {fileID: 1809744505624603810}
-  - component: {fileID: 8677697931504578591}
   m_Layer: 5
   m_Name: UpgradesPanel
   m_TagString: Untagged
@@ -371,34 +370,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &8677697931504578591
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5759412740961163090}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5263070b54ccde458b11ef7982fcda0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MetaUpgradeShopUI
-  goldText: {fileID: 0}
-  hpText: {fileID: 0}
-  hpButton: {fileID: 0}
-  damageText: {fileID: 0}
-  damageButton: {fileID: 0}
-  moveSpeedText: {fileID: 0}
-  moveSpeedButton: {fileID: 0}
-  xpGainText: {fileID: 0}
-  xpGainButton: {fileID: 0}
-  goldGainText: {fileID: 0}
-  goldGainButton: {fileID: 0}
-  pickupRadiusText: {fileID: 0}
-  pickupRadiusButton: {fileID: 0}
-  purchaseSound: {fileID: 8300000, guid: 9d32d90d5c08c6043b44285b8e8a0dad, type: 3}
-  purchaseVolume: 1
-  summaryUI: {fileID: 0}
 --- !u!1 &7311995919535232968
 GameObject:
   m_ObjectHideFlags: 0
