@@ -32,9 +32,18 @@ public class ExperiencePickup : MonoBehaviour
         if (player == null || isCollected)
             return;
 
+        PlayerPickupRadius pickupRadius = player.GetComponent<PlayerPickupRadius>();
+
+        float currentMagnetRadius = magnetRadius;
+
+        if (pickupRadius != null)
+        {
+            currentMagnetRadius = pickupRadius.CurrentRadius;
+        }
+
         float distance = Vector2.Distance(transform.position, player.position);
 
-        if (distance <= magnetRadius)
+        if (distance <= currentMagnetRadius)
         {
             transform.position = Vector2.MoveTowards(
                 transform.position,
