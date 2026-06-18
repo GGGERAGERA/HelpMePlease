@@ -363,14 +363,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MetaUpgradeApplier
   hpPerLevel: 5
-  damagePerLevel: 1
-  moveSpeedPerLevel: 0.15
-  attackSpeedPerLevel: 0.1
-  critDamagePerLevel: 0.25
-  critChancePerLevel: 0.02
-  piercingPerLevel: 1
-  multishotPerLevel: 1
-  ricochetPerLevel: 1
+  damagePercentPerLevel: 0.05
+  moveSpeedPercentPerLevel: 0.03
+  xpGainPercentPerLevel: 0.05
+  goldGainPercentPerLevel: 0.1
+  pickupRadiusPercentPerLevel: 0.05
 --- !u!114 &46915852
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -41,9 +41,8 @@ GameObject:
   m_Component:
   - component: {fileID: 6834189439628486322}
   - component: {fileID: 8383845657613111524}
-  - component: {fileID: 2366039752387171200}
   m_Layer: 0
-  m_Name: Enemy1_0
+  m_Name: Enemy1Shooter
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -62,7 +61,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1519862368115378757}
+  m_Father: {fileID: 4773886692617478305}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &8383845657613111524
 SpriteRenderer:
@@ -123,28 +122,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!95 &2366039752387171200
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7106779362139084517}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: a00c6b57824f0e241a289f8cba2f666d, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!1001 &3460517932262817062
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -253,15 +230,18 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 2671083716182587235, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-      insertIndex: 0
-      addedObject: {fileID: 6834189439628486322}
-    - targetCorrespondingSourceObject: {fileID: 2671083716182587235, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7560407389168839262}
+    - targetCorrespondingSourceObject: {fileID: 8234403241518505351, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6834189439628486322}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       insertIndex: -1
       addedObject: {fileID: -4657333644522867412}
+    - targetCorrespondingSourceObject: {fileID: 174528772103428958, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7585222145449660943}
   m_SourcePrefab: {fileID: 100100000, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
 --- !u!4 &1519862368115378757 stripped
 Transform:
@@ -294,6 +274,38 @@ MonoBehaviour:
   fireInterval: 4
   visualRoot: {fileID: 6834189439628486322}
   flipVisual: 1
+--- !u!1 &3632775731541157496 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 174528772103428958, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+  m_PrefabInstance: {fileID: 3460517932262817062}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &7585222145449660943
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3632775731541157496}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: a00c6b57824f0e241a289f8cba2f666d, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!4 &4773886692617478305 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8234403241518505351, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+  m_PrefabInstance: {fileID: 3460517932262817062}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &5832180790280448563 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6986819420519733013, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
