@@ -48,6 +48,8 @@ public class MetaUpgradeApplier : MonoBehaviour
 
         ApplyXpGain(meta.XpGainLevel * xpGainPercentPerLevel);
         ApplyGoldGain(meta.GoldGainLevel * goldGainPercentPerLevel);
+        ApplyPickupRadius(player, meta.PickupRadiusLevel * pickupRadiusPercentPerLevel
+);
     }
 
     private void ApplyXpGain(float percent)
@@ -60,5 +62,15 @@ public class MetaUpgradeApplier : MonoBehaviour
     {
         if (CurrencyManager.Instance != null)
             CurrencyManager.Instance.AddGoldGainPercent(percent);
+    }
+    private void ApplyPickupRadius(GameObject player, float percent)
+    {
+        PlayerPickupRadius pickupRadius =
+            player.GetComponent<PlayerPickupRadius>();
+
+        if (pickupRadius != null)
+        {
+            pickupRadius.AddRadiusPercent(percent);
+        }
     }
 }
