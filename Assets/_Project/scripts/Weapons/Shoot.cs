@@ -1,4 +1,3 @@
-using Unity.Mathematics;
 using UnityEngine;
 
 public class Shoot : BaseWeapon
@@ -7,6 +6,7 @@ public class Shoot : BaseWeapon
     public GameObject bulletPrefab;
     public GameObject ShootFX;
     [SerializeField] private float baseKnockbackForce = 4f;
+    [SerializeField] private float spreadAngle = 12f;
 
     [Header("Aim")]
     [SerializeField] private bool rotateToMouse = true;
@@ -21,23 +21,20 @@ public class Shoot : BaseWeapon
     [SerializeField] private float recoilDistance = 0.12f;
     [SerializeField] private float recoilReturnSpeed = 14f;
 
-
     private float currentRecoil;
 
     protected override void Start()
     {
-        if (bulletPrefab == null)
-        return;
-        bulletPrefab.SetActive(true);
         base.Start();
+
+        if (bulletPrefab != null)
+            bulletPrefab.SetActive(true);
 
         if (weaponSprite == null)
             weaponSprite = GetComponentInChildren<SpriteRenderer>();
 
         if (owner == null && transform.parent != null)
             owner = transform.parent;
-
-
     }
 
     protected override void Update()
@@ -54,19 +51,20 @@ public class Shoot : BaseWeapon
             RotateToMouse();
 
         if (Input.GetMouseButton(0) && CanAttack())
-        {
             Attack();
-        }
 
         currentRecoil = Mathf.MoveTowards(
-        currentRecoil,
-        0f,
-        recoilReturnSpeed * Time.deltaTime
-);
+            currentRecoil,
+            0f,
+            recoilReturnSpeed * Time.deltaTime
+        );
     }
 
     public override void Attack()
     {
+        if (!CanAttack())
+            return;
+
         if (bulletPrefab == null)
             return;
 
@@ -75,84 +73,119 @@ public class Shoot : BaseWeapon
 
         Vector2 baseDirection = GetShootDirection();
 
-        float spreadAngle = 12f;
-        int count = Mathf.Max(1, projectileCount);
+        FireShotGroup(baseDirection, projectileCount);
 
-        for (int i = 0; i < count; i++)
-        {
-            float angleOffset = 0f;
-
-            if (count > 1)
-            {
-                angleOffset = Mathf.Lerp(
-                    -spreadAngle,
-                    spreadAngle,
-                    (float)i / (count - 1)
-                );
-            }
-
-            Vector2 direction = RotateVector(baseDirection, angleOffset);
-
-            GameObject bullet = Instantiate(
-                bulletPrefab,
-                firePoint.position,
-                Quaternion.identity
-            );
-
-
-            IWeaponProjectile projectile = bullet.GetComponent<IWeaponProjectile>();
-
-            if (projectile != null)
-            {
-                bool isCritical = RollCritical();
-
-                float finalDamage = GetDamage();
-
-                if (isCritical)
-                {
-                    finalDamage *= GetCritMultiplier();
-                }
-
-                projectile.Initialize(
-                    finalDamage,
-                    GetProjectileSpeed(),
-                    GetRange(),
-                    direction,
-                    projectilePierce,
-                    isCritical,
-                    projectileRicochet,
-                   GetKnockbackForce(baseKnockbackForce)
-                );
-            }
-            else
-            {
-                Debug.LogWarning("Shoot: spawned projectile has no IWeaponProjectile component.");
-            }
-        }
+        TryFireEveryFifthExtraShot(baseDirection);
 
         if (weaponData != null)
             PlaySound(weaponData.attackSound);
 
         currentRecoil = recoilDistance;
-        MarkAttackTime();
 
-        //Спавн эффекта
+        SpawnShootFx();
+
+        MarkAttackTime();
+    }
+
+    private void FireShotGroup(Vector2 baseDirection, int count)
+    {
+        int safeCount = Mathf.Max(1, count);
+
+        for (int i = 0; i < safeCount; i++)
+        {
+            float angleOffset = GetSpreadOffset(i, safeCount);
+            Vector2 direction = RotateVector(baseDirection, angleOffset);
+
+            SpawnSingleProjectile(direction);
+        }
+    }
+
+    private float GetSpreadOffset(int index, int count)
+    {
+        if (count <= 1)
+            return 0f;
+
+        return Mathf.Lerp(
+            -spreadAngle,
+            spreadAngle,
+            (float)index / (count - 1)
+        );
+    }
+
+    private void SpawnSingleProjectile(Vector2 direction)
+    {
+        if (!IsValidVector(direction) || direction.sqrMagnitude < 0.001f)
+            return;
+
+        GameObject projectileObject = Instantiate(
+            bulletPrefab,
+            firePoint.position,
+            Quaternion.identity
+        );
+
+        IWeaponProjectile projectile =
+            projectileObject.GetComponent<IWeaponProjectile>();
+
+        if (projectile == null)
+        {
+            Debug.LogWarning("Shoot: spawned projectile has no IWeaponProjectile component.");
+            Destroy(projectileObject);
+            return;
+        }
+
+        bool isCritical = RollCritical();
+
+        float finalDamage = GetDamage();
+
+        if (isCritical)
+            finalDamage *= GetCritMultiplier();
+
+        projectile.Initialize(
+            finalDamage,
+            GetProjectileSpeed(),
+            GetRange(),
+            direction,
+            projectilePierce,
+            isCritical,
+            projectileRicochet,
+            GetKnockbackForce(baseKnockbackForce)
+        );
+    }
+
+    private void TryFireEveryFifthExtraShot(Vector2 baseDirection)
+    {
+        PlayerCombatModifiers modifiers =
+            GetComponentInParent<PlayerCombatModifiers>();
+
+        if (modifiers == null)
+            return;
+
+        if (!modifiers.ShouldFireExtraShot())
+            return;
+
+        SpawnSingleProjectile(baseDirection);
+    }
+
+    private void SpawnShootFx()
+    {
         if (ShootFX == null)
             return;
-        
-        float destroyFXTime = ShootFX.GetComponent<ParticleSystem>().main.startLifetime.constantMax;
-        Quaternion fxDirection = this.transform.rotation;
 
-        GameObject ShootFX1 = Instantiate(
-                ShootFX,
-                firePoint.position,
-                fxDirection,
-                this.transform
-                //direction
-            );
-        ShootFX1.SetActive(true);
-        Destroy(ShootFX1, destroyFXTime);
-        //Спавн эффекта    
+        ParticleSystem particleSystem = ShootFX.GetComponent<ParticleSystem>();
+
+        float destroyTime = particleSystem != null
+            ? particleSystem.main.startLifetime.constantMax
+            : 1f;
+
+        GameObject shootFx = Instantiate(
+            ShootFX,
+            firePoint.position,
+            transform.rotation,
+            transform
+        );
+
+        shootFx.SetActive(true);
+        Destroy(shootFx, destroyTime);
     }
 
     private Vector2 RotateVector(Vector2 vector, float angle)
@@ -174,24 +207,19 @@ public class Shoot : BaseWeapon
             return;
 
         Vector2 direction = GetMouseDirectionFromOwner();
-
         Vector2 recoilOffset = -direction * currentRecoil;
 
-        transform.position = (Vector2)owner.position
-            + direction * orbitRadius
-            + recoilOffset;
+        transform.position =
+            (Vector2)owner.position +
+            direction * orbitRadius +
+            recoilOffset;
     }
 
     private void RotateToMouse()
     {
         Vector2 direction = GetShootDirection();
-
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
 
-        // �����:
-        // ���� ������ ��������� ���������� ������� �����,
-        // � Unity angle 0 ������� ������.
-        // ������� ��������� 180 ��������.
         transform.rotation = Quaternion.Euler(0f, 0f, angle);
     }
 
@@ -200,7 +228,13 @@ public class Shoot : BaseWeapon
         Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mousePosition.z = 0f;
 
-        return ((Vector2)mousePosition - (Vector2)owner.position).normalized;
+        Vector2 direction =
+            (Vector2)mousePosition - (Vector2)owner.position;
+
+        if (direction.sqrMagnitude < 0.001f)
+            return Vector2.right;
+
+        return direction.normalized;
     }
 
     private Vector2 GetShootDirection()
@@ -208,6 +242,20 @@ public class Shoot : BaseWeapon
         Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mousePosition.z = 0f;
 
-        return ((Vector2)mousePosition - (Vector2)firePoint.position).normalized;
+        Vector2 direction =
+            (Vector2)mousePosition - (Vector2)firePoint.position;
+
+        if (!IsValidVector(direction) || direction.sqrMagnitude < 0.001f)
+            return transform.right;
+
+        return direction.normalized;
+    }
+    private bool IsValidVector(Vector2 value)
+    {
+        return
+            !float.IsNaN(value.x) &&
+            !float.IsNaN(value.y) &&
+            !float.IsInfinity(value.x) &&
+            !float.IsInfinity(value.y);
     }
 }

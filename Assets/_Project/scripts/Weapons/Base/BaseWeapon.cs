@@ -80,7 +80,7 @@ public abstract class BaseWeapon : MonoBehaviour
 
     protected virtual bool CanAttack()
     {
-        return Time.time >= lastAttackTime + GetFireRate();
+        return Time.time >= lastAttackTime + GetAttackCooldown();
     }
 
     public abstract void Attack();
@@ -109,11 +109,6 @@ public abstract class BaseWeapon : MonoBehaviour
         return weaponData != null ? weaponData.projectileSpeed : 10f;
     }
 
-    public float GetFireRate()
-    {
-        float baseFireRate = weaponData != null ? weaponData.fireRate : 1f;
-        return Mathf.Max(0.05f, baseFireRate * fireRateMultiplier);
-    }
 
     public void AddRuntimeDamage(float amount)
     {
@@ -127,7 +122,7 @@ public abstract class BaseWeapon : MonoBehaviour
 
     public void AddFireRatePercent(float percent)
     {
-        fireRateMultiplier *= Mathf.Clamp(1f - percent, 0.1f, 10f);
+        fireRateMultiplier *= 1f + percent;
     }
 
     public void AddCritChance(float amount)
@@ -201,5 +196,12 @@ public abstract class BaseWeapon : MonoBehaviour
     public float GetKnockbackForce(float baseForce)
     {
         return baseForce * knockbackMultiplier;
+    }
+    public float GetAttackCooldown()
+    {
+        float baseCooldown = weaponData != null ? weaponData.fireRate : 0.5f;
+        baseCooldown = Mathf.Max(0.05f, baseCooldown);
+
+        return baseCooldown / fireRateMultiplier;
     }
 }

@@ -11,9 +11,6 @@ public class LaserWeapon : BaseWeapon
     [SerializeField] private LayerMask hitMask;
     [SerializeField] private float beamWidth = 0.25f;
 
-    [Header("Debug")]
-    [SerializeField] private bool drawDebugLine = true;
-
     [Header("Visual Beam")]
     [SerializeField] private Material beamMaterial;
     [SerializeField] private float beamVisibleTime = 0.08f;
@@ -110,12 +107,10 @@ public class LaserWeapon : BaseWeapon
             }
         }
 
-        if (drawDebugLine)
-            Debug.DrawLine(origin, endPoint, Color.cyan, 0.12f);
-
         ShowBeam(origin, endPoint);
         SpawnBeamFx(muzzleFxPrefab, origin, direction);
         SpawnBeamFx(hitFxPrefab, endPoint, -direction);
+        TryFireEveryFifthExtraBeam(origin, direction);
 
         if (weaponData != null)
             PlaySound(weaponData.attackSound);
@@ -216,5 +211,81 @@ public class LaserWeapon : BaseWeapon
 
         fx.Play();
         Destroy(fx.gameObject, fxLifetime);
+    }
+
+    private void TryFireEveryFifthExtraBeam(Vector2 origin, Vector2 baseDirection)
+    {
+        PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
+
+        if (modifiers == null)
+            return;
+
+        if (!modifiers.ShouldFireExtraShot())
+            return;
+
+        Vector2 extraDirection = RotateVector(baseDirection, Random.Range(-12f, 12f));
+
+        FireBeam(origin, extraDirection);
+    }
+
+    private void FireBeam(Vector2 origin, Vector2 direction)
+    {
+        float range = GetRange();
+
+        RaycastHit2D hit = Physics2D.CircleCast(
+            origin,
+            beamWidth * 0.5f,
+            direction,
+            range,
+            hitMask
+        );
+
+        Vector2 endPoint = origin + direction * range;
+
+        if (hit.collider != null)
+        {
+            endPoint = hit.point;
+
+            EnemyHealth enemy = hit.collider.GetComponentInParent<EnemyHealth>();
+
+            if (enemy != null)
+            {
+                bool isCritical = RollCritical();
+                float finalDamage = GetDamage();
+
+                if (isCritical)
+                    finalDamage *= GetCritMultiplier();
+
+                enemy.TakeDamage(finalDamage, hit.point, isCritical);
+
+                EnemyMovement movement = enemy.GetComponent<EnemyMovement>();
+
+                if (movement != null)
+                {
+                    Vector2 knockbackDirection = enemy.transform.position - transform.position;
+                    movement.ApplyKnockback(
+                        knockbackDirection,
+                        GetKnockbackForce(3f)
+                    );
+                }
+            }
+        }
+
+        ShowBeam(origin, endPoint);
+        SpawnBeamFx(muzzleFxPrefab, origin, direction);
+        SpawnBeamFx(hitFxPrefab, endPoint, -direction);
+    }
+
+    private Vector2 RotateVector(Vector2 vector, float angle)
+    {
+        float radians = angle * Mathf.Deg2Rad;
+
+        float cos = Mathf.Cos(radians);
+        float sin = Mathf.Sin(radians);
+
+        return new Vector2(
+            vector.x * cos - vector.y * sin,
+            vector.x * sin + vector.y * cos
+        ).normalized;
     }
 }

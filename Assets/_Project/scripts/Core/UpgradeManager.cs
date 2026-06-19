@@ -137,6 +137,8 @@ public class UpgradeManager : MonoBehaviour
         PlayerHealth health = player.GetComponent<PlayerHealth>();
         CharacterMovement2D movement = player.GetComponent<CharacterMovement2D>();
         BaseWeapon[] weapons = player.GetComponentsInChildren<BaseWeapon>(true);
+        PlayerPickupRadius pickupRadius = player.GetComponent<PlayerPickupRadius>();
+        PlayerCombatModifiers combatModifiers = player.GetComponent<PlayerCombatModifiers>();
 
         switch (upgrade.upgradeType)
         {
@@ -147,7 +149,9 @@ public class UpgradeManager : MonoBehaviour
             case UpgradeType.MoveSpeedPercent:
                 ApplyMoveSpeedPercentUpgrade(movement, stats, upgrade.value);
                 break;
-
+            case UpgradeType.XpPickupRadiusPercent:
+                ApplyXpPickupRadiusUpgrade(pickupRadius, upgrade.value);
+                break;
             case UpgradeType.WeaponDamagePercent:
                 ApplyWeaponDamagePercentUpgrade(weapons, upgrade.value);
                 break;
@@ -170,6 +174,18 @@ public class UpgradeManager : MonoBehaviour
 
             case UpgradeType.KnockbackPercent:
                 ApplyKnockbackUpgrade(weapons, upgrade.value);
+                break;
+
+            case UpgradeType.EveryFifthAttackExtraShot:
+                ApplyEveryFifthAttackExtraShot(combatModifiers);
+                break;
+
+            case UpgradeType.HitExplosionChance:
+                ApplyHitExplosionChance(combatModifiers, upgrade.value);
+                break;
+
+            case UpgradeType.EnemyDeathExplosion:
+                ApplyEnemyDeathExplosion(combatModifiers, upgrade.value);
                 break;
 
             default:
@@ -198,31 +214,6 @@ public class UpgradeManager : MonoBehaviour
         }
     }
 
-    private void ApplyHealUpgrade(PlayerHealth health, float value)
-    {
-        if (health != null)
-        {
-            health.Heal(Mathf.RoundToInt(value));
-        }
-    }
-
-    private void ApplyMoveSpeedUpgrade(CharacterMovement2D movement, PlayerStats stats, float value)
-    {
-        if (movement != null)
-            movement.speed += value;
-
-        if (stats != null)
-            stats.moveSpeed += value;
-    }
-
-    private void ApplyWeaponDamageUpgrade(BaseWeapon[] weapons, float value)
-    {
-        foreach (BaseWeapon weapon in weapons)
-        {
-            if (weapon != null)
-                weapon.AddRuntimeDamage(value);
-        }
-    }
 
     private void ApplyFireRateUpgrade(BaseWeapon[] weapons, float value)
     {
@@ -233,25 +224,6 @@ public class UpgradeManager : MonoBehaviour
         }
     }
 
-    private void ApplyWeaponRangeUpgrade(BaseWeapon[] weapons, float value)
-    {
-        foreach (BaseWeapon weapon in weapons)
-        {
-            if (weapon != null)
-                weapon.AddRuntimeRange(value);
-        }
-    }
-
-    private void ApplyOrbitRadiusUpgrade(BaseWeapon[] weapons, float value)
-    {
-        foreach (BaseWeapon weapon in weapons)
-        {
-            OrbitalWeapon orbitalWeapon = weapon as OrbitalWeapon;
-
-            if (orbitalWeapon != null)
-                orbitalWeapon.orbitRadius += value;
-        }
-    }
     private void ApplyProjectileCountUpgrade(BaseWeapon[] weapons, float value)
     {
         int amount = Mathf.RoundToInt(value);
@@ -262,26 +234,6 @@ public class UpgradeManager : MonoBehaviour
                 continue;
 
             weapon.AddProjectileCount(amount);
-        }
-    }
-    private void ApplyPierceUpgrade(BaseWeapon[] weapons, float value)
-    {
-        foreach (BaseWeapon weapon in weapons)
-        {
-            if (weapon != null)
-            {
-                weapon.AddPierce(Mathf.RoundToInt(value));
-            }
-        }
-    }
-    private void ApplyRicochetUpgrade(BaseWeapon[] weapons, float value)
-    {
-        foreach (BaseWeapon weapon in weapons)
-        {
-            if (weapon != null)
-            {
-                weapon.AddRicochet(Mathf.RoundToInt(value));
-            }
         }
     }
 
@@ -328,5 +280,31 @@ public class UpgradeManager : MonoBehaviour
             if (weapon != null)
                 weapon.AddKnockbackPercent(value);
         }
+    }
+    private void ApplyXpPickupRadiusUpgrade(PlayerPickupRadius pickupRadius, float value)
+    {
+        if (pickupRadius != null)
+            pickupRadius.AddRadiusPercent(value);
+    }
+
+    private void ApplyEveryFifthAttackExtraShot(PlayerCombatModifiers combatModifiers)
+    {
+        if (combatModifiers != null)
+            combatModifiers.everyFifthAttackExtraShot = true;
+    }
+
+    private void ApplyHitExplosionChance(PlayerCombatModifiers combatModifiers, float value)
+    {
+        if (combatModifiers != null)
+            combatModifiers.hitExplosionChance += value;
+    }
+
+    private void ApplyEnemyDeathExplosion(PlayerCombatModifiers combatModifiers, float value)
+    {
+        if (combatModifiers == null)
+            return;
+
+        combatModifiers.enemyDeathExplosion = true;
+        combatModifiers.deathExplosionDamageBonus += value;
     }
 }
