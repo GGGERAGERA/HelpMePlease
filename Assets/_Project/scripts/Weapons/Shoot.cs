@@ -140,6 +140,8 @@ public class Shoot : BaseWeapon
         if (isCritical)
             finalDamage *= GetCritMultiplier();
 
+        PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
+
         projectile.Initialize(
             finalDamage,
             GetProjectileSpeed(),
@@ -150,6 +152,14 @@ public class Shoot : BaseWeapon
             projectileRicochet,
             GetKnockbackForce(baseKnockbackForce)
         );
+
+        ProjectileCombatContext context =
+            projectileObject.GetComponent<ProjectileCombatContext>();
+
+        if (context == null)
+            context = projectileObject.AddComponent<ProjectileCombatContext>();
+
+        context.Initialize(modifiers);
     }
 
     private void TryFireEveryFifthExtraShot(Vector2 baseDirection)

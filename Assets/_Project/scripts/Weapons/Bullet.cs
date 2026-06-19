@@ -66,6 +66,18 @@ public class Bullet : MonoBehaviour, IWeaponProjectile
 
         enemyHealth.TakeDamage(damage, transform.position, isCritical);
 
+        ProjectileCombatContext context = GetComponent<ProjectileCombatContext>();
+
+        if (context != null && context.Modifiers != null)
+        {
+            CombatExplosionService.TryExplodeOnHit(
+                transform.position,
+                damage,
+                context.Modifiers,
+                context.Modifiers.enemyMask
+            );
+        }
+
         EnemyMovement enemyMovement = enemyHealth.GetComponent<EnemyMovement>();
 
         if (enemyMovement != null)

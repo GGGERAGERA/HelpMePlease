@@ -21,6 +21,9 @@ public class PlayerCombatModifiers : MonoBehaviour
     public bool circularBurst;
     public bool nukeEveryTenKills;
 
+    [Header("Masks")]
+    public LayerMask enemyMask;
+
 
     public bool ShouldFireExtraShot()
     {

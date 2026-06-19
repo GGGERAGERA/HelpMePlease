@@ -94,6 +94,19 @@ public class LaserWeapon : BaseWeapon
                     finalDamage *= GetCritMultiplier();
 
                 enemy.TakeDamage(finalDamage, hit.point, isCritical);
+
+                PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
+
+                if (modifiers != null)
+                {
+                    CombatExplosionService.TryExplodeOnHit(
+                        hit.point,
+                        finalDamage,
+                        modifiers,
+                        modifiers.enemyMask
+                    );
+                }
+
                 EnemyMovement movement = enemy.GetComponent<EnemyMovement>();
 
                 if (movement != null)
@@ -257,6 +270,20 @@ public class LaserWeapon : BaseWeapon
                     finalDamage *= GetCritMultiplier();
 
                 enemy.TakeDamage(finalDamage, hit.point, isCritical);
+
+                PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
+
+                if (modifiers != null)
+                {
+                    CombatExplosionService.TryExplodeOnHit(
+                        hit.point,
+                        finalDamage,
+                        modifiers,
+                        modifiers.enemyMask
+                    );
+                }
+
+
 
                 EnemyMovement movement = enemy.GetComponent<EnemyMovement>();
 

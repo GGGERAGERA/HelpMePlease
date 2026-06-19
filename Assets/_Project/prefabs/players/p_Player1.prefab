@@ -402,6 +402,9 @@ MonoBehaviour:
   randomExtraShotsChance: 0
   circularBurst: 0
   nukeEveryTenKills: 0
+  enemyMask:
+    serializedVersion: 2
+    m_Bits: 256
 --- !u!1 &5144749796594398161
 GameObject:
   m_ObjectHideFlags: 0
