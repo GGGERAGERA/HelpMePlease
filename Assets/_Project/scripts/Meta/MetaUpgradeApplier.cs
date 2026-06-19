@@ -73,4 +73,5 @@ public class MetaUpgradeApplier : MonoBehaviour
             pickupRadius.AddRadiusPercent(percent);
         }
     }
+
 }
