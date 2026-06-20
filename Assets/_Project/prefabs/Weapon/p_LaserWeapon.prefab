@@ -12,7 +12,7 @@ GameObject:
   m_Layer: 0
   m_Name: FirePoint
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: -5442936267250999957, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 4821046006334479104}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.81, y: 0.09, z: 0}
+  m_LocalPosition: {x: 0.757, y: 0.096, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -93,7 +93,6 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   beamWidth: 0.25
-  drawDebugLine: 1
   beamMaterial: {fileID: 2100000, guid: 995e2324eb1b03f4babb8105764afa89, type: 2}
   beamVisibleTime: 0.08
   muzzleFxPrefab: {fileID: 3104720723642426815, guid: d9e86f94329e03f43bde3976d85ebb1a, type: 3}
