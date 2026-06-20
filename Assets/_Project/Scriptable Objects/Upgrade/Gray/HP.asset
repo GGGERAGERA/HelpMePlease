@@ -10,11 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2029363319d1b9741a19ac5963bb5155, type: 3}
-  m_Name: CritDamage
+  m_Name: HP
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
-  upgradeName: "\u041A\u0440\u0438\u0442 \u0443\u0440\u043E\u043D"
-  description: "\u041F\u043E\u0432\u044B\u0448\u0430\u0435\u0442 \u043A\u0440\u0438\u0442
-    \u0443\u0440\u043E\u043D \u043D\u0430 15"
-  icon: {fileID: 90539913, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
-  upgradeType: 11
-  value: 15
+  upgradeName: HP
+  description: +1 HP
+  icon: {fileID: -1317306447, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
+  rarity: 0
+  minPlayerLevel: 1
+  upgradeType: 2
+  value: 20
