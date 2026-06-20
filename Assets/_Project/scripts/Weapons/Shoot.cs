@@ -337,4 +337,14 @@ public class Shoot : BaseWeapon
             SpawnSingleProjectile(randomDirection);
         }
     }
+    public void FireExternalProjectile(Vector2 direction)
+    {
+        if (bulletPrefab == null)
+            return;
+
+        if (firePoint == null)
+            firePoint = transform;
+
+        SpawnSingleProjectile(direction);
+    }
 }

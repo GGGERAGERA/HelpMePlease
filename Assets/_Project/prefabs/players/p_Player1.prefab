@@ -22,6 +22,7 @@ GameObject:
   - component: {fileID: -6587262309609574107}
   - component: {fileID: -8583072440193625870}
   - component: {fileID: -5459413600173041077}
+  - component: {fileID: -7248466617024912767}
   m_Layer: 0
   m_Name: p_Player1
   m_TagString: Player
@@ -405,6 +406,28 @@ MonoBehaviour:
   enemyMask:
     serializedVersion: 2
     m_Bits: 256
+  bonusDamageMultiplier: 1
+  bonusFireRateMultiplier: 1
+  accuracyPenaltyDegrees: 0
+  stationaryFireTime: 0
+  stationaryFireRateBonus: 0
+  stationaryMoveThreshold: 0.05
+  lowHpDamageBonus: 0
+  lowHpFireRateBonus: 0
+--- !u!114 &-7248466617024912767
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 602157039170639563}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21511d449af0cc14ab66addc83f411e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CircularBurstRuntime
+  projectileCount: 16
+  interval: 3
 --- !u!1 &5144749796594398161
 GameObject:
   m_ObjectHideFlags: 0

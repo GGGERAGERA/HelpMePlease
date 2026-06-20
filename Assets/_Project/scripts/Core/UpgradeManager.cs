@@ -199,6 +199,9 @@ public class UpgradeManager : MonoBehaviour
             case UpgradeType.RandomExtraShotsChance:
                 ApplyRandomExtraShotsChance(combatModifiers, upgrade.value);
                 break;
+            case UpgradeType.CircularBurst:
+                ApplyCircularBurst(combatModifiers);
+                break;
 
             default:
                 Debug.LogWarning("UpgradeManager: upgrade not implemented yet: " + upgrade.upgradeType);
@@ -342,5 +345,10 @@ public class UpgradeManager : MonoBehaviour
     {
         if (combatModifiers != null)
             combatModifiers.randomExtraShotsChance += value;
+    }
+    private void ApplyCircularBurst(PlayerCombatModifiers combatModifiers)
+    {
+        if (combatModifiers != null)
+            combatModifiers.circularBurst = true;
     }
 }
