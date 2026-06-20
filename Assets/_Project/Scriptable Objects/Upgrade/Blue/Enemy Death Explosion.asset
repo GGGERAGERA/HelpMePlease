@@ -10,10 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2029363319d1b9741a19ac5963bb5155, type: 3}
-  m_Name: Fire Rate
+  m_Name: Enemy Death Explosion
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
-  upgradeName: "\u0421\u043A\u043E\u0440\u043E\u0441\u0442\u044C \u0430\u0442\u0430\u043A\u0438"
-  description: "+10 \u043A \u0441\u043A\u043E\u0440\u043E\u0441\u0442\u0438 \u0430\u0442\u0430\u043A\u0438"
-  icon: {fileID: 128373305, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
-  upgradeType: 4
-  value: 0.5
+  upgradeName: "\u0423\u0440\u043E\u043D \u043E\u0442 \u0432\u0437\u0440\u044B\u0432\u0430"
+  description: "\u0423\u0440\u043E\u043D \u043E\u0442 \u0432\u0437\u0440\u044B\u0432\u0430
+    +10%"
+  icon: {fileID: 1012635696, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
+  rarity: 1
+  minPlayerLevel: 3
+  upgradeType: 9
+  value: 0.1

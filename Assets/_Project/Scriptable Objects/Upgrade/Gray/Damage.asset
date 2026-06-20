@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2029363319d1b9741a19ac5963bb5155, type: 3}
-  m_Name: Knockback
+  m_Name: Damage
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
-  upgradeName: Knockback
-  description: "\u041E\u0442\u0442\u0430\u043B\u043A\u0438\u0432\u0430\u043D\u0438\u0435"
-  icon: {fileID: -397128966, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
+  upgradeName: "\u0423\u0440\u043E\u043D"
+  description: "\u0423\u0440\u043E\u043D +20%"
+  icon: {fileID: -1860428558, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
   rarity: 0
   minPlayerLevel: 1
-  upgradeType: 12
-  value: 1
+  upgradeType: 0
+  value: 0.2
