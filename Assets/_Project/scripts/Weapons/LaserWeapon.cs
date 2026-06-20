@@ -67,6 +67,7 @@ public class LaserWeapon : BaseWeapon
     {
         Vector2 origin = firePoint.position;
         Vector2 direction = GetAimDirectionFromFirePoint();
+        direction = ApplyAccuracyPenalty(direction);
 
         float range = GetRange();
 
@@ -343,5 +344,19 @@ public class LaserWeapon : BaseWeapon
             return false;
 
         return rb.linearVelocity.sqrMagnitude > threshold * threshold;
+    }
+    private Vector2 ApplyAccuracyPenalty(Vector2 direction)
+    {
+        PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
+
+        if (modifiers == null || modifiers.accuracyPenaltyDegrees <= 0f)
+            return direction;
+
+        float randomAngle = Random.Range(
+            -modifiers.accuracyPenaltyDegrees,
+            modifiers.accuracyPenaltyDegrees
+        );
+
+        return RotateVector(direction, randomAngle);
     }
 }

@@ -36,6 +36,23 @@ public class PlayerCombatModifiers : MonoBehaviour
     [Header("Movement Check")]
     public float stationaryMoveThreshold = 0.05f;
 
+    [Header("Low HP Power")]
+    public float lowHpDamageBonus;
+    public float lowHpFireRateBonus;
+
+    private PlayerHealth health;
+
+    private void Awake()
+    {
+        health = GetComponent<PlayerHealth>();
+    }
+    private void Update()
+    {
+        if (health == null)
+            return;
+
+        UpdateLowHpPower(health.CurrentHealth / health.MaxHealth);
+    }
 
     public bool ShouldFireExtraShot()
     {
@@ -73,6 +90,21 @@ public class PlayerCombatModifiers : MonoBehaviour
             stationaryFireTime * 0.15f,
             1.5f
         );
+    }
+
+    public void UpdateLowHpPower(float healthPercent)
+    {
+        if (!lowHpPower)
+        {
+            lowHpDamageBonus = 0f;
+            lowHpFireRateBonus = 0f;
+            return;
+        }
+
+        float missingHealthPercent = 1f - Mathf.Clamp01(healthPercent);
+
+        lowHpDamageBonus = missingHealthPercent;
+        lowHpFireRateBonus = missingHealthPercent;
     }
 
 }

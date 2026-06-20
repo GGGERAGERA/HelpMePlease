@@ -101,6 +101,7 @@ public abstract class BaseWeapon : MonoBehaviour
         if (modifiers != null)
         {
             finalDamage *= modifiers.bonusDamageMultiplier;
+            finalDamage *= 1f + modifiers.lowHpDamageBonus;
         }
 
         return Mathf.RoundToInt(finalDamage);
@@ -216,6 +217,7 @@ public abstract class BaseWeapon : MonoBehaviour
         {
             baseCooldown /= Mathf.Max(0.1f, modifiers.bonusFireRateMultiplier);
             baseCooldown /= Mathf.Max(0.1f, 1f + modifiers.stationaryFireRateBonus);
+            baseCooldown /= Mathf.Max(0.1f, 1f + modifiers.lowHpFireRateBonus);
         }
 
         return baseCooldown / fireRateMultiplier;

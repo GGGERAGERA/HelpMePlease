@@ -190,6 +190,12 @@ public class UpgradeManager : MonoBehaviour
             case UpgradeType.StationaryFireRateRamp:
                 ApplyStationaryFireRateRamp(combatModifiers);
                 break;
+            case UpgradeType.DoubleDamageWithInaccuracy:
+                ApplyDoubleDamageWithInaccuracy(combatModifiers);
+                break;
+            case UpgradeType.LowHpPower:
+                ApplyLowHpPower(combatModifiers);
+                break;
 
             default:
                 Debug.LogWarning("UpgradeManager: upgrade not implemented yet: " + upgrade.upgradeType);
@@ -314,5 +320,19 @@ public class UpgradeManager : MonoBehaviour
     {
         if (combatModifiers != null)
             combatModifiers.stationaryFireRateRamp = true;
+    }
+    private void ApplyDoubleDamageWithInaccuracy(PlayerCombatModifiers combatModifiers)
+    {
+        if (combatModifiers == null)
+            return;
+
+        combatModifiers.doubleDamageWithInaccuracy = true;
+        combatModifiers.bonusDamageMultiplier *= 2f;
+        combatModifiers.accuracyPenaltyDegrees += 12f;
+    }
+    private void ApplyLowHpPower(PlayerCombatModifiers combatModifiers)
+    {
+        if (combatModifiers != null)
+            combatModifiers.lowHpPower = true;
     }
 }

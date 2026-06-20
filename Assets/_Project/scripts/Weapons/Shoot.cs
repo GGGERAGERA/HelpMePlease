@@ -74,6 +74,7 @@ public class Shoot : BaseWeapon
             firePoint = transform;
 
         Vector2 baseDirection = GetShootDirection();
+        baseDirection = ApplyAccuracyPenalty(baseDirection);
 
         FireShotGroup(baseDirection, projectileCount);
 
@@ -297,5 +298,19 @@ public class Shoot : BaseWeapon
             return false;
 
         return rb.linearVelocity.sqrMagnitude > threshold * threshold;
+    }
+    private Vector2 ApplyAccuracyPenalty(Vector2 direction)
+    {
+        PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
+
+        if (modifiers == null || modifiers.accuracyPenaltyDegrees <= 0f)
+            return direction;
+
+        float randomAngle = Random.Range(
+            -modifiers.accuracyPenaltyDegrees,
+            modifiers.accuracyPenaltyDegrees
+        );
+
+        return RotateVector(direction, randomAngle);
     }
 }
