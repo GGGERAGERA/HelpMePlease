@@ -10,9 +10,12 @@ public class EnemyHealth : MonoBehaviour
     public UnityEvent<float, float> OnHealthChanged;
     public UnityEvent onDeath;
     public UnityEvent OnDamageTaken; // новое событие для эффекта урона
+    public System.Action<EnemyHealth> OnDied;
 
     public GameObject damagePopupPrefab;  // перетащите префаб DamagePopup
     public Vector3 popupOffset = new Vector3(0, 1f, 0); // смещение над врагом
+
+
 
     [SerializeField] private AudioClip critSound;
 
@@ -143,6 +146,8 @@ public class EnemyHealth : MonoBehaviour
         isDead = true;
 
         KillManager.Instance?.AddKill();
+
+        OnDied?.Invoke(this);
 
         Death();
     }

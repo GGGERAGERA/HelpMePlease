@@ -15,6 +15,8 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile
     private bool exploded;
     private bool isCritical;
     private float knockbackForce;
+    private PlayerCombatModifiers modifiers;
+
 
     public void Initialize(
         float damage,
@@ -88,6 +90,20 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile
                 continue;
 
             damagedEnemies.Add(enemy);
+
+            PlayerCombatModifiers activeModifiers = GetModifiers();
+
+            if (activeModifiers != null)
+            {
+                EnemyDeathExplosionRuntime deathExplosion =
+                    enemy.GetComponent<EnemyDeathExplosionRuntime>();
+
+                if (deathExplosion == null)
+                    deathExplosion = enemy.gameObject.AddComponent<EnemyDeathExplosionRuntime>();
+
+                deathExplosion.Initialize(activeModifiers);
+            }
+
             enemy.TakeDamage(damage, transform.position, isCritical);
 
             EnemyMovement enemyMovement = enemy.GetComponent<EnemyMovement>();
@@ -97,5 +113,14 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile
         }
 
         Destroy(gameObject);
+    }
+    private PlayerCombatModifiers GetModifiers()
+    {
+        ProjectileCombatContext context = GetComponent<ProjectileCombatContext>();
+
+        if (context == null)
+            return null;
+
+        return context.Modifiers;
     }
 }

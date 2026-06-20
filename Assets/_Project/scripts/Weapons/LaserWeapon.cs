@@ -269,21 +269,20 @@ public class LaserWeapon : BaseWeapon
                 if (isCritical)
                     finalDamage *= GetCritMultiplier();
 
-                enemy.TakeDamage(finalDamage, hit.point, isCritical);
-
                 PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
 
                 if (modifiers != null)
                 {
-                    CombatExplosionService.TryExplodeOnHit(
-                        hit.point,
-                        finalDamage,
-                        modifiers,
-                        modifiers.enemyMask
-                    );
+                    EnemyDeathExplosionRuntime deathExplosion =
+                        enemy.GetComponent<EnemyDeathExplosionRuntime>();
+
+                    if (deathExplosion == null)
+                        deathExplosion = enemy.gameObject.AddComponent<EnemyDeathExplosionRuntime>();
+
+                    deathExplosion.Initialize(modifiers);
                 }
 
-
+                enemy.TakeDamage(finalDamage, hit.point, isCritical);
 
                 EnemyMovement movement = enemy.GetComponent<EnemyMovement>();
 
