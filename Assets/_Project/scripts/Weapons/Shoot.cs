@@ -79,6 +79,7 @@ public class Shoot : BaseWeapon
         FireShotGroup(baseDirection, projectileCount);
 
         TryFireEveryFifthExtraShot(baseDirection);
+        TryFireRandomExtraShots(baseDirection);
 
         if (weaponData != null)
             PlaySound(weaponData.attackSound);
@@ -312,5 +313,28 @@ public class Shoot : BaseWeapon
         );
 
         return RotateVector(direction, randomAngle);
+    }
+    private void TryFireRandomExtraShots(Vector2 baseDirection)
+    {
+        PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
+
+        if (modifiers == null)
+            return;
+
+        if (modifiers.randomExtraShotsChance <= 0f)
+            return;
+
+        if (Random.value > modifiers.randomExtraShotsChance)
+            return;
+
+        for (int i = 0; i < 2; i++)
+        {
+            Vector2 randomDirection = RotateVector(
+                baseDirection,
+                Random.Range(-70f, 70f)
+            );
+
+            SpawnSingleProjectile(randomDirection);
+        }
     }
 }

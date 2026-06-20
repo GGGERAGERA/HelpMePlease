@@ -126,6 +126,7 @@ public class LaserWeapon : BaseWeapon
         SpawnBeamFx(muzzleFxPrefab, origin, direction);
         SpawnBeamFx(hitFxPrefab, endPoint, -direction);
         TryFireEveryFifthExtraBeam(origin, direction);
+        TryFireRandomExtraBeams(origin, direction);
 
         if (weaponData != null)
             PlaySound(weaponData.attackSound);
@@ -358,5 +359,28 @@ public class LaserWeapon : BaseWeapon
         );
 
         return RotateVector(direction, randomAngle);
+    }
+    private void TryFireRandomExtraBeams(Vector2 origin, Vector2 baseDirection)
+    {
+        PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
+
+        if (modifiers == null)
+            return;
+
+        if (modifiers.randomExtraShotsChance <= 0f)
+            return;
+
+        if (Random.value > modifiers.randomExtraShotsChance)
+            return;
+
+        for (int i = 0; i < 2; i++)
+        {
+            Vector2 randomDirection = RotateVector(
+                baseDirection,
+                Random.Range(-70f, 70f)
+            );
+
+            FireBeam(origin, randomDirection);
+        }
     }
 }

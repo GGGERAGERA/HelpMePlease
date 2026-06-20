@@ -196,6 +196,9 @@ public class UpgradeManager : MonoBehaviour
             case UpgradeType.LowHpPower:
                 ApplyLowHpPower(combatModifiers);
                 break;
+            case UpgradeType.RandomExtraShotsChance:
+                ApplyRandomExtraShotsChance(combatModifiers, upgrade.value);
+                break;
 
             default:
                 Debug.LogWarning("UpgradeManager: upgrade not implemented yet: " + upgrade.upgradeType);
@@ -334,5 +337,10 @@ public class UpgradeManager : MonoBehaviour
     {
         if (combatModifiers != null)
             combatModifiers.lowHpPower = true;
+    }
+    private void ApplyRandomExtraShotsChance(PlayerCombatModifiers combatModifiers, float value)
+    {
+        if (combatModifiers != null)
+            combatModifiers.randomExtraShotsChance += value;
     }
 }
