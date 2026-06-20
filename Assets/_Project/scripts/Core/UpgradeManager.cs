@@ -202,6 +202,9 @@ public class UpgradeManager : MonoBehaviour
             case UpgradeType.CircularBurst:
                 ApplyCircularBurst(combatModifiers);
                 break;
+            case UpgradeType.NukeEveryTenKills:
+                ApplyNukeEveryTenKills(combatModifiers);
+                break;
 
             default:
                 Debug.LogWarning("UpgradeManager: upgrade not implemented yet: " + upgrade.upgradeType);
@@ -350,5 +353,10 @@ public class UpgradeManager : MonoBehaviour
     {
         if (combatModifiers != null)
             combatModifiers.circularBurst = true;
+    }
+    private void ApplyNukeEveryTenKills(PlayerCombatModifiers combatModifiers)
+    {
+        if (combatModifiers != null)
+            combatModifiers.nukeEveryTenKills = true;
     }
 }
