@@ -187,6 +187,9 @@ public class UpgradeManager : MonoBehaviour
             case UpgradeType.EnemyDeathExplosion:
                 ApplyEnemyDeathExplosion(combatModifiers, upgrade.value);
                 break;
+            case UpgradeType.StationaryFireRateRamp:
+                ApplyStationaryFireRateRamp(combatModifiers);
+                break;
 
             default:
                 Debug.LogWarning("UpgradeManager: upgrade not implemented yet: " + upgrade.upgradeType);
@@ -306,5 +309,10 @@ public class UpgradeManager : MonoBehaviour
 
         combatModifiers.enemyDeathExplosion = true;
         combatModifiers.deathExplosionDamageBonus += value;
+    }
+    private void ApplyStationaryFireRateRamp(PlayerCombatModifiers combatModifiers)
+    {
+        if (combatModifiers != null)
+            combatModifiers.stationaryFireRateRamp = true;
     }
 }

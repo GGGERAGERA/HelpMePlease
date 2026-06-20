@@ -52,6 +52,7 @@ public class LaserWeapon : BaseWeapon
 
         UpdateOrbit(aimDirection);
         RotateWeapon(aimDirection);
+        UpdateStationaryFireRateRamp();
 
         if (Input.GetMouseButton(0))
         {
@@ -313,5 +314,34 @@ public class LaserWeapon : BaseWeapon
             vector.x * cos - vector.y * sin,
             vector.x * sin + vector.y * cos
         ).normalized;
+    }
+    private void UpdateStationaryFireRateRamp()
+    {
+        PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
+
+        if (modifiers == null)
+            return;
+
+        bool isShooting = Input.GetMouseButton(0);
+        bool isMoving = IsOwnerMoving(modifiers.stationaryMoveThreshold);
+
+        modifiers.UpdateStationaryFireRateRamp(
+            isShooting,
+            isMoving,
+            Time.deltaTime
+        );
+    }
+
+    private bool IsOwnerMoving(float threshold)
+    {
+        if (owner == null)
+            return false;
+
+        Rigidbody2D rb = owner.GetComponent<Rigidbody2D>();
+
+        if (rb == null)
+            return false;
+
+        return rb.linearVelocity.sqrMagnitude > threshold * threshold;
     }
 }

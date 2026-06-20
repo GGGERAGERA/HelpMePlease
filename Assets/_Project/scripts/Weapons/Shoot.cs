@@ -50,6 +50,8 @@ public class Shoot : BaseWeapon
         if (rotateToMouse)
             RotateToMouse();
 
+        UpdateStationaryFireRateRamp();
+
         if (Input.GetMouseButton(0) && CanAttack())
             Attack();
 
@@ -267,5 +269,33 @@ public class Shoot : BaseWeapon
             !float.IsNaN(value.y) &&
             !float.IsInfinity(value.x) &&
             !float.IsInfinity(value.y);
+    }
+    private void UpdateStationaryFireRateRamp()
+    {
+        PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
+
+        if (modifiers == null)
+            return;
+
+        bool isShooting = Input.GetMouseButton(0);
+        bool isMoving = IsOwnerMoving(modifiers.stationaryMoveThreshold);
+
+        modifiers.UpdateStationaryFireRateRamp(
+            isShooting,
+            isMoving,
+            Time.deltaTime
+        );
+    }
+    private bool IsOwnerMoving(float threshold)
+    {
+        if (owner == null)
+            return false;
+
+        Rigidbody2D rb = owner.GetComponent<Rigidbody2D>();
+
+        if (rb == null)
+            return false;
+
+        return rb.linearVelocity.sqrMagnitude > threshold * threshold;
     }
 }

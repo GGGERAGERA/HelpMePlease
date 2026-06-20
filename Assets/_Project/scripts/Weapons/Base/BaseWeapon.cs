@@ -95,6 +95,14 @@ public abstract class BaseWeapon : MonoBehaviour
         float weaponDamage = weaponData != null ? weaponData.damage : 10f;
         float finalDamage = (weaponDamage + runtimeDamageBonus) * damageMultiplier;
 
+        PlayerCombatModifiers modifiers =
+    GetComponentInParent<PlayerCombatModifiers>();
+
+        if (modifiers != null)
+        {
+            finalDamage *= modifiers.bonusDamageMultiplier;
+        }
+
         return Mathf.RoundToInt(finalDamage);
     }
 
@@ -201,6 +209,14 @@ public abstract class BaseWeapon : MonoBehaviour
     {
         float baseCooldown = weaponData != null ? weaponData.fireRate : 0.5f;
         baseCooldown = Mathf.Max(0.05f, baseCooldown);
+
+        PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
+
+        if (modifiers != null)
+        {
+            baseCooldown /= Mathf.Max(0.1f, modifiers.bonusFireRateMultiplier);
+            baseCooldown /= Mathf.Max(0.1f, 1f + modifiers.stationaryFireRateBonus);
+        }
 
         return baseCooldown / fireRateMultiplier;
     }
