@@ -78,12 +78,6 @@ public class PlayerHealth : MonoBehaviour
         CharacterMovement2D movement = GetComponent<CharacterMovement2D>();
         if (movement != null) movement.enabled = false;
 
-        OrbitalWeapon orbital = GetComponentInChildren<OrbitalWeapon>();
-        if (orbital != null) orbital.enabled = false;
-
-        LaserSword sword = GetComponentInChildren<LaserSword>();
-        if (sword != null) sword.enabled = false;
-
 
 
         // Скрываем спрайт игрока (ищем на дочерних объектах!)
