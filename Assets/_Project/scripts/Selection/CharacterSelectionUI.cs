@@ -4,32 +4,32 @@ using UnityEngine.UI;
 
 public class CharacterSelectionUI : MonoBehaviour
 {
-    [Header("Navigation")]
-    [SerializeField] private Button nextButton;
+    [Header("Cards")]
+    [SerializeField] private CharacterCardView[] cards;
 
-    [Header("Top Text")]
-    [SerializeField] private TextMeshProUGUI selectedPlayerText;
-
-    [Header("Right Info Panel")]
-    [SerializeField] private Image portraitImage;
+    [Header("Details")]
     [SerializeField] private TextMeshProUGUI characterNameText;
-    [SerializeField] private TextMeshProUGUI descriptionText;
-
-    [Header("Left Base Stats Panel")]
+    [SerializeField] private TextMeshProUGUI statusText;
+    [SerializeField] private Image portraitImage;
     [SerializeField] private TextMeshProUGUI hpText;
     [SerializeField] private TextMeshProUGUI speedText;
     [SerializeField] private TextMeshProUGUI specialText;
+    [SerializeField] private TextMeshProUGUI descriptionText;
 
-    [Header("Next Button Visual")]
-    [SerializeField] private Color enabledColor = Color.white;
-    [SerializeField] private Color disabledColor = new Color(0.45f, 0.45f, 0.45f, 1f);
+    [Header("Buttons")]
+    [SerializeField] private Button selectButton;
 
+    [Header("Navigation")]
+    [SerializeField] private MainMenuController mainMenuController;
 
+    private CharacterData selectedCharacter;
 
-
-    private void Start()
+    private void Awake()
     {
-        ClearSelection();
+        if (selectButton != null)
+            selectButton.onClick.AddListener(ConfirmSelection);
+
+        ClearDetails();
     }
 
     public void SelectCharacter(CharacterData character)
@@ -37,82 +37,96 @@ public class CharacterSelectionUI : MonoBehaviour
         if (character == null)
             return;
 
-        RunSelectionManager.Instance.SelectCharacter(character);
+        selectedCharacter = character;
 
-        UpdateTopText(character);
-        UpdateRightPanel(character);
-        UpdateStatsPanel(character);
-        SetNextButtonState(true);
+        UpdateDetails(character);
+        UpdateCardsSelection(character);
+
+        if (selectButton != null)
+            selectButton.interactable = true;
     }
 
-    private void ClearSelection()
+    private void ConfirmSelection()
     {
+        if (selectedCharacter == null)
+            return;
 
-        if (selectedPlayerText != null)
-            selectedPlayerText.text = "Selected Player: none";
+        if (RunSelectionManager.Instance != null)
+            RunSelectionManager.Instance.SelectCharacter(selectedCharacter);
 
-        if (portraitImage != null)
-        {
-            portraitImage.sprite = null;
-            portraitImage.enabled = false;
-        }
+        if (mainMenuController != null)
+            mainMenuController.OpenWeaponSelection();
 
+        Debug.Log("Confirmed character: " + selectedCharacter.characterName);
+    }
+
+    private void UpdateDetails(CharacterData character)
+    {
         if (characterNameText != null)
-            characterNameText.text = "";
+            characterNameText.text = character.characterName;
 
-        if (descriptionText != null)
-            descriptionText.text = "Select a character to see details.";
+        if (statusText != null)
+            statusText.text = "¬€∆»¬ÿ»…";
 
-        SetText(hpText, "HP: -");
-        SetText(speedText, "Speed: -");
-        SetText(specialText, "Special: -");
-
-        SetNextButtonState(false);
-    }
-
-    private void UpdateTopText(CharacterData character)
-    {
-        if (selectedPlayerText != null)
-            selectedPlayerText.text = "Selected Player: " + character.characterName;
-    }
-
-    private void UpdateRightPanel(CharacterData character)
-    {
         if (portraitImage != null)
         {
             portraitImage.sprite = character.portrait;
             portraitImage.enabled = character.portrait != null;
         }
 
-        if (characterNameText != null)
-            characterNameText.text = character.characterName;
+        if (hpText != null)
+            hpText.text = $"HP: {character.maxHealth}";
+
+        if (speedText != null)
+            speedText.text = $"Speed: {character.moveSpeed}";
+
+        if (specialText != null)
+            specialText.text = $"Special: {character.specialDescription}";
 
         if (descriptionText != null)
             descriptionText.text = character.description;
     }
 
-    private void UpdateStatsPanel(CharacterData character)
+    private void UpdateCardsSelection(CharacterData character)
     {
-        SetText(hpText, "HP: " + character.maxHealth);
-        SetText(speedText, "Speed: " + character.moveSpeed);
-        SetText(specialText, "Special: " + character.specialDescription);
-    }
-
-    private void SetNextButtonState(bool isEnabled)
-    {
-        if (nextButton == null)
+        if (cards == null)
             return;
 
-        nextButton.interactable = isEnabled;
+        foreach (CharacterCardView card in cards)
+        {
+            if (card == null)
+                continue;
 
-        Image buttonImage = nextButton.GetComponent<Image>();
-        if (buttonImage != null)
-            buttonImage.color = isEnabled ? enabledColor : disabledColor;
+            card.SetSelected(card.Character == character);
+        }
     }
 
-    private void SetText(TextMeshProUGUI text, string value)
+    private void ClearDetails()
     {
-        if (text != null)
-            text.text = value;
+        selectedCharacter = null;
+
+        if (characterNameText != null)
+            characterNameText.text = "SELECT CHARACTER";
+
+        if (statusText != null)
+            statusText.text = "";
+
+        if (portraitImage != null)
+            portraitImage.enabled = false;
+
+        if (hpText != null)
+            hpText.text = "HP: -";
+
+        if (speedText != null)
+            speedText.text = "Speed: -";
+
+        if (specialText != null)
+            specialText.text = "Special: -";
+
+        if (descriptionText != null)
+            descriptionText.text = "Choose a survivor.";
+
+        if (selectButton != null)
+            selectButton.interactable = false;
     }
 }
