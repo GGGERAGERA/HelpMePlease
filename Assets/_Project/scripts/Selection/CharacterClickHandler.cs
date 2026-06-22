@@ -1,38 +1,35 @@
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class CharacterClickHandler : MonoBehaviour
+public class CharacterClickHandler : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private CharacterData character;
     [SerializeField] private CharacterSelectionUI selectionUI;
+    [SerializeField] private CharacterCardView cardView;
 
     private void Awake()
     {
-        Button button = GetComponent<Button>();
-
-        if (button == null)
-            button = gameObject.AddComponent<Button>();
-
-        button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(OnCharacterClick);
+        if (cardView == null)
+            cardView = GetComponent<CharacterCardView>();
     }
 
-    private void OnCharacterClick()
+    public void OnPointerClick(PointerEventData eventData)
     {
-        Debug.Log("UI SELECT CHARACTER: " + character.characterName);
-        Debug.Log("Character CARD CLICKED: " + gameObject.name);
-        if (character == null)
-        {
-            Debug.LogWarning("CharacterClickHandler: character is null.");
+        if (character == null || selectionUI == null)
             return;
-        }
-
-        if (selectionUI == null)
-        {
-            Debug.LogWarning("CharacterClickHandler: selectionUI is null.");
-            return;
-        }
 
         selectionUI.SelectCharacter(character);
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (cardView != null)
+            cardView.SetHover(true);
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        if (cardView != null)
+            cardView.SetHover(false);
     }
 }
