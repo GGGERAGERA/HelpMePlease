@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class CharacterClickHandler : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
+public class CharacterClickHandler : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] private CharacterData character;
     [SerializeField] private CharacterSelectionUI selectionUI;
@@ -19,17 +19,5 @@ public class CharacterClickHandler : MonoBehaviour, IPointerClickHandler, IPoint
             return;
 
         selectionUI.SelectCharacter(character);
-    }
-
-    public void OnPointerEnter(PointerEventData eventData)
-    {
-        if (cardView != null)
-            cardView.SetHover(true);
-    }
-
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        if (cardView != null)
-            cardView.SetHover(false);
     }
 }
