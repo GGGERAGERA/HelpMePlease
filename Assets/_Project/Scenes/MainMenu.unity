@@ -119,17 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!114 &51098107 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2034226903225417084, guid: 33394cee7ac93f04595a06f269807259, type: 3}
-  m_PrefabInstance: {fileID: 1738713586}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!1 &64777138 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1935425138911604696, guid: 33394cee7ac93f04595a06f269807259, type: 3}
@@ -152,9 +141,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efbf73e14ba5d3f4390859f0d3068d50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterClickHandler
-  character: {fileID: 11400000, guid: 2a744b263115165479af439141435aec, type: 2}
   selectionUI: {fileID: 7798143337273099530}
-  cardView: {fileID: 64777141}
 --- !u!114 &64777141
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -168,10 +155,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterCardView
   character: {fileID: 11400000, guid: 2a744b263115165479af439141435aec, type: 2}
-  portraitIcon: {fileID: 51098107}
-  nameText: {fileID: 2102572731}
-  lockOverlay: {fileID: 0}
-  selectedFrame: {fileID: 0}
 --- !u!1 &71858964
 GameObject:
   m_ObjectHideFlags: 0
@@ -208,8 +191,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 24.3}
-  m_SizeDelta: {x: 0, y: 30}
+  m_AnchoredPosition: {x: 0, y: 40.7}
+  m_SizeDelta: {x: 0, y: 85.2}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &71858966
 MonoBehaviour:
@@ -230,7 +213,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
+  m_Transition: 2
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
@@ -240,10 +223,10 @@ MonoBehaviour:
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
-    m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
-    m_SelectedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 0}
+    m_HighlightedSprite: {fileID: 126696581, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
+    m_PressedSprite: {fileID: -1182780484, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
+    m_SelectedSprite: {fileID: 1787446774, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
+    m_DisabledSprite: {fileID: -836229286, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
   m_AnimationTriggers:
     m_NormalTrigger: Normal
     m_HighlightedTrigger: Highlighted
@@ -275,7 +258,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 127384931, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -325,9 +308,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2052938855}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 100, y: -25}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &114286735
@@ -1249,17 +1232,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 668071796}
   m_CullTransparentMesh: 1
---- !u!114 &743557835 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5513005935569499005, guid: 33394cee7ac93f04595a06f269807259, type: 3}
-  m_PrefabInstance: {fileID: 1565839264}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &781047935
 GameObject:
   m_ObjectHideFlags: 0
@@ -1292,9 +1264,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2052938855}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 100, y: -75}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &781047937
@@ -1651,8 +1623,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4281479730
-  m_fontColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -1669,8 +1641,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
-  m_fontSizeBase: 24
+  m_fontSize: 48
+  m_fontSizeBase: 48
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -1722,17 +1694,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 870942258}
   m_CullTransparentMesh: 1
---- !u!114 &889787126 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5513005935569499005, guid: 33394cee7ac93f04595a06f269807259, type: 3}
-  m_PrefabInstance: {fileID: 2029038024}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &922296206
 GameObject:
   m_ObjectHideFlags: 0
@@ -2615,8 +2576,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 41.9}
-  m_SizeDelta: {x: 0, y: 297.48}
+  m_AnchoredPosition: {x: 0, y: 77.4}
+  m_SizeDelta: {x: 0, y: 265.6}
   m_Pivot: {x: 1, y: 0}
 --- !u!114 &1259261961
 MonoBehaviour:
@@ -3156,7 +3117,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_AnchorMin.x
@@ -3164,15 +3125,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 250
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 745.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_LocalPosition.x
@@ -3204,11 +3165,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 125
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -372.75
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -3258,9 +3219,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efbf73e14ba5d3f4390859f0d3068d50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterClickHandler
-  character: {fileID: 11400000, guid: 6aad8e558b07e8243b3b79a85aefa335, type: 2}
   selectionUI: {fileID: 7798143337273099530}
-  cardView: {fileID: 1565839267}
 --- !u!114 &1565839267
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3274,10 +3233,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterCardView
   character: {fileID: 11400000, guid: 6aad8e558b07e8243b3b79a85aefa335, type: 2}
-  portraitIcon: {fileID: 1975655223}
-  nameText: {fileID: 743557835}
-  lockOverlay: {fileID: 0}
-  selectedFrame: {fileID: 0}
 --- !u!1001 &1573044760
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3636,7 +3591,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_AnchorMin.x
@@ -3644,15 +3599,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 250
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 745.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_LocalPosition.x
@@ -3684,11 +3639,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 661
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -372.75
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -3922,9 +3877,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2052938855}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 100, y: -125}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1775931021
@@ -4371,17 +4326,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
---- !u!114 &1975655223 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2034226903225417084, guid: 33394cee7ac93f04595a06f269807259, type: 3}
-  m_PrefabInstance: {fileID: 1565839264}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!114 &1975771141 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5334853512679212056, guid: a1a221b1a7e8e184bb4c0133c8fb2750, type: 3}
@@ -4582,17 +4526,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a461a7adb329bf24d95d103248a78258, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MetaUpgradeCardUI
---- !u!114 &2010692300 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2034226903225417084, guid: 33394cee7ac93f04595a06f269807259, type: 3}
-  m_PrefabInstance: {fileID: 2029038024}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!1 &2012440310
 GameObject:
   m_ObjectHideFlags: 0
@@ -4657,7 +4590,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_AnchorMin.x
@@ -4665,15 +4598,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 250
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 745.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4705,11 +4638,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 393
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -372.75
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1287247550129922841, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -4767,9 +4700,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efbf73e14ba5d3f4390859f0d3068d50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterClickHandler
-  character: {fileID: 11400000, guid: 6957f9cb24cd10646b1d8c718701e654, type: 2}
   selectionUI: {fileID: 7798143337273099530}
-  cardView: {fileID: 2029038027}
 --- !u!114 &2029038027
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4783,10 +4714,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterCardView
   character: {fileID: 11400000, guid: 6957f9cb24cd10646b1d8c718701e654, type: 2}
-  portraitIcon: {fileID: 2010692300}
-  nameText: {fileID: 889787126}
-  lockOverlay: {fileID: 0}
-  selectedFrame: {fileID: 0}
 --- !u!1001 &2035924462
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5189,17 +5116,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7076036226830984687, guid: 19d73233fc31a4049b52ba1247a92be8, type: 3}
   m_PrefabInstance: {fileID: 2062954312}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2102572731 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5513005935569499005, guid: 33394cee7ac93f04595a06f269807259, type: 3}
-  m_PrefabInstance: {fileID: 1738713586}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &2121403947
 GameObject:
   m_ObjectHideFlags: 0
@@ -34271,7 +34187,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &4860079262845804016
 GameObject:
   m_ObjectHideFlags: 0
@@ -47172,7 +47088,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d612544436664d4c9efcc5fc6baf227, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectionUI
-  cards: []
+  cards:
+  - {fileID: 1565839267}
+  - {fileID: 2029038027}
+  - {fileID: 64777141}
   characterNameText: {fileID: 2121403949}
   statusText: {fileID: 130043352}
   portraitImage: {fileID: 1204693874}

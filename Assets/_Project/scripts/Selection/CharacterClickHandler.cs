@@ -1,23 +1,34 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
-public class CharacterClickHandler : MonoBehaviour, IPointerClickHandler
+[RequireComponent(typeof(Button))]
+[RequireComponent(typeof(CharacterCardView))]
+public class CharacterClickHandler : MonoBehaviour
 {
-    [SerializeField] private CharacterData character;
     [SerializeField] private CharacterSelectionUI selectionUI;
-    [SerializeField] private CharacterCardView cardView;
+
+    private Button button;
+    private CharacterCardView cardView;
 
     private void Awake()
     {
-        if (cardView == null)
-            cardView = GetComponent<CharacterCardView>();
+        button = GetComponent<Button>();
+        cardView = GetComponent<CharacterCardView>();
+
+        button.onClick.AddListener(OnClick);
     }
 
-    public void OnPointerClick(PointerEventData eventData)
+    private void OnDestroy()
     {
-        if (character == null || selectionUI == null)
+        if (button != null)
+            button.onClick.RemoveListener(OnClick);
+    }
+
+    private void OnClick()
+    {
+        if (selectionUI == null || cardView == null || cardView.Character == null)
             return;
 
-        selectionUI.SelectCharacter(character);
+        selectionUI.SelectCharacter(cardView.Character);
     }
 }
