@@ -5130,7 +5130,7 @@ MonoBehaviour:
   critChance: 0.05
   critMultiplier: 2
   bulletPrefab: {fileID: 1168613123775889235, guid: c85e1d8ec23ffba47836a61f5644eb61, type: 3}
-  ShootFX: {fileID: 0}
+  ShootFX: {fileID: 3092589137338007280}
   baseKnockbackForce: 4
   spreadAngle: 12
   rotateToMouse: 1
@@ -5251,7 +5251,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
+  m_LocalScale: {x: 1.2033, y: 1.2033, z: 1.2033}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 5930085788941886523}
@@ -5305,7 +5305,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -4674427897357997025, guid: 7552172a543b68f47b7b0cb76cc5692e, type: 3}
+  m_Sprite: {fileID: 1965839527732470045, guid: acad099e2de734c459798c3de602f5cc, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
