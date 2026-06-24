@@ -8,12 +8,6 @@ public class CharacterCardView : MonoBehaviour
     [Header("Data")]
     [SerializeField] private CharacterData character;
 
-    [Header("UI")]
-    [SerializeField] private Image portraitIcon;
-    [SerializeField] private TextMeshProUGUI nameText;
-    [SerializeField] private GameObject lockOverlay;
-    [SerializeField] private GameObject selectedFrame;
-
     private bool isSelected;
 
     public CharacterData Character => character;
@@ -28,22 +22,10 @@ public class CharacterCardView : MonoBehaviour
     {
         if (character == null)
             return;
-
-        if (portraitIcon != null)
-            portraitIcon.sprite = character.portrait;
-
-        if (nameText != null)
-            nameText.text = character.characterName;
-
-        if (lockOverlay != null)
-            lockOverlay.SetActive(false);
     }
 
     public void SetSelected(bool selected)
     {
         isSelected = selected;
-
-        if (selectedFrame != null)
-            selectedFrame.SetActive(selected);
     }
 }
