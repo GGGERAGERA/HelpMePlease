@@ -1,6 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Builds upgrade choices from ScriptableObject data.
+/// It owns rarity/level rules only. It does not apply upgrades and does not touch UI.
+/// </summary>
 public sealed class UpgradeRoller
 {
     private readonly UpgradeData[] allUpgrades;
@@ -12,9 +16,9 @@ public sealed class UpgradeRoller
 
     public List<UpgradeData> RollChoices(int playerLevel, int count)
     {
-        List<UpgradeData> result = new();
+        List<UpgradeData> result = new List<UpgradeData>();
 
-        if (allUpgrades == null || allUpgrades.Length == 0)
+        if (allUpgrades == null || allUpgrades.Length == 0 || count <= 0)
             return result;
 
         List<UpgradeData> pool = BuildPool(playerLevel);
@@ -22,13 +26,13 @@ public sealed class UpgradeRoller
         while (result.Count < count && pool.Count > 0)
         {
             UpgradeRarity rarity = RollRarity(playerLevel);
-            UpgradeData upgrade = PickRandomByRarity(pool, rarity);
+            UpgradeData selected = PickRandomByRarity(pool, rarity);
 
-            if (upgrade == null)
-                upgrade = pool[Random.Range(0, pool.Count)];
+            if (selected == null)
+                selected = pool[Random.Range(0, pool.Count)];
 
-            result.Add(upgrade);
-            pool.Remove(upgrade);
+            result.Add(selected);
+            pool.Remove(selected);
         }
 
         return result;
@@ -36,11 +40,14 @@ public sealed class UpgradeRoller
 
     private List<UpgradeData> BuildPool(int playerLevel)
     {
-        List<UpgradeData> pool = new();
+        List<UpgradeData> pool = new List<UpgradeData>();
 
         foreach (UpgradeData upgrade in allUpgrades)
         {
             if (upgrade == null)
+                continue;
+
+            if (playerLevel < upgrade.minPlayerLevel)
                 continue;
 
             if (!IsRarityUnlocked(upgrade.rarity, playerLevel))
@@ -75,33 +82,21 @@ public sealed class UpgradeRoller
         if (playerLevel < 10)
         {
             float roll = Random.value;
-
-            if (roll < 0.60f)
-                return UpgradeRarity.Gray;
-
-            if (roll < 0.90f)
-                return UpgradeRarity.Blue;
-
+            if (roll < 0.60f) return UpgradeRarity.Gray;
+            if (roll < 0.90f) return UpgradeRarity.Blue;
             return UpgradeRarity.Purple;
         }
 
         float lateRoll = Random.value;
-
-        if (lateRoll < 0.50f)
-            return UpgradeRarity.Gray;
-
-        if (lateRoll < 0.80f)
-            return UpgradeRarity.Blue;
-
-        if (lateRoll < 0.95f)
-            return UpgradeRarity.Purple;
-
+        if (lateRoll < 0.50f) return UpgradeRarity.Gray;
+        if (lateRoll < 0.80f) return UpgradeRarity.Blue;
+        if (lateRoll < 0.95f) return UpgradeRarity.Purple;
         return UpgradeRarity.Legendary;
     }
 
     private UpgradeData PickRandomByRarity(List<UpgradeData> pool, UpgradeRarity rarity)
     {
-        List<UpgradeData> matching = new();
+        List<UpgradeData> matching = new List<UpgradeData>();
 
         foreach (UpgradeData upgrade in pool)
         {
@@ -115,3 +110,4 @@ public sealed class UpgradeRoller
         return matching[Random.Range(0, matching.Count)];
     }
 }
+

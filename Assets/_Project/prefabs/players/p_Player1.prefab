@@ -15,7 +15,6 @@ GameObject:
   - component: {fileID: 4325086801245655206}
   - component: {fileID: 8488144525096105199}
   - component: {fileID: 4726604075001662714}
-  - component: {fileID: 6017399571323920041}
   - component: {fileID: 6742118338655256636}
   - component: {fileID: 9013446077024987045}
   - component: {fileID: 7978632351014768105}
@@ -179,7 +178,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   enemyPrefabs:
   - {fileID: 1432338969431510999, guid: bbeab41e755732443b4201b8641136c9, type: 3}
-  spawnInterval: 1
+  spawnInterval: 3
   maxEnemies: 100
   minSpawnDistance: 10
   maxSpawnDistance: 15
@@ -210,21 +209,6 @@ MonoBehaviour:
   maxHealth: 200
   currentHealth: 0
   invulnerabilityTime: 0.5
---- !u!114 &6017399571323920041
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 602157039170639563}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1f5b6dddd1f45f04fa234abecc0fac0b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
-  maxHealth: 100
-  currentHealth: 0
-  moveSpeed: 1
 --- !u!210 &6742118338655256636
 SortingGroup:
   m_ObjectHideFlags: 0
