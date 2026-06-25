@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -51,7 +51,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 32
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -75,7 +75,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -569,8 +569,8 @@ TextureImporter:
       name: AseLocationBunker2_20
       rect:
         serializedVersion: 2
-        x: 0
-        y: 960
+        x: 640
+        y: 992
         width: 32
         height: 32
       alignment: 0
@@ -591,8 +591,8 @@ TextureImporter:
       name: AseLocationBunker2_21
       rect:
         serializedVersion: 2
-        x: 96
-        y: 960
+        x: 672
+        y: 992
         width: 32
         height: 32
       alignment: 0
@@ -613,8 +613,8 @@ TextureImporter:
       name: AseLocationBunker2_22
       rect:
         serializedVersion: 2
-        x: 128
-        y: 960
+        x: 704
+        y: 992
         width: 32
         height: 32
       alignment: 0
@@ -635,8 +635,8 @@ TextureImporter:
       name: AseLocationBunker2_23
       rect:
         serializedVersion: 2
-        x: 160
-        y: 960
+        x: 736
+        y: 992
         width: 32
         height: 32
       alignment: 0
@@ -657,8 +657,8 @@ TextureImporter:
       name: AseLocationBunker2_24
       rect:
         serializedVersion: 2
-        x: 192
-        y: 960
+        x: 768
+        y: 992
         width: 32
         height: 32
       alignment: 0
@@ -679,8 +679,8 @@ TextureImporter:
       name: AseLocationBunker2_25
       rect:
         serializedVersion: 2
-        x: 224
-        y: 960
+        x: 800
+        y: 992
         width: 32
         height: 32
       alignment: 0
@@ -701,8 +701,8 @@ TextureImporter:
       name: AseLocationBunker2_26
       rect:
         serializedVersion: 2
-        x: 256
-        y: 960
+        x: 832
+        y: 992
         width: 32
         height: 32
       alignment: 0
@@ -723,8 +723,8 @@ TextureImporter:
       name: AseLocationBunker2_27
       rect:
         serializedVersion: 2
-        x: 288
-        y: 960
+        x: 864
+        y: 992
         width: 32
         height: 32
       alignment: 0
@@ -745,7 +745,7 @@ TextureImporter:
       name: AseLocationBunker2_28
       rect:
         serializedVersion: 2
-        x: 320
+        x: 0
         y: 960
         width: 32
         height: 32
@@ -767,7 +767,7 @@ TextureImporter:
       name: AseLocationBunker2_29
       rect:
         serializedVersion: 2
-        x: 352
+        x: 32
         y: 960
         width: 32
         height: 32
@@ -789,7 +789,7 @@ TextureImporter:
       name: AseLocationBunker2_30
       rect:
         serializedVersion: 2
-        x: 384
+        x: 64
         y: 960
         width: 32
         height: 32
@@ -811,7 +811,7 @@ TextureImporter:
       name: AseLocationBunker2_31
       rect:
         serializedVersion: 2
-        x: 416
+        x: 96
         y: 960
         width: 32
         height: 32
@@ -833,7 +833,7 @@ TextureImporter:
       name: AseLocationBunker2_32
       rect:
         serializedVersion: 2
-        x: 448
+        x: 128
         y: 960
         width: 32
         height: 32
@@ -855,7 +855,7 @@ TextureImporter:
       name: AseLocationBunker2_33
       rect:
         serializedVersion: 2
-        x: 480
+        x: 160
         y: 960
         width: 32
         height: 32
@@ -877,7 +877,7 @@ TextureImporter:
       name: AseLocationBunker2_34
       rect:
         serializedVersion: 2
-        x: 512
+        x: 192
         y: 960
         width: 32
         height: 32
@@ -899,7 +899,7 @@ TextureImporter:
       name: AseLocationBunker2_35
       rect:
         serializedVersion: 2
-        x: 544
+        x: 224
         y: 960
         width: 32
         height: 32
@@ -921,7 +921,7 @@ TextureImporter:
       name: AseLocationBunker2_36
       rect:
         serializedVersion: 2
-        x: 576
+        x: 256
         y: 960
         width: 32
         height: 32
@@ -943,7 +943,7 @@ TextureImporter:
       name: AseLocationBunker2_37
       rect:
         serializedVersion: 2
-        x: 608
+        x: 288
         y: 960
         width: 32
         height: 32
@@ -965,8 +965,8 @@ TextureImporter:
       name: AseLocationBunker2_42
       rect:
         serializedVersion: 2
-        x: 0
-        y: 928
+        x: 448
+        y: 960
         width: 32
         height: 32
       alignment: 0
@@ -987,8 +987,8 @@ TextureImporter:
       name: AseLocationBunker2_43
       rect:
         serializedVersion: 2
-        x: 96
-        y: 928
+        x: 480
+        y: 960
         width: 32
         height: 32
       alignment: 0
@@ -1009,8 +1009,8 @@ TextureImporter:
       name: AseLocationBunker2_44
       rect:
         serializedVersion: 2
-        x: 128
-        y: 928
+        x: 512
+        y: 960
         width: 32
         height: 32
       alignment: 0
@@ -1031,8 +1031,8 @@ TextureImporter:
       name: AseLocationBunker2_45
       rect:
         serializedVersion: 2
-        x: 160
-        y: 928
+        x: 544
+        y: 960
         width: 32
         height: 32
       alignment: 0
@@ -1053,8 +1053,8 @@ TextureImporter:
       name: AseLocationBunker2_46
       rect:
         serializedVersion: 2
-        x: 192
-        y: 928
+        x: 576
+        y: 960
         width: 32
         height: 32
       alignment: 0
@@ -1075,8 +1075,8 @@ TextureImporter:
       name: AseLocationBunker2_47
       rect:
         serializedVersion: 2
-        x: 224
-        y: 928
+        x: 608
+        y: 960
         width: 32
         height: 32
       alignment: 0
@@ -1097,8 +1097,8 @@ TextureImporter:
       name: AseLocationBunker2_48
       rect:
         serializedVersion: 2
-        x: 256
-        y: 928
+        x: 640
+        y: 960
         width: 32
         height: 32
       alignment: 0
@@ -1119,8 +1119,8 @@ TextureImporter:
       name: AseLocationBunker2_49
       rect:
         serializedVersion: 2
-        x: 288
-        y: 928
+        x: 672
+        y: 960
         width: 32
         height: 32
       alignment: 0
@@ -1141,8 +1141,8 @@ TextureImporter:
       name: AseLocationBunker2_50
       rect:
         serializedVersion: 2
-        x: 320
-        y: 928
+        x: 704
+        y: 960
         width: 32
         height: 32
       alignment: 0
@@ -1163,8 +1163,8 @@ TextureImporter:
       name: AseLocationBunker2_51
       rect:
         serializedVersion: 2
-        x: 352
-        y: 928
+        x: 736
+        y: 960
         width: 32
         height: 32
       alignment: 0
@@ -1185,8 +1185,8 @@ TextureImporter:
       name: AseLocationBunker2_52
       rect:
         serializedVersion: 2
-        x: 384
-        y: 928
+        x: 768
+        y: 960
         width: 32
         height: 32
       alignment: 0
@@ -1207,8 +1207,8 @@ TextureImporter:
       name: AseLocationBunker2_53
       rect:
         serializedVersion: 2
-        x: 416
-        y: 928
+        x: 800
+        y: 960
         width: 32
         height: 32
       alignment: 0
@@ -1229,8 +1229,8 @@ TextureImporter:
       name: AseLocationBunker2_54
       rect:
         serializedVersion: 2
-        x: 448
-        y: 928
+        x: 832
+        y: 960
         width: 32
         height: 32
       alignment: 0
@@ -1251,8 +1251,8 @@ TextureImporter:
       name: AseLocationBunker2_55
       rect:
         serializedVersion: 2
-        x: 480
-        y: 928
+        x: 864
+        y: 960
         width: 32
         height: 32
       alignment: 0
@@ -1273,8 +1273,8 @@ TextureImporter:
       name: AseLocationBunker2_56
       rect:
         serializedVersion: 2
-        x: 512
-        y: 928
+        x: 896
+        y: 960
         width: 32
         height: 32
       alignment: 0
@@ -1295,8 +1295,8 @@ TextureImporter:
       name: AseLocationBunker2_57
       rect:
         serializedVersion: 2
-        x: 544
-        y: 928
+        x: 928
+        y: 960
         width: 32
         height: 32
       alignment: 0
@@ -1317,8 +1317,8 @@ TextureImporter:
       name: AseLocationBunker2_58
       rect:
         serializedVersion: 2
-        x: 576
-        y: 928
+        x: 960
+        y: 960
         width: 32
         height: 32
       alignment: 0
@@ -1339,8 +1339,8 @@ TextureImporter:
       name: AseLocationBunker2_59
       rect:
         serializedVersion: 2
-        x: 608
-        y: 928
+        x: 992
+        y: 960
         width: 32
         height: 32
       alignment: 0
@@ -1361,12 +1361,12 @@ TextureImporter:
       name: AseLocationBunker2_60
       rect:
         serializedVersion: 2
-        x: 640
+        x: 0
         y: 928
         width: 32
-        height: 64
-      alignment: 9
-      pivot: {x: 0.5, y: 0}
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1383,12 +1383,12 @@ TextureImporter:
       name: AseLocationBunker2_61
       rect:
         serializedVersion: 2
-        x: 672
+        x: 32
         y: 928
         width: 32
-        height: 64
-      alignment: 9
-      pivot: {x: 0.5, y: 0}
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1405,12 +1405,12 @@ TextureImporter:
       name: AseLocationBunker2_62
       rect:
         serializedVersion: 2
-        x: 704
+        x: 64
         y: 928
         width: 32
-        height: 64
-      alignment: 9
-      pivot: {x: 0.5, y: 0}
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1427,12 +1427,12 @@ TextureImporter:
       name: AseLocationBunker2_63
       rect:
         serializedVersion: 2
-        x: 736
+        x: 96
         y: 928
         width: 32
-        height: 64
-      alignment: 9
-      pivot: {x: 0.5, y: 0}
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1449,8 +1449,8 @@ TextureImporter:
       name: AseLocationBunker2_64
       rect:
         serializedVersion: 2
-        x: 0
-        y: 896
+        x: 128
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1471,8 +1471,8 @@ TextureImporter:
       name: AseLocationBunker2_65
       rect:
         serializedVersion: 2
-        x: 32
-        y: 896
+        x: 160
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1493,8 +1493,8 @@ TextureImporter:
       name: AseLocationBunker2_66
       rect:
         serializedVersion: 2
-        x: 64
-        y: 896
+        x: 192
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1515,8 +1515,8 @@ TextureImporter:
       name: AseLocationBunker2_67
       rect:
         serializedVersion: 2
-        x: 96
-        y: 896
+        x: 224
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1537,8 +1537,8 @@ TextureImporter:
       name: AseLocationBunker2_68
       rect:
         serializedVersion: 2
-        x: 128
-        y: 896
+        x: 256
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1559,8 +1559,8 @@ TextureImporter:
       name: AseLocationBunker2_69
       rect:
         serializedVersion: 2
-        x: 160
-        y: 896
+        x: 288
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1581,8 +1581,8 @@ TextureImporter:
       name: AseLocationBunker2_70
       rect:
         serializedVersion: 2
-        x: 192
-        y: 896
+        x: 320
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1603,8 +1603,8 @@ TextureImporter:
       name: AseLocationBunker2_71
       rect:
         serializedVersion: 2
-        x: 224
-        y: 896
+        x: 352
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1625,8 +1625,8 @@ TextureImporter:
       name: AseLocationBunker2_72
       rect:
         serializedVersion: 2
-        x: 256
-        y: 896
+        x: 384
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1647,8 +1647,8 @@ TextureImporter:
       name: AseLocationBunker2_73
       rect:
         serializedVersion: 2
-        x: 288
-        y: 896
+        x: 416
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1669,8 +1669,8 @@ TextureImporter:
       name: AseLocationBunker2_74
       rect:
         serializedVersion: 2
-        x: 320
-        y: 896
+        x: 448
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1691,8 +1691,8 @@ TextureImporter:
       name: AseLocationBunker2_75
       rect:
         serializedVersion: 2
-        x: 352
-        y: 896
+        x: 480
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1713,8 +1713,8 @@ TextureImporter:
       name: AseLocationBunker2_76
       rect:
         serializedVersion: 2
-        x: 384
-        y: 896
+        x: 512
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1735,8 +1735,8 @@ TextureImporter:
       name: AseLocationBunker2_77
       rect:
         serializedVersion: 2
-        x: 416
-        y: 896
+        x: 544
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1757,8 +1757,8 @@ TextureImporter:
       name: AseLocationBunker2_78
       rect:
         serializedVersion: 2
-        x: 448
-        y: 896
+        x: 576
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1779,8 +1779,8 @@ TextureImporter:
       name: AseLocationBunker2_79
       rect:
         serializedVersion: 2
-        x: 480
-        y: 896
+        x: 608
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1801,8 +1801,8 @@ TextureImporter:
       name: AseLocationBunker2_80
       rect:
         serializedVersion: 2
-        x: 512
-        y: 896
+        x: 640
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1823,8 +1823,8 @@ TextureImporter:
       name: AseLocationBunker2_81
       rect:
         serializedVersion: 2
-        x: 544
-        y: 896
+        x: 672
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1845,8 +1845,8 @@ TextureImporter:
       name: AseLocationBunker2_82
       rect:
         serializedVersion: 2
-        x: 576
-        y: 896
+        x: 704
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1867,8 +1867,8 @@ TextureImporter:
       name: AseLocationBunker2_83
       rect:
         serializedVersion: 2
-        x: 608
-        y: 896
+        x: 736
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1889,12 +1889,12 @@ TextureImporter:
       name: AseLocationBunker2_84
       rect:
         serializedVersion: 2
-        x: 640
-        y: 896
+        x: 768
+        y: 928
         width: 32
         height: 32
-      alignment: 9
-      pivot: {x: 0.5, y: 0}
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1911,12 +1911,12 @@ TextureImporter:
       name: AseLocationBunker2_85
       rect:
         serializedVersion: 2
-        x: 672
-        y: 896
+        x: 800
+        y: 928
         width: 32
         height: 32
-      alignment: 9
-      pivot: {x: 0.5, y: 0}
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1933,12 +1933,12 @@ TextureImporter:
       name: AseLocationBunker2_86
       rect:
         serializedVersion: 2
-        x: 704
-        y: 896
+        x: 832
+        y: 928
         width: 32
         height: 32
-      alignment: 9
-      pivot: {x: 0.5, y: 0}
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1955,12 +1955,12 @@ TextureImporter:
       name: AseLocationBunker2_87
       rect:
         serializedVersion: 2
-        x: 736
-        y: 896
+        x: 864
+        y: 928
         width: 32
         height: 32
-      alignment: 9
-      pivot: {x: 0.5, y: -0}
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1977,8 +1977,8 @@ TextureImporter:
       name: AseLocationBunker2_88
       rect:
         serializedVersion: 2
-        x: 0
-        y: 864
+        x: 896
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -1999,8 +1999,8 @@ TextureImporter:
       name: AseLocationBunker2_89
       rect:
         serializedVersion: 2
-        x: 32
-        y: 864
+        x: 928
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -2021,8 +2021,8 @@ TextureImporter:
       name: AseLocationBunker2_90
       rect:
         serializedVersion: 2
-        x: 64
-        y: 864
+        x: 960
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -2043,8 +2043,8 @@ TextureImporter:
       name: AseLocationBunker2_91
       rect:
         serializedVersion: 2
-        x: 96
-        y: 864
+        x: 992
+        y: 928
         width: 32
         height: 32
       alignment: 0
@@ -2065,8 +2065,8 @@ TextureImporter:
       name: AseLocationBunker2_92
       rect:
         serializedVersion: 2
-        x: 128
-        y: 864
+        x: 0
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2087,8 +2087,8 @@ TextureImporter:
       name: AseLocationBunker2_93
       rect:
         serializedVersion: 2
-        x: 160
-        y: 864
+        x: 32
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2109,8 +2109,8 @@ TextureImporter:
       name: AseLocationBunker2_94
       rect:
         serializedVersion: 2
-        x: 192
-        y: 864
+        x: 64
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2131,8 +2131,8 @@ TextureImporter:
       name: AseLocationBunker2_95
       rect:
         serializedVersion: 2
-        x: 224
-        y: 864
+        x: 96
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2153,8 +2153,8 @@ TextureImporter:
       name: AseLocationBunker2_96
       rect:
         serializedVersion: 2
-        x: 256
-        y: 864
+        x: 128
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2175,8 +2175,8 @@ TextureImporter:
       name: AseLocationBunker2_97
       rect:
         serializedVersion: 2
-        x: 288
-        y: 864
+        x: 160
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2197,8 +2197,8 @@ TextureImporter:
       name: AseLocationBunker2_98
       rect:
         serializedVersion: 2
-        x: 320
-        y: 864
+        x: 192
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2219,8 +2219,8 @@ TextureImporter:
       name: AseLocationBunker2_99
       rect:
         serializedVersion: 2
-        x: 352
-        y: 864
+        x: 224
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2241,8 +2241,8 @@ TextureImporter:
       name: AseLocationBunker2_100
       rect:
         serializedVersion: 2
-        x: 384
-        y: 864
+        x: 256
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2263,8 +2263,8 @@ TextureImporter:
       name: AseLocationBunker2_101
       rect:
         serializedVersion: 2
-        x: 416
-        y: 864
+        x: 288
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2285,8 +2285,8 @@ TextureImporter:
       name: AseLocationBunker2_102
       rect:
         serializedVersion: 2
-        x: 448
-        y: 864
+        x: 320
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2307,8 +2307,8 @@ TextureImporter:
       name: AseLocationBunker2_103
       rect:
         serializedVersion: 2
-        x: 480
-        y: 864
+        x: 352
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2329,8 +2329,8 @@ TextureImporter:
       name: AseLocationBunker2_104
       rect:
         serializedVersion: 2
-        x: 512
-        y: 864
+        x: 384
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2351,8 +2351,8 @@ TextureImporter:
       name: AseLocationBunker2_105
       rect:
         serializedVersion: 2
-        x: 544
-        y: 864
+        x: 416
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2373,8 +2373,8 @@ TextureImporter:
       name: AseLocationBunker2_106
       rect:
         serializedVersion: 2
-        x: 576
-        y: 864
+        x: 448
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2395,8 +2395,8 @@ TextureImporter:
       name: AseLocationBunker2_107
       rect:
         serializedVersion: 2
-        x: 608
-        y: 864
+        x: 480
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2417,8 +2417,8 @@ TextureImporter:
       name: AseLocationBunker2_108
       rect:
         serializedVersion: 2
-        x: 0
-        y: 832
+        x: 512
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2439,8 +2439,8 @@ TextureImporter:
       name: AseLocationBunker2_109
       rect:
         serializedVersion: 2
-        x: 96
-        y: 832
+        x: 544
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2461,8 +2461,8 @@ TextureImporter:
       name: AseLocationBunker2_110
       rect:
         serializedVersion: 2
-        x: 128
-        y: 832
+        x: 576
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2483,8 +2483,8 @@ TextureImporter:
       name: AseLocationBunker2_111
       rect:
         serializedVersion: 2
-        x: 160
-        y: 832
+        x: 608
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2505,8 +2505,8 @@ TextureImporter:
       name: AseLocationBunker2_112
       rect:
         serializedVersion: 2
-        x: 192
-        y: 832
+        x: 640
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2527,8 +2527,8 @@ TextureImporter:
       name: AseLocationBunker2_113
       rect:
         serializedVersion: 2
-        x: 224
-        y: 832
+        x: 672
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2549,8 +2549,8 @@ TextureImporter:
       name: AseLocationBunker2_114
       rect:
         serializedVersion: 2
-        x: 256
-        y: 832
+        x: 704
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2571,8 +2571,8 @@ TextureImporter:
       name: AseLocationBunker2_115
       rect:
         serializedVersion: 2
-        x: 288
-        y: 832
+        x: 736
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2593,8 +2593,8 @@ TextureImporter:
       name: AseLocationBunker2_116
       rect:
         serializedVersion: 2
-        x: 320
-        y: 832
+        x: 768
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2615,8 +2615,8 @@ TextureImporter:
       name: AseLocationBunker2_117
       rect:
         serializedVersion: 2
-        x: 352
-        y: 832
+        x: 800
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2637,8 +2637,8 @@ TextureImporter:
       name: AseLocationBunker2_118
       rect:
         serializedVersion: 2
-        x: 384
-        y: 832
+        x: 832
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2659,8 +2659,8 @@ TextureImporter:
       name: AseLocationBunker2_119
       rect:
         serializedVersion: 2
-        x: 416
-        y: 832
+        x: 864
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2681,8 +2681,8 @@ TextureImporter:
       name: AseLocationBunker2_120
       rect:
         serializedVersion: 2
-        x: 448
-        y: 832
+        x: 896
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2703,8 +2703,8 @@ TextureImporter:
       name: AseLocationBunker2_121
       rect:
         serializedVersion: 2
-        x: 480
-        y: 832
+        x: 928
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2725,8 +2725,8 @@ TextureImporter:
       name: AseLocationBunker2_122
       rect:
         serializedVersion: 2
-        x: 512
-        y: 832
+        x: 960
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2747,8 +2747,8 @@ TextureImporter:
       name: AseLocationBunker2_123
       rect:
         serializedVersion: 2
-        x: 544
-        y: 832
+        x: 992
+        y: 896
         width: 32
         height: 32
       alignment: 0
@@ -2769,8 +2769,8 @@ TextureImporter:
       name: AseLocationBunker2_124
       rect:
         serializedVersion: 2
-        x: 576
-        y: 832
+        x: 0
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -2791,8 +2791,8 @@ TextureImporter:
       name: AseLocationBunker2_125
       rect:
         serializedVersion: 2
-        x: 608
-        y: 832
+        x: 32
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -2813,8 +2813,8 @@ TextureImporter:
       name: AseLocationBunker2_126
       rect:
         serializedVersion: 2
-        x: 0
-        y: 800
+        x: 64
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -2836,7 +2836,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 96
-        y: 800
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -2858,7 +2858,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 128
-        y: 800
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -2880,7 +2880,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 160
-        y: 800
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -2902,7 +2902,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 192
-        y: 800
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -2924,7 +2924,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 224
-        y: 800
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -2946,7 +2946,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 256
-        y: 800
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -2968,7 +2968,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 288
-        y: 800
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -2990,7 +2990,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 320
-        y: 800
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -3012,7 +3012,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 352
-        y: 800
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -3034,7 +3034,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 384
-        y: 800
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -3056,7 +3056,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 416
-        y: 800
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -3078,7 +3078,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 448
-        y: 800
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -3100,7 +3100,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 480
-        y: 800
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -3122,7 +3122,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 512
-        y: 800
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -3144,7 +3144,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 544
-        y: 800
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -3166,7 +3166,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 576
-        y: 800
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -3188,7 +3188,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 608
-        y: 800
+        y: 864
         width: 32
         height: 32
       alignment: 0
@@ -3210,7 +3210,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3232,7 +3232,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 32
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3254,7 +3254,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 64
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3276,7 +3276,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 96
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3298,7 +3298,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 128
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3320,7 +3320,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 160
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3342,7 +3342,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 192
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3364,7 +3364,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 224
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3386,7 +3386,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 256
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3408,7 +3408,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 288
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3430,7 +3430,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 320
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3452,7 +3452,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 352
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3474,7 +3474,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 384
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3496,7 +3496,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 416
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3518,7 +3518,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 448
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3540,7 +3540,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 480
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3562,7 +3562,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 512
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3584,7 +3584,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 544
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3606,7 +3606,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 576
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3628,7 +3628,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 608
-        y: 768
+        y: 832
         width: 32
         height: 32
       alignment: 0
@@ -3641,6 +3641,4142 @@ TextureImporter:
       bones: []
       spriteID: 4f02d01fae396bb429728d894d9a755c
       internalID: 1217222016
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_38
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 960
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dad2e0bb93c47634bb86b292699b3b84
+      internalID: -1324317410
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_39
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 960
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 03513cd91c6ef2144a0e27aef218265d
+      internalID: -956049232
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_40
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 960
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1dbabf03fff6c664b80fcd9549b805d1
+      internalID: 546627924
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_41
+      rect:
+        serializedVersion: 2
+        x: 416
+        y: 960
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c7c30d7f78ecb734c8d9715d33fe1e8d
+      internalID: 1434192307
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_164
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8400b12795c9a104f848f2f9ce52ffc2
+      internalID: -1962586010
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_165
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eec9587049d7416429b4ce2f25cfdb58
+      internalID: -1226360262
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_166
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 616eb62a2dcead4499232701e3477544
+      internalID: -1623451713
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_167
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ba2508d201706c64c8631b2779cce5c7
+      internalID: -2076462044
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_168
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3515d67240b45e6468dbb449ac03a891
+      internalID: -1820024681
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_169
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1f19d0f59c8aff3468547e68459f0d1b
+      internalID: 1655033518
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_170
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c2c87770dc73e624a91983cc2c9b3500
+      internalID: 145506489
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_171
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bd0cb4e5f98bf43449943f728426efce
+      internalID: -123047476
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_172
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0eadb8d5938bf2747b838806c0d90855
+      internalID: 702580230
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_173
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8aa3ebb9bebadd445bca9b0708d07d72
+      internalID: 1713683978
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_174
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 04ce3dced8df5ba4cbfa1c7e3c35691e
+      internalID: -51501038
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_175
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 88fe9a30061672643bfa81fcb8bfb2fa
+      internalID: -2002400876
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_176
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 82d4f201d22f8de4da051c25e3249973
+      internalID: -1564046238
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_177
+      rect:
+        serializedVersion: 2
+        x: 416
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 58bbc2b70adb6fc4aa2ca50f4e66e985
+      internalID: -1143569665
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_178
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 48c03142fcdb2e041a177449b0d221f2
+      internalID: -141182579
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_179
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 466eaaa308c8cd54dbcce4e303da9436
+      internalID: -1999415467
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_180
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6f138e1435dd6c042a1818e0bcb91a63
+      internalID: -661952220
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_181
+      rect:
+        serializedVersion: 2
+        x: 544
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cb4706dccb55ad440a1cc4eb5a5bec87
+      internalID: -910080459
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_182
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8939db562f6760d4b885a8baecca9272
+      internalID: -1815221253
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_183
+      rect:
+        serializedVersion: 2
+        x: 608
+        y: 800
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 24a5a932b47ae4740a80c69baa778079
+      internalID: -1882956045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_184
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f5897e2069239cc40ad0fba654cb2f1a
+      internalID: -1146196376
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_185
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3ec854476e4110f4482b09b216b79f5f
+      internalID: 688896948
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_186
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 84bda12e02022734d8cfe67a00e0ec6c
+      internalID: -1987219807
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_187
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 17162c8226933274790971e52bdef4b2
+      internalID: 1959767622
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_188
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f4f403610aa1b8b4b8d0c3aa59ea3a0b
+      internalID: -406378807
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_189
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c6ff117659a45e746bf2852b70e49229
+      internalID: 763031552
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_190
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c823a58633c28cd44ba9b2c1a28b0d47
+      internalID: 172202945
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_191
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e106c0615296c0e45bfbe713e2801f94
+      internalID: -1126625052
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_192
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b1479c4f3c881bc42951452053d782a7
+      internalID: -435203117
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_193
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 006dbd32b8780b6498ecb627c4f5d631
+      internalID: 281783298
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_194
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9def8eb59da5b9f48b912457d810cd89
+      internalID: -1369729143
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_195
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 68e68c254c7bca14284ff24569a01b1b
+      internalID: -1366072426
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_196
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d316904b7a0f9c841b485ebaac0d3b07
+      internalID: -483534367
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_197
+      rect:
+        serializedVersion: 2
+        x: 416
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ce0de09ad5321ad48941f1b3fa4fa825
+      internalID: 154400158
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_198
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4d43d21fafacc3b4386be7776fe23072
+      internalID: 728742167
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_199
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9cd855b62699c8748bbaf1e9ad49c9ec
+      internalID: -554772243
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_200
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3c8424acd37a78641a27c49ab844bf5d
+      internalID: 731874716
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_201
+      rect:
+        serializedVersion: 2
+        x: 544
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b6b616dc201b62d42abac149e518ada7
+      internalID: 1720746225
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_202
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1966d9a3376945342bf09fc590d3ee67
+      internalID: 718856221
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_203
+      rect:
+        serializedVersion: 2
+        x: 608
+        y: 768
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2acfcdc6abbe66c44a8d8cd196f48ae3
+      internalID: -1028651331
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_204
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 736
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6185d1100bc143c44816e4ac2a37eb14
+      internalID: 983401096
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_205
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 736
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a817e353eae8e6849af50266c0e58035
+      internalID: 2061046429
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_206
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 736
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2837ebf45894a6d4787d6b854fd53a4d
+      internalID: 1765921392
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_207
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 736
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 736a1081fd1870b4bb0a89dccb98817d
+      internalID: 1098022159
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_208
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 704
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 51d4f42879bef304fbdf8ebe9c9f22cf
+      internalID: 208314996
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_209
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 704
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f7c6e6cfb80b1ee43a72f2c675407d50
+      internalID: 1531973288
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_210
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 704
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 89956c22c7374004ca6435d5a5a440b0
+      internalID: -1853091294
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_211
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 704
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dc972dfa81b45864d983f4a070e57fa7
+      internalID: 1628857767
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_212
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 672
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ebaf2d2a79c51cc459fb46a20de7398d
+      internalID: -673079400
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_213
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 672
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d3613317ee6923a4f8d3326befa48a69
+      internalID: -1080013878
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_214
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 672
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 462ffad326c0f99438614422e2e429ff
+      internalID: -1602030345
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_215
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 672
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bcb67bd75cf836446bd1d3dc1ecebaee
+      internalID: -2051548091
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_216
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 640
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 93dbbd1623c691d40b77103f622850c4
+      internalID: 1061320505
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_217
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 640
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e20b2eb5eb1da6e4ba126488262f4364
+      internalID: -388575259
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_218
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 640
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4fceec91b83531840a38465dffa33168
+      internalID: -356831656
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_219
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 640
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: db77239e34ea4d2458ddb6708a8c07d4
+      internalID: -1874217213
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_220
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 608
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 14d07e3c4c2f3344fb21761e3b10ae74
+      internalID: 1710251377
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_221
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 608
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2d4503c995af7fe42a1548aef2a261c3
+      internalID: -1033203362
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_222
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 608
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3cc751623e8c95647babccdf903b2fe5
+      internalID: -1145556050
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_223
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 608
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ee1b7aca34075264baf5a20b48a22a22
+      internalID: -1474252362
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_224
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 608
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a23c2090d3497d944aaaab249db69d79
+      internalID: 1349702162
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_225
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 608
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a629d01b3e5243c4487342e71d032148
+      internalID: -318430044
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_226
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 608
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 188a1dc167b396341b71d0d42464ba5f
+      internalID: -1391214092
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_227
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 608
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dbf254479b6bc0643942a65e6d2e357c
+      internalID: -1954912959
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_228
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 608
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0ed05c230dfb62540b64b1845b719a7b
+      internalID: 210374645
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_229
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 608
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a93aaadd319528947a30930c27210c45
+      internalID: 253111440
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_230
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 608
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7adf923695eff944f85124b616b3ee39
+      internalID: 576059088
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_231
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 608
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1ca4e78e314200143ac7a5db190b4c4b
+      internalID: 139542064
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_232
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 608
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0c8ca7bf5a97afb4dafb1572c5ce5fc6
+      internalID: 818421184
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_233
+      rect:
+        serializedVersion: 2
+        x: 416
+        y: 608
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 79d5553168dca3040af1b6ef1991286f
+      internalID: 820976580
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_234
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 608
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5203fc028c04267498d40fa6ca3ca441
+      internalID: -612971456
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_235
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 608
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 12e85ea7716ee134faaece4956c577ec
+      internalID: 2130989660
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_236
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 576
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4a0395e9d69f1ba4faf4edc090308cbe
+      internalID: 2113574475
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_237
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 576
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 16e25fb7ca4e442428c62ac13f2e8c62
+      internalID: 218322672
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_238
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 576
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d3f937abfa2bae347b6cf6e5e9894883
+      internalID: 262553963
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_239
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 576
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fe006f26cb88a054eafb2fa111713c01
+      internalID: -1961080568
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_240
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 576
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6dd2293202f5c594787009ef7ad11923
+      internalID: 442594506
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_241
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 576
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e0738917407bf2943bbcca24e57c3ec7
+      internalID: 1066370491
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_242
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 576
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bf2ede1245e4a1f499e836d39039ebfc
+      internalID: -1148198409
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_243
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 576
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7e19ec6feaaaf7b49836b51773a3a549
+      internalID: -295697265
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_244
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 576
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0ccfe4be00b37fa4fbdb7a40eeb27f2d
+      internalID: -408857315
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_245
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 576
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 39fe8def82abf394080036f465c1f1e5
+      internalID: 1140145633
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_246
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 576
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d9ce949883e48754c97dfba13948a796
+      internalID: -1453650162
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_247
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 576
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9594b751665d31740b13ebeda65a2faa
+      internalID: -1829227999
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_248
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 576
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9d036cecad6283e4f98626cd8a061941
+      internalID: -744377868
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_249
+      rect:
+        serializedVersion: 2
+        x: 416
+        y: 576
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f8e3a74fd5628f14b8082828ac54844f
+      internalID: -902562461
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_250
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 576
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 60e39ac7d939b6b43ba7f31e798bd941
+      internalID: 1837783331
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_251
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 576
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4b5a87885e1d18341a45bcda71d8906c
+      internalID: 534084843
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_252
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 544
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 09c34b1fcb96de64e93bc758d08f3dc7
+      internalID: -79346697
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_253
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 544
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 47d6eb218719d954aa767bdd86b084c9
+      internalID: 792342246
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_254
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 544
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bacff246def102d4c901eba5150ed4a2
+      internalID: 2102407903
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_255
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 544
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cd209eed294165146a7e6d1ad394bbd0
+      internalID: 108811069
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_256
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 544
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 29620280fc8ce654b9f0c3678c3a147c
+      internalID: 830945018
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_257
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 544
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 400ef705ecc2dee49b4048e3e7fefd44
+      internalID: -213372559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_258
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 544
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f9730a6f7b5dc4d4ab41f123f4432fcc
+      internalID: 1791637977
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_259
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 544
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 244e152b5b05c6e41b0d09f249b29439
+      internalID: 880682110
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_260
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 544
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7d57d85602a5b4d4bb14eca474c3e200
+      internalID: -271281373
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_261
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 544
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 32c3af0fc359c10468d1fa8270171964
+      internalID: 2329954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_262
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 544
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6e349f0a8b4793c47ad572223f857c76
+      internalID: -2044436970
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_263
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 544
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c5116f625cabeb0459d4c4f3e00b2fc1
+      internalID: -1616667314
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_264
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 544
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a622f9e96099674459bfed73b51ad1d1
+      internalID: -1377693610
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_265
+      rect:
+        serializedVersion: 2
+        x: 416
+        y: 544
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 61ef4521e5d1e464d97a6519bf5de2e3
+      internalID: 741267522
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_266
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 544
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fc7a6afae8d0b8547bb3d78de441ccb2
+      internalID: -305774904
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_267
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 544
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: df150489495ad0c47a05767f4a7ecaa0
+      internalID: -1996298670
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_268
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 512
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1d83545360af93e47b7d3137e4738e09
+      internalID: 218338822
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_269
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 512
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 84e244506891eb2478ef879645304309
+      internalID: 323350089
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_270
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 512
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3c1f6c047d465154691a3236f11c5d4b
+      internalID: -1313035983
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_271
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 512
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3433954baf3a7c24cb56e1e9cb6e7da6
+      internalID: 514461117
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_272
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 512
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5d9cb3043aa2b6e45b54385f0dd21e9f
+      internalID: -1784604253
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_273
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 512
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cb7d74f77495b2848a9b1214c14f758e
+      internalID: 351731623
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_274
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 512
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c210142e384b5b24089dcc9f636a65a4
+      internalID: 1128219553
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_275
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 512
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1a64ef95b4f3caa4897c042eda27e104
+      internalID: -1480433645
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_276
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 512
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7124afbd46759d3409db1493e2eda290
+      internalID: -1008338983
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_277
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 512
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 72da3eabfd3515f45acc67c028b5d1d3
+      internalID: -1464394177
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_278
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 512
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0c079e1dd77d92b4d86ffb5125741db0
+      internalID: -1301222954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_279
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 512
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ff787d291d009a947a7edcbc39af0c75
+      internalID: -678620182
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_280
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 512
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e1c9d08e92aa06545abda1f0516123d7
+      internalID: 742986011
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_281
+      rect:
+        serializedVersion: 2
+        x: 416
+        y: 512
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1289dc428b20ddf4d9abff7970efe179
+      internalID: 1559124251
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_282
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 512
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: aff2ccae6e07b1f4d914d988218f5245
+      internalID: -1863727721
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_283
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 512
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 006ae1f533815b04ea78cb1092892ecc
+      internalID: -764282676
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_284
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 480
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 81c2a9f957fa2ed41bf4c12feb5d35b7
+      internalID: 1048337734
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_285
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 480
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bdfe0618a745a7a45b3599e5e36c273c
+      internalID: 534420922
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_286
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 480
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0e5ccbcfa7df8844a813d5d75833e64d
+      internalID: 1496732029
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_287
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 480
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8b63e574b9971004f9256df967e86488
+      internalID: -658309906
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_288
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 480
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 013d6967435bf184aba036899af7f5eb
+      internalID: -1942719489
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_289
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 480
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f59e0454a25d3754d9691393e17809d8
+      internalID: -1090668602
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_290
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 480
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 430408de7842a844da46dd516e3d0123
+      internalID: 1968063236
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_291
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 480
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: abcc445d6b4a62b41b78976d3aeb4900
+      internalID: -309971550
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_292
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 480
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8691d581f37e42b48819bd3900344e51
+      internalID: -1789326425
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_293
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 480
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4f18b6a718e38234e8e3ee522072fe9f
+      internalID: -1101976991
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_294
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 480
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 26104db6e30813842aec128bb3e40cc1
+      internalID: 249995365
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_295
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 480
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f84180028125ddc4a9320d87e2b7a8de
+      internalID: -758790161
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_296
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 480
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: de5f0ea7c7a773749b66870abf19dd5f
+      internalID: -960688301
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_297
+      rect:
+        serializedVersion: 2
+        x: 416
+        y: 480
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c5abba341eed3314297954cd7a3bf349
+      internalID: -651488104
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_298
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 480
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7655cded06189764f998efad8e12ee23
+      internalID: 2088330472
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_299
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 480
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 62d690f05ef2f4c44aab2e043661374f
+      internalID: -533249460
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_300
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 448
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a63a9a00c28dd1f49b7d312f87063864
+      internalID: -1198386437
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_301
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 448
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5fa0b3f8cc2d7ff4cb9ceef36f65a139
+      internalID: -1249085545
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_302
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 448
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 345a0412a46b27c49a5b183af705f8f1
+      internalID: 151987743
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_303
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 448
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 129907ff5e07a4b4995e95d0b9e74a94
+      internalID: 608743398
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_304
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 448
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8ce1a8c6502d44549b490325981f57ba
+      internalID: -245382855
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_305
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 448
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d380dcd6120eb1b4294f341fcc0cf6c5
+      internalID: 1451650190
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_306
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 448
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c2ad98f4369110e45909dded65a1364f
+      internalID: -1300882600
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_307
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 448
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a9cea14f5cbc4ff4cb00849424413fa3
+      internalID: 1157375977
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_308
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 448
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 979c8075f5ba3b041b5dd9aed3f5d732
+      internalID: 1214337178
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_309
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 448
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2dddc409914b3384b940059d4fc5fc10
+      internalID: -2009000600
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_310
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 448
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f688e3aefb759954cbb673c95a4e9099
+      internalID: 2033088437
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_311
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 448
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3bd619952592fd44392e5bc865ca5f90
+      internalID: -1136554564
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_312
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 448
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9e9b876e2fd07ab429d4ab07f8899104
+      internalID: 1708289626
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_313
+      rect:
+        serializedVersion: 2
+        x: 416
+        y: 448
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6213f6a048d3ba34681c924453e5bbcc
+      internalID: -326384991
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_314
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 448
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1005b812f8523044d88c0a0349785807
+      internalID: 174099135
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_315
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 448
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5907e14e266ff0f43a7af36077d51468
+      internalID: 552767251
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_316
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 416
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dd33592b146db0a4cacdf15c9658d281
+      internalID: 1155699405
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_317
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 416
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2b856a3826f4b2d45b7d37ad999d2aa0
+      internalID: 46236352
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_318
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 416
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d9916b88ae4141844918fb1bf89fa8fe
+      internalID: 162588168
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_319
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 416
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 075759c7a20e3364699dd2fbc3fb5abd
+      internalID: 1054747976
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_320
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 416
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f2938f4383239dc49b27b80b45b062a2
+      internalID: -907627078
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_321
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 416
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 65a1e90a3f4d1ea4cb72c6574a80779e
+      internalID: 1636693845
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_322
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 416
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c24aab0dd4c33e24cbe37bec99ccddce
+      internalID: 988917140
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_323
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 416
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a8e4c68608fc7fd40af68558f96bfc01
+      internalID: -695936403
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_324
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 416
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 23be5efdbe9e0f54182aae0a982c7c53
+      internalID: 1832529013
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_325
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 416
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7aaff2f353dcede40b3c7f4288919be1
+      internalID: -249383034
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_326
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 416
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a82dbdafb854ab64a975d21c7c0a9bab
+      internalID: 792013924
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_327
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 416
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 30d36e3522a9d674698e7a75ab53d02f
+      internalID: 640954321
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_328
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 416
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 47e6cf174ed469e4eb7b7f7fa109beb9
+      internalID: -2014585412
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_329
+      rect:
+        serializedVersion: 2
+        x: 416
+        y: 416
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a2ad7366e614b3f4c9e7c45513e83ee6
+      internalID: 446832241
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_330
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 416
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 865c9e59035e1cd4eb24bd3e8dffd458
+      internalID: -938388554
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_331
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 416
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: aaf118c8de0c4044cb35cdc2c6ffc138
+      internalID: 1527696351
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_332
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 384
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1f77f4681a7c985449b936dbd6edea3d
+      internalID: -2101450763
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_333
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 384
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 235e37e114d6fd94ba231a9f9de7b321
+      internalID: -1357271859
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_334
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 384
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 107f01ae84e32ea4faa548e8d82dd250
+      internalID: 402253531
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_335
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 384
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d9afdf98762b9634abb71d9b6c6962aa
+      internalID: -188808758
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_336
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 384
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 85ab041bcbfb06c4eb6fda652262b89d
+      internalID: -435444000
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_337
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 384
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: efb5e43fa77bf784e8c448bedc599396
+      internalID: -1309824457
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_338
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 384
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 080da3536a68ea745b3ffff3bfc72211
+      internalID: 339513060
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_339
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 384
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 304ba7928f070a74688a0e9f0a364786
+      internalID: -1924107535
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_340
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 384
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 51ff6c8bbb1e9f249b85291659498bf4
+      internalID: 680539082
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_341
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 384
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fa942802103e066478d8c2c7d3ff5152
+      internalID: 502410212
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_342
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 384
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7ad4ebbc30e12df4d8340846f9432211
+      internalID: 1616649742
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_343
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 384
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 51993f8e5f179d54486a4cf88a823750
+      internalID: 1861643512
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_344
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 384
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 35a55c99780601540af37b642c7a92ee
+      internalID: 68507218
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_345
+      rect:
+        serializedVersion: 2
+        x: 416
+        y: 384
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8f5d4a785435ecf4db7f86b3ca733662
+      internalID: -1657874792
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_346
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 384
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cdfe4d70938c65646b9968d3a7d76c52
+      internalID: -909292543
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunker2_347
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 384
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2af5acb5f9329af49948025775f2e2ee
+      internalID: 148699471
       vertices: []
       indices: 
       edges: []
@@ -3734,26 +7870,210 @@ TextureImporter:
       AseLocationBunker2_161: -469382005
       AseLocationBunker2_162: 1580144246
       AseLocationBunker2_163: 1217222016
+      AseLocationBunker2_164: -1962586010
+      AseLocationBunker2_165: -1226360262
+      AseLocationBunker2_166: -1623451713
+      AseLocationBunker2_167: -2076462044
+      AseLocationBunker2_168: -1820024681
+      AseLocationBunker2_169: 1655033518
       AseLocationBunker2_17: -1964523640
+      AseLocationBunker2_170: 145506489
+      AseLocationBunker2_171: -123047476
+      AseLocationBunker2_172: 702580230
+      AseLocationBunker2_173: 1713683978
+      AseLocationBunker2_174: -51501038
+      AseLocationBunker2_175: -2002400876
+      AseLocationBunker2_176: -1564046238
+      AseLocationBunker2_177: -1143569665
+      AseLocationBunker2_178: -141182579
+      AseLocationBunker2_179: -1999415467
       AseLocationBunker2_18: 86312263
+      AseLocationBunker2_180: -661952220
+      AseLocationBunker2_181: -910080459
+      AseLocationBunker2_182: -1815221253
+      AseLocationBunker2_183: -1882956045
+      AseLocationBunker2_184: -1146196376
+      AseLocationBunker2_185: 688896948
+      AseLocationBunker2_186: -1987219807
+      AseLocationBunker2_187: 1959767622
+      AseLocationBunker2_188: -406378807
+      AseLocationBunker2_189: 763031552
       AseLocationBunker2_19: 813816844
+      AseLocationBunker2_190: 172202945
+      AseLocationBunker2_191: -1126625052
+      AseLocationBunker2_192: -435203117
+      AseLocationBunker2_193: 281783298
+      AseLocationBunker2_194: -1369729143
+      AseLocationBunker2_195: -1366072426
+      AseLocationBunker2_196: -483534367
+      AseLocationBunker2_197: 154400158
+      AseLocationBunker2_198: 728742167
+      AseLocationBunker2_199: -554772243
       AseLocationBunker2_2: -1241721645
       AseLocationBunker2_20: -619665342
+      AseLocationBunker2_200: 731874716
+      AseLocationBunker2_201: 1720746225
+      AseLocationBunker2_202: 718856221
+      AseLocationBunker2_203: -1028651331
+      AseLocationBunker2_204: 983401096
+      AseLocationBunker2_205: 2061046429
+      AseLocationBunker2_206: 1765921392
+      AseLocationBunker2_207: 1098022159
+      AseLocationBunker2_208: 208314996
+      AseLocationBunker2_209: 1531973288
       AseLocationBunker2_21: -1121843396
+      AseLocationBunker2_210: -1853091294
+      AseLocationBunker2_211: 1628857767
+      AseLocationBunker2_212: -673079400
+      AseLocationBunker2_213: -1080013878
+      AseLocationBunker2_214: -1602030345
+      AseLocationBunker2_215: -2051548091
+      AseLocationBunker2_216: 1061320505
+      AseLocationBunker2_217: -388575259
+      AseLocationBunker2_218: -356831656
+      AseLocationBunker2_219: -1874217213
       AseLocationBunker2_22: -1446117305
+      AseLocationBunker2_220: 1710251377
+      AseLocationBunker2_221: -1033203362
+      AseLocationBunker2_222: -1145556050
+      AseLocationBunker2_223: -1474252362
+      AseLocationBunker2_224: 1349702162
+      AseLocationBunker2_225: -318430044
+      AseLocationBunker2_226: -1391214092
+      AseLocationBunker2_227: -1954912959
+      AseLocationBunker2_228: 210374645
+      AseLocationBunker2_229: 253111440
       AseLocationBunker2_23: 1849872117
+      AseLocationBunker2_230: 576059088
+      AseLocationBunker2_231: 139542064
+      AseLocationBunker2_232: 818421184
+      AseLocationBunker2_233: 820976580
+      AseLocationBunker2_234: -612971456
+      AseLocationBunker2_235: 2130989660
+      AseLocationBunker2_236: 2113574475
+      AseLocationBunker2_237: 218322672
+      AseLocationBunker2_238: 262553963
+      AseLocationBunker2_239: -1961080568
       AseLocationBunker2_24: 1830859628
+      AseLocationBunker2_240: 442594506
+      AseLocationBunker2_241: 1066370491
+      AseLocationBunker2_242: -1148198409
+      AseLocationBunker2_243: -295697265
+      AseLocationBunker2_244: -408857315
+      AseLocationBunker2_245: 1140145633
+      AseLocationBunker2_246: -1453650162
+      AseLocationBunker2_247: -1829227999
+      AseLocationBunker2_248: -744377868
+      AseLocationBunker2_249: -902562461
       AseLocationBunker2_25: -958492585
+      AseLocationBunker2_250: 1837783331
+      AseLocationBunker2_251: 534084843
+      AseLocationBunker2_252: -79346697
+      AseLocationBunker2_253: 792342246
+      AseLocationBunker2_254: 2102407903
+      AseLocationBunker2_255: 108811069
+      AseLocationBunker2_256: 830945018
+      AseLocationBunker2_257: -213372559
+      AseLocationBunker2_258: 1791637977
+      AseLocationBunker2_259: 880682110
       AseLocationBunker2_26: 2145674928
+      AseLocationBunker2_260: -271281373
+      AseLocationBunker2_261: 2329954
+      AseLocationBunker2_262: -2044436970
+      AseLocationBunker2_263: -1616667314
+      AseLocationBunker2_264: -1377693610
+      AseLocationBunker2_265: 741267522
+      AseLocationBunker2_266: -305774904
+      AseLocationBunker2_267: -1996298670
+      AseLocationBunker2_268: 218338822
+      AseLocationBunker2_269: 323350089
       AseLocationBunker2_27: -752762300
+      AseLocationBunker2_270: -1313035983
+      AseLocationBunker2_271: 514461117
+      AseLocationBunker2_272: -1784604253
+      AseLocationBunker2_273: 351731623
+      AseLocationBunker2_274: 1128219553
+      AseLocationBunker2_275: -1480433645
+      AseLocationBunker2_276: -1008338983
+      AseLocationBunker2_277: -1464394177
+      AseLocationBunker2_278: -1301222954
+      AseLocationBunker2_279: -678620182
       AseLocationBunker2_28: 670654782
+      AseLocationBunker2_280: 742986011
+      AseLocationBunker2_281: 1559124251
+      AseLocationBunker2_282: -1863727721
+      AseLocationBunker2_283: -764282676
+      AseLocationBunker2_284: 1048337734
+      AseLocationBunker2_285: 534420922
+      AseLocationBunker2_286: 1496732029
+      AseLocationBunker2_287: -658309906
+      AseLocationBunker2_288: -1942719489
+      AseLocationBunker2_289: -1090668602
       AseLocationBunker2_29: 592724243
+      AseLocationBunker2_290: 1968063236
+      AseLocationBunker2_291: -309971550
+      AseLocationBunker2_292: -1789326425
+      AseLocationBunker2_293: -1101976991
+      AseLocationBunker2_294: 249995365
+      AseLocationBunker2_295: -758790161
+      AseLocationBunker2_296: -960688301
+      AseLocationBunker2_297: -651488104
+      AseLocationBunker2_298: 2088330472
+      AseLocationBunker2_299: -533249460
       AseLocationBunker2_3: -928952426
       AseLocationBunker2_30: 1404407604
+      AseLocationBunker2_300: -1198386437
+      AseLocationBunker2_301: -1249085545
+      AseLocationBunker2_302: 151987743
+      AseLocationBunker2_303: 608743398
+      AseLocationBunker2_304: -245382855
+      AseLocationBunker2_305: 1451650190
+      AseLocationBunker2_306: -1300882600
+      AseLocationBunker2_307: 1157375977
+      AseLocationBunker2_308: 1214337178
+      AseLocationBunker2_309: -2009000600
       AseLocationBunker2_31: -835586796
+      AseLocationBunker2_310: 2033088437
+      AseLocationBunker2_311: -1136554564
+      AseLocationBunker2_312: 1708289626
+      AseLocationBunker2_313: -326384991
+      AseLocationBunker2_314: 174099135
+      AseLocationBunker2_315: 552767251
+      AseLocationBunker2_316: 1155699405
+      AseLocationBunker2_317: 46236352
+      AseLocationBunker2_318: 162588168
+      AseLocationBunker2_319: 1054747976
       AseLocationBunker2_32: 578603121
+      AseLocationBunker2_320: -907627078
+      AseLocationBunker2_321: 1636693845
+      AseLocationBunker2_322: 988917140
+      AseLocationBunker2_323: -695936403
+      AseLocationBunker2_324: 1832529013
+      AseLocationBunker2_325: -249383034
+      AseLocationBunker2_326: 792013924
+      AseLocationBunker2_327: 640954321
+      AseLocationBunker2_328: -2014585412
+      AseLocationBunker2_329: 446832241
       AseLocationBunker2_33: -1269471219
+      AseLocationBunker2_330: -938388554
+      AseLocationBunker2_331: 1527696351
+      AseLocationBunker2_332: -2101450763
+      AseLocationBunker2_333: -1357271859
+      AseLocationBunker2_334: 402253531
+      AseLocationBunker2_335: -188808758
+      AseLocationBunker2_336: -435444000
+      AseLocationBunker2_337: -1309824457
+      AseLocationBunker2_338: 339513060
+      AseLocationBunker2_339: -1924107535
       AseLocationBunker2_34: 367343726
+      AseLocationBunker2_340: 680539082
+      AseLocationBunker2_341: 502410212
+      AseLocationBunker2_342: 1616649742
+      AseLocationBunker2_343: 1861643512
+      AseLocationBunker2_344: 68507218
+      AseLocationBunker2_345: -1657874792
+      AseLocationBunker2_346: -909292543
+      AseLocationBunker2_347: 148699471
       AseLocationBunker2_35: -394064059
       AseLocationBunker2_36: -172109660
       AseLocationBunker2_37: -479550591
