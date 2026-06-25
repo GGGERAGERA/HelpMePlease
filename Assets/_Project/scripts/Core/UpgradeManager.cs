@@ -6,15 +6,15 @@ public class UpgradeManager : MonoBehaviour
     public static UpgradeManager Instance;
 
     [Header("UI")]
-    public GameObject chooseUpgradesPanel;
-    public UpgradeButtonUI[] upgradeButtons;
-    public GameUpgradeDescriptionUI descriptionUI;
+    [SerializeField] private UpgradePanelView upgradePanelView;
 
     [Header("Available Upgrades")]
     public UpgradeData[] allUpgrades;
 
     private bool isChoosingUpgrade = false;
     public bool IsChoosingUpgrade => isChoosingUpgrade;
+
+    private UpgradeRoller upgradeRoller;
 
     private void Awake()
     {
@@ -23,8 +23,10 @@ public class UpgradeManager : MonoBehaviour
         else
             Destroy(gameObject);
 
-        if (chooseUpgradesPanel != null)
-            chooseUpgradesPanel.SetActive(false);
+        if (upgradePanelView != null)
+            upgradePanelView.Hide();
+
+        upgradeRoller = new UpgradeRoller(allUpgrades);
     }
 
     public void ShowUpgradeChoices()
@@ -35,92 +37,33 @@ public class UpgradeManager : MonoBehaviour
             return;
         }
 
-        if (chooseUpgradesPanel == null)
+        if (upgradePanelView == null)
         {
-            Debug.LogWarning("UpgradeManager: chooseUpgradesPanel is not assigned.");
+            Debug.LogWarning("UpgradeManager: upgradePanelView is not assigned.");
             return;
         }
 
+        int playerLevel = ExperienceManager.Instance != null
+            ? ExperienceManager.Instance.currentLevel
+            : 1;
+
+        List<UpgradeData> choices = upgradeRoller.RollChoices(playerLevel, 3);
+
         isChoosingUpgrade = true;
-
         Time.timeScale = 0f;
-        chooseUpgradesPanel.SetActive(true);
 
-        List<UpgradeData> randomUpgrades = GetRandomUpgrades(3);
-
-        for (int i = 0; i < upgradeButtons.Length; i++)
-        {
-            if (upgradeButtons[i] == null)
-                continue;
-
-            if (i < randomUpgrades.Count)
-            {
-                upgradeButtons[i].Setup(randomUpgrades[i], this);
-            }
-            else
-            {
-                upgradeButtons[i].gameObject.SetActive(false);
-            }
-        }
-        if (upgradeButtons.Length > 0 && upgradeButtons[0] != null)
-        {
-            upgradeButtons[0].ShowDescription();
-        }
+        upgradePanelView.Show(playerLevel, choices, SelectUpgrade);
     }
 
     public void SelectUpgrade(UpgradeData upgrade)
     {
         ApplyUpgrade(upgrade);
 
-        if (chooseUpgradesPanel != null)
-            chooseUpgradesPanel.SetActive(false);
+        if (upgradePanelView != null)
+            upgradePanelView.Hide();
 
         isChoosingUpgrade = false;
         Time.timeScale = 1f;
-    }
-
-    private List<UpgradeData> GetRandomUpgrades(int count)
-    {
-        List<UpgradeData> available = new List<UpgradeData>();
-
-        int playerLevel = ExperienceManager.Instance != null
-            ? ExperienceManager.Instance.currentLevel
-            : 1;
-
-        bool legendaryLevel = playerLevel == 10;
-
-        foreach (UpgradeData upgrade in allUpgrades)
-        {
-            if (upgrade == null)
-                continue;
-
-            if (legendaryLevel)
-            {
-                if (upgrade.rarity == UpgradeRarity.Legendary)
-                    available.Add(upgrade);
-
-                continue;
-            }
-
-            if (upgrade.rarity == UpgradeRarity.Legendary)
-                continue;
-
-            if (playerLevel < upgrade.minPlayerLevel)
-                continue;
-
-            available.Add(upgrade);
-        }
-
-        List<UpgradeData> result = new List<UpgradeData>();
-
-        while (result.Count < count && available.Count > 0)
-        {
-            int randomIndex = Random.Range(0, available.Count);
-            result.Add(available[randomIndex]);
-            available.RemoveAt(randomIndex);
-        }
-
-        return result;
     }
 
     private void ApplyUpgrade(UpgradeData upgrade)
