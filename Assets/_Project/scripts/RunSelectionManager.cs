@@ -1,11 +1,15 @@
 using UnityEngine;
 
-public class RunSelectionManager : MonoBehaviour
+public sealed class RunSelectionManager : MonoBehaviour
 {
     public static RunSelectionManager Instance { get; private set; }
 
     public CharacterData SelectedCharacter { get; private set; }
     public WeaponData SelectedWeapon { get; private set; }
+
+    public bool HasCharacter => SelectedCharacter != null;
+    public bool HasWeapon => SelectedWeapon != null;
+    public bool IsReady => HasCharacter && HasWeapon;
 
     private void Awake()
     {
@@ -23,7 +27,7 @@ public class RunSelectionManager : MonoBehaviour
     {
         if (character == null)
         {
-            Debug.LogWarning("RunSelectionManager: tried to select null character.");
+            Debug.LogWarning("[RunSelectionManager] Tried to select null character.");
             return;
         }
 
@@ -34,26 +38,11 @@ public class RunSelectionManager : MonoBehaviour
     {
         if (weapon == null)
         {
-            Debug.LogWarning("RunSelectionManager: tried to select null weapon.");
+            Debug.LogWarning("[RunSelectionManager] Tried to select null weapon.");
             return;
         }
 
         SelectedWeapon = weapon;
-    }
-
-    public bool HasCharacter()
-    {
-        return SelectedCharacter != null;
-    }
-
-    public bool HasWeapon()
-    {
-        return SelectedWeapon != null;
-    }
-
-    public bool IsReady()
-    {
-        return HasCharacter() && HasWeapon();
     }
 
     public void ClearRunSelection()

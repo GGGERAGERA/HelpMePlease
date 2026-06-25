@@ -2,93 +2,146 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class WeaponSelectionUI : MonoBehaviour
+public sealed class WeaponSelectionUI : MonoBehaviour
 {
     [Header("Navigation")]
-    [SerializeField] private Button nextButton;
-
-    [Header("Top")]
-    [SerializeField] private TextMeshProUGUI selectedWeaponText;
+    [SerializeField] private Button confirmButton;
+    [SerializeField] private MainMenuController mainMenuController;
 
     [Header("Right Info Panel")]
+    [SerializeField] private TextMeshProUGUI weaponNameText;
+    [SerializeField] private TextMeshProUGUI weaponClassText;
     [SerializeField] private Image weaponIconImage;
     [SerializeField] private TextMeshProUGUI descriptionText;
 
     [Header("Weapon Stats")]
     [SerializeField] private TextMeshProUGUI damageText;
     [SerializeField] private TextMeshProUGUI fireRateText;
-    [SerializeField] private TextMeshProUGUI bulletsText;
-    [SerializeField] private TextMeshProUGUI pierceText;
     [SerializeField] private TextMeshProUGUI specialText;
 
-    [Header("Next Button Visual")]
+    [Header("Button Visual")]
     [SerializeField] private Color enabledColor = Color.white;
     [SerializeField] private Color disabledColor = new Color(0.45f, 0.45f, 0.45f, 1f);
 
-    private void Start()
+    private WeaponData selectedWeapon;
+
+    private void Awake()
+    {
+        if (confirmButton != null)
+            confirmButton.onClick.AddListener(ConfirmSelection);
+
+        ClearSelection();
+    }
+
+    private void OnEnable()
     {
         ClearSelection();
     }
 
+    private void OnDestroy()
+    {
+        if (confirmButton != null)
+            confirmButton.onClick.RemoveListener(ConfirmSelection);
+    }
+
     public void SelectWeapon(WeaponData weapon)
     {
-    if (weapon == null)
-        return;
+        if (weapon == null)
+            return;
 
-    RunSelectionManager.Instance.SelectWeapon(weapon);
+        selectedWeapon = weapon;
+        RunSelectionManager.Instance?.SelectWeapon(weapon);
 
+        RefreshDetails(weapon);
+        SetConfirmButton(true);
+    }
 
-        if (weaponIconImage != null)
+    private void ConfirmSelection()
+    {
+        if (selectedWeapon == null)
+            return;
+
+        if (RunSelectionManager.Instance == null)
         {
-            weaponIconImage.sprite = weapon.icon;
-            weaponIconImage.enabled = weapon.icon != null;
+            Debug.LogError("[WeaponSelectionUI] RunSelectionManager is missing.");
+            return;
         }
 
-        SetText(descriptionText, weapon.description);
-        SetText(damageText, "Damage: " + weapon.damage);
-        SetText(fireRateText, "Fire Rate: " + weapon.fireRateRPM + " RPM");
-        SetText(bulletsText, "Bullets: " + weapon.bulletsPerShot);
-        SetText(pierceText, "Pierce: " + weapon.pierce);
-        SetText(specialText, "Special: " + weapon.specialDescription);
+        RunSelectionManager.Instance.SelectWeapon(selectedWeapon);
 
-        SetNextButton(true);
+        if (!RunSelectionManager.Instance.IsReady)
+        {
+            Debug.LogWarning("[WeaponSelectionUI] Cannot start game. Character or weapon is missing.");
+            return;
+        }
+
+        if (mainMenuController == null)
+        {
+            Debug.LogError("[WeaponSelectionUI] MainMenuController is not assigned.");
+            return;
+        }
+
+        mainMenuController.StartGame();
+    }
+
+    private void RefreshDetails(WeaponData weapon)
+    {
+        SetText(weaponNameText, weapon.weaponName);
+        SetText(weaponClassText, weapon.weaponName.ToUpperInvariant());
+        SetText(descriptionText, weapon.description);
+
+        SetText(damageText, $"Damage: {weapon.damage}");
+        SetText(fireRateText, $"Fire Rate: {weapon.fireRateRPM} RPM");
+        SetText(specialText, $"Special: {GetSpecialText(weapon.specialDescription)}");
+
+        SetWeaponIcon(weapon.icon);
     }
 
     private void ClearSelection()
     {
-        SetText(selectedWeaponText, "Selected Weapon: none");
+        selectedWeapon = null;
 
-        if (weaponIconImage != null)
-        {
-            weaponIconImage.sprite = null;
-            weaponIconImage.enabled = false;
-        }
+        SetText(weaponNameText, "Name");
+        SetText(weaponClassText, "Class");
+        SetText(descriptionText, "Description");
 
-        SetText(descriptionText, "Select a weapon.");
-        SetText(damageText, "Damage: -");
-        SetText(fireRateText, "Fire Rate: -");
-        SetText(bulletsText, "Bullets: -");
-        SetText(pierceText, "Pierce: -");
-        SetText(specialText, "Special: -");
+        SetText(damageText, "Damage");
+        SetText(fireRateText, "Fire Rate");
+        SetText(specialText, "Special");
 
-        SetNextButton(false);
+        SetWeaponIcon(null);
+        SetConfirmButton(false);
     }
 
-    private void SetNextButton(bool active)
+    private void SetWeaponIcon(Sprite icon)
     {
-        if (nextButton == null)
+        if (weaponIconImage == null)
             return;
 
-        nextButton.interactable = active;
+        weaponIconImage.sprite = icon;
+        weaponIconImage.enabled = icon != null;
+    }
 
-        Image img = nextButton.GetComponent<Image>();
-        if (img != null)
-            img.color = active ? enabledColor : disabledColor;
+    private void SetConfirmButton(bool active)
+    {
+        if (confirmButton == null)
+            return;
+
+        confirmButton.interactable = active;
+
+        Image image = confirmButton.GetComponent<Image>();
+        if (image != null)
+            image.color = active ? enabledColor : disabledColor;
     }
 
     private void SetText(TextMeshProUGUI text, string value)
     {
         if (text != null)
             text.text = value;
+    }
+
+    private string GetSpecialText(string special)
+    {
+        return string.IsNullOrWhiteSpace(special) ? "No" : special;
     }
 }
