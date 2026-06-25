@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class MainMenuController : MonoBehaviour
+public sealed class MainMenuController : MonoBehaviour
 {
     [Header("Root Panels")]
     [SerializeField] private GameObject mainPanel;
@@ -14,9 +14,11 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private GameObject weaponSelectPanel;
     [SerializeField] private GameObject sceneSelectPanel;
 
-    private bool isStartingGame;
+    [Header("Game")]
+    [SerializeField] private string gameplaySceneName = "MVP";
 
     private GameObject currentRootPanel;
+    private bool isStartingGame;
 
     private void Start()
     {
@@ -65,32 +67,24 @@ public class MainMenuController : MonoBehaviour
 
         if (RunSelectionManager.Instance == null)
         {
-            Debug.LogWarning("StartGame blocked: RunSelectionManager not found.");
+            Debug.LogWarning("[MainMenuController] StartGame blocked: RunSelectionManager not found.");
             return;
         }
 
-        if (!RunSelectionManager.Instance.HasCharacter())
+        if (!RunSelectionManager.Instance.IsReady)
         {
-            Debug.LogWarning("StartGame blocked: no character selected.");
-            return;
-        }
-
-        if (!RunSelectionManager.Instance.HasWeapon())
-        {
-            Debug.LogWarning("StartGame blocked: no weapon selected.");
+            Debug.LogWarning("[MainMenuController] StartGame blocked: selection is not complete.");
             return;
         }
 
         isStartingGame = true;
-
         Time.timeScale = 1f;
-        SceneManager.LoadScene("MVP");
+        SceneManager.LoadScene(gameplaySceneName);
     }
 
     public void QuitGame()
     {
         Application.Quit();
-        Debug.Log("Quit Game");
     }
 
     private void ShowRootPanel(GameObject target)

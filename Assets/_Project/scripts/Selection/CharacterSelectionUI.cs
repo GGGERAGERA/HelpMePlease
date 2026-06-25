@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class CharacterSelectionUI : MonoBehaviour
+public sealed class CharacterSelectionUI : MonoBehaviour
 {
     [Header("Cards")]
     [SerializeField] private CharacterCardView[] cards;
@@ -19,6 +19,10 @@ public class CharacterSelectionUI : MonoBehaviour
     [Header("Buttons")]
     [SerializeField] private Button selectButton;
 
+    [Header("Button Visual")]
+    [SerializeField] private Color enabledColor = Color.white;
+    [SerializeField] private Color disabledColor = new Color(0.45f, 0.45f, 0.45f, 1f);
+
     [Header("Navigation")]
     [SerializeField] private MainMenuController mainMenuController;
 
@@ -29,7 +33,18 @@ public class CharacterSelectionUI : MonoBehaviour
         if (selectButton != null)
             selectButton.onClick.AddListener(ConfirmSelection);
 
-        ClearDetails();
+        ClearSelection();
+    }
+
+    private void OnEnable()
+    {
+        ClearSelection();
+    }
+
+    private void OnDestroy()
+    {
+        if (selectButton != null)
+            selectButton.onClick.RemoveListener(ConfirmSelection);
     }
 
     public void SelectCharacter(CharacterData character)
@@ -38,12 +53,11 @@ public class CharacterSelectionUI : MonoBehaviour
             return;
 
         selectedCharacter = character;
+        RunSelectionManager.Instance?.SelectCharacter(character);
 
-        UpdateDetails(character);
-        UpdateCardsSelection(character);
-
-        if (selectButton != null)
-            selectButton.interactable = true;
+        RefreshDetails(character);
+        RefreshCards(character);
+        SetSelectButton(true);
     }
 
     private void ConfirmSelection()
@@ -51,43 +65,29 @@ public class CharacterSelectionUI : MonoBehaviour
         if (selectedCharacter == null)
             return;
 
-        if (RunSelectionManager.Instance != null)
-            RunSelectionManager.Instance.SelectCharacter(selectedCharacter);
+        RunSelectionManager.Instance?.SelectCharacter(selectedCharacter);
 
-        if (mainMenuController != null)
-            mainMenuController.OpenWeaponSelection();
-
-        Debug.Log("Confirmed character: " + selectedCharacter.characterName);
-    }
-
-    private void UpdateDetails(CharacterData character)
-    {
-        if (characterNameText != null)
-            characterNameText.text = character.characterName;
-
-        if (statusText != null)
-            statusText.text = "ÂÛÆÈÂØÈÉ";
-
-        if (portraitImage != null)
+        if (mainMenuController == null)
         {
-            portraitImage.sprite = character.portrait;
-            portraitImage.enabled = character.portrait != null;
+            Debug.LogError("[CharacterSelectionUI] MainMenuController is not assigned.");
+            return;
         }
 
-        if (hpText != null)
-            hpText.text = $"HP: {character.maxHealth}";
-
-        if (speedText != null)
-            speedText.text = $"Speed: {character.moveSpeed}";
-
-        if (specialText != null)
-            specialText.text = $"Special: {character.specialDescription}";
-
-        if (descriptionText != null)
-            descriptionText.text = character.description;
+        mainMenuController.OpenWeaponSelection();
     }
 
-    private void UpdateCardsSelection(CharacterData character)
+    private void RefreshDetails(CharacterData character)
+    {
+        SetText(characterNameText, character.characterName);
+        SetText(statusText, "Ð’Ð«Ð–Ð˜Ð’Ð¨Ð˜Ð™");
+        SetText(hpText, $"HP: {character.maxHealth}");
+        SetText(speedText, $"Speed: {character.moveSpeed}");
+        SetText(specialText, $"Special: {GetSpecialText(character.specialDescription)}");
+        SetText(descriptionText, character.description);
+        SetPortrait(character.portrait);
+    }
+
+    private void RefreshCards(CharacterData character)
     {
         if (cards == null)
             return;
@@ -101,32 +101,51 @@ public class CharacterSelectionUI : MonoBehaviour
         }
     }
 
-    private void ClearDetails()
+    private void ClearSelection()
     {
         selectedCharacter = null;
 
-        if (characterNameText != null)
-            characterNameText.text = "SELECT CHARACTER";
+        SetText(characterNameText, "SELECT CHARACTER");
+        SetText(statusText, string.Empty);
+        SetText(hpText, "HP: -");
+        SetText(speedText, "Speed: -");
+        SetText(specialText, "Special: -");
+        SetText(descriptionText, "Choose a survivor.");
 
-        if (statusText != null)
-            statusText.text = "";
+        SetPortrait(null);
+        RefreshCards(null);
+        SetSelectButton(false);
+    }
 
-        if (portraitImage != null)
-            portraitImage.enabled = false;
+    private void SetPortrait(Sprite portrait)
+    {
+        if (portraitImage == null)
+            return;
 
-        if (hpText != null)
-            hpText.text = "HP: -";
+        portraitImage.sprite = portrait;
+        portraitImage.enabled = portrait != null;
+    }
 
-        if (speedText != null)
-            speedText.text = "Speed: -";
+    private void SetSelectButton(bool active)
+    {
+        if (selectButton == null)
+            return;
 
-        if (specialText != null)
-            specialText.text = "Special: -";
+        selectButton.interactable = active;
 
-        if (descriptionText != null)
-            descriptionText.text = "Choose a survivor.";
+        Image image = selectButton.GetComponent<Image>();
+        if (image != null)
+            image.color = active ? enabledColor : disabledColor;
+    }
 
-        if (selectButton != null)
-            selectButton.interactable = false;
+    private void SetText(TextMeshProUGUI text, string value)
+    {
+        if (text != null)
+            text.text = value;
+    }
+
+    private string GetSpecialText(string special)
+    {
+        return string.IsNullOrWhiteSpace(special) ? "No" : special;
     }
 }
