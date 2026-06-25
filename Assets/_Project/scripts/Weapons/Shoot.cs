@@ -76,7 +76,7 @@ public class Shoot : BaseWeapon
         Vector2 baseDirection = GetShootDirection();
         baseDirection = ApplyAccuracyPenalty(baseDirection);
 
-        FireShotGroup(baseDirection, projectileCount);
+        FireShotGroup(baseDirection, GetProjectileCount());
 
         TryFireEveryFifthExtraShot(baseDirection);
         TryFireRandomExtraShots(baseDirection);
@@ -151,9 +151,9 @@ public class Shoot : BaseWeapon
             GetProjectileSpeed(),
             GetRange(),
             direction,
-            projectilePierce,
+            GetProjectilePierce(),
             isCritical,
-            projectileRicochet,
+            GetProjectileRicochet(),
             GetKnockbackForce(baseKnockbackForce)
         );
 

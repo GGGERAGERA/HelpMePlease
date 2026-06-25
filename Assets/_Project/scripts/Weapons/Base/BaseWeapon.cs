@@ -6,28 +6,20 @@ public abstract class BaseWeapon : MonoBehaviour
     public WeaponData weaponData;
     public Transform firePoint;
 
-    protected float lastAttackTime;
+    [Header("Runtime Stats")]
+    [SerializeField] private WeaponRuntimeStats runtimeStats;
 
-    private float runtimeDamageBonus = 0f;
-    private float runtimeRangeBonus = 0f;
-    private float fireRateMultiplier = 1f;
-    private float damageMultiplier = 1f;
-    private float knockbackMultiplier = 1f;
-
+    [Header("Audio")]
     [SerializeField] protected AudioSource weaponAudioSource;
 
-    [SerializeField] protected int projectileCount = 1;
-    [SerializeField] protected int projectilePierce = 0;
-    [SerializeField] protected int projectileRicochet = 0;
+    protected float lastAttackTime;
 
-    [Range(0f, 1f)]
-    [SerializeField] protected float critChance = 0.05f;
+    protected WeaponRuntimeStats Stats => runtimeStats;
 
-    [SerializeField] protected float critMultiplier = 2f;
-
-
-
-    private bool weaponDataApplied;
+    protected virtual void Awake()
+    {
+        EnsureRuntimeStats();
+    }
 
     protected virtual void Start()
     {
@@ -36,7 +28,8 @@ public abstract class BaseWeapon : MonoBehaviour
         if (firePoint == null)
             firePoint = transform;
 
-        ApplyWeaponDataStatsOnce();
+        if (weaponData != null)
+            runtimeStats.InitializeFromWeaponData(weaponData);
     }
 
     protected virtual void Update()
@@ -48,7 +41,19 @@ public abstract class BaseWeapon : MonoBehaviour
     public void Initialize(WeaponData data)
     {
         weaponData = data;
-        ApplyWeaponDataStatsOnce();
+        EnsureRuntimeStats();
+        runtimeStats.InitializeFromWeaponData(data);
+    }
+
+    private void EnsureRuntimeStats()
+    {
+        if (runtimeStats != null)
+            return;
+
+        runtimeStats = GetComponent<WeaponRuntimeStats>();
+
+        if (runtimeStats == null)
+            runtimeStats = gameObject.AddComponent<WeaponRuntimeStats>();
     }
 
     private void SetupAudio()
@@ -62,20 +67,6 @@ public abstract class BaseWeapon : MonoBehaviour
         weaponAudioSource.playOnAwake = false;
         weaponAudioSource.loop = false;
         weaponAudioSource.spatialBlend = 0f;
-    }
-
-    private void ApplyWeaponDataStatsOnce()
-    {
-        if (weaponDataApplied)
-            return;
-
-        if (weaponData == null)
-            return;
-
-        projectileCount = Mathf.Max(1, weaponData.bulletsPerShot);
-        projectilePierce = Mathf.Max(0, weaponData.pierce);
-
-        weaponDataApplied = true;
     }
 
     protected virtual bool CanAttack()
@@ -92,84 +83,94 @@ public abstract class BaseWeapon : MonoBehaviour
 
     public int GetDamage()
     {
-        float weaponDamage = weaponData != null ? weaponData.damage : 10f;
-        float finalDamage = (weaponDamage + runtimeDamageBonus) * damageMultiplier;
-
-        PlayerCombatModifiers modifiers =
-    GetComponentInParent<PlayerCombatModifiers>();
-
-        if (modifiers != null)
-        {
-            finalDamage *= modifiers.bonusDamageMultiplier;
-            finalDamage *= 1f + modifiers.lowHpDamageBonus;
-        }
-
-        return Mathf.RoundToInt(finalDamage);
+        return runtimeStats.GetDamage(GetCombatModifiers());
     }
 
     public float GetRange()
     {
-        float weaponRange = weaponData != null ? weaponData.range : 5f;
-        return weaponRange + runtimeRangeBonus;
+        return runtimeStats.Range;
     }
 
     public float GetProjectileSpeed()
     {
-        return weaponData != null ? weaponData.projectileSpeed : 10f;
+        return runtimeStats.ProjectileSpeed;
     }
 
+    public float GetAttackCooldown()
+    {
+        float shotsPerSecond = runtimeStats.GetShotsPerSecond(GetCombatModifiers());
+        return 1f / Mathf.Max(0.01f, shotsPerSecond);
+    }
+
+    protected int GetProjectileCount()
+    {
+        return runtimeStats.ProjectileCount;
+    }
+
+    protected int GetProjectilePierce()
+    {
+        return runtimeStats.Pierce;
+    }
+
+    protected int GetProjectileRicochet()
+    {
+        return runtimeStats.Ricochet;
+    }
+
+    protected PlayerCombatModifiers GetCombatModifiers()
+    {
+        return GetComponentInParent<PlayerCombatModifiers>();
+    }
 
     public void AddRuntimeDamage(float amount)
     {
-        runtimeDamageBonus += amount;
+        runtimeStats.AddFlatDamage(amount);
     }
 
     public void AddRuntimeRange(float amount)
     {
-        runtimeRangeBonus += amount;
+        runtimeStats.AddRange(amount);
     }
 
     public void AddFireRatePercent(float percent)
     {
-        fireRateMultiplier *= 1f + percent;
+        runtimeStats.AddFireRatePercent(percent);
+        runtimeStats.RefreshDebug(GetCombatModifiers());
     }
 
     public void AddCritChance(float amount)
     {
-        critChance = Mathf.Clamp01(critChance + amount);
+        runtimeStats.AddCritChance(amount);
     }
 
     public void AddCritMultiplier(float amount)
     {
-        critMultiplier += amount;
+        runtimeStats.AddCritMultiplier(amount);
     }
 
     public void AddProjectileCount(int amount)
     {
-        projectileCount = Mathf.Max(1, projectileCount + amount);
-        Debug.Log($"{name}: Projectile count = {projectileCount}");
+        runtimeStats.AddProjectileCount(amount);
     }
 
     public void AddPierce(int amount)
     {
-        projectilePierce = Mathf.Max(0, projectilePierce + amount);
-        Debug.Log($"{name}: Pierce = {projectilePierce}");
+        runtimeStats.AddPierce(amount);
     }
 
     public void AddRicochet(int amount)
     {
-        projectileRicochet = Mathf.Max(0, projectileRicochet + amount);
-        Debug.Log($"{name}: Ricochet = {projectileRicochet}");
+        runtimeStats.AddRicochet(amount);
     }
 
     public bool RollCritical()
     {
-        return Random.value < critChance;
+        return Random.value < runtimeStats.CritChance;
     }
 
     public float GetCritMultiplier()
     {
-        return critMultiplier;
+        return runtimeStats.CritMultiplier;
     }
 
     protected void PlaySound(AudioClip clip)
@@ -190,36 +191,21 @@ public abstract class BaseWeapon : MonoBehaviour
 
     public void AddDamagePercent(float percent)
     {
-        damageMultiplier *= 1f + percent;
+        runtimeStats.AddDamagePercent(percent);
     }
 
     public void AddKnockbackPercent(float percent)
     {
-        knockbackMultiplier *= 1f + percent;
+        runtimeStats.AddKnockbackPercent(percent);
     }
 
     public float GetKnockbackMultiplier()
     {
-        return knockbackMultiplier;
+        return runtimeStats.KnockbackMultiplier;
     }
+
     public float GetKnockbackForce(float baseForce)
     {
-        return baseForce * knockbackMultiplier;
-    }
-    public float GetAttackCooldown()
-    {
-        float baseCooldown = weaponData != null ? weaponData.fireRate : 0.5f;
-        baseCooldown = Mathf.Max(0.05f, baseCooldown);
-
-        PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
-
-        if (modifiers != null)
-        {
-            baseCooldown /= Mathf.Max(0.1f, modifiers.bonusFireRateMultiplier);
-            baseCooldown /= Mathf.Max(0.1f, 1f + modifiers.stationaryFireRateBonus);
-            baseCooldown /= Mathf.Max(0.1f, 1f + modifiers.lowHpFireRateBonus);
-        }
-
-        return baseCooldown / fireRateMultiplier;
+        return baseForce * runtimeStats.KnockbackMultiplier;
     }
 }
