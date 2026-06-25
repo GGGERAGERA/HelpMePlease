@@ -2105,6 +2105,7 @@ MonoBehaviour:
   playerSelectPanel: {fileID: 6333193236741506442}
   weaponSelectPanel: {fileID: 1680863188}
   sceneSelectPanel: {fileID: 6345536733884173939}
+  gameplaySceneName: MVP
 --- !u!82 &1516591362
 AudioSource:
   m_ObjectHideFlags: 0
@@ -2776,7 +2777,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 893cecb3a2348f84086914e8a8ac6582, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponSelectionUI
-  nextButton: {fileID: 1216871519}
+  confirmButton: {fileID: 1216871519}
   mainMenuController: {fileID: 1516591361}
   weaponNameText: {fileID: 0}
   weaponClassText: {fileID: 0}
