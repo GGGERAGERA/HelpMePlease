@@ -654,6 +654,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3963429074183942466}
+  - component: {fileID: 1643120500298246231}
   m_Layer: 0
   m_Name: p_BunkerDoorVertical1
   m_TagString: Untagged
@@ -677,8 +678,43 @@ Transform:
   - {fileID: 6047967441423827096}
   - {fileID: 4741766377729764273}
   - {fileID: 5156103273557649555}
+  - {fileID: 1812749084194608544}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1643120500298246231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2821076877057381025}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0aa2221ab726304eb1f8c4d6cb72bac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerDoor
+  doorAnimator: {fileID: 7929626873660239284}
+  doorTrigger: {fileID: 3584391285523451041}
+  interactionUI: {fileID: 0}
+  zoneRenderers: []
+  maxZoneAlpha: 0.8
+  minZoneAlpha: 0.1
+  zoneDetectionRadius: 5
+  lockIndicators: []
+  lockedMaterial: {fileID: 0}
+  unlockedMaterial: {fileID: 0}
+  openSound: {fileID: 0}
+  closeSound: {fileID: 0}
+  unlockSound: {fileID: 0}
+  lockSound: {fileID: 0}
+  knockSound: {fileID: 0}
+  audioSource: {fileID: 0}
+  openButton: {fileID: 0}
+  knockButton: {fileID: 0}
+  lockToggleButton: {fileID: 0}
+  lockButtonText: {fileID: 0}
+  holdTimeToShowUI: 2
+  playerInteractionRadius: 3
 --- !u!1 &3404974978762664497
 GameObject:
   m_ObjectHideFlags: 0
@@ -1273,6 +1309,84 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 5
+--- !u!1 &7010615349939143490
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1812749084194608544}
+  - component: {fileID: 4181565298203033450}
+  m_Layer: 0
+  m_Name: DoorHoverTrigger
+  m_TagString: Door
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1812749084194608544
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7010615349939143490}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.5, y: -4, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3963429074183942466}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!61 &4181565298203033450
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7010615349939143490}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: -0.02, y: 0.025}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 2, y: 8.5}
+  m_EdgeRadius: 0
 --- !u!1 &7585845647893569960
 GameObject:
   m_ObjectHideFlags: 0
