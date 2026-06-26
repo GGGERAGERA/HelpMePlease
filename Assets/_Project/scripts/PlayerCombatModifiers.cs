@@ -5,7 +5,6 @@ public class PlayerCombatModifiers : MonoBehaviour
     private int attackCounter;
 
     [Header("Blue Upgrades")]
-    public bool everyFifthAttackExtraShot;
     public float hitExplosionChance;
 
     [Range(0f, 1f)]
@@ -61,8 +60,6 @@ public class PlayerCombatModifiers : MonoBehaviour
 
     public bool ShouldFireExtraShot()
     {
-        if (!everyFifthAttackExtraShot)
-            return false;
 
         attackCounter++;
 

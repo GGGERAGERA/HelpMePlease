@@ -62,10 +62,6 @@ public sealed class UpgradeApplier : MonoBehaviour
                 ApplyToWeapons(context, weapon => weapon.AddKnockbackPercent(upgrade.value));
                 break;
 
-            case UpgradeType.EveryFifthAttackExtraShot:
-                RequireCombatModifiers(context).everyFifthAttackExtraShot = true;
-                break;
-
             case UpgradeType.HitExplosionChance:
                 RequireCombatModifiers(context).hitExplosionChance += upgrade.value;
                 break;
