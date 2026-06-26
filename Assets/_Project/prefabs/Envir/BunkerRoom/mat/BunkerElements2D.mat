@@ -1,0 +1,101 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: BunkerElements2D
+  m_Shader: {fileID: 4800000, guid: 807c5544a0fbbf0409dc45ee03c0deca, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords:
+  - _OUTLINE_GLOW
+  - _OUTLINE_PIXELATED
+  m_InvalidKeywords:
+  - _OUTLINEENABLED_ON
+  - _OUTLINE_EMISSION
+  - _PIXELNOISE_ON
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _AlphaTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MaskTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - PixelSnap: 0
+    - _BlendMode: 0
+    - _Brightness: 0
+    - _Contrast: 0
+    - _EMISSION_ON: 0
+    - _EmissionBrightness: 1
+    - _EmissionContrast: 1
+    - _EmissionEnabled: 0
+    - _EmissionIntensity: 0.1
+    - _EmissionStrength: 1
+    - _EnableEmission: 0
+    - _EnableExternalAlpha: 0
+    - _EnableOutline: 0
+    - _NoiseBlendMode: 0
+    - _NoiseContrast: 1
+    - _NoiseOpacity: 0.5
+    - _NoiseScale: 50
+    - _NoiseSpeed: 0
+    - _OUTLINE_EMISSION: 0
+    - _OUTLINE_ON: 0
+    - _OUTLINE_TYPE: 0
+    - _OutlineBrightness: 1
+    - _OutlineContrast: 1
+    - _OutlineEmission: 1
+    - _OutlineEmissionStrength: 1
+    - _OutlineEnabled: 1
+    - _OutlineGlow: 1
+    - _OutlineIntensity: 0
+    - _OutlineMode: 0
+    - _OutlinePixelated: 1
+    - _OutlineSize: 0.16
+    - _OutlineThreshold: 0.53
+    - _OutlineType: 0
+    - _OutlineWidth: 5
+    - _PixelNoise: 1
+    - _Saturation: 0
+    - _UseEmission: 0
+    - _UseNoise: 0
+    - _UseOutline: 0
+    - _ZWrite: 0
+    m_Colors:
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 0, g: 0.5411825, b: 1, a: 1}
+    - _OutlineColor: {r: 1, g: 1, b: 1, a: 1}
+    - _OutlineEmissionColor: {r: 1, g: 1, b: 1, a: 1}
+    - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
