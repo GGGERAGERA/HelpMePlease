@@ -235,6 +235,7 @@ GameObject:
   - component: {fileID: 46915852}
   - component: {fileID: 46915853}
   - component: {fileID: 46915854}
+  - component: {fileID: 46915855}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -313,9 +314,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeManager
   upgradePanelView: {fileID: 8325879207541808945}
-  upgradeApplier: {fileID: 0}
+  upgradeApplier: {fileID: 46915855}
   allUpgrades:
-  - {fileID: 11400000, guid: 5892b62c379db274ebe59a2a484b30e1, type: 2}
+  - {fileID: 11400000, guid: 32f912c87361a644681482b83a624369, type: 2}
   choicesCount: 3
 --- !u!114 &46915849
 MonoBehaviour:
@@ -419,6 +420,19 @@ MonoBehaviour:
   globalLight: {fileID: 1123768654}
   darkLevel: 2
   darkLevelIntensity: 0.1
+--- !u!114 &46915855
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 46915840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c33b031f509c8e439c7d748d314284a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UpgradeApplier
+  playerTag: Player
 --- !u!1 &101118583
 GameObject:
   m_ObjectHideFlags: 0

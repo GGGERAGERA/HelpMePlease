@@ -274,16 +274,6 @@ public class LaserWeapon : BaseWeapon
 
                 PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
 
-                if (modifiers != null)
-                {
-                    EnemyDeathExplosionRuntime deathExplosion =
-                        enemy.GetComponent<EnemyDeathExplosionRuntime>();
-
-                    if (deathExplosion == null)
-                        deathExplosion = enemy.gameObject.AddComponent<EnemyDeathExplosionRuntime>();
-
-                    deathExplosion.Initialize(modifiers);
-                }
 
                 enemy.TakeDamage(finalDamage, hit.point, isCritical);
 

@@ -98,6 +98,7 @@ public sealed class UpgradeApplier : MonoBehaviour
                 RequireCombatModifiers(context).nukeEveryTenKills = true;
                 break;
 
+
             default:
                 Debug.LogWarning($"[UpgradeApplier] Upgrade type is not implemented: {upgrade.upgradeType}");
                 return false;
@@ -157,8 +158,9 @@ public sealed class UpgradeApplier : MonoBehaviour
     private void ApplyEnemyDeathExplosion(PlayerUpgradeContext context, float value)
     {
         PlayerCombatModifiers modifiers = RequireCombatModifiers(context);
-        modifiers.enemyDeathExplosion = true;
-        modifiers.deathExplosionDamageBonus += value;
+
+        modifiers.enemyDeathExplosionChance += value;
+        modifiers.enemyDeathExplosionChance = Mathf.Clamp01(modifiers.enemyDeathExplosionChance);
     }
 
     private void ApplyDoubleDamageWithInaccuracy(PlayerUpgradeContext context)

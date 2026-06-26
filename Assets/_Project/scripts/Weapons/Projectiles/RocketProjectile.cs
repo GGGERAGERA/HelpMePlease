@@ -93,17 +93,6 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile
 
             PlayerCombatModifiers activeModifiers = GetModifiers();
 
-            if (activeModifiers != null)
-            {
-                EnemyDeathExplosionRuntime deathExplosion =
-                    enemy.GetComponent<EnemyDeathExplosionRuntime>();
-
-                if (deathExplosion == null)
-                    deathExplosion = enemy.gameObject.AddComponent<EnemyDeathExplosionRuntime>();
-
-                deathExplosion.Initialize(activeModifiers);
-            }
-
             enemy.TakeDamage(damage, transform.position, isCritical);
 
             EnemyMovement enemyMovement = enemy.GetComponent<EnemyMovement>();

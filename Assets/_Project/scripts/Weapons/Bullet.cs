@@ -66,17 +66,6 @@ public class Bullet : MonoBehaviour, IWeaponProjectile
 
         ProjectileCombatContext context = GetComponent<ProjectileCombatContext>();
 
-        if (context != null && context.Modifiers != null)
-        {
-            EnemyDeathExplosionRuntime deathExplosion =
-                enemyHealth.GetComponent<EnemyDeathExplosionRuntime>();
-
-            if (deathExplosion == null)
-                deathExplosion = enemyHealth.gameObject.AddComponent<EnemyDeathExplosionRuntime>();
-
-            deathExplosion.Initialize(context.Modifiers);
-        }
-
         enemyHealth.TakeDamage(damage, transform.position, isCritical);
 
 

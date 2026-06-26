@@ -195,6 +195,12 @@ public class EnemyHealth : MonoBehaviour
             Destroy(blood.gameObject, destroyTime);
         }
 
+        PlayerCombatModifiers modifiers =
+        FindFirstObjectByType<PlayerCombatModifiers>();
+
+        if (modifiers != null)
+            modifiers.TrySpawnDeathExplosion(transform.position);
+
         DropLoot();
         Destroy(gameObject);
     }

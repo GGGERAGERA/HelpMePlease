@@ -7,7 +7,9 @@ public class PlayerCombatModifiers : MonoBehaviour
     [Header("Blue Upgrades")]
     public bool everyFifthAttackExtraShot;
     public float hitExplosionChance;
-    public bool enemyDeathExplosion;
+
+    [Range(0f, 1f)]
+    public float enemyDeathExplosionChance;
     public float deathExplosionDamageBonus;
     public float knockbackMultiplier = 1f;
 
@@ -41,6 +43,9 @@ public class PlayerCombatModifiers : MonoBehaviour
     public float lowHpFireRateBonus;
 
     private PlayerHealth health;
+
+    [SerializeField] private GameObject deathExplosionPrefab;
+    [SerializeField] private float deathExplosionRadius = 2f;
 
     private void Awake()
     {
@@ -105,6 +110,41 @@ public class PlayerCombatModifiers : MonoBehaviour
 
         lowHpDamageBonus = missingHealthPercent;
         lowHpFireRateBonus = missingHealthPercent;
+    }
+    public void TrySpawnDeathExplosion(Vector3 position)
+    {
+        if (enemyDeathExplosionChance <= 0f)
+            return;
+
+        if (Random.value > enemyDeathExplosionChance)
+            return;
+
+        SpawnDeathExplosion(position);
+    }
+
+    private void SpawnDeathExplosion(Vector3 position)
+    {
+        if (deathExplosionPrefab != null)
+        {
+            GameObject fx = Instantiate(deathExplosionPrefab, position, Quaternion.identity);
+            Destroy(fx, 2f);
+        }
+
+        Collider2D[] enemies = Physics2D.OverlapCircleAll(
+            position,
+            deathExplosionRadius,
+            enemyMask
+        );
+
+        foreach (Collider2D collider in enemies)
+        {
+            EnemyHealth health = collider.GetComponent<EnemyHealth>();
+
+            if (health == null)
+                continue;
+
+            health.TakeDamage(deathExplosionDamageBonus, position);
+        }
     }
 
 }
