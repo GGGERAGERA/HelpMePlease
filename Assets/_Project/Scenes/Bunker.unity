@@ -8201,6 +8201,10 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1998794498104454481, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
+      propertyPath: m_SortAtRoot
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3736661123469467908, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
       propertyPath: m_LocalScale.x
       value: 2.5
@@ -186030,10 +186034,6 @@ PrefabInstance:
     - target: {fileID: 623316775884668042, guid: 3df0912ad634fc24185f74173543363f, type: 3}
       propertyPath: m_Name
       value: BunkerRoom2
-      objectReference: {fileID: 0}
-    - target: {fileID: 623316775884668042, guid: 3df0912ad634fc24185f74173543363f, type: 3}
-      propertyPath: m_IsActive
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5031394165764924428, guid: 3df0912ad634fc24185f74173543363f, type: 3}
       propertyPath: m_LocalPosition.x
