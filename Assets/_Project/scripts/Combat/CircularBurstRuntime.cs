@@ -3,7 +3,6 @@ using UnityEngine;
 public class CircularBurstRuntime : MonoBehaviour
 {
     [SerializeField] private int projectileCount = 16;
-    [SerializeField] private float interval = 3f;
 
     private float timer;
     private Shoot shootWeapon;
@@ -12,6 +11,7 @@ public class CircularBurstRuntime : MonoBehaviour
     private void Awake()
     {
         modifiers = GetComponent<PlayerCombatModifiers>();
+        shootWeapon = GetComponentInChildren<Shoot>();
     }
 
     private void Update()
@@ -27,7 +27,7 @@ public class CircularBurstRuntime : MonoBehaviour
 
         timer += Time.deltaTime;
 
-        if (timer < interval)
+        if (timer < modifiers.circularBurstCooldown)
             return;
 
         timer = 0f;

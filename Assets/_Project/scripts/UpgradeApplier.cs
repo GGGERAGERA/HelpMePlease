@@ -87,7 +87,7 @@ public sealed class UpgradeApplier : MonoBehaviour
                 break;
 
             case UpgradeType.CircularBurst:
-                RequireCombatModifiers(context).circularBurst = true;
+                ApplyCircularBurst(context, upgrade.value);
                 break;
 
             case UpgradeType.NukeEveryTenKills:
@@ -212,5 +212,10 @@ public sealed class UpgradeApplier : MonoBehaviour
 
         modifiers.stationaryFireRateRamp = true;
         modifiers.stationaryFireRateRampMaxBonus += value;
+    }
+    private void ApplyCircularBurst(PlayerUpgradeContext context, float value)
+    {
+        PlayerCombatModifiers modifiers = RequireCombatModifiers(context);
+        modifiers.AddCircularBurstCooldownReduction(value);
     }
 }

@@ -29,7 +29,10 @@ public class PlayerCombatModifiers : MonoBehaviour
 
     [Header("Legendary Upgrades")]
     public float randomExtraShotsChance;
+    [Header("Circular Burst")]
     public bool circularBurst;
+    public float circularBurstCooldown = 8f;
+    [SerializeField] private float circularBurstMinCooldown = 3f;
     public bool nukeEveryTenKills;
 
     [Header("Masks")]
@@ -192,6 +195,15 @@ public class PlayerCombatModifiers : MonoBehaviour
 
             enemyHealth.TakeDamage(hitExplosionDamage, position);
         }
+    }
+    public void AddCircularBurstCooldownReduction(float reduction)
+    {
+        circularBurst = true;
+
+        circularBurstCooldown = Mathf.Max(
+            circularBurstMinCooldown,
+            circularBurstCooldown - reduction
+        );
     }
 
 }

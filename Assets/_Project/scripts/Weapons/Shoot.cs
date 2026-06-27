@@ -22,14 +22,10 @@ public class Shoot : BaseWeapon
     [SerializeField] private float recoilReturnSpeed = 14f;
 
     private float currentRecoil;
-    private Vector2 lastOwnerPosition;
 
     protected override void Start()
     {
         base.Start();
-
-        if (owner != null)
-            lastOwnerPosition = owner.position;
 
         if (bulletPrefab != null)
             bulletPrefab.SetActive(true);

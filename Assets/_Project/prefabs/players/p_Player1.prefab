@@ -378,11 +378,19 @@ MonoBehaviour:
   enemyDeathExplosionChance: 0
   deathExplosionDamageBonus: 0
   knockbackMultiplier: 1
-  stationaryFireRateRamp: 0
   doubleDamageWithInaccuracy: 0
   lowHpPower: 0
+  lowHpPowerMultiplier: 0
+  lowHpDamageBonus: 0
+  lowHpFireRateBonus: 0
+  stationaryFireRateRamp: 0
+  stationaryFireRateRampMaxBonus: 0
+  stationaryFireRateBonus: 0
+  stationaryRampDuration: 2
   randomExtraShotsChance: 0
   circularBurst: 0
+  circularBurstCooldown: 6
+  circularBurstMinCooldown: 0.5
   nukeEveryTenKills: 0
   enemyMask:
     serializedVersion: 2
@@ -390,11 +398,7 @@ MonoBehaviour:
   bonusDamageMultiplier: 1
   bonusFireRateMultiplier: 1
   accuracyPenaltyDegrees: 0
-  stationaryFireTime: 0
-  stationaryFireRateBonus: 0
   stationaryMoveThreshold: 0.05
-  lowHpDamageBonus: 0
-  lowHpFireRateBonus: 0
   deathExplosionPrefab: {fileID: 2817483437198940390, guid: a0f7d14547ca6cc4281f13e8d9aa8cab, type: 3}
   deathExplosionRadius: 2
   hitExplosionPrefab: {fileID: 8264809118761358846, guid: 59d7dc58baebeea48914a601a8fc9407, type: 3}
@@ -413,7 +417,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CircularBurstRuntime
   projectileCount: 16
-  interval: 3
 --- !u!114 &-8467997292367934545
 MonoBehaviour:
   m_ObjectHideFlags: 0
