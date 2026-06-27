@@ -12,8 +12,7 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
-  - _OUTLINE_GLOW
-  - _OUTLINE_PIXELATED
+  - _OUTLINE_ON
   m_InvalidKeywords:
   - _OUTLINEENABLED_ON
   - _OUTLINE_EMISSION
@@ -62,7 +61,7 @@ Material:
     - _EmissionStrength: 1
     - _EnableEmission: 0
     - _EnableExternalAlpha: 0
-    - _EnableOutline: 0
+    - _EnableOutline: 1
     - _NoiseBlendMode: 0
     - _NoiseContrast: 1
     - _NoiseOpacity: 0.5
@@ -76,14 +75,14 @@ Material:
     - _OutlineEmission: 1
     - _OutlineEmissionStrength: 1
     - _OutlineEnabled: 1
-    - _OutlineGlow: 1
+    - _OutlineGlow: 0
     - _OutlineIntensity: 0
     - _OutlineMode: 0
-    - _OutlinePixelated: 1
+    - _OutlinePixelated: 0
     - _OutlineSize: 0.16
     - _OutlineThreshold: 0.53
     - _OutlineType: 0
-    - _OutlineWidth: 38
+    - _OutlineWidth: 3
     - _PixelNoise: 1
     - _Saturation: 0
     - _UseEmission: 0
