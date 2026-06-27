@@ -1,335 +1,358 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class BunkerDoor : MonoBehaviour
 {
-    // Глобальное состояние двери (для теста)
-    public static bool IsDoorLocked = true;
+    [Header("Состояние")]
+    [SerializeField] private bool isLocked = true;
 
-    [Header("Основные компоненты")]
-    [SerializeField] private Animator doorAnimator;
-    [SerializeField] private Collider2D doorTrigger;
-    [SerializeField] private GameObject interactionUI;
+    [Header("Зоны")]
+    [SerializeField] private Collider2D showUIZone;
+    [SerializeField] private Collider2D openZone;
 
-    [Header("Зоны подсветки")]
-    [SerializeField] private SpriteRenderer[] zoneRenderers;
-    [SerializeField] private float maxZoneAlpha = 0.8f;
-    [SerializeField] private float minZoneAlpha = 0.1f;
-    [SerializeField] private float zoneDetectionRadius = 5f;
+    [Header("Движущиеся части двери")]
+    [Tooltip("Сюда закинь все двигающиеся части: DoorsUpP1, DoorsLowP1 и т.д.")]
+    [SerializeField] private Transform[] doorParts;
+    
+    [Tooltip("Целевые позиции для каждой части при открытии. Создай пустые GameObject'ы и размести их там, куда должна приехать часть двери. Длина должна совпадать с doorParts")]
+    [SerializeField] private Transform[] openPositions;
+    
+    [Tooltip("Длительность анимации открытия/закрытия")]
+    [SerializeField] private float openDuration = 0.6f;
+    
+    [Tooltip("Кривая плавности. По умолчанию EaseInOut")]
+    [SerializeField] private AnimationCurve openCurve;
 
-    [Header("Части двери")]
-    [SerializeField] private GameObject[] lockIndicators;
-    [SerializeField] private Material lockedMaterial;
-    [SerializeField] private Material unlockedMaterial;
-
-    [Header("Звуки")]
-    [SerializeField] private AudioClip openSound;
-    [SerializeField] private AudioClip closeSound;
-    [SerializeField] private AudioClip unlockSound;
-    [SerializeField] private AudioClip lockSound;
-    [SerializeField] private AudioClip knockSound;
-    [SerializeField] private AudioSource audioSource;
-
-    [Header("UI кнопки")]
-    [SerializeField] private Button openButton;
+    [Header("UI")]
+    [SerializeField] private CanvasGroup uiPanel;
+    [SerializeField] private Button unlockButton;
+    [SerializeField] private Button lockButton;
     [SerializeField] private Button knockButton;
-    [SerializeField] private Button lockToggleButton;
-    [SerializeField] private Text lockButtonText;
 
-    [Header("Настройки")]
-    [SerializeField] private float holdTimeToShowUI = 2f;
-    [SerializeField] private float playerInteractionRadius = 3f;
+    [Header("Визуальные индикаторы")]
+    [SerializeField] private GameObject[] lockedVisuals;
+    [SerializeField] private GameObject[] unlockedVisuals;
 
-    private Camera mainCam;
-    private bool isDoorOpen;
-    private bool isPlayerInRange;
-    private bool isCursorOnDoor;
-    private float holdTimer;
+    [Header("Эффекты")]
+    [SerializeField] private GameObject openEffect;
+    [SerializeField] private GameObject closeEffect;
+    [SerializeField] private Transform effectSpawnPoint;
+
+    [Header("Настройки UI")]
+    [SerializeField] private float uiShowDelay = 1f;
+    [SerializeField] private float uiFadeSpeed = 5f;
+
     private Transform playerTransform;
+    private bool isOpen;
+    private bool isPlayerInShowUIZone;
+    private bool isPlayerInOpenZone;
+    private float hoverTimer;
+    private Coroutine doorCoroutine;
+
+    private Vector3[] closedPositions;
+    private Vector3[] targetOpenPositions;
 
     private void Awake()
     {
-        mainCam = Camera.main;
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+            playerTransform = player.transform;
 
-        if (audioSource == null)
+        if (unlockButton != null)
+            unlockButton.onClick.AddListener(OnUnlockClicked);
+
+        if (lockButton != null)
         {
-            audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.playOnAwake = false;
-            audioSource.spatialBlend = 1f;
+            lockButton.onClick.AddListener(OnLockClicked);
+            lockButton.gameObject.SetActive(false);
         }
 
-        playerTransform = GameObject.FindGameObjectWithTag("Player")?.transform;
-
-        SetupUIButtons();
-        ApplyLockState();
-    }
-
-    private void Start()
-    {
-        if (interactionUI != null)
-            interactionUI.SetActive(false);
-    }
-
-    // Подписываем кнопки на методы
-    private void SetupUIButtons()
-    {
-        if (openButton != null)
-            openButton.onClick.AddListener(OnOpenButtonClicked);
-
         if (knockButton != null)
-            knockButton.onClick.AddListener(OnKnockButtonClicked);
+            knockButton.onClick.AddListener(OnKnockClicked);
 
-        if (lockToggleButton != null)
-            lockToggleButton.onClick.AddListener(OnLockToggleButtonClicked);
+        if (uiPanel != null)
+        {
+            uiPanel.alpha = 0f;
+            uiPanel.blocksRaycasts = false;
+            uiPanel.interactable = false;
+        }
+
+        if (openCurve == null || openCurve.length == 0)
+            openCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
+
+        ValidateArrays();
+        CalculateDoorPositions();
+        ApplyLockVisuals();
     }
 
-    private void UpdateLockButtonText()
+    private void ValidateArrays()
     {
-        if (lockButtonText == null) return;
-        lockButtonText.text = IsDoorLocked ? "Разблокировать" : "Заблокировать";
+        if (doorParts == null || doorParts.Length == 0)
+        {
+            Debug.LogWarning("[BunkerDoor] doorParts массив пуст!");
+            return;
+        }
+
+        int partCount = doorParts.Length;
+
+        if (openPositions == null || openPositions.Length != partCount)
+        {
+            Debug.LogWarning($"[BunkerDoor] openPositions должен иметь {partCount} элементов. Создан автоматически.");
+            openPositions = new Transform[partCount];
+            for (int i = 0; i < partCount; i++)
+                openPositions[i] = doorParts[i]; // По умолчанию — остаться на месте
+        }
+    }
+
+    private void CalculateDoorPositions()
+    {
+        if (doorParts == null || doorParts.Length == 0) return;
+
+        closedPositions = new Vector3[doorParts.Length];
+        targetOpenPositions = new Vector3[doorParts.Length];
+
+        for (int i = 0; i < doorParts.Length; i++)
+        {
+            if (doorParts[i] != null)
+            {
+                closedPositions[i] = doorParts[i].localPosition;
+                
+                if (openPositions[i] != null)
+                    targetOpenPositions[i] = openPositions[i].localPosition;
+                else
+                    targetOpenPositions[i] = closedPositions[i];
+            }
+        }
     }
 
     private void Update()
     {
-        UpdateZoneOpacity();
-        UpdatePlayerHoldTimer();
-        UpdateCursorInteraction();
+        CheckPlayerInZones();
+        UpdateHoverTimer();
+        UpdateUIFade();
+        CheckAutoOpenClose();
     }
 
-    // Обновляем прозрачность зон в зависимости от расстояния до игрока/курсора
-    private void UpdateZoneOpacity()
+    private void CheckPlayerInZones()
     {
-        if (zoneRenderers == null || zoneRenderers.Length == 0) return;
+        if (playerTransform == null) return;
 
-        float playerIntensity = 0f;
-        if (playerTransform != null)
+        if (showUIZone != null)
         {
-            float distanceToPlayer = Vector2.Distance(transform.position, playerTransform.position);
-            playerIntensity = Mathf.Clamp01(1f - (distanceToPlayer / playerInteractionRadius));
-        }
+            bool inZone = showUIZone.bounds.Contains(playerTransform.position);
 
-        float cursorIntensity = 0f;
-        if (mainCam != null)
-        {
-            Vector2 mouseWorldPos = mainCam.ScreenToWorldPoint(Input.mousePosition);
-            float distanceToCursor = Vector2.Distance(transform.position, mouseWorldPos);
-            cursorIntensity = Mathf.Clamp01(1f - (distanceToCursor / zoneDetectionRadius));
-        }
-
-        float finalIntensity = Mathf.Max(playerIntensity, cursorIntensity);
-        float alpha = Mathf.Lerp(minZoneAlpha, maxZoneAlpha, finalIntensity);
-
-        foreach (SpriteRenderer zone in zoneRenderers)
-        {
-            if (zone == null) continue;
-            Color color = zone.color;
-            color.a = alpha;
-            zone.color = color;
-        }
-    }
-
-    // Отслеживаем время нахождения игрока в триггере
-    private void UpdatePlayerHoldTimer()
-    {
-        if (!isPlayerInRange)
-        {
-            holdTimer = 0f;
-            return;
-        }
-
-        holdTimer += Time.deltaTime;
-
-        if (holdTimer >= holdTimeToShowUI && interactionUI != null && !interactionUI.activeSelf)
-        {
-            ShowInteractionUI();
-        }
-    }
-
-    // Проверяем наведение курсора на дверь
-    private void UpdateCursorInteraction()
-    {
-        if (mainCam == null) return;
-
-        Vector2 mousePos = mainCam.ScreenToWorldPoint(Input.mousePosition);
-        RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
-
-        bool cursorOnDoor = hit.collider != null && hit.transform == transform;
-
-        if (cursorOnDoor && !isCursorOnDoor)
-        {
-            isCursorOnDoor = true;
-        }
-        else if (!cursorOnDoor && isCursorOnDoor)
-        {
-            isCursorOnDoor = false;
-            if (!isPlayerInRange && interactionUI != null && interactionUI.activeSelf)
+            if (inZone && !isPlayerInShowUIZone)
             {
-                HideInteractionUI();
+                isPlayerInShowUIZone = true;
+                hoverTimer = 0f;
+            }
+            else if (!inZone && isPlayerInShowUIZone)
+            {
+                isPlayerInShowUIZone = false;
+                hoverTimer = 0f;
             }
         }
 
-        // ЛКМ по двери - показываем UI
-        if (cursorOnDoor && Input.GetMouseButtonDown(0))
+        if (openZone != null)
         {
-            ShowInteractionUI();
+            bool inZone = openZone.bounds.Contains(playerTransform.position);
+
+            if (inZone && !isPlayerInOpenZone)
+                isPlayerInOpenZone = true;
+            else if (!inZone && isPlayerInOpenZone)
+                isPlayerInOpenZone = false;
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    private void UpdateHoverTimer()
     {
-        if (other.CompareTag("Player"))
-        {
-            isPlayerInRange = true;
-            holdTimer = 0f;
-
-            if (!IsDoorLocked)
-            {
-                OpenDoor();
-            }
-        }
+        if (isPlayerInShowUIZone)
+            hoverTimer += Time.deltaTime;
+        else
+            hoverTimer = 0f;
     }
 
-    private void OnTriggerExit2D(Collider2D other)
+    private void UpdateUIFade()
     {
-        if (other.CompareTag("Player"))
-        {
-            isPlayerInRange = false;
-            holdTimer = 0f;
+        if (uiPanel == null) return;
 
-            if (!isCursorOnDoor && interactionUI != null)
-            {
-                HideInteractionUI();
-            }
+        bool shouldShow = isPlayerInShowUIZone && hoverTimer >= uiShowDelay;
+        float targetAlpha = shouldShow ? 1f : 0f;
+        float currentAlpha = Mathf.MoveTowards(uiPanel.alpha, targetAlpha, uiFadeSpeed * Time.deltaTime);
 
-            if (isDoorOpen)
-            {
-                CloseDoor();
-            }
-        }
+        uiPanel.alpha = currentAlpha;
+        uiPanel.blocksRaycasts = currentAlpha > 0.1f;
+        uiPanel.interactable = currentAlpha > 0.1f;
+    }
+
+    private void CheckAutoOpenClose()
+    {
+        if (isLocked) return;
+
+        if (isPlayerInOpenZone && !isOpen)
+            OpenDoor();
+        else if (!isPlayerInOpenZone && isOpen)
+            CloseDoor();
+    }
+
+    private void OnUnlockClicked()
+    {
+        isLocked = false;
+        ApplyLockVisuals();
+
+        if (unlockButton != null) unlockButton.gameObject.SetActive(false);
+        if (lockButton != null) lockButton.gameObject.SetActive(true);
+    }
+
+    private void OnLockClicked()
+    {
+        isLocked = true;
+        ApplyLockVisuals();
+
+        if (lockButton != null) lockButton.gameObject.SetActive(false);
+        if (unlockButton != null) unlockButton.gameObject.SetActive(true);
+
+        if (isOpen) CloseDoor();
+    }
+
+    private void OnKnockClicked()
+    {
+        if (doorCoroutine != null) StopCoroutine(doorCoroutine);
+        doorCoroutine = StartCoroutine(KnockAnimation());
     }
 
     public void OpenDoor()
     {
-        if (IsDoorLocked)
-        {
-            Debug.Log("Дверь заблокирована!");
-            return;
-        }
-
-        if (isDoorOpen) return;
-
-        isDoorOpen = true;
-
-        if (doorAnimator != null)
-            doorAnimator.SetBool("IsOpen", true);
-
-        PlaySound(openSound);
+        if (isOpen || isLocked) return;
+        if (doorCoroutine != null) StopCoroutine(doorCoroutine);
+        doorCoroutine = StartCoroutine(AnimateDoor(true));
     }
 
     public void CloseDoor()
     {
-        if (!isDoorOpen) return;
-
-        isDoorOpen = false;
-
-        if (doorAnimator != null)
-            doorAnimator.SetBool("IsOpen", false);
-
-        PlaySound(closeSound);
+        if (!isOpen) return;
+        if (doorCoroutine != null) StopCoroutine(doorCoroutine);
+        doorCoroutine = StartCoroutine(AnimateDoor(false));
     }
 
-    public void UnlockDoor()
+    private IEnumerator AnimateDoor(bool opening)
     {
-        if (!IsDoorLocked) return;
+        isOpen = opening;
 
-        IsDoorLocked = false;
-        PlaySound(unlockSound);
-        ApplyLockState();
-    }
+        float elapsed = 0f;
+        Vector3[] startPositions = new Vector3[doorParts.Length];
+        Vector3[] endPositions = opening ? targetOpenPositions : closedPositions;
 
-    public void LockDoor()
-    {
-        if (IsDoorLocked) return;
-
-        IsDoorLocked = true;
-        PlaySound(lockSound);
-
-        if (isDoorOpen)
-            CloseDoor();
-
-        ApplyLockState();
-    }
-
-    private void OnLockToggleButtonClicked()
-    {
-        if (IsDoorLocked)
-            UnlockDoor();
-        else
-            LockDoor();
-
-        UpdateLockButtonText();
-    }
-
-    // Меняем материалы и вид двери в зависимости от состояния
-    private void ApplyLockState()
-    {
-        if (lockIndicators != null)
+        for (int i = 0; i < doorParts.Length; i++)
         {
-            foreach (GameObject indicator in lockIndicators)
-            {
-                if (indicator == null) continue;
+            if (doorParts[i] != null)
+                startPositions[i] = doorParts[i].localPosition;
+        }
 
-                SpriteRenderer sr = indicator.GetComponent<SpriteRenderer>();
-                if (sr != null)
+        while (elapsed < openDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / openDuration);
+            float curveT = openCurve.Evaluate(t);
+
+            for (int i = 0; i < doorParts.Length; i++)
+            {
+                if (doorParts[i] != null)
                 {
-                    sr.material = IsDoorLocked ? lockedMaterial : unlockedMaterial;
+                    doorParts[i].localPosition = Vector3.Lerp(startPositions[i], endPositions[i], curveT);
                 }
+            }
+
+            yield return null;
+        }
+
+        for (int i = 0; i < doorParts.Length; i++)
+        {
+            if (doorParts[i] != null)
+                doorParts[i].localPosition = endPositions[i];
+        }
+
+        SpawnEffect(opening ? openEffect : closeEffect);
+        doorCoroutine = null;
+    }
+
+    private IEnumerator KnockAnimation()
+    {
+        float duration = 0.35f;
+        float elapsed = 0f;
+        float knockAmount = 0.15f;
+
+        Vector3[] originalPositions = new Vector3[doorParts.Length];
+        Vector2[] knockDirections = new Vector2[doorParts.Length];
+        
+        for (int i = 0; i < doorParts.Length; i++)
+        {
+            if (doorParts[i] != null)
+            {
+                originalPositions[i] = doorParts[i].localPosition;
+                
+                // Направление стука — от целевой позиции к закрытой
+                Vector2 dir = (closedPositions[i] - targetOpenPositions[i]).normalized;
+                knockDirections[i] = dir.magnitude > 0.01f ? dir : Vector2.up;
             }
         }
 
-        UpdateLockButtonText();
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            float shake = Mathf.Sin(t * Mathf.PI * 6) * knockAmount * (1f - t);
+
+            for (int i = 0; i < doorParts.Length; i++)
+            {
+                if (doorParts[i] != null)
+                {
+                    doorParts[i].localPosition = originalPositions[i] + (Vector3)(knockDirections[i] * shake);
+                }
+            }
+
+            yield return null;
+        }
+
+        for (int i = 0; i < doorParts.Length; i++)
+        {
+            if (doorParts[i] != null)
+                doorParts[i].localPosition = originalPositions[i];
+        }
+
+        doorCoroutine = null;
     }
 
-    private void OnOpenButtonClicked()
+    private void SpawnEffect(GameObject effectPrefab)
     {
-        OpenDoor();
-        HideInteractionUI();
+        if (effectPrefab == null) return;
+
+        Vector3 spawnPos = effectSpawnPoint != null ? effectSpawnPoint.position : transform.position;
+        Instantiate(effectPrefab, spawnPos, Quaternion.identity);
     }
 
-    private void OnKnockButtonClicked()
+    private void ApplyLockVisuals()
     {
-        PlaySound(knockSound);
+        if (lockedVisuals != null)
+        {
+            for (int i = 0; i < lockedVisuals.Length; i++)
+            {
+                if (lockedVisuals[i] != null)
+                    lockedVisuals[i].SetActive(isLocked);
+            }
+        }
 
-        if (doorAnimator != null)
-            doorAnimator.SetTrigger("Knock");
+        if (unlockedVisuals != null)
+        {
+            for (int i = 0; i < unlockedVisuals.Length; i++)
+            {
+                if (unlockedVisuals[i] != null)
+                    unlockedVisuals[i].SetActive(!isLocked);
+            }
+        }
     }
 
-    public void ShowInteractionUI()
-    {
-        if (interactionUI == null) return;
-
-        interactionUI.SetActive(true);
-        UpdateLockButtonText();
-    }
-
-    public void HideInteractionUI()
-    {
-        if (interactionUI == null) return;
-        interactionUI.SetActive(false);
-    }
-
-    private void PlaySound(AudioClip clip)
-    {
-        if (clip == null || audioSource == null) return;
-        audioSource.PlayOneShot(clip);
-    }
-
-    public bool IsOpen() => isDoorOpen;
-    public bool IsLocked() => IsDoorLocked;
-
-    public static void ResetDoorState()
-    {
-        IsDoorLocked = true;
-    }
+    public bool IsOpen() => isOpen;
+    public bool IsLocked() => isLocked;
 }
