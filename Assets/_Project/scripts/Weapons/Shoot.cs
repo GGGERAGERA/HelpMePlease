@@ -22,10 +22,14 @@ public class Shoot : BaseWeapon
     [SerializeField] private float recoilReturnSpeed = 14f;
 
     private float currentRecoil;
+    private Vector2 lastOwnerPosition;
 
     protected override void Start()
     {
         base.Start();
+
+        if (owner != null)
+            lastOwnerPosition = owner.position;
 
         if (bulletPrefab != null)
             bulletPrefab.SetActive(true);
@@ -49,8 +53,6 @@ public class Shoot : BaseWeapon
 
         if (rotateToMouse)
             RotateToMouse();
-
-        UpdateStationaryFireRateRamp();
 
         if (Input.GetMouseButton(0) && CanAttack())
             Attack();
@@ -272,34 +274,7 @@ public class Shoot : BaseWeapon
             !float.IsInfinity(value.x) &&
             !float.IsInfinity(value.y);
     }
-    private void UpdateStationaryFireRateRamp()
-    {
-        PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
 
-        if (modifiers == null)
-            return;
-
-        bool isShooting = Input.GetMouseButton(0);
-        bool isMoving = IsOwnerMoving(modifiers.stationaryMoveThreshold);
-
-        modifiers.UpdateStationaryFireRateRamp(
-            isShooting,
-            isMoving,
-            Time.deltaTime
-        );
-    }
-    private bool IsOwnerMoving(float threshold)
-    {
-        if (owner == null)
-            return false;
-
-        Rigidbody2D rb = owner.GetComponent<Rigidbody2D>();
-
-        if (rb == null)
-            return false;
-
-        return rb.linearVelocity.sqrMagnitude > threshold * threshold;
-    }
     private Vector2 ApplyAccuracyPenalty(Vector2 direction)
     {
         PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();

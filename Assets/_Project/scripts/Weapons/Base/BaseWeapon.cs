@@ -12,6 +12,9 @@ public abstract class BaseWeapon : MonoBehaviour
     [Header("Audio")]
     [SerializeField] protected AudioSource weaponAudioSource;
 
+    private Vector2 lastOwnerPosition;
+    private Transform ownerTransform;
+
     protected float lastAttackTime;
 
     protected WeaponRuntimeStats Stats => runtimeStats;
@@ -25,6 +28,10 @@ public abstract class BaseWeapon : MonoBehaviour
     {
         SetupAudio();
 
+        ownerTransform = transform.parent;
+        if (ownerTransform != null)
+            lastOwnerPosition = ownerTransform.position;
+
         if (firePoint == null)
             firePoint = transform;
 
@@ -36,6 +43,8 @@ public abstract class BaseWeapon : MonoBehaviour
     {
         if (Time.timeScale == 0f)
             return;
+
+        UpdateStationaryFireRateRamp();
     }
 
     public void Initialize(WeaponData data)
@@ -207,5 +216,40 @@ public abstract class BaseWeapon : MonoBehaviour
     public float GetKnockbackForce(float baseForce)
     {
         return baseForce * runtimeStats.KnockbackMultiplier;
+    }
+    private void UpdateStationaryFireRateRamp()
+    {
+        PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
+
+        if (modifiers == null)
+            return;
+
+        bool isAttacking = IsTryingToAttack();
+        bool isMoving = IsOwnerMoving(modifiers.stationaryMoveThreshold);
+
+        modifiers.UpdateStationaryFireRateRamp(
+            isAttacking,
+            isMoving,
+            Time.deltaTime
+        );
+    }
+
+    protected virtual bool IsTryingToAttack()
+    {
+        return Input.GetMouseButton(0);
+    }
+
+    private bool IsOwnerMoving(float threshold)
+    {
+        if (ownerTransform == null)
+            return false;
+
+        Vector2 currentPosition = ownerTransform.position;
+        float deltaTime = Mathf.Max(Time.deltaTime, 0.0001f);
+
+        float speed = Vector2.Distance(currentPosition, lastOwnerPosition) / deltaTime;
+        lastOwnerPosition = currentPosition;
+
+        return speed > threshold;
     }
 }

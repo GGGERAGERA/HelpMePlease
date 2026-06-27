@@ -71,7 +71,7 @@ public sealed class UpgradeApplier : MonoBehaviour
                 break;
 
             case UpgradeType.StationaryFireRateRamp:
-                RequireCombatModifiers(context).stationaryFireRateRamp = true;
+                ApplyStationaryFireRateRamp(context, upgrade.value);
                 break;
 
             case UpgradeType.DoubleDamageWithInaccuracy:
@@ -79,7 +79,7 @@ public sealed class UpgradeApplier : MonoBehaviour
                 break;
 
             case UpgradeType.LowHpPower:
-                RequireCombatModifiers(context).lowHpPower = true;
+                ApplyLowHpPower(context, upgrade.value);
                 break;
 
             case UpgradeType.RandomExtraShotsChance:
@@ -197,5 +197,20 @@ public sealed class UpgradeApplier : MonoBehaviour
             CombatModifiers = player != null ? player.GetComponent<PlayerCombatModifiers>() : null;
             Weapons = player != null ? player.GetComponentsInChildren<BaseWeapon>(true) : null;
         }
+    }
+
+    private void ApplyLowHpPower(PlayerUpgradeContext context, float value)
+    {
+        PlayerCombatModifiers modifiers = RequireCombatModifiers(context);
+
+        modifiers.lowHpPower = true;
+        modifiers.lowHpPowerMultiplier += value;
+    }
+    private void ApplyStationaryFireRateRamp(PlayerUpgradeContext context, float value)
+    {
+        PlayerCombatModifiers modifiers = RequireCombatModifiers(context);
+
+        modifiers.stationaryFireRateRamp = true;
+        modifiers.stationaryFireRateRampMaxBonus += value;
     }
 }
