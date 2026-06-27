@@ -429,13 +429,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff511ff327fbdfb44928112c8ed616d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NukeEveryTenKillsRuntime
-  killsRequired: 10
-  radius: 6
+  killsRequired: 1
+  radius: 12
   damage: 999
   enemyMask:
     serializedVersion: 2
     m_Bits: 256
-  nukeFxPrefab: {fileID: 0}
+  nukeFxPrefab: {fileID: 8471479244625784341, guid: c9ef6978e0aec7749ac3b55cad40bc5d, type: 3}
 --- !u!1 &5144749796594398161
 GameObject:
   m_ObjectHideFlags: 0

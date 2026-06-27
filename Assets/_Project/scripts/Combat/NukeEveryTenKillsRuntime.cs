@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class NukeEveryTenKillsRuntime : MonoBehaviour
 {
-    [SerializeField] private int killsRequired = 10;
     [SerializeField] private float radius = 6f;
     [SerializeField] private float damage = 999f;
     [SerializeField] private LayerMask enemyMask;
@@ -18,7 +17,7 @@ public class NukeEveryTenKillsRuntime : MonoBehaviour
 
     private void Update()
     {
-        if (modifiers == null || !modifiers.nukeEveryTenKills)
+        if (modifiers == null || !modifiers.nukeEveryKills)
             return;
 
         if (KillManager.Instance == null)
@@ -29,7 +28,9 @@ public class NukeEveryTenKillsRuntime : MonoBehaviour
         if (kills <= 0)
             return;
 
-        if (kills - lastTriggeredKillCount < killsRequired)
+        int killsSinceLastNuke = kills - lastTriggeredKillCount;
+
+        if (killsSinceLastNuke < modifiers.nukeKillsRequired)
             return;
 
         lastTriggeredKillCount = kills;
