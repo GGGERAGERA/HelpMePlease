@@ -33,7 +33,10 @@ public class PlayerCombatModifiers : MonoBehaviour
     public bool circularBurst;
     public float circularBurstCooldown = 8f;
     [SerializeField] private float circularBurstMinCooldown = 3f;
-    public bool nukeEveryTenKills;
+    [Header("Nuke")]
+    public bool nukeEveryKills;
+    public int nukeKillsRequired = 10;
+    [SerializeField] private int nukeMinKillsRequired = 3;
 
     [Header("Masks")]
     public LayerMask enemyMask;
@@ -205,5 +208,15 @@ public class PlayerCombatModifiers : MonoBehaviour
             circularBurstCooldown - reduction
         );
     }
+    public void AddNukeKillRequirementReduction(float reduction)
+    {
+        nukeEveryKills = true;
 
+        int reductionInt = Mathf.RoundToInt(reduction);
+
+        nukeKillsRequired = Mathf.Max(
+            nukeMinKillsRequired,
+            nukeKillsRequired - reductionInt
+        );
+    }
 }

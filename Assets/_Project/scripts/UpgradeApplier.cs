@@ -91,7 +91,7 @@ public sealed class UpgradeApplier : MonoBehaviour
                 break;
 
             case UpgradeType.NukeEveryTenKills:
-                RequireCombatModifiers(context).nukeEveryTenKills = true;
+                ApplyNukeEveryKills(context, upgrade.value);
                 break;
 
 
@@ -217,5 +217,10 @@ public sealed class UpgradeApplier : MonoBehaviour
     {
         PlayerCombatModifiers modifiers = RequireCombatModifiers(context);
         modifiers.AddCircularBurstCooldownReduction(value);
+    }
+    private void ApplyNukeEveryKills(PlayerUpgradeContext context, float value)
+    {
+        PlayerCombatModifiers modifiers = RequireCombatModifiers(context);
+        modifiers.AddNukeKillRequirementReduction(value);
     }
 }
