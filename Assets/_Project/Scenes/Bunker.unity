@@ -8649,6 +8649,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1632875633}
     m_Modifications:
+    - target: {fileID: 2130963879315397534, guid: ce7a312400c672e41ad7868af8ef3ac4, type: 3}
+      propertyPath: m_SortingLayer
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2130963879315397534, guid: ce7a312400c672e41ad7868af8ef3ac4, type: 3}
+      propertyPath: m_SortingLayerID
+      value: -1183170747
+      objectReference: {fileID: 0}
     - target: {fileID: 3669318725166152770, guid: ce7a312400c672e41ad7868af8ef3ac4, type: 3}
       propertyPath: m_LocalPosition.x
       value: 39
@@ -8692,6 +8700,14 @@ PrefabInstance:
     - target: {fileID: 5891057351073325762, guid: ce7a312400c672e41ad7868af8ef3ac4, type: 3}
       propertyPath: m_Name
       value: BunkerHallway1_2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8037088976928449233, guid: ce7a312400c672e41ad7868af8ef3ac4, type: 3}
+      propertyPath: m_SortingLayer
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8037088976928449233, guid: ce7a312400c672e41ad7868af8ef3ac4, type: 3}
+      propertyPath: m_SortingLayerID
+      value: -1183170747
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

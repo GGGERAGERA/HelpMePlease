@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3270006375685738280}
   - component: {fileID: 6538297651316971196}
   - component: {fileID: 3229572299611706721}
+  - component: {fileID: 8686790380477725031}
   m_Layer: 0
   m_Name: p_bunkerWardrobe1
   m_TagString: BunkerElements
@@ -70,7 +71,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.009579301, y: 0.5910699}
+  m_Offset: {x: -0.009579301, y: 0.38904583}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -80,7 +81,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1.7730467, y: 1.1591634}
+  m_Size: {x: 1.7730467, y: 0.7551153}
   m_EdgeRadius: 0
 --- !u!61 &6538297651316971196
 BoxCollider2D:
@@ -112,7 +113,7 @@ BoxCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
@@ -146,6 +147,19 @@ MonoBehaviour:
   raycastLayerMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!210 &8686790380477725031
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 753558741162347847}
+  m_Enabled: 1
+  m_SortingLayerID: -1183170747
+  m_SortingLayer: 2
+  m_SortingOrder: 0
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0
 --- !u!1 &3529808757052123310
 GameObject:
   m_ObjectHideFlags: 0
@@ -223,16 +237,16 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingLayerID: -1183170747
+  m_SortingLayer: 2
+  m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -113274748, guid: b4f23bc517d7a7345a86361ac5935408, type: 3}
+  m_Sprite: {fileID: -2033716428, guid: b4f23bc517d7a7345a86361ac5935408, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.48, y: 0.59}
+  m_Size: {x: 1.75, y: 2.65625}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -350,7 +364,7 @@ SpriteRenderer:
   m_SortingLayer: -1
   m_SortingOrder: -9
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -58967724, guid: b4f23bc517d7a7345a86361ac5935408, type: 3}
+  m_Sprite: {fileID: -6496627578283254543, guid: b4f23bc517d7a7345a86361ac5935408, type: 3}
   m_Color: {r: 0, g: 0, b: 0, a: 0.49019608}
   m_FlipX: 0
   m_FlipY: 0

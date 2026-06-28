@@ -8,6 +8,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 8620009400717408306}
     m_Modifications:
+    - target: {fileID: 3984663107743931080, guid: eeb4ff2889a95c046b75bfa9e080de0b, type: 3}
+      propertyPath: m_SortingLayer
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3984663107743931080, guid: eeb4ff2889a95c046b75bfa9e080de0b, type: 3}
+      propertyPath: m_SortingLayerID
+      value: -1183170747
+      objectReference: {fileID: 0}
+    - target: {fileID: 4996621122760942471, guid: eeb4ff2889a95c046b75bfa9e080de0b, type: 3}
+      propertyPath: m_SortingLayer
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4996621122760942471, guid: eeb4ff2889a95c046b75bfa9e080de0b, type: 3}
+      propertyPath: m_SortingLayerID
+      value: -1183170747
+      objectReference: {fileID: 0}
     - target: {fileID: 7383198718424882109, guid: eeb4ff2889a95c046b75bfa9e080de0b, type: 3}
       propertyPath: m_Name
       value: p_BunkerDoorVertical1 Variant
@@ -88,15 +104,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1778856820779184774, guid: a962dd74dc322074ba6151de729a64ed, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 1778856820779184774, guid: a962dd74dc322074ba6151de729a64ed, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 1778856820779184774, guid: a962dd74dc322074ba6151de729a64ed, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 1778856820779184774, guid: a962dd74dc322074ba6151de729a64ed, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
