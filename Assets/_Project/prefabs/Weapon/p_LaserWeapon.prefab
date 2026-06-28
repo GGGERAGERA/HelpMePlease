@@ -42,6 +42,7 @@ GameObject:
   - component: {fileID: 5583223837665478476}
   - component: {fileID: 8058669482312627589}
   - component: {fileID: 2175164308714764740}
+  - component: {fileID: 1665494613045673805}
   m_Layer: 0
   m_Name: p_LaserWeapon
   m_TagString: Untagged
@@ -80,12 +81,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LaserWeapon
   weaponData: {fileID: 11400000, guid: a0a46b236f3b65c40b5c4cc5573d7c47, type: 2}
   firePoint: {fileID: 3181264610942060483}
+  runtimeStats: {fileID: 0}
   weaponAudioSource: {fileID: 0}
-  projectileCount: 1
-  projectilePierce: 0
-  projectileRicochet: 0
-  critChance: 0.05
-  critMultiplier: 2
   owner: {fileID: 0}
   orbitRadius: 0.55
   orbitSmoothSpeed: 25
@@ -195,6 +192,19 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!210 &1665494613045673805
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5277647906556210592}
+  m_Enabled: 1
+  m_SortingLayerID: -1183170747
+  m_SortingLayer: 2
+  m_SortingOrder: 0
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!1 &5993291520985931615
 GameObject:
   m_ObjectHideFlags: 0
