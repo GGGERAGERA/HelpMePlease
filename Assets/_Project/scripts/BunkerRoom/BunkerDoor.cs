@@ -6,6 +6,12 @@ public class BunkerDoor : MonoBehaviour
 {
     [Header("Состояние")]
     [SerializeField] private bool isLocked = true;
+    [Header("Покупка прохода")]
+    [SerializeField] private int unlockCost = 100;
+    [SerializeField] private CanvasGroup unlockConfirmUI;
+
+    private float knockCooldown = 0.5f;
+    private float lastKnockTime = -1f;
 
     [Header("Зоны")]
     [SerializeField] private Collider2D showUIZone;
@@ -14,13 +20,13 @@ public class BunkerDoor : MonoBehaviour
     [Header("Движущиеся части двери")]
     [Tooltip("Сюда закинь все двигающиеся части: DoorsUpP1, DoorsLowP1 и т.д.")]
     [SerializeField] private Transform[] doorParts;
-    
+
     [Tooltip("Целевые позиции для каждой части при открытии. Создай пустые GameObject'ы и размести их там, куда должна приехать часть двери. Длина должна совпадать с doorParts")]
     [SerializeField] private Transform[] openPositions;
-    
+
     [Tooltip("Длительность анимации открытия/закрытия")]
     [SerializeField] private float openDuration = 0.6f;
-    
+
     [Tooltip("Кривая плавности. По умолчанию EaseInOut")]
     [SerializeField] private AnimationCurve openCurve;
 
@@ -117,7 +123,7 @@ public class BunkerDoor : MonoBehaviour
             if (doorParts[i] != null)
             {
                 closedPositions[i] = doorParts[i].localPosition;
-                
+
                 if (openPositions[i] != null)
                     targetOpenPositions[i] = openPositions[i].localPosition;
                 else
@@ -132,6 +138,10 @@ public class BunkerDoor : MonoBehaviour
         UpdateHoverTimer();
         UpdateUIFade();
         CheckAutoOpenClose();
+        if (Input.GetMouseButtonDown(0) && isPlayerInShowUIZone && !BunkerPlacementSystem.Instance.IsPlacing)
+        {
+            OpenMainDoorUI();
+        }
     }
 
     private void CheckPlayerInZones()
@@ -218,6 +228,9 @@ public class BunkerDoor : MonoBehaviour
 
     private void OnKnockClicked()
     {
+        if (Time.time - lastKnockTime < knockCooldown) return;
+        lastKnockTime = Time.time;
+
         if (doorCoroutine != null) StopCoroutine(doorCoroutine);
         doorCoroutine = StartCoroutine(KnockAnimation());
     }
@@ -283,16 +296,16 @@ public class BunkerDoor : MonoBehaviour
         float elapsed = 0f;
         float knockAmount = 0.15f;
 
-        Vector3[] originalPositions = new Vector3[doorParts.Length];
+        // Запоминаем истинные позиции в зависимости от того, открыта дверь или нет
+        Vector3[] restPositions = isOpen ? targetOpenPositions : closedPositions;
+        Vector3[] startPositions = new Vector3[doorParts.Length];
         Vector2[] knockDirections = new Vector2[doorParts.Length];
-        
+
         for (int i = 0; i < doorParts.Length; i++)
         {
             if (doorParts[i] != null)
             {
-                originalPositions[i] = doorParts[i].localPosition;
-                
-                // Направление стука — от целевой позиции к закрытой
+                startPositions[i] = doorParts[i].localPosition;
                 Vector2 dir = (closedPositions[i] - targetOpenPositions[i]).normalized;
                 knockDirections[i] = dir.magnitude > 0.01f ? dir : Vector2.up;
             }
@@ -308,19 +321,18 @@ public class BunkerDoor : MonoBehaviour
             {
                 if (doorParts[i] != null)
                 {
-                    doorParts[i].localPosition = originalPositions[i] + (Vector3)(knockDirections[i] * shake);
+                    doorParts[i].localPosition = startPositions[i] + (Vector3)(knockDirections[i] * shake);
                 }
             }
-
             yield return null;
         }
 
+        // Гарантированно возвращаем двери в ровное положение
         for (int i = 0; i < doorParts.Length; i++)
         {
             if (doorParts[i] != null)
-                doorParts[i].localPosition = originalPositions[i];
+                doorParts[i].localPosition = restPositions[i];
         }
-
         doorCoroutine = null;
     }
 
@@ -331,6 +343,31 @@ public class BunkerDoor : MonoBehaviour
         Vector3 spawnPos = effectSpawnPoint != null ? effectSpawnPoint.position : transform.position;
         Instantiate(effectPrefab, spawnPos, Quaternion.identity);
     }
+
+    // И новые методы для открытия UI и подтверждения оплаты
+private void OpenMainDoorUI()
+{
+    if (isLocked && unlockConfirmUI != null)
+    {
+        BunkerUIManager.Instance.OpenUI(unlockConfirmUI);
+    }
+}
+
+public void ConfirmUnlock()
+{
+    if (CurrencyManager.Instance.SpendGold(unlockCost))
+    {
+        isLocked = false;
+        ApplyLockVisuals();
+        if (unlockButton != null) unlockButton.gameObject.SetActive(false);
+        if (lockButton != null) lockButton.gameObject.SetActive(true);
+        BunkerUIManager.Instance.CloseUI(unlockConfirmUI);
+    }
+    else
+    {
+        Debug.Log("Недостаточно монет для прохода!");
+    }
+}
 
     private void ApplyLockVisuals()
     {

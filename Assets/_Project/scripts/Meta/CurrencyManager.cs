@@ -2,6 +2,12 @@ using UnityEngine;
 
 public class CurrencyManager : MonoBehaviour
 {
+    [ContextMenu("Добавить 1000 монет (Debug)")] //Теперь в инспекторе можно кликнуть правой кнопкой 
+    //по скрипту CurrencyManager и начислить себе монеты.
+    public void DebugAddCoins()
+    {
+        AddGold(1000);
+    }
     public static CurrencyManager Instance;
 
     public int TotalGold { get; private set; }
