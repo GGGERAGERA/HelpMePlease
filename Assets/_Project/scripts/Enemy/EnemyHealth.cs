@@ -179,6 +179,7 @@ public class EnemyHealth : MonoBehaviour
         if (isBoss)
         {
             HUDManager.Instance?.HideBossHp();
+            RunMessageService.Instance?.Show(RunMessageType.BossDefeated);
             SpawnExitPortals();
         }
 

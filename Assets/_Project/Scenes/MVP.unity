@@ -153,6 +153,7 @@ GameObject:
   - component: {fileID: 33760154}
   - component: {fileID: 33760153}
   - component: {fileID: 33760155}
+  - component: {fileID: 33760156}
   m_Layer: 5
   m_Name: RunMessagePanel
   m_TagString: Untagged
@@ -231,9 +232,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03469e3e210e6504a999b165750fade8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunMessageView
-  canvasGroup: {fileID: 0}
+  canvasGroup: {fileID: 33760156}
   titleText: {fileID: 1452251761}
   descriptionText: {fileID: 1473219799}
+--- !u!225 &33760156
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 33760151}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
 --- !u!1 &46915840
 GameObject:
   m_ObjectHideFlags: 0
@@ -3940,7 +3953,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunMessageService
   view: {fileID: 33760155}
-  messages: []
+  messages:
+  - {fileID: 11400000, guid: 795a6a86af2bfb841a1f8406cd0f8b08, type: 2}
+  - {fileID: 11400000, guid: 39ae3304e6b47184791e0172a3adb7ea, type: 2}
+  - {fileID: 11400000, guid: 144dcceecfdcdaa45bffd377f878eb8e, type: 2}
+  - {fileID: 11400000, guid: abdae633be47eec48953cfce1ce81b92, type: 2}
 --- !u!1 &1771207005
 GameObject:
   m_ObjectHideFlags: 0

@@ -28,13 +28,24 @@ public sealed class RunMessageView : MonoBehaviour
         titleText.text = title;
         descriptionText.text = description;
 
-        canvasGroup.alpha = 1f;
-        canvasGroup.blocksRaycasts = false;
-        canvasGroup.interactable = false;
-
+        yield return FadeTo(1f, 0.15f);
         yield return new WaitForSecondsRealtime(duration);
+        yield return FadeTo(0f, 0.25f);
+    }
 
-        HideInstant();
+    private IEnumerator FadeTo(float targetAlpha, float duration)
+    {
+        float startAlpha = canvasGroup.alpha;
+        float time = 0f;
+
+        while (time < duration)
+        {
+            time += Time.unscaledDeltaTime;
+            canvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, time / duration);
+            yield return null;
+        }
+
+        canvasGroup.alpha = targetAlpha;
     }
 
     public void HideInstant()

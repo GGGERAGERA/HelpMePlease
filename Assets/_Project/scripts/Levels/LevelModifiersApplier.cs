@@ -41,6 +41,12 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         ApplyEvents(node);
 
         Debug.Log($"[LevelModifiersApplier] Applied node: {node.nodeName}");
+
+        RunMessageService.Instance?.ShowCustom(
+    $"спнбемэ {RunStateManager.Instance.CurrentLevel}",
+    $"{node.nodeName}\n{node.description}",
+    4f
+);
     }
 
     private void ApplyEnemyModifiers(LevelNodeData node)

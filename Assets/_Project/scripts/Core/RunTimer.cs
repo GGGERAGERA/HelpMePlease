@@ -74,7 +74,7 @@ public class RunTimer : MonoBehaviour
         bossSpawned = true;
 
         HUDManager.Instance?.SetTimer(0f);
-
+        RunMessageService.Instance?.Show(RunMessageType.BossIncoming);
 
 
         if (bossWarningSound != null && Camera.main != null)

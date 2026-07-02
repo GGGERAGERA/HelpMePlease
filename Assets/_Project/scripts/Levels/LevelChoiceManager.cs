@@ -50,7 +50,7 @@ public sealed class LevelChoiceManager : MonoBehaviour
             Debug.LogError("[LevelChoiceManager] PanelView is not assigned.");
             return;
         }
-
+        RunMessageService.Instance?.Show(RunMessageType.LevelChoiceOpened);
         Time.timeScale = 0f;
         panelView.Show(currentChoices, SelectNode);
     }
