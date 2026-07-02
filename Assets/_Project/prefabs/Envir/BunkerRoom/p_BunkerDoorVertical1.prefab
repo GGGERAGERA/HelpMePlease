@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 4701887012969377020}
   - component: {fileID: 3417082791324549344}
   m_Layer: 5
-  m_Name: DoorPanelInlocked
+  m_Name: DoorPaneUnlocked
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1278,6 +1278,7 @@ GameObject:
   - component: {fileID: 6038816173855921837}
   - component: {fileID: 420559118544387601}
   - component: {fileID: 7942514420987823232}
+  - component: {fileID: 2025671846371859588}
   m_Layer: 0
   m_Name: p_BunkerDoorVertical1
   m_TagString: Untagged
@@ -1392,6 +1393,35 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 3, y: 8}
   m_EdgeRadius: 0
+--- !u!114 &2025671846371859588
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2821076877057381025}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0aa2221ab726304eb1f8c4d6cb72bac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerDoor
+  doorID: Door_01
+  lockedVisuals:
+  - {fileID: 5271631023766727900}
+  - {fileID: 5197425017280372072}
+  - {fileID: 3759214639805813927}
+  unlockedVisuals:
+  - {fileID: 5512502613458380988}
+  - {fileID: 8828680820207840793}
+  - {fileID: 3722205271048347477}
+  openTriggerZone: {fileID: 4153436221838233166}
+  lockedUIPanelGroup: {fileID: 5393775803436402881}
+  unlockedUIPanelGroup: {fileID: 3417082791324549344}
+  knockDuration: 0.5
+  knockIntensity: 0.1
+  openOffset: 2.5
+  moveDuration: 0.6
+  fadeDuration: 0.2
 --- !u!1 &3315687893458677294
 GameObject:
   m_ObjectHideFlags: 0

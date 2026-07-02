@@ -9521,6 +9521,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5858861874738715783, guid: a962dd74dc322074ba6151de729a64ed, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8899940078072671238, guid: a962dd74dc322074ba6151de729a64ed, type: 3}
       propertyPath: m_Name
       value: BunkerHallway1

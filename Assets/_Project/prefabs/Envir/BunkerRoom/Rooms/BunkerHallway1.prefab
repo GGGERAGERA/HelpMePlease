@@ -2239,6 +2239,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3063786555060090886}
   - component: {fileID: 7730365427661875247}
+  - component: {fileID: 4254735985187967674}
   m_Layer: 0
   m_Name: HallwayZone1
   m_TagString: Hallway
@@ -2320,6 +2321,52 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!61 &4254735985187967674
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5530656194135020386}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0.53125, y: 0.53125, z: 0.53125, w: 0.53125}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 2.9375, y: 2.9375}
+    newSize: {x: 11, y: 8}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 2
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 2.9375, y: 2.9375}
+  m_EdgeRadius: 0
 --- !u!1 &5704521842288692367
 GameObject:
   m_ObjectHideFlags: 0
@@ -2729,7 +2776,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &266692781093622083
 Transform:
   m_ObjectHideFlags: 0
@@ -2892,8 +2939,8 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5928155110081555881}
   m_Enabled: 1
-  m_Alpha: 0.51
-  m_Interactable: 0
+  m_Alpha: 1
+  m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
 --- !u!1 &6935212975628807145
@@ -4099,6 +4146,7 @@ GameObject:
   - component: {fileID: 8732820531194036877}
   - component: {fileID: 5800369222855144127}
   - component: {fileID: 8985830369700522314}
+  - component: {fileID: 34574284543203320}
   m_Layer: 0
   m_Name: BunkerHallway1
   m_TagString: Hallway
@@ -4211,6 +4259,28 @@ MonoBehaviour:
   raycastLayerMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &34574284543203320
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8899940078072671238}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b142f87aff72f045972bed5967e4301, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerHallway
+  hallwayID: Hallway_01
+  unlockCost: 500
+  uiPanel: {fileID: 5928155110081555881}
+  interactionZone: {fileID: 4254735985187967674}
+  zonesToHide:
+  - {fileID: 5530656194135020386}
+  - {fileID: 5858861874738715783}
+  doorsInHallway:
+  - {fileID: 2768175146767420761}
+  - {fileID: 7564094833689766039}
 --- !u!1 &8931311537043623529
 GameObject:
   m_ObjectHideFlags: 0
@@ -4395,6 +4465,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3963429074183942466, guid: 58e3a6337b962564cb7bd04fb9d1a79e, type: 3}
   m_PrefabInstance: {fileID: 4212600058062967261}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2768175146767420761 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2025671846371859588, guid: 58e3a6337b962564cb7bd04fb9d1a79e, type: 3}
+  m_PrefabInstance: {fileID: 4212600058062967261}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0aa2221ab726304eb1f8c4d6cb72bac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerDoor
 --- !u!1001 &8423334267050996755
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4457,3 +4538,14 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3963429074183942466, guid: 58e3a6337b962564cb7bd04fb9d1a79e, type: 3}
   m_PrefabInstance: {fileID: 8423334267050996755}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7564094833689766039 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2025671846371859588, guid: 58e3a6337b962564cb7bd04fb9d1a79e, type: 3}
+  m_PrefabInstance: {fileID: 8423334267050996755}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0aa2221ab726304eb1f8c4d6cb72bac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerDoor
