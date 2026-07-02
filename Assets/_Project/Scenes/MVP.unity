@@ -279,8 +279,8 @@ MonoBehaviour:
   OnLevelUp:
     m_PersistentCalls:
       m_Calls: []
-  levelUpSound: {fileID: 8300000, guid: 4a096681f8b9aff46b98f111d2553d86, type: 3}
-  levelUpVolume: 0.5
+  levelUpSound: {fileID: 0}
+  levelUpVolume: 0.1
   levelUpFX: {fileID: 5832780733298168298, guid: a8519acdf6ef73b41ae1c5e4c2df7c5a, type: 3}
   FXPauseTime: 0.8
   playerTransform: {fileID: 0}

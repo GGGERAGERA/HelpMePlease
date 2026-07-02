@@ -9,14 +9,6 @@ public static class AICommentGenerator
         int level = ExperienceManager.Instance != null ? ExperienceManager.Instance.currentLevel : 1;
 
         string weaponName = "";
-        if (WeaponSelectionManager.Instance != null)
-        {
-            WeaponData weapon = RunSelectionManager.Instance != null
-            ? RunSelectionManager.Instance.SelectedWeapon
-            : null;
-            if (weapon != null)
-                weaponName = weapon.weaponName.ToLower();
-        }
 
         if (!victory && time < 60f)
             return RandomFrom(fastDeath);

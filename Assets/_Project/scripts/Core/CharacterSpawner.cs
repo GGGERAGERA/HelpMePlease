@@ -104,11 +104,6 @@ public class CharacterSpawner : MonoBehaviour
 
     private void ApplyCharacterStats(GameObject player, CharacterData characterData)
     {
-        PlayerStats stats = player.GetComponent<PlayerStats>();
-
-        if (stats != null)
-            stats.moveSpeed = characterData.moveSpeed;
-
         PlayerHealth health = player.GetComponent<PlayerHealth>();
 
         if (health != null)
