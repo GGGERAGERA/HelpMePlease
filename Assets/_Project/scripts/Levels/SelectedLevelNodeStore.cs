@@ -1,16 +1,16 @@
-using UnityEngine;
-
-public class SelectedLevelNodeStore : MonoBehaviour
+public static class SelectedLevelNodeStore
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public static LevelNodeData SelectedNode { get; private set; }
+
+    public static bool HasSelectedNode => SelectedNode != null;
+
+    public static void Set(LevelNodeData node)
     {
-        
+        SelectedNode = node;
     }
 
-    // Update is called once per frame
-    void Update()
+    public static void Clear()
     {
-        
+        SelectedNode = null;
     }
 }
