@@ -49,8 +49,6 @@ public class RunTimer : MonoBehaviour
 
     private void SpawnBossObject()
     {
-        Debug.Log("BOSS SPAWNED");
-
         GameObject player = GameObject.FindGameObjectWithTag("Player");
 
         if (bossPrefab != null && player != null)

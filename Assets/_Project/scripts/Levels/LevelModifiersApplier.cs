@@ -41,12 +41,23 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         ApplyEvents(node);
 
         Debug.Log($"[LevelModifiersApplier] Applied node: {node.nodeName}");
-
         RunMessageService.Instance?.ShowCustom(
-    $"УРОВЕНЬ {RunStateManager.Instance.CurrentLevel}",
-    $"{node.nodeName}\n{node.description}",
-    4f
-);
+            $"УРОВЕНЬ {RunStateManager.Instance.CurrentLevel}",
+            $"{node.nodeName}\n{node.description}",
+            4f
+        );
+        if (node == null)
+        {
+            DisableEnvironment();
+
+            RunMessageService.Instance?.ShowCustom(
+                "УРОВЕНЬ 1",
+                "Выживите до появления босса.",
+                4f
+            );
+
+            return;
+        }
     }
 
     private void ApplyEnemyModifiers(LevelNodeData node)
