@@ -100,26 +100,24 @@ public sealed class RunStateManager : MonoBehaviour
         Debug.Log($"[RunState] Advanced to level {CurrentLevel}");
     }
 
-    public void ApplyToSpawnedPlayer(GameObject player)
+    public void ApplyToSpawnedPlayer(GameObject player, UpgradeApplier upgradeApplier)
     {
         if (player == null)
             return;
 
         if (!upgradesAppliedToCurrentScene)
         {
-            UpgradeApplier applier = FindFirstObjectByType<UpgradeApplier>();
-
-            if (applier != null)
+            if (upgradeApplier != null)
             {
                 foreach (UpgradeData upgrade in pickedUpgrades)
-                    applier.Apply(upgrade);
+                    upgradeApplier.Apply(upgrade);
+            }
+            else if (pickedUpgrades.Count > 0)
+            {
+                Debug.LogWarning("[RunState] UpgradeApplier not assigned. Upgrades were not restored.");
             }
 
             upgradesAppliedToCurrentScene = true;
-        }
-        else if (pickedUpgrades.Count > 0)
-        {
-            Debug.LogWarning("[RunState] UpgradeApplier not found. Upgrades were not restored.");
         }
 
         if (hasHealthSnapshot)
@@ -129,7 +127,6 @@ public sealed class RunStateManager : MonoBehaviour
             if (health != null)
                 health.SetRuntimeHealth(savedMaxHealth, savedCurrentHealth);
         }
-
 
         Debug.Log($"[RunState] Applied to spawned player. Upgrades: {pickedUpgrades.Count}, hasHealth: {hasHealthSnapshot}");
     }

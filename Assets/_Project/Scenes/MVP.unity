@@ -300,6 +300,7 @@ MonoBehaviour:
   spawnPoint: {fileID: 0}
   weaponPointName: WeaponPoint
   metaUpgradeApplier: {fileID: 46915851}
+  upgradeApplier: {fileID: 46915855}
   defaultWeapon: {fileID: 11400000, guid: acd6c980f3b758a409e5285b329a175a, type: 2}
 --- !u!114 &46915847
 MonoBehaviour:
@@ -426,7 +427,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05f9856f3deee0e47bd27dc97ca8e7f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunLevelManager
-  currentLevel: 1
   levelStartPoint: {fileID: 101118584}
   healPlayerOnNextLevel: 0
   healPercentOnNextLevel: 0.35

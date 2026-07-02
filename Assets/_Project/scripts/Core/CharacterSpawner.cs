@@ -12,6 +12,7 @@ public class CharacterSpawner : MonoBehaviour
     [SerializeField] private string weaponPointName = "WeaponPoint";
 
     [SerializeField] private MetaUpgradeApplier metaUpgradeApplier;
+    [SerializeField] private UpgradeApplier upgradeApplier;
 
     [Header("Default weapon for direct MVP launch")]
     [SerializeField] private WeaponData defaultWeapon;
@@ -31,7 +32,7 @@ public class CharacterSpawner : MonoBehaviour
             metaUpgradeApplier.ApplyTo(player, weapons);
 
         if (RunStateManager.Instance != null)
-            RunStateManager.Instance.ApplyToSpawnedPlayer(player);
+            RunStateManager.Instance.ApplyToSpawnedPlayer(player, upgradeApplier);
     }
 
     private GameObject SpawnCharacter()
