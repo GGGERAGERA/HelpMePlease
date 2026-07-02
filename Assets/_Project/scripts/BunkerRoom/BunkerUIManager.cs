@@ -20,7 +20,7 @@ public class BunkerUIManager : MonoBehaviour
         else { Destroy(gameObject); return; }
 
         mainCam = mainCam != null ? mainCam : Camera.main;
-        raycasters = FindObjectsOfType<GraphicRaycaster>();
+        raycasters = FindObjectsByType<GraphicRaycaster>(FindObjectsSortMode.None);
     }
 
     private void Update()
