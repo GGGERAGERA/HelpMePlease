@@ -38,7 +38,7 @@ public class PlayerHealth : MonoBehaviour
 
         whiteFlash?.Flash();
         hitSound?.Play();
-        // Сильная тряска при получении урона
+        //     
         CameraShake.Instance?.Shake(0.12f, 0.08f);
         HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
         if (currentHealth <= 0) Die();
@@ -70,27 +70,27 @@ public class PlayerHealth : MonoBehaviour
         Debug.Log("Player died");
         if (isDead) return;
         isDead = true;
-        // Останавливаем тряску камеры
+        //   
         if (CameraShake.Instance != null)
             CameraShake.Instance.StopAllShakes();
 
-        // Отключаем движение игрока
+        //   
         CharacterMovement2D movement = GetComponent<CharacterMovement2D>();
         if (movement != null) movement.enabled = false;
 
 
 
-        // Скрываем спрайт игрока (ищем на дочерних объектах!)
+        //    (   !)
         SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>();
         foreach (SpriteRenderer sr in renderers)
         {
             sr.enabled = false;
         }
 
-        // ИЛИ просто деактивируем весь объект (проще и надёжнее)
+        //      (  )
         // gameObject.SetActive(false);
 
-        // Показываем панель GameOver
+        //   GameOver
         if (GameOverManager.Instance != null)
             GameOverManager.Instance.GameOver();
     }
@@ -99,6 +99,14 @@ public class PlayerHealth : MonoBehaviour
     {
         maxHealth += amount;
         currentHealth += amount;
+
+        HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
+    }
+    public void SetRuntimeHealth(float maxHealthValue, float currentHealthValue)
+    {
+        maxHealth = Mathf.Max(1f, maxHealthValue);
+        currentHealth = Mathf.Clamp(currentHealthValue, 1f, maxHealth);
+        isDead = false;
 
         HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
     }

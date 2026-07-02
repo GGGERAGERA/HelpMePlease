@@ -25,10 +25,13 @@ public class CharacterSpawner : MonoBehaviour
         if (player == null)
             return;
 
-        BaseWeapon[] weapons = player.GetComponentsInChildren<BaseWeapon>();
+        BaseWeapon[] weapons = player.GetComponentsInChildren<BaseWeapon>(true);
 
         if (metaUpgradeApplier != null)
             metaUpgradeApplier.ApplyTo(player, weapons);
+
+        if (RunStateManager.Instance != null)
+            RunStateManager.Instance.ApplyToSpawnedPlayer(player);
     }
 
     private GameObject SpawnCharacter()
@@ -37,11 +40,13 @@ public class CharacterSpawner : MonoBehaviour
 
         if (selectedCharacter == null)
         {
+            Debug.LogError("[CharacterSpawner] No selected/default character.");
             return null;
         }
 
         if (selectedCharacter.characterPrefab == null)
         {
+            Debug.LogError($"[CharacterSpawner] Character prefab is missing on {selectedCharacter.name}.");
             return null;
         }
 
@@ -65,6 +70,12 @@ public class CharacterSpawner : MonoBehaviour
 
     private CharacterData GetSelectedCharacter()
     {
+        if (RunStateManager.Instance != null &&
+            RunStateManager.Instance.SelectedCharacter != null)
+        {
+            return RunStateManager.Instance.SelectedCharacter;
+        }
+
         if (RunSelectionManager.Instance != null &&
             RunSelectionManager.Instance.SelectedCharacter != null)
         {
@@ -72,6 +83,23 @@ public class CharacterSpawner : MonoBehaviour
         }
 
         return defaultCharacter;
+    }
+
+    private WeaponData GetSelectedWeapon()
+    {
+        if (RunStateManager.Instance != null &&
+            RunStateManager.Instance.SelectedWeapon != null)
+        {
+            return RunStateManager.Instance.SelectedWeapon;
+        }
+
+        if (RunSelectionManager.Instance != null &&
+            RunSelectionManager.Instance.SelectedWeapon != null)
+        {
+            return RunSelectionManager.Instance.SelectedWeapon;
+        }
+
+        return defaultWeapon;
     }
 
     private void ApplyCharacterStats(GameObject player, CharacterData characterData)
@@ -99,19 +127,20 @@ public class CharacterSpawner : MonoBehaviour
     {
         if (weaponData == null)
         {
+            Debug.LogWarning("[CharacterSpawner] No selected/default weapon.");
             return;
         }
+
         if (weaponData.weaponPrefab == null)
         {
+            Debug.LogWarning($"[CharacterSpawner] Weapon prefab is missing on {weaponData.name}.");
             return;
         }
 
         Transform weaponPoint = player.transform.Find(weaponPointName);
 
         if (weaponPoint == null)
-        {
             weaponPoint = player.transform;
-        }
 
         GameObject weapon = Instantiate(
             weaponData.weaponPrefab,
@@ -138,16 +167,5 @@ public class CharacterSpawner : MonoBehaviour
         {
             Debug.LogWarning("CharacterSpawner: spawned weapon has no BaseWeapon component.");
         }
-    }
-
-    private WeaponData GetSelectedWeapon()
-    {
-        if (RunSelectionManager.Instance != null &&
-            RunSelectionManager.Instance.SelectedWeapon != null)
-        {
-            return RunSelectionManager.Instance.SelectedWeapon;
-        }
-
-        return defaultWeapon;
     }
 }

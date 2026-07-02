@@ -77,6 +77,11 @@ public sealed class MainMenuController : MonoBehaviour
             return;
         }
 
+        RunStateManager.EnsureExists().BeginNewRun(
+            RunSelectionManager.Instance.SelectedCharacter,
+            RunSelectionManager.Instance.SelectedWeapon
+        );
+
         isStartingGame = true;
         Time.timeScale = 1f;
         SceneManager.LoadScene(gameplaySceneName);

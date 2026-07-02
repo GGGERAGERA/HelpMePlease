@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 public sealed class LevelModifiersApplier : MonoBehaviour
 {
@@ -6,9 +7,13 @@ public sealed class LevelModifiersApplier : MonoBehaviour
     [SerializeField] private EnemySpawner enemySpawner;
 
     [Header("Environment")]
-    [SerializeField] private GameObject darknessObject;
     [SerializeField] private GameObject rainObject;
     [SerializeField] private GameObject snowObject;
+
+    [Header("Lighting")]
+    [SerializeField] private Light2D globalLight;
+    [SerializeField] private float normalLightIntensity = 1f;
+    [SerializeField] private float darknessLightIntensity = 0.01f;
 
     [Header("Events")]
     [SerializeField] private GameObject holdZoneEventObject;
@@ -55,8 +60,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         switch (node.weatherType)
         {
             case LevelWeatherType.Darkness:
-                if (darknessObject != null)
-                    darknessObject.SetActive(true);
+                ApplyLighting(node);
                 break;
 
             case LevelWeatherType.Rain:
@@ -82,8 +86,8 @@ public sealed class LevelModifiersApplier : MonoBehaviour
 
     private void DisableEnvironment()
     {
-        if (darknessObject != null)
-            darknessObject.SetActive(false);
+        if (globalLight != null)
+            globalLight.intensity = normalLightIntensity;
 
         if (rainObject != null)
             rainObject.SetActive(false);
@@ -96,5 +100,15 @@ public sealed class LevelModifiersApplier : MonoBehaviour
 
         if (extraChestObject != null)
             extraChestObject.SetActive(false);
+    }
+
+    private void ApplyLighting(LevelNodeData node)
+    {
+        if (globalLight == null)
+            return;
+
+        globalLight.intensity = node.weatherType == LevelWeatherType.Darkness
+            ? darknessLightIntensity
+            : normalLightIntensity;
     }
 }

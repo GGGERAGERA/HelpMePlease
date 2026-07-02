@@ -91,6 +91,8 @@ public sealed class UpgradeManager : MonoBehaviour
         if (!applied)
             return;
 
+        RunStateManager.EnsureExists().RegisterUpgrade(upgrade);
+
         CloseUpgradeSelection();
     }
 

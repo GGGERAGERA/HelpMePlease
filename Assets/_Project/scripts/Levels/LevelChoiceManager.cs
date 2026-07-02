@@ -78,6 +78,12 @@ public sealed class LevelChoiceManager : MonoBehaviour
         if (node == null)
             return;
 
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+
+        RunStateManager runState = RunStateManager.EnsureExists();
+        runState.SavePlayerState(player);
+        runState.AdvanceLevel();
+
         SelectedLevelNodeStore.Set(node);
 
         Time.timeScale = 1f;

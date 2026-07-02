@@ -20,7 +20,6 @@ public class MetaUpgradeApplier : MonoBehaviour
 
         if (MetaProgressionManager.Instance == null)
         {
-            Debug.LogWarning("MetaUpgradeApplier: MetaProgressionManager not found.");
             return;
         }
 
