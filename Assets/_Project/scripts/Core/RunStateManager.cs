@@ -13,11 +13,19 @@ public sealed class RunStateManager : MonoBehaviour
     public WeaponData SelectedWeapon { get; private set; }
     public int CurrentLevel { get; private set; } = 1;
 
+    public LevelNodeData SelectedLevelNode { get; private set; }
+
     private readonly List<UpgradeData> pickedUpgrades = new();
 
     private bool hasHealthSnapshot;
     private float savedCurrentHealth;
     private float savedMaxHealth;
+
+    private bool hasExperienceSnapshot;
+    private int savedXpLevel = 1;
+    private int savedCurrentExp;
+
+    private bool upgradesAppliedToCurrentScene;
 
     public IReadOnlyList<UpgradeData> PickedUpgrades => pickedUpgrades;
 
@@ -28,6 +36,12 @@ public sealed class RunStateManager : MonoBehaviour
 
         GameObject go = new GameObject("RunStateManager");
         return go.AddComponent<RunStateManager>();
+    }
+
+    public void SetSelectedLevelNode(LevelNodeData node)
+    {
+        SelectedLevelNode = node;
+        Debug.Log($"[RunState] Selected level node: {(node != null ? node.nodeName : "NULL")}");
     }
 
     private void Awake()
@@ -44,27 +58,21 @@ public sealed class RunStateManager : MonoBehaviour
 
     public void BeginNewRun(CharacterData character, WeaponData weapon)
     {
+        SelectedLevelNode = null;
         SelectedCharacter = character;
         SelectedWeapon = weapon;
         CurrentLevel = 1;
 
         pickedUpgrades.Clear();
+        ClearExperienceSnapshot();
         ClearHealthSnapshot();
 
         Debug.Log($"[RunState] New run: character={GetName(character)}, weapon={GetName(weapon)}");
     }
 
-    public void RegisterUpgrade(UpgradeData upgrade)
-    {
-        if (upgrade == null)
-            return;
-
-        pickedUpgrades.Add(upgrade);
-        Debug.Log($"[RunState] Registered upgrade: {upgrade.name}. Total: {pickedUpgrades.Count}");
-    }
-
     public void SavePlayerState(GameObject player)
     {
+        upgradesAppliedToCurrentScene = false;
         if (player == null)
         {
             Debug.LogWarning("[RunState] Save skipped: player is null.");
@@ -97,12 +105,17 @@ public sealed class RunStateManager : MonoBehaviour
         if (player == null)
             return;
 
-        UpgradeApplier applier = FindFirstObjectByType<UpgradeApplier>();
-
-        if (applier != null)
+        if (!upgradesAppliedToCurrentScene)
         {
-            foreach (UpgradeData upgrade in pickedUpgrades)
-                applier.Apply(upgrade);
+            UpgradeApplier applier = FindFirstObjectByType<UpgradeApplier>();
+
+            if (applier != null)
+            {
+                foreach (UpgradeData upgrade in pickedUpgrades)
+                    applier.Apply(upgrade);
+            }
+
+            upgradesAppliedToCurrentScene = true;
         }
         else if (pickedUpgrades.Count > 0)
         {
@@ -117,6 +130,7 @@ public sealed class RunStateManager : MonoBehaviour
                 health.SetRuntimeHealth(savedMaxHealth, savedCurrentHealth);
         }
 
+
         Debug.Log($"[RunState] Applied to spawned player. Upgrades: {pickedUpgrades.Count}, hasHealth: {hasHealthSnapshot}");
     }
 
@@ -130,5 +144,51 @@ public sealed class RunStateManager : MonoBehaviour
     private string GetName(Object obj)
     {
         return obj != null ? obj.name : "NULL";
+    }
+
+    public void SaveExperienceState()
+    {
+        ExperienceManager experience = ExperienceManager.Instance;
+
+        if (experience == null)
+        {
+            Debug.LogWarning("[RunState] XP save skipped: ExperienceManager not found.");
+            return;
+        }
+
+        savedXpLevel = experience.CurrentLevel;
+        savedCurrentExp = experience.CurrentExp;
+        hasExperienceSnapshot = true;
+
+        Debug.Log($"[RunState] Saved XP: level={savedXpLevel}, exp={savedCurrentExp}");
+    }
+
+    public void ApplyToExperienceManager(ExperienceManager experience)
+    {
+        if (experience == null)
+            return;
+
+        if (!hasExperienceSnapshot)
+            return;
+
+        experience.RestoreRuntimeExperience(savedXpLevel, savedCurrentExp);
+
+        Debug.Log($"[RunState] Applied XP: level={savedXpLevel}, exp={savedCurrentExp}");
+    }
+
+    private void ClearExperienceSnapshot()
+    {
+        hasExperienceSnapshot = false;
+        savedXpLevel = 1;
+        savedCurrentExp = 0;
+    }
+    public void RegisterUpgrade(UpgradeData upgrade)
+    {
+        if (upgrade == null)
+            return;
+
+        pickedUpgrades.Add(upgrade);
+
+        Debug.Log($"[RunState] Registered upgrade: {upgrade.upgradeName}. Total: {pickedUpgrades.Count}");
     }
 }

@@ -26,7 +26,9 @@ public sealed class LevelModifiersApplier : MonoBehaviour
 
     private void ApplySelectedNode()
     {
-        LevelNodeData node = SelectedLevelNodeStore.SelectedNode;
+        LevelNodeData node = RunStateManager.Instance != null
+    ? RunStateManager.Instance.SelectedLevelNode
+    : null;
 
         if (node == null)
         {

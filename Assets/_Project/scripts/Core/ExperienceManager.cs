@@ -23,6 +23,10 @@ public class ExperienceManager : MonoBehaviour
     [SerializeField] private float FXPauseTime = 1.2f;
     [SerializeField] private Transform playerTransform;
 
+    public int CurrentLevel => currentLevel;
+    public int CurrentExp => currentExp;
+    public int ExpToNextLevel => expToNextLevel;
+
     private void Awake()
     {
         if (Instance == null)
@@ -35,7 +39,11 @@ public class ExperienceManager : MonoBehaviour
     private void Start()
     {
         expToNextLevel = GetRequiredExpForLevel(currentLevel);
-        UpdateExperienceHUD();
+
+        if (RunStateManager.Instance != null)
+            RunStateManager.Instance.ApplyToExperienceManager(this);
+        else
+            UpdateExperienceHUD();
     }
 
     public void AddExperience(int amount)
@@ -139,5 +147,15 @@ public class ExperienceManager : MonoBehaviour
     public void AddXpGainPercent(float percent)
     {
         xpGainMultiplier *= 1f + percent;
+    }
+    public void RestoreRuntimeExperience(int level, int exp)
+    {
+        currentLevel = Mathf.Max(1, level);
+        currentExp = Mathf.Max(0, exp);
+
+        expToNextLevel = GetRequiredExpForLevel(currentLevel);
+
+        UpdateExperienceHUD();
+        OnExperienceChanged?.Invoke(currentExp, expToNextLevel);
     }
 }
