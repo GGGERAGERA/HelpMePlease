@@ -33,10 +33,7 @@ public class BunkerUIManager : MonoBehaviour
     {
         if (!Input.GetKeyDown(KeyCode.Escape)) return;
 
-        if (BunkerPlacementSystem.Instance != null && BunkerPlacementSystem.Instance.IsPlacing)
-        {
-            BunkerPlacementSystem.Instance.CancelPlacement();
-        }
+        
         else if (uiStack.Count > 0)
         {
             CloseTopUI();

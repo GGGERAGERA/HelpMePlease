@@ -2,39 +2,50 @@ using UnityEngine;
 
 public class CurrencyManager : MonoBehaviour
 {
-    [ContextMenu("Добавить 1000 монет (Debug)")] //Теперь в инспекторе можно кликнуть правой кнопкой 
-    //по скрипту CurrencyManager и начислить себе монеты.
+    [ContextMenu("Добавить 1000 монет (Debug)")]
     public void DebugAddCoins()
     {
         AddGold(1000);
     }
+
     public static CurrencyManager Instance;
-
     public int TotalGold { get; private set; }
-    private float goldGainMultiplier = 1f;
 
+    // Ивент, на который будут подписываться скрипты UI
+    public System.Action<int> OnGoldUpdated; 
+
+    private float goldGainMultiplier = 1f;
     private const string GoldKey = "TOTAL_GOLD";
 
     private void Awake()
+{
+    if (Instance == null)
     {
-        if (Instance == null)
+        Instance = this;
+        
+        // Фикс ошибки: делаем объект корневым, чтобы DontDestroyOnLoad работал
+        if (transform.parent != null)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-
-            LoadGold();
+            transform.SetParent(null); 
         }
-        else
-        {
-            Destroy(gameObject);
-        }
+        
+        DontDestroyOnLoad(gameObject);
+        LoadGold();
     }
+    else
+    {
+        Destroy(gameObject);
+    }
+}
 
     public void AddGold(int amount)
     {
         int finalAmount = Mathf.RoundToInt(amount * goldGainMultiplier);
         TotalGold += finalAmount;
         SaveGold();
+        
+        // Оповещаем всех подписчиков, что золото изменилось и передаем новое число
+        OnGoldUpdated?.Invoke(TotalGold);
     }
 
     public bool SpendGold(int amount)
@@ -44,7 +55,7 @@ public class CurrencyManager : MonoBehaviour
 
         TotalGold -= amount;
         SaveGold();
-
+        OnGoldUpdated?.Invoke(TotalGold);
         return true;
     }
 
@@ -58,6 +69,7 @@ public class CurrencyManager : MonoBehaviour
     {
         TotalGold = PlayerPrefs.GetInt(GoldKey, 0);
     }
+
     public void AddGoldGainPercent(float percent)
     {
         goldGainMultiplier *= 1f + percent;

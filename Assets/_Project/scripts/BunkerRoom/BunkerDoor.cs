@@ -138,10 +138,7 @@ public class BunkerDoor : MonoBehaviour
         UpdateHoverTimer();
         UpdateUIFade();
         CheckAutoOpenClose();
-        if (Input.GetMouseButtonDown(0) && isPlayerInShowUIZone && !BunkerPlacementSystem.Instance.IsPlacing)
-        {
-            OpenMainDoorUI();
-        }
+
     }
 
     private void CheckPlayerInZones()
@@ -347,10 +344,7 @@ public class BunkerDoor : MonoBehaviour
     // И новые методы для открытия UI и подтверждения оплаты
 private void OpenMainDoorUI()
 {
-    if (isLocked && unlockConfirmUI != null)
-    {
-        BunkerUIManager.Instance.OpenUI(unlockConfirmUI);
-    }
+
 }
 
 public void ConfirmUnlock()
@@ -361,7 +355,6 @@ public void ConfirmUnlock()
         ApplyLockVisuals();
         if (unlockButton != null) unlockButton.gameObject.SetActive(false);
         if (lockButton != null) lockButton.gameObject.SetActive(true);
-        BunkerUIManager.Instance.CloseUI(unlockConfirmUI);
     }
     else
     {

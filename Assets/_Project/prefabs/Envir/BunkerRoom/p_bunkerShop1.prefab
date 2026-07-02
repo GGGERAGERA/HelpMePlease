@@ -683,7 +683,6 @@ GameObject:
   - component: {fileID: 4608525319703192968}
   - component: {fileID: 2989719558316767301}
   - component: {fileID: 2943314194535984448}
-  - component: {fileID: 4172591381095873120}
   m_Layer: 0
   m_Name: p_bunkerShop1
   m_TagString: BunkerElements
@@ -838,25 +837,6 @@ SortingGroup:
   m_SortingOrder: 0
   m_SortAtRoot: 1
   m_Sort3DAs2D: 0
---- !u!114 &4172591381095873120
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4737281608205474900}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d9dfe195e8312f44fb9db77058559e88, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InteractableBunkerObject
-  interactionUI: {fileID: 7649318411065316714}
-  canBeSold: 0
-  canBeMoved: 1
-  sellPrice: 30
-  buyCost: 60
-  validPlacementColor: {r: 0, g: 1, b: 0, a: 0.5}
-  invalidPlacementColor: {r: 1, g: 0, b: 0, a: 0.5}
 --- !u!1 &5099491223183255912
 GameObject:
   m_ObjectHideFlags: 0
