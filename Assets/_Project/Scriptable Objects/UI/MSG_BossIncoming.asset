@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e243aac7dd4272f4f95346889ffcc655, type: 3}
+  m_Name: MSG_BossIncoming
+  m_EditorClassIdentifier: Assembly-CSharp::RunMessageData
+  messageType: 1
+  title: "\u0411\u041E\u0421\u0421 \u041F\u0420\u0418\u0411\u041B\u0418\u0416\u0410\u0415\u0422\u0421\u042F"
+  description: "\u041F\u0440\u0438\u0433\u043E\u0442\u043E\u0432\u044C\u0442\u0435\u0441\u044C
+    \u043A \u0435\u0431\u043A\u0435"
+  duration: 3
+  sound: {fileID: 0}
+  volume: 0.8

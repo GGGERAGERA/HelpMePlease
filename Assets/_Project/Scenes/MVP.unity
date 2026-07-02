@@ -152,6 +152,7 @@ GameObject:
   - component: {fileID: 33760152}
   - component: {fileID: 33760154}
   - component: {fileID: 33760153}
+  - component: {fileID: 33760155}
   m_Layer: 5
   m_Name: RunMessagePanel
   m_TagString: Untagged
@@ -218,6 +219,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 33760151}
   m_CullTransparentMesh: 1
+--- !u!114 &33760155
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 33760151}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03469e3e210e6504a999b165750fade8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RunMessageView
+  canvasGroup: {fileID: 0}
+  titleText: {fileID: 1452251761}
+  descriptionText: {fileID: 1473219799}
 --- !u!1 &46915840
 GameObject:
   m_ObjectHideFlags: 0
@@ -782,6 +798,7 @@ RectTransform:
   - {fileID: 1044910696}
   - {fileID: 2016151992}
   - {fileID: 33760152}
+  - {fileID: 1727180721}
   m_Father: {fileID: 1635164420}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -808,13 +825,13 @@ MonoBehaviour:
   experienceText: {fileID: 668022352}
   killsText: {fileID: 740100735}
   timerText: {fileID: 1439890534}
-  bossText: {fileID: 1452251761}
   lowHpVignette: {fileID: 2079903374}
   lowHpThreshold: 0.4
   bossHpPanel: {fileID: 352398372}
   bossHpSlider: {fileID: 810154277}
   bossNameText: {fileID: 1864624142}
   worldEventMarker: {fileID: 753439200}
+  runMessageView: {fileID: 0}
 --- !u!1 &610461739 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5193316843532077453, guid: 0e0021be84d8019499b92a2a19d08bd5, type: 3}
@@ -3874,6 +3891,56 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4621ab5341205e94095c0a1ab7ca2c3b, type: 3}
+--- !u!1 &1727180720
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1727180721}
+  - component: {fileID: 1727180722}
+  m_Layer: 5
+  m_Name: RunMessageService
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1727180721
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1727180720}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 458832744}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1727180722
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1727180720}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87a8980d58f607545b9cee2a138b754d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RunMessageService
+  view: {fileID: 33760155}
+  messages: []
 --- !u!1 &1771207005
 GameObject:
   m_ObjectHideFlags: 0
