@@ -23,7 +23,6 @@ public class RescueCapsuleEvent : WorldEvent
     {
         base.Initialize(spawner);
 
-        HUDManager.Instance?.ShowBossText("RESCUE CAPSULE DETECTED", 3f);
         HUDManager.Instance?.ShowWorldEventMarker(transform, "CAPSULE");
     }
 
@@ -70,8 +69,6 @@ public class RescueCapsuleEvent : WorldEvent
     {
         activated = true;
         timer = 0f;
-
-        HUDManager.Instance?.ShowBossText("DEFEND THE CAPSULE", 3f);
     }
 
     private void CompleteCapsule()

@@ -22,8 +22,6 @@ public class HUDManager : MonoBehaviour
     [Header("Timer")]
     [SerializeField] private TextMeshProUGUI timerText;
 
-    [Header("Boss")]
-    [SerializeField] private TextMeshProUGUI bossText;
 
     [Header("Low HP")]
     [SerializeField] private CanvasGroup lowHpVignette;
@@ -37,14 +35,14 @@ public class HUDManager : MonoBehaviour
     [Header("World Event Marker")]
     [SerializeField] private WorldEventMarker worldEventMarker;
 
+    [SerializeField] private RunMessageView runMessageView;
+
     private void Awake()
     {
         Instance = this;
         if (bossHpPanel != null)
             bossHpPanel.SetActive(false);
 
-        if (bossText != null)
-            bossText.gameObject.SetActive(false);
 
         HideLowHpVignette();
     }
@@ -100,10 +98,6 @@ public class HUDManager : MonoBehaviour
             experienceText.text = $"{currentExp} / {requiredExp}";
         }
     }
-    public void ShowBossText(string text, float duration = 5f)
-    {
-        StartCoroutine(ShowBossTextRoutine(text, duration));
-    }
     private void UpdateLowHpVignette(float currentHealth, float maxHealth)
     {
         if (lowHpVignette == null || maxHealth <= 0f)
@@ -122,19 +116,6 @@ public class HUDManager : MonoBehaviour
     }
 
 
-    private IEnumerator ShowBossTextRoutine(string text, float duration)
-    {
-        if (bossText == null)
-            yield break;
-
-        bossText.text = text;
-        bossText.gameObject.SetActive(true);
-
-        yield return new WaitForSeconds(duration);
-
-        bossText.text = "";
-        bossText.gameObject.SetActive(false);
-    }
 
     public void ShowBossHp(string bossName, float currentHp, float maxHp)
     {
@@ -177,5 +158,11 @@ public class HUDManager : MonoBehaviour
     {
         if (worldEventMarker != null)
             worldEventMarker.Hide();
+    }
+
+    public void ShowRunMessage(string title, string description, float duration = 3f)
+    {
+        if (runMessageView != null)
+            runMessageView.Show(title, description, duration);
     }
 }

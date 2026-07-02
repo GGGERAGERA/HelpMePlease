@@ -75,10 +75,7 @@ public class RunTimer : MonoBehaviour
 
         HUDManager.Instance?.SetTimer(0f);
 
-        HUDManager.Instance?.ShowBossText(
-            "BOSS INCOMING",
-            5f
-        );
+
 
         if (bossWarningSound != null && Camera.main != null)
         {

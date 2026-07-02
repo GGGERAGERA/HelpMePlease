@@ -24,7 +24,6 @@ public class CaptureZoneEvent : WorldEvent
     {
         base.Initialize(spawner);
 
-        HUDManager.Instance?.ShowBossText("CAPTURE ZONE DETECTED", 3f);
         HUDManager.Instance?.ShowWorldEventMarker(transform, "CAPTURE");
     }
 
