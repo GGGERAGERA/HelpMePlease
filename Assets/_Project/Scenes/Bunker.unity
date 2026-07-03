@@ -374,7 +374,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 41.7
+  m_fontSize: 41.8
   m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -1494,6 +1494,7 @@ GameObject:
   - component: {fileID: 322264726}
   - component: {fileID: 322264728}
   - component: {fileID: 322264727}
+  - component: {fileID: 322264729}
   m_Layer: 5
   m_Name: SelectionPanel
   m_TagString: Untagged
@@ -1515,6 +1516,7 @@ RectTransform:
   m_Children:
   - {fileID: 1832941531}
   - {fileID: 1461053124}
+  - {fileID: 7464173497705637187}
   - {fileID: 1461765589}
   m_Father: {fileID: 992930127}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1561,6 +1563,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 322264725}
   m_CullTransparentMesh: 1
+--- !u!114 &322264729
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322264725}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1818223e4d65c584287dae8d3232edda, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SelectionPanelController
+  root: {fileID: 0}
+  playerSelectPanel: {fileID: 0}
+  weaponSelectPanel: {fileID: 0}
+  sceneSelectPanel: {fileID: 0}
 --- !u!1 &345539673
 GameObject:
   m_ObjectHideFlags: 0
@@ -3342,37 +3360,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 641158417}
   m_CullTransparentMesh: 1
---- !u!1 &649099072
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 649099073}
-  m_Layer: 0
-  m_Name: BunkerPlacementSystem
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &649099073
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 649099072}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1750742712}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &651670347
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3562,37 +3549,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a461a7adb329bf24d95d103248a78258, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MetaUpgradeCardUI
---- !u!1 &661843311
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 661843312}
-  m_Layer: 0
-  m_Name: BunkerUIManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &661843312
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 661843311}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1750742712}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &678772032
 GameObject:
   m_ObjectHideFlags: 0
@@ -3931,6 +3887,54 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 729589162}
   m_CullTransparentMesh: 1
+--- !u!1 &733148233
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 733148235}
+  - component: {fileID: 733148234}
+  m_Layer: 0
+  m_Name: BunkerUIManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &733148234
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 733148233}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfa6235974e57e04d85d4e6872d038fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerPanelManager
+  selectionPanelController: {fileID: 0}
+  shopUI: {fileID: 7464173497705637191}
+  mapPanel: {fileID: 0}
+  upgradePanel: {fileID: 0}
+--- !u!4 &733148235
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 733148233}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 11.68434, y: -5.17255, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &819934503
 GameObject:
   m_ObjectHideFlags: 0
@@ -4231,7 +4235,6 @@ GameObject:
   - component: {fileID: 992930126}
   - component: {fileID: 992930125}
   - component: {fileID: 992930124}
-  - component: {fileID: 992930128}
   m_Layer: 5
   m_Name: MainCanvas
   m_TagString: Untagged
@@ -4316,7 +4319,6 @@ RectTransform:
   m_Children:
   - {fileID: 1131752473}
   - {fileID: 1681387012}
-  - {fileID: 7464173497705637187}
   - {fileID: 2285990381769746449}
   - {fileID: 1096843033}
   - {fileID: 322264726}
@@ -4332,22 +4334,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!114 &992930128
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 992930123}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1818223e4d65c584287dae8d3232edda, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SelectionPanelController
-  root: {fileID: 322264725}
-  playerSelectPanel: {fileID: 1812526872}
-  weaponSelectPanel: {fileID: 1461053132}
-  sceneSelectPanel: {fileID: 1461765588}
 --- !u!1001 &997345090
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5550,6 +5536,61 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1193978996}
   m_CullTransparentMesh: 1
+--- !u!1 &1274696264
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1274696266}
+  - component: {fileID: 1274696265}
+  m_Layer: 0
+  m_Name: BunkerShopService
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1274696265
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1274696264}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5b0b6cb42b7f8343b716cae649aa6c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerShopService
+--- !u!4 &1274696266
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1274696264}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 8.9426, y: -8.01818, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1315292482 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8964732159892519483, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+  m_PrefabInstance: {fileID: 706213274579006931}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 904849e1f0e59a94d9ad24c7408b7352, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerShopItemView
 --- !u!1 &1326188160
 GameObject:
   m_ObjectHideFlags: 0
@@ -7794,9 +7835,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 661843312}
   - {fileID: 123397166}
-  - {fileID: 649099073}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1755898971
@@ -8013,11 +8052,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1803167022}
   m_CullTransparentMesh: 1
---- !u!1 &1812526872 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8139642030608559447, guid: 8404c2e10f7c7f6488fa05ecfa2861bb, type: 3}
-  m_PrefabInstance: {fileID: 1832941530}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1817398007
 GameObject:
   m_ObjectHideFlags: 0
@@ -9342,7 +9376,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 992930127}
+    m_TransformParent: {fileID: 322264726}
     m_Modifications:
     - target: {fileID: 69622953559064812, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_AnchorMax.x
@@ -9358,39 +9392,71 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 196381618995012995, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 196381618995012995, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 196381618995012995, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 450
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 196381618995012995, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -150
+      value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 607958827923080554, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+      propertyPath: shopService
+      value: 
+      objectReference: {fileID: 1274696265}
+    - target: {fileID: 607958827923080554, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+      propertyPath: items.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 607958827923080554, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+      propertyPath: 'items.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 30835e66f2c55c64f9fe3d3561009607, type: 2}
+    - target: {fileID: 607958827923080554, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+      propertyPath: itemViews.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 607958827923080554, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+      propertyPath: 'itemViews.Array.data[0]'
+      value: 
+      objectReference: {fileID: 1315292482}
     - target: {fileID: 4504034243990365410, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: -7.6145935
       objectReference: {fileID: 0}
     - target: {fileID: 5538525290300802020, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+      propertyPath: m_Content
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5538525290300802020, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+      propertyPath: m_Viewport
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5538525290300802020, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_VerticalScrollbar
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5538525290300802020, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+      propertyPath: m_HorizontalScrollbar
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 6574160816977181251, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6574160816977181251, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6617710460798148297, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_Name
-      value: BunkerShopPanel
+      value: ShopPanel
       objectReference: {fileID: 0}
     - target: {fileID: 6617710460798148297, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_IsActive
@@ -9446,23 +9512,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8370425460527466016, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 8370425460527466016, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 8370425460527466016, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 8370425460527466016, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 10.000038
       objectReference: {fileID: 0}
     - target: {fileID: 8370425460527466016, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 60
+      value: 69.999985
       objectReference: {fileID: 0}
     - target: {fileID: 8370425460527466016, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -9478,22 +9544,29 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8910024359349454464, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8910024359349454464, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8910024359349454464, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 150
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8910024359349454464, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -150
+      value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedComponents:
+    - {fileID: 5538525290300802020, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+    m_RemovedGameObjects:
+    - {fileID: 6217288049136228535, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+    - {fileID: 3411280394988616628, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+    - {fileID: 5178886655470103495, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+    - {fileID: 1370613661777868128, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+    - {fileID: 3389688579140239373, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+    - {fileID: 3504301555107316832, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
@@ -9729,6 +9802,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: BunkerRoom2
       objectReference: {fileID: 0}
+    - target: {fileID: 2281501313619006986, guid: 3df0912ad634fc24185f74173543363f, type: 3}
+      propertyPath: panelManager
+      value: 
+      objectReference: {fileID: 733148234}
     - target: {fileID: 5031394165764924428, guid: 3df0912ad634fc24185f74173543363f, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -9776,10 +9853,16 @@ PrefabInstance:
     - target: {fileID: 7340676040133971516, guid: 3df0912ad634fc24185f74173543363f, type: 3}
       propertyPath: selectionPanelController
       value: 
-      objectReference: {fileID: 992930128}
+      objectReference: {fileID: 0}
+    - target: {fileID: 7779363609304974105, guid: 3df0912ad634fc24185f74173543363f, type: 3}
+      propertyPath: panelManager
+      value: 
+      objectReference: {fileID: 733148234}
     m_RemovedComponents:
     - {fileID: 334628191930064687, guid: 3df0912ad634fc24185f74173543363f, type: 3}
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 1264702918331743098, guid: 3df0912ad634fc24185f74173543363f, type: 3}
+    - {fileID: 4692860689863624986, guid: 3df0912ad634fc24185f74173543363f, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3df0912ad634fc24185f74173543363f, type: 3}
@@ -9845,6 +9928,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8370425460527466016, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
   m_PrefabInstance: {fileID: 706213274579006931}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7464173497705637191 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 607958827923080554, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+  m_PrefabInstance: {fileID: 706213274579006931}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 960513cb9604b2742b6282edff533dc9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerShopUI
 --- !u!1001 &7771368040657761165
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9912,3 +10006,5 @@ SceneRoots:
   - {fileID: 992930127}
   - {fileID: 1750742712}
   - {fileID: 181013841}
+  - {fileID: 733148235}
+  - {fileID: 1274696266}
