@@ -47,7 +47,15 @@ public sealed class BunkerShopService : MonoBehaviour
 
         PlayerPrefs.SetInt(KeyPrefix + item.Id, 1);
         PlayerPrefs.Save();
+        RefreshPurchasedObjects();
 
         return true;
+    }
+    private void RefreshPurchasedObjects()
+    {
+        BunkerPurchasedObject[] objects = FindObjectsByType<BunkerPurchasedObject>(FindObjectsSortMode.None);
+
+        foreach (var obj in objects)
+            obj.Refresh();
     }
 }
