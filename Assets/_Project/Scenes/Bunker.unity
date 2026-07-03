@@ -3042,6 +3042,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 495504964}
   m_CullTransparentMesh: 1
+--- !u!114 &567057869 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5936877117880268299, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+  m_PrefabInstance: {fileID: 706213274579006931}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &591511445
 GameObject:
   m_ObjectHideFlags: 0
@@ -9573,6 +9584,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8964732159892519483, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+      propertyPath: buyButtonText
+      value: 
+      objectReference: {fileID: 567057869}
     m_RemovedComponents:
     - {fileID: 5538525290300802020, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
     m_RemovedGameObjects:

@@ -9,6 +9,7 @@ public sealed class BunkerShopItemView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI descriptionText;
     [SerializeField] private TextMeshProUGUI priceText;
     [SerializeField] private Button buyButton;
+    [SerializeField] private TextMeshProUGUI buyButtonText;
     [SerializeField] private GameObject purchasedMark;
 
     private BunkerShopItemData item;
@@ -16,14 +17,20 @@ public sealed class BunkerShopItemView : MonoBehaviour
 
     private void Awake()
     {
-        buyButton.onClick.AddListener(Buy);
+        if (buyButton != null)
+            buyButton.onClick.AddListener(Buy);
+    }
+
+    private void OnDestroy()
+    {
+        if (buyButton != null)
+            buyButton.onClick.RemoveListener(Buy);
     }
 
     public void Setup(BunkerShopItemData itemData, BunkerShopService service)
     {
         item = itemData;
         shopService = service;
-
         Refresh();
     }
 
@@ -32,7 +39,14 @@ public sealed class BunkerShopItemView : MonoBehaviour
         if (shopService == null || item == null)
             return;
 
-        shopService.TryBuy(item);
+        bool success = shopService.TryBuy(item);
+
+        if (!success)
+        {
+            Debug.Log("[BunkerShopItemView] Cannot buy item.");
+            return;
+        }
+
         Refresh();
     }
 
@@ -41,9 +55,9 @@ public sealed class BunkerShopItemView : MonoBehaviour
         if (item == null)
             return;
 
-        titleText.text = item.Title;
-        descriptionText.text = item.Description;
-        priceText.text = item.Price.ToString();
+        if (titleText != null) titleText.text = item.Title;
+        if (descriptionText != null) descriptionText.text = item.Description;
+        if (priceText != null) priceText.text = item.Price.ToString();
 
         if (iconImage != null)
         {
@@ -54,7 +68,11 @@ public sealed class BunkerShopItemView : MonoBehaviour
         bool purchased = shopService != null && shopService.IsPurchased(item);
         bool canBuy = shopService != null && shopService.CanBuy(item);
 
-        buyButton.interactable = canBuy;
+        if (buyButton != null)
+            buyButton.interactable = canBuy;
+
+        if (buyButtonText != null)
+            buyButtonText.text = purchased ? "Куплено" : "Купить";
 
         if (purchasedMark != null)
             purchasedMark.SetActive(purchased);
