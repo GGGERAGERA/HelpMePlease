@@ -399,6 +399,8 @@ GameObject:
   m_Component:
   - component: {fileID: 895848283552994882}
   - component: {fileID: 2943314194535984448}
+  - component: {fileID: 1416157618893792956}
+  - component: {fileID: 6484268689991298835}
   m_Layer: 0
   m_Name: p_bunkerWeaponShowcase
   m_TagString: BunkerElements
@@ -437,6 +439,33 @@ SortingGroup:
   m_SortingOrder: 0
   m_SortAtRoot: 1
   m_Sort3DAs2D: 0
+--- !u!114 &1416157618893792956
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4737281608205474900}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b7a3da8d1a219249b37eebe9fc7e95a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponRackStation
+  selectionPanelController: {fileID: 0}
+--- !u!114 &6484268689991298835
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4737281608205474900}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74f55e459cc4282459103c6efa92cac3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerHoverOutline
+  targetRenderers: []
+  autoFindRenderers: 1
 --- !u!1 &6870895824228123653
 GameObject:
   m_ObjectHideFlags: 0
