@@ -24,6 +24,7 @@ public sealed class WeaponSelectionUI : MonoBehaviour
     [SerializeField] private Color disabledColor = new Color(0.45f, 0.45f, 0.45f, 1f);
 
     private WeaponData selectedWeapon;
+    [SerializeField] private GameObject root;
 
     private void Awake()
     {
@@ -42,6 +43,22 @@ public sealed class WeaponSelectionUI : MonoBehaviour
     {
         if (confirmButton != null)
             confirmButton.onClick.RemoveListener(ConfirmSelection);
+    }
+
+    public void Show()
+    {
+        if (root != null)
+            root.SetActive(true);
+        else
+            gameObject.SetActive(true);
+    }
+
+    public void Hide()
+    {
+        if (root != null)
+            root.SetActive(false);
+        else
+            gameObject.SetActive(false);
     }
 
     public void SelectWeapon(WeaponData weapon)
@@ -144,4 +161,6 @@ public sealed class WeaponSelectionUI : MonoBehaviour
     {
         return string.IsNullOrWhiteSpace(special) ? "No" : special;
     }
+
+
 }
