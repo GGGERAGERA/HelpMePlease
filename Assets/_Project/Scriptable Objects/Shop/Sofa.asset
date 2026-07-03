@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71edf7e5374baad4390ad2c26a6f74f3, type: 3}
-  m_Name: Table
+  m_Name: Sofa
   m_EditorClassIdentifier: Assembly-CSharp::BunkerShopItemData
-  Id: Item_01
-  Title: Table
-  Description: "\u0421\u0442\u0443\u043B \u0431\u043B\u0435\u0430\u0442\u044C"
-  Icon: {fileID: 595449928, guid: b4f23bc517d7a7345a86361ac5935408, type: 3}
-  Price: 2
+  Id: Sofa
+  Title: "\u0414\u0438\u0432\u0430\u043D"
+  Description: "\u041A\u0443\u043F\u0438 \u0434\u0438\u0432\u0430\u043D \u0441\u0443\u043A\u0430"
+  Icon: {fileID: -547264229, guid: b4f23bc517d7a7345a86361ac5935408, type: 3}
+  Price: 10

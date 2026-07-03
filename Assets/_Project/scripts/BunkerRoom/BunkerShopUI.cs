@@ -1,37 +1,41 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public sealed class BunkerShopUI : MonoBehaviour
 {
-    [SerializeField] private GameObject root;
+    [Header("Data")]
     [SerializeField] private BunkerShopService shopService;
-    [SerializeField] private BunkerShopItemView[] itemViews;
     [SerializeField] private BunkerShopItemData[] items;
 
-    private void Awake()
-    {
-        Hide();
-    }
+    [Header("View")]
+    [SerializeField] private Transform itemsContainer;
+    [SerializeField] private BunkerShopItemView itemViewPrefab;
 
-    public void Show()
-    {
-        Refresh();
-    }
-
-    public void Hide()
-    {
-    }
+    private readonly List<BunkerShopItemView> spawnedViews = new();
 
     public void Refresh()
     {
-        int count = Mathf.Min(itemViews.Length, items.Length);
+        Clear();
 
-        for (int i = 0; i < itemViews.Length; i++)
+        foreach (var item in items)
         {
-            bool active = i < count;
-            itemViews[i].gameObject.SetActive(active);
+            if (item == null)
+                continue;
 
-            if (active)
-                itemViews[i].Setup(items[i], shopService);
+            BunkerShopItemView view = Instantiate(itemViewPrefab, itemsContainer);
+            view.Setup(item, shopService);
+            spawnedViews.Add(view);
         }
+    }
+
+    private void Clear()
+    {
+        foreach (var view in spawnedViews)
+        {
+            if (view != null)
+                Destroy(view.gameObject);
+        }
+
+        spawnedViews.Clear();
     }
 }

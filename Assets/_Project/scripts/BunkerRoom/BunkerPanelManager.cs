@@ -64,9 +64,6 @@ public sealed class BunkerPanelManager : MonoBehaviour
         if (selectionPanelController != null)
             selectionPanelController.Hide();
 
-        if (shopUI != null)
-            shopUI.Hide();
-
         if (mapPanel != null)
             mapPanel.SetActive(false);
 

@@ -561,7 +561,7 @@ GameObject:
   - component: {fileID: 5566295863180727797}
   - component: {fileID: 241549566259557133}
   m_Layer: 5
-  m_Name: ItemView_01
+  m_Name: BunkerShopItemView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -647,6 +647,7 @@ MonoBehaviour:
   descriptionText: {fileID: 3542030487703516177}
   priceText: {fileID: 6329768475210043688}
   buyButton: {fileID: 3389210950304014861}
+  buyButtonText: {fileID: 3267095596590235453}
   purchasedMark: {fileID: 8582138778762114326}
 --- !u!1 &5595149818788188364
 GameObject:
