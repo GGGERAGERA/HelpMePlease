@@ -374,7 +374,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 41.8
+  m_fontSize: 41.7
   m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -1575,10 +1575,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1818223e4d65c584287dae8d3232edda, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SelectionPanelController
-  root: {fileID: 0}
-  playerSelectPanel: {fileID: 0}
-  weaponSelectPanel: {fileID: 0}
-  sceneSelectPanel: {fileID: 0}
+  root: {fileID: 322264725}
+  playerSelectPanel: {fileID: 1812526872}
+  weaponSelectPanel: {fileID: 1461053132}
+  shopPanel: {fileID: 378523999}
+  sceneSelectPanel: {fileID: 1461765588}
 --- !u!1 &345539673
 GameObject:
   m_ObjectHideFlags: 0
@@ -1899,6 +1900,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 376051178}
   m_CullTransparentMesh: 1
+--- !u!1 &378523999 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6617710460798148297, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+  m_PrefabInstance: {fileID: 706213274579006931}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &388302994 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8000478937846312216, guid: 3856ea26b21c1f64ea9937b9d9a4ad5c, type: 3}
@@ -3916,7 +3922,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cfa6235974e57e04d85d4e6872d038fd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BunkerPanelManager
-  selectionPanelController: {fileID: 0}
+  selectionPanelController: {fileID: 322264729}
   shopUI: {fileID: 7464173497705637191}
   mapPanel: {fileID: 0}
   upgradePanel: {fileID: 0}
@@ -8052,6 +8058,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1803167022}
   m_CullTransparentMesh: 1
+--- !u!1 &1812526872 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8139642030608559447, guid: 8404c2e10f7c7f6488fa05ecfa2861bb, type: 3}
+  m_PrefabInstance: {fileID: 1832941530}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1817398007
 GameObject:
   m_ObjectHideFlags: 0
@@ -9407,6 +9418,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 607958827923080554, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
+      propertyPath: root
+      value: 
+      objectReference: {fileID: 322264725}
+    - target: {fileID: 607958827923080554, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: shopService
       value: 
       objectReference: {fileID: 1274696265}
@@ -9933,7 +9948,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 607958827923080554, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
   m_PrefabInstance: {fileID: 706213274579006931}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 378523999}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 960513cb9604b2742b6282edff533dc9, type: 3}
