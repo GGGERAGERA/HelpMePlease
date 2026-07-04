@@ -1275,10 +1275,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3963429074183942466}
-  - component: {fileID: 6038816173855921837}
-  - component: {fileID: 420559118544387601}
   - component: {fileID: 7942514420987823232}
-  - component: {fileID: 2025671846371859588}
   m_Layer: 0
   m_Name: p_BunkerDoorVertical1
   m_TagString: Untagged
@@ -1306,47 +1303,6 @@ Transform:
   - {fileID: 1606111065710179834}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6038816173855921837
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2821076877057381025}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d17b1abcee061a43b72fe819c5272a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DoorZoneOpacity
-  zoneRenderers:
-  - {fileID: 5271631023766727900}
-  - {fileID: 5512502613458380988}
-  distanceFrom: {fileID: 3026901368559237356}
-  minAlpha: 0.05
-  maxAlpha: 1
-  triggerZone: {fileID: 0}
-  minDistance: 1
-  ignoreCursor: 0
-  playerTransform: {fileID: 0}
---- !u!114 &420559118544387601
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2821076877057381025}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6fdba635acdf8a549baca29ef5efacb3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HoverOutlineRaycast
-  autoFindRenderers: 1
-  targetRenderers:
-  - {fileID: 5271631023766727900}
-  - {fileID: 5512502613458380988}
-  raycastLayerMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
 --- !u!61 &7942514420987823232
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1393,35 +1349,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 3, y: 8}
   m_EdgeRadius: 0
---- !u!114 &2025671846371859588
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2821076877057381025}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e0aa2221ab726304eb1f8c4d6cb72bac, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerDoor
-  doorID: Door_01
-  lockedVisuals:
-  - {fileID: 5271631023766727900}
-  - {fileID: 5197425017280372072}
-  - {fileID: 3759214639805813927}
-  unlockedVisuals:
-  - {fileID: 5512502613458380988}
-  - {fileID: 8828680820207840793}
-  - {fileID: 3722205271048347477}
-  openTriggerZone: {fileID: 4153436221838233166}
-  lockedUIPanelGroup: {fileID: 5393775803436402881}
-  unlockedUIPanelGroup: {fileID: 3417082791324549344}
-  knockDuration: 0.5
-  knockIntensity: 0.1
-  openOffset: 2.5
-  moveDuration: 0.6
-  fadeDuration: 0.2
 --- !u!1 &3315687893458677294
 GameObject:
   m_ObjectHideFlags: 0

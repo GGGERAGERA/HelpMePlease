@@ -772,7 +772,6 @@ GameObject:
   - component: {fileID: 895848283552994882}
   - component: {fileID: 4537308340224350573}
   - component: {fileID: 4608525319703192968}
-  - component: {fileID: 2989719558316767301}
   - component: {fileID: 2943314194535984448}
   m_Layer: 0
   m_Name: p_bunkerTable1
@@ -894,26 +893,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 2.6803277, y: 2.8322012}
   m_EdgeRadius: 0
---- !u!114 &2989719558316767301
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4737281608205474900}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6fdba635acdf8a549baca29ef5efacb3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HoverOutlineRaycast
-  autoFindRenderers: 0
-  targetRenderers:
-  - {fileID: 4005247963406329285}
-  - {fileID: 4434952624678886151}
-  - {fileID: 8972439657572046654}
-  raycastLayerMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
 --- !u!210 &2943314194535984448
 SortingGroup:
   m_ObjectHideFlags: 0

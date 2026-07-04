@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 2496385580561591904}
   - component: {fileID: 731986020444759908}
   - component: {fileID: 7421770696914373914}
-  - component: {fileID: 8691574891239770167}
   m_Layer: 0
   m_Name: p_Lamp1
   m_TagString: BunkerElements
@@ -105,23 +104,6 @@ SortingGroup:
   m_SortingOrder: 2
   m_SortAtRoot: 0
   m_Sort3DAs2D: 0
---- !u!114 &8691574891239770167
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1661506046759815301}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6fdba635acdf8a549baca29ef5efacb3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HoverOutlineRaycast
-  autoFindRenderers: 1
-  targetRenderers: []
-  raycastLayerMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
 --- !u!1 &2282601894785224124
 GameObject:
   m_ObjectHideFlags: 0
