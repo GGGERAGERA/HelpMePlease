@@ -43,6 +43,9 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
             case BunkerStationType.Upgrade:
                 panelManager.OpenUpgrade();
                 break;
+            case BunkerStationType.StartRun:
+                panelManager.StartRun();
+                break;
 
             case BunkerStationType.Animation:
                 if (animator != null)
