@@ -599,10 +599,10 @@ TextureImporter:
         x: 128
         y: 304
         width: 32
-        height: 96
+        height: 64
       alignment: 9
       pivot: {x: 0, y: 1}
-      border: {x: 0, y: 0, z: 0, w: 0}
+      border: {x: 3, y: 3, z: 3, w: 3}
       customData: 
       outline: []
       physicsShape: []
@@ -610,6 +610,28 @@ TextureImporter:
       bones: []
       spriteID: 9e4da8453e2e3ec409496bda96136fbd
       internalID: -2885512411322360477
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Doors1_10
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 368
+        width: 32
+        height: 32
+      alignment: 9
+      pivot: {x: 0, y: 1}
+      border: {x: 3, y: 3, z: 3, w: 3}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0a9db459da68af44da59dc2daada1c23
+      internalID: -733554007
       vertices: []
       indices: 
       edges: []
