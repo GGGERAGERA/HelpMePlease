@@ -6,6 +6,7 @@ public enum BunkerStationType
     Shop = 3,
     Map = 4,
     Upgrade = 5,
-    Animation = 6,
-    CustomEvent = 7
+    StartRun = 6,
+    Animation = 7,
+    CustomEvent = 8
 }
