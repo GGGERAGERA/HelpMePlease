@@ -5,7 +5,7 @@ public sealed class BunkerShopUI : MonoBehaviour
 {
     [Header("Data")]
     [SerializeField] private BunkerShopService shopService;
-    [SerializeField] private BunkerShopItemData[] items;
+    [SerializeField] private BunkerContentData[] items;
 
     [Header("View")]
     [SerializeField] private Transform itemsContainer;

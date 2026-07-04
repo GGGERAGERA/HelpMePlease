@@ -12,7 +12,7 @@ public sealed class BunkerShopItemView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI buyButtonText;
     [SerializeField] private GameObject purchasedMark;
 
-    private BunkerShopItemData item;
+    private BunkerContentData item;
     private BunkerShopService shopService;
 
     private void Awake()
@@ -27,7 +27,7 @@ public sealed class BunkerShopItemView : MonoBehaviour
             buyButton.onClick.RemoveListener(Buy);
     }
 
-    public void Setup(BunkerShopItemData itemData, BunkerShopService service)
+    public void Setup(BunkerContentData itemData, BunkerShopService service)
     {
         item = itemData;
         shopService = service;
@@ -42,10 +42,7 @@ public sealed class BunkerShopItemView : MonoBehaviour
         bool success = shopService.TryBuy(item);
 
         if (!success)
-        {
-            Debug.Log("[BunkerShopItemView] Cannot buy item.");
             return;
-        }
 
         Refresh();
     }

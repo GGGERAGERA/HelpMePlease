@@ -2,18 +2,9 @@ using UnityEngine;
 
 public sealed class BunkerShopService : MonoBehaviour
 {
-
-    [ContextMenu("Clear Shop Purchases")]
-    private void ClearShopPurchases()
-    {
-        PlayerPrefs.DeleteAll();
-        PlayerPrefs.Save();
-
-        Debug.Log("[BunkerShopService] PlayerPrefs cleared.");
-    }
     private const string KeyPrefix = "BunkerShop_";
 
-    public bool IsPurchased(BunkerShopItemData item)
+    public bool IsPurchased(BunkerContentData item)
     {
         if (item == null)
             return false;
@@ -21,7 +12,7 @@ public sealed class BunkerShopService : MonoBehaviour
         return PlayerPrefs.GetInt(KeyPrefix + item.Id, 0) == 1;
     }
 
-    public bool CanBuy(BunkerShopItemData item)
+    public bool CanBuy(BunkerContentData item)
     {
         if (item == null)
             return false;
@@ -35,7 +26,7 @@ public sealed class BunkerShopService : MonoBehaviour
         return CurrencyManager.Instance.TotalGold >= item.Price;
     }
 
-    public bool TryBuy(BunkerShopItemData item)
+    public bool TryBuy(BunkerContentData item)
     {
         if (!CanBuy(item))
             return false;
@@ -47,10 +38,12 @@ public sealed class BunkerShopService : MonoBehaviour
 
         PlayerPrefs.SetInt(KeyPrefix + item.Id, 1);
         PlayerPrefs.Save();
+
         RefreshBunkerContent();
 
         return true;
     }
+
     private void RefreshBunkerContent()
     {
         BunkerContent[] contents =

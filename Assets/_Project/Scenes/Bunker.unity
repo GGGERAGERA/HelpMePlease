@@ -9479,12 +9479,12 @@ PrefabInstance:
       objectReference: {fileID: 706213274579006932}
     - target: {fileID: 607958827923080554, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: items.Array.size
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 607958827923080554, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: 'items.Array.data[0]'
       value: 
-      objectReference: {fileID: 11400000, guid: 6350de7b3a53a2b4a9837468ec1224d2, type: 2}
+      objectReference: {fileID: 11400000, guid: 7d1a5cbf1caa7f542a257728ba0619e1, type: 2}
     - target: {fileID: 607958827923080554, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
       propertyPath: 'items.Array.data[1]'
       value: 
@@ -9975,6 +9975,10 @@ PrefabInstance:
       propertyPath: panelManager
       value: 
       objectReference: {fileID: 733148234}
+    - target: {fileID: 8968378582121657692, guid: 3df0912ad634fc24185f74173543363f, type: 3}
+      propertyPath: data
+      value: 
+      objectReference: {fileID: 11400000, guid: 7d1a5cbf1caa7f542a257728ba0619e1, type: 2}
     - target: {fileID: 9011308876428421539, guid: 3df0912ad634fc24185f74173543363f, type: 3}
       propertyPath: targetRoot
       value: 

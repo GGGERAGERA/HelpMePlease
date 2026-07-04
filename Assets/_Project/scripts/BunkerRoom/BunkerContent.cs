@@ -4,14 +4,15 @@ public sealed class BunkerContent : MonoBehaviour
 {
     private const string KeyPrefix = "BunkerShop_";
 
-    [Header("Identity")]
-    [SerializeField] private string itemId;
+    [Header("Data")]
+    [SerializeField] private BunkerContentData data;
 
     [Header("Roots")]
     [SerializeField] private GameObject unlockedRoot;
     [SerializeField] private GameObject lockedRoot;
 
-    public string ItemId => itemId;
+    public BunkerContentData Data => data;
+    public string Id => data != null ? data.Id : string.Empty;
 
     private void Start()
     {
@@ -31,6 +32,9 @@ public sealed class BunkerContent : MonoBehaviour
 
     public bool IsUnlocked()
     {
-        return PlayerPrefs.GetInt(KeyPrefix + itemId, 0) == 1;
+        if (data == null)
+            return false;
+
+        return PlayerPrefs.GetInt(KeyPrefix + data.Id, 0) == 1;
     }
 }
