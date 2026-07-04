@@ -11,6 +11,9 @@ public sealed class BunkerShopUI : MonoBehaviour
     [SerializeField] private Transform itemsContainer;
     [SerializeField] private BunkerShopItemView itemViewPrefab;
 
+    [Header("Filter")]
+    [SerializeField] private BunkerContentCategory categoryFilter = BunkerContentCategory.None;
+
     private readonly List<BunkerShopItemView> spawnedViews = new();
 
     public void Refresh()
@@ -20,6 +23,9 @@ public sealed class BunkerShopUI : MonoBehaviour
         foreach (var item in items)
         {
             if (item == null)
+                continue;
+
+            if (categoryFilter != BunkerContentCategory.None && item.Category != categoryFilter)
                 continue;
 
             BunkerShopItemView view = Instantiate(itemViewPrefab, itemsContainer);

@@ -8,6 +8,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
     [SerializeField] private BunkerShopUI shopUI;
     [SerializeField] private GameObject mapPanel;
     [SerializeField] private GameObject upgradePanel;
+    [SerializeField] private MainMenuController mainMenuController;
 
 
     private void Update()
@@ -69,5 +70,15 @@ public sealed class BunkerPanelManager : MonoBehaviour
 
         if (upgradePanel != null)
             upgradePanel.SetActive(false);
+    }
+    public void StartRun()
+    {
+        if (RunSelectionManager.Instance == null || !RunSelectionManager.Instance.IsReady)
+        {
+            Debug.LogWarning("[BunkerPanelManager] Character or weapon is not selected.");
+            return;
+        }
+
+        mainMenuController.StartGame();
     }
 }
