@@ -54,10 +54,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
 
     public void OpenUpgrade()
     {
-        CloseAll();
-
-        if (upgradePanel != null)
-            upgradePanel.SetActive(true);
+        selectionPanelController.ShowUpgrade();
     }
 
     public void CloseAll()

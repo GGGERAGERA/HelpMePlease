@@ -3,14 +3,18 @@ using UnityEngine;
 public sealed class SelectionPanelController : MonoBehaviour
 {
     [SerializeField] private GameObject root;
+
+    [Header("Panels")]
     [SerializeField] private GameObject playerSelectPanel;
     [SerializeField] private GameObject weaponSelectPanel;
     [SerializeField] private GameObject shopPanel;
+    [SerializeField] private GameObject upgradePanel;
     [SerializeField] private GameObject sceneSelectPanel;
 
     public void ShowCharacters() => ShowOnly(playerSelectPanel);
     public void ShowWeapons() => ShowOnly(weaponSelectPanel);
     public void ShowShop() => ShowOnly(shopPanel);
+    public void ShowUpgrade() => ShowOnly(upgradePanel);
     public void ShowScenes() => ShowOnly(sceneSelectPanel);
 
     public void Hide()
@@ -18,10 +22,7 @@ public sealed class SelectionPanelController : MonoBehaviour
         if (root != null)
             root.SetActive(false);
     }
-    public void Close()
-    {
-        Hide();
-    }
+
     private void ShowOnly(GameObject target)
     {
         if (root != null)
@@ -36,8 +37,10 @@ public sealed class SelectionPanelController : MonoBehaviour
         if (shopPanel != null)
             shopPanel.SetActive(shopPanel == target);
 
+        if (upgradePanel != null)
+            upgradePanel.SetActive(upgradePanel == target);
+
         if (sceneSelectPanel != null)
             sceneSelectPanel.SetActive(sceneSelectPanel == target);
     }
-
 }
