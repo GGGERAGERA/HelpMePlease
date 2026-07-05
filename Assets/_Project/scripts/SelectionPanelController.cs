@@ -17,6 +17,8 @@ public sealed class SelectionPanelController : MonoBehaviour
     public void ShowUpgrade() => ShowOnly(upgradePanel);
     public void ShowScenes() => ShowOnly(sceneSelectPanel);
 
+    public bool IsOpen => root != null && root.activeInHierarchy;
+
     public void Hide()
     {
         if (root != null)

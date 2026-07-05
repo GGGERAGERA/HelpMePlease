@@ -18,13 +18,14 @@ public sealed class CharacterSelectionUI : MonoBehaviour
 
     [Header("Buttons")]
     [SerializeField] private Button selectButton;
+    [SerializeField] private Button backButton;
+
+    [Header("Navigation")]
+    [SerializeField] private BunkerPanelManager panelManager;
 
     [Header("Button Visual")]
     [SerializeField] private Color enabledColor = Color.white;
-    [SerializeField] private Color disabledColor = new Color(0.45f, 0.45f, 0.45f, 1f);
-
-    [Header("Navigation")]
-    [SerializeField] private MainMenuController mainMenuController;
+    [SerializeField] private Color disabledColor = new(0.45f, 0.45f, 0.45f, 1f);
 
     private CharacterData selectedCharacter;
 
@@ -32,6 +33,9 @@ public sealed class CharacterSelectionUI : MonoBehaviour
     {
         if (selectButton != null)
             selectButton.onClick.AddListener(ConfirmSelection);
+
+        if (backButton != null)
+            backButton.onClick.AddListener(Close);
 
         ClearSelection();
     }
@@ -45,6 +49,9 @@ public sealed class CharacterSelectionUI : MonoBehaviour
     {
         if (selectButton != null)
             selectButton.onClick.RemoveListener(ConfirmSelection);
+
+        if (backButton != null)
+            backButton.onClick.RemoveListener(Close);
     }
 
     public void SelectCharacter(CharacterData character)
@@ -53,7 +60,6 @@ public sealed class CharacterSelectionUI : MonoBehaviour
             return;
 
         selectedCharacter = character;
-        RunSelectionManager.Instance?.SelectCharacter(character);
 
         RefreshDetails(character);
         RefreshCards(character);
@@ -65,15 +71,20 @@ public sealed class CharacterSelectionUI : MonoBehaviour
         if (selectedCharacter == null)
             return;
 
-        RunSelectionManager.Instance?.SelectCharacter(selectedCharacter);
-
-        if (mainMenuController == null)
+        if (RunSelectionManager.Instance == null)
         {
-            Debug.LogError("[CharacterSelectionUI] MainMenuController is not assigned.");
+            Debug.LogError("[CharacterSelectionUI] RunSelectionManager is missing.");
             return;
         }
 
-        mainMenuController.OpenWeaponSelection();
+        RunSelectionManager.Instance.SelectCharacter(selectedCharacter);
+        Close();
+    }
+
+    private void Close()
+    {
+        if (panelManager != null)
+            panelManager.CloseAll();
     }
 
     private void RefreshDetails(CharacterData character)

@@ -10,7 +10,8 @@ public sealed class BunkerPanelManager : MonoBehaviour
     [SerializeField] private GameObject upgradePanel;
     [SerializeField] private MainMenuController mainMenuController;
 
-
+    public bool IsAnyPanelOpen =>
+    selectionPanelController != null && selectionPanelController.IsOpen;
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
