@@ -19,6 +19,14 @@ public sealed class BunkerRunStarter : MonoBehaviour
             return;
         }
 
+        CharacterData character = RunSelectionManager.Instance.SelectedCharacter;
+        WeaponData weapon = RunSelectionManager.Instance.SelectedWeapon;
+
+        RunStateManager.EnsureExists().BeginNewRun(character, weapon);
+
+        Debug.Log($"[BunkerRunStarter] Start run: character={character.name}, weapon={weapon.name}");
+
+        Time.timeScale = 1f;
         SceneManager.LoadScene(gameplaySceneName);
     }
 }
