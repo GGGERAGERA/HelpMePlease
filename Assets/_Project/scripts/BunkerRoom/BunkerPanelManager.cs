@@ -8,7 +8,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
     [SerializeField] private BunkerShopUI shopUI;
     [SerializeField] private GameObject mapPanel;
     [SerializeField] private GameObject upgradePanel;
-    [SerializeField] private MainMenuController mainMenuController;
+    [SerializeField] private BunkerRunStarter runStarter;
 
     public bool IsAnyPanelOpen =>
     selectionPanelController != null && selectionPanelController.IsOpen;
@@ -71,12 +71,9 @@ public sealed class BunkerPanelManager : MonoBehaviour
     }
     public void StartRun()
     {
-        if (RunSelectionManager.Instance == null || !RunSelectionManager.Instance.IsReady)
-        {
-            Debug.LogWarning("[BunkerPanelManager] Character or weapon is not selected.");
-            return;
-        }
-
-        mainMenuController.StartGame();
+        if (runStarter != null)
+            runStarter.StartRun();
+        else
+            Debug.LogError("[BunkerPanelManager] BunkerRunStarter is not assigned.");
     }
 }

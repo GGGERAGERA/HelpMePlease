@@ -2,15 +2,15 @@ using UnityEngine;
 
 public sealed class BunkerHoverOutline : MonoBehaviour, IBunkerHoverable
 {
-    [SerializeField] private SpriteRenderer[] targetRenderers;
     [SerializeField] private bool autoFindRenderers = true;
+    [SerializeField] private SpriteRenderer[] targetRenderers;
 
     private Material[] materials;
 
     private void Awake()
     {
-        if (autoFindRenderers && (targetRenderers == null || targetRenderers.Length == 0))
-            targetRenderers = GetComponentsInChildren<SpriteRenderer>();
+        if (autoFindRenderers)
+            targetRenderers = GetComponentsInChildren<SpriteRenderer>(true);
 
         materials = new Material[targetRenderers.Length];
 
@@ -22,6 +22,8 @@ public sealed class BunkerHoverOutline : MonoBehaviour, IBunkerHoverable
             materials[i] = targetRenderers[i].material;
         }
 
+        Debug.Log($"[BunkerHoverOutline] {name} renderers={targetRenderers.Length}");
+
         SetHovered(false);
     }
 
@@ -30,8 +32,10 @@ public sealed class BunkerHoverOutline : MonoBehaviour, IBunkerHoverable
         if (materials == null)
             return;
 
-        foreach (Material material in materials)
+        for (int i = 0; i < materials.Length; i++)
         {
+            Material material = materials[i];
+
             if (material == null)
                 continue;
 
@@ -47,10 +51,10 @@ public sealed class BunkerHoverOutline : MonoBehaviour, IBunkerHoverable
         if (materials == null)
             return;
 
-        foreach (Material material in materials)
+        for (int i = 0; i < materials.Length; i++)
         {
-            if (material != null)
-                Destroy(material);
+            if (materials[i] != null)
+                Destroy(materials[i]);
         }
     }
 }
