@@ -4,6 +4,7 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
 {
     [SerializeField] private Camera targetCamera;
     [SerializeField] private LayerMask interactionMask;
+    [SerializeField] private BunkerPanelManager panelManager;
 
     private BunkerInteractableCollider current;
 
@@ -23,6 +24,12 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
 
     private void UpdateHover()
     {
+        if (panelManager != null && panelManager.IsAnyPanelOpen)
+        {
+            current?.Hoverable?.SetHovered(false);
+            current = null;
+            return;
+        }
         BunkerInteractableCollider next = RaycastInteractable();
 
         if (next == current)
@@ -37,6 +44,9 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
 
     private void TryInteract()
     {
+
+        if (panelManager != null && panelManager.IsAnyPanelOpen)
+            return;
         BunkerInteractableCollider target = RaycastInteractable();
 
         if (target == null)

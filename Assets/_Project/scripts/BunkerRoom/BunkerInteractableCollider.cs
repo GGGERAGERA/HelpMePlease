@@ -13,10 +13,12 @@ public sealed class BunkerInteractableCollider : MonoBehaviour
         if (sourceRoot == null)
             sourceRoot = transform.root.gameObject;
 
-        Interactable = sourceRoot.GetComponentInParent<IBunkerInteractable>();
-        Hoverable = sourceRoot.GetComponentInParent<IBunkerHoverable>();
+        Interactable = sourceRoot.GetComponent<IBunkerInteractable>();
+        Hoverable = sourceRoot.GetComponent<IBunkerHoverable>();
 
         Collider2D col = GetComponent<Collider2D>();
         col.isTrigger = true;
+
+        Debug.Log($"[BunkerInteractableCollider] {name} source={sourceRoot.name}, interactable={Interactable != null}, hoverable={Hoverable != null}");
     }
 }

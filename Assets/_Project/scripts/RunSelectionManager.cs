@@ -7,9 +7,7 @@ public sealed class RunSelectionManager : MonoBehaviour
     public CharacterData SelectedCharacter { get; private set; }
     public WeaponData SelectedWeapon { get; private set; }
 
-    public bool HasCharacter => SelectedCharacter != null;
-    public bool HasWeapon => SelectedWeapon != null;
-    public bool IsReady => HasCharacter && HasWeapon;
+    public bool IsReady => SelectedCharacter != null && SelectedWeapon != null;
 
     private void Awake()
     {
@@ -25,26 +23,15 @@ public sealed class RunSelectionManager : MonoBehaviour
 
     public void SelectCharacter(CharacterData character)
     {
-        if (character == null)
-        {
-            Debug.LogWarning("[RunSelectionManager] Tried to select null character.");
-            return;
-        }
-
         SelectedCharacter = character;
+        Debug.Log($"[RunSelectionManager] Character selected: {character?.name}");
     }
 
     public void SelectWeapon(WeaponData weapon)
     {
-        if (weapon == null)
-        {
-            Debug.LogWarning("[RunSelectionManager] Tried to select null weapon.");
-            return;
-        }
-
         SelectedWeapon = weapon;
+        Debug.Log($"[RunSelectionManager] Weapon selected: {weapon?.name}");
     }
-
     public void ClearRunSelection()
     {
         SelectedCharacter = null;

@@ -5,8 +5,9 @@ using UnityEngine.UI;
 public sealed class WeaponSelectionUI : MonoBehaviour
 {
     [Header("Navigation")]
+    [SerializeField] private Button backButton;
     [SerializeField] private Button confirmButton;
-    [SerializeField] private MainMenuController mainMenuController;
+    [SerializeField] private BunkerPanelManager panelManager;
 
     [Header("Right Info Panel")]
     [SerializeField] private TextMeshProUGUI weaponNameText;
@@ -21,15 +22,17 @@ public sealed class WeaponSelectionUI : MonoBehaviour
 
     [Header("Button Visual")]
     [SerializeField] private Color enabledColor = Color.white;
-    [SerializeField] private Color disabledColor = new Color(0.45f, 0.45f, 0.45f, 1f);
+    [SerializeField] private Color disabledColor = new(0.45f, 0.45f, 0.45f, 1f);
 
     private WeaponData selectedWeapon;
-    [SerializeField] private GameObject root;
 
     private void Awake()
     {
         if (confirmButton != null)
             confirmButton.onClick.AddListener(ConfirmSelection);
+
+        if (backButton != null)
+            backButton.onClick.AddListener(Close);
 
         ClearSelection();
     }
@@ -43,22 +46,9 @@ public sealed class WeaponSelectionUI : MonoBehaviour
     {
         if (confirmButton != null)
             confirmButton.onClick.RemoveListener(ConfirmSelection);
-    }
 
-    public void Show()
-    {
-        if (root != null)
-            root.SetActive(true);
-        else
-            gameObject.SetActive(true);
-    }
-
-    public void Hide()
-    {
-        if (root != null)
-            root.SetActive(false);
-        else
-            gameObject.SetActive(false);
+        if (backButton != null)
+            backButton.onClick.RemoveListener(Close);
     }
 
     public void SelectWeapon(WeaponData weapon)
@@ -67,8 +57,6 @@ public sealed class WeaponSelectionUI : MonoBehaviour
             return;
 
         selectedWeapon = weapon;
-        RunSelectionManager.Instance?.SelectWeapon(weapon);
-
         RefreshDetails(weapon);
         SetConfirmButton(true);
     }
@@ -85,20 +73,13 @@ public sealed class WeaponSelectionUI : MonoBehaviour
         }
 
         RunSelectionManager.Instance.SelectWeapon(selectedWeapon);
+        Close();
+    }
 
-        if (!RunSelectionManager.Instance.IsReady)
-        {
-            Debug.LogWarning("[WeaponSelectionUI] Cannot start game. Character or weapon is missing.");
-            return;
-        }
-
-        if (mainMenuController == null)
-        {
-            Debug.LogError("[WeaponSelectionUI] MainMenuController is not assigned.");
-            return;
-        }
-
-        mainMenuController.StartGame();
+    private void Close()
+    {
+        if (panelManager != null)
+            panelManager.CloseAll();
     }
 
     private void RefreshDetails(WeaponData weapon)
@@ -106,7 +87,6 @@ public sealed class WeaponSelectionUI : MonoBehaviour
         SetText(weaponNameText, weapon.weaponName);
         SetText(weaponClassText, weapon.weaponName.ToUpperInvariant());
         SetText(descriptionText, weapon.description);
-
         SetText(damageText, $"Damage: {weapon.damage}");
         SetText(fireRateText, $"Fire Rate: {weapon.fireRateRPM} RPM");
         SetText(specialText, $"Special: {GetSpecialText(weapon.specialDescription)}");
@@ -121,7 +101,6 @@ public sealed class WeaponSelectionUI : MonoBehaviour
         SetText(weaponNameText, "Name");
         SetText(weaponClassText, "Class");
         SetText(descriptionText, "Description");
-
         SetText(damageText, "Damage");
         SetText(fireRateText, "Fire Rate");
         SetText(specialText, "Special");
@@ -161,6 +140,4 @@ public sealed class WeaponSelectionUI : MonoBehaviour
     {
         return string.IsNullOrWhiteSpace(special) ? "No" : special;
     }
-
-
 }
