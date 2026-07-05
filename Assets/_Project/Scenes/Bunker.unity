@@ -699,11 +699,11 @@ RectTransform:
   - {fileID: 678772033}
   - {fileID: 1430169428}
   - {fileID: 1408773104}
-  m_Father: {fileID: 992930127}
+  m_Father: {fileID: 322264726}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -54, y: 16}
+  m_AnchoredPosition: {x: -44, y: 26}
   m_SizeDelta: {x: 1520, y: 980}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &147915556
@@ -1718,6 +1718,7 @@ RectTransform:
   - {fileID: 1832941531}
   - {fileID: 1461053124}
   - {fileID: 7464173497705637187}
+  - {fileID: 147915555}
   - {fileID: 1461765589}
   m_Father: {fileID: 992930127}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1780,6 +1781,7 @@ MonoBehaviour:
   playerSelectPanel: {fileID: 1812526872}
   weaponSelectPanel: {fileID: 1461053132}
   shopPanel: {fileID: 378523999}
+  upgradePanel: {fileID: 147915554}
   sceneSelectPanel: {fileID: 1461765588}
 --- !u!1 &345539673
 GameObject:
@@ -2158,20 +2160,23 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1638737803680304841, guid: 567b105986aea7e40a27581f18ab8208, type: 3}
+      propertyPath: panelManager
+      value: 
+      objectReference: {fileID: 733148234}
+    - target: {fileID: 4646987233794834190, guid: 567b105986aea7e40a27581f18ab8208, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: 4737281608205474900, guid: 567b105986aea7e40a27581f18ab8208, type: 3}
       propertyPath: m_Name
-      value: p_bunkerBase1
+      value: p_bunkerUpgrade1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 6279582381387488997, guid: 567b105986aea7e40a27581f18ab8208, type: 3}
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 4737281608205474900, guid: 567b105986aea7e40a27581f18ab8208, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1682493502}
-    - targetCorrespondingSourceObject: {fileID: 4737281608205474900, guid: 567b105986aea7e40a27581f18ab8208, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1682493501}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 567b105986aea7e40a27581f18ab8208, type: 3}
 --- !u!4 &383357135 stripped
 Transform:
@@ -4222,7 +4227,7 @@ MonoBehaviour:
   selectionPanelController: {fileID: 322264729}
   shopUI: {fileID: 7464173497705637191}
   mapPanel: {fileID: 0}
-  upgradePanel: {fileID: 0}
+  upgradePanel: {fileID: 147915554}
   mainMenuController: {fileID: 0}
 --- !u!4 &733148235
 Transform:
@@ -4695,7 +4700,6 @@ RectTransform:
   - {fileID: 322264726}
   - {fileID: 2028872204}
   - {fileID: 1116675104}
-  - {fileID: 147915555}
   - {fileID: 819934504}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -4918,10 +4922,10 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 383357135}
+  - {fileID: 1873553520}
   - {fileID: 1914885783}
   - {fileID: 1414305296}
-  - {fileID: 1873553520}
+  - {fileID: 383357135}
   - {fileID: 5092652289106100766}
   m_Father: {fileID: 1632875633}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -6902,6 +6906,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: p_bunkerShop1
       objectReference: {fileID: 0}
+    - target: {fileID: 6096585990859220859, guid: ebee71303b9118e429ad2ba8ec0c7d03, type: 3}
+      propertyPath: panelManager
+      value: 
+      objectReference: {fileID: 733148234}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -8431,45 +8439,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 5082492393342630051, guid: 39f6a555ccba1014abb9a005cc09c9b7, type: 3}
   m_PrefabInstance: {fileID: 1681387011}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1682493497 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4737281608205474900, guid: 567b105986aea7e40a27581f18ab8208, type: 3}
-  m_PrefabInstance: {fileID: 383357134}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1682493501
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1682493497}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d6cd9f593f848084ea91bdce5a1ad098, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerStation
-  stationType: 5
-  interactionText: "\u0410\u043F\u0433\u0440\u0435\u0439\u0434\u044B"
-  panelManager: {fileID: 0}
-  animator: {fileID: 0}
-  animationTrigger: Interact
-  onInteract:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!114 &1682493502
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1682493497}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 74f55e459cc4282459103c6efa92cac3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerHoverOutline
-  targetRenderers: []
-  autoFindRenderers: 1
 --- !u!1 &1692267553
 GameObject:
   m_ObjectHideFlags: 0
@@ -9725,6 +9694,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2129564713534745497, guid: 875729b930699b041b3c5fb99c62ebb9, type: 3}
+      propertyPath: panelManager
+      value: 
+      objectReference: {fileID: 733148234}
     - target: {fileID: 4737281608205474900, guid: 875729b930699b041b3c5fb99c62ebb9, type: 3}
       propertyPath: m_Name
       value: p_bunkerWeaponShowcase
@@ -9787,6 +9760,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2129564713534745497, guid: 7299b4ba064c30443b59cbbe7a22f590, type: 3}
+      propertyPath: panelManager
+      value: 
+      objectReference: {fileID: 733148234}
     - target: {fileID: 4737281608205474900, guid: 7299b4ba064c30443b59cbbe7a22f590, type: 3}
       propertyPath: m_Name
       value: p_bunkerPlayerShowcase 1
