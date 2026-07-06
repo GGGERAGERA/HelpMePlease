@@ -37,4 +37,13 @@ public sealed class BunkerContent : MonoBehaviour
 
         return PlayerPrefs.GetInt(KeyPrefix + data.Id, 0) == 1;
     }
+    private void OnEnable()
+    {
+        BunkerContext.Instance?.ContentRegistry?.Register(this);
+    }
+
+    private void OnDisable()
+    {
+        BunkerContext.Instance?.ContentRegistry?.Unregister(this);
+    }
 }
