@@ -3,11 +3,11 @@ using UnityEngine;
 public sealed class WeaponFxPlayer : MonoBehaviour
 {
     [Header("Muzzle FX")]
-    [SerializeField] private ParticleSystem muzzleFxPrefab;
+    [SerializeField] private GameObject muzzleFxPrefab;
     [SerializeField] private float muzzleFxLifetime = 0.35f;
 
     [Header("Impact FX")]
-    [SerializeField] private ParticleSystem impactFxPrefab;
+    [SerializeField] private GameObject impactFxPrefab;
     [SerializeField] private float impactFxLifetime = 0.35f;
 
     [Header("Camera Shake")]
@@ -39,7 +39,7 @@ public sealed class WeaponFxPlayer : MonoBehaviour
     }
 
     private void SpawnParticle(
-        ParticleSystem prefab,
+        GameObject prefab,
         Vector2 position,
         Vector2 direction,
         float lifetime
@@ -50,13 +50,12 @@ public sealed class WeaponFxPlayer : MonoBehaviour
 
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
 
-        ParticleSystem fx = Instantiate(
+        GameObject fx = Instantiate(
             prefab,
             position,
             Quaternion.Euler(0f, 0f, angle)
         );
 
-        fx.Play();
-        Destroy(fx.gameObject, lifetime);
+        Destroy(fx, lifetime);
     }
 }
