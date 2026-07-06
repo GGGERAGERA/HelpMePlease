@@ -75,14 +75,6 @@ public class PlayerCombatModifiers : MonoBehaviour
 
         UpdateLowHpPower(health.CurrentHealth / health.MaxHealth);
     }
-
-    public bool ShouldFireExtraShot()
-    {
-
-        attackCounter++;
-
-        return attackCounter % 5 == 0;
-    }
     public void ResetStationaryFireRamp()
     {
         stationaryFireRateBonus = 0f;
@@ -162,41 +154,6 @@ public class PlayerCombatModifiers : MonoBehaviour
                 continue;
 
             health.TakeDamage(deathExplosionDamageBonus, position);
-        }
-    }
-    public void TrySpawnHitExplosion(Vector3 position)
-    {
-        if (hitExplosionChance <= 0f)
-            return;
-
-        if (Random.value > hitExplosionChance)
-            return;
-
-        SpawnHitExplosion(position);
-    }
-
-    private void SpawnHitExplosion(Vector3 position)
-    {
-        if (hitExplosionPrefab != null)
-        {
-            GameObject fx = Instantiate(hitExplosionPrefab, position, Quaternion.identity);
-            Destroy(fx, 2f);
-        }
-
-        Collider2D[] enemies = Physics2D.OverlapCircleAll(
-            position,
-            hitExplosionRadius,
-            enemyMask
-        );
-
-        foreach (Collider2D collider in enemies)
-        {
-            EnemyHealth enemyHealth = collider.GetComponent<EnemyHealth>();
-
-            if (enemyHealth == null)
-                continue;
-
-            enemyHealth.TakeDamage(hitExplosionDamage, position);
         }
     }
     public void AddCircularBurstCooldownReduction(float reduction)

@@ -76,9 +76,6 @@ public class Shoot : BaseWeapon
 
         FireShotGroup(baseDirection, GetProjectileCount());
 
-        TryFireEveryFifthExtraShot(baseDirection);
-        TryFireRandomExtraShots(baseDirection);
-
         if (weaponData != null)
             PlaySound(weaponData.attackSound);
 
@@ -162,20 +159,6 @@ public class Shoot : BaseWeapon
             context = projectileObject.AddComponent<ProjectileCombatContext>();
 
         context.Initialize(modifiers);
-    }
-
-    private void TryFireEveryFifthExtraShot(Vector2 baseDirection)
-    {
-        PlayerCombatModifiers modifiers =
-            GetComponentInParent<PlayerCombatModifiers>();
-
-        if (modifiers == null)
-            return;
-
-        if (!modifiers.ShouldFireExtraShot())
-            return;
-
-        SpawnSingleProjectile(baseDirection);
     }
 
     private void SpawnShootFx()
