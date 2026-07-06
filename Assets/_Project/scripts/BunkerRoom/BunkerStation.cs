@@ -7,8 +7,8 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
     [SerializeField] private BunkerStationType stationType;
     [SerializeField] private string interactionText = "Взаимодействовать";
 
-    [Header("UI")]
-    [SerializeField] private BunkerPanelManager panelManager;
+    [Header("Fallback")]
+    [SerializeField] private BunkerPanelManager panelManagerFallback;
 
     [Header("Animation")]
     [SerializeField] private Animator animator;
@@ -20,31 +20,37 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
     public bool CanInteract => stationType != BunkerStationType.None;
     public string InteractionText => interactionText;
 
+    private BunkerPanelManager Panels =>
+        BunkerContext.Instance != null && BunkerContext.Instance.Panels != null
+            ? BunkerContext.Instance.Panels
+            : panelManagerFallback;
+
     public void Interact()
     {
         switch (stationType)
         {
             case BunkerStationType.CharacterSelection:
-                panelManager.OpenCharacterSelection();
+                Panels?.OpenCharacterSelection();
                 break;
 
             case BunkerStationType.WeaponSelection:
-                panelManager.OpenWeaponSelection();
+                Panels?.OpenWeaponSelection();
                 break;
 
             case BunkerStationType.Shop:
-                panelManager.OpenShop();
+                Panels?.OpenShop();
                 break;
 
             case BunkerStationType.Map:
-                panelManager.OpenMap();
+                Panels?.OpenMap();
                 break;
 
             case BunkerStationType.Upgrade:
-                panelManager.OpenUpgrade();
+                Panels?.OpenUpgrade();
                 break;
+
             case BunkerStationType.StartRun:
-                panelManager.StartRun();
+                Panels?.StartRun();
                 break;
 
             case BunkerStationType.Animation:

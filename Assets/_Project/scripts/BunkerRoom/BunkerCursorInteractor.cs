@@ -4,9 +4,16 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
 {
     [SerializeField] private Camera targetCamera;
     [SerializeField] private LayerMask interactionMask;
-    [SerializeField] private BunkerPanelManager panelManager;
+
+    [Header("Fallback")]
+    [SerializeField] private BunkerPanelManager panelManagerFallback;
 
     private BunkerInteractableCollider current;
+
+    private BunkerPanelManager Panels =>
+        BunkerContext.Instance != null && BunkerContext.Instance.Panels != null
+            ? BunkerContext.Instance.Panels
+            : panelManagerFallback;
 
     private void Awake()
     {
@@ -24,12 +31,13 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
 
     private void UpdateHover()
     {
-        if (panelManager != null && panelManager.IsAnyPanelOpen)
+        if (Panels != null && Panels.IsAnyPanelOpen)
         {
             current?.Hoverable?.SetHovered(false);
             current = null;
             return;
         }
+
         BunkerInteractableCollider next = RaycastInteractable();
 
         if (next == current)
@@ -44,9 +52,9 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
 
     private void TryInteract()
     {
-
-        if (panelManager != null && panelManager.IsAnyPanelOpen)
+        if (Panels != null && Panels.IsAnyPanelOpen)
             return;
+
         BunkerInteractableCollider target = RaycastInteractable();
 
         if (target == null)
@@ -62,6 +70,9 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
 
     private BunkerInteractableCollider RaycastInteractable()
     {
+        if (targetCamera == null)
+            return null;
+
         Vector2 mouseWorld = targetCamera.ScreenToWorldPoint(Input.mousePosition);
         Collider2D hit = Physics2D.OverlapPoint(mouseWorld, interactionMask);
 

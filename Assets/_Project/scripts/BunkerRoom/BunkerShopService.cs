@@ -46,6 +46,13 @@ public sealed class BunkerShopService : MonoBehaviour
 
     private void RefreshBunkerContent()
     {
+        if (BunkerContext.Instance != null && BunkerContext.Instance.ContentRegistry != null)
+        {
+            BunkerContext.Instance.ContentRegistry.RefreshAll();
+            return;
+        }
+
+
         BunkerContent[] contents =
             FindObjectsByType<BunkerContent>(FindObjectsSortMode.None);
 
