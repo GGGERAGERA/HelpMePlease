@@ -15,6 +15,9 @@ public class EnemyWhiteFlash : MonoBehaviour
 
     private void Awake()
     {
+        if (targetRenderer == null)
+            targetRenderer = GetComponentInChildren<SpriteRenderer>();
+
         if (targetRenderer != null)
             originalMaterial = targetRenderer.material;
     }

@@ -87,6 +87,12 @@ public class EnemyHealth : MonoBehaviour
         if (isDead) return;
         if (currentHealth <= 0) return;
 
+        EnemyWhiteFlash whiteFlash = GetComponent<EnemyWhiteFlash>();
+        if (whiteFlash != null)
+        {
+            whiteFlash.Flash();
+        }
+
         currentHealth -= damage;
         if (isBoss)
         {

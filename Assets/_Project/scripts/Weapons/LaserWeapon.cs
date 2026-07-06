@@ -11,18 +11,8 @@ public class LaserWeapon : BaseWeapon
     [Header("Laser")]
     [SerializeField] private LayerMask hitMask;
     [SerializeField] private float beamWidth = 0.25f;
-    [Header("Beam Base")]
-    [SerializeField] private Material beamMaterial;
-    [SerializeField] private float beamDuration = 0.08f;
-    [Header("Beam Visual Layers")]
-    [SerializeField] private Material coreBeamMaterial;
-    [SerializeField] private Material glowBeamMaterial;
-
-    [SerializeField] private Color coreBeamColor = Color.white;
-    [SerializeField] private Color glowBeamColor = new Color(0.1f, 0.8f, 1f, 0.35f);
-
-    [SerializeField] private float coreBeamWidth = 0.08f;
-    [SerializeField] private float glowBeamWidth = 0.28f;
+    [Header("Beam Renderer")]
+    [SerializeField] private LaserBeamRenderer beamRenderer;
 
 
     private Camera mainCamera;
@@ -38,6 +28,8 @@ public class LaserWeapon : BaseWeapon
 
         if (firePoint == null)
             firePoint = transform;
+        if (beamRenderer == null)
+            beamRenderer = GetComponent<LaserBeamRenderer>();
     }
 
     protected override void Update()
@@ -135,42 +127,10 @@ public class LaserWeapon : BaseWeapon
     }
     private void ShowBeam(Vector2 start, Vector2 end)
     {
-        CreateBeamLine(start, end, glowBeamMaterial, glowBeamColor, glowBeamWidth, beamDuration);
-        CreateBeamLine(start, end, coreBeamMaterial, coreBeamColor, coreBeamWidth, beamDuration);
+        if (beamRenderer != null)
+            beamRenderer.Render(start, end);
     }
 
-    private void CreateBeamLine(
-     Vector2 start,
-     Vector2 end,
-     Material material,
-     Color color,
-     float width,
-     float duration
- )
-    {
-        GameObject beamObject = new GameObject("LaserBeam");
-        LineRenderer lineRenderer = beamObject.AddComponent<LineRenderer>();
-
-        lineRenderer.positionCount = 2;
-        lineRenderer.SetPosition(0, start);
-        lineRenderer.SetPosition(1, end);
-
-        lineRenderer.useWorldSpace = true;
-        lineRenderer.sortingLayerName = "Effects";
-        lineRenderer.sortingOrder = 20;
-
-        lineRenderer.material = material != null
-            ? material
-            : beamMaterial;
-
-        lineRenderer.startWidth = width;
-        lineRenderer.endWidth = width * 0.75f;
-
-        lineRenderer.startColor = color;
-        lineRenderer.endColor = new Color(color.r, color.g, color.b, 0f);
-
-        Destroy(beamObject, duration);
-    }
 
 
     private void FireBeam(Vector2 origin, Vector2 direction)
