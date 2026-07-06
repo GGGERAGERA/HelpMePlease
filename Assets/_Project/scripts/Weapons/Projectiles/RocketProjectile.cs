@@ -7,6 +7,10 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile
     [SerializeField] private float explosionRadius = 2.2f;
     [SerializeField] private LayerMask enemyMask;
 
+    [Header("Explosion FX")]
+    [SerializeField] private GameObject explosionFxPrefab;
+    [SerializeField] private float explosionFxLifetime = 1f;
+
     private float damage;
     private float speed;
     private float range;
@@ -70,6 +74,7 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile
             return;
 
         exploded = true;
+        SpawnExplosionFx();
 
         HashSet<EnemyHealth> damagedEnemies = new HashSet<EnemyHealth>();
 
@@ -91,7 +96,7 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile
 
             damagedEnemies.Add(enemy);
 
-            PlayerCombatModifiers activeModifiers = GetModifiers();
+           
 
             enemy.TakeDamage(damage, transform.position, isCritical);
 
@@ -103,13 +108,17 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile
 
         Destroy(gameObject);
     }
-    private PlayerCombatModifiers GetModifiers()
+    private void SpawnExplosionFx()
     {
-        ProjectileCombatContext context = GetComponent<ProjectileCombatContext>();
+        if (explosionFxPrefab == null)
+            return;
 
-        if (context == null)
-            return null;
+        GameObject fx = Instantiate(
+            explosionFxPrefab,
+            transform.position,
+            Quaternion.identity
+        );
 
-        return context.Modifiers;
+        Destroy(fx, explosionFxLifetime);
     }
 }
