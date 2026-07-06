@@ -9,7 +9,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
     [SerializeField] private GameObject mapPanel;
     [SerializeField] private GameObject upgradePanel;
     [SerializeField] private BunkerRunStarter runStarter;
-
+    [SerializeField] private MetaUpgradeShopUI metaUpgradeShopUI;
     public bool IsAnyPanelOpen =>
     selectionPanelController != null && selectionPanelController.IsOpen;
     private void Update()
@@ -56,6 +56,9 @@ public sealed class BunkerPanelManager : MonoBehaviour
     public void OpenUpgrade()
     {
         selectionPanelController.ShowUpgrade();
+
+        if (metaUpgradeShopUI != null)
+            metaUpgradeShopUI.Refresh();
     }
 
     public void CloseAll()
