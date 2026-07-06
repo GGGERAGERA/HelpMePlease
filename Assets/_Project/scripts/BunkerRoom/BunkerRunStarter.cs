@@ -9,13 +9,19 @@ public sealed class BunkerRunStarter : MonoBehaviour
     {
         if (RunSelectionManager.Instance == null)
         {
-            Debug.LogError("[BunkerRunStarter] RunSelectionManager is missing.");
+            BunkerNotificationManager.Instance?.ShowError("Система выбора не найдена.");
             return;
         }
 
-        if (!RunSelectionManager.Instance.IsReady)
+        if (RunSelectionManager.Instance.SelectedCharacter == null)
         {
-            Debug.LogWarning("[BunkerRunStarter] Select character and weapon first.");
+            BunkerNotificationManager.Instance?.ShowWarning("Сначала выбери персонажа.");
+            return;
+        }
+
+        if (RunSelectionManager.Instance.SelectedWeapon == null)
+        {
+            BunkerNotificationManager.Instance?.ShowWarning("Сначала выбери оружие.");
             return;
         }
 
