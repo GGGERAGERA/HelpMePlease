@@ -20,6 +20,8 @@ public abstract class BaseWeapon : MonoBehaviour
 
     protected float lastAttackTime;
 
+    private bool isInitialized;
+
     protected WeaponRuntimeStats Stats => runtimeStats;
     protected WeaponFxPlayer FxPlayer => fxPlayer;
 
@@ -41,8 +43,11 @@ public abstract class BaseWeapon : MonoBehaviour
         if (firePoint == null)
             firePoint = transform;
 
-        if (weaponData != null)
+        if (!isInitialized && weaponData != null)
+        {
             runtimeStats.InitializeFromWeaponData(weaponData);
+            isInitialized = true;
+        }
     }
 
     protected virtual void Update()
@@ -58,6 +63,7 @@ public abstract class BaseWeapon : MonoBehaviour
         weaponData = data;
         EnsureRuntimeStats();
         runtimeStats.InitializeFromWeaponData(data);
+        isInitialized = true;
     }
 
     private void EnsureRuntimeStats()

@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class PlayerCombatModifiers : MonoBehaviour
 {
-    private int attackCounter;
 
     [Header("Blue Upgrades")]
     public float hitExplosionChance;
@@ -11,9 +10,6 @@ public class PlayerCombatModifiers : MonoBehaviour
     public float enemyDeathExplosionChance;
     public float deathExplosionDamageBonus;
     public float knockbackMultiplier = 1f;
-
-    [Header("Purple Upgrades")]
-    public bool doubleDamageWithInaccuracy;
 
     [Header("Low HP Power")]
     public bool lowHpPower;
@@ -51,18 +47,7 @@ public class PlayerCombatModifiers : MonoBehaviour
     [Header("Movement Check")]
     public float stationaryMoveThreshold = 0.05f;
 
-
-
-
-
     private PlayerHealth health;
-
-    [SerializeField] private GameObject deathExplosionPrefab;
-    [SerializeField] private float deathExplosionRadius = 2f;
-    [Header("Hit Explosion")]
-    [SerializeField] private GameObject hitExplosionPrefab;
-    [SerializeField] private float hitExplosionRadius = 1.5f;
-    [SerializeField] private float hitExplosionDamage = 10f;
 
     private void Awake()
     {
@@ -121,41 +106,7 @@ public class PlayerCombatModifiers : MonoBehaviour
         lowHpDamageBonus = missingHealthPercent * lowHpPowerMultiplier;
         lowHpFireRateBonus = missingHealthPercent * lowHpPowerMultiplier;
     }
-    public void TrySpawnDeathExplosion(Vector3 position)
-    {
-        if (enemyDeathExplosionChance <= 0f)
-            return;
 
-        if (Random.value > enemyDeathExplosionChance)
-            return;
-
-        SpawnDeathExplosion(position);
-    }
-
-    private void SpawnDeathExplosion(Vector3 position)
-    {
-        if (deathExplosionPrefab != null)
-        {
-            GameObject fx = Instantiate(deathExplosionPrefab, position, Quaternion.identity);
-            Destroy(fx, 2f);
-        }
-
-        Collider2D[] enemies = Physics2D.OverlapCircleAll(
-            position,
-            deathExplosionRadius,
-            enemyMask
-        );
-
-        foreach (Collider2D collider in enemies)
-        {
-            EnemyHealth health = collider.GetComponent<EnemyHealth>();
-
-            if (health == null)
-                continue;
-
-            health.TakeDamage(deathExplosionDamageBonus, position);
-        }
-    }
     public void AddCircularBurstCooldownReduction(float reduction)
     {
         circularBurst = true;

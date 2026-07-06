@@ -16,7 +16,14 @@ public class CharacterSpawner : MonoBehaviour
 
     [Header("Default weapon for direct MVP launch")]
     [SerializeField] private WeaponData defaultWeapon;
+    private void Awake()
+    {
+        if (metaUpgradeApplier == null)
+            metaUpgradeApplier = GetComponent<MetaUpgradeApplier>();
 
+        if (metaUpgradeApplier == null)
+            metaUpgradeApplier = FindFirstObjectByType<MetaUpgradeApplier>();
+    }
     private void Start()
     {
         Time.timeScale = 1f;
@@ -28,8 +35,17 @@ public class CharacterSpawner : MonoBehaviour
 
         BaseWeapon[] weapons = player.GetComponentsInChildren<BaseWeapon>(true);
 
+        if (metaUpgradeApplier == null)
+            metaUpgradeApplier = FindFirstObjectByType<MetaUpgradeApplier>();
+
         if (metaUpgradeApplier != null)
+        {
             metaUpgradeApplier.ApplyTo(player, weapons);
+        }
+        else
+        {
+            Debug.LogWarning("[CharacterSpawner] MetaUpgradeApplier not found. Meta upgrades were not applied.");
+        }
 
         if (RunStateManager.Instance != null)
             RunStateManager.Instance.ApplyToSpawnedPlayer(player, upgradeApplier);

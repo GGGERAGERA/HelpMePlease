@@ -202,11 +202,16 @@ public class EnemyHealth : MonoBehaviour
             Destroy(blood.gameObject, destroyTime);
         }
 
-        PlayerCombatModifiers modifiers =
-        FindFirstObjectByType<PlayerCombatModifiers>();
+        PlayerCombatModifiers modifiers = FindFirstObjectByType<PlayerCombatModifiers>();
 
         if (modifiers != null)
-            modifiers.TrySpawnDeathExplosion(transform.position);
+        {
+            CombatExplosionService.TryExplodeOnEnemyDeath(
+                transform.position,
+                modifiers,
+                modifiers.enemyMask
+            );
+        }
 
         DropLoot();
         Destroy(gameObject);

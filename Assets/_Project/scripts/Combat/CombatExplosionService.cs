@@ -29,13 +29,11 @@ public static class CombatExplosionService
         Vector2 position,
         float sourceDamage,
         PlayerCombatModifiers modifiers,
-        LayerMask enemyMask
+        LayerMask enemyMask,
+        float extraDamageMultiplier = 1f
     )
     {
-        float damage = sourceDamage * ExplosionDamageMultiplier;
-
-        if (modifiers != null)
-            damage *= 1f + modifiers.deathExplosionDamageBonus;
+        float damage = sourceDamage * ExplosionDamageMultiplier * extraDamageMultiplier;
 
         Collider2D[] hits = Physics2D.OverlapCircleAll(
             position,
@@ -58,5 +56,29 @@ public static class CombatExplosionService
             damagedEnemies.Add(enemy);
             enemy.TakeDamage(damage, position, false);
         }
+    }
+
+    public static void TryExplodeOnEnemyDeath(
+    Vector2 position,
+    PlayerCombatModifiers modifiers,
+    LayerMask enemyMask
+)
+    {
+        if (modifiers == null)
+            return;
+
+        if (modifiers.enemyDeathExplosionChance <= 0f)
+            return;
+
+        if (Random.value > modifiers.enemyDeathExplosionChance)
+            return;
+
+        Explode(
+    position,
+    20f,
+    modifiers,
+    enemyMask,
+    1f + modifiers.deathExplosionDamageBonus
+);
     }
 }

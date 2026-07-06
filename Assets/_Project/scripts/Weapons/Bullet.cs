@@ -16,6 +16,7 @@ public class Bullet : MonoBehaviour, IWeaponProjectile
     private int ricochetCount;
     private bool isCritical;
     private float runtimeKnockbackForce;
+    private ProjectileCombatContext combatContext;
 
     private readonly HashSet<EnemyHealth> hitEnemies = new HashSet<EnemyHealth>();
 
@@ -65,6 +66,22 @@ public class Bullet : MonoBehaviour, IWeaponProjectile
         hitEnemies.Add(enemyHealth);
         enemyHealth.TakeDamage(damage, transform.position, isCritical);
 
+        if (combatContext == null)
+            combatContext = GetComponent<ProjectileCombatContext>();
+
+        PlayerCombatModifiers modifiers = combatContext != null
+            ? combatContext.Modifiers
+            : null;
+
+        if (modifiers != null)
+        {
+            CombatExplosionService.TryExplodeOnHit(
+                transform.position,
+                damage,
+                modifiers,
+                modifiers.enemyMask
+            );
+        }
 
 
 

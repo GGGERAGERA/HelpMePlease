@@ -162,7 +162,6 @@ public sealed class UpgradeApplier : MonoBehaviour
     private void ApplyDoubleDamageWithInaccuracy(PlayerUpgradeContext context)
     {
         PlayerCombatModifiers modifiers = RequireCombatModifiers(context);
-        modifiers.doubleDamageWithInaccuracy = true;
         modifiers.bonusDamageMultiplier *= 2f;
         modifiers.accuracyPenaltyDegrees += 12f;
     }

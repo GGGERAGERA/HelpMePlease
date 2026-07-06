@@ -20,10 +20,14 @@ public class MetaUpgradeApplier : MonoBehaviour
 
         if (MetaProgressionManager.Instance == null)
         {
+            Debug.LogWarning("[MetaUpgradeApplier] MetaProgressionManager.Instance is null. Meta upgrades not applied.");
             return;
         }
 
         MetaProgressionManager meta = MetaProgressionManager.Instance;
+        Debug.Log(
+    $"[MetaUpgradeApplier] Apply meta: HP={meta.HpLevel}, DMG={meta.DamageLevel}, SPD={meta.MoveSpeedLevel}, XP={meta.XpGainLevel}, GOLD={meta.GoldGainLevel}, PICKUP={meta.PickupRadiusLevel}"
+);
 
         PlayerHealth health = player.GetComponent<PlayerHealth>();
         CharacterMovement2D movement = player.GetComponent<CharacterMovement2D>();
@@ -40,7 +44,9 @@ public class MetaUpgradeApplier : MonoBehaviour
             {
                 if (weapon == null)
                     continue;
-
+                Debug.Log(
+    $"[MetaUpgradeApplier] Apply damage to weapon {weapon.name}: +{meta.DamageLevel * damagePercentPerLevel * 100f}%"
+);
                 weapon.AddDamagePercent(meta.DamageLevel * damagePercentPerLevel);
             }
         }
