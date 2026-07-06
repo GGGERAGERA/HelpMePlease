@@ -4716,6 +4716,7 @@ MonoBehaviour:
   mapPanel: {fileID: 0}
   upgradePanel: {fileID: 147915554}
   runStarter: {fileID: 733148236}
+  metaUpgradeShopUI: {fileID: 147915556}
 --- !u!4 &733148235
 Transform:
   m_ObjectHideFlags: 0
@@ -10203,7 +10204,6 @@ Transform:
   m_Children:
   - {fileID: 123397166}
   - {fileID: 974467353}
-  - {fileID: 2079708704}
   - {fileID: 735746297}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -12153,7 +12153,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1750742712}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2079708705
 MonoBehaviour:
@@ -13037,6 +13037,7 @@ SceneRoots:
   - {fileID: 181013841}
   - {fileID: 733148235}
   - {fileID: 1274696266}
+  - {fileID: 2079708704}
   - {fileID: 1795123434}
   - {fileID: 1021259861}
   - {fileID: 1731815807}
