@@ -4,24 +4,26 @@ using UnityEngine.SceneManagement;
 public sealed class BunkerRunStarter : MonoBehaviour
 {
     [SerializeField] private string gameplaySceneName = "MVP";
+    private BunkerNotificationManager Notifications =>
+    BunkerContext.Instance != null ? BunkerContext.Instance.Notifications : null;
 
     public void StartRun()
     {
         if (RunSelectionManager.Instance == null)
         {
-            BunkerNotificationManager.Instance?.ShowError("Система выбора не найдена.");
+            Notifications?.ShowError("Система выбора не найдена.");
             return;
         }
 
         if (RunSelectionManager.Instance.SelectedCharacter == null)
         {
-            BunkerNotificationManager.Instance?.ShowWarning("Сначала выбери персонажа.");
+            Notifications?.ShowWarning("Сначала выбери персонажа.");
             return;
         }
 
         if (RunSelectionManager.Instance.SelectedWeapon == null)
         {
-            BunkerNotificationManager.Instance?.ShowWarning("Сначала выбери оружие.");
+            Notifications?.ShowWarning("Сначала выбери оружие.");
             return;
         }
 
@@ -29,8 +31,6 @@ public sealed class BunkerRunStarter : MonoBehaviour
         WeaponData weapon = RunSelectionManager.Instance.SelectedWeapon;
 
         RunStateManager.EnsureExists().BeginNewRun(character, weapon);
-
-        Debug.Log($"[BunkerRunStarter] Start run: character={character.name}, weapon={weapon.name}");
 
         Time.timeScale = 1f;
         SceneManager.LoadScene(gameplaySceneName);

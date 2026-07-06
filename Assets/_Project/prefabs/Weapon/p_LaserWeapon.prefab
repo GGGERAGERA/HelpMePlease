@@ -90,8 +90,14 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   beamWidth: 0.25
-  beamMaterial: {fileID: 2100000, guid: 995e2324eb1b03f4babb8105764afa89, type: 2}
-  beamVisibleTime: 0.08
+  beamMaterial: {fileID: 2100000, guid: 9ebb10c2a65ae024f8df9756245f6fca, type: 2}
+  beamDuration: 0.08
+  coreBeamMaterial: {fileID: 2100000, guid: 91d132427295d144ead3f3fb486918c3, type: 2}
+  glowBeamMaterial: {fileID: 2100000, guid: ef6775db5138cf04a81b8df684f26731, type: 2}
+  coreBeamColor: {r: 1, g: 1, b: 1, a: 1}
+  glowBeamColor: {r: 0.1, g: 0.8, b: 1, a: 0.35}
+  coreBeamWidth: 0.08
+  glowBeamWidth: 0.4
   muzzleFxPrefab: {fileID: 3104720723642426815, guid: d9e86f94329e03f43bde3976d85ebb1a, type: 3}
   hitFxPrefab: {fileID: 7998235011682297928, guid: 271779233902d0443a2052d8a6cee89b, type: 3}
   fxLifetime: 0.25
