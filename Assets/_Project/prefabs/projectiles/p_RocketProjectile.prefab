@@ -5014,6 +5014,8 @@ MonoBehaviour:
   enemyMask:
     serializedVersion: 2
     m_Bits: 257
+  explosionFxPrefab: {fileID: 1557866962218771819, guid: c00f5d7e64850e3449188a3c7a9f023c, type: 3}
+  explosionFxLifetime: 1
 --- !u!1 &6955355789821109069
 GameObject:
   m_ObjectHideFlags: 0
