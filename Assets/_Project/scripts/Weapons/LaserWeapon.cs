@@ -25,10 +25,6 @@ public class LaserWeapon : BaseWeapon
     [SerializeField] private float glowBeamWidth = 0.28f;
 
 
-    [SerializeField] private ParticleSystem muzzleFxPrefab;
-    [SerializeField] private ParticleSystem hitFxPrefab;
-    [SerializeField] private float fxLifetime = 0.25f;
-
     private Camera mainCamera;
 
     protected override void Start()
@@ -87,7 +83,7 @@ public class LaserWeapon : BaseWeapon
 
         if (weaponData != null)
             PlaySound(weaponData.attackSound);
-        CameraShake.Instance?.Shake(0.2f, 0.25f);
+        FxPlayer?.PlayFire(origin, direction);
 
         MarkAttackTime();
     }
@@ -176,22 +172,6 @@ public class LaserWeapon : BaseWeapon
         Destroy(beamObject, duration);
     }
 
-    private void SpawnBeamFx(ParticleSystem prefab, Vector2 position, Vector2 direction)
-    {
-        if (prefab == null)
-            return;
-
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-
-        ParticleSystem fx = Instantiate(
-            prefab,
-            position,
-            Quaternion.Euler(0f, 0f, angle)
-        );
-
-        fx.Play();
-        Destroy(fx.gameObject, fxLifetime);
-    }
 
     private void FireBeam(Vector2 origin, Vector2 direction)
     {
@@ -214,8 +194,6 @@ public class LaserWeapon : BaseWeapon
         }
 
         ShowBeam(origin, endPoint);
-        SpawnBeamFx(muzzleFxPrefab, origin, direction);
-        SpawnBeamFx(hitFxPrefab, endPoint, -direction);
     }
 
     private void HandleBeamHit(RaycastHit2D hit, Vector2 direction)
@@ -256,10 +234,7 @@ public class LaserWeapon : BaseWeapon
             );
         }
 
-        CameraShake.Instance?.Shake(
-            isCritical ? 0.07f : 0.035f,
-            isCritical ? 0.06f : 0.025f
-        );
+        FxPlayer?.PlayHit(hit.point, -direction, isCritical);
     }
 
     private Vector2 RotateVector(Vector2 vector, float angle)

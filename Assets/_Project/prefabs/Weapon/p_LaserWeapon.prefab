@@ -43,6 +43,7 @@ GameObject:
   - component: {fileID: 8058669482312627589}
   - component: {fileID: 2175164308714764740}
   - component: {fileID: 1665494613045673805}
+  - component: {fileID: -1546513204278051988}
   m_Layer: 0
   m_Name: p_LaserWeapon
   m_TagString: Untagged
@@ -83,6 +84,7 @@ MonoBehaviour:
   firePoint: {fileID: 3181264610942060483}
   runtimeStats: {fileID: 0}
   weaponAudioSource: {fileID: 0}
+  fxPlayer: {fileID: 0}
   owner: {fileID: 0}
   orbitRadius: 0.55
   orbitSmoothSpeed: 25
@@ -98,9 +100,6 @@ MonoBehaviour:
   glowBeamColor: {r: 0.1, g: 0.8, b: 1, a: 0.35}
   coreBeamWidth: 0.08
   glowBeamWidth: 0.4
-  muzzleFxPrefab: {fileID: 3104720723642426815, guid: d9e86f94329e03f43bde3976d85ebb1a, type: 3}
-  hitFxPrefab: {fileID: 7998235011682297928, guid: 271779233902d0443a2052d8a6cee89b, type: 3}
-  fxLifetime: 0.25
 --- !u!82 &2175164308714764740
 AudioSource:
   m_ObjectHideFlags: 0
@@ -211,6 +210,28 @@ SortingGroup:
   m_SortingOrder: 0
   m_SortAtRoot: 0
   m_Sort3DAs2D: 0
+--- !u!114 &-1546513204278051988
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5277647906556210592}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57d64f35bcbf4ee42b0f94239a98a7f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponFxPlayer
+  muzzleFxPrefab: {fileID: 3104720723642426815, guid: d9e86f94329e03f43bde3976d85ebb1a, type: 3}
+  muzzleFxLifetime: 0.35
+  impactFxPrefab: {fileID: 1808880506540872006, guid: bc64e837a78e4d946bd5da183ce19505, type: 3}
+  impactFxLifetime: 0.35
+  fireShakeDuration: 0.08
+  fireShakeMagnitude: 0.08
+  hitShakeDuration: 0.08
+  hitShakeMagnitude: 0.08
+  critShakeDuration: 0.12
+  critShakeMagnitude: 0.16
 --- !u!1 &5993291520985931615
 GameObject:
   m_ObjectHideFlags: 0

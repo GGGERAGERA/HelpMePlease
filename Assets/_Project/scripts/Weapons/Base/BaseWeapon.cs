@@ -12,16 +12,22 @@ public abstract class BaseWeapon : MonoBehaviour
     [Header("Audio")]
     [SerializeField] protected AudioSource weaponAudioSource;
 
+    [Header("FX")]
+    [SerializeField] private WeaponFxPlayer fxPlayer;
+
     private Vector2 lastOwnerPosition;
     private Transform ownerTransform;
 
     protected float lastAttackTime;
 
     protected WeaponRuntimeStats Stats => runtimeStats;
+    protected WeaponFxPlayer FxPlayer => fxPlayer;
 
     protected virtual void Awake()
     {
         EnsureRuntimeStats();
+        if (fxPlayer == null)
+            fxPlayer = GetComponent<WeaponFxPlayer>();
     }
 
     protected virtual void Start()
