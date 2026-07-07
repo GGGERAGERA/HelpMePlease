@@ -5,13 +5,13 @@ public class CircularBurstRuntime : MonoBehaviour
     [SerializeField] private int projectileCount = 16;
 
     private float timer;
-    private Shoot shootWeapon;
+    private ProjectileWeapon shootWeapon;
     private PlayerCombatModifiers modifiers;
 
     private void Awake()
     {
         modifiers = GetComponent<PlayerCombatModifiers>();
-        shootWeapon = GetComponentInChildren<Shoot>();
+        shootWeapon = GetComponentInChildren<ProjectileWeapon>();
     }
 
     private void Update()
@@ -20,7 +20,7 @@ public class CircularBurstRuntime : MonoBehaviour
             return;
 
         if (shootWeapon == null)
-            shootWeapon = GetComponentInChildren<Shoot>();
+            shootWeapon = GetComponentInChildren<ProjectileWeapon>();
 
         if (shootWeapon == null)
             return;

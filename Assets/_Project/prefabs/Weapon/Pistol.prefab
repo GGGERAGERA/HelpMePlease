@@ -4974,6 +4974,8 @@ GameObject:
   - component: {fileID: 5458628035998651764}
   - component: {fileID: -2851344532050293130}
   - component: {fileID: 1928989846884532319}
+  - component: {fileID: -2011702771742143418}
+  - component: {fileID: 8213152442967674561}
   m_Layer: 0
   m_Name: Pistol
   m_TagString: Untagged
@@ -5127,18 +5129,19 @@ MonoBehaviour:
   runtimeStats: {fileID: 0}
   weaponAudioSource: {fileID: 0}
   fxPlayer: {fileID: 0}
-  bulletPrefab: {fileID: 1168613123775889235, guid: c85e1d8ec23ffba47836a61f5644eb61, type: 3}
-  ShootFX: {fileID: 3092589137338007280}
-  baseKnockbackForce: 4
-  spreadAngle: 12
   rotateToMouse: 1
   moveAroundOwner: 1
   owner: {fileID: 0}
   orbitRadius: 0.5
+  orbitSmoothSpeed: 25
+  ShootFX: {fileID: 3092589137338007280}
+  baseKnockbackForce: 4
+  spreadAngle: 12
   weaponSprite: {fileID: 0}
   recoilDistance: 0.12
   recoilReturnSpeed: 14
   fireBehaviourSource: {fileID: 1928989846884532319}
+  shotPattern: {fileID: 0}
 --- !u!114 &1928989846884532319
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5152,6 +5155,41 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileFireBehaviour
   projectilePrefab: {fileID: 1168613123775889235, guid: c85e1d8ec23ffba47836a61f5644eb61, type: 3}
+--- !u!114 &-2011702771742143418
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4188297587154588541}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 006fcf2c80908cf46a2f19dc149866e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectileShotPattern
+  fallbackSpreadAngle: 0
+--- !u!114 &8213152442967674561
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4188297587154588541}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57d64f35bcbf4ee42b0f94239a98a7f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponFxPlayer
+  muzzleFxPrefab: {fileID: 0}
+  muzzleFxLifetime: 0.35
+  impactFxPrefab: {fileID: 0}
+  impactFxLifetime: 0.35
+  fireShakeDuration: 0.08
+  fireShakeMagnitude: 0.08
+  hitShakeDuration: 0.08
+  hitShakeMagnitude: 0.08
+  critShakeDuration: 0.12
+  critShakeMagnitude: 0.16
 --- !u!1 &6937470469222571850
 GameObject:
   m_ObjectHideFlags: 0
