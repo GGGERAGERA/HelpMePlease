@@ -3,6 +3,10 @@
 [CreateAssetMenu(fileName = "New Character", menuName = "Game/Character Data")]
 public class CharacterData : ScriptableObject
 {
+
+    [Header("Unlock")]
+    public UnlockableContentData unlockData;
+
     [Header("Identity")]
     public string characterName;
 

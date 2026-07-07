@@ -3,6 +3,9 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "New Weapon", menuName = "Game/WeaponData")]
 public class WeaponData : ScriptableObject
 {
+    [Header("Unlock")]
+    public UnlockableContentData unlockData;
+
     [Header("Identity")]
     public string weaponName;
 
