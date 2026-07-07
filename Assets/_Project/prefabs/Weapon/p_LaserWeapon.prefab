@@ -45,6 +45,7 @@ GameObject:
   - component: {fileID: 1665494613045673805}
   - component: {fileID: -1546513204278051988}
   - component: {fileID: -4768851257318523984}
+  - component: {fileID: -6693474130703358042}
   m_Layer: 0
   m_Name: p_LaserWeapon
   m_TagString: Untagged
@@ -86,6 +87,8 @@ MonoBehaviour:
   runtimeStats: {fileID: 0}
   weaponAudioSource: {fileID: 0}
   fxPlayer: {fileID: 0}
+  rotateToMouse: 1
+  moveAroundOwner: 1
   owner: {fileID: 0}
   orbitRadius: 0.55
   orbitSmoothSpeed: 25
@@ -94,6 +97,7 @@ MonoBehaviour:
     m_Bits: 256
   beamWidth: 0.1
   beamRenderer: {fileID: -4768851257318523984}
+  fireBehaviourSource: {fileID: -6693474130703358042}
 --- !u!82 &2175164308714764740
 AudioSource:
   m_ObjectHideFlags: 0
@@ -250,6 +254,22 @@ MonoBehaviour:
   sortingLayerName: Effects
   glowSortingOrder: 20
   coreSortingOrder: 21
+--- !u!114 &-6693474130703358042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5277647906556210592}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: feebeb93f01fc6343971cbd7a62f2344, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BeamFireBehaviour
+  enemyMask:
+    serializedVersion: 2
+    m_Bits: 256
+  beamRenderer: {fileID: -4768851257318523984}
 --- !u!1 &5993291520985931615
 GameObject:
   m_ObjectHideFlags: 0
