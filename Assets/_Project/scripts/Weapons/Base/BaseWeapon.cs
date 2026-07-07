@@ -264,4 +264,32 @@ public abstract class BaseWeapon : MonoBehaviour
 
         return speed > threshold;
     }
+    protected WeaponFireContext BuildFireContext(Vector2 origin, Vector2 direction)
+    {
+        PlayerCombatModifiers modifiers = GetCombatModifiers();
+
+        bool isCritical = RollCritical();
+        int damage = GetDamage();
+
+        if (isCritical)
+            damage = Mathf.RoundToInt(damage * GetCritMultiplier());
+
+        return new WeaponFireContext(
+            this,
+            transform.parent,
+            firePoint,
+            origin,
+            direction,
+            damage,
+            isCritical,
+            GetRange(),
+            GetProjectileSpeed(),
+            GetProjectileCount(),
+            GetProjectilePierce(),
+            GetProjectileRicochet(),
+            0,
+            modifiers,
+            FxPlayer
+        );
+    }
 }

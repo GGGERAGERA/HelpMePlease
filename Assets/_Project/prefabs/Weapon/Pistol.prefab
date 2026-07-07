@@ -4973,6 +4973,7 @@ GameObject:
   - component: {fileID: 817849802606587231}
   - component: {fileID: 5458628035998651764}
   - component: {fileID: -2851344532050293130}
+  - component: {fileID: 1928989846884532319}
   m_Layer: 0
   m_Name: Pistol
   m_TagString: Untagged
@@ -5123,12 +5124,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Shoot
   weaponData: {fileID: 11400000, guid: acd6c980f3b758a409e5285b329a175a, type: 2}
   firePoint: {fileID: 5930085788941886523}
+  runtimeStats: {fileID: 0}
   weaponAudioSource: {fileID: 0}
-  projectileCount: 1
-  projectilePierce: 0
-  projectileRicochet: 0
-  critChance: 0.05
-  critMultiplier: 2
+  fxPlayer: {fileID: 0}
   bulletPrefab: {fileID: 1168613123775889235, guid: c85e1d8ec23ffba47836a61f5644eb61, type: 3}
   ShootFX: {fileID: 3092589137338007280}
   baseKnockbackForce: 4
@@ -5140,6 +5138,21 @@ MonoBehaviour:
   weaponSprite: {fileID: 0}
   recoilDistance: 0.12
   recoilReturnSpeed: 14
+  projectileFireBehaviour: {fileID: 0}
+--- !u!114 &1928989846884532319
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4188297587154588541}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4e887bd05512e14f9af9672933c37fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectileFireBehaviour
+  projectilePrefab: {fileID: 1168613123775889235, guid: c85e1d8ec23ffba47836a61f5644eb61, type: 3}
+  baseKnockbackForce: 4
 --- !u!1 &6937470469222571850
 GameObject:
   m_ObjectHideFlags: 0

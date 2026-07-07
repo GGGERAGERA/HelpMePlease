@@ -21,6 +21,10 @@ public class Shoot : BaseWeapon
     [SerializeField] private float recoilDistance = 0.12f;
     [SerializeField] private float recoilReturnSpeed = 14f;
 
+    [SerializeField] private MonoBehaviour fireBehaviourSource;
+
+    private IWeaponFireBehaviour fireBehaviour;
+
     private float currentRecoil;
 
     protected override void Start()
@@ -35,6 +39,13 @@ public class Shoot : BaseWeapon
 
         if (owner == null && transform.parent != null)
             owner = transform.parent;
+    }
+    protected override void Awake()
+    {
+        fireBehaviour = fireBehaviourSource as IWeaponFireBehaviour;
+
+        if (fireBehaviour == null)
+            Debug.LogWarning("[Shoot] Fire behaviour source is missing or invalid.");
     }
 
     protected override void Update()
@@ -74,28 +85,33 @@ public class Shoot : BaseWeapon
         Vector2 baseDirection = GetShootDirection();
         baseDirection = ApplyAccuracyPenalty(baseDirection);
 
-        FireShotGroup(baseDirection, GetProjectileCount());
+        FireShotGroup(baseDirection);
 
         if (weaponData != null)
             PlaySound(weaponData.attackSound);
 
         currentRecoil = recoilDistance;
 
-        SpawnShootFx();
+        PlayFireFx();
 
         MarkAttackTime();
     }
 
-    private void FireShotGroup(Vector2 baseDirection, int count)
+    private void FireShotGroup(Vector2 baseDirection)
     {
-        int safeCount = Mathf.Max(1, count);
+        int safeCount = Mathf.Max(1, GetProjectileCount());
 
         for (int i = 0; i < safeCount; i++)
         {
             float angleOffset = GetSpreadOffset(i, safeCount);
             Vector2 direction = RotateVector(baseDirection, angleOffset);
 
-            SpawnSingleProjectile(direction);
+            WeaponFireContext context = BuildFireContext(
+                firePoint.position,
+                direction
+            ).WithKnockback(GetKnockbackForce(baseKnockbackForce));
+
+            FireSingleShot(context);
         }
     }
 
@@ -111,57 +127,15 @@ public class Shoot : BaseWeapon
         );
     }
 
-    private void SpawnSingleProjectile(Vector2 direction)
+    private void FireSingleShot(WeaponFireContext context)
     {
-        if (!IsValidVector(direction) || direction.sqrMagnitude < 0.001f)
+        if (fireBehaviour == null)
             return;
 
-        GameObject projectileObject = Instantiate(
-            bulletPrefab,
-            firePoint.position,
-            Quaternion.identity
-        );
-
-        IWeaponProjectile projectile =
-            projectileObject.GetComponent<IWeaponProjectile>();
-
-        if (projectile == null)
-        {
-            Debug.LogWarning("Shoot: spawned projectile has no IWeaponProjectile component.");
-            Destroy(projectileObject);
-            return;
-        }
-
-        bool isCritical = RollCritical();
-
-        float finalDamage = GetDamage();
-
-        if (isCritical)
-            finalDamage *= GetCritMultiplier();
-
-        PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
-
-        projectile.Initialize(
-            finalDamage,
-            GetProjectileSpeed(),
-            GetRange(),
-            direction,
-            GetProjectilePierce(),
-            isCritical,
-            GetProjectileRicochet(),
-            GetKnockbackForce(baseKnockbackForce)
-        );
-
-        ProjectileCombatContext context =
-            projectileObject.GetComponent<ProjectileCombatContext>();
-
-        if (context == null)
-            context = projectileObject.AddComponent<ProjectileCombatContext>();
-
-        context.Initialize(modifiers);
+        fireBehaviour.Fire(context);
     }
 
-    private void SpawnShootFx()
+    private void PlayFireFx()
     {
         if (ShootFX == null)
             return;
@@ -268,7 +242,7 @@ public class Shoot : BaseWeapon
 
         return RotateVector(direction, randomAngle);
     }
-    public void FireExternalProjectile(Vector2 direction)
+    public void FireExternalProjectile(WeaponFireContext context)
     {
         if (bulletPrefab == null)
             return;
@@ -276,6 +250,21 @@ public class Shoot : BaseWeapon
         if (firePoint == null)
             firePoint = transform;
 
-        SpawnSingleProjectile(direction);
+        FireSingleShot(context);
+    }
+    public void FireExternalProjectile(Vector2 direction)
+    {
+        if (firePoint == null)
+            return;
+
+        if (direction.sqrMagnitude < 0.001f)
+            return;
+
+        WeaponFireContext context = BuildFireContext(
+            firePoint.position,
+            direction.normalized
+        );
+
+        FireSingleShot(context);
     }
 }
