@@ -15,6 +15,13 @@ public abstract class BaseWeapon : MonoBehaviour
     [Header("FX")]
     [SerializeField] private WeaponFxPlayer fxPlayer;
 
+    [Header("Aim / Orbit")]
+    [SerializeField] protected bool rotateToMouse = true;
+    [SerializeField] protected bool moveAroundOwner = true;
+    [SerializeField] protected Transform owner;
+    [SerializeField] protected float orbitRadius = 0.5f;
+    [SerializeField] protected float orbitSmoothSpeed = 25f;
+
     private Vector2 lastOwnerPosition;
     private Transform ownerTransform;
 
@@ -43,6 +50,9 @@ public abstract class BaseWeapon : MonoBehaviour
         if (firePoint == null)
             firePoint = transform;
 
+        if (owner == null && transform.parent != null)
+            owner = transform.parent;
+
         if (!isInitialized && weaponData != null)
         {
             runtimeStats.InitializeFromWeaponData(weaponData);
@@ -55,7 +65,14 @@ public abstract class BaseWeapon : MonoBehaviour
         if (Time.timeScale == 0f)
             return;
 
+        UpdateAimAndOrbit();
         UpdateStationaryFireRateRamp();
+
+        if (IsTryingToAttack() && CanAttack())
+        {
+            Attack();
+            MarkAttackTime();
+        }
     }
 
     public void Initialize(WeaponData data)
@@ -64,6 +81,75 @@ public abstract class BaseWeapon : MonoBehaviour
         EnsureRuntimeStats();
         runtimeStats.InitializeFromWeaponData(data);
         isInitialized = true;
+    }
+
+    protected virtual void UpdateAimAndOrbit()
+    {
+        if (owner == null)
+            return;
+
+        Vector2 aimDirection = GetAimDirectionFromOwner();
+
+        if (moveAroundOwner)
+            MoveAroundOwner(aimDirection);
+
+        if (rotateToMouse)
+            RotateWeapon(aimDirection);
+    }
+
+    protected Vector2 GetAimDirectionFromOwner()
+    {
+        Vector2 mousePosition = GetMouseWorldPosition();
+        Vector2 direction = mousePosition - (Vector2)owner.position;
+
+        if (!IsValidVector(direction) || direction.sqrMagnitude < 0.001f)
+            return Vector2.right;
+
+        return direction.normalized;
+    }
+
+    protected Vector2 GetAimDirectionFromFirePoint()
+    {
+        if (firePoint == null)
+            firePoint = transform;
+
+        Vector2 mousePosition = GetMouseWorldPosition();
+        Vector2 direction = mousePosition - (Vector2)firePoint.position;
+
+        if (!IsValidVector(direction) || direction.sqrMagnitude < 0.001f)
+            return transform.right;
+
+        return direction.normalized;
+    }
+
+    protected Vector2 GetMouseWorldPosition()
+    {
+        Camera camera = Camera.main;
+
+        if (camera == null)
+            return transform.position;
+
+        Vector3 mousePosition = camera.ScreenToWorldPoint(Input.mousePosition);
+        mousePosition.z = 0f;
+
+        return mousePosition;
+    }
+
+    protected void MoveAroundOwner(Vector2 aimDirection)
+    {
+        Vector2 targetPosition = (Vector2)owner.position + aimDirection * orbitRadius;
+
+        transform.position = Vector2.Lerp(
+            transform.position,
+            targetPosition,
+            orbitSmoothSpeed * Time.deltaTime
+        );
+    }
+
+    protected void RotateWeapon(Vector2 aimDirection)
+    {
+        float angle = Mathf.Atan2(aimDirection.y, aimDirection.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0f, 0f, angle);
     }
 
     private void EnsureRuntimeStats()
@@ -287,9 +373,46 @@ public abstract class BaseWeapon : MonoBehaviour
             GetProjectileCount(),
             GetProjectilePierce(),
             GetProjectileRicochet(),
-            0,
+            0f,
             modifiers,
             FxPlayer
         );
+    }
+
+    protected Vector2 ApplyAccuracyPenalty(Vector2 direction)
+    {
+        PlayerCombatModifiers modifiers = GetCombatModifiers();
+
+        if (modifiers == null || modifiers.accuracyPenaltyDegrees <= 0f)
+            return direction;
+
+        float randomAngle = Random.Range(
+            -modifiers.accuracyPenaltyDegrees,
+            modifiers.accuracyPenaltyDegrees
+        );
+
+        return RotateVector(direction, randomAngle);
+    }
+
+    protected Vector2 RotateVector(Vector2 vector, float angle)
+    {
+        float radians = angle * Mathf.Deg2Rad;
+
+        float cos = Mathf.Cos(radians);
+        float sin = Mathf.Sin(radians);
+
+        return new Vector2(
+            vector.x * cos - vector.y * sin,
+            vector.x * sin + vector.y * cos
+        ).normalized;
+    }
+
+    protected bool IsValidVector(Vector2 value)
+    {
+        return
+            !float.IsNaN(value.x) &&
+            !float.IsNaN(value.y) &&
+            !float.IsInfinity(value.x) &&
+            !float.IsInfinity(value.y);
     }
 }

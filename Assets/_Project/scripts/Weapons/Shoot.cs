@@ -8,12 +8,6 @@ public class Shoot : BaseWeapon
     [SerializeField] private float baseKnockbackForce = 4f;
     [SerializeField] private float spreadAngle = 12f;
 
-    [Header("Aim")]
-    [SerializeField] private bool rotateToMouse = true;
-    [SerializeField] private bool moveAroundOwner = true;
-    [SerializeField] private Transform owner;
-    [SerializeField] private float orbitRadius = 0.5f;
-
     [Header("Sprite")]
     [SerializeField] private SpriteRenderer weaponSprite;
 
@@ -42,6 +36,8 @@ public class Shoot : BaseWeapon
     }
     protected override void Awake()
     {
+        base.Awake();
+
         fireBehaviour = fireBehaviourSource as IWeaponFireBehaviour;
 
         if (fireBehaviour == null)
@@ -52,18 +48,6 @@ public class Shoot : BaseWeapon
     {
         base.Update();
 
-        if (Time.timeScale == 0f)
-            return;
-
-        if (moveAroundOwner)
-            MoveAroundOwner();
-
-        if (rotateToMouse)
-            RotateToMouse();
-
-        if (Input.GetMouseButton(0) && CanAttack())
-            Attack();
-
         currentRecoil = Mathf.MoveTowards(
             currentRecoil,
             0f,
@@ -73,8 +57,6 @@ public class Shoot : BaseWeapon
 
     public override void Attack()
     {
-        if (!CanAttack())
-            return;
 
         if (bulletPrefab == null)
             return;
@@ -82,8 +64,7 @@ public class Shoot : BaseWeapon
         if (firePoint == null)
             firePoint = transform;
 
-        Vector2 baseDirection = GetShootDirection();
-        baseDirection = ApplyAccuracyPenalty(baseDirection);
+        Vector2 baseDirection = ApplyAccuracyPenalty(GetAimDirectionFromFirePoint());
 
         FireShotGroup(baseDirection);
 
@@ -93,8 +74,6 @@ public class Shoot : BaseWeapon
         currentRecoil = recoilDistance;
 
         PlayFireFx();
-
-        MarkAttackTime();
     }
 
     private void FireShotGroup(Vector2 baseDirection)
@@ -170,78 +149,6 @@ public class Shoot : BaseWeapon
         ).normalized;
     }
 
-    private void MoveAroundOwner()
-    {
-        if (owner == null)
-            return;
-
-        Vector2 direction = GetMouseDirectionFromOwner();
-        Vector2 recoilOffset = -direction * currentRecoil;
-
-        transform.position =
-            (Vector2)owner.position +
-            direction * orbitRadius +
-            recoilOffset;
-    }
-
-    private void RotateToMouse()
-    {
-        Vector2 direction = GetShootDirection();
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-
-        transform.rotation = Quaternion.Euler(0f, 0f, angle);
-    }
-
-    private Vector2 GetMouseDirectionFromOwner()
-    {
-        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePosition.z = 0f;
-
-        Vector2 direction =
-            (Vector2)mousePosition - (Vector2)owner.position;
-
-        if (direction.sqrMagnitude < 0.001f)
-            return Vector2.right;
-
-        return direction.normalized;
-    }
-
-    private Vector2 GetShootDirection()
-    {
-        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePosition.z = 0f;
-
-        Vector2 direction =
-            (Vector2)mousePosition - (Vector2)firePoint.position;
-
-        if (!IsValidVector(direction) || direction.sqrMagnitude < 0.001f)
-            return transform.right;
-
-        return direction.normalized;
-    }
-    private bool IsValidVector(Vector2 value)
-    {
-        return
-            !float.IsNaN(value.x) &&
-            !float.IsNaN(value.y) &&
-            !float.IsInfinity(value.x) &&
-            !float.IsInfinity(value.y);
-    }
-
-    private Vector2 ApplyAccuracyPenalty(Vector2 direction)
-    {
-        PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
-
-        if (modifiers == null || modifiers.accuracyPenaltyDegrees <= 0f)
-            return direction;
-
-        float randomAngle = Random.Range(
-            -modifiers.accuracyPenaltyDegrees,
-            modifiers.accuracyPenaltyDegrees
-        );
-
-        return RotateVector(direction, randomAngle);
-    }
     public void FireExternalProjectile(WeaponFireContext context)
     {
         if (bulletPrefab == null)

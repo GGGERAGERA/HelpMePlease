@@ -75,6 +75,7 @@ GameObject:
   - component: {fileID: 817849802606587231}
   - component: {fileID: 5458628035998651764}
   - component: {fileID: 2027112042107839579}
+  - component: {fileID: -4935031414788189281}
   m_Layer: 0
   m_Name: Rocket
   m_TagString: Untagged
@@ -225,23 +226,35 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Shoot
   weaponData: {fileID: 11400000, guid: 45a606d5ce8c2a940bca74ee9c5c1843, type: 2}
   firePoint: {fileID: 2457338491928526576}
+  runtimeStats: {fileID: 0}
   weaponAudioSource: {fileID: 0}
-  projectileCount: 1
-  projectilePierce: 0
-  projectileRicochet: 0
-  critChance: 0.05
-  critMultiplier: 2
-  bulletPrefab: {fileID: 1388127652163498701, guid: fe1338c73f5b5fd49b0c276734aa73ba, type: 3}
-  ShootFX: {fileID: 3092589137338007280}
-  baseKnockbackForce: 4
-  spreadAngle: 12
+  fxPlayer: {fileID: 0}
   rotateToMouse: 1
   moveAroundOwner: 1
   owner: {fileID: 0}
   orbitRadius: 0.5
+  orbitSmoothSpeed: 25
+  bulletPrefab: {fileID: 1388127652163498701, guid: fe1338c73f5b5fd49b0c276734aa73ba, type: 3}
+  ShootFX: {fileID: 3092589137338007280}
+  baseKnockbackForce: 4
+  spreadAngle: 12
   weaponSprite: {fileID: 0}
   recoilDistance: 0.12
   recoilReturnSpeed: 14
+  fireBehaviourSource: {fileID: -4935031414788189281}
+--- !u!114 &-4935031414788189281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4188297587154588541}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4e887bd05512e14f9af9672933c37fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectileFireBehaviour
+  projectilePrefab: {fileID: 1388127652163498701, guid: fe1338c73f5b5fd49b0c276734aa73ba, type: 3}
 --- !u!1 &6937470469222571850
 GameObject:
   m_ObjectHideFlags: 0
