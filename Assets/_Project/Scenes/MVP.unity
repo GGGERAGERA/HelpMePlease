@@ -401,12 +401,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6ff630b29060c9459011215929abac5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MetaUpgradeApplier
-  hpPerLevel: 5
-  damagePercentPerLevel: 0.05
-  moveSpeedPercentPerLevel: 0.03
-  xpGainPercentPerLevel: 0.05
-  goldGainPercentPerLevel: 0.1
-  pickupRadiusPercentPerLevel: 0.05
+  hpPerLevel: 0
+  damagePercentPerLevel: 0
+  moveSpeedPercentPerLevel: 0
+  xpGainPercentPerLevel: 0
+  goldGainPercentPerLevel: 0
+  pickupRadiusPercentPerLevel: 0
 --- !u!114 &46915852
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -439,12 +439,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WorldEventSpawner
   eventPrefabs:
   - {fileID: 6791068172033243482, guid: 9be37b9069b011249924ba5f3b412aa3, type: 3}
-  - {fileID: 350149527517610057, guid: 176dbf5e68a24ca49b3595472b14d121, type: 3}
-  firstEventDelay: 10
+  firstEventDelay: 20
   eventInterval: 20
   minDistanceFromPlayer: 7
   maxDistanceFromPlayer: 12
-  maxActiveEvents: 2
+  maxActiveEvents: 1
 --- !u!114 &46915854
 MonoBehaviour:
   m_ObjectHideFlags: 0

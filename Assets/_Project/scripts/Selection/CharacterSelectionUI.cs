@@ -63,7 +63,9 @@ public sealed class CharacterSelectionUI : MonoBehaviour
 
         RefreshDetails(character);
         RefreshCards(character);
-        SetSelectButton(true);
+
+        bool isUnlocked = IsCharacterUnlocked(character);
+        SetSelectButton(isUnlocked);
     }
 
     private void ConfirmSelection()
@@ -96,6 +98,11 @@ public sealed class CharacterSelectionUI : MonoBehaviour
         SetText(specialText, $"Special: {GetSpecialText(character.specialDescription)}");
         SetText(descriptionText, character.description);
         SetPortrait(character.portrait);
+        if (!IsCharacterUnlocked(character) && character.unlockData != null)
+        {
+            SetText(statusText, "LOCKED");
+            SetText(descriptionText, character.unlockData.lockedDescription);
+        }
     }
 
     private void RefreshCards(CharacterData character)
@@ -158,5 +165,15 @@ public sealed class CharacterSelectionUI : MonoBehaviour
     private string GetSpecialText(string special)
     {
         return string.IsNullOrWhiteSpace(special) ? "No" : special;
+    }
+    private bool IsCharacterUnlocked(CharacterData character)
+    {
+        if (character == null || character.unlockData == null)
+            return true;
+
+        if (UnlockProgressService.Instance == null)
+            return character.unlockData.unlockedByDefault;
+
+        return UnlockProgressService.Instance.IsUnlocked(character.unlockData);
     }
 }

@@ -150,6 +150,18 @@ public class EnemyHealth : MonoBehaviour
         if (isDead) return;
 
         isDead = true;
+        EnemyIdentity identity = GetComponent<EnemyIdentity>();
+
+        if (UnlockProgressService.Instance != null &&
+            identity != null &&
+            !string.IsNullOrWhiteSpace(identity.EnemyId))
+        {
+            UnlockProgressService.Instance.AddProgressByCondition(
+                UnlockConditionType.KillEnemyType,
+                identity.EnemyId,
+                1
+            );
+        }
 
         KillManager.Instance?.AddKill();
 

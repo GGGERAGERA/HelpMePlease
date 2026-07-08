@@ -10,7 +10,6 @@ public class ProjectileWeapon : BaseWeapon
     [SerializeField] private SpriteRenderer weaponSprite;
 
     [Header("Recoil")]
-    [SerializeField] private float recoilDistance = 0.12f;
     [SerializeField] private float recoilReturnSpeed = 14f;
 
     [SerializeField] private MonoBehaviour fireBehaviourSource;

@@ -58,7 +58,9 @@ public sealed class WeaponSelectionUI : MonoBehaviour
 
         selectedWeapon = weapon;
         RefreshDetails(weapon);
-        SetConfirmButton(true);
+
+        bool isUnlocked = IsWeaponUnlocked(weapon);
+        SetConfirmButton(isUnlocked);
     }
 
     private void ConfirmSelection()
@@ -92,6 +94,11 @@ public sealed class WeaponSelectionUI : MonoBehaviour
         SetText(specialText, $"Special: {GetSpecialText(weapon.specialDescription)}");
 
         SetWeaponIcon(weapon.icon);
+        if (!IsWeaponUnlocked(weapon) && weapon.unlockData != null)
+        {
+            SetText(descriptionText, weapon.unlockData.lockedDescription);
+            SetText(specialText, "LOCKED");
+        }
     }
 
     private void ClearSelection()
@@ -139,5 +146,15 @@ public sealed class WeaponSelectionUI : MonoBehaviour
     private string GetSpecialText(string special)
     {
         return string.IsNullOrWhiteSpace(special) ? "No" : special;
+    }
+    private bool IsWeaponUnlocked(WeaponData weapon)
+    {
+        if (weapon == null || weapon.unlockData == null)
+            return true;
+
+        if (UnlockProgressService.Instance == null)
+            return weapon.unlockData.unlockedByDefault;
+
+        return UnlockProgressService.Instance.IsUnlocked(weapon.unlockData);
     }
 }

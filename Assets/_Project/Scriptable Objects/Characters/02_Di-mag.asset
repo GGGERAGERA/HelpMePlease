@@ -10,8 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 04a7e74498436d1449ee5d992e5bfc6a, type: 3}
-  m_Name: Di-mag
+  m_Name: 02_Di-mag
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  unlockData: {fileID: 11400000, guid: f00d42b9cb016a44f825ce1932affc15, type: 2}
   characterName: Di-mag
   description: "\u0423\u0442\u0432\u0435\u0440\u0436\u0434\u0430\u0435\u0442, \u0447\u0442\u043E
     \u043C\u0443\u0442\u0430\u043D\u0442\u044B \u0435\u0433\u043E \u0431\u043E\u044F\u0442\u0441\u044F.
