@@ -128,4 +128,70 @@ public sealed class UnlockProgressService : MonoBehaviour
             AddProgress(content, amount);
         }
     }
+#if UNITY_EDITOR
+    public void DebugAddKilledTupiks(int amount)
+    {
+        AddProgressByCondition(
+            UnlockConditionType.KillEnemyType,
+            "Tupik",
+            amount
+        );
+    }
+
+    public void DebugCompleteDarkLevel()
+    {
+        AddProgressByCondition(
+            UnlockConditionType.CompleteLevelModifier,
+            "Darkness",
+            1
+        );
+    }
+
+    public void DebugCompleteRainLevel()
+    {
+        AddProgressByCondition(
+            UnlockConditionType.CompleteLevelModifier,
+            "Rain",
+            1
+        );
+    }
+
+    public void DebugUnlockAll()
+    {
+        if (registry == null)
+        {
+            Debug.LogWarning("[UnlockProgressService] Registry is missing.");
+            return;
+        }
+
+        foreach (UnlockableContentData content in registry.Contents)
+        {
+            if (content == null)
+                continue;
+
+            Unlock(content);
+        }
+
+        Debug.Log("[UnlockProgressService] DEBUG unlocked all content.");
+    }
+
+    public void DebugResetAll()
+    {
+        if (registry == null)
+        {
+            Debug.LogWarning("[UnlockProgressService] Registry is missing.");
+            return;
+        }
+
+        foreach (UnlockableContentData content in registry.Contents)
+        {
+            if (content == null)
+                continue;
+
+            ResetUnlock(content);
+        }
+
+        Debug.Log("[UnlockProgressService] DEBUG reset all unlock progress.");
+    }
+#endif
 }

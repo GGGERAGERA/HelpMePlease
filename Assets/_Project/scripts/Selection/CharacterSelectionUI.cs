@@ -43,6 +43,15 @@ public sealed class CharacterSelectionUI : MonoBehaviour
     private void OnEnable()
     {
         ClearSelection();
+
+        if (cards == null)
+            return;
+
+        foreach (CharacterCardView card in cards)
+        {
+            if (card != null)
+                card.Refresh();
+        }
     }
 
     private void OnDestroy()

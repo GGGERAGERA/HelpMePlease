@@ -66,6 +66,8 @@ public sealed class BunkerNotificationManager : MonoBehaviour
             yield break;
 
         root.SetActive(true);
+        canvasGroup.interactable = false;
+        canvasGroup.blocksRaycasts = false;
 
         messageText.text = message;
 
@@ -131,6 +133,9 @@ public sealed class BunkerNotificationManager : MonoBehaviour
             canvasGroup.interactable = false;
             canvasGroup.blocksRaycasts = false;
         }
+
+        if (panel != null)
+            panel.anchoredPosition = basePosition + Vector2.up * slideOffsetY;
     }
 
     private Color GetColor(BunkerNotificationType type)
