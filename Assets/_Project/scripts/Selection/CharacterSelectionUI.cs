@@ -36,7 +36,7 @@ public sealed class CharacterSelectionUI : MonoBehaviour
 
         if (backButton != null)
             backButton.onClick.AddListener(Close);
-
+        BindCards();
         ClearSelection();
     }
 
@@ -52,6 +52,15 @@ public sealed class CharacterSelectionUI : MonoBehaviour
 
         if (backButton != null)
             backButton.onClick.RemoveListener(Close);
+
+        if (cards != null)
+        {
+            foreach (CharacterCardView card in cards)
+            {
+                if (card != null)
+                    card.Clicked -= SelectCharacter;
+            }
+        }
     }
 
     public void SelectCharacter(CharacterData character)
@@ -188,4 +197,20 @@ public sealed class CharacterSelectionUI : MonoBehaviour
 
         return UnlockProgressService.Instance.IsUnlocked(character.unlockData);
     }
+    private void BindCards()
+    {
+        if (cards == null)
+            return;
+
+        foreach (CharacterCardView card in cards)
+        {
+            if (card == null)
+                continue;
+
+            card.Clicked -= SelectCharacter;
+            card.Clicked += SelectCharacter;
+            card.Refresh();
+        }
+    }
+
 }

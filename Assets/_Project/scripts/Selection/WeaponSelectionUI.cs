@@ -4,14 +4,15 @@ using UnityEngine.UI;
 
 public sealed class WeaponSelectionUI : MonoBehaviour
 {
+    [Header("Cards")]
+    [SerializeField] private WeaponCardView[] cards;
+
     [Header("Navigation")]
     [SerializeField] private Button backButton;
     [SerializeField] private Button confirmButton;
     [SerializeField] private BunkerPanelManager panelManager;
 
     [Header("Right Info Panel")]
-    [SerializeField] private TextMeshProUGUI weaponNameText;
-    [SerializeField] private TextMeshProUGUI weaponClassText;
     [SerializeField] private Image weaponIconImage;
     [SerializeField] private TextMeshProUGUI descriptionText;
 
@@ -34,12 +35,22 @@ public sealed class WeaponSelectionUI : MonoBehaviour
         if (backButton != null)
             backButton.onClick.AddListener(Close);
 
+        BindCards();
         ClearSelection();
     }
 
     private void OnEnable()
     {
         ClearSelection();
+
+        if (cards == null)
+            return;
+
+        foreach (WeaponCardView card in cards)
+        {
+            if (card != null)
+                card.Refresh();
+        }
     }
 
     private void OnDestroy()
@@ -49,6 +60,8 @@ public sealed class WeaponSelectionUI : MonoBehaviour
 
         if (backButton != null)
             backButton.onClick.RemoveListener(Close);
+
+        UnbindCards();
     }
 
     public void SelectWeapon(WeaponData weapon)
@@ -57,7 +70,9 @@ public sealed class WeaponSelectionUI : MonoBehaviour
             return;
 
         selectedWeapon = weapon;
+
         RefreshDetails(weapon);
+        RefreshCards(weapon);
 
         bool isUnlocked = IsWeaponUnlocked(weapon);
         SetConfirmButton(isUnlocked);
@@ -66,6 +81,9 @@ public sealed class WeaponSelectionUI : MonoBehaviour
     private void ConfirmSelection()
     {
         if (selectedWeapon == null)
+            return;
+
+        if (!IsWeaponUnlocked(selectedWeapon))
             return;
 
         if (RunSelectionManager.Instance == null)
@@ -81,47 +99,105 @@ public sealed class WeaponSelectionUI : MonoBehaviour
     private void Close()
     {
         if (panelManager != null)
+        {
             panelManager.CloseAll();
+            return;
+        }
+
+        if (BunkerContext.Instance != null && BunkerContext.Instance.Panels != null)
+        {
+            BunkerContext.Instance.Panels.CloseAll();
+            return;
+        }
+
+        Debug.LogError("[WeaponSelectionUI] No BunkerPanelManager found.");
+    }
+
+    private void BindCards()
+    {
+        if (cards == null)
+            return;
+
+        foreach (WeaponCardView card in cards)
+        {
+            if (card == null)
+                continue;
+
+            card.Clicked -= SelectWeapon;
+            card.Clicked += SelectWeapon;
+            card.Refresh();
+        }
+    }
+
+    private void UnbindCards()
+    {
+        if (cards == null)
+            return;
+
+        foreach (WeaponCardView card in cards)
+        {
+            if (card != null)
+                card.Clicked -= SelectWeapon;
+        }
+    }
+
+    private void RefreshCards(WeaponData weapon)
+    {
+        if (cards == null)
+            return;
+
+        foreach (WeaponCardView card in cards)
+        {
+            if (card == null)
+                continue;
+
+            card.SetSelected(card.Weapon == weapon);
+        }
     }
 
     private void RefreshDetails(WeaponData weapon)
     {
-        SetText(weaponNameText, weapon.weaponName);
-        SetText(weaponClassText, weapon.weaponName.ToUpperInvariant());
+        bool isUnlocked = IsWeaponUnlocked(weapon);
+
+        if (!isUnlocked && weapon.unlockData != null)
+        {
+            SetText(descriptionText, weapon.unlockData.lockedDescription);
+            SetText(damageText, "");
+            SetText(fireRateText, "");
+            SetText(specialText, "LOCKED");
+
+            SetWeaponIcon(weapon.icon, Color.gray);
+            return;
+        }
+
         SetText(descriptionText, weapon.description);
         SetText(damageText, $"Damage: {weapon.damage}");
         SetText(fireRateText, $"Fire Rate: {weapon.fireRateRPM} RPM");
         SetText(specialText, $"Special: {GetSpecialText(weapon.specialDescription)}");
 
-        SetWeaponIcon(weapon.icon);
-        if (!IsWeaponUnlocked(weapon) && weapon.unlockData != null)
-        {
-            SetText(descriptionText, weapon.unlockData.lockedDescription);
-            SetText(specialText, "LOCKED");
-        }
+        SetWeaponIcon(weapon.icon, Color.white);
     }
 
     private void ClearSelection()
     {
         selectedWeapon = null;
+        SetText(descriptionText, "Choose a weapon.");
+        SetText(damageText, "Damage: -");
+        SetText(fireRateText, "Fire Rate: -");
+        SetText(specialText, "Special: -");
 
-        SetText(weaponNameText, "Name");
-        SetText(weaponClassText, "Class");
-        SetText(descriptionText, "Description");
-        SetText(damageText, "Damage");
-        SetText(fireRateText, "Fire Rate");
-        SetText(specialText, "Special");
-
-        SetWeaponIcon(null);
+        SetWeaponIcon(null, Color.white);
+        RefreshCards(null);
         SetConfirmButton(false);
     }
 
-    private void SetWeaponIcon(Sprite icon)
+    private void SetWeaponIcon(Sprite icon, Color color)
     {
         if (weaponIconImage == null)
             return;
 
         weaponIconImage.sprite = icon;
+        weaponIconImage.color = color;
         weaponIconImage.enabled = icon != null;
     }
 
@@ -147,6 +223,7 @@ public sealed class WeaponSelectionUI : MonoBehaviour
     {
         return string.IsNullOrWhiteSpace(special) ? "No" : special;
     }
+
     private bool IsWeaponUnlocked(WeaponData weapon)
     {
         if (weapon == null || weapon.unlockData == null)

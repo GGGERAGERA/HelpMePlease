@@ -3,13 +3,14 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class CharacterCardView : MonoBehaviour
+[RequireComponent(typeof(Button))]
+public sealed class WeaponCardView : MonoBehaviour
 {
     [Header("Data")]
-    [SerializeField] private CharacterData character;
+    [SerializeField] private WeaponData weapon;
 
     [Header("Visuals")]
-    [SerializeField] private Image portraitImage;
+    [SerializeField] private Image iconImage;
     [SerializeField] private TextMeshProUGUI nameText;
     [SerializeField] private GameObject lockedOverlay;
 
@@ -19,16 +20,14 @@ public class CharacterCardView : MonoBehaviour
 
     private Button button;
 
-    public CharacterData Character => character;
+    public WeaponData Weapon => weapon;
 
-    public event Action<CharacterData> Clicked;
+    public event Action<WeaponData> Clicked;
 
     private void Awake()
     {
         button = GetComponent<Button>();
-
-        if (button != null)
-            button.onClick.AddListener(HandleClick);
+        button.onClick.AddListener(HandleClick);
 
         Refresh();
         SetSelected(false);
@@ -42,28 +41,29 @@ public class CharacterCardView : MonoBehaviour
 
     private void HandleClick()
     {
-        if (character == null)
+        if (weapon == null)
             return;
 
-        Clicked?.Invoke(character);
+        Clicked?.Invoke(weapon);
     }
 
     public void Refresh()
     {
-        if (character == null)
+        if (weapon == null)
             return;
 
         bool isUnlocked = IsUnlocked();
 
-        if (portraitImage != null)
+        if (iconImage != null)
         {
-            portraitImage.sprite = character.portrait;
-            portraitImage.color = isUnlocked ? unlockedColor : lockedColor;
+            iconImage.sprite = weapon.icon;
+            iconImage.color = isUnlocked ? unlockedColor : lockedColor;
+            iconImage.enabled = weapon.icon != null;
         }
 
         if (nameText != null)
         {
-            nameText.text = character.characterName;
+            nameText.text = weapon.weaponName;
             nameText.color = isUnlocked ? Color.white : Color.gray;
         }
 
@@ -73,18 +73,18 @@ public class CharacterCardView : MonoBehaviour
 
     public void SetSelected(bool selected)
     {
-        // Пока оставляем пустым.
-        // У тебя выделение, похоже, живет через Animator/Button states.
+        // Пока пусто.
+        // Позже сюда можно добавить рамку выбранной карточки.
     }
 
     private bool IsUnlocked()
     {
-        if (character == null || character.unlockData == null)
+        if (weapon == null || weapon.unlockData == null)
             return true;
 
         if (UnlockProgressService.Instance == null)
-            return character.unlockData.unlockedByDefault;
+            return weapon.unlockData.unlockedByDefault;
 
-        return UnlockProgressService.Instance.IsUnlocked(character.unlockData);
+        return UnlockProgressService.Instance.IsUnlocked(weapon.unlockData);
     }
 }

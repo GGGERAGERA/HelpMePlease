@@ -350,144 +350,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
---- !u!1 &1705391153783565908
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8625681526025178536}
-  m_Layer: 5
-  m_Name: MatrixRainContainer
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &8625681526025178536
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1705391153783565908}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 8778826308921669642}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!1 &1955349825781642687
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8778826308921669642}
-  - component: {fileID: 390904954697020195}
-  - component: {fileID: 7597547400324934996}
-  - component: {fileID: 841898922453226017}
-  m_Layer: 5
-  m_Name: MatrixRainBackground
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!224 &8778826308921669642
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1955349825781642687}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 8625681526025178536}
-  m_Father: {fileID: 5421415255105552152}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &390904954697020195
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1955349825781642687}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d6de98e060f36e142a3defff7e98bdae, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MatrixRainBackground
-  columnPrefab: {fileID: 1908440814875846305, guid: b85db43c7a3b3a440b084148e1f06dbb, type: 3}
-  container: {fileID: 8625681526025178536}
-  columns: 60
-  minSpeed: 30
-  maxSpeed: 120
-  minLength: 8
-  maxLength: 22
-  normalColor: {r: 0.1, g: 0.8, b: 1, a: 0.45}
-  headColor: {r: 0.8, g: 1, b: 1, a: 0.9}
-  headChance: 0.25
-  glitchChancePerSecond: 0.35
-  glitchDuration: 0.08
-  glitchColor: {r: 1, g: 0, b: 0, a: 1}
-  wordChance: 0.15
---- !u!222 &7597547400324934996
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1955349825781642687}
-  m_CullTransparentMesh: 1
---- !u!114 &841898922453226017
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1955349825781642687}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.6156863}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &1994219291741133951
 GameObject:
   m_ObjectHideFlags: 0
@@ -500,7 +362,6 @@ GameObject:
   - component: {fileID: 5415646179180758399}
   - component: {fileID: 4173358085338472320}
   - component: {fileID: 4599416119988829359}
-  - component: {fileID: 5358594494220135705}
   m_Layer: 5
   m_Name: TitlePanelOutline
   m_TagString: Untagged
@@ -577,34 +438,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &5358594494220135705
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1994219291741133951}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4d612544436664d4c9efcc5fc6baf227, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectionUI
-  cards:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  characterNameText: {fileID: 0}
-  statusText: {fileID: 0}
-  portraitImage: {fileID: 0}
-  hpText: {fileID: 0}
-  speedText: {fileID: 0}
-  specialText: {fileID: 0}
-  descriptionText: {fileID: 0}
-  selectButton: {fileID: 0}
-  backButton: {fileID: 0}
-  panelManager: {fileID: 0}
-  enabledColor: {r: 1, g: 1, b: 1, a: 1}
-  disabledColor: {r: 0.45, g: 0.45, b: 0.45, a: 1}
 --- !u!1 &2458330490415392202
 GameObject:
   m_ObjectHideFlags: 0
@@ -1990,7 +1823,6 @@ GameObject:
   - component: {fileID: 5517521537506088109}
   - component: {fileID: 5473360267921769372}
   - component: {fileID: 8979559578964690334}
-  - component: {fileID: 2193295180240333865}
   m_Layer: 5
   m_Name: TitlePanel
   m_TagString: Untagged
@@ -2069,34 +1901,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &2193295180240333865
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7614416643009456823}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4d612544436664d4c9efcc5fc6baf227, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectionUI
-  cards:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  characterNameText: {fileID: 0}
-  statusText: {fileID: 0}
-  portraitImage: {fileID: 0}
-  hpText: {fileID: 0}
-  speedText: {fileID: 0}
-  specialText: {fileID: 0}
-  descriptionText: {fileID: 0}
-  selectButton: {fileID: 0}
-  backButton: {fileID: 0}
-  panelManager: {fileID: 0}
-  enabledColor: {r: 1, g: 1, b: 1, a: 1}
-  disabledColor: {r: 0.45, g: 0.45, b: 0.45, a: 1}
 --- !u!1 &7791351533144290317
 GameObject:
   m_ObjectHideFlags: 0
@@ -2343,7 +2147,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3678556328903697277}
-  - {fileID: 8778826308921669642}
   - {fileID: 1400341751283539336}
   - {fileID: 6457099623519626099}
   - {fileID: 3778847985122519357}
@@ -3123,6 +2926,10 @@ PrefabInstance:
     - target: {fileID: 1935425138911604696, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_Name
       value: PF_CharacterCard
+      objectReference: {fileID: 0}
+    - target: {fileID: 2164766724657131044, guid: 33394cee7ac93f04595a06f269807259, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5513005935569499005, guid: 33394cee7ac93f04595a06f269807259, type: 3}
       propertyPath: m_text
