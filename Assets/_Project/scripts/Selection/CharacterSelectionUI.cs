@@ -91,18 +91,29 @@ public sealed class CharacterSelectionUI : MonoBehaviour
 
     private void RefreshDetails(CharacterData character)
     {
+        bool isUnlocked = IsCharacterUnlocked(character);
+
         SetText(characterNameText, character.characterName);
+
+        if (!isUnlocked && character.unlockData != null)
+        {
+            SetText(statusText, "LOCKED");
+            SetText(hpText, "");
+            SetText(speedText, "");
+            SetText(specialText, "");
+            SetText(descriptionText, character.unlockData.lockedDescription);
+
+            SetPortrait(character.portrait, Color.gray);
+            return;
+        }
+
         SetText(statusText, "ВЫЖИВШИЙ");
         SetText(hpText, $"HP: {character.maxHealth}");
         SetText(speedText, $"Speed: {character.moveSpeed}");
         SetText(specialText, $"Special: {GetSpecialText(character.specialDescription)}");
         SetText(descriptionText, character.description);
-        SetPortrait(character.portrait);
-        if (!IsCharacterUnlocked(character) && character.unlockData != null)
-        {
-            SetText(statusText, "LOCKED");
-            SetText(descriptionText, character.unlockData.lockedDescription);
-        }
+
+        SetPortrait(character.portrait, Color.white);
     }
 
     private void RefreshCards(CharacterData character)
@@ -130,17 +141,18 @@ public sealed class CharacterSelectionUI : MonoBehaviour
         SetText(specialText, "Special: -");
         SetText(descriptionText, "Choose a survivor.");
 
-        SetPortrait(null);
+        SetPortrait(null, Color.white);
         RefreshCards(null);
         SetSelectButton(false);
     }
 
-    private void SetPortrait(Sprite portrait)
+    private void SetPortrait(Sprite portrait, Color color)
     {
         if (portraitImage == null)
             return;
 
         portraitImage.sprite = portrait;
+        portraitImage.color = color;
         portraitImage.enabled = portrait != null;
     }
 

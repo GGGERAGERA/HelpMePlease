@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1e6ff315515d2b4f97d01778aae1e8f, type: 3}
   m_Name: Pistol
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  unlockData: {fileID: 11400000, guid: 45c173ca16325c44d9ad3d5dce8b3c5f, type: 2}
   weaponName: Pistol
   description: "\u0421\u0442\u0430\u0440\u044B\u0439, \u043F\u043E\u0442\u0440\u0451\u043F\u0430\u043D\u043D\u044B\u0439,
     \u043D\u043E \u0432\u0441\u0451 \u0435\u0449\u0451 \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442.\r\n\u0412

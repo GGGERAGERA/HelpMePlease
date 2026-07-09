@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1e6ff315515d2b4f97d01778aae1e8f, type: 3}
   m_Name: Rocket
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  unlockData: {fileID: 11400000, guid: b648bfba745a0ec4bbae77ee684e1d7f, type: 2}
   weaponName: Rocket
   description: "\u0420\u0430\u043A\u0435\u0442\u043D\u0438\u0446\u0430 \u043D\u0430\u0445\u0443\u0439"
   icon: {fileID: 728457941966510583, guid: 7552172a543b68f47b7b0cb76cc5692e, type: 3}

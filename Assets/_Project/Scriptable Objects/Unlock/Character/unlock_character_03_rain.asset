@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74a19a310157b5a45a46ef45c1d55e43, type: 3}
   m_Name: unlock_character_03_rain
   m_EditorClassIdentifier: Assembly-CSharp::UnlockableContentData
-  id: character_02
+  id: character_03
   displayName: 
   contentType: 0
   unlockedByDefault: 0
   lockedDescription: "\u041F\u0440\u043E\u0439\u0434\u0438 \u0443\u0440\u043E\u0432\u0435\u043D\u044C
-    \u0441 \u0442\u0435\u043C\u043D\u043E\u0442\u043E\u0439"
+    \u0441 \u0434\u043E\u0436\u0434\u0451\u043C"
   condition:
     type: 2
-    targetId: Darkness
+    targetId: Rain
     requiredAmount: 1
