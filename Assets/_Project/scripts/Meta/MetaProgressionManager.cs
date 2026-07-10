@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public enum MetaUpgradeType
@@ -10,7 +11,7 @@ public enum MetaUpgradeType
     PickupRadius
 }
 
-public class MetaProgressionManager : MonoBehaviour
+public sealed class MetaProgressionManager : MonoBehaviour
 {
     public static MetaProgressionManager Instance { get; private set; }
 
@@ -22,6 +23,8 @@ public class MetaProgressionManager : MonoBehaviour
     private const string XpGainLevelKey = "META_XP_GAIN_LEVEL";
     private const string GoldGainLevelKey = "META_GOLD_GAIN_LEVEL";
     private const string PickupRadiusLevelKey = "META_PICKUP_RADIUS_LEVEL";
+
+    public event Action ProgressChanged;
 
     public int HpLevel { get; private set; }
     public int DamageLevel { get; private set; }
@@ -41,36 +44,56 @@ public class MetaProgressionManager : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
 
-        Load();
+        // Менеджер обязан быть корневым объектом.
+        if (transform.parent != null)
+            transform.SetParent(null);
+
+        DontDestroyOnLoad(gameObject);
+        ReloadFromStorage();
+    }
+
+    public static MetaProgressionManager EnsureExists()
+    {
+        if (Instance != null)
+            return Instance;
+
+        MetaProgressionManager existing =
+            FindFirstObjectByType<MetaProgressionManager>();
+
+        if (existing != null)
+        {
+            Instance = existing;
+            existing.ReloadFromStorage();
+            return existing;
+        }
+
+        GameObject root = new("MetaProgressionManager");
+        return root.AddComponent<MetaProgressionManager>();
+    }
+
+    public void ReloadFromStorage()
+    {
+        HpLevel = PlayerPrefs.GetInt(HpLevelKey, 0);
+        DamageLevel = PlayerPrefs.GetInt(DamageLevelKey, 0);
+        MoveSpeedLevel = PlayerPrefs.GetInt(MoveSpeedLevelKey, 0);
+        XpGainLevel = PlayerPrefs.GetInt(XpGainLevelKey, 0);
+        GoldGainLevel = PlayerPrefs.GetInt(GoldGainLevelKey, 0);
+        PickupRadiusLevel = PlayerPrefs.GetInt(PickupRadiusLevelKey, 0);
     }
 
     public int GetLevel(MetaUpgradeType type)
     {
-        switch (type)
+        return type switch
         {
-            case MetaUpgradeType.Hp:
-                return HpLevel;
-
-            case MetaUpgradeType.Damage:
-                return DamageLevel;
-
-            case MetaUpgradeType.MoveSpeed:
-                return MoveSpeedLevel;
-
-            case MetaUpgradeType.XpGain:
-                return XpGainLevel;
-
-            case MetaUpgradeType.GoldGain:
-                return GoldGainLevel;
-
-            case MetaUpgradeType.PickupRadius:
-                return PickupRadiusLevel;
-
-            default:
-                return 0;
-        }
+            MetaUpgradeType.Hp => HpLevel,
+            MetaUpgradeType.Damage => DamageLevel,
+            MetaUpgradeType.MoveSpeed => MoveSpeedLevel,
+            MetaUpgradeType.XpGain => XpGainLevel,
+            MetaUpgradeType.GoldGain => GoldGainLevel,
+            MetaUpgradeType.PickupRadius => PickupRadiusLevel,
+            _ => 0
+        };
     }
 
     public int GetUpgradeCost(MetaUpgradeType type)
@@ -99,16 +122,34 @@ public class MetaProgressionManager : MonoBehaviour
         if (currentLevel >= MaxUpgradeLevel)
             return false;
 
+        CurrencyManager currency = CurrencyManager.Instance;
+
+        if (currency == null)
+        {
+            Debug.LogError("[MetaProgressionManager] CurrencyManager is missing.");
+            return false;
+        }
+
         int cost = GetUpgradeCostByLevel(currentLevel);
 
-        if (CurrencyManager.Instance == null)
-            return false;
-
-        if (!CurrencyManager.Instance.SpendGold(cost))
+        if (!currency.SpendGold(cost))
             return false;
 
         SetLevel(type, currentLevel + 1);
         PlayerPrefs.Save();
+        Debug.Log(
+    $"[MetaProgressionManager] Saved: " +
+    $"HP={PlayerPrefs.GetInt("META_HP_LEVEL")}, " +
+    $"DMG={PlayerPrefs.GetInt("META_DAMAGE_LEVEL")}, " +
+    $"SPD={PlayerPrefs.GetInt("META_MOVE_SPEED_LEVEL")}"
+);
+
+        ProgressChanged?.Invoke();
+
+        Debug.Log(
+            $"[MetaProgressionManager] Purchased {type}: " +
+            $"{currentLevel} -> {currentLevel + 1}"
+        );
 
         return true;
     }
@@ -149,15 +190,5 @@ public class MetaProgressionManager : MonoBehaviour
                 PlayerPrefs.SetInt(PickupRadiusLevelKey, level);
                 break;
         }
-    }
-
-    private void Load()
-    {
-        HpLevel = PlayerPrefs.GetInt(HpLevelKey, 0);
-        DamageLevel = PlayerPrefs.GetInt(DamageLevelKey, 0);
-        MoveSpeedLevel = PlayerPrefs.GetInt(MoveSpeedLevelKey, 0);
-        XpGainLevel = PlayerPrefs.GetInt(XpGainLevelKey, 0);
-        GoldGainLevel = PlayerPrefs.GetInt(GoldGainLevelKey, 0);
-        PickupRadiusLevel = PlayerPrefs.GetInt(PickupRadiusLevelKey, 0);
     }
 }

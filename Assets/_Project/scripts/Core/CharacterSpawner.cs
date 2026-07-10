@@ -40,6 +40,7 @@ public class CharacterSpawner : MonoBehaviour
 
         if (metaUpgradeApplier != null)
         {
+            Debug.Log($"[CharacterSpawner] Weapons found: {weapons.Length}");
             metaUpgradeApplier.ApplyTo(player, weapons);
         }
         else
