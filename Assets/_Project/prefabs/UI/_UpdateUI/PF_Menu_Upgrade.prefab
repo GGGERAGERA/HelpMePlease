@@ -1430,6 +1430,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: PF_MenuButton
       objectReference: {fileID: 0}
+    - target: {fileID: 7600613525778074225, guid: 63160bda7609811499676be6d473d491, type: 3}
+      propertyPath: m_PixelsPerUnitMultiplier
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 8190850364114922400, guid: 63160bda7609811499676be6d473d491, type: 3}
       propertyPath: m_PixelsPerUnitMultiplier
       value: 4
