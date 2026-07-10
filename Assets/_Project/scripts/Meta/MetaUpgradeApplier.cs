@@ -14,20 +14,19 @@ public class MetaUpgradeApplier : MonoBehaviour
     {
         if (player == null)
         {
-            Debug.LogWarning("MetaUpgradeApplier: player is null.");
+            Debug.LogError("[MetaUpgradeApplier] Player is null.");
             return;
         }
 
-        if (MetaProgressionManager.Instance == null)
-        {
-            Debug.LogWarning("[MetaUpgradeApplier] MetaProgressionManager.Instance is null. Meta upgrades not applied.");
-            return;
-        }
+        MetaProgressionManager meta = MetaProgressionManager.EnsureExists();
+        meta.ReloadFromStorage();
 
-        MetaProgressionManager meta = MetaProgressionManager.Instance;
         Debug.Log(
-    $"[MetaUpgradeApplier] Apply meta: HP={meta.HpLevel}, DMG={meta.DamageLevel}, SPD={meta.MoveSpeedLevel}, XP={meta.XpGainLevel}, GOLD={meta.GoldGainLevel}, PICKUP={meta.PickupRadiusLevel}"
-);
+            $"[MetaUpgradeApplier] Loaded meta: " +
+            $"HP={meta.HpLevel}, DMG={meta.DamageLevel}, " +
+            $"SPD={meta.MoveSpeedLevel}, XP={meta.XpGainLevel}, " +
+            $"GOLD={meta.GoldGainLevel}, PICKUP={meta.PickupRadiusLevel}"
+        );
 
         PlayerHealth health = player.GetComponent<PlayerHealth>();
         CharacterMovement2D movement = player.GetComponent<CharacterMovement2D>();

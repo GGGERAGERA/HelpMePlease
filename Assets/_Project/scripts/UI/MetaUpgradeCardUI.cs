@@ -34,12 +34,15 @@ public class MetaUpgradeCardUI : MonoBehaviour
 
     public void Refresh(int gold)
     {
-        if (MetaProgressionManager.Instance == null)
-            return;
+        MetaProgressionManager progression =
+            MetaProgressionManager.EnsureExists();
 
-        int level = MetaProgressionManager.Instance.GetLevel(type);
-        int maxLevel = MetaProgressionManager.Instance.MaxLevel;
-        int cost = MetaProgressionManager.Instance.GetUpgradeCost(type);
+        progression.ReloadFromStorage();
+
+        int level = progression.GetLevel(type);
+        int maxLevel = progression.MaxLevel;
+        int cost = progression.GetUpgradeCost(type);
+
         bool isMaxed = level >= maxLevel;
 
         if (titleText != null)
@@ -90,17 +93,15 @@ public class MetaUpgradeCardUI : MonoBehaviour
 
     private void Buy()
     {
-        if (MetaProgressionManager.Instance == null)
+        MetaProgressionManager progression =
+            MetaProgressionManager.EnsureExists();
+
+        if (!progression.BuyUpgrade(type))
             return;
 
-        bool success = MetaProgressionManager.Instance.BuyUpgrade(type);
+        MetaUpgradeShopUI shop =
+            GetComponentInParent<MetaUpgradeShopUI>();
 
-        if (!success)
-            return;
-
-        MetaUpgradeShopUI shop = GetComponentInParent<MetaUpgradeShopUI>();
-
-        if (shop != null)
-            shop.Refresh();
+        shop?.Refresh();
     }
 }
