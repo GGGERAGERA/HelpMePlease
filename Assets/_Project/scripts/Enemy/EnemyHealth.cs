@@ -40,11 +40,6 @@ public class EnemyHealth : MonoBehaviour
     [Header("Boss UI")]
     [SerializeField] private string bossName = "BOSS";
 
-    [Header("Boss Portals")]
-    [SerializeField] private GameObject menuPortalPrefab;
-    [SerializeField] private GameObject nextLevelPortalPrefab;
-    [SerializeField] private float portalSpawnDistance = 2f;
-
     private bool isDead;
 
     private static float lastCritSoundTime;
@@ -197,8 +192,17 @@ public class EnemyHealth : MonoBehaviour
         if (isBoss)
         {
             HUDManager.Instance?.HideBossHp();
-            RunMessageService.Instance?.Show(RunMessageType.BossDefeated);
-            SpawnExitPortals();
+
+            if (RunFlowController.Instance != null)
+            {
+                RunFlowController.Instance.HandleBossDefeated();
+            }
+            else
+            {
+                Debug.LogError(
+                    "[EnemyHealth] Boss defeated, but RunFlowController is missing."
+                );
+            }
         }
 
         if (deathFXPrefab != null)
@@ -244,36 +248,5 @@ public class EnemyHealth : MonoBehaviour
             );
         }
     }
-    private void SpawnExitPortals()
-    {
-        Vector3 basePosition = transform.position;
-
-        if (menuPortalPrefab != null)
-        {
-            Instantiate(
-                menuPortalPrefab,
-                basePosition + Vector3.left * portalSpawnDistance,
-                Quaternion.identity
-            );
-        }
-
-        if (nextLevelPortalPrefab != null)
-        {
-            GameObject nextPortal = Instantiate(
-                nextLevelPortalPrefab,
-                basePosition + Vector3.right * portalSpawnDistance,
-                Quaternion.identity
-            );
-
-            PortalLabel label = nextPortal.GetComponentInChildren<PortalLabel>();
-
-            if (label != null && RunLevelManager.Instance != null)
-            {
-                int nextLevel = RunLevelManager.Instance.GetNextLevelNumber();
-                label.SetText($"LEVEL {nextLevel}");
-            }
-        }
-    }
-
 
 }

@@ -17,15 +17,26 @@ public sealed class LevelChoiceManager : MonoBehaviour
     [SerializeField, Min(1)] private int choicesCount = 3;
 
     private readonly List<LevelNodeData> currentChoices = new();
+    private bool isChoosing;
 
     private void Awake()
     {
+        if (panelView == null)
+        {
+            panelView = FindFirstObjectByType<LevelChoicePanelView>(
+                FindObjectsInactive.Include
+            );
+        }
+
         if (panelView != null)
             panelView.Hide();
     }
 
     public void ShowChoices()
     {
+        if (isChoosing)
+            return;
+
         currentChoices.Clear();
 
         List<LevelNodeData> pool = BuildPool();
@@ -51,6 +62,7 @@ public sealed class LevelChoiceManager : MonoBehaviour
             return;
         }
         RunMessageService.Instance?.Show(RunMessageType.LevelChoiceOpened);
+        isChoosing = true;
         Time.timeScale = 0f;
         panelView.Show(currentChoices, SelectNode);
     }
@@ -75,8 +87,10 @@ public sealed class LevelChoiceManager : MonoBehaviour
 
     private void SelectNode(LevelNodeData node)
     {
-        if (node == null)
+        if (node == null || !isChoosing)
             return;
+
+        isChoosing = false;
 
         GameObject player = GameObject.FindGameObjectWithTag("Player");
 
@@ -91,6 +105,10 @@ public sealed class LevelChoiceManager : MonoBehaviour
         if (panelView != null)
             panelView.Hide();
 
-        SceneManager.LoadScene(gameplaySceneName);
+        string targetScene = string.IsNullOrWhiteSpace(node.SceneName)
+            ? gameplaySceneName
+            : node.SceneName;
+
+        SceneManager.LoadScene(targetScene);
     }
 }

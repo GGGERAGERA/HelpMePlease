@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 [System.Serializable]
 public class EnemySpawnStage
@@ -10,15 +11,16 @@ public class EnemySpawnStage
 public class EnemySpawner : MonoBehaviour
 {
     [Header("Spawn Settings")]
-    public GameObject[] enemyPrefabs;      // массив префабов врагов
-    public float spawnInterval = 2f;       // интервал между спавнами
-    public int maxEnemies = 10;            // максимум врагов на сцене
+    public GameObject[] enemyPrefabs;      
+    public float spawnInterval = 2f;       
+    public int maxEnemies = 10;            
     private float spawnTimer;
+    private bool spawningEnabled = true;
 
     [Header("Spawn Distance")]
-    public float minSpawnDistance = 5f;    // минимальное расстояние от игрока
-    public float maxSpawnDistance = 12f;   // максимальное расстояние от игрока
-    public float spawnRadius = 360f;       // угол разброса (по кругу)
+    public float minSpawnDistance = 5f;    
+    public float maxSpawnDistance = 12f;   
+    public float spawnRadius = 360f;       
 
     private float difficultyTimer;
 
@@ -48,21 +50,31 @@ public class EnemySpawner : MonoBehaviour
     private float runTime;
 
     private Transform player;
+    private readonly List<EnemyHealth> activeEnemies = new();
+    private bool initialized;
 
 
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
-        if (player == null)
-            return;
         baseSpawnInterval = spawnInterval;
         baseMaxEnemies = maxEnemies;
         baseHealthMultiplier = currentHealthMultiplier;
         baseSpeedMultiplier = currentSpeedMultiplier;
+        initialized = true;
     }
     private void Update()
     {
+        if (!spawningEnabled)
+            return;
+
         if (Time.timeScale == 0f)
+            return;
+
+        if (player == null)
+            player = GameObject.FindGameObjectWithTag("Player")?.transform;
+
+        if (player == null)
             return;
 
         runTime += Time.deltaTime;
@@ -107,9 +119,9 @@ public class EnemySpawner : MonoBehaviour
     {
         if (player == null) return;
 
-        // Проверяем количество врагов на сцене
-        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
-        if (enemies.Length >= maxEnemies) return;
+        
+        activeEnemies.RemoveAll(enemy => enemy == null);
+        if (activeEnemies.Count >= maxEnemies) return;
 
         if (enemyPrefabs.Length == 0) return;
         GameObject[] availableEnemies = GetAvailableEnemies();
@@ -119,13 +131,13 @@ public class EnemySpawner : MonoBehaviour
 
         GameObject selectedEnemy = availableEnemies[Random.Range(0, availableEnemies.Length)];
 
-        // Выбираем случайное направление
+        
         Vector2 randomDirection = Random.insideUnitCircle.normalized;
 
-        // Выбираем случайное расстояние (от min до max)
+       
         float distance = Random.Range(minSpawnDistance, maxSpawnDistance);
 
-        // Вычисляем позицию спавна
+       
         Vector3 spawnPos = player.position + (Vector3)(randomDirection * distance);
 
         GameObject enemy = Instantiate(
@@ -138,6 +150,7 @@ public class EnemySpawner : MonoBehaviour
         if (enemyHealth != null)
         {
             enemyHealth.SetMaxHealthMultiplier(currentHealthMultiplier);
+            activeEnemies.Add(enemyHealth);
         }
 
         EnemyMovement enemyMovement = enemy.GetComponent<EnemyMovement>();
@@ -152,6 +165,9 @@ public class EnemySpawner : MonoBehaviour
     private GameObject[] GetAvailableEnemies()
     {
         GameObject[] result = enemyPrefabs;
+
+        if (spawnStages == null)
+            return result;
 
         for (int i = 0; i < spawnStages.Length; i++)
         {
@@ -186,20 +202,44 @@ public class EnemySpawner : MonoBehaviour
         spawnTimer = 0f;
         difficultyTimer = 0f;
         runTime = 0f;
+        spawningEnabled = true;
     }
     public void SetLevelScaling(
     float healthMultiplier,
     float speedMultiplier,
     float spawnRateMultiplier
-)
+    )
     {
+        if (!initialized)
+        {
+            baseSpawnInterval = spawnInterval;
+            baseMaxEnemies = maxEnemies;
+            baseHealthMultiplier = currentHealthMultiplier;
+            baseSpeedMultiplier = currentSpeedMultiplier;
+            initialized = true;
+        }
+
         currentHealthMultiplier = healthMultiplier;
         currentSpeedMultiplier = speedMultiplier;
 
-        spawnInterval = baseSpawnInterval * spawnRateMultiplier;
+        // A higher spawn-rate multiplier must produce more spawns, not a longer delay.
+        spawnInterval = baseSpawnInterval / Mathf.Max(0.1f, spawnRateMultiplier);
         spawnInterval = Mathf.Max(0.12f, spawnInterval);
 
         maxEnemies = Mathf.RoundToInt(baseMaxEnemies * Mathf.Lerp(1f, 2.5f, healthMultiplier - 1f));
         maxEnemies = Mathf.Clamp(maxEnemies, baseMaxEnemies, 220);
+    }
+    public void StopSpawning()
+    {
+        spawningEnabled = false;
+
+        Debug.Log("[EnemySpawner] Spawning stopped.");
+    }
+
+    public void ResumeSpawning()
+    {
+        spawningEnabled = true;
+
+        Debug.Log("[EnemySpawner] Spawning resumed.");
     }
 }

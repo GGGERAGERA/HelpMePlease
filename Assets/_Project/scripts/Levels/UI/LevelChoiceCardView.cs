@@ -66,50 +66,58 @@ public sealed class LevelChoiceCardView : MonoBehaviour
     private string BuildModifiersText(LevelNodeData data)
     {
         string result = "";
+        int nextLevel = RunStateManager.Instance != null
+            ? RunStateManager.Instance.CurrentLevel + 1
+            : 2;
+
+        if (nextLevel > 2)
+            result += $"вЂў Р”Р°РІР»РµРЅРёРµ СѓСЂРѕРІРЅСЏ +{(nextLevel - 2) * 12}%\n";
 
         if (data.weatherType != LevelWeatherType.None)
-            result += $"• {FormatWeather(data.weatherType)}\n";
+            result += $"вЂў {FormatWeather(data.weatherType)}\n";
 
         if (data.enemyHealthMultiplier != 1f)
-            result += $"• HP врагов x{data.enemyHealthMultiplier:0.##}\n";
+            result += $"вЂў HP РІСЂР°РіРѕРІ x{data.enemyHealthMultiplier:0.##}\n";
 
         if (data.enemySpeedMultiplier != 1f)
-            result += $"• Скорость врагов x{data.enemySpeedMultiplier:0.##}\n";
+            result += $"вЂў РЎРєРѕСЂРѕСЃС‚СЊ РІСЂР°РіРѕРІ x{data.enemySpeedMultiplier:0.##}\n";
 
         if (data.spawnRateMultiplier != 1f)
-            result += $"• Частота спавна x{data.spawnRateMultiplier:0.##}\n";
+            result += $"вЂў Р§Р°СЃС‚РѕС‚Р° СЃРїР°РІРЅР° x{data.spawnRateMultiplier:0.##}\n";
 
         if (data.hasEliteEnemies)
-            result += "• Элитные враги\n";
+            result += "вЂў Р­Р»РёС‚РЅС‹Рµ РІСЂР°РіРё\n";
 
         if (data.hasExplosiveEnemies)
-            result += "• Взрывные враги\n";
+            result += "вЂў Р’Р·СЂС‹РІРЅС‹Рµ РІСЂР°РіРё\n";
 
         if (data.hasHoldZoneEvent)
-            result += "• Событие удержания зоны\n";
+            result += "вЂў РЎРѕР±С‹С‚РёРµ СѓРґРµСЂР¶Р°РЅРёСЏ Р·РѕРЅС‹\n";
 
         if (data.hasExtraChest)
-            result += "• Дополнительный сундук\n";
+            result += "вЂў Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Р№ СЃСѓРЅРґСѓРє\n";
 
-        return string.IsNullOrWhiteSpace(result) ? "• Без особых условий" : result.TrimEnd();
+        return string.IsNullOrWhiteSpace(result)
+            ? "вЂў Р‘РµР· РѕСЃРѕР±С‹С… СѓСЃР»РѕРІРёР№"
+            : result.TrimEnd();
     }
 
     private string BuildRewardText(LevelNodeData data)
     {
         if (data.bonusRareChance > 0f)
-            return $"+{Mathf.RoundToInt(data.bonusRareChance * 100f)}% шанс редкой награды";
+            return $"+{Mathf.RoundToInt(data.bonusRareChance * 100f)}% С€Р°РЅСЃ СЂРµРґРєРѕР№ РЅР°РіСЂР°РґС‹";
 
-        return "Обычная награда";
+        return "РћР±С‹С‡РЅР°СЏ РЅР°РіСЂР°РґР°";
     }
 
     private string FormatWeather(LevelWeatherType weather)
     {
         return weather switch
         {
-            LevelWeatherType.Darkness => "Темнота",
-            LevelWeatherType.Rain => "Дождь",
-            LevelWeatherType.Snow => "Снег",
-            _ => "Обычная погода"
+            LevelWeatherType.Darkness => "РўРµРјРЅРѕС‚Р°",
+            LevelWeatherType.Rain => "Р”РѕР¶РґСЊ",
+            LevelWeatherType.Snow => "РЎРЅРµРі",
+            _ => "РћР±С‹С‡РЅР°СЏ РїРѕРіРѕРґР°"
         };
     }
 

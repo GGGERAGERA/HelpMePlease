@@ -6,6 +6,9 @@ using UnityEngine;
 )]
 public class LevelNodeData : ScriptableObject
 {
+    [Header("Identity")]
+    [SerializeField] private string id;
+
     [Header("View")]
     public string nodeName;
     [TextArea] public string description;
@@ -14,6 +17,10 @@ public class LevelNodeData : ScriptableObject
     [Header("Type")]
     public LevelNodeType nodeType;
     public LevelWeatherType weatherType;
+
+    [Header("Scene")]
+    [Tooltip("Leave empty to reuse the current gameplay scene.")]
+    [SerializeField] private string sceneName;
 
     [Header("Enemy Modifiers")]
     [Min(0.1f)] public float enemyHealthMultiplier = 1f;
@@ -29,4 +36,7 @@ public class LevelNodeData : ScriptableObject
     [Header("Reward")]
     public UpgradeRarity guaranteedRewardRarity;
     [Range(0f, 1f)] public float bonusRareChance;
+
+    public string Id => string.IsNullOrWhiteSpace(id) ? name : id;
+    public string SceneName => sceneName;
 }

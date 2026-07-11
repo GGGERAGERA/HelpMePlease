@@ -19,56 +19,92 @@ public sealed class LevelModifiersApplier : MonoBehaviour
     [SerializeField] private GameObject holdZoneEventObject;
     [SerializeField] private GameObject extraChestObject;
 
-    private void Start()
+    [Header("Endless Difficulty")]
+    [SerializeField, Min(0f)] private float healthGrowthPerLevel = 0.18f;
+    [SerializeField, Min(0f)] private float speedGrowthPerLevel = 0.05f;
+    [SerializeField, Min(0f)] private float spawnRateGrowthPerLevel = 0.12f;
+
+    private System.Collections.IEnumerator Start()
     {
+        // CharacterSpawner creates the player and the current legacy spawner during Start.
+        // Waiting one frame removes script execution-order coupling.
+        yield return null;
+
+        if (enemySpawner == null || !enemySpawner.gameObject.scene.IsValid())
+            enemySpawner = FindFirstObjectByType<EnemySpawner>();
+
         ApplySelectedNode();
     }
 
     private void ApplySelectedNode()
     {
-        LevelNodeData node = RunStateManager.Instance != null
-    ? RunStateManager.Instance.SelectedLevelNode
-    : null;
+        RunStateManager runState = RunStateManager.Instance;
+        LevelNodeData node = runState != null
+            ? runState.SelectedLevelNode
+            : null;
+        int currentLevel = runState != null
+            ? Mathf.Max(1, runState.CurrentLevel)
+            : 1;
 
         if (node == null)
         {
-            DisableEnvironment();
-            return;
-        }
-
-        ApplyEnemyModifiers(node);
-        ApplyWeather(node);
-        ApplyEvents(node);
-
-        Debug.Log($"[LevelModifiersApplier] Applied node: {node.nodeName}");
-        RunMessageService.Instance?.ShowCustom(
-            $"ÓÐÎÂÅÍÜ {RunStateManager.Instance.CurrentLevel}",
-            $"{node.nodeName}\n{node.description}",
-            4f
-        );
-        if (node == null)
-        {
+            ApplyEndlessEnemyScaling(currentLevel, 1f, 1f, 1f);
             DisableEnvironment();
 
             RunMessageService.Instance?.ShowCustom(
-                "ÓÐÎÂÅÍÜ 1",
-                "Âûæèâèòå äî ïîÿâëåíèÿ áîññà.",
+                $"LEVEL {currentLevel}",
+                "Survive until the boss appears.",
                 4f
             );
 
             return;
         }
+
+        ApplyEnemyModifiers(node, currentLevel);
+        ApplyWeather(node);
+        ApplyEvents(node);
+
+        Debug.Log($"[LevelModifiersApplier] Applied node: {node.nodeName}");
+        RunMessageService.Instance?.ShowCustom(
+            $"LEVEL {currentLevel}",
+            $"{node.nodeName}\n{node.description}",
+            4f
+        );
     }
 
-    private void ApplyEnemyModifiers(LevelNodeData node)
+    private void ApplyEnemyModifiers(LevelNodeData node, int currentLevel)
+    {
+        ApplyEndlessEnemyScaling(
+            currentLevel,
+            node.enemyHealthMultiplier,
+            node.enemySpeedMultiplier,
+            node.spawnRateMultiplier
+        );
+    }
+
+    private void ApplyEndlessEnemyScaling(
+        int currentLevel,
+        float nodeHealthMultiplier,
+        float nodeSpeedMultiplier,
+        float nodeSpawnRateMultiplier
+    )
     {
         if (enemySpawner == null)
             return;
 
+        int levelIndex = Mathf.Max(0, currentLevel - 1);
+
+        float healthMultiplier =
+            nodeHealthMultiplier * (1f + healthGrowthPerLevel * levelIndex);
+        float speedMultiplier =
+            nodeSpeedMultiplier * (1f + speedGrowthPerLevel * levelIndex);
+        float spawnRateMultiplier =
+            nodeSpawnRateMultiplier * (1f + spawnRateGrowthPerLevel * levelIndex);
+
         enemySpawner.SetLevelScaling(
-            node.enemyHealthMultiplier,
-            node.enemySpeedMultiplier,
-            node.spawnRateMultiplier
+            healthMultiplier,
+            speedMultiplier,
+            spawnRateMultiplier
         );
     }
 

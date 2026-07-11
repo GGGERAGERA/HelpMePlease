@@ -255,6 +255,7 @@ GameObject:
   - component: {fileID: 46915853}
   - component: {fileID: 46915854}
   - component: {fileID: 46915855}
+  - component: {fileID: 46915856}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -458,6 +459,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeApplier
   playerTag: Player
+--- !u!114 &46915856
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 46915840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b2a5f7583574e0f9585af8c234f195a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RunFlowController
+  baseSceneName: MainMenu
+  levelChoiceManager: {fileID: 1304651476}
+  returnToBasePortalFallback: {fileID: 0}
+  nextLevelPortalFallback: {fileID: 0}
+  defaultPortalSpawnDistance: 2
+  spawnReturnToBasePortal: 1
+  spawnNextLevelPortal: 1
 --- !u!1 &101118583
 GameObject:
   m_ObjectHideFlags: 0
@@ -1471,6 +1491,9 @@ MonoBehaviour:
   darknessLightIntensity: 0.01
   holdZoneEventObject: {fileID: 0}
   extraChestObject: {fileID: 0}
+  healthGrowthPerLevel: 0.18
+  speedGrowthPerLevel: 0.05
+  spawnRateGrowthPerLevel: 0.12
 --- !u!4 &1203821960
 Transform:
   m_ObjectHideFlags: 0

@@ -17,13 +17,5 @@ public sealed class DebugGoldCheat : MonoBehaviour
             CurrencyManager.Instance.AddGold(amount);
             Debug.Log($"[DebugGoldCheat] Added {amount} gold.");
         }
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            PlayerPrefs.DeleteAll();
-            PlayerPrefs.Save();
-
-            Debug.Log("[DebugBunkerReset] PlayerPrefs cleared.");
-        }
-
     }
 }
