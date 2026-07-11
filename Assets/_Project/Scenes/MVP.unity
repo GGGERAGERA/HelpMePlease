@@ -390,12 +390,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6ff630b29060c9459011215929abac5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MetaUpgradeApplier
-  hpPerLevel: 0
-  damagePercentPerLevel: 0
-  moveSpeedPercentPerLevel: 0
-  xpGainPercentPerLevel: 0
-  goldGainPercentPerLevel: 0
-  pickupRadiusPercentPerLevel: 0
+  hpPerLevel: 20
+  damagePercentPerLevel: 0.05
+  moveSpeedPercentPerLevel: 0.03
+  xpGainPercentPerLevel: 0.05
+  goldGainPercentPerLevel: 0.1
+  pickupRadiusPercentPerLevel: 0.05
 --- !u!114 &46915852
 MonoBehaviour:
   m_ObjectHideFlags: 0
