@@ -43,11 +43,10 @@ public sealed class LevelChoiceManager : MonoBehaviour
 
         while (currentChoices.Count < choicesCount && pool.Count > 0)
         {
-            int index = Random.Range(0, pool.Count);
-            LevelNodeData node = pool[index];
+            LevelNodeData node = TakeWeightedChoice(pool);
 
-            currentChoices.Add(node);
-            pool.RemoveAt(index);
+            if (node != null)
+                currentChoices.Add(node);
         }
 
         if (currentChoices.Count == 0)
@@ -74,15 +73,69 @@ public sealed class LevelChoiceManager : MonoBehaviour
         if (availableNodes == null)
             return pool;
 
+        RunStateManager runState = RunStateManager.Instance;
+        int nextRunLevel = runState != null
+            ? runState.CurrentLevel + 1
+            : 2;
+        LevelNodeData currentNode = runState != null
+            ? runState.SelectedLevelNode
+            : null;
+
         foreach (LevelNodeData node in availableNodes)
         {
             if (node == null)
                 continue;
 
+            if (nextRunLevel < node.MinimumRunLevel)
+                continue;
+
+            if (node.MaximumRunLevel > 0 && nextRunLevel > node.MaximumRunLevel)
+                continue;
+
+            if (node.ChoiceWeight <= 0f)
+                continue;
+
+            if (!node.AllowSameWeatherAsCurrent &&
+                currentNode != null &&
+                node.weatherType == currentNode.weatherType)
+            {
+                continue;
+            }
+
             pool.Add(node);
         }
 
         return pool;
+    }
+
+    private LevelNodeData TakeWeightedChoice(List<LevelNodeData> pool)
+    {
+        float totalWeight = 0f;
+
+        for (int i = 0; i < pool.Count; i++)
+            totalWeight += pool[i].ChoiceWeight;
+
+        if (totalWeight <= 0f)
+            return null;
+
+        float roll = Random.value * totalWeight;
+
+        for (int i = 0; i < pool.Count; i++)
+        {
+            roll -= pool[i].ChoiceWeight;
+
+            if (roll <= 0f)
+            {
+                LevelNodeData selected = pool[i];
+                pool.RemoveAt(i);
+                return selected;
+            }
+        }
+
+        int lastIndex = pool.Count - 1;
+        LevelNodeData fallback = pool[lastIndex];
+        pool.RemoveAt(lastIndex);
+        return fallback;
     }
 
     private void SelectNode(LevelNodeData node)

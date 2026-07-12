@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class RunTimer : MonoBehaviour
 {
-    [SerializeField] private float runDuration = 300f; // 5 минут
+    [SerializeField] private float runDuration = 300f; // 5 РјРёРЅСѓС‚
 
     [Header("Boss Spawn")]
     [SerializeField] private GameObject bossPrefab;
@@ -15,24 +15,15 @@ public class RunTimer : MonoBehaviour
     private float timeLeft;
     private bool bossSpawned;
 
-    private bool survivalPhaseStarted;
-    private float survivalTime;
-
     private void Start()
     {
+        ApplySelectedLevel();
         timeLeft = runDuration;
         HUDManager.Instance?.SetTimer(timeLeft);
     }
 
     private void Update()
     {
-        if (survivalPhaseStarted)
-        {
-            survivalTime += Time.deltaTime;
-            HUDManager.Instance?.SetTimer(survivalTime);
-            return;
-        }
-
         if (bossSpawned)
             return;
 
@@ -45,6 +36,26 @@ public class RunTimer : MonoBehaviour
             bossSpawned = true;
             StartCoroutine(BossSpawnRoutine());
         }
+    }
+
+    private void ApplySelectedLevel()
+    {
+        LevelNodeData level = RunStateManager.Instance != null
+            ? RunStateManager.Instance.SelectedLevelNode
+            : null;
+
+        if (level == null)
+            return;
+
+        runDuration = level.Duration;
+
+        if (level.BossPrefab != null)
+            bossPrefab = level.BossPrefab;
+
+        Debug.Log(
+            $"[RunTimer] Level '{level.nodeName}': {runDuration:F0}s, " +
+            $"boss '{(bossPrefab != null ? bossPrefab.name : "not assigned")}'."
+        );
     }
 
     private void SpawnBossObject()
@@ -63,7 +74,7 @@ public class RunTimer : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("RunTimer: bossPrefab или Player не найден.");
+            Debug.LogWarning("RunTimer: bossPrefab РёР»Рё Player РЅРµ РЅР°Р№РґРµРЅ.");
         }
     }
 
@@ -90,42 +101,15 @@ public class RunTimer : MonoBehaviour
 
         SpawnBossObject();
     }
-    public void StartSurvivalPhase()
-    {
-        if (survivalPhaseStarted)
-            return;
 
-        survivalPhaseStarted = true;
-        survivalTime = 0f;
-
-        HUDManager.Instance?.SetTimer(0f);
-
-        EnemySpawner spawner = FindAnyObjectByType<EnemySpawner>();
-
-        if (spawner != null)
-            spawner.StartSurvivalMode();
-
-        Debug.Log("Survival phase started.");
-    }
-    public float GetSurvivalTime()
-    {
-        return survivalTime;
-    }
-
+    // Kept for the existing result UI. The finite level flow no longer enters survival mode.
     public bool IsSurvivalPhaseStarted()
     {
-        return survivalPhaseStarted;
+        return false;
     }
-    public void RestartBossTimer()
+
+    public float GetSurvivalTime()
     {
-        survivalPhaseStarted = false;
-        survivalTime = 0f;
-
-        bossSpawned = false;
-        timeLeft = runDuration;
-
-        HUDManager.Instance?.SetTimer(timeLeft);
+        return 0f;
     }
-
-
 }
