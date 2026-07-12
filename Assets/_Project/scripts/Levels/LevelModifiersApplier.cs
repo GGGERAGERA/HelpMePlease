@@ -17,7 +17,6 @@ public sealed class LevelModifiersApplier : MonoBehaviour
 
     [Header("Events")]
     [SerializeField] private GameObject holdZoneEventObject;
-    [SerializeField] private GameObject extraChestObject;
 
     [Header("Endless Difficulty")]
     [SerializeField, Min(0f)] private float healthGrowthPerLevel = 0.18f;
@@ -135,8 +134,6 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         if (holdZoneEventObject != null)
             holdZoneEventObject.SetActive(node.hasHoldZoneEvent);
 
-        if (extraChestObject != null)
-            extraChestObject.SetActive(node.hasExtraChest);
     }
 
     private void DisableEnvironment()
@@ -153,8 +150,6 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         if (holdZoneEventObject != null)
             holdZoneEventObject.SetActive(false);
 
-        if (extraChestObject != null)
-            extraChestObject.SetActive(false);
     }
 
     private void ApplyLighting(LevelNodeData node)

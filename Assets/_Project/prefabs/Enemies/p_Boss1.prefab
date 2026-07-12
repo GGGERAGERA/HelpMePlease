@@ -129,6 +129,7 @@ GameObject:
   - component: {fileID: 8634306207331902935}
   - component: {fileID: 8498786568601226095}
   - component: {fileID: 1329760117982389465}
+  - component: {fileID: -8970330571610309405}
   m_Layer: 0
   m_Name: p_Boss1
   m_TagString: Enemy
@@ -265,7 +266,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19136a5a9a8407f4bad025abe8a5570b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
-  maxHealth: 700
+  maxHealth: 1
   OnHealthChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -289,9 +290,6 @@ MonoBehaviour:
   deathFXPrefab: {fileID: 8928692237468947480, guid: 214f1954046dffb4ca1fe34c079e7f6e, type: 3}
   isBoss: 1
   bossName: "\u0416\u0438\u0440\u043D\u044B\u0439 \u0421\u043A\u0443\u0444"
-  menuPortalPrefab: {fileID: 3594706724080515630, guid: e63dc6d8ef643aa49a2a333be476509f, type: 3}
-  nextLevelPortalPrefab: {fileID: 3594706724080515630, guid: 3a70fe764ad306841b8b95207c27399e, type: 3}
-  portalSpawnDistance: 2
 --- !u!114 &8498786568601226095
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -319,6 +317,28 @@ SortingGroup:
   m_SortingOrder: 0
   m_SortAtRoot: 0
   m_Sort3DAs2D: 0
+--- !u!114 &-8970330571610309405
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8074722678228422782}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fad7c3b5b3ed11441926130681548e1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyChaseMovement
+  playerTag: Player
+  normalSpeed: 2
+  aggroSpeed: 4
+  aggroDistance: 5
+  stopAfterHitDuration: 2
+  knockbackDecay: 16
+  visualRoot: {fileID: 3060955031055097430}
+  flipVisual: 1
+  animator: {fileID: 8106179503796228276}
+  runParameterName: IsRunning
 --- !u!1001 &5792137375309412222
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -178,18 +178,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   enemyPrefabs:
   - {fileID: 1432338969431510999, guid: bbeab41e755732443b4201b8641136c9, type: 3}
-  spawnInterval: 1
-  maxEnemies: 100
+  spawnInterval: 1.5
+  maxEnemies: 50
   minSpawnDistance: 10
   maxSpawnDistance: 15
   spawnRadius: 10
-  difficultyIncreaseInterval: 10
-  spawnRateMultiplier: 0.9
-  enemyHealthMultiplier: 1.1
-  enemySpeedMultiplier: 1.5
-  minSpawnInterval: 0.4
-  maxHealthMultiplier: 3
-  maxSpeedMultiplier: 1.8
+  difficultyIncreaseInterval: 60
+  spawnRateMultiplier: 0.92
+  enemyHealthMultiplier: 1.08
+  enemySpeedMultiplier: 1.03
+  minSpawnInterval: 0.45
+  maxHealthMultiplier: 2
+  maxSpeedMultiplier: 1.35
   spawnStages:
   - startTime: 1
     enemyPrefabs:
@@ -378,7 +378,6 @@ MonoBehaviour:
   enemyDeathExplosionChance: 0
   deathExplosionDamageBonus: 0
   knockbackMultiplier: 1
-  doubleDamageWithInaccuracy: 0
   lowHpPower: 0
   lowHpPowerMultiplier: 0
   lowHpDamageBonus: 0
@@ -401,11 +400,6 @@ MonoBehaviour:
   bonusFireRateMultiplier: 1
   accuracyPenaltyDegrees: 0
   stationaryMoveThreshold: 0.05
-  deathExplosionPrefab: {fileID: 2817483437198940390, guid: a0f7d14547ca6cc4281f13e8d9aa8cab, type: 3}
-  deathExplosionRadius: 2
-  hitExplosionPrefab: {fileID: 8264809118761358846, guid: 59d7dc58baebeea48914a601a8fc9407, type: 3}
-  hitExplosionRadius: 1.5
-  hitExplosionDamage: 10
 --- !u!114 &-7248466617024912767
 MonoBehaviour:
   m_ObjectHideFlags: 0

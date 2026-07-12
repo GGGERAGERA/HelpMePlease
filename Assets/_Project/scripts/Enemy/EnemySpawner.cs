@@ -208,7 +208,7 @@ public class EnemySpawner : MonoBehaviour
     float healthMultiplier,
     float speedMultiplier,
     float spawnRateMultiplier
-    )
+)
     {
         if (!initialized)
         {
@@ -219,15 +219,29 @@ public class EnemySpawner : MonoBehaviour
             initialized = true;
         }
 
-        currentHealthMultiplier = healthMultiplier;
-        currentSpeedMultiplier = speedMultiplier;
+        currentHealthMultiplier = Mathf.Max(0.1f, healthMultiplier);
+        currentSpeedMultiplier = Mathf.Max(0.1f, speedMultiplier);
 
-        // A higher spawn-rate multiplier must produce more spawns, not a longer delay.
-        spawnInterval = baseSpawnInterval / Mathf.Max(0.1f, spawnRateMultiplier);
-        spawnInterval = Mathf.Max(0.12f, spawnInterval);
+        float safeSpawnRateMultiplier = Mathf.Max(0.1f, spawnRateMultiplier);
 
-        maxEnemies = Mathf.RoundToInt(baseMaxEnemies * Mathf.Lerp(1f, 2.5f, healthMultiplier - 1f));
-        maxEnemies = Mathf.Clamp(maxEnemies, baseMaxEnemies, 220);
+        spawnInterval = baseSpawnInterval / safeSpawnRateMultiplier;
+        spawnInterval = Mathf.Max(minSpawnInterval, spawnInterval);
+
+        maxEnemies = Mathf.RoundToInt(baseMaxEnemies * safeSpawnRateMultiplier);
+        maxEnemies = Mathf.Clamp(
+            maxEnemies,
+            baseMaxEnemies,
+            220
+        );
+
+        Debug.Log(
+            $"[EnemySpawner] Level scaling applied: " +
+            $"HP x{currentHealthMultiplier:F2}, " +
+            $"Speed x{currentSpeedMultiplier:F2}, " +
+            $"Spawn x{safeSpawnRateMultiplier:F2}, " +
+            $"Interval {spawnInterval:F2}, " +
+            $"Max enemies {maxEnemies}."
+        );
     }
     public void StopSpawning()
     {

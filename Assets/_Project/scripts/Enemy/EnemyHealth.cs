@@ -142,9 +142,11 @@ public class EnemyHealth : MonoBehaviour
     }
     private void Die()
     {
-        if (isDead) return;
+        if (isDead)
+            return;
 
         isDead = true;
+
         EnemyIdentity identity = GetComponent<EnemyIdentity>();
 
         if (UnlockProgressService.Instance != null &&
@@ -156,6 +158,24 @@ public class EnemyHealth : MonoBehaviour
                 identity.EnemyId,
                 1
             );
+        }
+        else
+        {
+            if (identity == null)
+            {
+                Debug.LogWarning(
+                    $"[EnemyHealth] EnemyIdentity is missing on '{name}'. Kill progress was not registered.",
+                    this
+                );
+            }
+
+            if (UnlockProgressService.Instance == null)
+            {
+                Debug.LogWarning(
+                    "[EnemyHealth] UnlockProgressService is missing. Kill progress was not registered.",
+                    this
+                );
+            }
         }
 
         KillManager.Instance?.AddKill();

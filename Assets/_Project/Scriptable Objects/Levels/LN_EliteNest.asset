@@ -12,14 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e74dac74c1838a44383fc81aa6cac50f, type: 3}
   m_Name: LN_EliteNest
   m_EditorClassIdentifier: Assembly-CSharp::LevelNodeData
+  id: 
   nodeName: "\u0413\u043D\u0435\u0437\u0434\u043E \u044D\u043B\u0438\u0442\u044B"
   description: 
   icon: {fileID: 0}
   nodeType: 1
   weatherType: 0
+  sceneName: 
   enemyHealthMultiplier: 1.4
   enemySpeedMultiplier: 1.15
-  spawnRateMultiplier: 1
+  spawnRateMultiplier: 0.85
   hasEliteEnemies: 1
   hasExplosiveEnemies: 0
   hasHoldZoneEvent: 1

@@ -471,13 +471,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b2a5f7583574e0f9585af8c234f195a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunFlowController
-  baseSceneName: MainMenu
   levelChoiceManager: {fileID: 1304651476}
-  returnToBasePortalFallback: {fileID: 0}
-  nextLevelPortalFallback: {fileID: 0}
-  defaultPortalSpawnDistance: 2
-  spawnReturnToBasePortal: 1
-  spawnNextLevelPortal: 1
+  levelChoiceDelay: 5
+  stopEnemySpawnerAfterBoss: 1
+  completionCleaner: {fileID: 2000457041}
 --- !u!1 &101118583
 GameObject:
   m_ObjectHideFlags: 0
@@ -662,51 +659,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Slider
---- !u!1 &337075031
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 337075033}
-  - component: {fileID: 337075032}
-  m_Layer: 0
-  m_Name: VictoryManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &337075032
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 337075031}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 28c8538412ca9034ab76071433c95eb6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VictoryManager
-  runResultView: {fileID: 1844714996}
---- !u!4 &337075033
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 337075031}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &352398372
 GameObject:
   m_ObjectHideFlags: 0
@@ -853,6 +805,38 @@ MonoBehaviour:
   bossNameText: {fileID: 1864624142}
   worldEventMarker: {fileID: 753439200}
   runMessageView: {fileID: 0}
+--- !u!1 &476995245
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 476995246}
+  m_Layer: 0
+  m_Name: RunSystems
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &476995246
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 476995245}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 9.4687, y: -7.9938, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2000457040}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &610461739 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5193316843532077453, guid: 0e0021be84d8019499b92a2a19d08bd5, type: 3}
@@ -1490,10 +1474,9 @@ MonoBehaviour:
   normalLightIntensity: 1
   darknessLightIntensity: 0.01
   holdZoneEventObject: {fileID: 0}
-  extraChestObject: {fileID: 0}
-  healthGrowthPerLevel: 0.18
-  speedGrowthPerLevel: 0.05
-  spawnRateGrowthPerLevel: 0.12
+  healthGrowthPerLevel: 0.12
+  speedGrowthPerLevel: 0.025
+  spawnRateGrowthPerLevel: 0.08
 --- !u!4 &1203821960
 Transform:
   m_ObjectHideFlags: 0
@@ -1707,7 +1690,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b48d245815bfd5344b4d43797f6b2901, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelChoiceManager
-  panelView: {fileID: 0}
+  panelView: {fileID: 1005126886403062317}
   availableNodes:
   - {fileID: 11400000, guid: 4ffac9cebeca2ca448064c8e36e68b47, type: 2}
   - {fileID: 11400000, guid: 1ae1c50aecc06984f833bf27ce8efa57, type: 2}
@@ -3231,6 +3214,51 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1998914052}
   m_CullTransparentMesh: 1
+--- !u!1 &2000457039
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2000457040}
+  - component: {fileID: 2000457041}
+  m_Layer: 0
+  m_Name: RunCompletionCleaner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2000457040
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000457039}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 476995246}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2000457041
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000457039}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3295c458bb96f004aa2c180f177a66b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RunCompletionCleaner
+  enemyTag: Enemy
 --- !u!1 &2007231648
 GameObject:
   m_ObjectHideFlags: 0
@@ -3509,6 +3537,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1635164420}
     m_Modifications:
+    - target: {fileID: 1867481815405063287, guid: 4e295d3b3b0467c468bad1e06453d3ae, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2388607086955979827, guid: 4e295d3b3b0467c468bad1e06453d3ae, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -3866,6 +3898,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4e295d3b3b0467c468bad1e06453d3ae, type: 3}
+--- !u!114 &1005126886403062317 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1867481815405063287, guid: 4e295d3b3b0467c468bad1e06453d3ae, type: 3}
+  m_PrefabInstance: {fileID: 1005126886403062316}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe8a79765b1d1ad4388941ee2a8540b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelChoicePanelView
 --- !u!1001 &4036840034449866819
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4092,6 +4135,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 458832744}
     m_Modifications:
+    - target: {fileID: 758898587762472441, guid: 7a11732926af9a64689345aa18c22cfb, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.554
+      objectReference: {fileID: 0}
+    - target: {fileID: 758898587762472441, guid: 7a11732926af9a64689345aa18c22cfb, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 758898587762472441, guid: 7a11732926af9a64689345aa18c22cfb, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0.554
+      objectReference: {fileID: 0}
     - target: {fileID: 4151930814391668685, guid: 7a11732926af9a64689345aa18c22cfb, type: 3}
       propertyPath: m_Name
       value: LvlPanel
@@ -4365,8 +4420,8 @@ SceneRoots:
   - {fileID: 1513631143}
   - {fileID: 2102252088}
   - {fileID: 1994632612}
-  - {fileID: 337075033}
   - {fileID: 1586499094}
   - {fileID: 101118584}
   - {fileID: 1304651477}
   - {fileID: 1203821960}
+  - {fileID: 476995246}

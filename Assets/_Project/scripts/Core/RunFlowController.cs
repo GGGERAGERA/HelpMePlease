@@ -12,6 +12,9 @@ public sealed class RunFlowController : MonoBehaviour
     [SerializeField, Min(0f)] private float levelChoiceDelay = 5f;
     [SerializeField] private bool stopEnemySpawnerAfterBoss = true;
 
+    [Header("Completion")]
+    [SerializeField] private RunCompletionCleaner completionCleaner;
+
     private bool levelCompleted;
 
     private void Awake()
@@ -50,6 +53,13 @@ public sealed class RunFlowController : MonoBehaviour
 
         if (stopEnemySpawnerAfterBoss)
             StopEnemySpawner();
+
+        if (completionCleaner != null)
+            completionCleaner.ClearRemainingEnemies();
+        else
+            Debug.LogWarning(
+                "[RunFlowController] RunCompletionCleaner is not assigned."
+            );
 
         RunMessageService.Instance?.Show(RunMessageType.BossDefeated);
 

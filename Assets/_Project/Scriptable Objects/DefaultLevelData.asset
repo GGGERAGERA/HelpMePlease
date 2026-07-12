@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef28f036a4798294da66d317fe4e1f79, type: 3}
   m_Name: DefaultLevelData
   m_EditorClassIdentifier: Assembly-CSharp::LevelData
-  baseExpToNextLevel: 150
+  baseExpToNextLevel: 30
   expGrowth: 1.1
   maxLevel: 100
