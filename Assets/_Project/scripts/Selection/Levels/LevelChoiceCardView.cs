@@ -23,7 +23,10 @@ public sealed class LevelChoiceCardView : MonoBehaviour
         if (button == null)
             button = GetComponent<Button>();
 
-        button.onClick.RemoveAllListeners();
+        if (button == null)
+            return;
+
+        button.onClick.RemoveListener(HandleClick);
         button.onClick.AddListener(HandleClick);
     }
 
@@ -37,7 +40,6 @@ public sealed class LevelChoiceCardView : MonoBehaviour
     {
         nodeData = data;
         onClicked = clickCallback;
-
         gameObject.SetActive(data != null);
 
         if (data == null)
@@ -45,8 +47,8 @@ public sealed class LevelChoiceCardView : MonoBehaviour
 
         SetText(nameText, data.nodeName);
         SetText(descriptionText, data.description);
-        SetText(modifiersText, BuildModifiersText(data));
-        SetText(rewardText, BuildRewardText(data));
+        SetText(modifiersText, BuildLevelDetails(data));
+        SetText(rewardText, "Награда после победы над боссом");
 
         if (iconImage != null)
         {
@@ -57,57 +59,33 @@ public sealed class LevelChoiceCardView : MonoBehaviour
 
     private void HandleClick()
     {
-        if (nodeData == null)
-            return;
-
-        onClicked?.Invoke(nodeData);
+        if (nodeData != null)
+            onClicked?.Invoke(nodeData);
     }
 
-    private string BuildModifiersText(LevelNodeData data)
+    private string BuildLevelDetails(LevelNodeData data)
     {
-        string result = "";
-        int nextLevel = RunStateManager.Instance != null
-            ? RunStateManager.Instance.CurrentLevel + 1
-            : 2;
-
-        if (nextLevel > 2)
-            result += $"• Давление уровня +{(nextLevel - 2) * 12}%\n";
+        string result = $"• {Mathf.RoundToInt(data.Duration)} сек.";
 
         if (data.weatherType != LevelWeatherType.None)
-            result += $"• {FormatWeather(data.weatherType)}\n";
+            result += $"\n• {FormatWeather(data.weatherType)}";
 
-        if (data.enemyHealthMultiplier != 1f)
-            result += $"• HP врагов x{data.enemyHealthMultiplier:0.##}\n";
+        if (!string.IsNullOrWhiteSpace(data.MainThreat))
+            result += $"\n• Угроза: {data.MainThreat}";
 
-        if (data.enemySpeedMultiplier != 1f)
-            result += $"• Скорость врагов x{data.enemySpeedMultiplier:0.##}\n";
+        if (!Mathf.Approximately(data.enemyHealthMultiplier, 1f))
+            result += $"\n• Здоровье врагов x{data.enemyHealthMultiplier:0.##}";
 
-        if (data.spawnRateMultiplier != 1f)
-            result += $"• Частота спавна x{data.spawnRateMultiplier:0.##}\n";
+        if (!Mathf.Approximately(data.enemySpeedMultiplier, 1f))
+            result += $"\n• Скорость врагов x{data.enemySpeedMultiplier:0.##}";
 
-        if (data.hasEliteEnemies)
-            result += "• Элитные враги\n";
+        if (!Mathf.Approximately(data.spawnRateMultiplier, 1f))
+            result += $"\n• Давление спавна x{data.spawnRateMultiplier:0.##}";
 
-        if (data.hasExplosiveEnemies)
-            result += "• Взрывные враги\n";
+        if (data.BossPrefab != null)
+            result += $"\n• Босс: {data.BossPrefab.name}";
 
-        if (data.hasHoldZoneEvent)
-            result += "• Событие удержания зоны\n";
-
-        if (data.hasExtraChest)
-            result += "• Дополнительный сундук\n";
-
-        return string.IsNullOrWhiteSpace(result)
-            ? "• Без особых условий"
-            : result.TrimEnd();
-    }
-
-    private string BuildRewardText(LevelNodeData data)
-    {
-        if (data.bonusRareChance > 0f)
-            return $"+{Mathf.RoundToInt(data.bonusRareChance * 100f)}% шанс редкой награды";
-
-        return "Обычная награда";
+        return result;
     }
 
     private string FormatWeather(LevelWeatherType weather)

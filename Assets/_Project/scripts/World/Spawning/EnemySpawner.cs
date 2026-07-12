@@ -1,5 +1,5 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 [System.Serializable]
 public class EnemySpawnStage
@@ -10,26 +10,19 @@ public class EnemySpawnStage
 
 public class EnemySpawner : MonoBehaviour
 {
-    [Header("Spawn Settings")]
-    public GameObject[] enemyPrefabs;      
-    public float spawnInterval = 2f;       
-    public int maxEnemies = 10;            
-    private float spawnTimer;
-    private bool spawningEnabled = true;
+    [Header("Legacy Spawn Settings")]
+    [Tooltip("Used when the selected level has no EnemySpawnProfile.")]
+    public GameObject[] enemyPrefabs;
+    public float spawnInterval = 2f;
+    public int maxEnemies = 10;
 
     [Header("Spawn Distance")]
-    public float minSpawnDistance = 5f;    
-    public float maxSpawnDistance = 12f;   
-    public float spawnRadius = 360f;       
+    public float minSpawnDistance = 5f;
+    public float maxSpawnDistance = 12f;
+    public float spawnRadius = 360f;
 
-    private float difficultyTimer;
-
-    private float currentHealthMultiplier = 1f;
-    private float currentSpeedMultiplier = 1f;
-
-    [Header("Difficulty Scaling")]
+    [Header("Legacy Difficulty Scaling")]
     [SerializeField] private float difficultyIncreaseInterval = 30f;
-
     [SerializeField] private float spawnRateMultiplier = 0.9f;
     [SerializeField] private float enemyHealthMultiplier = 1.1f;
     [SerializeField] private float enemySpeedMultiplier = 1.1f;
@@ -39,36 +32,47 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private float maxHealthMultiplier = 3f;
     [SerializeField] private float maxSpeedMultiplier = 1.8f;
 
-    [Header("Spawn Stages")]
+    [Header("Legacy Spawn Stages")]
     [SerializeField] private EnemySpawnStage[] spawnStages;
+
+    private sealed class SpawnedEnemy
+    {
+        public GameObject instance;
+        public GameObject sourcePrefab;
+    }
+
+    private readonly List<SpawnedEnemy> activeEnemies = new();
+
+    private Transform player;
+    private EnemySpawnProfile spawnProfile;
+    private EnemySpawnPhase activePhase;
+    private int activePhaseIndex = -1;
+    private int currentRunLevel = 1;
+
+    private float spawnTimer;
+    private float difficultyTimer;
+    private float runTime;
+    private bool spawningEnabled = true;
+    private bool initialized;
+
+    private float currentHealthMultiplier = 1f;
+    private float currentSpeedMultiplier = 1f;
+    private float currentSpawnPressure = 1f;
 
     private float baseSpawnInterval;
     private int baseMaxEnemies;
     private float baseHealthMultiplier;
     private float baseSpeedMultiplier;
 
-    private float runTime;
-
-    private Transform player;
-    private readonly List<EnemyHealth> activeEnemies = new();
-    private bool initialized;
-
-
-    void Start()
+    private void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
-        baseSpawnInterval = spawnInterval;
-        baseMaxEnemies = maxEnemies;
-        baseHealthMultiplier = currentHealthMultiplier;
-        baseSpeedMultiplier = currentSpeedMultiplier;
-        initialized = true;
+        CaptureBaseSettings();
     }
+
     private void Update()
     {
-        if (!spawningEnabled)
-            return;
-
-        if (Time.timeScale == 0f)
+        if (!spawningEnabled || Time.timeScale == 0f)
             return;
 
         if (player == null)
@@ -78,91 +82,322 @@ public class EnemySpawner : MonoBehaviour
             return;
 
         runTime += Time.deltaTime;
-        difficultyTimer += Time.deltaTime;
+        UpdateActivePhase();
 
-        if (difficultyTimer >= difficultyIncreaseInterval)
-        {
-            difficultyTimer = 0f;
-            IncreaseDifficulty();
-        }
+        if (spawnProfile != null && activePhase == null)
+            return;
+
+        if (spawnProfile == null)
+            UpdateLegacyDifficulty();
+
         spawnTimer += Time.deltaTime;
 
-        if (spawnTimer >= spawnInterval)
-        {
-            spawnTimer = 0f;
-            SpawnEnemy();
-        }
-    }
-    private void IncreaseDifficulty()
-    {
-        spawnInterval = Mathf.Max(minSpawnInterval, spawnInterval * spawnRateMultiplier);
+        if (spawnTimer < GetCurrentSpawnInterval())
+            return;
 
+        spawnTimer = 0f;
+        SpawnEnemy();
+    }
+
+    public void SetSpawnProfile(EnemySpawnProfile profile, int runLevel)
+    {
+        spawnProfile = profile;
+        currentRunLevel = Mathf.Max(1, runLevel);
+        activePhase = null;
+        activePhaseIndex = -1;
+        runTime = 0f;
+        spawnTimer = 0f;
+
+        if (spawnProfile == null)
+        {
+            Debug.Log("[EnemySpawner] No spawn profile selected; using legacy Inspector settings.");
+            return;
+        }
+
+        UpdateActivePhase();
+    }
+
+    public void SetLevelScaling(
+        float healthMultiplier,
+        float speedMultiplier,
+        float spawnPressure)
+    {
+        if (!initialized)
+            CaptureBaseSettings();
+
+        currentHealthMultiplier = Mathf.Max(0.1f, healthMultiplier);
+        currentSpeedMultiplier = Mathf.Max(0.1f, speedMultiplier);
+        currentSpawnPressure = Mathf.Max(0.1f, spawnPressure);
+
+        if (spawnProfile == null)
+        {
+            spawnInterval = Mathf.Max(
+                minSpawnInterval,
+                baseSpawnInterval / currentSpawnPressure
+            );
+            maxEnemies = Mathf.Clamp(
+                Mathf.RoundToInt(baseMaxEnemies * currentSpawnPressure),
+                baseMaxEnemies,
+                220
+            );
+        }
+
+        Debug.Log(
+            $"[EnemySpawner] Level scaling: HP x{currentHealthMultiplier:F2}, " +
+            $"speed x{currentSpeedMultiplier:F2}, pressure x{currentSpawnPressure:F2}."
+        );
+    }
+
+    public void StopSpawning()
+    {
+        spawningEnabled = false;
+        Debug.Log("[EnemySpawner] Spawning stopped.");
+    }
+
+    public void ResumeSpawning()
+    {
+        spawningEnabled = true;
+        Debug.Log("[EnemySpawner] Spawning resumed.");
+    }
+
+    public void ResetForNewLevel()
+    {
+        spawnTimer = 0f;
+        difficultyTimer = 0f;
+        runTime = 0f;
+        activePhase = null;
+        activePhaseIndex = -1;
+        spawningEnabled = true;
+    }
+
+    public void ResetSpawner()
+    {
+        if (!initialized)
+            CaptureBaseSettings();
+
+        spawnInterval = baseSpawnInterval;
+        maxEnemies = baseMaxEnemies;
+        currentHealthMultiplier = baseHealthMultiplier;
+        currentSpeedMultiplier = baseSpeedMultiplier;
+        currentSpawnPressure = 1f;
+    }
+
+    private void CaptureBaseSettings()
+    {
+        baseSpawnInterval = Mathf.Max(0.1f, spawnInterval);
+        baseMaxEnemies = Mathf.Max(1, maxEnemies);
+        baseHealthMultiplier = currentHealthMultiplier;
+        baseSpeedMultiplier = currentSpeedMultiplier;
+        initialized = true;
+    }
+
+    private void UpdateLegacyDifficulty()
+    {
+        if (difficultyIncreaseInterval <= 0f)
+            return;
+
+        difficultyTimer += Time.deltaTime;
+
+        if (difficultyTimer < difficultyIncreaseInterval)
+            return;
+
+        difficultyTimer = 0f;
+        spawnInterval = Mathf.Max(minSpawnInterval, spawnInterval * spawnRateMultiplier);
         currentHealthMultiplier = Mathf.Min(
             maxHealthMultiplier,
             currentHealthMultiplier * enemyHealthMultiplier
         );
-
         currentSpeedMultiplier = Mathf.Min(
             maxSpeedMultiplier,
             currentSpeedMultiplier * enemySpeedMultiplier
         );
 
         Debug.Log(
-            $"Difficulty increased! " +
-            $"SpawnInterval: {spawnInterval}, " +
-            $"HP x{currentHealthMultiplier}, " +
-            $"Speed x{currentSpeedMultiplier}"
+            $"[EnemySpawner] Legacy difficulty increased: interval {spawnInterval:F2}, " +
+            $"HP x{currentHealthMultiplier:F2}, speed x{currentSpeedMultiplier:F2}."
         );
     }
 
-    void SpawnEnemy()
+    private void UpdateActivePhase()
     {
-        if (player == null) return;
-
-        
-        activeEnemies.RemoveAll(enemy => enemy == null);
-        if (activeEnemies.Count >= maxEnemies) return;
-
-        if (enemyPrefabs == null || enemyPrefabs.Length == 0) return;
-        GameObject[] availableEnemies = GetAvailableEnemies();
-
-        if (availableEnemies == null || availableEnemies.Length == 0)
+        if (spawnProfile == null || spawnProfile.Phases == null)
             return;
 
-        GameObject selectedEnemy = availableEnemies[Random.Range(0, availableEnemies.Length)];
+        EnemySpawnPhase[] phases = spawnProfile.Phases;
+        int nextIndex = -1;
+        float latestStartTime = float.MinValue;
 
-        
-        Vector2 randomDirection = Random.insideUnitCircle.normalized;
-
-       
-        float distance = Random.Range(minSpawnDistance, maxSpawnDistance);
-
-       
-        Vector3 spawnPos = player.position + (Vector3)(randomDirection * distance);
-
-        GameObject enemy = Instantiate(
-    selectedEnemy,
-    spawnPos,
-    Quaternion.identity
-);
-        EnemyHealth enemyHealth = enemy.GetComponent<EnemyHealth>();
-
-        if (enemyHealth != null)
+        for (int i = 0; i < phases.Length; i++)
         {
-            enemyHealth.SetMaxHealthMultiplier(currentHealthMultiplier);
-            activeEnemies.Add(enemyHealth);
+            EnemySpawnPhase phase = phases[i];
+
+            if (phase != null &&
+                runTime >= phase.startTime &&
+                phase.startTime >= latestStartTime)
+            {
+                nextIndex = i;
+                latestStartTime = phase.startTime;
+            }
         }
 
-        EnemyMovement enemyMovement = enemy.GetComponent<EnemyMovement>();
+        if (nextIndex == activePhaseIndex)
+            return;
 
-        if (enemyMovement != null)
+        activePhaseIndex = nextIndex;
+        activePhase = nextIndex >= 0 ? phases[nextIndex] : null;
+        spawnTimer = 0f;
+
+        if (activePhase != null)
         {
-            enemyMovement.SetSpeedMultiplier(currentSpeedMultiplier);
+            Debug.Log(
+                $"[EnemySpawner] Phase {activePhaseIndex + 1} started at {runTime:F1}s: " +
+                $"interval {activePhase.spawnInterval:F2}, max alive {activePhase.maxAlive}."
+            );
         }
-
     }
 
-    private GameObject[] GetAvailableEnemies()
+    private float GetCurrentSpawnInterval()
+    {
+        float interval = activePhase != null
+            ? activePhase.spawnInterval / currentSpawnPressure
+            : spawnInterval;
+
+        return Mathf.Max(0.1f, interval);
+    }
+
+    private int GetCurrentMaxAlive()
+    {
+        return activePhase != null
+            ? Mathf.Max(1, activePhase.maxAlive)
+            : Mathf.Max(1, maxEnemies);
+    }
+
+    private void SpawnEnemy()
+    {
+        RemoveDestroyedEnemies();
+
+        if (activeEnemies.Count >= GetCurrentMaxAlive())
+            return;
+
+        GameObject selectedPrefab = activePhase != null
+            ? SelectWeightedEnemy(activePhase)
+            : SelectLegacyEnemy();
+
+        if (selectedPrefab == null)
+            return;
+
+        Vector2 direction = Random.insideUnitCircle.normalized;
+        float distance = Random.Range(minSpawnDistance, maxSpawnDistance);
+        Vector3 spawnPosition = player.position + (Vector3)(direction * distance);
+
+        GameObject enemy = Instantiate(selectedPrefab, spawnPosition, Quaternion.identity);
+        EnemyHealth health = enemy.GetComponent<EnemyHealth>();
+
+        activeEnemies.Add(new SpawnedEnemy
+        {
+            instance = enemy,
+            sourcePrefab = selectedPrefab
+        });
+
+        if (health != null)
+        {
+            float phaseHealth = activePhase != null ? activePhase.healthMultiplier : 1f;
+            health.SetMaxHealthMultiplier(currentHealthMultiplier * phaseHealth);
+        }
+
+        EnemyMovement movement = enemy.GetComponent<EnemyMovement>();
+
+        if (movement != null)
+        {
+            float phaseSpeed = activePhase != null ? activePhase.speedMultiplier : 1f;
+            movement.SetSpeedMultiplier(currentSpeedMultiplier * phaseSpeed);
+        }
+    }
+
+    private GameObject SelectWeightedEnemy(EnemySpawnPhase phase)
+    {
+        if (phase.enemies == null || phase.enemies.Length == 0)
+            return null;
+
+        float totalWeight = 0f;
+
+        for (int i = 0; i < phase.enemies.Length; i++)
+        {
+            EnemySpawnEntry entry = phase.enemies[i];
+
+            if (CanSpawn(entry))
+                totalWeight += entry.weight;
+        }
+
+        if (totalWeight <= 0f)
+            return null;
+
+        float roll = Random.value * totalWeight;
+
+        for (int i = 0; i < phase.enemies.Length; i++)
+        {
+            EnemySpawnEntry entry = phase.enemies[i];
+
+            if (!CanSpawn(entry))
+                continue;
+
+            roll -= entry.weight;
+
+            if (roll <= 0f)
+                return entry.enemyPrefab;
+        }
+
+        return null;
+    }
+
+    private bool CanSpawn(EnemySpawnEntry entry)
+    {
+        if (entry == null || entry.enemyPrefab == null || entry.weight <= 0f)
+            return false;
+
+        if (currentRunLevel < Mathf.Max(1, entry.minimumRunLevel))
+            return false;
+
+        return entry.maxAliveOfType <= 0 ||
+               CountAlive(entry.enemyPrefab) < entry.maxAliveOfType;
+    }
+
+    private int CountAlive(GameObject sourcePrefab)
+    {
+        int count = 0;
+
+        for (int i = 0; i < activeEnemies.Count; i++)
+        {
+            if (activeEnemies[i].instance != null &&
+                activeEnemies[i].sourcePrefab == sourcePrefab)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private void RemoveDestroyedEnemies()
+    {
+        for (int i = activeEnemies.Count - 1; i >= 0; i--)
+        {
+            if (activeEnemies[i].instance == null)
+                activeEnemies.RemoveAt(i);
+        }
+    }
+
+    private GameObject SelectLegacyEnemy()
+    {
+        GameObject[] available = GetLegacyAvailableEnemies();
+
+        if (available == null || available.Length == 0)
+            return null;
+
+        return available[Random.Range(0, available.Length)];
+    }
+
+    private GameObject[] GetLegacyAvailableEnemies()
     {
         GameObject[] result = enemyPrefabs;
 
@@ -172,88 +407,9 @@ public class EnemySpawner : MonoBehaviour
         for (int i = 0; i < spawnStages.Length; i++)
         {
             if (runTime >= spawnStages[i].startTime)
-            {
                 result = spawnStages[i].enemyPrefabs;
-            }
         }
 
         return result;
-    }
-    public void StartSurvivalMode()
-    {
-        spawnInterval = 0.01f;
-        maxEnemies = 400;
-
-        currentHealthMultiplier *= 3.0f;
-        currentSpeedMultiplier *= 3.0f;
-
-        Debug.Log("EnemySpawner: Survival mode started.");
-    }
-
-    public void ResetSpawner()
-    {
-        spawnInterval = baseSpawnInterval;
-        maxEnemies = baseMaxEnemies;
-        currentHealthMultiplier = baseHealthMultiplier;
-        currentSpeedMultiplier = baseSpeedMultiplier;
-    }
-    public void ResetForNewLevel()
-    {
-        spawnTimer = 0f;
-        difficultyTimer = 0f;
-        runTime = 0f;
-        spawningEnabled = true;
-    }
-    public void SetLevelScaling(
-    float healthMultiplier,
-    float speedMultiplier,
-    float spawnRateMultiplier
-)
-    {
-        if (!initialized)
-        {
-            baseSpawnInterval = spawnInterval;
-            baseMaxEnemies = maxEnemies;
-            baseHealthMultiplier = currentHealthMultiplier;
-            baseSpeedMultiplier = currentSpeedMultiplier;
-            initialized = true;
-        }
-
-        currentHealthMultiplier = Mathf.Max(0.1f, healthMultiplier);
-        currentSpeedMultiplier = Mathf.Max(0.1f, speedMultiplier);
-
-        float safeSpawnRateMultiplier = Mathf.Max(0.1f, spawnRateMultiplier);
-
-        spawnInterval = baseSpawnInterval / safeSpawnRateMultiplier;
-        spawnInterval = Mathf.Max(minSpawnInterval, spawnInterval);
-
-        maxEnemies = Mathf.RoundToInt(baseMaxEnemies * safeSpawnRateMultiplier);
-        maxEnemies = Mathf.Clamp(
-            maxEnemies,
-            baseMaxEnemies,
-            220
-        );
-
-        Debug.Log(
-            $"[EnemySpawner] Level scaling applied: " +
-            $"HP x{currentHealthMultiplier:F2}, " +
-            $"Speed x{currentSpeedMultiplier:F2}, " +
-            $"Spawn x{safeSpawnRateMultiplier:F2}, " +
-            $"Interval {spawnInterval:F2}, " +
-            $"Max enemies {maxEnemies}."
-        );
-    }
-    public void StopSpawning()
-    {
-        spawningEnabled = false;
-
-        Debug.Log("[EnemySpawner] Spawning stopped.");
-    }
-
-    public void ResumeSpawning()
-    {
-        spawningEnabled = true;
-
-        Debug.Log("[EnemySpawner] Spawning resumed.");
     }
 }

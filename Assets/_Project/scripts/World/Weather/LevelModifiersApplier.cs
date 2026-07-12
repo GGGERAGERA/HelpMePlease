@@ -47,6 +47,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
 
         if (node == null)
         {
+            enemySpawner?.SetSpawnProfile(null, currentLevel);
             ApplyEndlessEnemyScaling(currentLevel, 1f, 1f, 1f);
             DisableEnvironment();
 
@@ -73,6 +74,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
 
     private void ApplyEnemyModifiers(LevelNodeData node, int currentLevel)
     {
+        enemySpawner?.SetSpawnProfile(node.SpawnProfile, currentLevel);
         ApplyEndlessEnemyScaling(
             currentLevel,
             node.enemyHealthMultiplier,
