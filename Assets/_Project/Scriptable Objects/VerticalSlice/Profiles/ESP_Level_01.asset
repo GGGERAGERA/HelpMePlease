@@ -1,0 +1,103 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 09ecb40b32d5442aa9ae5401ac694663, type: 3}
+  m_Name: ESP_Level_01
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnProfile
+  phases:
+  - startTime: 0
+    spawnInterval: 1.75
+    maxAlive: 10
+    healthMultiplier: 1
+    speedMultiplier: 1
+    enemies:
+    - enemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
+      weight: 100
+      maxAliveOfType: 10
+      minimumRunLevel: 1
+  - startTime: 12
+    spawnInterval: 1.7
+    maxAlive: 12
+    healthMultiplier: 1
+    speedMultiplier: 1
+    enemies:
+    - enemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
+      weight: 80
+      maxAliveOfType: 12
+      minimumRunLevel: 1
+    - enemyPrefab: {fileID: 2513438768801038890, guid: c234c537ed1fdfe489feaf994e3dbca7, type: 3}
+      weight: 20
+      maxAliveOfType: 1
+      minimumRunLevel: 1
+  - startTime: 24
+    spawnInterval: 1.55
+    maxAlive: 14
+    healthMultiplier: 1
+    speedMultiplier: 1
+    enemies:
+    - enemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
+      weight: 70
+      maxAliveOfType: 14
+      minimumRunLevel: 1
+    - enemyPrefab: {fileID: 2513438768801038890, guid: c234c537ed1fdfe489feaf994e3dbca7, type: 3}
+      weight: 30
+      maxAliveOfType: 2
+      minimumRunLevel: 1
+  - startTime: 36
+    spawnInterval: 1.65
+    maxAlive: 15
+    healthMultiplier: 1
+    speedMultiplier: 1
+    enemies:
+    - enemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
+      weight: 75
+      maxAliveOfType: 15
+      minimumRunLevel: 1
+    - enemyPrefab: {fileID: 1432338969431510999, guid: 46ef0098ace1f0e4585348645e131dff, type: 3}
+      weight: 25
+      maxAliveOfType: 1
+      minimumRunLevel: 1
+  - startTime: 48
+    spawnInterval: 1.4
+    maxAlive: 17
+    healthMultiplier: 1
+    speedMultiplier: 1
+    enemies:
+    - enemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
+      weight: 65
+      maxAliveOfType: 17
+      minimumRunLevel: 1
+    - enemyPrefab: {fileID: 2513438768801038890, guid: c234c537ed1fdfe489feaf994e3dbca7, type: 3}
+      weight: 15
+      maxAliveOfType: 2
+      minimumRunLevel: 1
+    - enemyPrefab: {fileID: 1432338969431510999, guid: 46ef0098ace1f0e4585348645e131dff, type: 3}
+      weight: 20
+      maxAliveOfType: 2
+      minimumRunLevel: 1
+  - startTime: 60
+    spawnInterval: 1.25
+    maxAlive: 20
+    healthMultiplier: 1
+    speedMultiplier: 1
+    enemies:
+    - enemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
+      weight: 60
+      maxAliveOfType: 20
+      minimumRunLevel: 1
+    - enemyPrefab: {fileID: 2513438768801038890, guid: c234c537ed1fdfe489feaf994e3dbca7, type: 3}
+      weight: 25
+      maxAliveOfType: 3
+      minimumRunLevel: 1
+    - enemyPrefab: {fileID: 1432338969431510999, guid: 46ef0098ace1f0e4585348645e131dff, type: 3}
+      weight: 15
+      maxAliveOfType: 2
+      minimumRunLevel: 1

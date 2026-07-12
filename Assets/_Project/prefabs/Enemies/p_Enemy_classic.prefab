@@ -99,6 +99,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 330473454747600092, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: enemyId
+      value: Basic_Tupik
+      objectReference: {fileID: 0}
     - target: {fileID: 826003451788788162, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: flashColor.b
       value: 1

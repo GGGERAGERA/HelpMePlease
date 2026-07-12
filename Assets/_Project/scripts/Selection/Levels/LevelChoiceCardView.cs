@@ -9,14 +9,21 @@ public sealed class LevelChoiceCardView : MonoBehaviour
     [SerializeField] private Button button;
     [SerializeField] private Image iconImage;
 
+    [Header("Selection")]
+    [SerializeField] private Image frameImage;
+    [SerializeField] private Image glowImage;
+    [SerializeField] private Color normalFrameColor = new Color(0.75f, 0.75f, 0.75f, 1f);
+    [SerializeField] private Color selectedFrameColor = new Color(0.2f, 0.72f, 0.82f, 1f);
+
     [Header("Texts")]
-    [SerializeField] private TextMeshProUGUI nameText;
+    [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI descriptionText;
-    [SerializeField] private TextMeshProUGUI modifiersText;
-    [SerializeField] private TextMeshProUGUI rewardText;
+    [SerializeField] private TextMeshProUGUI tagText;
 
     private LevelNodeData nodeData;
     private Action<LevelNodeData> onClicked;
+
+    public LevelNodeData Data => nodeData;
 
     private void Awake()
     {
@@ -26,8 +33,12 @@ public sealed class LevelChoiceCardView : MonoBehaviour
         if (button == null)
             return;
 
-        button.onClick.RemoveListener(HandleClick);
+        button.onClick.RemoveAllListeners();
         button.onClick.AddListener(HandleClick);
+
+        ConfigureText(titleText, 30f, 44f);
+        ConfigureText(descriptionText, 18f, 24f);
+        ConfigureText(tagText, 16f, 20f);
     }
 
     private void OnDestroy()
@@ -45,15 +56,15 @@ public sealed class LevelChoiceCardView : MonoBehaviour
         if (data == null)
             return;
 
-        SetText(nameText, data.nodeName);
-        SetText(descriptionText, data.description);
-        SetText(modifiersText, BuildLevelDetails(data));
-        SetText(rewardText, "Награда после победы над боссом");
+        SetSelected(false);
+        SetText(titleText, FormatWeather(data.weatherType));
+        SetText(descriptionText, FormatWeatherEffect(data.weatherType));
+        SetText(tagText, data.MainThreat);
 
         if (iconImage != null)
         {
-            iconImage.sprite = data.icon;
-            iconImage.enabled = data.icon != null;
+            iconImage.sprite = null;
+            iconImage.gameObject.SetActive(false);
         }
     }
 
@@ -63,40 +74,55 @@ public sealed class LevelChoiceCardView : MonoBehaviour
             onClicked?.Invoke(nodeData);
     }
 
-    private string BuildLevelDetails(LevelNodeData data)
+    public void SetSelected(bool selected)
     {
-        string result = $"• {Mathf.RoundToInt(data.Duration)} сек.";
+        transform.localScale = selected ? Vector3.one * 1.035f : Vector3.one;
 
-        if (data.weatherType != LevelWeatherType.None)
-            result += $"\n• {FormatWeather(data.weatherType)}";
+        Color frameColor = selected ? selectedFrameColor : normalFrameColor;
 
-        if (!string.IsNullOrWhiteSpace(data.MainThreat))
-            result += $"\n• Угроза: {data.MainThreat}";
+        if (frameImage != null)
+            frameImage.color = frameColor;
 
-        if (!Mathf.Approximately(data.enemyHealthMultiplier, 1f))
-            result += $"\n• Здоровье врагов x{data.enemyHealthMultiplier:0.##}";
-
-        if (!Mathf.Approximately(data.enemySpeedMultiplier, 1f))
-            result += $"\n• Скорость врагов x{data.enemySpeedMultiplier:0.##}";
-
-        if (!Mathf.Approximately(data.spawnRateMultiplier, 1f))
-            result += $"\n• Давление спавна x{data.spawnRateMultiplier:0.##}";
-
-        if (data.BossPrefab != null)
-            result += $"\n• Босс: {data.BossPrefab.name}";
-
-        return result;
+        if (glowImage != null)
+            glowImage.color = new Color(
+                frameColor.r,
+                frameColor.g,
+                frameColor.b,
+                selected ? 0.42f : 0.12f);
     }
 
     private string FormatWeather(LevelWeatherType weather)
     {
         return weather switch
         {
-            LevelWeatherType.Darkness => "Темнота",
-            LevelWeatherType.Rain => "Дождь",
-            LevelWeatherType.Snow => "Снег",
-            _ => "Обычная погода"
+            LevelWeatherType.Darkness => "ТЕМНОТА",
+            LevelWeatherType.Rain => "ДОЖДЬ",
+            LevelWeatherType.Snow => "СНЕГ",
+            _ => "БЕЗ ПОГОДЫ"
         };
+    }
+
+    private string FormatWeatherEffect(LevelWeatherType weather)
+    {
+        return weather switch
+        {
+            LevelWeatherType.Darkness => "Враги крепче",
+            LevelWeatherType.Rain => "Враги быстрее",
+            LevelWeatherType.Snow => "Врагов больше",
+            _ => "Обычные условия"
+        };
+    }
+
+    private void ConfigureText(TextMeshProUGUI text, float minimumSize, float maximumSize)
+    {
+        if (text == null)
+            return;
+
+        text.enableAutoSizing = true;
+        text.fontSizeMin = minimumSize;
+        text.fontSizeMax = maximumSize;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.overflowMode = TextOverflowModes.Ellipsis;
     }
 
     private void SetText(TextMeshProUGUI text, string value)

@@ -101,7 +101,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 330473454747600092, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: enemyId
-      value: Tupik
+      value: Elite_Tupik
+      objectReference: {fileID: 0}
+    - target: {fileID: 6045726002428409456, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: maxHealth
+      value: 75
+      objectReference: {fileID: 0}
+    - target: {fileID: 5140618788807294408, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: damage
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: m_Name
@@ -258,8 +266,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyChaseMovement
   playerTag: Player
-  normalSpeed: 2
-  aggroSpeed: 4
+  normalSpeed: 1.6
+  aggroSpeed: 3.2
   aggroDistance: 5
   stopAfterHitDuration: 2
   knockbackDecay: 16

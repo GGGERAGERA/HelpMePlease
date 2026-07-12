@@ -267,7 +267,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19136a5a9a8407f4bad025abe8a5570b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
-  maxHealth: 1
+  maxHealth: 450
   OnHealthChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -303,7 +303,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f398493d588f764ebc02a9de3fe96a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCollisionHandler
-  damage: 15
+  damage: 25
   damageCooldown: 1
 --- !u!210 &1329760117982389465
 SortingGroup:
@@ -331,8 +331,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyChaseMovement
   playerTag: Player
-  normalSpeed: 2
-  aggroSpeed: 4
+  normalSpeed: 1.5
+  aggroSpeed: 3
   aggroDistance: 5
   stopAfterHitDuration: 2
   knockbackDecay: 16

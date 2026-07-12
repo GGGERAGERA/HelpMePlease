@@ -2,7 +2,9 @@ using UnityEngine;
 
 public class RunTimer : MonoBehaviour
 {
-    [SerializeField] private float runDuration = 300f; // 5 минут
+    [Header("Level")]
+    [SerializeField] private LevelNodeData defaultLevel;
+    [SerializeField] private float runDuration = 70f;
 
     [Header("Boss Spawn")]
     [SerializeField] private GameObject bossPrefab;
@@ -45,6 +47,9 @@ public class RunTimer : MonoBehaviour
             : null;
 
         if (level == null)
+            level = defaultLevel;
+
+        if (level == null)
             return;
 
         runDuration = level.Duration;
@@ -84,6 +89,8 @@ public class RunTimer : MonoBehaviour
 
         HUDManager.Instance?.SetTimer(0f);
         RunMessageService.Instance?.Show(RunMessageType.BossIncoming);
+
+        FindFirstObjectByType<EnemySpawner>()?.StopSpawning();
 
 
         if (bossWarningSound != null && Camera.main != null)

@@ -3,6 +3,9 @@ using UnityEngine.Rendering.Universal;
 
 public sealed class LevelModifiersApplier : MonoBehaviour
 {
+    [Header("Level")]
+    [SerializeField] private LevelNodeData defaultLevel;
+
     [Header("Enemy Systems")]
     [SerializeField] private EnemySpawner enemySpawner;
 
@@ -41,6 +44,9 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         LevelNodeData node = runState != null
             ? runState.SelectedLevelNode
             : null;
+
+        if (node == null)
+            node = defaultLevel;
         int currentLevel = runState != null
             ? Mathf.Max(1, runState.CurrentLevel)
             : 1;
