@@ -40,6 +40,10 @@ public class CurrencyManager : MonoBehaviour
 
     public void AddGold(int amount)
     {
+        Debug.Log(
+    $"[CurrencyManager] AddGold called: +{amount}. " +
+    $"Before={TotalGold}\n{System.Environment.StackTrace}"
+);
         int finalAmount = Mathf.RoundToInt(amount * goldGainMultiplier);
         TotalGold += finalAmount;
         SaveGold();

@@ -847,6 +847,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 520692652}
+  - component: {fileID: 520692653}
   m_Layer: 0
   m_Name: RunEndService
   m_TagString: Untagged
@@ -869,6 +870,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 476995246}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &520692653
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 520692651}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c7651d9664267248818c993d11625cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RunEndService
+  bunkerSceneName: MainMenu
 --- !u!1 &610461739 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5193316843532077453, guid: 0e0021be84d8019499b92a2a19d08bd5, type: 3}

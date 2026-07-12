@@ -109,6 +109,12 @@ public sealed class RunFlowController : MonoBehaviour
         if (string.IsNullOrWhiteSpace(modifierId))
             return;
 
+        Debug.Log(
+    $"[RunFlowController] Register completion: " +
+    $"type={UnlockConditionType.CompleteLevelModifier}, " +
+    $"targetId='{modifierId}', " +
+    $"levelNode='{completedNode.name}'"
+);
         UnlockProgressService.Instance.AddProgressByCondition(
             UnlockConditionType.CompleteLevelModifier,
             modifierId,

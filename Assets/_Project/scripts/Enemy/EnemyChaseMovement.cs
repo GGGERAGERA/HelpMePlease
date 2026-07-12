@@ -24,6 +24,7 @@ public class EnemyChaseMovement : EnemyMovement
     [Header("Animation")]
     [SerializeField] private Animator animator;
     [SerializeField] private string runParameterName = "IsRunning";
+    private bool hasRunParameter;
 
     private Rigidbody2D rb;
     private Transform player;
@@ -35,6 +36,7 @@ public class EnemyChaseMovement : EnemyMovement
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        hasRunParameter = HasBoolParameter(animator, runParameterName);
     }
 
     private void Start()
@@ -81,7 +83,7 @@ public class EnemyChaseMovement : EnemyMovement
         float selectedSpeed = isRunning ? aggroSpeed : normalSpeed;
         selectedSpeed *= speedMultiplier;
 
-        if (animator != null)
+        if (animator != null && hasRunParameter)
             animator.SetBool(runParameterName, isRunning);
 
         knockbackVelocity = Vector2.MoveTowards(
@@ -124,5 +126,33 @@ public class EnemyChaseMovement : EnemyMovement
     public override void StopAfterHit()
     {
         stopTimer = stopAfterHitDuration;
+    }
+    private static bool HasBoolParameter(
+    Animator targetAnimator,
+    string parameterName)
+    {
+        if (targetAnimator == null ||
+            string.IsNullOrWhiteSpace(parameterName))
+        {
+            return false;
+        }
+
+        foreach (AnimatorControllerParameter parameter
+                 in targetAnimator.parameters)
+        {
+            if (parameter.type == AnimatorControllerParameterType.Bool &&
+                parameter.name == parameterName)
+            {
+                return true;
+            }
+        }
+
+        Debug.LogWarning(
+            $"[EnemyChaseMovement] '{targetAnimator.gameObject.name}' " +
+            $"has no Bool parameter '{parameterName}'.",
+            targetAnimator
+        );
+
+        return false;
     }
 }

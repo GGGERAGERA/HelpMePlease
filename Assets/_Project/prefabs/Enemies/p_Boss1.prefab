@@ -130,6 +130,7 @@ GameObject:
   - component: {fileID: 8498786568601226095}
   - component: {fileID: 1329760117982389465}
   - component: {fileID: -8970330571610309405}
+  - component: {fileID: -4685123070590477603}
   m_Layer: 0
   m_Name: p_Boss1
   m_TagString: Enemy
@@ -339,6 +340,19 @@ MonoBehaviour:
   flipVisual: 1
   animator: {fileID: 8106179503796228276}
   runParameterName: IsRunning
+--- !u!114 &-4685123070590477603
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8074722678228422782}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2adc7b77457108b4cb08fd3d905407ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyIdentity
+  enemyId: Boss_01
 --- !u!1001 &5792137375309412222
 PrefabInstance:
   m_ObjectHideFlags: 0
