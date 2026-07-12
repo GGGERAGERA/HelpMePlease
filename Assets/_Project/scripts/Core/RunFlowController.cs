@@ -50,6 +50,7 @@ public sealed class RunFlowController : MonoBehaviour
     private IEnumerator BossDefeatedRoutine()
     {
         RegisterCurrentLevelCompletion();
+        RunStateManager.Instance?.RegisterCompletedLevel();
 
         if (stopEnemySpawnerAfterBoss)
             StopEnemySpawner();

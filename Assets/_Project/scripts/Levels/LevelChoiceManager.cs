@@ -95,6 +95,7 @@ public sealed class LevelChoiceManager : MonoBehaviour
         GameObject player = GameObject.FindGameObjectWithTag("Player");
 
         RunStateManager runState = RunStateManager.EnsureExists();
+        runState.CommitCurrentSceneStats();
         runState.SaveExperienceState();
         runState.SavePlayerState(player);
         runState.AdvanceLevel();

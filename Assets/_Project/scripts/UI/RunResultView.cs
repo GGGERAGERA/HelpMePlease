@@ -8,7 +8,6 @@ public class RunResultView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI statsText;
     [SerializeField] private TextMeshProUGUI aiCommentText;
 
-    private bool goldAdded;
 
     public void Show(bool victory)
     {
@@ -18,13 +17,7 @@ public class RunResultView : MonoBehaviour
         float time = RunStatsManager.Instance != null ? RunStatsManager.Instance.RunTime : 0f;
         int level = ExperienceManager.Instance != null ? ExperienceManager.Instance.currentLevel : 1;
 
-        int goldEarned = RunRewardCalculator.CalculateGold(victory);
 
-        if (!goldAdded)
-        {
-            CurrencyManager.Instance?.AddGold(goldEarned);
-            goldAdded = true;
-        }
 
         int totalGold = CurrencyManager.Instance != null ? CurrencyManager.Instance.TotalGold : 0;
 
@@ -49,7 +42,6 @@ public class RunResultView : MonoBehaviour
             }
 
             result +=
-                $"GOLD EARNED: +{goldEarned}\n" +
                 $"TOTAL GOLD: {totalGold}";
 
             statsText.text = result;
@@ -59,18 +51,11 @@ public class RunResultView : MonoBehaviour
             aiCommentText.text = AICommentGenerator.GetComment(victory);
         }
     }
-    private void Awake()
-    {
-        goldAdded = false;
-    }
+
     private string FormatTime(float time)
     {
         int minutes = Mathf.FloorToInt(time / 60f);
         int seconds = Mathf.FloorToInt(time % 60f);
         return $"{minutes:00}:{seconds:00}";
-    }
-    private void OnEnable()
-    {
-        goldAdded = false;
     }
 }

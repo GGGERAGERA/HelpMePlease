@@ -2,20 +2,27 @@ using UnityEngine;
 
 public static class RunRewardCalculator
 {
-    public static int CalculateGold(bool victory)
+    private const int KillsPerGold = 5;
+    private const int GoldPerCompletedLevel = 100;
+    private const int GoldPerMinute = 5;
+
+    private const float DeathMultiplier = 0.75f;
+
+    public static int CalculateGold(
+        int kills,
+        float runTime,
+        int completedLevels,
+        RunEndReason endReason)
     {
-        int kills = RunStatsManager.Instance != null ? RunStatsManager.Instance.Kills : 0;
-        float runTime = RunStatsManager.Instance != null ? RunStatsManager.Instance.RunTime : 0f;
+        int killReward = kills / KillsPerGold;
+        int timeReward = Mathf.FloorToInt(runTime / 60f) * GoldPerMinute;
+        int levelReward = completedLevels * GoldPerCompletedLevel;
 
-        int minutes = Mathf.FloorToInt(runTime / 60f);
+        int total = killReward + timeReward + levelReward;
 
-        int gold = kills + minutes * 10 + 500; // для отладки базовая награда 500, чтобы не было 0 при коротких забегах
+        if (endReason == RunEndReason.PlayerDied)
+            total = Mathf.RoundToInt(total * DeathMultiplier);
 
-        if (victory)
-            gold = Mathf.RoundToInt(gold * 1.25f);
-        else
-            gold = Mathf.RoundToInt(gold * 0.8f);
-
-        return Mathf.Max(0, gold);
+        return Mathf.Max(0, total);
     }
 }

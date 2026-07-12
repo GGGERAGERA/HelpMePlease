@@ -27,7 +27,21 @@ public sealed class RunStateManager : MonoBehaviour
 
     private bool upgradesAppliedToCurrentScene;
 
+    private int accumulatedKills;
+    private float accumulatedRunTime;
+    private int completedLevels;
+
+    private int lastCommittedStatsInstanceId;
+    private bool runEnded;
+
+    private RunSummary lastRunSummary;
+
     public IReadOnlyList<UpgradeData> PickedUpgrades => pickedUpgrades;
+
+    public int AccumulatedKills => accumulatedKills;
+    public float AccumulatedRunTime => accumulatedRunTime;
+    public int CompletedLevels => completedLevels;
+    public bool IsRunEnded => runEnded;
 
     public static RunStateManager EnsureExists()
     {
@@ -64,10 +78,25 @@ public sealed class RunStateManager : MonoBehaviour
         CurrentLevel = 1;
 
         pickedUpgrades.Clear();
+
         ClearExperienceSnapshot();
         ClearHealthSnapshot();
 
-        Debug.Log($"[RunState] New run: character={GetName(character)}, weapon={GetName(weapon)}");
+        accumulatedKills = 0;
+        accumulatedRunTime = 0f;
+        completedLevels = 0;
+
+        lastCommittedStatsInstanceId = 0;
+        runEnded = false;
+        lastRunSummary = null;
+
+        upgradesAppliedToCurrentScene = false;
+
+        Debug.Log(
+            $"[RunState] New run: " +
+            $"character={GetName(character)}, " +
+            $"weapon={GetName(weapon)}"
+        );
     }
 
     public void SavePlayerState(GameObject player)
@@ -187,5 +216,105 @@ public sealed class RunStateManager : MonoBehaviour
         pickedUpgrades.Add(upgrade);
 
         Debug.Log($"[RunState] Registered upgrade: {upgrade.upgradeName}. Total: {pickedUpgrades.Count}");
+    }
+    public void RegisterCompletedLevel()
+    {
+        if (runEnded)
+            return;
+
+        completedLevels++;
+
+        Debug.Log(
+            $"[RunState] Completed levels: {completedLevels}"
+        );
+    }
+
+    public void CommitCurrentSceneStats()
+    {
+        if (runEnded)
+            return;
+
+        RunStatsManager stats = RunStatsManager.Instance;
+
+        if (stats == null)
+        {
+            Debug.LogWarning(
+                "[RunState] RunStatsManager is missing. " +
+                "Current scene stats were not committed."
+            );
+
+            return;
+        }
+
+        int instanceId = stats.GetInstanceID();
+
+        if (lastCommittedStatsInstanceId == instanceId)
+        {
+            Debug.Log(
+                "[RunState] Current scene stats were already committed."
+            );
+
+            return;
+        }
+
+        accumulatedKills += stats.Kills;
+        accumulatedRunTime += stats.RunTime;
+        lastCommittedStatsInstanceId = instanceId;
+
+        Debug.Log(
+            $"[RunState] Scene stats committed. " +
+            $"Total kills={accumulatedKills}, " +
+            $"time={accumulatedRunTime:F1}, " +
+            $"levels={completedLevels}"
+        );
+    }
+
+    public RunSummary EndRun(RunEndReason reason)
+    {
+        if (runEnded)
+            return lastRunSummary;
+
+        CommitCurrentSceneStats();
+
+        int goldEarned = RunRewardCalculator.CalculateGold(
+            accumulatedKills,
+            accumulatedRunTime,
+            completedLevels,
+            reason
+        );
+
+        CurrencyManager.Instance?.AddGold(goldEarned);
+
+        lastRunSummary = new RunSummary(
+            reason,
+            completedLevels,
+            accumulatedKills,
+            accumulatedRunTime,
+            goldEarned
+        );
+
+        runEnded = true;
+
+        Debug.Log(
+            $"[RunState] Run ended. " +
+            $"Reason={reason}, " +
+            $"levels={completedLevels}, " +
+            $"kills={accumulatedKills}, " +
+            $"time={accumulatedRunTime:F1}, " +
+            $"gold={goldEarned}"
+        );
+
+        return lastRunSummary;
+    }
+
+    public bool TryConsumeLastRunSummary(out RunSummary summary)
+    {
+        summary = lastRunSummary;
+
+        if (summary == null)
+            return false;
+
+        lastRunSummary = null;
+        return true;
     }
 }

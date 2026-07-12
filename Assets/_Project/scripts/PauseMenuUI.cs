@@ -49,8 +49,16 @@ public class PauseMenuUI : MonoBehaviour
 
     public void MainMenu()
     {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene("MainMenu");
+        if (RunEndService.Instance == null)
+        {
+            Debug.LogError(
+                "[PauseMenuUI] RunEndService is missing."
+            );
+
+            return;
+        }
+
+        RunEndService.Instance.ReturnToBunker();
     }
 
     public void RestartGame()

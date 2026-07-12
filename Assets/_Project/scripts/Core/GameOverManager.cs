@@ -33,7 +33,15 @@ public class GameOverManager : MonoBehaviour
     }
     public void MainMenu()
     {
-        SceneManager.LoadScene("MainMenu"); // Замените "MainMenu" на имя вашей сцены главного меню
-        Time.timeScale = 1f;
+        if (RunEndService.Instance == null)
+        {
+            Debug.LogError(
+                "[GameOverManager] RunEndService is missing."
+            );
+
+            return;
+        }
+
+        RunEndService.Instance.EndRunAfterDeath();
     }
 }
