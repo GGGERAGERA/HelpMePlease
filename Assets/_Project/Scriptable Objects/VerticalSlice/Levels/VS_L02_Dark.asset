@@ -13,16 +13,16 @@ MonoBehaviour:
   m_Name: VS_L02_Dark
   m_EditorClassIdentifier: Assembly-CSharp::LevelNodeData
   id: VS_L02_Dark
-  nodeName: "ТЕМНОТА"
-  description: "Враги крепче"
-  icon: {fileID: -1317306447, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
+  nodeName: "\u0422\u0415\u041C\u041D\u041E\u0422\u0410"
+  description: "\u0412\u0440\u0430\u0433\u0438 \u043A\u0440\u0435\u043F\u0447\u0435"
+  icon: {fileID: -501882847, guid: c99f220d81f76e94a813e51a3de93b58, type: 3}
   nodeType: 0
   weatherType: 1
   sceneName: 
   duration: 72
   spawnProfile: {fileID: 11400000, guid: 10000000000000000000000000000002, type: 2}
   bossPrefab: {fileID: 8074722678228422782, guid: 8f73b608ef0309744b732a66e85e86d7, type: 3}
-  mainThreat: "СТРЕЛКИ"
+  mainThreat: "\u0421\u0422\u0420\u0415\u041B\u041A\u0418"
   minimumRunLevel: 2
   maximumRunLevel: 2
   choiceWeight: 1

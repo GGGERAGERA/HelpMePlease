@@ -15,10 +15,18 @@ MonoBehaviour:
   id: 
   nodeName: "\u0417\u0430\u0442\u043E\u043F\u043B\u0435\u043D\u043D\u0430\u044F \u043F\u043E\u043B\u0435"
   description: 
-  icon: {fileID: 0}
+  icon: {fileID: -1480576705, guid: c99f220d81f76e94a813e51a3de93b58, type: 3}
   nodeType: 0
   weatherType: 2
   sceneName: 
+  duration: 90
+  spawnProfile: {fileID: 0}
+  bossPrefab: {fileID: 0}
+  mainThreat: 
+  minimumRunLevel: 1
+  maximumRunLevel: 0
+  choiceWeight: 1
+  allowSameWeatherAsCurrent: 1
   enemyHealthMultiplier: 1
   enemySpeedMultiplier: 1.08
   spawnRateMultiplier: 1.05

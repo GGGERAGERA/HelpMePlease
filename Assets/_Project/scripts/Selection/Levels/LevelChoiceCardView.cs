@@ -63,8 +63,9 @@ public sealed class LevelChoiceCardView : MonoBehaviour
 
         if (iconImage != null)
         {
-            iconImage.sprite = null;
-            iconImage.gameObject.SetActive(false);
+            iconImage.sprite = data.icon;
+            iconImage.preserveAspect = true;
+            iconImage.gameObject.SetActive(data.icon != null);
         }
     }
 
