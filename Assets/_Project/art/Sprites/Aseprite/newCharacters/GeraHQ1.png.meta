@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 2509e4842c82208469fd685210a8447c
+guid: 9ebdfdda2bcefcf4a99332ed3e851d9c
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 5674216407934994280
-    second: Gera1_0
+      213: -6395033526762136279
+    second: GeraHQ1_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -126,13 +126,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Gera1_0
+      name: GeraHQ1_0
       rect:
         serializedVersion: 2
-        x: 14
+        x: 0
         y: 0
-        width: 33
-        height: 64
+        width: 256
+        height: 256
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -141,8 +141,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 86788ad72cddebe40800000000000000
-      internalID: 5674216407934994280
+      spriteID: 92d11a6c3e64047a0800000000000000
+      internalID: -6395033526762136279
       vertices: []
       indices: 
       edges: []
@@ -161,7 +161,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Gera1_0: 5674216407934994280
+      GeraHQ1_0: -6395033526762136279
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
