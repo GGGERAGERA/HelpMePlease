@@ -23,6 +23,10 @@ MonoBehaviour:
       weight: 100
       maxAliveOfType: 10
       minimumRunLevel: 1
+    - enemyPrefab: {fileID: 1432338969431510999, guid: 46ef0098ace1f0e4585348645e131dff, type: 3}
+      weight: 100
+      maxAliveOfType: 10
+      minimumRunLevel: 1
   - startTime: 12
     spawnInterval: 1.7
     maxAlive: 12
@@ -63,7 +67,7 @@ MonoBehaviour:
       minimumRunLevel: 1
     - enemyPrefab: {fileID: 1432338969431510999, guid: 46ef0098ace1f0e4585348645e131dff, type: 3}
       weight: 25
-      maxAliveOfType: 1
+      maxAliveOfType: 10
       minimumRunLevel: 1
   - startTime: 48
     spawnInterval: 1.4

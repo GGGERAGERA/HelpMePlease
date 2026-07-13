@@ -105,6 +105,10 @@ public sealed class UnlockProgressService : MonoBehaviour
     int amount = 1
 )
     {
+        Debug.Log(
+    $"[UnlockProgressService] AddProgress: " +
+    $"type={conditionType}, targetId={targetId}, amount={amount}"
+);
         if (registry == null)
         {
             Debug.LogWarning("[UnlockProgressService] Registry is missing.");
@@ -113,8 +117,17 @@ public sealed class UnlockProgressService : MonoBehaviour
 
         foreach (UnlockableContentData content in registry.Contents)
         {
+            Debug.Log(
+    $"[UnlockProgressService] Check content={content.name}, " +
+    $"conditionType={content.condition.type}, " +
+    $"targetId={content.condition.targetId}"
+);
             if (content == null || content.condition == null)
                 continue;
+            Debug.Log(
+    $"[UnlockProgressService] MATCH: {content.name}, " +
+    $"old={GetProgress(content)}, add={amount}"
+);
 
             if (IsUnlocked(content))
                 continue;

@@ -149,10 +149,19 @@ public class EnemyHealth : MonoBehaviour
 
         EnemyIdentity identity = GetComponent<EnemyIdentity>();
 
+        Debug.Log(
+            $"[EnemyHealth] Died: {name}, " +
+            $"identity={(identity != null ? identity.EnemyId : "NULL")}"
+        );
+
         if (UnlockProgressService.Instance != null &&
             identity != null &&
             !string.IsNullOrWhiteSpace(identity.EnemyId))
         {
+            Debug.Log(
+    $"[EnemyHealth] Register kill progress: type={UnlockConditionType.KillEnemyType}, " +
+    $"target={identity.EnemyId}"
+);
             UnlockProgressService.Instance.AddProgressByCondition(
                 UnlockConditionType.KillEnemyType,
                 identity.EnemyId,

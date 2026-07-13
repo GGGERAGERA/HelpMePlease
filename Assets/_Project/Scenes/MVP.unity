@@ -429,7 +429,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldEventSpawner
   eventPrefabs:
-  - {fileID: 6791068172033243482, guid: 9be37b9069b011249924ba5f3b412aa3, type: 3}
+  - {fileID: 350149527517610057, guid: 176dbf5e68a24ca49b3595472b14d121, type: 3}
   firstEventDelay: 20
   eventInterval: 20
   minDistanceFromPlayer: 7
@@ -3614,7 +3614,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100000, guid: b4e2fc43b5f44d5e80e6a2c244773211, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 110004, guid: b4e2fc43b5f44d5e80e6a2c244773211, type: 3}
       propertyPath: m_fontSize
