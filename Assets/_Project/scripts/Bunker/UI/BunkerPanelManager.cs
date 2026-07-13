@@ -1,82 +1,131 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public sealed class BunkerPanelManager : MonoBehaviour
 {
-    [Header("Selection")]
+    [Header("Navigation")]
     [SerializeField] private SelectionPanelController selectionPanelController;
-
-    [SerializeField] private BunkerShopUI shopUI;
     [SerializeField] private GameObject mapPanel;
-    [SerializeField] private GameObject upgradePanel;
-    [SerializeField] private BunkerRunStarter runStarter;
+
+    [Header("Panel UI")]
+    [SerializeField] private BunkerShopUI shopUI;
     [SerializeField] private MetaUpgradeShopUI metaUpgradeShopUI;
+    [SerializeField] private Button upgradeBackButton;
+
+    [Header("Run")]
+    [SerializeField] private BunkerRunStarter runStarter;
+
     public bool IsAnyPanelOpen =>
-    selectionPanelController != null && selectionPanelController.IsOpen;
+        (selectionPanelController != null && selectionPanelController.IsOpen) ||
+        (mapPanel != null && mapPanel.activeInHierarchy);
+
+    private void Awake()
+    {
+        if (upgradeBackButton != null)
+            upgradeBackButton.onClick.AddListener(CloseAll);
+    }
+
+    private void OnDestroy()
+    {
+        if (upgradeBackButton != null)
+            upgradeBackButton.onClick.RemoveListener(CloseAll);
+    }
+
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetKeyDown(KeyCode.Escape) && IsAnyPanelOpen)
             CloseAll();
     }
+
     public void OpenCharacterSelection()
     {
+        if (!TryGetSelectionController(out SelectionPanelController controller))
+            return;
+
         CloseAll();
-        selectionPanelController.ShowCharacters();
+        controller.ShowCharacters();
     }
 
     public void OpenWeaponSelection()
     {
+        if (!TryGetSelectionController(out SelectionPanelController controller))
+            return;
+
         CloseAll();
-        selectionPanelController.ShowWeapons();
+        controller.ShowWeapons();
     }
 
     public void OpenShop()
     {
-        Debug.Log("[BunkerPanelManager] OpenShop");
-
-        if (selectionPanelController == null)
-        {
-            Debug.LogError("[BunkerPanelManager] SelectionPanelController is null");
+        if (!TryGetSelectionController(out SelectionPanelController controller))
             return;
-        }
 
-        selectionPanelController.ShowShop();
-
-        if (shopUI != null)
-            shopUI.Refresh();
+        CloseAll();
+        controller.ShowShop();
+        shopUI?.Refresh();
     }
 
     public void OpenMap()
     {
         CloseAll();
 
-        if (mapPanel != null)
-            mapPanel.SetActive(true);
+        if (mapPanel == null)
+        {
+            Debug.LogError("[BunkerPanelManager] MapPanel is not assigned.", this);
+            return;
+        }
+
+        mapPanel.SetActive(true);
     }
 
     public void OpenUpgrade()
     {
-        selectionPanelController.ShowUpgrade();
+        if (!TryGetSelectionController(out SelectionPanelController controller))
+            return;
 
-        if (metaUpgradeShopUI != null)
-            metaUpgradeShopUI.Refresh();
+        CloseAll();
+        controller.ShowUpgrade();
+        metaUpgradeShopUI?.Refresh();
     }
 
     public void CloseAll()
     {
-        if (selectionPanelController != null)
-            selectionPanelController.Hide();
+        selectionPanelController?.Hide();
 
         if (mapPanel != null)
             mapPanel.SetActive(false);
-
-        if (upgradePanel != null)
-            upgradePanel.SetActive(false);
     }
+
     public void StartRun()
     {
-        if (runStarter != null)
-            runStarter.StartRun();
-        else
-            Debug.LogError("[BunkerPanelManager] BunkerRunStarter is not assigned.");
+        if (runStarter == null)
+        {
+            Debug.LogError("[BunkerPanelManager] BunkerRunStarter is not assigned.", this);
+            return;
+        }
+
+        runStarter.StartRun();
     }
+
+    private bool TryGetSelectionController(out SelectionPanelController controller)
+    {
+        controller = selectionPanelController;
+
+        if (controller != null)
+            return true;
+
+        Debug.LogError("[BunkerPanelManager] SelectionPanelController is not assigned.", this);
+        return false;
+    }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (selectionPanelController == null)
+            Debug.LogWarning("[BunkerPanelManager] SelectionPanelController is not assigned.", this);
+
+        if (upgradeBackButton == null)
+            Debug.LogWarning("[BunkerPanelManager] UpgradeBackButton is not assigned.", this);
+    }
+#endif
 }

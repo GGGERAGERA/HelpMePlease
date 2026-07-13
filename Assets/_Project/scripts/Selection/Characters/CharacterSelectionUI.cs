@@ -180,10 +180,6 @@ public sealed class CharacterSelectionUI : MonoBehaviour
             return;
 
         selectButton.interactable = active;
-
-        Image image = selectButton.GetComponent<Image>();
-        if (image != null)
-            image.color = active ? enabledColor : disabledColor;
     }
 
     private void SetText(TextMeshProUGUI text, string value)

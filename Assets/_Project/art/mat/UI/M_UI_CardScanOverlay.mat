@@ -22,14 +22,18 @@ Material:
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
-    m_TexEnvs: []
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _GridStrength: 0.12
+    - _GridStrength: 0.132
     - _ScanSpeed: 0.12
-    - _ScanStrength: 0.8
-    - _ScanWidth: 0.045
+    - _ScanStrength: 1.682
+    - _ScanWidth: 0.0503
     m_Colors:
-    - _ScanColor: {r: 0, g: 0.9, b: 1, a: 1}
+    - _ScanColor: {r: 1, g: 0, b: 0.8484354, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

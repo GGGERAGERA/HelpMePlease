@@ -352,7 +352,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ea9138ac1751a634e92e1f09b464b978, type: 2}
   - {fileID: 11400000, guid: b7e8757e8554fd14a90ddac789fe1de0, type: 2}
   - {fileID: 11400000, guid: 58c13046baa6419418981d218c776e47, type: 2}
-  - {fileID: 11400000, guid: 0234b767634729842ad7ffc2f375bb69, type: 2}
   - {fileID: 11400000, guid: a209054e8f37b184f93430d405a63675, type: 2}
   choicesCount: 3
 --- !u!114 &46915849
@@ -410,7 +409,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunTimer
   defaultLevel: {fileID: 11400000, guid: 20100000000000000000000000000000, type: 2}
-  runDuration: 70
+  runDuration: 60
   bossPrefab: {fileID: 8074722678228422782, guid: 8f73b608ef0309744b732a66e85e86d7, type: 3}
   spawnDistanceFromPlayer: 25
   bossWarningSound: {fileID: 0}

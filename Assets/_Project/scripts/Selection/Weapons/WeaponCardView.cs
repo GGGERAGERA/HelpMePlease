@@ -23,6 +23,8 @@ public sealed class WeaponCardView : MonoBehaviour
         new Color(0.35f, 0.35f, 0.35f, 1f);
 
     private Button button;
+    [Header("Selection")]
+    [SerializeField] private GameObject selectedFrame;
 
     public WeaponData Weapon => weapon;
 
@@ -76,8 +78,8 @@ public sealed class WeaponCardView : MonoBehaviour
 
     public void SetSelected(bool selected)
     {
-        // Пока оставляем выбор через существующие состояния Button/Animator.
-        // Позже сюда можно добавить отдельную selected-frame.
+        if (selectedFrame != null)
+            selectedFrame.SetActive(selected);
     }
 
     private void RefreshMainVisuals(bool isUnlocked)

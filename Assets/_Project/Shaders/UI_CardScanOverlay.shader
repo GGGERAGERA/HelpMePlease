@@ -2,6 +2,8 @@ Shader "UI/Card Scan Overlay"
 {
     Properties
     {
+        [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
+
         _ScanColor ("Scan Color", Color) = (0, 0.9, 1, 1)
         _ScanStrength ("Scan Strength", Range(0, 2)) = 0.8
         _ScanSpeed ("Scan Speed", Range(0, 5)) = 0.8
@@ -37,6 +39,7 @@ Shader "UI/Card Scan Overlay"
             float _ScanSpeed;
             float _ScanWidth;
             float _GridStrength;
+            sampler2D _MainTex;
 
             struct appdata_t
             {
@@ -75,9 +78,10 @@ Shader "UI/Card Scan Overlay"
                 float verticalGrid = step(0.965, sin(uv.x * 80.0) * 0.5 + 0.5);
                 float horizontalGrid = step(0.965, sin(uv.y * 80.0) * 0.5 + 0.5);
                 float grid = (verticalGrid + horizontalGrid) * _GridStrength;
+                fixed4 sprite = tex2D(_MainTex, i.uv);
 
                 fixed4 col = _ScanColor;
-                col.a = saturate((scan * _ScanStrength + grid) * i.color.a);
+                col.a = saturate((scan * _ScanStrength + grid) * sprite.a * i.color.a);
 
                 return col;
             }

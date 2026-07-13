@@ -207,10 +207,6 @@ public sealed class WeaponSelectionUI : MonoBehaviour
             return;
 
         confirmButton.interactable = active;
-
-        Image image = confirmButton.GetComponent<Image>();
-        if (image != null)
-            image.color = active ? enabledColor : disabledColor;
     }
 
     private void SetText(TextMeshProUGUI text, string value)

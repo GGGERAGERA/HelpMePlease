@@ -17,6 +17,9 @@ public class CharacterCardView : MonoBehaviour
     [SerializeField] private Color unlockedColor = Color.white;
     [SerializeField] private Color lockedColor = new(0.35f, 0.35f, 0.35f, 1f);
 
+    [Header("Selection")]
+    [SerializeField] private GameObject selectedVisual;
+
     private Button button;
 
     public CharacterData Character => character;
@@ -73,8 +76,8 @@ public class CharacterCardView : MonoBehaviour
 
     public void SetSelected(bool selected)
     {
-        // Пока оставляем пустым.
-        // У тебя выделение, похоже, живет через Animator/Button states.
+        if (selectedVisual != null)
+            selectedVisual.SetActive(selected);
     }
 
     private bool IsUnlocked()
