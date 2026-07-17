@@ -54,9 +54,6 @@ public sealed class BunkerNotificationManager : MonoBehaviour
         if (string.IsNullOrWhiteSpace(message))
             return;
 
-        if (type == BunkerNotificationType.Error)
-            AudioService.Instance?.Play(AudioCueId.UIError);
-
         if (routine != null)
             StopCoroutine(routine);
 

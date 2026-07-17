@@ -72,7 +72,6 @@ public class UpgradeCardView : MonoBehaviour
         if (currentUpgrade == null)
             return;
 
-        AudioService.Instance?.Play(AudioCueId.CardSelect);
         onClicked?.Invoke(currentUpgrade);
     }
 

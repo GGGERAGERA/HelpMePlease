@@ -11,12 +11,6 @@ public class UISoundPlayer : MonoBehaviour
 
     public void PlayPanelSwitch()
     {
-        if (AudioService.Instance != null &&
-            AudioService.Instance.Play(AudioCueId.UIClick))
-        {
-            return;
-        }
-
         Play(panelSwitchSound, panelSwitchVolume);
     }
 

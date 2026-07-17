@@ -73,7 +73,6 @@ public sealed class LevelChoiceCardView : MonoBehaviour
     {
         if (nodeData != null)
         {
-            AudioService.Instance?.Play(AudioCueId.CardSelect);
             onClicked?.Invoke(nodeData);
         }
     }

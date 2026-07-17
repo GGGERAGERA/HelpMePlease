@@ -107,6 +107,32 @@ public sealed class AudioCatalog : ScriptableObject
     private void OnValidate()
     {
         RebuildLookup();
+
+        if (cues == null)
+            return;
+
+        HashSet<AudioCueId> seenIds = new();
+
+        foreach (AudioCueDefinition cue in cues)
+        {
+            if (cue == null)
+                continue;
+
+            if (cue.Id == AudioCueId.None)
+            {
+                Debug.LogWarning("[AudioCatalog] A cue uses AudioCueId.None.", this);
+            }
+            else if (!seenIds.Add(cue.Id))
+            {
+                Debug.LogWarning($"[AudioCatalog] Duplicate cue: {cue.Id}.", this);
+            }
+
+            if (cue.PitchMin <= 0f || cue.PitchMax <= 0f)
+                Debug.LogWarning($"[AudioCatalog] {cue.Id} has non-positive pitch.", this);
+
+            if (cue.Category == AudioCategory.UI && cue.Loop)
+                Debug.LogWarning($"[AudioCatalog] UI cue {cue.Id} must not loop.", this);
+        }
     }
 #endif
 }

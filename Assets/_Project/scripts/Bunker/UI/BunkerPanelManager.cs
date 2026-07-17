@@ -44,7 +44,6 @@ public sealed class BunkerPanelManager : MonoBehaviour
 
         CloseAll(false);
         controller.ShowCharacters();
-        AudioService.Instance?.Play(AudioCueId.UIClick);
     }
 
     public void OpenWeaponSelection()
@@ -54,7 +53,6 @@ public sealed class BunkerPanelManager : MonoBehaviour
 
         CloseAll(false);
         controller.ShowWeapons();
-        AudioService.Instance?.Play(AudioCueId.UIClick);
     }
 
     public void OpenShop()
@@ -65,7 +63,6 @@ public sealed class BunkerPanelManager : MonoBehaviour
         CloseAll(false);
         controller.ShowShop();
         shopUI?.Refresh();
-        AudioService.Instance?.Play(AudioCueId.UIClick);
     }
 
     public void OpenMap()
@@ -79,7 +76,6 @@ public sealed class BunkerPanelManager : MonoBehaviour
         }
 
         mapPanel.SetActive(true);
-        AudioService.Instance?.Play(AudioCueId.UIClick);
     }
 
     public void OpenUpgrade()
@@ -90,7 +86,6 @@ public sealed class BunkerPanelManager : MonoBehaviour
         CloseAll(false);
         controller.ShowUpgrade();
         metaUpgradeShopUI?.Refresh();
-        AudioService.Instance?.Play(AudioCueId.UIClick);
     }
 
     public void CloseAll()
@@ -105,8 +100,6 @@ public sealed class BunkerPanelManager : MonoBehaviour
         if (mapPanel != null)
             mapPanel.SetActive(false);
 
-        if (playSound)
-            AudioService.Instance?.Play(AudioCueId.UIBack);
     }
 
     public void StartRun()
