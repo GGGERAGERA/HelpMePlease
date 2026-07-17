@@ -9789,6 +9789,74 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f807e296a882ed419dc5b9e05a0a1ec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterCardView
+--- !u!1 &2146001001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2146001002}
+  - component: {fileID: 2146001003}
+  - component: {fileID: 2146001004}
+  m_Layer: 0
+  m_Name: '[AudioService]'
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2146001002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2146001001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2146001003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2146001001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b8f92e6d14a479db2f69eb0e5ce6b33, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::AudioService
+  catalog: {fileID: 11400000, guid: 6ee2dbe59cb5456f944b59a72f4a0c31, type: 2}
+  sfxPoolSize: 20
+  musicCrossfadeDuration: 0.75
+  musicMixerGroup: {fileID: 0}
+  sfxMixerGroup: {fileID: 0}
+  uiMixerGroup: {fileID: 0}
+  ambienceMixerGroup: {fileID: 0}
+  musicVolume: 1
+  sfxVolume: 1
+  uiVolume: 1
+  ambienceVolume: 1
+--- !u!114 &2146001004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2146001001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cfe281726b74f85922c04dcb3f96159, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::AudioSceneDirector
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -9812,3 +9880,4 @@ SceneRoots:
   - {fileID: 1081891586}
   - {fileID: 1120321534439961348}
   - {fileID: 2139217254}
+  - {fileID: 2146001002}

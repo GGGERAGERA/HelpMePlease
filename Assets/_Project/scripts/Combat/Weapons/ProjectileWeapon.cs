@@ -15,6 +15,9 @@ public class ProjectileWeapon : BaseWeapon
     [SerializeField] private MonoBehaviour fireBehaviourSource;
     [SerializeField] private ProjectileShotPattern shotPattern;
 
+    [Header("Audio (Stage 1)")]
+    [SerializeField] private AudioCueId attackCue = AudioCueId.None;
+
     private IWeaponFireBehaviour fireBehaviour;
 
     private float currentRecoil;
@@ -58,7 +61,9 @@ public class ProjectileWeapon : BaseWeapon
 
         FireShotGroup(baseDirection);
 
-        if (weaponData != null)
+        if (AudioService.Instance != null)
+            AudioService.Instance.PlayAt(attackCue, firePoint.position);
+        else if (weaponData != null)
             PlaySound(weaponData.attackSound);
 
         FxPlayer?.PlayFire(firePoint.position, baseDirection);

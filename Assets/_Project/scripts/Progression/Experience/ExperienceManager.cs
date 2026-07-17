@@ -17,8 +17,10 @@ public class ExperienceManager : MonoBehaviour
     public UnityEvent<int, int> OnExperienceChanged;
     public UnityEvent<int> OnLevelUp;
 
+#pragma warning disable CS0414
     [SerializeField] private AudioClip levelUpSound;
     [SerializeField] private float levelUpVolume = 0.5f;
+#pragma warning restore CS0414
     [SerializeField] private GameObject levelUpFX;
     [SerializeField] private float FXPauseTime = 1.2f;
     [SerializeField] private Transform playerTransform;
@@ -82,9 +84,8 @@ public class ExperienceManager : MonoBehaviour
         // 2. Пауза
         Time.timeScale = 0f;
 
-        // 3. Звук (играет всегда)
-        if (levelUpSound != null && Camera.main != null)
-            AudioSource.PlayClipAtPoint(levelUpSound, Camera.main.transform.position, levelUpVolume);
+        // 3. Звук через постоянный сервис; legacy-поля пока сохранены.
+        AudioService.Instance?.Play(AudioCueId.LevelUp);
 
         // 4. Поиск игрока
         if (playerTransform == null)

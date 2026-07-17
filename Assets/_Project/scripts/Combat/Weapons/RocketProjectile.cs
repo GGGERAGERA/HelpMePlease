@@ -74,6 +74,10 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile
             return;
 
         exploded = true;
+        AudioService.Instance?.PlayAt(
+            AudioCueId.RocketExplosion,
+            transform.position
+        );
         SpawnExplosionFx();
 
         HashSet<EnemyHealth> damagedEnemies = new HashSet<EnemyHealth>();

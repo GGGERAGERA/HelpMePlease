@@ -42,8 +42,12 @@ public sealed class BunkerShopItemView : MonoBehaviour
         bool success = shopService.TryBuy(item);
 
         if (!success)
+        {
+            AudioService.Instance?.Play(AudioCueId.PurchaseFail);
             return;
+        }
 
+        AudioService.Instance?.Play(AudioCueId.Purchase);
         Refresh();
     }
 
@@ -69,7 +73,7 @@ public sealed class BunkerShopItemView : MonoBehaviour
             buyButton.interactable = canBuy;
 
         if (buyButtonText != null)
-            buyButtonText.text = purchased ? "Куплено" : "Купить";
+            buyButtonText.text = purchased ? "РљСѓРїР»РµРЅРѕ" : "РљСѓРїРёС‚СЊ";
 
         if (purchasedMark != null)
             purchasedMark.SetActive(purchased);

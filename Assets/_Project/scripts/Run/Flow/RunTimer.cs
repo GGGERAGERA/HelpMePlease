@@ -10,8 +10,10 @@ public class RunTimer : MonoBehaviour
     [SerializeField] private GameObject bossPrefab;
     [SerializeField] private float spawnDistanceFromPlayer = 8f;
 
+#pragma warning disable CS0414
     [SerializeField] private AudioClip bossWarningSound;
     [SerializeField] private float bossWarningVolume = 0.8f;
+#pragma warning restore CS0414
     [SerializeField] private float bossSpawnDelay = 1f;
 
     private float timeLeft;
@@ -89,18 +91,9 @@ public class RunTimer : MonoBehaviour
 
         HUDManager.Instance?.SetTimer(0f);
         RunMessageService.Instance?.Show(RunMessageType.BossIncoming);
+        AudioService.Instance?.Play(AudioCueId.BossSpawn);
 
         FindFirstObjectByType<EnemySpawner>()?.StopSpawning();
-
-
-        if (bossWarningSound != null && Camera.main != null)
-        {
-            AudioSource.PlayClipAtPoint(
-                bossWarningSound,
-                Camera.main.transform.position,
-                bossWarningVolume
-            );
-        }
 
         CameraShake.Instance?.Shake(2f, 0.05f);
 

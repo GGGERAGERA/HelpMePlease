@@ -125,6 +125,7 @@ public sealed class LevelChoicePanelView : MonoBehaviour
         if (confirmButton != null)
             confirmButton.interactable = false;
 
+        AudioService.Instance?.Play(AudioCueId.UIConfirm);
         callback?.Invoke(selectedNode);
     }
 

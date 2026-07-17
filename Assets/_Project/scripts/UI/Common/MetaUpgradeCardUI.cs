@@ -97,8 +97,12 @@ public class MetaUpgradeCardUI : MonoBehaviour
             MetaProgressionManager.EnsureExists();
 
         if (!progression.BuyUpgrade(type))
+        {
+            AudioService.Instance?.Play(AudioCueId.PurchaseFail);
             return;
+        }
 
+        AudioService.Instance?.Play(AudioCueId.Purchase);
         MetaUpgradeShopUI shop =
             GetComponentInParent<MetaUpgradeShopUI>();
 

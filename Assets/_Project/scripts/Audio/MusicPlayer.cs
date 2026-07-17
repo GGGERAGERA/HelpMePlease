@@ -29,6 +29,9 @@ public class MusicPlayer : MonoBehaviour
 
     private void Start()
     {
+        if (AudioService.Instance != null)
+            return;
+
         if (playOnStart)
             PlayTrack();
     }

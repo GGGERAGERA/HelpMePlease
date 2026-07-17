@@ -98,13 +98,19 @@ public sealed class CharacterSelectionUI : MonoBehaviour
         }
 
         RunSelectionManager.Instance.SelectCharacter(selectedCharacter);
-        Close();
+        AudioService.Instance?.Play(AudioCueId.UIConfirm);
+        Close(false);
     }
 
     private void Close()
     {
+        Close(true);
+    }
+
+    private void Close(bool playSound)
+    {
         if (panelManager != null)
-            panelManager.CloseAll();
+            panelManager.CloseAll(playSound);
     }
 
     private void RefreshDetails(CharacterData character)

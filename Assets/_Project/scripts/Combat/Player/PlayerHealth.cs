@@ -42,7 +42,15 @@ public class PlayerHealth : MonoBehaviour
         currentHealth -= damage;
 
         whiteFlash?.Flash();
-        hitSound?.Play();
+
+        if (currentHealth > 0f)
+        {
+            if (AudioService.Instance != null)
+                AudioService.Instance.PlayAt(AudioCueId.PlayerHurt, transform.position);
+            else
+                hitSound?.Play();
+        }
+
         //     
         CameraShake.Instance?.Shake(0.12f, 0.08f);
         HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
@@ -75,6 +83,12 @@ public class PlayerHealth : MonoBehaviour
         Debug.Log("Player died");
         if (isDead) return;
         isDead = true;
+
+        AudioService.Instance?.PlayAt(
+            AudioCueId.PlayerDeath,
+            transform.position
+        );
+
         //   
         if (CameraShake.Instance != null)
             CameraShake.Instance.StopAllShakes();

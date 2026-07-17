@@ -1,0 +1,275 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a4c6171cf2f438285f17284513c8082, type: 3}
+  m_Name: VerticalSliceAudioCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::AudioCatalog
+  cues:
+  - id: 1
+    clips: []
+    volume: 0.35
+    pitchMin: 1
+    pitchMax: 1
+    spatialBlend: 0
+    cooldown: 0
+    maxSimultaneous: 1
+    loop: 1
+    category: 0
+  - id: 2
+    clips: []
+    volume: 0.4
+    pitchMin: 1
+    pitchMax: 1
+    spatialBlend: 0
+    cooldown: 0
+    maxSimultaneous: 1
+    loop: 1
+    category: 0
+  - id: 3
+    clips: []
+    volume: 0.18
+    pitchMin: 1
+    pitchMax: 1
+    spatialBlend: 0
+    cooldown: 0
+    maxSimultaneous: 1
+    loop: 1
+    category: 3
+  - id: 10
+    clips: []
+    volume: 0.5
+    pitchMin: 0.98
+    pitchMax: 1.02
+    spatialBlend: 0
+    cooldown: 0.03
+    maxSimultaneous: 4
+    loop: 0
+    category: 2
+  - id: 11
+    clips: []
+    volume: 0.25
+    pitchMin: 0.98
+    pitchMax: 1.03
+    spatialBlend: 0
+    cooldown: 0.025
+    maxSimultaneous: 2
+    loop: 0
+    category: 2
+  - id: 12
+    clips: []
+    volume: 0.6
+    pitchMin: 0.98
+    pitchMax: 1.02
+    spatialBlend: 0
+    cooldown: 0.05
+    maxSimultaneous: 3
+    loop: 0
+    category: 2
+  - id: 13
+    clips: []
+    volume: 0.5
+    pitchMin: 0.98
+    pitchMax: 1.02
+    spatialBlend: 0
+    cooldown: 0.05
+    maxSimultaneous: 3
+    loop: 0
+    category: 2
+  - id: 14
+    clips: []
+    volume: 0.65
+    pitchMin: 0.98
+    pitchMax: 1.02
+    spatialBlend: 0
+    cooldown: 0.1
+    maxSimultaneous: 2
+    loop: 0
+    category: 2
+  - id: 20
+    clips: []
+    volume: 0.35
+    pitchMin: 0.96
+    pitchMax: 1.04
+    spatialBlend: 0.15
+    cooldown: 0.04
+    maxSimultaneous: 4
+    loop: 0
+    category: 1
+  - id: 21
+    clips: []
+    volume: 0.45
+    pitchMin: 0.98
+    pitchMax: 1.02
+    spatialBlend: 0.15
+    cooldown: 0.05
+    maxSimultaneous: 1
+    loop: 0
+    category: 1
+  - id: 22
+    clips: []
+    volume: 0.35
+    pitchMin: 0.99
+    pitchMax: 1.01
+    spatialBlend: 0.15
+    cooldown: 0
+    maxSimultaneous: 1
+    loop: 1
+    category: 1
+  - id: 23
+    clips: []
+    volume: 0.3
+    pitchMin: 0.98
+    pitchMax: 1.02
+    spatialBlend: 0.25
+    cooldown: 0
+    maxSimultaneous: 1
+    loop: 1
+    category: 1
+  - id: 24
+    clips: []
+    volume: 0.4
+    pitchMin: 0.98
+    pitchMax: 1.02
+    spatialBlend: 0.15
+    cooldown: 0.05
+    maxSimultaneous: 1
+    loop: 0
+    category: 1
+  - id: 25
+    clips: []
+    volume: 0.55
+    pitchMin: 0.96
+    pitchMax: 1.03
+    spatialBlend: 0.3
+    cooldown: 0.15
+    maxSimultaneous: 2
+    loop: 0
+    category: 1
+  - id: 26
+    clips: []
+    volume: 0.75
+    pitchMin: 0.94
+    pitchMax: 1.04
+    spatialBlend: 0.7
+    cooldown: 0.08
+    maxSimultaneous: 3
+    loop: 0
+    category: 1
+  - id: 30
+    clips: []
+    volume: 0.55
+    pitchMin: 0.96
+    pitchMax: 1.04
+    spatialBlend: 0
+    cooldown: 0.18
+    maxSimultaneous: 1
+    loop: 0
+    category: 1
+  - id: 31
+    clips: []
+    volume: 0.75
+    pitchMin: 1
+    pitchMax: 1
+    spatialBlend: 0
+    cooldown: 1
+    maxSimultaneous: 1
+    loop: 0
+    category: 1
+  - id: 32
+    clips: []
+    volume: 0.4
+    pitchMin: 0.9
+    pitchMax: 1.1
+    spatialBlend: 0.6
+    cooldown: 0.03
+    maxSimultaneous: 4
+    loop: 0
+    category: 1
+  - id: 33
+    clips: []
+    volume: 0.22
+    pitchMin: 1
+    pitchMax: 1.08
+    spatialBlend: 0.2
+    cooldown: 0.035
+    maxSimultaneous: 3
+    loop: 0
+    category: 1
+  - id: 34
+    clips: []
+    volume: 0.7
+    pitchMin: 1
+    pitchMax: 1
+    spatialBlend: 0
+    cooldown: 0.5
+    maxSimultaneous: 1
+    loop: 0
+    category: 1
+  - id: 35
+    clips: []
+    volume: 0.8
+    pitchMin: 1
+    pitchMax: 1
+    spatialBlend: 0
+    cooldown: 2
+    maxSimultaneous: 1
+    loop: 0
+    category: 1
+  - id: 36
+    clips: []
+    volume: 0.9
+    pitchMin: 0.98
+    pitchMax: 1.02
+    spatialBlend: 0
+    cooldown: 1
+    maxSimultaneous: 1
+    loop: 0
+    category: 1
+  - id: 37
+    clips: []
+    volume: 0.5
+    pitchMin: 0.98
+    pitchMax: 1.02
+    spatialBlend: 0
+    cooldown: 0.04
+    maxSimultaneous: 3
+    loop: 0
+    category: 2
+  - id: 38
+    clips: []
+    volume: 0.6
+    pitchMin: 0.98
+    pitchMax: 1.02
+    spatialBlend: 0
+    cooldown: 0.1
+    maxSimultaneous: 2
+    loop: 0
+    category: 2
+  - id: 39
+    clips: []
+    volume: 0.65
+    pitchMin: 0.98
+    pitchMax: 1.02
+    spatialBlend: 0
+    cooldown: 0.1
+    maxSimultaneous: 2
+    loop: 0
+    category: 2
+  - id: 40
+    clips: []
+    volume: 0.7
+    pitchMin: 1
+    pitchMax: 1
+    spatialBlend: 0
+    cooldown: 0.5
+    maxSimultaneous: 1
+    loop: 0
+    category: 2

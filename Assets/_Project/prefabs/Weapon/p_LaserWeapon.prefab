@@ -46,6 +46,7 @@ GameObject:
   - component: {fileID: -1546513204278051988}
   - component: {fileID: -4768851257318523984}
   - component: {fileID: -6693474130703358042}
+  - component: {fileID: 6094317542381098701}
   m_Layer: 0
   m_Name: p_LaserWeapon
   m_TagString: Untagged
@@ -98,6 +99,19 @@ MonoBehaviour:
   beamWidth: 0.1
   beamRenderer: {fileID: -4768851257318523984}
   fireBehaviourSource: {fileID: -6693474130703358042}
+  audioController: {fileID: 6094317542381098701}
+--- !u!114 &6094317542381098701
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5277647906556210592}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d2a7f9083df48629a8ce4d1c60a4f75, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LaserAudioController
 --- !u!82 &2175164308714764740
 AudioSource:
   m_ObjectHideFlags: 0

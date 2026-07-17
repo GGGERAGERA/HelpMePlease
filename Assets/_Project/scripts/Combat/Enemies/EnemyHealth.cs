@@ -147,6 +147,11 @@ public class EnemyHealth : MonoBehaviour
 
         isDead = true;
 
+        AudioService.Instance?.PlayAt(
+            isBoss ? AudioCueId.BossDeath : AudioCueId.CommonEnemyDeath,
+            transform.position
+        );
+
         EnemyIdentity identity = GetComponent<EnemyIdentity>();
 
         Debug.Log(

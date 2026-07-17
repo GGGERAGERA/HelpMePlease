@@ -11,19 +11,19 @@ public sealed class BunkerRunStarter : MonoBehaviour
     {
         if (RunSelectionManager.Instance == null)
         {
-            Notifications?.ShowError("Система выбора не найдена.");
+            Notifications?.ShowError("РЎРёСЃС‚РµРјР° РІС‹Р±РѕСЂР° РЅРµ РЅР°Р№РґРµРЅР°.");
             return;
         }
 
         if (RunSelectionManager.Instance.SelectedCharacter == null)
         {
-            Notifications?.ShowWarning("Сначала выбери персонажа.");
+            Notifications?.ShowWarning("РЎРЅР°С‡Р°Р»Р° РІС‹Р±РµСЂРё РїРµСЂСЃРѕРЅР°Р¶Р°.");
             return;
         }
 
         if (RunSelectionManager.Instance.SelectedWeapon == null)
         {
-            Notifications?.ShowWarning("Сначала выбери оружие.");
+            Notifications?.ShowWarning("РЎРЅР°С‡Р°Р»Р° РІС‹Р±РµСЂРё РѕСЂСѓР¶РёРµ.");
             return;
         }
 
@@ -32,6 +32,7 @@ public sealed class BunkerRunStarter : MonoBehaviour
 
         RunStateManager.EnsureExists().BeginNewRun(character, weapon);
 
+        AudioService.Instance?.Play(AudioCueId.StartRun);
         Time.timeScale = 1f;
         SceneManager.LoadScene(gameplaySceneName);
     }

@@ -11,13 +11,16 @@ public class UIButtonHoverSound : MonoBehaviour, IPointerEnterHandler
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (hoverSound == null)
-            return;
-
         if (Time.unscaledTime < lastHoverTime + MinInterval)
             return;
 
-        UISoundPlayer.Instance?.Play(hoverSound, volume);
+        bool playedByService =
+            AudioService.Instance != null &&
+            AudioService.Instance.Play(AudioCueId.UIHover);
+
+        if (!playedByService && hoverSound != null)
+            UISoundPlayer.Instance?.Play(hoverSound, volume);
+
         lastHoverTime = Time.unscaledTime;
     }
 }

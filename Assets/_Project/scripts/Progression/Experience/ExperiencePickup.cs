@@ -10,9 +10,11 @@ public class ExperiencePickup : MonoBehaviour
     [SerializeField] private float magnetSpeed = 10f;
     [SerializeField] private float collectDistance = 0.25f;
 
-    [Header("Sound")]
+    [Header("Sound (Legacy)")]
+#pragma warning disable CS0414
     [SerializeField] private AudioClip pickupSound;
     [SerializeField] private float pickupVolume = 0.25f;
+#pragma warning restore CS0414
 
 
 
@@ -79,17 +81,13 @@ public class ExperiencePickup : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("ExperiencePickup: ExperienceManager νε νΰιδεν.");
+            Debug.LogWarning("ExperiencePickup: ExperienceManager Π½Πµ Π½Π°ΠΉΠ΄ΠµΠ½.");
         }
 
-        if (pickupSound != null)
-        {
-            AudioSource.PlayClipAtPoint(
-                pickupSound,
-                transform.position,
-                pickupVolume
-            );
-        }
+        AudioService.Instance?.PlayAt(
+            AudioCueId.XPPickup,
+            transform.position
+        );
 
         Destroy(gameObject);
     }

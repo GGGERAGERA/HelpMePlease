@@ -72,7 +72,10 @@ public sealed class LevelChoiceCardView : MonoBehaviour
     private void HandleClick()
     {
         if (nodeData != null)
+        {
+            AudioService.Instance?.Play(AudioCueId.CardSelect);
             onClicked?.Invoke(nodeData);
+        }
     }
 
     public void SetSelected(bool selected)

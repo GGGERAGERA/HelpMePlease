@@ -42,8 +42,9 @@ public sealed class BunkerPanelManager : MonoBehaviour
         if (!TryGetSelectionController(out SelectionPanelController controller))
             return;
 
-        CloseAll();
+        CloseAll(false);
         controller.ShowCharacters();
+        AudioService.Instance?.Play(AudioCueId.UIClick);
     }
 
     public void OpenWeaponSelection()
@@ -51,8 +52,9 @@ public sealed class BunkerPanelManager : MonoBehaviour
         if (!TryGetSelectionController(out SelectionPanelController controller))
             return;
 
-        CloseAll();
+        CloseAll(false);
         controller.ShowWeapons();
+        AudioService.Instance?.Play(AudioCueId.UIClick);
     }
 
     public void OpenShop()
@@ -60,14 +62,15 @@ public sealed class BunkerPanelManager : MonoBehaviour
         if (!TryGetSelectionController(out SelectionPanelController controller))
             return;
 
-        CloseAll();
+        CloseAll(false);
         controller.ShowShop();
         shopUI?.Refresh();
+        AudioService.Instance?.Play(AudioCueId.UIClick);
     }
 
     public void OpenMap()
     {
-        CloseAll();
+        CloseAll(false);
 
         if (mapPanel == null)
         {
@@ -76,6 +79,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
         }
 
         mapPanel.SetActive(true);
+        AudioService.Instance?.Play(AudioCueId.UIClick);
     }
 
     public void OpenUpgrade()
@@ -83,17 +87,26 @@ public sealed class BunkerPanelManager : MonoBehaviour
         if (!TryGetSelectionController(out SelectionPanelController controller))
             return;
 
-        CloseAll();
+        CloseAll(false);
         controller.ShowUpgrade();
         metaUpgradeShopUI?.Refresh();
+        AudioService.Instance?.Play(AudioCueId.UIClick);
     }
 
     public void CloseAll()
+    {
+        CloseAll(true);
+    }
+
+    public void CloseAll(bool playSound)
     {
         selectionPanelController?.Hide();
 
         if (mapPanel != null)
             mapPanel.SetActive(false);
+
+        if (playSound)
+            AudioService.Instance?.Play(AudioCueId.UIBack);
     }
 
     public void StartRun()

@@ -6,8 +6,12 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
     [SerializeField] private LayerMask enemyMask;
     [SerializeField] private LaserBeamRenderer beamRenderer;
 
+    public bool HitEnemyLastFire { get; private set; }
+
     public void Fire(WeaponFireContext context)
     {
+        HitEnemyLastFire = false;
+
         Vector2 endPoint = context.Origin + context.Direction * context.Range;
 
         RaycastHit2D[] hits = Physics2D.RaycastAll(
@@ -30,6 +34,7 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
                 continue;
 
             damagedEnemies.Add(enemyHealth);
+            HitEnemyLastFire = true;
 
             enemyHealth.TakeDamage(
                 context.Damage,

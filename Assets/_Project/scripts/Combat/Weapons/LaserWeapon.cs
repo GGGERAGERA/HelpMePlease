@@ -4,6 +4,7 @@ public class LaserWeapon : BaseWeapon
 {
     [Header("Beam")]
     [SerializeField] private MonoBehaviour fireBehaviourSource;
+    [SerializeField] private LaserAudioController audioController;
 
     private IWeaponFireBehaviour fireBehaviour;
 
@@ -12,9 +13,20 @@ public class LaserWeapon : BaseWeapon
         base.Awake();
 
         fireBehaviour = fireBehaviourSource as IWeaponFireBehaviour;
+        if (audioController == null)
+            audioController = GetComponent<LaserAudioController>();
 
         if (fireBehaviour == null)
             Debug.LogWarning("[LaserWeapon] Fire behaviour source is missing or invalid.");
+    }
+
+    protected override void Update()
+    {
+        audioController?.SetFiring(
+            Time.timeScale > 0f && IsTryingToAttack()
+        );
+
+        base.Update();
     }
 
     public override void Attack()
@@ -29,8 +41,11 @@ public class LaserWeapon : BaseWeapon
         if (fireBehaviour != null)
             fireBehaviour.Fire(context);
 
-        if (weaponData != null)
-            PlaySound(weaponData.attackSound);
+        bool hitEnemy =
+            fireBehaviour is BeamFireBehaviour beam &&
+            beam.HitEnemyLastFire;
+
+        audioController?.SetImpacting(hitEnemy);
 
         FxPlayer?.PlayFire(context.Origin, context.Direction);
     }

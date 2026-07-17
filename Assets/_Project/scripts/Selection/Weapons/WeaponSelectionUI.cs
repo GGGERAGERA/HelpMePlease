@@ -93,20 +93,26 @@ public sealed class WeaponSelectionUI : MonoBehaviour
         }
 
         RunSelectionManager.Instance.SelectWeapon(selectedWeapon);
-        Close();
+        AudioService.Instance?.Play(AudioCueId.UIConfirm);
+        Close(false);
     }
 
     private void Close()
     {
+        Close(true);
+    }
+
+    private void Close(bool playSound)
+    {
         if (panelManager != null)
         {
-            panelManager.CloseAll();
+            panelManager.CloseAll(playSound);
             return;
         }
 
         if (BunkerContext.Instance != null && BunkerContext.Instance.Panels != null)
         {
-            BunkerContext.Instance.Panels.CloseAll();
+            BunkerContext.Instance.Panels.CloseAll(playSound);
             return;
         }
 
