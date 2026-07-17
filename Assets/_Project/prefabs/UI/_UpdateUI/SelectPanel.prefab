@@ -2721,7 +2721,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2030403348863393899, guid: 63160bda7609811499676be6d473d491, type: 3}
       propertyPath: m_fontSize
-      value: 64.15
+      value: 12.04
       objectReference: {fileID: 0}
     - target: {fileID: 2030403348863393899, guid: 63160bda7609811499676be6d473d491, type: 3}
       propertyPath: m_fontColor32.rgba
@@ -2831,7 +2831,8 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 4902647163294899681, guid: 63160bda7609811499676be6d473d491, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

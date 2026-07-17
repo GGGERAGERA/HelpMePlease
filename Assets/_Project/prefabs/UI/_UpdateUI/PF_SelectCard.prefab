@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6914358897417600701}
   - component: {fileID: 5721129608564819230}
   - component: {fileID: 6813228341328492928}
+  - component: {fileID: 2873387301011002043}
   m_Layer: 5
   m_Name: PF_SelectCard
   m_TagString: Untagged
@@ -128,6 +129,20 @@ MonoBehaviour:
   unlockedColor: {r: 1, g: 1, b: 1, a: 1}
   lockedColor: {r: 0.35, g: 0.35, b: 0.35, a: 1}
   selectedVisual: {fileID: 4784156785863677945}
+--- !u!114 &2873387301011002043
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1935425138911604696}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9590b1d3ec288104b962fa62a0c9b9f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonHoverSound
+  hoverSound: {fileID: 0}
+  volume: 0.25
 --- !u!1 &2771438083949329399
 GameObject:
   m_ObjectHideFlags: 0
@@ -566,7 +581,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -655,7 +670,6 @@ GameObject:
   - component: {fileID: 9002232174535368234}
   - component: {fileID: 9094030980005744678}
   - component: {fileID: 3975055759696948774}
-  - component: {fileID: 625735741297078980}
   m_Layer: 5
   m_Name: BackgroundOutline
   m_TagString: Untagged
@@ -704,7 +718,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0.96084595, b: 1, a: 0}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -720,20 +734,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
---- !u!114 &625735741297078980
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6295458134704183972}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9590b1d3ec288104b962fa62a0c9b9f8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UIButtonHoverSound
-  hoverSound: {fileID: 8300000, guid: a7aa5b6d874324c4499a370a4294cf3a, type: 3}
-  volume: 0.25
 --- !u!1 &6471108462330092306
 GameObject:
   m_ObjectHideFlags: 0
@@ -869,7 +869,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -1006,7 +1006,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:

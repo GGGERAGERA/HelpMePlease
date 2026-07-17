@@ -14,8 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioCatalog
   cues:
   - id: 1
-    clips: []
-    volume: 0.35
+    clips:
+    - {fileID: 8300000, guid: 26c1fab41a360204694ff964595d24a8, type: 3}
+    - {fileID: 8300000, guid: 49023555999389e4e92c9d70fd3eccd4, type: 3}
+    - {fileID: 8300000, guid: 86fa5061025552b4b9951ece5fe14349, type: 3}
+    - {fileID: 8300000, guid: 1a08757c9966a3244881b21a3e061426, type: 3}
+    - {fileID: 8300000, guid: ec655ae4ec9dfb942baa3fed9d66df1f, type: 3}
+    volume: 0.1
     pitchMin: 1
     pitchMax: 1
     spatialBlend: 0
@@ -24,8 +29,9 @@ MonoBehaviour:
     loop: 1
     category: 0
   - id: 2
-    clips: []
-    volume: 0.4
+    clips:
+    - {fileID: 8300000, guid: bf14fbb54c0bf2f4b9f0160af4e42879, type: 3}
+    volume: 0.3
     pitchMin: 1
     pitchMax: 1
     spatialBlend: 0
@@ -43,28 +49,31 @@ MonoBehaviour:
     maxSimultaneous: 1
     loop: 1
     category: 3
-  - id: 10
-    clips: []
-    volume: 0.5
+  - id: 11
+    clips:
+    - {fileID: 8300000, guid: a7aa5b6d874324c4499a370a4294cf3a, type: 3}
+    volume: 0.142
     pitchMin: 0.98
     pitchMax: 1.02
     spatialBlend: 0
-    cooldown: 0.03
-    maxSimultaneous: 4
+    cooldown: 0
+    maxSimultaneous: 1
     loop: 0
     category: 2
-  - id: 11
-    clips: []
-    volume: 0.25
+  - id: 10
+    clips:
+    - {fileID: 0}
+    volume: 0.265
     pitchMin: 0.98
     pitchMax: 1.03
     spatialBlend: 0
-    cooldown: 0.025
+    cooldown: 0
     maxSimultaneous: 2
     loop: 0
     category: 2
   - id: 12
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: d8a26d1288c42474f80d9fbf6195e49f, type: 3}
     volume: 0.6
     pitchMin: 0.98
     pitchMax: 1.02

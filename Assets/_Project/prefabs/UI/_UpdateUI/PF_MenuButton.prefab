@@ -318,7 +318,6 @@ GameObject:
   - component: {fileID: 340865742398525339}
   - component: {fileID: 7010915958928206220}
   - component: {fileID: 80337003275453179}
-  - component: {fileID: 4902647163294899681}
   m_Layer: 5
   m_Name: PF_MenuButton
   m_TagString: Untagged
@@ -464,20 +463,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &4902647163294899681
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6057135903794781013}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9590b1d3ec288104b962fa62a0c9b9f8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UIButtonHoverSound
-  hoverSound: {fileID: 8300000, guid: a7aa5b6d874324c4499a370a4294cf3a, type: 3}
-  volume: 0.25
 --- !u!1 &8596076102224699305
 GameObject:
   m_ObjectHideFlags: 0
