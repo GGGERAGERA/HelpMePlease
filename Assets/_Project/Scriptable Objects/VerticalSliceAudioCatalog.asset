@@ -103,7 +103,8 @@ MonoBehaviour:
     loop: 0
     category: 2
   - id: 20
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 907d3442b4fc4244ea4e9c020e3966d6, type: 3}
     volume: 0.35
     pitchMin: 0.96
     pitchMax: 1.04
