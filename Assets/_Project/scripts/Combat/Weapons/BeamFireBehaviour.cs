@@ -8,7 +8,7 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
 
     public bool HitEnemyLastFire { get; private set; }
 
-    public void Fire(WeaponFireContext context)
+    public bool Fire(WeaponFireContext context)
     {
         HitEnemyLastFire = false;
 
@@ -52,5 +52,7 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
 
         if (beamRenderer != null)
             beamRenderer.Render(context.Origin, endPoint);
+
+        return true;
     }
 }

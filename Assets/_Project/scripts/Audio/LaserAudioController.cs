@@ -2,25 +2,8 @@ using UnityEngine;
 
 public sealed class LaserAudioController : MonoBehaviour
 {
-    private bool isFiring;
-
-    public void SetFiring(bool firing)
+    public void PlayShot(Vector3 position)
     {
-        if (firing == isFiring)
-            return;
-
-        isFiring = firing;
-
-        if (isFiring)
-            AudioService.Instance?.PlayAt(AudioCueId.LaserShot, transform.position);
-    }
-
-    public void SetImpacting(bool impacting)
-    {
-    }
-
-    private void OnDisable()
-    {
-        isFiring = false;
+        AudioService.Instance?.PlayAt(AudioCueId.LaserShot, position);
     }
 }

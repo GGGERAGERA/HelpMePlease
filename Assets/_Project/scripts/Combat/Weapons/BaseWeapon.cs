@@ -16,12 +16,15 @@ public abstract class BaseWeapon : MonoBehaviour
     [SerializeField] private WeaponFxPlayer fxPlayer;
 
     [Header("Aim / Orbit")]
+    [SerializeField] private WeaponControlMode controlMode = WeaponControlMode.Automatic;
+    [SerializeField] private WeaponTargeting targeting;
     [SerializeField] protected bool rotateToMouse = true;
     [SerializeField] protected bool moveAroundOwner = true;
     [SerializeField] protected Transform owner;
     [SerializeField] protected float orbitRadius = 0.5f;
     [SerializeField] protected float orbitSmoothSpeed = 25f;
 
+    private Vector2 lastAimDirection = Vector2.right;
     private Vector2 lastOwnerPosition;
     private Transform ownerTransform;
 
@@ -31,12 +34,24 @@ public abstract class BaseWeapon : MonoBehaviour
 
     protected WeaponRuntimeStats Stats => runtimeStats;
     protected WeaponFxPlayer FxPlayer => fxPlayer;
+    public Transform Owner => owner;
 
     protected virtual void Awake()
     {
         EnsureRuntimeStats();
         if (fxPlayer == null)
             fxPlayer = GetComponent<WeaponFxPlayer>();
+
+        if (targeting == null)
+            targeting = GetComponent<WeaponTargeting>();
+
+        if (controlMode == WeaponControlMode.Automatic && targeting == null)
+        {
+            Debug.LogWarning(
+                $"[BaseWeapon] Automatic control requires WeaponTargeting on {name}.",
+                this
+            );
+        }
     }
 
     protected virtual void Start()
@@ -70,8 +85,8 @@ public abstract class BaseWeapon : MonoBehaviour
 
         if (IsTryingToAttack() && CanAttack())
         {
-            Attack();
-            MarkAttackTime();
+            if (Attack())
+                MarkAttackTime();
         }
     }
 
@@ -88,7 +103,17 @@ public abstract class BaseWeapon : MonoBehaviour
         if (owner == null)
             return;
 
-        Vector2 aimDirection = GetAimDirectionFromOwner();
+        Vector2 aimDirection;
+
+        if (TryGetAimDirectionFromOwner(out Vector2 currentDirection))
+        {
+            lastAimDirection = currentDirection;
+            aimDirection = currentDirection;
+        }
+        else
+        {
+            aimDirection = lastAimDirection;
+        }
 
         if (moveAroundOwner)
             MoveAroundOwner(aimDirection);
@@ -97,29 +122,65 @@ public abstract class BaseWeapon : MonoBehaviour
             RotateWeapon(aimDirection);
     }
 
-    protected Vector2 GetAimDirectionFromOwner()
+    protected bool TryGetAimDirectionFromOwner(out Vector2 direction)
     {
-        Vector2 mousePosition = GetMouseWorldPosition();
-        Vector2 direction = mousePosition - (Vector2)owner.position;
+        direction = Vector2.zero;
 
-        if (!IsValidVector(direction) || direction.sqrMagnitude < 0.001f)
-            return Vector2.right;
+        if (owner == null)
+            return false;
 
-        return direction.normalized;
+        if (!TryGetAimTargetPosition(out Vector2 targetPosition))
+            return false;
+
+        return TryNormalizeDirection(
+            targetPosition - (Vector2)owner.position,
+            out direction
+        );
     }
 
-    protected Vector2 GetAimDirectionFromFirePoint()
+    protected bool TryGetAimDirectionFromFirePoint(out Vector2 direction)
     {
         if (firePoint == null)
             firePoint = transform;
 
-        Vector2 mousePosition = GetMouseWorldPosition();
-        Vector2 direction = mousePosition - (Vector2)firePoint.position;
+        direction = Vector2.zero;
 
-        if (!IsValidVector(direction) || direction.sqrMagnitude < 0.001f)
-            return transform.right;
+        if (!TryGetAimTargetPosition(out Vector2 targetPosition))
+            return false;
 
-        return direction.normalized;
+        return TryNormalizeDirection(
+            targetPosition - (Vector2)firePoint.position,
+            out direction
+        );
+    }
+
+    private bool TryGetAimTargetPosition(out Vector2 targetPosition)
+    {
+        if (controlMode == WeaponControlMode.Manual)
+        {
+            targetPosition = GetMouseWorldPosition();
+            return IsValidVector(targetPosition);
+        }
+
+        if (targeting != null && targeting.TryGetTarget(out Transform target))
+        {
+            targetPosition = target.position;
+            return true;
+        }
+
+        targetPosition = Vector2.zero;
+        return false;
+    }
+
+    private bool TryNormalizeDirection(Vector2 value, out Vector2 direction)
+    {
+        direction = Vector2.zero;
+
+        if (!IsValidVector(value) || value.sqrMagnitude < 0.001f)
+            return false;
+
+        direction = value.normalized;
+        return true;
     }
 
     protected Vector2 GetMouseWorldPosition()
@@ -181,7 +242,7 @@ public abstract class BaseWeapon : MonoBehaviour
         return Time.time >= lastAttackTime + GetAttackCooldown();
     }
 
-    public abstract void Attack();
+    public abstract bool Attack();
 
     protected void MarkAttackTime()
     {
@@ -334,7 +395,10 @@ public abstract class BaseWeapon : MonoBehaviour
 
     protected virtual bool IsTryingToAttack()
     {
-        return Input.GetMouseButton(0);
+        if (controlMode == WeaponControlMode.Manual)
+            return Input.GetMouseButton(0);
+
+        return targeting != null && targeting.HasTarget;
     }
 
     private bool IsOwnerMoving(float threshold)

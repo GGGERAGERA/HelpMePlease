@@ -1,4 +1,4 @@
 public interface IWeaponFireBehaviour
 {
-    void Fire(WeaponFireContext context);
+    bool Fire(WeaponFireContext context);
 }

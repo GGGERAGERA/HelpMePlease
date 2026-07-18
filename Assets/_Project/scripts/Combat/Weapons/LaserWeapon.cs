@@ -20,33 +20,26 @@ public class LaserWeapon : BaseWeapon
             Debug.LogWarning("[LaserWeapon] Fire behaviour source is missing or invalid.");
     }
 
-    protected override void Update()
+    public override bool Attack()
     {
-        audioController?.SetFiring(
-            Time.timeScale > 0f && IsTryingToAttack()
-        );
+        if (fireBehaviour == null ||
+            !TryGetAimDirectionFromFirePoint(out Vector2 aimDirection))
+        {
+            return false;
+        }
 
-        base.Update();
-    }
-
-    public override void Attack()
-    {
-        Vector2 direction = ApplyAccuracyPenalty(GetAimDirectionFromFirePoint());
+        Vector2 direction = ApplyAccuracyPenalty(aimDirection);
 
         WeaponFireContext context = BuildFireContext(
             firePoint.position,
             direction
         );
 
-        if (fireBehaviour != null)
-            fireBehaviour.Fire(context);
+        if (!fireBehaviour.Fire(context))
+            return false;
 
-        bool hitEnemy =
-            fireBehaviour is BeamFireBehaviour beam &&
-            beam.HitEnemyLastFire;
-
-        audioController?.SetImpacting(hitEnemy);
-
+        audioController?.PlayShot(context.Origin);
         FxPlayer?.PlayFire(context.Origin, context.Direction);
+        return true;
     }
 }

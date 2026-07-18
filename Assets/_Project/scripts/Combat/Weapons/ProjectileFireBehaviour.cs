@@ -4,12 +4,12 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
 {
     [SerializeField] private GameObject projectilePrefab;
 
-    public void Fire(WeaponFireContext context)
+    public bool Fire(WeaponFireContext context)
     {
         if (projectilePrefab == null)
         {
             Debug.LogWarning("[ProjectileFireBehaviour] Projectile prefab is missing.");
-            return;
+            return false;
         }
 
         if (!float.IsFinite(context.Direction.x) ||
@@ -17,7 +17,7 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
             context.Direction.sqrMagnitude < 0.001f)
         {
             Debug.LogWarning("[ProjectileFireBehaviour] Invalid fire direction.");
-            return;
+            return false;
         }
 
         float angle = Mathf.Atan2(context.Direction.y, context.Direction.x) * Mathf.Rad2Deg;
@@ -34,7 +34,7 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
         {
             Debug.LogWarning("[ProjectileFireBehaviour] Spawned projectile has no IWeaponProjectile.");
             Destroy(projectileObject);
-            return;
+            return false;
         }
 
         projectile.Initialize(
@@ -55,5 +55,6 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
             projectileContext = projectileObject.AddComponent<ProjectileCombatContext>();
 
         projectileContext.Initialize(context.Modifiers);
+        return true;
     }
 }

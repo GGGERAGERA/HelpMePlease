@@ -41,6 +41,7 @@ public class EnemyHealth : MonoBehaviour
     [SerializeField] private string bossName = "BOSS";
 
     private bool isDead;
+    public bool IsDead => isDead;
 
     private static float lastCritSoundTime;
     void Start()
