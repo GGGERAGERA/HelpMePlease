@@ -773,6 +773,7 @@ GameObject:
   - component: {fileID: 1455933384264137196}
   - component: {fileID: 3086174504460265763}
   - component: {fileID: 4612541345147181482}
+  - component: {fileID: 5978918760978417272}
   - component: {fileID: 2710226060710081824}
   m_Layer: 5
   m_Name: PF_UpgradeCard
@@ -922,6 +923,20 @@ MonoBehaviour:
   legendaryColor: {r: 1, g: 0.55, b: 0.1, a: 1}
   rarityFrameImage: {fileID: 763932944442976237}
   rarityGlowImage: {fileID: 2135680143225733694}
+--- !u!114 &5978918760978417272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6921885298083269458}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9590b1d3ec288104b962fa62a0c9b9f8, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonHoverSound
+  hoverSound: {fileID: 0}
+  volume: 0.25
 --- !u!95 &2710226060710081824
 Animator:
   serializedVersion: 7

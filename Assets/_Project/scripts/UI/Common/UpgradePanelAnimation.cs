@@ -8,7 +8,7 @@ public class UpgradePanelAnimation : MonoBehaviour
     [SerializeField] private CanvasGroup dimmerCanvasGroup;
     [SerializeField] private float duration = 0.13f;
     [SerializeField] private float startScale = 0.94f;
-    [SerializeField, Range(0f, 1f)] private float dimmerTargetAlpha = 0.65f;
+    [SerializeField, Range(0f, 1f)] private float dimmerTargetAlpha = 1f;
 
     public void PlayShow()
     {

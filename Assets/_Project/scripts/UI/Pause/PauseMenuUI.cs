@@ -8,13 +8,21 @@ public class PauseMenuUI : MonoBehaviour
     [SerializeField] private GameObject pausePanel;
     [SerializeField] private TextMeshProUGUI statsText;
     [SerializeField] private TextMeshProUGUI titleText;
+    [SerializeField] private AudioSettingsPanel audioSettingsPanel;
 
     private bool isPaused;
+    private bool settingsOpen;
 
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
+            if (settingsOpen)
+            {
+                audioSettingsPanel?.Close();
+                return;
+            }
+
             if (isPaused)
                 Resume();
             else
@@ -41,10 +49,29 @@ public class PauseMenuUI : MonoBehaviour
     {
         isPaused = false;
 
+        if (settingsOpen)
+        {
+            settingsOpen = false;
+            audioSettingsPanel?.Close();
+        }
+
         if (pausePanel != null)
             pausePanel.SetActive(false);
 
         Time.timeScale = 1f;
+    }
+
+    public void OpenSettings()
+    {
+        if (!isPaused || audioSettingsPanel == null)
+            return;
+
+        settingsOpen = true;
+
+        if (pausePanel != null)
+            pausePanel.SetActive(false);
+
+        audioSettingsPanel.Open(ReturnFromSettings);
     }
 
     public void MainMenu()
@@ -92,5 +119,18 @@ public class PauseMenuUI : MonoBehaviour
                 $"KILLS: {kills}\n" +
                 $"LEVEL: {level}";
         }
+    }
+
+    private void ReturnFromSettings()
+    {
+        settingsOpen = false;
+
+        if (!isPaused)
+            return;
+
+        if (pausePanel != null)
+            pausePanel.SetActive(true);
+
+        UpdateStats();
     }
 }

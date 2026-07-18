@@ -105,6 +105,9 @@ public sealed class AudioService : MonoBehaviour
         if (catalog == null)
             catalog = Resources.Load<AudioCatalog>(DefaultCatalogResourcePath);
 
+        if (GetComponent<AudioSettingsService>() == null)
+            gameObject.AddComponent<AudioSettingsService>();
+
         CreateFixedSources();
     }
 
@@ -563,6 +566,39 @@ public sealed class AudioService : MonoBehaviour
             AudioCategory.Ambience => ambienceMixerGroup,
             _ => sfxMixerGroup
         };
+    }
+
+    internal void ConfigureMixerGroups(
+        AudioMixerGroup music,
+        AudioMixerGroup sfx,
+        AudioMixerGroup ui,
+        AudioMixerGroup ambience
+    )
+    {
+        musicMixerGroup = music;
+        sfxMixerGroup = sfx;
+        uiMixerGroup = ui;
+        ambienceMixerGroup = ambience;
+
+        if (musicSources != null)
+        {
+            for (int i = 0; i < musicSources.Length; i++)
+            {
+                if (musicSources[i] != null)
+                    musicSources[i].outputAudioMixerGroup = musicMixerGroup;
+            }
+        }
+
+        if (ambienceSource != null)
+            ambienceSource.outputAudioMixerGroup = ambienceMixerGroup;
+
+        for (int i = 0; i < pool.Count; i++)
+        {
+            PoolSlot slot = pool[i];
+
+            if (slot.Source != null && slot.Definition != null)
+                slot.Source.outputAudioMixerGroup = GetMixerGroup(slot.Definition.Category);
+        }
     }
 
     private void MarkPlayed(AudioCueId cueId)

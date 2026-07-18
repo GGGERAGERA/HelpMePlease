@@ -469,7 +469,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2206431885715683611}
   m_Enabled: 1
-  m_Alpha: 0.65
+  m_Alpha: 1
   m_Interactable: 0
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
@@ -620,7 +620,7 @@ MonoBehaviour:
   dimmerCanvasGroup: {fileID: 6171537167303561557}
   duration: 0.13
   startScale: 0.94
-  dimmerTargetAlpha: 0.65
+  dimmerTargetAlpha: 1
 --- !u!114 &429339242947182392
 MonoBehaviour:
   m_ObjectHideFlags: 0
