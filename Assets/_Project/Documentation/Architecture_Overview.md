@@ -139,14 +139,14 @@ Completed weather modifier
 ## 13. Опыт и level-up
 
 - `ExperiencePickup` передаёт XP в `ExperienceManager`.
-- Manager меняет XP/character level, запускает realtime FX и вызывает `UpgradeManager.ShowUpgradeChoices`.
+- Manager синхронно меняет XP/character level и передаёт level-up в очередь `UpgradeManager`.
 - `RunStateManager` сохраняет/восстанавливает XP между MVP.
-- Inspector: `LevelData`, events, sound/FX, optional player transform.
+- Inspector: `LevelData` и events.
 - Console: отсутствие `LevelData` блокирует XP без exception; это ошибка конфигурации.
 
 ## 14. Run-upgrades
 
-- `UpgradeManager` rolls 3 choices, ставит pause, вызывает view.
+- `UpgradeManager` последовательно обрабатывает очередь choices, ставит pause и вызывает view.
 - `UpgradeApplier` находит player context и изменяет health/movement/weapons/modifiers.
 - После успешного apply upgrade регистрируется в `RunStateManager`; при новом MVP применяется один раз.
 - Inspector: panel, applier, allUpgrades, count.

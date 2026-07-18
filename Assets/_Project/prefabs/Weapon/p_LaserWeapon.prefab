@@ -96,6 +96,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   orbitRadius: 0.55
   orbitSmoothSpeed: 25
+  rotateAroundOwnerWithoutTarget: 1
+  idleOrbitDegreesPerSecond: 40
+  targetDirectionBlendSpeed: 14
+  initialIdleOrbitAngle: 120
   hitMask:
     serializedVersion: 2
     m_Bits: 256

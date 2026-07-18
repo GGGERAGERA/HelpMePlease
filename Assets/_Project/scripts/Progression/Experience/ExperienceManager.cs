@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.Events;
-using System.Collections; // 👈 Добавь только эту строку в начало
 
 public class ExperienceManager : MonoBehaviour
 {
@@ -16,14 +15,6 @@ public class ExperienceManager : MonoBehaviour
 
     public UnityEvent<int, int> OnExperienceChanged;
     public UnityEvent<int> OnLevelUp;
-
-#pragma warning disable CS0414
-    [SerializeField] private AudioClip levelUpSound;
-    [SerializeField] private float levelUpVolume = 0.5f;
-#pragma warning restore CS0414
-    [SerializeField] private GameObject levelUpFX;
-    [SerializeField] private float FXPauseTime = 1.2f;
-    [SerializeField] private Transform playerTransform;
 
     public int CurrentLevel => currentLevel;
     public int CurrentExp => currentExp;
@@ -71,52 +62,14 @@ public class ExperienceManager : MonoBehaviour
 
     private void LevelUp()
     {
-        StartCoroutine(LevelUpSequence()); // 👈 Запускаем корутину вместо прямого вызова
-    }
-
-    private IEnumerator LevelUpSequence()
-    {
-        // 1. Логика уровня
         currentLevel++;
         expToNextLevel = GetRequiredExpForLevel(currentLevel);
         OnLevelUp?.Invoke(currentLevel);
 
-        // 2. Пауза
-        Time.timeScale = 0f;
-
-        // 3. Звук через постоянный сервис; legacy-поля пока сохранены.
-        AudioService.Instance?.Play(AudioCueId.LevelUp);
-
-        // 4. Поиск игрока
-        if (playerTransform == null)
-        {
-            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-            playerTransform = playerObj?.transform;
-        }
-
-        // 5. Эффект
-        if (levelUpFX != null && playerTransform != null)
-        {
-            Vector3 spawnPosition = playerTransform.position; // 👈 Исправлена ошибка playerTransform.transform.position
-            GameObject FXSpawn = Instantiate(levelUpFX, spawnPosition, Quaternion.identity, playerTransform);
-
-            //  Чтобы эффект не завис на паузе
-            foreach (var ps in FXSpawn.GetComponentsInChildren<ParticleSystem>())
-            {
-                var mainModule = ps.main;
-                mainModule.useUnscaledTime = true;
-            }
-
-            Destroy(FXSpawn, 10f);
-
-            // 👇 Ждём завершения эффекта (реальное время, игнорирует паузу)
-            // ⚠️ Подставь реальную длительность твоего эффекта в секундах
-            yield return new WaitForSecondsRealtime(FXPauseTime);
-        }
-
-        // 6. UI появляется ТОЛЬКО после эффекта
         if (UpgradeManager.Instance != null)
-            UpgradeManager.Instance.ShowUpgradeChoices();
+            UpgradeManager.Instance.ShowLevelUpChoices(currentLevel);
+        else
+            AudioService.Instance?.Play(AudioCueId.LevelUp);
 
         Debug.Log("Level up! Now level " + currentLevel);
     }

@@ -12,9 +12,19 @@ public class UpgradePanelView : MonoBehaviour
     [Header("Cards")]
     [SerializeField] private UpgradeCardView[] cardViews;
 
+    [Header("Animation")]
+    [SerializeField] private UpgradePanelAnimation panelAnimation;
+
+    private void Awake()
+    {
+        if (panelAnimation == null)
+            panelAnimation = GetComponent<UpgradePanelAnimation>();
+    }
+
     public void Show(int level, IReadOnlyList<UpgradeData> upgrades, Action<UpgradeData> onUpgradeSelected)
     {
         gameObject.SetActive(true);
+        transform.SetAsLastSibling();
 
         SetText(titleText, $"УРОВЕНЬ {level}");
         SetText(subtitleText, "Выберите улучшение");
@@ -29,6 +39,8 @@ public class UpgradePanelView : MonoBehaviour
             else
                 cardViews[i].gameObject.SetActive(false);
         }
+
+        panelAnimation?.PlayShow();
     }
 
     public void Hide()

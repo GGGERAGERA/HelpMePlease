@@ -4,6 +4,18 @@ using UnityEngine;
 [RequireComponent(typeof(UpgradeApplier))]
 public sealed class UpgradeManager : MonoBehaviour
 {
+    private readonly struct UpgradeChoiceRequest
+    {
+        public readonly int PlayerLevel;
+        public readonly bool PlayLevelUpSound;
+
+        public UpgradeChoiceRequest(int playerLevel, bool playLevelUpSound)
+        {
+            PlayerLevel = playerLevel;
+            PlayLevelUpSound = playLevelUpSound;
+        }
+    }
+
     public static UpgradeManager Instance { get; private set; }
 
     [Header("UI")]
@@ -14,6 +26,7 @@ public sealed class UpgradeManager : MonoBehaviour
     [SerializeField] private UpgradeData[] allUpgrades;
     [SerializeField] private int choicesCount = 3;
 
+    private readonly Queue<UpgradeChoiceRequest> pendingChoices = new();
     private UpgradeRoller upgradeRoller;
     private bool isChoosingUpgrade;
     private float previousTimeScale = 1f;
@@ -41,38 +54,79 @@ public sealed class UpgradeManager : MonoBehaviour
 
     public void ShowUpgradeChoices()
     {
-        if (isChoosingUpgrade)
-            return;
-
-        if (upgradePanelView == null)
-        {
-            Debug.LogError("[UpgradeManager] UpgradePanelView is not assigned.");
-            return;
-        }
-
-        if (allUpgrades == null || allUpgrades.Length == 0)
-        {
-            Debug.LogWarning("[UpgradeManager] allUpgrades is empty.");
-            return;
-        }
-
         int playerLevel = ExperienceManager.Instance != null
             ? ExperienceManager.Instance.currentLevel
             : 1;
 
-        List<UpgradeData> choices = upgradeRoller.RollChoices(playerLevel, choicesCount);
+        RequestUpgradeChoices(
+            new UpgradeChoiceRequest(playerLevel, playLevelUpSound: false)
+        );
+    }
 
-        if (choices.Count == 0)
+    public void ShowLevelUpChoices(int playerLevel)
+    {
+        RequestUpgradeChoices(
+            new UpgradeChoiceRequest(playerLevel, playLevelUpSound: true)
+        );
+    }
+
+    private void RequestUpgradeChoices(UpgradeChoiceRequest request)
+    {
+        if (isChoosingUpgrade)
         {
-            Debug.LogWarning("[UpgradeManager] No upgrades available for current level.");
+            pendingChoices.Enqueue(request);
             return;
         }
+
+        if (!TryBuildChoices(request.PlayerLevel, out List<UpgradeData> choices))
+            return;
 
         isChoosingUpgrade = true;
         previousTimeScale = Time.timeScale;
         Time.timeScale = 0f;
 
-        upgradePanelView.Show(playerLevel, choices, SelectUpgrade);
+        ShowChoiceRequest(request, choices);
+    }
+
+    private bool TryBuildChoices(
+        int playerLevel,
+        out List<UpgradeData> choices
+    )
+    {
+        choices = null;
+
+        if (upgradePanelView == null)
+        {
+            Debug.LogError("[UpgradeManager] UpgradePanelView is not assigned.");
+            return false;
+        }
+
+        if (allUpgrades == null || allUpgrades.Length == 0)
+        {
+            Debug.LogWarning("[UpgradeManager] allUpgrades is empty.");
+            return false;
+        }
+
+        choices = upgradeRoller.RollChoices(playerLevel, choicesCount);
+
+        if (choices.Count > 0)
+            return true;
+
+        Debug.LogWarning(
+            $"[UpgradeManager] No upgrades available for level {playerLevel}."
+        );
+        return false;
+    }
+
+    private void ShowChoiceRequest(
+        UpgradeChoiceRequest request,
+        IReadOnlyList<UpgradeData> choices
+    )
+    {
+        if (request.PlayLevelUpSound)
+            AudioService.Instance?.Play(AudioCueId.LevelUp);
+
+        upgradePanelView.Show(request.PlayerLevel, choices, SelectUpgrade);
     }
 
     private void SelectUpgrade(UpgradeData upgrade)
@@ -102,6 +156,23 @@ public sealed class UpgradeManager : MonoBehaviour
             upgradePanelView.Hide();
 
         isChoosingUpgrade = false;
-        Time.timeScale = previousTimeScale <= 0f ? 1f : previousTimeScale;
+
+        while (pendingChoices.Count > 0)
+        {
+            UpgradeChoiceRequest nextRequest = pendingChoices.Dequeue();
+
+            if (!TryBuildChoices(
+                    nextRequest.PlayerLevel,
+                    out List<UpgradeData> choices))
+            {
+                continue;
+            }
+
+            isChoosingUpgrade = true;
+            ShowChoiceRequest(nextRequest, choices);
+            return;
+        }
+
+        Time.timeScale = previousTimeScale;
     }
 }

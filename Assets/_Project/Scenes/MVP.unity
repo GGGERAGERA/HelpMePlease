@@ -299,11 +299,6 @@ MonoBehaviour:
   OnLevelUp:
     m_PersistentCalls:
       m_Calls: []
-  levelUpSound: {fileID: 0}
-  levelUpVolume: 0.1
-  levelUpFX: {fileID: 5832780733298168298, guid: a8519acdf6ef73b41ae1c5e4c2df7c5a, type: 3}
-  FXPauseTime: 0.8
-  playerTransform: {fileID: 0}
 --- !u!114 &46915846
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4288,31 +4283,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3563637773276284904, guid: 7cd07440ff0d69345a8d3527d9f1fa84, type: 3}
       propertyPath: m_Pivot.y
-      value: 1
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 3563637773276284904, guid: 7cd07440ff0d69345a8d3527d9f1fa84, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3563637773276284904, guid: 7cd07440ff0d69345a8d3527d9f1fa84, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3563637773276284904, guid: 7cd07440ff0d69345a8d3527d9f1fa84, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3563637773276284904, guid: 7cd07440ff0d69345a8d3527d9f1fa84, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3563637773276284904, guid: 7cd07440ff0d69345a8d3527d9f1fa84, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 1200
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3563637773276284904, guid: 7cd07440ff0d69345a8d3527d9f1fa84, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 720
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3563637773276284904, guid: 7cd07440ff0d69345a8d3527d9f1fa84, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4348,7 +4343,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3563637773276284904, guid: 7cd07440ff0d69345a8d3527d9f1fa84, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 440
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3563637773276284904, guid: 7cd07440ff0d69345a8d3527d9f1fa84, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

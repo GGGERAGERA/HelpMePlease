@@ -24,7 +24,15 @@ public abstract class BaseWeapon : MonoBehaviour
     [SerializeField] protected float orbitRadius = 0.5f;
     [SerializeField] protected float orbitSmoothSpeed = 25f;
 
+    [Header("Idle Orbit")]
+    [SerializeField] private bool rotateAroundOwnerWithoutTarget = true;
+    [SerializeField] private float idleOrbitDegreesPerSecond = 45f;
+    [SerializeField] private float targetDirectionBlendSpeed = 12f;
+    [SerializeField] private float initialIdleOrbitAngle;
+
     private Vector2 lastAimDirection = Vector2.right;
+    private float idleOrbitAngle;
+    private bool hadAutomaticTarget;
     private Vector2 lastOwnerPosition;
     private Transform ownerTransform;
 
@@ -68,6 +76,9 @@ public abstract class BaseWeapon : MonoBehaviour
         if (owner == null && transform.parent != null)
             owner = transform.parent;
 
+        idleOrbitAngle = Mathf.Repeat(initialIdleOrbitAngle, 360f);
+        lastAimDirection = DirectionFromAngle(idleOrbitAngle);
+
         if (!isInitialized && weaponData != null)
         {
             runtimeStats.InitializeFromWeaponData(weaponData);
@@ -103,23 +114,85 @@ public abstract class BaseWeapon : MonoBehaviour
         if (owner == null)
             return;
 
-        Vector2 aimDirection;
-
-        if (TryGetAimDirectionFromOwner(out Vector2 currentDirection))
-        {
-            lastAimDirection = currentDirection;
-            aimDirection = currentDirection;
-        }
-        else
-        {
-            aimDirection = lastAimDirection;
-        }
+        Vector2 aimDirection = controlMode == WeaponControlMode.Manual
+            ? GetManualAimDirection()
+            : GetAutomaticAimDirection();
 
         if (moveAroundOwner)
             MoveAroundOwner(aimDirection);
 
         if (rotateToMouse)
             RotateWeapon(aimDirection);
+    }
+
+    private Vector2 GetManualAimDirection()
+    {
+        hadAutomaticTarget = false;
+
+        if (TryGetAimDirectionFromOwner(out Vector2 currentDirection))
+        {
+            lastAimDirection = currentDirection;
+            return currentDirection;
+        }
+
+        return lastAimDirection;
+    }
+
+    private Vector2 GetAutomaticAimDirection()
+    {
+        if (TryGetAimDirectionFromOwner(out Vector2 targetDirection))
+        {
+            hadAutomaticTarget = true;
+            lastAimDirection = BlendDirection(
+                lastAimDirection,
+                targetDirection,
+                targetDirectionBlendSpeed,
+                Time.deltaTime
+            );
+            return lastAimDirection;
+        }
+
+        if (hadAutomaticTarget)
+        {
+            idleOrbitAngle =
+                Mathf.Atan2(lastAimDirection.y, lastAimDirection.x) *
+                Mathf.Rad2Deg;
+            hadAutomaticTarget = false;
+        }
+
+        if (!rotateAroundOwnerWithoutTarget)
+            return lastAimDirection;
+
+        idleOrbitAngle = Mathf.Repeat(
+            idleOrbitAngle + idleOrbitDegreesPerSecond * Time.deltaTime,
+            360f
+        );
+        lastAimDirection = DirectionFromAngle(idleOrbitAngle);
+        return lastAimDirection;
+    }
+
+    private Vector2 BlendDirection(
+        Vector2 current,
+        Vector2 target,
+        float speed,
+        float deltaTime
+    )
+    {
+        if (speed <= 0f)
+            return target;
+
+        float currentAngle = Mathf.Atan2(current.y, current.x) * Mathf.Rad2Deg;
+        float targetAngle = Mathf.Atan2(target.y, target.x) * Mathf.Rad2Deg;
+        float blend = 1f - Mathf.Exp(-speed * deltaTime);
+        float angle = Mathf.LerpAngle(currentAngle, targetAngle, blend);
+
+        return DirectionFromAngle(angle);
+    }
+
+    private Vector2 DirectionFromAngle(float angle)
+    {
+        float radians = angle * Mathf.Deg2Rad;
+        return new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
     }
 
     protected bool TryGetAimDirectionFromOwner(out Vector2 direction)
@@ -479,4 +552,13 @@ public abstract class BaseWeapon : MonoBehaviour
             !float.IsInfinity(value.x) &&
             !float.IsInfinity(value.y);
     }
+
+#if UNITY_EDITOR
+    protected virtual void OnValidate()
+    {
+        idleOrbitDegreesPerSecond = Mathf.Max(0f, idleOrbitDegreesPerSecond);
+        targetDirectionBlendSpeed = Mathf.Max(0f, targetDirectionBlendSpeed);
+        initialIdleOrbitAngle = Mathf.Repeat(initialIdleOrbitAngle, 360f);
+    }
+#endif
 }

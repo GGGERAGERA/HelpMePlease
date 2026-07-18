@@ -239,6 +239,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   orbitRadius: 0.5
   orbitSmoothSpeed: 25
+  rotateAroundOwnerWithoutTarget: 1
+  idleOrbitDegreesPerSecond: 40
+  targetDirectionBlendSpeed: 14
+  initialIdleOrbitAngle: 240
   ShootFX: {fileID: 3092589137338007280}
   baseKnockbackForce: 4
   spreadAngle: 12
