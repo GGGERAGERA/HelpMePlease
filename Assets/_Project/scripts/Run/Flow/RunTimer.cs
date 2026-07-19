@@ -93,7 +93,7 @@ public class RunTimer : MonoBehaviour
         RunMessageService.Instance?.Show(RunMessageType.BossIncoming);
         AudioService.Instance?.Play(AudioCueId.BossSpawn);
 
-        FindFirstObjectByType<EnemySpawner>()?.StopSpawning();
+        //  FindFirstObjectByType<EnemySpawner>()?.StopSpawning(); спаун врагов во время босса отключен 
 
         CameraShake.Instance?.Shake(2f, 0.05f);
 

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnProfile
   phases:
   - startTime: 0
-    spawnInterval: 1.75
+    spawnInterval: 1.5
     maxAlive: 10
     healthMultiplier: 1
     speedMultiplier: 1

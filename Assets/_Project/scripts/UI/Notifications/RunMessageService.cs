@@ -29,7 +29,7 @@ public sealed class RunMessageService : MonoBehaviour
             yield return null;
 
         ShowCustom(
-            "УПРАВЛЕНИЕ",
+            string.Empty,
             "WASD — ДВИЖЕНИЕ\n" +
             "ОРУЖИЕ СТРЕЛЯЕТ АВТОМАТИЧЕСКИ\n" +
             "ПЕРЕЖИВИТЕ ВОЛНУ И ПОБЕДИТЕ БОССА",
