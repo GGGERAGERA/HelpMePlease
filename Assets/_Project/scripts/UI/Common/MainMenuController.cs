@@ -20,6 +20,11 @@ public sealed class MainMenuController : MonoBehaviour
     private GameObject currentRootPanel;
     private bool isStartingGame;
 
+    private void Awake()
+    {
+        Time.timeScale = 1f;
+    }
+
     private void Start()
     {
         RunSelectionManager.Instance?.ClearRunSelection();

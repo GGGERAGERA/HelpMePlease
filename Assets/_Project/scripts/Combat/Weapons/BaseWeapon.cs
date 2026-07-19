@@ -308,6 +308,10 @@ public abstract class BaseWeapon : MonoBehaviour
         weaponAudioSource.playOnAwake = false;
         weaponAudioSource.loop = false;
         weaponAudioSource.spatialBlend = 0f;
+        AudioService.Instance?.RouteExternalSource(
+            weaponAudioSource,
+            AudioCategory.SFX
+        );
     }
 
     protected virtual bool CanAttack()

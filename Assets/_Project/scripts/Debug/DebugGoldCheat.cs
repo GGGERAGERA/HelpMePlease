@@ -2,10 +2,13 @@ using UnityEngine;
 
 public sealed class DebugGoldCheat : MonoBehaviour
 {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     [SerializeField] private int amount = 1000;
+#endif
 
     private void Update()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (Input.GetKeyDown(KeyCode.G))
         {
             if (CurrencyManager.Instance == null)
@@ -17,5 +20,6 @@ public sealed class DebugGoldCheat : MonoBehaviour
             CurrencyManager.Instance.AddGold(amount);
             Debug.Log($"[DebugGoldCheat] Added {amount} gold.");
         }
+#endif
     }
 }

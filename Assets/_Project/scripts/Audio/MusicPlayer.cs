@@ -25,6 +25,10 @@ public class MusicPlayer : MonoBehaviour
         audioSource.loop = true;
         audioSource.spatialBlend = 0f;
         audioSource.volume = volume;
+        AudioService.Instance?.RouteExternalSource(
+            audioSource,
+            AudioCategory.Music
+        );
     }
 
     private void Start()
@@ -45,6 +49,10 @@ public class MusicPlayer : MonoBehaviour
 
         int index = GetTrackIndex();
 
+        AudioService.Instance?.RouteExternalSource(
+            audioSource,
+            AudioCategory.Music
+        );
         audioSource.clip = tracks[index];
         audioSource.volume = volume;
         audioSource.Play();

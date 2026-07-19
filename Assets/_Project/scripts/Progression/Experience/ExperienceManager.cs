@@ -71,7 +71,9 @@ public class ExperienceManager : MonoBehaviour
         else
             AudioService.Instance?.Play(AudioCueId.LevelUp);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log("Level up! Now level " + currentLevel);
+#endif
     }
 
     private void UpdateExperienceHUD()

@@ -22,7 +22,12 @@ public sealed class BunkerHoverOutline : MonoBehaviour, IBunkerHoverable
             materials[i] = targetRenderers[i].material;
         }
 
-        Debug.Log($"[BunkerHoverOutline] {name} renderers={targetRenderers.Length}");
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log(
+            $"[BunkerHoverOutline] {name} " +
+            $"renderers={targetRenderers.Length}"
+        );
+#endif
 
         SetHovered(false);
     }

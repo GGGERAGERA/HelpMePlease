@@ -32,6 +32,9 @@ public class PauseMenuUI : MonoBehaviour
 
     public void Pause()
     {
+        if (!isPaused && Time.timeScale <= 0f)
+            return;
+
         isPaused = true;
 
         if (pausePanel != null)

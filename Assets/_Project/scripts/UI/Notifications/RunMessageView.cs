@@ -33,6 +33,7 @@ public sealed class RunMessageView : MonoBehaviour
         yield return FadeTo(1f, 0.15f);
         yield return new WaitForSecondsRealtime(duration);
         yield return FadeTo(0f, 0.25f);
+        routine = null;
     }
 
     private IEnumerator FadeTo(float targetAlpha, float duration)
@@ -52,6 +53,12 @@ public sealed class RunMessageView : MonoBehaviour
 
     public void HideInstant()
     {
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+            routine = null;
+        }
+
         if (canvasGroup != null)
         {
             canvasGroup.alpha = 0f;

@@ -26,6 +26,11 @@ public class UISoundPlayer : MonoBehaviour
 
         if (audioSource == null)
             audioSource = GetComponent<AudioSource>();
+
+        AudioService.Instance?.RouteExternalSource(
+            audioSource,
+            AudioCategory.UI
+        );
     }
 
     public void Play(AudioClip clip, float volume = 0.5f)
@@ -33,6 +38,10 @@ public class UISoundPlayer : MonoBehaviour
         if (clip == null || audioSource == null)
             return;
 
+        AudioService.Instance?.RouteExternalSource(
+            audioSource,
+            AudioCategory.UI
+        );
         audioSource.PlayOneShot(clip, volume);
     }
 }

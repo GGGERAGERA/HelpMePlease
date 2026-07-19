@@ -37,7 +37,11 @@ public sealed class UnlockProgressService : MonoBehaviour
         if (content == null || content.condition == null)
             return 0;
 
-        return PlayerPrefs.GetInt(GetProgressKey(content.id), 0);
+        return Mathf.Clamp(
+            PlayerPrefs.GetInt(GetProgressKey(content.id), 0),
+            0,
+            Mathf.Max(0, content.condition.requiredAmount)
+        );
     }
 
     public void AddProgress(UnlockableContentData content, int amount = 1)
@@ -103,12 +107,14 @@ public sealed class UnlockProgressService : MonoBehaviour
     UnlockConditionType conditionType,
     string targetId,
     int amount = 1
-)
+    )
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log(
-    $"[UnlockProgressService] AddProgress: " +
-    $"type={conditionType}, targetId={targetId}, amount={amount}"
-);
+            $"[UnlockProgressService] AddProgress: " +
+            $"type={conditionType}, targetId={targetId}, amount={amount}"
+        );
+#endif
         if (registry == null)
         {
             Debug.LogWarning("[UnlockProgressService] Registry is missing.");
@@ -117,17 +123,8 @@ public sealed class UnlockProgressService : MonoBehaviour
 
         foreach (UnlockableContentData content in registry.Contents)
         {
-            Debug.Log(
-    $"[UnlockProgressService] Check content={content.name}, " +
-    $"conditionType={content.condition.type}, " +
-    $"targetId={content.condition.targetId}"
-);
             if (content == null || content.condition == null)
                 continue;
-            Debug.Log(
-    $"[UnlockProgressService] MATCH: {content.name}, " +
-    $"old={GetProgress(content)}, add={amount}"
-);
 
             if (IsUnlocked(content))
                 continue;
@@ -138,6 +135,12 @@ public sealed class UnlockProgressService : MonoBehaviour
             if (content.condition.targetId != targetId)
                 continue;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log(
+                $"[UnlockProgressService] Match: {content.name}, " +
+                $"old={GetProgress(content)}, add={amount}"
+            );
+#endif
             AddProgress(content, amount);
         }
     }

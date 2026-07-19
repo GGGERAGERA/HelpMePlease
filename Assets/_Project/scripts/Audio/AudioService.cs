@@ -266,6 +266,46 @@ public sealed class AudioService : MonoBehaviour
         RefreshActiveVolumes();
     }
 
+    public void RouteExternalSource(
+        AudioSource source,
+        AudioCategory category
+    )
+    {
+        if (source == null)
+            return;
+
+        source.outputAudioMixerGroup = GetMixerGroup(category);
+    }
+
+    public bool PlayExternalOneShot(
+        AudioClip clip,
+        Vector3 position,
+        float volume,
+        AudioCategory category,
+        float spatialBlend = 0f
+    )
+    {
+        if (clip == null)
+            return false;
+
+        GameObject sourceObject = new($"[OneShot] {clip.name}");
+        sourceObject.transform.SetParent(transform, false);
+        sourceObject.transform.position = position;
+
+        AudioSource source = sourceObject.AddComponent<AudioSource>();
+        source.playOnAwake = false;
+        source.dopplerLevel = 0f;
+        source.spatialBlend = Mathf.Clamp01(spatialBlend);
+        source.volume =
+            Mathf.Clamp01(volume) * GetCategoryVolume(category);
+        RouteExternalSource(source, category);
+        source.clip = clip;
+        source.Play();
+
+        Destroy(sourceObject, Mathf.Max(0.1f, clip.length + 0.1f));
+        return true;
+    }
+
     internal bool IsLoopPlaying(int slotIndex, int generation)
     {
         if (slotIndex < 0 || slotIndex >= pool.Count)

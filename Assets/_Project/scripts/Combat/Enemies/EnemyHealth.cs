@@ -65,6 +65,10 @@ public class EnemyHealth : MonoBehaviour
 
         audioSource.playOnAwake = false;
         audioSource.spatialBlend = 0f;
+        AudioService.Instance?.RouteExternalSource(
+            audioSource,
+            AudioCategory.SFX
+        );
     }
 
     public void SetMaxHealthMultiplier(float multiplier)
@@ -120,10 +124,12 @@ public class EnemyHealth : MonoBehaviour
             {
                 if (Time.time > lastCritSoundTime + 0.08f)
                 {
-                    AudioSource.PlayClipAtPoint(
+                    AudioService.Instance?.PlayExternalOneShot(
                         critSound,
                         transform.position,
-                        0.7f
+                        0.7f,
+                        AudioCategory.SFX,
+                        1f
                     );
 
                     lastCritSoundTime = Time.time;
@@ -155,19 +161,24 @@ public class EnemyHealth : MonoBehaviour
 
         EnemyIdentity identity = GetComponent<EnemyIdentity>();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log(
             $"[EnemyHealth] Died: {name}, " +
             $"identity={(identity != null ? identity.EnemyId : "NULL")}"
         );
+#endif
 
         if (UnlockProgressService.Instance != null &&
             identity != null &&
             !string.IsNullOrWhiteSpace(identity.EnemyId))
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log(
-    $"[EnemyHealth] Register kill progress: type={UnlockConditionType.KillEnemyType}, " +
-    $"target={identity.EnemyId}"
-);
+                $"[EnemyHealth] Register kill progress: " +
+                $"type={UnlockConditionType.KillEnemyType}, " +
+                $"target={identity.EnemyId}"
+            );
+#endif
             UnlockProgressService.Instance.AddProgressByCondition(
                 UnlockConditionType.KillEnemyType,
                 identity.EnemyId,

@@ -19,6 +19,13 @@ public sealed class BunkerInteractableCollider : MonoBehaviour
         Collider2D col = GetComponent<Collider2D>();
         col.isTrigger = true;
 
-        Debug.Log($"[BunkerInteractableCollider] {name} source={sourceRoot.name}, interactable={Interactable != null}, hoverable={Hoverable != null}");
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log(
+            $"[BunkerInteractableCollider] {name} " +
+            $"source={sourceRoot.name}, " +
+            $"interactable={Interactable != null}, " +
+            $"hoverable={Hoverable != null}"
+        );
+#endif
     }
 }

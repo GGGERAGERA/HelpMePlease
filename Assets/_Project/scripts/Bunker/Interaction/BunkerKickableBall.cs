@@ -24,6 +24,8 @@ public sealed class BunkerKickableBall : MonoBehaviour
 
         rb.AddForce(direction * kickForce, ForceMode2D.Impulse);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log("[BunkerKickableBall] Kicked.");
+#endif
     }
 }

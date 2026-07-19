@@ -1,7 +1,11 @@
+using System.Collections;
 using UnityEngine;
 
 public sealed class RunMessageService : MonoBehaviour
 {
+    private const float InitialLevelMessageDuration = 4.5f;
+    private const float FirstRunHintDuration = 4.5f;
+
     public static RunMessageService Instance { get; private set; }
 
     [SerializeField] private RunMessageView view;
@@ -10,6 +14,41 @@ public sealed class RunMessageService : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+    }
+
+    private IEnumerator Start()
+    {
+        yield return new WaitForSecondsRealtime(InitialLevelMessageDuration);
+
+        RunStateManager runState = RunStateManager.Instance;
+
+        if (runState != null && runState.CurrentLevel > 1)
+            yield break;
+
+        while (Time.timeScale <= 0f)
+            yield return null;
+
+        ShowCustom(
+            "УПРАВЛЕНИЕ",
+            "WASD — ДВИЖЕНИЕ\n" +
+            "ОРУЖИЕ СТРЕЛЯЕТ АВТОМАТИЧЕСКИ\n" +
+            "ПЕРЕЖИВИТЕ ВОЛНУ И ПОБЕДИТЕ БОССА",
+            FirstRunHintDuration
+        );
+
+        float visibleTime = 0f;
+
+        while (visibleTime < FirstRunHintDuration + 0.5f)
+        {
+            if (Time.timeScale <= 0f)
+            {
+                view?.HideInstant();
+                yield break;
+            }
+
+            visibleTime += Time.unscaledDeltaTime;
+            yield return null;
+        }
     }
 
     public void Show(RunMessageType type)
@@ -40,12 +79,17 @@ public sealed class RunMessageService : MonoBehaviour
 
         view.Show(data.title, data.description, data.duration);
 
-        if (data.sound != null && Camera.main != null)
+        if (data.sound != null)
         {
-            AudioSource.PlayClipAtPoint(
+            Vector3 position = Camera.main != null
+                ? Camera.main.transform.position
+                : transform.position;
+
+            AudioService.Instance?.PlayExternalOneShot(
                 data.sound,
-                Camera.main.transform.position,
-                data.volume
+                position,
+                data.volume,
+                AudioCategory.UI
             );
         }
     }
