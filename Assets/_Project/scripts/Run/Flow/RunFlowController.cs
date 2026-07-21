@@ -22,6 +22,8 @@ public sealed class RunFlowController : MonoBehaviour
 
     private bool levelCompleted;
 
+    public bool IsLevelCompleted => levelCompleted;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)

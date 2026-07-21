@@ -72,6 +72,14 @@ public sealed class DoubleOrLeave : MonoBehaviour
         State = DoubleOrLeaveState.WaitingForChallenge;
     }
 
+    public void ResetState()
+    {
+        HasPendingChoice = false;
+        IsWaitingForChallenge = false;
+        LastGrantedRewardAmount = 0;
+        State = DoubleOrLeaveState.Inactive;
+    }
+
     private void HandleWorldEventCompleted(WorldEvent worldEvent)
     {
         if (HasPendingChoice || IsWaitingForChallenge)
