@@ -18,8 +18,8 @@ public sealed class LevelModifiersApplier : MonoBehaviour
     [SerializeField] private float normalLightIntensity = 1f;
     [SerializeField] private float darknessLightIntensity = 0.01f;
 
-    [Header("Events")]
-    [SerializeField] private WorldEventSpawner worldEventSpawner;
+    [Header("Run Flow")]
+    [SerializeField] private RunFlowController runFlowController;
 
     [Header("Endless Difficulty")]
     [SerializeField, Min(0f)] private float healthGrowthPerLevel = 0.18f;
@@ -35,8 +35,8 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         if (enemySpawner == null || !enemySpawner.gameObject.scene.IsValid())
             enemySpawner = FindFirstObjectByType<EnemySpawner>();
 
-        if (worldEventSpawner == null || !worldEventSpawner.gameObject.scene.IsValid())
-            worldEventSpawner = FindFirstObjectByType<WorldEventSpawner>();
+        if (runFlowController == null || !runFlowController.gameObject.scene.IsValid())
+            runFlowController = FindFirstObjectByType<RunFlowController>();
 
         ApplySelectedNode();
     }
@@ -57,7 +57,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         if (node == null)
         {
             enemySpawner?.SetSpawnProfile(null, currentLevel);
-            worldEventSpawner?.SetHoldPointEnabled(false);
+            runFlowController?.ApplyLevelMechanics(null);
             ApplyEndlessEnemyScaling(currentLevel, 1f, 1f, 1f);
             DisableEnvironment();
 
@@ -72,7 +72,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
 
         ApplyEnemyModifiers(node, currentLevel);
         ApplyWeather(node);
-        ApplyEvents(node);
+        runFlowController?.ApplyLevelMechanics(node);
 
         Debug.Log($"[LevelModifiersApplier] Applied node: {node.nodeName}");
         RunMessageService.Instance?.ShowCustom(
@@ -139,11 +139,6 @@ public sealed class LevelModifiersApplier : MonoBehaviour
                     snowObject.SetActive(true);
                 break;
         }
-    }
-
-    private void ApplyEvents(LevelNodeData node)
-    {
-        worldEventSpawner?.SetHoldPointEnabled(node.hasHoldZoneEvent);
     }
 
     private void DisableEnvironment()

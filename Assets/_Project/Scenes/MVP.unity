@@ -435,6 +435,7 @@ GameObject:
   - component: {fileID: 46915856}
   - component: {fileID: 46915857}
   - component: {fileID: 46915858}
+  - component: {fileID: 46915859}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -649,6 +650,9 @@ MonoBehaviour:
   levelChoiceDelay: 5
   stopEnemySpawnerAfterBoss: 1
   completionCleaner: {fileID: 2000457041}
+  worldEventSpawner: {fileID: 46915853}
+  worldAccelerationRule: {fileID: 46915858}
+  noDamageChallenge: {fileID: 46915857}
 --- !u!114 &46915857
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -677,6 +681,21 @@ MonoBehaviour:
   enemySpawner: {fileID: 8488144525096105199, guid: 169b5772155b17842b8cd9604fcf1eb7, type: 3}
   duration: 5
   accelerationMultiplier: 1.5
+--- !u!114 &46915859
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 46915840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7b81a4d295f43ad98896d617b899e14, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DoubleOrLeave
+  worldEventSpawner: {fileID: 46915853}
+  noDamageChallenge: {fileID: 46915857}
+  rewardAmount: 1
 --- !u!1 &101118583
 GameObject:
   m_ObjectHideFlags: 0
@@ -1869,7 +1888,7 @@ MonoBehaviour:
   globalLight: {fileID: 1615053065}
   normalLightIntensity: 1
   darknessLightIntensity: 0.01
-  worldEventSpawner: {fileID: 46915853}
+  runFlowController: {fileID: 46915856}
   healthGrowthPerLevel: 0.12
   speedGrowthPerLevel: 0.025
   spawnRateGrowthPerLevel: 0.08

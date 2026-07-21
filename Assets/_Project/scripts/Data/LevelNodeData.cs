@@ -43,6 +43,8 @@ public class LevelNodeData : ScriptableObject
     public bool hasEliteEnemies;
     public bool hasExplosiveEnemies;
     public bool hasHoldZoneEvent;
+    public bool hasWorldAccelerationRule;
+    public bool hasNoDamageChallenge;
     public bool hasExtraChest;
 
     [Header("Reward")]

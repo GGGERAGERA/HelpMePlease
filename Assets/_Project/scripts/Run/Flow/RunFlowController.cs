@@ -15,6 +15,11 @@ public sealed class RunFlowController : MonoBehaviour
     [Header("Completion")]
     [SerializeField] private RunCompletionCleaner completionCleaner;
 
+    [Header("Level Mechanics")]
+    [SerializeField] private WorldEventSpawner worldEventSpawner;
+    [SerializeField] private WorldAccelerationRule worldAccelerationRule;
+    [SerializeField] private NoDamageChallenge noDamageChallenge;
+
     private bool levelCompleted;
 
     private void Awake()
@@ -35,7 +40,7 @@ public sealed class RunFlowController : MonoBehaviour
     }
 
     /// <summary>
-    /// Вызывается ровно один раз после смерти босса.
+    /// Р’С‹Р·С‹РІР°РµС‚СЃСЏ СЂРѕРІРЅРѕ РѕРґРёРЅ СЂР°Р· РїРѕСЃР»Рµ СЃРјРµСЂС‚Рё Р±РѕСЃСЃР°.
     /// </summary>
     public void HandleBossDefeated()
     {
@@ -45,6 +50,24 @@ public sealed class RunFlowController : MonoBehaviour
         levelCompleted = true;
 
         StartCoroutine(BossDefeatedRoutine());
+    }
+
+    public void ApplyLevelMechanics(LevelNodeData node)
+    {
+        ResolveLevelMechanics();
+
+        bool holdPointEnabled = node != null && node.hasHoldZoneEvent;
+        worldEventSpawner?.SetHoldPointEnabled(holdPointEnabled);
+
+        if (node != null && node.hasWorldAccelerationRule)
+            worldAccelerationRule?.StartRule();
+        else
+            worldAccelerationRule?.StopRule();
+
+        if (node != null && node.hasNoDamageChallenge)
+            noDamageChallenge?.StartChallenge();
+        else
+            noDamageChallenge?.CancelChallenge();
     }
 
     private IEnumerator BossDefeatedRoutine()
@@ -176,5 +199,17 @@ public sealed class RunFlowController : MonoBehaviour
             levelChoiceManager = FindFirstObjectByType<LevelChoiceManager>();
 
         return levelChoiceManager;
+    }
+
+    private void ResolveLevelMechanics()
+    {
+        if (worldEventSpawner == null)
+            worldEventSpawner = FindFirstObjectByType<WorldEventSpawner>();
+
+        if (worldAccelerationRule == null)
+            worldAccelerationRule = FindFirstObjectByType<WorldAccelerationRule>();
+
+        if (noDamageChallenge == null)
+            noDamageChallenge = FindFirstObjectByType<NoDamageChallenge>();
     }
 }
