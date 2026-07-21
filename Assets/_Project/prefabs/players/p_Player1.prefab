@@ -163,6 +163,9 @@ MonoBehaviour:
   speed: 1
   acceleration: 50
   deceleration: 40
+  dashDistance: 3
+  dashDuration: 0.15
+  dashCooldown: 3
   visualRoot: {fileID: 0}
 --- !u!114 &8488144525096105199
 MonoBehaviour:

@@ -12,10 +12,22 @@ public class CharacterMovement2D : MonoBehaviour
     [SerializeField] private float acceleration = 18f;
     [SerializeField] private float deceleration = 22f;
 
-
+    [Header("Dash")]
+    [SerializeField, Min(0.01f)] private float dashDistance = 3f;
+    [SerializeField, Min(0.01f)] private float dashDuration = 0.15f;
+    [SerializeField, Min(0f)] private float dashCooldown = 3f;
 
     private Vector2 moveInput;
     private Vector2 currentVelocity;
+    private Vector2 lastMoveDirection = Vector2.right;
+    private Vector2 dashDirection;
+    private float dashTimeRemaining;
+    private float dashCooldownRemaining;
+    private bool isDashing;
+
+    private const float DashCollisionSkin = 0.02f;
+    private readonly RaycastHit2D[] dashHits = new RaycastHit2D[8];
+    private ContactFilter2D dashContactFilter;
 
     [SerializeField] private Transform visualRoot;
 
@@ -29,6 +41,11 @@ public class CharacterMovement2D : MonoBehaviour
             rb.gravityScale = 0f;
             rb.freezeRotation = true;
         }
+
+        dashContactFilter = new ContactFilter2D
+        {
+            useTriggers = false
+        };
     }
 
     void Update()
@@ -37,6 +54,20 @@ public class CharacterMovement2D : MonoBehaviour
             Input.GetAxisRaw("Horizontal"),
             Input.GetAxisRaw("Vertical")
         ).normalized;
+
+        if (moveInput.sqrMagnitude > 0.01f)
+            lastMoveDirection = moveInput;
+
+        if (Time.timeScale > 0f)
+        {
+            dashCooldownRemaining = Mathf.Max(
+                0f,
+                dashCooldownRemaining - Time.deltaTime
+            );
+
+            if (Input.GetKeyDown(KeyCode.Space))
+                TryStartDash();
+        }
 
         if (moveInput.x != 0 && visualRoot != null)
         {
@@ -69,6 +100,12 @@ public class CharacterMovement2D : MonoBehaviour
         if (rb == null)
             return;
 
+        if (isDashing)
+        {
+            UpdateDash();
+            return;
+        }
+
         Vector2 targetVelocity = moveInput * speed;
 
         float rate = moveInput.sqrMagnitude > 0.01f
@@ -84,5 +121,91 @@ public class CharacterMovement2D : MonoBehaviour
 
         rb.MovePosition(rb.position + currentVelocity * Time.fixedDeltaTime);
 
+    }
+
+    private void TryStartDash()
+    {
+        if (isDashing || dashCooldownRemaining > 0f || rb == null)
+            return;
+
+        Vector2 direction = moveInput.sqrMagnitude > 0.01f
+            ? moveInput
+            : lastMoveDirection;
+
+        if (direction.sqrMagnitude <= 0.01f)
+            return;
+
+        dashDirection = direction.normalized;
+        dashTimeRemaining = Mathf.Max(0.01f, dashDuration);
+        dashCooldownRemaining = Mathf.Max(0f, dashCooldown);
+        currentVelocity = Vector2.zero;
+        isDashing = true;
+    }
+
+    private void UpdateDash()
+    {
+        float stepTime = Mathf.Min(Time.fixedDeltaTime, dashTimeRemaining);
+        float dashSpeed = Mathf.Max(0.01f, dashDistance) /
+            Mathf.Max(0.01f, dashDuration);
+        float desiredDistance = dashSpeed * stepTime;
+        float allowedDistance = GetAllowedDashDistance(desiredDistance);
+
+        if (allowedDistance > 0f)
+        {
+            rb.MovePosition(
+                rb.position + dashDirection * allowedDistance
+            );
+        }
+
+        dashTimeRemaining -= stepTime;
+
+        bool hitObstacle = allowedDistance + DashCollisionSkin < desiredDistance;
+
+        if (dashTimeRemaining <= 0f || hitObstacle)
+            EndDash();
+    }
+
+    private float GetAllowedDashDistance(float desiredDistance)
+    {
+        int hitCount = rb.Cast(
+            dashDirection,
+            dashContactFilter,
+            dashHits,
+            desiredDistance + DashCollisionSkin
+        );
+
+        float allowedDistance = desiredDistance;
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            RaycastHit2D hit = dashHits[i];
+
+            if (hit.collider == null)
+                continue;
+
+            allowedDistance = Mathf.Min(
+                allowedDistance,
+                Mathf.Max(0f, hit.distance - DashCollisionSkin)
+            );
+        }
+
+        return allowedDistance;
+    }
+
+    private void EndDash()
+    {
+        isDashing = false;
+        dashTimeRemaining = 0f;
+        currentVelocity = Vector2.zero;
+    }
+
+    private void OnDisable()
+    {
+        moveInput = Vector2.zero;
+        currentVelocity = Vector2.zero;
+        dashDirection = Vector2.zero;
+        dashTimeRemaining = 0f;
+        dashCooldownRemaining = 0f;
+        isDashing = false;
     }
 }
