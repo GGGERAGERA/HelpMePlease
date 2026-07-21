@@ -1839,7 +1839,7 @@ MonoBehaviour:
   globalLight: {fileID: 1615053065}
   normalLightIntensity: 1
   darknessLightIntensity: 0.01
-  holdZoneEventObject: {fileID: 0}
+  worldEventSpawner: {fileID: 46915853}
   healthGrowthPerLevel: 0.12
   speedGrowthPerLevel: 0.025
   spawnRateGrowthPerLevel: 0.08

@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class WorldEventSpawner : MonoBehaviour
 {
+    public event System.Action<WorldEvent> EventCompleted;
+
     [Header("Event Prefabs")]
     [SerializeField] private WorldEvent[] eventPrefabs;
 
@@ -20,6 +22,7 @@ public class WorldEventSpawner : MonoBehaviour
 
     private float timer;
     private int activeEvents;
+    private bool holdPointEnabled;
 
     private void Start()
     {
@@ -53,11 +56,7 @@ public class WorldEventSpawner : MonoBehaviour
         if (player == null)
             return;
 
-        WorldEvent prefab = eventPrefabs[nextEventIndex];
-
-        nextEventIndex++;
-        if (nextEventIndex >= eventPrefabs.Length)
-            nextEventIndex = 0;
+        WorldEvent prefab = GetNextEventPrefab();
 
         if (prefab == null)
             return;
@@ -73,8 +72,33 @@ public class WorldEventSpawner : MonoBehaviour
         activeEvents++;
     }
 
+    public void SetHoldPointEnabled(bool enabled)
+    {
+        holdPointEnabled = enabled;
+    }
+
+    private WorldEvent GetNextEventPrefab()
+    {
+        for (int i = 0; i < eventPrefabs.Length; i++)
+        {
+            WorldEvent prefab = eventPrefabs[nextEventIndex];
+
+            nextEventIndex++;
+            if (nextEventIndex >= eventPrefabs.Length)
+                nextEventIndex = 0;
+
+            if (prefab is CaptureZoneEvent && !holdPointEnabled)
+                continue;
+
+            return prefab;
+        }
+
+        return null;
+    }
+
     public void NotifyEventCompleted(WorldEvent worldEvent)
     {
         activeEvents = Mathf.Max(0, activeEvents - 1);
+        EventCompleted?.Invoke(worldEvent);
     }
 }

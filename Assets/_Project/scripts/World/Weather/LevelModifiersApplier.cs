@@ -19,7 +19,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
     [SerializeField] private float darknessLightIntensity = 0.01f;
 
     [Header("Events")]
-    [SerializeField] private GameObject holdZoneEventObject;
+    [SerializeField] private WorldEventSpawner worldEventSpawner;
 
     [Header("Endless Difficulty")]
     [SerializeField, Min(0f)] private float healthGrowthPerLevel = 0.18f;
@@ -34,6 +34,9 @@ public sealed class LevelModifiersApplier : MonoBehaviour
 
         if (enemySpawner == null || !enemySpawner.gameObject.scene.IsValid())
             enemySpawner = FindFirstObjectByType<EnemySpawner>();
+
+        if (worldEventSpawner == null || !worldEventSpawner.gameObject.scene.IsValid())
+            worldEventSpawner = FindFirstObjectByType<WorldEventSpawner>();
 
         ApplySelectedNode();
     }
@@ -54,6 +57,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         if (node == null)
         {
             enemySpawner?.SetSpawnProfile(null, currentLevel);
+            worldEventSpawner?.SetHoldPointEnabled(false);
             ApplyEndlessEnemyScaling(currentLevel, 1f, 1f, 1f);
             DisableEnvironment();
 
@@ -139,9 +143,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
 
     private void ApplyEvents(LevelNodeData node)
     {
-        if (holdZoneEventObject != null)
-            holdZoneEventObject.SetActive(node.hasHoldZoneEvent);
-
+        worldEventSpawner?.SetHoldPointEnabled(node.hasHoldZoneEvent);
     }
 
     private void DisableEnvironment()
@@ -154,9 +156,6 @@ public sealed class LevelModifiersApplier : MonoBehaviour
 
         if (snowObject != null)
             snowObject.SetActive(false);
-
-        if (holdZoneEventObject != null)
-            holdZoneEventObject.SetActive(false);
 
     }
 
