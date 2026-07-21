@@ -1,5 +1,14 @@
 using UnityEngine;
 
+public enum DoubleOrLeaveState
+{
+    Inactive,
+    WaitingForChoice,
+    WaitingForChallenge,
+    RewardGranted,
+    Failed
+}
+
 public sealed class DoubleOrLeave : MonoBehaviour
 {
     [SerializeField] private WorldEventSpawner worldEventSpawner;
@@ -10,6 +19,7 @@ public sealed class DoubleOrLeave : MonoBehaviour
     public int LastGrantedRewardAmount { get; private set; }
     public bool HasPendingChoice { get; private set; }
     public bool IsWaitingForChallenge { get; private set; }
+    public DoubleOrLeaveState State { get; private set; }
 
     private void OnEnable()
     {
@@ -44,6 +54,7 @@ public sealed class DoubleOrLeave : MonoBehaviour
 
         HasPendingChoice = false;
         LastGrantedRewardAmount = RewardAmount;
+        State = DoubleOrLeaveState.RewardGranted;
 
         Debug.Log(
             $"[DoubleOrLeave] Reward taken: {LastGrantedRewardAmount}."
@@ -58,6 +69,7 @@ public sealed class DoubleOrLeave : MonoBehaviour
         HasPendingChoice = false;
         IsWaitingForChallenge = true;
         LastGrantedRewardAmount = 0;
+        State = DoubleOrLeaveState.WaitingForChallenge;
     }
 
     private void HandleWorldEventCompleted(WorldEvent worldEvent)
@@ -67,6 +79,7 @@ public sealed class DoubleOrLeave : MonoBehaviour
 
         HasPendingChoice = true;
         LastGrantedRewardAmount = 0;
+        State = DoubleOrLeaveState.WaitingForChoice;
     }
 
     private void HandleChallengeCompleted()
@@ -76,6 +89,7 @@ public sealed class DoubleOrLeave : MonoBehaviour
 
         IsWaitingForChallenge = false;
         LastGrantedRewardAmount = RewardAmount * 2;
+        State = DoubleOrLeaveState.RewardGranted;
 
         Debug.Log(
             $"[DoubleOrLeave] Doubled reward granted: " +
@@ -90,6 +104,7 @@ public sealed class DoubleOrLeave : MonoBehaviour
 
         IsWaitingForChallenge = false;
         LastGrantedRewardAmount = 0;
+        State = DoubleOrLeaveState.Failed;
 
         Debug.Log("[DoubleOrLeave] Challenge failed. Reward lost.");
     }

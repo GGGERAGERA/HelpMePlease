@@ -4,6 +4,12 @@ using UnityEngine.UI;
 
 public class RescueCapsuleEvent : WorldEvent
 {
+    public float TimeRemaining => Mathf.Max(0f, defenseTime - timer);
+    public float Progress => defenseTime > 0f
+        ? Mathf.Clamp01(timer / defenseTime)
+        : 1f;
+    public bool IsActivated => activated;
+
     [Header("Defense Settings")]
     [SerializeField] private float activationRadius = 2.5f;
     [SerializeField] private float defenseTime = 45f;

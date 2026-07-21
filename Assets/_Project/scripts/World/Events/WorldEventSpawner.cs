@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class WorldEventSpawner : MonoBehaviour
 {
     public event System.Action<WorldEvent> EventCompleted;
+    public IReadOnlyList<WorldEvent> ActiveEvents => activeEventInstances;
 
     [Header("Event Prefabs")]
     [SerializeField] private WorldEvent[] eventPrefabs;
@@ -23,6 +25,7 @@ public class WorldEventSpawner : MonoBehaviour
     private float timer;
     private int activeEvents;
     private bool holdPointEnabled;
+    private readonly List<WorldEvent> activeEventInstances = new();
 
     private void Start()
     {
@@ -69,6 +72,7 @@ public class WorldEventSpawner : MonoBehaviour
         WorldEvent spawnedEvent = Instantiate(prefab, spawnPosition, Quaternion.identity);
         spawnedEvent.Initialize(this);
 
+        activeEventInstances.Add(spawnedEvent);
         activeEvents++;
     }
 
@@ -98,6 +102,7 @@ public class WorldEventSpawner : MonoBehaviour
 
     public void NotifyEventCompleted(WorldEvent worldEvent)
     {
+        activeEventInstances.Remove(worldEvent);
         activeEvents = Mathf.Max(0, activeEvents - 1);
         EventCompleted?.Invoke(worldEvent);
     }

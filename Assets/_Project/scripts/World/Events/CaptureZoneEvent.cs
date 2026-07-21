@@ -4,6 +4,12 @@ using UnityEngine.UI;
 
 public class CaptureZoneEvent : WorldEvent
 {
+    public float TimeRemaining => Mathf.Max(0f, requiredHoldTime - currentHoldTime);
+    public float Progress => requiredHoldTime > 0f
+        ? Mathf.Clamp01(currentHoldTime / requiredHoldTime)
+        : 1f;
+    public bool IsPlayerInside => playerInside;
+
     [Header("Capture Settings")]
     [SerializeField] private float requiredHoldTime = 30f;
     [SerializeField] private float captureRadius = 3f;

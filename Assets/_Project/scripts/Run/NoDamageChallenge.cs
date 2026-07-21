@@ -1,5 +1,13 @@
 using UnityEngine;
 
+public enum NoDamageChallengeState
+{
+    Inactive,
+    Active,
+    Completed,
+    Failed
+}
+
 public sealed class NoDamageChallenge : MonoBehaviour
 {
     [SerializeField, Min(0.1f)] private float duration = 30f;
@@ -10,6 +18,7 @@ public sealed class NoDamageChallenge : MonoBehaviour
 
     public bool IsRunning { get; private set; }
     public float TimeRemaining { get; private set; }
+    public NoDamageChallengeState State { get; private set; }
 
     private PlayerHealth playerHealth;
 
@@ -32,6 +41,12 @@ public sealed class NoDamageChallenge : MonoBehaviour
         playerHealth.DamageTaken += HandleDamageTaken;
         TimeRemaining = Mathf.Max(0.1f, duration);
         IsRunning = true;
+        State = NoDamageChallengeState.Active;
+
+        RunMessageService.Instance?.ShowCustom(
+            "ИСПЫТАНИЕ",
+            "НЕ ПОЛУЧАЙТЕ УРОН 30 СЕКУНД"
+        );
     }
 
     public void CancelChallenge()
@@ -42,6 +57,7 @@ public sealed class NoDamageChallenge : MonoBehaviour
         StopTrackingPlayer();
         IsRunning = false;
         TimeRemaining = 0f;
+        State = NoDamageChallengeState.Inactive;
         Canceled?.Invoke();
     }
 
@@ -77,6 +93,13 @@ public sealed class NoDamageChallenge : MonoBehaviour
         StopTrackingPlayer();
         IsRunning = false;
         TimeRemaining = 0f;
+        State = NoDamageChallengeState.Failed;
+
+        RunMessageService.Instance?.ShowCustom(
+            "ИСПЫТАНИЕ ПРОВАЛЕНО",
+            string.Empty
+        );
+
         Failed?.Invoke();
     }
 
@@ -85,6 +108,13 @@ public sealed class NoDamageChallenge : MonoBehaviour
         StopTrackingPlayer();
         IsRunning = false;
         TimeRemaining = 0f;
+        State = NoDamageChallengeState.Completed;
+
+        RunMessageService.Instance?.ShowCustom(
+            "ИСПЫТАНИЕ ВЫПОЛНЕНО",
+            string.Empty
+        );
+
         Completed?.Invoke();
     }
 

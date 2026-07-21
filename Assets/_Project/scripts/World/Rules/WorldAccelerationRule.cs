@@ -30,6 +30,11 @@ public sealed class WorldAccelerationRule : MonoBehaviour
             Mathf.Max(1f, accelerationMultiplier)
         );
         IsRunning = true;
+
+        RunMessageService.Instance?.ShowCustom(
+            "ПРАВИЛО МИРА",
+            "УСКОРЕНИЕ"
+        );
     }
 
     public void StopRule()
@@ -42,6 +47,11 @@ public sealed class WorldAccelerationRule : MonoBehaviour
 
         IsRunning = false;
         TimeRemaining = 0f;
+
+        RunMessageService.Instance?.ShowCustom(
+            "УСКОРЕНИЕ ЗАВЕРШЕНО",
+            string.Empty
+        );
     }
 
     private void Update()
