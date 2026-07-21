@@ -3,6 +3,7 @@ using System.Collections;
 
 public class PlayerHealth : MonoBehaviour
 {
+    public event System.Action DamageTaken;
 
     public float maxHealth = 100f;
     public float currentHealth;
@@ -55,6 +56,8 @@ public class PlayerHealth : MonoBehaviour
         CameraShake.Instance?.Shake(0.12f, 0.08f);
         HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
         if (currentHealth <= 0) Die();
+
+        DamageTaken?.Invoke();
 
         StartCoroutine(InvulnerabilityRoutine());
 

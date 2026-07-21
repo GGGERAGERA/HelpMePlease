@@ -39,6 +39,8 @@ public class EnemySpawner : MonoBehaviour
     {
         public GameObject instance;
         public GameObject sourcePrefab;
+        public EnemyMovement movement;
+        public float baseSpeedMultiplier;
     }
 
     private readonly List<SpawnedEnemy> activeEnemies = new();
@@ -58,6 +60,7 @@ public class EnemySpawner : MonoBehaviour
     private float currentHealthMultiplier = 1f;
     private float currentSpeedMultiplier = 1f;
     private float currentSpawnPressure = 1f;
+    private float worldAccelerationMultiplier = 1f;
 
     private float baseSpawnInterval;
     private int baseMaxEnemies;
@@ -158,6 +161,12 @@ public class EnemySpawner : MonoBehaviour
     {
         spawningEnabled = true;
         Debug.Log("[EnemySpawner] Spawning resumed.");
+    }
+
+    public void SetWorldAcceleration(float multiplier)
+    {
+        worldAccelerationMultiplier = Mathf.Max(0.1f, multiplier);
+        RefreshActiveEnemySpeeds();
     }
 
     public void ResetForNewLevel()
@@ -262,7 +271,7 @@ public class EnemySpawner : MonoBehaviour
             ? activePhase.spawnInterval / currentSpawnPressure
             : spawnInterval;
 
-        return Mathf.Max(0.1f, interval);
+        return Mathf.Max(0.1f, interval / worldAccelerationMultiplier);
     }
 
     private int GetCurrentMaxAlive()
@@ -293,12 +302,6 @@ public class EnemySpawner : MonoBehaviour
         GameObject enemy = Instantiate(selectedPrefab, spawnPosition, Quaternion.identity);
         EnemyHealth health = enemy.GetComponent<EnemyHealth>();
 
-        activeEnemies.Add(new SpawnedEnemy
-        {
-            instance = enemy,
-            sourcePrefab = selectedPrefab
-        });
-
         if (health != null)
         {
             float phaseHealth = activePhase != null ? activePhase.healthMultiplier : 1f;
@@ -306,12 +309,21 @@ public class EnemySpawner : MonoBehaviour
         }
 
         EnemyMovement movement = enemy.GetComponent<EnemyMovement>();
+        float phaseSpeed = activePhase != null ? activePhase.speedMultiplier : 1f;
+        float baseEnemySpeedMultiplier = currentSpeedMultiplier * phaseSpeed;
+
+        activeEnemies.Add(new SpawnedEnemy
+        {
+            instance = enemy,
+            sourcePrefab = selectedPrefab,
+            movement = movement,
+            baseSpeedMultiplier = baseEnemySpeedMultiplier
+        });
 
         if (movement != null)
-        {
-            float phaseSpeed = activePhase != null ? activePhase.speedMultiplier : 1f;
-            movement.SetSpeedMultiplier(currentSpeedMultiplier * phaseSpeed);
-        }
+            movement.SetSpeedMultiplier(
+                baseEnemySpeedMultiplier * worldAccelerationMultiplier
+            );
     }
 
     private GameObject SelectWeightedEnemy(EnemySpawnPhase phase)
@@ -384,6 +396,23 @@ public class EnemySpawner : MonoBehaviour
         {
             if (activeEnemies[i].instance == null)
                 activeEnemies.RemoveAt(i);
+        }
+    }
+
+    private void RefreshActiveEnemySpeeds()
+    {
+        RemoveDestroyedEnemies();
+
+        for (int i = 0; i < activeEnemies.Count; i++)
+        {
+            SpawnedEnemy enemy = activeEnemies[i];
+
+            if (enemy.movement != null)
+            {
+                enemy.movement.SetSpeedMultiplier(
+                    enemy.baseSpeedMultiplier * worldAccelerationMultiplier
+                );
+            }
         }
     }
 
