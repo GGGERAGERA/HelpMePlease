@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 public class CaptureZoneEvent : WorldEvent
 {
+    public float CaptureRadius => captureRadius;
     public float TimeRemaining => Mathf.Max(0f, requiredHoldTime - currentHoldTime);
     public float Progress => requiredHoldTime > 0f
         ? Mathf.Clamp01(currentHoldTime / requiredHoldTime)
