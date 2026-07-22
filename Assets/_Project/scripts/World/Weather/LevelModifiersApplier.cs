@@ -22,8 +22,8 @@ public sealed class LevelModifiersApplier : MonoBehaviour
     [SerializeField] private RunFlowController runFlowController;
 
     [Header("Endless Difficulty")]
-    [SerializeField, Min(0f)] private float healthGrowthPerLevel = 0.18f;
-    [SerializeField, Min(0f)] private float speedGrowthPerLevel = 0.05f;
+    [SerializeField, Min(0f)] private float healthGrowthPerLevel = 0.04f;
+    [SerializeField, Min(0f)] private float speedGrowthPerLevel = 0f;
     [SerializeField, Min(0f)] private float spawnRateGrowthPerLevel = 0.12f;
 
     private System.Collections.IEnumerator Start()

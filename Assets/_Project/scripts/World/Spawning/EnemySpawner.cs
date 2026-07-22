@@ -26,11 +26,20 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private float spawnRateMultiplier = 0.9f;
     [SerializeField] private float enemyHealthMultiplier = 1.1f;
     [SerializeField] private float enemySpeedMultiplier = 1.1f;
+    [SerializeField, Min(0)] private int maxEnemiesIncreasePerStep = 5;
+    [SerializeField, Min(1)] private int legacyStepsPerBatchIncrease = 1;
+
+    [Header("Spawn Density Scaling")]
+    [SerializeField, Min(1)] private int baseEnemiesPerCycle = 1;
+    [SerializeField, Min(1)] private int phasesPerBatchIncrease = 2;
+    [SerializeField, Min(0.01f)] private float spawnPressurePerBatchIncrease = 0.5f;
+    [SerializeField, Min(1)] private int maxEnemiesPerCycle = 4;
 
     [Header("Difficulty Limits")]
     [SerializeField] private float minSpawnInterval = 0.4f;
     [SerializeField] private float maxHealthMultiplier = 3f;
     [SerializeField] private float maxSpeedMultiplier = 1.8f;
+    [SerializeField, Min(1)] private int maxAliveLimit = 120;
 
     [Header("Legacy Spawn Stages")]
     [SerializeField] private EnemySpawnStage[] spawnStages;
@@ -54,6 +63,7 @@ public class EnemySpawner : MonoBehaviour
     private float spawnTimer;
     private float difficultyTimer;
     private float runTime;
+    private int legacyDifficultySteps;
     private bool spawningEnabled = true;
     private bool initialized;
 
@@ -99,7 +109,7 @@ public class EnemySpawner : MonoBehaviour
             return;
 
         spawnTimer = 0f;
-        SpawnEnemy();
+        SpawnCycle();
     }
 
     public void SetSpawnProfile(EnemySpawnProfile profile, int runLevel)
@@ -110,6 +120,7 @@ public class EnemySpawner : MonoBehaviour
         activePhaseIndex = -1;
         runTime = 0f;
         spawnTimer = 0f;
+        legacyDifficultySteps = 0;
 
         if (spawnProfile == null)
         {
@@ -141,7 +152,7 @@ public class EnemySpawner : MonoBehaviour
             maxEnemies = Mathf.Clamp(
                 Mathf.RoundToInt(baseMaxEnemies * currentSpawnPressure),
                 baseMaxEnemies,
-                220
+                Mathf.Max(baseMaxEnemies, maxAliveLimit)
             );
         }
 
@@ -176,6 +187,7 @@ public class EnemySpawner : MonoBehaviour
         runTime = 0f;
         activePhase = null;
         activePhaseIndex = -1;
+        legacyDifficultySteps = 0;
         spawningEnabled = true;
     }
 
@@ -189,6 +201,7 @@ public class EnemySpawner : MonoBehaviour
         currentHealthMultiplier = baseHealthMultiplier;
         currentSpeedMultiplier = baseSpeedMultiplier;
         currentSpawnPressure = 1f;
+        legacyDifficultySteps = 0;
     }
 
     private void CaptureBaseSettings()
@@ -211,7 +224,12 @@ public class EnemySpawner : MonoBehaviour
             return;
 
         difficultyTimer = 0f;
+        legacyDifficultySteps++;
         spawnInterval = Mathf.Max(minSpawnInterval, spawnInterval * spawnRateMultiplier);
+        maxEnemies = Mathf.Min(
+            Mathf.Max(baseMaxEnemies, maxAliveLimit),
+            maxEnemies + Mathf.Max(0, maxEnemiesIncreasePerStep)
+        );
         currentHealthMultiplier = Mathf.Min(
             maxHealthMultiplier,
             currentHealthMultiplier * enemyHealthMultiplier
@@ -223,6 +241,7 @@ public class EnemySpawner : MonoBehaviour
 
         Debug.Log(
             $"[EnemySpawner] Legacy difficulty increased: interval {spawnInterval:F2}, " +
+            $"batch {GetCurrentEnemiesPerCycle()}, max alive {maxEnemies}, " +
             $"HP x{currentHealthMultiplier:F2}, speed x{currentSpeedMultiplier:F2}."
         );
     }
@@ -271,30 +290,74 @@ public class EnemySpawner : MonoBehaviour
             ? activePhase.spawnInterval / currentSpawnPressure
             : spawnInterval;
 
-        return Mathf.Max(0.1f, interval / worldAccelerationMultiplier);
+        float limitedInterval = Mathf.Max(minSpawnInterval, interval);
+        return Mathf.Max(0.1f, limitedInterval / worldAccelerationMultiplier);
     }
 
     private int GetCurrentMaxAlive()
     {
-        return activePhase != null
-            ? Mathf.Max(1, activePhase.maxAlive)
-            : Mathf.Max(1, maxEnemies);
+        if (activePhase == null)
+            return Mathf.Max(1, maxEnemies);
+
+        int scaledMaxAlive = Mathf.RoundToInt(
+            activePhase.maxAlive * currentSpawnPressure
+        );
+
+        int minimumAlive = Mathf.Max(1, activePhase.maxAlive);
+
+        return Mathf.Clamp(
+            scaledMaxAlive,
+            minimumAlive,
+            Mathf.Max(minimumAlive, maxAliveLimit)
+        );
     }
 
-    private void SpawnEnemy()
+    private int GetCurrentEnemiesPerCycle()
+    {
+        int phaseBonus = activePhase != null
+            ? Mathf.Max(0, activePhaseIndex) / Mathf.Max(1, phasesPerBatchIncrease)
+            : 0;
+        int pressureBonus = Mathf.FloorToInt(
+            Mathf.Max(0f, currentSpawnPressure - 1f) /
+            Mathf.Max(0.01f, spawnPressurePerBatchIncrease)
+        );
+        int legacyBonus = activePhase == null
+            ? legacyDifficultySteps / Mathf.Max(1, legacyStepsPerBatchIncrease)
+            : 0;
+
+        return Mathf.Clamp(
+            baseEnemiesPerCycle + phaseBonus + pressureBonus + legacyBonus,
+            1,
+            Mathf.Max(1, maxEnemiesPerCycle)
+        );
+    }
+
+    private void SpawnCycle()
     {
         RemoveDestroyedEnemies();
 
-        if (activeEnemies.Count >= GetCurrentMaxAlive())
+        int availableSlots = GetCurrentMaxAlive() - activeEnemies.Count;
+
+        if (availableSlots <= 0)
             return;
 
-        GameObject selectedPrefab = activePhase != null
-            ? SelectWeightedEnemy(activePhase)
-            : SelectLegacyEnemy();
+        int spawnCount = Mathf.Min(GetCurrentEnemiesPerCycle(), availableSlots);
 
-        if (selectedPrefab == null)
-            return;
+        for (int i = 0; i < spawnCount; i++)
+        {
+            GameObject selectedPrefab = activePhase != null
+                ? SelectWeightedEnemy(activePhase)
+                : SelectLegacyEnemy();
 
+            if (selectedPrefab == null)
+                break;
+
+            SpawnEnemy(selectedPrefab);
+        }
+    }
+
+    private void SpawnEnemy(GameObject selectedPrefab)
+    {
         Vector2 direction = Random.insideUnitCircle.normalized;
         float distance = Random.Range(minSpawnDistance, maxSpawnDistance);
         Vector3 spawnPosition = player.position + (Vector3)(direction * distance);
@@ -370,8 +433,17 @@ public class EnemySpawner : MonoBehaviour
         if (currentRunLevel < Mathf.Max(1, entry.minimumRunLevel))
             return false;
 
-        return entry.maxAliveOfType <= 0 ||
-               CountAlive(entry.enemyPrefab) < entry.maxAliveOfType;
+        if (entry.maxAliveOfType <= 0)
+            return true;
+
+        int minimumTypeLimit = Mathf.Max(1, entry.maxAliveOfType);
+        int scaledTypeLimit = Mathf.Clamp(
+            Mathf.RoundToInt(entry.maxAliveOfType * currentSpawnPressure),
+            minimumTypeLimit,
+            Mathf.Max(minimumTypeLimit, maxAliveLimit)
+        );
+
+        return CountAlive(entry.enemyPrefab) < scaledTypeLimit;
     }
 
     private int CountAlive(GameObject sourcePrefab)

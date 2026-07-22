@@ -25,6 +25,7 @@ public class UpgradeCardView : MonoBehaviour
 
     private UpgradeData currentUpgrade;
     private Action<UpgradeData> onClicked;
+    private UICardHoverAnimation hoverAnimation;
 
     private void Awake()
     {
@@ -33,6 +34,8 @@ public class UpgradeCardView : MonoBehaviour
 
         if (backgroundImage == null)
             backgroundImage = GetComponent<Image>();
+
+        hoverAnimation = GetComponent<UICardHoverAnimation>();
 
         if (button != null)
         {
@@ -65,6 +68,7 @@ public class UpgradeCardView : MonoBehaviour
 
         SetIcon(upgrade.icon);
         SetRarity(upgrade.rarity);
+        hoverAnimation?.RefreshRestingState();
     }
 
     private void HandleClick()

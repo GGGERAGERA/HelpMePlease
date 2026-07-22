@@ -774,6 +774,7 @@ GameObject:
   - component: {fileID: 3086174504460265763}
   - component: {fileID: 4612541345147181482}
   - component: {fileID: 5978918760978417272}
+  - component: {fileID: 6123456789012345678}
   - component: {fileID: 2710226060710081824}
   m_Layer: 5
   m_Name: PF_UpgradeCard
@@ -937,6 +938,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UIButtonHoverSound
   hoverSound: {fileID: 0}
   volume: 0.25
+--- !u!114 &6123456789012345678
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6921885298083269458}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52fd5bb958664383bbd3d09195ea1d9d, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::UICardHoverAnimation
+  target: {fileID: 5210204260078422795}
+  button: {fileID: 3086174504460265763}
+  accentGraphic: {fileID: 2135680143225733694}
+  scaleMultiplier: 1.055
+  verticalOffset: 10
+  hoverDuration: 0.13
+  returnDuration: 0.11
+  accentAlphaMultiplier: 2
 --- !u!95 &2710226060710081824
 Animator:
   serializedVersion: 7

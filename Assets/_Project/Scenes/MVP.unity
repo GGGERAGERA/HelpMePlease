@@ -1889,9 +1889,9 @@ MonoBehaviour:
   normalLightIntensity: 1
   darknessLightIntensity: 0.01
   runFlowController: {fileID: 46915856}
-  healthGrowthPerLevel: 0.12
-  speedGrowthPerLevel: 0.025
-  spawnRateGrowthPerLevel: 0.08
+  healthGrowthPerLevel: 0.04
+  speedGrowthPerLevel: 0
+  spawnRateGrowthPerLevel: 0.12
 --- !u!4 &1203821960
 Transform:
   m_ObjectHideFlags: 0

@@ -426,6 +426,7 @@ GameObject:
   - component: {fileID: 109134864581621097}
   - component: {fileID: 6190026540808163291}
   - component: {fileID: 404639053540405627}
+  - component: {fileID: 6123456789012345679}
   - component: {fileID: 6597114767188503378}
   - component: {fileID: 6481372623488257146}
   - component: {fileID: 6985341564390380128}
@@ -536,6 +537,26 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!114 &6123456789012345679
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4466152653020647191}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52fd5bb958664383bbd3d09195ea1d9d, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::UICardHoverAnimation
+  target: {fileID: 109134864581621097}
+  button: {fileID: 404639053540405627}
+  accentGraphic: {fileID: 900000000000000004}
+  scaleMultiplier: 1.055
+  verticalOffset: 10
+  hoverDuration: 0.13
+  returnDuration: 0.11
+  accentAlphaMultiplier: 2
 --- !u!95 &6597114767188503378
 Animator:
   serializedVersion: 7

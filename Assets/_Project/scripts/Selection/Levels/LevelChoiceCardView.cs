@@ -22,6 +22,7 @@ public sealed class LevelChoiceCardView : MonoBehaviour
 
     private LevelNodeData nodeData;
     private Action<LevelNodeData> onClicked;
+    private UICardHoverAnimation hoverAnimation;
 
     public LevelNodeData Data => nodeData;
 
@@ -29,6 +30,8 @@ public sealed class LevelChoiceCardView : MonoBehaviour
     {
         if (button == null)
             button = GetComponent<Button>();
+
+        hoverAnimation = GetComponent<UICardHoverAnimation>();
 
         if (button == null)
             return;
@@ -79,7 +82,12 @@ public sealed class LevelChoiceCardView : MonoBehaviour
 
     public void SetSelected(bool selected)
     {
-        transform.localScale = selected ? Vector3.one * 1.035f : Vector3.one;
+        Vector3 restingScale = selected ? Vector3.one * 1.035f : Vector3.one;
+
+        if (hoverAnimation != null)
+            hoverAnimation.SetRestingScale(restingScale);
+        else
+            transform.localScale = restingScale;
 
         Color frameColor = selected ? selectedFrameColor : normalFrameColor;
 
@@ -87,11 +95,16 @@ public sealed class LevelChoiceCardView : MonoBehaviour
             frameImage.color = frameColor;
 
         if (glowImage != null)
-            glowImage.color = new Color(
+        {
+            Color glowColor = new Color(
                 frameColor.r,
                 frameColor.g,
                 frameColor.b,
                 selected ? 0.42f : 0.12f);
+
+            glowImage.color = glowColor;
+            hoverAnimation?.SetRestingAccentColor(glowColor);
+        }
     }
 
     private string FormatWeather(LevelWeatherType weather)

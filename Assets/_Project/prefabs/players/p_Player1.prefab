@@ -187,12 +187,19 @@ MonoBehaviour:
   maxSpawnDistance: 15
   spawnRadius: 10
   difficultyIncreaseInterval: 60
-  spawnRateMultiplier: 0.92
-  enemyHealthMultiplier: 1.08
-  enemySpeedMultiplier: 1.03
+  spawnRateMultiplier: 0.9
+  enemyHealthMultiplier: 1.03
+  enemySpeedMultiplier: 1
+  maxEnemiesIncreasePerStep: 8
+  legacyStepsPerBatchIncrease: 1
+  baseEnemiesPerCycle: 1
+  phasesPerBatchIncrease: 2
+  spawnPressurePerBatchIncrease: 0.5
+  maxEnemiesPerCycle: 4
   minSpawnInterval: 0.45
-  maxHealthMultiplier: 2
-  maxSpeedMultiplier: 1.35
+  maxHealthMultiplier: 1.35
+  maxSpeedMultiplier: 1.1
+  maxAliveLimit: 120
   spawnStages:
   - startTime: 1
     enemyPrefabs:
