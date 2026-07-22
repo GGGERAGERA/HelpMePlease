@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2029363319d1b9741a19ac5963bb5155, type: 3}
   m_Name: Crit Damage
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
-  upgradeName: "\u0428\u0430\u043D\u0441 \u043A\u0440\u0438\u0442\u0430"
-  description: "\u0448\u0430\u043D\u0441 \u043A\u0440\u0438\u0442\u0430  +50%"
+  upgradeName: "Уязвимая точка"
+  description: "Увеличивает урон критических попаданий на 50%."
   icon: {fileID: 90539913, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
   rarity: 1
   minPlayerLevel: 3
