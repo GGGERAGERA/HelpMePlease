@@ -918,12 +918,11 @@ MonoBehaviour:
   iconImage: {fileID: 7988888372902753732}
   titleText: {fileID: 2101410720312685313}
   descriptionText: {fileID: 5669223649467169955}
-  grayColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
-  blueColor: {r: 0.25, g: 0.55, b: 1, a: 1}
-  purpleColor: {r: 0.75, g: 0.25, b: 1, a: 1}
-  legendaryColor: {r: 1, g: 0.55, b: 0.1, a: 1}
-  rarityFrameImage: {fileID: 763932944442976237}
-  rarityGlowImage: {fileID: 2135680143225733694}
+  grayColor: {r: 0.654902, g: 0.705882, b: 0.760784, a: 1}
+  blueColor: {r: 0.239216, g: 0.552941, b: 1, a: 1}
+  purpleColor: {r: 0.658824, g: 0.333333, b: 0.968627, a: 1}
+  legendaryColor: {r: 0.94902, g: 0.662745, b: 0.231373, a: 1}
+  rarityFrameImage: {fileID: 4851996806345372775}
 --- !u!114 &5978918760978417272
 MonoBehaviour:
   m_ObjectHideFlags: 0

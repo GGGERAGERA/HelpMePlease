@@ -15,13 +15,12 @@ public class UpgradeCardView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI descriptionText;
 
     [Header("Rarity Colors")]
-    [SerializeField] private Color grayColor = new Color(0.75f, 0.75f, 0.75f, 1f);
-    [SerializeField] private Color blueColor = new Color(0.25f, 0.55f, 1f, 1f);
-    [SerializeField] private Color purpleColor = new Color(0.75f, 0.25f, 1f, 1f);
-    [SerializeField] private Color legendaryColor = new Color(1f, 0.55f, 0.1f, 1f);
+    [SerializeField] private Color grayColor = new Color(0.654902f, 0.705882f, 0.760784f, 1f);
+    [SerializeField] private Color blueColor = new Color(0.239216f, 0.552941f, 1f, 1f);
+    [SerializeField] private Color purpleColor = new Color(0.658824f, 0.333333f, 0.968627f, 1f);
+    [SerializeField] private Color legendaryColor = new Color(0.94902f, 0.662745f, 0.231373f, 1f);
 
     [SerializeField] private Image rarityFrameImage;
-    [SerializeField] private Image rarityGlowImage;
 
     private UpgradeData currentUpgrade;
     private Action<UpgradeData> onClicked;
@@ -94,12 +93,6 @@ public class UpgradeCardView : MonoBehaviour
 
         if (rarityFrameImage != null)
             rarityFrameImage.color = color;
-
-        if (rarityGlowImage != null)
-            rarityGlowImage.color = new Color(color.r, color.g, color.b, 0.18f);
-
-        if (backgroundImage != null)
-            backgroundImage.color = new Color(0.08f, 0.09f, 0.1f, 0.95f);
     }
 
     private Color GetRarityColor(UpgradeRarity rarity)
