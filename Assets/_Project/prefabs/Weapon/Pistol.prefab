@@ -5047,7 +5047,10 @@ MonoBehaviour:
   baseKnockbackForce: 4
   spreadAngle: 12
   weaponSprite: {fileID: 0}
-  recoilReturnSpeed: 14
+  recoilVisual: {fileID: 6904778869510139721}
+  recoilDistance: 0.12
+  recoilRotationDegrees: 3
+  recoilReturnSpeed: 1.2
   fireBehaviourSource: {fileID: 1928989846884532319}
   shotPattern: {fileID: 0}
   attackCue: 20

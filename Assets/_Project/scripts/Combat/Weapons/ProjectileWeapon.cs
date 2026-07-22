@@ -10,6 +10,9 @@ public class ProjectileWeapon : BaseWeapon
     [SerializeField] private SpriteRenderer weaponSprite;
 
     [Header("Recoil")]
+    [SerializeField] private Transform recoilVisual;
+    [SerializeField] private float recoilDistance = 0.12f;
+    [SerializeField] private float recoilRotationDegrees = 3f;
     [SerializeField] private float recoilReturnSpeed = 14f;
 
     [SerializeField] private MonoBehaviour fireBehaviourSource;
@@ -21,6 +24,10 @@ public class ProjectileWeapon : BaseWeapon
     private IWeaponFireBehaviour fireBehaviour;
 
     private float currentRecoil;
+    private Vector3 recoilRestPosition;
+    private Quaternion recoilRestRotation;
+    private Vector3 recoilRestScale;
+    private bool recoilRestStateCaptured;
 
     protected override void Start()
     {
@@ -30,6 +37,8 @@ public class ProjectileWeapon : BaseWeapon
 
         if (weaponSprite == null)
             weaponSprite = GetComponentInChildren<SpriteRenderer>();
+
+        CaptureRecoilRestState();
 
         if (owner == null && transform.parent != null)
             owner = transform.parent;
@@ -53,6 +62,8 @@ public class ProjectileWeapon : BaseWeapon
             0f,
             recoilReturnSpeed * Time.deltaTime
         );
+
+        ApplyRecoil();
     }
 
     public override bool Attack()
@@ -64,6 +75,8 @@ public class ProjectileWeapon : BaseWeapon
 
         if (!FireShotGroup(baseDirection))
             return false;
+
+        PlayRecoil();
 
         if (AudioService.Instance != null)
             AudioService.Instance.PlayAt(attackCue, firePoint.position);
@@ -107,7 +120,57 @@ public class ProjectileWeapon : BaseWeapon
             direction.normalized
         ).WithKnockback(GetKnockbackForce(baseKnockbackForce));
 
-        if (fireBehaviour != null)
-            fireBehaviour.Fire(context);
+        if (fireBehaviour != null && fireBehaviour.Fire(context))
+            PlayRecoil();
+    }
+
+    private void CaptureRecoilRestState()
+    {
+        if (recoilVisual == null)
+            return;
+
+        recoilRestPosition = recoilVisual.localPosition;
+        recoilRestRotation = recoilVisual.localRotation;
+        recoilRestScale = recoilVisual.localScale;
+        recoilRestStateCaptured = true;
+    }
+
+    private void PlayRecoil()
+    {
+        if (!recoilRestStateCaptured || recoilDistance <= 0f)
+            return;
+
+        currentRecoil = recoilDistance;
+        ApplyRecoil();
+    }
+
+    private void ApplyRecoil()
+    {
+        if (!recoilRestStateCaptured)
+            return;
+
+        float recoilAmount = recoilDistance > 0f
+            ? currentRecoil / recoilDistance
+            : 0f;
+
+        recoilVisual.localPosition = recoilRestPosition + Vector3.left * currentRecoil;
+        recoilVisual.localRotation = recoilRestRotation * Quaternion.Euler(
+            0f,
+            0f,
+            recoilRotationDegrees * recoilAmount
+        );
+        recoilVisual.localScale = recoilRestScale;
+    }
+
+    private void OnDisable()
+    {
+        currentRecoil = 0f;
+
+        if (!recoilRestStateCaptured || recoilVisual == null)
+            return;
+
+        recoilVisual.localPosition = recoilRestPosition;
+        recoilVisual.localRotation = recoilRestRotation;
+        recoilVisual.localScale = recoilRestScale;
     }
 }
