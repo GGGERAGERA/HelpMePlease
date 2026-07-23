@@ -93,6 +93,15 @@ public class PauseMenuUI : MonoBehaviour
 
     public void RestartGame()
     {
+        RunStateManager runState = RunStateManager.Instance;
+
+        if (runState != null)
+        {
+            CharacterData character = runState.SelectedCharacter;
+            WeaponData weapon = runState.SelectedWeapon;
+            runState.BeginNewRun(character, weapon);
+        }
+
         Time.timeScale = 1f;
         isPaused = false;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);

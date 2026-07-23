@@ -1,5 +1,7 @@
 public enum LevelAnomalyType
 {
     ExplosiveInfection,
-    Berserk
+    Berserk,
+    Haste,
+    Regeneration
 }

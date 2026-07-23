@@ -29,6 +29,7 @@ public class EnemyBomberMovement : EnemyMovement
     private bool isExploding;
     private bool exploded;
     private float speedMultiplier = 1f;
+    private float anomalySpeedMultiplier = 1f;
     private Vector2 knockbackVelocity;
 
     private void Awake()
@@ -60,7 +61,12 @@ public class EnemyBomberMovement : EnemyMovement
             knockbackDecay * Time.fixedDeltaTime
         );
 
-        Vector2 movement = direction * moveSpeed * speedMultiplier + knockbackVelocity;
+        Vector2 movement =
+            direction *
+            moveSpeed *
+            speedMultiplier *
+            anomalySpeedMultiplier +
+            knockbackVelocity;
 
         rb.MovePosition(rb.position + movement * Time.fixedDeltaTime);
 
@@ -159,6 +165,11 @@ public class EnemyBomberMovement : EnemyMovement
         speedMultiplier = Mathf.Max(0.1f, multiplier);
     }
 
+    public override void SetAnomalySpeedMultiplier(float multiplier)
+    {
+        anomalySpeedMultiplier = Mathf.Max(0.1f, multiplier);
+    }
+
     public override void ApplyKnockback(Vector2 direction, float force)
     {
         if (isExploding || exploded)
@@ -169,7 +180,7 @@ public class EnemyBomberMovement : EnemyMovement
 
     public override void StopAfterHit()
     {
-        // Подрывник не останавливается от контактного удара.
+        // РџРѕРґСЂС‹РІРЅРёРє РЅРµ РѕСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ РѕС‚ РєРѕРЅС‚Р°РєС‚РЅРѕРіРѕ СѓРґР°СЂР°.
     }
 
     private void OnDrawGizmosSelected()

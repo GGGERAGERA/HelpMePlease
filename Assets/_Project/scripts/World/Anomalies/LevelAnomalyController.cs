@@ -26,9 +26,12 @@ public sealed class LevelAnomalyController : MonoBehaviour
     private float originalIncomingDamageMultiplier = 1f;
     private float originalOutgoingDamageMultiplier = 1f;
     private float previousTimeScale = 1f;
+    private float regenerationTimer;
     private bool levelStarted;
     private bool enemyLifecycleSubscribed;
     private bool berserkApplied;
+    private bool regenerationApplied;
+    private bool hasteApplied;
 
     public LevelAnomalyData ActiveAnomaly => activeAnomaly;
     public bool IsIntroComplete { get; private set; }
@@ -118,6 +121,14 @@ public sealed class LevelAnomalyController : MonoBehaviour
             case LevelAnomalyType.Berserk:
                 ApplyBerserk();
                 break;
+
+            case LevelAnomalyType.Haste:
+                ApplyHaste();
+                break;
+
+            case LevelAnomalyType.Regeneration:
+                ApplyRegeneration();
+                break;
         }
     }
 
@@ -145,6 +156,29 @@ public sealed class LevelAnomalyController : MonoBehaviour
         }
     }
 
+    private void ApplyHaste()
+    {
+        hasteApplied = true;
+        ExperienceManager.Instance?.SetAnomalyXpGainMultiplier(
+            activeAnomaly.ExperienceGainMultiplier
+        );
+        SubscribeEnemyLifecycle();
+    }
+
+    private void ApplyRegeneration()
+    {
+        regenerationApplied = true;
+
+        if (playerModifiers == null)
+            return;
+
+        originalOutgoingDamageMultiplier =
+            playerModifiers.bonusDamageMultiplier;
+        playerModifiers.bonusDamageMultiplier =
+            originalOutgoingDamageMultiplier *
+            activeAnomaly.OutgoingDamageMultiplier;
+    }
+
     private void SubscribeEnemyLifecycle()
     {
         if (enemyLifecycleSubscribed)
@@ -163,7 +197,19 @@ public sealed class LevelAnomalyController : MonoBehaviour
         if (enemy == null || !registeredEnemies.Add(enemy))
             return;
 
-        enemy.OnDied += HandleEnemyDied;
+        if (activeAnomaly.AnomalyType ==
+            LevelAnomalyType.ExplosiveInfection)
+        {
+            enemy.OnDied += HandleEnemyDied;
+        }
+
+        if (activeAnomaly.AnomalyType == LevelAnomalyType.Haste)
+        {
+            EnemyMovement movement = GetEnemyMovement(enemy);
+            movement?.SetAnomalySpeedMultiplier(
+                activeAnomaly.EnemySpeedMultiplier
+            );
+        }
     }
 
     private void UnregisterEnemy(EnemyHealth enemy)
@@ -172,6 +218,27 @@ public sealed class LevelAnomalyController : MonoBehaviour
             return;
 
         enemy.OnDied -= HandleEnemyDied;
+    }
+
+    private void Update()
+    {
+        if (!IsIntroComplete ||
+            !regenerationApplied ||
+            activeAnomaly == null ||
+            activeAnomaly.PlayerHealthPerSecond <= 0f ||
+            playerHealth == null ||
+            playerHealth.IsDead)
+        {
+            return;
+        }
+
+        regenerationTimer += Time.deltaTime;
+
+        while (regenerationTimer >= 1f)
+        {
+            regenerationTimer -= 1f;
+            playerHealth.Heal(activeAnomaly.PlayerHealthPerSecond);
+        }
     }
 
     private void HandleEnemyDied(EnemyHealth source)
@@ -269,19 +336,51 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
     private void RestoreRuntimeEffects()
     {
-        if (!berserkApplied)
-            return;
-
-        if (playerModifiers != null)
+        if ((berserkApplied || regenerationApplied) &&
+            playerModifiers != null)
+        {
             playerModifiers.bonusDamageMultiplier =
                 originalOutgoingDamageMultiplier;
+        }
 
-        if (playerHealth != null)
+        if (berserkApplied && playerHealth != null)
+        {
             playerHealth.SetIncomingDamageMultiplier(
                 originalIncomingDamageMultiplier
             );
+        }
+
+        if (hasteApplied)
+        {
+            ExperienceManager.Instance?.SetAnomalyXpGainMultiplier(1f);
+
+            foreach (EnemyHealth enemy in registeredEnemies)
+            {
+                if (enemy == null)
+                    continue;
+
+                EnemyMovement movement = GetEnemyMovement(enemy);
+                movement?.SetAnomalySpeedMultiplier(1f);
+            }
+        }
 
         berserkApplied = false;
+        regenerationApplied = false;
+        hasteApplied = false;
+        regenerationTimer = 0f;
+    }
+
+    private static EnemyMovement GetEnemyMovement(EnemyHealth enemy)
+    {
+        EnemyMovement movement = enemy.GetComponent<EnemyMovement>();
+
+        if (movement == null)
+            movement = enemy.GetComponentInParent<EnemyMovement>();
+
+        if (movement == null)
+            movement = enemy.GetComponentInChildren<EnemyMovement>();
+
+        return movement;
     }
 
     private void OnDisable()

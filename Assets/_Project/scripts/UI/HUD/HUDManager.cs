@@ -40,11 +40,27 @@ public class HUDManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        ConfigureIndicatorSlider(healthSlider);
+        ConfigureIndicatorSlider(experienceSlider);
+        ConfigureIndicatorSlider(bossHpSlider);
+
         if (bossHpPanel != null)
             bossHpPanel.SetActive(false);
 
 
         HideLowHpVignette();
+    }
+
+    private static void ConfigureIndicatorSlider(Slider slider)
+    {
+        if (slider == null)
+            return;
+
+        slider.interactable = false;
+
+        Navigation navigation = slider.navigation;
+        navigation.mode = Navigation.Mode.None;
+        slider.navigation = navigation;
     }
 
     public void SetHealth(float currentHealth, float maxHealth)

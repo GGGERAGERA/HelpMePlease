@@ -31,6 +31,13 @@ public sealed class LevelAnomalyData : ScriptableObject
     [SerializeField, Min(0.1f)] private float outgoingDamageMultiplier = 2f;
     [SerializeField, Min(0.1f)] private float incomingDamageMultiplier = 2f;
 
+    [Header("Haste")]
+    [SerializeField, Min(0.1f)] private float enemySpeedMultiplier = 1f;
+    [SerializeField, Min(0.1f)] private float experienceGainMultiplier = 1f;
+
+    [Header("Regeneration")]
+    [SerializeField, Min(0f)] private float playerHealthPerSecond;
+
     public string Id => string.IsNullOrWhiteSpace(id) ? name : id;
     public LevelAnomalyType AnomalyType => anomalyType;
     public string DisplayName => displayName;
@@ -44,4 +51,7 @@ public sealed class LevelAnomalyData : ScriptableObject
     public bool AllowChainReaction => allowChainReaction;
     public float OutgoingDamageMultiplier => Mathf.Max(0.1f, outgoingDamageMultiplier);
     public float IncomingDamageMultiplier => Mathf.Max(0.1f, incomingDamageMultiplier);
+    public float EnemySpeedMultiplier => Mathf.Max(0.1f, enemySpeedMultiplier);
+    public float ExperienceGainMultiplier => Mathf.Max(0.1f, experienceGainMultiplier);
+    public float PlayerHealthPerSecond => Mathf.Max(0f, playerHealthPerSecond);
 }

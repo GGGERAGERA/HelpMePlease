@@ -30,6 +30,7 @@ public class EnemyChaseMovement : EnemyMovement
     private Transform player;
 
     private float speedMultiplier = 1f;
+    private float anomalySpeedMultiplier = 1f;
     private float stopTimer;
     private Vector2 knockbackVelocity;
 
@@ -81,7 +82,7 @@ public class EnemyChaseMovement : EnemyMovement
         bool isRunning = distance <= aggroDistance;
 
         float selectedSpeed = isRunning ? aggroSpeed : normalSpeed;
-        selectedSpeed *= speedMultiplier;
+        selectedSpeed *= speedMultiplier * anomalySpeedMultiplier;
 
         if (animator != null && hasRunParameter)
             animator.SetBool(runParameterName, isRunning);
@@ -116,6 +117,11 @@ public class EnemyChaseMovement : EnemyMovement
     public override void SetSpeedMultiplier(float multiplier)
     {
         speedMultiplier = Mathf.Max(0.1f, multiplier);
+    }
+
+    public override void SetAnomalySpeedMultiplier(float multiplier)
+    {
+        anomalySpeedMultiplier = Mathf.Max(0.1f, multiplier);
     }
 
     public override void ApplyKnockback(Vector2 direction, float force)

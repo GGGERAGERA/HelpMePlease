@@ -1319,7 +1319,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.31132078, g: 0.31132078, b: 0.31132078, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -1481,7 +1481,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Slider
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 0
     m_WrapAround: 0
     m_SelectOnUp: {fileID: 0}
     m_SelectOnDown: {fileID: 0}
@@ -1507,7 +1507,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 0}
   m_FillRect: {fileID: 1998914053}
   m_HandleRect: {fileID: 0}
@@ -1990,8 +1990,9 @@ MonoBehaviour:
   availableNodes:
   - {fileID: 11400000, guid: 7a300000000000000000000000000001, type: 2}
   - {fileID: 11400000, guid: 7a300000000000000000000000000002, type: 2}
+  - {fileID: 11400000, guid: 7a300000000000000000000000000003, type: 2}
   gameplaySceneName: MVP
-  choicesCount: 2
+  choicesCount: 3
 --- !u!4 &1304651477
 Transform:
   m_ObjectHideFlags: 0
@@ -4278,7 +4279,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.754717, g: 0, b: 0, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -5545,6 +5546,8 @@ MonoBehaviour:
   availableAnomalies:
   - {fileID: 11400000, guid: 7a200000000000000000000000000001, type: 2}
   - {fileID: 11400000, guid: 7a200000000000000000000000000002, type: 2}
+  - {fileID: 11400000, guid: 7a200000000000000000000000000003, type: 2}
+  - {fileID: 11400000, guid: 7a200000000000000000000000000004, type: 2}
   view: {fileID: 2147010004}
   explosionFxPrefab: {fileID: 3932597101254327762, guid: f91913de896646447a357936450e42c5, type: 3}
   explosionFxLifetime: 0.8

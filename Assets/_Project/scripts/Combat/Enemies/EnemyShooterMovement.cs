@@ -24,6 +24,7 @@ public class EnemyShooterMovement : EnemyMovement
     private Transform player;
     private float fireTimer;
     private float speedMultiplier = 1f;
+    private float anomalySpeedMultiplier = 1f;
 
     private void Awake()
     {
@@ -85,7 +86,14 @@ public class EnemyShooterMovement : EnemyMovement
         else if (distance < preferredDistance - distanceTolerance)
             moveDirection = -directionToPlayer;
 
-        rb.MovePosition(rb.position + moveDirection * moveSpeed * speedMultiplier * Time.fixedDeltaTime);
+        rb.MovePosition(
+            rb.position +
+            moveDirection *
+            moveSpeed *
+            speedMultiplier *
+            anomalySpeedMultiplier *
+            Time.fixedDeltaTime
+        );
         UpdateVisual(directionToPlayer);
     }
 
@@ -109,14 +117,19 @@ public class EnemyShooterMovement : EnemyMovement
         speedMultiplier = Mathf.Max(0.1f, multiplier);
     }
 
+    public override void SetAnomalySpeedMultiplier(float multiplier)
+    {
+        anomalySpeedMultiplier = Mathf.Max(0.1f, multiplier);
+    }
+
     public override void ApplyKnockback(Vector2 direction, float force)
     {
-        // Пока без knockback.
+        // РџРѕРєР° Р±РµР· knockback.
     }
 
     public override void StopAfterHit()
     {
-        // Стрелок не контактный враг.
+        // РЎС‚СЂРµР»РѕРє РЅРµ РєРѕРЅС‚Р°РєС‚РЅС‹Р№ РІСЂР°Рі.
     }
 
     private void UpdateVisual(Vector2 direction)
