@@ -20,6 +20,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
 
     [Header("Run Flow")]
     [SerializeField] private RunFlowController runFlowController;
+    [SerializeField] private LevelAnomalyController anomalyController;
 
     [Header("Endless Difficulty")]
     [SerializeField, Min(0f)] private float healthGrowthPerLevel = 0.04f;
@@ -37,6 +38,9 @@ public sealed class LevelModifiersApplier : MonoBehaviour
 
         if (runFlowController == null || !runFlowController.gameObject.scene.IsValid())
             runFlowController = FindFirstObjectByType<RunFlowController>();
+
+        if (anomalyController == null || !anomalyController.gameObject.scene.IsValid())
+            anomalyController = FindFirstObjectByType<LevelAnomalyController>();
 
         ApplySelectedNode();
     }
@@ -58,14 +62,10 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         {
             enemySpawner?.SetSpawnProfile(null, currentLevel);
             runFlowController?.ApplyLevelMechanics(null);
+            ExperienceManager.Instance?.SetLevelXpGainMultiplier(1f);
             ApplyEndlessEnemyScaling(currentLevel, 1f, 1f, 1f);
             DisableEnvironment();
-
-            RunMessageService.Instance?.ShowCustom(
-                $"LEVEL {currentLevel}",
-                "Survive until the boss appears.",
-                4f
-            );
+            anomalyController?.BeginLevel(null);
 
             return;
         }
@@ -73,13 +73,12 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         ApplyEnemyModifiers(node, currentLevel);
         ApplyWeather(node);
         runFlowController?.ApplyLevelMechanics(node);
+        ExperienceManager.Instance?.SetLevelXpGainMultiplier(
+            node.ExperienceGainMultiplier
+        );
+        anomalyController?.BeginLevel(node);
 
         Debug.Log($"[LevelModifiersApplier] Applied node: {node.nodeName}");
-        RunMessageService.Instance?.ShowCustom(
-            $"LEVEL {currentLevel}",
-            $"{node.nodeName}\n{node.description}",
-            4f
-        );
     }
 
     private void ApplyEnemyModifiers(LevelNodeData node, int currentLevel)

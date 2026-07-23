@@ -48,6 +48,8 @@ public class LevelNodeData : ScriptableObject
     public bool hasExtraChest;
 
     [Header("Reward")]
+    [SerializeField, Min(0.1f)] private float experienceGainMultiplier = 1f;
+    [SerializeField, Min(0.1f)] private float completionGoldMultiplier = 1f;
     public UpgradeRarity guaranteedRewardRarity;
     [Range(0f, 1f)] public float bonusRareChance;
 
@@ -61,4 +63,8 @@ public class LevelNodeData : ScriptableObject
     public int MaximumRunLevel => Mathf.Max(0, maximumRunLevel);
     public float ChoiceWeight => Mathf.Max(0f, choiceWeight);
     public bool AllowSameWeatherAsCurrent => allowSameWeatherAsCurrent;
+    public float ExperienceGainMultiplier =>
+        experienceGainMultiplier > 0f ? experienceGainMultiplier : 1f;
+    public float CompletionGoldMultiplier =>
+        completionGoldMultiplier > 0f ? completionGoldMultiplier : 1f;
 }

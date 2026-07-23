@@ -30,6 +30,7 @@ public sealed class RunStateManager : MonoBehaviour
     private int accumulatedKills;
     private float accumulatedRunTime;
     private int completedLevels;
+    private float completedLevelRewardMultiplierTotal;
 
     private int lastCommittedStatsInstanceId;
     private bool runEnded;
@@ -85,6 +86,7 @@ public sealed class RunStateManager : MonoBehaviour
         accumulatedKills = 0;
         accumulatedRunTime = 0f;
         completedLevels = 0;
+        completedLevelRewardMultiplierTotal = 0f;
 
         lastCommittedStatsInstanceId = 0;
         runEnded = false;
@@ -217,15 +219,19 @@ public sealed class RunStateManager : MonoBehaviour
 
         Debug.Log($"[RunState] Registered upgrade: {upgrade.upgradeName}. Total: {pickedUpgrades.Count}");
     }
-    public void RegisterCompletedLevel()
+    public void RegisterCompletedLevel(LevelNodeData completedNode)
     {
         if (runEnded)
             return;
 
         completedLevels++;
+        completedLevelRewardMultiplierTotal += completedNode != null
+            ? completedNode.CompletionGoldMultiplier
+            : 1f;
 
         Debug.Log(
-            $"[RunState] Completed levels: {completedLevels}"
+            $"[RunState] Completed levels: {completedLevels}, " +
+            $"reward total x{completedLevelRewardMultiplierTotal:F2}"
         );
     }
 
@@ -279,7 +285,7 @@ public sealed class RunStateManager : MonoBehaviour
         int goldEarned = RunRewardCalculator.CalculateGold(
             accumulatedKills,
             accumulatedRunTime,
-            completedLevels,
+            completedLevelRewardMultiplierTotal,
             reason
         );
 

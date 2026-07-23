@@ -60,8 +60,8 @@ public sealed class LevelChoiceCardView : MonoBehaviour
             return;
 
         SetSelected(false);
-        SetText(titleText, FormatWeather(data.weatherType));
-        SetText(descriptionText, FormatWeatherEffect(data.weatherType));
+        SetText(titleText, data.nodeName);
+        SetText(descriptionText, data.description);
         SetText(tagText, data.MainThreat);
 
         if (iconImage != null)
@@ -107,28 +107,6 @@ public sealed class LevelChoiceCardView : MonoBehaviour
         }
     }
 
-    private string FormatWeather(LevelWeatherType weather)
-    {
-        return weather switch
-        {
-            LevelWeatherType.Darkness => "ТЕМНОТА",
-            LevelWeatherType.Rain => "ДОЖДЬ",
-            LevelWeatherType.Snow => "СНЕГ",
-            _ => "БЕЗ ПОГОДЫ"
-        };
-    }
-
-    private string FormatWeatherEffect(LevelWeatherType weather)
-    {
-        return weather switch
-        {
-            LevelWeatherType.Darkness => "Враги крепче",
-            LevelWeatherType.Rain => "Враги быстрее",
-            LevelWeatherType.Snow => "Врагов больше",
-            _ => "Обычные условия"
-        };
-    }
-
     private void ConfigureText(TextMeshProUGUI text, float minimumSize, float maximumSize)
     {
         if (text == null)
@@ -137,8 +115,8 @@ public sealed class LevelChoiceCardView : MonoBehaviour
         text.enableAutoSizing = true;
         text.fontSizeMin = minimumSize;
         text.fontSizeMax = maximumSize;
-        text.textWrappingMode = TextWrappingModes.NoWrap;
-        text.overflowMode = TextOverflowModes.Ellipsis;
+        text.textWrappingMode = TextWrappingModes.Normal;
+        text.overflowMode = TextOverflowModes.Truncate;
     }
 
     private void SetText(TextMeshProUGUI text, string value)

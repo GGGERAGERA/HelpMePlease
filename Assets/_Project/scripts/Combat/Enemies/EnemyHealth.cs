@@ -1,9 +1,16 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
 using System.Collections;
+using System.Collections.Generic;
 
 public class EnemyHealth : MonoBehaviour
 {
+    private static readonly HashSet<EnemyHealth> activeInstances = new();
+
+    public static event System.Action<EnemyHealth> Spawned;
+    public static event System.Action<EnemyHealth> Despawned;
+    public static IReadOnlyCollection<EnemyHealth> ActiveInstances => activeInstances;
+
     public float maxHealth = 30f;
     private float currentHealth;
 
@@ -69,6 +76,18 @@ public class EnemyHealth : MonoBehaviour
             audioSource,
             AudioCategory.SFX
         );
+    }
+
+    private void OnEnable()
+    {
+        activeInstances.Add(this);
+        Spawned?.Invoke(this);
+    }
+
+    private void OnDisable()
+    {
+        activeInstances.Remove(this);
+        Despawned?.Invoke(this);
     }
 
     public void SetMaxHealthMultiplier(float multiplier)

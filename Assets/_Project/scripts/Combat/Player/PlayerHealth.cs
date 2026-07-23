@@ -17,6 +17,7 @@ public class PlayerHealth : MonoBehaviour
 
 
     [SerializeField] private float invulnerabilityTime = 0.5f;
+    [SerializeField, Min(0f)] private float incomingDamageMultiplier = 1f;
 
     private bool isInvulnerable;
 
@@ -40,7 +41,8 @@ public class PlayerHealth : MonoBehaviour
         if (isInvulnerable)
             return false;
         isInvulnerable = true;
-        currentHealth -= damage;
+        float finalDamage = Mathf.Max(0f, damage) * incomingDamageMultiplier;
+        currentHealth -= finalDamage;
 
         whiteFlash?.Flash();
 
@@ -63,6 +65,12 @@ public class PlayerHealth : MonoBehaviour
 
         return true;
     }
+    public void SetIncomingDamageMultiplier(float multiplier)
+    {
+        incomingDamageMultiplier = Mathf.Max(0f, multiplier);
+    }
+
+    public float IncomingDamageMultiplier => incomingDamageMultiplier;
     private IEnumerator InvulnerabilityRoutine()
     {
         yield return new WaitForSeconds(invulnerabilityTime);

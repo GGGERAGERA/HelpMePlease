@@ -16,6 +16,7 @@ public sealed class RunFlowController : MonoBehaviour
     [SerializeField] private RunCompletionCleaner completionCleaner;
 
     [Header("Level Mechanics")]
+    [SerializeField] private bool enableWorldRules;
     [SerializeField] private WorldEventSpawner worldEventSpawner;
     [SerializeField] private WorldAccelerationRule worldAccelerationRule;
     [SerializeField] private NoDamageChallenge noDamageChallenge;
@@ -61,10 +62,16 @@ public sealed class RunFlowController : MonoBehaviour
         bool holdPointEnabled = node != null && node.hasHoldZoneEvent;
         worldEventSpawner?.SetHoldPointEnabled(holdPointEnabled);
 
-        if (node != null && node.hasWorldAccelerationRule)
+        if (enableWorldRules &&
+            node != null &&
+            node.hasWorldAccelerationRule)
+        {
             worldAccelerationRule?.StartRule();
+        }
         else
+        {
             worldAccelerationRule?.StopRule();
+        }
 
         if (node != null && node.hasNoDamageChallenge)
             noDamageChallenge?.StartChallenge();
@@ -75,7 +82,8 @@ public sealed class RunFlowController : MonoBehaviour
     private IEnumerator BossDefeatedRoutine()
     {
         RegisterCurrentLevelCompletion();
-        RunStateManager.Instance?.RegisterCompletedLevel();
+        RunStateManager runState = RunStateManager.Instance;
+        runState?.RegisterCompletedLevel(runState.SelectedLevelNode);
 
         if (stopEnemySpawnerAfterBoss)
             StopEnemySpawner();
