@@ -18,7 +18,20 @@ public sealed class RunMessageService : MonoBehaviour
 
     private IEnumerator Start()
     {
-        yield return new WaitForSecondsRealtime(InitialLevelMessageDuration);
+        LevelAnomalyController anomalyController =
+            LevelAnomalyController.Instance;
+
+        if (anomalyController != null)
+        {
+            while (!anomalyController.IsIntroComplete)
+                yield return null;
+        }
+        else
+        {
+            yield return new WaitForSecondsRealtime(
+                InitialLevelMessageDuration
+            );
+        }
 
         RunStateManager runState = RunStateManager.Instance;
 

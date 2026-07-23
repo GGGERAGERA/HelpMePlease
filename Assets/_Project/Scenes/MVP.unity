@@ -650,6 +650,7 @@ MonoBehaviour:
   levelChoiceDelay: 5
   stopEnemySpawnerAfterBoss: 1
   completionCleaner: {fileID: 2000457041}
+  enableWorldRules: 0
   worldEventSpawner: {fileID: 46915853}
   worldAccelerationRule: {fileID: 46915858}
   noDamageChallenge: {fileID: 46915857}
@@ -1889,6 +1890,7 @@ MonoBehaviour:
   normalLightIntensity: 1
   darknessLightIntensity: 0.01
   runFlowController: {fileID: 46915856}
+  anomalyController: {fileID: 2147010005}
   healthGrowthPerLevel: 0.04
   speedGrowthPerLevel: 0
   spawnRateGrowthPerLevel: 0.12
@@ -1986,35 +1988,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelChoiceManager
   panelView: {fileID: 1005126886403062317}
   availableNodes:
-  - {fileID: 11400000, guid: 20210000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20220000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20230000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20310000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20320000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20330000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20410000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20420000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20430000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20510000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20520000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20530000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20610000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20620000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20630000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20710000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20720000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20730000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20810000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20820000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20830000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20910000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20920000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20930000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20a10000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20a20000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20a30000000000000000000000000000, type: 2}
+  - {fileID: 11400000, guid: 7a300000000000000000000000000001, type: 2}
+  - {fileID: 11400000, guid: 7a300000000000000000000000000002, type: 2}
   gameplaySceneName: MVP
-  choicesCount: 3
+  choicesCount: 2
 --- !u!4 &1304651477
 Transform:
   m_ObjectHideFlags: 0
@@ -2967,6 +2944,7 @@ RectTransform:
   - {fileID: 29378112}
   - {fileID: 2147001002}
   - {fileID: 2147002002}
+  - {fileID: 2147010002}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -5489,6 +5467,87 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfbc23b97ff0d5f4187724c34123749e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UpgradePanelView
+--- !u!1 &2147010001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2147010002}
+  - component: {fileID: 2147010003}
+  - component: {fileID: 2147010004}
+  - component: {fileID: 2147010005}
+  m_Layer: 5
+  m_Name: LevelAnomalySystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2147010002
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2147010001}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1635164420}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!225 &2147010003
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2147010001}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 0
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &2147010004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2147010001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LevelAnomalyView
+  font: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+--- !u!114 &2147010005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2147010001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a100000000000000000000000000003, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LevelAnomalyController
+  availableAnomalies:
+  - {fileID: 11400000, guid: 7a200000000000000000000000000001, type: 2}
+  - {fileID: 11400000, guid: 7a200000000000000000000000000002, type: 2}
+  view: {fileID: 2147010004}
+  explosionFxPrefab: {fileID: 3932597101254327762, guid: f91913de896646447a357936450e42c5, type: 3}
+  explosionFxLifetime: 0.8
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

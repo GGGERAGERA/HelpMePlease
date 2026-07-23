@@ -55,7 +55,7 @@ public sealed class LevelChoicePanelView : MonoBehaviour
     {
         gameObject.SetActive(true);
 
-        SetText(titleText, "ВЫБЕРИТЕ СЛЕДУЮЩИЙ УРОВЕНЬ");
+        SetText(titleText, "ВЫБЕРИТЕ СЛЕДУЮЩИЙ СЕКТОР");
 
         selectedNode = null;
         onChoiceConfirmed = onChoiceSelected;
