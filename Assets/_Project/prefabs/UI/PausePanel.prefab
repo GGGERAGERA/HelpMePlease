@@ -819,7 +819,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1283074402553637603, guid: 63160bda7609811499676be6d473d491, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8810000000000000001}
   m_SourcePrefab: {fileID: 100100000, guid: 63160bda7609811499676be6d473d491, type: 3}
 --- !u!224 &5954438051358872944 stripped
 RectTransform:
@@ -953,10 +956,49 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1283074402553637603, guid: 63160bda7609811499676be6d473d491, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8810000000000000003}
   m_SourcePrefab: {fileID: 100100000, guid: 63160bda7609811499676be6d473d491, type: 3}
 --- !u!224 &7428327949956470794 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4806060227944189492, guid: 63160bda7609811499676be6d473d491, type: 3}
   m_PrefabInstance: {fileID: 2712353046263617086}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &8810000000000000002 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1283074402553637603, guid: 63160bda7609811499676be6d473d491, type: 3}
+  m_PrefabInstance: {fileID: 1157679694190975812}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8810000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8810000000000000002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: pause.bunker
+--- !u!1 &8810000000000000004 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1283074402553637603, guid: 63160bda7609811499676be6d473d491, type: 3}
+  m_PrefabInstance: {fileID: 2712353046263617086}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8810000000000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8810000000000000004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: pause.restart

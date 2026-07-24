@@ -13,6 +13,9 @@ public class RunResultView : MonoBehaviour
     {
         gameObject.SetActive(true);
 
+        LocalizationService localization =
+            LocalizationService.EnsureExists();
+
         int kills = RunStatsManager.Instance != null ? RunStatsManager.Instance.Kills : 0;
         float time = RunStatsManager.Instance != null ? RunStatsManager.Instance.RunTime : 0f;
         int level = ExperienceManager.Instance != null ? ExperienceManager.Instance.currentLevel : 1;
@@ -23,26 +26,31 @@ public class RunResultView : MonoBehaviour
 
         if (titleText != null)
         {
-            titleText.text = victory ? "VICTORY" : "YOU DIED";
+            titleText.text = localization.Get(
+                victory ? "result.victory" : "result.defeat"
+            );
             titleText.color = victory ? Color.green : Color.red;
         }
 
         if (statsText != null)
         {
             string result =
-                $"TIME: {FormatTime(time)}\n" +
-                $"KILLS: {kills}\n" +
-                $"LEVEL: {level}\n";
+                $"{localization.Get("stats.time")}: " +
+                $"{FormatTime(time)}\n" +
+                $"{localization.Get("stats.kills")}: {kills}\n" +
+                $"{localization.Get("stats.level")}: {level}\n";
 
             RunTimer runTimer = FindAnyObjectByType<RunTimer>();
 
             if (runTimer != null && runTimer.IsSurvivalPhaseStarted())
             {
-                result += $"SURVIVED: {FormatTime(runTimer.GetSurvivalTime())}\n";
+                result +=
+                    $"{localization.Get("stats.survived")}: " +
+                    $"{FormatTime(runTimer.GetSurvivalTime())}\n";
             }
 
             result +=
-                $"TOTAL GOLD: {totalGold}";
+                $"{localization.Get("stats.totalGold")}: {totalGold}";
 
             statsText.text = result;
         }

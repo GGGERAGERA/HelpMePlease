@@ -147,6 +147,7 @@ MonoBehaviour:
   masterSlider: {fileID: 1511912563830133611}
   musicSlider: {fileID: 8304922988599978692}
   soundsSlider: {fileID: 3613260423553691467}
+  languageDropdown: {fileID: 8800000000000000102}
   backButton: {fileID: 4411851865440370720}
 --- !u!1 &3055045706767595275
 GameObject:
@@ -159,6 +160,7 @@ GameObject:
   - component: {fileID: 4398144871049746784}
   - component: {fileID: 3665092910009315690}
   - component: {fileID: 4493831372946898465}
+  - component: {fileID: 8800000000000000201}
   m_Layer: 5
   m_Name: MasterSliderLabel
   m_TagString: Untagged
@@ -296,6 +298,7 @@ GameObject:
   - component: {fileID: 940314698815782090}
   - component: {fileID: 5570872370817051649}
   - component: {fileID: 2822538176400055239}
+  - component: {fileID: 8800000000000000202}
   m_Layer: 5
   m_Name: MusicSliderLabel
   m_TagString: Untagged
@@ -433,6 +436,7 @@ GameObject:
   - component: {fileID: 4786055806591835024}
   - component: {fileID: 5985013529262271489}
   - component: {fileID: 5909955648062305810}
+  - component: {fileID: 8800000000000000203}
   m_Layer: 5
   m_Name: Title
   m_TagString: Untagged
@@ -596,6 +600,7 @@ RectTransform:
   - {fileID: 2352023093144192621}
   - {fileID: 7567181504634190456}
   - {fileID: 7044178234585318370}
+  - {fileID: 8800000000000000101}
   - {fileID: 2216689515093862296}
   m_Father: {fileID: 1437888512000691250}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -653,6 +658,7 @@ GameObject:
   - component: {fileID: 7567181504634190456}
   - component: {fileID: 1897526950676198788}
   - component: {fileID: 1134385689862925811}
+  - component: {fileID: 8800000000000000204}
   m_Layer: 5
   m_Name: SoundsSliderLabel
   m_TagString: Untagged
@@ -1027,6 +1033,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6057135903794781013, guid: 63160bda7609811499676be6d473d491, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7097868600780070115}
+    - targetCorrespondingSourceObject: {fileID: 1283074402553637603, guid: 63160bda7609811499676be6d473d491, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8800000000000000205}
   m_SourcePrefab: {fileID: 100100000, guid: 63160bda7609811499676be6d473d491, type: 3}
 --- !u!1 &612076192925512441 stripped
 GameObject:
@@ -1353,3 +1362,170 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4380313317619777071, guid: a5bc09acbc8697a47a92f5fd4f14d421, type: 3}
   m_PrefabInstance: {fileID: 8923751029530558957}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &8800000000000000201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3055045706767595275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: settings.master
+--- !u!114 &8800000000000000202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6030944674269327367}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: settings.music
+--- !u!114 &8800000000000000203
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6134092631441972822}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: settings.title
+--- !u!114 &8800000000000000204
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7603666644955166994}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: settings.sounds
+--- !u!1001 &8800000000000000100
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 4153004830983540754}
+    m_Modifications:
+    - target: {fileID: 6327921641848527875, guid: d41247059391bf744bd8800dc375a587, type: 3}
+      propertyPath: m_Name
+      value: LanguagePanel
+      objectReference: {fileID: 0}
+    - target: {fileID: 2085425418460825662, guid: d41247059391bf744bd8800dc375a587, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2085425418460825662, guid: d41247059391bf744bd8800dc375a587, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2085425418460825662, guid: d41247059391bf744bd8800dc375a587, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2085425418460825662, guid: d41247059391bf744bd8800dc375a587, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2085425418460825662, guid: d41247059391bf744bd8800dc375a587, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2085425418460825662, guid: d41247059391bf744bd8800dc375a587, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -195
+      objectReference: {fileID: 0}
+    - target: {fileID: 2085425418460825662, guid: d41247059391bf744bd8800dc375a587, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2085425418460825662, guid: d41247059391bf744bd8800dc375a587, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2085425418460825662, guid: d41247059391bf744bd8800dc375a587, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2085425418460825662, guid: d41247059391bf744bd8800dc375a587, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2085425418460825662, guid: d41247059391bf744bd8800dc375a587, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2085425418460825662, guid: d41247059391bf744bd8800dc375a587, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2085425418460825662, guid: d41247059391bf744bd8800dc375a587, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2085425418460825662, guid: d41247059391bf744bd8800dc375a587, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2085425418460825662, guid: d41247059391bf744bd8800dc375a587, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2085425418460825662, guid: d41247059391bf744bd8800dc375a587, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d41247059391bf744bd8800dc375a587, type: 3}
+--- !u!224 &8800000000000000101 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 2085425418460825662, guid: d41247059391bf744bd8800dc375a587, type: 3}
+  m_PrefabInstance: {fileID: 8800000000000000100}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8800000000000000102 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5645869244923343394, guid: d41247059391bf744bd8800dc375a587, type: 3}
+  m_PrefabInstance: {fileID: 8800000000000000100}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b743370ac3e4ec2a1668f5455a8ef8a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TMP_Dropdown
+--- !u!1 &8800000000000000206 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1283074402553637603, guid: 63160bda7609811499676be6d473d491, type: 3}
+  m_PrefabInstance: {fileID: 6661330787549292972}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8800000000000000205
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8800000000000000206}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: settings.back

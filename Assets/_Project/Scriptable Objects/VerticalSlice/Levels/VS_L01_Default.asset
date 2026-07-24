@@ -19,7 +19,7 @@ MonoBehaviour:
   nodeType: 2
   weatherType: 0
   sceneName: 
-  duration: 60
+  duration: 5
   spawnProfile: {fileID: 11400000, guid: 10000000000000000000000000000001, type: 2}
   bossPrefab: {fileID: 8074722678228422782, guid: 8f73b608ef0309744b732a66e85e86d7, type: 3}
   mainThreat: "\u041F\u0435\u0440\u0432\u044B\u0435 \u0430\u0442\u0430\u043A\u0438"
@@ -36,5 +36,7 @@ MonoBehaviour:
   hasWorldAccelerationRule: 1
   hasNoDamageChallenge: 1
   hasExtraChest: 1
+  experienceGainMultiplier: 1
+  completionGoldMultiplier: 1
   guaranteedRewardRarity: 0
   bonusRareChance: 0

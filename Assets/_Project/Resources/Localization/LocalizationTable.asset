@@ -1,0 +1,93 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000002, type: 3}
+  m_Name: LocalizationTable
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizationTable
+  entries:
+  - key: settings.title
+    ru: "\u041D\u0410\u0421\u0422\u0420\u041E\u0419\u041A\u0418"
+    en: SETTINGS
+  - key: settings.master
+    ru: "\u041E\u0411\u0429\u0410\u042F \u0413\u0420\u041E\u041C\u041A\u041E\u0421\u0422\u042C"
+    en: MASTER VOLUME
+  - key: settings.music
+    ru: "\u041C\u0423\u0417\u042B\u041A\u0410"
+    en: MUSIC
+  - key: settings.sounds
+    ru: "\u0417\u0412\u0423\u041A\u0418"
+    en: SOUNDS
+  - key: settings.language
+    ru: "\u042F\u0417\u042B\u041A"
+    en: LANGUAGE
+  - key: settings.back
+    ru: "\u041D\u0410\u0417\u0410\u0414"
+    en: BACK
+  - key: language.russian
+    ru: "\u0420\u0423\u0421\u0421\u041A\u0418\u0419"
+    en: RUSSIAN
+  - key: language.english
+    ru: "\u0410\u041D\u0413\u041B\u0418\u0419\u0421\u041A\u0418\u0419"
+    en: ENGLISH
+  - key: menu.start
+    ru: "\u041D\u0410\u0427\u0410\u0422\u042C"
+    en: START
+  - key: menu.settings
+    ru: "\u041D\u0410\u0421\u0422\u0420\u041E\u0419\u041A\u0418"
+    en: SETTINGS
+  - key: menu.about
+    ru: "\u041E\u0411 \u0418\u0413\u0420\u0415"
+    en: ABOUT
+  - key: menu.quit
+    ru: "\u0412\u042B\u0425\u041E\u0414"
+    en: QUIT
+  - key: pause.title
+    ru: "\u041F\u0410\u0423\u0417\u0410"
+    en: PAUSED
+  - key: pause.resume
+    ru: "\u041F\u0420\u041E\u0414\u041E\u041B\u0416\u0418\u0422\u042C"
+    en: RESUME
+  - key: pause.restart
+    ru: "\u041D\u0410\u0427\u0410\u0422\u042C \u0417\u0410\u041D\u041E\u0412\u041E"
+    en: RESTART
+  - key: pause.settings
+    ru: "\u041D\u0410\u0421\u0422\u0420\u041E\u0419\u041A\u0418"
+    en: SETTINGS
+  - key: pause.bunker
+    ru: "\u0412\u0415\u0420\u041D\u0423\u0422\u042C\u0421\u042F \u0412 \u0411\u0423\u041D\u041A\u0415\u0420"
+    en: RETURN TO BUNKER
+  - key: result.victory
+    ru: "\u041F\u041E\u0411\u0415\u0414\u0410"
+    en: VICTORY
+  - key: result.defeat
+    ru: "\u0412\u042B \u041F\u041E\u0413\u0418\u0411\u041B\u0418"
+    en: YOU DIED
+  - key: result.retry
+    ru: "\u041F\u041E\u0412\u0422\u041E\u0420\u0418\u0422\u042C"
+    en: RETRY
+  - key: result.bunker
+    ru: "\u0412\u0415\u0420\u041D\u0423\u0422\u042C\u0421\u042F \u0412 \u0411\u0423\u041D\u041A\u0415\u0420"
+    en: RETURN TO BUNKER
+  - key: stats.time
+    ru: "\u0412\u0420\u0415\u041C\u042F"
+    en: TIME
+  - key: stats.kills
+    ru: "\u0423\u0411\u0418\u0419\u0421\u0422\u0412\u0410"
+    en: KILLS
+  - key: stats.level
+    ru: "\u0423\u0420\u041E\u0412\u0415\u041D\u042C"
+    en: LEVEL
+  - key: stats.survived
+    ru: "\u0412\u042B\u0416\u0418\u0412\u0410\u041D\u0418\u0415"
+    en: SURVIVED
+  - key: stats.totalGold
+    ru: "\u0412\u0421\u0415\u0413\u041E \u0417\u041E\u041B\u041E\u0422\u0410"
+    en: TOTAL GOLD

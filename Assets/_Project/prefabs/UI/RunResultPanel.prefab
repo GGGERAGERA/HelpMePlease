@@ -1075,7 +1075,10 @@ PrefabInstance:
     m_RemovedGameObjects:
     - {fileID: 5821148169251459487, guid: 63160bda7609811499676be6d473d491, type: 3}
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1283074402553637603, guid: 63160bda7609811499676be6d473d491, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8810000000000000011}
   m_SourcePrefab: {fileID: 100100000, guid: 63160bda7609811499676be6d473d491, type: 3}
 --- !u!224 &2421588794441063478 stripped
 RectTransform:
@@ -1218,10 +1221,49 @@ PrefabInstance:
     m_RemovedGameObjects:
     - {fileID: 5821148169251459487, guid: 63160bda7609811499676be6d473d491, type: 3}
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1283074402553637603, guid: 63160bda7609811499676be6d473d491, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8810000000000000013}
   m_SourcePrefab: {fileID: 100100000, guid: 63160bda7609811499676be6d473d491, type: 3}
 --- !u!224 &3738369898053772387 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4806060227944189492, guid: 63160bda7609811499676be6d473d491, type: 3}
   m_PrefabInstance: {fileID: 8166105629476072023}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &8810000000000000012 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1283074402553637603, guid: 63160bda7609811499676be6d473d491, type: 3}
+  m_PrefabInstance: {fileID: 7145445134619300354}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8810000000000000011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8810000000000000012}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: result.retry
+--- !u!1 &8810000000000000014 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1283074402553637603, guid: 63160bda7609811499676be6d473d491, type: 3}
+  m_PrefabInstance: {fileID: 8166105629476072023}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8810000000000000013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8810000000000000014}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: result.bunker

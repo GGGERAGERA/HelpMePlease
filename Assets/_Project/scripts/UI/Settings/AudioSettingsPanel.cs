@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,6 +11,9 @@ public sealed class AudioSettingsPanel : MonoBehaviour
     [SerializeField] private Slider masterSlider;
     [SerializeField] private Slider musicSlider;
     [SerializeField] private Slider soundsSlider;
+
+    [Header("Language")]
+    [SerializeField] private TMP_Dropdown languageDropdown;
 
     [Header("Navigation")]
     [SerializeField] private Button backButton;
@@ -21,15 +26,16 @@ public sealed class AudioSettingsPanel : MonoBehaviour
         ConfigureSlider(masterSlider);
         ConfigureSlider(musicSlider);
         ConfigureSlider(soundsSlider);
-        RegisterListeners();
+        ConfigureLanguageDropdown();
     }
 
     private void OnEnable()
     {
+        RegisterListeners();
         RefreshValues();
     }
 
-    private void OnDestroy()
+    private void OnDisable()
     {
         RemoveListeners();
     }
@@ -59,14 +65,28 @@ public sealed class AudioSettingsPanel : MonoBehaviour
 
     private void RefreshValues()
     {
-        AudioSettingsService service = AudioSettingsService.Instance;
+        AudioSettingsService audioService =
+            AudioSettingsService.Instance;
 
-        if (service == null)
-            return;
+        if (audioService != null)
+        {
+            masterSlider?.SetValueWithoutNotify(
+                audioService.MasterVolume
+            );
+            musicSlider?.SetValueWithoutNotify(
+                audioService.MusicVolume
+            );
+            soundsSlider?.SetValueWithoutNotify(
+                audioService.SoundsVolume
+            );
+        }
 
-        masterSlider?.SetValueWithoutNotify(service.MasterVolume);
-        musicSlider?.SetValueWithoutNotify(service.MusicVolume);
-        soundsSlider?.SetValueWithoutNotify(service.SoundsVolume);
+        LocalizationService localization =
+            LocalizationService.EnsureExists();
+        languageDropdown?.SetValueWithoutNotify(
+            (int)localization.CurrentLanguage
+        );
+        languageDropdown?.RefreshShownValue();
     }
 
     private void RegisterListeners()
@@ -77,6 +97,9 @@ public sealed class AudioSettingsPanel : MonoBehaviour
         masterSlider?.onValueChanged.AddListener(HandleMasterChanged);
         musicSlider?.onValueChanged.AddListener(HandleMusicChanged);
         soundsSlider?.onValueChanged.AddListener(HandleSoundsChanged);
+        languageDropdown?.onValueChanged.AddListener(
+            HandleLanguageChanged
+        );
         backButton?.onClick.AddListener(Close);
         listenersRegistered = true;
     }
@@ -89,6 +112,9 @@ public sealed class AudioSettingsPanel : MonoBehaviour
         masterSlider?.onValueChanged.RemoveListener(HandleMasterChanged);
         musicSlider?.onValueChanged.RemoveListener(HandleMusicChanged);
         soundsSlider?.onValueChanged.RemoveListener(HandleSoundsChanged);
+        languageDropdown?.onValueChanged.RemoveListener(
+            HandleLanguageChanged
+        );
         backButton?.onClick.RemoveListener(Close);
         listenersRegistered = false;
     }
@@ -101,6 +127,21 @@ public sealed class AudioSettingsPanel : MonoBehaviour
         slider.minValue = 0f;
         slider.maxValue = 1f;
         slider.wholeNumbers = false;
+    }
+
+    private void ConfigureLanguageDropdown()
+    {
+        if (languageDropdown == null)
+            return;
+
+        languageDropdown.ClearOptions();
+        languageDropdown.AddOptions(
+            new List<string>
+            {
+                "Русский",
+                "English"
+            }
+        );
     }
 
     private static void HandleMasterChanged(float value)
@@ -116,5 +157,13 @@ public sealed class AudioSettingsPanel : MonoBehaviour
     private static void HandleSoundsChanged(float value)
     {
         AudioSettingsService.Instance?.SetSoundsVolume(value);
+    }
+
+    private static void HandleLanguageChanged(int value)
+    {
+        GameLanguage language = value == (int)GameLanguage.Russian
+            ? GameLanguage.Russian
+            : GameLanguage.English;
+        LocalizationService.EnsureExists().SetLanguage(language);
     }
 }

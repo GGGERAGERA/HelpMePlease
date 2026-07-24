@@ -40,10 +40,7 @@ public class PauseMenuUI : MonoBehaviour
         if (pausePanel != null)
             pausePanel.SetActive(true);
 
-        if (titleText != null)
-            titleText.text = "PAUSED";
-
-        UpdateStats();
+        UpdateLocalizedContent();
 
         Time.timeScale = 0f;
     }
@@ -107,7 +104,7 @@ public class PauseMenuUI : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
-    private void UpdateStats()
+    private void UpdateStats(LocalizationService localization)
     {
         int kills = RunStatsManager.Instance != null
             ? RunStatsManager.Instance.Kills
@@ -127,10 +124,22 @@ public class PauseMenuUI : MonoBehaviour
         if (statsText != null)
         {
             statsText.text =
-                $"TIME: {minutes:00}:{seconds:00}\n" +
-                $"KILLS: {kills}\n" +
-                $"LEVEL: {level}";
+                $"{localization.Get("stats.time")}: " +
+                $"{minutes:00}:{seconds:00}\n" +
+                $"{localization.Get("stats.kills")}: {kills}\n" +
+                $"{localization.Get("stats.level")}: {level}";
         }
+    }
+
+    private void UpdateLocalizedContent()
+    {
+        LocalizationService localization =
+            LocalizationService.EnsureExists();
+
+        if (titleText != null)
+            titleText.text = localization.Get("pause.title");
+
+        UpdateStats(localization);
     }
 
     private void ReturnFromSettings()
@@ -143,6 +152,6 @@ public class PauseMenuUI : MonoBehaviour
         if (pausePanel != null)
             pausePanel.SetActive(true);
 
-        UpdateStats();
+        UpdateLocalizedContent();
     }
 }

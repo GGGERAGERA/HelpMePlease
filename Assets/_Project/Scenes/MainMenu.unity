@@ -1914,6 +1914,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6057135903794781013, guid: 63160bda7609811499676be6d473d491, type: 3}
       insertIndex: -1
       addedObject: {fileID: 753814739}
+    - targetCorrespondingSourceObject: {fileID: 1283074402553637603, guid: 63160bda7609811499676be6d473d491, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8810000000000000031}
   m_SourcePrefab: {fileID: 100100000, guid: 63160bda7609811499676be6d473d491, type: 3}
 --- !u!224 &753814737 stripped
 RectTransform:
@@ -1939,6 +1942,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UIButtonHoverSound
   hoverSound: {fileID: 0}
   volume: 0.25
+--- !u!1 &8810000000000000032 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1283074402553637603, guid: 63160bda7609811499676be6d473d491, type: 3}
+  m_PrefabInstance: {fileID: 753814736}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8810000000000000031
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8810000000000000032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: menu.settings
 --- !u!1 &816356784
 GameObject:
   m_ObjectHideFlags: 0
