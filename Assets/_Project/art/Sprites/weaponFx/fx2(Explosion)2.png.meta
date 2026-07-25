@@ -1,19 +1,112 @@
 fileFormatVersion: 2
-guid: 237aec96aa9b67c47acd9eb9da7b0db2
+guid: 6394cc499824e1d4aa00d93d6903b82f
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8904933694989859987
-    second: fx3_0
+      213: -1430883269962773197
+    second: fx2(Explosion)2_0
   - first:
-      213: 7214472655509742283
-    second: fx3_1
+      213: 6271640794260848548
+    second: fx2(Explosion)2_1
   - first:
-      213: 2575558641642116952
-    second: fx3_2
+      213: 6109164198749515751
+    second: fx2(Explosion)2_2
   - first:
-      213: -4012723005134989856
-    second: fx3_3
+      213: -8933088137822713600
+    second: fx2(Explosion)2_3
+  - first:
+      213: 1533074765900704653
+    second: fx2(Explosion)2_4
+  - first:
+      213: -5254810742168654301
+    second: fx2(Explosion)2_5
+  - first:
+      213: -7918192179337847213
+    second: fx2(Explosion)2_6
+  - first:
+      213: 7606541110237059273
+    second: fx2(Explosion)2_7
+  - first:
+      213: 2633403907351805633
+    second: fx2(Explosion)2_8
+  - first:
+      213: 1800057113216202183
+    second: fx2(Explosion)2_9
+  - first:
+      213: -7415972067071340640
+    second: fx2(Explosion)2_10
+  - first:
+      213: 1694575610675705980
+    second: fx2(Explosion)2_11
+  - first:
+      213: -1260914787647788692
+    second: fx2(Explosion)2_12
+  - first:
+      213: -1890940580272266465
+    second: fx2(Explosion)2_13
+  - first:
+      213: 5176967685282867220
+    second: fx2(Explosion)2_14
+  - first:
+      213: 820124657940055230
+    second: fx2(Explosion)2_15
+  - first:
+      213: 6407153913902681758
+    second: fx2(Explosion)2_16
+  - first:
+      213: 9041594081852888361
+    second: fx2(Explosion)2_17
+  - first:
+      213: 5361640181041050027
+    second: fx2(Explosion)2_18
+  - first:
+      213: -7391502234595762622
+    second: fx2(Explosion)2_19
+  - first:
+      213: 7993483655214414222
+    second: fx2(Explosion)2_20
+  - first:
+      213: 1646085809168459849
+    second: fx2(Explosion)2_21
+  - first:
+      213: 4952439298051152770
+    second: fx2(Explosion)2_22
+  - first:
+      213: 2336770380168836347
+    second: fx2(Explosion)2_23
+  - first:
+      213: 999703865382563529
+    second: fx2(Explosion)2_24
+  - first:
+      213: -4780278944778366759
+    second: fx2(Explosion)2_25
+  - first:
+      213: -5311292513203553637
+    second: fx2(Explosion)2_26
+  - first:
+      213: -8458666422030727015
+    second: fx2(Explosion)2_27
+  - first:
+      213: -793326171955812989
+    second: fx2(Explosion)2_28
+  - first:
+      213: -4250366420738723986
+    second: fx2(Explosion)2_29
+  - first:
+      213: 7540841525092637287
+    second: fx2(Explosion)2_30
+  - first:
+      213: -5683206168875244558
+    second: fx2(Explosion)2_31
+  - first:
+      213: -8043465931914355314
+    second: fx2(Explosion)2_32
+  - first:
+      213: -574467484091265119
+    second: fx2(Explosion)2_33
+  - first:
+      213: 1530640916283476499
+    second: fx2(Explosion)2_34
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -84,7 +177,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -135,11 +228,11 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: fx3_0
+      name: fx2(Explosion)2_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 64
+        y: 192
         width: 64
         height: 64
       alignment: 0
@@ -150,18 +243,18 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 39cf646e30ea49b70800000000000000
-      internalID: 8904933694989859987
+      spriteID: 33dc1d24f3b742ce0800000000000000
+      internalID: -1430883269962773197
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: fx3_1
+      name: fx2(Explosion)2_1
       rect:
         serializedVersion: 2
         x: 64
-        y: 64
+        y: 192
         width: 64
         height: 64
       alignment: 0
@@ -172,18 +265,62 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: bc26d6108a4fe1460800000000000000
-      internalID: 7214472655509742283
+      spriteID: 4af34c4e218590750800000000000000
+      internalID: 6271640794260848548
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: fx3_2
+      name: fx2(Explosion)2_2
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 192
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7efaff4987c18c450800000000000000
+      internalID: 6109164198749515751
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fx2(Explosion)2_3
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 192
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00942dd0bab470480800000000000000
+      internalID: -8933088137822713600
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fx2(Explosion)2_4
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
+        y: 128
         width: 64
         height: 64
       alignment: 0
@@ -194,18 +331,18 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 857144d40f83eb320800000000000000
-      internalID: 2575558641642116952
+      spriteID: d8b60a38063964510800000000000000
+      internalID: 1533074765900704653
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: fx3_3
+      name: fx2(Explosion)2_5
       rect:
         serializedVersion: 2
         x: 64
-        y: 0
+        y: 128
         width: 64
         height: 64
       alignment: 0
@@ -216,8 +353,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0e514e8efa1ff48c0800000000000000
-      internalID: -4012723005134989856
+      spriteID: 32e612f98792317b0800000000000000
+      internalID: -5254810742168654301
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fx2(Explosion)2_6
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 128
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 35e9a4f4a2eec1290800000000000000
+      internalID: -7918192179337847213
       vertices: []
       indices: 
       edges: []
@@ -226,7 +385,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 181bedf59141d1643bc03ff0a9c70e3f
+    spriteID: e28c69b98c40b2a4a92cb929daea688c
     internalID: 0
     vertices: []
     indices: 
@@ -238,10 +397,13 @@ TextureImporter:
       - key: SpriteEditor.SliceSettings
         value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      fx3_0: 8904933694989859987
-      fx3_1: 7214472655509742283
-      fx3_2: 2575558641642116952
-      fx3_3: -4012723005134989856
+      fx2(Explosion)2_0: -1430883269962773197
+      fx2(Explosion)2_1: 6271640794260848548
+      fx2(Explosion)2_2: 6109164198749515751
+      fx2(Explosion)2_3: -8933088137822713600
+      fx2(Explosion)2_4: 1533074765900704653
+      fx2(Explosion)2_5: -5254810742168654301
+      fx2(Explosion)2_6: -7918192179337847213
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

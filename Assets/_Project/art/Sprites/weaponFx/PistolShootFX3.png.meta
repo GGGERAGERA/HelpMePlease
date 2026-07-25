@@ -1,0 +1,923 @@
+fileFormatVersion: 2
+guid: 526272e29854d2842a8ea811c423e16b
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3763713885680494012
+    second: PistolShootFX3_0
+  - first:
+      213: -6139840266059257139
+    second: PistolShootFX3_1
+  - first:
+      213: -3401916449381480598
+    second: PistolShootFX3_2
+  - first:
+      213: 4930596938124168045
+    second: PistolShootFX3_3
+  - first:
+      213: 8923430191708322175
+    second: PistolShootFX3_4
+  - first:
+      213: 1569178857171669542
+    second: PistolShootFX3_5
+  - first:
+      213: -8208976484080199093
+    second: PistolShootFX3_6
+  - first:
+      213: 6903464484353491051
+    second: PistolShootFX3_7
+  - first:
+      213: 7258065755501660139
+    second: PistolShootFX3_8
+  - first:
+      213: -4212515990461344479
+    second: PistolShootFX3_9
+  - first:
+      213: -9020755835695746508
+    second: PistolShootFX3_10
+  - first:
+      213: -1049698207137217618
+    second: PistolShootFX3_11
+  - first:
+      213: -8039265639815687836
+    second: PistolShootFX3_12
+  - first:
+      213: -2655615612944100004
+    second: PistolShootFX3_13
+  - first:
+      213: 8707296012374788448
+    second: PistolShootFX3_14
+  - first:
+      213: -6834671493182026237
+    second: PistolShootFX3_15
+  - first:
+      213: -8499884758446722403
+    second: PistolShootFX3_16
+  - first:
+      213: -16306836055215747
+    second: PistolShootFX3_17
+  - first:
+      213: 620282315664444563
+    second: PistolShootFX3_18
+  - first:
+      213: 1738954864676453909
+    second: PistolShootFX3_19
+  - first:
+      213: 3466093383742492965
+    second: PistolShootFX3_20
+  - first:
+      213: -6527500944576636514
+    second: PistolShootFX3_21
+  - first:
+      213: 6128186000362768860
+    second: PistolShootFX3_22
+  - first:
+      213: -3951154956805163167
+    second: PistolShootFX3_23
+  - first:
+      213: 1120635410946872581
+    second: PistolShootFX3_24
+  - first:
+      213: -7515726929430296114
+    second: PistolShootFX3_25
+  - first:
+      213: -6993560515297827453
+    second: PistolShootFX3_26
+  - first:
+      213: -6608877638330823335
+    second: PistolShootFX3_27
+  - first:
+      213: -5722801791585057821
+    second: PistolShootFX3_28
+  - first:
+      213: 2392841306285253268
+    second: PistolShootFX3_29
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WindowsStoreApps
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: PistolShootFX3_0
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 465
+        width: 35
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44a1fc7792a94cbc0800000000000000
+      internalID: -3763713885680494012
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_1
+      rect:
+        serializedVersion: 2
+        x: 67
+        y: 472
+        width: 36
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dcae5ebeec7eacaa0800000000000000
+      internalID: -6139840266059257139
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_2
+      rect:
+        serializedVersion: 2
+        x: 130
+        y: 475
+        width: 18
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a670f0f6307f9c0d0800000000000000
+      internalID: -3401916449381480598
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_3
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 401
+        width: 42
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d6b0583bacffc6440800000000000000
+      internalID: 4930596938124168045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_4
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 408
+        width: 31
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f7935c22b7466db70800000000000000
+      internalID: 8923430191708322175
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_5
+      rect:
+        serializedVersion: 2
+        x: 130
+        y: 410
+        width: 24
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 62255c25bd7d6c510800000000000000
+      internalID: 1569178857171669542
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_6
+      rect:
+        serializedVersion: 2
+        x: 130
+        y: 348
+        width: 20
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4a5dd8716bd31e80800000000000000
+      internalID: -8208976484080199093
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_7
+      rect:
+        serializedVersion: 2
+        x: 147
+        y: 360
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b604a655f580ecf50800000000000000
+      internalID: 6903464484353491051
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_8
+      rect:
+        serializedVersion: 2
+        x: 193
+        y: 376
+        width: 18
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: be78a198954d9b460800000000000000
+      internalID: 7258065755501660139
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_9
+      rect:
+        serializedVersion: 2
+        x: 194
+        y: 366
+        width: 32
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 12516e986032a85c0800000000000000
+      internalID: -4212515990461344479
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_10
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 375
+        width: 13
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 432b2d78c56dfc280800000000000000
+      internalID: -9020755835695746508
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_11
+      rect:
+        serializedVersion: 2
+        x: 225
+        y: 349
+        width: 62
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ea3c83aca09be61f0800000000000000
+      internalID: -1049698207137217618
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_12
+      rect:
+        serializedVersion: 2
+        x: 73
+        y: 350
+        width: 22
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46158c39e7ace6090800000000000000
+      internalID: -8039265639815687836
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_13
+      rect:
+        serializedVersion: 2
+        x: 77
+        y: 346
+        width: 52
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c555c7a8bab552bd0800000000000000
+      internalID: -2655615612944100004
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_14
+      rect:
+        serializedVersion: 2
+        x: 135
+        y: 348
+        width: 21
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06946cb079786d870800000000000000
+      internalID: 8707296012374788448
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_15
+      rect:
+        serializedVersion: 2
+        x: 151
+        y: 349
+        width: 28
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30e85641d7e5621a0800000000000000
+      internalID: -6834671493182026237
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_16
+      rect:
+        serializedVersion: 2
+        x: 162
+        y: 358
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d92b605b8d75a0a80800000000000000
+      internalID: -8499884758446722403
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_17
+      rect:
+        serializedVersion: 2
+        x: 198
+        y: 357
+        width: 9
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d71b48dd40116cff0800000000000000
+      internalID: -16306836055215747
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_18
+      rect:
+        serializedVersion: 2
+        x: 204
+        y: 349
+        width: 33
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 39cc2adca7fab9800800000000000000
+      internalID: 620282315664444563
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_19
+      rect:
+        serializedVersion: 2
+        x: 221
+        y: 361
+        width: 12
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 51e3a7d6c32022810800000000000000
+      internalID: 1738954864676453909
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_20
+      rect:
+        serializedVersion: 2
+        x: 37
+        y: 346
+        width: 27
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5219d4081990a1030800000000000000
+      internalID: 3466093383742492965
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_21
+      rect:
+        serializedVersion: 2
+        x: 150
+        y: 349
+        width: 13
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e999b7f9978a965a0800000000000000
+      internalID: -6527500944576636514
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_22
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 283
+        width: 46
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd90525e2b0bb0550800000000000000
+      internalID: 6128186000362768860
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_23
+      rect:
+        serializedVersion: 2
+        x: 82
+        y: 284
+        width: 45
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 167ba1b308daa29c0800000000000000
+      internalID: -3951154956805163167
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_24
+      rect:
+        serializedVersion: 2
+        x: 149
+        y: 284
+        width: 42
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 505563808fb4d8f00800000000000000
+      internalID: 1120635410946872581
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_25
+      rect:
+        serializedVersion: 2
+        x: 214
+        y: 283
+        width: 41
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ec9487e7d26c2b790800000000000000
+      internalID: -7515726929430296114
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_26
+      rect:
+        serializedVersion: 2
+        x: 21
+        y: 219
+        width: 18
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 385a97ac3c1e1fe90800000000000000
+      internalID: -6993560515297827453
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_27
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 219
+        width: 16
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 95dc443adcc8844a0800000000000000
+      internalID: -6608877638330823335
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_28
+      rect:
+        serializedVersion: 2
+        x: 151
+        y: 219
+        width: 16
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e38a9c57168490b0800000000000000
+      internalID: -5722801791585057821
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PistolShootFX3_29
+      rect:
+        serializedVersion: 2
+        x: 213
+        y: 218
+        width: 19
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 492a3018d74153120800000000000000
+      internalID: 2392841306285253268
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      PistolShootFX3_0: -3763713885680494012
+      PistolShootFX3_1: -6139840266059257139
+      PistolShootFX3_10: -9020755835695746508
+      PistolShootFX3_11: -1049698207137217618
+      PistolShootFX3_12: -8039265639815687836
+      PistolShootFX3_13: -2655615612944100004
+      PistolShootFX3_14: 8707296012374788448
+      PistolShootFX3_15: -6834671493182026237
+      PistolShootFX3_16: -8499884758446722403
+      PistolShootFX3_17: -16306836055215747
+      PistolShootFX3_18: 620282315664444563
+      PistolShootFX3_19: 1738954864676453909
+      PistolShootFX3_2: -3401916449381480598
+      PistolShootFX3_20: 3466093383742492965
+      PistolShootFX3_21: -6527500944576636514
+      PistolShootFX3_22: 6128186000362768860
+      PistolShootFX3_23: -3951154956805163167
+      PistolShootFX3_24: 1120635410946872581
+      PistolShootFX3_25: -7515726929430296114
+      PistolShootFX3_26: -6993560515297827453
+      PistolShootFX3_27: -6608877638330823335
+      PistolShootFX3_28: -5722801791585057821
+      PistolShootFX3_29: 2392841306285253268
+      PistolShootFX3_3: 4930596938124168045
+      PistolShootFX3_4: 8923430191708322175
+      PistolShootFX3_5: 1569178857171669542
+      PistolShootFX3_6: -8208976484080199093
+      PistolShootFX3_7: 6903464484353491051
+      PistolShootFX3_8: 7258065755501660139
+      PistolShootFX3_9: -4212515990461344479
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
