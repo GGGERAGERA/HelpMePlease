@@ -9,6 +9,9 @@ public class RunTimer : MonoBehaviour
     [Header("Boss Spawn")]
     [SerializeField] private GameObject bossPrefab;
     [SerializeField] private float spawnDistanceFromPlayer = 8f;
+    [SerializeField, Min(0f)] private float bossEdgePadding = 2f;
+    [SerializeField, Min(1)] private int spawnPositionAttempts = 24;
+    [SerializeField] private GameplayAreaService gameplayArea;
 
 #pragma warning disable CS0414
     [SerializeField] private AudioClip bossWarningSound;
@@ -21,6 +24,7 @@ public class RunTimer : MonoBehaviour
 
     private void Start()
     {
+        ResolveGameplayArea();
         ApplySelectedLevel();
         timeLeft = runDuration;
         HUDManager.Instance?.SetTimer(timeLeft);
@@ -71,11 +75,24 @@ public class RunTimer : MonoBehaviour
 
         if (bossPrefab != null && player != null)
         {
-            Vector2 randomDirection = Random.insideUnitCircle.normalized;
+            if (gameplayArea == null)
+                ResolveGameplayArea();
 
-            Vector3 spawnPosition =
-                player.transform.position
-                + (Vector3)(randomDirection * spawnDistanceFromPlayer);
+            if (gameplayArea == null ||
+                !gameplayArea.TryGetSpawnPosition(
+                    player.transform.position,
+                    spawnDistanceFromPlayer,
+                    spawnDistanceFromPlayer,
+                    spawnPositionAttempts,
+                    bossEdgePadding,
+                    out Vector3 spawnPosition))
+            {
+                Debug.LogWarning(
+                    "[RunTimer] No valid boss position exists inside the spawn area.",
+                    this
+                );
+                return;
+            }
 
             Instantiate(bossPrefab, spawnPosition, Quaternion.identity);
         }
@@ -111,5 +128,14 @@ public class RunTimer : MonoBehaviour
     public float GetSurvivalTime()
     {
         return 0f;
+    }
+
+    private void ResolveGameplayArea()
+    {
+        if (gameplayArea == null)
+            gameplayArea = GameplayAreaService.Instance;
+
+        if (gameplayArea == null)
+            gameplayArea = FindFirstObjectByType<GameplayAreaService>();
     }
 }

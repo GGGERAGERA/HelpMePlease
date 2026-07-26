@@ -16,6 +16,9 @@ public class WorldEventSpawner : MonoBehaviour
     [Header("Spawn Area")]
     [SerializeField] private float minDistanceFromPlayer = 8f;
     [SerializeField] private float maxDistanceFromPlayer = 14f;
+    [SerializeField, Min(0f)] private float eventEdgePadding = 2f;
+    [SerializeField, Min(1)] private int spawnPositionAttempts = 24;
+    [SerializeField] private GameplayAreaService gameplayArea;
 
     [Header("Limits")]
     [SerializeField] private int maxActiveEvents = 1;
@@ -29,6 +32,7 @@ public class WorldEventSpawner : MonoBehaviour
 
     private void Start()
     {
+        ResolveGameplayArea();
         timer = firstEventDelay;
     }
 
@@ -64,10 +68,24 @@ public class WorldEventSpawner : MonoBehaviour
         if (prefab == null)
             return;
 
-        Vector2 direction = Random.insideUnitCircle.normalized;
-        float distance = Random.Range(minDistanceFromPlayer, maxDistanceFromPlayer);
+        if (gameplayArea == null)
+            ResolveGameplayArea();
 
-        Vector3 spawnPosition = player.transform.position + (Vector3)(direction * distance);
+        if (gameplayArea == null ||
+            !gameplayArea.TryGetSpawnPosition(
+                player.transform.position,
+                minDistanceFromPlayer,
+                maxDistanceFromPlayer,
+                spawnPositionAttempts,
+                eventEdgePadding,
+                out Vector3 spawnPosition))
+        {
+            Debug.LogWarning(
+                "[WorldEventSpawner] No valid position exists inside the spawn area.",
+                this
+            );
+            return;
+        }
 
         WorldEvent spawnedEvent = Instantiate(prefab, spawnPosition, Quaternion.identity);
         spawnedEvent.Initialize(this);
@@ -105,5 +123,14 @@ public class WorldEventSpawner : MonoBehaviour
         activeEventInstances.Remove(worldEvent);
         activeEvents = Mathf.Max(0, activeEvents - 1);
         EventCompleted?.Invoke(worldEvent);
+    }
+
+    private void ResolveGameplayArea()
+    {
+        if (gameplayArea == null)
+            gameplayArea = GameplayAreaService.Instance;
+
+        if (gameplayArea == null)
+            gameplayArea = FindFirstObjectByType<GameplayAreaService>();
     }
 }

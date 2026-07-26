@@ -574,6 +574,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4726604075001662714, guid: 169b5772155b17842b8cd9604fcf1eb7, type: 3}
+      propertyPath: maxHealth
+      value: 100000
+      objectReference: {fileID: 0}
     - target: {fileID: 5620382063293760101, guid: 169b5772155b17842b8cd9604fcf1eb7, type: 3}
       propertyPath: m_IsActive
       value: 1
@@ -581,6 +585,14 @@ PrefabInstance:
     - target: {fileID: 6826215891082658128, guid: 169b5772155b17842b8cd9604fcf1eb7, type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8488144525096105199, guid: 169b5772155b17842b8cd9604fcf1eb7, type: 3}
+      propertyPath: maxAliveLimit
+      value: 300
+      objectReference: {fileID: 0}
+    - target: {fileID: 8488144525096105199, guid: 169b5772155b17842b8cd9604fcf1eb7, type: 3}
+      propertyPath: spawnInterval
+      value: 0.1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:

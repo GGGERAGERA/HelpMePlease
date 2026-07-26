@@ -20,6 +20,8 @@ public class EnemySpawner : MonoBehaviour
     public float minSpawnDistance = 5f;
     public float maxSpawnDistance = 12f;
     public float spawnRadius = 360f;
+    [SerializeField, Min(1)] private int spawnPositionAttempts = 16;
+    [SerializeField] private GameplayAreaService gameplayArea;
 
     [Header("Legacy Difficulty Scaling")]
     [SerializeField] private float difficultyIncreaseInterval = 30f;
@@ -80,6 +82,7 @@ public class EnemySpawner : MonoBehaviour
     private void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        ResolveGameplayArea();
         CaptureBaseSettings();
     }
 
@@ -358,9 +361,23 @@ public class EnemySpawner : MonoBehaviour
 
     private void SpawnEnemy(GameObject selectedPrefab)
     {
-        Vector2 direction = Random.insideUnitCircle.normalized;
-        float distance = Random.Range(minSpawnDistance, maxSpawnDistance);
-        Vector3 spawnPosition = player.position + (Vector3)(direction * distance);
+        if (gameplayArea == null)
+            ResolveGameplayArea();
+
+        if (gameplayArea == null ||
+            !gameplayArea.TryGetSpawnPosition(
+                player.position,
+                minSpawnDistance,
+                maxSpawnDistance,
+                spawnPositionAttempts,
+                out Vector3 spawnPosition))
+        {
+            Debug.LogWarning(
+                "[EnemySpawner] No valid position exists inside the spawn area.",
+                this
+            );
+            return;
+        }
 
         GameObject enemy = Instantiate(selectedPrefab, spawnPosition, Quaternion.identity);
         EnemyHealth health = enemy.GetComponent<EnemyHealth>();
@@ -512,5 +529,14 @@ public class EnemySpawner : MonoBehaviour
         }
 
         return result;
+    }
+
+    private void ResolveGameplayArea()
+    {
+        if (gameplayArea == null)
+            gameplayArea = GameplayAreaService.Instance;
+
+        if (gameplayArea == null)
+            gameplayArea = FindFirstObjectByType<GameplayAreaService>();
     }
 }
