@@ -50,7 +50,12 @@ public class EnemyHealth : MonoBehaviour
     private bool isDead;
     public bool IsDead => isDead;
 
+    private EnemyWhiteFlash whiteFlash;
+    private EnemyIdentity identity;
+
     private static float lastCritSoundTime;
+    private static bool missingUnlockServiceWasReported;
+    private static PlayerCombatModifiers cachedCombatModifiers;
     void Start()
     {
         currentHealth = maxHealth;
@@ -64,6 +69,12 @@ public class EnemyHealth : MonoBehaviour
 
     private void Awake()
     {
+        whiteFlash = GetComponent<EnemyWhiteFlash>();
+        identity = GetComponent<EnemyIdentity>();
+
+        if (hitSound == null)
+            return;
+
         if (audioSource == null)
             audioSource = GetComponent<AudioSource>();
 
@@ -106,11 +117,8 @@ public class EnemyHealth : MonoBehaviour
         if (isDead) return;
         if (currentHealth <= 0) return;
 
-        EnemyWhiteFlash whiteFlash = GetComponent<EnemyWhiteFlash>();
         if (whiteFlash != null)
-        {
             whiteFlash.Flash();
-        }
 
         currentHealth -= damage;
         if (isBoss)
@@ -178,26 +186,10 @@ public class EnemyHealth : MonoBehaviour
             transform.position
         );
 
-        EnemyIdentity identity = GetComponent<EnemyIdentity>();
-
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log(
-            $"[EnemyHealth] Died: {name}, " +
-            $"identity={(identity != null ? identity.EnemyId : "NULL")}"
-        );
-#endif
-
         if (UnlockProgressService.Instance != null &&
             identity != null &&
             !string.IsNullOrWhiteSpace(identity.EnemyId))
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.Log(
-                $"[EnemyHealth] Register kill progress: " +
-                $"type={UnlockConditionType.KillEnemyType}, " +
-                $"target={identity.EnemyId}"
-            );
-#endif
             UnlockProgressService.Instance.AddProgressByCondition(
                 UnlockConditionType.KillEnemyType,
                 identity.EnemyId,
@@ -214,8 +206,10 @@ public class EnemyHealth : MonoBehaviour
                 );
             }
 
-            if (UnlockProgressService.Instance == null)
+            if (UnlockProgressService.Instance == null &&
+                !missingUnlockServiceWasReported)
             {
+                missingUnlockServiceWasReported = true;
                 Debug.LogWarning(
                     "[EnemyHealth] UnlockProgressService is missing. Kill progress was not registered.",
                     this
@@ -283,14 +277,18 @@ public class EnemyHealth : MonoBehaviour
             Destroy(blood.gameObject, destroyTime);
         }
 
-        PlayerCombatModifiers modifiers = FindFirstObjectByType<PlayerCombatModifiers>();
+        if (cachedCombatModifiers == null)
+        {
+            cachedCombatModifiers =
+                FindFirstObjectByType<PlayerCombatModifiers>();
+        }
 
-        if (modifiers != null)
+        if (cachedCombatModifiers != null)
         {
             CombatExplosionService.TryExplodeOnEnemyDeath(
                 transform.position,
-                modifiers,
-                modifiers.enemyMask
+                cachedCombatModifiers,
+                cachedCombatModifiers.enemyMask
             );
         }
 

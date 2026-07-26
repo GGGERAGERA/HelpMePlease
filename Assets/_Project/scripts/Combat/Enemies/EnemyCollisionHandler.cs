@@ -7,29 +7,46 @@ public class EnemyCollisionHandler : MonoBehaviour
     public float damageCooldown = 1f;
 
     private float lastDamageTime;
+    private EnemyMovement movement;
+
+    private void Awake()
+    {
+        movement = GetComponent<EnemyMovement>();
+    }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.CompareTag("Player"))
+        if (CanAttemptDamage() && collision.CompareTag("Player"))
             TryDamagePlayer(collision.GetComponent<PlayerHealth>());
     }
 
     private void OnTriggerStay2D(Collider2D collision)
     {
-        if (collision.CompareTag("Player"))
+        if (CanAttemptDamage() && collision.CompareTag("Player"))
             TryDamagePlayer(collision.GetComponent<PlayerHealth>());
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.collider.CompareTag("Player"))
+        if (CanAttemptDamage() &&
+            collision.collider.CompareTag("Player"))
+        {
             TryDamagePlayer(collision.gameObject.GetComponent<PlayerHealth>());
+        }
     }
 
     private void OnCollisionStay2D(Collision2D collision)
     {
-        if (collision.collider.CompareTag("Player"))
+        if (CanAttemptDamage() &&
+            collision.collider.CompareTag("Player"))
+        {
             TryDamagePlayer(collision.gameObject.GetComponent<PlayerHealth>());
+        }
+    }
+
+    private bool CanAttemptDamage()
+    {
+        return Time.time >= lastDamageTime + damageCooldown;
     }
 
     private void TryDamagePlayer(PlayerHealth playerHealth)
@@ -46,8 +63,6 @@ public class EnemyCollisionHandler : MonoBehaviour
 
         if (damageApplied)
         {
-            EnemyMovement movement = GetComponent<EnemyMovement>();
-
             if (movement != null)
                 movement.StopAfterHit();
         }

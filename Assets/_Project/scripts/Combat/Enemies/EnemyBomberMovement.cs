@@ -53,7 +53,8 @@ public class EnemyBomberMovement : EnemyMovement
         if (player == null)
             return;
 
-        Vector2 direction = ((Vector2)player.position - rb.position).normalized;
+        Vector2 offset = (Vector2)player.position - rb.position;
+        Vector2 direction = offset.normalized;
 
         knockbackVelocity = Vector2.MoveTowards(
             knockbackVelocity,
@@ -70,9 +71,10 @@ public class EnemyBomberMovement : EnemyMovement
 
         rb.MovePosition(rb.position + movement * Time.fixedDeltaTime);
 
-        float distance = Vector2.Distance(rb.position, player.position);
+        float sqrDistance =
+            ((Vector2)player.position - rb.position).sqrMagnitude;
 
-        if (distance <= triggerRadius)
+        if (sqrDistance <= triggerRadius * triggerRadius)
             StartExplosionSequence();
     }
 

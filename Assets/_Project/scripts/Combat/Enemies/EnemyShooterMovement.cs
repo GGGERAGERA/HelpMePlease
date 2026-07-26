@@ -76,14 +76,19 @@ public class EnemyShooterMovement : EnemyMovement
 
     private void Move()
     {
-        float distance = Vector2.Distance(rb.position, player.position);
-        Vector2 directionToPlayer = ((Vector2)player.position - rb.position).normalized;
+        Vector2 offset = (Vector2)player.position - rb.position;
+        float sqrDistance = offset.sqrMagnitude;
+        Vector2 directionToPlayer = offset.normalized;
 
         Vector2 moveDirection = Vector2.zero;
+        float maximumDistance = preferredDistance + distanceTolerance;
+        float minimumDistance = preferredDistance - distanceTolerance;
 
-        if (distance > preferredDistance + distanceTolerance)
+        if (maximumDistance < 0f ||
+            sqrDistance > maximumDistance * maximumDistance)
             moveDirection = directionToPlayer;
-        else if (distance < preferredDistance - distanceTolerance)
+        else if (minimumDistance > 0f &&
+                 sqrDistance < minimumDistance * minimumDistance)
             moveDirection = -directionToPlayer;
 
         rb.MovePosition(
@@ -141,7 +146,13 @@ public class EnemyShooterMovement : EnemyMovement
             return;
 
         Vector3 scale = visualRoot.localScale;
-        scale.x = direction.x > 0f ? -Mathf.Abs(scale.x) : Mathf.Abs(scale.x);
+        float targetScaleX =
+            direction.x > 0f ? -Mathf.Abs(scale.x) : Mathf.Abs(scale.x);
+
+        if (Mathf.Approximately(scale.x, targetScaleX))
+            return;
+
+        scale.x = targetScaleX;
         visualRoot.localScale = scale;
     }
 }

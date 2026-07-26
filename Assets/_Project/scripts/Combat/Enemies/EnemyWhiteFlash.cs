@@ -12,6 +12,7 @@ public class EnemyWhiteFlash : MonoBehaviour
 
     private Material originalMaterial;
     private Coroutine flashCoroutine;
+    private WaitForSeconds flashWait;
 
     private void Awake()
     {
@@ -19,7 +20,9 @@ public class EnemyWhiteFlash : MonoBehaviour
             targetRenderer = GetComponentInChildren<SpriteRenderer>();
 
         if (targetRenderer != null)
-            originalMaterial = targetRenderer.material;
+            originalMaterial = targetRenderer.sharedMaterial;
+
+        flashWait = new WaitForSeconds(flashDuration);
     }
 
     public void Flash()
@@ -41,11 +44,11 @@ public class EnemyWhiteFlash : MonoBehaviour
 
     private IEnumerator FlashRoutine()
     {
-        targetRenderer.material = flashMaterial;
+        targetRenderer.sharedMaterial = flashMaterial;
 
-        yield return new WaitForSeconds(flashDuration);
+        yield return flashWait;
 
-        targetRenderer.material = originalMaterial;
+        targetRenderer.sharedMaterial = originalMaterial;
 
         flashCoroutine = null;
     }

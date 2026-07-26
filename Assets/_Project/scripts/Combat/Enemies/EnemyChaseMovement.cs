@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class EnemyChaseMovement : EnemyMovement
@@ -33,6 +34,11 @@ public class EnemyChaseMovement : EnemyMovement
     private float anomalySpeedMultiplier = 1f;
     private float stopTimer;
     private Vector2 knockbackVelocity;
+    private bool animatorStateInitialized;
+    private bool animatorRunning;
+
+    private static readonly Dictionary<(int, string), bool>
+        runParameterCache = new();
 
     private void Awake()
     {
@@ -76,16 +82,23 @@ public class EnemyChaseMovement : EnemyMovement
 
     private void MoveToPlayer()
     {
-        Vector2 direction = ((Vector2)player.position - rb.position).normalized;
-        float distance = Vector2.Distance(rb.position, player.position);
+        Vector2 offset = (Vector2)player.position - rb.position;
+        float sqrDistance = offset.sqrMagnitude;
+        Vector2 direction = offset.normalized;
 
-        bool isRunning = distance <= aggroDistance;
+        bool isRunning = sqrDistance <= aggroDistance * aggroDistance;
 
         float selectedSpeed = isRunning ? aggroSpeed : normalSpeed;
         selectedSpeed *= speedMultiplier * anomalySpeedMultiplier;
 
-        if (animator != null && hasRunParameter)
+        if (animator != null &&
+            hasRunParameter &&
+            (!animatorStateInitialized || animatorRunning != isRunning))
+        {
             animator.SetBool(runParameterName, isRunning);
+            animatorRunning = isRunning;
+            animatorStateInitialized = true;
+        }
 
         knockbackVelocity = Vector2.MoveTowards(
             knockbackVelocity,
@@ -110,7 +123,13 @@ public class EnemyChaseMovement : EnemyMovement
             return;
 
         Vector3 scale = visualRoot.localScale;
-        scale.x = direction.x > 0f ? -Mathf.Abs(scale.x) : Mathf.Abs(scale.x);
+        float targetScaleX =
+            direction.x > 0f ? -Mathf.Abs(scale.x) : Mathf.Abs(scale.x);
+
+        if (Mathf.Approximately(scale.x, targetScaleX))
+            return;
+
+        scale.x = targetScaleX;
         visualRoot.localScale = scale;
     }
 
@@ -143,16 +162,28 @@ public class EnemyChaseMovement : EnemyMovement
             return false;
         }
 
+        RuntimeAnimatorController controller =
+            targetAnimator.runtimeAnimatorController;
+        int controllerId = controller != null
+            ? controller.GetInstanceID()
+            : targetAnimator.GetInstanceID();
+        (int, string) cacheKey = (controllerId, parameterName);
+
+        if (runParameterCache.TryGetValue(cacheKey, out bool cachedResult))
+            return cachedResult;
+
         foreach (AnimatorControllerParameter parameter
                  in targetAnimator.parameters)
         {
             if (parameter.type == AnimatorControllerParameterType.Bool &&
                 parameter.name == parameterName)
             {
+                runParameterCache[cacheKey] = true;
                 return true;
             }
         }
 
+        runParameterCache[cacheKey] = false;
         Debug.LogWarning(
             $"[EnemyChaseMovement] '{targetAnimator.gameObject.name}' " +
             $"has no Bool parameter '{parameterName}'.",
