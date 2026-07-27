@@ -140,12 +140,33 @@ public sealed class UpgradeManager : MonoBehaviour
             return;
         }
 
-        bool applied = upgradeApplier.Apply(upgrade);
+        RunStateManager runState = RunStateManager.EnsureExists();
+        ItemGrantResult grantResult = runState.ItemSlots.TryAdd(upgrade);
 
-        if (!applied)
+        if (grantResult == ItemGrantResult.Added ||
+            grantResult == ItemGrantResult.LeveledUp)
+        {
+            bool applied = upgradeApplier.Apply(upgrade);
+
+            if (!applied)
+                return;
+
+            runState.RegisterUpgrade(upgrade);
+        }
+        else if (grantResult == ItemGrantResult.RequiresReplacement)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning(
+                $"[UpgradeManager] No free item slot for {upgrade.upgradeName}. " +
+                "Replacement selection is not implemented yet."
+            );
+#endif
+        }
+        else if (grantResult == ItemGrantResult.Invalid)
+        {
+            Debug.LogWarning("[UpgradeManager] Cannot grant an invalid upgrade.");
             return;
-
-        RunStateManager.EnsureExists().RegisterUpgrade(upgrade);
+        }
 
         CloseUpgradeSelection();
     }

@@ -16,6 +16,7 @@ public sealed class RunStateManager : MonoBehaviour
     public LevelNodeData SelectedLevelNode { get; private set; }
 
     private readonly List<UpgradeData> pickedUpgrades = new();
+    private readonly RunItemSlots itemSlots = new();
 
     private bool hasHealthSnapshot;
     private float savedCurrentHealth;
@@ -38,6 +39,7 @@ public sealed class RunStateManager : MonoBehaviour
     private RunSummary lastRunSummary;
 
     public IReadOnlyList<UpgradeData> PickedUpgrades => pickedUpgrades;
+    public RunItemSlots ItemSlots => itemSlots;
 
     public int AccumulatedKills => accumulatedKills;
     public float AccumulatedRunTime => accumulatedRunTime;
@@ -79,6 +81,7 @@ public sealed class RunStateManager : MonoBehaviour
         CurrentLevel = 1;
 
         pickedUpgrades.Clear();
+        itemSlots.Clear();
 
         ClearExperienceSnapshot();
         ClearHealthSnapshot();
@@ -219,6 +222,26 @@ public sealed class RunStateManager : MonoBehaviour
 
         Debug.Log($"[RunState] Registered upgrade: {upgrade.upgradeName}. Total: {pickedUpgrades.Count}");
     }
+
+    [ContextMenu("Debug/Clear Item Slots")]
+    private void DebugClearItemSlots()
+    {
+        itemSlots.Clear();
+    }
+
+    [ContextMenu("Debug/Log Item Slots")]
+    private void DebugLogItemSlots()
+    {
+        IReadOnlyList<RunItemSlot> slots = itemSlots.Slots;
+
+        for (int i = 0; i < slots.Count; i++)
+        {
+            RunItemSlot slot = slots[i];
+            string itemName = slot.Item != null ? slot.Item.upgradeName : "Empty";
+            Debug.Log($"[RunState] Item slot {i}: {itemName}, level {slot.Level}", this);
+        }
+    }
+
     public void RegisterCompletedLevel(LevelNodeData completedNode)
     {
         if (runEnded)

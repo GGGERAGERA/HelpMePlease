@@ -41,6 +41,9 @@ public sealed class UpgradeRoller
     private List<UpgradeData> BuildPool(int playerLevel)
     {
         List<UpgradeData> pool = new List<UpgradeData>();
+        RunItemSlots itemSlots = RunStateManager.Instance != null
+            ? RunStateManager.Instance.ItemSlots
+            : null;
 
         foreach (UpgradeData upgrade in allUpgrades)
         {
@@ -52,6 +55,12 @@ public sealed class UpgradeRoller
 
             if (!IsRarityUnlocked(upgrade.rarity, playerLevel))
                 continue;
+
+            if (itemSlots != null &&
+                itemSlots.GetLevel(upgrade) >= RunItemSlots.MaxItemLevel)
+            {
+                continue;
+            }
 
             pool.Add(upgrade);
         }
