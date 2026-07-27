@@ -23,4 +23,17 @@ public abstract class WorldEvent : MonoBehaviour
 
         Destroy(gameObject);
     }
+
+    protected void FailEvent()
+    {
+        if (IsCompleted)
+            return;
+
+        owner?.NotifyEventFailed(this);
+        owner = null;
+    }
+
+    public virtual void ApplyDifficultyMultiplier(float multiplier)
+    {
+    }
 }

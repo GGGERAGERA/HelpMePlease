@@ -512,22 +512,15 @@ MonoBehaviour:
   upgradePanelView: {fileID: 8325879207541808945}
   upgradeApplier: {fileID: 46915855}
   allUpgrades:
-  - {fileID: 11400000, guid: 352fa235404fe17428acc46b5d9d2d6f, type: 2}
-  - {fileID: 11400000, guid: 32f912c87361a644681482b83a624369, type: 2}
   - {fileID: 11400000, guid: 47b3beb0106312f43b62c4ab70fd35f4, type: 2}
-  - {fileID: 11400000, guid: 0b735dae9fc6f4c428d3608f73121ba0, type: 2}
   - {fileID: 11400000, guid: 37a48c32852d6044995673b2857c4361, type: 2}
-  - {fileID: 11400000, guid: a55214083a360b248bd0b37e4f66ba26, type: 2}
   - {fileID: 11400000, guid: 4d12f281773147b4f8ff7be651666ac9, type: 2}
   - {fileID: 11400000, guid: 7b703f110d294fa4fa7bc9adb77f4264, type: 2}
   - {fileID: 11400000, guid: c8db2879eddb6744f89bd449e3ce719e, type: 2}
   - {fileID: 11400000, guid: c566c95f91fdda34db552b74fad20c48, type: 2}
-  - {fileID: 11400000, guid: ce823526ee6b72f4f8e4d17ae70e4d4e, type: 2}
-  - {fileID: 11400000, guid: 470c203301181fe4bbce7e6636a8acb1, type: 2}
   - {fileID: 11400000, guid: ea9138ac1751a634e92e1f09b464b978, type: 2}
   - {fileID: 11400000, guid: b7e8757e8554fd14a90ddac789fe1de0, type: 2}
   - {fileID: 11400000, guid: 58c13046baa6419418981d218c776e47, type: 2}
-  - {fileID: 11400000, guid: a209054e8f37b184f93430d405a63675, type: 2}
   choicesCount: 3
 --- !u!114 &46915849
 MonoBehaviour:
@@ -607,6 +600,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WorldEventSpawner
   eventPrefabs:
   - {fileID: 350149527517610057, guid: 176dbf5e68a24ca49b3595472b14d121, type: 3}
+  rewardChestPrefab: {fileID: 1000000000000000004, guid: 91cb28ce62794baf86da67a04174801a, type: 3}
+  doubleOrLeave: {fileID: 46915859}
+  riskDifficultyMultiplier: 1.5
   firstEventDelay: 20
   eventInterval: 20
   minDistanceFromPlayer: 7
@@ -701,8 +697,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoubleOrLeave
   worldEventSpawner: {fileID: 46915853}
-  noDamageChallenge: {fileID: 46915857}
-  rewardAmount: 1
 --- !u!1 &101118583
 GameObject:
   m_ObjectHideFlags: 0
@@ -3834,7 +3828,6 @@ MonoBehaviour:
   takeRewardButton: {fileID: 2147002024}
   doubleRewardButton: {fileID: 2147002034}
   doubleOrLeave: {fileID: 46915859}
-  noDamageChallenge: {fileID: 46915857}
   runFlow: {fileID: 46915856}
 --- !u!212 &1708592419
 SpriteRenderer:

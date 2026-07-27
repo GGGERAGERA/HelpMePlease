@@ -75,6 +75,8 @@ public sealed class RunStateManager : MonoBehaviour
 
     public void BeginNewRun(CharacterData character, WeaponData weapon)
     {
+        FindFirstObjectByType<DoubleOrLeave>()?.ResetState();
+
         SelectedLevelNode = null;
         SelectedCharacter = character;
         SelectedWeapon = weapon;

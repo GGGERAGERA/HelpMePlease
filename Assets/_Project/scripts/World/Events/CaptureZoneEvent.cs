@@ -20,9 +20,6 @@ public class CaptureZoneEvent : WorldEvent
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private Slider progressSlider;
 
-    [Header("Reward")]
-    [SerializeField] private bool giveUpgradeChoice = true;
-
     private float currentHoldTime;
     private Transform player;
     private bool playerInside;
@@ -32,6 +29,11 @@ public class CaptureZoneEvent : WorldEvent
         base.Initialize(spawner);
 
         HUDManager.Instance?.ShowWorldEventMarker(transform, "CAPTURE");
+    }
+
+    public override void ApplyDifficultyMultiplier(float multiplier)
+    {
+        requiredHoldTime *= Mathf.Max(1f, multiplier);
     }
 
     private void Start()
@@ -95,9 +97,6 @@ public class CaptureZoneEvent : WorldEvent
     {
         HUDManager.Instance?.HideWorldEventMarker();
 
-        if (giveUpgradeChoice && UpgradeManager.Instance != null)
-            UpgradeManager.Instance.ShowUpgradeChoices();
-
         CompleteEvent();
     }
 
@@ -117,6 +116,7 @@ public class CaptureZoneEvent : WorldEvent
 
     private void OnDestroy()
     {
+        FailEvent();
         HUDManager.Instance?.HideWorldEventMarker();
     }
 

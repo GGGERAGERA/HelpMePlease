@@ -8,11 +8,26 @@ public sealed class UpgradeManager : MonoBehaviour
     {
         public readonly int PlayerLevel;
         public readonly bool PlayLevelUpSound;
+        public readonly int ChoiceCount;
+        public readonly bool GuaranteeBehavior;
+        public readonly bool IsChestReward;
+        public readonly System.Action OnClosed;
 
-        public UpgradeChoiceRequest(int playerLevel, bool playLevelUpSound)
+        public UpgradeChoiceRequest(
+            int playerLevel,
+            bool playLevelUpSound,
+            int choiceCount,
+            bool guaranteeBehavior,
+            bool isChestReward,
+            System.Action onClosed = null
+        )
         {
             PlayerLevel = playerLevel;
             PlayLevelUpSound = playLevelUpSound;
+            ChoiceCount = choiceCount;
+            GuaranteeBehavior = guaranteeBehavior;
+            IsChestReward = isChestReward;
+            OnClosed = onClosed;
         }
     }
 
@@ -30,6 +45,7 @@ public sealed class UpgradeManager : MonoBehaviour
     private UpgradeRoller upgradeRoller;
     private bool isChoosingUpgrade;
     private float previousTimeScale = 1f;
+    private System.Action currentOnClosed;
 
     public bool IsChoosingUpgrade => isChoosingUpgrade;
 
@@ -59,14 +75,48 @@ public sealed class UpgradeManager : MonoBehaviour
             : 1;
 
         RequestUpgradeChoices(
-            new UpgradeChoiceRequest(playerLevel, playLevelUpSound: false)
+            new UpgradeChoiceRequest(
+                playerLevel,
+                playLevelUpSound: false,
+                choicesCount,
+                guaranteeBehavior: false,
+                isChestReward: false
+            )
         );
     }
 
     public void ShowLevelUpChoices(int playerLevel)
     {
         RequestUpgradeChoices(
-            new UpgradeChoiceRequest(playerLevel, playLevelUpSound: true)
+            new UpgradeChoiceRequest(
+                playerLevel,
+                playLevelUpSound: true,
+                choicesCount,
+                guaranteeBehavior: false,
+                isChestReward: false
+            )
+        );
+    }
+
+    public void ShowChestRewardChoices(
+        int choiceCount,
+        bool guaranteeBehavior,
+        System.Action onClosed
+    )
+    {
+        int playerLevel = ExperienceManager.Instance != null
+            ? ExperienceManager.Instance.currentLevel
+            : 1;
+
+        RequestUpgradeChoices(
+            new UpgradeChoiceRequest(
+                playerLevel,
+                playLevelUpSound: false,
+                choiceCount,
+                guaranteeBehavior,
+                isChestReward: true,
+                onClosed
+            )
         );
     }
 
@@ -78,18 +128,22 @@ public sealed class UpgradeManager : MonoBehaviour
             return;
         }
 
-        if (!TryBuildChoices(request.PlayerLevel, out List<UpgradeData> choices))
+        if (!TryBuildChoices(request, out List<UpgradeData> choices))
+        {
+            request.OnClosed?.Invoke();
             return;
+        }
 
         isChoosingUpgrade = true;
         previousTimeScale = Time.timeScale;
         Time.timeScale = 0f;
+        currentOnClosed = request.OnClosed;
 
         ShowChoiceRequest(request, choices);
     }
 
     private bool TryBuildChoices(
-        int playerLevel,
+        UpgradeChoiceRequest request,
         out List<UpgradeData> choices
     )
     {
@@ -107,14 +161,36 @@ public sealed class UpgradeManager : MonoBehaviour
             return false;
         }
 
-        choices = upgradeRoller.RollChoices(playerLevel, choicesCount);
+        choices = request.GuaranteeBehavior
+            ? upgradeRoller.RollRewardChoices(
+                request.PlayerLevel,
+                request.ChoiceCount
+            )
+            : upgradeRoller.RollChoices(
+                request.PlayerLevel,
+                request.ChoiceCount
+            );
 
         if (choices.Count > 0)
             return true;
 
-        Debug.LogWarning(
-            $"[UpgradeManager] No upgrades available for level {playerLevel}."
-        );
+        if (request.IsChestReward)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning(
+                $"[UpgradeManager] No chest rewards available for level " +
+                $"{request.PlayerLevel}."
+            );
+#endif
+        }
+        else
+        {
+            Debug.LogWarning(
+                $"[UpgradeManager] No upgrades available for level " +
+                $"{request.PlayerLevel}."
+            );
+        }
+
         return false;
     }
 
@@ -126,7 +202,23 @@ public sealed class UpgradeManager : MonoBehaviour
         if (request.PlayLevelUpSound)
             AudioService.Instance?.Play(AudioCueId.LevelUp);
 
-        upgradePanelView.Show(request.PlayerLevel, choices, SelectUpgrade);
+        if (request.IsChestReward)
+        {
+            upgradePanelView.Show(
+                "НАГРАДА",
+                "Выберите предмет",
+                choices,
+                SelectUpgrade
+            );
+        }
+        else
+        {
+            upgradePanelView.Show(
+                request.PlayerLevel,
+                choices,
+                SelectUpgrade
+            );
+        }
     }
 
     private void SelectUpgrade(UpgradeData upgrade)
@@ -177,19 +269,22 @@ public sealed class UpgradeManager : MonoBehaviour
             upgradePanelView.Hide();
 
         isChoosingUpgrade = false;
+        System.Action onClosed = currentOnClosed;
+        currentOnClosed = null;
+        onClosed?.Invoke();
 
         while (pendingChoices.Count > 0)
         {
             UpgradeChoiceRequest nextRequest = pendingChoices.Dequeue();
 
-            if (!TryBuildChoices(
-                    nextRequest.PlayerLevel,
-                    out List<UpgradeData> choices))
+            if (!TryBuildChoices(nextRequest, out List<UpgradeData> choices))
             {
+                nextRequest.OnClosed?.Invoke();
                 continue;
             }
 
             isChoosingUpgrade = true;
+            currentOnClosed = nextRequest.OnClosed;
             ShowChoiceRequest(nextRequest, choices);
             return;
         }

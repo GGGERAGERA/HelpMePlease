@@ -18,9 +18,6 @@ public class RescueCapsuleEvent : WorldEvent
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private Slider progressSlider;
 
-    [Header("Reward")]
-    [SerializeField] private bool giveUpgradeChoice = true;
-
     private Transform player;
     private bool activated;
     private float timer;
@@ -30,6 +27,11 @@ public class RescueCapsuleEvent : WorldEvent
         base.Initialize(spawner);
 
         HUDManager.Instance?.ShowWorldEventMarker(transform, "CAPSULE");
+    }
+
+    public override void ApplyDifficultyMultiplier(float multiplier)
+    {
+        defenseTime *= Mathf.Max(1f, multiplier);
     }
 
     private void Start()
@@ -81,9 +83,6 @@ public class RescueCapsuleEvent : WorldEvent
     {
         HUDManager.Instance?.HideWorldEventMarker();
 
-        if (giveUpgradeChoice && UpgradeManager.Instance != null)
-            UpgradeManager.Instance.ShowUpgradeChoices();
-
         CompleteEvent();
     }
 
@@ -115,6 +114,7 @@ public class RescueCapsuleEvent : WorldEvent
 
     private void OnDestroy()
     {
+        FailEvent();
         HUDManager.Instance?.HideWorldEventMarker();
     }
 
