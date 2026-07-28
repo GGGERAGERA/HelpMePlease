@@ -5,7 +5,7 @@ public class WorldEventSpawner : MonoBehaviour
 {
     public event System.Action<WorldEvent> EventCompleted;
     public event System.Action<WorldEvent> EventFailed;
-    public IReadOnlyList<WorldEvent> ActiveEvents => activeEventInstances;
+    public IReadOnlyList<WorldEvent> SpawnedEvents => spawnedEvents;
     public WorldEvent ActiveEvent { get; private set; }
 
     [Header("Event Prefabs")]
@@ -33,9 +33,9 @@ public class WorldEventSpawner : MonoBehaviour
     private int nextEventIndex;
 
     private float timer;
-    private int activeEvents;
+    private int spawnedEventCount;
     private bool holdPointEnabled;
-    private readonly List<WorldEvent> activeEventInstances = new();
+    private readonly List<WorldEvent> spawnedEvents = new();
     private readonly List<LevelAnomalyController.LocalAnomalyZoneGeometry>
         localAnomalyZones = new();
 
@@ -66,7 +66,7 @@ public class WorldEventSpawner : MonoBehaviour
         if (eventPrefabs == null || eventPrefabs.Length == 0)
             return;
 
-        if (activeEvents >= maxActiveEvents)
+        if (spawnedEventCount >= maxActiveEvents)
             return;
 
         timer -= Time.deltaTime;
@@ -146,8 +146,8 @@ public class WorldEventSpawner : MonoBehaviour
             spawnedEvent.ApplyDifficultyMultiplier(riskDifficultyMultiplier);
         }
 
-        activeEventInstances.Add(spawnedEvent);
-        activeEvents++;
+        spawnedEvents.Add(spawnedEvent);
+        spawnedEventCount++;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         string anomalyType = selectedAnomalyType.HasValue
@@ -242,9 +242,9 @@ public class WorldEventSpawner : MonoBehaviour
         Vector2 candidate,
         float eventRadius)
     {
-        for (int i = 0; i < activeEventInstances.Count; i++)
+        for (int i = 0; i < spawnedEvents.Count; i++)
         {
-            WorldEvent activeEvent = activeEventInstances[i];
+            WorldEvent activeEvent = spawnedEvents[i];
 
             if (activeEvent == null)
                 continue;
@@ -332,8 +332,8 @@ public class WorldEventSpawner : MonoBehaviour
         if (ActiveEvent == worldEvent)
             ActiveEvent = null;
 
-        activeEventInstances.Remove(worldEvent);
-        activeEvents = Mathf.Max(0, activeEvents - 1);
+        spawnedEvents.Remove(worldEvent);
+        spawnedEventCount = Mathf.Max(0, spawnedEventCount - 1);
         EventCompleted?.Invoke(worldEvent);
     }
 
@@ -342,8 +342,8 @@ public class WorldEventSpawner : MonoBehaviour
         if (ActiveEvent == worldEvent)
             ActiveEvent = null;
 
-        activeEventInstances.Remove(worldEvent);
-        activeEvents = Mathf.Max(0, activeEvents - 1);
+        spawnedEvents.Remove(worldEvent);
+        spawnedEventCount = Mathf.Max(0, spawnedEventCount - 1);
         EventFailed?.Invoke(worldEvent);
     }
 
@@ -351,7 +351,7 @@ public class WorldEventSpawner : MonoBehaviour
     {
         return worldEvent != null &&
             ActiveEvent == null &&
-            activeEventInstances.Contains(worldEvent) &&
+            spawnedEvents.Contains(worldEvent) &&
             !worldEvent.IsStarted &&
             !worldEvent.IsCompleted;
     }

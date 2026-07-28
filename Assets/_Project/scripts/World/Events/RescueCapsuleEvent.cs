@@ -26,7 +26,7 @@ public class RescueCapsuleEvent : WorldEvent
     {
         base.Initialize(spawner);
 
-        HUDManager.Instance?.ShowWorldEventMarker(transform, "CAPSULE");
+        ShowEventMarker(transform, "CAPSULE");
     }
 
     public override void ApplyDifficultyMultiplier(float multiplier)
@@ -88,8 +88,6 @@ public class RescueCapsuleEvent : WorldEvent
 
     private void CompleteCapsule()
     {
-        HUDManager.Instance?.HideWorldEventMarker();
-
         CompleteEvent();
     }
 
@@ -117,12 +115,6 @@ public class RescueCapsuleEvent : WorldEvent
                 ? Mathf.Clamp01(timer / defenseTime)
                 : 0f;
         }
-    }
-
-    private void OnDestroy()
-    {
-        FailEvent();
-        HUDManager.Instance?.HideWorldEventMarker();
     }
 
     private void OnDrawGizmosSelected()

@@ -67,7 +67,7 @@ public sealed class EvacuationCorridorEvent : WorldEvent
     public override void Initialize(WorldEventSpawner spawner)
     {
         base.Initialize(spawner);
-        HUDManager.Instance?.ShowWorldEventMarker(
+        ShowEventMarker(
             transform,
             "EVACUATION"
         );
@@ -350,7 +350,7 @@ public sealed class EvacuationCorridorEvent : WorldEvent
         if (startOutline != null)
             startOutline.enabled = false;
 
-        HUDManager.Instance?.HideWorldEventMarker();
+        HideEventMarker();
     }
 
     private void EnableCorridor()
@@ -365,21 +365,16 @@ public sealed class EvacuationCorridorEvent : WorldEvent
         transform.position = EndPosition;
         rewardPosition = EndPosition;
         hasRewardPosition = true;
-        CleanupEventVisuals();
         CompleteEvent();
     }
 
     private void FailCorridor()
     {
-        if (IsCompleted)
-            return;
-
-        CleanupEventVisuals();
         FailEvent();
         Destroy(gameObject);
     }
 
-    private void CleanupEventVisuals()
+    protected override void CleanupEvent()
     {
         corridorActive = false;
         outsideDamageTimer = 0f;
@@ -398,8 +393,6 @@ public sealed class EvacuationCorridorEvent : WorldEvent
             corridorFill.enabled = false;
         if (corridorOutline != null)
             corridorOutline.enabled = false;
-
-        HUDManager.Instance?.HideWorldEventMarker();
     }
 
     private void FindPlayer()
@@ -509,14 +502,6 @@ public sealed class EvacuationCorridorEvent : WorldEvent
         line.startColor = color;
         line.endColor = color;
         return line;
-    }
-
-    private void OnDestroy()
-    {
-        CleanupEventVisuals();
-
-        if (!IsCompleted)
-            FailEvent();
     }
 
     private void OnDrawGizmosSelected()

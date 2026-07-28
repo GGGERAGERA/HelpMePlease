@@ -58,12 +58,13 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
         if (worldEventSpawner == null)
             return;
 
-        IReadOnlyList<WorldEvent> activeEvents = worldEventSpawner.ActiveEvents;
+        IReadOnlyList<WorldEvent> spawnedEvents =
+            worldEventSpawner.SpawnedEvents;
         bool headerAdded = false;
 
-        for (int i = 0; i < activeEvents.Count; i++)
+        for (int i = 0; i < spawnedEvents.Count; i++)
         {
-            WorldEvent worldEvent = activeEvents[i];
+            WorldEvent worldEvent = spawnedEvents[i];
 
             if (worldEvent == null)
                 continue;
