@@ -6237,7 +6237,19 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 7a200000000000000000000000000002, type: 2}
   - {fileID: 11400000, guid: 7a200000000000000000000000000003, type: 2}
   - {fileID: 11400000, guid: 7a200000000000000000000000000004, type: 2}
+  - {fileID: 11400000, guid: c48e6099f1d941c1a6794bf75e2695a3, type: 2}
   view: {fileID: 2147010004}
+  berserkZonePrefab: {fileID: 540000000000000004, guid: b37d5988e0cf40b0b5683ae64d1584f2, type: 3}
+  stasisZonePrefab: {fileID: 550000000000000004, guid: c48e6099f1d941c1a6794bf75e2695a2, type: 3}
+  anomalyCount: 1
+  anomalyRadius: 4
+  stasisRadius: 4
+  enemySpeedMultiplier: 1.5
+  playerSpeedMultiplier: 0.65
+  edgePadding: 1
+  minimumDistanceFromPlayerStart: 5
+  minimumDistanceBetweenAnomalies: 2
+  gameplayArea: {fileID: 2147020003}
   explosionFxPrefab: {fileID: 3932597101254327762, guid: f91913de896646447a357936450e42c5, type: 3}
   explosionFxLifetime: 0.8
 --- !u!1 &2147020001
