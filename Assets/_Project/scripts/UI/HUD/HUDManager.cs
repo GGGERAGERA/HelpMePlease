@@ -18,6 +18,7 @@ public class HUDManager : MonoBehaviour
 
     [Header("Stats")]
     [SerializeField] private TextMeshProUGUI killsText;
+    [SerializeField] private TextMeshProUGUI currencyText;
 
     [Header("Timer")]
     [SerializeField] private TextMeshProUGUI timerText;
@@ -36,6 +37,8 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private WorldEventMarker worldEventMarker;
 
     [SerializeField] private RunMessageView runMessageView;
+    private RunStatsManager runStatsManager;
+    private RunStateManager runStateManager;
 
     private void Awake()
     {
@@ -49,6 +52,27 @@ public class HUDManager : MonoBehaviour
 
 
         HideLowHpVignette();
+    }
+
+    private void Start()
+    {
+        runStatsManager = RunStatsManager.Instance;
+        runStateManager = RunStateManager.Instance;
+
+        if (runStatsManager != null)
+            runStatsManager.RewardRelevantStatsChanged += RefreshRunCurrency;
+        if (runStateManager != null)
+            runStateManager.CurrentRewardChanged += RefreshRunCurrency;
+
+        RefreshRunCurrency();
+    }
+
+    private void OnDestroy()
+    {
+        if (runStatsManager != null)
+            runStatsManager.RewardRelevantStatsChanged -= RefreshRunCurrency;
+        if (runStateManager != null)
+            runStateManager.CurrentRewardChanged -= RefreshRunCurrency;
     }
 
     private static void ConfigureIndicatorSlider(Slider slider)
@@ -96,6 +120,23 @@ public class HUDManager : MonoBehaviour
             killsText.text = $"KILLS: {kills}";
         }
     }
+
+    public void SetCurrentRunCurrency(int amount)
+    {
+        if (currencyText != null)
+            currencyText.text = $"GOLD: {amount}";
+    }
+
+    private void RefreshRunCurrency()
+    {
+        RunStateManager runState = RunStateManager.Instance;
+        int amount = runState != null
+            ? runState.GetCurrentGoldReward(RunEndReason.ReturnedToBunker)
+            : 0;
+
+        SetCurrentRunCurrency(amount);
+    }
+
     public void SetExperience(int currentExp, int requiredExp, int level)
     {
         if (experienceSlider != null)

@@ -8,6 +8,7 @@ using UnityEngine;
 public sealed class RunStateManager : MonoBehaviour
 {
     public static RunStateManager Instance { get; private set; }
+    public event System.Action CurrentRewardChanged;
 
     public CharacterData SelectedCharacter { get; private set; }
     public WeaponData SelectedWeapon { get; private set; }
@@ -45,6 +46,27 @@ public sealed class RunStateManager : MonoBehaviour
     public float AccumulatedRunTime => accumulatedRunTime;
     public int CompletedLevels => completedLevels;
     public bool IsRunEnded => runEnded;
+
+    public int GetCurrentGoldReward(RunEndReason endReason)
+    {
+        int kills = accumulatedKills;
+        float runTime = accumulatedRunTime;
+        RunStatsManager stats = RunStatsManager.Instance;
+
+        if (stats != null &&
+            stats.GetInstanceID() != lastCommittedStatsInstanceId)
+        {
+            kills += stats.Kills;
+            runTime += stats.RunTime;
+        }
+
+        return RunRewardCalculator.CalculateGold(
+            kills,
+            runTime,
+            completedLevelRewardMultiplierTotal,
+            endReason
+        );
+    }
 
     public static RunStateManager EnsureExists()
     {
@@ -98,6 +120,7 @@ public sealed class RunStateManager : MonoBehaviour
         lastRunSummary = null;
 
         upgradesAppliedToCurrentScene = false;
+        CurrentRewardChanged?.Invoke();
 
         Debug.Log(
             $"[RunState] New run: " +
@@ -253,6 +276,7 @@ public sealed class RunStateManager : MonoBehaviour
         completedLevelRewardMultiplierTotal += completedNode != null
             ? completedNode.CompletionGoldMultiplier
             : 1f;
+        CurrentRewardChanged?.Invoke();
 
         Debug.Log(
             $"[RunState] Completed levels: {completedLevels}, " +
@@ -291,6 +315,7 @@ public sealed class RunStateManager : MonoBehaviour
         accumulatedKills += stats.Kills;
         accumulatedRunTime += stats.RunTime;
         lastCommittedStatsInstanceId = instanceId;
+        CurrentRewardChanged?.Invoke();
 
         Debug.Log(
             $"[RunState] Scene stats committed. " +
@@ -307,12 +332,7 @@ public sealed class RunStateManager : MonoBehaviour
 
         CommitCurrentSceneStats();
 
-        int goldEarned = RunRewardCalculator.CalculateGold(
-            accumulatedKills,
-            accumulatedRunTime,
-            completedLevelRewardMultiplierTotal,
-            reason
-        );
+        int goldEarned = GetCurrentGoldReward(reason);
 
         CurrencyManager.Instance?.AddGold(goldEarned);
 
