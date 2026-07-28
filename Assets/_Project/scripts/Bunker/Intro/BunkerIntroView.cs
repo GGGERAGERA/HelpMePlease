@@ -7,6 +7,7 @@ public sealed class BunkerIntroView : MonoBehaviour
     [Header("Root")]
     [SerializeField] private CanvasGroup rootGroup;
     [SerializeField] private Image blackOverlay;
+    [SerializeField] private Image emergencyFlash;
 
     [Header("Text")]
     [SerializeField] private TextMeshProUGUI mainText;
@@ -14,14 +15,17 @@ public sealed class BunkerIntroView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI skipHint;
 
     [Header("Colors")]
-    [SerializeField] private Color normalColor =
-        new(0.78f, 0.95f, 1f, 1f);
+    [SerializeField] private Color recordingColor =
+        new(1f, 0.94f, 0.86f, 1f);
+    [SerializeField] private Color systemColor =
+        new(0.72f, 0.94f, 1f, 1f);
     [SerializeField] private Color errorColor =
-        new(1f, 0.24f, 0.2f, 1f);
+        new(1f, 0.22f, 0.18f, 1f);
 
     public bool IsConfigured =>
         rootGroup != null &&
         blackOverlay != null &&
+        emergencyFlash != null &&
         mainText != null &&
         systemText != null &&
         skipHint != null;
@@ -32,29 +36,45 @@ public sealed class BunkerIntroView : MonoBehaviour
         rootGroup.alpha = 1f;
         rootGroup.interactable = false;
         rootGroup.blocksRaycasts = true;
-        blackOverlay.color = WithAlpha(blackOverlay.color, 1f);
+        SetOverlayAlpha(1f);
+        SetFlash(Color.red, 0f);
         ClearText();
         SetSkipHint(false, 0f);
     }
 
-    public void SetStep(
+    public void SetText(
         string main,
-        string system,
-        bool errorStyle,
+        string secondary,
+        BunkerIntroTextStyle style,
         int visibleMainCharacters,
-        int visibleSystemCharacters,
-        float textAlpha,
-        float overlayAlpha)
+        int visibleSecondaryCharacters,
+        float textAlpha)
     {
-        Color color = errorStyle ? errorColor : normalColor;
+        Color mainColor = GetColor(style);
+        Color secondaryColor = style == BunkerIntroTextStyle.HumanRecording
+            ? systemColor
+            : mainColor;
 
         mainText.text = main ?? string.Empty;
-        systemText.text = system ?? string.Empty;
-        mainText.color = WithAlpha(color, textAlpha);
-        systemText.color = WithAlpha(color, textAlpha * 0.88f);
+        systemText.text = secondary ?? string.Empty;
+        mainText.color = WithAlpha(mainColor, textAlpha);
+        systemText.color = WithAlpha(
+            secondaryColor,
+            textAlpha * 0.72f);
         mainText.maxVisibleCharacters = visibleMainCharacters;
-        systemText.maxVisibleCharacters = visibleSystemCharacters;
-        blackOverlay.color = WithAlpha(blackOverlay.color, overlayAlpha);
+        systemText.maxVisibleCharacters = visibleSecondaryCharacters;
+    }
+
+    public void SetOverlayAlpha(float alpha)
+    {
+        blackOverlay.color = WithAlpha(
+            blackOverlay.color,
+            Mathf.Clamp01(alpha));
+    }
+
+    public void SetFlash(Color color, float alpha)
+    {
+        emergencyFlash.color = WithAlpha(color, alpha);
     }
 
     public void SetTextOffset(float horizontalOffset)
@@ -86,24 +106,10 @@ public sealed class BunkerIntroView : MonoBehaviour
         rootGroup.alpha = Mathf.Clamp01(alpha);
     }
 
-    public void HideImmediate()
+    public void ClearText()
     {
         SetTextOffset(0f);
-        ClearText();
-        SetSkipHint(false, 0f);
 
-        if (rootGroup != null)
-        {
-            rootGroup.alpha = 0f;
-            rootGroup.blocksRaycasts = false;
-            rootGroup.interactable = false;
-        }
-
-        gameObject.SetActive(false);
-    }
-
-    private void ClearText()
-    {
         if (mainText != null)
         {
             mainText.text = string.Empty;
@@ -115,6 +121,37 @@ public sealed class BunkerIntroView : MonoBehaviour
             systemText.text = string.Empty;
             systemText.maxVisibleCharacters = 0;
         }
+    }
+
+    public void HideImmediate()
+    {
+        ClearText();
+        SetSkipHint(false, 0f);
+
+        if (emergencyFlash != null)
+            SetFlash(Color.red, 0f);
+
+        if (blackOverlay != null)
+            SetOverlayAlpha(0f);
+
+        if (rootGroup != null)
+        {
+            rootGroup.alpha = 0f;
+            rootGroup.blocksRaycasts = false;
+            rootGroup.interactable = false;
+        }
+
+        gameObject.SetActive(false);
+    }
+
+    private Color GetColor(BunkerIntroTextStyle style)
+    {
+        return style switch
+        {
+            BunkerIntroTextStyle.HumanRecording => recordingColor,
+            BunkerIntroTextStyle.Error => errorColor,
+            _ => systemColor
+        };
     }
 
     private static Color WithAlpha(Color color, float alpha)

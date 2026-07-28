@@ -12,6 +12,10 @@ public class CharacterMovement2D : MonoBehaviour
     [SerializeField] private float acceleration = 18f;
     [SerializeField] private float deceleration = 22f;
 
+    [Header("Hit Knockback")]
+    [SerializeField, Min(0f)] private float hitKnockbackSpeed = 4f;
+    [SerializeField, Min(0.01f)] private float hitKnockbackDuration = 0.12f;
+
     [Header("Dash")]
     [SerializeField, Min(0.01f)] private float dashDistance = 3f;
     [SerializeField, Min(0.01f)] private float dashDuration = 0.15f;
@@ -24,6 +28,8 @@ public class CharacterMovement2D : MonoBehaviour
     private float dashTimeRemaining;
     private float dashCooldownRemaining;
     private bool isDashing;
+    private Vector2 hitKnockbackVelocity;
+    private float hitKnockbackTimeRemaining;
 
     private const float DashCollisionSkin = 0.02f;
     private readonly RaycastHit2D[] dashHits = new RaycastHit2D[8];
@@ -119,8 +125,44 @@ public class CharacterMovement2D : MonoBehaviour
         );
 
 
-        rb.MovePosition(rb.position + currentVelocity * Time.fixedDeltaTime);
+        UpdateHitKnockback();
 
+        rb.MovePosition(
+            rb.position +
+            (currentVelocity + hitKnockbackVelocity) * Time.fixedDeltaTime
+        );
+
+    }
+
+    public void ApplyKnockback(Vector2 direction)
+    {
+        if (direction.sqrMagnitude <= 0.0001f)
+            return;
+
+        if (isDashing)
+            EndDash();
+
+        hitKnockbackVelocity = direction.normalized * hitKnockbackSpeed;
+        hitKnockbackTimeRemaining = hitKnockbackDuration;
+    }
+
+    private void UpdateHitKnockback()
+    {
+        if (hitKnockbackTimeRemaining <= 0f)
+        {
+            hitKnockbackVelocity = Vector2.zero;
+            return;
+        }
+
+        hitKnockbackTimeRemaining = Mathf.Max(
+            0f,
+            hitKnockbackTimeRemaining - Time.fixedDeltaTime
+        );
+
+        float remainingRatio = hitKnockbackTimeRemaining /
+            Mathf.Max(0.01f, hitKnockbackDuration);
+        hitKnockbackVelocity = hitKnockbackVelocity.normalized *
+            hitKnockbackSpeed * remainingRatio;
     }
 
     private void TryStartDash()
@@ -207,5 +249,7 @@ public class CharacterMovement2D : MonoBehaviour
         dashTimeRemaining = 0f;
         dashCooldownRemaining = 0f;
         isDashing = false;
+        hitKnockbackVelocity = Vector2.zero;
+        hitKnockbackTimeRemaining = 0f;
     }
 }

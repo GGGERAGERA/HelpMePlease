@@ -1,16 +1,13 @@
 using UnityEngine;
 
-public enum UpgradeRarity
+public enum UpgradeCategory
 {
-    Gray,
-    Blue,
-    Purple,
-    Legendary
+    Numeric,
+    Behavior
 }
 
 public enum UpgradeType
 {
-    // Gray
     WeaponDamagePercent,
     FireRatePercent,
     MaxHealthFlat,
@@ -18,7 +15,6 @@ public enum UpgradeType
     XpPickupRadiusPercent,
     MoveSpeedPercent,
 
-    // Blue
     ExtraShot,
     EveryFifthAttackExtraShot,
     HitExplosionChance,
@@ -26,12 +22,10 @@ public enum UpgradeType
     CritDamage,
     KnockbackPercent,
 
-    // Purple
     StationaryFireRateRamp,
     DoubleDamageWithInaccuracy,
     LowHpPower,
 
-    // Legendary
     RandomExtraShotsChance,
     CircularBurst,
     NukeEveryTenKills
@@ -46,7 +40,7 @@ public class UpgradeData : ScriptableObject
     public Sprite icon;
 
     [Header("Rules")]
-    public UpgradeRarity rarity;
+    public UpgradeCategory category;
     public int minPlayerLevel = 1;
 
     [Header("Effect")]

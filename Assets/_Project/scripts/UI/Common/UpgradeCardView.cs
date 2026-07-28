@@ -14,13 +14,11 @@ public class UpgradeCardView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI descriptionText;
 
-    [Header("Rarity Colors")]
-    [SerializeField] private Color grayColor = new Color(0.654902f, 0.705882f, 0.760784f, 1f);
-    [SerializeField] private Color blueColor = new Color(0.239216f, 0.552941f, 1f, 1f);
-    [SerializeField] private Color purpleColor = new Color(0.658824f, 0.333333f, 0.968627f, 1f);
-    [SerializeField] private Color legendaryColor = new Color(0.94902f, 0.662745f, 0.231373f, 1f);
+    [Header("Category Colors")]
+    [SerializeField] private Color numericColor = new Color(0.239216f, 0.552941f, 1f, 1f);
+    [SerializeField] private Color behaviorColor = new Color(0.94902f, 0.662745f, 0.231373f, 1f);
 
-    [SerializeField] private Image rarityFrameImage;
+    [SerializeField] private Image categoryFrameImage;
 
     private UpgradeData currentUpgrade;
     private Action<UpgradeData> onClicked;
@@ -66,7 +64,7 @@ public class UpgradeCardView : MonoBehaviour
         SetText(descriptionText, upgrade.description);
 
         SetIcon(upgrade.icon);
-        SetRarity(upgrade.rarity);
+        SetCategory(upgrade.category);
         hoverAnimation?.RefreshRestingState();
     }
 
@@ -87,23 +85,21 @@ public class UpgradeCardView : MonoBehaviour
         iconImage.enabled = icon != null;
     }
 
-    private void SetRarity(UpgradeRarity rarity)
+    private void SetCategory(UpgradeCategory category)
     {
-        Color color = GetRarityColor(rarity);
+        Color color = GetCategoryColor(category);
 
-        if (rarityFrameImage != null)
-            rarityFrameImage.color = color;
+        if (categoryFrameImage != null)
+            categoryFrameImage.color = color;
     }
 
-    private Color GetRarityColor(UpgradeRarity rarity)
+    private Color GetCategoryColor(UpgradeCategory category)
     {
-        return rarity switch
+        return category switch
         {
-            UpgradeRarity.Gray => grayColor,
-            UpgradeRarity.Blue => blueColor,
-            UpgradeRarity.Purple => purpleColor,
-            UpgradeRarity.Legendary => legendaryColor,
-            _ => grayColor
+            UpgradeCategory.Numeric => numericColor,
+            UpgradeCategory.Behavior => behaviorColor,
+            _ => numericColor
         };
     }
 

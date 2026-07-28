@@ -1,0 +1,149 @@
+using System;
+using System.Collections.Generic;
+
+public enum ItemGrantResult
+{
+    Added,
+    LeveledUp,
+    MaxLevel,
+    RequiresReplacement,
+    Invalid
+}
+
+[Serializable]
+public sealed class RunItemSlot
+{
+    public UpgradeData Item { get; private set; }
+    public int Level { get; private set; }
+
+    internal void Set(UpgradeData item, int level)
+    {
+        Item = item;
+        Level = level;
+    }
+
+    internal void Clear()
+    {
+        Item = null;
+        Level = 0;
+    }
+}
+
+/// <summary>
+/// Runtime-only item slots for the current run.
+/// </summary>
+public sealed class RunItemSlots
+{
+    public const int SlotCount = 6;
+    public const int MaxItemLevel = 3;
+
+    private readonly RunItemSlot[] slots;
+    private readonly IReadOnlyList<RunItemSlot> readOnlySlots;
+
+    public event Action SlotsChanged;
+
+    public IReadOnlyList<RunItemSlot> Slots => readOnlySlots;
+
+    public RunItemSlots()
+    {
+        slots = new RunItemSlot[SlotCount];
+
+        for (int i = 0; i < slots.Length; i++)
+            slots[i] = new RunItemSlot();
+
+        readOnlySlots = Array.AsReadOnly(slots);
+    }
+
+    public ItemGrantResult TryAdd(UpgradeData item)
+    {
+        if (item == null)
+            return ItemGrantResult.Invalid;
+
+        int existingIndex = FindItemIndex(item);
+
+        if (existingIndex >= 0)
+        {
+            RunItemSlot existingSlot = slots[existingIndex];
+
+            if (existingSlot.Level >= MaxItemLevel)
+                return ItemGrantResult.MaxLevel;
+
+            existingSlot.Set(item, existingSlot.Level + 1);
+            SlotsChanged?.Invoke();
+            return ItemGrantResult.LeveledUp;
+        }
+
+        int emptyIndex = FindEmptySlotIndex();
+
+        if (emptyIndex < 0)
+            return ItemGrantResult.RequiresReplacement;
+
+        slots[emptyIndex].Set(item, 1);
+        SlotsChanged?.Invoke();
+        return ItemGrantResult.Added;
+    }
+
+    public bool Contains(UpgradeData item)
+    {
+        return item != null && FindItemIndex(item) >= 0;
+    }
+
+    public int GetLevel(UpgradeData item)
+    {
+        int index = item != null ? FindItemIndex(item) : -1;
+        return index >= 0 ? slots[index].Level : 0;
+    }
+
+    public bool TryReplace(int slotIndex, UpgradeData newItem)
+    {
+        if (slotIndex < 0 || slotIndex >= slots.Length || newItem == null)
+            return false;
+
+        int existingIndex = FindItemIndex(newItem);
+
+        if (existingIndex >= 0 && existingIndex != slotIndex)
+            return false;
+
+        slots[slotIndex].Set(newItem, 1);
+        SlotsChanged?.Invoke();
+        return true;
+    }
+
+    public void Clear()
+    {
+        bool changed = false;
+
+        for (int i = 0; i < slots.Length; i++)
+        {
+            if (slots[i].Item != null || slots[i].Level != 0)
+                changed = true;
+
+            slots[i].Clear();
+        }
+
+        if (changed)
+            SlotsChanged?.Invoke();
+    }
+
+    private int FindItemIndex(UpgradeData item)
+    {
+        for (int i = 0; i < slots.Length; i++)
+        {
+            if (ReferenceEquals(slots[i].Item, item))
+                return i;
+        }
+
+        return -1;
+    }
+
+    private int FindEmptySlotIndex()
+    {
+        for (int i = 0; i < slots.Length; i++)
+        {
+            if (slots[i].Item == null)
+                return i;
+        }
+
+        return -1;
+    }
+}

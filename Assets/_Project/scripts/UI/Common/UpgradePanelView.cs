@@ -23,11 +23,26 @@ public class UpgradePanelView : MonoBehaviour
 
     public void Show(int level, IReadOnlyList<UpgradeData> upgrades, Action<UpgradeData> onUpgradeSelected)
     {
+        Show(
+            $"РЈР РћР’Р•РќР¬ {level}",
+            "Р’С‹Р±РµСЂРёС‚Рµ СѓР»СѓС‡С€РµРЅРёРµ",
+            upgrades,
+            onUpgradeSelected
+        );
+    }
+
+    public void Show(
+        string title,
+        string subtitle,
+        IReadOnlyList<UpgradeData> upgrades,
+        Action<UpgradeData> onUpgradeSelected
+    )
+    {
         gameObject.SetActive(true);
         transform.SetAsLastSibling();
 
-        SetText(titleText, $"УРОВЕНЬ {level}");
-        SetText(subtitleText, "Выберите улучшение");
+        SetText(titleText, title);
+        SetText(subtitleText, subtitle);
 
         for (int i = 0; i < cardViews.Length; i++)
         {

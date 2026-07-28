@@ -172,12 +172,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 317101b222282334694718f82b6cedcc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CaptureZoneEvent
+  promptText: "\u2014 \u041D\u0430\u0447\u0430\u0442\u044C \u0441\u043E\u0431\u044B\u0442\u0438\u0435"
   requiredHoldTime: 5
   captureRadius: 3
   resetProgressOnExit: 0
   timerText: {fileID: 0}
   progressSlider: {fileID: 1443488956571464380}
-  giveUpgradeChoice: 1
 --- !u!114 &7461295083172649012
 MonoBehaviour:
   m_ObjectHideFlags: 0

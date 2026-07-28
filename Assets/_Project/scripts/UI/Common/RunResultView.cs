@@ -22,7 +22,14 @@ public class RunResultView : MonoBehaviour
 
 
 
-        int totalGold = CurrencyManager.Instance != null ? CurrencyManager.Instance.TotalGold : 0;
+        RunEndReason endReason = victory
+            ? RunEndReason.ReturnedToBunker
+            : RunEndReason.PlayerDied;
+        int runGold = RunStateManager.Instance != null
+            ? RunStateManager.Instance.GetCurrentGoldReward(endReason)
+            : 0;
+
+        HUDManager.Instance?.SetCurrentRunCurrency(runGold);
 
         if (titleText != null)
         {
@@ -50,7 +57,7 @@ public class RunResultView : MonoBehaviour
             }
 
             result +=
-                $"{localization.Get("stats.totalGold")}: {totalGold}";
+                $"{localization.Get("stats.runGold")}: {runGold}";
 
             statsText.text = result;
         }

@@ -730,11 +730,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a65f1a417da0624791eeba76868cd5f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RescueCapsuleEvent
+  promptText: "\u2014 \u041D\u0430\u0447\u0430\u0442\u044C \u0441\u043E\u0431\u044B\u0442\u0438\u0435"
   activationRadius: 2.5
   defenseTime: 10
   timerText: {fileID: 2992633540615199127}
   progressSlider: {fileID: 821538148316107046}
-  giveUpgradeChoice: 1
 --- !u!1 &4982818557014298857
 GameObject:
   m_ObjectHideFlags: 0

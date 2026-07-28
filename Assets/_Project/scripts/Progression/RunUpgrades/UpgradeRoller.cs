@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// Builds upgrade choices from ScriptableObject data.
-/// It owns rarity/level rules only. It does not apply upgrades and does not touch UI.
+/// It owns category/level rules only. It does not apply upgrades and does not touch UI.
 /// </summary>
 public sealed class UpgradeRoller
 {
@@ -25,8 +25,8 @@ public sealed class UpgradeRoller
 
         while (result.Count < count && pool.Count > 0)
         {
-            UpgradeRarity rarity = RollRarity(playerLevel);
-            UpgradeData selected = PickRandomByRarity(pool, rarity);
+            UpgradeCategory category = RollCategory();
+            UpgradeData selected = PickRandomByCategory(pool, category);
 
             if (selected == null)
                 selected = pool[Random.Range(0, pool.Count)];
@@ -38,9 +38,42 @@ public sealed class UpgradeRoller
         return result;
     }
 
+    public List<UpgradeData> RollRewardChoices(int playerLevel, int count)
+    {
+        List<UpgradeData> result = new List<UpgradeData>();
+
+        if (count <= 0)
+            return result;
+
+        List<UpgradeData> pool = BuildPool(playerLevel);
+        UpgradeData behavior = PickRandomByCategory(
+            pool,
+            UpgradeCategory.Behavior
+        );
+
+        if (behavior != null)
+        {
+            result.Add(behavior);
+            pool.Remove(behavior);
+        }
+
+        while (result.Count < count && pool.Count > 0)
+        {
+            UpgradeData selected = pool[Random.Range(0, pool.Count)];
+
+            result.Add(selected);
+            pool.Remove(selected);
+        }
+
+        return result;
+    }
+
     private List<UpgradeData> BuildPool(int playerLevel)
     {
         List<UpgradeData> pool = new List<UpgradeData>();
+        RunItemSlots itemSlots = RunStateManager.Instance != null
+            ? RunStateManager.Instance.ItemSlots
+            : null;
 
         foreach (UpgradeData upgrade in allUpgrades)
         {
@@ -50,8 +83,11 @@ public sealed class UpgradeRoller
             if (playerLevel < upgrade.minPlayerLevel)
                 continue;
 
-            if (!IsRarityUnlocked(upgrade.rarity, playerLevel))
+            if (itemSlots != null &&
+                itemSlots.GetLevel(upgrade) >= RunItemSlots.MaxItemLevel)
+            {
                 continue;
+            }
 
             pool.Add(upgrade);
         }
@@ -59,48 +95,23 @@ public sealed class UpgradeRoller
         return pool;
     }
 
-    private bool IsRarityUnlocked(UpgradeRarity rarity, int playerLevel)
+    private UpgradeCategory RollCategory()
     {
-        return rarity switch
-        {
-            UpgradeRarity.Gray => true,
-            UpgradeRarity.Blue => playerLevel >= 3,
-            UpgradeRarity.Purple => playerLevel >= 6,
-            UpgradeRarity.Legendary => playerLevel >= 10,
-            _ => false
-        };
+        return Random.value < 0.75f
+            ? UpgradeCategory.Numeric
+            : UpgradeCategory.Behavior;
     }
 
-    private UpgradeRarity RollRarity(int playerLevel)
-    {
-        if (playerLevel < 3)
-            return UpgradeRarity.Gray;
-
-        if (playerLevel < 6)
-            return Random.value < 0.75f ? UpgradeRarity.Gray : UpgradeRarity.Blue;
-
-        if (playerLevel < 10)
-        {
-            float roll = Random.value;
-            if (roll < 0.60f) return UpgradeRarity.Gray;
-            if (roll < 0.90f) return UpgradeRarity.Blue;
-            return UpgradeRarity.Purple;
-        }
-
-        float lateRoll = Random.value;
-        if (lateRoll < 0.50f) return UpgradeRarity.Gray;
-        if (lateRoll < 0.80f) return UpgradeRarity.Blue;
-        if (lateRoll < 0.95f) return UpgradeRarity.Purple;
-        return UpgradeRarity.Legendary;
-    }
-
-    private UpgradeData PickRandomByRarity(List<UpgradeData> pool, UpgradeRarity rarity)
+    private UpgradeData PickRandomByCategory(
+        List<UpgradeData> pool,
+        UpgradeCategory category
+    )
     {
         List<UpgradeData> matching = new List<UpgradeData>();
 
         foreach (UpgradeData upgrade in pool)
         {
-            if (upgrade.rarity == rarity)
+            if (upgrade.category == category)
                 matching.Add(upgrade);
         }
 

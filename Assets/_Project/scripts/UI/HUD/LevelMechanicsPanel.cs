@@ -141,14 +141,8 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
         if (doubleOrLeave == null || doubleOrLeave.State == DoubleOrLeaveState.Inactive)
             return;
 
-        AppendHeader(ref hasSection, "DOUBLE OR LEAVE");
+        AppendHeader(ref hasSection, "TAKE OR RISK");
         textBuilder.Append("- ").Append(GetDoubleOrLeaveStateLabel());
-
-        if (doubleOrLeave.State == DoubleOrLeaveState.RewardGranted)
-        {
-            textBuilder.Append(" - ")
-                .Append(doubleOrLeave.LastGrantedRewardAmount);
-        }
 
         textBuilder.AppendLine();
     }
@@ -158,9 +152,9 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
         return doubleOrLeave.State switch
         {
             DoubleOrLeaveState.WaitingForChoice => "Waiting for Choice",
-            DoubleOrLeaveState.WaitingForChallenge => "Waiting for Challenge",
-            DoubleOrLeaveState.RewardGranted => "Reward Granted",
-            DoubleOrLeaveState.Failed => "Failed",
+            DoubleOrLeaveState.WaitingForChallenge => "Risk Event Pending",
+            DoubleOrLeaveState.RewardGranted => "Reward Ready",
+            DoubleOrLeaveState.Failed => "Reward Lost",
             _ => string.Empty
         };
     }

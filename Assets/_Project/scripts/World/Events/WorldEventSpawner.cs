@@ -4,10 +4,15 @@ using UnityEngine;
 public class WorldEventSpawner : MonoBehaviour
 {
     public event System.Action<WorldEvent> EventCompleted;
+    public event System.Action<WorldEvent> EventFailed;
     public IReadOnlyList<WorldEvent> ActiveEvents => activeEventInstances;
+    public WorldEvent ActiveEvent { get; private set; }
 
     [Header("Event Prefabs")]
     [SerializeField] private WorldEvent[] eventPrefabs;
+    [SerializeField] private WorldEventRewardChest rewardChestPrefab;
+    [SerializeField] private DoubleOrLeave doubleOrLeave;
+    [SerializeField, Min(1f)] private float riskDifficultyMultiplier = 1.5f;
 
     [Header("Spawn Timing")]
     [SerializeField] private float firstEventDelay = 45f;
@@ -30,9 +35,22 @@ public class WorldEventSpawner : MonoBehaviour
     private bool holdPointEnabled;
     private readonly List<WorldEvent> activeEventInstances = new();
 
+    private void OnEnable()
+    {
+        EventCompleted += SpawnRewardChest;
+        EventFailed += HandleEventFailed;
+    }
+
+    private void OnDisable()
+    {
+        EventCompleted -= SpawnRewardChest;
+        EventFailed -= HandleEventFailed;
+    }
+
     private void Start()
     {
         ResolveGameplayArea();
+        ResolveDoubleOrLeave();
         timer = firstEventDelay;
     }
 
@@ -90,6 +108,12 @@ public class WorldEventSpawner : MonoBehaviour
         WorldEvent spawnedEvent = Instantiate(prefab, spawnPosition, Quaternion.identity);
         spawnedEvent.Initialize(this);
 
+        if (doubleOrLeave != null &&
+            doubleOrLeave.TryBeginRiskyEvent(spawnedEvent))
+        {
+            spawnedEvent.ApplyDifficultyMultiplier(riskDifficultyMultiplier);
+        }
+
         activeEventInstances.Add(spawnedEvent);
         activeEvents++;
     }
@@ -120,9 +144,71 @@ public class WorldEventSpawner : MonoBehaviour
 
     public void NotifyEventCompleted(WorldEvent worldEvent)
     {
+        if (ActiveEvent == worldEvent)
+            ActiveEvent = null;
+
         activeEventInstances.Remove(worldEvent);
         activeEvents = Mathf.Max(0, activeEvents - 1);
         EventCompleted?.Invoke(worldEvent);
+    }
+
+    public void NotifyEventFailed(WorldEvent worldEvent)
+    {
+        if (ActiveEvent == worldEvent)
+            ActiveEvent = null;
+
+        activeEventInstances.Remove(worldEvent);
+        activeEvents = Mathf.Max(0, activeEvents - 1);
+        EventFailed?.Invoke(worldEvent);
+    }
+
+    public bool CanStartEvent(WorldEvent worldEvent)
+    {
+        return worldEvent != null &&
+            ActiveEvent == null &&
+            activeEventInstances.Contains(worldEvent) &&
+            !worldEvent.IsStarted &&
+            !worldEvent.IsCompleted;
+    }
+
+    public bool TryStartEvent(WorldEvent worldEvent)
+    {
+        if (!CanStartEvent(worldEvent))
+            return false;
+
+        ActiveEvent = worldEvent;
+        return true;
+    }
+
+    private void SpawnRewardChest(WorldEvent completedEvent)
+    {
+        if (completedEvent == null)
+            return;
+
+        bool isImproved = doubleOrLeave != null &&
+            doubleOrLeave.ResolveCompletedEvent(completedEvent);
+
+        if (rewardChestPrefab == null)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning(
+                "[WorldEventSpawner] Reward chest prefab is not assigned."
+            );
+#endif
+            return;
+        }
+
+        WorldEventRewardChest chest = Instantiate(
+            rewardChestPrefab,
+            completedEvent.RewardPosition,
+            Quaternion.identity
+        );
+        chest.Initialize(isImproved, doubleOrLeave);
+    }
+
+    private void HandleEventFailed(WorldEvent failedEvent)
+    {
+        doubleOrLeave?.ResolveFailedEvent(failedEvent);
     }
 
     private void ResolveGameplayArea()
@@ -132,5 +218,11 @@ public class WorldEventSpawner : MonoBehaviour
 
         if (gameplayArea == null)
             gameplayArea = FindFirstObjectByType<GameplayAreaService>();
+    }
+
+    private void ResolveDoubleOrLeave()
+    {
+        if (doubleOrLeave == null)
+            doubleOrLeave = FindFirstObjectByType<DoubleOrLeave>();
     }
 }

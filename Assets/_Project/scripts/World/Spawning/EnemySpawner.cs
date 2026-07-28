@@ -207,6 +207,91 @@ public class EnemySpawner : MonoBehaviour
         legacyDifficultySteps = 0;
     }
 
+    public void SpawnAdditionalWave(
+        Vector3 origin,
+        int enemyCount,
+        float minDistance = 1f,
+        float maxDistance = 3f,
+        float minimumDistanceFromPlayer = 0f)
+    {
+        if (gameplayArea == null)
+            ResolveGameplayArea();
+
+        if (player == null)
+            player = GameObject.FindGameObjectWithTag("Player")?.transform;
+
+        RemoveDestroyedEnemies();
+
+        int count = Mathf.Max(0, enemyCount);
+
+        for (int i = 0; i < count; i++)
+        {
+            GameObject selectedPrefab = activePhase != null
+                ? SelectWeightedEnemy(activePhase)
+                : SelectLegacyEnemy();
+
+            if (selectedPrefab == null ||
+                gameplayArea == null ||
+                !TryGetAdditionalWaveSpawnPosition(
+                    origin,
+                    minDistance,
+                    maxDistance,
+                    minimumDistanceFromPlayer,
+                    out Vector3 spawnPosition))
+            {
+                break;
+            }
+
+            SpawnEnemyAt(selectedPrefab, spawnPosition);
+        }
+    }
+
+    private bool TryGetAdditionalWaveSpawnPosition(
+        Vector3 origin,
+        float minDistance,
+        float maxDistance,
+        float minimumDistanceFromPlayer,
+        out Vector3 spawnPosition)
+    {
+        float safePlayerDistance = Mathf.Max(0f, minimumDistanceFromPlayer);
+        float minimumRadius = Mathf.Max(0f, minDistance);
+        float maximumRadius = Mathf.Max(minimumRadius, maxDistance);
+
+        for (int i = 0; i < Mathf.Max(1, spawnPositionAttempts); i++)
+        {
+            if (!gameplayArea.TryGetSpawnPosition(
+                    origin,
+                    minDistance,
+                    maxDistance,
+                    1,
+                    out Vector3 candidate))
+            {
+                continue;
+            }
+
+            float originDistance = Vector2.Distance(candidate, origin);
+
+            if (originDistance < minimumRadius ||
+                originDistance > maximumRadius)
+            {
+                continue;
+            }
+
+            if (player != null &&
+                Vector2.Distance(candidate, player.position) <
+                safePlayerDistance)
+            {
+                continue;
+            }
+
+            spawnPosition = candidate;
+            return true;
+        }
+
+        spawnPosition = default;
+        return false;
+    }
+
     private void CaptureBaseSettings()
     {
         baseSpawnInterval = Mathf.Max(0.1f, spawnInterval);
@@ -379,7 +464,16 @@ public class EnemySpawner : MonoBehaviour
             return;
         }
 
-        GameObject enemy = Instantiate(selectedPrefab, spawnPosition, Quaternion.identity);
+        SpawnEnemyAt(selectedPrefab, spawnPosition);
+    }
+
+    private void SpawnEnemyAt(GameObject selectedPrefab, Vector3 spawnPosition)
+    {
+        GameObject enemy = Instantiate(
+            selectedPrefab,
+            spawnPosition,
+            Quaternion.identity
+        );
         EnemyHealth health = enemy.GetComponent<EnemyHealth>();
 
         if (health != null)

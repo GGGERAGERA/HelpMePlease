@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: -5459413600173041077}
   - component: {fileID: -7248466617024912767}
   - component: {fileID: -8467997292367934545}
+  - component: {fileID: 900000000000001001}
   m_Layer: 0
   m_Name: p_Player1
   m_TagString: Player
@@ -101,7 +102,7 @@ CircleCollider2D:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 256
   m_LayerOverridePriority: 0
   m_ForceSendLayers:
     serializedVersion: 2
@@ -163,6 +164,8 @@ MonoBehaviour:
   speed: 1
   acceleration: 50
   deceleration: 40
+  hitKnockbackSpeed: 4
+  hitKnockbackDuration: 0.12
   dashDistance: 3
   dashDuration: 0.15
   dashCooldown: 3
@@ -174,7 +177,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 602157039170639563}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 41639b5307150ce4495a793595571eac, type: 3}
   m_Name: 
@@ -220,7 +223,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
   maxHealth: 200
   currentHealth: 0
-  invulnerabilityTime: 0.5
+  invulnerabilityTime: 0.6
   incomingDamageMultiplier: 1
 --- !u!210 &6742118338655256636
 SortingGroup:
@@ -444,6 +447,19 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   nukeFxPrefab: {fileID: 8471479244625784341, guid: c9ef6978e0aec7749ac3b55cad40bc5d, type: 3}
+--- !u!114 &900000000000001001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 602157039170639563}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d81fa724ea685343af8bbf9467f5815, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractor
+  interactionRadius: 3
 --- !u!1 &5144749796594398161
 GameObject:
   m_ObjectHideFlags: 0

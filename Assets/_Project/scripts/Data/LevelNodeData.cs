@@ -50,7 +50,6 @@ public class LevelNodeData : ScriptableObject
     [Header("Reward")]
     [SerializeField, Min(0.1f)] private float experienceGainMultiplier = 1f;
     [SerializeField, Min(0.1f)] private float completionGoldMultiplier = 1f;
-    public UpgradeRarity guaranteedRewardRarity;
     [Range(0f, 1f)] public float bonusRareChance;
 
     public string Id => string.IsNullOrWhiteSpace(id) ? name : id;
