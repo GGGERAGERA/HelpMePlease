@@ -6,6 +6,23 @@ public sealed class LevelAnomalyController : MonoBehaviour
 {
     private const int LocalAnomalyPositionAttempts = 64;
 
+    public readonly struct LocalAnomalyZoneGeometry
+    {
+        public LevelAnomalyType Type { get; }
+        public Vector2 Center { get; }
+        public float Radius { get; }
+
+        public LocalAnomalyZoneGeometry(
+            LevelAnomalyType type,
+            Vector2 center,
+            float radius)
+        {
+            Type = type;
+            Center = center;
+            Radius = radius;
+        }
+    }
+
     public static LevelAnomalyController Instance { get; private set; }
 
     [Header("Data")]
@@ -36,6 +53,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
     private readonly HashSet<int> chainSuppressedEnemyIds = new();
     private readonly List<BerserkZone> berserkZones = new();
     private readonly List<StasisZone> stasisZones = new();
+    private readonly List<ActiveLocalZone> activeLocalZones = new();
 
     private enum LocalAnomalyKind
     {
@@ -55,6 +73,20 @@ public sealed class LevelAnomalyController : MonoBehaviour
         }
     }
 
+    private readonly struct ActiveLocalZone
+    {
+        public readonly Object Source;
+        public readonly LevelAnomalyType Type;
+
+        public ActiveLocalZone(
+            Object source,
+            LevelAnomalyType type)
+        {
+            Source = source;
+            Type = type;
+        }
+    }
+
     private LevelAnomalyData activeAnomaly;
     private PlayerHealth playerHealth;
     private PlayerCombatModifiers playerModifiers;
@@ -65,9 +97,70 @@ public sealed class LevelAnomalyController : MonoBehaviour
     private bool enemyLifecycleSubscribed;
     private bool regenerationApplied;
     private bool hasteApplied;
+    private bool introPauseApplied;
+    private bool localCardVisible;
+    private LevelAnomalyType displayedLocalAnomalyType;
 
     public LevelAnomalyData ActiveAnomaly => activeAnomaly;
     public bool IsIntroComplete { get; private set; }
+
+    public void CollectActiveLocalZones(
+        List<LocalAnomalyZoneGeometry> result)
+    {
+        if (result == null)
+            return;
+
+        result.Clear();
+
+        for (int i = 0; i < berserkZones.Count; i++)
+        {
+            AddLocalZoneGeometry(
+                result,
+                berserkZones[i],
+                LevelAnomalyType.Berserk
+            );
+        }
+
+        for (int i = 0; i < stasisZones.Count; i++)
+        {
+            AddLocalZoneGeometry(
+                result,
+                stasisZones[i],
+                LevelAnomalyType.Stasis
+            );
+        }
+    }
+
+    private static void AddLocalZoneGeometry(
+        List<LocalAnomalyZoneGeometry> result,
+        MonoBehaviour zone,
+        LevelAnomalyType type)
+    {
+        if (zone == null || !zone.isActiveAndEnabled)
+            return;
+
+        CircleCollider2D collider =
+            zone.GetComponent<CircleCollider2D>();
+
+        if (collider == null || !collider.enabled)
+            return;
+
+        Vector2 center = collider.transform.TransformPoint(
+            collider.offset
+        );
+        Vector3 scale = collider.transform.lossyScale;
+        float radius = collider.radius * Mathf.Max(
+            Mathf.Abs(scale.x),
+            Mathf.Abs(scale.y)
+        );
+
+        if (radius <= Mathf.Epsilon)
+            return;
+
+        result.Add(
+            new LocalAnomalyZoneGeometry(type, center, radius)
+        );
+    }
 
     private void Awake()
     {
@@ -79,8 +172,6 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
         Instance = this;
         previousTimeScale = Time.timeScale;
-        Time.timeScale = 0f;
-        view?.Prepare();
     }
 
     public void BeginLevel(LevelNodeData level)
@@ -93,7 +184,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
         if (activeAnomaly == null)
         {
-            FinishIntroPause();
+            IsIntroComplete = true;
             return;
         }
 
@@ -105,7 +196,46 @@ public sealed class LevelAnomalyController : MonoBehaviour
             playerModifiers = player.GetComponent<PlayerCombatModifiers>();
         }
 
-        ApplyGameplayEffect();
+        if (TryGetLocalAnomalyKind(
+                activeAnomaly.AnomalyType,
+                out LocalAnomalyKind localKind))
+        {
+            if (!HasZonePrefab(localKind))
+            {
+                Debug.LogWarning(
+                    "[LevelAnomalyController] Selected local anomaly " +
+                    $"'{activeAnomaly.name}' " +
+                    $"({activeAnomaly.AnomalyType}), but its zone " +
+                    "prefab is not assigned. Continuing without an " +
+                    "anomaly.",
+                    this
+                );
+                IsIntroComplete = true;
+                return;
+            }
+
+            SpawnLocalAnomalyZones();
+            IsIntroComplete = true;
+            return;
+        }
+
+        if (!UsesGlobalIntro(activeAnomaly.AnomalyType))
+        {
+            Debug.LogWarning(
+                "[LevelAnomalyController] Selected anomaly " +
+                $"'{activeAnomaly.name}' has unsupported type " +
+                $"{activeAnomaly.AnomalyType}. Continuing without " +
+                "an anomaly.",
+                this
+            );
+            IsIntroComplete = true;
+            return;
+        }
+
+        previousTimeScale = Time.timeScale;
+        Time.timeScale = 0f;
+        introPauseApplied = true;
+        ApplyGlobalGameplayEffect();
         StartCoroutine(IntroRoutine(level));
     }
 
@@ -143,16 +273,12 @@ public sealed class LevelAnomalyController : MonoBehaviour
         return availableAnomalies[availableAnomalies.Length - 1];
     }
 
-    private void ApplyGameplayEffect()
+    private void ApplyGlobalGameplayEffect()
     {
         switch (activeAnomaly.AnomalyType)
         {
             case LevelAnomalyType.ExplosiveInfection:
                 SubscribeEnemyLifecycle();
-                break;
-
-            case LevelAnomalyType.Berserk:
-                SpawnLocalAnomalyZones();
                 break;
 
             case LevelAnomalyType.Haste:
@@ -161,10 +287,6 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
             case LevelAnomalyType.Regeneration:
                 ApplyRegeneration();
-                break;
-
-            case LevelAnomalyType.Stasis:
-                SpawnLocalAnomalyZones();
                 break;
         }
     }
@@ -343,8 +465,13 @@ public sealed class LevelAnomalyController : MonoBehaviour
     {
         IsIntroComplete = true;
 
-        if (Mathf.Approximately(Time.timeScale, 0f))
+        if (introPauseApplied &&
+            Mathf.Approximately(Time.timeScale, 0f))
+        {
             Time.timeScale = previousTimeScale;
+        }
+
+        introPauseApplied = false;
     }
 
     private void RestoreRuntimeEffects()
@@ -388,6 +515,158 @@ public sealed class LevelAnomalyController : MonoBehaviour
         return movement;
     }
 
+    public void NotifyLocalZoneEntered(
+        Object zone,
+        LevelAnomalyType type)
+    {
+        if (zone == null || !IsLocalAnomalyType(type))
+            return;
+
+        RemoveActiveLocalZone(zone);
+        activeLocalZones.Add(new ActiveLocalZone(zone, type));
+        RefreshLocalAnomalyCard();
+    }
+
+    public void NotifyLocalZoneExited(Object zone)
+    {
+        if (zone == null)
+            return;
+
+        if (!RemoveActiveLocalZone(zone))
+            return;
+
+        RefreshLocalAnomalyCard();
+    }
+
+    private bool RemoveActiveLocalZone(Object zone)
+    {
+        for (int i = activeLocalZones.Count - 1; i >= 0; i--)
+        {
+            if (!ReferenceEquals(activeLocalZones[i].Source, zone))
+                continue;
+
+            activeLocalZones.RemoveAt(i);
+            return true;
+        }
+
+        return false;
+    }
+
+    private void RefreshLocalAnomalyCard()
+    {
+        for (int i = activeLocalZones.Count - 1; i >= 0; i--)
+        {
+            if (activeLocalZones[i].Source != null)
+                continue;
+
+            activeLocalZones.RemoveAt(i);
+        }
+
+        if (activeLocalZones.Count == 0)
+        {
+            view?.HideLocalAnomaly();
+            localCardVisible = false;
+            return;
+        }
+
+        LevelAnomalyType type =
+            activeLocalZones[activeLocalZones.Count - 1].Type;
+
+        if (localCardVisible &&
+            displayedLocalAnomalyType == type)
+        {
+            return;
+        }
+
+        LevelAnomalyData data = FindAnomalyData(type);
+
+        if (data == null)
+        {
+            Debug.LogWarning(
+                "[LevelAnomalyController] Missing data for local " +
+                $"anomaly {type}.",
+                this
+            );
+            view?.HideLocalAnomaly();
+            localCardVisible = false;
+            return;
+        }
+
+        displayedLocalAnomalyType = type;
+        localCardVisible = true;
+        view?.ShowLocalAnomaly(data);
+    }
+
+    private LevelAnomalyData FindAnomalyData(LevelAnomalyType type)
+    {
+        if (availableAnomalies == null)
+            return null;
+
+        for (int i = 0; i < availableAnomalies.Length; i++)
+        {
+            LevelAnomalyData data = availableAnomalies[i];
+
+            if (data != null && data.AnomalyType == type)
+                return data;
+        }
+
+        return null;
+    }
+
+    private static bool IsLocalAnomalyType(LevelAnomalyType type)
+    {
+        return TryGetLocalAnomalyKind(type, out _);
+    }
+
+    private static bool TryGetLocalAnomalyKind(
+        LevelAnomalyType type,
+        out LocalAnomalyKind kind)
+    {
+        switch (type)
+        {
+            case LevelAnomalyType.Berserk:
+                kind = LocalAnomalyKind.Berserk;
+                return true;
+
+            case LevelAnomalyType.Stasis:
+                kind = LocalAnomalyKind.Stasis;
+                return true;
+
+            default:
+                kind = default;
+                return false;
+        }
+    }
+
+    private bool HasZonePrefab(LocalAnomalyKind kind)
+    {
+        switch (kind)
+        {
+            case LocalAnomalyKind.Berserk:
+                return berserkZonePrefab != null;
+
+            case LocalAnomalyKind.Stasis:
+                return stasisZonePrefab != null;
+
+            default:
+                return false;
+        }
+    }
+
+    private static bool UsesGlobalIntro(LevelAnomalyType type)
+    {
+        switch (type)
+        {
+            case LevelAnomalyType.ExplosiveInfection:
+            case LevelAnomalyType.Haste:
+            case LevelAnomalyType.Regeneration:
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
     private void SpawnLocalAnomalyZones()
     {
         CleanupLocalAnomalyZones();
@@ -400,7 +679,8 @@ public sealed class LevelAnomalyController : MonoBehaviour
         {
             Debug.LogWarning(
                 "[LevelAnomalyController] Local anomalies cannot spawn: " +
-                "prefabs or GameplayAreaService are missing.",
+                "zone prefabs or GameplayAreaService are missing. " +
+                "Continuing without an anomaly.",
                 this
             );
             return;
@@ -410,7 +690,15 @@ public sealed class LevelAnomalyController : MonoBehaviour
             GameObject.FindGameObjectWithTag("Player");
 
         if (playerObject == null)
+        {
+            Debug.LogWarning(
+                "[LevelAnomalyController] Local anomalies cannot spawn: " +
+                "the Player object was not found. Continuing without " +
+                "an anomaly.",
+                this
+            );
             return;
+        }
 
         Vector3 playerStart = playerObject.transform.position;
         List<LocalAnomalyPlacement> placements = new();
@@ -435,8 +723,9 @@ public sealed class LevelAnomalyController : MonoBehaviour
                     out Vector3 position))
             {
                 Debug.LogWarning(
-                    "[LevelAnomalyController] No valid position exists " +
-                    $"for local anomaly {i + 1}.",
+                    "[LevelAnomalyController] No valid position was " +
+                    $"found for local anomaly {i + 1}. Continuing " +
+                    "without that zone.",
                     this
                 );
                 break;
@@ -507,7 +796,11 @@ public sealed class LevelAnomalyController : MonoBehaviour
                 position,
                 Quaternion.identity
             );
-            zone.Initialize(radius, playerSpeedMultiplier);
+            zone.Initialize(
+                radius,
+                playerSpeedMultiplier,
+                this
+            );
             stasisZones.Add(zone);
             return;
         }
@@ -517,7 +810,11 @@ public sealed class LevelAnomalyController : MonoBehaviour
             position,
             Quaternion.identity
         );
-        berserkZone.Initialize(radius, enemySpeedMultiplier);
+        berserkZone.Initialize(
+            radius,
+            enemySpeedMultiplier,
+            this
+        );
         berserkZones.Add(berserkZone);
     }
 
@@ -652,6 +949,9 @@ public sealed class LevelAnomalyController : MonoBehaviour
         }
 
         stasisZones.Clear();
+        activeLocalZones.Clear();
+        localCardVisible = false;
+        view?.HideLocalAnomaly();
     }
 
     private void ResolveGameplayArea()
@@ -684,8 +984,13 @@ public sealed class LevelAnomalyController : MonoBehaviour
         explodedEnemyIds.Clear();
         chainSuppressedEnemyIds.Clear();
 
-        if (!IsIntroComplete && Mathf.Approximately(Time.timeScale, 0f))
+        if (introPauseApplied &&
+            Mathf.Approximately(Time.timeScale, 0f))
+        {
             Time.timeScale = previousTimeScale;
+        }
+
+        introPauseApplied = false;
 
         if (Instance == this)
             Instance = null;

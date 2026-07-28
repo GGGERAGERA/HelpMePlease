@@ -18,6 +18,7 @@ public sealed class BerserkZone : MonoBehaviour
     private CircleCollider2D zoneCollider;
     private LineRenderer fill;
     private LineRenderer outline;
+    private LevelAnomalyController anomalyController;
     private float speedMultiplier = 1.5f;
     private int playerColliderCount;
     private bool initialized;
@@ -35,10 +36,14 @@ public sealed class BerserkZone : MonoBehaviour
         EnemyHealth.Despawned += HandleEnemyDespawned;
     }
 
-    public void Initialize(float radius, float enemySpeedMultiplier)
+    public void Initialize(
+        float radius,
+        float enemySpeedMultiplier,
+        LevelAnomalyController controller)
     {
         float safeRadius = Mathf.Max(0.1f, radius);
         speedMultiplier = Mathf.Max(1f, enemySpeedMultiplier);
+        anomalyController = controller;
         zoneCollider.radius = safeRadius;
         ConfigureVisual(safeRadius);
         effectsCleared = false;
@@ -58,12 +63,10 @@ public sealed class BerserkZone : MonoBehaviour
             playerColliderCount++;
 
             if (playerColliderCount == 1)
-            {
-                RunMessageService.Instance?.ShowCustom(
-                    "АНОМАЛИЯ: БЕРСЕРК",
-                    "Враги внутри движутся быстрее"
+                anomalyController?.NotifyLocalZoneEntered(
+                    this,
+                    LevelAnomalyType.Berserk
                 );
-            }
 
             return;
         }
@@ -93,10 +96,15 @@ public sealed class BerserkZone : MonoBehaviour
 
         if (exitingPlayer != null)
         {
+            bool wasInside = playerColliderCount > 0;
             playerColliderCount = Mathf.Max(
                 0,
                 playerColliderCount - 1
             );
+
+            if (wasInside && playerColliderCount == 0)
+                anomalyController?.NotifyLocalZoneExited(this);
+
             return;
         }
 
@@ -189,6 +197,10 @@ public sealed class BerserkZone : MonoBehaviour
             RemoveZoneEffect(movement);
 
         enemyColliderCounts.Clear();
+
+        if (playerColliderCount > 0)
+            anomalyController?.NotifyLocalZoneExited(this);
+
         playerColliderCount = 0;
 
         if (zoneCollider != null)

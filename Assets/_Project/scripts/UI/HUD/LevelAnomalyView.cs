@@ -10,6 +10,7 @@ public sealed class LevelAnomalyView : MonoBehaviour
 
     private CanvasGroup rootGroup;
     private CanvasGroup overlayGroup;
+    private Image overlayBackground;
     private Image flashImage;
     private CanvasGroup sectorGroup;
     private RectTransform sectorRect;
@@ -23,6 +24,7 @@ public sealed class LevelAnomalyView : MonoBehaviour
     private CanvasGroup pinnedGroup;
     private TextMeshProUGUI pinnedNameText;
     private TextMeshProUGUI pinnedDescriptionText;
+    private Coroutine localCardRoutine;
     private bool built;
 
     private static readonly Color DarkPanel =
@@ -34,7 +36,10 @@ public sealed class LevelAnomalyView : MonoBehaviour
 
     private void Awake()
     {
-        Prepare();
+        rootGroup = GetComponent<CanvasGroup>();
+        rootGroup.alpha = 0f;
+        rootGroup.interactable = false;
+        rootGroup.blocksRaycasts = false;
     }
 
     public void Prepare()
@@ -43,16 +48,19 @@ public sealed class LevelAnomalyView : MonoBehaviour
             return;
 
         built = true;
-        rootGroup = GetComponent<CanvasGroup>();
-        rootGroup.alpha = 1f;
+        if (rootGroup == null)
+            rootGroup = GetComponent<CanvasGroup>();
+
+        rootGroup.alpha = 0f;
         rootGroup.interactable = false;
-        rootGroup.blocksRaycasts = true;
+        rootGroup.blocksRaycasts = false;
 
         RectTransform rootRect = (RectTransform)transform;
         Stretch(rootRect);
 
         BuildOverlay();
         BuildPinnedCard();
+        overlayGroup.gameObject.SetActive(false);
     }
 
     public IEnumerator PlayIntro(
@@ -60,9 +68,12 @@ public sealed class LevelAnomalyView : MonoBehaviour
         LevelAnomalyData anomaly)
     {
         Prepare();
+        StopLocalCardRoutine();
         SetData(sector, anomaly);
 
+        rootGroup.alpha = 1f;
         rootGroup.blocksRaycasts = true;
+        overlayBackground.enabled = true;
         overlayGroup.gameObject.SetActive(true);
         pinnedGroup.gameObject.SetActive(false);
 
@@ -96,14 +107,87 @@ public sealed class LevelAnomalyView : MonoBehaviour
         rootGroup.blocksRaycasts = false;
     }
 
+    public void ShowLocalAnomaly(LevelAnomalyData anomaly)
+    {
+        if (anomaly == null)
+            return;
+
+        Prepare();
+        StopLocalCardRoutine();
+        localCardRoutine = StartCoroutine(
+            ShowLocalAnomalyRoutine(anomaly)
+        );
+    }
+
+    public void HideLocalAnomaly()
+    {
+        if (!built)
+            return;
+
+        StopLocalCardRoutine();
+        revealCardGroup.alpha = 0f;
+        pinnedGroup.alpha = 0f;
+        pinnedGroup.gameObject.SetActive(false);
+        overlayGroup.gameObject.SetActive(false);
+        overlayBackground.enabled = true;
+        rootGroup.alpha = 0f;
+        rootGroup.blocksRaycasts = false;
+    }
+
+    private IEnumerator ShowLocalAnomalyRoutine(
+        LevelAnomalyData anomaly)
+    {
+        SetData(null, anomaly);
+
+        rootGroup.alpha = 1f;
+        rootGroup.blocksRaycasts = false;
+        overlayBackground.enabled = false;
+        overlayGroup.gameObject.SetActive(true);
+        overlayGroup.alpha = 1f;
+        sectorGroup.alpha = 0f;
+        alertGroup.alpha = 0f;
+        flashImage.color = new Color(Cyan.r, Cyan.g, Cyan.b, 0f);
+        pinnedGroup.alpha = 0f;
+        pinnedGroup.gameObject.SetActive(false);
+        revealCardGroup.alpha = 0f;
+        revealCardRect.anchoredPosition = Vector2.zero;
+        revealCardRect.localScale = Vector3.one * 0.7f;
+
+        yield return ScaleAndFadeCard(0.25f);
+        yield return ScaleCard(
+            Vector3.one * 1.08f,
+            Vector3.one,
+            0.08f
+        );
+        yield return WaitRealtime(0.45f);
+        yield return DockCard(0.28f);
+
+        revealCardGroup.alpha = 0f;
+        pinnedGroup.gameObject.SetActive(true);
+        pinnedGroup.alpha = 1f;
+        overlayGroup.gameObject.SetActive(false);
+        overlayBackground.enabled = true;
+        localCardRoutine = null;
+    }
+
+    private void StopLocalCardRoutine()
+    {
+        if (localCardRoutine == null)
+            return;
+
+        StopCoroutine(localCardRoutine);
+        localCardRoutine = null;
+    }
+
     private void BuildOverlay()
     {
         GameObject overlay = CreateUiObject("AnomalyIntroOverlay", transform);
         RectTransform overlayRect = overlay.GetComponent<RectTransform>();
         Stretch(overlayRect);
-        Image overlayImage = overlay.AddComponent<Image>();
-        overlayImage.color = new Color(0.005f, 0.008f, 0.015f, 0.9f);
-        overlayImage.raycastTarget = true;
+        overlayBackground = overlay.AddComponent<Image>();
+        overlayBackground.color =
+            new Color(0.005f, 0.008f, 0.015f, 0.9f);
+        overlayBackground.raycastTarget = true;
         overlayGroup = overlay.AddComponent<CanvasGroup>();
 
         GameObject flash = CreateUiObject("GlitchFlash", overlay.transform);
@@ -440,5 +524,10 @@ public sealed class LevelAnomalyView : MonoBehaviour
         rect.pivot = new Vector2(0.5f, 0.5f);
         rect.anchoredPosition = position;
         rect.sizeDelta = size;
+    }
+
+    private void OnDisable()
+    {
+        HideLocalAnomaly();
     }
 }

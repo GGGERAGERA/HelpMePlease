@@ -15,6 +15,7 @@ public sealed class StasisZone : MonoBehaviour
     private CircleCollider2D zoneCollider;
     private LineRenderer fill;
     private LineRenderer outline;
+    private LevelAnomalyController anomalyController;
     private CharacterMovement2D affectedMovement;
     private float speedMultiplier = 0.65f;
     private int playerColliderCount;
@@ -28,7 +29,10 @@ public sealed class StasisZone : MonoBehaviour
         BuildVisual();
     }
 
-    public void Initialize(float radius, float playerSpeedMultiplier)
+    public void Initialize(
+        float radius,
+        float playerSpeedMultiplier,
+        LevelAnomalyController controller)
     {
         float safeRadius = Mathf.Max(0.1f, radius);
         speedMultiplier = Mathf.Clamp(
@@ -36,6 +40,7 @@ public sealed class StasisZone : MonoBehaviour
             0.1f,
             1f
         );
+        anomalyController = controller;
         zoneCollider.radius = safeRadius;
         ConfigureVisual(safeRadius);
         effectCleared = false;
@@ -66,9 +71,9 @@ public sealed class StasisZone : MonoBehaviour
             return;
 
         ApplyEffect(movement);
-        RunMessageService.Instance?.ShowCustom(
-            "АНОМАЛИЯ: СТАЗИС",
-            "Передвижение внутри зоны замедлено"
+        anomalyController?.NotifyLocalZoneEntered(
+            this,
+            LevelAnomalyType.Stasis
         );
     }
 
@@ -90,6 +95,7 @@ public sealed class StasisZone : MonoBehaviour
 
         RemoveEffect(movement);
         affectedMovement = null;
+        anomalyController?.NotifyLocalZoneExited(this);
     }
 
     private void ApplyEffect(CharacterMovement2D movement)
@@ -143,6 +149,9 @@ public sealed class StasisZone : MonoBehaviour
         {
             RemoveEffect(affectedMovement);
         }
+
+        if (playerColliderCount > 0)
+            anomalyController?.NotifyLocalZoneExited(this);
 
         affectedMovement = null;
         playerColliderCount = 0;

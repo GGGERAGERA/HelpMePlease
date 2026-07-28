@@ -37,9 +37,23 @@ public sealed class GameplayAreaService : MonoBehaviour
         return IsInside(playableArea, position, 0f);
     }
 
+    public bool IsInsidePlayableArea(
+        Vector2 position,
+        float edgePadding)
+    {
+        return IsInside(playableArea, position, edgePadding);
+    }
+
     public bool IsInsideSpawnArea(Vector2 position)
     {
         return IsInside(spawnArea, position, 0f);
+    }
+
+    public bool IsInsideSpawnArea(
+        Vector2 position,
+        float edgePadding)
+    {
+        return IsInside(spawnArea, position, edgePadding);
     }
 
     public bool TryGetSpawnPosition(
