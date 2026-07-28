@@ -65,7 +65,7 @@ public sealed class BerserkZone : MonoBehaviour
             if (playerColliderCount == 1)
                 anomalyController?.NotifyLocalZoneEntered(
                     this,
-                    LevelAnomalyType.Berserk
+                    LocalAnomalyType.Berserk
                 );
 
             return;

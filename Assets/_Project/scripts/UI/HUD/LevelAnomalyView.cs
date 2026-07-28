@@ -65,11 +65,11 @@ public sealed class LevelAnomalyView : MonoBehaviour
 
     public IEnumerator PlayIntro(
         LevelNodeData sector,
-        LevelAnomalyData anomaly)
+        LevelMechanicPresentationData presentation)
     {
         Prepare();
         StopLocalCardRoutine();
-        SetData(sector, anomaly);
+        SetData(sector, presentation);
 
         rootGroup.alpha = 1f;
         rootGroup.blocksRaycasts = true;
@@ -107,15 +107,13 @@ public sealed class LevelAnomalyView : MonoBehaviour
         rootGroup.blocksRaycasts = false;
     }
 
-    public void ShowLocalAnomaly(LevelAnomalyData anomaly)
+    public void ShowLocalAnomaly(
+        LevelMechanicPresentationData presentation)
     {
-        if (anomaly == null)
-            return;
-
         Prepare();
         StopLocalCardRoutine();
         localCardRoutine = StartCoroutine(
-            ShowLocalAnomalyRoutine(anomaly)
+            ShowLocalAnomalyRoutine(presentation)
         );
     }
 
@@ -135,9 +133,9 @@ public sealed class LevelAnomalyView : MonoBehaviour
     }
 
     private IEnumerator ShowLocalAnomalyRoutine(
-        LevelAnomalyData anomaly)
+        LevelMechanicPresentationData presentation)
     {
-        SetData(null, anomaly);
+        SetData(null, presentation);
 
         rootGroup.alpha = 1f;
         rootGroup.blocksRaycasts = false;
@@ -327,15 +325,18 @@ public sealed class LevelAnomalyView : MonoBehaviour
         pinned.SetActive(false);
     }
 
-    private void SetData(LevelNodeData sector, LevelAnomalyData anomaly)
+    private void SetData(
+        LevelNodeData sector,
+        LevelMechanicPresentationData presentation)
     {
         sectorText.text = sector != null
             ? sector.nodeName
             : "СЕКТОР";
-        revealNameText.text = anomaly.DisplayName;
-        revealDescriptionText.text = anomaly.Description;
-        pinnedNameText.text = anomaly.DisplayName;
-        pinnedDescriptionText.text = anomaly.PinnedDescription;
+        revealNameText.text = presentation.Title;
+        revealDescriptionText.text = presentation.Description;
+        pinnedNameText.text = presentation.Title;
+        pinnedDescriptionText.text =
+            presentation.PinnedDescription;
     }
 
     private IEnumerator AnimateSectorIn(float duration)

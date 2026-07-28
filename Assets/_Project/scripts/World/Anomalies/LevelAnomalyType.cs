@@ -1,3 +1,4 @@
+// Legacy mixed type kept only for existing LevelAnomalyData assets.
 public enum LevelAnomalyType
 {
     ExplosiveInfection,

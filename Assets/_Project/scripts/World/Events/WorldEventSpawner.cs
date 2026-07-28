@@ -106,7 +106,7 @@ public class WorldEventSpawner : MonoBehaviour
             Random.value < eventInsideAnomalyChance;
         bool placedInsideAnomaly = false;
         bool usedFallback = false;
-        LevelAnomalyType? selectedAnomalyType = null;
+        LocalAnomalyType? selectedAnomalyType = null;
         Vector3 spawnPosition = default;
 
         if (anomalyPlacementRequested)
@@ -166,7 +166,7 @@ public class WorldEventSpawner : MonoBehaviour
         WorldEvent prefab,
         Vector3 playerPosition,
         out Vector3 position,
-        out LevelAnomalyType? selectedAnomalyType)
+        out LocalAnomalyType? selectedAnomalyType)
     {
         position = default;
         selectedAnomalyType = null;

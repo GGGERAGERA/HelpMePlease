@@ -9,7 +9,7 @@ public sealed class WorldRuleController : MonoBehaviour
     [Header("World Rules")]
     [SerializeField] private bool enableWorldRules;
     [SerializeField] private WorldAccelerationRule worldAccelerationRule;
-    [SerializeField] private LevelAnomalyData[] availableRules;
+    [SerializeField] private WorldRuleData[] availableRules;
 
     [Header("View")]
     [SerializeField] private LevelAnomalyView view;
@@ -22,7 +22,7 @@ public sealed class WorldRuleController : MonoBehaviour
     private readonly HashSet<int> explodedEnemyIds = new();
     private readonly HashSet<int> chainSuppressedEnemyIds = new();
 
-    private LevelAnomalyData activeRule;
+    private WorldRuleData activeRule;
     private PlayerHealth playerHealth;
     private PlayerCombatModifiers playerModifiers;
     private float originalOutgoingDamageMultiplier = 1f;
@@ -34,7 +34,7 @@ public sealed class WorldRuleController : MonoBehaviour
     private bool hasteApplied;
     private bool introPauseApplied;
 
-    public LevelAnomalyData ActiveRule => activeRule;
+    public WorldRuleData ActiveRule => activeRule;
     public bool IsIntroComplete { get; private set; }
 
     private void Awake()
@@ -80,7 +80,7 @@ public sealed class WorldRuleController : MonoBehaviour
             playerModifiers = player.GetComponent<PlayerCombatModifiers>();
         }
 
-        if (!UsesGlobalIntro(activeRule.AnomalyType))
+        if (!UsesGlobalIntro(activeRule.RuleType))
         {
             Debug.LogWarning(
                 "[WorldRuleController] Selected data " +
@@ -123,7 +123,7 @@ public sealed class WorldRuleController : MonoBehaviour
         }
     }
 
-    private LevelAnomalyData SelectGlobalRule()
+    private WorldRuleData SelectGlobalRule()
     {
         if (availableRules == null || availableRules.Length == 0)
             return null;
@@ -132,9 +132,9 @@ public sealed class WorldRuleController : MonoBehaviour
 
         for (int i = 0; i < availableRules.Length; i++)
         {
-            LevelAnomalyData rule = availableRules[i];
+            WorldRuleData rule = availableRules[i];
 
-            if (rule != null && UsesGlobalIntro(rule.AnomalyType))
+            if (rule != null && UsesGlobalIntro(rule.RuleType))
                 totalWeight += rule.SelectionWeight;
         }
 
@@ -142,13 +142,13 @@ public sealed class WorldRuleController : MonoBehaviour
             return null;
 
         float roll = Random.value * totalWeight;
-        LevelAnomalyData lastEligible = null;
+        WorldRuleData lastEligible = null;
 
         for (int i = 0; i < availableRules.Length; i++)
         {
-            LevelAnomalyData rule = availableRules[i];
+            WorldRuleData rule = availableRules[i];
 
-            if (rule == null || !UsesGlobalIntro(rule.AnomalyType))
+            if (rule == null || !UsesGlobalIntro(rule.RuleType))
                 continue;
 
             lastEligible = rule;
@@ -161,13 +161,13 @@ public sealed class WorldRuleController : MonoBehaviour
         return lastEligible;
     }
 
-    private static bool UsesGlobalIntro(LevelAnomalyType type)
+    private static bool UsesGlobalIntro(WorldRuleType type)
     {
         switch (type)
         {
-            case LevelAnomalyType.ExplosiveInfection:
-            case LevelAnomalyType.Haste:
-            case LevelAnomalyType.Regeneration:
+            case WorldRuleType.ExplosiveInfection:
+            case WorldRuleType.Haste:
+            case WorldRuleType.Regeneration:
                 return true;
 
             default:
@@ -177,17 +177,17 @@ public sealed class WorldRuleController : MonoBehaviour
 
     private void ApplyGlobalGameplayEffect()
     {
-        switch (activeRule.AnomalyType)
+        switch (activeRule.RuleType)
         {
-            case LevelAnomalyType.ExplosiveInfection:
+            case WorldRuleType.ExplosiveInfection:
                 SubscribeEnemyLifecycle();
                 break;
 
-            case LevelAnomalyType.Haste:
+            case WorldRuleType.Haste:
                 ApplyHaste();
                 break;
 
-            case LevelAnomalyType.Regeneration:
+            case WorldRuleType.Regeneration:
                 ApplyRegeneration();
                 break;
         }
@@ -234,13 +234,13 @@ public sealed class WorldRuleController : MonoBehaviour
         if (enemy == null || !registeredEnemies.Add(enemy))
             return;
 
-        if (activeRule.AnomalyType ==
-            LevelAnomalyType.ExplosiveInfection)
+        if (activeRule.RuleType ==
+            WorldRuleType.ExplosiveInfection)
         {
             enemy.OnDied += HandleEnemyDied;
         }
 
-        if (activeRule.AnomalyType == LevelAnomalyType.Haste)
+        if (activeRule.RuleType == WorldRuleType.Haste)
         {
             EnemyMovement movement = GetEnemyMovement(enemy);
             movement?.SetAnomalySpeedMultiplier(
@@ -358,7 +358,10 @@ public sealed class WorldRuleController : MonoBehaviour
     private IEnumerator IntroRoutine(LevelNodeData level)
     {
         if (view != null)
-            yield return view.PlayIntro(level, activeRule);
+            yield return view.PlayIntro(
+                level,
+                activeRule.Presentation
+            );
 
         FinishIntroPause();
     }

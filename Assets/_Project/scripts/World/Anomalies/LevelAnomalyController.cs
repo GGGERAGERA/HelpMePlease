@@ -7,12 +7,12 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
     public readonly struct LocalAnomalyZoneGeometry
     {
-        public LevelAnomalyType Type { get; }
+        public LocalAnomalyType Type { get; }
         public Vector2 Center { get; }
         public float Radius { get; }
 
         public LocalAnomalyZoneGeometry(
-            LevelAnomalyType type,
+            LocalAnomalyType type,
             Vector2 center,
             float radius)
         {
@@ -25,7 +25,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
     public static LevelAnomalyController Instance { get; private set; }
 
     [Header("Data")]
-    [SerializeField] private LevelAnomalyData[] availableAnomalies;
+    [SerializeField] private LocalAnomalyData[] availableAnomalies;
 
     [Header("View")]
     [SerializeField] private LevelAnomalyView view;
@@ -68,23 +68,23 @@ public sealed class LevelAnomalyController : MonoBehaviour
     private readonly struct ActiveLocalZone
     {
         public readonly Object Source;
-        public readonly LevelAnomalyType Type;
+        public readonly LocalAnomalyType Type;
 
         public ActiveLocalZone(
             Object source,
-            LevelAnomalyType type)
+            LocalAnomalyType type)
         {
             Source = source;
             Type = type;
         }
     }
 
-    private LevelAnomalyData activeAnomaly;
+    private LocalAnomalyData activeAnomaly;
     private bool levelStarted;
     private bool localCardVisible;
-    private LevelAnomalyType displayedLocalAnomalyType;
+    private LocalAnomalyType displayedLocalAnomalyType;
 
-    public LevelAnomalyData ActiveAnomaly => activeAnomaly;
+    public LocalAnomalyData ActiveAnomaly => activeAnomaly;
     public bool IsIntroComplete { get; private set; }
 
     public void CollectActiveLocalZones(
@@ -100,7 +100,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
             AddLocalZoneGeometry(
                 result,
                 berserkZones[i],
-                LevelAnomalyType.Berserk
+                LocalAnomalyType.Berserk
             );
         }
 
@@ -109,7 +109,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
             AddLocalZoneGeometry(
                 result,
                 stasisZones[i],
-                LevelAnomalyType.Stasis
+                LocalAnomalyType.Stasis
             );
         }
     }
@@ -117,7 +117,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
     private static void AddLocalZoneGeometry(
         List<LocalAnomalyZoneGeometry> result,
         MonoBehaviour zone,
-        LevelAnomalyType type)
+        LocalAnomalyType type)
     {
         if (zone == null || !zone.isActiveAndEnabled)
             return;
@@ -196,7 +196,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
         IsIntroComplete = true;
     }
 
-    private LevelAnomalyData SelectLocalAnomaly()
+    private LocalAnomalyData SelectLocalAnomaly()
     {
         if (availableAnomalies == null || availableAnomalies.Length == 0)
             return null;
@@ -205,7 +205,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
         for (int i = 0; i < availableAnomalies.Length; i++)
         {
-            LevelAnomalyData anomaly = availableAnomalies[i];
+            LocalAnomalyData anomaly = availableAnomalies[i];
 
             if (anomaly != null &&
                 IsLocalAnomalyType(anomaly.AnomalyType))
@@ -218,11 +218,11 @@ public sealed class LevelAnomalyController : MonoBehaviour
             return null;
 
         float roll = Random.value * totalWeight;
-        LevelAnomalyData lastEligible = null;
+        LocalAnomalyData lastEligible = null;
 
         for (int i = 0; i < availableAnomalies.Length; i++)
         {
-            LevelAnomalyData anomaly = availableAnomalies[i];
+            LocalAnomalyData anomaly = availableAnomalies[i];
 
             if (anomaly == null ||
                 !IsLocalAnomalyType(anomaly.AnomalyType))
@@ -242,7 +242,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
     public void NotifyLocalZoneEntered(
         Object zone,
-        LevelAnomalyType type)
+        LocalAnomalyType type)
     {
         if (zone == null || !IsLocalAnomalyType(type))
             return;
@@ -294,7 +294,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
             return;
         }
 
-        LevelAnomalyType type =
+        LocalAnomalyType type =
             activeLocalZones[activeLocalZones.Count - 1].Type;
 
         if (localCardVisible &&
@@ -303,7 +303,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
             return;
         }
 
-        LevelAnomalyData data = FindAnomalyData(type);
+        LocalAnomalyData data = FindAnomalyData(type);
 
         if (data == null)
         {
@@ -319,17 +319,17 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
         displayedLocalAnomalyType = type;
         localCardVisible = true;
-        view?.ShowLocalAnomaly(data);
+        view?.ShowLocalAnomaly(data.Presentation);
     }
 
-    private LevelAnomalyData FindAnomalyData(LevelAnomalyType type)
+    private LocalAnomalyData FindAnomalyData(LocalAnomalyType type)
     {
         if (availableAnomalies == null)
             return null;
 
         for (int i = 0; i < availableAnomalies.Length; i++)
         {
-            LevelAnomalyData data = availableAnomalies[i];
+            LocalAnomalyData data = availableAnomalies[i];
 
             if (data != null && data.AnomalyType == type)
                 return data;
@@ -338,22 +338,22 @@ public sealed class LevelAnomalyController : MonoBehaviour
         return null;
     }
 
-    private static bool IsLocalAnomalyType(LevelAnomalyType type)
+    private static bool IsLocalAnomalyType(LocalAnomalyType type)
     {
         return TryGetLocalAnomalyKind(type, out _);
     }
 
     private static bool TryGetLocalAnomalyKind(
-        LevelAnomalyType type,
+        LocalAnomalyType type,
         out LocalAnomalyKind kind)
     {
         switch (type)
         {
-            case LevelAnomalyType.Berserk:
+            case LocalAnomalyType.Berserk:
                 kind = LocalAnomalyKind.Berserk;
                 return true;
 
-            case LevelAnomalyType.Stasis:
+            case LocalAnomalyType.Stasis:
                 kind = LocalAnomalyKind.Stasis;
                 return true;
 
@@ -465,7 +465,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
         List<LocalAnomalyKind> availableKinds)
     {
         LocalAnomalyKind preferred =
-            activeAnomaly.AnomalyType == LevelAnomalyType.Stasis
+            activeAnomaly.AnomalyType == LocalAnomalyType.Stasis
                 ? LocalAnomalyKind.Stasis
                 : LocalAnomalyKind.Berserk;
 

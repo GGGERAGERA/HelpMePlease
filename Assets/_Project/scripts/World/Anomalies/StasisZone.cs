@@ -73,7 +73,7 @@ public sealed class StasisZone : MonoBehaviour
         ApplyEffect(movement);
         anomalyController?.NotifyLocalZoneEntered(
             this,
-            LevelAnomalyType.Stasis
+            LocalAnomalyType.Stasis
         );
     }
 
