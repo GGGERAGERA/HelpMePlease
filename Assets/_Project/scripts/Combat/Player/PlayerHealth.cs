@@ -14,18 +14,23 @@ public class PlayerHealth : MonoBehaviour
 
     private PlayerWhiteFlash whiteFlash;
     private PlayerHitSound hitSound;
+    private CharacterMovement2D movement;
 
 
-    [SerializeField] private float invulnerabilityTime = 0.5f;
+    [SerializeField] private float invulnerabilityTime = 0.6f;
     [SerializeField, Min(0f)] private float incomingDamageMultiplier = 1f;
 
     private bool isInvulnerable;
 
-    void Start()
+    private void Awake()
     {
         whiteFlash = GetComponent<PlayerWhiteFlash>();
         hitSound = GetComponent<PlayerHitSound>();
+        movement = GetComponent<CharacterMovement2D>();
+    }
 
+    void Start()
+    {
         // CharacterSpawner can restore a run snapshot before this Start runs.
         // Only initialize health when no valid runtime value was supplied.
         if (currentHealth <= 0f)
@@ -44,6 +49,7 @@ public class PlayerHealth : MonoBehaviour
         float finalDamage = Mathf.Max(0f, damage) * incomingDamageMultiplier;
         currentHealth -= finalDamage;
 
+        movement?.ApplyKnockback(hitDirection);
         whiteFlash?.Flash();
 
         if (currentHealth > 0f)
