@@ -211,10 +211,14 @@ public class EnemySpawner : MonoBehaviour
         Vector3 origin,
         int enemyCount,
         float minDistance = 1f,
-        float maxDistance = 3f)
+        float maxDistance = 3f,
+        float minimumDistanceFromPlayer = 0f)
     {
         if (gameplayArea == null)
             ResolveGameplayArea();
+
+        if (player == null)
+            player = GameObject.FindGameObjectWithTag("Player")?.transform;
 
         RemoveDestroyedEnemies();
 
@@ -228,11 +232,11 @@ public class EnemySpawner : MonoBehaviour
 
             if (selectedPrefab == null ||
                 gameplayArea == null ||
-                !gameplayArea.TryGetSpawnPosition(
+                !TryGetAdditionalWaveSpawnPosition(
                     origin,
                     minDistance,
                     maxDistance,
-                    spawnPositionAttempts,
+                    minimumDistanceFromPlayer,
                     out Vector3 spawnPosition))
             {
                 break;
@@ -240,6 +244,52 @@ public class EnemySpawner : MonoBehaviour
 
             SpawnEnemyAt(selectedPrefab, spawnPosition);
         }
+    }
+
+    private bool TryGetAdditionalWaveSpawnPosition(
+        Vector3 origin,
+        float minDistance,
+        float maxDistance,
+        float minimumDistanceFromPlayer,
+        out Vector3 spawnPosition)
+    {
+        float safePlayerDistance = Mathf.Max(0f, minimumDistanceFromPlayer);
+        float minimumRadius = Mathf.Max(0f, minDistance);
+        float maximumRadius = Mathf.Max(minimumRadius, maxDistance);
+
+        for (int i = 0; i < Mathf.Max(1, spawnPositionAttempts); i++)
+        {
+            if (!gameplayArea.TryGetSpawnPosition(
+                    origin,
+                    minDistance,
+                    maxDistance,
+                    1,
+                    out Vector3 candidate))
+            {
+                continue;
+            }
+
+            float originDistance = Vector2.Distance(candidate, origin);
+
+            if (originDistance < minimumRadius ||
+                originDistance > maximumRadius)
+            {
+                continue;
+            }
+
+            if (player != null &&
+                Vector2.Distance(candidate, player.position) <
+                safePlayerDistance)
+            {
+                continue;
+            }
+
+            spawnPosition = candidate;
+            return true;
+        }
+
+        spawnPosition = default;
+        return false;
     }
 
     private void CaptureBaseSettings()

@@ -6,6 +6,7 @@ public abstract class WorldEvent : Interactable
 
     public bool IsCompleted { get; private set; }
     public bool IsStarted { get; private set; }
+    public virtual Vector3 RewardPosition => transform.position;
     public override bool CanInteract
     {
         get

@@ -37,6 +37,12 @@ public sealed class FalseSignalPoint : MonoBehaviour
         Destroy(gameObject);
     }
 
+    private void OnDestroy()
+    {
+        owner?.HandleSignalPointDestroyed(this);
+        owner = null;
+    }
+
     private void BuildVisual()
     {
         if (lineMaterial == null)

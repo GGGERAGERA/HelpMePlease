@@ -217,6 +217,31 @@ public class HUDManager : MonoBehaviour
             worldEventMarker.Hide();
     }
 
+    public WorldEventMarker CreateWorldEventMarker(
+        Transform target,
+        string label)
+    {
+        if (worldEventMarker == null || target == null)
+            return null;
+
+        WorldEventMarker marker = Instantiate(
+            worldEventMarker,
+            worldEventMarker.transform.parent
+        );
+        marker.gameObject.SetActive(true);
+        marker.Show(target, label);
+        return marker;
+    }
+
+    public void RemoveWorldEventMarker(WorldEventMarker marker)
+    {
+        if (marker == null || marker == worldEventMarker)
+            return;
+
+        marker.Hide();
+        Destroy(marker.gameObject);
+    }
+
     public void ShowRunMessage(string title, string description, float duration = 3f)
     {
         if (runMessageView != null)

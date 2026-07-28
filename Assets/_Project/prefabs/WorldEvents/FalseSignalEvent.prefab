@@ -79,19 +79,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f51a1e2d8b0c4d0a9e07f4e27b6d1101, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FalseSignalEvent
   promptText: "\u2014 \u041D\u0430\u0447\u0430\u0442\u044C \u0441\u043E\u0431\u044B\u0442\u0438\u0435"
-  startRadius: 2.5
+  startRadius: 5
   lineMaterial: {fileID: 2100000, guid: dca396c6aa60fe549b61f941be335967, type: 2}
   signalPointPrefab: {fileID: 510000000000000004, guid: f51a1e2d8b0c4d0a9e07f4e27b6d1202, type: 3}
   signalPointCount: 3
-  minPointDistance: 4
-  maxPointDistance: 12
+  minPointDistance: 6
+  maxPointDistance: 10
   minPointSeparation: 4
   pointEdgePadding: 1
   positionAttempts: 24
   timeLimit: 45
-  falseSignalEnemyCount: 5
+  falseSignalEnemyCount: 3
+  minimumEnemyDistanceFromPlayer: 4
+  minimumSpawnRadius: 3
+  maximumSpawnRadius: 6
   enemySpawner: {fileID: 0}
   gameplayArea: {fileID: 0}

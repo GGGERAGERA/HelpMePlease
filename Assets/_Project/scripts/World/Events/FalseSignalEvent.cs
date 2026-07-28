@@ -22,15 +22,26 @@ public sealed class FalseSignalEvent : WorldEvent
 
     [Header("False Signal Wave")]
     [SerializeField, Min(0)] private int falseSignalEnemyCount = 5;
+    [SerializeField, Min(0f)] private float minimumEnemyDistanceFromPlayer = 4f;
+    [SerializeField, Min(0f)] private float minimumSpawnRadius = 3f;
+    [SerializeField, Min(0f)] private float maximumSpawnRadius = 6f;
     [SerializeField] private EnemySpawner enemySpawner;
 
     [Header("Scene")]
     [SerializeField] private GameplayAreaService gameplayArea;
 
     private readonly List<FalseSignalPoint> signalPoints = new();
+    private readonly Dictionary<FalseSignalPoint, WorldEventMarker>
+        signalPointMarkers = new();
     private Collider2D startCollider;
     private LineRenderer startVisual;
     private float timeRemaining;
+    private Vector3 rewardPosition;
+    private bool hasRewardPosition;
+
+    public override Vector3 RewardPosition => hasRewardPosition
+        ? rewardPosition
+        : base.RewardPosition;
 
     public override void Initialize(WorldEventSpawner spawner)
     {
@@ -73,7 +84,15 @@ public sealed class FalseSignalEvent : WorldEvent
         timeRemaining = timeLimit;
 
         if (!SpawnSignalPoints())
+        {
             FailFalseSignal();
+            return;
+        }
+
+        RunMessageService.Instance?.ShowCustom(
+            "НАЙДИТЕ НАСТОЯЩИЙ СИГНАЛ",
+            "Проверьте сигнальные точки до истечения времени"
+        );
     }
 
     public void ResolveSignal(FalseSignalPoint signalPoint, bool isReal)
@@ -82,18 +101,41 @@ public sealed class FalseSignalEvent : WorldEvent
             return;
 
         signalPoints.Remove(signalPoint);
+        RemoveSignalPointMarker(signalPoint);
 
         if (!isReal)
         {
+            RunMessageService.Instance?.ShowCustom(
+                "ЛОЖНЫЙ СИГНАЛ — ЗАСАДА",
+                string.Empty
+            );
             enemySpawner?.SpawnAdditionalWave(
                 signalPoint.transform.position,
-                falseSignalEnemyCount
+                falseSignalEnemyCount,
+                minimumSpawnRadius,
+                maximumSpawnRadius,
+                minimumEnemyDistanceFromPlayer
             );
             return;
         }
 
+        rewardPosition = signalPoint.transform.position;
+        hasRewardPosition = true;
+        RunMessageService.Instance?.ShowCustom(
+            "СИГНАЛ ПОДТВЕРЖДЁН",
+            string.Empty
+        );
         CleanupSignalPoints();
         CompleteEvent();
+    }
+
+    public void HandleSignalPointDestroyed(FalseSignalPoint signalPoint)
+    {
+        if (signalPoint == null)
+            return;
+
+        signalPoints.Remove(signalPoint);
+        RemoveSignalPointMarker(signalPoint);
     }
 
     private bool SpawnSignalPoints()
@@ -123,6 +165,13 @@ public sealed class FalseSignalEvent : WorldEvent
             );
             point.Initialize(this, i == realSignalIndex);
             signalPoints.Add(point);
+
+            WorldEventMarker marker =
+                HUDManager.Instance?.CreateWorldEventMarker(
+                    point.transform,
+                    "SIGNAL"
+                );
+            signalPointMarkers[point] = marker;
         }
 
         return true;
@@ -222,6 +271,8 @@ public sealed class FalseSignalEvent : WorldEvent
 
     private void CleanupSignalPoints()
     {
+        CleanupSignalPointMarkers();
+
         for (int i = 0; i < signalPoints.Count; i++)
         {
             if (signalPoints[i] != null)
@@ -229,6 +280,27 @@ public sealed class FalseSignalEvent : WorldEvent
         }
 
         signalPoints.Clear();
+    }
+
+    private void RemoveSignalPointMarker(FalseSignalPoint signalPoint)
+    {
+        if (!signalPointMarkers.TryGetValue(
+                signalPoint,
+                out WorldEventMarker marker))
+        {
+            return;
+        }
+
+        HUDManager.Instance?.RemoveWorldEventMarker(marker);
+        signalPointMarkers.Remove(signalPoint);
+    }
+
+    private void CleanupSignalPointMarkers()
+    {
+        foreach (WorldEventMarker marker in signalPointMarkers.Values)
+            HUDManager.Instance?.RemoveWorldEventMarker(marker);
+
+        signalPointMarkers.Clear();
     }
 
     private void OnDestroy()

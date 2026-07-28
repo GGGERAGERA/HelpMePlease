@@ -36,6 +36,9 @@ public class WorldEventMarker : MonoBehaviour
 
     public void Show(Transform newTarget, string label)
     {
+        if (!gameObject.activeSelf)
+            gameObject.SetActive(true);
+
         target = newTarget;
         targetLabel = label;
 

@@ -200,7 +200,7 @@ public class WorldEventSpawner : MonoBehaviour
 
         WorldEventRewardChest chest = Instantiate(
             rewardChestPrefab,
-            completedEvent.transform.position,
+            completedEvent.RewardPosition,
             Quaternion.identity
         );
         chest.Initialize(isImproved, doubleOrLeave);

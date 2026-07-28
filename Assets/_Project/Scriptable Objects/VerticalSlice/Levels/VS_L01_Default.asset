@@ -30,13 +30,12 @@ MonoBehaviour:
   enemyHealthMultiplier: 1
   enemySpeedMultiplier: 1
   spawnRateMultiplier: 1
-  hasEliteEnemies: 1
+  hasEliteEnemies: 0
   hasExplosiveEnemies: 1
   hasHoldZoneEvent: 1
   hasWorldAccelerationRule: 1
-  hasNoDamageChallenge: 1
-  hasExtraChest: 1
+  hasNoDamageChallenge: 0
+  hasExtraChest: 0
   experienceGainMultiplier: 1
   completionGoldMultiplier: 1
-  guaranteedRewardRarity: 0
   bonusRareChance: 0
