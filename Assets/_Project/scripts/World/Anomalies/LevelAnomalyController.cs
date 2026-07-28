@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -44,13 +43,6 @@ public sealed class LevelAnomalyController : MonoBehaviour
     [SerializeField, Min(0f)] private float minimumDistanceBetweenAnomalies = 2f;
     [SerializeField] private GameplayAreaService gameplayArea;
 
-    [Header("Explosion")]
-    [SerializeField] private GameObject explosionFxPrefab;
-    [SerializeField, Min(0.1f)] private float explosionFxLifetime = 0.8f;
-
-    private readonly HashSet<EnemyHealth> registeredEnemies = new();
-    private readonly HashSet<int> explodedEnemyIds = new();
-    private readonly HashSet<int> chainSuppressedEnemyIds = new();
     private readonly List<BerserkZone> berserkZones = new();
     private readonly List<StasisZone> stasisZones = new();
     private readonly List<ActiveLocalZone> activeLocalZones = new();
@@ -88,16 +80,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
     }
 
     private LevelAnomalyData activeAnomaly;
-    private PlayerHealth playerHealth;
-    private PlayerCombatModifiers playerModifiers;
-    private float originalOutgoingDamageMultiplier = 1f;
-    private float previousTimeScale = 1f;
-    private float regenerationTimer;
     private bool levelStarted;
-    private bool enemyLifecycleSubscribed;
-    private bool regenerationApplied;
-    private bool hasteApplied;
-    private bool introPauseApplied;
     private bool localCardVisible;
     private LevelAnomalyType displayedLocalAnomalyType;
 
@@ -171,7 +154,6 @@ public sealed class LevelAnomalyController : MonoBehaviour
         }
 
         Instance = this;
-        previousTimeScale = Time.timeScale;
     }
 
     public void BeginLevel(LevelNodeData level)
@@ -180,20 +162,12 @@ public sealed class LevelAnomalyController : MonoBehaviour
             return;
 
         levelStarted = true;
-        activeAnomaly = SelectAnomaly();
+        activeAnomaly = SelectLocalAnomaly();
 
         if (activeAnomaly == null)
         {
             IsIntroComplete = true;
             return;
-        }
-
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-
-        if (player != null)
-        {
-            playerHealth = player.GetComponent<PlayerHealth>();
-            playerModifiers = player.GetComponent<PlayerCombatModifiers>();
         }
 
         if (TryGetLocalAnomalyKind(
@@ -219,27 +193,10 @@ public sealed class LevelAnomalyController : MonoBehaviour
             return;
         }
 
-        if (!UsesGlobalIntro(activeAnomaly.AnomalyType))
-        {
-            Debug.LogWarning(
-                "[LevelAnomalyController] Selected anomaly " +
-                $"'{activeAnomaly.name}' has unsupported type " +
-                $"{activeAnomaly.AnomalyType}. Continuing without " +
-                "an anomaly.",
-                this
-            );
-            IsIntroComplete = true;
-            return;
-        }
-
-        previousTimeScale = Time.timeScale;
-        Time.timeScale = 0f;
-        introPauseApplied = true;
-        ApplyGlobalGameplayEffect();
-        StartCoroutine(IntroRoutine(level));
+        IsIntroComplete = true;
     }
 
-    private LevelAnomalyData SelectAnomaly()
+    private LevelAnomalyData SelectLocalAnomaly()
     {
         if (availableAnomalies == null || availableAnomalies.Length == 0)
             return null;
@@ -248,271 +205,39 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
         for (int i = 0; i < availableAnomalies.Length; i++)
         {
-            if (availableAnomalies[i] != null)
-                totalWeight += availableAnomalies[i].SelectionWeight;
+            LevelAnomalyData anomaly = availableAnomalies[i];
+
+            if (anomaly != null &&
+                IsLocalAnomalyType(anomaly.AnomalyType))
+            {
+                totalWeight += anomaly.SelectionWeight;
+            }
         }
 
         if (totalWeight <= 0f)
             return null;
 
         float roll = Random.value * totalWeight;
+        LevelAnomalyData lastEligible = null;
 
         for (int i = 0; i < availableAnomalies.Length; i++)
         {
             LevelAnomalyData anomaly = availableAnomalies[i];
 
-            if (anomaly == null)
+            if (anomaly == null ||
+                !IsLocalAnomalyType(anomaly.AnomalyType))
+            {
                 continue;
+            }
 
+            lastEligible = anomaly;
             roll -= anomaly.SelectionWeight;
 
             if (roll <= 0f)
                 return anomaly;
         }
 
-        return availableAnomalies[availableAnomalies.Length - 1];
-    }
-
-    private void ApplyGlobalGameplayEffect()
-    {
-        switch (activeAnomaly.AnomalyType)
-        {
-            case LevelAnomalyType.ExplosiveInfection:
-                SubscribeEnemyLifecycle();
-                break;
-
-            case LevelAnomalyType.Haste:
-                ApplyHaste();
-                break;
-
-            case LevelAnomalyType.Regeneration:
-                ApplyRegeneration();
-                break;
-        }
-    }
-
-    private void ApplyHaste()
-    {
-        hasteApplied = true;
-        ExperienceManager.Instance?.SetAnomalyXpGainMultiplier(
-            activeAnomaly.ExperienceGainMultiplier
-        );
-        SubscribeEnemyLifecycle();
-    }
-
-    private void ApplyRegeneration()
-    {
-        regenerationApplied = true;
-
-        if (playerModifiers == null)
-            return;
-
-        originalOutgoingDamageMultiplier =
-            playerModifiers.bonusDamageMultiplier;
-        playerModifiers.bonusDamageMultiplier =
-            originalOutgoingDamageMultiplier *
-            activeAnomaly.OutgoingDamageMultiplier;
-    }
-
-    private void SubscribeEnemyLifecycle()
-    {
-        if (enemyLifecycleSubscribed)
-            return;
-
-        enemyLifecycleSubscribed = true;
-        EnemyHealth.Spawned += RegisterEnemy;
-        EnemyHealth.Despawned += UnregisterEnemy;
-
-        foreach (EnemyHealth enemy in EnemyHealth.ActiveInstances)
-            RegisterEnemy(enemy);
-    }
-
-    private void RegisterEnemy(EnemyHealth enemy)
-    {
-        if (enemy == null || !registeredEnemies.Add(enemy))
-            return;
-
-        if (activeAnomaly.AnomalyType ==
-            LevelAnomalyType.ExplosiveInfection)
-        {
-            enemy.OnDied += HandleEnemyDied;
-        }
-
-        if (activeAnomaly.AnomalyType == LevelAnomalyType.Haste)
-        {
-            EnemyMovement movement = GetEnemyMovement(enemy);
-            movement?.SetAnomalySpeedMultiplier(
-                activeAnomaly.EnemySpeedMultiplier
-            );
-        }
-    }
-
-    private void UnregisterEnemy(EnemyHealth enemy)
-    {
-        if (enemy == null || !registeredEnemies.Remove(enemy))
-            return;
-
-        enemy.OnDied -= HandleEnemyDied;
-    }
-
-    private void Update()
-    {
-        if (!IsIntroComplete ||
-            !regenerationApplied ||
-            activeAnomaly == null ||
-            activeAnomaly.PlayerHealthPerSecond <= 0f ||
-            playerHealth == null ||
-            playerHealth.IsDead)
-        {
-            return;
-        }
-
-        regenerationTimer += Time.deltaTime;
-
-        while (regenerationTimer >= 1f)
-        {
-            regenerationTimer -= 1f;
-            playerHealth.Heal(activeAnomaly.PlayerHealthPerSecond);
-        }
-    }
-
-    private void HandleEnemyDied(EnemyHealth source)
-    {
-        if (source == null || activeAnomaly == null)
-            return;
-
-        int sourceId = source.GetInstanceID();
-
-        if (chainSuppressedEnemyIds.Remove(sourceId))
-            return;
-
-        if (!explodedEnemyIds.Add(sourceId))
-            return;
-
-        Vector2 position = source.transform.position;
-        SpawnExplosionFx(position);
-
-        Collider2D[] hits = Physics2D.OverlapCircleAll(
-            position,
-            activeAnomaly.ExplosionRadius
-        );
-
-        HashSet<PlayerHealth> damagedPlayers = new();
-        HashSet<EnemyHealth> damagedEnemies = new();
-
-        for (int i = 0; i < hits.Length; i++)
-        {
-            Collider2D hit = hits[i];
-            PlayerHealth hitPlayer = hit.GetComponentInParent<PlayerHealth>();
-
-            if (hitPlayer != null && damagedPlayers.Add(hitPlayer))
-            {
-                Vector2 direction =
-                    (Vector2)hitPlayer.transform.position - position;
-                hitPlayer.TakeDamage(
-                    activeAnomaly.PlayerExplosionDamage,
-                    direction
-                );
-            }
-
-            EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
-
-            if (enemy == null ||
-                enemy == source ||
-                enemy.IsDead ||
-                !damagedEnemies.Add(enemy))
-            {
-                continue;
-            }
-
-            int enemyId = enemy.GetInstanceID();
-
-            if (!activeAnomaly.AllowChainReaction)
-                chainSuppressedEnemyIds.Add(enemyId);
-
-            enemy.TakeDamage(activeAnomaly.EnemyExplosionDamage, position);
-            chainSuppressedEnemyIds.Remove(enemyId);
-        }
-    }
-
-    private void SpawnExplosionFx(Vector2 position)
-    {
-        AudioService.Instance?.PlayAt(
-            AudioCueId.RocketExplosion,
-            position
-        );
-
-        if (explosionFxPrefab == null)
-            return;
-
-        GameObject fx = Instantiate(
-            explosionFxPrefab,
-            position,
-            Quaternion.identity
-        );
-        Destroy(fx, explosionFxLifetime);
-    }
-
-    private IEnumerator IntroRoutine(LevelNodeData level)
-    {
-        if (view != null)
-            yield return view.PlayIntro(level, activeAnomaly);
-
-        FinishIntroPause();
-    }
-
-    private void FinishIntroPause()
-    {
-        IsIntroComplete = true;
-
-        if (introPauseApplied &&
-            Mathf.Approximately(Time.timeScale, 0f))
-        {
-            Time.timeScale = previousTimeScale;
-        }
-
-        introPauseApplied = false;
-    }
-
-    private void RestoreRuntimeEffects()
-    {
-        if (regenerationApplied && playerModifiers != null)
-        {
-            playerModifiers.bonusDamageMultiplier =
-                originalOutgoingDamageMultiplier;
-        }
-
-        if (hasteApplied)
-        {
-            ExperienceManager.Instance?.SetAnomalyXpGainMultiplier(1f);
-
-            foreach (EnemyHealth enemy in registeredEnemies)
-            {
-                if (enemy == null)
-                    continue;
-
-                EnemyMovement movement = GetEnemyMovement(enemy);
-                movement?.SetAnomalySpeedMultiplier(1f);
-            }
-        }
-
-        CleanupLocalAnomalyZones();
-        regenerationApplied = false;
-        hasteApplied = false;
-        regenerationTimer = 0f;
-    }
-
-    private static EnemyMovement GetEnemyMovement(EnemyHealth enemy)
-    {
-        EnemyMovement movement = enemy.GetComponent<EnemyMovement>();
-
-        if (movement == null)
-            movement = enemy.GetComponentInParent<EnemyMovement>();
-
-        if (movement == null)
-            movement = enemy.GetComponentInChildren<EnemyMovement>();
-
-        return movement;
+        return lastEligible;
     }
 
     public void NotifyLocalZoneEntered(
@@ -647,20 +372,6 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
             case LocalAnomalyKind.Stasis:
                 return stasisZonePrefab != null;
-
-            default:
-                return false;
-        }
-    }
-
-    private static bool UsesGlobalIntro(LevelAnomalyType type)
-    {
-        switch (type)
-        {
-            case LevelAnomalyType.ExplosiveInfection:
-            case LevelAnomalyType.Haste:
-            case LevelAnomalyType.Regeneration:
-                return true;
 
             default:
                 return false;
@@ -965,32 +676,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
     private void OnDisable()
     {
-        RestoreRuntimeEffects();
-
-        if (enemyLifecycleSubscribed)
-        {
-            EnemyHealth.Spawned -= RegisterEnemy;
-            EnemyHealth.Despawned -= UnregisterEnemy;
-            enemyLifecycleSubscribed = false;
-        }
-
-        foreach (EnemyHealth enemy in registeredEnemies)
-        {
-            if (enemy != null)
-                enemy.OnDied -= HandleEnemyDied;
-        }
-
-        registeredEnemies.Clear();
-        explodedEnemyIds.Clear();
-        chainSuppressedEnemyIds.Clear();
-
-        if (introPauseApplied &&
-            Mathf.Approximately(Time.timeScale, 0f))
-        {
-            Time.timeScale = previousTimeScale;
-        }
-
-        introPauseApplied = false;
+        CleanupLocalAnomalyZones();
 
         if (Instance == this)
             Instance = null;

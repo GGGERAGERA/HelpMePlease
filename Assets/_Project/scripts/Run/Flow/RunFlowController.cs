@@ -16,9 +16,7 @@ public sealed class RunFlowController : MonoBehaviour
     [SerializeField] private RunCompletionCleaner completionCleaner;
 
     [Header("Level Mechanics")]
-    [SerializeField] private bool enableWorldRules;
     [SerializeField] private WorldEventSpawner worldEventSpawner;
-    [SerializeField] private WorldAccelerationRule worldAccelerationRule;
     [SerializeField] private NoDamageChallenge noDamageChallenge;
 
     private bool levelCompleted;
@@ -61,17 +59,6 @@ public sealed class RunFlowController : MonoBehaviour
 
         bool holdPointEnabled = node != null && node.hasHoldZoneEvent;
         worldEventSpawner?.SetHoldPointEnabled(holdPointEnabled);
-
-        if (enableWorldRules &&
-            node != null &&
-            node.hasWorldAccelerationRule)
-        {
-            worldAccelerationRule?.StartRule();
-        }
-        else
-        {
-            worldAccelerationRule?.StopRule();
-        }
 
         if (node != null && node.hasNoDamageChallenge)
             noDamageChallenge?.StartChallenge();
@@ -215,9 +202,6 @@ public sealed class RunFlowController : MonoBehaviour
     {
         if (worldEventSpawner == null)
             worldEventSpawner = FindFirstObjectByType<WorldEventSpawner>();
-
-        if (worldAccelerationRule == null)
-            worldAccelerationRule = FindFirstObjectByType<WorldAccelerationRule>();
 
         if (noDamageChallenge == null)
             noDamageChallenge = FindFirstObjectByType<NoDamageChallenge>();

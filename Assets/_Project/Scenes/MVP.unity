@@ -653,9 +653,7 @@ MonoBehaviour:
   levelChoiceDelay: 5
   stopEnemySpawnerAfterBoss: 1
   completionCleaner: {fileID: 2000457041}
-  enableWorldRules: 0
   worldEventSpawner: {fileID: 46915853}
-  worldAccelerationRule: {fileID: 46915858}
   noDamageChallenge: {fileID: 46915857}
 --- !u!114 &46915857
 MonoBehaviour:
@@ -2643,6 +2641,7 @@ MonoBehaviour:
   darknessLightIntensity: 0.01
   runFlowController: {fileID: 46915856}
   anomalyController: {fileID: 2147010005}
+  worldRuleController: {fileID: 2147010006}
   healthGrowthPerLevel: 0.04
   speedGrowthPerLevel: 0
   spawnRateGrowthPerLevel: 0.12
@@ -6170,6 +6169,7 @@ GameObject:
   - component: {fileID: 2147010003}
   - component: {fileID: 2147010004}
   - component: {fileID: 2147010005}
+  - component: {fileID: 2147010006}
   m_Layer: 5
   m_Name: LevelAnomalySystem
   m_TagString: Untagged
@@ -6248,6 +6248,22 @@ MonoBehaviour:
   minimumDistanceFromPlayerStart: 5
   minimumDistanceBetweenAnomalies: 2
   gameplayArea: {fileID: 2147020003}
+--- !u!114 &2147010006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2147010001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d5b67e1049c45b598c261d1e9dc98a1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::WorldRuleController
+  enableWorldRules: 0
+  worldAccelerationRule: {fileID: 46915858}
+  availableRules: []
+  view: {fileID: 2147010004}
   explosionFxPrefab: {fileID: 3932597101254327762, guid: f91913de896646447a357936450e42c5, type: 3}
   explosionFxLifetime: 0.8
 --- !u!1 &2147020001
