@@ -34,7 +34,7 @@ public class PlayerInteractor : MonoBehaviour
             Interactable interactable =
                 hit.GetComponent<Interactable>();
 
-            if (interactable == null)
+            if (interactable == null || !interactable.CanInteract)
                 continue;
 
             float distance =

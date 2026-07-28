@@ -55,7 +55,7 @@ public class CaptureZoneEvent : WorldEvent
 
         UpdatePlayerInsideState();
 
-        if (playerInside)
+        if (IsStarted && playerInside)
         {
             currentHoldTime += Time.deltaTime;
 
@@ -66,6 +66,18 @@ public class CaptureZoneEvent : WorldEvent
             }
         }
 
+        UpdateUI();
+    }
+
+    protected override bool CanStartFrom(Vector2 playerPosition)
+    {
+        return Vector2.Distance(transform.position, playerPosition) <=
+            captureRadius;
+    }
+
+    protected override void OnEventStarted()
+    {
+        currentHoldTime = 0f;
         UpdateUI();
     }
 
@@ -106,7 +118,8 @@ public class CaptureZoneEvent : WorldEvent
         float timeLeft = Mathf.Max(0f, requiredHoldTime - currentHoldTime);
 
         if (timerText != null)
-            timerText.text = playerInside || currentHoldTime > 0f
+            timerText.text = IsStarted &&
+                (playerInside || currentHoldTime > 0f)
                 ? $"{Mathf.CeilToInt(timeLeft)}s"
                 : "ENTER";
 

@@ -51,13 +51,8 @@ public class RescueCapsuleEvent : WorldEvent
         if (player == null)
             return;
 
-        if (!activated)
+        if (!IsStarted)
         {
-            float distance = Vector2.Distance(transform.position, player.position);
-
-            if (distance <= activationRadius)
-                Activate();
-
             UpdateUI();
             return;
         }
@@ -70,6 +65,18 @@ public class RescueCapsuleEvent : WorldEvent
             return;
         }
 
+        UpdateUI();
+    }
+
+    protected override bool CanStartFrom(Vector2 playerPosition)
+    {
+        return Vector2.Distance(transform.position, playerPosition) <=
+            activationRadius;
+    }
+
+    protected override void OnEventStarted()
+    {
+        Activate();
         UpdateUI();
     }
 

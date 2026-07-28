@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: -5459413600173041077}
   - component: {fileID: -7248466617024912767}
   - component: {fileID: -8467997292367934545}
+  - component: {fileID: 900000000000001001}
   m_Layer: 0
   m_Name: p_Player1
   m_TagString: Player
@@ -30,6 +31,19 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &900000000000001001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 602157039170639563}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d81fa724ea685343af8bbf9467f5815, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractor
+  interactionRadius: 3
 --- !u!4 &4583023003438230290
 Transform:
   m_ObjectHideFlags: 0

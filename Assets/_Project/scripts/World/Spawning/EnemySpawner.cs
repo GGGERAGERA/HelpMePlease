@@ -207,6 +207,41 @@ public class EnemySpawner : MonoBehaviour
         legacyDifficultySteps = 0;
     }
 
+    public void SpawnAdditionalWave(
+        Vector3 origin,
+        int enemyCount,
+        float minDistance = 1f,
+        float maxDistance = 3f)
+    {
+        if (gameplayArea == null)
+            ResolveGameplayArea();
+
+        RemoveDestroyedEnemies();
+
+        int count = Mathf.Max(0, enemyCount);
+
+        for (int i = 0; i < count; i++)
+        {
+            GameObject selectedPrefab = activePhase != null
+                ? SelectWeightedEnemy(activePhase)
+                : SelectLegacyEnemy();
+
+            if (selectedPrefab == null ||
+                gameplayArea == null ||
+                !gameplayArea.TryGetSpawnPosition(
+                    origin,
+                    minDistance,
+                    maxDistance,
+                    spawnPositionAttempts,
+                    out Vector3 spawnPosition))
+            {
+                break;
+            }
+
+            SpawnEnemyAt(selectedPrefab, spawnPosition);
+        }
+    }
+
     private void CaptureBaseSettings()
     {
         baseSpawnInterval = Mathf.Max(0.1f, spawnInterval);
@@ -379,7 +414,16 @@ public class EnemySpawner : MonoBehaviour
             return;
         }
 
-        GameObject enemy = Instantiate(selectedPrefab, spawnPosition, Quaternion.identity);
+        SpawnEnemyAt(selectedPrefab, spawnPosition);
+    }
+
+    private void SpawnEnemyAt(GameObject selectedPrefab, Vector3 spawnPosition)
+    {
+        GameObject enemy = Instantiate(
+            selectedPrefab,
+            spawnPosition,
+            Quaternion.identity
+        );
         EnemyHealth health = enemy.GetComponent<EnemyHealth>();
 
         if (health != null)

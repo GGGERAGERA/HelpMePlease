@@ -6,6 +6,7 @@ public class WorldEventSpawner : MonoBehaviour
     public event System.Action<WorldEvent> EventCompleted;
     public event System.Action<WorldEvent> EventFailed;
     public IReadOnlyList<WorldEvent> ActiveEvents => activeEventInstances;
+    public WorldEvent ActiveEvent { get; private set; }
 
     [Header("Event Prefabs")]
     [SerializeField] private WorldEvent[] eventPrefabs;
@@ -143,6 +144,9 @@ public class WorldEventSpawner : MonoBehaviour
 
     public void NotifyEventCompleted(WorldEvent worldEvent)
     {
+        if (ActiveEvent == worldEvent)
+            ActiveEvent = null;
+
         activeEventInstances.Remove(worldEvent);
         activeEvents = Mathf.Max(0, activeEvents - 1);
         EventCompleted?.Invoke(worldEvent);
@@ -150,9 +154,30 @@ public class WorldEventSpawner : MonoBehaviour
 
     public void NotifyEventFailed(WorldEvent worldEvent)
     {
+        if (ActiveEvent == worldEvent)
+            ActiveEvent = null;
+
         activeEventInstances.Remove(worldEvent);
         activeEvents = Mathf.Max(0, activeEvents - 1);
         EventFailed?.Invoke(worldEvent);
+    }
+
+    public bool CanStartEvent(WorldEvent worldEvent)
+    {
+        return worldEvent != null &&
+            ActiveEvent == null &&
+            activeEventInstances.Contains(worldEvent) &&
+            !worldEvent.IsStarted &&
+            !worldEvent.IsCompleted;
+    }
+
+    public bool TryStartEvent(WorldEvent worldEvent)
+    {
+        if (!CanStartEvent(worldEvent))
+            return false;
+
+        ActiveEvent = worldEvent;
+        return true;
     }
 
     private void SpawnRewardChest(WorldEvent completedEvent)
