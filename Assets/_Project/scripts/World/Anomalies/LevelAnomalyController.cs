@@ -654,8 +654,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
             if (zone == null)
                 continue;
 
-            zone.ClearEffect();
-            Destroy(zone.gameObject);
+            zone.Despawn();
         }
 
         stasisZones.Clear();

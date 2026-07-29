@@ -6260,7 +6260,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9d5b67e1049c45b598c261d1e9dc98a1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldRuleController
   enableWorldRules: 0
   worldAccelerationRule: {fileID: 46915858}
@@ -6279,17 +6279,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4b2b3d5f8d0a4ce78f5cd5f4c6d14791, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldRuleVisual
   fullscreenImage: {fileID: 2147010013}
   visualMaterial: {fileID: 2100000, guid: d31bb530e01b4594a58b27501624ddec, type: 2}
   transitionDuration: 1
   globalIntensity: 1
   pulseSpeed: 1
-  pulseStrength: 0.3
-  edgeIntensity: 1
-  hasteIntensity: 0.42
-  regenerationIntensity: 0.38
+  pulseStrength: 1
+  edgeIntensity: 2
+  hasteIntensity: 1
+  regenerationIntensity: 0.366
   explosiveIntensity: 0.48
 --- !u!1 &2147010010
 GameObject:
@@ -6346,7 +6346,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 2100000, guid: d31bb530e01b4594a58b27501624ddec, type: 2}
   m_Color: {r: 1, g: 1, b: 1, a: 1}

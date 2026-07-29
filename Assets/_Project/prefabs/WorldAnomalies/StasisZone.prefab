@@ -81,4 +81,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c48e6099f1d941c1a6794bf75e2695a1, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::StasisZone
-  lineMaterial: {fileID: 2100000, guid: dca396c6aa60fe549b61f941be335967, type: 2}
+  visualMaterial: {fileID: 2100000, guid: 429d3b2d9cdc42ab9c3adc02f4a982ec, type: 2}
+  visualRadiusMultiplier: 1.08
+  edgeWidth: 0.18
+  pulseSpeed: 0.65
+  pulseStrength: 0.18
+  distortionStrength: 0.035
+  fadeDuration: 0.8
