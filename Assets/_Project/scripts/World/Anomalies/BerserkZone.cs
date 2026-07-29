@@ -1,28 +1,48 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 [RequireComponent(typeof(CircleCollider2D))]
 public sealed class BerserkZone : MonoBehaviour
 {
-    private const int OutlineSegments = 64;
+    private static readonly int FadeId = Shader.PropertyToID("_Fade");
+    private static readonly int EdgeWidthId =
+        Shader.PropertyToID("_EdgeWidth");
+    private static readonly int PulseSpeedId =
+        Shader.PropertyToID("_PulseSpeed");
+    private static readonly int PulseStrengthId =
+        Shader.PropertyToID("_PulseStrength");
+    private static readonly int DistortionStrengthId =
+        Shader.PropertyToID("_DistortionStrength");
+    private static readonly int VisualTimeId =
+        Shader.PropertyToID("_VisualTime");
 
     private static readonly Dictionary<EnemyMovement, int>
         activeZoneCounts = new();
 
-    [SerializeField] private Material lineMaterial;
+    [Header("Visual")]
+    [SerializeField] private Material visualMaterial;
+    [SerializeField, Min(1f)] private float visualRadiusMultiplier = 1.08f;
+    [SerializeField, Range(0.01f, 0.4f)] private float edgeWidth = 0.16f;
+    [SerializeField, Min(0f)] private float pulseSpeed = 1.2f;
+    [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.22f;
+    [SerializeField, Range(0f, 0.25f)]
+    private float distortionStrength = 0.055f;
+    [SerializeField, Range(0.6f, 1f)] private float fadeDuration = 0.8f;
 
     private readonly Dictionary<EnemyMovement, int>
         enemyColliderCounts = new();
 
     private CircleCollider2D zoneCollider;
-    private LineRenderer fill;
-    private LineRenderer outline;
+    private MeshRenderer visualRenderer;
+    private MaterialPropertyBlock visualProperties;
     private LevelAnomalyController anomalyController;
     private float speedMultiplier = 1.5f;
+    private float visualFade;
+    private float targetVisualFade;
     private int playerColliderCount;
     private bool initialized;
     private bool effectsCleared;
+    private bool despawning;
 
     private void Awake()
     {
@@ -36,6 +56,22 @@ public sealed class BerserkZone : MonoBehaviour
         EnemyHealth.Despawned += HandleEnemyDespawned;
     }
 
+    private void Update()
+    {
+        if (visualRenderer == null)
+            return;
+
+        visualFade = Mathf.MoveTowards(
+            visualFade,
+            targetVisualFade,
+            Time.unscaledDeltaTime / Mathf.Max(0.01f, fadeDuration)
+        );
+        ApplyVisualProperties();
+
+        if (despawning && visualFade <= 0f)
+            Destroy(gameObject);
+    }
+
     public void Initialize(
         float radius,
         float enemySpeedMultiplier,
@@ -47,6 +83,10 @@ public sealed class BerserkZone : MonoBehaviour
         zoneCollider.radius = safeRadius;
         ConfigureVisual(safeRadius);
         effectsCleared = false;
+        despawning = false;
+        visualFade = 0f;
+        targetVisualFade = 1f;
+        ApplyVisualProperties();
         initialized = true;
     }
 
@@ -207,6 +247,19 @@ public sealed class BerserkZone : MonoBehaviour
             zoneCollider.enabled = false;
     }
 
+    public void Despawn()
+    {
+        if (despawning)
+            return;
+
+        ClearEffects();
+        despawning = true;
+        targetVisualFade = 0f;
+
+        if (visualRenderer == null)
+            Destroy(gameObject);
+    }
+
     private static EnemyMovement GetEnemyMovement(EnemyHealth enemy)
     {
         EnemyMovement movement = enemy.GetComponent<EnemyMovement>();
@@ -222,67 +275,64 @@ public sealed class BerserkZone : MonoBehaviour
 
     private void BuildVisual()
     {
-        fill = CreateLineRenderer(
-            "BerserkZoneFill",
-            0,
-            new Color(0.22f, 0.015f, 0.02f, 0.3f)
-        );
-        fill.positionCount = 2;
-        fill.numCapVertices = 32;
+        if (visualMaterial == null)
+            return;
 
-        outline = CreateLineRenderer(
-            "BerserkZoneOutline",
-            3,
-            new Color(1f, 0.08f, 0.1f, 0.98f)
-        );
-        outline.loop = true;
-        outline.positionCount = OutlineSegments;
-        outline.startWidth = 0.18f;
-        outline.endWidth = 0.18f;
+        Mesh quad = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
+
+        if (quad == null)
+        {
+            Debug.LogWarning(
+                "[BerserkZone] Built-in Quad mesh is unavailable.",
+                this
+            );
+            return;
+        }
+
+        GameObject visualObject = new("BerserkZoneVisual");
+        visualObject.transform.SetParent(transform, false);
+
+        MeshFilter meshFilter = visualObject.AddComponent<MeshFilter>();
+        meshFilter.sharedMesh = quad;
+
+        visualRenderer = visualObject.AddComponent<MeshRenderer>();
+        visualRenderer.sharedMaterial = visualMaterial;
+        visualRenderer.shadowCastingMode =
+            UnityEngine.Rendering.ShadowCastingMode.Off;
+        visualRenderer.receiveShadows = false;
+        visualRenderer.sortingLayerName = "Midground";
+        visualRenderer.sortingOrder = 1;
+
+        visualProperties = new MaterialPropertyBlock();
+        ApplyVisualProperties();
     }
 
     private void ConfigureVisual(float radius)
     {
-        fill.startWidth = radius * 2f;
-        fill.endWidth = radius * 2f;
-        fill.SetPosition(0, new Vector3(-0.001f, 0f, 0f));
-        fill.SetPosition(1, new Vector3(0.001f, 0f, 0f));
+        if (visualRenderer == null)
+            return;
 
-        for (int i = 0; i < OutlineSegments; i++)
-        {
-            float angle = i * Mathf.PI * 2f / OutlineSegments;
-            outline.SetPosition(
-                i,
-                new Vector3(
-                    Mathf.Cos(angle) * radius,
-                    Mathf.Sin(angle) * radius,
-                    0f
-                )
-            );
-        }
+        float diameter =
+            radius * 2f * Mathf.Max(1f, visualRadiusMultiplier);
+        visualRenderer.transform.localScale =
+            new Vector3(diameter, diameter, 1f);
     }
 
-    private LineRenderer CreateLineRenderer(
-        string objectName,
-        int sortingOrder,
-        Color color)
+    private void ApplyVisualProperties()
     {
-        GameObject lineObject = new GameObject(objectName);
-        lineObject.transform.SetParent(transform, false);
+        if (visualRenderer == null || visualProperties == null)
+            return;
 
-        LineRenderer line = lineObject.AddComponent<LineRenderer>();
-        line.sharedMaterial = lineMaterial;
-        line.useWorldSpace = false;
-        line.alignment = LineAlignment.View;
-        line.textureMode = LineTextureMode.Stretch;
-        line.numCornerVertices = 4;
-        line.shadowCastingMode = ShadowCastingMode.Off;
-        line.receiveShadows = false;
-        line.sortingLayerName = "Midground";
-        line.sortingOrder = sortingOrder;
-        line.startColor = color;
-        line.endColor = color;
-        return line;
+        visualProperties.SetFloat(FadeId, visualFade);
+        visualProperties.SetFloat(EdgeWidthId, edgeWidth);
+        visualProperties.SetFloat(PulseSpeedId, pulseSpeed);
+        visualProperties.SetFloat(PulseStrengthId, pulseStrength);
+        visualProperties.SetFloat(
+            DistortionStrengthId,
+            distortionStrength
+        );
+        visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
+        visualRenderer.SetPropertyBlock(visualProperties);
     }
 
     private void OnDisable()

@@ -642,8 +642,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
             if (zone == null)
                 continue;
 
-            zone.ClearEffects();
-            Destroy(zone.gameObject);
+            zone.Despawn();
         }
 
         berserkZones.Clear();
