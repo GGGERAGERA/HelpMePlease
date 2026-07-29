@@ -13,6 +13,7 @@ public sealed class WorldRuleController : MonoBehaviour
 
     [Header("View")]
     [SerializeField] private LevelAnomalyView view;
+    [SerializeField] private WorldRuleVisual worldRuleVisual;
 
     [Header("Explosion")]
     [SerializeField] private GameObject explosionFxPrefab;
@@ -60,6 +61,7 @@ public sealed class WorldRuleController : MonoBehaviour
 
         if (!enableWorldRules)
         {
+            worldRuleVisual?.ClearImmediate();
             IsIntroComplete = true;
             return;
         }
@@ -68,6 +70,7 @@ public sealed class WorldRuleController : MonoBehaviour
 
         if (activeRule == null)
         {
+            worldRuleVisual?.ClearImmediate();
             IsIntroComplete = true;
             return;
         }
@@ -89,6 +92,7 @@ public sealed class WorldRuleController : MonoBehaviour
                 this
             );
             activeRule = null;
+            worldRuleVisual?.ClearImmediate();
             IsIntroComplete = true;
             return;
         }
@@ -96,6 +100,7 @@ public sealed class WorldRuleController : MonoBehaviour
         previousTimeScale = Time.timeScale;
         Time.timeScale = 0f;
         introPauseApplied = true;
+        worldRuleVisual?.ShowRule(activeRule.RuleType);
         ApplyGlobalGameplayEffect();
         StartCoroutine(IntroRoutine(level));
     }
@@ -427,6 +432,7 @@ public sealed class WorldRuleController : MonoBehaviour
             return;
 
         RestoreRuntimeEffects();
+        worldRuleVisual?.ClearImmediate();
 
         if (enemyLifecycleSubscribed)
         {
