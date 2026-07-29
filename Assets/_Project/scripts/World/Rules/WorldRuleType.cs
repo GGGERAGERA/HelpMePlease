@@ -1,7 +1,6 @@
-public enum LevelAnomalyType
+public enum WorldRuleType
 {
     ExplosiveInfection,
-    Berserk,
     Haste,
     Regeneration
 }

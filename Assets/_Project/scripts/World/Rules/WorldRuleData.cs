@@ -1,14 +1,13 @@
 using UnityEngine;
 
 [CreateAssetMenu(
-    fileName = "LevelAnomalyData",
-    menuName = "Game/Levels/Level Anomaly Data"
+    fileName = "WorldRuleData",
+    menuName = "Game/Levels/World Rule Data"
 )]
-public sealed class LevelAnomalyData : ScriptableObject
+public sealed class WorldRuleData : ScriptableObject
 {
     [Header("Identity")]
-    [SerializeField] private string id;
-    [SerializeField] private LevelAnomalyType anomalyType;
+    [SerializeField] private WorldRuleType ruleType;
 
     [Header("View")]
     [SerializeField] private string displayName;
@@ -16,7 +15,6 @@ public sealed class LevelAnomalyData : ScriptableObject
     [SerializeField] private string description;
     [TextArea(1, 2)]
     [SerializeField] private string pinnedDescription;
-    [SerializeField] private Sprite icon;
 
     [Header("Selection")]
     [SerializeField, Min(0f)] private float selectionWeight = 1f;
@@ -27,31 +25,27 @@ public sealed class LevelAnomalyData : ScriptableObject
     [SerializeField, Min(0f)] private float enemyExplosionDamage = 25f;
     [SerializeField] private bool allowChainReaction = true;
 
-    [Header("Berserk")]
-    [SerializeField, Min(0.1f)] private float outgoingDamageMultiplier = 2f;
-    [SerializeField, Min(0.1f)] private float incomingDamageMultiplier = 2f;
-
     [Header("Haste")]
     [SerializeField, Min(0.1f)] private float enemySpeedMultiplier = 1f;
     [SerializeField, Min(0.1f)] private float experienceGainMultiplier = 1f;
 
     [Header("Regeneration")]
     [SerializeField, Min(0f)] private float playerHealthPerSecond;
+    [SerializeField, Min(0.1f)] private float outgoingDamageMultiplier = 1f;
 
-    public string Id => string.IsNullOrWhiteSpace(id) ? name : id;
-    public LevelAnomalyType AnomalyType => anomalyType;
-    public string DisplayName => displayName;
-    public string Description => description;
-    public string PinnedDescription => pinnedDescription;
-    public Sprite Icon => icon;
+    public WorldRuleType RuleType => ruleType;
     public float SelectionWeight => Mathf.Max(0f, selectionWeight);
     public float ExplosionRadius => Mathf.Max(0.1f, explosionRadius);
     public float PlayerExplosionDamage => Mathf.Max(0f, playerExplosionDamage);
     public float EnemyExplosionDamage => Mathf.Max(0f, enemyExplosionDamage);
     public bool AllowChainReaction => allowChainReaction;
-    public float OutgoingDamageMultiplier => Mathf.Max(0.1f, outgoingDamageMultiplier);
-    public float IncomingDamageMultiplier => Mathf.Max(0.1f, incomingDamageMultiplier);
     public float EnemySpeedMultiplier => Mathf.Max(0.1f, enemySpeedMultiplier);
-    public float ExperienceGainMultiplier => Mathf.Max(0.1f, experienceGainMultiplier);
-    public float PlayerHealthPerSecond => Mathf.Max(0f, playerHealthPerSecond);
+    public float ExperienceGainMultiplier =>
+        Mathf.Max(0.1f, experienceGainMultiplier);
+    public float PlayerHealthPerSecond =>
+        Mathf.Max(0f, playerHealthPerSecond);
+    public float OutgoingDamageMultiplier =>
+        Mathf.Max(0.1f, outgoingDamageMultiplier);
+    public LevelMechanicPresentationData Presentation =>
+        new(displayName, description, pinnedDescription);
 }

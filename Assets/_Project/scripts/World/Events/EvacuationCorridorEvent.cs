@@ -5,8 +5,22 @@ using UnityEngine.Rendering;
 public sealed class EvacuationCorridorEvent : WorldEvent
 {
     private const float StartRadius = 2.5f;
+    private const float CorridorVisualPadding = 20f;
     private const int PositionAttempts = 32;
     private const int StartVisualSegments = 48;
+
+    private static readonly int FadeId = Shader.PropertyToID("_Fade");
+    private static readonly int RevealId = Shader.PropertyToID("_Reveal");
+    private static readonly int CorridorRatioId =
+        Shader.PropertyToID("_CorridorRatio");
+    private static readonly int OutsideDarknessId =
+        Shader.PropertyToID("_OutsideDarkness");
+    private static readonly int EdgeGlowId =
+        Shader.PropertyToID("_EdgeGlow");
+    private static readonly int PulseSpeedId =
+        Shader.PropertyToID("_PulseSpeed");
+    private static readonly int VisualTimeId =
+        Shader.PropertyToID("_VisualTime");
 
     public Vector3 StartPosition { get; private set; }
     public Vector3 EndPosition { get; private set; }
@@ -46,6 +60,12 @@ public sealed class EvacuationCorridorEvent : WorldEvent
 
     [Header("Visual")]
     [SerializeField] private Material lineMaterial;
+    [SerializeField] private Material corridorMaterial;
+    [SerializeField, Range(0f, 0.8f)] private float outsideDarkness = 0.32f;
+    [SerializeField, Range(0f, 2f)] private float edgeGlow = 0.85f;
+    [SerializeField, Min(0f)] private float pulseSpeed = 1f;
+    [SerializeField, Min(0.01f)] private float revealDuration = 0.8f;
+    [SerializeField, Min(0.01f)] private float fadeDuration = 0.8f;
 
     [Header("Scene")]
     [SerializeField] private GameplayAreaService gameplayArea;
@@ -54,20 +74,25 @@ public sealed class EvacuationCorridorEvent : WorldEvent
     private BoxCollider2D corridorCollider;
     private LineRenderer startFill;
     private LineRenderer startOutline;
-    private LineRenderer corridorFill;
-    private LineRenderer corridorOutline;
+    private MeshRenderer corridorVisual;
+    private MaterialPropertyBlock corridorVisualProperties;
     private Transform player;
     private PlayerHealth playerHealth;
     private Vector3 rewardPosition;
     private float outsideDamageTimer;
+    private float visualFade;
+    private float targetVisualFade;
+    private float visualReveal;
+    private float targetVisualReveal;
     private bool wasPlayerInside;
     private bool corridorActive;
     private bool hasRewardPosition;
+    private bool completionPending;
 
     public override void Initialize(WorldEventSpawner spawner)
     {
         base.Initialize(spawner);
-        HUDManager.Instance?.ShowWorldEventMarker(
+        ShowEventMarker(
             transform,
             "EVACUATION"
         );
@@ -95,6 +120,15 @@ public sealed class EvacuationCorridorEvent : WorldEvent
 
     private void Update()
     {
+        UpdateCorridorVisual();
+
+        if (completionPending && visualFade <= 0f)
+        {
+            completionPending = false;
+            CompleteEvent();
+            return;
+        }
+
         if (!corridorActive ||
             !IsStarted ||
             IsCompleted ||
@@ -246,33 +280,25 @@ public sealed class EvacuationCorridorEvent : WorldEvent
         float halfLength = corridorLength * 0.5f;
         float halfWidth = corridorWidth * 0.5f;
 
-        corridorFill.startWidth = corridorWidth;
-        corridorFill.endWidth = corridorWidth;
-        corridorFill.SetPosition(
-            0,
-            new Vector3(-halfLength, 0f, 0f)
-        );
-        corridorFill.SetPosition(
-            1,
-            new Vector3(halfLength, 0f, 0f)
-        );
+        if (corridorVisual == null)
+            return;
 
-        corridorOutline.SetPosition(
-            0,
-            new Vector3(-halfLength, -halfWidth, 0f)
+        float visualLength =
+            corridorLength + CorridorVisualPadding * 2f;
+        float visualWidth =
+            corridorWidth + CorridorVisualPadding * 2f;
+        corridorVisual.transform.localScale =
+            new Vector3(visualLength, visualWidth, 1f);
+        corridorVisualProperties.SetVector(
+            CorridorRatioId,
+            new Vector4(
+                halfLength / visualLength,
+                halfWidth / visualWidth,
+                0f,
+                0f
+            )
         );
-        corridorOutline.SetPosition(
-            1,
-            new Vector3(-halfLength, halfWidth, 0f)
-        );
-        corridorOutline.SetPosition(
-            2,
-            new Vector3(halfLength, halfWidth, 0f)
-        );
-        corridorOutline.SetPosition(
-            3,
-            new Vector3(halfLength, -halfWidth, 0f)
-        );
+        ApplyCorridorVisualProperties();
     }
 
     private bool IsCorridorInsidePlayableArea(Vector3 center)
@@ -350,14 +376,21 @@ public sealed class EvacuationCorridorEvent : WorldEvent
         if (startOutline != null)
             startOutline.enabled = false;
 
-        HUDManager.Instance?.HideWorldEventMarker();
+        HideEventMarker();
     }
 
     private void EnableCorridor()
     {
         corridorCollider.enabled = true;
-        corridorFill.enabled = true;
-        corridorOutline.enabled = true;
+
+        if (corridorVisual != null)
+            corridorVisual.enabled = true;
+
+        visualFade = 0f;
+        visualReveal = 0f;
+        targetVisualFade = 1f;
+        targetVisualReveal = 1f;
+        ApplyCorridorVisualProperties();
     }
 
     private void CompleteCorridor()
@@ -365,23 +398,22 @@ public sealed class EvacuationCorridorEvent : WorldEvent
         transform.position = EndPosition;
         rewardPosition = EndPosition;
         hasRewardPosition = true;
-        CleanupEventVisuals();
-        CompleteEvent();
+        corridorActive = false;
+        corridorCollider.enabled = false;
+        targetVisualFade = 0f;
+        completionPending = true;
     }
 
     private void FailCorridor()
     {
-        if (IsCompleted)
-            return;
-
-        CleanupEventVisuals();
         FailEvent();
         Destroy(gameObject);
     }
 
-    private void CleanupEventVisuals()
+    protected override void CleanupEvent()
     {
         corridorActive = false;
+        completionPending = false;
         outsideDamageTimer = 0f;
         IsPlayerInside = false;
         wasPlayerInside = false;
@@ -394,12 +426,8 @@ public sealed class EvacuationCorridorEvent : WorldEvent
             startFill.enabled = false;
         if (startOutline != null)
             startOutline.enabled = false;
-        if (corridorFill != null)
-            corridorFill.enabled = false;
-        if (corridorOutline != null)
-            corridorOutline.enabled = false;
-
-        HUDManager.Instance?.HideWorldEventMarker();
+        if (corridorVisual != null)
+            corridorVisual.enabled = false;
     }
 
     private void FindPlayer()
@@ -467,25 +495,77 @@ public sealed class EvacuationCorridorEvent : WorldEvent
 
     private void BuildCorridorVisual()
     {
-        corridorFill = CreateLineRenderer(
-            "EvacuationCorridorFill",
-            0,
-            new Color(0.08f, 0.65f, 0.8f, 0.2f)
-        );
-        corridorFill.positionCount = 2;
-        corridorFill.numCapVertices = 0;
-        corridorFill.enabled = false;
+        if (corridorMaterial == null)
+            return;
 
-        corridorOutline = CreateLineRenderer(
-            "EvacuationCorridorOutline",
-            1,
-            new Color(0.2f, 0.95f, 1f, 0.95f)
+        Mesh quad = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
+
+        if (quad == null)
+        {
+            Debug.LogWarning(
+                "[EvacuationCorridorEvent] Built-in Quad mesh is unavailable.",
+                this
+            );
+            return;
+        }
+
+        GameObject visualObject = new("EvacuationCorridorVisual");
+        visualObject.transform.SetParent(transform, false);
+
+        MeshFilter meshFilter = visualObject.AddComponent<MeshFilter>();
+        meshFilter.sharedMesh = quad;
+
+        corridorVisual = visualObject.AddComponent<MeshRenderer>();
+        corridorVisual.sharedMaterial = corridorMaterial;
+        corridorVisual.shadowCastingMode = ShadowCastingMode.Off;
+        corridorVisual.receiveShadows = false;
+        corridorVisual.sortingLayerName = "Midground";
+        corridorVisual.sortingOrder = 2;
+        corridorVisual.enabled = false;
+
+        corridorVisualProperties = new MaterialPropertyBlock();
+        ApplyCorridorVisualProperties();
+    }
+
+    private void UpdateCorridorVisual()
+    {
+        if (corridorVisual == null || !corridorVisual.enabled)
+            return;
+
+        visualFade = Mathf.MoveTowards(
+            visualFade,
+            targetVisualFade,
+            Time.unscaledDeltaTime / Mathf.Max(0.01f, fadeDuration)
         );
-        corridorOutline.loop = true;
-        corridorOutline.positionCount = 4;
-        corridorOutline.startWidth = 0.14f;
-        corridorOutline.endWidth = 0.14f;
-        corridorOutline.enabled = false;
+        visualReveal = Mathf.MoveTowards(
+            visualReveal,
+            targetVisualReveal,
+            Time.unscaledDeltaTime / Mathf.Max(0.01f, revealDuration)
+        );
+        ApplyCorridorVisualProperties();
+    }
+
+    private void ApplyCorridorVisualProperties()
+    {
+        if (corridorVisual == null ||
+            corridorVisualProperties == null)
+        {
+            return;
+        }
+
+        corridorVisualProperties.SetFloat(FadeId, visualFade);
+        corridorVisualProperties.SetFloat(RevealId, visualReveal);
+        corridorVisualProperties.SetFloat(
+            OutsideDarknessId,
+            outsideDarkness
+        );
+        corridorVisualProperties.SetFloat(EdgeGlowId, edgeGlow);
+        corridorVisualProperties.SetFloat(PulseSpeedId, pulseSpeed);
+        corridorVisualProperties.SetFloat(
+            VisualTimeId,
+            Time.unscaledTime
+        );
+        corridorVisual.SetPropertyBlock(corridorVisualProperties);
     }
 
     private LineRenderer CreateLineRenderer(
@@ -509,14 +589,6 @@ public sealed class EvacuationCorridorEvent : WorldEvent
         line.startColor = color;
         line.endColor = color;
         return line;
-    }
-
-    private void OnDestroy()
-    {
-        CleanupEventVisuals();
-
-        if (!IsCompleted)
-            FailEvent();
     }
 
     private void OnDrawGizmosSelected()

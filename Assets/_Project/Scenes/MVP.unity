@@ -609,6 +609,7 @@ MonoBehaviour:
   maxDistanceFromPlayer: 12
   eventEdgePadding: 2
   spawnPositionAttempts: 24
+  eventInsideAnomalyChance: 0.35
   gameplayArea: {fileID: 2147020003}
   maxActiveEvents: 1
 --- !u!114 &46915854
@@ -652,9 +653,7 @@ MonoBehaviour:
   levelChoiceDelay: 5
   stopEnemySpawnerAfterBoss: 1
   completionCleaner: {fileID: 2000457041}
-  enableWorldRules: 0
   worldEventSpawner: {fileID: 46915853}
-  worldAccelerationRule: {fileID: 46915858}
   noDamageChallenge: {fileID: 46915857}
 --- !u!114 &46915857
 MonoBehaviour:
@@ -2642,6 +2641,7 @@ MonoBehaviour:
   darknessLightIntensity: 0.01
   runFlowController: {fileID: 46915856}
   anomalyController: {fileID: 2147010005}
+  worldRuleController: {fileID: 2147010006}
   healthGrowthPerLevel: 0.04
   speedGrowthPerLevel: 0
   spawnRateGrowthPerLevel: 0.12
@@ -3775,6 +3775,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2147010011}
   - {fileID: 1235127324}
   - {fileID: 458832744}
   - {fileID: 352398373}
@@ -6169,6 +6170,8 @@ GameObject:
   - component: {fileID: 2147010003}
   - component: {fileID: 2147010004}
   - component: {fileID: 2147010005}
+  - component: {fileID: 2147010006}
+  - component: {fileID: 2147010007}
   m_Layer: 5
   m_Name: LevelAnomalySystem
   m_TagString: Untagged
@@ -6203,9 +6206,9 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2147010001}
   m_Enabled: 1
-  m_Alpha: 1
+  m_Alpha: 0
   m_Interactable: 0
-  m_BlocksRaycasts: 1
+  m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
 --- !u!114 &2147010004
 MonoBehaviour:
@@ -6233,13 +6236,136 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelAnomalyController
   availableAnomalies:
-  - {fileID: 11400000, guid: 7a200000000000000000000000000001, type: 2}
-  - {fileID: 11400000, guid: 7a200000000000000000000000000002, type: 2}
-  - {fileID: 11400000, guid: 7a200000000000000000000000000003, type: 2}
-  - {fileID: 11400000, guid: 7a200000000000000000000000000004, type: 2}
+  - {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}
+  - {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca002, type: 2}
   view: {fileID: 2147010004}
+  berserkZonePrefab: {fileID: 540000000000000004, guid: b37d5988e0cf40b0b5683ae64d1584f2, type: 3}
+  stasisZonePrefab: {fileID: 550000000000000004, guid: c48e6099f1d941c1a6794bf75e2695a2, type: 3}
+  anomalyCount: 2
+  anomalyRadius: 15
+  stasisRadius: 4
+  enemySpeedMultiplier: 1.5
+  playerSpeedMultiplier: 0.65
+  edgePadding: 1
+  minimumDistanceFromPlayerStart: 5
+  minimumDistanceBetweenAnomalies: 2
+  gameplayArea: {fileID: 2147020003}
+--- !u!114 &2147010006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2147010001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d5b67e1049c45b598c261d1e9dc98a1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldRuleController
+  enableWorldRules: 0
+  worldAccelerationRule: {fileID: 46915858}
+  availableRules: []
+  view: {fileID: 2147010004}
+  worldRuleVisual: {fileID: 2147010007}
   explosionFxPrefab: {fileID: 3932597101254327762, guid: f91913de896646447a357936450e42c5, type: 3}
   explosionFxLifetime: 0.8
+--- !u!114 &2147010007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2147010001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b2b3d5f8d0a4ce78f5cd5f4c6d14791, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldRuleVisual
+  fullscreenImage: {fileID: 2147010013}
+  visualMaterial: {fileID: 2100000, guid: d31bb530e01b4594a58b27501624ddec, type: 2}
+  transitionDuration: 1
+  globalIntensity: 1
+  pulseSpeed: 1
+  pulseStrength: 1
+  edgeIntensity: 2
+  hasteIntensity: 1
+  regenerationIntensity: 0.366
+  explosiveIntensity: 0.48
+--- !u!1 &2147010010
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2147010011}
+  - component: {fileID: 2147010012}
+  - component: {fileID: 2147010013}
+  m_Layer: 5
+  m_Name: WorldRuleOverlay
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2147010011
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2147010010}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1635164420}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2147010012
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2147010010}
+  m_CullTransparentMesh: 1
+--- !u!114 &2147010013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2147010010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 2100000, guid: d31bb530e01b4594a58b27501624ddec, type: 2}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 0
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &2147020001
 GameObject:
   m_ObjectHideFlags: 0

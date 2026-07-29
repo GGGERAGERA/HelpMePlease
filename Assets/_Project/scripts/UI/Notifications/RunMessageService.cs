@@ -20,11 +20,18 @@ public sealed class RunMessageService : MonoBehaviour
     {
         LevelAnomalyController anomalyController =
             LevelAnomalyController.Instance;
+        WorldRuleController worldRuleController =
+            WorldRuleController.Instance;
 
-        if (anomalyController != null)
+        if (anomalyController != null || worldRuleController != null)
         {
-            while (!anomalyController.IsIntroComplete)
+            while ((anomalyController != null &&
+                    !anomalyController.IsIntroComplete) ||
+                   (worldRuleController != null &&
+                    !worldRuleController.IsIntroComplete))
+            {
                 yield return null;
+            }
         }
         else
         {

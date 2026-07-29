@@ -5,7 +5,7 @@ public class WorldEventSpawner : MonoBehaviour
 {
     public event System.Action<WorldEvent> EventCompleted;
     public event System.Action<WorldEvent> EventFailed;
-    public IReadOnlyList<WorldEvent> ActiveEvents => activeEventInstances;
+    public IReadOnlyList<WorldEvent> SpawnedEvents => spawnedEvents;
     public WorldEvent ActiveEvent { get; private set; }
 
     [Header("Event Prefabs")]
@@ -23,6 +23,8 @@ public class WorldEventSpawner : MonoBehaviour
     [SerializeField] private float maxDistanceFromPlayer = 14f;
     [SerializeField, Min(0f)] private float eventEdgePadding = 2f;
     [SerializeField, Min(1)] private int spawnPositionAttempts = 24;
+    [SerializeField, Range(0f, 1f)]
+    private float eventInsideAnomalyChance = 0.35f;
     [SerializeField] private GameplayAreaService gameplayArea;
 
     [Header("Limits")]
@@ -31,9 +33,11 @@ public class WorldEventSpawner : MonoBehaviour
     private int nextEventIndex;
 
     private float timer;
-    private int activeEvents;
+    private int spawnedEventCount;
     private bool holdPointEnabled;
-    private readonly List<WorldEvent> activeEventInstances = new();
+    private readonly List<WorldEvent> spawnedEvents = new();
+    private readonly List<LevelAnomalyController.LocalAnomalyZoneGeometry>
+        localAnomalyZones = new();
 
     private void OnEnable()
     {
@@ -62,7 +66,7 @@ public class WorldEventSpawner : MonoBehaviour
         if (eventPrefabs == null || eventPrefabs.Length == 0)
             return;
 
-        if (activeEvents >= maxActiveEvents)
+        if (spawnedEventCount >= maxActiveEvents)
             return;
 
         timer -= Time.deltaTime;
@@ -89,14 +93,42 @@ public class WorldEventSpawner : MonoBehaviour
         if (gameplayArea == null)
             ResolveGameplayArea();
 
-        if (gameplayArea == null ||
+        if (gameplayArea == null)
+        {
+            Debug.LogWarning(
+                "[WorldEventSpawner] No valid position exists inside the spawn area.",
+                this
+            );
+            return;
+        }
+
+        bool anomalyPlacementRequested =
+            Random.value < eventInsideAnomalyChance;
+        bool placedInsideAnomaly = false;
+        bool usedFallback = false;
+        LocalAnomalyType? selectedAnomalyType = null;
+        Vector3 spawnPosition = default;
+
+        if (anomalyPlacementRequested)
+        {
+            placedInsideAnomaly =
+                TryGetPositionInsideLocalAnomaly(
+                    prefab,
+                    player.transform.position,
+                    out spawnPosition,
+                    out selectedAnomalyType
+                );
+            usedFallback = !placedInsideAnomaly;
+        }
+
+        if (!placedInsideAnomaly &&
             !gameplayArea.TryGetSpawnPosition(
                 player.transform.position,
                 minDistanceFromPlayer,
                 maxDistanceFromPlayer,
                 spawnPositionAttempts,
                 eventEdgePadding,
-                out Vector3 spawnPosition))
+                out spawnPosition))
         {
             Debug.LogWarning(
                 "[WorldEventSpawner] No valid position exists inside the spawn area.",
@@ -114,8 +146,161 @@ public class WorldEventSpawner : MonoBehaviour
             spawnedEvent.ApplyDifficultyMultiplier(riskDifficultyMultiplier);
         }
 
-        activeEventInstances.Add(spawnedEvent);
-        activeEvents++;
+        spawnedEvents.Add(spawnedEvent);
+        spawnedEventCount++;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        string anomalyType = selectedAnomalyType.HasValue
+            ? selectedAnomalyType.Value.ToString()
+            : "None";
+        Debug.Log(
+            $"[WorldEventSpawner] Spawned '{prefab.name}': " +
+            $"insideAnomaly={placedInsideAnomaly}, " +
+            $"anomalyType={anomalyType}, fallback={usedFallback}.",
+            this
+        );
+#endif
+    }
+
+    private bool TryGetPositionInsideLocalAnomaly(
+        WorldEvent prefab,
+        Vector3 playerPosition,
+        out Vector3 position,
+        out LocalAnomalyType? selectedAnomalyType)
+    {
+        position = default;
+        selectedAnomalyType = null;
+
+        LevelAnomalyController anomalyController =
+            LevelAnomalyController.Instance;
+
+        if (anomalyController == null)
+            return false;
+
+        anomalyController.CollectActiveLocalZones(localAnomalyZones);
+
+        if (localAnomalyZones.Count == 0)
+            return false;
+
+        LevelAnomalyController.LocalAnomalyZoneGeometry zone =
+            localAnomalyZones[
+                Random.Range(0, localAnomalyZones.Count)
+            ];
+        selectedAnomalyType = zone.Type;
+
+        float eventRadius = GetEventFootprintRadius(prefab);
+        float availableRadius = zone.Radius - eventRadius;
+
+        if (availableRadius < 0f)
+            return false;
+
+        int attempts = Mathf.Max(1, spawnPositionAttempts);
+        float minimumPlayerDistance =
+            Mathf.Max(0f, minDistanceFromPlayer);
+        float minimumPlayerDistanceSquared =
+            minimumPlayerDistance * minimumPlayerDistance;
+        float playablePadding = Mathf.Max(
+            eventRadius,
+            eventEdgePadding
+        );
+
+        for (int i = 0; i < attempts; i++)
+        {
+            Vector2 candidate =
+                zone.Center +
+                Random.insideUnitCircle * availableRadius;
+
+            if (((Vector2)playerPosition - candidate).sqrMagnitude <
+                minimumPlayerDistanceSquared)
+            {
+                continue;
+            }
+
+            if (!gameplayArea.IsInsidePlayableArea(
+                    candidate,
+                    eventRadius) ||
+                !gameplayArea.IsInsideSpawnArea(
+                    candidate,
+                    playablePadding) ||
+                OverlapsActiveEvent(candidate, eventRadius))
+            {
+                continue;
+            }
+
+            position = new Vector3(
+                candidate.x,
+                candidate.y,
+                playerPosition.z
+            );
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool OverlapsActiveEvent(
+        Vector2 candidate,
+        float eventRadius)
+    {
+        for (int i = 0; i < spawnedEvents.Count; i++)
+        {
+            WorldEvent activeEvent = spawnedEvents[i];
+
+            if (activeEvent == null)
+                continue;
+
+            float requiredDistance =
+                eventRadius +
+                GetEventFootprintRadius(activeEvent);
+
+            if (Vector2.Distance(
+                    candidate,
+                    activeEvent.transform.position) <
+                requiredDistance)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private float GetEventFootprintRadius(WorldEvent worldEvent)
+    {
+        if (worldEvent == null)
+            return Mathf.Max(0.1f, eventEdgePadding);
+
+        CircleCollider2D[] colliders =
+            worldEvent.GetComponentsInChildren<CircleCollider2D>(
+                true
+            );
+        Vector2 eventCenter = worldEvent.transform.position;
+        float radius = 0f;
+
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            CircleCollider2D collider = colliders[i];
+
+            if (collider == null)
+                continue;
+
+            Vector2 colliderCenter =
+                collider.transform.TransformPoint(collider.offset);
+            Vector3 scale = collider.transform.lossyScale;
+            float colliderRadius = collider.radius * Mathf.Max(
+                Mathf.Abs(scale.x),
+                Mathf.Abs(scale.y)
+            );
+            radius = Mathf.Max(
+                radius,
+                Vector2.Distance(eventCenter, colliderCenter) +
+                colliderRadius
+            );
+        }
+
+        return radius > Mathf.Epsilon
+            ? radius
+            : Mathf.Max(0.1f, eventEdgePadding);
     }
 
     public void SetHoldPointEnabled(bool enabled)
@@ -147,8 +332,8 @@ public class WorldEventSpawner : MonoBehaviour
         if (ActiveEvent == worldEvent)
             ActiveEvent = null;
 
-        activeEventInstances.Remove(worldEvent);
-        activeEvents = Mathf.Max(0, activeEvents - 1);
+        spawnedEvents.Remove(worldEvent);
+        spawnedEventCount = Mathf.Max(0, spawnedEventCount - 1);
         EventCompleted?.Invoke(worldEvent);
     }
 
@@ -157,8 +342,8 @@ public class WorldEventSpawner : MonoBehaviour
         if (ActiveEvent == worldEvent)
             ActiveEvent = null;
 
-        activeEventInstances.Remove(worldEvent);
-        activeEvents = Mathf.Max(0, activeEvents - 1);
+        spawnedEvents.Remove(worldEvent);
+        spawnedEventCount = Mathf.Max(0, spawnedEventCount - 1);
         EventFailed?.Invoke(worldEvent);
     }
 
@@ -166,7 +351,7 @@ public class WorldEventSpawner : MonoBehaviour
     {
         return worldEvent != null &&
             ActiveEvent == null &&
-            activeEventInstances.Contains(worldEvent) &&
+            spawnedEvents.Contains(worldEvent) &&
             !worldEvent.IsStarted &&
             !worldEvent.IsCompleted;
     }

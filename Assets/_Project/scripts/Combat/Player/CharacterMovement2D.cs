@@ -30,6 +30,7 @@ public class CharacterMovement2D : MonoBehaviour
     private bool isDashing;
     private Vector2 hitKnockbackVelocity;
     private float hitKnockbackTimeRemaining;
+    private float anomalySpeedMultiplier = 1f;
 
     private const float DashCollisionSkin = 0.02f;
     private readonly RaycastHit2D[] dashHits = new RaycastHit2D[8];
@@ -100,6 +101,10 @@ public class CharacterMovement2D : MonoBehaviour
     {
         speed *= 1f + percent;
     }
+    public void SetAnomalySpeedMultiplier(float multiplier)
+    {
+        anomalySpeedMultiplier = Mathf.Max(0.1f, multiplier);
+    }
 
     private void FixedUpdate()
     {
@@ -112,7 +117,8 @@ public class CharacterMovement2D : MonoBehaviour
             return;
         }
 
-        Vector2 targetVelocity = moveInput * speed;
+        Vector2 targetVelocity =
+            moveInput * speed * anomalySpeedMultiplier;
 
         float rate = moveInput.sqrMagnitude > 0.01f
             ? acceleration

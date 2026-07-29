@@ -46,7 +46,7 @@ public sealed class FalseSignalEvent : WorldEvent
     public override void Initialize(WorldEventSpawner spawner)
     {
         base.Initialize(spawner);
-        HUDManager.Instance?.ShowWorldEventMarker(transform, "FALSE SIGNAL");
+        ShowEventMarker(transform, "FALSE SIGNAL");
     }
 
     private void Awake()
@@ -79,7 +79,7 @@ public sealed class FalseSignalEvent : WorldEvent
         if (startVisual != null)
             startVisual.enabled = false;
 
-        HUDManager.Instance?.HideWorldEventMarker();
+        HideEventMarker();
         ResolveSceneReferences();
         timeRemaining = timeLimit;
 
@@ -125,7 +125,6 @@ public sealed class FalseSignalEvent : WorldEvent
             "СИГНАЛ ПОДТВЕРЖДЁН",
             string.Empty
         );
-        CleanupSignalPoints();
         CompleteEvent();
     }
 
@@ -260,16 +259,11 @@ public sealed class FalseSignalEvent : WorldEvent
 
     private void FailFalseSignal()
     {
-        if (IsCompleted)
-            return;
-
-        CleanupSignalPoints();
-        HUDManager.Instance?.HideWorldEventMarker();
         FailEvent();
         Destroy(gameObject);
     }
 
-    private void CleanupSignalPoints()
+    protected override void CleanupEvent()
     {
         CleanupSignalPointMarkers();
 
@@ -301,15 +295,6 @@ public sealed class FalseSignalEvent : WorldEvent
             HUDManager.Instance?.RemoveWorldEventMarker(marker);
 
         signalPointMarkers.Clear();
-    }
-
-    private void OnDestroy()
-    {
-        CleanupSignalPoints();
-        HUDManager.Instance?.HideWorldEventMarker();
-
-        if (!IsCompleted)
-            FailEvent();
     }
 
     private void OnDrawGizmosSelected()

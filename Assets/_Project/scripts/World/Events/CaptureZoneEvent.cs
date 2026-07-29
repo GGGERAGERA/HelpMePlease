@@ -28,7 +28,7 @@ public class CaptureZoneEvent : WorldEvent
     {
         base.Initialize(spawner);
 
-        HUDManager.Instance?.ShowWorldEventMarker(transform, "CAPTURE");
+        ShowEventMarker(transform, "CAPTURE");
     }
 
     public override void ApplyDifficultyMultiplier(float multiplier)
@@ -107,8 +107,6 @@ public class CaptureZoneEvent : WorldEvent
 
     private void CompleteCapture()
     {
-        HUDManager.Instance?.HideWorldEventMarker();
-
         CompleteEvent();
     }
 
@@ -125,12 +123,6 @@ public class CaptureZoneEvent : WorldEvent
 
         if (progressSlider != null)
             progressSlider.value = progress;
-    }
-
-    private void OnDestroy()
-    {
-        FailEvent();
-        HUDManager.Instance?.HideWorldEventMarker();
     }
 
     private void OnDrawGizmosSelected()

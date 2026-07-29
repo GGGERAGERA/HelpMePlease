@@ -21,6 +21,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
     [Header("Run Flow")]
     [SerializeField] private RunFlowController runFlowController;
     [SerializeField] private LevelAnomalyController anomalyController;
+    [SerializeField] private WorldRuleController worldRuleController;
 
     [Header("Endless Difficulty")]
     [SerializeField, Min(0f)] private float healthGrowthPerLevel = 0.04f;
@@ -41,6 +42,12 @@ public sealed class LevelModifiersApplier : MonoBehaviour
 
         if (anomalyController == null || !anomalyController.gameObject.scene.IsValid())
             anomalyController = FindFirstObjectByType<LevelAnomalyController>();
+
+        if (worldRuleController == null ||
+            !worldRuleController.gameObject.scene.IsValid())
+        {
+            worldRuleController = FindFirstObjectByType<WorldRuleController>();
+        }
 
         ApplySelectedNode();
     }
@@ -66,6 +73,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
             ApplyEndlessEnemyScaling(currentLevel, 1f, 1f, 1f);
             DisableEnvironment();
             anomalyController?.BeginLevel(null);
+            worldRuleController?.BeginLevel(null);
 
             return;
         }
@@ -77,6 +85,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
             node.ExperienceGainMultiplier
         );
         anomalyController?.BeginLevel(node);
+        worldRuleController?.BeginLevel(node);
 
         Debug.Log($"[LevelModifiersApplier] Applied node: {node.nodeName}");
     }
