@@ -38,7 +38,15 @@ public abstract class WorldEvent : Interactable
 
     public sealed override void Interact()
     {
-        if (!CanInteract || !owner.TryStartEvent(this))
+        if (!CanInteract)
+            return;
+
+        owner.TryChooseAndStartEvent(this);
+    }
+
+    public void StartSelectedEvent()
+    {
+        if (IsStarted || owner == null || !owner.TryStartEvent(this))
             return;
 
         IsStarted = true;

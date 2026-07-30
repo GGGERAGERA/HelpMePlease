@@ -140,12 +140,6 @@ public class WorldEventSpawner : MonoBehaviour
         WorldEvent spawnedEvent = Instantiate(prefab, spawnPosition, Quaternion.identity);
         spawnedEvent.Initialize(this);
 
-        if (doubleOrLeave != null &&
-            doubleOrLeave.TryBeginRiskyEvent(spawnedEvent))
-        {
-            spawnedEvent.ApplyDifficultyMultiplier(riskDifficultyMultiplier);
-        }
-
         spawnedEvents.Add(spawnedEvent);
         spawnedEventCount++;
 
@@ -363,6 +357,31 @@ public class WorldEventSpawner : MonoBehaviour
 
         ActiveEvent = worldEvent;
         return true;
+    }
+
+    public bool TryChooseAndStartEvent(WorldEvent worldEvent)
+    {
+        if (!CanStartEvent(worldEvent))
+            return false;
+
+        ResolveDoubleOrLeave();
+
+        if (doubleOrLeave == null)
+        {
+            worldEvent.StartSelectedEvent();
+            return true;
+        }
+
+        return doubleOrLeave.BeginEventChoice(
+            worldEvent,
+            risk =>
+            {
+                if (risk)
+                worldEvent.ApplyDifficultyMultiplier(riskDifficultyMultiplier);
+
+                worldEvent.StartSelectedEvent();
+            }
+        );
     }
 
     private void SpawnRewardChest(WorldEvent completedEvent)

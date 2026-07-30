@@ -44,13 +44,24 @@ public class UpgradeCardView : MonoBehaviour
     private void OnDestroy()
     {
         if (button != null)
+        {
             button.onClick.RemoveListener(HandleClick);
+            button.onClick.RemoveListener(HandleChoiceClick);
+        }
     }
 
     public void Setup(UpgradeData upgrade, Action<UpgradeData> clickCallback)
     {
         currentUpgrade = upgrade;
         onClicked = clickCallback;
+        choiceClicked = null;
+
+        if (button != null)
+        {
+            button.onClick.RemoveListener(HandleChoiceClick);
+            button.onClick.RemoveListener(HandleClick);
+            button.onClick.AddListener(HandleClick);
+        }
 
         if (upgrade == null)
         {
@@ -66,6 +77,48 @@ public class UpgradeCardView : MonoBehaviour
         SetIcon(upgrade.icon);
         SetCategory(upgrade.category);
         hoverAnimation?.RefreshRestingState();
+    }
+
+    public void SetupChoice(
+        string title,
+        string description,
+        UpgradeCategory category,
+        Action clickCallback
+    )
+    {
+        currentUpgrade = null;
+        onClicked = null;
+        gameObject.SetActive(true);
+
+        SetText(titleText, title);
+        SetText(descriptionText, description);
+        SetIcon(null);
+        SetCategory(category);
+
+        if (button != null)
+        {
+            button.onClick.RemoveListener(HandleClick);
+            button.onClick.RemoveListener(HandleChoiceClick);
+            button.onClick.AddListener(HandleChoiceClick);
+        }
+
+        choiceClicked = clickCallback;
+        hoverAnimation?.RefreshRestingState();
+    }
+
+    private Action choiceClicked;
+
+    private void HandleChoiceClick()
+    {
+        choiceClicked?.Invoke();
+    }
+
+    public void ClearChoiceCallback()
+    {
+        choiceClicked = null;
+
+        if (button != null)
+            button.onClick.RemoveListener(HandleChoiceClick);
     }
 
     private void HandleClick()
