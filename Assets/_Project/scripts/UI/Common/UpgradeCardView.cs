@@ -23,6 +23,9 @@ public class UpgradeCardView : MonoBehaviour
     private UpgradeData currentUpgrade;
     private Action<UpgradeData> onClicked;
     private UICardHoverAnimation hoverAnimation;
+    private Image iconFrameImage;
+    private Color defaultIconFrameColor;
+    private bool visualDefaultsCaptured;
 
     private void Awake()
     {
@@ -33,6 +36,7 @@ public class UpgradeCardView : MonoBehaviour
             backgroundImage = GetComponent<Image>();
 
         hoverAnimation = GetComponent<UICardHoverAnimation>();
+        CaptureVisualDefaults();
 
         if (button != null)
         {
@@ -52,6 +56,7 @@ public class UpgradeCardView : MonoBehaviour
 
     public void Setup(UpgradeData upgrade, Action<UpgradeData> clickCallback)
     {
+        RestoreChoiceVisuals();
         currentUpgrade = upgrade;
         onClicked = clickCallback;
         choiceClicked = null;
@@ -83,17 +88,23 @@ public class UpgradeCardView : MonoBehaviour
         string title,
         string description,
         UpgradeCategory category,
+        Sprite icon,
+        Color headerTint,
         Action clickCallback
     )
     {
+        RestoreChoiceVisuals();
         currentUpgrade = null;
         onClicked = null;
         gameObject.SetActive(true);
 
         SetText(titleText, title);
         SetText(descriptionText, description);
-        SetIcon(null);
+        SetIcon(icon);
         SetCategory(category);
+
+        if (iconFrameImage != null)
+            iconFrameImage.color = headerTint;
 
         if (button != null)
         {
@@ -119,6 +130,8 @@ public class UpgradeCardView : MonoBehaviour
 
         if (button != null)
             button.onClick.RemoveListener(HandleChoiceClick);
+
+        RestoreChoiceVisuals();
     }
 
     private void HandleClick()
@@ -135,7 +148,30 @@ public class UpgradeCardView : MonoBehaviour
             return;
 
         iconImage.sprite = icon;
+        iconImage.color = Color.white;
         iconImage.enabled = icon != null;
+    }
+
+    private void CaptureVisualDefaults()
+    {
+        if (visualDefaultsCaptured)
+            return;
+
+        if (iconImage != null && iconImage.transform.parent != null)
+            iconFrameImage = iconImage.transform.parent.GetComponent<Image>();
+
+        if (iconFrameImage != null)
+            defaultIconFrameColor = iconFrameImage.color;
+
+        visualDefaultsCaptured = true;
+    }
+
+    private void RestoreChoiceVisuals()
+    {
+        CaptureVisualDefaults();
+
+        if (iconFrameImage != null)
+            iconFrameImage.color = defaultIconFrameColor;
     }
 
     private void SetCategory(UpgradeCategory category)

@@ -639,7 +639,13 @@ MonoBehaviour:
   - {fileID: 1908335314010695321}
   - {fileID: 6894830524693267065}
   - {fileID: 7754724390675642136}
+  standardChoiceIcon: {fileID: -1317306447, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
+  riskChoiceIcon: {fileID: 1739873496, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
   panelAnimation: {fileID: 5372429980188747203}
+  rewardCardInitialDelay: 0.16
+  rewardCardRevealDuration: 0.16
+  rewardCardDelay: 0.06
+  rewardCardStartScale: 0.92
 --- !u!1 &5381419904884213875
 GameObject:
   m_ObjectHideFlags: 0

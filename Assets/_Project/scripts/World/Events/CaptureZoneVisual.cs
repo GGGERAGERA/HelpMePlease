@@ -5,38 +5,39 @@ using UnityEngine.Rendering;
 [RequireComponent(typeof(CaptureZoneEvent))]
 public sealed class CaptureZoneVisual : MonoBehaviour
 {
-    [Header("Materials")]
-    [SerializeField] private Material lineMaterial;
-    [SerializeField] private Material particleMaterial;
+    private static readonly int EdgeWidthId =
+        Shader.PropertyToID("_EdgeWidth");
+    private static readonly int PulseSpeedId =
+        Shader.PropertyToID("_PulseSpeed");
+    private static readonly int FillIntensityId =
+        Shader.PropertyToID("_FillIntensity");
+    private static readonly int ProgressId =
+        Shader.PropertyToID("_Progress");
+    private static readonly int CompletionFlashId =
+        Shader.PropertyToID("_CompletionFlash");
+    private static readonly int FadeId =
+        Shader.PropertyToID("_Fade");
+    private static readonly int VisualTimeId =
+        Shader.PropertyToID("_VisualTime");
 
-    [Header("Field")]
-    [SerializeField] private Color fillColor = new Color(0.04f, 0.34f, 0.45f, 0.08f);
-    [SerializeField] private Color glowColor = new Color(0.08f, 0.55f, 0.8f, 0.18f);
-    [SerializeField] private Color contourColor = new Color(0.2f, 0.85f, 1f, 0.65f);
-    [SerializeField, Min(0.01f)] private float contourWidth = 0.045f;
-    [SerializeField, Min(0.01f)] private float glowWidth = 0.15f;
-    [SerializeField, Range(24, 160)] private int contourSegments = 96;
+    [Header("Material")]
+    [SerializeField] private Material visualMaterial;
 
-    [Header("Pulse")]
+    [Header("Capture Zone Visual")]
+    [SerializeField, Min(1f)] private float visualRadiusMultiplier = 1.18f;
+    [SerializeField, Range(0.01f, 0.3f)] private float edgeWidth = 0.075f;
     [SerializeField, Min(0f)] private float pulseSpeed = 0.85f;
-    [SerializeField, Range(0f, 0.5f)] private float pulseAmount = 0.18f;
-
-    [Header("Particles")]
-    [SerializeField, Min(0f)] private float particlesPerSecond = 5f;
-    [SerializeField, Min(0.01f)] private float particleSize = 0.07f;
-    [SerializeField, Min(0.1f)] private float particleLifetime = 2.2f;
-
-    [Header("Rendering")]
-    [SerializeField] private string sortingLayerName = "Midground";
+    [SerializeField, Range(0f, 2f)] private float fillIntensity = 0.7f;
+    [SerializeField, Range(0f, 3f)] private float completionFlash = 1.8f;
+    [SerializeField, Min(0.01f)] private float fadeDuration = 0.22f;
 
     private CaptureZoneEvent captureZoneEvent;
-    private Transform visualRoot;
-    private LineRenderer fill;
-    private LineRenderer glow;
-    private LineRenderer contour;
-    private ParticleSystem perimeterParticles;
-    private Coroutine pulseRoutine;
-    private float pulseTime;
+    private GameObject visualObject;
+    private MeshRenderer visualRenderer;
+    private Mesh visualMesh;
+    private MaterialPropertyBlock visualProperties;
+    private float visualFade;
+    private bool detachedForCompletion;
 
     private void Awake()
     {
@@ -46,193 +47,206 @@ public sealed class CaptureZoneVisual : MonoBehaviour
 
     private void OnEnable()
     {
-        if (fill == null)
-            return;
-
-        pulseRoutine = StartCoroutine(Pulse());
+        visualFade = 0f;
+        ApplyVisualProperties();
     }
 
-    private void OnDisable()
+    private void Update()
     {
-        if (pulseRoutine != null)
+        if (visualRenderer == null || captureZoneEvent == null)
+            return;
+
+        visualFade = Mathf.MoveTowards(
+            visualFade,
+            1f,
+            Time.unscaledDeltaTime / Mathf.Max(0.01f, fadeDuration)
+        );
+        ApplyVisualProperties();
+    }
+
+    public void PlayCompletion()
+    {
+        if (visualObject == null || visualRenderer == null ||
+            detachedForCompletion)
         {
-            StopCoroutine(pulseRoutine);
-            pulseRoutine = null;
+            return;
         }
 
-        ApplyPulse(1f);
+        detachedForCompletion = true;
+        visualProperties.SetFloat(ProgressId, 1f);
+        visualProperties.SetFloat(FadeId, 1f);
+        visualRenderer.SetPropertyBlock(visualProperties);
+        visualObject.transform.SetParent(null, true);
+
+        CaptureZoneCompletionVisual completion =
+            visualObject.AddComponent<CaptureZoneCompletionVisual>();
+        completion.Initialize(
+            visualRenderer,
+            visualMesh,
+            visualProperties,
+            completionFlash,
+            fadeDuration
+        );
+
+        visualObject = null;
+        visualRenderer = null;
+        visualMesh = null;
+        visualProperties = null;
     }
 
     private void BuildVisual()
     {
-        if (captureZoneEvent == null || lineMaterial == null)
+        if (captureZoneEvent == null || visualMaterial == null)
             return;
 
-        float radius = captureZoneEvent.CaptureRadius;
-        visualRoot = CreateWorldScaleRoot();
+        visualObject = new GameObject("CaptureZoneVisual");
+        visualObject.transform.SetParent(transform, false);
 
-        fill = CreateLine("FieldFill", -2);
-        fill.positionCount = 2;
-        fill.numCapVertices = 32;
-        fill.startWidth = radius * 2f;
-        fill.endWidth = radius * 2f;
-        fill.SetPosition(0, new Vector3(-0.001f, 0f, 0f));
-        fill.SetPosition(1, new Vector3(0.001f, 0f, 0f));
+        visualMesh = CreateQuad();
+        MeshFilter meshFilter = visualObject.AddComponent<MeshFilter>();
+        meshFilter.sharedMesh = visualMesh;
 
-        glow = CreateRing("OuterGlow", radius, glowWidth, -1);
-        contour = CreateRing("OuterContour", radius, contourWidth, 0);
+        visualRenderer = visualObject.AddComponent<MeshRenderer>();
+        visualRenderer.sharedMaterial = visualMaterial;
+        visualRenderer.shadowCastingMode = ShadowCastingMode.Off;
+        visualRenderer.receiveShadows = false;
+        visualRenderer.sortingLayerName = "Midground";
+        visualRenderer.sortingOrder = -1;
 
-        if (particleMaterial != null && particlesPerSecond > 0f)
-            perimeterParticles = CreatePerimeterParticles(radius);
-
-        ApplyPulse(1f);
-    }
-
-    private Transform CreateWorldScaleRoot()
-    {
-        GameObject root = new GameObject("CaptureZoneVisual");
-        Transform rootTransform = root.transform;
-        rootTransform.SetParent(transform, false);
-
+        float diameter =
+            captureZoneEvent.CaptureRadius *
+            2f *
+            Mathf.Max(1f, visualRadiusMultiplier);
         Vector3 parentScale = transform.lossyScale;
-        rootTransform.localScale = new Vector3(
-            SafeInverse(parentScale.x),
-            SafeInverse(parentScale.y),
-            SafeInverse(parentScale.z)
+        visualObject.transform.localScale = new Vector3(
+            diameter * SafeInverse(parentScale.x),
+            diameter * SafeInverse(parentScale.y),
+            1f
         );
 
-        return rootTransform;
+        visualProperties = new MaterialPropertyBlock();
+        ApplyVisualProperties();
     }
 
-    private LineRenderer CreateRing(string objectName, float radius, float width, int sortingOrder)
+    private void ApplyVisualProperties()
     {
-        LineRenderer line = CreateLine(objectName, sortingOrder);
-        line.loop = true;
-        line.positionCount = contourSegments;
-        line.startWidth = width;
-        line.endWidth = width;
-
-        for (int i = 0; i < contourSegments; i++)
-        {
-            float angle = i * Mathf.PI * 2f / contourSegments;
-            line.SetPosition(i, new Vector3(
-                Mathf.Cos(angle) * radius,
-                Mathf.Sin(angle) * radius,
-                0f
-            ));
-        }
-
-        return line;
-    }
-
-    private LineRenderer CreateLine(string objectName, int sortingOrder)
-    {
-        GameObject lineObject = new GameObject(objectName);
-        lineObject.transform.SetParent(visualRoot, false);
-
-        LineRenderer line = lineObject.AddComponent<LineRenderer>();
-        line.sharedMaterial = lineMaterial;
-        line.useWorldSpace = false;
-        line.alignment = LineAlignment.View;
-        line.textureMode = LineTextureMode.Stretch;
-        line.numCornerVertices = 4;
-        line.shadowCastingMode = ShadowCastingMode.Off;
-        line.receiveShadows = false;
-        line.sortingLayerName = sortingLayerName;
-        line.sortingOrder = sortingOrder;
-        return line;
-    }
-
-    private ParticleSystem CreatePerimeterParticles(float radius)
-    {
-        GameObject particlesObject = new GameObject("PerimeterParticles");
-        particlesObject.transform.SetParent(visualRoot, false);
-
-        ParticleSystem particles = particlesObject.AddComponent<ParticleSystem>();
-        ParticleSystem.MainModule main = particles.main;
-        main.loop = true;
-        main.playOnAwake = true;
-        main.useUnscaledTime = true;
-        main.simulationSpace = ParticleSystemSimulationSpace.Local;
-        main.startLifetime = particleLifetime;
-        main.startSpeed = 0f;
-        main.startSize = particleSize;
-        main.startColor = new Color(contourColor.r, contourColor.g, contourColor.b, 0.28f);
-        main.maxParticles = 18;
-
-        ParticleSystem.EmissionModule emission = particles.emission;
-        emission.rateOverTime = particlesPerSecond;
-
-        ParticleSystem.ShapeModule shape = particles.shape;
-        shape.shapeType = ParticleSystemShapeType.Circle;
-        shape.radius = radius;
-        shape.radiusThickness = 0f;
-
-        ParticleSystem.ColorOverLifetimeModule colorOverLifetime = particles.colorOverLifetime;
-        colorOverLifetime.enabled = true;
-        Gradient alphaGradient = new Gradient();
-        alphaGradient.SetKeys(
-            new[]
-            {
-                new GradientColorKey(Color.white, 0f),
-                new GradientColorKey(Color.white, 1f)
-            },
-            new[]
-            {
-                new GradientAlphaKey(0f, 0f),
-                new GradientAlphaKey(1f, 0.25f),
-                new GradientAlphaKey(0f, 1f)
-            }
-        );
-        colorOverLifetime.color = alphaGradient;
-
-        ParticleSystemRenderer particleRenderer = particles.GetComponent<ParticleSystemRenderer>();
-        particleRenderer.sharedMaterial = particleMaterial;
-        particleRenderer.renderMode = ParticleSystemRenderMode.Billboard;
-        particleRenderer.sortingLayerName = sortingLayerName;
-        particleRenderer.sortingOrder = 1;
-        particleRenderer.shadowCastingMode = ShadowCastingMode.Off;
-        particleRenderer.receiveShadows = false;
-
-        particles.Play();
-        return particles;
-    }
-
-    private IEnumerator Pulse()
-    {
-        while (true)
-        {
-            pulseTime += Time.unscaledDeltaTime * pulseSpeed;
-            float pulse = 1f + Mathf.Sin(pulseTime * Mathf.PI * 2f) * pulseAmount;
-            ApplyPulse(pulse);
-            yield return null;
-        }
-    }
-
-    private void ApplyPulse(float multiplier)
-    {
-        SetColor(fill, WithMultipliedAlpha(fillColor, multiplier));
-        SetColor(glow, WithMultipliedAlpha(glowColor, multiplier));
-        SetColor(contour, WithMultipliedAlpha(contourColor, multiplier));
-    }
-
-    private static void SetColor(LineRenderer line, Color color)
-    {
-        if (line == null)
+        if (visualRenderer == null || visualProperties == null)
             return;
 
-        line.startColor = color;
-        line.endColor = color;
+        visualProperties.SetFloat(EdgeWidthId, edgeWidth);
+        visualProperties.SetFloat(PulseSpeedId, pulseSpeed);
+        visualProperties.SetFloat(FillIntensityId, fillIntensity);
+        visualProperties.SetFloat(
+            ProgressId,
+            captureZoneEvent != null ? captureZoneEvent.Progress : 0f
+        );
+        visualProperties.SetFloat(CompletionFlashId, 0f);
+        visualProperties.SetFloat(FadeId, visualFade);
+        visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
+        visualRenderer.SetPropertyBlock(visualProperties);
     }
 
-    private static Color WithMultipliedAlpha(Color color, float multiplier)
+    private static Mesh CreateQuad()
     {
-        color.a = Mathf.Clamp01(color.a * multiplier);
-        return color;
+        Mesh mesh = new Mesh
+        {
+            name = "CaptureZoneVisualQuad"
+        };
+        mesh.vertices = new[]
+        {
+            new Vector3(-0.5f, -0.5f, 0f),
+            new Vector3(-0.5f, 0.5f, 0f),
+            new Vector3(0.5f, 0.5f, 0f),
+            new Vector3(0.5f, -0.5f, 0f)
+        };
+        mesh.uv = new[]
+        {
+            new Vector2(0f, 0f),
+            new Vector2(0f, 1f),
+            new Vector2(1f, 1f),
+            new Vector2(1f, 0f)
+        };
+        mesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+        mesh.RecalculateBounds();
+        return mesh;
     }
 
     private static float SafeInverse(float value)
     {
         return Mathf.Abs(value) > 0.0001f ? 1f / value : 1f;
+    }
+
+    private void OnDestroy()
+    {
+        if (!detachedForCompletion && visualMesh != null)
+            Destroy(visualMesh);
+    }
+}
+
+public sealed class CaptureZoneCompletionVisual : MonoBehaviour
+{
+    private static readonly int CompletionFlashId =
+        Shader.PropertyToID("_CompletionFlash");
+    private static readonly int FadeId =
+        Shader.PropertyToID("_Fade");
+    private static readonly int VisualTimeId =
+        Shader.PropertyToID("_VisualTime");
+
+    private MeshRenderer visualRenderer;
+    private Mesh visualMesh;
+    private MaterialPropertyBlock visualProperties;
+    private float completionFlash;
+    private float fadeDuration;
+
+    public void Initialize(
+        MeshRenderer renderer,
+        Mesh mesh,
+        MaterialPropertyBlock properties,
+        float flash,
+        float duration)
+    {
+        visualRenderer = renderer;
+        visualMesh = mesh;
+        visualProperties = properties ?? new MaterialPropertyBlock();
+        completionFlash = Mathf.Max(0f, flash);
+        fadeDuration = Mathf.Max(0.01f, duration);
+        StartCoroutine(Play());
+    }
+
+    private IEnumerator Play()
+    {
+        float elapsed = 0f;
+
+        while (elapsed < fadeDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / fadeDuration);
+            float flashEnvelope = 1f - Mathf.Abs(t * 2f - 1f);
+            float fade = 1f - t * t;
+
+            if (visualRenderer != null)
+            {
+                visualProperties.SetFloat(
+                    CompletionFlashId,
+                    completionFlash * flashEnvelope
+                );
+                visualProperties.SetFloat(FadeId, fade);
+                visualProperties.SetFloat(
+                    VisualTimeId,
+                    Time.unscaledTime
+                );
+                visualRenderer.SetPropertyBlock(visualProperties);
+            }
+
+            yield return null;
+        }
+
+        Destroy(gameObject);
+    }
+
+    private void OnDestroy()
+    {
+        if (visualMesh != null)
+            Destroy(visualMesh);
     }
 }

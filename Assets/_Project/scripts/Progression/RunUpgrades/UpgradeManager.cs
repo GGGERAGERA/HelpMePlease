@@ -49,6 +49,7 @@ public sealed class UpgradeManager : MonoBehaviour
     private System.Action currentOnClosed;
     private System.Action worldEventStandardSelected;
     private System.Action worldEventRiskSelected;
+    private bool currentRequestIsChestReward;
 
     public bool IsChoosingUpgrade => isChoosingUpgrade;
 
@@ -109,6 +110,22 @@ public sealed class UpgradeManager : MonoBehaviour
     private void OnDisable()
     {
         CancelWorldEventModeChoice();
+
+        if (!isChoosingUpgrade || !currentRequestIsChestReward)
+            return;
+
+        isChoosingUpgrade = false;
+        currentRequestIsChestReward = false;
+        upgradePanelView?.Hide();
+
+        System.Action onClosed = currentOnClosed;
+        currentOnClosed = null;
+        onClosed?.Invoke();
+
+        while (pendingChoices.Count > 0)
+            pendingChoices.Dequeue().OnClosed?.Invoke();
+
+        Time.timeScale = previousTimeScale;
     }
 
     public void ShowUpgradeChoices()
@@ -181,6 +198,7 @@ public sealed class UpgradeManager : MonoBehaviour
         previousTimeScale = Time.timeScale;
         Time.timeScale = 0f;
         currentOnClosed = request.OnClosed;
+        currentRequestIsChestReward = request.IsChestReward;
 
         ShowChoiceRequest(request, choices);
     }
@@ -247,7 +265,7 @@ public sealed class UpgradeManager : MonoBehaviour
 
         if (request.IsChestReward)
         {
-            upgradePanelView.Show(
+            upgradePanelView.ShowWorldEventReward(
                 "НАГРАДА",
                 "Выберите предмет",
                 choices,
@@ -312,6 +330,7 @@ public sealed class UpgradeManager : MonoBehaviour
             upgradePanelView.Hide();
 
         isChoosingUpgrade = false;
+        currentRequestIsChestReward = false;
         System.Action onClosed = currentOnClosed;
         currentOnClosed = null;
         onClosed?.Invoke();
@@ -328,6 +347,7 @@ public sealed class UpgradeManager : MonoBehaviour
 
             isChoosingUpgrade = true;
             currentOnClosed = nextRequest.OnClosed;
+            currentRequestIsChestReward = nextRequest.IsChestReward;
             ShowChoiceRequest(nextRequest, choices);
             return;
         }

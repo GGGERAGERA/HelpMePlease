@@ -190,20 +190,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d7b4d1129f064a3395d14214e311c8a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CaptureZoneVisual
-  lineMaterial: {fileID: 2100000, guid: dca396c6aa60fe549b61f941be335967, type: 2}
-  particleMaterial: {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
-  fillColor: {r: 0.04, g: 0.34, b: 0.45, a: 0.08}
-  glowColor: {r: 0.08, g: 0.55, b: 0.8, a: 0.18}
-  contourColor: {r: 0.2, g: 0.85, b: 1, a: 0.65}
-  contourWidth: 0.045
-  glowWidth: 0.15
-  contourSegments: 96
+  visualMaterial: {fileID: 2100000, guid: c452b5f3e8a34f50a61fc5ff789b4ea2, type: 2}
+  visualRadiusMultiplier: 1.18
+  edgeWidth: 0.075
   pulseSpeed: 0.85
-  pulseAmount: 0.18
-  particlesPerSecond: 5
-  particleSize: 0.07
-  particleLifetime: 2.2
-  sortingLayerName: Midground
+  fillIntensity: 0.7
+  completionFlash: 1.8
+  fadeDuration: 0.22
 --- !u!1 &7134633371813098000
 GameObject:
   m_ObjectHideFlags: 0

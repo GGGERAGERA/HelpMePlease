@@ -110,6 +110,12 @@ public class CaptureZoneEvent : WorldEvent
         CompleteEvent();
     }
 
+    protected override void CleanupEvent()
+    {
+        if (!IsFailed)
+            GetComponent<CaptureZoneVisual>()?.PlayCompletion();
+    }
+
     private void UpdateUI()
     {
         float progress = Mathf.Clamp01(currentHoldTime / requiredHoldTime);

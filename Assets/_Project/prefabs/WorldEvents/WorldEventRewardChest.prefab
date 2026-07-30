@@ -139,4 +139,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41b79f95b87943d3a9f0d02d5e41aa01, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::WorldEventRewardChest
-  playerTag: Player
+  promptText: "\u2014 \u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0441\u0443\u043D\u0434\u0443\u043A"
+  appearDuration: 0.28
+  appearStartScale: 0.72
+  pulseDuration: 0.16
+  pulseScale: 1.12
+  openFeedbackDuration: 0.12
