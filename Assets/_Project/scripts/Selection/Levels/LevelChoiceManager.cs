@@ -97,7 +97,7 @@ public sealed class LevelChoiceManager : MonoBehaviour
 
             if (!node.AllowSameWeatherAsCurrent &&
                 currentNode != null &&
-                node.weatherType == currentNode.weatherType)
+                HasSameGlobalModifier(node, currentNode))
             {
                 continue;
             }
@@ -106,6 +106,38 @@ public sealed class LevelChoiceManager : MonoBehaviour
         }
 
         return pool;
+    }
+
+    private static bool HasSameGlobalModifier(
+        LevelNodeData candidate,
+        LevelNodeData current
+    )
+    {
+        WorldRuleData candidateRule = candidate.WorldRule;
+        WorldRuleData currentRule = current.WorldRule;
+
+        if (candidateRule != null && currentRule != null)
+        {
+            if (candidateRule.RuleType == WorldRuleType.None ||
+                currentRule.RuleType == WorldRuleType.None)
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(candidateRule.Id) &&
+                !string.IsNullOrWhiteSpace(currentRule.Id))
+            {
+                return string.Equals(
+                    candidateRule.Id,
+                    currentRule.Id,
+                    System.StringComparison.Ordinal
+                );
+            }
+
+            return candidateRule.RuleType == currentRule.RuleType;
+        }
+
+        return false;
     }
 
     private LevelNodeData TakeWeightedChoice(List<LevelNodeData> pool)

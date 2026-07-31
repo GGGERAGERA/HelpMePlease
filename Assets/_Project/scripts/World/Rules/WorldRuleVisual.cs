@@ -32,6 +32,14 @@ public sealed class WorldRuleVisual : MonoBehaviour
     [SerializeField] private Image fullscreenImage;
     [SerializeField] private Material visualMaterial;
 
+    [Header("Rain / Existing Scene Effect")]
+    [SerializeField] private GameObject rainEffect;
+
+    [Header("Darkness / Existing Scene Light")]
+    [SerializeField] private Light2D globalLight;
+    [SerializeField, Min(0f)] private float normalLightIntensity = 1f;
+    [SerializeField, Min(0f)] private float darknessLightIntensity = 0.01f;
+
     [Header("Transition")]
     [SerializeField, Min(0.01f)] private float transitionDuration = 1f;
     [SerializeField, Range(0f, 1f)] private float globalIntensity = 1f;
@@ -177,6 +185,47 @@ public sealed class WorldRuleVisual : MonoBehaviour
         FollowCamera();
     }
 
+    public void Apply(WorldRuleData rule)
+    {
+        if (rule == null || rule.RuleType == WorldRuleType.None)
+        {
+            Clear();
+            return;
+        }
+
+        switch (rule.RuleType)
+        {
+            case WorldRuleType.ExplosiveInfection:
+            case WorldRuleType.Haste:
+            case WorldRuleType.Regeneration:
+                ShowRule(rule.RuleType);
+                break;
+
+            case WorldRuleType.Snow:
+                SetSnowActive(true);
+                break;
+
+            case WorldRuleType.Rain:
+                ApplyRain();
+                break;
+
+            case WorldRuleType.Darkness:
+                ApplyDarkness();
+                break;
+
+            case WorldRuleType.Wind:
+            case WorldRuleType.Golden:
+                break;
+        }
+    }
+
+    public void Clear()
+    {
+        ClearRule();
+        SetSnowActive(false);
+        ClearRainAndDarkness();
+    }
+
     public void ShowRule(WorldRuleType ruleType)
     {
         if (visualMaterial == null)
@@ -245,6 +294,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
     private void SetNeutral()
     {
+        ClearRainAndDarkness();
         currentIntensity = 0f;
         targetIntensity = 0f;
         currentSnowIntensity = 0f;
@@ -266,6 +316,31 @@ public sealed class WorldRuleVisual : MonoBehaviour
             fullscreenImage.enabled = false;
 
         UpdateSnowResources();
+    }
+
+    private void ApplyRain()
+    {
+        if (rainEffect == null)
+            return;
+
+        rainEffect.SetActive(true);
+    }
+
+    private void ApplyDarkness()
+    {
+        if (globalLight == null)
+            return;
+
+        globalLight.intensity = darknessLightIntensity;
+    }
+
+    private void ClearRainAndDarkness()
+    {
+        if (rainEffect != null)
+            rainEffect.SetActive(false);
+
+        if (globalLight != null)
+            globalLight.intensity = normalLightIntensity;
     }
 
     private void ApplyTuning()

@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Rendering.Universal;
 
 public sealed class LevelModifiersApplier : MonoBehaviour
 {
@@ -8,15 +7,6 @@ public sealed class LevelModifiersApplier : MonoBehaviour
 
     [Header("Enemy Systems")]
     [SerializeField] private EnemySpawner enemySpawner;
-
-    [Header("Environment")]
-    [SerializeField] private GameObject rainObject;
-    [SerializeField] private GameObject snowObject;
-
-    [Header("Lighting")]
-    [SerializeField] private Light2D globalLight;
-    [SerializeField] private float normalLightIntensity = 1f;
-    [SerializeField] private float darknessLightIntensity = 0.01f;
 
     [Header("Run Flow")]
     [SerializeField] private RunFlowController runFlowController;
@@ -67,28 +57,64 @@ public sealed class LevelModifiersApplier : MonoBehaviour
 
         if (node == null)
         {
+            Debug.LogError(
+                "[LevelModifiersApplier] No LevelNodeData is available. " +
+                "Applying neutral World Rule."
+            );
             enemySpawner?.SetSpawnProfile(null, currentLevel);
             runFlowController?.ApplyLevelMechanics(null);
             ExperienceManager.Instance?.SetLevelXpGainMultiplier(1f);
             ApplyEndlessEnemyScaling(currentLevel, 1f, 1f, 1f);
-            DisableEnvironment();
             anomalyController?.BeginLevel(null);
-            worldRuleController?.BeginLevel(null);
+            worldRuleController?.Apply(null);
+
+#if UNITY_EDITOR
+            LogWorldRule(null);
+#endif
 
             return;
         }
 
         ApplyEnemyModifiers(node, currentLevel);
-        ApplyWeather(node);
+
+        if (node.WorldRule == null)
+        {
+            Debug.LogError(
+                $"[LevelModifiersApplier] LevelNodeData '{node.name}' " +
+                "has no WorldRuleData. Applying neutral World Rule.",
+                node
+            );
+        }
+
+        worldRuleController?.Apply(node.WorldRule);
         runFlowController?.ApplyLevelMechanics(node);
         ExperienceManager.Instance?.SetLevelXpGainMultiplier(
             node.ExperienceGainMultiplier
         );
         anomalyController?.BeginLevel(node);
-        worldRuleController?.BeginLevel(node);
+
+#if UNITY_EDITOR
+        LogWorldRule(node);
+#endif
 
         Debug.Log($"[LevelModifiersApplier] Applied node: {node.nodeName}");
     }
+
+#if UNITY_EDITOR
+    private static void LogWorldRule(LevelNodeData node)
+    {
+        string nodeName = node != null ? node.name : "<null>";
+        string ruleId = node != null && node.WorldRule != null
+            ? node.WorldRule.Id
+            : "<null>";
+
+        Debug.Log(
+            "[WorldRule]\n" +
+            $"Node='{nodeName}'\n" +
+            $"Rule='{ruleId}'"
+        );
+    }
+#endif
 
     private void ApplyEnemyModifiers(LevelNodeData node, int currentLevel)
     {
@@ -127,48 +153,4 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         );
     }
 
-    private void ApplyWeather(LevelNodeData node)
-    {
-        DisableEnvironment();
-
-        switch (node.weatherType)
-        {
-            case LevelWeatherType.Darkness:
-                ApplyLighting(node);
-                break;
-
-            case LevelWeatherType.Rain:
-                if (rainObject != null)
-                    rainObject.SetActive(true);
-                break;
-
-            case LevelWeatherType.Snow:
-                if (snowObject != null)
-                    snowObject.SetActive(true);
-                break;
-        }
-    }
-
-    private void DisableEnvironment()
-    {
-        if (globalLight != null)
-            globalLight.intensity = normalLightIntensity;
-
-        if (rainObject != null)
-            rainObject.SetActive(false);
-
-        if (snowObject != null)
-            snowObject.SetActive(false);
-
-    }
-
-    private void ApplyLighting(LevelNodeData node)
-    {
-        if (globalLight == null)
-            return;
-
-        globalLight.intensity = node.weatherType == LevelWeatherType.Darkness
-            ? darknessLightIntensity
-            : normalLightIntensity;
-    }
 }

@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,13 +5,7 @@ public sealed class WorldRuleController : MonoBehaviour
 {
     public static WorldRuleController Instance { get; private set; }
 
-    [Header("World Rules")]
-    [SerializeField] private bool enableWorldRules;
-    [SerializeField] private WorldAccelerationRule worldAccelerationRule;
-    [SerializeField] private WorldRuleData[] availableRules;
-
     [Header("View")]
-    [SerializeField] private LevelAnomalyView view;
     [SerializeField] private WorldRuleVisual worldRuleVisual;
 
     [Header("Explosion")]
@@ -27,16 +20,13 @@ public sealed class WorldRuleController : MonoBehaviour
     private PlayerHealth playerHealth;
     private PlayerCombatModifiers playerModifiers;
     private float originalOutgoingDamageMultiplier = 1f;
-    private float previousTimeScale = 1f;
     private float regenerationTimer;
-    private bool levelStarted;
     private bool enemyLifecycleSubscribed;
     private bool regenerationApplied;
     private bool hasteApplied;
-    private bool introPauseApplied;
 
     public WorldRuleData ActiveRule => activeRule;
-    public bool IsIntroComplete { get; private set; }
+    public bool IsIntroComplete => true;
 
     private void Awake()
     {
@@ -47,141 +37,44 @@ public sealed class WorldRuleController : MonoBehaviour
         }
 
         Instance = this;
-        previousTimeScale = Time.timeScale;
     }
 
-    public void BeginLevel(LevelNodeData level)
+    public void Apply(WorldRuleData rule)
     {
-        if (levelStarted)
+        Clear();
+
+        if (rule == null || rule.RuleType == WorldRuleType.None)
             return;
 
-        levelStarted = true;
-        worldRuleVisual?.SetSnowActive(
-            level != null &&
-            level.weatherType == LevelWeatherType.Snow
-        );
-        ResolveWorldAccelerationRule();
-        ApplyConfiguredWorldAcceleration(level);
+        activeRule = rule;
+        ResolvePlayerReferences();
+        ApplyGlobalGameplayEffect();
+        worldRuleVisual?.Apply(rule);
+    }
 
-        if (!enableWorldRules)
-        {
-            worldRuleVisual?.ClearRuleImmediate();
-            IsIntroComplete = true;
-            return;
-        }
+    public void Clear()
+    {
+        RestoreRuntimeEffects();
+        UnsubscribeEnemyLifecycle();
 
-        activeRule = SelectGlobalRule();
+        activeRule = null;
+        playerHealth = null;
+        playerModifiers = null;
 
-        if (activeRule == null)
-        {
-            worldRuleVisual?.ClearRuleImmediate();
-            IsIntroComplete = true;
-            return;
-        }
+        explodedEnemyIds.Clear();
+        chainSuppressedEnemyIds.Clear();
+        worldRuleVisual?.Clear();
+    }
 
+    private void ResolvePlayerReferences()
+    {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
 
-        if (player != null)
-        {
-            playerHealth = player.GetComponent<PlayerHealth>();
-            playerModifiers = player.GetComponent<PlayerCombatModifiers>();
-        }
-
-        if (!UsesGlobalIntro(activeRule.RuleType))
-        {
-            Debug.LogWarning(
-                "[WorldRuleController] Selected data " +
-                $"'{activeRule.name}' is not a global world rule. " +
-                "Continuing without that rule.",
-                this
-            );
-            activeRule = null;
-            worldRuleVisual?.ClearRuleImmediate();
-            IsIntroComplete = true;
+        if (player == null)
             return;
-        }
 
-        previousTimeScale = Time.timeScale;
-        Time.timeScale = 0f;
-        introPauseApplied = true;
-        worldRuleVisual?.ShowRule(activeRule.RuleType);
-        ApplyGlobalGameplayEffect();
-        StartCoroutine(IntroRoutine(level));
-    }
-
-    private void ApplyConfiguredWorldAcceleration(LevelNodeData level)
-    {
-        if (enableWorldRules &&
-            level != null &&
-            level.hasWorldAccelerationRule)
-        {
-            worldAccelerationRule?.StartRule();
-        }
-        else
-        {
-            worldAccelerationRule?.StopRule();
-        }
-    }
-
-    private void ResolveWorldAccelerationRule()
-    {
-        if (worldAccelerationRule == null)
-        {
-            worldAccelerationRule =
-                FindFirstObjectByType<WorldAccelerationRule>();
-        }
-    }
-
-    private WorldRuleData SelectGlobalRule()
-    {
-        if (availableRules == null || availableRules.Length == 0)
-            return null;
-
-        float totalWeight = 0f;
-
-        for (int i = 0; i < availableRules.Length; i++)
-        {
-            WorldRuleData rule = availableRules[i];
-
-            if (rule != null && UsesGlobalIntro(rule.RuleType))
-                totalWeight += rule.SelectionWeight;
-        }
-
-        if (totalWeight <= 0f)
-            return null;
-
-        float roll = Random.value * totalWeight;
-        WorldRuleData lastEligible = null;
-
-        for (int i = 0; i < availableRules.Length; i++)
-        {
-            WorldRuleData rule = availableRules[i];
-
-            if (rule == null || !UsesGlobalIntro(rule.RuleType))
-                continue;
-
-            lastEligible = rule;
-            roll -= rule.SelectionWeight;
-
-            if (roll <= 0f)
-                return rule;
-        }
-
-        return lastEligible;
-    }
-
-    private static bool UsesGlobalIntro(WorldRuleType type)
-    {
-        switch (type)
-        {
-            case WorldRuleType.ExplosiveInfection:
-            case WorldRuleType.Haste:
-            case WorldRuleType.Regeneration:
-                return true;
-
-            default:
-                return false;
-        }
+        playerHealth = player.GetComponent<PlayerHealth>();
+        playerModifiers = player.GetComponent<PlayerCombatModifiers>();
     }
 
     private void ApplyGlobalGameplayEffect()
@@ -198,6 +91,15 @@ public sealed class WorldRuleController : MonoBehaviour
 
             case WorldRuleType.Regeneration:
                 ApplyRegeneration();
+                break;
+
+            case WorldRuleType.None:
+            case WorldRuleType.Snow:
+            case WorldRuleType.Rain:
+            case WorldRuleType.Darkness:
+            case WorldRuleType.Wind:
+            case WorldRuleType.Golden:
+                // Gameplay for migrated World Rules is enabled in a later stage.
                 break;
         }
     }
@@ -364,34 +266,8 @@ public sealed class WorldRuleController : MonoBehaviour
         Destroy(fx, explosionFxLifetime);
     }
 
-    private IEnumerator IntroRoutine(LevelNodeData level)
-    {
-        if (view != null)
-            yield return view.PlayIntro(
-                level,
-                activeRule.Presentation
-            );
-
-        FinishIntroPause();
-    }
-
-    private void FinishIntroPause()
-    {
-        IsIntroComplete = true;
-
-        if (introPauseApplied &&
-            Mathf.Approximately(Time.timeScale, 0f))
-        {
-            Time.timeScale = previousTimeScale;
-        }
-
-        introPauseApplied = false;
-    }
-
     private void RestoreRuntimeEffects()
     {
-        worldAccelerationRule?.StopRule();
-
         if (regenerationApplied && playerModifiers != null)
         {
             playerModifiers.bonusDamageMultiplier =
@@ -417,6 +293,24 @@ public sealed class WorldRuleController : MonoBehaviour
         regenerationTimer = 0f;
     }
 
+    private void UnsubscribeEnemyLifecycle()
+    {
+        if (enemyLifecycleSubscribed)
+        {
+            EnemyHealth.Spawned -= RegisterEnemy;
+            EnemyHealth.Despawned -= UnregisterEnemy;
+            enemyLifecycleSubscribed = false;
+        }
+
+        foreach (EnemyHealth enemy in registeredEnemies)
+        {
+            if (enemy != null)
+                enemy.OnDied -= HandleEnemyDied;
+        }
+
+        registeredEnemies.Clear();
+    }
+
     private static EnemyMovement GetEnemyMovement(EnemyHealth enemy)
     {
         EnemyMovement movement = enemy.GetComponent<EnemyMovement>();
@@ -435,33 +329,7 @@ public sealed class WorldRuleController : MonoBehaviour
         if (Instance != this)
             return;
 
-        RestoreRuntimeEffects();
-        worldRuleVisual?.ClearImmediate();
-
-        if (enemyLifecycleSubscribed)
-        {
-            EnemyHealth.Spawned -= RegisterEnemy;
-            EnemyHealth.Despawned -= UnregisterEnemy;
-            enemyLifecycleSubscribed = false;
-        }
-
-        foreach (EnemyHealth enemy in registeredEnemies)
-        {
-            if (enemy != null)
-                enemy.OnDied -= HandleEnemyDied;
-        }
-
-        registeredEnemies.Clear();
-        explodedEnemyIds.Clear();
-        chainSuppressedEnemyIds.Clear();
-
-        if (introPauseApplied &&
-            Mathf.Approximately(Time.timeScale, 0f))
-        {
-            Time.timeScale = previousTimeScale;
-        }
-
-        introPauseApplied = false;
+        Clear();
 
         if (Instance == this)
             Instance = null;

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e7a23f4bc9f4e65a021dd9d286ca004, type: 3}
+  m_Name: WorldRule_None
+  m_EditorClassIdentifier: Assembly-CSharp::WorldRuleData
+  stableId: None
+  ruleType: 10
+  displayName: No World Rule
+  description: Standard level without a global World Rule.
+  pinnedDescription: No World Rule
+  selectionWeight: 1
+  explosionRadius: 2.2
+  playerExplosionDamage: 20
+  enemyExplosionDamage: 25
+  allowChainReaction: 1
+  enemySpeedMultiplier: 1
+  experienceGainMultiplier: 1
+  playerHealthPerSecond: 0
+  outgoingDamageMultiplier: 1

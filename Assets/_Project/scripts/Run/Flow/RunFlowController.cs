@@ -124,7 +124,7 @@ public sealed class RunFlowController : MonoBehaviour
             return;
         }
 
-        string modifierId = GetModifierUnlockId(completedNode.weatherType);
+        string modifierId = GetModifierUnlockId(completedNode);
 
         if (string.IsNullOrWhiteSpace(modifierId))
             return;
@@ -146,22 +146,30 @@ public sealed class RunFlowController : MonoBehaviour
         );
     }
 
-    private string GetModifierUnlockId(LevelWeatherType weatherType)
+    private string GetModifierUnlockId(LevelNodeData node)
     {
-        switch (weatherType)
+        WorldRuleData rule = node.WorldRule;
+
+        if (rule != null)
         {
-            case LevelWeatherType.Darkness:
-                return "Darkness";
+            switch (rule.RuleType)
+            {
+                case WorldRuleType.Darkness:
+                case WorldRuleType.Rain:
+                case WorldRuleType.Snow:
+                    return rule.Id;
 
-            case LevelWeatherType.Rain:
-                return "Rain";
-
-            case LevelWeatherType.Snow:
-                return "Snow";
-
-            default:
-                return string.Empty;
+                case WorldRuleType.None:
+                case WorldRuleType.Wind:
+                case WorldRuleType.Golden:
+                case WorldRuleType.ExplosiveInfection:
+                case WorldRuleType.Haste:
+                case WorldRuleType.Regeneration:
+                    return string.Empty;
+            }
         }
+
+        return string.Empty;
     }
 
     private void StopEnemySpawner()

@@ -2633,11 +2633,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelModifiersApplier
   defaultLevel: {fileID: 11400000, guid: 20100000000000000000000000000000, type: 2}
   enemySpawner: {fileID: 8488144525096105199, guid: 169b5772155b17842b8cd9604fcf1eb7, type: 3}
-  rainObject: {fileID: 610461739}
-  snowObject: {fileID: 2007231648}
-  globalLight: {fileID: 1615053065}
-  normalLightIntensity: 1
-  darknessLightIntensity: 0.01
   runFlowController: {fileID: 46915856}
   anomalyController: {fileID: 2147010005}
   worldRuleController: {fileID: 2147010006}
@@ -6258,10 +6253,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d5b67e1049c45b598c261d1e9dc98a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldRuleController
-  enableWorldRules: 0
-  worldAccelerationRule: {fileID: 46915858}
-  availableRules: []
-  view: {fileID: 2147010004}
   worldRuleVisual: {fileID: 2147010007}
   explosionFxPrefab: {fileID: 3932597101254327762, guid: f91913de896646447a357936450e42c5, type: 3}
   explosionFxLifetime: 0.8
@@ -6279,6 +6270,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WorldRuleVisual
   fullscreenImage: {fileID: 2147010013}
   visualMaterial: {fileID: 2100000, guid: d31bb530e01b4594a58b27501624ddec, type: 2}
+  rainEffect: {fileID: 610461739}
+  globalLight: {fileID: 1615053065}
+  normalLightIntensity: 1
+  darknessLightIntensity: 0.01
   transitionDuration: 1
   globalIntensity: 1
   pulseSpeed: 1
