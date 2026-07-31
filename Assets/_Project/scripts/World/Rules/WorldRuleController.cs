@@ -12,20 +12,55 @@ public sealed class WorldRuleController : MonoBehaviour
     [SerializeField] private GameObject explosionFxPrefab;
     [SerializeField, Min(0.1f)] private float explosionFxLifetime = 0.8f;
 
+    [Header("Diagnostics")]
+    [SerializeField] private bool logGoldenEnemyAssignments;
+    [SerializeField] private bool logWindSelection;
+
+    private static readonly Vector2[] CardinalWindDirections =
+    {
+        Vector2.up,
+        Vector2.down,
+        Vector2.left,
+        Vector2.right
+    };
+
+    private static readonly Vector2[] EightWindDirections =
+    {
+        Vector2.up,
+        Vector2.down,
+        Vector2.left,
+        Vector2.right,
+        new Vector2(1f, 1f).normalized,
+        new Vector2(1f, -1f).normalized,
+        new Vector2(-1f, 1f).normalized,
+        new Vector2(-1f, -1f).normalized
+    };
+
     private readonly HashSet<EnemyHealth> registeredEnemies = new();
     private readonly HashSet<int> explodedEnemyIds = new();
     private readonly HashSet<int> chainSuppressedEnemyIds = new();
 
     private WorldRuleData activeRule;
     private PlayerHealth playerHealth;
+    private CharacterMovement2D playerMovement;
     private PlayerCombatModifiers playerModifiers;
     private float originalOutgoingDamageMultiplier = 1f;
     private float regenerationTimer;
     private bool enemyLifecycleSubscribed;
     private bool regenerationApplied;
     private bool hasteApplied;
+    private bool playerMoveSpeedApplied;
+    private bool enemyMoveSpeedApplied;
+    private bool goldenSpawnSubscribed;
+    private float goldenEnemyChance;
+    private float goldenEnemyHealthMultiplier = 1f;
+    private float goldenEnemyRewardMultiplier = 1f;
+    private Vector2 activeWindDirection;
+    private Vector2 activeWindVelocity;
 
     public WorldRuleData ActiveRule => activeRule;
+    public Vector2 ActiveWindDirection => activeWindDirection;
+    public Vector2 ActiveWindVelocity => activeWindVelocity;
     public bool IsIntroComplete => true;
 
     private void Awake()
@@ -48,17 +83,22 @@ public sealed class WorldRuleController : MonoBehaviour
 
         activeRule = rule;
         ResolvePlayerReferences();
-        ApplyGlobalGameplayEffect();
+        ApplyMovementModifiers();
+        ApplyGoldenEnemyAssignment();
+        ApplyTransitionalGameplayEffect();
         worldRuleVisual?.Apply(rule);
+        ApplyWind();
     }
 
     public void Clear()
     {
         RestoreRuntimeEffects();
+        StopGoldenEnemyAssignment();
         UnsubscribeEnemyLifecycle();
 
         activeRule = null;
         playerHealth = null;
+        playerMovement = null;
         playerModifiers = null;
 
         explodedEnemyIds.Clear();
@@ -74,10 +114,31 @@ public sealed class WorldRuleController : MonoBehaviour
             return;
 
         playerHealth = player.GetComponent<PlayerHealth>();
+        playerMovement = player.GetComponent<CharacterMovement2D>();
         playerModifiers = player.GetComponent<PlayerCombatModifiers>();
     }
 
-    private void ApplyGlobalGameplayEffect()
+    private void ApplyMovementModifiers()
+    {
+        float playerMultiplier = activeRule.PlayerMoveSpeedMultiplier;
+
+        if (!Mathf.Approximately(playerMultiplier, 1f) &&
+            playerMovement != null)
+        {
+            playerMovement.SetWorldRuleSpeedMultiplier(playerMultiplier);
+            playerMoveSpeedApplied = true;
+        }
+
+        float enemyMultiplier = activeRule.EnemyMoveSpeedMultiplier;
+
+        if (!Mathf.Approximately(enemyMultiplier, 1f))
+        {
+            enemyMoveSpeedApplied = true;
+            SubscribeEnemyLifecycle();
+        }
+    }
+
+    private void ApplyTransitionalGameplayEffect()
     {
         switch (activeRule.RuleType)
         {
@@ -93,15 +154,121 @@ public sealed class WorldRuleController : MonoBehaviour
                 ApplyRegeneration();
                 break;
 
-            case WorldRuleType.None:
-            case WorldRuleType.Snow:
-            case WorldRuleType.Rain:
-            case WorldRuleType.Darkness:
-            case WorldRuleType.Wind:
-            case WorldRuleType.Golden:
-                // Gameplay for migrated World Rules is enabled in a later stage.
+            default:
                 break;
         }
+    }
+
+    private void ApplyWind()
+    {
+        float force = activeRule.WindForce;
+        WindDirectionMode mode = activeRule.WindDirectionMode;
+
+        if (force <= 0f || mode == WindDirectionMode.None)
+            return;
+
+        activeWindDirection = SelectWindDirection(activeRule, mode);
+        activeWindVelocity = activeWindDirection * force;
+        playerMovement?.SetWorldRuleExternalVelocity(activeWindVelocity);
+        worldRuleVisual?.ShowWind(activeWindDirection);
+
+#if UNITY_EDITOR
+        if (logWindSelection)
+        {
+            Debug.Log(
+                $"[WindRule] Direction={activeWindDirection} " +
+                $"Velocity={activeWindVelocity}",
+                this
+            );
+        }
+#endif
+    }
+
+    private static Vector2 SelectWindDirection(
+        WorldRuleData rule,
+        WindDirectionMode mode)
+    {
+        switch (mode)
+        {
+            case WindDirectionMode.Fixed:
+                return rule.FixedWindDirection;
+
+            case WindDirectionMode.RandomCardinal:
+                return CardinalWindDirections[
+                    Random.Range(0, CardinalWindDirections.Length)
+                ];
+
+            case WindDirectionMode.RandomEightDirections:
+                return EightWindDirections[
+                    Random.Range(0, EightWindDirections.Length)
+                ];
+
+            default:
+                return Vector2.zero;
+        }
+    }
+
+    private void ApplyGoldenEnemyAssignment()
+    {
+        goldenEnemyChance = activeRule.GoldenEnemyChance;
+        goldenEnemyHealthMultiplier =
+            activeRule.GoldenEnemyHealthMultiplier;
+        goldenEnemyRewardMultiplier =
+            activeRule.GoldenEnemyRewardMultiplier;
+
+        if (goldenEnemyChance <= 0f || goldenSpawnSubscribed)
+            return;
+
+        goldenSpawnSubscribed = true;
+        EnemyHealth.SpawnConfigured += TryAssignGoldenEnemy;
+    }
+
+    private void TryAssignGoldenEnemy(EnemyHealth enemy)
+    {
+        if (enemy == null || enemy.IsBoss || goldenEnemyChance <= 0f)
+            return;
+
+        GoldenEnemyModifier modifier =
+            enemy.GetComponent<GoldenEnemyModifier>();
+
+        if (modifier == null)
+            modifier = enemy.gameObject.AddComponent<GoldenEnemyModifier>();
+
+        if (!modifier.TryBeginSpawnRoll() ||
+            Random.value >= goldenEnemyChance)
+        {
+            return;
+        }
+
+        modifier.Apply(
+            goldenEnemyHealthMultiplier,
+            goldenEnemyRewardMultiplier
+        );
+
+#if UNITY_EDITOR
+        if (logGoldenEnemyAssignments)
+        {
+            Debug.Log(
+                $"[GoldenEnemy] Enemy='{enemy.name}' " +
+                $"HealthMultiplier={goldenEnemyHealthMultiplier:F2} " +
+                $"RewardMultiplier={goldenEnemyRewardMultiplier:F2}",
+                enemy
+            );
+        }
+#endif
+    }
+
+    private void StopGoldenEnemyAssignment()
+    {
+        if (goldenSpawnSubscribed)
+        {
+            EnemyHealth.SpawnConfigured -= TryAssignGoldenEnemy;
+            goldenSpawnSubscribed = false;
+        }
+
+        goldenEnemyChance = 0f;
+        goldenEnemyHealthMultiplier = 1f;
+        goldenEnemyRewardMultiplier = 1f;
     }
 
     private void ApplyHaste()
@@ -145,6 +312,14 @@ public sealed class WorldRuleController : MonoBehaviour
         if (enemy == null || !registeredEnemies.Add(enemy))
             return;
 
+        if (activeRule == null)
+            return;
+
+        EnemyMovement movement = GetEnemyMovement(enemy);
+        movement?.SetWorldRuleSpeedMultiplier(
+            activeRule.EnemyMoveSpeedMultiplier
+        );
+
         if (activeRule.RuleType ==
             WorldRuleType.ExplosiveInfection)
         {
@@ -153,7 +328,6 @@ public sealed class WorldRuleController : MonoBehaviour
 
         if (activeRule.RuleType == WorldRuleType.Haste)
         {
-            EnemyMovement movement = GetEnemyMovement(enemy);
             movement?.SetAnomalySpeedMultiplier(
                 activeRule.EnemySpeedMultiplier
             );
@@ -268,6 +442,27 @@ public sealed class WorldRuleController : MonoBehaviour
 
     private void RestoreRuntimeEffects()
     {
+        if (playerMovement != null)
+            playerMovement.SetWorldRuleExternalVelocity(Vector2.zero);
+
+        activeWindDirection = Vector2.zero;
+        activeWindVelocity = Vector2.zero;
+
+        if (playerMoveSpeedApplied && playerMovement != null)
+            playerMovement.SetWorldRuleSpeedMultiplier(1f);
+
+        if (enemyMoveSpeedApplied)
+        {
+            foreach (EnemyHealth enemy in registeredEnemies)
+            {
+                if (enemy == null)
+                    continue;
+
+                EnemyMovement movement = GetEnemyMovement(enemy);
+                movement?.SetWorldRuleSpeedMultiplier(1f);
+            }
+        }
+
         if (regenerationApplied && playerModifiers != null)
         {
             playerModifiers.bonusDamageMultiplier =
@@ -290,6 +485,8 @@ public sealed class WorldRuleController : MonoBehaviour
 
         regenerationApplied = false;
         hasteApplied = false;
+        playerMoveSpeedApplied = false;
+        enemyMoveSpeedApplied = false;
         regenerationTimer = 0f;
     }
 

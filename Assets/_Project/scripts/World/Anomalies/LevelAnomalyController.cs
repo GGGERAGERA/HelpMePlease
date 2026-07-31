@@ -22,37 +22,6 @@ public sealed class LevelAnomalyController : MonoBehaviour
         }
     }
 
-    public static LevelAnomalyController Instance { get; private set; }
-
-    [Header("Data")]
-    [SerializeField] private LocalAnomalyData[] availableAnomalies;
-
-    [Header("View")]
-    [SerializeField] private LevelAnomalyView view;
-
-    [Header("Local Anomaly Zones")]
-    [SerializeField] private BerserkZone berserkZonePrefab;
-    [SerializeField] private StasisZone stasisZonePrefab;
-    [SerializeField, Range(1, 2)] private int anomalyCount = 1;
-    [SerializeField, Min(0.1f)] private float anomalyRadius = 4f;
-    [SerializeField, Min(0.1f)] private float stasisRadius = 4f;
-    [SerializeField, Min(1f)] private float enemySpeedMultiplier = 1.5f;
-    [SerializeField, Range(0.1f, 1f)] private float playerSpeedMultiplier = 0.65f;
-    [SerializeField, Min(0f)] private float edgePadding = 1f;
-    [SerializeField, Min(0f)] private float minimumDistanceFromPlayerStart = 5f;
-    [SerializeField, Min(0f)] private float minimumDistanceBetweenAnomalies = 2f;
-    [SerializeField] private GameplayAreaService gameplayArea;
-
-    private readonly List<BerserkZone> berserkZones = new();
-    private readonly List<StasisZone> stasisZones = new();
-    private readonly List<ActiveLocalZone> activeLocalZones = new();
-
-    private enum LocalAnomalyKind
-    {
-        Berserk,
-        Stasis
-    }
-
     private readonly struct LocalAnomalyPlacement
     {
         public readonly Vector3 Position;
@@ -68,82 +37,36 @@ public sealed class LevelAnomalyController : MonoBehaviour
     private readonly struct ActiveLocalZone
     {
         public readonly Object Source;
-        public readonly LocalAnomalyType Type;
+        public readonly LocalAnomalyData Data;
 
-        public ActiveLocalZone(
-            Object source,
-            LocalAnomalyType type)
+        public ActiveLocalZone(Object source, LocalAnomalyData data)
         {
             Source = source;
-            Type = type;
+            Data = data;
         }
     }
+
+    public static LevelAnomalyController Instance { get; private set; }
+
+    [Header("View")]
+    [SerializeField] private LocalAnomalyVisual visual;
+
+    [Header("Placement")]
+    [SerializeField, Range(1, 2)] private int anomalyCount = 1;
+    [SerializeField, Min(0f)] private float edgePadding = 1f;
+    [SerializeField, Min(0f)] private float minimumDistanceFromPlayerStart = 5f;
+    [SerializeField, Min(0f)] private float minimumDistanceBetweenAnomalies = 2f;
+    [SerializeField] private GameplayAreaService gameplayArea;
+
+    private readonly List<LocalAnomalyZone> spawnedZones = new();
+    private readonly List<ActiveLocalZone> activeLocalZones = new();
 
     private LocalAnomalyData activeAnomaly;
-    private bool levelStarted;
     private bool localCardVisible;
-    private LocalAnomalyType displayedLocalAnomalyType;
+    private LocalAnomalyData displayedLocalAnomaly;
 
     public LocalAnomalyData ActiveAnomaly => activeAnomaly;
-    public bool IsIntroComplete { get; private set; }
-
-    public void CollectActiveLocalZones(
-        List<LocalAnomalyZoneGeometry> result)
-    {
-        if (result == null)
-            return;
-
-        result.Clear();
-
-        for (int i = 0; i < berserkZones.Count; i++)
-        {
-            AddLocalZoneGeometry(
-                result,
-                berserkZones[i],
-                LocalAnomalyType.Berserk
-            );
-        }
-
-        for (int i = 0; i < stasisZones.Count; i++)
-        {
-            AddLocalZoneGeometry(
-                result,
-                stasisZones[i],
-                LocalAnomalyType.Stasis
-            );
-        }
-    }
-
-    private static void AddLocalZoneGeometry(
-        List<LocalAnomalyZoneGeometry> result,
-        MonoBehaviour zone,
-        LocalAnomalyType type)
-    {
-        if (zone == null || !zone.isActiveAndEnabled)
-            return;
-
-        CircleCollider2D collider =
-            zone.GetComponent<CircleCollider2D>();
-
-        if (collider == null || !collider.enabled)
-            return;
-
-        Vector2 center = collider.transform.TransformPoint(
-            collider.offset
-        );
-        Vector3 scale = collider.transform.lossyScale;
-        float radius = collider.radius * Mathf.Max(
-            Mathf.Abs(scale.x),
-            Mathf.Abs(scale.y)
-        );
-
-        if (radius <= Mathf.Epsilon)
-            return;
-
-        result.Add(
-            new LocalAnomalyZoneGeometry(type, center, radius)
-        );
-    }
+    public bool IsIntroComplete { get; private set; } = true;
 
     private void Awake()
     {
@@ -156,108 +79,92 @@ public sealed class LevelAnomalyController : MonoBehaviour
         Instance = this;
     }
 
-    public void BeginLevel(LevelNodeData level)
+    public void Apply(LocalAnomalyData anomaly)
     {
-        if (levelStarted)
-            return;
+        Clear();
+        IsIntroComplete = false;
 
-        levelStarted = true;
-        activeAnomaly = SelectLocalAnomaly();
-
-        if (activeAnomaly == null)
+        if (anomaly == null)
         {
             IsIntroComplete = true;
             return;
         }
 
-        if (TryGetLocalAnomalyKind(
-                activeAnomaly.AnomalyType,
-                out LocalAnomalyKind localKind))
-        {
-            if (!HasZonePrefab(localKind))
-            {
-                Debug.LogWarning(
-                    "[LevelAnomalyController] Selected local anomaly " +
-                    $"'{activeAnomaly.name}' " +
-                    $"({activeAnomaly.AnomalyType}), but its zone " +
-                    "prefab is not assigned. Continuing without an " +
-                    "anomaly.",
-                    this
-                );
-                IsIntroComplete = true;
-                return;
-            }
+        activeAnomaly = anomaly;
+        visual?.Apply(anomaly);
 
-            SpawnLocalAnomalyZones();
-            IsIntroComplete = true;
-            return;
-        }
+        if (anomaly.ZonePrefab != null)
+            SpawnLocalAnomalyZones(anomaly);
 
         IsIntroComplete = true;
     }
 
-    private LocalAnomalyData SelectLocalAnomaly()
+    public void Clear()
     {
-        if (availableAnomalies == null || availableAnomalies.Length == 0)
-            return null;
+        CleanupLocalAnomalyZones();
+        activeAnomaly = null;
+        displayedLocalAnomaly = null;
+        localCardVisible = false;
+        visual?.Clear();
+        IsIntroComplete = true;
+    }
 
-        float totalWeight = 0f;
+    public void CollectActiveLocalZones(
+        List<LocalAnomalyZoneGeometry> result)
+    {
+        if (result == null)
+            return;
 
-        for (int i = 0; i < availableAnomalies.Length; i++)
+        result.Clear();
+
+        for (int i = 0; i < spawnedZones.Count; i++)
         {
-            LocalAnomalyData anomaly = availableAnomalies[i];
+            LocalAnomalyZone zone = spawnedZones[i];
 
-            if (anomaly != null &&
-                IsLocalAnomalyType(anomaly.AnomalyType))
-            {
-                totalWeight += anomaly.SelectionWeight;
-            }
-        }
-
-        if (totalWeight <= 0f)
-            return null;
-
-        float roll = Random.value * totalWeight;
-        LocalAnomalyData lastEligible = null;
-
-        for (int i = 0; i < availableAnomalies.Length; i++)
-        {
-            LocalAnomalyData anomaly = availableAnomalies[i];
-
-            if (anomaly == null ||
-                !IsLocalAnomalyType(anomaly.AnomalyType))
-            {
+            if (zone == null || !zone.isActiveAndEnabled)
                 continue;
-            }
 
-            lastEligible = anomaly;
-            roll -= anomaly.SelectionWeight;
+            CircleCollider2D collider =
+                zone.GetComponent<CircleCollider2D>();
 
-            if (roll <= 0f)
-                return anomaly;
+            if (collider == null || !collider.enabled)
+                continue;
+
+            Vector2 center = collider.transform.TransformPoint(
+                collider.offset
+            );
+            Vector3 scale = collider.transform.lossyScale;
+            float radius = collider.radius * Mathf.Max(
+                Mathf.Abs(scale.x),
+                Mathf.Abs(scale.y)
+            );
+
+            if (radius <= Mathf.Epsilon)
+                continue;
+
+            result.Add(new LocalAnomalyZoneGeometry(
+                zone.AnomalyType,
+                center,
+                radius
+            ));
         }
-
-        return lastEligible;
     }
 
     public void NotifyLocalZoneEntered(
         Object zone,
-        LocalAnomalyType type)
+        LocalAnomalyData data)
     {
-        if (zone == null || !IsLocalAnomalyType(type))
+        if (zone == null || data == null)
             return;
 
         RemoveActiveLocalZone(zone);
-        activeLocalZones.Add(new ActiveLocalZone(zone, type));
+        activeLocalZones.Add(new ActiveLocalZone(zone, data));
         RefreshLocalAnomalyCard();
     }
 
     public void NotifyLocalZoneExited(Object zone)
     {
-        if (zone == null)
-            return;
-
-        if (!RemoveActiveLocalZone(zone))
+        if (zone == null || !RemoveActiveLocalZone(zone))
             return;
 
         RefreshLocalAnomalyCard();
@@ -281,117 +188,38 @@ public sealed class LevelAnomalyController : MonoBehaviour
     {
         for (int i = activeLocalZones.Count - 1; i >= 0; i--)
         {
-            if (activeLocalZones[i].Source != null)
-                continue;
-
-            activeLocalZones.RemoveAt(i);
+            if (activeLocalZones[i].Source == null)
+                activeLocalZones.RemoveAt(i);
         }
 
         if (activeLocalZones.Count == 0)
         {
-            view?.HideLocalAnomaly();
+            visual?.Hide();
+            displayedLocalAnomaly = null;
             localCardVisible = false;
             return;
         }
 
-        LocalAnomalyType type =
-            activeLocalZones[activeLocalZones.Count - 1].Type;
+        LocalAnomalyData data =
+            activeLocalZones[activeLocalZones.Count - 1].Data;
 
-        if (localCardVisible &&
-            displayedLocalAnomalyType == type)
-        {
+        if (localCardVisible && displayedLocalAnomaly == data)
             return;
-        }
 
-        LocalAnomalyData data = FindAnomalyData(type);
-
-        if (data == null)
-        {
-            Debug.LogWarning(
-                "[LevelAnomalyController] Missing data for local " +
-                $"anomaly {type}.",
-                this
-            );
-            view?.HideLocalAnomaly();
-            localCardVisible = false;
-            return;
-        }
-
-        displayedLocalAnomalyType = type;
+        displayedLocalAnomaly = data;
         localCardVisible = true;
-        view?.ShowLocalAnomaly(data.Presentation);
+        visual?.Show(data);
     }
 
-    private LocalAnomalyData FindAnomalyData(LocalAnomalyType type)
+    private void SpawnLocalAnomalyZones(LocalAnomalyData rootData)
     {
-        if (availableAnomalies == null)
-            return null;
-
-        for (int i = 0; i < availableAnomalies.Length; i++)
-        {
-            LocalAnomalyData data = availableAnomalies[i];
-
-            if (data != null && data.AnomalyType == type)
-                return data;
-        }
-
-        return null;
-    }
-
-    private static bool IsLocalAnomalyType(LocalAnomalyType type)
-    {
-        return TryGetLocalAnomalyKind(type, out _);
-    }
-
-    private static bool TryGetLocalAnomalyKind(
-        LocalAnomalyType type,
-        out LocalAnomalyKind kind)
-    {
-        switch (type)
-        {
-            case LocalAnomalyType.Berserk:
-                kind = LocalAnomalyKind.Berserk;
-                return true;
-
-            case LocalAnomalyType.Stasis:
-                kind = LocalAnomalyKind.Stasis;
-                return true;
-
-            default:
-                kind = default;
-                return false;
-        }
-    }
-
-    private bool HasZonePrefab(LocalAnomalyKind kind)
-    {
-        switch (kind)
-        {
-            case LocalAnomalyKind.Berserk:
-                return berserkZonePrefab != null;
-
-            case LocalAnomalyKind.Stasis:
-                return stasisZonePrefab != null;
-
-            default:
-                return false;
-        }
-    }
-
-    private void SpawnLocalAnomalyZones()
-    {
-        CleanupLocalAnomalyZones();
         ResolveGameplayArea();
 
-        List<LocalAnomalyKind> availableKinds =
-            GetAvailableLocalAnomalyKinds();
-
-        if (availableKinds.Count == 0 || gameplayArea == null)
+        if (gameplayArea == null)
         {
             Debug.LogWarning(
-                "[LevelAnomalyController] Local anomalies cannot spawn: " +
-                "zone prefabs or GameplayAreaService are missing. " +
-                "Continuing without an anomaly.",
+                "[LevelAnomalyController] GameplayAreaService is " +
+                "missing. Continuing without local anomalies.",
                 this
             );
             return;
@@ -403,29 +231,26 @@ public sealed class LevelAnomalyController : MonoBehaviour
         if (playerObject == null)
         {
             Debug.LogWarning(
-                "[LevelAnomalyController] Local anomalies cannot spawn: " +
-                "the Player object was not found. Continuing without " +
-                "an anomaly.",
+                "[LevelAnomalyController] Player was not found. " +
+                "Continuing without local anomalies.",
                 this
             );
             return;
         }
 
+        List<LocalAnomalyData> zoneData = BuildZoneData(rootData);
+
+        if (zoneData.Count == 0)
+            return;
+
         Vector3 playerStart = playerObject.transform.position;
         List<LocalAnomalyPlacement> placements = new();
         int count = Mathf.Clamp(anomalyCount, 1, 2);
-        LocalAnomalyKind firstKind =
-            GetFirstLocalAnomalyKind(availableKinds);
 
         for (int i = 0; i < count; i++)
         {
-            LocalAnomalyKind kind = i == 0
-                ? firstKind
-                : GetNextLocalAnomalyKind(
-                    firstKind,
-                    availableKinds
-                );
-            float radius = GetLocalAnomalyRadius(kind);
+            LocalAnomalyData data = zoneData[i % zoneData.Count];
+            float radius = data.ZoneRadius;
 
             if (!TryGetLocalAnomalyPosition(
                     playerStart,
@@ -435,98 +260,48 @@ public sealed class LevelAnomalyController : MonoBehaviour
             {
                 Debug.LogWarning(
                     "[LevelAnomalyController] No valid position was " +
-                    $"found for local anomaly {i + 1}. Continuing " +
-                    "without that zone.",
+                    $"found for local anomaly {i + 1}.",
                     this
                 );
                 break;
             }
 
-            SpawnLocalAnomaly(kind, position, radius);
-            placements.Add(
-                new LocalAnomalyPlacement(position, radius)
+            LocalAnomalyZone zone = Instantiate(
+                data.ZonePrefab,
+                position,
+                Quaternion.identity
             );
+            zone.Initialize(data, this);
+            spawnedZones.Add(zone);
+            placements.Add(new LocalAnomalyPlacement(position, radius));
         }
     }
 
-    private List<LocalAnomalyKind> GetAvailableLocalAnomalyKinds()
+    private static List<LocalAnomalyData> BuildZoneData(
+        LocalAnomalyData rootData)
     {
-        List<LocalAnomalyKind> result = new();
+        List<LocalAnomalyData> result = new();
+        AddZoneData(result, rootData);
 
-        if (berserkZonePrefab != null)
-            result.Add(LocalAnomalyKind.Berserk);
-        if (stasisZonePrefab != null)
-            result.Add(LocalAnomalyKind.Stasis);
+        LocalAnomalyData[] additional = rootData.AdditionalAnomalies;
+
+        if (additional == null)
+            return result;
+
+        for (int i = 0; i < additional.Length; i++)
+            AddZoneData(result, additional[i]);
 
         return result;
     }
 
-    private LocalAnomalyKind GetFirstLocalAnomalyKind(
-        List<LocalAnomalyKind> availableKinds)
+    private static void AddZoneData(
+        List<LocalAnomalyData> result,
+        LocalAnomalyData data)
     {
-        LocalAnomalyKind preferred =
-            activeAnomaly.AnomalyType == LocalAnomalyType.Stasis
-                ? LocalAnomalyKind.Stasis
-                : LocalAnomalyKind.Berserk;
-
-        if (availableKinds.Contains(preferred))
-            return preferred;
-
-        return availableKinds[Random.Range(0, availableKinds.Count)];
-    }
-
-    private static LocalAnomalyKind GetNextLocalAnomalyKind(
-        LocalAnomalyKind firstKind,
-        List<LocalAnomalyKind> availableKinds)
-    {
-        for (int i = 0; i < availableKinds.Count; i++)
-        {
-            if (availableKinds[i] != firstKind)
-                return availableKinds[i];
-        }
-
-        return firstKind;
-    }
-
-    private float GetLocalAnomalyRadius(LocalAnomalyKind kind)
-    {
-        return kind == LocalAnomalyKind.Stasis
-            ? Mathf.Max(0.1f, stasisRadius)
-            : Mathf.Max(0.1f, anomalyRadius);
-    }
-
-    private void SpawnLocalAnomaly(
-        LocalAnomalyKind kind,
-        Vector3 position,
-        float radius)
-    {
-        if (kind == LocalAnomalyKind.Stasis)
-        {
-            StasisZone zone = Instantiate(
-                stasisZonePrefab,
-                position,
-                Quaternion.identity
-            );
-            zone.Initialize(
-                radius,
-                playerSpeedMultiplier,
-                this
-            );
-            stasisZones.Add(zone);
+        if (data == null || data.ZonePrefab == null || result.Contains(data))
             return;
-        }
 
-        BerserkZone berserkZone = Instantiate(
-            berserkZonePrefab,
-            position,
-            Quaternion.identity
-        );
-        berserkZone.Initialize(
-            radius,
-            enemySpeedMultiplier,
-            this
-        );
-        berserkZones.Add(berserkZone);
+        result.Add(data);
     }
 
     private bool TryGetLocalAnomalyPosition(
@@ -542,10 +317,8 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
         float requiredPlayerDistance =
             radius + Mathf.Max(0f, minimumDistanceFromPlayerStart);
-        float placementPadding =
-            radius + Mathf.Max(0f, edgePadding);
-        float maximumDistance =
-            gameplayArea.SpawnArea.bounds.size.magnitude;
+        float placementPadding = radius + Mathf.Max(0f, edgePadding);
+        float maximumDistance = gameplayArea.SpawnArea.bounds.size.magnitude;
 
         for (int attempt = 0;
              attempt < LocalAnomalyPositionAttempts;
@@ -568,30 +341,20 @@ public sealed class LevelAnomalyController : MonoBehaviour
                 continue;
             }
 
-            if (!IsCircleInsidePlayableArea(
-                    candidate,
-                    placementPadding))
-            {
+            if (!IsCircleInsidePlayableArea(candidate, placementPadding))
                 continue;
-            }
 
             bool separated = true;
 
             for (int i = 0; i < existingPlacements.Count; i++)
             {
-                LocalAnomalyPlacement existing =
-                    existingPlacements[i];
+                LocalAnomalyPlacement existing = existingPlacements[i];
                 float requiredZoneDistance =
                     radius +
                     existing.Radius +
-                    Mathf.Max(
-                        0f,
-                        minimumDistanceBetweenAnomalies
-                    );
+                    Mathf.Max(0f, minimumDistanceBetweenAnomalies);
 
-                if (Vector2.Distance(
-                        candidate,
-                        existing.Position) <
+                if (Vector2.Distance(candidate, existing.Position) <
                     requiredZoneDistance)
                 {
                     separated = false;
@@ -609,9 +372,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
         return false;
     }
 
-    private bool IsCircleInsidePlayableArea(
-        Vector2 center,
-        float radius)
+    private bool IsCircleInsidePlayableArea(Vector2 center, float radius)
     {
         const int Samples = 16;
 
@@ -635,32 +396,17 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
     private void CleanupLocalAnomalyZones()
     {
-        for (int i = 0; i < berserkZones.Count; i++)
+        for (int i = 0; i < spawnedZones.Count; i++)
         {
-            BerserkZone zone = berserkZones[i];
+            LocalAnomalyZone zone = spawnedZones[i];
 
-            if (zone == null)
-                continue;
-
-            zone.Despawn();
+            if (zone != null)
+                zone.Despawn();
         }
 
-        berserkZones.Clear();
-
-        for (int i = 0; i < stasisZones.Count; i++)
-        {
-            StasisZone zone = stasisZones[i];
-
-            if (zone == null)
-                continue;
-
-            zone.Despawn();
-        }
-
-        stasisZones.Clear();
+        spawnedZones.Clear();
         activeLocalZones.Clear();
-        localCardVisible = false;
-        view?.HideLocalAnomaly();
+        visual?.Hide();
     }
 
     private void ResolveGameplayArea()
@@ -674,7 +420,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
     private void OnDisable()
     {
-        CleanupLocalAnomalyZones();
+        Clear();
 
         if (Instance == this)
             Instance = null;

@@ -10,9 +10,12 @@ public class EnemyHealth : MonoBehaviour
     public static event System.Action<EnemyHealth> Spawned;
     public static event System.Action<EnemyHealth> Despawned;
     public static IReadOnlyCollection<EnemyHealth> ActiveInstances => activeInstances;
+    public static event System.Action<EnemyHealth> SpawnConfigured;
 
     public float maxHealth = 30f;
     private float currentHealth;
+    private float baseMaxHealth;
+    private bool spawnConfigured;
 
     public UnityEvent<float, float> OnHealthChanged;
     public UnityEvent onDeath;
@@ -49,6 +52,7 @@ public class EnemyHealth : MonoBehaviour
 
     private bool isDead;
     public bool IsDead => isDead;
+    public bool IsBoss => isBoss;
 
     private EnemyWhiteFlash whiteFlash;
     private EnemyIdentity identity;
@@ -69,6 +73,7 @@ public class EnemyHealth : MonoBehaviour
 
     private void Awake()
     {
+        baseMaxHealth = maxHealth;
         whiteFlash = GetComponent<EnemyWhiteFlash>();
         identity = GetComponent<EnemyIdentity>();
 
@@ -91,6 +96,10 @@ public class EnemyHealth : MonoBehaviour
 
     private void OnEnable()
     {
+        isDead = false;
+        spawnConfigured = false;
+        maxHealth = baseMaxHealth;
+        currentHealth = maxHealth;
         activeInstances.Add(this);
         Spawned?.Invoke(this);
     }
@@ -110,6 +119,25 @@ public class EnemyHealth : MonoBehaviour
 
         if (isBoss)
             HUDManager.Instance?.UpdateBossHp(currentHealth, maxHealth);
+    }
+
+    public void SetRuntimeMaxHealth(float value)
+    {
+        maxHealth = Mathf.Max(0.01f, value);
+        currentHealth = maxHealth;
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+
+        if (isBoss)
+            HUDManager.Instance?.UpdateBossHp(currentHealth, maxHealth);
+    }
+
+    public void NotifySpawnConfigured()
+    {
+        if (spawnConfigured)
+            return;
+
+        spawnConfigured = true;
+        SpawnConfigured?.Invoke(this);
     }
 
     public void TakeDamage(float damage, Vector2 hitPoint, bool isCritical = false)
@@ -217,7 +245,13 @@ public class EnemyHealth : MonoBehaviour
             }
         }
 
-        KillManager.Instance?.AddKill();
+        GoldenEnemyModifier goldenModifier =
+            GetComponent<GoldenEnemyModifier>();
+        float killRewardMultiplier = goldenModifier != null
+            ? goldenModifier.RewardMultiplier
+            : 1f;
+
+        KillManager.Instance?.AddKill(killRewardMultiplier);
 
         OnDied?.Invoke(this);
 

@@ -31,6 +31,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
     [Header("References")]
     [SerializeField] private Image fullscreenImage;
     [SerializeField] private Material visualMaterial;
+    [SerializeField] private WindRuleIndicator windIndicator;
 
     [Header("Rain / Existing Scene Effect")]
     [SerializeField] private GameObject rainEffect;
@@ -224,6 +225,12 @@ public sealed class WorldRuleVisual : MonoBehaviour
         ClearRule();
         SetSnowActive(false);
         ClearRainAndDarkness();
+        windIndicator?.Hide();
+    }
+
+    public void ShowWind(Vector2 direction)
+    {
+        windIndicator?.Show(direction);
     }
 
     public void ShowRule(WorldRuleType ruleType)
@@ -295,6 +302,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
     private void SetNeutral()
     {
         ClearRainAndDarkness();
+        windIndicator?.Hide();
         currentIntensity = 0f;
         targetIntensity = 0f;
         currentSnowIntensity = 0f;

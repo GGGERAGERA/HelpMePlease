@@ -21,6 +21,8 @@ public class LevelNodeData : ScriptableObject
     public LevelWeatherType weatherType;
     [Tooltip("Migrated World Rule. Null means this level has not been migrated.")]
     [SerializeField] private WorldRuleData worldRule;
+    [Tooltip("Migrated Local Anomaly. Null means this level has not been migrated.")]
+    [SerializeField] private LocalAnomalyData localAnomaly;
 
     [Header("Scene")]
     [Tooltip("Leave empty to reuse the current gameplay scene.")]
@@ -58,6 +60,7 @@ public class LevelNodeData : ScriptableObject
 
     public string Id => string.IsNullOrWhiteSpace(id) ? name : id;
     public WorldRuleData WorldRule => worldRule;
+    public LocalAnomalyData LocalAnomaly => localAnomaly;
     public string SceneName => sceneName;
     public float Duration => Mathf.Max(1f, duration);
     public EnemySpawnProfile SpawnProfile => spawnProfile;

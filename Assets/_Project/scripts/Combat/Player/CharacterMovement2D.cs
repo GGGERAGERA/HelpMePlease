@@ -31,6 +31,8 @@ public class CharacterMovement2D : MonoBehaviour
     private Vector2 hitKnockbackVelocity;
     private float hitKnockbackTimeRemaining;
     private float anomalySpeedMultiplier = 1f;
+    private float worldRuleSpeedMultiplier = 1f;
+    private Vector2 worldRuleExternalVelocity;
 
     private const float DashCollisionSkin = 0.02f;
     private readonly RaycastHit2D[] dashHits = new RaycastHit2D[8];
@@ -105,6 +107,14 @@ public class CharacterMovement2D : MonoBehaviour
     {
         anomalySpeedMultiplier = Mathf.Max(0.1f, multiplier);
     }
+    public void SetWorldRuleSpeedMultiplier(float multiplier)
+    {
+        worldRuleSpeedMultiplier = Mathf.Max(0.1f, multiplier);
+    }
+    public void SetWorldRuleExternalVelocity(Vector2 velocity)
+    {
+        worldRuleExternalVelocity = velocity;
+    }
 
     private void FixedUpdate()
     {
@@ -118,7 +128,10 @@ public class CharacterMovement2D : MonoBehaviour
         }
 
         Vector2 targetVelocity =
-            moveInput * speed * anomalySpeedMultiplier;
+            moveInput *
+            speed *
+            anomalySpeedMultiplier *
+            worldRuleSpeedMultiplier;
 
         float rate = moveInput.sqrMagnitude > 0.01f
             ? acceleration
@@ -135,7 +148,9 @@ public class CharacterMovement2D : MonoBehaviour
 
         rb.MovePosition(
             rb.position +
-            (currentVelocity + hitKnockbackVelocity) * Time.fixedDeltaTime
+            (currentVelocity +
+             hitKnockbackVelocity +
+             worldRuleExternalVelocity) * Time.fixedDeltaTime
         );
 
     }
@@ -201,7 +216,9 @@ public class CharacterMovement2D : MonoBehaviour
         if (allowedDistance > 0f)
         {
             rb.MovePosition(
-                rb.position + dashDirection * allowedDistance
+                rb.position +
+                dashDirection * allowedDistance +
+                worldRuleExternalVelocity * stepTime
             );
         }
 
@@ -257,5 +274,6 @@ public class CharacterMovement2D : MonoBehaviour
         isDashing = false;
         hitKnockbackVelocity = Vector2.zero;
         hitKnockbackTimeRemaining = 0f;
+        worldRuleExternalVelocity = Vector2.zero;
     }
 }

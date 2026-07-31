@@ -10,31 +10,34 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e74dac74c1838a44383fc81aa6cac50f, type: 3}
-  m_Name: VS_L02_Rain
+  m_Name: VS_L02_Wind
   m_EditorClassIdentifier: Assembly-CSharp::LevelNodeData
-  id: VS_L02_Rain
-  nodeName: "ДОЖДЬ"
-  description: "Враги быстрее"
-  icon: {fileID: -1999676519, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
+  id: VS_L02_Wind
+  nodeName: "ВЕТЕР"
+  description: "Постоянный направленный ветер"
+  icon: {fileID: 1915979101, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
   nodeType: 0
-  weatherType: 2
-  worldRule: {fileID: 11400000, guid: b6cce96141ae4ca1b732195fcaaa1e22, type: 2}
+  weatherType: 0
+  worldRule: {fileID: 11400000, guid: d8ee0b8363c04ec3d9543b71eccc3044, type: 2}
   localAnomaly: {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}
-  sceneName: 
+  sceneName:
   duration: 72
   spawnProfile: {fileID: 11400000, guid: 10000000000000000000000000000002, type: 2}
   bossPrefab: {fileID: 8074722678228422782, guid: 8f73b608ef0309744b732a66e85e86d7, type: 3}
-  mainThreat: "СТРЕЛКИ"
+  mainThreat: "НАПРАВЛЕННЫЙ ВЕТЕР"
   minimumRunLevel: 2
   maximumRunLevel: 2
   choiceWeight: 1
   allowSameWeatherAsCurrent: 1
   enemyHealthMultiplier: 1
-  enemySpeedMultiplier: 1.08
+  enemySpeedMultiplier: 1
   spawnRateMultiplier: 1
   hasEliteEnemies: 0
   hasExplosiveEnemies: 0
   hasHoldZoneEvent: 0
+  hasWorldAccelerationRule: 0
+  hasNoDamageChallenge: 0
   hasExtraChest: 0
-  guaranteedRewardRarity: 0
+  experienceGainMultiplier: 1
+  completionGoldMultiplier: 1
   bonusRareChance: 0

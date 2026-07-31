@@ -65,7 +65,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
             runFlowController?.ApplyLevelMechanics(null);
             ExperienceManager.Instance?.SetLevelXpGainMultiplier(1f);
             ApplyEndlessEnemyScaling(currentLevel, 1f, 1f, 1f);
-            anomalyController?.BeginLevel(null);
+            anomalyController?.Apply(null);
             worldRuleController?.Apply(null);
 
 #if UNITY_EDITOR
@@ -91,7 +91,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         ExperienceManager.Instance?.SetLevelXpGainMultiplier(
             node.ExperienceGainMultiplier
         );
-        anomalyController?.BeginLevel(node);
+        anomalyController?.Apply(node.LocalAnomaly);
 
 #if UNITY_EDITOR
         LogWorldRule(node);

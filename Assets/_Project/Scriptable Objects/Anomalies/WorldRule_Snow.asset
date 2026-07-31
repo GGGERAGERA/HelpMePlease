@@ -18,6 +18,14 @@ MonoBehaviour:
   description: Заснеженный уровень с холодной зимней атмосферой.
   pinnedDescription: Снег
   selectionWeight: 1
+  playerMoveSpeedMultiplier: 0.9
+  enemyMoveSpeedMultiplier: 0.9
+  goldenEnemyChance: 0
+  goldenEnemyHealthMultiplier: 1
+  goldenEnemyRewardMultiplier: 1
+  windForce: 0
+  windDirectionMode: 0
+  fixedWindDirection: {x: 1, y: 0}
   explosionRadius: 2.2
   playerExplosionDamage: 20
   enemyExplosionDamage: 25

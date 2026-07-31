@@ -1,8 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(CircleCollider2D))]
-public sealed class BerserkZone : MonoBehaviour
+public sealed class BerserkZone : LocalAnomalyZone
 {
     private static readonly int FadeId = Shader.PropertyToID("_Fade");
     private static readonly int EdgeWidthId =
@@ -35,7 +34,6 @@ public sealed class BerserkZone : MonoBehaviour
     private CircleCollider2D zoneCollider;
     private MeshRenderer visualRenderer;
     private MaterialPropertyBlock visualProperties;
-    private LevelAnomalyController anomalyController;
     private float speedMultiplier = 1.5f;
     private float visualFade;
     private float targetVisualFade;
@@ -72,14 +70,10 @@ public sealed class BerserkZone : MonoBehaviour
             Destroy(gameObject);
     }
 
-    public void Initialize(
-        float radius,
-        float enemySpeedMultiplier,
-        LevelAnomalyController controller)
+    protected override void InitializeFromData(LocalAnomalyData data)
     {
-        float safeRadius = Mathf.Max(0.1f, radius);
-        speedMultiplier = Mathf.Max(1f, enemySpeedMultiplier);
-        anomalyController = controller;
+        float safeRadius = data.ZoneRadius;
+        speedMultiplier = data.EnemySpeedMultiplier;
         zoneCollider.radius = safeRadius;
         ConfigureVisual(safeRadius);
         effectsCleared = false;
@@ -103,10 +97,7 @@ public sealed class BerserkZone : MonoBehaviour
             playerColliderCount++;
 
             if (playerColliderCount == 1)
-                anomalyController?.NotifyLocalZoneEntered(
-                    this,
-                    LocalAnomalyType.Berserk
-                );
+                Controller?.NotifyLocalZoneEntered(this, Data);
 
             return;
         }
@@ -143,7 +134,7 @@ public sealed class BerserkZone : MonoBehaviour
             );
 
             if (wasInside && playerColliderCount == 0)
-                anomalyController?.NotifyLocalZoneExited(this);
+                Controller?.NotifyLocalZoneExited(this);
 
             return;
         }
@@ -239,7 +230,7 @@ public sealed class BerserkZone : MonoBehaviour
         enemyColliderCounts.Clear();
 
         if (playerColliderCount > 0)
-            anomalyController?.NotifyLocalZoneExited(this);
+            Controller?.NotifyLocalZoneExited(this);
 
         playerColliderCount = 0;
 
@@ -247,7 +238,7 @@ public sealed class BerserkZone : MonoBehaviour
             zoneCollider.enabled = false;
     }
 
-    public void Despawn()
+    public override void Despawn()
     {
         if (despawning)
             return;

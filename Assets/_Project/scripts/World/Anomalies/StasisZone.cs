@@ -1,8 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(CircleCollider2D))]
-public sealed class StasisZone : MonoBehaviour
+public sealed class StasisZone : LocalAnomalyZone
 {
     private static readonly int FadeId = Shader.PropertyToID("_Fade");
     private static readonly int EdgeWidthId =
@@ -32,7 +31,6 @@ public sealed class StasisZone : MonoBehaviour
     private CircleCollider2D zoneCollider;
     private MeshRenderer visualRenderer;
     private MaterialPropertyBlock visualProperties;
-    private LevelAnomalyController anomalyController;
     private CharacterMovement2D affectedMovement;
     private float speedMultiplier = 0.65f;
     private float visualFade;
@@ -65,18 +63,10 @@ public sealed class StasisZone : MonoBehaviour
             Destroy(gameObject);
     }
 
-    public void Initialize(
-        float radius,
-        float playerSpeedMultiplier,
-        LevelAnomalyController controller)
+    protected override void InitializeFromData(LocalAnomalyData data)
     {
-        float safeRadius = Mathf.Max(0.1f, radius);
-        speedMultiplier = Mathf.Clamp(
-            playerSpeedMultiplier,
-            0.1f,
-            1f
-        );
-        anomalyController = controller;
+        float safeRadius = data.ZoneRadius;
+        speedMultiplier = data.PlayerSpeedMultiplier;
         zoneCollider.radius = safeRadius;
         ConfigureVisual(safeRadius);
         effectCleared = false;
@@ -111,10 +101,7 @@ public sealed class StasisZone : MonoBehaviour
             return;
 
         ApplyEffect(movement);
-        anomalyController?.NotifyLocalZoneEntered(
-            this,
-            LocalAnomalyType.Stasis
-        );
+        Controller?.NotifyLocalZoneEntered(this, Data);
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -135,7 +122,7 @@ public sealed class StasisZone : MonoBehaviour
 
         RemoveEffect(movement);
         affectedMovement = null;
-        anomalyController?.NotifyLocalZoneExited(this);
+        Controller?.NotifyLocalZoneExited(this);
     }
 
     private void ApplyEffect(CharacterMovement2D movement)
@@ -191,7 +178,7 @@ public sealed class StasisZone : MonoBehaviour
         }
 
         if (playerColliderCount > 0)
-            anomalyController?.NotifyLocalZoneExited(this);
+            Controller?.NotifyLocalZoneExited(this);
 
         affectedMovement = null;
         playerColliderCount = 0;
@@ -200,7 +187,7 @@ public sealed class StasisZone : MonoBehaviour
             zoneCollider.enabled = false;
     }
 
-    public void Despawn()
+    public override void Despawn()
     {
         if (despawning)
             return;

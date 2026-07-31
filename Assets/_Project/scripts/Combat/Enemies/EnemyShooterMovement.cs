@@ -25,6 +25,7 @@ public class EnemyShooterMovement : EnemyMovement
     private float fireTimer;
     private float speedMultiplier = 1f;
     private float anomalySpeedMultiplier = 1f;
+    private float worldRuleSpeedMultiplier = 1f;
 
     private void Awake()
     {
@@ -97,6 +98,7 @@ public class EnemyShooterMovement : EnemyMovement
             moveSpeed *
             speedMultiplier *
             anomalySpeedMultiplier *
+            worldRuleSpeedMultiplier *
             Time.fixedDeltaTime
         );
         UpdateVisual(directionToPlayer);
@@ -125,6 +127,11 @@ public class EnemyShooterMovement : EnemyMovement
     public override void SetAnomalySpeedMultiplier(float multiplier)
     {
         anomalySpeedMultiplier = Mathf.Max(0.1f, multiplier);
+    }
+
+    public override void SetWorldRuleSpeedMultiplier(float multiplier)
+    {
+        worldRuleSpeedMultiplier = Mathf.Max(0.1f, multiplier);
     }
 
     public override void ApplyKnockback(Vector2 direction, float force)

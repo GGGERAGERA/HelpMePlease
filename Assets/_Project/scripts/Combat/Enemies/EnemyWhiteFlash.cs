@@ -14,6 +14,8 @@ public class EnemyWhiteFlash : MonoBehaviour
     private Coroutine flashCoroutine;
     private WaitForSeconds flashWait;
 
+    public SpriteRenderer TargetRenderer => targetRenderer;
+
     private void Awake()
     {
         if (targetRenderer == null)

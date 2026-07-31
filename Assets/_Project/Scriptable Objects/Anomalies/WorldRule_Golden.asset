@@ -18,6 +18,14 @@ MonoBehaviour:
   description: Золотой уровень с повышенной наградой.
   pinnedDescription: Золотой уровень
   selectionWeight: 1
+  playerMoveSpeedMultiplier: 1
+  enemyMoveSpeedMultiplier: 1
+  goldenEnemyChance: 0.15
+  goldenEnemyHealthMultiplier: 1.5
+  goldenEnemyRewardMultiplier: 3
+  windForce: 0
+  windDirectionMode: 0
+  fixedWindDirection: {x: 1, y: 0}
   explosionRadius: 2.2
   playerExplosionDamage: 20
   enemyExplosionDamage: 25

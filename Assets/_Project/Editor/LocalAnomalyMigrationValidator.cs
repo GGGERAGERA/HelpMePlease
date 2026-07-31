@@ -5,10 +5,10 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-public static class WorldRuleMigrationValidator
+public static class LocalAnomalyMigrationValidator
 {
     private const string MenuPath =
-        "Tools/World Rules/Validate Level Node Migration";
+        "Tools/Local Anomalies/Validate Level Node Migration";
     private const string ActiveFlowScenePath =
         "Assets/_Project/Scenes/MVP.unity";
 
@@ -21,11 +21,11 @@ public static class WorldRuleMigrationValidator
         foreach (string guid in guids)
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
-            LevelNodeData levelNode =
+            LevelNodeData node =
                 AssetDatabase.LoadAssetAtPath<LevelNodeData>(path);
 
-            if (levelNode != null)
-                levelNodes.Add(levelNode);
+            if (node != null)
+                levelNodes.Add(node);
         }
 
         levelNodes.Sort((left, right) => string.Compare(
@@ -35,61 +35,58 @@ public static class WorldRuleMigrationValidator
         ));
 
         var activeNodes = new HashSet<LevelNodeData>();
-        string[] activeDependencies =
+        string[] dependencies =
             AssetDatabase.GetDependencies(ActiveFlowScenePath, true);
 
-        foreach (string dependencyPath in activeDependencies)
+        foreach (string path in dependencies)
         {
-            LevelNodeData activeNode =
-                AssetDatabase.LoadAssetAtPath<LevelNodeData>(dependencyPath);
+            LevelNodeData node =
+                AssetDatabase.LoadAssetAtPath<LevelNodeData>(path);
 
-            if (activeNode != null)
-                activeNodes.Add(activeNode);
+            if (node != null)
+                activeNodes.Add(node);
         }
 
-        int activeMissingCount = 0;
-        int inactiveMissingCount = 0;
+        int activeErrors = 0;
+        int inactiveWarnings = 0;
         var activeEntries = new StringBuilder();
-        var inactiveMissingEntries = new StringBuilder();
+        var inactiveEntries = new StringBuilder();
 
-        foreach (LevelNodeData levelNode in levelNodes)
+        foreach (LevelNodeData node in levelNodes)
         {
-            bool isActive = activeNodes.Contains(levelNode);
-            bool isMissing = levelNode.WorldRule == null;
-            string path = AssetDatabase.GetAssetPath(levelNode);
-            string rule = isMissing
+            bool active = activeNodes.Contains(node);
+            bool missing = node.LocalAnomaly == null;
+            string path = AssetDatabase.GetAssetPath(node);
+            string anomaly = missing
                 ? "NULL"
-                : $"{levelNode.WorldRule.Id} ({levelNode.WorldRule.RuleType})";
+                : $"{node.LocalAnomaly.Id} " +
+                  $"({node.LocalAnomaly.AnomalyType})";
 
-            if (isActive)
+            if (active)
             {
-                activeEntries.Append(isMissing ? "[ERROR] " : "[OK] ")
+                activeEntries.Append(missing ? "[ERROR] " : "[OK] ")
                     .Append(path)
-                    .Append(" | worldRule: ")
-                    .Append(rule)
-                    .Append(" | legacy weatherType: ")
-                    .Append(levelNode.weatherType)
+                    .Append(" | localAnomaly: ")
+                    .Append(anomaly)
                     .AppendLine();
 
-                if (isMissing)
-                    activeMissingCount++;
+                if (missing)
+                    activeErrors++;
 
                 continue;
             }
 
-            if (!isMissing)
+            if (!missing)
                 continue;
 
-            inactiveMissingCount++;
-            inactiveMissingEntries.Append("[WARNING] ")
+            inactiveWarnings++;
+            inactiveEntries.Append("[WARNING] ")
                 .Append(path)
-                .Append(" | weatherType: ")
-                .Append(levelNode.weatherType)
-                .AppendLine();
+                .AppendLine(" | localAnomaly: NULL");
         }
 
         var report = new StringBuilder()
-            .AppendLine("[World Rule Migration Validation]")
+            .AppendLine("[Local Anomaly Migration Validation]")
             .Append("Active flow scene: ")
             .AppendLine(ActiveFlowScenePath)
             .Append("LevelNodeData found: ")
@@ -97,25 +94,25 @@ public static class WorldRuleMigrationValidator
             .Append("Active flow nodes: ")
             .AppendLine(activeNodes.Count.ToString())
             .Append("Active flow errors: ")
-            .AppendLine(activeMissingCount.ToString())
+            .AppendLine(activeErrors.ToString())
             .Append("Inactive assets awaiting migration: ")
-            .AppendLine(inactiveMissingCount.ToString())
+            .AppendLine(inactiveWarnings.ToString())
             .AppendLine()
             .AppendLine("Active flow:")
             .Append(activeEntries);
 
-        if (activeMissingCount > 0)
+        if (activeErrors > 0)
             Debug.LogError(report.ToString());
         else
             Debug.Log(report.ToString());
 
-        if (inactiveMissingCount > 0)
+        if (inactiveWarnings > 0)
         {
             Debug.LogWarning(
                 new StringBuilder()
-                    .AppendLine("[World Rule Migration Validation]")
+                    .AppendLine("[Local Anomaly Migration Validation]")
                     .AppendLine("Inactive assets awaiting migration:")
-                    .Append(inactiveMissingEntries)
+                    .Append(inactiveEntries)
                     .ToString()
             );
         }

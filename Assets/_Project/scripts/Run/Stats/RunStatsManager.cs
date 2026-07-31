@@ -6,6 +6,7 @@ public class RunStatsManager : MonoBehaviour
     public event System.Action RewardRelevantStatsChanged;
 
     public int Kills { get; private set; }
+    public float KillRewardUnits { get; private set; }
     public float RunTime { get; private set; }
     private int elapsedRewardMinutes;
 
@@ -29,7 +30,13 @@ public class RunStatsManager : MonoBehaviour
 
     public void AddKill()
     {
+        AddKill(1f);
+    }
+
+    public void AddKill(float rewardMultiplier)
+    {
         Kills++;
+        KillRewardUnits += Mathf.Max(1f, rewardMultiplier);
         RewardRelevantStatsChanged?.Invoke();
     }
 }

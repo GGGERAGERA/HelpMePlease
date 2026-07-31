@@ -30,6 +30,7 @@ public sealed class RunStateManager : MonoBehaviour
     private bool upgradesAppliedToCurrentScene;
 
     private int accumulatedKills;
+    private float accumulatedKillRewardUnits;
     private float accumulatedRunTime;
     private int completedLevels;
     private float completedLevelRewardMultiplierTotal;
@@ -49,19 +50,19 @@ public sealed class RunStateManager : MonoBehaviour
 
     public int GetCurrentGoldReward(RunEndReason endReason)
     {
-        int kills = accumulatedKills;
+        float killRewardUnits = accumulatedKillRewardUnits;
         float runTime = accumulatedRunTime;
         RunStatsManager stats = RunStatsManager.Instance;
 
         if (stats != null &&
             stats.GetInstanceID() != lastCommittedStatsInstanceId)
         {
-            kills += stats.Kills;
+            killRewardUnits += stats.KillRewardUnits;
             runTime += stats.RunTime;
         }
 
         return RunRewardCalculator.CalculateGold(
-            kills,
+            killRewardUnits,
             runTime,
             completedLevelRewardMultiplierTotal,
             endReason
@@ -111,6 +112,7 @@ public sealed class RunStateManager : MonoBehaviour
         ClearHealthSnapshot();
 
         accumulatedKills = 0;
+        accumulatedKillRewardUnits = 0f;
         accumulatedRunTime = 0f;
         completedLevels = 0;
         completedLevelRewardMultiplierTotal = 0f;
@@ -313,6 +315,7 @@ public sealed class RunStateManager : MonoBehaviour
         }
 
         accumulatedKills += stats.Kills;
+        accumulatedKillRewardUnits += stats.KillRewardUnits;
         accumulatedRunTime += stats.RunTime;
         lastCommittedStatsInstanceId = instanceId;
         CurrentRewardChanged?.Invoke();

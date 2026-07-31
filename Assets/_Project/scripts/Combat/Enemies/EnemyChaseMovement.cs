@@ -32,6 +32,7 @@ public class EnemyChaseMovement : EnemyMovement
 
     private float speedMultiplier = 1f;
     private float anomalySpeedMultiplier = 1f;
+    private float worldRuleSpeedMultiplier = 1f;
     private float stopTimer;
     private Vector2 knockbackVelocity;
     private bool animatorStateInitialized;
@@ -89,7 +90,9 @@ public class EnemyChaseMovement : EnemyMovement
         bool isRunning = sqrDistance <= aggroDistance * aggroDistance;
 
         float selectedSpeed = isRunning ? aggroSpeed : normalSpeed;
-        selectedSpeed *= speedMultiplier * anomalySpeedMultiplier;
+        selectedSpeed *= speedMultiplier *
+            anomalySpeedMultiplier *
+            worldRuleSpeedMultiplier;
 
         if (animator != null &&
             hasRunParameter &&
@@ -141,6 +144,11 @@ public class EnemyChaseMovement : EnemyMovement
     public override void SetAnomalySpeedMultiplier(float multiplier)
     {
         anomalySpeedMultiplier = Mathf.Max(0.1f, multiplier);
+    }
+
+    public override void SetWorldRuleSpeedMultiplier(float multiplier)
+    {
+        worldRuleSpeedMultiplier = Mathf.Max(0.1f, multiplier);
     }
 
     public override void ApplyKnockback(Vector2 direction, float force)

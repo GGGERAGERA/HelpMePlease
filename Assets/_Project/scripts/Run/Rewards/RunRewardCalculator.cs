@@ -14,7 +14,21 @@ public static class RunRewardCalculator
         float completedLevelRewardMultiplierTotal,
         RunEndReason endReason)
     {
-        int killReward = kills / KillsPerGold;
+        return CalculateGold(
+            (float)Mathf.Max(0, kills),
+            runTime,
+            completedLevelRewardMultiplierTotal,
+            endReason
+        );
+    }
+
+    public static int CalculateGold(
+        float killRewardUnits,
+        float runTime,
+        float completedLevelRewardMultiplierTotal,
+        RunEndReason endReason)
+    {
+        int killReward = Mathf.FloorToInt(killRewardUnits / KillsPerGold);
         int timeReward = Mathf.FloorToInt(runTime / 60f) * GoldPerMinute;
         int levelReward = Mathf.RoundToInt(
             Mathf.Max(0f, completedLevelRewardMultiplierTotal) *

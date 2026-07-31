@@ -498,6 +498,8 @@ public class EnemySpawner : MonoBehaviour
             movement.SetSpeedMultiplier(
                 baseEnemySpeedMultiplier * worldAccelerationMultiplier
             );
+
+        health?.NotifySpawnConfigured();
     }
 
     private GameObject SelectWeightedEnemy(EnemySpawnPhase phase)

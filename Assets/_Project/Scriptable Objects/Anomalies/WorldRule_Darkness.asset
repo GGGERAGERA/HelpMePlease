@@ -18,6 +18,14 @@ MonoBehaviour:
   description: Тёмный уровень с ограниченной видимостью.
   pinnedDescription: Темнота
   selectionWeight: 1
+  playerMoveSpeedMultiplier: 1
+  enemyMoveSpeedMultiplier: 1
+  goldenEnemyChance: 0
+  goldenEnemyHealthMultiplier: 1
+  goldenEnemyRewardMultiplier: 1
+  windForce: 0
+  windDirectionMode: 0
+  fixedWindDirection: {x: 1, y: 0}
   explosionRadius: 2.2
   playerExplosionDamage: 20
   enemyExplosionDamage: 25

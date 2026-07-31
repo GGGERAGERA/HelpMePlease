@@ -20,8 +20,13 @@ public class KillManager : MonoBehaviour
 
     public void AddKill()
     {
+        AddKill(1f);
+    }
+
+    public void AddKill(float rewardMultiplier)
+    {
         Kills++;
         HUDManager.Instance?.SetKills(Kills);
-        RunStatsManager.Instance?.AddKill();
+        RunStatsManager.Instance?.AddKill(rewardMultiplier);
     }
 }

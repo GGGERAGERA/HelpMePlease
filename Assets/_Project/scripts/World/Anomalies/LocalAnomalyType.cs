@@ -1,5 +1,6 @@
 public enum LocalAnomalyType
 {
-    Berserk,
-    Stasis
+    Berserk = 0,
+    Stasis = 1,
+    ExplosiveZone = 2
 }
