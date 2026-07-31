@@ -599,7 +599,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldEventSpawner
   eventPrefabs:
-  - {fileID: 530000000000000004, guid: e47c3f95a8a34c18a619b70ec785f142, type: 3}
+  - {fileID: 350149527517610057, guid: 176dbf5e68a24ca49b3595472b14d121, type: 3}
   rewardChestPrefab: {fileID: 1000000000000000004, guid: 91cb28ce62794baf86da67a04174801a, type: 3}
   doubleOrLeave: {fileID: 46915859}
   riskDifficultyMultiplier: 1.5
@@ -695,7 +695,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7b81a4d295f43ad98896d617b899e14, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoubleOrLeave
-  worldEventSpawner: {fileID: 46915853}
 --- !u!1 &101118583
 GameObject:
   m_ObjectHideFlags: 0
@@ -3830,9 +3829,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoubleOrLeavePanel
   panelRoot: {fileID: 2147002001}
-  rewardText: {fileID: 2147002013}
-  takeRewardButton: {fileID: 2147002024}
-  doubleRewardButton: {fileID: 2147002034}
   doubleOrLeave: {fileID: 46915859}
   runFlow: {fileID: 46915856}
 --- !u!212 &1708592419
@@ -6291,6 +6287,28 @@ MonoBehaviour:
   hasteIntensity: 1
   regenerationIntensity: 0.366
   explosiveIntensity: 0.48
+  snowTransitionDuration: 1
+  snowVisualIntensity: 0.58
+  snowColorFilter: {r: 0.68, g: 0.84, b: 1, a: 1}
+  snowTemperature: -38
+  snowTint: -4
+  snowSaturation: -20
+  snowContrast: 12
+  snowPostExposure: -0.12
+  snowVolumeWeight: 1
+  snowWorldMaterial: {fileID: 2100000, guid: c2bf904374f34fd1972fb95acd727688, type: 2}
+  targetCamera: {fileID: 1621092227}
+  snowWorldSize: {x: 42, y: 24}
+  snowWorldDepth: 1
+  snowSortingLayer: Background
+  snowSortingOrder: 30
+  snowCoverageColor: {r: 0.82, g: 0.92, b: 1, a: 0.72}
+  snowPatchDensity: 3.2
+  snowCoverageScale: 2.4
+  snowParticlePrefab: {fileID: 2732887255044470663, guid: 1e886009deaf51f4486d0d684fe11822, type: 3}
+  snowParticleCameraOffset: {x: 0, y: 8, z: 2}
+  snowEmissionMultiplier: 1
+  snowScreenOpacity: 0.04
 --- !u!1 &2147010010
 GameObject:
   m_ObjectHideFlags: 0

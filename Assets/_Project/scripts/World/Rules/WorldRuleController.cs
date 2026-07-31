@@ -56,12 +56,16 @@ public sealed class WorldRuleController : MonoBehaviour
             return;
 
         levelStarted = true;
+        worldRuleVisual?.SetSnowActive(
+            level != null &&
+            level.weatherType == LevelWeatherType.Snow
+        );
         ResolveWorldAccelerationRule();
         ApplyConfiguredWorldAcceleration(level);
 
         if (!enableWorldRules)
         {
-            worldRuleVisual?.ClearImmediate();
+            worldRuleVisual?.ClearRuleImmediate();
             IsIntroComplete = true;
             return;
         }
@@ -70,7 +74,7 @@ public sealed class WorldRuleController : MonoBehaviour
 
         if (activeRule == null)
         {
-            worldRuleVisual?.ClearImmediate();
+            worldRuleVisual?.ClearRuleImmediate();
             IsIntroComplete = true;
             return;
         }
@@ -92,7 +96,7 @@ public sealed class WorldRuleController : MonoBehaviour
                 this
             );
             activeRule = null;
-            worldRuleVisual?.ClearImmediate();
+            worldRuleVisual?.ClearRuleImmediate();
             IsIntroComplete = true;
             return;
         }

@@ -12,6 +12,7 @@ Shader "UI/World Rule Overlay"
         _PulseSpeed ("Pulse Speed", Range(0, 3)) = 1
         _PulseStrength ("Pulse Strength", Range(0, 1)) = 0.3
         _EdgeIntensity ("Edge Intensity", Range(0, 2)) = 1
+        _SnowIntensity ("Snow Screen Opacity", Range(0, 0.25)) = 0
     }
 
     SubShader
@@ -47,6 +48,7 @@ Shader "UI/World Rule Overlay"
             float _PulseSpeed;
             float _PulseStrength;
             float _EdgeIntensity;
+            float _SnowIntensity;
 
             struct appdata_t
             {
@@ -192,6 +194,19 @@ Shader "UI/World Rule Overlay"
                 }
 
                 alpha *= _Intensity * input.color.a;
+                float ruleAlpha = alpha;
+
+                fixed3 snowVeil = fixed3(0.82, 0.91, 1.0);
+                float snowEdge = EdgeMask(uv) * 0.35 + 0.65;
+                float snowAlpha = _SnowIntensity * snowEdge *
+                    input.color.a;
+                alpha = saturate(ruleAlpha + snowAlpha);
+                color = alpha > 0.0001
+                    ? (
+                        color * ruleAlpha +
+                        snowVeil * snowAlpha
+                    ) / alpha
+                    : snowVeil;
                 return fixed4(color * input.color.rgb, alpha);
             }
             ENDCG

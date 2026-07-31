@@ -7,6 +7,8 @@ using UnityEngine;
 public sealed class WorldRuleData : ScriptableObject
 {
     [Header("Identity")]
+    [Tooltip("Stable ID assigned explicitly for migration and persistence.")]
+    [SerializeField] private string stableId;
     [SerializeField] private WorldRuleType ruleType;
 
     [Header("View")]
@@ -33,6 +35,7 @@ public sealed class WorldRuleData : ScriptableObject
     [SerializeField, Min(0f)] private float playerHealthPerSecond;
     [SerializeField, Min(0.1f)] private float outgoingDamageMultiplier = 1f;
 
+    public string Id => stableId;
     public WorldRuleType RuleType => ruleType;
     public float SelectionWeight => Mathf.Max(0f, selectionWeight);
     public float ExplosionRadius => Mathf.Max(0.1f, explosionRadius);
