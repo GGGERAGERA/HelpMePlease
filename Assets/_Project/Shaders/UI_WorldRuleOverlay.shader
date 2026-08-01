@@ -15,6 +15,12 @@ Shader "UI/World Rule Overlay"
         _SnowIntensity ("Snow Screen Opacity", Range(0, 0.25)) = 0
         _RainDropsIntensity ("Rain Drops Intensity", Range(0, 0.5)) = 0
         _RainDropsFrequency ("Rain Drops Frequency", Range(0.05, 2)) = 0.35
+        _GoldenOverlayIntensity ("Golden Overlay Intensity", Range(0, 0.2)) = 0
+        _GoldenOverlayColor ("Golden Overlay Color", Color) = (1, 0.78, 0.32, 1)
+        _WindVisualIntensity ("Wind Visual Intensity", Range(0, 0.4)) = 0
+        _WindLineDensity ("Wind Line Density", Range(2, 12)) = 5.5
+        _WindLineSpeed ("Wind Line Speed", Range(0.05, 2)) = 0.45
+        _WindDirection ("Wind Direction", Vector) = (1, 0, 0, 0)
     }
 
     SubShader
@@ -53,6 +59,12 @@ Shader "UI/World Rule Overlay"
             float _SnowIntensity;
             float _RainDropsIntensity;
             float _RainDropsFrequency;
+            float _GoldenOverlayIntensity;
+            fixed4 _GoldenOverlayColor;
+            float _WindVisualIntensity;
+            float _WindLineDensity;
+            float _WindLineSpeed;
+            float2 _WindDirection;
 
             struct appdata_t
             {
@@ -126,6 +138,56 @@ Shader "UI/World Rule Overlay"
                     smoothstep(0.0, 0.22, delta.y) *
                     (1.0 - smoothstep(0.22, 0.5, delta.y));
                 return enabled * saturate(head + trail * 0.32);
+            }
+
+            float WindLines(float2 uv)
+            {
+                float directionLength = length(_WindDirection);
+
+                if (directionLength < 0.001)
+                    return 0.0;
+
+                float2 direction = _WindDirection / directionLength;
+                float2 perpendicular = float2(-direction.y, direction.x);
+                float aspect = _ScreenParams.x / max(1.0, _ScreenParams.y);
+                float2 screenUv = float2(uv.x * aspect, uv.y);
+                float along = dot(screenUv, direction);
+                float across = dot(screenUv, perpendicular);
+                float row = floor(across * _WindLineDensity + 37.0);
+                float rowUv = frac(across * _WindLineDensity + 37.0);
+                float movingAlong =
+                    along * 3.2 - _VisualTime * _WindLineSpeed;
+                float cell = floor(movingAlong);
+                float localAlong = frac(movingAlong);
+                float seed = Hash(float2(cell, row));
+                float enabled = step(0.88, seed);
+                float lineLength = lerp(
+                    0.12,
+                    0.3,
+                    Hash(float2(cell + 13.0, row + 29.0))
+                );
+                float lineStart = lerp(
+                    0.08,
+                    0.55,
+                    Hash(float2(cell + 41.0, row + 7.0))
+                );
+                float alongShape =
+                    smoothstep(lineStart, lineStart + 0.035, localAlong) *
+                    (1.0 - smoothstep(
+                        lineStart + lineLength,
+                        lineStart + lineLength + 0.05,
+                        localAlong
+                    ));
+                float rowOffset = lerp(
+                    0.28,
+                    0.72,
+                    Hash(float2(cell + 71.0, row + 17.0))
+                );
+                float crossDistance = abs(rowUv - rowOffset);
+                float thinCore = 1.0 - smoothstep(0.012, 0.035, crossDistance);
+                float softEdge = 1.0 - smoothstep(0.035, 0.09, crossDistance);
+                return enabled * alongShape *
+                    (thinCore * 0.7 + softEdge * 0.3);
             }
 
             fixed4 frag(v2f input) : SV_Target
@@ -242,13 +304,23 @@ Shader "UI/World Rule Overlay"
                     input.color.a;
                 float rainAlpha = RainDrops(uv) *
                     _RainDropsIntensity * input.color.a;
+                float goldenAlpha = _GoldenOverlayIntensity *
+                    input.color.a;
+                float windAlpha = WindLines(uv) *
+                    _WindVisualIntensity * input.color.a;
                 fixed3 rainColor = fixed3(0.62, 0.76, 0.86);
-                alpha = saturate(ruleAlpha + snowAlpha + rainAlpha);
+                fixed3 windColor = fixed3(0.72, 0.9, 1.0);
+                alpha = saturate(
+                    ruleAlpha + snowAlpha + rainAlpha + goldenAlpha +
+                    windAlpha
+                );
                 color = alpha > 0.0001
                     ? (
                         color * ruleAlpha +
                         snowVeil * snowAlpha +
-                        rainColor * rainAlpha
+                        rainColor * rainAlpha +
+                        _GoldenOverlayColor.rgb * goldenAlpha +
+                        windColor * windAlpha
                     ) / alpha
                     : rainColor;
                 return fixed4(color * input.color.rgb, alpha);

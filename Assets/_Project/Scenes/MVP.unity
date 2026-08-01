@@ -6263,6 +6263,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldRuleController
   worldRuleVisual: {fileID: 2147010007}
+  goldenEnemyTint: {r: 1, g: 0.62, b: 0.08, a: 1}
+  assignmentPulseDuration: 0.28
+  deathFlashIntensity: 1.35
+  goldenDeathFxPrefab: {fileID: 4954931696877459830, guid: a0f7d14547ca6cc4281f13e8d9aa8cab, type: 3}
   logWindSelection: 0
 --- !u!114 &2147010007
 MonoBehaviour:
@@ -6285,9 +6289,16 @@ MonoBehaviour:
   wetPatternScale: 2.8
   screenDropsIntensity: 0.14
   screenDropsFrequency: 0.35
+  goldenOverlayIntensity: 0.07
+  goldenColorFilter: {r: 1, g: 0.94, b: 0.78, a: 1}
+  windVisualIntensity: 0.16
+  windLineDensity: 5.5
+  windLineSpeed: 0.45
   globalLight: {fileID: 1615053065}
   normalLightIntensity: 1
-  darknessLightIntensity: 0.01
+  darknessGlobalIntensity: 0.05
+  playerLightRadius: 6.5
+  playerLightFalloff: 0.75
   transitionDuration: 1
   snowTransitionDuration: 1
   snowVisualIntensity: 0.58
@@ -8969,6 +8980,7 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::WindRuleIndicator
   arrowTransform: {fileID: 900000000000003011}
+  windIndicatorPulseSpeed: 2.2
 --- !u!1 &900000000000003010
 GameObject:
   m_ObjectHideFlags: 0

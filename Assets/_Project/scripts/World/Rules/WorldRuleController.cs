@@ -12,6 +12,15 @@ public sealed class WorldRuleController : MonoBehaviour
     [SerializeField] private bool logGoldenEnemyAssignments;
     [SerializeField] private bool logWindSelection;
 
+    [Header("Golden / Enemy Visual")]
+    [SerializeField] private Color goldenEnemyTint =
+        new Color(1f, 0.62f, 0.08f, 1f);
+    [SerializeField, Min(0.01f)] private float assignmentPulseDuration = 0.28f;
+    [SerializeField, Min(0f)] private float deathFlashIntensity = 1.35f;
+
+    [Header("Golden / Existing FX")]
+    [SerializeField] private ParticleSystem goldenDeathFxPrefab;
+
     private static readonly Vector2[] CardinalWindDirections =
     {
         Vector2.up,
@@ -215,6 +224,13 @@ public sealed class WorldRuleController : MonoBehaviour
 
         if (modifier == null)
             modifier = enemy.gameObject.AddComponent<GoldenEnemyModifier>();
+
+        modifier.ConfigureVisuals(
+            goldenEnemyTint,
+            assignmentPulseDuration,
+            deathFlashIntensity,
+            goldenDeathFxPrefab
+        );
 
         if (!modifier.TryBeginSpawnRoll() ||
             Random.value >= goldenEnemyChance)
