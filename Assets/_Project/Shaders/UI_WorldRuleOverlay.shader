@@ -13,6 +13,8 @@ Shader "UI/World Rule Overlay"
         _PulseStrength ("Pulse Strength", Range(0, 1)) = 0.3
         _EdgeIntensity ("Edge Intensity", Range(0, 2)) = 1
         _SnowIntensity ("Snow Screen Opacity", Range(0, 0.25)) = 0
+        _RainDropsIntensity ("Rain Drops Intensity", Range(0, 0.5)) = 0
+        _RainDropsFrequency ("Rain Drops Frequency", Range(0.05, 2)) = 0.35
     }
 
     SubShader
@@ -49,6 +51,8 @@ Shader "UI/World Rule Overlay"
             float _PulseStrength;
             float _EdgeIntensity;
             float _SnowIntensity;
+            float _RainDropsIntensity;
+            float _RainDropsFrequency;
 
             struct appdata_t
             {
@@ -86,6 +90,42 @@ Shader "UI/World Rule Overlay"
                     sin(dot(value, float2(12.9898, 78.233))) *
                     43758.5453
                 );
+            }
+
+            float RainDrops(float2 uv)
+            {
+                const float2 gridSize = float2(9.0, 6.0);
+                float2 gridUv = uv * gridSize;
+                float2 cell = floor(gridUv);
+                float2 local = frac(gridUv);
+                float epoch = floor(
+                    _VisualTime * max(0.05, _RainDropsFrequency)
+                );
+                float phase = frac(
+                    _VisualTime * max(0.05, _RainDropsFrequency) +
+                    Hash(cell + 19.7)
+                );
+                float enabled = step(
+                    0.93,
+                    Hash(cell + epoch * float2(17.3, 41.9))
+                );
+                float dropX = lerp(
+                    0.2,
+                    0.8,
+                    Hash(cell + epoch * 7.1 + 3.4)
+                );
+                float dropY = 1.15 - phase * 1.3;
+                float2 delta = local - float2(dropX, dropY);
+                float head = 1.0 - smoothstep(
+                    0.025,
+                    0.085,
+                    length(float2(delta.x * 1.8, delta.y))
+                );
+                float trail =
+                    (1.0 - smoothstep(0.018, 0.045, abs(delta.x))) *
+                    smoothstep(0.0, 0.22, delta.y) *
+                    (1.0 - smoothstep(0.22, 0.5, delta.y));
+                return enabled * saturate(head + trail * 0.32);
             }
 
             fixed4 frag(v2f input) : SV_Target
@@ -200,13 +240,17 @@ Shader "UI/World Rule Overlay"
                 float snowEdge = EdgeMask(uv) * 0.35 + 0.65;
                 float snowAlpha = _SnowIntensity * snowEdge *
                     input.color.a;
-                alpha = saturate(ruleAlpha + snowAlpha);
+                float rainAlpha = RainDrops(uv) *
+                    _RainDropsIntensity * input.color.a;
+                fixed3 rainColor = fixed3(0.62, 0.76, 0.86);
+                alpha = saturate(ruleAlpha + snowAlpha + rainAlpha);
                 color = alpha > 0.0001
                     ? (
                         color * ruleAlpha +
-                        snowVeil * snowAlpha
+                        snowVeil * snowAlpha +
+                        rainColor * rainAlpha
                     ) / alpha
-                    : snowVeil;
+                    : rainColor;
                 return fixed4(color * input.color.rgb, alpha);
             }
             ENDCG

@@ -162,9 +162,6 @@ public sealed class RunFlowController : MonoBehaviour
                 case WorldRuleType.None:
                 case WorldRuleType.Wind:
                 case WorldRuleType.Golden:
-                case WorldRuleType.ExplosiveInfection:
-                case WorldRuleType.Haste:
-                case WorldRuleType.Regeneration:
                     return string.Empty;
             }
         }

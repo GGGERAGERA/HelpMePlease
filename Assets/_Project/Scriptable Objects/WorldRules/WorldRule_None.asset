@@ -20,17 +20,10 @@ MonoBehaviour:
   selectionWeight: 1
   playerMoveSpeedMultiplier: 1
   enemyMoveSpeedMultiplier: 1
+  spawnPressureMultiplier: 1
   goldenEnemyChance: 0
   goldenEnemyHealthMultiplier: 1
   goldenEnemyRewardMultiplier: 1
   windForce: 0
   windDirectionMode: 0
   fixedWindDirection: {x: 1, y: 0}
-  explosionRadius: 2.2
-  playerExplosionDamage: 20
-  enemyExplosionDamage: 25
-  allowChainReaction: 1
-  enemySpeedMultiplier: 1
-  experienceGainMultiplier: 1
-  playerHealthPerSecond: 0
-  outgoingDamageMultiplier: 1

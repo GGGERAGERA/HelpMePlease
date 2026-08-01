@@ -7,18 +7,8 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public sealed class WorldRuleVisual : MonoBehaviour
 {
-    private static readonly int RuleTypeId =
-        Shader.PropertyToID("_RuleType");
-    private static readonly int IntensityId =
-        Shader.PropertyToID("_Intensity");
     private static readonly int VisualTimeId =
         Shader.PropertyToID("_VisualTime");
-    private static readonly int PulseSpeedId =
-        Shader.PropertyToID("_PulseSpeed");
-    private static readonly int PulseStrengthId =
-        Shader.PropertyToID("_PulseStrength");
-    private static readonly int EdgeIntensityId =
-        Shader.PropertyToID("_EdgeIntensity");
     private static readonly int SnowIntensityId =
         Shader.PropertyToID("_SnowIntensity");
     private static readonly int SnowColorId =
@@ -27,6 +17,14 @@ public sealed class WorldRuleVisual : MonoBehaviour
         Shader.PropertyToID("_SnowDensity");
     private static readonly int SnowScaleId =
         Shader.PropertyToID("_SnowScale");
+    private static readonly int WetGroundIntensityId =
+        Shader.PropertyToID("_WetGroundIntensity");
+    private static readonly int WetPatternScaleId =
+        Shader.PropertyToID("_WetPatternScale");
+    private static readonly int RainDropsIntensityId =
+        Shader.PropertyToID("_RainDropsIntensity");
+    private static readonly int RainDropsFrequencyId =
+        Shader.PropertyToID("_RainDropsFrequency");
 
     [Header("References")]
     [SerializeField] private Image fullscreenImage;
@@ -36,6 +34,15 @@ public sealed class WorldRuleVisual : MonoBehaviour
     [Header("Rain / Existing Scene Effect")]
     [SerializeField] private GameObject rainEffect;
 
+    [Header("Rain / Wet Ground")]
+    [SerializeField] private Material rainWorldMaterial;
+    [SerializeField, Range(0f, 1f)] private float wetGroundIntensity = 0.32f;
+    [SerializeField, Range(0.25f, 8f)] private float wetPatternScale = 2.8f;
+
+    [Header("Rain / Screen Drops")]
+    [SerializeField, Range(0f, 0.5f)] private float screenDropsIntensity = 0.14f;
+    [SerializeField, Range(0.05f, 2f)] private float screenDropsFrequency = 0.35f;
+
     [Header("Darkness / Existing Scene Light")]
     [SerializeField] private Light2D globalLight;
     [SerializeField, Min(0f)] private float normalLightIntensity = 1f;
@@ -43,17 +50,6 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
     [Header("Transition")]
     [SerializeField, Min(0.01f)] private float transitionDuration = 1f;
-    [SerializeField, Range(0f, 1f)] private float globalIntensity = 1f;
-
-    [Header("Animation")]
-    [SerializeField, Min(0f)] private float pulseSpeed = 1f;
-    [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.3f;
-    [SerializeField, Range(0f, 2f)] private float edgeIntensity = 1f;
-
-    [Header("Rule Strength")]
-    [SerializeField, Range(0f, 1f)] private float hasteIntensity = 0.42f;
-    [SerializeField, Range(0f, 1f)] private float regenerationIntensity = 0.38f;
-    [SerializeField, Range(0f, 1f)] private float explosiveIntensity = 0.48f;
 
     [Header("Snow / Transition")]
     [SerializeField, Min(0.01f)] private float snowTransitionDuration = 1f;
@@ -93,10 +89,14 @@ public sealed class WorldRuleVisual : MonoBehaviour
     [Header("Snow / Screen Overlay")]
     [SerializeField, Range(0f, 0.25f)] private float snowScreenOpacity = 0.055f;
 
-    private float currentIntensity;
-    private float targetIntensity;
     private float currentSnowIntensity;
     private float targetSnowIntensity;
+    private float currentRainIntensity;
+    private float targetRainIntensity;
+    private GameObject rainWorldObject;
+    private Mesh rainWorldMesh;
+    private MeshRenderer rainWorldRenderer;
+    private MaterialPropertyBlock rainProperties;
     private GameObject snowWorldObject;
     private Mesh snowWorldMesh;
     private MeshRenderer snowWorldRenderer;
@@ -131,7 +131,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
         }
 
         EnsureSnowResources();
-        ApplyTuning();
+        EnsureRainResources();
         SetNeutral();
     }
 
@@ -139,12 +139,6 @@ public sealed class WorldRuleVisual : MonoBehaviour
     {
         float step = Time.unscaledDeltaTime /
             Mathf.Max(0.01f, transitionDuration);
-        currentIntensity = Mathf.MoveTowards(
-            currentIntensity,
-            targetIntensity,
-            step
-        );
-
         float snowStep =
             Mathf.Max(0.0001f, snowVisualIntensity) *
             Time.unscaledDeltaTime /
@@ -154,28 +148,41 @@ public sealed class WorldRuleVisual : MonoBehaviour
             targetSnowIntensity,
             snowStep
         );
+        currentRainIntensity = Mathf.MoveTowards(
+            currentRainIntensity,
+            targetRainIntensity,
+            step
+        );
 
         if (visualMaterial != null)
         {
-            visualMaterial.SetFloat(IntensityId, currentIntensity);
             visualMaterial.SetFloat(VisualTimeId, Time.unscaledTime);
             visualMaterial.SetFloat(
                 SnowIntensityId,
                 currentSnowIntensity * snowScreenOpacity
             );
+            visualMaterial.SetFloat(
+                RainDropsIntensityId,
+                currentRainIntensity * screenDropsIntensity
+            );
+            visualMaterial.SetFloat(
+                RainDropsFrequencyId,
+                screenDropsFrequency
+            );
         }
 
         UpdateSnowResources();
+        UpdateRainResources();
 
 #if UNITY_EDITOR
         UpdateSnowDiagnostics();
 #endif
 
         if (fullscreenImage != null &&
-            targetIntensity <= 0f &&
-            currentIntensity <= 0f &&
             targetSnowIntensity <= 0f &&
-            currentSnowIntensity <= 0f)
+            currentSnowIntensity <= 0f &&
+            targetRainIntensity <= 0f &&
+            currentRainIntensity <= 0f)
         {
             fullscreenImage.enabled = false;
         }
@@ -196,12 +203,6 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
         switch (rule.RuleType)
         {
-            case WorldRuleType.ExplosiveInfection:
-            case WorldRuleType.Haste:
-            case WorldRuleType.Regeneration:
-                ShowRule(rule.RuleType);
-                break;
-
             case WorldRuleType.Snow:
                 SetSnowActive(true);
                 break;
@@ -222,7 +223,6 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
     public void Clear()
     {
-        ClearRule();
         SetSnowActive(false);
         ClearRainAndDarkness();
         windIndicator?.Hide();
@@ -233,37 +233,9 @@ public sealed class WorldRuleVisual : MonoBehaviour
         windIndicator?.Show(direction);
     }
 
-    public void ShowRule(WorldRuleType ruleType)
-    {
-        if (visualMaterial == null)
-            return;
-
-        if (fullscreenImage != null)
-            fullscreenImage.enabled = true;
-
-        visualMaterial.SetFloat(RuleTypeId, (float)ruleType);
-        targetIntensity = GetIntensity(ruleType) * globalIntensity;
-    }
-
-    public void ClearRule()
-    {
-        targetIntensity = 0f;
-    }
-
     public void ClearImmediate()
     {
         SetNeutral();
-    }
-
-    public void ClearRuleImmediate()
-    {
-        currentIntensity = 0f;
-        targetIntensity = 0f;
-
-        if (visualMaterial != null)
-            visualMaterial.SetFloat(IntensityId, 0f);
-
-        RefreshFullscreenVisibility();
     }
 
     public void SetSnowActive(bool active)
@@ -281,32 +253,14 @@ public sealed class WorldRuleVisual : MonoBehaviour
             fullscreenImage.enabled = true;
     }
 
-    private float GetIntensity(WorldRuleType ruleType)
-    {
-        switch (ruleType)
-        {
-            case WorldRuleType.Haste:
-                return hasteIntensity;
-
-            case WorldRuleType.Regeneration:
-                return regenerationIntensity;
-
-            case WorldRuleType.ExplosiveInfection:
-                return explosiveIntensity;
-
-            default:
-                return 0f;
-        }
-    }
-
     private void SetNeutral()
     {
         ClearRainAndDarkness();
         windIndicator?.Hide();
-        currentIntensity = 0f;
-        targetIntensity = 0f;
         currentSnowIntensity = 0f;
         targetSnowIntensity = 0f;
+        currentRainIntensity = 0f;
+        targetRainIntensity = 0f;
 
 #if UNITY_EDITOR
         snowDiagnosticElapsed = 0f;
@@ -316,22 +270,20 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
         if (visualMaterial != null)
         {
-            visualMaterial.SetFloat(IntensityId, 0f);
             visualMaterial.SetFloat(SnowIntensityId, 0f);
+            visualMaterial.SetFloat(RainDropsIntensityId, 0f);
         }
 
         if (fullscreenImage != null)
             fullscreenImage.enabled = false;
 
         UpdateSnowResources();
+        UpdateRainResources();
     }
 
     private void ApplyRain()
     {
-        if (rainEffect == null)
-            return;
-
-        rainEffect.SetActive(true);
+        SetRainActive(true);
     }
 
     private void ApplyDarkness()
@@ -344,21 +296,25 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
     private void ClearRainAndDarkness()
     {
-        if (rainEffect != null)
-            rainEffect.SetActive(false);
+        SetRainActive(false);
 
         if (globalLight != null)
             globalLight.intensity = normalLightIntensity;
     }
 
-    private void ApplyTuning()
+    private void SetRainActive(bool active)
     {
-        if (visualMaterial == null)
-            return;
+        EnsureRainResources();
+        targetRainIntensity = active ? 1f : 0f;
 
-        visualMaterial.SetFloat(PulseSpeedId, pulseSpeed);
-        visualMaterial.SetFloat(PulseStrengthId, pulseStrength);
-        visualMaterial.SetFloat(EdgeIntensityId, edgeIntensity);
+        if (active)
+        {
+            if (rainEffect != null)
+                rainEffect.SetActive(true);
+
+            if (fullscreenImage != null)
+                fullscreenImage.enabled = true;
+        }
     }
 
     private void EnsureSnowResources()
@@ -371,6 +327,98 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
         if (snowParticleInstance == null && snowParticlePrefab != null)
             CreateSnowParticles();
+    }
+
+    private void EnsureRainResources()
+    {
+        if (rainWorldObject == null && rainWorldMaterial != null)
+            CreateRainWorldOverlay();
+    }
+
+    private void CreateRainWorldOverlay()
+    {
+        rainWorldObject = new GameObject("RainWetGroundOverlay");
+        rainWorldObject.transform.SetParent(transform, false);
+
+        MeshFilter filter = rainWorldObject.AddComponent<MeshFilter>();
+        rainWorldRenderer = rainWorldObject.AddComponent<MeshRenderer>();
+        rainWorldRenderer.sharedMaterial = rainWorldMaterial;
+        rainWorldRenderer.sortingLayerName = "Background";
+        rainWorldRenderer.sortingOrder = 29;
+
+        rainWorldMesh = new Mesh
+        {
+            name = "RainWetGroundOverlayMesh",
+            vertices = new[]
+            {
+                new Vector3(-0.5f, -0.5f, 0f),
+                new Vector3(0.5f, -0.5f, 0f),
+                new Vector3(-0.5f, 0.5f, 0f),
+                new Vector3(0.5f, 0.5f, 0f)
+            },
+            uv = new[]
+            {
+                new Vector2(0f, 0f),
+                new Vector2(1f, 0f),
+                new Vector2(0f, 1f),
+                new Vector2(1f, 1f)
+            },
+            triangles = new[] { 0, 2, 1, 2, 3, 1 }
+        };
+        filter.sharedMesh = rainWorldMesh;
+        rainProperties = new MaterialPropertyBlock();
+        rainWorldObject.SetActive(false);
+    }
+
+    private void UpdateRainResources()
+    {
+        if (rainWorldRenderer != null && rainWorldObject != null)
+        {
+            bool visible = currentRainIntensity > 0f ||
+                targetRainIntensity > 0f;
+            rainWorldObject.SetActive(visible);
+
+            if (visible)
+            {
+                if (targetCamera == null)
+                    targetCamera = Camera.main;
+
+                Vector3 cameraPosition = targetCamera != null
+                    ? targetCamera.transform.position
+                    : transform.position;
+                rainWorldObject.transform.position = new Vector3(
+                    cameraPosition.x,
+                    cameraPosition.y,
+                    snowWorldDepth
+                );
+                rainWorldObject.transform.localScale = new Vector3(
+                    snowWorldSize.x,
+                    snowWorldSize.y,
+                    1f
+                );
+                rainWorldRenderer.GetPropertyBlock(rainProperties);
+                rainProperties.SetFloat(
+                    WetGroundIntensityId,
+                    currentRainIntensity * wetGroundIntensity
+                );
+                rainProperties.SetFloat(
+                    WetPatternScaleId,
+                    wetPatternScale
+                );
+                rainProperties.SetFloat(
+                    VisualTimeId,
+                    Time.unscaledTime
+                );
+                rainWorldRenderer.SetPropertyBlock(rainProperties);
+            }
+        }
+
+        if (rainEffect != null &&
+            targetRainIntensity <= 0f &&
+            currentRainIntensity <= 0f)
+        {
+            rainEffect.SetActive(false);
+        }
     }
 
     private void CreateSnowWorldOverlay()
@@ -582,10 +630,10 @@ public sealed class WorldRuleVisual : MonoBehaviour
             return;
 
         fullscreenImage.enabled =
-            currentIntensity > 0f ||
-            targetIntensity > 0f ||
             currentSnowIntensity > 0f ||
-            targetSnowIntensity > 0f;
+            targetSnowIntensity > 0f ||
+            currentRainIntensity > 0f ||
+            targetRainIntensity > 0f;
     }
 
     private void FollowCamera()
@@ -601,6 +649,15 @@ public sealed class WorldRuleVisual : MonoBehaviour
         if (snowWorldObject != null && snowWorldObject.activeSelf)
         {
             snowWorldObject.transform.position = new Vector3(
+                cameraPosition.x,
+                cameraPosition.y,
+                snowWorldDepth
+            );
+        }
+
+        if (rainWorldObject != null && rainWorldObject.activeSelf)
+        {
+            rainWorldObject.transform.position = new Vector3(
                 cameraPosition.x,
                 cameraPosition.y,
                 snowWorldDepth
@@ -624,6 +681,9 @@ public sealed class WorldRuleVisual : MonoBehaviour
     {
         if (snowWorldMesh != null)
             Destroy(snowWorldMesh);
+
+        if (rainWorldMesh != null)
+            Destroy(rainWorldMesh);
 
         if (snowVolumeProfile != null)
             Destroy(snowVolumeProfile);
@@ -687,47 +747,11 @@ public sealed class WorldRuleVisual : MonoBehaviour
             snowDiagnosticsActive = false;
     }
 
-    [ContextMenu("Preview/Haste")]
-    private void PreviewHaste()
-    {
-        Preview(WorldRuleType.Haste);
-    }
-
-    [ContextMenu("Preview/Regeneration")]
-    private void PreviewRegeneration()
-    {
-        Preview(WorldRuleType.Regeneration);
-    }
-
-    [ContextMenu("Preview/Explosive Infection")]
-    private void PreviewExplosiveInfection()
-    {
-        Preview(WorldRuleType.ExplosiveInfection);
-    }
-
     [ContextMenu("Preview/Clear")]
     private void PreviewClear()
     {
         ClearImmediate();
     }
 
-    private void Preview(WorldRuleType ruleType)
-    {
-        if (visualMaterial == null)
-            return;
-
-        if (fullscreenImage != null)
-            fullscreenImage.enabled = true;
-
-        visualMaterial.SetFloat(RuleTypeId, (float)ruleType);
-        ApplyTuning();
-        currentIntensity = GetIntensity(ruleType) * globalIntensity;
-        targetIntensity = currentIntensity;
-        visualMaterial.SetFloat(IntensityId, currentIntensity);
-        visualMaterial.SetFloat(
-            VisualTimeId,
-            (float)UnityEditor.EditorApplication.timeSinceStartup
-        );
-    }
 #endif
 }

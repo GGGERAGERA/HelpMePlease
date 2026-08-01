@@ -1,10 +1,5 @@
 public enum WorldRuleType
 {
-    // Transitional legacy values. Keep their serialized numbers unchanged.
-    ExplosiveInfection = 0,
-    Haste = 1,
-    Regeneration = 2,
-
     None = 10,
     Snow = 11,
     Rain = 12,
