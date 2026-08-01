@@ -60,6 +60,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
     private readonly List<LocalAnomalyZone> spawnedZones = new();
     private readonly List<ActiveLocalZone> activeLocalZones = new();
+    private readonly HashSet<EnemyHealth> claimedExplosiveDeaths = new();
 
     private LocalAnomalyData activeAnomaly;
     private bool localCardVisible;
@@ -67,6 +68,17 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
     public LocalAnomalyData ActiveAnomaly => activeAnomaly;
     public bool IsIntroComplete { get; private set; } = true;
+
+    public bool TryClaimExplosiveDeath(EnemyHealth enemy)
+    {
+        return enemy != null && claimedExplosiveDeaths.Add(enemy);
+    }
+
+    public void ResetExplosiveDeathClaim(EnemyHealth enemy)
+    {
+        if (!ReferenceEquals(enemy, null))
+            claimedExplosiveDeaths.Remove(enemy);
+    }
 
     private void Awake()
     {
@@ -406,6 +418,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
         spawnedZones.Clear();
         activeLocalZones.Clear();
+        claimedExplosiveDeaths.Clear();
         visual?.Hide();
     }
 

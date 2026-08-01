@@ -15,11 +15,15 @@ MonoBehaviour:
   stableId: ExplosiveZone
   anomalyType: 2
   displayName: "АНОМАЛИЯ: ВЗРЫВНАЯ ЗОНА"
-  description: "Нестабильная локальная зона. Gameplay будет добавлен позднее."
-  pinnedDescription: "Взрывная зона"
+  description: "Враги, погибшие внутри зоны, взрываются"
+  pinnedDescription: "Смерть врага в зоне вызывает взрыв"
   selectionWeight: 1
-  zonePrefab: {fileID: 0}
+  zonePrefab: {fileID: 560000000000000004, guid: 8f28f249de924290b647392946c60af3, type: 3}
   zoneRadius: 4
   enemySpeedMultiplier: 1
   playerSpeedMultiplier: 1
   additionalAnomalies: []
+  explosionDelay: 1.2
+  explosionRadius: 2.5
+  explosionDamage: 40
+  explosionEffectPrefab: {fileID: 3932597101254327762, guid: f91913de896646447a357936450e42c5, type: 3}
