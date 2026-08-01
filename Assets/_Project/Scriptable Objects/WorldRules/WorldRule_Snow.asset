@@ -10,27 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2e7a23f4bc9f4e65a021dd9d286ca004, type: 3}
-  m_Name: WorldRule_Darkness
+  m_Name: WorldRule_Snow
   m_EditorClassIdentifier: Assembly-CSharp::WorldRuleData
-  stableId: Darkness
-  ruleType: 13
-  displayName: ТЕМНОТА
-  description: Тёмный уровень с ограниченной видимостью.
-  pinnedDescription: Темнота
+  stableId: Snow
+  ruleType: 11
+  displayName: СНЕГ
+  description: Заснеженный уровень с холодной зимней атмосферой.
+  pinnedDescription: Снег
   selectionWeight: 1
-  playerMoveSpeedMultiplier: 1
-  enemyMoveSpeedMultiplier: 1
+  playerMoveSpeedMultiplier: 0.9
+  enemyMoveSpeedMultiplier: 0.9
+  spawnPressureMultiplier: 1
   goldenEnemyChance: 0
   goldenEnemyHealthMultiplier: 1
   goldenEnemyRewardMultiplier: 1
   windForce: 0
   windDirectionMode: 0
   fixedWindDirection: {x: 1, y: 0}
-  explosionRadius: 2.2
-  playerExplosionDamage: 20
-  enemyExplosionDamage: 25
-  allowChainReaction: 1
-  enemySpeedMultiplier: 1
-  experienceGainMultiplier: 1
-  playerHealthPerSecond: 0
-  outgoingDamageMultiplier: 1

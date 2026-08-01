@@ -36,6 +36,9 @@ public sealed class WorldRuleData : ScriptableObject
     [Tooltip("Multiplier applied to enemy movement speed.")]
     [SerializeField, Min(0.1f)]
     private float enemyMoveSpeedMultiplier = 1f;
+    [Tooltip("Multiplier applied once to the level spawn pressure.")]
+    [SerializeField, Min(0.1f)]
+    private float spawnPressureMultiplier = 1f;
 
     [Header("Golden Enemies")]
     [Tooltip("Chance that an eligible newly spawned enemy becomes Golden.")]
@@ -56,20 +59,6 @@ public sealed class WorldRuleData : ScriptableObject
     [Tooltip("Direction used by Fixed mode. A zero vector safely falls back to right.")]
     [SerializeField] private Vector2 fixedWindDirection = Vector2.right;
 
-    [Header("Explosive Infection")]
-    [SerializeField, Min(0.1f)] private float explosionRadius = 2.2f;
-    [SerializeField, Min(0f)] private float playerExplosionDamage = 20f;
-    [SerializeField, Min(0f)] private float enemyExplosionDamage = 25f;
-    [SerializeField] private bool allowChainReaction = true;
-
-    [Header("Haste")]
-    [SerializeField, Min(0.1f)] private float enemySpeedMultiplier = 1f;
-    [SerializeField, Min(0.1f)] private float experienceGainMultiplier = 1f;
-
-    [Header("Regeneration")]
-    [SerializeField, Min(0f)] private float playerHealthPerSecond;
-    [SerializeField, Min(0.1f)] private float outgoingDamageMultiplier = 1f;
-
     public string Id => stableId;
     public WorldRuleType RuleType => ruleType;
     public float SelectionWeight => Mathf.Max(0f, selectionWeight);
@@ -77,6 +66,8 @@ public sealed class WorldRuleData : ScriptableObject
         Mathf.Max(0.1f, playerMoveSpeedMultiplier);
     public float EnemyMoveSpeedMultiplier =>
         Mathf.Max(0.1f, enemyMoveSpeedMultiplier);
+    public float SpawnPressureMultiplier =>
+        Mathf.Max(0.1f, spawnPressureMultiplier);
     public float GoldenEnemyChance => Mathf.Clamp01(goldenEnemyChance);
     public float GoldenEnemyHealthMultiplier =>
         Mathf.Max(1f, goldenEnemyHealthMultiplier);
@@ -88,17 +79,6 @@ public sealed class WorldRuleData : ScriptableObject
         fixedWindDirection.sqrMagnitude > 0.0001f
             ? fixedWindDirection.normalized
             : Vector2.right;
-    public float ExplosionRadius => Mathf.Max(0.1f, explosionRadius);
-    public float PlayerExplosionDamage => Mathf.Max(0f, playerExplosionDamage);
-    public float EnemyExplosionDamage => Mathf.Max(0f, enemyExplosionDamage);
-    public bool AllowChainReaction => allowChainReaction;
-    public float EnemySpeedMultiplier => Mathf.Max(0.1f, enemySpeedMultiplier);
-    public float ExperienceGainMultiplier =>
-        Mathf.Max(0.1f, experienceGainMultiplier);
-    public float PlayerHealthPerSecond =>
-        Mathf.Max(0f, playerHealthPerSecond);
-    public float OutgoingDamageMultiplier =>
-        Mathf.Max(0.1f, outgoingDamageMultiplier);
     public LevelMechanicPresentationData Presentation =>
         new(displayName, description, pinnedDescription);
 }

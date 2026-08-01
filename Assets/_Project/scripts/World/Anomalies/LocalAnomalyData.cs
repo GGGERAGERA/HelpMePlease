@@ -30,6 +30,12 @@ public sealed class LocalAnomalyData : ScriptableObject
     [Tooltip("Additional zone data spawned with this anomaly. Used to preserve multi-zone level layouts.")]
     [SerializeField] private LocalAnomalyData[] additionalAnomalies;
 
+    [Header("Explosion")]
+    [SerializeField, Min(0f)] private float explosionDelay;
+    [SerializeField, Min(0.1f)] private float explosionRadius = 0.1f;
+    [SerializeField, Min(0f)] private float explosionDamage;
+    [SerializeField] private GameObject explosionEffectPrefab;
+
     public string Id => string.IsNullOrWhiteSpace(stableId)
         ? name
         : stableId;
@@ -41,6 +47,10 @@ public sealed class LocalAnomalyData : ScriptableObject
     public float PlayerSpeedMultiplier =>
         Mathf.Max(0.1f, playerSpeedMultiplier);
     public LocalAnomalyData[] AdditionalAnomalies => additionalAnomalies;
+    public float ExplosionDelay => Mathf.Max(0f, explosionDelay);
+    public float ExplosionRadius => Mathf.Max(0.1f, explosionRadius);
+    public float ExplosionDamage => Mathf.Max(0f, explosionDamage);
+    public GameObject ExplosionEffectPrefab => explosionEffectPrefab;
     public LevelMechanicPresentationData Presentation =>
         new(displayName, description, pinnedDescription);
 }

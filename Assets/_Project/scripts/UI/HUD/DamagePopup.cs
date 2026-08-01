@@ -33,6 +33,16 @@ public class DamagePopup : MonoBehaviour
         }
     }
 
+    public void SetRewardMultiplier(float multiplier, Color color)
+    {
+        if (text == null)
+            return;
+
+        text.text = $"GOLD ×{multiplier:0.#}";
+        text.color = color;
+        text.fontSize *= 1.15f;
+    }
+
     void Update()
     {
         // Поднимаем текст вверх

@@ -16,12 +16,9 @@ public class LevelNodeData : ScriptableObject
 
     [Header("Type")]
     public LevelNodeType nodeType;
-    // Transitional legacy data retained until the remaining assets are migrated.
-    [Tooltip("Transitional legacy value. Runtime uses World Rule instead.")]
-    public LevelWeatherType weatherType;
-    [Tooltip("Migrated World Rule. Null means this level has not been migrated.")]
+    [Tooltip("Global rule applied for this level.")]
     [SerializeField] private WorldRuleData worldRule;
-    [Tooltip("Migrated Local Anomaly. Null means this level has not been migrated.")]
+    [Tooltip("Local anomaly composition applied for this level.")]
     [SerializeField] private LocalAnomalyData localAnomaly;
 
     [Header("Scene")]

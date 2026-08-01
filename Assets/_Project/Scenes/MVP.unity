@@ -6263,8 +6263,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldRuleController
   worldRuleVisual: {fileID: 2147010007}
-  explosionFxPrefab: {fileID: 3932597101254327762, guid: f91913de896646447a357936450e42c5, type: 3}
-  explosionFxLifetime: 0.8
+  goldenEnemyTint: {r: 1, g: 0.62, b: 0.08, a: 1}
+  assignmentPulseDuration: 0.28
+  deathFlashIntensity: 1.35
+  goldenDeathFxPrefab: {fileID: 4954931696877459830, guid: a0f7d14547ca6cc4281f13e8d9aa8cab, type: 3}
   logWindSelection: 0
 --- !u!114 &2147010007
 MonoBehaviour:
@@ -6282,17 +6284,22 @@ MonoBehaviour:
   visualMaterial: {fileID: 2100000, guid: d31bb530e01b4594a58b27501624ddec, type: 2}
   windIndicator: {fileID: 900000000000003002}
   rainEffect: {fileID: 610461739}
+  rainWorldMaterial: {fileID: 2100000, guid: 4c7fd535216f4b90bf61d62e90bb160d, type: 2}
+  wetGroundIntensity: 0.32
+  wetPatternScale: 2.8
+  screenDropsIntensity: 0.14
+  screenDropsFrequency: 0.35
+  goldenOverlayIntensity: 0.07
+  goldenColorFilter: {r: 1, g: 0.94, b: 0.78, a: 1}
+  windVisualIntensity: 0.16
+  windLineDensity: 5.5
+  windLineSpeed: 0.45
   globalLight: {fileID: 1615053065}
   normalLightIntensity: 1
-  darknessLightIntensity: 0.01
+  darknessGlobalIntensity: 0.05
+  playerLightRadius: 6.5
+  playerLightFalloff: 0.75
   transitionDuration: 1
-  globalIntensity: 1
-  pulseSpeed: 1
-  pulseStrength: 1
-  edgeIntensity: 2
-  hasteIntensity: 1
-  regenerationIntensity: 0.366
-  explosiveIntensity: 0.48
   snowTransitionDuration: 1
   snowVisualIntensity: 0.58
   snowColorFilter: {r: 0.68, g: 0.84, b: 1, a: 1}
@@ -8973,6 +8980,7 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::WindRuleIndicator
   arrowTransform: {fileID: 900000000000003011}
+  windIndicatorPulseSpeed: 2.2
 --- !u!1 &900000000000003010
 GameObject:
   m_ObjectHideFlags: 0
