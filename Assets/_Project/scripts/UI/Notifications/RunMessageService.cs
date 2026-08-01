@@ -1,15 +1,19 @@
 using System.Collections;
+using System;
 using UnityEngine;
 
 public sealed class RunMessageService : MonoBehaviour
 {
     private const float InitialLevelMessageDuration = 4.5f;
     private const float FirstRunHintDuration = 4.5f;
+    private const float WorldEventStartDuration = 0.65f;
 
     public static RunMessageService Instance { get; private set; }
 
     [SerializeField] private RunMessageView view;
     [SerializeField] private RunMessageData[] messages;
+
+    private WorldEvent worldEventPresentationOwner;
 
     private void Awake()
     {
@@ -73,6 +77,9 @@ public sealed class RunMessageService : MonoBehaviour
 
     public void Show(RunMessageType type)
     {
+        if (worldEventPresentationOwner != null)
+            return;
+
         RunMessageData data = FindMessage(type);
 
         if (data == null)
@@ -86,10 +93,70 @@ public sealed class RunMessageService : MonoBehaviour
 
     public void ShowCustom(string title, string description, float duration = 3f)
     {
-        if (view == null)
+        if (view == null || worldEventPresentationOwner != null)
             return;
 
         view.Show(title, description, duration);
+    }
+
+    public bool ShowWorldEventStart(
+        WorldEvent worldEvent,
+        string displayName,
+        Color accentColor,
+        Action onComplete)
+    {
+        if (view == null || worldEvent == null ||
+            worldEventPresentationOwner != null)
+        {
+            return false;
+        }
+
+        worldEventPresentationOwner = worldEvent;
+        CameraShake.Instance?.PlayWorldEventStartPulse(
+            WorldEventStartDuration
+        );
+        view.ShowWorldEventStart(
+            worldEvent,
+            displayName,
+            accentColor,
+            WorldEventStartDuration,
+            () => FinishWorldEventStart(worldEvent, onComplete)
+        );
+        return true;
+    }
+
+    public void CancelWorldEventStart(WorldEvent worldEvent)
+    {
+        if (worldEvent == null ||
+            worldEventPresentationOwner != worldEvent)
+        {
+            return;
+        }
+
+        view?.CancelWorldEventStart(worldEvent);
+        CameraShake.Instance?.StopWorldEventStartPulse();
+        worldEventPresentationOwner = null;
+    }
+
+    private void FinishWorldEventStart(
+        WorldEvent worldEvent,
+        Action onComplete)
+    {
+        if (worldEventPresentationOwner != worldEvent)
+            return;
+
+        worldEventPresentationOwner = null;
+        CameraShake.Instance?.StopWorldEventStartPulse();
+        onComplete?.Invoke();
+    }
+
+    private void OnDisable()
+    {
+        if (worldEventPresentationOwner != null)
+            CancelWorldEventStart(worldEventPresentationOwner);
+
+        if (Instance == this)
+            Instance = null;
     }
 
     private void Show(RunMessageData data)

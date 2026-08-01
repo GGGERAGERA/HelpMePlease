@@ -4,6 +4,10 @@ using UnityEngine.UI;
 
 public class CaptureZoneEvent : WorldEvent
 {
+    protected override string StartDisplayName => "CAPTURE ZONE";
+    protected override Color StartAccentColor =>
+        new Color(0.15f, 0.82f, 1f, 1f);
+
     public float CaptureRadius => captureRadius;
     public float TimeRemaining => Mathf.Max(0f, requiredHoldTime - currentHoldTime);
     public float Progress => requiredHoldTime > 0f

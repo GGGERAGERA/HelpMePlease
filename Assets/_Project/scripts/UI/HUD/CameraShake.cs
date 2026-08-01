@@ -7,19 +7,45 @@ public class CameraShake : MonoBehaviour
 
     private Vector3 originalLocalPosition;
     private Coroutine shakeRoutine;
+    private Coroutine worldEventStartRoutine;
+    private Camera targetCamera;
+    private float originalOrthographicSize;
 
     private void Awake()
     {
         Instance = this;
         originalLocalPosition = transform.localPosition;
+        targetCamera = GetComponent<Camera>();
+
+        if (targetCamera != null)
+            originalOrthographicSize = targetCamera.orthographicSize;
     }
 
     public void Shake(float duration, float magnitude)
     {
-        if (shakeRoutine != null)
-            StopCoroutine(shakeRoutine);
+        StopAllShakes();
 
         shakeRoutine = StartCoroutine(ShakeRoutine(duration, magnitude));
+    }
+
+    public void PlayWorldEventStartPulse(float duration)
+    {
+        StopAllShakes();
+        worldEventStartRoutine = StartCoroutine(
+            WorldEventStartPulseRoutine(
+                Mathf.Clamp(duration, 0.5f, 0.8f)
+            )
+        );
+    }
+
+    public void StopWorldEventStartPulse()
+    {
+        if (worldEventStartRoutine == null)
+            return;
+
+        StopCoroutine(worldEventStartRoutine);
+        worldEventStartRoutine = null;
+        RestoreCameraState();
     }
 
     private IEnumerator ShakeRoutine(float duration, float magnitude)
@@ -47,6 +73,39 @@ public class CameraShake : MonoBehaviour
         transform.localPosition = basePosition;
         shakeRoutine = null;
     }
+
+    private IEnumerator WorldEventStartPulseRoutine(float duration)
+    {
+        Vector3 basePosition = transform.localPosition;
+        float baseSize = targetCamera != null
+            ? targetCamera.orthographicSize
+            : 0f;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float normalized = Mathf.Clamp01(elapsed / duration);
+            float pulse = Mathf.Sin(normalized * Mathf.PI);
+            float noiseTime = Time.unscaledTime * 28f;
+            float x = Mathf.PerlinNoise(noiseTime, 0f) * 2f - 1f;
+            float y = Mathf.PerlinNoise(0f, noiseTime) * 2f - 1f;
+            transform.localPosition = basePosition +
+                new Vector3(x, y, 0f) * (0.045f * pulse);
+
+            if (targetCamera != null && targetCamera.orthographic)
+                targetCamera.orthographicSize = baseSize - 0.22f * pulse;
+
+            yield return null;
+        }
+
+        transform.localPosition = basePosition;
+
+        if (targetCamera != null && targetCamera.orthographic)
+            targetCamera.orthographicSize = baseSize;
+
+        worldEventStartRoutine = null;
+    }
     public void StopAllShakes()
     {
         if (shakeRoutine != null)
@@ -54,5 +113,29 @@ public class CameraShake : MonoBehaviour
             StopCoroutine(shakeRoutine);
             shakeRoutine = null;
         }
+
+        if (worldEventStartRoutine != null)
+        {
+            StopCoroutine(worldEventStartRoutine);
+            worldEventStartRoutine = null;
+        }
+
+        RestoreCameraState();
+    }
+
+    private void RestoreCameraState()
+    {
+        transform.localPosition = originalLocalPosition;
+
+        if (targetCamera != null && targetCamera.orthographic)
+            targetCamera.orthographicSize = originalOrthographicSize;
+    }
+
+    private void OnDisable()
+    {
+        StopAllShakes();
+
+        if (Instance == this)
+            Instance = null;
     }
 }

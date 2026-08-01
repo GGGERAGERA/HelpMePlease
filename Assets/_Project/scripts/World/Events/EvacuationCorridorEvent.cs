@@ -4,6 +4,10 @@ using UnityEngine.Rendering;
 [RequireComponent(typeof(CircleCollider2D))]
 public sealed class EvacuationCorridorEvent : WorldEvent
 {
+    protected override string StartDisplayName => "EVACUATION CORRIDOR";
+    protected override Color StartAccentColor =>
+        new Color(0.18f, 1f, 0.62f, 1f);
+
     private const float StartRadius = 2.5f;
     private const float CorridorVisualPadding = 20f;
     private const int PositionAttempts = 32;
