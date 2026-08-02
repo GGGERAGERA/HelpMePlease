@@ -77,7 +77,7 @@ public sealed class LevelAnomalyView : MonoBehaviour
         overlayBackground.enabled = true;
         overlayGroup.gameObject.SetActive(true);
         pinnedGroup.gameObject.SetActive(false);
-        pinnedRect.anchoredPosition = new Vector2(-20f, -165f);
+        pinnedRect.anchoredPosition = new Vector2(-40f, -112f);
 
         overlayGroup.alpha = 0f;
         sectorGroup.alpha = 0f;
@@ -128,7 +128,7 @@ public sealed class LevelAnomalyView : MonoBehaviour
         revealCardGroup.alpha = 0f;
         pinnedGroup.alpha = 0f;
         pinnedGroup.gameObject.SetActive(false);
-        pinnedRect.anchoredPosition = new Vector2(-20f, -165f);
+        pinnedRect.anchoredPosition = new Vector2(-40f, -112f);
         overlayGroup.gameObject.SetActive(false);
         overlayBackground.enabled = true;
         rootGroup.alpha = 0f;
@@ -145,7 +145,7 @@ public sealed class LevelAnomalyView : MonoBehaviour
         overlayBackground.enabled = false;
         overlayGroup.gameObject.SetActive(false);
         revealCardGroup.alpha = 0f;
-        pinnedRect.anchoredPosition = new Vector2(-20f, -20f);
+        pinnedRect.anchoredPosition = new Vector2(-40f, -112f);
         pinnedGroup.gameObject.SetActive(true);
         yield return Fade(pinnedGroup, 0f, 1f, 0.15f);
         overlayBackground.enabled = true;
@@ -252,7 +252,7 @@ public sealed class LevelAnomalyView : MonoBehaviour
         pinnedRect.anchorMin = new Vector2(1f, 1f);
         pinnedRect.anchorMax = new Vector2(1f, 1f);
         pinnedRect.pivot = new Vector2(1f, 1f);
-        pinnedRect.anchoredPosition = new Vector2(-20f, -165f);
+        pinnedRect.anchoredPosition = new Vector2(-40f, -112f);
         pinnedRect.sizeDelta = new Vector2(390f, 155f);
 
         Image background = pinned.AddComponent<Image>();

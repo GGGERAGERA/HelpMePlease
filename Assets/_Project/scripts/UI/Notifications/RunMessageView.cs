@@ -12,6 +12,8 @@ public sealed class RunMessageView : MonoBehaviour
     [SerializeField] private CanvasGroup canvasGroup;
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI descriptionText;
+    [SerializeField, Range(1f, 120f)]
+    private float typewriterCharactersPerSecond = 45f;
 
     private Coroutine routine;
     private Image backgroundImage;
@@ -74,11 +76,20 @@ public sealed class RunMessageView : MonoBehaviour
         HideInstant();
     }
 
-    public void Show(string title, string description, float duration = 3f)
+    public void Show(
+        string title,
+        string description,
+        float duration = 3f,
+        bool useTypewriter = false)
     {
         StopActiveRoutine(false);
 
-        routine = StartCoroutine(ShowRoutine(title, description, duration));
+        routine = StartCoroutine(ShowRoutine(
+            title,
+            description,
+            duration,
+            useTypewriter
+        ));
     }
 
     public void ShowWorldEventStart(
@@ -121,15 +132,34 @@ public sealed class RunMessageView : MonoBehaviour
         StopActiveRoutine(false);
     }
 
-    private IEnumerator ShowRoutine(string title, string description, float duration)
+    private IEnumerator ShowRoutine(
+        string title,
+        string description,
+        float duration,
+        bool useTypewriter)
     {
-        titleText.text = title;
-        descriptionText.text = description;
+        PrepareText(titleText, title, useTypewriter);
+        PrepareText(descriptionText, description, useTypewriter);
         ApplyDescriptionLayout(string.IsNullOrWhiteSpace(title));
 
         yield return FadeTo(1f, 0.15f);
-        yield return new WaitForSecondsRealtime(duration);
+        float visiblePhaseStartedAt = Time.unscaledTime;
+
+        if (useTypewriter)
+        {
+            yield return RevealText(titleText);
+            yield return RevealText(descriptionText);
+        }
+
+        float remainingVisibleTime = Mathf.Max(
+            0f,
+            duration - (Time.unscaledTime - visiblePhaseStartedAt)
+        );
+        if (remainingVisibleTime > 0f)
+            yield return new WaitForSecondsRealtime(remainingVisibleTime);
+
         yield return FadeTo(0f, 0.25f);
+        ClearDisplayedText();
         routine = null;
     }
 
@@ -139,6 +169,7 @@ public sealed class RunMessageView : MonoBehaviour
         float duration)
     {
         ApplyEventPresentationLayout(title, accentColor);
+        int characterCount = PrepareText(titleText, title, true);
         float elapsed = 0f;
 
         while (elapsed < duration)
@@ -147,12 +178,20 @@ public sealed class RunMessageView : MonoBehaviour
             float normalized = Mathf.Clamp01(elapsed / duration);
             float pulse = Mathf.Sin(normalized * Mathf.PI);
             canvasGroup.alpha = Mathf.SmoothStep(0f, 1f, pulse);
+            titleText.maxVisibleCharacters = Mathf.Min(
+                characterCount,
+                Mathf.FloorToInt(
+                    elapsed * Mathf.Max(1f, typewriterCharactersPerSecond)
+                )
+            );
             yield return null;
         }
 
+        titleText.maxVisibleCharacters = int.MaxValue;
         canvasGroup.alpha = 0f;
         routine = null;
         RestoreEventPresentationLayout();
+        ClearDisplayedText();
         eventPresentationOwner = null;
         Action completion = eventPresentationComplete;
         eventPresentationComplete = null;
@@ -180,6 +219,7 @@ public sealed class RunMessageView : MonoBehaviour
         canvasGroup.alpha = 0f;
         routine = null;
         RestoreEventPresentationLayout();
+        ClearDisplayedText();
     }
 
     private void ApplyEventPresentationLayout(
@@ -279,7 +319,62 @@ public sealed class RunMessageView : MonoBehaviour
         eventPresentationOwner = null;
         eventPresentationComplete = null;
         RestoreEventPresentationLayout();
+        canvasGroup.alpha = 0f;
+        ClearDisplayedText();
         completion?.Invoke();
+    }
+
+    private static int PrepareText(
+        TextMeshProUGUI target,
+        string value,
+        bool hideCharacters)
+    {
+        if (target == null)
+            return 0;
+
+        target.text = value ?? string.Empty;
+        target.maxVisibleCharacters = hideCharacters ? 0 : int.MaxValue;
+        target.ForceMeshUpdate();
+        return target.textInfo.characterCount;
+    }
+
+    private IEnumerator RevealText(TextMeshProUGUI target)
+    {
+        if (target == null)
+            yield break;
+
+        target.ForceMeshUpdate();
+        int characterCount = target.textInfo.characterCount;
+        float visibleCharacters = 0f;
+
+        while (target.maxVisibleCharacters < characterCount)
+        {
+            visibleCharacters +=
+                Mathf.Max(1f, typewriterCharactersPerSecond) *
+                Time.unscaledDeltaTime;
+            target.maxVisibleCharacters = Mathf.Min(
+                characterCount,
+                Mathf.FloorToInt(visibleCharacters)
+            );
+            yield return null;
+        }
+
+        target.maxVisibleCharacters = int.MaxValue;
+    }
+
+    private void ClearDisplayedText()
+    {
+        if (titleText != null)
+        {
+            titleText.maxVisibleCharacters = int.MaxValue;
+            titleText.text = string.Empty;
+        }
+
+        if (descriptionText != null)
+        {
+            descriptionText.maxVisibleCharacters = int.MaxValue;
+            descriptionText.text = string.Empty;
+        }
     }
 
     private IEnumerator FadeTo(float targetAlpha, float duration)

@@ -47,7 +47,7 @@ public sealed class ExplosiveZone : LocalAnomalyZone
     [SerializeField] private Color innerColor =
         new(0.12f, 0.035f, 0.012f, 0.2f);
     [SerializeField] private Color edgeColor =
-        new(1f, 0.32f, 0.025f, 0.78f);
+        new(1f, 0.32f, 0.025f, 0.64f);
     [SerializeField, Range(0.6f, 1f)] private float fadeDuration = 0.8f;
 
     private readonly Dictionary<EnemyHealth, int> enemyColliderCounts = new();

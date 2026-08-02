@@ -13,8 +13,16 @@ Shader "UI/World Rule Overlay"
         _PulseStrength ("Pulse Strength", Range(0, 1)) = 0.3
         _EdgeIntensity ("Edge Intensity", Range(0, 2)) = 1
         _SnowIntensity ("Snow Screen Opacity", Range(0, 0.25)) = 0
+        _BlizzardIntensity ("Blizzard Intensity", Range(0, 0.6)) = 0
+        _BlizzardLineDensity ("Blizzard Line Density", Range(2, 16)) = 8
+        _BlizzardLineSpeed ("Blizzard Line Speed", Range(0.1, 3)) = 1.4
+        _BlizzardVeil ("Blizzard Veil", Range(0, 0.4)) = 0
         _RainDropsIntensity ("Rain Drops Intensity", Range(0, 0.5)) = 0
         _RainDropsFrequency ("Rain Drops Frequency", Range(0.05, 2)) = 0.35
+        _RainLargeDropsIntensity ("Rain Large Drops Intensity", Range(0, 0.6)) = 0
+        _RainLargeDropsCount ("Rain Large Drops Count", Range(4, 8)) = 6
+        _RainLargeDropsSpeed ("Rain Large Drops Speed", Range(0.05, 0.5)) = 0.18
+        _RainLargeDropsScale ("Rain Large Drops Scale", Range(0.5, 2)) = 1
         _GoldenOverlayIntensity ("Golden Overlay Intensity", Range(0, 0.2)) = 0
         _GoldenOverlayColor ("Golden Overlay Color", Color) = (1, 0.78, 0.32, 1)
         _WindVisualIntensity ("Wind Visual Intensity", Range(0, 0.4)) = 0
@@ -57,8 +65,16 @@ Shader "UI/World Rule Overlay"
             float _PulseStrength;
             float _EdgeIntensity;
             float _SnowIntensity;
+            float _BlizzardIntensity;
+            float _BlizzardLineDensity;
+            float _BlizzardLineSpeed;
+            float _BlizzardVeil;
             float _RainDropsIntensity;
             float _RainDropsFrequency;
+            float _RainLargeDropsIntensity;
+            float _RainLargeDropsCount;
+            float _RainLargeDropsSpeed;
+            float _RainLargeDropsScale;
             float _GoldenOverlayIntensity;
             fixed4 _GoldenOverlayColor;
             float _WindVisualIntensity;
@@ -140,6 +156,92 @@ Shader "UI/World Rule Overlay"
                 return enabled * saturate(head + trail * 0.32);
             }
 
+            void RainLargeDrops(
+                float2 uv,
+                out float body,
+                out float rim)
+            {
+                body = 0.0;
+                rim = 0.0;
+                float aspect = _ScreenParams.x / max(1.0, _ScreenParams.y);
+
+                [unroll]
+                for (int i = 0; i < 8; i++)
+                {
+                    float index = (float)i;
+                    float active = step(index + 0.5, _RainLargeDropsCount);
+                    float baseSeed = Hash(float2(index + 11.7, index * 7.3));
+                    float individualSpeed = lerp(
+                        0.72,
+                        1.18,
+                        Hash(float2(index + 37.1, index + 5.9))
+                    );
+                    float travel = _VisualTime *
+                        max(0.01, _RainLargeDropsSpeed) *
+                        individualSpeed + baseSeed;
+                    float cycle = floor(travel);
+                    float phase = frac(travel);
+                    float dropX = lerp(
+                        0.08,
+                        0.92,
+                        Hash(float2(index * 19.7 + cycle * 3.1, 71.3))
+                    );
+                    float dropY = 1.08 - phase * 1.16;
+                    float sizeVariation = lerp(
+                        0.72,
+                        1.28,
+                        Hash(float2(index + 83.2, cycle + 13.4))
+                    );
+                    float radius = 0.072 *
+                        max(0.2, _RainLargeDropsScale) * sizeVariation;
+                    float stretch = lerp(1.02, 1.16, phase);
+                    float2 delta = uv - float2(dropX, dropY);
+                    delta.x *= aspect;
+                    float2 dropSpace = float2(
+                        delta.x / radius,
+                        delta.y / (radius * stretch)
+                    );
+                    dropSpace.x *= lerp(
+                        0.92,
+                        1.08,
+                        Hash(float2(index + 29.0, cycle + 47.0))
+                    );
+                    float distanceToDrop = length(dropSpace);
+                    float outer = 1.0 - smoothstep(
+                        0.88,
+                        1.04,
+                        distanceToDrop
+                    );
+                    float inner = 1.0 - smoothstep(
+                        0.56,
+                        0.9,
+                        distanceToDrop
+                    );
+                    float edge = saturate(outer - inner * 0.78);
+                    float2 highlightOffset =
+                        dropSpace - float2(-0.2, 0.36);
+                    float highlight = 1.0 - smoothstep(
+                        0.1,
+                        0.4,
+                        length(highlightOffset)
+                    );
+                    float verticalFlow = 1.0 - smoothstep(
+                        0.0,
+                        0.92,
+                        abs(dropSpace.x)
+                    );
+                    body = max(
+                        body,
+                        active * inner *
+                            lerp(0.68, 1.0, verticalFlow)
+                    );
+                    rim = max(
+                        rim,
+                        active * saturate(edge + highlight * 0.54)
+                    );
+                }
+            }
+
             float WindLines(float2 uv)
             {
                 float directionLength = length(_WindDirection);
@@ -188,6 +290,55 @@ Shader "UI/World Rule Overlay"
                 float softEdge = 1.0 - smoothstep(0.035, 0.09, crossDistance);
                 return enabled * alongShape *
                     (thinCore * 0.7 + softEdge * 0.3);
+            }
+
+            float BlizzardLines(float2 uv)
+            {
+                float aspect = _ScreenParams.x / max(1.0, _ScreenParams.y);
+                float2 screenUv = float2(uv.x * aspect, uv.y);
+                float2 direction = normalize(float2(1.0, -0.58));
+                float2 perpendicular = float2(-direction.y, direction.x);
+                float along = dot(screenUv, direction);
+                float across = dot(screenUv, perpendicular);
+                float rowPosition = across * _BlizzardLineDensity + 53.0;
+                float row = floor(rowPosition);
+                float rowUv = frac(rowPosition);
+                float movingAlong =
+                    along * _BlizzardLineDensity * 0.72 -
+                    _VisualTime * _BlizzardLineSpeed;
+                float cell = floor(movingAlong);
+                float localAlong = frac(movingAlong);
+                float seed = Hash(float2(cell + 17.0, row + 31.0));
+                float enabled = step(0.28, seed);
+                float lineStart = lerp(
+                    0.04,
+                    0.42,
+                    Hash(float2(cell + 47.0, row + 11.0))
+                );
+                float lineLength = lerp(
+                    0.18,
+                    0.42,
+                    Hash(float2(cell + 7.0, row + 73.0))
+                );
+                float alongShape =
+                    smoothstep(lineStart, lineStart + 0.025, localAlong) *
+                    (1.0 - smoothstep(
+                        lineStart + lineLength,
+                        lineStart + lineLength + 0.045,
+                        localAlong
+                    ));
+                float rowOffset = lerp(
+                    0.18,
+                    0.82,
+                    Hash(float2(cell + 89.0, row + 5.0))
+                );
+                float crossDistance = abs(rowUv - rowOffset);
+                float lineCore = 1.0 - smoothstep(
+                    0.018,
+                    0.055,
+                    crossDistance
+                );
+                return enabled * alongShape * lineCore;
             }
 
             fixed4 frag(v2f input) : SV_Target
@@ -302,8 +453,24 @@ Shader "UI/World Rule Overlay"
                 float snowEdge = EdgeMask(uv) * 0.35 + 0.65;
                 float snowAlpha = _SnowIntensity * snowEdge *
                     input.color.a;
+                float blizzardLineAlpha = BlizzardLines(uv) *
+                    _BlizzardIntensity * input.color.a;
+                float farSnow = smoothstep(
+                    0.08,
+                    0.68,
+                    length(centered * float2(1.12, 0.9))
+                );
+                float blizzardVeilAlpha = _BlizzardVeil *
+                    lerp(0.64, 1.0, farSnow) * input.color.a;
                 float rainAlpha = RainDrops(uv) *
                     _RainDropsIntensity * input.color.a;
+                float largeDropBody;
+                float largeDropRim;
+                RainLargeDrops(uv, largeDropBody, largeDropRim);
+                float largeDropBodyAlpha = largeDropBody *
+                    _RainLargeDropsIntensity * 0.25 * input.color.a;
+                float largeDropRimAlpha = largeDropRim *
+                    _RainLargeDropsIntensity * 0.82 * input.color.a;
                 float goldenAlpha = _GoldenOverlayIntensity *
                     input.color.a;
                 float windAlpha = WindLines(uv) *
@@ -312,7 +479,8 @@ Shader "UI/World Rule Overlay"
                 fixed3 windColor = fixed3(0.72, 0.9, 1.0);
                 alpha = saturate(
                     ruleAlpha + snowAlpha + rainAlpha + goldenAlpha +
-                    windAlpha
+                    windAlpha + blizzardLineAlpha + blizzardVeilAlpha +
+                    largeDropBodyAlpha + largeDropRimAlpha
                 );
                 color = alpha > 0.0001
                     ? (
@@ -320,7 +488,11 @@ Shader "UI/World Rule Overlay"
                         snowVeil * snowAlpha +
                         rainColor * rainAlpha +
                         _GoldenOverlayColor.rgb * goldenAlpha +
-                        windColor * windAlpha
+                        windColor * windAlpha +
+                        fixed3(0.9, 0.96, 1.0) * blizzardLineAlpha +
+                        fixed3(0.48, 0.57, 0.64) * blizzardVeilAlpha +
+                        fixed3(0.34, 0.48, 0.58) * largeDropBodyAlpha +
+                        fixed3(0.8, 0.92, 0.98) * largeDropRimAlpha
                     ) / alpha
                     : rainColor;
                 return fixed4(color * input.color.rgb, alpha);
