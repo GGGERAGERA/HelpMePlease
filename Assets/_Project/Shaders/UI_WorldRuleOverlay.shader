@@ -194,7 +194,7 @@ Shader "UI/World Rule Overlay"
                     );
                     float radius = 0.072 *
                         max(0.2, _RainLargeDropsScale) * sizeVariation;
-                    float stretch = lerp(1.08, 1.62, phase);
+                    float stretch = lerp(1.02, 1.16, phase);
                     float2 delta = uv - float2(dropX, dropY);
                     delta.x *= aspect;
                     float2 dropSpace = float2(
@@ -217,12 +217,12 @@ Shader "UI/World Rule Overlay"
                         0.9,
                         distanceToDrop
                     );
-                    float edge = saturate(outer - inner * 0.72);
+                    float edge = saturate(outer - inner * 0.78);
                     float2 highlightOffset =
-                        dropSpace - float2(-0.28, 0.25);
+                        dropSpace - float2(-0.2, 0.36);
                     float highlight = 1.0 - smoothstep(
-                        0.08,
-                        0.32,
+                        0.1,
+                        0.4,
                         length(highlightOffset)
                     );
                     float verticalFlow = 1.0 - smoothstep(
@@ -237,7 +237,7 @@ Shader "UI/World Rule Overlay"
                     );
                     rim = max(
                         rim,
-                        active * saturate(edge + highlight * 0.62)
+                        active * saturate(edge + highlight * 0.54)
                     );
                 }
             }
@@ -468,9 +468,9 @@ Shader "UI/World Rule Overlay"
                 float largeDropRim;
                 RainLargeDrops(uv, largeDropBody, largeDropRim);
                 float largeDropBodyAlpha = largeDropBody *
-                    _RainLargeDropsIntensity * 0.46 * input.color.a;
+                    _RainLargeDropsIntensity * 0.25 * input.color.a;
                 float largeDropRimAlpha = largeDropRim *
-                    _RainLargeDropsIntensity * 0.78 * input.color.a;
+                    _RainLargeDropsIntensity * 0.82 * input.color.a;
                 float goldenAlpha = _GoldenOverlayIntensity *
                     input.color.a;
                 float windAlpha = WindLines(uv) *

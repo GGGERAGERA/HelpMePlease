@@ -6,7 +6,7 @@ public sealed class RunMessageService : MonoBehaviour
 {
     private const float InitialLevelMessageDuration = 4.5f;
     private const float FirstRunHintDuration = 4.5f;
-    private const float WorldEventStartDuration = 0.35f;
+    private const float WorldEventStartDuration = 0.4f;
 
     public static RunMessageService Instance { get; private set; }
 
@@ -57,7 +57,8 @@ public sealed class RunMessageService : MonoBehaviour
             "WASD — ДВИЖЕНИЕ\n" +
             "ОРУЖИЕ СТРЕЛЯЕТ АВТОМАТИЧЕСКИ\n" +
             "ПЕРЕЖИВИТЕ ВОЛНУ И ПОБЕДИТЕ БОССА",
-            FirstRunHintDuration
+            FirstRunHintDuration,
+            true
         );
 
         float visibleTime = 0f;
@@ -88,15 +89,19 @@ public sealed class RunMessageService : MonoBehaviour
             return;
         }
 
-        Show(data);
+        Show(data, type == RunMessageType.BossIncoming);
     }
 
-    public void ShowCustom(string title, string description, float duration = 3f)
+    public void ShowCustom(
+        string title,
+        string description,
+        float duration = 3f,
+        bool useTypewriter = false)
     {
         if (view == null || worldEventPresentationOwner != null)
             return;
 
-        view.Show(title, description, duration);
+        view.Show(title, description, duration, useTypewriter);
     }
 
     public void ShowWorldEventFeedback(
@@ -171,12 +176,17 @@ public sealed class RunMessageService : MonoBehaviour
             Instance = null;
     }
 
-    private void Show(RunMessageData data)
+    private void Show(RunMessageData data, bool useTypewriter)
     {
         if (view == null || data == null)
             return;
 
-        view.Show(data.title, data.description, data.duration);
+        view.Show(
+            data.title,
+            data.description,
+            data.duration,
+            useTypewriter
+        );
 
         if (data.sound != null)
         {
