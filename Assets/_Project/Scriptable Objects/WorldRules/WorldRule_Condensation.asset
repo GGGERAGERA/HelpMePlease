@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e7a23f4bc9f4e65a021dd9d286ca004, type: 3}
+  m_Name: WorldRule_Condensation
+  m_EditorClassIdentifier: Assembly-CSharp::WorldRuleData
+  stableId: Condensation
+  ruleType: 16
+  displayName: CONDENSATION
+  description: Wipe the fog with the mouse.
+  pinnedDescription: CONDENSATION
+  selectionWeight: 1
+  playerMoveSpeedMultiplier: 1
+  enemyMoveSpeedMultiplier: 1
+  spawnPressureMultiplier: 1
+  goldenEnemyChance: 0
+  goldenEnemyHealthMultiplier: 1
+  goldenEnemyRewardMultiplier: 1
+  windForce: 0
+  windDirectionMode: 0
+  fixedWindDirection: {x: 1, y: 0}

@@ -14,8 +14,18 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         Shader.PropertyToID("_PulseSpeed");
     private static readonly int PulseStrengthId =
         Shader.PropertyToID("_PulseStrength");
-    private static readonly int DistortionStrengthId =
-        Shader.PropertyToID("_DistortionStrength");
+    private static readonly int PulseSharpnessId =
+        Shader.PropertyToID("_PulseSharpness");
+    private static readonly int RegionSizeId =
+        Shader.PropertyToID("_RegionSize");
+    private static readonly int InnerPatternIntensityId =
+        Shader.PropertyToID("_InnerPatternIntensity");
+    private static readonly int InnerPatternSpeedId =
+        Shader.PropertyToID("_InnerPatternSpeed");
+    private static readonly int InnerPatternScaleId =
+        Shader.PropertyToID("_InnerPatternScale");
+    private static readonly int WarningPulseFrequencyId =
+        Shader.PropertyToID("_WarningPulseFrequency");
     private static readonly int InnerColorId =
         Shader.PropertyToID("_InnerColor");
     private static readonly int EdgeColorId =
@@ -25,14 +35,17 @@ public sealed class ExplosiveZone : LocalAnomalyZone
 
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
-    [SerializeField, Min(1f)] private float visualRadiusMultiplier = 1.08f;
-    [SerializeField, Range(0.01f, 0.4f)] private float edgeWidth = 0.18f;
+    [SerializeField, Range(0.1f, 0.75f)] private float edgeWidth = 0.35f;
     [SerializeField, Min(0f)] private float pulseSpeed = 0.22f;
-    [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.35f;
+    [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.22f;
+    [SerializeField, Min(1f)] private float pulseSharpness = 8f;
     [SerializeField, Range(0f, 0.25f)]
-    private float distortionStrength = 0.025f;
+    private float innerPatternIntensity = 0.12f;
+    [SerializeField, Min(0f)] private float innerPatternSpeed = 0.7f;
+    [SerializeField, Min(0.75f)] private float innerPatternScale = 2.5f;
+    [SerializeField, Min(0f)] private float warningPulseFrequency = 0.35f;
     [SerializeField] private Color innerColor =
-        new(0.09f, 0.012f, 0.002f, 0.1f);
+        new(0.12f, 0.035f, 0.012f, 0.2f);
     [SerializeField] private Color edgeColor =
         new(1f, 0.32f, 0.025f, 0.78f);
     [SerializeField, Range(0.6f, 1f)] private float fadeDuration = 0.8f;
@@ -43,7 +56,6 @@ public sealed class ExplosiveZone : LocalAnomalyZone
     private readonly HashSet<EnemyHealth> damagedEnemies = new();
     private readonly List<GameObject> activeExplosionFx = new();
 
-    private CircleCollider2D zoneCollider;
     private MeshRenderer visualRenderer;
     private MaterialPropertyBlock visualProperties;
     private ContactFilter2D explosionFilter;
@@ -60,8 +72,6 @@ public sealed class ExplosiveZone : LocalAnomalyZone
 
     private void Awake()
     {
-        zoneCollider = GetComponent<CircleCollider2D>();
-        zoneCollider.isTrigger = true;
         explosionFilter = ContactFilter2D.noFilter;
         explosionFilter.useTriggers = true;
         BuildVisual();
@@ -83,15 +93,15 @@ public sealed class ExplosiveZone : LocalAnomalyZone
             Destroy(gameObject);
     }
 
-    protected override void InitializeFromData(LocalAnomalyData data)
+    protected override void InitializeFromData(
+        LocalAnomalyData data,
+        Vector2 areaSize)
     {
-        float safeRadius = data.ZoneRadius;
         explosionDelay = data.ExplosionDelay;
         explosionRadius = data.ExplosionRadius;
         explosionDamage = data.ExplosionDamage;
         explosionEffectPrefab = data.ExplosionEffectPrefab;
-        zoneCollider.radius = safeRadius;
-        ConfigureVisual(safeRadius);
+        ConfigureVisual(areaSize);
         effectsCleared = false;
         despawning = false;
         visualFade = 0f;
@@ -307,8 +317,8 @@ public sealed class ExplosiveZone : LocalAnomalyZone
 
         playerColliderCount = 0;
 
-        if (zoneCollider != null)
-            zoneCollider.enabled = false;
+        if (AreaCollider != null)
+            AreaCollider.enabled = false;
     }
 
     public override void Despawn()
@@ -358,15 +368,13 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         ApplyVisualProperties();
     }
 
-    private void ConfigureVisual(float radius)
+    private void ConfigureVisual(Vector2 areaSize)
     {
         if (visualRenderer == null)
             return;
 
-        float diameter =
-            radius * 2f * Mathf.Max(1f, visualRadiusMultiplier);
         visualRenderer.transform.localScale =
-            new Vector3(diameter, diameter, 1f);
+            new Vector3(areaSize.x, areaSize.y, 1f);
     }
 
     private void ApplyVisualProperties()
@@ -378,9 +386,17 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         visualProperties.SetFloat(EdgeWidthId, edgeWidth);
         visualProperties.SetFloat(PulseSpeedId, pulseSpeed);
         visualProperties.SetFloat(PulseStrengthId, pulseStrength);
+        visualProperties.SetFloat(PulseSharpnessId, pulseSharpness);
+        visualProperties.SetVector(RegionSizeId, AreaSize);
         visualProperties.SetFloat(
-            DistortionStrengthId,
-            distortionStrength
+            InnerPatternIntensityId,
+            innerPatternIntensity
+        );
+        visualProperties.SetFloat(InnerPatternSpeedId, innerPatternSpeed);
+        visualProperties.SetFloat(InnerPatternScaleId, innerPatternScale);
+        visualProperties.SetFloat(
+            WarningPulseFrequencyId,
+            warningPulseFrequency
         );
         visualProperties.SetColor(InnerColorId, innerColor);
         visualProperties.SetColor(EdgeColorId, edgeColor);

@@ -8,6 +8,8 @@ public sealed class StasisZone : LocalAnomalyZone
         Shader.PropertyToID("_EdgeWidth");
     private static readonly int PulseSpeedId =
         Shader.PropertyToID("_PulseSpeed");
+    private static readonly int RegionSizeId =
+        Shader.PropertyToID("_RegionSize");
     private static readonly int VisualTimeId =
         Shader.PropertyToID("_VisualTime");
 
@@ -16,12 +18,10 @@ public sealed class StasisZone : LocalAnomalyZone
 
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
-    [SerializeField, Min(1f)] private float visualRadiusMultiplier = 1.08f;
-    [SerializeField, Range(0.01f, 0.4f)] private float edgeWidth = 0.14f;
-    [SerializeField, Min(0f)] private float pulseSpeed = 0.28f;
+    [SerializeField, Range(0.1f, 0.75f)] private float edgeWidth = 0.35f;
+    [SerializeField, Min(0f)] private float pulseSpeed = 0.18f;
     [SerializeField, Range(0.6f, 1f)] private float fadeDuration = 0.8f;
 
-    private CircleCollider2D zoneCollider;
     private MeshRenderer visualRenderer;
     private MaterialPropertyBlock visualProperties;
     private CharacterMovement2D affectedMovement;
@@ -35,8 +35,6 @@ public sealed class StasisZone : LocalAnomalyZone
 
     private void Awake()
     {
-        zoneCollider = GetComponent<CircleCollider2D>();
-        zoneCollider.isTrigger = true;
         BuildVisual();
     }
 
@@ -56,12 +54,12 @@ public sealed class StasisZone : LocalAnomalyZone
             Destroy(gameObject);
     }
 
-    protected override void InitializeFromData(LocalAnomalyData data)
+    protected override void InitializeFromData(
+        LocalAnomalyData data,
+        Vector2 areaSize)
     {
-        float safeRadius = data.ZoneRadius;
         speedMultiplier = data.PlayerSpeedMultiplier;
-        zoneCollider.radius = safeRadius;
-        ConfigureVisual(safeRadius);
+        ConfigureVisual(areaSize);
         effectCleared = false;
         despawning = false;
         visualFade = 0f;
@@ -176,8 +174,8 @@ public sealed class StasisZone : LocalAnomalyZone
         affectedMovement = null;
         playerColliderCount = 0;
 
-        if (zoneCollider != null)
-            zoneCollider.enabled = false;
+        if (AreaCollider != null)
+            AreaCollider.enabled = false;
     }
 
     public override void Despawn()
@@ -227,15 +225,13 @@ public sealed class StasisZone : LocalAnomalyZone
         ApplyVisualProperties();
     }
 
-    private void ConfigureVisual(float radius)
+    private void ConfigureVisual(Vector2 areaSize)
     {
         if (visualRenderer == null)
             return;
 
-        float diameter =
-            radius * 2f * Mathf.Max(1f, visualRadiusMultiplier);
         visualRenderer.transform.localScale =
-            new Vector3(diameter, diameter, 1f);
+            new Vector3(areaSize.x, areaSize.y, 1f);
     }
 
     private void ApplyVisualProperties()
@@ -246,6 +242,7 @@ public sealed class StasisZone : LocalAnomalyZone
         visualProperties.SetFloat(FadeId, visualFade);
         visualProperties.SetFloat(EdgeWidthId, edgeWidth);
         visualProperties.SetFloat(PulseSpeedId, pulseSpeed);
+        visualProperties.SetVector(RegionSizeId, AreaSize);
         visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
         visualRenderer.SetPropertyBlock(visualProperties);
     }

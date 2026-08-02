@@ -5,5 +5,6 @@ public enum WorldRuleType
     Rain = 12,
     Darkness = 13,
     Wind = 14,
-    Golden = 15
+    Golden = 15,
+    Condensation = 16
 }

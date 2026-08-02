@@ -33,8 +33,8 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!58 &560000000000000003
-CircleCollider2D:
+--- !u!61 &560000000000000003
+BoxCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -68,7 +68,8 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 4
+  m_Size: {x: 1, y: 1}
+  m_EdgeRadius: 0
 --- !u!114 &560000000000000004
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -82,11 +83,14 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::ExplosiveZone
   visualMaterial: {fileID: 2100000, guid: e4918ec0069f4328b3fa21b24b6e1d69, type: 2}
-  visualRadiusMultiplier: 1.08
-  edgeWidth: 0.18
+  edgeWidth: 0.35
   pulseSpeed: 0.22
-  pulseStrength: 0.35
-  distortionStrength: 0.025
-  innerColor: {r: 0.09, g: 0.012, b: 0.002, a: 0.1}
+  pulseStrength: 0.22
+  pulseSharpness: 8
+  innerPatternIntensity: 0.12
+  innerPatternSpeed: 0.7
+  innerPatternScale: 2.5
+  warningPulseFrequency: 0.35
+  innerColor: {r: 0.12, g: 0.035, b: 0.012, a: 0.2}
   edgeColor: {r: 1, g: 0.32, b: 0.025, a: 0.78}
   fadeDuration: 0.8

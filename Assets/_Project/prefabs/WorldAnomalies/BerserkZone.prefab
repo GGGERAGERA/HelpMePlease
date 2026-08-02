@@ -33,8 +33,8 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!58 &540000000000000003
-CircleCollider2D:
+--- !u!61 &540000000000000003
+BoxCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -68,7 +68,8 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 4
+  m_Size: {x: 1, y: 1}
+  m_EdgeRadius: 0
 --- !u!114 &540000000000000004
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -82,9 +83,12 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BerserkZone
   visualMaterial: {fileID: 2100000, guid: e4918ec0069f4328b3fa21b24b6e1d69, type: 2}
-  visualRadiusMultiplier: 1.08
-  edgeWidth: 0.12
-  pulseSpeed: 0.45
-  pulseStrength: 0.12
-  distortionStrength: 0.085
+  edgeWidth: 0.35
+  pulseSpeed: 0.35
+  pulseStrength: 0.08
+  pulseSharpness: 1
+  innerPatternIntensity: 0.14
+  innerPatternSpeed: 1.8
+  innerPatternScale: 3.5
+  warningPulseFrequency: 0.22
   fadeDuration: 0.8

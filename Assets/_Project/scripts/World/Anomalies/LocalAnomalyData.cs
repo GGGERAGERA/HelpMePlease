@@ -21,8 +21,8 @@ public sealed class LocalAnomalyData : ScriptableObject
     [Header("Zone Gameplay")]
     [Tooltip("Zone prefab spawned for this anomaly. Null means neutral gameplay.")]
     [SerializeField] private LocalAnomalyZone zonePrefab;
-    [Tooltip("World-space radius of each spawned zone.")]
-    [SerializeField, Min(0.1f)] private float zoneRadius = 4f;
+    [Tooltip("Base world-space size of each rectangular anomaly region.")]
+    [SerializeField] private Vector2 zoneSize = new(12f, 9f);
     [Tooltip("Enemy movement multiplier while inside this anomaly zone.")]
     [SerializeField, Min(0.1f)] private float enemySpeedMultiplier = 1f;
     [Tooltip("Player movement multiplier while inside this anomaly zone.")]
@@ -41,7 +41,10 @@ public sealed class LocalAnomalyData : ScriptableObject
         : stableId;
     public LocalAnomalyType AnomalyType => anomalyType;
     public LocalAnomalyZone ZonePrefab => zonePrefab;
-    public float ZoneRadius => Mathf.Max(0.1f, zoneRadius);
+    public Vector2 ZoneSize => new(
+        Mathf.Max(0.1f, zoneSize.x),
+        Mathf.Max(0.1f, zoneSize.y)
+    );
     public float EnemySpeedMultiplier =>
         Mathf.Max(0.1f, enemySpeedMultiplier);
     public float PlayerSpeedMultiplier =>

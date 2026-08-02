@@ -10,8 +10,18 @@ public sealed class BerserkZone : LocalAnomalyZone
         Shader.PropertyToID("_PulseSpeed");
     private static readonly int PulseStrengthId =
         Shader.PropertyToID("_PulseStrength");
-    private static readonly int DistortionStrengthId =
-        Shader.PropertyToID("_DistortionStrength");
+    private static readonly int PulseSharpnessId =
+        Shader.PropertyToID("_PulseSharpness");
+    private static readonly int RegionSizeId =
+        Shader.PropertyToID("_RegionSize");
+    private static readonly int InnerPatternIntensityId =
+        Shader.PropertyToID("_InnerPatternIntensity");
+    private static readonly int InnerPatternSpeedId =
+        Shader.PropertyToID("_InnerPatternSpeed");
+    private static readonly int InnerPatternScaleId =
+        Shader.PropertyToID("_InnerPatternScale");
+    private static readonly int WarningPulseFrequencyId =
+        Shader.PropertyToID("_WarningPulseFrequency");
     private static readonly int VisualTimeId =
         Shader.PropertyToID("_VisualTime");
 
@@ -20,18 +30,20 @@ public sealed class BerserkZone : LocalAnomalyZone
 
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
-    [SerializeField, Min(1f)] private float visualRadiusMultiplier = 1.08f;
-    [SerializeField, Range(0.01f, 0.4f)] private float edgeWidth = 0.12f;
-    [SerializeField, Min(0f)] private float pulseSpeed = 0.45f;
-    [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.12f;
+    [SerializeField, Range(0.1f, 0.75f)] private float edgeWidth = 0.35f;
+    [SerializeField, Min(0f)] private float pulseSpeed = 0.35f;
+    [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.08f;
+    [SerializeField, Min(1f)] private float pulseSharpness = 1f;
     [SerializeField, Range(0f, 0.25f)]
-    private float distortionStrength = 0.085f;
+    private float innerPatternIntensity = 0.14f;
+    [SerializeField, Min(0f)] private float innerPatternSpeed = 1.8f;
+    [SerializeField, Min(0.5f)] private float innerPatternScale = 3.5f;
+    [SerializeField, Min(0f)] private float warningPulseFrequency = 0.22f;
     [SerializeField, Range(0.6f, 1f)] private float fadeDuration = 0.8f;
 
     private readonly Dictionary<EnemyMovement, int>
         enemyColliderCounts = new();
 
-    private CircleCollider2D zoneCollider;
     private MeshRenderer visualRenderer;
     private MaterialPropertyBlock visualProperties;
     private float speedMultiplier = 1.5f;
@@ -44,8 +56,6 @@ public sealed class BerserkZone : LocalAnomalyZone
 
     private void Awake()
     {
-        zoneCollider = GetComponent<CircleCollider2D>();
-        zoneCollider.isTrigger = true;
         BuildVisual();
     }
 
@@ -70,12 +80,12 @@ public sealed class BerserkZone : LocalAnomalyZone
             Destroy(gameObject);
     }
 
-    protected override void InitializeFromData(LocalAnomalyData data)
+    protected override void InitializeFromData(
+        LocalAnomalyData data,
+        Vector2 areaSize)
     {
-        float safeRadius = data.ZoneRadius;
         speedMultiplier = data.EnemySpeedMultiplier;
-        zoneCollider.radius = safeRadius;
-        ConfigureVisual(safeRadius);
+        ConfigureVisual(areaSize);
         effectsCleared = false;
         despawning = false;
         visualFade = 0f;
@@ -234,8 +244,8 @@ public sealed class BerserkZone : LocalAnomalyZone
 
         playerColliderCount = 0;
 
-        if (zoneCollider != null)
-            zoneCollider.enabled = false;
+        if (AreaCollider != null)
+            AreaCollider.enabled = false;
     }
 
     public override void Despawn()
@@ -298,15 +308,13 @@ public sealed class BerserkZone : LocalAnomalyZone
         ApplyVisualProperties();
     }
 
-    private void ConfigureVisual(float radius)
+    private void ConfigureVisual(Vector2 areaSize)
     {
         if (visualRenderer == null)
             return;
 
-        float diameter =
-            radius * 2f * Mathf.Max(1f, visualRadiusMultiplier);
         visualRenderer.transform.localScale =
-            new Vector3(diameter, diameter, 1f);
+            new Vector3(areaSize.x, areaSize.y, 1f);
     }
 
     private void ApplyVisualProperties()
@@ -318,9 +326,17 @@ public sealed class BerserkZone : LocalAnomalyZone
         visualProperties.SetFloat(EdgeWidthId, edgeWidth);
         visualProperties.SetFloat(PulseSpeedId, pulseSpeed);
         visualProperties.SetFloat(PulseStrengthId, pulseStrength);
+        visualProperties.SetFloat(PulseSharpnessId, pulseSharpness);
+        visualProperties.SetVector(RegionSizeId, AreaSize);
         visualProperties.SetFloat(
-            DistortionStrengthId,
-            distortionStrength
+            InnerPatternIntensityId,
+            innerPatternIntensity
+        );
+        visualProperties.SetFloat(InnerPatternSpeedId, innerPatternSpeed);
+        visualProperties.SetFloat(InnerPatternScaleId, innerPatternScale);
+        visualProperties.SetFloat(
+            WarningPulseFrequencyId,
+            warningPulseFrequency
         );
         visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
         visualRenderer.SetPropertyBlock(visualProperties);

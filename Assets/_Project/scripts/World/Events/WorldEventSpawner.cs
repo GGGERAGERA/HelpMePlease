@@ -190,9 +190,10 @@ public class WorldEventSpawner : MonoBehaviour
         selectedAnomalyType = zone.Type;
 
         float eventRadius = GetEventFootprintRadius(prefab);
-        float availableRadius = zone.Radius - eventRadius;
+        Vector2 availableHalfSize = zone.Size * 0.5f -
+            Vector2.one * eventRadius;
 
-        if (availableRadius < 0f)
+        if (availableHalfSize.x < 0f || availableHalfSize.y < 0f)
             return false;
 
         int attempts = Mathf.Max(1, spawnPositionAttempts);
@@ -207,9 +208,10 @@ public class WorldEventSpawner : MonoBehaviour
 
         for (int i = 0; i < attempts; i++)
         {
-            Vector2 candidate =
-                zone.Center +
-                Random.insideUnitCircle * availableRadius;
+            Vector2 candidate = zone.Center + new Vector2(
+                Random.Range(-availableHalfSize.x, availableHalfSize.x),
+                Random.Range(-availableHalfSize.y, availableHalfSize.y)
+            );
 
             if (((Vector2)playerPosition - candidate).sqrMagnitude <
                 minimumPlayerDistanceSquared)
