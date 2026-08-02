@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 8aefddd74b1bd844b83d810540f8ee86
+guid: 20f4a74562df4e44fbf5154548cfb80c
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -127,9 +127,9 @@ ScriptedImporter:
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
   animatedSpriteImportData:
-  - name: Capsule
+  - name: Lightning
     originalName: 
-    pivot: {x: 0.57399106, y: -0.9541985}
+    pivot: {x: 0.5, y: -0.07522124}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -137,9 +137,9 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 446
-      height: 262
-    spriteID: 884344da641b36f4ca5370cf5a492ac1
+      width: 256
+      height: 226
+    spriteID: 98c2baec9082f254e93487e2440e8d8e
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -153,25 +153,25 @@ ScriptedImporter:
   asepriteLayers:
   - layerIndex: 0
     uuid:
-      value0: 2217438381
+      value0: 3738238888
       value1: 0
       value2: 0
       value3: 0
     guid: 0
-    name: Capsule
+    name: Lightning
     layerFlags: 0
     layerType: 0
     blendMode: 0
     cells:
-    - name: Capsule
+    - name: Lightning
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:
         x: 0
-        y: 250
-        width: 446
-        height: 262
-      spriteId: 884344da641b36f4ca5370cf5a492ac1
+        y: 17
+        width: 256
+        height: 226
+      spriteId: 98c2baec9082f254e93487e2440e8d8e
     linkedCells: []
     tileCells: []
     tileSetIndex: 0
@@ -181,5 +181,5 @@ ScriptedImporter:
   generatePhysicsShape: 0
   secondarySpriteTextures: []
   spritePackingTag: 
-  canvasSize: {x: 512, y: 512}
-  previousTextureSize: {x: 512, y: 512}
+  canvasSize: {x: 256, y: 256}
+  previousTextureSize: {x: 512, y: 256}

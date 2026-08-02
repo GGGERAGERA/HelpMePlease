@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 8aefddd74b1bd844b83d810540f8ee86
+guid: 987a3b221577861438b517c1222a338d
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -127,9 +127,9 @@ ScriptedImporter:
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
   animatedSpriteImportData:
-  - name: Capsule
+  - name: BunkerAnomalyTable1
     originalName: 
-    pivot: {x: 0.57399106, y: -0.9541985}
+    pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -137,9 +137,9 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 446
-      height: 262
-    spriteID: 884344da641b36f4ca5370cf5a492ac1
+      width: 256
+      height: 256
+    spriteID: 53e99ced0f8320942b8558dd1fa9fcb0
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -153,25 +153,25 @@ ScriptedImporter:
   asepriteLayers:
   - layerIndex: 0
     uuid:
-      value0: 2217438381
+      value0: 21538223
       value1: 0
       value2: 0
       value3: 0
     guid: 0
-    name: Capsule
+    name: BunkerAnomalyTable1
     layerFlags: 0
     layerType: 0
     blendMode: 0
     cells:
-    - name: Capsule
+    - name: BunkerAnomalyTable1
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:
         x: 0
-        y: 250
-        width: 446
-        height: 262
-      spriteId: 884344da641b36f4ca5370cf5a492ac1
+        y: 0
+        width: 256
+        height: 256
+      spriteId: 53e99ced0f8320942b8558dd1fa9fcb0
     linkedCells: []
     tileCells: []
     tileSetIndex: 0
@@ -181,5 +181,5 @@ ScriptedImporter:
   generatePhysicsShape: 0
   secondarySpriteTextures: []
   spritePackingTag: 
-  canvasSize: {x: 512, y: 512}
+  canvasSize: {x: 256, y: 256}
   previousTextureSize: {x: 512, y: 512}
