@@ -6,7 +6,7 @@ public sealed class RunMessageService : MonoBehaviour
 {
     private const float InitialLevelMessageDuration = 4.5f;
     private const float FirstRunHintDuration = 4.5f;
-    private const float WorldEventStartDuration = 0.65f;
+    private const float WorldEventStartDuration = 0.35f;
 
     public static RunMessageService Instance { get; private set; }
 
@@ -99,6 +99,23 @@ public sealed class RunMessageService : MonoBehaviour
         view.Show(title, description, duration);
     }
 
+    public void ShowWorldEventFeedback(
+        string title,
+        string description,
+        Color accentColor,
+        float duration = 0.45f)
+    {
+        if (view == null || worldEventPresentationOwner != null)
+            return;
+
+        view.ShowWorldEventFeedback(
+            title,
+            description,
+            accentColor,
+            duration
+        );
+    }
+
     public bool ShowWorldEventStart(
         WorldEvent worldEvent,
         string displayName,
@@ -112,9 +129,6 @@ public sealed class RunMessageService : MonoBehaviour
         }
 
         worldEventPresentationOwner = worldEvent;
-        CameraShake.Instance?.PlayWorldEventStartPulse(
-            WorldEventStartDuration
-        );
         view.ShowWorldEventStart(
             worldEvent,
             displayName,
@@ -134,7 +148,6 @@ public sealed class RunMessageService : MonoBehaviour
         }
 
         view?.CancelWorldEventStart(worldEvent);
-        CameraShake.Instance?.StopWorldEventStartPulse();
         worldEventPresentationOwner = null;
     }
 
@@ -146,7 +159,6 @@ public sealed class RunMessageService : MonoBehaviour
             return;
 
         worldEventPresentationOwner = null;
-        CameraShake.Instance?.StopWorldEventStartPulse();
         onComplete?.Invoke();
     }
 

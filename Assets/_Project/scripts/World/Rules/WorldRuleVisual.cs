@@ -52,22 +52,21 @@ public sealed class WorldRuleVisual : MonoBehaviour
     [SerializeField, Range(0.25f, 8f)] private float wetPatternScale = 2.8f;
 
     [Header("Rain / Screen Drops")]
-    [SerializeField, Range(0f, 0.5f)] private float screenDropsIntensity = 0.14f;
+    [SerializeField, Range(0f, 0.5f)] private float screenDropsIntensity = 0.06f;
     [SerializeField, Range(0.05f, 2f)] private float screenDropsFrequency = 0.35f;
 
     [Header("Golden / World Visual")]
-    [SerializeField, Range(0f, 0.2f)] private float goldenOverlayIntensity = 0.07f;
+    [SerializeField, Range(0f, 0.2f)] private float goldenOverlayIntensity = 0.025f;
     [SerializeField, ColorUsage(false, true)] private Color goldenColorFilter =
         new Color(1f, 0.94f, 0.78f, 1f);
 
     [Header("Wind / Screen Flow")]
     [SerializeField, Range(0f, 0.4f)] private float windVisualIntensity = 0.16f;
-    [SerializeField, Range(2f, 12f)] private float windLineDensity = 5.5f;
+    [SerializeField, Range(2f, 12f)] private float windLineDensity = 3f;
     [SerializeField, Range(0.05f, 2f)] private float windLineSpeed = 0.45f;
 
     [Header("Darkness / Existing 2D Lights")]
     [SerializeField] private Light2D globalLight;
-    [SerializeField, HideInInspector] private float normalLightIntensity = 1f;
     [FormerlySerializedAs("darknessLightIntensity")]
     [SerializeField, Range(0f, 1f)]
     private float darknessGlobalIntensity = 0.05f;
@@ -124,6 +123,8 @@ public sealed class WorldRuleVisual : MonoBehaviour
     private float currentWindIntensity;
     private float targetWindIntensity;
     private Vector2 windVisualDirection;
+    private float baselineGlobalLightIntensity;
+    private bool globalLightStateCaptured;
     private Light2D playerLight;
     private float normalPlayerLightRadius;
     private float normalPlayerLightFalloff;
@@ -162,6 +163,8 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
     private void Awake()
     {
+        CaptureGlobalLightState();
+
         if (fullscreenImage != null)
         {
             fullscreenImage.raycastTarget = false;
@@ -335,6 +338,15 @@ public sealed class WorldRuleVisual : MonoBehaviour
         SetNeutral();
     }
 
+    private void CaptureGlobalLightState()
+    {
+        if (globalLight == null || globalLightStateCaptured)
+            return;
+
+        baselineGlobalLightIntensity = globalLight.intensity;
+        globalLightStateCaptured = true;
+    }
+
     public void SetSnowActive(bool active)
     {
         EnsureSnowResources();
@@ -408,10 +420,10 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
     private void UpdateDarknessResources()
     {
-        if (globalLight != null)
+        if (globalLight != null && globalLightStateCaptured)
         {
             globalLight.intensity = Mathf.Lerp(
-                normalLightIntensity,
+                baselineGlobalLightIntensity,
                 darknessGlobalIntensity,
                 currentDarknessIntensity
             );

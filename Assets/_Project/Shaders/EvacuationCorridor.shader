@@ -6,8 +6,6 @@ Shader "World/Evacuation Corridor"
         _EdgeColor ("Edge Color", Color) = (0.24, 0.94, 1, 0.48)
         _DirectionColor ("Direction Color", Color) = (0.48, 1, 1, 0.2)
         _OutsideDarkness ("Outside Darkness", Range(0, 0.8)) = 0.32
-        _EdgeGlow ("Edge Glow", Range(0, 2)) = 0.85
-        _PulseSpeed ("Pulse Speed", Float) = 1
         _Reveal ("Reveal", Range(0, 1)) = 0
         _Fade ("Fade", Range(0, 1)) = 0
         _CorridorRatio ("Corridor Ratio", Vector) = (0.08, 0.035, 0, 0)
@@ -40,8 +38,6 @@ Shader "World/Evacuation Corridor"
                 half4 _EdgeColor;
                 half4 _DirectionColor;
                 float _OutsideDarkness;
-                float _EdgeGlow;
-                float _PulseSpeed;
                 float _Reveal;
                 float _Fade;
                 float4 _CorridorRatio;
@@ -106,11 +102,8 @@ Shader "World/Evacuation Corridor"
                 );
                 edge *= revealMask;
 
-                float time = _VisualTime * _PulseSpeed;
-                float pulse =
-                    0.72 + 0.28 * (sin(time * 2.0) * 0.5 + 0.5);
-                float edgeAlpha =
-                    edge * _EdgeColor.a * _EdgeGlow * pulse;
+                float time = _VisualTime;
+                float edgeAlpha = edge * _EdgeColor.a;
 
                 float2 normalized = localPosition / halfSize;
                 float movingCell = frac(

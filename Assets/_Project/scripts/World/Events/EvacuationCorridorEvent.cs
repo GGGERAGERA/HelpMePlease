@@ -19,10 +19,6 @@ public sealed class EvacuationCorridorEvent : WorldEvent
         Shader.PropertyToID("_CorridorRatio");
     private static readonly int OutsideDarknessId =
         Shader.PropertyToID("_OutsideDarkness");
-    private static readonly int EdgeGlowId =
-        Shader.PropertyToID("_EdgeGlow");
-    private static readonly int PulseSpeedId =
-        Shader.PropertyToID("_PulseSpeed");
     private static readonly int VisualTimeId =
         Shader.PropertyToID("_VisualTime");
 
@@ -65,11 +61,17 @@ public sealed class EvacuationCorridorEvent : WorldEvent
     [Header("Visual")]
     [SerializeField] private Material lineMaterial;
     [SerializeField] private Material corridorMaterial;
-    [SerializeField, Range(0f, 0.8f)] private float outsideDarkness = 0.32f;
-    [SerializeField, Range(0f, 2f)] private float edgeGlow = 0.85f;
-    [SerializeField, Min(0f)] private float pulseSpeed = 1f;
-    [SerializeField, Min(0.01f)] private float revealDuration = 0.8f;
-    [SerializeField, Min(0.01f)] private float fadeDuration = 0.8f;
+    [SerializeField, Range(0f, 0.8f)] private float outsideDarkness = 0.42f;
+    [SerializeField, Range(0f, 0.8f)]
+    private float dangerOutsideDarkness = 0.62f;
+    [SerializeField, Min(0.01f)] private float outsideDarkenDuration = 0.32f;
+    [SerializeField, Min(0.01f)] private float insideRestoreDuration = 0.16f;
+    [SerializeField, Min(0.01f)] private float revealDuration = 0.65f;
+    [SerializeField, Min(0.01f)] private float fadeDuration = 0.45f;
+
+    [Header("Feedback")]
+    [SerializeField, Min(0f)] private float dangerShakeDuration = 0.16f;
+    [SerializeField, Min(0f)] private float dangerShakeMagnitude = 0.045f;
 
     [Header("Scene")]
     [SerializeField] private GameplayAreaService gameplayArea;
@@ -88,6 +90,7 @@ public sealed class EvacuationCorridorEvent : WorldEvent
     private float targetVisualFade;
     private float visualReveal;
     private float targetVisualReveal;
+    private float currentOutsideDarkness;
     private bool wasPlayerInside;
     private bool corridorActive;
     private bool hasRewardPosition;
@@ -176,10 +179,6 @@ public sealed class EvacuationCorridorEvent : WorldEvent
         outsideDamageTimer = 0f;
         corridorActive = true;
 
-        RunMessageService.Instance?.ShowCustom(
-            "ЭВАКУАЦИОННЫЙ КОРИДОР",
-            "Следуйте внутри безопасной зоны до точки эвакуации"
-        );
     }
 
     private bool TryConfigurePath()
@@ -255,10 +254,9 @@ public sealed class EvacuationCorridorEvent : WorldEvent
 
     private void ApplyCorridorOrientation(Vector2 direction)
     {
-        bool movesVertically = Mathf.Abs(direction.y) > 0f;
-        transform.rotation = movesVertically
-            ? Quaternion.Euler(0f, 0f, 90f)
-            : Quaternion.identity;
+        float angle = Mathf.Atan2(direction.y, direction.x) *
+            Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0f, 0f, angle);
     }
 
     private bool MoveCorridorToEnd()
@@ -340,10 +338,9 @@ public sealed class EvacuationCorridorEvent : WorldEvent
 
         if (!IsPlayerInside && wasPlayerInside)
         {
-            RunMessageService.Instance?.ShowCustom(
-                "ВНЕ КОРИДОРА",
-                "Вернитесь в безопасную зону",
-                2f
+            CameraShake.Instance?.Shake(
+                dangerShakeDuration,
+                dangerShakeMagnitude
             );
         }
 
@@ -392,6 +389,7 @@ public sealed class EvacuationCorridorEvent : WorldEvent
 
         visualFade = 0f;
         visualReveal = 0f;
+        currentOutsideDarkness = outsideDarkness;
         targetVisualFade = 1f;
         targetVisualReveal = 1f;
         ApplyCorridorVisualProperties();
@@ -546,6 +544,22 @@ public sealed class EvacuationCorridorEvent : WorldEvent
             targetVisualReveal,
             Time.unscaledDeltaTime / Mathf.Max(0.01f, revealDuration)
         );
+        float targetOutsideDarkness = IsPlayerInside
+            ? outsideDarkness
+            : dangerOutsideDarkness;
+        float darknessDuration = targetOutsideDarkness >
+            currentOutsideDarkness
+            ? outsideDarkenDuration
+            : insideRestoreDuration;
+        float darknessDistance = Mathf.Abs(
+            dangerOutsideDarkness - outsideDarkness
+        );
+        currentOutsideDarkness = Mathf.MoveTowards(
+            currentOutsideDarkness,
+            targetOutsideDarkness,
+            darknessDistance * Time.unscaledDeltaTime /
+            Mathf.Max(0.01f, darknessDuration)
+        );
         ApplyCorridorVisualProperties();
     }
 
@@ -561,10 +575,8 @@ public sealed class EvacuationCorridorEvent : WorldEvent
         corridorVisualProperties.SetFloat(RevealId, visualReveal);
         corridorVisualProperties.SetFloat(
             OutsideDarknessId,
-            outsideDarkness
+            currentOutsideDarkness
         );
-        corridorVisualProperties.SetFloat(EdgeGlowId, edgeGlow);
-        corridorVisualProperties.SetFloat(PulseSpeedId, pulseSpeed);
         corridorVisualProperties.SetFloat(
             VisualTimeId,
             Time.unscaledTime

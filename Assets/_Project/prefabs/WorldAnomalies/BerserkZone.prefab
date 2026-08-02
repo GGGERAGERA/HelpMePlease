@@ -83,8 +83,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BerserkZone
   visualMaterial: {fileID: 2100000, guid: e4918ec0069f4328b3fa21b24b6e1d69, type: 2}
   visualRadiusMultiplier: 1.08
-  edgeWidth: 0.16
-  pulseSpeed: 1.2
-  pulseStrength: 0.22
-  distortionStrength: 0.055
+  edgeWidth: 0.12
+  pulseSpeed: 0.45
+  pulseStrength: 0.12
+  distortionStrength: 0.085
   fadeDuration: 0.8

@@ -27,10 +27,12 @@ public class CaptureZoneEvent : WorldEvent
     private float currentHoldTime;
     private Transform player;
     private bool playerInside;
+    private bool completionTriggered;
 
     public override void Initialize(WorldEventSpawner spawner)
     {
         base.Initialize(spawner);
+        completionTriggered = false;
 
         ShowEventMarker(transform, "CAPTURE");
     }
@@ -111,6 +113,10 @@ public class CaptureZoneEvent : WorldEvent
 
     private void CompleteCapture()
     {
+        if (completionTriggered)
+            return;
+
+        completionTriggered = true;
         CompleteEvent();
     }
 

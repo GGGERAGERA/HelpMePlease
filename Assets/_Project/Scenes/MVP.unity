@@ -600,6 +600,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WorldEventSpawner
   eventPrefabs:
   - {fileID: 350149527517610057, guid: 176dbf5e68a24ca49b3595472b14d121, type: 3}
+  - {fileID: 520000000000000004, guid: f51a1e2d8b0c4d0a9e07f4e27b6d1201, type: 3}
+  - {fileID: 530000000000000004, guid: e47c3f95a8a34c18a619b70ec785f142, type: 3}
   rewardChestPrefab: {fileID: 1000000000000000004, guid: 91cb28ce62794baf86da67a04174801a, type: 3}
   doubleOrLeave: {fileID: 46915859}
   riskDifficultyMultiplier: 1.5
@@ -6287,15 +6289,14 @@ MonoBehaviour:
   rainWorldMaterial: {fileID: 2100000, guid: 4c7fd535216f4b90bf61d62e90bb160d, type: 2}
   wetGroundIntensity: 0.32
   wetPatternScale: 2.8
-  screenDropsIntensity: 0.14
+  screenDropsIntensity: 0.06
   screenDropsFrequency: 0.35
-  goldenOverlayIntensity: 0.07
+  goldenOverlayIntensity: 0.025
   goldenColorFilter: {r: 1, g: 0.94, b: 0.78, a: 1}
   windVisualIntensity: 0.16
-  windLineDensity: 5.5
+  windLineDensity: 3
   windLineSpeed: 0.45
   globalLight: {fileID: 1615053065}
-  normalLightIntensity: 1
   darknessGlobalIntensity: 0.05
   playerLightRadius: 6.5
   playerLightFalloff: 0.75
@@ -8980,7 +8981,6 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::WindRuleIndicator
   arrowTransform: {fileID: 900000000000003011}
-  windIndicatorPulseSpeed: 2.2
 --- !u!1 &900000000000003010
 GameObject:
   m_ObjectHideFlags: 0

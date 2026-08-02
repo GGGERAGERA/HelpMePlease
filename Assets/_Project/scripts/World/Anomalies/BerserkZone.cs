@@ -21,11 +21,11 @@ public sealed class BerserkZone : LocalAnomalyZone
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
     [SerializeField, Min(1f)] private float visualRadiusMultiplier = 1.08f;
-    [SerializeField, Range(0.01f, 0.4f)] private float edgeWidth = 0.16f;
-    [SerializeField, Min(0f)] private float pulseSpeed = 1.2f;
-    [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.22f;
+    [SerializeField, Range(0.01f, 0.4f)] private float edgeWidth = 0.12f;
+    [SerializeField, Min(0f)] private float pulseSpeed = 0.45f;
+    [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.12f;
     [SerializeField, Range(0f, 0.25f)]
-    private float distortionStrength = 0.055f;
+    private float distortionStrength = 0.085f;
     [SerializeField, Range(0.6f, 1f)] private float fadeDuration = 0.8f;
 
     private readonly Dictionary<EnemyMovement, int>

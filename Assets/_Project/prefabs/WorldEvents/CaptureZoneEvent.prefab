@@ -193,10 +193,9 @@ MonoBehaviour:
   visualMaterial: {fileID: 2100000, guid: c452b5f3e8a34f50a61fc5ff789b4ea2, type: 2}
   visualRadiusMultiplier: 1.18
   edgeWidth: 0.075
-  pulseSpeed: 0.85
-  fillIntensity: 0.7
-  completionFlash: 1.8
-  fadeDuration: 0.22
+  completionFlash: 1.15
+  fadeDuration: 0.45
+  completionFadeDuration: 0.4
 --- !u!1 &7134633371813098000
 GameObject:
   m_ObjectHideFlags: 0

@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(Collider2D))]
 public sealed class FalseSignalPoint : MonoBehaviour
 {
-    [Header("Test Visual")]
+    [Header("Visual")]
     [SerializeField] private Material lineMaterial;
     [SerializeField] private Color color = new(1f, 0.35f, 0.1f, 0.9f);
     [SerializeField, Min(0.1f)] private float visualRadius = 0.75f;
@@ -12,6 +12,12 @@ public sealed class FalseSignalPoint : MonoBehaviour
     private FalseSignalEvent owner;
     private bool isReal;
     private bool consumed;
+    private LineRenderer coreRing;
+    private Collider2D signalCollider;
+    private bool fading;
+    private float fadeDuration;
+    private float fadeRemaining;
+    private float visibility = 1f;
 
     public void Initialize(FalseSignalEvent eventOwner, bool realSignal)
     {
@@ -22,7 +28,28 @@ public sealed class FalseSignalPoint : MonoBehaviour
 
     private void Awake()
     {
+        signalCollider = GetComponent<Collider2D>();
         BuildVisual();
+    }
+
+    private void Update()
+    {
+        if (fading)
+        {
+            fadeRemaining = Mathf.Max(
+                0f,
+                fadeRemaining - Time.unscaledDeltaTime
+            );
+            visibility = fadeRemaining / fadeDuration;
+
+            if (fadeRemaining <= 0f)
+            {
+                Destroy(gameObject);
+                return;
+            }
+        }
+
+        ApplyVisual();
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -31,10 +58,31 @@ public sealed class FalseSignalPoint : MonoBehaviour
             return;
 
         consumed = true;
+        SetVisualEnabled(false);
+
+        if (signalCollider != null)
+            signalCollider.enabled = false;
+
         FalseSignalEvent eventOwner = owner;
         owner = null;
         eventOwner.ResolveSignal(this, isReal);
         Destroy(gameObject);
+    }
+
+    public void FadeOutAndDestroy(float duration)
+    {
+        if (consumed || fading)
+            return;
+
+        consumed = true;
+        fading = true;
+        fadeDuration = Mathf.Max(0.05f, duration);
+        fadeRemaining = fadeDuration;
+        owner = null;
+        transform.SetParent(null, true);
+
+        if (signalCollider != null)
+            signalCollider.enabled = false;
     }
 
     private void OnDestroy()
@@ -48,17 +96,24 @@ public sealed class FalseSignalPoint : MonoBehaviour
         if (lineMaterial == null)
             return;
 
+        coreRing = CreateRing(visualRadius, 0.15f, 3);
+        ApplyVisual();
+    }
+
+    private LineRenderer CreateRing(
+        float radius,
+        float width,
+        int sortingOrder)
+    {
         LineRenderer line = gameObject.AddComponent<LineRenderer>();
         line.sharedMaterial = lineMaterial;
         line.useWorldSpace = false;
         line.loop = true;
         line.positionCount = Mathf.Max(8, segments);
-        line.startWidth = 0.12f;
-        line.endWidth = 0.12f;
-        line.startColor = color;
-        line.endColor = color;
+        line.startWidth = width;
+        line.endWidth = width;
         line.sortingLayerName = "Midground";
-        line.sortingOrder = 2;
+        line.sortingOrder = sortingOrder;
 
         for (int i = 0; i < line.positionCount; i++)
         {
@@ -66,11 +121,31 @@ public sealed class FalseSignalPoint : MonoBehaviour
             line.SetPosition(
                 i,
                 new Vector3(
-                    Mathf.Cos(angle) * visualRadius,
-                    Mathf.Sin(angle) * visualRadius,
+                    Mathf.Cos(angle) * radius,
+                    Mathf.Sin(angle) * radius,
                     0f
                 )
             );
         }
+
+        return line;
+    }
+
+    private void ApplyVisual()
+    {
+        Color coreColor = color;
+        coreColor.a *= visibility;
+
+        if (coreRing != null)
+        {
+            coreRing.startColor = coreColor;
+            coreRing.endColor = coreColor;
+        }
+    }
+
+    private void SetVisualEnabled(bool enabled)
+    {
+        if (coreRing != null)
+            coreRing.enabled = enabled;
     }
 }

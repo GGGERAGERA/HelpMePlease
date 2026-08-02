@@ -90,9 +90,12 @@ MonoBehaviour:
   outsideDamageInterval: 1
   lineMaterial: {fileID: 2100000, guid: dca396c6aa60fe549b61f941be335967, type: 2}
   corridorMaterial: {fileID: 2100000, guid: 60a86a73f1bb434fa6c0ba457b9b3e33, type: 2}
-  outsideDarkness: 0.32
-  edgeGlow: 0.85
-  pulseSpeed: 1
-  revealDuration: 0.8
-  fadeDuration: 0.8
+  outsideDarkness: 0.42
+  dangerOutsideDarkness: 0.62
+  outsideDarkenDuration: 0.32
+  insideRestoreDuration: 0.16
+  revealDuration: 0.65
+  fadeDuration: 0.45
+  dangerShakeDuration: 0.16
+  dangerShakeMagnitude: 0.045
   gameplayArea: {fileID: 0}

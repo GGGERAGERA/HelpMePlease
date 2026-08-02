@@ -83,8 +83,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ExplosiveZone
   visualMaterial: {fileID: 2100000, guid: e4918ec0069f4328b3fa21b24b6e1d69, type: 2}
   visualRadiusMultiplier: 1.08
-  edgeWidth: 0.2
-  pulseSpeed: 1.8
-  pulseStrength: 0.32
-  distortionStrength: 0.075
+  edgeWidth: 0.18
+  pulseSpeed: 0.22
+  pulseStrength: 0.35
+  distortionStrength: 0.025
+  innerColor: {r: 0.09, g: 0.012, b: 0.002, a: 0.1}
+  edgeColor: {r: 1, g: 0.32, b: 0.025, a: 0.78}
   fadeDuration: 0.8

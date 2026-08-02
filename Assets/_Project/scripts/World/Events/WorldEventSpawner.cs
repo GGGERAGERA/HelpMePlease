@@ -14,6 +14,10 @@ public class WorldEventSpawner : MonoBehaviour
     [SerializeField] private DoubleOrLeave doubleOrLeave;
     [SerializeField, Min(1f)] private float riskDifficultyMultiplier = 1.5f;
 
+    [Header("Spawn Pressure")]
+    [SerializeField, Min(1f)] private float standardEventPressure = 1.15f;
+    [SerializeField, Min(1f)] private float riskEventPressure = 1.35f;
+
     [Header("Spawn Timing")]
     [SerializeField] private float firstEventDelay = 45f;
     [SerializeField] private float eventInterval = 90f;
@@ -35,6 +39,8 @@ public class WorldEventSpawner : MonoBehaviour
     private float timer;
     private int spawnedEventCount;
     private bool holdPointEnabled;
+    private EnemySpawner enemySpawner;
+    private WorldEvent pressureEvent;
     private readonly List<WorldEvent> spawnedEvents = new();
     private readonly List<LevelAnomalyController.LocalAnomalyZoneGeometry>
         localAnomalyZones = new();
@@ -47,6 +53,7 @@ public class WorldEventSpawner : MonoBehaviour
 
     private void OnDisable()
     {
+        ClearEventSpawnPressure();
         EventCompleted -= SpawnRewardChest;
         EventFailed -= HandleEventFailed;
     }
@@ -323,6 +330,8 @@ public class WorldEventSpawner : MonoBehaviour
 
     public void NotifyEventCompleted(WorldEvent worldEvent)
     {
+        ClearEventSpawnPressure(worldEvent);
+
         if (ActiveEvent == worldEvent)
             ActiveEvent = null;
 
@@ -333,6 +342,8 @@ public class WorldEventSpawner : MonoBehaviour
 
     public void NotifyEventFailed(WorldEvent worldEvent)
     {
+        ClearEventSpawnPressure(worldEvent);
+
         if (ActiveEvent == worldEvent)
             ActiveEvent = null;
 
@@ -360,6 +371,21 @@ public class WorldEventSpawner : MonoBehaviour
         return true;
     }
 
+    public void NotifyEventStarted(WorldEvent worldEvent, bool riskMode)
+    {
+        if (!isActiveAndEnabled ||
+            worldEvent == null || ActiveEvent != worldEvent)
+        {
+            return;
+        }
+
+        ResolveEnemySpawner();
+        pressureEvent = worldEvent;
+        enemySpawner?.SetWorldEventSpawnPressureMultiplier(
+            riskMode ? riskEventPressure : standardEventPressure
+        );
+    }
+
     public bool TryChooseAndStartEvent(WorldEvent worldEvent)
     {
         if (!CanStartEvent(worldEvent))
@@ -369,7 +395,7 @@ public class WorldEventSpawner : MonoBehaviour
 
         if (doubleOrLeave == null)
         {
-            worldEvent.StartSelectedEvent();
+            worldEvent.StartSelectedEvent(false);
             return true;
         }
 
@@ -380,7 +406,7 @@ public class WorldEventSpawner : MonoBehaviour
                 if (risk)
                 worldEvent.ApplyDifficultyMultiplier(riskDifficultyMultiplier);
 
-                worldEvent.StartSelectedEvent();
+                worldEvent.StartSelectedEvent(risk);
             }
         );
     }
@@ -429,5 +455,20 @@ public class WorldEventSpawner : MonoBehaviour
     {
         if (doubleOrLeave == null)
             doubleOrLeave = FindFirstObjectByType<DoubleOrLeave>();
+    }
+
+    private void ClearEventSpawnPressure(WorldEvent worldEvent = null)
+    {
+        if (worldEvent != null && pressureEvent != worldEvent)
+            return;
+
+        enemySpawner?.SetWorldEventSpawnPressureMultiplier(1f);
+        pressureEvent = null;
+    }
+
+    private void ResolveEnemySpawner()
+    {
+        if (enemySpawner == null || !enemySpawner.gameObject.scene.IsValid())
+            enemySpawner = FindFirstObjectByType<EnemySpawner>();
     }
 }

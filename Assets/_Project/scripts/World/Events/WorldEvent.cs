@@ -6,6 +6,7 @@ public abstract class WorldEvent : Interactable
 
     private bool cleanupPerformed;
     private bool eventMarkerVisible;
+    private bool selectedRiskMode;
 
     public bool IsCompleted { get; private set; }
     public bool IsFailed { get; private set; }
@@ -36,6 +37,7 @@ public abstract class WorldEvent : Interactable
         IsFailed = false;
         IsStarted = false;
         IsStarting = false;
+        selectedRiskMode = false;
         cleanupPerformed = false;
         eventMarkerVisible = false;
     }
@@ -48,7 +50,7 @@ public abstract class WorldEvent : Interactable
         owner.TryChooseAndStartEvent(this);
     }
 
-    public void StartSelectedEvent()
+    public void StartSelectedEvent(bool riskMode = false)
     {
         if (IsStarted || IsStarting || owner == null ||
             !owner.TryStartEvent(this))
@@ -56,6 +58,7 @@ public abstract class WorldEvent : Interactable
             return;
         }
 
+        selectedRiskMode = riskMode;
         IsStarting = true;
 
         RunMessageService presentation = RunMessageService.Instance;
@@ -79,6 +82,7 @@ public abstract class WorldEvent : Interactable
 
         IsStarting = false;
         IsStarted = true;
+        owner?.NotifyEventStarted(this, selectedRiskMode);
         OnEventStarted();
     }
 
