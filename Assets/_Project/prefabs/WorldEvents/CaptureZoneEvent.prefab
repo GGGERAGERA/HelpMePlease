@@ -178,11 +178,6 @@ MonoBehaviour:
   resetProgressOnExit: 0
   timerText: {fileID: 0}
   progressSlider: {fileID: 1443488956571464380}
-  feedbackPulseDuration: 0.38
-  exitShakeDuration: 0.14
-  exitShakeMagnitude: 0.04
-  exitPulseColor: {r: 0.95, g: 0.07, b: 0.03, a: 1}
-  completionPulseColor: {r: 0.08, g: 0.92, b: 1, a: 1}
 --- !u!114 &7461295083172649012
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -198,9 +193,7 @@ MonoBehaviour:
   visualMaterial: {fileID: 2100000, guid: c452b5f3e8a34f50a61fc5ff789b4ea2, type: 2}
   visualRadiusMultiplier: 1.18
   edgeWidth: 0.075
-  pulseSpeed: 0.85
-  fillIntensity: 0.7
-  completionFlash: 1.8
+  completionFlash: 1.15
   fadeDuration: 0.45
   completionFadeDuration: 0.4
 --- !u!1 &7134633371813098000

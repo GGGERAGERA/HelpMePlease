@@ -52,17 +52,17 @@ public sealed class WorldRuleVisual : MonoBehaviour
     [SerializeField, Range(0.25f, 8f)] private float wetPatternScale = 2.8f;
 
     [Header("Rain / Screen Drops")]
-    [SerializeField, Range(0f, 0.5f)] private float screenDropsIntensity = 0.14f;
+    [SerializeField, Range(0f, 0.5f)] private float screenDropsIntensity = 0.06f;
     [SerializeField, Range(0.05f, 2f)] private float screenDropsFrequency = 0.35f;
 
     [Header("Golden / World Visual")]
-    [SerializeField, Range(0f, 0.2f)] private float goldenOverlayIntensity = 0.07f;
+    [SerializeField, Range(0f, 0.2f)] private float goldenOverlayIntensity = 0.025f;
     [SerializeField, ColorUsage(false, true)] private Color goldenColorFilter =
         new Color(1f, 0.94f, 0.78f, 1f);
 
     [Header("Wind / Screen Flow")]
     [SerializeField, Range(0f, 0.4f)] private float windVisualIntensity = 0.16f;
-    [SerializeField, Range(2f, 12f)] private float windLineDensity = 5.5f;
+    [SerializeField, Range(2f, 12f)] private float windLineDensity = 3f;
     [SerializeField, Range(0.05f, 2f)] private float windLineSpeed = 0.45f;
 
     [Header("Darkness / Existing 2D Lights")]

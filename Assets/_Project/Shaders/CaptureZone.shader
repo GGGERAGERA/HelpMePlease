@@ -2,18 +2,12 @@ Shader "World/Capture Zone"
 {
     Properties
     {
-        _InnerColor ("Inner Color", Color) = (0.02, 0.24, 0.34, 0.08)
         _EdgeColor ("Edge Color", Color) = (0.18, 0.86, 1, 0.72)
-        _PatternColor ("Pattern Color", Color) = (0.16, 0.72, 0.92, 0.12)
         _ProgressColor ("Progress Color", Color) = (0.45, 1, 0.86, 0.95)
         _EdgeWidth ("Edge Width", Range(0.01, 0.3)) = 0.075
-        _PulseSpeed ("Pulse Speed", Float) = 0.85
-        _FillIntensity ("Fill Intensity", Range(0, 2)) = 0.7
         _Progress ("Progress", Range(0, 1)) = 0
-        _PlayerInside ("Player Inside", Range(0, 1)) = 0
         _CompletionFlash ("Completion Flash", Range(0, 3)) = 0
         _Fade ("Fade", Range(0, 1)) = 1
-        _VisualTime ("Visual Time", Float) = 0
     }
 
     SubShader
@@ -38,18 +32,12 @@ Shader "World/Capture Zone"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
-                half4 _InnerColor;
                 half4 _EdgeColor;
-                half4 _PatternColor;
                 half4 _ProgressColor;
                 float _EdgeWidth;
-                float _PulseSpeed;
-                float _FillIntensity;
                 float _Progress;
-                float _PlayerInside;
                 float _CompletionFlash;
                 float _Fade;
-                float _VisualTime;
             CBUFFER_END
 
             struct Attributes
@@ -80,18 +68,7 @@ Shader "World/Capture Zone"
                 float radius = length(samplePoint);
                 float angle = atan2(samplePoint.y, samplePoint.x);
                 float angle01 = frac(0.25 - angle / TwoPi);
-                float time = _VisualTime * _PulseSpeed;
-
-                float boundary =
-                    0.855 +
-                    sin(angle * 8.0) * 0.018 +
-                    sin(angle * 16.0 + 0.6) * 0.007;
-                float antialias = max(fwidth(radius), 0.002);
-                float shape = 1.0 - smoothstep(
-                    boundary - antialias,
-                    boundary + antialias,
-                    radius
-                );
+                float boundary = 0.855;
 
                 float edgeDistance = abs(radius - boundary);
                 float edge = 1.0 - smoothstep(
@@ -99,47 +76,6 @@ Shader "World/Capture Zone"
                     _EdgeWidth,
                     edgeDistance
                 );
-                float stableEdge = edge;
-                float glow = 1.0 - smoothstep(
-                    _EdgeWidth,
-                    _EdgeWidth * 3.2,
-                    edgeDistance
-                );
-
-                float pulseWave =
-                    sin(time * TwoPi) * 0.5 + 0.5;
-                float pulseAmount =
-                    _PlayerInside * lerp(0.16, 0.045, _Progress);
-                float edgePulse = 1.0 - pulseAmount * (1.0 - pulseWave);
-                float edgeBreaks =
-                    0.76 +
-                    0.24 *
-                    smoothstep(
-                        -0.25,
-                        0.55,
-                        sin(angle * 24.0 + time * 0.18)
-                    );
-                edge *= edgeBreaks;
-
-                float diagonal = abs(
-                    frac(
-                        (samplePoint.x + samplePoint.y * 0.72) * 3.2 -
-                        time * 0.08
-                    ) - 0.5
-                );
-                float movingBands =
-                    1.0 - smoothstep(0.035, 0.085, diagonal);
-                float radialTicks =
-                    1.0 - smoothstep(
-                        0.22,
-                        0.48,
-                        abs(sin(angle * 12.0 - time * 0.1))
-                    );
-                radialTicks *= smoothstep(0.26, 0.62, radius);
-                float pattern =
-                    saturate(movingBands * 0.65 + radialTicks * 0.35);
-                pattern *= shape * saturate(1.0 - edge);
-
                 float progressVisible = step(0.001, _Progress);
                 float progressArc = 1.0 - smoothstep(
                     _Progress,
@@ -147,62 +83,25 @@ Shader "World/Capture Zone"
                     angle01
                 );
                 progressArc *= progressVisible;
-                float progressEdge = stableEdge * progressArc;
-                float progressHead = 1.0 - smoothstep(
-                    0.0,
-                    0.025,
-                    abs(angle01 - _Progress)
-                );
-                progressHead *= stableEdge * progressVisible;
+                float progressEdge = edge * progressArc;
                 float progressBrightness = lerp(
                     0.72,
                     1.28,
                     smoothstep(0.0, 1.0, _Progress)
                 );
-                float centerMarker = 1.0 - smoothstep(
-                    0.025,
-                    0.075,
-                    radius
-                );
-
-                half3 color = _InnerColor.rgb;
-                color = lerp(
-                    color,
-                    _PatternColor.rgb,
-                    pattern * 0.45
-                );
-                color = lerp(color, _EdgeColor.rgb, edge);
+                half3 color = _EdgeColor.rgb;
                 color = lerp(
                     color,
                     _ProgressColor.rgb,
-                    saturate(
-                        (progressEdge + progressHead) *
-                        progressBrightness
-                    )
-                );
-                color = lerp(
-                    color,
-                    _EdgeColor.rgb,
-                    centerMarker * 0.82
+                    saturate(progressEdge * progressBrightness)
                 );
                 color += _CompletionFlash *
                     lerp(_ProgressColor.rgb, half3(1, 1, 1), 0.7);
 
-                float innerAlpha =
-                    _InnerColor.a *
-                    _FillIntensity *
-                    (0.72 + pattern * 0.28) *
-                    (1.0 + _PlayerInside * pulseWave * 0.08);
                 float alpha =
-                    innerAlpha * shape +
-                    glow * _EdgeColor.a * 0.18 * edgePulse +
-                    edge * _EdgeColor.a * edgePulse +
-                    progressEdge * _ProgressColor.a * progressBrightness +
-                    progressHead * _ProgressColor.a *
-                        0.8 * progressBrightness +
-                    centerMarker * _EdgeColor.a * 0.72 +
-                    pattern * _PatternColor.a * _FillIntensity;
-                alpha += _CompletionFlash * 0.28 * shape;
+                    edge * _EdgeColor.a +
+                    progressEdge * _ProgressColor.a * progressBrightness;
+                alpha += _CompletionFlash * 0.32 * edge;
 
                 return half4(
                     saturate(color),

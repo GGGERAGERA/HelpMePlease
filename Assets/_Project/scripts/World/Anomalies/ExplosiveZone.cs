@@ -16,17 +16,25 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         Shader.PropertyToID("_PulseStrength");
     private static readonly int DistortionStrengthId =
         Shader.PropertyToID("_DistortionStrength");
+    private static readonly int InnerColorId =
+        Shader.PropertyToID("_InnerColor");
+    private static readonly int EdgeColorId =
+        Shader.PropertyToID("_EdgeColor");
     private static readonly int VisualTimeId =
         Shader.PropertyToID("_VisualTime");
 
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
     [SerializeField, Min(1f)] private float visualRadiusMultiplier = 1.08f;
-    [SerializeField, Range(0.01f, 0.4f)] private float edgeWidth = 0.2f;
-    [SerializeField, Min(0f)] private float pulseSpeed = 1.8f;
-    [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.32f;
+    [SerializeField, Range(0.01f, 0.4f)] private float edgeWidth = 0.18f;
+    [SerializeField, Min(0f)] private float pulseSpeed = 0.22f;
+    [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.35f;
     [SerializeField, Range(0f, 0.25f)]
-    private float distortionStrength = 0.075f;
+    private float distortionStrength = 0.025f;
+    [SerializeField] private Color innerColor =
+        new(0.09f, 0.012f, 0.002f, 0.1f);
+    [SerializeField] private Color edgeColor =
+        new(1f, 0.32f, 0.025f, 0.78f);
     [SerializeField, Range(0.6f, 1f)] private float fadeDuration = 0.8f;
 
     private readonly Dictionary<EnemyHealth, int> enemyColliderCounts = new();
@@ -374,6 +382,8 @@ public sealed class ExplosiveZone : LocalAnomalyZone
             DistortionStrengthId,
             distortionStrength
         );
+        visualProperties.SetColor(InnerColorId, innerColor);
+        visualProperties.SetColor(EdgeColorId, edgeColor);
         visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
         visualRenderer.SetPropertyBlock(visualProperties);
     }

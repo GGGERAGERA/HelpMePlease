@@ -73,9 +73,8 @@ Shader "World/Berserk Zone"
                 float time = _VisualTime * _PulseSpeed;
 
                 float coarseWave =
-                    sin(angle * 7.0 + time * 0.75) * 0.55 +
-                    sin(angle * 13.0 - time * 0.42) * 0.3 +
-                    sin(angle * 19.0 + time * 0.24) * 0.15;
+                    sin(angle * 7.0 + 0.35) * 0.65 +
+                    sin(angle * 13.0 - 0.8) * 0.35;
                 float boundary =
                     0.91 + coarseWave * _DistortionStrength;
                 float antialias = max(fwidth(radius), 0.002);
@@ -91,21 +90,17 @@ Shader "World/Berserk Zone"
                     _EdgeWidth,
                     edgeDistance
                 );
-                float innerPattern =
-                    sin(samplePoint.x * 8.0 + time * 0.28) *
-                    sin(samplePoint.y * 7.0 - time * 0.2);
-                innerPattern = innerPattern * 0.5 + 0.5;
-
-                float pulse =
-                    1.0 - _PulseStrength +
-                    _PulseStrength * (sin(time) * 0.5 + 0.5);
+                float pulseWave = sin(time) * 0.5 + 0.5;
+                float warningPulse = pow(pulseWave, 7.0);
+                float pulse = 1.0 - _PulseStrength +
+                    _PulseStrength * pulseWave;
                 half3 color = lerp(
                     _InnerColor.rgb,
                     _EdgeColor.rgb,
                     edge
                 );
-                float innerAlpha =
-                    _InnerColor.a * lerp(0.72, 1.0, innerPattern);
+                float innerAlpha = _InnerColor.a *
+                    (1.0 + warningPulse * _PulseStrength);
                 float alpha = lerp(
                     innerAlpha,
                     _EdgeColor.a * pulse,

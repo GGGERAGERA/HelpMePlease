@@ -6289,12 +6289,12 @@ MonoBehaviour:
   rainWorldMaterial: {fileID: 2100000, guid: 4c7fd535216f4b90bf61d62e90bb160d, type: 2}
   wetGroundIntensity: 0.32
   wetPatternScale: 2.8
-  screenDropsIntensity: 0.14
+  screenDropsIntensity: 0.06
   screenDropsFrequency: 0.35
-  goldenOverlayIntensity: 0.07
+  goldenOverlayIntensity: 0.025
   goldenColorFilter: {r: 1, g: 0.94, b: 0.78, a: 1}
   windVisualIntensity: 0.16
-  windLineDensity: 5.5
+  windLineDensity: 3
   windLineSpeed: 0.45
   globalLight: {fileID: 1615053065}
   darknessGlobalIntensity: 0.05
@@ -8981,7 +8981,6 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::WindRuleIndicator
   arrowTransform: {fileID: 900000000000003011}
-  windIndicatorPulseSpeed: 2.2
 --- !u!1 &900000000000003010
 GameObject:
   m_ObjectHideFlags: 0

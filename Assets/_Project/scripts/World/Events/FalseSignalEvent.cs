@@ -38,8 +38,6 @@ public sealed class FalseSignalEvent : WorldEvent
     [SerializeField, Min(0f)] private float ambushShakeMagnitude = 0.06f;
     [SerializeField] private Color falseSignalPulseColor =
         new(0.95f, 0.08f, 0.04f, 1f);
-    [SerializeField] private Color confirmedSignalPulseColor =
-        new(0.1f, 0.9f, 1f, 1f);
 
     [Header("Scene")]
     [SerializeField] private GameplayAreaService gameplayArea;
@@ -109,10 +107,6 @@ public sealed class FalseSignalEvent : WorldEvent
             return;
         }
 
-        RunMessageService.Instance?.ShowCustom(
-            "НАЙДИТЕ НАСТОЯЩИЙ СИГНАЛ",
-            "Проверьте сигнальные точки до истечения времени"
-        );
     }
 
     public void ResolveSignal(FalseSignalPoint signalPoint, bool isReal)
@@ -152,12 +146,6 @@ public sealed class FalseSignalEvent : WorldEvent
         hasRewardPosition = true;
         completionPending = true;
         FadeRemainingSignalPoints();
-        RunMessageService.Instance?.ShowWorldEventFeedback(
-            "СИГНАЛ ПОДТВЕРЖДЁН",
-            string.Empty,
-            confirmedSignalPulseColor,
-            feedbackPulseDuration
-        );
         CompleteEvent();
     }
 

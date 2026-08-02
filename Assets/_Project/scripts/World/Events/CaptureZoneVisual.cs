@@ -7,20 +7,12 @@ public sealed class CaptureZoneVisual : MonoBehaviour
 {
     private static readonly int EdgeWidthId =
         Shader.PropertyToID("_EdgeWidth");
-    private static readonly int PulseSpeedId =
-        Shader.PropertyToID("_PulseSpeed");
-    private static readonly int FillIntensityId =
-        Shader.PropertyToID("_FillIntensity");
     private static readonly int ProgressId =
         Shader.PropertyToID("_Progress");
-    private static readonly int PlayerInsideId =
-        Shader.PropertyToID("_PlayerInside");
     private static readonly int CompletionFlashId =
         Shader.PropertyToID("_CompletionFlash");
     private static readonly int FadeId =
         Shader.PropertyToID("_Fade");
-    private static readonly int VisualTimeId =
-        Shader.PropertyToID("_VisualTime");
 
     [Header("Material")]
     [SerializeField] private Material visualMaterial;
@@ -28,9 +20,7 @@ public sealed class CaptureZoneVisual : MonoBehaviour
     [Header("Capture Zone Visual")]
     [SerializeField, Min(1f)] private float visualRadiusMultiplier = 1.18f;
     [SerializeField, Range(0.01f, 0.3f)] private float edgeWidth = 0.075f;
-    [SerializeField, Min(0f)] private float pulseSpeed = 0.85f;
-    [SerializeField, Range(0f, 2f)] private float fillIntensity = 0.7f;
-    [SerializeField, Range(0f, 3f)] private float completionFlash = 1.8f;
+    [SerializeField, Range(0f, 3f)] private float completionFlash = 1.15f;
     [SerializeField, Min(0.01f)] private float fadeDuration = 0.45f;
     [SerializeField, Min(0.01f)] private float completionFadeDuration = 0.4f;
 
@@ -81,7 +71,6 @@ public sealed class CaptureZoneVisual : MonoBehaviour
 
         detachedForCompletion = true;
         visualProperties.SetFloat(ProgressId, 1f);
-        visualProperties.SetFloat(PlayerInsideId, 0f);
         visualProperties.SetFloat(FadeId, 1f);
         visualRenderer.SetPropertyBlock(visualProperties);
         visualObject.transform.SetParent(null, true);
@@ -142,23 +131,12 @@ public sealed class CaptureZoneVisual : MonoBehaviour
             return;
 
         visualProperties.SetFloat(EdgeWidthId, edgeWidth);
-        visualProperties.SetFloat(PulseSpeedId, pulseSpeed);
-        visualProperties.SetFloat(FillIntensityId, fillIntensity);
         visualProperties.SetFloat(
             ProgressId,
             captureZoneEvent != null ? captureZoneEvent.Progress : 0f
         );
-        visualProperties.SetFloat(
-            PlayerInsideId,
-            captureZoneEvent != null &&
-            captureZoneEvent.IsStarted &&
-            captureZoneEvent.IsPlayerInside
-                ? 1f
-                : 0f
-        );
         visualProperties.SetFloat(CompletionFlashId, 0f);
         visualProperties.SetFloat(FadeId, visualFade);
-        visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
         visualRenderer.SetPropertyBlock(visualProperties);
     }
 
@@ -205,8 +183,6 @@ public sealed class CaptureZoneCompletionVisual : MonoBehaviour
         Shader.PropertyToID("_CompletionFlash");
     private static readonly int FadeId =
         Shader.PropertyToID("_Fade");
-    private static readonly int VisualTimeId =
-        Shader.PropertyToID("_VisualTime");
 
     private MeshRenderer visualRenderer;
     private Mesh visualMesh;
@@ -247,10 +223,6 @@ public sealed class CaptureZoneCompletionVisual : MonoBehaviour
                     completionFlash * flashEnvelope
                 );
                 visualProperties.SetFloat(FadeId, fade);
-                visualProperties.SetFloat(
-                    VisualTimeId,
-                    Time.unscaledTime
-                );
                 visualRenderer.SetPropertyBlock(visualProperties);
             }
 

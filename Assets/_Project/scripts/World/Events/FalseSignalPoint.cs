@@ -8,16 +8,11 @@ public sealed class FalseSignalPoint : MonoBehaviour
     [SerializeField] private Color color = new(1f, 0.35f, 0.1f, 0.9f);
     [SerializeField, Min(0.1f)] private float visualRadius = 0.75f;
     [SerializeField, Min(8)] private int segments = 32;
-    [SerializeField, Min(1f)] private float glowRadiusMultiplier = 1.18f;
-    [SerializeField, Range(0f, 1f)] private float glowAlpha = 0.28f;
-    [SerializeField, Min(0f)] private float pulseSpeed = 2.2f;
-    [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.18f;
 
     private FalseSignalEvent owner;
     private bool isReal;
     private bool consumed;
     private LineRenderer coreRing;
-    private LineRenderer glowRing;
     private Collider2D signalCollider;
     private bool fading;
     private float fadeDuration;
@@ -54,10 +49,7 @@ public sealed class FalseSignalPoint : MonoBehaviour
             }
         }
 
-        float pulse = 0.5f + 0.5f * Mathf.Sin(
-            Time.unscaledTime * pulseSpeed * Mathf.PI * 2f
-        );
-        ApplyVisual(pulse);
+        ApplyVisual();
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -105,12 +97,7 @@ public sealed class FalseSignalPoint : MonoBehaviour
             return;
 
         coreRing = CreateRing(visualRadius, 0.15f, 3);
-        glowRing = CreateRing(
-            visualRadius * glowRadiusMultiplier,
-            0.24f,
-            2
-        );
-        ApplyVisual(0f);
+        ApplyVisual();
     }
 
     private LineRenderer CreateRing(
@@ -144,26 +131,15 @@ public sealed class FalseSignalPoint : MonoBehaviour
         return line;
     }
 
-    private void ApplyVisual(float pulse)
+    private void ApplyVisual()
     {
-        float pulseAmount = 1f + pulse * pulseStrength;
         Color coreColor = color;
-        coreColor.a *= visibility * Mathf.Lerp(0.82f, 1f, pulse);
-        Color outerColor = color;
-        outerColor.a = glowAlpha * visibility * Mathf.Lerp(0.65f, 1f, pulse);
+        coreColor.a *= visibility;
 
         if (coreRing != null)
         {
             coreRing.startColor = coreColor;
             coreRing.endColor = coreColor;
-            coreRing.widthMultiplier = pulseAmount;
-        }
-
-        if (glowRing != null)
-        {
-            glowRing.startColor = outerColor;
-            glowRing.endColor = outerColor;
-            glowRing.widthMultiplier = pulseAmount;
         }
     }
 
@@ -171,7 +147,5 @@ public sealed class FalseSignalPoint : MonoBehaviour
     {
         if (coreRing != null)
             coreRing.enabled = enabled;
-        if (glowRing != null)
-            glowRing.enabled = enabled;
     }
 }

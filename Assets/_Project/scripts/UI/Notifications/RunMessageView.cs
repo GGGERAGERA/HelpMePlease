@@ -94,7 +94,7 @@ public sealed class RunMessageView : MonoBehaviour
         routine = StartCoroutine(WorldEventStartRoutine(
             title,
             accentColor,
-            Mathf.Clamp(duration, 0.5f, 0.8f)
+            Mathf.Clamp(duration, 0.2f, 0.4f)
         ));
     }
 
@@ -223,9 +223,14 @@ public sealed class RunMessageView : MonoBehaviour
 
         if (backgroundImage != null)
         {
-            Color pulseColor = Color.Lerp(Color.black, accentColor, 0.3f);
-            pulseColor.a = 0.42f;
-            backgroundImage.color = pulseColor;
+            backgroundImage.color = string.IsNullOrWhiteSpace(description)
+                ? Color.clear
+                : new Color(
+                    accentColor.r * 0.18f,
+                    accentColor.g * 0.18f,
+                    accentColor.b * 0.18f,
+                    0.34f
+                );
             backgroundImage.raycastTarget = false;
         }
     }

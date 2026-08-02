@@ -19,10 +19,6 @@ public sealed class EvacuationCorridorEvent : WorldEvent
         Shader.PropertyToID("_CorridorRatio");
     private static readonly int OutsideDarknessId =
         Shader.PropertyToID("_OutsideDarkness");
-    private static readonly int EdgeGlowId =
-        Shader.PropertyToID("_EdgeGlow");
-    private static readonly int PulseSpeedId =
-        Shader.PropertyToID("_PulseSpeed");
     private static readonly int VisualTimeId =
         Shader.PropertyToID("_VisualTime");
 
@@ -70,19 +66,12 @@ public sealed class EvacuationCorridorEvent : WorldEvent
     private float dangerOutsideDarkness = 0.62f;
     [SerializeField, Min(0.01f)] private float outsideDarkenDuration = 0.32f;
     [SerializeField, Min(0.01f)] private float insideRestoreDuration = 0.16f;
-    [SerializeField, Range(0f, 2f)] private float edgeGlow = 0.85f;
-    [SerializeField, Min(0f)] private float pulseSpeed = 1f;
     [SerializeField, Min(0.01f)] private float revealDuration = 0.65f;
     [SerializeField, Min(0.01f)] private float fadeDuration = 0.45f;
 
     [Header("Feedback")]
-    [SerializeField, Min(0.1f)] private float dangerPulseDuration = 0.38f;
     [SerializeField, Min(0f)] private float dangerShakeDuration = 0.16f;
     [SerializeField, Min(0f)] private float dangerShakeMagnitude = 0.045f;
-    [SerializeField] private Color dangerPulseColor =
-        new(0.95f, 0.07f, 0.03f, 1f);
-    [SerializeField] private Color completionPulseColor =
-        new(0.08f, 1f, 0.68f, 1f);
 
     [Header("Scene")]
     [SerializeField] private GameplayAreaService gameplayArea;
@@ -190,10 +179,6 @@ public sealed class EvacuationCorridorEvent : WorldEvent
         outsideDamageTimer = 0f;
         corridorActive = true;
 
-        RunMessageService.Instance?.ShowCustom(
-            "ЭВАКУАЦИОННЫЙ КОРИДОР",
-            "Следуйте внутри безопасной зоны до точки эвакуации"
-        );
     }
 
     private bool TryConfigurePath()
@@ -353,12 +338,6 @@ public sealed class EvacuationCorridorEvent : WorldEvent
 
         if (!IsPlayerInside && wasPlayerInside)
         {
-            RunMessageService.Instance?.ShowWorldEventFeedback(
-                "ВНЕ КОРИДОРА",
-                "ВЕРНИТЕСЬ В БЕЗОПАСНУЮ ЗОНУ",
-                dangerPulseColor,
-                dangerPulseDuration
-            );
             CameraShake.Instance?.Shake(
                 dangerShakeDuration,
                 dangerShakeMagnitude
@@ -425,12 +404,6 @@ public sealed class EvacuationCorridorEvent : WorldEvent
         corridorCollider.enabled = false;
         targetVisualFade = 0f;
         completionPending = true;
-        RunMessageService.Instance?.ShowWorldEventFeedback(
-            "ТОЧКА ЭВАКУАЦИИ ДОСТИГНУТА",
-            string.Empty,
-            completionPulseColor,
-            dangerPulseDuration
-        );
     }
 
     private void FailCorridor()
@@ -604,8 +577,6 @@ public sealed class EvacuationCorridorEvent : WorldEvent
             OutsideDarknessId,
             currentOutsideDarkness
         );
-        corridorVisualProperties.SetFloat(EdgeGlowId, edgeGlow);
-        corridorVisualProperties.SetFloat(PulseSpeedId, pulseSpeed);
         corridorVisualProperties.SetFloat(
             VisualTimeId,
             Time.unscaledTime

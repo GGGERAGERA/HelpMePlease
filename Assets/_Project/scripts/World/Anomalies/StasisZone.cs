@@ -8,10 +8,6 @@ public sealed class StasisZone : LocalAnomalyZone
         Shader.PropertyToID("_EdgeWidth");
     private static readonly int PulseSpeedId =
         Shader.PropertyToID("_PulseSpeed");
-    private static readonly int PulseStrengthId =
-        Shader.PropertyToID("_PulseStrength");
-    private static readonly int DistortionStrengthId =
-        Shader.PropertyToID("_DistortionStrength");
     private static readonly int VisualTimeId =
         Shader.PropertyToID("_VisualTime");
 
@@ -21,11 +17,8 @@ public sealed class StasisZone : LocalAnomalyZone
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
     [SerializeField, Min(1f)] private float visualRadiusMultiplier = 1.08f;
-    [SerializeField, Range(0.01f, 0.4f)] private float edgeWidth = 0.18f;
-    [SerializeField, Min(0f)] private float pulseSpeed = 0.65f;
-    [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.18f;
-    [SerializeField, Range(0f, 0.25f)]
-    private float distortionStrength = 0.035f;
+    [SerializeField, Range(0.01f, 0.4f)] private float edgeWidth = 0.14f;
+    [SerializeField, Min(0f)] private float pulseSpeed = 0.28f;
     [SerializeField, Range(0.6f, 1f)] private float fadeDuration = 0.8f;
 
     private CircleCollider2D zoneCollider;
@@ -253,11 +246,6 @@ public sealed class StasisZone : LocalAnomalyZone
         visualProperties.SetFloat(FadeId, visualFade);
         visualProperties.SetFloat(EdgeWidthId, edgeWidth);
         visualProperties.SetFloat(PulseSpeedId, pulseSpeed);
-        visualProperties.SetFloat(PulseStrengthId, pulseStrength);
-        visualProperties.SetFloat(
-            DistortionStrengthId,
-            distortionStrength
-        );
         visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
         visualRenderer.SetPropertyBlock(visualProperties);
     }

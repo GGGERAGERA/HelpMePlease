@@ -94,13 +94,8 @@ MonoBehaviour:
   dangerOutsideDarkness: 0.62
   outsideDarkenDuration: 0.32
   insideRestoreDuration: 0.16
-  edgeGlow: 0.85
-  pulseSpeed: 1
   revealDuration: 0.65
   fadeDuration: 0.45
-  dangerPulseDuration: 0.38
   dangerShakeDuration: 0.16
   dangerShakeMagnitude: 0.045
-  dangerPulseColor: {r: 0.95, g: 0.07, b: 0.03, a: 1}
-  completionPulseColor: {r: 0.08, g: 1, b: 0.68, a: 1}
   gameplayArea: {fileID: 0}
