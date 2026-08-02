@@ -25,12 +25,11 @@ public sealed class ExplosiveZone : LocalAnomalyZone
 
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
-    [SerializeField, Min(1f)] private float visualRadiusMultiplier = 1.08f;
     [SerializeField, Range(0.01f, 0.4f)] private float edgeWidth = 0.18f;
     [SerializeField, Min(0f)] private float pulseSpeed = 0.22f;
     [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.35f;
     [SerializeField, Range(0f, 0.25f)]
-    private float distortionStrength = 0.025f;
+    private float distortionStrength = 0.003f;
     [SerializeField] private Color innerColor =
         new(0.09f, 0.012f, 0.002f, 0.1f);
     [SerializeField] private Color edgeColor =
@@ -43,7 +42,6 @@ public sealed class ExplosiveZone : LocalAnomalyZone
     private readonly HashSet<EnemyHealth> damagedEnemies = new();
     private readonly List<GameObject> activeExplosionFx = new();
 
-    private CircleCollider2D zoneCollider;
     private MeshRenderer visualRenderer;
     private MaterialPropertyBlock visualProperties;
     private ContactFilter2D explosionFilter;
@@ -60,8 +58,6 @@ public sealed class ExplosiveZone : LocalAnomalyZone
 
     private void Awake()
     {
-        zoneCollider = GetComponent<CircleCollider2D>();
-        zoneCollider.isTrigger = true;
         explosionFilter = ContactFilter2D.noFilter;
         explosionFilter.useTriggers = true;
         BuildVisual();
@@ -83,15 +79,15 @@ public sealed class ExplosiveZone : LocalAnomalyZone
             Destroy(gameObject);
     }
 
-    protected override void InitializeFromData(LocalAnomalyData data)
+    protected override void InitializeFromData(
+        LocalAnomalyData data,
+        Vector2 areaSize)
     {
-        float safeRadius = data.ZoneRadius;
         explosionDelay = data.ExplosionDelay;
         explosionRadius = data.ExplosionRadius;
         explosionDamage = data.ExplosionDamage;
         explosionEffectPrefab = data.ExplosionEffectPrefab;
-        zoneCollider.radius = safeRadius;
-        ConfigureVisual(safeRadius);
+        ConfigureVisual(areaSize);
         effectsCleared = false;
         despawning = false;
         visualFade = 0f;
@@ -307,8 +303,8 @@ public sealed class ExplosiveZone : LocalAnomalyZone
 
         playerColliderCount = 0;
 
-        if (zoneCollider != null)
-            zoneCollider.enabled = false;
+        if (AreaCollider != null)
+            AreaCollider.enabled = false;
     }
 
     public override void Despawn()
@@ -358,15 +354,13 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         ApplyVisualProperties();
     }
 
-    private void ConfigureVisual(float radius)
+    private void ConfigureVisual(Vector2 areaSize)
     {
         if (visualRenderer == null)
             return;
 
-        float diameter =
-            radius * 2f * Mathf.Max(1f, visualRadiusMultiplier);
         visualRenderer.transform.localScale =
-            new Vector3(diameter, diameter, 1f);
+            new Vector3(areaSize.x / 0.9f, areaSize.y / 0.9f, 1f);
     }
 
     private void ApplyVisualProperties()

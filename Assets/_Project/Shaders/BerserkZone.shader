@@ -68,23 +68,24 @@ Shader "World/Berserk Zone"
             half4 Frag(Varyings input) : SV_Target
             {
                 float2 samplePoint = (input.uv - 0.5) * 2.0;
-                float radius = length(samplePoint);
-                float angle = atan2(samplePoint.y, samplePoint.x);
+                float2 rectanglePoint = abs(samplePoint);
                 float time = _VisualTime * _PulseSpeed;
 
-                float coarseWave =
-                    sin(angle * 7.0 + 0.35) * 0.65 +
-                    sin(angle * 13.0 - 0.8) * 0.35;
-                float boundary =
-                    0.91 + coarseWave * _DistortionStrength;
-                float antialias = max(fwidth(radius), 0.002);
+                float edgeCoordinate = rectanglePoint.x > rectanglePoint.y
+                    ? rectanglePoint.y
+                    : rectanglePoint.x;
+                float boundary = 0.9 + sin(edgeCoordinate * 13.0) *
+                    min(_DistortionStrength, 0.012);
+                float signedDistance =
+                    max(rectanglePoint.x, rectanglePoint.y) - boundary;
+                float antialias = max(fwidth(signedDistance), 0.002);
                 float shape = 1.0 - smoothstep(
-                    boundary - antialias,
-                    boundary + antialias,
-                    radius
+                    -antialias,
+                    antialias,
+                    signedDistance
                 );
 
-                float edgeDistance = abs(radius - boundary);
+                float edgeDistance = abs(signedDistance);
                 float edge = 1.0 - smoothstep(
                     _EdgeWidth * 0.35,
                     _EdgeWidth,

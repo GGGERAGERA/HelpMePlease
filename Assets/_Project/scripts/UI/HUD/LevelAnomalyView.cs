@@ -22,6 +22,7 @@ public sealed class LevelAnomalyView : MonoBehaviour
     private TextMeshProUGUI revealNameText;
     private TextMeshProUGUI revealDescriptionText;
     private CanvasGroup pinnedGroup;
+    private RectTransform pinnedRect;
     private TextMeshProUGUI pinnedNameText;
     private TextMeshProUGUI pinnedDescriptionText;
     private Coroutine localCardRoutine;
@@ -76,6 +77,7 @@ public sealed class LevelAnomalyView : MonoBehaviour
         overlayBackground.enabled = true;
         overlayGroup.gameObject.SetActive(true);
         pinnedGroup.gameObject.SetActive(false);
+        pinnedRect.anchoredPosition = new Vector2(-20f, -165f);
 
         overlayGroup.alpha = 0f;
         sectorGroup.alpha = 0f;
@@ -126,6 +128,7 @@ public sealed class LevelAnomalyView : MonoBehaviour
         revealCardGroup.alpha = 0f;
         pinnedGroup.alpha = 0f;
         pinnedGroup.gameObject.SetActive(false);
+        pinnedRect.anchoredPosition = new Vector2(-20f, -165f);
         overlayGroup.gameObject.SetActive(false);
         overlayBackground.enabled = true;
         rootGroup.alpha = 0f;
@@ -140,30 +143,11 @@ public sealed class LevelAnomalyView : MonoBehaviour
         rootGroup.alpha = 1f;
         rootGroup.blocksRaycasts = false;
         overlayBackground.enabled = false;
-        overlayGroup.gameObject.SetActive(true);
-        overlayGroup.alpha = 1f;
-        sectorGroup.alpha = 0f;
-        alertGroup.alpha = 0f;
-        flashImage.color = new Color(Cyan.r, Cyan.g, Cyan.b, 0f);
-        pinnedGroup.alpha = 0f;
-        pinnedGroup.gameObject.SetActive(false);
-        revealCardGroup.alpha = 0f;
-        revealCardRect.anchoredPosition = Vector2.zero;
-        revealCardRect.localScale = Vector3.one * 0.7f;
-
-        yield return ScaleAndFadeCard(0.25f);
-        yield return ScaleCard(
-            Vector3.one * 1.08f,
-            Vector3.one,
-            0.08f
-        );
-        yield return WaitRealtime(0.45f);
-        yield return DockCard(0.28f);
-
-        revealCardGroup.alpha = 0f;
-        pinnedGroup.gameObject.SetActive(true);
-        pinnedGroup.alpha = 1f;
         overlayGroup.gameObject.SetActive(false);
+        revealCardGroup.alpha = 0f;
+        pinnedRect.anchoredPosition = new Vector2(-20f, -20f);
+        pinnedGroup.gameObject.SetActive(true);
+        yield return Fade(pinnedGroup, 0f, 1f, 0.15f);
         overlayBackground.enabled = true;
         localCardRoutine = null;
     }
@@ -264,7 +248,7 @@ public sealed class LevelAnomalyView : MonoBehaviour
     private void BuildPinnedCard()
     {
         GameObject pinned = CreateUiObject("ActiveAnomalyCard", transform);
-        RectTransform pinnedRect = pinned.GetComponent<RectTransform>();
+        pinnedRect = pinned.GetComponent<RectTransform>();
         pinnedRect.anchorMin = new Vector2(1f, 1f);
         pinnedRect.anchorMax = new Vector2(1f, 1f);
         pinnedRect.pivot = new Vector2(1f, 1f);

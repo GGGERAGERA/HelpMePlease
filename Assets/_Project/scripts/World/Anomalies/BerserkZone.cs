@@ -20,18 +20,16 @@ public sealed class BerserkZone : LocalAnomalyZone
 
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
-    [SerializeField, Min(1f)] private float visualRadiusMultiplier = 1.08f;
     [SerializeField, Range(0.01f, 0.4f)] private float edgeWidth = 0.12f;
     [SerializeField, Min(0f)] private float pulseSpeed = 0.45f;
     [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.12f;
     [SerializeField, Range(0f, 0.25f)]
-    private float distortionStrength = 0.085f;
+    private float distortionStrength = 0.008f;
     [SerializeField, Range(0.6f, 1f)] private float fadeDuration = 0.8f;
 
     private readonly Dictionary<EnemyMovement, int>
         enemyColliderCounts = new();
 
-    private CircleCollider2D zoneCollider;
     private MeshRenderer visualRenderer;
     private MaterialPropertyBlock visualProperties;
     private float speedMultiplier = 1.5f;
@@ -44,8 +42,6 @@ public sealed class BerserkZone : LocalAnomalyZone
 
     private void Awake()
     {
-        zoneCollider = GetComponent<CircleCollider2D>();
-        zoneCollider.isTrigger = true;
         BuildVisual();
     }
 
@@ -70,12 +66,12 @@ public sealed class BerserkZone : LocalAnomalyZone
             Destroy(gameObject);
     }
 
-    protected override void InitializeFromData(LocalAnomalyData data)
+    protected override void InitializeFromData(
+        LocalAnomalyData data,
+        Vector2 areaSize)
     {
-        float safeRadius = data.ZoneRadius;
         speedMultiplier = data.EnemySpeedMultiplier;
-        zoneCollider.radius = safeRadius;
-        ConfigureVisual(safeRadius);
+        ConfigureVisual(areaSize);
         effectsCleared = false;
         despawning = false;
         visualFade = 0f;
@@ -234,8 +230,8 @@ public sealed class BerserkZone : LocalAnomalyZone
 
         playerColliderCount = 0;
 
-        if (zoneCollider != null)
-            zoneCollider.enabled = false;
+        if (AreaCollider != null)
+            AreaCollider.enabled = false;
     }
 
     public override void Despawn()
@@ -298,15 +294,13 @@ public sealed class BerserkZone : LocalAnomalyZone
         ApplyVisualProperties();
     }
 
-    private void ConfigureVisual(float radius)
+    private void ConfigureVisual(Vector2 areaSize)
     {
         if (visualRenderer == null)
             return;
 
-        float diameter =
-            radius * 2f * Mathf.Max(1f, visualRadiusMultiplier);
         visualRenderer.transform.localScale =
-            new Vector3(diameter, diameter, 1f);
+            new Vector3(areaSize.x / 0.9f, areaSize.y / 0.9f, 1f);
     }
 
     private void ApplyVisualProperties()

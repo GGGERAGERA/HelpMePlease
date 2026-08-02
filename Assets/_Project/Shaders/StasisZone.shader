@@ -66,27 +66,34 @@ Shader "World/Stasis Zone"
             half4 Frag(Varyings input) : SV_Target
             {
                 float2 samplePoint = (input.uv - 0.5) * 2.0;
-                float radius = length(samplePoint);
+                float2 rectanglePoint = abs(samplePoint);
                 float time = _VisualTime * _PulseSpeed;
-                float boundary = 0.91;
-                float antialias = max(fwidth(radius), 0.002);
+                float edgeCoordinate = rectanglePoint.x > rectanglePoint.y
+                    ? rectanglePoint.y
+                    : rectanglePoint.x;
+                float boundary = 0.9 +
+                    sin(edgeCoordinate * 11.0 + 0.4) * 0.004;
+                float signedDistance =
+                    max(rectanglePoint.x, rectanglePoint.y) - boundary;
+                float antialias = max(fwidth(signedDistance), 0.002);
                 float shape = 1.0 - smoothstep(
-                    boundary - antialias,
-                    boundary + antialias,
-                    radius
+                    -antialias,
+                    antialias,
+                    signedDistance
                 );
 
-                float edgeDistance = abs(radius - boundary);
+                float edgeDistance = abs(signedDistance);
                 float edge = 1.0 - smoothstep(
                     _EdgeWidth * 0.25,
                     _EdgeWidth,
                     edgeDistance
                 );
+                float distanceFromEdge = max(0.0, -signedDistance);
                 float rippleWave =
-                    sin(radius * 24.0 - time);
+                    sin(distanceFromEdge * 24.0 - time);
                 float ripple = smoothstep(0.88, 1.0, rippleWave);
                 ripple *= saturate(1.0 - edge) *
-                    smoothstep(0.18, 0.42, radius);
+                    smoothstep(0.08, 0.3, distanceFromEdge);
                 half3 color = lerp(
                     _InnerColor.rgb,
                     _RippleColor.rgb,
@@ -97,7 +104,7 @@ Shader "World/Stasis Zone"
                 float innerAlpha = _InnerColor.a;
                 float alpha =
                     innerAlpha +
-                    ripple * _RippleColor.a +
+                    ripple * _RippleColor.a * 0.55 +
                     edge * _EdgeColor.a;
 
                 return half4(color, alpha * shape * _Fade);

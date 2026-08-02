@@ -6234,10 +6234,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelAnomalyController
   visual: {fileID: 2147010008}
-  anomalyCount: 2
+  anomalyCount: 5
+  targetCoverage: 0.7
   edgePadding: 1
-  minimumDistanceFromPlayerStart: 5
-  minimumDistanceBetweenAnomalies: 2
   gameplayArea: {fileID: 2147020003}
 --- !u!114 &2147010008
 MonoBehaviour:

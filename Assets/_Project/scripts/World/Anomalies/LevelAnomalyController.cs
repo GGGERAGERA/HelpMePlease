@@ -3,35 +3,57 @@ using UnityEngine;
 
 public sealed class LevelAnomalyController : MonoBehaviour
 {
-    private const int LocalAnomalyPositionAttempts = 64;
-
     public readonly struct LocalAnomalyZoneGeometry
     {
         public LocalAnomalyType Type { get; }
         public Vector2 Center { get; }
-        public float Radius { get; }
+        public Vector2 Size { get; }
 
         public LocalAnomalyZoneGeometry(
             LocalAnomalyType type,
             Vector2 center,
-            float radius)
+            Vector2 size)
         {
             Type = type;
             Center = center;
-            Radius = radius;
+            Size = size;
         }
     }
 
     private readonly struct LocalAnomalyPlacement
     {
         public readonly Vector3 Position;
-        public readonly float Radius;
+        public readonly Vector2 Size;
+        public readonly LocalAnomalyData Data;
 
-        public LocalAnomalyPlacement(Vector3 position, float radius)
+        public LocalAnomalyPlacement(
+            Vector3 position,
+            Vector2 size,
+            LocalAnomalyData data)
         {
             Position = position;
-            Radius = radius;
+            Size = size;
+            Data = data;
         }
+    }
+
+    private readonly struct RegionRequest
+    {
+        public readonly LocalAnomalyData Data;
+        public readonly Vector2 Size;
+
+        public RegionRequest(LocalAnomalyData data, Vector2 size)
+        {
+            Data = data;
+            Size = size;
+        }
+    }
+
+    private sealed class RegionShelf
+    {
+        public readonly List<RegionRequest> Regions = new();
+        public float UsedWidth;
+        public float Height;
     }
 
     private readonly struct ActiveLocalZone
@@ -52,10 +74,9 @@ public sealed class LevelAnomalyController : MonoBehaviour
     [SerializeField] private LocalAnomalyVisual visual;
 
     [Header("Placement")]
-    [SerializeField, Range(1, 2)] private int anomalyCount = 1;
+    [SerializeField, Range(3, 5)] private int anomalyCount = 5;
+    [SerializeField, Range(0.65f, 0.8f)] private float targetCoverage = 0.7f;
     [SerializeField, Min(0f)] private float edgePadding = 1f;
-    [SerializeField, Min(0f)] private float minimumDistanceFromPlayerStart = 5f;
-    [SerializeField, Min(0f)] private float minimumDistanceBetweenAnomalies = 2f;
     [SerializeField] private GameplayAreaService gameplayArea;
 
     private readonly List<LocalAnomalyZone> spawnedZones = new();
@@ -68,6 +89,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
     public LocalAnomalyData ActiveAnomaly => activeAnomaly;
     public bool IsIntroComplete { get; private set; } = true;
+    public float CurrentCoverage { get; private set; }
 
     public bool TryClaimExplosiveDeath(EnemyHealth enemy)
     {
@@ -136,8 +158,8 @@ public sealed class LevelAnomalyController : MonoBehaviour
             if (zone == null || !zone.isActiveAndEnabled)
                 continue;
 
-            CircleCollider2D collider =
-                zone.GetComponent<CircleCollider2D>();
+            BoxCollider2D collider =
+                zone.GetComponent<BoxCollider2D>();
 
             if (collider == null || !collider.enabled)
                 continue;
@@ -146,18 +168,18 @@ public sealed class LevelAnomalyController : MonoBehaviour
                 collider.offset
             );
             Vector3 scale = collider.transform.lossyScale;
-            float radius = collider.radius * Mathf.Max(
-                Mathf.Abs(scale.x),
-                Mathf.Abs(scale.y)
+            Vector2 size = Vector2.Scale(
+                collider.size,
+                new Vector2(Mathf.Abs(scale.x), Mathf.Abs(scale.y))
             );
 
-            if (radius <= Mathf.Epsilon)
+            if (size.x <= Mathf.Epsilon || size.y <= Mathf.Epsilon)
                 continue;
 
             result.Add(new LocalAnomalyZoneGeometry(
                 zone.AnomalyType,
                 center,
-                radius
+                size
             ));
         }
     }
@@ -227,23 +249,10 @@ public sealed class LevelAnomalyController : MonoBehaviour
     {
         ResolveGameplayArea();
 
-        if (gameplayArea == null)
+        if (gameplayArea == null || gameplayArea.PlayableArea == null)
         {
             Debug.LogWarning(
-                "[LevelAnomalyController] GameplayAreaService is " +
-                "missing. Continuing without local anomalies.",
-                this
-            );
-            return;
-        }
-
-        GameObject playerObject =
-            GameObject.FindGameObjectWithTag("Player");
-
-        if (playerObject == null)
-        {
-            Debug.LogWarning(
-                "[LevelAnomalyController] Player was not found. " +
+                "[LevelAnomalyController] PlayableArea is missing. " +
                 "Continuing without local anomalies.",
                 this
             );
@@ -255,38 +264,78 @@ public sealed class LevelAnomalyController : MonoBehaviour
         if (zoneData.Count == 0)
             return;
 
-        Vector3 playerStart = playerObject.transform.position;
-        List<LocalAnomalyPlacement> placements = new();
-        int count = Mathf.Clamp(anomalyCount, 1, 2);
+        zoneData.Sort((left, right) =>
+            left.AnomalyType.CompareTo(right.AnomalyType));
+
+        int count = Mathf.Clamp(anomalyCount, 3, 5);
+        List<LocalAnomalyData> regionData = new(count);
+        float baseArea = 0f;
 
         for (int i = 0; i < count; i++)
         {
             LocalAnomalyData data = zoneData[i % zoneData.Count];
-            float radius = data.ZoneRadius;
+            regionData.Add(data);
+            Vector2 baseSize = data.ZoneSize;
+            baseArea += baseSize.x * baseSize.y;
+        }
 
-            if (!TryGetLocalAnomalyPosition(
-                    playerStart,
-                    radius,
-                    placements,
-                    out Vector3 position))
+        Bounds bounds = gameplayArea.PlayableArea.bounds;
+        float playableArea = bounds.size.x * bounds.size.y;
+
+        if (baseArea <= Mathf.Epsilon || playableArea <= Mathf.Epsilon)
+            return;
+
+        float scale = Mathf.Sqrt(
+            playableArea * Mathf.Clamp(targetCoverage, 0.65f, 0.8f) /
+            baseArea
+        );
+        List<LocalAnomalyPlacement> placements = null;
+
+        for (int attempt = 0; attempt < 16; attempt++)
+        {
+            if (TryBuildRegionPlacements(
+                    regionData,
+                    bounds,
+                    scale,
+                    out placements))
             {
-                Debug.LogWarning(
-                    "[LevelAnomalyController] No valid position was " +
-                    $"found for local anomaly {i + 1}.",
-                    this
-                );
                 break;
             }
 
+            scale *= 0.97f;
+        }
+
+        if (placements == null || placements.Count == 0)
+        {
+            Debug.LogWarning(
+                "[LevelAnomalyController] Rectangular anomaly regions " +
+                "do not fit inside PlayableArea.",
+                this
+            );
+            return;
+        }
+
+        float coveredArea = 0f;
+
+        for (int i = 0; i < placements.Count; i++)
+        {
+            LocalAnomalyPlacement placement = placements[i];
+
             LocalAnomalyZone zone = Instantiate(
-                data.ZonePrefab,
-                position,
+                placement.Data.ZonePrefab,
+                placement.Position,
                 Quaternion.identity
             );
-            zone.Initialize(data, this);
+            zone.Initialize(
+                placement.Data,
+                this,
+                placement.Size
+            );
             spawnedZones.Add(zone);
-            placements.Add(new LocalAnomalyPlacement(position, radius));
+            coveredArea += placement.Size.x * placement.Size.y;
         }
+
+        CurrentCoverage = coveredArea / playableArea;
     }
 
     private static List<LocalAnomalyData> BuildZoneData(
@@ -316,94 +365,148 @@ public sealed class LevelAnomalyController : MonoBehaviour
         result.Add(data);
     }
 
-    private bool TryGetLocalAnomalyPosition(
-        Vector3 playerStart,
-        float radius,
-        List<LocalAnomalyPlacement> existingPlacements,
-        out Vector3 position)
+    private bool TryBuildRegionPlacements(
+        List<LocalAnomalyData> regionData,
+        Bounds bounds,
+        float scale,
+        out List<LocalAnomalyPlacement> placements)
     {
-        position = default;
+        placements = null;
+        float padding = Mathf.Max(0f, edgePadding);
+        float availableWidth = bounds.size.x - padding * 2f;
+        float availableHeight = bounds.size.y - padding * 2f;
 
-        if (gameplayArea == null || gameplayArea.SpawnArea == null)
+        if (availableWidth <= 0f || availableHeight <= 0f)
             return false;
 
-        float requiredPlayerDistance =
-            radius + Mathf.Max(0f, minimumDistanceFromPlayerStart);
-        float placementPadding = radius + Mathf.Max(0f, edgePadding);
-        float maximumDistance = gameplayArea.SpawnArea.bounds.size.magnitude;
+        List<RegionRequest> requests = new(regionData.Count);
 
-        for (int attempt = 0;
-             attempt < LocalAnomalyPositionAttempts;
-             attempt++)
+        for (int i = 0; i < regionData.Count; i++)
         {
-            if (!gameplayArea.TryGetSpawnPosition(
-                    playerStart,
-                    requiredPlayerDistance,
-                    maximumDistance,
-                    1,
-                    placementPadding,
-                    out Vector3 candidate))
+            LocalAnomalyData data = regionData[i];
+            requests.Add(new RegionRequest(data, data.ZoneSize * scale));
+        }
+
+        requests.Sort((left, right) =>
+        {
+            int heightOrder = right.Size.y.CompareTo(left.Size.y);
+            return heightOrder != 0
+                ? heightOrder
+                : right.Size.x.CompareTo(left.Size.x);
+        });
+
+        List<RegionShelf> shelves = new();
+
+        for (int i = 0; i < requests.Count; i++)
+        {
+            RegionRequest request = requests[i];
+            bool added = false;
+
+            for (int shelfIndex = 0;
+                 shelfIndex < shelves.Count;
+                 shelfIndex++)
             {
-                continue;
-            }
+                RegionShelf shelf = shelves[shelfIndex];
 
-            if (Vector2.Distance(candidate, playerStart) <
-                requiredPlayerDistance)
-            {
-                continue;
-            }
-
-            if (!IsCircleInsidePlayableArea(candidate, placementPadding))
-                continue;
-
-            bool separated = true;
-
-            for (int i = 0; i < existingPlacements.Count; i++)
-            {
-                LocalAnomalyPlacement existing = existingPlacements[i];
-                float requiredZoneDistance =
-                    radius +
-                    existing.Radius +
-                    Mathf.Max(0f, minimumDistanceBetweenAnomalies);
-
-                if (Vector2.Distance(candidate, existing.Position) <
-                    requiredZoneDistance)
+                if (request.Size.y <= shelf.Height + 0.001f &&
+                    shelf.UsedWidth + request.Size.x <=
+                    availableWidth + 0.001f)
                 {
-                    separated = false;
+                    shelf.Regions.Add(request);
+                    shelf.UsedWidth += request.Size.x;
+                    added = true;
                     break;
                 }
             }
 
-            if (!separated)
+            if (added)
                 continue;
 
-            position = candidate;
-            return true;
+            if (request.Size.x > availableWidth + 0.001f ||
+                request.Size.y > availableHeight + 0.001f)
+            {
+                return false;
+            }
+
+            RegionShelf newShelf = new()
+            {
+                UsedWidth = request.Size.x,
+                Height = request.Size.y
+            };
+            newShelf.Regions.Add(request);
+            shelves.Add(newShelf);
         }
 
-        return false;
-    }
+        float usedHeight = 0f;
 
-    private bool IsCircleInsidePlayableArea(Vector2 center, float radius)
-    {
-        const int Samples = 16;
+        for (int i = 0; i < shelves.Count; i++)
+            usedHeight += shelves[i].Height;
 
-        if (!gameplayArea.IsInsidePlayableArea(center))
+        if (usedHeight > availableHeight + 0.001f)
             return false;
 
-        for (int i = 0; i < Samples; i++)
+        if (shelves.Count == 3)
         {
-            float angle = i * Mathf.PI * 2f / Samples;
-            Vector2 sample = center + new Vector2(
-                Mathf.Cos(angle),
-                Mathf.Sin(angle)
-            ) * radius;
+            RegionShelf middle = shelves[2];
+            shelves.RemoveAt(2);
+            shelves.Insert(1, middle);
+        }
 
-            if (!gameplayArea.IsInsidePlayableArea(sample))
-                return false;
+        placements = new List<LocalAnomalyPlacement>(regionData.Count);
+        float top = bounds.max.y - padding;
+
+        for (int shelfIndex = 0;
+             shelfIndex < shelves.Count;
+             shelfIndex++)
+        {
+            RegionShelf shelf = shelves[shelfIndex];
+            float left = bounds.min.x + padding;
+            float centerY = top - shelf.Height * 0.5f;
+
+            for (int regionIndex = 0;
+                 regionIndex < shelf.Regions.Count;
+                 regionIndex++)
+            {
+                RegionRequest request = shelf.Regions[regionIndex];
+                Vector2 center = new(
+                    left + request.Size.x * 0.5f,
+                    centerY
+                );
+
+                if (!IsRectangleInsidePlayableArea(center, request.Size))
+                {
+                    placements = null;
+                    return false;
+                }
+
+                placements.Add(new LocalAnomalyPlacement(
+                    center,
+                    request.Size,
+                    request.Data
+                ));
+                left += request.Size.x;
+            }
+
+            top -= shelf.Height;
         }
 
         return true;
+    }
+
+    private bool IsRectangleInsidePlayableArea(
+        Vector2 center,
+        Vector2 size)
+    {
+        Vector2 halfSize = size * 0.5f;
+
+        return gameplayArea.IsInsidePlayableArea(
+                center + new Vector2(-halfSize.x, -halfSize.y)) &&
+            gameplayArea.IsInsidePlayableArea(
+                center + new Vector2(-halfSize.x, halfSize.y)) &&
+            gameplayArea.IsInsidePlayableArea(
+                center + new Vector2(halfSize.x, -halfSize.y)) &&
+            gameplayArea.IsInsidePlayableArea(
+                center + new Vector2(halfSize.x, halfSize.y));
     }
 
     private void CleanupLocalAnomalyZones()
@@ -419,6 +522,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
         spawnedZones.Clear();
         activeLocalZones.Clear();
         claimedExplosiveDeaths.Clear();
+        CurrentCoverage = 0f;
         visual?.Hide();
     }
 

@@ -40,7 +40,7 @@ public sealed class CaptureZoneVisual : MonoBehaviour
 
     private void OnEnable()
     {
-        visualFade = 0f;
+        visualFade = 1f;
         ApplyVisualProperties();
     }
 
@@ -49,8 +49,7 @@ public sealed class CaptureZoneVisual : MonoBehaviour
         if (visualRenderer == null || captureZoneEvent == null)
             return;
 
-        float targetFade = captureZoneEvent.IsStarted &&
-            !captureZoneEvent.IsCompleted
+        float targetFade = !captureZoneEvent.IsCompleted
             ? 1f
             : 0f;
         visualFade = Mathf.MoveTowards(

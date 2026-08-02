@@ -19,8 +19,9 @@ MonoBehaviour:
   pinnedDescription: "\u041F\u0435\u0440\u0435\u0434\u0432\u0438\u0436\u0435\u043D\u0438\u0435 \u0432\u043D\u0443\u0442\u0440\u0438 \u0437\u043E\u043D\u044B \u0437\u0430\u043C\u0435\u0434\u043B\u0435\u043D\u043E"
   selectionWeight: 1
   zonePrefab: {fileID: 550000000000000004, guid: c48e6099f1d941c1a6794bf75e2695a2, type: 3}
-  zoneRadius: 4
+  zoneSize: {x: 14, y: 10}
   enemySpeedMultiplier: 1
   playerSpeedMultiplier: 0.65
   additionalAnomalies:
   - {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}
+  - {fileID: 11400000, guid: 4e7a23f4bc9f4e65a021dd9d286ca003, type: 2}

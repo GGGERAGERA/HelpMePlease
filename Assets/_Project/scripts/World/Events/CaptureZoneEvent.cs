@@ -1,6 +1,5 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class CaptureZoneEvent : WorldEvent
 {
@@ -22,7 +21,6 @@ public class CaptureZoneEvent : WorldEvent
 
     [Header("UI")]
     [SerializeField] private TextMeshProUGUI timerText;
-    [SerializeField] private Slider progressSlider;
 
     private float currentHoldTime;
     private Transform player;
@@ -137,8 +135,6 @@ public class CaptureZoneEvent : WorldEvent
                 ? $"{Mathf.CeilToInt(timeLeft)}s"
                 : "ENTER";
 
-        if (progressSlider != null)
-            progressSlider.value = progress;
     }
 
     private void OnDrawGizmosSelected()
