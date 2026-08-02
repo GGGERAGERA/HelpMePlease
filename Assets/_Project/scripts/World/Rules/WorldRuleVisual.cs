@@ -42,6 +42,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
     [SerializeField] private Image fullscreenImage;
     [SerializeField] private Material visualMaterial;
     [SerializeField] private WindRuleIndicator windIndicator;
+    [SerializeField] private CondensationFogOverlay condensationFogOverlay;
 
     [Header("Rain / Existing Scene Effect")]
     [SerializeField] private GameObject rainEffect;
@@ -307,6 +308,10 @@ public sealed class WorldRuleVisual : MonoBehaviour
             case WorldRuleType.Golden:
                 SetGoldenActive(true);
                 break;
+
+            case WorldRuleType.Condensation:
+                SetCondensationActive(true);
+                break;
         }
     }
 
@@ -316,6 +321,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
         ClearRainAndDarkness();
         SetGoldenActive(false);
         SetWindActive(false);
+        SetCondensationActive(false);
         windIndicator?.Hide();
     }
 
@@ -364,6 +370,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
     private void SetNeutral()
     {
+        condensationFogOverlay?.HideImmediate();
         ClearRainAndDarkness();
         windIndicator?.Hide();
         currentSnowIntensity = 0f;
@@ -399,6 +406,29 @@ public sealed class WorldRuleVisual : MonoBehaviour
         UpdateRainResources();
         UpdateDarknessResources();
         UpdateGoldenResources();
+    }
+
+    private void SetCondensationActive(bool active)
+    {
+        if (condensationFogOverlay == null)
+        {
+            condensationFogOverlay =
+                CondensationFogOverlay.Instance;
+        }
+
+        if (condensationFogOverlay == null)
+        {
+            condensationFogOverlay =
+                FindFirstObjectByType<CondensationFogOverlay>();
+        }
+
+        if (condensationFogOverlay == null)
+            return;
+
+        if (active)
+            condensationFogOverlay.Show();
+        else
+            condensationFogOverlay.Hide();
     }
 
     private void ApplyRain()

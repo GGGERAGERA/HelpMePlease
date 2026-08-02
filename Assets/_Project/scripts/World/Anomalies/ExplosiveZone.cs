@@ -18,6 +18,14 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         Shader.PropertyToID("_PulseSharpness");
     private static readonly int RegionSizeId =
         Shader.PropertyToID("_RegionSize");
+    private static readonly int InnerPatternIntensityId =
+        Shader.PropertyToID("_InnerPatternIntensity");
+    private static readonly int InnerPatternSpeedId =
+        Shader.PropertyToID("_InnerPatternSpeed");
+    private static readonly int InnerPatternScaleId =
+        Shader.PropertyToID("_InnerPatternScale");
+    private static readonly int WarningPulseFrequencyId =
+        Shader.PropertyToID("_WarningPulseFrequency");
     private static readonly int InnerColorId =
         Shader.PropertyToID("_InnerColor");
     private static readonly int EdgeColorId =
@@ -31,8 +39,13 @@ public sealed class ExplosiveZone : LocalAnomalyZone
     [SerializeField, Min(0f)] private float pulseSpeed = 0.22f;
     [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.22f;
     [SerializeField, Min(1f)] private float pulseSharpness = 8f;
+    [SerializeField, Range(0f, 0.25f)]
+    private float innerPatternIntensity = 0.12f;
+    [SerializeField, Min(0f)] private float innerPatternSpeed = 0.7f;
+    [SerializeField, Min(0.75f)] private float innerPatternScale = 2.5f;
+    [SerializeField, Min(0f)] private float warningPulseFrequency = 0.35f;
     [SerializeField] private Color innerColor =
-        new(0.12f, 0.035f, 0.012f, 0.075f);
+        new(0.12f, 0.035f, 0.012f, 0.2f);
     [SerializeField] private Color edgeColor =
         new(1f, 0.32f, 0.025f, 0.78f);
     [SerializeField, Range(0.6f, 1f)] private float fadeDuration = 0.8f;
@@ -375,6 +388,16 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         visualProperties.SetFloat(PulseStrengthId, pulseStrength);
         visualProperties.SetFloat(PulseSharpnessId, pulseSharpness);
         visualProperties.SetVector(RegionSizeId, AreaSize);
+        visualProperties.SetFloat(
+            InnerPatternIntensityId,
+            innerPatternIntensity
+        );
+        visualProperties.SetFloat(InnerPatternSpeedId, innerPatternSpeed);
+        visualProperties.SetFloat(InnerPatternScaleId, innerPatternScale);
+        visualProperties.SetFloat(
+            WarningPulseFrequencyId,
+            warningPulseFrequency
+        );
         visualProperties.SetColor(InnerColorId, innerColor);
         visualProperties.SetColor(EdgeColorId, edgeColor);
         visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);

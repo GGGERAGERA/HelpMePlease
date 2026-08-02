@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e74dac74c1838a44383fc81aa6cac50f, type: 3}
+  m_Name: VS_L02_Condensation
+  m_EditorClassIdentifier: Assembly-CSharp::LevelNodeData
+  id: VS_L02_Condensation
+  nodeName: CONDENSATION
+  description: WIPE THE FOG WITH THE MOUSE
+  icon: {fileID: -1999676519, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
+  nodeType: 0
+  worldRule: {fileID: 11400000, guid: c016d34b1d8f4fe797a9483ca0d30016, type: 2}
+  localAnomaly: {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}
+  sceneName:
+  duration: 72
+  spawnProfile: {fileID: 11400000, guid: 10000000000000000000000000000002, type: 2}
+  bossPrefab: {fileID: 8074722678228422782, guid: 8f73b608ef0309744b732a66e85e86d7, type: 3}
+  mainThreat: CONDENSATION
+  minimumRunLevel: 2
+  maximumRunLevel: 2
+  choiceWeight: 1
+  allowSameWeatherAsCurrent: 1
+  enemyHealthMultiplier: 1
+  enemySpeedMultiplier: 1
+  spawnRateMultiplier: 1
+  hasEliteEnemies: 0
+  hasExplosiveEnemies: 0
+  hasHoldZoneEvent: 0
+  hasWorldAccelerationRule: 0
+  hasNoDamageChallenge: 0
+  hasExtraChest: 0
+  experienceGainMultiplier: 1
+  completionGoldMultiplier: 1
+  bonusRareChance: 0

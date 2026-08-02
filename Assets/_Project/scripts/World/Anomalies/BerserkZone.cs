@@ -14,6 +14,14 @@ public sealed class BerserkZone : LocalAnomalyZone
         Shader.PropertyToID("_PulseSharpness");
     private static readonly int RegionSizeId =
         Shader.PropertyToID("_RegionSize");
+    private static readonly int InnerPatternIntensityId =
+        Shader.PropertyToID("_InnerPatternIntensity");
+    private static readonly int InnerPatternSpeedId =
+        Shader.PropertyToID("_InnerPatternSpeed");
+    private static readonly int InnerPatternScaleId =
+        Shader.PropertyToID("_InnerPatternScale");
+    private static readonly int WarningPulseFrequencyId =
+        Shader.PropertyToID("_WarningPulseFrequency");
     private static readonly int VisualTimeId =
         Shader.PropertyToID("_VisualTime");
 
@@ -26,6 +34,11 @@ public sealed class BerserkZone : LocalAnomalyZone
     [SerializeField, Min(0f)] private float pulseSpeed = 0.35f;
     [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.08f;
     [SerializeField, Min(1f)] private float pulseSharpness = 1f;
+    [SerializeField, Range(0f, 0.25f)]
+    private float innerPatternIntensity = 0.14f;
+    [SerializeField, Min(0f)] private float innerPatternSpeed = 1.8f;
+    [SerializeField, Min(0.5f)] private float innerPatternScale = 3.5f;
+    [SerializeField, Min(0f)] private float warningPulseFrequency = 0.22f;
     [SerializeField, Range(0.6f, 1f)] private float fadeDuration = 0.8f;
 
     private readonly Dictionary<EnemyMovement, int>
@@ -315,6 +328,16 @@ public sealed class BerserkZone : LocalAnomalyZone
         visualProperties.SetFloat(PulseStrengthId, pulseStrength);
         visualProperties.SetFloat(PulseSharpnessId, pulseSharpness);
         visualProperties.SetVector(RegionSizeId, AreaSize);
+        visualProperties.SetFloat(
+            InnerPatternIntensityId,
+            innerPatternIntensity
+        );
+        visualProperties.SetFloat(InnerPatternSpeedId, innerPatternSpeed);
+        visualProperties.SetFloat(InnerPatternScaleId, innerPatternScale);
+        visualProperties.SetFloat(
+            WarningPulseFrequencyId,
+            warningPulseFrequency
+        );
         visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
         visualRenderer.SetPropertyBlock(visualProperties);
     }

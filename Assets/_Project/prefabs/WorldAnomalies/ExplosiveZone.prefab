@@ -87,6 +87,10 @@ MonoBehaviour:
   pulseSpeed: 0.22
   pulseStrength: 0.22
   pulseSharpness: 8
-  innerColor: {r: 0.12, g: 0.035, b: 0.012, a: 0.075}
+  innerPatternIntensity: 0.12
+  innerPatternSpeed: 0.7
+  innerPatternScale: 2.5
+  warningPulseFrequency: 0.35
+  innerColor: {r: 0.12, g: 0.035, b: 0.012, a: 0.2}
   edgeColor: {r: 1, g: 0.32, b: 0.025, a: 0.78}
   fadeDuration: 0.8

@@ -27,13 +27,17 @@ Material:
     m_Floats:
     - _EdgeWidth: 0.35
     - _Fade: 0
+    - _InnerPatternIntensity: 0.14
+    - _InnerPatternScale: 3.5
+    - _InnerPatternSpeed: 1.8
     - _PulseSharpness: 1
     - _PulseSpeed: 0.35
     - _PulseStrength: 0.08
     - _VisualTime: 0
+    - _WarningPulseFrequency: 0.22
     m_Colors:
     - _EdgeColor: {r: 1, g: 0.14, b: 0.02, a: 0.78}
-    - _InnerColor: {r: 0.2, g: 0.015, b: 0.006, a: 0.06}
+    - _InnerColor: {r: 0.2, g: 0.015, b: 0.006, a: 0.22}
     - _RegionSize: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
