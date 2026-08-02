@@ -595,7 +595,7 @@ TextureImporter:
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -604,6 +604,72 @@ TextureImporter:
       bones: []
       spriteID: 6bcc883a74e21a44ba307ea3554b0e63
       internalID: 314323427
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fx1_21
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 62ae36eb842ccfb4faf5ba4efebba856
+      internalID: -1108289374
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fx1_22
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4b7d4d5f2aaab75498543290f12b263b
+      internalID: -131044860
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fx1_23
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 531ad3792a218e046af7d70b86221894
+      internalID: 7460597
       vertices: []
       indices: 
       edges: []
@@ -638,6 +704,9 @@ TextureImporter:
       fx1_19: -358652000
       fx1_2: 1385386211804770281
       fx1_20: 314323427
+      fx1_21: -1108289374
+      fx1_22: -131044860
+      fx1_23: 7460597
       fx1_3: 5918483671411632572
       fx1_4: -5727518625274934744
       fx1_5: -4721523603487371254
