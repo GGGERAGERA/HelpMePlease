@@ -17,6 +17,14 @@ public sealed class WorldRuleVisual : MonoBehaviour
         Shader.PropertyToID("_SnowDensity");
     private static readonly int SnowScaleId =
         Shader.PropertyToID("_SnowScale");
+    private static readonly int BlizzardIntensityId =
+        Shader.PropertyToID("_BlizzardIntensity");
+    private static readonly int BlizzardLineDensityId =
+        Shader.PropertyToID("_BlizzardLineDensity");
+    private static readonly int BlizzardLineSpeedId =
+        Shader.PropertyToID("_BlizzardLineSpeed");
+    private static readonly int BlizzardVeilId =
+        Shader.PropertyToID("_BlizzardVeil");
     private static readonly int WetGroundIntensityId =
         Shader.PropertyToID("_WetGroundIntensity");
     private static readonly int WetPatternScaleId =
@@ -25,6 +33,14 @@ public sealed class WorldRuleVisual : MonoBehaviour
         Shader.PropertyToID("_RainDropsIntensity");
     private static readonly int RainDropsFrequencyId =
         Shader.PropertyToID("_RainDropsFrequency");
+    private static readonly int RainLargeDropsIntensityId =
+        Shader.PropertyToID("_RainLargeDropsIntensity");
+    private static readonly int RainLargeDropsCountId =
+        Shader.PropertyToID("_RainLargeDropsCount");
+    private static readonly int RainLargeDropsSpeedId =
+        Shader.PropertyToID("_RainLargeDropsSpeed");
+    private static readonly int RainLargeDropsScaleId =
+        Shader.PropertyToID("_RainLargeDropsScale");
     private static readonly int GoldenOverlayIntensityId =
         Shader.PropertyToID("_GoldenOverlayIntensity");
     private static readonly int GoldenOverlayColorId =
@@ -53,8 +69,15 @@ public sealed class WorldRuleVisual : MonoBehaviour
     [SerializeField, Range(0.25f, 8f)] private float wetPatternScale = 2.8f;
 
     [Header("Rain / Screen Drops")]
-    [SerializeField, Range(0f, 0.5f)] private float screenDropsIntensity = 0.06f;
+    [SerializeField, Range(0f, 0.5f)] private float screenDropsIntensity = 0.025f;
     [SerializeField, Range(0.05f, 2f)] private float screenDropsFrequency = 0.35f;
+    [SerializeField, Range(0f, 0.6f)]
+    private float rainLargeDropsIntensity = 0.32f;
+    [SerializeField, Range(4, 8)] private int rainLargeDropsCount = 6;
+    [SerializeField, Range(0.05f, 0.5f)]
+    private float rainLargeDropsSpeed = 0.18f;
+    [SerializeField, Range(0.5f, 2f)]
+    private float rainLargeDropsScale = 1f;
 
     [Header("Golden / World Visual")]
     [SerializeField, Range(0f, 0.2f)] private float goldenOverlayIntensity = 0.025f;
@@ -108,10 +131,17 @@ public sealed class WorldRuleVisual : MonoBehaviour
     [SerializeField] private GameObject snowParticlePrefab;
     [SerializeField] private Vector3 snowParticleCameraOffset =
         new Vector3(0f, 8f, 2f);
-    [SerializeField, Range(0f, 2f)] private float snowEmissionMultiplier = 1f;
+
+    [FormerlySerializedAs("snowEmissionMultiplier")]
+    [SerializeField, Range(0f, 3f)]
+    private float snowParticleEmissionMultiplier = 1.8f;
 
     [Header("Snow / Screen Overlay")]
     [SerializeField, Range(0f, 0.25f)] private float snowScreenOpacity = 0.055f;
+    [SerializeField, Range(0f, 0.6f)] private float blizzardIntensity = 0.32f;
+    [SerializeField, Range(2f, 16f)] private float blizzardLineDensity = 8f;
+    [SerializeField, Range(0.1f, 3f)] private float blizzardLineSpeed = 1.4f;
+    [SerializeField, Range(0f, 0.4f)] private float blizzardVeil = 0.14f;
 
     private float currentSnowIntensity;
     private float targetSnowIntensity;
@@ -147,7 +177,12 @@ public sealed class WorldRuleVisual : MonoBehaviour
     private GameObject snowParticleInstance;
     private ParticleSystem[] snowParticleSystems;
     private float[] snowParticleEmissionRates;
+    private float[] snowParticleStartSizes;
+    private float[] snowParticleStartSpeeds;
     private bool snowParticlesPlaying;
+
+    private const float SnowParticleSizeMultiplier = 1.25f;
+    private const float SnowParticleSpeedMultiplier = 1.35f;
 
 #if UNITY_EDITOR
     private static readonly float[] SnowDiagnosticTimes =
@@ -214,10 +249,31 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
         if (visualMaterial != null)
         {
+            float normalizedSnow = snowVisualIntensity > 0f
+                ? Mathf.Clamp01(
+                    currentSnowIntensity / snowVisualIntensity
+                )
+                : 0f;
             visualMaterial.SetFloat(VisualTimeId, Time.unscaledTime);
             visualMaterial.SetFloat(
                 SnowIntensityId,
                 currentSnowIntensity * snowScreenOpacity
+            );
+            visualMaterial.SetFloat(
+                BlizzardIntensityId,
+                normalizedSnow * blizzardIntensity
+            );
+            visualMaterial.SetFloat(
+                BlizzardLineDensityId,
+                blizzardLineDensity
+            );
+            visualMaterial.SetFloat(
+                BlizzardLineSpeedId,
+                blizzardLineSpeed
+            );
+            visualMaterial.SetFloat(
+                BlizzardVeilId,
+                normalizedSnow * blizzardVeil
             );
             visualMaterial.SetFloat(
                 RainDropsIntensityId,
@@ -226,6 +282,22 @@ public sealed class WorldRuleVisual : MonoBehaviour
             visualMaterial.SetFloat(
                 RainDropsFrequencyId,
                 screenDropsFrequency
+            );
+            visualMaterial.SetFloat(
+                RainLargeDropsIntensityId,
+                currentRainIntensity * rainLargeDropsIntensity
+            );
+            visualMaterial.SetFloat(
+                RainLargeDropsCountId,
+                rainLargeDropsCount
+            );
+            visualMaterial.SetFloat(
+                RainLargeDropsSpeedId,
+                rainLargeDropsSpeed
+            );
+            visualMaterial.SetFloat(
+                RainLargeDropsScaleId,
+                rainLargeDropsScale
             );
             visualMaterial.SetFloat(
                 GoldenOverlayIntensityId,
@@ -394,7 +466,10 @@ public sealed class WorldRuleVisual : MonoBehaviour
         if (visualMaterial != null)
         {
             visualMaterial.SetFloat(SnowIntensityId, 0f);
+            visualMaterial.SetFloat(BlizzardIntensityId, 0f);
+            visualMaterial.SetFloat(BlizzardVeilId, 0f);
             visualMaterial.SetFloat(RainDropsIntensityId, 0f);
+            visualMaterial.SetFloat(RainLargeDropsIntensityId, 0f);
             visualMaterial.SetFloat(GoldenOverlayIntensityId, 0f);
             visualMaterial.SetFloat(WindVisualIntensityId, 0f);
         }
@@ -761,11 +836,17 @@ public sealed class WorldRuleVisual : MonoBehaviour
             snowParticleInstance.GetComponentsInChildren<ParticleSystem>(true);
         snowParticleEmissionRates =
             new float[snowParticleSystems.Length];
+        snowParticleStartSizes =
+            new float[snowParticleSystems.Length];
+        snowParticleStartSpeeds =
+            new float[snowParticleSystems.Length];
 
         for (int i = 0; i < snowParticleSystems.Length; i++)
         {
             ParticleSystem particleSystem = snowParticleSystems[i];
             ParticleSystem.MainModule main = particleSystem.main;
+            snowParticleStartSizes[i] = main.startSizeMultiplier;
+            snowParticleStartSpeeds[i] = main.startSpeedMultiplier;
             main.useUnscaledTime = true;
             main.cullingMode =
                 ParticleSystemCullingMode.AlwaysSimulate;
@@ -863,8 +944,21 @@ public sealed class WorldRuleVisual : MonoBehaviour
                     particleSystem.emission;
                 emission.rateOverTimeMultiplier =
                     snowParticleEmissionRates[i] *
-                    snowEmissionMultiplier *
+                    snowParticleEmissionMultiplier *
                     normalized;
+                ParticleSystem.MainModule main = particleSystem.main;
+                main.startSizeMultiplier = snowParticleStartSizes[i] *
+                    Mathf.Lerp(
+                        1f,
+                        SnowParticleSizeMultiplier,
+                        normalized
+                    );
+                main.startSpeedMultiplier = snowParticleStartSpeeds[i] *
+                    Mathf.Lerp(
+                        1f,
+                        SnowParticleSpeedMultiplier,
+                        normalized
+                    );
 
                 if (!snowParticlesPlaying)
                     particleSystem.Play(true);
@@ -874,22 +968,30 @@ public sealed class WorldRuleVisual : MonoBehaviour
             return;
         }
 
-        if (!snowParticlesPlaying)
-            return;
-
         for (int i = 0; i < snowParticleSystems.Length; i++)
         {
+            ParticleSystem.MainModule main =
+                snowParticleSystems[i].main;
+            main.startSizeMultiplier = snowParticleStartSizes[i];
+            main.startSpeedMultiplier = snowParticleStartSpeeds[i];
             ParticleSystem.EmissionModule emission =
                 snowParticleSystems[i].emission;
-            emission.rateOverTimeMultiplier = 0f;
-            snowParticleSystems[i].Stop(
-                true,
-                ParticleSystemStopBehavior.StopEmittingAndClear
-            );
+            emission.rateOverTimeMultiplier =
+                snowParticleEmissionRates[i];
+
+            if (snowParticlesPlaying)
+            {
+                snowParticleSystems[i].Stop(
+                    true,
+                    ParticleSystemStopBehavior.StopEmittingAndClear
+                );
+            }
         }
 
         snowParticlesPlaying = false;
-        snowParticleInstance.SetActive(false);
+
+        if (snowParticleInstance.activeSelf)
+            snowParticleInstance.SetActive(false);
     }
 
     private void RefreshFullscreenVisibility()

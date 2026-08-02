@@ -6291,8 +6291,12 @@ MonoBehaviour:
   rainWorldMaterial: {fileID: 2100000, guid: 4c7fd535216f4b90bf61d62e90bb160d, type: 2}
   wetGroundIntensity: 0.32
   wetPatternScale: 2.8
-  screenDropsIntensity: 0.06
+  screenDropsIntensity: 0.025
   screenDropsFrequency: 0.35
+  rainLargeDropsIntensity: 0.32
+  rainLargeDropsCount: 6
+  rainLargeDropsSpeed: 0.18
+  rainLargeDropsScale: 1
   goldenOverlayIntensity: 0.025
   goldenColorFilter: {r: 1, g: 0.94, b: 0.78, a: 1}
   windVisualIntensity: 0.16
@@ -6323,8 +6327,12 @@ MonoBehaviour:
   snowCoverageScale: 2.4
   snowParticlePrefab: {fileID: 2732887255044470663, guid: 1e886009deaf51f4486d0d684fe11822, type: 3}
   snowParticleCameraOffset: {x: 0, y: 8, z: 2}
-  snowEmissionMultiplier: 1
+  snowParticleEmissionMultiplier: 1.8
   snowScreenOpacity: 0.04
+  blizzardIntensity: 0.32
+  blizzardLineDensity: 8
+  blizzardLineSpeed: 1.4
+  blizzardVeil: 0.14
 --- !u!1 &2147010010
 GameObject:
   m_ObjectHideFlags: 0
