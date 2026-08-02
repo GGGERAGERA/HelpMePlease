@@ -24,13 +24,24 @@ public class CaptureZoneEvent : WorldEvent
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private Slider progressSlider;
 
+    [Header("Feedback")]
+    [SerializeField, Min(0.1f)] private float feedbackPulseDuration = 0.38f;
+    [SerializeField, Min(0f)] private float exitShakeDuration = 0.14f;
+    [SerializeField, Min(0f)] private float exitShakeMagnitude = 0.04f;
+    [SerializeField] private Color exitPulseColor =
+        new(0.95f, 0.07f, 0.03f, 1f);
+    [SerializeField] private Color completionPulseColor =
+        new(0.08f, 0.92f, 1f, 1f);
+
     private float currentHoldTime;
     private Transform player;
     private bool playerInside;
+    private bool completionTriggered;
 
     public override void Initialize(WorldEventSpawner spawner)
     {
         base.Initialize(spawner);
+        completionTriggered = false;
 
         ShowEventMarker(transform, "CAPTURE");
     }
@@ -105,12 +116,36 @@ public class CaptureZoneEvent : WorldEvent
 
         playerInside = distance <= captureRadius;
 
+        if (IsStarted && wasInside && !playerInside)
+        {
+            RunMessageService.Instance?.ShowWorldEventFeedback(
+                "ЗОНА ПОКИНУТА",
+                "ВЕРНИТЕСЬ ДЛЯ ПРОДОЛЖЕНИЯ ЗАХВАТА",
+                exitPulseColor,
+                feedbackPulseDuration
+            );
+            CameraShake.Instance?.Shake(
+                exitShakeDuration,
+                exitShakeMagnitude
+            );
+        }
+
         if (wasInside && !playerInside && resetProgressOnExit)
             currentHoldTime = 0f;
     }
 
     private void CompleteCapture()
     {
+        if (completionTriggered)
+            return;
+
+        completionTriggered = true;
+        RunMessageService.Instance?.ShowWorldEventFeedback(
+            "ЗОНА ЗАХВАЧЕНА",
+            string.Empty,
+            completionPulseColor,
+            feedbackPulseDuration
+        );
         CompleteEvent();
     }
 

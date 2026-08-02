@@ -31,6 +31,16 @@ public sealed class FalseSignalEvent : WorldEvent
     [SerializeField, Min(0f)] private float maximumSpawnRadius = 6f;
     [SerializeField] private EnemySpawner enemySpawner;
 
+    [Header("Feedback")]
+    [SerializeField, Min(0.1f)] private float feedbackPulseDuration = 0.45f;
+    [SerializeField, Min(0.05f)] private float successFadeDuration = 0.35f;
+    [SerializeField, Min(0f)] private float ambushShakeDuration = 0.18f;
+    [SerializeField, Min(0f)] private float ambushShakeMagnitude = 0.06f;
+    [SerializeField] private Color falseSignalPulseColor =
+        new(0.95f, 0.08f, 0.04f, 1f);
+    [SerializeField] private Color confirmedSignalPulseColor =
+        new(0.1f, 0.9f, 1f, 1f);
+
     [Header("Scene")]
     [SerializeField] private GameplayAreaService gameplayArea;
 
@@ -42,6 +52,7 @@ public sealed class FalseSignalEvent : WorldEvent
     private float timeRemaining;
     private Vector3 rewardPosition;
     private bool hasRewardPosition;
+    private bool completionPending;
 
     public override Vector3 RewardPosition => hasRewardPosition
         ? rewardPosition
@@ -50,6 +61,8 @@ public sealed class FalseSignalEvent : WorldEvent
     public override void Initialize(WorldEventSpawner spawner)
     {
         base.Initialize(spawner);
+        hasRewardPosition = false;
+        completionPending = false;
         ShowEventMarker(transform, "FALSE SIGNAL");
     }
 
@@ -61,8 +74,11 @@ public sealed class FalseSignalEvent : WorldEvent
 
     private void Update()
     {
-        if (!IsStarted || IsCompleted || Time.timeScale == 0f)
+        if (!IsStarted || IsCompleted || completionPending ||
+            Time.timeScale == 0f)
+        {
             return;
+        }
 
         timeRemaining -= Time.deltaTime;
 
@@ -101,17 +117,26 @@ public sealed class FalseSignalEvent : WorldEvent
 
     public void ResolveSignal(FalseSignalPoint signalPoint, bool isReal)
     {
-        if (!IsStarted || IsCompleted || signalPoint == null)
+        if (!IsStarted || IsCompleted || completionPending ||
+            signalPoint == null)
+        {
             return;
+        }
 
         signalPoints.Remove(signalPoint);
         RemoveSignalPointMarker(signalPoint);
 
         if (!isReal)
         {
-            RunMessageService.Instance?.ShowCustom(
-                "ЛОЖНЫЙ СИГНАЛ — ЗАСАДА",
-                string.Empty
+            RunMessageService.Instance?.ShowWorldEventFeedback(
+                "ЛОЖНЫЙ СИГНАЛ",
+                "ЗАСАДА",
+                falseSignalPulseColor,
+                feedbackPulseDuration
+            );
+            CameraShake.Instance?.Shake(
+                ambushShakeDuration,
+                ambushShakeMagnitude
             );
             enemySpawner?.SpawnAdditionalWave(
                 signalPoint.transform.position,
@@ -125,9 +150,13 @@ public sealed class FalseSignalEvent : WorldEvent
 
         rewardPosition = signalPoint.transform.position;
         hasRewardPosition = true;
-        RunMessageService.Instance?.ShowCustom(
+        completionPending = true;
+        FadeRemainingSignalPoints();
+        RunMessageService.Instance?.ShowWorldEventFeedback(
             "СИГНАЛ ПОДТВЕРЖДЁН",
-            string.Empty
+            string.Empty,
+            confirmedSignalPulseColor,
+            feedbackPulseDuration
         );
         CompleteEvent();
     }
@@ -265,6 +294,22 @@ public sealed class FalseSignalEvent : WorldEvent
     {
         FailEvent();
         Destroy(gameObject);
+    }
+
+    private void FadeRemainingSignalPoints()
+    {
+        for (int i = 0; i < signalPoints.Count; i++)
+        {
+            FalseSignalPoint point = signalPoints[i];
+
+            if (point == null)
+                continue;
+
+            RemoveSignalPointMarker(point);
+            point.FadeOutAndDestroy(successFadeDuration);
+        }
+
+        signalPoints.Clear();
     }
 
     protected override void CleanupEvent()

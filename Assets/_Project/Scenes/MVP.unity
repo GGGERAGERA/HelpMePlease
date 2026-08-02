@@ -600,6 +600,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WorldEventSpawner
   eventPrefabs:
   - {fileID: 350149527517610057, guid: 176dbf5e68a24ca49b3595472b14d121, type: 3}
+  - {fileID: 520000000000000004, guid: f51a1e2d8b0c4d0a9e07f4e27b6d1201, type: 3}
+  - {fileID: 530000000000000004, guid: e47c3f95a8a34c18a619b70ec785f142, type: 3}
   rewardChestPrefab: {fileID: 1000000000000000004, guid: 91cb28ce62794baf86da67a04174801a, type: 3}
   doubleOrLeave: {fileID: 46915859}
   riskDifficultyMultiplier: 1.5
@@ -6295,7 +6297,6 @@ MonoBehaviour:
   windLineDensity: 5.5
   windLineSpeed: 0.45
   globalLight: {fileID: 1615053065}
-  normalLightIntensity: 1
   darknessGlobalIntensity: 0.05
   playerLightRadius: 6.5
   playerLightFalloff: 0.75

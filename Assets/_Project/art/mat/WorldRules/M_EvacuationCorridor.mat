@@ -27,14 +27,14 @@ Material:
     m_Floats:
     - _EdgeGlow: 0.85
     - _Fade: 0
-    - _OutsideDarkness: 0.32
+    - _OutsideDarkness: 0.42
     - _PulseSpeed: 1
     - _Reveal: 0
     - _VisualTime: 0
     m_Colors:
     - _CorridorRatio: {r: 0.08, g: 0.035, b: 0, a: 0}
-    - _DirectionColor: {r: 0.48, g: 1, b: 1, a: 0.2}
-    - _EdgeColor: {r: 0.24, g: 0.94, b: 1, a: 0.48}
-    - _InsideColor: {r: 0.22, g: 0.82, b: 0.95, a: 0.11}
+    - _DirectionColor: {r: 0.48, g: 1, b: 1, a: 0.34}
+    - _EdgeColor: {r: 0.24, g: 0.94, b: 1, a: 0.58}
+    - _InsideColor: {r: 0.22, g: 0.82, b: 0.95, a: 0.14}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

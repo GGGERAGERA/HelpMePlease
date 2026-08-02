@@ -10,6 +10,7 @@ Shader "World/Capture Zone"
         _PulseSpeed ("Pulse Speed", Float) = 0.85
         _FillIntensity ("Fill Intensity", Range(0, 2)) = 0.7
         _Progress ("Progress", Range(0, 1)) = 0
+        _PlayerInside ("Player Inside", Range(0, 1)) = 0
         _CompletionFlash ("Completion Flash", Range(0, 3)) = 0
         _Fade ("Fade", Range(0, 1)) = 1
         _VisualTime ("Visual Time", Float) = 0
@@ -45,6 +46,7 @@ Shader "World/Capture Zone"
                 float _PulseSpeed;
                 float _FillIntensity;
                 float _Progress;
+                float _PlayerInside;
                 float _CompletionFlash;
                 float _Fade;
                 float _VisualTime;
@@ -97,15 +99,18 @@ Shader "World/Capture Zone"
                     _EdgeWidth,
                     edgeDistance
                 );
+                float stableEdge = edge;
                 float glow = 1.0 - smoothstep(
                     _EdgeWidth,
                     _EdgeWidth * 3.2,
                     edgeDistance
                 );
 
-                float edgePulse =
-                    0.72 +
-                    0.28 * (sin(time * TwoPi) * 0.5 + 0.5);
+                float pulseWave =
+                    sin(time * TwoPi) * 0.5 + 0.5;
+                float pulseAmount =
+                    _PlayerInside * lerp(0.16, 0.045, _Progress);
+                float edgePulse = 1.0 - pulseAmount * (1.0 - pulseWave);
                 float edgeBreaks =
                     0.76 +
                     0.24 *
@@ -142,13 +147,23 @@ Shader "World/Capture Zone"
                     angle01
                 );
                 progressArc *= progressVisible;
-                float progressEdge = edge * progressArc;
+                float progressEdge = stableEdge * progressArc;
                 float progressHead = 1.0 - smoothstep(
                     0.0,
                     0.025,
                     abs(angle01 - _Progress)
                 );
-                progressHead *= edge * progressVisible;
+                progressHead *= stableEdge * progressVisible;
+                float progressBrightness = lerp(
+                    0.72,
+                    1.28,
+                    smoothstep(0.0, 1.0, _Progress)
+                );
+                float centerMarker = 1.0 - smoothstep(
+                    0.025,
+                    0.075,
+                    radius
+                );
 
                 half3 color = _InnerColor.rgb;
                 color = lerp(
@@ -160,7 +175,15 @@ Shader "World/Capture Zone"
                 color = lerp(
                     color,
                     _ProgressColor.rgb,
-                    saturate(progressEdge + progressHead)
+                    saturate(
+                        (progressEdge + progressHead) *
+                        progressBrightness
+                    )
+                );
+                color = lerp(
+                    color,
+                    _EdgeColor.rgb,
+                    centerMarker * 0.82
                 );
                 color += _CompletionFlash *
                     lerp(_ProgressColor.rgb, half3(1, 1, 1), 0.7);
@@ -168,13 +191,16 @@ Shader "World/Capture Zone"
                 float innerAlpha =
                     _InnerColor.a *
                     _FillIntensity *
-                    (0.72 + pattern * 0.28);
+                    (0.72 + pattern * 0.28) *
+                    (1.0 + _PlayerInside * pulseWave * 0.08);
                 float alpha =
                     innerAlpha * shape +
                     glow * _EdgeColor.a * 0.18 * edgePulse +
                     edge * _EdgeColor.a * edgePulse +
-                    progressEdge * _ProgressColor.a +
-                    progressHead * _ProgressColor.a * 0.8 +
+                    progressEdge * _ProgressColor.a * progressBrightness +
+                    progressHead * _ProgressColor.a *
+                        0.8 * progressBrightness +
+                    centerMarker * _EdgeColor.a * 0.72 +
                     pattern * _PatternColor.a * _FillIntensity;
                 alpha += _CompletionFlash * 0.28 * shape;
 

@@ -67,7 +67,6 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
     [Header("Darkness / Existing 2D Lights")]
     [SerializeField] private Light2D globalLight;
-    [SerializeField, HideInInspector] private float normalLightIntensity = 1f;
     [FormerlySerializedAs("darknessLightIntensity")]
     [SerializeField, Range(0f, 1f)]
     private float darknessGlobalIntensity = 0.05f;
@@ -124,6 +123,8 @@ public sealed class WorldRuleVisual : MonoBehaviour
     private float currentWindIntensity;
     private float targetWindIntensity;
     private Vector2 windVisualDirection;
+    private float baselineGlobalLightIntensity;
+    private bool globalLightStateCaptured;
     private Light2D playerLight;
     private float normalPlayerLightRadius;
     private float normalPlayerLightFalloff;
@@ -162,6 +163,8 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
     private void Awake()
     {
+        CaptureGlobalLightState();
+
         if (fullscreenImage != null)
         {
             fullscreenImage.raycastTarget = false;
@@ -335,6 +338,15 @@ public sealed class WorldRuleVisual : MonoBehaviour
         SetNeutral();
     }
 
+    private void CaptureGlobalLightState()
+    {
+        if (globalLight == null || globalLightStateCaptured)
+            return;
+
+        baselineGlobalLightIntensity = globalLight.intensity;
+        globalLightStateCaptured = true;
+    }
+
     public void SetSnowActive(bool active)
     {
         EnsureSnowResources();
@@ -408,10 +420,10 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
     private void UpdateDarknessResources()
     {
-        if (globalLight != null)
+        if (globalLight != null && globalLightStateCaptured)
         {
             globalLight.intensity = Mathf.Lerp(
-                normalLightIntensity,
+                baselineGlobalLightIntensity,
                 darknessGlobalIntensity,
                 currentDarknessIntensity
             );

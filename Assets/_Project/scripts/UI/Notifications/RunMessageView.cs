@@ -98,6 +98,21 @@ public sealed class RunMessageView : MonoBehaviour
         ));
     }
 
+    public void ShowWorldEventFeedback(
+        string title,
+        string description,
+        Color accentColor,
+        float duration)
+    {
+        StopActiveRoutine(false);
+        routine = StartCoroutine(WorldEventFeedbackRoutine(
+            title,
+            description,
+            accentColor,
+            Mathf.Clamp(duration, 0.2f, 0.8f)
+        ));
+    }
+
     public void CancelWorldEventStart(UnityEngine.Object owner)
     {
         if (owner == null || eventPresentationOwner != owner)
@@ -144,13 +159,48 @@ public sealed class RunMessageView : MonoBehaviour
         completion?.Invoke();
     }
 
+    private IEnumerator WorldEventFeedbackRoutine(
+        string title,
+        string description,
+        Color accentColor,
+        float duration)
+    {
+        ApplyEventPresentationLayout(title, description, accentColor);
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float normalized = Mathf.Clamp01(elapsed / duration);
+            float pulse = Mathf.Sin(normalized * Mathf.PI);
+            canvasGroup.alpha = Mathf.SmoothStep(0f, 1f, pulse);
+            yield return null;
+        }
+
+        canvasGroup.alpha = 0f;
+        routine = null;
+        RestoreEventPresentationLayout();
+    }
+
     private void ApplyEventPresentationLayout(
         string title,
         Color accentColor)
     {
+        ApplyEventPresentationLayout(
+            title,
+            string.Empty,
+            accentColor
+        );
+    }
+
+    private void ApplyEventPresentationLayout(
+        string title,
+        string description,
+        Color accentColor)
+    {
         eventPresentationLayoutApplied = true;
         titleText.text = title;
-        descriptionText.text = string.Empty;
+        descriptionText.text = description;
         titleText.color = Color.Lerp(Color.white, accentColor, 0.6f);
 
         panelRect.anchorMin = Vector2.zero;
@@ -164,6 +214,12 @@ public sealed class RunMessageView : MonoBehaviour
         titleRect.anchoredPosition = Vector2.zero;
         titleRect.sizeDelta = new Vector2(-160f, -80f);
         titleRect.pivot = new Vector2(0.5f, 0.5f);
+
+        descriptionRect.anchorMin = new Vector2(0.15f, 0.22f);
+        descriptionRect.anchorMax = new Vector2(0.85f, 0.48f);
+        descriptionRect.anchoredPosition = Vector2.zero;
+        descriptionRect.sizeDelta = Vector2.zero;
+        descriptionRect.pivot = new Vector2(0.5f, 0.5f);
 
         if (backgroundImage != null)
         {
@@ -191,6 +247,11 @@ public sealed class RunMessageView : MonoBehaviour
         titleRect.sizeDelta = defaultTitleSizeDelta;
         titleRect.pivot = defaultTitlePivot;
         titleText.color = defaultTitleColor;
+        descriptionRect.anchorMin = defaultDescriptionAnchorMin;
+        descriptionRect.anchorMax = defaultDescriptionAnchorMax;
+        descriptionRect.anchoredPosition = defaultDescriptionAnchoredPosition;
+        descriptionRect.sizeDelta = defaultDescriptionSizeDelta;
+        descriptionRect.pivot = defaultDescriptionPivot;
 
         if (backgroundImage != null)
         {

@@ -99,6 +99,23 @@ public sealed class RunMessageService : MonoBehaviour
         view.Show(title, description, duration);
     }
 
+    public void ShowWorldEventFeedback(
+        string title,
+        string description,
+        Color accentColor,
+        float duration = 0.45f)
+    {
+        if (view == null || worldEventPresentationOwner != null)
+            return;
+
+        view.ShowWorldEventFeedback(
+            title,
+            description,
+            accentColor,
+            duration
+        );
+    }
+
     public bool ShowWorldEventStart(
         WorldEvent worldEvent,
         string displayName,

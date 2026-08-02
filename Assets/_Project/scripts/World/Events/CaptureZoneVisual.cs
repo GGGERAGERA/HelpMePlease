@@ -13,6 +13,8 @@ public sealed class CaptureZoneVisual : MonoBehaviour
         Shader.PropertyToID("_FillIntensity");
     private static readonly int ProgressId =
         Shader.PropertyToID("_Progress");
+    private static readonly int PlayerInsideId =
+        Shader.PropertyToID("_PlayerInside");
     private static readonly int CompletionFlashId =
         Shader.PropertyToID("_CompletionFlash");
     private static readonly int FadeId =
@@ -29,7 +31,8 @@ public sealed class CaptureZoneVisual : MonoBehaviour
     [SerializeField, Min(0f)] private float pulseSpeed = 0.85f;
     [SerializeField, Range(0f, 2f)] private float fillIntensity = 0.7f;
     [SerializeField, Range(0f, 3f)] private float completionFlash = 1.8f;
-    [SerializeField, Min(0.01f)] private float fadeDuration = 0.22f;
+    [SerializeField, Min(0.01f)] private float fadeDuration = 0.45f;
+    [SerializeField, Min(0.01f)] private float completionFadeDuration = 0.4f;
 
     private CaptureZoneEvent captureZoneEvent;
     private GameObject visualObject;
@@ -56,9 +59,13 @@ public sealed class CaptureZoneVisual : MonoBehaviour
         if (visualRenderer == null || captureZoneEvent == null)
             return;
 
+        float targetFade = captureZoneEvent.IsStarted &&
+            !captureZoneEvent.IsCompleted
+            ? 1f
+            : 0f;
         visualFade = Mathf.MoveTowards(
             visualFade,
-            1f,
+            targetFade,
             Time.unscaledDeltaTime / Mathf.Max(0.01f, fadeDuration)
         );
         ApplyVisualProperties();
@@ -74,6 +81,7 @@ public sealed class CaptureZoneVisual : MonoBehaviour
 
         detachedForCompletion = true;
         visualProperties.SetFloat(ProgressId, 1f);
+        visualProperties.SetFloat(PlayerInsideId, 0f);
         visualProperties.SetFloat(FadeId, 1f);
         visualRenderer.SetPropertyBlock(visualProperties);
         visualObject.transform.SetParent(null, true);
@@ -85,7 +93,7 @@ public sealed class CaptureZoneVisual : MonoBehaviour
             visualMesh,
             visualProperties,
             completionFlash,
-            fadeDuration
+            completionFadeDuration
         );
 
         visualObject = null;
@@ -139,6 +147,14 @@ public sealed class CaptureZoneVisual : MonoBehaviour
         visualProperties.SetFloat(
             ProgressId,
             captureZoneEvent != null ? captureZoneEvent.Progress : 0f
+        );
+        visualProperties.SetFloat(
+            PlayerInsideId,
+            captureZoneEvent != null &&
+            captureZoneEvent.IsStarted &&
+            captureZoneEvent.IsPlayerInside
+                ? 1f
+                : 0f
         );
         visualProperties.SetFloat(CompletionFlashId, 0f);
         visualProperties.SetFloat(FadeId, visualFade);

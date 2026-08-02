@@ -73,7 +73,11 @@ public class EnemySpawner : MonoBehaviour
     private float currentSpeedMultiplier = 1f;
     private float currentSpawnPressure = 1f;
     private float worldRuleSpawnPressureMultiplier = 1f;
+    private float worldEventSpawnPressureMultiplier = 1f;
     private float worldAccelerationMultiplier = 1f;
+
+    public float WorldEventSpawnPressureMultiplier =>
+        worldEventSpawnPressureMultiplier;
 
     private float baseSpawnInterval;
     private int baseMaxEnemies;
@@ -189,6 +193,11 @@ public class EnemySpawner : MonoBehaviour
         worldRuleSpawnPressureMultiplier = Mathf.Max(0.1f, multiplier);
     }
 
+    public void SetWorldEventSpawnPressureMultiplier(float multiplier)
+    {
+        worldEventSpawnPressureMultiplier = Mathf.Max(0.1f, multiplier);
+    }
+
     public void ResetForNewLevel()
     {
         spawnTimer = 0f;
@@ -197,6 +206,7 @@ public class EnemySpawner : MonoBehaviour
         activePhase = null;
         activePhaseIndex = -1;
         legacyDifficultySteps = 0;
+        worldEventSpawnPressureMultiplier = 1f;
         spawningEnabled = true;
     }
 
@@ -211,6 +221,7 @@ public class EnemySpawner : MonoBehaviour
         currentSpeedMultiplier = baseSpeedMultiplier;
         currentSpawnPressure = 1f;
         worldRuleSpawnPressureMultiplier = 1f;
+        worldEventSpawnPressureMultiplier = 1f;
         legacyDifficultySteps = 0;
     }
 
@@ -389,22 +400,21 @@ public class EnemySpawner : MonoBehaviour
         return Mathf.Max(
             0.1f,
             limitedInterval /
-            worldRuleSpawnPressureMultiplier /
+            GetExternalSpawnPressureMultiplier() /
             worldAccelerationMultiplier
         );
     }
 
     private int GetCurrentMaxAlive()
     {
-        float effectivePressure =
-            currentSpawnPressure * worldRuleSpawnPressureMultiplier;
+        float effectivePressure = GetEffectiveSpawnPressure();
 
         if (activePhase == null)
         {
             int legacyMinimumAlive = Mathf.Max(1, maxEnemies);
             return Mathf.Clamp(
                 Mathf.RoundToInt(maxEnemies *
-                    worldRuleSpawnPressureMultiplier),
+                    GetExternalSpawnPressureMultiplier()),
                 legacyMinimumAlive,
                 Mathf.Max(legacyMinimumAlive, maxAliveLimit)
             );
@@ -425,8 +435,7 @@ public class EnemySpawner : MonoBehaviour
 
     private int GetCurrentEnemiesPerCycle()
     {
-        float effectivePressure =
-            currentSpawnPressure * worldRuleSpawnPressureMultiplier;
+        float effectivePressure = GetEffectiveSpawnPressure();
         int phaseBonus = activePhase != null
             ? Mathf.Max(0, activePhaseIndex) / Mathf.Max(1, phasesPerBatchIncrease)
             : 0;
@@ -575,8 +584,7 @@ public class EnemySpawner : MonoBehaviour
             return true;
 
         int minimumTypeLimit = Mathf.Max(1, entry.maxAliveOfType);
-        float effectivePressure =
-            currentSpawnPressure * worldRuleSpawnPressureMultiplier;
+        float effectivePressure = GetEffectiveSpawnPressure();
         int scaledTypeLimit = Mathf.Clamp(
             Mathf.RoundToInt(entry.maxAliveOfType * effectivePressure),
             minimumTypeLimit,
@@ -584,6 +592,17 @@ public class EnemySpawner : MonoBehaviour
         );
 
         return CountAlive(entry.enemyPrefab) < scaledTypeLimit;
+    }
+
+    private float GetEffectiveSpawnPressure()
+    {
+        return currentSpawnPressure * GetExternalSpawnPressureMultiplier();
+    }
+
+    private float GetExternalSpawnPressureMultiplier()
+    {
+        return worldRuleSpawnPressureMultiplier *
+            worldEventSpawnPressureMultiplier;
     }
 
     private int CountAlive(GameObject sourcePrefab)
