@@ -9706,7 +9706,7 @@ ParticleSystem:
   ringBufferLoopRange: {x: 0, y: 1}
   emitterVelocityMode: 0
   looping: 1
-  prewarm: 0
+  prewarm: 1
   playOnAwake: 1
   useUnscaledTime: 0
   autoRandomSeed: 1
@@ -9720,7 +9720,7 @@ ParticleSystem:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 1
+        value: 0
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -9729,7 +9729,7 @@ ParticleSystem:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 1
-        value: 1
+        value: 0
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -9773,8 +9773,8 @@ ParticleSystem:
     startLifetime:
       serializedVersion: 2
       minMaxState: 3
-      scalar: 0.8
-      minScalar: 0.4
+      scalar: 0.5
+      minScalar: 0.5
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -9808,8 +9808,8 @@ ParticleSystem:
     startSpeed:
       serializedVersion: 2
       minMaxState: 3
-      scalar: 3
-      minScalar: 1
+      scalar: 4
+      minScalar: 5
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -9908,8 +9908,8 @@ ParticleSystem:
     startSize:
       serializedVersion: 2
       minMaxState: 3
-      scalar: 1.5
-      minScalar: 1.4
+      scalar: 1.8
+      minScalar: 1.2
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -9944,7 +9944,7 @@ ParticleSystem:
       serializedVersion: 2
       minMaxState: 3
       scalar: 1
-      minScalar: 1
+      minScalar: 0.5
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -10156,7 +10156,7 @@ ParticleSystem:
       serializedVersion: 2
       minMaxState: 3
       scalar: 6.283185
-      minScalar: 0
+      minScalar: -6.283185
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -10455,7 +10455,7 @@ ParticleSystem:
     rateOverTime:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 35
+      scalar: 33
       minScalar: 10
       maxCurve:
         serializedVersion: 2
@@ -10954,7 +10954,7 @@ ParticleSystem:
   UVModule:
     serializedVersion: 2
     enabled: 1
-    mode: 0
+    mode: 1
     timeMode: 0
     fps: 30
     frameOverTime:
@@ -11068,11 +11068,22 @@ ParticleSystem:
     tilesY: 3
     animationType: 0
     rowIndex: 0
-    cycles: 2
+    cycles: 3
     uvChannelMask: -1
     rowMode: 1
     sprites:
-    - sprite: {fileID: 0}
+    - sprite: {fileID: 366768423103614464, guid: 523b1ec531a729941b2e7cb4204ae81d, type: 3}
+    - sprite: {fileID: 6880982119027326074, guid: 523b1ec531a729941b2e7cb4204ae81d, type: 3}
+    - sprite: {fileID: -410592620228268872, guid: 523b1ec531a729941b2e7cb4204ae81d, type: 3}
+    - sprite: {fileID: -6095612748637073844, guid: 523b1ec531a729941b2e7cb4204ae81d, type: 3}
+    - sprite: {fileID: -1927988972680946074, guid: 523b1ec531a729941b2e7cb4204ae81d, type: 3}
+    - sprite: {fileID: 8002889993424940659, guid: 523b1ec531a729941b2e7cb4204ae81d, type: 3}
+    - sprite: {fileID: 5227733896212992062, guid: 523b1ec531a729941b2e7cb4204ae81d, type: 3}
+    - sprite: {fileID: -6927925275123613887, guid: 523b1ec531a729941b2e7cb4204ae81d, type: 3}
+    - sprite: {fileID: -3130491651901608498, guid: 523b1ec531a729941b2e7cb4204ae81d, type: 3}
+    - sprite: {fileID: -3076609478508237738, guid: 523b1ec531a729941b2e7cb4204ae81d, type: 3}
+    - sprite: {fileID: -6224813190031808863, guid: 523b1ec531a729941b2e7cb4204ae81d, type: 3}
+    - sprite: {fileID: 8039348521063447284, guid: 523b1ec531a729941b2e7cb4204ae81d, type: 3}
     flipU: 0
     flipV: 0
   VelocityModule:
@@ -14379,7 +14390,7 @@ ParticleSystemRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 12b56d0b81e80e748b8129a9c1a582d9, type: 2}
+  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

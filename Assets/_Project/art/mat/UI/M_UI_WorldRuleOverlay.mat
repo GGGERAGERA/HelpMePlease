@@ -29,6 +29,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _BlizzardIntensity: 0
+    - _BlizzardLineDensity: 8
+    - _BlizzardLineSpeed: 1.4
+    - _BlizzardVeil: 0
     - _EdgeIntensity: 2
     - _GoldenOverlayIntensity: 0
     - _Intensity: 0
@@ -36,9 +40,13 @@ Material:
     - _PulseStrength: 1
     - _RainDropsFrequency: 0.35
     - _RainDropsIntensity: 0
+    - _RainLargeDropsCount: 6
+    - _RainLargeDropsIntensity: 0
+    - _RainLargeDropsScale: 1
+    - _RainLargeDropsSpeed: 0.18
     - _RuleType: -4.2
     - _SnowIntensity: 0
-    - _VisualTime: 22.377436
+    - _VisualTime: 330.95996
     - _WindLineDensity: 3
     - _WindLineSpeed: 0.45
     - _WindVisualIntensity: 0
