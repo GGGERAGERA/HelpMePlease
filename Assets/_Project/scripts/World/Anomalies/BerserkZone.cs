@@ -10,8 +10,10 @@ public sealed class BerserkZone : LocalAnomalyZone
         Shader.PropertyToID("_PulseSpeed");
     private static readonly int PulseStrengthId =
         Shader.PropertyToID("_PulseStrength");
-    private static readonly int DistortionStrengthId =
-        Shader.PropertyToID("_DistortionStrength");
+    private static readonly int PulseSharpnessId =
+        Shader.PropertyToID("_PulseSharpness");
+    private static readonly int RegionSizeId =
+        Shader.PropertyToID("_RegionSize");
     private static readonly int VisualTimeId =
         Shader.PropertyToID("_VisualTime");
 
@@ -20,11 +22,10 @@ public sealed class BerserkZone : LocalAnomalyZone
 
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
-    [SerializeField, Range(0.01f, 0.4f)] private float edgeWidth = 0.12f;
-    [SerializeField, Min(0f)] private float pulseSpeed = 0.45f;
-    [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.12f;
-    [SerializeField, Range(0f, 0.25f)]
-    private float distortionStrength = 0.008f;
+    [SerializeField, Range(0.1f, 0.75f)] private float edgeWidth = 0.35f;
+    [SerializeField, Min(0f)] private float pulseSpeed = 0.35f;
+    [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.08f;
+    [SerializeField, Min(1f)] private float pulseSharpness = 1f;
     [SerializeField, Range(0.6f, 1f)] private float fadeDuration = 0.8f;
 
     private readonly Dictionary<EnemyMovement, int>
@@ -300,7 +301,7 @@ public sealed class BerserkZone : LocalAnomalyZone
             return;
 
         visualRenderer.transform.localScale =
-            new Vector3(areaSize.x / 0.9f, areaSize.y / 0.9f, 1f);
+            new Vector3(areaSize.x, areaSize.y, 1f);
     }
 
     private void ApplyVisualProperties()
@@ -312,10 +313,8 @@ public sealed class BerserkZone : LocalAnomalyZone
         visualProperties.SetFloat(EdgeWidthId, edgeWidth);
         visualProperties.SetFloat(PulseSpeedId, pulseSpeed);
         visualProperties.SetFloat(PulseStrengthId, pulseStrength);
-        visualProperties.SetFloat(
-            DistortionStrengthId,
-            distortionStrength
-        );
+        visualProperties.SetFloat(PulseSharpnessId, pulseSharpness);
+        visualProperties.SetVector(RegionSizeId, AreaSize);
         visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
         visualRenderer.SetPropertyBlock(visualProperties);
     }

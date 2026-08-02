@@ -4,10 +4,11 @@ Shader "World/Berserk Zone"
     {
         _InnerColor ("Inner Color", Color) = (0.32, 0.015, 0.005, 0.16)
         _EdgeColor ("Edge Color", Color) = (1, 0.12, 0.015, 0.8)
-        _EdgeWidth ("Edge Width", Range(0.01, 0.4)) = 0.16
-        _PulseSpeed ("Pulse Speed", Float) = 1.2
-        _PulseStrength ("Pulse Strength", Range(0, 1)) = 0.22
-        _DistortionStrength ("Distortion Strength", Range(0, 0.25)) = 0.055
+        _EdgeWidth ("Edge Width (World Units)", Range(0.1, 0.75)) = 0.35
+        _PulseSpeed ("Pulse Speed", Float) = 0.35
+        _PulseStrength ("Pulse Strength", Range(0, 1)) = 0.08
+        _PulseSharpness ("Pulse Sharpness", Range(1, 10)) = 1
+        _RegionSize ("Region Size", Vector) = (1, 1, 0, 0)
         _Fade ("Fade", Range(0, 1)) = 0
         _VisualTime ("Visual Time", Float) = 0
     }
@@ -39,7 +40,8 @@ Shader "World/Berserk Zone"
                 float _EdgeWidth;
                 float _PulseSpeed;
                 float _PulseStrength;
-                float _DistortionStrength;
+                float _PulseSharpness;
+                float4 _RegionSize;
                 float _Fade;
                 float _VisualTime;
             CBUFFER_END
@@ -67,48 +69,53 @@ Shader "World/Berserk Zone"
 
             half4 Frag(Varyings input) : SV_Target
             {
-                float2 samplePoint = (input.uv - 0.5) * 2.0;
-                float2 rectanglePoint = abs(samplePoint);
-                float time = _VisualTime * _PulseSpeed;
-
-                float edgeCoordinate = rectanglePoint.x > rectanglePoint.y
-                    ? rectanglePoint.y
-                    : rectanglePoint.x;
-                float boundary = 0.9 + sin(edgeCoordinate * 13.0) *
-                    min(_DistortionStrength, 0.012);
-                float signedDistance =
-                    max(rectanglePoint.x, rectanglePoint.y) - boundary;
-                float antialias = max(fwidth(signedDistance), 0.002);
-                float shape = 1.0 - smoothstep(
-                    -antialias,
-                    antialias,
-                    signedDistance
+                float2 rectanglePoint = abs((input.uv - 0.5) * 2.0);
+                float2 halfSize = max(
+                    _RegionSize.xy * 0.5,
+                    float2(0.001, 0.001)
                 );
-
-                float edgeDistance = abs(signedDistance);
+                float2 distanceToEdge =
+                    (1.0 - rectanglePoint) * halfSize;
+                float insideDistance = min(
+                    distanceToEdge.x,
+                    distanceToEdge.y
+                );
+                float antialias = max(fwidth(insideDistance), 0.002);
                 float edge = 1.0 - smoothstep(
-                    _EdgeWidth * 0.35,
-                    _EdgeWidth,
-                    edgeDistance
+                    max(0.0, _EdgeWidth - antialias),
+                    _EdgeWidth + antialias,
+                    insideDistance
                 );
-                float pulseWave = sin(time) * 0.5 + 0.5;
-                float warningPulse = pow(pulseWave, 7.0);
-                float pulse = 1.0 - _PulseStrength +
-                    _PulseStrength * pulseWave;
+
+                float pulseWave =
+                    sin(_VisualTime * _PulseSpeed) * 0.5 + 0.5;
+                float sharpPulse = pow(
+                    saturate(pulseWave),
+                    max(1.0, _PulseSharpness)
+                );
+                float warningMode = step(2.0, _PulseSharpness);
+                float borderPulse = lerp(
+                    1.0 - _PulseStrength + _PulseStrength * pulseWave,
+                    1.0,
+                    warningMode
+                );
+                float innerPulse = 1.0 + _PulseStrength * lerp(
+                    pulseWave * 0.25,
+                    sharpPulse,
+                    warningMode
+                );
                 half3 color = lerp(
                     _InnerColor.rgb,
                     _EdgeColor.rgb,
                     edge
                 );
-                float innerAlpha = _InnerColor.a *
-                    (1.0 + warningPulse * _PulseStrength);
                 float alpha = lerp(
-                    innerAlpha,
-                    _EdgeColor.a * pulse,
+                    _InnerColor.a * innerPulse,
+                    _EdgeColor.a * borderPulse,
                     edge
                 );
 
-                return half4(color, alpha * shape * _Fade);
+                return half4(color, saturate(alpha) * _Fade);
             }
             ENDHLSL
         }

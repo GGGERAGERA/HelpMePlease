@@ -5,8 +5,9 @@ Shader "World/Stasis Zone"
         _InnerColor ("Inner Color", Color) = (0.015, 0.14, 0.24, 0.13)
         _EdgeColor ("Edge Color", Color) = (0.12, 0.7, 1, 0.48)
         _RippleColor ("Ripple Color", Color) = (0.22, 0.82, 1, 0.2)
-        _EdgeWidth ("Edge Width", Range(0.01, 0.4)) = 0.18
-        _PulseSpeed ("Pulse Speed", Float) = 0.65
+        _EdgeWidth ("Edge Width (World Units)", Range(0.1, 0.75)) = 0.35
+        _PulseSpeed ("Stripe Speed", Float) = 0.18
+        _RegionSize ("Region Size", Vector) = (1, 1, 0, 0)
         _Fade ("Fade", Range(0, 1)) = 0
         _VisualTime ("Visual Time", Float) = 0
     }
@@ -38,6 +39,7 @@ Shader "World/Stasis Zone"
                 half4 _RippleColor;
                 float _EdgeWidth;
                 float _PulseSpeed;
+                float4 _RegionSize;
                 float _Fade;
                 float _VisualTime;
             CBUFFER_END
@@ -67,47 +69,50 @@ Shader "World/Stasis Zone"
             {
                 float2 samplePoint = (input.uv - 0.5) * 2.0;
                 float2 rectanglePoint = abs(samplePoint);
-                float time = _VisualTime * _PulseSpeed;
-                float edgeCoordinate = rectanglePoint.x > rectanglePoint.y
-                    ? rectanglePoint.y
-                    : rectanglePoint.x;
-                float boundary = 0.9 +
-                    sin(edgeCoordinate * 11.0 + 0.4) * 0.004;
-                float signedDistance =
-                    max(rectanglePoint.x, rectanglePoint.y) - boundary;
-                float antialias = max(fwidth(signedDistance), 0.002);
-                float shape = 1.0 - smoothstep(
-                    -antialias,
-                    antialias,
-                    signedDistance
+                float2 halfSize = max(
+                    _RegionSize.xy * 0.5,
+                    float2(0.001, 0.001)
+                );
+                float2 distanceToEdge =
+                    (1.0 - rectanglePoint) * halfSize;
+                float insideDistance = min(
+                    distanceToEdge.x,
+                    distanceToEdge.y
+                );
+                float antialias = max(fwidth(insideDistance), 0.002);
+                float edge = 1.0 - smoothstep(
+                    max(0.0, _EdgeWidth - antialias),
+                    _EdgeWidth + antialias,
+                    insideDistance
                 );
 
-                float edgeDistance = abs(signedDistance);
-                float edge = 1.0 - smoothstep(
-                    _EdgeWidth * 0.25,
-                    _EdgeWidth,
-                    edgeDistance
+                float worldY = samplePoint.y * halfSize.y;
+                float stripeCoordinate = frac(
+                    (worldY + _VisualTime * _PulseSpeed) / 5.0
                 );
-                float distanceFromEdge = max(0.0, -signedDistance);
-                float rippleWave =
-                    sin(distanceFromEdge * 24.0 - time);
-                float ripple = smoothstep(0.88, 1.0, rippleWave);
-                ripple *= saturate(1.0 - edge) *
-                    smoothstep(0.08, 0.3, distanceFromEdge);
+                float stripeDistance = abs(stripeCoordinate - 0.5);
+                float stripe = 1.0 - smoothstep(
+                    0.025,
+                    0.08,
+                    stripeDistance
+                );
+                stripe *= saturate(1.0 - edge);
                 half3 color = lerp(
                     _InnerColor.rgb,
                     _RippleColor.rgb,
-                    ripple * 0.3
+                    stripe * 0.18
                 );
                 color = lerp(color, _EdgeColor.rgb, edge);
 
-                float innerAlpha = _InnerColor.a;
-                float alpha =
-                    innerAlpha +
-                    ripple * _RippleColor.a * 0.55 +
-                    edge * _EdgeColor.a;
+                float interiorAlpha =
+                    _InnerColor.a + stripe * _RippleColor.a * 0.22;
+                float alpha = lerp(
+                    interiorAlpha,
+                    _EdgeColor.a,
+                    edge
+                );
 
-                return half4(color, alpha * shape * _Fade);
+                return half4(color, saturate(alpha) * _Fade);
             }
             ENDHLSL
         }
