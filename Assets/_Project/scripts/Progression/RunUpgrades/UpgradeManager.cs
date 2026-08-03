@@ -54,6 +54,8 @@ public sealed class UpgradeManager : MonoBehaviour
     public bool IsChoosingUpgrade => isChoosingUpgrade;
 
     public bool ShowWorldEventModeChoices(
+        string eventDisplayName,
+        string eventDescription,
         System.Action onStandardSelected,
         System.Action onRiskSelected
     )
@@ -69,6 +71,8 @@ public sealed class UpgradeManager : MonoBehaviour
         Time.timeScale = 0f;
 
         upgradePanelView.ShowWorldEventModeChoices(
+            eventDisplayName,
+            eventDescription,
             () => CompleteWorldEventModeChoice(false),
             () => CompleteWorldEventModeChoice(true)
         );

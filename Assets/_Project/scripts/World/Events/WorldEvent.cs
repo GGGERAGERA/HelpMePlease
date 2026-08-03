@@ -2,6 +2,10 @@ using UnityEngine;
 
 public abstract class WorldEvent : Interactable
 {
+    [Header("Presentation")]
+    [SerializeField] private string eventDisplayName = "WORLD EVENT";
+    [SerializeField, TextArea(1, 2)] private string eventDescription;
+
     protected WorldEventSpawner owner;
 
     private bool cleanupPerformed;
@@ -9,6 +13,8 @@ public abstract class WorldEvent : Interactable
     public bool IsCompleted { get; private set; }
     public bool IsFailed { get; private set; }
     public bool IsStarted { get; private set; }
+    public string EventDisplayName => eventDisplayName;
+    public string EventDescription => eventDescription;
     public virtual Vector3 RewardPosition => transform.position;
     public override bool CanInteract
     {

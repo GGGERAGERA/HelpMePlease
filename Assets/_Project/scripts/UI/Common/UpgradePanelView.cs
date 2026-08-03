@@ -38,6 +38,15 @@ public class UpgradePanelView : MonoBehaviour
     private readonly List<CanvasGroup> rewardCardGroups = new();
     private bool layoutDefaultsCaptured;
     private Coroutine rewardRevealRoutine;
+    private bool textDefaultsCaptured;
+    private bool defaultTitleAutoSizing;
+    private bool defaultSubtitleAutoSizing;
+    private float defaultTitleFontSizeMin;
+    private float defaultTitleFontSizeMax;
+    private float defaultSubtitleFontSizeMin;
+    private float defaultSubtitleFontSizeMax;
+    private float defaultTitleFontSize;
+    private float defaultSubtitleFontSize;
 
     private void Awake()
     {
@@ -45,6 +54,7 @@ public class UpgradePanelView : MonoBehaviour
             panelAnimation = GetComponent<UpgradePanelAnimation>();
 
         CaptureLayoutDefaults();
+        CaptureTextDefaults();
     }
 
     public void Show(int level, IReadOnlyList<UpgradeData> upgrades, Action<UpgradeData> onUpgradeSelected)
@@ -66,6 +76,7 @@ public class UpgradePanelView : MonoBehaviour
     {
         StopRewardReveal();
         RestoreDefaultLayout();
+        RestoreDefaultTextLayout();
         gameObject.SetActive(true);
         transform.SetAsLastSibling();
 
@@ -96,6 +107,7 @@ public class UpgradePanelView : MonoBehaviour
     {
         StopRewardReveal();
         RestoreDefaultLayout();
+        RestoreDefaultTextLayout();
         gameObject.SetActive(true);
         transform.SetAsLastSibling();
 
@@ -115,6 +127,8 @@ public class UpgradePanelView : MonoBehaviour
     }
 
     public void ShowWorldEventModeChoices(
+        string eventDisplayName,
+        string eventDescription,
         Action onStandardSelected,
         Action onRiskSelected
     )
@@ -124,8 +138,9 @@ public class UpgradePanelView : MonoBehaviour
         gameObject.SetActive(true);
         transform.SetAsLastSibling();
 
-        SetText(titleText, "WORLD EVENT");
-        SetText(subtitleText, "Выберите режим события");
+        ApplyWorldEventChoiceTextLayout();
+        SetText(titleText, eventDisplayName);
+        SetText(subtitleText, eventDescription);
 
         if (cardViews != null && cardViews.Length > 0 && cardViews[0] != null)
         {
@@ -143,7 +158,7 @@ public class UpgradePanelView : MonoBehaviour
         {
             cardViews[1].SetupChoice(
                 "RISK",
-                "Повышенная сложность\n3 улучшенных варианта\nПоражение — без награды",
+                "Повышенная сложность\nУлучшенная награда\nПоражение — без награды",
                 UpgradeCategory.Behavior,
                 riskChoiceIcon,
                 new Color(0.82f, 0.25f, 0.12f, 1f),
@@ -172,6 +187,7 @@ public class UpgradePanelView : MonoBehaviour
 
         Hide();
         RestoreDefaultLayout();
+        RestoreDefaultTextLayout();
     }
 
     private void CaptureLayoutDefaults()
@@ -257,6 +273,54 @@ public class UpgradePanelView : MonoBehaviour
             if (card != null)
                 card.sizeDelta = defaultCardSizes[i];
         }
+    }
+
+    private void CaptureTextDefaults()
+    {
+        if (textDefaultsCaptured || titleText == null || subtitleText == null)
+            return;
+
+        defaultTitleAutoSizing = titleText.enableAutoSizing;
+        defaultSubtitleAutoSizing = subtitleText.enableAutoSizing;
+        defaultTitleFontSizeMin = titleText.fontSizeMin;
+        defaultTitleFontSizeMax = titleText.fontSizeMax;
+        defaultSubtitleFontSizeMin = subtitleText.fontSizeMin;
+        defaultSubtitleFontSizeMax = subtitleText.fontSizeMax;
+        defaultTitleFontSize = titleText.fontSize;
+        defaultSubtitleFontSize = subtitleText.fontSize;
+        textDefaultsCaptured = true;
+    }
+
+    private void ApplyWorldEventChoiceTextLayout()
+    {
+        CaptureTextDefaults();
+
+        if (!textDefaultsCaptured)
+            return;
+
+        titleText.enableAutoSizing = true;
+        titleText.fontSizeMin = 28f;
+        titleText.fontSizeMax = defaultTitleFontSize;
+        subtitleText.enableAutoSizing = true;
+        subtitleText.fontSizeMin = 22f;
+        subtitleText.fontSizeMax = defaultSubtitleFontSize;
+    }
+
+    private void RestoreDefaultTextLayout()
+    {
+        CaptureTextDefaults();
+
+        if (!textDefaultsCaptured)
+            return;
+
+        titleText.enableAutoSizing = defaultTitleAutoSizing;
+        titleText.fontSizeMin = defaultTitleFontSizeMin;
+        titleText.fontSizeMax = defaultTitleFontSizeMax;
+        titleText.fontSize = defaultTitleFontSize;
+        subtitleText.enableAutoSizing = defaultSubtitleAutoSizing;
+        subtitleText.fontSizeMin = defaultSubtitleFontSizeMin;
+        subtitleText.fontSizeMax = defaultSubtitleFontSizeMax;
+        subtitleText.fontSize = defaultSubtitleFontSize;
     }
 
     private void SetupUpgradeCards(

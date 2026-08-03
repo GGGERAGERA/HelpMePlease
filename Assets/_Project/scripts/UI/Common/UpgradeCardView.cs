@@ -20,11 +20,21 @@ public class UpgradeCardView : MonoBehaviour
 
     [SerializeField] private Image categoryFrameImage;
 
+    [Header("Choice-only Decorations")]
+    [SerializeField] private GameObject rarityDecorationRoot;
+    [SerializeField] private Image rarityGlowImage;
+    [SerializeField] private Image modeFrameImage;
+
     private UpgradeData currentUpgrade;
     private Action<UpgradeData> onClicked;
     private UICardHoverAnimation hoverAnimation;
     private Image iconFrameImage;
     private Color defaultIconFrameColor;
+    private Color defaultModeFrameColor;
+    private bool defaultModeFrameEnabled;
+    private bool defaultIconFrameEnabled;
+    private bool defaultRarityGlowEnabled;
+    private bool defaultRarityDecorationActive;
     private bool visualDefaultsCaptured;
 
     private void Awake()
@@ -79,8 +89,8 @@ public class UpgradeCardView : MonoBehaviour
         SetText(titleText, upgrade.upgradeName);
         SetText(descriptionText, upgrade.description);
 
-        SetIcon(upgrade.icon);
         SetCategory(upgrade.category);
+        SetIcon(upgrade.icon, GetCategoryColor(upgrade.category));
         hoverAnimation?.RefreshRestingState();
     }
 
@@ -100,11 +110,9 @@ public class UpgradeCardView : MonoBehaviour
 
         SetText(titleText, title);
         SetText(descriptionText, description);
-        SetIcon(icon);
         SetCategory(category);
-
-        if (iconFrameImage != null)
-            iconFrameImage.color = headerTint;
+        SetIcon(icon, headerTint);
+        ApplyChoiceVisuals(headerTint);
 
         if (button != null)
         {
@@ -142,13 +150,13 @@ public class UpgradeCardView : MonoBehaviour
         onClicked?.Invoke(currentUpgrade);
     }
 
-    private void SetIcon(Sprite icon)
+    private void SetIcon(Sprite icon, Color tint)
     {
         if (iconImage == null)
             return;
 
         iconImage.sprite = icon;
-        iconImage.color = Color.white;
+        iconImage.color = tint;
         iconImage.enabled = icon != null;
     }
 
@@ -161,7 +169,22 @@ public class UpgradeCardView : MonoBehaviour
             iconFrameImage = iconImage.transform.parent.GetComponent<Image>();
 
         if (iconFrameImage != null)
+        {
             defaultIconFrameColor = iconFrameImage.color;
+            defaultIconFrameEnabled = iconFrameImage.enabled;
+        }
+
+        if (modeFrameImage != null)
+        {
+            defaultModeFrameColor = modeFrameImage.color;
+            defaultModeFrameEnabled = modeFrameImage.enabled;
+        }
+
+        if (rarityGlowImage != null)
+            defaultRarityGlowEnabled = rarityGlowImage.enabled;
+
+        if (rarityDecorationRoot != null)
+            defaultRarityDecorationActive = rarityDecorationRoot.activeSelf;
 
         visualDefaultsCaptured = true;
     }
@@ -171,7 +194,40 @@ public class UpgradeCardView : MonoBehaviour
         CaptureVisualDefaults();
 
         if (iconFrameImage != null)
+        {
             iconFrameImage.color = defaultIconFrameColor;
+            iconFrameImage.enabled = defaultIconFrameEnabled;
+        }
+
+        if (modeFrameImage != null)
+        {
+            modeFrameImage.color = defaultModeFrameColor;
+            modeFrameImage.enabled = defaultModeFrameEnabled;
+        }
+
+        if (rarityGlowImage != null)
+            rarityGlowImage.enabled = defaultRarityGlowEnabled;
+
+        if (rarityDecorationRoot != null)
+            rarityDecorationRoot.SetActive(defaultRarityDecorationActive);
+    }
+
+    private void ApplyChoiceVisuals(Color frameColor)
+    {
+        if (rarityDecorationRoot != null)
+            rarityDecorationRoot.SetActive(false);
+
+        if (rarityGlowImage != null)
+            rarityGlowImage.enabled = false;
+
+        if (iconFrameImage != null)
+            iconFrameImage.enabled = false;
+
+        if (modeFrameImage != null)
+        {
+            modeFrameImage.color = frameColor;
+            modeFrameImage.enabled = true;
+        }
     }
 
     private void SetCategory(UpgradeCategory category)

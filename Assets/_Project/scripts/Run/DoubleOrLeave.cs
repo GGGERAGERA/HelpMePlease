@@ -39,6 +39,8 @@ public sealed class DoubleOrLeave : MonoBehaviour
         State = DoubleOrLeaveState.WaitingForChoice;
 
         bool shown = upgradeManager.ShowWorldEventModeChoices(
+            worldEvent.EventDisplayName,
+            worldEvent.EventDescription,
             () => SelectEventMode(false, onSelected),
             () => SelectEventMode(true, onSelected)
         );
