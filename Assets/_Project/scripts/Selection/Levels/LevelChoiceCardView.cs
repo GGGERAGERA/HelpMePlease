@@ -1,30 +1,42 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+
+public enum LevelChoiceCardPresentationMode
+{
+    Default = 0,
+    SectorChoice = 1
+}
 
 public sealed class LevelChoiceCardView : MonoBehaviour
 {
     [Header("Root")]
     [SerializeField] private Button button;
     [SerializeField] private Image iconImage;
+    [SerializeField] private LevelChoiceCardPresentationMode presentationMode;
 
     [Header("Selection")]
     [SerializeField] private Image frameImage;
     [SerializeField] private Image glowImage;
-    [SerializeField] private Color normalFrameColor = new Color(0.75f, 0.75f, 0.75f, 1f);
-    [SerializeField] private Color selectedFrameColor = new Color(0.2f, 0.72f, 0.82f, 1f);
+    [SerializeField] private Image accentHeaderImage;
 
     [Header("Texts")]
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI descriptionText;
     [SerializeField] private TextMeshProUGUI tagText;
+    [SerializeField] private TextMeshProUGUI rewardText;
 
-    private LevelNodeData nodeData;
-    private Action<LevelNodeData> onClicked;
+    private WorldRuleData worldRuleData;
+    private Action<WorldRuleData> onRuleClicked;
     private UICardHoverAnimation hoverAnimation;
+    private Color sectorAccentColor = Color.white;
 
-    public LevelNodeData Data => nodeData;
+    public WorldRuleData Rule => worldRuleData;
+    public LevelChoiceCardPresentationMode PresentationMode =>
+        presentationMode;
 
     private void Awake()
     {
@@ -39,9 +51,10 @@ public sealed class LevelChoiceCardView : MonoBehaviour
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(HandleClick);
 
-        ConfigureText(titleText, 30f, 44f);
-        ConfigureText(descriptionText, 18f, 24f);
-        ConfigureText(tagText, 16f, 20f);
+        ConfigureText(titleText, 26f, 38f, 1);
+        ConfigureText(descriptionText, 17f, 22f, 2);
+        ConfigureText(tagText, 15f, 19f, 2);
+        ConfigureText(rewardText, 15f, 19f, 3);
     }
 
     private void OnDestroy()
@@ -50,64 +63,155 @@ public sealed class LevelChoiceCardView : MonoBehaviour
             button.onClick.RemoveListener(HandleClick);
     }
 
-    public void Setup(LevelNodeData data, Action<LevelNodeData> clickCallback)
+    public void SetupSectorChoice(
+        WorldRuleData rule,
+        RunSector sector,
+        Action<WorldRuleData> clickCallback)
     {
-        nodeData = data;
-        onClicked = clickCallback;
-        gameObject.SetActive(data != null);
+        presentationMode = LevelChoiceCardPresentationMode.SectorChoice;
+        worldRuleData = rule;
+        onRuleClicked = clickCallback;
+        gameObject.SetActive(rule != null);
 
-        if (data == null)
+        if (rule == null)
             return;
 
+        ApplySectorPresentation(rule, sector);
         SetSelected(false);
-        SetText(titleText, data.nodeName);
-        SetText(descriptionText, data.description);
-        SetText(tagText, data.MainThreat);
+    }
 
-        if (iconImage != null)
-        {
-            iconImage.sprite = data.icon;
-            iconImage.preserveAspect = true;
-            iconImage.gameObject.SetActive(data.icon != null);
-        }
+    private void ApplySectorPresentation(
+        WorldRuleData rule,
+        RunSector sector)
+    {
+        sectorAccentColor = rule.PresentationColor;
+        SetText(titleText, rule.DisplayName);
+        SetText(descriptionText, rule.ShortDescription);
+        SetText(tagText, BuildEffectText(rule));
+        SetText(rewardText, BuildRewardText(rule, sector));
+        SetIcon(rule.Icon, sectorAccentColor);
+
+        if (titleText != null)
+            titleText.color = sectorAccentColor;
+
+        if (accentHeaderImage != null)
+            accentHeaderImage.color = sectorAccentColor;
+
+        if (glowImage != null)
+            glowImage.enabled = false;
+    }
+
+    private void SetIcon(Sprite icon, Color tint)
+    {
+        if (iconImage == null)
+            return;
+
+        iconImage.sprite = icon;
+        iconImage.color = tint;
+        iconImage.preserveAspect = true;
+        iconImage.gameObject.SetActive(icon != null);
     }
 
     private void HandleClick()
     {
-        if (nodeData != null)
-        {
-            onClicked?.Invoke(nodeData);
-        }
+        if (worldRuleData != null)
+            onRuleClicked?.Invoke(worldRuleData);
     }
 
     public void SetSelected(bool selected)
     {
-        Vector3 restingScale = selected ? Vector3.one * 1.035f : Vector3.one;
-
         if (hoverAnimation != null)
-            hoverAnimation.SetRestingScale(restingScale);
+            hoverAnimation.SetRestingScale(Vector3.one);
         else
-            transform.localScale = restingScale;
-
-        Color frameColor = selected ? selectedFrameColor : normalFrameColor;
+            transform.localScale = Vector3.one;
 
         if (frameImage != null)
-            frameImage.color = frameColor;
-
-        if (glowImage != null)
         {
-            Color glowColor = new Color(
-                frameColor.r,
-                frameColor.g,
-                frameColor.b,
-                selected ? 0.42f : 0.12f);
-
-            glowImage.color = glowColor;
-            hoverAnimation?.SetRestingAccentColor(glowColor);
+            Color sectorFrameColor = sectorAccentColor;
+            sectorFrameColor.a = selected ? 1f : 0.72f;
+            frameImage.color = sectorFrameColor;
         }
     }
 
-    private void ConfigureText(TextMeshProUGUI text, float minimumSize, float maximumSize)
+    private static string BuildEffectText(WorldRuleData rule)
+    {
+        List<string> lines = new(2);
+
+        switch (rule.RuleType)
+        {
+            case WorldRuleType.Rain:
+                AddLine(lines, "\u0412\u0440\u0430\u0433\u0438 \u0434\u0432\u0438\u0433\u0430\u044e\u0442\u0441\u044f \u0431\u044b\u0441\u0442\u0440\u0435\u0435");
+                AddLine(lines, "\u0412\u0440\u0430\u0433\u0438 \u043f\u043e\u044f\u0432\u043b\u044f\u044e\u0442\u0441\u044f \u0447\u0430\u0449\u0435");
+                break;
+
+            case WorldRuleType.Snow:
+                AddLine(lines, "\u0414\u0432\u0438\u0436\u0435\u043d\u0438\u0435 \u0437\u0430\u043c\u0435\u0434\u043b\u0435\u043d\u043e");
+                AddLine(lines, "\u0412\u0440\u0430\u0433\u0438 \u043f\u043e\u044f\u0432\u043b\u044f\u044e\u0442\u0441\u044f \u0447\u0430\u0449\u0435");
+                break;
+
+            case WorldRuleType.Wind:
+                AddLine(lines, "\u041d\u0430\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u0432\u0435\u0442\u0440\u0430 \u043c\u0435\u043d\u044f\u0435\u0442\u0441\u044f");
+                break;
+        }
+
+        return string.Join("\n", lines);
+    }
+
+    private static void AddLine(List<string> lines, string value)
+    {
+        if (lines.Count < 2 && !string.IsNullOrWhiteSpace(value))
+            lines.Add(value);
+    }
+
+    private static string BuildRewardText(
+        WorldRuleData rule,
+        RunSector sector)
+    {
+        List<string> lines = new(3);
+
+        if (rule.RuleType == WorldRuleType.Golden &&
+            rule.GoldenEnemyRewardMultiplier > 1f)
+        {
+            lines.Add(
+                "\u0417\u043e\u043b\u043e\u0442\u044b\u0435 \u0432\u0440\u0430\u0433\u0438 \u0434\u0430\u044e\u0442 " +
+                "\u0431\u043e\u043b\u044c\u0448\u0435 \u0437\u043e\u043b\u043e\u0442\u0430"
+            );
+        }
+
+        float experienceMultiplier = sector != null
+            ? sector.ExperienceGainMultiplier
+            : 1f;
+        float completionGoldMultiplier = sector != null
+            ? sector.CompletionGoldMultiplier
+            : 1f;
+
+        if (!Mathf.Approximately(experienceMultiplier, 1f))
+            lines.Add($"XP \u00d7{FormatMultiplier(experienceMultiplier)}");
+
+        if (!Mathf.Approximately(completionGoldMultiplier, 1f))
+        {
+            lines.Add(
+                $"\u0417\u043e\u043b\u043e\u0442\u043e \u00d7" +
+                FormatMultiplier(completionGoldMultiplier)
+            );
+        }
+
+        if (lines.Count == 0)
+            return "\u0421\u0442\u0430\u043d\u0434\u0430\u0440\u0442\u043d\u0430\u044f \u043d\u0430\u0433\u0440\u0430\u0434\u0430";
+
+        return string.Join("\n", lines);
+    }
+
+    private static string FormatMultiplier(float value)
+    {
+        return value.ToString("0.##", CultureInfo.InvariantCulture);
+    }
+
+    private static void ConfigureText(
+        TextMeshProUGUI text,
+        float minimumSize,
+        float maximumSize,
+        int maximumLines)
     {
         if (text == null)
             return;
@@ -117,11 +221,15 @@ public sealed class LevelChoiceCardView : MonoBehaviour
         text.fontSizeMax = maximumSize;
         text.textWrappingMode = TextWrappingModes.Normal;
         text.overflowMode = TextOverflowModes.Truncate;
+        text.maxVisibleLines = maximumLines;
     }
 
-    private void SetText(TextMeshProUGUI text, string value)
+    private static void SetText(TextMeshProUGUI text, string value)
     {
-        if (text != null)
-            text.text = value;
+        if (text == null)
+            return;
+
+        text.text = value;
+        text.gameObject.SetActive(!string.IsNullOrWhiteSpace(value));
     }
 }

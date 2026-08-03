@@ -14,13 +14,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WorldRuleData
   stableId: Snow
   ruleType: 11
-  displayName: СНЕГ
-  description: Заснеженный уровень с холодной зимней атмосферой.
-  pinnedDescription: Снег
+  displayName: "\u0421\u041D\u0415\u0413"
+  description: "\u0417\u0430\u0441\u043D\u0435\u0436\u0435\u043D\u043D\u044B\u0439 \u0441\u0435\u043A\u0442\u043E\u0440 \u0441 \u0445\u043E\u043B\u043E\u0434\u043D\u043E\u0439 \u0437\u0438\u043C\u043D\u0435\u0439 \u0430\u0442\u043C\u043E\u0441\u0444\u0435\u0440\u043E\u0439."
+  shortDescription: "\u0421\u043D\u0435\u0433 \u0437\u0430\u043C\u0435\u0434\u043B\u044F\u0435\u0442 \u0434\u0432\u0438\u0436\u0435\u043D\u0438\u0435"
+  icon: {fileID: -1631316636, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
+  presentationColor: {r: 0.78, g: 0.92, b: 1, a: 1}
+  pinnedDescription: "\u0421\u043D\u0435\u0433"
   selectionWeight: 1
+  sectorExperienceMultiplier: 1
+  sectorCompletionGoldMultiplier: 1
   playerMoveSpeedMultiplier: 0.9
   enemyMoveSpeedMultiplier: 0.9
-  spawnPressureMultiplier: 1
+  enemyHealthMultiplier: 1
+  spawnPressureMultiplier: 1.12
   goldenEnemyChance: 0
   goldenEnemyHealthMultiplier: 1
   goldenEnemyRewardMultiplier: 1

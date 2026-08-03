@@ -24,10 +24,26 @@ public sealed class WorldRuleData : ScriptableObject
     [TextArea(2, 4)]
     [SerializeField] private string description;
     [TextArea(1, 2)]
+    [Tooltip("Short sector-choice description, limited to one concise effect.")]
+    [SerializeField] private string shortDescription;
+    [Tooltip("Icon used by the sector-choice card.")]
+    [SerializeField] private Sprite icon;
+    [Tooltip("Accent used by the sector-choice frame, icon and header.")]
+    [SerializeField] private Color presentationColor =
+        new(0.2f, 0.72f, 0.82f, 1f);
+    [TextArea(1, 2)]
     [SerializeField] private string pinnedDescription;
 
     [Header("Selection")]
     [SerializeField, Min(0f)] private float selectionWeight = 1f;
+
+    [Header("Sector Rewards")]
+    [Tooltip("Experience multiplier applied to a sector using this rule.")]
+    [SerializeField, Min(0.1f)]
+    private float sectorExperienceMultiplier = 1f;
+    [Tooltip("Completion-gold multiplier applied to a sector using this rule.")]
+    [SerializeField, Min(0.1f)]
+    private float sectorCompletionGoldMultiplier = 1f;
 
     [Header("Gameplay")]
     [Tooltip("Multiplier applied to the player's regular movement speed.")]
@@ -36,6 +52,9 @@ public sealed class WorldRuleData : ScriptableObject
     [Tooltip("Multiplier applied to enemy movement speed.")]
     [SerializeField, Min(0.1f)]
     private float enemyMoveSpeedMultiplier = 1f;
+    [Tooltip("Multiplier applied to all enemy health for this world rule.")]
+    [SerializeField, Min(0.1f)]
+    private float enemyHealthMultiplier = 1f;
     [Tooltip("Multiplier applied once to the level spawn pressure.")]
     [SerializeField, Min(0.1f)]
     private float spawnPressureMultiplier = 1f;
@@ -62,10 +81,20 @@ public sealed class WorldRuleData : ScriptableObject
     public string Id => stableId;
     public WorldRuleType RuleType => ruleType;
     public float SelectionWeight => Mathf.Max(0f, selectionWeight);
+    public float SectorExperienceMultiplier =>
+        sectorExperienceMultiplier > 0f
+            ? sectorExperienceMultiplier
+            : 1f;
+    public float SectorCompletionGoldMultiplier =>
+        sectorCompletionGoldMultiplier > 0f
+            ? sectorCompletionGoldMultiplier
+            : 1f;
     public float PlayerMoveSpeedMultiplier =>
         Mathf.Max(0.1f, playerMoveSpeedMultiplier);
     public float EnemyMoveSpeedMultiplier =>
         Mathf.Max(0.1f, enemyMoveSpeedMultiplier);
+    public float EnemyHealthMultiplier =>
+        enemyHealthMultiplier > 0f ? enemyHealthMultiplier : 1f;
     public float SpawnPressureMultiplier =>
         Mathf.Max(0.1f, spawnPressureMultiplier);
     public float GoldenEnemyChance => Mathf.Clamp01(goldenEnemyChance);
@@ -79,6 +108,10 @@ public sealed class WorldRuleData : ScriptableObject
         fixedWindDirection.sqrMagnitude > 0.0001f
             ? fixedWindDirection.normalized
             : Vector2.right;
+    public string DisplayName => displayName;
+    public string ShortDescription => shortDescription;
+    public Sprite Icon => icon;
+    public Color PresentationColor => presentationColor;
     public LevelMechanicPresentationData Presentation =>
         new(displayName, description, pinnedDescription);
 }

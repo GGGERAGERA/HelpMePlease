@@ -3,7 +3,6 @@ using UnityEngine;
 public class RunTimer : MonoBehaviour
 {
     [Header("Level")]
-    [SerializeField] private LevelNodeData defaultLevel;
     [SerializeField] private float runDuration = 70f;
 
     [Header("Boss Spawn")]
@@ -22,10 +21,22 @@ public class RunTimer : MonoBehaviour
     private float timeLeft;
     private bool bossSpawned;
 
+    public void StopTimer()
+    {
+        StopAllCoroutines();
+        enabled = false;
+    }
+
     private void Start()
     {
         ResolveGameplayArea();
-        ApplySelectedLevel();
+
+        if (!ApplyCurrentSector())
+        {
+            enabled = false;
+            return;
+        }
+
         timeLeft = runDuration;
         HUDManager.Instance?.SetTimer(timeLeft);
     }
@@ -46,27 +57,33 @@ public class RunTimer : MonoBehaviour
         }
     }
 
-    private void ApplySelectedLevel()
+    private bool ApplyCurrentSector()
     {
-        LevelNodeData level = RunStateManager.Instance != null
-            ? RunStateManager.Instance.SelectedLevelNode
+        RunStateManager runState = RunStateManager.Instance;
+        RunSector sector = runState != null
+            ? runState.CurrentSector
             : null;
 
-        if (level == null)
-            level = defaultLevel;
+        if (sector == null)
+        {
+            Debug.LogError(
+                "[RunTimer] CurrentSector is missing. " +
+                "The timer and boss spawn are disabled.",
+                this
+            );
+            return false;
+        }
 
-        if (level == null)
-            return;
-
-        runDuration = level.Duration;
-
-        if (level.BossPrefab != null)
-            bossPrefab = level.BossPrefab;
+        runDuration = sector.Duration;
+        bossPrefab = sector.BossPrefab;
 
         Debug.Log(
-            $"[RunTimer] Level '{level.nodeName}': {runDuration:F0}s, " +
-            $"boss '{(bossPrefab != null ? bossPrefab.name : "not assigned")}'."
+            $"[RunTimer] Sector {sector.SectorNumber}: " +
+            $"{runDuration:F0}s, boss " +
+            $"'{(bossPrefab != null ? bossPrefab.name : "not assigned")}'."
         );
+
+        return true;
     }
 
     private void SpawnBossObject()

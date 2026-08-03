@@ -64,51 +64,6 @@ public sealed class LevelAnomalyView : MonoBehaviour
         overlayGroup.gameObject.SetActive(false);
     }
 
-    public IEnumerator PlayIntro(
-        LevelNodeData sector,
-        LevelMechanicPresentationData presentation)
-    {
-        Prepare();
-        StopLocalCardRoutine();
-        SetData(sector, presentation);
-
-        rootGroup.alpha = 1f;
-        rootGroup.blocksRaycasts = true;
-        overlayBackground.enabled = true;
-        overlayGroup.gameObject.SetActive(true);
-        pinnedGroup.gameObject.SetActive(false);
-        pinnedRect.anchoredPosition = new Vector2(-40f, -112f);
-
-        overlayGroup.alpha = 0f;
-        sectorGroup.alpha = 0f;
-        alertGroup.alpha = 0f;
-        revealCardGroup.alpha = 0f;
-        flashImage.color = new Color(Cyan.r, Cyan.g, Cyan.b, 0f);
-
-        sectorRect.anchoredPosition = new Vector2(-70f, 130f);
-        revealCardRect.anchoredPosition = Vector2.zero;
-        revealCardRect.localScale = Vector3.one * 0.7f;
-
-        yield return Fade(overlayGroup, 0f, 1f, 0.18f);
-        yield return AnimateSectorIn(0.25f);
-        yield return WaitRealtime(0.22f);
-        yield return Fade(sectorGroup, 1f, 0f, 0.15f);
-        yield return GlitchFlash();
-        yield return Fade(alertGroup, 0f, 1f, 0.15f);
-        yield return ScaleAndFadeCard(0.25f);
-        yield return ScaleCard(Vector3.one * 1.08f, Vector3.one, 0.08f);
-        yield return WaitRealtime(0.45f);
-        yield return DockCard(0.28f);
-
-        revealCardGroup.alpha = 0f;
-        pinnedGroup.gameObject.SetActive(true);
-        pinnedGroup.alpha = 1f;
-        yield return Fade(overlayGroup, 1f, 0f, 0.2f);
-
-        overlayGroup.gameObject.SetActive(false);
-        rootGroup.blocksRaycasts = false;
-    }
-
     public void ShowLocalAnomaly(
         LevelMechanicPresentationData presentation)
     {
@@ -138,7 +93,7 @@ public sealed class LevelAnomalyView : MonoBehaviour
     private IEnumerator ShowLocalAnomalyRoutine(
         LevelMechanicPresentationData presentation)
     {
-        SetData(null, presentation);
+        SetData(presentation);
 
         rootGroup.alpha = 1f;
         rootGroup.blocksRaycasts = false;
@@ -309,13 +264,9 @@ public sealed class LevelAnomalyView : MonoBehaviour
         pinned.SetActive(false);
     }
 
-    private void SetData(
-        LevelNodeData sector,
-        LevelMechanicPresentationData presentation)
+    private void SetData(LevelMechanicPresentationData presentation)
     {
-        sectorText.text = sector != null
-            ? sector.nodeName
-            : "СЕКТОР";
+        sectorText.text = "СЕКТОР";
         revealNameText.text = presentation.Title;
         revealDescriptionText.text = presentation.Description;
         pinnedNameText.text = presentation.Title;

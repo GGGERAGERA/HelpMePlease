@@ -576,7 +576,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bddeb846b618d9e4f8e3f0aee017ce4a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunTimer
-  defaultLevel: {fileID: 11400000, guid: 20100000000000000000000000000000, type: 2}
   runDuration: 60
   bossPrefab: {fileID: 8074722678228422782, guid: 8f73b608ef0309744b732a66e85e86d7, type: 3}
   spawnDistanceFromPlayer: 25
@@ -1322,6 +1321,7 @@ RectTransform:
   - {fileID: 900000000000000002}
   - {fileID: 900000000000002003}
   - {fileID: 900000000000003001}
+  - {fileID: 920000000000000002}
   m_Father: {fileID: 1635164420}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1349,6 +1349,7 @@ MonoBehaviour:
   killsText: {fileID: 740100735}
   currencyText: {fileID: 900000000000000104}
   timerText: {fileID: 1439890534}
+  routeProgressView: {fileID: 920000000000000005}
   lowHpVignette: {fileID: 2079903374}
   lowHpThreshold: 0.4
   bossHpPanel: {fileID: 352398372}
@@ -2697,14 +2698,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1da2644fdaf4896468bb61b26fc07793, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelModifiersApplier
-  defaultLevel: {fileID: 11400000, guid: 20100000000000000000000000000000, type: 2}
+  devStageProfile: {fileID: 11400000, guid: d387815bd32a4a639c4ac0f811ee3251, type: 2}
+  devWorldRule: {fileID: 11400000, guid: f1012da158e24a20bb764c93aeee5266, type: 2}
+  devLocalAnomaly: {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}
   enemySpawner: {fileID: 8488144525096105199, guid: 169b5772155b17842b8cd9604fcf1eb7, type: 3}
   runFlowController: {fileID: 46915856}
   anomalyController: {fileID: 2147010005}
   worldRuleController: {fileID: 2147010006}
-  healthGrowthPerLevel: 0.04
-  speedGrowthPerLevel: 0
-  spawnRateGrowthPerLevel: 0.12
 --- !u!4 &1203821960
 Transform:
   m_ObjectHideFlags: 0
@@ -2798,14 +2798,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelChoiceManager
   panelView: {fileID: 1005126886403062317}
-  availableNodes:
-  - {fileID: 11400000, guid: 7a300000000000000000000000000001, type: 2}
-  - {fileID: 11400000, guid: 7a300000000000000000000000000002, type: 2}
-  - {fileID: 11400000, guid: 7a300000000000000000000000000003, type: 2}
-  - {fileID: 11400000, guid: 20230000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20220000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20240000000000000000000000000000, type: 2}
-  - {fileID: 11400000, guid: 20250000000000000000000000000000, type: 2}
+  availableWorldRules:
+  - {fileID: 11400000, guid: e9ff1c9474d14fd4ea654c82fddd4155, type: 2}
+  - {fileID: 11400000, guid: c7ddfa7252bf4db2c8432a60dbbb2f33, type: 2}
+  - {fileID: 11400000, guid: a5bdb85030fd4b90a621084eb9990d11, type: 2}
+  - {fileID: 11400000, guid: b6cce96141ae4ca1b732195fcaaa1e22, type: 2}
+  - {fileID: 11400000, guid: d8ee0b8363c04ec3d9543b71eccc3044, type: 2}
+  - {fileID: 11400000, guid: c016d34b1d8f4fe797a9483ca0d30016, type: 2}
+  defaultLocalAnomaly: {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}
+  stageProfiles:
+  - {fileID: 11400000, guid: d387815bd32a4a639c4ac0f811ee3251, type: 2}
+  - {fileID: 11400000, guid: d9e69161c1eb43b0a2d951ef6b23c802, type: 2}
+  - {fileID: 11400000, guid: 5f8bad0d052f482ca5099c4b0f757003, type: 2}
+  - {fileID: 11400000, guid: 2c0e020fa77e43e388709a06b56d61a4, type: 2}
+  - {fileID: 11400000, guid: b8cfd422d11741b6b873948b000772f7, type: 2}
+  - {fileID: 11400000, guid: 7a5b2f60bf534a258f78ab379766b0d4, type: 2}
+  - {fileID: 11400000, guid: 54106be565ac42d0a99c24f7bdbd711b, type: 2}
+  - {fileID: 11400000, guid: 189cb14e477c424db65779b9f88af5c5, type: 2}
+  - {fileID: 11400000, guid: c3d47ea694744bdb840164e013dee97d, type: 2}
+  - {fileID: 11400000, guid: 2d1a0f7556dd4e42a4830200a0931611, type: 2}
   gameplaySceneName: MVP
   choicesCount: 3
 --- !u!4 &1304651477
@@ -9372,6 +9383,113 @@ MonoBehaviour:
   fogOpacity: 0.82
   fadeInDuration: 1.25
   fadeOutDuration: 0.55
+--- !u!1 &920000000000000001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 920000000000000002}
+  - component: {fileID: 920000000000000003}
+  - component: {fileID: 920000000000000004}
+  - component: {fileID: 920000000000000005}
+  - component: {fileID: 920000000000000006}
+  m_Layer: 5
+  m_Name: HUDRouteProgress
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &920000000000000002
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 920000000000000001}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 458832744}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -24, y: -24}
+  m_SizeDelta: {x: 220, y: 44}
+  m_Pivot: {x: 1, y: 1}
+--- !u!222 &920000000000000003
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 920000000000000001}
+  m_CullTransparentMesh: 1
+--- !u!114 &920000000000000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 920000000000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.015, g: 0.025, b: 0.04, a: 0.9}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &920000000000000005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 920000000000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b92b13653fe44898f8dc4dd940128aa, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::RunRouteProgressView
+  font: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  pointSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  showPoints: 0
+--- !u!114 &920000000000000006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 920000000000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
+  m_EffectColor: {r: 0.12, g: 0.78, b: 0.9, a: 0.8}
+  m_EffectDistance: {x: 1, y: -1}
+  m_UseGraphicAlpha: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -6,9 +6,14 @@ using UnityEngine.UI;
 
 public sealed class LevelChoicePanelView : MonoBehaviour
 {
+    private const int TotalRouteSectors = 10;
+
     [Header("Texts")]
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI subtitleText;
+
+    [Header("Route Progress")]
+    [SerializeField] private RunRouteProgressView routeProgressView;
 
     [Header("Cards")]
     [SerializeField] private LevelChoiceCardView[] cardViews;
@@ -16,8 +21,8 @@ public sealed class LevelChoicePanelView : MonoBehaviour
     [Header("Confirm")]
     [SerializeField] private Button confirmButton;
 
-    private LevelNodeData selectedNode;
-    private Action<LevelNodeData> onChoiceConfirmed;
+    private WorldRuleData selectedRule;
+    private Action<WorldRuleData> onChoiceConfirmed;
 
     private void Awake()
     {
@@ -49,16 +54,27 @@ public sealed class LevelChoicePanelView : MonoBehaviour
     }
 
     public void Show(
-        IReadOnlyList<LevelNodeData> choices,
-        Action<LevelNodeData> onChoiceSelected
+        IReadOnlyList<WorldRuleData> choices,
+        IReadOnlyDictionary<WorldRuleData, RunSector> sectorOptions,
+        int nextSectorNumber,
+        Action<WorldRuleData> onChoiceSelected
     )
     {
         gameObject.SetActive(true);
 
-        SetText(titleText, "ВЫБЕРИТЕ СЛЕДУЮЩИЙ СЕКТОР");
+        SetText(
+            titleText,
+            "\u0412\u042b\u0411\u0415\u0420\u0418\u0422\u0415 " +
+            "\u0423\u0421\u041b\u041e\u0412\u0418\u042f " +
+            "\u0421\u0415\u041a\u0422\u041e\u0420\u0410"
+        );
 
-        selectedNode = null;
+        selectedRule = null;
         onChoiceConfirmed = onChoiceSelected;
+        routeProgressView?.ShowNext(
+            nextSectorNumber,
+            TotalRouteSectors
+        );
 
         if (confirmButton != null)
             confirmButton.interactable = false;
@@ -72,20 +88,25 @@ public sealed class LevelChoicePanelView : MonoBehaviour
             if (cardView == null)
                 continue;
 
-            LevelNodeData data =
+            WorldRuleData rule =
                 choices != null && i < choices.Count
                     ? choices[i]
                     : null;
+            RunSector sector = null;
 
-            cardView.Setup(data, SelectCard);
+            if (rule != null && sectorOptions != null)
+                sectorOptions.TryGetValue(rule, out sector);
+
+            cardView.SetupSectorChoice(rule, sector, SelectCard);
             cardView.SetSelected(false);
         }
     }
 
     public void Hide()
     {
-        selectedNode = null;
+        selectedRule = null;
         onChoiceConfirmed = null;
+        routeProgressView?.Hide();
 
         if (confirmButton != null)
             confirmButton.interactable = false;
@@ -93,12 +114,12 @@ public sealed class LevelChoicePanelView : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    private void SelectCard(LevelNodeData node)
+    private void SelectCard(WorldRuleData rule)
     {
-        if (node == null)
+        if (rule == null)
             return;
 
-        selectedNode = node;
+        selectedRule = rule;
 
         int cardCount = cardViews != null ? cardViews.Length : 0;
 
@@ -107,7 +128,7 @@ public sealed class LevelChoicePanelView : MonoBehaviour
             LevelChoiceCardView cardView = cardViews[i];
 
             if (cardView != null)
-                cardView.SetSelected(cardView.Data == node);
+                cardView.SetSelected(cardView.Rule == rule);
         }
 
         if (confirmButton != null)
@@ -116,17 +137,16 @@ public sealed class LevelChoicePanelView : MonoBehaviour
 
     private void ConfirmSelection()
     {
-        if (selectedNode == null)
+        if (selectedRule == null)
             return;
 
-        Action<LevelNodeData> callback = onChoiceConfirmed;
+        Action<WorldRuleData> callback = onChoiceConfirmed;
 
-        // Защита от повторного клика до смены сцены.
         if (confirmButton != null)
             confirmButton.interactable = false;
 
         AudioService.Instance?.Play(AudioCueId.UIConfirm);
-        callback?.Invoke(selectedNode);
+        callback?.Invoke(selectedRule);
     }
 
     private Button FindButton(string objectName)

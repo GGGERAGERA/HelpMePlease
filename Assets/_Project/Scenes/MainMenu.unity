@@ -25537,6 +25537,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BunkerRunStarter
   gameplaySceneName: MVP
+  startingStageProfile: {fileID: 11400000, guid: d387815bd32a4a639c4ac0f811ee3251, type: 2}
+  startingWorldRule: {fileID: 11400000, guid: f1012da158e24a20bb764c93aeee5266, type: 2}
+  startingLocalAnomaly: {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}
 --- !u!1 &735746296
 GameObject:
   m_ObjectHideFlags: 0

@@ -14,7 +14,7 @@ public sealed class RunStateManager : MonoBehaviour
     public WeaponData SelectedWeapon { get; private set; }
     public int CurrentLevel { get; private set; } = 1;
 
-    public LevelNodeData SelectedLevelNode { get; private set; }
+    public RunSector CurrentSector { get; private set; }
 
     private readonly List<UpgradeData> pickedUpgrades = new();
     private readonly RunItemSlots itemSlots = new();
@@ -34,11 +34,16 @@ public sealed class RunStateManager : MonoBehaviour
     private float accumulatedRunTime;
     private int completedLevels;
     private float completedLevelRewardMultiplierTotal;
+    private int lastCompletedSectorNumber;
 
     private int lastCommittedStatsInstanceId;
     private bool runEnded;
 
     private RunSummary lastRunSummary;
+
+    private StageProfileData startingStageProfile;
+    private WorldRuleData startingWorldRule;
+    private LocalAnomalyData startingLocalAnomaly;
 
     public IReadOnlyList<UpgradeData> PickedUpgrades => pickedUpgrades;
     public RunItemSlots ItemSlots => itemSlots;
@@ -78,10 +83,17 @@ public sealed class RunStateManager : MonoBehaviour
         return go.AddComponent<RunStateManager>();
     }
 
-    public void SetSelectedLevelNode(LevelNodeData node)
+    public void SetCurrentSector(RunSector sector)
     {
-        SelectedLevelNode = node;
-        Debug.Log($"[RunState] Selected level node: {(node != null ? node.nodeName : "NULL")}");
+        CurrentSector = sector;
+
+        if (sector != null)
+            CurrentLevel = Mathf.Max(1, sector.SectorNumber);
+    }
+
+    public void ClearCurrentSector()
+    {
+        CurrentSector = null;
     }
 
     private void Awake()
@@ -100,7 +112,7 @@ public sealed class RunStateManager : MonoBehaviour
     {
         FindFirstObjectByType<DoubleOrLeave>()?.ResetState();
 
-        SelectedLevelNode = null;
+        ClearCurrentSector();
         SelectedCharacter = character;
         SelectedWeapon = weapon;
         CurrentLevel = 1;
@@ -116,12 +128,14 @@ public sealed class RunStateManager : MonoBehaviour
         accumulatedRunTime = 0f;
         completedLevels = 0;
         completedLevelRewardMultiplierTotal = 0f;
+        lastCompletedSectorNumber = 0;
 
         lastCommittedStatsInstanceId = 0;
         runEnded = false;
         lastRunSummary = null;
 
         upgradesAppliedToCurrentScene = false;
+        CreateStartingSector();
         CurrentRewardChanged?.Invoke();
 
         Debug.Log(
@@ -269,19 +283,39 @@ public sealed class RunStateManager : MonoBehaviour
         }
     }
 
-    public void RegisterCompletedLevel(LevelNodeData completedNode)
+    public void RegisterCompletedLevel()
     {
         if (runEnded)
             return;
 
+        if (CurrentSector == null)
+        {
+            Debug.LogError(
+                "[RunState] Cannot register sector completion: " +
+                "CurrentSector is missing."
+            );
+            return;
+        }
+
+        int sectorNumber = CurrentSector.SectorNumber;
+
+        if (lastCompletedSectorNumber == sectorNumber)
+        {
+            Debug.LogWarning(
+                $"[RunState] Sector {sectorNumber} completion was already registered."
+            );
+            return;
+        }
+
         completedLevels++;
-        completedLevelRewardMultiplierTotal += completedNode != null
-            ? completedNode.CompletionGoldMultiplier
-            : 1f;
+        completedLevelRewardMultiplierTotal +=
+            CurrentSector.CompletionGoldMultiplier;
+        lastCompletedSectorNumber = sectorNumber;
         CurrentRewardChanged?.Invoke();
 
         Debug.Log(
-            $"[RunState] Completed levels: {completedLevels}, " +
+            $"[RunState] Completed sector {sectorNumber}. " +
+            $"Completed levels: {completedLevels}, " +
             $"reward total x{completedLevelRewardMultiplierTotal:F2}"
         );
     }
@@ -370,5 +404,57 @@ public sealed class RunStateManager : MonoBehaviour
 
         lastRunSummary = null;
         return true;
+    }
+
+    public void BeginNewRun(
+        CharacterData character,
+        WeaponData weapon,
+        StageProfileData stageProfile,
+        WorldRuleData worldRule,
+        LocalAnomalyData localAnomaly)
+    {
+        startingStageProfile = stageProfile;
+        startingWorldRule = worldRule;
+        startingLocalAnomaly = localAnomaly;
+        BeginNewRun(character, weapon);
+    }
+
+    private void CreateStartingSector()
+    {
+        if (startingStageProfile == null ||
+            startingWorldRule == null ||
+            startingLocalAnomaly == null)
+        {
+            Debug.LogError(
+                "[RunState] Starting sector configuration is missing. " +
+                "CurrentSector was not created."
+            );
+            return;
+        }
+
+        if (startingStageProfile.SectorNumber != 1)
+        {
+            Debug.LogError(
+                $"[RunState] Starting StageProfile " +
+                $"'{startingStageProfile.name}' is not sector 1."
+            );
+            return;
+        }
+
+        SetCurrentSector(new RunSector(
+            1,
+            startingStageProfile,
+            startingWorldRule,
+            startingLocalAnomaly
+        ));
+    }
+
+    public void ClearFinishedRunCompatibilityState()
+    {
+        if (!runEnded)
+            return;
+
+        ClearCurrentSector();
+        CurrentLevel = 1;
     }
 }
