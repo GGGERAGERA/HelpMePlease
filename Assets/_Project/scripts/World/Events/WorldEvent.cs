@@ -6,20 +6,15 @@ public abstract class WorldEvent : Interactable
 
     private bool cleanupPerformed;
     private bool eventMarkerVisible;
-    private bool selectedRiskMode;
-
     public bool IsCompleted { get; private set; }
     public bool IsFailed { get; private set; }
     public bool IsStarted { get; private set; }
-    public bool IsStarting { get; private set; }
     public virtual Vector3 RewardPosition => transform.position;
-    protected virtual string StartDisplayName => string.Empty;
-    protected virtual Color StartAccentColor => Color.white;
     public override bool CanInteract
     {
         get
         {
-            if (IsCompleted || IsStarted || IsStarting ||
+            if (IsCompleted || IsStarted ||
                 owner == null || !owner.CanStartEvent(this))
             {
                 return false;
@@ -36,8 +31,6 @@ public abstract class WorldEvent : Interactable
         IsCompleted = false;
         IsFailed = false;
         IsStarted = false;
-        IsStarting = false;
-        selectedRiskMode = false;
         cleanupPerformed = false;
         eventMarkerVisible = false;
     }
@@ -52,37 +45,14 @@ public abstract class WorldEvent : Interactable
 
     public void StartSelectedEvent(bool riskMode = false)
     {
-        if (IsStarted || IsStarting || owner == null ||
+        if (IsStarted || owner == null ||
             !owner.TryStartEvent(this))
         {
             return;
         }
 
-        selectedRiskMode = riskMode;
-        IsStarting = true;
-
-        RunMessageService presentation = RunMessageService.Instance;
-
-        if (presentation == null ||
-            string.IsNullOrWhiteSpace(StartDisplayName) ||
-            !presentation.ShowWorldEventStart(
-                this,
-                StartDisplayName,
-                StartAccentColor,
-                FinishStartPresentation))
-        {
-            FinishStartPresentation();
-        }
-    }
-
-    private void FinishStartPresentation()
-    {
-        if (!IsStarting || IsCompleted)
-            return;
-
-        IsStarting = false;
         IsStarted = true;
-        owner?.NotifyEventStarted(this, selectedRiskMode);
+        owner.NotifyEventStarted(this, riskMode);
         OnEventStarted();
     }
 
@@ -164,8 +134,6 @@ public abstract class WorldEvent : Interactable
 
     private void OnDestroy()
     {
-        RunMessageService.Instance?.CancelWorldEventStart(this);
-
         if (!IsCompleted)
             FailEvent();
         else

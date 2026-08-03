@@ -1,12 +1,13 @@
 using UnityEngine;
 
-public class EnemyProjectile : MonoBehaviour
+public class EnemyProjectile : MonoBehaviour, IAnomalySpeedProjectile
 {
     [SerializeField] private float speed = 7f;
     [SerializeField] private int damage = 10;
     [SerializeField] private float lifetime = 5f;
 
     private Vector2 direction;
+    private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
 
     public void Initialize(Vector2 shootDirection)
     {
@@ -16,7 +17,9 @@ public class EnemyProjectile : MonoBehaviour
 
     private void Update()
     {
-        transform.position += (Vector3)(direction * speed * Time.deltaTime);
+        transform.position += (Vector3)(
+            direction * speed * anomalySpeed.Value * Time.deltaTime
+        );
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -33,5 +36,29 @@ public class EnemyProjectile : MonoBehaviour
         }
 
         Destroy(gameObject);
+    }
+
+    public Component ProjectileComponent => this;
+    public float AnomalySpeedMultiplier => anomalySpeed.Value;
+
+    public void SetAnomalySpeedMultiplier(Object source, float multiplier)
+    {
+        anomalySpeed.Set(source, multiplier);
+    }
+
+    public void RemoveAnomalySpeedMultiplier(Object source)
+    {
+        anomalySpeed.Remove(source);
+    }
+
+    public void ClearAnomalySpeedMultipliers()
+    {
+        anomalySpeed.Clear();
+    }
+
+    private void OnDisable()
+    {
+        AnomalyProjectileLifecycle.NotifyDisabled(this);
+        anomalySpeed.Clear();
     }
 }

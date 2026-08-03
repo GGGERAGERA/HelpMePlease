@@ -50,6 +50,10 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         new(1f, 0.32f, 0.025f, 0.64f);
     [SerializeField, Range(0.6f, 1f)] private float fadeDuration = 0.8f;
 
+    [Header("Enemy Tint")]
+    [SerializeField] private Color enemyTint =
+        new(1f, 0.58f, 0.25f, 1f);
+
     private readonly Dictionary<EnemyHealth, int> enemyColliderCounts = new();
     private readonly Collider2D[] explosionHitBuffer =
         new Collider2D[ExplosionHitBufferSize];
@@ -139,6 +143,11 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         }
 
         enemyColliderCounts.Add(enemy, 1);
+        EnemyAnomalyEffects.GetOrCreate(enemy)?.EnterZone(
+            this,
+            1f,
+            enemyTint
+        );
         Controller?.ResetExplosiveDeathClaim(enemy);
         enemy.OnDied += HandleEnemyDied;
     }
@@ -284,7 +293,10 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         }
 
         if (enemy != null)
+        {
             enemy.OnDied -= HandleEnemyDied;
+            enemy.GetComponent<EnemyAnomalyEffects>()?.ExitZone(this);
+        }
     }
 
     private void ClearEffects()
@@ -298,7 +310,10 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         foreach (EnemyHealth enemy in enemyColliderCounts.Keys)
         {
             if (enemy != null)
+            {
                 enemy.OnDied -= HandleEnemyDied;
+                enemy.GetComponent<EnemyAnomalyEffects>()?.ExitZone(this);
+            }
         }
 
         enemyColliderCounts.Clear();

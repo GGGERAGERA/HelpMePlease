@@ -1,19 +1,14 @@
 using System.Collections;
-using System;
 using UnityEngine;
 
 public sealed class RunMessageService : MonoBehaviour
 {
     private const float InitialLevelMessageDuration = 4.5f;
     private const float FirstRunHintDuration = 4.5f;
-    private const float WorldEventStartDuration = 0.4f;
-
     public static RunMessageService Instance { get; private set; }
 
     [SerializeField] private RunMessageView view;
     [SerializeField] private RunMessageData[] messages;
-
-    private WorldEvent worldEventPresentationOwner;
 
     private void Awake()
     {
@@ -78,9 +73,6 @@ public sealed class RunMessageService : MonoBehaviour
 
     public void Show(RunMessageType type)
     {
-        if (worldEventPresentationOwner != null)
-            return;
-
         RunMessageData data = FindMessage(type);
 
         if (data == null)
@@ -98,7 +90,7 @@ public sealed class RunMessageService : MonoBehaviour
         float duration = 3f,
         bool useTypewriter = false)
     {
-        if (view == null || worldEventPresentationOwner != null)
+        if (view == null)
             return;
 
         view.Show(title, description, duration, useTypewriter);
@@ -110,7 +102,7 @@ public sealed class RunMessageService : MonoBehaviour
         Color accentColor,
         float duration = 0.45f)
     {
-        if (view == null || worldEventPresentationOwner != null)
+        if (view == null)
             return;
 
         view.ShowWorldEventFeedback(
@@ -121,57 +113,8 @@ public sealed class RunMessageService : MonoBehaviour
         );
     }
 
-    public bool ShowWorldEventStart(
-        WorldEvent worldEvent,
-        string displayName,
-        Color accentColor,
-        Action onComplete)
-    {
-        if (view == null || worldEvent == null ||
-            worldEventPresentationOwner != null)
-        {
-            return false;
-        }
-
-        worldEventPresentationOwner = worldEvent;
-        view.ShowWorldEventStart(
-            worldEvent,
-            displayName,
-            accentColor,
-            WorldEventStartDuration,
-            () => FinishWorldEventStart(worldEvent, onComplete)
-        );
-        return true;
-    }
-
-    public void CancelWorldEventStart(WorldEvent worldEvent)
-    {
-        if (worldEvent == null ||
-            worldEventPresentationOwner != worldEvent)
-        {
-            return;
-        }
-
-        view?.CancelWorldEventStart(worldEvent);
-        worldEventPresentationOwner = null;
-    }
-
-    private void FinishWorldEventStart(
-        WorldEvent worldEvent,
-        Action onComplete)
-    {
-        if (worldEventPresentationOwner != worldEvent)
-            return;
-
-        worldEventPresentationOwner = null;
-        onComplete?.Invoke();
-    }
-
     private void OnDisable()
     {
-        if (worldEventPresentationOwner != null)
-            CancelWorldEventStart(worldEventPresentationOwner);
-
         if (Instance == this)
             Instance = null;
     }

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Bullet : MonoBehaviour, IWeaponProjectile
+public class Bullet : MonoBehaviour, IWeaponProjectile, IAnomalySpeedProjectile
 {
     public float speed = 10f;
     public float damage = 20f;
@@ -17,6 +17,7 @@ public class Bullet : MonoBehaviour, IWeaponProjectile
     private bool isCritical;
     private float runtimeKnockbackForce;
     private ProjectileCombatContext combatContext;
+    private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
 
     private readonly HashSet<EnemyHealth> hitEnemies = new HashSet<EnemyHealth>();
 
@@ -47,10 +48,37 @@ public class Bullet : MonoBehaviour, IWeaponProjectile
     }
     private void Update()
     {
-        transform.Translate(direction * speed * Time.deltaTime, Space.World);
+        transform.Translate(
+            direction * speed * anomalySpeed.Value * Time.deltaTime,
+            Space.World
+        );
 
         if (Vector3.Distance(startPosition, transform.position) >= range)
             Destroy(gameObject);
+    }
+
+    public Component ProjectileComponent => this;
+    public float AnomalySpeedMultiplier => anomalySpeed.Value;
+
+    public void SetAnomalySpeedMultiplier(Object source, float multiplier)
+    {
+        anomalySpeed.Set(source, multiplier);
+    }
+
+    public void RemoveAnomalySpeedMultiplier(Object source)
+    {
+        anomalySpeed.Remove(source);
+    }
+
+    public void ClearAnomalySpeedMultipliers()
+    {
+        anomalySpeed.Clear();
+    }
+
+    private void OnDisable()
+    {
+        AnomalyProjectileLifecycle.NotifyDisabled(this);
+        anomalySpeed.Clear();
     }
 
     private void OnTriggerEnter2D(Collider2D other)

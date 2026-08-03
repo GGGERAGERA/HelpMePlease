@@ -25,9 +25,6 @@ public sealed class BerserkZone : LocalAnomalyZone
     private static readonly int VisualTimeId =
         Shader.PropertyToID("_VisualTime");
 
-    private static readonly Dictionary<EnemyMovement, int>
-        activeZoneCounts = new();
-
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
     [SerializeField, Range(0.1f, 0.75f)] private float edgeWidth = 0.35f;
@@ -40,6 +37,10 @@ public sealed class BerserkZone : LocalAnomalyZone
     [SerializeField, Min(0.5f)] private float innerPatternScale = 3.5f;
     [SerializeField, Min(0f)] private float warningPulseFrequency = 0.22f;
     [SerializeField, Range(0.6f, 1f)] private float fadeDuration = 0.8f;
+
+    [Header("Enemy Tint")]
+    [SerializeField] private Color enemyTint =
+        new(1f, 0.42f, 0.38f, 1f);
 
     private readonly Dictionary<EnemyMovement, int>
         enemyColliderCounts = new();
@@ -177,38 +178,23 @@ public sealed class BerserkZone : LocalAnomalyZone
         if (movement == null)
             return;
 
-        if (activeZoneCounts.TryGetValue(movement, out int zoneCount))
-        {
-            activeZoneCounts[movement] = zoneCount + 1;
-            return;
-        }
-
-        activeZoneCounts[movement] = 1;
-        movement.SetAnomalySpeedMultiplier(speedMultiplier);
+        EnemyHealth enemy = movement.GetComponentInParent<EnemyHealth>();
+        EnemyAnomalyEffects.GetOrCreate(enemy)?.EnterZone(
+            this,
+            speedMultiplier,
+            enemyTint
+        );
     }
 
-    private static void RemoveZoneEffect(EnemyMovement movement)
+    private void RemoveZoneEffect(EnemyMovement movement)
     {
-        if (ReferenceEquals(movement, null) ||
-            !activeZoneCounts.TryGetValue(
-                movement,
-                out int zoneCount))
-        {
+        if (ReferenceEquals(movement, null))
             return;
-        }
 
-        zoneCount--;
-
-        if (zoneCount > 0)
-        {
-            activeZoneCounts[movement] = zoneCount;
-            return;
-        }
-
-        activeZoneCounts.Remove(movement);
-
-        if (movement != null)
-            movement.SetAnomalySpeedMultiplier(1f);
+        EnemyHealth enemy = movement != null
+            ? movement.GetComponentInParent<EnemyHealth>()
+            : null;
+        enemy?.GetComponent<EnemyAnomalyEffects>()?.ExitZone(this);
     }
 
     private void HandleEnemyDespawned(EnemyHealth enemy)
@@ -224,7 +210,7 @@ public sealed class BerserkZone : LocalAnomalyZone
             return;
         }
 
-        RemoveZoneEffect(movement);
+        enemy.GetComponent<EnemyAnomalyEffects>()?.ExitZone(this);
     }
 
     public void ClearEffects()

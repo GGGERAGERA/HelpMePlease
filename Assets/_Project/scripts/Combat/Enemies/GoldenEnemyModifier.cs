@@ -4,6 +4,7 @@ public sealed class GoldenEnemyModifier : MonoBehaviour
 {
     private EnemyHealth health;
     private SpriteRenderer bodyRenderer;
+    private EnemyAnomalyEffects anomalyEffects;
     private Color originalColor;
     private Color goldenTint = new(1f, 0.62f, 0.08f, 1f);
     private ParticleSystem deathFxPrefab;
@@ -50,7 +51,7 @@ public sealed class GoldenEnemyModifier : MonoBehaviour
         float pulse = Mathf.Sin(progress * Mathf.PI);
         Color baseTint = GetTintedColor();
         Color pulseTint = Color.Lerp(baseTint, Color.white, 0.45f);
-        bodyRenderer.color = Color.Lerp(baseTint, pulseTint, pulse);
+        SetBodyColor(Color.Lerp(baseTint, pulseTint, pulse));
     }
 
     public void ConfigureVisuals(
@@ -95,9 +96,12 @@ public sealed class GoldenEnemyModifier : MonoBehaviour
         if (bodyRenderer == null)
             return;
 
-        originalColor = bodyRenderer.color;
+        ResolveAnomalyEffects();
+        originalColor = anomalyEffects != null
+            ? anomalyEffects.BaseColor
+            : bodyRenderer.color;
         hasOriginalColor = true;
-        bodyRenderer.color = GetTintedColor();
+        SetBodyColor(GetTintedColor());
     }
 
     private Color GetTintedColor()
@@ -182,7 +186,7 @@ public sealed class GoldenEnemyModifier : MonoBehaviour
             health.SetRuntimeMaxHealth(originalMaxHealth);
 
         if (hasOriginalColor && bodyRenderer != null)
-            bodyRenderer.color = originalColor;
+            SetBodyColor(originalColor);
 
         if (deathSubscribed && health != null)
         {
@@ -202,5 +206,24 @@ public sealed class GoldenEnemyModifier : MonoBehaviour
     private void OnDisable()
     {
         ResetSpawnState(true);
+    }
+
+    private void ResolveAnomalyEffects()
+    {
+        if (anomalyEffects == null)
+            anomalyEffects = GetComponent<EnemyAnomalyEffects>();
+    }
+
+    private void SetBodyColor(Color color)
+    {
+        if (bodyRenderer == null)
+            return;
+
+        ResolveAnomalyEffects();
+
+        if (anomalyEffects != null)
+            anomalyEffects.SetBaseColor(color);
+        else
+            bodyRenderer.color = color;
     }
 }

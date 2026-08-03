@@ -4,10 +4,6 @@ using UnityEngine;
 [RequireComponent(typeof(Collider2D))]
 public sealed class FalseSignalEvent : WorldEvent
 {
-    protected override string StartDisplayName => "FALSE SIGNAL";
-    protected override Color StartAccentColor =>
-        new Color(1f, 0.32f, 0.12f, 1f);
-
     [Header("Start")]
     [SerializeField, Min(0.1f)] private float startRadius = 2.5f;
     [SerializeField] private Material lineMaterial;

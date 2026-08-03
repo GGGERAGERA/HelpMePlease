@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RocketProjectile : MonoBehaviour, IWeaponProjectile
+public class RocketProjectile : MonoBehaviour, IWeaponProjectile, IAnomalySpeedProjectile
 {
     [Header("Explosion")]
     [SerializeField] private float explosionRadius = 2.2f;
@@ -20,6 +20,7 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile
     private bool isCritical;
     private float knockbackForce;
     private PlayerCombatModifiers modifiers;
+    private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
 
 
     public void Initialize(
@@ -51,7 +52,9 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile
         if (exploded)
             return;
 
-        transform.position += (Vector3)(direction * speed * Time.deltaTime);
+        transform.position += (Vector3)(
+            direction * speed * anomalySpeed.Value * Time.deltaTime
+        );
 
         if (Vector3.Distance(startPosition, transform.position) >= range)
             Explode();
@@ -124,5 +127,29 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile
         );
 
         Destroy(fx, explosionFxLifetime);
+    }
+
+    public Component ProjectileComponent => this;
+    public float AnomalySpeedMultiplier => anomalySpeed.Value;
+
+    public void SetAnomalySpeedMultiplier(Object source, float multiplier)
+    {
+        anomalySpeed.Set(source, multiplier);
+    }
+
+    public void RemoveAnomalySpeedMultiplier(Object source)
+    {
+        anomalySpeed.Remove(source);
+    }
+
+    public void ClearAnomalySpeedMultipliers()
+    {
+        anomalySpeed.Clear();
+    }
+
+    private void OnDisable()
+    {
+        AnomalyProjectileLifecycle.NotifyDisabled(this);
+        anomalySpeed.Clear();
     }
 }

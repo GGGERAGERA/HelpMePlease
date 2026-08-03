@@ -22,10 +22,20 @@ public sealed class StasisZone : LocalAnomalyZone
     [SerializeField, Min(0f)] private float pulseSpeed = 0.18f;
     [SerializeField, Range(0.6f, 1f)] private float fadeDuration = 0.8f;
 
+    [Header("Enemy Tint")]
+    [SerializeField] private Color enemyTint =
+        new(0.45f, 0.78f, 1f, 1f);
+
+    private readonly Dictionary<EnemyHealth, int>
+        enemyColliderCounts = new();
+    private readonly Dictionary<Component, int>
+        projectileColliderCounts = new();
+
     private MeshRenderer visualRenderer;
     private MaterialPropertyBlock visualProperties;
     private CharacterMovement2D affectedMovement;
     private float speedMultiplier = 0.65f;
+    private float enemySpeedMultiplier = 0.65f;
     private float visualFade;
     private float targetVisualFade;
     private int playerColliderCount;
@@ -36,6 +46,12 @@ public sealed class StasisZone : LocalAnomalyZone
     private void Awake()
     {
         BuildVisual();
+    }
+
+    private void OnEnable()
+    {
+        EnemyHealth.Despawned += HandleEnemyDespawned;
+        AnomalyProjectileLifecycle.Disabled += HandleProjectileDisabled;
     }
 
     private void Update()
@@ -59,6 +75,7 @@ public sealed class StasisZone : LocalAnomalyZone
         Vector2 areaSize)
     {
         speedMultiplier = data.PlayerSpeedMultiplier;
+        enemySpeedMultiplier = data.EnemySpeedMultiplier;
         ConfigureVisual(areaSize);
         effectCleared = false;
         despawning = false;
@@ -76,23 +93,62 @@ public sealed class StasisZone : LocalAnomalyZone
         CharacterMovement2D movement =
             other.GetComponentInParent<CharacterMovement2D>();
 
-        if (movement == null)
-            return;
-
-        if (affectedMovement != null &&
-            affectedMovement != movement)
+        if (movement != null)
         {
+            if (affectedMovement != null &&
+                affectedMovement != movement)
+            {
+                return;
+            }
+
+            affectedMovement = movement;
+            playerColliderCount++;
+
+            if (playerColliderCount > 1)
+                return;
+
+            ApplyEffect(movement);
+            Controller?.NotifyLocalZoneEntered(this, Data);
             return;
         }
 
-        affectedMovement = movement;
-        playerColliderCount++;
+        EnemyHealth enemy = other.GetComponentInParent<EnemyHealth>();
 
-        if (playerColliderCount > 1)
+        if (enemy != null && !enemy.IsDead)
+        {
+            if (enemyColliderCounts.TryGetValue(enemy, out int enemyCount))
+            {
+                enemyColliderCounts[enemy] = enemyCount + 1;
+                return;
+            }
+
+            enemyColliderCounts.Add(enemy, 1);
+            EnemyAnomalyEffects.GetOrCreate(enemy)?.EnterZone(
+                this,
+                enemySpeedMultiplier,
+                enemyTint
+            );
+            return;
+        }
+
+        IAnomalySpeedProjectile projectile = FindProjectile(other);
+
+        if (projectile == null || projectile.ProjectileComponent == null)
             return;
 
-        ApplyEffect(movement);
-        Controller?.NotifyLocalZoneEntered(this, Data);
+        Component projectileComponent = projectile.ProjectileComponent;
+
+        if (projectileColliderCounts.TryGetValue(
+                projectileComponent,
+                out int projectileCount))
+        {
+            projectileColliderCounts[projectileComponent] =
+                projectileCount + 1;
+            return;
+        }
+
+        projectileColliderCounts.Add(projectileComponent, 1);
+        projectile.SetAnomalySpeedMultiplier(this, speedMultiplier);
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -100,20 +156,64 @@ public sealed class StasisZone : LocalAnomalyZone
         CharacterMovement2D movement =
             other.GetComponentInParent<CharacterMovement2D>();
 
-        if (movement == null || movement != affectedMovement)
+        if (movement != null)
+        {
+            if (movement != affectedMovement)
+                return;
+
+            playerColliderCount = Mathf.Max(
+                0,
+                playerColliderCount - 1
+            );
+
+            if (playerColliderCount > 0)
+                return;
+
+            RemoveEffect(movement);
+            affectedMovement = null;
+            Controller?.NotifyLocalZoneExited(this);
             return;
+        }
 
-        playerColliderCount = Mathf.Max(
-            0,
-            playerColliderCount - 1
-        );
+        EnemyHealth enemy = other.GetComponentInParent<EnemyHealth>();
 
-        if (playerColliderCount > 0)
+        if (enemy != null &&
+            enemyColliderCounts.TryGetValue(enemy, out int enemyCount))
+        {
+            enemyCount--;
+
+            if (enemyCount > 0)
+            {
+                enemyColliderCounts[enemy] = enemyCount;
+                return;
+            }
+
+            enemyColliderCounts.Remove(enemy);
+            enemy.GetComponent<EnemyAnomalyEffects>()?.ExitZone(this);
             return;
+        }
 
-        RemoveEffect(movement);
-        affectedMovement = null;
-        Controller?.NotifyLocalZoneExited(this);
+        IAnomalySpeedProjectile projectile = FindProjectile(other);
+        Component projectileComponent = projectile?.ProjectileComponent;
+
+        if (projectileComponent == null ||
+            !projectileColliderCounts.TryGetValue(
+                projectileComponent,
+                out int projectileCount))
+        {
+            return;
+        }
+
+        projectileCount--;
+
+        if (projectileCount > 0)
+        {
+            projectileColliderCounts[projectileComponent] = projectileCount;
+            return;
+        }
+
+        projectileColliderCounts.Remove(projectileComponent);
+        projectile.RemoveAnomalySpeedMultiplier(this);
     }
 
     private void ApplyEffect(CharacterMovement2D movement)
@@ -173,6 +273,22 @@ public sealed class StasisZone : LocalAnomalyZone
 
         affectedMovement = null;
         playerColliderCount = 0;
+
+        foreach (EnemyHealth enemy in enemyColliderCounts.Keys)
+        {
+            if (enemy != null)
+                enemy.GetComponent<EnemyAnomalyEffects>()?.ExitZone(this);
+        }
+
+        enemyColliderCounts.Clear();
+
+        foreach (Component component in projectileColliderCounts.Keys)
+        {
+            if (component is IAnomalySpeedProjectile projectile)
+                projectile.RemoveAnomalySpeedMultiplier(this);
+        }
+
+        projectileColliderCounts.Clear();
 
         if (AreaCollider != null)
             AreaCollider.enabled = false;
@@ -249,6 +365,40 @@ public sealed class StasisZone : LocalAnomalyZone
 
     private void OnDisable()
     {
+        EnemyHealth.Despawned -= HandleEnemyDespawned;
+        AnomalyProjectileLifecycle.Disabled -= HandleProjectileDisabled;
         ClearEffect();
+    }
+
+    private void HandleEnemyDespawned(EnemyHealth enemy)
+    {
+        if (enemy == null || !enemyColliderCounts.Remove(enemy))
+            return;
+
+        enemy.GetComponent<EnemyAnomalyEffects>()?.ExitZone(this);
+    }
+
+    private void HandleProjectileDisabled(Component projectile)
+    {
+        if (ReferenceEquals(projectile, null))
+            return;
+
+        projectileColliderCounts.Remove(projectile);
+    }
+
+    private static IAnomalySpeedProjectile FindProjectile(Collider2D other)
+    {
+        Bullet bullet = other.GetComponentInParent<Bullet>();
+
+        if (bullet != null)
+            return bullet;
+
+        RocketProjectile rocket =
+            other.GetComponentInParent<RocketProjectile>();
+
+        if (rocket != null)
+            return rocket;
+
+        return other.GetComponentInParent<EnemyProjectile>();
     }
 }

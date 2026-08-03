@@ -359,7 +359,6 @@ public class WorldEventSpawner : MonoBehaviour
         return worldEvent != null &&
             ActiveEvent == null &&
             spawnedEvents.Contains(worldEvent) &&
-            !worldEvent.IsStarting &&
             !worldEvent.IsStarted &&
             !worldEvent.IsCompleted;
     }
