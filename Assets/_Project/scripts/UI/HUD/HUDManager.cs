@@ -25,6 +25,9 @@ public class HUDManager : MonoBehaviour
     [Header("Timer")]
     [SerializeField] private TextMeshProUGUI timerText;
 
+    [Header("Dash")]
+    [SerializeField] private DashCooldownView dashCooldownView;
+
     [Header("Route Progress")]
     [SerializeField] private RunRouteProgressView routeProgressView;
 
@@ -133,14 +136,22 @@ public class HUDManager : MonoBehaviour
     {
         if (killsText != null)
         {
-            killsText.text = $"KILLS: {kills}";
+            killsText.text = kills.ToString();
         }
     }
 
     public void SetCurrentRunCurrency(int amount)
     {
         if (currencyText != null)
-            currencyText.text = $"GOLD: {amount}";
+            currencyText.text = amount.ToString();
+    }
+
+    public void BindPlayer(GameObject player)
+    {
+        CharacterMovement2D movement = player != null
+            ? player.GetComponent<CharacterMovement2D>()
+            : null;
+        dashCooldownView?.Bind(movement);
     }
 
     private void RefreshRunCurrency()

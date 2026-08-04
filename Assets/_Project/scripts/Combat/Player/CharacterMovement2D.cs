@@ -20,6 +20,7 @@ public class CharacterMovement2D : MonoBehaviour
     [SerializeField, Min(0.01f)] private float dashDistance = 3f;
     [SerializeField, Min(0.01f)] private float dashDuration = 0.15f;
     [SerializeField, Min(0f)] private float dashCooldown = 3f;
+    [SerializeField] private KeyCode dashKey = KeyCode.Space;
 
     private Vector2 moveInput;
     private Vector2 currentVelocity;
@@ -39,6 +40,15 @@ public class CharacterMovement2D : MonoBehaviour
     private ContactFilter2D dashContactFilter;
 
     [SerializeField] private Transform visualRoot;
+
+    public float DashCooldown => Mathf.Max(0f, dashCooldown);
+    public float DashCooldownRemaining =>
+        Mathf.Max(0f, dashCooldownRemaining);
+    public float DashCooldownProgress => dashCooldown <= 0f
+        ? 1f
+        : 1f - Mathf.Clamp01(dashCooldownRemaining / dashCooldown);
+    public bool IsDashReady => !isDashing && dashCooldownRemaining <= 0f;
+    public KeyCode DashKey => dashKey;
 
     void Start()
     {
@@ -74,7 +84,7 @@ public class CharacterMovement2D : MonoBehaviour
                 dashCooldownRemaining - Time.deltaTime
             );
 
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKeyDown(dashKey))
                 TryStartDash();
         }
 
