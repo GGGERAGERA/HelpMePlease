@@ -15,6 +15,9 @@ public sealed class AudioSettingsPanel : MonoBehaviour
     [Header("Language")]
     [SerializeField] private TMP_Dropdown languageDropdown;
 
+    [Header("Accessibility")]
+    [SerializeField] private Toggle automaticFireToggle;
+
     [Header("Navigation")]
     [SerializeField] private Button backButton;
 
@@ -87,6 +90,9 @@ public sealed class AudioSettingsPanel : MonoBehaviour
             (int)localization.CurrentLanguage
         );
         languageDropdown?.RefreshShownValue();
+        automaticFireToggle?.SetIsOnWithoutNotify(
+            WeaponControlSettings.AutomaticFireEnabled
+        );
     }
 
     private void RegisterListeners()
@@ -99,6 +105,9 @@ public sealed class AudioSettingsPanel : MonoBehaviour
         soundsSlider?.onValueChanged.AddListener(HandleSoundsChanged);
         languageDropdown?.onValueChanged.AddListener(
             HandleLanguageChanged
+        );
+        automaticFireToggle?.onValueChanged.AddListener(
+            HandleAutomaticFireChanged
         );
         backButton?.onClick.AddListener(Close);
         listenersRegistered = true;
@@ -114,6 +123,9 @@ public sealed class AudioSettingsPanel : MonoBehaviour
         soundsSlider?.onValueChanged.RemoveListener(HandleSoundsChanged);
         languageDropdown?.onValueChanged.RemoveListener(
             HandleLanguageChanged
+        );
+        automaticFireToggle?.onValueChanged.RemoveListener(
+            HandleAutomaticFireChanged
         );
         backButton?.onClick.RemoveListener(Close);
         listenersRegistered = false;
@@ -165,5 +177,10 @@ public sealed class AudioSettingsPanel : MonoBehaviour
             ? GameLanguage.Russian
             : GameLanguage.English;
         LocalizationService.EnsureExists().SetLanguage(language);
+    }
+
+    private static void HandleAutomaticFireChanged(bool enabled)
+    {
+        WeaponControlSettings.SetAutomaticFire(enabled);
     }
 }

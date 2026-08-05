@@ -2,8 +2,10 @@ using UnityEngine;
 
 public sealed class LevelModifiersApplier : MonoBehaviour
 {
-    [Header("Level")]
-    [SerializeField] private LevelNodeData defaultLevel;
+    [Header("Editor Direct Play")]
+    [SerializeField] private StageProfileData devStageProfile;
+    [SerializeField] private WorldRuleData devWorldRule;
+    [SerializeField] private LocalAnomalyData devLocalAnomaly;
 
     [Header("Enemy Systems")]
     [SerializeField] private EnemySpawner enemySpawner;
@@ -13,10 +15,48 @@ public sealed class LevelModifiersApplier : MonoBehaviour
     [SerializeField] private LevelAnomalyController anomalyController;
     [SerializeField] private WorldRuleController worldRuleController;
 
-    [Header("Endless Difficulty")]
-    [SerializeField, Min(0f)] private float healthGrowthPerLevel = 0.04f;
-    [SerializeField, Min(0f)] private float speedGrowthPerLevel = 0f;
-    [SerializeField, Min(0f)] private float spawnRateGrowthPerLevel = 0.12f;
+    private void Awake()
+    {
+#if UNITY_EDITOR
+        RunStateManager runState = RunStateManager.Instance;
+
+        if (runState != null && runState.CurrentSector != null)
+            return;
+
+        if (devStageProfile == null ||
+            devWorldRule == null ||
+            devLocalAnomaly == null)
+        {
+            Debug.LogError(
+                "[DevRunBootstrap] Direct MVP play configuration is missing.",
+                this
+            );
+            return;
+        }
+
+        if (devStageProfile.SectorNumber != 1)
+        {
+            Debug.LogError(
+                "[DevRunBootstrap] devStageProfile must describe sector 1.",
+                this
+            );
+            return;
+        }
+
+        runState = RunStateManager.EnsureExists();
+        runState.SetCurrentSector(new RunSector(
+            1,
+            devStageProfile,
+            devWorldRule,
+            devLocalAnomaly
+        ));
+
+        Debug.Log(
+            "[DevRunBootstrap] Created Sector 1 for direct MVP play.",
+            this
+        );
+#endif
+    }
 
     private System.Collections.IEnumerator Start()
     {
@@ -45,112 +85,75 @@ public sealed class LevelModifiersApplier : MonoBehaviour
     private void ApplySelectedNode()
     {
         RunStateManager runState = RunStateManager.Instance;
-        LevelNodeData node = runState != null
-            ? runState.SelectedLevelNode
-            : null;
-
-        if (node == null)
-            node = defaultLevel;
         int currentLevel = runState != null
             ? Mathf.Max(1, runState.CurrentLevel)
             : 1;
+        RunSector sector = runState != null
+            ? runState.CurrentSector
+            : null;
 
-        if (node == null)
+        if (sector != null)
         {
-            Debug.LogError(
-                "[LevelModifiersApplier] No LevelNodeData is available. " +
-                "Applying neutral World Rule."
-            );
-            enemySpawner?.SetSpawnProfile(null, currentLevel);
-            runFlowController?.ApplyLevelMechanics(null);
-            ExperienceManager.Instance?.SetLevelXpGainMultiplier(1f);
-            ApplyEndlessEnemyScaling(currentLevel, 1f, 1f, 1f);
-            anomalyController?.Apply(null);
-            worldRuleController?.Apply(null);
+            ApplyCurrentSector(sector, currentLevel);
 
 #if UNITY_EDITOR
-            LogWorldRule(null);
+            LogSectorRuntime(sector);
 #endif
-
             return;
         }
 
-        ApplyEnemyModifiers(node, currentLevel);
-
-        if (node.WorldRule == null)
-        {
-            Debug.LogError(
-                $"[LevelModifiersApplier] LevelNodeData '{node.name}' " +
-                "has no WorldRuleData. Applying neutral World Rule.",
-                node
-            );
-        }
-
-        worldRuleController?.Apply(node.WorldRule);
-        runFlowController?.ApplyLevelMechanics(node);
-        ExperienceManager.Instance?.SetLevelXpGainMultiplier(
-            node.ExperienceGainMultiplier
+        Debug.LogError(
+            "[LevelModifiersApplier] CurrentSector is missing. " +
+            "No level modifiers were applied.",
+            this
         );
-        anomalyController?.Apply(node.LocalAnomaly);
-
-#if UNITY_EDITOR
-        LogWorldRule(node);
-#endif
-
-        Debug.Log($"[LevelModifiersApplier] Applied node: {node.nodeName}");
     }
 
 #if UNITY_EDITOR
-    private static void LogWorldRule(LevelNodeData node)
+    private static void LogSectorRuntime(RunSector sector)
     {
-        string nodeName = node != null ? node.name : "<null>";
-        string ruleId = node != null && node.WorldRule != null
-            ? node.WorldRule.Id
-            : "<null>";
-
         Debug.Log(
-            "[WorldRule]\n" +
-            $"Node='{nodeName}'\n" +
-            $"Rule='{ruleId}'"
+            "[SectorRuntime]\n" +
+            "Source=RunSector\n" +
+            $"Sector={sector.SectorNumber}\n" +
+            $"StageProfile='{GetAssetName(sector.StageProfile)}'\n" +
+            $"WorldRule='{GetAssetName(sector.WorldRule)}'\n" +
+            $"LocalAnomaly='{GetAssetName(sector.LocalAnomaly)}'"
         );
+    }
+
+    private static string GetAssetName(Object asset)
+    {
+        return asset != null ? asset.name : "<null>";
     }
 #endif
 
-    private void ApplyEnemyModifiers(LevelNodeData node, int currentLevel)
+    private void ApplyCurrentSector(
+        RunSector sector,
+        int currentLevel)
     {
-        enemySpawner?.SetSpawnProfile(node.SpawnProfile, currentLevel);
-        ApplyEndlessEnemyScaling(
-            currentLevel,
-            node.enemyHealthMultiplier,
-            node.enemySpeedMultiplier,
-            node.spawnRateMultiplier
+        enemySpawner?.SetSpawnProfile(
+            sector.SpawnProfile,
+            currentLevel
         );
+        enemySpawner?.SetLevelScaling(
+            sector.EnemyHealthMultiplier *
+                GetWorldRuleEnemyHealthMultiplier(sector.WorldRule),
+            sector.EnemySpeedMultiplier,
+            sector.SpawnPressureMultiplier
+        );
+        worldRuleController?.Apply(sector.WorldRule);
+        runFlowController?.ApplyLevelMechanics();
+        ExperienceManager.Instance?.SetLevelXpGainMultiplier(
+            sector.ExperienceGainMultiplier
+        );
+        anomalyController?.Apply(sector.LocalAnomaly);
     }
 
-    private void ApplyEndlessEnemyScaling(
-        int currentLevel,
-        float nodeHealthMultiplier,
-        float nodeSpeedMultiplier,
-        float nodeSpawnRateMultiplier
-    )
+    private static float GetWorldRuleEnemyHealthMultiplier(
+        WorldRuleData rule)
     {
-        if (enemySpawner == null)
-            return;
-
-        int levelIndex = Mathf.Max(0, currentLevel - 1);
-
-        float healthMultiplier =
-            nodeHealthMultiplier * (1f + healthGrowthPerLevel * levelIndex);
-        float speedMultiplier =
-            nodeSpeedMultiplier * (1f + speedGrowthPerLevel * levelIndex);
-        float spawnRateMultiplier =
-            nodeSpawnRateMultiplier * (1f + spawnRateGrowthPerLevel * levelIndex);
-
-        enemySpawner.SetLevelScaling(
-            healthMultiplier,
-            speedMultiplier,
-            spawnRateMultiplier
-        );
+        return rule != null ? rule.EnemyHealthMultiplier : 1f;
     }
 
 }

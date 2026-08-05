@@ -1,5 +1,6 @@
 public enum RunEndReason
 {
     ReturnedToBunker,
-    PlayerDied
+    PlayerDied,
+    Victory
 }

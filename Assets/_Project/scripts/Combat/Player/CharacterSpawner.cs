@@ -33,6 +33,8 @@ public class CharacterSpawner : MonoBehaviour
         if (player == null)
             return;
 
+        HUDManager.Instance?.BindPlayer(player);
+
         BaseWeapon[] weapons = player.GetComponentsInChildren<BaseWeapon>(true);
 
         if (metaUpgradeApplier == null)

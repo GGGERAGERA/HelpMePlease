@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public abstract class BaseWeapon : MonoBehaviour
 {
@@ -16,7 +17,6 @@ public abstract class BaseWeapon : MonoBehaviour
     [SerializeField] private WeaponFxPlayer fxPlayer;
 
     [Header("Aim / Orbit")]
-    [SerializeField] private WeaponControlMode controlMode = WeaponControlMode.Automatic;
     [SerializeField] private WeaponTargeting targeting;
     [SerializeField] protected bool rotateToMouse = true;
     [SerializeField] protected bool moveAroundOwner = true;
@@ -31,6 +31,7 @@ public abstract class BaseWeapon : MonoBehaviour
     [SerializeField] private float initialIdleOrbitAngle;
 
     private Vector2 lastAimDirection = Vector2.right;
+    private bool hasAim;
     private float idleOrbitAngle;
     private bool hadAutomaticTarget;
     private Vector2 lastOwnerPosition;
@@ -43,6 +44,10 @@ public abstract class BaseWeapon : MonoBehaviour
     protected WeaponRuntimeStats Stats => runtimeStats;
     protected WeaponFxPlayer FxPlayer => fxPlayer;
     public Transform Owner => owner;
+    public WeaponControlMode ControlMode => WeaponControlSettings.CurrentMode;
+    public Vector2 AimDirection => lastAimDirection;
+    public bool HasAim => hasAim;
+    public bool WantsToFire => IsTryingToAttack();
 
     protected virtual void Awake()
     {
@@ -53,10 +58,10 @@ public abstract class BaseWeapon : MonoBehaviour
         if (targeting == null)
             targeting = GetComponent<WeaponTargeting>();
 
-        if (controlMode == WeaponControlMode.Automatic && targeting == null)
+        if (ControlMode == WeaponControlMode.AutoAim && targeting == null)
         {
             Debug.LogWarning(
-                $"[BaseWeapon] Automatic control requires WeaponTargeting on {name}.",
+                $"[BaseWeapon] Auto Aim requires WeaponTargeting on {name}.",
                 this
             );
         }
@@ -78,6 +83,7 @@ public abstract class BaseWeapon : MonoBehaviour
 
         idleOrbitAngle = Mathf.Repeat(initialIdleOrbitAngle, 360f);
         lastAimDirection = DirectionFromAngle(idleOrbitAngle);
+        hasAim = true;
 
         if (!isInitialized && weaponData != null)
         {
@@ -114,7 +120,7 @@ public abstract class BaseWeapon : MonoBehaviour
         if (owner == null)
             return;
 
-        Vector2 aimDirection = controlMode == WeaponControlMode.Manual
+        Vector2 aimDirection = ControlMode == WeaponControlMode.Manual
             ? GetManualAimDirection()
             : GetAutomaticAimDirection();
 
@@ -131,10 +137,12 @@ public abstract class BaseWeapon : MonoBehaviour
 
         if (TryGetAimDirectionFromOwner(out Vector2 currentDirection))
         {
+            hasAim = true;
             lastAimDirection = currentDirection;
             return currentDirection;
         }
 
+        hasAim = true;
         return lastAimDirection;
     }
 
@@ -142,6 +150,7 @@ public abstract class BaseWeapon : MonoBehaviour
     {
         if (TryGetAimDirectionFromOwner(out Vector2 targetDirection))
         {
+            hasAim = true;
             hadAutomaticTarget = true;
             lastAimDirection = BlendDirection(
                 lastAimDirection,
@@ -159,6 +168,8 @@ public abstract class BaseWeapon : MonoBehaviour
                 Mathf.Rad2Deg;
             hadAutomaticTarget = false;
         }
+
+        hasAim = false;
 
         if (!rotateAroundOwnerWithoutTarget)
             return lastAimDirection;
@@ -213,6 +224,12 @@ public abstract class BaseWeapon : MonoBehaviour
 
     protected bool TryGetAimDirectionFromFirePoint(out Vector2 direction)
     {
+        if (ControlMode == WeaponControlMode.Manual)
+        {
+            direction = lastAimDirection;
+            return hasAim;
+        }
+
         if (firePoint == null)
             firePoint = transform;
 
@@ -229,7 +246,7 @@ public abstract class BaseWeapon : MonoBehaviour
 
     private bool TryGetAimTargetPosition(out Vector2 targetPosition)
     {
-        if (controlMode == WeaponControlMode.Manual)
+        if (ControlMode == WeaponControlMode.Manual)
         {
             targetPosition = GetMouseWorldPosition();
             return IsValidVector(targetPosition);
@@ -472,8 +489,18 @@ public abstract class BaseWeapon : MonoBehaviour
 
     protected virtual bool IsTryingToAttack()
     {
-        if (controlMode == WeaponControlMode.Manual)
-            return Input.GetMouseButton(0);
+        if (Time.timeScale <= 0f)
+            return false;
+
+        if (ControlMode == WeaponControlMode.Manual)
+        {
+            if (!Input.GetMouseButton(0))
+                return false;
+
+            EventSystem eventSystem = EventSystem.current;
+            return eventSystem == null ||
+                !eventSystem.IsPointerOverGameObject();
+        }
 
         return targeting != null && targeting.HasTarget;
     }

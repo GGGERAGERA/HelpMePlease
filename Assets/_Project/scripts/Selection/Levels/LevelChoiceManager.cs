@@ -7,8 +7,14 @@ public sealed class LevelChoiceManager : MonoBehaviour
     [Header("UI")]
     [SerializeField] private LevelChoicePanelView panelView;
 
-    [Header("Available Nodes")]
-    [SerializeField] private LevelNodeData[] availableNodes;
+    [Header("Available World Rules")]
+    [SerializeField] private WorldRuleData[] availableWorldRules;
+
+    [Header("Local Anomaly")]
+    [SerializeField] private LocalAnomalyData defaultLocalAnomaly;
+
+    [Header("Stage Profiles")]
+    [SerializeField] private StageProfileData[] stageProfiles;
 
     [Header("Scene")]
     [SerializeField] private string gameplaySceneName = "MVP";
@@ -16,7 +22,9 @@ public sealed class LevelChoiceManager : MonoBehaviour
     [Header("Choice Settings")]
     [SerializeField, Min(1)] private int choicesCount = 3;
 
-    private readonly List<LevelNodeData> currentChoices = new();
+    private readonly List<WorldRuleData> currentChoices = new();
+    private readonly Dictionary<WorldRuleData, RunSector>
+        currentSectorOptions = new();
     private bool isChoosing;
 
     private void Awake()
@@ -38,20 +46,78 @@ public sealed class LevelChoiceManager : MonoBehaviour
             return;
 
         currentChoices.Clear();
+        currentSectorOptions.Clear();
 
-        List<LevelNodeData> pool = BuildPool();
+        RunStateManager runState = RunStateManager.Instance;
+        RunSector currentSector = runState != null
+            ? runState.CurrentSector
+            : null;
+
+        if (currentSector == null)
+        {
+            Debug.LogError(
+                "[LevelChoiceManager] CurrentSector is missing. " +
+                "Sector choice cannot be opened."
+            );
+            return;
+        }
+
+        if (defaultLocalAnomaly == null)
+        {
+            Debug.LogError(
+                "[LevelChoiceManager] Default LocalAnomaly is missing. " +
+                "Sector choice cannot be opened."
+            );
+            return;
+        }
+
+        int nextSectorNumber = currentSector.SectorNumber + 1;
+        StageProfileData nextStageProfile = GetStageProfile(nextSectorNumber);
+
+        if (nextStageProfile == null)
+        {
+            Debug.LogError(
+                $"[LevelChoiceManager] StageProfile for sector " +
+                $"{nextSectorNumber} was not found."
+            );
+            return;
+        }
+
+        List<WorldRuleData> pool = BuildPool();
+
+        if (pool.Count < choicesCount)
+        {
+            Debug.LogError(
+                $"[LevelChoiceManager] At least {choicesCount} unique " +
+                $"World Rules are required, but only {pool.Count} are available."
+            );
+            return;
+        }
 
         while (currentChoices.Count < choicesCount && pool.Count > 0)
         {
-            LevelNodeData node = TakeWeightedChoice(pool);
+            int selectedIndex = Random.Range(0, pool.Count);
+            WorldRuleData rule = pool[selectedIndex];
+            pool.RemoveAt(selectedIndex);
 
-            if (node != null)
-                currentChoices.Add(node);
+            RunSector option = new(
+                nextSectorNumber,
+                nextStageProfile,
+                rule,
+                defaultLocalAnomaly
+            );
+
+            currentChoices.Add(rule);
+            currentSectorOptions.Add(rule, option);
         }
 
-        if (currentChoices.Count == 0)
+        if (currentChoices.Count != choicesCount)
         {
-            Debug.LogWarning("[LevelChoiceManager] No level nodes available.");
+            Debug.LogError(
+                "[LevelChoiceManager] A complete sector choice could not be built."
+            );
+            currentChoices.Clear();
+            currentSectorOptions.Clear();
             return;
         }
 
@@ -60,120 +126,103 @@ public sealed class LevelChoiceManager : MonoBehaviour
             Debug.LogError("[LevelChoiceManager] PanelView is not assigned.");
             return;
         }
+
+#if UNITY_EDITOR
+        Debug.Log(
+            "[SectorChoice]\n" +
+            $"Current={currentSector.SectorNumber}\n" +
+            $"Next={nextSectorNumber}\n" +
+            $"Rules={GetOptionRuleIds()}\n" +
+            $"StageProfile='{nextStageProfile.name}'\n" +
+            $"LocalAnomaly='{defaultLocalAnomaly.name}'"
+        );
+#endif
+
         RunMessageService.Instance?.Show(RunMessageType.LevelChoiceOpened);
         isChoosing = true;
         Time.timeScale = 0f;
-        panelView.Show(currentChoices, SelectNode);
+        panelView.Show(
+            currentChoices,
+            currentSectorOptions,
+            nextSectorNumber,
+            SelectRule
+        );
     }
 
-    private List<LevelNodeData> BuildPool()
+    private List<WorldRuleData> BuildPool()
     {
-        List<LevelNodeData> pool = new();
+        List<WorldRuleData> pool = new();
+        HashSet<string> ruleIds = new(System.StringComparer.Ordinal);
 
-        if (availableNodes == null)
+        if (availableWorldRules == null)
             return pool;
 
-        RunStateManager runState = RunStateManager.Instance;
-        int nextRunLevel = runState != null
-            ? runState.CurrentLevel + 1
-            : 2;
-        LevelNodeData currentNode = runState != null
-            ? runState.SelectedLevelNode
-            : null;
-
-        foreach (LevelNodeData node in availableNodes)
+        foreach (WorldRuleData rule in availableWorldRules)
         {
-            if (node == null)
+            if (rule == null || rule.RuleType == WorldRuleType.None)
                 continue;
 
-            if (nextRunLevel < node.MinimumRunLevel)
+            if (!ruleIds.Add(GetRuleId(rule)))
                 continue;
 
-            if (node.MaximumRunLevel > 0 && nextRunLevel > node.MaximumRunLevel)
-                continue;
-
-            if (node.ChoiceWeight <= 0f)
-                continue;
-
-            if (!node.AllowSameWeatherAsCurrent &&
-                currentNode != null &&
-                HasSameGlobalModifier(node, currentNode))
-            {
-                continue;
-            }
-
-            pool.Add(node);
+            pool.Add(rule);
         }
 
         return pool;
     }
 
-    private static bool HasSameGlobalModifier(
-        LevelNodeData candidate,
-        LevelNodeData current
-    )
+    private StageProfileData GetStageProfile(int sectorNumber)
     {
-        WorldRuleData candidateRule = candidate.WorldRule;
-        WorldRuleData currentRule = current.WorldRule;
-
-        if (candidateRule != null && currentRule != null)
-        {
-            if (candidateRule.RuleType == WorldRuleType.None ||
-                currentRule.RuleType == WorldRuleType.None)
-            {
-                return false;
-            }
-
-            if (!string.IsNullOrWhiteSpace(candidateRule.Id) &&
-                !string.IsNullOrWhiteSpace(currentRule.Id))
-            {
-                return string.Equals(
-                    candidateRule.Id,
-                    currentRule.Id,
-                    System.StringComparison.Ordinal
-                );
-            }
-
-            return candidateRule.RuleType == currentRule.RuleType;
-        }
-
-        return false;
-    }
-
-    private LevelNodeData TakeWeightedChoice(List<LevelNodeData> pool)
-    {
-        float totalWeight = 0f;
-
-        for (int i = 0; i < pool.Count; i++)
-            totalWeight += pool[i].ChoiceWeight;
-
-        if (totalWeight <= 0f)
+        if (stageProfiles == null || sectorNumber < 1)
             return null;
 
-        float roll = Random.value * totalWeight;
+        StageProfileData match = null;
 
-        for (int i = 0; i < pool.Count; i++)
+        for (int i = 0; i < stageProfiles.Length; i++)
         {
-            roll -= pool[i].ChoiceWeight;
+            StageProfileData profile = stageProfiles[i];
 
-            if (roll <= 0f)
+            if (profile == null || profile.SectorNumber != sectorNumber)
+                continue;
+
+            if (match != null)
             {
-                LevelNodeData selected = pool[i];
-                pool.RemoveAt(i);
-                return selected;
+                Debug.LogError(
+                    $"[LevelChoiceManager] More than one StageProfile " +
+                    $"uses sector number {sectorNumber}."
+                );
+                return null;
             }
+
+            match = profile;
         }
 
-        int lastIndex = pool.Count - 1;
-        LevelNodeData fallback = pool[lastIndex];
-        pool.RemoveAt(lastIndex);
-        return fallback;
+        return match;
     }
 
-    private void SelectNode(LevelNodeData node)
+    private static string GetRuleId(WorldRuleData rule)
     {
-        if (node == null || !isChoosing)
+        if (rule == null)
+            return "<null>";
+
+        return !string.IsNullOrWhiteSpace(rule.Id)
+            ? rule.Id
+            : rule.RuleType.ToString();
+    }
+
+    private void SelectRule(WorldRuleData rule)
+    {
+        if (rule == null || !isChoosing)
             return;
+
+        if (!currentSectorOptions.TryGetValue(rule, out RunSector sector) ||
+            sector == null)
+        {
+            Debug.LogError(
+                "[LevelChoiceManager] The selected RunSector option is missing."
+            );
+            return;
+        }
 
         isChoosing = false;
 
@@ -183,18 +232,25 @@ public sealed class LevelChoiceManager : MonoBehaviour
         runState.CommitCurrentSceneStats();
         runState.SaveExperienceState();
         runState.SavePlayerState(player);
-        runState.AdvanceLevel();
-        runState.SetSelectedLevelNode(node);
+        runState.SetCurrentSector(sector);
 
         Time.timeScale = 1f;
 
         if (panelView != null)
             panelView.Hide();
 
-        string targetScene = string.IsNullOrWhiteSpace(node.SceneName)
-            ? gameplaySceneName
-            : node.SceneName;
-
-        SceneManager.LoadScene(targetScene);
+        SceneManager.LoadScene(gameplaySceneName);
     }
+
+#if UNITY_EDITOR
+    private string GetOptionRuleIds()
+    {
+        List<string> ids = new(currentChoices.Count);
+
+        for (int i = 0; i < currentChoices.Count; i++)
+            ids.Add(GetRuleId(currentChoices[i]));
+
+        return string.Join(",", ids);
+    }
+#endif
 }

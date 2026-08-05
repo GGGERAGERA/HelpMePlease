@@ -14,13 +14,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WorldRuleData
   stableId: Golden
   ruleType: 15
-  displayName: ЗОЛОТОЙ
-  description: Золотой уровень с повышенной наградой.
-  pinnedDescription: Золотой уровень
+  displayName: "\u0417\u041E\u041B\u041E\u0422\u041E\u0419"
+  description: "\u0417\u043E\u043B\u043E\u0442\u043E\u0439 \u0441\u0435\u043A\u0442\u043E\u0440 \u0441 \u043F\u043E\u0432\u044B\u0448\u0435\u043D\u043D\u043E\u0439 \u043D\u0430\u0433\u0440\u0430\u0434\u043E\u0439."
+  shortDescription: "\u041C\u0435\u043D\u044C\u0448\u0435 \u0432\u0440\u0430\u0433\u043E\u0432, \u043D\u043E \u043E\u043D\u0438 \u043A\u0440\u0435\u043F\u0447\u0435"
+  icon: {fileID: -1999676519, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
+  presentationColor: {r: 0.95, g: 0.68, b: 0.18, a: 1}
+  pinnedDescription: "\u0417\u043E\u043B\u043E\u0442\u043E\u0439 \u0441\u0435\u043A\u0442\u043E\u0440"
   selectionWeight: 1
+  sectorExperienceMultiplier: 1.5
+  sectorCompletionGoldMultiplier: 2
   playerMoveSpeedMultiplier: 1
   enemyMoveSpeedMultiplier: 1
-  spawnPressureMultiplier: 1
+  enemyHealthMultiplier: 1.25
+  spawnPressureMultiplier: 0.8
   goldenEnemyChance: 0.15
   goldenEnemyHealthMultiplier: 1.5
   goldenEnemyRewardMultiplier: 3

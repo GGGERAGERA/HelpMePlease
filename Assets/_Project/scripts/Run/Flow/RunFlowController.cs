@@ -53,24 +53,56 @@ public sealed class RunFlowController : MonoBehaviour
         StartCoroutine(BossDefeatedRoutine());
     }
 
-    public void ApplyLevelMechanics(LevelNodeData node)
+    public void ApplyLevelMechanics()
     {
         ResolveLevelMechanics();
-
-        bool holdPointEnabled = node != null && node.hasHoldZoneEvent;
-        worldEventSpawner?.SetHoldPointEnabled(holdPointEnabled);
-
-        if (node != null && node.hasNoDamageChallenge)
-            noDamageChallenge?.StartChallenge();
-        else
-            noDamageChallenge?.CancelChallenge();
+        worldEventSpawner?.SetHoldPointEnabled(false);
+        noDamageChallenge?.CancelChallenge();
     }
 
     private IEnumerator BossDefeatedRoutine()
     {
-        RegisterCurrentLevelCompletion();
         RunStateManager runState = RunStateManager.Instance;
-        runState?.RegisterCompletedLevel(runState.SelectedLevelNode);
+
+        if (runState == null || runState.CurrentSector == null)
+        {
+            Debug.LogError(
+                "[RunFlowController] CurrentSector is missing after boss defeat."
+            );
+            yield break;
+        }
+
+        RegisterCurrentLevelCompletion();
+
+        int sectorNumber = runState.CurrentSector.SectorNumber;
+
+        if (sectorNumber == 10)
+        {
+            RunEndService endService = RunEndService.Instance;
+
+            if (endService == null)
+            {
+                Debug.LogError(
+                    "[RunFlowController] RunEndService is missing. " +
+                    "Victory cannot be completed."
+                );
+                yield break;
+            }
+
+            endService.CompleteRunVictory();
+            yield break;
+        }
+
+        if (sectorNumber > 10)
+        {
+            Debug.LogError(
+                $"[RunFlowController] Invalid sector {sectorNumber}; " +
+                "the main route ends at sector 10."
+            );
+            yield break;
+        }
+
+        runState.RegisterCompletedLevel();
 
         if (stopEnemySpawnerAfterBoss)
             StopEnemySpawner();
@@ -93,23 +125,22 @@ public sealed class RunFlowController : MonoBehaviour
     {
         RunStateManager runState = RunStateManager.Instance;
 
-        if (runState == null)
+        if (runState == null || runState.CurrentSector == null)
         {
-            Debug.LogWarning(
-                "[RunFlowController] RunStateManager is missing. " +
-                "Level modifier completion was not registered."
+            Debug.LogError(
+                "[RunFlowController] CurrentSector is missing. " +
+                "World Rule completion was not registered."
             );
 
             return;
         }
 
-        LevelNodeData completedNode = runState.SelectedLevelNode;
+        WorldRuleData completedRule = runState.CurrentSector.WorldRule;
 
-        if (completedNode == null)
+        if (completedRule == null)
         {
             Debug.Log(
-                "[RunFlowController] First/default level completed. " +
-                "No modifier unlock progress to register."
+                "[RunFlowController] No WorldRule unlock progress to register."
             );
 
             return;
@@ -124,17 +155,17 @@ public sealed class RunFlowController : MonoBehaviour
             return;
         }
 
-        string modifierId = GetModifierUnlockId(completedNode);
+        string modifierId = GetModifierUnlockId(completedRule);
 
         if (string.IsNullOrWhiteSpace(modifierId))
             return;
 
         Debug.Log(
-    $"[RunFlowController] Register completion: " +
-    $"type={UnlockConditionType.CompleteLevelModifier}, " +
-    $"targetId='{modifierId}', " +
-    $"levelNode='{completedNode.name}'"
-);
+            $"[RunFlowController] Register completion: " +
+            $"type={UnlockConditionType.CompleteLevelModifier}, " +
+            $"targetId='{modifierId}', " +
+            $"worldRule='{completedRule.name}'"
+        );
         UnlockProgressService.Instance.AddProgressByCondition(
             UnlockConditionType.CompleteLevelModifier,
             modifierId,
@@ -146,10 +177,8 @@ public sealed class RunFlowController : MonoBehaviour
         );
     }
 
-    private string GetModifierUnlockId(LevelNodeData node)
+    private string GetModifierUnlockId(WorldRuleData rule)
     {
-        WorldRuleData rule = node.WorldRule;
-
         if (rule != null)
         {
             switch (rule.RuleType)
@@ -162,6 +191,7 @@ public sealed class RunFlowController : MonoBehaviour
                 case WorldRuleType.None:
                 case WorldRuleType.Wind:
                 case WorldRuleType.Golden:
+                case WorldRuleType.Condensation:
                     return string.Empty;
             }
         }

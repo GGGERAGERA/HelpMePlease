@@ -36,6 +36,45 @@ public sealed class RunEndService : MonoBehaviour
         EndRun(RunEndReason.PlayerDied);
     }
 
+    public void CompleteRunVictory()
+    {
+        if (isEndingRun)
+            return;
+
+        RunStateManager runState = RunStateManager.EnsureExists();
+        RunSector sector = runState.CurrentSector;
+
+        if (sector == null || sector.SectorNumber != 10)
+        {
+            Debug.LogError(
+                "[RunEndService] Victory requires CurrentSector 10."
+            );
+            return;
+        }
+
+        isEndingRun = true;
+        StopActiveGameplay();
+        runState.CommitCurrentSceneStats();
+        runState.RegisterCompletedLevel();
+
+        UnlockProgressService.Instance?.AddProgressByCondition(
+            UnlockConditionType.CompleteRun,
+            string.Empty,
+            1
+        );
+
+        RunSummary summary = runState.EndRun(RunEndReason.Victory);
+        ClearActiveSectorEffects();
+
+        Debug.Log(
+            $"[RunEndService] Victory. Returning to bunker. " +
+            $"Gold earned: {summary?.GoldEarned ?? 0}"
+        );
+
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(bunkerSceneName);
+    }
+
     private void EndRun(RunEndReason reason)
     {
         if (isEndingRun)
@@ -53,5 +92,23 @@ public sealed class RunEndService : MonoBehaviour
 
         Time.timeScale = 1f;
         SceneManager.LoadScene(bunkerSceneName);
+    }
+
+    private static void StopActiveGameplay()
+    {
+        FindFirstObjectByType<EnemySpawner>()?.StopSpawning();
+        FindFirstObjectByType<RunTimer>()?.StopTimer();
+
+        WorldEventSpawner eventSpawner =
+            FindFirstObjectByType<WorldEventSpawner>();
+
+        if (eventSpawner != null)
+            eventSpawner.enabled = false;
+    }
+
+    private static void ClearActiveSectorEffects()
+    {
+        WorldRuleController.Instance?.Clear();
+        LevelAnomalyController.Instance?.Clear();
     }
 }
