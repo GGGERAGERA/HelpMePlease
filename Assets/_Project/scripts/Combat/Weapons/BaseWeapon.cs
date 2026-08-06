@@ -46,6 +46,16 @@ public abstract class BaseWeapon : MonoBehaviour
     private Vector2 lastOwnerPosition;
     private Transform ownerTransform;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private bool telekinesisDebugStateCaptured;
+    private float telekinesisDebugBaseOrbitRadius;
+    private bool telekinesisDebugManualPosition;
+    private bool telekinesisDebugForceAutomaticControl;
+    private bool telekinesisDebugSecondaryWeapon;
+    private float telekinesisDebugRadius = 6f;
+    private float telekinesisDebugFollowSpeed = 18f;
+#endif
+
     protected float lastAttackTime;
 
     private bool isInitialized;
@@ -57,6 +67,10 @@ public abstract class BaseWeapon : MonoBehaviour
     public Vector2 AimDirection => lastAimDirection;
     public bool HasAim => hasAim;
     public bool WantsToFire => IsTryingToAttack();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool IsTelekinesisDebugSecondary =>
+        telekinesisDebugSecondaryWeapon;
+#endif
     protected virtual WeaponShotKind ShotKind => WeaponShotKind.Standard;
 
     protected virtual void Awake()
@@ -138,10 +152,15 @@ public abstract class BaseWeapon : MonoBehaviour
         if (owner == null)
             return;
 
-        Vector2 aimDirection = ControlMode == WeaponControlMode.Manual
+        Vector2 aimDirection = UsesManualAimInput()
             ? GetManualAimDirection()
             : GetAutomaticAimDirection();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (telekinesisDebugManualPosition)
+            UpdateTelekinesisDebugPosition();
+        else
+#endif
         if (moveAroundOwner)
             MoveAroundOwner(aimDirection);
 
@@ -242,7 +261,7 @@ public abstract class BaseWeapon : MonoBehaviour
 
     protected bool TryGetAimDirectionFromFirePoint(out Vector2 direction)
     {
-        if (ControlMode == WeaponControlMode.Manual)
+        if (UsesManualAimInput())
         {
             direction = lastAimDirection;
             return hasAim;
@@ -264,7 +283,7 @@ public abstract class BaseWeapon : MonoBehaviour
 
     private bool TryGetAimTargetPosition(out Vector2 targetPosition)
     {
-        if (ControlMode == WeaponControlMode.Manual)
+        if (UsesManualAimInput())
         {
             targetPosition = GetMouseWorldPosition();
             return IsValidVector(targetPosition);
@@ -303,6 +322,38 @@ public abstract class BaseWeapon : MonoBehaviour
 
         return mousePosition;
     }
+
+    private bool UsesManualAimInput()
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (telekinesisDebugForceAutomaticControl)
+            return false;
+#endif
+
+        return ControlMode == WeaponControlMode.Manual;
+    }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private void UpdateTelekinesisDebugPosition()
+    {
+        if (owner == null)
+            return;
+
+        Vector2 ownerPosition = owner.position;
+        Vector2 offset = GetMouseWorldPosition() - ownerPosition;
+        Vector2 clampedOffset = Vector2.ClampMagnitude(
+            offset,
+            telekinesisDebugRadius
+        );
+        Vector2 targetPosition = ownerPosition + clampedOffset;
+
+        transform.position = Vector2.MoveTowards(
+            transform.position,
+            targetPosition,
+            telekinesisDebugFollowSpeed * Time.deltaTime
+        );
+    }
+#endif
 
     protected void MoveAroundOwner(Vector2 aimDirection)
     {
@@ -490,6 +541,11 @@ public abstract class BaseWeapon : MonoBehaviour
     }
     private void UpdateStationaryFireRateRamp()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (telekinesisDebugSecondaryWeapon)
+            return;
+#endif
+
         PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
 
         if (modifiers == null)
@@ -510,7 +566,7 @@ public abstract class BaseWeapon : MonoBehaviour
         if (Time.timeScale <= 0f)
             return false;
 
-        if (ControlMode == WeaponControlMode.Manual)
+        if (UsesManualAimInput())
         {
             if (!Input.GetMouseButton(0))
                 return false;
@@ -522,6 +578,68 @@ public abstract class BaseWeapon : MonoBehaviour
 
         return targeting != null && targeting.HasTarget;
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void SetTelekinesisDebugBase()
+    {
+        CaptureTelekinesisDebugState();
+        orbitRadius = telekinesisDebugBaseOrbitRadius;
+        telekinesisDebugManualPosition = false;
+        telekinesisDebugForceAutomaticControl = false;
+        telekinesisDebugSecondaryWeapon = false;
+    }
+
+    public void SetTelekinesisDebugExtended(float radiusMultiplier)
+    {
+        CaptureTelekinesisDebugState();
+        orbitRadius = telekinesisDebugBaseOrbitRadius *
+            Mathf.Max(1f, radiusMultiplier);
+        telekinesisDebugManualPosition = false;
+        telekinesisDebugForceAutomaticControl = false;
+        telekinesisDebugSecondaryWeapon = false;
+    }
+
+    public void SetTelekinesisDebugManual(
+        float radius,
+        float followSpeed)
+    {
+        CaptureTelekinesisDebugState();
+        orbitRadius = telekinesisDebugBaseOrbitRadius;
+        telekinesisDebugRadius = Mathf.Max(0.1f, radius);
+        telekinesisDebugFollowSpeed = Mathf.Max(0.1f, followSpeed);
+        telekinesisDebugManualPosition = true;
+        telekinesisDebugForceAutomaticControl = true;
+        telekinesisDebugSecondaryWeapon = false;
+    }
+
+    public void SetTelekinesisDebugAutomaticClone()
+    {
+        CaptureTelekinesisDebugState();
+        orbitRadius = telekinesisDebugBaseOrbitRadius;
+        telekinesisDebugManualPosition = false;
+        telekinesisDebugForceAutomaticControl = true;
+        telekinesisDebugSecondaryWeapon = true;
+    }
+
+    public void CopyRuntimeStatsFrom(BaseWeapon source)
+    {
+        if (source == null)
+            return;
+
+        EnsureRuntimeStats();
+        source.EnsureRuntimeStats();
+        runtimeStats.CopyFrom(source.runtimeStats);
+    }
+
+    private void CaptureTelekinesisDebugState()
+    {
+        if (telekinesisDebugStateCaptured)
+            return;
+
+        telekinesisDebugBaseOrbitRadius = orbitRadius;
+        telekinesisDebugStateCaptured = true;
+    }
+#endif
 
     private bool IsOwnerMoving(float threshold)
     {

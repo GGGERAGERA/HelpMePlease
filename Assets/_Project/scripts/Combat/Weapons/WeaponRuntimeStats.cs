@@ -73,6 +73,33 @@ public sealed class WeaponRuntimeStats : MonoBehaviour
         RefreshDebug(null);
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void CopyFrom(WeaponRuntimeStats source)
+    {
+        if (source == null)
+            return;
+
+        baseDamage = source.baseDamage;
+        baseShotsPerSecond = source.baseShotsPerSecond;
+        baseRange = source.baseRange;
+        baseProjectileSpeed = source.baseProjectileSpeed;
+        baseProjectileCount = source.baseProjectileCount;
+        basePierce = source.basePierce;
+        baseRicochet = source.baseRicochet;
+        damageMultiplier = source.damageMultiplier;
+        fireRateMultiplier = source.fireRateMultiplier;
+        knockbackMultiplier = source.knockbackMultiplier;
+        flatDamageBonus = source.flatDamageBonus;
+        rangeBonus = source.rangeBonus;
+        projectileCountBonus = source.projectileCountBonus;
+        pierceBonus = source.pierceBonus;
+        ricochetBonus = source.ricochetBonus;
+        critChance = source.critChance;
+        critMultiplier = source.critMultiplier;
+        RefreshDebug(null);
+    }
+#endif
+
     public int GetDamage(PlayerCombatModifiers modifiers)
     {
         float finalDamage = (baseDamage + flatDamageBonus) * damageMultiplier;

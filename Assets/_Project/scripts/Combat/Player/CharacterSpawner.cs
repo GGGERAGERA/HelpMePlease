@@ -138,18 +138,18 @@ public class CharacterSpawner : MonoBehaviour
             movement.speed = characterData.moveSpeed;
     }
 
-    private void SpawnWeapon(GameObject player, WeaponData weaponData)
+    private BaseWeapon SpawnWeapon(GameObject player, WeaponData weaponData)
     {
         if (weaponData == null)
         {
             Debug.LogWarning("[CharacterSpawner] No selected/default weapon.");
-            return;
+            return null;
         }
 
         if (weaponData.weaponPrefab == null)
         {
             Debug.LogWarning($"[CharacterSpawner] Weapon prefab is missing on {weaponData.name}.");
-            return;
+            return null;
         }
 
         Transform weaponPoint = player.transform.Find(weaponPointName);
@@ -167,10 +167,12 @@ public class CharacterSpawner : MonoBehaviour
         weapon.transform.position = weaponPoint.position;
         weapon.transform.rotation = weaponPoint.rotation;
 
-        AssignWeaponData(weapon, weaponData);
+        return AssignWeaponData(weapon, weaponData);
     }
 
-    private void AssignWeaponData(GameObject weapon, WeaponData weaponData)
+    private BaseWeapon AssignWeaponData(
+        GameObject weapon,
+        WeaponData weaponData)
     {
         BaseWeapon baseWeapon = weapon.GetComponent<BaseWeapon>();
 
@@ -182,5 +184,25 @@ public class CharacterSpawner : MonoBehaviour
         {
             Debug.LogWarning("CharacterSpawner: spawned weapon has no BaseWeapon component.");
         }
+
+        return baseWeapon;
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public BaseWeapon SpawnTelekinesisDebugWeaponClone(
+        GameObject player,
+        BaseWeapon source)
+    {
+        if (player == null || source == null || source.weaponData == null)
+            return null;
+
+        BaseWeapon clone = SpawnWeapon(player, source.weaponData);
+
+        if (clone == null)
+            return null;
+
+        clone.CopyRuntimeStatsFrom(source);
+        return clone;
+    }
+#endif
 }

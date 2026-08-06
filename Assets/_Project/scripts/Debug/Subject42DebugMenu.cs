@@ -56,6 +56,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private readonly StringBuilder activeAnomalySummary = new();
     private readonly List<WorldEvent> addedEventPrefabs = new();
     private readonly List<GameObject> debugEnemies = new();
+    private TelekinesisDebugPrototype telekinesisPrototype;
 
     private readonly Color panelColor = new(0.035f, 0.045f, 0.06f, 0.97f);
     private readonly Color rowColor = new(0.09f, 0.11f, 0.145f, 0.95f);
@@ -298,6 +299,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddLocalAnomaliesSection();
         AddWorldEventsSection();
         AddEnemiesSection();
+        AddTelekinesisSection();
         AddHint("F1 toggles this menu. Gameplay remains paused while it is open.");
     }
 
@@ -592,6 +594,150 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             debugEnemies.Count > 0,
             ClearDebugEnemies
         );
+    }
+
+    private void AddTelekinesisSection()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        PlayerHealth health = player != null
+            ? player.GetComponent<PlayerHealth>()
+            : null;
+        BaseWeapon primaryWeapon = player != null
+            ? player.GetComponentInChildren<BaseWeapon>(true)
+            : null;
+        bool available = player != null && primaryWeapon != null &&
+            (health == null || !health.IsDead);
+
+        if (telekinesisPrototype == null && player != null)
+        {
+            telekinesisPrototype =
+                player.GetComponent<TelekinesisDebugPrototype>();
+        }
+
+        TelekinesisDebugMode currentMode = telekinesisPrototype != null
+            ? telekinesisPrototype.CurrentMode
+            : TelekinesisDebugMode.Base;
+
+        AddSectionTitle(
+            "TELEKINESIS TEST",
+            $"Current: {GetTelekinesisModeName(currentMode)}"
+        );
+        AddTelekinesisModeRow(
+            "Current gameplay control",
+            "BASE",
+            TelekinesisDebugMode.Base,
+            currentMode,
+            available
+        );
+        AddTelekinesisModeRow(
+            "Orbit radius x1.8",
+            "EXTENDED RADIUS",
+            TelekinesisDebugMode.ExtendedRadius,
+            currentMode,
+            available
+        );
+        AddTelekinesisModeRow(
+            "Mouse position / auto target",
+            "MANUAL CONTROL",
+            TelekinesisDebugMode.ManualControl,
+            currentMode,
+            available
+        );
+        AddTelekinesisModeRow(
+            "Manual primary + auto clone",
+            "DUAL CONTROL",
+            TelekinesisDebugMode.DualControl,
+            currentMode,
+            available
+        );
+        AddRow(
+            "Return to current gameplay",
+            available ? "READY" : "PLAYER/WEAPON NOT FOUND",
+            available ? mutedColor : warningColor,
+            "RESET",
+            available,
+            ResetTelekinesisPrototype
+        );
+    }
+
+    private void AddTelekinesisModeRow(
+        string description,
+        string buttonLabel,
+        TelekinesisDebugMode mode,
+        TelekinesisDebugMode currentMode,
+        bool available)
+    {
+        bool active = currentMode == mode;
+
+        AddRow(
+            description,
+            active ? "ACTIVE" : available ? "AVAILABLE" : "UNAVAILABLE",
+            active ? successColor : available ? mutedColor : warningColor,
+            buttonLabel,
+            available,
+            () => ApplyTelekinesisMode(mode)
+        );
+    }
+
+    private void ApplyTelekinesisMode(TelekinesisDebugMode mode)
+    {
+        if (!ResolveTelekinesisPrototype())
+            return;
+
+        telekinesisPrototype.ApplyMode(mode);
+        RefreshData();
+    }
+
+    private void ResetTelekinesisPrototype()
+    {
+        if (telekinesisPrototype == null)
+        {
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            telekinesisPrototype = player != null
+                ? player.GetComponent<TelekinesisDebugPrototype>()
+                : null;
+        }
+
+        telekinesisPrototype?.ResetPrototype();
+        RefreshData();
+    }
+
+    private bool ResolveTelekinesisPrototype()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+
+        if (player == null)
+            return false;
+
+        if (telekinesisPrototype == null ||
+            telekinesisPrototype.gameObject != player)
+        {
+            telekinesisPrototype =
+                player.GetComponent<TelekinesisDebugPrototype>();
+
+            if (telekinesisPrototype == null)
+            {
+                telekinesisPrototype =
+                    player.AddComponent<TelekinesisDebugPrototype>();
+            }
+        }
+
+        telekinesisPrototype.Configure(
+            FindFirstObjectByType<CharacterSpawner>()
+        );
+        return telekinesisPrototype.IsAvailable;
+    }
+
+    private static string GetTelekinesisModeName(
+        TelekinesisDebugMode mode)
+    {
+        return mode switch
+        {
+            TelekinesisDebugMode.ExtendedRadius => "EXTENDED RADIUS",
+            TelekinesisDebugMode.ManualControl => "MANUAL CONTROL",
+            TelekinesisDebugMode.DualControl => "DUAL CONTROL",
+            _ => "BASE"
+        };
     }
 
     private void AddDebugEnemyRow(
@@ -907,6 +1053,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         {
             "CLEAR DEBUG ENEMIES" => 218f,
             "CLEAR ANOMALIES" => 176f,
+            "EXTENDED RADIUS" => 194f,
+            "MANUAL CONTROL" => 184f,
+            "DUAL CONTROL" => 164f,
             "SPAWN TURRET" => 166f,
             "SPAWN EYES" => 150f,
             "CLEAR EVENT" => 150f,
