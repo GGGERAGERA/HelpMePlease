@@ -36,6 +36,10 @@ public sealed class LocalAnomalyData : ScriptableObject
     [Tooltip("External velocity pulling objects toward a Gravity zone center.")]
     [SerializeField, Min(0f)] private float gravityForce = 1.5f;
 
+    [Header("Glitch")]
+    [SerializeField, Min(0.05f)] private float glitchInterval = 1.5f;
+    [SerializeField, Min(0f)] private float glitchDistance = 0.7f;
+
     [Header("Explosion")]
     [SerializeField, Min(0f)] private float explosionDelay;
     [SerializeField, Min(0.1f)] private float explosionRadius = 0.1f;
@@ -63,6 +67,8 @@ public sealed class LocalAnomalyData : ScriptableObject
         Mathf.Max(0.1f, pickupSpeedMultiplier);
     public LocalAnomalyData[] AdditionalAnomalies => additionalAnomalies;
     public float GravityForce => Mathf.Max(0f, gravityForce);
+    public float GlitchInterval => Mathf.Max(0.05f, glitchInterval);
+    public float GlitchDistance => Mathf.Max(0f, glitchDistance);
     public float ExplosionDelay => Mathf.Max(0f, explosionDelay);
     public float ExplosionRadius => Mathf.Max(0.1f, explosionRadius);
     public float ExplosionDamage => Mathf.Max(0f, explosionDamage);

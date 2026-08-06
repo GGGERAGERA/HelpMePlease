@@ -33,7 +33,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         LocalAnomalyType.Berserk,
         LocalAnomalyType.Stasis,
         LocalAnomalyType.ExplosiveZone,
-        LocalAnomalyType.Gravity
+        LocalAnomalyType.Gravity,
+        LocalAnomalyType.Glitch
     };
 
     private GameObject menuRoot;
