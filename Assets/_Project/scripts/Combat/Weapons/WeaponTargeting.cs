@@ -18,6 +18,11 @@ public sealed class WeaponTargeting : MonoBehaviour
     private ContactFilter2D targetFilter;
     private float nextTargetRefreshTime;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private EnemyHealth telekinesisDebugPriorityTarget;
+    private bool telekinesisDebugUseWeaponOrigin;
+#endif
+
     public bool HasTarget => TryGetTarget(out _);
     public Transform CurrentTarget =>
         TryGetTarget(out Transform target) ? target : null;
@@ -44,6 +49,16 @@ public sealed class WeaponTargeting : MonoBehaviour
 
     public bool TryGetTarget(out Transform target)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (IsValidTelekinesisDebugPriorityTarget())
+        {
+            target = telekinesisDebugPriorityTarget.transform;
+            return true;
+        }
+
+        telekinesisDebugPriorityTarget = null;
+#endif
+
         if (!IsValidTarget(currentTarget))
             currentTarget = null;
 
@@ -112,11 +127,43 @@ public sealed class WeaponTargeting : MonoBehaviour
         if (weapon == null)
             weapon = GetComponent<BaseWeapon>();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (telekinesisDebugUseWeaponOrigin && weapon != null)
+            return weapon.transform.position;
+#endif
+
         Transform weaponOwner = weapon != null ? weapon.Owner : null;
         return weaponOwner != null
             ? (Vector2)weaponOwner.position
             : (Vector2)transform.position;
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void SetTelekinesisDebugPriorityTarget(EnemyHealth target)
+    {
+        telekinesisDebugPriorityTarget = target;
+    }
+
+    public void SetTelekinesisDebugUseWeaponOrigin(bool enabled)
+    {
+        telekinesisDebugUseWeaponOrigin = enabled;
+        nextTargetRefreshTime = 0f;
+    }
+
+    public void ClearTelekinesisDebugOverrides()
+    {
+        telekinesisDebugPriorityTarget = null;
+        telekinesisDebugUseWeaponOrigin = false;
+        nextTargetRefreshTime = 0f;
+    }
+
+    private bool IsValidTelekinesisDebugPriorityTarget()
+    {
+        return telekinesisDebugPriorityTarget != null &&
+            !telekinesisDebugPriorityTarget.IsDead &&
+            telekinesisDebugPriorityTarget.gameObject.activeInHierarchy;
+    }
+#endif
 
     private void ConfigureTargetFilter()
     {

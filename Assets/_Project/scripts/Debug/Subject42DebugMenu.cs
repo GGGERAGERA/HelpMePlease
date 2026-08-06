@@ -630,16 +630,16 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             available
         );
         AddTelekinesisModeRow(
-            "Orbit radius x1.8",
-            "EXTENDED RADIUS",
-            TelekinesisDebugMode.ExtendedRadius,
+            "Mouse position / auto target",
+            "MANUAL POSITION",
+            TelekinesisDebugMode.ManualPosition,
             currentMode,
             available
         );
         AddTelekinesisModeRow(
-            "Mouse position / auto target",
-            "MANUAL CONTROL",
-            TelekinesisDebugMode.ManualControl,
+            "Mouse aim and position / LMB fire",
+            "MANUAL FIRE",
+            TelekinesisDebugMode.ManualFire,
             currentMode,
             available
         );
@@ -647,6 +647,41 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             "Manual primary + auto clone",
             "DUAL CONTROL",
             TelekinesisDebugMode.DualControl,
+            currentMode,
+            available
+        );
+        AddTelekinesisModeRow(
+            "TAB switches the manual weapon",
+            "DUAL SWITCH",
+            TelekinesisDebugMode.DualSwitch,
+            currentMode,
+            available
+        );
+        AddTelekinesisModeRow(
+            "RMB moves two auto weapons",
+            "COMMAND POINT",
+            TelekinesisDebugMode.CommandPoint,
+            currentMode,
+            available
+        );
+        AddTelekinesisModeRow(
+            "LMB selects priority enemy",
+            "FOCUS TARGET",
+            TelekinesisDebugMode.FocusTarget,
+            currentMode,
+            available
+        );
+        AddTelekinesisModeRow(
+            "RMB throws the auto weapon",
+            "WEAPON THROW",
+            TelekinesisDebugMode.WeaponThrow,
+            currentMode,
+            available
+        );
+        AddTelekinesisModeRow(
+            "RMB position / LMB priority",
+            "FULL AUTO COMMAND",
+            TelekinesisDebugMode.FullAutoCommand,
             currentMode,
             available
         );
@@ -733,9 +768,14 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         return mode switch
         {
-            TelekinesisDebugMode.ExtendedRadius => "EXTENDED RADIUS",
-            TelekinesisDebugMode.ManualControl => "MANUAL CONTROL",
+            TelekinesisDebugMode.ManualPosition => "MANUAL POSITION",
+            TelekinesisDebugMode.ManualFire => "MANUAL FIRE",
             TelekinesisDebugMode.DualControl => "DUAL CONTROL",
+            TelekinesisDebugMode.DualSwitch => "DUAL SWITCH",
+            TelekinesisDebugMode.CommandPoint => "COMMAND POINT",
+            TelekinesisDebugMode.FocusTarget => "FOCUS TARGET",
+            TelekinesisDebugMode.WeaponThrow => "WEAPON THROW",
+            TelekinesisDebugMode.FullAutoCommand => "FULL AUTO COMMAND",
             _ => "BASE"
         };
     }
@@ -1053,9 +1093,14 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         {
             "CLEAR DEBUG ENEMIES" => 218f,
             "CLEAR ANOMALIES" => 176f,
-            "EXTENDED RADIUS" => 194f,
-            "MANUAL CONTROL" => 184f,
+            "MANUAL POSITION" => 184f,
+            "MANUAL FIRE" => 164f,
             "DUAL CONTROL" => 164f,
+            "DUAL SWITCH" => 164f,
+            "COMMAND POINT" => 174f,
+            "FOCUS TARGET" => 164f,
+            "WEAPON THROW" => 174f,
+            "FULL AUTO COMMAND" => 220f,
             "SPAWN TURRET" => 166f,
             "SPAWN EYES" => 150f,
             "CLEAR EVENT" => 150f,

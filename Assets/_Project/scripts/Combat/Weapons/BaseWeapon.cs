@@ -51,9 +51,12 @@ public abstract class BaseWeapon : MonoBehaviour
     private float telekinesisDebugBaseOrbitRadius;
     private bool telekinesisDebugManualPosition;
     private bool telekinesisDebugForceAutomaticControl;
+    private bool telekinesisDebugForceManualControl;
+    private bool telekinesisDebugExternalPosition;
     private bool telekinesisDebugSecondaryWeapon;
     private float telekinesisDebugRadius = 6f;
     private float telekinesisDebugFollowSpeed = 18f;
+    private Vector2 telekinesisDebugPositionTarget;
 #endif
 
     protected float lastAttackTime;
@@ -159,6 +162,8 @@ public abstract class BaseWeapon : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (telekinesisDebugManualPosition)
             UpdateTelekinesisDebugPosition();
+        else if (telekinesisDebugExternalPosition)
+            UpdateTelekinesisDebugExternalPosition();
         else
 #endif
         if (moveAroundOwner)
@@ -261,6 +266,19 @@ public abstract class BaseWeapon : MonoBehaviour
 
     protected bool TryGetAimDirectionFromFirePoint(out Vector2 direction)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (telekinesisDebugForceManualControl)
+        {
+            if (firePoint == null)
+                firePoint = transform;
+
+            return TryNormalizeDirection(
+                GetMouseWorldPosition() - (Vector2)firePoint.position,
+                out direction
+            );
+        }
+#endif
+
         if (UsesManualAimInput())
         {
             direction = lastAimDirection;
@@ -326,6 +344,9 @@ public abstract class BaseWeapon : MonoBehaviour
     private bool UsesManualAimInput()
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (telekinesisDebugForceManualControl)
+            return true;
+
         if (telekinesisDebugForceAutomaticControl)
             return false;
 #endif
@@ -350,6 +371,15 @@ public abstract class BaseWeapon : MonoBehaviour
         transform.position = Vector2.MoveTowards(
             transform.position,
             targetPosition,
+            telekinesisDebugFollowSpeed * Time.deltaTime
+        );
+    }
+
+    private void UpdateTelekinesisDebugExternalPosition()
+    {
+        transform.position = Vector2.MoveTowards(
+            transform.position,
+            telekinesisDebugPositionTarget,
             telekinesisDebugFollowSpeed * Time.deltaTime
         );
     }
@@ -586,20 +616,30 @@ public abstract class BaseWeapon : MonoBehaviour
         orbitRadius = telekinesisDebugBaseOrbitRadius;
         telekinesisDebugManualPosition = false;
         telekinesisDebugForceAutomaticControl = false;
+        telekinesisDebugForceManualControl = false;
+        telekinesisDebugExternalPosition = false;
         telekinesisDebugSecondaryWeapon = false;
-    }
-
-    public void SetTelekinesisDebugExtended(float radiusMultiplier)
-    {
-        CaptureTelekinesisDebugState();
-        orbitRadius = telekinesisDebugBaseOrbitRadius *
-            Mathf.Max(1f, radiusMultiplier);
-        telekinesisDebugManualPosition = false;
-        telekinesisDebugForceAutomaticControl = false;
-        telekinesisDebugSecondaryWeapon = false;
+        targeting?.ClearTelekinesisDebugOverrides();
     }
 
     public void SetTelekinesisDebugManual(
+        float radius,
+        float followSpeed,
+        bool secondaryWeapon = false)
+    {
+        CaptureTelekinesisDebugState();
+        orbitRadius = telekinesisDebugBaseOrbitRadius;
+        telekinesisDebugRadius = Mathf.Max(0.1f, radius);
+        telekinesisDebugFollowSpeed = Mathf.Max(0.1f, followSpeed);
+        telekinesisDebugManualPosition = true;
+        telekinesisDebugForceAutomaticControl = true;
+        telekinesisDebugForceManualControl = false;
+        telekinesisDebugExternalPosition = false;
+        telekinesisDebugSecondaryWeapon = secondaryWeapon;
+        targeting?.ClearTelekinesisDebugOverrides();
+    }
+
+    public void SetTelekinesisDebugManualFire(
         float radius,
         float followSpeed)
     {
@@ -608,17 +648,59 @@ public abstract class BaseWeapon : MonoBehaviour
         telekinesisDebugRadius = Mathf.Max(0.1f, radius);
         telekinesisDebugFollowSpeed = Mathf.Max(0.1f, followSpeed);
         telekinesisDebugManualPosition = true;
-        telekinesisDebugForceAutomaticControl = true;
+        telekinesisDebugForceAutomaticControl = false;
+        telekinesisDebugForceManualControl = true;
+        telekinesisDebugExternalPosition = false;
         telekinesisDebugSecondaryWeapon = false;
+        targeting?.ClearTelekinesisDebugOverrides();
     }
 
-    public void SetTelekinesisDebugAutomaticClone()
+    public void SetTelekinesisDebugAutomatic(
+        bool secondaryWeapon,
+        bool useWeaponTargetingOrigin = false)
     {
         CaptureTelekinesisDebugState();
         orbitRadius = telekinesisDebugBaseOrbitRadius;
         telekinesisDebugManualPosition = false;
         telekinesisDebugForceAutomaticControl = true;
-        telekinesisDebugSecondaryWeapon = true;
+        telekinesisDebugForceManualControl = false;
+        telekinesisDebugExternalPosition = false;
+        telekinesisDebugSecondaryWeapon = secondaryWeapon;
+        targeting?.ClearTelekinesisDebugOverrides();
+        targeting?.SetTelekinesisDebugUseWeaponOrigin(
+            useWeaponTargetingOrigin
+        );
+    }
+
+    public void SetTelekinesisDebugExternalAutoPosition(
+        Vector2 targetPosition,
+        float followSpeed,
+        bool secondaryWeapon,
+        bool useWeaponTargetingOrigin)
+    {
+        CaptureTelekinesisDebugState();
+        orbitRadius = telekinesisDebugBaseOrbitRadius;
+        telekinesisDebugPositionTarget = targetPosition;
+        telekinesisDebugFollowSpeed = Mathf.Max(0.1f, followSpeed);
+        telekinesisDebugManualPosition = false;
+        telekinesisDebugForceAutomaticControl = true;
+        telekinesisDebugForceManualControl = false;
+        telekinesisDebugExternalPosition = true;
+        telekinesisDebugSecondaryWeapon = secondaryWeapon;
+        targeting?.ClearTelekinesisDebugOverrides();
+        targeting?.SetTelekinesisDebugUseWeaponOrigin(
+            useWeaponTargetingOrigin
+        );
+    }
+
+    public void UpdateTelekinesisDebugPositionTarget(Vector2 targetPosition)
+    {
+        telekinesisDebugPositionTarget = targetPosition;
+    }
+
+    public void SetTelekinesisDebugPriorityTarget(EnemyHealth target)
+    {
+        targeting?.SetTelekinesisDebugPriorityTarget(target);
     }
 
     public void CopyRuntimeStatsFrom(BaseWeapon source)

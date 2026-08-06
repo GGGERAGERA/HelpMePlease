@@ -1,26 +1,55 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public enum TelekinesisDebugMode
 {
     Base,
-    ExtendedRadius,
-    ManualControl,
-    DualControl
+    ManualPosition,
+    ManualFire,
+    DualControl,
+    DualSwitch,
+    CommandPoint,
+    FocusTarget,
+    WeaponThrow,
+    FullAutoCommand
 }
 
 public sealed class TelekinesisDebugPrototype : MonoBehaviour
 {
-    [SerializeField, Min(1f)] private float extendedRadiusMultiplier = 1.8f;
-    [SerializeField, Min(0.1f)] private float manualRadius = 6f;
-    [SerializeField, Min(0.1f)] private float manualFollowSpeed = 18f;
+    private enum WeaponThrowState
+    {
+        Idle,
+        FlyingOut,
+        Holding,
+        Returning
+    }
+
+    private const float ManualRadius = 6f;
+    private const float CommandRadius = 8f;
+    private const float ManualFollowSpeed = 18f;
+    private const float CommandFollowSpeed = 18f;
+    private const float ThrowFollowSpeed = 28f;
+    private const float ThrowHoldDuration = 2f;
+    private const float FormationOffset = 0.8f;
+    private const float ThrowArrivalDistance = 0.08f;
+    private const float ThrowReturnDistance = 1.25f;
 
     private CharacterSpawner characterSpawner;
     private PlayerHealth playerHealth;
     private BaseWeapon primaryWeapon;
     private BaseWeapon secondaryWeapon;
+    private EnemyHealth focusTarget;
     private LineRenderer radiusVisual;
-    private Material radiusMaterial;
+    private LineRenderer commandPointMarker;
+    private LineRenderer focusTargetMarker;
+    private Material debugLineMaterial;
+    private Vector2 commandPoint;
+    private Vector2 throwTarget;
+    private float throwHoldRemaining;
+    private float radiusVisualRadius;
+    private int manualWeaponIndex;
+    private WeaponThrowState throwState;
     private bool cleaningUp;
 
     public TelekinesisDebugMode CurrentMode { get; private set; } =
@@ -45,6 +74,27 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
         {
             ResetPrototype();
             enabled = false;
+            return;
+        }
+
+        if (Time.timeScale <= 0f)
+            return;
+
+        ValidateFocusTarget();
+
+        if (CanProcessGameplayInput())
+            ProcessModeInput();
+
+        switch (CurrentMode)
+        {
+            case TelekinesisDebugMode.CommandPoint:
+            case TelekinesisDebugMode.FullAutoCommand:
+                UpdateCommandFormation();
+                break;
+
+            case TelekinesisDebugMode.WeaponThrow:
+                UpdateWeaponThrow();
+                break;
         }
     }
 
@@ -64,43 +114,53 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
         if (!IsAvailable)
             return false;
 
+        ClearTransientState();
+        CurrentMode = mode;
+
         switch (mode)
         {
             case TelekinesisDebugMode.Base:
-                DestroySecondaryWeapon();
-                primaryWeapon.SetTelekinesisDebugBase();
-                SetRadiusVisualActive(false);
                 break;
 
-            case TelekinesisDebugMode.ExtendedRadius:
-                DestroySecondaryWeapon();
-                primaryWeapon.SetTelekinesisDebugExtended(
-                    extendedRadiusMultiplier
+            case TelekinesisDebugMode.ManualPosition:
+                ConfigureManualPosition(primaryWeapon, false);
+                SetRadiusVisualActive(true, ManualRadius);
+                break;
+
+            case TelekinesisDebugMode.ManualFire:
+                primaryWeapon.SetTelekinesisDebugManualFire(
+                    ManualRadius,
+                    ManualFollowSpeed
                 );
-                SetRadiusVisualActive(false);
-                break;
-
-            case TelekinesisDebugMode.ManualControl:
-                DestroySecondaryWeapon();
-                ConfigurePrimaryManual();
-                SetRadiusVisualActive(true);
+                SetRadiusVisualActive(true, ManualRadius);
                 break;
 
             case TelekinesisDebugMode.DualControl:
-                ConfigurePrimaryManual();
+                ConfigureDualControl(false);
+                break;
 
-                if (!EnsureSecondaryWeapon())
-                {
-                    CurrentMode = TelekinesisDebugMode.ManualControl;
-                    SetRadiusVisualActive(true);
-                    return false;
-                }
+            case TelekinesisDebugMode.DualSwitch:
+                ConfigureDualControl(true);
+                break;
 
-                SetRadiusVisualActive(true);
+            case TelekinesisDebugMode.CommandPoint:
+                ConfigureCommandMode(false);
+                break;
+
+            case TelekinesisDebugMode.FocusTarget:
+                primaryWeapon.SetTelekinesisDebugAutomatic(false);
+                break;
+
+            case TelekinesisDebugMode.WeaponThrow:
+                primaryWeapon.SetTelekinesisDebugAutomatic(false);
+                SetRadiusVisualActive(true, CommandRadius);
+                break;
+
+            case TelekinesisDebugMode.FullAutoCommand:
+                ConfigureCommandMode(true);
                 break;
         }
 
-        CurrentMode = mode;
         return true;
     }
 
@@ -110,31 +170,281 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
             return;
 
         cleaningUp = true;
+        ClearTransientState();
+        CurrentMode = TelekinesisDebugMode.Base;
+        cleaningUp = false;
+    }
+
+    private void ConfigureDualControl(bool switchable)
+    {
+        ConfigureManualPosition(primaryWeapon, false);
+
+        if (EnsureSecondaryWeapon())
+            secondaryWeapon.SetTelekinesisDebugAutomatic(true);
+
+        manualWeaponIndex = 0;
+        SetRadiusVisualActive(true, ManualRadius);
+
+        if (!switchable)
+            manualWeaponIndex = 0;
+    }
+
+    private void ConfigureCommandMode(bool allowFocus)
+    {
+        EnsureSecondaryWeapon();
+        commandPoint = transform.position;
+        EnsureCommandPointMarker();
+        SetRadiusVisualActive(true, CommandRadius);
+        ConfigureCommandFormationWeapons();
+
+        if (!allowFocus)
+            ClearFocusTarget();
+    }
+
+    private void ConfigureCommandFormationWeapons()
+    {
+        GetCommandFormationTargets(
+            out Vector2 primaryTarget,
+            out Vector2 secondaryTarget
+        );
+        primaryWeapon.SetTelekinesisDebugExternalAutoPosition(
+            primaryTarget,
+            CommandFollowSpeed,
+            false,
+            true
+        );
+
+        if (secondaryWeapon != null)
+        {
+            secondaryWeapon.SetTelekinesisDebugExternalAutoPosition(
+                secondaryTarget,
+                CommandFollowSpeed,
+                true,
+                true
+            );
+        }
+    }
+
+    private void ConfigureManualPosition(
+        BaseWeapon weapon,
+        bool secondary)
+    {
+        weapon?.SetTelekinesisDebugManual(
+            ManualRadius,
+            ManualFollowSpeed,
+            secondary
+        );
+    }
+
+    private void ProcessModeInput()
+    {
+        switch (CurrentMode)
+        {
+            case TelekinesisDebugMode.DualSwitch:
+                if (Input.GetKeyDown(KeyCode.Tab))
+                    SwitchManualWeapon();
+                break;
+
+            case TelekinesisDebugMode.CommandPoint:
+                if (Input.GetMouseButtonDown(1))
+                    SetCommandPointFromMouse();
+                break;
+
+            case TelekinesisDebugMode.FocusTarget:
+                if (Input.GetMouseButtonDown(0))
+                    SetFocusTargetFromMouse();
+                break;
+
+            case TelekinesisDebugMode.WeaponThrow:
+                if (Input.GetMouseButtonDown(1))
+                    StartOrRetargetWeaponThrow();
+                break;
+
+            case TelekinesisDebugMode.FullAutoCommand:
+                if (Input.GetMouseButtonDown(1))
+                    SetCommandPointFromMouse();
+                if (Input.GetMouseButtonDown(0))
+                    SetFocusTargetFromMouse();
+                break;
+        }
+    }
+
+    private void SwitchManualWeapon()
+    {
+        if (secondaryWeapon == null)
+            return;
+
+        manualWeaponIndex = 1 - manualWeaponIndex;
+
+        if (manualWeaponIndex == 0)
+        {
+            ConfigureManualPosition(primaryWeapon, false);
+            secondaryWeapon.SetTelekinesisDebugAutomatic(true);
+        }
+        else
+        {
+            primaryWeapon.SetTelekinesisDebugAutomatic(false);
+            ConfigureManualPosition(secondaryWeapon, true);
+        }
+    }
+
+    private void SetCommandPointFromMouse()
+    {
+        commandPoint = ClampToPlayerRadius(
+            GetMouseWorldPosition(),
+            CommandRadius
+        );
+        EnsureCommandPointMarker();
+    }
+
+    private void UpdateCommandFormation()
+    {
+        commandPoint = ClampToPlayerRadius(
+            commandPoint,
+            CommandRadius
+        );
+
+        if (commandPointMarker != null)
+            commandPointMarker.transform.position = commandPoint;
+
+        GetCommandFormationTargets(
+            out Vector2 primaryTarget,
+            out Vector2 secondaryTarget
+        );
+        primaryWeapon?.UpdateTelekinesisDebugPositionTarget(primaryTarget);
+        secondaryWeapon?.UpdateTelekinesisDebugPositionTarget(secondaryTarget);
+    }
+
+    private void GetCommandFormationTargets(
+        out Vector2 primaryTarget,
+        out Vector2 secondaryTarget)
+    {
+        Vector2 left = commandPoint + Vector2.left * FormationOffset;
+        Vector2 right = commandPoint + Vector2.right * FormationOffset;
+        primaryTarget = ClampToPlayerRadius(left, CommandRadius);
+        secondaryTarget = ClampToPlayerRadius(right, CommandRadius);
+    }
+
+    private void SetFocusTargetFromMouse()
+    {
+        SetFocusTarget(FindEnemyAtWorldPosition(GetMouseWorldPosition()));
+    }
+
+    private void SetFocusTarget(EnemyHealth target)
+    {
+        focusTarget = target != null && !target.IsDead ? target : null;
+        ApplyFocusTargetToWeapons();
+        UpdateFocusTargetMarker();
+    }
+
+    private void ApplyFocusTargetToWeapons()
+    {
+        primaryWeapon?.SetTelekinesisDebugPriorityTarget(focusTarget);
+        secondaryWeapon?.SetTelekinesisDebugPriorityTarget(focusTarget);
+    }
+
+    private void ValidateFocusTarget()
+    {
+        if (focusTarget == null)
+            return;
+
+        if (!focusTarget.IsDead && focusTarget.gameObject.activeInHierarchy)
+            return;
+
+        ClearFocusTarget();
+    }
+
+    private void ClearFocusTarget()
+    {
+        focusTarget = null;
+        ApplyFocusTargetToWeapons();
+
+        if (focusTargetMarker != null)
+            Destroy(focusTargetMarker.gameObject);
+
+        focusTargetMarker = null;
+    }
+
+    private void StartOrRetargetWeaponThrow()
+    {
+        throwTarget = ClampToPlayerRadius(
+            GetMouseWorldPosition(),
+            CommandRadius
+        );
+        throwHoldRemaining = ThrowHoldDuration;
+        throwState = WeaponThrowState.FlyingOut;
+        primaryWeapon.SetTelekinesisDebugExternalAutoPosition(
+            throwTarget,
+            ThrowFollowSpeed,
+            false,
+            false
+        );
+    }
+
+    private void UpdateWeaponThrow()
+    {
+        switch (throwState)
+        {
+            case WeaponThrowState.FlyingOut:
+                throwTarget = ClampToPlayerRadius(
+                    throwTarget,
+                    CommandRadius
+                );
+                primaryWeapon.UpdateTelekinesisDebugPositionTarget(
+                    throwTarget
+                );
+
+                if (Vector2.Distance(
+                        primaryWeapon.transform.position,
+                        throwTarget) <= ThrowArrivalDistance)
+                {
+                    throwState = WeaponThrowState.Holding;
+                    throwHoldRemaining = ThrowHoldDuration;
+                }
+                break;
+
+            case WeaponThrowState.Holding:
+                throwHoldRemaining -= Time.deltaTime;
+
+                if (throwHoldRemaining <= 0f)
+                {
+                    throwState = WeaponThrowState.Returning;
+                    primaryWeapon.SetTelekinesisDebugAutomatic(false);
+                }
+                break;
+
+            case WeaponThrowState.Returning:
+                if (Vector2.Distance(
+                        primaryWeapon.transform.position,
+                        transform.position) <= ThrowReturnDistance)
+                {
+                    throwState = WeaponThrowState.Idle;
+                }
+                break;
+        }
+    }
+
+    private void ClearTransientState()
+    {
+        ClearFocusTarget();
 
         if (primaryWeapon != null)
             primaryWeapon.SetTelekinesisDebugBase();
 
         DestroySecondaryWeapon();
-        SetRadiusVisualActive(false);
-        CurrentMode = TelekinesisDebugMode.Base;
-        cleaningUp = false;
-    }
-
-    private void ConfigurePrimaryManual()
-    {
-        primaryWeapon.SetTelekinesisDebugManual(
-            manualRadius,
-            manualFollowSpeed
-        );
+        DestroyCommandPointMarker();
+        SetRadiusVisualActive(false, 0f);
+        commandPoint = transform.position;
+        throwTarget = transform.position;
+        throwHoldRemaining = 0f;
+        throwState = WeaponThrowState.Idle;
+        manualWeaponIndex = 0;
     }
 
     private bool EnsureSecondaryWeapon()
     {
         if (secondaryWeapon != null)
-        {
-            secondaryWeapon.SetTelekinesisDebugAutomaticClone();
             return true;
-        }
 
         if (characterSpawner == null)
             characterSpawner = FindFirstObjectByType<CharacterSpawner>();
@@ -153,7 +463,6 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
 
         secondaryWeapon.name =
             $"{primaryWeapon.name} [TELEKINESIS DEBUG AUTO]";
-        secondaryWeapon.SetTelekinesisDebugAutomaticClone();
         return true;
     }
 
@@ -193,7 +502,69 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
         return false;
     }
 
-    private void SetRadiusVisualActive(bool active)
+    private bool CanProcessGameplayInput()
+    {
+        if (Time.timeScale <= 0f)
+            return false;
+
+        EventSystem eventSystem = EventSystem.current;
+        return eventSystem == null || !eventSystem.IsPointerOverGameObject();
+    }
+
+    private Vector2 GetMouseWorldPosition()
+    {
+        Camera targetCamera = Camera.main;
+
+        if (targetCamera == null)
+            return transform.position;
+
+        Vector3 mouseWorld = targetCamera.ScreenToWorldPoint(
+            Input.mousePosition
+        );
+        return new Vector2(mouseWorld.x, mouseWorld.y);
+    }
+
+    private Vector2 ClampToPlayerRadius(Vector2 target, float radius)
+    {
+        Vector2 playerPosition = transform.position;
+        return playerPosition + Vector2.ClampMagnitude(
+            target - playerPosition,
+            radius
+        );
+    }
+
+    private static EnemyHealth FindEnemyAtWorldPosition(Vector2 position)
+    {
+        Collider2D[] hits = Physics2D.OverlapPointAll(position);
+        EnemyHealth selected = null;
+        float nearestDistanceSquared = float.PositiveInfinity;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            EnemyHealth enemy = hits[i] != null
+                ? hits[i].GetComponentInParent<EnemyHealth>()
+                : null;
+
+            if (enemy == null || enemy.IsDead ||
+                !enemy.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            float distanceSquared =
+                ((Vector2)enemy.transform.position - position).sqrMagnitude;
+
+            if (distanceSquared >= nearestDistanceSquared)
+                continue;
+
+            selected = enemy;
+            nearestDistanceSquared = distanceSquared;
+        }
+
+        return selected;
+    }
+
+    private void SetRadiusVisualActive(bool active, float radius)
     {
         if (!active)
         {
@@ -205,8 +576,16 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
 
         EnsureRadiusVisual();
 
-        if (radiusVisual != null)
-            radiusVisual.enabled = true;
+        if (radiusVisual == null)
+            return;
+
+        if (!Mathf.Approximately(radiusVisualRadius, radius))
+        {
+            radiusVisualRadius = radius;
+            SetRingPositions(radiusVisual, radius);
+        }
+
+        radiusVisual.enabled = true;
     }
 
     private void EnsureRadiusVisual()
@@ -214,42 +593,134 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
         if (radiusVisual != null)
             return;
 
-        GameObject visualObject = new("Telekinesis Radius (Debug)");
-        visualObject.transform.SetParent(transform, false);
-        radiusVisual = visualObject.AddComponent<LineRenderer>();
-        radiusVisual.useWorldSpace = false;
-        radiusVisual.loop = true;
-        radiusVisual.positionCount = 64;
-        radiusVisual.startWidth = 0.025f;
-        radiusVisual.endWidth = 0.025f;
-        radiusVisual.startColor = new Color(0.1f, 0.9f, 1f, 0.22f);
-        radiusVisual.endColor = new Color(0.1f, 0.9f, 1f, 0.22f);
-        radiusVisual.sortingLayerName = "Midground";
-        radiusVisual.sortingOrder = 50;
+        radiusVisual = CreateRing(
+            "Telekinesis Radius (Debug)",
+            transform,
+            64,
+            0.025f,
+            new Color(0.1f, 0.9f, 1f, 0.22f),
+            50
+        );
+    }
+
+    private void EnsureCommandPointMarker()
+    {
+        if (commandPointMarker == null)
+        {
+            commandPointMarker = CreateRing(
+                "Telekinesis Command Point (Debug)",
+                transform,
+                20,
+                0.045f,
+                new Color(0.1f, 0.95f, 1f, 0.8f),
+                55
+            );
+            SetRingPositions(commandPointMarker, 0.28f);
+        }
+
+        if (commandPointMarker != null)
+        {
+            commandPointMarker.transform.position = commandPoint;
+            commandPointMarker.enabled = true;
+        }
+    }
+
+    private void DestroyCommandPointMarker()
+    {
+        if (commandPointMarker != null)
+            Destroy(commandPointMarker.gameObject);
+
+        commandPointMarker = null;
+    }
+
+    private void UpdateFocusTargetMarker()
+    {
+        if (focusTargetMarker != null)
+            Destroy(focusTargetMarker.gameObject);
+
+        focusTargetMarker = null;
+
+        if (focusTarget == null)
+            return;
+
+        focusTargetMarker = CreateRing(
+            "Telekinesis Focus Target (Debug)",
+            focusTarget.transform,
+            20,
+            0.055f,
+            new Color(1f, 0.2f, 0.35f, 0.9f),
+            60
+        );
+
+        if (focusTargetMarker != null)
+        {
+            focusTargetMarker.transform.localPosition =
+                new Vector3(0f, 1.2f, 0f);
+            SetRingPositions(focusTargetMarker, 0.32f);
+        }
+    }
+
+    private LineRenderer CreateRing(
+        string objectName,
+        Transform parent,
+        int segments,
+        float width,
+        Color color,
+        int sortingOrder)
+    {
+        EnsureDebugLineMaterial();
+
+        if (debugLineMaterial == null)
+            return null;
+
+        GameObject visualObject = new(objectName);
+        visualObject.transform.SetParent(parent, false);
+        LineRenderer line = visualObject.AddComponent<LineRenderer>();
+        line.useWorldSpace = false;
+        line.loop = true;
+        line.positionCount = Mathf.Max(8, segments);
+        line.startWidth = width;
+        line.endWidth = width;
+        line.startColor = color;
+        line.endColor = color;
+        line.sortingLayerName = "Midground";
+        line.sortingOrder = sortingOrder;
+        line.sharedMaterial = debugLineMaterial;
+        return line;
+    }
+
+    private void EnsureDebugLineMaterial()
+    {
+        if (debugLineMaterial != null)
+            return;
 
         Shader shader = Shader.Find(
             "Universal Render Pipeline/2D/Sprite-Unlit-Default"
         );
         shader ??= Shader.Find("Sprites/Default");
 
-        if (shader != null)
-        {
-            radiusMaterial = new Material(shader)
-            {
-                name = "Telekinesis Radius Material (Debug)"
-            };
-            radiusVisual.sharedMaterial = radiusMaterial;
-        }
+        if (shader == null)
+            return;
 
-        for (int i = 0; i < radiusVisual.positionCount; i++)
+        debugLineMaterial = new Material(shader)
         {
-            float angle = i * Mathf.PI * 2f /
-                radiusVisual.positionCount;
-            radiusVisual.SetPosition(
+            name = "Telekinesis Debug Line Material"
+        };
+    }
+
+    private static void SetRingPositions(LineRenderer line, float radius)
+    {
+        if (line == null)
+            return;
+
+        for (int i = 0; i < line.positionCount; i++)
+        {
+            float angle = i * Mathf.PI * 2f / line.positionCount;
+            line.SetPosition(
                 i,
                 new Vector3(
-                    Mathf.Cos(angle) * manualRadius,
-                    Mathf.Sin(angle) * manualRadius,
+                    Mathf.Cos(angle) * radius,
+                    Mathf.Sin(angle) * radius,
                     0f
                 )
             );
@@ -260,8 +731,8 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
     {
         ResetPrototype();
 
-        if (radiusMaterial != null)
-            Destroy(radiusMaterial);
+        if (debugLineMaterial != null)
+            Destroy(debugLineMaterial);
     }
 }
 #endif
