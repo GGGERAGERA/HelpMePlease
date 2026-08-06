@@ -30,6 +30,15 @@ MonoBehaviour:
   goldenEnemyChance: 0.15
   goldenEnemyHealthMultiplier: 1.5
   goldenEnemyRewardMultiplier: 3
+  goldenCoinCountMin: 2
+  goldenCoinCountMax: 4
+  goldenCoinValue: 1
+  goldenCoinLifetime: 6
+  goldenCoinPickupRadius: 3
+  goldenCoinAttractSpeed: 8
+  goldenCoinScatterSpeed: 2.4
+  goldenCoinFadeDuration: 1.25
+  goldenCoinActiveLimit: 48
   windForce: 0
   windDirectionMode: 0
   fixedWindDirection: {x: 1, y: 0}

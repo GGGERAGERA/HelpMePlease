@@ -138,6 +138,25 @@ public abstract class WorldEvent : Interactable
         CleanupEvent();
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    internal void ClearForDebug()
+    {
+        if (IsCompleted)
+            return;
+
+        // Mark the transient instance as terminal before Destroy so OnDestroy
+        // cannot route a debug cleanup through the regular failure lifecycle.
+        // IsFailed also keeps event-specific cleanup from playing completion
+        // presentation; no failure notification is sent to the owner.
+        IsCompleted = true;
+        IsFailed = true;
+        HideEventMarker();
+        CleanupOnce();
+        owner = null;
+        Destroy(gameObject);
+    }
+#endif
+
     private void OnDestroy()
     {
         if (!IsCompleted)

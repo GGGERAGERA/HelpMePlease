@@ -6,6 +6,7 @@ public sealed class ExplosiveZone : LocalAnomalyZone
 {
     private const int ExplosionHitBufferSize = 128;
     private const float ExplosionFxLifetime = 2f;
+    private const float DefaultExplosionWarningDuration = 0.7f;
 
     private static readonly int FadeId = Shader.PropertyToID("_Fade");
     private static readonly int EdgeWidthId =
@@ -35,6 +36,7 @@ public sealed class ExplosiveZone : LocalAnomalyZone
 
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
+    [SerializeField] private GameObject explosionWarningPrefab;
     [SerializeField, Range(0.1f, 0.75f)] private float edgeWidth = 0.35f;
     [SerializeField, Min(0f)] private float pulseSpeed = 0.22f;
     [SerializeField, Range(0f, 1f)] private float pulseStrength = 0.22f;
@@ -59,6 +61,9 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         new Collider2D[ExplosionHitBufferSize];
     private readonly HashSet<EnemyHealth> damagedEnemies = new();
     private readonly List<GameObject> activeExplosionFx = new();
+    private readonly List<GameObject> activeExplosionWarnings = new();
+    private readonly List<BomberExplosionSequence>
+        activeBomberSequences = new();
 
     private MeshRenderer visualRenderer;
     private MaterialPropertyBlock visualProperties;
@@ -66,6 +71,7 @@ public sealed class ExplosiveZone : LocalAnomalyZone
     private float explosionDelay;
     private float explosionRadius;
     private float explosionDamage;
+    private float bomberRadiusMultiplier;
     private GameObject explosionEffectPrefab;
     private float visualFade;
     private float targetVisualFade;
@@ -104,6 +110,7 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         explosionDelay = data.ExplosionDelay;
         explosionRadius = data.ExplosionRadius;
         explosionDamage = data.ExplosionDamage;
+        bomberRadiusMultiplier = data.ExplosiveZoneBomberRadiusMultiplier;
         explosionEffectPrefab = data.ExplosionEffectPrefab;
         ConfigureVisual(areaSize);
         effectsCleared = false;
@@ -143,6 +150,11 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         }
 
         enemyColliderCounts.Add(enemy, 1);
+        EnemyBomberMovement bomber = GetBomber(enemy);
+
+        if (bomber != null)
+            bomber.EnterExplosiveZone(this, bomberRadiusMultiplier);
+
         EnemyAnomalyEffects.GetOrCreate(enemy)?.EnterZone(
             this,
             1f,
@@ -195,13 +207,23 @@ public sealed class ExplosiveZone : LocalAnomalyZone
             return;
 
         Vector2 deathPosition = enemy.transform.position;
-        UnregisterEnemy(enemy);
+        EnemyBomberMovement bomber = GetBomber(enemy);
 
         if (Controller == null ||
             !Controller.TryClaimExplosiveDeath(enemy))
         {
+            UnregisterEnemy(enemy);
             return;
         }
+
+        if (bomber != null)
+        {
+            bomber.TryStartExplosionAfterDeath(out _);
+            UnregisterEnemy(enemy);
+            return;
+        }
+
+        UnregisterEnemy(enemy);
 
         StartCoroutine(ExplodeAfterDelay(
             deathPosition,
@@ -213,8 +235,26 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         Vector2 position,
         int sourceInstanceId)
     {
-        if (explosionDelay > 0f)
-            yield return new WaitForSeconds(explosionDelay);
+        float warningDuration = explosionDelay > 0f
+            ? explosionDelay
+            : DefaultExplosionWarningDuration;
+        GameObject warning = ExplosionWarningVisual.Spawn(
+            explosionWarningPrefab,
+            position,
+            explosionRadius,
+            warningDuration
+        );
+
+        if (warning != null)
+            activeExplosionWarnings.Add(warning);
+
+        yield return new WaitForSeconds(warningDuration);
+
+        if (warning != null)
+        {
+            activeExplosionWarnings.Remove(warning);
+            Destroy(warning);
+        }
 
         if (!effectsCleared)
             Explode(position, sourceInstanceId);
@@ -296,6 +336,30 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         {
             enemy.OnDied -= HandleEnemyDied;
             enemy.GetComponent<EnemyAnomalyEffects>()?.ExitZone(this);
+            GetBomber(enemy)?.ExitExplosiveZone(this);
+        }
+    }
+
+    private static EnemyBomberMovement GetBomber(EnemyHealth enemy)
+    {
+        if (enemy == null)
+            return null;
+
+        EnemyBomberMovement bomber =
+            enemy.GetComponent<EnemyBomberMovement>();
+
+        if (bomber == null)
+            bomber = enemy.GetComponentInParent<EnemyBomberMovement>();
+
+        return bomber;
+    }
+
+    internal void TrackBomberSequence(BomberExplosionSequence sequence)
+    {
+        if (sequence != null &&
+            !activeBomberSequences.Contains(sequence))
+        {
+            activeBomberSequences.Add(sequence);
         }
     }
 
@@ -313,6 +377,7 @@ public sealed class ExplosiveZone : LocalAnomalyZone
             {
                 enemy.OnDied -= HandleEnemyDied;
                 enemy.GetComponent<EnemyAnomalyEffects>()?.ExitZone(this);
+                GetBomber(enemy)?.ExitExplosiveZone(this);
             }
         }
 
@@ -326,6 +391,22 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         }
 
         activeExplosionFx.Clear();
+
+        for (int i = 0; i < activeExplosionWarnings.Count; i++)
+        {
+            if (activeExplosionWarnings[i] != null)
+                Destroy(activeExplosionWarnings[i]);
+        }
+
+        activeExplosionWarnings.Clear();
+
+        for (int i = 0; i < activeBomberSequences.Count; i++)
+        {
+            if (activeBomberSequences[i] != null)
+                activeBomberSequences[i].Cancel();
+        }
+
+        activeBomberSequences.Clear();
 
         if (playerColliderCount > 0)
             Controller?.NotifyLocalZoneExited(this);
@@ -422,5 +503,53 @@ public sealed class ExplosiveZone : LocalAnomalyZone
     private void OnDisable()
     {
         ClearEffects();
+    }
+}
+
+internal static class ExplosionWarningVisual
+{
+    private const string WarningSortingLayer = "Midground";
+    private const int WarningSortingOrder = -1;
+
+    public static GameObject Spawn(
+        GameObject prefab,
+        Vector2 position,
+        float radius,
+        float duration)
+    {
+        if (prefab == null)
+            return null;
+
+        GameObject warning = Object.Instantiate(
+            prefab,
+            position,
+            Quaternion.identity
+        );
+        float diameter = Mathf.Max(0.1f, radius) * 2f;
+        warning.transform.localScale = new Vector3(diameter, diameter, 1f);
+
+        ParticleSystem[] particleSystems =
+            warning.GetComponentsInChildren<ParticleSystem>(true);
+        float safeDuration = Mathf.Max(0.01f, duration);
+
+        for (int i = 0; i < particleSystems.Length; i++)
+        {
+            ParticleSystem particles = particleSystems[i];
+            ParticleSystem.MainModule main = particles.main;
+            main.simulationSpeed = Mathf.Max(0.01f, main.duration) /
+                safeDuration;
+            particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            particles.Play(true);
+        }
+
+        Renderer[] renderers = warning.GetComponentsInChildren<Renderer>(true);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            renderers[i].sortingLayerName = WarningSortingLayer;
+            renderers[i].sortingOrder = WarningSortingOrder;
+        }
+
+        return warning;
     }
 }

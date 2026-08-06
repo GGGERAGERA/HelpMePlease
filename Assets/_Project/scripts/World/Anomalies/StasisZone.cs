@@ -13,9 +13,6 @@ public sealed class StasisZone : LocalAnomalyZone
     private static readonly int VisualTimeId =
         Shader.PropertyToID("_VisualTime");
 
-    private static readonly Dictionary<CharacterMovement2D, int>
-        activeZoneCounts = new();
-
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
     [SerializeField, Range(0.1f, 0.75f)] private float edgeWidth = 0.35f;
@@ -30,12 +27,16 @@ public sealed class StasisZone : LocalAnomalyZone
         enemyColliderCounts = new();
     private readonly Dictionary<Component, int>
         projectileColliderCounts = new();
+    private readonly Dictionary<Component, int>
+        pickupColliderCounts = new();
 
     private MeshRenderer visualRenderer;
     private MaterialPropertyBlock visualProperties;
     private CharacterMovement2D affectedMovement;
     private float speedMultiplier = 0.65f;
     private float enemySpeedMultiplier = 0.65f;
+    private float projectileSpeedMultiplier = 0.45f;
+    private float pickupSpeedMultiplier = 0.5f;
     private float visualFade;
     private float targetVisualFade;
     private int playerColliderCount;
@@ -52,6 +53,7 @@ public sealed class StasisZone : LocalAnomalyZone
     {
         EnemyHealth.Despawned += HandleEnemyDespawned;
         AnomalyProjectileLifecycle.Disabled += HandleProjectileDisabled;
+        AnomalySpeedPickupLifecycle.Disabled += HandlePickupDisabled;
     }
 
     private void Update()
@@ -76,6 +78,8 @@ public sealed class StasisZone : LocalAnomalyZone
     {
         speedMultiplier = data.PlayerSpeedMultiplier;
         enemySpeedMultiplier = data.EnemySpeedMultiplier;
+        projectileSpeedMultiplier = data.ProjectileSpeedMultiplier;
+        pickupSpeedMultiplier = data.PickupSpeedMultiplier;
         ConfigureVisual(areaSize);
         effectCleared = false;
         despawning = false;
@@ -131,6 +135,28 @@ public sealed class StasisZone : LocalAnomalyZone
             return;
         }
 
+        IAnomalySpeedPickup pickup = FindPickup(other);
+
+        if (pickup != null && pickup.PickupComponent != null)
+        {
+            Component pickupComponent = pickup.PickupComponent;
+
+            if (pickupColliderCounts.TryGetValue(
+                    pickupComponent,
+                    out int pickupCount))
+            {
+                pickupColliderCounts[pickupComponent] = pickupCount + 1;
+                return;
+            }
+
+            pickupColliderCounts.Add(pickupComponent, 1);
+            pickup.SetAnomalySpeedMultiplier(
+                this,
+                pickupSpeedMultiplier
+            );
+            return;
+        }
+
         IAnomalySpeedProjectile projectile = FindProjectile(other);
 
         if (projectile == null || projectile.ProjectileComponent == null)
@@ -148,7 +174,10 @@ public sealed class StasisZone : LocalAnomalyZone
         }
 
         projectileColliderCounts.Add(projectileComponent, 1);
-        projectile.SetAnomalySpeedMultiplier(this, speedMultiplier);
+        projectile.SetAnomalySpeedMultiplier(
+            this,
+            projectileSpeedMultiplier
+        );
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -193,6 +222,27 @@ public sealed class StasisZone : LocalAnomalyZone
             return;
         }
 
+        IAnomalySpeedPickup pickup = FindPickup(other);
+        Component pickupComponent = pickup?.PickupComponent;
+
+        if (pickupComponent != null &&
+            pickupColliderCounts.TryGetValue(
+                pickupComponent,
+                out int pickupCount))
+        {
+            pickupCount--;
+
+            if (pickupCount > 0)
+            {
+                pickupColliderCounts[pickupComponent] = pickupCount;
+                return;
+            }
+
+            pickupColliderCounts.Remove(pickupComponent);
+            pickup.RemoveAnomalySpeedMultiplier(this);
+            return;
+        }
+
         IAnomalySpeedProjectile projectile = FindProjectile(other);
         Component projectileComponent = projectile?.ProjectileComponent;
 
@@ -221,38 +271,16 @@ public sealed class StasisZone : LocalAnomalyZone
         if (movement == null)
             return;
 
-        if (activeZoneCounts.TryGetValue(movement, out int zoneCount))
-        {
-            activeZoneCounts[movement] = zoneCount + 1;
-            return;
-        }
-
-        activeZoneCounts[movement] = 1;
-        movement.SetAnomalySpeedMultiplier(speedMultiplier);
+        movement.SetAnomalySpeedMultiplier(this, speedMultiplier);
     }
 
-    private static void RemoveEffect(CharacterMovement2D movement)
+    private void RemoveEffect(CharacterMovement2D movement)
     {
-        if (ReferenceEquals(movement, null) ||
-            !activeZoneCounts.TryGetValue(
-                movement,
-                out int zoneCount))
-        {
+        if (ReferenceEquals(movement, null))
             return;
-        }
-
-        zoneCount--;
-
-        if (zoneCount > 0)
-        {
-            activeZoneCounts[movement] = zoneCount;
-            return;
-        }
-
-        activeZoneCounts.Remove(movement);
 
         if (movement != null)
-            movement.SetAnomalySpeedMultiplier(1f);
+            movement.RemoveAnomalySpeedMultiplier(this);
     }
 
     public void ClearEffect()
@@ -289,6 +317,14 @@ public sealed class StasisZone : LocalAnomalyZone
         }
 
         projectileColliderCounts.Clear();
+
+        foreach (Component component in pickupColliderCounts.Keys)
+        {
+            if (component is IAnomalySpeedPickup pickup)
+                pickup.RemoveAnomalySpeedMultiplier(this);
+        }
+
+        pickupColliderCounts.Clear();
 
         if (AreaCollider != null)
             AreaCollider.enabled = false;
@@ -367,6 +403,7 @@ public sealed class StasisZone : LocalAnomalyZone
     {
         EnemyHealth.Despawned -= HandleEnemyDespawned;
         AnomalyProjectileLifecycle.Disabled -= HandleProjectileDisabled;
+        AnomalySpeedPickupLifecycle.Disabled -= HandlePickupDisabled;
         ClearEffect();
     }
 
@@ -384,6 +421,25 @@ public sealed class StasisZone : LocalAnomalyZone
             return;
 
         projectileColliderCounts.Remove(projectile);
+    }
+
+    private void HandlePickupDisabled(Component pickup)
+    {
+        if (ReferenceEquals(pickup, null))
+            return;
+
+        pickupColliderCounts.Remove(pickup);
+    }
+
+    private static IAnomalySpeedPickup FindPickup(Collider2D other)
+    {
+        ExperiencePickup experience =
+            other.GetComponentInParent<ExperiencePickup>();
+
+        if (experience != null)
+            return experience;
+
+        return other.GetComponentInParent<GoldenCoinPickup>();
     }
 
     private static IAnomalySpeedProjectile FindProjectile(Collider2D other)

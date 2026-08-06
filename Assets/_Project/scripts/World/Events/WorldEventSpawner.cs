@@ -6,7 +6,24 @@ public class WorldEventSpawner : MonoBehaviour
     public event System.Action<WorldEvent> EventCompleted;
     public event System.Action<WorldEvent> EventFailed;
     public IReadOnlyList<WorldEvent> SpawnedEvents => spawnedEvents;
+    public IReadOnlyList<WorldEvent> EventPrefabs => eventPrefabs;
     public WorldEvent ActiveEvent { get; private set; }
+    public WorldEvent CurrentEvent
+    {
+        get
+        {
+            if (ActiveEvent != null)
+                return ActiveEvent;
+
+            for (int i = 0; i < spawnedEvents.Count; i++)
+            {
+                if (spawnedEvents[i] != null)
+                    return spawnedEvents[i];
+            }
+
+            return null;
+        }
+    }
 
     [Header("Event Prefabs")]
     [SerializeField] private WorldEvent[] eventPrefabs;
@@ -44,6 +61,9 @@ public class WorldEventSpawner : MonoBehaviour
     private readonly List<WorldEvent> spawnedEvents = new();
     private readonly List<LevelAnomalyController.LocalAnomalyZoneGeometry>
         localAnomalyZones = new();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private WorldEvent debugEvent;
+#endif
 
     private void OnEnable()
     {
@@ -97,6 +117,19 @@ public class WorldEventSpawner : MonoBehaviour
         if (prefab == null)
             return;
 
+        TrySpawnEvent(prefab, player, out _);
+    }
+
+    private bool TrySpawnEvent(
+        WorldEvent prefab,
+        GameObject player,
+        out WorldEvent spawnedEvent)
+    {
+        spawnedEvent = null;
+
+        if (prefab == null || player == null)
+            return false;
+
         if (gameplayArea == null)
             ResolveGameplayArea();
 
@@ -106,7 +139,7 @@ public class WorldEventSpawner : MonoBehaviour
                 "[WorldEventSpawner] No valid position exists inside the spawn area.",
                 this
             );
-            return;
+            return false;
         }
 
         bool anomalyPlacementRequested =
@@ -141,10 +174,10 @@ public class WorldEventSpawner : MonoBehaviour
                 "[WorldEventSpawner] No valid position exists inside the spawn area.",
                 this
             );
-            return;
+            return false;
         }
 
-        WorldEvent spawnedEvent = Instantiate(prefab, spawnPosition, Quaternion.identity);
+        spawnedEvent = Instantiate(prefab, spawnPosition, Quaternion.identity);
         spawnedEvent.Initialize(this);
 
         spawnedEvents.Add(spawnedEvent);
@@ -161,6 +194,7 @@ public class WorldEventSpawner : MonoBehaviour
             this
         );
 #endif
+        return true;
     }
 
     private bool TryGetPositionInsideLocalAnomaly(
@@ -311,6 +345,23 @@ public class WorldEventSpawner : MonoBehaviour
         holdPointEnabled = enabled;
     }
 
+    public bool IsEventPrefabEnabled(WorldEvent eventPrefab)
+    {
+        if (eventPrefab == null || eventPrefabs == null)
+            return false;
+
+        for (int i = 0; i < eventPrefabs.Length; i++)
+        {
+            if (eventPrefabs[i] != eventPrefab)
+                continue;
+
+            return !(eventPrefab is CaptureZoneEvent) ||
+                holdPointEnabled;
+        }
+
+        return false;
+    }
+
     private WorldEvent GetNextEventPrefab()
     {
         for (int i = 0; i < eventPrefabs.Length; i++)
@@ -334,6 +385,11 @@ public class WorldEventSpawner : MonoBehaviour
     {
         ClearEventSpawnPressure(worldEvent);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (debugEvent == worldEvent)
+            debugEvent = null;
+#endif
+
         if (ActiveEvent == worldEvent)
             ActiveEvent = null;
 
@@ -346,6 +402,11 @@ public class WorldEventSpawner : MonoBehaviour
     {
         ClearEventSpawnPressure(worldEvent);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (debugEvent == worldEvent)
+            debugEvent = null;
+#endif
+
         if (ActiveEvent == worldEvent)
             ActiveEvent = null;
 
@@ -353,6 +414,63 @@ public class WorldEventSpawner : MonoBehaviour
         spawnedEventCount = Mathf.Max(0, spawnedEventCount - 1);
         EventFailed?.Invoke(worldEvent);
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool SpawnDebugEvent(WorldEvent prefab)
+    {
+        if (!isActiveAndEnabled || prefab == null ||
+            !IsEventPrefabEnabled(prefab))
+        {
+            return false;
+        }
+
+        if (debugEvent != null)
+            ClearDebugEvent(debugEvent);
+
+        if (spawnedEventCount >= maxActiveEvents)
+            return false;
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+
+        if (!TrySpawnEvent(prefab, player, out WorldEvent spawnedEvent))
+            return false;
+
+        debugEvent = spawnedEvent;
+        timer = eventInterval;
+        return true;
+    }
+
+    public bool ClearDebugEvent()
+    {
+        return ClearDebugEvent(CurrentEvent);
+    }
+
+    private bool ClearDebugEvent(WorldEvent worldEvent)
+    {
+        if (worldEvent == null)
+            return false;
+
+        ClearEventSpawnPressure(worldEvent);
+
+        if (ActiveEvent == worldEvent)
+            ActiveEvent = null;
+
+        if (debugEvent == worldEvent)
+            debugEvent = null;
+
+        spawnedEvents.Remove(worldEvent);
+        spawnedEventCount = Mathf.Max(0, spawnedEventCount - 1);
+
+        ResolveDoubleOrLeave();
+        doubleOrLeave?.ResetState();
+        worldEvent.ClearForDebug();
+
+        // A debug event pauses the regular countdown. Restarting it here avoids
+        // an immediate automatic spawn caused by previously accumulated time.
+        timer = eventInterval;
+        return true;
+    }
+#endif
 
     public bool CanStartEvent(WorldEvent worldEvent)
     {

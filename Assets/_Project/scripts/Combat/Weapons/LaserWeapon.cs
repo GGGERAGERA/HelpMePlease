@@ -8,6 +8,8 @@ public class LaserWeapon : BaseWeapon
 
     private IWeaponFireBehaviour fireBehaviour;
 
+    protected override WeaponShotKind ShotKind => WeaponShotKind.Laser;
+
     protected override void Awake()
     {
         base.Awake();

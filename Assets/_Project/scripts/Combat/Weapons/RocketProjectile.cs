@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RocketProjectile : MonoBehaviour, IWeaponProjectile, IAnomalySpeedProjectile
+public class RocketProjectile : MonoBehaviour, IWeaponProjectile,
+    IAnomalySpeedProjectile, IAnomalyExternalVelocity
 {
     [Header("Explosion")]
     [SerializeField] private float explosionRadius = 2.2f;
@@ -21,6 +22,8 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile, IAnomalySpeedP
     private float knockbackForce;
     private PlayerCombatModifiers modifiers;
     private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
+    private readonly AnomalyExternalVelocityStack
+        anomalyExternalVelocity = new();
 
 
     public void Initialize(
@@ -52,8 +55,13 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile, IAnomalySpeedP
         if (exploded)
             return;
 
+        Vector2 windVelocity = WorldRuleController.Instance != null
+            ? WorldRuleController.Instance.ProjectileWindVelocity
+            : Vector2.zero;
         transform.position += (Vector3)(
-            direction * speed * anomalySpeed.Value * Time.deltaTime
+            (direction * speed * anomalySpeed.Value + windVelocity +
+             anomalyExternalVelocity.Value) *
+            Time.deltaTime
         );
 
         if (Vector3.Distance(startPosition, transform.position) >= range)
@@ -130,6 +138,7 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile, IAnomalySpeedP
     }
 
     public Component ProjectileComponent => this;
+    public Component ExternalVelocityComponent => this;
     public float AnomalySpeedMultiplier => anomalySpeed.Value;
 
     public void SetAnomalySpeedMultiplier(Object source, float multiplier)
@@ -147,9 +156,22 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile, IAnomalySpeedP
         anomalySpeed.Clear();
     }
 
+    public void SetAnomalyExternalVelocity(
+        Object source,
+        Vector2 velocity)
+    {
+        anomalyExternalVelocity.Set(source, velocity);
+    }
+
+    public void RemoveAnomalyExternalVelocity(Object source)
+    {
+        anomalyExternalVelocity.Remove(source);
+    }
+
     private void OnDisable()
     {
         AnomalyProjectileLifecycle.NotifyDisabled(this);
         anomalySpeed.Clear();
+        anomalyExternalVelocity.Clear();
     }
 }

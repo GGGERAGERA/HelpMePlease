@@ -602,6 +602,7 @@ MonoBehaviour:
   - {fileID: 350149527517610057, guid: 176dbf5e68a24ca49b3595472b14d121, type: 3}
   - {fileID: 520000000000000004, guid: f51a1e2d8b0c4d0a9e07f4e27b6d1201, type: 3}
   - {fileID: 530000000000000004, guid: e47c3f95a8a34c18a619b70ec785f142, type: 3}
+  - {fileID: 590000000000000004, guid: c39b42a1000000000000000000000003, type: 3}
   rewardChestPrefab: {fileID: 1000000000000000004, guid: 91cb28ce62794baf86da67a04174801a, type: 3}
   doubleOrLeave: {fileID: 46915859}
   riskDifficultyMultiplier: 1.5
@@ -6200,6 +6201,7 @@ GameObject:
   - component: {fileID: 2147010006}
   - component: {fileID: 2147010007}
   - component: {fileID: 2147010008}
+  - component: {fileID: 2147010014}
   m_Layer: 5
   m_Name: LevelAnomalySystem
   m_TagString: Untagged
@@ -6287,6 +6289,7 @@ MonoBehaviour:
   assignmentPulseDuration: 0.28
   deathFlashIntensity: 1.35
   goldenDeathFxPrefab: {fileID: 4954931696877459830, guid: a0f7d14547ca6cc4281f13e8d9aa8cab, type: 3}
+  goldenCoinPrefab: {fileID: 8849100027710031041, guid: dde4a96739496354da52757e7a1d4556, type: 3}
 --- !u!114 &2147010007
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6321,7 +6324,10 @@ MonoBehaviour:
   globalLight: {fileID: 1615053065}
   darknessGlobalIntensity: 0.05
   playerLightRadius: 6.5
+  playerLightIntensity: 1
   playerLightFalloff: 0.75
+  darknessMarkerSprite: {fileID: 21300000, guid: 119f93d0bcbf1e743bf5fcf237507d39, type: 3}
+  darknessMarkerMaterial: {fileID: 2100000, guid: 91d132427295d144ead3f3fb486918c3, type: 2}
   transitionDuration: 1
   snowTransitionDuration: 1
   snowVisualIntensity: 0.58
@@ -6362,6 +6368,40 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LocalAnomalyVisual
   view: {fileID: 2147010004}
+--- !u!114 &2147010014
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2147010001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d7b2f19a8e64a59b0c3d4219f76e812, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Subject42DebugMenu
+  worldRuleController: {fileID: 2147010006}
+  anomalyController: {fileID: 2147010005}
+  worldEventSpawner: {fileID: 46915853}
+  worldRules:
+  - {fileID: 11400000, guid: a5bdb85030fd4b90a621084eb9990d11, type: 2}
+  - {fileID: 11400000, guid: b6cce96141ae4ca1b732195fcaaa1e22, type: 2}
+  - {fileID: 11400000, guid: c7ddfa7252bf4db2c8432a60dbbb2f33, type: 2}
+  - {fileID: 11400000, guid: d8ee0b8363c04ec3d9543b71eccc3044, type: 2}
+  - {fileID: 11400000, guid: e9ff1c9474d14fd4ea654c82fddd4155, type: 2}
+  - {fileID: 11400000, guid: c016d34b1d8f4fe797a9483ca0d30016, type: 2}
+  localAnomalies:
+  - {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}
+  - {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca002, type: 2}
+  - {fileID: 11400000, guid: 4e7a23f4bc9f4e65a021dd9d286ca003, type: 2}
+  - {fileID: 11400000, guid: d17a42a1000000000000000000000006, type: 2}
+  - {fileID: 11400000, guid: f28b42a1000000000000000000000005, type: 2}
+  worldEventPrefabs:
+  - {fileID: 350149527517610057, guid: 176dbf5e68a24ca49b3595472b14d121, type: 3}
+  - {fileID: 530000000000000004, guid: e47c3f95a8a34c18a619b70ec785f142, type: 3}
+  - {fileID: 520000000000000004, guid: f51a1e2d8b0c4d0a9e07f4e27b6d1201, type: 3}
+  - {fileID: 6791068172033243482, guid: 9be37b9069b011249924ba5f3b412aa3, type: 3}
+  - {fileID: 590000000000000004, guid: c39b42a1000000000000000000000003, type: 3}
 --- !u!1 &2147010010
 GameObject:
   m_ObjectHideFlags: 0

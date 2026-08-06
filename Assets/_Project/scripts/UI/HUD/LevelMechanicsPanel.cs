@@ -95,6 +95,15 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
                     rescue.Progress
                 );
             }
+            else if (worldEvent is CarrierHuntEvent carrierHunt)
+            {
+                textBuilder.Append("- ОХОТА НА НОСИТЕЛЯ - ")
+                    .AppendLine(
+                        carrierHunt.IsRiskMode
+                            ? "Цель скрывается"
+                            : "Уничтожьте цель"
+                    );
+            }
             else
             {
                 textBuilder.Append("- ")

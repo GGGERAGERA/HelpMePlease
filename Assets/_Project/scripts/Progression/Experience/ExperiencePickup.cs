@@ -1,6 +1,7 @@
 using UnityEngine;
 
-public class ExperiencePickup : MonoBehaviour
+public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
+    IAnomalyExternalVelocity
 {
     [Header("Experience")]
     [SerializeField] private int expValue = 10;
@@ -20,6 +21,13 @@ public class ExperiencePickup : MonoBehaviour
 
     private Transform player;
     private bool isCollected;
+    private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
+    private readonly AnomalyExternalVelocityStack
+        anomalyExternalVelocity = new();
+
+    public Component PickupComponent => this;
+    public Component ExternalVelocityComponent => this;
+    public float AnomalySpeedMultiplier => anomalySpeed.Value;
 
     private void Start()
     {
@@ -31,7 +39,14 @@ public class ExperiencePickup : MonoBehaviour
 
     private void Update()
     {
-        if (player == null || isCollected)
+        if (isCollected)
+            return;
+
+        transform.position += (Vector3)(
+            anomalyExternalVelocity.Value * Time.deltaTime
+        );
+
+        if (player == null)
             return;
 
         PlayerPickupRadius pickupRadius = player.GetComponent<PlayerPickupRadius>();
@@ -50,7 +65,7 @@ public class ExperiencePickup : MonoBehaviour
             transform.position = Vector2.MoveTowards(
                 transform.position,
                 player.position,
-                magnetSpeed * Time.deltaTime
+                magnetSpeed * anomalySpeed.Value * Time.deltaTime
             );
         }
 
@@ -90,5 +105,34 @@ public class ExperiencePickup : MonoBehaviour
         );
 
         Destroy(gameObject);
+    }
+
+    public void SetAnomalySpeedMultiplier(Object source, float multiplier)
+    {
+        anomalySpeed.Set(source, multiplier);
+    }
+
+    public void RemoveAnomalySpeedMultiplier(Object source)
+    {
+        anomalySpeed.Remove(source);
+    }
+
+    public void SetAnomalyExternalVelocity(
+        Object source,
+        Vector2 velocity)
+    {
+        anomalyExternalVelocity.Set(source, velocity);
+    }
+
+    public void RemoveAnomalyExternalVelocity(Object source)
+    {
+        anomalyExternalVelocity.Remove(source);
+    }
+
+    private void OnDisable()
+    {
+        AnomalySpeedPickupLifecycle.NotifyDisabled(this);
+        anomalySpeed.Clear();
+        anomalyExternalVelocity.Clear();
     }
 }

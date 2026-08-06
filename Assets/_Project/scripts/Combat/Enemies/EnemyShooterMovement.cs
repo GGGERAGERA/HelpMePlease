@@ -26,6 +26,7 @@ public class EnemyShooterMovement : EnemyMovement
     private float speedMultiplier = 1f;
     private float anomalySpeedMultiplier = 1f;
     private float worldRuleSpeedMultiplier = 1f;
+    private Vector2 worldRuleExternalVelocity;
 
     private void Awake()
     {
@@ -94,11 +95,13 @@ public class EnemyShooterMovement : EnemyMovement
 
         rb.MovePosition(
             rb.position +
-            moveDirection *
-            moveSpeed *
-            speedMultiplier *
-            anomalySpeedMultiplier *
-            worldRuleSpeedMultiplier *
+            (moveDirection *
+             moveSpeed *
+             speedMultiplier *
+             anomalySpeedMultiplier *
+             worldRuleSpeedMultiplier +
+             worldRuleExternalVelocity +
+             AnomalyExternalVelocity) *
             Time.fixedDeltaTime
         );
         UpdateVisual(directionToPlayer);
@@ -134,6 +137,11 @@ public class EnemyShooterMovement : EnemyMovement
         worldRuleSpeedMultiplier = Mathf.Max(0.1f, multiplier);
     }
 
+    public override void SetWorldRuleExternalVelocity(Vector2 velocity)
+    {
+        worldRuleExternalVelocity = velocity;
+    }
+
     public override void ApplyKnockback(Vector2 direction, float force)
     {
         // Пока без knockback.
@@ -142,6 +150,11 @@ public class EnemyShooterMovement : EnemyMovement
     public override void StopAfterHit()
     {
         // Стрелок не контактный враг.
+    }
+
+    private void OnDisable()
+    {
+        ClearAnomalyExternalVelocities();
     }
 
     private void UpdateVisual(Vector2 direction)

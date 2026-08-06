@@ -17,6 +17,7 @@ Shader "UI/World Rule Overlay"
         _BlizzardLineDensity ("Blizzard Line Density", Range(2, 16)) = 8
         _BlizzardLineSpeed ("Blizzard Line Speed", Range(0.1, 3)) = 1.4
         _BlizzardVeil ("Blizzard Veil", Range(0, 0.4)) = 0
+        _BlizzardDirection ("Blizzard Direction", Range(-1, 1)) = 1
         _RainDropsIntensity ("Rain Drops Intensity", Range(0, 0.5)) = 0
         _RainDropsFrequency ("Rain Drops Frequency", Range(0.05, 2)) = 0.35
         _RainLargeDropsIntensity ("Rain Large Drops Intensity", Range(0, 0.6)) = 0
@@ -69,6 +70,7 @@ Shader "UI/World Rule Overlay"
             float _BlizzardLineDensity;
             float _BlizzardLineSpeed;
             float _BlizzardVeil;
+            float _BlizzardDirection;
             float _RainDropsIntensity;
             float _RainDropsFrequency;
             float _RainLargeDropsIntensity;
@@ -296,7 +298,12 @@ Shader "UI/World Rule Overlay"
             {
                 float aspect = _ScreenParams.x / max(1.0, _ScreenParams.y);
                 float2 screenUv = float2(uv.x * aspect, uv.y);
-                float2 direction = normalize(float2(1.0, -0.58));
+                float directionSign = abs(_BlizzardDirection) > 0.001
+                    ? sign(_BlizzardDirection)
+                    : 1.0;
+                float2 direction = normalize(
+                    float2(directionSign, -0.58)
+                );
                 float2 perpendicular = float2(-direction.y, direction.x);
                 float along = dot(screenUv, direction);
                 float across = dot(screenUv, perpendicular);

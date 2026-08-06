@@ -16,14 +16,54 @@ MonoBehaviour:
   ruleType: 10
   displayName: No World Rule
   description: Standard level without a global World Rule.
+  shortDescription: 
+  icon: {fileID: 0}
+  presentationColor: {r: 0.2, g: 0.72, b: 0.82, a: 1}
   pinnedDescription: No World Rule
   selectionWeight: 1
+  sectorExperienceMultiplier: 1
+  sectorCompletionGoldMultiplier: 1
   playerMoveSpeedMultiplier: 1
   enemyMoveSpeedMultiplier: 1
+  enemyHealthMultiplier: 1
   spawnPressureMultiplier: 1
   goldenEnemyChance: 0
   goldenEnemyHealthMultiplier: 1
   goldenEnemyRewardMultiplier: 1
+  goldenCoinCountMin: 2
+  goldenCoinCountMax: 4
+  goldenCoinValue: 1
+  goldenCoinLifetime: 6
+  goldenCoinPickupRadius: 3
+  goldenCoinAttractSpeed: 8
+  goldenCoinScatterSpeed: 2.4
+  goldenCoinFadeDuration: 1.25
+  goldenCoinActiveLimit: 48
+  snowCalmDurationMin: 15
+  snowCalmDurationMax: 24
+  snowWarningDuration: 2.5
+  snowBlizzardDurationMin: 5
+  snowBlizzardDurationMax: 7
+  snowCalmEmissionMultiplier: 1
+  snowBlizzardEmissionMultiplier: 3.5
+  snowCalmParticleSpeedMultiplier: 1
+  snowBlizzardParticleSpeedMultiplier: 2.1
+  snowBlizzardVisibilityMultiplier: 0.65
+  snowTransitionDuration: 1
+  snowBlizzardHorizontalSpeed: 4.5
   windForce: 0
   windDirectionMode: 0
   fixedWindDirection: {x: 1, y: 0}
+  windMinDirectionDuration: 18
+  windMaxDirectionDuration: 30
+  windDirectionWarningDuration: 2.5
+  windEnemyForceMultiplier: 0.4
+  windProjectileForceMultiplier: 0.12
+  darknessPlayerLightRadius: 4.8
+  darknessPlayerLightIntensity: 1.15
+  darknessEnemyMarkerIntensity: 0.75
+  darknessShotRevealRadius: 3.5
+  darknessShotRevealDuration: 0.12
+  darknessShotRevealIntensity: 1.25
+  darknessRocketRevealMultiplier: 1.3
+  darknessLaserRevealCooldown: 0.16

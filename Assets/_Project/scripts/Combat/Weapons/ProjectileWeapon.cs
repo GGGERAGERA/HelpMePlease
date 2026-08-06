@@ -22,6 +22,11 @@ public class ProjectileWeapon : BaseWeapon
     [SerializeField] private AudioCueId attackCue = AudioCueId.None;
 
     private IWeaponFireBehaviour fireBehaviour;
+    private bool usesRocketProjectile;
+
+    protected override WeaponShotKind ShotKind => usesRocketProjectile
+        ? WeaponShotKind.Rocket
+        : WeaponShotKind.Standard;
 
     private float currentRecoil;
     private Vector3 recoilRestPosition;
@@ -48,6 +53,9 @@ public class ProjectileWeapon : BaseWeapon
         base.Awake();
 
         fireBehaviour = fireBehaviourSource as IWeaponFireBehaviour;
+        usesRocketProjectile =
+            fireBehaviourSource is ProjectileFireBehaviour projectileFire &&
+            projectileFire.UsesRocketProjectile;
 
         if (fireBehaviour == null)
             Debug.LogWarning("[Shoot] Fire behaviour source is missing or invalid.");
