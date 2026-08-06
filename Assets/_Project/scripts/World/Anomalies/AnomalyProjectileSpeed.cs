@@ -20,6 +20,57 @@ public static class AnomalyProjectileLifecycle
     }
 }
 
+public interface IAnomalyExternalVelocity
+{
+    Component ExternalVelocityComponent { get; }
+    void SetAnomalyExternalVelocity(Object source, Vector2 velocity);
+    void RemoveAnomalyExternalVelocity(Object source);
+}
+
+public sealed class AnomalyExternalVelocityStack
+{
+    private readonly Dictionary<Object, Vector2> velocities = new();
+
+    public Vector2 Value { get; private set; }
+
+    public void Set(Object source, Vector2 velocity)
+    {
+        if (source == null)
+            return;
+
+        velocities[source] = velocity;
+        Recalculate();
+    }
+
+    public void Remove(Object source)
+    {
+        if (ReferenceEquals(source, null))
+            return;
+
+        if (velocities.Remove(source))
+            Recalculate();
+    }
+
+    public void Clear()
+    {
+        velocities.Clear();
+        Value = Vector2.zero;
+    }
+
+    private void Recalculate()
+    {
+        Vector2 result = Vector2.zero;
+
+        foreach (KeyValuePair<Object, Vector2> pair in velocities)
+        {
+            if (pair.Key != null)
+                result += pair.Value;
+        }
+
+        Value = result;
+    }
+}
+
 public sealed class AnomalySpeedMultiplierStack
 {
     private readonly Dictionary<Object, float> multipliers = new();

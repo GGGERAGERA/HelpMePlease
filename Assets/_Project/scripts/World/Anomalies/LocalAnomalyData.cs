@@ -33,6 +33,8 @@ public sealed class LocalAnomalyData : ScriptableObject
     [SerializeField, Min(0.1f)] private float pickupSpeedMultiplier = 0.5f;
     [Tooltip("Additional zone data spawned with this anomaly. Used to preserve multi-zone level layouts.")]
     [SerializeField] private LocalAnomalyData[] additionalAnomalies;
+    [Tooltip("External velocity pulling objects toward a Gravity zone center.")]
+    [SerializeField, Min(0f)] private float gravityForce = 1.5f;
 
     [Header("Explosion")]
     [SerializeField, Min(0f)] private float explosionDelay;
@@ -60,6 +62,7 @@ public sealed class LocalAnomalyData : ScriptableObject
     public float PickupSpeedMultiplier =>
         Mathf.Max(0.1f, pickupSpeedMultiplier);
     public LocalAnomalyData[] AdditionalAnomalies => additionalAnomalies;
+    public float GravityForce => Mathf.Max(0f, gravityForce);
     public float ExplosionDelay => Mathf.Max(0f, explosionDelay);
     public float ExplosionRadius => Mathf.Max(0.1f, explosionRadius);
     public float ExplosionDamage => Mathf.Max(0f, explosionDamage);

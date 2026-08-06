@@ -32,7 +32,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         LocalAnomalyType.Berserk,
         LocalAnomalyType.Stasis,
-        LocalAnomalyType.ExplosiveZone
+        LocalAnomalyType.ExplosiveZone,
+        LocalAnomalyType.Gravity
     };
 
     private GameObject menuRoot;
@@ -746,8 +747,13 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         if (string.IsNullOrEmpty(buttonLabel))
             return;
 
-        Button button = CreateButton(row, buttonLabel, action, buttonWidth);
-        button.interactable = buttonEnabled;
+        Button button = CreateButton(
+            row,
+            buttonLabel,
+            action,
+            buttonWidth,
+            buttonEnabled
+        );
         RectTransform buttonRect = button.GetComponent<RectTransform>();
         buttonRect.anchorMin = buttonRect.anchorMax = new Vector2(1f, 0.5f);
         buttonRect.pivot = new Vector2(1f, 0.5f);
@@ -772,7 +778,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         Transform parent,
         string label,
         UnityEngine.Events.UnityAction action,
-        float width)
+        float width,
+        bool interactable = true)
     {
         RectTransform rect = CreateRect(label + " Button", parent);
         rect.sizeDelta = new Vector2(width, 38f);
@@ -786,8 +793,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         colors.pressedColor = new Color(0.08f, 0.4f, 0.53f, 1f);
         colors.disabledColor = new Color(0.22f, 0.24f, 0.27f, 0.7f);
         button.colors = colors;
+        button.interactable = interactable;
 
-        if (action != null)
+        if (interactable && action != null)
             button.onClick.AddListener(action);
 
         TextMeshProUGUI text = CreateText(

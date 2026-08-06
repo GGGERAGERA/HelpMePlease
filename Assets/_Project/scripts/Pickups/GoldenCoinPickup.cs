@@ -2,7 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
-public sealed class GoldenCoinPickup : MonoBehaviour, IAnomalySpeedPickup
+public sealed class GoldenCoinPickup : MonoBehaviour, IAnomalySpeedPickup,
+    IAnomalyExternalVelocity
 {
     private enum DestructionReason
     {
@@ -36,9 +37,12 @@ public sealed class GoldenCoinPickup : MonoBehaviour, IAnomalySpeedPickup
     private bool collected;
     private DestructionReason destructionReason;
     private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
+    private readonly AnomalyExternalVelocityStack
+        anomalyExternalVelocity = new();
 
     public static int ActiveCount => Active.Count;
     public Component PickupComponent => this;
+    public Component ExternalVelocityComponent => this;
     public float AnomalySpeedMultiplier => anomalySpeed.Value;
 
     private void Awake()
@@ -139,6 +143,9 @@ public sealed class GoldenCoinPickup : MonoBehaviour, IAnomalySpeedPickup
         float movementDeltaTime = deltaTime * anomalySpeed.Value;
         elapsed += deltaTime;
         lifetimeRemaining -= deltaTime;
+        transform.position += (Vector3)(
+            anomalyExternalVelocity.Value * deltaTime
+        );
 
         if (scatterVelocity.sqrMagnitude > 0.0001f)
         {
@@ -261,6 +268,7 @@ public sealed class GoldenCoinPickup : MonoBehaviour, IAnomalySpeedPickup
         Active.Remove(this);
         AnomalySpeedPickupLifecycle.NotifyDisabled(this);
         anomalySpeed.Clear();
+        anomalyExternalVelocity.Clear();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (initialized && !collected)
@@ -294,5 +302,17 @@ public sealed class GoldenCoinPickup : MonoBehaviour, IAnomalySpeedPickup
     public void RemoveAnomalySpeedMultiplier(Object source)
     {
         anomalySpeed.Remove(source);
+    }
+
+    public void SetAnomalyExternalVelocity(
+        Object source,
+        Vector2 velocity)
+    {
+        anomalyExternalVelocity.Set(source, velocity);
+    }
+
+    public void RemoveAnomalyExternalVelocity(Object source)
+    {
+        anomalyExternalVelocity.Remove(source);
     }
 }

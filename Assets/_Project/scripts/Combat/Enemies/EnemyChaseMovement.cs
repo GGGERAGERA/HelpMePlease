@@ -70,7 +70,8 @@ public class EnemyChaseMovement : EnemyMovement
             rb.linearVelocity = Vector2.zero;
             rb.MovePosition(
                 rb.position +
-                worldRuleExternalVelocity * Time.fixedDeltaTime
+                (worldRuleExternalVelocity + AnomalyExternalVelocity) *
+                Time.fixedDeltaTime
             );
             return;
         }
@@ -116,7 +117,8 @@ public class EnemyChaseMovement : EnemyMovement
 
         Vector2 movement = direction * selectedSpeed +
             knockbackVelocity +
-            worldRuleExternalVelocity;
+            worldRuleExternalVelocity +
+            AnomalyExternalVelocity;
         Vector2 nextPosition = rb.position + movement * Time.fixedDeltaTime;
 
         rb.MovePosition(nextPosition);
@@ -171,6 +173,10 @@ public class EnemyChaseMovement : EnemyMovement
     public override void StopAfterHit()
     {
         stopTimer = stopAfterHitDuration;
+    }
+    private void OnDisable()
+    {
+        ClearAnomalyExternalVelocities();
     }
     private static bool HasBoolParameter(
     Animator targetAnimator,

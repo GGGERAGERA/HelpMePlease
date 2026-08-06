@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class CharacterMovement2D : MonoBehaviour
+public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
 {
     [Header("Движение")]
     public float speed = 5f;
@@ -36,6 +36,8 @@ public class CharacterMovement2D : MonoBehaviour
     private readonly AnomalySpeedMultiplierStack anomalySpeedSources = new();
     private float worldRuleSpeedMultiplier = 1f;
     private Vector2 worldRuleExternalVelocity;
+    private readonly AnomalyExternalVelocityStack
+        anomalyExternalVelocity = new();
 
     private const float DashCollisionSkin = 0.02f;
     private readonly RaycastHit2D[] dashHits = new RaycastHit2D[8];
@@ -145,6 +147,17 @@ public class CharacterMovement2D : MonoBehaviour
     {
         worldRuleExternalVelocity = velocity;
     }
+    public Component ExternalVelocityComponent => this;
+    public void SetAnomalyExternalVelocity(
+        Object source,
+        Vector2 velocity)
+    {
+        anomalyExternalVelocity.Set(source, velocity);
+    }
+    public void RemoveAnomalyExternalVelocity(Object source)
+    {
+        anomalyExternalVelocity.Remove(source);
+    }
 
     private void FixedUpdate()
     {
@@ -180,7 +193,8 @@ public class CharacterMovement2D : MonoBehaviour
             rb.position +
             (currentVelocity +
              hitKnockbackVelocity +
-             worldRuleExternalVelocity) * Time.fixedDeltaTime
+             worldRuleExternalVelocity +
+             anomalyExternalVelocity.Value) * Time.fixedDeltaTime
         );
 
     }
@@ -248,7 +262,8 @@ public class CharacterMovement2D : MonoBehaviour
             rb.MovePosition(
                 rb.position +
                 dashDirection * allowedDistance +
-                worldRuleExternalVelocity * stepTime
+                (worldRuleExternalVelocity +
+                 anomalyExternalVelocity.Value) * stepTime
             );
         }
 
@@ -305,6 +320,7 @@ public class CharacterMovement2D : MonoBehaviour
         hitKnockbackVelocity = Vector2.zero;
         hitKnockbackTimeRemaining = 0f;
         worldRuleExternalVelocity = Vector2.zero;
+        anomalyExternalVelocity.Clear();
         anomalySpeedSources.Clear();
         legacyAnomalySpeedMultiplier = 1f;
         anomalySpeedMultiplier = 1f;

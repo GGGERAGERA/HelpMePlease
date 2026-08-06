@@ -1,6 +1,7 @@
 using UnityEngine;
 
-public class EnemyProjectile : MonoBehaviour, IAnomalySpeedProjectile
+public class EnemyProjectile : MonoBehaviour, IAnomalySpeedProjectile,
+    IAnomalyExternalVelocity
 {
     [SerializeField] private float speed = 7f;
     [SerializeField] private int damage = 10;
@@ -8,6 +9,8 @@ public class EnemyProjectile : MonoBehaviour, IAnomalySpeedProjectile
 
     private Vector2 direction;
     private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
+    private readonly AnomalyExternalVelocityStack
+        anomalyExternalVelocity = new();
 
     public void Initialize(Vector2 shootDirection)
     {
@@ -21,7 +24,8 @@ public class EnemyProjectile : MonoBehaviour, IAnomalySpeedProjectile
             ? WorldRuleController.Instance.ProjectileWindVelocity
             : Vector2.zero;
         transform.position += (Vector3)(
-            (direction * speed * anomalySpeed.Value + windVelocity) *
+            (direction * speed * anomalySpeed.Value + windVelocity +
+             anomalyExternalVelocity.Value) *
             Time.deltaTime
         );
     }
@@ -43,6 +47,7 @@ public class EnemyProjectile : MonoBehaviour, IAnomalySpeedProjectile
     }
 
     public Component ProjectileComponent => this;
+    public Component ExternalVelocityComponent => this;
     public float AnomalySpeedMultiplier => anomalySpeed.Value;
 
     public void SetAnomalySpeedMultiplier(Object source, float multiplier)
@@ -60,9 +65,22 @@ public class EnemyProjectile : MonoBehaviour, IAnomalySpeedProjectile
         anomalySpeed.Clear();
     }
 
+    public void SetAnomalyExternalVelocity(
+        Object source,
+        Vector2 velocity)
+    {
+        anomalyExternalVelocity.Set(source, velocity);
+    }
+
+    public void RemoveAnomalyExternalVelocity(Object source)
+    {
+        anomalyExternalVelocity.Remove(source);
+    }
+
     private void OnDisable()
     {
         AnomalyProjectileLifecycle.NotifyDisabled(this);
         anomalySpeed.Clear();
+        anomalyExternalVelocity.Clear();
     }
 }

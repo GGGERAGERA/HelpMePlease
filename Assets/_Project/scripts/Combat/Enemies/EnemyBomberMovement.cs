@@ -74,7 +74,8 @@ public class EnemyBomberMovement : EnemyMovement
             anomalySpeedMultiplier *
             worldRuleSpeedMultiplier +
             knockbackVelocity +
-            worldRuleExternalVelocity;
+            worldRuleExternalVelocity +
+            AnomalyExternalVelocity;
 
         rb.MovePosition(rb.position + movement * Time.fixedDeltaTime);
 
@@ -208,6 +209,7 @@ public class EnemyBomberMovement : EnemyMovement
     private void OnDisable()
     {
         explosiveZoneRadiusMultipliers.Clear();
+        ClearAnomalyExternalVelocities();
     }
 
     private void OnDrawGizmosSelected()

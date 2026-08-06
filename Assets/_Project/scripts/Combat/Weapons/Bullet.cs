@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Bullet : MonoBehaviour, IWeaponProjectile, IAnomalySpeedProjectile
+public class Bullet : MonoBehaviour, IWeaponProjectile,
+    IAnomalySpeedProjectile, IAnomalyExternalVelocity
 {
     public float speed = 10f;
     public float damage = 20f;
@@ -18,6 +19,8 @@ public class Bullet : MonoBehaviour, IWeaponProjectile, IAnomalySpeedProjectile
     private float runtimeKnockbackForce;
     private ProjectileCombatContext combatContext;
     private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
+    private readonly AnomalyExternalVelocityStack
+        anomalyExternalVelocity = new();
 
     private readonly HashSet<EnemyHealth> hitEnemies = new HashSet<EnemyHealth>();
 
@@ -52,7 +55,8 @@ public class Bullet : MonoBehaviour, IWeaponProjectile, IAnomalySpeedProjectile
             ? WorldRuleController.Instance.ProjectileWindVelocity
             : Vector2.zero;
         transform.Translate(
-            (direction * speed * anomalySpeed.Value + windVelocity) *
+            (direction * speed * anomalySpeed.Value + windVelocity +
+             anomalyExternalVelocity.Value) *
             Time.deltaTime,
             Space.World
         );
@@ -62,6 +66,7 @@ public class Bullet : MonoBehaviour, IWeaponProjectile, IAnomalySpeedProjectile
     }
 
     public Component ProjectileComponent => this;
+    public Component ExternalVelocityComponent => this;
     public float AnomalySpeedMultiplier => anomalySpeed.Value;
 
     public void SetAnomalySpeedMultiplier(Object source, float multiplier)
@@ -79,10 +84,23 @@ public class Bullet : MonoBehaviour, IWeaponProjectile, IAnomalySpeedProjectile
         anomalySpeed.Clear();
     }
 
+    public void SetAnomalyExternalVelocity(
+        Object source,
+        Vector2 velocity)
+    {
+        anomalyExternalVelocity.Set(source, velocity);
+    }
+
+    public void RemoveAnomalyExternalVelocity(Object source)
+    {
+        anomalyExternalVelocity.Remove(source);
+    }
+
     private void OnDisable()
     {
         AnomalyProjectileLifecycle.NotifyDisabled(this);
         anomalySpeed.Clear();
+        anomalyExternalVelocity.Clear();
     }
 
     private void OnTriggerEnter2D(Collider2D other)

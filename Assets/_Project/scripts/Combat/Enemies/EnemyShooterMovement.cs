@@ -100,7 +100,8 @@ public class EnemyShooterMovement : EnemyMovement
              speedMultiplier *
              anomalySpeedMultiplier *
              worldRuleSpeedMultiplier +
-             worldRuleExternalVelocity) *
+             worldRuleExternalVelocity +
+             AnomalyExternalVelocity) *
             Time.fixedDeltaTime
         );
         UpdateVisual(directionToPlayer);
@@ -149,6 +150,11 @@ public class EnemyShooterMovement : EnemyMovement
     public override void StopAfterHit()
     {
         // Стрелок не контактный враг.
+    }
+
+    private void OnDisable()
+    {
+        ClearAnomalyExternalVelocities();
     }
 
     private void UpdateVisual(Vector2 direction)
