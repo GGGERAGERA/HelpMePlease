@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class ExperiencePickup : MonoBehaviour
+public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup
 {
     [Header("Experience")]
     [SerializeField] private int expValue = 10;
@@ -20,6 +20,10 @@ public class ExperiencePickup : MonoBehaviour
 
     private Transform player;
     private bool isCollected;
+    private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
+
+    public Component PickupComponent => this;
+    public float AnomalySpeedMultiplier => anomalySpeed.Value;
 
     private void Start()
     {
@@ -50,7 +54,7 @@ public class ExperiencePickup : MonoBehaviour
             transform.position = Vector2.MoveTowards(
                 transform.position,
                 player.position,
-                magnetSpeed * Time.deltaTime
+                magnetSpeed * anomalySpeed.Value * Time.deltaTime
             );
         }
 
@@ -90,5 +94,21 @@ public class ExperiencePickup : MonoBehaviour
         );
 
         Destroy(gameObject);
+    }
+
+    public void SetAnomalySpeedMultiplier(Object source, float multiplier)
+    {
+        anomalySpeed.Set(source, multiplier);
+    }
+
+    public void RemoveAnomalySpeedMultiplier(Object source)
+    {
+        anomalySpeed.Remove(source);
+    }
+
+    private void OnDisable()
+    {
+        AnomalySpeedPickupLifecycle.NotifyDisabled(this);
+        anomalySpeed.Clear();
     }
 }

@@ -22,6 +22,8 @@ MonoBehaviour:
   zoneSize: {x: 14, y: 10}
   enemySpeedMultiplier: 0.65
   playerSpeedMultiplier: 0.65
+  projectileSpeedMultiplier: 0.45
+  pickupSpeedMultiplier: 0.5
   additionalAnomalies:
   - {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}
   - {fileID: 11400000, guid: 4e7a23f4bc9f4e65a021dd9d286ca003, type: 2}

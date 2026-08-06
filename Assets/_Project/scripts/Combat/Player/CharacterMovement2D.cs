@@ -32,6 +32,8 @@ public class CharacterMovement2D : MonoBehaviour
     private Vector2 hitKnockbackVelocity;
     private float hitKnockbackTimeRemaining;
     private float anomalySpeedMultiplier = 1f;
+    private float legacyAnomalySpeedMultiplier = 1f;
+    private readonly AnomalySpeedMultiplierStack anomalySpeedSources = new();
     private float worldRuleSpeedMultiplier = 1f;
     private Vector2 worldRuleExternalVelocity;
 
@@ -115,7 +117,25 @@ public class CharacterMovement2D : MonoBehaviour
     }
     public void SetAnomalySpeedMultiplier(float multiplier)
     {
-        anomalySpeedMultiplier = Mathf.Max(0.1f, multiplier);
+        legacyAnomalySpeedMultiplier = Mathf.Max(0.1f, multiplier);
+        RefreshAnomalySpeedMultiplier();
+    }
+    public void SetAnomalySpeedMultiplier(
+        Object source,
+        float multiplier)
+    {
+        anomalySpeedSources.Set(source, multiplier);
+        RefreshAnomalySpeedMultiplier();
+    }
+    public void RemoveAnomalySpeedMultiplier(Object source)
+    {
+        anomalySpeedSources.Remove(source);
+        RefreshAnomalySpeedMultiplier();
+    }
+    private void RefreshAnomalySpeedMultiplier()
+    {
+        anomalySpeedMultiplier = legacyAnomalySpeedMultiplier *
+            anomalySpeedSources.Value;
     }
     public void SetWorldRuleSpeedMultiplier(float multiplier)
     {
@@ -285,5 +305,8 @@ public class CharacterMovement2D : MonoBehaviour
         hitKnockbackVelocity = Vector2.zero;
         hitKnockbackTimeRemaining = 0f;
         worldRuleExternalVelocity = Vector2.zero;
+        anomalySpeedSources.Clear();
+        legacyAnomalySpeedMultiplier = 1f;
+        anomalySpeedMultiplier = 1f;
     }
 }

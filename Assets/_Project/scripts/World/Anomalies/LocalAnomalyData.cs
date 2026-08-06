@@ -27,6 +27,10 @@ public sealed class LocalAnomalyData : ScriptableObject
     [SerializeField, Min(0.1f)] private float enemySpeedMultiplier = 1f;
     [Tooltip("Player movement multiplier while inside this anomaly zone.")]
     [SerializeField, Min(0.1f)] private float playerSpeedMultiplier = 1f;
+    [Tooltip("Projectile movement multiplier inside a Stasis zone.")]
+    [SerializeField, Min(0.1f)] private float projectileSpeedMultiplier = 0.45f;
+    [Tooltip("Pickup movement multiplier inside a Stasis zone.")]
+    [SerializeField, Min(0.1f)] private float pickupSpeedMultiplier = 0.5f;
     [Tooltip("Additional zone data spawned with this anomaly. Used to preserve multi-zone level layouts.")]
     [SerializeField] private LocalAnomalyData[] additionalAnomalies;
 
@@ -49,6 +53,10 @@ public sealed class LocalAnomalyData : ScriptableObject
         Mathf.Max(0.1f, enemySpeedMultiplier);
     public float PlayerSpeedMultiplier =>
         Mathf.Max(0.1f, playerSpeedMultiplier);
+    public float ProjectileSpeedMultiplier =>
+        Mathf.Max(0.1f, projectileSpeedMultiplier);
+    public float PickupSpeedMultiplier =>
+        Mathf.Max(0.1f, pickupSpeedMultiplier);
     public LocalAnomalyData[] AdditionalAnomalies => additionalAnomalies;
     public float ExplosionDelay => Mathf.Max(0f, explosionDelay);
     public float ExplosionRadius => Mathf.Max(0.1f, explosionRadius);

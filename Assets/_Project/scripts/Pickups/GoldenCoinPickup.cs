@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
-public sealed class GoldenCoinPickup : MonoBehaviour
+public sealed class GoldenCoinPickup : MonoBehaviour, IAnomalySpeedPickup
 {
     private enum DestructionReason
     {
@@ -35,8 +35,11 @@ public sealed class GoldenCoinPickup : MonoBehaviour
     private bool initialized;
     private bool collected;
     private DestructionReason destructionReason;
+    private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
 
     public static int ActiveCount => Active.Count;
+    public Component PickupComponent => this;
+    public float AnomalySpeedMultiplier => anomalySpeed.Value;
 
     private void Awake()
     {
@@ -133,16 +136,18 @@ public sealed class GoldenCoinPickup : MonoBehaviour
             return;
 
         float deltaTime = Time.deltaTime;
+        float movementDeltaTime = deltaTime * anomalySpeed.Value;
         elapsed += deltaTime;
         lifetimeRemaining -= deltaTime;
 
         if (scatterVelocity.sqrMagnitude > 0.0001f)
         {
-            transform.position += (Vector3)(scatterVelocity * deltaTime);
+            transform.position +=
+                (Vector3)(scatterVelocity * movementDeltaTime);
             scatterVelocity = Vector2.MoveTowards(
                 scatterVelocity,
                 Vector2.zero,
-                ScatterDamping * deltaTime
+                ScatterDamping * movementDeltaTime
             );
         }
 
@@ -159,7 +164,7 @@ public sealed class GoldenCoinPickup : MonoBehaviour
                 transform.position = Vector2.MoveTowards(
                     transform.position,
                     player.position,
-                    attractSpeed * deltaTime
+                    attractSpeed * movementDeltaTime
                 );
                 offset = player.position - transform.position;
                 sqrDistance = offset.sqrMagnitude;
@@ -254,6 +259,8 @@ public sealed class GoldenCoinPickup : MonoBehaviour
     private void OnDisable()
     {
         Active.Remove(this);
+        AnomalySpeedPickupLifecycle.NotifyDisabled(this);
+        anomalySpeed.Clear();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (initialized && !collected)
@@ -277,5 +284,15 @@ public sealed class GoldenCoinPickup : MonoBehaviour
 
         destructionReason = reason;
         Destroy(gameObject);
+    }
+
+    public void SetAnomalySpeedMultiplier(Object source, float multiplier)
+    {
+        anomalySpeed.Set(source, multiplier);
+    }
+
+    public void RemoveAnomalySpeedMultiplier(Object source)
+    {
+        anomalySpeed.Remove(source);
     }
 }

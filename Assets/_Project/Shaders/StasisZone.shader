@@ -5,6 +5,7 @@ Shader "World/Stasis Zone"
         _InnerColor ("Inner Color", Color) = (0.015, 0.14, 0.24, 0.13)
         _EdgeColor ("Edge Color", Color) = (0.12, 0.7, 1, 0.48)
         _RippleColor ("Ripple Color", Color) = (0.22, 0.82, 1, 0.2)
+        _DetailColor ("Slow Detail Color", Color) = (0.35, 0.88, 1, 0.12)
         _EdgeWidth ("Edge Width (World Units)", Range(0.1, 0.75)) = 0.35
         _PulseSpeed ("Stripe Speed", Float) = 0.18
         _RegionSize ("Region Size", Vector) = (1, 1, 0, 0)
@@ -37,6 +38,7 @@ Shader "World/Stasis Zone"
                 half4 _InnerColor;
                 half4 _EdgeColor;
                 half4 _RippleColor;
+                half4 _DetailColor;
                 float _EdgeWidth;
                 float _PulseSpeed;
                 float4 _RegionSize;
@@ -87,6 +89,7 @@ Shader "World/Stasis Zone"
                 );
 
                 float worldY = samplePoint.y * halfSize.y;
+                float2 worldPoint = samplePoint * halfSize;
                 float stripeCoordinate = frac(
                     (worldY + _VisualTime * _PulseSpeed) / 5.0
                 );
@@ -97,18 +100,50 @@ Shader "World/Stasis Zone"
                     stripeDistance
                 );
                 stripe *= saturate(1.0 - edge);
+
+                float verticalCoordinate = frac(
+                    (worldPoint.x +
+                     sin(_VisualTime * 0.22 + worldPoint.y * 0.18) * 0.2) /
+                    3.4
+                );
+                float verticalDistance = abs(verticalCoordinate - 0.5);
+                float verticalLine = 1.0 - smoothstep(
+                    0.012,
+                    0.045,
+                    verticalDistance
+                );
+
+                float ringCoordinate = frac(
+                    length(worldPoint) * 0.19 -
+                    _VisualTime * _PulseSpeed * 0.16
+                );
+                float ringDistance = abs(ringCoordinate - 0.5);
+                float slowRing = 1.0 - smoothstep(
+                    0.018,
+                    0.065,
+                    ringDistance
+                );
+                float detail = (verticalLine * 0.38 + slowRing * 0.24) *
+                    saturate(1.0 - edge);
+
                 half3 color = lerp(
                     _InnerColor.rgb,
                     _RippleColor.rgb,
                     stripe * 0.18
                 );
-                color = lerp(color, _EdgeColor.rgb, edge);
+                color = lerp(color, _DetailColor.rgb, detail);
+
+                float edgePulse = 0.88 +
+                    sin(_VisualTime * max(0.1, _PulseSpeed) * 2.2) * 0.12;
+                color = lerp(color, _EdgeColor.rgb, edge * edgePulse);
 
                 float interiorAlpha =
-                    _InnerColor.a + stripe * _RippleColor.a * 0.22;
+                    _InnerColor.a +
+                    stripe * _RippleColor.a * 0.22 +
+                    detail * _DetailColor.a;
                 float alpha = lerp(
                     interiorAlpha,
-                    _EdgeColor.a,
+                    _EdgeColor.a * edgePulse,
                     edge
                 );
 
