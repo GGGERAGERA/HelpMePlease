@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -42,6 +44,11 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private bool warnedRuleController;
     private bool warnedAnomalyController;
     private bool warnedEventSpawner;
+    private readonly List<LevelAnomalyController.LocalAnomalyZoneGeometry>
+        activeAnomalyZones = new();
+    private readonly List<LocalAnomalyType> activeAnomalyTypes = new();
+    private readonly List<int> activeAnomalyTypeCounts = new();
+    private readonly StringBuilder activeAnomalySummary = new();
 
     private readonly Color panelColor = new(0.035f, 0.045f, 0.06f, 0.97f);
     private readonly Color rowColor = new(0.09f, 0.11f, 0.145f, 0.95f);
@@ -354,48 +361,162 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         AddSectionTitle(
             "LOCAL ANOMALIES",
-            "Information only — no runtime controls"
+            "Apply or clear through LevelAnomalyController"
         );
+
+        if (localAnomalies != null)
+        {
+            for (int i = 0; i < localAnomalies.Length; i++)
+            {
+                LocalAnomalyData data = localAnomalies[i];
+
+                if (data == null || WasAnomalyAlreadyAdded(data, i))
+                    continue;
+
+                AddLocalAnomalyRow(data);
+            }
+        }
 
         for (int i = 0; i < DebugAnomalyTypes.Length; i++)
         {
             LocalAnomalyType type = DebugAnomalyTypes[i];
-            LocalAnomalyData data = FindLocalAnomaly(type);
-            string status;
-            Color statusColor;
 
-            if (data == null)
-            {
-                status = "MISSING";
-                statusColor = warningColor;
-            }
-            else if (data.ZonePrefab == null)
-            {
-                status = "PREFAB MISSING";
-                statusColor = warningColor;
-            }
-            else if (anomalyController == null)
-            {
-                status = "CONTROLLER NOT FOUND";
-                statusColor = warningColor;
-            }
-            else if (IsInCurrentAnomalyPool(data))
-            {
-                status = "IN CURRENT POOL";
-                statusColor = successColor;
-            }
-            else
-            {
-                status = "ASSET + PREFAB AVAILABLE";
-                statusColor = mutedColor;
-            }
+            if (FindLocalAnomaly(type) != null)
+                continue;
 
-            string name = data != null &&
-                !string.IsNullOrWhiteSpace(data.Presentation.Title)
-                    ? data.Presentation.Title
-                    : type.ToString();
-            AddRow(name, status, statusColor, null, false, null);
+            AddRow(
+                $"{GetAnomalyTypeName(type)}  ·  {type}",
+                "NOT CONFIGURED",
+                warningColor,
+                "APPLY",
+                false,
+                null
+            );
         }
+
+        AddRow(
+            "All local anomaly zones",
+            anomalyController == null
+                ? "CONTROLLER NOT FOUND"
+                : anomalyController.ActiveAnomaly == null
+                    ? "CLEAR"
+                    : "ACTIVE",
+            anomalyController != null &&
+                anomalyController.ActiveAnomaly != null
+                    ? successColor
+                    : mutedColor,
+            "CLEAR ANOMALIES",
+            anomalyController != null,
+            ClearLocalAnomalies
+        );
+
+        AddActiveAnomalySummary();
+    }
+
+    private void AddLocalAnomalyRow(LocalAnomalyData data)
+    {
+        bool canApply = anomalyController != null &&
+            data != null && data.ZonePrefab != null;
+        string status;
+        Color statusColor;
+
+        if (data.ZonePrefab == null)
+        {
+            status = "MISSING PREFAB";
+            statusColor = warningColor;
+        }
+        else if (anomalyController == null)
+        {
+            status = "NOT CONFIGURED";
+            statusColor = warningColor;
+        }
+        else if (anomalyController.ActiveAnomaly == data)
+        {
+            status = "ACTIVE";
+            statusColor = successColor;
+        }
+        else
+        {
+            status = "AVAILABLE";
+            statusColor = mutedColor;
+        }
+
+        string displayName = !string.IsNullOrWhiteSpace(
+                data.Presentation.Title)
+            ? data.Presentation.Title
+            : data.name;
+        LocalAnomalyData capturedData = data;
+
+        AddRow(
+            $"{displayName}  ·  {GetAnomalyTypeName(data.AnomalyType)}",
+            status,
+            statusColor,
+            "APPLY",
+            canApply,
+            () => ApplyLocalAnomaly(capturedData)
+        );
+    }
+
+    private void AddActiveAnomalySummary()
+    {
+        LocalAnomalyData active = anomalyController != null
+            ? anomalyController.ActiveAnomaly
+            : null;
+        string profile = active != null
+            ? GetAnomalyTypeName(active.AnomalyType)
+            : "None";
+
+        AddRow("Active profile", profile,
+            active != null ? successColor : mutedColor, null, false, null);
+        AddRow("Active zones", BuildActiveZoneSummary(),
+            activeAnomalyZones.Count > 0 ? successColor : mutedColor,
+            null, false, null);
+    }
+
+    private string BuildActiveZoneSummary()
+    {
+        activeAnomalyZones.Clear();
+        activeAnomalyTypes.Clear();
+        activeAnomalyTypeCounts.Clear();
+
+        if (anomalyController == null)
+            return "None";
+
+        anomalyController.CollectActiveLocalZones(activeAnomalyZones);
+
+        for (int i = 0; i < activeAnomalyZones.Count; i++)
+        {
+            LocalAnomalyType type = activeAnomalyZones[i].Type;
+            int typeIndex = activeAnomalyTypes.IndexOf(type);
+
+            if (typeIndex >= 0)
+            {
+                activeAnomalyTypeCounts[typeIndex]++;
+                continue;
+            }
+
+            activeAnomalyTypes.Add(type);
+            activeAnomalyTypeCounts.Add(1);
+        }
+
+        if (activeAnomalyTypes.Count == 0)
+            return "None";
+
+        activeAnomalySummary.Clear();
+
+        for (int i = 0; i < activeAnomalyTypes.Count; i++)
+        {
+            if (i > 0)
+                activeAnomalySummary.Append(", ");
+
+            activeAnomalySummary.Append(
+                GetAnomalyTypeName(activeAnomalyTypes[i])
+            );
+            activeAnomalySummary.Append(" × ");
+            activeAnomalySummary.Append(activeAnomalyTypeCounts[i]);
+        }
+
+        return activeAnomalySummary.ToString();
     }
 
     private void AddWorldEventsSection()
@@ -464,6 +585,27 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         RefreshData();
     }
 
+    private void ApplyLocalAnomaly(LocalAnomalyData data)
+    {
+        if (anomalyController == null || data == null ||
+            data.ZonePrefab == null)
+        {
+            return;
+        }
+
+        anomalyController.Apply(data);
+        RefreshData();
+    }
+
+    private void ClearLocalAnomalies()
+    {
+        if (anomalyController == null)
+            return;
+
+        anomalyController.Clear();
+        RefreshData();
+    }
+
     private LocalAnomalyData FindLocalAnomaly(LocalAnomalyType type)
     {
         if (localAnomalies == null)
@@ -481,6 +623,17 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         return null;
     }
 
+    private bool WasAnomalyAlreadyAdded(LocalAnomalyData data, int beforeIndex)
+    {
+        for (int i = 0; i < beforeIndex; i++)
+        {
+            if (localAnomalies[i] == data)
+                return true;
+        }
+
+        return false;
+    }
+
     private WorldEvent FindEventPrefab<T>() where T : WorldEvent
     {
         if (worldEventPrefabs == null)
@@ -495,27 +648,11 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         return null;
     }
 
-    private bool IsInCurrentAnomalyPool(LocalAnomalyData data)
+    private static string GetAnomalyTypeName(LocalAnomalyType type)
     {
-        LocalAnomalyData active = anomalyController.ActiveAnomaly;
-
-        if (active == null)
-            return false;
-
-        if (active == data)
-            return true;
-
-        LocalAnomalyData[] additional = active.AdditionalAnomalies;
-        if (additional == null)
-            return false;
-
-        for (int i = 0; i < additional.Length; i++)
-        {
-            if (additional[i] == data)
-                return true;
-        }
-
-        return false;
+        return type == LocalAnomalyType.ExplosiveZone
+            ? "Explosive"
+            : type.ToString();
     }
 
     private static bool ContainsEventPrefab(
@@ -576,7 +713,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         LayoutElement layout = row.gameObject.AddComponent<LayoutElement>();
         layout.preferredHeight = 54f;
 
-        float rightPadding = string.IsNullOrEmpty(buttonLabel) ? 18f : 152f;
+        float buttonWidth = buttonLabel == "CLEAR ANOMALIES" ? 176f : 116f;
+        float rightPadding = string.IsNullOrEmpty(buttonLabel)
+            ? 18f
+            : buttonWidth + 36f;
         TextMeshProUGUI labelText = CreateText(
             "Name",
             row,
@@ -606,13 +746,13 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         if (string.IsNullOrEmpty(buttonLabel))
             return;
 
-        Button button = CreateButton(row, buttonLabel, action, 116f);
+        Button button = CreateButton(row, buttonLabel, action, buttonWidth);
         button.interactable = buttonEnabled;
         RectTransform buttonRect = button.GetComponent<RectTransform>();
         buttonRect.anchorMin = buttonRect.anchorMax = new Vector2(1f, 0.5f);
         buttonRect.pivot = new Vector2(1f, 0.5f);
         buttonRect.anchoredPosition = new Vector2(-12f, 0f);
-        buttonRect.sizeDelta = new Vector2(116f, 38f);
+        buttonRect.sizeDelta = new Vector2(buttonWidth, 38f);
     }
 
     private void AddHint(string message)

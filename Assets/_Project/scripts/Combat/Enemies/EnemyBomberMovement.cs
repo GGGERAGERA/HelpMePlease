@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -27,12 +28,14 @@ public class EnemyBomberMovement : EnemyMovement
     private Rigidbody2D rb;
     private Transform player;
     private bool isExploding;
-    private bool exploded;
     private float speedMultiplier = 1f;
     private float anomalySpeedMultiplier = 1f;
     private float worldRuleSpeedMultiplier = 1f;
     private Vector2 worldRuleExternalVelocity;
     private Vector2 knockbackVelocity;
+    private readonly Dictionary<ExplosiveZone, float>
+        explosiveZoneRadiusMultipliers = new();
+    private BomberExplosionSequence activeExplosionSequence;
 
     private void Awake()
     {
@@ -46,7 +49,7 @@ public class EnemyBomberMovement : EnemyMovement
 
     private void FixedUpdate()
     {
-        if (Time.timeScale == 0f || exploded || isExploding)
+        if (Time.timeScale == 0f || isExploding)
             return;
 
         if (player == null)
@@ -92,78 +95,81 @@ public class EnemyBomberMovement : EnemyMovement
 
     private void StartExplosionSequence()
     {
-        if (isExploding || exploded)
+        if (isExploding)
             return;
 
         isExploding = true;
         rb.linearVelocity = Vector2.zero;
-
-        StartCoroutine(ExplosionSequence());
+        float lockedRadius = explosionRadius *
+            GetExplosiveZoneRadiusMultiplier(out ExplosiveZone sourceZone);
+        activeExplosionSequence = BomberExplosionSequence.Create(
+            transform.position,
+            lockedRadius,
+            explosionDelay,
+            explosionDamage,
+            explosionRadiusPrefab,
+            explosionFxPrefab,
+            shockwaveFxPrefab,
+            gameObject
+        );
+        sourceZone?.TrackBomberSequence(activeExplosionSequence);
     }
 
-    private IEnumerator ExplosionSequence()
+    internal void EnterExplosiveZone(ExplosiveZone source, float multiplier)
     {
-        GameObject radiusVisual = null;
-
-        if (explosionRadiusPrefab != null)
-        {
-            radiusVisual = Instantiate(
-                explosionRadiusPrefab,
-                transform.position,
-                Quaternion.identity
-            );
-
-            float diameter = explosionRadius * 2f;
-            radiusVisual.transform.localScale = new Vector3(diameter, diameter, 1f);
-        }
-
-        yield return new WaitForSeconds(explosionDelay);
-
-        if (radiusVisual != null)
-            Destroy(radiusVisual);
-
-        Explode();
-    }
-
-    private void Explode()
-    {
-        if (exploded)
+        if (source == null)
             return;
 
-        exploded = true;
+        explosiveZoneRadiusMultipliers[source] = Mathf.Max(1f, multiplier);
+    }
 
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, explosionRadius);
+    internal void ExitExplosiveZone(ExplosiveZone source)
+    {
+        if (!ReferenceEquals(source, null))
+            explosiveZoneRadiusMultipliers.Remove(source);
+    }
 
-        foreach (Collider2D hit in hits)
+    internal bool TryStartExplosionAfterDeath(
+        out BomberExplosionSequence sequence)
+    {
+        if (activeExplosionSequence != null)
         {
-            if (!hit.CompareTag("Player"))
+            sequence = activeExplosionSequence;
+            return false;
+        }
+
+        StartExplosionSequence();
+        sequence = activeExplosionSequence;
+        return sequence != null;
+    }
+
+    internal void NotifyExplosionSequenceCanceled(
+        BomberExplosionSequence sequence)
+    {
+        if (activeExplosionSequence != sequence)
+            return;
+
+        activeExplosionSequence = null;
+        isExploding = false;
+    }
+
+    private float GetExplosiveZoneRadiusMultiplier(
+        out ExplosiveZone sourceZone)
+    {
+        float multiplier = 1f;
+        sourceZone = null;
+
+        foreach (KeyValuePair<ExplosiveZone, float> pair in
+                 explosiveZoneRadiusMultipliers)
+        {
+            if (pair.Key == null || pair.Value <= multiplier)
                 continue;
 
-            PlayerHealth health = hit.GetComponent<PlayerHealth>();
-
-            if (health != null)
-            {
-                Vector2 hitDirection = hit.transform.position - transform.position;
-                health.TakeDamage(explosionDamage, hitDirection);
-            }
+            multiplier = pair.Value;
+            sourceZone = pair.Key;
         }
 
-        if (explosionFxPrefab != null)
-        {
-            ParticleSystem fx = Instantiate(
-                explosionFxPrefab,
-                transform.position,
-                Quaternion.identity
-            );
-
-            fx.Play();
-            Destroy(fx.gameObject, fx.main.duration);
-        }
-
-        if (shockwaveFxPrefab != null)
-            Instantiate(shockwaveFxPrefab, transform.position, Quaternion.identity);
-
-        Destroy(gameObject);
+        return multiplier;
     }
 
     public override void SetSpeedMultiplier(float multiplier)
@@ -188,7 +194,7 @@ public class EnemyBomberMovement : EnemyMovement
 
     public override void ApplyKnockback(Vector2 direction, float force)
     {
-        if (isExploding || exploded)
+        if (isExploding)
             return;
 
         knockbackVelocity = direction.normalized * force;
@@ -199,6 +205,11 @@ public class EnemyBomberMovement : EnemyMovement
         // Подрывник не останавливается от контактного удара.
     }
 
+    private void OnDisable()
+    {
+        explosiveZoneRadiusMultipliers.Clear();
+    }
+
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
@@ -206,5 +217,140 @@ public class EnemyBomberMovement : EnemyMovement
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, explosionRadius);
+    }
+}
+
+internal sealed class BomberExplosionSequence : MonoBehaviour
+{
+    private float radius;
+    private float delay;
+    private int damage;
+    private ParticleSystem explosionFxPrefab;
+    private GameObject shockwaveFxPrefab;
+    private GameObject owner;
+    private Vector2 explosionPosition;
+    private bool canceled;
+    private bool exploded;
+
+    internal static BomberExplosionSequence Create(
+        Vector2 position,
+        float radius,
+        float delay,
+        int damage,
+        GameObject warningPrefab,
+        ParticleSystem explosionFxPrefab,
+        GameObject shockwaveFxPrefab,
+        GameObject owner)
+    {
+        GameObject sequenceObject = ExplosionWarningVisual.Spawn(
+            warningPrefab,
+            position,
+            radius,
+            delay
+        );
+
+        if (sequenceObject == null)
+        {
+            sequenceObject = new GameObject("Bomber Explosion Sequence");
+            sequenceObject.transform.position = position;
+        }
+
+        BomberExplosionSequence sequence =
+            sequenceObject.AddComponent<BomberExplosionSequence>();
+        sequence.radius = Mathf.Max(0.1f, radius);
+        sequence.delay = Mathf.Max(0f, delay);
+        sequence.damage = Mathf.Max(0, damage);
+        sequence.explosionFxPrefab = explosionFxPrefab;
+        sequence.shockwaveFxPrefab = shockwaveFxPrefab;
+        sequence.owner = owner;
+        sequence.explosionPosition = position;
+        sequence.StartCoroutine(sequence.Run());
+        return sequence;
+    }
+
+    internal void Cancel()
+    {
+        if (canceled || exploded)
+            return;
+
+        canceled = true;
+        StopAllCoroutines();
+
+        if (owner != null)
+        {
+            EnemyBomberMovement bomber =
+                owner.GetComponent<EnemyBomberMovement>();
+            bomber?.NotifyExplosionSequenceCanceled(this);
+        }
+
+        Destroy(gameObject);
+    }
+
+    private IEnumerator Run()
+    {
+        if (delay > 0f)
+            yield return new WaitForSeconds(delay);
+
+        if (!canceled)
+            Explode();
+    }
+
+    private void Explode()
+    {
+        if (canceled || exploded)
+            return;
+
+        exploded = true;
+        Collider2D[] hits = Physics2D.OverlapCircleAll(
+            explosionPosition,
+            radius
+        );
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+
+            if (hit == null || !hit.CompareTag("Player"))
+                continue;
+
+            PlayerHealth health = hit.GetComponent<PlayerHealth>();
+
+            if (health == null)
+                continue;
+
+            Vector2 hitDirection =
+                (Vector2)hit.transform.position - explosionPosition;
+            health.TakeDamage(damage, hitDirection);
+        }
+
+        AudioService.Instance?.PlayAt(
+            AudioCueId.RocketExplosion,
+            explosionPosition
+        );
+
+        if (explosionFxPrefab != null)
+        {
+            ParticleSystem fx = Instantiate(
+                explosionFxPrefab,
+                explosionPosition,
+                Quaternion.identity
+            );
+            fx.Play();
+            Destroy(fx.gameObject, fx.main.duration);
+        }
+
+        if (shockwaveFxPrefab != null)
+        {
+            Instantiate(
+                shockwaveFxPrefab,
+                explosionPosition,
+                Quaternion.identity
+            );
+        }
+
+        if (owner != null)
+            Destroy(owner);
+
+        Destroy(gameObject);
     }
 }

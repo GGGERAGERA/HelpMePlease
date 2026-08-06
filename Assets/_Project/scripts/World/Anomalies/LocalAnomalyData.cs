@@ -39,6 +39,8 @@ public sealed class LocalAnomalyData : ScriptableObject
     [SerializeField, Min(0.1f)] private float explosionRadius = 0.1f;
     [SerializeField, Min(0f)] private float explosionDamage;
     [SerializeField] private GameObject explosionEffectPrefab;
+    [SerializeField, Min(1f)]
+    private float explosiveZoneBomberRadiusMultiplier = 1.5f;
 
     public string Id => string.IsNullOrWhiteSpace(stableId)
         ? name
@@ -62,6 +64,8 @@ public sealed class LocalAnomalyData : ScriptableObject
     public float ExplosionRadius => Mathf.Max(0.1f, explosionRadius);
     public float ExplosionDamage => Mathf.Max(0f, explosionDamage);
     public GameObject ExplosionEffectPrefab => explosionEffectPrefab;
+    public float ExplosiveZoneBomberRadiusMultiplier =>
+        Mathf.Max(1f, explosiveZoneBomberRadiusMultiplier);
     public LevelMechanicPresentationData Presentation =>
         new(displayName, description, pinnedDescription);
 }
