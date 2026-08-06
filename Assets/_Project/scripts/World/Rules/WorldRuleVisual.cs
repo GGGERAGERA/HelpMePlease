@@ -89,6 +89,12 @@ public sealed class WorldRuleVisual : MonoBehaviour
     [SerializeField, Range(2f, 12f)] private float windLineDensity = 3f;
     [SerializeField, Range(0.05f, 2f)] private float windLineSpeed = 0.45f;
 
+    [Header("Wind / Dust Particles")]
+    [SerializeField] private ParticleSystem windParticleSystem;
+    [SerializeField, Range(0f, 60f)] private float windParticleEmission = 22f;
+    [SerializeField, Range(0.1f, 5f)] private float windParticleSpeed = 2.2f;
+    [SerializeField] private Vector2 windParticleArea = new(22f, 13f);
+
     [Header("Darkness / Existing 2D Lights")]
     [SerializeField] private Light2D globalLight;
     [FormerlySerializedAs("darknessLightIntensity")]
@@ -180,6 +186,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
     private float[] snowParticleStartSizes;
     private float[] snowParticleStartSpeeds;
     private bool snowParticlesPlaying;
+    private GameObject windParticleObject;
 
     private const float SnowParticleSizeMultiplier = 1.25f;
     private const float SnowParticleSpeedMultiplier = 1.35f;
@@ -408,7 +415,16 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
         windVisualDirection = direction.normalized;
         SetWindActive(true);
-        windIndicator?.Show(windVisualDirection);
+        UpdateWindParticlesDirection();
+        windIndicator?.ShowApplied(windVisualDirection);
+    }
+
+    public void WarnWind(Vector2 direction)
+    {
+        if (direction.sqrMagnitude <= 0.0001f)
+            return;
+
+        windIndicator?.ShowWarning(direction.normalized);
     }
 
     public void ClearImmediate()
@@ -456,6 +472,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
         currentWindIntensity = 0f;
         targetWindIntensity = 0f;
         windVisualDirection = Vector2.zero;
+        StopWindParticles();
 
 #if UNITY_EDITOR
         snowDiagnosticElapsed = 0f;
@@ -648,8 +665,102 @@ public sealed class WorldRuleVisual : MonoBehaviour
     {
         targetWindIntensity = active ? 1f : 0f;
 
-        if (active && fullscreenImage != null)
-            fullscreenImage.enabled = true;
+        if (active)
+        {
+            EnsureWindResources();
+
+            if (fullscreenImage != null)
+                fullscreenImage.enabled = true;
+        }
+
+        if (windParticleSystem == null)
+            return;
+
+        if (active)
+        {
+            UpdateWindParticlesDirection();
+
+            if (!windParticleSystem.isPlaying)
+                windParticleSystem.Play(true);
+        }
+        else
+        {
+            StopWindParticles();
+        }
+    }
+
+    private void EnsureWindResources()
+    {
+        if (windParticleSystem != null)
+            return;
+
+        windParticleObject = new GameObject("WindDustParticles");
+        windParticleObject.layer = 0;
+        windParticleSystem =
+            windParticleObject.AddComponent<ParticleSystem>();
+
+        ParticleSystem.MainModule main = windParticleSystem.main;
+        main.loop = true;
+        main.duration = 5f;
+        main.startLifetime = 2.5f;
+        main.startSpeed = 0f;
+        main.startSize = new ParticleSystem.MinMaxCurve(0.025f, 0.07f);
+        main.startColor = new ParticleSystem.MinMaxGradient(
+            new Color(0.72f, 0.78f, 0.82f, 0.12f),
+            new Color(0.9f, 0.94f, 1f, 0.28f)
+        );
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        main.maxParticles = 96;
+
+        ParticleSystem.EmissionModule emission = windParticleSystem.emission;
+        emission.rateOverTime = windParticleEmission;
+
+        ParticleSystem.ShapeModule shape = windParticleSystem.shape;
+        shape.shapeType = ParticleSystemShapeType.Box;
+        shape.scale = new Vector3(
+            Mathf.Max(0.1f, windParticleArea.x),
+            Mathf.Max(0.1f, windParticleArea.y),
+            0.1f
+        );
+
+        ParticleSystemRenderer particleRenderer =
+            windParticleObject.GetComponent<ParticleSystemRenderer>();
+        particleRenderer.renderMode = ParticleSystemRenderMode.Stretch;
+        particleRenderer.velocityScale = 0.08f;
+        particleRenderer.lengthScale = 0.18f;
+        particleRenderer.sortingLayerName = "Foreground";
+        particleRenderer.sortingOrder = 2;
+
+        windParticleSystem.Stop(
+            true,
+            ParticleSystemStopBehavior.StopEmittingAndClear
+        );
+    }
+
+    private void UpdateWindParticlesDirection()
+    {
+        if (windParticleSystem == null)
+            return;
+
+        Vector2 velocity = windVisualDirection * windParticleSpeed;
+        ParticleSystem.VelocityOverLifetimeModule velocityModule =
+            windParticleSystem.velocityOverLifetime;
+        velocityModule.enabled = true;
+        velocityModule.space = ParticleSystemSimulationSpace.World;
+        velocityModule.x = velocity.x;
+        velocityModule.y = velocity.y;
+        velocityModule.z = 0f;
+    }
+
+    private void StopWindParticles()
+    {
+        if (windParticleSystem == null)
+            return;
+
+        windParticleSystem.Stop(
+            true,
+            ParticleSystemStopBehavior.StopEmittingAndClear
+        );
     }
 
     private void CreateGoldenColorVolume()
@@ -1044,6 +1155,15 @@ public sealed class WorldRuleVisual : MonoBehaviour
             snowParticleInstance.transform.position =
                 cameraPosition + snowParticleCameraOffset;
         }
+
+        if (windParticleSystem != null && windParticleSystem.isPlaying)
+        {
+            windParticleSystem.transform.position = new Vector3(
+                cameraPosition.x,
+                cameraPosition.y,
+                0f
+            );
+        }
     }
 
     private void OnDisable()
@@ -1064,6 +1184,9 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
         if (goldenVolumeProfile != null)
             Destroy(goldenVolumeProfile);
+
+        if (windParticleObject != null)
+            Destroy(windParticleObject);
     }
 
 #if UNITY_EDITOR

@@ -55,10 +55,15 @@ public sealed class WorldRuleController : MonoBehaviour
     private float goldenEnemyRewardMultiplier = 1f;
     private Vector2 activeWindDirection;
     private Vector2 activeWindVelocity;
+    private Vector2 pendingWindDirection;
+    private float windDirectionChangeTimeRemaining;
+    private bool windWarningVisible;
+    private bool enemyWindApplied;
 
     public WorldRuleData ActiveRule => activeRule;
     public Vector2 ActiveWindDirection => activeWindDirection;
     public Vector2 ActiveWindVelocity => activeWindVelocity;
+    public Vector2 ProjectileWindVelocity { get; private set; }
     public bool IsIntroComplete => true;
 
     private void Awake()
@@ -70,6 +75,38 @@ public sealed class WorldRuleController : MonoBehaviour
         }
 
         Instance = this;
+    }
+
+    private void Update()
+    {
+        if (activeRule == null ||
+            activeRule.RuleType != WorldRuleType.Wind ||
+            activeWindVelocity.sqrMagnitude <= 0.0001f)
+        {
+            return;
+        }
+
+        windDirectionChangeTimeRemaining -= Time.deltaTime;
+
+        if (!windWarningVisible &&
+            windDirectionChangeTimeRemaining <=
+            activeRule.WindDirectionWarningDuration)
+        {
+            pendingWindDirection = SelectNextCardinalWindDirection(
+                activeWindDirection
+            );
+            windWarningVisible = true;
+            worldRuleVisual?.WarnWind(pendingWindDirection);
+        }
+
+        if (windDirectionChangeTimeRemaining > 0f)
+            return;
+
+        Vector2 nextDirection = pendingWindDirection.sqrMagnitude > 0.0001f
+            ? pendingWindDirection
+            : SelectNextCardinalWindDirection(activeWindDirection);
+        ApplyWindDirection(nextDirection);
+        ScheduleNextWindDirectionChange();
     }
 
     public void Apply(WorldRuleData rule)
@@ -123,9 +160,12 @@ public sealed class WorldRuleController : MonoBehaviour
 
         float enemyMultiplier = activeRule.EnemyMoveSpeedMultiplier;
 
-        if (!Mathf.Approximately(enemyMultiplier, 1f))
+        if (!Mathf.Approximately(enemyMultiplier, 1f) ||
+            (activeRule.RuleType == WorldRuleType.Wind &&
+             activeRule.WindForce > 0f))
         {
-            enemyMoveSpeedApplied = true;
+            enemyMoveSpeedApplied =
+                !Mathf.Approximately(enemyMultiplier, 1f);
             SubscribeEnemyLifecycle();
         }
     }
@@ -158,9 +198,38 @@ public sealed class WorldRuleController : MonoBehaviour
         if (force <= 0f || mode == WindDirectionMode.None)
             return;
 
-        activeWindDirection = SelectWindDirection(activeRule, mode);
-        activeWindVelocity = activeWindDirection * force;
+        enemyWindApplied = true;
+        ApplyWindDirection(SelectWindDirection(activeRule, mode));
+        ScheduleNextWindDirectionChange();
+
+    }
+
+    private void ApplyWindDirection(Vector2 direction)
+    {
+        if (activeRule == null || direction.sqrMagnitude <= 0.0001f)
+            return;
+
+        activeWindDirection = direction.normalized;
+        activeWindVelocity = activeWindDirection * activeRule.WindForce;
+        ProjectileWindVelocity = activeWindVelocity *
+            activeRule.WindProjectileForceMultiplier;
         playerMovement?.SetWorldRuleExternalVelocity(activeWindVelocity);
+
+        Vector2 enemyWindVelocity = activeWindVelocity *
+            activeRule.WindEnemyForceMultiplier;
+
+        foreach (EnemyHealth enemy in registeredEnemies)
+        {
+            if (enemy == null)
+                continue;
+
+            GetEnemyMovement(enemy)?.SetWorldRuleExternalVelocity(
+                enemyWindVelocity
+            );
+        }
+
+        pendingWindDirection = Vector2.zero;
+        windWarningVisible = false;
         worldRuleVisual?.ShowWind(activeWindDirection);
 
 #if UNITY_EDITOR
@@ -173,6 +242,42 @@ public sealed class WorldRuleController : MonoBehaviour
             );
         }
 #endif
+    }
+
+    private void ScheduleNextWindDirectionChange()
+    {
+        if (activeRule == null)
+            return;
+
+        windDirectionChangeTimeRemaining = Random.Range(
+            activeRule.WindMinDirectionDuration,
+            activeRule.WindMaxDirectionDuration
+        );
+        pendingWindDirection = Vector2.zero;
+        windWarningVisible = false;
+    }
+
+    private static Vector2 SelectNextCardinalWindDirection(
+        Vector2 currentDirection)
+    {
+        int currentIndex = -1;
+
+        for (int i = 0; i < CardinalWindDirections.Length; i++)
+        {
+            if (Vector2.Dot(
+                    CardinalWindDirections[i],
+                    currentDirection) > 0.999f)
+            {
+                currentIndex = i;
+                break;
+            }
+        }
+
+        int offset = Random.Range(1, CardinalWindDirections.Length);
+        int nextIndex = currentIndex >= 0
+            ? (currentIndex + offset) % CardinalWindDirections.Length
+            : Random.Range(0, CardinalWindDirections.Length);
+        return CardinalWindDirections[nextIndex];
     }
 
     private static Vector2 SelectWindDirection(
@@ -294,7 +399,9 @@ public sealed class WorldRuleController : MonoBehaviour
         movement?.SetWorldRuleSpeedMultiplier(
             activeRule.EnemyMoveSpeedMultiplier
         );
-
+        movement?.SetWorldRuleExternalVelocity(
+            activeWindVelocity * activeRule.WindEnemyForceMultiplier
+        );
     }
 
     private void UnregisterEnemy(EnemyHealth enemy)
@@ -311,11 +418,15 @@ public sealed class WorldRuleController : MonoBehaviour
 
         activeWindDirection = Vector2.zero;
         activeWindVelocity = Vector2.zero;
+        pendingWindDirection = Vector2.zero;
+        ProjectileWindVelocity = Vector2.zero;
+        windDirectionChangeTimeRemaining = 0f;
+        windWarningVisible = false;
 
         if (playerMoveSpeedApplied && playerMovement != null)
             playerMovement.SetWorldRuleSpeedMultiplier(1f);
 
-        if (enemyMoveSpeedApplied)
+        if (enemyMoveSpeedApplied || enemyWindApplied)
         {
             foreach (EnemyHealth enemy in registeredEnemies)
             {
@@ -324,11 +435,13 @@ public sealed class WorldRuleController : MonoBehaviour
 
                 EnemyMovement movement = GetEnemyMovement(enemy);
                 movement?.SetWorldRuleSpeedMultiplier(1f);
+                movement?.SetWorldRuleExternalVelocity(Vector2.zero);
             }
         }
 
         playerMoveSpeedApplied = false;
         enemyMoveSpeedApplied = false;
+        enemyWindApplied = false;
     }
 
     private void UnsubscribeEnemyLifecycle()

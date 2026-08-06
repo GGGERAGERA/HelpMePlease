@@ -33,6 +33,7 @@ public class EnemyChaseMovement : EnemyMovement
     private float speedMultiplier = 1f;
     private float anomalySpeedMultiplier = 1f;
     private float worldRuleSpeedMultiplier = 1f;
+    private Vector2 worldRuleExternalVelocity;
     private float stopTimer;
     private Vector2 knockbackVelocity;
     private bool animatorStateInitialized;
@@ -67,6 +68,10 @@ public class EnemyChaseMovement : EnemyMovement
         {
             stopTimer -= Time.fixedDeltaTime;
             rb.linearVelocity = Vector2.zero;
+            rb.MovePosition(
+                rb.position +
+                worldRuleExternalVelocity * Time.fixedDeltaTime
+            );
             return;
         }
 
@@ -109,7 +114,9 @@ public class EnemyChaseMovement : EnemyMovement
             knockbackDecay * Time.fixedDeltaTime
         );
 
-        Vector2 movement = direction * selectedSpeed + knockbackVelocity;
+        Vector2 movement = direction * selectedSpeed +
+            knockbackVelocity +
+            worldRuleExternalVelocity;
         Vector2 nextPosition = rb.position + movement * Time.fixedDeltaTime;
 
         rb.MovePosition(nextPosition);
@@ -149,6 +156,11 @@ public class EnemyChaseMovement : EnemyMovement
     public override void SetWorldRuleSpeedMultiplier(float multiplier)
     {
         worldRuleSpeedMultiplier = Mathf.Max(0.1f, multiplier);
+    }
+
+    public override void SetWorldRuleExternalVelocity(Vector2 velocity)
+    {
+        worldRuleExternalVelocity = velocity;
     }
 
     public override void ApplyKnockback(Vector2 direction, float force)

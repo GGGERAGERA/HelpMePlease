@@ -6,6 +6,7 @@ public class WorldEventSpawner : MonoBehaviour
     public event System.Action<WorldEvent> EventCompleted;
     public event System.Action<WorldEvent> EventFailed;
     public IReadOnlyList<WorldEvent> SpawnedEvents => spawnedEvents;
+    public IReadOnlyList<WorldEvent> EventPrefabs => eventPrefabs;
     public WorldEvent ActiveEvent { get; private set; }
 
     [Header("Event Prefabs")]
@@ -309,6 +310,23 @@ public class WorldEventSpawner : MonoBehaviour
     public void SetHoldPointEnabled(bool enabled)
     {
         holdPointEnabled = enabled;
+    }
+
+    public bool IsEventPrefabEnabled(WorldEvent eventPrefab)
+    {
+        if (eventPrefab == null || eventPrefabs == null)
+            return false;
+
+        for (int i = 0; i < eventPrefabs.Length; i++)
+        {
+            if (eventPrefabs[i] != eventPrefab)
+                continue;
+
+            return !(eventPrefab is CaptureZoneEvent) ||
+                holdPointEnabled;
+        }
+
+        return false;
     }
 
     private WorldEvent GetNextEventPrefab()

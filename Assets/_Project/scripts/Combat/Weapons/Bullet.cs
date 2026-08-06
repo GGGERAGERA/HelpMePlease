@@ -48,8 +48,12 @@ public class Bullet : MonoBehaviour, IWeaponProjectile, IAnomalySpeedProjectile
     }
     private void Update()
     {
+        Vector2 windVelocity = WorldRuleController.Instance != null
+            ? WorldRuleController.Instance.ProjectileWindVelocity
+            : Vector2.zero;
         transform.Translate(
-            direction * speed * anomalySpeed.Value * Time.deltaTime,
+            (direction * speed * anomalySpeed.Value + windVelocity) *
+            Time.deltaTime,
             Space.World
         );
 

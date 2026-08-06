@@ -31,6 +31,7 @@ public class EnemyBomberMovement : EnemyMovement
     private float speedMultiplier = 1f;
     private float anomalySpeedMultiplier = 1f;
     private float worldRuleSpeedMultiplier = 1f;
+    private Vector2 worldRuleExternalVelocity;
     private Vector2 knockbackVelocity;
 
     private void Awake()
@@ -69,7 +70,8 @@ public class EnemyBomberMovement : EnemyMovement
             speedMultiplier *
             anomalySpeedMultiplier *
             worldRuleSpeedMultiplier +
-            knockbackVelocity;
+            knockbackVelocity +
+            worldRuleExternalVelocity;
 
         rb.MovePosition(rb.position + movement * Time.fixedDeltaTime);
 
@@ -177,6 +179,11 @@ public class EnemyBomberMovement : EnemyMovement
     public override void SetWorldRuleSpeedMultiplier(float multiplier)
     {
         worldRuleSpeedMultiplier = Mathf.Max(0.1f, multiplier);
+    }
+
+    public override void SetWorldRuleExternalVelocity(Vector2 velocity)
+    {
+        worldRuleExternalVelocity = velocity;
     }
 
     public override void ApplyKnockback(Vector2 direction, float force)

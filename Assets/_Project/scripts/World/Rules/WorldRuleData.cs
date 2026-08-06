@@ -77,6 +77,18 @@ public sealed class WorldRuleData : ScriptableObject
     [SerializeField] private WindDirectionMode windDirectionMode;
     [Tooltip("Direction used by Fixed mode. A zero vector safely falls back to right.")]
     [SerializeField] private Vector2 fixedWindDirection = Vector2.right;
+    [Tooltip("Minimum time in seconds before the wind changes direction.")]
+    [SerializeField, Min(0.1f)] private float windMinDirectionDuration = 18f;
+    [Tooltip("Maximum time in seconds before the wind changes direction.")]
+    [SerializeField, Min(0.1f)] private float windMaxDirectionDuration = 30f;
+    [Tooltip("How long the existing wind indicator warns about the next direction.")]
+    [SerializeField, Range(0.1f, 10f)]
+    private float windDirectionWarningDuration = 2.5f;
+    [Tooltip("Wind strength applied to enemies relative to the player.")]
+    [SerializeField, Range(0f, 1f)] private float windEnemyForceMultiplier = 0.4f;
+    [Tooltip("Wind strength applied to compatible projectiles relative to the player.")]
+    [SerializeField, Range(0f, 1f)]
+    private float windProjectileForceMultiplier = 0.12f;
 
     public string Id => stableId;
     public WorldRuleType RuleType => ruleType;
@@ -108,6 +120,21 @@ public sealed class WorldRuleData : ScriptableObject
         fixedWindDirection.sqrMagnitude > 0.0001f
             ? fixedWindDirection.normalized
             : Vector2.right;
+    public float WindMinDirectionDuration =>
+        Mathf.Max(0.1f, windMinDirectionDuration);
+    public float WindMaxDirectionDuration => Mathf.Max(
+        WindMinDirectionDuration,
+        windMaxDirectionDuration
+    );
+    public float WindDirectionWarningDuration => Mathf.Clamp(
+        windDirectionWarningDuration,
+        0.1f,
+        WindMinDirectionDuration
+    );
+    public float WindEnemyForceMultiplier =>
+        Mathf.Clamp01(windEnemyForceMultiplier);
+    public float WindProjectileForceMultiplier =>
+        Mathf.Clamp01(windProjectileForceMultiplier);
     public string DisplayName => displayName;
     public string ShortDescription => shortDescription;
     public Sprite Icon => icon;

@@ -52,8 +52,12 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile, IAnomalySpeedP
         if (exploded)
             return;
 
+        Vector2 windVelocity = WorldRuleController.Instance != null
+            ? WorldRuleController.Instance.ProjectileWindVelocity
+            : Vector2.zero;
         transform.position += (Vector3)(
-            direction * speed * anomalySpeed.Value * Time.deltaTime
+            (direction * speed * anomalySpeed.Value + windVelocity) *
+            Time.deltaTime
         );
 
         if (Vector3.Distance(startPosition, transform.position) >= range)
