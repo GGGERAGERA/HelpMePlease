@@ -51,6 +51,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private readonly List<LocalAnomalyType> activeAnomalyTypes = new();
     private readonly List<int> activeAnomalyTypeCounts = new();
     private readonly StringBuilder activeAnomalySummary = new();
+    private readonly List<WorldEvent> addedEventPrefabs = new();
 
     private readonly Color panelColor = new(0.035f, 0.045f, 0.06f, 0.97f);
     private readonly Color rowColor = new(0.09f, 0.11f, 0.145f, 0.95f);
@@ -525,20 +526,63 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         AddSectionTitle(
             "WORLD EVENTS",
-            "Information only — connected spawner configuration"
+            "Spawn/Clear through WorldEventSpawner"
         );
 
-        AddEventRow<CaptureZoneEvent>("Capture");
-        AddEventRow<EvacuationCorridorEvent>("Evacuation");
+        WorldEvent currentEvent = worldEventSpawner != null
+            ? worldEventSpawner.CurrentEvent
+            : null;
+
+        AddRow(
+            $"Active event: {GetEventDisplayName(currentEvent)}",
+            currentEvent != null ? "ACTIVE" : "None",
+            currentEvent != null ? successColor : mutedColor,
+            "CLEAR EVENT",
+            currentEvent != null,
+            ClearWorldEvent
+        );
+
+        addedEventPrefabs.Clear();
+        AddEventRow<CaptureZoneEvent>("Capture Zone");
         AddEventRow<FalseSignalEvent>("False Signal");
+        AddEventRow<EvacuationCorridorEvent>("Evacuation Corridor");
         AddEventRow<RescueCapsuleEvent>("Rescue Capsule");
+        AddEventRow<CarrierHuntEvent>("Carrier Hunt");
+
+        if (worldEventSpawner == null)
+            return;
+
+        IReadOnlyList<WorldEvent> connectedPrefabs =
+            worldEventSpawner.EventPrefabs;
+
+        if (connectedPrefabs == null)
+            return;
+
+        for (int i = 0; i < connectedPrefabs.Count; i++)
+        {
+            WorldEvent prefab = connectedPrefabs[i];
+
+            if (prefab == null || addedEventPrefabs.Contains(prefab))
+                continue;
+
+            AddEventRow(GetEventDisplayName(prefab), prefab);
+        }
     }
 
     private void AddEventRow<T>(string displayName) where T : WorldEvent
     {
         WorldEvent prefab = FindEventPrefab<T>();
+        AddEventRow(displayName, prefab);
+    }
+
+    private void AddEventRow(string displayName, WorldEvent prefab)
+    {
         string status;
         Color statusColor;
+        bool canSpawn = false;
+
+        if (prefab != null && !addedEventPrefabs.Contains(prefab))
+            addedEventPrefabs.Add(prefab);
 
         if (prefab == null)
         {
@@ -547,7 +591,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         }
         else if (worldEventSpawner == null)
         {
-            status = "SPAWNER NOT FOUND";
+            status = "MISSING";
             statusColor = warningColor;
         }
         else if (!ContainsEventPrefab(worldEventSpawner.EventPrefabs, prefab))
@@ -562,11 +606,41 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         }
         else
         {
-            status = "AVAILABLE";
+            WorldEvent currentEvent = worldEventSpawner.CurrentEvent;
+            status = currentEvent != null &&
+                currentEvent.GetType() == prefab.GetType()
+                    ? "ACTIVE"
+                    : "AVAILABLE";
             statusColor = successColor;
+            canSpawn = true;
         }
 
-        AddRow(displayName, status, statusColor, null, false, null);
+        AddRow(
+            displayName,
+            status,
+            statusColor,
+            "SPAWN",
+            canSpawn,
+            () => SpawnWorldEvent(prefab)
+        );
+    }
+
+    private void SpawnWorldEvent(WorldEvent prefab)
+    {
+        if (worldEventSpawner == null || prefab == null)
+            return;
+
+        worldEventSpawner.SpawnDebugEvent(prefab);
+        RefreshData();
+    }
+
+    private void ClearWorldEvent()
+    {
+        if (worldEventSpawner == null)
+            return;
+
+        worldEventSpawner.ClearDebugEvent();
+        RefreshData();
     }
 
     private void ApplyWorldRule(WorldRuleData data)
@@ -657,6 +731,27 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             : type.ToString();
     }
 
+    private static string GetEventDisplayName(WorldEvent worldEvent)
+    {
+        if (worldEvent == null)
+            return "None";
+
+        if (worldEvent is CaptureZoneEvent)
+            return "Capture Zone";
+        if (worldEvent is FalseSignalEvent)
+            return "False Signal";
+        if (worldEvent is EvacuationCorridorEvent)
+            return "Evacuation Corridor";
+        if (worldEvent is RescueCapsuleEvent)
+            return "Rescue Capsule";
+        if (worldEvent is CarrierHuntEvent)
+            return "Carrier Hunt";
+
+        return string.IsNullOrWhiteSpace(worldEvent.EventDisplayName)
+            ? worldEvent.name
+            : worldEvent.EventDisplayName;
+    }
+
     private static bool ContainsEventPrefab(
         System.Collections.Generic.IReadOnlyList<WorldEvent> prefabs,
         WorldEvent target)
@@ -715,7 +810,11 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         LayoutElement layout = row.gameObject.AddComponent<LayoutElement>();
         layout.preferredHeight = 54f;
 
-        float buttonWidth = buttonLabel == "CLEAR ANOMALIES" ? 176f : 116f;
+        float buttonWidth = buttonLabel == "CLEAR ANOMALIES"
+            ? 176f
+            : buttonLabel == "CLEAR EVENT"
+                ? 150f
+                : 116f;
         float rightPadding = string.IsNullOrEmpty(buttonLabel)
             ? 18f
             : buttonWidth + 36f;
