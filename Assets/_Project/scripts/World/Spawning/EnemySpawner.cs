@@ -50,6 +50,7 @@ public class EnemySpawner : MonoBehaviour
     {
         public GameObject instance;
         public GameObject sourcePrefab;
+        public string enemyId;
         public EnemyMovement movement;
         public float baseSpeedMultiplier;
     }
@@ -255,6 +256,7 @@ public class EnemySpawner : MonoBehaviour
                     minDistance,
                     maxDistance,
                     minimumDistanceFromPlayer,
+                    0f,
                     out Vector3 spawnPosition))
             {
                 break;
@@ -269,6 +271,7 @@ public class EnemySpawner : MonoBehaviour
         float minDistance,
         float maxDistance,
         float minimumDistanceFromPlayer,
+        float spawnClearance,
         out Vector3 spawnPosition)
     {
         float safePlayerDistance = Mathf.Max(0f, minimumDistanceFromPlayer);
@@ -302,12 +305,44 @@ public class EnemySpawner : MonoBehaviour
                 continue;
             }
 
+            if (!IsAdditionalWaveSpawnPositionClear(
+                    candidate,
+                    spawnClearance))
+            {
+                continue;
+            }
+
             spawnPosition = candidate;
             return true;
         }
 
         spawnPosition = default;
         return false;
+    }
+
+    private static bool IsAdditionalWaveSpawnPositionClear(
+        Vector2 position,
+        float clearance)
+    {
+        float safeClearance = Mathf.Max(0f, clearance);
+
+        if (safeClearance <= 0f)
+            return true;
+
+        Collider2D[] overlaps = Physics2D.OverlapCircleAll(
+            position,
+            safeClearance
+        );
+
+        for (int i = 0; i < overlaps.Length; i++)
+        {
+            Collider2D overlap = overlaps[i];
+
+            if (overlap != null && overlap.enabled && !overlap.isTrigger)
+                return false;
+        }
+
+        return true;
     }
 
     private void CaptureBaseSettings()
@@ -402,6 +437,45 @@ public class EnemySpawner : MonoBehaviour
             limitedInterval /
             GetExternalSpawnPressureMultiplier() /
             worldAccelerationMultiplier
+        );
+    }
+
+    public GameObject SpawnSpecificEnemyAround(
+        GameObject enemyPrefab,
+        Vector3 origin,
+        float minDistance,
+        float maxDistance,
+        float minimumDistanceFromPlayer = 0f,
+        bool countTowardSpawnLimits = true,
+        float spawnClearance = 0f)
+    {
+        if (enemyPrefab == null)
+            return null;
+
+        if (gameplayArea == null)
+            ResolveGameplayArea();
+
+        if (player == null)
+            player = GameObject.FindGameObjectWithTag("Player")?.transform;
+
+        RemoveDestroyedEnemies();
+
+        if (gameplayArea == null ||
+            !TryGetAdditionalWaveSpawnPosition(
+                origin,
+                minDistance,
+                maxDistance,
+                minimumDistanceFromPlayer,
+                spawnClearance,
+                out Vector3 spawnPosition))
+        {
+            return null;
+        }
+
+        return SpawnEnemyAt(
+            enemyPrefab,
+            spawnPosition,
+            countTowardSpawnLimits
         );
     }
 
@@ -501,7 +575,10 @@ public class EnemySpawner : MonoBehaviour
         SpawnEnemyAt(selectedPrefab, spawnPosition);
     }
 
-    private void SpawnEnemyAt(GameObject selectedPrefab, Vector3 spawnPosition)
+    private GameObject SpawnEnemyAt(
+        GameObject selectedPrefab,
+        Vector3 spawnPosition,
+        bool countTowardSpawnLimits = true)
     {
         GameObject enemy = Instantiate(
             selectedPrefab,
@@ -520,13 +597,19 @@ public class EnemySpawner : MonoBehaviour
         float phaseSpeed = activePhase != null ? activePhase.speedMultiplier : 1f;
         float baseEnemySpeedMultiplier = currentSpeedMultiplier * phaseSpeed;
 
-        activeEnemies.Add(new SpawnedEnemy
+        EnemyIdentity identity = enemy.GetComponent<EnemyIdentity>();
+
+        if (countTowardSpawnLimits)
         {
-            instance = enemy,
-            sourcePrefab = selectedPrefab,
-            movement = movement,
-            baseSpeedMultiplier = baseEnemySpeedMultiplier
-        });
+            activeEnemies.Add(new SpawnedEnemy
+            {
+                instance = enemy,
+                sourcePrefab = selectedPrefab,
+                enemyId = identity != null ? identity.EnemyId : string.Empty,
+                movement = movement,
+                baseSpeedMultiplier = baseEnemySpeedMultiplier
+            });
+        }
 
         if (movement != null)
             movement.SetSpeedMultiplier(
@@ -534,6 +617,7 @@ public class EnemySpawner : MonoBehaviour
             );
 
         health?.NotifySpawnConfigured();
+        return enemy;
     }
 
     private GameObject SelectWeightedEnemy(EnemySpawnPhase phase)
@@ -584,6 +668,10 @@ public class EnemySpawner : MonoBehaviour
             return true;
 
         int minimumTypeLimit = Mathf.Max(1, entry.maxAliveOfType);
+
+        if (entry.useExactAliveLimit)
+            return CountAlive(entry) < minimumTypeLimit;
+
         float effectivePressure = GetEffectiveSpawnPressure();
         int scaledTypeLimit = Mathf.Clamp(
             Mathf.RoundToInt(entry.maxAliveOfType * effectivePressure),
@@ -591,7 +679,7 @@ public class EnemySpawner : MonoBehaviour
             Mathf.Max(minimumTypeLimit, maxAliveLimit)
         );
 
-        return CountAlive(entry.enemyPrefab) < scaledTypeLimit;
+        return CountAlive(entry) < scaledTypeLimit;
     }
 
     private float GetEffectiveSpawnPressure()
@@ -605,14 +693,24 @@ public class EnemySpawner : MonoBehaviour
             worldEventSpawnPressureMultiplier;
     }
 
-    private int CountAlive(GameObject sourcePrefab)
+    private int CountAlive(EnemySpawnEntry entry)
     {
         int count = 0;
+        EnemyIdentity prefabIdentity =
+            entry.enemyPrefab.GetComponent<EnemyIdentity>();
+        string targetEnemyId = prefabIdentity != null
+            ? prefabIdentity.EnemyId
+            : string.Empty;
+        bool useIdentity = !string.IsNullOrWhiteSpace(targetEnemyId);
 
         for (int i = 0; i < activeEnemies.Count; i++)
         {
-            if (activeEnemies[i].instance != null &&
-                activeEnemies[i].sourcePrefab == sourcePrefab)
+            SpawnedEnemy activeEnemy = activeEnemies[i];
+
+            if (activeEnemy.instance != null &&
+                (useIdentity
+                    ? activeEnemy.enemyId == targetEnemyId
+                    : activeEnemy.sourcePrefab == entry.enemyPrefab))
             {
                 count++;
             }

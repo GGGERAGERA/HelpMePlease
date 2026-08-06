@@ -11,11 +11,14 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     [SerializeField] private WorldRuleController worldRuleController;
     [SerializeField] private LevelAnomalyController anomalyController;
     [SerializeField] private WorldEventSpawner worldEventSpawner;
+    [SerializeField] private EnemySpawner enemySpawner;
 
     [Header("Known project content")]
     [SerializeField] private WorldRuleData[] worldRules;
     [SerializeField] private LocalAnomalyData[] localAnomalies;
     [SerializeField] private WorldEvent[] worldEventPrefabs;
+    [SerializeField] private GameObject turretEnemyPrefab;
+    [SerializeField] private GameObject eyesEnemyPrefab;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private static readonly WorldRuleType[] DebugRuleTypes =
@@ -52,6 +55,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private readonly List<int> activeAnomalyTypeCounts = new();
     private readonly StringBuilder activeAnomalySummary = new();
     private readonly List<WorldEvent> addedEventPrefabs = new();
+    private readonly List<GameObject> debugEnemies = new();
 
     private readonly Color panelColor = new(0.035f, 0.045f, 0.06f, 0.97f);
     private readonly Color rowColor = new(0.09f, 0.11f, 0.145f, 0.95f);
@@ -144,6 +148,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         if (worldEventSpawner == null)
             worldEventSpawner = FindFirstObjectByType<WorldEventSpawner>();
+
+        if (enemySpawner == null)
+            enemySpawner = FindFirstObjectByType<EnemySpawner>();
 
         WarnIfMissing(
             worldRuleController,
@@ -290,6 +297,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddWorldRulesSection();
         AddLocalAnomaliesSection();
         AddWorldEventsSection();
+        AddEnemiesSection();
         AddHint("F1 toggles this menu. Gameplay remains paused while it is open.");
     }
 
@@ -569,6 +577,91 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         }
     }
 
+    private void AddEnemiesSection()
+    {
+        RemoveDestroyedDebugEnemies();
+        AddSectionTitle("ENEMIES", "Spawn existing prefabs near the player");
+
+        AddDebugEnemyRow("Turret", turretEnemyPrefab, "SPAWN TURRET");
+        AddDebugEnemyRow("Eyes", eyesEnemyPrefab, "SPAWN EYES");
+        AddRow(
+            "Debug-spawned enemies",
+            debugEnemies.Count > 0 ? $"ACTIVE: {debugEnemies.Count}" : "CLEAR",
+            debugEnemies.Count > 0 ? successColor : mutedColor,
+            "CLEAR DEBUG ENEMIES",
+            debugEnemies.Count > 0,
+            ClearDebugEnemies
+        );
+    }
+
+    private void AddDebugEnemyRow(
+        string displayName,
+        GameObject prefab,
+        string buttonLabel)
+    {
+        bool available = enemySpawner != null && prefab != null;
+        string status = prefab == null
+            ? "PREFAB NOT ASSIGNED"
+            : enemySpawner == null
+                ? "SPAWNER NOT FOUND"
+                : "AVAILABLE";
+
+        AddRow(
+            displayName,
+            status,
+            available ? successColor : warningColor,
+            buttonLabel,
+            available,
+            () => SpawnDebugEnemy(prefab)
+        );
+    }
+
+    private void SpawnDebugEnemy(GameObject prefab)
+    {
+        if (enemySpawner == null || prefab == null)
+            return;
+
+        Transform player = GameObject.FindGameObjectWithTag("Player")?.transform;
+
+        if (player == null)
+            return;
+
+        GameObject enemy = enemySpawner.SpawnSpecificEnemyAround(
+            prefab,
+            player.position,
+            3f,
+            6f,
+            3f,
+            false
+        );
+
+        if (enemy != null)
+            debugEnemies.Add(enemy);
+
+        RefreshData();
+    }
+
+    private void ClearDebugEnemies()
+    {
+        for (int i = debugEnemies.Count - 1; i >= 0; i--)
+        {
+            if (debugEnemies[i] != null)
+                Destroy(debugEnemies[i]);
+        }
+
+        debugEnemies.Clear();
+        RefreshData();
+    }
+
+    private void RemoveDestroyedDebugEnemies()
+    {
+        for (int i = debugEnemies.Count - 1; i >= 0; i--)
+        {
+            if (debugEnemies[i] == null)
+                debugEnemies.RemoveAt(i);
+        }
+    }
+
     private void AddEventRow<T>(string displayName) where T : WorldEvent
     {
         WorldEvent prefab = FindEventPrefab<T>();
@@ -810,11 +903,15 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         LayoutElement layout = row.gameObject.AddComponent<LayoutElement>();
         layout.preferredHeight = 54f;
 
-        float buttonWidth = buttonLabel == "CLEAR ANOMALIES"
-            ? 176f
-            : buttonLabel == "CLEAR EVENT"
-                ? 150f
-                : 116f;
+        float buttonWidth = buttonLabel switch
+        {
+            "CLEAR DEBUG ENEMIES" => 218f,
+            "CLEAR ANOMALIES" => 176f,
+            "SPAWN TURRET" => 166f,
+            "SPAWN EYES" => 150f,
+            "CLEAR EVENT" => 150f,
+            _ => 116f
+        };
         float rightPadding = string.IsNullOrEmpty(buttonLabel)
             ? 18f
             : buttonWidth + 36f;

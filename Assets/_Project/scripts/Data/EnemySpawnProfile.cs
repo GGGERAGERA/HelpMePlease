@@ -30,5 +30,7 @@ public sealed class EnemySpawnEntry
     [Min(0f)] public float weight = 1f;
     [Tooltip("0 means no per-type limit.")]
     [Min(0)] public int maxAliveOfType;
+    [Tooltip("Keep maxAliveOfType exact instead of scaling it with pressure.")]
+    public bool useExactAliveLimit;
     [Min(1)] public int minimumRunLevel = 1;
 }

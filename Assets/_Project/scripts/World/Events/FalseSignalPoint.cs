@@ -18,6 +18,9 @@ public sealed class FalseSignalPoint : MonoBehaviour
     private float fadeDuration;
     private float fadeRemaining;
     private float visibility = 1f;
+    private bool trapWarningActive;
+    private float trapWarningElapsed;
+    private Color trapWarningColor;
 
     public void Initialize(FalseSignalEvent eventOwner, bool realSignal)
     {
@@ -34,6 +37,9 @@ public sealed class FalseSignalPoint : MonoBehaviour
 
     private void Update()
     {
+        if (trapWarningActive)
+            trapWarningElapsed += Time.deltaTime;
+
         if (fading)
         {
             fadeRemaining = Mathf.Max(
@@ -58,7 +64,6 @@ public sealed class FalseSignalPoint : MonoBehaviour
             return;
 
         consumed = true;
-        SetVisualEnabled(false);
 
         if (signalCollider != null)
             signalCollider.enabled = false;
@@ -66,7 +71,15 @@ public sealed class FalseSignalPoint : MonoBehaviour
         FalseSignalEvent eventOwner = owner;
         owner = null;
         eventOwner.ResolveSignal(this, isReal);
-        Destroy(gameObject);
+    }
+
+    public void BeginTrapWarning(Color warningColor)
+    {
+        trapWarningActive = true;
+        trapWarningElapsed = 0f;
+        trapWarningColor = warningColor;
+        visibility = 1f;
+        SetVisualEnabled(true);
     }
 
     public void FadeOutAndDestroy(float duration)
@@ -133,7 +146,19 @@ public sealed class FalseSignalPoint : MonoBehaviour
 
     private void ApplyVisual()
     {
-        Color coreColor = color;
+        Color coreColor = trapWarningActive
+            ? trapWarningColor
+            : color;
+
+        if (trapWarningActive)
+        {
+            float pulse = Mathf.PingPong(
+                trapWarningElapsed * 8f,
+                1f
+            );
+            coreColor.a *= Mathf.Lerp(0.3f, 1f, pulse);
+        }
+
         coreColor.a *= visibility;
 
         if (coreRing != null)

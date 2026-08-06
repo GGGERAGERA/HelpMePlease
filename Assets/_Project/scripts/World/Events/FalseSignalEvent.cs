@@ -1,9 +1,35 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
 public sealed class FalseSignalEvent : WorldEvent
 {
+    private enum FalseSignalTrap
+    {
+        Ambush,
+        Blackout
+    }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private enum DebugTrapOverride
+    {
+        Random,
+        Ambush,
+        Blackout
+    }
+#endif
+
+    private const int AmbushTurretCount = 2;
+    private const float AmbushWarningDuration = 0.5f;
+    private const float BlackoutWarningDuration = 0.4f;
+    private const float BlackoutDuration = 3f;
+    private const float BlackoutGlobalLightMultiplier = 0.15f;
+    private const float TurretMinimumSpawnRadius = 3f;
+    private const float TurretMaximumSpawnRadius = 5f;
+    private const float TurretMinimumPlayerDistance = 2f;
+    private const float TurretSpawnClearance = 0.75f;
+
     [Header("Start")]
     [SerializeField, Min(0.1f)] private float startRadius = 2.5f;
     [SerializeField] private Material lineMaterial;
@@ -26,6 +52,7 @@ public sealed class FalseSignalEvent : WorldEvent
     [SerializeField, Min(0f)] private float minimumSpawnRadius = 3f;
     [SerializeField, Min(0f)] private float maximumSpawnRadius = 6f;
     [SerializeField] private EnemySpawner enemySpawner;
+    [SerializeField] private GameObject ambushTurretPrefab;
 
     [Header("Feedback")]
     [SerializeField, Min(0.1f)] private float feedbackPulseDuration = 0.45f;
@@ -38,7 +65,13 @@ public sealed class FalseSignalEvent : WorldEvent
     [Header("Scene")]
     [SerializeField] private GameplayAreaService gameplayArea;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    [Header("Debug")]
+    [SerializeField] private DebugTrapOverride debugTrapOverride;
+#endif
+
     private readonly List<FalseSignalPoint> signalPoints = new();
+    private readonly List<GameObject> spawnedAmbushTurrets = new();
     private readonly Dictionary<FalseSignalPoint, WorldEventMarker>
         signalPointMarkers = new();
     private Collider2D startCollider;
@@ -47,6 +80,9 @@ public sealed class FalseSignalEvent : WorldEvent
     private Vector3 rewardPosition;
     private bool hasRewardPosition;
     private bool completionPending;
+    private WorldRuleVisual worldRuleVisual;
+    private float blackoutRemaining;
+    private bool blackoutActive;
 
     public override Vector3 RewardPosition => hasRewardPosition
         ? rewardPosition
@@ -57,6 +93,9 @@ public sealed class FalseSignalEvent : WorldEvent
         base.Initialize(spawner);
         hasRewardPosition = false;
         completionPending = false;
+        blackoutRemaining = 0f;
+        blackoutActive = false;
+        spawnedAmbushTurrets.Clear();
         ShowEventMarker(transform, "FALSE SIGNAL");
     }
 
@@ -75,6 +114,8 @@ public sealed class FalseSignalEvent : WorldEvent
         }
 
         timeRemaining -= Time.deltaTime;
+
+        UpdateBlackout();
 
         if (timeRemaining <= 0f)
             FailFalseSignal();
@@ -113,36 +154,175 @@ public sealed class FalseSignalEvent : WorldEvent
             return;
         }
 
-        signalPoints.Remove(signalPoint);
         RemoveSignalPointMarker(signalPoint);
 
         if (!isReal)
         {
-            RunMessageService.Instance?.ShowWorldEventFeedback(
-                "ЛОЖНЫЙ СИГНАЛ",
-                "ЗАСАДА",
-                falseSignalPulseColor,
-                feedbackPulseDuration
-            );
-            CameraShake.Instance?.Shake(
-                ambushShakeDuration,
-                ambushShakeMagnitude
-            );
-            enemySpawner?.SpawnAdditionalWave(
-                signalPoint.transform.position,
-                falseSignalEnemyCount,
-                minimumSpawnRadius,
-                maximumSpawnRadius,
-                minimumEnemyDistanceFromPlayer
-            );
+            FalseSignalTrap trap = ChooseFalseSignalTrap();
+            float warningDuration = trap == FalseSignalTrap.Ambush
+                ? AmbushWarningDuration
+                : BlackoutWarningDuration;
+
+            signalPoint.BeginTrapWarning(falseSignalPulseColor);
+            StartCoroutine(ResolveFalseSignalTrapAfterWarning(
+                signalPoint,
+                trap,
+                warningDuration
+            ));
             return;
         }
 
         rewardPosition = signalPoint.transform.position;
         hasRewardPosition = true;
+        signalPoints.Remove(signalPoint);
+        Destroy(signalPoint.gameObject);
         completionPending = true;
         FadeRemainingSignalPoints();
         CompleteEvent();
+    }
+
+    private void SpawnAmbushTurrets(Vector3 origin)
+    {
+        if (enemySpawner == null || ambushTurretPrefab == null)
+            return;
+
+        float minimumPlayerDistance = Mathf.Max(
+            TurretMinimumPlayerDistance,
+            minimumEnemyDistanceFromPlayer
+        );
+
+        for (int i = 0; i < AmbushTurretCount; i++)
+        {
+            GameObject turret = enemySpawner.SpawnSpecificEnemyAround(
+                ambushTurretPrefab,
+                origin,
+                TurretMinimumSpawnRadius,
+                TurretMaximumSpawnRadius,
+                minimumPlayerDistance,
+                true,
+                TurretSpawnClearance
+            );
+
+            if (turret != null)
+                spawnedAmbushTurrets.Add(turret);
+        }
+    }
+
+    private IEnumerator ResolveFalseSignalTrapAfterWarning(
+        FalseSignalPoint signalPoint,
+        FalseSignalTrap trap,
+        float warningDuration)
+    {
+        yield return new WaitForSeconds(warningDuration);
+
+        if (!IsStarted || IsCompleted)
+            yield break;
+
+        Vector3 trapPosition = signalPoint != null
+            ? signalPoint.transform.position
+            : transform.position;
+
+        signalPoints.Remove(signalPoint);
+
+        if (signalPoint != null)
+            Destroy(signalPoint.gameObject);
+
+        switch (trap)
+        {
+            case FalseSignalTrap.Ambush:
+                TriggerAmbush(trapPosition);
+                break;
+
+            case FalseSignalTrap.Blackout:
+                TriggerBlackout();
+                break;
+        }
+    }
+
+    private void TriggerAmbush(Vector3 origin)
+    {
+        RunMessageService.Instance?.ShowWorldEventFeedback(
+            "ЛОЖНЫЙ СИГНАЛ",
+            "ЗАСАДА",
+            falseSignalPulseColor,
+            feedbackPulseDuration
+        );
+        CameraShake.Instance?.Shake(
+            ambushShakeDuration,
+            ambushShakeMagnitude
+        );
+        enemySpawner?.SpawnAdditionalWave(
+            origin,
+            falseSignalEnemyCount,
+            minimumSpawnRadius,
+            maximumSpawnRadius,
+            minimumEnemyDistanceFromPlayer
+        );
+        SpawnAmbushTurrets(origin);
+    }
+
+    private void TriggerBlackout()
+    {
+        RunMessageService.Instance?.ShowWorldEventFeedback(
+            "ЛОЖНЫЙ СИГНАЛ",
+            "BLACKOUT",
+            falseSignalPulseColor,
+            feedbackPulseDuration
+        );
+
+        blackoutRemaining = BlackoutDuration;
+        blackoutActive = true;
+        worldRuleVisual?.SetBlackoutGlobalLightMultiplier(
+            this,
+            BlackoutGlobalLightMultiplier
+        );
+    }
+
+    private void UpdateBlackout()
+    {
+        if (!blackoutActive)
+            return;
+
+        blackoutRemaining = Mathf.Max(
+            0f,
+            blackoutRemaining - Time.deltaTime
+        );
+
+        if (blackoutRemaining > 0f)
+            return;
+
+        RemoveBlackoutModifier();
+    }
+
+    private void RemoveBlackoutModifier()
+    {
+        if (!blackoutActive)
+            return;
+
+        blackoutActive = false;
+        blackoutRemaining = 0f;
+        worldRuleVisual?.RemoveBlackoutGlobalLightMultiplier(this);
+    }
+
+    private FalseSignalTrap ChooseFalseSignalTrap()
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (debugTrapOverride == DebugTrapOverride.Ambush)
+        {
+            debugTrapOverride = DebugTrapOverride.Random;
+            return FalseSignalTrap.Ambush;
+        }
+
+        if (debugTrapOverride == DebugTrapOverride.Blackout)
+        {
+            debugTrapOverride = DebugTrapOverride.Random;
+            return FalseSignalTrap.Blackout;
+        }
+#endif
+
+        return Random.value < 0.5f
+            ? FalseSignalTrap.Ambush
+            : FalseSignalTrap.Blackout;
     }
 
     public void HandleSignalPointDestroyed(FalseSignalPoint signalPoint)
@@ -240,6 +420,9 @@ public sealed class FalseSignalEvent : WorldEvent
 
         if (enemySpawner == null)
             enemySpawner = FindFirstObjectByType<EnemySpawner>();
+
+        if (worldRuleVisual == null)
+            worldRuleVisual = FindFirstObjectByType<WorldRuleVisual>();
     }
 
     private void BuildStartVisual()
@@ -298,6 +481,8 @@ public sealed class FalseSignalEvent : WorldEvent
 
     protected override void CleanupEvent()
     {
+        StopAllCoroutines();
+        RemoveBlackoutModifier();
         CleanupSignalPointMarkers();
 
         for (int i = 0; i < signalPoints.Count; i++)
@@ -307,6 +492,17 @@ public sealed class FalseSignalEvent : WorldEvent
         }
 
         signalPoints.Clear();
+
+        if (IsDebugCleanup)
+        {
+            for (int i = 0; i < spawnedAmbushTurrets.Count; i++)
+            {
+                if (spawnedAmbushTurrets[i] != null)
+                    Destroy(spawnedAmbushTurrets[i]);
+            }
+        }
+
+        spawnedAmbushTurrets.Clear();
     }
 
     private void RemoveSignalPointMarker(FalseSignalPoint signalPoint)

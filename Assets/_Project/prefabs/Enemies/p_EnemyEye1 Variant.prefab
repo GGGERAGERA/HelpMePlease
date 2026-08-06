@@ -103,6 +103,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: p_EnemyEye1 Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 330473454747600092, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: enemyId
+      value: Eyes
+      objectReference: {fileID: 0}
     - target: {fileID: 1915675553744595750, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.6452
@@ -165,6 +169,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 174528772103428958, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 9133520138962506031}
+    - targetCorrespondingSourceObject: {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8921193840297014073}
   m_SourcePrefab: {fileID: 100100000, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
 --- !u!1 &4536633306523866543 stripped
 GameObject:
@@ -198,3 +205,22 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8234403241518505351, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
   m_PrefabInstance: {fileID: 4366617016853909233}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &3350373065324294653 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+  m_PrefabInstance: {fileID: 4366617016853909233}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8921193840297014073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3350373065324294653}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a42e1100000000000000000000000002, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EyesEnemyBehaviour
+  eyeVisual: {fileID: 4524904278419929960}
+  moveSpeed: 1.2

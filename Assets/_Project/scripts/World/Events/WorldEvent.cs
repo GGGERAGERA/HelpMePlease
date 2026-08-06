@@ -9,6 +9,7 @@ public abstract class WorldEvent : Interactable
     protected WorldEventSpawner owner;
 
     private bool cleanupPerformed;
+    private bool debugCleanup;
     private bool eventMarkerVisible;
     public bool IsCompleted { get; private set; }
     public bool IsFailed { get; private set; }
@@ -16,6 +17,7 @@ public abstract class WorldEvent : Interactable
     public string EventDisplayName => eventDisplayName;
     public string EventDescription => eventDescription;
     public virtual Vector3 RewardPosition => transform.position;
+    protected bool IsDebugCleanup => debugCleanup;
     public override bool CanInteract
     {
         get
@@ -38,6 +40,7 @@ public abstract class WorldEvent : Interactable
         IsFailed = false;
         IsStarted = false;
         cleanupPerformed = false;
+        debugCleanup = false;
         eventMarkerVisible = false;
     }
 
@@ -150,6 +153,7 @@ public abstract class WorldEvent : Interactable
         // presentation; no failure notification is sent to the owner.
         IsCompleted = true;
         IsFailed = true;
+        debugCleanup = true;
         HideEventMarker();
         CleanupOnce();
         owner = null;

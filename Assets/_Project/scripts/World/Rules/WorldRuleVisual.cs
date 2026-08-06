@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -195,6 +196,12 @@ public sealed class WorldRuleVisual : MonoBehaviour
     private float normalPlayerLightIntensity;
     private float normalPlayerLightFalloff;
     private bool playerLightStateCaptured;
+    private readonly Dictionary<Object, float>
+        playerLightRadiusMultipliers = new();
+    private readonly Dictionary<Object, float>
+        blackoutGlobalLightMultipliers = new();
+    private const float EyesMinimumRadiusMultiplier = 0.6f;
+    private const float EyesMinimumGlobalLightMultiplier = 0.35f;
     private Light2D darknessRevealLight;
     private GameObject darknessRevealObject;
     private float darknessRevealRemaining;
@@ -681,17 +688,33 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
     private void UpdateDarknessResources()
     {
+        float radiusMultiplier = GetPlayerLightRadiusMultiplier();
+        float eyesStrength = Mathf.InverseLerp(
+            1f,
+            EyesMinimumRadiusMultiplier,
+            radiusMultiplier
+        );
+
         if (globalLight != null && globalLightStateCaptured)
         {
-            globalLight.intensity = Mathf.Lerp(
+            float baseGlobalIntensity = Mathf.Lerp(
                 baselineGlobalLightIntensity,
                 darknessGlobalIntensity,
                 currentDarknessIntensity
             );
+            float eyesGlobalMultiplier = Mathf.Lerp(
+                1f,
+                EyesMinimumGlobalLightMultiplier,
+                eyesStrength
+            );
+            globalLight.intensity =
+                baseGlobalIntensity * eyesGlobalMultiplier *
+                GetBlackoutGlobalLightMultiplier();
         }
 
         if (currentDarknessIntensity > 0f ||
-            targetDarknessIntensity > 0f)
+            targetDarknessIntensity > 0f ||
+            playerLightRadiusMultipliers.Count > 0)
         {
             ResolvePlayerLight();
         }
@@ -699,11 +722,12 @@ public sealed class WorldRuleVisual : MonoBehaviour
         if (playerLight == null || !playerLightStateCaptured)
             return;
 
-        playerLight.pointLightOuterRadius = Mathf.Lerp(
+        float baseRadius = Mathf.Lerp(
             normalPlayerLightRadius,
             playerLightRadius,
             currentDarknessIntensity
         );
+        playerLight.pointLightOuterRadius = baseRadius * radiusMultiplier;
         playerLight.intensity = Mathf.Lerp(
             normalPlayerLightIntensity,
             playerLightIntensity,
@@ -714,6 +738,70 @@ public sealed class WorldRuleVisual : MonoBehaviour
             playerLightFalloff,
             currentDarknessIntensity
         );
+    }
+
+    public void SetPlayerLightRadiusMultiplier(
+        Object source,
+        float multiplier)
+    {
+        if (source == null)
+            return;
+
+        playerLightRadiusMultipliers[source] = Mathf.Clamp01(multiplier);
+    }
+
+    public void RemovePlayerLightRadiusMultiplier(Object source)
+    {
+        if (ReferenceEquals(source, null))
+            return;
+
+        if (!playerLightRadiusMultipliers.Remove(source))
+            return;
+
+        UpdateDarknessResources();
+    }
+
+    private float GetPlayerLightRadiusMultiplier()
+    {
+        float result = 1f;
+
+        foreach (float multiplier in playerLightRadiusMultipliers.Values)
+            result = Mathf.Min(result, multiplier);
+
+        return result;
+    }
+
+    public void SetBlackoutGlobalLightMultiplier(
+        Object source,
+        float multiplier)
+    {
+        if (source == null)
+            return;
+
+        blackoutGlobalLightMultipliers[source] =
+            Mathf.Clamp01(multiplier);
+        UpdateDarknessResources();
+    }
+
+    public void RemoveBlackoutGlobalLightMultiplier(Object source)
+    {
+        if (ReferenceEquals(source, null))
+            return;
+
+        if (!blackoutGlobalLightMultipliers.Remove(source))
+            return;
+
+        UpdateDarknessResources();
+    }
+
+    private float GetBlackoutGlobalLightMultiplier()
+    {
+        float result = 1f;
+
+        foreach (float multiplier in blackoutGlobalLightMultipliers.Values)
+            result = Mathf.Min(result, multiplier);
+
+        return result;
     }
 
     private void ResolvePlayerLight()
@@ -1634,6 +1722,8 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
     private void OnDisable()
     {
+        playerLightRadiusMultipliers.Clear();
+        blackoutGlobalLightMultipliers.Clear();
         SetNeutral();
     }
 

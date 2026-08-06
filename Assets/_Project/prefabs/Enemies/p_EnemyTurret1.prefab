@@ -557,6 +557,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: p_EnemyTurret1
       objectReference: {fileID: 0}
+    - target: {fileID: 330473454747600092, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: enemyId
+      value: Turret
+      objectReference: {fileID: 0}
     - target: {fileID: 1650459043932727762, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: m_Size.x
       value: 1.0727806
@@ -638,10 +642,36 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8234403241518505351, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6444087543633445230}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6018367976647202281}
   m_SourcePrefab: {fileID: 100100000, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
 --- !u!4 &8225059544858623518 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8234403241518505351, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
   m_PrefabInstance: {fileID: 27921055179006873}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1334349216365075605 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+  m_PrefabInstance: {fileID: 27921055179006873}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6018367976647202281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1334349216365075605}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a42e1100000000000000000000000001, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::TurretEnemyBehaviour
+  aimPivot: {fileID: 3952823522664485484}
+  firePoint: {fileID: 8509991220114881812}
+  projectilePrefab: {fileID: 1168613123775889235, guid: 3cd5630d49123414ba68ea2d0d673765, type: 3}
+  aimLineMaterial: {fileID: 2100000, guid: dca396c6aa60fe549b61f941be335967, type: 2}
+  aimDuration: 1
+  cooldown: 2.5
