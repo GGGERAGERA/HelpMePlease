@@ -30,6 +30,18 @@ MonoBehaviour:
   goldenEnemyChance: 0
   goldenEnemyHealthMultiplier: 1
   goldenEnemyRewardMultiplier: 1
+  snowCalmDurationMin: 15
+  snowCalmDurationMax: 24
+  snowWarningDuration: 2.5
+  snowBlizzardDurationMin: 5
+  snowBlizzardDurationMax: 7
+  snowCalmEmissionMultiplier: 1
+  snowBlizzardEmissionMultiplier: 3.5
+  snowCalmParticleSpeedMultiplier: 1
+  snowBlizzardParticleSpeedMultiplier: 2.1
+  snowBlizzardVisibilityMultiplier: 0.65
+  snowTransitionDuration: 1
+  snowBlizzardHorizontalSpeed: 2.4
   windForce: 0
   windDirectionMode: 0
   fixedWindDirection: {x: 1, y: 0}

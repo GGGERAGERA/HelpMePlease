@@ -6288,6 +6288,7 @@ MonoBehaviour:
   assignmentPulseDuration: 0.28
   deathFlashIntensity: 1.35
   goldenDeathFxPrefab: {fileID: 4954931696877459830, guid: a0f7d14547ca6cc4281f13e8d9aa8cab, type: 3}
+  goldenCoinPrefab: {fileID: 8849100027710031041, guid: dde4a96739496354da52757e7a1d4556, type: 3}
 --- !u!114 &2147010007
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6322,7 +6323,10 @@ MonoBehaviour:
   globalLight: {fileID: 1615053065}
   darknessGlobalIntensity: 0.05
   playerLightRadius: 6.5
+  playerLightIntensity: 1
   playerLightFalloff: 0.75
+  darknessMarkerSprite: {fileID: 21300000, guid: 119f93d0bcbf1e743bf5fcf237507d39, type: 3}
+  darknessMarkerMaterial: {fileID: 2100000, guid: 91d132427295d144ead3f3fb486918c3, type: 2}
   transitionDuration: 1
   snowTransitionDuration: 1
   snowVisualIntensity: 0.58

@@ -4,6 +4,10 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
 {
     [SerializeField] private GameObject projectilePrefab;
 
+    public bool UsesRocketProjectile =>
+        projectilePrefab != null &&
+        projectilePrefab.GetComponent<RocketProjectile>() != null;
+
     public bool Fire(WeaponFireContext context)
     {
         if (projectilePrefab == null)

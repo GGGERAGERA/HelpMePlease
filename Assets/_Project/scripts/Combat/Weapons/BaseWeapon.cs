@@ -1,8 +1,17 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
+public enum WeaponShotKind
+{
+    Standard = 0,
+    Rocket = 1,
+    Laser = 2
+}
+
 public abstract class BaseWeapon : MonoBehaviour
 {
+    public static event System.Action<Vector2, WeaponShotKind> ShotFired;
+
     [Header("Base Weapon Settings")]
     public WeaponData weaponData;
     public Transform firePoint;
@@ -48,6 +57,7 @@ public abstract class BaseWeapon : MonoBehaviour
     public Vector2 AimDirection => lastAimDirection;
     public bool HasAim => hasAim;
     public bool WantsToFire => IsTryingToAttack();
+    protected virtual WeaponShotKind ShotKind => WeaponShotKind.Standard;
 
     protected virtual void Awake()
     {
@@ -103,7 +113,15 @@ public abstract class BaseWeapon : MonoBehaviour
         if (IsTryingToAttack() && CanAttack())
         {
             if (Attack())
+            {
                 MarkAttackTime();
+                ShotFired?.Invoke(
+                    firePoint != null
+                        ? (Vector2)firePoint.position
+                        : (Vector2)transform.position,
+                    ShotKind
+                );
+            }
         }
     }
 

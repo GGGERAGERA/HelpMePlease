@@ -1,8 +1,14 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public sealed class WorldRuleController : MonoBehaviour
 {
+#if UNITY_EDITOR
+    private const string GoldenCoinPrefabAssetPath =
+        "Assets/_Project/prefabs/Pickups/p_coin1.prefab";
+#endif
+
     public static WorldRuleController Instance { get; private set; }
 
     [Header("View")]
@@ -20,6 +26,9 @@ public sealed class WorldRuleController : MonoBehaviour
 
     [Header("Golden / Existing FX")]
     [SerializeField] private ParticleSystem goldenDeathFxPrefab;
+
+    [Header("Golden / Physical Coin Reward")]
+    [SerializeField] private GoldenCoinPickup goldenCoinPrefab;
 
     private static readonly Vector2[] CardinalWindDirections =
     {
@@ -59,6 +68,10 @@ public sealed class WorldRuleController : MonoBehaviour
     private float windDirectionChangeTimeRemaining;
     private bool windWarningVisible;
     private bool enemyWindApplied;
+    private Coroutine snowLifecycle;
+    private bool darknessActive;
+    private bool darknessShotSubscribed;
+    private float nextLaserRevealTime;
 
     public WorldRuleData ActiveRule => activeRule;
     public Vector2 ActiveWindDirection => activeWindDirection;
@@ -76,6 +89,25 @@ public sealed class WorldRuleController : MonoBehaviour
 
         Instance = this;
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (goldenCoinPrefab != null)
+            return;
+
+        GameObject coinPrefabObject =
+            UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(
+                GoldenCoinPrefabAssetPath
+            );
+        goldenCoinPrefab = coinPrefabObject != null
+            ? coinPrefabObject.GetComponent<GoldenCoinPickup>()
+            : null;
+
+        if (goldenCoinPrefab != null)
+            UnityEditor.EditorUtility.SetDirty(this);
+    }
+#endif
 
     private void Update()
     {
@@ -122,19 +154,158 @@ public sealed class WorldRuleController : MonoBehaviour
         ApplyGoldenEnemyAssignment();
         ApplySpawnPressure();
         worldRuleVisual?.Apply(rule);
+        ApplyDarkness();
         ApplyWind();
+        ApplySnow();
     }
 
     public void Clear()
     {
+        StopSnowLifecycle();
         RestoreSpawnPressure();
         RestoreRuntimeEffects();
         StopGoldenEnemyAssignment();
+        StopDarkness();
         UnsubscribeEnemyLifecycle();
 
         activeRule = null;
         playerMovement = null;
         worldRuleVisual?.Clear();
+    }
+
+    private void ApplySnow()
+    {
+        if (activeRule == null ||
+            activeRule.RuleType != WorldRuleType.Snow)
+        {
+            return;
+        }
+
+        StopSnowLifecycle();
+        worldRuleVisual?.SetSnowBlizzardState(
+            0f,
+            0f,
+            activeRule.SnowTransitionDuration
+        );
+        snowLifecycle = StartCoroutine(SnowCycle(activeRule));
+    }
+
+    private void ApplyDarkness()
+    {
+        if (activeRule == null ||
+            activeRule.RuleType != WorldRuleType.Darkness)
+        {
+            return;
+        }
+
+        darknessActive = true;
+        nextLaserRevealTime = 0f;
+        SubscribeEnemyLifecycle();
+
+        if (!darknessShotSubscribed)
+        {
+            BaseWeapon.ShotFired += HandlePlayerShot;
+            darknessShotSubscribed = true;
+        }
+
+        foreach (EnemyHealth enemy in registeredEnemies)
+            ApplyDarknessToEnemy(enemy, true);
+    }
+
+    private void StopDarkness()
+    {
+        if (darknessShotSubscribed)
+        {
+            BaseWeapon.ShotFired -= HandlePlayerShot;
+            darknessShotSubscribed = false;
+        }
+
+        if (darknessActive)
+        {
+            foreach (EnemyHealth enemy in registeredEnemies)
+                ApplyDarknessToEnemy(enemy, false);
+        }
+
+        darknessActive = false;
+        nextLaserRevealTime = 0f;
+        worldRuleVisual?.StopDarknessReveal();
+    }
+
+    private void HandlePlayerShot(Vector2 origin, WeaponShotKind shotKind)
+    {
+        if (!darknessActive || activeRule == null)
+            return;
+
+        if (shotKind == WeaponShotKind.Laser)
+        {
+            if (Time.unscaledTime < nextLaserRevealTime)
+                return;
+
+            nextLaserRevealTime = Time.unscaledTime +
+                activeRule.DarknessLaserRevealCooldown;
+        }
+
+        float multiplier = shotKind == WeaponShotKind.Rocket
+            ? activeRule.DarknessRocketRevealMultiplier
+            : 1f;
+        worldRuleVisual?.RevealDarkness(origin, multiplier);
+    }
+
+    private IEnumerator SnowCycle(WorldRuleData snowRule)
+    {
+        while (activeRule == snowRule)
+        {
+            float calmDuration = Random.Range(
+                snowRule.SnowCalmDurationMin,
+                snowRule.SnowCalmDurationMax
+            );
+            yield return new WaitForSeconds(calmDuration);
+
+            if (activeRule != snowRule)
+                break;
+
+            float direction = Random.value < 0.5f ? -1f : 1f;
+            worldRuleVisual?.SetSnowBlizzardState(
+                1f,
+                direction,
+                snowRule.SnowWarningDuration
+            );
+            yield return new WaitForSeconds(
+                snowRule.SnowWarningDuration
+            );
+
+            if (activeRule != snowRule)
+                break;
+
+            float blizzardDuration = Random.Range(
+                snowRule.SnowBlizzardDurationMin,
+                snowRule.SnowBlizzardDurationMax
+            );
+            yield return new WaitForSeconds(blizzardDuration);
+
+            if (activeRule != snowRule)
+                break;
+
+            worldRuleVisual?.SetSnowBlizzardState(
+                0f,
+                direction,
+                snowRule.SnowTransitionDuration
+            );
+            yield return new WaitForSeconds(
+                snowRule.SnowTransitionDuration
+            );
+        }
+
+        snowLifecycle = null;
+    }
+
+    private void StopSnowLifecycle()
+    {
+        if (snowLifecycle == null)
+            return;
+
+        StopCoroutine(snowLifecycle);
+        snowLifecycle = null;
     }
 
     private void ResolvePlayerReferences()
@@ -348,16 +519,13 @@ public sealed class WorldRuleController : MonoBehaviour
             goldenEnemyRewardMultiplier
         );
 
-#if UNITY_EDITOR
-        if (logGoldenEnemyAssignments)
-        {
-            Debug.Log(
-                $"[GoldenEnemy] Enemy='{enemy.name}' " +
-                $"HealthMultiplier={goldenEnemyHealthMultiplier:F2} " +
-                $"RewardMultiplier={goldenEnemyRewardMultiplier:F2}",
-                enemy
-            );
-        }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log(
+            $"[GoldenRule] Roll success: enemy='{enemy.name}', " +
+            $"healthMultiplier={goldenEnemyHealthMultiplier:F2}, " +
+            $"rewardMultiplier={goldenEnemyRewardMultiplier:F2}.",
+            enemy
+        );
 #endif
     }
 
@@ -372,6 +540,102 @@ public sealed class WorldRuleController : MonoBehaviour
         goldenEnemyChance = 0f;
         goldenEnemyHealthMultiplier = 1f;
         goldenEnemyRewardMultiplier = 1f;
+        GoldenCoinPickup.ClearAll();
+    }
+
+    public void HandleGoldenEnemyDeath(EnemyHealth enemy)
+    {
+        if (enemy == null || activeRule == null ||
+            activeRule.RuleType != WorldRuleType.Golden)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning(
+                $"[GoldenRule] Drop rejected: enemy=" +
+                $"'{(enemy != null ? enemy.name : "null")}', " +
+                $"activeRule='{(activeRule != null ? activeRule.name : "null")}'.",
+                this
+            );
+#endif
+            return;
+        }
+
+        int coinCount = Random.Range(
+            activeRule.GoldenCoinCountMin,
+            activeRule.GoldenCoinCountMax + 1
+        );
+        int availableSlots = Mathf.Max(
+            0,
+            activeRule.GoldenCoinActiveLimit -
+            GoldenCoinPickup.ActiveCount
+        );
+        Transform player = playerMovement != null
+            ? playerMovement.transform
+            : null;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log(
+            $"[GoldenRule] Drop request: enemy='{enemy.name}', " +
+            $"count={coinCount}, activeCoins={GoldenCoinPickup.ActiveCount}, " +
+            $"availableSlots={availableSlots}.",
+            enemy
+        );
+#endif
+
+        if (goldenCoinPrefab == null)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogError(
+                "[GoldenRule] Drop aborted: goldenCoinPrefab is null. " +
+                "No direct-gold fallback was used.",
+                this
+            );
+#endif
+            return;
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (player == null)
+        {
+            Debug.LogWarning(
+                "[GoldenRule] Player Transform is null; coins will still " +
+                "spawn and try one player lookup during Initialize.",
+                this
+            );
+        }
+#endif
+
+        int spawnCount = Mathf.Min(coinCount, availableSlots);
+
+        for (int i = 0; i < spawnCount; i++)
+        {
+            GoldenCoinPickup coin = Instantiate(
+                goldenCoinPrefab,
+                enemy.transform.position,
+                Quaternion.identity
+            );
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log(
+                $"[GoldenRule] Coin instantiated: object='{coin.name}', " +
+                $"position={coin.transform.position}.",
+                coin
+            );
+#endif
+            coin.Initialize(
+                player,
+                activeRule.GoldenCoinValue,
+                activeRule.GoldenCoinLifetime,
+                activeRule.GoldenCoinPickupRadius,
+                activeRule.GoldenCoinAttractSpeed,
+                activeRule.GoldenCoinScatterSpeed,
+                activeRule.GoldenCoinFadeDuration
+            );
+        }
+
+        int overflowValue = (coinCount - spawnCount) *
+            activeRule.GoldenCoinValue;
+
+        if (overflowValue > 0)
+            CurrencyManager.Instance?.AddGold(overflowValue);
     }
 
     private void SubscribeEnemyLifecycle()
@@ -402,6 +666,9 @@ public sealed class WorldRuleController : MonoBehaviour
         movement?.SetWorldRuleExternalVelocity(
             activeWindVelocity * activeRule.WindEnemyForceMultiplier
         );
+
+        if (darknessActive)
+            ApplyDarknessToEnemy(enemy, true);
     }
 
     private void UnregisterEnemy(EnemyHealth enemy)
@@ -409,6 +676,36 @@ public sealed class WorldRuleController : MonoBehaviour
         if (enemy == null || !registeredEnemies.Remove(enemy))
             return;
 
+        ApplyDarknessToEnemy(enemy, false);
+    }
+
+    private void ApplyDarknessToEnemy(EnemyHealth enemy, bool active)
+    {
+        if (enemy == null)
+            return;
+
+        DarknessEnemyMarker marker =
+            enemy.GetComponent<DarknessEnemyMarker>();
+
+        if (active && marker == null)
+            marker = enemy.gameObject.AddComponent<DarknessEnemyMarker>();
+
+        if (marker == null)
+            return;
+
+        marker.SetActive(
+            active,
+            worldRuleVisual != null
+                ? worldRuleVisual.DarknessMarkerSprite
+                : null,
+            worldRuleVisual != null
+                ? worldRuleVisual.DarknessMarkerMaterial
+                : null,
+            activeRule != null
+                ? activeRule.DarknessEnemyMarkerIntensity
+                : 0f,
+            enemy
+        );
     }
 
     private void RestoreRuntimeEffects()
