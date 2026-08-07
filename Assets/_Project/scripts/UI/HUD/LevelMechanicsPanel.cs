@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -11,7 +10,6 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI contentText;
 
     [Header("Mechanics")]
-    [SerializeField] private WorldEventSpawner worldEventSpawner;
     [SerializeField] private WorldAccelerationRule worldAccelerationRule;
     [SerializeField] private NoDamageChallenge noDamageChallenge;
     [SerializeField] private DoubleOrLeave doubleOrLeave;
@@ -45,72 +43,11 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
         textBuilder.Clear();
         bool hasSection = false;
 
-        AppendWorldEvents(ref hasSection);
         AppendWorldRules(ref hasSection);
         AppendChallenges(ref hasSection);
         AppendDoubleOrLeave(ref hasSection);
 
         return hasSection;
-    }
-
-    private void AppendWorldEvents(ref bool hasSection)
-    {
-        if (worldEventSpawner == null)
-            return;
-
-        IReadOnlyList<WorldEvent> spawnedEvents =
-            worldEventSpawner.SpawnedEvents;
-        bool headerAdded = false;
-
-        for (int i = 0; i < spawnedEvents.Count; i++)
-        {
-            WorldEvent worldEvent = spawnedEvents[i];
-
-            if (worldEvent == null)
-                continue;
-
-            if (!headerAdded)
-            {
-                AppendHeader(ref hasSection, "WORLD EVENTS");
-                headerAdded = true;
-            }
-
-            if (worldEvent is CaptureZoneEvent capture)
-            {
-                string state = capture.IsPlayerInside ? "Active" : "Waiting";
-                AppendTimedLine(
-                    "Hold Point",
-                    state,
-                    capture.TimeRemaining,
-                    capture.Progress
-                );
-            }
-            else if (worldEvent is RescueCapsuleEvent rescue)
-            {
-                string state = rescue.IsActivated ? "Active" : "Waiting";
-                AppendTimedLine(
-                    "Rescue Capsule",
-                    state,
-                    rescue.TimeRemaining,
-                    rescue.Progress
-                );
-            }
-            else if (worldEvent is CarrierHuntEvent carrierHunt)
-            {
-                textBuilder.Append("- ОХОТА НА НОСИТЕЛЯ - ")
-                    .AppendLine(
-                        carrierHunt.IsRiskMode
-                            ? "Цель скрывается"
-                            : "Уничтожьте цель"
-                    );
-            }
-            else
-            {
-                textBuilder.Append("- ")
-                    .Append(worldEvent.GetType().Name)
-                    .AppendLine(" - Active");
-            }
-        }
     }
 
     private void AppendWorldRules(ref bool hasSection)
@@ -178,20 +115,4 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
         hasSection = true;
     }
 
-    private void AppendTimedLine(
-        string label,
-        string state,
-        float timeRemaining,
-        float progress)
-    {
-        textBuilder.Append("- ")
-            .Append(label)
-            .Append(" - ")
-            .Append(state)
-            .Append(" - ")
-            .Append(Mathf.CeilToInt(timeRemaining))
-            .Append("s / ")
-            .Append(Mathf.RoundToInt(progress * 100f))
-            .AppendLine("%");
-    }
 }

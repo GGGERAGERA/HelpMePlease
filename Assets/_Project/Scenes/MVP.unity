@@ -3832,7 +3832,6 @@ MonoBehaviour:
   panelRoot: {fileID: 2147001001}
   panelRect: {fileID: 2147001002}
   contentText: {fileID: 2147001013}
-  worldEventSpawner: {fileID: 46915853}
   worldAccelerationRule: {fileID: 46915858}
   noDamageChallenge: {fileID: 46915857}
   doubleOrLeave: {fileID: 46915859}
@@ -5277,7 +5276,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 40, y: -275}
+  m_AnchoredPosition: {x: 40, y: -435}
   m_SizeDelta: {x: 320, y: 200}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &2147001003
