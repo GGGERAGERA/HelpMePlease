@@ -302,7 +302,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8705035277953414196}
   - component: {fileID: 1933299924881377511}
-  - component: {fileID: 7631048325535723161}
   m_Layer: 0
   m_Name: ShelfPartMiddle
   m_TagString: Untagged
@@ -372,7 +371,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 4209054396817990924, guid: a8866fe4aa4eba649acf28865b2d0f4f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -384,19 +383,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!210 &7631048325535723161
-SortingGroup:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3827081387223642541}
-  m_Enabled: 1
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 1
-  m_SortAtRoot: 1
-  m_Sort3DAs2D: 0
 --- !u!1 &4057525231886279265
 GameObject:
   m_ObjectHideFlags: 0
@@ -475,7 +461,7 @@ SortingGroup:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5695106836399691201}
-  m_Enabled: 1
+  m_Enabled: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
@@ -673,7 +659,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2796105906487844967}
   - component: {fileID: 8498762396901494463}
-  - component: {fileID: 7627919975520469705}
   m_Layer: 0
   m_Name: ShelfPartMiddle (1)
   m_TagString: Untagged
@@ -743,7 +728,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 3
   m_MaskInteraction: 0
   m_Sprite: {fileID: 4209054396817990924, guid: a8866fe4aa4eba649acf28865b2d0f4f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -755,19 +740,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!210 &7627919975520469705
-SortingGroup:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6501008470006144082}
-  m_Enabled: 1
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 3
-  m_SortAtRoot: 1
-  m_Sort3DAs2D: 0
 --- !u!1 &6652641581508748358
 GameObject:
   m_ObjectHideFlags: 0
@@ -778,7 +750,6 @@ GameObject:
   m_Component:
   - component: {fileID: 6681244296391416413}
   - component: {fileID: 4316738582998974897}
-  - component: {fileID: 6602988715673218907}
   m_Layer: 0
   m_Name: ShelfPartMiddle (2)
   m_TagString: Untagged
@@ -848,7 +819,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 5
   m_MaskInteraction: 0
   m_Sprite: {fileID: 4209054396817990924, guid: a8866fe4aa4eba649acf28865b2d0f4f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -860,19 +831,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!210 &6602988715673218907
-SortingGroup:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6652641581508748358}
-  m_Enabled: 1
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 5
-  m_SortAtRoot: 1
-  m_Sort3DAs2D: 0
 --- !u!1 &7725938076222006824
 GameObject:
   m_ObjectHideFlags: 0
@@ -928,7 +886,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6484538685460563193, guid: 76386653985950141a0738520eaca3af, type: 3}
       propertyPath: m_SortAtRoot
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6484538685460563193, guid: 76386653985950141a0738520eaca3af, type: 3}
       propertyPath: m_SortingLayer
@@ -1046,7 +1004,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3556497322810433754, guid: 3b9f0bb5d2d798243ac556c9f526be0f, type: 3}
       propertyPath: m_SortAtRoot
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3556497322810433754, guid: 3b9f0bb5d2d798243ac556c9f526be0f, type: 3}
       propertyPath: m_SortingLayer
@@ -1132,7 +1090,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4355192835281005222, guid: 95bb173ddc0349b44a477fafca393861, type: 3}
       propertyPath: m_SortAtRoot
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4355192835281005222, guid: 95bb173ddc0349b44a477fafca393861, type: 3}
       propertyPath: m_SortingLayer
@@ -1174,7 +1132,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1696842238883411864, guid: 2abdef93a38cf874cb82d6bb30bcbc5c, type: 3}
       propertyPath: m_SortAtRoot
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1696842238883411864, guid: 2abdef93a38cf874cb82d6bb30bcbc5c, type: 3}
       propertyPath: m_SortingLayer
@@ -1260,7 +1218,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5764246515398661479, guid: f282b3fa59d169c40a240add5bacbf1a, type: 3}
       propertyPath: m_SortAtRoot
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5764246515398661479, guid: f282b3fa59d169c40a240add5bacbf1a, type: 3}
       propertyPath: m_SortingLayer
@@ -1338,7 +1296,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1696842238883411864, guid: 2abdef93a38cf874cb82d6bb30bcbc5c, type: 3}
       propertyPath: m_SortAtRoot
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1696842238883411864, guid: 2abdef93a38cf874cb82d6bb30bcbc5c, type: 3}
       propertyPath: m_SortingLayer

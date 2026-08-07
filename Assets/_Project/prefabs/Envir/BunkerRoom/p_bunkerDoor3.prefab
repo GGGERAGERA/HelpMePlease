@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7232763135891811166}
   - component: {fileID: 1193206650191144892}
+  - component: {fileID: 2876066344667078614}
   m_Layer: 0
   m_Name: UpPart
   m_TagString: Untagged
@@ -80,7 +81,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7160786979409441372, guid: fff0d699b10ee144892466a348d12914, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -92,6 +93,19 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!210 &2876066344667078614
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1475752656602604382}
+  m_Enabled: 1
+  m_SortingLayerID: -1183170747
+  m_SortingLayer: 2
+  m_SortingOrder: 1
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0
 --- !u!1 &2486629240283169194
 GameObject:
   m_ObjectHideFlags: 0
@@ -285,6 +299,7 @@ GameObject:
   - component: {fileID: 6672934174700839871}
   - component: {fileID: 3737101950990140331}
   - component: {fileID: 3431161404493905721}
+  - component: {fileID: 8516452970812335901}
   m_Layer: 0
   m_Name: Door
   m_TagString: Untagged
@@ -415,6 +430,19 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 3, y: 1}
   m_EdgeRadius: 0
+--- !u!210 &8516452970812335901
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2989791639618736581}
+  m_Enabled: 1
+  m_SortingLayerID: -1183170747
+  m_SortingLayer: 2
+  m_SortingOrder: 0
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0
 --- !u!1 &3348362147946726501
 GameObject:
   m_ObjectHideFlags: 0
@@ -961,6 +989,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7509735512237395211}
   - component: {fileID: 7779895384405142332}
+  - component: {fileID: 4516736533051276062}
   m_Layer: 0
   m_Name: LowPart
   m_TagString: Untagged
@@ -1043,6 +1072,19 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!210 &4516736533051276062
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6921747508279485942}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 1
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0
 --- !u!1 &6977290619176330169
 GameObject:
   m_ObjectHideFlags: 0
@@ -1084,7 +1126,7 @@ SortingGroup:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6977290619176330169}
-  m_Enabled: 1
+  m_Enabled: 0
   m_SortingLayerID: -1183170747
   m_SortingLayer: 2
   m_SortingOrder: 0
@@ -1277,7 +1319,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &6882823508069353645
 Transform:
   m_ObjectHideFlags: 0
