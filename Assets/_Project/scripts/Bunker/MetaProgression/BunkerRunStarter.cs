@@ -17,8 +17,8 @@ public sealed class BunkerRunStarter : MonoBehaviour
     [SerializeField] private CameraFollow cameraFollow;
     [SerializeField] private Behaviour playerMovement;
     [SerializeField] private BunkerCursorInteractor bunkerCursor;
-    [SerializeField, Range(0.8f, 1.2f)] private float transitionDuration = 1f;
-    [SerializeField, Min(0.5f)] private float targetOrthographicSize = 2.2f;
+    [SerializeField, Range(0.6f, 1f)] private float transitionDuration = 0.8f;
+    [SerializeField, Min(0.5f)] private float targetOrthographicSize = 3.5f;
 
     private bool isTransitioning;
 
@@ -121,22 +121,22 @@ public sealed class BunkerRunStarter : MonoBehaviour
         Vector3 targetPosition = transitionTarget.position;
         targetPosition.z = startPosition.z;
         float startSize = transitionCamera.orthographicSize;
-        float duration = Mathf.Clamp(transitionDuration, 0.8f, 1.2f);
+        float duration = Mathf.Clamp(transitionDuration, 0.6f, 1f);
         float elapsed = 0f;
 
         while (elapsed < duration)
         {
             elapsed += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsed / duration);
-            float easeIn = t * t;
+            float easedT = t * t * (3f - 2f * t);
             cameraRig.position = Vector3.LerpUnclamped(
                 startPosition,
                 targetPosition,
-                easeIn);
+                easedT);
             transitionCamera.orthographicSize = Mathf.Lerp(
                 startSize,
                 Mathf.Max(0.5f, targetOrthographicSize),
-                easeIn);
+                easedT);
             yield return null;
         }
 

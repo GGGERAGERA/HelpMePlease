@@ -22,6 +22,8 @@ public class CharacterCardView : MonoBehaviour
 
     private Button button;
     private TextMeshProUGUI lockRequirementText;
+    private Image selectionOutlineImage;
+    private Outline selectionOutlineEffect;
 
     public CharacterData Character => character;
 
@@ -35,6 +37,7 @@ public class CharacterCardView : MonoBehaviour
             button.onClick.AddListener(HandleClick);
 
         Refresh();
+        ConfigurePixelStateVisuals();
         SetSelected(false);
     }
 
@@ -85,7 +88,17 @@ public class CharacterCardView : MonoBehaviour
     public void SetSelected(bool selected)
     {
         if (selectedVisual != null)
-            selectedVisual.SetActive(selected);
+            selectedVisual.SetActive(false);
+
+        if (selectionOutlineImage != null)
+        {
+            Color color = selectionOutlineImage.color;
+            color.a = selected ? 1f : 0f;
+            selectionOutlineImage.color = color;
+        }
+
+        if (selectionOutlineEffect != null)
+            selectionOutlineEffect.enabled = selected;
     }
 
     private bool IsUnlocked()
@@ -134,6 +147,56 @@ public class CharacterCardView : MonoBehaviour
             lockRequirementText.raycastTarget = false;
         }
 
-        lockRequirementText.text = $"LOCKED\nSTATION LV.{condition.requiredAmount}";
+        Transform legacyCondition = lockedOverlay.transform.Find("ConditionText");
+        if (legacyCondition != null)
+            legacyCondition.gameObject.SetActive(false);
+
+        lockRequirementText.text = $"STATION LV.{condition.requiredAmount}";
+    }
+
+    private void ConfigurePixelStateVisuals()
+    {
+        if (selectedVisual != null)
+            selectedVisual.SetActive(false);
+
+        Animator animator = GetComponent<Animator>();
+        if (animator != null)
+            animator.enabled = false;
+
+        if (button != null)
+        {
+            button.transition = Selectable.Transition.ColorTint;
+            ColorBlock colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1.05f, 1.05f, 1.05f, 1f);
+            colors.pressedColor = new Color(0.88f, 0.92f, 0.94f, 1f);
+            colors.selectedColor = Color.white;
+            button.colors = colors;
+        }
+
+        Transform existingOutline = transform.Find("Background/BackgroundOutline");
+        selectionOutlineImage = existingOutline != null
+            ? existingOutline.GetComponent<Image>()
+            : null;
+
+        if (selectionOutlineImage != null)
+        {
+            selectionOutlineImage.material = null;
+            selectionOutlineImage.color = new Color(0.08f, 0.78f, 0.82f, 0f);
+            selectionOutlineImage.raycastTarget = false;
+            return;
+        }
+
+        Graphic target = button != null ? button.targetGraphic : GetComponent<Graphic>();
+        if (target != null)
+        {
+            selectionOutlineEffect = target.GetComponent<Outline>();
+            if (selectionOutlineEffect == null)
+                selectionOutlineEffect = target.gameObject.AddComponent<Outline>();
+            selectionOutlineEffect.effectColor = new Color(0.08f, 0.78f, 0.82f, 1f);
+            selectionOutlineEffect.effectDistance = new Vector2(2f, -2f);
+            selectionOutlineEffect.useGraphicAlpha = true;
+            selectionOutlineEffect.enabled = false;
+        }
     }
 }

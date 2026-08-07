@@ -24,5 +24,18 @@ public sealed class BunkerContext : MonoBehaviour
         StationProgression = GetComponent<BunkerStationProgressionService>();
         if (StationProgression == null)
             StationProgression = gameObject.AddComponent<BunkerStationProgressionService>();
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        EnsureDebugMenu();
+#endif
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private void EnsureDebugMenu()
+    {
+        Subject42DebugMenu debugMenu = GetComponent<Subject42DebugMenu>();
+        if (debugMenu == null)
+            gameObject.AddComponent<Subject42DebugMenu>();
+    }
+#endif
 }
