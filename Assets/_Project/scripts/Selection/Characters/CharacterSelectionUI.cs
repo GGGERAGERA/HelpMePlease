@@ -30,6 +30,7 @@ public sealed class CharacterSelectionUI : MonoBehaviour
     private CharacterData selectedCharacter;
     private CharacterStationEmbeddedView stationView;
     private RectTransform detailPanel;
+    private BunkerStationProgressionService boundProgressionService;
 
     private void Awake()
     {
@@ -61,6 +62,12 @@ public sealed class CharacterSelectionUI : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        if (boundProgressionService != BunkerStationProgressionService.Instance)
+            SubscribeToProgression();
+    }
+
     private void OnDestroy()
     {
         UnsubscribeFromProgression();
@@ -87,17 +94,19 @@ public sealed class CharacterSelectionUI : MonoBehaviour
 
     private void SubscribeToProgression()
     {
-        if (BunkerStationProgressionService.Instance == null)
-            return;
+        if (boundProgressionService != null)
+            boundProgressionService.StationLevelChanged -= HandleStationLevelChanged;
 
-        BunkerStationProgressionService.Instance.StationLevelChanged -= HandleStationLevelChanged;
-        BunkerStationProgressionService.Instance.StationLevelChanged += HandleStationLevelChanged;
+        boundProgressionService = BunkerStationProgressionService.Instance;
+        if (boundProgressionService != null)
+            boundProgressionService.StationLevelChanged += HandleStationLevelChanged;
     }
 
     private void UnsubscribeFromProgression()
     {
-        if (BunkerStationProgressionService.Instance != null)
-            BunkerStationProgressionService.Instance.StationLevelChanged -= HandleStationLevelChanged;
+        if (boundProgressionService != null)
+            boundProgressionService.StationLevelChanged -= HandleStationLevelChanged;
+        boundProgressionService = null;
     }
 
     private void HandleStationLevelChanged(BunkerStationId stationId, int level)
@@ -120,7 +129,7 @@ public sealed class CharacterSelectionUI : MonoBehaviour
 
     public void SelectCharacter(CharacterData character)
     {
-        if (character == null)
+        if (character == null || !IsCharacterUnlocked(character))
             return;
 
         selectedCharacter = character;
@@ -161,27 +170,9 @@ public sealed class CharacterSelectionUI : MonoBehaviour
 
     private void RefreshDetails(CharacterData character)
     {
-        bool isUnlocked = IsCharacterUnlocked(character);
-
         SetText(characterNameText, character.characterName);
-
-        if (!isUnlocked && character.unlockData != null)
-        {
-            SetText(statusText, "LOCKED");
-            SetText(hpText, string.Empty);
-            SetText(speedText, string.Empty);
-            SetText(specialText, string.Empty);
-            SetText(descriptionText, character.unlockData.lockedDescription);
-
-            SetPortrait(character.portrait, Color.gray);
-            return;
-        }
-
-        SetText(statusText, "CHARACTERISTICS");
-        SetText(hpText, $"HP      {character.maxHealth}");
-        SetText(speedText, $"SPEED   {character.moveSpeed:0.##}");
-        SetText(specialText, $"SPECIAL {GetSpecialText(character.specialDescription)}");
-        SetText(descriptionText, $"DESCRIPTION\n{character.description}");
+        SetText(statusText, "DESCRIPTION");
+        SetText(descriptionText, character.description);
 
         SetPortrait(character.portrait, Color.white);
     }
@@ -205,11 +196,8 @@ public sealed class CharacterSelectionUI : MonoBehaviour
         selectedCharacter = null;
 
         SetText(characterNameText, "SELECT CHARACTER");
-        SetText(statusText, string.Empty);
-        SetText(hpText, "HP: -");
-        SetText(speedText, "Speed: -");
-        SetText(specialText, "Special: -");
-        SetText(descriptionText, "DESCRIPTION\nChoose a survivor.");
+        SetText(statusText, "DESCRIPTION");
+        SetText(descriptionText, "Choose a survivor.");
 
         SetPortrait(null, Color.white);
         RefreshCards(null);
@@ -221,8 +209,11 @@ public sealed class CharacterSelectionUI : MonoBehaviour
         if (portraitImage == null)
             return;
 
-        // The selected portrait is already the dominant visual on the card.
-        portraitImage.enabled = false;
+        portraitImage.sprite = portrait;
+        portraitImage.color = color;
+        portraitImage.preserveAspect = true;
+        portraitImage.raycastTarget = false;
+        portraitImage.enabled = portrait != null;
     }
 
     private void SetSelectButton(bool active)
@@ -247,6 +238,60 @@ public sealed class CharacterSelectionUI : MonoBehaviour
             ? "-"
             : special;
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void DebugRefresh()
+    {
+        stationView?.Refresh();
+        if (cards != null)
+        {
+            foreach (CharacterCardView card in cards)
+                card?.Refresh();
+        }
+
+        if (selectedCharacter != null)
+        {
+            if (IsCharacterUnlocked(selectedCharacter))
+                RefreshDetails(selectedCharacter);
+            else
+                ClearSelection();
+        }
+    }
+
+    public bool CanDebugSelectCharacter(string characterName)
+    {
+        CharacterData character = FindCharacter(characterName);
+        return character != null && IsCharacterUnlocked(character);
+    }
+
+    public bool DebugSelectCharacter(string characterName)
+    {
+        CharacterData character = FindCharacter(characterName);
+        if (character == null || !IsCharacterUnlocked(character))
+            return false;
+
+        SelectCharacter(character);
+        return selectedCharacter == character;
+    }
+
+    private CharacterData FindCharacter(string characterName)
+    {
+        if (cards == null || string.IsNullOrWhiteSpace(characterName))
+            return null;
+
+        foreach (CharacterCardView card in cards)
+        {
+            CharacterData character = card != null ? card.Character : null;
+            if (character != null && string.Equals(
+                    character.characterName,
+                    characterName,
+                    System.StringComparison.OrdinalIgnoreCase))
+                return character;
+        }
+
+        return null;
+    }
+#endif
     private bool IsCharacterUnlocked(CharacterData character)
     {
         if (character == null || character.unlockData == null)
@@ -328,19 +373,27 @@ public sealed class CharacterSelectionUI : MonoBehaviour
             detailPanel.anchoredPosition = Vector2.zero;
             detailPanel.sizeDelta = Vector2.zero;
 
-            ReparentInfoText(characterNameText, detailPanel, 28f, 42f, 30f, Color.white, FontStyles.Bold);
-            ReparentInfoText(statusText, detailPanel, 78f, 30f, 19f, new Color(0.2f, 0.78f, 0.82f), FontStyles.Bold);
-            ReparentInfoText(hpText, detailPanel, 118f, 28f, 18f, Color.white, FontStyles.Normal);
-            ReparentInfoText(speedText, detailPanel, 150f, 28f, 18f, Color.white, FontStyles.Normal);
-            ReparentInfoText(specialText, detailPanel, 182f, 38f, 18f, Color.white, FontStyles.Normal);
-            ReparentInfoText(descriptionText, detailPanel, 232f, 142f, 17f, new Color(0.82f, 0.86f, 0.88f), FontStyles.Normal);
+            ApplyDetailPanelStyle(detailPanel);
+            ConfigurePortrait(detailPanel);
+            ReparentInfoText(characterNameText, detailPanel, 28f, 44f, 30f,
+                Color.white, FontStyles.Bold, 208f, 28f);
+            ReparentInfoText(statusText, detailPanel, 82f, 24f, 15f,
+                new Color(0.2f, 0.78f, 0.82f), FontStyles.Bold, 208f, 28f);
+            ReparentInfoText(descriptionText, detailPanel, 112f, 116f, 17f,
+                new Color(0.82f, 0.86f, 0.88f), FontStyles.Normal, 208f, 28f);
             descriptionText.textWrappingMode = TextWrappingModes.Normal;
-            descriptionText.overflowMode = TextOverflowModes.Ellipsis;
-            descriptionText.maxVisibleLines = 5;
+            descriptionText.overflowMode = TextOverflowModes.Overflow;
+            descriptionText.maxVisibleLines = int.MaxValue;
+
+            SetProductionStatsVisible(false);
 
             Transform portraitFrame = FindDescendant(detailPanel, "PortraitImageOutline");
             if (portraitFrame != null)
                 portraitFrame.gameObject.SetActive(false);
+
+            Transform portraitMask = FindDescendant(detailPanel, "PortraitImageMask");
+            if (portraitMask != null && portraitMask != portraitImage.transform)
+                portraitMask.gameObject.SetActive(false);
 
             Transform oldInfoContainer = FindDescendant(detailPanel, "LeftInfo");
             if (oldInfoContainer != null)
@@ -365,7 +418,9 @@ public sealed class CharacterSelectionUI : MonoBehaviour
         float height,
         float fontSize,
         Color color,
-        FontStyles style)
+        FontStyles style,
+        float left = 28f,
+        float right = 28f)
     {
         if (text == null)
             return;
@@ -376,12 +431,63 @@ public sealed class CharacterSelectionUI : MonoBehaviour
         rect.anchorMax = new Vector2(1f, 1f);
         rect.pivot = new Vector2(0.5f, 1f);
         rect.anchoredPosition = new Vector2(0f, -top);
-        rect.sizeDelta = new Vector2(-56f, height);
+        rect.offsetMin = new Vector2(left, rect.offsetMin.y);
+        rect.offsetMax = new Vector2(-right, rect.offsetMax.y);
+        rect.sizeDelta = new Vector2(-(left + right), height);
         text.fontSize = fontSize;
         text.fontStyle = style;
         text.color = color;
         text.alignment = TextAlignmentOptions.MidlineLeft;
         text.raycastTarget = false;
+    }
+
+    private void ConfigurePortrait(RectTransform parent)
+    {
+        if (portraitImage == null)
+            return;
+
+        portraitImage.transform.SetParent(parent, false);
+        RectTransform rect = portraitImage.rectTransform;
+        rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f);
+        rect.pivot = new Vector2(0f, 1f);
+        rect.anchoredPosition = new Vector2(28f, -28f);
+        rect.sizeDelta = new Vector2(156f, 156f);
+        portraitImage.preserveAspect = true;
+        portraitImage.raycastTarget = false;
+    }
+
+    private void SetProductionStatsVisible(bool visible)
+    {
+        if (hpText != null) hpText.gameObject.SetActive(visible);
+        if (speedText != null) speedText.gameObject.SetActive(visible);
+        if (specialText != null) specialText.gameObject.SetActive(visible);
+    }
+
+    private static void ApplyDetailPanelStyle(RectTransform panel)
+    {
+        Image background = panel.GetComponent<Image>();
+        if (background != null)
+        {
+            background.sprite = null;
+            background.type = Image.Type.Simple;
+            background.color = new Color(0.018f, 0.035f, 0.05f, 0.98f);
+            background.raycastTarget = true;
+        }
+
+        foreach (Shadow shadow in panel.GetComponents<Shadow>())
+            shadow.enabled = false;
+
+        Outline outline = panel.GetComponent<Outline>();
+        if (outline == null)
+            outline = panel.gameObject.AddComponent<Outline>();
+        outline.enabled = true;
+        outline.effectColor = new Color(0.08f, 0.78f, 0.82f, 0.9f);
+        outline.effectDistance = new Vector2(1f, -1f);
+        outline.useGraphicAlpha = true;
+
+        Transform oldOutline = FindDescendant(panel, "DetailPanelOutline");
+        if (oldOutline != null)
+            oldOutline.gameObject.SetActive(false);
     }
 
     private static void DisableOwnFrame(GameObject target)

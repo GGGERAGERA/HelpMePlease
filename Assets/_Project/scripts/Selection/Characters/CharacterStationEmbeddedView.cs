@@ -2,6 +2,7 @@ using System.Collections;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
@@ -11,6 +12,7 @@ using UnityEngine.UI;
 public sealed class CharacterStationEmbeddedView : MonoBehaviour
 {
     private const int SegmentCount = 10;
+    private const float InvestmentRate = 180f;
 
     private static readonly Color Cyan = new(0.08f, 0.78f, 0.82f, 1f);
     private static readonly Color MutedCyan = new(0.23f, 0.55f, 0.58f, 1f);
@@ -21,13 +23,19 @@ public sealed class CharacterStationEmbeddedView : MonoBehaviour
     private TextMeshProUGUI levelText;
     private GameObject progressRoot;
     private readonly Image[] progressSegments = new Image[SegmentCount];
+    private readonly Image[] progressFills = new Image[SegmentCount];
     private TextMeshProUGUI goldProgressText;
+    private TextMeshProUGUI availableGoldText;
     private TextMeshProUGUI unlockText;
     private Button upgradeButton;
     private TextMeshProUGUI upgradeButtonText;
     private TMP_FontAsset inheritedFont;
     private Coroutine feedbackRoutine;
-    private bool eventsBound;
+    private BunkerStationProgressionService boundService;
+    private CurrencyManager boundCurrency;
+    private bool isInvesting;
+    private bool investedDuringCurrentPress;
+    private float investmentAccumulator;
 
     public void Configure(TMP_FontAsset font, RectTransform hostPanel)
     {
@@ -45,6 +53,7 @@ public sealed class CharacterStationEmbeddedView : MonoBehaviour
 
     private void OnDisable()
     {
+        StopInvesting();
         UnbindEvents();
         if (feedbackRoutine != null)
         {
@@ -53,29 +62,95 @@ public sealed class CharacterStationEmbeddedView : MonoBehaviour
         }
     }
 
-    private void OnDestroy() => UnbindEvents();
+    private void OnDestroy()
+    {
+        StopInvesting();
+        UnbindEvents();
+    }
 
-    private void Upgrade()
+    private void Update()
+    {
+        BindEvents();
+        if (!isInvesting)
+            return;
+
+        if (Time.timeScale <= 0f)
+        {
+            StopInvesting();
+            Refresh();
+            return;
+        }
+
+        BunkerStationProgressionService service = BunkerStationProgressionService.Instance;
+        if (service == null || !service.CanInvest(BunkerStationId.Character))
+        {
+            StopInvesting();
+            Refresh();
+            return;
+        }
+
+        investmentAccumulator += Time.deltaTime * InvestmentRate;
+        int amount = Mathf.FloorToInt(investmentAccumulator);
+        if (amount <= 0)
+            return;
+
+        investmentAccumulator -= amount;
+        Invest(amount);
+    }
+
+    private void BeginInvesting()
+    {
+        if (BunkerStationProgressionService.Instance == null ||
+            !BunkerStationProgressionService.Instance.CanInvest(BunkerStationId.Character))
+            return;
+
+        isInvesting = true;
+        investedDuringCurrentPress = false;
+        investmentAccumulator = 0f;
+        upgradeButtonText.text = "INVESTING...";
+    }
+
+    private void EndInvesting()
+    {
+        if (isInvesting && !investedDuringCurrentPress)
+            Invest(1);
+        StopInvesting();
+        Refresh();
+    }
+
+    private void StopInvesting()
+    {
+        isInvesting = false;
+        investmentAccumulator = 0f;
+    }
+
+    private void Invest(int requestedAmount)
     {
         BunkerStationProgressionService service = BunkerStationProgressionService.Instance;
         if (service == null || !service.TryGetData(BunkerStationId.Character, out BunkerStationProgressionData data))
             return;
 
-        int nextLevel = service.GetLevel(BunkerStationId.Character) + 1;
-        string[] unlockedContent = data.GetUnlocksForLevel(nextLevel);
-        if (!service.TryUpgrade(BunkerStationId.Character))
+        int oldLevel = service.GetLevel(BunkerStationId.Character);
+        string[] unlockedContent = data.GetUnlocksForLevel(oldLevel + 1);
+        if (!service.TryInvestGold(BunkerStationId.Character, requestedAmount, out int actual) || actual <= 0)
         {
+            StopInvesting();
             Refresh();
             return;
         }
 
+        investedDuringCurrentPress = true;
+        int newLevel = service.GetLevel(BunkerStationId.Character);
+        if (newLevel != oldLevel)
+            StopInvesting();
         Refresh();
-        if (unlockedContent.Length == 0)
+        if (newLevel == oldLevel)
             return;
 
         if (feedbackRoutine != null)
             StopCoroutine(feedbackRoutine);
-        feedbackRoutine = StartCoroutine(ShowUnlockFeedback(unlockedContent));
+        if (unlockedContent.Length > 0)
+            feedbackRoutine = StartCoroutine(ShowUnlockFeedback(unlockedContent));
     }
 
     public void Refresh()
@@ -94,12 +169,18 @@ public sealed class CharacterStationEmbeddedView : MonoBehaviour
         int level = service.GetLevel(BunkerStationId.Character);
         bool isMax = level >= data.MaxLevel;
         int cost = service.GetUpgradeCost(BunkerStationId.Character);
+        int invested = service.GetInvestedGold(BunkerStationId.Character);
         int gold = CurrencyManager.Instance != null ? CurrencyManager.Instance.TotalGold : 0;
 
         titleText.text = data.DisplayName;
         levelText.text = $"LEVEL {level} / {data.MaxLevel}";
+        panelRect.sizeDelta = new Vector2(-56f, isMax ? 156f : 340f);
         progressRoot.SetActive(!isMax);
-        goldProgressText.text = isMax ? "MAX LEVEL" : $"{gold} / {cost} GOLD";
+        goldProgressText.text = isMax ? "MAX LEVEL" : $"{invested} / {cost} INVESTED";
+        SetStretchTop(goldProgressText.rectTransform, isMax ? 102f : 136f, 28f);
+        availableGoldText.gameObject.SetActive(!isMax);
+        unlockText.gameObject.SetActive(!isMax);
+        availableGoldText.text = $"GOLD: {gold}";
 
         if (isMax)
         {
@@ -113,15 +194,21 @@ public sealed class CharacterStationEmbeddedView : MonoBehaviour
                 : $"NEXT UNLOCK\n{string.Join("\n", unlocks)}";
         }
 
-        float fill = cost > 0 ? Mathf.Clamp01((float)gold / cost) : 0f;
-        int filledSegments = Mathf.FloorToInt(fill * SegmentCount + 0.0001f);
+        float fill = cost > 0 ? Mathf.Clamp01((float)invested / cost) : 0f;
         for (int i = 0; i < progressSegments.Length; i++)
-            progressSegments[i].color = i < filledSegments ? Cyan : EmptySegment;
+        {
+            progressSegments[i].color = EmptySegment;
+            float segmentFill = Mathf.Clamp01(fill * SegmentCount - i);
+            Image segmentProgress = progressFills[i];
+            segmentProgress.gameObject.SetActive(segmentFill > 0f);
+            RectTransform fillRect = segmentProgress.rectTransform;
+            fillRect.anchorMax = new Vector2(segmentFill, 1f);
+        }
 
-        bool canUpgrade = !isMax && service.CanUpgrade(BunkerStationId.Character);
+        bool canUpgrade = !isMax && service.CanInvest(BunkerStationId.Character);
         upgradeButton.gameObject.SetActive(!isMax);
         upgradeButton.interactable = canUpgrade;
-        upgradeButtonText.text = "UPGRADE STATION";
+        upgradeButtonText.text = isInvesting ? "INVESTING..." : "INVEST GOLD";
     }
 
     private IEnumerator ShowUnlockFeedback(string[] unlockedContent)
@@ -137,29 +224,55 @@ public sealed class CharacterStationEmbeddedView : MonoBehaviour
 
     private void BindEvents()
     {
-        if (eventsBound)
-            return;
+        if (boundCurrency != CurrencyManager.Instance)
+        {
+            if (boundCurrency != null)
+                boundCurrency.OnGoldUpdated -= HandleGoldChanged;
+            boundCurrency = CurrencyManager.Instance;
+            if (boundCurrency != null)
+            {
+                boundCurrency.OnGoldUpdated += HandleGoldChanged;
+                Refresh();
+            }
+        }
 
-        if (CurrencyManager.Instance != null)
-            CurrencyManager.Instance.OnGoldUpdated += HandleGoldChanged;
-        if (BunkerStationProgressionService.Instance != null)
-            BunkerStationProgressionService.Instance.StationLevelChanged += HandleStationLevelChanged;
-        eventsBound = true;
+        if (boundService != BunkerStationProgressionService.Instance)
+        {
+            if (boundService != null)
+            {
+                boundService.StationLevelChanged -= HandleStationLevelChanged;
+                boundService.StationInvestmentChanged -= HandleInvestmentChanged;
+            }
+            boundService = BunkerStationProgressionService.Instance;
+            if (boundService != null)
+            {
+                boundService.StationLevelChanged += HandleStationLevelChanged;
+                boundService.StationInvestmentChanged += HandleInvestmentChanged;
+                Refresh();
+            }
+        }
     }
 
     private void UnbindEvents()
     {
-        if (!eventsBound)
-            return;
-
-        if (CurrencyManager.Instance != null)
-            CurrencyManager.Instance.OnGoldUpdated -= HandleGoldChanged;
-        if (BunkerStationProgressionService.Instance != null)
-            BunkerStationProgressionService.Instance.StationLevelChanged -= HandleStationLevelChanged;
-        eventsBound = false;
+        if (boundCurrency != null)
+            boundCurrency.OnGoldUpdated -= HandleGoldChanged;
+        if (boundService != null)
+        {
+            boundService.StationLevelChanged -= HandleStationLevelChanged;
+            boundService.StationInvestmentChanged -= HandleInvestmentChanged;
+        }
+        boundCurrency = null;
+        boundService = null;
     }
 
     private void HandleGoldChanged(int value) => Refresh();
+
+    private void HandleInvestmentChanged(BunkerStationId stationId, int invested)
+    {
+        if (stationId == BunkerStationId.Character)
+            Refresh();
+    }
 
     private void HandleStationLevelChanged(BunkerStationId stationId, int level)
     {
@@ -182,8 +295,8 @@ public sealed class CharacterStationEmbeddedView : MonoBehaviour
         panelRect.anchorMin = new Vector2(0f, 1f);
         panelRect.anchorMax = new Vector2(1f, 1f);
         panelRect.pivot = new Vector2(0.5f, 1f);
-        panelRect.anchoredPosition = new Vector2(0f, -394f);
-        panelRect.sizeDelta = new Vector2(-56f, 354f);
+        panelRect.anchoredPosition = new Vector2(0f, -248f);
+        panelRect.sizeDelta = new Vector2(-56f, 340f);
 
         GameObject divider = CreateUiObject("InfoStationDivider", panel.transform, typeof(Image));
         RectTransform dividerRect = divider.GetComponent<RectTransform>();
@@ -212,14 +325,28 @@ public sealed class CharacterStationEmbeddedView : MonoBehaviour
             segmentRect.offsetMax = new Vector2(-2f, -1f);
             progressSegments[i] = segment.GetComponent<Image>();
             progressSegments[i].raycastTarget = false;
+            progressSegments[i].color = EmptySegment;
+
+            GameObject fill = CreateUiObject("Fill", segment.transform, typeof(Image));
+            RectTransform fillRect = fill.GetComponent<RectTransform>();
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+            progressFills[i] = fill.GetComponent<Image>();
+            progressFills[i].color = Cyan;
+            progressFills[i].raycastTarget = false;
         }
 
         goldProgressText = CreateStretchText(panel.transform, "GoldProgressText", 136f, 28f, 17f, Color.white);
-        unlockText = CreateStretchText(panel.transform, "NextUnlock", 181f, 70f, 17f, Color.white);
+        availableGoldText = CreateStretchText(panel.transform, "AvailableGoldText", 166f, 28f, 17f, Color.white);
+        unlockText = CreateStretchText(panel.transform, "NextUnlock", 201f, 60f, 17f, Color.white);
         unlockText.lineSpacing = 5f;
 
         upgradeButton = CreateButton(panel.transform, "UpgradeStationButton", 284f, 50f, out upgradeButtonText);
-        upgradeButton.onClick.AddListener(Upgrade);
+        HoldInvestmentInput holdInput = upgradeButton.gameObject.AddComponent<HoldInvestmentInput>();
+        holdInput.PointerDown = BeginInvesting;
+        holdInput.PointerUp = EndInvesting;
     }
 
     private Button CreateButton(Transform parent, string name, float top, float height, out TextMeshProUGUI label)
@@ -298,5 +425,30 @@ public sealed class CharacterStationEmbeddedView : MonoBehaviour
         }
 
         return result;
+    }
+}
+
+internal sealed class HoldInvestmentInput : MonoBehaviour,
+    IPointerDownHandler, IPointerUpHandler, IPointerExitHandler
+{
+    public System.Action PointerDown { private get; set; }
+    public System.Action PointerUp { private get; set; }
+
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Left)
+            PointerDown?.Invoke();
+    }
+
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Left)
+            PointerUp?.Invoke();
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        if (eventData.pointerPress == gameObject)
+            PointerUp?.Invoke();
     }
 }

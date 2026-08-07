@@ -31,6 +31,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private enum DebugTab
     {
         Run,
+        Bunker,
         World,
         Enemies,
         Events,
@@ -49,6 +50,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private static readonly string[] TabLabels =
     {
         "RUN",
+        "BUNKER",
         "WORLD",
         "ENEMIES",
         "EVENTS",
@@ -457,6 +459,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             case DebugTab.Run:
                 AddRunSection();
                 break;
+            case DebugTab.Bunker:
+                AddBunkerSection();
+                break;
             case DebugTab.World:
                 AddWorldRulesSection();
                 AddLocalAnomaliesSection();
@@ -583,6 +588,114 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             mapVisible ? successColor : hud != null ? mutedColor : warningColor,
             mapVisible ? "TURN OFF" : "TURN ON", hud != null,
             ToggleTacticalMap);
+    }
+
+    private void AddBunkerSection()
+    {
+        BunkerStationProgressionService service = BunkerStationProgressionService.Instance;
+        AddSectionTitle("CHARACTER STATION", "Persistent station investment");
+        if (service == null ||
+            !service.TryGetData(BunkerStationId.Character, out BunkerStationProgressionData data))
+        {
+            AddRow("Progression service", "NOT AVAILABLE", warningColor,
+                null, false, null);
+            return;
+        }
+
+        int level = service.GetLevel(BunkerStationId.Character);
+        int cost = service.GetUpgradeCost(BunkerStationId.Character);
+        int invested = service.GetInvestedGold(BunkerStationId.Character);
+        int gold = CurrencyManager.Instance != null ? CurrencyManager.Instance.TotalGold : 0;
+        AddRow("Current state",
+            level >= data.MaxLevel ? $"LV{level} - MAX" : $"LV{level} - {invested}/{cost} INVESTED",
+            successColor, null, false, null);
+        AddRow("Available Gold", gold.ToString(), gold > 0 ? successColor : warningColor,
+            "+1000 GOLD", CurrencyManager.Instance != null, DebugAddStationGold);
+        AddRow("Set Character Station level", "LV1 / INVESTED 0", mutedColor,
+            "SET LV1", true, () => DebugSetCharacterLevel(1));
+        AddRow("Set Character Station level", "LV2 / INVESTED 0", mutedColor,
+            "SET LV2", true, () => DebugSetCharacterLevel(2));
+        AddRow("Set Character Station level", "LV3 / INVESTED 0", mutedColor,
+            "SET LV3", true, () => DebugSetCharacterLevel(3));
+        AddRow("Set partial investment", "0", mutedColor,
+            "SET INVESTED 0", level < data.MaxLevel,
+            () => DebugSetCharacterInvestment(0));
+        AddRow("Set partial investment", "50% OF CURRENT COST", mutedColor,
+            "SET INVESTED 50%", level < data.MaxLevel,
+            DebugSetCharacterInvestmentHalf);
+        AddRow("Reset Character Station", "LV1 / INVESTED 0", warningColor,
+            "RESET", true, DebugResetCharacterStation);
+
+        AddSectionTitle("CHARACTER UI", "Selection and locked-state testing");
+        CharacterSelectionUI characterUi = FindFirstObjectByType<CharacterSelectionUI>();
+        bool uiAvailable = characterUi != null;
+        AddRow("Character Selection", uiAvailable ? "OPEN" : "NOT OPEN",
+            uiAvailable ? successColor : warningColor,
+            "REFRESH", uiAvailable, () => DebugRefreshCharacterUi(characterUi));
+        AddCharacterDebugSelection(characterUi, "Gera");
+        AddCharacterDebugSelection(characterUi, "Di-mag");
+        AddCharacterDebugSelection(characterUi, "Vika");
+    }
+
+    private void AddCharacterDebugSelection(
+        CharacterSelectionUI characterUi,
+        string characterName)
+    {
+        bool canSelect = characterUi != null &&
+            characterUi.CanDebugSelectCharacter(characterName);
+        AddRow($"Select {characterName}", canSelect ? "AVAILABLE" : "LOCKED",
+            canSelect ? mutedColor : warningColor,
+            $"SELECT {characterName.ToUpperInvariant()}", canSelect,
+            () => DebugSelectCharacter(characterUi, characterName));
+    }
+
+    private void DebugRefreshCharacterUi(CharacterSelectionUI characterUi)
+    {
+        characterUi?.DebugRefresh();
+        RefreshCurrentTab();
+    }
+
+    private void DebugSelectCharacter(
+        CharacterSelectionUI characterUi,
+        string characterName)
+    {
+        characterUi?.DebugSelectCharacter(characterName);
+        RefreshCurrentTab();
+    }
+
+    private void DebugAddStationGold()
+    {
+        BunkerStationProgressionService.Instance?.DebugAddGold();
+        RefreshCurrentTab();
+    }
+
+    private void DebugSetCharacterLevel(int level)
+    {
+        BunkerStationProgressionService.Instance?.DebugSetStationLevel(
+            BunkerStationId.Character, level);
+        RefreshCurrentTab();
+    }
+
+    private void DebugSetCharacterInvestment(int amount)
+    {
+        BunkerStationProgressionService.Instance?.DebugSetStationInvestment(
+            BunkerStationId.Character, amount);
+        RefreshCurrentTab();
+    }
+
+    private void DebugSetCharacterInvestmentHalf()
+    {
+        BunkerStationProgressionService service = BunkerStationProgressionService.Instance;
+        if (service != null)
+            DebugSetCharacterInvestment(Mathf.RoundToInt(
+                service.GetUpgradeCost(BunkerStationId.Character) * 0.5f));
+    }
+
+    private void DebugResetCharacterStation()
+    {
+        BunkerStationProgressionService.Instance?.DebugResetStation(
+            BunkerStationId.Character);
+        RefreshCurrentTab();
     }
 
     private void SpawnBoss()
@@ -1528,6 +1641,12 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         "KILL BOSS" => 146f,
         "COMPLETE LEVEL" => 188f,
         "OPEN LEVEL CARDS" => 210f,
+        "SET INVESTED 0" => 190f,
+        "SET INVESTED 50%" => 214f,
+        "+1000 GOLD" => 150f,
+        "SELECT GERA" => 164f,
+        "SELECT DI-MAG" => 184f,
+        "SELECT VIKA" => 164f,
         "CLEAR CURRENT EVENT" => 228f,
         "CLEAR EVENT" => 150f,
         "TURN OFF" => 130f,

@@ -22,7 +22,6 @@ public sealed class BunkerStationUpgradePanel : MonoBehaviour
 
     public bool IsVisible => canvasRoot != null && canvasRoot.activeSelf;
 
-    private void OnEnable() => BindEvents();
     private void OnDisable() => UnbindEvents();
     private void OnDestroy() => UnbindEvents();
 
@@ -37,6 +36,8 @@ public sealed class BunkerStationUpgradePanel : MonoBehaviour
 
     public void Hide()
     {
+        UnbindEvents();
+
         if (unlockFeedbackRoutine != null)
         {
             StopCoroutine(unlockFeedbackRoutine);
@@ -107,6 +108,9 @@ public sealed class BunkerStationUpgradePanel : MonoBehaviour
     private void BindEvents()
     {
         UnbindEvents();
+        if (!IsVisible)
+            return;
+
         if (CurrencyManager.Instance != null)
             CurrencyManager.Instance.OnGoldUpdated += HandleGoldChanged;
         if (BunkerStationProgressionService.Instance != null)
