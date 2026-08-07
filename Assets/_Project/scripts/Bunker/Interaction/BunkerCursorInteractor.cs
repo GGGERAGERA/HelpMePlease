@@ -21,6 +21,12 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
             targetCamera = Camera.main;
     }
 
+    private void OnDisable()
+    {
+        current?.Hoverable?.SetHovered(false);
+        current = null;
+    }
+
     private void Update()
     {
         UpdateHover();

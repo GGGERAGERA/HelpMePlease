@@ -44,6 +44,8 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private WorldEventMarker worldEventMarker;
 
     [SerializeField] private RunMessageView runMessageView;
+    [Header("Tactical Map")]
+    [SerializeField] private TacticalMapHUD tacticalMap;
     private RunStatsManager runStatsManager;
     private RunStateManager runStateManager;
 
@@ -57,6 +59,11 @@ public class HUDManager : MonoBehaviour
         if (bossHpPanel != null)
             bossHpPanel.SetActive(false);
 
+        if (tacticalMap == null)
+            tacticalMap = GetComponent<TacticalMapHUD>();
+
+        if (tacticalMap == null)
+            tacticalMap = gameObject.AddComponent<TacticalMapHUD>();
 
         HideLowHpVignette();
     }
@@ -152,6 +159,15 @@ public class HUDManager : MonoBehaviour
             ? player.GetComponent<CharacterMovement2D>()
             : null;
         dashCooldownView?.Bind(movement);
+        tacticalMap?.BindPlayer(player != null ? player.transform : null);
+    }
+
+    public bool IsTacticalMapVisible =>
+        tacticalMap != null && tacticalMap.IsVisible;
+
+    public void SetTacticalMapVisible(bool visible)
+    {
+        tacticalMap?.SetVisible(visible);
     }
 
     private void RefreshRunCurrency()

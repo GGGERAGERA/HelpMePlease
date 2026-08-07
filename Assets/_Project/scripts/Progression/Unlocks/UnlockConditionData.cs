@@ -9,4 +9,7 @@ public class UnlockConditionData
     public string targetId;
 
     public int requiredAmount = 1;
+
+    [Tooltip("Used only by StationLevelRequirement.")]
+    public BunkerStationId stationId;
 }

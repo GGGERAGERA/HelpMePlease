@@ -23,11 +23,23 @@ public sealed class UnlockProgressService : MonoBehaviour
 
     public bool IsUnlocked(UnlockableContentData content)
     {
+        return IsUnlockedNow(content);
+    }
+
+    public static bool IsUnlockedNow(UnlockableContentData content)
+    {
         if (content == null)
             return true;
 
         if (content.unlockedByDefault)
             return true;
+
+        if (content.condition != null &&
+            content.condition.type == UnlockConditionType.StationLevelRequirement)
+        {
+            return BunkerStationProgressionService.GetStoredLevel(content.condition.stationId) >=
+                   Mathf.Max(1, content.condition.requiredAmount);
+        }
 
         return PlayerPrefs.GetInt(GetUnlockKey(content.id), 0) == 1;
     }
@@ -36,6 +48,9 @@ public sealed class UnlockProgressService : MonoBehaviour
     {
         if (content == null || content.condition == null)
             return 0;
+
+        if (content.condition.type == UnlockConditionType.StationLevelRequirement)
+            return BunkerStationProgressionService.GetStoredLevel(content.condition.stationId);
 
         return Mathf.Clamp(
             PlayerPrefs.GetInt(GetProgressKey(content.id), 0),
@@ -93,12 +108,12 @@ public sealed class UnlockProgressService : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    private string GetUnlockKey(string id)
+    private static string GetUnlockKey(string id)
     {
         return UnlockKeyPrefix + id;
     }
 
-    private string GetProgressKey(string id)
+    private static string GetProgressKey(string id)
     {
         return ProgressKeyPrefix + id;
     }

@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 578320bd9aa24aa19f81d7f8695c0675, type: 3}
+  m_Name: ReducedGravity
+  m_EditorClassIdentifier: Assembly-CSharp::AnomalyStabilizerData
+  id: reduced_gravity
+  displayName: "СНИЖЕНИЕ ГРАВИТАЦИИ"
+  description: "Gravity тянет игрока на 35% слабее. Остальные объекты не изменены."
+  requiredStationLevel: 2
+  effectType: 3
+  value: 0.65

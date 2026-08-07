@@ -189,6 +189,81 @@ public class CharacterSpawner : MonoBehaviour
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void ConfigureDebugDefaults(
+        CharacterData character,
+        WeaponData weapon,
+        UpgradeApplier runUpgradeApplier)
+    {
+        defaultCharacter = character;
+        defaultWeapon = weapon;
+        upgradeApplier = runUpgradeApplier;
+    }
+
+    public bool TryReplaceDebugPrimaryWeapon(
+        GameObject player,
+        WeaponData weaponData,
+        out BaseWeapon replacement)
+    {
+        replacement = null;
+
+        if (player == null || weaponData == null ||
+            weaponData.weaponPrefab == null)
+        {
+            return false;
+        }
+
+        TelekinesisDebugPrototype prototype =
+            player.GetComponent<TelekinesisDebugPrototype>();
+        prototype?.ResetPrototype();
+
+        BaseWeapon current = FindDebugPrimaryWeapon(player);
+
+        if (current != null && current.weaponData == weaponData)
+        {
+            replacement = current;
+            prototype?.SetPrimaryWeapon(current);
+            return true;
+        }
+
+        if (current != null)
+            current.gameObject.SetActive(false);
+
+        replacement = SpawnWeapon(player, weaponData);
+
+        if (replacement == null)
+        {
+            if (current != null)
+                current.gameObject.SetActive(true);
+
+            return false;
+        }
+
+        if (current != null)
+        {
+            replacement.CopyRuntimeUpgradeModifiersFrom(current);
+            Destroy(current.gameObject);
+        }
+
+        prototype?.SetPrimaryWeapon(replacement);
+        return true;
+    }
+
+    public BaseWeapon SpawnTelekinesisDebugWeapon(
+        GameObject player,
+        WeaponData weaponData,
+        BaseWeapon modifierSource)
+    {
+        if (player == null || weaponData == null)
+            return null;
+
+        BaseWeapon weapon = SpawnWeapon(player, weaponData);
+
+        if (weapon != null && modifierSource != null)
+            weapon.CopyRuntimeUpgradeModifiersFrom(modifierSource);
+
+        return weapon;
+    }
+
     public BaseWeapon SpawnTelekinesisDebugWeaponClone(
         GameObject player,
         BaseWeapon source)
@@ -203,6 +278,21 @@ public class CharacterSpawner : MonoBehaviour
 
         clone.CopyRuntimeStatsFrom(source);
         return clone;
+    }
+
+    private static BaseWeapon FindDebugPrimaryWeapon(GameObject player)
+    {
+        BaseWeapon[] weapons = player.GetComponentsInChildren<BaseWeapon>(true);
+
+        for (int i = 0; i < weapons.Length; i++)
+        {
+            BaseWeapon weapon = weapons[i];
+
+            if (weapon != null && !weapon.IsTelekinesisDebugSecondary)
+                return weapon;
+        }
+
+        return null;
     }
 #endif
 }

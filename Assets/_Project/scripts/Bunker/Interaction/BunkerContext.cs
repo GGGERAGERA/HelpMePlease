@@ -10,6 +10,7 @@ public sealed class BunkerContext : MonoBehaviour
     [field: SerializeField] public BunkerShopService Shop { get; private set; }
     [field: SerializeField] public BunkerRunStarter RunStarter { get; private set; }
     [field: SerializeField] public BunkerContentRegistry ContentRegistry { get; private set; }
+    public BunkerStationProgressionService StationProgression { get; private set; }
 
     private void Awake()
     {
@@ -20,5 +21,8 @@ public sealed class BunkerContext : MonoBehaviour
         }
 
         Instance = this;
+        StationProgression = GetComponent<BunkerStationProgressionService>();
+        if (StationProgression == null)
+            StationProgression = gameObject.AddComponent<BunkerStationProgressionService>();
     }
 }

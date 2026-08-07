@@ -80,6 +80,9 @@ public sealed class UpgradeRoller
             if (upgrade == null)
                 continue;
 
+            if (!UnlockProgressService.IsUnlockedNow(upgrade.unlockData))
+                continue;
+
             if (playerLevel < upgrade.minPlayerLevel)
                 continue;
 

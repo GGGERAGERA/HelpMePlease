@@ -34,6 +34,10 @@ public enum UpgradeType
 [CreateAssetMenu(fileName = "New UpgradeData", menuName = "Game/Upgrade Data")]
 public class UpgradeData : ScriptableObject
 {
+    [Header("Unlock")]
+    [Tooltip("Optional. Use StationLevelRequirement to gate this upgrade through the shared unlock service.")]
+    public UnlockableContentData unlockData;
+
     [Header("UI")]
     public string upgradeName;
     [TextArea] public string description;

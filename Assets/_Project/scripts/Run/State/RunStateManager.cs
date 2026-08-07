@@ -12,6 +12,9 @@ public sealed class RunStateManager : MonoBehaviour
 
     public CharacterData SelectedCharacter { get; private set; }
     public WeaponData SelectedWeapon { get; private set; }
+    public AnomalyStabilizerData CurrentAnomalyStabilizer { get; private set; }
+    public AnomalyRunModifiers AnomalyModifiers { get; private set; } =
+        AnomalyRunModifiers.None;
     public int CurrentLevel { get; private set; } = 1;
 
     public RunSector CurrentSector { get; private set; }
@@ -110,11 +113,21 @@ public sealed class RunStateManager : MonoBehaviour
 
     public void BeginNewRun(CharacterData character, WeaponData weapon)
     {
+        BeginNewRunInternal(character, weapon, null);
+    }
+
+    private void BeginNewRunInternal(
+        CharacterData character,
+        WeaponData weapon,
+        AnomalyStabilizerData anomalyStabilizer)
+    {
         FindFirstObjectByType<DoubleOrLeave>()?.ResetState();
 
         ClearCurrentSector();
         SelectedCharacter = character;
         SelectedWeapon = weapon;
+        CurrentAnomalyStabilizer = anomalyStabilizer;
+        AnomalyModifiers = AnomalyRunModifiers.From(anomalyStabilizer);
         CurrentLevel = 1;
 
         pickedUpgrades.Clear();
@@ -141,7 +154,8 @@ public sealed class RunStateManager : MonoBehaviour
         Debug.Log(
             $"[RunState] New run: " +
             $"character={GetName(character)}, " +
-            $"weapon={GetName(weapon)}"
+            $"weapon={GetName(weapon)}, " +
+            $"stabilizer={GetName(anomalyStabilizer)}"
         );
     }
 
@@ -382,6 +396,8 @@ public sealed class RunStateManager : MonoBehaviour
         );
 
         runEnded = true;
+        CurrentAnomalyStabilizer = null;
+        AnomalyModifiers = AnomalyRunModifiers.None;
 
         Debug.Log(
             $"[RunState] Run ended. " +
@@ -417,6 +433,20 @@ public sealed class RunStateManager : MonoBehaviour
         startingWorldRule = worldRule;
         startingLocalAnomaly = localAnomaly;
         BeginNewRun(character, weapon);
+    }
+
+    public void BeginNewRun(
+        CharacterData character,
+        WeaponData weapon,
+        StageProfileData stageProfile,
+        WorldRuleData worldRule,
+        LocalAnomalyData localAnomaly,
+        AnomalyStabilizerData anomalyStabilizer)
+    {
+        startingStageProfile = stageProfile;
+        startingWorldRule = worldRule;
+        startingLocalAnomaly = localAnomaly;
+        BeginNewRunInternal(character, weapon, anomalyStabilizer);
     }
 
     private void CreateStartingSector()

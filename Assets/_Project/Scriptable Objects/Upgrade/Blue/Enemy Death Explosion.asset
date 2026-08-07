@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2029363319d1b9741a19ac5963bb5155, type: 3}
   m_Name: Enemy Death Explosion
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
+  unlockData: {fileID: 11400000, guid: 7bf44d91d2fd4e1e92b163e3b0ad62ad, type: 2}
   upgradeName: "Цепная реакция"
   description: "Погибшие враги получают 10% шанс взорваться и задеть окружающих."
   icon: {fileID: 782781406, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}

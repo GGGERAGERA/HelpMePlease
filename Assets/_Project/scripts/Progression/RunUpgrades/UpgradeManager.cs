@@ -53,6 +53,26 @@ public sealed class UpgradeManager : MonoBehaviour
 
     public bool IsChoosingUpgrade => isChoosingUpgrade;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public IReadOnlyList<UpgradeData> AllUpgrades => allUpgrades;
+
+    public void ConfigureDebugUpgradePool(
+        UpgradeData[] upgrades,
+        UpgradeApplier applier)
+    {
+        allUpgrades = upgrades ?? System.Array.Empty<UpgradeData>();
+        upgradeApplier = applier != null ? applier : GetComponent<UpgradeApplier>();
+        upgradeRoller = new UpgradeRoller(allUpgrades);
+    }
+
+    public bool TryApplyDebugUpgrade(
+        UpgradeData upgrade,
+        out ItemGrantResult grantResult)
+    {
+        return TryGrantUpgrade(upgrade, out grantResult);
+    }
+#endif
+
     public bool ShowWorldEventModeChoices(
         string eventDisplayName,
         string eventDescription,
@@ -291,26 +311,9 @@ public sealed class UpgradeManager : MonoBehaviour
         if (!isChoosingUpgrade)
             return;
 
-        if (upgradeApplier == null)
-        {
-            Debug.LogError("[UpgradeManager] UpgradeApplier is not assigned.");
-            return;
-        }
+        bool applied = TryGrantUpgrade(upgrade, out ItemGrantResult grantResult);
 
-        RunStateManager runState = RunStateManager.EnsureExists();
-        ItemGrantResult grantResult = runState.ItemSlots.TryAdd(upgrade);
-
-        if (grantResult == ItemGrantResult.Added ||
-            grantResult == ItemGrantResult.LeveledUp)
-        {
-            bool applied = upgradeApplier.Apply(upgrade);
-
-            if (!applied)
-                return;
-
-            runState.RegisterUpgrade(upgrade);
-        }
-        else if (grantResult == ItemGrantResult.RequiresReplacement)
+        if (!applied && grantResult == ItemGrantResult.RequiresReplacement)
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.LogWarning(
@@ -324,8 +327,42 @@ public sealed class UpgradeManager : MonoBehaviour
             Debug.LogWarning("[UpgradeManager] Cannot grant an invalid upgrade.");
             return;
         }
+        else if (!applied &&
+            (grantResult == ItemGrantResult.Added ||
+             grantResult == ItemGrantResult.LeveledUp))
+        {
+            return;
+        }
 
         CloseUpgradeSelection();
+    }
+
+    private bool TryGrantUpgrade(
+        UpgradeData upgrade,
+        out ItemGrantResult grantResult)
+    {
+        grantResult = ItemGrantResult.Invalid;
+
+        if (upgradeApplier == null)
+        {
+            Debug.LogError("[UpgradeManager] UpgradeApplier is not assigned.");
+            return false;
+        }
+
+        RunStateManager runState = RunStateManager.EnsureExists();
+        grantResult = runState.ItemSlots.TryAdd(upgrade);
+
+        if (grantResult != ItemGrantResult.Added &&
+            grantResult != ItemGrantResult.LeveledUp)
+        {
+            return false;
+        }
+
+        if (!upgradeApplier.Apply(upgrade))
+            return false;
+
+        runState.RegisterUpgrade(upgrade);
+        return true;
     }
 
     private void CloseUpgradeSelection()

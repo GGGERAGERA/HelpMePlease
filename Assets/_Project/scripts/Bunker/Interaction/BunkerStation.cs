@@ -5,7 +5,14 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
 {
     [Header("Station")]
     [SerializeField] private BunkerStationType stationType;
-    [SerializeField] private string interactionText = "Взаимодействовать";
+    [SerializeField] private string interactionText = "Р’Р·Р°РёРјРѕРґРµР№СЃС‚РІРѕРІР°С‚СЊ";
+
+    [Header("Progression")]
+    [SerializeField] private bool progressionEnabled;
+    [SerializeField] private BunkerStationId progressionStationId;
+
+    [Header("Start Run")]
+    [SerializeField] private Transform runTransitionTarget;
 
     [Header("Fallback")]
     [SerializeField] private BunkerPanelManager panelManagerFallback;
@@ -50,7 +57,7 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
                 break;
 
             case BunkerStationType.StartRun:
-                Panels?.StartRun();
+                Panels?.StartRun(runTransitionTarget);
                 break;
 
             case BunkerStationType.Animation:
@@ -61,6 +68,15 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
             case BunkerStationType.CustomEvent:
                 onInteract?.Invoke();
                 break;
+
+            case BunkerStationType.AnomalyStabilizer:
+                Panels?.OpenAnomalyStabilizers();
+                break;
         }
+
+        // Character progression is presented inside the existing selection frame.
+        // Other stations continue using the reusable floating panel.
+        if (progressionEnabled && progressionStationId != BunkerStationId.Character)
+            Panels?.ShowStationProgression(progressionStationId);
     }
 }

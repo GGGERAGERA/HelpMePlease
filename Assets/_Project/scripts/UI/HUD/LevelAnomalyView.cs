@@ -6,41 +6,30 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CanvasGroup))]
 public sealed class LevelAnomalyView : MonoBehaviour
 {
+    private static readonly Vector2 CardPosition = new(40f, -275f);
+    private static readonly Vector2 CardSize = new(350f, 140f);
+
+    private static readonly Color PanelColor =
+        new(0.01f, 0.022f, 0.032f, 0.86f);
+    private static readonly Color Cyan =
+        new(0.12f, 0.78f, 0.9f, 0.95f);
+    private static readonly Color DescriptionColor =
+        new(0.78f, 0.84f, 0.88f, 1f);
+
     [SerializeField] private TMP_FontAsset font;
 
     private CanvasGroup rootGroup;
-    private CanvasGroup overlayGroup;
-    private Image overlayBackground;
-    private Image flashImage;
-    private CanvasGroup sectorGroup;
-    private RectTransform sectorRect;
-    private TextMeshProUGUI sectorText;
-    private CanvasGroup alertGroup;
-    private TextMeshProUGUI alertText;
-    private CanvasGroup revealCardGroup;
-    private RectTransform revealCardRect;
-    private TextMeshProUGUI revealNameText;
-    private TextMeshProUGUI revealDescriptionText;
-    private CanvasGroup pinnedGroup;
-    private RectTransform pinnedRect;
-    private TextMeshProUGUI pinnedNameText;
-    private TextMeshProUGUI pinnedDescriptionText;
-    private Coroutine localCardRoutine;
+    private CanvasGroup cardGroup;
+    private RectTransform cardRect;
+    private TextMeshProUGUI nameText;
+    private TextMeshProUGUI descriptionText;
+    private Coroutine cardRoutine;
     private bool built;
-
-    private static readonly Color DarkPanel =
-        new(0.015f, 0.025f, 0.04f, 0.96f);
-    private static readonly Color Cyan =
-        new(0.12f, 0.78f, 0.9f, 1f);
-    private static readonly Color DangerRed =
-        new(0.92f, 0.14f, 0.18f, 1f);
 
     private void Awake()
     {
         rootGroup = GetComponent<CanvasGroup>();
-        rootGroup.alpha = 0f;
-        rootGroup.interactable = false;
-        rootGroup.blocksRaycasts = false;
+        ConfigureRootGroup();
     }
 
     public void Prepare()
@@ -49,29 +38,18 @@ public sealed class LevelAnomalyView : MonoBehaviour
             return;
 
         built = true;
-        if (rootGroup == null)
-            rootGroup = GetComponent<CanvasGroup>();
-
-        rootGroup.alpha = 0f;
-        rootGroup.interactable = false;
-        rootGroup.blocksRaycasts = false;
-
-        RectTransform rootRect = (RectTransform)transform;
-        Stretch(rootRect);
-
-        BuildOverlay();
-        BuildPinnedCard();
-        overlayGroup.gameObject.SetActive(false);
+        rootGroup ??= GetComponent<CanvasGroup>();
+        ConfigureRootGroup();
+        Stretch((RectTransform)transform);
+        BuildCard();
     }
 
     public void ShowLocalAnomaly(
         LevelMechanicPresentationData presentation)
     {
         Prepare();
-        StopLocalCardRoutine();
-        localCardRoutine = StartCoroutine(
-            ShowLocalAnomalyRoutine(presentation)
-        );
+        StopCardRoutine();
+        cardRoutine = StartCoroutine(ShowCardRoutine(presentation));
     }
 
     public void HideLocalAnomaly()
@@ -79,281 +57,146 @@ public sealed class LevelAnomalyView : MonoBehaviour
         if (!built)
             return;
 
-        StopLocalCardRoutine();
-        revealCardGroup.alpha = 0f;
-        pinnedGroup.alpha = 0f;
-        pinnedGroup.gameObject.SetActive(false);
-        pinnedRect.anchoredPosition = new Vector2(-40f, -112f);
-        overlayGroup.gameObject.SetActive(false);
-        overlayBackground.enabled = true;
+        StopCardRoutine();
+        cardGroup.alpha = 0f;
+        cardGroup.gameObject.SetActive(false);
         rootGroup.alpha = 0f;
         rootGroup.blocksRaycasts = false;
     }
 
-    private IEnumerator ShowLocalAnomalyRoutine(
+    private IEnumerator ShowCardRoutine(
         LevelMechanicPresentationData presentation)
     {
         SetData(presentation);
-
         rootGroup.alpha = 1f;
         rootGroup.blocksRaycasts = false;
-        overlayBackground.enabled = false;
-        overlayGroup.gameObject.SetActive(false);
-        revealCardGroup.alpha = 0f;
-        pinnedRect.anchoredPosition = new Vector2(-40f, -112f);
-        pinnedGroup.gameObject.SetActive(true);
-        yield return Fade(pinnedGroup, 0f, 1f, 0.15f);
-        overlayBackground.enabled = true;
-        localCardRoutine = null;
+        cardRect.anchoredPosition = CardPosition;
+        cardGroup.gameObject.SetActive(true);
+        yield return Fade(cardGroup, 0f, 1f, 0.15f);
+        cardRoutine = null;
     }
 
-    private void StopLocalCardRoutine()
+    private void BuildCard()
     {
-        if (localCardRoutine == null)
-            return;
+        GameObject card = CreateUiObject("ActiveAnomalyCard", transform);
+        cardRect = card.GetComponent<RectTransform>();
+        cardRect.anchorMin = new Vector2(0f, 1f);
+        cardRect.anchorMax = new Vector2(0f, 1f);
+        cardRect.pivot = new Vector2(0f, 1f);
+        cardRect.anchoredPosition = CardPosition;
+        cardRect.sizeDelta = CardSize;
 
-        StopCoroutine(localCardRoutine);
-        localCardRoutine = null;
-    }
+        Image background = card.AddComponent<Image>();
+        background.color = PanelColor;
+        background.raycastTarget = false;
 
-    private void BuildOverlay()
-    {
-        GameObject overlay = CreateUiObject("AnomalyIntroOverlay", transform);
-        RectTransform overlayRect = overlay.GetComponent<RectTransform>();
-        Stretch(overlayRect);
-        overlayBackground = overlay.AddComponent<Image>();
-        overlayBackground.color =
-            new Color(0.005f, 0.008f, 0.015f, 0.9f);
-        overlayBackground.raycastTarget = true;
-        overlayGroup = overlay.AddComponent<CanvasGroup>();
-
-        GameObject flash = CreateUiObject("GlitchFlash", overlay.transform);
-        RectTransform flashRect = flash.GetComponent<RectTransform>();
-        Stretch(flashRect);
-        flashImage = flash.AddComponent<Image>();
-        flashImage.raycastTarget = false;
-
-        GameObject sector = CreateUiObject("SectorTitle", overlay.transform);
-        sectorRect = sector.GetComponent<RectTransform>();
-        SetCenteredRect(sectorRect, new Vector2(1280f, 150f), new Vector2(0f, 130f));
-        sectorGroup = sector.AddComponent<CanvasGroup>();
-        sectorText = AddText(
-            sector,
-            58f,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center,
-            Color.white
-        );
-
-        GameObject alert = CreateUiObject("AnomalyAlert", overlay.transform);
-        RectTransform alertRect = alert.GetComponent<RectTransform>();
-        SetCenteredRect(alertRect, new Vector2(1000f, 90f), new Vector2(0f, 210f));
-        alertGroup = alert.AddComponent<CanvasGroup>();
-        alertText = AddText(
-            alert,
-            38f,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center,
-            DangerRed
-        );
-        alertText.text = "ОБНАРУЖЕНА АНОМАЛИЯ";
-
-        GameObject card = CreateUiObject("AnomalyRevealCard", overlay.transform);
-        revealCardRect = card.GetComponent<RectTransform>();
-        SetCenteredRect(revealCardRect, new Vector2(650f, 280f), Vector2.zero);
-        Image cardImage = card.AddComponent<Image>();
-        cardImage.color = DarkPanel;
-        cardImage.raycastTarget = false;
         Outline outline = card.AddComponent<Outline>();
         outline.effectColor = Cyan;
-        outline.effectDistance = new Vector2(2f, -2f);
-        revealCardGroup = card.AddComponent<CanvasGroup>();
+        outline.effectDistance = new Vector2(1f, -1f);
+        outline.useGraphicAlpha = true;
 
-        GameObject accent = CreateUiObject("DangerAccent", card.transform);
-        RectTransform accentRect = accent.GetComponent<RectTransform>();
-        accentRect.anchorMin = new Vector2(0f, 0f);
-        accentRect.anchorMax = new Vector2(0f, 1f);
-        accentRect.pivot = new Vector2(0f, 0.5f);
-        accentRect.anchoredPosition = Vector2.zero;
-        accentRect.sizeDelta = new Vector2(7f, 0f);
-        Image accentImage = accent.AddComponent<Image>();
-        accentImage.color = DangerRed;
-        accentImage.raycastTarget = false;
-
-        revealNameText = CreateTextChild(
-            card.transform,
-            "AnomalyName",
-            new Vector2(0f, 48f),
-            new Vector2(570f, 80f),
-            34f,
-            FontStyles.Bold,
-            Color.white
-        );
-        revealDescriptionText = CreateTextChild(
-            card.transform,
-            "AnomalyDescription",
-            new Vector2(0f, -45f),
-            new Vector2(570f, 110f),
-            24f,
-            FontStyles.Normal,
-            new Color(0.82f, 0.9f, 0.95f, 1f)
-        );
-    }
-
-    private void BuildPinnedCard()
-    {
-        GameObject pinned = CreateUiObject("ActiveAnomalyCard", transform);
-        pinnedRect = pinned.GetComponent<RectTransform>();
-        pinnedRect.anchorMin = new Vector2(1f, 1f);
-        pinnedRect.anchorMax = new Vector2(1f, 1f);
-        pinnedRect.pivot = new Vector2(1f, 1f);
-        pinnedRect.anchoredPosition = new Vector2(-40f, -112f);
-        pinnedRect.sizeDelta = new Vector2(390f, 155f);
-
-        Image background = pinned.AddComponent<Image>();
-        background.color = new Color(0.015f, 0.025f, 0.04f, 0.92f);
-        background.raycastTarget = false;
-        Outline outline = pinned.AddComponent<Outline>();
-        outline.effectColor = Cyan;
-        outline.effectDistance = new Vector2(1.5f, -1.5f);
-        pinnedGroup = pinned.AddComponent<CanvasGroup>();
-        pinnedGroup.interactable = false;
-        pinnedGroup.blocksRaycasts = false;
-
-        GameObject accent = CreateUiObject("DangerAccent", pinned.transform);
-        RectTransform accentRect = accent.GetComponent<RectTransform>();
-        accentRect.anchorMin = new Vector2(0f, 0f);
-        accentRect.anchorMax = new Vector2(0f, 1f);
-        accentRect.pivot = new Vector2(0f, 0.5f);
-        accentRect.anchoredPosition = Vector2.zero;
-        accentRect.sizeDelta = new Vector2(5f, 0f);
-        Image accentImage = accent.AddComponent<Image>();
-        accentImage.color = DangerRed;
-        accentImage.raycastTarget = false;
+        cardGroup = card.AddComponent<CanvasGroup>();
+        cardGroup.interactable = false;
+        cardGroup.blocksRaycasts = false;
 
         TextMeshProUGUI header = CreateTextChild(
-            pinned.transform,
+            card.transform,
             "Header",
-            new Vector2(0f, 55f),
-            new Vector2(340f, 30f),
-            17f,
+            new Vector2(0f, 49f),
+            new Vector2(310f, 20f),
+            15f,
             FontStyles.Bold,
+            TextAlignmentOptions.MidlineLeft,
             Cyan
         );
         header.text = "АНОМАЛИЯ";
 
-        pinnedNameText = CreateTextChild(
-            pinned.transform,
+        nameText = CreateTextChild(
+            card.transform,
             "Name",
-            new Vector2(0f, 16f),
-            new Vector2(340f, 42f),
+            new Vector2(0f, 19f),
+            new Vector2(310f, 32f),
             23f,
             FontStyles.Bold,
+            TextAlignmentOptions.MidlineLeft,
             Color.white
         );
-        pinnedDescriptionText = CreateTextChild(
-            pinned.transform,
-            "Description",
-            new Vector2(0f, -37f),
-            new Vector2(340f, 58f),
-            18f,
-            FontStyles.Normal,
-            new Color(0.82f, 0.9f, 0.95f, 1f)
-        );
 
-        pinned.SetActive(false);
+        descriptionText = CreateTextChild(
+            card.transform,
+            "Description",
+            new Vector2(0f, -31f),
+            new Vector2(310f, 50f),
+            17f,
+            FontStyles.Normal,
+            TextAlignmentOptions.TopLeft,
+            DescriptionColor
+        );
+        descriptionText.maxVisibleLines = 2;
+
+        card.SetActive(false);
     }
 
     private void SetData(LevelMechanicPresentationData presentation)
     {
-        sectorText.text = "СЕКТОР";
-        revealNameText.text = presentation.Title;
-        revealDescriptionText.text = presentation.Description;
-        pinnedNameText.text = presentation.Title;
-        pinnedDescriptionText.text =
-            presentation.PinnedDescription;
+        nameText.text = GetCompactName(presentation.Title);
+        descriptionText.text = string.IsNullOrWhiteSpace(
+                presentation.PinnedDescription)
+            ? presentation.Description
+            : presentation.PinnedDescription;
     }
 
-    private IEnumerator AnimateSectorIn(float duration)
+    private static string GetCompactName(string title)
     {
-        Vector2 start = new(-70f, 130f);
-        Vector2 target = new(0f, 130f);
-        float elapsed = 0f;
+        if (string.IsNullOrWhiteSpace(title))
+            return string.Empty;
 
-        while (elapsed < duration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            float t = EaseOut(elapsed / duration);
-            sectorRect.anchoredPosition = Vector2.LerpUnclamped(start, target, t);
-            sectorGroup.alpha = Mathf.Lerp(0f, 1f, t);
-            yield return null;
-        }
-
-        sectorRect.anchoredPosition = target;
-        sectorGroup.alpha = 1f;
+        int separatorIndex = title.IndexOf(':');
+        return separatorIndex >= 0 && separatorIndex < title.Length - 1
+            ? title.Substring(separatorIndex + 1).Trim()
+            : title.Trim();
     }
 
-    private IEnumerator GlitchFlash()
+    private void ConfigureRootGroup()
     {
-        flashImage.color = new Color(DangerRed.r, DangerRed.g, DangerRed.b, 0.5f);
-        yield return WaitRealtime(0.04f);
-        flashImage.color = new Color(Cyan.r, Cyan.g, Cyan.b, 0.4f);
-        yield return WaitRealtime(0.04f);
-        flashImage.color = new Color(DangerRed.r, DangerRed.g, DangerRed.b, 0f);
+        rootGroup.alpha = 0f;
+        rootGroup.interactable = false;
+        rootGroup.blocksRaycasts = false;
     }
 
-    private IEnumerator ScaleAndFadeCard(float duration)
+    private void StopCardRoutine()
     {
-        float elapsed = 0f;
-        Vector3 start = Vector3.one * 0.7f;
-        Vector3 target = Vector3.one * 1.08f;
+        if (cardRoutine == null)
+            return;
 
-        while (elapsed < duration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            float t = EaseOut(elapsed / duration);
-            revealCardRect.localScale = Vector3.LerpUnclamped(start, target, t);
-            revealCardGroup.alpha = Mathf.Lerp(0f, 1f, t);
-            yield return null;
-        }
-
-        revealCardRect.localScale = target;
-        revealCardGroup.alpha = 1f;
+        StopCoroutine(cardRoutine);
+        cardRoutine = null;
     }
 
-    private IEnumerator ScaleCard(Vector3 start, Vector3 target, float duration)
+    private TextMeshProUGUI CreateTextChild(
+        Transform parent,
+        string objectName,
+        Vector2 position,
+        Vector2 size,
+        float fontSize,
+        FontStyles style,
+        TextAlignmentOptions alignment,
+        Color color)
     {
-        float elapsed = 0f;
+        GameObject textObject = CreateUiObject(objectName, parent);
+        RectTransform rect = textObject.GetComponent<RectTransform>();
+        SetCenteredRect(rect, size, position);
 
-        while (elapsed < duration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            float t = EaseOut(elapsed / duration);
-            revealCardRect.localScale = Vector3.LerpUnclamped(start, target, t);
-            yield return null;
-        }
-
-        revealCardRect.localScale = target;
-    }
-
-    private IEnumerator DockCard(float duration)
-    {
-        Vector2 startPosition = revealCardRect.anchoredPosition;
-        Vector2 targetPosition = new(735f, 380f);
-        Vector3 startScale = revealCardRect.localScale;
-        Vector3 targetScale = Vector3.one * 0.52f;
-        float elapsed = 0f;
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            float t = EaseOut(elapsed / duration);
-            revealCardRect.anchoredPosition =
-                Vector2.LerpUnclamped(startPosition, targetPosition, t);
-            revealCardRect.localScale =
-                Vector3.LerpUnclamped(startScale, targetScale, t);
-            yield return null;
-        }
+        TextMeshProUGUI text = textObject.AddComponent<TextMeshProUGUI>();
+        text.font = font;
+        text.fontSize = fontSize;
+        text.fontStyle = style;
+        text.alignment = alignment;
+        text.color = color;
+        text.textWrappingMode = TextWrappingModes.Normal;
+        text.overflowMode = TextOverflowModes.Truncate;
+        text.raycastTarget = false;
+        return text;
     }
 
     private static IEnumerator Fade(
@@ -368,71 +211,17 @@ public sealed class LevelAnomalyView : MonoBehaviour
         while (elapsed < duration)
         {
             elapsed += Time.unscaledDeltaTime;
-            group.alpha = Mathf.Lerp(start, target, EaseOut(elapsed / duration));
+            float t = Mathf.Clamp01(elapsed / duration);
+            group.alpha = Mathf.Lerp(start, target, 1f - (1f - t) * (1f - t));
             yield return null;
         }
 
         group.alpha = target;
     }
 
-    private static IEnumerator WaitRealtime(float duration)
-    {
-        float elapsed = 0f;
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            yield return null;
-        }
-    }
-
-    private static float EaseOut(float value)
-    {
-        float t = Mathf.Clamp01(value);
-        return 1f - (1f - t) * (1f - t);
-    }
-
-    private TextMeshProUGUI CreateTextChild(
-        Transform parent,
+    private static GameObject CreateUiObject(
         string objectName,
-        Vector2 position,
-        Vector2 size,
-        float fontSize,
-        FontStyles style,
-        Color color)
-    {
-        GameObject textObject = CreateUiObject(objectName, parent);
-        RectTransform rect = textObject.GetComponent<RectTransform>();
-        SetCenteredRect(rect, size, position);
-        return AddText(
-            textObject,
-            fontSize,
-            style,
-            TextAlignmentOptions.Center,
-            color
-        );
-    }
-
-    private TextMeshProUGUI AddText(
-        GameObject target,
-        float fontSize,
-        FontStyles style,
-        TextAlignmentOptions alignment,
-        Color color)
-    {
-        TextMeshProUGUI text = target.AddComponent<TextMeshProUGUI>();
-        text.font = font;
-        text.fontSize = fontSize;
-        text.fontStyle = style;
-        text.alignment = alignment;
-        text.color = color;
-        text.enableWordWrapping = true;
-        text.overflowMode = TextOverflowModes.Truncate;
-        text.raycastTarget = false;
-        return text;
-    }
-
-    private static GameObject CreateUiObject(string objectName, Transform parent)
+        Transform parent)
     {
         GameObject result = new(objectName, typeof(RectTransform));
         result.layer = 5;

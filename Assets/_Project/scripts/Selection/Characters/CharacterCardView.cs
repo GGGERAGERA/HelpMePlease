@@ -21,6 +21,7 @@ public class CharacterCardView : MonoBehaviour
     [SerializeField] private GameObject selectedVisual;
 
     private Button button;
+    private TextMeshProUGUI lockRequirementText;
 
     public CharacterData Character => character;
 
@@ -45,7 +46,7 @@ public class CharacterCardView : MonoBehaviour
 
     private void HandleClick()
     {
-        if (character == null)
+        if (character == null || !IsUnlocked())
             return;
 
         Clicked?.Invoke(character);
@@ -71,7 +72,14 @@ public class CharacterCardView : MonoBehaviour
         }
 
         if (lockedOverlay != null)
+        {
             lockedOverlay.SetActive(!isUnlocked);
+            if (!isUnlocked)
+                RefreshLockRequirement();
+        }
+
+        if (button != null)
+            button.interactable = isUnlocked;
     }
 
     public void SetSelected(bool selected)
@@ -89,5 +97,43 @@ public class CharacterCardView : MonoBehaviour
             return character.unlockData.unlockedByDefault;
 
         return UnlockProgressService.Instance.IsUnlocked(character.unlockData);
+    }
+
+    private void RefreshLockRequirement()
+    {
+        if (lockedOverlay == null || character == null || character.unlockData == null)
+            return;
+
+        UnlockConditionData condition = character.unlockData.condition;
+        if (condition == null || condition.type != UnlockConditionType.StationLevelRequirement)
+            return;
+
+        if (lockRequirementText == null)
+        {
+            Transform existing = lockedOverlay.transform.Find("StationRequirementText");
+            lockRequirementText = existing != null ? existing.GetComponent<TextMeshProUGUI>() : null;
+        }
+
+        if (lockRequirementText == null)
+        {
+            GameObject requirement = new("StationRequirementText", typeof(RectTransform), typeof(TextMeshProUGUI));
+            requirement.layer = lockedOverlay.layer;
+            requirement.transform.SetParent(lockedOverlay.transform, false);
+            RectTransform rect = requirement.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.08f, 0.08f);
+            rect.anchorMax = new Vector2(0.92f, 0.42f);
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+
+            lockRequirementText = requirement.GetComponent<TextMeshProUGUI>();
+            lockRequirementText.font = nameText != null ? nameText.font : TMP_Settings.defaultFontAsset;
+            lockRequirementText.fontSize = 20f;
+            lockRequirementText.fontStyle = FontStyles.Bold;
+            lockRequirementText.alignment = TextAlignmentOptions.Center;
+            lockRequirementText.color = new Color(0.78f, 0.95f, 0.96f, 1f);
+            lockRequirementText.textWrappingMode = TextWrappingModes.Normal;
+            lockRequirementText.raycastTarget = false;
+        }
+
+        lockRequirementText.text = $"LOCKED\nSTATION LV.{condition.requiredAmount}";
     }
 }
