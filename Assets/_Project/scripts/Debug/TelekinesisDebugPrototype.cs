@@ -39,6 +39,7 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
     private PlayerHealth playerHealth;
     private BaseWeapon primaryWeapon;
     private BaseWeapon secondaryWeapon;
+    private WeaponData secondaryDebugWeaponData;
     private EnemyHealth focusTarget;
     private LineRenderer radiusVisual;
     private LineRenderer commandPointMarker;
@@ -107,6 +108,29 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
             playerHealth = GetComponent<PlayerHealth>();
 
         enabled = true;
+    }
+
+    public WeaponData SecondaryDebugWeaponData => secondaryDebugWeaponData;
+
+    public void SetPrimaryWeapon(BaseWeapon weapon)
+    {
+        primaryWeapon = weapon;
+        enabled = weapon != null;
+    }
+
+    public void SetSecondaryDebugWeapon(WeaponData weaponData)
+    {
+        if (secondaryDebugWeaponData == weaponData)
+            return;
+
+        secondaryDebugWeaponData = weaponData;
+
+        if (secondaryWeapon == null)
+            return;
+
+        TelekinesisDebugMode mode = CurrentMode;
+        ClearTransientState();
+        ApplyMode(mode);
     }
 
     public bool ApplyMode(TelekinesisDebugMode mode)
@@ -452,11 +476,14 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
         if (characterSpawner == null)
             return false;
 
-        secondaryWeapon =
-            characterSpawner.SpawnTelekinesisDebugWeaponClone(
-                gameObject,
-                primaryWeapon
-            );
+        WeaponData weaponData = secondaryDebugWeaponData != null
+            ? secondaryDebugWeaponData
+            : primaryWeapon.weaponData;
+        secondaryWeapon = characterSpawner.SpawnTelekinesisDebugWeapon(
+            gameObject,
+            weaponData,
+            primaryWeapon
+        );
 
         if (secondaryWeapon == null)
             return false;

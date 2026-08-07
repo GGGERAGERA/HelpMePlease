@@ -27,6 +27,8 @@ public sealed class LevelChoiceManager : MonoBehaviour
         currentSectorOptions = new();
     private bool isChoosing;
 
+    public bool IsChoosing => isChoosing;
+
     private void Awake()
     {
         if (panelView == null)

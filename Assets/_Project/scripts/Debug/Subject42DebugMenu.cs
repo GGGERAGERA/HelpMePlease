@@ -12,6 +12,11 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     [SerializeField] private LevelAnomalyController anomalyController;
     [SerializeField] private WorldEventSpawner worldEventSpawner;
     [SerializeField] private EnemySpawner enemySpawner;
+    [SerializeField] private CharacterSpawner characterSpawner;
+    [SerializeField] private UpgradeManager upgradeManager;
+    [SerializeField] private RunTimer runTimer;
+    [SerializeField] private RunFlowController runFlowController;
+    [SerializeField] private LevelChoiceManager levelChoiceManager;
 
     [Header("Known project content")]
     [SerializeField] private WorldRuleData[] worldRules;
@@ -19,8 +24,38 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     [SerializeField] private WorldEvent[] worldEventPrefabs;
     [SerializeField] private GameObject turretEnemyPrefab;
     [SerializeField] private GameObject eyesEnemyPrefab;
+    [SerializeField] private WeaponData[] debugWeapons;
+    [SerializeField] private UpgradeData[] additionalDebugUpgrades;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private enum DebugTab
+    {
+        Run,
+        World,
+        Enemies,
+        Events,
+        WeaponsAndUpgrades,
+        Telekinesis
+    }
+
+    private enum UpgradeFilter
+    {
+        All,
+        Numeric,
+        Behavior,
+        OutOfPool
+    }
+
+    private static readonly string[] TabLabels =
+    {
+        "RUN",
+        "WORLD",
+        "ENEMIES",
+        "EVENTS",
+        "WEAPONS & UPGRADES",
+        "TELEKINESIS"
+    };
+
     private static readonly WorldRuleType[] DebugRuleTypes =
     {
         WorldRuleType.Snow,
@@ -42,13 +77,20 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private GameObject menuRoot;
     private RectTransform contentRoot;
+    private readonly GameObject[] tabRoots = new GameObject[TabLabels.Length];
+    private readonly Image[] tabButtonImages = new Image[TabLabels.Length];
+    private DebugTab activeTab = DebugTab.Run;
+    private UpgradeFilter upgradeFilter = UpgradeFilter.All;
     private bool isOpen;
+    private bool waitingForF1Release;
     private float previousTimeScale;
     private bool previousCursorVisible;
     private CursorLockMode previousCursorLockMode;
     private bool warnedRuleController;
     private bool warnedAnomalyController;
     private bool warnedEventSpawner;
+    private string lastUpgradeResult;
+
     private readonly List<LevelAnomalyController.LocalAnomalyZoneGeometry>
         activeAnomalyZones = new();
     private readonly List<LocalAnomalyType> activeAnomalyTypes = new();
@@ -56,6 +98,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private readonly StringBuilder activeAnomalySummary = new();
     private readonly List<WorldEvent> addedEventPrefabs = new();
     private readonly List<GameObject> debugEnemies = new();
+    private readonly List<UpgradeData> visibleUpgrades = new();
     private TelekinesisDebugPrototype telekinesisPrototype;
 
     private readonly Color panelColor = new(0.035f, 0.045f, 0.06f, 0.97f);
@@ -69,14 +112,58 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         ResolveSceneReferences();
         BuildMenu();
-        RefreshData();
+        RefreshAllTabs();
+        SelectTab(activeTab, false);
         menuRoot.SetActive(false);
+    }
+
+    public void ConfigureSandbox(
+        WorldRuleController rulesController,
+        LevelAnomalyController anomaliesController,
+        WorldEventSpawner eventsSpawner,
+        EnemySpawner enemiesSpawner,
+        CharacterSpawner playerSpawner,
+        UpgradeManager upgradesManager,
+        WorldRuleData[] rules,
+        LocalAnomalyData[] anomalies,
+        WorldEvent[] events,
+        GameObject turretPrefab,
+        GameObject eyesPrefab,
+        WeaponData[] weapons,
+        UpgradeData[] upgrades)
+    {
+        worldRuleController = rulesController;
+        anomalyController = anomaliesController;
+        worldEventSpawner = eventsSpawner;
+        enemySpawner = enemiesSpawner;
+        characterSpawner = playerSpawner;
+        upgradeManager = upgradesManager;
+        worldRules = rules;
+        localAnomalies = anomalies;
+        worldEventPrefabs = events;
+        turretEnemyPrefab = turretPrefab;
+        eyesEnemyPrefab = eyesPrefab;
+        debugWeapons = weapons;
+        additionalDebugUpgrades = upgrades;
+        RefreshAllTabs();
+        SelectTab(activeTab, false);
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.F1))
-            SetOpen(!isOpen);
+        if (waitingForF1Release)
+        {
+            if (!Input.GetKey(KeyCode.F1))
+                waitingForF1Release = false;
+
+            return;
+        }
+
+        if (!Input.GetKeyDown(KeyCode.F1))
+            return;
+
+        waitingForF1Release = true;
+        SetOpen(!isOpen);
     }
 
     private void OnDisable()
@@ -108,16 +195,14 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             return;
 
         ResolveSceneReferences();
-        RefreshData();
+        RefreshTab(activeTab);
 
         previousTimeScale = Time.timeScale;
         previousCursorVisible = Cursor.visible;
         previousCursorLockMode = Cursor.lockState;
-
         Time.timeScale = 0f;
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
-
         isOpen = true;
         menuRoot.SetActive(true);
     }
@@ -134,6 +219,18 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void RestoreGameState()
     {
+        bool productionChoiceIsOpen =
+            (levelChoiceManager != null && levelChoiceManager.IsChoosing) ||
+            (upgradeManager != null && upgradeManager.IsChoosingUpgrade);
+
+        if (productionChoiceIsOpen)
+        {
+            Time.timeScale = 0f;
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+            return;
+        }
+
         Time.timeScale = previousTimeScale;
         Cursor.visible = previousCursorVisible;
         Cursor.lockState = previousCursorLockMode;
@@ -141,33 +238,26 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void ResolveSceneReferences()
     {
-        if (worldRuleController == null)
-            worldRuleController = FindFirstObjectByType<WorldRuleController>();
+        worldRuleController ??= FindFirstObjectByType<WorldRuleController>();
+        anomalyController ??= FindFirstObjectByType<LevelAnomalyController>();
+        worldEventSpawner ??= FindFirstObjectByType<WorldEventSpawner>();
+        enemySpawner ??= FindFirstObjectByType<EnemySpawner>();
+        characterSpawner ??= FindFirstObjectByType<CharacterSpawner>();
+        upgradeManager ??= UpgradeManager.Instance != null
+            ? UpgradeManager.Instance
+            : FindFirstObjectByType<UpgradeManager>();
+        runTimer ??= FindFirstObjectByType<RunTimer>();
+        runFlowController ??= RunFlowController.Instance != null
+            ? RunFlowController.Instance
+            : FindFirstObjectByType<RunFlowController>();
+        levelChoiceManager ??= FindFirstObjectByType<LevelChoiceManager>();
 
-        if (anomalyController == null)
-            anomalyController = FindFirstObjectByType<LevelAnomalyController>();
-
-        if (worldEventSpawner == null)
-            worldEventSpawner = FindFirstObjectByType<WorldEventSpawner>();
-
-        if (enemySpawner == null)
-            enemySpawner = FindFirstObjectByType<EnemySpawner>();
-
-        WarnIfMissing(
-            worldRuleController,
-            ref warnedRuleController,
-            "WorldRuleController"
-        );
-        WarnIfMissing(
-            anomalyController,
-            ref warnedAnomalyController,
-            "LevelAnomalyController"
-        );
-        WarnIfMissing(
-            worldEventSpawner,
-            ref warnedEventSpawner,
-            "WorldEventSpawner"
-        );
+        WarnIfMissing(worldRuleController, ref warnedRuleController,
+            "WorldRuleController");
+        WarnIfMissing(anomalyController, ref warnedAnomalyController,
+            "LevelAnomalyController");
+        WarnIfMissing(worldEventSpawner, ref warnedEventSpawner,
+            "WorldEventSpawner");
     }
 
     private void WarnIfMissing(
@@ -181,7 +271,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         wasWarned = true;
         Debug.LogWarning(
             $"[Subject42DebugMenu] {systemName} was not found. " +
-            "The related section is diagnostics-only until it is available.",
+            "The related tab is diagnostics-only until it is available.",
             this
         );
     }
@@ -212,8 +302,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         blockerImage.raycastTarget = true;
 
         RectTransform panel = CreateRect("Panel", blocker);
-        panel.anchorMin = new Vector2(0.1f, 0.06f);
-        panel.anchorMax = new Vector2(0.9f, 0.94f);
+        panel.anchorMin = new Vector2(0.07f, 0.05f);
+        panel.anchorMax = new Vector2(0.93f, 0.95f);
         panel.offsetMin = Vector2.zero;
         panel.offsetMax = Vector2.zero;
         panel.gameObject.AddComponent<Image>().color = panelColor;
@@ -222,57 +312,86 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         header.anchorMin = new Vector2(0f, 1f);
         header.anchorMax = Vector2.one;
         header.pivot = new Vector2(0.5f, 1f);
-        header.sizeDelta = new Vector2(0f, 72f);
+        header.sizeDelta = new Vector2(0f, 62f);
         header.anchoredPosition = Vector2.zero;
 
         TextMeshProUGUI title = CreateText(
-            "Title",
-            header,
-            "SUBJECT#42  —  DEBUG MENU",
-            30f,
-            TextAlignmentOptions.MidlineLeft,
-            Color.white
+            "Title", header, "SUBJECT#42 - DEBUG MENU", 28f,
+            TextAlignmentOptions.MidlineLeft, Color.white
         );
-        RectTransform titleRect = title.rectTransform;
-        titleRect.anchorMin = Vector2.zero;
-        titleRect.anchorMax = Vector2.one;
-        titleRect.offsetMin = new Vector2(24f, 0f);
-        titleRect.offsetMax = new Vector2(-90f, 0f);
+        Stretch(title.rectTransform, 22f, 90f);
 
-        Button closeButton = CreateButton(header, "X", CloseMenu, 54f);
+        Button closeButton = CreateButton(header, "X", CloseMenu, 52f);
         RectTransform closeRect = closeButton.GetComponent<RectTransform>();
         closeRect.anchorMin = closeRect.anchorMax = new Vector2(1f, 0.5f);
         closeRect.pivot = new Vector2(1f, 0.5f);
-        closeRect.anchoredPosition = new Vector2(-16f, 0f);
-        closeRect.sizeDelta = new Vector2(54f, 44f);
+        closeRect.anchoredPosition = new Vector2(-14f, 0f);
+        closeRect.sizeDelta = new Vector2(52f, 40f);
 
-        RectTransform scrollRectTransform = CreateRect("Scroll View", panel);
-        scrollRectTransform.anchorMin = Vector2.zero;
-        scrollRectTransform.anchorMax = Vector2.one;
-        scrollRectTransform.offsetMin = new Vector2(18f, 18f);
-        scrollRectTransform.offsetMax = new Vector2(-18f, -72f);
+        RectTransform tabBar = CreateRect("Tabs", panel);
+        tabBar.anchorMin = new Vector2(0f, 1f);
+        tabBar.anchorMax = Vector2.one;
+        tabBar.pivot = new Vector2(0.5f, 1f);
+        tabBar.anchoredPosition = new Vector2(0f, -62f);
+        tabBar.sizeDelta = new Vector2(0f, 54f);
 
-        ScrollRect scrollRect = scrollRectTransform.gameObject.AddComponent<ScrollRect>();
-        scrollRect.horizontal = false;
-        scrollRect.vertical = true;
-        scrollRect.scrollSensitivity = 34f;
+        for (int i = 0; i < TabLabels.Length; i++)
+        {
+            int captured = i;
+            RectTransform slot = CreateRect(TabLabels[i] + " Slot", tabBar);
+            slot.anchorMin = new Vector2((float)i / TabLabels.Length, 0f);
+            slot.anchorMax = new Vector2((float)(i + 1) / TabLabels.Length, 1f);
+            slot.offsetMin = new Vector2(3f, 3f);
+            slot.offsetMax = new Vector2(-3f, -3f);
+            Button button = CreateButton(
+                slot,
+                TabLabels[i],
+                () => SelectTab((DebugTab)captured),
+                100f
+            );
+            Stretch(button.GetComponent<RectTransform>());
+            tabButtonImages[i] = button.targetGraphic as Image;
+        }
 
-        RectTransform viewport = CreateRect("Viewport", scrollRectTransform);
+        RectTransform pages = CreateRect("Tab Pages", panel);
+        pages.anchorMin = Vector2.zero;
+        pages.anchorMax = Vector2.one;
+        pages.offsetMin = new Vector2(18f, 18f);
+        pages.offsetMax = new Vector2(-18f, -120f);
+
+        for (int i = 0; i < TabLabels.Length; i++)
+            tabRoots[i] = CreateTabPage(TabLabels[i], pages, out _);
+    }
+
+    private GameObject CreateTabPage(
+        string tabName,
+        Transform parent,
+        out RectTransform pageContent)
+    {
+        RectTransform page = CreateRect(tabName + " Page", parent);
+        Stretch(page);
+
+        ScrollRect scroll = page.gameObject.AddComponent<ScrollRect>();
+        scroll.horizontal = false;
+        scroll.vertical = true;
+        scroll.scrollSensitivity = 34f;
+
+        RectTransform viewport = CreateRect("Viewport", page);
         Stretch(viewport);
         viewport.gameObject.AddComponent<Image>().color =
             new Color(0f, 0f, 0f, 0.12f);
         viewport.gameObject.AddComponent<Mask>().showMaskGraphic = false;
-        scrollRect.viewport = viewport;
+        scroll.viewport = viewport;
 
-        contentRoot = CreateRect("Content", viewport);
-        contentRoot.anchorMin = new Vector2(0f, 1f);
-        contentRoot.anchorMax = Vector2.one;
-        contentRoot.pivot = new Vector2(0.5f, 1f);
-        contentRoot.offsetMin = new Vector2(10f, 0f);
-        contentRoot.offsetMax = new Vector2(-10f, 0f);
+        pageContent = CreateRect("Content", viewport);
+        pageContent.anchorMin = new Vector2(0f, 1f);
+        pageContent.anchorMax = Vector2.one;
+        pageContent.pivot = new Vector2(0.5f, 1f);
+        pageContent.offsetMin = new Vector2(10f, 0f);
+        pageContent.offsetMax = new Vector2(-10f, 0f);
 
         VerticalLayoutGroup layout =
-            contentRoot.gameObject.AddComponent<VerticalLayoutGroup>();
+            pageContent.gameObject.AddComponent<VerticalLayoutGroup>();
         layout.padding = new RectOffset(10, 10, 10, 16);
         layout.spacing = 7f;
         layout.childAlignment = TextAnchor.UpperCenter;
@@ -282,42 +401,268 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         layout.childForceExpandWidth = true;
 
         ContentSizeFitter fitter =
-            contentRoot.gameObject.AddComponent<ContentSizeFitter>();
+            pageContent.gameObject.AddComponent<ContentSizeFitter>();
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-        scrollRect.content = contentRoot;
+        scroll.content = pageContent;
+        return page.gameObject;
     }
 
-    private void RefreshData()
+    private void SelectTab(DebugTab tab, bool refresh = true)
     {
+        activeTab = tab;
+
+        for (int i = 0; i < tabRoots.Length; i++)
+        {
+            bool selected = i == (int)tab;
+            tabRoots[i].SetActive(selected);
+
+            if (tabButtonImages[i] != null)
+            {
+                tabButtonImages[i].color = selected
+                    ? new Color(0.2f, 0.73f, 0.88f, 1f)
+                    : accentColor;
+            }
+        }
+
+        if (refresh)
+            RefreshTab(tab);
+    }
+
+    private void RefreshAllTabs()
+    {
+        for (int i = 0; i < tabRoots.Length; i++)
+            RefreshTab((DebugTab)i);
+    }
+
+    private void RefreshCurrentTab() => RefreshTab(activeTab);
+
+    private void RefreshTab(DebugTab tab)
+    {
+        if (tabRoots[(int)tab] == null)
+            return;
+
+        contentRoot = tabRoots[(int)tab].transform
+            .Find("Viewport/Content") as RectTransform;
+
         if (contentRoot == null)
             return;
 
         for (int i = contentRoot.childCount - 1; i >= 0; i--)
             Destroy(contentRoot.GetChild(i).gameObject);
 
-        AddWorldRulesSection();
-        AddLocalAnomaliesSection();
-        AddWorldEventsSection();
-        AddEnemiesSection();
-        AddTelekinesisSection();
+        AddTabHeading(TabLabels[(int)tab]);
+
+        switch (tab)
+        {
+            case DebugTab.Run:
+                AddRunSection();
+                break;
+            case DebugTab.World:
+                AddWorldRulesSection();
+                AddLocalAnomaliesSection();
+                break;
+            case DebugTab.Enemies:
+                AddEnemiesSection();
+                break;
+            case DebugTab.Events:
+                AddWorldEventsSection();
+                break;
+            case DebugTab.WeaponsAndUpgrades:
+                AddWeaponsSection();
+                AddUpgradesSection();
+                break;
+            case DebugTab.Telekinesis:
+                AddTelekinesisSection();
+                break;
+        }
+
         AddHint("F1 toggles this menu. Gameplay remains paused while it is open.");
+    }
+
+    private void AddRunSection()
+    {
+        ResolveSceneReferences();
+        RunStateManager runState = RunStateManager.Instance;
+        RunSector sector = runState != null ? runState.CurrentSector : null;
+        WorldEvent currentEvent = worldEventSpawner != null
+            ? worldEventSpawner.CurrentEvent
+            : null;
+        EnemyHealth boss = FindAliveBoss();
+        bool choiceOpen = levelChoiceManager != null &&
+            levelChoiceManager.IsChoosing;
+        bool completed = runFlowController != null &&
+            runFlowController.IsLevelCompleted;
+
+        AddSectionTitle("CURRENT RUN", "Read-only production state");
+        AddRow("Current level",
+            sector != null ? sector.SectorNumber.ToString() : "NOT AVAILABLE",
+            sector != null ? successColor : warningColor,
+            null, false, null);
+        AddRow("Current World Rule",
+            sector != null && sector.WorldRule != null
+                ? GetWorldRuleName(sector.WorldRule.RuleType, sector.WorldRule)
+                : "None",
+            mutedColor, null, false, null);
+        AddRow("Current Local Anomaly",
+            sector != null && sector.LocalAnomaly != null
+                ? sector.LocalAnomaly.name
+                : "None",
+            mutedColor, null, false, null);
+        AddRow("Current Event",
+            currentEvent == null
+                ? "None"
+                : $"{GetEventDisplayName(currentEvent)} - " +
+                  $"{(currentEvent.IsStarted ? "ACTIVE" : "WAITING")}",
+            currentEvent != null ? successColor : mutedColor,
+            null, false, null);
+        AddRow("Boss alive", boss != null ? "YES" : "NO",
+            boss != null ? successColor : mutedColor,
+            null, false, null);
+        AddRow("Level choice open", choiceOpen ? "YES" : "NO",
+            choiceOpen ? successColor : mutedColor,
+            null, false, null);
+
+        AddSectionTitle("LEVEL FLOW", "Production boss-defeat lifecycle");
+        bool canSpawnBoss = runTimer != null &&
+            runTimer.CanDebugSpawnBoss &&
+            boss == null && !completed && !choiceOpen;
+        AddRow("Spawn the configured current-sector boss",
+            canSpawnBoss ? "READY" : "UNAVAILABLE IN CURRENT STATE",
+            canSpawnBoss ? mutedColor : warningColor,
+            "SPAWN BOSS", canSpawnBoss, SpawnBoss);
+
+        bool canKillBoss = boss != null && !completed && !choiceOpen;
+        AddRow("Defeat the live boss through EnemyHealth",
+            canKillBoss ? "READY" : "NO LIVE BOSS",
+            canKillBoss ? mutedColor : warningColor,
+            "KILL BOSS", canKillBoss, KillBoss);
+
+        bool canComplete = runFlowController != null &&
+            runFlowController.CanDebugCompleteCurrentLevel;
+        AddRow("Complete current level through RunFlowController",
+            canComplete ? "READY" : completed ? "ALREADY COMPLETED" : "UNAVAILABLE",
+            canComplete ? successColor : warningColor,
+            "COMPLETE LEVEL", canComplete, CompleteLevel);
+
+        bool canOpenCards = runFlowController != null &&
+            runFlowController.CanDebugOpenLevelChoice;
+        AddRow("Skip only the post-boss presentation delay",
+            choiceOpen ? "ALREADY OPEN" : canOpenCards ? "READY" :
+                "COMPLETE LEVEL FIRST",
+            canOpenCards ? mutedColor : warningColor,
+            "OPEN LEVEL CARDS", canOpenCards, OpenLevelCards);
+
+        bool canClearEvent = worldEventSpawner != null && currentEvent != null;
+        AddRow("Current World Event",
+            canClearEvent ? GetEventDisplayName(currentEvent) : "None",
+            canClearEvent ? mutedColor : warningColor,
+            "CLEAR CURRENT EVENT", canClearEvent, ClearWorldEvent);
+
+        AddHint(
+            "NEXT LEVEL remains the production card-confirmation action; " +
+            "there is no safe no-choice transition API."
+        );
+        AddHint(
+            "REROLL LEVEL CARDS is not exposed because LevelChoiceManager " +
+            "has no safe production reroll lifecycle."
+        );
+
+        AddSectionTitle("HUD", "Runtime-only comparison setting");
+        HUDManager hud = HUDManager.Instance;
+        bool mapVisible = hud != null && hud.IsTacticalMapVisible;
+        AddRow("TACTICAL MAP", hud == null ? "HUD NOT FOUND" :
+                mapVisible ? "ON" : "OFF",
+            mapVisible ? successColor : hud != null ? mutedColor : warningColor,
+            mapVisible ? "TURN OFF" : "TURN ON", hud != null,
+            ToggleTacticalMap);
+    }
+
+    private void SpawnBoss()
+    {
+        runTimer?.TryDebugSpawnBoss();
+        RefreshCurrentTab();
+    }
+
+    private void KillBoss()
+    {
+        EnemyHealth boss = FindAliveBoss();
+        boss?.TakeDamage(float.MaxValue, boss.transform.position);
+        RefreshCurrentTab();
+    }
+
+    private void CompleteLevel()
+    {
+        EnemyHealth boss = FindAliveBoss();
+
+        if (boss != null)
+            boss.TakeDamage(float.MaxValue, boss.transform.position);
+        else
+            runFlowController?.TryDebugCompleteCurrentLevel();
+
+        if (runFlowController != null &&
+            runFlowController.TryDebugOpenLevelChoice())
+        {
+            CloseMenu();
+            return;
+        }
+
+        RefreshCurrentTab();
+    }
+
+    private void OpenLevelCards()
+    {
+        if (runFlowController != null &&
+            runFlowController.TryDebugOpenLevelChoice())
+        {
+            CloseMenu();
+            return;
+        }
+
+        RefreshCurrentTab();
+    }
+
+    private void ToggleTacticalMap()
+    {
+        HUDManager hud = HUDManager.Instance;
+
+        if (hud != null)
+            hud.SetTacticalMapVisible(!hud.IsTacticalMapVisible);
+
+        RefreshCurrentTab();
+    }
+
+    private static EnemyHealth FindAliveBoss()
+    {
+        foreach (EnemyHealth enemy in EnemyHealth.ActiveInstances)
+        {
+            if (enemy != null && enemy.IsBoss && enemy.isActiveAndEnabled &&
+                !enemy.IsDead)
+            {
+                return enemy;
+            }
+        }
+
+        return null;
+    }
+
+    private void AddTabHeading(string title)
+    {
+        TextMeshProUGUI heading = CreateText(
+            "Active Tab", contentRoot, title, 26f,
+            TextAlignmentOptions.MidlineLeft, Color.white
+        );
+        heading.gameObject.AddComponent<LayoutElement>().preferredHeight = 42f;
     }
 
     private void AddWorldRulesSection()
     {
         AddSectionTitle("WORLD RULES", "Apply/Clear through WorldRuleController");
-
         AddRow(
             "None / Clear",
-            worldRuleController == null
-                ? "CONTROLLER NOT FOUND"
-                : worldRuleController.ActiveRule == null
-                    ? "ACTIVE"
-                    : "AVAILABLE",
+            worldRuleController == null ? "CONTROLLER NOT FOUND" :
+                worldRuleController.ActiveRule == null ? "ACTIVE" : "AVAILABLE",
             worldRuleController == null ? warningColor : successColor,
-            "CLEAR",
-            worldRuleController != null,
-            ClearWorldRule
+            "CLEAR", worldRuleController != null, ClearWorldRule
         );
 
         for (int i = 0; i < DebugRuleTypes.Length; i++)
@@ -326,56 +671,25 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             WorldRuleData data = worldRules != null && i < worldRules.Length
                 ? worldRules[i]
                 : null;
-            string status;
-            Color statusColor;
-            bool canApply = worldRuleController != null && data != null &&
+            bool valid = worldRuleController != null && data != null &&
                 data.RuleType == type;
-
-            if (data == null)
-            {
-                status = "MISSING";
-                statusColor = warningColor;
-            }
-            else if (data.RuleType != type)
-            {
-                status = "NOT CONFIGURED";
-                statusColor = warningColor;
-            }
-            else if (worldRuleController == null)
-            {
-                status = "CONTROLLER NOT FOUND";
-                statusColor = warningColor;
-            }
-            else if (worldRuleController.ActiveRule != null &&
-                worldRuleController.ActiveRule.RuleType == type)
-            {
-                status = "ACTIVE";
-                statusColor = successColor;
-            }
-            else
-            {
-                status = "AVAILABLE";
-                statusColor = mutedColor;
-            }
-
-            WorldRuleData capturedData = data;
-            AddRow(
-                GetWorldRuleName(type, data),
-                status,
-                statusColor,
-                "APPLY",
-                canApply,
-                () => ApplyWorldRule(capturedData)
-            );
+            bool active = valid && worldRuleController.ActiveRule != null &&
+                worldRuleController.ActiveRule.RuleType == type;
+            string status = data == null ? "MISSING" :
+                data.RuleType != type ? "NOT CONFIGURED" :
+                worldRuleController == null ? "CONTROLLER NOT FOUND" :
+                active ? "ACTIVE" : "AVAILABLE";
+            WorldRuleData captured = data;
+            AddRow(GetWorldRuleName(type, data), status,
+                active ? successColor : valid ? mutedColor : warningColor,
+                "APPLY", valid, () => ApplyWorldRule(captured));
         }
     }
 
     private void AddLocalAnomaliesSection()
     {
-        AddSectionTitle(
-            "LOCAL ANOMALIES",
-            "Apply or clear through LevelAnomalyController"
-        );
+        AddSectionTitle("LOCAL ANOMALIES",
+            "Apply or clear through LevelAnomalyController");
 
         if (localAnomalies != null)
         {
@@ -383,10 +697,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             {
                 LocalAnomalyData data = localAnomalies[i];
 
-                if (data == null || WasAnomalyAlreadyAdded(data, i))
-                    continue;
-
-                AddLocalAnomalyRow(data);
+                if (data != null && !WasAnomalyAlreadyAdded(data, i))
+                    AddLocalAnomalyRow(data);
             }
         }
 
@@ -394,80 +706,38 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         {
             LocalAnomalyType type = DebugAnomalyTypes[i];
 
-            if (FindLocalAnomaly(type) != null)
-                continue;
-
-            AddRow(
-                $"{GetAnomalyTypeName(type)}  ·  {type}",
-                "NOT CONFIGURED",
-                warningColor,
-                "APPLY",
-                false,
-                null
-            );
+            if (FindLocalAnomaly(type) == null)
+            {
+                AddRow($"{GetAnomalyTypeName(type)} - {type}",
+                    "NOT CONFIGURED", warningColor, "APPLY", false, null);
+            }
         }
 
-        AddRow(
-            "All local anomaly zones",
-            anomalyController == null
-                ? "CONTROLLER NOT FOUND"
-                : anomalyController.ActiveAnomaly == null
-                    ? "CLEAR"
-                    : "ACTIVE",
-            anomalyController != null &&
-                anomalyController.ActiveAnomaly != null
-                    ? successColor
-                    : mutedColor,
-            "CLEAR ANOMALIES",
-            anomalyController != null,
-            ClearLocalAnomalies
-        );
-
+        bool hasActive = anomalyController != null &&
+            anomalyController.ActiveAnomaly != null;
+        AddRow("All local anomaly zones",
+            anomalyController == null ? "CONTROLLER NOT FOUND" :
+                hasActive ? "ACTIVE" : "CLEAR",
+            hasActive ? successColor : mutedColor,
+            "CLEAR ANOMALIES", anomalyController != null,
+            ClearLocalAnomalies);
         AddActiveAnomalySummary();
     }
 
     private void AddLocalAnomalyRow(LocalAnomalyData data)
     {
-        bool canApply = anomalyController != null &&
-            data != null && data.ZonePrefab != null;
-        string status;
-        Color statusColor;
-
-        if (data.ZonePrefab == null)
-        {
-            status = "MISSING PREFAB";
-            statusColor = warningColor;
-        }
-        else if (anomalyController == null)
-        {
-            status = "NOT CONFIGURED";
-            statusColor = warningColor;
-        }
-        else if (anomalyController.ActiveAnomaly == data)
-        {
-            status = "ACTIVE";
-            statusColor = successColor;
-        }
-        else
-        {
-            status = "AVAILABLE";
-            statusColor = mutedColor;
-        }
-
-        string displayName = !string.IsNullOrWhiteSpace(
-                data.Presentation.Title)
+        bool valid = anomalyController != null && data.ZonePrefab != null;
+        bool active = valid && anomalyController.ActiveAnomaly == data;
+        string status = data.ZonePrefab == null ? "MISSING PREFAB" :
+            anomalyController == null ? "CONTROLLER NOT FOUND" :
+            active ? "ACTIVE" : "AVAILABLE";
+        string displayName = !string.IsNullOrWhiteSpace(data.Presentation.Title)
             ? data.Presentation.Title
             : data.name;
-        LocalAnomalyData capturedData = data;
-
-        AddRow(
-            $"{displayName}  ·  {GetAnomalyTypeName(data.AnomalyType)}",
-            status,
-            statusColor,
-            "APPLY",
-            canApply,
-            () => ApplyLocalAnomaly(capturedData)
-        );
+        LocalAnomalyData captured = data;
+        AddRow($"{displayName} - {GetAnomalyTypeName(data.AnomalyType)}",
+            status, active ? successColor : valid ? mutedColor : warningColor,
+            "APPLY", valid, () => ApplyLocalAnomaly(captured));
     }
 
     private void AddActiveAnomalySummary()
@@ -475,11 +745,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         LocalAnomalyData active = anomalyController != null
             ? anomalyController.ActiveAnomaly
             : null;
-        string profile = active != null
-            ? GetAnomalyTypeName(active.AnomalyType)
-            : "None";
-
-        AddRow("Active profile", profile,
+        AddRow("Active profile",
+            active != null ? GetAnomalyTypeName(active.AnomalyType) : "None",
             active != null ? successColor : mutedColor, null, false, null);
         AddRow("Active zones", BuildActiveZoneSummary(),
             activeAnomalyZones.Count > 0 ? successColor : mutedColor,
@@ -500,16 +767,15 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         for (int i = 0; i < activeAnomalyZones.Count; i++)
         {
             LocalAnomalyType type = activeAnomalyZones[i].Type;
-            int typeIndex = activeAnomalyTypes.IndexOf(type);
+            int index = activeAnomalyTypes.IndexOf(type);
 
-            if (typeIndex >= 0)
+            if (index >= 0)
+                activeAnomalyTypeCounts[index]++;
+            else
             {
-                activeAnomalyTypeCounts[typeIndex]++;
-                continue;
+                activeAnomalyTypes.Add(type);
+                activeAnomalyTypeCounts.Add(1);
             }
-
-            activeAnomalyTypes.Add(type);
-            activeAnomalyTypeCounts.Add(1);
         }
 
         if (activeAnomalyTypes.Count == 0)
@@ -522,35 +788,37 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             if (i > 0)
                 activeAnomalySummary.Append(", ");
 
-            activeAnomalySummary.Append(
-                GetAnomalyTypeName(activeAnomalyTypes[i])
-            );
-            activeAnomalySummary.Append(" × ");
+            activeAnomalySummary.Append(GetAnomalyTypeName(activeAnomalyTypes[i]));
+            activeAnomalySummary.Append(" x");
             activeAnomalySummary.Append(activeAnomalyTypeCounts[i]);
         }
 
         return activeAnomalySummary.ToString();
     }
 
+    private void AddEnemiesSection()
+    {
+        RemoveDestroyedDebugEnemies();
+        AddSectionTitle("DEBUG SPAWN", "Existing EnemySpawner debug route");
+        AddDebugEnemyRow("Turret", turretEnemyPrefab, "SPAWN TURRET");
+        AddDebugEnemyRow("Eyes", eyesEnemyPrefab, "SPAWN EYES");
+        AddRow("Debug-spawned enemies",
+            debugEnemies.Count > 0 ? $"ACTIVE: {debugEnemies.Count}" : "CLEAR",
+            debugEnemies.Count > 0 ? successColor : mutedColor,
+            "CLEAR DEBUG ENEMIES", debugEnemies.Count > 0,
+            ClearDebugEnemies);
+    }
+
     private void AddWorldEventsSection()
     {
-        AddSectionTitle(
-            "WORLD EVENTS",
-            "Spawn/Clear through WorldEventSpawner"
-        );
-
-        WorldEvent currentEvent = worldEventSpawner != null
+        AddSectionTitle("WORLD EVENTS", "Spawn/Clear through WorldEventSpawner");
+        WorldEvent current = worldEventSpawner != null
             ? worldEventSpawner.CurrentEvent
             : null;
-
-        AddRow(
-            $"Active event: {GetEventDisplayName(currentEvent)}",
-            currentEvent != null ? "ACTIVE" : "None",
-            currentEvent != null ? successColor : mutedColor,
-            "CLEAR EVENT",
-            currentEvent != null,
-            ClearWorldEvent
-        );
+        AddRow($"Active event: {GetEventDisplayName(current)}",
+            current != null ? "ACTIVE" : "None",
+            current != null ? successColor : mutedColor,
+            "CLEAR EVENT", current != null, ClearWorldEvent);
 
         addedEventPrefabs.Clear();
         AddEventRow<CaptureZoneEvent>("Capture Zone");
@@ -559,41 +827,229 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddEventRow<RescueCapsuleEvent>("Rescue Capsule");
         AddEventRow<CarrierHuntEvent>("Carrier Hunt");
 
-        if (worldEventSpawner == null)
+        IReadOnlyList<WorldEvent> connected = worldEventSpawner != null
+            ? worldEventSpawner.EventPrefabs
+            : null;
+
+        if (connected == null)
             return;
 
-        IReadOnlyList<WorldEvent> connectedPrefabs =
-            worldEventSpawner.EventPrefabs;
-
-        if (connectedPrefabs == null)
-            return;
-
-        for (int i = 0; i < connectedPrefabs.Count; i++)
+        for (int i = 0; i < connected.Count; i++)
         {
-            WorldEvent prefab = connectedPrefabs[i];
+            WorldEvent prefab = connected[i];
 
-            if (prefab == null || addedEventPrefabs.Contains(prefab))
-                continue;
-
-            AddEventRow(GetEventDisplayName(prefab), prefab);
+            if (prefab != null && !addedEventPrefabs.Contains(prefab))
+                AddEventRow(GetEventDisplayName(prefab), prefab);
         }
     }
 
-    private void AddEnemiesSection()
+    private void AddWeaponsSection()
     {
-        RemoveDestroyedDebugEnemies();
-        AddSectionTitle("ENEMIES", "Spawn existing prefabs near the player");
+        AddSectionTitle("ACTIVE WEAPON",
+            "Session-only replacement through CharacterSpawner");
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        BaseWeapon current = FindPrimaryWeapon(player);
+        AddRow("Current Weapon",
+            current != null ? GetWeaponName(current.weaponData) : "NOT FOUND",
+            current != null ? successColor : warningColor,
+            null, false, null);
 
-        AddDebugEnemyRow("Turret", turretEnemyPrefab, "SPAWN TURRET");
-        AddDebugEnemyRow("Eyes", eyesEnemyPrefab, "SPAWN EYES");
-        AddRow(
-            "Debug-spawned enemies",
-            debugEnemies.Count > 0 ? $"ACTIVE: {debugEnemies.Count}" : "CLEAR",
-            debugEnemies.Count > 0 ? successColor : mutedColor,
-            "CLEAR DEBUG ENEMIES",
-            debugEnemies.Count > 0,
-            ClearDebugEnemies
+        if (debugWeapons == null || debugWeapons.Length == 0)
+        {
+            AddHint("No WeaponData assets are assigned to the debug menu.");
+            return;
+        }
+
+        for (int i = 0; i < debugWeapons.Length; i++)
+        {
+            WeaponData data = debugWeapons[i];
+
+            if (data == null || WasWeaponAlreadyAdded(data, i))
+                continue;
+
+            bool active = current != null && current.weaponData == data;
+            bool available = player != null && characterSpawner != null &&
+                data.weaponPrefab != null;
+            WeaponData captured = data;
+            AddRow(GetWeaponName(data),
+                active ? "ACTIVE" : data.weaponPrefab == null
+                    ? "PREFAB MISSING"
+                    : available ? "AVAILABLE" : "PLAYER/SPAWNER NOT FOUND",
+                active ? successColor : available ? mutedColor : warningColor,
+                "USE", available, () => UseWeapon(captured));
+        }
+    }
+
+    private void AddUpgradesSection()
+    {
+        AddSectionTitle("RUN UPGRADES",
+            "Production UpgradeManager apply; runtime rarity is not defined");
+        AddUpgradeFilterRow();
+
+        if (!string.IsNullOrWhiteSpace(lastUpgradeResult))
+            AddHint(lastUpgradeResult);
+
+        BuildUpgradeList();
+
+        if (visibleUpgrades.Count == 0)
+        {
+            AddHint("No UpgradeData assets are available for this filter.");
+            return;
+        }
+
+        RunStateManager runState = RunStateManager.Instance;
+
+        for (int i = 0; i < visibleUpgrades.Count; i++)
+        {
+            UpgradeData data = visibleUpgrades[i];
+            bool inPool = IsUpgradeInCurrentPool(data);
+
+            if (!MatchesUpgradeFilter(data, inPool))
+                continue;
+
+            int stack = runState != null
+                ? runState.ItemSlots.GetLevel(data)
+                : 0;
+            string displayName = string.IsNullOrWhiteSpace(data.upgradeName)
+                ? data.name
+                : data.upgradeName;
+            string status = $"{data.category} - {data.upgradeType} - x{stack}";
+
+            if (!inPool)
+                status += " - OUT OF CURRENT POOL";
+
+            bool canApply = upgradeManager != null &&
+                GameObject.FindGameObjectWithTag("Player") != null &&
+                stack < RunItemSlots.MaxItemLevel;
+            UpgradeData captured = data;
+            AddRow(displayName, status,
+                stack > 0 ? successColor : inPool ? mutedColor : warningColor,
+                stack >= RunItemSlots.MaxItemLevel ? "MAX" : "APPLY",
+                canApply, () => ApplyUpgrade(captured));
+        }
+
+        AddHint(
+            "GRAY/BLUE/PURPLE/LEGENDARY filters are intentionally absent: " +
+            "UpgradeData has no rarity enum or serialized rarity field."
         );
+        AddHint(
+            "RESET RUN UPGRADES is unavailable: the production systems do not " +
+            "provide a safe combat-state rebuild/reset lifecycle."
+        );
+    }
+
+    private void AddUpgradeFilterRow()
+    {
+        RectTransform row = CreateRect("Upgrade Filters", contentRoot);
+        row.gameObject.AddComponent<Image>().color = rowColor;
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 50f;
+        string[] labels = { "ALL", "NUMERIC", "BEHAVIOR", "OUT OF POOL" };
+
+        for (int i = 0; i < labels.Length; i++)
+        {
+            int captured = i;
+            RectTransform slot = CreateRect(labels[i] + " Slot", row);
+            slot.anchorMin = new Vector2((float)i / labels.Length, 0f);
+            slot.anchorMax = new Vector2((float)(i + 1) / labels.Length, 1f);
+            slot.offsetMin = new Vector2(5f, 6f);
+            slot.offsetMax = new Vector2(-5f, -6f);
+            Button button = CreateButton(slot, labels[i], () =>
+            {
+                upgradeFilter = (UpgradeFilter)captured;
+                RefreshTab(DebugTab.WeaponsAndUpgrades);
+            }, 100f);
+            Stretch(button.GetComponent<RectTransform>());
+            Image image = button.targetGraphic as Image;
+
+            if (image != null && captured == (int)upgradeFilter)
+                image.color = new Color(0.2f, 0.73f, 0.88f, 1f);
+        }
+    }
+
+    private void BuildUpgradeList()
+    {
+        visibleUpgrades.Clear();
+        IReadOnlyList<UpgradeData> pool = upgradeManager != null
+            ? upgradeManager.AllUpgrades
+            : null;
+
+        AddUniqueUpgrades(pool);
+        AddUniqueUpgrades(additionalDebugUpgrades);
+    }
+
+    private void AddUniqueUpgrades(IReadOnlyList<UpgradeData> upgrades)
+    {
+        if (upgrades == null)
+            return;
+
+        for (int i = 0; i < upgrades.Count; i++)
+        {
+            UpgradeData data = upgrades[i];
+
+            if (data != null && !visibleUpgrades.Contains(data))
+                visibleUpgrades.Add(data);
+        }
+    }
+
+    private bool MatchesUpgradeFilter(UpgradeData data, bool inPool)
+    {
+        return upgradeFilter switch
+        {
+            UpgradeFilter.Numeric => data.category == UpgradeCategory.Numeric,
+            UpgradeFilter.Behavior => data.category == UpgradeCategory.Behavior,
+            UpgradeFilter.OutOfPool => !inPool,
+            _ => true
+        };
+    }
+
+    private bool IsUpgradeInCurrentPool(UpgradeData target)
+    {
+        IReadOnlyList<UpgradeData> pool = upgradeManager != null
+            ? upgradeManager.AllUpgrades
+            : null;
+
+        if (pool == null)
+            return false;
+
+        for (int i = 0; i < pool.Count; i++)
+        {
+            if (pool[i] == target)
+                return true;
+        }
+
+        return false;
+    }
+
+    private void ApplyUpgrade(UpgradeData data)
+    {
+        if (upgradeManager == null || data == null)
+            return;
+
+        bool applied = upgradeManager.TryApplyDebugUpgrade(
+            data,
+            out ItemGrantResult result
+        );
+        lastUpgradeResult = applied
+            ? $"Applied {GetUpgradeName(data)} through UpgradeManager ({result})."
+            : $"Could not apply {GetUpgradeName(data)} ({result}).";
+        RefreshCurrentTab();
+    }
+
+    private void UseWeapon(WeaponData data)
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+
+        if (player == null || characterSpawner == null || data == null)
+            return;
+
+        characterSpawner.TryReplaceDebugPrimaryWeapon(
+            player,
+            data,
+            out _
+        );
+        telekinesisPrototype = player.GetComponent<TelekinesisDebugPrototype>();
+        RefreshTab(DebugTab.WeaponsAndUpgrades);
+        RefreshTab(DebugTab.Telekinesis);
     }
 
     private void AddTelekinesisSection()
@@ -602,97 +1058,80 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         PlayerHealth health = player != null
             ? player.GetComponent<PlayerHealth>()
             : null;
-        BaseWeapon primaryWeapon = player != null
-            ? player.GetComponentInChildren<BaseWeapon>(true)
-            : null;
-        bool available = player != null && primaryWeapon != null &&
+        BaseWeapon primary = FindPrimaryWeapon(player);
+        bool available = player != null && primary != null &&
             (health == null || !health.IsDead);
 
         if (telekinesisPrototype == null && player != null)
-        {
-            telekinesisPrototype =
-                player.GetComponent<TelekinesisDebugPrototype>();
-        }
+            telekinesisPrototype = player.GetComponent<TelekinesisDebugPrototype>();
 
         TelekinesisDebugMode currentMode = telekinesisPrototype != null
             ? telekinesisPrototype.CurrentMode
             : TelekinesisDebugMode.Base;
 
-        AddSectionTitle(
-            "TELEKINESIS TEST",
-            $"Current: {GetTelekinesisModeName(currentMode)}"
-        );
-        AddTelekinesisModeRow(
-            "Current gameplay control",
-            "BASE",
-            TelekinesisDebugMode.Base,
-            currentMode,
-            available
-        );
-        AddTelekinesisModeRow(
-            "Mouse position / auto target",
-            "MANUAL POSITION",
-            TelekinesisDebugMode.ManualPosition,
-            currentMode,
-            available
-        );
-        AddTelekinesisModeRow(
-            "Mouse aim and position / LMB fire",
-            "MANUAL FIRE",
-            TelekinesisDebugMode.ManualFire,
-            currentMode,
-            available
-        );
-        AddTelekinesisModeRow(
-            "Manual primary + auto clone",
-            "DUAL CONTROL",
-            TelekinesisDebugMode.DualControl,
-            currentMode,
-            available
-        );
-        AddTelekinesisModeRow(
-            "TAB switches the manual weapon",
-            "DUAL SWITCH",
-            TelekinesisDebugMode.DualSwitch,
-            currentMode,
-            available
-        );
-        AddTelekinesisModeRow(
-            "RMB moves two auto weapons",
-            "COMMAND POINT",
-            TelekinesisDebugMode.CommandPoint,
-            currentMode,
-            available
-        );
-        AddTelekinesisModeRow(
-            "LMB selects priority enemy",
-            "FOCUS TARGET",
-            TelekinesisDebugMode.FocusTarget,
-            currentMode,
-            available
-        );
-        AddTelekinesisModeRow(
-            "RMB throws the auto weapon",
-            "WEAPON THROW",
-            TelekinesisDebugMode.WeaponThrow,
-            currentMode,
-            available
-        );
-        AddTelekinesisModeRow(
-            "RMB position / LMB priority",
-            "FULL AUTO COMMAND",
-            TelekinesisDebugMode.FullAutoCommand,
-            currentMode,
-            available
-        );
-        AddRow(
-            "Return to current gameplay",
+        AddSectionTitle("SECONDARY DEBUG WEAPON",
+            "Used by DUAL CONTROL / DUAL SWITCH / command modes");
+        AddRow("Same as primary",
+            telekinesisPrototype == null ||
+                telekinesisPrototype.SecondaryDebugWeaponData == null
+                    ? "SELECTED" : "AVAILABLE",
+            telekinesisPrototype == null ||
+                telekinesisPrototype.SecondaryDebugWeaponData == null
+                    ? successColor : mutedColor,
+            "USE", available, () => SelectSecondaryWeapon(null));
+
+        if (debugWeapons != null)
+        {
+            for (int i = 0; i < debugWeapons.Length; i++)
+            {
+                WeaponData data = debugWeapons[i];
+
+                if (data == null || WasWeaponAlreadyAdded(data, i))
+                    continue;
+
+                bool selected = telekinesisPrototype != null &&
+                    telekinesisPrototype.SecondaryDebugWeaponData == data;
+                WeaponData captured = data;
+                AddRow(GetWeaponName(data), selected ? "SELECTED" : "AVAILABLE",
+                    selected ? successColor : mutedColor,
+                    "USE", available && data.weaponPrefab != null,
+                    () => SelectSecondaryWeapon(captured));
+            }
+        }
+
+        AddSectionTitle("TELEKINESIS DEBUG PROTOTYPE",
+            $"Current: {GetTelekinesisModeName(currentMode)}");
+        AddTelekinesisModeRow("Current gameplay control", "BASE",
+            TelekinesisDebugMode.Base, currentMode, available);
+        AddTelekinesisModeRow("Mouse position / auto target", "MANUAL POSITION",
+            TelekinesisDebugMode.ManualPosition, currentMode, available);
+        AddTelekinesisModeRow("Mouse aim and position / LMB fire", "MANUAL FIRE",
+            TelekinesisDebugMode.ManualFire, currentMode, available);
+        AddTelekinesisModeRow("Manual primary + auto secondary", "DUAL CONTROL",
+            TelekinesisDebugMode.DualControl, currentMode, available);
+        AddTelekinesisModeRow("TAB switches the manual weapon", "DUAL SWITCH",
+            TelekinesisDebugMode.DualSwitch, currentMode, available);
+        AddTelekinesisModeRow("RMB moves two auto weapons", "COMMAND POINT",
+            TelekinesisDebugMode.CommandPoint, currentMode, available);
+        AddTelekinesisModeRow("LMB selects priority enemy", "FOCUS TARGET",
+            TelekinesisDebugMode.FocusTarget, currentMode, available);
+        AddTelekinesisModeRow("RMB throws the auto weapon", "WEAPON THROW",
+            TelekinesisDebugMode.WeaponThrow, currentMode, available);
+        AddTelekinesisModeRow("RMB position / LMB priority", "FULL AUTO COMMAND",
+            TelekinesisDebugMode.FullAutoCommand, currentMode, available);
+        AddRow("Return to current gameplay",
             available ? "READY" : "PLAYER/WEAPON NOT FOUND",
             available ? mutedColor : warningColor,
-            "RESET",
-            available,
-            ResetTelekinesisPrototype
-        );
+            "RESET", available, ResetTelekinesisPrototype);
+    }
+
+    private void SelectSecondaryWeapon(WeaponData data)
+    {
+        if (!ResolveTelekinesisPrototype())
+            return;
+
+        telekinesisPrototype.SetSecondaryDebugWeapon(data);
+        RefreshCurrentTab();
     }
 
     private void AddTelekinesisModeRow(
@@ -703,15 +1142,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         bool available)
     {
         bool active = currentMode == mode;
-
-        AddRow(
-            description,
+        AddRow(description,
             active ? "ACTIVE" : available ? "AVAILABLE" : "UNAVAILABLE",
             active ? successColor : available ? mutedColor : warningColor,
-            buttonLabel,
-            available,
-            () => ApplyTelekinesisMode(mode)
-        );
+            buttonLabel, available, () => ApplyTelekinesisMode(mode));
     }
 
     private void ApplyTelekinesisMode(TelekinesisDebugMode mode)
@@ -720,21 +1154,13 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             return;
 
         telekinesisPrototype.ApplyMode(mode);
-        RefreshData();
+        RefreshCurrentTab();
     }
 
     private void ResetTelekinesisPrototype()
     {
-        if (telekinesisPrototype == null)
-        {
-            GameObject player = GameObject.FindGameObjectWithTag("Player");
-            telekinesisPrototype = player != null
-                ? player.GetComponent<TelekinesisDebugPrototype>()
-                : null;
-        }
-
         telekinesisPrototype?.ResetPrototype();
-        RefreshData();
+        RefreshCurrentTab();
     }
 
     private bool ResolveTelekinesisPrototype()
@@ -747,37 +1173,30 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         if (telekinesisPrototype == null ||
             telekinesisPrototype.gameObject != player)
         {
-            telekinesisPrototype =
-                player.GetComponent<TelekinesisDebugPrototype>();
-
-            if (telekinesisPrototype == null)
-            {
-                telekinesisPrototype =
-                    player.AddComponent<TelekinesisDebugPrototype>();
-            }
+            telekinesisPrototype = player.GetComponent<TelekinesisDebugPrototype>();
+            telekinesisPrototype ??= player.AddComponent<TelekinesisDebugPrototype>();
         }
 
-        telekinesisPrototype.Configure(
-            FindFirstObjectByType<CharacterSpawner>()
-        );
+        telekinesisPrototype.Configure(characterSpawner);
         return telekinesisPrototype.IsAvailable;
     }
 
-    private static string GetTelekinesisModeName(
-        TelekinesisDebugMode mode)
+    private static BaseWeapon FindPrimaryWeapon(GameObject player)
     {
-        return mode switch
+        if (player == null)
+            return null;
+
+        BaseWeapon[] weapons = player.GetComponentsInChildren<BaseWeapon>(true);
+
+        for (int i = 0; i < weapons.Length; i++)
         {
-            TelekinesisDebugMode.ManualPosition => "MANUAL POSITION",
-            TelekinesisDebugMode.ManualFire => "MANUAL FIRE",
-            TelekinesisDebugMode.DualControl => "DUAL CONTROL",
-            TelekinesisDebugMode.DualSwitch => "DUAL SWITCH",
-            TelekinesisDebugMode.CommandPoint => "COMMAND POINT",
-            TelekinesisDebugMode.FocusTarget => "FOCUS TARGET",
-            TelekinesisDebugMode.WeaponThrow => "WEAPON THROW",
-            TelekinesisDebugMode.FullAutoCommand => "FULL AUTO COMMAND",
-            _ => "BASE"
-        };
+            BaseWeapon weapon = weapons[i];
+
+            if (weapon != null && !weapon.IsTelekinesisDebugSecondary)
+                return weapon;
+        }
+
+        return null;
     }
 
     private void AddDebugEnemyRow(
@@ -786,45 +1205,28 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         string buttonLabel)
     {
         bool available = enemySpawner != null && prefab != null;
-        string status = prefab == null
-            ? "PREFAB NOT ASSIGNED"
-            : enemySpawner == null
-                ? "SPAWNER NOT FOUND"
-                : "AVAILABLE";
-
-        AddRow(
-            displayName,
-            status,
+        AddRow(displayName,
+            prefab == null ? "PREFAB NOT ASSIGNED" :
+                enemySpawner == null ? "SPAWNER NOT FOUND" : "AVAILABLE",
             available ? successColor : warningColor,
-            buttonLabel,
-            available,
-            () => SpawnDebugEnemy(prefab)
-        );
+            buttonLabel, available, () => SpawnDebugEnemy(prefab));
     }
 
     private void SpawnDebugEnemy(GameObject prefab)
     {
-        if (enemySpawner == null || prefab == null)
-            return;
-
         Transform player = GameObject.FindGameObjectWithTag("Player")?.transform;
 
-        if (player == null)
+        if (enemySpawner == null || prefab == null || player == null)
             return;
 
         GameObject enemy = enemySpawner.SpawnSpecificEnemyAround(
-            prefab,
-            player.position,
-            3f,
-            6f,
-            3f,
-            false
+            prefab, player.position, 3f, 6f, 3f, false
         );
 
         if (enemy != null)
             debugEnemies.Add(enemy);
 
-        RefreshData();
+        RefreshCurrentTab();
     }
 
     private void ClearDebugEnemies()
@@ -836,7 +1238,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         }
 
         debugEnemies.Clear();
-        RefreshData();
+        RefreshCurrentTab();
     }
 
     private void RemoveDestroyedDebugEnemies()
@@ -848,60 +1250,28 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         }
     }
 
-    private void AddEventRow<T>(string displayName) where T : WorldEvent
-    {
-        WorldEvent prefab = FindEventPrefab<T>();
-        AddEventRow(displayName, prefab);
-    }
+    private void AddEventRow<T>(string displayName) where T : WorldEvent =>
+        AddEventRow(displayName, FindEventPrefab<T>());
 
     private void AddEventRow(string displayName, WorldEvent prefab)
     {
-        string status;
-        Color statusColor;
-        bool canSpawn = false;
-
         if (prefab != null && !addedEventPrefabs.Contains(prefab))
             addedEventPrefabs.Add(prefab);
 
-        if (prefab == null)
-        {
-            status = "MISSING";
-            statusColor = warningColor;
-        }
-        else if (worldEventSpawner == null)
-        {
-            status = "MISSING";
-            statusColor = warningColor;
-        }
-        else if (!ContainsEventPrefab(worldEventSpawner.EventPrefabs, prefab))
-        {
-            status = "PREFAB NOT CONNECTED";
-            statusColor = warningColor;
-        }
-        else if (!worldEventSpawner.IsEventPrefabEnabled(prefab))
-        {
-            status = "CONNECTED BUT DISABLED";
-            statusColor = warningColor;
-        }
-        else
-        {
-            WorldEvent currentEvent = worldEventSpawner.CurrentEvent;
-            status = currentEvent != null &&
-                currentEvent.GetType() == prefab.GetType()
-                    ? "ACTIVE"
-                    : "AVAILABLE";
-            statusColor = successColor;
-            canSpawn = true;
-        }
-
-        AddRow(
-            displayName,
-            status,
-            statusColor,
-            "SPAWN",
-            canSpawn,
-            () => SpawnWorldEvent(prefab)
-        );
+        bool connected = prefab != null && worldEventSpawner != null &&
+            ContainsEventPrefab(worldEventSpawner.EventPrefabs, prefab);
+        bool enabledPrefab = connected &&
+            worldEventSpawner.IsEventPrefabEnabled(prefab);
+        bool active = enabledPrefab && worldEventSpawner.CurrentEvent != null &&
+            worldEventSpawner.CurrentEvent.GetType() == prefab.GetType();
+        string status = prefab == null ? "MISSING" :
+            worldEventSpawner == null ? "SPAWNER NOT FOUND" :
+            !connected ? "PREFAB NOT CONNECTED" :
+            !enabledPrefab ? "CONNECTED BUT DISABLED" :
+            active ? "ACTIVE" : "AVAILABLE";
+        AddRow(displayName, status,
+            active ? successColor : enabledPrefab ? mutedColor : warningColor,
+            "SPAWN", enabledPrefab, () => SpawnWorldEvent(prefab));
     }
 
     private void SpawnWorldEvent(WorldEvent prefab)
@@ -910,16 +1280,13 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             return;
 
         worldEventSpawner.SpawnDebugEvent(prefab);
-        RefreshData();
+        RefreshCurrentTab();
     }
 
     private void ClearWorldEvent()
     {
-        if (worldEventSpawner == null)
-            return;
-
-        worldEventSpawner.ClearDebugEvent();
-        RefreshData();
+        worldEventSpawner?.ClearDebugEvent();
+        RefreshCurrentTab();
     }
 
     private void ApplyWorldRule(WorldRuleData data)
@@ -928,37 +1295,28 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             return;
 
         worldRuleController.Apply(data);
-        RefreshData();
+        RefreshCurrentTab();
     }
 
     private void ClearWorldRule()
     {
-        if (worldRuleController == null)
-            return;
-
-        worldRuleController.Clear();
-        RefreshData();
+        worldRuleController?.Clear();
+        RefreshCurrentTab();
     }
 
     private void ApplyLocalAnomaly(LocalAnomalyData data)
     {
-        if (anomalyController == null || data == null ||
-            data.ZonePrefab == null)
-        {
+        if (anomalyController == null || data == null || data.ZonePrefab == null)
             return;
-        }
 
         anomalyController.Apply(data);
-        RefreshData();
+        RefreshCurrentTab();
     }
 
     private void ClearLocalAnomalies()
     {
-        if (anomalyController == null)
-            return;
-
-        anomalyController.Clear();
-        RefreshData();
+        anomalyController?.Clear();
+        RefreshCurrentTab();
     }
 
     private LocalAnomalyData FindLocalAnomaly(LocalAnomalyType type)
@@ -989,6 +1347,17 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         return false;
     }
 
+    private bool WasWeaponAlreadyAdded(WeaponData data, int beforeIndex)
+    {
+        for (int i = 0; i < beforeIndex; i++)
+        {
+            if (debugWeapons[i] == data)
+                return true;
+        }
+
+        return false;
+    }
+
     private WorldEvent FindEventPrefab<T>() where T : WorldEvent
     {
         if (worldEventPrefabs == null)
@@ -1003,36 +1372,47 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         return null;
     }
 
-    private static string GetAnomalyTypeName(LocalAnomalyType type)
-    {
-        return type == LocalAnomalyType.ExplosiveZone
-            ? "Explosive"
-            : type.ToString();
-    }
+    private static string GetTelekinesisModeName(TelekinesisDebugMode mode) =>
+        mode switch
+        {
+            TelekinesisDebugMode.ManualPosition => "MANUAL POSITION",
+            TelekinesisDebugMode.ManualFire => "MANUAL FIRE",
+            TelekinesisDebugMode.DualControl => "DUAL CONTROL",
+            TelekinesisDebugMode.DualSwitch => "DUAL SWITCH",
+            TelekinesisDebugMode.CommandPoint => "COMMAND POINT",
+            TelekinesisDebugMode.FocusTarget => "FOCUS TARGET",
+            TelekinesisDebugMode.WeaponThrow => "WEAPON THROW",
+            TelekinesisDebugMode.FullAutoCommand => "FULL AUTO COMMAND",
+            _ => "BASE"
+        };
+
+    private static string GetAnomalyTypeName(LocalAnomalyType type) =>
+        type == LocalAnomalyType.ExplosiveZone ? "Explosive" : type.ToString();
+
+    private static string GetWeaponName(WeaponData data) =>
+        data == null ? "None" :
+            string.IsNullOrWhiteSpace(data.weaponName) ? data.name : data.weaponName;
+
+    private static string GetUpgradeName(UpgradeData data) =>
+        data == null ? "None" :
+            string.IsNullOrWhiteSpace(data.upgradeName) ? data.name : data.upgradeName;
 
     private static string GetEventDisplayName(WorldEvent worldEvent)
     {
         if (worldEvent == null)
             return "None";
-
-        if (worldEvent is CaptureZoneEvent)
-            return "Capture Zone";
-        if (worldEvent is FalseSignalEvent)
-            return "False Signal";
-        if (worldEvent is EvacuationCorridorEvent)
-            return "Evacuation Corridor";
-        if (worldEvent is RescueCapsuleEvent)
-            return "Rescue Capsule";
-        if (worldEvent is CarrierHuntEvent)
-            return "Carrier Hunt";
-
+        if (worldEvent is CaptureZoneEvent) return "Capture Zone";
+        if (worldEvent is FalseSignalEvent) return "False Signal";
+        if (worldEvent is EvacuationCorridorEvent) return "Evacuation Corridor";
+        if (worldEvent is RescueCapsuleEvent) return "Rescue Capsule";
+        if (worldEvent is CarrierHuntEvent) return "Carrier Hunt";
         return string.IsNullOrWhiteSpace(worldEvent.EventDisplayName)
             ? worldEvent.name
             : worldEvent.EventDisplayName;
     }
 
     private static bool ContainsEventPrefab(
-        System.Collections.Generic.IReadOnlyList<WorldEvent> prefabs,
+        IReadOnlyList<WorldEvent> prefabs,
         WorldEvent target)
     {
         if (prefabs == null)
@@ -1047,33 +1427,23 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         return false;
     }
 
-    private static string GetWorldRuleName(
-        WorldRuleType type,
-        WorldRuleData data)
-    {
-        if (data != null && !string.IsNullOrWhiteSpace(data.DisplayName))
-            return data.DisplayName;
-
-        return type.ToString();
-    }
+    private static string GetWorldRuleName(WorldRuleType type, WorldRuleData data) =>
+        data != null && !string.IsNullOrWhiteSpace(data.DisplayName)
+            ? data.DisplayName
+            : type.ToString();
 
     private void AddSectionTitle(string title, string subtitle)
     {
         RectTransform section = CreateRect(title, contentRoot);
-        LayoutElement layout = section.gameObject.AddComponent<LayoutElement>();
-        layout.preferredHeight = 64f;
+        section.gameObject.AddComponent<LayoutElement>().preferredHeight = 62f;
         section.gameObject.AddComponent<Image>().color =
             new Color(accentColor.r, accentColor.g, accentColor.b, 0.18f);
-
         TextMeshProUGUI text = CreateText(
-            "Label",
-            section,
-            $"<b>{title}</b>\n<size=17><color=#A6AFBC>{subtitle}</color></size>",
-            23f,
-            TextAlignmentOptions.MidlineLeft,
-            Color.white
+            "Label", section,
+            $"<b>{title}</b>\n<size=16><color=#A6AFBC>{subtitle}</color></size>",
+            22f, TextAlignmentOptions.MidlineLeft, Color.white
         );
-        Stretch(text.rectTransform, 16f, 12f, 8f, 8f);
+        Stretch(text.rectTransform, 16f, 12f, 7f, 7f);
     }
 
     private void AddRow(
@@ -1086,51 +1456,26 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         RectTransform row = CreateRect(label, contentRoot);
         row.gameObject.AddComponent<Image>().color = rowColor;
-        LayoutElement layout = row.gameObject.AddComponent<LayoutElement>();
-        layout.preferredHeight = 54f;
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 54f;
 
-        float buttonWidth = buttonLabel switch
-        {
-            "CLEAR DEBUG ENEMIES" => 218f,
-            "CLEAR ANOMALIES" => 176f,
-            "MANUAL POSITION" => 184f,
-            "MANUAL FIRE" => 164f,
-            "DUAL CONTROL" => 164f,
-            "DUAL SWITCH" => 164f,
-            "COMMAND POINT" => 174f,
-            "FOCUS TARGET" => 164f,
-            "WEAPON THROW" => 174f,
-            "FULL AUTO COMMAND" => 220f,
-            "SPAWN TURRET" => 166f,
-            "SPAWN EYES" => 150f,
-            "CLEAR EVENT" => 150f,
-            _ => 116f
-        };
+        float buttonWidth = GetButtonWidth(buttonLabel);
         float rightPadding = string.IsNullOrEmpty(buttonLabel)
             ? 18f
             : buttonWidth + 36f;
         TextMeshProUGUI labelText = CreateText(
-            "Name",
-            row,
-            label,
-            20f,
-            TextAlignmentOptions.MidlineLeft,
-            Color.white
+            "Name", row, label, 19f,
+            TextAlignmentOptions.MidlineLeft, Color.white
         );
         labelText.rectTransform.anchorMin = Vector2.zero;
-        labelText.rectTransform.anchorMax = new Vector2(0.52f, 1f);
+        labelText.rectTransform.anchorMax = new Vector2(0.48f, 1f);
         labelText.rectTransform.offsetMin = new Vector2(16f, 0f);
         labelText.rectTransform.offsetMax = Vector2.zero;
 
         TextMeshProUGUI statusText = CreateText(
-            "Status",
-            row,
-            status,
-            16f,
-            TextAlignmentOptions.MidlineRight,
-            statusColor
+            "Status", row, status, 15f,
+            TextAlignmentOptions.MidlineRight, statusColor
         );
-        statusText.rectTransform.anchorMin = new Vector2(0.47f, 0f);
+        statusText.rectTransform.anchorMin = new Vector2(0.43f, 0f);
         statusText.rectTransform.anchorMax = Vector2.one;
         statusText.rectTransform.offsetMin = Vector2.zero;
         statusText.rectTransform.offsetMax = new Vector2(-rightPadding, 0f);
@@ -1139,11 +1484,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             return;
 
         Button button = CreateButton(
-            row,
-            buttonLabel,
-            action,
-            buttonWidth,
-            buttonEnabled
+            row, buttonLabel, action, buttonWidth, buttonEnabled
         );
         RectTransform buttonRect = button.GetComponent<RectTransform>();
         buttonRect.anchorMin = buttonRect.anchorMax = new Vector2(1f, 0.5f);
@@ -1152,16 +1493,38 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         buttonRect.sizeDelta = new Vector2(buttonWidth, 38f);
     }
 
+    private static float GetButtonWidth(string label) => label switch
+    {
+        "CLEAR DEBUG ENEMIES" => 218f,
+        "CLEAR ANOMALIES" => 176f,
+        "MANUAL POSITION" => 184f,
+        "MANUAL FIRE" => 164f,
+        "DUAL CONTROL" => 164f,
+        "DUAL SWITCH" => 164f,
+        "COMMAND POINT" => 174f,
+        "FOCUS TARGET" => 164f,
+        "WEAPON THROW" => 174f,
+        "FULL AUTO COMMAND" => 220f,
+        "SPAWN TURRET" => 166f,
+        "SPAWN EYES" => 150f,
+        "SPAWN BOSS" => 156f,
+        "KILL BOSS" => 146f,
+        "COMPLETE LEVEL" => 188f,
+        "OPEN LEVEL CARDS" => 210f,
+        "CLEAR CURRENT EVENT" => 228f,
+        "CLEAR EVENT" => 150f,
+        "TURN OFF" => 130f,
+        "TURN ON" => 130f,
+        _ => 116f
+    };
+
     private void AddHint(string message)
     {
         TextMeshProUGUI hint = CreateText(
-            "Hint",
-            contentRoot,
-            message,
-            16f,
-            TextAlignmentOptions.Center,
-            mutedColor
+            "Hint", contentRoot, message, 15f,
+            TextAlignmentOptions.Center, mutedColor
         );
+        hint.textWrappingMode = TextWrappingModes.Normal;
         hint.gameObject.AddComponent<LayoutElement>().preferredHeight = 42f;
     }
 
@@ -1178,7 +1541,6 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         image.color = accentColor;
         Button button = rect.gameObject.AddComponent<Button>();
         button.targetGraphic = image;
-
         ColorBlock colors = button.colors;
         colors.highlightedColor = new Color(0.2f, 0.73f, 0.88f, 1f);
         colors.pressedColor = new Color(0.08f, 0.4f, 0.53f, 1f);
@@ -1190,12 +1552,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             button.onClick.AddListener(action);
 
         TextMeshProUGUI text = CreateText(
-            "Label",
-            rect,
-            label,
-            17f,
-            TextAlignmentOptions.Center,
-            Color.white
+            "Label", rect, label, 16f,
+            TextAlignmentOptions.Center, Color.white
         );
         Stretch(text.rectTransform);
         return button;

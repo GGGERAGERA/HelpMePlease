@@ -62,7 +62,14 @@ public class WorldEventSpawner : MonoBehaviour
     private readonly List<LevelAnomalyController.LocalAnomalyZoneGeometry>
         localAnomalyZones = new();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void ConfigureDebugEventPrefabs(WorldEvent[] prefabs)
+    {
+        eventPrefabs = prefabs ?? System.Array.Empty<WorldEvent>();
+        debugManualOnly = true;
+    }
+
     private WorldEvent debugEvent;
+    private bool debugManualOnly;
 #endif
 
     private void OnEnable()
@@ -87,6 +94,11 @@ public class WorldEventSpawner : MonoBehaviour
 
     private void Update()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (debugManualOnly)
+            return;
+#endif
+
         if (Time.timeScale == 0f)
             return;
 

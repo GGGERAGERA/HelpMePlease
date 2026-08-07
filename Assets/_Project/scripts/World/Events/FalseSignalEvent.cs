@@ -505,6 +505,28 @@ public sealed class FalseSignalEvent : WorldEvent
         spawnedAmbushTurrets.Clear();
     }
 
+    public override void CollectTacticalMapMarkers(
+        List<TacticalMapMarkerDescriptor> markers)
+    {
+        base.CollectTacticalMapMarkers(markers);
+
+        if (markers == null || !IsStarted || IsCompleted)
+            return;
+
+        for (int i = 0; i < signalPoints.Count; i++)
+        {
+            FalseSignalPoint point = signalPoints[i];
+
+            if (point != null)
+            {
+                markers.Add(new TacticalMapMarkerDescriptor(
+                    TacticalMapMarkerKind.Objective,
+                    point.transform.position
+                ));
+            }
+        }
+    }
+
     private void RemoveSignalPointMarker(FalseSignalPoint signalPoint)
     {
         if (!signalPointMarkers.TryGetValue(

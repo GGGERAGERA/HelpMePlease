@@ -713,6 +713,16 @@ public abstract class BaseWeapon : MonoBehaviour
         runtimeStats.CopyFrom(source.runtimeStats);
     }
 
+    public void CopyRuntimeUpgradeModifiersFrom(BaseWeapon source)
+    {
+        if (source == null)
+            return;
+
+        EnsureRuntimeStats();
+        source.EnsureRuntimeStats();
+        runtimeStats.CopyUpgradeModifiersFrom(source.runtimeStats);
+    }
+
     private void CaptureTelekinesisDebugState()
     {
         if (telekinesisDebugStateCaptured)

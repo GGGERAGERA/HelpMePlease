@@ -32,6 +32,16 @@ public sealed class GameplayAreaService : MonoBehaviour
             Instance = null;
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void ConfigureDebugAreas(
+        Collider2D playable,
+        Collider2D spawn)
+    {
+        playableArea = playable;
+        spawnArea = spawn;
+    }
+#endif
+
     public bool IsInsidePlayableArea(Vector2 position)
     {
         return IsInside(playableArea, position, 0f);

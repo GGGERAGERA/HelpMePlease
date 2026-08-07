@@ -335,6 +335,20 @@ public sealed class CarrierHuntEvent : WorldEvent
         carrier = null;
     }
 
+    public override void CollectTacticalMapMarkers(
+        System.Collections.Generic.List<TacticalMapMarkerDescriptor> markers)
+    {
+        base.CollectTacticalMapMarkers(markers);
+
+        if (markers == null || carrier == null || IsCompleted)
+            return;
+
+        markers.Add(new TacticalMapMarkerDescriptor(
+            TacticalMapMarkerKind.Target,
+            carrier.transform.position
+        ));
+    }
+
     private void StopWaitingForCarrier()
     {
         if (!waitingForCarrier)

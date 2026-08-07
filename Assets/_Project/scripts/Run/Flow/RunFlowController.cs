@@ -233,6 +233,65 @@ public sealed class RunFlowController : MonoBehaviour
         return levelChoiceManager;
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool CanDebugCompleteCurrentLevel
+    {
+        get
+        {
+            RunStateManager runState = RunStateManager.Instance;
+            LevelChoiceManager manager = ResolveLevelChoiceManager();
+
+            if (levelCompleted || runState == null ||
+                runState.CurrentSector == null)
+            {
+                return false;
+            }
+
+            int sectorNumber = runState.CurrentSector.SectorNumber;
+
+            if (sectorNumber == 10)
+                return RunEndService.Instance != null;
+
+            return sectorNumber < 10 && manager != null &&
+                !manager.IsChoosing;
+        }
+    }
+
+    public bool TryDebugCompleteCurrentLevel()
+    {
+        if (!CanDebugCompleteCurrentLevel)
+            return false;
+
+        HandleBossDefeated();
+        return levelCompleted;
+    }
+
+    public bool CanDebugOpenLevelChoice
+    {
+        get
+        {
+            RunStateManager runState = RunStateManager.Instance;
+            LevelChoiceManager manager = ResolveLevelChoiceManager();
+            return levelCompleted &&
+                runState != null &&
+                runState.CurrentSector != null &&
+                runState.CurrentSector.SectorNumber < 10 &&
+                manager != null &&
+                !manager.IsChoosing;
+        }
+    }
+
+    public bool TryDebugOpenLevelChoice()
+    {
+        if (!CanDebugOpenLevelChoice)
+            return false;
+
+        OpenLevelChoice();
+        LevelChoiceManager manager = ResolveLevelChoiceManager();
+        return manager != null && manager.IsChoosing;
+    }
+#endif
+
     private void ResolveLevelMechanics()
     {
         if (worldEventSpawner == null)

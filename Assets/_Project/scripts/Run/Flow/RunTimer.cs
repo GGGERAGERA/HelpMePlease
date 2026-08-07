@@ -86,7 +86,7 @@ public class RunTimer : MonoBehaviour
         return true;
     }
 
-    private void SpawnBossObject()
+    private bool SpawnBossObject()
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
 
@@ -108,15 +108,18 @@ public class RunTimer : MonoBehaviour
                     "[RunTimer] No valid boss position exists inside the spawn area.",
                     this
                 );
-                return;
+                return false;
             }
 
             Instantiate(bossPrefab, spawnPosition, Quaternion.identity);
+            return true;
         }
         else
         {
             Debug.LogWarning("RunTimer: bossPrefab или Player не найден.");
         }
+
+        return false;
     }
 
     private System.Collections.IEnumerator BossSpawnRoutine()
@@ -135,6 +138,34 @@ public class RunTimer : MonoBehaviour
 
         SpawnBossObject();
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool CanDebugSpawnBoss =>
+        isActiveAndEnabled &&
+        !bossSpawned &&
+        bossPrefab != null &&
+        GameObject.FindGameObjectWithTag("Player") != null;
+
+    public bool TryDebugSpawnBoss()
+    {
+        if (!CanDebugSpawnBoss)
+            return false;
+
+        StopAllCoroutines();
+        bossSpawned = true;
+        timeLeft = 0f;
+        HUDManager.Instance?.SetTimer(0f);
+        RunMessageService.Instance?.Show(RunMessageType.BossIncoming);
+        AudioService.Instance?.Play(AudioCueId.BossSpawn);
+        CameraShake.Instance?.Shake(2f, 0.05f);
+
+        if (SpawnBossObject())
+            return true;
+
+        bossSpawned = false;
+        return false;
+    }
+#endif
 
     // Kept for the existing result UI. The finite level flow no longer enters survival mode.
     public bool IsSurvivalPhaseStarted()

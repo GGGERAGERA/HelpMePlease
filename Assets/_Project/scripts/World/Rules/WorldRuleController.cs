@@ -90,6 +90,13 @@ public sealed class WorldRuleController : MonoBehaviour
         Instance = this;
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void ConfigureDebugVisual(WorldRuleVisual visual)
+    {
+        worldRuleVisual = visual;
+    }
+#endif
+
 #if UNITY_EDITOR
     private void OnValidate()
     {

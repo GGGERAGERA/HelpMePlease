@@ -6383,6 +6383,9 @@ MonoBehaviour:
   worldRuleController: {fileID: 2147010006}
   anomalyController: {fileID: 2147010005}
   worldEventSpawner: {fileID: 46915853}
+  enemySpawner: {fileID: 0}
+  characterSpawner: {fileID: 46915846}
+  upgradeManager: {fileID: 46915847}
   worldRules:
   - {fileID: 11400000, guid: a5bdb85030fd4b90a621084eb9990d11, type: 2}
   - {fileID: 11400000, guid: b6cce96141ae4ca1b732195fcaaa1e22, type: 2}
@@ -6404,6 +6407,19 @@ MonoBehaviour:
   - {fileID: 590000000000000004, guid: c39b42a1000000000000000000000003, type: 3}
   turretEnemyPrefab: {fileID: 1334349216365075605, guid: 9a2217687199c7b41894a7ab9673f951, type: 3}
   eyesEnemyPrefab: {fileID: 3350373065324294653, guid: 74d98ca6a4a3cc94daabdf7b81bb7f13, type: 3}
+  debugWeapons:
+  - {fileID: 11400000, guid: acd6c980f3b758a409e5285b329a175a, type: 2}
+  - {fileID: 11400000, guid: a0a46b236f3b65c40b5c4cc5573d7c47, type: 2}
+  - {fileID: 11400000, guid: 45a606d5ce8c2a940bca74ee9c5c1843, type: 2}
+  additionalDebugUpgrades:
+  - {fileID: 11400000, guid: a55214083a360b248bd0b37e4f66ba26, type: 2}
+  - {fileID: 11400000, guid: ce823526ee6b72f4f8e4d17ae70e4d4e, type: 2}
+  - {fileID: 11400000, guid: 0b735dae9fc6f4c428d3608f73121ba0, type: 2}
+  - {fileID: 11400000, guid: 32f912c87361a644681482b83a624369, type: 2}
+  - {fileID: 11400000, guid: 352fa235404fe17428acc46b5d9d2d6f, type: 2}
+  - {fileID: 11400000, guid: 470c203301181fe4bbce7e6636a8acb1, type: 2}
+  - {fileID: 11400000, guid: 0234b767634729842ad7ffc2f375bb69, type: 2}
+  - {fileID: 11400000, guid: a209054e8f37b184f93430d405a63675, type: 2}
 --- !u!1 &2147010010
 GameObject:
   m_ObjectHideFlags: 0

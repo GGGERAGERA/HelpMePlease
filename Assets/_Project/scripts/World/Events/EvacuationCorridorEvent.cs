@@ -428,6 +428,22 @@ public sealed class EvacuationCorridorEvent : WorldEvent
             corridorVisual.enabled = false;
     }
 
+    public override void CollectTacticalMapMarkers(
+        System.Collections.Generic.List<TacticalMapMarkerDescriptor> markers)
+    {
+        base.CollectTacticalMapMarkers(markers);
+
+        if (markers == null || !corridorActive || IsCompleted)
+            return;
+
+        markers.Add(new TacticalMapMarkerDescriptor(
+            TacticalMapMarkerKind.Corridor,
+            transform.position,
+            new Vector2(corridorLength, corridorWidth),
+            transform.eulerAngles.z
+        ));
+    }
+
     private void FindPlayer()
     {
         GameObject playerObject =

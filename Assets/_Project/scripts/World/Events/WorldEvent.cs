@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public abstract class WorldEvent : Interactable
+public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
 {
     [Header("Presentation")]
     [SerializeField] private string eventDisplayName = "WORLD EVENT";
@@ -173,5 +173,19 @@ public abstract class WorldEvent : Interactable
 
     public virtual void ApplyDifficultyMultiplier(float multiplier)
     {
+    }
+
+    public virtual void CollectTacticalMapMarkers(
+        System.Collections.Generic.List<TacticalMapMarkerDescriptor> markers)
+    {
+        if (markers == null || IsCompleted)
+            return;
+
+        markers.Add(new TacticalMapMarkerDescriptor(
+            IsStarted
+                ? TacticalMapMarkerKind.Objective
+                : TacticalMapMarkerKind.Event,
+            transform.position
+        ));
     }
 }

@@ -74,6 +74,24 @@ public sealed class WeaponRuntimeStats : MonoBehaviour
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void CopyUpgradeModifiersFrom(WeaponRuntimeStats source)
+    {
+        if (source == null)
+            return;
+
+        damageMultiplier = source.damageMultiplier;
+        fireRateMultiplier = source.fireRateMultiplier;
+        knockbackMultiplier = source.knockbackMultiplier;
+        flatDamageBonus = source.flatDamageBonus;
+        rangeBonus = source.rangeBonus;
+        projectileCountBonus = source.projectileCountBonus;
+        pierceBonus = source.pierceBonus;
+        ricochetBonus = source.ricochetBonus;
+        critChance = source.critChance;
+        critMultiplier = source.critMultiplier;
+        RefreshDebug(null);
+    }
+
     public void CopyFrom(WeaponRuntimeStats source)
     {
         if (source == null)
