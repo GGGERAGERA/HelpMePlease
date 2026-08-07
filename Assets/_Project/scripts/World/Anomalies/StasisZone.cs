@@ -76,7 +76,13 @@ public sealed class StasisZone : LocalAnomalyZone
         LocalAnomalyData data,
         Vector2 areaSize)
     {
-        speedMultiplier = data.PlayerSpeedMultiplier;
+        float playerEffectMultiplier = RunStateManager.Instance != null
+            ? RunStateManager.Instance.AnomalyModifiers.StasisPlayerEffectMultiplier
+            : 1f;
+        speedMultiplier = Mathf.Lerp(
+            1f,
+            data.PlayerSpeedMultiplier,
+            playerEffectMultiplier);
         enemySpeedMultiplier = data.EnemySpeedMultiplier;
         projectileSpeedMultiplier = data.ProjectileSpeedMultiplier;
         pickupSpeedMultiplier = data.PickupSpeedMultiplier;

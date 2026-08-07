@@ -24,9 +24,5 @@ public sealed class BunkerContext : MonoBehaviour
         StationProgression = GetComponent<BunkerStationProgressionService>();
         if (StationProgression == null)
             StationProgression = gameObject.AddComponent<BunkerStationProgressionService>();
-
-        // MainMenu-only setup keeps scene-specific prototype gates out of gameplay scenes.
-        if (GetComponent<BunkerProgressionSceneSetup>() == null)
-            gameObject.AddComponent<BunkerProgressionSceneSetup>();
     }
 }

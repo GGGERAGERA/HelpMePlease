@@ -508,6 +508,14 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 ? sector.LocalAnomaly.name
                 : "None",
             mutedColor, null, false, null);
+        AddRow("ANOMALY STABILIZER",
+            runState != null && runState.CurrentAnomalyStabilizer != null
+                ? runState.CurrentAnomalyStabilizer.DisplayName
+                : "NONE",
+            runState != null && runState.CurrentAnomalyStabilizer != null
+                ? successColor
+                : mutedColor,
+            null, false, null);
         AddRow("Current Event",
             currentEvent == null
                 ? "None"
@@ -914,16 +922,25 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 ? data.name
                 : data.upgradeName;
             string status = $"{data.category} - {data.upgradeType} - x{stack}";
+            bool isUnlocked = UnlockProgressService.IsUnlockedNow(data.unlockData);
 
             if (!inPool)
                 status += " - OUT OF CURRENT POOL";
+            if (!isUnlocked &&
+                data.unlockData != null &&
+                data.unlockData.condition != null &&
+                data.unlockData.condition.type == UnlockConditionType.StationLevelRequirement)
+            {
+                status += $" - LOCKED BY {data.unlockData.condition.stationId.ToString().ToUpperInvariant()} " +
+                    $"STATION LV{Mathf.Max(1, data.unlockData.condition.requiredAmount)}";
+            }
 
             bool canApply = upgradeManager != null &&
                 GameObject.FindGameObjectWithTag("Player") != null &&
                 stack < RunItemSlots.MaxItemLevel;
             UpgradeData captured = data;
             AddRow(displayName, status,
-                stack > 0 ? successColor : inPool ? mutedColor : warningColor,
+                stack > 0 ? successColor : inPool && isUnlocked ? mutedColor : warningColor,
                 stack >= RunItemSlots.MaxItemLevel ? "MAX" : "APPLY",
                 canApply, () => ApplyUpgrade(captured));
         }

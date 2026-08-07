@@ -14,13 +14,17 @@ public sealed class BunkerRoomGate : MonoBehaviour, IBunkerInteractable, IBunker
     [SerializeField, Range(1, 3)] private int requiredStationLevel = 2;
     [SerializeField] private Collider2D blockerCollider;
     [SerializeField] private GameObject visualRoot;
+    [SerializeField] private Vector2 blockerSize = new(1.5f, 3.8f);
+    [SerializeField] private Vector2 occluderOffset;
+    [SerializeField] private Vector2 occluderSize = new(8.5f, 6.5f);
+    [SerializeField] private string accessMessage = "НЕТ ДОСТУПА";
 
     private static Sprite massSprite;
     private Collider2D interactionCollider;
 
     public bool CanInteract => IsClosed;
     public string InteractionText => mode == BunkerRoomGateMode.Sealed
-        ? "НЕТ ДОСТУПА"
+        ? accessMessage
         : $"{requiredStationId}: LEVEL {requiredStationLevel}";
 
     private bool IsClosed => mode == BunkerRoomGateMode.Sealed ||
@@ -30,6 +34,7 @@ public sealed class BunkerRoomGate : MonoBehaviour, IBunkerInteractable, IBunker
     private void Awake()
     {
         EnsureRuntimeParts();
+        ApplyConfiguration();
         Refresh();
     }
 
@@ -52,13 +57,24 @@ public sealed class BunkerRoomGate : MonoBehaviour, IBunkerInteractable, IBunker
         int stationLevel,
         Vector2 blockerSize,
         Vector2 occluderOffset,
-        Vector2 occluderSize)
+        Vector2 occluderSize,
+        string closedMessage = null)
     {
         mode = gateMode;
         requiredStationId = stationId;
         requiredStationLevel = Mathf.Clamp(stationLevel, 1, 3);
+        this.blockerSize = blockerSize;
+        this.occluderOffset = occluderOffset;
+        this.occluderSize = occluderSize;
+        if (!string.IsNullOrWhiteSpace(closedMessage))
+            accessMessage = closedMessage;
         EnsureRuntimeParts();
+        ApplyConfiguration();
+        Refresh();
+    }
 
+    private void ApplyConfiguration()
+    {
         if (blockerCollider is BoxCollider2D box)
             box.size = blockerSize;
 
@@ -77,8 +93,6 @@ public sealed class BunkerRoomGate : MonoBehaviour, IBunkerInteractable, IBunker
 
         if (interactionCollider is BoxCollider2D interactionBox)
             interactionBox.size = blockerSize + Vector2.one * 0.5f;
-
-        Refresh();
     }
 
     public void Interact()
@@ -102,7 +116,7 @@ public sealed class BunkerRoomGate : MonoBehaviour, IBunkerInteractable, IBunker
 
         if (mode == BunkerRoomGateMode.Sealed)
         {
-            BunkerContext.Instance?.Notifications?.ShowWarning("НЕТ ДОСТУПА");
+            BunkerContext.Instance?.Notifications?.ShowWarning(accessMessage);
             return;
         }
 

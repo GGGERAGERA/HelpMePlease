@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -17,6 +18,7 @@ public sealed class BunkerStationUpgradePanel : MonoBehaviour
     private Button upgradeButton;
     private TextMeshProUGUI upgradeButtonText;
     private BunkerStationId currentStationId;
+    private Coroutine unlockFeedbackRoutine;
 
     public bool IsVisible => canvasRoot != null && canvasRoot.activeSelf;
 
@@ -35,14 +37,33 @@ public sealed class BunkerStationUpgradePanel : MonoBehaviour
 
     public void Hide()
     {
+        if (unlockFeedbackRoutine != null)
+        {
+            StopCoroutine(unlockFeedbackRoutine);
+            unlockFeedbackRoutine = null;
+        }
+
         if (canvasRoot != null)
             canvasRoot.SetActive(false);
     }
 
     private void Upgrade()
     {
-        BunkerStationProgressionService.Instance?.TryUpgrade(currentStationId);
+        BunkerStationProgressionService service = BunkerStationProgressionService.Instance;
+        if (service == null || !service.TryGetData(currentStationId, out BunkerStationProgressionData data))
+            return;
+
+        int nextLevel = service.GetLevel(currentStationId) + 1;
+        string[] unlockedContent = data.GetUnlocksForLevel(nextLevel);
+        bool upgraded = service.TryUpgrade(currentStationId);
         Refresh();
+
+        if (upgraded && unlockedContent.Length > 0)
+        {
+            if (unlockFeedbackRoutine != null)
+                StopCoroutine(unlockFeedbackRoutine);
+            unlockFeedbackRoutine = StartCoroutine(ShowUnlockFeedback(unlockedContent));
+        }
     }
 
     private void Refresh()
@@ -65,11 +86,22 @@ public sealed class BunkerStationUpgradePanel : MonoBehaviour
         unlocksText.text = isMax ? "" : unlocks.Length == 0
             ? "UNLOCKS:\n—"
             : $"UNLOCKS:\n{string.Join("\n", unlocks.Select(value => "• " + value))}";
+        unlocksText.color = new Color(0.82f, 0.88f, 0.9f);
 
         int gold = CurrencyManager.Instance != null ? CurrencyManager.Instance.TotalGold : 0;
         goldText.text = $"GOLD: {gold}";
         upgradeButton.interactable = !isMax && service.CanUpgrade(currentStationId);
         upgradeButtonText.text = isMax ? "MAX LEVEL" : "UPGRADE";
+    }
+
+    private IEnumerator ShowUnlockFeedback(string[] unlockedContent)
+    {
+        unlocksText.color = Cyan;
+        unlocksText.text = "ОТКРЫТО: " +
+            string.Join(", ", unlockedContent.Select(value => value.ToUpperInvariant()));
+        yield return new WaitForSecondsRealtime(1.1f);
+        unlockFeedbackRoutine = null;
+        Refresh();
     }
 
     private void BindEvents()

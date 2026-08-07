@@ -23833,13 +23833,42 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2100000102}
   m_SourcePrefab: {fileID: 100100000, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
 --- !u!4 &373838867 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4097959814010224276, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
   m_PrefabInstance: {fileID: 373838866}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2100000101 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+  m_PrefabInstance: {fileID: 373838866}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2100000102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 373838866}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100000101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dca735fefb7c4545be1d927057b0ca2a, type: 3}
+  m_Name: ''
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomGate
+  mode: 2
+  requiredStationId: 3
+  requiredStationLevel: 1
+  blockerCollider: {fileID: 0}
+  visualRoot: {fileID: 0}
+  blockerSize: {x: 1.5, y: 3.8}
+  occluderOffset: {x: 4, y: -2.2}
+  occluderSize: {x: 8.5, y: 6.5}
+  accessMessage: "\u041D\u0415\u0422 \u0414\u041E\u0421\u0422\u0423\u041F\u0410"
 --- !u!1 &378523999 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6617710460798148297, guid: d63ce45c95c11b34f90a928465a2ead2, type: 3}
@@ -24880,6 +24909,13 @@ MonoBehaviour:
   startingStageProfile: {fileID: 11400000, guid: d387815bd32a4a639c4ac0f811ee3251, type: 2}
   startingWorldRule: {fileID: 11400000, guid: f1012da158e24a20bb764c93aeee5266, type: 2}
   startingLocalAnomaly: {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}
+  transitionCamera: {fileID: 1648039033}
+  cameraRig: {fileID: 1111020599}
+  cameraFollow: {fileID: 1111020598}
+  playerMovement: {fileID: 1368619039}
+  bunkerCursor: {fileID: 181013842}
+  transitionDuration: 1
+  targetOrthographicSize: 2.2
 --- !u!1 &735746296
 GameObject:
   m_ObjectHideFlags: 0
@@ -69555,13 +69591,42 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2100000202}
   m_SourcePrefab: {fileID: 100100000, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
 --- !u!4 &973028969 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4097959814010224276, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
   m_PrefabInstance: {fileID: 973028968}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2100000201 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+  m_PrefabInstance: {fileID: 973028968}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2100000202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 973028968}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100000201}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dca735fefb7c4545be1d927057b0ca2a, type: 3}
+  m_Name: ''
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomGate
+  mode: 2
+  requiredStationId: 3
+  requiredStationLevel: 1
+  blockerCollider: {fileID: 0}
+  visualRoot: {fileID: 0}
+  blockerSize: {x: 1.5, y: 3.8}
+  occluderOffset: {x: -4, y: -2.2}
+  occluderSize: {x: 8.5, y: 6.5}
+  accessMessage: "\u0421\u0422\u0410\u041D\u0426\u0418\u042F \u041D\u0415\u0414\u041E\u0421\u0422\u0423\u041F\u041D\u0410"
 --- !u!1 &974467351
 GameObject:
   m_ObjectHideFlags: 0

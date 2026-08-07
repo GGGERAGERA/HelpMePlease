@@ -401,6 +401,7 @@ GameObject:
   - component: {fileID: 2943314194535984448}
   - component: {fileID: 6484268689991298835}
   - component: {fileID: 2129564713534745497}
+  - component: {fileID: 919900000000000001}
   m_Layer: 0
   m_Name: p_bunkerWeaponShowcase
   m_TagString: BunkerElements
@@ -1119,3 +1120,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5930085788941886523, guid: 3aa8dacf946c88e4791e363c6730928b, type: 3}
   m_PrefabInstance: {fileID: 5322023973648552024}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &919900000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4737281608205474900}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d0f9987164a44cfbb2115f3b25bbf6f, type: 3}
+  m_Name: ''
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerStationLevelView
+  stationId: 1
+  indicatorOffset: {x: 0, y: 2, z: 0}

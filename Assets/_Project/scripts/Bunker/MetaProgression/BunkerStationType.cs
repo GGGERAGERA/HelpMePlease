@@ -8,5 +8,6 @@ public enum BunkerStationType
     Upgrade = 5,
     StartRun = 6,
     Animation = 7,
-    CustomEvent = 8
+    CustomEvent = 8,
+    AnomalyStabilizer = 9
 }

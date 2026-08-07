@@ -96,6 +96,27 @@ public sealed class LevelAnomalyController : MonoBehaviour
         return enemy != null && claimedExplosiveDeaths.Add(enemy);
     }
 
+    public bool IsPositionInsideActiveZone(Vector2 position)
+    {
+        for (int i = 0; i < spawnedZones.Count; i++)
+        {
+            LocalAnomalyZone zone = spawnedZones[i];
+
+            if (zone == null || !zone.isActiveAndEnabled)
+                continue;
+
+            BoxCollider2D collider = zone.GetComponent<BoxCollider2D>();
+
+            if (collider != null && collider.enabled &&
+                collider.OverlapPoint(position))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public void ResetExplosiveDeathClaim(EnemyHealth enemy)
     {
         if (!ReferenceEquals(enemy, null))
@@ -384,7 +405,12 @@ public sealed class LevelAnomalyController : MonoBehaviour
         for (int i = 0; i < regionData.Count; i++)
         {
             LocalAnomalyData data = regionData[i];
-            requests.Add(new RegionRequest(data, data.ZoneSize * scale));
+            float zoneSizeMultiplier = RunStateManager.Instance != null
+                ? RunStateManager.Instance.AnomalyModifiers.ZoneSizeMultiplier
+                : 1f;
+            requests.Add(new RegionRequest(
+                data,
+                data.ZoneSize * scale * zoneSizeMultiplier));
         }
 
         requests.Sort((left, right) =>

@@ -23,6 +23,11 @@ public sealed class UnlockProgressService : MonoBehaviour
 
     public bool IsUnlocked(UnlockableContentData content)
     {
+        return IsUnlockedNow(content);
+    }
+
+    public static bool IsUnlockedNow(UnlockableContentData content)
+    {
         if (content == null)
             return true;
 
@@ -103,12 +108,12 @@ public sealed class UnlockProgressService : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    private string GetUnlockKey(string id)
+    private static string GetUnlockKey(string id)
     {
         return UnlockKeyPrefix + id;
     }
 
-    private string GetProgressKey(string id)
+    private static string GetProgressKey(string id)
     {
         return ProgressKeyPrefix + id;
     }

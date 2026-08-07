@@ -164,6 +164,12 @@ public sealed class GravityZone : LocalAnomalyZone
 
             if (affected.Component is IAnomalySpeedProjectile)
                 velocity *= ProjectileForceMultiplier;
+            else if (affected.Component is CharacterMovement2D &&
+                RunStateManager.Instance != null)
+            {
+                velocity *= RunStateManager.Instance.AnomalyModifiers
+                    .GravityPlayerForceMultiplier;
+            }
 
             affected.VelocityTarget.SetAnomalyExternalVelocity(
                 this,

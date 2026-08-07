@@ -13,6 +13,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
     [SerializeField] private Button upgradeBackButton;
 
     private BunkerStationUpgradePanel stationUpgradePanel;
+    private BunkerAnomalyStabilizerPanel anomalyStabilizerPanel;
 
     [Header("Run")]
     [SerializeField] private BunkerRunStarter runStarter;
@@ -20,13 +21,19 @@ public sealed class BunkerPanelManager : MonoBehaviour
     public bool IsAnyPanelOpen =>
         (selectionPanelController != null && selectionPanelController.IsOpen) ||
         (mapPanel != null && mapPanel.activeInHierarchy) ||
-        (stationUpgradePanel != null && stationUpgradePanel.IsVisible);
+        (stationUpgradePanel != null && stationUpgradePanel.IsVisible) ||
+        (anomalyStabilizerPanel != null && anomalyStabilizerPanel.IsVisible);
 
     private void Awake()
     {
         stationUpgradePanel = GetComponent<BunkerStationUpgradePanel>();
         if (stationUpgradePanel == null)
             stationUpgradePanel = gameObject.AddComponent<BunkerStationUpgradePanel>();
+
+        anomalyStabilizerPanel = GetComponent<BunkerAnomalyStabilizerPanel>();
+        if (anomalyStabilizerPanel == null)
+            anomalyStabilizerPanel = gameObject.AddComponent<BunkerAnomalyStabilizerPanel>();
+        anomalyStabilizerPanel.Configure(this);
 
         if (upgradeBackButton != null)
             upgradeBackButton.onClick.AddListener(CloseAll);
@@ -95,6 +102,12 @@ public sealed class BunkerPanelManager : MonoBehaviour
         metaUpgradeShopUI?.Refresh();
     }
 
+    public void OpenAnomalyStabilizers()
+    {
+        CloseAll(false);
+        anomalyStabilizerPanel?.Show();
+    }
+
     public void CloseAll()
     {
         CloseAll(true);
@@ -108,15 +121,19 @@ public sealed class BunkerPanelManager : MonoBehaviour
             mapPanel.SetActive(false);
 
         stationUpgradePanel?.Hide();
+        anomalyStabilizerPanel?.Hide();
 
     }
 
     public void ShowStationProgression(BunkerStationId stationId)
     {
+        if (stationId == BunkerStationId.Character)
+            return;
+
         stationUpgradePanel?.Show(stationId);
     }
 
-    public void StartRun()
+    public void StartRun(Transform transitionTarget)
     {
         if (runStarter == null)
         {
@@ -124,7 +141,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
             return;
         }
 
-        runStarter.StartRun();
+        runStarter.StartRun(transitionTarget);
     }
 
     private bool TryGetSelectionController(out SelectionPanelController controller)

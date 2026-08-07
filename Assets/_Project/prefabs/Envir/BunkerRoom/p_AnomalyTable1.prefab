@@ -20379,6 +20379,8 @@ GameObject:
   - component: {fileID: 1637831002072245796}
   - component: {fileID: 1362942269097689913}
   - component: {fileID: 7755996745517013064}
+  - component: {fileID: 919900000000000201}
+  - component: {fileID: 919900000000000202}
   m_Layer: 0
   m_Name: p_AnomalyTable1
   m_TagString: Untagged
@@ -20476,6 +20478,43 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerHoverOutline
   autoFindRenderers: 1
   targetRenderers: []
+--- !u!114 &919900000000000201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6569535763045236176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6cd9f593f848084ea91bdce5a1ad098, type: 3}
+  m_Name: ''
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerStation
+  stationType: 9
+  interactionText: "\u041D\u0430\u0441\u0442\u0440\u043E\u0438\u0442\u044C \u0441\u0442\u0430\u0431\u0438\u043B\u0438\u0437\u0430\u0442\u043E\u0440"
+  progressionEnabled: 1
+  progressionStationId: 3
+  runTransitionTarget: {fileID: 0}
+  panelManagerFallback: {fileID: 0}
+  animator: {fileID: 0}
+  animationTrigger: Interact
+  onInteract:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &919900000000000202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6569535763045236176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d0f9987164a44cfbb2115f3b25bbf6f, type: 3}
+  m_Name: ''
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerStationLevelView
+  stationId: 3
+  indicatorOffset: {x: 0, y: 3.1, z: 0}
 --- !u!1 &6931206399000753611
 GameObject:
   m_ObjectHideFlags: 0

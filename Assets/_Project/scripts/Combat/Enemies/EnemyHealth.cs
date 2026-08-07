@@ -251,6 +251,15 @@ public class EnemyHealth : MonoBehaviour
             ? goldenModifier.RewardMultiplier
             : 1f;
 
+        if (!isBoss && LevelAnomalyController.Instance != null &&
+            LevelAnomalyController.Instance.IsPositionInsideActiveZone(
+                transform.position) &&
+            RunStateManager.Instance != null)
+        {
+            killRewardMultiplier *= RunStateManager.Instance.AnomalyModifiers
+                .GoldInsideAnomalyMultiplier;
+        }
+
         KillManager.Instance?.AddKill(killRewardMultiplier);
 
         OnDied?.Invoke(this);
