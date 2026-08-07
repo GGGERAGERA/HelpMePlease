@@ -47,17 +47,58 @@ public sealed class GravityZone : LocalAnomalyZone
     private float gravityForce;
     private float visualFade;
     private float targetVisualFade;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private float debugVisualEmphasis = 1f;
+#endif
     private bool effectsCleared;
     private bool despawning;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-    private bool debugOrbitMode;
-    private float debugOrbitForceEnemies;
-    private float debugOrbitForcePlayer;
-    private float debugOrbitForceProjectiles;
-    private float debugInwardForceEnemies;
-    private float debugInwardForcePlayer;
-    private float debugInwardForceProjectiles;
-#endif
+    private bool orbitMode;
+    private float orbitForceEnemies;
+    private float orbitForcePlayer;
+    private float orbitForceProjectiles;
+    private float inwardForceEnemies;
+    private float inwardForcePlayer;
+    private float inwardForceProjectiles;
+
+    public void ConfigureOrbit(
+        float enemyOrbitForce,
+        float playerOrbitForce,
+        float projectileOrbitForce,
+        float enemyInwardForce,
+        float playerInwardForce,
+        float projectileInwardForce)
+    {
+        orbitMode = true;
+        orbitForceEnemies = Mathf.Max(0f, enemyOrbitForce);
+        orbitForcePlayer = Mathf.Max(0f, playerOrbitForce);
+        orbitForceProjectiles = Mathf.Max(0f, projectileOrbitForce);
+        inwardForceEnemies = Mathf.Max(0f, enemyInwardForce);
+        inwardForcePlayer = Mathf.Max(0f, playerInwardForce);
+        inwardForceProjectiles = Mathf.Max(0f, projectileInwardForce);
+    }
+
+    public bool ContainsWorldPosition(Vector2 worldPosition)
+    {
+        return !effectsCleared && AreaCollider != null &&
+            AreaCollider.enabled && AreaCollider.OverlapPoint(worldPosition);
+    }
+
+    public Vector2 GetPredictedExternalVelocity(
+        Vector2 worldPosition,
+        Component affectedComponent)
+    {
+        if (!orbitMode || effectsCleared || affectedComponent == null)
+            return Vector2.zero;
+
+        Vector2 center = AreaCollider != null
+            ? AreaCollider.bounds.center
+            : transform.position;
+        return CalculateOrbitVelocity(
+            affectedComponent,
+            center,
+            worldPosition
+        );
+    }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public void ConfigureDebugOrbit(
@@ -68,43 +109,35 @@ public sealed class GravityZone : LocalAnomalyZone
         float inwardForcePlayer,
         float inwardForceProjectiles)
     {
-        debugOrbitMode = true;
-        debugOrbitForceEnemies = Mathf.Max(0f, orbitForceEnemies);
-        debugOrbitForcePlayer = Mathf.Max(0f, orbitForcePlayer);
-        debugOrbitForceProjectiles = Mathf.Max(0f, orbitForceProjectiles);
-        debugInwardForceEnemies = Mathf.Max(0f, inwardForceEnemies);
-        debugInwardForcePlayer = Mathf.Max(0f, inwardForcePlayer);
-        debugInwardForceProjectiles = Mathf.Max(
-            0f,
+        ConfigureOrbit(
+            orbitForceEnemies,
+            orbitForcePlayer,
+            orbitForceProjectiles,
+            inwardForceEnemies,
+            inwardForcePlayer,
             inwardForceProjectiles
         );
     }
 
     public bool DebugContainsWorldPosition(Vector2 worldPosition)
     {
-        return !effectsCleared && AreaCollider != null &&
-            AreaCollider.enabled &&
-            AreaCollider.OverlapPoint(worldPosition);
+        return ContainsWorldPosition(worldPosition);
     }
 
     public Vector2 GetDebugPredictedExternalVelocity(
         Vector2 worldPosition,
         Component affectedComponent)
     {
-        if (!debugOrbitMode || effectsCleared ||
-            affectedComponent == null)
-        {
-            return Vector2.zero;
-        }
-
-        Vector2 center = AreaCollider != null
-            ? AreaCollider.bounds.center
-            : transform.position;
-        return CalculateDebugOrbitVelocity(
-            affectedComponent,
-            center,
-            worldPosition
+        return GetPredictedExternalVelocity(
+            worldPosition,
+            affectedComponent
         );
+    }
+
+    public void SetDebugVisualEmphasis(float multiplier)
+    {
+        debugVisualEmphasis = Mathf.Clamp(multiplier, 1f, 1.75f);
+        ApplyVisualProperties();
     }
 #endif
 
@@ -218,17 +251,15 @@ public sealed class GravityZone : LocalAnomalyZone
             Vector2 offset = center - position;
             Vector2 velocity;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (debugOrbitMode)
+            if (orbitMode)
             {
-                velocity = CalculateDebugOrbitVelocity(
+                velocity = CalculateOrbitVelocity(
                     affected.Component,
                     center,
                     position
                 );
             }
             else
-#endif
             {
                 velocity = offset.sqrMagnitude > 0.0001f
                     ? offset.normalized * gravityForce
@@ -253,8 +284,7 @@ public sealed class GravityZone : LocalAnomalyZone
         }
     }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-    private Vector2 CalculateDebugOrbitVelocity(
+    private Vector2 CalculateOrbitVelocity(
         Component component,
         Vector2 center,
         Vector2 position)
@@ -274,8 +304,8 @@ public sealed class GravityZone : LocalAnomalyZone
 
         if (component is CharacterMovement2D)
         {
-            orbitForce = debugOrbitForcePlayer;
-            inwardForce = debugInwardForcePlayer;
+            orbitForce = orbitForcePlayer;
+            inwardForce = inwardForcePlayer;
 
             if (RunStateManager.Instance != null)
             {
@@ -287,13 +317,13 @@ public sealed class GravityZone : LocalAnomalyZone
         }
         else if (projectile)
         {
-            orbitForce = debugOrbitForceProjectiles;
-            inwardForce = debugInwardForceProjectiles;
+            orbitForce = orbitForceProjectiles;
+            inwardForce = inwardForceProjectiles;
         }
         else
         {
-            orbitForce = debugOrbitForceEnemies;
-            inwardForce = debugInwardForceEnemies;
+            orbitForce = orbitForceEnemies;
+            inwardForce = inwardForceEnemies;
         }
 
         float radius = Mathf.Max(
@@ -309,8 +339,6 @@ public sealed class GravityZone : LocalAnomalyZone
             tangent * orbitForce - radial * inwardForce
         ) * distanceMultiplier;
     }
-#endif
-
     private AffectedObject FindAffected(Component component)
     {
         for (int i = 0; i < affectedObjects.Count; i++)
@@ -410,7 +438,11 @@ public sealed class GravityZone : LocalAnomalyZone
         if (visualRenderer == null || visualProperties == null)
             return;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        visualProperties.SetFloat(FadeId, visualFade * debugVisualEmphasis);
+#else
         visualProperties.SetFloat(FadeId, visualFade);
+#endif
         visualProperties.SetFloat(EdgeWidthId, edgeWidth);
         visualProperties.SetFloat(FlowSpeedId, flowSpeed);
         visualProperties.SetFloat(CenterPulseSpeedId, centerPulseSpeed);

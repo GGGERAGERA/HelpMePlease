@@ -39,6 +39,18 @@ public sealed class TacticalMapHUD : MonoBehaviour
         new(0.78f, 0.84f, 0.86f, 0.95f);
     private static readonly Color EventFill =
         new(0.1f, 0.75f, 0.86f, 0.95f);
+    private static readonly Color NormalSiteFill =
+        new(0.08f, 0.68f, 0.9f, 0.2f);
+    private static readonly Color NormalSiteBorder =
+        new(0.18f, 0.88f, 1f, 0.95f);
+    private static readonly Color SpecialSiteFill =
+        new(0.72f, 0.12f, 0.95f, 0.26f);
+    private static readonly Color SpecialSiteBorder =
+        new(1f, 0.28f, 0.95f, 1f);
+    private static readonly Color ExitFill =
+        new(0.18f, 1f, 0.42f, 0.95f);
+    private static readonly Color ExitBorder =
+        new(0.62f, 1f, 0.72f, 1f);
     private static readonly Color BossFill =
         new(0.95f, 0.12f, 0.08f, 0.95f);
     private static readonly Color BossBorder =
@@ -53,9 +65,13 @@ public sealed class TacticalMapHUD : MonoBehaviour
     private RectTransform eventRoot;
     private RectTransform legendRoot;
     private RectTransform playerLegendRow;
+    private RectTransform normalSiteLegendRow;
+    private RectTransform specialSiteLegendRow;
+    private RectTransform exitLegendRow;
     private RectTransform eventLegendRow;
     private RectTransform bossLegendRow;
     private MarkerVisual playerMarker;
+    private MarkerVisual exitMarker;
     private MarkerVisual bossMarker;
     private GameplayAreaService gameplayArea;
     private LevelAnomalyController anomalyController;
@@ -66,6 +82,9 @@ public sealed class TacticalMapHUD : MonoBehaviour
     private bool isVisible;
     private bool hasVisibleEvents;
     private bool hasVisibleBoss;
+    private bool hasVisibleNormalSite;
+    private bool hasVisibleSpecialSite;
+    private bool hasVisibleExit;
     private float currentMapHeight = MaxMapSize;
     private float nextAnomalyRefresh;
     private float nextMarkerRefresh;
@@ -177,6 +196,12 @@ public sealed class TacticalMapHUD : MonoBehaviour
         SetMarkerStyle(bossMarker, BossFill, BossBorder);
         bossMarker.Rect.gameObject.SetActive(false);
 
+        exitMarker = CreateMarker("Sector Exit", projectionRoot);
+        exitMarker.Rect.sizeDelta = new Vector2(10f, 10f);
+        exitMarker.Rect.localRotation = Quaternion.Euler(0f, 0f, 45f);
+        SetMarkerStyle(exitMarker, ExitFill, ExitBorder);
+        exitMarker.Rect.gameObject.SetActive(false);
+
         playerMarker = CreateMarker("Player", projectionRoot);
         playerMarker.Rect.sizeDelta = new Vector2(8f, 8f);
         SetMarkerStyle(
@@ -195,7 +220,23 @@ public sealed class TacticalMapHUD : MonoBehaviour
             new Color(0.94f, 0.98f, 1f, 1f),
             Cyan
         );
-        eventLegendRow = CreateLegendRow("СОБЫТИЕ", EventFill, Cyan);
+        normalSiteLegendRow = CreateLegendRow(
+            "ОБЫЧНАЯ АНОМАЛИЯ",
+            NormalSiteFill,
+            NormalSiteBorder
+        );
+        specialSiteLegendRow = CreateLegendRow(
+            "ОСОБАЯ АНОМАЛИЯ",
+            SpecialSiteFill,
+            SpecialSiteBorder
+        );
+        exitLegendRow = CreateLegendRow(
+            "ВЫХОД",
+            ExitFill,
+            ExitBorder,
+            45f
+        );
+        eventLegendRow = CreateLegendRow("ИСПЫТАНИЕ", EventFill, Cyan);
         bossLegendRow = CreateLegendRow("БОСС", BossFill, BossBorder);
 
         ApplyMapLayout(MaxMapSize, MaxMapSize);
@@ -232,7 +273,8 @@ public sealed class TacticalMapHUD : MonoBehaviour
     private RectTransform CreateLegendRow(
         string label,
         Color fill,
-        Color border)
+        Color border,
+        float markerRotation = 0f)
     {
         RectTransform row = CreateRect("Legend " + label, legendRoot);
         row.anchorMin = new Vector2(0f, 1f);
@@ -245,6 +287,11 @@ public sealed class TacticalMapHUD : MonoBehaviour
         swatch.Rect.pivot = new Vector2(0f, 1f);
         swatch.Rect.anchoredPosition = new Vector2(3f, -6f);
         swatch.Rect.sizeDelta = new Vector2(8f, 8f);
+        swatch.Rect.localRotation = Quaternion.Euler(
+            0f,
+            0f,
+            markerRotation
+        );
         SetMarkerStyle(swatch, fill, border);
 
         RectTransform textRect = CreateRect("Label", row);
@@ -340,9 +387,64 @@ public sealed class TacticalMapHUD : MonoBehaviour
 
     private void RefreshAnomalies()
     {
+        hasVisibleNormalSite = false;
+        hasVisibleSpecialSite = false;
+
         if (!hasBounds)
         {
             SetMarkerCount(anomalyMarkers, 0);
+            return;
+        }
+
+        IReadOnlyList<ProductionAnomalySite> productionSites =
+            ProductionAnomalySite.ActiveSites;
+        int productionMarkerCount = 0;
+
+        for (int i = 0; i < productionSites.Count; i++)
+        {
+            ProductionAnomalySite site = productionSites[i];
+
+            if (site == null || !site.IsMapVisible)
+                continue;
+
+            EnsureMarkerCount(
+                anomalyMarkers,
+                productionMarkerCount + 1,
+                "Production Site",
+                anomalyRoot
+            );
+            MarkerVisual marker = anomalyMarkers[productionMarkerCount];
+            marker.Rect.anchoredPosition = WorldToMap(
+                site.transform.position
+            );
+            marker.Rect.sizeDelta = WorldSizeToMap(site.SiteSize);
+            marker.Rect.localRotation = Quaternion.identity;
+
+            if (site.IsSpecial)
+            {
+                SetMarkerStyle(
+                    marker,
+                    SpecialSiteFill,
+                    SpecialSiteBorder
+                );
+                hasVisibleSpecialSite = true;
+            }
+            else
+            {
+                SetMarkerStyle(
+                    marker,
+                    NormalSiteFill,
+                    NormalSiteBorder
+                );
+                hasVisibleNormalSite = true;
+            }
+
+            productionMarkerCount++;
+        }
+
+        if (productionMarkerCount > 0)
+        {
+            SetMarkerCount(anomalyMarkers, productionMarkerCount);
             return;
         }
 
@@ -369,6 +471,8 @@ public sealed class TacticalMapHUD : MonoBehaviour
             GetAnomalyColors(zone.Type, out Color fill, out Color border);
             SetMarkerStyle(marker, fill, border);
         }
+
+        hasVisibleNormalSite = anomalyZones.Count > 0;
     }
 
     private void RefreshMarkers()
@@ -412,6 +516,29 @@ public sealed class TacticalMapHUD : MonoBehaviour
 
         SetMarkerCount(eventMarkers, eventCount);
 
+        hasVisibleExit = false;
+        exitMarker.Rect.gameObject.SetActive(false);
+        IReadOnlyList<ProductionSectorExit> exits =
+            ProductionSectorExit.ActiveExits;
+
+        if (hasBounds)
+        {
+            for (int i = 0; i < exits.Count; i++)
+            {
+                ProductionSectorExit sectorExit = exits[i];
+
+                if (sectorExit == null || !sectorExit.IsMapVisible)
+                    continue;
+
+                exitMarker.Rect.anchoredPosition = WorldToMap(
+                    sectorExit.transform.position
+                );
+                exitMarker.Rect.gameObject.SetActive(true);
+                hasVisibleExit = true;
+                break;
+            }
+        }
+
         EnemyHealth boss = FindAliveBoss();
         bool showBoss = hasBounds && boss != null;
         bossMarker.Rect.gameObject.SetActive(showBoss);
@@ -448,11 +575,28 @@ public sealed class TacticalMapHUD : MonoBehaviour
         if (legendRoot == null || mapRoot == null)
             return;
 
-        bool showLegend = hasVisibleEvents || hasVisibleBoss;
+        bool showLegend = hasBounds && player != null ||
+            hasVisibleNormalSite || hasVisibleSpecialSite || hasVisibleExit ||
+            hasVisibleEvents || hasVisibleBoss;
         legendRoot.gameObject.SetActive(showLegend);
 
         int rowIndex = 0;
-        LayoutLegendRow(playerLegendRow, showLegend, ref rowIndex);
+        LayoutLegendRow(
+            playerLegendRow,
+            hasBounds && player != null,
+            ref rowIndex
+        );
+        LayoutLegendRow(
+            normalSiteLegendRow,
+            hasVisibleNormalSite,
+            ref rowIndex
+        );
+        LayoutLegendRow(
+            specialSiteLegendRow,
+            hasVisibleSpecialSite,
+            ref rowIndex
+        );
+        LayoutLegendRow(exitLegendRow, hasVisibleExit, ref rowIndex);
         LayoutLegendRow(eventLegendRow, hasVisibleEvents, ref rowIndex);
         LayoutLegendRow(bossLegendRow, hasVisibleBoss, ref rowIndex);
 

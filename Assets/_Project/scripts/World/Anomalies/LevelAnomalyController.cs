@@ -154,6 +154,58 @@ public sealed class LevelAnomalyController : MonoBehaviour
         IsIntroComplete = true;
     }
 
+    public void BeginSiteLayout()
+    {
+        Clear();
+        IsIntroComplete = true;
+    }
+
+    public LocalAnomalyZone SpawnSiteZone(
+        LocalAnomalyData data,
+        Vector2 position,
+        Vector2 size)
+    {
+        if (data == null || data.ZonePrefab == null)
+            return null;
+
+        ResolveGameplayArea();
+
+        Vector2 safeSize = new(
+            Mathf.Max(0.1f, size.x),
+            Mathf.Max(0.1f, size.y)
+        );
+
+        if (gameplayArea == null ||
+            !IsRectangleInsidePlayableArea(position, safeSize))
+        {
+            Debug.LogWarning(
+                $"[LevelAnomalyController] Site zone '{data.name}' " +
+                "does not fit inside PlayableArea.",
+                this
+            );
+            return null;
+        }
+
+        LocalAnomalyZone zone = Instantiate(
+            data.ZonePrefab,
+            position,
+            Quaternion.identity
+        );
+        zone.Initialize(data, this, safeSize);
+        spawnedZones.Add(zone);
+        return zone;
+    }
+
+    public void CollapseSiteZone(LocalAnomalyZone zone)
+    {
+        if (zone == null || !spawnedZones.Remove(zone))
+            return;
+
+        RemoveActiveLocalZone(zone);
+        RefreshLocalAnomalyCard();
+        zone.Despawn();
+    }
+
     public void Clear()
     {
         CleanupLocalAnomalyZones();

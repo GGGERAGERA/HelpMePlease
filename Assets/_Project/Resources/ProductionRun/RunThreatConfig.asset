@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42a10000000000000000000000000002, type: 3}
+  m_Name: RunThreatConfig
+  m_EditorClassIdentifier: Assembly-CSharp::RunThreatConfig
+  valuePerSecond: 0.12
+  presets:
+  - minimumValue: 0
+    spawnIntervalMultiplier: 1.05
+    maxAliveCap: 18
+    batchSize: 1
+  - minimumValue: 16.67
+    spawnIntervalMultiplier: 1
+    maxAliveCap: 22
+    batchSize: 1
+  - minimumValue: 33.33
+    spawnIntervalMultiplier: 0.9
+    maxAliveCap: 27
+    batchSize: 2
+  - minimumValue: 50
+    spawnIntervalMultiplier: 0.82
+    maxAliveCap: 32
+    batchSize: 2
+  - minimumValue: 66.67
+    spawnIntervalMultiplier: 0.74
+    maxAliveCap: 36
+    batchSize: 3
+  - minimumValue: 83.33
+    spawnIntervalMultiplier: 0.68
+    maxAliveCap: 40
+    batchSize: 3

@@ -10,6 +10,7 @@ public sealed class UpgradeManager : MonoBehaviour
         public readonly bool PlayLevelUpSound;
         public readonly int ChoiceCount;
         public readonly bool GuaranteeBehavior;
+        public readonly bool NumericOnly;
         public readonly bool IsChestReward;
         public readonly System.Action OnClosed;
 
@@ -19,13 +20,15 @@ public sealed class UpgradeManager : MonoBehaviour
             int choiceCount,
             bool guaranteeBehavior,
             bool isChestReward,
-            System.Action onClosed = null
+            System.Action onClosed = null,
+            bool numericOnly = false
         )
         {
             PlayerLevel = playerLevel;
             PlayLevelUpSound = playLevelUpSound;
             ChoiceCount = choiceCount;
             GuaranteeBehavior = guaranteeBehavior;
+            NumericOnly = numericOnly;
             IsChestReward = isChestReward;
             OnClosed = onClosed;
         }
@@ -204,6 +207,27 @@ public sealed class UpgradeManager : MonoBehaviour
         );
     }
 
+    public void ShowNumericChestRewardChoices(
+        int choiceCount,
+        System.Action onClosed)
+    {
+        int playerLevel = ExperienceManager.Instance != null
+            ? ExperienceManager.Instance.currentLevel
+            : 1;
+
+        RequestUpgradeChoices(
+            new UpgradeChoiceRequest(
+                playerLevel,
+                playLevelUpSound: false,
+                choiceCount,
+                guaranteeBehavior: false,
+                isChestReward: true,
+                onClosed: onClosed,
+                numericOnly: true
+            )
+        );
+    }
+
     private void RequestUpgradeChoices(UpgradeChoiceRequest request)
     {
         if (isChoosingUpgrade)
@@ -246,15 +270,20 @@ public sealed class UpgradeManager : MonoBehaviour
             return false;
         }
 
-        choices = request.GuaranteeBehavior
-            ? upgradeRoller.RollRewardChoices(
+        choices = request.NumericOnly
+            ? upgradeRoller.RollNumericChoices(
                 request.PlayerLevel,
                 request.ChoiceCount
             )
-            : upgradeRoller.RollChoices(
-                request.PlayerLevel,
-                request.ChoiceCount
-            );
+            : request.GuaranteeBehavior
+                ? upgradeRoller.RollRewardChoices(
+                    request.PlayerLevel,
+                    request.ChoiceCount
+                )
+                : upgradeRoller.RollChoices(
+                    request.PlayerLevel,
+                    request.ChoiceCount
+                );
 
         if (choices.Count > 0)
             return true;

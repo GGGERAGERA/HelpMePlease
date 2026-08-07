@@ -59,6 +59,8 @@ public class WorldEventSpawner : MonoBehaviour
     private EnemySpawner enemySpawner;
     private WorldEvent pressureEvent;
     private readonly List<WorldEvent> spawnedEvents = new();
+    private readonly HashSet<WorldEvent> siteRewardSuppressedEvents = new();
+    private bool siteControlledMode;
     private readonly List<LevelAnomalyController.LocalAnomalyZoneGeometry>
         localAnomalyZones = new();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -93,6 +95,7 @@ public class WorldEventSpawner : MonoBehaviour
     private void OnDisable()
     {
         ClearEventSpawnPressure();
+        siteRewardSuppressedEvents.Clear();
         EventCompleted -= SpawnRewardChest;
         EventFailed -= HandleEventFailed;
     }
@@ -106,6 +109,9 @@ public class WorldEventSpawner : MonoBehaviour
 
     private void Update()
     {
+        if (siteControlledMode)
+            return;
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (debugManualOnly)
             return;
@@ -364,9 +370,61 @@ public class WorldEventSpawner : MonoBehaviour
             : Mathf.Max(0.1f, eventEdgePadding);
     }
 
+    public float GetSiteEventFootprintRadius(WorldEvent worldEvent)
+    {
+        return GetEventFootprintRadius(worldEvent);
+    }
+
+    public bool IsSiteEventPositionClear(
+        WorldEvent prefab,
+        Vector2 position,
+        float extraClearance = 0f)
+    {
+        float radius = GetEventFootprintRadius(prefab) +
+            Mathf.Max(0f, extraClearance);
+        return !OverlapsActiveEvent(position, radius);
+    }
+
     public void SetHoldPointEnabled(bool enabled)
     {
         holdPointEnabled = enabled;
+    }
+
+    public void ConfigureSiteControlledMode(int concurrentSiteCount)
+    {
+        siteControlledMode = true;
+        holdPointEnabled = true;
+        maxActiveEvents = Mathf.Max(1, concurrentSiteCount);
+        timer = eventInterval;
+    }
+
+    public bool SpawnSiteEventAt(
+        WorldEvent prefab,
+        Vector3 position,
+        Vector2 siteCenter,
+        Vector2 siteSize,
+        bool suppressStandardReward,
+        out WorldEvent spawnedEvent)
+    {
+        spawnedEvent = null;
+
+        if (!isActiveAndEnabled || prefab == null ||
+            !IsEventPrefabEnabled(prefab) ||
+            spawnedEventCount >= maxActiveEvents)
+        {
+            return false;
+        }
+
+        spawnedEvent = Instantiate(prefab, position, Quaternion.identity);
+        spawnedEvent.ConfigureSitePlacement(siteCenter, siteSize);
+        spawnedEvent.Initialize(this);
+        spawnedEvents.Add(spawnedEvent);
+        spawnedEventCount++;
+
+        if (suppressStandardReward)
+            siteRewardSuppressedEvents.Add(spawnedEvent);
+
+        return true;
     }
 
     public bool IsEventPrefabEnabled(WorldEvent eventPrefab)
@@ -438,6 +496,7 @@ public class WorldEventSpawner : MonoBehaviour
             ActiveEvent = null;
 
         spawnedEvents.Remove(worldEvent);
+        siteRewardSuppressedEvents.Remove(worldEvent);
         spawnedEventCount = Mathf.Max(0, spawnedEventCount - 1);
         EventFailed?.Invoke(worldEvent);
     }
@@ -647,13 +706,16 @@ public class WorldEventSpawner : MonoBehaviour
         if (completedEvent == null)
             return;
 
+        bool isImproved = doubleOrLeave != null &&
+            doubleOrLeave.ResolveCompletedEvent(completedEvent);
+
+        if (siteRewardSuppressedEvents.Remove(completedEvent))
+            return;
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (debugRewardSuppressedEvents.Remove(completedEvent))
             return;
 #endif
-
-        bool isImproved = doubleOrLeave != null &&
-            doubleOrLeave.ResolveCompletedEvent(completedEvent);
 
         if (rewardChestPrefab == null)
         {
@@ -670,7 +732,11 @@ public class WorldEventSpawner : MonoBehaviour
             completedEvent.RewardPosition,
             Quaternion.identity
         );
-        chest.Initialize(isImproved, doubleOrLeave);
+        chest.Initialize(
+            isImproved,
+            doubleOrLeave,
+            forceNumeric: siteControlledMode
+        );
     }
 
     private void HandleEventFailed(WorldEvent failedEvent)

@@ -1,4 +1,21 @@
-# Current Architecture
+# Subject#42 Phase 1 Production Overlay
+
+Актуально после переноса exploration mechanics в production MVP:
+
+- Активный route централизован в `RunRoute`: Sectors 1–4 — exploration, Sector 5 — существующий boss, всего 5 секторов.
+- `MVP` по-прежнему перезагружается между секторами. `RunStateManager` сохраняет HP/XP, обычные upgrades, непрерывный `ThreatValue` и максимум три уникальных `AnomalyPowerType`.
+- В exploration sector `RunTimer` не создаёт boss. `ProductionExplorationSectorController` размещает четыре крупных production-региона суммарным покрытием около 89% текущих bounds: три Normal Sites, один Special Site и доступный с начала физический Exit в узком центральном коридоре.
+- Normal Site использует Stasis/Berserk/Glitch + существующий Hold/Corridor/False Signal Event; completion схлопывает anomaly и создаёт standard chest с numeric Upgrade Cards.
+- Special Site выбирается из Gravity/Electric/Beam без зависимости от sandbox controllers. Electric использует 6-node telegraph/discharge, Beam — horizontal/vertical/diagonal environmental patterns; оба always-on, наносят production-configurable damage врагам и игроку и выключаются при completion. Награда остаётся Gravity Orb/Arc Node/Red Beam в отдельном run-layer.
+- Gravity Special использует parity orbital flow (enemy/player/projectile orbit 7/3.5/2.5, inward 1/0.7/0.35). Gravity Orb сохраняет gameplay radius/damage 0.72/65 отдельно от увеличенного visual core/ring и trail 0.32 s.
+- Tactical Map в exploration берёт геометрию прямо из production sites: Normal — cyan, Special — magenta, Exit — зелёный diamond; русская legend явно показывает игрока, оба типа anomaly и выход.
+- Session Threat имеет шесть data-driven presets. Он не сбрасывается и не получает фиксированного прироста при переходе; `EnemySpawner` использует соответствующую phase/composition, interval, batch и cap не выше 40.
+- Exit сохраняет scene state, автоматически выбирает следующий одиночный World Rule из существующего production pool и перезагружает `MVP`. Sector 4 Exit создаёт Sector 5; boss death завершает run и возвращает в Bunker.
+- `GameplaySandbox`, debug HUD/keys/controllers и standalone selectors не являются production dependencies. Data-only `GravityTrajectoryService` существует, но по умолчанию выключен до будущего Scanner API consumer.
+
+Подробная инвентаризация ниже сохранена как pre-Phase-1 baseline и историческое объяснение зависимостей. При расхождении с этим overlay актуальным считается overlay.
+
+# Pre-Phase-1 Architecture Baseline
 
 Актуальный срез проверен по Unity `6000.3.13f1`, C#-коду, сериализованным ссылкам сцен/prefab и ScriptableObject. В `Assets/_Project/scripts` находится 238 runtime-скриптов. В Build Settings включены только `MainMenu.unity` и `MVP.unity`. Метки ниже: **CURRENT** — есть доказанный runtime-вход; **LEGACY** — заменённая или отсоединённая ветка; **PROTOTYPE** — тестовая/dev-функция; **UNKNOWN** — файл или компонент существует, но полезный runtime-вызов не доказан.
 

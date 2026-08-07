@@ -36,7 +36,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         Enemies,
         Events,
         WeaponsAndUpgrades,
-        Telekinesis
+        Telekinesis,
+        SectorTest
     }
 
     private enum UpgradeFilter
@@ -66,7 +67,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         "ENEMIES",
         "EVENTS",
         "WEAPONS & UPGRADES",
-        "TELEKINESIS"
+        "TELEKINESIS",
+        "ТЕСТ СЕКТОРА"
     };
 
     private static readonly string[] SandboxTabLabels =
@@ -113,6 +115,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private GravityTrajectoryPreview trajectoryPreview;
     private WorldEventDebugStatusOverlay eventStatusOverlay;
     private EnvironmentReadabilityDebugController readabilityController;
+    private ProductionSectorDebugController productionSectorDebug;
     private GiantObserverBackgroundController giantObserverController;
     private AnomalySiteDebugSelector anomalySiteSelector;
     private bool isOpen;
@@ -149,6 +152,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void Start()
     {
+        EnsureProductionSectorDebug();
         BuildMenu();
         RefreshAllTabs();
         if (sandboxLabMode)
@@ -328,6 +332,16 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             "WorldEventSpawner");
     }
 
+    private void EnsureProductionSectorDebug()
+    {
+        if (sandboxLabMode || productionSectorDebug != null)
+            return;
+
+        productionSectorDebug = GetComponent<ProductionSectorDebugController>();
+        productionSectorDebug ??=
+            gameObject.AddComponent<ProductionSectorDebugController>();
+    }
+
     private void WarnIfMissing(
         UnityEngine.Object target,
         ref bool wasWarned,
@@ -422,8 +436,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             );
             Stretch(button.GetComponent<RectTransform>());
             TextMeshProUGUI tabText = button.GetComponentInChildren<TextMeshProUGUI>();
-            if (sandboxLabMode && tabText != null)
-                tabText.fontSize = 13f;
+            if (tabText != null && (sandboxLabMode || labels.Length > 7))
+                tabText.fontSize = sandboxLabMode ? 13f : 12f;
             tabButtonImages[i] = button.targetGraphic as Image;
         }
 
@@ -622,6 +636,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 break;
             case DebugTab.Telekinesis:
                 AddTelekinesisSection();
+                break;
+            case DebugTab.SectorTest:
+                AddProductionSectorTestSection();
                 break;
         }
 
@@ -1526,6 +1543,271 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         int total = Mathf.Max(0, Mathf.FloorToInt(seconds));
         return $"{total / 60:00}:{total % 60:00}";
     }
+
+    private void AddProductionSectorTestSection()
+    {
+        EnsureProductionSectorDebug();
+        ProductionSectorDebugController debug = productionSectorDebug;
+        bool available = debug != null;
+
+        if (!available)
+        {
+            AddSectionTitle("ТЕСТ СЕКТОРА", "Development / Editor only");
+            AddHint("ProductionSectorDebugController не создан.");
+            return;
+        }
+
+        AddSectionTitle(
+            "ИГРОК",
+            "Урон HP ×0; knockback, gravity, hit flash, sound и camera shake остаются"
+        );
+        AddToggleRow(
+            "НЕУЯЗВИМОСТЬ ИГРОКА",
+            debug.InvulnerabilityEnabled,
+            true,
+            () => debug.SetInvulnerability(!debug.InvulnerabilityEnabled)
+        );
+
+        AddSectionTitle(
+            "ЧИТАЕМОСТЬ ЗОНЫ",
+            "Только CURRENT ZONE: ground, trees, vegetation, props и decor"
+        );
+        AddProductionReadabilityPreset(
+            ProductionSectorDebugController.ReadabilityPreset.Original
+        );
+        AddProductionReadabilityPreset(
+            ProductionSectorDebugController.ReadabilityPreset.Muted
+        );
+        AddProductionReadabilityPreset(
+            ProductionSectorDebugController.ReadabilityPreset.HighGameplayContrast
+        );
+        AddProductionReadabilityPreset(
+            ProductionSectorDebugController.ReadabilityPreset.DarkWorld
+        );
+        AddHint(
+            "Player, enemies, projectiles, weapons, anomaly visuals, Event/Exit/chest markers, HUD и World Rule overlays исключены. " +
+            "Активный World Rule остаётся нижним слоем визуала."
+        );
+
+        AddSectionTitle(
+            "ЯРКОСТЬ ДЕКОРА",
+            "Trees, plants, grass, props и clutter внутри CURRENT ZONE"
+        );
+        AddProductionFloatOptions(
+            new[] { 1f, 0.75f, 0.5f, 0.25f },
+            debug.DecorBrightness,
+            value => debug.SetDecorBrightness(value),
+            value => $"{value * 100f:0}%"
+        );
+
+        AddSectionTitle(
+            "АКЦЕНТ АНОМАЛИИ",
+            "Только visual brightness/alpha/line width; geometry, damage и силы не меняются"
+        );
+        AddProductionFloatOptions(
+            new[] { 1f, 1.25f, 1.5f, 1.75f },
+            debug.AnomalyAccent,
+            value => debug.SetAnomalyAccent(value),
+            value => $"{value * 100f:0}%"
+        );
+
+        AddSectionTitle(
+            "ВРАГИ",
+            "Мультипликативный lift/tint сохраняет Golden и специальные цвета"
+        );
+        AddProductionEnemyMode(
+            ProductionSectorDebugController.EnemyReadability.Off
+        );
+        AddProductionEnemyMode(
+            ProductionSectorDebugController.EnemyReadability.Light
+        );
+        AddProductionEnemyMode(
+            ProductionSectorDebugController.EnemyReadability.Strong
+        );
+        AddOptionRow(
+            "ПРИМЕНЯТЬ: В ТЕКУЩЕЙ ЗОНЕ",
+            debug.CurrentEnemyScope ==
+                ProductionSectorDebugController.EnemyScope.CurrentZone,
+            true,
+            () => debug.SetEnemyScope(
+                ProductionSectorDebugController.EnemyScope.CurrentZone
+            )
+        );
+        AddOptionRow(
+            "ПРИМЕНЯТЬ: ВСЕ",
+            debug.CurrentEnemyScope ==
+                ProductionSectorDebugController.EnemyScope.All,
+            true,
+            () => debug.SetEnemyScope(
+                ProductionSectorDebugController.EnemyScope.All
+            )
+        );
+
+        AddSectionTitle(
+            "ОСОБАЯ АНОМАЛИЯ",
+            "Применится только при безопасной полной пересборке текущего сектора"
+        );
+        AddRow(
+            "ТЕКУЩАЯ",
+            debug.CurrentSpecialName,
+            debug.CurrentSpecialName != "NONE" ? successColor : mutedColor,
+            "ИНФО",
+            false,
+            null
+        );
+        AddProductionSpecialOverride(
+            ProductionSectorDebugController.SpecialOverride.Random
+        );
+        AddProductionSpecialOverride(
+            ProductionSectorDebugController.SpecialOverride.Gravity
+        );
+        AddProductionSpecialOverride(
+            ProductionSectorDebugController.SpecialOverride.Electric
+        );
+        AddProductionSpecialOverride(
+            ProductionSectorDebugController.SpecialOverride.Beam
+        );
+        AddRow(
+            "ПЕРЕСОЗДАТЬ ТЕКУЩИЙ СЕКТОР",
+            "FULL SCENE REBUILD / RUNSTATE СОХРАНЁН",
+            warningColor,
+            "ПЕРЕСОЗДАТЬ",
+            RunStateManager.Instance != null,
+            () => debug.RebuildCurrentSector()
+        );
+        AddHint(
+            "Live hot-swap Special Site отключён: reset не двигает маршрут, не завершает Event и не выдаёт награду."
+        );
+
+        AddRow(
+            "СБРОСИТЬ ВИЗУАЛ",
+            "ORIGINAL / 100 / 100 / ENEMY OFF",
+            mutedColor,
+            "СБРОСИТЬ",
+            true,
+            () => debug.ResetVisualSettings()
+        );
+        AddHint(
+            "Visual reset не меняет invulnerability и Special override. Все defaults нейтральны: Original, 100%, 100%, Enemy Off, Current Zone, Random, Invulnerability Off."
+        );
+
+        AddSectionTitle(
+            "ДИАГНОСТИКА",
+            "Session-only инструменты; сохранение и meta-прогресс не меняются"
+        );
+        AddRow(
+            "ТЕКУЩИЙ СЕКТОР",
+            debug.CurrentSectorNumber > 0
+                ? $"{debug.CurrentSectorNumber}/5"
+                : "НЕТ АКТИВНОГО RUNSTATE",
+            debug.CurrentSectorNumber > 0 ? successColor : warningColor,
+            "ИНФО",
+            false,
+            null
+        );
+        AddRow(
+            "ТЕКУЩАЯ ЗОНА",
+            debug.CurrentZoneName,
+            debug.CurrentSite != null ? successColor : mutedColor,
+            "ИНФО",
+            false,
+            null
+        );
+        AddHint(
+            $"Читаемость: {GetProductionPresetName(debug.Preset)} | " +
+            $"декор {debug.DecorBrightness * 100f:0}% | " +
+            $"акцент аномалии {debug.AnomalyAccent * 100f:0}% | " +
+            $"враги {GetEnemyReadabilityName(debug.EnemyMode)} " +
+            $"({GetEnemyScopeName(debug.CurrentEnemyScope)})\n" +
+            $"Override особой аномалии: {debug.Override.ToString().ToUpperInvariant()} | " +
+            $"бессмертие: {(debug.InvulnerabilityEnabled ? "ДА" : "НЕТ")} | " +
+            $"environment renderers в зоне: {debug.EnvironmentRendererCount}"
+        );
+    }
+
+    private void AddProductionReadabilityPreset(
+        ProductionSectorDebugController.ReadabilityPreset value)
+    {
+        ProductionSectorDebugController debug = productionSectorDebug;
+        AddOptionRow(
+            GetProductionPresetName(value),
+            debug != null && debug.Preset == value,
+            debug != null,
+            () => debug.SetPreset(value)
+        );
+    }
+
+    private void AddProductionFloatOptions(
+        float[] values,
+        float current,
+        System.Action<float> setter,
+        System.Func<float, string> label)
+    {
+        for (int i = 0; i < values.Length; i++)
+        {
+            float captured = values[i];
+            AddOptionRow(
+                label(captured),
+                Mathf.Approximately(captured, current),
+                true,
+                () => setter(captured)
+            );
+        }
+    }
+
+    private void AddProductionEnemyMode(
+        ProductionSectorDebugController.EnemyReadability value)
+    {
+        ProductionSectorDebugController debug = productionSectorDebug;
+        AddOptionRow(
+            GetEnemyReadabilityName(value),
+            debug != null && debug.EnemyMode == value,
+            debug != null,
+            () => debug.SetEnemyReadability(value)
+        );
+    }
+
+    private void AddProductionSpecialOverride(
+        ProductionSectorDebugController.SpecialOverride value)
+    {
+        ProductionSectorDebugController debug = productionSectorDebug;
+        AddOptionRow(
+            value.ToString().ToUpperInvariant(),
+            debug != null && debug.Override == value,
+            debug != null,
+            () => debug.SetSpecialOverride(value)
+        );
+    }
+
+    private static string GetProductionPresetName(
+        ProductionSectorDebugController.ReadabilityPreset value) =>
+        value switch
+        {
+            ProductionSectorDebugController.ReadabilityPreset.Muted =>
+                "ПРИГЛУШЁННЫЙ МИР",
+            ProductionSectorDebugController.ReadabilityPreset.HighGameplayContrast =>
+                "ВЫСОКИЙ КОНТРАСТ GAMEPLAY",
+            ProductionSectorDebugController.ReadabilityPreset.DarkWorld =>
+                "ТЁМНЫЙ МИР",
+            _ => "ОРИГИНАЛ"
+        };
+
+    private static string GetEnemyReadabilityName(
+        ProductionSectorDebugController.EnemyReadability value) =>
+        value switch
+        {
+            ProductionSectorDebugController.EnemyReadability.Light =>
+                "ЛЁГКАЯ",
+            ProductionSectorDebugController.EnemyReadability.Strong =>
+                "СИЛЬНАЯ",
+            _ => "ВЫКЛ"
+        };
+
+    private static string GetEnemyScopeName(
+        ProductionSectorDebugController.EnemyScope value) =>
+        value == ProductionSectorDebugController.EnemyScope.All
+            ? "ВСЕ"
+            : "ТЕКУЩАЯ ЗОНА";
 
     private void AddRunSection()
     {

@@ -47,11 +47,21 @@ public sealed class RunMessageService : MonoBehaviour
         while (Time.timeScale <= 0f)
             yield return null;
 
+        bool exploration = runState != null &&
+            runState.CurrentSector != null &&
+            RunRoute.IsExplorationSector(
+                runState.CurrentSector.SectorNumber
+            );
+
         ShowCustom(
             string.Empty,
-            "WASD — ДВИЖЕНИЕ\n" +
-            "ОРУЖИЕ СТРЕЛЯЕТ АВТОМАТИЧЕСКИ\n" +
-            "ПЕРЕЖИВИТЕ ВОЛНУ И ПОБЕДИТЕ БОССА",
+            exploration
+                ? "WASD — ДВИЖЕНИЕ\n" +
+                  "ИССЛЕДУЙТЕ ANOMALY SITES ИЛИ СРАЗУ ИДИТЕ К EXIT\n" +
+                  "E — ВЗАИМОДЕЙСТВИЕ С EVENT"
+                : "WASD — ДВИЖЕНИЕ\n" +
+                  "ОРУЖИЕ СТРЕЛЯЕТ АВТОМАТИЧЕСКИ\n" +
+                  "ПОБЕДИТЕ БОССА",
             FirstRunHintDuration,
             true
         );

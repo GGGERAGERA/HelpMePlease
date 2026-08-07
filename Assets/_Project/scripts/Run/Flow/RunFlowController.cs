@@ -8,13 +8,6 @@ public sealed class RunFlowController : MonoBehaviour
     [Header("Level Choice")]
     [SerializeField] private LevelChoiceManager levelChoiceManager;
 
-    [Header("Boss Defeat Flow")]
-    [SerializeField, Min(0f)] private float levelChoiceDelay = 5f;
-    [SerializeField] private bool stopEnemySpawnerAfterBoss = true;
-
-    [Header("Completion")]
-    [SerializeField] private RunCompletionCleaner completionCleaner;
-
     [Header("Level Mechanics")]
     [SerializeField] private WorldEventSpawner worldEventSpawner;
     [SerializeField] private NoDamageChallenge noDamageChallenge;
@@ -53,6 +46,47 @@ public sealed class RunFlowController : MonoBehaviour
         StartCoroutine(BossDefeatedRoutine());
     }
 
+    public bool HandleExitReached()
+    {
+        if (levelCompleted)
+            return false;
+
+        RunStateManager runState = RunStateManager.Instance;
+        int sectorNumber = runState != null && runState.CurrentSector != null
+            ? runState.CurrentSector.SectorNumber
+            : 0;
+
+        if (!RunRoute.IsExplorationSector(sectorNumber))
+        {
+            Debug.LogWarning(
+                $"[RunFlowController] Exit ignored in sector {sectorNumber}."
+            );
+            return false;
+        }
+
+        LevelChoiceManager manager = ResolveLevelChoiceManager();
+
+        if (manager == null)
+        {
+            Debug.LogError(
+                "[RunFlowController] LevelChoiceManager not found."
+            );
+            return false;
+        }
+
+        levelCompleted = true;
+        RegisterCurrentLevelCompletion();
+        runState.RegisterCompletedLevel();
+
+        if (!manager.TryAdvanceFromExit())
+        {
+            levelCompleted = false;
+            return false;
+        }
+
+        return true;
+    }
+
     public void ApplyLevelMechanics()
     {
         ResolveLevelMechanics();
@@ -76,7 +110,7 @@ public sealed class RunFlowController : MonoBehaviour
 
         int sectorNumber = runState.CurrentSector.SectorNumber;
 
-        if (sectorNumber == 10)
+        if (RunRoute.IsBossSector(sectorNumber))
         {
             RunEndService endService = RunEndService.Instance;
 
@@ -93,32 +127,10 @@ public sealed class RunFlowController : MonoBehaviour
             yield break;
         }
 
-        if (sectorNumber > 10)
-        {
-            Debug.LogError(
-                $"[RunFlowController] Invalid sector {sectorNumber}; " +
-                "the main route ends at sector 10."
-            );
-            yield break;
-        }
-
-        runState.RegisterCompletedLevel();
-
-        if (stopEnemySpawnerAfterBoss)
-            StopEnemySpawner();
-
-        if (completionCleaner != null)
-            completionCleaner.ClearRemainingEnemies();
-        else
-            Debug.LogWarning(
-                "[RunFlowController] RunCompletionCleaner is not assigned."
-            );
-
-        RunMessageService.Instance?.Show(RunMessageType.BossDefeated);
-
-        yield return new WaitForSeconds(levelChoiceDelay);
-
-        OpenLevelChoice();
+        Debug.LogError(
+            $"[RunFlowController] Boss defeat is only valid in sector " +
+            $"{RunRoute.FinalBossSector}; current sector is {sectorNumber}."
+        );
     }
 
     private void RegisterCurrentLevelCompletion()
@@ -199,16 +211,6 @@ public sealed class RunFlowController : MonoBehaviour
         return string.Empty;
     }
 
-    private void StopEnemySpawner()
-    {
-        EnemySpawner spawner = FindFirstObjectByType<EnemySpawner>();
-
-        if (spawner == null)
-            return;
-
-        spawner.StopSpawning();
-    }
-
     private void OpenLevelChoice()
     {
         LevelChoiceManager manager = ResolveLevelChoiceManager();
@@ -249,11 +251,11 @@ public sealed class RunFlowController : MonoBehaviour
 
             int sectorNumber = runState.CurrentSector.SectorNumber;
 
-            if (sectorNumber == 10)
+            if (RunRoute.IsBossSector(sectorNumber))
                 return RunEndService.Instance != null;
 
-            return sectorNumber < 10 && manager != null &&
-                !manager.IsChoosing;
+            return RunRoute.IsExplorationSector(sectorNumber) &&
+                manager != null && !manager.IsChoosing;
         }
     }
 
@@ -275,7 +277,9 @@ public sealed class RunFlowController : MonoBehaviour
             return levelCompleted &&
                 runState != null &&
                 runState.CurrentSector != null &&
-                runState.CurrentSector.SectorNumber < 10 &&
+                RunRoute.IsExplorationSector(
+                    runState.CurrentSector.SectorNumber
+                ) &&
                 manager != null &&
                 !manager.IsChoosing;
         }

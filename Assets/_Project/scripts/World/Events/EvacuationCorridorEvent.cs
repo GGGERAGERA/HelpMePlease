@@ -205,7 +205,9 @@ public sealed class EvacuationCorridorEvent : WorldEvent
                 (Vector3)(debugPathDirection * debugTravelDistance);
             ApplyCorridorOrientation(debugPathDirection);
             return IsCorridorInsidePlayableArea(StartPosition) &&
-                IsCorridorInsidePlayableArea(EndPosition);
+                IsCorridorInsidePlayableArea(EndPosition) &&
+                IsCorridorInsideSite(StartPosition) &&
+                IsCorridorInsideSite(EndPosition);
         }
 #endif
 
@@ -249,7 +251,9 @@ public sealed class EvacuationCorridorEvent : WorldEvent
                     (Vector3)(direction * travelDistance);
 
                 if (!IsCorridorInsidePlayableArea(candidate) ||
-                    !IsCorridorInsidePlayableArea(end))
+                    !IsCorridorInsidePlayableArea(end) ||
+                    !IsCorridorInsideSite(candidate) ||
+                    !IsCorridorInsideSite(end))
                 {
                     continue;
                 }
@@ -347,6 +351,21 @@ public sealed class EvacuationCorridorEvent : WorldEvent
             gameplayArea.IsInsidePlayableArea(
                 center2D - along - across
             );
+    }
+
+    private bool IsCorridorInsideSite(Vector3 center)
+    {
+        if (!HasSitePlacementBounds)
+            return true;
+
+        Vector2 along = transform.right * (corridorLength * 0.5f);
+        Vector2 across = transform.up * (corridorWidth * 0.5f);
+        Vector2 center2D = center;
+
+        return IsInsideSitePlacement(center2D + along + across) &&
+            IsInsideSitePlacement(center2D + along - across) &&
+            IsInsideSitePlacement(center2D - along + across) &&
+            IsInsideSitePlacement(center2D - along - across);
     }
 
     private void UpdatePlayerInsideState()

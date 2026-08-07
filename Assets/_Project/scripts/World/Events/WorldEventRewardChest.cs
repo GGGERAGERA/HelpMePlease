@@ -15,6 +15,7 @@ public sealed class WorldEventRewardChest : Interactable
 
     private bool opened;
     private bool improved;
+    private bool numericOnly;
     private bool appearanceComplete;
     private Collider2D interactionCollider;
     private SpriteRenderer visualRenderer;
@@ -46,9 +47,13 @@ public sealed class WorldEventRewardChest : Interactable
         animationRoutine = StartCoroutine(PlayAppearance());
     }
 
-    public void Initialize(bool isImproved, DoubleOrLeave rewardChoice)
+    public void Initialize(
+        bool isImproved,
+        DoubleOrLeave rewardChoice,
+        bool forceNumeric = false)
     {
         improved = isImproved;
+        numericOnly = forceNumeric;
     }
 
     public override void Interact()
@@ -136,11 +141,21 @@ public sealed class WorldEventRewardChest : Interactable
             yield break;
         }
 
-        upgradeManager.ShowChestRewardChoices(
-            choiceCount: 3,
-            guaranteeBehavior: improved,
-            onClosed: HandleRewardClosed
-        );
+        if (numericOnly)
+        {
+            upgradeManager.ShowNumericChestRewardChoices(
+                choiceCount: 3,
+                onClosed: HandleRewardClosed
+            );
+        }
+        else
+        {
+            upgradeManager.ShowChestRewardChoices(
+                choiceCount: 3,
+                guaranteeBehavior: improved,
+                onClosed: HandleRewardClosed
+            );
+        }
     }
 
     private void HandleRewardClosed()

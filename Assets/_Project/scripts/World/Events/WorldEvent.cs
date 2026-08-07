@@ -11,6 +11,9 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
     private bool cleanupPerformed;
     private bool debugCleanup;
     private bool eventMarkerVisible;
+    private bool hasSitePlacementBounds;
+    private Vector2 sitePlacementCenter;
+    private Vector2 sitePlacementSize;
     public bool IsCompleted { get; private set; }
     public bool IsFailed { get; private set; }
     public bool IsStarted { get; private set; }
@@ -42,6 +45,34 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
         cleanupPerformed = false;
         debugCleanup = false;
         eventMarkerVisible = false;
+    }
+
+    public void ConfigureSitePlacement(Vector2 center, Vector2 size)
+    {
+        sitePlacementCenter = center;
+        sitePlacementSize = new Vector2(
+            Mathf.Max(0f, size.x),
+            Mathf.Max(0f, size.y)
+        );
+        hasSitePlacementBounds = sitePlacementSize.x > 0f &&
+            sitePlacementSize.y > 0f;
+    }
+
+    protected bool HasSitePlacementBounds => hasSitePlacementBounds;
+
+    protected bool IsInsideSitePlacement(
+        Vector2 position,
+        float padding = 0f)
+    {
+        if (!hasSitePlacementBounds)
+            return true;
+
+        Vector2 half = sitePlacementSize * 0.5f -
+            Vector2.one * Mathf.Max(0f, padding);
+        Vector2 offset = position - sitePlacementCenter;
+        return half.x >= 0f && half.y >= 0f &&
+            Mathf.Abs(offset.x) <= half.x &&
+            Mathf.Abs(offset.y) <= half.y;
     }
 
     public sealed override void Interact()

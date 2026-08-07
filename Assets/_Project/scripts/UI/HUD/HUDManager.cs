@@ -5,7 +5,7 @@ using System.Collections;
 
 public class HUDManager : MonoBehaviour
 {
-    private const int TotalRouteSectors = 10;
+    private const int TotalRouteSectors = RunRoute.TotalSectors;
 
     public static HUDManager Instance { get; private set; }
 
@@ -24,6 +24,12 @@ public class HUDManager : MonoBehaviour
 
     [Header("Timer")]
     [SerializeField] private TextMeshProUGUI timerText;
+
+    [Header("Threat")]
+    [SerializeField] private RectTransform threatPanel;
+    [SerializeField] private TextMeshProUGUI threatLevelText;
+    [SerializeField] private TextMeshProUGUI threatValueText;
+    [SerializeField] private RectTransform threatFill;
 
     [Header("Dash")]
     [SerializeField] private DashCooldownView dashCooldownView;
@@ -66,6 +72,7 @@ public class HUDManager : MonoBehaviour
             tacticalMap = gameObject.AddComponent<TacticalMapHUD>();
 
         HideLowHpVignette();
+        EnsureThreatView();
     }
 
     private void Start()
@@ -137,6 +144,193 @@ public class HUDManager : MonoBehaviour
 
         if (timerText != null)
             timerText.text = $"{minutes:00}:{seconds:00}";
+    }
+
+    public void SetTimerVisible(bool visible)
+    {
+        if (timerText != null)
+            timerText.gameObject.SetActive(visible);
+    }
+
+    public void SetThreat(float value, int level)
+    {
+        EnsureThreatView();
+
+        if (threatPanel == null)
+            return;
+
+        threatPanel.gameObject.SetActive(true);
+
+        float clampedValue = Mathf.Clamp(value, 0f, 100f);
+
+        if (threatLevelText != null)
+            threatLevelText.text = $"THREAT {ToRoman(level)}";
+
+        if (threatValueText != null)
+            threatValueText.text = $"{clampedValue:0}%";
+
+        if (threatFill != null)
+        {
+            Vector2 max = threatFill.anchorMax;
+            max.x = clampedValue / 100f;
+            threatFill.anchorMax = max;
+        }
+    }
+
+    private void EnsureThreatView()
+    {
+        if (threatPanel != null)
+        {
+            ConfigureThreatPanelRect();
+            return;
+        }
+
+        GameObject panelObject = new(
+            "ThreatPanel",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(Image),
+            typeof(Outline)
+        );
+        panelObject.transform.SetParent(transform, false);
+        panelObject.SetActive(false);
+
+        threatPanel = panelObject.GetComponent<RectTransform>();
+        ConfigureThreatPanelRect();
+
+        Image panelImage = panelObject.GetComponent<Image>();
+        panelImage.color = new Color(0.01f, 0.025f, 0.03f, 0.92f);
+        panelImage.raycastTarget = false;
+
+        Outline panelOutline = panelObject.GetComponent<Outline>();
+        panelOutline.effectColor = new Color(0f, 0.75f, 0.78f, 0.9f);
+        panelOutline.effectDistance = new Vector2(1f, -1f);
+
+        threatLevelText = CreateThreatText(
+            "ThreatLevel",
+            threatPanel,
+            TextAlignmentOptions.MidlineLeft
+        );
+        SetRect(
+            threatLevelText.rectTransform,
+            new Vector2(0f, 0.34f),
+            new Vector2(0.72f, 1f),
+            new Vector2(10f, 0f),
+            new Vector2(-2f, -1f)
+        );
+
+        threatValueText = CreateThreatText(
+            "ThreatValue",
+            threatPanel,
+            TextAlignmentOptions.MidlineRight
+        );
+        SetRect(
+            threatValueText.rectTransform,
+            new Vector2(0.72f, 0.34f),
+            Vector2.one,
+            Vector2.zero,
+            new Vector2(-10f, -1f)
+        );
+
+        GameObject barObject = new(
+            "ThreatBar",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(Image)
+        );
+        barObject.transform.SetParent(threatPanel, false);
+        RectTransform barRect = barObject.GetComponent<RectTransform>();
+        SetRect(
+            barRect,
+            new Vector2(0f, 0f),
+            new Vector2(1f, 0f),
+            new Vector2(10f, 8f),
+            new Vector2(-10f, 16f)
+        );
+        Image barImage = barObject.GetComponent<Image>();
+        barImage.color = new Color(0.08f, 0.12f, 0.13f, 1f);
+        barImage.raycastTarget = false;
+
+        GameObject fillObject = new(
+            "Fill",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(Image)
+        );
+        fillObject.transform.SetParent(barRect, false);
+        threatFill = fillObject.GetComponent<RectTransform>();
+        threatFill.anchorMin = Vector2.zero;
+        threatFill.anchorMax = new Vector2(0f, 1f);
+        threatFill.offsetMin = Vector2.zero;
+        threatFill.offsetMax = Vector2.zero;
+        Image fillImage = fillObject.GetComponent<Image>();
+        fillImage.color = new Color(0f, 0.88f, 0.82f, 1f);
+        fillImage.raycastTarget = false;
+    }
+
+    private void ConfigureThreatPanelRect()
+    {
+        if (threatPanel == null)
+            return;
+
+        if (threatPanel.parent != transform)
+            threatPanel.SetParent(transform, false);
+        threatPanel.anchorMin = new Vector2(0f, 1f);
+        threatPanel.anchorMax = new Vector2(0f, 1f);
+        threatPanel.pivot = new Vector2(0f, 1f);
+        threatPanel.anchoredPosition = new Vector2(40f, -207f);
+        threatPanel.sizeDelta = new Vector2(240f, 50f);
+    }
+
+    private TextMeshProUGUI CreateThreatText(
+        string objectName,
+        Transform parent,
+        TextAlignmentOptions alignment)
+    {
+        GameObject textObject = new(
+            objectName,
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(TextMeshProUGUI)
+        );
+        textObject.transform.SetParent(parent, false);
+
+        TextMeshProUGUI text = textObject.GetComponent<TextMeshProUGUI>();
+        text.font = timerText != null ? timerText.font : null;
+        text.fontSize = 19f;
+        text.fontStyle = FontStyles.Bold;
+        text.color = Color.white;
+        text.alignment = alignment;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.overflowMode = TextOverflowModes.Overflow;
+        text.raycastTarget = false;
+        return text;
+    }
+
+    private static void SetRect(
+        RectTransform rect,
+        Vector2 anchorMin,
+        Vector2 anchorMax,
+        Vector2 offsetMin,
+        Vector2 offsetMax)
+    {
+        rect.anchorMin = anchorMin;
+        rect.anchorMax = anchorMax;
+        rect.offsetMin = offsetMin;
+        rect.offsetMax = offsetMax;
+    }
+
+    private static string ToRoman(int level)
+    {
+        return level switch
+        {
+            1 => "I",
+            2 => "II",
+            3 => "III",
+            4 => "IV",
+            5 => "V",
+            _ => "VI"
+        };
     }
 
     public void SetKills(int kills)
