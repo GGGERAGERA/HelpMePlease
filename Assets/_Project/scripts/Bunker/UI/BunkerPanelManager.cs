@@ -12,15 +12,22 @@ public sealed class BunkerPanelManager : MonoBehaviour
     [SerializeField] private MetaUpgradeShopUI metaUpgradeShopUI;
     [SerializeField] private Button upgradeBackButton;
 
+    private BunkerStationUpgradePanel stationUpgradePanel;
+
     [Header("Run")]
     [SerializeField] private BunkerRunStarter runStarter;
 
     public bool IsAnyPanelOpen =>
         (selectionPanelController != null && selectionPanelController.IsOpen) ||
-        (mapPanel != null && mapPanel.activeInHierarchy);
+        (mapPanel != null && mapPanel.activeInHierarchy) ||
+        (stationUpgradePanel != null && stationUpgradePanel.IsVisible);
 
     private void Awake()
     {
+        stationUpgradePanel = GetComponent<BunkerStationUpgradePanel>();
+        if (stationUpgradePanel == null)
+            stationUpgradePanel = gameObject.AddComponent<BunkerStationUpgradePanel>();
+
         if (upgradeBackButton != null)
             upgradeBackButton.onClick.AddListener(CloseAll);
     }
@@ -100,6 +107,13 @@ public sealed class BunkerPanelManager : MonoBehaviour
         if (mapPanel != null)
             mapPanel.SetActive(false);
 
+        stationUpgradePanel?.Hide();
+
+    }
+
+    public void ShowStationProgression(BunkerStationId stationId)
+    {
+        stationUpgradePanel?.Show(stationId);
     }
 
     public void StartRun()

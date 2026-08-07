@@ -42,6 +42,7 @@ public sealed class CharacterSelectionUI : MonoBehaviour
 
     private void OnEnable()
     {
+        SubscribeToProgression();
         ClearSelection();
 
         if (cards == null)
@@ -56,6 +57,7 @@ public sealed class CharacterSelectionUI : MonoBehaviour
 
     private void OnDestroy()
     {
+        UnsubscribeFromProgression();
         if (selectButton != null)
             selectButton.onClick.RemoveListener(ConfirmSelection);
 
@@ -69,6 +71,44 @@ public sealed class CharacterSelectionUI : MonoBehaviour
                 if (card != null)
                     card.Clicked -= SelectCharacter;
             }
+        }
+    }
+
+    private void OnDisable()
+    {
+        UnsubscribeFromProgression();
+    }
+
+    private void SubscribeToProgression()
+    {
+        if (BunkerStationProgressionService.Instance == null)
+            return;
+
+        BunkerStationProgressionService.Instance.StationLevelChanged -= HandleStationLevelChanged;
+        BunkerStationProgressionService.Instance.StationLevelChanged += HandleStationLevelChanged;
+    }
+
+    private void UnsubscribeFromProgression()
+    {
+        if (BunkerStationProgressionService.Instance != null)
+            BunkerStationProgressionService.Instance.StationLevelChanged -= HandleStationLevelChanged;
+    }
+
+    private void HandleStationLevelChanged(BunkerStationId stationId, int level)
+    {
+        if (stationId != BunkerStationId.Character)
+            return;
+
+        if (cards != null)
+        {
+            foreach (CharacterCardView card in cards)
+                card?.Refresh();
+        }
+
+        if (selectedCharacter != null)
+        {
+            RefreshDetails(selectedCharacter);
+            SetSelectButton(IsCharacterUnlocked(selectedCharacter));
         }
     }
 

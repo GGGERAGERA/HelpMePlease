@@ -5,5 +5,8 @@ public enum UnlockConditionType
     KillEnemyType,
     CompleteLevelModifier,
     CompleteRun,
-    KillTotalEnemies
+    KillTotalEnemies,
+
+    // Appended to preserve all existing serialized enum values.
+    StationLevelRequirement
 }

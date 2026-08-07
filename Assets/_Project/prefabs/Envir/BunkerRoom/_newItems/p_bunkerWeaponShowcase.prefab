@@ -467,6 +467,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerStation
   stationType: 2
   interactionText: "\u0412\u044B\u0431\u0440\u0430\u0442\u044C \u043E\u0440\u0443\u0436\u0438\u0435"
+  progressionEnabled: 1
+  progressionStationId: 1
   panelManager: {fileID: 0}
 --- !u!1 &6870895824228123653
 GameObject:

@@ -41,6 +41,7 @@ public sealed class WeaponSelectionUI : MonoBehaviour
 
     private void OnEnable()
     {
+        SubscribeToProgression();
         ClearSelection();
 
         if (cards == null)
@@ -55,6 +56,7 @@ public sealed class WeaponSelectionUI : MonoBehaviour
 
     private void OnDestroy()
     {
+        UnsubscribeFromProgression();
         if (confirmButton != null)
             confirmButton.onClick.RemoveListener(ConfirmSelection);
 
@@ -62,6 +64,44 @@ public sealed class WeaponSelectionUI : MonoBehaviour
             backButton.onClick.RemoveListener(Close);
 
         UnbindCards();
+    }
+
+    private void OnDisable()
+    {
+        UnsubscribeFromProgression();
+    }
+
+    private void SubscribeToProgression()
+    {
+        if (BunkerStationProgressionService.Instance == null)
+            return;
+
+        BunkerStationProgressionService.Instance.StationLevelChanged -= HandleStationLevelChanged;
+        BunkerStationProgressionService.Instance.StationLevelChanged += HandleStationLevelChanged;
+    }
+
+    private void UnsubscribeFromProgression()
+    {
+        if (BunkerStationProgressionService.Instance != null)
+            BunkerStationProgressionService.Instance.StationLevelChanged -= HandleStationLevelChanged;
+    }
+
+    private void HandleStationLevelChanged(BunkerStationId stationId, int level)
+    {
+        if (stationId != BunkerStationId.Weapon)
+            return;
+
+        if (cards != null)
+        {
+            foreach (WeaponCardView card in cards)
+                card?.Refresh();
+        }
+
+        if (selectedWeapon != null)
+        {
+            RefreshDetails(selectedWeapon);
+            SetConfirmButton(IsWeaponUnlocked(selectedWeapon));
+        }
     }
 
     public void SelectWeapon(WeaponData weapon)

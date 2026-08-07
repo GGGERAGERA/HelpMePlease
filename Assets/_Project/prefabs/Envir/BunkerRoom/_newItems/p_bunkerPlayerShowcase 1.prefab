@@ -552,6 +552,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerStation
   stationType: 1
   interactionText: "\u0412\u044B\u0431\u0440\u0430\u0442\u044C \u0438\u0433\u0440\u043E\u043A\u0430"
+  progressionEnabled: 1
+  progressionStationId: 0
   panelManager: {fileID: 0}
   animator: {fileID: 0}
   animationTrigger: Interact

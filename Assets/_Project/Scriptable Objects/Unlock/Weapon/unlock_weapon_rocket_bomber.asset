@@ -16,8 +16,9 @@ MonoBehaviour:
   displayName: 
   contentType: 1
   unlockedByDefault: 0
-  lockedDescription: "\u0423\u0431\u0435\u0439 100 \u0432\u0437\u0440\u044B\u0432\u043D\u0438\u043A\u043E\u0432"
+  lockedDescription: "\u041E\u0440\u0443\u0436\u0435\u0439\u043D\u0430\u044F \u0441\u0442\u0430\u043D\u0446\u0438\u044F: \u0443\u0440\u043E\u0432\u0435\u043D\u044C 3"
   condition:
-    type: 1
-    targetId: Bomber
-    requiredAmount: 100
+    type: 5
+    targetId: ''
+    requiredAmount: 3
+    stationId: 1

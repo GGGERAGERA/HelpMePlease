@@ -50,8 +50,8 @@ public sealed class WeaponCardView : MonoBehaviour
         if (weapon == null)
             return;
 
-        // Закрытую карточку можно нажать, чтобы увидеть условие справа.
-        // Но выбрать оружие кнопкой Confirm всё равно нельзя.
+        // Р—Р°РєСЂС‹С‚СѓСЋ РєР°СЂС‚РѕС‡РєСѓ РјРѕР¶РЅРѕ РЅР°Р¶Р°С‚СЊ, С‡С‚РѕР±С‹ СѓРІРёРґРµС‚СЊ СѓСЃР»РѕРІРёРµ СЃРїСЂР°РІР°.
+        // РќРѕ РІС‹Р±СЂР°С‚СЊ РѕСЂСѓР¶РёРµ РєРЅРѕРїРєРѕР№ Confirm РІСЃС‘ СЂР°РІРЅРѕ РЅРµР»СЊР·СЏ.
         Clicked?.Invoke(weapon);
     }
 
@@ -70,8 +70,8 @@ public sealed class WeaponCardView : MonoBehaviour
 
         if (button != null)
         {
-            // Оставляем кликабельной даже закрытую карточку,
-            // чтобы игрок мог посмотреть условия открытия.
+            // РћСЃС‚Р°РІР»СЏРµРј РєР»РёРєР°Р±РµР»СЊРЅРѕР№ РґР°Р¶Рµ Р·Р°РєСЂС‹С‚СѓСЋ РєР°СЂС‚РѕС‡РєСѓ,
+            // С‡С‚РѕР±С‹ РёРіСЂРѕРє РјРѕРі РїРѕСЃРјРѕС‚СЂРµС‚СЊ СѓСЃР»РѕРІРёСЏ РѕС‚РєСЂС‹С‚РёСЏ.
             button.interactable = true;
         }
     }
@@ -114,7 +114,7 @@ public sealed class WeaponCardView : MonoBehaviour
 
         if (unlockData == null || unlockData.condition == null)
         {
-            SetText(conditionText, "Условия открытия не заданы");
+            SetText(conditionText, "РЈСЃР»РѕРІРёСЏ РѕС‚РєСЂС‹С‚РёСЏ РЅРµ Р·Р°РґР°РЅС‹");
             SetText(progressText, string.Empty);
             return;
         }
@@ -129,7 +129,7 @@ public sealed class WeaponCardView : MonoBehaviour
         SetText(conditionText, BuildConditionText(condition));
         SetText(
             progressText,
-            $"{clampedCurrent} / {required}\nОсталось: {remaining}"
+            $"{clampedCurrent} / {required}\nРћСЃС‚Р°Р»РѕСЃСЊ: {remaining}"
         );
     }
 
@@ -144,24 +144,39 @@ public sealed class WeaponCardView : MonoBehaviour
     private static string BuildConditionText(UnlockConditionData condition)
     {
         if (condition == null)
-            return "Условия открытия не заданы";
+            return "РЈСЃР»РѕРІРёСЏ РѕС‚РєСЂС‹С‚РёСЏ РЅРµ Р·Р°РґР°РЅС‹";
 
         return condition.type switch
         {
             UnlockConditionType.KillEnemyType =>
-                $"Убить врагов: {condition.targetId}",
+                $"РЈР±РёС‚СЊ РІСЂР°РіРѕРІ: {condition.targetId}",
 
             UnlockConditionType.KillTotalEnemies =>
-                "Убить любых врагов",
+                "РЈР±РёС‚СЊ Р»СЋР±С‹С… РІСЂР°РіРѕРІ",
 
             UnlockConditionType.CompleteLevelModifier =>
-                $"Пройти уровень: {condition.targetId}",
+                $"РџСЂРѕР№С‚Рё СѓСЂРѕРІРµРЅСЊ: {condition.targetId}",
 
             UnlockConditionType.CompleteRun =>
-                "Завершить забег",
+                "Р—Р°РІРµСЂС€РёС‚СЊ Р·Р°Р±РµРі",
+
+            UnlockConditionType.StationLevelRequirement =>
+                $"{GetStationName(condition.stationId)}: СѓСЂРѕРІРµРЅСЊ {Mathf.Max(1, condition.requiredAmount)}",
 
             _ =>
-                "Выполнить условие открытия"
+                "Р’С‹РїРѕР»РЅРёС‚СЊ СѓСЃР»РѕРІРёРµ РѕС‚РєСЂС‹С‚РёСЏ"
+        };
+    }
+
+    private static string GetStationName(BunkerStationId stationId)
+    {
+        return stationId switch
+        {
+            BunkerStationId.Character => "РЎС‚Р°РЅС†РёСЏ РїРµСЂСЃРѕРЅР°Р¶РµР№",
+            BunkerStationId.Weapon => "РћСЂСѓР¶РµР№РЅР°СЏ СЃС‚Р°РЅС†РёСЏ",
+            BunkerStationId.Upgrades => "РЎС‚Р°РЅС†РёСЏ СѓР»СѓС‡С€РµРЅРёР№",
+            BunkerStationId.Anomaly => "РЎС‚Р°РЅС†РёСЏ Р°РЅРѕРјР°Р»РёР№",
+            _ => "РЎС‚Р°РЅС†РёСЏ"
         };
     }
 

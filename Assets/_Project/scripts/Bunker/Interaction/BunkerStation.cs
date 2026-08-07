@@ -5,7 +5,11 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
 {
     [Header("Station")]
     [SerializeField] private BunkerStationType stationType;
-    [SerializeField] private string interactionText = "Взаимодействовать";
+    [SerializeField] private string interactionText = "Р’Р·Р°РёРјРѕРґРµР№СЃС‚РІРѕРІР°С‚СЊ";
+
+    [Header("Progression")]
+    [SerializeField] private bool progressionEnabled;
+    [SerializeField] private BunkerStationId progressionStationId;
 
     [Header("Fallback")]
     [SerializeField] private BunkerPanelManager panelManagerFallback;
@@ -62,5 +66,8 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
                 onInteract?.Invoke();
                 break;
         }
+
+        if (progressionEnabled)
+            Panels?.ShowStationProgression(progressionStationId);
     }
 }
