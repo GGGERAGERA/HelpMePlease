@@ -119,6 +119,7 @@ public class BallRollVisual : MonoBehaviour
     private bool _ownsSlowMotion;
 
     private static BallRollVisual _activeRangeBall;
+    private static BallRollVisual _slowMotionOwner;
 
     public float Charge => _charge01;
     public bool InKickRange { get; private set; }
@@ -152,6 +153,11 @@ public class BallRollVisual : MonoBehaviour
     {
         RestoreTimeScaleImmediate();
         ReleaseActiveRangeBall();
+    }
+
+    void OnApplicationQuit()
+    {
+        RestoreTimeScaleImmediate();
     }
 
     void OnApplicationFocus(bool hasFocus)
@@ -367,6 +373,9 @@ public class BallRollVisual : MonoBehaviour
 
     void BeginAim()
     {
+        if (_slowMotionOwner != null && _slowMotionOwner != this)
+            _slowMotionOwner.CancelAim(true);
+
         _aiming = true;
         _chargeT = 0f;
         _charge01 = 0f;
@@ -375,6 +384,7 @@ public class BallRollVisual : MonoBehaviour
         {
             _timeScaleBeforeAim = Time.timeScale;
             _ownsSlowMotion = true;
+            _slowMotionOwner = this;
         }
     }
 
@@ -411,6 +421,8 @@ public class BallRollVisual : MonoBehaviour
         {
             Time.timeScale = target;
             _ownsSlowMotion = false;
+            if (_slowMotionOwner == this)
+                _slowMotionOwner = null;
         }
     }
 
@@ -419,10 +431,18 @@ public class BallRollVisual : MonoBehaviour
         if (!_ownsSlowMotion)
             return;
 
-        if (Time.timeScale > 0f)
+        if (_slowMotionOwner == this && Time.timeScale > 0f)
             Time.timeScale = _timeScaleBeforeAim;
 
         _ownsSlowMotion = false;
+        if (_slowMotionOwner == this)
+            _slowMotionOwner = null;
+    }
+
+    public static void CancelActiveSlowMotion()
+    {
+        if (_slowMotionOwner != null)
+            _slowMotionOwner.CancelAim(true);
     }
 
     public void Kick() => Kick(kickDirection, maxPower);

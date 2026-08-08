@@ -113,6 +113,7 @@ public sealed class FootballMinigame : BunkerMinigame
 
     protected override void OnGameStarted()
     {
+        BallRollVisual.CancelActiveSlowMotion();
         Debug.Log("[Football] Started");
 
         currentScore = 0;
@@ -132,6 +133,7 @@ public sealed class FootballMinigame : BunkerMinigame
 
     protected override void OnGameCompleted()
     {
+        BallRollVisual.CancelActiveSlowMotion();
         StopZoneRespawn();
         scoreZone?.Hide();
 
@@ -151,6 +153,7 @@ public sealed class FootballMinigame : BunkerMinigame
 
     protected override void OnGameFailed()
     {
+        BallRollVisual.CancelActiveSlowMotion();
         StopZoneRespawn();
         scoreZone?.Hide();
         startZone?.SetAvailable(true);
@@ -161,6 +164,8 @@ public sealed class FootballMinigame : BunkerMinigame
 
     protected override void OnGameReset()
     {
+        BallRollVisual.CancelActiveSlowMotion();
+
         if (returningToIdleAfterRound)
             return;
 
