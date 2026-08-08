@@ -876,11 +876,14 @@ MonoBehaviour:
   kickZoneRadius: 7
   kickRange: 2
   rayColor: {r: 1, g: 0, b: 0, a: 1}
-  rayWidth: 0.03
-  rayMinLength: 0.4
-  rayMaxLength: 3
-  rayEndAlpha: 0
+  rayWidth: 0.1
+  rayMinLength: 1.8
+  rayMaxLength: 5
+  rayEndAlpha: 0.65
   raySortOrder: 1000
+  aimTimeScale: 0.32
+  slowMotionEnterDuration: 0.12
+  slowMotionExitDuration: 0.08
   ringColor: {r: 1, g: 0.8, b: 0.2, a: 0.8}
   ringThickness: 0.06
   ringDashCount: 24
