@@ -50,6 +50,11 @@ public class BallRollVisual : MonoBehaviour
     [Range(0f, 1f)] [Tooltip("Альфа на кончике луча (0 = полностью тает)")] public float rayEndAlpha = 0f;
     public int raySortOrder = 1000;
 
+    [Header("Slow motion")]
+    [Range(0.1f, 1f)] public float aimTimeScale = 0.32f;
+    [Min(0.01f)] public float slowMotionEnterDuration = 0.12f;
+    [Min(0.01f)] public float slowMotionExitDuration = 0.08f;
+
     [Header("Пунктирное кольцо")]
     public Color ringColor = new Color(1f, 0.8f, 0.2f, 0.8f);
     [Range(0.01f, 0.2f)] public float ringThickness = 0.06f;
@@ -100,6 +105,7 @@ public class BallRollVisual : MonoBehaviour
     private Camera _cam;
 
     private LineRenderer _line;
+    private LineRenderer _arrowHead;
     private GameObject _ringGo;
     private Mesh _ringMesh;
     private Material _ringMat;
@@ -108,6 +114,11 @@ public class BallRollVisual : MonoBehaviour
 
     private float _bRingRadius, _bRingThick, _bRingFill;
     private int _bRingDash;
+    private float _distanceToKicker = Mathf.Infinity;
+    private float _timeScaleBeforeAim = 1f;
+    private bool _ownsSlowMotion;
+
+    private static BallRollVisual _activeRangeBall;
 
     public float Charge => _charge01;
     public bool InKickRange { get; private set; }
@@ -128,6 +139,30 @@ public class BallRollVisual : MonoBehaviour
     }
 
     void OnEnable() => _prev = transform.position;
+
+    void OnDisable()
+    {
+        CancelAim(true);
+        ReleaseActiveRangeBall();
+        if (_ringGo != null) _ringGo.SetActive(false);
+        SetAimVisualVisible(false);
+    }
+
+    void OnDestroy()
+    {
+        RestoreTimeScaleImmediate();
+        ReleaseActiveRangeBall();
+    }
+
+    void OnApplicationFocus(bool hasFocus)
+    {
+        if (!hasFocus) CancelAim(true);
+    }
+
+    void OnApplicationPause(bool pauseStatus)
+    {
+        if (pauseStatus) CancelAim(true);
+    }
 
     // ================= ЗОНА И ТРЕКИНГ ИГРОКА =================
 
@@ -165,6 +200,8 @@ public class BallRollVisual : MonoBehaviour
         _playerContacts = Mathf.Max(0, _playerContacts - 1);
         if (_playerContacts == 0)
         {
+            CancelAim(false);
+            ReleaseActiveRangeBall();
             if (_dribbling) StopDribble();
             _kicker = null;
             _kickerRb = null;
@@ -191,10 +228,18 @@ public class BallRollVisual : MonoBehaviour
         EnsureZoneTrigger();
         TrackKicker();
 
+        if (_ownsSlowMotion && Time.timeScale <= 0f)
+            CancelAim(false);
+
         bool hold = (kickMouseLeft && Input.GetMouseButton(0)) || Input.GetKey(kickKey);
         bool inZone = _playerContacts > 0 && _kicker != null;
         float dist = inZone ? Vector2.Distance(_kicker.position, transform.position) : Mathf.Infinity;
         InKickRange = inZone && dist <= kickRange;
+        _distanceToKicker = dist;
+
+        UpdateActiveRangeBall();
+        bool isActiveRangeBall = _activeRangeBall == this && InKickRange;
+        UpdateRing(isActiveRangeBall);
 
         // захват ведения — только в области удара
         if (Input.GetKeyDown(dribbleKey))
@@ -205,43 +250,42 @@ public class BallRollVisual : MonoBehaviour
 
         if (_dribbling) UpdateDribble();
 
-        UpdateGlow(InKickRange);
+        UpdateGlow(isActiveRangeBall);
 
         // авто-удар при вбегании в радиус с зажатой кнопкой
         if (_aiming && autoKickOnEnter && !_dribbling && InKickRange && !_wasInRange)
         {
             DoKick();
-            _aiming = false;
+            CancelAim(false);
         }
 
         if (_aiming)
         {
-            if (hold && inZone)
+            if (hold && isActiveRangeBall)
             {
-                _chargeT += Time.deltaTime;
+                _chargeT += Time.unscaledDeltaTime;
                 _charge01 = pingPongCharge
                     ? Mathf.PingPong(_chargeT / chargeTime, 1f)
                     : Mathf.Clamp01(_chargeT / chargeTime);
 
                 UpdateSlider(true);
                 DrawRay();
-                UpdateRing(true);
             }
             else
             {
-                if (!hold && InKickRange) DoKick();
-                _aiming = false;
-                UpdateSlider(false);
-                UpdateRing(false);
-                if (_line != null) _line.enabled = false;
+                if (!hold && isActiveRangeBall) DoKick();
+                CancelAim(false);
             }
         }
-        else if (hold && inZone)
+        else if (hold && isActiveRangeBall)
         {
-            _aiming = true;
-            _chargeT = 0f;
-            _charge01 = 0f;
+            BeginAim();
         }
+
+        if (!isActiveRangeBall && _aiming)
+            CancelAim(false);
+
+        UpdateSlowMotion();
 
         UpdateHint();
         _wasInRange = InKickRange;
@@ -319,6 +363,66 @@ public class BallRollVisual : MonoBehaviour
 
         Vector2 point = from + ((Vector2)_kicker.position - from).normalized * radius;
         SpawnFX(kickFX, point, kickSound);
+    }
+
+    void BeginAim()
+    {
+        _aiming = true;
+        _chargeT = 0f;
+        _charge01 = 0f;
+
+        if (!_ownsSlowMotion && Time.timeScale > 0f)
+        {
+            _timeScaleBeforeAim = Time.timeScale;
+            _ownsSlowMotion = true;
+        }
+    }
+
+    void CancelAim(bool immediateTimeRestore)
+    {
+        _aiming = false;
+        UpdateSlider(false);
+        SetAimVisualVisible(false);
+
+        if (immediateTimeRestore)
+            RestoreTimeScaleImmediate();
+    }
+
+    void UpdateSlowMotion()
+    {
+        if (!_ownsSlowMotion)
+            return;
+
+        if (Time.timeScale <= 0f)
+            return;
+
+        float target = _aiming
+            ? Mathf.Min(_timeScaleBeforeAim, aimTimeScale)
+            : _timeScaleBeforeAim;
+        float duration = _aiming
+            ? slowMotionEnterDuration
+            : slowMotionExitDuration;
+        float maxDelta = Mathf.Abs(_timeScaleBeforeAim - aimTimeScale) /
+            Mathf.Max(0.01f, duration) * Time.unscaledDeltaTime;
+
+        Time.timeScale = Mathf.MoveTowards(Time.timeScale, target, maxDelta);
+
+        if (!_aiming && Mathf.Approximately(Time.timeScale, target))
+        {
+            Time.timeScale = target;
+            _ownsSlowMotion = false;
+        }
+    }
+
+    void RestoreTimeScaleImmediate()
+    {
+        if (!_ownsSlowMotion)
+            return;
+
+        if (Time.timeScale > 0f)
+            Time.timeScale = _timeScaleBeforeAim;
+
+        _ownsSlowMotion = false;
     }
 
     public void Kick() => Kick(kickDirection, maxPower);
@@ -402,7 +506,15 @@ public class BallRollVisual : MonoBehaviour
 
         float len = Mathf.Lerp(rayMinLength, rayMaxLength, _charge01);
         _line.SetPosition(0, from);
-        _line.SetPosition(1, from + dirV * len);
+        Vector2 endPoint = from + dirV * len;
+        _line.SetPosition(1, endPoint);
+
+        Vector2 side = new Vector2(-dirV.y, dirV.x);
+        float headLength = Mathf.Clamp(len * 0.16f, 0.28f, 0.48f);
+        float headWidth = headLength * 0.62f;
+        _arrowHead.SetPosition(0, endPoint - dirV * headLength + side * headWidth);
+        _arrowHead.SetPosition(1, endPoint);
+        _arrowHead.SetPosition(2, endPoint - dirV * headLength - side * headWidth);
 
         _line.startColor = rayColor;
         Color end = rayColor;
@@ -411,12 +523,18 @@ public class BallRollVisual : MonoBehaviour
         _line.startWidth = rayWidth;
         _line.endWidth = rayWidth;
         _line.enabled = true;
+        _arrowHead.startColor = rayColor;
+        _arrowHead.endColor = rayColor;
+        _arrowHead.startWidth = rayWidth;
+        _arrowHead.endWidth = rayWidth;
+        _arrowHead.enabled = true;
     }
 
     void EnsureLine()
     {
         if (_line != null) return;
         var go = new GameObject("AimRay");
+        go.transform.SetParent(transform, false);
         _line = go.AddComponent<LineRenderer>();
         _line.useWorldSpace = true;
         _line.positionCount = 2;
@@ -424,12 +542,70 @@ public class BallRollVisual : MonoBehaviour
         _line.material = MakeSpriteMat();
         _line.sortingOrder = raySortOrder;
         _line.enabled = false;
+
+        var arrowObject = new GameObject("AimRayArrowHead");
+        arrowObject.transform.SetParent(transform, false);
+        _arrowHead = arrowObject.AddComponent<LineRenderer>();
+        _arrowHead.useWorldSpace = true;
+        _arrowHead.positionCount = 3;
+        _arrowHead.numCapVertices = 3;
+        _arrowHead.numCornerVertices = 2;
+        _arrowHead.material = _line.material;
+        _arrowHead.sortingOrder = raySortOrder;
+        _arrowHead.enabled = false;
+    }
+
+    void SetAimVisualVisible(bool visible)
+    {
+        if (_line != null) _line.enabled = visible;
+        if (_arrowHead != null) _arrowHead.enabled = visible;
+    }
+
+    void UpdateActiveRangeBall()
+    {
+        if (!InKickRange)
+        {
+            if (_activeRangeBall == this)
+                _activeRangeBall = null;
+            return;
+        }
+
+        if (_activeRangeBall == null || !_activeRangeBall.isActiveAndEnabled ||
+            !_activeRangeBall.InKickRange)
+        {
+            _activeRangeBall = this;
+            return;
+        }
+
+        if (_activeRangeBall != this &&
+            _distanceToKicker < _activeRangeBall._distanceToKicker)
+        {
+            BallRollVisual previous = _activeRangeBall;
+            _activeRangeBall = this;
+            previous.LoseActiveRangeBall();
+        }
+    }
+
+    void LoseActiveRangeBall()
+    {
+        CancelAim(false);
+        if (_ringGo != null) _ringGo.SetActive(false);
+        UpdateGlow(false);
+    }
+
+    void ReleaseActiveRangeBall()
+    {
+        if (_activeRangeBall == this)
+            _activeRangeBall = null;
     }
 
     // ================= КОЛЬЦО =================
 
     void UpdateRing(bool visible)
     {
+        if (!visible && _ringGo == null)
+            return;
+
         EnsureRing();
         _ringGo.SetActive(visible);
         if (!visible) return;

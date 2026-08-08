@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5700670840109955763}
   - component: {fileID: 1104795591828411682}
   - component: {fileID: 7576153521894847241}
-  m_Layer: 10
+  m_Layer: 5
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -86,7 +86,7 @@ GameObject:
   - component: {fileID: 5054364831665932119}
   - component: {fileID: 2573434565085106817}
   - component: {fileID: 6011037100745399584}
-  m_Layer: 10
+  m_Layer: 0
   m_Name: Ball3D
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -176,7 +176,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1060242223853673994}
   - component: {fileID: 3022243258331508965}
-  m_Layer: 10
+  m_Layer: 0
   m_Name: SpriteLight2D
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -263,7 +263,7 @@ GameObject:
   - component: {fileID: 3015919329638692370}
   - component: {fileID: 7173408547503787201}
   - component: {fileID: 3604296095164748231}
-  m_Layer: 10
+  m_Layer: 5
   m_Name: Handle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -336,7 +336,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3571381548610908184}
-  m_Layer: 10
+  m_Layer: 5
   m_Name: Fill Area
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -375,7 +375,7 @@ GameObject:
   - component: {fileID: 4822705654129413901}
   - component: {fileID: 4476002330847928302}
   - component: {fileID: 2290630762052685529}
-  m_Layer: 10
+  m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -475,7 +475,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8187768727379379497}
   - component: {fileID: 4832238275022975397}
-  m_Layer: 10
+  m_Layer: 0
   m_Name: Trigger
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -543,7 +543,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1491366172989389992}
   - component: {fileID: 4490551780996270493}
-  m_Layer: 10
+  m_Layer: 5
   m_Name: Slider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -634,7 +634,7 @@ GameObject:
   - component: {fileID: 7801961232081176903}
   - component: {fileID: 1581500789828697622}
   - component: {fileID: 627526317596332284}
-  m_Layer: 10
+  m_Layer: 5
   m_Name: Fill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -707,7 +707,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8158079359762587934}
-  m_Layer: 10
+  m_Layer: 5
   m_Name: Handle Slide Area
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -747,7 +747,7 @@ GameObject:
   - component: {fileID: 5436863216511146425}
   - component: {fileID: 8352541526942022441}
   - component: {fileID: 2316904346705873363}
-  m_Layer: 10
+  m_Layer: 0
   m_Name: Ball1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -873,15 +873,18 @@ MonoBehaviour:
   dribbleStiffness: 40
   dribbleJitterRadius: 0.1
   dribbleJitterFreq: 10
-  kickZoneRadius: 3
-  kickRange: 1.5
+  kickZoneRadius: 7
+  kickRange: 2
   rayColor: {r: 1, g: 0, b: 0, a: 1}
-  rayWidth: 0.03
-  rayMinLength: 1.4
+  rayWidth: 0.1
+  rayMinLength: 1.8
   rayMaxLength: 5
-  rayEndAlpha: 0
+  rayEndAlpha: 0.65
   raySortOrder: 1000
-  ringColor: {r: 1, g: 0.8, b: 0.2, a: 0.45490196}
+  aimTimeScale: 0.32
+  slowMotionEnterDuration: 0.12
+  slowMotionExitDuration: 0.08
+  ringColor: {r: 1, g: 0.8, b: 0.2, a: 0.8}
   ringThickness: 0.06
   ringDashCount: 24
   ringDashFill: 0.55
@@ -924,10 +927,6 @@ PrefabInstance:
     - target: {fileID: 1225697590497564346, guid: eb16fb47744e2184f9a71bc456707725, type: 3}
       propertyPath: m_Name
       value: p_FxAttacked2
-      objectReference: {fileID: 0}
-    - target: {fileID: 1225697590497564346, guid: eb16fb47744e2184f9a71bc456707725, type: 3}
-      propertyPath: m_Layer
-      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 7017326881360869345, guid: eb16fb47744e2184f9a71bc456707725, type: 3}
       propertyPath: m_LocalScale.x
@@ -1008,10 +1007,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: p_shadow1
       objectReference: {fileID: 0}
-    - target: {fileID: 551380718664416474, guid: e1e11e6161b3eb14fb0dd9b457971742, type: 3}
-      propertyPath: m_Layer
-      value: 10
-      objectReference: {fileID: 0}
     - target: {fileID: 3161433651102554937, guid: e1e11e6161b3eb14fb0dd9b457971742, type: 3}
       propertyPath: m_LocalScale.z
       value: 100
@@ -1055,10 +1050,6 @@ PrefabInstance:
     - target: {fileID: 3161433651102554937, guid: e1e11e6161b3eb14fb0dd9b457971742, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3900297725665032394, guid: e1e11e6161b3eb14fb0dd9b457971742, type: 3}
-      propertyPath: m_Layer
-      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 6549896907629717469, guid: e1e11e6161b3eb14fb0dd9b457971742, type: 3}
       propertyPath: m_LocalScale.x
