@@ -1453,9 +1453,6 @@ GameObject:
   - component: {fileID: 396981199}
   - component: {fileID: 396981204}
   - component: {fileID: 396981203}
-  - component: {fileID: 396981202}
-  - component: {fileID: 396981201}
-  - component: {fileID: 396981200}
   m_Layer: 0
   m_Name: Ball3D
   m_TagString: Untagged
@@ -1478,81 +1475,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1236849688}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &396981200
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 396981198}
-  serializedVersion: 5
-  m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 14
-  m_CollisionDetection: 0
---- !u!135 &396981201
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 396981198}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 0.11079003
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1773428102 &396981202
-ParentConstraint:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 396981198}
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Weight: 1
-  m_TranslationAtRest: {x: 0, y: 0, z: 0}
-  m_RotationAtRest: {x: 0, y: 0, z: 0}
-  m_TranslationOffsets:
-  - {x: 0, y: 0, z: 0}
-  m_RotationOffsets:
-  - {x: 0, y: 0, z: 0}
-  m_AffectTranslationX: 1
-  m_AffectTranslationY: 1
-  m_AffectTranslationZ: 1
-  m_AffectRotationX: 0
-  m_AffectRotationY: 0
-  m_AffectRotationZ: 0
-  m_Active: 0
-  m_IsLocked: 1
-  m_Sources:
-  - sourceTransform: {fileID: 1236849688}
-    weight: 1
 --- !u!23 &396981203
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -251500,6 +251422,7 @@ GameObject:
   - component: {fileID: 1236849688}
   - component: {fileID: 1236849687}
   - component: {fileID: 1236849686}
+  - component: {fileID: 1236849689}
   m_Layer: 0
   m_Name: Ball1
   m_TagString: Untagged
@@ -251518,21 +251441,21 @@ Rigidbody2D:
   m_BodyType: 0
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
-  m_UseAutoMass: 0
-  m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
+  m_UseAutoMass: 1
+  m_Mass: 0.7853982
+  m_LinearDamping: 0.02
+  m_AngularDamping: 0.02
   m_GravityScale: 0
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 5bae370544e6be54fb467c1cf12b1f5e, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_SleepingMode: 1
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
   m_Constraints: 4
 --- !u!58 &1236849687
 CircleCollider2D:
@@ -251579,13 +251502,32 @@ Transform:
   m_GameObject: {fileID: 1236849685}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 10.5, y: -9.5, z: 0}
+  m_LocalPosition: {x: 10.75, y: -14.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 0.01}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 396981199}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1236849689
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1236849685}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea9ca4a8a876e1a49984317255089911, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BallRollVisual
+  visual: {fileID: 396981199}
+  radius: 0.5
+  dir: 1
+  kickDirection: {x: 0, y: 1}
+  kickPower: 10
+  maxSpeed: 15
+  kickSpin: 25
 --- !u!1 &1246286011
 GameObject:
   m_ObjectHideFlags: 0
@@ -252368,7 +252310,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8770723759076525695, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 14.41
+      value: 13.41
       objectReference: {fileID: 0}
     - target: {fileID: 8770723759076525695, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
       propertyPath: m_LocalPosition.y
@@ -252376,7 +252318,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8770723759076525695, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -0.25
       objectReference: {fileID: 0}
     - target: {fileID: 8770723759076525695, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
       propertyPath: m_LocalRotation.w
