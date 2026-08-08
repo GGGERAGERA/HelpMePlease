@@ -446,6 +446,34 @@ public class BallRollVisual : MonoBehaviour
         Kick((Vector2)transform.position - (Vector2)source.position, power);
     }
 
+    public void ResetBall(Transform spawnPoint)
+    {
+        if (spawnPoint == null)
+            return;
+
+        CancelAim(true);
+        if (_dribbling) StopDribble();
+        ReleaseActiveRangeBall();
+
+        _rb.linearVelocity = Vector2.zero;
+        _rb.angularVelocity = 0f;
+        _rb.position = spawnPoint.position;
+        _rb.rotation = spawnPoint.eulerAngles.z;
+        transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
+
+        _prev = transform.position;
+        _playerContacts = 0;
+        _kicker = null;
+        _kickerRb = null;
+        _kickerSolid = null;
+        _kickerStep = Vector2.zero;
+        _kickerSpeed = 0f;
+        InKickRange = false;
+        if (_ringGo != null) _ringGo.SetActive(false);
+        if (_glow != null) _glow.enabled = false;
+        UpdateHint();
+    }
+
     // ================= ЭФФЕКТЫ И ТАЧ-УДАР =================
 
     void OnCollisionEnter2D(Collision2D col)
