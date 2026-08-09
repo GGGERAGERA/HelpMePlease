@@ -37,7 +37,9 @@ public sealed class ProjectileShotPattern : MonoBehaviour
                 baseContext.Ricochet,
                 baseContext.KnockbackForce,
                 baseContext.Modifiers,
-                baseContext.FxPlayer
+                baseContext.FxPlayer,
+                baseContext.ShotKind,
+                baseContext.Core
             );
 
             fired |= fireBehaviour.Fire(shotContext);

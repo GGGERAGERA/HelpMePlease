@@ -1,0 +1,680 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+public sealed class GravityAnomalySiteController : MonoBehaviour
+{
+    private enum SiteState
+    {
+        Stopped,
+        Dormant,
+        Active,
+        Collapsing,
+        Completed
+    }
+
+    private const float SiteRadius = 11f;
+    private const float ActivationDistance = 12f;
+    private const float HoldSeconds = 10f;
+    private const float CollapseSeconds = 0.75f;
+    private const float InterEventDelay = 0.75f;
+    private const int EventOneEnemyTarget = 28;
+    private const int IntermissionEnemyTarget = 34;
+    private const int EventTwoEnemyTarget = 38;
+    private const float OrbitForceEnemies = 7f;
+    private const float OrbitForcePlayer = 3.5f;
+    private const float OrbitForceProjectiles = 2.5f;
+    private const float InwardForceEnemies = 1f;
+    private const float InwardForcePlayer = 0.7f;
+    private const float InwardForceProjectiles = 0.35f;
+    private const float OrbitPreviewDegreesPerSecond = 24f;
+
+    private readonly HashSet<EnemyHealth> trialEnemies = new();
+    private readonly Vector3 sitePosition = Vector3.zero;
+    private readonly Vector3 playerStartPosition = new(-8f, 0f, 0f);
+    private readonly Vector3 eventOnePosition = new(-5f, -3f, 0f);
+    private readonly Vector3 eventTwoPosition = new(5f, 3f, 0f);
+
+    private EnemySpawner enemySpawner;
+    private WorldEventSpawner eventSpawner;
+    private LevelAnomalyController anomalyController;
+    private AnomalyPowerDebugController powerController;
+    private PowerTestController powerTest;
+    private LocalAnomalyData gravityData;
+    private CaptureZoneEvent capturePrefab;
+    private EvacuationCorridorEvent corridorPrefab;
+    private GameObject[] enemyPrefabs;
+    private Transform player;
+    private PlayerHealth playerHealth;
+    private float originalPlayerDamageMultiplier = 1f;
+    private bool playerDamageMultiplierCaptured;
+    private bool playerInvulnerabilityRequested;
+    private CaptureZoneEvent activeCapture;
+    private EvacuationCorridorEvent activeCorridor;
+    private WorldEvent activeSiteEvent;
+    private LocalAnomalyZone activeGravityZone;
+    private LineRenderer outerRing;
+    private LineRenderer innerRing;
+    private Transform orbitPreviewRoot;
+    private SiteState state = SiteState.Stopped;
+    private float collapseTimer;
+    private float acquisitionMessageUntil;
+    private string transientMessage;
+    private float interEventTimer;
+    private int completedEvents;
+    private bool intermissionActive;
+    private bool resetPlayerWhenAvailable;
+
+    public void Configure(
+        EnemySpawner spawner,
+        WorldEventSpawner worldEvents,
+        LevelAnomalyController anomalies,
+        AnomalyPowerDebugController powers,
+        PowerTestController test,
+        LocalAnomalyData gravity,
+        CaptureZoneEvent capture,
+        GameObject[] trialEnemyPrefabs)
+    {
+        enemySpawner = spawner;
+        eventSpawner = worldEvents;
+        anomalyController = anomalies;
+        powerController = powers;
+        powerTest = test;
+        gravityData = gravity;
+        capturePrefab = capture;
+        corridorPrefab = FindCorridorPrefab(worldEvents);
+        enemyPrefabs = trialEnemyPrefabs ?? System.Array.Empty<GameObject>();
+
+        if (eventSpawner != null)
+        {
+            eventSpawner.SetHoldPointEnabled(true);
+            eventSpawner.EventCompleted += HandleEventCompleted;
+            eventSpawner.EventFailed += HandleEventFailed;
+        }
+
+        BuildPreview();
+        StartOrResetSite();
+    }
+
+    private void Update()
+    {
+        ResolvePlayer();
+        RemoveDeadTrialEnemies();
+
+        if (Input.GetKeyDown(KeyCode.F6))
+        {
+            if (Input.GetKey(KeyCode.LeftShift) ||
+                Input.GetKey(KeyCode.RightShift))
+            {
+                StopSite();
+            }
+            else
+            {
+                StartOrResetSite();
+            }
+        }
+
+        if (state == SiteState.Dormant && IsPlayerNearSite() &&
+            Input.GetKeyDown(KeyCode.E))
+        {
+            StartTrial();
+        }
+
+        if (state == SiteState.Collapsing)
+        {
+            collapseTimer -= Time.deltaTime;
+            if (collapseTimer <= 0f)
+                CompleteCollapse();
+        }
+
+        if (intermissionActive)
+        {
+            interEventTimer -= Time.deltaTime;
+            if (interEventTimer <= 0f)
+                SpawnSecondEvent();
+        }
+
+        UpdatePreview();
+    }
+
+    private void StartOrResetSite()
+    {
+        powerTest?.StopTest();
+        ClearActiveEvent();
+        DespawnGravityZone();
+        ClearTrialEnemies();
+        powerController?.BeginGravitySiteRewardLock();
+        state = SiteState.Dormant;
+        completedEvents = 0;
+        intermissionActive = false;
+        activeSiteEvent = null;
+        activeCapture = null;
+        activeCorridor = null;
+        EnablePlayerInvulnerability();
+        ResetPlayerPosition();
+        SpawnGravityZone();
+        acquisitionMessageUntil = 0f;
+        transientMessage = string.Empty;
+        SetPreviewVisible(true);
+    }
+
+    private void StopSite()
+    {
+        ClearActiveEvent();
+        DespawnGravityZone();
+        ClearTrialEnemies();
+        powerController?.ClearGravitySiteReward();
+        RestorePlayerDamage();
+        resetPlayerWhenAvailable = false;
+        state = SiteState.Stopped;
+        completedEvents = 0;
+        intermissionActive = false;
+        SetPreviewVisible(false);
+    }
+
+    private void StartTrial()
+    {
+        if (gravityData == null || gravityData.ZonePrefab == null ||
+            capturePrefab == null || corridorPrefab == null ||
+            eventSpawner == null)
+        {
+            Debug.LogWarning(
+                "[GravitySite] Gravity data or CaptureZone prefab is missing.",
+                this
+            );
+            return;
+        }
+
+        // A temporary F4 population is useful for testing orbit movement
+        // before the trial. E replaces it with the site-owned pressure.
+        powerTest?.StopTest();
+
+        if (!eventSpawner.SpawnDebugEventAt(
+                capturePrefab,
+                eventOnePosition,
+                true,
+                out WorldEvent spawnedEvent))
+        {
+            Debug.LogWarning(
+                "[GravitySite] CaptureZoneEvent could not be spawned.",
+                this
+            );
+            return;
+        }
+
+        activeCapture = spawnedEvent as CaptureZoneEvent;
+        if (activeCapture == null)
+        {
+            ClearActiveEvent();
+            return;
+        }
+
+        activeCapture.ConfigureDebugHoldTime(HoldSeconds);
+        activeSiteEvent = activeCapture;
+        EnsureTrialPopulation(EventOneEnemyTarget);
+        state = SiteState.Active;
+        activeCapture.StartSelectedEvent();
+    }
+
+    private void SpawnGravityZone()
+    {
+        activeGravityZone = Instantiate(
+            gravityData.ZonePrefab,
+            sitePosition,
+            Quaternion.identity
+        );
+        activeGravityZone.name = "Gravity Anomaly Site - Orbit Zone";
+        activeGravityZone.Initialize(
+            gravityData,
+            anomalyController,
+            Vector2.one * SiteRadius * 2f
+        );
+
+        if (activeGravityZone is GravityZone gravityZone)
+        {
+            gravityZone.ConfigureDebugOrbit(
+                OrbitForceEnemies,
+                OrbitForcePlayer,
+                OrbitForceProjectiles,
+                InwardForceEnemies,
+                InwardForcePlayer,
+                InwardForceProjectiles
+            );
+        }
+    }
+
+    private void EnsureTrialPopulation(int targetAlive)
+    {
+        if (enemySpawner == null || enemyPrefabs.Length == 0)
+            return;
+
+        RemoveDeadTrialEnemies();
+        int attempts = Mathf.Max(0, targetAlive - trialEnemies.Count) * 3;
+        for (int i = 0; i < attempts &&
+            trialEnemies.Count < targetAlive; i++)
+        {
+            GameObject prefab = enemyPrefabs[i % enemyPrefabs.Length];
+            GameObject instance = enemySpawner.SpawnSpecificEnemyAround(
+                prefab,
+                sitePosition,
+                1.5f,
+                SiteRadius - 0.4f,
+                0.75f,
+                true,
+                0.15f
+            );
+            EnemyHealth health = instance != null
+                ? instance.GetComponent<EnemyHealth>()
+                : null;
+            if (health != null)
+                trialEnemies.Add(health);
+        }
+    }
+
+    private void HandleEventCompleted(WorldEvent worldEvent)
+    {
+        if (activeSiteEvent == null || worldEvent != activeSiteEvent)
+            return;
+
+        activeSiteEvent = null;
+
+        if (worldEvent == activeCapture)
+        {
+            activeCapture = null;
+            completedEvents = 1;
+            intermissionActive = true;
+            interEventTimer = InterEventDelay;
+            EnsureTrialPopulation(IntermissionEnemyTarget);
+            acquisitionMessageUntil = Time.unscaledTime + InterEventDelay;
+            transientMessage = "EVENT 1 COMPLETE / CORRIDOR INCOMING";
+            return;
+        }
+
+        if (worldEvent == activeCorridor)
+        {
+            activeCorridor = null;
+            completedEvents = 2;
+            state = SiteState.Collapsing;
+            collapseTimer = CollapseSeconds;
+        }
+    }
+
+    private void HandleEventFailed(WorldEvent worldEvent)
+    {
+        if (activeSiteEvent == null || worldEvent != activeSiteEvent)
+            return;
+
+        activeSiteEvent = null;
+        activeCapture = null;
+        activeCorridor = null;
+        completedEvents = 0;
+        intermissionActive = false;
+        ClearTrialEnemies();
+        powerController?.BeginGravitySiteRewardLock();
+        state = SiteState.Dormant;
+
+        if (activeGravityZone == null)
+            SpawnGravityZone();
+    }
+
+    private void CompleteCollapse()
+    {
+        DespawnGravityZone();
+        state = SiteState.Completed;
+        powerController?.GrantGravityOrbFromSite();
+        acquisitionMessageUntil = Time.unscaledTime + 3f;
+        transientMessage = "GRAVITY ORB ACQUIRED";
+        Debug.Log("GRAVITY ORB ACQUIRED");
+    }
+
+    private void SpawnSecondEvent()
+    {
+        intermissionActive = false;
+        EnsureTrialPopulation(EventTwoEnemyTarget);
+
+        if (!eventSpawner.SpawnDebugEventAt(
+                corridorPrefab,
+                eventTwoPosition,
+                true,
+                out WorldEvent spawnedEvent))
+        {
+            Debug.LogWarning(
+                "[GravitySite] EvacuationCorridorEvent could not be spawned.",
+                this
+            );
+            HandleSequenceSpawnFailure();
+            return;
+        }
+
+        activeCorridor = spawnedEvent as EvacuationCorridorEvent;
+        if (activeCorridor == null)
+        {
+            ClearActiveEvent();
+            HandleSequenceSpawnFailure();
+            return;
+        }
+
+        Vector2 path = eventOnePosition - eventTwoPosition;
+        activeCorridor.ConfigureDebugPath(path, path.magnitude);
+        activeSiteEvent = activeCorridor;
+        transientMessage = "EVENT 2 READY / FOLLOW MARKER / PRESS E";
+        acquisitionMessageUntil = Time.unscaledTime + 3f;
+    }
+
+    private void HandleSequenceSpawnFailure()
+    {
+        completedEvents = 0;
+        state = SiteState.Dormant;
+        ClearTrialEnemies();
+        powerController?.BeginGravitySiteRewardLock();
+    }
+
+    private void ClearActiveEvent()
+    {
+        if (activeSiteEvent != null && eventSpawner != null)
+            eventSpawner.ClearDebugEvent();
+
+        activeSiteEvent = null;
+        activeCapture = null;
+        activeCorridor = null;
+    }
+
+    private void DespawnGravityZone()
+    {
+        if (activeGravityZone != null)
+            activeGravityZone.Despawn();
+
+        activeGravityZone = null;
+    }
+
+    private void ResolvePlayer()
+    {
+        if (player == null)
+        {
+            GameObject playerObject =
+                GameObject.FindGameObjectWithTag("Player");
+            if (playerObject == null)
+                return;
+
+            player = playerObject.transform;
+            playerHealth = playerObject.GetComponent<PlayerHealth>();
+        }
+
+        if (resetPlayerWhenAvailable)
+        {
+            Rigidbody2D body = player.GetComponent<Rigidbody2D>();
+            if (body != null)
+                body.position = playerStartPosition;
+            player.position = playerStartPosition;
+            resetPlayerWhenAvailable = false;
+        }
+
+        if (playerInvulnerabilityRequested && playerHealth != null)
+        {
+            if (!playerDamageMultiplierCaptured)
+            {
+                originalPlayerDamageMultiplier =
+                    playerHealth.IncomingDamageMultiplier;
+                playerDamageMultiplierCaptured = true;
+            }
+
+            playerHealth.SetIncomingDamageMultiplier(0f);
+        }
+    }
+
+    private void EnablePlayerInvulnerability()
+    {
+        playerInvulnerabilityRequested = true;
+        ResolvePlayer();
+    }
+
+    private void ResetPlayerPosition()
+    {
+        resetPlayerWhenAvailable = true;
+        ResolvePlayer();
+    }
+
+    private void RestorePlayerDamage()
+    {
+        playerInvulnerabilityRequested = false;
+
+        if (playerHealth != null && playerDamageMultiplierCaptured)
+        {
+            playerHealth.SetIncomingDamageMultiplier(
+                originalPlayerDamageMultiplier
+            );
+        }
+
+        playerDamageMultiplierCaptured = false;
+    }
+
+    private bool IsPlayerNearSite()
+    {
+        return player != null && Vector2.Distance(
+            player.position,
+            sitePosition
+        ) <= ActivationDistance;
+    }
+
+    private void RemoveDeadTrialEnemies()
+    {
+        trialEnemies.RemoveWhere(enemy => enemy == null || enemy.IsDead);
+    }
+
+    private void ClearTrialEnemies()
+    {
+        foreach (EnemyHealth enemy in trialEnemies)
+        {
+            if (enemy != null)
+                Destroy(enemy.gameObject);
+        }
+
+        trialEnemies.Clear();
+    }
+
+    private static EvacuationCorridorEvent FindCorridorPrefab(
+        WorldEventSpawner spawner)
+    {
+        if (spawner == null)
+            return null;
+
+        System.Collections.Generic.IReadOnlyList<WorldEvent> prefabs =
+            spawner.EventPrefabs;
+        for (int i = 0; i < prefabs.Count; i++)
+        {
+            if (prefabs[i] is EvacuationCorridorEvent corridor)
+                return corridor;
+        }
+
+        return null;
+    }
+
+    private void BuildPreview()
+    {
+        outerRing = CreateRing("Gravity Site Preview", SiteRadius, 72, 0.08f);
+        innerRing = CreateRing("Gravity Site Center", 0.75f, 32, 0.07f);
+        CreateOrbitPreview();
+    }
+
+    private void CreateOrbitPreview()
+    {
+        GameObject root = new("Gravity Orbit Direction Preview");
+        root.transform.SetParent(transform, false);
+        root.transform.position = sitePosition;
+        orbitPreviewRoot = root.transform;
+
+        const int guideCount = 6;
+        const int pointsPerGuide = 6;
+        const float guideRadius = SiteRadius * 0.7f;
+        const float guideArcDegrees = 20f;
+
+        for (int guideIndex = 0; guideIndex < guideCount; guideIndex++)
+        {
+            GameObject guideObject = new($"Orbit Guide {guideIndex + 1}");
+            guideObject.transform.SetParent(orbitPreviewRoot, false);
+            LineRenderer guide = guideObject.AddComponent<LineRenderer>();
+            guide.useWorldSpace = false;
+            guide.positionCount = pointsPerGuide;
+            guide.widthMultiplier = 0.11f;
+            guide.sharedMaterial = new Material(Shader.Find("Sprites/Default"));
+            guide.sortingLayerName = "Foreground";
+            guide.sortingOrder = 21;
+
+            float baseDegrees = guideIndex * 360f / guideCount;
+            for (int pointIndex = 0; pointIndex < pointsPerGuide; pointIndex++)
+            {
+                float fraction = pointIndex / (pointsPerGuide - 1f);
+                float degrees = baseDegrees + guideArcDegrees * fraction;
+                float radians = degrees * Mathf.Deg2Rad;
+                guide.SetPosition(pointIndex, new Vector3(
+                    Mathf.Cos(radians) * guideRadius,
+                    Mathf.Sin(radians) * guideRadius,
+                    0f
+                ));
+            }
+        }
+    }
+
+    private LineRenderer CreateRing(
+        string objectName,
+        float radius,
+        int segments,
+        float width)
+    {
+        GameObject ringObject = new(objectName);
+        ringObject.transform.SetParent(transform, false);
+        ringObject.transform.position = sitePosition;
+        LineRenderer ring = ringObject.AddComponent<LineRenderer>();
+        ring.loop = true;
+        ring.useWorldSpace = false;
+        ring.positionCount = segments;
+        ring.widthMultiplier = width;
+        ring.sharedMaterial = new Material(Shader.Find("Sprites/Default"));
+        ring.sortingLayerName = "Foreground";
+        ring.sortingOrder = 20;
+
+        for (int i = 0; i < segments; i++)
+        {
+            float angle = i * Mathf.PI * 2f / segments;
+            ring.SetPosition(i, new Vector3(
+                Mathf.Cos(angle) * radius,
+                Mathf.Sin(angle) * radius,
+                0f
+            ));
+        }
+
+        return ring;
+    }
+
+    private void UpdatePreview()
+    {
+        if (outerRing == null || !outerRing.enabled)
+            return;
+
+        bool gravityVisible = state == SiteState.Dormant ||
+            state == SiteState.Active || state == SiteState.Collapsing;
+        if (orbitPreviewRoot != null)
+        {
+            orbitPreviewRoot.gameObject.SetActive(gravityVisible);
+            if (gravityVisible)
+            {
+                float speed = state == SiteState.Collapsing
+                    ? OrbitPreviewDegreesPerSecond * 0.35f
+                    : OrbitPreviewDegreesPerSecond;
+                orbitPreviewRoot.Rotate(
+                    0f,
+                    0f,
+                    speed * Time.unscaledDeltaTime
+                );
+            }
+        }
+
+        float pulse = 0.55f + Mathf.Sin(Time.unscaledTime * 3f) * 0.2f;
+        Color color = state switch
+        {
+            SiteState.Active => new Color(0.7f, 0.25f, 1f, 0.9f),
+            SiteState.Collapsing => new Color(1f, 0.85f, 1f, pulse),
+            SiteState.Completed => new Color(0.25f, 1f, 0.6f, 0.75f),
+            _ => new Color(0.55f, 0.15f, 1f, pulse)
+        };
+        outerRing.startColor = outerRing.endColor = color;
+        innerRing.startColor = innerRing.endColor = color;
+    }
+
+    private void SetPreviewVisible(bool visible)
+    {
+        if (outerRing != null)
+            outerRing.enabled = visible;
+        if (innerRing != null)
+            innerRing.enabled = visible;
+        if (orbitPreviewRoot != null)
+            orbitPreviewRoot.gameObject.SetActive(visible);
+    }
+
+    private void OnGUI()
+    {
+        if (state == SiteState.Stopped)
+            return;
+
+        string progress = activeCapture != null
+            ? $"{activeCapture.Progress * 100f:F0}% ({activeCapture.TimeRemaining:F1}s)"
+            : activeCorridor != null && activeCorridor.IsStarted
+                ? $"{activeCorridor.Progress * 100f:F0}%"
+                : "--";
+        string gravityStatus = state switch
+        {
+            SiteState.Dormant => "ACTIVE",
+            SiteState.Active => "ACTIVE",
+            SiteState.Collapsing => "COLLAPSING",
+            _ => "OFF"
+        };
+        string currentEvent = activeCapture != null
+            ? "Hold Zone"
+            : activeCorridor != null
+                ? "Evacuation Corridor"
+                : "None";
+        string orbStatus = powerController != null &&
+            powerController.GravityOrbEnabled
+            ? "ACQUIRED"
+            : "LOCKED";
+        string status =
+            "GRAVITY ANOMALY SITE\n" +
+            $"Site: {state}\n" +
+            $"Gravity: {gravityStatus}\n" +
+            $"Player Invulnerable: {(playerInvulnerabilityRequested ? "YES" : "NO")}\n" +
+            $"Event Sequence: {completedEvents}/2\n" +
+            $"Current Event: {currentEvent}\n" +
+            $"Gravity Orb: {orbStatus}\n" +
+            $"Enemies Alive: {EnemyHealth.ActiveInstances.Count}\n" +
+            $"Objective Progress: {progress}";
+        GUI.Box(new Rect(14f, Screen.height - 210f, 330f, 195f), status);
+
+        if (state == SiteState.Dormant && IsPlayerNearSite())
+        {
+            GUI.Box(
+                new Rect(Screen.width * 0.5f - 150f, 55f, 300f, 70f),
+                "GRAVITY ANOMALY\n[E] ENTER / START TRIAL"
+            );
+        }
+
+        if (Time.unscaledTime < acquisitionMessageUntil)
+        {
+            GUI.Box(
+                new Rect(Screen.width * 0.5f - 190f, 55f, 380f, 45f),
+                transientMessage
+            );
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (eventSpawner != null)
+        {
+            eventSpawner.EventCompleted -= HandleEventCompleted;
+            eventSpawner.EventFailed -= HandleEventFailed;
+        }
+
+        DespawnGravityZone();
+        ClearTrialEnemies();
+        RestorePlayerDamage();
+    }
+}

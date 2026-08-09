@@ -21,6 +21,7 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile,
     private bool isCritical;
     private float knockbackForce;
     private PlayerCombatModifiers modifiers;
+    private ProjectileCombatContext combatContext;
     private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
     private readonly AnomalyExternalVelocityStack
         anomalyExternalVelocity = new();
@@ -91,6 +92,9 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile,
         );
         SpawnExplosionFx();
 
+        if (combatContext == null)
+            combatContext = GetComponent<ProjectileCombatContext>();
+
         HashSet<EnemyHealth> damagedEnemies = new HashSet<EnemyHealth>();
 
         Collider2D[] hits = Physics2D.OverlapCircleAll(
@@ -113,12 +117,46 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile,
 
            
 
-            enemy.TakeDamage(damage, transform.position, isCritical);
+            WeaponHitContext hitContext = new WeaponHitContext(
+                combatContext != null ? combatContext.Weapon : null,
+                combatContext != null ? combatContext.Owner : null,
+                this,
+                WeaponShotKind.Rocket,
+                combatContext != null
+                    ? combatContext.Core
+                    : WeaponCoreType.None,
+                enemy,
+                transform.position,
+                direction,
+                damage,
+                isCritical
+            );
+            WeaponHitResolver.Resolve(
+                hitContext,
+                hitContext.Core != WeaponCoreType.Void
+            );
 
             EnemyMovement enemyMovement = enemy.GetComponent<EnemyMovement>();
 
             if (enemyMovement != null)
                 enemyMovement.ApplyKnockback(direction, knockbackForce);
+        }
+
+        if (combatContext != null &&
+            combatContext.Core == WeaponCoreType.Void)
+        {
+            WeaponHitResolver.ResolveCoreImpact(new WeaponHitContext(
+                combatContext.Weapon,
+                combatContext.Owner,
+                this,
+                WeaponShotKind.Rocket,
+                combatContext.Core,
+                null,
+                transform.position,
+                direction,
+                damage,
+                isCritical
+            ));
         }
 
         Destroy(gameObject);

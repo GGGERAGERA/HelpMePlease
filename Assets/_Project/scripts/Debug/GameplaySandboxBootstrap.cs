@@ -16,6 +16,7 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
     [SerializeField] private WorldEvent[] eventPrefabs;
     [SerializeField] private GameObject turretEnemyPrefab;
     [SerializeField] private GameObject eyesEnemyPrefab;
+    [SerializeField] private GameObject[] massTestEnemyPrefabs;
 
     [Header("Area")]
     [SerializeField] private Vector2 areaSize = new(32f, 20f);
@@ -23,7 +24,7 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private void Awake()
     {
-        CreateGameplayArea();
+        GameplayAreaService gameplayArea = CreateGameplayArea();
         CreateCamera();
         CreateEventSystem();
         CreateHud();
@@ -71,6 +72,71 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
             debugWeapons,
             upgrades
         );
+
+        ExitMassTestController massTest =
+            systems.AddComponent<ExitMassTestController>();
+        massTest.Configure(
+            enemySpawner,
+            gameplayArea,
+            massTestEnemyPrefabs
+        );
+
+        AnomalyPowerDebugController powerController =
+            systems.AddComponent<AnomalyPowerDebugController>();
+        PowerTestController powerTest =
+            systems.AddComponent<PowerTestController>();
+        powerTest.Configure(
+            enemySpawner,
+            gameplayArea,
+            massTestEnemyPrefabs,
+            massTest
+        );
+        powerController.Configure(powerTest);
+
+        GravityAnomalySiteController gravitySite =
+            systems.AddComponent<GravityAnomalySiteController>();
+        gravitySite.Configure(
+            enemySpawner,
+            eventSpawner,
+            anomalyController,
+            powerController,
+            powerTest,
+            FindGravityAnomaly(),
+            FindCaptureZoneEvent(),
+            massTestEnemyPrefabs
+        );
+    }
+
+    private LocalAnomalyData FindGravityAnomaly()
+    {
+        if (localAnomalies == null)
+            return null;
+
+        for (int i = 0; i < localAnomalies.Length; i++)
+        {
+            LocalAnomalyData anomaly = localAnomalies[i];
+            if (anomaly != null &&
+                anomaly.AnomalyType == LocalAnomalyType.Gravity)
+            {
+                return anomaly;
+            }
+        }
+
+        return null;
+    }
+
+    private CaptureZoneEvent FindCaptureZoneEvent()
+    {
+        if (eventPrefabs == null)
+            return null;
+
+        for (int i = 0; i < eventPrefabs.Length; i++)
+        {
+            if (eventPrefabs[i] is CaptureZoneEvent capture)
+                return capture;
+        }
+
+        return null;
     }
 
     private GameplayAreaService CreateGameplayArea()
@@ -115,7 +181,7 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
         cameraObject.transform.position = new Vector3(0f, 0f, -10f);
         Camera camera = cameraObject.AddComponent<Camera>();
         camera.orthographic = true;
-        camera.orthographicSize = 9f;
+        camera.orthographicSize = 12.5f;
         camera.clearFlags = CameraClearFlags.SolidColor;
         camera.backgroundColor = new Color(0.02f, 0.025f, 0.035f, 1f);
         cameraObject.AddComponent<AudioListener>();

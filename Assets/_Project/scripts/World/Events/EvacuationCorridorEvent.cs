@@ -91,6 +91,21 @@ public sealed class EvacuationCorridorEvent : WorldEvent
     private bool corridorActive;
     private bool hasRewardPosition;
     private bool completionPending;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private bool debugFixedPath;
+    private Vector2 debugPathDirection;
+    private float debugTravelDistance;
+
+    public void ConfigureDebugPath(Vector2 direction, float distance)
+    {
+        if (direction.sqrMagnitude <= 0.0001f)
+            return;
+
+        debugFixedPath = true;
+        debugPathDirection = direction.normalized;
+        debugTravelDistance = Mathf.Max(0.1f, distance);
+    }
+#endif
 
     public override void Initialize(WorldEventSpawner spawner)
     {
@@ -181,6 +196,18 @@ public sealed class EvacuationCorridorEvent : WorldEvent
     {
         if (gameplayArea == null)
             return false;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (debugFixedPath)
+        {
+            StartPosition = transform.position;
+            EndPosition = StartPosition +
+                (Vector3)(debugPathDirection * debugTravelDistance);
+            ApplyCorridorOrientation(debugPathDirection);
+            return IsCorridorInsidePlayableArea(StartPosition) &&
+                IsCorridorInsidePlayableArea(EndPosition);
+        }
+#endif
 
         Vector3 eventPosition = transform.position;
         float halfLength = corridorLength * 0.5f;

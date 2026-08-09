@@ -58,7 +58,7 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
         if (projectileContext == null)
             projectileContext = projectileObject.AddComponent<ProjectileCombatContext>();
 
-        projectileContext.Initialize(context.Modifiers);
+        projectileContext.Initialize(context);
         return true;
     }
 }

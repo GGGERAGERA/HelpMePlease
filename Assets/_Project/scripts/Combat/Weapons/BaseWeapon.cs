@@ -771,7 +771,9 @@ public abstract class BaseWeapon : MonoBehaviour
             GetProjectileRicochet(),
             0f,
             modifiers,
-            FxPlayer
+            FxPlayer,
+            ShotKind,
+            WeaponCoreDebugSelector.ActiveCore
         );
     }
 

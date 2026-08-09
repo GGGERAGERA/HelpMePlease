@@ -23,6 +23,8 @@ public readonly struct WeaponFireContext
 
     public readonly PlayerCombatModifiers Modifiers;
     public readonly WeaponFxPlayer FxPlayer;
+    public readonly WeaponShotKind ShotKind;
+    public readonly WeaponCoreType Core;
 
     public WeaponFireContext(
         BaseWeapon weapon,
@@ -39,7 +41,9 @@ public readonly struct WeaponFireContext
         int ricochet,
         float knockbackForce,
         PlayerCombatModifiers modifiers,
-        WeaponFxPlayer fxPlayer
+        WeaponFxPlayer fxPlayer,
+        WeaponShotKind shotKind,
+        WeaponCoreType core
     )
     {
         Weapon = weapon;
@@ -57,6 +61,8 @@ public readonly struct WeaponFireContext
         KnockbackForce = knockbackForce;
         Modifiers = modifiers;
         FxPlayer = fxPlayer;
+        ShotKind = shotKind;
+        Core = core;
     }
 
     public WeaponFireContext WithKnockback(float knockbackForce)
@@ -76,7 +82,9 @@ public readonly struct WeaponFireContext
             Ricochet,
             knockbackForce,
             Modifiers,
-            FxPlayer
+            FxPlayer,
+            ShotKind,
+            Core
         );
     }
 }

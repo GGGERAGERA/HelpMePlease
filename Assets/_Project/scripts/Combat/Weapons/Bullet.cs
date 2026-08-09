@@ -113,11 +113,26 @@ public class Bullet : MonoBehaviour, IWeaponProjectile,
         if (hitEnemies.Contains(enemyHealth))
             return;
 
-        hitEnemies.Add(enemyHealth);
-        enemyHealth.TakeDamage(damage, transform.position, isCritical);
-
         if (combatContext == null)
             combatContext = GetComponent<ProjectileCombatContext>();
+
+        hitEnemies.Add(enemyHealth);
+        WeaponHitResolver.Resolve(new WeaponHitContext(
+            combatContext != null ? combatContext.Weapon : null,
+            combatContext != null ? combatContext.Owner : null,
+            this,
+            combatContext != null
+                ? combatContext.ShotKind
+                : WeaponShotKind.Standard,
+            combatContext != null
+                ? combatContext.Core
+                : WeaponCoreType.None,
+            enemyHealth,
+            transform.position,
+            direction,
+            damage,
+            isCritical
+        ));
 
         PlayerCombatModifiers modifiers = combatContext != null
             ? combatContext.Modifiers

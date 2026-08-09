@@ -22,6 +22,7 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
         );
 
         HashSet<EnemyHealth> damagedEnemies = new HashSet<EnemyHealth>();
+        bool limitedCoreApplied = false;
 
         foreach (RaycastHit2D hit in hits)
         {
@@ -36,11 +37,27 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
             damagedEnemies.Add(enemyHealth);
             HitEnemyLastFire = true;
 
-            enemyHealth.TakeDamage(
-                context.Damage,
+            bool usesSingleSourceCore = context.Core == WeaponCoreType.Chain ||
+                context.Core == WeaponCoreType.Void;
+            WeaponHitContext hitContext = new WeaponHitContext(
+                context.Weapon,
+                context.Owner,
+                context.Weapon,
+                context.ShotKind,
+                context.Core,
+                enemyHealth,
                 hit.point,
+                context.Direction,
+                context.Damage,
                 context.IsCritical
             );
+            WeaponHitResolver.Resolve(
+                hitContext,
+                !usesSingleSourceCore || !limitedCoreApplied
+            );
+
+            if (usesSingleSourceCore)
+                limitedCoreApplied = true;
 
             CombatExplosionService.TryExplodeOnHit(
                 hit.point,

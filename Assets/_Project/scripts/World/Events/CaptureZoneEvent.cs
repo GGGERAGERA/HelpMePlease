@@ -23,6 +23,15 @@ public class CaptureZoneEvent : WorldEvent
     private bool playerInside;
     private bool completionTriggered;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void ConfigureDebugHoldTime(float seconds)
+    {
+        requiredHoldTime = Mathf.Max(0.1f, seconds);
+        currentHoldTime = 0f;
+        UpdateUI();
+    }
+#endif
+
     public override void Initialize(WorldEventSpawner spawner)
     {
         base.Initialize(spawner);

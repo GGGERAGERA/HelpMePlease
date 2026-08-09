@@ -205,4 +205,6 @@ MonoBehaviour:
   - {fileID: 590000000000000004, guid: c39b42a1000000000000000000000003, type: 3}
   turretEnemyPrefab: {fileID: 1334349216365075605, guid: 9a2217687199c7b41894a7ab9673f951, type: 3}
   eyesEnemyPrefab: {fileID: 3350373065324294653, guid: 74d98ca6a4a3cc94daabdf7b81bb7f13, type: 3}
-  areaSize: {x: 32, y: 20}
+  massTestEnemyPrefabs:
+  - {fileID: 100100000, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
+  areaSize: {x: 48, y: 28}

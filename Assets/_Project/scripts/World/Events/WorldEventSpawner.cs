@@ -70,6 +70,8 @@ public class WorldEventSpawner : MonoBehaviour
 
     private WorldEvent debugEvent;
     private bool debugManualOnly;
+    private readonly HashSet<WorldEvent> debugRewardSuppressedEvents =
+        new();
 #endif
 
     private void OnEnable()
@@ -400,6 +402,7 @@ public class WorldEventSpawner : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (debugEvent == worldEvent)
             debugEvent = null;
+
 #endif
 
         if (ActiveEvent == worldEvent)
@@ -417,6 +420,8 @@ public class WorldEventSpawner : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (debugEvent == worldEvent)
             debugEvent = null;
+
+        debugRewardSuppressedEvents.Remove(worldEvent);
 #endif
 
         if (ActiveEvent == worldEvent)
@@ -428,6 +433,39 @@ public class WorldEventSpawner : MonoBehaviour
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool SpawnDebugEventAt(
+        WorldEvent prefab,
+        Vector3 position,
+        bool suppressReward,
+        out WorldEvent spawnedEvent)
+    {
+        spawnedEvent = null;
+
+        if (!isActiveAndEnabled || prefab == null ||
+            !IsEventPrefabEnabled(prefab))
+        {
+            return false;
+        }
+
+        if (debugEvent != null)
+            ClearDebugEvent(debugEvent);
+
+        if (spawnedEventCount >= maxActiveEvents)
+            return false;
+
+        spawnedEvent = Instantiate(prefab, position, Quaternion.identity);
+        spawnedEvent.Initialize(this);
+        spawnedEvents.Add(spawnedEvent);
+        spawnedEventCount++;
+        debugEvent = spawnedEvent;
+
+        if (suppressReward)
+            debugRewardSuppressedEvents.Add(spawnedEvent);
+
+        timer = eventInterval;
+        return true;
+    }
+
     public bool SpawnDebugEvent(WorldEvent prefab)
     {
         if (!isActiveAndEnabled || prefab == null ||
@@ -469,6 +507,8 @@ public class WorldEventSpawner : MonoBehaviour
 
         if (debugEvent == worldEvent)
             debugEvent = null;
+
+        debugRewardSuppressedEvents.Remove(worldEvent);
 
         spawnedEvents.Remove(worldEvent);
         spawnedEventCount = Mathf.Max(0, spawnedEventCount - 1);
@@ -546,6 +586,11 @@ public class WorldEventSpawner : MonoBehaviour
     {
         if (completedEvent == null)
             return;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (debugRewardSuppressedEvents.Remove(completedEvent))
+            return;
+#endif
 
         bool isImproved = doubleOrLeave != null &&
             doubleOrLeave.ResolveCompletedEvent(completedEvent);

@@ -32,7 +32,7 @@ public sealed class GravityZone : LocalAnomalyZone
     private static readonly int VisualTimeId =
         Shader.PropertyToID("_VisualTime");
 
-    private const float ProjectileForceMultiplier = 0.5f;
+    private const float DefaultProjectileForceMultiplier = 0.5f;
 
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
@@ -49,6 +49,37 @@ public sealed class GravityZone : LocalAnomalyZone
     private float targetVisualFade;
     private bool effectsCleared;
     private bool despawning;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private bool debugOrbitMode;
+    private float debugOrbitForceEnemies;
+    private float debugOrbitForcePlayer;
+    private float debugOrbitForceProjectiles;
+    private float debugInwardForceEnemies;
+    private float debugInwardForcePlayer;
+    private float debugInwardForceProjectiles;
+#endif
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void ConfigureDebugOrbit(
+        float orbitForceEnemies,
+        float orbitForcePlayer,
+        float orbitForceProjectiles,
+        float inwardForceEnemies,
+        float inwardForcePlayer,
+        float inwardForceProjectiles)
+    {
+        debugOrbitMode = true;
+        debugOrbitForceEnemies = Mathf.Max(0f, orbitForceEnemies);
+        debugOrbitForcePlayer = Mathf.Max(0f, orbitForcePlayer);
+        debugOrbitForceProjectiles = Mathf.Max(0f, orbitForceProjectiles);
+        debugInwardForceEnemies = Mathf.Max(0f, inwardForceEnemies);
+        debugInwardForcePlayer = Mathf.Max(0f, inwardForcePlayer);
+        debugInwardForceProjectiles = Mathf.Max(
+            0f,
+            inwardForceProjectiles
+        );
+    }
+#endif
 
     private void Awake()
     {
@@ -156,19 +187,36 @@ public sealed class GravityZone : LocalAnomalyZone
                 continue;
             }
 
-            Vector2 offset = center -
-                (Vector2)affected.Component.transform.position;
-            Vector2 velocity = offset.sqrMagnitude > 0.0001f
-                ? offset.normalized * gravityForce
-                : Vector2.zero;
+            Vector2 position = affected.Component.transform.position;
+            Vector2 offset = center - position;
+            Vector2 velocity;
 
-            if (affected.Component is IAnomalySpeedProjectile)
-                velocity *= ProjectileForceMultiplier;
-            else if (affected.Component is CharacterMovement2D &&
-                RunStateManager.Instance != null)
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (debugOrbitMode)
             {
-                velocity *= RunStateManager.Instance.AnomalyModifiers
-                    .GravityPlayerForceMultiplier;
+                velocity = CalculateDebugOrbitVelocity(
+                    affected.Component,
+                    center,
+                    position
+                );
+            }
+            else
+#endif
+            {
+                velocity = offset.sqrMagnitude > 0.0001f
+                    ? offset.normalized * gravityForce
+                    : Vector2.zero;
+
+                if (affected.Component is IAnomalySpeedProjectile)
+                {
+                    velocity *= DefaultProjectileForceMultiplier;
+                }
+                else if (affected.Component is CharacterMovement2D &&
+                    RunStateManager.Instance != null)
+                {
+                    velocity *= RunStateManager.Instance.AnomalyModifiers
+                        .GravityPlayerForceMultiplier;
+                }
             }
 
             affected.VelocityTarget.SetAnomalyExternalVelocity(
@@ -177,6 +225,64 @@ public sealed class GravityZone : LocalAnomalyZone
             );
         }
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private Vector2 CalculateDebugOrbitVelocity(
+        Component component,
+        Vector2 center,
+        Vector2 position)
+    {
+        Vector2 radial = position - center;
+        float distance = radial.magnitude;
+
+        if (distance <= 0.0001f)
+            return Vector2.zero;
+
+        radial /= distance;
+        Vector2 tangent = new(-radial.y, radial.x);
+        bool projectile = component is IAnomalySpeedProjectile ||
+            component is EnemyProjectile;
+        float orbitForce;
+        float inwardForce;
+
+        if (component is CharacterMovement2D)
+        {
+            orbitForce = debugOrbitForcePlayer;
+            inwardForce = debugInwardForcePlayer;
+
+            if (RunStateManager.Instance != null)
+            {
+                float modifier = RunStateManager.Instance.AnomalyModifiers
+                    .GravityPlayerForceMultiplier;
+                orbitForce *= modifier;
+                inwardForce *= modifier;
+            }
+        }
+        else if (projectile)
+        {
+            orbitForce = debugOrbitForceProjectiles;
+            inwardForce = debugInwardForceProjectiles;
+        }
+        else
+        {
+            orbitForce = debugOrbitForceEnemies;
+            inwardForce = debugInwardForceEnemies;
+        }
+
+        float radius = Mathf.Max(
+            0.1f,
+            Mathf.Min(AreaSize.x, AreaSize.y) * 0.5f
+        );
+        float normalizedDistance = Mathf.Clamp01(distance / radius);
+        float distanceMultiplier = Mathf.Sin(
+            normalizedDistance * Mathf.PI
+        );
+
+        return (
+            tangent * orbitForce - radial * inwardForce
+        ) * distanceMultiplier;
+    }
+#endif
 
     private AffectedObject FindAffected(Component component)
     {
