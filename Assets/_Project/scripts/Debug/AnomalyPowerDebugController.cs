@@ -11,6 +11,7 @@ public sealed class AnomalyPowerDebugController : MonoBehaviour
     private PowerTestController powerTest;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private GravityTrajectoryPreview gravityTrajectoryPreview;
+    private bool explorationHudMode;
 #endif
     private bool gravityOrbEnabled;
     private bool arcNodeEnabled;
@@ -25,6 +26,19 @@ public sealed class AnomalyPowerDebugController : MonoBehaviour
     public bool GravityOrbSiteLocked => gravityOrbSiteLocked;
     public bool ArcNodeSiteLocked => arcNodeSiteLocked;
     public bool RedBeamSiteLocked => redBeamSiteLocked;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool TrajectoryEnabled => gravityTrajectoryPreview != null &&
+        gravityTrajectoryPreview.PreviewEnabled;
+    public float TrajectoryPredictionTime => gravityTrajectoryPreview != null
+        ? gravityTrajectoryPreview.PredictionTime
+        : 1.5f;
+    public int TrajectoryTargetCount => gravityTrajectoryPreview != null
+        ? gravityTrajectoryPreview.ActiveTargetCount
+        : 0;
+    public int TrajectoryMaxTargets => gravityTrajectoryPreview != null
+        ? gravityTrajectoryPreview.MaxTargets
+        : 5;
+#endif
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public void Configure(
@@ -33,6 +47,51 @@ public sealed class AnomalyPowerDebugController : MonoBehaviour
     {
         powerTest = test;
         gravityTrajectoryPreview = trajectoryPreview;
+    }
+
+    public void SetExplorationHudMode(bool enabled)
+    {
+        explorationHudMode = enabled;
+    }
+
+    public void SetGravityOrbEnabled(bool enabled)
+    {
+        if (gravityOrbSiteLocked)
+            return;
+        gravityOrbEnabled = enabled;
+        ResolvePlayer();
+        ApplyPowerStates();
+    }
+
+    public void SetArcNodeEnabled(bool enabled)
+    {
+        if (arcNodeSiteLocked)
+            return;
+        arcNodeEnabled = enabled;
+        ResolvePlayer();
+        ApplyPowerStates();
+    }
+
+    public void SetRedBeamEnabled(bool enabled)
+    {
+        if (redBeamSiteLocked)
+            return;
+        redBeamEnabled = enabled;
+        ResolvePlayer();
+        ApplyPowerStates();
+    }
+
+    public void SetTrajectoryEnabled(bool enabled) =>
+        gravityTrajectoryPreview?.SetPreviewEnabled(enabled);
+
+    public void SetTrajectoryPredictionTime(float seconds) =>
+        gravityTrajectoryPreview?.SetPredictionTime(seconds);
+
+    public int KillAllEnemiesDebug()
+    {
+        int killed = KillAllEnemies();
+        Debug.Log($"DEBUG KILL ALL: killed {killed} enemies");
+        return killed;
     }
 #endif
 
@@ -61,8 +120,10 @@ public sealed class AnomalyPowerDebugController : MonoBehaviour
             LogState("Red Beam", redBeamEnabled);
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (Input.GetKeyDown(KeyCode.F8))
-            KillAllEnemies();
+            KillAllEnemiesDebug();
+#endif
     }
 
     public void BeginGravitySiteRewardLock()
@@ -170,7 +231,7 @@ public sealed class AnomalyPowerDebugController : MonoBehaviour
         Debug.Log($"[AnomalyPowers] {powerName}: {(enabled ? "ON" : "OFF")}");
     }
 
-    private void KillAllEnemies()
+    private int KillAllEnemies()
     {
         killAllTargets.Clear();
 
@@ -193,11 +254,15 @@ public sealed class AnomalyPowerDebugController : MonoBehaviour
         }
 
         killAllTargets.Clear();
-        Debug.Log($"DEBUG KILL ALL: killed {killed} enemies");
+        return killed;
     }
 
     private void OnGUI()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (explorationHudMode)
+            return;
+#endif
         int enemiesAlive = EnemyHealth.ActiveInstances.Count;
         int kills = powerTest != null ? powerTest.Kills : 0;
         float killsPerSecond = powerTest != null

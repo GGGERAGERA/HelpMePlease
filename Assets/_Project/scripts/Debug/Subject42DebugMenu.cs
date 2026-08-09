@@ -47,6 +47,16 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         OutOfPool
     }
 
+    private enum SandboxTab
+    {
+        Exploration,
+        SectorVisual,
+        VisualReadability,
+        WorldRule,
+        Anomaly,
+        WeaponsPowers
+    }
+
     private static readonly string[] TabLabels =
     {
         "RUN",
@@ -56,6 +66,16 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         "EVENTS",
         "WEAPONS & UPGRADES",
         "TELEKINESIS"
+    };
+
+    private static readonly string[] SandboxTabLabels =
+    {
+        "EXPLORATION",
+        "SECTOR VISUAL",
+        "VISUAL READABILITY",
+        "WORLD RULE",
+        "ANOMALY",
+        "WEAPONS & POWERS"
     };
 
     private static readonly WorldRuleType[] DebugRuleTypes =
@@ -82,7 +102,15 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private readonly GameObject[] tabRoots = new GameObject[TabLabels.Length];
     private readonly Image[] tabButtonImages = new Image[TabLabels.Length];
     private DebugTab activeTab = DebugTab.Run;
+    private SandboxTab activeSandboxTab = SandboxTab.Exploration;
     private UpgradeFilter upgradeFilter = UpgradeFilter.All;
+    private bool sandboxLabMode;
+    private ExplorationSectorController explorationSector;
+    private SectorVisualDebugController sectorVisualController;
+    private AnomalyPowerDebugController anomalyPowerController;
+    private GravityTrajectoryPreview trajectoryPreview;
+    private WorldEventDebugStatusOverlay eventStatusOverlay;
+    private EnvironmentReadabilityDebugController readabilityController;
     private bool isOpen;
     private bool waitingForF1Release;
     private float previousTimeScale;
@@ -113,9 +141,16 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private void Awake()
     {
         ResolveSceneReferences();
+    }
+
+    private void Start()
+    {
         BuildMenu();
         RefreshAllTabs();
-        SelectTab(activeTab, false);
+        if (sandboxLabMode)
+            SelectSandboxTab(activeSandboxTab, false);
+        else
+            SelectTab(activeTab, false);
         menuRoot.SetActive(false);
     }
 
@@ -147,8 +182,28 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         eyesEnemyPrefab = eyesPrefab;
         debugWeapons = weapons;
         additionalDebugUpgrades = upgrades;
-        RefreshAllTabs();
-        SelectTab(activeTab, false);
+        if (menuRoot != null)
+        {
+            RefreshAllTabs();
+            SelectTab(activeTab, false);
+        }
+    }
+
+    public void ConfigureSandboxLab(
+        ExplorationSectorController exploration,
+        SectorVisualDebugController sectorVisual,
+        AnomalyPowerDebugController powers,
+        GravityTrajectoryPreview trajectory,
+        WorldEventDebugStatusOverlay eventOverlay,
+        EnvironmentReadabilityDebugController readability)
+    {
+        sandboxLabMode = true;
+        explorationSector = exploration;
+        sectorVisualController = sectorVisual;
+        anomalyPowerController = powers;
+        trajectoryPreview = trajectory;
+        eventStatusOverlay = eventOverlay;
+        readabilityController = readability;
     }
 
     private void Update()
@@ -197,7 +252,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             return;
 
         ResolveSceneReferences();
-        RefreshTab(activeTab);
+        if (sandboxLabMode)
+            RefreshSandboxTab(activeSandboxTab);
+        else
+            RefreshTab(activeTab);
 
         previousTimeScale = Time.timeScale;
         previousCursorVisible = Cursor.visible;
@@ -337,18 +395,21 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         tabBar.anchoredPosition = new Vector2(0f, -62f);
         tabBar.sizeDelta = new Vector2(0f, 54f);
 
-        for (int i = 0; i < TabLabels.Length; i++)
+        string[] labels = sandboxLabMode ? SandboxTabLabels : TabLabels;
+        for (int i = 0; i < labels.Length; i++)
         {
             int captured = i;
-            RectTransform slot = CreateRect(TabLabels[i] + " Slot", tabBar);
-            slot.anchorMin = new Vector2((float)i / TabLabels.Length, 0f);
-            slot.anchorMax = new Vector2((float)(i + 1) / TabLabels.Length, 1f);
+            RectTransform slot = CreateRect(labels[i] + " Slot", tabBar);
+            slot.anchorMin = new Vector2((float)i / labels.Length, 0f);
+            slot.anchorMax = new Vector2((float)(i + 1) / labels.Length, 1f);
             slot.offsetMin = new Vector2(3f, 3f);
             slot.offsetMax = new Vector2(-3f, -3f);
             Button button = CreateButton(
                 slot,
-                TabLabels[i],
-                () => SelectTab((DebugTab)captured),
+                labels[i],
+                sandboxLabMode
+                    ? () => SelectSandboxTab((SandboxTab)captured)
+                    : () => SelectTab((DebugTab)captured),
                 100f
             );
             Stretch(button.GetComponent<RectTransform>());
@@ -361,8 +422,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         pages.offsetMin = new Vector2(18f, 18f);
         pages.offsetMax = new Vector2(-18f, -120f);
 
-        for (int i = 0; i < TabLabels.Length; i++)
-            tabRoots[i] = CreateTabPage(TabLabels[i], pages, out _);
+        for (int i = 0; i < labels.Length; i++)
+            tabRoots[i] = CreateTabPage(labels[i], pages, out _);
     }
 
     private GameObject CreateTabPage(
@@ -430,13 +491,82 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             RefreshTab(tab);
     }
 
+    private void SelectSandboxTab(SandboxTab tab, bool refresh = true)
+    {
+        activeSandboxTab = tab;
+        for (int i = 0; i < tabRoots.Length; i++)
+        {
+            if (tabRoots[i] == null)
+                continue;
+            bool selected = i == (int)tab;
+            tabRoots[i].SetActive(selected);
+            if (tabButtonImages[i] != null)
+            {
+                tabButtonImages[i].color = selected
+                    ? new Color(0.2f, 0.73f, 0.88f, 1f)
+                    : accentColor;
+            }
+        }
+        if (refresh)
+            RefreshSandboxTab(tab);
+    }
+
     private void RefreshAllTabs()
     {
+        if (sandboxLabMode)
+        {
+            for (int i = 0; i < SandboxTabLabels.Length; i++)
+                RefreshSandboxTab((SandboxTab)i);
+            return;
+        }
         for (int i = 0; i < tabRoots.Length; i++)
             RefreshTab((DebugTab)i);
     }
 
-    private void RefreshCurrentTab() => RefreshTab(activeTab);
+    private void RefreshCurrentTab()
+    {
+        if (sandboxLabMode)
+            RefreshSandboxTab(activeSandboxTab);
+        else
+            RefreshTab(activeTab);
+    }
+
+    private void RefreshSandboxTab(SandboxTab tab)
+    {
+        if (tabRoots[(int)tab] == null)
+            return;
+
+        contentRoot = tabRoots[(int)tab].transform
+            .Find("Viewport/Content") as RectTransform;
+        if (contentRoot == null)
+            return;
+        for (int i = contentRoot.childCount - 1; i >= 0; i--)
+            Destroy(contentRoot.GetChild(i).gameObject);
+
+        AddTabHeading(SandboxTabLabels[(int)tab]);
+        switch (tab)
+        {
+            case SandboxTab.Exploration:
+                AddSandboxExplorationSection();
+                break;
+            case SandboxTab.SectorVisual:
+                AddSandboxSectorVisualSection();
+                break;
+            case SandboxTab.VisualReadability:
+                AddSandboxVisualReadabilitySection();
+                break;
+            case SandboxTab.WorldRule:
+                AddSandboxWorldRuleSection();
+                break;
+            case SandboxTab.Anomaly:
+                AddSandboxAnomalySection();
+                break;
+            case SandboxTab.WeaponsPowers:
+                AddSandboxWeaponsPowersSection();
+                break;
+        }
+        AddHint("F1 toggles this menu. Gameplay remains paused while it is open.");
+    }
 
     private void RefreshTab(DebugTab tab)
     {
@@ -482,6 +612,350 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         }
 
         AddHint("F1 toggles this menu. Gameplay remains paused while it is open.");
+    }
+
+    private void AddSandboxExplorationSection()
+    {
+        bool available = explorationSector != null;
+        AddSectionTitle("SECTOR SESSION", "Runtime-only Exploration controls");
+        AddRow("New Layout", available ? "GENERATE + RESET" : "NOT FOUND",
+            available ? mutedColor : warningColor,
+            "NEW", available, () =>
+            {
+                explorationSector.NewLayout();
+                RefreshCurrentTab();
+            });
+        AddRow("Reset Sector", available ? "KEEP LAYOUT" : "NOT FOUND",
+            available ? mutedColor : warningColor,
+            "RESET", available, () =>
+            {
+                explorationSector.ResetSector();
+                RefreshCurrentTab();
+            });
+        AddToggleRow("Invulnerability",
+            available && explorationSector.InvulnerabilityEnabled,
+            available,
+            () => explorationSector.SetInvulnerability(
+                !explorationSector.InvulnerabilityEnabled));
+        AddToggleRow("Exploration HUD",
+            available && explorationSector.HudVisible,
+            available,
+            () => explorationSector.SetHudVisible(!explorationSector.HudVisible));
+        AddToggleRow("Debug Map",
+            available && explorationSector.MapVisible,
+            available,
+            () => explorationSector.SetMapVisible(!explorationSector.MapVisible));
+
+        AddSectionTitle("ENEMY CAP", "Comparison scale; default balance remains 100%");
+        AddOptionRow("50%", available && Mathf.Approximately(
+            explorationSector.EnemyCapScale, 0.5f), available,
+            () => explorationSector.SetEnemyCapScale(0.5f));
+        AddOptionRow("75%", available && Mathf.Approximately(
+            explorationSector.EnemyCapScale, 0.75f), available,
+            () => explorationSector.SetEnemyCapScale(0.75f));
+        AddOptionRow("100%", available && Mathf.Approximately(
+            explorationSector.EnemyCapScale, 1f), available,
+            () => explorationSector.SetEnemyCapScale(1f));
+        AddRow("Kill All Enemies", $"ALIVE: {EnemyHealth.ActiveInstances.Count}",
+            mutedColor, "KILL ALL", anomalyPowerController != null,
+            () => anomalyPowerController.KillAllEnemiesDebug());
+
+        if (!available)
+            return;
+        AddSectionTitle("LIVE STATUS", "Current Exploration state");
+        AddRow("Threat", explorationSector.ThreatLevel.ToString(), mutedColor,
+            null, false, null);
+        AddRow("Elapsed", FormatDebugElapsed(explorationSector.Elapsed), mutedColor,
+            null, false, null);
+        AddRow("Enemies Alive", explorationSector.EnemiesAlive.ToString(), mutedColor,
+            null, false, null);
+        AddRow("Sites completed", $"{explorationSector.SitesCompleted}/4", mutedColor,
+            null, false, null);
+    }
+
+    private void AddSandboxSectorVisualSection()
+    {
+        bool available = sectorVisualController != null;
+        string active = available ? sectorVisualController.CurrentPresetName : "NOT FOUND";
+        AddSectionTitle("VISUAL PRESET", $"Active: {active}");
+        AddSectorPresetRow(SectorVisualDebugController.SectorPreset.Calibration);
+        AddSectorPresetRow(SectorVisualDebugController.SectorPreset.CorruptedTest);
+        AddSectorPresetRow(SectorVisualDebugController.SectorPreset.Containment);
+        AddSectorPresetRow(SectorVisualDebugController.SectorPreset.SystemFailure);
+        AddSectorPresetRow(SectorVisualDebugController.SectorPreset.CoreFinalTest);
+
+        AddSectionTitle("LAYERS", "Visual only; no colliders or gameplay state");
+        AddToggleRow("Grid", available && sectorVisualController.GridVisible,
+            available, () => sectorVisualController.SetGridVisible(
+                !sectorVisualController.GridVisible));
+        AddToggleRow("Sector Lines",
+            available && sectorVisualController.SectorLinesVisible,
+            available, () => sectorVisualController.SetSectorLinesVisible(
+                !sectorVisualController.SectorLinesVisible));
+        AddToggleRow("Debug Boundaries",
+            available && sectorVisualController.BoundariesVisible,
+            available, () => sectorVisualController.SetBoundariesVisible(
+                !sectorVisualController.BoundariesVisible));
+        AddToggleRow("Exploration HUD",
+            explorationSector != null && explorationSector.HudVisible,
+            explorationSector != null,
+            () => explorationSector.SetHudVisible(!explorationSector.HudVisible));
+    }
+
+    private void AddSectorPresetRow(SectorVisualDebugController.SectorPreset preset)
+    {
+        bool available = sectorVisualController != null;
+        bool selected = available && sectorVisualController.CurrentPreset == preset;
+        AddRow(SectorVisualDebugController.GetPresetName(preset),
+            selected ? "SELECTED" : "AVAILABLE",
+            selected ? successColor : mutedColor,
+            ((int)preset).ToString(), available, () =>
+            {
+                sectorVisualController.ApplyPreset(preset);
+                RefreshCurrentTab();
+            });
+    }
+
+    private void AddSandboxVisualReadabilitySection()
+    {
+        bool available = readabilityController != null;
+        string active = available
+            ? EnvironmentReadabilityDebugController.GetPresetName(
+                readabilityController.Preset)
+            : "NOT FOUND";
+        AddSectionTitle(
+            "READABILITY PRESET",
+            $"Active: {active} | Environment renderers: " +
+            $"{(available ? readabilityController.EnvironmentRendererCount : 0)}"
+        );
+        AddReadabilityPresetRow(
+            EnvironmentReadabilityDebugController.ReadabilityPreset.Original);
+        AddReadabilityPresetRow(
+            EnvironmentReadabilityDebugController.ReadabilityPreset.MutedWorld);
+        AddReadabilityPresetRow(
+            EnvironmentReadabilityDebugController.ReadabilityPreset.HighGameplayContrast);
+        AddReadabilityPresetRow(
+            EnvironmentReadabilityDebugController.ReadabilityPreset.DarkWorld);
+
+        AddSectionTitle("ENVIRONMENT PROPS INTENSITY",
+            "Trees, plants, decorative props and their shadows");
+        AddReadabilityValueRow("Props 100%", 1f,
+            available ? readabilityController.PropsIntensity : 1f,
+            available, value => readabilityController.SetPropsIntensity(value));
+        AddReadabilityValueRow("Props 75%", 0.75f,
+            available ? readabilityController.PropsIntensity : 1f,
+            available, value => readabilityController.SetPropsIntensity(value));
+        AddReadabilityValueRow("Props 50%", 0.5f,
+            available ? readabilityController.PropsIntensity : 1f,
+            available, value => readabilityController.SetPropsIntensity(value));
+        AddReadabilityValueRow("Props 25%", 0.25f,
+            available ? readabilityController.PropsIntensity : 1f,
+            available, value => readabilityController.SetPropsIntensity(value));
+
+        AddSectionTitle("ANOMALY EMPHASIS",
+            "Visual brightness/alpha and line width only; radius unchanged");
+        AddReadabilityValueRow("Anomaly 100%", 1f,
+            available ? readabilityController.AnomalyEmphasis : 1f,
+            available, value => readabilityController.SetAnomalyEmphasis(value));
+        AddReadabilityValueRow("Anomaly 125%", 1.25f,
+            available ? readabilityController.AnomalyEmphasis : 1f,
+            available, value => readabilityController.SetAnomalyEmphasis(value));
+        AddReadabilityValueRow("Anomaly 150%", 1.5f,
+            available ? readabilityController.AnomalyEmphasis : 1f,
+            available, value => readabilityController.SetAnomalyEmphasis(value));
+
+        AddSectionTitle("ENEMY READABILITY", "Optional subtle tint separation");
+        AddOptionRow("Enemy Highlight OFF",
+            available && !readabilityController.EnemyHighlight,
+            available,
+            () => readabilityController.SetEnemyHighlight(false));
+        AddOptionRow("Enemy Highlight SUBTLE",
+            available && readabilityController.EnemyHighlight,
+            available,
+            () => readabilityController.SetEnemyHighlight(true));
+
+        AddRow("Reset Visual", available ? "RESTORE ORIGINAL" : "NOT FOUND",
+            available ? warningColor : mutedColor,
+            "RESET VISUAL", available, () =>
+            {
+                readabilityController.ResetVisual();
+                RefreshCurrentTab();
+            });
+    }
+
+    private void AddReadabilityPresetRow(
+        EnvironmentReadabilityDebugController.ReadabilityPreset value)
+    {
+        bool available = readabilityController != null;
+        bool selected = available && readabilityController.Preset == value;
+        AddRow(EnvironmentReadabilityDebugController.GetPresetName(value),
+            selected ? "SELECTED" : "AVAILABLE",
+            selected ? successColor : mutedColor,
+            "SELECT", available, () =>
+            {
+                readabilityController.SetPreset(value);
+                RefreshCurrentTab();
+            });
+    }
+
+    private void AddReadabilityValueRow(
+        string label,
+        float value,
+        float current,
+        bool available,
+        System.Action<float> setter)
+    {
+        bool selected = available && Mathf.Approximately(value, current);
+        AddRow(label, selected ? "SELECTED" : "AVAILABLE",
+            selected ? successColor : mutedColor,
+            "SELECT", available, () =>
+            {
+                setter?.Invoke(value);
+                RefreshCurrentTab();
+            });
+    }
+
+    private void AddSandboxWorldRuleSection()
+    {
+        WorldRuleData active = worldRuleController != null
+            ? worldRuleController.ActiveRule : null;
+        AddSectionTitle("WORLD RULE",
+            $"Active Rule: {(active != null ? GetWorldRuleName(active.RuleType, active) : "None")}");
+        AddRow("None", active == null ? "SELECTED" : "AVAILABLE",
+            active == null ? successColor : mutedColor,
+            "APPLY", worldRuleController != null, ClearWorldRule);
+
+        WorldRuleType[] order =
+        {
+            WorldRuleType.Snow,
+            WorldRuleType.Rain,
+            WorldRuleType.Wind,
+            WorldRuleType.Darkness,
+            WorldRuleType.Condensation,
+            WorldRuleType.Golden
+        };
+        for (int i = 0; i < order.Length; i++)
+        {
+            WorldRuleData data = FindWorldRule(order[i]);
+            bool selected = data != null && active == data;
+            WorldRuleData captured = data;
+            AddRow(order[i].ToString(), data == null ? "ASSET MISSING" :
+                selected ? "SELECTED" : "AVAILABLE",
+                data == null ? warningColor : selected ? successColor : mutedColor,
+                "APPLY", worldRuleController != null && data != null,
+                () => ApplyWorldRule(captured));
+        }
+        AddRow("Clear Rule", active != null ? "ACTIVE" : "CLEAR",
+            active != null ? warningColor : mutedColor,
+            "CLEAR", worldRuleController != null, ClearWorldRule);
+    }
+
+    private void AddSandboxAnomalySection()
+    {
+        bool trajectoryAvailable = trajectoryPreview != null;
+        AddSectionTitle("GRAVITY TRAJECTORY", "Existing orbital prediction");
+        AddToggleRow("Gravity Trajectory",
+            trajectoryAvailable && trajectoryPreview.PreviewEnabled,
+            trajectoryAvailable,
+            () => trajectoryPreview.SetPreviewEnabled(!trajectoryPreview.PreviewEnabled));
+        float[] times = { 0.75f, 1.25f, 1.5f, 2f };
+        for (int i = 0; i < times.Length; i++)
+        {
+            float captured = times[i];
+            AddOptionRow($"Prediction {captured:0.00} sec",
+                trajectoryAvailable && Mathf.Approximately(
+                    trajectoryPreview.PredictionTime, captured),
+                trajectoryAvailable,
+                () => trajectoryPreview.SetPredictionTime(captured));
+        }
+        AddSectionTitle("EVENT DIAGNOSTICS", "Existing interaction status overlay");
+        AddToggleRow("Show Event Debug",
+            eventStatusOverlay != null && eventStatusOverlay.OverlayVisible,
+            eventStatusOverlay != null,
+            () => eventStatusOverlay.SetOverlayVisible(
+                !eventStatusOverlay.OverlayVisible));
+    }
+
+    private void AddSandboxWeaponsPowersSection()
+    {
+        AddWeaponsSection();
+        AddSectionTitle("WEAPON CORE", "Existing debug selector");
+        AddOptionRow("None", WeaponCoreDebugSelector.ActiveCore == WeaponCoreType.None,
+            true, () => WeaponCoreDebugSelector.Select(WeaponCoreType.None));
+        AddOptionRow("Chain", WeaponCoreDebugSelector.ActiveCore == WeaponCoreType.Chain,
+            true, () => WeaponCoreDebugSelector.Select(WeaponCoreType.Chain));
+
+        AddSectionTitle("ANOMALY POWERS", "Existing runtime power components");
+        bool available = anomalyPowerController != null;
+        AddPowerToggle("Gravity Orb",
+            available && anomalyPowerController.GravityOrbEnabled,
+            available && !anomalyPowerController.GravityOrbSiteLocked,
+            () => anomalyPowerController.SetGravityOrbEnabled(
+                !anomalyPowerController.GravityOrbEnabled));
+        AddPowerToggle("Arc Node",
+            available && anomalyPowerController.ArcNodeEnabled,
+            available && !anomalyPowerController.ArcNodeSiteLocked,
+            () => anomalyPowerController.SetArcNodeEnabled(
+                !anomalyPowerController.ArcNodeEnabled));
+        AddPowerToggle("Red Beam",
+            available && anomalyPowerController.RedBeamEnabled,
+            available && !anomalyPowerController.RedBeamSiteLocked,
+            () => anomalyPowerController.SetRedBeamEnabled(
+                !anomalyPowerController.RedBeamEnabled));
+    }
+
+    private void AddPowerToggle(string label, bool enabled, bool available,
+        UnityEngine.Events.UnityAction action)
+    {
+        AddRow(label, available ? (enabled ? "ON" : "OFF") : "LOCKED",
+            enabled ? successColor : available ? mutedColor : warningColor,
+            enabled ? "TURN OFF" : "TURN ON", available, () =>
+            {
+                action?.Invoke();
+                RefreshCurrentTab();
+            });
+    }
+
+    private void AddToggleRow(string label, bool enabled, bool available,
+        UnityEngine.Events.UnityAction action)
+    {
+        AddRow(label, enabled ? "ON" : "OFF",
+            enabled ? successColor : mutedColor,
+            enabled ? "TURN OFF" : "TURN ON", available, () =>
+            {
+                action?.Invoke();
+                RefreshCurrentTab();
+            });
+    }
+
+    private void AddOptionRow(string label, bool selected, bool available,
+        UnityEngine.Events.UnityAction action)
+    {
+        AddRow(label, selected ? "SELECTED" : "AVAILABLE",
+            selected ? successColor : mutedColor,
+            "SELECT", available, () =>
+            {
+                action?.Invoke();
+                RefreshCurrentTab();
+            });
+    }
+
+    private WorldRuleData FindWorldRule(WorldRuleType type)
+    {
+        if (worldRules == null)
+            return null;
+        for (int i = 0; i < worldRules.Length; i++)
+        {
+            if (worldRules[i] != null && worldRules[i].RuleType == type)
+                return worldRules[i];
+        }
+        return null;
+    }
+
+    private static string FormatDebugElapsed(float seconds)
+    {
+        int total = Mathf.Max(0, Mathf.FloorToInt(seconds));
+        return $"{total / 60:00}:{total % 60:00}";
     }
 
     private void AddRunSection()

@@ -17,16 +17,21 @@ public sealed class GravityTrajectoryPreview : MonoBehaviour
     [SerializeField, Range(0.2f, 2f)] private float predictionTime = 1.5f;
     [SerializeField, Range(2, 24)] private int segments = 16;
     [SerializeField, Min(0.05f)] private float targetRefreshInterval = 0.2f;
+    [SerializeField, Range(3f, 15f)] private float maxThreatDistance = 9f;
+    [SerializeField, Range(1f, 5f)] private float threatClosestApproach = 3f;
+    [SerializeField, Min(0.016f)] private float trajectoryRenderInterval = 0.033f;
     [SerializeField, Min(0.005f)] private float lineWidth = 0.035f;
 
     private GravityAnomalySiteController gravitySite;
     private TrajectorySlot[] slots;
-    private EnemyHealth[] nearestTargets;
-    private float[] nearestDistances;
+    private EnemyHealth[] threatTargets;
+    private float[] threatScores;
     private Vector3[] pathPoints;
     private Transform player;
     private Material lineMaterial;
     private float nextTargetRefresh;
+    private float nextTrajectoryRender;
+    private float lastTrajectoryRender;
     private bool previewEnabled = true;
     private bool wasSiteActive;
     private int predictionTimeIndex = 2;
@@ -46,6 +51,32 @@ public sealed class GravityTrajectoryPreview : MonoBehaviour
         HideAll();
     }
 
+    public void SetPreviewEnabled(bool enabled)
+    {
+        previewEnabled = enabled;
+        if (!enabled)
+            HideAll();
+        else
+            nextTargetRefresh = 0f;
+    }
+
+    public void SetPredictionTime(float seconds)
+    {
+        int closestIndex = 0;
+        float closestDistance = float.PositiveInfinity;
+        for (int i = 0; i < PredictionTimes.Length; i++)
+        {
+            float distance = Mathf.Abs(PredictionTimes[i] - seconds);
+            if (distance >= closestDistance)
+                continue;
+            closestDistance = distance;
+            closestIndex = i;
+        }
+        predictionTimeIndex = closestIndex;
+        predictionTime = PredictionTimes[closestIndex];
+        nextTrajectoryRender = 0f;
+    }
+
     private void Update()
     {
         bool siteActive = gravitySite != null &&
@@ -56,6 +87,8 @@ public sealed class GravityTrajectoryPreview : MonoBehaviour
         {
             previewEnabled = true;
             nextTargetRefresh = 0f;
+            nextTrajectoryRender = 0f;
+            lastTrajectoryRender = Time.unscaledTime;
         }
 
         wasSiteActive = siteActive;
@@ -95,7 +128,20 @@ public sealed class GravityTrajectoryPreview : MonoBehaviour
             nextTargetRefresh = Time.unscaledTime + targetRefreshInterval;
         }
 
-        RenderTrajectories(gravitySite.ActiveOrbitZone);
+        if (Time.unscaledTime >= nextTrajectoryRender)
+        {
+            float renderDelta = Mathf.Max(
+                0.0001f,
+                Time.unscaledTime - lastTrajectoryRender
+            );
+            lastTrajectoryRender = Time.unscaledTime;
+            nextTrajectoryRender =
+                Time.unscaledTime + trajectoryRenderInterval;
+            RenderTrajectories(
+                gravitySite.ActiveOrbitZone,
+                renderDelta
+            );
+        }
     }
 
     private void BuildPool()
@@ -103,8 +149,8 @@ public sealed class GravityTrajectoryPreview : MonoBehaviour
         maxTargets = Mathf.Max(1, maxTargets);
         segments = Mathf.Max(2, segments);
         slots = new TrajectorySlot[maxTargets];
-        nearestTargets = new EnemyHealth[maxTargets];
-        nearestDistances = new float[maxTargets];
+        threatTargets = new EnemyHealth[maxTargets];
+        threatScores = new float[maxTargets];
         pathPoints = new Vector3[segments + 1];
 
         Shader shader = Shader.Find("Sprites/Default");
@@ -165,8 +211,8 @@ public sealed class GravityTrajectoryPreview : MonoBehaviour
     {
         for (int i = 0; i < maxTargets; i++)
         {
-            nearestTargets[i] = null;
-            nearestDistances[i] = float.PositiveInfinity;
+            threatTargets[i] = null;
+            threatScores[i] = float.PositiveInfinity;
         }
 
         Vector2 playerPosition = player.position;
@@ -182,34 +228,140 @@ public sealed class GravityTrajectoryPreview : MonoBehaviour
             if (!gravityZone.DebugContainsWorldPosition(position))
                 continue;
 
-            float distance = (position - playerPosition).sqrMagnitude;
-            InsertNearest(enemy, distance);
+            Vector2 playerOffset = playerPosition - position;
+            float distanceSquared = playerOffset.sqrMagnitude;
+            if (distanceSquared > maxThreatDistance * maxThreatDistance)
+                continue;
+
+            EnemyMovement movement = enemy.GetComponent<EnemyMovement>();
+            if (movement == null)
+                continue;
+
+            if (!TryCalculateThreatScore(
+                    enemy,
+                    movement,
+                    gravityZone,
+                    position,
+                    playerPosition,
+                    distanceSquared,
+                    out float score))
+            {
+                continue;
+            }
+
+            InsertThreat(enemy, score);
         }
 
         ActiveTargetCount = 0;
         for (int i = 0; i < slots.Length; i++)
         {
-            AssignTarget(slots[i], nearestTargets[i]);
+            AssignTarget(slots[i], threatTargets[i]);
             if (slots[i].Target != null)
                 ActiveTargetCount++;
         }
     }
 
-    private void InsertNearest(EnemyHealth enemy, float distance)
+    private bool TryCalculateThreatScore(
+        EnemyHealth enemy,
+        EnemyMovement movement,
+        GravityZone gravityZone,
+        Vector2 startPosition,
+        Vector2 playerPosition,
+        float startDistanceSquared,
+        out float score)
+    {
+        score = float.PositiveInfinity;
+        Vector2 observedVelocity = GetCandidateVelocity(enemy, playerPosition);
+        Vector2 currentGravity =
+            gravityZone.GetDebugPredictedExternalVelocity(
+                startPosition,
+                movement
+            );
+        Vector2 baseVelocity = observedVelocity - currentGravity;
+        Vector2 predictedPosition = startPosition;
+        float predictionStep = predictionTime / segments;
+        float closestDistanceSquared = startDistanceSquared;
+        float timeToClosest = 0f;
+
+        for (int point = 1; point <= segments; point++)
+        {
+            Vector2 predictedGravity =
+                gravityZone.GetDebugPredictedExternalVelocity(
+                    predictedPosition,
+                    movement
+                );
+            predictedPosition +=
+                (baseVelocity + predictedGravity) * predictionStep;
+            float distanceSquared =
+                (predictedPosition - playerPosition).sqrMagnitude;
+            if (distanceSquared >= closestDistanceSquared)
+                continue;
+
+            closestDistanceSquared = distanceSquared;
+            timeToClosest = point * predictionStep;
+        }
+
+        Vector2 toPlayer = playerPosition - startPosition;
+        Vector2 initialVelocity = baseVelocity + currentGravity;
+        float approach = initialVelocity.sqrMagnitude > 0.01f &&
+            toPlayer.sqrMagnitude > 0.01f
+            ? Vector2.Dot(initialVelocity.normalized, toPlayer.normalized)
+            : 0f;
+        float closestDistance = Mathf.Sqrt(closestDistanceSquared);
+        bool directThreat = closestDistance <= threatClosestApproach;
+        bool approachingThreat = approach >= 0.25f &&
+            closestDistance <= threatClosestApproach + 2f &&
+            closestDistanceSquared < startDistanceSquared - 0.25f;
+        if (!directThreat && !approachingThreat)
+            return false;
+
+        float currentDistance = Mathf.Sqrt(startDistanceSquared);
+        score = closestDistance * 2f +
+            timeToClosest * 0.7f +
+            currentDistance * 0.25f -
+            Mathf.Max(0f, approach) * 1.5f;
+        return true;
+    }
+
+    private Vector2 GetCandidateVelocity(
+        EnemyHealth enemy,
+        Vector2 playerPosition)
+    {
+        for (int i = 0; i < slots.Length; i++)
+        {
+            TrajectorySlot slot = slots[i];
+            if (slot.Target == enemy && slot.HasMotionSample &&
+                slot.ObservedVelocity.sqrMagnitude > 0.01f)
+            {
+                return slot.ObservedVelocity;
+            }
+        }
+
+        Rigidbody2D body = enemy.GetComponent<Rigidbody2D>();
+        if (body != null && body.linearVelocity.sqrMagnitude > 0.01f)
+            return body.linearVelocity;
+
+        Vector2 toPlayer = playerPosition - (Vector2)enemy.transform.position;
+        return toPlayer.sqrMagnitude > 0.01f
+            ? toPlayer.normalized * 2f
+            : Vector2.zero;
+    }
+
+    private void InsertThreat(EnemyHealth enemy, float score)
     {
         for (int i = 0; i < maxTargets; i++)
         {
-            if (distance >= nearestDistances[i])
+            if (score >= threatScores[i])
                 continue;
 
             for (int j = maxTargets - 1; j > i; j--)
             {
-                nearestTargets[j] = nearestTargets[j - 1];
-                nearestDistances[j] = nearestDistances[j - 1];
+                threatTargets[j] = threatTargets[j - 1];
+                threatScores[j] = threatScores[j - 1];
             }
 
-            nearestTargets[i] = enemy;
-            nearestDistances[i] = distance;
+            threatTargets[i] = enemy;
+            threatScores[i] = score;
             return;
         }
     }
@@ -230,9 +382,10 @@ public sealed class GravityTrajectoryPreview : MonoBehaviour
         slot.Line.enabled = target != null;
     }
 
-    private void RenderTrajectories(GravityZone gravityZone)
+    private void RenderTrajectories(
+        GravityZone gravityZone,
+        float sampleDeltaTime)
     {
-        float deltaTime = Mathf.Max(0f, Time.deltaTime);
         float predictionStep = predictionTime / segments;
 
         for (int i = 0; i < slots.Length; i++)
@@ -248,7 +401,11 @@ public sealed class GravityTrajectoryPreview : MonoBehaviour
             }
 
             Vector2 currentPosition = enemy.transform.position;
-            UpdateObservedVelocity(slot, currentPosition, deltaTime);
+            UpdateObservedVelocity(
+                slot,
+                currentPosition,
+                sampleDeltaTime
+            );
             Vector2 currentGravity =
                 gravityZone.GetDebugPredictedExternalVelocity(
                     currentPosition,

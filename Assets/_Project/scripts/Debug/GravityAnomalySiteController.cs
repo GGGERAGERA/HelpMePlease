@@ -26,9 +26,9 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
     private const float OrbitPreviewDegreesPerSecond = 24f;
 
     private readonly HashSet<EnemyHealth> trialEnemies = new();
-    private readonly Vector3 sitePosition = Vector3.zero;
+    private Vector3 sitePosition = Vector3.zero;
     private readonly Vector3 playerStartPosition = new(-8f, 0f, 0f);
-    private readonly Vector3 eventOnePosition = new(-5f, -3f, 0f);
+    private readonly Vector3 eventOffset = new(-5f, -3f, 0f);
 
     private EnemySpawner enemySpawner;
     private WorldEventSpawner eventSpawner;
@@ -54,10 +54,14 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
     private float acquisitionMessageUntil;
     private string transientMessage;
     private bool resetPlayerWhenAvailable;
+    private bool explorationMode;
+    private bool showStandaloneHud = true;
 
     public bool IsOrbitalGravityActive => activeGravityZone != null &&
         (state == SiteState.Active || state == SiteState.Collapsing);
     public GravityZone ActiveOrbitZone => activeGravityZone as GravityZone;
+    public bool IsCompleted => state == SiteState.Completed;
+    public Vector3 SitePosition => sitePosition;
 
     public void Configure(
         EnemySpawner spawner,
@@ -89,6 +93,14 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
         StopSite();
     }
 
+    public void ConfigureExploration(Vector2 position)
+    {
+        sitePosition = position;
+        explorationMode = true;
+        showStandaloneHud = false;
+        resetPlayerWhenAvailable = false;
+    }
+
     private void Update()
     {
         ResolvePlayer();
@@ -114,8 +126,11 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
         state = SiteState.Active;
         activeSiteEvent = null;
         activeCapture = null;
-        EnablePlayerInvulnerability();
-        ResetPlayerPosition();
+        if (!explorationMode)
+        {
+            EnablePlayerInvulnerability();
+            ResetPlayerPosition();
+        }
         SpawnGravityZone();
         CreateHoldEvent();
         acquisitionMessageUntil = 0f;
@@ -147,11 +162,19 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
             return;
         }
 
-        if (!eventSpawner.SpawnDebugEventAt(
+        Vector3 eventPosition = sitePosition + eventOffset;
+        bool spawnedSuccessfully = explorationMode
+            ? eventSpawner.SpawnConcurrentDebugEventAt(
                 capturePrefab,
-                eventOnePosition,
+                eventPosition,
                 true,
-                out WorldEvent spawnedEvent))
+                out WorldEvent spawnedEvent)
+            : eventSpawner.SpawnDebugEventAt(
+                capturePrefab,
+                eventPosition,
+                true,
+                out spawnedEvent);
+        if (!spawnedSuccessfully)
         {
             Debug.LogWarning(
                 "[GravitySite] CaptureZoneEvent could not be spawned.",
@@ -169,7 +192,8 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
 
         activeCapture.ConfigureDebugHoldTime(HoldSeconds);
         activeSiteEvent = activeCapture;
-        EnsureTrialPopulation(EventOneEnemyTarget);
+        if (!explorationMode)
+            EnsureTrialPopulation(EventOneEnemyTarget);
         state = SiteState.Active;
     }
 
@@ -268,7 +292,7 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
     private void ClearActiveEvent()
     {
         if (activeSiteEvent != null && eventSpawner != null)
-            eventSpawner.ClearDebugEvent();
+            eventSpawner.ClearDebugEvent(activeSiteEvent);
 
         activeSiteEvent = null;
         activeCapture = null;
@@ -500,7 +524,7 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
 
     private void OnGUI()
     {
-        if (state == SiteState.Stopped)
+        if (!showStandaloneHud || state == SiteState.Stopped)
             return;
 
         string progress = activeCapture != null

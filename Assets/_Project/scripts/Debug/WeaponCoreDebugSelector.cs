@@ -38,7 +38,7 @@ public sealed class WeaponCoreDebugSelector : MonoBehaviour
         }
     }
 
-    private static void Select(WeaponCoreType core)
+    public static void Select(WeaponCoreType core)
     {
         if (ActiveCore == core)
             return;

@@ -84,6 +84,9 @@ public class EnemySpawner : MonoBehaviour
     private int baseMaxEnemies;
     private float baseHealthMultiplier;
     private float baseSpeedMultiplier;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private bool debugFixedExplorationPressure;
+#endif
 
     private void Start()
     {
@@ -110,7 +113,12 @@ public class EnemySpawner : MonoBehaviour
             return;
 
         if (spawnProfile == null)
-            UpdateLegacyDifficulty();
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (!debugFixedExplorationPressure)
+#endif
+                UpdateLegacyDifficulty();
+        }
 
         spawnTimer += Time.deltaTime;
 
@@ -182,6 +190,59 @@ public class EnemySpawner : MonoBehaviour
         spawningEnabled = true;
         Debug.Log("[EnemySpawner] Spawning resumed.");
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void ConfigureDebugExplorationPressure(
+        GameObject[] prefabs,
+        float interval,
+        int maxAlive,
+        int batchSize,
+        float minimumSpawnDistance = 8f,
+        float maximumSpawnDistance = 16f)
+    {
+        spawnProfile = null;
+        activePhase = null;
+        activePhaseIndex = -1;
+        enemyPrefabs = prefabs ?? System.Array.Empty<GameObject>();
+        spawnInterval = Mathf.Max(0.1f, interval);
+        maxEnemies = Mathf.Max(1, maxAlive);
+        baseEnemiesPerCycle = Mathf.Max(1, batchSize);
+        maxEnemiesPerCycle = Mathf.Max(maxEnemiesPerCycle, batchSize);
+        minSpawnDistance = Mathf.Max(1f, minimumSpawnDistance);
+        maxSpawnDistance = Mathf.Max(
+            minSpawnDistance,
+            maximumSpawnDistance
+        );
+        currentHealthMultiplier = 1f;
+        currentSpeedMultiplier = 1f;
+        currentSpawnPressure = 1f;
+        worldRuleSpawnPressureMultiplier = 1f;
+        legacyDifficultySteps = 0;
+        difficultyTimer = 0f;
+        spawnTimer = 0f;
+        debugFixedExplorationPressure = true;
+        spawningEnabled = true;
+    }
+
+    public void StopDebugExplorationPressure()
+    {
+        debugFixedExplorationPressure = false;
+        worldEventSpawnPressureMultiplier = 1f;
+        spawningEnabled = false;
+    }
+
+    public void ClearDebugSpawnedEnemies()
+    {
+        for (int i = activeEnemies.Count - 1; i >= 0; i--)
+        {
+            GameObject instance = activeEnemies[i].instance;
+            if (instance != null)
+                Destroy(instance);
+        }
+
+        activeEnemies.Clear();
+    }
+#endif
 
     public void SetWorldAcceleration(float multiplier)
     {
@@ -481,6 +542,10 @@ public class EnemySpawner : MonoBehaviour
 
     private int GetCurrentMaxAlive()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (debugFixedExplorationPressure)
+            return Mathf.Max(1, maxEnemies);
+#endif
         float effectivePressure = GetEffectiveSpawnPressure();
 
         if (activePhase == null)

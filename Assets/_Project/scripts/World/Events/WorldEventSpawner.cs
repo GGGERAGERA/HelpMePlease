@@ -73,6 +73,11 @@ public class WorldEventSpawner : MonoBehaviour
         rewardChestPrefab = prefab;
     }
 
+    public void ConfigureDebugConcurrentEventCapacity(int capacity)
+    {
+        maxActiveEvents = Mathf.Max(1, capacity);
+    }
+
     private WorldEvent debugEvent;
     private bool debugManualOnly;
     private readonly HashSet<WorldEvent> debugRewardSuppressedEvents =
@@ -455,6 +460,47 @@ public class WorldEventSpawner : MonoBehaviour
         if (debugEvent != null)
             ClearDebugEvent(debugEvent);
 
+        if (!SpawnDebugEventAtInternal(
+                prefab,
+                position,
+                suppressReward,
+                out spawnedEvent))
+        {
+            return false;
+        }
+
+        debugEvent = spawnedEvent;
+        return true;
+    }
+
+    public bool SpawnConcurrentDebugEventAt(
+        WorldEvent prefab,
+        Vector3 position,
+        bool suppressReward,
+        out WorldEvent spawnedEvent)
+    {
+        return SpawnDebugEventAtInternal(
+            prefab,
+            position,
+            suppressReward,
+            out spawnedEvent
+        );
+    }
+
+    private bool SpawnDebugEventAtInternal(
+        WorldEvent prefab,
+        Vector3 position,
+        bool suppressReward,
+        out WorldEvent spawnedEvent)
+    {
+        spawnedEvent = null;
+
+        if (!isActiveAndEnabled || prefab == null ||
+            !IsEventPrefabEnabled(prefab))
+        {
+            return false;
+        }
+
         if (spawnedEventCount >= maxActiveEvents)
             return false;
 
@@ -462,7 +508,6 @@ public class WorldEventSpawner : MonoBehaviour
         spawnedEvent.Initialize(this);
         spawnedEvents.Add(spawnedEvent);
         spawnedEventCount++;
-        debugEvent = spawnedEvent;
 
         if (suppressReward)
             debugRewardSuppressedEvents.Add(spawnedEvent);
@@ -500,7 +545,7 @@ public class WorldEventSpawner : MonoBehaviour
         return ClearDebugEvent(CurrentEvent);
     }
 
-    private bool ClearDebugEvent(WorldEvent worldEvent)
+    public bool ClearDebugEvent(WorldEvent worldEvent)
     {
         if (worldEvent == null)
             return false;
@@ -526,6 +571,16 @@ public class WorldEventSpawner : MonoBehaviour
         // an immediate automatic spawn caused by previously accumulated time.
         timer = eventInterval;
         return true;
+    }
+
+    public void ClearAllDebugEvents()
+    {
+        for (int i = spawnedEvents.Count - 1; i >= 0; i--)
+        {
+            WorldEvent worldEvent = spawnedEvents[i];
+            if (worldEvent != null)
+                ClearDebugEvent(worldEvent);
+        }
     }
 #endif
 

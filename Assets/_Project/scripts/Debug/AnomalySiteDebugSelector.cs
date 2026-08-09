@@ -7,6 +7,7 @@ public sealed class AnomalySiteDebugSelector : MonoBehaviour
     private ElectricAnomalySiteController electricSite;
     private BeamAnomalySiteController beamSite;
     private NormalAnomalySiteController normalSite;
+    private bool explorationLocked;
 
     public void Configure(
         GravityAnomalySiteController gravity,
@@ -23,6 +24,9 @@ public sealed class AnomalySiteDebugSelector : MonoBehaviour
 
     private void Update()
     {
+        if (explorationLocked)
+            return;
+
         if (Input.GetKeyDown(KeyCode.F6))
             HandleSiteKey(6);
         if (Input.GetKeyDown(KeyCode.F7))
@@ -31,6 +35,18 @@ public sealed class AnomalySiteDebugSelector : MonoBehaviour
             HandleSiteKey(9);
         if (Input.GetKeyDown(KeyCode.F10))
             HandleSiteKey(10);
+    }
+
+    public void SetExplorationLocked(bool locked)
+    {
+        explorationLocked = locked;
+        if (locked)
+            StopAll();
+
+        if (electricSite != null)
+            electricSite.enabled = !locked;
+        if (beamSite != null)
+            beamSite.enabled = !locked;
     }
 
     private void HandleSiteKey(int site)

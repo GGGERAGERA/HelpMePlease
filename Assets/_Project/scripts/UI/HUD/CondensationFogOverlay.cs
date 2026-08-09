@@ -48,6 +48,19 @@ public sealed class CondensationFogOverlay : MonoBehaviour
     private bool isHiding;
     private bool acceptsBrushInput;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void ConfigureDebugShader(Shader shader)
+    {
+        fogImage = GetComponent<RawImage>();
+        fogShader = shader;
+        if (fogImage != null)
+        {
+            fogImage.raycastTarget = false;
+            fogImage.enabled = false;
+        }
+    }
+#endif
+
     private void Awake()
     {
         if (Instance != null && Instance != this)

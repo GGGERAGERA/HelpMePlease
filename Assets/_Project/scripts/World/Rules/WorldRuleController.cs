@@ -95,6 +95,14 @@ public sealed class WorldRuleController : MonoBehaviour
     {
         worldRuleVisual = visual;
     }
+
+    public void ConfigureDebugGoldenAssets(
+        ParticleSystem deathFx,
+        GoldenCoinPickup coinPrefab)
+    {
+        goldenDeathFxPrefab = deathFx;
+        goldenCoinPrefab = coinPrefab;
+    }
 #endif
 
 #if UNITY_EDITOR

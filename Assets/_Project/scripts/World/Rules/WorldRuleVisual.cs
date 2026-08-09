@@ -241,12 +241,65 @@ public sealed class WorldRuleVisual : MonoBehaviour
     private float cachedSnowOrthographicSize = -1f;
     private float cachedSnowAspect = -1f;
     private GameObject windParticleObject;
+    private Image debugDarknessImage;
+    private Material debugVisualMaterial;
 
     private const float SnowParticleSizeMultiplier = 1.25f;
     private const float SnowParticleSpeedMultiplier = 1.35f;
 
     public Sprite DarknessMarkerSprite => darknessMarkerSprite;
     public Material DarknessMarkerMaterial => darknessMarkerMaterial;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void ConfigureDebugRuntime(
+        Image screenImage,
+        Image darknessImage,
+        CondensationFogOverlay condensation,
+        Material screenMaterial,
+        Material rainMaterial,
+        Material snowMaterial,
+        GameObject snowParticles,
+        Camera camera,
+        Sprite markerSprite,
+        Material markerMaterial)
+    {
+        fullscreenImage = screenImage;
+        debugDarknessImage = darknessImage;
+        condensationFogOverlay = condensation;
+        rainWorldMaterial = rainMaterial;
+        snowWorldMaterial = snowMaterial;
+        snowParticlePrefab = snowParticles;
+        targetCamera = camera;
+        darknessMarkerSprite = markerSprite;
+        darknessMarkerMaterial = markerMaterial;
+
+        if (screenMaterial != null)
+        {
+            debugVisualMaterial = new Material(screenMaterial)
+            {
+                name = "Sandbox World Rule Overlay (Runtime)",
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            visualMaterial = debugVisualMaterial;
+        }
+
+        if (fullscreenImage != null)
+        {
+            fullscreenImage.raycastTarget = false;
+            fullscreenImage.material = visualMaterial;
+        }
+        if (debugDarknessImage != null)
+        {
+            debugDarknessImage.raycastTarget = false;
+            debugDarknessImage.color = Color.clear;
+        }
+
+        EnsureSnowResources();
+        EnsureRainResources();
+        EnsureGoldenResources();
+        SetNeutral();
+    }
+#endif
 
 #if UNITY_EDITOR
     private static readonly float[] SnowDiagnosticTimes =
@@ -410,6 +463,16 @@ public sealed class WorldRuleVisual : MonoBehaviour
         UpdateSnowResources();
         UpdateRainResources();
         UpdateDarknessResources();
+        if (debugDarknessImage != null)
+        {
+            debugDarknessImage.color = new Color(
+                0.005f, 0.008f, 0.015f,
+                currentDarknessIntensity * 0.82f
+            );
+            debugDarknessImage.enabled =
+                currentDarknessIntensity > 0f ||
+                targetDarknessIntensity > 0f;
+        }
         UpdateGoldenResources();
 
 #if UNITY_EDITOR
@@ -1746,6 +1809,9 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
         if (darknessRevealObject != null)
             Destroy(darknessRevealObject);
+
+        if (debugVisualMaterial != null)
+            Destroy(debugVisualMaterial);
     }
 
 #if UNITY_EDITOR

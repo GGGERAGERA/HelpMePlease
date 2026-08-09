@@ -208,4 +208,15 @@ MonoBehaviour:
   eyesEnemyPrefab: {fileID: 3350373065324294653, guid: 74d98ca6a4a3cc94daabdf7b81bb7f13, type: 3}
   massTestEnemyPrefabs:
   - {fileID: 100100000, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
-  areaSize: {x: 48, y: 28}
+  worldRuleOverlayMaterial: {fileID: 2100000, guid: d31bb530e01b4594a58b27501624ddec, type: 2}
+  rainWorldMaterial: {fileID: 2100000, guid: 4c7fd535216f4b90bf61d62e90bb160d, type: 2}
+  snowWorldMaterial: {fileID: 2100000, guid: c2bf904374f34fd1972fb95acd727688, type: 2}
+  snowParticlePrefab: {fileID: 2732887255044470663, guid: 1e886009deaf51f4486d0d684fe11822, type: 3}
+  condensationFogShader: {fileID: 4800000, guid: c134e5f911244d97955a57f53bd90013, type: 3}
+  darknessMarkerSprite: {fileID: 21300000, guid: 119f93d0bcbf1e743bf5fcf237507d39, type: 3}
+  darknessMarkerMaterial: {fileID: 2100000, guid: 91d132427295d144ead3f3fb486918c3, type: 2}
+  goldenDeathFxPrefab: {fileID: 4954931696877459830, guid: a0f7d14547ca6cc4281f13e8d9aa8cab, type: 3}
+  goldenCoinPrefab: {fileID: 8849100027710031041, guid: dde4a96739496354da52757e7a1d4556, type: 3}
+  readabilityEnvironmentPrefab: {fileID: 100100000, guid: ba034f64368358747975b687617a0695, type: 3}
+  environmentReadabilityShader: {fileID: 4800000, guid: 726c5cb8469e43648c8d604eff6dc401, type: 3}
+  areaSize: {x: 70, y: 45}

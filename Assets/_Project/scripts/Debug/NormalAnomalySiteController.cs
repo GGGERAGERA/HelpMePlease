@@ -22,7 +22,15 @@ public sealed class NormalAnomalySiteController : MonoBehaviour
     private LocalAnomalyZone activeZone;
     private Transform player;
     private bool resetPlayerWhenAvailable;
+    private Vector3 sitePosition;
+    private bool explorationMode;
+    private bool showStandaloneHud = true;
+    private string siteLabel = "NORMAL STASIS SITE";
     private SiteState state = SiteState.Stopped;
+
+    public bool IsCompleted => state == SiteState.Completed;
+    public bool IsActive => state == SiteState.Active;
+    public Vector3 SitePosition => sitePosition;
 
     public void Configure(
         EnemySpawner spawner,
@@ -46,15 +54,32 @@ public sealed class NormalAnomalySiteController : MonoBehaviour
         StopSite();
     }
 
+    public void ConfigureExploration(
+        Vector2 position,
+        LocalAnomalyData anomaly,
+        string label)
+    {
+        sitePosition = position;
+        stasisData = anomaly;
+        siteLabel = string.IsNullOrWhiteSpace(label)
+            ? "NORMAL SITE"
+            : label;
+        explorationMode = true;
+        showStandaloneHud = false;
+        resetPlayerWhenAvailable = false;
+    }
+
     public void StartOrResetSite()
     {
         powerTest?.StopTest();
         ClearEvent();
         ClearZone();
         ClearEnemies();
-        ClearRewardChests();
-        resetPlayerWhenAvailable = true;
-        ResolvePlayer();
+        if (!explorationMode)
+            ClearRewardChests();
+        resetPlayerWhenAvailable = !explorationMode;
+        if (resetPlayerWhenAvailable)
+            ResolvePlayer();
         SpawnZone();
         CreateEvent();
         state = SiteState.Active;
@@ -65,7 +90,8 @@ public sealed class NormalAnomalySiteController : MonoBehaviour
         ClearEvent();
         ClearZone();
         ClearEnemies();
-        ClearRewardChests();
+        if (!explorationMode)
+            ClearRewardChests();
         resetPlayerWhenAvailable = false;
         state = SiteState.Stopped;
     }
@@ -82,10 +108,10 @@ public sealed class NormalAnomalySiteController : MonoBehaviour
             return;
         activeZone = Instantiate(
             stasisData.ZonePrefab,
-            Vector3.zero,
+            sitePosition,
             Quaternion.identity
         );
-        activeZone.name = "Normal Stasis Anomaly Site";
+        activeZone.name = siteLabel;
         activeZone.Initialize(
             stasisData,
             anomalyController,
@@ -97,11 +123,18 @@ public sealed class NormalAnomalySiteController : MonoBehaviour
     {
         if (capturePrefab == null || eventSpawner == null)
             return;
-        if (!eventSpawner.SpawnDebugEventAt(
+        bool spawnedSuccessfully = explorationMode
+            ? eventSpawner.SpawnConcurrentDebugEventAt(
                 capturePrefab,
-                Vector3.zero,
+                sitePosition,
                 false,
-                out WorldEvent spawned))
+                out WorldEvent spawned)
+            : eventSpawner.SpawnDebugEventAt(
+                capturePrefab,
+                sitePosition,
+                false,
+                out spawned);
+        if (!spawnedSuccessfully)
         {
             return;
         }
@@ -109,7 +142,8 @@ public sealed class NormalAnomalySiteController : MonoBehaviour
         if (activeEvent == null)
             return;
         activeEvent.ConfigureDebugHoldTime(HoldSeconds);
-        EnsureEnemies(EnemyTarget);
+        if (!explorationMode)
+            EnsureEnemies(EnemyTarget);
     }
 
     private void HandleEventCompleted(WorldEvent worldEvent)
@@ -139,7 +173,7 @@ public sealed class NormalAnomalySiteController : MonoBehaviour
         {
             GameObject instance = enemySpawner.SpawnSpecificEnemyAround(
                 enemyPrefabs[i % enemyPrefabs.Length],
-                Vector3.zero,
+                sitePosition,
                 1f,
                 SiteRadius - 0.3f,
                 0.75f,
@@ -171,7 +205,7 @@ public sealed class NormalAnomalySiteController : MonoBehaviour
     private void ClearEvent()
     {
         if (activeEvent != null && eventSpawner != null)
-            eventSpawner.ClearDebugEvent();
+            eventSpawner.ClearDebugEvent(activeEvent);
         activeEvent = null;
     }
 
@@ -205,9 +239,9 @@ public sealed class NormalAnomalySiteController : MonoBehaviour
 
     private void OnGUI()
     {
-        if (state == SiteState.Stopped)
+        if (!showStandaloneHud || state == SiteState.Stopped)
             return;
-        string text = "NORMAL STASIS SITE\n" +
+        string text = siteLabel + "\n" +
             $"Site: {state}\nAnomaly: {(state == SiteState.Active ? "ACTIVE" : "OFF")}\n" +
             $"Current Event: {(activeEvent != null ? "Hold Zone" : "None")}\n" +
             "Reward: STANDARD UPGRADE CHEST\n" +

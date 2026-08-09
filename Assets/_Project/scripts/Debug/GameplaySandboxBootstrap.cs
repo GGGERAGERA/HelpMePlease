@@ -19,14 +19,29 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
     [SerializeField] private GameObject eyesEnemyPrefab;
     [SerializeField] private GameObject[] massTestEnemyPrefabs;
 
+    [Header("Existing World Rule presentation assets")]
+    [SerializeField] private Material worldRuleOverlayMaterial;
+    [SerializeField] private Material rainWorldMaterial;
+    [SerializeField] private Material snowWorldMaterial;
+    [SerializeField] private GameObject snowParticlePrefab;
+    [SerializeField] private Shader condensationFogShader;
+    [SerializeField] private Sprite darknessMarkerSprite;
+    [SerializeField] private Material darknessMarkerMaterial;
+    [SerializeField] private ParticleSystem goldenDeathFxPrefab;
+    [SerializeField] private GoldenCoinPickup goldenCoinPrefab;
+
+    [Header("Environment readability test")]
+    [SerializeField] private GameObject readabilityEnvironmentPrefab;
+    [SerializeField] private Shader environmentReadabilityShader;
+
     [Header("Area")]
-    [SerializeField] private Vector2 areaSize = new(32f, 20f);
+    [SerializeField] private Vector2 areaSize = new(70f, 45f);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private void Awake()
     {
         GameplayAreaService gameplayArea = CreateGameplayArea();
-        CreateCamera();
+        Camera sandboxCamera = CreateCamera();
         CreateEventSystem();
         CreateHud();
 
@@ -41,13 +56,31 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
         WorldRuleVisual ruleVisual = systems.AddComponent<WorldRuleVisual>();
         WorldRuleController ruleController =
             systems.AddComponent<WorldRuleController>();
+        ConfigureWorldRulePresentation(ruleVisual, sandboxCamera);
         ruleController.ConfigureDebugVisual(ruleVisual);
+        ruleController.ConfigureDebugGoldenAssets(
+            goldenDeathFxPrefab,
+            goldenCoinPrefab
+        );
         LevelAnomalyController anomalyController =
             systems.AddComponent<LevelAnomalyController>();
         WorldEventSpawner eventSpawner =
             systems.AddComponent<WorldEventSpawner>();
         eventSpawner.ConfigureDebugEventPrefabs(eventPrefabs);
         eventSpawner.ConfigureDebugRewardChest(rewardChestPrefab);
+        WorldEventDebugStatusOverlay eventStatusOverlay =
+            systems.AddComponent<WorldEventDebugStatusOverlay>();
+        eventStatusOverlay.Configure(eventSpawner);
+
+        SectorVisualDebugController sectorVisual =
+            systems.AddComponent<SectorVisualDebugController>();
+        sectorVisual.Configure(gameplayArea, sandboxCamera);
+        EnvironmentReadabilityDebugController readabilityController =
+            systems.AddComponent<EnvironmentReadabilityDebugController>();
+        readabilityController.Configure(
+            readabilityEnvironmentPrefab,
+            environmentReadabilityShader
+        );
 
         CharacterSpawner characterSpawner =
             systems.AddComponent<CharacterSpawner>();
@@ -142,6 +175,28 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
             FindCaptureZoneEvent(),
             massTestEnemyPrefabs
         );
+        NormalAnomalySiteController normalSite2 =
+            systems.AddComponent<NormalAnomalySiteController>();
+        normalSite2.Configure(
+            enemySpawner,
+            eventSpawner,
+            anomalyController,
+            powerTest,
+            FindLocalAnomaly(LocalAnomalyType.Berserk),
+            FindCaptureZoneEvent(),
+            massTestEnemyPrefabs
+        );
+        NormalAnomalySiteController normalSite3 =
+            systems.AddComponent<NormalAnomalySiteController>();
+        normalSite3.Configure(
+            enemySpawner,
+            eventSpawner,
+            anomalyController,
+            powerTest,
+            FindLocalAnomaly(LocalAnomalyType.Glitch),
+            FindCaptureZoneEvent(),
+            massTestEnemyPrefabs
+        );
 
         AnomalySiteDebugSelector siteSelector =
             systems.AddComponent<AnomalySiteDebugSelector>();
@@ -151,6 +206,39 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
             beamSite,
             normalSite
         );
+
+        ExplorationSectorController explorationSector =
+            systems.AddComponent<ExplorationSectorController>();
+        explorationSector.Configure(
+            gameplayArea,
+            enemySpawner,
+            eventSpawner,
+            powerController,
+            powerTest,
+            massTest,
+            siteSelector,
+            gravitySite,
+            new[] { normalSite, normalSite2, normalSite3 },
+            new[]
+            {
+                FindLocalAnomaly(LocalAnomalyType.Stasis),
+                FindLocalAnomaly(LocalAnomalyType.Berserk),
+                FindLocalAnomaly(LocalAnomalyType.Glitch)
+            },
+            massTestEnemyPrefabs,
+            turretEnemyPrefab,
+            eyesEnemyPrefab,
+            sectorVisual
+        );
+        debugMenu.ConfigureSandboxLab(
+            explorationSector,
+            sectorVisual,
+            powerController,
+            trajectoryPreview,
+            eventStatusOverlay,
+            readabilityController
+        );
+        explorationSector.PrepareAsDefaultSandboxMode(characterSpawner);
     }
 
     private LocalAnomalyData FindGravityAnomaly()
@@ -233,7 +321,7 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
         return collider;
     }
 
-    private static void CreateCamera()
+    private static Camera CreateCamera()
     {
         GameObject cameraObject = new("Main Camera");
         cameraObject.tag = "MainCamera";
@@ -245,6 +333,81 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
         camera.backgroundColor = new Color(0.02f, 0.025f, 0.035f, 1f);
         cameraObject.AddComponent<AudioListener>();
         cameraObject.AddComponent<CameraFollow>();
+        return camera;
+    }
+
+    private void ConfigureWorldRulePresentation(
+        WorldRuleVisual ruleVisual,
+        Camera sandboxCamera)
+    {
+        GameObject canvasObject = new(
+            "Sandbox World Rule Presentation",
+            typeof(RectTransform),
+            typeof(Canvas),
+            typeof(CanvasScaler)
+        );
+        Canvas canvas = canvasObject.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 900;
+
+        Image screenImage = CreateFullscreenImage(
+            "World Rule Overlay",
+            canvasObject.transform
+        );
+        Image darknessImage = CreateFullscreenImage(
+            "Darkness Overlay",
+            canvasObject.transform
+        );
+        darknessImage.enabled = false;
+
+        GameObject fogObject = new(
+            "Condensation Fog Overlay",
+            typeof(RectTransform),
+            typeof(RawImage)
+        );
+        RectTransform fogRect = fogObject.GetComponent<RectTransform>();
+        fogRect.SetParent(canvasObject.transform, false);
+        Stretch(fogRect);
+        CondensationFogOverlay condensation =
+            fogObject.AddComponent<CondensationFogOverlay>();
+        condensation.ConfigureDebugShader(condensationFogShader);
+
+        ruleVisual.ConfigureDebugRuntime(
+            screenImage,
+            darknessImage,
+            condensation,
+            worldRuleOverlayMaterial,
+            rainWorldMaterial,
+            snowWorldMaterial,
+            snowParticlePrefab,
+            sandboxCamera,
+            darknessMarkerSprite,
+            darknessMarkerMaterial
+        );
+    }
+
+    private static Image CreateFullscreenImage(string name, Transform parent)
+    {
+        GameObject imageObject = new(
+            name,
+            typeof(RectTransform),
+            typeof(Image)
+        );
+        RectTransform rect = imageObject.GetComponent<RectTransform>();
+        rect.SetParent(parent, false);
+        Stretch(rect);
+        Image image = imageObject.GetComponent<Image>();
+        image.color = Color.white;
+        image.raycastTarget = false;
+        return image;
+    }
+
+    private static void Stretch(RectTransform rect)
+    {
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
     }
 
     private static void CreateEventSystem()

@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class CharacterSpawner : MonoBehaviour
 {
+    public event System.Action<GameObject> CharacterSpawned;
+    public GameObject SpawnedPlayer { get; private set; }
+
     [Header("Default character for direct MVP launch")]
     [SerializeField] private CharacterData defaultCharacter;
 
@@ -52,6 +55,9 @@ public class CharacterSpawner : MonoBehaviour
 
         if (RunStateManager.Instance != null)
             RunStateManager.Instance.ApplyToSpawnedPlayer(player, upgradeApplier);
+
+        SpawnedPlayer = player;
+        CharacterSpawned?.Invoke(player);
     }
 
     private GameObject SpawnCharacter()
