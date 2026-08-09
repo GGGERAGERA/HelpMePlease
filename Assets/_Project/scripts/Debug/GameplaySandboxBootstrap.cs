@@ -77,10 +77,19 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
         sectorVisual.Configure(gameplayArea, sandboxCamera);
         EnvironmentReadabilityDebugController readabilityController =
             systems.AddComponent<EnvironmentReadabilityDebugController>();
-        readabilityController.Configure(
-            readabilityEnvironmentPrefab,
-            environmentReadabilityShader
-        );
+        try
+        {
+            readabilityController.Configure(
+                readabilityEnvironmentPrefab,
+                environmentReadabilityShader
+            );
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogError(
+                $"Environment Readability debug setup was skipped: {exception.Message}"
+            );
+        }
 
         CharacterSpawner characterSpawner =
             systems.AddComponent<CharacterSpawner>();

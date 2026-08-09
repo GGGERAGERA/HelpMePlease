@@ -718,15 +718,30 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void AddSandboxVisualReadabilitySection()
     {
-        bool available = readabilityController != null;
-        string active = available
+        bool controllerAvailable = readabilityController != null;
+        bool canEnable = controllerAvailable && readabilityController.CanEnable;
+        bool testEnabled = controllerAvailable && readabilityController.TestEnabled;
+        AddSectionTitle("ENVIRONMENT READABILITY TEST",
+            "Opt-in Sandbox visual layer; OFF preserves the original scene");
+        AddRow("ENABLE ENVIRONMENT READABILITY TEST",
+            testEnabled ? "ON" : "OFF",
+            testEnabled ? successColor : mutedColor,
+            "TOGGLE",
+            canEnable,
+            () =>
+            {
+                readabilityController.SetTestEnabled(!readabilityController.TestEnabled);
+                RefreshCurrentTab();
+            });
+
+        string active = testEnabled
             ? EnvironmentReadabilityDebugController.GetPresetName(
                 readabilityController.Preset)
-            : "NOT FOUND";
+            : "DISABLED";
         AddSectionTitle(
             "READABILITY PRESET",
             $"Active: {active} | Environment renderers: " +
-            $"{(available ? readabilityController.EnvironmentRendererCount : 0)}"
+            $"{(testEnabled ? readabilityController.EnvironmentRendererCount : 0)}"
         );
         AddReadabilityPresetRow(
             EnvironmentReadabilityDebugController.ReadabilityPreset.Original);
@@ -740,43 +755,43 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddSectionTitle("ENVIRONMENT PROPS INTENSITY",
             "Trees, plants, decorative props and their shadows");
         AddReadabilityValueRow("Props 100%", 1f,
-            available ? readabilityController.PropsIntensity : 1f,
-            available, value => readabilityController.SetPropsIntensity(value));
+            testEnabled ? readabilityController.PropsIntensity : 1f,
+            testEnabled, value => readabilityController.SetPropsIntensity(value));
         AddReadabilityValueRow("Props 75%", 0.75f,
-            available ? readabilityController.PropsIntensity : 1f,
-            available, value => readabilityController.SetPropsIntensity(value));
+            testEnabled ? readabilityController.PropsIntensity : 1f,
+            testEnabled, value => readabilityController.SetPropsIntensity(value));
         AddReadabilityValueRow("Props 50%", 0.5f,
-            available ? readabilityController.PropsIntensity : 1f,
-            available, value => readabilityController.SetPropsIntensity(value));
+            testEnabled ? readabilityController.PropsIntensity : 1f,
+            testEnabled, value => readabilityController.SetPropsIntensity(value));
         AddReadabilityValueRow("Props 25%", 0.25f,
-            available ? readabilityController.PropsIntensity : 1f,
-            available, value => readabilityController.SetPropsIntensity(value));
+            testEnabled ? readabilityController.PropsIntensity : 1f,
+            testEnabled, value => readabilityController.SetPropsIntensity(value));
 
         AddSectionTitle("ANOMALY EMPHASIS",
             "Visual brightness/alpha and line width only; radius unchanged");
         AddReadabilityValueRow("Anomaly 100%", 1f,
-            available ? readabilityController.AnomalyEmphasis : 1f,
-            available, value => readabilityController.SetAnomalyEmphasis(value));
+            testEnabled ? readabilityController.AnomalyEmphasis : 1f,
+            testEnabled, value => readabilityController.SetAnomalyEmphasis(value));
         AddReadabilityValueRow("Anomaly 125%", 1.25f,
-            available ? readabilityController.AnomalyEmphasis : 1f,
-            available, value => readabilityController.SetAnomalyEmphasis(value));
+            testEnabled ? readabilityController.AnomalyEmphasis : 1f,
+            testEnabled, value => readabilityController.SetAnomalyEmphasis(value));
         AddReadabilityValueRow("Anomaly 150%", 1.5f,
-            available ? readabilityController.AnomalyEmphasis : 1f,
-            available, value => readabilityController.SetAnomalyEmphasis(value));
+            testEnabled ? readabilityController.AnomalyEmphasis : 1f,
+            testEnabled, value => readabilityController.SetAnomalyEmphasis(value));
 
         AddSectionTitle("ENEMY READABILITY", "Optional subtle tint separation");
         AddOptionRow("Enemy Highlight OFF",
-            available && !readabilityController.EnemyHighlight,
-            available,
+            testEnabled && !readabilityController.EnemyHighlight,
+            testEnabled,
             () => readabilityController.SetEnemyHighlight(false));
         AddOptionRow("Enemy Highlight SUBTLE",
-            available && readabilityController.EnemyHighlight,
-            available,
+            testEnabled && readabilityController.EnemyHighlight,
+            testEnabled,
             () => readabilityController.SetEnemyHighlight(true));
 
-        AddRow("Reset Visual", available ? "RESTORE ORIGINAL" : "NOT FOUND",
-            available ? warningColor : mutedColor,
-            "RESET VISUAL", available, () =>
+        AddRow("Reset Visual", testEnabled ? "RESTORE ORIGINAL" : "DISABLED",
+            testEnabled ? warningColor : mutedColor,
+            "RESET VISUAL", testEnabled, () =>
             {
                 readabilityController.ResetVisual();
                 RefreshCurrentTab();
@@ -786,7 +801,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private void AddReadabilityPresetRow(
         EnvironmentReadabilityDebugController.ReadabilityPreset value)
     {
-        bool available = readabilityController != null;
+        bool available = readabilityController != null && readabilityController.TestEnabled;
         bool selected = available && readabilityController.Preset == value;
         AddRow(EnvironmentReadabilityDebugController.GetPresetName(value),
             selected ? "SELECTED" : "AVAILABLE",

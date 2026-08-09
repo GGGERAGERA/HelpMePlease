@@ -17,6 +17,8 @@ public sealed class EnvironmentReadabilityDebugController : MonoBehaviour
     {
         public Renderer Renderer;
         public Material[] Materials;
+        public int SortingLayerId;
+        public int SortingOrder;
         public SpriteRenderer Sprite;
         public Tilemap Tilemap;
         public Color Color;
@@ -37,6 +39,9 @@ public sealed class EnvironmentReadabilityDebugController : MonoBehaviour
 
     private GameObject environmentInstance;
     private Material readabilityMaterial;
+    private GameObject environmentPrefab;
+    private Shader readabilityShader;
+    private bool testEnabled;
     private ReadabilityPreset preset = ReadabilityPreset.Original;
     private float propsIntensity = 1f;
     private float anomalyEmphasis = 1f;
@@ -48,44 +53,69 @@ public sealed class EnvironmentReadabilityDebugController : MonoBehaviour
     public float AnomalyEmphasis => anomalyEmphasis;
     public bool EnemyHighlight => enemyHighlight;
     public int EnvironmentRendererCount => environmentStates.Count;
+    public bool TestEnabled => testEnabled;
+    public bool CanEnable => environmentPrefab != null;
 
     public void Configure(GameObject environmentPrefab, Shader readabilityShader)
     {
-        if (environmentPrefab != null)
+        this.environmentPrefab = environmentPrefab;
+        this.readabilityShader = readabilityShader;
+        testEnabled = false;
+    }
+
+    public bool SetTestEnabled(bool enabled)
+    {
+        if (enabled == testEnabled)
+            return testEnabled;
+
+        if (!enabled)
         {
-            environmentInstance = Instantiate(environmentPrefab);
-            environmentInstance.name = "Sandbox Environment Readability Visual";
-            DisableGameplayComponents(environmentInstance);
+            DisableTestAndRestore();
+            return false;
         }
 
-        if (readabilityShader != null)
+        try
         {
-            readabilityMaterial = new Material(readabilityShader)
-            {
-                name = "Sandbox Environment Readability (Runtime)",
-                hideFlags = HideFlags.HideAndDontSave
-            };
-        }
+            EnsureTestResources();
+            if (environmentInstance == null)
+                return false;
 
-        CaptureEnvironmentRenderers();
-        RefreshDynamicTargets();
-        ApplyAll();
+            testEnabled = true;
+            environmentInstance.SetActive(true);
+            CaptureEnvironmentRenderers();
+            PutEnvironmentBehindGameplay();
+            RefreshDynamicTargets();
+            ApplyAll();
+            return true;
+        }
+        catch (System.Exception exception)
+        {
+            DisableTestAndRestore();
+            Debug.LogError($"Environment Readability test could not start: {exception.Message}");
+            return false;
+        }
     }
 
     public void SetPreset(ReadabilityPreset value)
     {
+        if (!testEnabled)
+            return;
         preset = value;
         ApplyEnvironment();
     }
 
     public void SetPropsIntensity(float value)
     {
+        if (!testEnabled)
+            return;
         propsIntensity = Mathf.Clamp01(value);
         ApplyEnvironment();
     }
 
     public void SetAnomalyEmphasis(float value)
     {
+        if (!testEnabled)
+            return;
         anomalyEmphasis = Mathf.Clamp(value, 1f, 1.5f);
         CaptureAnomalyRenderers();
         ApplyAnomalyEmphasis();
@@ -93,6 +123,8 @@ public sealed class EnvironmentReadabilityDebugController : MonoBehaviour
 
     public void SetEnemyHighlight(bool enabled)
     {
+        if (!testEnabled)
+            return;
         RestoreEnemyColors();
         enemyHighlight = enabled;
         if (enabled)
@@ -104,6 +136,8 @@ public sealed class EnvironmentReadabilityDebugController : MonoBehaviour
 
     public void ResetVisual()
     {
+        if (!testEnabled)
+            return;
         preset = ReadabilityPreset.Original;
         propsIntensity = 1f;
         anomalyEmphasis = 1f;
@@ -121,6 +155,8 @@ public sealed class EnvironmentReadabilityDebugController : MonoBehaviour
 
     private void Update()
     {
+        if (!testEnabled)
+            return;
         if (Time.unscaledTime < nextRefresh)
             return;
         nextRefresh = Time.unscaledTime + 0.5f;
@@ -157,6 +193,8 @@ public sealed class EnvironmentReadabilityDebugController : MonoBehaviour
             {
                 Renderer = renderer,
                 Materials = renderer.sharedMaterials,
+                SortingLayerId = renderer.sortingLayerID,
+                SortingOrder = renderer.sortingOrder,
                 Sprite = sprite,
                 Tilemap = tilemap,
                 Color = sprite != null ? sprite.color :
@@ -173,6 +211,41 @@ public sealed class EnvironmentReadabilityDebugController : MonoBehaviour
         RestoreEnemyColors();
         if (enemyHighlight)
             ApplyEnemyHighlight();
+    }
+
+    private void EnsureTestResources()
+    {
+        if (environmentInstance == null && environmentPrefab != null)
+        {
+            environmentInstance = Instantiate(environmentPrefab);
+            environmentInstance.name = "Sandbox Environment Readability Visual";
+            DisableGameplayComponents(environmentInstance);
+        }
+
+        if (readabilityMaterial == null && readabilityShader != null)
+        {
+            readabilityMaterial = new Material(readabilityShader)
+            {
+                name = "Sandbox Environment Readability (Runtime)",
+                hideFlags = HideFlags.HideAndDontSave
+            };
+        }
+    }
+
+    private void PutEnvironmentBehindGameplay()
+    {
+        for (int i = 0; i < environmentStates.Count; i++)
+        {
+            Renderer renderer = environmentStates[i].Renderer;
+            if (renderer == null)
+                continue;
+            renderer.sortingLayerName = "Background";
+            renderer.sortingOrder = -200 + Mathf.Clamp(
+                environmentStates[i].SortingOrder,
+                -40,
+                40
+            );
+        }
     }
 
     private void ApplyEnvironment()
@@ -435,6 +508,8 @@ public sealed class EnvironmentReadabilityDebugController : MonoBehaviour
             if (state.Renderer == null)
                 continue;
             state.Renderer.sharedMaterials = state.Materials;
+            state.Renderer.sortingLayerID = state.SortingLayerId;
+            state.Renderer.sortingOrder = state.SortingOrder;
             if (state.Sprite != null)
                 state.Sprite.color = state.Color;
             else if (state.Tilemap != null)
@@ -442,12 +517,25 @@ public sealed class EnvironmentReadabilityDebugController : MonoBehaviour
         }
     }
 
-    private void OnDestroy()
+    private void DisableTestAndRestore()
     {
         RestoreEnvironment();
         RestoreEnemyColors();
         anomalyEmphasis = 1f;
         ApplyAnomalyEmphasis();
+        anomalyLines.Clear();
+        anomalySprites.Clear();
+        preset = ReadabilityPreset.Original;
+        propsIntensity = 1f;
+        enemyHighlight = false;
+        testEnabled = false;
+        if (environmentInstance != null)
+            environmentInstance.SetActive(false);
+    }
+
+    private void OnDestroy()
+    {
+        DisableTestAndRestore();
         if (readabilityMaterial != null)
             Destroy(readabilityMaterial);
         if (environmentInstance != null)
