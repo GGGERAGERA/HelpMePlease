@@ -25,6 +25,14 @@ public sealed class GravityOrbPower : MonoBehaviour
     private float cleanupTimer;
     private Vector2 orbPosition;
     private ContactFilter2D contactFilter;
+    private float lastContactTime = float.NegativeInfinity;
+    private int lastContactHits;
+    private int lastContactKills;
+
+    public float LastContactTime => lastContactTime;
+    public int LastContactHits => lastContactHits;
+    public int LastContactKills => lastContactKills;
+    public float LastDamage => ContactDamage;
 
     private void Awake()
     {
@@ -76,6 +84,8 @@ public sealed class GravityOrbPower : MonoBehaviour
 
     private void DamageContacts()
     {
+        int hitsThisScan = 0;
+        int killsThisScan = 0;
         int count = Physics2D.OverlapCircle(
             orbPosition,
             ContactRadius,
@@ -100,6 +110,16 @@ public sealed class GravityOrbPower : MonoBehaviour
 
             nextDamageTimes[enemy] = Time.time + TargetCooldown;
             enemy.TakeDamage(ContactDamage, orbPosition, false);
+            lastContactTime = Time.time;
+            hitsThisScan++;
+            if (enemy.IsDead)
+                killsThisScan++;
+        }
+
+        if (hitsThisScan > 0)
+        {
+            lastContactHits = hitsThisScan;
+            lastContactKills = killsThisScan;
         }
     }
 

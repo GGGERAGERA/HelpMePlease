@@ -51,6 +51,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         Exploration,
         SectorVisual,
+        Background,
         VisualReadability,
         WorldRule,
         Anomaly,
@@ -70,12 +71,13 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private static readonly string[] SandboxTabLabels =
     {
-        "EXPLORATION",
-        "SECTOR VISUAL",
-        "VISUAL READABILITY",
-        "WORLD RULE",
-        "ANOMALY",
-        "WEAPONS & POWERS"
+        "ИССЛЕДОВАНИЕ",
+        "ВИЗУАЛ СЕКТОРА",
+        "ФОН / НАБЛЮДАТЕЛЬ",
+        "ЧИТАЕМОСТЬ",
+        "ГЛОБАЛЬНОЕ ПРАВИЛО",
+        "АНОМАЛИИ",
+        "ОРУЖИЕ И СПОСОБНОСТИ"
     };
 
     private static readonly WorldRuleType[] DebugRuleTypes =
@@ -111,6 +113,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private GravityTrajectoryPreview trajectoryPreview;
     private WorldEventDebugStatusOverlay eventStatusOverlay;
     private EnvironmentReadabilityDebugController readabilityController;
+    private GiantObserverBackgroundController giantObserverController;
+    private AnomalySiteDebugSelector anomalySiteSelector;
     private bool isOpen;
     private bool waitingForF1Release;
     private float previousTimeScale;
@@ -195,7 +199,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AnomalyPowerDebugController powers,
         GravityTrajectoryPreview trajectory,
         WorldEventDebugStatusOverlay eventOverlay,
-        EnvironmentReadabilityDebugController readability)
+        EnvironmentReadabilityDebugController readability,
+        GiantObserverBackgroundController giantObserver,
+        AnomalySiteDebugSelector siteSelector)
     {
         sandboxLabMode = true;
         explorationSector = exploration;
@@ -204,6 +210,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         trajectoryPreview = trajectory;
         eventStatusOverlay = eventOverlay;
         readabilityController = readability;
+        giantObserverController = giantObserver;
+        anomalySiteSelector = siteSelector;
     }
 
     private void Update()
@@ -376,7 +384,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         header.anchoredPosition = Vector2.zero;
 
         TextMeshProUGUI title = CreateText(
-            "Title", header, "SUBJECT#42 - DEBUG MENU", 28f,
+            "Title", header, "SUBJECT#42 — ОТЛАДОЧНОЕ МЕНЮ", 28f,
             TextAlignmentOptions.MidlineLeft, Color.white
         );
         Stretch(title.rectTransform, 22f, 90f);
@@ -413,6 +421,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 100f
             );
             Stretch(button.GetComponent<RectTransform>());
+            TextMeshProUGUI tabText = button.GetComponentInChildren<TextMeshProUGUI>();
+            if (sandboxLabMode && tabText != null)
+                tabText.fontSize = 13f;
             tabButtonImages[i] = button.targetGraphic as Image;
         }
 
@@ -552,6 +563,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             case SandboxTab.SectorVisual:
                 AddSandboxSectorVisualSection();
                 break;
+            case SandboxTab.Background:
+                AddSandboxBackgroundSection();
+                break;
             case SandboxTab.VisualReadability:
                 AddSandboxVisualReadabilitySection();
                 break;
@@ -565,7 +579,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 AddSandboxWeaponsPowersSection();
                 break;
         }
-        AddHint("F1 toggles this menu. Gameplay remains paused while it is open.");
+        AddHint("F1 закрывает меню. Пока меню открыто, игровой процесс на паузе.");
     }
 
     private void RefreshTab(DebugTab tab)
@@ -611,42 +625,53 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 break;
         }
 
-        AddHint("F1 toggles this menu. Gameplay remains paused while it is open.");
+        AddHint("F1 закрывает меню. Пока меню открыто, игровой процесс на паузе.");
     }
 
     private void AddSandboxExplorationSection()
     {
         bool available = explorationSector != null;
-        AddSectionTitle("SECTOR SESSION", "Runtime-only Exploration controls");
-        AddRow("New Layout", available ? "GENERATE + RESET" : "NOT FOUND",
+        AddSectionTitle("СЕССИЯ СЕКТОРА",
+            "Управление только текущим Exploration Sandbox");
+        AddRow("НОВАЯ РАСКЛАДКА", available ? "ГОТОВО" : "НЕ НАЙДЕНО",
             available ? mutedColor : warningColor,
-            "NEW", available, () =>
+            "СОЗДАТЬ", available, () =>
             {
                 explorationSector.NewLayout();
                 RefreshCurrentTab();
             });
-        AddRow("Reset Sector", available ? "KEEP LAYOUT" : "NOT FOUND",
+        AddHint("Что делает: генерирует новые позиции игрока, сайтов и выхода; " +
+            "полностью перезапускает текущий Sandbox-сектор.");
+        AddRow("СБРОСИТЬ СЕКТОР", available ? "СОХРАНИТ РАСКЛАДКУ" : "НЕ НАЙДЕНО",
             available ? mutedColor : warningColor,
-            "RESET", available, () =>
+            "СБРОСИТЬ", available, () =>
             {
                 explorationSector.ResetSector();
                 RefreshCurrentTab();
             });
-        AddToggleRow("Invulnerability",
+        AddHint("Что делает: перезапускает врагов, события и прогресс сайтов, " +
+            "не меняя сгенерированные позиции.");
+        AddToggleRow("БЕССМЕРТИЕ",
             available && explorationSector.InvulnerabilityEnabled,
             available,
             () => explorationSector.SetInvulnerability(
                 !explorationSector.InvulnerabilityEnabled));
-        AddToggleRow("Exploration HUD",
+        AddHint("Игрок не теряет HP и не умирает. Гравитация, knockback и hit feedback " +
+            "продолжают работать. Только Exploration Sandbox.");
+        AddToggleRow("HUD ИССЛЕДОВАНИЯ",
             available && explorationSector.HudVisible,
             available,
             () => explorationSector.SetHudVisible(!explorationSector.HudVisible));
-        AddToggleRow("Debug Map",
+        AddHint("Показывает runtime-панели Exploration: threat, сайты, powers и FPS.");
+        AddToggleRow("DEBUG-КАРТА",
             available && explorationSector.MapVisible,
             available,
             () => explorationSector.SetMapVisible(!explorationSector.MapVisible));
+        AddHint("Показывает игрока, сайты и выход. Это диагностический overlay, " +
+            "не gameplay-механика.");
 
-        AddSectionTitle("ENEMY CAP", "Comparison scale; default balance remains 100%");
+        AddSectionTitle("ЛИМИТ ВРАГОВ",
+            "Меняет только максимум одновременно живых врагов; используется для FPS-теста");
         AddOptionRow("50%", available && Mathf.Approximately(
             explorationSector.EnemyCapScale, 0.5f), available,
             () => explorationSector.SetEnemyCapScale(0.5f));
@@ -656,47 +681,58 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddOptionRow("100%", available && Mathf.Approximately(
             explorationSector.EnemyCapScale, 1f), available,
             () => explorationSector.SetEnemyCapScale(1f));
-        AddRow("Kill All Enemies", $"ALIVE: {EnemyHealth.ActiveInstances.Count}",
-            mutedColor, "KILL ALL", anomalyPowerController != null,
+        AddRow("УБИТЬ ВСЕХ ВРАГОВ", $"ЖИВЫХ: {EnemyHealth.ActiveInstances.Count}",
+            mutedColor, "УБИТЬ", anomalyPowerController != null,
             () => anomalyPowerController.KillAllEnemiesDebug());
+        AddHint("Вызывает EnemyHealth.TakeDamage для каждого живого enemy; " +
+            "сохраняет обычный death lifecycle.");
 
         if (!available)
             return;
-        AddSectionTitle("LIVE STATUS", "Current Exploration state");
-        AddRow("Threat", explorationSector.ThreatLevel.ToString(), mutedColor,
+        AddSectionTitle("ДИАГНОСТИКА", "Фактическое состояние runtime-систем");
+        AddRow("Exploration", explorationSector.IsRunning ? "АКТИВНО" :
+                explorationSector.IsCompleted ? "ЗАВЕРШЕНО" : "НЕАКТИВНО",
+            explorationSector.IsRunning ? successColor : warningColor,
             null, false, null);
-        AddRow("Elapsed", FormatDebugElapsed(explorationSector.Elapsed), mutedColor,
+        AddRow("EnemySpawner", $"АКТИВЕН · {explorationSector.EnemiesAlive} / " +
+                $"{explorationSector.CurrentEnemyCap}", mutedColor,
             null, false, null);
-        AddRow("Enemies Alive", explorationSector.EnemiesAlive.ToString(), mutedColor,
+        AddRow("Уровень угрозы", explorationSector.ThreatLevel.ToString(), mutedColor,
             null, false, null);
-        AddRow("Sites completed", $"{explorationSector.SitesCompleted}/4", mutedColor,
+        AddRow("Прошло времени", FormatDebugElapsed(explorationSector.Elapsed), mutedColor,
+            null, false, null);
+        AddRow("Сайтов завершено", $"{explorationSector.SitesCompleted}/4", mutedColor,
             null, false, null);
     }
 
     private void AddSandboxSectorVisualSection()
     {
         bool available = sectorVisualController != null;
-        string active = available ? sectorVisualController.CurrentPresetName : "NOT FOUND";
-        AddSectionTitle("VISUAL PRESET", $"Active: {active}");
+        string active = available
+            ? GetRussianSectorPresetName(sectorVisualController.CurrentPreset)
+            : "НЕ НАЙДЕНО";
+        AddSectionTitle("ВИЗУАЛЬНЫЙ ПРЕСЕТ", $"Активен: {active}");
         AddSectorPresetRow(SectorVisualDebugController.SectorPreset.Calibration);
         AddSectorPresetRow(SectorVisualDebugController.SectorPreset.CorruptedTest);
         AddSectorPresetRow(SectorVisualDebugController.SectorPreset.Containment);
         AddSectorPresetRow(SectorVisualDebugController.SectorPreset.SystemFailure);
         AddSectorPresetRow(SectorVisualDebugController.SectorPreset.CoreFinalTest);
 
-        AddSectionTitle("LAYERS", "Visual only; no colliders or gameplay state");
-        AddToggleRow("Grid", available && sectorVisualController.GridVisible,
+        AddHint("Что делает: меняет только цвет и оформление debug-сектора. " +
+            "Не меняет threat, врагов, аномалии или правила мира.");
+        AddSectionTitle("СЛОИ", "Только визуал; нет collider или gameplay-state");
+        AddToggleRow("СЕТКА", available && sectorVisualController.GridVisible,
             available, () => sectorVisualController.SetGridVisible(
                 !sectorVisualController.GridVisible));
-        AddToggleRow("Sector Lines",
+        AddToggleRow("ЛИНИИ СЕКТОРА",
             available && sectorVisualController.SectorLinesVisible,
             available, () => sectorVisualController.SetSectorLinesVisible(
                 !sectorVisualController.SectorLinesVisible));
-        AddToggleRow("Debug Boundaries",
+        AddToggleRow("DEBUG-ГРАНИЦЫ",
             available && sectorVisualController.BoundariesVisible,
             available, () => sectorVisualController.SetBoundariesVisible(
                 !sectorVisualController.BoundariesVisible));
-        AddToggleRow("Exploration HUD",
+        AddToggleRow("HUD ИССЛЕДОВАНИЯ",
             explorationSector != null && explorationSector.HudVisible,
             explorationSector != null,
             () => explorationSector.SetHudVisible(!explorationSector.HudVisible));
@@ -706,8 +742,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         bool available = sectorVisualController != null;
         bool selected = available && sectorVisualController.CurrentPreset == preset;
-        AddRow(SectorVisualDebugController.GetPresetName(preset),
-            selected ? "SELECTED" : "AVAILABLE",
+        AddRow(GetRussianSectorPresetName(preset),
+            selected ? "ВЫБРАНО" : "ДОСТУПНО",
             selected ? successColor : mutedColor,
             ((int)preset).ToString(), available, () =>
             {
@@ -716,31 +752,136 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             });
     }
 
+    private void AddSandboxBackgroundSection()
+    {
+        bool available = giantObserverController != null;
+        bool observerOn = available && giantObserverController.ObserverEnabled;
+        bool visible = available && giantObserverController.IsVisible;
+
+        AddSectionTitle("ГИГАНТСКИЙ НАБЛЮДАТЕЛЬ",
+            "Sandbox-only фон без collider, AI, target или gameplay-state");
+        AddToggleRow("ГИГАНТСКИЙ НАБЛЮДАТЕЛЬ", observerOn, available,
+            () => giantObserverController.SetObserverEnabled(
+                !giantObserverController.ObserverEnabled));
+        AddHint("Главный выключатель visual prototype. Сам по себе событие не запускает.");
+        AddToggleRow("АВТОМАТИЧЕСКОЕ ПОЯВЛЕНИЕ",
+            available && giantObserverController.AutoTrigger,
+            available,
+            () => giantObserverController.SetAutoTrigger(
+                !giantObserverController.AutoTrigger));
+        AddHint("Раз в выбранный интервал запускает фоновый Light Reveal. " +
+            "На gameplay не влияет.");
+        AddRow("ПОКАЗАТЬ СЕЙЧАС", visible ? "СОБЫТИЕ АКТИВНО" :
+                observerOn ? "ГОТОВО" : "СНАЧАЛА ВКЛЮЧИТЕ НАБЛЮДАТЕЛЯ",
+            visible ? successColor : observerOn ? mutedColor : warningColor,
+            "ПОКАЗАТЬ", observerOn && !visible,
+            () =>
+            {
+                giantObserverController.TriggerNow();
+                RefreshCurrentTab();
+            });
+        AddHint("Принудительно запускает reveal после закрытия F1: " +
+            "пока меню открыто, игровой timer стоит на паузе.");
+
+        AddSectionTitle("ИНТЕРВАЛ",
+            available
+                ? $"Активен: {giantObserverController.IntervalMin:0}-" +
+                  $"{giantObserverController.IntervalMax:0} сек между запусками"
+                : "Controller не найден");
+        AddObserverIntervalRow(10f, 15f);
+        AddObserverIntervalRow(15f, 25f);
+        AddObserverIntervalRow(20f, 30f);
+
+        AddSectionTitle("ИНТЕНСИВНОСТЬ",
+            "Сила фонового света и силуэта; gameplay не меняется");
+        AddObserverIntensityRow(
+            GiantObserverBackgroundController.ObserverIntensity.Low);
+        AddObserverIntensityRow(
+            GiantObserverBackgroundController.ObserverIntensity.Normal);
+        AddObserverIntensityRow(
+            GiantObserverBackgroundController.ObserverIntensity.High);
+
+        AddHint(
+            "По умолчанию Наблюдатель и автоматическое появление выключены."
+        );
+    }
+
+    private void AddObserverIntervalRow(float minimum, float maximum)
+    {
+        bool available = giantObserverController != null;
+        bool selected = available &&
+            Mathf.Approximately(giantObserverController.IntervalMin, minimum) &&
+            Mathf.Approximately(giantObserverController.IntervalMax, maximum);
+        AddRow($"{minimum:0}-{maximum:0} сек",
+            selected ? "ВЫБРАНО" : "ДОСТУПНО",
+            selected ? successColor : mutedColor,
+            "ВЫБРАТЬ", available, () =>
+            {
+                giantObserverController.SetInterval(minimum, maximum);
+                RefreshCurrentTab();
+            });
+    }
+
+    private static string GetRussianSectorPresetName(
+        SectorVisualDebugController.SectorPreset preset) => preset switch
+    {
+        SectorVisualDebugController.SectorPreset.CorruptedTest => "ИСКАЖЁННЫЙ ТЕСТ",
+        SectorVisualDebugController.SectorPreset.Containment => "УДЕРЖАНИЕ",
+        SectorVisualDebugController.SectorPreset.SystemFailure => "СБОЙ СИСТЕМЫ",
+        SectorVisualDebugController.SectorPreset.CoreFinalTest => "ФИНАЛЬНЫЙ ТЕСТ ЯДРА",
+        _ => "КАЛИБРОВКА"
+    };
+
+    private void AddObserverIntensityRow(
+        GiantObserverBackgroundController.ObserverIntensity value)
+    {
+        bool available = giantObserverController != null;
+        bool selected = available && giantObserverController.Intensity == value;
+        AddRow(GetRussianObserverIntensity(value),
+            selected ? "ВЫБРАНО" : "ДОСТУПНО",
+            selected ? successColor : mutedColor,
+            "ВЫБРАТЬ", available, () =>
+            {
+                giantObserverController.SetIntensity(value);
+                RefreshCurrentTab();
+            });
+    }
+
+    private static string GetRussianObserverIntensity(
+        GiantObserverBackgroundController.ObserverIntensity value) => value switch
+    {
+        GiantObserverBackgroundController.ObserverIntensity.Low => "НИЗКАЯ",
+        GiantObserverBackgroundController.ObserverIntensity.High => "ВЫСОКАЯ",
+        _ => "НОРМАЛЬНАЯ"
+    };
+
     private void AddSandboxVisualReadabilitySection()
     {
         bool controllerAvailable = readabilityController != null;
         bool canEnable = controllerAvailable && readabilityController.CanEnable;
         bool testEnabled = controllerAvailable && readabilityController.TestEnabled;
-        AddSectionTitle("ENVIRONMENT READABILITY TEST",
-            "Opt-in Sandbox visual layer; OFF preserves the original scene");
-        AddRow("ENABLE ENVIRONMENT READABILITY TEST",
-            testEnabled ? "ON" : "OFF",
+        AddSectionTitle("ТЕСТ ЧИТАЕМОСТИ ОКРУЖЕНИЯ",
+            "Sandbox-only обработка environment; при выключении сцена не изменяется");
+        AddRow("ТЕСТ ЧИТАЕМОСТИ",
+            testEnabled ? "ВКЛЮЧЕНО" : "ВЫКЛЮЧЕНО",
             testEnabled ? successColor : mutedColor,
-            "TOGGLE",
+            "ПЕРЕКЛЮЧИТЬ",
             canEnable,
             () =>
             {
                 readabilityController.SetTestEnabled(!readabilityController.TestEnabled);
                 RefreshCurrentTab();
             });
+        AddHint(testEnabled
+            ? "Включено: выбранный preset временно применяется к копии окружения."
+            : "Выключено. Окружение не изменяется.");
 
         string active = testEnabled
-            ? EnvironmentReadabilityDebugController.GetPresetName(
-                readabilityController.Preset)
-            : "DISABLED";
+            ? GetRussianReadabilityPreset(readabilityController.Preset)
+            : "ВЫКЛЮЧЕНО";
         AddSectionTitle(
-            "READABILITY PRESET",
-            $"Active: {active} | Environment renderers: " +
+            "ПРЕСЕТ ЧИТАЕМОСТИ",
+            $"Активен: {active} | Renderer-объектов: " +
             $"{(testEnabled ? readabilityController.EnvironmentRendererCount : 0)}"
         );
         AddReadabilityPresetRow(
@@ -752,46 +893,49 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddReadabilityPresetRow(
             EnvironmentReadabilityDebugController.ReadabilityPreset.DarkWorld);
 
-        AddSectionTitle("ENVIRONMENT PROPS INTENSITY",
-            "Trees, plants, decorative props and their shadows");
-        AddReadabilityValueRow("Props 100%", 1f,
+        AddHint("ОРИГИНАЛ — без обработки. ПРИГЛУШЁННЫЙ МИР снижает яркость и " +
+            "насыщенность. ВЫСОКИЙ КОНТРАСТ сильнее уводит environment назад. " +
+            "ТЁМНЫЙ МИР — экстремальное затемнение.");
+        AddSectionTitle("ЯРКОСТЬ ДЕКОРАЦИЙ",
+            "Деревья, растения, декоративные props и их тени");
+        AddReadabilityValueRow("Декорации 100%", 1f,
             testEnabled ? readabilityController.PropsIntensity : 1f,
             testEnabled, value => readabilityController.SetPropsIntensity(value));
-        AddReadabilityValueRow("Props 75%", 0.75f,
+        AddReadabilityValueRow("Декорации 75%", 0.75f,
             testEnabled ? readabilityController.PropsIntensity : 1f,
             testEnabled, value => readabilityController.SetPropsIntensity(value));
-        AddReadabilityValueRow("Props 50%", 0.5f,
+        AddReadabilityValueRow("Декорации 50%", 0.5f,
             testEnabled ? readabilityController.PropsIntensity : 1f,
             testEnabled, value => readabilityController.SetPropsIntensity(value));
-        AddReadabilityValueRow("Props 25%", 0.25f,
+        AddReadabilityValueRow("Декорации 25%", 0.25f,
             testEnabled ? readabilityController.PropsIntensity : 1f,
             testEnabled, value => readabilityController.SetPropsIntensity(value));
 
-        AddSectionTitle("ANOMALY EMPHASIS",
-            "Visual brightness/alpha and line width only; radius unchanged");
-        AddReadabilityValueRow("Anomaly 100%", 1f,
+        AddSectionTitle("АКЦЕНТ АНОМАЛИЙ",
+            "Только яркость, alpha и ширина линий; radius не меняется");
+        AddReadabilityValueRow("Аномалии 100%", 1f,
             testEnabled ? readabilityController.AnomalyEmphasis : 1f,
             testEnabled, value => readabilityController.SetAnomalyEmphasis(value));
-        AddReadabilityValueRow("Anomaly 125%", 1.25f,
+        AddReadabilityValueRow("Аномалии 125%", 1.25f,
             testEnabled ? readabilityController.AnomalyEmphasis : 1f,
             testEnabled, value => readabilityController.SetAnomalyEmphasis(value));
-        AddReadabilityValueRow("Anomaly 150%", 1.5f,
+        AddReadabilityValueRow("Аномалии 150%", 1.5f,
             testEnabled ? readabilityController.AnomalyEmphasis : 1f,
             testEnabled, value => readabilityController.SetAnomalyEmphasis(value));
 
-        AddSectionTitle("ENEMY READABILITY", "Optional subtle tint separation");
-        AddOptionRow("Enemy Highlight OFF",
+        AddSectionTitle("ЧИТАЕМОСТЬ ВРАГОВ", "Слабое цветовое отделение от environment");
+        AddOptionRow("Подсветка врагов ВЫКЛ",
             testEnabled && !readabilityController.EnemyHighlight,
             testEnabled,
             () => readabilityController.SetEnemyHighlight(false));
-        AddOptionRow("Enemy Highlight SUBTLE",
+        AddOptionRow("Подсветка врагов СЛАБАЯ",
             testEnabled && readabilityController.EnemyHighlight,
             testEnabled,
             () => readabilityController.SetEnemyHighlight(true));
 
-        AddRow("Reset Visual", testEnabled ? "RESTORE ORIGINAL" : "DISABLED",
+        AddRow("СБРОСИТЬ ВИЗУАЛ", testEnabled ? "ВОССТАНОВИТЬ ОРИГИНАЛ" : "ВЫКЛЮЧЕНО",
             testEnabled ? warningColor : mutedColor,
-            "RESET VISUAL", testEnabled, () =>
+            "СБРОСИТЬ", testEnabled, () =>
             {
                 readabilityController.ResetVisual();
                 RefreshCurrentTab();
@@ -803,10 +947,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         bool available = readabilityController != null && readabilityController.TestEnabled;
         bool selected = available && readabilityController.Preset == value;
-        AddRow(EnvironmentReadabilityDebugController.GetPresetName(value),
-            selected ? "SELECTED" : "AVAILABLE",
+        AddRow(GetRussianReadabilityPreset(value),
+            selected ? "ВЫБРАНО" : "ДОСТУПНО",
             selected ? successColor : mutedColor,
-            "SELECT", available, () =>
+            "ВЫБРАТЬ", available, () =>
             {
                 readabilityController.SetPreset(value);
                 RefreshCurrentTab();
@@ -821,24 +965,38 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         System.Action<float> setter)
     {
         bool selected = available && Mathf.Approximately(value, current);
-        AddRow(label, selected ? "SELECTED" : "AVAILABLE",
+        AddRow(label, selected ? "ВЫБРАНО" : "ДОСТУПНО",
             selected ? successColor : mutedColor,
-            "SELECT", available, () =>
+            "ВЫБРАТЬ", available, () =>
             {
                 setter?.Invoke(value);
                 RefreshCurrentTab();
             });
     }
 
+    private static string GetRussianReadabilityPreset(
+        EnvironmentReadabilityDebugController.ReadabilityPreset value) => value switch
+    {
+        EnvironmentReadabilityDebugController.ReadabilityPreset.MutedWorld =>
+            "ПРИГЛУШЁННЫЙ МИР",
+        EnvironmentReadabilityDebugController.ReadabilityPreset.HighGameplayContrast =>
+            "ВЫСОКИЙ КОНТРАСТ GAMEPLAY",
+        EnvironmentReadabilityDebugController.ReadabilityPreset.DarkWorld =>
+            "ТЁМНЫЙ МИР",
+        _ => "ОРИГИНАЛ"
+    };
+
     private void AddSandboxWorldRuleSection()
     {
         WorldRuleData active = worldRuleController != null
             ? worldRuleController.ActiveRule : null;
-        AddSectionTitle("WORLD RULE",
-            $"Active Rule: {(active != null ? GetWorldRuleName(active.RuleType, active) : "None")}");
-        AddRow("None", active == null ? "SELECTED" : "AVAILABLE",
+        AddSectionTitle("ГЛОБАЛЬНОЕ ПРАВИЛО",
+            $"Активно: {(active != null ? GetRussianWorldRuleName(active.RuleType) : "НЕТ")}");
+        AddRow("БЕЗ ПРАВИЛА", active == null ? "ВЫБРАНО" : "ДОСТУПНО",
             active == null ? successColor : mutedColor,
-            "APPLY", worldRuleController != null, ClearWorldRule);
+            "ПРИМЕНИТЬ", worldRuleController != null, ClearWorldRule);
+        AddHint("Отключает активное правило через WorldRuleController и " +
+            "восстанавливает его visual/gameplay modifiers.");
 
         WorldRuleType[] order =
         {
@@ -854,77 +1012,323 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             WorldRuleData data = FindWorldRule(order[i]);
             bool selected = data != null && active == data;
             WorldRuleData captured = data;
-            AddRow(order[i].ToString(), data == null ? "ASSET MISSING" :
-                selected ? "SELECTED" : "AVAILABLE",
+            AddRow(GetRussianWorldRuleName(order[i]), data == null ? "ASSET НЕ НАЗНАЧЕН" :
+                selected ? "ВЫБРАНО" : "ДОСТУПНО",
                 data == null ? warningColor : selected ? successColor : mutedColor,
-                "APPLY", worldRuleController != null && data != null,
+                "ПРИМЕНИТЬ", worldRuleController != null && data != null,
                 () => ApplyWorldRule(captured));
+            AddHint(GetWorldRuleDebugDescription(order[i], data));
         }
-        AddRow("Clear Rule", active != null ? "ACTIVE" : "CLEAR",
+        AddRow("ОЧИСТИТЬ ПРАВИЛО", active != null ? "АКТИВНО" : "УЖЕ ЧИСТО",
             active != null ? warningColor : mutedColor,
-            "CLEAR", worldRuleController != null, ClearWorldRule);
+            "ОЧИСТИТЬ", worldRuleController != null, ClearWorldRule);
+    }
+
+    private static string GetRussianWorldRuleName(WorldRuleType type) => type switch
+    {
+        WorldRuleType.Snow => "СНЕГ",
+        WorldRuleType.Rain => "ДОЖДЬ",
+        WorldRuleType.Wind => "ВЕТЕР",
+        WorldRuleType.Darkness => "ТЕМНОТА",
+        WorldRuleType.Condensation => "КОНДЕНСАТ",
+        WorldRuleType.Golden => "ЗОЛОТОЙ",
+        _ => type.ToString()
+    };
+
+    private static string GetWorldRuleDebugDescription(
+        WorldRuleType type,
+        WorldRuleData data)
+    {
+        if (data == null)
+            return "Недоступно: соответствующий WorldRuleData не назначен в GameplaySandbox.";
+
+        string modifiers = $"Player speed ×{data.PlayerMoveSpeedMultiplier:0.##}; " +
+            $"enemy speed ×{data.EnemyMoveSpeedMultiplier:0.##}; " +
+            $"enemy HP ×{data.EnemyHealthMultiplier:0.##}; " +
+            $"spawn pressure ×{data.SpawnPressureMultiplier:0.##}.";
+        return type switch
+        {
+            WorldRuleType.Snow => "Снег и цикл метели с существующими modifiers. " + modifiers,
+            WorldRuleType.Rain => "Дождевой visual и modifiers из WorldRuleData. " + modifiers,
+            WorldRuleType.Wind => "Поток сдвигает player, enemies и совместимые projectiles. " + modifiers,
+            WorldRuleType.Darkness => "Ограничивает видимость; выстрелы и свет кратко раскрывают область. " + modifiers,
+            WorldRuleType.Condensation => "Экран запотевает; слой очищается движением мыши. " + modifiers,
+            WorldRuleType.Golden => "Golden enemies получают отдельные HP/reward modifiers и роняют монеты. " +
+                "Постоянная Sandbox-валюта зависит от существующего CurrencyManager.",
+            _ => modifiers
+        };
     }
 
     private void AddSandboxAnomalySection()
     {
         bool trajectoryAvailable = trajectoryPreview != null;
-        AddSectionTitle("GRAVITY TRAJECTORY", "Existing orbital prediction");
-        AddToggleRow("Gravity Trajectory",
+        AddSectionTitle("ТЕКУЩИЙ EXPLORATION",
+            "В основном секторе используется только специальный сайт GRAVITY");
+        AddRow("Special Site", explorationSector != null && explorationSector.IsRunning
+                ? "GRAVITY · АКТИВЕН" : "EXPLORATION НЕАКТИВЕН",
+            explorationSector != null && explorationSector.IsRunning
+                ? successColor : warningColor, null, false, null);
+        AddHint("Electric и Beam не входят в текущую Exploration-раскладку. " +
+            "Их controllers исправны и запускаются отдельными тестами ниже.");
+
+        AddSectionTitle("ТРАЕКТОРИЯ ГРАВИТАЦИИ",
+            "Прогноз движения опасных enemies внутри активной Gravity Anomaly");
+        AddToggleRow("ТРАЕКТОРИЯ ГРАВИТАЦИИ",
             trajectoryAvailable && trajectoryPreview.PreviewEnabled,
             trajectoryAvailable,
             () => trajectoryPreview.SetPreviewEnabled(!trajectoryPreview.PreviewEnabled));
+        AddHint("Вне активной orbital Gravity Zone линии не показываются — " +
+            "это нормальное ограничение, а не ошибка.");
         float[] times = { 0.75f, 1.25f, 1.5f, 2f };
         for (int i = 0; i < times.Length; i++)
         {
             float captured = times[i];
-            AddOptionRow($"Prediction {captured:0.00} sec",
+            AddOptionRow($"ПРОГНОЗ НА {captured:0.00} СЕК",
                 trajectoryAvailable && Mathf.Approximately(
                     trajectoryPreview.PredictionTime, captured),
                 trajectoryAvailable,
                 () => trajectoryPreview.SetPredictionTime(captured));
         }
-        AddSectionTitle("EVENT DIAGNOSTICS", "Existing interaction status overlay");
-        AddToggleRow("Show Event Debug",
+        AddHint("Prediction определяет, на сколько секунд вперёд строится траектория.");
+
+        AddSectionTitle("ОТДЕЛЬНЫЕ ТЕСТЫ САЙТОВ",
+            "Останавливают Exploration безопасным debug-путём; F1 остаётся доступен");
+        AddSiteTestRow(AnomalySiteDebugSelector.SiteTestType.Gravity,
+            "GRAVITY SITE");
+        AddSiteTestRow(AnomalySiteDebugSelector.SiteTestType.Electric,
+            "ELECTRIC SITE");
+        AddSiteTestRow(AnomalySiteDebugSelector.SiteTestType.Beam,
+            "BEAM SITE");
+        AddSiteTestRow(AnomalySiteDebugSelector.SiteTestType.Normal,
+            "NORMAL SITE");
+        AddRow("ВЕРНУТЬСЯ В EXPLORATION", "ПЕРЕЗАГРУЗИТ SANDBOX",
+            warningColor, "ВЕРНУТЬСЯ", explorationSector != null,
+            () => explorationSector.ReturnToExploration());
+        AddHint("Возврат перезагружает только GameplaySandbox и восстанавливает " +
+            "его стандартную Exploration-конфигурацию.");
+
+        AddSectionTitle("ДИАГНОСТИКА СОБЫТИЙ",
+            "Фактические runtime-state и interaction overlay");
+        AddSiteRuntimeStatusRows();
+        AddToggleRow("ПОКАЗЫВАТЬ EVENT DEBUG",
             eventStatusOverlay != null && eventStatusOverlay.OverlayVisible,
             eventStatusOverlay != null,
             () => eventStatusOverlay.SetOverlayVisible(
                 !eventStatusOverlay.OverlayVisible));
+        AddHint("Показывает CanInteract, distance, E-state и progress текущего World Event.");
     }
+
+    private void AddSiteTestRow(
+        AnomalySiteDebugSelector.SiteTestType type,
+        string label)
+    {
+        bool available = IsSiteTestAvailable(type);
+        AddRow($"ЗАПУСТИТЬ {label}", available ? "ГОТОВО" : "НЕ НАСТРОЕНО",
+            available ? mutedColor : warningColor,
+            "ЗАПУСТИТЬ", available, () =>
+            {
+                explorationSector?.StopForStandaloneSiteTest();
+                anomalySiteSelector?.StartStandaloneTest(type);
+                RefreshCurrentTab();
+            });
+        AddHint(type switch
+        {
+            AnomalySiteDebugSelector.SiteTestType.Gravity =>
+                "Orbital Gravity Zone + Hold Event; completion выдаёт Gravity Orb.",
+            AnomalySiteDebugSelector.SiteTestType.Electric =>
+                "Электрические nodes дают telegraph и разряды; Hold Event выдаёт Arc Node.",
+            AnomalySiteDebugSelector.SiteTestType.Beam =>
+                "Environmental beam даёт telegraph; Evacuation Corridor выдаёт Red Beam.",
+            _ => "Обычная Local Anomaly + Hold Event; отдельной power-награды нет."
+        });
+    }
+
+    private bool IsSiteTestAvailable(AnomalySiteDebugSelector.SiteTestType type)
+    {
+        if (anomalySiteSelector == null || explorationSector == null)
+            return false;
+        return type switch
+        {
+            AnomalySiteDebugSelector.SiteTestType.Gravity =>
+                anomalySiteSelector.GravitySite != null &&
+                anomalySiteSelector.GravitySite.IsConfigured,
+            AnomalySiteDebugSelector.SiteTestType.Electric =>
+                anomalySiteSelector.ElectricSite != null &&
+                anomalySiteSelector.ElectricSite.IsConfigured,
+            AnomalySiteDebugSelector.SiteTestType.Beam =>
+                anomalySiteSelector.BeamSite != null &&
+                anomalySiteSelector.BeamSite.IsConfigured,
+            AnomalySiteDebugSelector.SiteTestType.Normal =>
+                anomalySiteSelector.NormalSite != null &&
+                anomalySiteSelector.NormalSite.IsConfigured,
+            _ => false
+        };
+    }
+
+    private void AddSiteRuntimeStatusRows()
+    {
+        AddRow("WorldEventSpawner", worldEventSpawner != null ? "ГОТОВ" : "НЕ НАЙДЕН",
+            worldEventSpawner != null ? successColor : warningColor,
+            null, false, null);
+        if (anomalySiteSelector == null)
+        {
+            AddRow("Site selector", "НЕ НАЙДЕН", warningColor, null, false, null);
+            return;
+        }
+        GravityAnomalySiteController gravity = anomalySiteSelector.GravitySite;
+        ElectricAnomalySiteController electric = anomalySiteSelector.ElectricSite;
+        BeamAnomalySiteController beam = anomalySiteSelector.BeamSite;
+        NormalAnomalySiteController normal = anomalySiteSelector.NormalSite;
+        AddRow("Gravity Site", gravity != null ? TranslateSiteState(gravity.RuntimeState) :
+            "НЕ НАЙДЕН", gravity != null && gravity.IsRunning ? successColor : mutedColor,
+            null, false, null);
+        AddRow("Electric Site", electric != null
+                ? $"{TranslateSiteState(electric.RuntimeState)} · EVENT: " +
+                  (electric.HasActiveEvent ? "ЕСТЬ" : "НЕТ") + " · HAZARD: " +
+                  TranslatePowerState(electric.HazardRuntimeState)
+                : "НЕ НАЙДЕН",
+            electric != null && electric.IsRunning ? successColor : mutedColor,
+            null, false, null);
+        AddRow("Beam Site", beam != null
+                ? $"{TranslateSiteState(beam.RuntimeState)} · EVENT: " +
+                  (beam.HasActiveEvent ? "ЕСТЬ" : "НЕТ") + " · HAZARD: " +
+                  TranslatePowerState(beam.HazardRuntimeState)
+                : "НЕ НАЙДЕН",
+            beam != null && beam.IsRunning ? successColor : mutedColor,
+            null, false, null);
+        AddRow("Normal Site", normal != null ? TranslateSiteState(normal.RuntimeState) :
+            "НЕ НАЙДЕН", normal != null && normal.IsActive ? successColor : mutedColor,
+            null, false, null);
+    }
+
+    private static string TranslateSiteState(string state) => state switch
+    {
+        "Active" => "АКТИВЕН",
+        "Dormant" => "ОЖИДАЕТ",
+        "Collapsing" => "СВОРАЧИВАЕТСЯ",
+        "Completed" => "ЗАВЕРШЁН",
+        "Stopped" => "ОСТАНОВЛЕН",
+        _ => "НЕИЗВЕСТНО"
+    };
 
     private void AddSandboxWeaponsPowersSection()
     {
         AddWeaponsSection();
-        AddSectionTitle("WEAPON CORE", "Existing debug selector");
-        AddOptionRow("None", WeaponCoreDebugSelector.ActiveCore == WeaponCoreType.None,
+        AddSectionTitle("ЯДРО ОРУЖИЯ", "Runtime-переключатель существующего debug core");
+        AddOptionRow("БЕЗ ЯДРА", WeaponCoreDebugSelector.ActiveCore == WeaponCoreType.None,
             true, () => WeaponCoreDebugSelector.Select(WeaponCoreType.None));
-        AddOptionRow("Chain", WeaponCoreDebugSelector.ActiveCore == WeaponCoreType.Chain,
+        AddOptionRow("ЦЕПНОЕ ЯДРО", WeaponCoreDebugSelector.ActiveCore == WeaponCoreType.Chain,
             true, () => WeaponCoreDebugSelector.Select(WeaponCoreType.Chain));
+        AddHint("Цепное ядро: попадание основного оружия передаёт часть урона " +
+            "соседнему enemy. Без ядра оружие работает штатно.");
 
-        AddSectionTitle("ANOMALY POWERS", "Existing runtime power components");
+        AddSectionTitle("АНОМАЛЬНЫЕ СПОСОБНОСТИ",
+            "Реальные runtime-components на player; reward-lock показан явно");
         bool available = anomalyPowerController != null;
-        AddPowerToggle("Gravity Orb",
+        AddPowerToggle("ГРАВИТАЦИОННАЯ СФЕРА",
             available && anomalyPowerController.GravityOrbEnabled,
             available && !anomalyPowerController.GravityOrbSiteLocked,
             () => anomalyPowerController.SetGravityOrbEnabled(
                 !anomalyPowerController.GravityOrbEnabled));
-        AddPowerToggle("Arc Node",
+        AddHint("Вращается вокруг player и наносит 65 damage при контакте. " +
+            "Повторный hit по одной цели возможен через 0.42 сек. При блокировке " +
+            "завершите Gravity Site.");
+        AddPowerToggle("ЭЛЕКТРИЧЕСКИЙ УЗЕЛ",
             available && anomalyPowerController.ArcNodeEnabled,
             available && !anomalyPowerController.ArcNodeSiteLocked,
             () => anomalyPowerController.SetArcNodeEnabled(
                 !anomalyPowerController.ArcNodeEnabled));
-        AddPowerToggle("Red Beam",
+        AddHint("Каждые 0.65 сек ищет enemy в радиусе 9 и цепляет до 4 целей. " +
+            "Каждая получает 70 damage. При блокировке завершите Electric Site.");
+        AddPowerToggle("КРАСНЫЙ ЛУЧ",
             available && anomalyPowerController.RedBeamEnabled,
             available && !anomalyPowerController.RedBeamSiteLocked,
             () => anomalyPowerController.SetRedBeamEnabled(
                 !anomalyPowerController.RedBeamEnabled));
+        AddHint("Раз в 3 сек выбирает линию с максимальным числом целей. " +
+            "Дальность 18, полуширина 1.05, урон 120. При блокировке завершите Beam Site.");
+
+        AddSectionTitle("ДИАГНОСТИКА POWERS",
+            "Последнее фактическое срабатывание; значения обновляются не каждый frame");
+        if (!available)
+        {
+            AddRow("AnomalyPower controller", "НЕ НАЙДЕН", warningColor,
+                null, false, null);
+            return;
+        }
+        AddRow("Gravity Orb component",
+            anomalyPowerController.GravityOrbComponentPresent ? "ДА" : "НЕТ",
+            anomalyPowerController.GravityOrbComponentPresent ? successColor : warningColor,
+            null, false, null);
+        AddRow("Gravity Orb · последний контакт",
+            $"{FormatLastActivity(anomalyPowerController.GravityOrbLastContactTime)} · " +
+            $"Hits: {anomalyPowerController.GravityOrbLastContactHits} · " +
+            $"Kills: {anomalyPowerController.GravityOrbLastContactKills} · Урон: 65",
+            mutedColor, null, false, null);
+        AddRow("Arc Node component",
+            anomalyPowerController.ArcNodeComponentPresent ? "ДА" : "НЕТ",
+            anomalyPowerController.ArcNodeComponentPresent ? successColor : warningColor,
+            null, false, null);
+        AddRow("Arc Node · последний разряд",
+            $"{FormatLastActivity(anomalyPowerController.ArcNodeLastDischargeTime)} · " +
+            $"Targets: {anomalyPowerController.ArcNodeLastTargetCount} · " +
+            $"Kills: {anomalyPowerController.ArcNodeLastKillCount} · Урон: 70",
+            mutedColor, null, false, null);
+        AddRow("Arc Node · разрядить сейчас",
+            anomalyPowerController.ArcNodeEnabled ? "ГОТОВО" : "СНАЧАЛА ВКЛЮЧИТЕ",
+            anomalyPowerController.ArcNodeEnabled ? mutedColor : warningColor,
+            "РАЗРЯД", anomalyPowerController.ArcNodeEnabled, () =>
+            {
+                anomalyPowerController.DischargeArcNodeNowDebug();
+                RefreshCurrentTab();
+            });
+        AddRow("Red Beam component",
+            anomalyPowerController.RedBeamComponentPresent ? "ДА" : "НЕТ",
+            anomalyPowerController.RedBeamComponentPresent ? successColor : warningColor,
+            null, false, null);
+        AddRow("Red Beam · runtime",
+            $"{TranslatePowerState(anomalyPowerController.RedBeamRuntimeState)} · cooldown " +
+            $"{anomalyPowerController.RedBeamCooldownRemaining:0.00} сек",
+            mutedColor, null, false, null);
+        AddRow("Red Beam · последний выстрел",
+            $"{FormatLastActivity(anomalyPowerController.RedBeamLastFireTime)} · " +
+            $"Кандидатов: {anomalyPowerController.RedBeamLastCandidateCount} · " +
+            $"Hits: {anomalyPowerController.RedBeamLastHitCount} · " +
+            $"Kills: {anomalyPowerController.RedBeamLastKillCount} · Урон: 120",
+            mutedColor, null, false, null);
+        AddRow("Red Beam · выстрелить сейчас",
+            anomalyPowerController.RedBeamEnabled ? "ГОТОВО" : "СНАЧАЛА ВКЛЮЧИТЕ",
+            anomalyPowerController.RedBeamEnabled ? mutedColor : warningColor,
+            "ВЫСТРЕЛ", anomalyPowerController.RedBeamEnabled, () =>
+            {
+                anomalyPowerController.FireRedBeamNowDebug();
+                RefreshCurrentTab();
+            });
+        AddHint("Принудительные actions используют тот же target selection и " +
+            "EnemyHealth.TakeDamage, что и автоматическая способность.");
     }
+
+    private static string FormatLastActivity(float timestamp)
+    {
+        if (float.IsNegativeInfinity(timestamp))
+            return "ЕЩЁ НЕ БЫЛО";
+        return $"{Mathf.Max(0f, Time.time - timestamp):0.0} сек назад";
+    }
+
+    private static string TranslatePowerState(string state) => state switch
+    {
+        "Waiting" => "ОЖИДАНИЕ",
+        "Telegraph" => "ПРЕДУПРЕЖДЕНИЕ",
+        "Firing" => "ВЫСТРЕЛ",
+        _ => "НЕТ COMPONENT"
+    };
 
     private void AddPowerToggle(string label, bool enabled, bool available,
         UnityEngine.Events.UnityAction action)
     {
-        AddRow(label, available ? (enabled ? "ON" : "OFF") : "LOCKED",
+        AddRow(label, available ? (enabled ? "ВКЛЮЧЕНО" : "ВЫКЛЮЧЕНО") : "ЗАБЛОКИРОВАНО",
             enabled ? successColor : available ? mutedColor : warningColor,
-            enabled ? "TURN OFF" : "TURN ON", available, () =>
+            enabled ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ", available, () =>
             {
                 action?.Invoke();
                 RefreshCurrentTab();
@@ -934,9 +1338,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private void AddToggleRow(string label, bool enabled, bool available,
         UnityEngine.Events.UnityAction action)
     {
-        AddRow(label, enabled ? "ON" : "OFF",
-            enabled ? successColor : mutedColor,
-            enabled ? "TURN OFF" : "TURN ON", available, () =>
+        AddRow(label, !available ? "НЕДОСТУПНО В ТЕКУЩЕМ РЕЖИМЕ" :
+                enabled ? "ВКЛЮЧЕНО" : "ВЫКЛЮЧЕНО",
+            enabled ? successColor : available ? mutedColor : warningColor,
+            enabled ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ", available, () =>
             {
                 action?.Invoke();
                 RefreshCurrentTab();
@@ -946,9 +1351,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private void AddOptionRow(string label, bool selected, bool available,
         UnityEngine.Events.UnityAction action)
     {
-        AddRow(label, selected ? "SELECTED" : "AVAILABLE",
-            selected ? successColor : mutedColor,
-            "SELECT", available, () =>
+        AddRow(label, !available ? "НЕДОСТУПНО В ТЕКУЩЕМ РЕЖИМЕ" :
+                selected ? "ВЫБРАНО" : "ДОСТУПНО",
+            selected ? successColor : available ? mutedColor : warningColor,
+            "ВЫБРАТЬ", available, () =>
             {
                 action?.Invoke();
                 RefreshCurrentTab();
@@ -1455,18 +1861,18 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void AddWeaponsSection()
     {
-        AddSectionTitle("ACTIVE WEAPON",
-            "Session-only replacement through CharacterSpawner");
+        AddSectionTitle("АКТИВНОЕ ОРУЖИЕ",
+            "Замена только на текущую сессию через CharacterSpawner");
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         BaseWeapon current = FindPrimaryWeapon(player);
-        AddRow("Current Weapon",
-            current != null ? GetWeaponName(current.weaponData) : "NOT FOUND",
+        AddRow("ТЕКУЩЕЕ ОРУЖИЕ",
+            current != null ? GetWeaponName(current.weaponData) : "НЕ НАЙДЕНО",
             current != null ? successColor : warningColor,
             null, false, null);
 
         if (debugWeapons == null || debugWeapons.Length == 0)
         {
-            AddHint("No WeaponData assets are assigned to the debug menu.");
+            AddHint("Недоступно: в debug menu не назначены WeaponData assets.");
             return;
         }
 
@@ -1482,12 +1888,14 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 data.weaponPrefab != null;
             WeaponData captured = data;
             AddRow(GetWeaponName(data),
-                active ? "ACTIVE" : data.weaponPrefab == null
-                    ? "PREFAB MISSING"
-                    : available ? "AVAILABLE" : "PLAYER/SPAWNER NOT FOUND",
+                active ? "АКТИВНО" : data.weaponPrefab == null
+                    ? "PREFAB НЕ НАЗНАЧЕН"
+                    : available ? "ДОСТУПНО" : "PLAYER/SPAWNER НЕ НАЙДЕН",
                 active ? successColor : available ? mutedColor : warningColor,
-                "USE", available, () => UseWeapon(captured));
+                "ВЫБРАТЬ", available, () => UseWeapon(captured));
         }
+        AddHint("Что делает: заменяет primary weapon у текущего player. " +
+            "Сохранение и production loadout не изменяются.");
     }
 
     private void AddUpgradesSection()
@@ -2140,7 +2548,11 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         "CLEAR EVENT" => 150f,
         "TURN OFF" => 130f,
         "TURN ON" => 130f,
-        _ => 116f
+        _ => Mathf.Clamp(
+            60f + (string.IsNullOrEmpty(label) ? 0f : label.Length * 8.5f),
+            116f,
+            280f
+        )
     };
 
     private void AddHint(string message)
@@ -2150,7 +2562,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             TextAlignmentOptions.Center, mutedColor
         );
         hint.textWrappingMode = TextWrappingModes.Normal;
-        hint.gameObject.AddComponent<LayoutElement>().preferredHeight = 42f;
+        hint.gameObject.AddComponent<LayoutElement>().preferredHeight = 56f;
     }
 
     private Button CreateButton(

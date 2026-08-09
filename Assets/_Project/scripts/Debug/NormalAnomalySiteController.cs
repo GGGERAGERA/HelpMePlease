@@ -16,6 +16,7 @@ public sealed class NormalAnomalySiteController : MonoBehaviour
     private LevelAnomalyController anomalyController;
     private PowerTestController powerTest;
     private LocalAnomalyData stasisData;
+    private LocalAnomalyData standaloneData;
     private CaptureZoneEvent capturePrefab;
     private GameObject[] enemyPrefabs;
     private CaptureZoneEvent activeEvent;
@@ -31,6 +32,11 @@ public sealed class NormalAnomalySiteController : MonoBehaviour
     public bool IsCompleted => state == SiteState.Completed;
     public bool IsActive => state == SiteState.Active;
     public Vector3 SitePosition => sitePosition;
+    public bool HasActiveEvent => activeEvent != null;
+    public bool IsConfigured => enemySpawner != null && eventSpawner != null &&
+        anomalyController != null && standaloneData != null &&
+        capturePrefab != null;
+    public string RuntimeState => state.ToString();
 
     public void Configure(
         EnemySpawner spawner,
@@ -46,12 +52,23 @@ public sealed class NormalAnomalySiteController : MonoBehaviour
         anomalyController = anomalies;
         powerTest = test;
         stasisData = stasis;
+        standaloneData = stasis;
         capturePrefab = capture;
         enemyPrefabs = prefabs ?? System.Array.Empty<GameObject>();
         eventSpawner.SetHoldPointEnabled(true);
         eventSpawner.EventCompleted += HandleEventCompleted;
         eventSpawner.EventFailed += HandleEventFailed;
         StopSite();
+    }
+
+    public void ConfigureStandalone()
+    {
+        sitePosition = Vector3.zero;
+        stasisData = standaloneData;
+        siteLabel = "NORMAL STASIS SITE";
+        explorationMode = false;
+        showStandaloneHud = true;
+        resetPlayerWhenAvailable = true;
     }
 
     public void ConfigureExploration(

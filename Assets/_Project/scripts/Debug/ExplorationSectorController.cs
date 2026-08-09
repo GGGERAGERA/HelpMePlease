@@ -102,6 +102,7 @@ public sealed class ExplorationSectorController : MonoBehaviour
     public int ThreatLevel => threatLevel;
     public float Elapsed => elapsed;
     public int EnemiesAlive => EnemyHealth.ActiveInstances.Count;
+    public int CurrentEnemyCap => CurrentThreatCap();
     public int SitesCompleted => CompletedNormalSites() +
         (gravitySite != null && gravitySite.IsCompleted ? 1 : 0);
 
@@ -168,6 +169,32 @@ public sealed class ExplorationSectorController : MonoBehaviour
     public void NewLayout() => StartSector(true);
 
     public void ResetSector() => StartSector(false);
+
+    public void StopForStandaloneSiteTest()
+    {
+        running = false;
+        completed = false;
+        enemySpawner?.StopDebugExplorationPressure();
+        enemySpawner?.ClearDebugSpawnedEnemies();
+        eventSpawner?.ClearAllDebugEvents();
+        ClearRewardChests();
+        gravitySite?.StopSite();
+        if (normalSites != null)
+        {
+            for (int i = 0; i < normalSites.Length; i++)
+                normalSites[i]?.StopSite();
+        }
+        RestorePlayerIncomingDamage();
+        powerController?.SetExplorationHudMode(false);
+        siteSelector?.SetExplorationLocked(false);
+        if (worldVisualRoot != null)
+            worldVisualRoot.SetActive(false);
+    }
+
+    public void ReturnToExploration()
+    {
+        ResetThroughSceneReload();
+    }
 
     public void SetInvulnerability(bool enabled)
     {

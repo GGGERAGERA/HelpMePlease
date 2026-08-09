@@ -26,6 +26,35 @@ public sealed class AnomalyPowerDebugController : MonoBehaviour
     public bool GravityOrbSiteLocked => gravityOrbSiteLocked;
     public bool ArcNodeSiteLocked => arcNodeSiteLocked;
     public bool RedBeamSiteLocked => redBeamSiteLocked;
+    public bool GravityOrbComponentPresent => gravityOrb != null;
+    public bool ArcNodeComponentPresent => arcNode != null;
+    public bool RedBeamComponentPresent => redBeam != null;
+    public float GravityOrbLastContactTime => gravityOrb != null
+        ? gravityOrb.LastContactTime : float.NegativeInfinity;
+    public int GravityOrbLastContactHits => gravityOrb != null
+        ? gravityOrb.LastContactHits : 0;
+    public int GravityOrbLastContactKills => gravityOrb != null
+        ? gravityOrb.LastContactKills : 0;
+    public float ArcNodeLastDischargeTime => arcNode != null
+        ? arcNode.LastDischargeTime : float.NegativeInfinity;
+    public int ArcNodeLastTargetCount => arcNode != null
+        ? arcNode.LastTargetCount : 0;
+    public int ArcNodeLastKillCount => arcNode != null
+        ? arcNode.LastKillCount : 0;
+    public float ArcNodeCooldownRemaining => arcNode != null
+        ? arcNode.CooldownRemaining : 0f;
+    public float RedBeamLastFireTime => redBeam != null
+        ? redBeam.LastFireTime : float.NegativeInfinity;
+    public int RedBeamLastCandidateCount => redBeam != null
+        ? redBeam.LastCandidateCount : 0;
+    public int RedBeamLastHitCount => redBeam != null
+        ? redBeam.LastHitCount : 0;
+    public int RedBeamLastKillCount => redBeam != null
+        ? redBeam.LastKillCount : 0;
+    public float RedBeamCooldownRemaining => redBeam != null
+        ? redBeam.CooldownRemaining : 0f;
+    public string RedBeamRuntimeState => redBeam != null
+        ? redBeam.RuntimeState : "MISSING";
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public bool TrajectoryEnabled => gravityTrajectoryPreview != null &&
         gravityTrajectoryPreview.PreviewEnabled;
@@ -92,6 +121,18 @@ public sealed class AnomalyPowerDebugController : MonoBehaviour
         int killed = KillAllEnemies();
         Debug.Log($"DEBUG KILL ALL: killed {killed} enemies");
         return killed;
+    }
+
+    public bool FireRedBeamNowDebug()
+    {
+        ResolvePlayer();
+        return redBeam != null && redBeam.FireNowForDebug();
+    }
+
+    public bool DischargeArcNodeNowDebug()
+    {
+        ResolvePlayer();
+        return arcNode != null && arcNode.DischargeNowForDebug();
     }
 #endif
 

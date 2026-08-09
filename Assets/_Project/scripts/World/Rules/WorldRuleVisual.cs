@@ -184,6 +184,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
     private float targetRainIntensity;
     private float currentDarknessIntensity;
     private float targetDarknessIntensity;
+    private float debugDarknessOverlayMultiplier = 1f;
     private float currentGoldenIntensity;
     private float targetGoldenIntensity;
     private float currentWindIntensity;
@@ -251,6 +252,11 @@ public sealed class WorldRuleVisual : MonoBehaviour
     public Material DarknessMarkerMaterial => darknessMarkerMaterial;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void SetDebugDarknessOverlayMultiplier(float multiplier)
+    {
+        debugDarknessOverlayMultiplier = Mathf.Clamp01(multiplier);
+    }
+
     public void ConfigureDebugRuntime(
         Image screenImage,
         Image darknessImage,
@@ -467,7 +473,8 @@ public sealed class WorldRuleVisual : MonoBehaviour
         {
             debugDarknessImage.color = new Color(
                 0.005f, 0.008f, 0.015f,
-                currentDarknessIntensity * 0.82f
+                currentDarknessIntensity * 0.82f *
+                debugDarknessOverlayMultiplier
             );
             debugDarknessImage.enabled =
                 currentDarknessIntensity > 0f ||

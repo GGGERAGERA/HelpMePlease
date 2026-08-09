@@ -75,6 +75,9 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
         SectorVisualDebugController sectorVisual =
             systems.AddComponent<SectorVisualDebugController>();
         sectorVisual.Configure(gameplayArea, sandboxCamera);
+        GiantObserverBackgroundController giantObserver =
+            systems.AddComponent<GiantObserverBackgroundController>();
+        giantObserver.Configure(sandboxCamera, ruleVisual);
         EnvironmentReadabilityDebugController readabilityController =
             systems.AddComponent<EnvironmentReadabilityDebugController>();
         try
@@ -245,7 +248,9 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
             powerController,
             trajectoryPreview,
             eventStatusOverlay,
-            readabilityController
+            readabilityController,
+            giantObserver,
+            siteSelector
         );
         explorationSector.PrepareAsDefaultSandboxMode(characterSpawner);
     }

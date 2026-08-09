@@ -61,7 +61,22 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
         (state == SiteState.Active || state == SiteState.Collapsing);
     public GravityZone ActiveOrbitZone => activeGravityZone as GravityZone;
     public bool IsCompleted => state == SiteState.Completed;
+    public bool IsRunning => state == SiteState.Dormant ||
+        state == SiteState.Active || state == SiteState.Collapsing;
+    public bool HasActiveEvent => activeSiteEvent != null;
+    public bool IsConfigured => enemySpawner != null && eventSpawner != null &&
+        anomalyController != null && gravityData != null &&
+        capturePrefab != null;
+    public string RuntimeState => state.ToString();
     public Vector3 SitePosition => sitePosition;
+
+    public void ConfigureStandalone()
+    {
+        sitePosition = Vector3.zero;
+        explorationMode = false;
+        showStandaloneHud = true;
+        resetPlayerWhenAvailable = true;
+    }
 
     public void Configure(
         EnemySpawner spawner,

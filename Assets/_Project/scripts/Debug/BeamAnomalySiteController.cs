@@ -54,6 +54,15 @@ public sealed class BeamAnomalySiteController : MonoBehaviour
     private string message;
     private float messageUntil;
 
+    public bool IsConfigured => enemySpawner != null && eventSpawner != null &&
+        corridorPrefab != null && visualRoot != null;
+    public bool IsRunning => state == SiteState.Dormant ||
+        state == SiteState.Active || state == SiteState.Collapsing;
+    public bool IsCompleted => state == SiteState.Completed;
+    public bool HasActiveEvent => activeEvent != null;
+    public string RuntimeState => state.ToString();
+    public string HazardRuntimeState => hazardState.ToString();
+
     public void Configure(
         EnemySpawner spawner,
         WorldEventSpawner events,
@@ -75,6 +84,7 @@ public sealed class BeamAnomalySiteController : MonoBehaviour
 
     public void StartOrResetSite()
     {
+        enabled = true;
         powerTest?.StopTest();
         ClearEvent();
         ClearEnemies();

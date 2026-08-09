@@ -26,6 +26,20 @@ public sealed class RedBeamPower : MonoBehaviour
     private BeamState state;
     private Vector2 fireDirection = Vector2.right;
     private float stateTimer;
+    private float lastFireTime = float.NegativeInfinity;
+    private int lastCandidateCount;
+    private int lastHitCount;
+    private int lastKillCount;
+
+    public float LastFireTime => lastFireTime;
+    public int LastCandidateCount => lastCandidateCount;
+    public int LastHitCount => lastHitCount;
+    public int LastKillCount => lastKillCount;
+    public float LastDamage => BeamDamage;
+    public float CooldownRemaining => state == BeamState.Waiting
+        ? Mathf.Max(0f, Cooldown - stateTimer)
+        : 0f;
+    public string RuntimeState => state.ToString();
 
     private void OnEnable()
     {
@@ -64,6 +78,17 @@ public sealed class RedBeamPower : MonoBehaviour
         }
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool FireNowForDebug()
+    {
+        if (!isActiveAndEnabled || !TryChooseDirection())
+            return false;
+        BeginTelegraph();
+        FireBeam();
+        return true;
+    }
+#endif
+
     private bool TryChooseDirection()
     {
         candidates.Clear();
@@ -81,6 +106,8 @@ public sealed class RedBeamPower : MonoBehaviour
                 candidates.Add(enemy);
             }
         }
+
+        lastCandidateCount = candidates.Count;
 
         if (candidates.Count == 0)
             return false;
@@ -145,6 +172,9 @@ public sealed class RedBeamPower : MonoBehaviour
         beamGlow.enabled = true;
         beamCore.enabled = true;
         UpdateLinePositions();
+        lastFireTime = Time.time;
+        lastHitCount = 0;
+        lastKillCount = 0;
 
         Vector2 origin = transform.position;
         foreach (EnemyHealth enemy in EnemyHealth.ActiveInstances)
@@ -165,6 +195,9 @@ public sealed class RedBeamPower : MonoBehaviour
 
             Vector2 hitPoint = origin + fireDirection * forward;
             enemy.TakeDamage(BeamDamage, hitPoint, false);
+            lastHitCount++;
+            if (enemy.IsDead)
+                lastKillCount++;
         }
     }
 
@@ -201,7 +234,7 @@ public sealed class RedBeamPower : MonoBehaviour
         );
         beamGlow = CreateLine(
             "Red Beam Glow",
-            1.05f,
+            BeamHalfWidth * 2f,
             new Color(1f, 0.02f, 0.02f, 0.32f),
             38
         );

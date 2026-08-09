@@ -16,6 +16,18 @@ public sealed class ArcNodePower : MonoBehaviour
     private GameObject visualRoot;
     private LineRenderer nodeRing;
     private float dischargeTimer;
+    private float lastDischargeTime = float.NegativeInfinity;
+    private int lastTargetCount;
+    private int lastKillCount;
+
+    public float LastDischargeTime => lastDischargeTime;
+    public int LastTargetCount => lastTargetCount;
+    public int LastKillCount => lastKillCount;
+    public float LastDamage => DamagePerTarget;
+    public float CooldownRemaining => Mathf.Max(
+        0f,
+        DischargeInterval - dischargeTimer
+    );
 
     private void OnEnable()
     {
@@ -42,6 +54,8 @@ public sealed class ArcNodePower : MonoBehaviour
     private void Discharge()
     {
         dischargeTargets.Clear();
+        lastTargetCount = 0;
+        lastKillCount = 0;
         Vector2 nodePosition = visualRoot.transform.position;
         EnemyHealth first = FindNearest(
             nodePosition,
@@ -71,6 +85,7 @@ public sealed class ArcNodePower : MonoBehaviour
 
         Vector2 start = nodePosition;
         Color arcColor = new(1f, 0.72f, 0.12f, 1f);
+        lastDischargeTime = Time.time;
 
         for (int i = 0; i < dischargeTargets.Count; i++)
         {
@@ -87,9 +102,22 @@ public sealed class ArcNodePower : MonoBehaviour
                 0.18f
             );
             target.TakeDamage(DamagePerTarget, end, false);
+            lastTargetCount++;
+            if (target.IsDead)
+                lastKillCount++;
             start = end;
         }
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool DischargeNowForDebug()
+    {
+        if (!isActiveAndEnabled)
+            return false;
+        Discharge();
+        return lastTargetCount > 0;
+    }
+#endif
 
     private static EnemyHealth FindNearest(
         Vector2 center,
