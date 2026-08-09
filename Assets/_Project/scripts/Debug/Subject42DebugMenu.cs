@@ -759,8 +759,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         bool visible = available && giantObserverController.IsVisible;
 
         AddSectionTitle("ГИГАНТСКИЙ НАБЛЮДАТЕЛЬ",
-            "Sandbox-only фон без collider, AI, target или gameplay-state");
-        AddToggleRow("ГИГАНТСКИЙ НАБЛЮДАТЕЛЬ", observerOn, available,
+            "Источник: p_robot1.prefab");
+        AddToggleRow("ВКЛ / ВЫКЛ", observerOn, available,
             () => giantObserverController.SetObserverEnabled(
                 !giantObserverController.ObserverEnabled));
         AddHint("Главный выключатель visual prototype. Сам по себе событие не запускает.");
@@ -800,6 +800,34 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             GiantObserverBackgroundController.ObserverIntensity.Normal);
         AddObserverIntensityRow(
             GiantObserverBackgroundController.ObserverIntensity.High);
+
+        AddSectionTitle("РАЗМЕР НА ЭКРАНЕ",
+            available
+                ? $"Выбрано: {giantObserverController.ScreenWidthPercent:0}% ширины камеры"
+                : "Controller не найден");
+        AddObserverScreenWidthRow(50f);
+        AddObserverScreenWidthRow(65f);
+        AddObserverScreenWidthRow(80f);
+        AddObserverScreenWidthRow(100f);
+
+        AddSectionTitle("ВИДИМОСТЬ РОБОТА",
+            "Runtime-only усиление цветов; материалы prefab не изменяются");
+        AddObserverVisibilityRow(
+            GiantObserverBackgroundController.RobotVisibility.Original);
+        AddObserverVisibilityRow(
+            GiantObserverBackgroundController.RobotVisibility.Boosted);
+
+        AddSectionTitle("ДИАГНОСТИКА", available
+            ? $"Prefab: {(giantObserverController.PrefabLoaded ? "LOADED" : "MISSING")}  |  " +
+              $"Renderers: {giantObserverController.RendererCount}  |  " +
+              $"Bounds: {giantObserverController.SourceBoundsSize.x:0.##} × " +
+              $"{giantObserverController.SourceBoundsSize.y:0.##}"
+            : "Prefab: MISSING | Renderers: 0 | Bounds: 0 × 0");
+        AddHint("Current state: " +
+            (available ? giantObserverController.CurrentStateName : "HIDDEN") +
+            "  |  Sensor: " +
+            (available && giantObserverController.UsesPrefabSensor
+                ? "PREFAB EYE" : "PROCEDURAL FALLBACK"));
 
         AddHint(
             "По умолчанию Наблюдатель и автоматическое появление выключены."
@@ -854,6 +882,36 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         GiantObserverBackgroundController.ObserverIntensity.High => "ВЫСОКАЯ",
         _ => "НОРМАЛЬНАЯ"
     };
+
+    private void AddObserverScreenWidthRow(float percent)
+    {
+        bool available = giantObserverController != null;
+        bool selected = available && Mathf.Approximately(
+            giantObserverController.ScreenWidthPercent, percent);
+        AddRow($"{percent:0}%", selected ? "ВЫБРАНО" : "ДОСТУПНО",
+            selected ? successColor : mutedColor,
+            "ВЫБРАТЬ", available, () =>
+            {
+                giantObserverController.SetScreenWidthPercent(percent);
+                RefreshCurrentTab();
+            });
+    }
+
+    private void AddObserverVisibilityRow(
+        GiantObserverBackgroundController.RobotVisibility value)
+    {
+        bool available = giantObserverController != null;
+        bool selected = available && giantObserverController.Visibility == value;
+        string label = value == GiantObserverBackgroundController.RobotVisibility.Boosted
+            ? "УСИЛЕННАЯ" : "ОРИГИНАЛ";
+        AddRow(label, selected ? "ВЫБРАНО" : "ДОСТУПНО",
+            selected ? successColor : mutedColor,
+            "ВЫБРАТЬ", available, () =>
+            {
+                giantObserverController.SetRobotVisibility(value);
+                RefreshCurrentTab();
+            });
+    }
 
     private void AddSandboxVisualReadabilitySection()
     {

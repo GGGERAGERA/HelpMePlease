@@ -34,6 +34,9 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
     [SerializeField] private GameObject readabilityEnvironmentPrefab;
     [SerializeField] private Shader environmentReadabilityShader;
 
+    [Header("Sandbox Giant Observer")]
+    [SerializeField] private GameObject giantObserverPrefab;
+
     [Header("Area")]
     [SerializeField] private Vector2 areaSize = new(70f, 45f);
 
@@ -77,7 +80,7 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
         sectorVisual.Configure(gameplayArea, sandboxCamera);
         GiantObserverBackgroundController giantObserver =
             systems.AddComponent<GiantObserverBackgroundController>();
-        giantObserver.Configure(sandboxCamera, ruleVisual);
+        giantObserver.Configure(sandboxCamera, ruleVisual, giantObserverPrefab);
         EnvironmentReadabilityDebugController readabilityController =
             systems.AddComponent<EnvironmentReadabilityDebugController>();
         try

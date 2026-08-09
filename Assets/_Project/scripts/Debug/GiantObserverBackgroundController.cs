@@ -1,12 +1,21 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 public sealed class GiantObserverBackgroundController : MonoBehaviour
 {
     public enum ObserverIntensity { Low, Normal, High }
+    public enum RobotVisibility { Original, Boosted }
 
     private enum EventPhase { Hidden, Prepare, LightOn, Observe, LightOff }
+
+    private sealed class RendererVisual
+    {
+        public Renderer Renderer;
+        public Material[] Materials;
+        public bool[] SensorMaterials;
+    }
 
     private const float PrepareDuration = 0.3f;
     private const float LightOnDuration = 0.45f;
@@ -16,49 +25,78 @@ public sealed class GiantObserverBackgroundController : MonoBehaviour
     private const float SensorOffLead = 0.15f;
     private const float PrepareRevealLevel = 0.12f;
     private const float ParallaxFactor = 0.045f;
-    private const float ObserverScale = 1.75f;
     private const int BacklightSortingOrder = -195;
     private const int ObserverSortingOrder = -185;
+    private const float ObserverWorldZ = 4f;
+    private const float LightWorldZ = 5f;
 
-    private readonly List<SpriteRenderer> silhouetteRenderers = new();
+    private readonly List<RendererVisual> robotVisuals = new();
+    private readonly List<SpriteRenderer> fallbackRenderers = new();
     private readonly List<SpriteRenderer> sensorRenderers = new();
     private readonly List<SpriteRenderer> lightRenderers = new();
-    private readonly List<Color> silhouetteColors = new();
+    private readonly List<Color> fallbackColors = new();
     private readonly List<Color> sensorColors = new();
     private readonly List<Color> lightColors = new();
+    private readonly List<string> disabledRuntimeComponents = new();
 
     private Camera sandboxCamera;
     private WorldRuleVisual worldRuleVisual;
+    private GameObject observerPrefab;
     private Transform observerRoot;
     private Transform lightRoot;
+    private GameObject robotInstance;
     private Sprite runtimeSprite;
     private Sprite gradientSprite;
     private Texture2D runtimeTexture;
     private Texture2D gradientTexture;
     private EventPhase phase;
     private ObserverIntensity intensity = ObserverIntensity.Normal;
+    private RobotVisibility robotVisibility = RobotVisibility.Original;
     private bool observerEnabled;
     private bool autoTrigger;
+    private bool prefabLoaded;
+    private bool usesPrefabSensor;
     private float intervalMin = 10f;
     private float intervalMax = 15f;
+    private float screenWidthPercent = 65f;
     private float phaseStartedAt;
     private float nextTriggerAt;
     private Vector3 eventCameraPosition;
     private Vector3 eventRootPosition;
     private Vector3 eventLightPosition;
+    private Vector2 sourceBoundsSize;
+    private Vector3 sourceBoundsCenterOffset;
     private Color cameraColorBeforeEvent;
 
     public bool ObserverEnabled => observerEnabled;
     public bool AutoTrigger => autoTrigger;
     public bool IsVisible => phase != EventPhase.Hidden;
+    public bool PrefabLoaded => prefabLoaded;
+    public bool UsesPrefabSensor => usesPrefabSensor;
     public float IntervalMin => intervalMin;
     public float IntervalMax => intervalMax;
+    public float ScreenWidthPercent => screenWidthPercent;
+    public int RendererCount => robotVisuals.Count;
+    public Vector2 SourceBoundsSize => sourceBoundsSize;
     public ObserverIntensity Intensity => intensity;
+    public RobotVisibility Visibility => robotVisibility;
+    public IReadOnlyList<string> DisabledRuntimeComponents => disabledRuntimeComponents;
 
-    public void Configure(Camera targetCamera, WorldRuleVisual ruleVisual)
+    public string CurrentStateName => phase switch
+    {
+        EventPhase.Prepare => "PREPARE",
+        EventPhase.LightOn => "LIGHT",
+        EventPhase.Observe => "OBSERVE",
+        EventPhase.LightOff => "FADE",
+        _ => "HIDDEN"
+    };
+
+    public void Configure(Camera targetCamera, WorldRuleVisual ruleVisual,
+        GameObject prefab)
     {
         sandboxCamera = targetCamera;
         worldRuleVisual = ruleVisual;
+        observerPrefab = prefab;
         EnsureVisual();
         SetVisualLevels(0f, 0f, 0f);
         ScheduleNextTrigger();
@@ -107,12 +145,24 @@ public sealed class GiantObserverBackgroundController : MonoBehaviour
 
     public void SetIntensity(ObserverIntensity value) => intensity = value;
 
-    public static string GetIntensityName(ObserverIntensity value) => value switch
+    public void SetScreenWidthPercent(float value)
     {
-        ObserverIntensity.Low => "LOW",
-        ObserverIntensity.High => "HIGH",
-        _ => "NORMAL"
-    };
+        screenWidthPercent = Mathf.Clamp(value, 50f, 100f);
+        if (phase != EventPhase.Hidden)
+        {
+            ConfigureRevealComposition();
+            eventCameraPosition = sandboxCamera.transform.position;
+            eventRootPosition = observerRoot.position;
+            eventLightPosition = lightRoot.position;
+        }
+    }
+
+    public void SetRobotVisibility(RobotVisibility value)
+    {
+        robotVisibility = value;
+        if (phase != EventPhase.Hidden)
+            ApplyRobotVisibility(1f, 1f);
+    }
 
     private void Update()
     {
@@ -161,14 +211,10 @@ public sealed class GiantObserverBackgroundController : MonoBehaviour
 
     private void UpdateLightOn(float elapsed)
     {
-        float light = Mathf.Lerp(
-            PrepareRevealLevel,
-            1f,
-            Smooth01(elapsed / LightOnDuration)
-        );
+        float light = Mathf.Lerp(PrepareRevealLevel, 1f,
+            Smooth01(elapsed / LightOnDuration));
         float sensor = Smooth01(
-            (elapsed - SensorDelay) / (LightOnDuration - SensorDelay)
-        );
+            (elapsed - SensorDelay) / (LightOnDuration - SensorDelay));
         SetVisualLevels(light, sensor, light);
         ApplyRevealEnvironment(light);
         if (elapsed >= LightOnDuration)
@@ -179,8 +225,7 @@ public sealed class GiantObserverBackgroundController : MonoBehaviour
     {
         float sensor = 1f - Smooth01(elapsed / SensorOffLead);
         float bodyFade = 1f - Smooth01(
-            (elapsed - SensorOffLead) / (LightOffDuration - SensorOffLead)
-        );
+            (elapsed - SensorOffLead) / (LightOffDuration - SensorOffLead));
         SetVisualLevels(bodyFade, sensor, bodyFade);
         ApplyRevealEnvironment(bodyFade);
         if (elapsed >= LightOffDuration)
@@ -231,11 +276,8 @@ public sealed class GiantObserverBackgroundController : MonoBehaviour
             _ => 0.56f
         };
         Color coldLight = new(0.18f, 0.29f, 0.39f, cameraColorBeforeEvent.a);
-        sandboxCamera.backgroundColor = Color.Lerp(
-            cameraColorBeforeEvent,
-            coldLight,
-            amount * backgroundStrength
-        );
+        sandboxCamera.backgroundColor = Color.Lerp(cameraColorBeforeEvent,
+            coldLight, amount * backgroundStrength);
 
         float darknessAtFullReveal = intensity switch
         {
@@ -244,8 +286,7 @@ public sealed class GiantObserverBackgroundController : MonoBehaviour
             _ => 0.56f
         };
         worldRuleVisual?.SetDebugDarknessOverlayMultiplier(
-            Mathf.Lerp(1f, darknessAtFullReveal, amount)
-        );
+            Mathf.Lerp(1f, darknessAtFullReveal, amount));
     }
 
     private void RestoreVisualEnvironment()
@@ -257,15 +298,29 @@ public sealed class GiantObserverBackgroundController : MonoBehaviour
 
     private void ConfigureRevealComposition()
     {
-        float halfHeight = sandboxCamera.orthographicSize;
-        Vector3 center = sandboxCamera.transform.position;
-        center.z = 0f;
+        float cameraHeight = sandboxCamera.orthographicSize * 2f;
+        float cameraWidth = cameraHeight * sandboxCamera.aspect;
+        Vector3 cameraCenter = sandboxCamera.transform.position;
+        float sourceWidth = Mathf.Max(0.01f, sourceBoundsSize.x);
+        float scale = cameraWidth * (screenWidthPercent / 100f) / sourceWidth;
+
         observerRoot.rotation = Quaternion.identity;
-        observerRoot.localScale = Vector3.one * ObserverScale;
-        observerRoot.position = center + new Vector3(0.8f, halfHeight * 0.65f, 0f);
+        observerRoot.localScale = Vector3.one * scale;
+        Vector3 scaledCenterOffset = sourceBoundsCenterOffset * scale;
+        float scaledHeight = sourceBoundsSize.y * scale;
+        float desiredBoundsCenterY = cameraCenter.y + sandboxCamera.orthographicSize
+            - scaledHeight * 0.42f;
+        observerRoot.position = new Vector3(
+            cameraCenter.x - scaledCenterOffset.x,
+            desiredBoundsCenterY - scaledCenterOffset.y,
+            ObserverWorldZ);
+
         lightRoot.rotation = Quaternion.identity;
-        lightRoot.localScale = Vector3.one;
-        lightRoot.position = center + new Vector3(0f, halfHeight * 0.5f, 0f);
+        lightRoot.localScale = new Vector3(cameraWidth / 35f,
+            cameraHeight / 25f, 1f);
+        lightRoot.position = new Vector3(cameraCenter.x,
+            cameraCenter.y + sandboxCamera.orthographicSize * 0.55f,
+            LightWorldZ);
     }
 
     private void EnsureVisual()
@@ -281,11 +336,6 @@ public sealed class GiantObserverBackgroundController : MonoBehaviour
         root.transform.SetParent(transform, false);
         observerRoot = root.transform;
 
-        Color shell = new(0.22f, 0.29f, 0.34f, 1f);
-        Color shellEdge = new(0.31f, 0.4f, 0.46f, 1f);
-        Color shellShadow = new(0.13f, 0.18f, 0.22f, 1f);
-        Color sensor = new(0.25f, 0.95f, 1f, 1f);
-
         CreateLightShape("Cold Technical Backlight", new Vector2(0f, 2f),
             new Vector2(43f, 29f), new Color(0.24f, 0.67f, 0.94f, 1f));
         CreateLightShape("Horizon Light Bank", new Vector2(0f, -5.4f),
@@ -293,31 +343,176 @@ public sealed class GiantObserverBackgroundController : MonoBehaviour
         CreateLightShape("Head Rim Halo", new Vector2(1f, 4.5f),
             new Vector2(24f, 18f), new Color(0.42f, 0.8f, 1f, 1f));
 
-        CreateObserverShape("Head", new Vector2(0f, 1.4f),
-            new Vector2(9.8f, 6.6f), 0f, shell);
-        CreateObserverShape("Crown", new Vector2(-0.5f, 5f),
-            new Vector2(7.8f, 1.25f), -3f, shellEdge);
-        CreateObserverShape("Face Shadow", new Vector2(0.3f, 0.1f),
-            new Vector2(8.9f, 2.4f), 1f, shellShadow);
-        CreateObserverShape("Jaw", new Vector2(0.9f, -2f),
-            new Vector2(8.1f, 1.8f), 4f, shellEdge);
-        CreateObserverShape("Near Shoulder", new Vector2(1.2f, -4.1f),
-            new Vector2(15.2f, 3.1f), -3f, shell);
-        CreateObserverShape("Far Shoulder", new Vector2(-4.8f, -4.7f),
-            new Vector2(9.2f, 2.7f), 6f, shellShadow);
-        CreateObserverShape("Upper Torso", new Vector2(2.1f, -7.2f),
-            new Vector2(12.5f, 5.4f), -2f, shellShadow);
-        CreateObserverShape("Antenna", new Vector2(-3f, 7f),
-            new Vector2(0.72f, 4.4f), -11f, shellEdge);
-        CreateObserverShape("Sensor Housing", new Vector2(0.05f, 2.05f),
-            new Vector2(5.8f, 2.25f), 1f, shellShadow);
-        CreateSensorShape("Primary Sensor Halo", new Vector2(-0.35f, 2.1f),
-            new Vector2(3.2f, 2.15f), 1f,
-            new Color(0.2f, 0.82f, 1f, 0.24f));
-        CreateSensorShape("Primary Sensor", new Vector2(-0.35f, 2.1f),
-            new Vector2(2.15f, 1.05f), 1f, sensor);
-        CreateSensorShape("Sensor Core", new Vector2(-0.7f, 2.18f),
-            new Vector2(0.55f, 0.48f), 1f, Color.white);
+        if (!CreatePrefabRobot())
+            CreateProceduralFallback();
+    }
+
+    private bool CreatePrefabRobot()
+    {
+        if (observerPrefab == null)
+            return false;
+
+        robotInstance = Instantiate(observerPrefab, observerRoot, false);
+        robotInstance.name = "p_robot1 (Runtime Observer Visual)";
+        robotInstance.transform.localPosition = Vector3.zero;
+        DisableRuntimeGameplay(robotInstance);
+        CollectPrefabRenderers(robotInstance);
+        if (robotVisuals.Count == 0)
+        {
+            Destroy(robotInstance);
+            robotInstance = null;
+            return false;
+        }
+
+        ConfigurePrefabSorting(robotInstance);
+        Bounds bounds = CalculateRendererBounds();
+        sourceBoundsSize = new Vector2(bounds.size.x, bounds.size.y);
+        sourceBoundsCenterOffset = observerRoot.InverseTransformPoint(bounds.center);
+        prefabLoaded = true;
+        return true;
+    }
+
+    private void DisableRuntimeGameplay(GameObject instance)
+    {
+        foreach (Collider collider in instance.GetComponentsInChildren<Collider>(true))
+        {
+            collider.enabled = false;
+            RecordDisabled(collider);
+        }
+        foreach (Collider2D collider in instance.GetComponentsInChildren<Collider2D>(true))
+        {
+            collider.enabled = false;
+            RecordDisabled(collider);
+        }
+        foreach (Rigidbody body in instance.GetComponentsInChildren<Rigidbody>(true))
+        {
+            body.isKinematic = true;
+            body.detectCollisions = false;
+            body.constraints = RigidbodyConstraints.FreezeAll;
+            RecordDisabled(body);
+        }
+        foreach (Rigidbody2D body in instance.GetComponentsInChildren<Rigidbody2D>(true))
+        {
+            body.simulated = false;
+            body.bodyType = RigidbodyType2D.Kinematic;
+            body.constraints = RigidbodyConstraints2D.FreezeAll;
+            RecordDisabled(body);
+        }
+        foreach (Joint joint in instance.GetComponentsInChildren<Joint>(true))
+        {
+            joint.enableCollision = false;
+            RecordDisabled(joint);
+        }
+        foreach (Joint2D joint in instance.GetComponentsInChildren<Joint2D>(true))
+        {
+            joint.enabled = false;
+            RecordDisabled(joint);
+        }
+        foreach (MonoBehaviour behaviour in instance.GetComponentsInChildren<MonoBehaviour>(true))
+        {
+            behaviour.enabled = false;
+            RecordDisabled(behaviour);
+        }
+    }
+
+    private void RecordDisabled(Component component)
+    {
+        string name = component.GetType().Name;
+        if (!disabledRuntimeComponents.Contains(name))
+            disabledRuntimeComponents.Add(name);
+    }
+
+    private void CollectPrefabRenderers(GameObject instance)
+    {
+        foreach (Renderer renderer in instance.GetComponentsInChildren<Renderer>(true))
+        {
+            if (renderer is ParticleSystemRenderer || renderer is TrailRenderer ||
+                renderer is LineRenderer)
+                continue;
+
+            Material[] materials = renderer.sharedMaterials;
+            bool[] sensorMaterials = FindSensorMaterials(renderer, materials);
+            robotVisuals.Add(new RendererVisual
+            {
+                Renderer = renderer,
+                Materials = materials,
+                SensorMaterials = sensorMaterials
+            });
+            foreach (bool sensorMaterial in sensorMaterials)
+                usesPrefabSensor |= sensorMaterial;
+        }
+    }
+
+    private static bool[] FindSensorMaterials(Renderer renderer, Material[] materials)
+    {
+        bool[] result = new bool[materials.Length];
+        string rendererName = renderer.name.ToLowerInvariant();
+        bool sensorRenderer = rendererName.Contains("eye") ||
+            rendererName.Contains("sensor");
+        for (int i = 0; i < materials.Length; i++)
+        {
+            Material material = materials[i];
+            result[i] = sensorRenderer;
+            if (material == null) continue;
+            string materialName = material.name.ToLowerInvariant();
+            if (materialName.Contains("eye") || materialName.Contains("sensor"))
+                result[i] = true;
+        }
+        return result;
+    }
+
+    private void ConfigurePrefabSorting(GameObject instance)
+    {
+        int minimumOrder = int.MaxValue;
+        foreach (RendererVisual visual in robotVisuals)
+            minimumOrder = Mathf.Min(minimumOrder, visual.Renderer.sortingOrder);
+        if (minimumOrder == int.MaxValue) minimumOrder = 0;
+
+        foreach (RendererVisual visual in robotVisuals)
+        {
+            int relativeOrder = visual.Renderer.sortingOrder - minimumOrder;
+            visual.Renderer.sortingLayerName = "Background";
+            visual.Renderer.sortingOrder = ObserverSortingOrder + relativeOrder;
+        }
+
+        SortingGroup[] groups = instance.GetComponentsInChildren<SortingGroup>(true);
+        int minimumGroupOrder = int.MaxValue;
+        foreach (SortingGroup group in groups)
+            minimumGroupOrder = Mathf.Min(minimumGroupOrder, group.sortingOrder);
+        if (minimumGroupOrder == int.MaxValue) minimumGroupOrder = 0;
+        foreach (SortingGroup group in groups)
+        {
+            int relativeOrder = group.sortingOrder - minimumGroupOrder;
+            group.sortingLayerName = "Background";
+            group.sortingOrder = ObserverSortingOrder + relativeOrder;
+        }
+    }
+
+    private Bounds CalculateRendererBounds()
+    {
+        Bounds bounds = robotVisuals[0].Renderer.bounds;
+        for (int i = 1; i < robotVisuals.Count; i++)
+            bounds.Encapsulate(robotVisuals[i].Renderer.bounds);
+        return bounds;
+    }
+
+    private void CreateProceduralFallback()
+    {
+        prefabLoaded = false;
+        sourceBoundsSize = new Vector2(16f, 15.5f);
+        sourceBoundsCenterOffset = new Vector3(0f, -0.25f, 0f);
+        Color shell = new(0.22f, 0.29f, 0.34f, 1f);
+        Color shadow = new(0.13f, 0.18f, 0.22f, 1f);
+        CreateFallbackShape("Fallback Head", new Vector2(0f, 1.4f),
+            new Vector2(9.8f, 6.6f), shell);
+        CreateFallbackShape("Fallback Shoulders", new Vector2(0f, -4.1f),
+            new Vector2(16f, 3.1f), shell);
+        CreateFallbackShape("Fallback Upper Torso", new Vector2(1f, -7.2f),
+            new Vector2(12.5f, 5.4f), shadow);
+        CreateSensorShape("Fallback Sensor Halo", new Vector2(-0.35f, 2.1f),
+            new Vector2(3.2f, 2.15f), new Color(0.2f, 0.82f, 1f, 0.24f));
+        CreateSensorShape("Fallback Sensor", new Vector2(-0.35f, 2.1f),
+            new Vector2(2.15f, 1.05f), new Color(0.25f, 0.95f, 1f, 1f));
     }
 
     private void CreateRuntimeSprites()
@@ -349,10 +544,8 @@ public sealed class GiantObserverBackgroundController : MonoBehaviour
         {
             for (int x = 0; x < gradientSize; x++)
             {
-                Vector2 normalized = new(
-                    (x + 0.5f) / gradientSize * 2f - 1f,
-                    (y + 0.5f) / gradientSize * 2f - 1f
-                );
+                Vector2 normalized = new((x + 0.5f) / gradientSize * 2f - 1f,
+                    (y + 0.5f) / gradientSize * 2f - 1f);
                 float alpha = Smooth01(1f - Mathf.Clamp01(normalized.magnitude));
                 gradientPixels[y * gradientSize + x] =
                     new Color(1f, 1f, 1f, alpha);
@@ -374,59 +567,110 @@ public sealed class GiantObserverBackgroundController : MonoBehaviour
         return sprite;
     }
 
-    private void CreateLightShape(string shapeName, Vector2 localPosition,
-        Vector2 size, Color color)
+    private void CreateLightShape(string name, Vector2 position, Vector2 size,
+        Color color)
     {
-        SpriteRenderer renderer = CreateRenderer(shapeName, lightRoot,
-            gradientSprite, localPosition, size, 0f, color,
-            BacklightSortingOrder);
+        SpriteRenderer renderer = CreateRenderer(name, lightRoot, gradientSprite,
+            position, size, color, BacklightSortingOrder);
         lightRenderers.Add(renderer);
         lightColors.Add(color);
     }
 
-    private void CreateObserverShape(string shapeName, Vector2 localPosition,
-        Vector2 size, float rotation, Color color)
+    private void CreateFallbackShape(string name, Vector2 position, Vector2 size,
+        Color color)
     {
-        SpriteRenderer renderer = CreateRenderer(shapeName, observerRoot,
-            runtimeSprite, localPosition, size, rotation, color,
-            ObserverSortingOrder);
-        silhouetteRenderers.Add(renderer);
-        silhouetteColors.Add(color);
+        SpriteRenderer renderer = CreateRenderer(name, observerRoot, runtimeSprite,
+            position, size, color, ObserverSortingOrder);
+        fallbackRenderers.Add(renderer);
+        fallbackColors.Add(color);
     }
 
-    private void CreateSensorShape(string shapeName, Vector2 localPosition,
-        Vector2 size, float rotation, Color color)
+    private void CreateSensorShape(string name, Vector2 position, Vector2 size,
+        Color color)
     {
-        SpriteRenderer renderer = CreateRenderer(shapeName, observerRoot,
-            gradientSprite, localPosition, size, rotation, color,
-            ObserverSortingOrder + 1);
+        SpriteRenderer renderer = CreateRenderer(name, observerRoot, gradientSprite,
+            position, size, color, ObserverSortingOrder + 1);
         sensorRenderers.Add(renderer);
         sensorColors.Add(color);
     }
 
-    private static SpriteRenderer CreateRenderer(string shapeName,
-        Transform parent, Sprite sprite, Vector2 localPosition, Vector2 size,
-        float rotation, Color color, int sortingOrder)
+    private static SpriteRenderer CreateRenderer(string name, Transform parent,
+        Sprite sprite, Vector2 position, Vector2 size, Color color, int order)
     {
-        GameObject shape = new(shapeName);
+        GameObject shape = new(name);
         shape.transform.SetParent(parent, false);
-        shape.transform.localPosition = new Vector3(localPosition.x,
-            localPosition.y, 0f);
-        shape.transform.localRotation = Quaternion.Euler(0f, 0f, rotation);
+        shape.transform.localPosition = new Vector3(position.x, position.y, 0f);
         shape.transform.localScale = new Vector3(size.x, size.y, 1f);
         SpriteRenderer renderer = shape.AddComponent<SpriteRenderer>();
         renderer.sprite = sprite;
         renderer.color = color;
         renderer.sortingLayerName = "Background";
-        renderer.sortingOrder = sortingOrder;
+        renderer.sortingOrder = order;
         return renderer;
     }
 
     private void SetVisualLevels(float body, float sensor, float light)
     {
-        SetAlpha(silhouetteRenderers, silhouetteColors, body * BodyAlpha());
+        ApplyRobotVisibility(body, sensor);
+        SetAlpha(fallbackRenderers, fallbackColors, body * BodyAlpha());
         SetAlpha(sensorRenderers, sensorColors, sensor * SensorAlpha());
         SetAlpha(lightRenderers, lightColors, light * LightAlpha());
+    }
+
+    private void ApplyRobotVisibility(float body, float sensor)
+    {
+        bool bodyVisible = body > 0.015f;
+        bool sensorVisible = sensor > 0.015f;
+        foreach (RendererVisual visual in robotVisuals)
+        {
+            visual.Renderer.enabled = bodyVisible;
+            ApplyMaterialAppearance(visual,
+                bodyVisible && robotVisibility == RobotVisibility.Boosted,
+                sensorVisible);
+        }
+    }
+
+    private static void ApplyMaterialAppearance(RendererVisual visual,
+        bool boosted, bool sensorVisible)
+    {
+        for (int i = 0; i < visual.Materials.Length; i++)
+        {
+            Material material = visual.Materials[i];
+            bool hiddenSensor = visual.SensorMaterials[i] && !sensorVisible;
+            if ((!boosted && !hiddenSensor) || material == null)
+            {
+                visual.Renderer.SetPropertyBlock(null, i);
+                continue;
+            }
+
+            MaterialPropertyBlock block = new();
+            if (hiddenSensor)
+            {
+                if (material.HasProperty("_BaseColor"))
+                    block.SetColor("_BaseColor", Color.black);
+                if (material.HasProperty("_Color"))
+                    block.SetColor("_Color", Color.black);
+                if (material.HasProperty("_EmissionColor"))
+                    block.SetColor("_EmissionColor", Color.black);
+                visual.Renderer.SetPropertyBlock(block, i);
+                continue;
+            }
+            if (material.HasProperty("_BaseColor"))
+                block.SetColor("_BaseColor", BoostColor(material.GetColor("_BaseColor")));
+            if (material.HasProperty("_Color"))
+                block.SetColor("_Color", BoostColor(material.GetColor("_Color")));
+            if (material.HasProperty("_EmissionColor"))
+                block.SetColor("_EmissionColor",
+                    material.GetColor("_EmissionColor") * 1.18f);
+            visual.Renderer.SetPropertyBlock(block, i);
+        }
+    }
+
+    private static Color BoostColor(Color color)
+    {
+        return new Color(Mathf.Min(color.r * 1.22f + 0.035f, 1f),
+            Mathf.Min(color.g * 1.22f + 0.035f, 1f),
+            Mathf.Min(color.b * 1.22f + 0.035f, 1f), color.a);
     }
 
     private static void SetAlpha(List<SpriteRenderer> renderers,
