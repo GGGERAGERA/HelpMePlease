@@ -7,6 +7,10 @@ public class CameraShake : MonoBehaviour
 
     private Vector3 originalLocalPosition;
     private Coroutine shakeRoutine;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private bool debugSuppressed;
+    public bool DebugSuppressed => debugSuppressed;
+#endif
 
     private void Awake()
     {
@@ -16,10 +20,24 @@ public class CameraShake : MonoBehaviour
 
     public void Shake(float duration, float magnitude)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (debugSuppressed)
+            return;
+#endif
         StopAllShakes();
 
         shakeRoutine = StartCoroutine(ShakeRoutine(duration, magnitude));
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void SetDebugSuppressed(bool suppressed)
+    {
+        debugSuppressed = suppressed;
+
+        if (debugSuppressed)
+            StopAllShakes();
+    }
+#endif
 
     private IEnumerator ShakeRoutine(float duration, float magnitude)
     {

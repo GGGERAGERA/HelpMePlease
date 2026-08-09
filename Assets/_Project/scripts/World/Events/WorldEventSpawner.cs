@@ -68,6 +68,11 @@ public class WorldEventSpawner : MonoBehaviour
         debugManualOnly = true;
     }
 
+    public void ConfigureDebugRewardChest(WorldEventRewardChest prefab)
+    {
+        rewardChestPrefab = prefab;
+    }
+
     private WorldEvent debugEvent;
     private bool debugManualOnly;
     private readonly HashSet<WorldEvent> debugRewardSuppressedEvents =

@@ -85,13 +85,14 @@ public sealed class ElectricAnomalySiteController : MonoBehaviour
         ClearEvent();
         ClearEnemies();
         powerController?.BeginElectricSiteRewardLock();
-        state = SiteState.Dormant;
+        state = SiteState.Active;
         visualRoot.SetActive(true);
         visualRoot.transform.localScale = Vector3.one;
         invulnerabilityRequested = true;
         resetPlayerWhenAvailable = true;
         ResolvePlayer();
         ResetHazard();
+        CreateEvent();
         message = string.Empty;
         messageUntil = 0f;
     }
@@ -114,12 +115,6 @@ public sealed class ElectricAnomalySiteController : MonoBehaviour
         ResolvePlayer();
         trialEnemies.RemoveWhere(enemy => enemy == null || enemy.IsDead);
 
-        if (state == SiteState.Dormant && IsPlayerInside() &&
-            Input.GetKeyDown(KeyCode.E))
-        {
-            StartTrial();
-        }
-
         if (state == SiteState.Dormant || state == SiteState.Active)
             UpdateHazard();
 
@@ -133,7 +128,7 @@ public sealed class ElectricAnomalySiteController : MonoBehaviour
         }
     }
 
-    private void StartTrial()
+    private void CreateEvent()
     {
         if (capturePrefab == null || eventSpawner == null)
             return;
@@ -155,7 +150,6 @@ public sealed class ElectricAnomalySiteController : MonoBehaviour
         activeEvent.ConfigureDebugHoldTime(HoldSeconds);
         EnsureEnemies(EnemyTarget);
         state = SiteState.Active;
-        activeEvent.StartSelectedEvent();
     }
 
     private void UpdateHazard()
@@ -245,8 +239,9 @@ public sealed class ElectricAnomalySiteController : MonoBehaviour
             return;
         activeEvent = null;
         ClearEnemies();
-        state = SiteState.Dormant;
+        state = SiteState.Active;
         ResetHazard();
+        CreateEvent();
     }
 
     private void CompleteCollapse()
@@ -456,9 +451,6 @@ public sealed class ElectricAnomalySiteController : MonoBehaviour
             $"Enemies Alive: {EnemyHealth.ActiveInstances.Count}";
         GUI.Box(new Rect(14f, Screen.height - 185f, 315f, 170f), text);
 
-        if (state == SiteState.Dormant && IsPlayerInside())
-            GUI.Box(new Rect(Screen.width * 0.5f - 165f, 55f, 330f, 70f),
-                "ELECTRIC ANOMALY\n[E] ENTER / START TRIAL");
         if (Time.unscaledTime < messageUntil)
             GUI.Box(new Rect(Screen.width * 0.5f - 190f, 55f, 380f, 60f), message);
     }

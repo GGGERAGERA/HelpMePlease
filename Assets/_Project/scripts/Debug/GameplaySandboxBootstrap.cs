@@ -14,6 +14,7 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
     [SerializeField] private WorldRuleData[] worldRules;
     [SerializeField] private LocalAnomalyData[] localAnomalies;
     [SerializeField] private WorldEvent[] eventPrefabs;
+    [SerializeField] private WorldEventRewardChest rewardChestPrefab;
     [SerializeField] private GameObject turretEnemyPrefab;
     [SerializeField] private GameObject eyesEnemyPrefab;
     [SerializeField] private GameObject[] massTestEnemyPrefabs;
@@ -46,6 +47,7 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
         WorldEventSpawner eventSpawner =
             systems.AddComponent<WorldEventSpawner>();
         eventSpawner.ConfigureDebugEventPrefabs(eventPrefabs);
+        eventSpawner.ConfigureDebugRewardChest(rewardChestPrefab);
 
         CharacterSpawner characterSpawner =
             systems.AddComponent<CharacterSpawner>();
@@ -91,8 +93,6 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
             massTestEnemyPrefabs,
             massTest
         );
-        powerController.Configure(powerTest);
-
         GravityAnomalySiteController gravitySite =
             systems.AddComponent<GravityAnomalySiteController>();
         gravitySite.Configure(
@@ -105,6 +105,10 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
             FindCaptureZoneEvent(),
             massTestEnemyPrefabs
         );
+        GravityTrajectoryPreview trajectoryPreview =
+            systems.AddComponent<GravityTrajectoryPreview>();
+        trajectoryPreview.Configure(gravitySite);
+        powerController.Configure(powerTest, trajectoryPreview);
 
         ElectricAnomalySiteController electricSite =
             systems.AddComponent<ElectricAnomalySiteController>();
@@ -127,9 +131,26 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
             massTestEnemyPrefabs
         );
 
+        NormalAnomalySiteController normalSite =
+            systems.AddComponent<NormalAnomalySiteController>();
+        normalSite.Configure(
+            enemySpawner,
+            eventSpawner,
+            anomalyController,
+            powerTest,
+            FindLocalAnomaly(LocalAnomalyType.Stasis),
+            FindCaptureZoneEvent(),
+            massTestEnemyPrefabs
+        );
+
         AnomalySiteDebugSelector siteSelector =
             systems.AddComponent<AnomalySiteDebugSelector>();
-        siteSelector.Configure(gravitySite, electricSite, beamSite);
+        siteSelector.Configure(
+            gravitySite,
+            electricSite,
+            beamSite,
+            normalSite
+        );
     }
 
     private LocalAnomalyData FindGravityAnomaly()
@@ -147,6 +168,19 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
             }
         }
 
+        return null;
+    }
+
+    private LocalAnomalyData FindLocalAnomaly(LocalAnomalyType type)
+    {
+        if (localAnomalies == null)
+            return null;
+        for (int i = 0; i < localAnomalies.Length; i++)
+        {
+            LocalAnomalyData anomaly = localAnomalies[i];
+            if (anomaly != null && anomaly.AnomalyType == type)
+                return anomaly;
+        }
         return null;
     }
 

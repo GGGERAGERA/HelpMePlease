@@ -9,6 +9,9 @@ public sealed class AnomalyPowerDebugController : MonoBehaviour
     private ArcNodePower arcNode;
     private RedBeamPower redBeam;
     private PowerTestController powerTest;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private GravityTrajectoryPreview gravityTrajectoryPreview;
+#endif
     private bool gravityOrbEnabled;
     private bool arcNodeEnabled;
     private bool redBeamEnabled;
@@ -23,10 +26,15 @@ public sealed class AnomalyPowerDebugController : MonoBehaviour
     public bool ArcNodeSiteLocked => arcNodeSiteLocked;
     public bool RedBeamSiteLocked => redBeamSiteLocked;
 
-    public void Configure(PowerTestController test)
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void Configure(
+        PowerTestController test,
+        GravityTrajectoryPreview trajectoryPreview)
     {
         powerTest = test;
+        gravityTrajectoryPreview = trajectoryPreview;
     }
+#endif
 
     private void Update()
     {
@@ -195,6 +203,19 @@ public sealed class AnomalyPowerDebugController : MonoBehaviour
         float killsPerSecond = powerTest != null
             ? powerTest.KillsPerSecond
             : 0f;
+        string trajectoryControl = string.Empty;
+        string trajectoryStatus = string.Empty;
+        float hudHeight = 525f;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        trajectoryControl =
+            "T    Gravity Trajectory ON/OFF\n" +
+            "Y    Cycle Prediction Length\n\n";
+        trajectoryStatus =
+            $"Gravity Trajectory: {(gravityTrajectoryPreview != null && gravityTrajectoryPreview.PreviewEnabled ? "ON" : "OFF")}\n" +
+            $"Prediction: {(gravityTrajectoryPreview != null ? gravityTrajectoryPreview.PredictionTime : 1.5f):0.00} sec\n" +
+            $"Targets: {(gravityTrajectoryPreview != null ? gravityTrajectoryPreview.ActiveTargetCount : 0)}/{(gravityTrajectoryPreview != null ? gravityTrajectoryPreview.MaxTargets : 5)}\n";
+        hudHeight = 615f;
+#endif
         string status =
             "CONTROLS\n" +
             "F1  Weapon Menu\n" +
@@ -206,24 +227,28 @@ public sealed class AnomalyPowerDebugController : MonoBehaviour
             "F4  Start / Reset Power Test\n" +
             "Shift+F4  Stop Power Test\n" +
             "F5  Toggle Weapon Core\n" +
-            "E    Start active Site Trial\n" +
+            "E    Interact with World Event\n" +
             "F6  Start / Reset Gravity Site\n" +
             "Shift+F6  Stop Gravity Site\n" +
             "F7  Start / Reset Electric Site\n" +
             "Shift+F7  Stop Electric Site\n" +
             "F8  KILL ALL ENEMIES\n\n" +
             "F9  Start / Reset Beam Site\n" +
-            "Shift+F9  Stop Beam Site\n\n" +
+            "Shift+F9  Stop Beam Site\n" +
+            "F10 Start / Reset Normal Site\n" +
+            "Shift+F10 Stop Normal Site\n\n" +
+            trajectoryControl +
             "STATUS\n" +
             $"Weapon Core: {WeaponCoreDebugSelector.ActiveCore}\n" +
             $"Gravity Orb: {(gravityOrbEnabled ? "ON" : gravityOrbSiteLocked ? "LOCKED" : "OFF")}\n" +
             $"Arc Node: {(arcNodeEnabled ? "ON" : arcNodeSiteLocked ? "LOCKED" : "OFF")}\n" +
             $"Red Beam: {(redBeamEnabled ? "ON" : redBeamSiteLocked ? "LOCKED" : "OFF")}\n" +
+            trajectoryStatus +
             $"Enemies Alive: {enemiesAlive}\n" +
             $"Kills: {kills}\n" +
             $"Kills/sec: {killsPerSecond:F1}";
         GUI.Box(
-            new Rect(Screen.width - 355f, 14f, 340f, 485f),
+            new Rect(Screen.width - 365f, 14f, 350f, hudHeight),
             status
         );
     }

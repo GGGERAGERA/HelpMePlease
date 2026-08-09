@@ -14,13 +14,9 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
     }
 
     private const float SiteRadius = 11f;
-    private const float ActivationDistance = 12f;
     private const float HoldSeconds = 10f;
     private const float CollapseSeconds = 0.75f;
-    private const float InterEventDelay = 0.75f;
     private const int EventOneEnemyTarget = 28;
-    private const int IntermissionEnemyTarget = 34;
-    private const int EventTwoEnemyTarget = 38;
     private const float OrbitForceEnemies = 7f;
     private const float OrbitForcePlayer = 3.5f;
     private const float OrbitForceProjectiles = 2.5f;
@@ -33,7 +29,6 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
     private readonly Vector3 sitePosition = Vector3.zero;
     private readonly Vector3 playerStartPosition = new(-8f, 0f, 0f);
     private readonly Vector3 eventOnePosition = new(-5f, -3f, 0f);
-    private readonly Vector3 eventTwoPosition = new(5f, 3f, 0f);
 
     private EnemySpawner enemySpawner;
     private WorldEventSpawner eventSpawner;
@@ -42,7 +37,6 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
     private PowerTestController powerTest;
     private LocalAnomalyData gravityData;
     private CaptureZoneEvent capturePrefab;
-    private EvacuationCorridorEvent corridorPrefab;
     private GameObject[] enemyPrefabs;
     private Transform player;
     private PlayerHealth playerHealth;
@@ -50,7 +44,6 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
     private bool playerDamageMultiplierCaptured;
     private bool playerInvulnerabilityRequested;
     private CaptureZoneEvent activeCapture;
-    private EvacuationCorridorEvent activeCorridor;
     private WorldEvent activeSiteEvent;
     private LocalAnomalyZone activeGravityZone;
     private LineRenderer outerRing;
@@ -60,10 +53,11 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
     private float collapseTimer;
     private float acquisitionMessageUntil;
     private string transientMessage;
-    private float interEventTimer;
-    private int completedEvents;
-    private bool intermissionActive;
     private bool resetPlayerWhenAvailable;
+
+    public bool IsOrbitalGravityActive => activeGravityZone != null &&
+        (state == SiteState.Active || state == SiteState.Collapsing);
+    public GravityZone ActiveOrbitZone => activeGravityZone as GravityZone;
 
     public void Configure(
         EnemySpawner spawner,
@@ -82,7 +76,6 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
         powerTest = test;
         gravityData = gravity;
         capturePrefab = capture;
-        corridorPrefab = FindCorridorPrefab(worldEvents);
         enemyPrefabs = trialEnemyPrefabs ?? System.Array.Empty<GameObject>();
 
         if (eventSpawner != null)
@@ -101,24 +94,11 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
         ResolvePlayer();
         RemoveDeadTrialEnemies();
 
-        if (state == SiteState.Dormant && IsPlayerNearSite() &&
-            Input.GetKeyDown(KeyCode.E))
-        {
-            StartTrial();
-        }
-
         if (state == SiteState.Collapsing)
         {
             collapseTimer -= Time.deltaTime;
             if (collapseTimer <= 0f)
                 CompleteCollapse();
-        }
-
-        if (intermissionActive)
-        {
-            interEventTimer -= Time.deltaTime;
-            if (interEventTimer <= 0f)
-                SpawnSecondEvent();
         }
 
         UpdatePreview();
@@ -131,15 +111,13 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
         DespawnGravityZone();
         ClearTrialEnemies();
         powerController?.BeginGravitySiteRewardLock();
-        state = SiteState.Dormant;
-        completedEvents = 0;
-        intermissionActive = false;
+        state = SiteState.Active;
         activeSiteEvent = null;
         activeCapture = null;
-        activeCorridor = null;
         EnablePlayerInvulnerability();
         ResetPlayerPosition();
         SpawnGravityZone();
+        CreateHoldEvent();
         acquisitionMessageUntil = 0f;
         transientMessage = string.Empty;
         SetPreviewVisible(true);
@@ -154,16 +132,13 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
         RestorePlayerDamage();
         resetPlayerWhenAvailable = false;
         state = SiteState.Stopped;
-        completedEvents = 0;
-        intermissionActive = false;
         SetPreviewVisible(false);
     }
 
-    private void StartTrial()
+    private void CreateHoldEvent()
     {
         if (gravityData == null || gravityData.ZonePrefab == null ||
-            capturePrefab == null || corridorPrefab == null ||
-            eventSpawner == null)
+            capturePrefab == null || eventSpawner == null)
         {
             Debug.LogWarning(
                 "[GravitySite] Gravity data or CaptureZone prefab is missing.",
@@ -171,10 +146,6 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
             );
             return;
         }
-
-        // A temporary F4 population is useful for testing orbit movement
-        // before the trial. E replaces it with the site-owned pressure.
-        powerTest?.StopTest();
 
         if (!eventSpawner.SpawnDebugEventAt(
                 capturePrefab,
@@ -200,7 +171,6 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
         activeSiteEvent = activeCapture;
         EnsureTrialPopulation(EventOneEnemyTarget);
         state = SiteState.Active;
-        activeCapture.StartSelectedEvent();
     }
 
     private void SpawnGravityZone()
@@ -264,26 +234,9 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
             return;
 
         activeSiteEvent = null;
-
-        if (worldEvent == activeCapture)
-        {
-            activeCapture = null;
-            completedEvents = 1;
-            intermissionActive = true;
-            interEventTimer = InterEventDelay;
-            EnsureTrialPopulation(IntermissionEnemyTarget);
-            acquisitionMessageUntil = Time.unscaledTime + InterEventDelay;
-            transientMessage = "EVENT 1 COMPLETE / CORRIDOR INCOMING";
-            return;
-        }
-
-        if (worldEvent == activeCorridor)
-        {
-            activeCorridor = null;
-            completedEvents = 2;
-            state = SiteState.Collapsing;
-            collapseTimer = CollapseSeconds;
-        }
+        activeCapture = null;
+        state = SiteState.Collapsing;
+        collapseTimer = CollapseSeconds;
     }
 
     private void HandleEventFailed(WorldEvent worldEvent)
@@ -293,15 +246,13 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
 
         activeSiteEvent = null;
         activeCapture = null;
-        activeCorridor = null;
-        completedEvents = 0;
-        intermissionActive = false;
         ClearTrialEnemies();
         powerController?.BeginGravitySiteRewardLock();
-        state = SiteState.Dormant;
+        state = SiteState.Active;
 
         if (activeGravityZone == null)
             SpawnGravityZone();
+        CreateHoldEvent();
     }
 
     private void CompleteCollapse()
@@ -314,48 +265,6 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
         Debug.Log("GRAVITY ORB ACQUIRED");
     }
 
-    private void SpawnSecondEvent()
-    {
-        intermissionActive = false;
-        EnsureTrialPopulation(EventTwoEnemyTarget);
-
-        if (!eventSpawner.SpawnDebugEventAt(
-                corridorPrefab,
-                eventTwoPosition,
-                true,
-                out WorldEvent spawnedEvent))
-        {
-            Debug.LogWarning(
-                "[GravitySite] EvacuationCorridorEvent could not be spawned.",
-                this
-            );
-            HandleSequenceSpawnFailure();
-            return;
-        }
-
-        activeCorridor = spawnedEvent as EvacuationCorridorEvent;
-        if (activeCorridor == null)
-        {
-            ClearActiveEvent();
-            HandleSequenceSpawnFailure();
-            return;
-        }
-
-        Vector2 path = eventOnePosition - eventTwoPosition;
-        activeCorridor.ConfigureDebugPath(path, path.magnitude);
-        activeSiteEvent = activeCorridor;
-        transientMessage = "EVENT 2 READY / FOLLOW MARKER / PRESS E";
-        acquisitionMessageUntil = Time.unscaledTime + 3f;
-    }
-
-    private void HandleSequenceSpawnFailure()
-    {
-        completedEvents = 0;
-        state = SiteState.Dormant;
-        ClearTrialEnemies();
-        powerController?.BeginGravitySiteRewardLock();
-    }
-
     private void ClearActiveEvent()
     {
         if (activeSiteEvent != null && eventSpawner != null)
@@ -363,7 +272,6 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
 
         activeSiteEvent = null;
         activeCapture = null;
-        activeCorridor = null;
     }
 
     private void DespawnGravityZone()
@@ -433,14 +341,6 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
         }
 
         playerDamageMultiplierCaptured = false;
-    }
-
-    private bool IsPlayerNearSite()
-    {
-        return player != null && Vector2.Distance(
-            player.position,
-            sitePosition
-        ) <= ActivationDistance;
     }
 
     private void RemoveDeadTrialEnemies()
@@ -605,9 +505,7 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
 
         string progress = activeCapture != null
             ? $"{activeCapture.Progress * 100f:F0}% ({activeCapture.TimeRemaining:F1}s)"
-            : activeCorridor != null && activeCorridor.IsStarted
-                ? $"{activeCorridor.Progress * 100f:F0}%"
-                : "--";
+            : "--";
         string gravityStatus = state switch
         {
             SiteState.Dormant => "ACTIVE",
@@ -617,9 +515,7 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
         };
         string currentEvent = activeCapture != null
             ? "Hold Zone"
-            : activeCorridor != null
-                ? "Evacuation Corridor"
-                : "None";
+            : "None";
         string orbStatus = powerController != null &&
             powerController.GravityOrbEnabled
             ? "ACQUIRED"
@@ -629,20 +525,11 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
             $"Site: {state}\n" +
             $"Gravity: {gravityStatus}\n" +
             $"Player Invulnerable: {(playerInvulnerabilityRequested ? "YES" : "NO")}\n" +
-            $"Event Sequence: {completedEvents}/2\n" +
             $"Current Event: {currentEvent}\n" +
             $"Gravity Orb: {orbStatus}\n" +
             $"Enemies Alive: {EnemyHealth.ActiveInstances.Count}\n" +
             $"Objective Progress: {progress}";
         GUI.Box(new Rect(14f, Screen.height - 210f, 330f, 195f), status);
-
-        if (state == SiteState.Dormant && IsPlayerNearSite())
-        {
-            GUI.Box(
-                new Rect(Screen.width * 0.5f - 150f, 55f, 300f, 70f),
-                "GRAVITY ANOMALY\n[E] ENTER / START TRIAL"
-            );
-        }
 
         if (Time.unscaledTime < acquisitionMessageUntil)
         {

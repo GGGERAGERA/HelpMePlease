@@ -79,6 +79,33 @@ public sealed class GravityZone : LocalAnomalyZone
             inwardForceProjectiles
         );
     }
+
+    public bool DebugContainsWorldPosition(Vector2 worldPosition)
+    {
+        return !effectsCleared && AreaCollider != null &&
+            AreaCollider.enabled &&
+            AreaCollider.OverlapPoint(worldPosition);
+    }
+
+    public Vector2 GetDebugPredictedExternalVelocity(
+        Vector2 worldPosition,
+        Component affectedComponent)
+    {
+        if (!debugOrbitMode || effectsCleared ||
+            affectedComponent == null)
+        {
+            return Vector2.zero;
+        }
+
+        Vector2 center = AreaCollider != null
+            ? AreaCollider.bounds.center
+            : transform.position;
+        return CalculateDebugOrbitVelocity(
+            affectedComponent,
+            center,
+            worldPosition
+        );
+    }
 #endif
 
     private void Awake()

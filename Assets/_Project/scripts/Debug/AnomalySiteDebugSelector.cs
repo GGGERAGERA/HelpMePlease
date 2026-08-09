@@ -6,15 +6,18 @@ public sealed class AnomalySiteDebugSelector : MonoBehaviour
     private GravityAnomalySiteController gravitySite;
     private ElectricAnomalySiteController electricSite;
     private BeamAnomalySiteController beamSite;
+    private NormalAnomalySiteController normalSite;
 
     public void Configure(
         GravityAnomalySiteController gravity,
         ElectricAnomalySiteController electric,
-        BeamAnomalySiteController beam)
+        BeamAnomalySiteController beam,
+        NormalAnomalySiteController normal)
     {
         gravitySite = gravity;
         electricSite = electric;
         beamSite = beam;
+        normalSite = normal;
         StopAll();
     }
 
@@ -26,6 +29,8 @@ public sealed class AnomalySiteDebugSelector : MonoBehaviour
             HandleSiteKey(7);
         if (Input.GetKeyDown(KeyCode.F9))
             HandleSiteKey(9);
+        if (Input.GetKeyDown(KeyCode.F10))
+            HandleSiteKey(10);
     }
 
     private void HandleSiteKey(int site)
@@ -39,8 +44,10 @@ public sealed class AnomalySiteDebugSelector : MonoBehaviour
                 gravitySite?.StopSite();
             else if (site == 7)
                 electricSite?.StopSite();
-            else
+            else if (site == 9)
                 beamSite?.StopSite();
+            else
+                normalSite?.StopSite();
             return;
         }
 
@@ -50,8 +57,10 @@ public sealed class AnomalySiteDebugSelector : MonoBehaviour
             gravitySite?.StartOrResetSite();
         else if (site == 7)
             electricSite?.StartOrResetSite();
-        else
+        else if (site == 9)
             beamSite?.StartOrResetSite();
+        else
+            normalSite?.StartOrResetSite();
     }
 
     private void StopAll()
@@ -59,6 +68,7 @@ public sealed class AnomalySiteDebugSelector : MonoBehaviour
         gravitySite?.StopSite();
         electricSite?.StopSite();
         beamSite?.StopSite();
+        normalSite?.StopSite();
     }
 }
 #endif
