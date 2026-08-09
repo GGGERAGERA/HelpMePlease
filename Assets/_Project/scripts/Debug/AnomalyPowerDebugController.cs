@@ -13,11 +13,15 @@ public sealed class AnomalyPowerDebugController : MonoBehaviour
     private bool arcNodeEnabled;
     private bool redBeamEnabled;
     private bool gravityOrbSiteLocked;
+    private bool arcNodeSiteLocked;
+    private bool redBeamSiteLocked;
 
     public bool GravityOrbEnabled => gravityOrbEnabled;
     public bool ArcNodeEnabled => arcNodeEnabled;
     public bool RedBeamEnabled => redBeamEnabled;
     public bool GravityOrbSiteLocked => gravityOrbSiteLocked;
+    public bool ArcNodeSiteLocked => arcNodeSiteLocked;
+    public bool RedBeamSiteLocked => redBeamSiteLocked;
 
     public void Configure(PowerTestController test)
     {
@@ -35,14 +39,14 @@ public sealed class AnomalyPowerDebugController : MonoBehaviour
             LogState("Gravity Orb", gravityOrbEnabled);
         }
 
-        if (Input.GetKeyDown(KeyCode.Alpha5))
+        if (Input.GetKeyDown(KeyCode.Alpha5) && !arcNodeSiteLocked)
         {
             arcNodeEnabled = !arcNodeEnabled;
             ApplyPowerStates();
             LogState("Arc Node", arcNodeEnabled);
         }
 
-        if (Input.GetKeyDown(KeyCode.Alpha6))
+        if (Input.GetKeyDown(KeyCode.Alpha6) && !redBeamSiteLocked)
         {
             redBeamEnabled = !redBeamEnabled;
             ApplyPowerStates();
@@ -71,6 +75,48 @@ public sealed class AnomalyPowerDebugController : MonoBehaviour
     {
         gravityOrbSiteLocked = false;
         gravityOrbEnabled = false;
+        ApplyPowerStates();
+    }
+
+    public void BeginElectricSiteRewardLock()
+    {
+        arcNodeSiteLocked = true;
+        arcNodeEnabled = false;
+        ApplyPowerStates();
+    }
+
+    public void GrantArcNodeFromSite()
+    {
+        arcNodeSiteLocked = false;
+        arcNodeEnabled = true;
+        ApplyPowerStates();
+    }
+
+    public void ClearElectricSiteReward()
+    {
+        arcNodeSiteLocked = false;
+        arcNodeEnabled = false;
+        ApplyPowerStates();
+    }
+
+    public void BeginBeamSiteRewardLock()
+    {
+        redBeamSiteLocked = true;
+        redBeamEnabled = false;
+        ApplyPowerStates();
+    }
+
+    public void GrantRedBeamFromSite()
+    {
+        redBeamSiteLocked = false;
+        redBeamEnabled = true;
+        ApplyPowerStates();
+    }
+
+    public void ClearBeamSiteReward()
+    {
+        redBeamSiteLocked = false;
+        redBeamEnabled = false;
         ApplyPowerStates();
     }
 
@@ -160,20 +206,24 @@ public sealed class AnomalyPowerDebugController : MonoBehaviour
             "F4  Start / Reset Power Test\n" +
             "Shift+F4  Stop Power Test\n" +
             "F5  Toggle Weapon Core\n" +
-            "E    Start Gravity Trial (near site)\n" +
+            "E    Start active Site Trial\n" +
             "F6  Start / Reset Gravity Site\n" +
             "Shift+F6  Stop Gravity Site\n" +
+            "F7  Start / Reset Electric Site\n" +
+            "Shift+F7  Stop Electric Site\n" +
             "F8  KILL ALL ENEMIES\n\n" +
+            "F9  Start / Reset Beam Site\n" +
+            "Shift+F9  Stop Beam Site\n\n" +
             "STATUS\n" +
             $"Weapon Core: {WeaponCoreDebugSelector.ActiveCore}\n" +
             $"Gravity Orb: {(gravityOrbEnabled ? "ON" : gravityOrbSiteLocked ? "LOCKED" : "OFF")}\n" +
-            $"Arc Node: {(arcNodeEnabled ? "ON" : "OFF")}\n" +
-            $"Red Beam: {(redBeamEnabled ? "ON" : "OFF")}\n" +
+            $"Arc Node: {(arcNodeEnabled ? "ON" : arcNodeSiteLocked ? "LOCKED" : "OFF")}\n" +
+            $"Red Beam: {(redBeamEnabled ? "ON" : redBeamSiteLocked ? "LOCKED" : "OFF")}\n" +
             $"Enemies Alive: {enemiesAlive}\n" +
             $"Kills: {kills}\n" +
             $"Kills/sec: {killsPerSecond:F1}";
         GUI.Box(
-            new Rect(Screen.width - 345f, 14f, 330f, 415f),
+            new Rect(Screen.width - 355f, 14f, 340f, 485f),
             status
         );
     }

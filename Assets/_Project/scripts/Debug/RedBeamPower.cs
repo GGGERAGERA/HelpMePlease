@@ -7,8 +7,8 @@ public sealed class RedBeamPower : MonoBehaviour
     public const float Cooldown = 3f;
     public const float TelegraphDuration = 0.32f;
     public const float BeamDuration = 0.22f;
-    public const float BeamRange = 14f;
-    public const float BeamHalfWidth = 0.82f;
+    public const float BeamRange = 18f;
+    public const float BeamHalfWidth = 1.05f;
     public const float BeamDamage = 120f;
 
     private enum BeamState
@@ -201,14 +201,14 @@ public sealed class RedBeamPower : MonoBehaviour
         );
         beamGlow = CreateLine(
             "Red Beam Glow",
-            0.72f,
+            1.05f,
             new Color(1f, 0.02f, 0.02f, 0.32f),
             38
         );
         beamCore = CreateLine(
             "Red Beam Core",
-            0.24f,
-            new Color(1f, 0.15f, 0.08f, 1f),
+            0.38f,
+            new Color(1f, 0.28f, 0.12f, 1f),
             39
         );
     }

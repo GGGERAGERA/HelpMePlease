@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 public sealed class GravityAnomalySiteController : MonoBehaviour
 {
     private enum SiteState
@@ -92,26 +93,13 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
         }
 
         BuildPreview();
-        StartOrResetSite();
+        StopSite();
     }
 
     private void Update()
     {
         ResolvePlayer();
         RemoveDeadTrialEnemies();
-
-        if (Input.GetKeyDown(KeyCode.F6))
-        {
-            if (Input.GetKey(KeyCode.LeftShift) ||
-                Input.GetKey(KeyCode.RightShift))
-            {
-                StopSite();
-            }
-            else
-            {
-                StartOrResetSite();
-            }
-        }
 
         if (state == SiteState.Dormant && IsPlayerNearSite() &&
             Input.GetKeyDown(KeyCode.E))
@@ -136,7 +124,7 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
         UpdatePreview();
     }
 
-    private void StartOrResetSite()
+    public void StartOrResetSite()
     {
         powerTest?.StopTest();
         ClearActiveEvent();
@@ -157,7 +145,7 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
         SetPreviewVisible(true);
     }
 
-    private void StopSite()
+    public void StopSite()
     {
         ClearActiveEvent();
         DespawnGravityZone();
@@ -678,3 +666,4 @@ public sealed class GravityAnomalySiteController : MonoBehaviour
         RestorePlayerDamage();
     }
 }
+#endif

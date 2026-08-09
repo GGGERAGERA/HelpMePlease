@@ -105,6 +105,31 @@ public sealed class GameplaySandboxBootstrap : MonoBehaviour
             FindCaptureZoneEvent(),
             massTestEnemyPrefabs
         );
+
+        ElectricAnomalySiteController electricSite =
+            systems.AddComponent<ElectricAnomalySiteController>();
+        electricSite.Configure(
+            enemySpawner,
+            eventSpawner,
+            powerController,
+            powerTest,
+            FindCaptureZoneEvent(),
+            massTestEnemyPrefabs
+        );
+
+        BeamAnomalySiteController beamSite =
+            systems.AddComponent<BeamAnomalySiteController>();
+        beamSite.Configure(
+            enemySpawner,
+            eventSpawner,
+            powerController,
+            powerTest,
+            massTestEnemyPrefabs
+        );
+
+        AnomalySiteDebugSelector siteSelector =
+            systems.AddComponent<AnomalySiteDebugSelector>();
+        siteSelector.Configure(gravitySite, electricSite, beamSite);
     }
 
     private LocalAnomalyData FindGravityAnomaly()
