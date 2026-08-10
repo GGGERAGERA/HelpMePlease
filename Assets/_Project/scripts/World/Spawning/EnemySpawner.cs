@@ -76,6 +76,10 @@ public class EnemySpawner : MonoBehaviour
     private float worldRuleSpawnPressureMultiplier = 1f;
     private float worldEventSpawnPressureMultiplier = 1f;
     private float worldAccelerationMultiplier = 1f;
+    private bool runThreatControlsPhase;
+    private float runThreatSpawnIntervalMultiplier = 1f;
+    private int runThreatMaxAliveCap;
+    private int runThreatBatchSize = 1;
 
     public float WorldEventSpawnPressureMultiplier =>
         worldEventSpawnPressureMultiplier;
@@ -107,7 +111,8 @@ public class EnemySpawner : MonoBehaviour
             return;
 
         runTime += Time.deltaTime;
-        UpdateActivePhase();
+        if (!runThreatControlsPhase)
+            UpdateActivePhase();
 
         if (spawnProfile != null && activePhase == null)
             return;
@@ -135,6 +140,10 @@ public class EnemySpawner : MonoBehaviour
         currentRunLevel = Mathf.Max(1, runLevel);
         activePhase = null;
         activePhaseIndex = -1;
+        runThreatControlsPhase = false;
+        runThreatSpawnIntervalMultiplier = 1f;
+        runThreatMaxAliveCap = 0;
+        runThreatBatchSize = 1;
         runTime = 0f;
         spawnTimer = 0f;
         legacyDifficultySteps = 0;
@@ -146,6 +155,31 @@ public class EnemySpawner : MonoBehaviour
         }
 
         UpdateActivePhase();
+    }
+
+    public void SetRunThreatPreset(
+        int presetIndex,
+        float spawnIntervalMultiplier,
+        int maxAliveCap,
+        int batchSize)
+    {
+        runThreatControlsPhase = true;
+        runThreatSpawnIntervalMultiplier = Mathf.Max(
+            0.1f,
+            spawnIntervalMultiplier
+        );
+        runThreatMaxAliveCap = Mathf.Clamp(
+            maxAliveCap,
+            1,
+            Mathf.Min(40, Mathf.Max(1, maxAliveLimit))
+        );
+        runThreatBatchSize = Mathf.Clamp(
+            batchSize,
+            1,
+            Mathf.Max(1, maxEnemiesPerCycle)
+        );
+
+        ApplyProfilePhase(presetIndex);
     }
 
     public void SetLevelScaling(
@@ -269,6 +303,10 @@ public class EnemySpawner : MonoBehaviour
         activePhaseIndex = -1;
         legacyDifficultySteps = 0;
         worldEventSpawnPressureMultiplier = 1f;
+        runThreatControlsPhase = false;
+        runThreatSpawnIntervalMultiplier = 1f;
+        runThreatMaxAliveCap = 0;
+        runThreatBatchSize = 1;
         spawningEnabled = true;
     }
 
@@ -285,6 +323,10 @@ public class EnemySpawner : MonoBehaviour
         worldRuleSpawnPressureMultiplier = 1f;
         worldEventSpawnPressureMultiplier = 1f;
         legacyDifficultySteps = 0;
+        runThreatControlsPhase = false;
+        runThreatSpawnIntervalMultiplier = 1f;
+        runThreatMaxAliveCap = 0;
+        runThreatBatchSize = 1;
     }
 
     public void SpawnAdditionalWave(
@@ -470,18 +512,37 @@ public class EnemySpawner : MonoBehaviour
             }
         }
 
-        if (nextIndex == activePhaseIndex)
+        ApplyProfilePhase(nextIndex);
+    }
+
+    private void ApplyProfilePhase(int requestedIndex)
+    {
+        EnemySpawnPhase[] phases = spawnProfile != null
+            ? spawnProfile.Phases
+            : null;
+
+        if (phases == null || phases.Length == 0)
+        {
+            activePhaseIndex = -1;
+            activePhase = null;
+            return;
+        }
+
+        int nextIndex = Mathf.Clamp(requestedIndex, 0, phases.Length - 1);
+
+        if (nextIndex == activePhaseIndex && activePhase != null)
             return;
 
         activePhaseIndex = nextIndex;
-        activePhase = nextIndex >= 0 ? phases[nextIndex] : null;
+        activePhase = phases[nextIndex];
         spawnTimer = 0f;
 
         if (activePhase != null)
         {
             Debug.Log(
-                $"[EnemySpawner] Phase {activePhaseIndex + 1} started at {runTime:F1}s: " +
-                $"interval {activePhase.spawnInterval:F2}, max alive {activePhase.maxAlive}."
+                $"[EnemySpawner] Phase {activePhaseIndex + 1}: " +
+                $"interval {activePhase.spawnInterval:F2}, " +
+                $"max alive {activePhase.maxAlive}."
             );
         }
     }
@@ -492,6 +553,7 @@ public class EnemySpawner : MonoBehaviour
             ? activePhase.spawnInterval / currentSpawnPressure
             : spawnInterval;
 
+        interval *= runThreatSpawnIntervalMultiplier;
         float limitedInterval = Mathf.Max(minSpawnInterval, interval);
         return Mathf.Max(
             0.1f,
@@ -565,11 +627,15 @@ public class EnemySpawner : MonoBehaviour
 
         int minimumAlive = Mathf.Max(1, activePhase.maxAlive);
 
-        return Mathf.Clamp(
+        int result = Mathf.Clamp(
             scaledMaxAlive,
             minimumAlive,
             Mathf.Max(minimumAlive, maxAliveLimit)
         );
+
+        return runThreatMaxAliveCap > 0
+            ? Mathf.Min(result, runThreatMaxAliveCap)
+            : result;
     }
 
     private int GetCurrentEnemiesPerCycle()
@@ -586,11 +652,15 @@ public class EnemySpawner : MonoBehaviour
             ? legacyDifficultySteps / Mathf.Max(1, legacyStepsPerBatchIncrease)
             : 0;
 
-        return Mathf.Clamp(
+        int calculatedBatch = Mathf.Clamp(
             baseEnemiesPerCycle + phaseBonus + pressureBonus + legacyBonus,
             1,
             Mathf.Max(1, maxEnemiesPerCycle)
         );
+
+        return runThreatControlsPhase
+            ? Mathf.Max(calculatedBatch, runThreatBatchSize)
+            : calculatedBatch;
     }
 
     private void SpawnCycle()

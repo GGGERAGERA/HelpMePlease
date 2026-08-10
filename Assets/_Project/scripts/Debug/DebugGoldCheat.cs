@@ -4,6 +4,12 @@ public sealed class DebugGoldCheat : MonoBehaviour
 {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     [SerializeField] private int amount = 1000;
+
+    private void Awake()
+    {
+        if (FindFirstObjectByType<Subject42DebugMenu>() == null)
+            gameObject.AddComponent<Subject42DebugMenu>();
+    }
 #endif
 
     private void Update()

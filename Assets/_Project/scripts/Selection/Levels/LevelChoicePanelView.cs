@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public sealed class LevelChoicePanelView : MonoBehaviour
 {
-    private const int TotalRouteSectors = 10;
+    private const int TotalRouteSectors = RunRoute.TotalSectors;
 
     [Header("Texts")]
     [SerializeField] private TextMeshProUGUI titleText;

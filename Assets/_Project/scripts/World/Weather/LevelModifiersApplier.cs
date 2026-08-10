@@ -14,6 +14,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
     [SerializeField] private RunFlowController runFlowController;
     [SerializeField] private LevelAnomalyController anomalyController;
     [SerializeField] private WorldRuleController worldRuleController;
+    [SerializeField] private ExplorationSectorConfig explorationConfig;
 
     private void Awake()
     {
@@ -147,7 +148,75 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         ExperienceManager.Instance?.SetLevelXpGainMultiplier(
             sector.ExperienceGainMultiplier
         );
+
+        if (RunRoute.IsExplorationSector(sector.SectorNumber))
+            ApplyExplorationSector();
+        else
+            ApplyBossSector(sector);
+    }
+
+    private void ApplyExplorationSector()
+    {
+        if (explorationConfig == null)
+        {
+            explorationConfig = Resources.Load<ExplorationSectorConfig>(
+                "ProductionRun/ExplorationSectorConfig"
+            );
+        }
+
+        GameplayAreaService gameplayArea = GameplayAreaService.Instance;
+
+        if (gameplayArea == null)
+            gameplayArea = FindFirstObjectByType<GameplayAreaService>();
+
+        WorldEventSpawner eventSpawner =
+            FindFirstObjectByType<WorldEventSpawner>();
+        ProductionExplorationSectorController exploration =
+            gameObject.GetComponent<ProductionExplorationSectorController>();
+
+        if (exploration == null)
+        {
+            exploration = gameObject.AddComponent<
+                ProductionExplorationSectorController>();
+        }
+
+        exploration.Initialize(
+            explorationConfig,
+            gameplayArea,
+            enemySpawner,
+            eventSpawner,
+            anomalyController,
+            runFlowController
+        );
+    }
+
+    private void ApplyBossSector(RunSector sector)
+    {
         anomalyController?.Apply(sector.LocalAnomaly);
+
+        if (explorationConfig == null)
+        {
+            explorationConfig = Resources.Load<ExplorationSectorConfig>(
+                "ProductionRun/ExplorationSectorConfig"
+            );
+        }
+
+        if (explorationConfig == null ||
+            explorationConfig.ThreatConfig == null)
+        {
+            return;
+        }
+
+        RunThreatController threatController =
+            gameObject.GetComponent<RunThreatController>();
+
+        if (threatController == null)
+            threatController = gameObject.AddComponent<RunThreatController>();
+
+        threatController.Initialize(
+            explorationConfig.ThreatConfig,
+            enemySpawner
+        );
     }
 
     private static float GetWorldRuleEnemyHealthMultiplier(

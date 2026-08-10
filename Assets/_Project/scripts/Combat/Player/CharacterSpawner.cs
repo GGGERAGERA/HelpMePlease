@@ -56,6 +56,8 @@ public class CharacterSpawner : MonoBehaviour
         if (RunStateManager.Instance != null)
             RunStateManager.Instance.ApplyToSpawnedPlayer(player, upgradeApplier);
 
+        AnomalyPowerRuntime.ApplyRunLoadout(player);
+
         SpawnedPlayer = player;
         CharacterSpawned?.Invoke(player);
     }

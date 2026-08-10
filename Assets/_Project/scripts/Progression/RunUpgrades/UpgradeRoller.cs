@@ -68,6 +68,24 @@ public sealed class UpgradeRoller
         return result;
     }
 
+    public List<UpgradeData> RollNumericChoices(int playerLevel, int count)
+    {
+        List<UpgradeData> pool = BuildPool(playerLevel);
+        pool.RemoveAll(upgrade =>
+            upgrade == null || upgrade.category != UpgradeCategory.Numeric
+        );
+        List<UpgradeData> result = new();
+
+        while (result.Count < count && pool.Count > 0)
+        {
+            int index = Random.Range(0, pool.Count);
+            result.Add(pool[index]);
+            pool.RemoveAt(index);
+        }
+
+        return result;
+    }
+
     private List<UpgradeData> BuildPool(int playerLevel)
     {
         List<UpgradeData> pool = new List<UpgradeData>();

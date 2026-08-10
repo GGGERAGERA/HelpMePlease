@@ -390,6 +390,9 @@ public sealed class FalseSignalEvent : WorldEvent
                 continue;
             }
 
+            if (!IsInsideSitePlacement(candidate, pointEdgePadding))
+                continue;
+
             bool separated = true;
 
             for (int j = 0; j < existingPositions.Count; j++)

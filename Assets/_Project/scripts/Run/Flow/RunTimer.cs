@@ -37,7 +37,20 @@ public class RunTimer : MonoBehaviour
             return;
         }
 
+        RunStateManager runState = RunStateManager.Instance;
+        int sectorNumber = runState != null && runState.CurrentSector != null
+            ? runState.CurrentSector.SectorNumber
+            : 0;
+
+        if (RunRoute.IsExplorationSector(sectorNumber))
+        {
+            HUDManager.Instance?.SetTimerVisible(false);
+            enabled = false;
+            return;
+        }
+
         timeLeft = runDuration;
+        HUDManager.Instance?.SetTimerVisible(true);
         HUDManager.Instance?.SetTimer(timeLeft);
     }
 

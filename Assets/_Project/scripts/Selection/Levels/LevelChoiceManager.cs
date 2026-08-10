@@ -151,6 +151,62 @@ public sealed class LevelChoiceManager : MonoBehaviour
         );
     }
 
+    public bool TryAdvanceFromExit()
+    {
+        RunStateManager runState = RunStateManager.Instance;
+        RunSector currentSector = runState != null
+            ? runState.CurrentSector
+            : null;
+
+        if (currentSector == null ||
+            !RunRoute.IsExplorationSector(currentSector.SectorNumber))
+        {
+            return false;
+        }
+
+        int nextSectorNumber = currentSector.SectorNumber + 1;
+        StageProfileData nextStageProfile = GetStageProfile(nextSectorNumber);
+
+        if (nextStageProfile == null || defaultLocalAnomaly == null)
+        {
+            Debug.LogError(
+                $"[LevelChoiceManager] Sector {nextSectorNumber} " +
+                "configuration is incomplete."
+            );
+            return false;
+        }
+
+        List<WorldRuleData> pool = BuildPool();
+
+        if (pool.Count == 0)
+        {
+            Debug.LogError(
+                "[LevelChoiceManager] No production World Rules available."
+            );
+            return false;
+        }
+
+        WorldRuleData currentRule = currentSector.WorldRule;
+        List<WorldRuleData> alternatives = pool.FindAll(rule =>
+            rule != currentRule
+        );
+        List<WorldRuleData> selectionPool = alternatives.Count > 0
+            ? alternatives
+            : pool;
+        WorldRuleData selectedRule = selectionPool[
+            Random.Range(0, selectionPool.Count)
+        ];
+        RunSector nextSector = new(
+            nextSectorNumber,
+            nextStageProfile,
+            selectedRule,
+            defaultLocalAnomaly
+        );
+
+        TransitionToSector(nextSector);
+        return true;
+    }
+
     private List<WorldRuleData> BuildPool()
     {
         List<WorldRuleData> pool = new();
@@ -227,9 +283,12 @@ public sealed class LevelChoiceManager : MonoBehaviour
         }
 
         isChoosing = false;
+        TransitionToSector(sector);
+    }
 
+    private void TransitionToSector(RunSector sector)
+    {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
-
         RunStateManager runState = RunStateManager.EnsureExists();
         runState.CommitCurrentSceneStats();
         runState.SaveExperienceState();
@@ -237,10 +296,7 @@ public sealed class LevelChoiceManager : MonoBehaviour
         runState.SetCurrentSector(sector);
 
         Time.timeScale = 1f;
-
-        if (panelView != null)
-            panelView.Hide();
-
+        panelView?.Hide();
         SceneManager.LoadScene(gameplaySceneName);
     }
 

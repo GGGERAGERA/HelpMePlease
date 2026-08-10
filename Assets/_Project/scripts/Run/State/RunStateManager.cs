@@ -21,6 +21,10 @@ public sealed class RunStateManager : MonoBehaviour
 
     private readonly List<UpgradeData> pickedUpgrades = new();
     private readonly RunItemSlots itemSlots = new();
+    private readonly List<AnomalyPowerType> anomalyPowers = new(3);
+
+    private float threatValue;
+    private float threatElapsedTime;
 
     private bool hasHealthSnapshot;
     private float savedCurrentHealth;
@@ -50,6 +54,9 @@ public sealed class RunStateManager : MonoBehaviour
 
     public IReadOnlyList<UpgradeData> PickedUpgrades => pickedUpgrades;
     public RunItemSlots ItemSlots => itemSlots;
+    public IReadOnlyList<AnomalyPowerType> AnomalyPowers => anomalyPowers;
+    public float ThreatValue => threatValue;
+    public float ThreatElapsedTime => threatElapsedTime;
 
     public int AccumulatedKills => accumulatedKills;
     public float AccumulatedRunTime => accumulatedRunTime;
@@ -132,6 +139,9 @@ public sealed class RunStateManager : MonoBehaviour
 
         pickedUpgrades.Clear();
         itemSlots.Clear();
+        anomalyPowers.Clear();
+        threatValue = 0f;
+        threatElapsedTime = 0f;
 
         ClearExperienceSnapshot();
         ClearHealthSnapshot();
@@ -278,6 +288,40 @@ public sealed class RunStateManager : MonoBehaviour
         Debug.Log($"[RunState] Registered upgrade: {upgrade.upgradeName}. Total: {pickedUpgrades.Count}");
     }
 
+    public void AdvanceThreat(float deltaTime, float valuePerSecond)
+    {
+        if (runEnded || deltaTime <= 0f)
+            return;
+
+        threatElapsedTime += deltaTime;
+        threatValue = Mathf.Clamp(
+            threatValue + deltaTime * Mathf.Max(0f, valuePerSecond),
+            0f,
+            100f
+        );
+    }
+
+    public bool HasAnomalyPower(AnomalyPowerType power)
+    {
+        return anomalyPowers.Contains(power);
+    }
+
+    public bool TryAddAnomalyPower(AnomalyPowerType power)
+    {
+        if (runEnded || anomalyPowers.Count >= 3 ||
+            anomalyPowers.Contains(power))
+        {
+            return false;
+        }
+
+        anomalyPowers.Add(power);
+        Debug.Log(
+            $"[RunState] Anomaly Power acquired: {power}. " +
+            $"Slots: {anomalyPowers.Count}/3."
+        );
+        return true;
+    }
+
     [ContextMenu("Debug/Clear Item Slots")]
     private void DebugClearItemSlots()
     {
@@ -398,6 +442,9 @@ public sealed class RunStateManager : MonoBehaviour
         runEnded = true;
         CurrentAnomalyStabilizer = null;
         AnomalyModifiers = AnomalyRunModifiers.None;
+        anomalyPowers.Clear();
+        threatValue = 0f;
+        threatElapsedTime = 0f;
 
         Debug.Log(
             $"[RunState] Run ended. " +

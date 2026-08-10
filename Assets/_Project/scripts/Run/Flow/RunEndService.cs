@@ -44,10 +44,11 @@ public sealed class RunEndService : MonoBehaviour
         RunStateManager runState = RunStateManager.EnsureExists();
         RunSector sector = runState.CurrentSector;
 
-        if (sector == null || sector.SectorNumber != 10)
+        if (sector == null || !RunRoute.IsBossSector(sector.SectorNumber))
         {
             Debug.LogError(
-                "[RunEndService] Victory requires CurrentSector 10."
+                $"[RunEndService] Victory requires CurrentSector " +
+                $"{RunRoute.FinalBossSector}."
             );
             return;
         }
