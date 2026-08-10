@@ -759,18 +759,17 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         bool visible = available && giantObserverController.IsVisible;
 
         AddSectionTitle("ГИГАНТСКИЙ НАБЛЮДАТЕЛЬ",
-            "Источник: p_robot1.prefab");
-        AddToggleRow("ВКЛ / ВЫКЛ", observerOn, available,
+            "Perspective background camera + orthographic gameplay camera");
+        AddToggleRow("ГИГАНТСКИЙ НАБЛЮДАТЕЛЬ", observerOn, available,
             () => giantObserverController.SetObserverEnabled(
                 !giantObserverController.ObserverEnabled));
-        AddHint("Главный выключатель visual prototype. Сам по себе событие не запускает.");
+        AddHint("Sandbox-only visual prototype. По умолчанию выключен.");
         AddToggleRow("АВТОМАТИЧЕСКОЕ ПОЯВЛЕНИЕ",
             available && giantObserverController.AutoTrigger,
             available,
             () => giantObserverController.SetAutoTrigger(
                 !giantObserverController.AutoTrigger));
-        AddHint("Раз в выбранный интервал запускает фоновый Light Reveal. " +
-            "На gameplay не влияет.");
+        AddHint("Запускает фоновое появление через выбранный случайный интервал.");
         AddRow("ПОКАЗАТЬ СЕЙЧАС", visible ? "СОБЫТИЕ АКТИВНО" :
                 observerOn ? "ГОТОВО" : "СНАЧАЛА ВКЛЮЧИТЕ НАБЛЮДАТЕЛЯ",
             visible ? successColor : observerOn ? mutedColor : warningColor,
@@ -780,20 +779,39 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 giantObserverController.TriggerNow();
                 RefreshCurrentTab();
             });
-        AddHint("Принудительно запускает reveal после закрытия F1: " +
-            "пока меню открыто, игровой timer стоит на паузе.");
+        AddHint("Событие: дальнее проявление → приближение по Z → наблюдение → исчезновение.");
 
-        AddSectionTitle("ИНТЕРВАЛ",
-            available
-                ? $"Активен: {giantObserverController.IntervalMin:0}-" +
-                  $"{giantObserverController.IntervalMax:0} сек между запусками"
-                : "Controller не найден");
+        AddSectionTitle("ИНТЕРВАЛ", available
+            ? $"Активен: {giantObserverController.IntervalMin:0}-" +
+              $"{giantObserverController.IntervalMax:0} сек между запусками"
+            : "Controller не найден");
         AddObserverIntervalRow(10f, 15f);
         AddObserverIntervalRow(15f, 25f);
         AddObserverIntervalRow(20f, 30f);
 
-        AddSectionTitle("ИНТЕНСИВНОСТЬ",
-            "Сила фонового света и силуэта; gameplay не меняется");
+        AddSectionTitle("ПЕРСПЕКТИВА", available
+            ? $"FOV: {GetObserverFov(giantObserverController.Perspective):0}°"
+            : "Controller не найден");
+        AddObserverPerspectiveRow(
+            GiantObserverBackgroundController.PerspectivePreset.Narrow);
+        AddObserverPerspectiveRow(
+            GiantObserverBackgroundController.PerspectivePreset.Normal);
+        AddObserverPerspectiveRow(
+            GiantObserverBackgroundController.PerspectivePreset.Wide);
+
+        AddSectionTitle("СТАРТОВАЯ ДИСТАНЦИЯ", "Реальная дальняя позиция робота по Z");
+        AddObserverFarDistanceRow(
+            GiantObserverBackgroundController.FarDistancePreset.Far);
+        AddObserverFarDistanceRow(
+            GiantObserverBackgroundController.FarDistancePreset.VeryFar);
+
+        AddSectionTitle("КОНЕЧНАЯ ДИСТАНЦИЯ", "Ближняя позиция без анимации масштаба");
+        AddObserverNearDistanceRow(
+            GiantObserverBackgroundController.NearDistancePreset.Close);
+        AddObserverNearDistanceRow(
+            GiantObserverBackgroundController.NearDistancePreset.VeryClose);
+
+        AddSectionTitle("СВЕТ", "Холодный key + rim свет на слое Observer3D");
         AddObserverIntensityRow(
             GiantObserverBackgroundController.ObserverIntensity.Low);
         AddObserverIntensityRow(
@@ -801,37 +819,84 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddObserverIntensityRow(
             GiantObserverBackgroundController.ObserverIntensity.High);
 
-        AddSectionTitle("РАЗМЕР НА ЭКРАНЕ",
-            available
-                ? $"Выбрано: {giantObserverController.ScreenWidthPercent:0}% ширины камеры"
-                : "Controller не найден");
-        AddObserverScreenWidthRow(50f);
-        AddObserverScreenWidthRow(65f);
-        AddObserverScreenWidthRow(80f);
-        AddObserverScreenWidthRow(100f);
+        AddToggleRow("ПОКАЗЫВАТЬ ПОСТОЯННО",
+            available && giantObserverController.ShowConstantly,
+            available,
+            () => giantObserverController.SetShowConstantly(
+                !giantObserverController.ShowConstantly));
+        AddHint("Удерживает наблюдателя в ближней точке для визуальной настройки.");
 
-        AddSectionTitle("ВИДИМОСТЬ РОБОТА",
-            "Runtime-only усиление цветов; материалы prefab не изменяются");
-        AddObserverVisibilityRow(
-            GiantObserverBackgroundController.RobotVisibility.Original);
-        AddObserverVisibilityRow(
-            GiantObserverBackgroundController.RobotVisibility.Boosted);
+        AddRow("ДИАГНОСТИКА: ПОКАЗАТЬ РОБОТА",
+            available && giantObserverController.CurrentStateName == "FORCE_VISIBLE"
+                ? "FORCE VISIBLE ACTIVE" : "DISTANCE 25 · HIGH LIGHT",
+            available && giantObserverController.CurrentStateName == "FORCE_VISIBLE"
+                ? successColor : mutedColor,
+            "ПОКАЗАТЬ", available, () =>
+            {
+                giantObserverController.ShowForceVisible();
+                RefreshCurrentTab();
+            });
+        AddRow("ТЕСТ BACKGROUND CAMERA",
+            available && giantObserverController.CurrentStateName == "BACKGROUND_CAMERA_TEST"
+                ? "MAGENTA ACTIVE" : "MAGENTA · 2 СЕК",
+            available && giantObserverController.CurrentStateName == "BACKGROUND_CAMERA_TEST"
+                ? successColor : mutedColor,
+            "ТЕСТ", available, () =>
+            {
+                giantObserverController.StartBackgroundCameraTest();
+                RefreshCurrentTab();
+            });
 
         AddSectionTitle("ДИАГНОСТИКА", available
-            ? $"Prefab: {(giantObserverController.PrefabLoaded ? "LOADED" : "MISSING")}  |  " +
-              $"Renderers: {giantObserverController.RendererCount}  |  " +
-              $"Bounds: {giantObserverController.SourceBoundsSize.x:0.##} × " +
-              $"{giantObserverController.SourceBoundsSize.y:0.##}"
-            : "Prefab: MISSING | Renderers: 0 | Bounds: 0 × 0");
-        AddHint("Current state: " +
-            (available ? giantObserverController.CurrentStateName : "HIDDEN") +
-            "  |  Sensor: " +
-            (available && giantObserverController.UsesPrefabSensor
-                ? "PREFAB EYE" : "PROCEDURAL FALLBACK"));
-
-        AddHint(
-            "По умолчанию Наблюдатель и автоматическое появление выключены."
-        );
+            ? $"Camera Stack: {(giantObserverController.CameraStackOk ? "OK" : "ERROR")}  |  " +
+              $"Prefab: {(giantObserverController.PrefabLoaded ? "LOADED" : "MISSING")}"
+            : "Camera Stack: ERROR | Prefab: MISSING");
+        AddHint(available
+            ? $"Background Camera: {(giantObserverController.BackgroundCameraActive ? "ACTIVE" : "DISABLED")}  |  " +
+              $"Background Renderer: {(giantObserverController.ForwardRendererOk ? "Universal Forward" : "ERROR")}  |  " +
+              $"Gameplay Renderer: {(giantObserverController.GameplayForwardRendererOk ? "Universal Forward" : "2D / RESTORED")}"
+            : "Background Camera: DISABLED | Renderers: ERROR");
+        WorldRuleData observerActiveRule = worldRuleController != null
+            ? worldRuleController.ActiveRule : null;
+        AddHint("Active World Rule: " + (observerActiveRule != null
+            ? observerActiveRule.RuleType.ToString().ToUpperInvariant()
+            : "NONE"));
+        AddHint(available
+            ? $"Culling Mask: Observer3D {(giantObserverController.ObserverMaskOk ? "YES" : "NO")}  |  " +
+              $"Observer Layer: {giantObserverController.ObserverLayerIndex}  |  " +
+              $"Robot Layers: {(giantObserverController.RobotLayersOk ? "OK" : "MISMATCH")}"
+            : "Culling Mask: Observer3D NO | Observer Layer: 31 | Robot Layers: MISMATCH");
+        AddHint(available
+            ? $"Robot Active: {(giantObserverController.RobotActive ? "YES" : "NO")}  |  " +
+              $"MeshRenderers: {giantObserverController.RendererCount} / " +
+              $"{giantObserverController.EnabledRendererCount} enabled"
+            : "Robot Active: NO | MeshRenderers: 0 / 0 enabled");
+        AddHint(available
+            ? $"Materials: {giantObserverController.MaterialCount}  |  " +
+              $"Unsupported shaders: {giantObserverController.UnsupportedShaderCount}"
+            : "Materials: 0 | Unsupported shaders: 0");
+        if (available)
+        {
+            Vector3 position = giantObserverController.RobotWorldPosition;
+            Vector3 forward = giantObserverController.BackgroundCameraForward;
+            AddHint($"Robot World Position: {position.x:0.0} {position.y:0.0} {position.z:0.0}");
+            AddHint($"Camera Forward: {forward.x:0.00} {forward.y:0.00} {forward.z:0.00}");
+            AddHint($"Distance: {giantObserverController.CurrentDistance:0.0}  |  " +
+                $"Near/Far: {giantObserverController.BackgroundNearClip:0.0} / " +
+                $"{giantObserverController.BackgroundFarClip:0}");
+            AddHint("Is Robot In Front Of Camera: " +
+                (giantObserverController.RobotInFrontOfCamera ? "YES" : "NO"));
+            AddHint($"Estimated Screen Coverage: " +
+                $"{giantObserverController.RobotScreenCoverage * 100f:0.0}%");
+            AddHint($"State: {giantObserverController.CurrentStateName}  |  " +
+                $"Last Render State: {giantObserverController.LastRenderState}");
+        }
+        else
+        {
+            AddHint("Robot World Position: 0 0 0 | Camera Forward: 0 0 1");
+            AddHint("Distance: 0 | Near/Far: 0 / 0 | Is Robot In Front Of Camera: NO");
+            AddHint("Estimated Screen Coverage: 0% | Last Render State: CAMERA OFF");
+        }
     }
 
     private void AddObserverIntervalRow(float minimum, float maximum)
@@ -878,37 +943,62 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private static string GetRussianObserverIntensity(
         GiantObserverBackgroundController.ObserverIntensity value) => value switch
     {
-        GiantObserverBackgroundController.ObserverIntensity.Low => "НИЗКАЯ",
-        GiantObserverBackgroundController.ObserverIntensity.High => "ВЫСОКАЯ",
-        _ => "НОРМАЛЬНАЯ"
+        GiantObserverBackgroundController.ObserverIntensity.Low => "LOW",
+        GiantObserverBackgroundController.ObserverIntensity.High => "HIGH",
+        _ => "NORMAL"
     };
 
-    private void AddObserverScreenWidthRow(float percent)
+    private void AddObserverPerspectiveRow(
+        GiantObserverBackgroundController.PerspectivePreset value)
     {
         bool available = giantObserverController != null;
-        bool selected = available && Mathf.Approximately(
-            giantObserverController.ScreenWidthPercent, percent);
-        AddRow($"{percent:0}%", selected ? "ВЫБРАНО" : "ДОСТУПНО",
+        bool selected = available && giantObserverController.Perspective == value;
+        AddRow($"FOV {GetObserverFov(value):0}°",
+            selected ? "ВЫБРАНО" : "ДОСТУПНО",
             selected ? successColor : mutedColor,
             "ВЫБРАТЬ", available, () =>
             {
-                giantObserverController.SetScreenWidthPercent(percent);
+                giantObserverController.SetPerspective(value);
                 RefreshCurrentTab();
             });
     }
 
-    private void AddObserverVisibilityRow(
-        GiantObserverBackgroundController.RobotVisibility value)
+    private static float GetObserverFov(
+        GiantObserverBackgroundController.PerspectivePreset value) => value switch
+    {
+        GiantObserverBackgroundController.PerspectivePreset.Narrow => 30f,
+        GiantObserverBackgroundController.PerspectivePreset.Wide => 50f,
+        _ => 40f
+    };
+
+    private void AddObserverFarDistanceRow(
+        GiantObserverBackgroundController.FarDistancePreset value)
     {
         bool available = giantObserverController != null;
-        bool selected = available && giantObserverController.Visibility == value;
-        string label = value == GiantObserverBackgroundController.RobotVisibility.Boosted
-            ? "УСИЛЕННАЯ" : "ОРИГИНАЛ";
+        bool selected = available && giantObserverController.FarPreset == value;
+        string label = value == GiantObserverBackgroundController.FarDistancePreset.VeryFar
+            ? "VERY FAR" : "FAR";
         AddRow(label, selected ? "ВЫБРАНО" : "ДОСТУПНО",
             selected ? successColor : mutedColor,
             "ВЫБРАТЬ", available, () =>
             {
-                giantObserverController.SetRobotVisibility(value);
+                giantObserverController.SetFarDistance(value);
+                RefreshCurrentTab();
+            });
+    }
+
+    private void AddObserverNearDistanceRow(
+        GiantObserverBackgroundController.NearDistancePreset value)
+    {
+        bool available = giantObserverController != null;
+        bool selected = available && giantObserverController.NearPreset == value;
+        string label = value == GiantObserverBackgroundController.NearDistancePreset.VeryClose
+            ? "VERY CLOSE" : "CLOSE";
+        AddRow(label, selected ? "ВЫБРАНО" : "ДОСТУПНО",
+            selected ? successColor : mutedColor,
+            "ВЫБРАТЬ", available, () =>
+            {
+                giantObserverController.SetNearDistance(value);
                 RefreshCurrentTab();
             });
     }
