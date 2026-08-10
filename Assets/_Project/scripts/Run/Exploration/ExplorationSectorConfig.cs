@@ -19,7 +19,7 @@ public sealed class ExplorationSectorConfig : ScriptableObject
     };
 
     [Header("Layout")]
-    [SerializeField, Range(0.88f, 0.9f)]
+    [SerializeField, Range(0.85f, 0.95f)]
     private float targetAnomalyCoverage = 0.89f;
     [SerializeField, Min(0f)] private float edgePadding = 0.1f;
     [SerializeField, Min(0.5f)] private float exitRadius = 2.5f;
@@ -37,7 +37,7 @@ public sealed class ExplorationSectorConfig : ScriptableObject
     public LocalAnomalyData GravityAnomaly => gravityAnomaly;
     public AnomalyPowerType[] SpecialPowerPool => specialPowerPool;
     public float TargetAnomalyCoverage =>
-        Mathf.Clamp(targetAnomalyCoverage, 0.88f, 0.9f);
+        Mathf.Clamp(targetAnomalyCoverage, 0.85f, 0.95f);
     public float EdgePadding => Mathf.Max(0f, edgePadding);
     public float ExitRadius => Mathf.Max(0.5f, exitRadius);
     public float ElectricEnemyDamage => Mathf.Max(0f, electricEnemyDamage);

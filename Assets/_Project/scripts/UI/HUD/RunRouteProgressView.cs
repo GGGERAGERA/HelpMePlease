@@ -22,6 +22,11 @@ public sealed class RunRouteProgressView : MonoBehaviour
     private static readonly Color Future =
         new(0.12f, 0.3f, 0.36f, 0.34f);
 
+    private void Awake()
+    {
+        ConfigureRootLayout();
+    }
+
     public void ShowCurrent(int currentSector, int totalSectors)
     {
         Show(currentSector, totalSectors);
@@ -39,10 +44,18 @@ public sealed class RunRouteProgressView : MonoBehaviour
 
     private void Show(int sectorNumber, int totalSectors)
     {
-        Build();
-
         int safeTotal = Mathf.Max(1, totalSectors);
         int safeSector = Mathf.Clamp(sectorNumber, 1, safeTotal);
+
+        // Sector 5 owns the top-center space with its boss health bar.
+        if (RunRoute.IsBossSector(safeSector))
+        {
+            Hide();
+            return;
+        }
+
+        ConfigureRootLayout();
+        Build();
 
         gameObject.SetActive(true);
         sectorText.text = $"СЕКТОР {safeSector} / {safeTotal}";
@@ -110,6 +123,19 @@ public sealed class RunRouteProgressView : MonoBehaviour
         layout.childForceExpandWidth = false;
         layout.childForceExpandHeight = false;
 
+    }
+
+    private void ConfigureRootLayout()
+    {
+        if (transform is not RectTransform root)
+            return;
+
+        root.anchorMin = new Vector2(0.5f, 1f);
+        root.anchorMax = new Vector2(0.5f, 1f);
+        root.pivot = new Vector2(0.5f, 1f);
+        root.anchoredPosition = new Vector2(0f, -18f);
+        root.sizeDelta = new Vector2(260f, 44f);
+        root.localScale = Vector3.one;
     }
 
     private void EnsurePoints(int totalSectors)
