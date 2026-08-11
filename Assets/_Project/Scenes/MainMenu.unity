@@ -253048,6 +253048,22 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1530995923412410891, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 1530995923412410891, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 1530995923412410891, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 1530995923412410891, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1562728105753015236, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
       propertyPath: m_Enabled
       value: 0

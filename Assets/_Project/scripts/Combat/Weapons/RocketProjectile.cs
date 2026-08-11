@@ -119,44 +119,19 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile,
 
             WeaponHitContext hitContext = new WeaponHitContext(
                 combatContext != null ? combatContext.Weapon : null,
-                combatContext != null ? combatContext.Owner : null,
-                this,
-                WeaponShotKind.Rocket,
-                combatContext != null
-                    ? combatContext.Core
-                    : WeaponCoreType.None,
+                combatContext != null ? combatContext.WeaponData : null,
                 enemy,
                 transform.position,
                 direction,
                 damage,
                 isCritical
             );
-            WeaponHitResolver.Resolve(
-                hitContext,
-                hitContext.Core != WeaponCoreType.Void
-            );
+            WeaponHitResolver.Resolve(hitContext);
 
             EnemyMovement enemyMovement = enemy.GetComponent<EnemyMovement>();
 
             if (enemyMovement != null)
                 enemyMovement.ApplyKnockback(direction, knockbackForce);
-        }
-
-        if (combatContext != null &&
-            combatContext.Core == WeaponCoreType.Void)
-        {
-            WeaponHitResolver.ResolveCoreImpact(new WeaponHitContext(
-                combatContext.Weapon,
-                combatContext.Owner,
-                this,
-                WeaponShotKind.Rocket,
-                combatContext.Core,
-                null,
-                transform.position,
-                direction,
-                damage,
-                isCritical
-            ));
         }
 
         Destroy(gameObject);

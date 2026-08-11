@@ -467,7 +467,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 break;
             case DebugTab.WeaponsAndUpgrades:
                 AddWeaponsSection();
-                AddWeaponCoreSection();
+                AddGravityConstructSection();
+                AddRiftConstructSection();
                 AddUpgradesSection();
                 break;
             case DebugTab.Telekinesis:
@@ -479,6 +480,142 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         }
 
         AddHint("F1 закрывает меню. Пока меню открыто, игровой процесс на паузе.");
+    }
+
+    private void AddGravityConstructSection()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        AnomalyCoreRuntime coreRuntime = player != null
+            ? player.GetComponent<AnomalyCoreRuntime>()
+            : null;
+        bool enabled = coreRuntime != null &&
+            coreRuntime.IsCoreActive(AnomalyCoreId.Gravity);
+        bool available = coreRuntime != null &&
+            coreRuntime.CurrentWeapon != null;
+
+        AddSectionTitle(
+            "GRAVITY CONSTRUCT CONTRACT",
+            "Independent gravity orb with optional weapon payload"
+        );
+        AddRow(
+            "GRAVITY CONSTRUCT",
+            enabled
+                ? $"ACTIVE - {GetWeaponName(coreRuntime.CurrentWeapon.weaponData)}"
+                : available ? "READY" : "PLAYER/WEAPON NOT FOUND",
+            enabled ? successColor : available ? mutedColor : warningColor,
+            enabled ? "TURN OFF" : "TURN ON",
+            available,
+            ToggleGravityConstruct
+        );
+
+        bool payloadEnabled = false;
+        bool hasPayloadToggle = coreRuntime != null &&
+            coreRuntime.TryGetWeaponPayloadEnabled(
+                AnomalyCoreId.Gravity,
+                out payloadEnabled);
+        AddRow(
+            "WEAPON PAYLOAD",
+            hasPayloadToggle
+                ? payloadEnabled ? "PISTOL/LASER PAYLOAD ON" : "BASE GRAVITY ONLY"
+                : "ACTIVATE GRAVITY FIRST",
+            hasPayloadToggle && payloadEnabled ? successColor : mutedColor,
+            hasPayloadToggle && payloadEnabled ? "TURN OFF" : "TURN ON",
+            hasPayloadToggle,
+            ToggleGravityWeaponPayload
+        );
+        AddHint(
+            "The orb always orbits and deals direct base damage. Weapon " +
+            "payload optionally emits the current BaseWeapon attack outward."
+        );
+    }
+
+    private void ToggleGravityConstruct()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        AnomalyCoreRuntime coreRuntime = player != null
+            ? player.GetComponent<AnomalyCoreRuntime>()
+            : null;
+
+        if (coreRuntime == null)
+            return;
+
+        if (coreRuntime.IsCoreActive(AnomalyCoreId.Gravity))
+            coreRuntime.DeactivateCore(AnomalyCoreId.Gravity);
+        else
+            coreRuntime.ActivateCore(AnomalyCoreId.Gravity);
+
+        RefreshTab(DebugTab.WeaponsAndUpgrades);
+    }
+
+    private void ToggleGravityWeaponPayload()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        AnomalyCoreRuntime coreRuntime = player != null
+            ? player.GetComponent<AnomalyCoreRuntime>()
+            : null;
+
+        if (coreRuntime == null ||
+            !coreRuntime.TryGetWeaponPayloadEnabled(
+                AnomalyCoreId.Gravity,
+                out bool enabled))
+        {
+            return;
+        }
+
+        coreRuntime.TrySetWeaponPayloadEnabled(
+            AnomalyCoreId.Gravity,
+            !enabled
+        );
+        RefreshTab(DebugTab.WeaponsAndUpgrades);
+    }
+
+    private void AddRiftConstructSection()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        AnomalyCoreRuntime coreRuntime = player != null
+            ? player.GetComponent<AnomalyCoreRuntime>()
+            : null;
+        bool enabled = coreRuntime != null &&
+            coreRuntime.IsCoreActive(AnomalyCoreId.Rift);
+        bool available = coreRuntime != null &&
+            coreRuntime.CurrentWeapon != null;
+
+        AddSectionTitle(
+            "RIFT CONSTRUCT CONTRACT",
+            "Delayed impact with radial polymorphic weapon burst"
+        );
+        AddRow(
+            "RIFT",
+            enabled
+                ? $"ACTIVE - {GetWeaponName(coreRuntime.CurrentWeapon.weaponData)}"
+                : available ? "READY" : "PLAYER/WEAPON NOT FOUND",
+            enabled ? successColor : available ? mutedColor : warningColor,
+            enabled ? "TURN OFF" : "TURN ON",
+            available,
+            ToggleRiftConstruct
+        );
+        AddHint(
+            "AnomalyCoreRuntime owns Rift independently from Gravity. " +
+            "Both may be active at the same time."
+        );
+    }
+
+    private void ToggleRiftConstruct()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        AnomalyCoreRuntime coreRuntime = player != null
+            ? player.GetComponent<AnomalyCoreRuntime>()
+            : null;
+
+        if (coreRuntime == null)
+            return;
+
+        if (coreRuntime.IsCoreActive(AnomalyCoreId.Rift))
+            coreRuntime.DeactivateCore(AnomalyCoreId.Rift);
+        else
+            coreRuntime.ActivateCore(AnomalyCoreId.Rift);
+
+        RefreshTab(DebugTab.WeaponsAndUpgrades);
     }
 
     private void AddWeaponCoreSection()
@@ -1476,11 +1613,15 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         if (player == null || characterSpawner == null || data == null)
             return;
 
-        characterSpawner.TryReplaceDebugPrimaryWeapon(
+        if (!characterSpawner.TryReplaceDebugPrimaryWeapon(
             player,
             data,
             out _
-        );
+        ))
+        {
+            return;
+        }
+
         telekinesisPrototype = player.GetComponent<TelekinesisDebugPrototype>();
         RefreshTab(DebugTab.WeaponsAndUpgrades);
         RefreshTab(DebugTab.Telekinesis);

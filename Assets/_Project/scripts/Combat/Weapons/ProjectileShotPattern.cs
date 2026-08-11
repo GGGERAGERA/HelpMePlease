@@ -24,6 +24,7 @@ public sealed class ProjectileShotPattern : MonoBehaviour
 
             WeaponFireContext shotContext = new WeaponFireContext(
                 baseContext.Weapon,
+                baseContext.WeaponData,
                 baseContext.Owner,
                 baseContext.FirePoint,
                 baseContext.Origin,
@@ -37,9 +38,7 @@ public sealed class ProjectileShotPattern : MonoBehaviour
                 baseContext.Ricochet,
                 baseContext.KnockbackForce,
                 baseContext.Modifiers,
-                baseContext.FxPlayer,
-                baseContext.ShotKind,
-                baseContext.Core
+                baseContext.FxPlayer
             );
 
             fired |= fireBehaviour.Fire(shotContext);

@@ -130,15 +130,7 @@ public abstract class BaseWeapon : MonoBehaviour
         if (IsTryingToAttack() && CanAttack())
         {
             if (Attack())
-            {
                 MarkAttackTime();
-                ShotFired?.Invoke(
-                    firePoint != null
-                        ? (Vector2)firePoint.position
-                        : (Vector2)transform.position,
-                    ShotKind
-                );
-            }
         }
     }
 
@@ -436,6 +428,28 @@ public abstract class BaseWeapon : MonoBehaviour
     }
 
     public abstract bool Attack();
+
+    /// <summary>
+    /// Emits one base attack with current runtime stats without changing the
+    /// automatic-fire cooldown.
+    /// </summary>
+    public bool EmitAttack(Vector2 origin, Vector2 direction)
+    {
+        if (!IsValidVector(origin) || !IsValidVector(direction) ||
+            direction.sqrMagnitude < 0.001f)
+        {
+            return false;
+        }
+
+        Vector2 finalDirection = ApplyAccuracyPenalty(direction.normalized);
+        if (!EmitAttack(BuildFireContext(origin, finalDirection)))
+            return false;
+
+        ShotFired?.Invoke(origin, ShotKind);
+        return true;
+    }
+
+    protected abstract bool EmitAttack(WeaponFireContext context);
 
     protected void MarkAttackTime()
     {
@@ -758,6 +772,7 @@ public abstract class BaseWeapon : MonoBehaviour
 
         return new WeaponFireContext(
             this,
+            weaponData,
             transform.parent,
             firePoint,
             origin,
@@ -771,9 +786,7 @@ public abstract class BaseWeapon : MonoBehaviour
             GetProjectileRicochet(),
             0f,
             modifiers,
-            FxPlayer,
-            ShotKind,
-            WeaponCoreDebugSelector.ActiveCore
+            FxPlayer
         );
     }
 

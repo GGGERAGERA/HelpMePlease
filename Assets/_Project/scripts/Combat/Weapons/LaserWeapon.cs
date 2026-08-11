@@ -30,12 +30,13 @@ public class LaserWeapon : BaseWeapon
             return false;
         }
 
-        Vector2 direction = ApplyAccuracyPenalty(aimDirection);
+        return EmitAttack(firePoint.position, aimDirection);
+    }
 
-        WeaponFireContext context = BuildFireContext(
-            firePoint.position,
-            direction
-        );
+    protected override bool EmitAttack(WeaponFireContext context)
+    {
+        if (fireBehaviour == null)
+            return false;
 
         if (!fireBehaviour.Fire(context))
             return false;

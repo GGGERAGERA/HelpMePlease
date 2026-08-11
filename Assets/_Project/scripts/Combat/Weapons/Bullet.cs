@@ -119,14 +119,7 @@ public class Bullet : MonoBehaviour, IWeaponProjectile,
         hitEnemies.Add(enemyHealth);
         WeaponHitResolver.Resolve(new WeaponHitContext(
             combatContext != null ? combatContext.Weapon : null,
-            combatContext != null ? combatContext.Owner : null,
-            this,
-            combatContext != null
-                ? combatContext.ShotKind
-                : WeaponShotKind.Standard,
-            combatContext != null
-                ? combatContext.Core
-                : WeaponCoreType.None,
+            combatContext != null ? combatContext.WeaponData : null,
             enemyHealth,
             transform.position,
             direction,

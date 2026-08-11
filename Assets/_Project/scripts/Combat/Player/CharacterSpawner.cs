@@ -3,7 +3,9 @@ using UnityEngine;
 public class CharacterSpawner : MonoBehaviour
 {
     public event System.Action<GameObject> CharacterSpawned;
+    public event System.Action<BaseWeapon> PrimaryWeaponChanged;
     public GameObject SpawnedPlayer { get; private set; }
+    public BaseWeapon PrimaryWeapon { get; private set; }
 
     [Header("Default character for direct MVP launch")]
     [SerializeField] private CharacterData defaultCharacter;
@@ -58,6 +60,11 @@ public class CharacterSpawner : MonoBehaviour
 
         AnomalyPowerRuntime.ApplyRunLoadout(player);
 
+        AnomalyCoreRuntime coreRuntime =
+            player.GetComponent<AnomalyCoreRuntime>();
+        coreRuntime ??= player.AddComponent<AnomalyCoreRuntime>();
+        coreRuntime.Initialize(this, PrimaryWeapon);
+
         SpawnedPlayer = player;
         CharacterSpawned?.Invoke(player);
     }
@@ -91,7 +98,7 @@ public class CharacterSpawner : MonoBehaviour
         ApplyCharacterStats(player, selectedCharacter);
 
         WeaponData selectedWeapon = GetSelectedWeapon();
-        SpawnWeapon(player, selectedWeapon);
+        SetPrimaryWeapon(SpawnWeapon(player, selectedWeapon));
 
         return player;
     }
@@ -196,6 +203,15 @@ public class CharacterSpawner : MonoBehaviour
         return baseWeapon;
     }
 
+    private void SetPrimaryWeapon(BaseWeapon weapon)
+    {
+        if (PrimaryWeapon == weapon)
+            return;
+
+        PrimaryWeapon = weapon;
+        PrimaryWeaponChanged?.Invoke(weapon);
+    }
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public void ConfigureDebugDefaults(
         CharacterData character,
@@ -230,6 +246,7 @@ public class CharacterSpawner : MonoBehaviour
         {
             replacement = current;
             prototype?.SetPrimaryWeapon(current);
+            SetPrimaryWeapon(current);
             return true;
         }
 
@@ -253,6 +270,7 @@ public class CharacterSpawner : MonoBehaviour
         }
 
         prototype?.SetPrimaryWeapon(replacement);
+        SetPrimaryWeapon(replacement);
         return true;
     }
 

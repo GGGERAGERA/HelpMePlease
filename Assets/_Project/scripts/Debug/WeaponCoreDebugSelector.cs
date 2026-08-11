@@ -1,5 +1,13 @@
 using UnityEngine;
 
+public enum WeaponCoreType
+{
+    None = 0,
+    Rupture = 1,
+    Chain = 2,
+    Void = 3
+}
+
 public sealed class WeaponCoreDebugSelector : MonoBehaviour
 {
     public static WeaponCoreType ActiveCore { get; private set; }

@@ -3,6 +3,7 @@ using UnityEngine;
 public readonly struct WeaponFireContext
 {
     public readonly BaseWeapon Weapon;
+    public readonly WeaponData WeaponData;
     public readonly Transform Owner;
     public readonly Transform FirePoint;
 
@@ -23,11 +24,10 @@ public readonly struct WeaponFireContext
 
     public readonly PlayerCombatModifiers Modifiers;
     public readonly WeaponFxPlayer FxPlayer;
-    public readonly WeaponShotKind ShotKind;
-    public readonly WeaponCoreType Core;
 
     public WeaponFireContext(
         BaseWeapon weapon,
+        WeaponData weaponData,
         Transform owner,
         Transform firePoint,
         Vector2 origin,
@@ -41,12 +41,10 @@ public readonly struct WeaponFireContext
         int ricochet,
         float knockbackForce,
         PlayerCombatModifiers modifiers,
-        WeaponFxPlayer fxPlayer,
-        WeaponShotKind shotKind,
-        WeaponCoreType core
-    )
+        WeaponFxPlayer fxPlayer)
     {
         Weapon = weapon;
+        WeaponData = weaponData;
         Owner = owner;
         FirePoint = firePoint;
         Origin = origin;
@@ -61,14 +59,13 @@ public readonly struct WeaponFireContext
         KnockbackForce = knockbackForce;
         Modifiers = modifiers;
         FxPlayer = fxPlayer;
-        ShotKind = shotKind;
-        Core = core;
     }
 
     public WeaponFireContext WithKnockback(float knockbackForce)
     {
         return new WeaponFireContext(
             Weapon,
+            WeaponData,
             Owner,
             FirePoint,
             Origin,
@@ -82,9 +79,22 @@ public readonly struct WeaponFireContext
             Ricochet,
             knockbackForce,
             Modifiers,
-            FxPlayer,
-            ShotKind,
-            Core
+            FxPlayer
+        );
+    }
+
+    public WeaponHitContext CreateHitContext(
+        EnemyHealth target,
+        Vector2 hitPoint)
+    {
+        return new WeaponHitContext(
+            Weapon,
+            WeaponData,
+            target,
+            hitPoint,
+            Direction,
+            Damage,
+            IsCritical
         );
     }
 }

@@ -79,34 +79,36 @@ public class ProjectileWeapon : BaseWeapon
         if (!TryGetAimDirectionFromFirePoint(out Vector2 aimDirection))
             return false;
 
-        Vector2 baseDirection = ApplyAccuracyPenalty(aimDirection);
+        return EmitAttack(firePoint.position, aimDirection);
+    }
 
-        if (!FireShotGroup(baseDirection))
+    protected override bool EmitAttack(WeaponFireContext context)
+    {
+        context = context.WithKnockback(
+            GetKnockbackForce(baseKnockbackForce)
+        );
+
+        if (!FireShotGroup(context))
             return false;
 
         PlayRecoil();
 
         if (AudioService.Instance != null)
-            AudioService.Instance.PlayAt(attackCue, firePoint.position);
+            AudioService.Instance.PlayAt(attackCue, context.Origin);
         else if (weaponData != null)
             PlaySound(weaponData.attackSound);
 
-        FxPlayer?.PlayFire(firePoint.position, baseDirection);
+        FxPlayer?.PlayFire(context.Origin, context.Direction);
         return true;
     }
 
-    private bool FireShotGroup(Vector2 baseDirection)
+    private bool FireShotGroup(WeaponFireContext context)
     {
         if (shotPattern == null)
         {
             Debug.LogWarning($"[ProjectileWeapon] ShotPattern is missing on {name}.");
             return false;
         }
-
-        WeaponFireContext context = BuildFireContext(
-            firePoint.position,
-            baseDirection
-        ).WithKnockback(GetKnockbackForce(baseKnockbackForce));
 
         return shotPattern.FirePattern(
             context,
