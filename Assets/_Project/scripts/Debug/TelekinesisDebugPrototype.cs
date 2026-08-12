@@ -5,6 +5,7 @@ using UnityEngine.EventSystems;
 public enum TelekinesisDebugMode
 {
     Base,
+    Remote,
     ManualPosition,
     ManualFire,
     DualControl,
@@ -46,12 +47,14 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
     private LineRenderer focusTargetMarker;
     private Material debugLineMaterial;
     private Vector2 commandPoint;
+    private Vector2 remoteCommandPoint;
     private Vector2 throwTarget;
     private float throwHoldRemaining;
     private float radiusVisualRadius;
     private int manualWeaponIndex;
     private WeaponThrowState throwState;
     private bool cleaningUp;
+    private bool hasRemoteCommandPoint;
 
     public TelekinesisDebugMode CurrentMode { get; private set; } =
         TelekinesisDebugMode.Base;
@@ -88,6 +91,10 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
 
         switch (CurrentMode)
         {
+            case TelekinesisDebugMode.Remote:
+                UpdateRemotePosition();
+                break;
+
             case TelekinesisDebugMode.CommandPoint:
             case TelekinesisDebugMode.FullAutoCommand:
                 UpdateCommandFormation();
@@ -146,6 +153,10 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
             case TelekinesisDebugMode.Base:
                 break;
 
+            case TelekinesisDebugMode.Remote:
+                ConfigureRemote();
+                break;
+
             case TelekinesisDebugMode.ManualPosition:
                 ConfigureManualPosition(primaryWeapon, false);
                 SetRadiusVisualActive(true, ManualRadius);
@@ -186,6 +197,25 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
         }
 
         return true;
+    }
+
+    private void ConfigureRemote()
+    {
+        if (!hasRemoteCommandPoint)
+        {
+            remoteCommandPoint = ClampToPlayerRadius(
+                primaryWeapon.transform.position,
+                CommandRadius
+            );
+            hasRemoteCommandPoint = true;
+        }
+
+        primaryWeapon.SetTelekinesisDebugExternalPosition(
+            remoteCommandPoint,
+            CommandFollowSpeed,
+            true
+        );
+        SetRadiusVisualActive(true, CommandRadius);
     }
 
     public void ResetPrototype()
@@ -264,6 +294,11 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
     {
         switch (CurrentMode)
         {
+            case TelekinesisDebugMode.Remote:
+                if (Input.GetMouseButtonDown(1))
+                    SetRemotePointFromMouse();
+                break;
+
             case TelekinesisDebugMode.DualSwitch:
                 if (Input.GetKeyDown(KeyCode.Tab))
                     SwitchManualWeapon();
@@ -291,6 +326,32 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
                     SetFocusTargetFromMouse();
                 break;
         }
+    }
+
+    private void SetRemotePointFromMouse()
+    {
+        remoteCommandPoint = ClampToPlayerRadius(
+            GetMouseWorldPosition(),
+            CommandRadius
+        );
+        hasRemoteCommandPoint = true;
+        primaryWeapon?.UpdateTelekinesisDebugPositionTarget(
+            remoteCommandPoint
+        );
+    }
+
+    private void UpdateRemotePosition()
+    {
+        if (!hasRemoteCommandPoint || primaryWeapon == null)
+            return;
+
+        remoteCommandPoint = ClampToPlayerRadius(
+            remoteCommandPoint,
+            CommandRadius
+        );
+        primaryWeapon.UpdateTelekinesisDebugPositionTarget(
+            remoteCommandPoint
+        );
     }
 
     private void SwitchManualWeapon()

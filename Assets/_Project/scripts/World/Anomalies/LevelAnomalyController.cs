@@ -79,6 +79,12 @@ public sealed class LevelAnomalyController : MonoBehaviour
     [SerializeField, Min(0f)] private float edgePadding = 1f;
     [SerializeField] private GameplayAreaService gameplayArea;
 
+    [Header("Production Anomaly Focus")]
+    [SerializeField] private bool anomalyFocusEnabled = true;
+    [SerializeField, Range(0f, 1f)] private float outsideDarkness = 1f;
+    [SerializeField, Range(0f, 1f)] private float outsideDesaturation;
+    [SerializeField, Range(0.2f, 0.35f)] private float focusTransition = 0.35f;
+
     private readonly List<LocalAnomalyZone> spawnedZones = new();
     private readonly List<ActiveLocalZone> activeLocalZones = new();
     private readonly HashSet<EnemyHealth> claimedExplosiveDeaths = new();
@@ -86,10 +92,42 @@ public sealed class LevelAnomalyController : MonoBehaviour
     private LocalAnomalyData activeAnomaly;
     private bool localCardVisible;
     private LocalAnomalyData displayedLocalAnomaly;
+    private Transform focusPlayer;
+    private LocalAnomalyZone focusedZone;
+    private SpriteRenderer focusOverlay;
+    private Material focusMaterial;
+    private MaterialPropertyBlock focusProperties;
+    private Texture2D focusTexture;
+    private Sprite focusSprite;
+    private float focusAmount;
+    private Bounds focusBounds;
+    private bool hasFocusGeometry;
+
+    private static readonly int FocusAmountId = Shader.PropertyToID("_FocusAmount");
+    private static readonly int FocusDarknessId = Shader.PropertyToID("_OutsideDarkness");
+    private static readonly int FocusDesaturationId = Shader.PropertyToID("_OutsideDesaturation");
+    private static readonly int FocusClearRatioId = Shader.PropertyToID("_ClearRatio");
 
     public LocalAnomalyData ActiveAnomaly => activeAnomaly;
     public bool IsIntroComplete { get; private set; } = true;
     public float CurrentCoverage { get; private set; }
+    public bool IsAnomalyFocusActive => focusAmount > 0f;
+    public string FocusedZoneName => focusedZone != null
+        ? focusedZone.AnomalyType.ToString()
+        : "NONE";
+    public bool AnomalyFocusEnabled => anomalyFocusEnabled;
+    public float OutsideDarkness => outsideDarkness;
+    public float OutsideDesaturation => outsideDesaturation;
+    public float OutsideColor => 1f - outsideDesaturation;
+    public float FocusTransition => focusTransition;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void SetAnomalyFocusEnabled(bool value) => anomalyFocusEnabled = value;
+    public void SetOutsideDarkness(float value) => outsideDarkness = Mathf.Clamp01(value);
+    public void SetOutsideDesaturation(float value) => outsideDesaturation = Mathf.Clamp01(value);
+    public void SetOutsideColor(float value) => outsideDesaturation = 1f - Mathf.Clamp01(value);
+    public void SetFocusTransition(float value) => focusTransition = Mathf.Clamp(value, 0.2f, 0.35f);
+#endif
 
     public bool TryClaimExplosiveDeath(EnemyHealth enemy)
     {
@@ -132,6 +170,151 @@ public sealed class LevelAnomalyController : MonoBehaviour
         }
 
         Instance = this;
+    }
+
+    private void Update()
+    {
+        UpdateAnomalyFocus();
+    }
+
+    private void UpdateAnomalyFocus()
+    {
+        if (focusPlayer == null)
+        {
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            focusPlayer = player != null ? player.transform : null;
+        }
+
+        LocalAnomalyZone next = anomalyFocusEnabled && focusPlayer != null
+            ? FindFocusZone(focusPlayer.position)
+            : null;
+        if (next != null)
+        {
+            focusedZone = next;
+            Collider2D nextArea = next.FocusArea;
+            if (nextArea != null && nextArea.enabled)
+            {
+                focusBounds = nextArea.bounds;
+                hasFocusGeometry = true;
+            }
+        }
+
+        float target = next != null ? 1f : 0f;
+        focusAmount = Mathf.MoveTowards(
+            focusAmount,
+            target,
+            Time.unscaledDeltaTime / Mathf.Max(0.01f, focusTransition)
+        );
+
+        if (!hasFocusGeometry || (focusAmount <= 0f && next == null))
+        {
+            focusedZone = null;
+            hasFocusGeometry = false;
+            if (focusOverlay != null)
+                focusOverlay.enabled = false;
+            return;
+        }
+
+        EnsureFocusOverlay();
+        if (focusOverlay == null)
+            return;
+
+        Bounds bounds = focusBounds;
+        Vector2 overlaySize = new(
+            Mathf.Max(1f, bounds.size.x + 80f),
+            Mathf.Max(1f, bounds.size.y + 80f)
+        );
+        focusOverlay.transform.position = new Vector3(
+            bounds.center.x,
+            bounds.center.y,
+            0f
+        );
+        focusOverlay.transform.localScale = overlaySize;
+
+        focusProperties.Clear();
+        focusProperties.SetFloat(FocusAmountId, focusAmount);
+        focusProperties.SetFloat(FocusDarknessId, outsideDarkness);
+        focusProperties.SetFloat(FocusDesaturationId, outsideDesaturation);
+        focusProperties.SetVector(
+            FocusClearRatioId,
+            new Vector4(
+                bounds.size.x / overlaySize.x,
+                bounds.size.y / overlaySize.y,
+                0f,
+                0f
+            )
+        );
+        focusOverlay.SetPropertyBlock(focusProperties);
+        focusOverlay.enabled = true;
+
+        if (next == null && focusAmount <= 0f)
+        {
+            focusedZone = null;
+            hasFocusGeometry = false;
+        }
+    }
+
+    private LocalAnomalyZone FindFocusZone(Vector2 position)
+    {
+        LocalAnomalyZone best = null;
+        float bestArea = float.MaxValue;
+
+        for (int i = 0; i < spawnedZones.Count; i++)
+        {
+            LocalAnomalyZone zone = spawnedZones[i];
+            if (zone == null || !zone.isActiveAndEnabled)
+                continue;
+
+            Collider2D area = zone.FocusArea;
+            if (area == null || !area.enabled || !area.OverlapPoint(position))
+                continue;
+
+            float areaSize = area.bounds.size.x * area.bounds.size.y;
+            if (areaSize < bestArea)
+            {
+                best = zone;
+                bestArea = areaSize;
+            }
+        }
+
+        return best;
+    }
+
+    private void EnsureFocusOverlay()
+    {
+        if (focusOverlay != null)
+            return;
+
+        Material source = Resources.Load<Material>("AnomalyFocus");
+        if (source == null)
+            return;
+
+        focusMaterial = new Material(source)
+        {
+            name = "Anomaly Focus Runtime Material"
+        };
+        focusProperties = new MaterialPropertyBlock();
+        focusTexture = new Texture2D(1, 1)
+        {
+            name = "Anomaly Focus Pixel",
+            hideFlags = HideFlags.HideAndDontSave
+        };
+        focusTexture.SetPixel(0, 0, Color.white);
+        focusTexture.Apply();
+        focusSprite = Sprite.Create(
+            focusTexture,
+            new Rect(0f, 0f, 1f, 1f),
+            new Vector2(0.5f, 0.5f),
+            1f
+        );
+
+        GameObject overlay = new("Production Anomaly Focus");
+        overlay.transform.SetParent(transform, false);
+        focusOverlay = overlay.AddComponent<SpriteRenderer>();
+        focusOverlay.sprite = focusSprite;
+        focusOverlay.sharedMaterial = focusMaterial;
+        focusOverlay.sortingLayerName = "Default";
+        focusOverlay.sortingOrder = 30000;
     }
 
     public void Apply(LocalAnomalyData anomaly)
@@ -616,8 +799,23 @@ public sealed class LevelAnomalyController : MonoBehaviour
     private void OnDisable()
     {
         Clear();
+        focusedZone = null;
+        hasFocusGeometry = false;
+        focusAmount = 0f;
+        if (focusOverlay != null)
+            focusOverlay.enabled = false;
 
         if (Instance == this)
             Instance = null;
+    }
+
+    private void OnDestroy()
+    {
+        if (focusMaterial != null)
+            Destroy(focusMaterial);
+        if (focusSprite != null)
+            Destroy(focusSprite);
+        if (focusTexture != null)
+            Destroy(focusTexture);
     }
 }

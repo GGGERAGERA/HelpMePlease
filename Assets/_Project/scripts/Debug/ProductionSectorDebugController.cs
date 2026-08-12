@@ -17,14 +17,20 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     public enum EnemyReadability
     {
         Off,
-        Light,
-        Strong
+        Low,
+        Medium,
+        High
     }
 
     public enum EnemyScope
     {
         CurrentZone,
-        All
+        All,
+        Basic,
+        Elite,
+        Shooter,
+        Bomber,
+        Boss
     }
 
     public enum SpecialOverride
@@ -50,12 +56,61 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         public Color EndColor;
     }
 
+    private enum EnemyCategory
+    {
+        Basic,
+        Elite,
+        Shooter,
+        Bomber,
+        Boss
+    }
+
+    private sealed class EnemyRendererState
+    {
+        public SpriteRenderer Renderer;
+        public Material OriginalMaterial;
+    }
+
+    private sealed class EnemyVisualState
+    {
+        public EnemyHealth Enemy;
+        public EnemyCategory Category;
+        public EnemyWhiteFlash WhiteFlash;
+        public readonly List<EnemyRendererState> Renderers = new();
+    }
+
+    private static readonly int SaturationId =
+        Shader.PropertyToID("_ReadabilitySaturation");
+    private static readonly int BrightnessId =
+        Shader.PropertyToID("_ReadabilityBrightness");
+    private static readonly int TintId =
+        Shader.PropertyToID("_ReadabilityTint");
+    private static readonly int TintStrengthId =
+        Shader.PropertyToID("_ReadabilityTintStrength");
+    private static readonly int OutlineColorId =
+        Shader.PropertyToID("_ReadabilityOutlineColor");
+    private static readonly int OutlineStrengthId =
+        Shader.PropertyToID("_ReadabilityOutlineStrength");
+    private static readonly int OutlineWidthId =
+        Shader.PropertyToID("_ReadabilityOutlineWidth");
+
+    private static readonly Color EnemyTint =
+        new(0.05f, 1f, 1f, 1f);
+    private static readonly Color EnemyOutlineColor =
+        new(0.025f, 0.055f, 0.09f, 1f);
+
     private static ReadabilityPreset readabilityPreset =
         ReadabilityPreset.Original;
     private static float decorBrightness = 1f;
     private static float anomalyAccent = 1f;
-    private static EnemyReadability enemyReadability = EnemyReadability.Off;
-    private static EnemyScope enemyScope = EnemyScope.CurrentZone;
+    private static EnemyReadability enemyReadability = EnemyReadability.High;
+    private static EnemyScope enemyScope = EnemyScope.All;
+    private static float enemySaturation = 1.9f;
+    private static float enemyBrightness = 1.45f;
+    private static float enemyTintStrength = 0.5f;
+    private static float enemyOutlineStrength;
+    private static float enemyOutlineWidth = 1f;
+    private static bool enemyOutlineEnabled;
     private static SpecialOverride specialOverride = SpecialOverride.Random;
     private static bool invulnerability;
 
@@ -65,15 +120,24 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         readabilityPreset = ReadabilityPreset.Original;
         decorBrightness = 1f;
         anomalyAccent = 1f;
-        enemyReadability = EnemyReadability.Off;
-        enemyScope = EnemyScope.CurrentZone;
+        enemyReadability = EnemyReadability.High;
+        enemyScope = EnemyScope.All;
+        enemySaturation = 1.9f;
+        enemyBrightness = 1.45f;
+        enemyTintStrength = 0.5f;
+        enemyOutlineStrength = 0f;
+        enemyOutlineWidth = 1f;
+        enemyOutlineEnabled = false;
         specialOverride = SpecialOverride.Random;
         invulnerability = false;
     }
 
     private readonly List<EnvironmentState> environmentStates = new();
     private readonly Dictionary<LineRenderer, LineState> anomalyLines = new();
-    private readonly Dictionary<SpriteRenderer, Color> enemySprites = new();
+    private readonly Dictionary<EnemyHealth, EnemyVisualState> enemyVisuals =
+        new();
+    private MaterialPropertyBlock readabilityProperties;
+    private readonly HashSet<Transform> decorObjects = new();
 
     private ProductionAnomalySite currentSite;
     private PlayerHealth protectedPlayer;
@@ -82,6 +146,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     private SpriteRenderer groundOverlay;
     private Texture2D overlayTexture;
     private Sprite overlaySprite;
+    private Material enemyReadabilityMaterial;
     private float nextRefresh;
 
     public ReadabilityPreset Preset => readabilityPreset;
@@ -89,6 +154,85 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     public float AnomalyAccent => anomalyAccent;
     public EnemyReadability EnemyMode => enemyReadability;
     public EnemyScope CurrentEnemyScope => enemyScope;
+    public float EnemySaturation => enemySaturation;
+    public float EnemyBrightness => enemyBrightness;
+    public float EnemyTintStrength => enemyTintStrength;
+    public float EnemyOutlineStrength => enemyOutlineStrength;
+    public float EnemyOutlineWidth => enemyOutlineWidth;
+    public bool EnemyOutlineEnabled => enemyOutlineEnabled;
+    public int RegisteredEnemyCount => enemyVisuals.Count;
+    public int RegisteredEnemyRendererCount
+    {
+        get
+        {
+            int count = 0;
+            foreach (EnemyVisualState state in enemyVisuals.Values)
+                count += state.Renderers.Count;
+            return count;
+        }
+    }
+    public int AffectedEnemyCount
+    {
+        get
+        {
+            if (enemyReadability == EnemyReadability.Off ||
+                enemyReadabilityMaterial == null)
+                return 0;
+
+            int count = 0;
+            foreach (EnemyVisualState state in enemyVisuals.Values)
+            {
+                if (state.Enemy != null && MatchesEnemyScope(state))
+                    count++;
+            }
+            return count;
+        }
+    }
+    public int AffectedEnemyRendererCount
+    {
+        get
+        {
+            if (enemyReadability == EnemyReadability.Off ||
+                enemyReadabilityMaterial == null)
+                return 0;
+
+            int count = 0;
+            foreach (EnemyVisualState state in enemyVisuals.Values)
+            {
+                if (state.Enemy != null && MatchesEnemyScope(state))
+                    count += state.Renderers.Count;
+            }
+            return count;
+        }
+    }
+    public int ActiveReadabilityMaterialRendererCount
+    {
+        get
+        {
+            if (enemyReadabilityMaterial == null)
+                return 0;
+
+            int count = 0;
+            foreach (EnemyVisualState state in enemyVisuals.Values)
+            {
+                for (int i = 0; i < state.Renderers.Count; i++)
+                {
+                    SpriteRenderer renderer = state.Renderers[i].Renderer;
+                    if (renderer != null &&
+                        renderer.sharedMaterial == enemyReadabilityMaterial)
+                    {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+    }
+    public bool EnemyReadabilityMaterialReady => enemyReadabilityMaterial != null;
+    public int DecorObjectCount { get; private set; }
+    public int DecorRendererCount { get; private set; }
+    public int AnomalyZoneCount { get; private set; }
+    public int AnomalyRendererCount => anomalyLines.Count;
     public SpecialOverride Override => specialOverride;
     public bool InvulnerabilityEnabled => invulnerability;
     public ProductionAnomalySite CurrentSite => currentSite;
@@ -139,7 +283,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
 
     public void SetDecorBrightness(float value)
     {
-        decorBrightness = Mathf.Clamp(value, 0.25f, 1f);
+        decorBrightness = Mathf.Clamp(value, 0.25f, 1.5f);
         ApplyEnvironment();
     }
 
@@ -152,13 +296,55 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     public void SetEnemyReadability(EnemyReadability value)
     {
         enemyReadability = value;
-        RefreshEnemies();
+        ApplyEnemyPreset(value);
+        ApplyAllEnemies();
     }
 
     public void SetEnemyScope(EnemyScope value)
     {
         enemyScope = value;
-        RefreshEnemies();
+        ApplyAllEnemies();
+    }
+
+    public void SetEnemySaturation(float value)
+    {
+        enemySaturation = Mathf.Clamp(value, 0f, 3f);
+        ApplyAllEnemies();
+    }
+
+    public void SetEnemyBrightness(float value)
+    {
+        enemyBrightness = Mathf.Clamp(value, 0.5f, 2.5f);
+        ApplyAllEnemies();
+    }
+
+    public void SetEnemyTintStrength(float value)
+    {
+        enemyTintStrength = Mathf.Clamp01(value);
+        ApplyAllEnemies();
+    }
+
+    public void SetEnemyOutlineStrength(float value)
+    {
+        enemyOutlineStrength = Mathf.Clamp(value, 0f, 2f);
+        ApplyAllEnemies();
+    }
+
+    public void SetEnemyOutlineWidth(float value)
+    {
+        enemyOutlineWidth = Mathf.Clamp(value, 0.5f, 4f);
+        ApplyAllEnemies();
+    }
+
+    public void RefreshVisualTargets()
+    {
+        RefreshVisualRegistries();
+    }
+
+    public void SetEnemyOutlineEnabled(bool enabled)
+    {
+        enemyOutlineEnabled = enabled;
+        ApplyAllEnemies();
     }
 
     public void SetSpecialOverride(SpecialOverride value)
@@ -171,10 +357,13 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         readabilityPreset = ReadabilityPreset.Original;
         decorBrightness = 1f;
         anomalyAccent = 1f;
-        enemyReadability = EnemyReadability.Off;
+        enemyReadability = EnemyReadability.High;
+        enemyScope = EnemyScope.All;
+        ApplyEnemyPreset(EnemyReadability.High);
+        enemyOutlineWidth = 1f;
         ApplyEnvironment();
         ApplyAnomalyAccent();
-        RefreshEnemies();
+        ApplyAllEnemies();
     }
 
     public void RebuildCurrentSector()
@@ -205,7 +394,14 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
 
     private void OnEnable()
     {
+        readabilityProperties ??= new MaterialPropertyBlock();
+        EnemyHealth.Spawned += RegisterEnemy;
+        EnemyHealth.Despawned += UnregisterEnemy;
+        EnsureEnemyReadabilityMaterial();
         RefreshCurrentSite(true);
+        RefreshVisualRegistries();
+        RegisterActiveEnemies();
+        ApplyAllEnemies();
         ApplyInvulnerability();
     }
 
@@ -218,7 +414,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
 
         nextRefresh = Time.unscaledTime + 0.35f;
         RefreshCurrentSite(false);
-        RefreshEnemies();
+
     }
 
     private void RefreshCurrentSite(bool force)
@@ -246,9 +442,16 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         if (!force && next == currentSite)
             return;
 
+        currentSite = next;
+
+        if (enemyScope == EnemyScope.CurrentZone)
+            ApplyAllEnemies();
+    }
+
+    private void RefreshVisualRegistries()
+    {
         RestoreEnvironment();
         RestoreAnomalyAccent();
-        currentSite = next;
         CaptureEnvironment();
         CaptureAnomalyVisuals();
         ApplyEnvironment();
@@ -309,9 +512,6 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
 
     private void CaptureEnvironment()
     {
-        if (currentSite == null)
-            return;
-
         SpriteRenderer[] sprites = FindObjectsByType<SpriteRenderer>(
             FindObjectsSortMode.None
         );
@@ -319,8 +519,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         for (int i = 0; i < sprites.Length; i++)
         {
             SpriteRenderer sprite = sprites[i];
-            if (sprite == null || !IsEnvironmentRenderer(sprite.transform) ||
-                !currentSite.ContainsWorldPosition(sprite.bounds.center))
+            if (sprite == null || !IsEnvironmentRenderer(sprite.transform))
             {
                 continue;
             }
@@ -345,8 +544,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
                 : null;
 
             if (tilemap == null ||
-                !IsEnvironmentRenderer(renderer.transform) ||
-                !RendererFitsCurrentSite(renderer))
+                !IsEnvironmentRenderer(renderer.transform))
             {
                 continue;
             }
@@ -358,6 +556,23 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
                 IsDecor = IsDecorRenderer(renderer.transform)
             });
         }
+
+        decorObjects.Clear();
+        DecorRendererCount = 0;
+        for (int i = 0; i < environmentStates.Count; i++)
+        {
+            EnvironmentState state = environmentStates[i];
+            if (!state.IsDecor)
+                continue;
+
+            DecorRendererCount++;
+            Transform target = state.Sprite != null
+                ? state.Sprite.transform
+                : state.Tilemap != null ? state.Tilemap.transform : null;
+            if (target != null)
+                decorObjects.Add(target);
+        }
+        DecorObjectCount = decorObjects.Count;
     }
 
     private bool RendererFitsCurrentSite(Renderer renderer)
@@ -512,12 +727,20 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
 
     private void CaptureAnomalyVisuals()
     {
-        if (currentSite == null)
-            return;
+        IReadOnlyList<ProductionAnomalySite> sites =
+            ProductionAnomalySite.ActiveSites;
+        AnomalyZoneCount = 0;
+        for (int i = 0; i < sites.Count; i++)
+        {
+            ProductionAnomalySite site = sites[i];
+            if (site == null)
+                continue;
 
-        CaptureLines(currentSite.transform);
-        if (currentSite.AnomalyZone != null)
-            CaptureLines(currentSite.AnomalyZone.transform);
+            AnomalyZoneCount++;
+            CaptureLines(site.transform);
+            if (site.AnomalyZone != null)
+                CaptureLines(site.AnomalyZone.transform);
+        }
     }
 
     private void CaptureLines(Transform root)
@@ -553,7 +776,10 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
             pair.Key.endColor = BoostColor(pair.Value.EndColor, anomalyAccent);
         }
 
-        currentSite?.SetDebugVisualEmphasis(anomalyAccent);
+        IReadOnlyList<ProductionAnomalySite> sites =
+            ProductionAnomalySite.ActiveSites;
+        for (int i = 0; i < sites.Count; i++)
+            sites[i]?.SetDebugVisualEmphasis(anomalyAccent);
     }
 
     private void RestoreAnomalyAccent()
@@ -568,8 +794,12 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
             pair.Key.endColor = pair.Value.EndColor;
         }
 
-        currentSite?.SetDebugVisualEmphasis(1f);
+        IReadOnlyList<ProductionAnomalySite> sites =
+            ProductionAnomalySite.ActiveSites;
+        for (int i = 0; i < sites.Count; i++)
+            sites[i]?.SetDebugVisualEmphasis(1f);
         anomalyLines.Clear();
+        AnomalyZoneCount = 0;
     }
 
     private static Color BoostColor(Color source, float multiplier)
@@ -586,64 +816,263 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         return result;
     }
 
-    private void RefreshEnemies()
+    private static void ApplyEnemyPreset(EnemyReadability preset)
     {
-        RestoreEnemyColors();
-        if (enemyReadability == EnemyReadability.Off)
-            return;
+        enemyOutlineWidth = 1f;
 
-        foreach (EnemyHealth enemy in EnemyHealth.ActiveInstances)
+        switch (preset)
         {
-            if (enemy == null || enemy.IsDead ||
-                (enemyScope == EnemyScope.CurrentZone &&
-                 (currentSite == null ||
-                  !currentSite.ContainsWorldPosition(enemy.transform.position))))
-            {
-                continue;
-            }
-
-            SpriteRenderer[] sprites =
-                enemy.GetComponentsInChildren<SpriteRenderer>(true);
-            for (int i = 0; i < sprites.Length; i++)
-            {
-                SpriteRenderer sprite = sprites[i];
-                if (sprite == null)
-                    continue;
-
-                Color original = sprite.color;
-                enemySprites.Add(sprite, original);
-                float blend = enemyReadability == EnemyReadability.Light
-                    ? 0.08f
-                    : 0.17f;
-                float brightness = enemyReadability == EnemyReadability.Light
-                    ? 1.08f
-                    : 1.2f;
-                Color lifted = new(
-                    Mathf.Clamp01(original.r * brightness),
-                    Mathf.Clamp01(original.g * brightness),
-                    Mathf.Clamp01(original.b * brightness),
-                    original.a
-                );
-                Color readable = Color.Lerp(
-                    lifted,
-                    new Color(0.78f, 0.94f, 1f, original.a),
-                    blend
-                );
-                readable.a = original.a;
-                sprite.color = readable;
-            }
+            case EnemyReadability.Low:
+                enemySaturation = 1.2f;
+                enemyBrightness = 1.1f;
+                enemyTintStrength = 0.15f;
+                enemyOutlineStrength = 0.6f;
+                enemyOutlineEnabled = true;
+                break;
+            case EnemyReadability.Medium:
+                enemySaturation = 1.5f;
+                enemyBrightness = 1.25f;
+                enemyTintStrength = 0.3f;
+                enemyOutlineStrength = 1f;
+                enemyOutlineEnabled = true;
+                break;
+            case EnemyReadability.High:
+                enemySaturation = 1.9f;
+                enemyBrightness = 1.45f;
+                enemyTintStrength = 0.5f;
+                enemyOutlineStrength = 0f;
+                enemyOutlineEnabled = false;
+                break;
+            default:
+                enemySaturation = 1f;
+                enemyBrightness = 1f;
+                enemyTintStrength = 0f;
+                enemyOutlineStrength = 0f;
+                enemyOutlineEnabled = false;
+                break;
         }
     }
 
-    private void RestoreEnemyColors()
+    private void EnsureEnemyReadabilityMaterial()
     {
-        foreach (KeyValuePair<SpriteRenderer, Color> pair in enemySprites)
+        if (enemyReadabilityMaterial != null)
+            return;
+
+        enemyReadabilityMaterial = Resources.Load<Material>(
+            "EnemyReadability"
+        );
+
+        if (enemyReadabilityMaterial == null)
         {
-            if (pair.Key != null)
-                pair.Key.color = pair.Value;
+            Debug.LogWarning(
+                "[ProductionSectorDebug] EnemyReadability shared material " +
+                "was not found in Resources.",
+                this
+            );
+        }
+    }
+
+    private void RegisterActiveEnemies()
+    {
+        foreach (EnemyHealth enemy in EnemyHealth.ActiveInstances)
+            RegisterEnemy(enemy);
+    }
+
+    private void RegisterEnemy(EnemyHealth enemy)
+    {
+        if (enemy == null || enemyVisuals.ContainsKey(enemy))
+            return;
+
+        EnemyVisualState state = new()
+        {
+            Enemy = enemy,
+            Category = ResolveEnemyCategory(enemy),
+            WhiteFlash = enemy.GetComponent<EnemyWhiteFlash>()
+        };
+        SpriteRenderer[] renderers =
+            enemy.GetComponentsInChildren<SpriteRenderer>(true);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer renderer = renderers[i];
+            if (renderer == null)
+                continue;
+
+            state.Renderers.Add(new EnemyRendererState
+            {
+                Renderer = renderer,
+                OriginalMaterial = renderer.sharedMaterial
+            });
         }
 
-        enemySprites.Clear();
+        enemyVisuals.Add(enemy, state);
+        ApplyEnemy(state);
+    }
+
+    private void UnregisterEnemy(EnemyHealth enemy)
+    {
+        if (enemy == null || !enemyVisuals.TryGetValue(
+                enemy,
+                out EnemyVisualState state))
+        {
+            return;
+        }
+
+        RestoreEnemy(state);
+        enemyVisuals.Remove(enemy);
+    }
+
+    private void ApplyAllEnemies()
+    {
+        foreach (EnemyVisualState state in enemyVisuals.Values)
+            ApplyEnemy(state);
+    }
+
+    private void ApplyEnemy(EnemyVisualState state)
+    {
+        if (state == null || state.Enemy == null)
+            return;
+
+        readabilityProperties ??= new MaterialPropertyBlock();
+
+        bool apply = enemyReadability != EnemyReadability.Off &&
+            enemyReadabilityMaterial != null &&
+            MatchesEnemyScope(state);
+
+        for (int i = 0; i < state.Renderers.Count; i++)
+        {
+            EnemyRendererState rendererState = state.Renderers[i];
+            SpriteRenderer renderer = rendererState.Renderer;
+            if (renderer == null)
+                continue;
+
+            Material targetMaterial = apply
+                ? enemyReadabilityMaterial
+                : rendererState.OriginalMaterial;
+            SetEnemyBaseMaterial(state, renderer, targetMaterial);
+
+            readabilityProperties.Clear();
+            renderer.GetPropertyBlock(readabilityProperties);
+            readabilityProperties.SetFloat(
+                SaturationId,
+                apply ? enemySaturation : 1f
+            );
+            readabilityProperties.SetFloat(
+                BrightnessId,
+                apply ? enemyBrightness : 1f
+            );
+            readabilityProperties.SetColor(TintId, EnemyTint);
+            readabilityProperties.SetFloat(
+                TintStrengthId,
+                apply ? enemyTintStrength : 0f
+            );
+            readabilityProperties.SetColor(
+                OutlineColorId,
+                EnemyOutlineColor
+            );
+            readabilityProperties.SetFloat(
+                OutlineStrengthId,
+                apply && enemyOutlineEnabled ? enemyOutlineStrength : 0f
+            );
+            readabilityProperties.SetFloat(
+                OutlineWidthId,
+                apply ? enemyOutlineWidth : 1f
+            );
+            renderer.SetPropertyBlock(readabilityProperties);
+        }
+    }
+
+    private static void SetEnemyBaseMaterial(
+        EnemyVisualState state,
+        SpriteRenderer renderer,
+        Material material)
+    {
+        if (state.WhiteFlash != null &&
+            state.WhiteFlash.TargetRenderer == renderer)
+        {
+            state.WhiteFlash.SetRuntimeBaseMaterial(material);
+        }
+        else
+        {
+            renderer.sharedMaterial = material;
+        }
+    }
+
+    private bool MatchesEnemyScope(EnemyVisualState state)
+    {
+        switch (enemyScope)
+        {
+            case EnemyScope.CurrentZone:
+                return currentSite != null &&
+                    currentSite.ContainsWorldPosition(
+                        state.Enemy.transform.position
+                    );
+            case EnemyScope.Basic:
+                return state.Category == EnemyCategory.Basic;
+            case EnemyScope.Elite:
+                return state.Category == EnemyCategory.Elite;
+            case EnemyScope.Shooter:
+                return state.Category == EnemyCategory.Shooter;
+            case EnemyScope.Bomber:
+                return state.Category == EnemyCategory.Bomber;
+            case EnemyScope.Boss:
+                return state.Category == EnemyCategory.Boss;
+            default:
+                return true;
+        }
+    }
+
+    private static EnemyCategory ResolveEnemyCategory(EnemyHealth enemy)
+    {
+        if (enemy.IsBoss)
+            return EnemyCategory.Boss;
+        if (enemy.GetComponent<EnemyShooterMovement>() != null)
+            return EnemyCategory.Shooter;
+        if (enemy.GetComponent<EnemyBomberMovement>() != null)
+            return EnemyCategory.Bomber;
+        if (enemy.GetComponent<EyesEnemyBehaviour>() != null ||
+            enemy.GetComponent<TurretEnemyBehaviour>() != null)
+        {
+            return EnemyCategory.Elite;
+        }
+
+        return EnemyCategory.Basic;
+    }
+
+    private void RestoreEnemy(EnemyVisualState state)
+    {
+        if (state == null)
+            return;
+
+        readabilityProperties ??= new MaterialPropertyBlock();
+
+        for (int i = 0; i < state.Renderers.Count; i++)
+        {
+            EnemyRendererState rendererState = state.Renderers[i];
+            SpriteRenderer renderer = rendererState.Renderer;
+            if (renderer == null)
+                continue;
+
+            SetEnemyBaseMaterial(
+                state,
+                renderer,
+                rendererState.OriginalMaterial
+            );
+            readabilityProperties.Clear();
+            renderer.GetPropertyBlock(readabilityProperties);
+            readabilityProperties.SetFloat(SaturationId, 1f);
+            readabilityProperties.SetFloat(BrightnessId, 1f);
+            readabilityProperties.SetFloat(TintStrengthId, 0f);
+            readabilityProperties.SetFloat(OutlineStrengthId, 0f);
+            readabilityProperties.SetFloat(OutlineWidthId, 1f);
+            renderer.SetPropertyBlock(readabilityProperties);
+        }
+    }
+
+    private void RestoreAllEnemyVisuals()
+    {
+        foreach (EnemyVisualState state in enemyVisuals.Values)
+            RestoreEnemy(state);
     }
 
     private static bool IsEnvironmentRenderer(Transform target)
@@ -698,12 +1127,15 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         RestorePlayerMultiplier();
         RestoreEnvironment();
         RestoreAnomalyAccent();
-        RestoreEnemyColors();
+        RestoreAllEnemyVisuals();
     }
 
     private void OnDisable()
     {
+        EnemyHealth.Spawned -= RegisterEnemy;
+        EnemyHealth.Despawned -= UnregisterEnemy;
         RestoreAll();
+        enemyVisuals.Clear();
     }
 
     private void OnDestroy()

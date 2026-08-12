@@ -153,6 +153,8 @@ public class RunTimer : MonoBehaviour
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public GameObject DebugBossPrefab => bossPrefab;
+
     public bool CanDebugSpawnBoss =>
         isActiveAndEnabled &&
         !bossSpawned &&

@@ -16,6 +16,14 @@ public class EnemyWhiteFlash : MonoBehaviour
 
     public SpriteRenderer TargetRenderer => targetRenderer;
 
+    public void SetRuntimeBaseMaterial(Material material)
+    {
+        originalMaterial = material;
+
+        if (targetRenderer != null && flashCoroutine == null)
+            targetRenderer.sharedMaterial = material;
+    }
+
     private void Awake()
     {
         if (targetRenderer == null)

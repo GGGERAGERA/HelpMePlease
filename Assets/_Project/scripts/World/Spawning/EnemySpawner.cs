@@ -10,6 +10,16 @@ public class EnemySpawnStage
 
 public class EnemySpawner : MonoBehaviour
 {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public enum DebugEnemyArchetype
+    {
+        Basic,
+        Shooter,
+        Bomber,
+        Eyes,
+        Turret
+    }
+#endif
     [Header("Legacy Spawn Settings")]
     [Tooltip("Used when the selected level has no EnemySpawnProfile.")]
     public GameObject[] enemyPrefabs;
@@ -83,6 +93,9 @@ public class EnemySpawner : MonoBehaviour
 
     public float WorldEventSpawnPressureMultiplier =>
         worldEventSpawnPressureMultiplier;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool IsSpawningEnabled => spawningEnabled;
+#endif
 
     private float baseSpawnInterval;
     private int baseMaxEnemies;
@@ -226,6 +239,86 @@ public class EnemySpawner : MonoBehaviour
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public GameObject FindDebugEnemyPrefab(DebugEnemyArchetype archetype)
+    {
+        GameObject match = FindDebugEnemyPrefab(enemyPrefabs, archetype);
+        if (match != null)
+            return match;
+
+        if (spawnStages != null)
+        {
+            for (int i = 0; i < spawnStages.Length; i++)
+            {
+                match = FindDebugEnemyPrefab(
+                    spawnStages[i]?.enemyPrefabs,
+                    archetype
+                );
+                if (match != null)
+                    return match;
+            }
+        }
+
+        EnemySpawnPhase[] phases = spawnProfile != null
+            ? spawnProfile.Phases
+            : null;
+        if (phases == null)
+            return null;
+
+        for (int i = 0; i < phases.Length; i++)
+        {
+            EnemySpawnEntry[] entries = phases[i]?.enemies;
+            if (entries == null)
+                continue;
+
+            for (int j = 0; j < entries.Length; j++)
+            {
+                GameObject prefab = entries[j]?.enemyPrefab;
+                if (MatchesDebugArchetype(prefab, archetype))
+                    return prefab;
+            }
+        }
+
+        return null;
+    }
+
+    private static GameObject FindDebugEnemyPrefab(
+        GameObject[] prefabs,
+        DebugEnemyArchetype archetype)
+    {
+        if (prefabs == null)
+            return null;
+
+        for (int i = 0; i < prefabs.Length; i++)
+        {
+            if (MatchesDebugArchetype(prefabs[i], archetype))
+                return prefabs[i];
+        }
+
+        return null;
+    }
+
+    private static bool MatchesDebugArchetype(
+        GameObject prefab,
+        DebugEnemyArchetype archetype)
+    {
+        if (prefab == null)
+            return false;
+
+        bool shooter = prefab.GetComponent<EnemyShooterMovement>() != null;
+        bool bomber = prefab.GetComponent<EnemyBomberMovement>() != null;
+        bool eyes = prefab.GetComponent<EyesEnemyBehaviour>() != null;
+        bool turret = prefab.GetComponent<TurretEnemyBehaviour>() != null;
+
+        return archetype switch
+        {
+            DebugEnemyArchetype.Shooter => shooter,
+            DebugEnemyArchetype.Bomber => bomber,
+            DebugEnemyArchetype.Eyes => eyes,
+            DebugEnemyArchetype.Turret => turret,
+            _ => !shooter && !bomber && !eyes && !turret
+        };
+    }
+
     public void ConfigureDebugExplorationPressure(
         GameObject[] prefabs,
         float interval,

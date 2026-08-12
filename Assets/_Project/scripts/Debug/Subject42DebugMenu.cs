@@ -5,6 +5,197 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+public enum CombatLabControlStyle
+{
+    Orbit,
+    Remote
+}
+
+[DisallowMultipleComponent]
+public sealed class CombatLabDebugController : MonoBehaviour
+{
+    private CharacterSpawner characterSpawner;
+    private GameObject player;
+    private TelekinesisDebugPrototype telekinesis;
+    private BaseWeapon primaryWeapon;
+    private WeaponData pistol;
+    private WeaponData laser;
+    private bool initialized;
+
+    public CombatLabControlStyle ControlStyle { get; private set; } =
+        CombatLabControlStyle.Orbit;
+    public WeaponData SelectedWeapon { get; private set; }
+    public WeaponControlMode FireMode { get; private set; }
+    public WeaponData Pistol => pistol;
+    public WeaponData Laser => laser;
+    public bool IsAvailable => player != null && primaryWeapon != null &&
+        telekinesis != null && telekinesis.IsAvailable;
+
+    public string CurrentSummary =>
+        $"{ControlStyle.ToString().ToUpperInvariant()} / " +
+        $"{GetWeaponLabel(SelectedWeapon).ToUpperInvariant()} / " +
+        $"{(FireMode == WeaponControlMode.AutoAim ? "AUTO" : "MANUAL")}";
+
+    public void Configure(
+        CharacterSpawner spawner,
+        WeaponData pistolData,
+        WeaponData laserData)
+    {
+        characterSpawner = spawner;
+        pistol = pistolData;
+        laser = laserData;
+
+        if (!initialized)
+        {
+            FireMode = WeaponControlSettings.CurrentMode;
+            initialized = true;
+        }
+
+        RefreshBinding();
+    }
+
+    public bool RefreshBinding()
+    {
+        GameObject currentPlayer = GameObject.FindGameObjectWithTag("Player");
+        bool playerChanged = currentPlayer != player;
+
+        if (playerChanged)
+        {
+            player = currentPlayer;
+            telekinesis = null;
+            primaryWeapon = null;
+        }
+
+        if (player == null)
+            return false;
+
+        telekinesis ??= player.GetComponent<TelekinesisDebugPrototype>();
+        telekinesis ??= player.AddComponent<TelekinesisDebugPrototype>();
+        telekinesis.Configure(characterSpawner);
+
+        BaseWeapon resolved = ResolvePrimaryWeapon(player);
+        bool weaponChanged = resolved != primaryWeapon;
+        primaryWeapon = resolved;
+
+        if (primaryWeapon != null)
+        {
+            SelectedWeapon = primaryWeapon.weaponData;
+            telekinesis.SetPrimaryWeapon(primaryWeapon);
+        }
+
+        FireMode = WeaponControlSettings.CurrentMode;
+
+        TelekinesisDebugMode expectedMode =
+            ControlStyle == CombatLabControlStyle.Remote
+                ? TelekinesisDebugMode.Remote
+                : TelekinesisDebugMode.Base;
+        bool controlModeChanged = telekinesis.CurrentMode != expectedMode;
+
+        if ((playerChanged || weaponChanged || controlModeChanged) &&
+            IsAvailable)
+        {
+            ApplyControlStyle();
+        }
+
+        return IsAvailable;
+    }
+
+    public bool SelectControlStyle(CombatLabControlStyle style)
+    {
+        ControlStyle = style;
+
+        if (!RefreshBinding())
+            return false;
+
+        return ApplyControlStyle();
+    }
+
+    public void SelectFireMode(WeaponControlMode mode)
+    {
+        FireMode = mode;
+        WeaponControlSettings.SetMode(mode);
+    }
+
+    public bool SelectWeapon(WeaponData weaponData)
+    {
+        if (!IsCombatLabWeapon(weaponData) || !RefreshBinding() ||
+            characterSpawner == null)
+        {
+            return false;
+        }
+
+        if (!characterSpawner.TryReplaceDebugPrimaryWeapon(
+                player,
+                weaponData,
+                out BaseWeapon replacement))
+        {
+            return false;
+        }
+
+        primaryWeapon = replacement;
+        SelectedWeapon = replacement != null
+            ? replacement.weaponData
+            : weaponData;
+        telekinesis = player.GetComponent<TelekinesisDebugPrototype>();
+
+        if (telekinesis == null || primaryWeapon == null)
+            return false;
+
+        telekinesis.Configure(characterSpawner);
+        telekinesis.SetPrimaryWeapon(primaryWeapon);
+        WeaponControlSettings.SetMode(FireMode);
+        return ApplyControlStyle();
+    }
+
+    private bool ApplyControlStyle()
+    {
+        if (telekinesis == null || !telekinesis.IsAvailable)
+            return false;
+
+        return telekinesis.ApplyMode(
+            ControlStyle == CombatLabControlStyle.Remote
+                ? TelekinesisDebugMode.Remote
+                : TelekinesisDebugMode.Base
+        );
+    }
+
+    private bool IsCombatLabWeapon(WeaponData weaponData)
+    {
+        return weaponData != null &&
+            (weaponData == pistol || weaponData == laser);
+    }
+
+    private static BaseWeapon ResolvePrimaryWeapon(GameObject owner)
+    {
+        if (owner == null)
+            return null;
+
+        BaseWeapon[] weapons = owner.GetComponentsInChildren<BaseWeapon>(true);
+
+        for (int i = 0; i < weapons.Length; i++)
+        {
+            BaseWeapon candidate = weapons[i];
+
+            if (candidate != null && !candidate.IsTelekinesisDebugSecondary)
+                return candidate;
+        }
+
+        return null;
+    }
+
+    private static string GetWeaponLabel(WeaponData weaponData)
+    {
+        if (weaponData == null)
+            return "None";
+
+        return string.IsNullOrWhiteSpace(weaponData.weaponName)
+            ? weaponData.name
+            : weaponData.weaponName;
+    }
+}
+#endif
+
 public sealed class Subject42DebugMenu : MonoBehaviour
 {
     [Header("Existing scene systems")]
@@ -48,6 +239,18 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         OutOfPool
     }
 
+    private enum PreviewParameter
+    {
+        EnemyBrightness,
+        EnemySaturation,
+        EnemyTint,
+        EnemyOutline,
+        EnemyOutlineWidth,
+        OutsideDarkness,
+        OutsideColor,
+        FocusTransition
+    }
+
     private static readonly string[] TabLabels =
     {
         "RUN",
@@ -80,6 +283,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     };
 
     private GameObject menuRoot;
+    private GameObject fullMenuBlocker;
+    private GameObject previewPanelRoot;
+    private TextMeshProUGUI previewText;
     private RectTransform contentRoot;
     private readonly GameObject[] tabRoots = new GameObject[TabLabels.Length];
     private readonly Image[] tabButtonImages = new Image[TabLabels.Length];
@@ -87,6 +293,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private UpgradeFilter upgradeFilter = UpgradeFilter.All;
     private ProductionSectorDebugController productionSectorDebug;
     private bool isOpen;
+    private bool isPreview;
+    private PreviewParameter previewParameter;
     private bool waitingForF1Release;
     private float previousTimeScale;
     private bool previousCursorVisible;
@@ -101,11 +309,14 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private readonly List<LocalAnomalyType> activeAnomalyTypes = new();
     private readonly List<int> activeAnomalyTypeCounts = new();
     private readonly StringBuilder activeAnomalySummary = new();
+    private readonly StringBuilder previewSummary = new();
     private readonly List<WorldEvent> addedEventPrefabs = new();
     private readonly List<CharacterData> debugCharacters = new();
     private readonly List<GameObject> debugEnemies = new();
+    private string enemyDebugStatus = "Готово к ручному тесту.";
     private readonly List<UpgradeData> visibleUpgrades = new();
     private TelekinesisDebugPrototype telekinesisPrototype;
+    private CombatLabDebugController combatLab;
 
     private readonly Color panelColor = new(0.035f, 0.045f, 0.06f, 0.97f);
     private readonly Color rowColor = new(0.09f, 0.11f, 0.145f, 0.95f);
@@ -125,7 +336,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         BuildMenu();
         RefreshAllTabs();
         SelectTab(activeTab, false);
-        menuRoot.SetActive(false);
+        if (menuRoot != null)
+            menuRoot.SetActive(false);
     }
 
     private void Update()
@@ -134,6 +346,22 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         {
             if (!Input.GetKey(KeyCode.F1))
                 waitingForF1Release = false;
+
+            if (isPreview)
+                UpdatePreviewInput();
+
+            return;
+        }
+
+        if (isPreview)
+        {
+            UpdatePreviewInput();
+
+            if (Input.GetKeyDown(KeyCode.F1))
+            {
+                waitingForF1Release = true;
+                ReturnFromPreviewToFullMenu();
+            }
 
             return;
         }
@@ -149,6 +377,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         if (isOpen)
             CloseMenu();
+
+        isPreview = false;
+        if (previewPanelRoot != null)
+            previewPanelRoot.SetActive(false);
     }
 
     private void OnDestroy()
@@ -184,6 +416,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         isOpen = true;
         menuRoot.SetActive(true);
+        fullMenuBlocker?.SetActive(true);
+        previewPanelRoot?.SetActive(false);
     }
 
     private void CloseMenu()
@@ -191,9 +425,11 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         if (!isOpen)
             return;
 
-        menuRoot.SetActive(false);
+        if (menuRoot != null)
+            menuRoot.SetActive(false);
         RestoreGameState();
         isOpen = false;
+        isPreview = false;
     }
 
     private void RestoreGameState()
@@ -213,6 +449,192 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         Time.timeScale = previousTimeScale;
         Cursor.visible = previousCursorVisible;
         Cursor.lockState = previousCursorLockMode;
+    }
+
+    private void EnterScenePreview()
+    {
+        if (!isOpen || productionSectorDebug == null)
+            return;
+
+        isOpen = false;
+        isPreview = true;
+        fullMenuBlocker?.SetActive(false);
+        previewPanelRoot?.SetActive(true);
+        RestoreGameState();
+        UpdatePreviewPanel();
+    }
+
+    private void ReturnFromPreviewToFullMenu()
+    {
+        if (!isPreview)
+            return;
+
+        isPreview = false;
+        previewPanelRoot?.SetActive(false);
+        OpenMenu();
+    }
+
+    private void UpdatePreviewInput()
+    {
+        if (Input.GetKeyDown(KeyCode.PageUp))
+        {
+            int count = System.Enum.GetValues(typeof(PreviewParameter)).Length;
+            previewParameter = (PreviewParameter)(
+                ((int)previewParameter - 1 + count) % count
+            );
+            UpdatePreviewPanel();
+        }
+        else if (Input.GetKeyDown(KeyCode.PageDown))
+        {
+            int count = System.Enum.GetValues(typeof(PreviewParameter)).Length;
+            previewParameter = (PreviewParameter)(
+                ((int)previewParameter + 1) % count
+            );
+            UpdatePreviewPanel();
+        }
+
+        bool largeStep = Input.GetKey(KeyCode.LeftShift) ||
+            Input.GetKey(KeyCode.RightShift);
+
+        if (Input.GetKeyDown(KeyCode.LeftBracket))
+            AdjustPreviewParameter(-1f, largeStep);
+        else if (Input.GetKeyDown(KeyCode.RightBracket))
+            AdjustPreviewParameter(1f, largeStep);
+
+        if (Input.GetKeyDown(KeyCode.F5))
+            SelectPreviewPreset(ProductionSectorDebugController.EnemyReadability.Off);
+        else if (Input.GetKeyDown(KeyCode.F6))
+            SelectPreviewPreset(ProductionSectorDebugController.EnemyReadability.Low);
+        else if (Input.GetKeyDown(KeyCode.F7))
+            SelectPreviewPreset(ProductionSectorDebugController.EnemyReadability.Medium);
+        else if (Input.GetKeyDown(KeyCode.F8))
+            SelectPreviewPreset(ProductionSectorDebugController.EnemyReadability.High);
+    }
+
+    private void SelectPreviewPreset(
+        ProductionSectorDebugController.EnemyReadability preset)
+    {
+        productionSectorDebug?.SetEnemyReadability(preset);
+        UpdatePreviewPanel();
+    }
+
+    private void AdjustPreviewParameter(float direction, bool largeStep)
+    {
+        ProductionSectorDebugController debug = productionSectorDebug;
+        if (debug == null)
+            return;
+
+        float step = largeStep ? 0.25f : 0.1f;
+
+        switch (previewParameter)
+        {
+            case PreviewParameter.EnemyBrightness:
+                debug.SetEnemyBrightness(debug.EnemyBrightness + direction * step);
+                break;
+            case PreviewParameter.EnemySaturation:
+                debug.SetEnemySaturation(debug.EnemySaturation + direction * step);
+                break;
+            case PreviewParameter.EnemyTint:
+                debug.SetEnemyTintStrength(debug.EnemyTintStrength + direction * step);
+                break;
+            case PreviewParameter.EnemyOutline:
+                float outline = debug.EnemyOutlineStrength + direction * step;
+                debug.SetEnemyOutlineStrength(outline);
+                debug.SetEnemyOutlineEnabled(outline > 0f);
+                break;
+            case PreviewParameter.EnemyOutlineWidth:
+                debug.SetEnemyOutlineWidth(
+                    debug.EnemyOutlineWidth + direction * (largeStep ? 1f : 0.5f)
+                );
+                break;
+            case PreviewParameter.OutsideDarkness:
+                anomalyController?.SetOutsideDarkness(
+                    anomalyController.OutsideDarkness + direction * step
+                );
+                break;
+            case PreviewParameter.OutsideColor:
+                anomalyController?.SetOutsideColor(
+                    anomalyController.OutsideColor + direction * step
+                );
+                break;
+            case PreviewParameter.FocusTransition:
+                anomalyController?.SetFocusTransition(
+                    anomalyController.FocusTransition +
+                    direction * (largeStep ? 0.05f : 0.01f)
+                );
+                break;
+        }
+
+        UpdatePreviewPanel();
+    }
+
+    private void UpdatePreviewPanel()
+    {
+        if (previewText == null || productionSectorDebug == null)
+            return;
+
+        ProductionSectorDebugController debug = productionSectorDebug;
+        previewSummary.Clear();
+        previewSummary.AppendLine("<b>ВИЗУАЛЬНЫЙ ТЕСТ</b>");
+        previewSummary.Append("Читаемость: <b>");
+        previewSummary.Append(GetEnemyReadabilityName(debug.EnemyMode));
+        previewSummary.AppendLine("</b>");
+        previewSummary.AppendLine("F5 ВЫКЛ  F6 СЛАБО  F7 СРЕДНЕ  F8 СИЛЬНО");
+        previewSummary.AppendLine();
+        AppendPreviewLine(PreviewParameter.EnemyBrightness,
+            "ЯРКОСТЬ ВРАГОВ", debug.EnemyBrightness.ToString("0.00"));
+        AppendPreviewLine(PreviewParameter.EnemySaturation,
+            "НАСЫЩЕННОСТЬ", debug.EnemySaturation.ToString("0.00"));
+        AppendPreviewLine(PreviewParameter.EnemyTint,
+            "ОТТЕНОК", debug.EnemyTintStrength.ToString("0.00"));
+        AppendPreviewLine(PreviewParameter.EnemyOutline,
+            "КОНТУР", debug.EnemyOutlineEnabled
+                ? debug.EnemyOutlineStrength.ToString("0.00")
+                : "ВЫКЛ");
+        AppendPreviewLine(PreviewParameter.EnemyOutlineWidth,
+            "ТОЛЩИНА КОНТУРА", debug.EnemyOutlineWidth.ToString("0.0"));
+        AppendPreviewLine(PreviewParameter.OutsideDarkness,
+            "ЗАТЕМНЕНИЕ СНАРУЖИ",
+            anomalyController != null
+                ? anomalyController.OutsideDarkness.ToString("0.00")
+                : "НЕТ CONTROLLER");
+        AppendPreviewLine(PreviewParameter.OutsideColor,
+            "ЦВЕТ СНАРУЖИ",
+            anomalyController != null
+                ? anomalyController.OutsideColor.ToString("0.00")
+                : "НЕТ CONTROLLER");
+        AppendPreviewLine(PreviewParameter.FocusTransition,
+            "ПЕРЕХОД",
+            anomalyController != null
+                ? anomalyController.FocusTransition.ToString("0.00") + " сек"
+                : "НЕТ CONTROLLER");
+        previewSummary.AppendLine();
+        previewSummary.AppendLine("PageUp/PageDown — выбрать параметр");
+        previewSummary.AppendLine("[ / ] — изменить; Shift = большой шаг");
+        previewSummary.AppendLine("F1 — назад в полное меню");
+        previewSummary.AppendLine("Контур ограничен геометрией sprite.");
+        previewText.text = previewSummary.ToString();
+    }
+
+    private void AppendPreviewLine(
+        PreviewParameter parameter,
+        string label,
+        string value)
+    {
+        bool selected = previewParameter == parameter;
+        if (selected)
+            previewSummary.Append("<color=#42D9F5><b>▶ ");
+        else
+            previewSummary.Append("  ");
+
+        previewSummary.Append(label);
+        previewSummary.Append(": ");
+        previewSummary.Append(value);
+
+        if (selected)
+            previewSummary.Append("</b></color>");
+
+        previewSummary.AppendLine();
     }
 
     private void ResolveSceneReferences()
@@ -285,6 +707,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         scaler.matchWidthOrHeight = 0.5f;
 
         RectTransform blocker = CreateRect("Input Blocker", menuRoot.transform);
+        fullMenuBlocker = blocker.gameObject;
         Stretch(blocker);
         Image blockerImage = blocker.gameObject.AddComponent<Image>();
         blockerImage.color = new Color(0f, 0f, 0f, 0.68f);
@@ -354,6 +777,37 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         for (int i = 0; i < labels.Length; i++)
             tabRoots[i] = CreateTabPage(labels[i], pages, out _);
+
+        BuildPreviewPanel();
+    }
+
+    private void BuildPreviewPanel()
+    {
+        RectTransform panel = CreateRect(
+            "Sector Visual Preview",
+            menuRoot.transform
+        );
+        previewPanelRoot = panel.gameObject;
+        panel.anchorMin = panel.anchorMax = new Vector2(0f, 1f);
+        panel.pivot = new Vector2(0f, 1f);
+        panel.anchoredPosition = new Vector2(18f, -18f);
+        panel.sizeDelta = new Vector2(430f, 520f);
+
+        Image background = panel.gameObject.AddComponent<Image>();
+        background.color = new Color(0.025f, 0.035f, 0.05f, 0.9f);
+        background.raycastTarget = false;
+
+        previewText = CreateText(
+            "Preview Values",
+            panel,
+            string.Empty,
+            18f,
+            TextAlignmentOptions.TopLeft,
+            Color.white
+        );
+        previewText.textWrappingMode = TextWrappingModes.Normal;
+        Stretch(previewText.rectTransform, 18f, 18f, 16f, 16f);
+        previewPanelRoot.SetActive(false);
     }
 
     private GameObject CreateTabPage(
@@ -467,6 +921,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 AddWorldEventsSection();
                 break;
             case DebugTab.WeaponsAndUpgrades:
+                AddCombatLabSection();
                 AddWeaponsSection();
                 AddGravityConstructSection();
                 AddRiftConstructSection();
@@ -673,6 +1128,19 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         }
 
         AddSectionTitle(
+            "ПРЕДПРОСМОТР СЦЕНЫ",
+            "Компактная панель; gameplay продолжает работать без паузы"
+        );
+        AddRow(
+            "ВИЗУАЛЬНЫЙ TUNING",
+            "80–90% сцены остаётся открытым",
+            successColor,
+            "ПРЕДПРОСМОТР",
+            true,
+            EnterScenePreview
+        );
+
+        AddSectionTitle(
             "ИГРОК",
             "Урон HP ×0; knockback, gravity, hit flash, sound и camera shake остаются"
         );
@@ -685,7 +1153,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         AddSectionTitle(
             "ЧИТАЕМОСТЬ ЗОНЫ",
-            "Только CURRENT ZONE: ground, trees, vegetation, props и decor"
+            "Меняет существующее окружение сектора сразу; gameplay-объекты исключены"
         );
         AddProductionReadabilityPreset(
             ProductionSectorDebugController.ReadabilityPreset.Original
@@ -706,18 +1174,29 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         AddSectionTitle(
             "ЯРКОСТЬ ДЕКОРА",
-            "Trees, plants, grass, props и clutter внутри CURRENT ZONE"
+            $"Меняет деревья / траву / декор карты. Объектов: {debug.DecorObjectCount}; renderer'ов: {debug.DecorRendererCount}"
         );
         AddProductionFloatOptions(
-            new[] { 1f, 0.75f, 0.5f, 0.25f },
+            new[] { 1.2f, 1f, 0.75f, 0.5f, 0.25f },
             debug.DecorBrightness,
             value => debug.SetDecorBrightness(value),
             value => $"{value * 100f:0}%"
         );
+        AddHint(debug.DecorRendererCount > 0
+            ? $"✓ Применено к {debug.DecorRendererCount} renderer'ам декора."
+            : "⚠ Renderer'ы декора не найдены.");
+        AddRow(
+            "ОБНОВИТЬ ЦЕЛИ ВИЗУАЛА",
+            "Ручной поиск нового runtime-декора и anomaly renderer'ов",
+            mutedColor,
+            "ОБНОВИТЬ",
+            true,
+            RefreshSectorVisualTargets
+        );
 
         AddSectionTitle(
             "АКЦЕНТ АНОМАЛИИ",
-            "Только visual brightness/alpha/line width; geometry, damage и силы не меняются"
+            $"Визуальное выделение активных зон. Зон: {debug.AnomalyZoneCount}; renderer'ов: {debug.AnomalyRendererCount}"
         );
         AddProductionFloatOptions(
             new[] { 1f, 1.25f, 1.5f, 1.75f },
@@ -725,38 +1204,165 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             value => debug.SetAnomalyAccent(value),
             value => $"{value * 100f:0}%"
         );
+        AddHint(debug.AnomalyZoneCount > 0
+            ? $"✓ Акцент применён к {debug.AnomalyZoneCount} зонам."
+            : "⚠ Активные anomaly visuals не найдены.");
 
         AddSectionTitle(
-            "ВРАГИ",
-            "Мультипликативный lift/tint сохраняет Golden и специальные цвета"
+            "ФОКУС ВНУТРИ АНОМАЛИИ",
+            anomalyController != null && anomalyController.IsAnomalyFocusActive
+                ? $"Активен: {anomalyController.FocusedZoneName}"
+                : "Снаружи зоны: эффект не активен"
+        );
+        if (anomalyController != null)
+        {
+            AddToggleRow(
+                "PRODUCTION FOCUS",
+                anomalyController.AnomalyFocusEnabled,
+                true,
+                () => anomalyController.SetAnomalyFocusEnabled(
+                    !anomalyController.AnomalyFocusEnabled
+                )
+            );
+            AddSectionTitle("ЗАТЕМНЕНИЕ СНАРУЖИ", "Внутри зоны остаётся прозрачное окно");
+            AddProductionFloatOptions(
+                new[] { 0f, 0.25f, 0.5f, 0.75f, 1f },
+                anomalyController.OutsideDarkness,
+                value => anomalyController.SetOutsideDarkness(value),
+                value => $"{value:0.00}"
+            );
+            AddSectionTitle("ЦВЕТ СНАРУЖИ", "0 = полностью серый; 1 = исходные цвета");
+            AddProductionFloatOptions(
+                new[] { 0f, 0.25f, 0.5f, 0.75f, 1f },
+                anomalyController.OutsideColor,
+                value => anomalyController.SetOutsideColor(value),
+                value => $"{value:0.00}"
+            );
+            AddSectionTitle("ПЛАВНОСТЬ ПЕРЕХОДА", "Вход / выход / collapse");
+            AddProductionFloatOptions(
+                new[] { 0.2f, 0.25f, 0.3f, 0.35f },
+                anomalyController.FocusTransition,
+                value => anomalyController.SetFocusTransition(value),
+                value => $"{value:0.00} сек"
+            );
+        }
+        else
+        {
+            AddHint("⚠ LevelAnomalyController не найден.");
+        }
+
+        AddSectionTitle(
+            "ЧИТАЕМОСТЬ ВРАГОВ",
+            "Яркость, насыщенность, холодный оттенок и контур"
         );
         AddProductionEnemyMode(
             ProductionSectorDebugController.EnemyReadability.Off
         );
         AddProductionEnemyMode(
-            ProductionSectorDebugController.EnemyReadability.Light
+            ProductionSectorDebugController.EnemyReadability.Low
         );
         AddProductionEnemyMode(
-            ProductionSectorDebugController.EnemyReadability.Strong
+            ProductionSectorDebugController.EnemyReadability.Medium
         );
-        AddOptionRow(
-            "ПРИМЕНЯТЬ: В ТЕКУЩЕЙ ЗОНЕ",
-            debug.CurrentEnemyScope ==
-                ProductionSectorDebugController.EnemyScope.CurrentZone,
+        AddProductionEnemyMode(
+            ProductionSectorDebugController.EnemyReadability.High
+        );
+        AddHint(
+            $"Режим: {GetEnemyReadabilityName(debug.EnemyMode)} | " +
+            $"насыщенность {debug.EnemySaturation:0.00} | " +
+            $"яркость {debug.EnemyBrightness:0.00} | " +
+            $"оттенок {debug.EnemyTintStrength:0.00} | " +
+            $"контур {(debug.EnemyOutlineEnabled ? debug.EnemyOutlineStrength.ToString("0.00") : "ВЫКЛ")} | " +
+            $"толщина {debug.EnemyOutlineWidth:0.0} texel"
+        );
+
+        AddSectionTitle("НАСЫЩЕННОСТЬ", "0 = серый; 1 = исходный цвет; 2+ = усиленный цвет");
+        AddProductionFloatOptions(
+            new[] { 0f, 0.5f, 1f, 1.5f, 2f, 2.5f, 3f },
+            debug.EnemySaturation,
+            value => debug.SetEnemySaturation(value),
+            value => $"{value:0.00}"
+        );
+        AddSectionTitle("ЯРКОСТЬ", "0.5 = темнее; 1 = исходная; 2.5 = экстремально ярко");
+        AddProductionFloatOptions(
+            new[] { 0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f, 2.5f },
+            debug.EnemyBrightness,
+            value => debug.SetEnemyBrightness(value),
+            value => $"{value:0.00}"
+        );
+        AddSectionTitle("ХОЛОДНЫЙ ОТТЕНОК", "0 = нет; 1 = максимально заметный cyan/teal");
+        AddProductionFloatOptions(
+            new[] { 0f, 0.25f, 0.5f, 0.75f, 1f },
+            debug.EnemyTintStrength,
+            value => debug.SetEnemyTintStrength(value),
+            value => $"{value:0.00}"
+        );
+        AddSectionTitle("КОНТУР", "0 = нет; 2 = максимальная сила");
+        AddHint(
+            "⚠ Контур ограничен tight-геометрией production sprite. " +
+            "Он оставлен для диагностики и не используется preset СИЛЬНО."
+        );
+        AddToggleRow(
+            "КОНТУР",
+            debug.EnemyOutlineEnabled,
             true,
-            () => debug.SetEnemyScope(
-                ProductionSectorDebugController.EnemyScope.CurrentZone
+            () => debug.SetEnemyOutlineEnabled(
+                !debug.EnemyOutlineEnabled
             )
         );
-        AddOptionRow(
-            "ПРИМЕНЯТЬ: ВСЕ",
-            debug.CurrentEnemyScope ==
-                ProductionSectorDebugController.EnemyScope.All,
-            true,
-            () => debug.SetEnemyScope(
-                ProductionSectorDebugController.EnemyScope.All
-            )
+        AddProductionFloatOptions(
+            new[] { 0f, 0.5f, 1f, 1.5f, 2f },
+            debug.EnemyOutlineStrength,
+            value => debug.SetEnemyOutlineStrength(value),
+            value => $"{value:0.00}"
         );
+        AddSectionTitle("ТОЛЩИНА КОНТУРА", "Ширина выборки прозрачности: 0.5–4 texel");
+        AddProductionFloatOptions(
+            new[] { 0.5f, 1f, 2f, 3f, 4f },
+            debug.EnemyOutlineWidth,
+            value => debug.SetEnemyOutlineWidth(value),
+            value => $"{value:0.0} texel"
+        );
+
+        AddSectionTitle(
+            "ОБЛАСТЬ ЧИТАЕМОСТИ",
+            "ВСЕ / текущая зона / тип врага; ЭЛИТА = Eyes и Turret"
+        );
+        AddProductionEnemyScope(
+            ProductionSectorDebugController.EnemyScope.All
+        );
+        AddProductionEnemyScope(
+            ProductionSectorDebugController.EnemyScope.CurrentZone
+        );
+        AddProductionEnemyScope(
+            ProductionSectorDebugController.EnemyScope.Basic
+        );
+        AddProductionEnemyScope(
+            ProductionSectorDebugController.EnemyScope.Elite
+        );
+        AddProductionEnemyScope(
+            ProductionSectorDebugController.EnemyScope.Shooter
+        );
+        AddProductionEnemyScope(
+            ProductionSectorDebugController.EnemyScope.Bomber
+        );
+        AddProductionEnemyScope(
+            ProductionSectorDebugController.EnemyScope.Boss
+        );
+        AddHint(
+            $"Зарегистрировано врагов: {debug.RegisteredEnemyCount}; " +
+            $"renderer'ов: {debug.RegisteredEnemyRendererCount}. " +
+            $"Изменено врагов: {debug.AffectedEnemyCount}; " +
+            $"renderer'ов: {debug.AffectedEnemyRendererCount}."
+        );
+        AddHint(!debug.EnemyReadabilityMaterialReady
+            ? "⚠ Материал EnemyReadability не загружен."
+            : debug.EnemyMode == ProductionSectorDebugController.EnemyReadability.Off
+                ? "Читаемость выключена: исходные материалы восстановлены."
+                : $"✓ Применено к {debug.AffectedEnemyCount} врагам. " +
+                  $"Активный EnemyReadability material: " +
+                  $"{debug.ActiveReadabilityMaterialRendererCount}/" +
+                  $"{debug.AffectedEnemyRendererCount} renderer'ов.");
 
         AddSectionTitle(
             "ОСОБАЯ АНОМАЛИЯ",
@@ -796,14 +1402,15 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         AddRow(
             "СБРОСИТЬ ВИЗУАЛ",
-            "ORIGINAL / 100 / 100 / ENEMY OFF",
+            "ORIGINAL / 100 / 100 / ВРАГИ СИЛЬНО",
             mutedColor,
             "СБРОСИТЬ",
             true,
             () => debug.ResetVisualSettings()
         );
         AddHint(
-            "Visual reset не меняет invulnerability и Special override. Все defaults нейтральны: Original, 100%, 100%, Enemy Off, Current Zone, Random, Invulnerability Off."
+            "Сброс визуала не меняет неуязвимость и выбор особой аномалии. " +
+            "Текущий test default: враги СИЛЬНО, область — все."
         );
 
         AddSectionTitle(
@@ -836,7 +1443,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             $"({GetEnemyScopeName(debug.CurrentEnemyScope)})\n" +
             $"Override особой аномалии: {debug.Override.ToString().ToUpperInvariant()} | " +
             $"бессмертие: {(debug.InvulnerabilityEnabled ? "ДА" : "НЕТ")} | " +
-            $"environment renderers в зоне: {debug.EnvironmentRendererCount}"
+            $"renderer'ов окружения в секторе: {debug.EnvironmentRendererCount}"
         );
     }
 
@@ -870,6 +1477,12 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         }
     }
 
+    private void RefreshSectorVisualTargets()
+    {
+        productionSectorDebug?.RefreshVisualTargets();
+        RefreshCurrentTab();
+    }
+
     private void AddProductionEnemyMode(
         ProductionSectorDebugController.EnemyReadability value)
     {
@@ -879,6 +1492,18 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             debug != null && debug.EnemyMode == value,
             debug != null,
             () => debug.SetEnemyReadability(value)
+        );
+    }
+
+    private void AddProductionEnemyScope(
+        ProductionSectorDebugController.EnemyScope value)
+    {
+        ProductionSectorDebugController debug = productionSectorDebug;
+        AddOptionRow(
+            $"ОБЛАСТЬ: {GetEnemyScopeName(value)}",
+            debug != null && debug.CurrentEnemyScope == value,
+            debug != null,
+            () => debug.SetEnemyScope(value)
         );
     }
 
@@ -911,18 +1536,25 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         ProductionSectorDebugController.EnemyReadability value) =>
         value switch
         {
-            ProductionSectorDebugController.EnemyReadability.Light =>
-                "ЛЁГКАЯ",
-            ProductionSectorDebugController.EnemyReadability.Strong =>
-                "СИЛЬНАЯ",
+            ProductionSectorDebugController.EnemyReadability.Low => "СЛАБО",
+            ProductionSectorDebugController.EnemyReadability.Medium =>
+                "СРЕДНЕ",
+            ProductionSectorDebugController.EnemyReadability.High => "СИЛЬНО",
             _ => "ВЫКЛ"
         };
 
     private static string GetEnemyScopeName(
         ProductionSectorDebugController.EnemyScope value) =>
-        value == ProductionSectorDebugController.EnemyScope.All
-            ? "ВСЕ"
-            : "ТЕКУЩАЯ ЗОНА";
+        value switch
+        {
+            ProductionSectorDebugController.EnemyScope.All => "ВСЕ",
+            ProductionSectorDebugController.EnemyScope.Basic => "ОБЫЧНЫЕ",
+            ProductionSectorDebugController.EnemyScope.Elite => "ЭЛИТА",
+            ProductionSectorDebugController.EnemyScope.Shooter => "СТРЕЛКИ",
+            ProductionSectorDebugController.EnemyScope.Bomber => "БОМБЕРЫ",
+            ProductionSectorDebugController.EnemyScope.Boss => "БОСС",
+            _ => "ТЕКУЩАЯ ЗОНА"
+        };
 
     private void AddRunSection()
     {
@@ -1375,13 +2007,40 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private void AddEnemiesSection()
     {
         RemoveDestroyedDebugEnemies();
-        AddSectionTitle("DEBUG SPAWN", "Existing EnemySpawner debug route");
-        AddDebugEnemyRow("Turret", turretEnemyPrefab, "SPAWN TURRET");
-        AddDebugEnemyRow("Eyes", eyesEnemyPrefab, "SPAWN EYES");
-        AddRow("Debug-spawned enemies",
-            debugEnemies.Count > 0 ? $"ACTIVE: {debugEnemies.Count}" : "CLEAR",
+        AddSectionTitle("ВРАГИ", "Production spawn API; ручной spawn работает при выключенном автоспавне");
+
+        bool spawnerAvailable = enemySpawner != null;
+        bool autoSpawn = spawnerAvailable && enemySpawner.IsSpawningEnabled;
+        AddRow(
+            "АВТОСПАВН",
+            !spawnerAvailable ? "SPAWNER НЕ НАЙДЕН" : autoSpawn ? "ВКЛ" : "ВЫКЛ",
+            autoSpawn ? successColor : spawnerAvailable ? mutedColor : warningColor,
+            autoSpawn ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ",
+            spawnerAvailable,
+            ToggleEnemyAutoSpawn
+        );
+        AddRow(
+            "ВСЕ АКТИВНЫЕ ВРАГИ",
+            $"Найдено: {EnemyHealth.ActiveInstances.Count}",
+            EnemyHealth.ActiveInstances.Count > 0 ? warningColor : mutedColor,
+            "УБИТЬ ВСЕХ",
+            EnemyHealth.ActiveInstances.Count > 0,
+            KillAllEnemies
+        );
+        AddHint(enemyDebugStatus);
+
+        AddSectionTitle("РУЧНОЙ SPAWN", "Безопасные разные позиции вокруг игрока");
+        AddManualEnemyRows("ОБЫЧНЫЙ", ResolveEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Basic));
+        AddManualEnemyRows("СТРЕЛОК", ResolveEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Shooter));
+        AddManualEnemyRows("БОМБЕР", ResolveEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Bomber));
+        AddManualEnemyRows("EYES", eyesEnemyPrefab != null ? eyesEnemyPrefab : ResolveEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Eyes));
+        AddManualEnemyRows("ТУРЕЛЬ", turretEnemyPrefab != null ? turretEnemyPrefab : ResolveEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Turret));
+        AddManualEnemyRows("БОСС", runTimer != null ? runTimer.DebugBossPrefab : null);
+
+        AddRow("Создано вручную",
+            debugEnemies.Count > 0 ? $"Активно: {debugEnemies.Count}" : "Нет",
             debugEnemies.Count > 0 ? successColor : mutedColor,
-            "CLEAR DEBUG ENEMIES", debugEnemies.Count > 0,
+            "УБРАТЬ РУЧНЫХ", debugEnemies.Count > 0,
             ClearDebugEnemies);
     }
 
@@ -1423,6 +2082,151 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             if (prefab != null && !addedEventPrefabs.Contains(prefab))
                 AddEventRow(GetEventDisplayName(prefab), prefab);
         }
+    }
+
+    private void AddCombatLabSection()
+    {
+        ResolveCombatLab();
+
+        bool available = combatLab != null && combatLab.RefreshBinding();
+        CombatLabControlStyle style = combatLab != null
+            ? combatLab.ControlStyle
+            : CombatLabControlStyle.Orbit;
+        WeaponControlMode fireMode = combatLab != null
+            ? combatLab.FireMode
+            : WeaponControlSettings.CurrentMode;
+        WeaponData selectedWeapon = combatLab != null
+            ? combatLab.SelectedWeapon
+            : null;
+        WeaponData pistol = combatLab != null ? combatLab.Pistol : null;
+        WeaponData laser = combatLab != null ? combatLab.Laser : null;
+
+        AddSectionTitle(
+            "COMBAT LAB",
+            combatLab != null ? $"CURRENT: {combatLab.CurrentSummary}" :
+                "CURRENT: PLAYER/WEAPON NOT FOUND"
+        );
+
+        AddRow(
+            "CONTROL / ORBIT",
+            style == CombatLabControlStyle.Orbit ? "ACTIVE" : "AVAILABLE",
+            style == CombatLabControlStyle.Orbit ? successColor : mutedColor,
+            "ORBIT",
+            available,
+            () => SelectCombatLabControl(CombatLabControlStyle.Orbit)
+        );
+        AddRow(
+            "CONTROL / REMOTE",
+            style == CombatLabControlStyle.Remote ? "ACTIVE" : "AVAILABLE",
+            style == CombatLabControlStyle.Remote ? successColor : mutedColor,
+            "REMOTE",
+            available,
+            () => SelectCombatLabControl(CombatLabControlStyle.Remote)
+        );
+
+        AddRow(
+            "WEAPON / PISTOL",
+            selectedWeapon == pistol ? "ACTIVE" :
+                pistol != null ? "AVAILABLE" : "WEAPON DATA NOT FOUND",
+            selectedWeapon == pistol ? successColor :
+                pistol != null ? mutedColor : warningColor,
+            "PISTOL",
+            available && pistol != null && pistol.weaponPrefab != null,
+            () => SelectCombatLabWeapon(pistol)
+        );
+        AddRow(
+            "WEAPON / LASER",
+            selectedWeapon == laser ? "ACTIVE" :
+                laser != null ? "AVAILABLE" : "WEAPON DATA NOT FOUND",
+            selectedWeapon == laser ? successColor :
+                laser != null ? mutedColor : warningColor,
+            "LASER",
+            available && laser != null && laser.weaponPrefab != null,
+            () => SelectCombatLabWeapon(laser)
+        );
+
+        AddRow(
+            "FIRE / AUTO",
+            fireMode == WeaponControlMode.AutoAim ? "ACTIVE" : "AVAILABLE",
+            fireMode == WeaponControlMode.AutoAim ? successColor : mutedColor,
+            "AUTO",
+            combatLab != null,
+            () => SelectCombatLabFire(WeaponControlMode.AutoAim)
+        );
+        AddRow(
+            "FIRE / MANUAL",
+            fireMode == WeaponControlMode.Manual ? "ACTIVE" : "AVAILABLE",
+            fireMode == WeaponControlMode.Manual ? successColor : mutedColor,
+            "MANUAL",
+            combatLab != null,
+            () => SelectCombatLabFire(WeaponControlMode.Manual)
+        );
+        AddHint(
+            "REMOTE: RMB sets the primary weapon position inside radius 8. " +
+            "AUTO targets from the weapon. MANUAL aims at mouse and fires on LMB."
+        );
+    }
+
+    private void ResolveCombatLab()
+    {
+        combatLab ??= GetComponent<CombatLabDebugController>();
+        combatLab ??= gameObject.AddComponent<CombatLabDebugController>();
+        combatLab.Configure(
+            characterSpawner,
+            FindCombatLabWeapon("pistol"),
+            FindCombatLabWeapon("laser")
+        );
+    }
+
+    private WeaponData FindCombatLabWeapon(string namePart)
+    {
+        if (debugWeapons == null)
+            return null;
+
+        for (int i = 0; i < debugWeapons.Length; i++)
+        {
+            WeaponData data = debugWeapons[i];
+            if (data == null)
+                continue;
+
+            string displayName = string.IsNullOrWhiteSpace(data.weaponName)
+                ? data.name
+                : data.weaponName;
+
+            if (displayName.IndexOf(
+                    namePart,
+                    StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return data;
+            }
+        }
+
+        return null;
+    }
+
+    private void SelectCombatLabControl(CombatLabControlStyle style)
+    {
+        ResolveCombatLab();
+        combatLab?.SelectControlStyle(style);
+        RefreshTab(DebugTab.WeaponsAndUpgrades);
+        RefreshTab(DebugTab.Telekinesis);
+    }
+
+    private void SelectCombatLabWeapon(WeaponData weaponData)
+    {
+        ResolveCombatLab();
+        combatLab?.SelectWeapon(weaponData);
+        telekinesisPrototype = GameObject.FindGameObjectWithTag("Player")
+            ?.GetComponent<TelekinesisDebugPrototype>();
+        RefreshTab(DebugTab.WeaponsAndUpgrades);
+        RefreshTab(DebugTab.Telekinesis);
+    }
+
+    private void SelectCombatLabFire(WeaponControlMode mode)
+    {
+        ResolveCombatLab();
+        combatLab?.SelectFireMode(mode);
+        RefreshTab(DebugTab.WeaponsAndUpgrades);
     }
 
     private void AddWeaponsSection()
@@ -1796,33 +2600,98 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         return null;
     }
 
-    private void AddDebugEnemyRow(
-        string displayName,
-        GameObject prefab,
-        string buttonLabel)
+    private GameObject ResolveEnemyPrefab(
+        EnemySpawner.DebugEnemyArchetype archetype)
     {
-        bool available = enemySpawner != null && prefab != null;
-        AddRow(displayName,
-            prefab == null ? "PREFAB NOT ASSIGNED" :
-                enemySpawner == null ? "SPAWNER NOT FOUND" : "AVAILABLE",
-            available ? successColor : warningColor,
-            buttonLabel, available, () => SpawnDebugEnemy(prefab));
+        return enemySpawner != null
+            ? enemySpawner.FindDebugEnemyPrefab(archetype)
+            : null;
     }
 
-    private void SpawnDebugEnemy(GameObject prefab)
+    private void AddManualEnemyRows(string displayName, GameObject prefab)
+    {
+        bool available = enemySpawner != null && prefab != null;
+        string status = prefab == null ? "PREFAB НЕ НАЙДЕН" :
+            enemySpawner == null ? "SPAWNER НЕ НАЙДЕН" : "ДОСТУПЕН";
+        AddRow(displayName, status,
+            available ? successColor : warningColor,
+            "+1", available, () => SpawnDebugEnemies(prefab, displayName, 1));
+        AddRow("↳ пакет", "Ровно десять попыток в разных позициях",
+            available ? mutedColor : warningColor,
+            "+10", available, () => SpawnDebugEnemies(prefab, displayName, 10));
+    }
+
+    private void SpawnDebugEnemies(GameObject prefab, string displayName, int count)
     {
         Transform player = GameObject.FindGameObjectWithTag("Player")?.transform;
 
         if (enemySpawner == null || prefab == null || player == null)
+        {
+            enemyDebugStatus = "⚠ Spawn невозможен: отсутствует player, prefab или EnemySpawner.";
+            return;
+        }
+
+        int spawned = 0;
+        for (int i = 0; i < Mathf.Max(1, count); i++)
+        {
+            GameObject enemy = enemySpawner.SpawnSpecificEnemyAround(
+                prefab,
+                player.position,
+                3f,
+                8f,
+                3f,
+                false,
+                0.45f
+            );
+
+            if (enemy == null)
+                continue;
+
+            debugEnemies.Add(enemy);
+            spawned++;
+        }
+
+        enemyDebugStatus = spawned == count
+            ? $"✓ {displayName}: создано {spawned}."
+            : $"⚠ {displayName}: создано {spawned} из {count}; не хватило безопасных позиций.";
+
+        RefreshCurrentTab();
+    }
+
+    private void ToggleEnemyAutoSpawn()
+    {
+        if (enemySpawner == null)
             return;
 
-        GameObject enemy = enemySpawner.SpawnSpecificEnemyAround(
-            prefab, player.position, 3f, 6f, 3f, false
-        );
+        if (enemySpawner.IsSpawningEnabled)
+        {
+            enemySpawner.StopSpawning();
+            enemyDebugStatus = "✓ Автоспавн остановлен; ручной spawn доступен.";
+        }
+        else
+        {
+            enemySpawner.ResumeSpawning();
+            enemyDebugStatus = "✓ Production автоспавн возобновлён.";
+        }
 
-        if (enemy != null)
-            debugEnemies.Add(enemy);
+        RefreshCurrentTab();
+    }
 
+    private void KillAllEnemies()
+    {
+        List<EnemyHealth> enemies = new(EnemyHealth.ActiveInstances);
+        int killed = 0;
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyHealth enemy = enemies[i];
+            if (enemy == null)
+                continue;
+
+            Destroy(enemy.gameObject);
+            killed++;
+        }
+
+        enemyDebugStatus = $"✓ Убрано врагов: {killed}; награды и meta-прогресс не начислялись.";
         RefreshCurrentTab();
     }
 
@@ -1955,6 +2824,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private static string GetTelekinesisModeName(TelekinesisDebugMode mode) =>
         mode switch
         {
+            TelekinesisDebugMode.Remote => "REMOTE",
             TelekinesisDebugMode.ManualPosition => "MANUAL POSITION",
             TelekinesisDebugMode.ManualFire => "MANUAL FIRE",
             TelekinesisDebugMode.DualControl => "DUAL CONTROL",

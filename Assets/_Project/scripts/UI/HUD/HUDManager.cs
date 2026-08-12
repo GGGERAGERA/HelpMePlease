@@ -54,6 +54,8 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private TacticalMapHUD tacticalMap;
     private RunStatsManager runStatsManager;
     private RunStateManager runStateManager;
+    private int lastDisplayedTimerSecond = int.MinValue;
+    private int lastDisplayedThreatLevel = int.MinValue;
 
     private void Awake()
     {
@@ -138,12 +140,18 @@ public class HUDManager : MonoBehaviour
     public void SetTimer(float timeLeft)
     {
         timeLeft = Mathf.Max(0f, timeLeft);
+        int totalSeconds = Mathf.FloorToInt(timeLeft);
 
-        int minutes = Mathf.FloorToInt(timeLeft / 60f);
-        int seconds = Mathf.FloorToInt(timeLeft % 60f);
+        if (totalSeconds == lastDisplayedTimerSecond)
+            return;
+
+        lastDisplayedTimerSecond = totalSeconds;
+
+        int minutes = totalSeconds / 60;
+        int seconds = totalSeconds % 60;
 
         if (timerText != null)
-            timerText.text = $"{minutes:00}:{seconds:00}";
+            timerText.SetText("{0:00}:{1:00}", minutes, seconds);
     }
 
     public void SetTimerVisible(bool visible)
@@ -163,11 +171,14 @@ public class HUDManager : MonoBehaviour
 
         float clampedValue = Mathf.Clamp(value, 0f, 100f);
 
-        if (threatLevelText != null)
-            threatLevelText.text = $"THREAT {ToRoman(level)}";
+        if (threatLevelText != null && level != lastDisplayedThreatLevel)
+        {
+            lastDisplayedThreatLevel = level;
+            threatLevelText.text = "THREAT " + ToRoman(level);
+        }
 
         if (threatValueText != null)
-            threatValueText.text = $"{clampedValue:0}%";
+            threatValueText.SetText("{0:0}%", clampedValue);
 
         if (threatFill != null)
         {

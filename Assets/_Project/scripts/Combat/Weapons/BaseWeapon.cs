@@ -169,6 +169,26 @@ public abstract class BaseWeapon : MonoBehaviour
     {
         hadAutomaticTarget = false;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (telekinesisDebugExternalPosition)
+        {
+            if (firePoint == null)
+                firePoint = transform;
+
+            if (TryNormalizeDirection(
+                    GetMouseWorldPosition() - (Vector2)firePoint.position,
+                    out Vector2 remoteDirection))
+            {
+                hasAim = true;
+                lastAimDirection = remoteDirection;
+                return remoteDirection;
+            }
+
+            hasAim = false;
+            return lastAimDirection;
+        }
+#endif
+
         if (TryGetAimDirectionFromOwner(out Vector2 currentDirection))
         {
             hasAim = true;
@@ -719,6 +739,26 @@ public abstract class BaseWeapon : MonoBehaviour
         telekinesisDebugForceManualControl = false;
         telekinesisDebugExternalPosition = true;
         telekinesisDebugSecondaryWeapon = secondaryWeapon;
+        targeting?.ClearTelekinesisDebugOverrides();
+        targeting?.SetTelekinesisDebugUseWeaponOrigin(
+            useWeaponTargetingOrigin
+        );
+    }
+
+    public void SetTelekinesisDebugExternalPosition(
+        Vector2 targetPosition,
+        float followSpeed,
+        bool useWeaponTargetingOrigin)
+    {
+        CaptureTelekinesisDebugState();
+        orbitRadius = telekinesisDebugBaseOrbitRadius;
+        telekinesisDebugPositionTarget = targetPosition;
+        telekinesisDebugFollowSpeed = Mathf.Max(0.1f, followSpeed);
+        telekinesisDebugManualPosition = false;
+        telekinesisDebugForceAutomaticControl = false;
+        telekinesisDebugForceManualControl = false;
+        telekinesisDebugExternalPosition = true;
+        telekinesisDebugSecondaryWeapon = false;
         targeting?.ClearTelekinesisDebugOverrides();
         targeting?.SetTelekinesisDebugUseWeaponOrigin(
             useWeaponTargetingOrigin

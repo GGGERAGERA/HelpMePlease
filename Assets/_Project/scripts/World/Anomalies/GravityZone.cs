@@ -47,9 +47,7 @@ public sealed class GravityZone : LocalAnomalyZone
     private float gravityForce;
     private float visualFade;
     private float targetVisualFade;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
     private float debugVisualEmphasis = 1f;
-#endif
     private bool effectsCleared;
     private bool despawning;
     private bool orbitMode;
@@ -134,12 +132,13 @@ public sealed class GravityZone : LocalAnomalyZone
         );
     }
 
+#endif
+
     public void SetDebugVisualEmphasis(float multiplier)
     {
         debugVisualEmphasis = Mathf.Clamp(multiplier, 1f, 1.75f);
         ApplyVisualProperties();
     }
-#endif
 
     private void Awake()
     {
