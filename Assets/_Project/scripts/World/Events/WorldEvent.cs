@@ -6,6 +6,10 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
     [SerializeField] private string eventDisplayName = "WORLD EVENT";
     [SerializeField, TextArea(1, 2)] private string eventDescription;
 
+    [Header("Orchestration")]
+    [SerializeField] private bool allowedInSite;
+    [SerializeField] private bool requiresHoldPointFeature;
+
     protected WorldEventSpawner owner;
 
     private bool cleanupPerformed;
@@ -19,6 +23,8 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
     public bool IsStarted { get; private set; }
     public string EventDisplayName => eventDisplayName;
     public string EventDescription => eventDescription;
+    public bool AllowedInSite => allowedInSite;
+    public bool RequiresHoldPointFeature => requiresHoldPointFeature;
     public virtual Vector3 RewardPosition => transform.position;
     protected bool IsDebugCleanup => debugCleanup;
     public override bool CanInteract

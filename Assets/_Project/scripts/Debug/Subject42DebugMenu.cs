@@ -102,6 +102,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private readonly List<int> activeAnomalyTypeCounts = new();
     private readonly StringBuilder activeAnomalySummary = new();
     private readonly List<WorldEvent> addedEventPrefabs = new();
+    private readonly List<CharacterData> debugCharacters = new();
     private readonly List<GameObject> debugEnemies = new();
     private readonly List<UpgradeData> visibleUpgrades = new();
     private TelekinesisDebugPrototype telekinesisPrototype;
@@ -1071,21 +1072,36 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddRow("Character Selection", uiAvailable ? "OPEN" : "NOT OPEN",
             uiAvailable ? successColor : warningColor,
             "REFRESH", uiAvailable, () => DebugRefreshCharacterUi(characterUi));
-        AddCharacterDebugSelection(characterUi, "Gera");
-        AddCharacterDebugSelection(characterUi, "Di-mag");
-        AddCharacterDebugSelection(characterUi, "Vika");
+
+        debugCharacters.Clear();
+        characterUi?.CollectDebugCharacters(debugCharacters);
+
+        if (debugCharacters.Count == 0)
+        {
+            AddRow("Debug character source",
+                characterUi == null ? "NOT AVAILABLE" : "NO CHARACTER DATA",
+                warningColor, null, false, null);
+            return;
+        }
+
+        for (int i = 0; i < debugCharacters.Count; i++)
+            AddCharacterDebugSelection(characterUi, debugCharacters[i]);
     }
 
     private void AddCharacterDebugSelection(
         CharacterSelectionUI characterUi,
-        string characterName)
+        CharacterData character)
     {
+        string characterName = string.IsNullOrWhiteSpace(
+            character.characterName)
+            ? "UNNAMED CHARACTER"
+            : character.characterName;
         bool canSelect = characterUi != null &&
-            characterUi.CanDebugSelectCharacter(characterName);
+            characterUi.CanDebugSelectCharacter(character);
         AddRow($"Select {characterName}", canSelect ? "AVAILABLE" : "LOCKED",
             canSelect ? mutedColor : warningColor,
             $"SELECT {characterName.ToUpperInvariant()}", canSelect,
-            () => DebugSelectCharacter(characterUi, characterName));
+            () => DebugSelectCharacter(characterUi, character));
     }
 
     private void DebugRefreshCharacterUi(CharacterSelectionUI characterUi)
@@ -1096,9 +1112,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void DebugSelectCharacter(
         CharacterSelectionUI characterUi,
-        string characterName)
+        CharacterData character)
     {
-        characterUi?.DebugSelectCharacter(characterName);
+        characterUi?.DebugSelectCharacter(character);
         RefreshCurrentTab();
     }
 
@@ -1381,11 +1397,17 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             "CLEAR EVENT", current != null, ClearWorldEvent);
 
         addedEventPrefabs.Clear();
-        AddEventRow<CaptureZoneEvent>("Capture Zone");
-        AddEventRow<FalseSignalEvent>("False Signal");
-        AddEventRow<EvacuationCorridorEvent>("Evacuation Corridor");
-        AddEventRow<RescueCapsuleEvent>("Rescue Capsule");
-        AddEventRow<CarrierHuntEvent>("Carrier Hunt");
+
+        if (worldEventPrefabs != null)
+        {
+            for (int i = 0; i < worldEventPrefabs.Length; i++)
+            {
+                WorldEvent prefab = worldEventPrefabs[i];
+
+                if (prefab != null && !addedEventPrefabs.Contains(prefab))
+                    AddEventRow(GetEventDisplayName(prefab), prefab);
+            }
+        }
 
         IReadOnlyList<WorldEvent> connected = worldEventSpawner != null
             ? worldEventSpawner.EventPrefabs
@@ -1825,9 +1847,6 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         }
     }
 
-    private void AddEventRow<T>(string displayName) where T : WorldEvent =>
-        AddEventRow(displayName, FindEventPrefab<T>());
-
     private void AddEventRow(string displayName, WorldEvent prefab)
     {
         if (prefab != null && !addedEventPrefabs.Contains(prefab))
@@ -1933,20 +1952,6 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         return false;
     }
 
-    private WorldEvent FindEventPrefab<T>() where T : WorldEvent
-    {
-        if (worldEventPrefabs == null)
-            return null;
-
-        for (int i = 0; i < worldEventPrefabs.Length; i++)
-        {
-            if (worldEventPrefabs[i] is T)
-                return worldEventPrefabs[i];
-        }
-
-        return null;
-    }
-
     private static string GetTelekinesisModeName(TelekinesisDebugMode mode) =>
         mode switch
         {
@@ -1976,11 +1981,6 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         if (worldEvent == null)
             return "None";
-        if (worldEvent is CaptureZoneEvent) return "Capture Zone";
-        if (worldEvent is FalseSignalEvent) return "False Signal";
-        if (worldEvent is EvacuationCorridorEvent) return "Evacuation Corridor";
-        if (worldEvent is RescueCapsuleEvent) return "Rescue Capsule";
-        if (worldEvent is CarrierHuntEvent) return "Carrier Hunt";
         return string.IsNullOrWhiteSpace(worldEvent.EventDisplayName)
             ? worldEvent.name
             : worldEvent.EventDisplayName;
@@ -2089,9 +2089,6 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         "SET INVESTED 0" => 190f,
         "SET INVESTED 50%" => 214f,
         "+1000 GOLD" => 150f,
-        "SELECT GERA" => 164f,
-        "SELECT DI-MAG" => 184f,
-        "SELECT VIKA" => 164f,
         "CLEAR CURRENT EVENT" => 228f,
         "CLEAR EVENT" => 150f,
         "TURN OFF" => 130f,

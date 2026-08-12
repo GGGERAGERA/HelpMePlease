@@ -59,6 +59,7 @@ public class WorldEventSpawner : MonoBehaviour
     private EnemySpawner enemySpawner;
     private WorldEvent pressureEvent;
     private readonly List<WorldEvent> spawnedEvents = new();
+    private readonly HashSet<WorldEvent> warnedUnsupportedEventPrefabs = new();
     private readonly HashSet<WorldEvent> siteRewardSuppressedEvents = new();
     private bool siteControlledMode;
     private readonly List<LevelAnomalyController.LocalAnomalyZoneGeometry>
@@ -388,6 +389,9 @@ public class WorldEventSpawner : MonoBehaviour
     public void SetHoldPointEnabled(bool enabled)
     {
         holdPointEnabled = enabled;
+
+        if (enabled)
+            warnedUnsupportedEventPrefabs.Clear();
     }
 
     public void ConfigureSiteControlledMode(int concurrentSiteCount)
@@ -437,8 +441,7 @@ public class WorldEventSpawner : MonoBehaviour
             if (eventPrefabs[i] != eventPrefab)
                 continue;
 
-            return !(eventPrefab is CaptureZoneEvent) ||
-                holdPointEnabled;
+            return SupportsEventCapabilities(eventPrefab);
         }
 
         return false;
@@ -454,13 +457,34 @@ public class WorldEventSpawner : MonoBehaviour
             if (nextEventIndex >= eventPrefabs.Length)
                 nextEventIndex = 0;
 
-            if (prefab is CaptureZoneEvent && !holdPointEnabled)
+            if (!SupportsEventCapabilities(prefab))
                 continue;
 
             return prefab;
         }
 
         return null;
+    }
+
+    private bool SupportsEventCapabilities(WorldEvent eventPrefab)
+    {
+        if (eventPrefab == null)
+            return false;
+
+        if (!eventPrefab.RequiresHoldPointFeature || holdPointEnabled)
+            return true;
+
+        if (warnedUnsupportedEventPrefabs.Add(eventPrefab))
+        {
+            Debug.LogWarning(
+                $"[WorldEventSpawner] Event '{eventPrefab.name}' requires " +
+                "the hold-point feature, but it is not enabled. " +
+                "The event will be skipped.",
+                this
+            );
+        }
+
+        return false;
     }
 
     public void NotifyEventCompleted(WorldEvent worldEvent)
