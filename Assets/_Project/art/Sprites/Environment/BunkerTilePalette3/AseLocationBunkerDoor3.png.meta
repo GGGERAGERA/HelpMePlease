@@ -281,7 +281,7 @@ TextureImporter:
         width: 96
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -303,7 +303,7 @@ TextureImporter:
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -347,7 +347,7 @@ TextureImporter:
         width: 96
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -356,6 +356,116 @@ TextureImporter:
       bones: []
       spriteID: dfe00095cd55abf45828b70ecfc72e82
       internalID: 319069704
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunkerDoor3_11
+      rect:
+        serializedVersion: 2
+        x: 704
+        y: 992
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 15, y: 15, z: 15, w: 15}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 992788907c8adc542ac0d3014c617717
+      internalID: -2147422180
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunkerDoor3_3
+      rect:
+        serializedVersion: 2
+        x: 719
+        y: 992
+        width: 2
+        height: 16
+      alignment: 9
+      pivot: {x: 0.5, y: 1}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5224d6ce60716c447bef112d048b9b8c
+      internalID: -3030064185483494775
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunkerDoor3_12
+      rect:
+        serializedVersion: 2
+        x: 736
+        y: 992
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c98f7f52a622ed84dad60532543e3d11
+      internalID: -280576458
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunkerDoor3_13
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 992
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6e28717c2c0f23145bdac9e3379f0b52
+      internalID: 1242472134
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AseLocationBunkerDoor3_14
+      rect:
+        serializedVersion: 2
+        x: 800
+        y: 960
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e6650255e5f6a3846b4dc238937de375
+      internalID: -1629191873
       vertices: []
       indices: 
       edges: []
@@ -377,6 +487,10 @@ TextureImporter:
       AseLocationBunkerDoor3_0: 7160786979409441372
       AseLocationBunkerDoor3_1: -5371984406877783455
       AseLocationBunkerDoor3_10: 319069704
+      AseLocationBunkerDoor3_11: -2147422180
+      AseLocationBunkerDoor3_12: -280576458
+      AseLocationBunkerDoor3_13: 1242472134
+      AseLocationBunkerDoor3_14: -1629191873
       AseLocationBunkerDoor3_2: -1605310520788921559
       AseLocationBunkerDoor3_3: -3030064185483494775
       AseLocationBunkerDoor3_4: 8710222688176117630
