@@ -240,6 +240,21 @@ public sealed class CharacterSelectionUI : MonoBehaviour
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void CollectDebugCharacters(
+        System.Collections.Generic.List<CharacterData> destination)
+    {
+        if (destination == null || cards == null)
+            return;
+
+        foreach (CharacterCardView card in cards)
+        {
+            CharacterData character = card != null ? card.Character : null;
+
+            if (character != null && !destination.Contains(character))
+                destination.Add(character);
+        }
+    }
+
     public void DebugRefresh()
     {
         stationView?.Refresh();
@@ -258,38 +273,18 @@ public sealed class CharacterSelectionUI : MonoBehaviour
         }
     }
 
-    public bool CanDebugSelectCharacter(string characterName)
+    public bool CanDebugSelectCharacter(CharacterData character)
     {
-        CharacterData character = FindCharacter(characterName);
         return character != null && IsCharacterUnlocked(character);
     }
 
-    public bool DebugSelectCharacter(string characterName)
+    public bool DebugSelectCharacter(CharacterData character)
     {
-        CharacterData character = FindCharacter(characterName);
         if (character == null || !IsCharacterUnlocked(character))
             return false;
 
         SelectCharacter(character);
         return selectedCharacter == character;
-    }
-
-    private CharacterData FindCharacter(string characterName)
-    {
-        if (cards == null || string.IsNullOrWhiteSpace(characterName))
-            return null;
-
-        foreach (CharacterCardView card in cards)
-        {
-            CharacterData character = card != null ? card.Character : null;
-            if (character != null && string.Equals(
-                    character.characterName,
-                    characterName,
-                    System.StringComparison.OrdinalIgnoreCase))
-                return character;
-        }
-
-        return null;
     }
 #endif
     private bool IsCharacterUnlocked(CharacterData character)

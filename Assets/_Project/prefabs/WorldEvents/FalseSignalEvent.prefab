@@ -83,6 +83,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FalseSignalEvent
   eventDisplayName: "\u041B\u041E\u0416\u041D\u042B\u0419 \u0421\u0418\u0413\u041D\u0410\u041B"
   eventDescription: "\u041D\u0430\u0439\u0434\u0438\u0442\u0435 \u043D\u0430\u0441\u0442\u043E\u044F\u0449\u0438\u0439 \u0438\u0441\u0442\u043E\u0447\u043D\u0438\u043A \u0441\u0438\u0433\u043D\u0430\u043B\u0430."
+  allowedInSite: 1
+  requiresHoldPointFeature: 0
   promptText: "\u2014 \u041D\u0430\u0447\u0430\u0442\u044C \u0441\u043E\u0431\u044B\u0442\u0438\u0435"
   startRadius: 5
   lineMaterial: {fileID: 2100000, guid: dca396c6aa60fe549b61f941be335967, type: 2}

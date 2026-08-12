@@ -117,21 +117,24 @@ public class ProjectileWeapon : BaseWeapon
         );
     }
 
-    public void FireExternalProjectile(Vector2 direction)
+    public override bool TryEmitExternalAttack(Vector2 direction)
     {
         if (firePoint == null)
             firePoint = transform;
 
         if (direction.sqrMagnitude < 0.001f)
-            return;
+            return false;
 
         WeaponFireContext context = BuildFireContext(
             firePoint.position,
             direction.normalized
         ).WithKnockback(GetKnockbackForce(baseKnockbackForce));
 
-        if (fireBehaviour != null && fireBehaviour.Fire(context))
-            PlayRecoil();
+        if (fireBehaviour == null || !fireBehaviour.Fire(context))
+            return false;
+
+        PlayRecoil();
+        return true;
     }
 
     private void CaptureRecoilRestState()

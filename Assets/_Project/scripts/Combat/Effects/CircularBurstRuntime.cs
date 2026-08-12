@@ -5,13 +5,13 @@ public class CircularBurstRuntime : MonoBehaviour
     [SerializeField] private int projectileCount = 16;
 
     private float timer;
-    private ProjectileWeapon shootWeapon;
+    private BaseWeapon attackWeapon;
     private PlayerCombatModifiers modifiers;
 
     private void Awake()
     {
         modifiers = GetComponent<PlayerCombatModifiers>();
-        shootWeapon = GetComponentInChildren<ProjectileWeapon>();
+        attackWeapon = GetComponentInChildren<BaseWeapon>();
     }
 
     private void Update()
@@ -19,10 +19,10 @@ public class CircularBurstRuntime : MonoBehaviour
         if (modifiers == null || !modifiers.circularBurst)
             return;
 
-        if (shootWeapon == null)
-            shootWeapon = GetComponentInChildren<ProjectileWeapon>();
+        if (attackWeapon == null)
+            attackWeapon = GetComponentInChildren<BaseWeapon>();
 
-        if (shootWeapon == null)
+        if (attackWeapon == null)
             return;
 
         timer += Time.deltaTime;
@@ -41,7 +41,7 @@ public class CircularBurstRuntime : MonoBehaviour
             float angle = 360f / projectileCount * i;
             Vector2 direction = Quaternion.Euler(0f, 0f, angle) * Vector2.right;
 
-            shootWeapon.FireExternalProjectile(direction);
+            attackWeapon.TryEmitExternalAttack(direction);
         }
     }
 }

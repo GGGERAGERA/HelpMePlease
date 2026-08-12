@@ -787,12 +787,8 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         {
             WorldEvent prefab = prefabs[i];
 
-            if (prefab is CaptureZoneEvent ||
-                prefab is EvacuationCorridorEvent ||
-                prefab is FalseSignalEvent)
-            {
+            if (prefab != null && prefab.AllowedInSite)
                 result.Add(prefab);
-            }
         }
 
         Shuffle(result);

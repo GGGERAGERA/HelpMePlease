@@ -449,6 +449,24 @@ public abstract class BaseWeapon : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// Emits an externally triggered attack in a supplied direction without
+    /// changing the automatic-fire cooldown or applying aim inaccuracy.
+    /// </summary>
+    public virtual bool TryEmitExternalAttack(Vector2 direction)
+    {
+        if (!IsValidVector(direction) || direction.sqrMagnitude < 0.001f)
+            return false;
+
+        if (firePoint == null)
+            firePoint = transform;
+
+        return EmitAttack(BuildFireContext(
+            firePoint.position,
+            direction.normalized
+        ));
+    }
+
     protected abstract bool EmitAttack(WeaponFireContext context);
 
     protected void MarkAttackTime()
