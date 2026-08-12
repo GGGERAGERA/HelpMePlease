@@ -15,8 +15,8 @@ public interface IAnomalyWeaponPayload
 public abstract class AnomalyCoreConstruct : MonoBehaviour
 {
     public abstract void Configure(
-        BaseWeapon weapon,
-        Transform anchor);
+        Transform anchor,
+        BaseWeapon optionalWeapon);
 
     public virtual void Shutdown()
     {

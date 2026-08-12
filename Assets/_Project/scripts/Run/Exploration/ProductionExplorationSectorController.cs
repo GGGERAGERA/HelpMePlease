@@ -85,17 +85,6 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         anomalyController.BeginSiteLayout();
         eventSpawner.ConfigureSiteControlledMode(TotalSiteCount);
 
-        GravityTrajectoryService trajectoryService =
-            gameObject.GetComponent<GravityTrajectoryService>();
-
-        if (trajectoryService == null)
-        {
-            trajectoryService =
-                gameObject.AddComponent<GravityTrajectoryService>();
-        }
-
-        trajectoryService.Disable();
-
         if (!BuildLayout(
                 out Vector2[] normalPositions,
                 out Vector2[] normalSizes,
@@ -154,19 +143,21 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         );
         ProductionAnomalySite specialSite =
             specialObject.AddComponent<ProductionAnomalySite>();
-        specialSite.InitializeSpecial(
-            specialPosition,
-            specialSize,
-            specialPower,
-            config.GravityAnomaly,
-            siteEvents[NormalSiteCount % siteEvents.Count],
-            eventSpawner,
-            anomalyController,
-            trajectoryService,
-            config,
-            exitPosition,
-            config.ExitRadius
-        );
+        if (!specialSite.InitializeSpecial(
+                specialPosition,
+                specialSize,
+                specialPower,
+                siteEvents[NormalSiteCount % siteEvents.Count],
+                eventSpawner,
+                anomalyController,
+                gameObject,
+                config,
+                exitPosition,
+                config.ExitRadius))
+        {
+            Destroy(specialObject);
+            return false;
+        }
 
         GameObject exitObject = new("Sector Exit");
         ProductionSectorExit sectorExit =

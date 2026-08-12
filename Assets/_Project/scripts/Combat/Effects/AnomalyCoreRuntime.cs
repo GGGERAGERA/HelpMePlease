@@ -33,9 +33,6 @@ public sealed class AnomalyCoreRuntime : MonoBehaviour
 
     public bool ActivateCore(AnomalyCoreId coreId)
     {
-        if (currentWeapon == null)
-            return false;
-
         if (activeConstructs.TryGetValue(
             coreId,
             out AnomalyCoreConstruct existing))
@@ -50,7 +47,7 @@ public sealed class AnomalyCoreRuntime : MonoBehaviour
         if (construct == null)
             return false;
 
-        construct.Configure(currentWeapon, transform);
+        construct.Configure(transform, currentWeapon);
         construct.enabled = true;
         activeConstructs.Add(coreId, construct);
         return true;
@@ -140,7 +137,7 @@ public sealed class AnomalyCoreRuntime : MonoBehaviour
         foreach (AnomalyCoreConstruct construct in activeConstructs.Values)
         {
             if (construct != null)
-                construct.Configure(currentWeapon, transform);
+                construct.Configure(transform, currentWeapon);
         }
     }
 

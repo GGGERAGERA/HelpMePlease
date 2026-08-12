@@ -44,10 +44,10 @@ public sealed class GravityConstruct :
     public bool WeaponPayloadEnabled => weaponPayloadEnabled;
 
     public override void Configure(
-        BaseWeapon weapon,
-        Transform anchorTransform)
+        Transform anchorTransform,
+        BaseWeapon optionalWeapon)
     {
-        sourceWeapon = weapon;
+        sourceWeapon = optionalWeapon;
         anchor = anchorTransform != null ? anchorTransform : transform;
     }
 
