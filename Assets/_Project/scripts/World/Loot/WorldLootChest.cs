@@ -33,7 +33,8 @@ public sealed class WorldLootChest : Interactable
     private Coroutine openingRoutine;
     private ChestState state;
 
-    public override bool CanInteract => state == ChestState.Closed;
+    public override bool CanInteract => state == ChestState.Closed &&
+        !WorldLootRewardReel.IsActive;
     public ChestState State => state;
     public IReadOnlyList<WorldLootRewardDefinition> RewardPool => rewardPool;
 
@@ -51,7 +52,7 @@ public sealed class WorldLootChest : Interactable
 
     public override void Interact()
     {
-        if (!CanInteract)
+        if (!CanInteract || !WorldLootRewardReel.TryReserveOpening())
             return;
 
         state = ChestState.Opening;
@@ -105,8 +106,13 @@ public sealed class WorldLootChest : Interactable
         state = ChestState.RewardReel;
         ApplyOpenedVisual();
 
-        if (WorldLootRewardReel.TryShow(rewardPool, HandleRewardClaimed))
+        if (WorldLootRewardReel.TryShow(
+            rewardPool,
+            transform.position,
+            HandleRewardClaimed))
             return;
+
+        WorldLootRewardReel.ReleaseOpeningReservation();
 
         Debug.LogError(
             $"[WorldLootChest] Reward Reel could not open for '{name}'. " +
@@ -180,6 +186,9 @@ public sealed class WorldLootChest : Interactable
 
     private void OnDisable()
     {
+        if (state == ChestState.Opening)
+            WorldLootRewardReel.ReleaseOpeningReservation();
+
         if (openingRoutine == null)
             return;
 

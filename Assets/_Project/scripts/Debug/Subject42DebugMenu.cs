@@ -437,8 +437,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         bool productionChoiceIsOpen =
             (levelChoiceManager != null && levelChoiceManager.IsChoosing) ||
-            (upgradeManager != null && upgradeManager.IsChoosingUpgrade) ||
-            WorldLootRewardReel.IsModalOpen;
+            (upgradeManager != null && upgradeManager.IsChoosingUpgrade);
 
         if (productionChoiceIsOpen)
         {
@@ -2116,7 +2115,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         AddSectionTitle(
             "СУНДУКИ",
-            "Production World Loot Chest V1; ручное размещение рядом с игроком"
+            "Production World Loot Chest V1.2; non-blocking Reel"
         );
         AddRow(
             "WORLD LOOT CHEST",
@@ -2130,6 +2129,13 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         );
         AddHint(
             "Reward Pool: 50 GOLD x6 · 100 GOLD x3 · 300 GOLD x1\n" +
+            "REEL PRESENTATION: " +
+            $"{WorldLootRewardReel.PresentationPanelSize.x:0}x" +
+            $"{WorldLootRewardReel.PresentationPanelSize.y:0} · " +
+            $"transfer {WorldLootRewardReel.PresentationTransferDuration:0.00}s\n" +
+            "Active Reel: " +
+            (WorldLootRewardReel.IsActive ? "YES" : "NO") + "\n" +
+            "State: " + WorldLootRewardReel.ActiveStateLabel + "\n" +
             lootChestDebugStatus + "\n" +
             "Последняя награда: " +
             (string.IsNullOrWhiteSpace(WorldLootRewardReel.LastClaimedReward)
