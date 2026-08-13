@@ -1,25 +1,10 @@
 fileFormatVersion: 2
-guid: fff0d699b10ee144892466a348d12914
+guid: 423b91d85bf0b85418c8a85f14691d4d
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 7160786979409441372
-    second: AseLocationBunkerDoor3_0
-  - first:
-      213: -5371984406877783455
-    second: AseLocationBunkerDoor3_1
-  - first:
-      213: -1605310520788921559
-    second: AseLocationBunkerDoor3_2
-  - first:
-      213: -3030064185483494775
-    second: AseLocationBunkerDoor3_3
-  - first:
-      213: 8710222688176117630
-    second: AseLocationBunkerDoor3_4
-  - first:
-      213: -5510336489783083607
-    second: AseLocationBunkerDoor3_5
+      213: -8114585613154805456
+    second: Case1_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -66,7 +51,7 @@ TextureImporter:
   spriteMeshType: 0
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 32
+  spritePixelsToUnits: 128
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -141,14 +126,14 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: AseLocationBunkerDoor3_0
+      name: Case1_0
       rect:
         serializedVersion: 2
-        x: 192
-        y: 992
-        width: 96
-        height: 32
-      alignment: 9
+        x: 0
+        y: 768
+        width: 256
+        height: 256
+      alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -156,109 +141,21 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c5231fb71d9306360800000000000000
-      internalID: 7160786979409441372
+      spriteID: 0399964b063336f80800000000000000
+      internalID: -8114585613154805456
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: AseLocationBunkerDoor3_1
+      name: Case1_1
       rect:
         serializedVersion: 2
-        x: 384
-        y: 992
-        width: 96
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 16abc19d4a0e275b0800000000000000
-      internalID: -5371984406877783455
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: AseLocationBunkerDoor3_2
-      rect:
-        serializedVersion: 2
-        x: 480
-        y: 992
-        width: 96
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 923dd2e269ac8b9e0800000000000000
-      internalID: -1605310520788921559
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: AseLocationBunkerDoor3_4
-      rect:
-        serializedVersion: 2
-        x: 576
-        y: 976
-        width: 96
-        height: 16
-      alignment: 9
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: e77194bd26de0e870800000000000000
-      internalID: 8710222688176117630
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: AseLocationBunkerDoor3_5
-      rect:
-        serializedVersion: 2
-        x: 576
-        y: 939
-        width: 96
-        height: 16
-      alignment: 9
-      pivot: {x: 0.5, y: 0.3125}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 9ad3b95582a5783b0800000000000000
-      internalID: -5510336489783083607
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: AseLocationBunkerDoor3_6
-      rect:
-        serializedVersion: 2
-        x: 192
-        y: 864
-        width: 96
-        height: 128
-      alignment: 9
+        x: 256
+        y: 768
+        width: 256
+        height: 256
+      alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -266,250 +163,316 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 0b29dc0abe6cef44ab4a8af4692cf7d9
-      internalID: 933509943
+      spriteID: 92ac79885fe7e284cb3cb02ccaf4f0d7
+      internalID: -1270952704
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: AseLocationBunkerDoor3_7
+      name: Case1_2
       rect:
         serializedVersion: 2
-        x: 288
-        y: 992
-        width: 96
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+        x: 512
+        y: 768
+        width: 256
+        height: 256
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 708259600747d27498996aa96ff43628
-      internalID: 2023921816
+      spriteID: 085753a4f08a0f44e9271bb57881fcbc
+      internalID: -1951026498
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: AseLocationBunkerDoor3_8
-      rect:
-        serializedVersion: 2
-        x: 288
-        y: 960
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 857f7abb49c39444694c4b04fb99cb30
-      internalID: -1867894307
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: AseLocationBunkerDoor3_9
-      rect:
-        serializedVersion: 2
-        x: 320
-        y: 944
-        width: 32
-        height: 48
-      alignment: 9
-      pivot: {x: 0.5, y: 0.3541667}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 0e0548950dd621542a7e6d3d1f4855d3
-      internalID: -516955941
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: AseLocationBunkerDoor3_10
-      rect:
-        serializedVersion: 2
-        x: 192
-        y: 832
-        width: 96
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: dfe00095cd55abf45828b70ecfc72e82
-      internalID: 319069704
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: AseLocationBunkerDoor3_11
-      rect:
-        serializedVersion: 2
-        x: 704
-        y: 992
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 15, y: 15, z: 15, w: 15}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 992788907c8adc542ac0d3014c617717
-      internalID: -2147422180
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: AseLocationBunkerDoor3_3
-      rect:
-        serializedVersion: 2
-        x: 719
-        y: 992
-        width: 2
-        height: 16
-      alignment: 9
-      pivot: {x: 0.5, y: 1}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 5224d6ce60716c447bef112d048b9b8c
-      internalID: -3030064185483494775
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: AseLocationBunkerDoor3_12
-      rect:
-        serializedVersion: 2
-        x: 736
-        y: 992
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: c98f7f52a622ed84dad60532543e3d11
-      internalID: -280576458
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: AseLocationBunkerDoor3_13
+      name: Case1_3
       rect:
         serializedVersion: 2
         x: 768
-        y: 992
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+        y: 768
+        width: 256
+        height: 256
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 6e28717c2c0f23145bdac9e3379f0b52
-      internalID: 1242472134
+      spriteID: a0f65de55a3d8b54aa765ff10abb6c55
+      internalID: -1771077187
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: AseLocationBunkerDoor3_14
+      name: Case1_4
       rect:
         serializedVersion: 2
-        x: 800
-        y: 960
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+        x: 0
+        y: 512
+        width: 256
+        height: 256
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: e6650255e5f6a3846b4dc238937de375
-      internalID: -1629191873
+      spriteID: 31b6a1f6e4aac064c90795fe1c6766d7
+      internalID: -800999708
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: AseLocationBunkerDoor3_15
+      name: Case1_5
       rect:
         serializedVersion: 2
-        x: 864
-        y: 992
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 7, z: 0, w: 7}
+        x: 256
+        y: 512
+        width: 256
+        height: 256
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 8b9e7211e37d150459be32546850d99e
-      internalID: -950230919
+      spriteID: 61b9e1e6cc59c6042bd07532db3b3e7f
+      internalID: 204024453
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: AseLocationBunkerDoor3_16
+      name: Case1_6
       rect:
         serializedVersion: 2
-        x: 896
-        y: 992
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 7, z: 0, w: 7}
+        x: 512
+        y: 512
+        width: 256
+        height: 256
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: b2e936e87acfae944b970b47ac928bbd
-      internalID: 1099670502
+      spriteID: 2a52304c036a75849a156016d69374f9
+      internalID: 138259394
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Case1_7
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 512
+        width: 256
+        height: 256
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1b059c2a0dcfe514a9692935425f141c
+      internalID: -1441935853
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Case1_8
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 256
+        width: 256
+        height: 256
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2cb41c12c958850488c0701c9586b16a
+      internalID: 1152100119
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Case1_9
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 256
+        width: 256
+        height: 256
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2bec5ad4e88cb91489ce72485e3c75cf
+      internalID: 642270681
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Case1_10
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 256
+        width: 256
+        height: 256
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c035d51217aa08943a99a48549beb0fc
+      internalID: 1649840054
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Case1_11
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 256
+        width: 256
+        height: 256
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6bbd63e5a05ad194abc2f37571f861a8
+      internalID: 376107409
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Case1_12
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 256
+        height: 256
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 60e87b8f223f2844794eae6a013e56fb
+      internalID: -1372699521
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Case1_13
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 0
+        width: 256
+        height: 256
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c13064f7767fbd24d94a59d5d30c7145
+      internalID: -2053373865
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Case1_14
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 0
+        width: 256
+        height: 256
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4227ba2a52e854d4f9ec7333207ccc65
+      internalID: -1757121096
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Case1_15
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 0
+        width: 256
+        height: 256
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a7e1d076c2c4b374898d542d3d29c9f9
+      internalID: -1808150187
       vertices: []
       indices: 
       edges: []
@@ -518,7 +481,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 15be0e66fddac6447b271dcb66a1c11f
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -526,25 +489,26 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":256.0,"y":256.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.0},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":7,"pivotUnitMode":1,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      AseLocationBunkerDoor3_0: 7160786979409441372
-      AseLocationBunkerDoor3_1: -5371984406877783455
-      AseLocationBunkerDoor3_10: 319069704
-      AseLocationBunkerDoor3_11: -2147422180
-      AseLocationBunkerDoor3_12: -280576458
-      AseLocationBunkerDoor3_13: 1242472134
-      AseLocationBunkerDoor3_14: -1629191873
-      AseLocationBunkerDoor3_15: -950230919
-      AseLocationBunkerDoor3_16: 1099670502
-      AseLocationBunkerDoor3_2: -1605310520788921559
-      AseLocationBunkerDoor3_3: -3030064185483494775
-      AseLocationBunkerDoor3_4: 8710222688176117630
-      AseLocationBunkerDoor3_5: -5510336489783083607
-      AseLocationBunkerDoor3_6: 933509943
-      AseLocationBunkerDoor3_7: 2023921816
-      AseLocationBunkerDoor3_8: -1867894307
-      AseLocationBunkerDoor3_9: -516955941
+      Case1_0: -8114585613154805456
+      Case1_1: -1270952704
+      Case1_10: 1649840054
+      Case1_11: 376107409
+      Case1_12: -1372699521
+      Case1_13: -2053373865
+      Case1_14: -1757121096
+      Case1_15: -1808150187
+      Case1_2: -1951026498
+      Case1_3: -1771077187
+      Case1_4: -800999708
+      Case1_5: 204024453
+      Case1_6: 138259394
+      Case1_7: -1441935853
+      Case1_8: 1152100119
+      Case1_9: 642270681
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
