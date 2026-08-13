@@ -26,6 +26,12 @@ public class PlayerInteractor : MonoBehaviour
 
     private void Update()
     {
+        if (Time.timeScale <= 0f)
+        {
+            currentInteractable = null;
+            return;
+        }
+
         FindInteractable();
 
         if (currentInteractable != null &&

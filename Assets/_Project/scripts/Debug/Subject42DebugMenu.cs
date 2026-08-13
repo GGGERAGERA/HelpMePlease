@@ -314,6 +314,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private readonly List<CharacterData> debugCharacters = new();
     private readonly List<GameObject> debugEnemies = new();
     private string enemyDebugStatus = "Готово к ручному тесту.";
+    private string lootChestDebugStatus = "Готово к тесту сундука.";
     private readonly List<UpgradeData> visibleUpgrades = new();
     private TelekinesisDebugPrototype telekinesisPrototype;
     private CombatLabDebugController combatLab;
@@ -436,7 +437,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         bool productionChoiceIsOpen =
             (levelChoiceManager != null && levelChoiceManager.IsChoosing) ||
-            (upgradeManager != null && upgradeManager.IsChoosingUpgrade);
+            (upgradeManager != null && upgradeManager.IsChoosingUpgrade) ||
+            WorldLootRewardReel.IsModalOpen;
 
         if (productionChoiceIsOpen)
         {
@@ -2009,6 +2011,25 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         RemoveDestroyedDebugEnemies();
         AddSectionTitle("ВРАГИ", "Production spawn API; ручной spawn работает при выключенном автоспавне");
 
+        bool aiFrozen = EnemyDebugAiFreeze.IsFrozen;
+        AddSectionTitle(
+            "ПОВЕДЕНИЕ ВРАГОВ",
+            "Отключает только собственные движение и атаки AI"
+        );
+        AddRow(
+            "РЕЖИМ AI",
+            aiFrozen ? "AI ЗАМОРОЖЕН" : "АКТИВНО",
+            aiFrozen ? warningColor : successColor,
+            aiFrozen ? "АКТИВНО" : "AI ЗАМОРОЖЕН",
+            true,
+            ToggleEnemyAiFreeze
+        );
+        AddHint(
+            aiFrozen
+                ? $"Состояние: AI остановлен у: {EnemyHealth.ActiveInstances.Count} врагов"
+                : "Состояние: собственное поведение врагов активно"
+        );
+
         bool spawnerAvailable = enemySpawner != null;
         bool autoSpawn = spawnerAvailable && enemySpawner.IsSpawningEnabled;
         AddRow(
@@ -2046,6 +2067,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void AddWorldEventsSection()
     {
+        AddLootChestSection();
         AddSectionTitle("WORLD EVENTS", "Spawn/Clear through WorldEventSpawner");
         WorldEvent current = worldEventSpawner != null
             ? worldEventSpawner.CurrentEvent
@@ -2082,6 +2104,58 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             if (prefab != null && !addedEventPrefabs.Contains(prefab))
                 AddEventRow(GetEventDisplayName(prefab), prefab);
         }
+    }
+
+    private void AddLootChestSection()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        WorldLootChest prefab = Resources.Load<WorldLootChest>(
+            "WorldLoot/WorldLootChestV1"
+        );
+        bool available = player != null && prefab != null;
+
+        AddSectionTitle(
+            "СУНДУКИ",
+            "Production World Loot Chest V1; ручное размещение рядом с игроком"
+        );
+        AddRow(
+            "WORLD LOOT CHEST",
+            !available
+                ? player == null ? "ИГРОК НЕ НАЙДЕН" : "PREFAB НЕ НАЙДЕН"
+                : "ГОТОВ",
+            available ? successColor : warningColor,
+            "СОЗДАТЬ СУНДУК РЯДОМ",
+            available,
+            SpawnWorldLootChestNearPlayer
+        );
+        AddHint(
+            "Reward Pool: 50 GOLD x6 · 100 GOLD x3 · 300 GOLD x1\n" +
+            lootChestDebugStatus + "\n" +
+            "Последняя награда: " +
+            (string.IsNullOrWhiteSpace(WorldLootRewardReel.LastClaimedReward)
+                ? "нет"
+                : WorldLootRewardReel.LastClaimedReward)
+        );
+    }
+
+    private void SpawnWorldLootChestNearPlayer()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+
+        if (player == null)
+        {
+            lootChestDebugStatus = "⚠ Игрок не найден.";
+            RefreshCurrentTab();
+            return;
+        }
+
+        Vector2 position = (Vector2)player.transform.position +
+            Vector2.right * 2.5f;
+        WorldLootChest chest = WorldLootChestSpawner.SpawnChest(position);
+        lootChestDebugStatus = chest != null
+            ? "✓ Сундук создан в 2.5 м справа от игрока."
+            : "⚠ Не удалось создать production prefab.";
+        RefreshCurrentTab();
     }
 
     private void AddCombatLabSection()
@@ -2674,6 +2748,21 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             enemyDebugStatus = "✓ Production автоспавн возобновлён.";
         }
 
+        RefreshCurrentTab();
+    }
+
+    private void ToggleEnemyAiFreeze()
+    {
+        bool frozen = !EnemyDebugAiFreeze.IsFrozen;
+
+        if (productionSectorDebug != null)
+            productionSectorDebug.SetEnemyAiFrozen(frozen);
+        else
+            EnemyDebugAiFreeze.SetFrozen(frozen);
+
+        enemyDebugStatus = frozen
+            ? $"✓ AI остановлен у: {EnemyHealth.ActiveInstances.Count} врагов. Новые враги наследуют режим."
+            : "✓ Собственное движение и атаки врагов восстановлены.";
         RefreshCurrentTab();
     }
 

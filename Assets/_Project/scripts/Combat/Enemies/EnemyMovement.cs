@@ -1,5 +1,21 @@
 using UnityEngine;
 
+public static class EnemyDebugAiFreeze
+{
+    public static bool IsFrozen { get; private set; }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetSessionState()
+    {
+        IsFrozen = false;
+    }
+
+    public static void SetFrozen(bool frozen)
+    {
+        IsFrozen = frozen;
+    }
+}
+
 public abstract class EnemyMovement : MonoBehaviour, IAnomalyExternalVelocity
 {
     private readonly AnomalyExternalVelocityStack

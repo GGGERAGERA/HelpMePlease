@@ -1,7 +1,8 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public sealed class TurretEnemyBehaviour : MonoBehaviour
+public sealed class TurretEnemyBehaviour : MonoBehaviour,
+    IAnomalyExternalVelocity
 {
     [Header("Existing prefab references")]
     [SerializeField] private Transform aimPivot;
@@ -18,6 +19,11 @@ public sealed class TurretEnemyBehaviour : MonoBehaviour
     private LineRenderer aimLine;
     private float timer;
     private bool aiming;
+    private bool wasAiFrozen;
+    private readonly AnomalyExternalVelocityStack anomalyExternalVelocity =
+        new();
+
+    public Component ExternalVelocityComponent => this;
 
     private void Awake()
     {
@@ -28,6 +34,14 @@ public sealed class TurretEnemyBehaviour : MonoBehaviour
     private void Start()
     {
         FindPlayer();
+
+        if (EnemyDebugAiFreeze.IsFrozen)
+        {
+            wasAiFrozen = true;
+            SetAimLineVisible(false);
+            return;
+        }
+
         BeginAim();
     }
 
@@ -35,6 +49,24 @@ public sealed class TurretEnemyBehaviour : MonoBehaviour
     {
         if (Time.timeScale == 0f)
             return;
+
+        if (EnemyDebugAiFreeze.IsFrozen)
+        {
+            if (!wasAiFrozen)
+            {
+                wasAiFrozen = true;
+                aiming = false;
+                SetAimLineVisible(false);
+            }
+
+            return;
+        }
+
+        if (wasAiFrozen)
+        {
+            wasAiFrozen = false;
+            BeginAim();
+        }
 
         if (player == null)
             FindPlayer();
@@ -73,8 +105,27 @@ public sealed class TurretEnemyBehaviour : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (EnemyDebugAiFreeze.IsFrozen)
+        {
+            body.MovePosition(
+                body.position + anomalyExternalVelocity.Value *
+                Time.fixedDeltaTime
+            );
+            return;
+        }
+
         body.linearVelocity = Vector2.zero;
         body.angularVelocity = 0f;
+    }
+
+    public void SetAnomalyExternalVelocity(Object source, Vector2 velocity)
+    {
+        anomalyExternalVelocity.Set(source, velocity);
+    }
+
+    public void RemoveAnomalyExternalVelocity(Object source)
+    {
+        anomalyExternalVelocity.Remove(source);
     }
 
     private void BeginAim()
@@ -148,5 +199,6 @@ public sealed class TurretEnemyBehaviour : MonoBehaviour
     private void OnDisable()
     {
         SetAimLineVisible(false);
+        anomalyExternalVelocity.Clear();
     }
 }

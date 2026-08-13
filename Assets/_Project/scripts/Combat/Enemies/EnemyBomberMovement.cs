@@ -52,6 +52,21 @@ public class EnemyBomberMovement : EnemyMovement
         if (Time.timeScale == 0f || isExploding)
             return;
 
+        if (EnemyDebugAiFreeze.IsFrozen)
+        {
+            knockbackVelocity = Vector2.MoveTowards(
+                knockbackVelocity,
+                Vector2.zero,
+                knockbackDecay * Time.fixedDeltaTime
+            );
+            rb.MovePosition(
+                rb.position +
+                (knockbackVelocity + worldRuleExternalVelocity +
+                 AnomalyExternalVelocity) * Time.fixedDeltaTime
+            );
+            return;
+        }
+
         if (player == null)
             FindPlayer();
 

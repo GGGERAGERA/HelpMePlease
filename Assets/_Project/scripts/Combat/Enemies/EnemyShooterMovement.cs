@@ -46,6 +46,16 @@ public class EnemyShooterMovement : EnemyMovement
         if (Time.timeScale == 0f)
             return;
 
+        if (EnemyDebugAiFreeze.IsFrozen)
+        {
+            rb.MovePosition(
+                rb.position +
+                (worldRuleExternalVelocity + AnomalyExternalVelocity) *
+                Time.fixedDeltaTime
+            );
+            return;
+        }
+
         if (player == null)
             FindPlayer();
 
@@ -57,7 +67,8 @@ public class EnemyShooterMovement : EnemyMovement
 
     private void Update()
     {
-        if (Time.timeScale == 0f || player == null)
+        if (Time.timeScale == 0f || EnemyDebugAiFreeze.IsFrozen ||
+            player == null)
             return;
 
         fireTimer -= Time.deltaTime;

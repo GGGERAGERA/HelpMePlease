@@ -130,6 +130,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         enemyOutlineEnabled = false;
         specialOverride = SpecialOverride.Random;
         invulnerability = false;
+        EnemyDebugAiFreeze.SetFrozen(false);
     }
 
     private readonly List<EnvironmentState> environmentStates = new();
@@ -235,6 +236,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     public int AnomalyRendererCount => anomalyLines.Count;
     public SpecialOverride Override => specialOverride;
     public bool InvulnerabilityEnabled => invulnerability;
+    public bool EnemyAiFrozen => EnemyDebugAiFreeze.IsFrozen;
     public ProductionAnomalySite CurrentSite => currentSite;
     public int EnvironmentRendererCount => environmentStates.Count;
 
@@ -273,6 +275,11 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     {
         invulnerability = enabled;
         ApplyInvulnerability();
+    }
+
+    public void SetEnemyAiFrozen(bool frozen)
+    {
+        EnemyDebugAiFreeze.SetFrozen(frozen);
     }
 
     public void SetPreset(ReadabilityPreset value)

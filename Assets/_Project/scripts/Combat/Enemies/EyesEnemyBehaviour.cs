@@ -29,11 +29,19 @@ public sealed class EyesEnemyBehaviour : EnemyMovement
     {
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
         worldRuleVisual = FindFirstObjectByType<WorldRuleVisual>();
-        UpdateVisibilityEffect();
+
+        if (!EnemyDebugAiFreeze.IsFrozen)
+            UpdateVisibilityEffect();
     }
 
     private void Update()
     {
+        if (EnemyDebugAiFreeze.IsFrozen)
+        {
+            worldRuleVisual?.RemovePlayerLightRadiusMultiplier(this);
+            return;
+        }
+
         if (Time.timeScale == 0f || player == null)
             return;
 
@@ -42,7 +50,20 @@ public sealed class EyesEnemyBehaviour : EnemyMovement
 
     private void FixedUpdate()
     {
-        if (Time.timeScale == 0f || player == null)
+        if (Time.timeScale == 0f)
+            return;
+
+        if (EnemyDebugAiFreeze.IsFrozen)
+        {
+            body.MovePosition(
+                body.position +
+                (worldRuleExternalVelocity + AnomalyExternalVelocity) *
+                Time.fixedDeltaTime
+            );
+            return;
+        }
+
+        if (player == null)
             return;
 
         Vector2 offset = (Vector2)player.position - body.position;

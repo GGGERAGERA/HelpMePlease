@@ -58,6 +58,12 @@ public class EnemyChaseMovement : EnemyMovement
         if (Time.timeScale == 0f)
             return;
 
+        if (EnemyDebugAiFreeze.IsFrozen)
+        {
+            MoveWithoutAi();
+            return;
+        }
+
         if (player == null)
             FindPlayer();
 
@@ -77,6 +83,29 @@ public class EnemyChaseMovement : EnemyMovement
         }
 
         MoveToPlayer();
+    }
+
+    private void MoveWithoutAi()
+    {
+        if (animator != null && hasRunParameter &&
+            (!animatorStateInitialized || animatorRunning))
+        {
+            animator.SetBool(runParameterName, false);
+            animatorRunning = false;
+            animatorStateInitialized = true;
+        }
+
+        knockbackVelocity = Vector2.MoveTowards(
+            knockbackVelocity,
+            Vector2.zero,
+            knockbackDecay * Time.fixedDeltaTime
+        );
+
+        rb.MovePosition(
+            rb.position +
+            (knockbackVelocity + worldRuleExternalVelocity +
+             AnomalyExternalVelocity) * Time.fixedDeltaTime
+        );
     }
 
     private void FindPlayer()
