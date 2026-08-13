@@ -264,7 +264,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1df5541c41803e04ca73f43836b58ac8, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerNotificationManager
   root: {fileID: 75423600}
   canvasGroup: {fileID: 75423603}
@@ -251986,6 +251986,7 @@ MonoBehaviour:
   target: {fileID: 1742332385}
   offset: {x: 0, y: 0, z: -10}
   smoothSpeed: 0.125
+  controlledCamera: {fileID: 1648039033}
 --- !u!4 &1111020599
 Transform:
   m_ObjectHideFlags: 0
@@ -254507,6 +254508,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1400463893}
   - component: {fileID: 1400463894}
+  - component: {fileID: 910000000000000103}
   m_Layer: 0
   m_Name: StartRobotAnimationTrigger
   m_TagString: Untagged
@@ -254526,7 +254528,8 @@ Transform:
   m_LocalPosition: {x: 0, y: -5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 910000000000000102}
   m_Father: {fileID: 1030696774}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!61 &1400463894
@@ -258748,6 +258751,64 @@ Transform:
   m_Children: []
   m_Father: {fileID: 910000000000000002}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &910000000000000101
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 910000000000000102}
+  m_Layer: 0
+  m_Name: RobotWindowCameraFocus
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &910000000000000102
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910000000000000101}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1400463893}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &910000000000000103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1400463892}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2aef89d04f33431ca98f791d0fc5d254, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::RobotWindowAnimationTrigger
+  robotAnimator: {fileID: 910000000000000104}
+  animationStateName: animRobot2D1
+  waitForPlayerBeforeAnimation: 1
+  animationStartDelay: 2
+  cameraFollow: {fileID: 1111020598}
+  focusTarget: {fileID: 910000000000000102}
+  zoomMultiplier: 0.85
+  positionStrength: 0.35
+  focusInDuration: 0.4
+  focusOutDuration: 0.5
+--- !u!95 &910000000000000104 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 4399900168903702634, guid: 8cb53c066268ada4d826a7eeef6d8f2b, type: 3}
+  m_PrefabInstance: {fileID: 756387017}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &920000000000000001
 PrefabInstance:
   m_ObjectHideFlags: 0
