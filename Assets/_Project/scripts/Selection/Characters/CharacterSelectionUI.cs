@@ -171,10 +171,22 @@ public sealed class CharacterSelectionUI : MonoBehaviour
     private void RefreshDetails(CharacterData character)
     {
         SetText(characterNameText, character.characterName);
-        SetText(statusText, "DESCRIPTION");
-        SetText(descriptionText, character.description);
+        SetText(statusText, "COMBAT TYPE");
+        SetText(descriptionText, GetCharacterDetails(character));
 
         SetPortrait(character.portrait, Color.white);
+    }
+
+    private static string GetCharacterDetails(CharacterData character)
+    {
+        string combatName = string.IsNullOrWhiteSpace(
+            character.combatTypeDisplayName)
+            ? character.combatType.ToString()
+            : character.combatTypeDisplayName;
+        string combatDescription = character.combatTypeDescription ?? string.Empty;
+        string characterDescription = character.description ?? string.Empty;
+
+        return $"{combatName}\n{combatDescription}\n\n{characterDescription}";
     }
 
     private void RefreshCards(CharacterData character)
@@ -292,10 +304,7 @@ public sealed class CharacterSelectionUI : MonoBehaviour
         if (character == null || character.unlockData == null)
             return true;
 
-        if (UnlockProgressService.Instance == null)
-            return character.unlockData.unlockedByDefault;
-
-        return UnlockProgressService.Instance.IsUnlocked(character.unlockData);
+        return UnlockProgressService.IsUnlockedNow(character.unlockData);
     }
     private void BindCards()
     {

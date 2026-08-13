@@ -62,11 +62,13 @@ public abstract class BaseWeapon : MonoBehaviour
     protected float lastAttackTime;
 
     private bool isInitialized;
+    private WeaponControlMode? controlModeOverride;
 
     protected WeaponRuntimeStats Stats => runtimeStats;
     protected WeaponFxPlayer FxPlayer => fxPlayer;
     public Transform Owner => owner;
-    public WeaponControlMode ControlMode => WeaponControlSettings.CurrentMode;
+    public WeaponControlMode ControlMode =>
+        controlModeOverride ?? WeaponControlSettings.CurrentMode;
     public Vector2 AimDirection => lastAimDirection;
     public bool HasAim => hasAim;
     public bool WantsToFire => IsTryingToAttack();
@@ -140,6 +142,11 @@ public abstract class BaseWeapon : MonoBehaviour
         EnsureRuntimeStats();
         runtimeStats.InitializeFromWeaponData(data);
         isInitialized = true;
+    }
+
+    public void SetControlModeOverride(WeaponControlMode mode)
+    {
+        controlModeOverride = mode;
     }
 
     protected virtual void UpdateAimAndOrbit()

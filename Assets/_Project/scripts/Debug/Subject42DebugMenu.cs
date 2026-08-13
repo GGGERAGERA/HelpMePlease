@@ -1665,6 +1665,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void AddBunkerSection()
     {
+        AddRoomStateRows();
+
         BunkerStationProgressionService service = BunkerStationProgressionService.Instance;
         AddSectionTitle("CHARACTER STATION", "Persistent station investment");
         if (service == null ||
@@ -1700,6 +1702,22 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             "RESET", true, DebugResetCharacterStation);
 
         AddSectionTitle("CHARACTER UI", "Selection and locked-state testing");
+        CharacterData selectedCharacter =
+            RunSelectionManager.Instance != null
+                ? RunSelectionManager.Instance.SelectedCharacter
+                : null;
+        AddRow("Selected Character",
+            selectedCharacter != null
+                ? selectedCharacter.characterName
+                : "NOT SELECTED",
+            selectedCharacter != null ? successColor : mutedColor,
+            null, false, null);
+        AddRow("Combat Type",
+            selectedCharacter != null
+                ? selectedCharacter.combatType.ToString()
+                : "-",
+            selectedCharacter != null ? successColor : mutedColor,
+            null, false, null);
         CharacterSelectionUI characterUi = FindFirstObjectByType<CharacterSelectionUI>();
         bool uiAvailable = characterUi != null;
         AddRow("Character Selection", uiAvailable ? "OPEN" : "NOT OPEN",
@@ -1731,7 +1749,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             : character.characterName;
         bool canSelect = characterUi != null &&
             characterUi.CanDebugSelectCharacter(character);
-        AddRow($"Select {characterName}", canSelect ? "AVAILABLE" : "LOCKED",
+        string availability = canSelect ? "AVAILABLE" : "LOCKED";
+        AddRow($"Select {characterName}",
+            $"{availability} / {character.combatType}",
             canSelect ? mutedColor : warningColor,
             $"SELECT {characterName.ToUpperInvariant()}", canSelect,
             () => DebugSelectCharacter(characterUi, character));
@@ -2102,6 +2122,34 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
             if (prefab != null && !addedEventPrefabs.Contains(prefab))
                 AddEventRow(GetEventDisplayName(prefab), prefab);
+        }
+    }
+
+    private void AddRoomStateRows()
+    {
+        AddSectionTitle("BUNKER ROOMS", "Independent production room states");
+        BunkerRoomState[] rooms =
+            FindObjectsByType<BunkerRoomState>(FindObjectsSortMode.None);
+
+        foreach (BunkerRoomId roomId in Enum.GetValues(typeof(BunkerRoomId)))
+        {
+            BunkerRoomState room = null;
+            for (int i = 0; i < rooms.Length; i++)
+            {
+                if (rooms[i] != null && rooms[i].RoomId == roomId)
+                {
+                    room = rooms[i];
+                    break;
+                }
+            }
+
+            string state = room == null
+                ? "MISSING"
+                : room.IsOpen ? "OPEN" : "CLOSED";
+            Color color = room == null
+                ? warningColor
+                : room.IsOpen ? successColor : mutedColor;
+            AddRow(roomId.ToString(), state, color, null, false, null);
         }
     }
 
