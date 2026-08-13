@@ -118,6 +118,13 @@ public sealed class RobotWindowAnimationTrigger : MonoBehaviour
 
     private void ScheduleRobotAnimation()
     {
+        if (animationStarted && !animatorHeld)
+        {
+            stopAfterCurrentLoop = false;
+            animationStartPending = false;
+            return;
+        }
+
         animationStartTimer = animationStartDelay;
         animationStartPending = true;
 
