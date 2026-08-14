@@ -106,10 +106,7 @@ public class CharacterCardView : MonoBehaviour
         if (character == null || character.unlockData == null)
             return true;
 
-        if (UnlockProgressService.Instance == null)
-            return character.unlockData.unlockedByDefault;
-
-        return UnlockProgressService.Instance.IsUnlocked(character.unlockData);
+        return UnlockProgressService.IsUnlockedNow(character.unlockData);
     }
 
     private void RefreshLockRequirement()
@@ -117,8 +114,8 @@ public class CharacterCardView : MonoBehaviour
         if (lockedOverlay == null || character == null || character.unlockData == null)
             return;
 
-        UnlockConditionData condition = character.unlockData.condition;
-        if (condition == null || condition.type != UnlockConditionType.StationLevelRequirement)
+        string description = UnlockProgressService.GetLockedDescription(character.unlockData);
+        if (string.IsNullOrWhiteSpace(description))
             return;
 
         if (lockRequirementText == null)
@@ -151,7 +148,7 @@ public class CharacterCardView : MonoBehaviour
         if (legacyCondition != null)
             legacyCondition.gameObject.SetActive(false);
 
-        lockRequirementText.text = $"STATION LV.{condition.requiredAmount}";
+        lockRequirementText.text = description;
     }
 
     private void ConfigurePixelStateVisuals()

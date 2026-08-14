@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: upgrade_station_lv2
   m_EditorClassIdentifier: Assembly-CSharp::UnlockableContentData
   id: upgrade_station_lv2
-  displayName: BLUE UPGRADES
+  displayName: ADVANCED UPGRADES
   contentType: 4
   unlockedByDefault: 0
-  lockedDescription: "Upgrades Station: Level 2"
+  lockedDescription: "Requires Upgrade Station Lv2"
   condition:
     type: 5
     targetId: ''

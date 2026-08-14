@@ -44,21 +44,21 @@ public sealed class RunRouteProgressView : MonoBehaviour
 
     private void Show(int sectorNumber, int totalSectors)
     {
-        int safeTotal = Mathf.Max(1, totalSectors);
-        int safeSector = Mathf.Clamp(sectorNumber, 1, safeTotal);
-
-        // Sector 5 owns the top-center space with its boss health bar.
-        if (RunRoute.IsBossSector(safeSector))
+        // Boss is outside the three-sector production HUD route.
+        if (RunRoute.IsBossSector(sectorNumber))
         {
             Hide();
             return;
         }
 
+        int safeTotal = Mathf.Max(1, totalSectors);
+        int safeSector = Mathf.Clamp(sectorNumber, 1, safeTotal);
+
         ConfigureRootLayout();
         Build();
 
         gameObject.SetActive(true);
-        sectorText.text = $"СЕКТОР {safeSector} / {safeTotal}";
+        sectorText.text = $"SECTOR {safeSector} / {safeTotal}";
 
         if (!showPoints)
             return;
@@ -85,7 +85,7 @@ public sealed class RunRouteProgressView : MonoBehaviour
             pointRect.sizeDelta = new Vector2(size, size);
         }
 
-        finalLabel.text = "ФИНАЛ";
+        finalLabel.text = "EXIT";
         finalLabel.gameObject.SetActive(true);
     }
 

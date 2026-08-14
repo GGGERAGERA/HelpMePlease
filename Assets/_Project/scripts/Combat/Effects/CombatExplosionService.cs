@@ -58,27 +58,4 @@ public static class CombatExplosionService
         }
     }
 
-    public static void TryExplodeOnEnemyDeath(
-    Vector2 position,
-    PlayerCombatModifiers modifiers,
-    LayerMask enemyMask
-)
-    {
-        if (modifiers == null)
-            return;
-
-        if (modifiers.enemyDeathExplosionChance <= 0f)
-            return;
-
-        if (Random.value > modifiers.enemyDeathExplosionChance)
-            return;
-
-        Explode(
-    position,
-    20f,
-    modifiers,
-    enemyMask,
-    1f + modifiers.deathExplosionDamageBonus
-);
-    }
 }

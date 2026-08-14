@@ -8,10 +8,39 @@ using UnityEngine;
 public sealed class UpgradeRoller
 {
     private readonly UpgradeData[] allUpgrades;
+    private readonly RunItemSlots itemSlotsOverride;
+    private readonly bool useItemSlotsOverride;
+    private readonly WeaponUpgradeCapability capabilityOverride;
+    private readonly bool useCapabilityOverride;
 
     public UpgradeRoller(UpgradeData[] allUpgrades)
     {
         this.allUpgrades = allUpgrades;
+    }
+
+    /// <summary>
+    /// Supplies an explicit slot state for deterministic validation tooling.
+    /// Production uses the current RunStateManager through the main constructor.
+    /// </summary>
+    public UpgradeRoller(
+        UpgradeData[] allUpgrades,
+        RunItemSlots itemSlots)
+    {
+        this.allUpgrades = allUpgrades;
+        itemSlotsOverride = itemSlots;
+        useItemSlotsOverride = true;
+    }
+
+    public UpgradeRoller(
+        UpgradeData[] allUpgrades,
+        RunItemSlots itemSlots,
+        WeaponUpgradeCapability capabilities)
+    {
+        this.allUpgrades = allUpgrades;
+        itemSlotsOverride = itemSlots;
+        useItemSlotsOverride = true;
+        capabilityOverride = capabilities;
+        useCapabilityOverride = true;
     }
 
     public List<UpgradeData> RollChoices(int playerLevel, int count)
@@ -86,12 +115,25 @@ public sealed class UpgradeRoller
         return result;
     }
 
+    public int CountEligibleChoices(int playerLevel)
+    {
+        return BuildPool(playerLevel).Count;
+    }
+
     private List<UpgradeData> BuildPool(int playerLevel)
     {
         List<UpgradeData> pool = new List<UpgradeData>();
-        RunItemSlots itemSlots = RunStateManager.Instance != null
-            ? RunStateManager.Instance.ItemSlots
-            : null;
+        if (allUpgrades == null)
+            return pool;
+
+        RunItemSlots itemSlots = useItemSlotsOverride
+            ? itemSlotsOverride
+            : RunStateManager.Instance != null
+                ? RunStateManager.Instance.ItemSlots
+                : null;
+        WeaponUpgradeCapability capabilities = useCapabilityOverride
+            ? capabilityOverride
+            : WeaponUpgradeCapabilityResolver.GetCurrentCapabilities();
 
         foreach (UpgradeData upgrade in allUpgrades)
         {
@@ -104,11 +146,22 @@ public sealed class UpgradeRoller
             if (playerLevel < upgrade.minPlayerLevel)
                 continue;
 
-            if (itemSlots != null &&
-                itemSlots.GetLevel(upgrade) >= RunItemSlots.MaxItemLevel)
+            if (!UpgradeEligibilityRules.IsWeaponCompatible(
+                    upgrade,
+                    capabilities))
             {
                 continue;
             }
+
+            if (UpgradeEligibilityRules.HasExclusiveConflict(
+                    upgrade,
+                    itemSlots))
+            {
+                continue;
+            }
+
+            if (itemSlots != null && !itemSlots.CanAccept(upgrade))
+                continue;
 
             pool.Add(upgrade);
         }

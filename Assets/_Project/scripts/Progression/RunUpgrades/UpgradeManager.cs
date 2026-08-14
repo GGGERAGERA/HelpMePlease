@@ -53,6 +53,8 @@ public sealed class UpgradeManager : MonoBehaviour
     private System.Action worldEventStandardSelected;
     private System.Action worldEventRiskSelected;
     private bool currentRequestIsChestReward;
+    private UpgradeChoiceRequest currentRequest;
+    private bool hasCurrentRequest;
 
     public bool IsChoosingUpgrade => isChoosingUpgrade;
 
@@ -73,6 +75,32 @@ public sealed class UpgradeManager : MonoBehaviour
         out ItemGrantResult grantResult)
     {
         return TryGrantUpgrade(upgrade, out grantResult);
+    }
+
+    public int GetEligibleProductionUpgradeCount(int playerLevel)
+    {
+        return upgradeRoller != null
+            ? upgradeRoller.CountEligibleChoices(playerLevel)
+            : 0;
+    }
+
+    public int GetStationAvailableProductionUpgradeCount()
+    {
+        if (allUpgrades == null)
+            return 0;
+
+        int count = 0;
+        for (int i = 0; i < allUpgrades.Length; i++)
+        {
+            UpgradeData upgrade = allUpgrades[i];
+            if (upgrade != null &&
+                UnlockProgressService.IsUnlockedNow(upgrade.unlockData))
+            {
+                count++;
+            }
+        }
+
+        return count;
     }
 #endif
 
@@ -143,6 +171,7 @@ public sealed class UpgradeManager : MonoBehaviour
 
         isChoosingUpgrade = false;
         currentRequestIsChestReward = false;
+        hasCurrentRequest = false;
         upgradePanelView?.Hide();
 
         System.Action onClosed = currentOnClosed;
@@ -245,6 +274,8 @@ public sealed class UpgradeManager : MonoBehaviour
         isChoosingUpgrade = true;
         previousTimeScale = Time.timeScale;
         Time.timeScale = 0f;
+        currentRequest = request;
+        hasCurrentRequest = true;
         currentOnClosed = request.OnClosed;
         currentRequestIsChestReward = request.IsChestReward;
 
@@ -342,27 +373,33 @@ public sealed class UpgradeManager : MonoBehaviour
 
         bool applied = TryGrantUpgrade(upgrade, out ItemGrantResult grantResult);
 
-        if (!applied && grantResult == ItemGrantResult.RequiresReplacement)
+        if (!applied)
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.LogWarning(
-                $"[UpgradeManager] No free item slot for {upgrade.upgradeName}. " +
-                "Replacement selection is not implemented yet."
+                $"[UpgradeManager] Could not grant " +
+                $"'{upgrade?.upgradeName ?? "NULL"}' ({grantResult}). " +
+                "Refreshing eligible choices."
             );
-#endif
-        }
-        else if (grantResult == ItemGrantResult.Invalid)
-        {
-            Debug.LogWarning("[UpgradeManager] Cannot grant an invalid upgrade.");
-            return;
-        }
-        else if (!applied &&
-            (grantResult == ItemGrantResult.Added ||
-             grantResult == ItemGrantResult.LeveledUp))
-        {
+            RefreshChoicesAfterGrantFailure();
             return;
         }
 
+        CloseUpgradeSelection();
+    }
+
+    private void RefreshChoicesAfterGrantFailure()
+    {
+        if (hasCurrentRequest &&
+            TryBuildChoices(currentRequest, out List<UpgradeData> choices))
+        {
+            ShowChoiceRequest(currentRequest, choices);
+            return;
+        }
+
+        Debug.LogWarning(
+            "[UpgradeManager] No eligible upgrades remain after grant failure. " +
+            "Closing the selection without leaving the game paused."
+        );
         CloseUpgradeSelection();
     }
 
@@ -379,16 +416,47 @@ public sealed class UpgradeManager : MonoBehaviour
         }
 
         RunStateManager runState = RunStateManager.EnsureExists();
+
+        if (!UpgradeEligibilityRules.IsWeaponCompatible(
+                upgrade,
+                WeaponUpgradeCapabilityResolver.GetCurrentCapabilities()))
+        {
+            grantResult = ItemGrantResult.IncompatibleWeapon;
+            return false;
+        }
+
+        if (UpgradeEligibilityRules.HasExclusiveConflict(
+                upgrade,
+                runState.ItemSlots))
+        {
+            grantResult = ItemGrantResult.ExclusiveConflict;
+            return false;
+        }
+
+        if (!runState.ItemSlots.CanAccept(upgrade))
+        {
+            grantResult = runState.ItemSlots.GetLevel(upgrade) >=
+                RunItemSlots.MaxItemLevel
+                ? ItemGrantResult.MaxLevel
+                : ItemGrantResult.RequiresReplacement;
+            return false;
+        }
+
+        int nextLevel = runState.ItemSlots.GetLevel(upgrade) + 1;
+        if (!upgradeApplier.Apply(upgrade, nextLevel))
+            return false;
+
         grantResult = runState.ItemSlots.TryAdd(upgrade);
 
         if (grantResult != ItemGrantResult.Added &&
             grantResult != ItemGrantResult.LeveledUp)
         {
+            Debug.LogError(
+                $"[UpgradeManager] Slot state changed while granting " +
+                $"'{upgrade.upgradeName}' ({grantResult})."
+            );
             return false;
         }
-
-        if (!upgradeApplier.Apply(upgrade))
-            return false;
 
         runState.RegisterUpgrade(upgrade);
         return true;
@@ -401,6 +469,7 @@ public sealed class UpgradeManager : MonoBehaviour
 
         isChoosingUpgrade = false;
         currentRequestIsChestReward = false;
+        hasCurrentRequest = false;
         System.Action onClosed = currentOnClosed;
         currentOnClosed = null;
         onClosed?.Invoke();
@@ -416,6 +485,8 @@ public sealed class UpgradeManager : MonoBehaviour
             }
 
             isChoosingUpgrade = true;
+            currentRequest = nextRequest;
+            hasCurrentRequest = true;
             currentOnClosed = nextRequest.OnClosed;
             currentRequestIsChestReward = nextRequest.IsChestReward;
             ShowChoiceRequest(nextRequest, choices);

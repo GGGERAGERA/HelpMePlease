@@ -127,6 +127,13 @@ public sealed class LevelAnomalyController : MonoBehaviour
     public void SetOutsideDesaturation(float value) => outsideDesaturation = Mathf.Clamp01(value);
     public void SetOutsideColor(float value) => outsideDesaturation = 1f - Mathf.Clamp01(value);
     public void SetFocusTransition(float value) => focusTransition = Mathf.Clamp(value, 0.2f, 0.35f);
+    public void ResetFocusPresentationForDebug()
+    {
+        anomalyFocusEnabled = true;
+        outsideDarkness = 1f;
+        outsideDesaturation = 0f;
+        focusTransition = 0.35f;
+    }
 #endif
 
     public bool TryClaimExplosiveDeath(EnemyHealth enemy)

@@ -19,6 +19,7 @@ public readonly struct WeaponFireContext
     public readonly int ProjectileCount;
     public readonly int Pierce;
     public readonly int Ricochet;
+    public readonly float ShotVisualScale;
 
     public readonly float KnockbackForce;
 
@@ -39,6 +40,7 @@ public readonly struct WeaponFireContext
         int projectileCount,
         int pierce,
         int ricochet,
+        float shotVisualScale,
         float knockbackForce,
         PlayerCombatModifiers modifiers,
         WeaponFxPlayer fxPlayer)
@@ -56,6 +58,7 @@ public readonly struct WeaponFireContext
         ProjectileCount = projectileCount;
         Pierce = pierce;
         Ricochet = ricochet;
+        ShotVisualScale = Mathf.Max(0.1f, shotVisualScale);
         KnockbackForce = knockbackForce;
         Modifiers = modifiers;
         FxPlayer = fxPlayer;
@@ -77,6 +80,7 @@ public readonly struct WeaponFireContext
             ProjectileCount,
             Pierce,
             Ricochet,
+            ShotVisualScale,
             knockbackForce,
             Modifiers,
             FxPlayer

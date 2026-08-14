@@ -62,19 +62,28 @@ public abstract class BaseWeapon : MonoBehaviour
     protected float lastAttackTime;
 
     private bool isInitialized;
+    private WeaponControlMode? controlModeOverride;
 
     protected WeaponRuntimeStats Stats => runtimeStats;
     protected WeaponFxPlayer FxPlayer => fxPlayer;
     public Transform Owner => owner;
-    public WeaponControlMode ControlMode => WeaponControlSettings.CurrentMode;
+    public WeaponControlMode ControlMode =>
+        controlModeOverride ?? WeaponControlSettings.CurrentMode;
     public Vector2 AimDirection => lastAimDirection;
     public bool HasAim => hasAim;
     public bool WantsToFire => IsTryingToAttack();
+    public int RuntimePierce => runtimeStats != null ? runtimeStats.Pierce : 0;
+    public int RuntimeRicochet => runtimeStats != null ? runtimeStats.Ricochet : 0;
+    public float RuntimeShotVisualScale => runtimeStats != null
+        ? runtimeStats.ShotVisualScale
+        : 1f;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public bool IsTelekinesisDebugSecondary =>
         telekinesisDebugSecondaryWeapon;
 #endif
     protected virtual WeaponShotKind ShotKind => WeaponShotKind.Standard;
+    public virtual WeaponUpgradeCapability UpgradeCapabilities =>
+        WeaponUpgradeCapability.None;
 
     protected virtual void Awake()
     {
@@ -140,6 +149,11 @@ public abstract class BaseWeapon : MonoBehaviour
         EnsureRuntimeStats();
         runtimeStats.InitializeFromWeaponData(data);
         isInitialized = true;
+    }
+
+    public void SetControlModeOverride(WeaponControlMode mode)
+    {
+        controlModeOverride = mode;
     }
 
     protected virtual void UpdateAimAndOrbit()
@@ -576,6 +590,28 @@ public abstract class BaseWeapon : MonoBehaviour
         runtimeStats.AddRicochet(amount);
     }
 
+    public void SetPierceBonus(int amount)
+    {
+        runtimeStats.SetPierceBonus(amount);
+    }
+
+    public void SetRicochetBonus(int amount)
+    {
+        runtimeStats.SetRicochetBonus(amount);
+    }
+
+    public void SetTempoProfile(
+        float damageMultiplier,
+        float fireRateMultiplier,
+        float visualScale)
+    {
+        runtimeStats.SetTempoProfile(
+            damageMultiplier,
+            fireRateMultiplier,
+            visualScale);
+        runtimeStats.RefreshDebug(GetCombatModifiers());
+    }
+
     public bool RollCritical()
     {
         return Random.value < runtimeStats.CritChance;
@@ -842,6 +878,7 @@ public abstract class BaseWeapon : MonoBehaviour
             GetProjectileCount(),
             GetProjectilePierce(),
             GetProjectileRicochet(),
+            runtimeStats.ShotVisualScale,
             0f,
             modifiers,
             FxPlayer

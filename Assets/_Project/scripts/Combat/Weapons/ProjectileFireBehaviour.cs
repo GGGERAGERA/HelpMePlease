@@ -8,6 +8,14 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
         projectilePrefab != null &&
         projectilePrefab.GetComponent<RocketProjectile>() != null;
 
+    public WeaponUpgradeCapability UpgradeCapabilities =>
+        projectilePrefab != null && projectilePrefab.GetComponent<Bullet>() != null
+            ? WeaponUpgradeCapability.Pierce |
+              WeaponUpgradeCapability.Ricochet |
+              WeaponUpgradeCapability.MultiProjectile |
+              WeaponUpgradeCapability.Knockback
+            : WeaponUpgradeCapability.None;
+
     public bool Fire(WeaponFireContext context)
     {
         if (projectilePrefab == null)
@@ -31,6 +39,7 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
             context.Origin,
             Quaternion.Euler(0f, 0f, angle)
         );
+        ScaleProjectileVisuals(projectileObject.transform, context.ShotVisualScale);
 
         IWeaponProjectile projectile = projectileObject.GetComponent<IWeaponProjectile>();
 
@@ -60,5 +69,16 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
 
         projectileContext.Initialize(context);
         return true;
+    }
+
+    private static void ScaleProjectileVisuals(Transform root, float scale)
+    {
+        if (root == null || Mathf.Approximately(scale, 1f))
+            return;
+
+        // Keep the projectile root collider unchanged; production projectile
+        // visuals live under child transforms.
+        for (int i = 0; i < root.childCount; i++)
+            root.GetChild(i).localScale *= scale;
     }
 }

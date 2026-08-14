@@ -59,7 +59,6 @@ public class EnemyHealth : MonoBehaviour
 
     private static float lastCritSoundTime;
     private static bool missingUnlockServiceWasReported;
-    private static PlayerCombatModifiers cachedCombatModifiers;
     void Start()
     {
         currentHealth = maxHealth;
@@ -318,21 +317,6 @@ public class EnemyHealth : MonoBehaviour
             float destroyTime = blood.main.duration;
             blood.Play();
             Destroy(blood.gameObject, destroyTime);
-        }
-
-        if (cachedCombatModifiers == null)
-        {
-            cachedCombatModifiers =
-                FindFirstObjectByType<PlayerCombatModifiers>();
-        }
-
-        if (cachedCombatModifiers != null)
-        {
-            CombatExplosionService.TryExplodeOnEnemyDeath(
-                transform.position,
-                cachedCombatModifiers,
-                cachedCombatModifiers.enemyMask
-            );
         }
 
         DropLoot();

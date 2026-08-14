@@ -1,6 +1,53 @@
 using System;
 using UnityEngine;
 
+public enum ThreatTier
+{
+    Tier1 = 1,
+    Tier2 = 2,
+    Tier3 = 3,
+    Tier4 = 4
+}
+
+public static class ThreatTierPresentation
+{
+    public const int TierCount = 4;
+    public const float Tier2Minimum = 25f;
+    public const float Tier3Minimum = 50f;
+    public const float Tier4Minimum = 75f;
+
+    public static ThreatTier FromPressure(float pressure)
+    {
+        float value = Mathf.Clamp(pressure, 0f, 100f);
+
+        if (value >= Tier4Minimum)
+            return ThreatTier.Tier4;
+
+        if (value >= Tier3Minimum)
+            return ThreatTier.Tier3;
+
+        return value >= Tier2Minimum
+            ? ThreatTier.Tier2
+            : ThreatTier.Tier1;
+    }
+
+    public static string ToRoman(ThreatTier tier)
+    {
+        return tier switch
+        {
+            ThreatTier.Tier2 => "II",
+            ThreatTier.Tier3 => "III",
+            ThreatTier.Tier4 => "IV",
+            _ => "I"
+        };
+    }
+
+    public static string Format(ThreatTier tier)
+    {
+        return $"{ToRoman(tier)} / {ToRoman(ThreatTier.Tier4)}";
+    }
+}
+
 [CreateAssetMenu(
     fileName = "RunThreatConfig",
     menuName = "Game/Run/Threat Config"

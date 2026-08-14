@@ -84,9 +84,15 @@ public sealed class BunkerStationUpgradePanel : MonoBehaviour
         titleText.text = data.DisplayName;
         levelText.text = $"LEVEL {level} / {data.MaxLevel}";
         costText.text = isMax ? "MAX LEVEL" : $"NEXT LEVEL: {cost} GOLD";
-        unlocksText.text = isMax ? "" : unlocks.Length == 0
-            ? "UNLOCKS:\n—"
-            : $"UNLOCKS:\n{string.Join("\n", unlocks.Select(value => "• " + value))}";
+        string nextUnlocks = isMax ? "" : unlocks.Length == 0
+            ? "NEXT: —"
+            : $"NEXT: {string.Join(", ", unlocks)}";
+        unlocksText.text = currentStationId == BunkerStationId.Upgrades
+            ? "TIERS: LV1 CORE (6) • LV2 ADVANCED (+4) • LV3 BUILD (+2)" +
+              (string.IsNullOrEmpty(nextUnlocks) ? "" : $"\n{nextUnlocks}")
+            : isMax ? "" : unlocks.Length == 0
+                ? "UNLOCKS:\n—"
+                : $"UNLOCKS:\n{string.Join("\n", unlocks.Select(value => "• " + value))}";
         unlocksText.color = new Color(0.82f, 0.88f, 0.9f);
 
         int gold = CurrencyManager.Instance != null ? CurrencyManager.Instance.TotalGold : 0;

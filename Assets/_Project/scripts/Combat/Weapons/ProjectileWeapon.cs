@@ -27,6 +27,10 @@ public class ProjectileWeapon : BaseWeapon
     protected override WeaponShotKind ShotKind => usesRocketProjectile
         ? WeaponShotKind.Rocket
         : WeaponShotKind.Standard;
+    public override WeaponUpgradeCapability UpgradeCapabilities =>
+        fireBehaviourSource is ProjectileFireBehaviour projectileFire
+            ? projectileFire.UpgradeCapabilities
+            : WeaponUpgradeCapability.None;
 
     private float currentRecoil;
     private Vector3 recoilRestPosition;

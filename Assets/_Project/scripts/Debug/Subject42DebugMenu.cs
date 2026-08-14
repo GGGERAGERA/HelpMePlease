@@ -228,6 +228,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         Events,
         WeaponsAndUpgrades,
         Telekinesis,
+        VisualTest,
         SectorTest
     }
 
@@ -260,6 +261,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         "EVENTS",
         "WEAPONS & UPGRADES",
         "TELEKINESIS",
+        "VISUAL TEST",
         "ТЕСТ СЕКТОРА"
     };
 
@@ -284,6 +286,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private GameObject menuRoot;
     private GameObject fullMenuBlocker;
+    private Image fullMenuBlockerImage;
+    private RectTransform menuPanel;
     private GameObject previewPanelRoot;
     private TextMeshProUGUI previewText;
     private RectTransform contentRoot;
@@ -294,6 +298,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private ProductionSectorDebugController productionSectorDebug;
     private bool isOpen;
     private bool isPreview;
+    private bool menuLiveSimulation;
     private PreviewParameter previewParameter;
     private bool waitingForF1Release;
     private float previousTimeScale;
@@ -407,11 +412,12 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             return;
 
         ResolveSceneReferences();
-        RefreshTab(activeTab);
-
         previousTimeScale = Time.timeScale;
         previousCursorVisible = Cursor.visible;
         previousCursorLockMode = Cursor.lockState;
+        menuLiveSimulation = false;
+        RefreshTab(activeTab);
+
         Time.timeScale = 0f;
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
@@ -437,8 +443,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         bool productionChoiceIsOpen =
             (levelChoiceManager != null && levelChoiceManager.IsChoosing) ||
-            (upgradeManager != null && upgradeManager.IsChoosingUpgrade) ||
-            WorldLootRewardReel.IsModalOpen;
+            (upgradeManager != null && upgradeManager.IsChoosingUpgrade);
 
         if (productionChoiceIsOpen)
         {
@@ -611,8 +616,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 ? anomalyController.FocusTransition.ToString("0.00") + " сек"
                 : "НЕТ CONTROLLER");
         previewSummary.AppendLine();
-        previewSummary.AppendLine("PageUp/PageDown — выбрать параметр");
-        previewSummary.AppendLine("[ / ] — изменить; Shift = большой шаг");
+        previewSummary.AppendLine("Optional shortcuts: PageUp/PageDown, [ / ], Shift");
+        previewSummary.AppendLine("Основное mouse-only управление: F1 → VISUAL TEST");
         previewSummary.AppendLine("F1 — назад в полное меню");
         previewSummary.AppendLine("Контур ограничен геометрией sprite.");
         previewText.text = previewSummary.ToString();
@@ -714,8 +719,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         Image blockerImage = blocker.gameObject.AddComponent<Image>();
         blockerImage.color = new Color(0f, 0f, 0f, 0.68f);
         blockerImage.raycastTarget = true;
+        fullMenuBlockerImage = blockerImage;
 
         RectTransform panel = CreateRect("Panel", blocker);
+        menuPanel = panel;
         panel.anchorMin = new Vector2(0.07f, 0.05f);
         panel.anchorMax = new Vector2(0.93f, 0.95f);
         panel.offsetMin = Vector2.zero;
@@ -859,6 +866,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private void SelectTab(DebugTab tab, bool refresh = true)
     {
         activeTab = tab;
+        ApplyMenuViewportLayout();
 
         for (int i = 0; i < tabRoots.Length; i++)
         {
@@ -932,12 +940,40 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             case DebugTab.Telekinesis:
                 AddTelekinesisSection();
                 break;
+            case DebugTab.VisualTest:
+                AddInteractiveAnomalyVisualTest();
+                break;
             case DebugTab.SectorTest:
                 AddProductionSectorTestSection();
                 break;
         }
 
-        AddHint("F1 закрывает меню. Пока меню открыто, игровой процесс на паузе.");
+        AddHint(menuLiveSimulation
+            ? "F1 закрывает меню. LIVE: симуляция продолжает работать."
+            : "F1 закрывает меню. PAUSED: симуляция остановлена.");
+    }
+
+    private void ApplyMenuViewportLayout()
+    {
+        if (menuPanel == null)
+            return;
+
+        bool compact = activeTab == DebugTab.VisualTest;
+        menuPanel.anchorMin = compact
+            ? new Vector2(0.015f, 0.03f)
+            : new Vector2(0.07f, 0.05f);
+        menuPanel.anchorMax = compact
+            ? new Vector2(0.72f, 0.97f)
+            : new Vector2(0.93f, 0.95f);
+        menuPanel.offsetMin = Vector2.zero;
+        menuPanel.offsetMax = Vector2.zero;
+
+        if (fullMenuBlockerImage != null)
+        {
+            fullMenuBlockerImage.color = compact
+                ? new Color(0f, 0f, 0f, 0.24f)
+                : new Color(0f, 0f, 0f, 0.68f);
+        }
     }
 
     private void AddGravityConstructSection()
@@ -1210,6 +1246,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             ? $"✓ Акцент применён к {debug.AnomalyZoneCount} зонам."
             : "⚠ Активные anomaly visuals не найдены.");
 
+        AddHint("Anomaly instance tuning перенесён во вкладку VISUAL TEST.");
+
         AddSectionTitle(
             "ФОКУС ВНУТРИ АНОМАЛИИ",
             anomalyController != null && anomalyController.IsAnomalyFocusActive
@@ -1422,12 +1460,62 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddRow(
             "ТЕКУЩИЙ СЕКТОР",
             debug.CurrentSectorNumber > 0
-                ? $"{debug.CurrentSectorNumber}/5"
+                ? RunRoute.IsBossSector(debug.CurrentSectorNumber)
+                    ? "BOSS / EXIT COMPLETE"
+                    : $"{debug.CurrentSectorNumber}/{debug.ProductionSectorCount}"
                 : "НЕТ АКТИВНОГО RUNSTATE",
             debug.CurrentSectorNumber > 0 ? successColor : warningColor,
             "ИНФО",
             false,
             null
+        );
+        AddRow(
+            "THREAT TIER",
+            ThreatTierPresentation.Format(debug.CurrentThreatTier),
+            successColor,
+            "ИНФО",
+            false,
+            null
+        );
+        AddRow(
+            "INTERNAL PRESSURE",
+            $"{debug.InternalPressure:0.0} / 100",
+            mutedColor,
+            "ИНФО",
+            false,
+            null
+        );
+        AddRow(
+            "ПРОВЕРИТЬ THREAT I",
+            "PRESSURE 0",
+            mutedColor,
+            "TIER I",
+            true,
+            () => SetDebugThreatTier(ThreatTier.Tier1)
+        );
+        AddRow(
+            "ПРОВЕРИТЬ THREAT II",
+            $"PRESSURE {ThreatTierPresentation.Tier2Minimum:0}",
+            mutedColor,
+            "TIER II",
+            true,
+            () => SetDebugThreatTier(ThreatTier.Tier2)
+        );
+        AddRow(
+            "ПРОВЕРИТЬ THREAT III",
+            $"PRESSURE {ThreatTierPresentation.Tier3Minimum:0}",
+            mutedColor,
+            "TIER III",
+            true,
+            () => SetDebugThreatTier(ThreatTier.Tier3)
+        );
+        AddRow(
+            "ПРОВЕРИТЬ THREAT IV",
+            $"PRESSURE {ThreatTierPresentation.Tier4Minimum:0}",
+            mutedColor,
+            "TIER IV",
+            true,
+            () => SetDebugThreatTier(ThreatTier.Tier4)
         );
         AddRow(
             "ТЕКУЩАЯ ЗОНА",
@@ -1449,6 +1537,110 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         );
     }
 
+    private void AddInteractiveAnomalyVisualTest()
+    {
+        EnsureProductionSectorDebug();
+        ProductionSectorDebugController debug = productionSectorDebug;
+
+        if (debug == null)
+        {
+            AddSectionTitle("ANOMALY VISUAL TEST", "Development / Editor only");
+            AddHint("ProductionSectorDebugController не создан.");
+            return;
+        }
+
+        bool choiceIsOpen =
+            (levelChoiceManager != null && levelChoiceManager.IsChoosing) ||
+            (upgradeManager != null && upgradeManager.IsChoosingUpgrade);
+        bool liveAvailable = !choiceIsOpen && previousTimeScale > 0f;
+        AddSectionTitle(
+            "ANOMALY VISUAL TEST",
+            "Mouse-first live tuning; правая часть viewport остаётся открытой"
+        );
+        AddRow(
+            "SIMULATION",
+            menuLiveSimulation ? "LIVE" : "PAUSED",
+            menuLiveSimulation ? successColor : warningColor,
+            menuLiveSimulation ? "PAUSE" : "GO LIVE",
+            menuLiveSimulation || liveAvailable,
+            () => SetMenuLiveSimulation(!menuLiveSimulation)
+        );
+        AddAnomalyTargetPanel(debug);
+
+        AddSectionTitle("VISUAL TEST", "One-click strength and renderer controls");
+        AddEnemyReadabilityPresetStrip(debug);
+        AddFourStepRow(
+            "Enemy Brightness", debug.EnemyBrightness, 0.05f, 0.25f,
+            0.5f, 2.5f, debug.SetEnemyBrightness, "0.00");
+        AddFourStepRow(
+            "Saturation", debug.EnemySaturation, 0.05f, 0.25f,
+            0f, 3f, debug.SetEnemySaturation, "0.00");
+        AddFourStepRow(
+            "Hue / Tint Strength", debug.EnemyTintStrength, 0.02f, 0.1f,
+            0f, 1f, debug.SetEnemyTintStrength, "0.00");
+        AddToggleRow(
+            "OUTLINE", debug.EnemyOutlineEnabled, true,
+            () => debug.SetEnemyOutlineEnabled(!debug.EnemyOutlineEnabled));
+        AddFourStepRow(
+            "Outline Strength", debug.EnemyOutlineStrength, 0.05f, 0.25f,
+            0f, 2f, debug.SetEnemyOutlineStrength, "0.00");
+        AddFourStepRow(
+            "Outline Thickness", debug.EnemyOutlineWidth, 0.1f, 0.5f,
+            0.5f, 4f, debug.SetEnemyOutlineWidth, "0.0");
+
+        if (anomalyController != null)
+        {
+            AddFourStepRow(
+                "Interior / Outside Darkness",
+                anomalyController.OutsideDarkness, 0.05f, 0.2f,
+                0f, 1f, anomalyController.SetOutsideDarkness, "0.00");
+            AddFourStepRow(
+                "Exterior Color / Intensity",
+                anomalyController.OutsideColor, 0.05f, 0.2f,
+                0f, 1f, anomalyController.SetOutsideColor, "0.00");
+            AddFourStepRow(
+                "Transition Duration",
+                anomalyController.FocusTransition, 0.01f, 0.05f,
+                0.2f, 0.35f, anomalyController.SetFocusTransition, "0.00");
+        }
+        else
+        {
+            AddHint("LevelAnomalyController не найден: focus controls недоступны.");
+        }
+
+        AddRow(
+            "RESET VISUAL TEST",
+            "Enemy readability + focus presentation baseline",
+            mutedColor,
+            "RESET TEST",
+            true,
+            () =>
+            {
+                debug.ResetVisualTestSettings();
+                anomalyController?.ResetFocusPresentationForDebug();
+                RefreshCurrentTab();
+            }
+        );
+
+        AddAnomalyVisualTuner(debug);
+    }
+
+    private void SetMenuLiveSimulation(bool live)
+    {
+        bool choiceIsOpen =
+            (levelChoiceManager != null && levelChoiceManager.IsChoosing) ||
+            (upgradeManager != null && upgradeManager.IsChoosingUpgrade);
+        menuLiveSimulation = live && !choiceIsOpen && previousTimeScale > 0f;
+        Time.timeScale = menuLiveSimulation ? previousTimeScale : 0f;
+        RefreshCurrentTab();
+    }
+
+    private void SetDebugThreatTier(ThreatTier tier)
+    {
+        productionSectorDebug?.SetThreatTier(tier);
+        RefreshCurrentTab();
+    }
+
     private void AddProductionReadabilityPreset(
         ProductionSectorDebugController.ReadabilityPreset value)
     {
@@ -1459,6 +1651,446 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             debug != null,
             () => debug.SetPreset(value)
         );
+    }
+
+    private void AddAnomalyVisualTuner(
+        ProductionSectorDebugController debug)
+    {
+        ProductionAnomalySite target = debug.VisualTunerTarget;
+        AddSectionTitle(
+            "ANOMALY",
+            target != null
+                ? "Capability-driven runtime presentation values"
+                : "NO ACTIVE SUPPORTED ANOMALY"
+        );
+
+        AddRow(
+            "MONOCHROME ANOMALIES",
+            debug.MonochromeAnomaliesEnabled
+                ? "ON | neutral palette; geometry and motion preserved"
+                : "OFF | authored runtime colors",
+            debug.MonochromeAnomaliesEnabled ? warningColor : mutedColor,
+            debug.MonochromeAnomaliesEnabled ? "DISABLE" : "ENABLE",
+            true,
+            () =>
+            {
+                debug.SetMonochromeAnomalies(
+                    !debug.MonochromeAnomaliesEnabled);
+                RefreshCurrentTab();
+            }
+        );
+
+        if (target == null)
+        {
+            return;
+        }
+
+        AddSectionTitle("ART", "Optional artist-authored presentation layers");
+        AddRow(
+            "ART LAYERS",
+            $"{debug.VisualTunerArtHookRootCount} ROOTS | " +
+            $"{debug.VisualTunerInstantiatedArtCount} ASSIGNED | " +
+            (debug.VisualTunerArtHooksVisible ? "VISIBLE" : "HIDDEN"),
+            debug.VisualTunerInstantiatedArtCount > 0
+                ? successColor
+                : mutedColor,
+            debug.VisualTunerArtHooksVisible ? "HIDE" : "SHOW",
+            debug.VisualTunerArtHookRootCount > 0,
+            () =>
+            {
+                debug.SetVisualTunerArtHooksVisible(
+                    !debug.VisualTunerArtHooksVisible);
+                RefreshCurrentTab();
+            }
+        );
+
+        AddSectionTitle("BOUNDARY", "Presentation only; collider is unchanged");
+        AddVisualTunerFloat(
+            debug, "Boundary Width",
+            AnomalyVisualTuningCapabilities.BoundaryWidth,
+            0.01f, 0.1f, 0.01f, 3f,
+            values => values.BoundaryWidth,
+            (values, value) =>
+            {
+                values.BoundaryWidth = value;
+                return values;
+            }
+        );
+        AddVisualTunerFloat(
+            debug, "Inner Line Width",
+            AnomalyVisualTuningCapabilities.InnerLineWidth,
+            0.01f, 0.1f, 0.01f, 3f,
+            values => values.InnerLineWidth,
+            (values, value) =>
+            {
+                values.InnerLineWidth = value;
+                return values;
+            }
+        );
+        AddVisualTunerFloat(
+            debug, "Visual Scale",
+            AnomalyVisualTuningCapabilities.VisualScale,
+            0.05f, 0.25f, 0.25f, 3f,
+            values => values.VisualScale,
+            (values, value) =>
+            {
+                values.VisualScale = value;
+                return values;
+            }
+        );
+
+        AddSectionTitle("COLORS", "Runtime instance RGBA; assets are untouched");
+        AddVisualTunerColor(
+            debug,
+            "Primary",
+            AnomalyVisualTuningCapabilities.PrimaryColor,
+            values => values.PrimaryColor,
+            (values, value) =>
+            {
+                values.PrimaryColor = value;
+                return values;
+            }
+        );
+        AddVisualTunerColor(
+            debug,
+            "Secondary",
+            AnomalyVisualTuningCapabilities.SecondaryColor,
+            values => values.SecondaryColor,
+            (values, value) =>
+            {
+                values.SecondaryColor = value;
+                return values;
+            }
+        );
+        AddVisualTunerColor(
+            debug,
+            "Fill",
+            AnomalyVisualTuningCapabilities.FillColor,
+            values => values.FillColor,
+            (values, value) =>
+            {
+                values.FillColor = value;
+                return values;
+            },
+            false
+        );
+        AddVisualTunerFloat(
+            debug, "Fill Alpha",
+            AnomalyVisualTuningCapabilities.FillAlpha,
+            0.05f, 0.2f, 0f, 1f,
+            values => values.FillAlpha,
+            (values, value) =>
+            {
+                values.FillAlpha = value;
+                return values;
+            }
+        );
+
+        AddSectionTitle("PATTERN / FX", "Only supported renderer properties");
+        AddVisualTunerFloat(
+            debug, "Edge Glow",
+            AnomalyVisualTuningCapabilities.EdgeGlow,
+            0.1f, 0.5f, 0.01f, 10f,
+            values => values.EdgeGlow,
+            (values, value) =>
+            {
+                values.EdgeGlow = value;
+                return values;
+            }
+        );
+        AddVisualTunerFloat(
+            debug, "Pulse Speed",
+            AnomalyVisualTuningCapabilities.PulseSpeed,
+            0.05f, 0.25f, 0f, 10f,
+            values => values.PulseSpeed,
+            (values, value) =>
+            {
+                values.PulseSpeed = value;
+                return values;
+            }
+        );
+        AddVisualTunerFloat(
+            debug, "Pulse Strength",
+            AnomalyVisualTuningCapabilities.PulseStrength,
+            0.05f, 0.2f, 0f, 1f,
+            values => values.PulseStrength,
+            (values, value) =>
+            {
+                values.PulseStrength = value;
+                return values;
+            }
+        );
+        AddVisualTunerFloat(
+            debug, "Pattern Speed",
+            AnomalyVisualTuningCapabilities.PatternSpeed,
+            0.05f, 0.25f, 0f, 10f,
+            values => values.PatternSpeed,
+            (values, value) =>
+            {
+                values.PatternSpeed = value;
+                return values;
+            }
+        );
+
+        AddSectionTitle("DEBUG PRESETS", "Session-only starting points");
+        AddVisualTunerPreset(debug, "CLEAN");
+        AddVisualTunerPreset(debug, "AGGRESSIVE");
+        AddVisualTunerPreset(debug, "MINIMAL");
+        AddRow(
+            "RESET VISUAL",
+            "Restore values captured when this instance was initialized",
+            successColor,
+            "RESET",
+            true,
+            () =>
+            {
+                debug.ResetVisualTuner();
+                RefreshCurrentTab();
+            }
+        );
+        AddRow(
+            "COPY VALUES",
+            "Console + system clipboard",
+            successColor,
+            "COPY",
+            true,
+            () =>
+            {
+                debug.CopyVisualTunerValues();
+                RefreshCurrentTab();
+            }
+        );
+    }
+
+    private void AddAnomalyTargetPanel(
+        ProductionSectorDebugController debug)
+    {
+        ProductionAnomalySite target = debug.VisualTunerTarget;
+        string distance = debug.VisualTunerDistance >= 0f
+            ? $"{debug.VisualTunerDistance:0.0}"
+            : "--";
+        AddSectionTitle(
+            "TARGET",
+            target != null
+                ? $"Type: {debug.VisualTunerTypeName} | Distance: {distance}"
+                : "NO ACTIVE SUPPORTED ANOMALY"
+        );
+
+        if (target == null)
+        {
+            AddRow(
+                "NO ACTIVE SUPPORTED ANOMALY",
+                "Uses ProductionAnomalySite.ActiveSites",
+                warningColor,
+                "REFRESH",
+                true,
+                RefreshSectorVisualTargets
+            );
+            return;
+        }
+
+        AddTargetSelectorRow(debug);
+    }
+
+    private void SelectVisualTunerTarget(
+        ProductionSectorDebugController debug,
+        bool next)
+    {
+        if (next)
+            debug.SelectNextVisualTunerTarget();
+        else
+            debug.SelectPreviousVisualTunerTarget();
+
+        RefreshCurrentTab();
+    }
+
+    private void AddTargetSelectorRow(
+        ProductionSectorDebugController debug)
+    {
+        RectTransform row = CreateRect("Target Selector", contentRoot);
+        row.gameObject.AddComponent<Image>().color = rowColor;
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 54f;
+
+        bool canCycle = debug.VisualTunerTargetCount > 1;
+        Button previous = CreateButton(
+            row, "PREV", () => SelectVisualTunerTarget(debug, false),
+            104f, canCycle);
+        RectTransform previousRect = previous.GetComponent<RectTransform>();
+        previousRect.anchorMin = previousRect.anchorMax =
+            new Vector2(0f, 0.5f);
+        previousRect.pivot = new Vector2(0f, 0.5f);
+        previousRect.anchoredPosition = new Vector2(12f, 0f);
+        previousRect.sizeDelta = new Vector2(104f, 38f);
+
+        TextMeshProUGUI target = CreateText(
+            "Target", row,
+            $"{debug.VisualTunerTargetName}  " +
+            $"({debug.VisualTunerTargetIndex + 1}/" +
+            $"{debug.VisualTunerTargetCount})",
+            17f, TextAlignmentOptions.Center, successColor);
+        Stretch(target.rectTransform, 126f, 126f);
+
+        Button next = CreateButton(
+            row, "NEXT", () => SelectVisualTunerTarget(debug, true),
+            104f, canCycle);
+        RectTransform nextRect = next.GetComponent<RectTransform>();
+        nextRect.anchorMin = nextRect.anchorMax = new Vector2(1f, 0.5f);
+        nextRect.pivot = new Vector2(1f, 0.5f);
+        nextRect.anchoredPosition = new Vector2(-12f, 0f);
+        nextRect.sizeDelta = new Vector2(104f, 38f);
+    }
+
+    private void AddVisualTunerPreset(
+        ProductionSectorDebugController debug,
+        string preset)
+    {
+        AddRow(
+            preset,
+            "Runtime visual only",
+            mutedColor,
+            "APPLY",
+            true,
+            () =>
+            {
+                debug.ApplyVisualTunerPreset(preset);
+                RefreshCurrentTab();
+            }
+        );
+    }
+
+    private void AddVisualTunerFloat(
+        ProductionSectorDebugController debug,
+        string label,
+        AnomalyVisualTuningCapabilities capability,
+        float smallStep,
+        float largeStep,
+        float minimum,
+        float maximum,
+        System.Func<AnomalyVisualTuningValues, float> getter,
+        System.Func<
+            AnomalyVisualTuningValues,
+            float,
+            AnomalyVisualTuningValues> setter)
+    {
+        if ((debug.VisualTunerCapabilities & capability) == 0)
+            return;
+
+        float current = getter(debug.VisualTunerValues);
+        AddFourStepRow(
+            label,
+            current,
+            smallStep,
+            largeStep,
+            minimum,
+            maximum,
+            value =>
+            {
+                AnomalyVisualTuningValues values = debug.VisualTunerValues;
+                debug.ApplyVisualTunerValues(setter(values, value));
+            },
+            "0.###"
+        );
+    }
+
+    private void AddVisualTunerColor(
+        ProductionSectorDebugController debug,
+        string label,
+        AnomalyVisualTuningCapabilities capability,
+        System.Func<AnomalyVisualTuningValues, Color> getter,
+        System.Func<
+            AnomalyVisualTuningValues,
+            Color,
+            AnomalyVisualTuningValues> setter,
+        bool includeAlpha = true)
+    {
+        if ((debug.VisualTunerCapabilities & capability) == 0)
+            return;
+
+        AddVisualTunerColorChannel(debug, label + " R", getter, setter, 0);
+        AddVisualTunerColorChannel(debug, label + " G", getter, setter, 1);
+        AddVisualTunerColorChannel(debug, label + " B", getter, setter, 2);
+
+        if (includeAlpha)
+            AddVisualTunerColorChannel(debug, label + " A", getter, setter, 3);
+    }
+
+    private void AddVisualTunerColorChannel(
+        ProductionSectorDebugController debug,
+        string label,
+        System.Func<AnomalyVisualTuningValues, Color> getter,
+        System.Func<
+            AnomalyVisualTuningValues,
+            Color,
+            AnomalyVisualTuningValues> setter,
+        int channel)
+    {
+        Color color = getter(debug.VisualTunerValues);
+        float current = GetColorChannel(color, channel);
+        AddFourStepRow(
+            label,
+            current,
+            0.02f,
+            0.1f,
+            0f,
+            1f,
+            value => SetVisualTunerColorChannel(
+                debug, getter, setter, channel, value),
+            "0.00"
+        );
+    }
+
+    private void SetVisualTunerColorChannel(
+        ProductionSectorDebugController debug,
+        System.Func<AnomalyVisualTuningValues, Color> getter,
+        System.Func<
+            AnomalyVisualTuningValues,
+            Color,
+            AnomalyVisualTuningValues> setter,
+        int channel,
+        float channelValue)
+    {
+        AnomalyVisualTuningValues values = debug.VisualTunerValues;
+        Color color = getter(values);
+        SetColorChannel(
+            ref color,
+            channel,
+            Mathf.Clamp01(channelValue)
+        );
+        debug.ApplyVisualTunerValues(setter(values, color));
+        RefreshCurrentTab();
+    }
+
+    private static float GetColorChannel(Color color, int channel)
+    {
+        return channel switch
+        {
+            0 => color.r,
+            1 => color.g,
+            2 => color.b,
+            _ => color.a
+        };
+    }
+
+    private static void SetColorChannel(
+        ref Color color,
+        int channel,
+        float value)
+    {
+        switch (channel)
+        {
+            case 0:
+                color.r = value;
+                break;
+            case 1:
+                color.g = value;
+                break;
+            case 2:
+                color.b = value;
+                break;
+            default:
+                color.a = value;
+                break;
+        }
     }
 
     private void AddProductionFloatOptions(
@@ -1609,7 +2241,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             choiceOpen ? successColor : mutedColor,
             null, false, null);
 
-        AddSectionTitle("LEVEL FLOW", "Production boss-defeat lifecycle");
+        AddSectionTitle(
+            "LEVEL FLOW",
+            "Production Sector 1 -> 2 -> 3 -> Exit/Boss lifecycle"
+        );
         bool canSpawnBoss = runTimer != null &&
             runTimer.CanDebugSpawnBoss &&
             boss == null && !completed && !choiceOpen;
@@ -1626,7 +2261,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         bool canComplete = runFlowController != null &&
             runFlowController.CanDebugCompleteCurrentLevel;
-        AddRow("Complete current level through RunFlowController",
+        AddRow("Advance through production Exit/Boss flow",
             canComplete ? "READY" : completed ? "ALREADY COMPLETED" : "UNAVAILABLE",
             canComplete ? successColor : warningColor,
             "COMPLETE LEVEL", canComplete, CompleteLevel);
@@ -1666,6 +2301,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void AddBunkerSection()
     {
+        AddRoomStateRows();
+
         BunkerStationProgressionService service = BunkerStationProgressionService.Instance;
         AddSectionTitle("CHARACTER STATION", "Persistent station investment");
         if (service == null ||
@@ -1701,6 +2338,22 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             "RESET", true, DebugResetCharacterStation);
 
         AddSectionTitle("CHARACTER UI", "Selection and locked-state testing");
+        CharacterData selectedCharacter =
+            RunSelectionManager.Instance != null
+                ? RunSelectionManager.Instance.SelectedCharacter
+                : null;
+        AddRow("Selected Character",
+            selectedCharacter != null
+                ? selectedCharacter.characterName
+                : "NOT SELECTED",
+            selectedCharacter != null ? successColor : mutedColor,
+            null, false, null);
+        AddRow("Combat Type",
+            selectedCharacter != null
+                ? selectedCharacter.combatType.ToString()
+                : "-",
+            selectedCharacter != null ? successColor : mutedColor,
+            null, false, null);
         CharacterSelectionUI characterUi = FindFirstObjectByType<CharacterSelectionUI>();
         bool uiAvailable = characterUi != null;
         AddRow("Character Selection", uiAvailable ? "OPEN" : "NOT OPEN",
@@ -1732,7 +2385,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             : character.characterName;
         bool canSelect = characterUi != null &&
             characterUi.CanDebugSelectCharacter(character);
-        AddRow($"Select {characterName}", canSelect ? "AVAILABLE" : "LOCKED",
+        string availability = canSelect ? "AVAILABLE" : "LOCKED";
+        AddRow($"Select {characterName}",
+            $"{availability} / {character.combatType}",
             canSelect ? mutedColor : warningColor,
             $"SELECT {characterName.ToUpperInvariant()}", canSelect,
             () => DebugSelectCharacter(characterUi, character));
@@ -2106,6 +2761,34 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         }
     }
 
+    private void AddRoomStateRows()
+    {
+        AddSectionTitle("BUNKER ROOMS", "Independent production room states");
+        BunkerRoomState[] rooms =
+            FindObjectsByType<BunkerRoomState>(FindObjectsSortMode.None);
+
+        foreach (BunkerRoomId roomId in Enum.GetValues(typeof(BunkerRoomId)))
+        {
+            BunkerRoomState room = null;
+            for (int i = 0; i < rooms.Length; i++)
+            {
+                if (rooms[i] != null && rooms[i].RoomId == roomId)
+                {
+                    room = rooms[i];
+                    break;
+                }
+            }
+
+            string state = room == null
+                ? "MISSING"
+                : room.IsOpen ? "OPEN" : "CLOSED";
+            Color color = room == null
+                ? warningColor
+                : room.IsOpen ? successColor : mutedColor;
+            AddRow(roomId.ToString(), state, color, null, false, null);
+        }
+    }
+
     private void AddLootChestSection()
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
@@ -2116,7 +2799,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         AddSectionTitle(
             "СУНДУКИ",
-            "Production World Loot Chest V1; ручное размещение рядом с игроком"
+            "Production World Loot Chest V1.2; non-blocking Reel"
         );
         AddRow(
             "WORLD LOOT CHEST",
@@ -2130,6 +2813,13 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         );
         AddHint(
             "Reward Pool: 50 GOLD x6 · 100 GOLD x3 · 300 GOLD x1\n" +
+            "REEL PRESENTATION: " +
+            $"{WorldLootRewardReel.PresentationPanelSize.x:0}x" +
+            $"{WorldLootRewardReel.PresentationPanelSize.y:0} · " +
+            $"transfer {WorldLootRewardReel.PresentationTransferDuration:0.00}s\n" +
+            "Active Reel: " +
+            (WorldLootRewardReel.IsActive ? "YES" : "NO") + "\n" +
+            "State: " + WorldLootRewardReel.ActiveStateLabel + "\n" +
             lootChestDebugStatus + "\n" +
             "Последняя награда: " +
             (string.IsNullOrWhiteSpace(WorldLootRewardReel.LastClaimedReward)
@@ -2353,13 +3043,39 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         BuildUpgradeList();
 
+        RunStateManager runState = RunStateManager.Instance;
+        int playerLevel = ExperienceManager.Instance != null
+            ? ExperienceManager.Instance.CurrentLevel
+            : 1;
+        int usedSlots = runState != null
+            ? runState.ItemSlots.UsedSlotCount
+            : 0;
+        int eligibleProduction = upgradeManager != null
+            ? upgradeManager.GetEligibleProductionUpgradeCount(playerLevel)
+            : 0;
+        int stationLevel = BunkerStationProgressionService.GetStoredLevel(
+            BunkerStationId.Upgrades);
+        int stationAvailable = upgradeManager != null
+            ? upgradeManager.GetStationAvailableProductionUpgradeCount()
+            : 0;
+        int productionPoolSize = upgradeManager?.AllUpgrades?.Count ?? 0;
+        WeaponUpgradeCapability weaponCapabilities =
+            WeaponUpgradeCapabilityResolver.GetCurrentCapabilities();
+        AddHint(
+            $"Upgrade Station: Lv{stationLevel} | " +
+            $"Production Pool Available: {stationAvailable}/{productionPoolSize}"
+        );
+        AddHint(
+            $"Slots: {usedSlots} / {RunItemSlots.SlotCount} | " +
+            $"Eligible Current Choices: {eligibleProduction}"
+        );
+        AddHint($"Current Weapon Capabilities: {weaponCapabilities}");
+
         if (visibleUpgrades.Count == 0)
         {
             AddHint("No UpgradeData assets are available for this filter.");
             return;
         }
-
-        RunStateManager runState = RunStateManager.Instance;
 
         for (int i = 0; i < visibleUpgrades.Count; i++)
         {
@@ -2377,24 +3093,54 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 : data.upgradeName;
             string status = $"{data.category} - {data.upgradeType} - x{stack}";
             bool isUnlocked = UnlockProgressService.IsUnlockedNow(data.unlockData);
+            bool hasEligibleLevel = playerLevel >= data.minPlayerLevel;
+            bool hasEligibleSlot = runState == null ||
+                runState.ItemSlots.CanAccept(data);
+            bool stationLocked = !isUnlocked &&
+                data.unlockData != null &&
+                data.unlockData.condition != null &&
+                data.unlockData.condition.type == UnlockConditionType.StationLevelRequirement;
+            bool weaponCompatible = UpgradeEligibilityRules.IsWeaponCompatible(
+                data,
+                weaponCapabilities);
+            bool exclusiveConflict = UpgradeEligibilityRules.HasExclusiveConflict(
+                data,
+                runState != null ? runState.ItemSlots : null);
 
             if (!inPool)
                 status += " - OUT OF CURRENT POOL";
-            if (!isUnlocked &&
-                data.unlockData != null &&
-                data.unlockData.condition != null &&
-                data.unlockData.condition.type == UnlockConditionType.StationLevelRequirement)
-            {
-                status += $" - LOCKED BY {data.unlockData.condition.stationId.ToString().ToUpperInvariant()} " +
+            else if (stationLocked)
+                status += $" - REQUIRES {data.unlockData.condition.stationId.ToString().ToUpperInvariant()} " +
                     $"STATION LV{Mathf.Max(1, data.unlockData.condition.requiredAmount)}";
-            }
+            else if (!isUnlocked)
+                status += " - LOCKED";
+            else if (!hasEligibleLevel)
+                status += $" - REQUIRES PLAYER LV{data.minPlayerLevel}";
+            else if (!weaponCompatible)
+                status += " - INCOMPATIBLE WITH CURRENT WEAPON";
+            else if (exclusiveConflict)
+                status += $" - BLOCKED BY EXCLUSIVE GROUP {data.exclusiveGroup}";
+            else if (stack >= RunItemSlots.MaxItemLevel)
+                status += " - MAXED";
+            else if (!hasEligibleSlot)
+                status += " - NOT OWNED / NO FREE SLOT";
+            else
+                status += " - ELIGIBLE";
 
             bool canApply = upgradeManager != null &&
                 GameObject.FindGameObjectWithTag("Player") != null &&
-                stack < RunItemSlots.MaxItemLevel;
+                isUnlocked &&
+                hasEligibleLevel &&
+                weaponCompatible &&
+                !exclusiveConflict &&
+                hasEligibleSlot;
             UpgradeData captured = data;
             AddRow(displayName, status,
-                stack > 0 ? successColor : inPool && isUnlocked ? mutedColor : warningColor,
+                stack > 0 ? successColor :
+                    inPool && isUnlocked && hasEligibleLevel &&
+                    weaponCompatible && !exclusiveConflict && hasEligibleSlot
+                        ? mutedColor
+                        : warningColor,
                 stack >= RunItemSlots.MaxItemLevel ? "MAX" : "APPLY",
                 canApply, () => ApplyUpgrade(captured));
         }
@@ -3025,6 +3771,175 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         buttonRect.pivot = new Vector2(1f, 0.5f);
         buttonRect.anchoredPosition = new Vector2(-12f, 0f);
         buttonRect.sizeDelta = new Vector2(buttonWidth, 38f);
+    }
+
+    private void AddStepperRow(
+        string label,
+        string value,
+        bool canDecrease,
+        bool canIncrease,
+        UnityEngine.Events.UnityAction decrease,
+        UnityEngine.Events.UnityAction increase)
+    {
+        RectTransform row = CreateRect(label, contentRoot);
+        row.gameObject.AddComponent<Image>().color = rowColor;
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 54f;
+
+        TextMeshProUGUI labelText = CreateText(
+            "Name", row, label, 19f,
+            TextAlignmentOptions.MidlineLeft, Color.white
+        );
+        labelText.rectTransform.anchorMin = Vector2.zero;
+        labelText.rectTransform.anchorMax = new Vector2(0.48f, 1f);
+        labelText.rectTransform.offsetMin = new Vector2(16f, 0f);
+        labelText.rectTransform.offsetMax = Vector2.zero;
+
+        TextMeshProUGUI valueText = CreateText(
+            "Value", row, value, 17f,
+            TextAlignmentOptions.MidlineRight, successColor
+        );
+        valueText.rectTransform.anchorMin = new Vector2(0.45f, 0f);
+        valueText.rectTransform.anchorMax = Vector2.one;
+        valueText.rectTransform.offsetMin = Vector2.zero;
+        valueText.rectTransform.offsetMax = new Vector2(-158f, 0f);
+
+        Button minus = CreateButton(
+            row,
+            "−",
+            decrease,
+            64f,
+            canDecrease
+        );
+        RectTransform minusRect = minus.GetComponent<RectTransform>();
+        minusRect.anchorMin = minusRect.anchorMax = new Vector2(1f, 0.5f);
+        minusRect.pivot = new Vector2(1f, 0.5f);
+        minusRect.anchoredPosition = new Vector2(-82f, 0f);
+        minusRect.sizeDelta = new Vector2(64f, 38f);
+
+        Button plus = CreateButton(
+            row,
+            "+",
+            increase,
+            64f,
+            canIncrease
+        );
+        RectTransform plusRect = plus.GetComponent<RectTransform>();
+        plusRect.anchorMin = plusRect.anchorMax = new Vector2(1f, 0.5f);
+        plusRect.pivot = new Vector2(1f, 0.5f);
+        plusRect.anchoredPosition = new Vector2(-12f, 0f);
+        plusRect.sizeDelta = new Vector2(64f, 38f);
+    }
+
+    private void AddFourStepRow(
+        string label,
+        float value,
+        float smallStep,
+        float largeStep,
+        float minimum,
+        float maximum,
+        System.Action<float> setter,
+        string format)
+    {
+        RectTransform row = CreateRect(label, contentRoot);
+        row.gameObject.AddComponent<Image>().color = rowColor;
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 50f;
+
+        TextMeshProUGUI labelText = CreateText(
+            "Name", row, label, 17f,
+            TextAlignmentOptions.MidlineLeft, Color.white);
+        labelText.rectTransform.anchorMin = Vector2.zero;
+        labelText.rectTransform.anchorMax = new Vector2(0.68f, 1f);
+        labelText.rectTransform.offsetMin = new Vector2(14f, 0f);
+        labelText.rectTransform.offsetMax = Vector2.zero;
+
+        TextMeshProUGUI valueText = CreateText(
+            "Value", row, value.ToString(format), 16f,
+            TextAlignmentOptions.Center, successColor);
+        RectTransform valueRect = valueText.rectTransform;
+        valueRect.anchorMin = valueRect.anchorMax = new Vector2(1f, 0.5f);
+        valueRect.pivot = new Vector2(1f, 0.5f);
+        valueRect.anchoredPosition = new Vector2(-132f, 0f);
+        valueRect.sizeDelta = new Vector2(82f, 38f);
+
+        AddFourStepButton(row, "--", -280f, value > minimum,
+            () => ApplyFourStep(setter, value - largeStep, minimum, maximum));
+        AddFourStepButton(row, "-", -220f, value > minimum,
+            () => ApplyFourStep(setter, value - smallStep, minimum, maximum));
+        AddFourStepButton(row, "+", -72f, value < maximum,
+            () => ApplyFourStep(setter, value + smallStep, minimum, maximum));
+        AddFourStepButton(row, "++", -12f, value < maximum,
+            () => ApplyFourStep(setter, value + largeStep, minimum, maximum));
+    }
+
+    private void AddFourStepButton(
+        Transform parent,
+        string label,
+        float rightOffset,
+        bool interactable,
+        UnityEngine.Events.UnityAction action)
+    {
+        Button button = CreateButton(parent, label, action, 54f, interactable);
+        RectTransform rect = button.GetComponent<RectTransform>();
+        rect.anchorMin = rect.anchorMax = new Vector2(1f, 0.5f);
+        rect.pivot = new Vector2(1f, 0.5f);
+        rect.anchoredPosition = new Vector2(rightOffset, 0f);
+        rect.sizeDelta = new Vector2(54f, 36f);
+    }
+
+    private void ApplyFourStep(
+        System.Action<float> setter,
+        float value,
+        float minimum,
+        float maximum)
+    {
+        setter?.Invoke(Mathf.Clamp(value, minimum, maximum));
+        RefreshCurrentTab();
+    }
+
+    private void AddEnemyReadabilityPresetStrip(
+        ProductionSectorDebugController debug)
+    {
+        RectTransform row = CreateRect("Visual Test Strength", contentRoot);
+        row.gameObject.AddComponent<Image>().color = rowColor;
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 52f;
+
+        TextMeshProUGUI label = CreateText(
+            "Name", row, "STRENGTH", 17f,
+            TextAlignmentOptions.MidlineLeft, Color.white);
+        label.rectTransform.anchorMin = Vector2.zero;
+        label.rectTransform.anchorMax = new Vector2(0.36f, 1f);
+        label.rectTransform.offsetMin = new Vector2(14f, 0f);
+        label.rectTransform.offsetMax = Vector2.zero;
+
+        ProductionSectorDebugController.EnemyReadability[] values =
+        {
+            ProductionSectorDebugController.EnemyReadability.Off,
+            ProductionSectorDebugController.EnemyReadability.Low,
+            ProductionSectorDebugController.EnemyReadability.Medium,
+            ProductionSectorDebugController.EnemyReadability.High
+        };
+        string[] labels = { "OFF", "WEAK", "MEDIUM", "STRONG" };
+
+        for (int i = 0; i < values.Length; i++)
+        {
+            ProductionSectorDebugController.EnemyReadability captured = values[i];
+            bool selected = debug.EnemyMode == captured;
+            Button button = CreateButton(
+                row, labels[i],
+                () =>
+                {
+                    debug.SetEnemyReadability(captured);
+                    RefreshCurrentTab();
+                },
+                100f);
+            RectTransform rect = button.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.38f + i * 0.15f, 0.14f);
+            rect.anchorMax = new Vector2(0.515f + i * 0.15f, 0.86f);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            if (selected && button.targetGraphic is Image image)
+                image.color = successColor;
+        }
     }
 
     private static float GetButtonWidth(string label) => label switch

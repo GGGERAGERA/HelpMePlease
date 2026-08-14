@@ -18,6 +18,8 @@ public sealed class ProductionAnomalySite : MonoBehaviour
     private ProductionAnomalySiteDefinition specialDefinition;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private LocalAnomalyData normalAnomaly;
+    private Color originalBoundaryColor;
+    private float originalBoundaryWidth;
 #endif
     private bool isSpecial;
     private bool completed;
@@ -165,6 +167,199 @@ public sealed class ProductionAnomalySite : MonoBehaviour
     public void SetDebugVisualEmphasis(float multiplier)
     {
         specialEnvironment?.SetDebugVisualEmphasis(multiplier);
+    }
+
+    internal bool HasVisualTuner => ResolveVisualTunable() != null;
+
+    internal string VisualTunerTypeName => ResolveVisualTunable()?.VisualTypeName
+        ?? "UNSUPPORTED";
+
+    internal AnomalyVisualTuningCapabilities VisualTunerCapabilities =>
+        ResolveVisualTunable()?.VisualCapabilities ??
+        AnomalyVisualTuningCapabilities.None;
+
+    internal AnomalyVisualTuningValues VisualTunerValues =>
+        ResolveVisualTunable()?.VisualValues ?? default;
+
+    internal int ArtHookRootCount => CountArtHooks(countInstances: false);
+    internal int InstantiatedArtHookCount => CountArtHooks(countInstances: true);
+    internal bool ArtHooksVisible
+    {
+        get
+        {
+            List<AnomalyArtHooks> hooks = CollectArtHooks();
+            return hooks.Count == 0 || hooks[0].IsVisible;
+        }
+    }
+
+    internal void ApplyVisualTunerValues(AnomalyVisualTuningValues values)
+    {
+        IAnomalyVisualTunable tunable = ResolveVisualTunable();
+
+        if (tunable == null)
+            return;
+
+        tunable.ApplyVisualValues(values);
+        ApplyBoundaryPresentation(values, tunable.VisualCapabilities);
+    }
+
+    internal void SetArtHooksVisible(bool visible)
+    {
+        List<AnomalyArtHooks> hooks = CollectArtHooks();
+        for (int i = 0; i < hooks.Count; i++)
+            hooks[i]?.SetVisible(visible);
+    }
+
+    internal void ResetVisualTuner()
+    {
+        IAnomalyVisualTunable tunable = ResolveVisualTunable();
+        tunable?.ResetVisualValues();
+
+        if (boundary != null)
+        {
+            boundary.startColor = originalBoundaryColor;
+            boundary.endColor = originalBoundaryColor;
+            boundary.startWidth = originalBoundaryWidth;
+            boundary.endWidth = originalBoundaryWidth;
+            UpdateBoundaryGeometry(1f);
+        }
+    }
+
+    internal void ApplyVisualTunerPreset(string preset)
+    {
+        IAnomalyVisualTunable tunable = ResolveVisualTunable();
+
+        if (tunable == null)
+            return;
+
+        if (string.Equals(preset, "RESET", System.StringComparison.Ordinal))
+        {
+            ResetVisualTuner();
+            return;
+        }
+
+        tunable.ResetVisualValues();
+        AnomalyVisualTuningValues values = tunable.VisualValues;
+
+        switch (preset)
+        {
+            case "CLEAN":
+                values.BoundaryWidth *= 0.72f;
+                values.InnerLineWidth *= 0.78f;
+                values.EdgeGlow *= 0.72f;
+                values.PulseStrength *= 0.55f;
+                values.PatternSpeed *= 0.7f;
+                break;
+            case "AGGRESSIVE":
+                values.BoundaryWidth *= 1.5f;
+                values.InnerLineWidth *= 1.35f;
+                values.EdgeGlow *= 1.65f;
+                values.PulseSpeed *= 1.5f;
+                values.PulseStrength = Mathf.Max(
+                    0.35f,
+                    values.PulseStrength * 1.6f
+                );
+                break;
+            case "MINIMAL":
+                values.BoundaryWidth *= 0.55f;
+                values.InnerLineWidth *= 0.55f;
+                values.EdgeGlow *= 0.25f;
+                values.PulseSpeed = 0f;
+                values.PulseStrength = 0f;
+                values.PatternSpeed *= 0.25f;
+                values.FillAlpha *= 0.45f;
+                break;
+            default:
+                return;
+        }
+
+        ApplyVisualTunerValues(values);
+    }
+
+    internal string GetVisualTunerValuesText()
+    {
+        IAnomalyVisualTunable tunable = ResolveVisualTunable();
+
+        return tunable != null
+            ? AnomalyVisualTuningFormatter.Format(
+                tunable.VisualTypeName,
+                tunable.VisualCapabilities,
+                tunable.VisualValues
+            )
+            : "No supported anomaly visual target.";
+    }
+
+    private IAnomalyVisualTunable ResolveVisualTunable()
+    {
+        LocalAnomalyZone zone = AnomalyZone;
+
+        if (zone is IAnomalyVisualTunable zoneTunable)
+            return zoneTunable;
+
+        return specialEnvironment as IAnomalyVisualTunable;
+    }
+
+    private int CountArtHooks(bool countInstances)
+    {
+        List<AnomalyArtHooks> hooks = CollectArtHooks();
+        int count = 0;
+        for (int i = 0; i < hooks.Count; i++)
+        {
+            if (hooks[i] == null)
+                continue;
+
+            count += countInstances
+                ? hooks[i].InstantiatedArtCount
+                : hooks[i].RootCount;
+        }
+
+        return count;
+    }
+
+    private List<AnomalyArtHooks> CollectArtHooks()
+    {
+        List<AnomalyArtHooks> result = new();
+        result.AddRange(GetComponentsInChildren<AnomalyArtHooks>(true));
+
+        LocalAnomalyZone zone = AnomalyZone;
+        if (zone != null && !zone.transform.IsChildOf(transform))
+        {
+            result.AddRange(
+                zone.GetComponentsInChildren<AnomalyArtHooks>(true));
+        }
+
+        return result;
+    }
+
+    private void ApplyBoundaryPresentation(
+        AnomalyVisualTuningValues values,
+        AnomalyVisualTuningCapabilities capabilities)
+    {
+        if (boundary == null)
+            return;
+
+        if ((capabilities & AnomalyVisualTuningCapabilities.PrimaryColor) != 0)
+        {
+            Color color = values.PrimaryColor;
+            color.a = originalBoundaryColor.a;
+            boundary.startColor = color;
+            boundary.endColor = color;
+        }
+
+        UpdateBoundaryGeometry(values.VisualScale);
+    }
+
+    private void UpdateBoundaryGeometry(float scale)
+    {
+        if (boundary == null)
+            return;
+
+        Vector2 half = siteSize * 0.5f * Mathf.Clamp(scale, 0.25f, 3f);
+        boundary.SetPosition(0, new Vector3(-half.x, -half.y));
+        boundary.SetPosition(1, new Vector3(-half.x, half.y));
+        boundary.SetPosition(2, new Vector3(half.x, half.y));
+        boundary.SetPosition(3, new Vector3(half.x, -half.y));
+        boundary.SetPosition(4, new Vector3(-half.x, -half.y));
     }
 #endif
 
@@ -400,7 +595,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
             transform,
             "Site Boundary",
             color,
-            0.08f,
+            0.065f,
             5,
             material
         );
@@ -411,6 +606,10 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         boundary.SetPosition(2, new Vector3(half.x, half.y));
         boundary.SetPosition(3, new Vector3(half.x, -half.y));
         boundary.SetPosition(4, new Vector3(-half.x, -half.y));
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        originalBoundaryColor = color;
+        originalBoundaryWidth = boundary.startWidth;
+#endif
     }
 
     private void OnDestroy()

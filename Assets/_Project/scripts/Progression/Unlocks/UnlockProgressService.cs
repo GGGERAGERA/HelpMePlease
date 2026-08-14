@@ -44,6 +44,27 @@ public sealed class UnlockProgressService : MonoBehaviour
         return PlayerPrefs.GetInt(GetUnlockKey(content.id), 0) == 1;
     }
 
+    public static string GetLockedDescription(UnlockableContentData content)
+    {
+        if (content == null)
+            return string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(content.lockedDescription))
+            return content.lockedDescription;
+
+        UnlockConditionData condition = content.condition;
+        if (condition == null)
+            return string.Empty;
+
+        if (condition.type == UnlockConditionType.StationLevelRequirement)
+        {
+            return $"Requires {GetStationDisplayName(condition.stationId)} Station " +
+                   $"Lv. {Mathf.Max(1, condition.requiredAmount)}";
+        }
+
+        return string.Empty;
+    }
+
     public int GetProgress(UnlockableContentData content)
     {
         if (content == null || content.condition == null)
@@ -116,6 +137,18 @@ public sealed class UnlockProgressService : MonoBehaviour
     private static string GetProgressKey(string id)
     {
         return ProgressKeyPrefix + id;
+    }
+
+    private static string GetStationDisplayName(BunkerStationId stationId)
+    {
+        return stationId switch
+        {
+            BunkerStationId.Character => "Character",
+            BunkerStationId.Weapon => "Weapon",
+            BunkerStationId.Upgrades => "Upgrade",
+            BunkerStationId.Anomaly => "Anomaly",
+            _ => stationId.ToString()
+        };
     }
 
     public void AddProgressByCondition(

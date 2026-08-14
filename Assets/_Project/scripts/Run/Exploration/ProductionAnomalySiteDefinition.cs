@@ -1,6 +1,110 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
+
+[Flags]
+public enum AnomalyVisualTuningCapabilities
+{
+    None = 0,
+    PrimaryColor = 1 << 0,
+    SecondaryColor = 1 << 1,
+    FillColor = 1 << 2,
+    FillAlpha = 1 << 3,
+    BoundaryWidth = 1 << 4,
+    InnerLineWidth = 1 << 5,
+    VisualScale = 1 << 6,
+    EdgeGlow = 1 << 7,
+    PulseSpeed = 1 << 8,
+    PulseStrength = 1 << 9,
+    PatternSpeed = 1 << 10
+}
+
+public struct AnomalyVisualTuningValues
+{
+    public Color PrimaryColor;
+    public Color SecondaryColor;
+    public Color FillColor;
+    public float FillAlpha;
+    public float BoundaryWidth;
+    public float InnerLineWidth;
+    public float VisualScale;
+    public float EdgeGlow;
+    public float PulseSpeed;
+    public float PulseStrength;
+    public float PatternSpeed;
+}
+
+internal interface IAnomalyVisualTunable
+{
+    string VisualTypeName { get; }
+    AnomalyVisualTuningCapabilities VisualCapabilities { get; }
+    AnomalyVisualTuningValues VisualValues { get; }
+    void ApplyVisualValues(AnomalyVisualTuningValues values);
+    void ResetVisualValues();
+}
+
+internal static class AnomalyVisualTuningFormatter
+{
+    public static string Format(
+        string name,
+        AnomalyVisualTuningCapabilities capabilities,
+        AnomalyVisualTuningValues values)
+    {
+        StringBuilder text = new();
+        text.AppendLine($"{name} Visual");
+        AppendColor(text, "PrimaryColor", values.PrimaryColor,
+            capabilities, AnomalyVisualTuningCapabilities.PrimaryColor);
+        AppendColor(text, "SecondaryColor", values.SecondaryColor,
+            capabilities, AnomalyVisualTuningCapabilities.SecondaryColor);
+        AppendColor(text, "FillColor", values.FillColor,
+            capabilities, AnomalyVisualTuningCapabilities.FillColor);
+        AppendFloat(text, "FillAlpha", values.FillAlpha,
+            capabilities, AnomalyVisualTuningCapabilities.FillAlpha);
+        AppendFloat(text, "BoundaryWidth", values.BoundaryWidth,
+            capabilities, AnomalyVisualTuningCapabilities.BoundaryWidth);
+        AppendFloat(text, "InnerLineWidth", values.InnerLineWidth,
+            capabilities, AnomalyVisualTuningCapabilities.InnerLineWidth);
+        AppendFloat(text, "VisualScale", values.VisualScale,
+            capabilities, AnomalyVisualTuningCapabilities.VisualScale);
+        AppendFloat(text, "EdgeGlow", values.EdgeGlow,
+            capabilities, AnomalyVisualTuningCapabilities.EdgeGlow);
+        AppendFloat(text, "PulseSpeed", values.PulseSpeed,
+            capabilities, AnomalyVisualTuningCapabilities.PulseSpeed);
+        AppendFloat(text, "PulseStrength", values.PulseStrength,
+            capabilities, AnomalyVisualTuningCapabilities.PulseStrength);
+        AppendFloat(text, "PatternSpeed", values.PatternSpeed,
+            capabilities, AnomalyVisualTuningCapabilities.PatternSpeed);
+        return text.ToString().TrimEnd();
+    }
+
+    private static void AppendColor(
+        StringBuilder text,
+        string label,
+        Color value,
+        AnomalyVisualTuningCapabilities capabilities,
+        AnomalyVisualTuningCapabilities required)
+    {
+        if ((capabilities & required) == 0)
+            return;
+
+        text.AppendLine(
+            $"{label} = ({value.r:0.###}, {value.g:0.###}, " +
+            $"{value.b:0.###}, {value.a:0.###})"
+        );
+    }
+
+    private static void AppendFloat(
+        StringBuilder text,
+        string label,
+        float value,
+        AnomalyVisualTuningCapabilities capabilities,
+        AnomalyVisualTuningCapabilities required)
+    {
+        if ((capabilities & required) != 0)
+            text.AppendLine($"{label} = {value:0.###}");
+    }
+}
 
 internal readonly struct ProductionAnomalySiteContext
 {

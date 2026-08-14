@@ -208,8 +208,14 @@ public sealed class RunStateManager : MonoBehaviour
         {
             if (upgradeApplier != null)
             {
+                Dictionary<UpgradeData, int> restoredLevels = new();
                 foreach (UpgradeData upgrade in pickedUpgrades)
-                    upgradeApplier.Apply(upgrade);
+                {
+                    restoredLevels.TryGetValue(upgrade, out int level);
+                    level++;
+                    restoredLevels[upgrade] = level;
+                    upgradeApplier.Apply(upgrade, level);
+                }
             }
             else if (pickedUpgrades.Count > 0)
             {
@@ -300,6 +306,16 @@ public sealed class RunStateManager : MonoBehaviour
             100f
         );
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void SetThreatForDebug(float value)
+    {
+        if (runEnded)
+            return;
+
+        threatValue = Mathf.Clamp(value, 0f, 100f);
+    }
+#endif
 
     public bool HasAnomalyPower(AnomalyPowerType power)
     {

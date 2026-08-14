@@ -1,5 +1,45 @@
 using UnityEngine;
 
+public readonly struct WeaponTempoValues
+{
+    public readonly float DamageMultiplier;
+    public readonly float FireRateMultiplier;
+    public readonly float VisualScale;
+
+    public WeaponTempoValues(float damage, float fireRate, float visualScale)
+    {
+        DamageMultiplier = damage;
+        FireRateMultiplier = fireRate;
+        VisualScale = visualScale;
+    }
+}
+
+public static class WeaponTempoProfiles
+{
+    public static WeaponTempoValues Get(UpgradeType type, int upgradeLevel)
+    {
+        int level = Mathf.Clamp(upgradeLevel, 1, RunItemSlots.MaxItemLevel);
+
+        if (type == UpgradeType.HeavyShot)
+        {
+            return new WeaponTempoValues(
+                level switch { 1 => 1.75f, 2 => 2.25f, _ => 3f },
+                level switch { 1 => 0.75f, 2 => 0.65f, _ => 0.55f },
+                level switch { 1 => 1.2f, 2 => 1.35f, _ => 1.5f });
+        }
+
+        if (type == UpgradeType.Overclock)
+        {
+            return new WeaponTempoValues(
+                level switch { 1 => 0.8f, 2 => 0.7f, _ => 0.6f },
+                level switch { 1 => 1.5f, 2 => 1.9f, _ => 2.4f },
+                1f);
+        }
+
+        return new WeaponTempoValues(1f, 1f, 1f);
+    }
+}
+
 /// <summary>
 /// Applies one selected upgrade to the current player runtime state.
 /// UpgradeManager should not know how upgrades change health, movement, weapons, or combat flags.
@@ -9,6 +49,11 @@ public sealed class UpgradeApplier : MonoBehaviour
     [SerializeField] private string playerTag = "Player";
 
     public bool Apply(UpgradeData upgrade)
+    {
+        return Apply(upgrade, 1);
+    }
+
+    public bool Apply(UpgradeData upgrade, int upgradeLevel)
     {
         if (upgrade == null)
         {
@@ -66,10 +111,6 @@ public sealed class UpgradeApplier : MonoBehaviour
                 RequireCombatModifiers(context).hitExplosionChance += upgrade.value;
                 break;
 
-            case UpgradeType.EnemyDeathExplosion:
-                ApplyEnemyDeathExplosion(context, upgrade.value);
-                break;
-
             case UpgradeType.StationaryFireRateRamp:
                 ApplyStationaryFireRateRamp(context, upgrade.value);
                 break;
@@ -78,22 +119,27 @@ public sealed class UpgradeApplier : MonoBehaviour
                 ApplyDoubleDamageWithInaccuracy(context);
                 break;
 
-            case UpgradeType.LowHpPower:
-                ApplyLowHpPower(context, upgrade.value);
+            case UpgradeType.Pierce:
+                ApplyToCompatibleWeapons(
+                    context,
+                    WeaponUpgradeCapability.Pierce,
+                    weapon => weapon.SetPierceBonus(upgradeLevel));
                 break;
 
-            case UpgradeType.RandomExtraShotsChance:
-                RequireCombatModifiers(context).randomExtraShotsChance += upgrade.value;
+            case UpgradeType.Ricochet:
+                ApplyToCompatibleWeapons(
+                    context,
+                    WeaponUpgradeCapability.Ricochet,
+                    weapon => weapon.SetRicochetBonus(upgradeLevel));
                 break;
 
-            case UpgradeType.CircularBurst:
-                ApplyCircularBurst(context, upgrade.value);
+            case UpgradeType.HeavyShot:
+                ApplyTempoProfile(context, UpgradeType.HeavyShot, upgradeLevel);
                 break;
 
-            case UpgradeType.NukeEveryTenKills:
-                ApplyNukeEveryKills(context, upgrade.value);
+            case UpgradeType.Overclock:
+                ApplyTempoProfile(context, UpgradeType.Overclock, upgradeLevel);
                 break;
-
 
             default:
                 Debug.LogWarning($"[UpgradeApplier] Upgrade type is not implemented: {upgrade.upgradeType}");
@@ -151,12 +197,31 @@ public sealed class UpgradeApplier : MonoBehaviour
         }
     }
 
-    private void ApplyEnemyDeathExplosion(PlayerUpgradeContext context, float value)
+    private void ApplyToCompatibleWeapons(
+        PlayerUpgradeContext context,
+        WeaponUpgradeCapability capability,
+        System.Action<BaseWeapon> apply)
     {
-        PlayerCombatModifiers modifiers = RequireCombatModifiers(context);
+        ApplyToWeapons(context, weapon =>
+        {
+            if ((weapon.UpgradeCapabilities & capability) == capability)
+                apply?.Invoke(weapon);
+        });
+    }
 
-        modifiers.enemyDeathExplosionChance += value;
-        modifiers.enemyDeathExplosionChance = Mathf.Clamp01(modifiers.enemyDeathExplosionChance);
+    private void ApplyTempoProfile(
+        PlayerUpgradeContext context,
+        UpgradeType type,
+        int upgradeLevel)
+    {
+        WeaponTempoValues values = WeaponTempoProfiles.Get(type, upgradeLevel);
+
+        ApplyToWeapons(
+            context,
+            weapon => weapon.SetTempoProfile(
+                values.DamageMultiplier,
+                values.FireRateMultiplier,
+                values.VisualScale));
     }
 
     private void ApplyDoubleDamageWithInaccuracy(PlayerUpgradeContext context)
@@ -198,28 +263,11 @@ public sealed class UpgradeApplier : MonoBehaviour
         }
     }
 
-    private void ApplyLowHpPower(PlayerUpgradeContext context, float value)
-    {
-        PlayerCombatModifiers modifiers = RequireCombatModifiers(context);
-
-        modifiers.lowHpPower = true;
-        modifiers.lowHpPowerMultiplier += value;
-    }
     private void ApplyStationaryFireRateRamp(PlayerUpgradeContext context, float value)
     {
         PlayerCombatModifiers modifiers = RequireCombatModifiers(context);
 
         modifiers.stationaryFireRateRamp = true;
         modifiers.stationaryFireRateRampMaxBonus += value;
-    }
-    private void ApplyCircularBurst(PlayerUpgradeContext context, float value)
-    {
-        PlayerCombatModifiers modifiers = RequireCombatModifiers(context);
-        modifiers.AddCircularBurstCooldownReduction(value);
-    }
-    private void ApplyNukeEveryKills(PlayerUpgradeContext context, float value)
-    {
-        PlayerCombatModifiers modifiers = RequireCombatModifiers(context);
-        modifiers.AddNukeKillRequirementReduction(value);
     }
 }

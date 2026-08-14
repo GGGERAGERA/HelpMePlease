@@ -13,6 +13,15 @@ public class CharacterData : ScriptableObject
     [TextArea(3, 6)]
     public string description;
 
+    [Header("Combat")]
+    public CharacterCombatType combatType = CharacterCombatType.AutoFire;
+
+    public string combatTypeDisplayName = "AUTO FIRE";
+
+    [TextArea(2, 4)]
+    public string combatTypeDescription =
+        "Weapon automatically targets and attacks enemies.";
+
     public Sprite portrait;
 
     [Header("Prefabs")]

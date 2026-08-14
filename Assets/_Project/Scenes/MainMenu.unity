@@ -3458,7 +3458,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
       propertyPath: m_Name
-      value: p_bunkerDoor3 (4)
+      value: SecretRoom
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3467,6 +3467,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2100000102}
+    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2100000103}
   m_SourcePrefab: {fileID: 100100000, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
 --- !u!4 &373838867 stripped
 Transform:
@@ -4109,12 +4112,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
       propertyPath: m_Name
-      value: p_bunkerDoor3 (1)
+      value: WeaponRoom
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2200000202}
+    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2200000203}
   m_SourcePrefab: {fileID: 100100000, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
 --- !u!4 &583375175 stripped
 Transform:
@@ -49279,7 +49288,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
       propertyPath: m_Name
-      value: p_bunkerDoor3 (2)
+      value: FutureRoom
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -49288,6 +49297,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2100000202}
+    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2100000203}
   m_SourcePrefab: {fileID: 100100000, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
 --- !u!4 &973028969 stripped
 Transform:
@@ -257339,12 +257351,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
       propertyPath: m_Name
-      value: p_bunkerDoor3 (5)
+      value: UpgradeRoom
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2200000302}
+    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2200000303}
   m_SourcePrefab: {fileID: 100100000, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
 --- !u!4 &2007863681 stripped
 Transform:
@@ -258150,6 +258168,29 @@ MonoBehaviour:
   occluderOffset: {x: 4, y: -2.2}
   occluderSize: {x: 8.5, y: 6.5}
   accessMessage: "\u041D\u0415\u0422 \u0414\u041E\u0421\u0422\u0423\u041F\u0410"
+  allowClosedInteraction: 0
+--- !u!114 &2100000103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100000101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46dc362738934620a40e706db033e21e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomState
+  roomId: 5
+  state: 0
+  closedVisuals: []
+  redWarningVisual: {fileID: 0}
+  darkVeil: {fileID: 0}
+  openVisuals: []
+  blockingCollider: {fileID: 0}
+  interactionsRoot: {fileID: 910000000000000001}
+  presentationDrivers:
+  - {fileID: 2100000102}
 --- !u!1 &2100000201 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
@@ -258176,6 +258217,29 @@ MonoBehaviour:
   occluderOffset: {x: -4, y: -2.2}
   occluderSize: {x: 8.5, y: 6.5}
   accessMessage: "\u0421\u0422\u0410\u041D\u0426\u0418\u042F \u041D\u0415\u0414\u041E\u0421\u0422\u0423\u041F\u041D\u0410"
+  allowClosedInteraction: 1
+--- !u!114 &2100000203
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100000201}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46dc362738934620a40e706db033e21e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomState
+  roomId: 4
+  state: 0
+  closedVisuals: []
+  redWarningVisual: {fileID: 0}
+  darkVeil: {fileID: 0}
+  openVisuals: []
+  blockingCollider: {fileID: 0}
+  interactionsRoot: {fileID: 2300000501}
+  presentationDrivers:
+  - {fileID: 2100000202}
 --- !u!1 &2101010392
 GameObject:
   m_ObjectHideFlags: 0
@@ -258304,12 +258368,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
       propertyPath: m_Name
-      value: p_bunkerDoor3 (3)
+      value: AnomalyRoom
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2200000402}
+    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2200000403}
   m_SourcePrefab: {fileID: 100100000, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
 --- !u!4 &2111523215 stripped
 Transform:
@@ -259255,12 +259325,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
       propertyPath: m_Name
-      value: p_bunkerDoor3
+      value: CharacterRoom
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2200000102}
+    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2200000103}
   m_SourcePrefab: {fileID: 100100000, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
 --- !u!4 &1580761371692661204 stripped
 Transform:
@@ -261716,6 +261792,227 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7066cc072a384514ab4425d38bded1d7, type: 3}
+--- !u!1 &2200000101 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+  m_PrefabInstance: {fileID: 1580761371692661203}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2200000102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2200000101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dca735fefb7c4545be1d927057b0ca2a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomGate
+  mode: 2
+  requiredStationId: 0
+  requiredStationLevel: 1
+  blockerCollider: {fileID: 0}
+  visualRoot: {fileID: 0}
+  blockerSize: {x: 1.5, y: 3.8}
+  occluderOffset: {x: -4, y: -2.2}
+  occluderSize: {x: 8.5, y: 6.5}
+  accessMessage: ROOM CLOSED
+  allowClosedInteraction: 1
+--- !u!114 &2200000103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2200000101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46dc362738934620a40e706db033e21e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomState
+  roomId: 0
+  state: 1
+  closedVisuals: []
+  redWarningVisual: {fileID: 0}
+  darkVeil: {fileID: 0}
+  openVisuals: []
+  blockingCollider: {fileID: 0}
+  interactionsRoot: {fileID: 2300000101}
+  presentationDrivers:
+  - {fileID: 2200000102}
+--- !u!1 &2300000101 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4737281608205474900, guid: 7299b4ba064c30443b59cbbe7a22f590, type: 3}
+  m_PrefabInstance: {fileID: 1914885782}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &2200000201 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+  m_PrefabInstance: {fileID: 583375174}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2200000202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2200000201}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dca735fefb7c4545be1d927057b0ca2a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomGate
+  mode: 2
+  requiredStationId: 1
+  requiredStationLevel: 1
+  blockerCollider: {fileID: 0}
+  visualRoot: {fileID: 0}
+  blockerSize: {x: 1.5, y: 3.8}
+  occluderOffset: {x: -4, y: -2.2}
+  occluderSize: {x: 8.5, y: 6.5}
+  accessMessage: ROOM CLOSED
+  allowClosedInteraction: 1
+--- !u!114 &2200000203
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2200000201}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46dc362738934620a40e706db033e21e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomState
+  roomId: 1
+  state: 1
+  closedVisuals: []
+  redWarningVisual: {fileID: 0}
+  darkVeil: {fileID: 0}
+  openVisuals: []
+  blockingCollider: {fileID: 0}
+  interactionsRoot: {fileID: 2300000201}
+  presentationDrivers:
+  - {fileID: 2200000202}
+--- !u!1 &2300000201 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4737281608205474900, guid: 875729b930699b041b3c5fb99c62ebb9, type: 3}
+  m_PrefabInstance: {fileID: 1873553519}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &2200000301 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+  m_PrefabInstance: {fileID: 2007863680}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2200000302
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2200000301}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dca735fefb7c4545be1d927057b0ca2a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomGate
+  mode: 2
+  requiredStationId: 2
+  requiredStationLevel: 1
+  blockerCollider: {fileID: 0}
+  visualRoot: {fileID: 0}
+  blockerSize: {x: 1.5, y: 3.8}
+  occluderOffset: {x: 4, y: -2.2}
+  occluderSize: {x: 8.5, y: 6.5}
+  accessMessage: ROOM CLOSED
+  allowClosedInteraction: 1
+--- !u!114 &2200000303
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2200000301}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46dc362738934620a40e706db033e21e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomState
+  roomId: 2
+  state: 1
+  closedVisuals: []
+  redWarningVisual: {fileID: 0}
+  darkVeil: {fileID: 0}
+  openVisuals: []
+  blockingCollider: {fileID: 0}
+  interactionsRoot: {fileID: 2300000301}
+  presentationDrivers:
+  - {fileID: 2200000302}
+--- !u!1 &2300000301 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4737281608205474900, guid: 567b105986aea7e40a27581f18ab8208, type: 3}
+  m_PrefabInstance: {fileID: 383357134}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &2200000401 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+  m_PrefabInstance: {fileID: 2111523214}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2200000402
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2200000401}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dca735fefb7c4545be1d927057b0ca2a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomGate
+  mode: 2
+  requiredStationId: 3
+  requiredStationLevel: 1
+  blockerCollider: {fileID: 0}
+  visualRoot: {fileID: 0}
+  blockerSize: {x: 1.5, y: 3.8}
+  occluderOffset: {x: -4, y: -2.2}
+  occluderSize: {x: 8.5, y: 6.5}
+  accessMessage: ROOM CLOSED
+  allowClosedInteraction: 1
+--- !u!114 &2200000403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2200000401}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46dc362738934620a40e706db033e21e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomState
+  roomId: 3
+  state: 0
+  closedVisuals: []
+  redWarningVisual: {fileID: 0}
+  darkVeil: {fileID: 0}
+  openVisuals: []
+  blockingCollider: {fileID: 0}
+  interactionsRoot: {fileID: 2300000401}
+  presentationDrivers:
+  - {fileID: 2200000402}
+--- !u!1 &2300000401 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7672746889591957895, guid: b972bff1d6084994dab3eac0a508d314, type: 3}
+  m_PrefabInstance: {fileID: 6370523255212067373}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &2300000501 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4737281608205474900, guid: ebee71303b9118e429ad2ba8ec0c7d03, type: 3}
+  m_PrefabInstance: {fileID: 1414305295}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

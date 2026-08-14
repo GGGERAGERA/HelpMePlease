@@ -6,6 +6,10 @@ public class CharacterSpawner : MonoBehaviour
     public event System.Action<BaseWeapon> PrimaryWeaponChanged;
     public GameObject SpawnedPlayer { get; private set; }
     public BaseWeapon PrimaryWeapon { get; private set; }
+    public CharacterData SpawnedCharacterData { get; private set; }
+    public CharacterCombatType CombatType => SpawnedCharacterData != null
+        ? SpawnedCharacterData.combatType
+        : CharacterCombatType.AutoFire;
 
     [Header("Default character for direct MVP launch")]
     [SerializeField] private CharacterData defaultCharacter;
@@ -84,6 +88,8 @@ public class CharacterSpawner : MonoBehaviour
             Debug.LogError($"[CharacterSpawner] Character prefab is missing on {selectedCharacter.name}.");
             return null;
         }
+
+        SpawnedCharacterData = selectedCharacter;
 
         Vector3 spawnPosition = spawnPoint != null ? spawnPoint.position : transform.position;
 
@@ -194,6 +200,7 @@ public class CharacterSpawner : MonoBehaviour
         if (baseWeapon != null)
         {
             baseWeapon.Initialize(weaponData);
+            baseWeapon.SetControlModeOverride(GetWeaponControlMode(CombatType));
         }
         else
         {
@@ -201,6 +208,16 @@ public class CharacterSpawner : MonoBehaviour
         }
 
         return baseWeapon;
+    }
+
+    private static WeaponControlMode GetWeaponControlMode(
+        CharacterCombatType combatType)
+    {
+        return combatType switch
+        {
+            CharacterCombatType.AutoFire => WeaponControlMode.AutoAim,
+            _ => WeaponControlMode.AutoAim
+        };
     }
 
     private void SetPrimaryWeapon(BaseWeapon weapon)

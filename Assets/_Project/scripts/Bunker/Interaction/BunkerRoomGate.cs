@@ -7,7 +7,8 @@ public enum BunkerRoomGateMode
     Sealed = 2
 }
 
-public sealed class BunkerRoomGate : MonoBehaviour, IBunkerInteractable, IBunkerHoverable
+public sealed class BunkerRoomGate : MonoBehaviour, IBunkerInteractable, IBunkerHoverable,
+    IBunkerRoomStatePresentation, IBunkerRoomIdentityPresentation
 {
     [SerializeField] private BunkerRoomGateMode mode;
     [SerializeField] private BunkerStationId requiredStationId;
@@ -19,17 +20,23 @@ public sealed class BunkerRoomGate : MonoBehaviour, IBunkerInteractable, IBunker
     [SerializeField] private Vector2 occluderSize = new(8.5f, 6.5f);
     [SerializeField] private string accessMessage = "НЕТ ДОСТУПА";
 
+    [SerializeField] private bool allowClosedInteraction = true;
+
     private static Sprite massSprite;
     private Collider2D interactionCollider;
+    private bool? roomStateClosedOverride;
+    private bool secretPresentation;
 
     public bool CanInteract => IsClosed;
-    public string InteractionText => mode == BunkerRoomGateMode.Sealed
+    public string InteractionText => roomStateClosedOverride.HasValue ||
+        mode == BunkerRoomGateMode.Sealed
         ? accessMessage
         : $"{requiredStationId}: LEVEL {requiredStationLevel}";
 
-    private bool IsClosed => mode == BunkerRoomGateMode.Sealed ||
-        (mode == BunkerRoomGateMode.Locked &&
-         BunkerStationProgressionService.GetStoredLevel(requiredStationId) < requiredStationLevel);
+    private bool IsClosed => roomStateClosedOverride ??
+        (mode == BunkerRoomGateMode.Sealed ||
+         (mode == BunkerRoomGateMode.Locked &&
+          BunkerStationProgressionService.GetStoredLevel(requiredStationId) < requiredStationLevel));
 
     private void Awake()
     {
@@ -80,16 +87,32 @@ public sealed class BunkerRoomGate : MonoBehaviour, IBunkerInteractable, IBunker
 
         Transform doorwayMass = visualRoot.transform.Find("DoorwayMass");
         doorwayMass.localScale = new Vector3(blockerSize.x + 0.35f, blockerSize.y + 0.35f, 1f);
-        doorwayMass.GetComponent<SpriteRenderer>().color = mode == BunkerRoomGateMode.Sealed
-            ? new Color(0.004f, 0.001f, 0.004f, 1f)
-            : new Color(0.012f, 0.006f, 0.02f, 0.99f);
+        doorwayMass.GetComponent<SpriteRenderer>().color = GetDoorwayColor();
+
+        Transform warningIndicator = visualRoot.transform.Find("WarningIndicator");
+        if (warningIndicator != null)
+        {
+            warningIndicator.localScale = new Vector3(
+                blockerSize.x + 0.65f,
+                blockerSize.y + 0.65f,
+                1f);
+        }
 
         Transform roomOccluder = visualRoot.transform.Find("RoomOccluder");
         roomOccluder.localPosition = occluderOffset;
-        roomOccluder.localScale = new Vector3(occluderSize.x, occluderSize.y, 1f);
-        roomOccluder.GetComponent<SpriteRenderer>().color = mode == BunkerRoomGateMode.Sealed
-            ? new Color(0.002f, 0.001f, 0.003f, 1f)
-            : new Color(0.005f, 0.004f, 0.009f, 0.985f);
+        float secretScale = secretPresentation ? 1.12f : 1f;
+        roomOccluder.localScale = new Vector3(
+            occluderSize.x * secretScale,
+            occluderSize.y * secretScale,
+            1f);
+        roomOccluder.GetComponent<SpriteRenderer>().color = GetOccluderColor();
+
+        if (warningIndicator != null)
+        {
+            warningIndicator.GetComponent<SpriteRenderer>().color = secretPresentation
+                ? new Color(0.32f, 0.01f, 0.015f, 1f)
+                : new Color(0.82f, 0.03f, 0.04f, 0.95f);
+        }
 
         if (interactionCollider is BoxCollider2D interactionBox)
             interactionBox.size = blockerSize + Vector2.one * 0.5f;
@@ -114,7 +137,7 @@ public sealed class BunkerRoomGate : MonoBehaviour, IBunkerInteractable, IBunker
         if (!IsClosed)
             return;
 
-        if (mode == BunkerRoomGateMode.Sealed)
+        if (roomStateClosedOverride.HasValue || mode == BunkerRoomGateMode.Sealed)
         {
             BunkerContext.Instance?.Notifications?.ShowWarning(accessMessage);
             return;
@@ -132,7 +155,21 @@ public sealed class BunkerRoomGate : MonoBehaviour, IBunkerInteractable, IBunker
         if (blockerCollider != null)
             blockerCollider.enabled = closed;
         if (interactionCollider != null)
-            interactionCollider.enabled = closed;
+            interactionCollider.enabled = closed && allowClosedInteraction;
+    }
+
+    public void ApplyRoomState(BunkerRoomAccessState state)
+    {
+        roomStateClosedOverride = state == BunkerRoomAccessState.Closed;
+        Refresh();
+    }
+
+    public void ApplyRoomIdentity(BunkerRoomId roomId)
+    {
+        secretPresentation = roomId == BunkerRoomId.Secret;
+        EnsureRuntimeParts();
+        ApplyConfiguration();
+        Refresh();
     }
 
     private void HandleStationLevelChanged(BunkerStationId stationId, int level)
@@ -157,6 +194,7 @@ public sealed class BunkerRoomGate : MonoBehaviour, IBunkerInteractable, IBunker
             visualRoot = new GameObject("DarkAnomalyMass");
             visualRoot.transform.SetParent(transform, false);
             CreateMassRenderer("RoomOccluder", visualRoot.transform, new Color(0.005f, 0.004f, 0.009f, 0.985f), 118);
+            CreateMassRenderer("WarningIndicator", visualRoot.transform, new Color(0.82f, 0.03f, 0.04f, 0.95f), 119);
             CreateMassRenderer("DoorwayMass", visualRoot.transform, mode == BunkerRoomGateMode.Sealed
                 ? new Color(0.018f, 0.004f, 0.012f, 1f)
                 : new Color(0.01f, 0.006f, 0.018f, 1f), 120);
@@ -182,6 +220,26 @@ public sealed class BunkerRoomGate : MonoBehaviour, IBunkerInteractable, IBunker
         renderer.sprite = GetMassSprite();
         renderer.color = color;
         renderer.sortingOrder = sortingOrder;
+    }
+
+    private Color GetDoorwayColor()
+    {
+        if (secretPresentation)
+            return new Color(0.001f, 0.001f, 0.002f, 1f);
+
+        return mode == BunkerRoomGateMode.Sealed
+            ? new Color(0.004f, 0.001f, 0.004f, 1f)
+            : new Color(0.012f, 0.006f, 0.02f, 0.99f);
+    }
+
+    private Color GetOccluderColor()
+    {
+        if (secretPresentation)
+            return new Color(0f, 0f, 0.001f, 1f);
+
+        return mode == BunkerRoomGateMode.Sealed
+            ? new Color(0.002f, 0.001f, 0.003f, 1f)
+            : new Color(0.005f, 0.004f, 0.009f, 0.985f);
     }
 
     private static Sprite GetMassSprite()
