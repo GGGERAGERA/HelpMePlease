@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2029363319d1b9741a19ac5963bb5155, type: 3}
+  m_Name: Ricochet
+  m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
+  unlockData: {fileID: 11400000, guid: 7bf44d91d2fd4e1e92b163e3b0ad62ad, type: 2}
+  upgradeName: "Рикошет"
+  description: "Пули отскакивают к ближайшим врагам."
+  icon: {fileID: 128373305, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
+  category: 1
+  minPlayerLevel: 3
+  requiredWeaponCapabilities: 2
+  exclusiveGroup:
+  upgradeType: 19
+  value: 1

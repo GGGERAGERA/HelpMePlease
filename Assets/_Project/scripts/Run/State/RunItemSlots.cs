@@ -7,7 +7,9 @@ public enum ItemGrantResult
     LeveledUp,
     MaxLevel,
     RequiresReplacement,
-    Invalid
+    Invalid,
+    IncompatibleWeapon,
+    ExclusiveConflict
 }
 
 [Serializable]
@@ -43,6 +45,22 @@ public sealed class RunItemSlots
     public event Action SlotsChanged;
 
     public IReadOnlyList<RunItemSlot> Slots => readOnlySlots;
+    public int UsedSlotCount
+    {
+        get
+        {
+            int count = 0;
+
+            for (int i = 0; i < slots.Length; i++)
+            {
+                if (slots[i].Item != null)
+                    count++;
+            }
+
+            return count;
+        }
+    }
+    public bool HasFreeUniqueSlot => UsedSlotCount < SlotCount;
 
     public RunItemSlots()
     {
@@ -92,6 +110,19 @@ public sealed class RunItemSlots
     {
         int index = item != null ? FindItemIndex(item) : -1;
         return index >= 0 ? slots[index].Level : 0;
+    }
+
+    public bool CanAccept(UpgradeData item)
+    {
+        if (item == null)
+            return false;
+
+        int level = GetLevel(item);
+
+        if (level >= MaxItemLevel)
+            return false;
+
+        return level > 0 || HasFreeUniqueSlot;
     }
 
     public bool TryReplace(int slotIndex, UpgradeData newItem)

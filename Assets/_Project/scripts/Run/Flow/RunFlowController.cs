@@ -264,6 +264,12 @@ public sealed class RunFlowController : MonoBehaviour
         if (!CanDebugCompleteCurrentLevel)
             return false;
 
+        RunStateManager runState = RunStateManager.Instance;
+        int sectorNumber = runState.CurrentSector.SectorNumber;
+
+        if (RunRoute.IsExplorationSector(sectorNumber))
+            return HandleExitReached();
+
         HandleBossDefeated();
         return levelCompleted;
     }

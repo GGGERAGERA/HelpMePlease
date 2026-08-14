@@ -5,7 +5,8 @@ using System.Collections;
 
 public class HUDManager : MonoBehaviour
 {
-    private const int TotalRouteSectors = RunRoute.TotalSectors;
+    private const int ProductionSectorCount =
+        RunRoute.ExplorationSectorCount;
 
     public static HUDManager Instance { get; private set; }
 
@@ -55,7 +56,7 @@ public class HUDManager : MonoBehaviour
     private RunStatsManager runStatsManager;
     private RunStateManager runStateManager;
     private int lastDisplayedTimerSecond = int.MinValue;
-    private int lastDisplayedThreatLevel = int.MinValue;
+    private ThreatTier? lastDisplayedThreatTier;
 
     private void Awake()
     {
@@ -86,7 +87,7 @@ public class HUDManager : MonoBehaviour
         {
             routeProgressView?.ShowCurrent(
                 runStateManager.CurrentSector.SectorNumber,
-                TotalRouteSectors
+                ProductionSectorCount
             );
         }
         else
@@ -160,7 +161,7 @@ public class HUDManager : MonoBehaviour
             timerText.gameObject.SetActive(visible);
     }
 
-    public void SetThreat(float value, int level)
+    public void SetThreat(float value, ThreatTier tier)
     {
         EnsureThreatView();
 
@@ -171,14 +172,22 @@ public class HUDManager : MonoBehaviour
 
         float clampedValue = Mathf.Clamp(value, 0f, 100f);
 
-        if (threatLevelText != null && level != lastDisplayedThreatLevel)
+        if (threatLevelText != null && tier != lastDisplayedThreatTier)
         {
-            lastDisplayedThreatLevel = level;
-            threatLevelText.text = "THREAT " + ToRoman(level);
+            lastDisplayedThreatTier = tier;
+            threatLevelText.text =
+                $"THREAT {ThreatTierPresentation.Format(tier)}";
+            SetRect(
+                threatLevelText.rectTransform,
+                new Vector2(0f, 0.34f),
+                Vector2.one,
+                new Vector2(10f, 0f),
+                new Vector2(-10f, -1f)
+            );
         }
 
         if (threatValueText != null)
-            threatValueText.SetText("{0:0}%", clampedValue);
+            threatValueText.gameObject.SetActive(false);
 
         if (threatFill != null)
         {
@@ -225,9 +234,9 @@ public class HUDManager : MonoBehaviour
         SetRect(
             threatLevelText.rectTransform,
             new Vector2(0f, 0.34f),
-            new Vector2(0.72f, 1f),
+            Vector2.one,
             new Vector2(10f, 0f),
-            new Vector2(-2f, -1f)
+            new Vector2(-10f, -1f)
         );
 
         threatValueText = CreateThreatText(
@@ -329,19 +338,6 @@ public class HUDManager : MonoBehaviour
         rect.anchorMax = anchorMax;
         rect.offsetMin = offsetMin;
         rect.offsetMax = offsetMax;
-    }
-
-    private static string ToRoman(int level)
-    {
-        return level switch
-        {
-            1 => "I",
-            2 => "II",
-            3 => "III",
-            4 => "IV",
-            5 => "V",
-            _ => "VI"
-        };
     }
 
     public void SetKills(int kills)

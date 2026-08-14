@@ -5,7 +5,11 @@ public sealed class RunThreatController : MonoBehaviour
     private RunThreatConfig config;
     private EnemySpawner enemySpawner;
     private int appliedPresetIndex = -1;
+    private ThreatTier displayedTier;
     private float nextHudRefresh;
+
+    public ThreatTier DisplayedTier => displayedTier;
+    public int AppliedPresetIndex => appliedPresetIndex;
 
     public void Initialize(RunThreatConfig threatConfig, EnemySpawner spawner)
     {
@@ -35,6 +39,9 @@ public sealed class RunThreatController : MonoBehaviour
         if (config == null || runState == null)
             return;
 
+        ThreatTier currentTier = ThreatTierPresentation.FromPressure(
+            runState.ThreatValue
+        );
         int presetIndex = config.GetPresetIndex(runState.ThreatValue);
 
         if (!force && presetIndex == appliedPresetIndex)
@@ -44,9 +51,14 @@ public sealed class RunThreatController : MonoBehaviour
                 nextHudRefresh = Time.unscaledTime + 0.2f;
                 HUDManager.Instance?.SetThreat(
                     runState.ThreatValue,
-                    presetIndex + 1
+                    currentTier
                 );
             }
+
+            if (currentTier > displayedTier)
+                ShowTierIncrease(currentTier);
+
+            displayedTier = currentTier;
             return;
         }
 
@@ -63,29 +75,21 @@ public sealed class RunThreatController : MonoBehaviour
             );
         }
 
-        HUDManager.Instance?.SetThreat(runState.ThreatValue, presetIndex + 1);
+        HUDManager.Instance?.SetThreat(runState.ThreatValue, currentTier);
         nextHudRefresh = Time.unscaledTime + 0.2f;
 
-        if (!force)
-        {
-            RunMessageService.Instance?.ShowCustom(
-                $"THREAT {ToRoman(presetIndex + 1)}",
-                "ENEMY PRESSURE INCREASED",
-                1.8f
-            );
-        }
+        if (!force && currentTier > displayedTier)
+            ShowTierIncrease(currentTier);
+
+        displayedTier = currentTier;
     }
 
-    private static string ToRoman(int level)
+    private static void ShowTierIncrease(ThreatTier tier)
     {
-        return level switch
-        {
-            1 => "I",
-            2 => "II",
-            3 => "III",
-            4 => "IV",
-            5 => "V",
-            _ => "VI"
-        };
+        RunMessageService.Instance?.ShowCustom(
+            $"THREAT {ThreatTierPresentation.Format(tier)}",
+            "ENEMY PRESSURE INCREASED",
+            1.8f
+        );
     }
 }

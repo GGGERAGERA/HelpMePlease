@@ -6,7 +6,8 @@ using UnityEngine.UI;
 
 public sealed class LevelChoicePanelView : MonoBehaviour
 {
-    private const int TotalRouteSectors = RunRoute.TotalSectors;
+    private const int ProductionSectorCount =
+        RunRoute.ExplorationSectorCount;
 
     [Header("Texts")]
     [SerializeField] private TextMeshProUGUI titleText;
@@ -73,7 +74,7 @@ public sealed class LevelChoicePanelView : MonoBehaviour
         onChoiceConfirmed = onChoiceSelected;
         routeProgressView?.ShowNext(
             nextSectorNumber,
-            TotalRouteSectors
+            ProductionSectorCount
         );
 
         if (confirmButton != null)

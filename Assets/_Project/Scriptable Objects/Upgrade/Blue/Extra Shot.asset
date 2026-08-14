@@ -18,5 +18,7 @@ MonoBehaviour:
   icon: {fileID: -1631316636, guid: 3913b1f1fea8fa14db133feab25f3250, type: 3}
   category: 0
   minPlayerLevel: 1
+  requiredWeaponCapabilities: 4
+  exclusiveGroup:
   upgradeType: 6
   value: 1

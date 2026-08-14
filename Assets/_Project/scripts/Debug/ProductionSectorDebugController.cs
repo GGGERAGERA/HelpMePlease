@@ -139,8 +139,13 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         new();
     private MaterialPropertyBlock readabilityProperties;
     private readonly HashSet<Transform> decorObjects = new();
+    private readonly List<ProductionAnomalySite> visualTunerSites = new();
+    private readonly Dictionary<
+        ProductionAnomalySite,
+        AnomalyVisualTuningValues> monochromeOriginalValues = new();
 
     private ProductionAnomalySite currentSite;
+    private int visualTunerIndex = -1;
     private PlayerHealth protectedPlayer;
     private float protectedPlayerMultiplier = 1f;
     private bool playerMultiplierCaptured;
@@ -149,6 +154,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     private Sprite overlaySprite;
     private Material enemyReadabilityMaterial;
     private float nextRefresh;
+    private bool monochromeAnomalies;
 
     public ReadabilityPreset Preset => readabilityPreset;
     public float DecorBrightness => decorBrightness;
@@ -240,6 +246,56 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     public ProductionAnomalySite CurrentSite => currentSite;
     public int EnvironmentRendererCount => environmentStates.Count;
 
+    public ProductionAnomalySite VisualTunerTarget
+    {
+        get
+        {
+            return visualTunerIndex >= 0 &&
+                visualTunerIndex < visualTunerSites.Count
+                    ? visualTunerSites[visualTunerIndex]
+                    : null;
+        }
+    }
+
+    public int VisualTunerTargetCount => visualTunerSites.Count;
+    public int VisualTunerTargetIndex => visualTunerIndex;
+    public string VisualTunerTargetName => VisualTunerTarget != null
+        ? VisualTunerTarget.DebugZoneName
+        : "NO ACTIVE ANOMALY";
+    public string VisualTunerTypeName => VisualTunerTarget != null
+        ? VisualTunerTarget.VisualTunerTypeName
+        : "NONE";
+    public AnomalyVisualTuningCapabilities VisualTunerCapabilities =>
+        VisualTunerTarget != null
+            ? VisualTunerTarget.VisualTunerCapabilities
+            : AnomalyVisualTuningCapabilities.None;
+    public AnomalyVisualTuningValues VisualTunerValues =>
+        VisualTunerTarget != null
+            ? VisualTunerTarget.VisualTunerValues
+            : default;
+    public float VisualTunerDistance
+    {
+        get
+        {
+            Transform player = ResolvePlayerTransform();
+            return VisualTunerTarget != null && player != null
+                ? Vector2.Distance(
+                    player.position,
+                    VisualTunerTarget.transform.position
+                )
+                : -1f;
+        }
+    }
+    public bool MonochromeAnomaliesEnabled => monochromeAnomalies;
+    public int VisualTunerArtHookRootCount => VisualTunerTarget != null
+        ? VisualTunerTarget.ArtHookRootCount
+        : 0;
+    public int VisualTunerInstantiatedArtCount => VisualTunerTarget != null
+        ? VisualTunerTarget.InstantiatedArtHookCount
+        : 0;
+    public bool VisualTunerArtHooksVisible => VisualTunerTarget == null ||
+        VisualTunerTarget.ArtHooksVisible;
+
     public string CurrentZoneName => currentSite != null
         ? currentSite.DebugZoneName
         : "NONE";
@@ -269,6 +325,38 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
                 : null;
             return sector != null ? sector.SectorNumber : 0;
         }
+    }
+
+    public int ProductionSectorCount => RunRoute.ExplorationSectorCount;
+
+    public float InternalPressure
+    {
+        get
+        {
+            RunStateManager runState = RunStateManager.Instance;
+            return runState != null ? runState.ThreatValue : 0f;
+        }
+    }
+
+    public ThreatTier CurrentThreatTier =>
+        ThreatTierPresentation.FromPressure(InternalPressure);
+
+    public void SetThreatTier(ThreatTier tier)
+    {
+        RunStateManager runState = RunStateManager.Instance;
+
+        if (runState == null)
+            return;
+
+        float pressure = tier switch
+        {
+            ThreatTier.Tier2 => ThreatTierPresentation.Tier2Minimum,
+            ThreatTier.Tier3 => ThreatTierPresentation.Tier3Minimum,
+            ThreatTier.Tier4 => ThreatTierPresentation.Tier4Minimum,
+            _ => 0f
+        };
+
+        runState.SetThreatForDebug(pressure);
     }
 
     public void SetInvulnerability(bool enabled)
@@ -346,6 +434,87 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     public void RefreshVisualTargets()
     {
         RefreshVisualRegistries();
+        RefreshVisualTunerTargets(true);
+    }
+
+    public void SelectPreviousVisualTunerTarget()
+    {
+        RefreshVisualTunerTargets(false);
+
+        if (visualTunerSites.Count == 0)
+            return;
+
+        visualTunerIndex = (visualTunerIndex - 1 + visualTunerSites.Count) %
+            visualTunerSites.Count;
+    }
+
+    public void SelectNextVisualTunerTarget()
+    {
+        RefreshVisualTunerTargets(false);
+
+        if (visualTunerSites.Count == 0)
+            return;
+
+        visualTunerIndex = (visualTunerIndex + 1) % visualTunerSites.Count;
+    }
+
+    public void ApplyVisualTunerValues(AnomalyVisualTuningValues values)
+    {
+        if (monochromeAnomalies && VisualTunerTarget != null)
+            values = BuildMonochromeValues(
+                values,
+                VisualTunerTarget.VisualTunerCapabilities);
+
+        VisualTunerTarget?.ApplyVisualTunerValues(values);
+    }
+
+    public void ResetVisualTuner()
+    {
+        if (monochromeAnomalies)
+            SetMonochromeAnomalies(false);
+
+        VisualTunerTarget?.ResetVisualTuner();
+    }
+
+    public void SetMonochromeAnomalies(bool enabled)
+    {
+        if (enabled == monochromeAnomalies)
+            return;
+
+        if (!enabled)
+        {
+            RestoreMonochromeAnomalies();
+            return;
+        }
+
+        monochromeAnomalies = true;
+        monochromeOriginalValues.Clear();
+        MaintainMonochromeAnomalies();
+    }
+
+    public void SetVisualTunerArtHooksVisible(bool visible)
+    {
+        VisualTunerTarget?.SetArtHooksVisible(visible);
+    }
+
+    public void ApplyVisualTunerPreset(string preset)
+    {
+        VisualTunerTarget?.ApplyVisualTunerPreset(preset);
+    }
+
+    public void CopyVisualTunerValues()
+    {
+        ProductionAnomalySite target = VisualTunerTarget;
+
+        if (target == null)
+        {
+            Debug.Log("[AnomalyVisualTuner] No active anomaly target.");
+            return;
+        }
+
+        string values = target.GetVisualTunerValuesText();
+        GUIUtility.systemCopyBuffer = values;
+        Debug.Log($"[AnomalyVisualTuner]\n{values}", target);
     }
 
     public void SetEnemyOutlineEnabled(bool enabled)
@@ -370,6 +539,14 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         enemyOutlineWidth = 1f;
         ApplyEnvironment();
         ApplyAnomalyAccent();
+        ApplyAllEnemies();
+    }
+
+    public void ResetVisualTestSettings()
+    {
+        enemyReadability = EnemyReadability.High;
+        enemyScope = EnemyScope.All;
+        ApplyEnemyPreset(EnemyReadability.High);
         ApplyAllEnemies();
     }
 
@@ -407,6 +584,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         EnsureEnemyReadabilityMaterial();
         RefreshCurrentSite(true);
         RefreshVisualRegistries();
+        RefreshVisualTunerTargets(true);
         RegisterActiveEnemies();
         ApplyAllEnemies();
         ApplyInvulnerability();
@@ -421,6 +599,8 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
 
         nextRefresh = Time.unscaledTime + 0.35f;
         RefreshCurrentSite(false);
+        ValidateVisualTunerTarget();
+        MaintainMonochromeAnomalies();
 
     }
 
@@ -463,6 +643,131 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         CaptureAnomalyVisuals();
         ApplyEnvironment();
         ApplyAnomalyAccent();
+    }
+
+    private void RefreshVisualTunerTargets(bool selectNearest)
+    {
+        ProductionAnomalySite previous = VisualTunerTarget;
+        visualTunerSites.Clear();
+        IReadOnlyList<ProductionAnomalySite> sites =
+            ProductionAnomalySite.ActiveSites;
+
+        for (int i = 0; i < sites.Count; i++)
+        {
+            ProductionAnomalySite site = sites[i];
+
+            if (site != null && site.IsMapVisible && site.HasVisualTuner)
+                visualTunerSites.Add(site);
+        }
+
+        if (visualTunerSites.Count == 0)
+        {
+            visualTunerIndex = -1;
+            return;
+        }
+
+        int previousIndex = visualTunerSites.IndexOf(previous);
+
+        if (!selectNearest && previousIndex >= 0)
+        {
+            visualTunerIndex = previousIndex;
+            return;
+        }
+
+        Transform player = ResolvePlayerTransform();
+        visualTunerIndex = 0;
+
+        if (player == null)
+            return;
+
+        float nearestDistance = float.PositiveInfinity;
+
+        for (int i = 0; i < visualTunerSites.Count; i++)
+        {
+            float distance = Vector2.SqrMagnitude(
+                (Vector2)player.position -
+                (Vector2)visualTunerSites[i].transform.position
+            );
+
+            if (distance >= nearestDistance)
+                continue;
+
+            nearestDistance = distance;
+            visualTunerIndex = i;
+        }
+    }
+
+    private void ValidateVisualTunerTarget()
+    {
+        ProductionAnomalySite target = VisualTunerTarget;
+
+        if (target == null || !target.IsMapVisible || !target.HasVisualTuner)
+            RefreshVisualTunerTargets(true);
+    }
+
+    private void MaintainMonochromeAnomalies()
+    {
+        if (!monochromeAnomalies)
+            return;
+
+        IReadOnlyList<ProductionAnomalySite> sites =
+            ProductionAnomalySite.ActiveSites;
+        for (int i = 0; i < sites.Count; i++)
+        {
+            ProductionAnomalySite site = sites[i];
+            if (site == null || !site.IsMapVisible || !site.HasVisualTuner ||
+                monochromeOriginalValues.ContainsKey(site))
+            {
+                continue;
+            }
+
+            AnomalyVisualTuningValues original = site.VisualTunerValues;
+            monochromeOriginalValues.Add(site, original);
+            site.ApplyVisualTunerValues(BuildMonochromeValues(
+                original,
+                site.VisualTunerCapabilities));
+        }
+    }
+
+    private void RestoreMonochromeAnomalies()
+    {
+        foreach (KeyValuePair<
+            ProductionAnomalySite,
+            AnomalyVisualTuningValues> pair in monochromeOriginalValues)
+        {
+            pair.Key?.ApplyVisualTunerValues(pair.Value);
+        }
+
+        monochromeOriginalValues.Clear();
+        monochromeAnomalies = false;
+    }
+
+    private static AnomalyVisualTuningValues BuildMonochromeValues(
+        AnomalyVisualTuningValues values,
+        AnomalyVisualTuningCapabilities capabilities)
+    {
+        Color neutral = new(0.72f, 0.76f, 0.78f, 1f);
+        Color neutralFill = new(0.16f, 0.18f, 0.19f, 1f);
+
+        if ((capabilities & AnomalyVisualTuningCapabilities.PrimaryColor) != 0)
+        {
+            neutral.a = values.PrimaryColor.a;
+            values.PrimaryColor = neutral;
+        }
+
+        if ((capabilities & AnomalyVisualTuningCapabilities.SecondaryColor) != 0)
+        {
+            neutral.a = values.SecondaryColor.a;
+            values.SecondaryColor = neutral;
+        }
+
+        if ((capabilities & AnomalyVisualTuningCapabilities.FillColor) != 0)
+        {
+            neutralFill.a = values.FillColor.a;
+            values.FillColor = neutralFill;
+        }
+
+        return values;
     }
 
     private Transform ResolvePlayerTransform()
@@ -1131,6 +1436,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
 
     private void RestoreAll()
     {
+        RestoreMonochromeAnomalies();
         RestorePlayerMultiplier();
         RestoreEnvironment();
         RestoreAnomalyAccent();

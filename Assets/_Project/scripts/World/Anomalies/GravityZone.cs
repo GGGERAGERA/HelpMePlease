@@ -3,6 +3,9 @@ using UnityEngine;
 
 [RequireComponent(typeof(BoxCollider2D))]
 public sealed class GravityZone : LocalAnomalyZone
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    , IAnomalyVisualTunable
+#endif
 {
     private sealed class AffectedObject
     {
@@ -31,18 +34,26 @@ public sealed class GravityZone : LocalAnomalyZone
         Shader.PropertyToID("_RegionSize");
     private static readonly int VisualTimeId =
         Shader.PropertyToID("_VisualTime");
+    private static readonly int InnerColorId =
+        Shader.PropertyToID("_InnerColor");
+    private static readonly int EdgeColorId =
+        Shader.PropertyToID("_EdgeColor");
 
     private const float DefaultProjectileForceMultiplier = 0.5f;
 
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
-    [SerializeField, Range(0.1f, 0.75f)] private float edgeWidth = 0.35f;
+    [SerializeField, Range(0.1f, 0.75f)] private float edgeWidth = 0.3f;
     [SerializeField, Min(0f)] private float flowSpeed = 0.65f;
     [SerializeField, Min(0f)] private float centerPulseSpeed = 1.1f;
     [SerializeField, Range(0.1f, 1f)] private float fadeDuration = 0.8f;
 
+    [Header("Optional Art Hooks")]
+    [SerializeField] private AnomalyArtHookSet artHooks;
+
     private readonly List<AffectedObject> affectedObjects = new();
     private MeshRenderer visualRenderer;
+    private AnomalyArtHooks artHookRuntime;
     private MaterialPropertyBlock visualProperties;
     private float gravityForce;
     private float visualFade;
@@ -57,6 +68,11 @@ public sealed class GravityZone : LocalAnomalyZone
     private float inwardForceEnemies;
     private float inwardForcePlayer;
     private float inwardForceProjectiles;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private AnomalyVisualTuningValues originalVisualValues;
+    private AnomalyVisualTuningValues debugVisualValues;
+    private bool visualValuesCaptured;
+#endif
 
     public void ConfigureOrbit(
         float enemyOrbitForce,
@@ -143,6 +159,8 @@ public sealed class GravityZone : LocalAnomalyZone
     private void Awake()
     {
         BuildVisual();
+        artHookRuntime = AnomalyArtHooks.Create(
+            transform, artHooks, "GRAVITY");
     }
 
     private void Update()
@@ -167,6 +185,10 @@ public sealed class GravityZone : LocalAnomalyZone
     {
         gravityForce = data.GravityForce;
         ConfigureVisual(areaSize);
+        artHookRuntime?.SetBoundarySize(areaSize);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        CaptureOriginalVisualValues();
+#endif
         effectsCleared = false;
         despawning = false;
         visualFade = 0f;
@@ -432,6 +454,86 @@ public sealed class GravityZone : LocalAnomalyZone
             new Vector3(areaSize.x, areaSize.y, 1f);
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public string VisualTypeName => "GRAVITY";
+
+    public AnomalyVisualTuningCapabilities VisualCapabilities =>
+        AnomalyVisualTuningCapabilities.PrimaryColor |
+        AnomalyVisualTuningCapabilities.FillColor |
+        AnomalyVisualTuningCapabilities.FillAlpha |
+        AnomalyVisualTuningCapabilities.BoundaryWidth |
+        AnomalyVisualTuningCapabilities.VisualScale |
+        AnomalyVisualTuningCapabilities.PulseSpeed |
+        AnomalyVisualTuningCapabilities.PatternSpeed;
+
+    public AnomalyVisualTuningValues VisualValues => debugVisualValues;
+
+    public void ApplyVisualValues(AnomalyVisualTuningValues values)
+    {
+        debugVisualValues = values;
+        debugVisualValues.PrimaryColor = ClampColor(values.PrimaryColor);
+        debugVisualValues.FillColor = ClampColor(values.FillColor);
+        debugVisualValues.FillAlpha = Mathf.Clamp01(values.FillAlpha);
+        debugVisualValues.FillColor.a = debugVisualValues.FillAlpha;
+        debugVisualValues.BoundaryWidth = Mathf.Clamp(
+            values.BoundaryWidth, 0.01f, 3f);
+        debugVisualValues.VisualScale = Mathf.Clamp(
+            values.VisualScale, 0.25f, 3f);
+        debugVisualValues.PulseSpeed = Mathf.Clamp(
+            values.PulseSpeed, 0f, 10f);
+        debugVisualValues.PatternSpeed = Mathf.Clamp(
+            values.PatternSpeed, 0f, 10f);
+        edgeWidth = debugVisualValues.BoundaryWidth;
+        centerPulseSpeed = debugVisualValues.PulseSpeed;
+        flowSpeed = debugVisualValues.PatternSpeed;
+        ConfigureVisual(AreaSize * debugVisualValues.VisualScale);
+        ApplyVisualProperties();
+    }
+
+    public void ResetVisualValues()
+    {
+        if (visualValuesCaptured)
+            ApplyVisualValues(originalVisualValues);
+    }
+
+    private void CaptureOriginalVisualValues()
+    {
+        if (visualValuesCaptured)
+            return;
+
+        Color inner = visualMaterial != null &&
+            visualMaterial.HasProperty(InnerColorId)
+                ? visualMaterial.GetColor(InnerColorId)
+                : Color.clear;
+        Color edge = visualMaterial != null &&
+            visualMaterial.HasProperty(EdgeColorId)
+                ? visualMaterial.GetColor(EdgeColorId)
+                : Color.white;
+        debugVisualValues = new AnomalyVisualTuningValues
+        {
+            PrimaryColor = edge,
+            FillColor = inner,
+            FillAlpha = inner.a,
+            BoundaryWidth = edgeWidth,
+            VisualScale = 1f,
+            PulseSpeed = centerPulseSpeed,
+            PatternSpeed = flowSpeed
+        };
+        originalVisualValues = debugVisualValues;
+        visualValuesCaptured = true;
+    }
+
+    private static Color ClampColor(Color value)
+    {
+        return new Color(
+            Mathf.Clamp01(value.r),
+            Mathf.Clamp01(value.g),
+            Mathf.Clamp01(value.b),
+            Mathf.Clamp01(value.a)
+        );
+    }
+#endif
+
     private void ApplyVisualProperties()
     {
         if (visualRenderer == null || visualProperties == null)
@@ -445,7 +547,24 @@ public sealed class GravityZone : LocalAnomalyZone
         visualProperties.SetFloat(EdgeWidthId, edgeWidth);
         visualProperties.SetFloat(FlowSpeedId, flowSpeed);
         visualProperties.SetFloat(CenterPulseSpeedId, centerPulseSpeed);
-        visualProperties.SetVector(RegionSizeId, AreaSize);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (visualValuesCaptured)
+        {
+            Color fill = debugVisualValues.FillColor;
+            fill.a = debugVisualValues.FillAlpha;
+            visualProperties.SetColor(InnerColorId, fill);
+            visualProperties.SetColor(
+                EdgeColorId,
+                debugVisualValues.PrimaryColor
+            );
+            visualProperties.SetVector(
+                RegionSizeId,
+                AreaSize * debugVisualValues.VisualScale
+            );
+        }
+        else
+#endif
+            visualProperties.SetVector(RegionSizeId, AreaSize);
         visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
         visualRenderer.SetPropertyBlock(visualProperties);
     }

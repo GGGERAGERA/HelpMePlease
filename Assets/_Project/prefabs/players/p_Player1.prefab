@@ -21,8 +21,6 @@ GameObject:
   - component: {fileID: -6587262309609574107}
   - component: {fileID: -8583072440193625870}
   - component: {fileID: -5459413600173041077}
-  - component: {fileID: -7248466617024912767}
-  - component: {fileID: -8467997292367934545}
   - component: {fileID: 900000000000001001}
   m_Layer: 0
   m_Name: p_Player1
@@ -392,24 +390,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombatModifiers
   hitExplosionChance: 0
-  enemyDeathExplosionChance: 0
-  deathExplosionDamageBonus: 0
   knockbackMultiplier: 1
-  lowHpPower: 0
-  lowHpPowerMultiplier: 0
-  lowHpDamageBonus: 0
-  lowHpFireRateBonus: 0
   stationaryFireRateRamp: 0
   stationaryFireRateRampMaxBonus: 0
   stationaryFireRateBonus: 0
   stationaryRampDuration: 2
-  randomExtraShotsChance: 0
-  circularBurst: 0
-  circularBurstCooldown: 6
-  circularBurstMinCooldown: 0.5
-  nukeEveryKills: 0
-  nukeKillsRequired: 10
-  nukeMinKillsRequired: 3
   enemyMask:
     serializedVersion: 2
     m_Bits: 256
@@ -417,37 +402,6 @@ MonoBehaviour:
   bonusFireRateMultiplier: 1
   accuracyPenaltyDegrees: 0
   stationaryMoveThreshold: 0.05
---- !u!114 &-7248466617024912767
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 602157039170639563}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 21511d449af0cc14ab66addc83f411e1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CircularBurstRuntime
-  projectileCount: 16
---- !u!114 &-8467997292367934545
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 602157039170639563}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ff511ff327fbdfb44928112c8ed616d9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NukeEveryTenKillsRuntime
-  radius: 12
-  damage: 999
-  enemyMask:
-    serializedVersion: 2
-    m_Bits: 256
-  nukeFxPrefab: {fileID: 8471479244625784341, guid: c9ef6978e0aec7749ac3b55cad40bc5d, type: 3}
 --- !u!114 &900000000000001001
 MonoBehaviour:
   m_ObjectHideFlags: 0

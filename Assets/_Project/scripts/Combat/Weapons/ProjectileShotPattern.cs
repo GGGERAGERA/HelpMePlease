@@ -36,6 +36,7 @@ public sealed class ProjectileShotPattern : MonoBehaviour
                 baseContext.ProjectileCount,
                 baseContext.Pierce,
                 baseContext.Ricochet,
+                baseContext.ShotVisualScale,
                 baseContext.KnockbackForce,
                 baseContext.Modifiers,
                 baseContext.FxPlayer

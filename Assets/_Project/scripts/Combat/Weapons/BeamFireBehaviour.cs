@@ -49,7 +49,10 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
         }
 
         if (beamRenderer != null)
-            beamRenderer.Render(context.Origin, endPoint);
+            beamRenderer.Render(
+                context.Origin,
+                endPoint,
+                context.ShotVisualScale);
 
         return true;
     }

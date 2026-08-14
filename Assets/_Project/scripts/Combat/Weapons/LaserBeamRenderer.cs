@@ -24,21 +24,22 @@ public sealed class LaserBeamRenderer : MonoBehaviour
     [SerializeField] private int glowSortingOrder = 20;
     [SerializeField] private int coreSortingOrder = 21;
 
-    public void Render(Vector2 start, Vector2 end)
+    public void Render(Vector2 start, Vector2 end, float widthScale = 1f)
     {
         Vector2 jitteredEnd = end + Random.insideUnitCircle * endJitter;
+        widthScale = Mathf.Max(0.1f, widthScale);
 
-        CreateGlow(start, jitteredEnd);
-        CreateCore(start, jitteredEnd);
+        CreateGlow(start, jitteredEnd, widthScale);
+        CreateCore(start, jitteredEnd, widthScale);
     }
 
-    private void CreateCore(Vector2 start, Vector2 end)
+    private void CreateCore(Vector2 start, Vector2 end, float widthScale)
     {
         LineRenderer line = CreateLine("LaserBeam_Core", coreMaterial, coreSortingOrder);
 
         float width = Mathf.Max(
             0.01f,
-            coreWidth + Random.Range(-widthJitter, widthJitter)
+            (coreWidth + Random.Range(-widthJitter, widthJitter)) * widthScale
         );
 
         line.startWidth = width;
@@ -53,13 +54,13 @@ public sealed class LaserBeamRenderer : MonoBehaviour
         Destroy(line.gameObject, beamDuration);
     }
 
-    private void CreateGlow(Vector2 start, Vector2 end)
+    private void CreateGlow(Vector2 start, Vector2 end, float widthScale)
     {
         LineRenderer line = CreateLine("LaserBeam_Glow", glowMaterial, glowSortingOrder);
 
         float width = Mathf.Max(
             0.01f,
-            glowWidth + Random.Range(-widthJitter, widthJitter)
+            (glowWidth + Random.Range(-widthJitter, widthJitter)) * widthScale
         );
 
         line.startWidth = width;
