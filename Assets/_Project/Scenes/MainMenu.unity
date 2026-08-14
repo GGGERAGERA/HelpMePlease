@@ -6926,18 +6926,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1001258581}
     m_Modifications:
-    - target: {fileID: 852050964030931831, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
       propertyPath: interactionsRoot
       value: 
       objectReference: {fileID: 2300000201}
-    - target: {fileID: 1675017784238013216, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 4097959814010224276, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
       propertyPath: m_LocalPosition.x
       value: 46.5
@@ -6981,10 +6973,6 @@ PrefabInstance:
     - target: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
       propertyPath: m_Name
       value: WeaponRoom
-      objectReference: {fileID: 0}
-    - target: {fileID: 8067390264947269761, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-      propertyPath: m_IsActive
-      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -267308,6 +267296,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1001258581}
     m_Modifications:
+    - target: {fileID: 852050964030931831, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1675017784238013216, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2876066344667078614, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
       propertyPath: m_SortingOrder
       value: 3
