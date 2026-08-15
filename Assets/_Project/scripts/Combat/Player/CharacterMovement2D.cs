@@ -35,6 +35,7 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
     private float legacyAnomalySpeedMultiplier = 1f;
     private readonly AnomalySpeedMultiplierStack anomalySpeedSources = new();
     private float worldRuleSpeedMultiplier = 1f;
+    private float runUpgradeSpeedMultiplier = 1f;
     private Vector2 worldRuleExternalVelocity;
     private readonly AnomalyExternalVelocityStack
         anomalyExternalVelocity = new();
@@ -147,6 +148,13 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
     {
         worldRuleExternalVelocity = velocity;
     }
+    public void SetRunUpgradeMoveSpeedMultiplier(float multiplier)
+    {
+        multiplier = Mathf.Max(0.1f, multiplier);
+        speed = speed / Mathf.Max(0.1f, runUpgradeSpeedMultiplier) * multiplier;
+        runUpgradeSpeedMultiplier = multiplier;
+    }
+    public float RunUpgradeMoveSpeedMultiplier => runUpgradeSpeedMultiplier;
     public Component ExternalVelocityComponent => this;
     public void SetAnomalyExternalVelocity(
         Object source,

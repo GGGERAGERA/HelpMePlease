@@ -40,6 +40,28 @@ public static class WeaponTempoProfiles
     }
 }
 
+public static class ProductionUpgradeProfiles
+{
+    public static float DamageMultiplier(int level) =>
+        1f + 0.1f * ClampLevel(level);
+    public static float MaxHealthBonus(int level) =>
+        20f * ClampLevel(level);
+    public static float MoveSpeedMultiplier(int level) =>
+        1f + 0.1f * ClampLevel(level);
+    public static float XpGainMultiplier(int level) =>
+        1f + 0.08f * ClampLevel(level);
+    public static float AttackSizeMultiplier(int level) =>
+        1f + 0.2f * ClampLevel(level);
+    public static float CritChanceBonus(int level) =>
+        0.1f * ClampLevel(level);
+    public static float RegenerationPerSecond(int level) =>
+        ClampLevel(level) switch { 1 => 1f, 2 => 1.5f, _ => 2f };
+    public static int MultishotBonus(int level) => ClampLevel(level);
+
+    private static int ClampLevel(int level) =>
+        Mathf.Clamp(level, 1, RunItemSlots.MaxItemLevel);
+}
+
 /// <summary>
 /// Applies one selected upgrade to the current player runtime state.
 /// UpgradeManager should not know how upgrades change health, movement, weapons, or combat flags.
@@ -72,11 +94,11 @@ public sealed class UpgradeApplier : MonoBehaviour
         switch (upgrade.upgradeType)
         {
             case UpgradeType.MaxHealthFlat:
-                ApplyMaxHealth(context, upgrade.value);
+                ApplyMaxHealth(context, upgradeLevel);
                 break;
 
             case UpgradeType.MoveSpeedPercent:
-                ApplyMoveSpeed(context, upgrade.value);
+                ApplyMoveSpeed(context, upgradeLevel);
                 break;
 
             case UpgradeType.XpPickupRadiusPercent:
@@ -84,7 +106,8 @@ public sealed class UpgradeApplier : MonoBehaviour
                 break;
 
             case UpgradeType.WeaponDamagePercent:
-                ApplyToWeapons(context, weapon => weapon.AddDamagePercent(upgrade.value));
+                RequireCombatModifiers(context).SetRunDamageMultiplier(
+                    ProductionUpgradeProfiles.DamageMultiplier(upgradeLevel));
                 break;
 
             case UpgradeType.FireRatePercent:
@@ -96,7 +119,28 @@ public sealed class UpgradeApplier : MonoBehaviour
                 break;
 
             case UpgradeType.CritChance:
-                ApplyToWeapons(context, weapon => weapon.AddCritChance(upgrade.value));
+                RequireCombatModifiers(context).SetRunCritChanceBonus(
+                    ProductionUpgradeProfiles.CritChanceBonus(upgradeLevel));
+                break;
+
+            case UpgradeType.XpGainPercent:
+                ExperienceManager.Instance?.SetRunUpgradeXpGainMultiplier(
+                    ProductionUpgradeProfiles.XpGainMultiplier(upgradeLevel));
+                break;
+
+            case UpgradeType.AttackSizePercent:
+                RequireCombatModifiers(context).SetRunAttackSizeMultiplier(
+                    ProductionUpgradeProfiles.AttackSizeMultiplier(upgradeLevel));
+                break;
+
+            case UpgradeType.HpRegeneration:
+                context.Health?.SetRunUpgradeRegeneration(
+                    ProductionUpgradeProfiles.RegenerationPerSecond(upgradeLevel));
+                break;
+
+            case UpgradeType.Multishot:
+                ApplyToWeapons(context, weapon => weapon.SetProjectileCountBonus(
+                    ProductionUpgradeProfiles.MultishotBonus(upgradeLevel)));
                 break;
 
             case UpgradeType.CritDamage:
@@ -159,20 +203,22 @@ public sealed class UpgradeApplier : MonoBehaviour
         return new PlayerUpgradeContext(player);
     }
 
-    private void ApplyMaxHealth(PlayerUpgradeContext context, float value)
+    private void ApplyMaxHealth(PlayerUpgradeContext context, int level)
     {
         if (context.Health == null)
             return;
 
-        context.Health.AddMaxHealth(value);
+        context.Health.SetRunUpgradeMaxHealthBonus(
+            ProductionUpgradeProfiles.MaxHealthBonus(level));
     }
 
-    private void ApplyMoveSpeed(PlayerUpgradeContext context, float value)
+    private void ApplyMoveSpeed(PlayerUpgradeContext context, int level)
     {
         if (context.Movement == null)
             return;
 
-        context.Movement.AddMoveSpeedPercent(value);
+        context.Movement.SetRunUpgradeMoveSpeedMultiplier(
+            ProductionUpgradeProfiles.MoveSpeedMultiplier(level));
     }
 
     private void ApplyXpPickupRadius(PlayerUpgradeContext context, float value)

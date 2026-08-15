@@ -5,6 +5,8 @@ using UnityEngine;
 public interface IAnomalyPowerRuntime
 {
     AnomalyPowerType Type { get; }
+    int Level { get; }
+    void SetLevel(int level);
     void Activate();
     void Deactivate();
 }

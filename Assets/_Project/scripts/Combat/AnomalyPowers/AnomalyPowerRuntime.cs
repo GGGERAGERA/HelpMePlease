@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 public static class AnomalyPowerRuntime
@@ -10,19 +9,27 @@ public static class AnomalyPowerRuntime
         if (player == null || runState == null)
             return;
 
-        IReadOnlyList<AnomalyPowerType> powers = runState.AnomalyPowers;
+        AnomalyInventory inventory = runState.AnomalyInventory;
+        if (inventory.IsEmpty)
+            return;
 
-        for (int i = 0; i < powers.Count; i++)
-            EnsurePower(player, powers[i]);
+        EnsurePower(
+            player,
+            inventory.CurrentItem.PowerType,
+            inventory.Level);
     }
 
-    public static void EnsurePower(GameObject player, AnomalyPowerType power)
+    public static void EnsurePower(
+        GameObject player,
+        AnomalyPowerType power,
+        int level = 1)
     {
         if (player == null)
             return;
 
         if (TryFindPower(player, power, out IAnomalyPowerRuntime existing))
         {
+            existing.SetLevel(level);
             existing.Activate();
             return;
         }
@@ -32,6 +39,7 @@ public static class AnomalyPowerRuntime
                 power,
                 out IAnomalyPowerRuntime created))
         {
+            created.SetLevel(level);
             created.Activate();
             return;
         }

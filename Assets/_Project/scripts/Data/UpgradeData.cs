@@ -39,7 +39,12 @@ public enum UpgradeType
     Pierce = 18,
     Ricochet = 19,
     HeavyShot = 20,
-    Overclock = 21
+    Overclock = 21,
+
+    XpGainPercent = 22,
+    AttackSizePercent = 23,
+    HpRegeneration = 24,
+    Multishot = 25
 }
 
 [CreateAssetMenu(fileName = "New UpgradeData", menuName = "Game/Upgrade Data")]

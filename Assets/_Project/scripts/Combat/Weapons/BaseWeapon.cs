@@ -579,6 +579,18 @@ public abstract class BaseWeapon : MonoBehaviour
     {
         runtimeStats.AddProjectileCount(amount);
     }
+    public void SetProjectileCountBonus(int amount)
+    {
+        runtimeStats.SetProjectileCountBonus(amount);
+    }
+
+    public int RuntimeProjectileCount => runtimeStats != null
+        ? runtimeStats.ProjectileCount
+        : weaponData != null ? Mathf.Max(1, weaponData.bulletsPerShot) : 1;
+
+    public int RuntimeProjectileCountBonus => runtimeStats != null
+        ? runtimeStats.ProjectileCountBonus
+        : 0;
 
     public void AddPierce(int amount)
     {
@@ -614,7 +626,10 @@ public abstract class BaseWeapon : MonoBehaviour
 
     public bool RollCritical()
     {
-        return Random.value < runtimeStats.CritChance;
+        PlayerCombatModifiers modifiers = GetCombatModifiers();
+        float chance = runtimeStats.CritChance +
+            (modifiers != null ? modifiers.RunCritChanceBonus : 0f);
+        return Random.value < Mathf.Clamp01(chance);
     }
 
     public float GetCritMultiplier()
@@ -878,7 +893,10 @@ public abstract class BaseWeapon : MonoBehaviour
             GetProjectileCount(),
             GetProjectilePierce(),
             GetProjectileRicochet(),
-            runtimeStats.ShotVisualScale,
+            runtimeStats.ShotVisualScale *
+                (modifiers != null
+                    ? modifiers.RunAttackSizeMultiplier
+                    : 1f),
             0f,
             modifiers,
             FxPlayer
@@ -922,12 +940,10 @@ public abstract class BaseWeapon : MonoBehaviour
             !float.IsInfinity(value.y);
     }
 
-#if UNITY_EDITOR
     protected virtual void OnValidate()
     {
         idleOrbitDegreesPerSecond = Mathf.Max(0f, idleOrbitDegreesPerSecond);
         targetDirectionBlendSpeed = Mathf.Max(0f, targetDirectionBlendSpeed);
         initialIdleOrbitAngle = Mathf.Repeat(initialIdleOrbitAngle, 360f);
     }
-#endif
 }

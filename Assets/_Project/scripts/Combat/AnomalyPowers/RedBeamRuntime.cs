@@ -24,8 +24,15 @@ internal sealed class RedBeamRuntime : MonoBehaviour, IAnomalyPowerRuntime
     private State state;
     private float stateUntil;
     private Vector2 direction = Vector2.right;
+    private int level = 1;
 
     public AnomalyPowerType Type => AnomalyPowerType.RedBeam;
+    public int Level => level;
+
+    public void SetLevel(int value)
+    {
+        level = AnomalyPowerLevelProfiles.ClampLevel(value);
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void RegisterRuntime()
@@ -88,14 +95,17 @@ internal sealed class RedBeamRuntime : MonoBehaviour, IAnomalyPowerRuntime
                 direction = SelectDirection();
                 state = State.Telegraph;
                 stateUntil = Time.time + TelegraphDuration;
-                ShowLine(0.08f, new Color(1f, 0.2f, 0.1f, 0.7f));
+                ShowLine(
+                    0.08f * GetFinalWidthMultiplier(),
+                    new Color(1f, 0.2f, 0.1f, 0.7f));
                 break;
             case State.Telegraph:
                 Fire();
                 state = State.Firing;
                 stateUntil = Time.time + BeamDuration;
                 ShowLine(
-                    BeamHalfWidth * 2f,
+                    BeamHalfWidth * 2f *
+                        GetFinalWidthMultiplier(),
                     new Color(1f, 0.05f, 0.02f, 0.8f)
                 );
                 break;
@@ -143,6 +153,12 @@ internal sealed class RedBeamRuntime : MonoBehaviour, IAnomalyPowerRuntime
     private void Fire()
     {
         Vector2 origin = transform.position;
+        OffensiveAttackContext attack = OffensiveAttackContext.Resolve(
+            gameObject,
+            BeamDamage * AnomalyPowerLevelProfiles.BeamDamage(level));
+        float beamHalfWidth = BeamHalfWidth *
+            AnomalyPowerLevelProfiles.BeamWidth(level) *
+            attack.AttackSizeMultiplier;
         List<EnemyHealth> enemies = new(EnemyHealth.ActiveInstances);
 
         foreach (EnemyHealth enemy in enemies)
@@ -157,12 +173,12 @@ internal sealed class RedBeamRuntime : MonoBehaviour, IAnomalyPowerRuntime
             );
 
             if (forward > 0f && forward <= BeamRange &&
-                perpendicular <= BeamHalfWidth)
+                perpendicular <= beamHalfWidth)
             {
                 enemy.TakeDamage(
-                    BeamDamage,
+                    attack.Damage,
                     origin + direction * forward,
-                    false
+                    attack.IsCritical
                 );
             }
         }
@@ -176,6 +192,12 @@ internal sealed class RedBeamRuntime : MonoBehaviour, IAnomalyPowerRuntime
         line.endColor = color;
         UpdateBeamVisualPosition();
         line.enabled = true;
+    }
+
+    private float GetFinalWidthMultiplier()
+    {
+        return AnomalyPowerLevelProfiles.BeamWidth(level) *
+            OffensiveAttackContext.GetAttackSize(gameObject);
     }
 
     private void UpdateBeamVisualPosition()
@@ -262,6 +284,8 @@ internal sealed class RedBeamRuntime : MonoBehaviour, IAnomalyPowerRuntime
         );
         emitterVisual.position = (Vector2)transform.position +
             EmitterOffset + drift;
+        emitterVisual.localScale = Vector3.one *
+            GetFinalWidthMultiplier();
         emitterVisual.Rotate(0f, 0f, -46f * Time.deltaTime);
     }
 

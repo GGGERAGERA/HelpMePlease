@@ -63,11 +63,17 @@ public class CharacterSpawner : MonoBehaviour
             RunStateManager.Instance.ApplyToSpawnedPlayer(player, upgradeApplier);
 
         AnomalyPowerRuntime.ApplyRunLoadout(player);
+        AnomalySlotHUD.EnsureExists();
 
         AnomalyCoreRuntime coreRuntime =
             player.GetComponent<AnomalyCoreRuntime>();
         coreRuntime ??= player.AddComponent<AnomalyCoreRuntime>();
         coreRuntime.Initialize(this, PrimaryWeapon);
+
+        EvolutionRuntimeController evolutionRuntime =
+            player.GetComponent<EvolutionRuntimeController>();
+        evolutionRuntime ??= player.AddComponent<EvolutionRuntimeController>();
+        evolutionRuntime.Initialize(this, PrimaryWeapon);
 
         SpawnedPlayer = player;
         CharacterSpawned?.Invoke(player);

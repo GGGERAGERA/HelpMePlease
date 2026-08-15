@@ -14,6 +14,7 @@ public class ExperienceManager : MonoBehaviour
     private float xpGainMultiplier = 1f;
     private float levelXpGainMultiplier = 1f;
     private float anomalyXpGainMultiplier = 1f;
+    private float runUpgradeXpGainMultiplier = 1f;
 
     public UnityEvent<int, int> OnExperienceChanged;
     public UnityEvent<int> OnLevelUp;
@@ -51,6 +52,7 @@ public class ExperienceManager : MonoBehaviour
         currentExp += Mathf.RoundToInt(
             amount *
             xpGainMultiplier *
+            runUpgradeXpGainMultiplier *
             levelXpGainMultiplier *
             anomalyXpGainMultiplier
         );
@@ -119,6 +121,11 @@ public class ExperienceManager : MonoBehaviour
     {
         anomalyXpGainMultiplier = Mathf.Max(0.1f, multiplier);
     }
+    public void SetRunUpgradeXpGainMultiplier(float multiplier)
+    {
+        runUpgradeXpGainMultiplier = Mathf.Max(0.1f, multiplier);
+    }
+    public float RunUpgradeXpGainMultiplier => runUpgradeXpGainMultiplier;
     public void RestoreRuntimeExperience(int level, int exp)
     {
         currentLevel = Mathf.Max(1, level);

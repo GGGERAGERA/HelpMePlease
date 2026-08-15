@@ -514,17 +514,13 @@ MonoBehaviour:
   upgradeApplier: {fileID: 46915855}
   allUpgrades:
   - {fileID: 11400000, guid: 4d12f281773147b4f8ff7be651666ac9, type: 2}
-  - {fileID: 11400000, guid: 7b703f110d294fa4fa7bc9adb77f4264, type: 2}
   - {fileID: 11400000, guid: c8db2879eddb6744f89bd449e3ce719e, type: 2}
   - {fileID: 11400000, guid: c566c95f91fdda34db552b74fad20c48, type: 2}
-  - {fileID: 11400000, guid: ce823526ee6b72f4f8e4d17ae70e4d4e, type: 2}
+  - {fileID: 11400000, guid: 9b100000000000000000000000000001, type: 2}
+  - {fileID: 11400000, guid: 9b100000000000000000000000000002, type: 2}
   - {fileID: 11400000, guid: a55214083a360b248bd0b37e4f66ba26, type: 2}
-  - {fileID: 11400000, guid: 352fa235404fe17428acc46b5d9d2d6f, type: 2}
-  - {fileID: 11400000, guid: 0b735dae9fc6f4c428d3608f73121ba0, type: 2}
-  - {fileID: 11400000, guid: 5e11097c54ae4f25ab1c16558021ff62, type: 2}
-  - {fileID: 11400000, guid: 255c606c56ba43a3bd7134061abe20e1, type: 2}
-  - {fileID: 11400000, guid: bf640996ca2748bab583cc68eed19294, type: 2}
-  - {fileID: 11400000, guid: d2a510d576c249938406489518fc23fc, type: 2}
+  - {fileID: 11400000, guid: 9b100000000000000000000000000003, type: 2}
+  - {fileID: 11400000, guid: 9b100000000000000000000000000004, type: 2}
   choicesCount: 3
 --- !u!114 &46915849
 MonoBehaviour:
@@ -4986,7 +4982,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6753869298132210314, guid: 2726d95301e967749956cb544488e426, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 364
+      value: 240
       objectReference: {fileID: 0}
     - target: {fileID: 6753869298132210314, guid: 2726d95301e967749956cb544488e426, type: 3}
       propertyPath: m_SizeDelta.y
