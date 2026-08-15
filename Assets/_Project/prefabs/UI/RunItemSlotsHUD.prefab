@@ -439,7 +439,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 0, y: 92}
-  m_SizeDelta: {x: 364, y: 54}
+  m_SizeDelta: {x: 240, y: 54}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2050775015527646462
 MonoBehaviour:
@@ -484,15 +484,11 @@ MonoBehaviour:
   - {fileID: 4849257337289747886}
   - {fileID: 9101073059712505666}
   - {fileID: 1819245396666872012}
-  - {fileID: 2306484126230444092}
-  - {fileID: 2131117007130070067}
   levelTexts:
   - {fileID: 90937558494403086}
   - {fileID: 6685739293574084693}
   - {fileID: 363085463261789568}
   - {fileID: 4883561991664062205}
-  - {fileID: 4970410203981763207}
-  - {fileID: 6818167606294339785}
 --- !u!1 &2267765315175211699
 GameObject:
   m_ObjectHideFlags: 0
@@ -1284,7 +1280,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2690641115911206545
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1377,7 +1373,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5265550175218997637
 RectTransform:
   m_ObjectHideFlags: 0

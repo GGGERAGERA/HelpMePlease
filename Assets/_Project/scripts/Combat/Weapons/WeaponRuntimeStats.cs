@@ -43,6 +43,7 @@ public sealed class WeaponRuntimeStats : MonoBehaviour
     [SerializeField] private int debugFinalDamage;
 
     public int ProjectileCount => Mathf.Max(1, baseProjectileCount + projectileCountBonus);
+    public int ProjectileCountBonus => projectileCountBonus;
     public int Pierce => Mathf.Max(0, basePierce + pierceBonus);
     public int Ricochet => Mathf.Max(0, baseRicochet + ricochetBonus);
     public float Range => Mathf.Max(0.1f, baseRange + rangeBonus);
@@ -140,7 +141,7 @@ public sealed class WeaponRuntimeStats : MonoBehaviour
 
         if (modifiers != null)
         {
-            finalDamage *= modifiers.bonusDamageMultiplier;
+            finalDamage *= modifiers.TotalDamageMultiplier;
         }
 
         int rounded = Mathf.Max(0, Mathf.RoundToInt(finalDamage));
@@ -173,6 +174,8 @@ public sealed class WeaponRuntimeStats : MonoBehaviour
     public void AddCritChance(float amount) => critChance = Mathf.Clamp01(critChance + amount);
     public void AddCritMultiplier(float amount) => critMultiplier += amount;
     public void AddProjectileCount(int amount) => projectileCountBonus += amount;
+    public void SetProjectileCountBonus(int amount) =>
+        projectileCountBonus = Mathf.Max(0, amount);
     public void AddPierce(int amount) => pierceBonus += amount;
     public void AddRicochet(int amount) => ricochetBonus += amount;
     public void SetPierceBonus(int amount) => pierceBonus = Mathf.Max(0, amount);

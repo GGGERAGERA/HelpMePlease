@@ -21,6 +21,8 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField, Min(0f)] private float incomingDamageMultiplier = 1f;
 
     private bool isInvulnerable;
+    private float runUpgradeMaxHealthBonus;
+    private float runUpgradeRegenerationPerSecond;
 
     private void Awake()
     {
@@ -37,6 +39,17 @@ public class PlayerHealth : MonoBehaviour
             currentHealth = maxHealth;
 
         HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
+    }
+
+    private void Update()
+    {
+        if (isDead || runUpgradeRegenerationPerSecond <= 0f ||
+            currentHealth >= maxHealth)
+        {
+            return;
+        }
+
+        Heal(runUpgradeRegenerationPerSecond * Time.deltaTime);
     }
 
     public bool TakeDamage(float damage, Vector2 hitDirection)
@@ -138,6 +151,22 @@ public class PlayerHealth : MonoBehaviour
 
         HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
     }
+    public void SetRunUpgradeMaxHealthBonus(float targetBonus)
+    {
+        targetBonus = Mathf.Max(0f, targetBonus);
+        float delta = targetBonus - runUpgradeMaxHealthBonus;
+        runUpgradeMaxHealthBonus = targetBonus;
+
+        if (!Mathf.Approximately(delta, 0f))
+            AddMaxHealth(delta);
+    }
+    public void SetRunUpgradeRegeneration(float healthPerSecond)
+    {
+        runUpgradeRegenerationPerSecond = Mathf.Max(0f, healthPerSecond);
+    }
+    public float RunUpgradeMaxHealthBonus => runUpgradeMaxHealthBonus;
+    public float RunUpgradeRegenerationPerSecond =>
+        runUpgradeRegenerationPerSecond;
     public void SetRuntimeHealth(float maxHealthValue, float currentHealthValue)
     {
         maxHealth = Mathf.Max(1f, maxHealthValue);

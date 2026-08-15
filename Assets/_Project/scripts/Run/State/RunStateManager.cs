@@ -7,6 +7,7 @@ using UnityEngine;
 /// </summary>
 public sealed class RunStateManager : MonoBehaviour
 {
+    public event System.Action EvolutionChanged;
     public static RunStateManager Instance { get; private set; }
     public event System.Action CurrentRewardChanged;
 
@@ -21,7 +22,8 @@ public sealed class RunStateManager : MonoBehaviour
 
     private readonly List<UpgradeData> pickedUpgrades = new();
     private readonly RunItemSlots itemSlots = new();
-    private readonly List<AnomalyPowerType> anomalyPowers = new(3);
+    private readonly AnomalyInventory anomalyInventory = new();
+    private readonly EvolutionState evolutionState = new();
 
     private float threatValue;
     private float threatElapsedTime;
@@ -54,7 +56,11 @@ public sealed class RunStateManager : MonoBehaviour
 
     public IReadOnlyList<UpgradeData> PickedUpgrades => pickedUpgrades;
     public RunItemSlots ItemSlots => itemSlots;
-    public IReadOnlyList<AnomalyPowerType> AnomalyPowers => anomalyPowers;
+    public AnomalyInventory AnomalyInventory => anomalyInventory;
+    public EvolutionState EvolutionState => evolutionState;
+    public EvolutionDefinition CurrentEvolution =>
+        evolutionState.CurrentEvolution;
+    public bool HasEvolution => evolutionState.HasEvolution;
     public float ThreatValue => threatValue;
     public float ThreatElapsedTime => threatElapsedTime;
 
@@ -139,7 +145,8 @@ public sealed class RunStateManager : MonoBehaviour
 
         pickedUpgrades.Clear();
         itemSlots.Clear();
-        anomalyPowers.Clear();
+        anomalyInventory.Clear();
+        evolutionState.Clear();
         threatValue = 0f;
         threatElapsedTime = 0f;
 
@@ -270,6 +277,12 @@ public sealed class RunStateManager : MonoBehaviour
         if (experience == null)
             return;
 
+        int xpGainLevel = itemSlots.GetLevel(UpgradeType.XpGainPercent);
+        experience.SetRunUpgradeXpGainMultiplier(
+            xpGainLevel > 0
+                ? ProductionUpgradeProfiles.XpGainMultiplier(xpGainLevel)
+                : 1f);
+
         if (!hasExperienceSnapshot)
             return;
 
@@ -317,25 +330,55 @@ public sealed class RunStateManager : MonoBehaviour
     }
 #endif
 
-    public bool HasAnomalyPower(AnomalyPowerType power)
+    public AnomalyGrantResult TryGrantAnomalyItem(AnomalyItemData item)
     {
-        return anomalyPowers.Contains(power);
-    }
+        AnomalyGrantResult result = runEnded
+            ? AnomalyGrantResult.Invalid
+            : anomalyInventory.TryGrant(item);
 
-    public bool TryAddAnomalyPower(AnomalyPowerType power)
-    {
-        if (runEnded || anomalyPowers.Count >= 3 ||
-            anomalyPowers.Contains(power))
+        Debug.Log(
+            $"[RunState] Anomaly grant '{(item != null ? item.Id : "NULL")}' " +
+            $"=> {result}. Level: {anomalyInventory.Level}."
+        );
+
+        if (result == AnomalyGrantResult.Accepted ||
+            result == AnomalyGrantResult.Upgraded)
         {
-            return false;
+            AnomalyPowerRuntime.EnsurePower(
+                GameObject.FindGameObjectWithTag("Player"),
+                anomalyInventory.CurrentItem.PowerType,
+                anomalyInventory.Level);
         }
 
-        anomalyPowers.Add(power);
-        Debug.Log(
-            $"[RunState] Anomaly Power acquired: {power}. " +
-            $"Slots: {anomalyPowers.Count}/3."
-        );
-        return true;
+        return result;
+    }
+
+    public void ClearAnomalyItem()
+    {
+        if (runEnded || anomalyInventory.IsEmpty)
+            return;
+
+        AnomalyPowerRuntime.DeactivatePower(
+            GameObject.FindGameObjectWithTag("Player"),
+            anomalyInventory.CurrentItem.PowerType);
+        anomalyInventory.Clear();
+    }
+
+    public void ResolveCurrentEvolution(
+        IReadOnlyList<EvolutionRecipe> recipes)
+    {
+        ResolveCurrentEvolution(SelectedWeapon, recipes);
+    }
+
+    public void ResolveCurrentEvolution(
+        WeaponData activeWeapon,
+        IReadOnlyList<EvolutionRecipe> recipes)
+    {
+        EvolutionDefinition previous = evolutionState.CurrentEvolution;
+        evolutionState.Refresh(activeWeapon, anomalyInventory, recipes);
+
+        if (previous != evolutionState.CurrentEvolution)
+            EvolutionChanged?.Invoke();
     }
 
     [ContextMenu("Debug/Clear Item Slots")]
@@ -458,7 +501,8 @@ public sealed class RunStateManager : MonoBehaviour
         runEnded = true;
         CurrentAnomalyStabilizer = null;
         AnomalyModifiers = AnomalyRunModifiers.None;
-        anomalyPowers.Clear();
+        anomalyInventory.Clear();
+        evolutionState.Clear();
         threatValue = 0f;
         threatElapsedTime = 0f;
 

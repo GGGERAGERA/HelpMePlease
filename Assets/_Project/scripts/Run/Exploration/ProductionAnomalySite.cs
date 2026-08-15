@@ -542,31 +542,58 @@ public sealed class ProductionAnomalySite : MonoBehaviour
             return;
         }
 
-        AnomalyPowerType powerReward = specialDefinition.PowerReward;
+        AnomalyItemData item = AnomalyItemCatalog.Find(
+            specialDefinition.PowerReward);
         RunStateManager runState = RunStateManager.Instance;
-        bool added = runState != null &&
-            runState.TryAddAnomalyPower(powerReward);
+        AnomalyGrantResult result = runState != null
+            ? runState.TryGrantAnomalyItem(item)
+            : AnomalyGrantResult.Invalid;
 
-        if (added)
+        if (result == AnomalyGrantResult.Accepted ||
+            result == AnomalyGrantResult.Upgraded)
         {
-            GameObject player = GameObject.FindGameObjectWithTag("Player");
-            AnomalyPowerRuntime.EnsurePower(player, powerReward);
             RunMessageService.Instance?.ShowCustom(
-                "ANOMALY POWER ACQUIRED",
-                $"{specialDefinition.PowerDisplayName}  " +
-                $"{runState.AnomalyPowers.Count}/3",
+                result == AnomalyGrantResult.Accepted
+                    ? "ANOMALY ITEM ACQUIRED"
+                    : "ANOMALY ITEM UPGRADED",
+                $"{item.DisplayName}  " +
+                $"{ToRoman(runState.AnomalyInventory.Level)} / III",
+                2.5f
+            );
+        }
+        else if (result == AnomalyGrantResult.RequiresReplacement)
+        {
+            RunMessageService.Instance?.ShowCustom(
+                "ANOMALY SLOT OCCUPIED",
+                "REPLACEMENT UI IS NOT AVAILABLE — CURRENT ITEM KEPT",
+                3f
+            );
+        }
+        else if (result == AnomalyGrantResult.Maxed)
+        {
+            RunMessageService.Instance?.ShowCustom(
+                "ANOMALY ITEM MAXED",
+                $"{item.DisplayName}  III / III",
                 2.5f
             );
         }
         else
         {
             RunMessageService.Instance?.ShowCustom(
-                "ANOMALY POWER UNCHANGED",
-                "DUPLICATES AND SLOT OVERFLOW ARE DISABLED",
+                "ANOMALY REWARD INVALID",
+                "ANOMALY ITEM DATA IS MISSING",
                 2.5f
             );
         }
     }
+
+    private static string ToRoman(int level) => level switch
+    {
+        1 => "I",
+        2 => "II",
+        3 => "III",
+        _ => "—"
+    };
 
     private void CollapseEnvironment()
     {

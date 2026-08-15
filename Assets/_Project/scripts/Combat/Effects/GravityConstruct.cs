@@ -4,7 +4,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class GravityConstruct :
     AnomalyCoreConstruct,
-    IAnomalyWeaponPayload
+    IAnomalyWeaponPayload,
+    IAnomalyPowerRuntime
 {
     private const float VisualRadius = 0.78f;
     private const float CoreRadius = 0.38f;
@@ -27,9 +28,9 @@ public sealed class GravityConstruct :
     [SerializeField] private float damageTickInterval = 0.42f;
 
     [Header("Optional Weapon Payload")]
-    [SerializeField] private bool weaponPayloadEnabled = true;
-    [Min(0.05f)]
-    [SerializeField] private float fireInterval = 1f;
+    [SerializeField] private bool weaponPayloadEnabled;
+    [Range(0.05f, 2f)]
+    [SerializeField] private float payloadFireRateMultiplier = 0.7f;
     [SerializeField] private float angleOffset;
 
     private readonly List<EnemyHealth> enemySnapshot = new();
@@ -38,10 +39,42 @@ public sealed class GravityConstruct :
     private float orbitAngle;
     private float damageTickTimer;
     private float fireTimer;
+    private int level = 1;
 
+    public AnomalyPowerType Type => AnomalyPowerType.GravityOrb;
+    public int Level => level;
     public BaseWeapon SourceWeapon => sourceWeapon;
     public Transform Anchor => anchor;
     public bool WeaponPayloadEnabled => weaponPayloadEnabled;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void RegisterRuntime()
+    {
+        AnomalyPowerRuntimeRegistry.Register(
+            AnomalyPowerType.GravityOrb,
+            owner => owner.AddComponent<GravityConstruct>());
+    }
+
+    public void SetLevel(int value)
+    {
+        level = AnomalyPowerLevelProfiles.ClampLevel(value);
+    }
+
+    public void Activate()
+    {
+        enabled = true;
+
+        if (gravityEntity != null)
+            gravityEntity.gameObject.SetActive(true);
+    }
+
+    public void Deactivate()
+    {
+        enabled = false;
+
+        if (gravityEntity != null)
+            gravityEntity.gameObject.SetActive(false);
+    }
 
     public override void Configure(
         Transform anchorTransform,
@@ -59,12 +92,19 @@ public sealed class GravityConstruct :
             fireTimer = 0f;
     }
 
+    public void ConfigureWeaponPayload(
+        BaseWeapon weapon,
+        float fireRateMultiplier)
+    {
+        sourceWeapon = weapon;
+        payloadFireRateMultiplier = Mathf.Clamp(
+            fireRateMultiplier, 0.05f, 2f);
+    }
+
     public override void Shutdown()
     {
         base.Shutdown();
-
-        if (gravityEntity != null)
-            gravityEntity.gameObject.SetActive(false);
+        Deactivate();
     }
 
     private void Awake()
@@ -99,6 +139,9 @@ public sealed class GravityConstruct :
         Vector2 direction = DirectionFromAngle(angle);
         gravityEntity.position = GetCenter() +
             direction * Mathf.Max(0f, orbitRadius);
+        float size = OffensiveAttackContext.GetAttackSize(gameObject) *
+            AnomalyPowerLevelProfiles.GravitySize(level);
+        gravityEntity.localScale = Vector3.one * size;
     }
 
     private void ApplyBaseGravityDamage()
@@ -116,8 +159,13 @@ public sealed class GravityConstruct :
             enemySnapshot.Add(enemy);
 
         Vector2 hitPoint = gravityEntity.position;
-        float radiusSquared = damageRadius * damageRadius;
-
+        OffensiveAttackContext attack = OffensiveAttackContext.Resolve(
+            gameObject,
+            baseDamage * AnomalyPowerLevelProfiles.GravityDamage(level));
+        float scaledRadius = damageRadius *
+            AnomalyPowerLevelProfiles.GravitySize(level) *
+            attack.AttackSizeMultiplier;
+        float radiusSquared = scaledRadius * scaledRadius;
         foreach (EnemyHealth enemy in enemySnapshot)
         {
             if (enemy == null || enemy.IsDead)
@@ -128,7 +176,7 @@ public sealed class GravityConstruct :
             if (offset.sqrMagnitude > radiusSquared)
                 continue;
 
-            enemy.TakeDamage(baseDamage, hitPoint, false);
+            enemy.TakeDamage(attack.Damage, hitPoint, attack.IsCritical);
         }
     }
 
@@ -142,19 +190,57 @@ public sealed class GravityConstruct :
 
         fireTimer += Time.deltaTime;
 
-        if (fireTimer < Mathf.Max(0.05f, fireInterval))
+        float interval = sourceWeapon.GetAttackCooldown() /
+            Mathf.Max(0.05f, payloadFireRateMultiplier);
+        if (fireTimer < Mathf.Max(0.05f, interval))
             return;
 
         fireTimer = 0f;
         Vector2 origin = gravityEntity.position;
-        Vector2 direction = origin - GetCenter();
+        if (!TryFindNearestEnemy(
+                origin,
+                sourceWeapon.GetRange(),
+                out EnemyHealth target))
+            return;
 
+        Vector2 direction = (Vector2)target.transform.position - origin;
         if (direction.sqrMagnitude <= Mathf.Epsilon)
-            direction = DirectionFromAngle(orbitAngle + angleOffset);
-        else
-            direction.Normalize();
+            return;
+
+        direction.Normalize();
 
         sourceWeapon.EmitAttack(origin, direction);
+    }
+
+    private static bool TryFindNearestEnemy(
+        Vector2 origin,
+        float range,
+        out EnemyHealth nearest)
+    {
+        nearest = null;
+        float nearestDistanceSquared = float.PositiveInfinity;
+        float rangeSquared = Mathf.Max(0.1f, range) *
+            Mathf.Max(0.1f, range);
+
+        foreach (EnemyHealth enemy in EnemyHealth.ActiveInstances)
+        {
+            if (enemy == null || enemy.IsDead ||
+                !enemy.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            float distanceSquared =
+                ((Vector2)enemy.transform.position - origin).sqrMagnitude;
+            if (distanceSquared > rangeSquared ||
+                distanceSquared >= nearestDistanceSquared)
+                continue;
+
+            nearest = enemy;
+            nearestDistanceSquared = distanceSquared;
+        }
+
+        return nearest != null;
     }
 
     private void CreateGravityEntity()
@@ -260,7 +346,8 @@ public sealed class GravityConstruct :
         damageRadius = Mathf.Max(0f, damageRadius);
         baseDamage = Mathf.Max(0f, baseDamage);
         damageTickInterval = Mathf.Max(0.05f, damageTickInterval);
-        fireInterval = Mathf.Max(0.05f, fireInterval);
+        payloadFireRateMultiplier = Mathf.Clamp(
+            payloadFireRateMultiplier, 0.05f, 2f);
     }
 
     private void OnDestroy()

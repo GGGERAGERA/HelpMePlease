@@ -308,6 +308,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private bool warnedAnomalyController;
     private bool warnedEventSpawner;
     private string lastUpgradeResult;
+    private string lastAnomalyGrantResult;
 
     private readonly List<LevelAnomalyController.LocalAnomalyZoneGeometry>
         activeAnomalyZones = new();
@@ -3065,11 +3066,48 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             $"Upgrade Station: Lv{stationLevel} | " +
             $"Production Pool Available: {stationAvailable}/{productionPoolSize}"
         );
+        int slotCapacity = runState != null
+            ? runState.ItemSlots.Capacity
+            : RunItemSlots.SlotCount;
         AddHint(
-            $"Slots: {usedSlots} / {RunItemSlots.SlotCount} | " +
+            $"Upgrade Slots: {usedSlots} / {slotCapacity} | " +
             $"Eligible Current Choices: {eligibleProduction}"
         );
         AddHint($"Current Weapon Capabilities: {weaponCapabilities}");
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        PlayerCombatModifiers offensive = player != null
+            ? player.GetComponent<PlayerCombatModifiers>()
+            : null;
+        PlayerHealth health = player != null
+            ? player.GetComponent<PlayerHealth>()
+            : null;
+        CharacterMovement2D movement = player != null
+            ? player.GetComponent<CharacterMovement2D>()
+            : null;
+        BaseWeapon weapon = FindPrimaryWeapon(player);
+        ExperienceManager experience = ExperienceManager.Instance;
+
+        if (offensive != null)
+        {
+            AddHint(
+                $"Offensive: Damage x{offensive.RunDamageMultiplier:0.00} | " +
+                $"Crit +{offensive.RunCritChanceBonus:P0} | " +
+                $"Attack Size x{offensive.RunAttackSizeMultiplier:0.00}"
+            );
+        }
+
+        AddHint(
+            $"Player: HP Bonus +{(health != null ? health.RunUpgradeMaxHealthBonus : 0f):0.#} | " +
+            $"Move x{(movement != null ? movement.RunUpgradeMoveSpeedMultiplier : 1f):0.00} | " +
+            $"XP x{(experience != null ? experience.RunUpgradeXpGainMultiplier : 1f):0.00} | " +
+            $"Regen {(health != null ? health.RunUpgradeRegenerationPerSecond : 0f):0.#}/s"
+        );
+        AddHint(
+            $"Weapon: Multishot +{(weapon != null ? weapon.RuntimeProjectileCountBonus : 0)} | " +
+            $"Attack Count {(weapon != null ? weapon.RuntimeProjectileCount : 1)}"
+        );
+        AddAnomalySlotSection();
 
         if (visibleUpgrades.Count == 0)
         {
@@ -3128,7 +3166,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 status += " - ELIGIBLE";
 
             bool canApply = upgradeManager != null &&
-                GameObject.FindGameObjectWithTag("Player") != null &&
+                player != null &&
                 isUnlocked &&
                 hasEligibleLevel &&
                 weaponCompatible &&
@@ -3895,6 +3933,103 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         setter?.Invoke(Mathf.Clamp(value, minimum, maximum));
         RefreshCurrentTab();
     }
+
+    private void AddAnomalySlotSection()
+    {
+        AddSectionTitle("ANOMALY SLOT", "Production AnomalyInventory (1 slot)");
+        RunStateManager runState = RunStateManager.Instance;
+        AnomalyInventory inventory = runState != null
+            ? runState.AnomalyInventory
+            : null;
+        bool hasItem = inventory != null && !inventory.IsEmpty;
+        AddRow("CURRENT", hasItem
+                ? inventory.CurrentItem.DisplayName
+                : "EMPTY",
+            inventory != null && !inventory.IsEmpty ? successColor : mutedColor,
+            null, false, null);
+        AddRow("LEVEL", hasItem
+                ? $"{ToRomanLevel(inventory.Level)} / III"
+                : "— / III",
+            hasItem ? successColor : mutedColor,
+            null, false, null);
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        BaseWeapon selectedWeapon = FindPrimaryWeapon(player);
+        AddRow("SELECTED WEAPON",
+            selectedWeapon != null && selectedWeapon.weaponData != null
+                ? GetWeaponName(selectedWeapon.weaponData)
+                : "NONE",
+            selectedWeapon != null ? successColor : mutedColor,
+            null, false, null);
+
+        EvolutionDefinition evolution = runState != null
+            ? runState.CurrentEvolution
+            : null;
+        EvolutionRuntimeController runtime = player != null
+            ? player.GetComponent<EvolutionRuntimeController>()
+            : null;
+        AddRow("EVOLUTION",
+            evolution != null ? evolution.DisplayName : "NONE",
+            evolution != null ? successColor : mutedColor,
+            null, false, null);
+        AddRow("EVOLUTION RUNTIME",
+            runtime != null && runtime.IsRuntimeActive ? "ACTIVE" : "INACTIVE",
+            runtime != null && runtime.IsRuntimeActive
+                ? successColor
+                : mutedColor,
+            null, false, null);
+
+        if (!string.IsNullOrWhiteSpace(lastAnomalyGrantResult))
+            AddHint($"Last result: {lastAnomalyGrantResult}");
+
+        AnomalyItemData[] items = AnomalyItemCatalog.GetAll();
+        for (int i = 0; i < items.Length; i++)
+        {
+            AnomalyItemData item = items[i];
+            if (item == null)
+                continue;
+
+            AnomalyItemData captured = item;
+            AddRow(item.DisplayName, item.PowerType.ToString(), mutedColor,
+                $"GRANT {item.DisplayName.ToUpperInvariant()}", runState != null,
+                () => GrantDebugAnomaly(captured));
+        }
+
+        AddRow("CLEAR SLOT", "Keeps upgrade slots unchanged", warningColor,
+            "CLEAR", inventory != null && !inventory.IsEmpty,
+            ClearDebugAnomaly);
+    }
+
+    private void GrantDebugAnomaly(AnomalyItemData item)
+    {
+        RunStateManager runState = RunStateManager.Instance;
+        if (runState == null)
+            return;
+
+        AnomalyGrantResult result = runState.TryGrantAnomalyItem(item);
+        lastAnomalyGrantResult = result.ToString();
+
+        RefreshCurrentTab();
+    }
+
+    private void ClearDebugAnomaly()
+    {
+        RunStateManager runState = RunStateManager.Instance;
+        if (runState == null || runState.AnomalyInventory.IsEmpty)
+            return;
+
+        runState.ClearAnomalyItem();
+        lastAnomalyGrantResult = "Cleared";
+        RefreshCurrentTab();
+    }
+
+    private static string ToRomanLevel(int level) => level switch
+    {
+        1 => "I",
+        2 => "II",
+        3 => "III",
+        _ => "—"
+    };
 
     private void AddEnemyReadabilityPresetStrip(
         ProductionSectorDebugController debug)

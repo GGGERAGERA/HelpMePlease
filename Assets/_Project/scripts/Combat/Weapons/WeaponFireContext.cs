@@ -87,6 +87,31 @@ public readonly struct WeaponFireContext
         );
     }
 
+    public WeaponFireContext WithOriginAndDirection(
+        Vector2 origin,
+        Vector2 direction)
+    {
+        return new WeaponFireContext(
+            Weapon,
+            WeaponData,
+            Owner,
+            FirePoint,
+            origin,
+            direction,
+            Damage,
+            IsCritical,
+            Range,
+            ProjectileSpeed,
+            ProjectileCount,
+            Pierce,
+            Ricochet,
+            ShotVisualScale,
+            KnockbackForce,
+            Modifiers,
+            FxPlayer
+        );
+    }
+
     public WeaponHitContext CreateHitContext(
         EnemyHealth target,
         Vector2 hitPoint)

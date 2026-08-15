@@ -36,7 +36,8 @@ public sealed class RunItemSlot
 /// </summary>
 public sealed class RunItemSlots
 {
-    public const int SlotCount = 6;
+    public const int SlotCount = 4;
+    public const int ProductionTargetSlotCount = 4;
     public const int MaxItemLevel = 3;
 
     private readonly RunItemSlot[] slots;
@@ -45,6 +46,7 @@ public sealed class RunItemSlots
     public event Action SlotsChanged;
 
     public IReadOnlyList<RunItemSlot> Slots => readOnlySlots;
+    public int Capacity => slots.Length;
     public int UsedSlotCount
     {
         get
@@ -60,11 +62,14 @@ public sealed class RunItemSlots
             return count;
         }
     }
-    public bool HasFreeUniqueSlot => UsedSlotCount < SlotCount;
+    public bool HasFreeUniqueSlot => UsedSlotCount < Capacity;
 
-    public RunItemSlots()
+    public RunItemSlots(int capacity = SlotCount)
     {
-        slots = new RunItemSlot[SlotCount];
+        if (capacity <= 0)
+            throw new ArgumentOutOfRangeException(nameof(capacity));
+
+        slots = new RunItemSlot[capacity];
 
         for (int i = 0; i < slots.Length; i++)
             slots[i] = new RunItemSlot();
@@ -110,6 +115,18 @@ public sealed class RunItemSlots
     {
         int index = item != null ? FindItemIndex(item) : -1;
         return index >= 0 ? slots[index].Level : 0;
+    }
+
+    public int GetLevel(UpgradeType type)
+    {
+        for (int i = 0; i < slots.Length; i++)
+        {
+            UpgradeData item = slots[i].Item;
+            if (item != null && item.upgradeType == type)
+                return slots[i].Level;
+        }
+
+        return 0;
     }
 
     public bool CanAccept(UpgradeData item)

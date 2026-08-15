@@ -5,6 +5,7 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
 {
     [SerializeField] private LayerMask enemyMask;
     [SerializeField] private LaserBeamRenderer beamRenderer;
+    [SerializeField, Min(0.01f)] private float baseHitHalfWidth = 0.08f;
 
     public bool HitEnemyLastFire { get; private set; }
 
@@ -14,8 +15,12 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
 
         Vector2 endPoint = context.Origin + context.Direction * context.Range;
 
-        RaycastHit2D[] hits = Physics2D.RaycastAll(
+        float hitHalfWidth = Mathf.Max(
+            0.01f,
+            baseHitHalfWidth * context.ShotVisualScale);
+        RaycastHit2D[] hits = Physics2D.CircleCastAll(
             context.Origin,
+            hitHalfWidth,
             context.Direction,
             context.Range,
             enemyMask
@@ -37,7 +42,11 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
             HitEnemyLastFire = true;
 
             WeaponHitResolver.Resolve(
-                context.CreateHitContext(enemyHealth, hit.point)
+                context.CreateHitContext(
+                    enemyHealth,
+                    hit.point != Vector2.zero
+                        ? hit.point
+                        : hit.collider.ClosestPoint(context.Origin))
             );
 
             CombatExplosionService.TryExplodeOnHit(
@@ -55,5 +64,10 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
                 context.ShotVisualScale);
 
         return true;
+    }
+
+    private void OnValidate()
+    {
+        baseHitHalfWidth = Mathf.Max(0.01f, baseHitHalfWidth);
     }
 }

@@ -6,18 +6,26 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime
     private const float DischargeInterval = 0.65f;
     private const float AcquisitionRadius = 9f;
     private const float JumpRadius = 4.2f;
-    private const int MaxTargets = 4;
+    private const int MaximumProfileTargets = 6;
     private const float DamagePerTarget = 70f;
+    private const float DischargeVisualWidth = 0.11f;
 
-    private readonly List<EnemyHealth> targets = new(MaxTargets);
+    private readonly List<EnemyHealth> targets = new(MaximumProfileTargets);
     private static readonly Vector2 NodeOffset = new(-1.45f, 1.05f);
     private Material material;
     private LineRenderer line;
     private Transform nodeVisual;
     private float nextDischarge;
     private float hideLineAt;
+    private int level = 1;
 
     public AnomalyPowerType Type => AnomalyPowerType.ArcNode;
+    public int Level => level;
+
+    public void SetLevel(int value)
+    {
+        level = AnomalyPowerLevelProfiles.ClampLevel(value);
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void RegisterRuntime()
@@ -58,7 +66,7 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime
             "Arc Node Discharge",
             new Color(0.3f, 0.8f, 1f, 1f),
             0.11f,
-            MaxTargets + 1,
+            MaximumProfileTargets + 1,
             material
         );
         line.enabled = false;
@@ -67,6 +75,14 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime
     private void Update()
     {
         UpdateNodeVisual();
+        float attackSize = OffensiveAttackContext.GetAttackSize(gameObject);
+        if (nodeVisual != null)
+            nodeVisual.localScale = Vector3.one * attackSize;
+        if (line != null)
+        {
+            line.startWidth = DischargeVisualWidth * attackSize;
+            line.endWidth = DischargeVisualWidth * attackSize;
+        }
 
         if (line.enabled && Time.time >= hideLineAt)
             line.enabled = false;
@@ -87,12 +103,15 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime
             ? nodeVisual.position
             : transform.position);
 
+        OffensiveAttackContext attack = OffensiveAttackContext.Resolve(
+            gameObject,
+            DamagePerTarget * AnomalyPowerLevelProfiles.ArcDamage(level));
         for (int i = 0; i < targets.Count; i++)
         {
             EnemyHealth enemy = targets[i];
             Vector3 hitPoint = enemy.transform.position;
             line.SetPosition(i + 1, hitPoint);
-            enemy.TakeDamage(DamagePerTarget, hitPoint, false);
+            enemy.TakeDamage(attack.Damage, hitPoint, attack.IsCritical);
         }
 
         line.enabled = true;
@@ -104,7 +123,8 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime
         targets.Clear();
         Vector2 origin = transform.position;
 
-        for (int targetIndex = 0; targetIndex < MaxTargets; targetIndex++)
+        int targetCount = AnomalyPowerLevelProfiles.ArcTargets(level);
+        for (int targetIndex = 0; targetIndex < targetCount; targetIndex++)
         {
             EnemyHealth best = null;
             float bestDistance = float.PositiveInfinity;

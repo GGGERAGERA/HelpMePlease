@@ -821,14 +821,16 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
 #endif
 
         RunStateManager runState = RunStateManager.Instance;
+        if (runState != null && !runState.AnomalyInventory.IsEmpty)
+            return runState.AnomalyInventory.CurrentItem.PowerType;
+
         List<AnomalyPowerType> available = new();
 
         for (int i = 0; i < config.SpecialPowerPool.Length; i++)
         {
             AnomalyPowerType power = config.SpecialPowerPool[i];
 
-            if (runState == null || !runState.HasAnomalyPower(power))
-                available.Add(power);
+            available.Add(power);
         }
 
         if (available.Count > 0)

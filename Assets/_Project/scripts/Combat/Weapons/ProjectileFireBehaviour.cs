@@ -40,6 +40,9 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
             Quaternion.Euler(0f, 0f, angle)
         );
         ScaleProjectileVisuals(projectileObject.transform, context.ShotVisualScale);
+        ScaleRootCollisionGeometry(
+            projectileObject.transform,
+            context.ShotVisualScale);
 
         IWeaponProjectile projectile = projectileObject.GetComponent<IWeaponProjectile>();
 
@@ -76,9 +79,45 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
         if (root == null || Mathf.Approximately(scale, 1f))
             return;
 
-        // Keep the projectile root collider unchanged; production projectile
-        // visuals live under child transforms.
+        // Production projectile visuals live under child transforms. Root
+        // collision geometry is scaled separately without changing speed.
         for (int i = 0; i < root.childCount; i++)
             root.GetChild(i).localScale *= scale;
+    }
+
+    private static void ScaleRootCollisionGeometry(Transform root, float scale)
+    {
+        if (root == null || Mathf.Approximately(scale, 1f))
+            return;
+
+        Collider2D[] colliders = root.GetComponents<Collider2D>();
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            switch (colliders[i])
+            {
+                case CircleCollider2D circle:
+                    circle.radius *= scale;
+                    circle.offset *= scale;
+                    break;
+                case BoxCollider2D box:
+                    box.size *= scale;
+                    box.offset *= scale;
+                    break;
+                case CapsuleCollider2D capsule:
+                    capsule.size *= scale;
+                    capsule.offset *= scale;
+                    break;
+                case PolygonCollider2D polygon:
+                    for (int path = 0; path < polygon.pathCount; path++)
+                    {
+                        Vector2[] points = polygon.GetPath(path);
+                        for (int point = 0; point < points.Length; point++)
+                            points[point] *= scale;
+                        polygon.SetPath(path, points);
+                    }
+                    polygon.offset *= scale;
+                    break;
+            }
+        }
     }
 }

@@ -31,8 +31,9 @@ public sealed class RunItemSlotsHUD : MonoBehaviour
     private void Refresh()
     {
         IReadOnlyList<RunItemSlot> slots = runState.ItemSlots.Slots;
+        int visibleSlotCount = slots.Count;
 
-        for (int i = 0; i < RunItemSlots.SlotCount; i++)
+        for (int i = 0; i < visibleSlotCount; i++)
         {
             RunItemSlot slot = slots[i];
             UpgradeData item = slot.Item;
@@ -50,6 +51,18 @@ public sealed class RunItemSlotsHUD : MonoBehaviour
                 levelTexts[i].text = level;
                 levelTexts[i].enabled = level.Length > 0;
             }
+        }
+
+        for (int i = visibleSlotCount; iconImages != null && i < iconImages.Length; i++)
+        {
+            if (iconImages[i] != null)
+                iconImages[i].enabled = false;
+        }
+
+        for (int i = visibleSlotCount; levelTexts != null && i < levelTexts.Length; i++)
+        {
+            if (levelTexts[i] != null)
+                levelTexts[i].enabled = false;
         }
     }
 
