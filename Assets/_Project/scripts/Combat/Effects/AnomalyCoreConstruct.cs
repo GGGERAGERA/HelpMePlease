@@ -12,6 +12,15 @@ public interface IAnomalyWeaponPayload
     void SetWeaponPayloadEnabled(bool enabled);
 }
 
+public interface IAnomalyEvolutionPower
+{
+    void ConfigureEvolutionPayload(
+        BaseWeapon weapon,
+        EvolutionDefinition definition,
+        int anomalyLevel);
+    void DisableEvolutionPayload();
+}
+
 public abstract class AnomalyCoreConstruct : MonoBehaviour
 {
     public abstract void Configure(

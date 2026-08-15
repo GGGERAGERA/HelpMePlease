@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 42d31cfe1120462fbcb6da2861d916b4, type: 3}
-  m_Name: Pistol Gravity Recipe
+  m_Name: Laser Beam Recipe
   m_EditorClassIdentifier: Assembly-CSharp::EvolutionRecipe
-  weapon: {fileID: 11400000, guid: acd6c980f3b758a409e5285b329a175a, type: 2}
-  anomalyItem: {fileID: 11400000, guid: 9c300000000000000000000000000001, type: 2}
+  weapon: {fileID: 11400000, guid: a0a46b236f3b65c40b5c4cc5573d7c47, type: 2}
+  anomalyItem: {fileID: 11400000, guid: 9c300000000000000000000000000003, type: 2}
   requiredAnomalyLevel: 2
-  evolution: {fileID: 11400000, guid: 9d300000000000000000000000000001, type: 2}
+  evolution: {fileID: 11400000, guid: 9d300000000000000000000000000004, type: 2}

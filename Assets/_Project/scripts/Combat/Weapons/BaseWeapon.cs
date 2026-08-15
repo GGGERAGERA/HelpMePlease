@@ -469,6 +469,18 @@ public abstract class BaseWeapon : MonoBehaviour
     /// </summary>
     public bool EmitAttack(Vector2 origin, Vector2 direction)
     {
+        return EmitAttack(origin, direction, 1f);
+    }
+
+    /// <summary>
+    /// Emits one current weapon attack with a local range override. Runtime
+    /// damage, crit, size and multishot are still resolved by the weapon.
+    /// </summary>
+    public bool EmitAttack(
+        Vector2 origin,
+        Vector2 direction,
+        float rangeMultiplier)
+    {
         if (!IsValidVector(origin) || !IsValidVector(direction) ||
             direction.sqrMagnitude < 0.001f)
         {
@@ -476,7 +488,9 @@ public abstract class BaseWeapon : MonoBehaviour
         }
 
         Vector2 finalDirection = ApplyAccuracyPenalty(direction.normalized);
-        if (!EmitAttack(BuildFireContext(origin, finalDirection)))
+        WeaponFireContext context = BuildFireContext(origin, finalDirection)
+            .WithRangeMultiplier(rangeMultiplier);
+        if (!EmitAttack(context))
             return false;
 
         ShotFired?.Invoke(origin, ShotKind);

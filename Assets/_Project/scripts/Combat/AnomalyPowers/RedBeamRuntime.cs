@@ -1,7 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-internal sealed class RedBeamRuntime : MonoBehaviour, IAnomalyPowerRuntime
+internal sealed class RedBeamRuntime :
+    MonoBehaviour,
+    IAnomalyPowerRuntime,
+    IAnomalyEvolutionPower
 {
     private enum State
     {
@@ -24,6 +27,9 @@ internal sealed class RedBeamRuntime : MonoBehaviour, IAnomalyPowerRuntime
     private State state;
     private float stateUntil;
     private Vector2 direction = Vector2.right;
+    private BaseWeapon payloadWeapon;
+    private EvolutionDefinition evolutionDefinition;
+    private float nextPayloadAt;
     private int level = 1;
 
     public AnomalyPowerType Type => AnomalyPowerType.RedBeam;
@@ -32,6 +38,24 @@ internal sealed class RedBeamRuntime : MonoBehaviour, IAnomalyPowerRuntime
     public void SetLevel(int value)
     {
         level = AnomalyPowerLevelProfiles.ClampLevel(value);
+    }
+
+    public void ConfigureEvolutionPayload(
+        BaseWeapon weapon,
+        EvolutionDefinition definition,
+        int anomalyLevel)
+    {
+        payloadWeapon = weapon;
+        evolutionDefinition = definition;
+        SetLevel(anomalyLevel);
+        nextPayloadAt = 0f;
+    }
+
+    public void DisableEvolutionPayload()
+    {
+        payloadWeapon = null;
+        evolutionDefinition = null;
+        nextPayloadAt = 0f;
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -54,6 +78,7 @@ internal sealed class RedBeamRuntime : MonoBehaviour, IAnomalyPowerRuntime
     public void Deactivate()
     {
         enabled = false;
+        DisableEvolutionPayload();
 
         if (emitterVisual != null)
             emitterVisual.gameObject.SetActive(false);
@@ -86,6 +111,9 @@ internal sealed class RedBeamRuntime : MonoBehaviour, IAnomalyPowerRuntime
         if (state != State.Waiting && line != null && line.enabled)
             UpdateBeamVisualPosition();
 
+        if (state == State.Firing)
+            EmitPayloadIfReady();
+
         if (Time.time < stateUntil)
             return;
 
@@ -102,6 +130,7 @@ internal sealed class RedBeamRuntime : MonoBehaviour, IAnomalyPowerRuntime
             case State.Telegraph:
                 Fire();
                 state = State.Firing;
+                nextPayloadAt = Time.time;
                 stateUntil = Time.time + BeamDuration;
                 ShowLine(
                     BeamHalfWidth * 2f *
@@ -152,7 +181,7 @@ internal sealed class RedBeamRuntime : MonoBehaviour, IAnomalyPowerRuntime
 
     private void Fire()
     {
-        Vector2 origin = transform.position;
+        Vector2 origin = GetEmitterPosition();
         OffensiveAttackContext attack = OffensiveAttackContext.Resolve(
             gameObject,
             BeamDamage * AnomalyPowerLevelProfiles.BeamDamage(level));
@@ -184,6 +213,84 @@ internal sealed class RedBeamRuntime : MonoBehaviour, IAnomalyPowerRuntime
         }
     }
 
+    private void EmitPayloadIfReady()
+    {
+        if (level < 2 || payloadWeapon == null ||
+            evolutionDefinition == null || Time.time < nextPayloadAt)
+        {
+            return;
+        }
+
+        float interval = payloadWeapon.GetAttackCooldown() /
+            evolutionDefinition.PayloadFireRateMultiplier;
+        nextPayloadAt = Time.time + Mathf.Max(0.02f, interval);
+
+        if (level < 3)
+        {
+            payloadWeapon.EmitAttack(GetEmitterPosition(), direction);
+            return;
+        }
+
+        EmitDistributedPayload();
+    }
+
+    private void EmitDistributedPayload()
+    {
+        float[] emissionPoints = evolutionDefinition.BeamEmissionPoints;
+        int budget = Mathf.Min(
+            evolutionDefinition.MaxPayloadAttacksPerTick,
+            evolutionDefinition.MaxPayloadSegments);
+        Vector2 origin = GetEmitterPosition();
+
+        for (int i = 0; i < emissionPoints.Length && budget > 0; i++)
+        {
+            float fraction = Mathf.Clamp01(emissionPoints[i]);
+            Vector2 point = origin + direction * (BeamRange * fraction);
+            if (!TryFindNearestEnemy(
+                    point,
+                    evolutionDefinition.BeamPointTargetRadius,
+                    out EnemyHealth target))
+            {
+                continue;
+            }
+
+            Vector2 payloadDirection =
+                (Vector2)target.transform.position - point;
+            if (payloadDirection.sqrMagnitude <= 0.001f)
+                continue;
+
+            payloadWeapon.EmitAttack(point, payloadDirection.normalized);
+            budget--;
+        }
+    }
+
+    private static bool TryFindNearestEnemy(
+        Vector2 origin,
+        float radius,
+        out EnemyHealth nearest)
+    {
+        nearest = null;
+        float nearestDistanceSquared = radius * radius;
+        foreach (EnemyHealth enemy in EnemyHealth.ActiveInstances)
+        {
+            if (enemy == null || enemy.IsDead ||
+                !enemy.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            float distanceSquared =
+                ((Vector2)enemy.transform.position - origin).sqrMagnitude;
+            if (distanceSquared > nearestDistanceSquared)
+                continue;
+
+            nearest = enemy;
+            nearestDistanceSquared = distanceSquared;
+        }
+
+        return nearest != null;
+    }
+
     private void ShowLine(float width, Color color)
     {
         line.startWidth = width;
@@ -202,13 +309,17 @@ internal sealed class RedBeamRuntime : MonoBehaviour, IAnomalyPowerRuntime
 
     private void UpdateBeamVisualPosition()
     {
-        Vector3 origin = emitterVisual != null
-            ? emitterVisual.position
-            : transform.position;
-        Vector3 end = transform.position +
-            (Vector3)(direction * BeamRange);
+        Vector3 origin = GetEmitterPosition();
+        Vector3 end = origin + (Vector3)(direction * BeamRange);
         line.SetPosition(0, origin);
         line.SetPosition(1, end);
+    }
+
+    private Vector2 GetEmitterPosition()
+    {
+        return emitterVisual != null
+            ? (Vector2)emitterVisual.position
+            : (Vector2)transform.position;
     }
 
     private void BuildEmitterVisual()

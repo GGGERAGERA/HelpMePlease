@@ -6,7 +6,10 @@ public interface IEvolutionRuntime
 {
     EvolutionRuntimeType Type { get; }
     bool IsActive { get; }
-    void Activate(EvolutionDefinition definition, BaseWeapon weapon);
+    void Activate(
+        EvolutionDefinition definition,
+        BaseWeapon weapon,
+        int anomalyLevel);
     void Deactivate();
 }
 

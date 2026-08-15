@@ -5,6 +5,7 @@ using UnityEngine;
 public sealed class GravityConstruct :
     AnomalyCoreConstruct,
     IAnomalyWeaponPayload,
+    IAnomalyEvolutionPower,
     IAnomalyPowerRuntime
 {
     private const float VisualRadius = 0.78f;
@@ -21,7 +22,7 @@ public sealed class GravityConstruct :
     [SerializeField] private float orbitRadius = 3f;
     [SerializeField] private float orbitSpeed = 145f;
     [Min(0f)]
-    [SerializeField] private float damageRadius = 0.72f;
+    [SerializeField] private float damageRadius = VisualRadius;
     [Min(0f)]
     [SerializeField] private float baseDamage = 65f;
     [Min(0.05f)]
@@ -33,12 +34,15 @@ public sealed class GravityConstruct :
     [SerializeField] private float payloadFireRateMultiplier = 0.7f;
     [SerializeField] private float angleOffset;
 
+    private EvolutionDefinition evolutionDefinition;
+
     private readonly List<EnemyHealth> enemySnapshot = new();
     private Transform gravityEntity;
     private Material visualMaterial;
     private float orbitAngle;
     private float damageTickTimer;
     private float fireTimer;
+    private float overdriveAngle;
     private int level = 1;
 
     public AnomalyPowerType Type => AnomalyPowerType.GravityOrb;
@@ -99,6 +103,28 @@ public sealed class GravityConstruct :
         sourceWeapon = weapon;
         payloadFireRateMultiplier = Mathf.Clamp(
             fireRateMultiplier, 0.05f, 2f);
+    }
+
+    public void ConfigureEvolutionPayload(
+        BaseWeapon weapon,
+        EvolutionDefinition definition,
+        int anomalyLevel)
+    {
+        evolutionDefinition = definition;
+        SetLevel(anomalyLevel);
+        ConfigureWeaponPayload(
+            weapon,
+            definition != null
+                ? definition.PayloadFireRateMultiplier
+                : payloadFireRateMultiplier);
+        SetWeaponPayloadEnabled(definition != null && weapon != null &&
+            level >= 2);
+    }
+
+    public void DisableEvolutionPayload()
+    {
+        evolutionDefinition = null;
+        SetWeaponPayloadEnabled(false);
     }
 
     public override void Shutdown()
@@ -171,12 +197,13 @@ public sealed class GravityConstruct :
             if (enemy == null || enemy.IsDead)
                 continue;
 
-            Vector2 offset = (Vector2)enemy.transform.position - hitPoint;
+            Vector2 damagePoint = GetClosestDamagePoint(enemy, hitPoint);
+            Vector2 offset = damagePoint - hitPoint;
 
             if (offset.sqrMagnitude > radiusSquared)
                 continue;
 
-            enemy.TakeDamage(attack.Damage, hitPoint, attack.IsCritical);
+            enemy.TakeDamage(attack.Damage, damagePoint, attack.IsCritical);
         }
     }
 
@@ -190,13 +217,23 @@ public sealed class GravityConstruct :
 
         fireTimer += Time.deltaTime;
 
-        float interval = sourceWeapon.GetAttackCooldown() /
-            Mathf.Max(0.05f, payloadFireRateMultiplier);
+        bool overdrive = level >= 3 && evolutionDefinition != null;
+        float interval = overdrive
+            ? sourceWeapon.GetAttackCooldown() /
+                evolutionDefinition.OverdriveFireRateMultiplier
+            : sourceWeapon.GetAttackCooldown() /
+                Mathf.Max(0.05f, payloadFireRateMultiplier);
         if (fireTimer < Mathf.Max(0.05f, interval))
             return;
 
         fireTimer = 0f;
         Vector2 origin = gravityEntity.position;
+        if (overdrive)
+        {
+            EmitRotatingOverdriveShot(origin);
+            return;
+        }
+
         if (!TryFindNearestEnemy(
                 origin,
                 sourceWeapon.GetRange(),
@@ -210,6 +247,33 @@ public sealed class GravityConstruct :
         direction.Normalize();
 
         sourceWeapon.EmitAttack(origin, direction);
+    }
+
+    private void EmitRotatingOverdriveShot(Vector2 origin)
+    {
+        float jitter = Random.Range(
+            -evolutionDefinition.OverdriveDirectionJitter,
+            evolutionDefinition.OverdriveDirectionJitter);
+        Vector2 direction = DirectionFromAngle(overdriveAngle + jitter);
+        sourceWeapon.EmitAttack(
+            origin,
+            direction,
+            evolutionDefinition.PayloadRangeMultiplier);
+        overdriveAngle = Mathf.Repeat(
+            overdriveAngle + evolutionDefinition.OverdriveAngularStep,
+            360f);
+    }
+
+    private static Vector2 GetClosestDamagePoint(
+        EnemyHealth enemy,
+        Vector2 origin)
+    {
+        Collider2D collider = enemy != null
+            ? enemy.GetComponentInChildren<Collider2D>()
+            : null;
+        return collider != null
+            ? collider.ClosestPoint(origin)
+            : (Vector2)enemy.transform.position;
     }
 
     private static bool TryFindNearestEnemy(

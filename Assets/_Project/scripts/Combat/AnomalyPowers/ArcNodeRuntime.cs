@@ -1,22 +1,30 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime
+internal sealed class ArcNodeRuntime :
+    MonoBehaviour,
+    IAnomalyPowerRuntime,
+    IAnomalyEvolutionPower
 {
     private const float DischargeInterval = 0.65f;
     private const float AcquisitionRadius = 9f;
     private const float JumpRadius = 4.2f;
-    private const int MaximumProfileTargets = 6;
+    private const int MaximumVisualTargets = 12;
     private const float DamagePerTarget = 70f;
     private const float DischargeVisualWidth = 0.11f;
-
-    private readonly List<EnemyHealth> targets = new(MaximumProfileTargets);
     private static readonly Vector2 NodeOffset = new(-1.45f, 1.05f);
+
+    private readonly List<EnemyHealth> primaryTargets = new();
+    private readonly List<EnemyHealth> secondaryTargets = new();
+    private readonly HashSet<EnemyHealth> claimedTargets = new();
     private Material material;
-    private LineRenderer line;
+    private LineRenderer primaryLine;
+    private LineRenderer secondaryLine;
     private Transform nodeVisual;
+    private BaseWeapon payloadWeapon;
+    private EvolutionDefinition evolutionDefinition;
     private float nextDischarge;
-    private float hideLineAt;
+    private float hideLinesAt;
     private int level = 1;
 
     public AnomalyPowerType Type => AnomalyPowerType.ArcNode;
@@ -27,19 +35,33 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime
         level = AnomalyPowerLevelProfiles.ClampLevel(value);
     }
 
+    public void ConfigureEvolutionPayload(
+        BaseWeapon weapon,
+        EvolutionDefinition definition,
+        int anomalyLevel)
+    {
+        payloadWeapon = weapon;
+        evolutionDefinition = definition;
+        SetLevel(anomalyLevel);
+    }
+
+    public void DisableEvolutionPayload()
+    {
+        payloadWeapon = null;
+        evolutionDefinition = null;
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void RegisterRuntime()
     {
         AnomalyPowerRuntimeRegistry.Register(
             AnomalyPowerType.ArcNode,
-            owner => owner.AddComponent<ArcNodeRuntime>()
-        );
+            owner => owner.AddComponent<ArcNodeRuntime>());
     }
 
     public void Activate()
     {
         enabled = true;
-
         if (nodeVisual != null)
             nodeVisual.gameObject.SetActive(true);
     }
@@ -47,29 +69,32 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime
     public void Deactivate()
     {
         enabled = false;
-
+        DisableEvolutionPayload();
         if (nodeVisual != null)
             nodeVisual.gameObject.SetActive(false);
-
-        if (line != null)
-            line.enabled = false;
+        HideLines();
     }
 
     private void Awake()
     {
         material = AnomalyPowerVisuals.CreateMaterial(
-            "Arc Node Runtime Material"
-        );
+            "Arc Node Runtime Material");
         BuildNodeVisual();
-        line = AnomalyPowerVisuals.CreateLine(
+        primaryLine = CreateDischargeLine("Arc Primary Discharge");
+        secondaryLine = CreateDischargeLine("Arc Fork Discharge");
+    }
+
+    private LineRenderer CreateDischargeLine(string lineName)
+    {
+        LineRenderer result = AnomalyPowerVisuals.CreateLine(
             transform,
-            "Arc Node Discharge",
+            lineName,
             new Color(0.3f, 0.8f, 1f, 1f),
-            0.11f,
-            MaximumProfileTargets + 1,
-            material
-        );
-        line.enabled = false;
+            DischargeVisualWidth,
+            MaximumVisualTargets + 1,
+            material);
+        result.enabled = false;
+        return result;
     }
 
     private void Update()
@@ -78,83 +103,200 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime
         float attackSize = OffensiveAttackContext.GetAttackSize(gameObject);
         if (nodeVisual != null)
             nodeVisual.localScale = Vector3.one * attackSize;
-        if (line != null)
-        {
-            line.startWidth = DischargeVisualWidth * attackSize;
-            line.endWidth = DischargeVisualWidth * attackSize;
-        }
+        UpdateLineWidth(primaryLine, attackSize);
+        UpdateLineWidth(secondaryLine, attackSize);
 
-        if (line.enabled && Time.time >= hideLineAt)
-            line.enabled = false;
-        else if (line.enabled && nodeVisual != null)
-            line.SetPosition(0, nodeVisual.position);
+        if (Time.time >= hideLinesAt)
+            HideLines();
+        else
+            UpdateVisibleLineOrigins();
 
         if (Time.time < nextDischarge)
             return;
 
         nextDischarge = Time.time + DischargeInterval;
-        BuildChain();
+        Discharge(attackSize);
+    }
 
-        if (targets.Count == 0)
+    private void Discharge(float attackSize)
+    {
+        BuildTopology(attackSize);
+        if (primaryTargets.Count == 0 && secondaryTargets.Count == 0)
             return;
 
-        line.positionCount = targets.Count + 1;
-        line.SetPosition(0, nodeVisual != null
-            ? nodeVisual.position
-            : transform.position);
-
+        Vector2 nodeOrigin = GetNodePosition();
         OffensiveAttackContext attack = OffensiveAttackContext.Resolve(
             gameObject,
             DamagePerTarget * AnomalyPowerLevelProfiles.ArcDamage(level));
-        for (int i = 0; i < targets.Count; i++)
-        {
-            EnemyHealth enemy = targets[i];
-            Vector3 hitPoint = enemy.transform.position;
-            line.SetPosition(i + 1, hitPoint);
-            enemy.TakeDamage(attack.Damage, hitPoint, attack.IsCritical);
-        }
+        int payloadBudget = evolutionDefinition != null
+            ? evolutionDefinition.MaxPayloadAttacksPerTick
+            : 0;
 
-        line.enabled = true;
-        hideLineAt = Time.time + 0.12f;
+        DrawAndApplyBranch(
+            primaryLine,
+            nodeOrigin,
+            primaryTargets,
+            attack,
+            ref payloadBudget);
+        DrawAndApplyBranch(
+            secondaryLine,
+            nodeOrigin,
+            secondaryTargets,
+            attack,
+            ref payloadBudget);
+        hideLinesAt = Time.time + 0.12f;
     }
 
-    private void BuildChain()
+    private void BuildTopology(float attackSize)
     {
-        targets.Clear();
-        Vector2 origin = transform.position;
+        primaryTargets.Clear();
+        secondaryTargets.Clear();
+        claimedTargets.Clear();
 
-        int targetCount = AnomalyPowerLevelProfiles.ArcTargets(level);
+        int primaryCount = level == 1
+            ? 1
+            : evolutionDefinition != null
+                ? evolutionDefinition.BranchTargets
+                : AnomalyPowerLevelProfiles.ArcTargets(level);
+        int segmentCap = evolutionDefinition != null
+            ? evolutionDefinition.MaxPayloadSegments
+            : primaryCount;
+        primaryCount = Mathf.Min(primaryCount, segmentCap);
+
+        BuildBranch(
+            GetNodePosition(),
+            primaryCount,
+            attackSize,
+            primaryTargets);
+
+        if (level < 3 || evolutionDefinition == null ||
+            evolutionDefinition.OverdriveBranchCount < 2)
+        {
+            return;
+        }
+
+        int remaining = Mathf.Max(0, segmentCap - primaryTargets.Count);
+        BuildBranch(
+            GetNodePosition(),
+            Mathf.Min(evolutionDefinition.BranchTargets, remaining),
+            attackSize,
+            secondaryTargets);
+    }
+
+    private void BuildBranch(
+        Vector2 origin,
+        int targetCount,
+        float attackSize,
+        List<EnemyHealth> output)
+    {
         for (int targetIndex = 0; targetIndex < targetCount; targetIndex++)
         {
-            EnemyHealth best = null;
-            float bestDistance = float.PositiveInfinity;
-            float radius = targetIndex == 0
+            float radius = (targetIndex == 0
                 ? AcquisitionRadius
-                : JumpRadius;
-
-            foreach (EnemyHealth enemy in EnemyHealth.ActiveInstances)
-            {
-                if (enemy == null || enemy.IsDead || targets.Contains(enemy))
-                    continue;
-
-                float distance = Vector2.Distance(
-                    origin,
-                    enemy.transform.position
-                );
-
-                if (distance <= radius && distance < bestDistance)
-                {
-                    best = enemy;
-                    bestDistance = distance;
-                }
-            }
-
+                : JumpRadius) * attackSize;
+            EnemyHealth best = FindNearestUnclaimed(origin, radius);
             if (best == null)
                 break;
 
-            targets.Add(best);
+            output.Add(best);
+            claimedTargets.Add(best);
             origin = best.transform.position;
         }
+    }
+
+    private EnemyHealth FindNearestUnclaimed(Vector2 origin, float radius)
+    {
+        EnemyHealth best = null;
+        float bestDistanceSquared = radius * radius;
+        foreach (EnemyHealth enemy in EnemyHealth.ActiveInstances)
+        {
+            if (enemy == null || enemy.IsDead ||
+                !enemy.gameObject.activeInHierarchy ||
+                claimedTargets.Contains(enemy))
+            {
+                continue;
+            }
+
+            float distanceSquared =
+                ((Vector2)enemy.transform.position - origin).sqrMagnitude;
+            if (distanceSquared > bestDistanceSquared)
+                continue;
+
+            best = enemy;
+            bestDistanceSquared = distanceSquared;
+        }
+
+        return best;
+    }
+
+    private void DrawAndApplyBranch(
+        LineRenderer branchLine,
+        Vector2 origin,
+        List<EnemyHealth> branch,
+        OffensiveAttackContext attack,
+        ref int payloadBudget)
+    {
+        if (branchLine == null || branch.Count == 0)
+            return;
+
+        branchLine.positionCount = branch.Count + 1;
+        branchLine.SetPosition(0, origin);
+        Vector2 segmentOrigin = origin;
+
+        for (int i = 0; i < branch.Count; i++)
+        {
+            EnemyHealth enemy = branch[i];
+            Vector2 targetPosition = enemy.transform.position;
+            branchLine.SetPosition(i + 1, targetPosition);
+            enemy.TakeDamage(
+                attack.Damage,
+                targetPosition,
+                attack.IsCritical);
+
+            Vector2 direction = targetPosition - segmentOrigin;
+            if (level >= 2 && payloadWeapon != null &&
+                payloadBudget > 0 && direction.sqrMagnitude > 0.001f)
+            {
+                payloadWeapon.EmitAttack(segmentOrigin, direction.normalized);
+                payloadBudget--;
+            }
+
+            segmentOrigin = targetPosition;
+        }
+
+        branchLine.enabled = true;
+    }
+
+    private void UpdateVisibleLineOrigins()
+    {
+        Vector2 origin = GetNodePosition();
+        if (primaryLine != null && primaryLine.enabled)
+            primaryLine.SetPosition(0, origin);
+        if (secondaryLine != null && secondaryLine.enabled)
+            secondaryLine.SetPosition(0, origin);
+    }
+
+    private static void UpdateLineWidth(LineRenderer target, float scale)
+    {
+        if (target == null)
+            return;
+        target.startWidth = DischargeVisualWidth * scale;
+        target.endWidth = DischargeVisualWidth * scale;
+    }
+
+    private void HideLines()
+    {
+        if (primaryLine != null)
+            primaryLine.enabled = false;
+        if (secondaryLine != null)
+            secondaryLine.enabled = false;
+    }
+
+    private Vector2 GetNodePosition()
+    {
+        return nodeVisual != null
+            ? (Vector2)nodeVisual.position
+            : (Vector2)transform.position;
     }
 
     private void BuildNodeVisual()
@@ -169,8 +311,7 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime
             new Color(0.12f, 0.65f, 1f, 0.28f),
             0.18f,
             25,
-            material
-        );
+            material);
         ConfigureNodeRing(glow, 0.53f);
         glow.sortingOrder = 35;
 
@@ -180,8 +321,7 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime
             new Color(0.2f, 0.92f, 1f, 1f),
             0.11f,
             12,
-            material
-        );
+            material);
         star.useWorldSpace = false;
         star.loop = true;
         star.sortingOrder = 38;
@@ -194,8 +334,7 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime
             star.SetPosition(i, new Vector3(
                 Mathf.Cos(radians) * radius,
                 Mathf.Sin(radians) * radius,
-                0f
-            ));
+                0f));
         }
 
         LineRenderer core = AnomalyPowerVisuals.CreateLine(
@@ -204,8 +343,7 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime
             new Color(0.72f, 0.96f, 1f, 1f),
             0.3f,
             2,
-            material
-        );
+            material);
         core.useWorldSpace = false;
         core.numCapVertices = 8;
         core.SetPosition(0, new Vector3(-0.02f, 0f, 0f));
@@ -224,8 +362,7 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime
             ring.SetPosition(i, new Vector3(
                 Mathf.Cos(radians) * radius,
                 Mathf.Sin(radians) * radius,
-                0f
-            ));
+                0f));
         }
     }
 
@@ -237,8 +374,7 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime
         float phase = Time.time * 2.2f;
         Vector2 drift = new(
             Mathf.Cos(phase) * 0.1f,
-            Mathf.Sin(phase * 1.15f) * 0.14f
-        );
+            Mathf.Sin(phase * 1.15f) * 0.14f);
         nodeVisual.position = (Vector2)transform.position +
             NodeOffset + drift;
         nodeVisual.Rotate(0f, 0f, 72f * Time.deltaTime);

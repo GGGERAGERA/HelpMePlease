@@ -63,7 +63,7 @@ public sealed class AnomalySlotHUD : MonoBehaviour
         panel.anchorMax = Vector2.zero;
         panel.pivot = Vector2.zero;
         panel.anchoredPosition = new Vector2(18f, 82f);
-        panel.sizeDelta = new Vector2(210f, 62f);
+        panel.sizeDelta = new Vector2(300f, 62f);
 
         Image background = panel.gameObject.AddComponent<Image>();
         background.color = new Color(0.035f, 0.045f, 0.06f, 0.86f);
@@ -71,11 +71,11 @@ public sealed class AnomalySlotHUD : MonoBehaviour
         titleText = CreateText("Title", panel);
         ConfigureText(titleText, 13f, FontStyles.Bold, new Color(0.42f, 0.82f, 1f));
         titleText.text = "ANOMALY";
-        SetRect(titleText.rectTransform, new Vector2(10f, 34f), new Vector2(190f, 20f));
+        SetRect(titleText.rectTransform, new Vector2(10f, 34f), new Vector2(280f, 20f));
 
         valueText = CreateText("Value", panel);
         ConfigureText(valueText, 18f, FontStyles.Bold, Color.white);
-        SetRect(valueText.rectTransform, new Vector2(10f, 7f), new Vector2(190f, 25f));
+        SetRect(valueText.rectTransform, new Vector2(10f, 7f), new Vector2(280f, 25f));
     }
 
     private void Refresh()
@@ -92,13 +92,12 @@ public sealed class AnomalySlotHUD : MonoBehaviour
 
         if (runState != null && runState.HasEvolution)
         {
-            EvolutionRecipe recipe = runState.EvolutionState.CurrentRecipe;
-            string weaponName = recipe != null && recipe.Weapon != null
-                ? recipe.Weapon.weaponName
-                : "WEAPON";
-            titleText.text = "ANOMALY  •  EVOLVED";
+            string mode = inventory.Level >= 3
+                ? "OVERDRIVE"
+                : "HYBRID";
+            titleText.text = "ANOMALY";
             valueText.text = $"[ {inventory.CurrentItem.DisplayName} " +
-                $"{ToRoman(inventory.Level)} + {weaponName} ]";
+                $"{ToRoman(inventory.Level)} • {mode} ]";
             return;
         }
 

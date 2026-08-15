@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b461625df6b144be89dd54b6c816daaa, type: 3}
-  m_Name: Gravity Hybrid Definition
+  m_Name: Beam Hybrid Definition
   m_EditorClassIdentifier: Assembly-CSharp::EvolutionDefinition
-  id: gravity_hybrid
-  displayName: Gravity Hybrid
+  id: beam_hybrid
+  displayName: Beam Hybrid
   icon: {fileID: 0}
-  runtimeType: 1
-  payloadFireRateMultiplier: 0.7
+  runtimeType: 3
+  payloadFireRateMultiplier: 0.8
   overdriveFireRateMultiplier: 2.5
   overdriveAngularStep: 47
   overdriveDirectionJitter: 3
@@ -28,5 +28,5 @@ MonoBehaviour:
   - 0.5
   - 0.75
   beamPointTargetRadius: 5
-  maxPayloadAttacksPerTick: 8
-  maxPayloadSegments: 8
+  maxPayloadAttacksPerTick: 3
+  maxPayloadSegments: 3

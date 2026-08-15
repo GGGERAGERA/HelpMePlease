@@ -70,6 +70,53 @@ public sealed class UpgradeApplier : MonoBehaviour
 {
     [SerializeField] private string playerTag = "Player";
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool ApplyDebugProductionBuild(RunItemSlots slots)
+    {
+        PlayerUpgradeContext context = FindPlayerContext();
+        if (!context.IsValid || slots == null)
+            return false;
+
+        int damage = slots.GetLevel(UpgradeType.WeaponDamagePercent);
+        int maxHealth = slots.GetLevel(UpgradeType.MaxHealthFlat);
+        int moveSpeed = slots.GetLevel(UpgradeType.MoveSpeedPercent);
+        int xpGain = slots.GetLevel(UpgradeType.XpGainPercent);
+        int attackSize = slots.GetLevel(UpgradeType.AttackSizePercent);
+        int crit = slots.GetLevel(UpgradeType.CritChance);
+        int regeneration = slots.GetLevel(UpgradeType.HpRegeneration);
+        int multishot = slots.GetLevel(UpgradeType.Multishot);
+
+        PlayerCombatModifiers modifiers = RequireCombatModifiers(context);
+        modifiers.SetRunDamageMultiplier(damage > 0
+            ? ProductionUpgradeProfiles.DamageMultiplier(damage)
+            : 1f);
+        modifiers.SetRunCritChanceBonus(crit > 0
+            ? ProductionUpgradeProfiles.CritChanceBonus(crit)
+            : 0f);
+        modifiers.SetRunAttackSizeMultiplier(attackSize > 0
+            ? ProductionUpgradeProfiles.AttackSizeMultiplier(attackSize)
+            : 1f);
+        context.Health?.SetRunUpgradeMaxHealthBonus(maxHealth > 0
+            ? ProductionUpgradeProfiles.MaxHealthBonus(maxHealth)
+            : 0f);
+        context.Health?.SetRunUpgradeRegeneration(regeneration > 0
+            ? ProductionUpgradeProfiles.RegenerationPerSecond(regeneration)
+            : 0f);
+        context.Movement?.SetRunUpgradeMoveSpeedMultiplier(moveSpeed > 0
+            ? ProductionUpgradeProfiles.MoveSpeedMultiplier(moveSpeed)
+            : 1f);
+        ExperienceManager.Instance?.SetRunUpgradeXpGainMultiplier(xpGain > 0
+            ? ProductionUpgradeProfiles.XpGainMultiplier(xpGain)
+            : 1f);
+        ApplyToWeapons(
+            context,
+            weapon => weapon.SetProjectileCountBonus(multishot > 0
+                ? ProductionUpgradeProfiles.MultishotBonus(multishot)
+                : 0));
+        return true;
+    }
+#endif
+
     public bool Apply(UpgradeData upgrade)
     {
         return Apply(upgrade, 1);

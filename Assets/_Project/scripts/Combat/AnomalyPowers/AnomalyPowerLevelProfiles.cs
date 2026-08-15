@@ -25,7 +25,12 @@ public static class AnomalyPowerLevelProfiles
         _ => 1.4f
     };
 
-    public static int ArcTargets(int level) => 3 + ClampLevel(level);
+    public static int ArcTargets(int level) => ClampLevel(level) switch
+    {
+        1 => 1,
+        2 => 3,
+        _ => 6
+    };
 
     public static float BeamDamage(int level) => ClampLevel(level) switch
     {

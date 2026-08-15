@@ -10,23 +10,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b461625df6b144be89dd54b6c816daaa, type: 3}
-  m_Name: Gravity Hybrid Definition
+  m_Name: Arc Hybrid Definition
   m_EditorClassIdentifier: Assembly-CSharp::EvolutionDefinition
-  id: gravity_hybrid
-  displayName: Gravity Hybrid
+  id: arc_hybrid
+  displayName: Arc Hybrid
   icon: {fileID: 0}
-  runtimeType: 1
+  runtimeType: 2
   payloadFireRateMultiplier: 0.7
   overdriveFireRateMultiplier: 2.5
   overdriveAngularStep: 47
   overdriveDirectionJitter: 3
   payloadRangeMultiplier: 1
-  overdriveBranchCount: 1
-  branchTargets: 1
+  overdriveBranchCount: 2
+  branchTargets: 3
   beamEmissionPoints:
   - 0.25
   - 0.5
   - 0.75
   beamPointTargetRadius: 5
-  maxPayloadAttacksPerTick: 8
-  maxPayloadSegments: 8
+  maxPayloadAttacksPerTick: 6
+  maxPayloadSegments: 6

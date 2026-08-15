@@ -259,7 +259,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         "WORLD",
         "ENEMIES",
         "EVENTS",
-        "WEAPONS & UPGRADES",
+        "WEAPONS & BUILD",
         "TELEKINESIS",
         "VISUAL TEST",
         "ТЕСТ СЕКТОРА"
@@ -932,11 +932,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 AddWorldEventsSection();
                 break;
             case DebugTab.WeaponsAndUpgrades:
-                AddCombatLabSection();
-                AddWeaponsSection();
-                AddGravityConstructSection();
-                AddRiftConstructSection();
-                AddUpgradesSection();
+                AddProductionWeaponBuildSection();
+                AddProductionAnomalyBuildSection();
+                AddProductionUpgradeBuildSection();
                 break;
             case DebugTab.Telekinesis:
                 AddTelekinesisSection();
@@ -2849,6 +2847,247 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         RefreshCurrentTab();
     }
 
+    private void AddProductionWeaponBuildSection()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        BaseWeapon current = FindPrimaryWeapon(player);
+        AddSectionTitle(
+            "WEAPON",
+            $"Current: {(current != null ? GetWeaponName(current.weaponData) : "None")}");
+
+        WeaponData pistol = FindCombatLabWeapon("pistol");
+        WeaponData laser = FindCombatLabWeapon("laser");
+        AddProductionWeaponRow("PISTOL", pistol, current, player);
+        AddProductionWeaponRow("LASER", laser, current, player);
+    }
+
+    private void AddProductionWeaponRow(
+        string label,
+        WeaponData weapon,
+        BaseWeapon current,
+        GameObject player)
+    {
+        bool selected = weapon != null && current != null &&
+            current.weaponData == weapon;
+        bool available = weapon != null && weapon.weaponPrefab != null &&
+            player != null && characterSpawner != null;
+        AddRow(
+            label,
+            selected ? "CURRENT" : available ? "AVAILABLE" : "NOT FOUND",
+            selected ? successColor : available ? mutedColor : warningColor,
+            "SELECT",
+            available,
+            () => UseWeapon(weapon));
+    }
+
+    private void AddProductionAnomalyBuildSection()
+    {
+        RunStateManager runState = RunStateManager.Instance;
+        AnomalyInventory inventory = runState != null
+            ? runState.AnomalyInventory
+            : null;
+        string current = inventory != null && !inventory.IsEmpty
+            ? $"{inventory.CurrentItem.DisplayName} " +
+                ToRomanLevel(inventory.Level)
+            : "None";
+        string mode = inventory == null || inventory.IsEmpty
+            ? "NONE"
+            : runState != null && runState.HasEvolution
+                ? inventory.Level >= 3 ? "OVERDRIVE" : "HYBRID"
+                : "PURE";
+        AddSectionTitle("ANOMALY", $"Current: {current}  •  Mode: {mode}");
+
+        AnomalyItemData[] items = AnomalyItemCatalog.GetAll();
+        AddAnomalyLevelRow(items, AnomalyPowerType.GravityOrb, "GRAVITY");
+        AddAnomalyLevelRow(items, AnomalyPowerType.ArcNode, "ARC");
+        AddAnomalyLevelRow(items, AnomalyPowerType.RedBeam, "BEAM");
+        AddRow(
+            "CLEAR ANOMALY",
+            inventory != null && !inventory.IsEmpty ? current : "EMPTY",
+            warningColor,
+            "CLEAR",
+            inventory != null && !inventory.IsEmpty,
+            ClearDebugAnomaly);
+    }
+
+    private void AddAnomalyLevelRow(
+        AnomalyItemData[] items,
+        AnomalyPowerType type,
+        string label)
+    {
+        AnomalyItemData item = null;
+        if (items != null)
+        {
+            for (int i = 0; i < items.Length; i++)
+            {
+                if (items[i] != null && items[i].PowerType == type)
+                {
+                    item = items[i];
+                    break;
+                }
+            }
+        }
+
+        AnomalyItemData captured = item;
+        int currentLevel = RunStateManager.Instance != null && item != null &&
+            RunStateManager.Instance.AnomalyInventory.CurrentItem == item
+            ? RunStateManager.Instance.AnomalyInventory.Level
+            : 0;
+        AddThreeLevelRow(
+            label,
+            currentLevel,
+            item != null,
+            level => SetDebugAnomalyLevel(captured, level));
+    }
+
+    private void AddProductionUpgradeBuildSection()
+    {
+        AddSectionTitle(
+            "UPGRADES",
+            "Set exact production target level (4 unique slots)");
+        RunStateManager runState = RunStateManager.Instance;
+        UpgradeType[] types =
+        {
+            UpgradeType.WeaponDamagePercent,
+            UpgradeType.MaxHealthFlat,
+            UpgradeType.MoveSpeedPercent,
+            UpgradeType.XpGainPercent,
+            UpgradeType.AttackSizePercent,
+            UpgradeType.CritChance,
+            UpgradeType.HpRegeneration,
+            UpgradeType.Multishot
+        };
+        string[] labels =
+        {
+            "DAMAGE",
+            "MAX HP",
+            "MOVE SPEED",
+            "XP GAIN",
+            "ATTACK SIZE",
+            "CRIT CHANCE",
+            "HP REGEN",
+            "MULTISHOT"
+        };
+
+        for (int i = 0; i < types.Length; i++)
+        {
+            UpgradeData upgrade = FindProductionUpgrade(types[i]);
+            UpgradeData captured = upgrade;
+            int level = runState != null && upgrade != null
+                ? runState.ItemSlots.GetLevel(upgrade)
+                : 0;
+            AddThreeLevelRow(
+                labels[i],
+                level,
+                runState != null && upgrade != null,
+                targetLevel => SetDebugUpgradeLevel(
+                    captured,
+                    targetLevel));
+        }
+
+        AddRow(
+            "CLEAR UPGRADES",
+            runState != null
+                ? $"{runState.ItemSlots.UsedSlotCount} / " +
+                    runState.ItemSlots.Capacity
+                : "NO RUN STATE",
+            warningColor,
+            "CLEAR",
+            runState != null && runState.ItemSlots.UsedSlotCount > 0,
+            ClearDebugUpgrades);
+    }
+
+    private UpgradeData FindProductionUpgrade(UpgradeType type)
+    {
+        IReadOnlyList<UpgradeData> pool = upgradeManager != null
+            ? upgradeManager.AllUpgrades
+            : null;
+        if (pool == null)
+            return null;
+
+        for (int i = 0; i < pool.Count; i++)
+        {
+            if (pool[i] != null && pool[i].upgradeType == type)
+                return pool[i];
+        }
+
+        return null;
+    }
+
+    private void SetDebugUpgradeLevel(UpgradeData upgrade, int targetLevel)
+    {
+        RunStateManager runState = RunStateManager.Instance;
+        UpgradeApplier applier = upgradeManager != null
+            ? upgradeManager.GetComponent<UpgradeApplier>()
+            : null;
+        bool applied = runState != null &&
+            runState.TrySetUpgradeLevelForDebug(
+                upgrade,
+                targetLevel,
+                applier);
+        lastUpgradeResult = applied
+            ? $"{GetUpgradeName(upgrade)} set to {ToRomanLevel(targetLevel)}."
+            : $"Could not set {GetUpgradeName(upgrade)} to " +
+                $"{ToRomanLevel(targetLevel)}.";
+        RefreshCurrentTab();
+    }
+
+    private void ClearDebugUpgrades()
+    {
+        RunStateManager runState = RunStateManager.Instance;
+        UpgradeApplier applier = upgradeManager != null
+            ? upgradeManager.GetComponent<UpgradeApplier>()
+            : null;
+        runState?.ClearUpgradesForDebug(applier);
+        lastUpgradeResult = "Production upgrades cleared.";
+        RefreshCurrentTab();
+    }
+
+    private void AddThreeLevelRow(
+        string label,
+        int currentLevel,
+        bool interactable,
+        System.Action<int> setter)
+    {
+        RectTransform row = CreateRect(label, contentRoot);
+        row.gameObject.AddComponent<Image>().color = rowColor;
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 54f;
+
+        TextMeshProUGUI labelText = CreateText(
+            "Name",
+            row,
+            label,
+            18f,
+            TextAlignmentOptions.MidlineLeft,
+            Color.white);
+        labelText.rectTransform.anchorMin = Vector2.zero;
+        labelText.rectTransform.anchorMax = new Vector2(0.48f, 1f);
+        labelText.rectTransform.offsetMin = new Vector2(16f, 0f);
+        labelText.rectTransform.offsetMax = Vector2.zero;
+
+        string[] levels = { "I", "II", "III" };
+        for (int i = 0; i < levels.Length; i++)
+        {
+            int capturedLevel = i + 1;
+            Button button = CreateButton(
+                row,
+                levels[i],
+                () => setter?.Invoke(capturedLevel),
+                72f,
+                interactable);
+            RectTransform rect = button.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(1f, 0.5f);
+            rect.pivot = new Vector2(1f, 0.5f);
+            rect.anchoredPosition = new Vector2(-12f - (2 - i) * 78f, 0f);
+            rect.sizeDelta = new Vector2(72f, 38f);
+            if (currentLevel == capturedLevel &&
+                button.targetGraphic is Image image)
+            {
+                image.color = successColor;
+            }
+        }
+    }
+
     private void AddCombatLabSection()
     {
         ResolveCombatLab();
@@ -3305,6 +3544,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         {
             return;
         }
+
+        RunStateManager.Instance?.SetSelectedWeaponForDebug(data);
 
         telekinesisPrototype = player.GetComponent<TelekinesisDebugPrototype>();
         RefreshTab(DebugTab.WeaponsAndUpgrades);
@@ -3942,35 +4183,37 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             ? runState.AnomalyInventory
             : null;
         bool hasItem = inventory != null && !inventory.IsEmpty;
-        AddRow("CURRENT", hasItem
-                ? inventory.CurrentItem.DisplayName
+        AddRow("ANOMALY", hasItem
+                ? $"{inventory.CurrentItem.DisplayName} " +
+                    ToRomanLevel(inventory.Level)
                 : "EMPTY",
             inventory != null && !inventory.IsEmpty ? successColor : mutedColor,
-            null, false, null);
-        AddRow("LEVEL", hasItem
-                ? $"{ToRomanLevel(inventory.Level)} / III"
-                : "— / III",
-            hasItem ? successColor : mutedColor,
             null, false, null);
 
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         BaseWeapon selectedWeapon = FindPrimaryWeapon(player);
-        AddRow("SELECTED WEAPON",
+        AddRow("WEAPON",
             selectedWeapon != null && selectedWeapon.weaponData != null
                 ? GetWeaponName(selectedWeapon.weaponData)
                 : "NONE",
             selectedWeapon != null ? successColor : mutedColor,
             null, false, null);
 
-        EvolutionDefinition evolution = runState != null
-            ? runState.CurrentEvolution
+        EvolutionRecipe recipe = runState != null
+            ? runState.EvolutionState.CurrentRecipe
             : null;
         EvolutionRuntimeController runtime = player != null
             ? player.GetComponent<EvolutionRuntimeController>()
             : null;
         AddRow("EVOLUTION",
-            evolution != null ? evolution.DisplayName : "NONE",
-            evolution != null ? successColor : mutedColor,
+            recipe != null ? recipe.DisplayName : "NONE",
+            recipe != null ? successColor : mutedColor,
+            null, false, null);
+        AddRow("MODE",
+            recipe == null
+                ? "PURE"
+                : inventory.Level >= 3 ? "OVERDRIVE" : "HYBRID",
+            recipe != null ? successColor : mutedColor,
             null, false, null);
         AddRow("EVOLUTION RUNTIME",
             runtime != null && runtime.IsRuntimeActive ? "ACTIVE" : "INACTIVE",
@@ -3989,10 +4232,21 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             if (item == null)
                 continue;
 
-            AnomalyItemData captured = item;
-            AddRow(item.DisplayName, item.PowerType.ToString(), mutedColor,
-                $"GRANT {item.DisplayName.ToUpperInvariant()}", runState != null,
-                () => GrantDebugAnomaly(captured));
+            for (int targetLevel = 1; targetLevel <= 3; targetLevel++)
+            {
+                AnomalyItemData captured = item;
+                int capturedLevel = targetLevel;
+                AddRow(
+                    $"SET {item.DisplayName.ToUpperInvariant()} " +
+                        ToRomanLevel(targetLevel),
+                    targetLevel == 1
+                        ? "PURE"
+                        : targetLevel == 2 ? "HYBRID" : "OVERDRIVE",
+                    mutedColor,
+                    "SET",
+                    runState != null,
+                    () => SetDebugAnomalyLevel(captured, capturedLevel));
+            }
         }
 
         AddRow("CLEAR SLOT", "Keeps upgrade slots unchanged", warningColor,
@@ -4009,6 +4263,25 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AnomalyGrantResult result = runState.TryGrantAnomalyItem(item);
         lastAnomalyGrantResult = result.ToString();
 
+        RefreshCurrentTab();
+    }
+
+    private void SetDebugAnomalyLevel(AnomalyItemData item, int targetLevel)
+    {
+        RunStateManager runState = RunStateManager.Instance;
+        if (runState == null || item == null)
+            return;
+
+        if (!runState.AnomalyInventory.IsEmpty)
+            runState.ClearAnomalyItem();
+
+        AnomalyGrantResult result = AnomalyGrantResult.Invalid;
+        int grants = Mathf.Clamp(targetLevel, 1, item.MaxLevel);
+        for (int i = 0; i < grants; i++)
+            result = runState.TryGrantAnomalyItem(item);
+
+        lastAnomalyGrantResult =
+            $"{item.DisplayName} {ToRomanLevel(grants)}: {result}";
         RefreshCurrentTab();
     }
 

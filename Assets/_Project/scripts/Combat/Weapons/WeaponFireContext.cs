@@ -112,6 +112,30 @@ public readonly struct WeaponFireContext
         );
     }
 
+
+    public WeaponFireContext WithRangeMultiplier(float multiplier)
+    {
+        return new WeaponFireContext(
+            Weapon,
+            WeaponData,
+            Owner,
+            FirePoint,
+            Origin,
+            Direction,
+            Damage,
+            IsCritical,
+            Range * Mathf.Max(0.1f, multiplier),
+            ProjectileSpeed,
+            ProjectileCount,
+            Pierce,
+            Ricochet,
+            ShotVisualScale,
+            KnockbackForce,
+            Modifiers,
+            FxPlayer
+        );
+    }
+
     public WeaponHitContext CreateHitContext(
         EnemyHealth target,
         Vector2 hitPoint)
