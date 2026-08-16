@@ -173,6 +173,36 @@ public sealed class RunItemSlots
             SlotsChanged?.Invoke();
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool TrySetLevelForDebug(UpgradeData item, int targetLevel)
+    {
+        if (item == null || targetLevel < 0 || targetLevel > MaxItemLevel)
+            return false;
+
+        int index = FindItemIndex(item);
+        if (targetLevel == 0)
+        {
+            if (index < 0)
+                return true;
+
+            slots[index].Clear();
+            SlotsChanged?.Invoke();
+            return true;
+        }
+
+        if (index < 0)
+        {
+            index = FindEmptySlotIndex();
+            if (index < 0)
+                return false;
+        }
+
+        slots[index].Set(item, targetLevel);
+        SlotsChanged?.Invoke();
+        return true;
+    }
+#endif
+
     private int FindItemIndex(UpgradeData item)
     {
         for (int i = 0; i < slots.Length; i++)

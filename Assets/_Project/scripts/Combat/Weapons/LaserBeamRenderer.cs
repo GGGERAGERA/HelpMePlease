@@ -24,10 +24,20 @@ public sealed class LaserBeamRenderer : MonoBehaviour
     [SerializeField] private int glowSortingOrder = 20;
     [SerializeField] private int coreSortingOrder = 21;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public float DebugLastWidthScale { get; private set; } = 1f;
+    public float DebugLastCoreWidth { get; private set; }
+    public float DebugLastGlowWidth { get; private set; }
+#endif
+
     public void Render(Vector2 start, Vector2 end, float widthScale = 1f)
     {
         Vector2 jitteredEnd = end + Random.insideUnitCircle * endJitter;
         widthScale = Mathf.Max(0.1f, widthScale);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        DebugLastWidthScale = widthScale;
+#endif
 
         CreateGlow(start, jitteredEnd, widthScale);
         CreateCore(start, jitteredEnd, widthScale);
@@ -44,6 +54,10 @@ public sealed class LaserBeamRenderer : MonoBehaviour
 
         line.startWidth = width;
         line.endWidth = width;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        DebugLastCoreWidth = width;
+#endif
 
         line.startColor = coreColor;
         line.endColor = coreColor;
@@ -65,6 +79,10 @@ public sealed class LaserBeamRenderer : MonoBehaviour
 
         line.startWidth = width;
         line.endWidth = width;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        DebugLastGlowWidth = width;
+#endif
 
         line.startColor = glowColor;
         line.endColor = new Color(

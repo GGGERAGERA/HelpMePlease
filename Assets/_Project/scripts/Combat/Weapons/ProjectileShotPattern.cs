@@ -19,54 +19,21 @@ public sealed class ProjectileShotPattern : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            float angleOffset = GetSpreadOffset(i, count, finalSpread);
-            Vector2 direction = RotateVector(baseContext.Direction, angleOffset);
-
-            WeaponFireContext shotContext = new WeaponFireContext(
-                baseContext.Weapon,
-                baseContext.WeaponData,
-                baseContext.Owner,
-                baseContext.FirePoint,
-                baseContext.Origin,
-                direction,
-                baseContext.Damage,
-                baseContext.IsCritical,
-                baseContext.Range,
-                baseContext.ProjectileSpeed,
-                baseContext.ProjectileCount,
-                baseContext.Pierce,
-                baseContext.Ricochet,
-                baseContext.ShotVisualScale,
-                baseContext.KnockbackForce,
-                baseContext.Modifiers,
-                baseContext.FxPlayer
-            );
+            float angleOffset = WeaponShotSpread.GetAngleOffset(
+                i,
+                count,
+                finalSpread);
+            Vector2 direction = WeaponShotSpread.RotateDirection(
+                baseContext.Direction,
+                angleOffset);
+            WeaponFireContext shotContext =
+                baseContext.WithOriginAndDirection(
+                    baseContext.Origin,
+                    direction);
 
             fired |= fireBehaviour.Fire(shotContext);
         }
 
         return fired;
-    }
-
-    private float GetSpreadOffset(int index, int count, float totalSpread)
-    {
-        if (count <= 1)
-            return 0f;
-
-        float step = totalSpread / (count - 1);
-        return -totalSpread * 0.5f + step * index;
-    }
-
-    private Vector2 RotateVector(Vector2 vector, float angle)
-    {
-        float radians = angle * Mathf.Deg2Rad;
-
-        float cos = Mathf.Cos(radians);
-        float sin = Mathf.Sin(radians);
-
-        return new Vector2(
-            vector.x * cos - vector.y * sin,
-            vector.x * sin + vector.y * cos
-        ).normalized;
     }
 }

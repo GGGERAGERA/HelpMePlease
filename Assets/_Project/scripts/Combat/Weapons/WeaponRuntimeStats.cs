@@ -18,12 +18,6 @@ public sealed class WeaponRuntimeStats : MonoBehaviour
     [Header("Runtime Multipliers")]
     [SerializeField] private float damageMultiplier = 1f;
     [SerializeField] private float fireRateMultiplier = 1f;
-    [SerializeField] private float knockbackMultiplier = 1f;
-
-    [Header("Weapon Tempo Profile")]
-    [SerializeField] private float tempoDamageMultiplier = 1f;
-    [SerializeField] private float tempoFireRateMultiplier = 1f;
-    [SerializeField] private float shotVisualScale = 1f;
 
     [Header("Runtime Additive")]
     [SerializeField] private float flatDamageBonus = 0f;
@@ -50,8 +44,8 @@ public sealed class WeaponRuntimeStats : MonoBehaviour
     public float ProjectileSpeed => Mathf.Max(0.1f, baseProjectileSpeed);
     public float CritChance => critChance;
     public float CritMultiplier => critMultiplier;
-    public float KnockbackMultiplier => knockbackMultiplier;
-    public float ShotVisualScale => Mathf.Max(0.1f, shotVisualScale);
+    public float BaseShotsPerSecond => Mathf.Max(0.01f, baseShotsPerSecond);
+    public float FireRateMultiplier => Mathf.Max(0.01f, fireRateMultiplier);
 
     public void InitializeFromWeaponData(WeaponData data)
     {
@@ -68,10 +62,6 @@ public sealed class WeaponRuntimeStats : MonoBehaviour
 
         damageMultiplier = 1f;
         fireRateMultiplier = 1f;
-        knockbackMultiplier = 1f;
-        tempoDamageMultiplier = 1f;
-        tempoFireRateMultiplier = 1f;
-        shotVisualScale = 1f;
         flatDamageBonus = 0f;
         rangeBonus = 0f;
         projectileCountBonus = 0;
@@ -91,10 +81,6 @@ public sealed class WeaponRuntimeStats : MonoBehaviour
 
         damageMultiplier = source.damageMultiplier;
         fireRateMultiplier = source.fireRateMultiplier;
-        knockbackMultiplier = source.knockbackMultiplier;
-        tempoDamageMultiplier = source.tempoDamageMultiplier;
-        tempoFireRateMultiplier = source.tempoFireRateMultiplier;
-        shotVisualScale = source.shotVisualScale;
         flatDamageBonus = source.flatDamageBonus;
         rangeBonus = source.rangeBonus;
         projectileCountBonus = source.projectileCountBonus;
@@ -119,10 +105,6 @@ public sealed class WeaponRuntimeStats : MonoBehaviour
         baseRicochet = source.baseRicochet;
         damageMultiplier = source.damageMultiplier;
         fireRateMultiplier = source.fireRateMultiplier;
-        knockbackMultiplier = source.knockbackMultiplier;
-        tempoDamageMultiplier = source.tempoDamageMultiplier;
-        tempoFireRateMultiplier = source.tempoFireRateMultiplier;
-        shotVisualScale = source.shotVisualScale;
         flatDamageBonus = source.flatDamageBonus;
         rangeBonus = source.rangeBonus;
         projectileCountBonus = source.projectileCountBonus;
@@ -137,7 +119,7 @@ public sealed class WeaponRuntimeStats : MonoBehaviour
     public int GetDamage(PlayerCombatModifiers modifiers)
     {
         float finalDamage = (baseDamage + flatDamageBonus) *
-            damageMultiplier * tempoDamageMultiplier;
+            damageMultiplier;
 
         if (modifiers != null)
         {
@@ -151,14 +133,7 @@ public sealed class WeaponRuntimeStats : MonoBehaviour
 
     public float GetShotsPerSecond(PlayerCombatModifiers modifiers)
     {
-        float shotsPerSecond = baseShotsPerSecond *
-            fireRateMultiplier * tempoFireRateMultiplier;
-
-        if (modifiers != null)
-        {
-            shotsPerSecond *= Mathf.Max(0.1f, modifiers.bonusFireRateMultiplier);
-            shotsPerSecond *= Mathf.Max(0.1f, 1f + modifiers.stationaryFireRateBonus);
-        }
+        float shotsPerSecond = baseShotsPerSecond * fireRateMultiplier;
 
         shotsPerSecond = Mathf.Max(0.01f, shotsPerSecond);
         debugFinalShotsPerSecond = shotsPerSecond;
@@ -170,26 +145,15 @@ public sealed class WeaponRuntimeStats : MonoBehaviour
     public void AddRange(float amount) => rangeBonus += amount;
     public void AddDamagePercent(float percent) => damageMultiplier *= 1f + percent;
     public void AddFireRatePercent(float percent) => fireRateMultiplier *= 1f + percent;
-    public void AddKnockbackPercent(float percent) => knockbackMultiplier *= 1f + percent;
+    public void SetFireRateMultiplier(float multiplier) =>
+        fireRateMultiplier = Mathf.Max(0.01f, multiplier);
     public void AddCritChance(float amount) => critChance = Mathf.Clamp01(critChance + amount);
-    public void AddCritMultiplier(float amount) => critMultiplier += amount;
-    public void AddProjectileCount(int amount) => projectileCountBonus += amount;
     public void SetProjectileCountBonus(int amount) =>
         projectileCountBonus = Mathf.Max(0, amount);
     public void AddPierce(int amount) => pierceBonus += amount;
     public void AddRicochet(int amount) => ricochetBonus += amount;
     public void SetPierceBonus(int amount) => pierceBonus = Mathf.Max(0, amount);
     public void SetRicochetBonus(int amount) => ricochetBonus = Mathf.Max(0, amount);
-
-    public void SetTempoProfile(
-        float damage,
-        float fireRate,
-        float visualScale)
-    {
-        tempoDamageMultiplier = Mathf.Max(0.01f, damage);
-        tempoFireRateMultiplier = Mathf.Max(0.01f, fireRate);
-        shotVisualScale = Mathf.Max(0.1f, visualScale);
-    }
 
     public void RefreshDebug(PlayerCombatModifiers modifiers)
     {

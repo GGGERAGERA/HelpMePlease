@@ -87,7 +87,9 @@ public class UpgradeCardView : MonoBehaviour
         gameObject.SetActive(true);
 
         SetText(titleText, upgrade.upgradeName);
-        SetText(descriptionText, upgrade.description);
+        SetText(
+            descriptionText,
+            ProductionUpgradePresentation.GetCardDescription(upgrade));
 
         SetCategory(upgrade.category);
         SetIcon(upgrade.icon, GetCategoryColor(upgrade.category));

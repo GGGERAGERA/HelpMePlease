@@ -127,22 +127,6 @@ public class Bullet : MonoBehaviour, IWeaponProjectile,
             isCritical
         ));
 
-        PlayerCombatModifiers modifiers = combatContext != null
-            ? combatContext.Modifiers
-            : null;
-
-        if (modifiers != null)
-        {
-            CombatExplosionService.TryExplodeOnHit(
-                transform.position,
-                damage,
-                modifiers,
-                modifiers.enemyMask
-            );
-        }
-
-
-
         EnemyMovement enemyMovement = enemyHealth.GetComponent<EnemyMovement>();
 
         if (enemyMovement != null)

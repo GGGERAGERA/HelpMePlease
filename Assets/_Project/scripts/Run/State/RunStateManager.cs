@@ -321,6 +321,38 @@ public sealed class RunStateManager : MonoBehaviour
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void SetSelectedWeaponForDebug(WeaponData weapon)
+    {
+        if (!runEnded && weapon != null)
+            SelectedWeapon = weapon;
+    }
+
+    public bool TrySetUpgradeLevelForDebug(
+        UpgradeData upgrade,
+        int targetLevel,
+        UpgradeApplier upgradeApplier)
+    {
+        if (runEnded || upgrade == null || upgradeApplier == null ||
+            !itemSlots.TrySetLevelForDebug(upgrade, targetLevel))
+        {
+            return false;
+        }
+
+        pickedUpgrades.RemoveAll(item => item == upgrade);
+        for (int i = 0; i < targetLevel; i++)
+            pickedUpgrades.Add(upgrade);
+
+        upgradeApplier.ApplyDebugProductionBuild(itemSlots);
+        return true;
+    }
+
+    public void ClearUpgradesForDebug(UpgradeApplier upgradeApplier)
+    {
+        pickedUpgrades.Clear();
+        itemSlots.Clear();
+        upgradeApplier?.ApplyDebugProductionBuild(itemSlots);
+    }
+
     public void SetThreatForDebug(float value)
     {
         if (runEnded)

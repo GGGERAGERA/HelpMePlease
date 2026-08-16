@@ -1,45 +1,5 @@
 using UnityEngine;
 
-public readonly struct WeaponTempoValues
-{
-    public readonly float DamageMultiplier;
-    public readonly float FireRateMultiplier;
-    public readonly float VisualScale;
-
-    public WeaponTempoValues(float damage, float fireRate, float visualScale)
-    {
-        DamageMultiplier = damage;
-        FireRateMultiplier = fireRate;
-        VisualScale = visualScale;
-    }
-}
-
-public static class WeaponTempoProfiles
-{
-    public static WeaponTempoValues Get(UpgradeType type, int upgradeLevel)
-    {
-        int level = Mathf.Clamp(upgradeLevel, 1, RunItemSlots.MaxItemLevel);
-
-        if (type == UpgradeType.HeavyShot)
-        {
-            return new WeaponTempoValues(
-                level switch { 1 => 1.75f, 2 => 2.25f, _ => 3f },
-                level switch { 1 => 0.75f, 2 => 0.65f, _ => 0.55f },
-                level switch { 1 => 1.2f, 2 => 1.35f, _ => 1.5f });
-        }
-
-        if (type == UpgradeType.Overclock)
-        {
-            return new WeaponTempoValues(
-                level switch { 1 => 0.8f, 2 => 0.7f, _ => 0.6f },
-                level switch { 1 => 1.5f, 2 => 1.9f, _ => 2.4f },
-                1f);
-        }
-
-        return new WeaponTempoValues(1f, 1f, 1f);
-    }
-}
-
 public static class ProductionUpgradeProfiles
 {
     public static float DamageMultiplier(int level) =>
@@ -48,6 +8,8 @@ public static class ProductionUpgradeProfiles
         20f * ClampLevel(level);
     public static float MoveSpeedMultiplier(int level) =>
         1f + 0.1f * ClampLevel(level);
+    public static float FireRateMultiplier(int level) =>
+        1f + 0.15f * ClampLevel(level);
     public static float XpGainMultiplier(int level) =>
         1f + 0.08f * ClampLevel(level);
     public static float AttackSizeMultiplier(int level) =>
@@ -69,6 +31,60 @@ public static class ProductionUpgradeProfiles
 public sealed class UpgradeApplier : MonoBehaviour
 {
     [SerializeField] private string playerTag = "Player";
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool ApplyDebugProductionBuild(RunItemSlots slots)
+    {
+        PlayerUpgradeContext context = FindPlayerContext();
+        if (!context.IsValid || slots == null)
+            return false;
+
+        int damage = slots.GetLevel(UpgradeType.WeaponDamagePercent);
+        int maxHealth = slots.GetLevel(UpgradeType.MaxHealthFlat);
+        int moveSpeed = slots.GetLevel(UpgradeType.MoveSpeedPercent);
+        int xpGain = slots.GetLevel(UpgradeType.XpGainPercent);
+        int attackSize = slots.GetLevel(UpgradeType.AttackSizePercent);
+        int crit = slots.GetLevel(UpgradeType.CritChance);
+        int regeneration = slots.GetLevel(UpgradeType.HpRegeneration);
+        int multishot = slots.GetLevel(UpgradeType.Multishot);
+        int fireRate = slots.GetLevel(UpgradeType.FireRatePercent);
+
+        PlayerCombatModifiers modifiers = RequireCombatModifiers(context);
+        modifiers.SetRunDamageMultiplier(damage > 0
+            ? ProductionUpgradeProfiles.DamageMultiplier(damage)
+            : 1f);
+        modifiers.SetRunCritChanceBonus(crit > 0
+            ? ProductionUpgradeProfiles.CritChanceBonus(crit)
+            : 0f);
+        modifiers.SetRunAttackSizeMultiplier(attackSize > 0
+            ? ProductionUpgradeProfiles.AttackSizeMultiplier(attackSize)
+            : 1f);
+        context.Health?.SetRunUpgradeMaxHealthBonus(maxHealth > 0
+            ? ProductionUpgradeProfiles.MaxHealthBonus(maxHealth)
+            : 0f);
+        context.Health?.SetRunUpgradeRegeneration(regeneration > 0
+            ? ProductionUpgradeProfiles.RegenerationPerSecond(regeneration)
+            : 0f);
+        context.Movement?.SetRunUpgradeMoveSpeedMultiplier(moveSpeed > 0
+            ? ProductionUpgradeProfiles.MoveSpeedMultiplier(moveSpeed)
+            : 1f);
+        ExperienceManager.Instance?.SetRunUpgradeXpGainMultiplier(xpGain > 0
+            ? ProductionUpgradeProfiles.XpGainMultiplier(xpGain)
+            : 1f);
+        ApplyToWeapons(
+            context,
+            weapon =>
+            {
+                weapon.SetProjectileCountBonus(multishot > 0
+                    ? ProductionUpgradeProfiles.MultishotBonus(multishot)
+                    : 0);
+                weapon.SetFireRateMultiplier(fireRate > 0
+                    ? ProductionUpgradeProfiles.FireRateMultiplier(fireRate)
+                    : 1f);
+            });
+        return true;
+    }
+#endif
 
     public bool Apply(UpgradeData upgrade)
     {
@@ -101,21 +117,17 @@ public sealed class UpgradeApplier : MonoBehaviour
                 ApplyMoveSpeed(context, upgradeLevel);
                 break;
 
-            case UpgradeType.XpPickupRadiusPercent:
-                ApplyXpPickupRadius(context, upgrade.value);
-                break;
-
             case UpgradeType.WeaponDamagePercent:
                 RequireCombatModifiers(context).SetRunDamageMultiplier(
                     ProductionUpgradeProfiles.DamageMultiplier(upgradeLevel));
                 break;
 
             case UpgradeType.FireRatePercent:
-                ApplyToWeapons(context, weapon => weapon.AddFireRatePercent(upgrade.value));
-                break;
-
-            case UpgradeType.ExtraShot:
-                ApplyToWeapons(context, weapon => weapon.AddProjectileCount(Mathf.RoundToInt(upgrade.value)));
+                ApplyToWeapons(
+                    context,
+                    weapon => weapon.SetFireRateMultiplier(
+                        ProductionUpgradeProfiles.FireRateMultiplier(
+                            upgradeLevel)));
                 break;
 
             case UpgradeType.CritChance:
@@ -141,48 +153,6 @@ public sealed class UpgradeApplier : MonoBehaviour
             case UpgradeType.Multishot:
                 ApplyToWeapons(context, weapon => weapon.SetProjectileCountBonus(
                     ProductionUpgradeProfiles.MultishotBonus(upgradeLevel)));
-                break;
-
-            case UpgradeType.CritDamage:
-                ApplyToWeapons(context, weapon => weapon.AddCritMultiplier(upgrade.value));
-                break;
-
-            case UpgradeType.KnockbackPercent:
-                ApplyToWeapons(context, weapon => weapon.AddKnockbackPercent(upgrade.value));
-                break;
-
-            case UpgradeType.HitExplosionChance:
-                RequireCombatModifiers(context).hitExplosionChance += upgrade.value;
-                break;
-
-            case UpgradeType.StationaryFireRateRamp:
-                ApplyStationaryFireRateRamp(context, upgrade.value);
-                break;
-
-            case UpgradeType.DoubleDamageWithInaccuracy:
-                ApplyDoubleDamageWithInaccuracy(context);
-                break;
-
-            case UpgradeType.Pierce:
-                ApplyToCompatibleWeapons(
-                    context,
-                    WeaponUpgradeCapability.Pierce,
-                    weapon => weapon.SetPierceBonus(upgradeLevel));
-                break;
-
-            case UpgradeType.Ricochet:
-                ApplyToCompatibleWeapons(
-                    context,
-                    WeaponUpgradeCapability.Ricochet,
-                    weapon => weapon.SetRicochetBonus(upgradeLevel));
-                break;
-
-            case UpgradeType.HeavyShot:
-                ApplyTempoProfile(context, UpgradeType.HeavyShot, upgradeLevel);
-                break;
-
-            case UpgradeType.Overclock:
-                ApplyTempoProfile(context, UpgradeType.Overclock, upgradeLevel);
                 break;
 
             default:
@@ -221,14 +191,6 @@ public sealed class UpgradeApplier : MonoBehaviour
             ProductionUpgradeProfiles.MoveSpeedMultiplier(level));
     }
 
-    private void ApplyXpPickupRadius(PlayerUpgradeContext context, float value)
-    {
-        if (context.PickupRadius == null)
-            return;
-
-        context.PickupRadius.AddRadiusPercent(value);
-    }
-
     private void ApplyToWeapons(PlayerUpgradeContext context, System.Action<BaseWeapon> apply)
     {
         if (context.Weapons == null || context.Weapons.Length == 0)
@@ -241,40 +203,6 @@ public sealed class UpgradeApplier : MonoBehaviour
 
             apply?.Invoke(weapon);
         }
-    }
-
-    private void ApplyToCompatibleWeapons(
-        PlayerUpgradeContext context,
-        WeaponUpgradeCapability capability,
-        System.Action<BaseWeapon> apply)
-    {
-        ApplyToWeapons(context, weapon =>
-        {
-            if ((weapon.UpgradeCapabilities & capability) == capability)
-                apply?.Invoke(weapon);
-        });
-    }
-
-    private void ApplyTempoProfile(
-        PlayerUpgradeContext context,
-        UpgradeType type,
-        int upgradeLevel)
-    {
-        WeaponTempoValues values = WeaponTempoProfiles.Get(type, upgradeLevel);
-
-        ApplyToWeapons(
-            context,
-            weapon => weapon.SetTempoProfile(
-                values.DamageMultiplier,
-                values.FireRateMultiplier,
-                values.VisualScale));
-    }
-
-    private void ApplyDoubleDamageWithInaccuracy(PlayerUpgradeContext context)
-    {
-        PlayerCombatModifiers modifiers = RequireCombatModifiers(context);
-        modifiers.bonusDamageMultiplier *= 2f;
-        modifiers.accuracyPenaltyDegrees += 12f;
     }
 
     private PlayerCombatModifiers RequireCombatModifiers(PlayerUpgradeContext context)
@@ -292,7 +220,6 @@ public sealed class UpgradeApplier : MonoBehaviour
         public readonly GameObject Player;
         public readonly PlayerHealth Health;
         public readonly CharacterMovement2D Movement;
-        public readonly PlayerPickupRadius PickupRadius;
         public readonly PlayerCombatModifiers CombatModifiers;
         public readonly BaseWeapon[] Weapons;
 
@@ -303,17 +230,8 @@ public sealed class UpgradeApplier : MonoBehaviour
             Player = player;
             Health = player != null ? player.GetComponent<PlayerHealth>() : null;
             Movement = player != null ? player.GetComponent<CharacterMovement2D>() : null;
-            PickupRadius = player != null ? player.GetComponent<PlayerPickupRadius>() : null;
             CombatModifiers = player != null ? player.GetComponent<PlayerCombatModifiers>() : null;
             Weapons = player != null ? player.GetComponentsInChildren<BaseWeapon>(true) : null;
         }
-    }
-
-    private void ApplyStationaryFireRateRamp(PlayerUpgradeContext context, float value)
-    {
-        PlayerCombatModifiers modifiers = RequireCombatModifiers(context);
-
-        modifiers.stationaryFireRateRamp = true;
-        modifiers.stationaryFireRateRampMaxBonus += value;
     }
 }

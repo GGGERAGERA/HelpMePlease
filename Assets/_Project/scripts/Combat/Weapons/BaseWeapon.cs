@@ -43,8 +43,6 @@ public abstract class BaseWeapon : MonoBehaviour
     private bool hasAim;
     private float idleOrbitAngle;
     private bool hadAutomaticTarget;
-    private Vector2 lastOwnerPosition;
-    private Transform ownerTransform;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private bool telekinesisDebugStateCaptured;
@@ -57,6 +55,9 @@ public abstract class BaseWeapon : MonoBehaviour
     private float telekinesisDebugRadius = 6f;
     private float telekinesisDebugFollowSpeed = 18f;
     private Vector2 telekinesisDebugPositionTarget;
+    private float debugLastAttackSizeMultiplier = 1f;
+    private float debugLastContextShotVisualScale = 1f;
+    private int debugLastFireContextFrame = -1;
 #endif
 
     protected float lastAttackTime;
@@ -74,12 +75,25 @@ public abstract class BaseWeapon : MonoBehaviour
     public bool WantsToFire => IsTryingToAttack();
     public int RuntimePierce => runtimeStats != null ? runtimeStats.Pierce : 0;
     public int RuntimeRicochet => runtimeStats != null ? runtimeStats.Ricochet : 0;
-    public float RuntimeShotVisualScale => runtimeStats != null
-        ? runtimeStats.ShotVisualScale
+    public float RuntimeFireRateMultiplier => runtimeStats != null
+        ? runtimeStats.FireRateMultiplier
+        : 1f;
+    public float RuntimeShotsPerSecond => runtimeStats != null
+        ? runtimeStats.GetShotsPerSecond(GetCombatModifiers())
+        : 0f;
+    public float RuntimeEffectiveFireRateMultiplier => runtimeStats != null
+        ? RuntimeShotsPerSecond / runtimeStats.BaseShotsPerSecond
         : 1f;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public bool IsTelekinesisDebugSecondary =>
         telekinesisDebugSecondaryWeapon;
+    public PlayerCombatModifiers DebugResolvedCombatModifiers =>
+        GetCombatModifiers();
+    public float DebugLastAttackSizeMultiplier =>
+        debugLastAttackSizeMultiplier;
+    public float DebugLastContextShotVisualScale =>
+        debugLastContextShotVisualScale;
+    public int DebugLastFireContextFrame => debugLastFireContextFrame;
 #endif
     protected virtual WeaponShotKind ShotKind => WeaponShotKind.Standard;
     public virtual WeaponUpgradeCapability UpgradeCapabilities =>
@@ -107,10 +121,6 @@ public abstract class BaseWeapon : MonoBehaviour
     {
         SetupAudio();
 
-        ownerTransform = transform.parent;
-        if (ownerTransform != null)
-            lastOwnerPosition = ownerTransform.position;
-
         if (firePoint == null)
             firePoint = transform;
 
@@ -134,7 +144,6 @@ public abstract class BaseWeapon : MonoBehaviour
             return;
 
         UpdateAimAndOrbit();
-        UpdateStationaryFireRateRamp();
 
         if (IsTryingToAttack() && CanAttack())
         {
@@ -469,14 +478,27 @@ public abstract class BaseWeapon : MonoBehaviour
     /// </summary>
     public bool EmitAttack(Vector2 origin, Vector2 direction)
     {
+        return EmitAttack(origin, direction, 1f);
+    }
+
+    /// <summary>
+    /// Emits one current weapon attack with a local range override. Runtime
+    /// damage, crit, size and multishot are still resolved by the weapon.
+    /// </summary>
+    public bool EmitAttack(
+        Vector2 origin,
+        Vector2 direction,
+        float rangeMultiplier)
+    {
         if (!IsValidVector(origin) || !IsValidVector(direction) ||
             direction.sqrMagnitude < 0.001f)
         {
             return false;
         }
 
-        Vector2 finalDirection = ApplyAccuracyPenalty(direction.normalized);
-        if (!EmitAttack(BuildFireContext(origin, finalDirection)))
+        WeaponFireContext context = BuildFireContext(origin, direction.normalized)
+            .WithRangeMultiplier(rangeMultiplier);
+        if (!EmitAttack(context))
             return false;
 
         ShotFired?.Invoke(origin, ShotKind);
@@ -529,6 +551,17 @@ public abstract class BaseWeapon : MonoBehaviour
         return 1f / Mathf.Max(0.01f, shotsPerSecond);
     }
 
+    /// <summary>
+    /// Base weapon cadence without runtime/meta/tempo modifiers. Constructs
+    /// may use it as authored payload timing while retaining ownership of WHEN.
+    /// </summary>
+    public float GetBaseAttackCooldown()
+    {
+        return runtimeStats != null
+            ? 1f / runtimeStats.BaseShotsPerSecond
+            : 1f;
+    }
+
     protected int GetProjectileCount()
     {
         return runtimeStats.ProjectileCount;
@@ -570,15 +603,6 @@ public abstract class BaseWeapon : MonoBehaviour
         runtimeStats.AddCritChance(amount);
     }
 
-    public void AddCritMultiplier(float amount)
-    {
-        runtimeStats.AddCritMultiplier(amount);
-    }
-
-    public void AddProjectileCount(int amount)
-    {
-        runtimeStats.AddProjectileCount(amount);
-    }
     public void SetProjectileCountBonus(int amount)
     {
         runtimeStats.SetProjectileCountBonus(amount);
@@ -612,15 +636,9 @@ public abstract class BaseWeapon : MonoBehaviour
         runtimeStats.SetRicochetBonus(amount);
     }
 
-    public void SetTempoProfile(
-        float damageMultiplier,
-        float fireRateMultiplier,
-        float visualScale)
+    public void SetFireRateMultiplier(float multiplier)
     {
-        runtimeStats.SetTempoProfile(
-            damageMultiplier,
-            fireRateMultiplier,
-            visualScale);
+        runtimeStats.SetFireRateMultiplier(multiplier);
         runtimeStats.RefreshDebug(GetCombatModifiers());
     }
 
@@ -658,40 +676,9 @@ public abstract class BaseWeapon : MonoBehaviour
         runtimeStats.AddDamagePercent(percent);
     }
 
-    public void AddKnockbackPercent(float percent)
-    {
-        runtimeStats.AddKnockbackPercent(percent);
-    }
-
-    public float GetKnockbackMultiplier()
-    {
-        return runtimeStats.KnockbackMultiplier;
-    }
-
     public float GetKnockbackForce(float baseForce)
     {
-        return baseForce * runtimeStats.KnockbackMultiplier;
-    }
-    private void UpdateStationaryFireRateRamp()
-    {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        if (telekinesisDebugSecondaryWeapon)
-            return;
-#endif
-
-        PlayerCombatModifiers modifiers = GetComponentInParent<PlayerCombatModifiers>();
-
-        if (modifiers == null)
-            return;
-
-        bool isAttacking = IsTryingToAttack();
-        bool isMoving = IsOwnerMoving(modifiers.stationaryMoveThreshold);
-
-        modifiers.UpdateStationaryFireRateRamp(
-            isAttacking,
-            isMoving,
-            Time.deltaTime
-        );
+        return baseForce;
     }
 
     protected virtual bool IsTryingToAttack()
@@ -856,19 +843,6 @@ public abstract class BaseWeapon : MonoBehaviour
     }
 #endif
 
-    private bool IsOwnerMoving(float threshold)
-    {
-        if (ownerTransform == null)
-            return false;
-
-        Vector2 currentPosition = ownerTransform.position;
-        float deltaTime = Mathf.Max(Time.deltaTime, 0.0001f);
-
-        float speed = Vector2.Distance(currentPosition, lastOwnerPosition) / deltaTime;
-        lastOwnerPosition = currentPosition;
-
-        return speed > threshold;
-    }
     protected WeaponFireContext BuildFireContext(Vector2 origin, Vector2 direction)
     {
         PlayerCombatModifiers modifiers = GetCombatModifiers();
@@ -879,7 +853,7 @@ public abstract class BaseWeapon : MonoBehaviour
         if (isCritical)
             damage = Mathf.RoundToInt(damage * GetCritMultiplier());
 
-        return new WeaponFireContext(
+        WeaponFireContext context = new WeaponFireContext(
             this,
             weaponData,
             transform.parent,
@@ -893,29 +867,23 @@ public abstract class BaseWeapon : MonoBehaviour
             GetProjectileCount(),
             GetProjectilePierce(),
             GetProjectileRicochet(),
-            runtimeStats.ShotVisualScale *
-                (modifiers != null
-                    ? modifiers.RunAttackSizeMultiplier
-                    : 1f),
+            modifiers != null
+                ? modifiers.RunAttackSizeMultiplier
+                : 1f,
             0f,
             modifiers,
             FxPlayer
         );
-    }
 
-    protected Vector2 ApplyAccuracyPenalty(Vector2 direction)
-    {
-        PlayerCombatModifiers modifiers = GetCombatModifiers();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        debugLastAttackSizeMultiplier = modifiers != null
+            ? modifiers.RunAttackSizeMultiplier
+            : 1f;
+        debugLastContextShotVisualScale = context.ShotVisualScale;
+        debugLastFireContextFrame = Time.frameCount;
+#endif
 
-        if (modifiers == null || modifiers.accuracyPenaltyDegrees <= 0f)
-            return direction;
-
-        float randomAngle = Random.Range(
-            -modifiers.accuracyPenaltyDegrees,
-            modifiers.accuracyPenaltyDegrees
-        );
-
-        return RotateVector(direction, randomAngle);
+        return context;
     }
 
     protected Vector2 RotateVector(Vector2 vector, float angle)

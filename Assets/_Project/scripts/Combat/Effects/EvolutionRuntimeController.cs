@@ -72,7 +72,10 @@ public sealed class EvolutionRuntimeController : MonoBehaviour
             }
         }
 
-        currentRuntime.Activate(definition, currentWeapon);
+        currentRuntime.Activate(
+            definition,
+            currentWeapon,
+            runState.AnomalyInventory.Level);
     }
 
     private void HandleWeaponChanged(BaseWeapon weapon)

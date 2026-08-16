@@ -5,7 +5,6 @@ public class LaserWeapon : BaseWeapon
     [Header("Beam")]
     [SerializeField] private MonoBehaviour fireBehaviourSource;
     [SerializeField] private LaserAudioController audioController;
-    [SerializeField, Min(0.05f)] private float laneSpacing = 0.34f;
 
     private IWeaponFireBehaviour fireBehaviour;
 
@@ -41,17 +40,19 @@ public class LaserWeapon : BaseWeapon
         if (fireBehaviour == null)
             return false;
 
-        int laneCount = Mathf.Max(1, context.ProjectileCount);
-        Vector2 normal = new(-context.Direction.y, context.Direction.x);
-        float spacing = laneSpacing * context.ShotVisualScale;
+        int beamCount = Mathf.Max(1, context.ProjectileCount);
         bool fired = false;
 
-        for (int i = 0; i < laneCount; i++)
+        for (int i = 0; i < beamCount; i++)
         {
-            float laneOffset = (i - (laneCount - 1) * 0.5f) * spacing;
-            Vector2 laneOrigin = context.Origin + normal * laneOffset;
+            float angleOffset = WeaponShotSpread.GetAngleOffset(
+                i,
+                beamCount);
+            Vector2 direction = WeaponShotSpread.RotateDirection(
+                context.Direction,
+                angleOffset);
             fired |= fireBehaviour.Fire(
-                context.WithOriginAndDirection(laneOrigin, context.Direction));
+                context.WithOriginAndDirection(context.Origin, direction));
         }
 
         if (!fired)
@@ -62,9 +63,4 @@ public class LaserWeapon : BaseWeapon
         return true;
     }
 
-    protected override void OnValidate()
-    {
-        base.OnValidate();
-        laneSpacing = Mathf.Max(0.05f, laneSpacing);
-    }
 }

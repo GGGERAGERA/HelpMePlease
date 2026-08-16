@@ -1,57 +1,122 @@
 using UnityEngine;
 
-[DisallowMultipleComponent]
-public sealed class PistolGravityEvolutionRuntime :
+public abstract class AnomalyEvolutionRuntimeBase :
     MonoBehaviour,
     IEvolutionRuntime
 {
-    private GravityConstruct gravity;
+    private IAnomalyEvolutionPower power;
 
-    public EvolutionRuntimeType Type => EvolutionRuntimeType.PistolGravity;
+    public abstract EvolutionRuntimeType Type { get; }
+    protected abstract AnomalyPowerType PowerType { get; }
     public bool IsActive { get; private set; }
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    private static void RegisterRuntime()
+    public void Activate(
+        EvolutionDefinition definition,
+        BaseWeapon weapon,
+        int anomalyLevel)
     {
-        EvolutionRuntimeRegistry.Register(
-            EvolutionRuntimeType.PistolGravity,
-            owner => owner.GetComponent<PistolGravityEvolutionRuntime>() ??
-                owner.AddComponent<PistolGravityEvolutionRuntime>());
-    }
-
-    public void Activate(EvolutionDefinition definition, BaseWeapon weapon)
-    {
-        if (definition == null || weapon == null)
+        if (definition == null || weapon == null || anomalyLevel < 2)
         {
             Deactivate();
             return;
         }
 
-        gravity ??= GetComponent<GravityConstruct>();
-        if (gravity == null)
+        AnomalyPowerRuntime.EnsurePower(gameObject, PowerType, anomalyLevel);
+        power = FindEvolutionPower(PowerType);
+        if (power == null)
         {
             Debug.LogWarning(
-                "[PistolGravityEvolution] Gravity runtime is missing.", this);
+                $"[EvolutionRuntime] '{PowerType}' does not expose the " +
+                "evolution payload contract.",
+                this);
             Deactivate();
             return;
         }
 
-        gravity.ConfigureWeaponPayload(
-            weapon, definition.PayloadFireRateMultiplier);
-        gravity.SetWeaponPayloadEnabled(true);
+        power.ConfigureEvolutionPayload(weapon, definition, anomalyLevel);
         IsActive = true;
     }
 
     public void Deactivate()
     {
-        if (gravity != null)
-            gravity.SetWeaponPayloadEnabled(false);
-
+        power?.DisableEvolutionPayload();
+        power = null;
         IsActive = false;
     }
 
-    private void OnDestroy()
+    private IAnomalyEvolutionPower FindEvolutionPower(
+        AnomalyPowerType expectedType)
+    {
+        MonoBehaviour[] behaviours = GetComponents<MonoBehaviour>();
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            if (behaviours[i] is IAnomalyPowerRuntime anomaly &&
+                anomaly.Type == expectedType &&
+                behaviours[i] is IAnomalyEvolutionPower evolutionPower)
+            {
+                return evolutionPower;
+            }
+        }
+
+        return null;
+    }
+
+    protected virtual void OnDestroy()
     {
         Deactivate();
+    }
+}
+
+[DisallowMultipleComponent]
+public sealed class GravityEvolutionRuntime : AnomalyEvolutionRuntimeBase
+{
+    public override EvolutionRuntimeType Type =>
+        EvolutionRuntimeType.GravityHybrid;
+    protected override AnomalyPowerType PowerType =>
+        AnomalyPowerType.GravityOrb;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void RegisterRuntime()
+    {
+        EvolutionRuntimeRegistry.Register(
+            EvolutionRuntimeType.GravityHybrid,
+            owner => owner.GetComponent<GravityEvolutionRuntime>() ??
+                owner.AddComponent<GravityEvolutionRuntime>());
+    }
+}
+
+[DisallowMultipleComponent]
+public sealed class ArcEvolutionRuntime : AnomalyEvolutionRuntimeBase
+{
+    public override EvolutionRuntimeType Type =>
+        EvolutionRuntimeType.ArcHybrid;
+    protected override AnomalyPowerType PowerType =>
+        AnomalyPowerType.ArcNode;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void RegisterRuntime()
+    {
+        EvolutionRuntimeRegistry.Register(
+            EvolutionRuntimeType.ArcHybrid,
+            owner => owner.GetComponent<ArcEvolutionRuntime>() ??
+                owner.AddComponent<ArcEvolutionRuntime>());
+    }
+}
+
+[DisallowMultipleComponent]
+public sealed class BeamEvolutionRuntime : AnomalyEvolutionRuntimeBase
+{
+    public override EvolutionRuntimeType Type =>
+        EvolutionRuntimeType.BeamHybrid;
+    protected override AnomalyPowerType PowerType =>
+        AnomalyPowerType.RedBeam;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void RegisterRuntime()
+    {
+        EvolutionRuntimeRegistry.Register(
+            EvolutionRuntimeType.BeamHybrid,
+            owner => owner.GetComponent<BeamEvolutionRuntime>() ??
+                owner.AddComponent<BeamEvolutionRuntime>());
     }
 }
