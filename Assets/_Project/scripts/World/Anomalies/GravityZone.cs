@@ -68,6 +68,7 @@ public sealed class GravityZone : LocalAnomalyZone
     private float inwardForceEnemies;
     private float inwardForcePlayer;
     private float inwardForceProjectiles;
+    private System.Predicate<Collider2D> affectedColliderFilter;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private AnomalyVisualTuningValues originalVisualValues;
     private AnomalyVisualTuningValues debugVisualValues;
@@ -89,6 +90,17 @@ public sealed class GravityZone : LocalAnomalyZone
         inwardForceEnemies = Mathf.Max(0f, enemyInwardForce);
         inwardForcePlayer = Mathf.Max(0f, playerInwardForce);
         inwardForceProjectiles = Mathf.Max(0f, projectileInwardForce);
+    }
+
+    public void ConfigureForce(float force)
+    {
+        gravityForce = Mathf.Max(0f, force);
+    }
+
+    public void ConfigureAffectedColliderFilter(
+        System.Predicate<Collider2D> filter)
+    {
+        affectedColliderFilter = filter;
     }
 
     public bool ContainsWorldPosition(Vector2 worldPosition)
@@ -201,6 +213,9 @@ public sealed class GravityZone : LocalAnomalyZone
         if (effectsCleared)
             return;
 
+        if (affectedColliderFilter != null && !affectedColliderFilter(other))
+            return;
+
         IAnomalyExternalVelocity target =
             other.GetComponentInParent<IAnomalyExternalVelocity>();
 
@@ -224,6 +239,9 @@ public sealed class GravityZone : LocalAnomalyZone
 
     private void OnTriggerExit2D(Collider2D other)
     {
+        if (affectedColliderFilter != null && !affectedColliderFilter(other))
+            return;
+
         IAnomalyExternalVelocity target =
             other.GetComponentInParent<IAnomalyExternalVelocity>();
         Component component = target?.ExternalVelocityComponent;
