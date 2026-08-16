@@ -389,19 +389,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d290efcf0725aee43ba316960d9f43b5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombatModifiers
-  hitExplosionChance: 0
-  knockbackMultiplier: 1
-  stationaryFireRateRamp: 0
-  stationaryFireRateRampMaxBonus: 0
-  stationaryFireRateBonus: 0
-  stationaryRampDuration: 2
-  enemyMask:
-    serializedVersion: 2
-    m_Bits: 256
-  bonusDamageMultiplier: 1
-  bonusFireRateMultiplier: 1
-  accuracyPenaltyDegrees: 0
-  stationaryMoveThreshold: 0.05
 --- !u!114 &900000000000001001
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -75,15 +75,15 @@ public sealed class RunFlowController : MonoBehaviour
         }
 
         levelCompleted = true;
-        RegisterCurrentLevelCompletion();
-        runState.RegisterCompletedLevel();
 
-        if (!manager.TryAdvanceFromExit())
+        if (!manager.TryShowChoices())
         {
             levelCompleted = false;
             return false;
         }
 
+        RegisterCurrentLevelCompletion();
+        runState?.RegisterCompletedLevel();
         return true;
     }
 

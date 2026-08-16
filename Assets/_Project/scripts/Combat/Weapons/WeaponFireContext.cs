@@ -151,3 +151,38 @@ public readonly struct WeaponFireContext
         );
     }
 }
+
+public static class WeaponShotSpread
+{
+    private const float SpreadDegreesPerShot = 15f;
+    private const float MaximumTotalSpread = 72f;
+
+    public static float GetAngleOffset(
+        int index,
+        int shotCount,
+        float minimumTotalSpread = 0f)
+    {
+        int count = Mathf.Max(1, shotCount);
+        if (count <= 1)
+            return 0f;
+
+        float automaticSpread = Mathf.Min(
+            MaximumTotalSpread,
+            SpreadDegreesPerShot * count);
+        float totalSpread = Mathf.Max(
+            automaticSpread,
+            Mathf.Max(0f, minimumTotalSpread));
+        float step = totalSpread / (count - 1);
+        return -totalSpread * 0.5f + step * Mathf.Clamp(index, 0, count - 1);
+    }
+
+    public static Vector2 RotateDirection(Vector2 direction, float angle)
+    {
+        float radians = angle * Mathf.Deg2Rad;
+        float cos = Mathf.Cos(radians);
+        float sin = Mathf.Sin(radians);
+        return new Vector2(
+            direction.x * cos - direction.y * sin,
+            direction.x * sin + direction.y * cos).normalized;
+    }
+}

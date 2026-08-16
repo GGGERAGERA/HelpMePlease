@@ -44,8 +44,13 @@ public sealed class LevelChoiceManager : MonoBehaviour
 
     public void ShowChoices()
     {
+        TryShowChoices();
+    }
+
+    public bool TryShowChoices()
+    {
         if (isChoosing)
-            return;
+            return false;
 
         currentChoices.Clear();
         currentSectorOptions.Clear();
@@ -61,7 +66,7 @@ public sealed class LevelChoiceManager : MonoBehaviour
                 "[LevelChoiceManager] CurrentSector is missing. " +
                 "Sector choice cannot be opened."
             );
-            return;
+            return false;
         }
 
         if (defaultLocalAnomaly == null)
@@ -70,7 +75,7 @@ public sealed class LevelChoiceManager : MonoBehaviour
                 "[LevelChoiceManager] Default LocalAnomaly is missing. " +
                 "Sector choice cannot be opened."
             );
-            return;
+            return false;
         }
 
         int nextSectorNumber = currentSector.SectorNumber + 1;
@@ -82,7 +87,7 @@ public sealed class LevelChoiceManager : MonoBehaviour
                 $"[LevelChoiceManager] StageProfile for sector " +
                 $"{nextSectorNumber} was not found."
             );
-            return;
+            return false;
         }
 
         List<WorldRuleData> pool = BuildPool();
@@ -93,7 +98,7 @@ public sealed class LevelChoiceManager : MonoBehaviour
                 $"[LevelChoiceManager] At least {choicesCount} unique " +
                 $"World Rules are required, but only {pool.Count} are available."
             );
-            return;
+            return false;
         }
 
         while (currentChoices.Count < choicesCount && pool.Count > 0)
@@ -120,13 +125,13 @@ public sealed class LevelChoiceManager : MonoBehaviour
             );
             currentChoices.Clear();
             currentSectorOptions.Clear();
-            return;
+            return false;
         }
 
         if (panelView == null)
         {
             Debug.LogError("[LevelChoiceManager] PanelView is not assigned.");
-            return;
+            return false;
         }
 
 #if UNITY_EDITOR
@@ -149,61 +154,6 @@ public sealed class LevelChoiceManager : MonoBehaviour
             nextSectorNumber,
             SelectRule
         );
-    }
-
-    public bool TryAdvanceFromExit()
-    {
-        RunStateManager runState = RunStateManager.Instance;
-        RunSector currentSector = runState != null
-            ? runState.CurrentSector
-            : null;
-
-        if (currentSector == null ||
-            !RunRoute.IsExplorationSector(currentSector.SectorNumber))
-        {
-            return false;
-        }
-
-        int nextSectorNumber = currentSector.SectorNumber + 1;
-        StageProfileData nextStageProfile = GetStageProfile(nextSectorNumber);
-
-        if (nextStageProfile == null || defaultLocalAnomaly == null)
-        {
-            Debug.LogError(
-                $"[LevelChoiceManager] Sector {nextSectorNumber} " +
-                "configuration is incomplete."
-            );
-            return false;
-        }
-
-        List<WorldRuleData> pool = BuildPool();
-
-        if (pool.Count == 0)
-        {
-            Debug.LogError(
-                "[LevelChoiceManager] No production World Rules available."
-            );
-            return false;
-        }
-
-        WorldRuleData currentRule = currentSector.WorldRule;
-        List<WorldRuleData> alternatives = pool.FindAll(rule =>
-            rule != currentRule
-        );
-        List<WorldRuleData> selectionPool = alternatives.Count > 0
-            ? alternatives
-            : pool;
-        WorldRuleData selectedRule = selectionPool[
-            Random.Range(0, selectionPool.Count)
-        ];
-        RunSector nextSector = new(
-            nextSectorNumber,
-            nextStageProfile,
-            selectedRule,
-            defaultLocalAnomaly
-        );
-
-        TransitionToSector(nextSector);
         return true;
     }
 

@@ -1,30 +1,54 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-internal sealed class ArcNodeRuntime :
-    MonoBehaviour,
-    IAnomalyPowerRuntime,
-    IAnomalyEvolutionPower
+[DisallowMultipleComponent]
+internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime, IAnomalyEvolutionPower
 {
-    private const float DischargeInterval = 0.65f;
-    private const float AcquisitionRadius = 9f;
-    private const float JumpRadius = 4.2f;
-    private const int MaximumVisualTargets = 12;
-    private const float DamagePerTarget = 70f;
-    private const float DischargeVisualWidth = 0.11f;
-    private static readonly Vector2 NodeOffset = new(-1.45f, 1.05f);
+    private const float BaseDamage = 40f;
+    private const float VisualRadius = 0.53f;
+    private const float HitFlashDuration = 0.1f;
+    private const float IdleTargetSearchInterval = 0.15f;
+    private const int MaximumSweepHits = 64;
+    private static readonly Vector2 IdleOffset = new(-1.45f, 1.05f);
 
-    private readonly List<EnemyHealth> primaryTargets = new();
-    private readonly List<EnemyHealth> secondaryTargets = new();
-    private readonly HashSet<EnemyHealth> claimedTargets = new();
+    private enum MovementState { Idle, Outbound, Returning }
+
+    [Header("Arc Construct Movement")]
+    [SerializeField, Min(0.1f)] private float flightSpeed = 13.5f;
+    [SerializeField, Min(0.1f)] private float targetSearchRadius = 9f;
+    [SerializeField, Min(0.01f)] private float hitRadius = 0.42f;
+    [SerializeField, Min(0.1f)] private float overshootDistance = 3f;
+    [SerializeField, Min(0.01f)] private float returnRadius = 0.3f;
+
+    [Header("Arc II Moving Weapon Platform")]
+    [SerializeField, Min(0.05f)] private float hybridPayloadInterval = 0.75f;
+
+    [Header("Arc III Flight Overdrive")]
+    [SerializeField, Min(1f)] private float overdriveSpeedMultiplier = 1.35f;
+    [SerializeField, Min(0.05f)] private float overdrivePayloadInterval = 0.2f;
+    [SerializeField, Range(1f, 180f)] private float overdrivePayloadAngularStep = 47f;
+    [SerializeField, Range(0f, 45f)] private float overdrivePayloadJitter = 15f;
+
+    [Header("Payload Safety")]
+    [SerializeField, Min(0f)] private float minPayloadInterval = 0.06f;
+
     private Material material;
-    private LineRenderer primaryLine;
-    private LineRenderer secondaryLine;
     private Transform nodeVisual;
+    private TrailRenderer trail;
+    private readonly HashSet<EnemyHealth> outboundHits = new();
+    private readonly HashSet<EnemyHealth> returningHits = new();
+    private readonly RaycastHit2D[] sweepHits = new RaycastHit2D[MaximumSweepHits];
+    private EnemyHealth lastCollisionEnemy;
     private BaseWeapon payloadWeapon;
-    private EvolutionDefinition evolutionDefinition;
-    private float nextDischarge;
-    private float hideLinesAt;
+    private MovementState state;
+    private float lastPayloadTime = float.NegativeInfinity;
+    private float hitFlashUntil;
+    private float idlePhase;
+    private float nextIdleTargetSearch;
+    private float nextPayloadAt;
+    private float payloadAngle;
+    private Vector2 outboundDirection;
+    private Vector2 outboundEndpoint;
     private int level = 1;
 
     public AnomalyPowerType Type => AnomalyPowerType.ArcNode;
@@ -35,28 +59,18 @@ internal sealed class ArcNodeRuntime :
         level = AnomalyPowerLevelProfiles.ClampLevel(value);
     }
 
-    public void ConfigureEvolutionPayload(
-        BaseWeapon weapon,
-        EvolutionDefinition definition,
-        int anomalyLevel)
+    public void ConfigureEvolutionPayload(BaseWeapon weapon, EvolutionDefinition definition, int anomalyLevel)
     {
         payloadWeapon = weapon;
-        evolutionDefinition = definition;
         SetLevel(anomalyLevel);
     }
 
-    public void DisableEvolutionPayload()
-    {
-        payloadWeapon = null;
-        evolutionDefinition = null;
-    }
+    public void DisableEvolutionPayload() => payloadWeapon = null;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void RegisterRuntime()
     {
-        AnomalyPowerRuntimeRegistry.Register(
-            AnomalyPowerType.ArcNode,
-            owner => owner.AddComponent<ArcNodeRuntime>());
+        AnomalyPowerRuntimeRegistry.Register(AnomalyPowerType.ArcNode, owner => owner.AddComponent<ArcNodeRuntime>());
     }
 
     public void Activate()
@@ -64,292 +78,325 @@ internal sealed class ArcNodeRuntime :
         enabled = true;
         if (nodeVisual != null)
             nodeVisual.gameObject.SetActive(true);
+        if (trail != null)
+            trail.emitting = true;
     }
 
     public void Deactivate()
     {
         enabled = false;
         DisableEvolutionPayload();
+        outboundHits.Clear();
+        returningHits.Clear();
+        lastCollisionEnemy = null;
+        if (trail != null)
+        {
+            trail.emitting = false;
+            trail.Clear();
+        }
         if (nodeVisual != null)
             nodeVisual.gameObject.SetActive(false);
-        HideLines();
     }
 
     private void Awake()
     {
-        material = AnomalyPowerVisuals.CreateMaterial(
-            "Arc Node Runtime Material");
+        material = AnomalyPowerVisuals.CreateMaterial("Arc Construct Runtime Material");
         BuildNodeVisual();
-        primaryLine = CreateDischargeLine("Arc Primary Discharge");
-        secondaryLine = CreateDischargeLine("Arc Fork Discharge");
-    }
-
-    private LineRenderer CreateDischargeLine(string lineName)
-    {
-        LineRenderer result = AnomalyPowerVisuals.CreateLine(
-            transform,
-            lineName,
-            new Color(0.3f, 0.8f, 1f, 1f),
-            DischargeVisualWidth,
-            MaximumVisualTargets + 1,
-            material);
-        result.enabled = false;
-        return result;
+        SnapToIdleAnchor();
+        state = MovementState.Idle;
     }
 
     private void Update()
     {
-        UpdateNodeVisual();
-        float attackSize = OffensiveAttackContext.GetAttackSize(gameObject);
-        if (nodeVisual != null)
-            nodeVisual.localScale = Vector3.one * attackSize;
-        UpdateLineWidth(primaryLine, attackSize);
-        UpdateLineWidth(secondaryLine, attackSize);
-
-        if (Time.time >= hideLinesAt)
-            HideLines();
-        else
-            UpdateVisibleLineOrigins();
-
-        if (Time.time < nextDischarge)
+        if (nodeVisual == null)
             return;
 
-        nextDischarge = Time.time + DischargeInterval;
-        Discharge(attackSize);
-    }
-
-    private void Discharge(float attackSize)
-    {
-        BuildTopology(attackSize);
-        if (primaryTargets.Count == 0 && secondaryTargets.Count == 0)
-            return;
-
-        Vector2 nodeOrigin = GetNodePosition();
-        OffensiveAttackContext attack = OffensiveAttackContext.Resolve(
-            gameObject,
-            DamagePerTarget * AnomalyPowerLevelProfiles.ArcDamage(level));
-        int payloadBudget = evolutionDefinition != null
-            ? evolutionDefinition.MaxPayloadAttacksPerTick
-            : 0;
-
-        DrawAndApplyBranch(
-            primaryLine,
-            nodeOrigin,
-            primaryTargets,
-            attack,
-            ref payloadBudget);
-        DrawAndApplyBranch(
-            secondaryLine,
-            nodeOrigin,
-            secondaryTargets,
-            attack,
-            ref payloadBudget);
-        hideLinesAt = Time.time + 0.12f;
-    }
-
-    private void BuildTopology(float attackSize)
-    {
-        primaryTargets.Clear();
-        secondaryTargets.Clear();
-        claimedTargets.Clear();
-
-        int primaryCount = level == 1
-            ? 1
-            : evolutionDefinition != null
-                ? evolutionDefinition.BranchTargets
-                : AnomalyPowerLevelProfiles.ArcTargets(level);
-        int segmentCap = evolutionDefinition != null
-            ? evolutionDefinition.MaxPayloadSegments
-            : primaryCount;
-        primaryCount = Mathf.Min(primaryCount, segmentCap);
-
-        BuildBranch(
-            GetNodePosition(),
-            primaryCount,
-            attackSize,
-            primaryTargets);
-
-        if (level < 3 || evolutionDefinition == null ||
-            evolutionDefinition.OverdriveBranchCount < 2)
+        float attackSize = Mathf.Max(0.01f, OffensiveAttackContext.GetAttackSize(gameObject));
+        UpdateVisual(attackSize);
+        switch (state)
         {
+            case MovementState.Idle: UpdateIdle(); break;
+            case MovementState.Outbound: UpdateOutbound(attackSize); break;
+            case MovementState.Returning: UpdateReturning(attackSize); break;
+        }
+    }
+
+    private void UpdateIdle()
+    {
+        nodeVisual.position = Vector2.MoveTowards(
+            nodeVisual.position,
+            GetIdleAnchor(),
+            flightSpeed * Time.deltaTime);
+        if (Time.time < nextIdleTargetSearch)
+            return;
+
+        nextIdleTargetSearch = Time.time + IdleTargetSearchInterval;
+        EnemyHealth next = FindNearestTarget(
+            nodeVisual.position,
+            targetSearchRadius,
+            null);
+        if (next != null)
+            BeginOutbound(next);
+    }
+
+    private void BeginOutbound(EnemyHealth target)
+    {
+        if (!IsValidTarget(target))
+            return;
+
+        Vector2 launchPosition = nodeVisual.position;
+        Vector2 targetOffset =
+            (Vector2)target.transform.position - launchPosition;
+        if (targetOffset.sqrMagnitude <= 0.001f)
+            targetOffset = Vector2.right;
+
+        float distanceToTarget = targetOffset.magnitude;
+        outboundDirection = targetOffset.normalized;
+        outboundEndpoint = launchPosition + outboundDirection *
+            (distanceToTarget + overshootDistance);
+        outboundHits.Clear();
+        returningHits.Clear();
+        lastCollisionEnemy = null;
+        state = MovementState.Outbound;
+        nextPayloadAt = Time.time + GetPayloadInterval();
+    }
+
+    private void UpdateOutbound(float attackSize)
+    {
+        Vector2 previousPosition = nodeVisual.position;
+        float speed = GetFlightSpeed();
+        Vector2 currentPosition = Vector2.MoveTowards(
+            previousPosition,
+            outboundEndpoint,
+            speed * Time.deltaTime);
+        nodeVisual.position = currentPosition;
+        ApplySweptDamage(
+            previousPosition,
+            currentPosition,
+            attackSize,
+            outboundHits);
+
+        if ((currentPosition - outboundEndpoint).sqrMagnitude <= 0.0001f)
+        {
+            state = MovementState.Returning;
+            returningHits.Clear();
             return;
         }
 
-        int remaining = Mathf.Max(0, segmentCap - primaryTargets.Count);
-        BuildBranch(
-            GetNodePosition(),
-            Mathf.Min(evolutionDefinition.BranchTargets, remaining),
-            attackSize,
-            secondaryTargets);
+        UpdateMovementPayload();
     }
 
-    private void BuildBranch(
-        Vector2 origin,
-        int targetCount,
+    private void UpdateReturning(float attackSize)
+    {
+        Vector2 returnTarget = GetIdleAnchor();
+        Vector2 previousPosition = nodeVisual.position;
+        Vector2 currentPosition = Vector2.MoveTowards(
+            previousPosition,
+            returnTarget,
+            GetFlightSpeed() * Time.deltaTime);
+        nodeVisual.position = currentPosition;
+        ApplySweptDamage(
+            previousPosition,
+            currentPosition,
+            attackSize,
+            returningHits);
+
+        if ((currentPosition - returnTarget).sqrMagnitude <=
+            returnRadius * returnRadius)
+        {
+            nodeVisual.position = returnTarget;
+            state = MovementState.Idle;
+            lastCollisionEnemy = null;
+            return;
+        }
+
+        UpdateMovementPayload();
+    }
+
+    private void ApplySweptDamage(
+        Vector2 previousPosition,
+        Vector2 currentPosition,
         float attackSize,
-        List<EnemyHealth> output)
+        HashSet<EnemyHealth> hitSet)
     {
-        for (int targetIndex = 0; targetIndex < targetCount; targetIndex++)
-        {
-            float radius = (targetIndex == 0
-                ? AcquisitionRadius
-                : JumpRadius) * attackSize;
-            EnemyHealth best = FindNearestUnclaimed(origin, radius);
-            if (best == null)
-                break;
-
-            output.Add(best);
-            claimedTargets.Add(best);
-            origin = best.transform.position;
-        }
-    }
-
-    private EnemyHealth FindNearestUnclaimed(Vector2 origin, float radius)
-    {
-        EnemyHealth best = null;
-        float bestDistanceSquared = radius * radius;
-        foreach (EnemyHealth enemy in EnemyHealth.ActiveInstances)
-        {
-            if (enemy == null || enemy.IsDead ||
-                !enemy.gameObject.activeInHierarchy ||
-                claimedTargets.Contains(enemy))
-            {
-                continue;
-            }
-
-            float distanceSquared =
-                ((Vector2)enemy.transform.position - origin).sqrMagnitude;
-            if (distanceSquared > bestDistanceSquared)
-                continue;
-
-            best = enemy;
-            bestDistanceSquared = distanceSquared;
-        }
-
-        return best;
-    }
-
-    private void DrawAndApplyBranch(
-        LineRenderer branchLine,
-        Vector2 origin,
-        List<EnemyHealth> branch,
-        OffensiveAttackContext attack,
-        ref int payloadBudget)
-    {
-        if (branchLine == null || branch.Count == 0)
+        Vector2 movement = currentPosition - previousPosition;
+        float distance = movement.magnitude;
+        if (distance <= Mathf.Epsilon)
             return;
 
-        branchLine.positionCount = branch.Count + 1;
-        branchLine.SetPosition(0, origin);
-        Vector2 segmentOrigin = origin;
-
-        for (int i = 0; i < branch.Count; i++)
+        float radius = hitRadius * Mathf.Max(0.01f, attackSize);
+        int hitCount = Physics2D.CircleCast(
+            previousPosition,
+            radius,
+            movement / distance,
+            ContactFilter2D.noFilter,
+            sweepHits,
+            distance);
+        for (int i = 0; i < hitCount; i++)
         {
-            EnemyHealth enemy = branch[i];
-            Vector2 targetPosition = enemy.transform.position;
-            branchLine.SetPosition(i + 1, targetPosition);
-            enemy.TakeDamage(
-                attack.Damage,
-                targetPosition,
-                attack.IsCritical);
+            Collider2D collider = sweepHits[i].collider;
+            EnemyHealth enemy = collider != null
+                ? collider.GetComponentInParent<EnemyHealth>()
+                : null;
+            if (!IsValidTarget(enemy) || !hitSet.Add(enemy))
+                continue;
 
-            Vector2 direction = targetPosition - segmentOrigin;
-            if (level >= 2 && payloadWeapon != null &&
-                payloadBudget > 0 && direction.sqrMagnitude > 0.001f)
-            {
-                payloadWeapon.EmitAttack(segmentOrigin, direction.normalized);
-                payloadBudget--;
-            }
+            Vector2 hitPoint = collider.ClosestPoint(currentPosition);
+            OffensiveAttackContext attack = OffensiveAttackContext.Resolve(
+                gameObject,
+                BaseDamage);
+            enemy.TakeDamage(attack.Damage, hitPoint, attack.IsCritical);
+            lastCollisionEnemy = enemy;
+            hitFlashUntil = Time.time + HitFlashDuration;
+        }
+    }
 
-            segmentOrigin = targetPosition;
+    private void UpdateMovementPayload()
+    {
+        if (level < 2 || payloadWeapon == null ||
+            Time.time < nextPayloadAt)
+        {
+            return;
         }
 
-        branchLine.enabled = true;
-    }
+        nextPayloadAt = Time.time + GetPayloadInterval();
+        if (level >= 3)
+        {
+            float jitter = Random.Range(
+                -overdrivePayloadJitter,
+                overdrivePayloadJitter);
+            Vector2 radialDirection =
+                DirectionFromAngle(payloadAngle + jitter);
+            TryEmitPayload(radialDirection);
+            payloadAngle = Mathf.Repeat(
+                payloadAngle + overdrivePayloadAngularStep,
+                360f);
+            return;
+        }
 
-    private void UpdateVisibleLineOrigins()
-    {
-        Vector2 origin = GetNodePosition();
-        if (primaryLine != null && primaryLine.enabled)
-            primaryLine.SetPosition(0, origin);
-        if (secondaryLine != null && secondaryLine.enabled)
-            secondaryLine.SetPosition(0, origin);
-    }
+        EnemyHealth target = FindNearestTarget(
+            nodeVisual.position,
+            targetSearchRadius,
+            lastCollisionEnemy);
+        if (target == null)
+        {
+            target = FindNearestTarget(
+                nodeVisual.position,
+                targetSearchRadius,
+                null);
+        }
 
-    private static void UpdateLineWidth(LineRenderer target, float scale)
-    {
         if (target == null)
             return;
-        target.startWidth = DischargeVisualWidth * scale;
-        target.endWidth = DischargeVisualWidth * scale;
+
+        Vector2 targetDirection =
+            (Vector2)target.transform.position -
+            (Vector2)nodeVisual.position;
+        TryEmitPayload(targetDirection);
     }
 
-    private void HideLines()
+    private float GetFlightSpeed()
     {
-        if (primaryLine != null)
-            primaryLine.enabled = false;
-        if (secondaryLine != null)
-            secondaryLine.enabled = false;
+        return flightSpeed * (level >= 3 ? overdriveSpeedMultiplier : 1f);
     }
 
-    private Vector2 GetNodePosition()
+    private float GetPayloadInterval()
     {
-        return nodeVisual != null
-            ? (Vector2)nodeVisual.position
-            : (Vector2)transform.position;
+        return level >= 3
+            ? overdrivePayloadInterval
+            : hybridPayloadInterval;
+    }
+
+    private bool TryEmitPayload(Vector2 direction)
+    {
+        if (payloadWeapon == null || direction.sqrMagnitude <= 0.001f ||
+            Time.time < lastPayloadTime + minPayloadInterval)
+        {
+            return false;
+        }
+
+        lastPayloadTime = Time.time;
+        return payloadWeapon.EmitAttack(
+            nodeVisual.position,
+            direction.normalized);
+    }
+
+    private EnemyHealth FindNearestTarget(
+        Vector2 origin,
+        float radius,
+        EnemyHealth excludedTarget)
+    {
+        EnemyHealth nearest = null;
+        float nearestDistanceSquared = radius * radius;
+
+        foreach (EnemyHealth enemy in EnemyHealth.ActiveInstances)
+        {
+            if (!IsValidTarget(enemy) || enemy == excludedTarget)
+                continue;
+            float distanceSquared = ((Vector2)enemy.transform.position - origin).sqrMagnitude;
+            if (distanceSquared <= nearestDistanceSquared)
+            {
+                nearest = enemy;
+                nearestDistanceSquared = distanceSquared;
+            }
+        }
+        return nearest;
+    }
+
+    private static bool IsValidTarget(EnemyHealth enemy)
+    {
+        return enemy != null && !enemy.IsDead && enemy.gameObject.activeInHierarchy;
+    }
+
+    private static Vector2 DirectionFromAngle(float angle)
+    {
+        float radians = angle * Mathf.Deg2Rad;
+        return new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
     }
 
     private void BuildNodeVisual()
     {
-        GameObject nodeObject = new("Arc Node Satellite");
+        GameObject nodeObject = new("Arc Construct");
         nodeObject.transform.SetParent(transform, false);
         nodeVisual = nodeObject.transform;
 
-        LineRenderer glow = AnomalyPowerVisuals.CreateLine(
-            nodeVisual,
-            "Arc Node Glow",
-            new Color(0.12f, 0.65f, 1f, 0.28f),
-            0.18f,
-            25,
-            material);
-        ConfigureNodeRing(glow, 0.53f);
+        LineRenderer glow = AnomalyPowerVisuals.CreateLine(nodeVisual, "Arc Construct Glow", new Color(0.12f, 0.65f, 1f, 0.28f), 0.18f, 25, material);
+        ConfigureNodeRing(glow, VisualRadius);
         glow.sortingOrder = 35;
 
-        LineRenderer star = AnomalyPowerVisuals.CreateLine(
-            nodeVisual,
-            "Arc Node Star",
-            new Color(0.2f, 0.92f, 1f, 1f),
-            0.11f,
-            12,
-            material);
+        LineRenderer star = AnomalyPowerVisuals.CreateLine(nodeVisual, "Arc Construct Star", new Color(0.2f, 0.92f, 1f, 1f), 0.11f, 12, material);
         star.useWorldSpace = false;
         star.loop = true;
         star.sortingOrder = 38;
         star.endColor = new Color(0.18f, 0.48f, 1f, 1f);
-
         for (int i = 0; i < star.positionCount; i++)
         {
             float radians = Mathf.PI * 2f * i / star.positionCount;
             float radius = i % 2 == 0 ? 0.42f : 0.22f;
-            star.SetPosition(i, new Vector3(
-                Mathf.Cos(radians) * radius,
-                Mathf.Sin(radians) * radius,
-                0f));
+            star.SetPosition(i, new Vector3(Mathf.Cos(radians) * radius, Mathf.Sin(radians) * radius, 0f));
         }
 
-        LineRenderer core = AnomalyPowerVisuals.CreateLine(
-            nodeVisual,
-            "Arc Node Core",
-            new Color(0.72f, 0.96f, 1f, 1f),
-            0.3f,
-            2,
-            material);
+        LineRenderer core = AnomalyPowerVisuals.CreateLine(nodeVisual, "Arc Construct Core", new Color(0.72f, 0.96f, 1f, 1f), 0.3f, 2, material);
         core.useWorldSpace = false;
         core.numCapVertices = 8;
         core.SetPosition(0, new Vector3(-0.02f, 0f, 0f));
         core.SetPosition(1, new Vector3(0.02f, 0f, 0f));
         core.sortingOrder = 39;
-        UpdateNodeVisual();
+
+        trail = nodeObject.AddComponent<TrailRenderer>();
+        trail.time = 0.16f;
+        trail.minVertexDistance = 0.08f;
+        trail.startWidth = 0.2f;
+        trail.endWidth = 0.015f;
+        trail.numCapVertices = 4;
+        trail.numCornerVertices = 3;
+        trail.startColor = new Color(0.35f, 0.9f, 1f, 0.7f);
+        trail.endColor = new Color(0.12f, 0.45f, 1f, 0f);
+        trail.sortingLayerName = "Effects";
+        trail.sortingOrder = 34;
+        if (material != null)
+            trail.sharedMaterial = material;
+        trail.Clear();
     }
 
     private static void ConfigureNodeRing(LineRenderer ring, float radius)
@@ -359,25 +406,56 @@ internal sealed class ArcNodeRuntime :
         for (int i = 0; i < ring.positionCount; i++)
         {
             float radians = Mathf.PI * 2f * i / ring.positionCount;
-            ring.SetPosition(i, new Vector3(
-                Mathf.Cos(radians) * radius,
-                Mathf.Sin(radians) * radius,
-                0f));
+            ring.SetPosition(i, new Vector3(Mathf.Cos(radians) * radius, Mathf.Sin(radians) * radius, 0f));
         }
     }
 
-    private void UpdateNodeVisual()
+    private void UpdateVisual(float attackSize)
     {
-        if (nodeVisual == null)
-            return;
+        idlePhase += Time.deltaTime;
+        float flashScale = Time.time < hitFlashUntil ? 1.35f : 1f;
+        nodeVisual.localScale = Vector3.one * attackSize * flashScale;
+        nodeVisual.Rotate(0f, 0f, 120f * Time.deltaTime);
+        if (trail != null)
+        {
+            trail.startWidth = 0.2f * attackSize;
+            trail.endWidth = 0.015f * attackSize;
+        }
+    }
 
-        float phase = Time.time * 2.2f;
-        Vector2 drift = new(
-            Mathf.Cos(phase) * 0.1f,
-            Mathf.Sin(phase * 1.15f) * 0.14f);
-        nodeVisual.position = (Vector2)transform.position +
-            NodeOffset + drift;
-        nodeVisual.Rotate(0f, 0f, 72f * Time.deltaTime);
+    private Vector2 GetIdleAnchor()
+    {
+        Vector2 drift = new(Mathf.Cos(idlePhase * 2.2f) * 0.1f, Mathf.Sin(idlePhase * 2.5f) * 0.14f);
+        return (Vector2)transform.position + IdleOffset + drift;
+    }
+
+    private void SnapToIdleAnchor()
+    {
+        if (nodeVisual != null)
+            nodeVisual.position = (Vector2)transform.position + IdleOffset;
+    }
+
+    private void OnValidate()
+    {
+        flightSpeed = Mathf.Max(0.1f, flightSpeed);
+        targetSearchRadius = Mathf.Max(0.1f, targetSearchRadius);
+        hitRadius = Mathf.Max(0.01f, hitRadius);
+        overshootDistance = Mathf.Max(0.1f, overshootDistance);
+        returnRadius = Mathf.Max(0.01f, returnRadius);
+        hybridPayloadInterval = Mathf.Max(0.05f, hybridPayloadInterval);
+        overdriveSpeedMultiplier = Mathf.Max(1f, overdriveSpeedMultiplier);
+        overdrivePayloadInterval = Mathf.Max(
+            0.05f,
+            overdrivePayloadInterval);
+        overdrivePayloadAngularStep = Mathf.Clamp(
+            overdrivePayloadAngularStep,
+            1f,
+            180f);
+        overdrivePayloadJitter = Mathf.Clamp(
+            overdrivePayloadJitter,
+            0f,
+            45f);
+        minPayloadInterval = Mathf.Max(0f, minPayloadInterval);
     }
 
     private void OnDestroy()

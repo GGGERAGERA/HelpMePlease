@@ -12,19 +12,26 @@ public enum UpgradeType
     FireRatePercent = 1,
     MaxHealthFlat = 2,
     CritChance = 3,
+    [System.Obsolete("Serialized ID reserved; legacy upgrade removed.")]
     XpPickupRadiusPercent = 4,
     MoveSpeedPercent = 5,
 
+    [System.Obsolete("Serialized ID reserved; legacy upgrade removed.")]
     ExtraShot = 6,
     [System.Obsolete("Serialized ID reserved; upgrade removed from production.")]
     EveryFifthAttackExtraShot = 7,
+    [System.Obsolete("Serialized ID reserved; legacy upgrade removed.")]
     HitExplosionChance = 8,
     [System.Obsolete("Serialized ID reserved; upgrade removed in Phase 7B.")]
     EnemyDeathExplosion = 9,
+    [System.Obsolete("Serialized ID reserved; legacy upgrade removed.")]
     CritDamage = 10,
+    [System.Obsolete("Serialized ID reserved; legacy upgrade removed.")]
     KnockbackPercent = 11,
 
+    [System.Obsolete("Serialized ID reserved; legacy upgrade removed.")]
     StationaryFireRateRamp = 12,
+    [System.Obsolete("Serialized ID reserved; legacy upgrade removed.")]
     DoubleDamageWithInaccuracy = 13,
     [System.Obsolete("Serialized ID reserved; upgrade removed in Phase 7B.")]
     LowHpPower = 14,
@@ -36,9 +43,13 @@ public enum UpgradeType
     [System.Obsolete("Serialized ID reserved; upgrade removed in Phase 7B.")]
     NukeEveryTenKills = 17,
 
+    [System.Obsolete("Serialized ID reserved; legacy upgrade removed.")]
     Pierce = 18,
+    [System.Obsolete("Serialized ID reserved; legacy upgrade removed.")]
     Ricochet = 19,
+    [System.Obsolete("Serialized ID reserved; legacy upgrade removed.")]
     HeavyShot = 20,
+    [System.Obsolete("Serialized ID reserved; legacy upgrade removed.")]
     Overclock = 21,
 
     XpGainPercent = 22,

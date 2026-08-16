@@ -219,9 +219,9 @@ public sealed class GravityConstruct :
 
         bool overdrive = level >= 3 && evolutionDefinition != null;
         float interval = overdrive
-            ? sourceWeapon.GetAttackCooldown() /
+            ? sourceWeapon.GetBaseAttackCooldown() /
                 evolutionDefinition.OverdriveFireRateMultiplier
-            : sourceWeapon.GetAttackCooldown() /
+            : sourceWeapon.GetBaseAttackCooldown() /
                 Mathf.Max(0.05f, payloadFireRateMultiplier);
         if (fireTimer < Mathf.Max(0.05f, interval))
             return;

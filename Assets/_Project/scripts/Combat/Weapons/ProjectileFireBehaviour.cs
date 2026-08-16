@@ -4,6 +4,12 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
 {
     [SerializeField] private GameObject projectilePrefab;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public float DebugLastContextScale { get; private set; } = 1f;
+    public Vector3 DebugLastPrefabScale { get; private set; } = Vector3.one;
+    public Vector3 DebugLastFinalScale { get; private set; } = Vector3.one;
+#endif
+
     public bool UsesRocketProjectile =>
         projectilePrefab != null &&
         projectilePrefab.GetComponent<RocketProjectile>() != null;
@@ -39,8 +45,7 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
             context.Origin,
             Quaternion.Euler(0f, 0f, angle)
         );
-        ScaleProjectileVisuals(projectileObject.transform, context.ShotVisualScale);
-        ScaleRootCollisionGeometry(
+        ScaleProjectileGeometry(
             projectileObject.transform,
             context.ShotVisualScale);
 
@@ -74,50 +79,40 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
         return true;
     }
 
-    private static void ScaleProjectileVisuals(Transform root, float scale)
+    private void ScaleProjectileGeometry(Transform root, float scale)
     {
-        if (root == null || Mathf.Approximately(scale, 1f))
+        if (root == null)
             return;
 
-        // Production projectile visuals live under child transforms. Root
-        // collision geometry is scaled separately without changing speed.
-        for (int i = 0; i < root.childCount; i++)
-            root.GetChild(i).localScale *= scale;
-    }
+        float finalMultiplier = Mathf.Max(0.1f, scale);
+        Vector3 prefabScale = root.localScale;
 
-    private static void ScaleRootCollisionGeometry(Transform root, float scale)
-    {
-        if (root == null || Mathf.Approximately(scale, 1f))
-            return;
-
-        Collider2D[] colliders = root.GetComponents<Collider2D>();
-        for (int i = 0; i < colliders.Length; i++)
+        // The pistol prefab uses Local particle-system scaling, which ignores
+        // the projectile root scale. Switch spawned particles to Hierarchy so
+        // the single root scale drives both authored visuals and colliders.
+        // This instance is freshly instantiated (not pooled), so prefab data
+        // remains untouched and scale cannot accumulate between attacks.
+        ParticleSystem[] particles =
+            root.GetComponentsInChildren<ParticleSystem>(true);
+        for (int i = 0; i < particles.Length; i++)
         {
-            switch (colliders[i])
-            {
-                case CircleCollider2D circle:
-                    circle.radius *= scale;
-                    circle.offset *= scale;
-                    break;
-                case BoxCollider2D box:
-                    box.size *= scale;
-                    box.offset *= scale;
-                    break;
-                case CapsuleCollider2D capsule:
-                    capsule.size *= scale;
-                    capsule.offset *= scale;
-                    break;
-                case PolygonCollider2D polygon:
-                    for (int path = 0; path < polygon.pathCount; path++)
-                    {
-                        Vector2[] points = polygon.GetPath(path);
-                        for (int point = 0; point < points.Length; point++)
-                            points[point] *= scale;
-                        polygon.SetPath(path, points);
-                    }
-                    polygon.offset *= scale;
-                    break;
-            }
+            ParticleSystem.MainModule main = particles[i].main;
+            main.scalingMode = ParticleSystemScalingMode.Hierarchy;
         }
+
+        root.localScale = prefabScale * finalMultiplier;
+
+        // Trail width is expressed in world units and is not governed by the
+        // projectile transform scale. Keep it aligned with the same modifier.
+        TrailRenderer[] trails =
+            root.GetComponentsInChildren<TrailRenderer>(true);
+        for (int i = 0; i < trails.Length; i++)
+            trails[i].widthMultiplier *= finalMultiplier;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        DebugLastContextScale = finalMultiplier;
+        DebugLastPrefabScale = prefabScale;
+        DebugLastFinalScale = root.localScale;
+#endif
     }
 }

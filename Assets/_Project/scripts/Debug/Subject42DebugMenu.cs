@@ -216,7 +216,6 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     [SerializeField] private GameObject turretEnemyPrefab;
     [SerializeField] private GameObject eyesEnemyPrefab;
     [SerializeField] private WeaponData[] debugWeapons;
-    [SerializeField] private UpgradeData[] additionalDebugUpgrades;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private enum DebugTab
@@ -2955,7 +2954,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             UpgradeType.AttackSizePercent,
             UpgradeType.CritChance,
             UpgradeType.HpRegeneration,
-            UpgradeType.Multishot
+            UpgradeType.Multishot,
+            UpgradeType.FireRatePercent
         };
         string[] labels =
         {
@@ -2966,7 +2966,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             "ATTACK SIZE",
             "CRIT CHANCE",
             "HP REGEN",
-            "MULTISHOT"
+            "MULTISHOT",
+            "FIRE RATE"
         };
 
         for (int i = 0; i < types.Length; i++)
@@ -2985,6 +2986,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                     targetLevel));
         }
 
+        AddMultishotTestRow();
+        AddAttackSizeTestRow();
+        AddFireRateTestRow();
+
         AddRow(
             "CLEAR UPGRADES",
             runState != null
@@ -2995,6 +3000,224 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             "CLEAR",
             runState != null && runState.ItemSlots.UsedSlotCount > 0,
             ClearDebugUpgrades);
+    }
+
+    private void AddMultishotTestRow()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        BaseWeapon weapon = FindPrimaryWeapon(player);
+        int currentBonus = weapon != null
+            ? weapon.RuntimeProjectileCountBonus
+            : 0;
+
+        RectTransform row = CreateRect("Multishot Test", contentRoot);
+        row.gameObject.AddComponent<Image>().color = rowColor;
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 54f;
+
+        TextMeshProUGUI labelText = CreateText(
+            "Name",
+            row,
+            "MULTISHOT TEST",
+            18f,
+            TextAlignmentOptions.MidlineLeft,
+            Color.white);
+        labelText.rectTransform.anchorMin = Vector2.zero;
+        labelText.rectTransform.anchorMax = new Vector2(0.42f, 1f);
+        labelText.rectTransform.offsetMin = new Vector2(16f, 0f);
+        labelText.rectTransform.offsetMax = Vector2.zero;
+
+        for (int bonus = 0; bonus <= 4; bonus++)
+        {
+            int capturedBonus = bonus;
+            Button button = CreateButton(
+                row,
+                $"+{bonus}",
+                () => SetDebugMultishotBonus(capturedBonus),
+                56f,
+                weapon != null);
+            RectTransform rect = button.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(1f, 0.5f);
+            rect.pivot = new Vector2(1f, 0.5f);
+            rect.anchoredPosition = new Vector2(
+                -12f - (4 - bonus) * 62f,
+                0f);
+            rect.sizeDelta = new Vector2(56f, 38f);
+            if (currentBonus == bonus && button.targetGraphic is Image image)
+                image.color = successColor;
+        }
+    }
+
+    private void SetDebugMultishotBonus(int bonus)
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        BaseWeapon weapon = FindPrimaryWeapon(player);
+        if (weapon == null)
+        {
+            lastUpgradeResult = "Primary weapon not found.";
+            RefreshCurrentTab();
+            return;
+        }
+
+        weapon.SetProjectileCountBonus(Mathf.Clamp(bonus, 0, 4));
+        lastUpgradeResult =
+            $"Runtime Multishot set to +{weapon.RuntimeProjectileCountBonus}.";
+        RefreshCurrentTab();
+    }
+
+    private void AddAttackSizeTestRow()
+    {
+        GameObject player = FindRuntimePlayer();
+        BaseWeapon weapon = characterSpawner != null &&
+            characterSpawner.PrimaryWeapon != null
+                ? characterSpawner.PrimaryWeapon
+                : FindPrimaryWeapon(player);
+        PlayerCombatModifiers modifiers = weapon != null
+            ? weapon.DebugResolvedCombatModifiers
+            : player != null
+                ? player.GetComponent<PlayerCombatModifiers>()
+                : null;
+        float currentScale = modifiers != null
+            ? modifiers.RunAttackSizeMultiplier
+            : 1f;
+        float[] scales = { 1f, 1.25f, 1.5f, 2f, 3f };
+
+        RectTransform row = CreateRect("Attack Size Test", contentRoot);
+        row.gameObject.AddComponent<Image>().color = rowColor;
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 54f;
+
+        TextMeshProUGUI labelText = CreateText(
+            "Name",
+            row,
+            "ATTACK SIZE TEST",
+            18f,
+            TextAlignmentOptions.MidlineLeft,
+            Color.white);
+        labelText.rectTransform.anchorMin = Vector2.zero;
+        labelText.rectTransform.anchorMax = new Vector2(0.42f, 1f);
+        labelText.rectTransform.offsetMin = new Vector2(16f, 0f);
+        labelText.rectTransform.offsetMax = Vector2.zero;
+
+        for (int i = 0; i < scales.Length; i++)
+        {
+            float capturedScale = scales[i];
+            Button button = CreateButton(
+                row,
+                $"{capturedScale:0.##}x",
+                () => SetDebugAttackSize(capturedScale),
+                56f,
+                player != null);
+            RectTransform rect = button.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(1f, 0.5f);
+            rect.pivot = new Vector2(1f, 0.5f);
+            rect.anchoredPosition = new Vector2(
+                -12f - (scales.Length - 1 - i) * 62f,
+                0f);
+            rect.sizeDelta = new Vector2(56f, 38f);
+            if (Mathf.Approximately(currentScale, capturedScale) &&
+                button.targetGraphic is Image image)
+            {
+                image.color = successColor;
+            }
+        }
+    }
+
+    private void AddFireRateTestRow()
+    {
+        GameObject player = FindRuntimePlayer();
+        BaseWeapon weapon = characterSpawner != null &&
+            characterSpawner.PrimaryWeapon != null
+                ? characterSpawner.PrimaryWeapon
+                : FindPrimaryWeapon(player);
+        float currentMultiplier = weapon != null
+            ? weapon.RuntimeFireRateMultiplier
+            : 1f;
+        float[] multipliers = { 1f, 1.25f, 1.5f, 2f, 3f };
+
+        RectTransform row = CreateRect("Fire Rate Test", contentRoot);
+        row.gameObject.AddComponent<Image>().color = rowColor;
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 54f;
+
+        TextMeshProUGUI labelText = CreateText(
+            "Name",
+            row,
+            "FIRE RATE TEST",
+            18f,
+            TextAlignmentOptions.MidlineLeft,
+            Color.white);
+        labelText.rectTransform.anchorMin = Vector2.zero;
+        labelText.rectTransform.anchorMax = new Vector2(0.42f, 1f);
+        labelText.rectTransform.offsetMin = new Vector2(16f, 0f);
+        labelText.rectTransform.offsetMax = Vector2.zero;
+
+        for (int i = 0; i < multipliers.Length; i++)
+        {
+            float capturedMultiplier = multipliers[i];
+            Button button = CreateButton(
+                row,
+                $"{capturedMultiplier:0.##}x",
+                () => SetDebugFireRate(capturedMultiplier),
+                56f,
+                weapon != null);
+            RectTransform rect = button.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(1f, 0.5f);
+            rect.pivot = new Vector2(1f, 0.5f);
+            rect.anchoredPosition = new Vector2(
+                -12f - (multipliers.Length - 1 - i) * 62f,
+                0f);
+            rect.sizeDelta = new Vector2(56f, 38f);
+            if (Mathf.Approximately(currentMultiplier, capturedMultiplier) &&
+                button.targetGraphic is Image image)
+            {
+                image.color = successColor;
+            }
+        }
+    }
+
+    private void SetDebugFireRate(float multiplier)
+    {
+        GameObject player = FindRuntimePlayer();
+        BaseWeapon weapon = characterSpawner != null &&
+            characterSpawner.PrimaryWeapon != null
+                ? characterSpawner.PrimaryWeapon
+                : FindPrimaryWeapon(player);
+        if (weapon == null)
+        {
+            lastUpgradeResult = "Primary weapon not found.";
+            RefreshCurrentTab();
+            return;
+        }
+
+        weapon.SetFireRateMultiplier(multiplier);
+        lastUpgradeResult =
+            $"Runtime Fire Rate set to x{weapon.RuntimeFireRateMultiplier:0.##} " +
+            $"({weapon.RuntimeShotsPerSecond:0.##} attacks/sec).";
+        RefreshCurrentTab();
+    }
+
+    private void SetDebugAttackSize(float scale)
+    {
+        GameObject player = FindRuntimePlayer();
+        if (player == null)
+        {
+            lastUpgradeResult = "Player not found.";
+            RefreshCurrentTab();
+            return;
+        }
+
+        BaseWeapon weapon = characterSpawner != null &&
+            characterSpawner.PrimaryWeapon != null
+                ? characterSpawner.PrimaryWeapon
+                : FindPrimaryWeapon(player);
+        PlayerCombatModifiers modifiers = weapon != null
+            ? weapon.DebugResolvedCombatModifiers
+            : null;
+        modifiers ??= player.GetComponent<PlayerCombatModifiers>() ??
+            player.AddComponent<PlayerCombatModifiers>();
+        modifiers.SetRunAttackSizeMultiplier(scale);
+        lastUpgradeResult =
+            $"Runtime Attack Size set to x" +
+            $"{modifiers.RunAttackSizeMultiplier:0.##}.";
+        RefreshCurrentTab();
     }
 
     private UpgradeData FindProductionUpgrade(UpgradeType type)
@@ -3314,7 +3537,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         );
         AddHint($"Current Weapon Capabilities: {weaponCapabilities}");
 
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        GameObject player = FindRuntimePlayer();
         PlayerCombatModifiers offensive = player != null
             ? player.GetComponent<PlayerCombatModifiers>()
             : null;
@@ -3336,6 +3559,49 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             );
         }
 
+        if (weapon != null)
+        {
+            int modifierCount = player != null
+                ? player.GetComponents<PlayerCombatModifiers>().Length
+                : 0;
+            string contextAge = weapon.DebugLastFireContextFrame >= 0
+                ? $"frame {weapon.DebugLastFireContextFrame}"
+                : "no shot yet";
+            AddHint(
+                $"ATTACK SIZE TRACE: runtime " +
+                $"x{weapon.DebugResolvedCombatModifiers?.RunAttackSizeMultiplier ?? 1f:0.00} | " +
+                $"modifier instances {modifierCount} | " +
+                $"last BuildFireContext runtime " +
+                $"x{weapon.DebugLastAttackSizeMultiplier:0.00} | " +
+                $"ShotVisualScale x{weapon.DebugLastContextShotVisualScale:0.00} | " +
+                contextAge
+            );
+
+            ProjectileFireBehaviour projectileFire =
+                weapon.GetComponent<ProjectileFireBehaviour>();
+            if (projectileFire != null)
+            {
+                AddHint(
+                    $"Pistol geometry: context x{projectileFire.DebugLastContextScale:0.00} | " +
+                    $"prefab {projectileFire.DebugLastPrefabScale} | " +
+                    $"spawned {projectileFire.DebugLastFinalScale}"
+                );
+            }
+
+            BeamFireBehaviour beamFire = weapon.GetComponent<BeamFireBehaviour>();
+            if (beamFire != null)
+            {
+                LaserBeamRenderer renderer = beamFire.DebugBeamRenderer;
+                AddHint(
+                    $"Laser geometry: context x{beamFire.DebugLastContextScale:0.00} | " +
+                    $"hit half-width {beamFire.DebugLastHitHalfWidth:0.###} | " +
+                    $"visual core/glow " +
+                    $"{(renderer != null ? renderer.DebugLastCoreWidth : 0f):0.###}/" +
+                    $"{(renderer != null ? renderer.DebugLastGlowWidth : 0f):0.###}"
+                );
+            }
+        }
+
         AddHint(
             $"Player: HP Bonus +{(health != null ? health.RunUpgradeMaxHealthBonus : 0f):0.#} | " +
             $"Move x{(movement != null ? movement.RunUpgradeMoveSpeedMultiplier : 1f):0.00} | " +
@@ -3344,7 +3610,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         );
         AddHint(
             $"Weapon: Multishot +{(weapon != null ? weapon.RuntimeProjectileCountBonus : 0)} | " +
-            $"Attack Count {(weapon != null ? weapon.RuntimeProjectileCount : 1)}"
+            $"Attack Count {(weapon != null ? weapon.RuntimeProjectileCount : 1)} | " +
+            $"Fire Rate stat x{(weapon != null ? weapon.RuntimeFireRateMultiplier : 1f):0.00} | " +
+            $"effective x{(weapon != null ? weapon.RuntimeEffectiveFireRateMultiplier : 1f):0.00} | " +
+            $"{(weapon != null ? weapon.RuntimeShotsPerSecond : 0f):0.##}/sec"
         );
         AddAnomalySlotSection();
 
@@ -3468,7 +3737,6 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             : null;
 
         AddUniqueUpgrades(pool);
-        AddUniqueUpgrades(additionalDebugUpgrades);
     }
 
     private void AddUniqueUpgrades(IReadOnlyList<UpgradeData> upgrades)
@@ -3692,11 +3960,30 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         {
             BaseWeapon weapon = weapons[i];
 
+            if (weapon != null && weapon.gameObject.activeInHierarchy &&
+                !weapon.IsTelekinesisDebugSecondary)
+                return weapon;
+        }
+
+        // Replacement destroys the previous weapon at the end of the frame.
+        // Only fall back to inactive objects if no active primary exists.
+        for (int i = 0; i < weapons.Length; i++)
+        {
+            BaseWeapon weapon = weapons[i];
+
             if (weapon != null && !weapon.IsTelekinesisDebugSecondary)
                 return weapon;
         }
 
         return null;
+    }
+
+    private GameObject FindRuntimePlayer()
+    {
+        if (characterSpawner != null && characterSpawner.SpawnedPlayer != null)
+            return characterSpawner.SpawnedPlayer;
+
+        return GameObject.FindGameObjectWithTag("Player");
     }
 
     private GameObject ResolveEnemyPrefab(

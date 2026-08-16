@@ -9,6 +9,12 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
 
     public bool HitEnemyLastFire { get; private set; }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public float DebugLastContextScale { get; private set; } = 1f;
+    public float DebugLastHitHalfWidth { get; private set; }
+    public LaserBeamRenderer DebugBeamRenderer => beamRenderer;
+#endif
+
     public bool Fire(WeaponFireContext context)
     {
         HitEnemyLastFire = false;
@@ -18,6 +24,10 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
         float hitHalfWidth = Mathf.Max(
             0.01f,
             baseHitHalfWidth * context.ShotVisualScale);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        DebugLastContextScale = context.ShotVisualScale;
+        DebugLastHitHalfWidth = hitHalfWidth;
+#endif
         RaycastHit2D[] hits = Physics2D.CircleCastAll(
             context.Origin,
             hitHalfWidth,
@@ -49,12 +59,6 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
                         : hit.collider.ClosestPoint(context.Origin))
             );
 
-            CombatExplosionService.TryExplodeOnHit(
-                hit.point,
-                context.Damage,
-                context.Modifiers,
-                enemyMask
-            );
         }
 
         if (beamRenderer != null)
