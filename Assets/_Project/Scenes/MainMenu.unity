@@ -3845,6 +3845,7 @@ GameObject:
   m_Component:
   - component: {fileID: 181013841}
   - component: {fileID: 181013842}
+  - component: {fileID: 181013843}
   m_Layer: 0
   m_Name: BunkerInteractionSystem
   m_TagString: Untagged
@@ -3884,6 +3885,18 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 512
   panelManagerFallback: {fileID: 0}
+--- !u!114 &181013843
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 181013840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5df9b706bb2d4ea0874a38695611a933, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerCursorView
 --- !u!114 &198962417 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5171476941688374684, guid: b4bf005b0b93b0f4b92d2e78b9eb9c12, type: 3}
@@ -6311,16 +6324,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: SecretRoom
       objectReference: {fileID: 0}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: roomId
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: defaultUnlocked
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: legacyStationsRoot
+      value:
+      objectReference: {fileID: 910000000000000001}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: closedFog
+      value:
+      objectReference: {fileID: 1306185659}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2100000102}
-    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2100000103}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
 --- !u!4 &373838867 stripped
 Transform:
@@ -6922,7 +6945,7 @@ PrefabInstance:
     m_TransformParent: {fileID: 1001258581}
     m_Modifications:
     - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-      propertyPath: interactionsRoot
+      propertyPath: legacyStationsRoot
       value: 
       objectReference: {fileID: 2300000201}
     - target: {fileID: 4097959814010224276, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
@@ -52147,16 +52170,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: FutureRoom
       objectReference: {fileID: 0}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: roomId
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: defaultUnlocked
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: legacyStationsRoot
+      value:
+      objectReference: {fileID: 2300000501}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: closedFog
+      value:
+      objectReference: {fileID: 2060931407}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2100000202}
-    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2100000203}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
 --- !u!4 &973028969 stripped
 Transform:
@@ -263917,16 +263950,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: UpgradeRoom
       objectReference: {fileID: 0}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: roomId
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: defaultUnlocked
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: legacyStationsRoot
+      value:
+      objectReference: {fileID: 2300000301}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: closedFog
+      value:
+      objectReference: {fileID: 333211603}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2200000302}
-    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2200000303}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
 --- !u!4 &2007863681 stripped
 Transform:
@@ -266062,104 +266105,6 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 1200
   m_TargetDisplay: 0
---- !u!1 &2100000101 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-  m_PrefabInstance: {fileID: 373838866}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &2100000102
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2100000101}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dca735fefb7c4545be1d927057b0ca2a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomGate
-  mode: 2
-  requiredStationId: 3
-  requiredStationLevel: 1
-  blockerCollider: {fileID: 0}
-  visualRoot: {fileID: 0}
-  blockerSize: {x: 1.5, y: 3.8}
-  occluderOffset: {x: 4, y: -2.2}
-  occluderSize: {x: 8.5, y: 6.5}
-  accessMessage: "\u041D\u0415\u0422 \u0414\u041E\u0421\u0422\u0423\u041F\u0410"
-  allowClosedInteraction: 0
---- !u!114 &2100000103
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2100000101}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 46dc362738934620a40e706db033e21e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomState
-  roomId: 5
-  state: 0
-  closedVisuals: []
-  redWarningVisual: {fileID: 0}
-  darkVeil: {fileID: 0}
-  openVisuals: []
-  blockingCollider: {fileID: 0}
-  interactionsRoot: {fileID: 910000000000000001}
-  presentationDrivers:
-  - {fileID: 2100000102}
---- !u!1 &2100000201 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-  m_PrefabInstance: {fileID: 973028968}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &2100000202
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2100000201}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dca735fefb7c4545be1d927057b0ca2a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomGate
-  mode: 2
-  requiredStationId: 3
-  requiredStationLevel: 1
-  blockerCollider: {fileID: 0}
-  visualRoot: {fileID: 0}
-  blockerSize: {x: 1.5, y: 3.8}
-  occluderOffset: {x: -4, y: -2.2}
-  occluderSize: {x: 8.5, y: 6.5}
-  accessMessage: "\u0421\u0422\u0410\u041D\u0426\u0418\u042F \u041D\u0415\u0414\u041E\u0421\u0422\u0423\u041F\u041D\u0410"
-  allowClosedInteraction: 1
---- !u!114 &2100000203
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2100000201}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 46dc362738934620a40e706db033e21e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomState
-  roomId: 4
-  state: 0
-  closedVisuals: []
-  redWarningVisual: {fileID: 0}
-  darkVeil: {fileID: 0}
-  openVisuals: []
-  blockingCollider: {fileID: 0}
-  interactionsRoot: {fileID: 2300000501}
-  presentationDrivers:
-  - {fileID: 2100000202}
 --- !u!1 &2101010392
 GameObject:
   m_ObjectHideFlags: 0
@@ -266298,16 +266243,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: AnomalyRoom
       objectReference: {fileID: 0}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: roomId
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: defaultUnlocked
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: legacyStationsRoot
+      value:
+      objectReference: {fileID: 2300000401}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: closedFog
+      value:
+      objectReference: {fileID: 1253992015}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2200000402}
-    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2200000403}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
 --- !u!4 &2111523215 stripped
 Transform:
@@ -266444,153 +266399,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cfe281726b74f85922c04dcb3f96159, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AudioSceneDirector
---- !u!1 &2200000101 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-  m_PrefabInstance: {fileID: 1580761371692661203}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &2200000102
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2200000101}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dca735fefb7c4545be1d927057b0ca2a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomGate
-  mode: 2
-  requiredStationId: 0
-  requiredStationLevel: 1
-  blockerCollider: {fileID: 0}
-  visualRoot: {fileID: 0}
-  blockerSize: {x: 1.5, y: 3.8}
-  occluderOffset: {x: -4, y: -2.2}
-  occluderSize: {x: 8.5, y: 6.5}
-  accessMessage: ROOM CLOSED
-  allowClosedInteraction: 1
---- !u!114 &2200000103
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2200000101}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 46dc362738934620a40e706db033e21e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomState
-  roomId: 0
-  state: 1
-  closedVisuals: []
-  redWarningVisual: {fileID: 0}
-  darkVeil: {fileID: 0}
-  openVisuals: []
-  blockingCollider: {fileID: 0}
-  interactionsRoot: {fileID: 2300000101}
-  presentationDrivers:
-  - {fileID: 2200000102}
---- !u!1 &2200000301 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-  m_PrefabInstance: {fileID: 2007863680}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &2200000302
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2200000301}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dca735fefb7c4545be1d927057b0ca2a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomGate
-  mode: 2
-  requiredStationId: 2
-  requiredStationLevel: 1
-  blockerCollider: {fileID: 0}
-  visualRoot: {fileID: 0}
-  blockerSize: {x: 1.5, y: 3.8}
-  occluderOffset: {x: 4, y: -2.2}
-  occluderSize: {x: 8.5, y: 6.5}
-  accessMessage: ROOM CLOSED
-  allowClosedInteraction: 1
---- !u!114 &2200000303
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2200000301}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 46dc362738934620a40e706db033e21e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomState
-  roomId: 2
-  state: 1
-  closedVisuals: []
-  redWarningVisual: {fileID: 0}
-  darkVeil: {fileID: 0}
-  openVisuals: []
-  blockingCollider: {fileID: 0}
-  interactionsRoot: {fileID: 2300000301}
-  presentationDrivers:
-  - {fileID: 2200000302}
---- !u!1 &2200000401 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-  m_PrefabInstance: {fileID: 2111523214}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &2200000402
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2200000401}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dca735fefb7c4545be1d927057b0ca2a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomGate
-  mode: 2
-  requiredStationId: 3
-  requiredStationLevel: 1
-  blockerCollider: {fileID: 0}
-  visualRoot: {fileID: 0}
-  blockerSize: {x: 1.5, y: 3.8}
-  occluderOffset: {x: -4, y: -2.2}
-  occluderSize: {x: 8.5, y: 6.5}
-  accessMessage: ROOM CLOSED
-  allowClosedInteraction: 1
---- !u!114 &2200000403
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2200000401}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 46dc362738934620a40e706db033e21e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomState
-  roomId: 3
-  state: 0
-  closedVisuals: []
-  redWarningVisual: {fileID: 0}
-  darkVeil: {fileID: 0}
-  openVisuals: []
-  blockingCollider: {fileID: 0}
-  interactionsRoot: {fileID: 2300000401}
-  presentationDrivers:
-  - {fileID: 2200000402}
 --- !u!1 &2300000101 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4737281608205474900, guid: 7299b4ba064c30443b59cbbe7a22f590, type: 3}
@@ -267496,16 +267304,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: CharacterRoom
       objectReference: {fileID: 0}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: roomId
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: defaultUnlocked
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
+      propertyPath: legacyStationsRoot
+      value:
+      objectReference: {fileID: 2300000101}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2200000102}
-    - targetCorrespondingSourceObject: {fileID: 6977290619176330169, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2200000103}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
 --- !u!4 &1580761371692661204 stripped
 Transform:

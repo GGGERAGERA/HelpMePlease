@@ -85,6 +85,13 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
         if (hit == null)
             return null;
 
-        return hit.GetComponent<BunkerInteractableCollider>();
+        BunkerInteractableCollider target =
+            hit.GetComponent<BunkerInteractableCollider>();
+
+        return target != null &&
+            target.Interactable != null &&
+            target.Interactable.CanInteract
+                ? target
+                : null;
     }
 }

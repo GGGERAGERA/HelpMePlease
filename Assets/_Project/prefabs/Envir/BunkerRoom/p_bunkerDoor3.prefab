@@ -2081,7 +2081,6 @@ GameObject:
   - component: {fileID: 4097959814010224276}
   - component: {fileID: 7779812130685886789}
   - component: {fileID: 3123930691996055176}
-  - component: {fileID: 1188651354249695731}
   - component: {fileID: 971571797205999333}
   m_Layer: 0
   m_Name: p_bunkerDoor3
@@ -2165,28 +2164,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 3, y: 1}
   m_EdgeRadius: 0
---- !u!114 &1188651354249695731
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6977290619176330169}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dca735fefb7c4545be1d927057b0ca2a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomGate
-  mode: 2
-  requiredStationId: 1
-  requiredStationLevel: 1
-  blockerCollider: {fileID: 0}
-  visualRoot: {fileID: 0}
-  blockerSize: {x: 1.5, y: 3.8}
-  occluderOffset: {x: -4, y: -2.2}
-  occluderSize: {x: 8.5, y: 6.5}
-  accessMessage: ROOM CLOSED
-  allowClosedInteraction: 1
 --- !u!114 &971571797205999333
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2198,17 +2175,14 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 46dc362738934620a40e706db033e21e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomState
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerRoomAccess
   roomId: 1
-  state: 1
-  closedVisuals: []
-  redWarningVisual: {fileID: 0}
-  darkVeil: {fileID: 0}
-  openVisuals: []
-  blockingCollider: {fileID: 0}
-  interactionsRoot: {fileID: 0}
-  presentationDrivers:
-  - {fileID: 1188651354249695731}
+  openDoorVisual: {fileID: 1675017784238013216}
+  closedDoorVisual: {fileID: 852050964030931831}
+  closedFog: {fileID: 0}
+  stations: []
+  defaultUnlocked: 1
+  legacyStationsRoot: {fileID: 0}
 --- !u!1 &7589363970103939847
 GameObject:
   m_ObjectHideFlags: 0
