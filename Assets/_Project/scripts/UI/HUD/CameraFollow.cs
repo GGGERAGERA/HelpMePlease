@@ -20,6 +20,22 @@ public class CameraFollow : MonoBehaviour
     private float normalOrthographicSize;
     private bool hasFocusSession;
 
+    private Object worldBoundsOwner;
+    private Vector3 worldBoundsRootPosition;
+    private Vector3 savedWorldBoundsRootPosition;
+    private float worldBoundsOrthographicSize;
+    private float savedWorldBoundsOrthographicSize;
+    private bool hasWorldBoundsFocus;
+
+    public Camera ControlledCamera
+    {
+        get
+        {
+            ResolveCamera();
+            return controlledCamera;
+        }
+    }
+
     private void Awake()
     {
         ResolveCamera();
@@ -27,6 +43,14 @@ public class CameraFollow : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (hasWorldBoundsFocus)
+        {
+            transform.position = worldBoundsRootPosition;
+            if (controlledCamera != null && controlledCamera.orthographic)
+                controlledCamera.orthographicSize = worldBoundsOrthographicSize;
+            return;
+        }
+
         ResolveTarget();
         UpdateFocusBlend();
 
@@ -83,6 +107,55 @@ public class CameraFollow : MonoBehaviour
         focusBlendTarget = 0f;
     }
 
+    public bool BeginWorldBoundsFocus(
+        Object owner,
+        Vector2 worldCenter,
+        float orthographicSize)
+    {
+        ResolveCamera();
+        if (owner == null || controlledCamera == null ||
+            !controlledCamera.orthographic || orthographicSize <= 0f)
+        {
+            return false;
+        }
+
+        if (!hasWorldBoundsFocus)
+        {
+            savedWorldBoundsRootPosition = transform.position;
+            savedWorldBoundsOrthographicSize = controlledCamera.orthographicSize;
+        }
+
+        Vector3 cameraWorldOffset = controlledCamera.transform.position - transform.position;
+        Vector3 framedCameraPosition = new(
+            worldCenter.x,
+            worldCenter.y,
+            controlledCamera.transform.position.z);
+
+        worldBoundsOwner = owner;
+        worldBoundsRootPosition = framedCameraPosition - cameraWorldOffset;
+        worldBoundsOrthographicSize = orthographicSize;
+        hasWorldBoundsFocus = true;
+        transform.position = worldBoundsRootPosition;
+        controlledCamera.orthographicSize = worldBoundsOrthographicSize;
+        return true;
+    }
+
+    public void EndWorldBoundsFocus(Object owner)
+    {
+        if (!hasWorldBoundsFocus || worldBoundsOwner != owner)
+            return;
+
+        transform.position = savedWorldBoundsRootPosition;
+        if (controlledCamera != null && controlledCamera.orthographic &&
+            savedWorldBoundsOrthographicSize > 0f)
+        {
+            controlledCamera.orthographicSize = savedWorldBoundsOrthographicSize;
+        }
+
+        hasWorldBoundsFocus = false;
+        worldBoundsOwner = null;
+    }
+
     private void ResolveTarget()
     {
         if (target != null)
@@ -135,6 +208,7 @@ public class CameraFollow : MonoBehaviour
 
     private void OnDisable()
     {
+        EndWorldBoundsFocus(worldBoundsOwner);
         RestoreNormalZoom();
         hasFocusSession = false;
         focusBlend = 0f;

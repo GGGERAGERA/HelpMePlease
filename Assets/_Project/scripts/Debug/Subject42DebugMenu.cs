@@ -2825,7 +2825,27 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddRow("Score", available ? football.Score.ToString() : "-", mutedColor,
             "RESET", available,
             () => { football.ResetGame(); RefreshCurrentTab(); });
-        AddRow("Balls", available ? football.ActiveBallCount.ToString() : "-", mutedColor,
+        AddRow("TIME", available ? football.RemainingTime.ToString("0.0") : "-", mutedColor,
+            null, false, null);
+        AddRow("SCORE", available ? football.Score.ToString() : "-", mutedColor,
+            null, false, null);
+        AddRow("Arena Width", available ? football.ArenaWidth.ToString("0.00") : "-", mutedColor,
+            "SHOW ZONES", available,
+            () => { football.ToggleDebugZones(); RefreshCurrentTab(); });
+        AddRow("Arena Height", available ? football.ArenaHeight.ToString("0.00") : "-", mutedColor,
+            "FRAME CAMERA", available,
+            () => { football.FrameCamera(); RefreshCurrentTab(); });
+        AddRow("Camera Ortho Size",
+            available ? football.CameraOrthographicSize.ToString("0.00") : "-", mutedColor,
+            "RESTORE CAMERA", available,
+            () => { football.RestoreCamera(); RefreshCurrentTab(); });
+        AddRow("Ball Zone Height", available ? football.BallZoneHeight.ToString("0.00") : "-",
+            mutedColor, null, false, null);
+        AddRow("Anomaly Zone Height", available ? football.AnomalyZoneHeight.ToString("0.00") : "-",
+            mutedColor, null, false, null);
+        AddRow("Target Zone Height", available ? football.TargetZoneHeight.ToString("0.00") : "-",
+            mutedColor, null, false, null);
+        AddRow("Balls active", available ? football.ActiveBallCount.ToString() : "-", mutedColor,
             "+1 BALL", available && football.IsRunning,
             () => { football.DebugAddBall(); RefreshCurrentTab(); });
         AddRow("Anomalies", available ? football.ActiveAnomalyCount.ToString() : "-", mutedColor,
@@ -2834,6 +2854,21 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddRow("Targets", available ? football.ActiveTargetCount.ToString() : "-", mutedColor,
             "SPAWN TARGET", available && football.IsRunning,
             () => { football.DebugSpawnTarget(); RefreshCurrentTab(); });
+        AddRow("Green Targets", available ? football.GreenTargetCount.ToString() : "-", mutedColor,
+            "+2 SCORE", available && football.IsRunning,
+            () => { football.DebugAddScore(2); RefreshCurrentTab(); });
+        AddRow("Yellow Targets", available ? football.YellowTargetCount.ToString() : "-", mutedColor,
+            "+5 SCORE", available && football.IsRunning,
+            () => { football.DebugAddScore(5); RefreshCurrentTab(); });
+        AddRow("Red Targets", available ? football.RedTargetCount.ToString() : "-", mutedColor,
+            "+10 SCORE", available && football.IsRunning,
+            () => { football.DebugAddScore(10); RefreshCurrentTab(); });
+        AddRow("Gates", available ? football.GateCount.ToString() : "-", mutedColor,
+            "+20 SCORE", available && football.IsRunning,
+            () => { football.DebugAddScore(20); RefreshCurrentTab(); });
+        AddRow("Target types", available ? "RANDOM PER LANE" : "-", accentColor,
+            "REROLL TARGETS", available && football.IsRunning,
+            () => { football.DebugRerollTargets(); RefreshCurrentTab(); });
         AddRow("Clear runtime balls", available ? "READY" : "NOT FOUND", warningColor,
             "CLEAR BALLS", available,
             () => { football.DebugClearBalls(); RefreshCurrentTab(); });

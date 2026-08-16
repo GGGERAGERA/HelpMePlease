@@ -15,13 +15,22 @@ MonoBehaviour:
   stableId: Gravity
   anomalyType: 3
   displayName: "\u0410\u041D\u041E\u041C\u0410\u041B\u0418\u042F: \u0413\u0420\u0410\u0412\u0418\u0422\u0410\u0426\u0418\u042F"
-  description: "\u0412\u0441\u0435 \u043E\u0431\u044A\u0435\u043A\u0442\u044B \u0432\u043D\u0443\u0442\u0440\u0438 \u0442\u044F\u043D\u0435\u0442 \u043A \u0446\u0435\u043D\u0442\u0440\u0443 \u0437\u043E\u043D\u044B"
-  pinnedDescription: "\u0417\u043E\u043D\u0430 \u043F\u0440\u0438\u0442\u044F\u0433\u0438\u0432\u0430\u0435\u0442 \u043A \u0441\u0432\u043E\u0435\u043C\u0443 \u0446\u0435\u043D\u0442\u0440\u0443"
+  description: "\u0412\u0441\u0435 \u043E\u0431\u044A\u0435\u043A\u0442\u044B \u0432\u043D\u0443\u0442\u0440\u0438
+    \u0442\u044F\u043D\u0435\u0442 \u043A \u0446\u0435\u043D\u0442\u0440\u0443 \u0437\u043E\u043D\u044B"
+  pinnedDescription: "\u0417\u043E\u043D\u0430 \u043F\u0440\u0438\u0442\u044F\u0433\u0438\u0432\u0430\u0435\u0442
+    \u043A \u0441\u0432\u043E\u0435\u043C\u0443 \u0446\u0435\u043D\u0442\u0440\u0443"
   zonePrefab: {fileID: 570000000000000004, guid: d17a42a1000000000000000000000005, type: 3}
-  zoneSize: {x: 14, y: 10}
+  zoneSize: {x: 40.7, y: 10}
   enemySpeedMultiplier: 1
   playerSpeedMultiplier: 1
   projectileSpeedMultiplier: 1
   pickupSpeedMultiplier: 1
   additionalAnomalies: []
   gravityForce: 1.5
+  glitchInterval: 1.5
+  glitchDistance: 0.7
+  explosionDelay: 0
+  explosionRadius: 0.1
+  explosionDamage: 0
+  explosionEffectPrefab: {fileID: 0}
+  explosiveZoneBomberRadiusMultiplier: 1.5

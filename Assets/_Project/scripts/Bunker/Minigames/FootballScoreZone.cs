@@ -1,9 +1,10 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum FootballScoreZoneType
 {
     Green,
-    Blue,
+    Yellow,
     Red
 }
 
@@ -14,10 +15,12 @@ public sealed class FootballScoreZone : MonoBehaviour
 
     private CircleCollider2D zoneCollider;
     private SpriteRenderer zoneRenderer;
+    private readonly HashSet<BallRollVisual> ballsAwaitingExit = new();
 
     public FootballScoreZoneType Type { get; private set; }
     public int Points { get; private set; }
     public bool IsAcceptingBalls { get; private set; }
+    public int LaneIndex { get; private set; } = -1;
 
     private FootballPingPongMover laneMover;
 
@@ -27,6 +30,16 @@ public sealed class FootballScoreZone : MonoBehaviour
         zoneRenderer = GetComponent<SpriteRenderer>();
         zoneCollider.isTrigger = true;
         Hide();
+    }
+
+    public void ConfigureOwner(FootballMinigame owner)
+    {
+        minigame = owner;
+    }
+
+    public void ResetContacts()
+    {
+        ballsAwaitingExit.Clear();
     }
 
     public void Show(FootballScoreZoneType type, int points, float radius, Color color)
@@ -42,7 +55,11 @@ public sealed class FootballScoreZone : MonoBehaviour
         IsAcceptingBalls = true;
     }
 
-    public void ConfigureLane(FootballTargetLane lane, bool moveRight)
+    public void ConfigureLane(
+        FootballTargetLane lane,
+        int laneIndex,
+        float moveSpeed,
+        bool moveRight)
     {
         if (lane == null || !lane.IsValid)
             return;
@@ -51,7 +68,8 @@ public sealed class FootballScoreZone : MonoBehaviour
             laneMover = GetComponent<FootballPingPongMover>();
         if (laneMover == null)
             laneMover = gameObject.AddComponent<FootballPingPongMover>();
-        laneMover.Configure(lane.LeftAnchor, lane.RightAnchor, lane.Speed, moveRight);
+        LaneIndex = laneIndex;
+        laneMover.Configure(lane.LeftAnchor, lane.RightAnchor, moveSpeed, moveRight);
         transform.position = moveRight ? lane.LeftAnchor.position : lane.RightAnchor.position;
         laneMover.enabled = true;
     }
@@ -60,10 +78,19 @@ public sealed class FootballScoreZone : MonoBehaviour
     {
         EnsureComponents();
         IsAcceptingBalls = false;
+        LaneIndex = -1;
         zoneCollider.enabled = false;
         zoneRenderer.enabled = false;
         if (laneMover != null)
             laneMover.enabled = false;
+    }
+
+    private void FixedUpdate()
+    {
+        if (zoneCollider == null || !zoneCollider.enabled || ballsAwaitingExit.Count == 0)
+            return;
+
+        ballsAwaitingExit.RemoveWhere(ball => !OverlapsBall(ball));
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -72,13 +99,24 @@ public sealed class FootballScoreZone : MonoBehaviour
             return;
 
         BallRollVisual ball = minigame.GetRegisteredBall(other);
-        if (ball == null)
+        if (ball == null || ballsAwaitingExit.Contains(ball))
             return;
 
         // Close immediately so simultaneous contacts cannot score twice.
+        ballsAwaitingExit.Add(ball);
         IsAcceptingBalls = false;
         zoneCollider.enabled = false;
         minigame.OnBallEnteredScoreZone(this, ball);
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (minigame == null)
+            return;
+
+        BallRollVisual ball = minigame.GetRegisteredBall(other);
+        if (ball != null)
+            ballsAwaitingExit.Remove(ball);
     }
 
     private void EnsureComponents()
@@ -87,5 +125,21 @@ public sealed class FootballScoreZone : MonoBehaviour
             zoneCollider = GetComponent<CircleCollider2D>();
         if (zoneRenderer == null)
             zoneRenderer = GetComponent<SpriteRenderer>();
+    }
+
+    private bool OverlapsBall(BallRollVisual ball)
+    {
+        if (ball == null || !ball.gameObject.activeInHierarchy)
+            return false;
+
+        foreach (Collider2D collider in ball.GetComponentsInChildren<Collider2D>())
+        {
+            if (collider != null && collider.enabled &&
+                zoneCollider.Distance(collider).isOverlapped)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }

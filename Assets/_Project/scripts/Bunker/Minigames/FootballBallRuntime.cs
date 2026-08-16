@@ -7,23 +7,30 @@ public sealed class FootballBallRuntime : MonoBehaviour, IAnomalyExternalVelocit
     private readonly AnomalyExternalVelocityStack anomalyVelocity = new();
 
     private Rigidbody2D body;
+    private Collider2D physicalCollider;
     private FootballMinigame owner;
     private Transform spawnPoint;
     private Bounds playBounds;
     private float stuckSpeed;
     private float stuckDuration;
     private float outOfBoundsPadding;
+    private float topOutOfBoundsMargin;
     private float respawnDelay;
     private float stillTime;
     private float respawnAt = -1f;
 
     public Component ExternalVelocityComponent => this;
     public bool IsRespawning => respawnAt >= 0f;
+    public Collider2D PhysicalCollider => ResolvePhysicalCollider();
 
     private void Awake()
     {
         body = GetComponent<Rigidbody2D>();
+        ResolvePhysicalCollider();
     }
+
+    public bool IsPhysicalCollider(Collider2D candidate) =>
+        candidate != null && candidate == ResolvePhysicalCollider();
 
     public void Configure(
         FootballMinigame minigame,
@@ -32,6 +39,7 @@ public sealed class FootballBallRuntime : MonoBehaviour, IAnomalyExternalVelocit
         float assignedStuckSpeed,
         float assignedStuckDuration,
         float assignedOutOfBoundsPadding,
+        float assignedTopOutOfBoundsMargin,
         float assignedRespawnDelay)
     {
         owner = minigame;
@@ -40,6 +48,7 @@ public sealed class FootballBallRuntime : MonoBehaviour, IAnomalyExternalVelocit
         stuckSpeed = Mathf.Max(0f, assignedStuckSpeed);
         stuckDuration = Mathf.Max(0.1f, assignedStuckDuration);
         outOfBoundsPadding = Mathf.Max(0f, assignedOutOfBoundsPadding);
+        topOutOfBoundsMargin = Mathf.Max(0f, assignedTopOutOfBoundsMargin);
         respawnDelay = Mathf.Max(0f, assignedRespawnDelay);
         stillTime = 0f;
         respawnAt = -1f;
@@ -56,7 +65,11 @@ public sealed class FootballBallRuntime : MonoBehaviour, IAnomalyExternalVelocit
         // is applied as acceleration so momentum and collisions remain physical.
         body.AddForce(anomalyVelocity.Value, ForceMode2D.Force);
 
-        if (!ContainsWithPadding(playBounds, body.position, outOfBoundsPadding))
+        if (!ContainsWithPadding(
+            playBounds,
+            body.position,
+            outOfBoundsPadding,
+            topOutOfBoundsMargin))
         {
             RequestRespawn();
             return;
@@ -102,6 +115,7 @@ public sealed class FootballBallRuntime : MonoBehaviour, IAnomalyExternalVelocit
         anomalyVelocity.Clear();
         body.simulated = true;
         GetComponent<BallRollVisual>().ResetBall(spawnPoint);
+        body.WakeUp();
     }
 
     public void SetAnomalyExternalVelocity(Object source, Vector2 velocity)
@@ -121,11 +135,34 @@ public sealed class FootballBallRuntime : MonoBehaviour, IAnomalyExternalVelocit
         stillTime = 0f;
     }
 
-    private static bool ContainsWithPadding(Bounds bounds, Vector2 point, float padding)
+    private Collider2D ResolvePhysicalCollider()
+    {
+        if (physicalCollider != null && !physicalCollider.isTrigger)
+            return physicalCollider;
+
+        Collider2D[] colliders = GetComponentsInChildren<Collider2D>(true);
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider2D candidate = colliders[i];
+            if (candidate != null && !candidate.isTrigger &&
+                (body == null || candidate.attachedRigidbody == body))
+            {
+                physicalCollider = candidate;
+                break;
+            }
+        }
+        return physicalCollider;
+    }
+
+    private static bool ContainsWithPadding(
+        Bounds bounds,
+        Vector2 point,
+        float padding,
+        float topMargin)
     {
         return point.x >= bounds.min.x - padding &&
                point.x <= bounds.max.x + padding &&
                point.y >= bounds.min.y - padding &&
-               point.y <= bounds.max.y + padding;
+               point.y <= bounds.max.y + Mathf.Max(padding, topMargin);
     }
 }
