@@ -19,6 +19,8 @@ public sealed class FootballScoreZone : MonoBehaviour
     public int Points { get; private set; }
     public bool IsAcceptingBalls { get; private set; }
 
+    private FootballPingPongMover laneMover;
+
     private void Awake()
     {
         zoneCollider = GetComponent<CircleCollider2D>();
@@ -40,12 +42,28 @@ public sealed class FootballScoreZone : MonoBehaviour
         IsAcceptingBalls = true;
     }
 
+    public void ConfigureLane(FootballTargetLane lane, bool moveRight)
+    {
+        if (lane == null || !lane.IsValid)
+            return;
+
+        if (laneMover == null)
+            laneMover = GetComponent<FootballPingPongMover>();
+        if (laneMover == null)
+            laneMover = gameObject.AddComponent<FootballPingPongMover>();
+        laneMover.Configure(lane.LeftAnchor, lane.RightAnchor, lane.Speed, moveRight);
+        transform.position = moveRight ? lane.LeftAnchor.position : lane.RightAnchor.position;
+        laneMover.enabled = true;
+    }
+
     public void Hide()
     {
         EnsureComponents();
         IsAcceptingBalls = false;
         zoneCollider.enabled = false;
         zoneRenderer.enabled = false;
+        if (laneMover != null)
+            laneMover.enabled = false;
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -53,13 +71,14 @@ public sealed class FootballScoreZone : MonoBehaviour
         if (!IsAcceptingBalls || minigame == null || !minigame.IsRunning)
             return;
 
-        if (!minigame.IsRegisteredBall(other))
+        BallRollVisual ball = minigame.GetRegisteredBall(other);
+        if (ball == null)
             return;
 
         // Close immediately so simultaneous contacts cannot score twice.
         IsAcceptingBalls = false;
         zoneCollider.enabled = false;
-        minigame.OnBallEnteredScoreZone(this);
+        minigame.OnBallEnteredScoreZone(this, ball);
     }
 
     private void EnsureComponents()

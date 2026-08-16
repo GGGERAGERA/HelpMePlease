@@ -16,7 +16,6 @@ public static class SetupFootballScoreMinigameScene
     private const string BallPrefabPath = "Assets/_Project/art/test/prefabs/Ball1.prefab";
     private const string SessionKey = "Bunker.Football.ScoreMinigameSetup.2";
 
-    [InitializeOnLoadMethod]
     private static void QueueAutomaticSetup()
     {
         EditorApplication.delayCall += TryAutomaticSetup;
@@ -25,7 +24,7 @@ public static class SetupFootballScoreMinigameScene
     [MenuItem("Tools/Bunker/Setup Football Score Minigame")]
     public static void SetupFromMenu()
     {
-        SetupAndSave();
+        SetupBunkerFootballV1Scene.SetupFromMenu();
     }
 
     private static void TryAutomaticSetup()

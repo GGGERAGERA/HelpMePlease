@@ -2304,6 +2304,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void AddBunkerSection()
     {
+        AddFootballMinigameSection();
+
         BunkerStationProgressionService service = BunkerStationProgressionService.Instance;
         AddSectionTitle("CHARACTER STATION", "Persistent station investment");
         if (service == null ||
@@ -2807,6 +2809,40 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             "CLOSE ALL", rooms.Length > 0, () => SetAllRooms(rooms, false));
         AddRow("RESET DEFAULTS", "Read defaultUnlocked from scene", accentColor,
             "RESET DEFAULTS", rooms.Length > 0, () => ResetRoomDefaults(rooms));
+    }
+
+    private void AddFootballMinigameSection()
+    {
+        FootballMinigame football = FindFirstObjectByType<FootballMinigame>(
+            FindObjectsInactive.Include);
+        bool available = football != null;
+
+        AddSectionTitle("FOOTBALL MINIGAME", "Bunker V1 lifecycle and runtime objects");
+        AddRow("State", available ? football.State.ToString() : "NOT FOUND",
+            available ? successColor : warningColor,
+            "START", available && football.CanStart,
+            () => { football.StartGame(); RefreshCurrentTab(); });
+        AddRow("Score", available ? football.Score.ToString() : "-", mutedColor,
+            "RESET", available,
+            () => { football.ResetGame(); RefreshCurrentTab(); });
+        AddRow("Balls", available ? football.ActiveBallCount.ToString() : "-", mutedColor,
+            "+1 BALL", available && football.IsRunning,
+            () => { football.DebugAddBall(); RefreshCurrentTab(); });
+        AddRow("Anomalies", available ? football.ActiveAnomalyCount.ToString() : "-", mutedColor,
+            "SPAWN ANOMALY", available && football.IsRunning,
+            () => { football.DebugSpawnAnomaly(); RefreshCurrentTab(); });
+        AddRow("Targets", available ? football.ActiveTargetCount.ToString() : "-", mutedColor,
+            "SPAWN TARGET", available && football.IsRunning,
+            () => { football.DebugSpawnTarget(); RefreshCurrentTab(); });
+        AddRow("Clear runtime balls", available ? "READY" : "NOT FOUND", warningColor,
+            "CLEAR BALLS", available,
+            () => { football.DebugClearBalls(); RefreshCurrentTab(); });
+        AddRow("Clear runtime anomalies", available ? "READY" : "NOT FOUND", warningColor,
+            "CLEAR ANOMALIES", available,
+            () => { football.DebugClearAnomalies(); RefreshCurrentTab(); });
+        AddRow("Clear runtime targets", available ? "READY" : "NOT FOUND", warningColor,
+            "CLEAR TARGETS", available,
+            () => { football.DebugClearTargets(); RefreshCurrentTab(); });
     }
 
     private void SetAllRooms(BunkerRoomAccess[] rooms, bool unlocked)

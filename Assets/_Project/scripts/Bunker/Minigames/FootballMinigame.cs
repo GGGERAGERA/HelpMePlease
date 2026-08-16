@@ -6,53 +6,71 @@ public sealed class FootballMinigame : BunkerMinigame
 {
     private const string BestScoreKey = "BunkerFootballBestScore";
 
-    [Header("Scene")]
-    [SerializeField] private List<BallRollVisual> balls = new();
+    [Header("Manual scene references")]
+    [SerializeField] private Collider2D ballSpawnZone;
+    [SerializeField] private Collider2D anomalySpawnZone;
+    [SerializeField] private Collider2D targetSpawnZone;
     [SerializeField] private Collider2D playAreaBounds;
-    [SerializeField] private FootballScoreZone scoreZone;
     [SerializeField] private FootballStartZone startZone;
     [SerializeField] private FootballMinigameHUD hud;
-    [SerializeField] private Transform player;
 
-    [Header("Round")]
+    [Header("Runtime roots")]
+    [SerializeField] private Transform ballsRuntime;
+    [SerializeField] private Transform anomaliesRuntime;
+    [SerializeField] private Transform targetsRuntime;
+
+    [Header("Balls")]
+    [SerializeField] private List<BallRollVisual> balls = new();
+    [SerializeField] private Transform[] ballSpawnPoints;
+    [SerializeField, Min(1)] private int initialBallCount = 4;
+    [SerializeField, Min(0f)] private float ballRespawnDelay = 0.45f;
+    [SerializeField, Min(0f)] private float outOfBoundsPadding = 1f;
+    [SerializeField, Min(0f)] private float stuckSpeed = 0.08f;
+    [SerializeField, Min(1f)] private float stuckDuration = 8f;
+
+    [Header("Gravity anomalies")]
+    [SerializeField] private GravityZone gravityAnomalyPrefab;
+    [SerializeField] private LocalAnomalyData gravityAnomalyData;
+    [SerializeField] private Transform[] anomalySpawnPoints;
+    [SerializeField] private FootballTargetLane[] anomalyLanes;
+    [SerializeField, Range(1, 2)] private int activeAnomalyCount = 2;
+    [SerializeField, Min(0f)] private float anomalyForce = 3.2f;
+    [SerializeField] private Vector2 anomalyFieldSize = new(4.5f, 3.2f);
+    [SerializeField, Min(0f)] private float anomalyMoveSpeed = 1.1f;
+
+    [Header("Targets")]
+    [SerializeField] private FootballScoreZone targetTemplate;
+    [SerializeField] private FootballTargetLane[] targetLanes;
+    [SerializeField, Min(1)] private int activeTargetCount = 3;
+    [SerializeField, Min(0f)] private float targetRespawnDelay = 0.45f;
+    [SerializeField, Min(0)] private int targetScore = 5;
+    [SerializeField, Min(0.1f)] private float targetRadius = 0.8f;
+    [SerializeField] private Color targetColor = new(0.15f, 0.75f, 1f, 0.86f);
+
+    [Header("Optional round timer")]
+    [SerializeField] private bool useRoundTimer;
     [SerializeField, Min(1f)] private float roundDuration = 60f;
-    [SerializeField, Min(0f)] private float zoneRespawnDelay = 0.3f;
-
-    [Header("Zone balance")]
-    [SerializeField, Min(0.1f)] private float greenRadius = 1.6f;
-    [SerializeField, Min(0.1f)] private float blueRadius = 1.1f;
-    [SerializeField, Min(0.1f)] private float redRadius = 0.65f;
-    [SerializeField, Min(0)] private int greenPoints = 3;
-    [SerializeField, Min(0)] private int bluePoints = 6;
-    [SerializeField, Min(0)] private int redPoints = 10;
-    [SerializeField, Min(0f)] private float greenWeight = 50f;
-    [SerializeField, Min(0f)] private float blueWeight = 35f;
-    [SerializeField, Min(0f)] private float redWeight = 15f;
-
-    [Header("Zone spawning")]
-    [SerializeField, Min(0f)] private float spawnMargin = 1.5f;
-    [SerializeField, Min(0f)] private float minDistanceFromPlayer = 3f;
-    [SerializeField, Min(0f)] private float minDistanceFromBalls = 2.5f;
-    [SerializeField, Min(1)] private int spawnAttempts = 20;
 
     [Header("Legacy scene compatibility")]
+    [SerializeField, HideInInspector] private FootballScoreZone scoreZone;
     [SerializeField, HideInInspector] private BallRollVisual ball;
     [SerializeField, HideInInspector] private Transform ballSpawnPoint;
     [SerializeField, HideInInspector] private int goalsToComplete = 3;
 
-    private Coroutine respawnRoutine;
+    private readonly List<GravityZone> activeAnomalies = new();
+    private readonly List<FootballScoreZone> activeTargets = new();
+    private readonly List<Coroutine> targetRespawns = new();
     private int currentScore;
     private int bestScore;
     private float remainingTime;
-    private bool newRecord;
-    private bool returningToIdleAfterRound;
 
     public int Score => currentScore;
     public int BestScore => bestScore;
     public float RemainingTime => remainingTime;
     public IReadOnlyList<BallRollVisual> Balls => balls;
-
-    // Kept so the decorative legacy FootballGoal component remains binary-compatible.
+    public int ActiveBallCount => CountActiveBalls();
+    public int ActiveAnomalyCount => activeAnomalies.Count;
+    public int ActiveTargetCount => activeTargets.Count;
     public BallRollVisual Ball => balls.Count > 0 ? balls[0] : ball;
     public int GoalsToComplete => goalsToComplete;
 
@@ -60,7 +78,8 @@ public sealed class FootballMinigame : BunkerMinigame
     {
         bestScore = PlayerPrefs.GetInt(BestScoreKey, 0);
         remainingTime = roundDuration;
-        scoreZone?.Hide();
+        ResolveLegacyReferences();
+        ResetRuntimeObjects();
         startZone?.SetAvailable(true);
         hud?.ShowIdle(roundDuration, bestScore);
     }
@@ -70,255 +89,273 @@ public sealed class FootballMinigame : BunkerMinigame
         if (!IsRunning)
             return;
 
-        remainingTime = Mathf.Max(0f, remainingTime - Time.unscaledDeltaTime);
-        hud?.ShowRunning(remainingTime, currentScore, bestScore);
+        if (useRoundTimer)
+        {
+            remainingTime = Mathf.Max(0f, remainingTime - Time.unscaledDeltaTime);
+            if (remainingTime <= 0f)
+            {
+                CompleteGame();
+                return;
+            }
+        }
 
-        if (remainingTime <= 0f)
-            CompleteGame();
+        hud?.ShowRunning(useRoundTimer ? remainingTime : roundDuration, currentScore, bestScore);
     }
 
-    public bool IsRegisteredBall(BallRollVisual candidate)
-    {
-        return candidate != null && balls.Contains(candidate);
-    }
-
-    public bool IsRegisteredBall(Collider2D other)
+    public BallRollVisual GetRegisteredBall(Collider2D other)
     {
         if (other == null || other.isTrigger)
-            return false;
+            return null;
 
         BallRollVisual candidate = other.GetComponent<BallRollVisual>();
-        if (candidate == null)
-            candidate = other.GetComponentInParent<BallRollVisual>();
-
-        return IsRegisteredBall(candidate);
+        candidate ??= other.GetComponentInParent<BallRollVisual>();
+        return candidate != null && balls.Contains(candidate) && candidate.gameObject.activeInHierarchy
+            ? candidate : null;
     }
 
-    public void OnBallEnteredScoreZone(FootballScoreZone zone)
+    public bool IsRegisteredBall(BallRollVisual candidate) => candidate != null && balls.Contains(candidate);
+    public bool IsRegisteredBall(Collider2D other) => GetRegisteredBall(other) != null;
+
+    public void OnBallEnteredScoreZone(FootballScoreZone target, BallRollVisual hitBall)
     {
-        if (!IsRunning || zone == null || zone != scoreZone)
+        if (!IsRunning || target == null || !activeTargets.Contains(target))
             return;
 
-        zone.Hide();
-        currentScore += zone.Points;
-        hud?.ShowRunning(remainingTime, currentScore, bestScore);
-
-        if (respawnRoutine != null)
-            StopCoroutine(respawnRoutine);
-        respawnRoutine = StartCoroutine(RespawnZone());
+        currentScore += target.Points;
+        hud?.ShowRunning(useRoundTimer ? remainingTime : roundDuration, currentScore, bestScore);
+        hitBall?.GetComponent<FootballBallRuntime>()?.RequestRespawn();
+        int laneIndex = activeTargets.IndexOf(target);
+        Coroutine routine = StartCoroutine(RespawnTarget(target, laneIndex));
+        targetRespawns.Add(routine);
     }
 
-    // Legacy goals are decorative in the score-zone version.
     public void OnGoalScored(FootballGoal goal) { }
 
     protected override void OnGameStarted()
     {
         BallRollVisual.CancelActiveSlowMotion();
-        Debug.Log("[Football] Started");
-
         currentScore = 0;
         remainingTime = roundDuration;
-        newRecord = false;
         startZone?.SetAvailable(false);
-        hud?.ShowRunning(remainingTime, currentScore, bestScore);
-
-        BunkerNotificationManager notifications =
-            BunkerContext.Instance != null && BunkerContext.Instance.Notifications != null
-                ? BunkerContext.Instance.Notifications
-                : BunkerNotificationManager.Instance;
-        notifications?.ShowInfo("FOOTBALL TEST STARTED");
-
-        SpawnNextZone();
+        hud?.ShowRunning(roundDuration, currentScore, bestScore);
+        SpawnInitialBalls();
+        SpawnInitialAnomalies();
+        SpawnInitialTargets();
+        Debug.Log("[Football] V1 round started.", this);
     }
 
     protected override void OnGameCompleted()
     {
-        BallRollVisual.CancelActiveSlowMotion();
-        StopZoneRespawn();
-        scoreZone?.Hide();
-
-        if (currentScore > bestScore)
-        {
-            bestScore = currentScore;
-            newRecord = true;
-            PlayerPrefs.SetInt(BestScoreKey, bestScore);
-            PlayerPrefs.Save();
-        }
-
-        startZone?.SetAvailable(true);
+        bool newRecord = SaveBestScore();
+        StopTargetRespawns();
+        ResetRuntimeObjects();
+        startZone?.SetAvailable(false);
         hud?.ShowCompleted(currentScore, bestScore, newRecord);
-
-        ReturnToIdleAfterRound();
     }
 
     protected override void OnGameFailed()
     {
-        BallRollVisual.CancelActiveSlowMotion();
-        StopZoneRespawn();
-        scoreZone?.Hide();
-        startZone?.SetAvailable(true);
+        SaveBestScore();
+        StopTargetRespawns();
+        ResetRuntimeObjects();
+        startZone?.SetAvailable(false);
         hud?.ShowCompleted(currentScore, bestScore, false);
-
-        ReturnToIdleAfterRound();
     }
 
     protected override void OnGameReset()
     {
         BallRollVisual.CancelActiveSlowMotion();
-
-        if (returningToIdleAfterRound)
-            return;
-
-        StopZoneRespawn();
+        StopTargetRespawns();
+        ResetRuntimeObjects();
         currentScore = 0;
         remainingTime = roundDuration;
-        newRecord = false;
-        scoreZone?.Hide();
         startZone?.SetAvailable(true);
         hud?.ShowIdle(roundDuration, bestScore);
     }
 
-    private IEnumerator RespawnZone()
+    public void DebugAddBall()
     {
-        yield return new WaitForSecondsRealtime(zoneRespawnDelay);
-        respawnRoutine = null;
-
-        if (IsRunning)
-            SpawnNextZone();
+        if (!IsRunning) return;
+        int index = CountActiveBalls();
+        if (index < balls.Count) ActivateBall(index);
     }
 
-    private void SpawnNextZone()
+    public void DebugSpawnAnomaly() { if (IsRunning) SpawnAnomaly(activeAnomalies.Count); }
+    public void DebugSpawnTarget() { if (IsRunning) SpawnTarget(activeTargets.Count); }
+
+    public void DebugClearBalls()
     {
-        if (scoreZone == null || playAreaBounds == null)
-            return;
-
-        FootballScoreZoneType type = ChooseZoneType();
-        float radius = GetRadius(type);
-        Vector2 position = FindSpawnPosition(radius);
-
-        scoreZone.transform.position = position;
-        scoreZone.Show(
-            type,
-            GetPoints(type),
-            radius,
-            GetColor(type));
+        foreach (BallRollVisual item in balls)
+            if (item != null) item.gameObject.SetActive(false);
     }
 
-    private FootballScoreZoneType ChooseZoneType()
+    public void DebugClearAnomalies()
     {
-        float total = greenWeight + blueWeight + redWeight;
-        if (total <= 0f)
-            return FootballScoreZoneType.Green;
-
-        float roll = Random.value * total;
-        if (roll < greenWeight)
-            return FootballScoreZoneType.Green;
-        if (roll < greenWeight + blueWeight)
-            return FootballScoreZoneType.Blue;
-        return FootballScoreZoneType.Red;
+        for (int i = activeAnomalies.Count - 1; i >= 0; i--)
+            if (activeAnomalies[i] != null) Destroy(activeAnomalies[i].gameObject);
+        activeAnomalies.Clear();
     }
 
-    private Vector2 FindSpawnPosition(float radius)
+    public void DebugClearTargets()
     {
-        Bounds bounds = playAreaBounds.bounds;
-        float inset = spawnMargin + radius;
-        float minX = bounds.min.x + inset;
-        float maxX = bounds.max.x - inset;
-        float minY = bounds.min.y + inset;
-        float maxY = bounds.max.y - inset;
-
-        if (minX > maxX)
-            minX = maxX = bounds.center.x;
-        if (minY > maxY)
-            minY = maxY = bounds.center.y;
-
-        Vector2 fallback = bounds.center;
-        for (int attempt = 0; attempt < spawnAttempts; attempt++)
+        StopTargetRespawns();
+        foreach (FootballScoreZone target in activeTargets)
         {
-            Vector2 candidate = new(
-                Random.Range(minX, maxX),
-                Random.Range(minY, maxY));
-            fallback = candidate;
-
-            if (player != null &&
-                Vector2.Distance(candidate, player.position) < minDistanceFromPlayer + radius)
-            {
-                continue;
-            }
-
-            bool tooCloseToBall = false;
-            foreach (BallRollVisual registeredBall in balls)
-            {
-                if (registeredBall != null &&
-                    Vector2.Distance(candidate, registeredBall.transform.position) < minDistanceFromBalls + radius)
-                {
-                    tooCloseToBall = true;
-                    break;
-                }
-            }
-
-            if (!tooCloseToBall)
-                return candidate;
+            if (target == null) continue;
+            if (target == targetTemplate) target.gameObject.SetActive(false);
+            else Destroy(target.gameObject);
         }
-
-        return fallback;
+        activeTargets.Clear();
     }
 
-    private float GetRadius(FootballScoreZoneType type)
+    private void SpawnInitialBalls()
     {
-        return type switch
-        {
-            FootballScoreZoneType.Blue => blueRadius,
-            FootballScoreZoneType.Red => redRadius,
-            _ => greenRadius
-        };
+        int count = Mathf.Min(initialBallCount, balls.Count, ballSpawnPoints?.Length ?? 0);
+        for (int i = 0; i < count; i++) ActivateBall(i);
     }
 
-    private int GetPoints(FootballScoreZoneType type)
+    private void ActivateBall(int index)
     {
-        return type switch
-        {
-            FootballScoreZoneType.Blue => bluePoints,
-            FootballScoreZoneType.Red => redPoints,
-            _ => greenPoints
-        };
-    }
-
-    private static Color GetColor(FootballScoreZoneType type)
-    {
-        return type switch
-        {
-            FootballScoreZoneType.Blue => new Color(0.1f, 0.55f, 1f, 0.82f),
-            FootballScoreZoneType.Red => new Color(1f, 0.15f, 0.12f, 0.88f),
-            _ => new Color(0.12f, 1f, 0.3f, 0.78f)
-        };
-    }
-
-    private void StopZoneRespawn()
-    {
-        if (respawnRoutine == null)
+        if (index < 0 || index >= balls.Count || ballSpawnPoints == null || ballSpawnPoints.Length == 0)
             return;
+        BallRollVisual item = balls[index];
+        if (item == null) return;
 
-        StopCoroutine(respawnRoutine);
-        respawnRoutine = null;
+        Transform spawn = ballSpawnPoints[index % ballSpawnPoints.Length];
+        item.gameObject.SetActive(true);
+        FootballBallRuntime runtime = item.GetComponent<FootballBallRuntime>();
+        if (runtime == null)
+            runtime = item.gameObject.AddComponent<FootballBallRuntime>();
+        Bounds bounds = playAreaBounds != null ? playAreaBounds.bounds :
+            ballSpawnZone != null ? ballSpawnZone.bounds : new Bounds(item.transform.position, Vector3.one * 50f);
+        runtime.Configure(this, spawn, bounds, stuckSpeed, stuckDuration,
+            outOfBoundsPadding, ballRespawnDelay);
+        runtime.RespawnNow();
     }
 
-    private void ReturnToIdleAfterRound()
+    private void SpawnInitialAnomalies()
     {
-        returningToIdleAfterRound = true;
-        ResetGame();
-        returningToIdleAfterRound = false;
+        int count = Mathf.Min(activeAnomalyCount, anomalySpawnPoints?.Length ?? 0);
+        for (int i = 0; i < count; i++) SpawnAnomaly(i);
     }
+
+    private void SpawnAnomaly(int index)
+    {
+        if (gravityAnomalyPrefab == null || gravityAnomalyData == null ||
+            anomalySpawnPoints == null || anomalySpawnPoints.Length == 0) return;
+
+        Transform spawn = anomalySpawnPoints[index % anomalySpawnPoints.Length];
+        GravityZone anomaly = Instantiate(gravityAnomalyPrefab, spawn.position,
+            Quaternion.identity, anomaliesRuntime);
+        anomaly.name = $"FootballGravity_{index + 1}";
+        anomaly.Initialize(gravityAnomalyData, null, anomalyFieldSize);
+        anomaly.ConfigureForce(anomalyForce);
+        anomaly.ConfigureAffectedColliderFilter(IsFootballBallCollider);
+
+        if (anomalyLanes != null && anomalyLanes.Length > 0)
+        {
+            FootballTargetLane lane = anomalyLanes[index % anomalyLanes.Length];
+            if (lane != null && lane.IsValid)
+            {
+                FootballPingPongMover mover = anomaly.gameObject.AddComponent<FootballPingPongMover>();
+                mover.Configure(lane.LeftAnchor, lane.RightAnchor,
+                    anomalyMoveSpeed > 0f ? anomalyMoveSpeed : lane.Speed, index % 2 == 0);
+            }
+        }
+        activeAnomalies.Add(anomaly);
+    }
+
+    private void SpawnInitialTargets()
+    {
+        int count = Mathf.Min(activeTargetCount, targetLanes?.Length ?? 0);
+        for (int i = 0; i < count; i++) SpawnTarget(i);
+    }
+
+    private void SpawnTarget(int laneIndex)
+    {
+        if (targetTemplate == null || targetLanes == null || targetLanes.Length == 0) return;
+
+        FootballScoreZone target = activeTargets.Count == 0
+            ? targetTemplate : Instantiate(targetTemplate, targetsRuntime);
+        target.name = $"Target_{activeTargets.Count + 1:00}";
+        if (targetsRuntime != null) target.transform.SetParent(targetsRuntime, true);
+        target.gameObject.SetActive(true);
+        target.ConfigureLane(targetLanes[laneIndex % targetLanes.Length], laneIndex % 2 == 0);
+        target.Show(FootballScoreZoneType.Blue, targetScore, targetRadius, targetColor);
+        activeTargets.Add(target);
+    }
+
+    private IEnumerator RespawnTarget(FootballScoreZone target, int laneIndex)
+    {
+        target.Hide();
+        yield return new WaitForSecondsRealtime(targetRespawnDelay);
+        if (IsRunning && target != null && targetLanes.Length > 0)
+        {
+            target.ConfigureLane(targetLanes[laneIndex % targetLanes.Length], laneIndex % 2 != 0);
+            target.Show(FootballScoreZoneType.Blue, targetScore, targetRadius, targetColor);
+        }
+    }
+
+    private void ResetRuntimeObjects()
+    {
+        DebugClearAnomalies();
+        DebugClearTargets();
+        DebugClearBalls();
+        if (targetTemplate != null)
+        {
+            targetTemplate.Hide();
+            targetTemplate.gameObject.SetActive(false);
+        }
+    }
+
+    private void StopTargetRespawns()
+    {
+        foreach (Coroutine routine in targetRespawns)
+            if (routine != null) StopCoroutine(routine);
+        targetRespawns.Clear();
+    }
+
+    private int CountActiveBalls()
+    {
+        int count = 0;
+        foreach (BallRollVisual item in balls)
+            if (item != null && item.gameObject.activeInHierarchy) count++;
+        return count;
+    }
+
+    private bool SaveBestScore()
+    {
+        if (currentScore <= bestScore) return false;
+        bestScore = currentScore;
+        PlayerPrefs.SetInt(BestScoreKey, bestScore);
+        PlayerPrefs.Save();
+        return true;
+    }
+
+    private void ResolveLegacyReferences()
+    {
+        targetTemplate ??= scoreZone;
+        if (balls.Count == 0 && ball != null) balls.Add(ball);
+        if ((ballSpawnPoints == null || ballSpawnPoints.Length == 0) && ballSpawnPoint != null)
+            ballSpawnPoints = new[] { ballSpawnPoint };
+    }
+
+    private static bool IsFootballBallCollider(Collider2D other) =>
+        other != null && other.GetComponentInParent<FootballBallRuntime>() != null;
 
 #if UNITY_EDITOR
-    private void OnValidate()
+    private void OnDrawGizmosSelected()
     {
-        roundDuration = Mathf.Max(1f, roundDuration);
-        zoneRespawnDelay = Mathf.Max(0f, zoneRespawnDelay);
-        spawnAttempts = Mathf.Max(1, spawnAttempts);
-        greenRadius = Mathf.Max(0.1f, greenRadius);
-        blueRadius = Mathf.Max(0.1f, blueRadius);
-        redRadius = Mathf.Max(0.1f, redRadius);
+        DrawZone(ballSpawnZone, new Color(0.2f, 1f, 0.35f, 0.8f));
+        DrawZone(anomalySpawnZone, new Color(1f, 0.25f, 0.25f, 0.8f));
+        DrawZone(targetSpawnZone, new Color(0.15f, 0.65f, 1f, 0.8f));
+    }
+
+    private static void DrawZone(Collider2D zone, Color color)
+    {
+        if (zone == null) return;
+        Gizmos.color = color;
+        Gizmos.DrawWireCube(zone.bounds.center, zone.bounds.size);
     }
 #endif
 }
