@@ -222,6 +222,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         Run,
         Bunker,
+        BunkerRooms,
         World,
         Enemies,
         Events,
@@ -255,6 +256,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         "RUN",
         "BUNKER",
+        "BUNKER ROOMS",
         "WORLD",
         "ENEMIES",
         "EVENTS",
@@ -919,6 +921,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 break;
             case DebugTab.Bunker:
                 AddBunkerSection();
+                break;
+            case DebugTab.BunkerRooms:
+                AddRoomStateRows();
                 break;
             case DebugTab.World:
                 AddWorldRulesSection();
@@ -2299,8 +2304,6 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void AddBunkerSection()
     {
-        AddRoomStateRows();
-
         BunkerStationProgressionService service = BunkerStationProgressionService.Instance;
         AddSectionTitle("CHARACTER STATION", "Persistent station investment");
         if (service == null ||
@@ -2761,13 +2764,13 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void AddRoomStateRows()
     {
-        AddSectionTitle("BUNKER ROOMS", "Independent production room states");
-        BunkerRoomState[] rooms =
-            FindObjectsByType<BunkerRoomState>(FindObjectsSortMode.None);
+        AddSectionTitle("ROOM ACCESS", "Runtime only; values are not saved");
+        BunkerRoomAccess[] rooms =
+            FindObjectsByType<BunkerRoomAccess>(FindObjectsSortMode.None);
 
         foreach (BunkerRoomId roomId in Enum.GetValues(typeof(BunkerRoomId)))
         {
-            BunkerRoomState room = null;
+            BunkerRoomAccess room = null;
             for (int i = 0; i < rooms.Length; i++)
             {
                 if (rooms[i] != null && rooms[i].RoomId == roomId)
@@ -2779,13 +2782,59 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
             string state = room == null
                 ? "MISSING"
-                : room.IsOpen ? "OPEN" : "CLOSED";
+                : room.Unlocked ? "OPEN" : "CLOSED";
             Color color = room == null
                 ? warningColor
-                : room.IsOpen ? successColor : mutedColor;
-            AddRow(roomId.ToString(), state, color, null, false, null);
+                : room.Unlocked ? successColor : mutedColor;
+            BunkerRoomAccess captured = room;
+            AddRow(
+                GetRoomDisplayName(roomId),
+                $"[ {state} ]",
+                color,
+                room != null && room.Unlocked ? "CLOSE" : "OPEN",
+                room != null,
+                () =>
+                {
+                    captured.SetUnlocked(!captured.Unlocked);
+                    RefreshCurrentTab();
+                });
         }
+
+        AddSectionTitle("ALL ROOMS", "Bulk runtime controls");
+        AddRow("OPEN ALL", "Set every room OPEN", successColor,
+            "OPEN ALL", rooms.Length > 0, () => SetAllRooms(rooms, true));
+        AddRow("CLOSE ALL", "Set every room CLOSED", mutedColor,
+            "CLOSE ALL", rooms.Length > 0, () => SetAllRooms(rooms, false));
+        AddRow("RESET DEFAULTS", "Read defaultUnlocked from scene", accentColor,
+            "RESET DEFAULTS", rooms.Length > 0, () => ResetRoomDefaults(rooms));
     }
+
+    private void SetAllRooms(BunkerRoomAccess[] rooms, bool unlocked)
+    {
+        for (int i = 0; i < rooms.Length; i++)
+            rooms[i]?.SetUnlocked(unlocked);
+
+        RefreshCurrentTab();
+    }
+
+    private void ResetRoomDefaults(BunkerRoomAccess[] rooms)
+    {
+        for (int i = 0; i < rooms.Length; i++)
+            rooms[i]?.ResetToDefault();
+
+        RefreshCurrentTab();
+    }
+
+    private static string GetRoomDisplayName(BunkerRoomId roomId) => roomId switch
+    {
+        BunkerRoomId.CharacterSelection => "Character Selection",
+        BunkerRoomId.WeaponSelection => "Weapon Selection",
+        BunkerRoomId.UpgradeStation => "Upgrade Station",
+        BunkerRoomId.AnomalyStation => "Anomaly Station",
+        BunkerRoomId.FutureStation => "Future Station",
+        BunkerRoomId.SecretRoom => "Secret Room",
+        _ => roomId.ToString()
+    };
 
     private void AddLootChestSection()
     {

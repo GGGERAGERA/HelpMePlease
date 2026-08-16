@@ -24,7 +24,9 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
     [Header("Custom")]
     [SerializeField] private UnityEvent onInteract;
 
-    public bool CanInteract => stationType != BunkerStationType.None;
+    private bool interactionEnabled = true;
+
+    public bool CanInteract => interactionEnabled && stationType != BunkerStationType.None;
     public string InteractionText => interactionText;
 
     private BunkerPanelManager Panels =>
@@ -34,6 +36,9 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
 
     public void Interact()
     {
+        if (!CanInteract)
+            return;
+
         switch (stationType)
         {
             case BunkerStationType.CharacterSelection:
@@ -78,5 +83,10 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
         // Other stations continue using the reusable floating panel.
         if (progressionEnabled && progressionStationId != BunkerStationId.Character)
             Panels?.ShowStationProgression(progressionStationId);
+    }
+
+    public void SetInteractionEnabled(bool enabled)
+    {
+        interactionEnabled = enabled;
     }
 }
