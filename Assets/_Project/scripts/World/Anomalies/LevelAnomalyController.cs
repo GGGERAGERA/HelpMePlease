@@ -102,6 +102,11 @@ public sealed class LevelAnomalyController : MonoBehaviour
     private float focusAmount;
     private Bounds focusBounds;
     private bool hasFocusGeometry;
+    private bool focusDefaultsCaptured;
+    private bool defaultAnomalyFocusEnabled;
+    private float defaultOutsideDarkness;
+    private float defaultOutsideDesaturation;
+    private float defaultFocusTransition;
 
     private static readonly int FocusAmountId = Shader.PropertyToID("_FocusAmount");
     private static readonly int FocusDarknessId = Shader.PropertyToID("_OutsideDarkness");
@@ -129,10 +134,11 @@ public sealed class LevelAnomalyController : MonoBehaviour
     public void SetFocusTransition(float value) => focusTransition = Mathf.Clamp(value, 0.2f, 0.35f);
     public void ResetFocusPresentationForDebug()
     {
-        anomalyFocusEnabled = true;
-        outsideDarkness = 1f;
-        outsideDesaturation = 0f;
-        focusTransition = 0.35f;
+        CaptureFocusPresentationDefaults();
+        anomalyFocusEnabled = defaultAnomalyFocusEnabled;
+        outsideDarkness = defaultOutsideDarkness;
+        outsideDesaturation = defaultOutsideDesaturation;
+        focusTransition = defaultFocusTransition;
     }
 #endif
 
@@ -177,6 +183,19 @@ public sealed class LevelAnomalyController : MonoBehaviour
         }
 
         Instance = this;
+        CaptureFocusPresentationDefaults();
+    }
+
+    private void CaptureFocusPresentationDefaults()
+    {
+        if (focusDefaultsCaptured)
+            return;
+
+        focusDefaultsCaptured = true;
+        defaultAnomalyFocusEnabled = anomalyFocusEnabled;
+        defaultOutsideDarkness = outsideDarkness;
+        defaultOutsideDesaturation = outsideDesaturation;
+        defaultFocusTransition = focusTransition;
     }
 
     private void Update()

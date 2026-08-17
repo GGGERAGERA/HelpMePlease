@@ -17,7 +17,9 @@ public enum AnomalyVisualTuningCapabilities
     EdgeGlow = 1 << 7,
     PulseSpeed = 1 << 8,
     PulseStrength = 1 << 9,
-    PatternSpeed = 1 << 10
+    PatternSpeed = 1 << 10,
+    BoundaryAlpha = 1 << 11,
+    PatternStrength = 1 << 12
 }
 
 public struct AnomalyVisualTuningValues
@@ -33,6 +35,8 @@ public struct AnomalyVisualTuningValues
     public float PulseSpeed;
     public float PulseStrength;
     public float PatternSpeed;
+    public float BoundaryAlpha;
+    public float PatternStrength;
 }
 
 internal interface IAnomalyVisualTunable
@@ -75,6 +79,10 @@ internal static class AnomalyVisualTuningFormatter
             capabilities, AnomalyVisualTuningCapabilities.PulseStrength);
         AppendFloat(text, "PatternSpeed", values.PatternSpeed,
             capabilities, AnomalyVisualTuningCapabilities.PatternSpeed);
+        AppendFloat(text, "BoundaryAlpha", values.BoundaryAlpha,
+            capabilities, AnomalyVisualTuningCapabilities.BoundaryAlpha);
+        AppendFloat(text, "PatternStrength", values.PatternStrength,
+            capabilities, AnomalyVisualTuningCapabilities.PatternStrength);
         return text.ToString().TrimEnd();
     }
 

@@ -5,6 +5,9 @@ using UnityEngine;
 public sealed class ProductionAnomalySite : MonoBehaviour
 {
     private static readonly List<ProductionAnomalySite> activeSites = new();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    internal static event System.Action VisualTargetsChanged;
+#endif
 
     private WorldEventSpawner eventSpawner;
     private LevelAnomalyController anomalyController;
@@ -49,12 +52,22 @@ public sealed class ProductionAnomalySite : MonoBehaviour
     private void OnEnable()
     {
         if (!activeSites.Contains(this))
+        {
             activeSites.Add(this);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            VisualTargetsChanged?.Invoke();
+#endif
+        }
     }
 
     private void OnDisable()
     {
-        activeSites.Remove(this);
+        if (activeSites.Remove(this))
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            VisualTargetsChanged?.Invoke();
+#endif
+        }
     }
 
     public bool InitializeNormal(
@@ -88,7 +101,11 @@ public sealed class ProductionAnomalySite : MonoBehaviour
             size
         );
         eventPosition = SelectEventPosition();
-        return SpawnEvent(false);
+        bool spawned = SpawnEvent(false);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        VisualTargetsChanged?.Invoke();
+#endif
+        return spawned;
     }
 
     public bool InitializeSpecial(
@@ -152,7 +169,11 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         BuildBoundary(size, new Color(1f, 0.35f, 0.1f, 0.9f));
 
         eventPosition = SelectEventPosition();
-        return SpawnEvent(true);
+        bool spawned = SpawnEvent(true);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        VisualTargetsChanged?.Invoke();
+#endif
+        return spawned;
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -341,7 +362,12 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         if ((capabilities & AnomalyVisualTuningCapabilities.PrimaryColor) != 0)
         {
             Color color = values.PrimaryColor;
-            color.a = originalBoundaryColor.a;
+            float alphaMultiplier =
+                (capabilities &
+                    AnomalyVisualTuningCapabilities.BoundaryAlpha) != 0
+                    ? Mathf.Clamp01(values.BoundaryAlpha)
+                    : 1f;
+            color.a = originalBoundaryColor.a * alphaMultiplier;
             boundary.startColor = color;
             boundary.endColor = color;
         }
@@ -611,6 +637,10 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 
         if (boundary != null)
             boundary.enabled = false;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        VisualTargetsChanged?.Invoke();
+#endif
     }
 
     private void BuildBoundary(Vector2 size, Color color)
@@ -641,7 +671,12 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 
     private void OnDestroy()
     {
-        activeSites.Remove(this);
+        if (activeSites.Remove(this))
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            VisualTargetsChanged?.Invoke();
+#endif
+        }
 
         if (eventSpawner != null)
         {

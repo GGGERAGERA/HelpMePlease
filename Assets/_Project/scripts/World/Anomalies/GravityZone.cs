@@ -505,6 +505,7 @@ public sealed class GravityZone : LocalAnomalyZone
         AnomalyVisualTuningCapabilities.FillColor |
         AnomalyVisualTuningCapabilities.FillAlpha |
         AnomalyVisualTuningCapabilities.BoundaryWidth |
+        AnomalyVisualTuningCapabilities.BoundaryAlpha |
         AnomalyVisualTuningCapabilities.VisualScale |
         AnomalyVisualTuningCapabilities.PulseSpeed |
         AnomalyVisualTuningCapabilities.PatternSpeed;
@@ -520,6 +521,8 @@ public sealed class GravityZone : LocalAnomalyZone
         debugVisualValues.FillColor.a = debugVisualValues.FillAlpha;
         debugVisualValues.BoundaryWidth = Mathf.Clamp(
             values.BoundaryWidth, 0.01f, 3f);
+        debugVisualValues.BoundaryAlpha = Mathf.Clamp01(
+            values.BoundaryAlpha);
         debugVisualValues.VisualScale = Mathf.Clamp(
             values.VisualScale, 0.25f, 3f);
         debugVisualValues.PulseSpeed = Mathf.Clamp(
@@ -558,6 +561,7 @@ public sealed class GravityZone : LocalAnomalyZone
             FillColor = inner,
             FillAlpha = inner.a,
             BoundaryWidth = edgeWidth,
+            BoundaryAlpha = 1f,
             VisualScale = 1f,
             PulseSpeed = centerPulseSpeed,
             PatternSpeed = flowSpeed
@@ -595,11 +599,10 @@ public sealed class GravityZone : LocalAnomalyZone
         {
             Color fill = debugVisualValues.FillColor;
             fill.a = debugVisualValues.FillAlpha;
+            Color edge = debugVisualValues.PrimaryColor;
+            edge.a *= debugVisualValues.BoundaryAlpha;
             visualProperties.SetColor(InnerColorId, fill);
-            visualProperties.SetColor(
-                EdgeColorId,
-                debugVisualValues.PrimaryColor
-            );
+            visualProperties.SetColor(EdgeColorId, edge);
             visualProperties.SetVector(
                 RegionSizeId,
                 AreaSize * debugVisualValues.VisualScale

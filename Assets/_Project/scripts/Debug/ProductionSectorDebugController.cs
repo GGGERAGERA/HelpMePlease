@@ -155,6 +155,18 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     private Material enemyReadabilityMaterial;
     private float nextRefresh;
     private bool monochromeAnomalies;
+    private bool sessionDefaultsCaptured;
+    private ReadabilityPreset defaultReadabilityPreset;
+    private float defaultDecorBrightness;
+    private float defaultAnomalyAccent;
+    private EnemyReadability defaultEnemyReadability;
+    private EnemyScope defaultEnemyScope;
+    private float defaultEnemySaturation;
+    private float defaultEnemyBrightness;
+    private float defaultEnemyTintStrength;
+    private float defaultEnemyOutlineStrength;
+    private float defaultEnemyOutlineWidth;
+    private bool defaultEnemyOutlineEnabled;
 
     public ReadabilityPreset Preset => readabilityPreset;
     public float DecorBrightness => decorBrightness;
@@ -437,6 +449,11 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         RefreshVisualTunerTargets(true);
     }
 
+    public void RefreshVisualTunerTargetCache()
+    {
+        RefreshVisualTunerTargets(false);
+    }
+
     public void SelectPreviousVisualTunerTarget()
     {
         RefreshVisualTunerTargets(false);
@@ -530,24 +547,51 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
 
     public void ResetVisualSettings()
     {
-        readabilityPreset = ReadabilityPreset.Original;
-        decorBrightness = 1f;
-        anomalyAccent = 1f;
-        enemyReadability = EnemyReadability.High;
-        enemyScope = EnemyScope.All;
-        ApplyEnemyPreset(EnemyReadability.High);
-        enemyOutlineWidth = 1f;
-        ApplyEnvironment();
-        ApplyAnomalyAccent();
-        ApplyAllEnemies();
+        ResetWorldVisualSettings();
+        ResetEnemyVisualSettings();
+        ResetAnomalyVisualSettings();
     }
 
     public void ResetVisualTestSettings()
     {
-        enemyReadability = EnemyReadability.High;
-        enemyScope = EnemyScope.All;
-        ApplyEnemyPreset(EnemyReadability.High);
+        ResetEnemyVisualSettings();
+    }
+
+    public void ResetWorldVisualSettings()
+    {
+        CaptureSessionDefaults();
+        readabilityPreset = defaultReadabilityPreset;
+        decorBrightness = defaultDecorBrightness;
+        ApplyEnvironment();
+    }
+
+    public void ResetEnemyVisualSettings()
+    {
+        CaptureSessionDefaults();
+        enemyReadability = defaultEnemyReadability;
+        enemyScope = defaultEnemyScope;
+        enemySaturation = defaultEnemySaturation;
+        enemyBrightness = defaultEnemyBrightness;
+        enemyTintStrength = defaultEnemyTintStrength;
+        enemyOutlineStrength = defaultEnemyOutlineStrength;
+        enemyOutlineWidth = defaultEnemyOutlineWidth;
+        enemyOutlineEnabled = defaultEnemyOutlineEnabled;
         ApplyAllEnemies();
+    }
+
+    public void ResetAnomalyVisualSettings()
+    {
+        CaptureSessionDefaults();
+        anomalyAccent = defaultAnomalyAccent;
+        ApplyAnomalyAccent();
+
+        if (monochromeAnomalies)
+            SetMonochromeAnomalies(false);
+
+        IReadOnlyList<ProductionAnomalySite> sites =
+            ProductionAnomalySite.ActiveSites;
+        for (int i = 0; i < sites.Count; i++)
+            sites[i]?.ResetVisualTuner();
     }
 
     public void RebuildCurrentSector()
@@ -578,9 +622,12 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
 
     private void OnEnable()
     {
+        CaptureSessionDefaults();
         readabilityProperties ??= new MaterialPropertyBlock();
         EnemyHealth.Spawned += RegisterEnemy;
         EnemyHealth.Despawned += UnregisterEnemy;
+        ProductionAnomalySite.VisualTargetsChanged +=
+            HandleVisualTargetsChanged;
         EnsureEnemyReadabilityMaterial();
         RefreshCurrentSite(true);
         RefreshVisualRegistries();
@@ -588,6 +635,30 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         RegisterActiveEnemies();
         ApplyAllEnemies();
         ApplyInvulnerability();
+    }
+
+    private void CaptureSessionDefaults()
+    {
+        if (sessionDefaultsCaptured)
+            return;
+
+        sessionDefaultsCaptured = true;
+        defaultReadabilityPreset = readabilityPreset;
+        defaultDecorBrightness = decorBrightness;
+        defaultAnomalyAccent = anomalyAccent;
+        defaultEnemyReadability = enemyReadability;
+        defaultEnemyScope = enemyScope;
+        defaultEnemySaturation = enemySaturation;
+        defaultEnemyBrightness = enemyBrightness;
+        defaultEnemyTintStrength = enemyTintStrength;
+        defaultEnemyOutlineStrength = enemyOutlineStrength;
+        defaultEnemyOutlineWidth = enemyOutlineWidth;
+        defaultEnemyOutlineEnabled = enemyOutlineEnabled;
+    }
+
+    private void HandleVisualTargetsChanged()
+    {
+        RefreshVisualTunerTargets(false);
     }
 
     private void Update()
@@ -656,7 +727,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         {
             ProductionAnomalySite site = sites[i];
 
-            if (site != null && site.IsMapVisible && site.HasVisualTuner)
+            if (site != null && site.IsMapVisible)
                 visualTunerSites.Add(site);
         }
 
@@ -701,7 +772,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     {
         ProductionAnomalySite target = VisualTunerTarget;
 
-        if (target == null || !target.IsMapVisible || !target.HasVisualTuner)
+        if (target == null || !target.IsMapVisible)
             RefreshVisualTunerTargets(true);
     }
 
@@ -1447,6 +1518,8 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     {
         EnemyHealth.Spawned -= RegisterEnemy;
         EnemyHealth.Despawned -= UnregisterEnemy;
+        ProductionAnomalySite.VisualTargetsChanged -=
+            HandleVisualTargetsChanged;
         RestoreAll();
         enemyVisuals.Clear();
     }

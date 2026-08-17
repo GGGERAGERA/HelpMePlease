@@ -269,6 +269,7 @@ internal sealed class ProductionElectricSiteHazard :
         AnomalyVisualTuningCapabilities.PrimaryColor |
         AnomalyVisualTuningCapabilities.SecondaryColor |
         AnomalyVisualTuningCapabilities.BoundaryWidth |
+        AnomalyVisualTuningCapabilities.BoundaryAlpha |
         AnomalyVisualTuningCapabilities.InnerLineWidth |
         AnomalyVisualTuningCapabilities.VisualScale |
         AnomalyVisualTuningCapabilities.EdgeGlow;
@@ -282,12 +283,17 @@ internal sealed class ProductionElectricSiteHazard :
         debugVisualValues.SecondaryColor = ClampColor(values.SecondaryColor);
         debugVisualValues.BoundaryWidth = Mathf.Clamp(
             values.BoundaryWidth, 0.01f, 3f);
+        debugVisualValues.BoundaryAlpha = Mathf.Clamp01(
+            values.BoundaryAlpha);
         debugVisualValues.InnerLineWidth = Mathf.Clamp(
             values.InnerLineWidth, 0.01f, 3f);
         debugVisualValues.VisualScale = Mathf.Clamp(
             values.VisualScale, 0.25f, 3f);
         debugVisualValues.EdgeGlow = Mathf.Clamp(
             values.EdgeGlow, 0.01f, 10f);
+
+        Color boundaryColor = debugVisualValues.PrimaryColor;
+        boundaryColor.a *= debugVisualValues.BoundaryAlpha;
 
         for (int i = 0; i < nodeRings.Count; i++)
         {
@@ -296,8 +302,8 @@ internal sealed class ProductionElectricSiteHazard :
             if (ring == null)
                 continue;
 
-            ring.startColor = debugVisualValues.PrimaryColor;
-            ring.endColor = debugVisualValues.PrimaryColor;
+            ring.startColor = boundaryColor;
+            ring.endColor = boundaryColor;
             ring.startWidth = debugVisualValues.BoundaryWidth;
             ring.endWidth = debugVisualValues.BoundaryWidth;
             SetNodeRing(
@@ -377,6 +383,7 @@ internal sealed class ProductionElectricSiteHazard :
             PrimaryColor = originalCoreColor,
             SecondaryColor = originalTelegraphColor,
             BoundaryWidth = originalNodeWidth,
+            BoundaryAlpha = 1f,
             InnerLineWidth = originalCoreWidth,
             VisualScale = 1f,
             EdgeGlow = originalGlowWidth

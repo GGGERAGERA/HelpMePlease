@@ -3,6 +3,9 @@ using UnityEngine;
 
 [RequireComponent(typeof(BoxCollider2D))]
 public sealed class GlitchZone : LocalAnomalyZone
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    , IAnomalyVisualTunable
+#endif
 {
     private sealed class AffectedObject
     {
@@ -24,6 +27,10 @@ public sealed class GlitchZone : LocalAnomalyZone
     private static readonly int VisualTimeId =
         Shader.PropertyToID("_VisualTime");
     private static readonly int PulseId = Shader.PropertyToID("_Pulse");
+    private static readonly int InnerColorId =
+        Shader.PropertyToID("_InnerColor");
+    private static readonly int EdgeColorId =
+        Shader.PropertyToID("_EdgeColor");
 
     private const int PositionAttempts = 8;
     private const int OverlapCapacity = 32;
@@ -49,6 +56,11 @@ public sealed class GlitchZone : LocalAnomalyZone
     private float targetVisualFade;
     private bool effectsCleared;
     private bool despawning;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private AnomalyVisualTuningValues originalVisualValues;
+    private AnomalyVisualTuningValues debugVisualValues;
+    private bool visualValuesCaptured;
+#endif
 
     private void Awake()
     {
@@ -107,6 +119,9 @@ public sealed class GlitchZone : LocalAnomalyZone
             gameplayArea = FindFirstObjectByType<GameplayAreaService>();
 
         ConfigureVisual(areaSize);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        CaptureOriginalVisualValues();
+#endif
         effectsCleared = false;
         despawning = false;
         pulseVisual = 0f;
@@ -524,6 +539,80 @@ public sealed class GlitchZone : LocalAnomalyZone
         }
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public string VisualTypeName => "GLITCH";
+
+    public AnomalyVisualTuningCapabilities VisualCapabilities =>
+        AnomalyVisualTuningCapabilities.PrimaryColor |
+        AnomalyVisualTuningCapabilities.FillColor |
+        AnomalyVisualTuningCapabilities.FillAlpha |
+        AnomalyVisualTuningCapabilities.BoundaryWidth |
+        AnomalyVisualTuningCapabilities.BoundaryAlpha |
+        AnomalyVisualTuningCapabilities.VisualScale;
+
+    public AnomalyVisualTuningValues VisualValues => debugVisualValues;
+
+    public void ApplyVisualValues(AnomalyVisualTuningValues values)
+    {
+        debugVisualValues = values;
+        debugVisualValues.PrimaryColor = ClampColor(values.PrimaryColor);
+        debugVisualValues.FillColor = ClampColor(values.FillColor);
+        debugVisualValues.FillAlpha = Mathf.Clamp01(values.FillAlpha);
+        debugVisualValues.FillColor.a = debugVisualValues.FillAlpha;
+        debugVisualValues.BoundaryWidth = Mathf.Clamp(
+            values.BoundaryWidth, 0.01f, 3f);
+        debugVisualValues.BoundaryAlpha = Mathf.Clamp01(
+            values.BoundaryAlpha);
+        debugVisualValues.VisualScale = Mathf.Clamp(
+            values.VisualScale, 0.25f, 3f);
+        edgeWidth = debugVisualValues.BoundaryWidth;
+        ConfigureVisual(AreaSize * debugVisualValues.VisualScale);
+        ApplyVisualProperties();
+    }
+
+    public void ResetVisualValues()
+    {
+        if (visualValuesCaptured)
+            ApplyVisualValues(originalVisualValues);
+    }
+
+    private void CaptureOriginalVisualValues()
+    {
+        if (visualValuesCaptured)
+            return;
+
+        Color inner = visualMaterial != null &&
+            visualMaterial.HasProperty(InnerColorId)
+                ? visualMaterial.GetColor(InnerColorId)
+                : Color.clear;
+        Color edge = visualMaterial != null &&
+            visualMaterial.HasProperty(EdgeColorId)
+                ? visualMaterial.GetColor(EdgeColorId)
+                : Color.white;
+        debugVisualValues = new AnomalyVisualTuningValues
+        {
+            PrimaryColor = edge,
+            FillColor = inner,
+            FillAlpha = inner.a,
+            BoundaryWidth = edgeWidth,
+            BoundaryAlpha = 1f,
+            VisualScale = 1f
+        };
+        originalVisualValues = debugVisualValues;
+        visualValuesCaptured = true;
+    }
+
+    private static Color ClampColor(Color value)
+    {
+        return new Color(
+            Mathf.Clamp01(value.r),
+            Mathf.Clamp01(value.g),
+            Mathf.Clamp01(value.b),
+            Mathf.Clamp01(value.a)
+        );
+    }
+#endif
+
     private void ApplyVisualProperties()
     {
         if (visualRenderer == null || visualProperties == null)
@@ -531,7 +620,23 @@ public sealed class GlitchZone : LocalAnomalyZone
 
         visualProperties.SetFloat(FadeId, visualFade);
         visualProperties.SetFloat(EdgeWidthId, edgeWidth);
-        visualProperties.SetVector(RegionSizeId, AreaSize);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (visualValuesCaptured)
+        {
+            Color fill = debugVisualValues.FillColor;
+            fill.a = debugVisualValues.FillAlpha;
+            Color edge = debugVisualValues.PrimaryColor;
+            edge.a *= debugVisualValues.BoundaryAlpha;
+            visualProperties.SetColor(InnerColorId, fill);
+            visualProperties.SetColor(EdgeColorId, edge);
+            visualProperties.SetVector(
+                RegionSizeId,
+                AreaSize * debugVisualValues.VisualScale
+            );
+        }
+        else
+#endif
+            visualProperties.SetVector(RegionSizeId, AreaSize);
         visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
         visualProperties.SetFloat(PulseId, pulseVisual);
         visualRenderer.SetPropertyBlock(visualProperties);
