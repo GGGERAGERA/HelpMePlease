@@ -13,16 +13,40 @@ PrefabInstance:
       value: FootBallGates1 Variant
       objectReference: {fileID: 0}
     - target: {fileID: 498333777358020122, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_Frequency
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 498333777358020122, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_DampingRatio
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 498333777358020122, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_ConnectedAnchor.x
-      value: -3.4620332e-12
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 498333777358020122, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_ConnectedAnchor.y
-      value: 0.0000013338067
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 670832028437019720, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_Mass
       value: 0.38484532
+      objectReference: {fileID: 0}
+    - target: {fileID: 670832028437019720, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_GravityScale
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 915845535449219851, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_Constraints
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 1671366595733339122, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_Constraints
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2312608323493793675, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_Constraints
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 3384728257966872058, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_LocalScale.y
@@ -45,24 +69,36 @@ PrefabInstance:
       value: -1.981628
       objectReference: {fileID: 0}
     - target: {fileID: 4312498966595906724, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_Frequency
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4312498966595906724, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_DampingRatio
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4312498966595906724, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_ConnectedAnchor.x
-      value: 0.0000013623916
+      value: -1.35233135e-11
       objectReference: {fileID: 0}
     - target: {fileID: 4312498966595906724, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_ConnectedAnchor.y
-      value: 5.2958304e-11
+      value: 0.000005335227
+      objectReference: {fileID: 0}
+    - target: {fileID: 4436913336290497380, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_Constraints
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 4640422778032349014, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 17.524271
+      value: 84.78652
       objectReference: {fileID: 0}
     - target: {fileID: 4640422778032349014, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -8.378602
+      value: 23.157068
       objectReference: {fileID: 0}
     - target: {fileID: 4640422778032349014, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -1.2732614
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4640422778032349014, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_LocalRotation.w
@@ -93,32 +129,64 @@ PrefabInstance:
       value: 180.001
       objectReference: {fileID: 0}
     - target: {fileID: 4762609717769707768, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_Frequency
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4762609717769707768, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_DampingRatio
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4762609717769707768, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_ConnectedAnchor.x
-      value: -0.0000013623916
+      value: -1.35233135e-11
       objectReference: {fileID: 0}
     - target: {fileID: 4762609717769707768, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_ConnectedAnchor.y
-      value: -5.2958304e-11
+      value: 0.000005335227
       objectReference: {fileID: 0}
     - target: {fileID: 5006812088033769184, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_Mass
       value: 0.38484532
       objectReference: {fileID: 0}
+    - target: {fileID: 5006812088033769184, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_GravityScale
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6108109648866005785, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_Frequency
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6108109648866005785, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_DampingRatio
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 6108109648866005785, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_ConnectedAnchor.x
-      value: -6.7616568e-12
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 6108109648866005785, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_ConnectedAnchor.y
-      value: 0.0000026676134
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6219657612423064851, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6264121896787505901, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_Frequency
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6264121896787505901, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_DampingRatio
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6264121896787505901, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_ConnectedAnchor.x
-      value: -3.624443e-12
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 6264121896787505901, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_ConnectedAnchor.y
-      value: 0.0000013338067
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 6377599028603862196, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_LocalPosition.x
@@ -160,13 +228,29 @@ PrefabInstance:
       propertyPath: m_Mass
       value: 0.38484532
       objectReference: {fileID: 0}
+    - target: {fileID: 7103425008632768648, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_GravityScale
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7789552164760385665, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_Constraints
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 8234059180065158977, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_Mass
       value: 0.38484532
       objectReference: {fileID: 0}
+    - target: {fileID: 8234059180065158977, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_GravityScale
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 9071920755886873121, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_Mass
       value: 0.38484532
+      objectReference: {fileID: 0}
+    - target: {fileID: 9071920755886873121, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
+      propertyPath: m_GravityScale
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9193121854040772312, guid: 6d6ddfe5c3dafd2458e8d6fe2b87dcf2, type: 3}
       propertyPath: m_LocalPosition.x
