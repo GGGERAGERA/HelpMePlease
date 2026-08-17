@@ -320,6 +320,9 @@ public class EnemyHealth : MonoBehaviour
         }
 
         DropLoot();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        PhysicalCombatFeedbackRuntime.TryDetachDeathVisual(this);
+#endif
         Destroy(gameObject);
     }
 

@@ -229,6 +229,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         WeaponsAndUpgrades,
         Telekinesis,
         VisualTest,
+        FeelTest,
         SectorTest
     }
 
@@ -265,6 +266,16 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         Camera
     }
 
+    private enum FeelSection
+    {
+        PhysicalFeedback,
+        Weapon,
+        Hit,
+        Death,
+        Camera,
+        Movement
+    }
+
     private static readonly string[] TabLabels =
     {
         "RUN",
@@ -276,6 +287,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         "WEAPONS & BUILD",
         "TELEKINESIS",
         "VISUAL",
+        "FEEL",
         "ТЕСТ СЕКТОРА"
     };
 
@@ -345,12 +357,17 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private TelekinesisDebugPrototype telekinesisPrototype;
     private CombatLabDebugController combatLab;
     private ProductionVisualTuningController productionVisualTuning;
+    private ProductionFeelTuningController productionFeelTuning;
     private WorldRuleVisual worldRuleVisual;
     private PlayerWeaponOrbitVisual playerOrbitVisual;
     private CameraFollow cameraFollow;
     private readonly bool[] visualSectionExpanded =
     {
         true, false, true, true, true, true, true, true, true
+    };
+    private readonly bool[] feelSectionExpanded =
+    {
+        true, true, true, false, true, true
     };
 
     private readonly Color panelColor = new(0.035f, 0.045f, 0.06f, 0.97f);
@@ -461,11 +478,14 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         if (isOpen)
             return;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
+#endif
         ResolveSceneReferences();
         previousTimeScale = Time.timeScale;
         previousCursorVisible = Cursor.visible;
         previousCursorLockMode = Cursor.lockState;
-        menuLiveSimulation = activeTab == DebugTab.VisualTest;
+        menuLiveSimulation = IsRuntimeLabTab(activeTab);
         RefreshTab(activeTab);
 
         Time.timeScale = menuLiveSimulation ? previousTimeScale : 0f;
@@ -735,6 +755,12 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         productionVisualTuning ??=
             gameObject.AddComponent<ProductionVisualTuningController>();
         productionVisualTuning.Configure();
+
+        productionFeelTuning ??=
+            GetComponent<ProductionFeelTuningController>();
+        productionFeelTuning ??=
+            gameObject.AddComponent<ProductionFeelTuningController>();
+        productionFeelTuning.Configure();
     }
 
     private void WarnIfMissing(
@@ -850,12 +876,13 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         for (int i = 0; i < labels.Length; i++)
         {
-            bool visual = i == (int)DebugTab.VisualTest;
-            tabRoots[i] = CreateTabPage(labels[i], pages, out _, visual);
+            bool compactLab = IsRuntimeLabTab((DebugTab)i);
+            tabRoots[i] = CreateTabPage(labels[i], pages, out _, compactLab);
         }
 
         BuildVisualBackButton(header);
         BuildVisualActionBar(tabRoots[(int)DebugTab.VisualTest].transform);
+        BuildFeelActionBar(tabRoots[(int)DebugTab.FeelTest].transform);
 
         BuildPreviewPanel();
     }
@@ -929,6 +956,47 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             resetText.fontSize = 12f;
         if (copyText != null)
             copyText.fontSize = 12f;
+    }
+
+    private void BuildFeelActionBar(Transform feelPage)
+    {
+        RectTransform viewport = feelPage.Find("Viewport") as RectTransform;
+        if (viewport != null)
+            viewport.offsetMin = new Vector2(viewport.offsetMin.x, 42f);
+
+        RectTransform scrollbar = feelPage.Find("Scrollbar") as RectTransform;
+        if (scrollbar != null)
+            scrollbar.offsetMin = new Vector2(scrollbar.offsetMin.x, 44f);
+
+        RectTransform bar = CreateRect("Feel Actions", feelPage);
+        bar.anchorMin = Vector2.zero;
+        bar.anchorMax = new Vector2(1f, 0f);
+        bar.pivot = new Vector2(0.5f, 0f);
+        bar.offsetMin = Vector2.zero;
+        bar.offsetMax = new Vector2(0f, 38f);
+        bar.gameObject.AddComponent<Image>().color =
+            new Color(0.045f, 0.055f, 0.07f, 0.98f);
+
+        Button reset = CreateButton(
+            bar, "RESET ALL", ResetAllFeelLabValues, 120f);
+        RectTransform resetRect = reset.GetComponent<RectTransform>();
+        resetRect.anchorMin = Vector2.zero;
+        resetRect.anchorMax = new Vector2(0.5f, 1f);
+        resetRect.offsetMin = new Vector2(4f, 5f);
+        resetRect.offsetMax = new Vector2(-2f, -5f);
+
+        Button copy = CreateButton(
+            bar, "COPY VALUES", CopyFeelLabValues, 120f);
+        RectTransform copyRect = copy.GetComponent<RectTransform>();
+        copyRect.anchorMin = new Vector2(0.5f, 0f);
+        copyRect.anchorMax = Vector2.one;
+        copyRect.offsetMin = new Vector2(2f, 5f);
+        copyRect.offsetMax = new Vector2(-4f, -5f);
+
+        TextMeshProUGUI resetText = reset.GetComponentInChildren<TextMeshProUGUI>();
+        TextMeshProUGUI copyText = copy.GetComponentInChildren<TextMeshProUGUI>();
+        if (resetText != null) resetText.fontSize = 12f;
+        if (copyText != null) copyText.fontSize = 12f;
     }
 
     private void BuildPreviewPanel()
@@ -1046,7 +1114,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             bool choiceIsOpen =
                 (levelChoiceManager != null && levelChoiceManager.IsChoosing) ||
                 (upgradeManager != null && upgradeManager.IsChoosingUpgrade);
-            menuLiveSimulation = tab == DebugTab.VisualTest &&
+            menuLiveSimulation = IsRuntimeLabTab(tab) &&
                 !choiceIsOpen && previousTimeScale > 0f;
             Time.timeScale = menuLiveSimulation ? previousTimeScale : 0f;
         }
@@ -1094,7 +1162,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         for (int i = contentRoot.childCount - 1; i >= 0; i--)
             Destroy(contentRoot.GetChild(i).gameObject);
 
-        if (tab != DebugTab.VisualTest)
+        if (!IsRuntimeLabTab(tab))
             AddTabHeading(TabLabels[(int)tab]);
 
         switch (tab)
@@ -1129,12 +1197,15 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             case DebugTab.VisualTest:
                 AddInteractiveAnomalyVisualTest();
                 break;
+            case DebugTab.FeelTest:
+                AddInteractiveFeelLab();
+                break;
             case DebugTab.SectorTest:
                 AddProductionSectorTestSection();
                 break;
         }
 
-        if (activeTab != DebugTab.VisualTest)
+        if (!IsRuntimeLabTab(activeTab))
         {
             AddHint(menuLiveSimulation
                 ? "F1 закрывает меню. LIVE: симуляция продолжает работать."
@@ -1147,7 +1218,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         if (menuPanel == null)
             return;
 
-        bool compact = activeTab == DebugTab.VisualTest;
+        bool compact = IsRuntimeLabTab(activeTab);
         if (compact)
         {
             menuPanel.anchorMin = new Vector2(1f, 0.02f);
@@ -1169,9 +1240,11 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             menuHeader.sizeDelta = new Vector2(0f, compact ? 44f : 62f);
         if (menuTitle != null)
         {
-            menuTitle.text = compact
+            menuTitle.text = activeTab == DebugTab.VisualTest
                 ? "RUNTIME VISUAL LAB"
-                : "SUBJECT#42 — ОТЛАДОЧНОЕ МЕНЮ";
+                : activeTab == DebugTab.FeelTest
+                    ? "RUNTIME FEEL LAB"
+                    : "SUBJECT#42 — ОТЛАДОЧНОЕ МЕНЮ";
             menuTitle.fontSize = compact ? 17f : 28f;
             Stretch(menuTitle.rectTransform,
                 compact ? 12f : 22f,
@@ -2109,6 +2182,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             }
         }
     }
+
+    private static bool IsRuntimeLabTab(DebugTab tab) =>
+        tab == DebugTab.VisualTest || tab == DebugTab.FeelTest;
 
     private void SetMenuLiveSimulation(bool live)
     {
@@ -5002,6 +5078,228 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         return expanded;
     }
 
+    private bool AddFeelSectionHeader(
+        FeelSection section,
+        string title,
+        string subtitle)
+    {
+        int index = (int)section;
+        bool expanded = feelSectionExpanded[index];
+        RectTransform header = CreateRect(title, contentRoot);
+        Image image = header.gameObject.AddComponent<Image>();
+        image.color = new Color(
+            accentColor.r, accentColor.g, accentColor.b,
+            expanded ? 0.28f : 0.16f);
+        header.gameObject.AddComponent<LayoutElement>().preferredHeight = 34f;
+
+        Button button = header.gameObject.AddComponent<Button>();
+        button.targetGraphic = image;
+        button.navigation = new Navigation { mode = Navigation.Mode.None };
+        button.onClick.AddListener(() =>
+        {
+            feelSectionExpanded[index] = !feelSectionExpanded[index];
+            RefreshCurrentTab();
+        });
+
+        TextMeshProUGUI text = CreateText(
+            "Label", header,
+            $"<b>{(expanded ? "▼" : "▶")} {title}</b>",
+            13f, TextAlignmentOptions.MidlineLeft, Color.white);
+        text.raycastTarget = false;
+        Stretch(text.rectTransform, 9f, 9f, 2f, 2f);
+        return expanded;
+    }
+
+    private void AddInteractiveFeelLab()
+    {
+        EnsureProductionSectorDebug();
+        ProductionFeelTuningController tuning = productionFeelTuning;
+
+        if (tuning == null)
+        {
+            AddSectionTitle("FEEL", "Development / Editor only");
+            AddHint("ProductionFeelTuningController was not created.");
+            return;
+        }
+
+        tuning.Configure();
+        AddVisualStatusLine("● LIVE   Existing production parameters");
+        AddFeelPresetStrip(tuning);
+
+        if (AddFeelSectionHeader(
+                FeelSection.PhysicalFeedback,
+                "PHYSICAL FEEDBACK",
+                "Experimental presentation-only combat response"))
+        {
+            AddToggleRow("Hit Stop", tuning.HitStopEnabled, true,
+                tuning.ToggleHitStop);
+            AddSliderRow("Normal Hit Stop Duration",
+                tuning.NormalHitStopDuration, 0f, 0.1f,
+                tuning.SetNormalHitStopDuration, "0.000");
+            AddSliderRow("Crit Hit Stop Duration",
+                tuning.CritHitStopDuration, 0f, 0.15f,
+                tuning.SetCritHitStopDuration, "0.000");
+            AddSliderRow("Kill Hit Stop Duration",
+                tuning.KillHitStopDuration, 0f, 0.15f,
+                tuning.SetKillHitStopDuration, "0.000");
+
+            AddToggleRow("Enemy Hit Punch", tuning.EnemyHitPunchEnabled,
+                true, tuning.ToggleEnemyHitPunch);
+            AddSliderRow("Punch Strength", tuning.EnemyPunchStrength,
+                0f, 0.35f, tuning.SetEnemyPunchStrength, "0.000");
+            AddSliderRow("Punch Duration", tuning.EnemyPunchDuration,
+                0.02f, 0.2f, tuning.SetEnemyPunchDuration, "0.000");
+
+            AddToggleRow("Enemy Visual Kick", tuning.EnemyVisualKickEnabled,
+                true, tuning.ToggleEnemyVisualKick);
+            AddSliderRow("Kick Distance", tuning.EnemyKickDistance,
+                0f, 1f, tuning.SetEnemyKickDistance, "0.000");
+            AddSliderRow("Kick Return Duration",
+                tuning.EnemyKickReturnDuration, 0.02f, 0.2f,
+                tuning.SetEnemyKickReturnDuration, "0.000");
+
+            AddToggleRow("Weapon Visual Recoil",
+                tuning.WeaponVisualRecoilEnabled, true,
+                tuning.ToggleWeaponVisualRecoil);
+            AddSliderRow("Recoil Distance", tuning.WeaponRecoilDistance,
+                0f, 1f, tuning.SetWeaponRecoilDistance, "0.000");
+            AddSliderRow("Recoil Return Duration",
+                tuning.WeaponRecoilReturnDuration, 0.02f, 0.2f,
+                tuning.SetWeaponRecoilReturnDuration, "0.000");
+
+            AddToggleRow("Death Punch", tuning.DeathPunchEnabled, true,
+                tuning.ToggleDeathPunch);
+            AddSliderRow("Death Punch Strength", tuning.DeathPunchStrength,
+                0f, 0.5f, tuning.SetDeathPunchStrength, "0.000");
+            AddSliderRow("Death Punch Duration", tuning.DeathPunchDuration,
+                0.02f, 0.2f, tuning.SetDeathPunchDuration, "0.000");
+            AddVisualSectionReset(
+                "PHYSICAL FEEDBACK", tuning.ResetPhysicalFeedback);
+        }
+
+        if (AddFeelSectionHeader(
+                FeelSection.Weapon, "WEAPON", "Production weapon feedback"))
+        {
+            if (tuning.HasWeaponFx)
+            {
+                AddSliderRow("Weapon Camera Kick", tuning.FireShakeMagnitude,
+                    0f, 1f, tuning.SetFireShakeMagnitude, "0.000");
+                AddSliderRow("Fire Shake Duration", tuning.FireShakeDuration,
+                    0f, 1f, tuning.SetFireShakeDuration, "0.000");
+                AddVisualSectionReset("WEAPON", tuning.ResetWeapon);
+            }
+            else
+            {
+                AddHint("No active production WeaponFxPlayer was found.");
+            }
+        }
+
+        if (AddFeelSectionHeader(
+                FeelSection.Hit, "HIT", "EnemyWhiteFlash production source"))
+        {
+            if (tuning.HasHitFlash)
+            {
+                AddSliderRow("Hit Flash Duration", tuning.HitFlashDuration,
+                    0f, 1f, tuning.SetHitFlashDuration, "0.000");
+                AddVisualSectionReset("HIT", tuning.ResetHit);
+            }
+            else
+            {
+                AddHint("No active production EnemyWhiteFlash was found.");
+            }
+        }
+
+        if (AddFeelSectionHeader(
+                FeelSection.Death, "DEATH", "Production enemy death audit"))
+        {
+            AddHint(
+                "Death Punch is configured in PHYSICAL FEEDBACK. Gameplay " +
+                "death remains immediate; only the detached visual survives.");
+        }
+
+        if (AddFeelSectionHeader(
+                FeelSection.Camera, "CAMERA", "Production follow and impulses"))
+        {
+            if (tuning.HasCameraFollow)
+            {
+                AddSliderRow("Follow Smoothness", tuning.CameraDamping,
+                    0f, 1f, tuning.SetCameraDamping, "0.000");
+            }
+            if (tuning.HasWeaponFx)
+            {
+                AddSliderRow("Hit Impulse Strength", tuning.HitShakeMagnitude,
+                    0f, 1.5f, tuning.SetHitShakeMagnitude, "0.000");
+                AddSliderRow("Hit Impulse Duration", tuning.HitShakeDuration,
+                    0f, 1f, tuning.SetHitShakeDuration, "0.000");
+                AddSliderRow("Crit Impulse Strength", tuning.CritShakeMagnitude,
+                    0f, 2f, tuning.SetCritShakeMagnitude, "0.000");
+                AddSliderRow("Crit Impulse Duration", tuning.CritShakeDuration,
+                    0f, 1.5f, tuning.SetCritShakeDuration, "0.000");
+            }
+            if (!tuning.HasCameraFollow && !tuning.HasWeaponFx)
+                AddHint("No production camera feel parameters were found.");
+            else
+                AddVisualSectionReset("CAMERA", tuning.ResetCamera);
+            AddHint("Camera Zoom remains in VISUAL (same source of truth).");
+        }
+
+        if (AddFeelSectionHeader(
+                FeelSection.Movement, "MOVEMENT", "CharacterMovement2D fields"))
+        {
+            if (tuning.HasMovement)
+            {
+                AddSliderRow("Move Speed", tuning.MoveSpeed,
+                    0f, 20f, tuning.SetMoveSpeed, "0.00");
+                AddSliderRow("Acceleration", tuning.Acceleration,
+                    0f, 100f, tuning.SetAcceleration, "0.0");
+                AddSliderRow("Deceleration", tuning.Deceleration,
+                    0f, 100f, tuning.SetDeceleration, "0.0");
+                AddVisualSectionReset("MOVEMENT", tuning.ResetMovement);
+            }
+            else
+            {
+                AddHint("No active production CharacterMovement2D was found.");
+            }
+            AddHint("MISSING: independent direction-change responsiveness.");
+        }
+    }
+
+    private void AddFeelPresetStrip(ProductionFeelTuningController tuning)
+    {
+        RectTransform row = CreateRect("FEEL Presets", contentRoot);
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 30f;
+        row.gameObject.AddComponent<Image>().color =
+            new Color(rowColor.r, rowColor.g, rowColor.b, 0.72f);
+
+        ProductionFeelTuningController.Preset[] presets =
+        {
+            ProductionFeelTuningController.Preset.Production,
+            ProductionFeelTuningController.Preset.Soft,
+            ProductionFeelTuningController.Preset.Strong
+        };
+
+        for (int i = 0; i < presets.Length; i++)
+        {
+            int captured = i;
+            Button button = CreateButton(
+                row, presets[i].ToString().ToUpperInvariant(), () =>
+                {
+                    tuning.ApplyPreset(presets[captured]);
+                    RefreshCurrentTab();
+                }, 100f);
+            RectTransform rect = button.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2((float)i / presets.Length, 0f);
+            rect.anchorMax = new Vector2((float)(i + 1) / presets.Length, 1f);
+            rect.offsetMin = new Vector2(2f, 3f);
+            rect.offsetMax = new Vector2(-2f, -3f);
+            if (tuning.CurrentPreset == presets[i] &&
+                button.targetGraphic is Image image)
+                image.color = successColor;
+            TextMeshProUGUI text = button.GetComponentInChildren<TextMeshProUGUI>();
+            if (text != null) text.fontSize = 10f;
+        }
+    }
+
     private void AddVisualStatusLine(string message)
     {
         RectTransform row = CreateRect("Visual Status", contentRoot);
@@ -5026,6 +5324,12 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         worldRuleVisual?.ResetWindDustDebugSettings();
         cameraFollow?.ResetDebugOrthographicSize();
         anomalyController?.ResetFocusPresentationForDebug();
+        RefreshCurrentTab();
+    }
+
+    private void ResetAllFeelLabValues()
+    {
+        productionFeelTuning?.ResetAll();
         RefreshCurrentTab();
     }
 
@@ -5173,10 +5477,20 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         Debug.Log($"[RuntimeVisualLab]\n{result}", this);
     }
 
+    private void CopyFeelLabValues()
+    {
+        if (productionFeelTuning == null)
+            return;
+
+        string result = productionFeelTuning.GetValuesText();
+        GUIUtility.systemCopyBuffer = result;
+        Debug.Log($"[RuntimeFeelLab]\n{result}", this);
+    }
+
     private void AddSectionTitle(string title, string subtitle)
     {
         RectTransform section = CreateRect(title, contentRoot);
-        bool compact = activeTab == DebugTab.VisualTest;
+        bool compact = IsRuntimeLabTab(activeTab);
         section.gameObject.AddComponent<LayoutElement>().preferredHeight =
             compact ? 26f : 62f;
         section.gameObject.AddComponent<Image>().color =
@@ -5205,7 +5519,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         bool buttonEnabled,
         UnityEngine.Events.UnityAction action)
     {
-        bool compact = activeTab == DebugTab.VisualTest;
+        bool compact = IsRuntimeLabTab(activeTab);
         RectTransform row = CreateRect(label, contentRoot);
         row.gameObject.AddComponent<Image>().color = rowColor;
         row.gameObject.AddComponent<LayoutElement>().preferredHeight =
@@ -5774,7 +6088,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void AddHint(string message)
     {
-        bool compact = activeTab == DebugTab.VisualTest;
+        bool compact = IsRuntimeLabTab(activeTab);
         TextMeshProUGUI hint = CreateText(
             "Hint", contentRoot, message, compact ? 10f : 15f,
             compact
