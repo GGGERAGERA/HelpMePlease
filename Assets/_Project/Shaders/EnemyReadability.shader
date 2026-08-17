@@ -10,6 +10,9 @@ Shader "Hidden/Subject42/EnemyReadability"
         _ReadabilityBrightness ("Brightness", Float) = 1
         _ReadabilityTint ("Readability Tint", Color) = (0.05,1,1,1)
         _ReadabilityTintStrength ("Tint Strength", Range(0,1)) = 0
+        _ReadabilityHueShift ("Hue Shift", Range(-180,180)) = 0
+        _ReadabilityRecolorTarget ("Recolor Target", Color) = (0,1,1,1)
+        _ReadabilityRecolorStrength ("Recolor Strength", Range(0,1)) = 0
         _ReadabilityOutlineColor ("Outline Color", Color) = (0.025,0.055,0.09,1)
         _ReadabilityOutlineStrength ("Outline Strength", Range(0,2)) = 0
         _ReadabilityOutlineWidth ("Outline Width", Range(0.5,4)) = 1
@@ -64,6 +67,9 @@ Shader "Hidden/Subject42/EnemyReadability"
             float _ReadabilityBrightness;
             fixed4 _ReadabilityTint;
             float _ReadabilityTintStrength;
+            float _ReadabilityHueShift;
+            fixed4 _ReadabilityRecolorTarget;
+            float _ReadabilityRecolorStrength;
             fixed4 _ReadabilityOutlineColor;
             float _ReadabilityOutlineStrength;
             float _ReadabilityOutlineWidth;
@@ -92,6 +98,42 @@ Shader "Hidden/Subject42/EnemyReadability"
                 #endif
 
                 return color;
+            }
+
+            fixed3 RotateHuePreservingLuminance(fixed3 color, float degrees)
+            {
+                float angle = radians(degrees);
+                float cosine = cos(angle);
+                float sine = sin(angle);
+                float y = dot(color, fixed3(0.299, 0.587, 0.114));
+                float i = dot(color, fixed3(0.596, -0.274, -0.322));
+                float q = dot(color, fixed3(0.211, -0.523, 0.312));
+                float rotatedI = i * cosine - q * sine;
+                float rotatedQ = i * sine + q * cosine;
+
+                return fixed3(
+                    y + 0.956 * rotatedI + 0.621 * rotatedQ,
+                    y - 0.272 * rotatedI - 0.647 * rotatedQ,
+                    y - 1.106 * rotatedI + 1.703 * rotatedQ
+                );
+            }
+
+            fixed3 RecolorPreservingLuminance(fixed3 color, fixed3 target)
+            {
+                fixed luminance = dot(color, fixed3(0.299, 0.587, 0.114));
+                fixed targetLuminance = max(
+                    dot(target, fixed3(0.299, 0.587, 0.114)),
+                    0.001
+                );
+                fixed3 recolored = saturate(
+                    target * (luminance / targetLuminance)
+                );
+                fixed clippedLuminance = dot(
+                    recolored,
+                    fixed3(0.299, 0.587, 0.114)
+                );
+
+                return saturate(recolored + (luminance - clippedLuminance));
             }
 
             fixed4 SpriteFrag(v2f input) : SV_Target
@@ -147,6 +189,19 @@ Shader "Hidden/Subject42/EnemyReadability"
                     readable,
                     obviousTint,
                     saturate(_ReadabilityTintStrength)
+                );
+                readable = saturate(RotateHuePreservingLuminance(
+                    readable,
+                    _ReadabilityHueShift
+                ));
+                fixed3 recolored = RecolorPreservingLuminance(
+                    readable,
+                    saturate(_ReadabilityRecolorTarget.rgb)
+                );
+                readable = lerp(
+                    readable,
+                    recolored,
+                    saturate(_ReadabilityRecolorStrength)
                 );
 
                 return fixed4(

@@ -303,6 +303,8 @@ internal sealed class ProductionBeamSiteHazard :
     public AnomalyVisualTuningCapabilities VisualCapabilities =>
         AnomalyVisualTuningCapabilities.PrimaryColor |
         AnomalyVisualTuningCapabilities.SecondaryColor |
+        AnomalyVisualTuningCapabilities.BoundaryWidth |
+        AnomalyVisualTuningCapabilities.BoundaryAlpha |
         AnomalyVisualTuningCapabilities.InnerLineWidth |
         AnomalyVisualTuningCapabilities.VisualScale |
         AnomalyVisualTuningCapabilities.EdgeGlow;
@@ -314,6 +316,10 @@ internal sealed class ProductionBeamSiteHazard :
         debugVisualValues = values;
         debugVisualValues.PrimaryColor = ClampColor(values.PrimaryColor);
         debugVisualValues.SecondaryColor = ClampColor(values.SecondaryColor);
+        debugVisualValues.BoundaryWidth = Mathf.Clamp(
+            values.BoundaryWidth, 0.01f, 3f);
+        debugVisualValues.BoundaryAlpha = Mathf.Clamp01(
+            values.BoundaryAlpha);
         debugVisualValues.InnerLineWidth = Mathf.Clamp(
             values.InnerLineWidth, 0.01f, 3f);
         debugVisualValues.VisualScale = Mathf.Clamp(
@@ -321,14 +327,12 @@ internal sealed class ProductionBeamSiteHazard :
         debugVisualValues.EdgeGlow = Mathf.Clamp(
             values.EdgeGlow, 0.01f, 10f);
 
+        Color boundaryColor = debugVisualValues.SecondaryColor;
+        boundaryColor.a *= debugVisualValues.BoundaryAlpha;
         SetLineStyle(
             telegraph,
-            debugVisualValues.SecondaryColor,
-            Mathf.Clamp(
-                debugVisualValues.InnerLineWidth * 0.2f,
-                0.01f,
-                3f
-            )
+            boundaryColor,
+            debugVisualValues.BoundaryWidth
         );
         Color glowColor = debugVisualValues.SecondaryColor;
         glowColor.a = Mathf.Min(glowColor.a, 0.45f);
@@ -376,6 +380,8 @@ internal sealed class ProductionBeamSiteHazard :
         {
             PrimaryColor = originalCoreColor,
             SecondaryColor = originalTelegraphColor,
+            BoundaryWidth = originalTelegraphWidth,
+            BoundaryAlpha = 1f,
             InnerLineWidth = originalCoreWidth,
             VisualScale = 1f,
             EdgeGlow = originalGlowWidth

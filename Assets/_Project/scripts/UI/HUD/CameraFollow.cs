@@ -19,14 +19,92 @@ public class CameraFollow : MonoBehaviour
     private float focusOutDuration = 0.5f;
     private float normalOrthographicSize;
     private bool hasFocusSession;
+    private float productionOrthographicSize;
+    private float debugOrthographicSize = -1f;
+    private bool productionOrthographicSizeCaptured;
+
+    private Object worldBoundsOwner;
+    private Vector3 worldBoundsRootPosition;
+    private Vector3 savedWorldBoundsRootPosition;
+    private float worldBoundsOrthographicSize;
+    private float savedWorldBoundsOrthographicSize;
+    private bool hasWorldBoundsFocus;
+
+    public Camera ControlledCamera
+    {
+        get
+        {
+            ResolveCamera();
+            return controlledCamera;
+        }
+    }
 
     private void Awake()
     {
         ResolveCamera();
+        CaptureProductionOrthographicSize();
+    }
+
+    public bool OrthographicZoomAvailable
+    {
+        get
+        {
+            ResolveCamera();
+            return controlledCamera != null && controlledCamera.orthographic;
+        }
+    }
+
+    public float ProductionOrthographicSize
+    {
+        get
+        {
+            CaptureProductionOrthographicSize();
+            return productionOrthographicSize;
+        }
+    }
+
+    public float DebugOrthographicSize => debugOrthographicSize > 0f
+        ? debugOrthographicSize
+        : ProductionOrthographicSize;
+
+    public void SetDebugOrthographicSize(float value)
+    {
+        CaptureProductionOrthographicSize();
+        debugOrthographicSize = Mathf.Clamp(value, 2f, 16f);
+        normalOrthographicSize = debugOrthographicSize;
+
+        if (!hasWorldBoundsFocus && controlledCamera != null &&
+            controlledCamera.orthographic)
+        {
+            ApplyFocusZoom();
+        }
+    }
+
+    public void ResetDebugOrthographicSize()
+    {
+        CaptureProductionOrthographicSize();
+        debugOrthographicSize = -1f;
+        normalOrthographicSize = productionOrthographicSize;
+        if (!hasWorldBoundsFocus && controlledCamera != null &&
+            controlledCamera.orthographic)
+        {
+            if (hasFocusSession)
+                ApplyFocusZoom();
+            else
+                controlledCamera.orthographicSize = productionOrthographicSize;
+        }
     }
 
     private void LateUpdate()
     {
+        if (hasWorldBoundsFocus)
+        {
+            transform.position = worldBoundsRootPosition;
+            if (controlledCamera != null && controlledCamera.orthographic)
+                controlledCamera.orthographicSize = worldBoundsOrthographicSize;
+            return;
+        }
+
         ResolveTarget();
         UpdateFocusBlend();
 
@@ -83,6 +161,55 @@ public class CameraFollow : MonoBehaviour
         focusBlendTarget = 0f;
     }
 
+    public bool BeginWorldBoundsFocus(
+        Object owner,
+        Vector2 worldCenter,
+        float orthographicSize)
+    {
+        ResolveCamera();
+        if (owner == null || controlledCamera == null ||
+            !controlledCamera.orthographic || orthographicSize <= 0f)
+        {
+            return false;
+        }
+
+        if (!hasWorldBoundsFocus)
+        {
+            savedWorldBoundsRootPosition = transform.position;
+            savedWorldBoundsOrthographicSize = controlledCamera.orthographicSize;
+        }
+
+        Vector3 cameraWorldOffset = controlledCamera.transform.position - transform.position;
+        Vector3 framedCameraPosition = new(
+            worldCenter.x,
+            worldCenter.y,
+            controlledCamera.transform.position.z);
+
+        worldBoundsOwner = owner;
+        worldBoundsRootPosition = framedCameraPosition - cameraWorldOffset;
+        worldBoundsOrthographicSize = orthographicSize;
+        hasWorldBoundsFocus = true;
+        transform.position = worldBoundsRootPosition;
+        controlledCamera.orthographicSize = worldBoundsOrthographicSize;
+        return true;
+    }
+
+    public void EndWorldBoundsFocus(Object owner)
+    {
+        if (!hasWorldBoundsFocus || worldBoundsOwner != owner)
+            return;
+
+        transform.position = savedWorldBoundsRootPosition;
+        if (controlledCamera != null && controlledCamera.orthographic &&
+            savedWorldBoundsOrthographicSize > 0f)
+        {
+            controlledCamera.orthographicSize = savedWorldBoundsOrthographicSize;
+        }
+
+        hasWorldBoundsFocus = false;
+        worldBoundsOwner = null;
+    }
+
     private void ResolveTarget()
     {
         if (target != null)
@@ -125,7 +252,15 @@ public class CameraFollow : MonoBehaviour
 
         if (!hasFocusSession)
         {
-            normalOrthographicSize = controlledCamera.orthographicSize;
+            if (debugOrthographicSize > 0f)
+            {
+                normalOrthographicSize = debugOrthographicSize;
+                controlledCamera.orthographicSize = debugOrthographicSize;
+            }
+            else
+            {
+                normalOrthographicSize = controlledCamera.orthographicSize;
+            }
             return;
         }
 
@@ -135,6 +270,7 @@ public class CameraFollow : MonoBehaviour
 
     private void OnDisable()
     {
+        EndWorldBoundsFocus(worldBoundsOwner);
         RestoreNormalZoom();
         hasFocusSession = false;
         focusBlend = 0f;
@@ -147,6 +283,20 @@ public class CameraFollow : MonoBehaviour
     {
         if (controlledCamera != null && controlledCamera.orthographic && normalOrthographicSize > 0f)
             controlledCamera.orthographicSize = normalOrthographicSize;
+    }
+
+    private void CaptureProductionOrthographicSize()
+    {
+        ResolveCamera();
+        if (productionOrthographicSizeCaptured || controlledCamera == null ||
+            !controlledCamera.orthographic)
+        {
+            return;
+        }
+
+        productionOrthographicSize = controlledCamera.orthographicSize;
+        productionOrthographicSizeCaptured = true;
+        normalOrthographicSize = productionOrthographicSize;
     }
 
     private static float Ease(float value)

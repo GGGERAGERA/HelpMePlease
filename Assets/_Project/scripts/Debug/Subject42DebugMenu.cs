@@ -229,6 +229,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         WeaponsAndUpgrades,
         Telekinesis,
         VisualTest,
+        FeelTest,
         SectorTest
     }
 
@@ -252,6 +253,29 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         FocusTransition
     }
 
+    private enum VisualSection
+    {
+        World,
+        Background,
+        Enemies,
+        Player,
+        PostFx,
+        Atmosphere,
+        Anomalies,
+        Projectiles,
+        Camera
+    }
+
+    private enum FeelSection
+    {
+        PhysicalFeedback,
+        Weapon,
+        Hit,
+        Death,
+        Camera,
+        Movement
+    }
+
     private static readonly string[] TabLabels =
     {
         "RUN",
@@ -262,7 +286,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         "EVENTS",
         "WEAPONS & BUILD",
         "TELEKINESIS",
-        "VISUAL TEST",
+        "VISUAL",
+        "FEEL",
         "ТЕСТ СЕКТОРА"
     };
 
@@ -289,6 +314,12 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private GameObject fullMenuBlocker;
     private Image fullMenuBlockerImage;
     private RectTransform menuPanel;
+    private RectTransform menuHeader;
+    private RectTransform menuTabBar;
+    private RectTransform menuPages;
+    private RectTransform closeButtonRect;
+    private TextMeshProUGUI menuTitle;
+    private GameObject visualBackButton;
     private GameObject previewPanelRoot;
     private TextMeshProUGUI previewText;
     private RectTransform contentRoot;
@@ -325,6 +356,19 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private readonly List<UpgradeData> visibleUpgrades = new();
     private TelekinesisDebugPrototype telekinesisPrototype;
     private CombatLabDebugController combatLab;
+    private ProductionVisualTuningController productionVisualTuning;
+    private ProductionFeelTuningController productionFeelTuning;
+    private WorldRuleVisual worldRuleVisual;
+    private PlayerWeaponOrbitVisual playerOrbitVisual;
+    private CameraFollow cameraFollow;
+    private readonly bool[] visualSectionExpanded =
+    {
+        true, false, true, true, true, true, true, true, true
+    };
+    private readonly bool[] feelSectionExpanded =
+    {
+        true, true, true, false, true, true
+    };
 
     private readonly Color panelColor = new(0.035f, 0.045f, 0.06f, 0.97f);
     private readonly Color rowColor = new(0.09f, 0.11f, 0.145f, 0.95f);
@@ -336,6 +380,12 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private void Awake()
     {
         ResolveSceneReferences();
+    }
+
+    private void OnEnable()
+    {
+        ProductionAnomalySite.VisualTargetsChanged +=
+            HandleAnomalyVisualTargetsChanged;
     }
 
     private void Start()
@@ -383,6 +433,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void OnDisable()
     {
+        ProductionAnomalySite.VisualTargetsChanged -=
+            HandleAnomalyVisualTargetsChanged;
+
         if (isOpen)
             CloseMenu();
 
@@ -393,11 +446,23 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void OnDestroy()
     {
+        ProductionAnomalySite.VisualTargetsChanged -=
+            HandleAnomalyVisualTargetsChanged;
+
         if (isOpen)
             RestoreGameState();
 
         if (menuRoot != null)
             Destroy(menuRoot);
+    }
+
+    private void HandleAnomalyVisualTargetsChanged()
+    {
+        if (isOpen && activeTab == DebugTab.VisualTest &&
+            visualSectionExpanded[(int)VisualSection.Anomalies])
+        {
+            RefreshCurrentTab();
+        }
     }
 
     private void SetOpen(bool open)
@@ -413,14 +478,17 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         if (isOpen)
             return;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
+#endif
         ResolveSceneReferences();
         previousTimeScale = Time.timeScale;
         previousCursorVisible = Cursor.visible;
         previousCursorLockMode = Cursor.lockState;
-        menuLiveSimulation = false;
+        menuLiveSimulation = IsRuntimeLabTab(activeTab);
         RefreshTab(activeTab);
 
-        Time.timeScale = 0f;
+        Time.timeScale = menuLiveSimulation ? previousTimeScale : 0f;
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         isOpen = true;
@@ -619,7 +687,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 : "НЕТ CONTROLLER");
         previewSummary.AppendLine();
         previewSummary.AppendLine("Optional shortcuts: PageUp/PageDown, [ / ], Shift");
-        previewSummary.AppendLine("Основное mouse-only управление: F1 → VISUAL TEST");
+        previewSummary.AppendLine("Основное mouse-only управление: F1 → VISUAL");
         previewSummary.AppendLine("F1 — назад в полное меню");
         previewSummary.AppendLine("Контур ограничен геометрией sprite.");
         previewText.text = previewSummary.ToString();
@@ -661,6 +729,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             ? RunFlowController.Instance
             : FindFirstObjectByType<RunFlowController>();
         levelChoiceManager ??= FindFirstObjectByType<LevelChoiceManager>();
+        worldRuleVisual ??= FindFirstObjectByType<WorldRuleVisual>();
+        playerOrbitVisual ??= FindFirstObjectByType<PlayerWeaponOrbitVisual>();
+        cameraFollow ??= FindFirstObjectByType<CameraFollow>();
 
         WarnIfMissing(worldRuleController, ref warnedRuleController,
             "WorldRuleController");
@@ -678,6 +749,18 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         productionSectorDebug = GetComponent<ProductionSectorDebugController>();
         productionSectorDebug ??=
             gameObject.AddComponent<ProductionSectorDebugController>();
+
+        productionVisualTuning ??=
+            GetComponent<ProductionVisualTuningController>();
+        productionVisualTuning ??=
+            gameObject.AddComponent<ProductionVisualTuningController>();
+        productionVisualTuning.Configure();
+
+        productionFeelTuning ??=
+            GetComponent<ProductionFeelTuningController>();
+        productionFeelTuning ??=
+            gameObject.AddComponent<ProductionFeelTuningController>();
+        productionFeelTuning.Configure();
     }
 
     private void WarnIfMissing(
@@ -732,6 +815,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         panel.gameObject.AddComponent<Image>().color = panelColor;
 
         RectTransform header = CreateRect("Header", panel);
+        menuHeader = header;
         header.anchorMin = new Vector2(0f, 1f);
         header.anchorMax = Vector2.one;
         header.pivot = new Vector2(0.5f, 1f);
@@ -742,16 +826,19 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             "Title", header, "SUBJECT#42 — ОТЛАДОЧНОЕ МЕНЮ", 28f,
             TextAlignmentOptions.MidlineLeft, Color.white
         );
+        menuTitle = title;
         Stretch(title.rectTransform, 22f, 90f);
 
         Button closeButton = CreateButton(header, "X", CloseMenu, 52f);
         RectTransform closeRect = closeButton.GetComponent<RectTransform>();
+        closeButtonRect = closeRect;
         closeRect.anchorMin = closeRect.anchorMax = new Vector2(1f, 0.5f);
         closeRect.pivot = new Vector2(1f, 0.5f);
         closeRect.anchoredPosition = new Vector2(-14f, 0f);
         closeRect.sizeDelta = new Vector2(52f, 40f);
 
         RectTransform tabBar = CreateRect("Tabs", panel);
+        menuTabBar = tabBar;
         tabBar.anchorMin = new Vector2(0f, 1f);
         tabBar.anchorMax = Vector2.one;
         tabBar.pivot = new Vector2(0.5f, 1f);
@@ -781,15 +868,135 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         }
 
         RectTransform pages = CreateRect("Tab Pages", panel);
+        menuPages = pages;
         pages.anchorMin = Vector2.zero;
         pages.anchorMax = Vector2.one;
         pages.offsetMin = new Vector2(18f, 18f);
         pages.offsetMax = new Vector2(-18f, -120f);
 
         for (int i = 0; i < labels.Length; i++)
-            tabRoots[i] = CreateTabPage(labels[i], pages, out _);
+        {
+            bool compactLab = IsRuntimeLabTab((DebugTab)i);
+            tabRoots[i] = CreateTabPage(labels[i], pages, out _, compactLab);
+        }
+
+        BuildVisualBackButton(header);
+        BuildVisualActionBar(tabRoots[(int)DebugTab.VisualTest].transform);
+        BuildFeelActionBar(tabRoots[(int)DebugTab.FeelTest].transform);
 
         BuildPreviewPanel();
+    }
+
+    private void BuildVisualBackButton(Transform header)
+    {
+        Button button = CreateButton(
+            header,
+            "MENU",
+            () => SelectTab(DebugTab.Run),
+            54f
+        );
+        visualBackButton = button.gameObject;
+        RectTransform rect = button.GetComponent<RectTransform>();
+        rect.anchorMin = rect.anchorMax = new Vector2(1f, 0.5f);
+        rect.pivot = new Vector2(1f, 0.5f);
+        rect.anchoredPosition = new Vector2(-48f, 0f);
+        rect.sizeDelta = new Vector2(54f, 26f);
+        TextMeshProUGUI text = button.GetComponentInChildren<TextMeshProUGUI>();
+        if (text != null)
+            text.fontSize = 11f;
+        visualBackButton.SetActive(false);
+    }
+
+    private void BuildVisualActionBar(Transform visualPage)
+    {
+        RectTransform viewport = visualPage.Find("Viewport") as RectTransform;
+        if (viewport != null)
+            viewport.offsetMin = new Vector2(viewport.offsetMin.x, 42f);
+
+        RectTransform scrollbar = visualPage.Find("Scrollbar") as RectTransform;
+        if (scrollbar != null)
+            scrollbar.offsetMin = new Vector2(scrollbar.offsetMin.x, 44f);
+
+        RectTransform bar = CreateRect("Visual Actions", visualPage);
+        bar.anchorMin = Vector2.zero;
+        bar.anchorMax = new Vector2(1f, 0f);
+        bar.pivot = new Vector2(0.5f, 0f);
+        bar.offsetMin = new Vector2(0f, 0f);
+        bar.offsetMax = new Vector2(0f, 38f);
+        Image background = bar.gameObject.AddComponent<Image>();
+        background.color = new Color(0.045f, 0.055f, 0.07f, 0.98f);
+
+        Button reset = CreateButton(
+            bar,
+            "RESET ALL",
+            ResetAllVisualLabValues,
+            120f
+        );
+        RectTransform resetRect = reset.GetComponent<RectTransform>();
+        resetRect.anchorMin = new Vector2(0f, 0f);
+        resetRect.anchorMax = new Vector2(0.5f, 1f);
+        resetRect.offsetMin = new Vector2(4f, 5f);
+        resetRect.offsetMax = new Vector2(-2f, -5f);
+
+        Button copy = CreateButton(
+            bar,
+            "COPY VALUES",
+            CopyVisualLabValues,
+            120f
+        );
+        RectTransform copyRect = copy.GetComponent<RectTransform>();
+        copyRect.anchorMin = new Vector2(0.5f, 0f);
+        copyRect.anchorMax = Vector2.one;
+        copyRect.offsetMin = new Vector2(2f, 5f);
+        copyRect.offsetMax = new Vector2(-4f, -5f);
+
+        TextMeshProUGUI resetText = reset.GetComponentInChildren<TextMeshProUGUI>();
+        TextMeshProUGUI copyText = copy.GetComponentInChildren<TextMeshProUGUI>();
+        if (resetText != null)
+            resetText.fontSize = 12f;
+        if (copyText != null)
+            copyText.fontSize = 12f;
+    }
+
+    private void BuildFeelActionBar(Transform feelPage)
+    {
+        RectTransform viewport = feelPage.Find("Viewport") as RectTransform;
+        if (viewport != null)
+            viewport.offsetMin = new Vector2(viewport.offsetMin.x, 42f);
+
+        RectTransform scrollbar = feelPage.Find("Scrollbar") as RectTransform;
+        if (scrollbar != null)
+            scrollbar.offsetMin = new Vector2(scrollbar.offsetMin.x, 44f);
+
+        RectTransform bar = CreateRect("Feel Actions", feelPage);
+        bar.anchorMin = Vector2.zero;
+        bar.anchorMax = new Vector2(1f, 0f);
+        bar.pivot = new Vector2(0.5f, 0f);
+        bar.offsetMin = Vector2.zero;
+        bar.offsetMax = new Vector2(0f, 38f);
+        bar.gameObject.AddComponent<Image>().color =
+            new Color(0.045f, 0.055f, 0.07f, 0.98f);
+
+        Button reset = CreateButton(
+            bar, "RESET ALL", ResetAllFeelLabValues, 120f);
+        RectTransform resetRect = reset.GetComponent<RectTransform>();
+        resetRect.anchorMin = Vector2.zero;
+        resetRect.anchorMax = new Vector2(0.5f, 1f);
+        resetRect.offsetMin = new Vector2(4f, 5f);
+        resetRect.offsetMax = new Vector2(-2f, -5f);
+
+        Button copy = CreateButton(
+            bar, "COPY VALUES", CopyFeelLabValues, 120f);
+        RectTransform copyRect = copy.GetComponent<RectTransform>();
+        copyRect.anchorMin = new Vector2(0.5f, 0f);
+        copyRect.anchorMax = Vector2.one;
+        copyRect.offsetMin = new Vector2(2f, 5f);
+        copyRect.offsetMax = new Vector2(-4f, -5f);
+
+        TextMeshProUGUI resetText = reset.GetComponentInChildren<TextMeshProUGUI>();
+        TextMeshProUGUI copyText = copy.GetComponentInChildren<TextMeshProUGUI>();
+        if (resetText != null) resetText.fontSize = 12f;
+        if (copyText != null) copyText.fontSize = 12f;
     }
 
     private void BuildPreviewPanel()
@@ -824,7 +1031,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private GameObject CreateTabPage(
         string tabName,
         Transform parent,
-        out RectTransform pageContent)
+        out RectTransform pageContent,
+        bool compactVisual = false)
     {
         RectTransform page = CreateRect(tabName + " Page", parent);
         Stretch(page);
@@ -836,6 +1044,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         RectTransform viewport = CreateRect("Viewport", page);
         Stretch(viewport);
+        if (compactVisual)
+            viewport.offsetMax = new Vector2(-7f, 0f);
         viewport.gameObject.AddComponent<Image>().color =
             new Color(0f, 0f, 0f, 0.12f);
         viewport.gameObject.AddComponent<Mask>().showMaskGraphic = false;
@@ -845,13 +1055,15 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         pageContent.anchorMin = new Vector2(0f, 1f);
         pageContent.anchorMax = Vector2.one;
         pageContent.pivot = new Vector2(0.5f, 1f);
-        pageContent.offsetMin = new Vector2(10f, 0f);
-        pageContent.offsetMax = new Vector2(-10f, 0f);
+        pageContent.offsetMin = new Vector2(compactVisual ? 3f : 10f, 0f);
+        pageContent.offsetMax = new Vector2(compactVisual ? -3f : -10f, 0f);
 
         VerticalLayoutGroup layout =
             pageContent.gameObject.AddComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(10, 10, 10, 16);
-        layout.spacing = 7f;
+        layout.padding = compactVisual
+            ? new RectOffset(3, 3, 3, 5)
+            : new RectOffset(10, 10, 10, 16);
+        layout.spacing = compactVisual ? 2f : 7f;
         layout.childAlignment = TextAnchor.UpperCenter;
         layout.childControlHeight = true;
         layout.childControlWidth = true;
@@ -862,12 +1074,50 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             pageContent.gameObject.AddComponent<ContentSizeFitter>();
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         scroll.content = pageContent;
+
+        if (compactVisual)
+        {
+            RectTransform scrollbarRect = CreateRect("Scrollbar", page);
+            scrollbarRect.anchorMin = new Vector2(1f, 0f);
+            scrollbarRect.anchorMax = Vector2.one;
+            scrollbarRect.pivot = new Vector2(1f, 0.5f);
+            scrollbarRect.offsetMin = new Vector2(-4f, 2f);
+            scrollbarRect.offsetMax = new Vector2(0f, -2f);
+            Image track = scrollbarRect.gameObject.AddComponent<Image>();
+            track.color = new Color(0.18f, 0.21f, 0.25f, 0.65f);
+
+            RectTransform handle = CreateRect("Handle", scrollbarRect);
+            Stretch(handle);
+            Image handleImage = handle.gameObject.AddComponent<Image>();
+            handleImage.color = new Color(
+                accentColor.r, accentColor.g, accentColor.b, 0.8f);
+
+            Scrollbar scrollbar = scrollbarRect.gameObject.AddComponent<Scrollbar>();
+            scrollbar.handleRect = handle;
+            scrollbar.targetGraphic = handleImage;
+            scrollbar.direction = Scrollbar.Direction.BottomToTop;
+            scrollbar.navigation = new Navigation { mode = Navigation.Mode.None };
+            scroll.verticalScrollbar = scrollbar;
+            scroll.verticalScrollbarVisibility =
+                ScrollRect.ScrollbarVisibility.AutoHide;
+            scroll.verticalScrollbarSpacing = 3f;
+        }
+
         return page.gameObject;
     }
 
     private void SelectTab(DebugTab tab, bool refresh = true)
     {
         activeTab = tab;
+        if (isOpen)
+        {
+            bool choiceIsOpen =
+                (levelChoiceManager != null && levelChoiceManager.IsChoosing) ||
+                (upgradeManager != null && upgradeManager.IsChoosingUpgrade);
+            menuLiveSimulation = IsRuntimeLabTab(tab) &&
+                !choiceIsOpen && previousTimeScale > 0f;
+            Time.timeScale = menuLiveSimulation ? previousTimeScale : 0f;
+        }
         ApplyMenuViewportLayout();
 
         for (int i = 0; i < tabRoots.Length; i++)
@@ -912,7 +1162,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         for (int i = contentRoot.childCount - 1; i >= 0; i--)
             Destroy(contentRoot.GetChild(i).gameObject);
 
-        AddTabHeading(TabLabels[(int)tab]);
+        if (!IsRuntimeLabTab(tab))
+            AddTabHeading(TabLabels[(int)tab]);
 
         switch (tab)
         {
@@ -946,14 +1197,20 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             case DebugTab.VisualTest:
                 AddInteractiveAnomalyVisualTest();
                 break;
+            case DebugTab.FeelTest:
+                AddInteractiveFeelLab();
+                break;
             case DebugTab.SectorTest:
                 AddProductionSectorTestSection();
                 break;
         }
 
-        AddHint(menuLiveSimulation
-            ? "F1 закрывает меню. LIVE: симуляция продолжает работать."
-            : "F1 закрывает меню. PAUSED: симуляция остановлена.");
+        if (!IsRuntimeLabTab(activeTab))
+        {
+            AddHint(menuLiveSimulation
+                ? "F1 закрывает меню. LIVE: симуляция продолжает работать."
+                : "F1 закрывает меню. PAUSED: симуляция остановлена.");
+        }
     }
 
     private void ApplyMenuViewportLayout()
@@ -961,21 +1218,66 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         if (menuPanel == null)
             return;
 
-        bool compact = activeTab == DebugTab.VisualTest;
-        menuPanel.anchorMin = compact
-            ? new Vector2(0.015f, 0.03f)
-            : new Vector2(0.07f, 0.05f);
-        menuPanel.anchorMax = compact
-            ? new Vector2(0.72f, 0.97f)
-            : new Vector2(0.93f, 0.95f);
-        menuPanel.offsetMin = Vector2.zero;
-        menuPanel.offsetMax = Vector2.zero;
+        bool compact = IsRuntimeLabTab(activeTab);
+        if (compact)
+        {
+            menuPanel.anchorMin = new Vector2(1f, 0.02f);
+            menuPanel.anchorMax = new Vector2(1f, 0.98f);
+            menuPanel.pivot = new Vector2(1f, 0.5f);
+            menuPanel.sizeDelta = new Vector2(390f, 0f);
+            menuPanel.anchoredPosition = new Vector2(-16f, 0f);
+        }
+        else
+        {
+            menuPanel.anchorMin = new Vector2(0.07f, 0.05f);
+            menuPanel.anchorMax = new Vector2(0.93f, 0.95f);
+            menuPanel.pivot = new Vector2(0.5f, 0.5f);
+            menuPanel.sizeDelta = Vector2.zero;
+            menuPanel.anchoredPosition = Vector2.zero;
+        }
+
+        if (menuHeader != null)
+            menuHeader.sizeDelta = new Vector2(0f, compact ? 44f : 62f);
+        if (menuTitle != null)
+        {
+            menuTitle.text = activeTab == DebugTab.VisualTest
+                ? "RUNTIME VISUAL LAB"
+                : activeTab == DebugTab.FeelTest
+                    ? "RUNTIME FEEL LAB"
+                    : "SUBJECT#42 — ОТЛАДОЧНОЕ МЕНЮ";
+            menuTitle.fontSize = compact ? 17f : 28f;
+            Stretch(menuTitle.rectTransform,
+                compact ? 12f : 22f,
+                compact ? 112f : 90f);
+        }
+        if (closeButtonRect != null)
+        {
+            closeButtonRect.anchoredPosition = new Vector2(
+                compact ? -8f : -14f, 0f);
+            closeButtonRect.sizeDelta = compact
+                ? new Vector2(32f, 26f)
+                : new Vector2(52f, 40f);
+        }
+        if (menuTabBar != null)
+            menuTabBar.gameObject.SetActive(!compact);
+        if (visualBackButton != null)
+            visualBackButton.SetActive(compact);
+        if (menuPages != null)
+        {
+            menuPages.offsetMin = compact
+                ? new Vector2(6f, 6f)
+                : new Vector2(18f, 18f);
+            menuPages.offsetMax = compact
+                ? new Vector2(-6f, -46f)
+                : new Vector2(-18f, -120f);
+        }
 
         if (fullMenuBlockerImage != null)
         {
             fullMenuBlockerImage.color = compact
-                ? new Color(0f, 0f, 0f, 0.24f)
+                ? Color.clear
                 : new Color(0f, 0f, 0f, 0.68f);
+            fullMenuBlockerImage.raycastTarget = !compact;
         }
     }
 
@@ -1249,7 +1551,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             ? $"✓ Акцент применён к {debug.AnomalyZoneCount} зонам."
             : "⚠ Активные anomaly visuals не найдены.");
 
-        AddHint("Anomaly instance tuning перенесён во вкладку VISUAL TEST.");
+        AddHint("Anomaly instance tuning перенесён во вкладку VISUAL.");
 
         AddSectionTitle(
             "ФОКУС ВНУТРИ АНОМАЛИИ",
@@ -1547,86 +1849,342 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         if (debug == null)
         {
-            AddSectionTitle("ANOMALY VISUAL TEST", "Development / Editor only");
+            AddSectionTitle("VISUAL", "Development / Editor only");
             AddHint("ProductionSectorDebugController не создан.");
             return;
         }
 
-        bool choiceIsOpen =
-            (levelChoiceManager != null && levelChoiceManager.IsChoosing) ||
-            (upgradeManager != null && upgradeManager.IsChoosingUpgrade);
-        bool liveAvailable = !choiceIsOpen && previousTimeScale > 0f;
-        AddSectionTitle(
-            "ANOMALY VISUAL TEST",
-            "Mouse-first live tuning; правая часть viewport остаётся открытой"
-        );
-        AddRow(
-            "SIMULATION",
-            menuLiveSimulation ? "LIVE" : "PAUSED",
-            menuLiveSimulation ? successColor : warningColor,
-            menuLiveSimulation ? "PAUSE" : "GO LIVE",
-            menuLiveSimulation || liveAvailable,
-            () => SetMenuLiveSimulation(!menuLiveSimulation)
-        );
-        AddAnomalyTargetPanel(debug);
+        AddVisualStatusLine("● LIVE   Production runtime values");
 
-        AddSectionTitle("VISUAL TEST", "One-click strength and renderer controls");
-        AddEnemyReadabilityPresetStrip(debug);
-        AddFourStepRow(
-            "Enemy Brightness", debug.EnemyBrightness, 0.05f, 0.25f,
-            0.5f, 2.5f, debug.SetEnemyBrightness, "0.00");
-        AddFourStepRow(
-            "Saturation", debug.EnemySaturation, 0.05f, 0.25f,
-            0f, 3f, debug.SetEnemySaturation, "0.00");
-        AddFourStepRow(
-            "Hue / Tint Strength", debug.EnemyTintStrength, 0.02f, 0.1f,
-            0f, 1f, debug.SetEnemyTintStrength, "0.00");
-        AddToggleRow(
-            "OUTLINE", debug.EnemyOutlineEnabled, true,
-            () => debug.SetEnemyOutlineEnabled(!debug.EnemyOutlineEnabled));
-        AddFourStepRow(
-            "Outline Strength", debug.EnemyOutlineStrength, 0.05f, 0.25f,
-            0f, 2f, debug.SetEnemyOutlineStrength, "0.00");
-        AddFourStepRow(
-            "Outline Thickness", debug.EnemyOutlineWidth, 0.1f, 0.5f,
-            0.5f, 4f, debug.SetEnemyOutlineWidth, "0.0");
-
-        if (anomalyController != null)
+        if (AddVisualSectionHeader(
+                VisualSection.World,
+                "WORLD",
+                "Environment readability and decor"))
         {
-            AddFourStepRow(
-                "Interior / Outside Darkness",
-                anomalyController.OutsideDarkness, 0.05f, 0.2f,
-                0f, 1f, anomalyController.SetOutsideDarkness, "0.00");
-            AddFourStepRow(
-                "Exterior Color / Intensity",
-                anomalyController.OutsideColor, 0.05f, 0.2f,
-                0f, 1f, anomalyController.SetOutsideColor, "0.00");
-            AddFourStepRow(
-                "Transition Duration",
-                anomalyController.FocusTransition, 0.01f, 0.05f,
-                0.2f, 0.35f, anomalyController.SetFocusTransition, "0.00");
-        }
-        else
-        {
-            AddHint("LevelAnomalyController не найден: focus controls недоступны.");
+            AddProductionReadabilityPreset(
+                ProductionSectorDebugController.ReadabilityPreset.Original);
+            AddProductionReadabilityPreset(
+                ProductionSectorDebugController.ReadabilityPreset.Muted);
+            AddProductionReadabilityPreset(
+                ProductionSectorDebugController.ReadabilityPreset.HighGameplayContrast);
+            AddProductionReadabilityPreset(
+                ProductionSectorDebugController.ReadabilityPreset.DarkWorld);
+            AddSliderRow(
+                "Decor Brightness", debug.DecorBrightness,
+                0.25f, 1.5f, debug.SetDecorBrightness, "0.00");
+            AddSliderRow(
+                "Environment Darken", debug.EnvironmentDarken,
+                0f, 1f, debug.SetEnvironmentDarken, "0.00");
+            AddVisualSectionReset("WORLD", debug.ResetWorldVisualSettings);
         }
 
-        AddRow(
-            "RESET VISUAL TEST",
-            "Enemy readability + focus presentation baseline",
-            mutedColor,
-            "RESET TEST",
-            true,
-            () =>
+        if (AddVisualSectionHeader(
+                VisualSection.Background,
+                "BACKGROUND",
+                "No independent production runtime parameter found"))
+        {
+            AddHint(
+                "Background renderers currently follow WORLD readability; " +
+                "no parallel debug state was created.");
+        }
+
+        if (AddVisualSectionHeader(
+                VisualSection.Enemies,
+                "ENEMIES",
+                $"{debug.RegisteredEnemyCount} registered via spawn hooks"))
+        {
+            AddEnemyReadabilityPresetStrip(debug);
+            AddHint("AFFECTED ENEMIES");
+            AddProductionEnemyScope(
+                ProductionSectorDebugController.EnemyScope.All);
+            AddProductionEnemyScope(
+                ProductionSectorDebugController.EnemyScope.CurrentZone);
+            AddProductionEnemyScope(
+                ProductionSectorDebugController.EnemyScope.Basic);
+            AddProductionEnemyScope(
+                ProductionSectorDebugController.EnemyScope.Elite);
+            AddProductionEnemyScope(
+                ProductionSectorDebugController.EnemyScope.Shooter);
+            AddProductionEnemyScope(
+                ProductionSectorDebugController.EnemyScope.Bomber);
+            AddProductionEnemyScope(
+                ProductionSectorDebugController.EnemyScope.Boss);
+            AddSliderRow(
+                "Brightness", debug.EnemyBrightness,
+                0.5f, 2.5f, debug.SetEnemyBrightness, "0.00");
+            AddSliderRow(
+                "Saturation", debug.EnemySaturation,
+                0f, 3f, debug.SetEnemySaturation, "0.00");
+            AddSliderRow(
+                "Tint Strength", debug.EnemyTintStrength,
+                0f, 1f, debug.SetEnemyTintStrength, "0.00");
+            AddHint("RECOLOR PRESETS");
+            AddEnemyRecolorPresetStrip(debug);
+            AddSliderRow(
+                "Hue Shift", debug.EnemyHueShift,
+                -180f, 180f, debug.SetEnemyHueShift, "0");
+            Color recolorTarget = debug.EnemyRecolorTarget;
+            AddRow(
+                "Target Color",
+                "#" + ColorUtility.ToHtmlStringRGB(recolorTarget),
+                recolorTarget,
+                string.Empty,
+                false,
+                null);
+            AddEnemyRecolorColorChannel(debug, "Target Color R", 0);
+            AddEnemyRecolorColorChannel(debug, "Target Color G", 1);
+            AddEnemyRecolorColorChannel(debug, "Target Color B", 2);
+            AddSliderRow(
+                "Recolor Strength", debug.EnemyRecolorStrength,
+                0f, 1f, debug.SetEnemyRecolorStrength, "0.00");
+            AddToggleRow(
+                "OUTLINE", debug.EnemyOutlineEnabled, true,
+                () => debug.SetEnemyOutlineEnabled(!debug.EnemyOutlineEnabled));
+            AddSliderRow(
+                "Outline Strength", debug.EnemyOutlineStrength,
+                0f, 2f,
+                value =>
+                {
+                    debug.SetEnemyOutlineStrength(value);
+                    debug.SetEnemyOutlineEnabled(value > 0f);
+                },
+                "0.00");
+            AddSliderRow(
+                "Outline Width", debug.EnemyOutlineWidth,
+                0.5f, 4f, debug.SetEnemyOutlineWidth, "0.00");
+            AddVisualSectionReset("ENEMIES", debug.ResetEnemyVisualSettings);
+        }
+
+        if (AddVisualSectionHeader(
+                VisualSection.Player,
+                "PLAYER",
+                "Production SpriteLight2D and weapon orbit"))
+        {
+            if (worldRuleVisual != null && worldRuleVisual.PlayerGlowAvailable)
             {
-                debug.ResetVisualTestSettings();
-                anomalyController?.ResetFocusPresentationForDebug();
-                RefreshCurrentTab();
+                AddSliderRow(
+                    "Player Glow Intensity",
+                    worldRuleVisual.PlayerGlowIntensityMultiplier,
+                    0f, 5f,
+                    worldRuleVisual.SetPlayerGlowIntensityMultiplier,
+                    "0.00");
+                AddSliderRow(
+                    "Player Glow Radius",
+                    worldRuleVisual.PlayerGlowRadiusMultiplier,
+                    0.1f, 5f,
+                    worldRuleVisual.SetPlayerGlowRadiusMultiplier,
+                    "0.00");
+                AddHint("Multipliers: 1.00 = authored production value.");
             }
-        );
+            else
+            {
+                AddHint("Player SpriteLight2D is not available yet.");
+            }
 
-        AddAnomalyVisualTuner(debug);
+            if (playerOrbitVisual != null &&
+                playerOrbitVisual.HasOrbitSource)
+            {
+                AddToggleRow(
+                    "ORBIT RING",
+                    playerOrbitVisual.RingEnabled,
+                    true,
+                    () => playerOrbitVisual.SetRingEnabled(
+                        !playerOrbitVisual.RingEnabled));
+                AddSliderRow(
+                    "Orbit Ring Intensity",
+                    playerOrbitVisual.RingIntensity,
+                    0f, 4f,
+                    playerOrbitVisual.SetRingIntensity,
+                    "0.00");
+                AddSliderRow(
+                    "Orbit Ring Width",
+                    playerOrbitVisual.RingWidth,
+                    0.005f, 0.15f,
+                    playerOrbitVisual.SetRingWidth,
+                    "0.000");
+                AddSliderRow(
+                    "Orbit Ring Alpha",
+                    playerOrbitVisual.RingAlpha,
+                    0f, 1f,
+                    playerOrbitVisual.SetRingAlpha,
+                    "0.00");
+                AddHint(
+                    $"Radius {playerOrbitVisual.CurrentOrbitRadius:0.###} is " +
+                    "read directly from BaseWeapon; presentation only.");
+            }
+            else
+            {
+                AddHint("Production weapon orbit source is not available yet.");
+            }
+
+            AddVisualSectionReset(
+                "PLAYER",
+                () =>
+                {
+                    worldRuleVisual?.ResetPlayerGlowDebugSettings();
+                    playerOrbitVisual?.ResetPresentationSettings();
+                });
+        }
+
+        if (AddVisualSectionHeader(
+                VisualSection.PostFx,
+                "POST FX",
+                "URP global default VolumeProfile"))
+        {
+            ProductionVisualTuningController tuning = productionVisualTuning;
+            bool available = tuning != null && tuning.VignetteAvailable;
+            if (available)
+            {
+                AddSliderRow(
+                    "Vignette Intensity", tuning.VignetteIntensity,
+                    0f, 1f, tuning.SetVignetteIntensity, "0.00");
+                AddVisualSectionReset("POST FX", tuning.ResetVignette);
+            }
+            else
+            {
+                AddHint("Production Vignette was not found in the active profile.");
+            }
+        }
+
+        if (AddVisualSectionHeader(
+                VisualSection.Atmosphere,
+                "ATMOSPHERE",
+                "Production anomaly focus overlay"))
+        {
+            if (anomalyController != null)
+            {
+                AddToggleRow(
+                    "ANOMALY FOCUS",
+                    anomalyController.AnomalyFocusEnabled,
+                    true,
+                    () => anomalyController.SetAnomalyFocusEnabled(
+                        !anomalyController.AnomalyFocusEnabled));
+                AddSliderRow(
+                    "Outside Darkness", anomalyController.OutsideDarkness,
+                    0f, 1f, anomalyController.SetOutsideDarkness, "0.00");
+                AddSliderRow(
+                    "Outside Color", anomalyController.OutsideColor,
+                    0f, 1f, anomalyController.SetOutsideColor, "0.00");
+                AddSliderRow(
+                    "Focus Transition", anomalyController.FocusTransition,
+                    0.2f, 0.35f, anomalyController.SetFocusTransition, "0.000");
+            }
+            else
+            {
+                AddHint("LevelAnomalyController not found in this scene.");
+            }
+
+            if (worldRuleVisual != null)
+            {
+                AddSliderRow(
+                    "Wind Dust Amount",
+                    worldRuleVisual.WindDustAmountMultiplier,
+                    0f, 5f,
+                    worldRuleVisual.SetWindDustAmountMultiplier,
+                    "0.00");
+                AddHint(
+                    "Tunes production WindDustParticles; visible while the " +
+                    "Wind world rule is active. 1.00 = production.");
+            }
+
+            AddVisualSectionReset(
+                "ATMOSPHERE",
+                () =>
+                {
+                    anomalyController?.ResetFocusPresentationForDebug();
+                    worldRuleVisual?.ResetWindDustDebugSettings();
+                });
+        }
+
+        if (AddVisualSectionHeader(
+                VisualSection.Anomalies,
+                "ANOMALIES",
+                "Registered production site renderers"))
+        {
+            AddSliderRow(
+                "Global Accent", debug.AnomalyAccent,
+                1f, 1.75f, debug.SetAnomalyAccent, "0.00");
+            AddAnomalyTargetPanel(debug);
+            AddAnomalyVisualTuner(debug);
+            AddVisualSectionReset("ANOMALIES", debug.ResetAnomalyVisualSettings);
+        }
+
+        if (AddVisualSectionHeader(
+                VisualSection.Projectiles,
+                "PROJECTILES",
+                "Authored bullet visual child and TrailRenderer"))
+        {
+            ProductionVisualTuningController tuning = productionVisualTuning;
+            if (tuning != null)
+            {
+                AddSliderRow(
+                    "Projectile Visual Scale", tuning.ProjectileVisualScale,
+                    0.1f, 4f, tuning.SetProjectileVisualScale, "0.00");
+                AddSliderRow(
+                    "Trail Width", tuning.TrailWidth,
+                    0.1f, 5f, tuning.SetTrailWidth, "0.00");
+                AddSliderRow(
+                    "Trail Time / Length", tuning.TrailTime,
+                    0.1f, 6f, tuning.SetTrailTime, "0.00");
+                AddSliderRow(
+                    "Trail Alpha", tuning.TrailAlpha,
+                    0f, 3f, tuning.SetTrailAlpha, "0.00");
+                AddHint(
+                    "Multipliers: 1.00 = production. Visual child scale does " +
+                    "not change the root collider.");
+                AddVisualSectionReset(
+                    "PROJECTILES", tuning.ResetProjectileSettings);
+            }
+            else
+            {
+                AddHint("Production projectile tuner could not be created.");
+            }
+        }
+
+        if (AddVisualSectionHeader(
+                VisualSection.Camera,
+                "CAMERA",
+                "Production CameraFollow orthographic source"))
+        {
+            if (cameraFollow != null && cameraFollow.OrthographicZoomAvailable)
+            {
+                float productionSize = cameraFollow.ProductionOrthographicSize;
+                AddSliderRow(
+                    "Camera Zoom / Orthographic Size",
+                    cameraFollow.DebugOrthographicSize,
+                    2f, 16f,
+                    cameraFollow.SetDebugOrthographicSize,
+                    "0.00");
+                AddRow(
+                    "MVP DEFAULT", productionSize.ToString("0.00"),
+                    successColor, "APPLY", true,
+                    () =>
+                    {
+                        cameraFollow.SetDebugOrthographicSize(productionSize);
+                        RefreshCurrentTab();
+                    });
+                AddRow(
+                    "SANDBOX-LIKE", "12.50", successColor, "APPLY", true,
+                    () =>
+                    {
+                        cameraFollow.SetDebugOrthographicSize(12.5f);
+                        RefreshCurrentTab();
+                    });
+                AddHint(
+                    "Sandbox value 12.5 comes from the removed " +
+                    "GameplaySandboxBootstrap.CreateCamera().");
+                AddVisualSectionReset(
+                    "CAMERA", cameraFollow.ResetDebugOrthographicSize);
+            }
+            else
+            {
+                AddHint("Production orthographic CameraFollow was not found.");
+            }
+        }
     }
+
+    private static bool IsRuntimeLabTab(DebugTab tab) =>
+        tab == DebugTab.VisualTest || tab == DebugTab.FeelTest;
 
     private void SetMenuLiveSimulation(bool live)
     {
@@ -1688,6 +2246,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             return;
         }
 
+        AnomalyVisualTuningCapabilities capabilities =
+            target.VisualTunerCapabilities;
+
         AddSectionTitle("ART", "Optional artist-authored presentation layers");
         AddRow(
             "ART LAYERS",
@@ -1707,7 +2268,17 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             }
         );
 
-        AddSectionTitle("BOUNDARY", "Presentation only; collider is unchanged");
+        AnomalyVisualTuningCapabilities boundaryCapabilities =
+            AnomalyVisualTuningCapabilities.BoundaryWidth |
+            AnomalyVisualTuningCapabilities.BoundaryAlpha |
+            AnomalyVisualTuningCapabilities.InnerLineWidth |
+            AnomalyVisualTuningCapabilities.VisualScale;
+        if ((capabilities & boundaryCapabilities) != 0)
+        {
+            AddSectionTitle(
+                "BOUNDARY",
+                "Presentation only; collider is unchanged"
+            );
         AddVisualTunerFloat(
             debug, "Boundary Width",
             AnomalyVisualTuningCapabilities.BoundaryWidth,
@@ -1716,6 +2287,17 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             (values, value) =>
             {
                 values.BoundaryWidth = value;
+                return values;
+            }
+        );
+        AddVisualTunerFloat(
+            debug, "Boundary Alpha",
+            AnomalyVisualTuningCapabilities.BoundaryAlpha,
+            0.02f, 0.1f, 0f, 1f,
+            values => values.BoundaryAlpha,
+            (values, value) =>
+            {
+                values.BoundaryAlpha = value;
                 return values;
             }
         );
@@ -1741,8 +2323,19 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 return values;
             }
         );
+        }
 
-        AddSectionTitle("COLORS", "Runtime instance RGBA; assets are untouched");
+        AnomalyVisualTuningCapabilities colorCapabilities =
+            AnomalyVisualTuningCapabilities.PrimaryColor |
+            AnomalyVisualTuningCapabilities.SecondaryColor |
+            AnomalyVisualTuningCapabilities.FillColor |
+            AnomalyVisualTuningCapabilities.FillAlpha;
+        if ((capabilities & colorCapabilities) != 0)
+        {
+            AddSectionTitle(
+                "COLORS",
+                "Runtime instance RGBA; assets are untouched"
+            );
         AddVisualTunerColor(
             debug,
             "Primary",
@@ -1788,8 +2381,20 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 return values;
             }
         );
+        }
 
-        AddSectionTitle("PATTERN / FX", "Only supported renderer properties");
+        AnomalyVisualTuningCapabilities patternCapabilities =
+            AnomalyVisualTuningCapabilities.EdgeGlow |
+            AnomalyVisualTuningCapabilities.PulseSpeed |
+            AnomalyVisualTuningCapabilities.PulseStrength |
+            AnomalyVisualTuningCapabilities.PatternSpeed |
+            AnomalyVisualTuningCapabilities.PatternStrength;
+        if ((capabilities & patternCapabilities) != 0)
+        {
+            AddSectionTitle(
+                "PATTERN / FX",
+                "Only supported renderer properties"
+            );
         AddVisualTunerFloat(
             debug, "Edge Glow",
             AnomalyVisualTuningCapabilities.EdgeGlow,
@@ -1834,6 +2439,18 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 return values;
             }
         );
+        AddVisualTunerFloat(
+            debug, "Pattern Strength",
+            AnomalyVisualTuningCapabilities.PatternStrength,
+            0.02f, 0.1f, 0f, 1f,
+            values => values.PatternStrength,
+            (values, value) =>
+            {
+                values.PatternStrength = value;
+                return values;
+            }
+        );
+        }
 
         AddSectionTitle("DEBUG PRESETS", "Session-only starting points");
         AddVisualTunerPreset(debug, "CLEAN");
@@ -1868,6 +2485,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private void AddAnomalyTargetPanel(
         ProductionSectorDebugController debug)
     {
+        debug.RefreshVisualTunerTargetCache();
         ProductionAnomalySite target = debug.VisualTunerTarget;
         string distance = debug.VisualTunerDistance >= 0f
             ? $"{debug.VisualTunerDistance:0.0}"
@@ -1912,9 +2530,17 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         RectTransform row = CreateRect("Target Selector", contentRoot);
         row.gameObject.AddComponent<Image>().color = rowColor;
-        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 54f;
+        bool compact = activeTab == DebugTab.VisualTest;
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight =
+            compact ? 30f : 54f;
 
         bool canCycle = debug.VisualTunerTargetCount > 1;
+        string targetLabel = debug.VisualTunerCapabilities !=
+            AnomalyVisualTuningCapabilities.None
+                ? debug.VisualTunerTypeName
+                : debug.VisualTunerTargetName
+                    .Replace("NORMAL ", string.Empty)
+                    .Replace("SPECIAL ", string.Empty);
         Button previous = CreateButton(
             row, "PREV", () => SelectVisualTunerTarget(debug, false),
             104f, canCycle);
@@ -1922,16 +2548,23 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         previousRect.anchorMin = previousRect.anchorMax =
             new Vector2(0f, 0.5f);
         previousRect.pivot = new Vector2(0f, 0.5f);
-        previousRect.anchoredPosition = new Vector2(12f, 0f);
-        previousRect.sizeDelta = new Vector2(104f, 38f);
+        previousRect.anchoredPosition = new Vector2(compact ? 4f : 12f, 0f);
+        previousRect.sizeDelta = compact
+            ? new Vector2(48f, 22f)
+            : new Vector2(104f, 38f);
 
         TextMeshProUGUI target = CreateText(
             "Target", row,
-            $"{debug.VisualTunerTargetName}  " +
+            $"{targetLabel}  " +
             $"({debug.VisualTunerTargetIndex + 1}/" +
             $"{debug.VisualTunerTargetCount})",
-            17f, TextAlignmentOptions.Center, successColor);
-        Stretch(target.rectTransform, 126f, 126f);
+            compact ? 9f : 17f,
+            TextAlignmentOptions.Center,
+            successColor);
+        Stretch(target.rectTransform,
+            compact ? 56f : 126f,
+            compact ? 56f : 126f);
+        target.overflowMode = TextOverflowModes.Ellipsis;
 
         Button next = CreateButton(
             row, "NEXT", () => SelectVisualTunerTarget(debug, true),
@@ -1939,8 +2572,21 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         RectTransform nextRect = next.GetComponent<RectTransform>();
         nextRect.anchorMin = nextRect.anchorMax = new Vector2(1f, 0.5f);
         nextRect.pivot = new Vector2(1f, 0.5f);
-        nextRect.anchoredPosition = new Vector2(-12f, 0f);
-        nextRect.sizeDelta = new Vector2(104f, 38f);
+        nextRect.anchoredPosition = new Vector2(compact ? -4f : -12f, 0f);
+        nextRect.sizeDelta = compact
+            ? new Vector2(48f, 22f)
+            : new Vector2(104f, 38f);
+        if (compact)
+        {
+            TextMeshProUGUI previousText =
+                previous.GetComponentInChildren<TextMeshProUGUI>();
+            TextMeshProUGUI nextText =
+                next.GetComponentInChildren<TextMeshProUGUI>();
+            if (previousText != null)
+                previousText.fontSize = 9f;
+            if (nextText != null)
+                nextText.fontSize = 9f;
+        }
     }
 
     private void AddVisualTunerPreset(
@@ -1979,11 +2625,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             return;
 
         float current = getter(debug.VisualTunerValues);
-        AddFourStepRow(
+        AddSliderRow(
             label,
             current,
-            smallStep,
-            largeStep,
             minimum,
             maximum,
             value =>
@@ -2029,11 +2673,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         Color color = getter(debug.VisualTunerValues);
         float current = GetColorChannel(color, channel);
-        AddFourStepRow(
+        AddSliderRow(
             label,
             current,
-            0.02f,
-            0.1f,
             0f,
             1f,
             value => SetVisualTunerColorChannel(
@@ -2060,7 +2702,6 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             Mathf.Clamp01(channelValue)
         );
         debug.ApplyVisualTunerValues(setter(values, color));
-        RefreshCurrentTab();
     }
 
     private static float GetColorChannel(Color color, int channel)
@@ -2825,7 +3466,27 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddRow("Score", available ? football.Score.ToString() : "-", mutedColor,
             "RESET", available,
             () => { football.ResetGame(); RefreshCurrentTab(); });
-        AddRow("Balls", available ? football.ActiveBallCount.ToString() : "-", mutedColor,
+        AddRow("TIME", available ? football.RemainingTime.ToString("0.0") : "-", mutedColor,
+            null, false, null);
+        AddRow("SCORE", available ? football.Score.ToString() : "-", mutedColor,
+            null, false, null);
+        AddRow("Arena Width", available ? football.ArenaWidth.ToString("0.00") : "-", mutedColor,
+            "SHOW ZONES", available,
+            () => { football.ToggleDebugZones(); RefreshCurrentTab(); });
+        AddRow("Arena Height", available ? football.ArenaHeight.ToString("0.00") : "-", mutedColor,
+            "FRAME CAMERA", available,
+            () => { football.FrameCamera(); RefreshCurrentTab(); });
+        AddRow("Camera Ortho Size",
+            available ? football.CameraOrthographicSize.ToString("0.00") : "-", mutedColor,
+            "RESTORE CAMERA", available,
+            () => { football.RestoreCamera(); RefreshCurrentTab(); });
+        AddRow("Ball Zone Height", available ? football.BallZoneHeight.ToString("0.00") : "-",
+            mutedColor, null, false, null);
+        AddRow("Anomaly Zone Height", available ? football.AnomalyZoneHeight.ToString("0.00") : "-",
+            mutedColor, null, false, null);
+        AddRow("Target Zone Height", available ? football.TargetZoneHeight.ToString("0.00") : "-",
+            mutedColor, null, false, null);
+        AddRow("Balls active", available ? football.ActiveBallCount.ToString() : "-", mutedColor,
             "+1 BALL", available && football.IsRunning,
             () => { football.DebugAddBall(); RefreshCurrentTab(); });
         AddRow("Anomalies", available ? football.ActiveAnomalyCount.ToString() : "-", mutedColor,
@@ -2834,6 +3495,21 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddRow("Targets", available ? football.ActiveTargetCount.ToString() : "-", mutedColor,
             "SPAWN TARGET", available && football.IsRunning,
             () => { football.DebugSpawnTarget(); RefreshCurrentTab(); });
+        AddRow("Green Targets", available ? football.GreenTargetCount.ToString() : "-", mutedColor,
+            "+2 SCORE", available && football.IsRunning,
+            () => { football.DebugAddScore(2); RefreshCurrentTab(); });
+        AddRow("Yellow Targets", available ? football.YellowTargetCount.ToString() : "-", mutedColor,
+            "+5 SCORE", available && football.IsRunning,
+            () => { football.DebugAddScore(5); RefreshCurrentTab(); });
+        AddRow("Red Targets", available ? football.RedTargetCount.ToString() : "-", mutedColor,
+            "+10 SCORE", available && football.IsRunning,
+            () => { football.DebugAddScore(10); RefreshCurrentTab(); });
+        AddRow("Gates", available ? football.GateCount.ToString() : "-", mutedColor,
+            "+20 SCORE", available && football.IsRunning,
+            () => { football.DebugAddScore(20); RefreshCurrentTab(); });
+        AddRow("Target types", available ? "RANDOM PER LANE" : "-", accentColor,
+            "REROLL TARGETS", available && football.IsRunning,
+            () => { football.DebugRerollTargets(); RefreshCurrentTab(); });
         AddRow("Clear runtime balls", available ? "READY" : "NOT FOUND", warningColor,
             "CLEAR BALLS", available,
             () => { football.DebugClearBalls(); RefreshCurrentTab(); });
@@ -4363,18 +5039,476 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             ? data.DisplayName
             : type.ToString();
 
+    private bool AddVisualSectionHeader(
+        VisualSection section,
+        string title,
+        string subtitle)
+    {
+        int index = (int)section;
+        bool expanded = visualSectionExpanded[index];
+        RectTransform header = CreateRect(title, contentRoot);
+        Image image = header.gameObject.AddComponent<Image>();
+        image.color = new Color(
+            accentColor.r,
+            accentColor.g,
+            accentColor.b,
+            expanded ? 0.28f : 0.16f
+        );
+        header.gameObject.AddComponent<LayoutElement>().preferredHeight = 34f;
+
+        Button button = header.gameObject.AddComponent<Button>();
+        button.targetGraphic = image;
+        button.navigation = new Navigation { mode = Navigation.Mode.None };
+        button.onClick.AddListener(() =>
+        {
+            visualSectionExpanded[index] = !visualSectionExpanded[index];
+            RefreshCurrentTab();
+        });
+
+        TextMeshProUGUI text = CreateText(
+            "Label",
+            header,
+            $"<b>{(expanded ? "▼" : "▶")} {title}</b>",
+            13f,
+            TextAlignmentOptions.MidlineLeft,
+            Color.white
+        );
+        text.raycastTarget = false;
+        Stretch(text.rectTransform, 9f, 9f, 2f, 2f);
+        return expanded;
+    }
+
+    private bool AddFeelSectionHeader(
+        FeelSection section,
+        string title,
+        string subtitle)
+    {
+        int index = (int)section;
+        bool expanded = feelSectionExpanded[index];
+        RectTransform header = CreateRect(title, contentRoot);
+        Image image = header.gameObject.AddComponent<Image>();
+        image.color = new Color(
+            accentColor.r, accentColor.g, accentColor.b,
+            expanded ? 0.28f : 0.16f);
+        header.gameObject.AddComponent<LayoutElement>().preferredHeight = 34f;
+
+        Button button = header.gameObject.AddComponent<Button>();
+        button.targetGraphic = image;
+        button.navigation = new Navigation { mode = Navigation.Mode.None };
+        button.onClick.AddListener(() =>
+        {
+            feelSectionExpanded[index] = !feelSectionExpanded[index];
+            RefreshCurrentTab();
+        });
+
+        TextMeshProUGUI text = CreateText(
+            "Label", header,
+            $"<b>{(expanded ? "▼" : "▶")} {title}</b>",
+            13f, TextAlignmentOptions.MidlineLeft, Color.white);
+        text.raycastTarget = false;
+        Stretch(text.rectTransform, 9f, 9f, 2f, 2f);
+        return expanded;
+    }
+
+    private void AddInteractiveFeelLab()
+    {
+        EnsureProductionSectorDebug();
+        ProductionFeelTuningController tuning = productionFeelTuning;
+
+        if (tuning == null)
+        {
+            AddSectionTitle("FEEL", "Development / Editor only");
+            AddHint("ProductionFeelTuningController was not created.");
+            return;
+        }
+
+        tuning.Configure();
+        AddVisualStatusLine("● LIVE   Existing production parameters");
+        AddFeelPresetStrip(tuning);
+
+        if (AddFeelSectionHeader(
+                FeelSection.PhysicalFeedback,
+                "PHYSICAL FEEDBACK",
+                "Experimental presentation-only combat response"))
+        {
+            AddToggleRow("Hit Stop", tuning.HitStopEnabled, true,
+                tuning.ToggleHitStop);
+            AddSliderRow("Normal Hit Stop Duration",
+                tuning.NormalHitStopDuration, 0f, 0.1f,
+                tuning.SetNormalHitStopDuration, "0.000");
+            AddSliderRow("Crit Hit Stop Duration",
+                tuning.CritHitStopDuration, 0f, 0.15f,
+                tuning.SetCritHitStopDuration, "0.000");
+            AddSliderRow("Kill Hit Stop Duration",
+                tuning.KillHitStopDuration, 0f, 0.15f,
+                tuning.SetKillHitStopDuration, "0.000");
+
+            AddToggleRow("Enemy Hit Punch", tuning.EnemyHitPunchEnabled,
+                true, tuning.ToggleEnemyHitPunch);
+            AddSliderRow("Punch Strength", tuning.EnemyPunchStrength,
+                0f, 0.35f, tuning.SetEnemyPunchStrength, "0.000");
+            AddSliderRow("Punch Duration", tuning.EnemyPunchDuration,
+                0.02f, 0.2f, tuning.SetEnemyPunchDuration, "0.000");
+
+            AddToggleRow("Enemy Visual Kick", tuning.EnemyVisualKickEnabled,
+                true, tuning.ToggleEnemyVisualKick);
+            AddSliderRow("Kick Distance", tuning.EnemyKickDistance,
+                0f, 1f, tuning.SetEnemyKickDistance, "0.000");
+            AddSliderRow("Kick Return Duration",
+                tuning.EnemyKickReturnDuration, 0.02f, 0.2f,
+                tuning.SetEnemyKickReturnDuration, "0.000");
+
+            AddToggleRow("Weapon Visual Recoil",
+                tuning.WeaponVisualRecoilEnabled, true,
+                tuning.ToggleWeaponVisualRecoil);
+            AddSliderRow("Recoil Distance", tuning.WeaponRecoilDistance,
+                0f, 1f, tuning.SetWeaponRecoilDistance, "0.000");
+            AddSliderRow("Recoil Return Duration",
+                tuning.WeaponRecoilReturnDuration, 0.02f, 0.2f,
+                tuning.SetWeaponRecoilReturnDuration, "0.000");
+
+            AddToggleRow("Death Punch", tuning.DeathPunchEnabled, true,
+                tuning.ToggleDeathPunch);
+            AddSliderRow("Death Punch Strength", tuning.DeathPunchStrength,
+                0f, 0.5f, tuning.SetDeathPunchStrength, "0.000");
+            AddSliderRow("Death Punch Duration", tuning.DeathPunchDuration,
+                0.02f, 0.2f, tuning.SetDeathPunchDuration, "0.000");
+            AddVisualSectionReset(
+                "PHYSICAL FEEDBACK", tuning.ResetPhysicalFeedback);
+        }
+
+        if (AddFeelSectionHeader(
+                FeelSection.Weapon, "WEAPON", "Production weapon feedback"))
+        {
+            if (tuning.HasWeaponFx)
+            {
+                AddSliderRow("Weapon Camera Kick", tuning.FireShakeMagnitude,
+                    0f, 1f, tuning.SetFireShakeMagnitude, "0.000");
+                AddSliderRow("Fire Shake Duration", tuning.FireShakeDuration,
+                    0f, 1f, tuning.SetFireShakeDuration, "0.000");
+                AddVisualSectionReset("WEAPON", tuning.ResetWeapon);
+            }
+            else
+            {
+                AddHint("No active production WeaponFxPlayer was found.");
+            }
+        }
+
+        if (AddFeelSectionHeader(
+                FeelSection.Hit, "HIT", "EnemyWhiteFlash production source"))
+        {
+            if (tuning.HasHitFlash)
+            {
+                AddSliderRow("Hit Flash Duration", tuning.HitFlashDuration,
+                    0f, 1f, tuning.SetHitFlashDuration, "0.000");
+                AddVisualSectionReset("HIT", tuning.ResetHit);
+            }
+            else
+            {
+                AddHint("No active production EnemyWhiteFlash was found.");
+            }
+        }
+
+        if (AddFeelSectionHeader(
+                FeelSection.Death, "DEATH", "Production enemy death audit"))
+        {
+            AddHint(
+                "Death Punch is configured in PHYSICAL FEEDBACK. Gameplay " +
+                "death remains immediate; only the detached visual survives.");
+        }
+
+        if (AddFeelSectionHeader(
+                FeelSection.Camera, "CAMERA", "Production follow and impulses"))
+        {
+            if (tuning.HasCameraFollow)
+            {
+                AddSliderRow("Follow Smoothness", tuning.CameraDamping,
+                    0f, 1f, tuning.SetCameraDamping, "0.000");
+            }
+            if (tuning.HasWeaponFx)
+            {
+                AddSliderRow("Hit Impulse Strength", tuning.HitShakeMagnitude,
+                    0f, 1.5f, tuning.SetHitShakeMagnitude, "0.000");
+                AddSliderRow("Hit Impulse Duration", tuning.HitShakeDuration,
+                    0f, 1f, tuning.SetHitShakeDuration, "0.000");
+                AddSliderRow("Crit Impulse Strength", tuning.CritShakeMagnitude,
+                    0f, 2f, tuning.SetCritShakeMagnitude, "0.000");
+                AddSliderRow("Crit Impulse Duration", tuning.CritShakeDuration,
+                    0f, 1.5f, tuning.SetCritShakeDuration, "0.000");
+            }
+            if (!tuning.HasCameraFollow && !tuning.HasWeaponFx)
+                AddHint("No production camera feel parameters were found.");
+            else
+                AddVisualSectionReset("CAMERA", tuning.ResetCamera);
+            AddHint("Camera Zoom remains in VISUAL (same source of truth).");
+        }
+
+        if (AddFeelSectionHeader(
+                FeelSection.Movement, "MOVEMENT", "CharacterMovement2D fields"))
+        {
+            if (tuning.HasMovement)
+            {
+                AddSliderRow("Move Speed", tuning.MoveSpeed,
+                    0f, 20f, tuning.SetMoveSpeed, "0.00");
+                AddSliderRow("Acceleration", tuning.Acceleration,
+                    0f, 100f, tuning.SetAcceleration, "0.0");
+                AddSliderRow("Deceleration", tuning.Deceleration,
+                    0f, 100f, tuning.SetDeceleration, "0.0");
+                AddVisualSectionReset("MOVEMENT", tuning.ResetMovement);
+            }
+            else
+            {
+                AddHint("No active production CharacterMovement2D was found.");
+            }
+            AddHint("MISSING: independent direction-change responsiveness.");
+        }
+    }
+
+    private void AddFeelPresetStrip(ProductionFeelTuningController tuning)
+    {
+        RectTransform row = CreateRect("FEEL Presets", contentRoot);
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 30f;
+        row.gameObject.AddComponent<Image>().color =
+            new Color(rowColor.r, rowColor.g, rowColor.b, 0.72f);
+
+        ProductionFeelTuningController.Preset[] presets =
+        {
+            ProductionFeelTuningController.Preset.Production,
+            ProductionFeelTuningController.Preset.Soft,
+            ProductionFeelTuningController.Preset.Strong
+        };
+
+        for (int i = 0; i < presets.Length; i++)
+        {
+            int captured = i;
+            Button button = CreateButton(
+                row, presets[i].ToString().ToUpperInvariant(), () =>
+                {
+                    tuning.ApplyPreset(presets[captured]);
+                    RefreshCurrentTab();
+                }, 100f);
+            RectTransform rect = button.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2((float)i / presets.Length, 0f);
+            rect.anchorMax = new Vector2((float)(i + 1) / presets.Length, 1f);
+            rect.offsetMin = new Vector2(2f, 3f);
+            rect.offsetMax = new Vector2(-2f, -3f);
+            if (tuning.CurrentPreset == presets[i] &&
+                button.targetGraphic is Image image)
+                image.color = successColor;
+            TextMeshProUGUI text = button.GetComponentInChildren<TextMeshProUGUI>();
+            if (text != null) text.fontSize = 10f;
+        }
+    }
+
+    private void AddVisualStatusLine(string message)
+    {
+        RectTransform row = CreateRect("Visual Status", contentRoot);
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 26f;
+        TextMeshProUGUI text = CreateText(
+            "Label", row, message, 11f,
+            TextAlignmentOptions.MidlineLeft, successColor);
+        Stretch(text.rectTransform, 7f, 7f);
+    }
+
+    private void ResetAllVisualLabValues()
+    {
+        ProductionSectorDebugController debug = productionSectorDebug;
+        if (debug == null)
+            return;
+
+        debug.ResetVisualSettings();
+        productionVisualTuning?.ResetProjectileSettings();
+        productionVisualTuning?.ResetVignette();
+        worldRuleVisual?.ResetPlayerGlowDebugSettings();
+        playerOrbitVisual?.ResetPresentationSettings();
+        worldRuleVisual?.ResetWindDustDebugSettings();
+        cameraFollow?.ResetDebugOrthographicSize();
+        anomalyController?.ResetFocusPresentationForDebug();
+        RefreshCurrentTab();
+    }
+
+    private void ResetAllFeelLabValues()
+    {
+        productionFeelTuning?.ResetAll();
+        RefreshCurrentTab();
+    }
+
+    private void AddVisualSectionReset(string section, System.Action reset)
+    {
+        RectTransform row = CreateRect(section + " Reset", contentRoot);
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 24f;
+        Button button = CreateButton(
+            row,
+            "Reset section",
+            () =>
+            {
+                reset?.Invoke();
+                RefreshCurrentTab();
+            },
+            92f
+        );
+        RectTransform rect = button.GetComponent<RectTransform>();
+        rect.anchorMin = rect.anchorMax = new Vector2(1f, 0.5f);
+        rect.pivot = new Vector2(1f, 0.5f);
+        rect.anchoredPosition = new Vector2(-4f, 0f);
+        rect.sizeDelta = new Vector2(92f, 20f);
+        if (button.targetGraphic is Image image)
+            image.color = new Color(0.14f, 0.17f, 0.21f, 1f);
+        TextMeshProUGUI text = button.GetComponentInChildren<TextMeshProUGUI>();
+        if (text != null)
+        {
+            text.fontSize = 10f;
+            text.color = mutedColor;
+        }
+    }
+
+    private void CopyVisualLabValues()
+    {
+        ProductionSectorDebugController debug = productionSectorDebug;
+        if (debug == null)
+            return;
+
+        StringBuilder values = new();
+        values.AppendLine("WORLD");
+        values.AppendLine($"Readability = {debug.Preset}");
+        values.AppendLine($"DecorBrightness = {debug.DecorBrightness:0.###}");
+        values.AppendLine($"EnvironmentDarken = {debug.EnvironmentDarken:0.###}");
+        values.AppendLine();
+        values.AppendLine("ENEMIES");
+        values.AppendLine($"Readability = {debug.EnemyMode}");
+        values.AppendLine($"Scope = {debug.CurrentEnemyScope}");
+        values.AppendLine($"Brightness = {debug.EnemyBrightness:0.###}");
+        values.AppendLine($"Saturation = {debug.EnemySaturation:0.###}");
+        values.AppendLine($"TintStrength = {debug.EnemyTintStrength:0.###}");
+        values.AppendLine($"HueShift = {debug.EnemyHueShift:0.###}");
+        Color recolor = debug.EnemyRecolorTarget;
+        values.AppendLine(
+            $"TargetColor = #{ColorUtility.ToHtmlStringRGB(recolor)}");
+        values.AppendLine(
+            $"RecolorStrength = {debug.EnemyRecolorStrength:0.###}");
+        values.AppendLine($"OutlineEnabled = {debug.EnemyOutlineEnabled}");
+        values.AppendLine($"OutlineStrength = {debug.EnemyOutlineStrength:0.###}");
+        values.AppendLine($"OutlineWidth = {debug.EnemyOutlineWidth:0.###}");
+
+        if (anomalyController != null)
+        {
+            values.AppendLine();
+            values.AppendLine("ATMOSPHERE");
+            values.AppendLine(
+                $"AnomalyFocus = {anomalyController.AnomalyFocusEnabled}");
+            values.AppendLine(
+                $"OutsideDarkness = {anomalyController.OutsideDarkness:0.###}");
+            values.AppendLine(
+                $"OutsideColor = {anomalyController.OutsideColor:0.###}");
+            values.AppendLine(
+                $"FocusTransition = {anomalyController.FocusTransition:0.###}");
+        }
+
+        if (worldRuleVisual != null)
+        {
+            values.AppendLine($"WindDustAmount = " +
+                $"{worldRuleVisual.WindDustAmountMultiplier:0.###}");
+        }
+
+        if (worldRuleVisual != null || playerOrbitVisual != null)
+        {
+            values.AppendLine();
+            values.AppendLine("PLAYER");
+            if (worldRuleVisual != null)
+            {
+                values.AppendLine($"GlowIntensity = " +
+                    $"{worldRuleVisual.PlayerGlowIntensityMultiplier:0.###}");
+                values.AppendLine($"GlowRadius = " +
+                    $"{worldRuleVisual.PlayerGlowRadiusMultiplier:0.###}");
+            }
+            if (playerOrbitVisual != null)
+            {
+                values.AppendLine($"OrbitRing = {playerOrbitVisual.RingEnabled}");
+                values.AppendLine($"OrbitRadius = " +
+                    $"{playerOrbitVisual.CurrentOrbitRadius:0.###}");
+                values.AppendLine($"OrbitIntensity = " +
+                    $"{playerOrbitVisual.RingIntensity:0.###}");
+                values.AppendLine($"OrbitWidth = " +
+                    $"{playerOrbitVisual.RingWidth:0.###}");
+                values.AppendLine($"OrbitAlpha = " +
+                    $"{playerOrbitVisual.RingAlpha:0.###}");
+            }
+        }
+
+        values.AppendLine();
+        values.AppendLine("ANOMALIES");
+        values.AppendLine($"GlobalAccent = {debug.AnomalyAccent:0.###}");
+        values.AppendLine($"Monochrome = {debug.MonochromeAnomaliesEnabled}");
+
+        if (debug.VisualTunerTarget != null)
+        {
+            values.AppendLine($"Target = {debug.VisualTunerTargetName}");
+            values.Append(debug.VisualTunerTarget.GetVisualTunerValuesText());
+        }
+
+        if (productionVisualTuning != null)
+        {
+            values.AppendLine();
+            values.AppendLine("POST FX");
+            values.AppendLine($"VignetteIntensity = " +
+                $"{productionVisualTuning.VignetteIntensity:0.###}");
+            values.AppendLine();
+            values.AppendLine("PROJECTILES");
+            values.AppendLine($"VisualScale = " +
+                $"{productionVisualTuning.ProjectileVisualScale:0.###}");
+            values.AppendLine($"TrailWidth = " +
+                $"{productionVisualTuning.TrailWidth:0.###}");
+            values.AppendLine($"TrailTime = " +
+                $"{productionVisualTuning.TrailTime:0.###}");
+            values.AppendLine($"TrailAlpha = " +
+                $"{productionVisualTuning.TrailAlpha:0.###}");
+        }
+
+        if (cameraFollow != null)
+        {
+            values.AppendLine();
+            values.AppendLine("CAMERA");
+            values.AppendLine($"OrthographicSize = " +
+                $"{cameraFollow.DebugOrthographicSize:0.###}");
+        }
+
+        string result = values.ToString().TrimEnd();
+        GUIUtility.systemCopyBuffer = result;
+        Debug.Log($"[RuntimeVisualLab]\n{result}", this);
+    }
+
+    private void CopyFeelLabValues()
+    {
+        if (productionFeelTuning == null)
+            return;
+
+        string result = productionFeelTuning.GetValuesText();
+        GUIUtility.systemCopyBuffer = result;
+        Debug.Log($"[RuntimeFeelLab]\n{result}", this);
+    }
+
     private void AddSectionTitle(string title, string subtitle)
     {
         RectTransform section = CreateRect(title, contentRoot);
-        section.gameObject.AddComponent<LayoutElement>().preferredHeight = 62f;
+        bool compact = IsRuntimeLabTab(activeTab);
+        section.gameObject.AddComponent<LayoutElement>().preferredHeight =
+            compact ? 26f : 62f;
         section.gameObject.AddComponent<Image>().color =
             new Color(accentColor.r, accentColor.g, accentColor.b, 0.18f);
         TextMeshProUGUI text = CreateText(
             "Label", section,
-            $"<b>{title}</b>\n<size=16><color=#A6AFBC>{subtitle}</color></size>",
-            22f, TextAlignmentOptions.MidlineLeft, Color.white
+            compact
+                ? $"<b>{title}</b>"
+                : $"<b>{title}</b>\n<size=16><color=#A6AFBC>{subtitle}</color></size>",
+            compact ? 11f : 22f,
+            TextAlignmentOptions.MidlineLeft,
+            Color.white
         );
-        Stretch(text.rectTransform, 16f, 12f, 7f, 7f);
+        Stretch(text.rectTransform,
+            compact ? 7f : 16f,
+            compact ? 7f : 12f,
+            compact ? 2f : 7f,
+            compact ? 2f : 7f);
     }
 
     private void AddRow(
@@ -4385,31 +5519,40 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         bool buttonEnabled,
         UnityEngine.Events.UnityAction action)
     {
+        bool compact = IsRuntimeLabTab(activeTab);
         RectTransform row = CreateRect(label, contentRoot);
         row.gameObject.AddComponent<Image>().color = rowColor;
-        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 54f;
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight =
+            compact ? 30f : 54f;
 
-        float buttonWidth = GetButtonWidth(buttonLabel);
+        float buttonWidth = compact
+            ? Mathf.Clamp(GetButtonWidth(buttonLabel), 58f, 76f)
+            : GetButtonWidth(buttonLabel);
         float rightPadding = string.IsNullOrEmpty(buttonLabel)
-            ? 18f
-            : buttonWidth + 36f;
+            ? (compact ? 7f : 18f)
+            : buttonWidth + (compact ? 9f : 36f);
         TextMeshProUGUI labelText = CreateText(
-            "Name", row, label, 19f,
+            "Name", row, label, compact ? 11f : 19f,
             TextAlignmentOptions.MidlineLeft, Color.white
         );
         labelText.rectTransform.anchorMin = Vector2.zero;
-        labelText.rectTransform.anchorMax = new Vector2(0.48f, 1f);
-        labelText.rectTransform.offsetMin = new Vector2(16f, 0f);
+        labelText.rectTransform.anchorMax = new Vector2(
+            compact ? 0.56f : 0.48f, 1f);
+        labelText.rectTransform.offsetMin = new Vector2(
+            compact ? 7f : 16f, 0f);
         labelText.rectTransform.offsetMax = Vector2.zero;
+        labelText.overflowMode = TextOverflowModes.Ellipsis;
 
         TextMeshProUGUI statusText = CreateText(
-            "Status", row, status, 15f,
+            "Status", row, status, compact ? 9f : 15f,
             TextAlignmentOptions.MidlineRight, statusColor
         );
-        statusText.rectTransform.anchorMin = new Vector2(0.43f, 0f);
+        statusText.rectTransform.anchorMin = new Vector2(
+            compact ? 0.50f : 0.43f, 0f);
         statusText.rectTransform.anchorMax = Vector2.one;
         statusText.rectTransform.offsetMin = Vector2.zero;
         statusText.rectTransform.offsetMax = new Vector2(-rightPadding, 0f);
+        statusText.overflowMode = TextOverflowModes.Ellipsis;
 
         if (string.IsNullOrEmpty(buttonLabel))
             return;
@@ -4420,8 +5563,15 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         RectTransform buttonRect = button.GetComponent<RectTransform>();
         buttonRect.anchorMin = buttonRect.anchorMax = new Vector2(1f, 0.5f);
         buttonRect.pivot = new Vector2(1f, 0.5f);
-        buttonRect.anchoredPosition = new Vector2(-12f, 0f);
-        buttonRect.sizeDelta = new Vector2(buttonWidth, 38f);
+        buttonRect.anchoredPosition = new Vector2(compact ? -4f : -12f, 0f);
+        buttonRect.sizeDelta = new Vector2(
+            buttonWidth, compact ? 22f : 38f);
+        if (compact)
+        {
+            TextMeshProUGUI text = button.GetComponentInChildren<TextMeshProUGUI>();
+            if (text != null)
+                text.fontSize = 9f;
+        }
     }
 
     private void AddStepperRow(
@@ -4520,6 +5670,102 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             () => ApplyFourStep(setter, value + smallStep, minimum, maximum));
         AddFourStepButton(row, "++", -12f, value < maximum,
             () => ApplyFourStep(setter, value + largeStep, minimum, maximum));
+    }
+
+    private void AddSliderRow(
+        string label,
+        float value,
+        float minimum,
+        float maximum,
+        System.Action<float> setter,
+        string format)
+    {
+        minimum = Mathf.Min(minimum, value);
+        maximum = Mathf.Max(maximum, value);
+        if (Mathf.Approximately(minimum, maximum))
+            maximum = minimum + 1f;
+
+        RectTransform row = CreateRect(label, contentRoot);
+        row.gameObject.AddComponent<Image>().color =
+            new Color(rowColor.r, rowColor.g, rowColor.b, 0.72f);
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 30f;
+
+        TextMeshProUGUI labelText = CreateText(
+            "Name", row, label, 11f,
+            TextAlignmentOptions.MidlineLeft, Color.white);
+        labelText.rectTransform.anchorMin = Vector2.zero;
+        labelText.rectTransform.anchorMax = new Vector2(0.42f, 1f);
+        labelText.rectTransform.offsetMin = new Vector2(7f, 0f);
+        labelText.rectTransform.offsetMax = Vector2.zero;
+        labelText.overflowMode = TextOverflowModes.Ellipsis;
+
+        RectTransform sliderRoot = CreateRect("Slider", row);
+        sliderRoot.anchorMin = new Vector2(0.43f, 0.5f);
+        sliderRoot.anchorMax = new Vector2(0.82f, 0.5f);
+        sliderRoot.pivot = new Vector2(0.5f, 0.5f);
+        sliderRoot.offsetMin = new Vector2(0f, -10f);
+        sliderRoot.offsetMax = new Vector2(0f, 10f);
+        Image sliderHitArea = sliderRoot.gameObject.AddComponent<Image>();
+        sliderHitArea.color = Color.clear;
+        sliderHitArea.raycastTarget = true;
+
+        RectTransform background = CreateRect("Background", sliderRoot);
+        background.anchorMin = new Vector2(0f, 0.5f);
+        background.anchorMax = new Vector2(1f, 0.5f);
+        background.sizeDelta = new Vector2(0f, 4f);
+        Image backgroundImage = background.gameObject.AddComponent<Image>();
+        backgroundImage.color = new Color(0.28f, 0.31f, 0.35f, 1f);
+        backgroundImage.raycastTarget = false;
+
+        RectTransform fillArea = CreateRect("Fill Area", sliderRoot);
+        fillArea.anchorMin = new Vector2(0f, 0.5f);
+        fillArea.anchorMax = new Vector2(1f, 0.5f);
+        fillArea.offsetMin = new Vector2(5f, -2f);
+        fillArea.offsetMax = new Vector2(-5f, 2f);
+        RectTransform fill = CreateRect("Fill", fillArea);
+        Stretch(fill);
+        Image fillImage = fill.gameObject.AddComponent<Image>();
+        fillImage.color = new Color(
+            accentColor.r, accentColor.g, accentColor.b, 0.9f);
+        fillImage.raycastTarget = false;
+
+        RectTransform handleArea = CreateRect("Handle Slide Area", sliderRoot);
+        handleArea.anchorMin = new Vector2(0f, 0.5f);
+        handleArea.anchorMax = new Vector2(1f, 0.5f);
+        handleArea.offsetMin = new Vector2(6f, -8f);
+        handleArea.offsetMax = new Vector2(-6f, 8f);
+        RectTransform handle = CreateRect("Handle", handleArea);
+        handle.sizeDelta = new Vector2(12f, 14f);
+        Image handleImage = handle.gameObject.AddComponent<Image>();
+        handleImage.color = accentColor;
+
+        Slider slider = sliderRoot.gameObject.AddComponent<Slider>();
+        slider.enabled = true;
+        slider.interactable = true;
+        slider.minValue = minimum;
+        slider.maxValue = maximum;
+        slider.wholeNumbers = false;
+        slider.fillRect = fill;
+        slider.handleRect = handle;
+        slider.targetGraphic = handleImage;
+        slider.direction = Slider.Direction.LeftToRight;
+        slider.navigation = new Navigation { mode = Navigation.Mode.None };
+
+        TextMeshProUGUI valueText = CreateText(
+            "Value", row, value.ToString(format), 11f,
+            TextAlignmentOptions.MidlineRight, successColor);
+        valueText.rectTransform.anchorMin = new Vector2(0.83f, 0f);
+        valueText.rectTransform.anchorMax = Vector2.one;
+        valueText.rectTransform.offsetMin = Vector2.zero;
+        valueText.rectTransform.offsetMax = new Vector2(-7f, 0f);
+        valueText.raycastTarget = false;
+
+        slider.SetValueWithoutNotify(Mathf.Clamp(value, minimum, maximum));
+        slider.onValueChanged.AddListener(current =>
+        {
+            valueText.text = current.ToString(format);
+            setter?.Invoke(current);
+        });
     }
 
     private void AddFourStepButton(
@@ -4681,14 +5927,14 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         RectTransform row = CreateRect("Visual Test Strength", contentRoot);
         row.gameObject.AddComponent<Image>().color = rowColor;
-        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 52f;
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 30f;
 
         TextMeshProUGUI label = CreateText(
-            "Name", row, "STRENGTH", 17f,
+            "Name", row, "MODE", 10f,
             TextAlignmentOptions.MidlineLeft, Color.white);
         label.rectTransform.anchorMin = Vector2.zero;
-        label.rectTransform.anchorMax = new Vector2(0.36f, 1f);
-        label.rectTransform.offsetMin = new Vector2(14f, 0f);
+        label.rectTransform.anchorMax = new Vector2(0.21f, 1f);
+        label.rectTransform.offsetMin = new Vector2(7f, 0f);
         label.rectTransform.offsetMax = Vector2.zero;
 
         ProductionSectorDebugController.EnemyReadability[] values =
@@ -4713,13 +5959,99 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 },
                 100f);
             RectTransform rect = button.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.38f + i * 0.15f, 0.14f);
-            rect.anchorMax = new Vector2(0.515f + i * 0.15f, 0.86f);
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
+            rect.anchorMin = new Vector2(0.22f + i * 0.195f, 0.12f);
+            rect.anchorMax = new Vector2(0.405f + i * 0.195f, 0.88f);
+            rect.offsetMin = new Vector2(1f, 0f);
+            rect.offsetMax = new Vector2(-1f, 0f);
+            TextMeshProUGUI buttonText =
+                button.GetComponentInChildren<TextMeshProUGUI>();
+            if (buttonText != null)
+                buttonText.fontSize = 8.5f;
             if (selected && button.targetGraphic is Image image)
                 image.color = successColor;
         }
+    }
+
+    private void AddEnemyRecolorPresetStrip(
+        ProductionSectorDebugController debug)
+    {
+        RectTransform row = CreateRect("Enemy Recolor Presets", contentRoot);
+        row.gameObject.AddComponent<Image>().color = rowColor;
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 30f;
+
+        string[] labels = { "ORIGINAL", "CYAN", "MAGENTA", "RED", "WHITE" };
+        Color[] colors =
+        {
+            Color.clear,
+            Color.cyan,
+            Color.magenta,
+            Color.red,
+            Color.white
+        };
+
+        for (int i = 0; i < labels.Length; i++)
+        {
+            int index = i;
+            bool original = index == 0;
+            bool selected = original
+                ? debug.EnemyRecolorStrength <= 0.001f &&
+                    Mathf.Abs(debug.EnemyHueShift) <= 0.001f
+                : debug.EnemyRecolorStrength >= 0.999f &&
+                    Mathf.Abs(debug.EnemyHueShift) <= 0.001f &&
+                    ColorsApproximately(debug.EnemyRecolorTarget, colors[index]);
+            Button button = CreateButton(
+                row,
+                labels[index],
+                () =>
+                {
+                    if (original)
+                        debug.ResetEnemyRecolor();
+                    else
+                        debug.SetEnemyRecolorPreset(colors[index]);
+                    RefreshCurrentTab();
+                },
+                100f);
+            RectTransform rect = button.GetComponent<RectTransform>();
+            float width = 1f / labels.Length;
+            rect.anchorMin = new Vector2(index * width, 0.12f);
+            rect.anchorMax = new Vector2((index + 1) * width, 0.88f);
+            rect.offsetMin = new Vector2(1f, 0f);
+            rect.offsetMax = new Vector2(-1f, 0f);
+            TextMeshProUGUI text = button.GetComponentInChildren<TextMeshProUGUI>();
+            if (text != null)
+                text.fontSize = 8f;
+            if (selected && button.targetGraphic is Image image)
+                image.color = successColor;
+        }
+    }
+
+    private void AddEnemyRecolorColorChannel(
+        ProductionSectorDebugController debug,
+        string label,
+        int channel)
+    {
+        AddSliderRow(
+            label,
+            GetColorChannel(debug.EnemyRecolorTarget, channel),
+            0f,
+            1f,
+            value =>
+            {
+                Color color = debug.EnemyRecolorTarget;
+                SetColorChannel(ref color, channel, value);
+                debug.SetEnemyRecolorTarget(color);
+            },
+            "0.00");
+    }
+
+    private static bool ColorsApproximately(Color first, Color second)
+    {
+        Vector3 delta = new(
+            first.r - second.r,
+            first.g - second.g,
+            first.b - second.b
+        );
+        return delta.sqrMagnitude <= 0.0001f;
     }
 
     private static float GetButtonWidth(string label) => label switch
@@ -4756,12 +6088,22 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void AddHint(string message)
     {
+        bool compact = IsRuntimeLabTab(activeTab);
         TextMeshProUGUI hint = CreateText(
-            "Hint", contentRoot, message, 15f,
-            TextAlignmentOptions.Center, mutedColor
+            "Hint", contentRoot, message, compact ? 10f : 15f,
+            compact
+                ? TextAlignmentOptions.MidlineLeft
+                : TextAlignmentOptions.Center,
+            mutedColor
         );
         hint.textWrappingMode = TextWrappingModes.Normal;
-        hint.gameObject.AddComponent<LayoutElement>().preferredHeight = 56f;
+        hint.gameObject.AddComponent<LayoutElement>().preferredHeight =
+            compact ? 32f : 56f;
+        if (compact)
+        {
+            hint.margin = new Vector4(7f, 0f, 7f, 0f);
+            hint.overflowMode = TextOverflowModes.Ellipsis;
+        }
     }
 
     private Button CreateButton(

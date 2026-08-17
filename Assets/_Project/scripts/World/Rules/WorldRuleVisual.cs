@@ -185,6 +185,9 @@ public sealed class WorldRuleVisual : MonoBehaviour
     private float currentDarknessIntensity;
     private float targetDarknessIntensity;
     private float debugDarknessOverlayMultiplier = 1f;
+    private float debugPlayerGlowIntensityMultiplier = 1f;
+    private float debugPlayerGlowRadiusMultiplier = 1f;
+    private float debugWindDustAmountMultiplier = 1f;
     private float currentGoldenIntensity;
     private float targetGoldenIntensity;
     private float currentWindIntensity;
@@ -250,6 +253,55 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
     public Sprite DarknessMarkerSprite => darknessMarkerSprite;
     public Material DarknessMarkerMaterial => darknessMarkerMaterial;
+
+    public bool PlayerGlowAvailable
+    {
+        get
+        {
+            ResolvePlayerLight();
+            return playerLight != null && playerLightStateCaptured;
+        }
+    }
+
+    public float PlayerGlowIntensityMultiplier =>
+        debugPlayerGlowIntensityMultiplier;
+    public float PlayerGlowRadiusMultiplier => debugPlayerGlowRadiusMultiplier;
+    public float WindDustAmountMultiplier => debugWindDustAmountMultiplier;
+
+    public void SetPlayerGlowIntensityMultiplier(float value)
+    {
+        debugPlayerGlowIntensityMultiplier = Mathf.Clamp(value, 0f, 5f);
+        UpdateDarknessResources();
+    }
+
+    public void SetPlayerGlowRadiusMultiplier(float value)
+    {
+        debugPlayerGlowRadiusMultiplier = Mathf.Clamp(value, 0.1f, 5f);
+        UpdateDarknessResources();
+    }
+
+    public void ResetPlayerGlowDebugSettings()
+    {
+        debugPlayerGlowIntensityMultiplier = 1f;
+        debugPlayerGlowRadiusMultiplier = 1f;
+        UpdateDarknessResources();
+    }
+
+    public void SetWindDustAmountMultiplier(float value)
+    {
+        debugWindDustAmountMultiplier = Mathf.Clamp(value, 0f, 5f);
+        if (windParticleSystem == null)
+            return;
+
+        ParticleSystem.EmissionModule emission = windParticleSystem.emission;
+        emission.rateOverTime =
+            windParticleEmission * debugWindDustAmountMultiplier;
+    }
+
+    public void ResetWindDustDebugSettings()
+    {
+        SetWindDustAmountMultiplier(1f);
+    }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public void SetDebugDarknessOverlayMultiplier(float multiplier)
@@ -797,12 +849,13 @@ public sealed class WorldRuleVisual : MonoBehaviour
             playerLightRadius,
             currentDarknessIntensity
         );
-        playerLight.pointLightOuterRadius = baseRadius * radiusMultiplier;
+        playerLight.pointLightOuterRadius = baseRadius * radiusMultiplier *
+            debugPlayerGlowRadiusMultiplier;
         playerLight.intensity = Mathf.Lerp(
             normalPlayerLightIntensity,
             playerLightIntensity,
             currentDarknessIntensity
-        );
+        ) * debugPlayerGlowIntensityMultiplier;
         playerLight.falloffIntensity = Mathf.Lerp(
             normalPlayerLightFalloff,
             playerLightFalloff,
@@ -1087,7 +1140,8 @@ public sealed class WorldRuleVisual : MonoBehaviour
         main.maxParticles = 96;
 
         ParticleSystem.EmissionModule emission = windParticleSystem.emission;
-        emission.rateOverTime = windParticleEmission;
+        emission.rateOverTime =
+            windParticleEmission * debugWindDustAmountMultiplier;
 
         ParticleSystem.ShapeModule shape = windParticleSystem.shape;
         shape.shapeType = ParticleSystemShapeType.Box;
@@ -1792,6 +1846,8 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
     private void OnDisable()
     {
+        ResetPlayerGlowDebugSettings();
+        ResetWindDustDebugSettings();
         playerLightRadiusMultipliers.Clear();
         blackoutGlobalLightMultipliers.Clear();
         SetNeutral();

@@ -68,6 +68,7 @@ public abstract class BaseWeapon : MonoBehaviour
     protected WeaponRuntimeStats Stats => runtimeStats;
     protected WeaponFxPlayer FxPlayer => fxPlayer;
     public Transform Owner => owner;
+    public float CurrentOrbitRadius => Mathf.Max(0f, orbitRadius);
     public WeaponControlMode ControlMode =>
         controlModeOverride ?? WeaponControlSettings.CurrentMode;
     public Vector2 AimDirection => lastAimDirection;

@@ -18,8 +18,33 @@ public sealed class WeaponFxPlayer : MonoBehaviour
     [SerializeField] private float critShakeDuration = 0.12f;
     [SerializeField] private float critShakeMagnitude = 0.16f;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public float FireShakeDuration => fireShakeDuration;
+    public float FireShakeMagnitude => fireShakeMagnitude;
+    public float HitShakeDuration => hitShakeDuration;
+    public float HitShakeMagnitude => hitShakeMagnitude;
+    public float CritShakeDuration => critShakeDuration;
+    public float CritShakeMagnitude => critShakeMagnitude;
+
+    public void SetFireShakeDuration(float value) =>
+        fireShakeDuration = Mathf.Max(0f, value);
+    public void SetFireShakeMagnitude(float value) =>
+        fireShakeMagnitude = Mathf.Max(0f, value);
+    public void SetHitShakeDuration(float value) =>
+        hitShakeDuration = Mathf.Max(0f, value);
+    public void SetHitShakeMagnitude(float value) =>
+        hitShakeMagnitude = Mathf.Max(0f, value);
+    public void SetCritShakeDuration(float value) =>
+        critShakeDuration = Mathf.Max(0f, value);
+    public void SetCritShakeMagnitude(float value) =>
+        critShakeMagnitude = Mathf.Max(0f, value);
+#endif
+
     public void PlayFire(Vector2 position, Vector2 direction)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        PhysicalCombatFeedbackRuntime.NotifyWeaponFired(this, direction);
+#endif
         SpawnParticle(muzzleFxPrefab, position, direction, muzzleFxLifetime);
 
         CameraShake.Instance?.Shake(

@@ -55,6 +55,17 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
     public bool IsDashReady => !isDashing && dashCooldownRemaining <= 0f;
     public KeyCode DashKey => dashKey;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public float DebugAcceleration => acceleration;
+    public float DebugDeceleration => deceleration;
+
+    public void SetDebugMoveSpeed(float value) => speed = Mathf.Max(0f, value);
+    public void SetDebugAcceleration(float value) =>
+        acceleration = Mathf.Max(0f, value);
+    public void SetDebugDeceleration(float value) =>
+        deceleration = Mathf.Max(0f, value);
+#endif
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();

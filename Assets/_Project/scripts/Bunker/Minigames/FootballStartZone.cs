@@ -9,6 +9,7 @@ public sealed class FootballStartZone : MonoBehaviour
     [SerializeField] private TMP_Text startText;
     [SerializeField] private Color availableColor = Color.white;
     [SerializeField] private Color unavailableColor = new(0.35f, 0.35f, 0.35f, 1f);
+    [SerializeField] private bool hideVisualWhileRunning = true;
 
     private Color[] baseColors;
 
@@ -29,12 +30,16 @@ public sealed class FootballStartZone : MonoBehaviour
             {
                 SpriteRenderer renderer = visualRenderers[i];
                 if (renderer != null)
+                {
                     renderer.color = baseColors[i] * tint;
+                    renderer.enabled = available || !hideVisualWhileRunning;
+                }
             }
         }
 
         if (startText != null)
         {
+            startText.gameObject.SetActive(available || !hideVisualWhileRunning);
             startText.text = available ? "START" : "RUNNING";
             startText.color = available
                 ? new Color(0.2f, 1f, 0.45f, 1f)

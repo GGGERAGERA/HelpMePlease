@@ -11,15 +11,16 @@ public sealed class GravityZone : LocalAnomalyZone
     {
         public readonly Component Component;
         public readonly IAnomalyExternalVelocity VelocityTarget;
-        public int ColliderCount;
+        public readonly HashSet<Collider2D> Colliders = new();
 
         public AffectedObject(
             Component component,
-            IAnomalyExternalVelocity velocityTarget)
+            IAnomalyExternalVelocity velocityTarget,
+            Collider2D collider)
         {
             Component = component;
             VelocityTarget = velocityTarget;
-            ColliderCount = 1;
+            Colliders.Add(collider);
         }
     }
 
@@ -227,11 +228,11 @@ public sealed class GravityZone : LocalAnomalyZone
 
         if (affected != null)
         {
-            affected.ColliderCount++;
+            affected.Colliders.Add(other);
             return;
         }
 
-        affectedObjects.Add(new AffectedObject(component, target));
+        affectedObjects.Add(new AffectedObject(component, target, other));
 
         if (component is CharacterMovement2D)
             Controller?.NotifyLocalZoneEntered(this, Data);
@@ -254,9 +255,9 @@ public sealed class GravityZone : LocalAnomalyZone
         if (affected == null)
             return;
 
-        affected.ColliderCount--;
+        affected.Colliders.Remove(other);
 
-        if (affected.ColliderCount > 0)
+        if (affected.Colliders.Count > 0 && IsActuallyOverlapping(affected))
             return;
 
         RemoveAffected(affected);
@@ -281,6 +282,12 @@ public sealed class GravityZone : LocalAnomalyZone
             if (!affected.Component.gameObject.activeInHierarchy ||
                 affected.Component is Behaviour behaviour &&
                 !behaviour.isActiveAndEnabled)
+            {
+                RemoveAffected(affected);
+                continue;
+            }
+
+            if (!IsActuallyOverlapping(affected))
             {
                 RemoveAffected(affected);
                 continue;
@@ -389,6 +396,24 @@ public sealed class GravityZone : LocalAnomalyZone
         return null;
     }
 
+    private bool IsActuallyOverlapping(AffectedObject affected)
+    {
+        if (AreaCollider == null || !AreaCollider.enabled)
+            return false;
+
+        affected.Colliders.RemoveWhere(collider => collider == null);
+        foreach (Collider2D collider in affected.Colliders)
+        {
+            if (!collider.enabled || !collider.gameObject.activeInHierarchy)
+                continue;
+
+            ColliderDistance2D distance = AreaCollider.Distance(collider);
+            if (distance.isOverlapped)
+                return true;
+        }
+        return false;
+    }
+
     private void RemoveAffected(AffectedObject affected)
     {
         if (affected.Component != null)
@@ -480,6 +505,7 @@ public sealed class GravityZone : LocalAnomalyZone
         AnomalyVisualTuningCapabilities.FillColor |
         AnomalyVisualTuningCapabilities.FillAlpha |
         AnomalyVisualTuningCapabilities.BoundaryWidth |
+        AnomalyVisualTuningCapabilities.BoundaryAlpha |
         AnomalyVisualTuningCapabilities.VisualScale |
         AnomalyVisualTuningCapabilities.PulseSpeed |
         AnomalyVisualTuningCapabilities.PatternSpeed;
@@ -495,6 +521,8 @@ public sealed class GravityZone : LocalAnomalyZone
         debugVisualValues.FillColor.a = debugVisualValues.FillAlpha;
         debugVisualValues.BoundaryWidth = Mathf.Clamp(
             values.BoundaryWidth, 0.01f, 3f);
+        debugVisualValues.BoundaryAlpha = Mathf.Clamp01(
+            values.BoundaryAlpha);
         debugVisualValues.VisualScale = Mathf.Clamp(
             values.VisualScale, 0.25f, 3f);
         debugVisualValues.PulseSpeed = Mathf.Clamp(
@@ -533,6 +561,7 @@ public sealed class GravityZone : LocalAnomalyZone
             FillColor = inner,
             FillAlpha = inner.a,
             BoundaryWidth = edgeWidth,
+            BoundaryAlpha = 1f,
             VisualScale = 1f,
             PulseSpeed = centerPulseSpeed,
             PatternSpeed = flowSpeed
@@ -570,11 +599,10 @@ public sealed class GravityZone : LocalAnomalyZone
         {
             Color fill = debugVisualValues.FillColor;
             fill.a = debugVisualValues.FillAlpha;
+            Color edge = debugVisualValues.PrimaryColor;
+            edge.a *= debugVisualValues.BoundaryAlpha;
             visualProperties.SetColor(InnerColorId, fill);
-            visualProperties.SetColor(
-                EdgeColorId,
-                debugVisualValues.PrimaryColor
-            );
+            visualProperties.SetColor(EdgeColorId, edge);
             visualProperties.SetVector(
                 RegionSizeId,
                 AreaSize * debugVisualValues.VisualScale

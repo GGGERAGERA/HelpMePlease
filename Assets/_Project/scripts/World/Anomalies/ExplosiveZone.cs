@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public sealed class ExplosiveZone : LocalAnomalyZone
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    , IAnomalyVisualTunable
+#endif
 {
     private const int ExplosionHitBufferSize = 128;
     private const float ExplosionFxLifetime = 2f;
@@ -79,6 +82,11 @@ public sealed class ExplosiveZone : LocalAnomalyZone
     private bool initialized;
     private bool effectsCleared;
     private bool despawning;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private AnomalyVisualTuningValues originalVisualValues;
+    private AnomalyVisualTuningValues debugVisualValues;
+    private bool visualValuesCaptured;
+#endif
 
     private void Awake()
     {
@@ -113,6 +121,9 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         bomberRadiusMultiplier = data.ExplosiveZoneBomberRadiusMultiplier;
         explosionEffectPrefab = data.ExplosionEffectPrefab;
         ConfigureVisual(areaSize);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        CaptureOriginalVisualValues();
+#endif
         effectsCleared = false;
         despawning = false;
         visualFade = 0f;
@@ -473,6 +484,91 @@ public sealed class ExplosiveZone : LocalAnomalyZone
             new Vector3(areaSize.x, areaSize.y, 1f);
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public string VisualTypeName => "EXPLOSIVE";
+
+    public AnomalyVisualTuningCapabilities VisualCapabilities =>
+        AnomalyVisualTuningCapabilities.PrimaryColor |
+        AnomalyVisualTuningCapabilities.FillColor |
+        AnomalyVisualTuningCapabilities.FillAlpha |
+        AnomalyVisualTuningCapabilities.BoundaryWidth |
+        AnomalyVisualTuningCapabilities.BoundaryAlpha |
+        AnomalyVisualTuningCapabilities.VisualScale |
+        AnomalyVisualTuningCapabilities.PulseSpeed |
+        AnomalyVisualTuningCapabilities.PulseStrength |
+        AnomalyVisualTuningCapabilities.PatternSpeed |
+        AnomalyVisualTuningCapabilities.PatternStrength;
+
+    public AnomalyVisualTuningValues VisualValues => debugVisualValues;
+
+    public void ApplyVisualValues(AnomalyVisualTuningValues values)
+    {
+        debugVisualValues = values;
+        debugVisualValues.PrimaryColor = ClampColor(values.PrimaryColor);
+        debugVisualValues.FillColor = ClampColor(values.FillColor);
+        debugVisualValues.FillAlpha = Mathf.Clamp01(values.FillAlpha);
+        debugVisualValues.BoundaryWidth = Mathf.Clamp(
+            values.BoundaryWidth, 0.01f, 3f);
+        debugVisualValues.BoundaryAlpha = Mathf.Clamp01(
+            values.BoundaryAlpha);
+        debugVisualValues.VisualScale = Mathf.Clamp(
+            values.VisualScale, 0.25f, 3f);
+        debugVisualValues.PulseSpeed = Mathf.Clamp(
+            values.PulseSpeed, 0f, 10f);
+        debugVisualValues.PulseStrength = Mathf.Clamp01(
+            values.PulseStrength);
+        debugVisualValues.PatternSpeed = Mathf.Clamp(
+            values.PatternSpeed, 0f, 10f);
+        debugVisualValues.PatternStrength = Mathf.Clamp01(
+            values.PatternStrength);
+
+        edgeWidth = debugVisualValues.BoundaryWidth;
+        pulseSpeed = debugVisualValues.PulseSpeed;
+        pulseStrength = debugVisualValues.PulseStrength;
+        innerPatternSpeed = debugVisualValues.PatternSpeed;
+        innerPatternIntensity = debugVisualValues.PatternStrength * 0.25f;
+        ConfigureVisual(AreaSize * debugVisualValues.VisualScale);
+        ApplyVisualProperties();
+    }
+
+    public void ResetVisualValues()
+    {
+        if (visualValuesCaptured)
+            ApplyVisualValues(originalVisualValues);
+    }
+
+    private void CaptureOriginalVisualValues()
+    {
+        if (visualValuesCaptured)
+            return;
+
+        debugVisualValues = new AnomalyVisualTuningValues
+        {
+            PrimaryColor = edgeColor,
+            FillColor = innerColor,
+            FillAlpha = innerColor.a,
+            BoundaryWidth = edgeWidth,
+            BoundaryAlpha = 1f,
+            VisualScale = 1f,
+            PulseSpeed = pulseSpeed,
+            PulseStrength = pulseStrength,
+            PatternSpeed = innerPatternSpeed,
+            PatternStrength = innerPatternIntensity / 0.25f
+        };
+        originalVisualValues = debugVisualValues;
+        visualValuesCaptured = true;
+    }
+
+    private static Color ClampColor(Color value)
+    {
+        return new Color(
+            Mathf.Clamp01(value.r),
+            Mathf.Clamp01(value.g),
+            Mathf.Clamp01(value.b),
+            Mathf.Clamp01(value.a));
+    }
+#endif
+
     private void ApplyVisualProperties()
     {
         if (visualRenderer == null || visualProperties == null)
@@ -494,8 +590,25 @@ public sealed class ExplosiveZone : LocalAnomalyZone
             WarningPulseFrequencyId,
             warningPulseFrequency
         );
-        visualProperties.SetColor(InnerColorId, innerColor);
-        visualProperties.SetColor(EdgeColorId, edgeColor);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (visualValuesCaptured)
+        {
+            Color fill = debugVisualValues.FillColor;
+            fill.a = debugVisualValues.FillAlpha;
+            Color edge = debugVisualValues.PrimaryColor;
+            edge.a *= debugVisualValues.BoundaryAlpha;
+            visualProperties.SetColor(InnerColorId, fill);
+            visualProperties.SetColor(EdgeColorId, edge);
+            visualProperties.SetVector(
+                RegionSizeId,
+                AreaSize * debugVisualValues.VisualScale);
+        }
+        else
+#endif
+        {
+            visualProperties.SetColor(InnerColorId, innerColor);
+            visualProperties.SetColor(EdgeColorId, edgeColor);
+        }
         visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
         visualRenderer.SetPropertyBlock(visualProperties);
     }

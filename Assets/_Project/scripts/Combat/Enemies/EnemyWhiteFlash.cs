@@ -16,6 +16,24 @@ public class EnemyWhiteFlash : MonoBehaviour
 
     public SpriteRenderer TargetRenderer => targetRenderer;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public float FlashDuration => flashDuration;
+
+    public void SetFlashDuration(float value)
+    {
+        flashDuration = Mathf.Max(0f, value);
+        flashWait = new WaitForSeconds(flashDuration);
+
+        if (flashDuration <= 0f && flashCoroutine != null)
+        {
+            StopCoroutine(flashCoroutine);
+            flashCoroutine = null;
+            if (targetRenderer != null)
+                targetRenderer.sharedMaterial = originalMaterial;
+        }
+    }
+#endif
+
     public void SetRuntimeBaseMaterial(Material material)
     {
         originalMaterial = material;
@@ -38,6 +56,9 @@ public class EnemyWhiteFlash : MonoBehaviour
     public void Flash()
     {
         if (targetRenderer == null)
+            return;
+
+        if (flashDuration <= 0f)
             return;
 
         if (flashMaterial == null)
