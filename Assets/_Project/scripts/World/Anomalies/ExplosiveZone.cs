@@ -39,6 +39,10 @@ public sealed class ExplosiveZone : LocalAnomalyZone
 
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
+    [SerializeField] private Transform visualRoot;
+    [SerializeField] private MeshRenderer visualRenderer;
+    [Tooltip("Editor-only prefab preview. Runtime Initialize size still wins.")]
+    [SerializeField] private Vector2 previewSize = new(4.5f, 3.2f);
     [SerializeField] private GameObject explosionWarningPrefab;
     [SerializeField, Range(0.1f, 0.75f)] private float edgeWidth = 0.35f;
     [SerializeField, Min(0f)] private float pulseSpeed = 0.22f;
@@ -68,7 +72,6 @@ public sealed class ExplosiveZone : LocalAnomalyZone
     private readonly List<BomberExplosionSequence>
         activeBomberSequences = new();
 
-    private MeshRenderer visualRenderer;
     private MaterialPropertyBlock visualProperties;
     private ContactFilter2D explosionFilter;
     private float explosionDelay;
@@ -92,8 +95,47 @@ public sealed class ExplosiveZone : LocalAnomalyZone
     {
         explosionFilter = ContactFilter2D.noFilter;
         explosionFilter.useTriggers = true;
-        BuildVisual();
+        ResolveVisual();
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (Application.isPlaying || visualRoot == null)
+            return;
+
+        previewSize = new Vector2(
+            Mathf.Max(0.1f, previewSize.x),
+            Mathf.Max(0.1f, previewSize.y));
+        if (TryGetComponent(out BoxCollider2D previewCollider))
+            previewCollider.size = previewSize;
+        ConfigureVisual(previewSize);
+
+        if (visualRenderer == null)
+            visualRenderer = visualRoot.GetComponentInChildren<MeshRenderer>(true);
+
+        if (visualRenderer == null)
+            return;
+
+        MaterialPropertyBlock previewProperties = new();
+        visualRenderer.GetPropertyBlock(previewProperties);
+        previewProperties.SetFloat(FadeId, 1f);
+        previewProperties.SetFloat(EdgeWidthId, edgeWidth);
+        previewProperties.SetFloat(PulseSpeedId, pulseSpeed);
+        previewProperties.SetFloat(PulseStrengthId, pulseStrength);
+        previewProperties.SetFloat(PulseSharpnessId, pulseSharpness);
+        previewProperties.SetVector(RegionSizeId, previewSize);
+        previewProperties.SetFloat(
+            InnerPatternIntensityId, innerPatternIntensity);
+        previewProperties.SetFloat(InnerPatternSpeedId, innerPatternSpeed);
+        previewProperties.SetFloat(InnerPatternScaleId, innerPatternScale);
+        previewProperties.SetFloat(
+            WarningPulseFrequencyId, warningPulseFrequency);
+        previewProperties.SetColor(InnerColorId, innerColor);
+        previewProperties.SetColor(EdgeColorId, edgeColor);
+        visualRenderer.SetPropertyBlock(previewProperties);
+    }
+#endif
 
     private void Update()
     {
@@ -441,35 +483,26 @@ public sealed class ExplosiveZone : LocalAnomalyZone
             Destroy(gameObject);
     }
 
-    private void BuildVisual()
+    private void ResolveVisual()
     {
-        if (visualMaterial == null)
-            return;
-
-        Mesh quad = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
-
-        if (quad == null)
+        if (visualRoot == null)
         {
             Debug.LogWarning(
-                "[ExplosiveZone] Built-in Quad mesh is unavailable.",
-                this
-            );
+                "[ExplosiveZone] Serialized VisualRoot is missing.",
+                this);
             return;
         }
 
-        GameObject visualObject = new("ExplosiveZoneVisual");
-        visualObject.transform.SetParent(transform, false);
+        if (visualRenderer == null)
+            visualRenderer = visualRoot.GetComponentInChildren<MeshRenderer>(true);
 
-        MeshFilter meshFilter = visualObject.AddComponent<MeshFilter>();
-        meshFilter.sharedMesh = quad;
-
-        visualRenderer = visualObject.AddComponent<MeshRenderer>();
-        visualRenderer.sharedMaterial = visualMaterial;
-        visualRenderer.shadowCastingMode =
-            UnityEngine.Rendering.ShadowCastingMode.Off;
-        visualRenderer.receiveShadows = false;
-        visualRenderer.sortingLayerName = "Midground";
-        visualRenderer.sortingOrder = 1;
+        if (visualRenderer == null)
+        {
+            Debug.LogWarning(
+                "[ExplosiveZone] Serialized VisualRoot has no MeshRenderer.",
+                this);
+            return;
+        }
 
         visualProperties = new MaterialPropertyBlock();
         ApplyVisualProperties();
@@ -477,10 +510,10 @@ public sealed class ExplosiveZone : LocalAnomalyZone
 
     private void ConfigureVisual(Vector2 areaSize)
     {
-        if (visualRenderer == null)
+        if (visualRoot == null)
             return;
 
-        visualRenderer.transform.localScale =
+        visualRoot.localScale =
             new Vector3(areaSize.x, areaSize.y, 1f);
     }
 

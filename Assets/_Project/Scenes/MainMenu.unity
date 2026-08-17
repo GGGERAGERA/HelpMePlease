@@ -265122,7 +265122,7 @@ MonoBehaviour:
   anomalyContent: {fileID: 0}
   targetsContent: {fileID: 0}
   playerTopBoundary: {fileID: 0}
-  showGizmos: 1
+  showGizmos: 0
 --- !u!61 &1718466064
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -266243,7 +266243,8 @@ MonoBehaviour:
   anomalySpawnZone: {fileID: 1505638357}
   targetSpawnZone: {fileID: 1933370544}
   horizontalPadding: 0.5
-  showDebugZones: 1
+  showDebugZones: 0
+  showLaneDebug: 0
   playerBoundary: {fileID: 1032065683}
   playerBoundaryThickness: 0.2
   startZone: {fileID: 796771811}

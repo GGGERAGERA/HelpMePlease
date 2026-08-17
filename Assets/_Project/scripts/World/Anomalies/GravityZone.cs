@@ -44,6 +44,10 @@ public sealed class GravityZone : LocalAnomalyZone
 
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
+    [SerializeField] private Transform visualRoot;
+    [SerializeField] private MeshRenderer visualRenderer;
+    [Tooltip("Editor-only prefab preview. Runtime Initialize size still wins.")]
+    [SerializeField] private Vector2 previewSize = new(4.5f, 3.2f);
     [SerializeField, Range(0.1f, 0.75f)] private float edgeWidth = 0.3f;
     [SerializeField, Min(0f)] private float flowSpeed = 0.65f;
     [SerializeField, Min(0f)] private float centerPulseSpeed = 1.1f;
@@ -53,7 +57,6 @@ public sealed class GravityZone : LocalAnomalyZone
     [SerializeField] private AnomalyArtHookSet artHooks;
 
     private readonly List<AffectedObject> affectedObjects = new();
-    private MeshRenderer visualRenderer;
     private AnomalyArtHooks artHookRuntime;
     private MaterialPropertyBlock visualProperties;
     private float gravityForce;
@@ -171,10 +174,40 @@ public sealed class GravityZone : LocalAnomalyZone
 
     private void Awake()
     {
-        BuildVisual();
+        ResolveVisual();
         artHookRuntime = AnomalyArtHooks.Create(
             transform, artHooks, "GRAVITY");
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (Application.isPlaying || visualRoot == null)
+            return;
+
+        previewSize = new Vector2(
+            Mathf.Max(0.1f, previewSize.x),
+            Mathf.Max(0.1f, previewSize.y));
+        if (TryGetComponent(out BoxCollider2D previewCollider))
+            previewCollider.size = previewSize;
+        ConfigureVisual(previewSize);
+
+        if (visualRenderer == null)
+            visualRenderer = visualRoot.GetComponentInChildren<MeshRenderer>(true);
+
+        if (visualRenderer == null)
+            return;
+
+        MaterialPropertyBlock previewProperties = new();
+        visualRenderer.GetPropertyBlock(previewProperties);
+        previewProperties.SetFloat(FadeId, 1f);
+        previewProperties.SetFloat(EdgeWidthId, edgeWidth);
+        previewProperties.SetFloat(FlowSpeedId, flowSpeed);
+        previewProperties.SetFloat(CenterPulseSpeedId, centerPulseSpeed);
+        previewProperties.SetVector(RegionSizeId, previewSize);
+        visualRenderer.SetPropertyBlock(previewProperties);
+    }
+#endif
 
     private void Update()
     {
@@ -454,7 +487,32 @@ public sealed class GravityZone : LocalAnomalyZone
             Destroy(gameObject);
     }
 
-    private void BuildVisual()
+    private void ResolveVisual()
+    {
+        if (visualRoot != null)
+        {
+            if (visualRenderer == null)
+            {
+                visualRenderer = visualRoot.GetComponentInChildren<MeshRenderer>(true);
+            }
+
+            if (visualRenderer == null)
+            {
+                Debug.LogWarning(
+                    "[GravityZone] Serialized VisualRoot has no MeshRenderer.",
+                    this);
+                return;
+            }
+
+            visualProperties = new MaterialPropertyBlock();
+            ApplyVisualProperties();
+            return;
+        }
+
+        BuildLegacyRuntimeVisual();
+    }
+
+    private void BuildLegacyRuntimeVisual()
     {
         if (visualMaterial == null)
             return;
@@ -472,6 +530,7 @@ public sealed class GravityZone : LocalAnomalyZone
 
         GameObject visualObject = new("GravityZoneVisual");
         visualObject.transform.SetParent(transform, false);
+        visualRoot = visualObject.transform;
 
         MeshFilter meshFilter = visualObject.AddComponent<MeshFilter>();
         meshFilter.sharedMesh = quad;
@@ -490,10 +549,10 @@ public sealed class GravityZone : LocalAnomalyZone
 
     private void ConfigureVisual(Vector2 areaSize)
     {
-        if (visualRenderer == null)
+        if (visualRoot == null)
             return;
 
-        visualRenderer.transform.localScale =
+        visualRoot.localScale =
             new Vector3(areaSize.x, areaSize.y, 1f);
     }
 
@@ -547,13 +606,16 @@ public sealed class GravityZone : LocalAnomalyZone
         if (visualValuesCaptured)
             return;
 
-        Color inner = visualMaterial != null &&
-            visualMaterial.HasProperty(InnerColorId)
-                ? visualMaterial.GetColor(InnerColorId)
+        Material sourceMaterial = visualRenderer != null
+            ? visualRenderer.sharedMaterial
+            : visualMaterial;
+        Color inner = sourceMaterial != null &&
+            sourceMaterial.HasProperty(InnerColorId)
+                ? sourceMaterial.GetColor(InnerColorId)
                 : Color.clear;
-        Color edge = visualMaterial != null &&
-            visualMaterial.HasProperty(EdgeColorId)
-                ? visualMaterial.GetColor(EdgeColorId)
+        Color edge = sourceMaterial != null &&
+            sourceMaterial.HasProperty(EdgeColorId)
+                ? sourceMaterial.GetColor(EdgeColorId)
                 : Color.white;
         debugVisualValues = new AnomalyVisualTuningValues
         {

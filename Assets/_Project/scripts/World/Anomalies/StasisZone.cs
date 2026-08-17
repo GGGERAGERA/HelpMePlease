@@ -22,6 +22,10 @@ public sealed class StasisZone : LocalAnomalyZone
 
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
+    [SerializeField] private Transform visualRoot;
+    [SerializeField] private MeshRenderer visualRenderer;
+    [Tooltip("Editor-only prefab preview. Runtime Initialize size still wins.")]
+    [SerializeField] private Vector2 previewSize = new(4.5f, 3.2f);
     [SerializeField, Range(0.1f, 0.75f)] private float edgeWidth = 0.28f;
     [SerializeField, Min(0f)] private float pulseSpeed = 0.18f;
     [SerializeField, Range(0.6f, 1f)] private float fadeDuration = 0.8f;
@@ -40,7 +44,6 @@ public sealed class StasisZone : LocalAnomalyZone
     private readonly Dictionary<Component, int>
         pickupColliderCounts = new();
 
-    private MeshRenderer visualRenderer;
     private AnomalyArtHooks artHookRuntime;
     private MaterialPropertyBlock visualProperties;
     private CharacterMovement2D affectedMovement;
@@ -62,10 +65,39 @@ public sealed class StasisZone : LocalAnomalyZone
 
     private void Awake()
     {
-        BuildVisual();
+        ResolveVisual();
         artHookRuntime = AnomalyArtHooks.Create(
             transform, artHooks, "STASIS");
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (Application.isPlaying || visualRoot == null)
+            return;
+
+        previewSize = new Vector2(
+            Mathf.Max(0.1f, previewSize.x),
+            Mathf.Max(0.1f, previewSize.y));
+        if (TryGetComponent(out BoxCollider2D previewCollider))
+            previewCollider.size = previewSize;
+        ConfigureVisual(previewSize);
+
+        if (visualRenderer == null)
+            visualRenderer = visualRoot.GetComponentInChildren<MeshRenderer>(true);
+
+        if (visualRenderer == null)
+            return;
+
+        MaterialPropertyBlock previewProperties = new();
+        visualRenderer.GetPropertyBlock(previewProperties);
+        previewProperties.SetFloat(FadeId, 1f);
+        previewProperties.SetFloat(EdgeWidthId, edgeWidth);
+        previewProperties.SetFloat(PulseSpeedId, pulseSpeed);
+        previewProperties.SetVector(RegionSizeId, previewSize);
+        visualRenderer.SetPropertyBlock(previewProperties);
+    }
+#endif
 
     private void OnEnable()
     {
@@ -371,35 +403,28 @@ public sealed class StasisZone : LocalAnomalyZone
             Destroy(gameObject);
     }
 
-    private void BuildVisual()
+    private void ResolveVisual()
     {
-        if (visualMaterial == null)
-            return;
-
-        Mesh quad = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
-
-        if (quad == null)
+        if (visualRoot == null)
         {
             Debug.LogWarning(
-                "[StasisZone] Built-in Quad mesh is unavailable.",
-                this
-            );
+                "[StasisZone] Serialized VisualRoot is missing.",
+                this);
             return;
         }
 
-        GameObject visualObject = new("StasisZoneVisual");
-        visualObject.transform.SetParent(transform, false);
+        if (visualRenderer == null)
+        {
+            visualRenderer = visualRoot.GetComponentInChildren<MeshRenderer>(true);
+        }
 
-        MeshFilter meshFilter = visualObject.AddComponent<MeshFilter>();
-        meshFilter.sharedMesh = quad;
-
-        visualRenderer = visualObject.AddComponent<MeshRenderer>();
-        visualRenderer.sharedMaterial = visualMaterial;
-        visualRenderer.shadowCastingMode =
-            UnityEngine.Rendering.ShadowCastingMode.Off;
-        visualRenderer.receiveShadows = false;
-        visualRenderer.sortingLayerName = "Midground";
-        visualRenderer.sortingOrder = 1;
+        if (visualRenderer == null)
+        {
+            Debug.LogWarning(
+                "[StasisZone] Serialized VisualRoot has no MeshRenderer.",
+                this);
+            return;
+        }
 
         visualProperties = new MaterialPropertyBlock();
         ApplyVisualProperties();
@@ -407,10 +432,10 @@ public sealed class StasisZone : LocalAnomalyZone
 
     private void ConfigureVisual(Vector2 areaSize)
     {
-        if (visualRenderer == null)
+        if (visualRoot == null)
             return;
 
-        visualRenderer.transform.localScale =
+        visualRoot.localScale =
             new Vector3(areaSize.x, areaSize.y, 1f);
     }
 
@@ -460,13 +485,16 @@ public sealed class StasisZone : LocalAnomalyZone
         if (visualValuesCaptured)
             return;
 
-        Color inner = visualMaterial != null &&
-            visualMaterial.HasProperty(InnerColorId)
-                ? visualMaterial.GetColor(InnerColorId)
+        Material sourceMaterial = visualRenderer != null
+            ? visualRenderer.sharedMaterial
+            : visualMaterial;
+        Color inner = sourceMaterial != null &&
+            sourceMaterial.HasProperty(InnerColorId)
+                ? sourceMaterial.GetColor(InnerColorId)
                 : Color.clear;
-        Color edge = visualMaterial != null &&
-            visualMaterial.HasProperty(EdgeColorId)
-                ? visualMaterial.GetColor(EdgeColorId)
+        Color edge = sourceMaterial != null &&
+            sourceMaterial.HasProperty(EdgeColorId)
+                ? sourceMaterial.GetColor(EdgeColorId)
                 : Color.white;
         debugVisualValues = new AnomalyVisualTuningValues
         {

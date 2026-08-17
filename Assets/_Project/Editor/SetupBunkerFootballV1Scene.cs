@@ -213,7 +213,8 @@ public static class SetupBunkerFootballV1Scene
         data.FindProperty("horizontalPadding").floatValue = 0.5f;
         data.FindProperty("playerBoundaryThickness").floatValue = 0.2f;
         data.FindProperty("cameraPadding").floatValue = 1f;
-        data.FindProperty("showDebugZones").boolValue = true;
+        data.FindProperty("showDebugZones").boolValue = false;
+        data.FindProperty("showLaneDebug").boolValue = false;
         data.FindProperty("topOutOfBoundsMargin").floatValue = 3f;
         data.FindProperty("targetBaseRadius").floatValue = 0.8f;
         data.FindProperty("gateHorizontalOffset").floatValue = 6f;

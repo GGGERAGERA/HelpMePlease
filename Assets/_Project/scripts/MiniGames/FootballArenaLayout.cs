@@ -43,7 +43,7 @@ public class FootballArenaLayout : MonoBehaviour
     [SerializeField] private BoxCollider2D playerTopBoundary;
 
     [Header("Debug")]
-    [SerializeField] private bool showGizmos = true;
+    [SerializeField] private bool showGizmos;
 
     private Vector2 lastArenaSize;
     private Vector2 lastArenaOffset;
