@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -41,9 +42,31 @@ public class FootballArenaLayout : MonoBehaviour
 
     [Header("Optional Player Boundary")]
     [SerializeField] private BoxCollider2D playerTopBoundary;
+    [SerializeField, Min(0.05f)] private float playerBoundaryThickness = 0.2f;
+
+    [Header("Gameplay Anchors")]
+    [SerializeField] private Transform[] ballSpawnPoints;
+    [SerializeField, Range(0f, 1f)] private float ballSpawnNormalizedY = 0.5f;
+    [SerializeField] private Transform startZone;
+    [SerializeField] private FootballTargetLane[] anomalyLanes;
+    [SerializeField] private Transform[] anomalySpawnPoints;
+    [SerializeField, Min(0f)] private float horizontalPadding = 0.5f;
+    [SerializeField] private Vector2 anomalyVisualSize = new(4.5f, 3.2f);
+    [SerializeField] private FootballTargetLane[] targetLanes;
+    [SerializeField, Min(0f)] private float targetMaximumRadius = 1.08f;
+    [SerializeField, Min(0f)] private float targetGateReservedHeight = 3.2f;
+    [SerializeField] private Transform targetTemplate;
+
+    [Header("Gates")]
+    [SerializeField] private Transform[] gateRoots;
+    [SerializeField, Min(0f)] private float gateHorizontalOffset = 6f;
+    [SerializeField, Min(0f)] private float gateVerticalInset = 1.4f;
 
     [Header("Debug")]
     [SerializeField] private bool showGizmos;
+    [SerializeField] private bool showLaneGizmos = true;
+
+    private Transform[] runtimeGateRoots;
 
     private Vector2 lastArenaSize;
     private Vector2 lastArenaOffset;
@@ -57,6 +80,9 @@ public class FootballArenaLayout : MonoBehaviour
     public Bounds BallsWorldBounds => ballsZone != null ? ballsZone.bounds : default;
     public Bounds AnomalyWorldBounds => anomalyZone != null ? anomalyZone.bounds : default;
     public Bounds TargetsWorldBounds => targetsZone != null ? targetsZone.bounds : default;
+    public float BallsRatio => ballsRatio;
+    public float AnomalyRatio => anomalyRatio;
+    public float TargetsRatio => targetsRatio;
 
     private void Awake()
     {
@@ -100,6 +126,40 @@ public class FootballArenaLayout : MonoBehaviour
     public void ApplyLayout()
     {
         ApplyLayoutInternal(true);
+    }
+
+    public void RefreshLayout()
+    {
+        ApplyLayoutInternal(false);
+    }
+
+    public void SynchronizeRuntimeGates(
+        IReadOnlyList<FootballGateScoreZone> gateZones)
+    {
+        if (gateRoots != null && gateRoots.Length >= 2 &&
+            gateRoots[0] != null && gateRoots[1] != null)
+        {
+            runtimeGateRoots = null;
+            ApplyLayoutInternal(false);
+            return;
+        }
+
+        if (gateZones == null || gateZones.Count == 0)
+        {
+            runtimeGateRoots = null;
+            return;
+        }
+
+        runtimeGateRoots = new Transform[Mathf.Min(2, gateZones.Count)];
+        for (int i = 0; i < runtimeGateRoots.Length; i++)
+        {
+            FootballGateScoreZone gate = gateZones[i];
+            runtimeGateRoots[i] = gate != null && gate.transform.parent != null
+                ? gate.transform.parent
+                : gate != null ? gate.transform : null;
+        }
+
+        ApplyLayoutInternal(false);
     }
 
     private void ApplyLayoutInternal(bool recordEditorUndo)
@@ -154,7 +214,13 @@ public class FootballArenaLayout : MonoBehaviour
         changed |= PositionContentRoot(targetsContent, targetsZone);
         changed |= ConfigurePlayerBoundary(
             arenaSize,
-            new Vector2(arenaOffset.x, arenaBottom + ballsHeight));
+            new Vector2(
+                arenaOffset.x,
+                arenaBottom + ballsHeight + playerBoundaryThickness * 0.5f));
+        changed |= LayoutBallArea(ballsZone.bounds);
+        changed |= LayoutAnomalyArea(anomalyZone.bounds);
+        changed |= LayoutTargetArea(targetsZone.bounds);
+        changed |= LayoutGates(targetsZone.bounds);
 
         CacheLayoutInputs();
 
@@ -327,16 +393,148 @@ public class FootballArenaLayout : MonoBehaviour
         if (playerTopBoundary == null)
             return false;
 
-        const float thickness = 0.2f;
         Transform boundaryTransform = playerTopBoundary.transform;
         Vector3 worldCenter = arenaBounds.transform.TransformPoint(centerInArena);
         bool changed = SetWorldPose(boundaryTransform, worldCenter, arenaBounds.transform.rotation);
         Vector2 boundarySize = ConvertArenaSizeToZoneSize(
             boundaryTransform,
-            new Vector2(arenaSize.x, thickness));
+            new Vector2(arenaSize.x, playerBoundaryThickness));
 
         changed |= SetCollider(playerTopBoundary, boundarySize, false);
+        FootballPlayerBoundary boundary =
+            playerTopBoundary.GetComponent<FootballPlayerBoundary>();
+        if (boundary != null)
+        {
+            boundary.Configure(
+                worldCenter,
+                arenaBounds.bounds.size.x,
+                playerBoundaryThickness);
+        }
         return changed;
+    }
+
+    private bool LayoutBallArea(Bounds zone)
+    {
+        bool changed = false;
+        float y = Mathf.Lerp(zone.min.y, zone.max.y, ballSpawnNormalizedY);
+        int count = ballSpawnPoints?.Length ?? 0;
+        for (int i = 0; i < count; i++)
+        {
+            float t = (i + 1f) / (count + 1f);
+            changed |= SetWorldPosition(
+                ballSpawnPoints[i],
+                new Vector2(Mathf.Lerp(zone.min.x, zone.max.x, t), y));
+        }
+
+        changed |= SetWorldPosition(startZone, new Vector2(zone.center.x, y));
+        return changed;
+    }
+
+    private bool LayoutAnomalyArea(Bounds zone)
+    {
+        float inset = horizontalPadding + anomalyVisualSize.x * 0.5f;
+        float left = Mathf.Min(zone.center.x, zone.min.x + inset);
+        float right = Mathf.Max(zone.center.x, zone.max.x - inset);
+        bool changed = LayoutLanes(anomalyLanes, left, right, zone.min.y, zone.max.y);
+
+        int spawnCount = anomalySpawnPoints?.Length ?? 0;
+        int laneCount = anomalyLanes?.Length ?? 0;
+        for (int i = 0; i < spawnCount && laneCount > 0; i++)
+        {
+            FootballTargetLane lane = anomalyLanes[i % laneCount];
+            if (lane == null || !lane.IsValid)
+                continue;
+
+            Transform anchor = i % 2 == 0 ? lane.LeftAnchor : lane.RightAnchor;
+            changed |= SetWorldPosition(
+                anomalySpawnPoints[i],
+                anchor.position);
+        }
+
+        return changed;
+    }
+
+    private bool LayoutTargetArea(Bounds zone)
+    {
+        float left = Mathf.Min(
+            zone.center.x,
+            zone.min.x + horizontalPadding + targetMaximumRadius);
+        float right = Mathf.Max(
+            zone.center.x,
+            zone.max.x - horizontalPadding - targetMaximumRadius);
+        float bottom = Mathf.Min(
+            zone.center.y,
+            zone.min.y + targetMaximumRadius);
+        float top = Mathf.Max(
+            bottom,
+            zone.max.y - targetGateReservedHeight - targetMaximumRadius);
+        bool changed = LayoutLanes(targetLanes, left, right, bottom, top);
+
+        if (targetLanes != null && targetLanes.Length > 0 &&
+            targetLanes[0] != null && targetLanes[0].IsValid)
+        {
+            changed |= SetWorldPosition(
+                targetTemplate,
+                targetLanes[0].LeftAnchor.position);
+        }
+
+        return changed;
+    }
+
+    private bool LayoutGates(Bounds zone)
+    {
+        Transform[] roots = runtimeGateRoots != null && runtimeGateRoots.Length > 0
+            ? runtimeGateRoots
+            : gateRoots;
+        int count = Mathf.Min(2, roots?.Length ?? 0);
+        bool changed = false;
+        for (int i = 0; i < count; i++)
+        {
+            float direction = i == 0 ? -1f : 1f;
+            changed |= SetWorldPosition(
+                roots[i],
+                new Vector2(
+                    zone.center.x + direction * gateHorizontalOffset,
+                    zone.max.y - gateVerticalInset));
+        }
+
+        return changed;
+    }
+
+    private static bool LayoutLanes(
+        FootballTargetLane[] lanes,
+        float left,
+        float right,
+        float bottom,
+        float top)
+    {
+        int count = lanes?.Length ?? 0;
+        bool changed = false;
+        for (int i = 0; i < count; i++)
+        {
+            FootballTargetLane lane = lanes[i];
+            if (lane == null || !lane.IsValid)
+                continue;
+
+            float y = Mathf.Lerp(bottom, top, (i + 1f) / (count + 1f));
+            changed |= SetWorldPosition(lane.LeftAnchor, new Vector2(left, y));
+            changed |= SetWorldPosition(lane.RightAnchor, new Vector2(right, y));
+        }
+
+        return changed;
+    }
+
+    private static bool SetWorldPosition(Transform target, Vector2 position)
+    {
+        if (target == null)
+            return false;
+
+        Vector3 desired = new(position.x, position.y, target.position.z);
+        if (Approximately(target.position, desired))
+            return false;
+
+        target.position = desired;
+        return true;
     }
 
     private bool LayoutInputsChanged()
@@ -366,12 +564,37 @@ public class FootballArenaLayout : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        if (!showGizmos)
+        if (showGizmos)
+        {
+            DrawZoneGizmo(ballsZone);
+            DrawZoneGizmo(anomalyZone);
+            DrawZoneGizmo(targetsZone);
+        }
+
+        if (showLaneGizmos)
+        {
+            DrawLaneGizmos(anomalyLanes, new Color(1f, 0.45f, 0.2f, 0.9f));
+            DrawLaneGizmos(targetLanes, new Color(0.2f, 0.75f, 1f, 0.9f));
+        }
+    }
+
+    private static void DrawLaneGizmos(
+        FootballTargetLane[] lanes,
+        Color color)
+    {
+        if (lanes == null)
             return;
 
-        DrawZoneGizmo(ballsZone);
-        DrawZoneGizmo(anomalyZone);
-        DrawZoneGizmo(targetsZone);
+        Gizmos.color = color;
+        foreach (FootballTargetLane lane in lanes)
+        {
+            if (lane == null || !lane.IsValid)
+                continue;
+
+            Gizmos.DrawLine(lane.LeftAnchor.position, lane.RightAnchor.position);
+            Gizmos.DrawSphere(lane.LeftAnchor.position, 0.12f);
+            Gizmos.DrawSphere(lane.RightAnchor.position, 0.12f);
+        }
     }
 
     private static void DrawZoneGizmo(BoxCollider2D zone)
@@ -426,7 +649,9 @@ public class FootballArenaLayout : MonoBehaviour
             anomalyContent,
             targetsContent,
             playerTopBoundary != null ? playerTopBoundary.transform : null,
-            playerTopBoundary
+            playerTopBoundary,
+            startZone,
+            targetTemplate
         };
 
         Undo.RecordObjects(RemoveNullObjects(objects), "Apply Football Arena Layout");

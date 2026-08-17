@@ -6,21 +6,16 @@ using UnityEngine.Serialization;
 public sealed class FootballMinigame : BunkerMinigame
 {
     private const string BestScoreKey = "BunkerFootballBestScore";
-    private const float BallZoneRatio = 0.20f;
-    private const float AnomalyZoneRatio = 0.40f;
-    private const float TargetZoneRatio = 0.40f;
-
     [Header("Arena geometry")]
+    [SerializeField] private FootballArenaLayout arenaLayout;
     [FormerlySerializedAs("playAreaBounds")]
     [SerializeField] private BoxCollider2D arenaBounds;
     [SerializeField] private BoxCollider2D ballSpawnZone;
     [SerializeField] private BoxCollider2D anomalySpawnZone;
     [SerializeField] private BoxCollider2D targetSpawnZone;
-    [SerializeField, Min(0f)] private float horizontalPadding = 0.5f;
     [SerializeField] private bool showDebugZones;
     [SerializeField] private bool showLaneDebug;
     [SerializeField] private FootballPlayerBoundary playerBoundary;
-    [SerializeField, Min(0.05f)] private float playerBoundaryThickness = 0.2f;
     [SerializeField] private FootballStartZone startZone;
     [SerializeField] private FootballMinigameHUD hud;
 
@@ -82,12 +77,9 @@ public sealed class FootballMinigame : BunkerMinigame
     [Header("Gates")]
     [SerializeField] private GameObject gatePrefab;
     [SerializeField] private Transform gatesRuntime;
-    [SerializeField, Min(0f)] private float gateHorizontalOffset = 6f;
-    [SerializeField, Min(0f)] private float gateVerticalInset = 1.4f;
     [SerializeField, Min(0.1f)] private float gateVisualScale = 0.55f;
     [SerializeField] private Vector2 gateTriggerSize = new(3.6f, 1.8f);
     [SerializeField, Min(0)] private int gateScore = 20;
-    [SerializeField, Min(0f)] private float gateReservedHeight = 3.2f;
 
     [Header("Optional round timer")]
     [SerializeField] private bool useRoundTimer;
@@ -124,9 +116,12 @@ public sealed class FootballMinigame : BunkerMinigame
     public int GoalsToComplete => goalsToComplete;
     public float ArenaWidth => arenaBounds != null ? arenaBounds.bounds.size.x : 0f;
     public float ArenaHeight => arenaBounds != null ? arenaBounds.bounds.size.y : 0f;
-    public float BallZoneHeight => ArenaHeight * BallZoneRatio;
-    public float AnomalyZoneHeight => ArenaHeight * AnomalyZoneRatio;
-    public float TargetZoneHeight => ArenaHeight * TargetZoneRatio;
+    public float BallZoneHeight => ballSpawnZone != null
+        ? ballSpawnZone.bounds.size.y : 0f;
+    public float AnomalyZoneHeight => anomalySpawnZone != null
+        ? anomalySpawnZone.bounds.size.y : 0f;
+    public float TargetZoneHeight => targetSpawnZone != null
+        ? targetSpawnZone.bounds.size.y : 0f;
     public float CameraOrthographicSize => cameraFollow != null && cameraFollow.ControlledCamera != null
         ? cameraFollow.ControlledCamera.orthographicSize : 0f;
     public bool ShowDebugZones => showDebugZones;
@@ -314,37 +309,8 @@ public sealed class FootballMinigame : BunkerMinigame
 
     public void SynchronizeArenaGeometry()
     {
-        if (arenaBounds == null || ballSpawnZone == null ||
-            anomalySpawnZone == null || targetSpawnZone == null)
-        {
-            return;
-        }
-
-        Bounds arena = arenaBounds.bounds;
-        float width = arena.size.x;
-        float ballHeight = arena.size.y * BallZoneRatio;
-        float anomalyHeight = arena.size.y * AnomalyZoneRatio;
-        float targetHeight = arena.size.y - ballHeight - anomalyHeight;
-        float bottom = arena.min.y;
-
-        Vector2 ballCenter = new(arena.center.x, bottom + ballHeight * 0.5f);
-        Vector2 anomalyCenter = new(arena.center.x, bottom + ballHeight + anomalyHeight * 0.5f);
-        Vector2 targetCenter = new(arena.center.x, arena.max.y - targetHeight * 0.5f);
-
-        SetZoneGeometry(ballSpawnZone, ballCenter, width, ballHeight);
-        SetZoneGeometry(anomalySpawnZone, anomalyCenter, width, anomalyHeight);
-        SetZoneGeometry(targetSpawnZone, targetCenter, width, targetHeight);
-        if (playerBoundary != null)
-        {
-            playerBoundary.Configure(
-                new Vector2(arena.center.x, ballSpawnZone.bounds.max.y + playerBoundaryThickness * 0.5f),
-                width,
-                playerBoundaryThickness);
-        }
-        LayoutBallArea(ballSpawnZone.bounds);
-        LayoutAnomalyArea(anomalySpawnZone.bounds);
-        LayoutTargetArea(targetSpawnZone.bounds);
-        LayoutGates(targetSpawnZone.bounds);
+        ResolveArenaLayout();
+        arenaLayout?.RefreshLayout();
         SynchronizeDebugZones();
     }
 
@@ -684,29 +650,21 @@ public sealed class FootballMinigame : BunkerMinigame
             gates.Add(scoreZone);
         }
 
-        LayoutGates(targetSpawnZone != null ? targetSpawnZone.bounds : default);
-    }
-
-    private void LayoutGates(Bounds targetBounds)
-    {
-        if (gates.Count == 0 || targetBounds.size.sqrMagnitude <= 0f)
-            return;
-
-        for (int i = 0; i < gates.Count && i < 2; i++)
+        for (int i = 0; i < gates.Count; i++)
         {
             FootballGateScoreZone gate = gates[i];
-            if (gate == null) continue;
+            if (gate == null)
+                continue;
+
             Transform gateRoot = gate.transform.parent != null
                 ? gate.transform.parent
                 : gate.transform;
             StabilizeGate(gateRoot.gameObject);
-            float direction = i == 0 ? -1f : 1f;
-            gateRoot.position = new Vector3(
-                targetBounds.center.x + direction * gateHorizontalOffset,
-                targetBounds.max.y - gateVerticalInset,
-                gateRoot.position.z);
             gate.Configure(this, gateScore, gateTriggerSize);
         }
+
+        ResolveArenaLayout();
+        arenaLayout?.SynchronizeRuntimeGates(gates);
     }
 
     private static void StabilizeGate(GameObject gateRoot)
@@ -720,15 +678,6 @@ public sealed class FootballMinigame : BunkerMinigame
         }
     }
 
-    private float GetMaximumTargetRadius()
-    {
-        float scale = Mathf.Max(
-            greenTarget != null ? greenTarget.SizeScale : 1f,
-            yellowTarget != null ? yellowTarget.SizeScale : 1f,
-            redTarget != null ? redTarget.SizeScale : 1f);
-        return targetBaseRadius * scale;
-    }
-
     private int CountTargets(FootballScoreZoneType type)
     {
         int count = 0;
@@ -738,118 +687,6 @@ public sealed class FootballMinigame : BunkerMinigame
                 count++;
         }
         return count;
-    }
-
-    private static void SetZoneGeometry(
-        BoxCollider2D zone,
-        Vector2 worldCenter,
-        float worldWidth,
-        float worldHeight)
-    {
-        zone.transform.position = new Vector3(
-            worldCenter.x,
-            worldCenter.y,
-            zone.transform.position.z);
-        Vector3 scale = zone.transform.lossyScale;
-        zone.offset = Vector2.zero;
-        zone.size = new Vector2(
-            worldWidth / Mathf.Max(0.0001f, Mathf.Abs(scale.x)),
-            worldHeight / Mathf.Max(0.0001f, Mathf.Abs(scale.y)));
-        zone.isTrigger = true;
-    }
-
-    private void LayoutBallArea(Bounds zone)
-    {
-        float y = zone.center.y;
-        if (ballSpawnPoints != null)
-        {
-            float left = zone.center.x - zone.size.x * 0.3f;
-            float right = zone.center.x + zone.size.x * 0.3f;
-            int count = ballSpawnPoints.Length;
-            for (int i = 0; i < count; i++)
-            {
-                if (ballSpawnPoints[i] == null) continue;
-                float t = count <= 1 ? 0.5f : i / (float)(count - 1);
-                ballSpawnPoints[i].position = new Vector3(
-                    Mathf.Lerp(left, right, t), y, ballSpawnPoints[i].position.z);
-            }
-        }
-
-        if (startZone != null)
-        {
-            startZone.transform.position = new Vector3(
-                zone.center.x,
-                y,
-                startZone.transform.position.z);
-        }
-    }
-
-    private void LayoutAnomalyArea(Bounds zone)
-    {
-        float left = zone.min.x + horizontalPadding + anomalyFieldSize.x * 0.5f;
-        float right = zone.max.x - horizontalPadding - anomalyFieldSize.x * 0.5f;
-
-        if (anomalyLanes != null)
-        {
-            int count = anomalyLanes.Length;
-            for (int i = 0; i < count; i++)
-            {
-                float t = (i + 1f) / (count + 1f);
-                LayoutLane(anomalyLanes[i], left, right, Mathf.Lerp(zone.min.y, zone.max.y, t));
-            }
-        }
-
-        if (anomalySpawnPoints != null && anomalySpawnPoints.Length > 0)
-        {
-            for (int i = 0; i < anomalySpawnPoints.Length; i++)
-            {
-                Transform spawn = anomalySpawnPoints[i];
-                if (spawn == null) continue;
-                FootballTargetLane lane = anomalyLanes != null && anomalyLanes.Length > 0
-                    ? anomalyLanes[i % anomalyLanes.Length] : null;
-                if (lane == null || !lane.IsValid) continue;
-                Transform anchor = i % 2 == 0 ? lane.LeftAnchor : lane.RightAnchor;
-                spawn.position = anchor.position;
-            }
-        }
-    }
-
-    private void LayoutTargetArea(Bounds zone)
-    {
-        float maxRadius = GetMaximumTargetRadius();
-        float left = zone.min.x + horizontalPadding + maxRadius;
-        float right = zone.max.x - horizontalPadding - maxRadius;
-        float bottom = zone.min.y + maxRadius;
-        float top = Mathf.Max(bottom, zone.max.y - gateReservedHeight - maxRadius);
-
-        if (targetLanes != null)
-        {
-            int count = targetLanes.Length;
-            for (int i = 0; i < count; i++)
-            {
-                float t = (i + 1f) / (count + 1f);
-                LayoutLane(targetLanes[i], left, right, Mathf.Lerp(bottom, top, t));
-            }
-        }
-
-        if (targetTemplate != null && targetLanes != null &&
-            targetLanes.Length > 0 && targetLanes[0].IsValid)
-        {
-            targetTemplate.transform.position = targetLanes[0].LeftAnchor.position;
-        }
-    }
-
-    private static void LayoutLane(
-        FootballTargetLane lane,
-        float left,
-        float right,
-        float y)
-    {
-        if (lane == null || !lane.IsValid)
-            return;
-
-        lane.LeftAnchor.position = new Vector3(left, y, lane.LeftAnchor.position.z);
-        lane.RightAnchor.position = new Vector3(right, y, lane.RightAnchor.position.z);
     }
 
     private void EnsureDebugZoneView()
@@ -891,10 +728,19 @@ public sealed class FootballMinigame : BunkerMinigame
 
     private void ResolveLegacyReferences()
     {
+        ResolveArenaLayout();
         targetTemplate ??= scoreZone;
         if (balls.Count == 0 && ball != null) balls.Add(ball);
         if ((ballSpawnPoints == null || ballSpawnPoints.Length == 0) && ballSpawnPoint != null)
             ballSpawnPoints = new[] { ballSpawnPoint };
+    }
+
+    private void ResolveArenaLayout()
+    {
+        if (arenaLayout != null)
+            return;
+
+        arenaLayout = GetComponentInParent<FootballArenaLayout>(true);
     }
 
     private static bool IsFootballBallCollider(Collider2D other)
@@ -909,12 +755,8 @@ public sealed class FootballMinigame : BunkerMinigame
     private void OnValidate()
     {
         EnsureTargetSettings();
-        horizontalPadding = Mathf.Max(0f, horizontalPadding);
         cameraPadding = Mathf.Max(0f, cameraPadding);
-        playerBoundaryThickness = Mathf.Max(0.05f, playerBoundaryThickness);
         targetBaseRadius = Mathf.Max(0.1f, targetBaseRadius);
-        gateVerticalInset = Mathf.Max(0f, gateVerticalInset);
-        gateReservedHeight = Mathf.Max(0f, gateReservedHeight);
         topOutOfBoundsMargin = Mathf.Max(0f, topOutOfBoundsMargin);
         SynchronizeArenaGeometry();
     }

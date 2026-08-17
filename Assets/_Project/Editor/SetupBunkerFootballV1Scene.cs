@@ -12,6 +12,8 @@ public static class SetupBunkerFootballV1Scene
     private const string GravityDataPath = "Assets/_Project/Scriptable Objects/LocalAnomalies/LocalAnomaly_Gravity.asset";
     private const string BallPrefabPath = "Assets/_Project/prefabs/Ball1.prefab";
     private const string GatePrefabPath = "Assets/_Project/prefabs/FootBallGates1 Variant.prefab";
+    private const string ZoneSpritePath =
+        "Assets/_Project/art/Sprites/Environment/Boundary/BoundarySolid.png";
     private const string SessionKey = "Bunker.Football.V1.2.RuntimeWiring.2";
 
     [InitializeOnLoadMethod]
@@ -59,9 +61,11 @@ public static class SetupBunkerFootballV1Scene
         BallRollVisual ballPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(BallPrefabPath)
             ?.GetComponent<BallRollVisual>();
         GameObject gatePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(GatePrefabPath);
+        Sprite zoneSprite = AssetDatabase.LoadAssetAtPath<Sprite>(ZoneSpritePath);
 
         if (area == null || minigame == null || target == null || playArea == null ||
-            gravityPrefab == null || gravityData == null || ballPrefab == null || gatePrefab == null)
+            gravityPrefab == null || gravityData == null || ballPrefab == null ||
+            gatePrefab == null || zoneSprite == null)
         {
             Debug.LogError("[FootballV1Setup] Existing football scene objects or gravity assets are missing.");
             return;
@@ -79,6 +83,9 @@ public static class SetupBunkerFootballV1Scene
         }
         foreach (GameObject root in scene.GetRootGameObjects())
         {
+            if (root.name == "FootballArena" && root != area.gameObject)
+                root.SetActive(false);
+
             if (root != area.gameObject &&
                 root.GetComponent<FootballMinigame>() != null)
             {
@@ -91,18 +98,27 @@ public static class SetupBunkerFootballV1Scene
         playArea.size = new Vector2(24f, 28f);
 
         Transform zones = GetOrCreate(area, "Zones", center);
-        BoxCollider2D ballsZone = ConfigureZone(zones, "Zone_Balls", center + Vector3.down * 11.2f, new Vector2(24f, 5.6f));
-        BoxCollider2D anomaliesZone = ConfigureZone(zones, "Zone_Anomalies", center + Vector3.down * 2.8f, new Vector2(24f, 11.2f));
-        BoxCollider2D targetsZone = ConfigureZone(zones, "Zone_Targets", center + Vector3.up * 8.4f, new Vector2(24f, 11.2f));
+        BoxCollider2D ballsZone = ConfigureZone(
+            zones, "Zone_Balls", center, Vector2.one);
+        BoxCollider2D anomaliesZone = ConfigureZone(
+            zones, "Zone_Anomalies", center, Vector2.one);
+        BoxCollider2D targetsZone = ConfigureZone(
+            zones, "Zone_Targets", center, Vector2.one);
+        SpriteRenderer ballsVisual = ConfigureZoneVisual(
+            ballsZone, zoneSprite, new Color(0.08f, 0.65f, 0.78f, 0.55f));
+        SpriteRenderer anomaliesVisual = ConfigureZoneVisual(
+            anomaliesZone, zoneSprite, new Color(0.035f, 0.02f, 0.055f, 0.92f));
+        SpriteRenderer targetsVisual = ConfigureZoneVisual(
+            targetsZone, zoneSprite, new Color(0.18f, 0.42f, 0.22f, 0.65f));
 
-        Transform boundaryRoot = GetOrCreate(area, "Player Boundary", center + Vector3.down * 8.3f);
+        Transform boundaryRoot = GetOrCreate(area, "Player Boundary", center);
         BoxCollider2D boundaryCollider = boundaryRoot.GetComponent<BoxCollider2D>();
         if (boundaryCollider == null)
             boundaryCollider = Undo.AddComponent<BoxCollider2D>(boundaryRoot.gameObject);
         FootballPlayerBoundary playerBoundary = boundaryRoot.GetComponent<FootballPlayerBoundary>();
         if (playerBoundary == null)
             playerBoundary = Undo.AddComponent<FootballPlayerBoundary>(boundaryRoot.gameObject);
-        playerBoundary.Configure(new Vector2(center.x, ballsZone.bounds.max.y + 0.1f), 24f, 0.2f);
+        playerBoundary.Configure(center, 1f, 0.2f);
         Transform boundaryVisualRoot = GetOrCreate(boundaryRoot, "BoundaryVisual", boundaryRoot.position);
         boundaryVisualRoot.localPosition = Vector3.zero;
         SpriteRenderer boundaryVisual = boundaryVisualRoot.GetComponent<SpriteRenderer>();
@@ -114,31 +130,31 @@ public static class SetupBunkerFootballV1Scene
         Transform ballSpawns = GetOrCreate(area, "BallSpawns", center);
         Transform[] ballPoints =
         {
-            Marker(ballSpawns, "BallSpawn_01", center + new Vector3(-5f, -10f)),
-            Marker(ballSpawns, "BallSpawn_02", center + new Vector3(-1.7f, -10f)),
-            Marker(ballSpawns, "BallSpawn_03", center + new Vector3(1.7f, -10f)),
-            Marker(ballSpawns, "BallSpawn_04", center + new Vector3(5f, -10f))
+            Marker(ballSpawns, "BallSpawn_01", center),
+            Marker(ballSpawns, "BallSpawn_02", center),
+            Marker(ballSpawns, "BallSpawn_03", center),
+            Marker(ballSpawns, "BallSpawn_04", center)
         };
 
         Transform anomalySpawns = GetOrCreate(area, "AnomalySpawns", center);
         Transform[] anomalyPoints =
         {
-            Marker(anomalySpawns, "AnomalySpawn_Left", center + Vector3.left * 5f),
-            Marker(anomalySpawns, "AnomalySpawn_Right", center + Vector3.right * 5f)
+            Marker(anomalySpawns, "AnomalySpawn_Left", center),
+            Marker(anomalySpawns, "AnomalySpawn_Right", center)
         };
         Transform anomalyLanes = GetOrCreate(area, "AnomalyLanes", center);
         Transform[][] anomalyLanePoints =
         {
-            Lane(anomalyLanes, "Lane_Lower", center + Vector3.down * 1.7f, 8f),
-            Lane(anomalyLanes, "Lane_Upper", center + Vector3.up * 1.7f, 8f)
+            Lane(anomalyLanes, "Lane_Lower", center, 0f),
+            Lane(anomalyLanes, "Lane_Upper", center, 0f)
         };
 
         Transform targetLanes = GetOrCreate(area, "TargetLanes", center);
         Transform[][] targetLanePoints =
         {
-            Lane(targetLanes, "Lane_Left", center + new Vector3(0f, 7.6f), 8f),
-            Lane(targetLanes, "Lane_Center", center + new Vector3(0f, 9.5f), 8f),
-            Lane(targetLanes, "Lane_Right", center + new Vector3(0f, 11.4f), 8f)
+            Lane(targetLanes, "Lane_Left", center, 0f),
+            Lane(targetLanes, "Lane_Center", center, 0f),
+            Lane(targetLanes, "Lane_Right", center, 0f)
         };
 
         Transform runtime = GetOrCreate(area, "Runtime", center);
@@ -180,9 +196,49 @@ public static class SetupBunkerFootballV1Scene
             targetPool[i].name = $"Target_{i + 1:00}";
 
         FootballGateScoreZone[] gates = EnsureGates(
-            scene, gatesRuntime, gatePrefab, minigame, targetsZone.bounds);
+            scene, gatesRuntime, gatePrefab, minigame);
+
+        FootballArenaLayout layout = area.GetComponent<FootballArenaLayout>();
+        if (layout == null)
+            layout = Undo.AddComponent<FootballArenaLayout>(area.gameObject);
+        SerializedObject layoutData = new(layout);
+        SetObject(layoutData, "arenaBounds", playArea);
+        SetObject(layoutData, "ballsZone", ballsZone);
+        SetObject(layoutData, "anomalyZone", anomaliesZone);
+        SetObject(layoutData, "targetsZone", targetsZone);
+        SetObject(layoutData, "ballsVisual", ballsVisual);
+        SetObject(layoutData, "anomalyVisual", anomaliesVisual);
+        SetObject(layoutData, "targetsVisual", targetsVisual);
+        SetObject(layoutData, "playerTopBoundary", boundaryCollider);
+        SetArray(layoutData, "ballSpawnPoints", ballPoints.Cast<Object>().ToArray());
+        SetObject(layoutData, "startZone", area.Find("StartZone"));
+        SetLanes(layoutData.FindProperty("anomalyLanes"), anomalyLanePoints, 1.1f);
+        SetArray(layoutData, "anomalySpawnPoints", anomalyPoints.Cast<Object>().ToArray());
+        SetLanes(layoutData.FindProperty("targetLanes"), targetLanePoints, 1.35f);
+        SetObject(layoutData, "targetTemplate", target.transform);
+        SetArray(layoutData, "gateRoots", gates
+            .Take(2)
+            .Select(item => (Object)(item.transform.parent != null
+                ? item.transform.parent
+                : item.transform))
+            .ToArray());
+        layoutData.FindProperty("ballsRatio").floatValue = 0.2f;
+        layoutData.FindProperty("anomalyRatio").floatValue = 0.4f;
+        layoutData.FindProperty("targetsRatio").floatValue = 0.4f;
+        layoutData.FindProperty("playerBoundaryThickness").floatValue = 0.2f;
+        layoutData.FindProperty("ballSpawnNormalizedY").floatValue = 0.5f;
+        layoutData.FindProperty("horizontalPadding").floatValue = 0.5f;
+        layoutData.FindProperty("anomalyVisualSize").vector2Value = new Vector2(4.5f, 3.2f);
+        layoutData.FindProperty("targetMaximumRadius").floatValue = 1.08f;
+        layoutData.FindProperty("targetGateReservedHeight").floatValue = 3.2f;
+        layoutData.FindProperty("gateHorizontalOffset").floatValue = 6f;
+        layoutData.FindProperty("gateVerticalInset").floatValue = 1.4f;
+        layoutData.FindProperty("showGizmos").boolValue = false;
+        layoutData.FindProperty("showLaneGizmos").boolValue = true;
+        layoutData.ApplyModifiedPropertiesWithoutUndo();
 
         SerializedObject data = new(minigame);
+        SetObject(data, "arenaLayout", layout);
         SetObject(data, "ballSpawnZone", ballsZone);
         SetObject(data, "anomalySpawnZone", anomaliesZone);
         SetObject(data, "targetSpawnZone", targetsZone);
@@ -210,19 +266,14 @@ public static class SetupBunkerFootballV1Scene
         data.FindProperty("anomalyFieldSize").vector2Value = new Vector2(4.5f, 3.2f);
         data.FindProperty("useRoundTimer").boolValue = true;
         data.FindProperty("roundDuration").floatValue = 60f;
-        data.FindProperty("horizontalPadding").floatValue = 0.5f;
-        data.FindProperty("playerBoundaryThickness").floatValue = 0.2f;
         data.FindProperty("cameraPadding").floatValue = 1f;
         data.FindProperty("showDebugZones").boolValue = false;
         data.FindProperty("showLaneDebug").boolValue = false;
         data.FindProperty("topOutOfBoundsMargin").floatValue = 3f;
         data.FindProperty("targetBaseRadius").floatValue = 0.8f;
-        data.FindProperty("gateHorizontalOffset").floatValue = 6f;
-        data.FindProperty("gateVerticalInset").floatValue = 1.4f;
         data.FindProperty("gateVisualScale").floatValue = 0.55f;
         data.FindProperty("gateTriggerSize").vector2Value = new Vector2(3.6f, 1.8f);
         data.FindProperty("gateScore").intValue = 20;
-        data.FindProperty("gateReservedHeight").floatValue = 3.2f;
         SetTargetSettings(data.FindProperty("greenTarget"),
             FootballScoreZoneType.Green, new Color(0.15f, 0.9f, 0.25f, 0.9f), 1.35f, 1.5f, 2);
         SetTargetSettings(data.FindProperty("yellowTarget"),
@@ -230,7 +281,9 @@ public static class SetupBunkerFootballV1Scene
         SetTargetSettings(data.FindProperty("redTarget"),
             FootballScoreZoneType.Red, new Color(1f, 0.12f, 0.08f, 0.92f), 0.65f, 5.5f, 10);
         data.ApplyModifiedPropertiesWithoutUndo();
+        layout.RefreshLayout();
         minigame.SynchronizeArenaGeometry();
+        EditorUtility.SetDirty(layout);
         EditorUtility.SetDirty(minigame);
 
         EditorSceneManager.MarkSceneDirty(scene);
@@ -254,8 +307,7 @@ public static class SetupBunkerFootballV1Scene
         Scene scene,
         Transform parent,
         GameObject prefab,
-        FootballMinigame minigame,
-        Bounds targetBounds)
+        FootballMinigame minigame)
     {
         FootballGateScoreZone[] result = parent
             .GetComponentsInChildren<FootballGateScoreZone>(true);
@@ -277,15 +329,10 @@ public static class SetupBunkerFootballV1Scene
             result = result.Append(scoreZone).ToArray();
         }
 
-        for (int i = 0; i < result.Length && i < 2; i++)
+        for (int i = 0; i < result.Length; i++)
         {
             Transform root = result[i].transform.parent;
             StabilizeGate(root.gameObject);
-            float direction = i == 0 ? -1f : 1f;
-            root.position = new Vector3(
-                targetBounds.center.x + direction * 6f,
-                targetBounds.max.y - 1.4f,
-                root.position.z);
             result[i].Configure(minigame, 20, new Vector2(3.6f, 1.8f));
         }
         return result;
@@ -312,6 +359,26 @@ public static class SetupBunkerFootballV1Scene
         collider.isTrigger = true;
         collider.size = size;
         return collider;
+    }
+
+    private static SpriteRenderer ConfigureZoneVisual(
+        BoxCollider2D zone,
+        Sprite sprite,
+        Color color)
+    {
+        Transform root = GetOrCreate(zone.transform, "Visual", zone.transform.position);
+        root.localPosition = Vector3.zero;
+        root.localRotation = Quaternion.identity;
+        root.localScale = Vector3.one;
+        SpriteRenderer visual = root.GetComponent<SpriteRenderer>();
+        if (visual == null)
+            visual = Undo.AddComponent<SpriteRenderer>(root.gameObject);
+        visual.sprite = sprite;
+        visual.color = color;
+        visual.drawMode = SpriteDrawMode.Sliced;
+        visual.size = zone.size;
+        visual.sortingOrder = -10;
+        return visual;
     }
 
     private static Transform Marker(Transform parent, string name, Vector3 position)
