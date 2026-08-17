@@ -87,6 +87,12 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         Shader.PropertyToID("_ReadabilityTint");
     private static readonly int TintStrengthId =
         Shader.PropertyToID("_ReadabilityTintStrength");
+    private static readonly int HueShiftId =
+        Shader.PropertyToID("_ReadabilityHueShift");
+    private static readonly int RecolorTargetId =
+        Shader.PropertyToID("_ReadabilityRecolorTarget");
+    private static readonly int RecolorStrengthId =
+        Shader.PropertyToID("_ReadabilityRecolorStrength");
     private static readonly int OutlineColorId =
         Shader.PropertyToID("_ReadabilityOutlineColor");
     private static readonly int OutlineStrengthId =
@@ -102,12 +108,16 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     private static ReadabilityPreset readabilityPreset =
         ReadabilityPreset.Original;
     private static float decorBrightness = 1f;
+    private static float environmentDarken;
     private static float anomalyAccent = 1f;
     private static EnemyReadability enemyReadability = EnemyReadability.High;
     private static EnemyScope enemyScope = EnemyScope.All;
     private static float enemySaturation = 1.9f;
     private static float enemyBrightness = 1.45f;
     private static float enemyTintStrength = 0.5f;
+    private static float enemyHueShift;
+    private static Color enemyRecolorTarget = Color.cyan;
+    private static float enemyRecolorStrength;
     private static float enemyOutlineStrength;
     private static float enemyOutlineWidth = 1f;
     private static bool enemyOutlineEnabled;
@@ -119,12 +129,16 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     {
         readabilityPreset = ReadabilityPreset.Original;
         decorBrightness = 1f;
+        environmentDarken = 0f;
         anomalyAccent = 1f;
         enemyReadability = EnemyReadability.High;
         enemyScope = EnemyScope.All;
         enemySaturation = 1.9f;
         enemyBrightness = 1.45f;
         enemyTintStrength = 0.5f;
+        enemyHueShift = 0f;
+        enemyRecolorTarget = Color.cyan;
+        enemyRecolorStrength = 0f;
         enemyOutlineStrength = 0f;
         enemyOutlineWidth = 1f;
         enemyOutlineEnabled = false;
@@ -164,18 +178,25 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     private float defaultEnemySaturation;
     private float defaultEnemyBrightness;
     private float defaultEnemyTintStrength;
+    private float defaultEnemyHueShift;
+    private Color defaultEnemyRecolorTarget;
+    private float defaultEnemyRecolorStrength;
     private float defaultEnemyOutlineStrength;
     private float defaultEnemyOutlineWidth;
     private bool defaultEnemyOutlineEnabled;
 
     public ReadabilityPreset Preset => readabilityPreset;
     public float DecorBrightness => decorBrightness;
+    public float EnvironmentDarken => environmentDarken;
     public float AnomalyAccent => anomalyAccent;
     public EnemyReadability EnemyMode => enemyReadability;
     public EnemyScope CurrentEnemyScope => enemyScope;
     public float EnemySaturation => enemySaturation;
     public float EnemyBrightness => enemyBrightness;
     public float EnemyTintStrength => enemyTintStrength;
+    public float EnemyHueShift => enemyHueShift;
+    public Color EnemyRecolorTarget => enemyRecolorTarget;
+    public float EnemyRecolorStrength => enemyRecolorStrength;
     public float EnemyOutlineStrength => enemyOutlineStrength;
     public float EnemyOutlineWidth => enemyOutlineWidth;
     public bool EnemyOutlineEnabled => enemyOutlineEnabled;
@@ -431,6 +452,49 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         ApplyAllEnemies();
     }
 
+    public void SetEnemyHueShift(float value)
+    {
+        enemyHueShift = Mathf.Clamp(value, -180f, 180f);
+        ApplyAllEnemies();
+    }
+
+    public void SetEnemyRecolorTarget(Color value)
+    {
+        enemyRecolorTarget = new Color(
+            Mathf.Clamp01(value.r),
+            Mathf.Clamp01(value.g),
+            Mathf.Clamp01(value.b),
+            1f
+        );
+        ApplyAllEnemies();
+    }
+
+    public void SetEnemyRecolorStrength(float value)
+    {
+        enemyRecolorStrength = Mathf.Clamp01(value);
+        ApplyAllEnemies();
+    }
+
+    public void SetEnemyRecolorPreset(Color target)
+    {
+        enemyHueShift = 0f;
+        enemyRecolorTarget = new Color(
+            Mathf.Clamp01(target.r),
+            Mathf.Clamp01(target.g),
+            Mathf.Clamp01(target.b),
+            1f
+        );
+        enemyRecolorStrength = 1f;
+        ApplyAllEnemies();
+    }
+
+    public void ResetEnemyRecolor()
+    {
+        enemyHueShift = 0f;
+        enemyRecolorStrength = 0f;
+        ApplyAllEnemies();
+    }
+
     public void SetEnemyOutlineStrength(float value)
     {
         enemyOutlineStrength = Mathf.Clamp(value, 0f, 2f);
@@ -447,6 +511,12 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     {
         RefreshVisualRegistries();
         RefreshVisualTunerTargets(true);
+    }
+
+    public void SetEnvironmentDarken(float value)
+    {
+        environmentDarken = Mathf.Clamp01(value);
+        ApplyEnvironment();
     }
 
     public void RefreshVisualTunerTargetCache()
@@ -562,6 +632,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         CaptureSessionDefaults();
         readabilityPreset = defaultReadabilityPreset;
         decorBrightness = defaultDecorBrightness;
+        environmentDarken = 0f;
         ApplyEnvironment();
     }
 
@@ -573,6 +644,9 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         enemySaturation = defaultEnemySaturation;
         enemyBrightness = defaultEnemyBrightness;
         enemyTintStrength = defaultEnemyTintStrength;
+        enemyHueShift = defaultEnemyHueShift;
+        enemyRecolorTarget = defaultEnemyRecolorTarget;
+        enemyRecolorStrength = defaultEnemyRecolorStrength;
         enemyOutlineStrength = defaultEnemyOutlineStrength;
         enemyOutlineWidth = defaultEnemyOutlineWidth;
         enemyOutlineEnabled = defaultEnemyOutlineEnabled;
@@ -651,6 +725,9 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         defaultEnemySaturation = enemySaturation;
         defaultEnemyBrightness = enemyBrightness;
         defaultEnemyTintStrength = enemyTintStrength;
+        defaultEnemyHueShift = enemyHueShift;
+        defaultEnemyRecolorTarget = enemyRecolorTarget;
+        defaultEnemyRecolorStrength = enemyRecolorStrength;
         defaultEnemyOutlineStrength = enemyOutlineStrength;
         defaultEnemyOutlineWidth = enemyOutlineWidth;
         defaultEnemyOutlineEnabled = enemyOutlineEnabled;
@@ -1021,7 +1098,11 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
                 tint = new Color(0.62f, 0.73f, 0.9f, 1f);
                 break;
             default:
-                return source;
+                saturation = 1f;
+                brightness = 1f;
+                contrast = 1f;
+                tint = Color.white;
+                break;
         }
 
         float luminance = source.r * 0.299f + source.g * 0.587f +
@@ -1034,6 +1115,10 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
             brightness * tint.g;
         result.b = ((result.b - 0.5f) * contrast + 0.5f) *
             brightness * tint.b;
+        float darkenMultiplier = 1f - environmentDarken;
+        result.r *= darkenMultiplier;
+        result.g *= darkenMultiplier;
+        result.b *= darkenMultiplier;
         result.a = source.a;
         return result;
     }
@@ -1349,6 +1434,18 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
                 TintStrengthId,
                 apply ? enemyTintStrength : 0f
             );
+            readabilityProperties.SetFloat(
+                HueShiftId,
+                apply ? enemyHueShift : 0f
+            );
+            readabilityProperties.SetColor(
+                RecolorTargetId,
+                enemyRecolorTarget
+            );
+            readabilityProperties.SetFloat(
+                RecolorStrengthId,
+                apply ? enemyRecolorStrength : 0f
+            );
             readabilityProperties.SetColor(
                 OutlineColorId,
                 EnemyOutlineColor
@@ -1446,6 +1543,9 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
             readabilityProperties.SetFloat(SaturationId, 1f);
             readabilityProperties.SetFloat(BrightnessId, 1f);
             readabilityProperties.SetFloat(TintStrengthId, 0f);
+            readabilityProperties.SetFloat(HueShiftId, 0f);
+            readabilityProperties.SetColor(RecolorTargetId, Color.cyan);
+            readabilityProperties.SetFloat(RecolorStrengthId, 0f);
             readabilityProperties.SetFloat(OutlineStrengthId, 0f);
             readabilityProperties.SetFloat(OutlineWidthId, 1f);
             renderer.SetPropertyBlock(readabilityProperties);

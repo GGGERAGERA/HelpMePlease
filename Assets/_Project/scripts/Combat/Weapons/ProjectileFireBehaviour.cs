@@ -48,6 +48,7 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
         ScaleProjectileGeometry(
             projectileObject.transform,
             context.ShotVisualScale);
+        ProductionVisualTuningController.RegisterProjectile(projectileObject);
 
         IWeaponProjectile projectile = projectileObject.GetComponent<IWeaponProjectile>();
 

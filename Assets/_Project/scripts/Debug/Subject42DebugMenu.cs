@@ -260,7 +260,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         Player,
         PostFx,
         Atmosphere,
-        Anomalies
+        Anomalies,
+        Projectiles,
+        Camera
     }
 
     private static readonly string[] TabLabels =
@@ -342,9 +344,13 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private readonly List<UpgradeData> visibleUpgrades = new();
     private TelekinesisDebugPrototype telekinesisPrototype;
     private CombatLabDebugController combatLab;
+    private ProductionVisualTuningController productionVisualTuning;
+    private WorldRuleVisual worldRuleVisual;
+    private PlayerWeaponOrbitVisual playerOrbitVisual;
+    private CameraFollow cameraFollow;
     private readonly bool[] visualSectionExpanded =
     {
-        true, false, true, false, false, true, true
+        true, false, true, true, true, true, true, true, true
     };
 
     private readonly Color panelColor = new(0.035f, 0.045f, 0.06f, 0.97f);
@@ -703,6 +709,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             ? RunFlowController.Instance
             : FindFirstObjectByType<RunFlowController>();
         levelChoiceManager ??= FindFirstObjectByType<LevelChoiceManager>();
+        worldRuleVisual ??= FindFirstObjectByType<WorldRuleVisual>();
+        playerOrbitVisual ??= FindFirstObjectByType<PlayerWeaponOrbitVisual>();
+        cameraFollow ??= FindFirstObjectByType<CameraFollow>();
 
         WarnIfMissing(worldRuleController, ref warnedRuleController,
             "WorldRuleController");
@@ -720,6 +729,12 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         productionSectorDebug = GetComponent<ProductionSectorDebugController>();
         productionSectorDebug ??=
             gameObject.AddComponent<ProductionSectorDebugController>();
+
+        productionVisualTuning ??=
+            GetComponent<ProductionVisualTuningController>();
+        productionVisualTuning ??=
+            gameObject.AddComponent<ProductionVisualTuningController>();
+        productionVisualTuning.Configure();
     }
 
     private void WarnIfMissing(
@@ -1784,6 +1799,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             AddSliderRow(
                 "Decor Brightness", debug.DecorBrightness,
                 0.25f, 1.5f, debug.SetDecorBrightness, "0.00");
+            AddSliderRow(
+                "Environment Darken", debug.EnvironmentDarken,
+                0f, 1f, debug.SetEnvironmentDarken, "0.00");
             AddVisualSectionReset("WORLD", debug.ResetWorldVisualSettings);
         }
 
@@ -1827,6 +1845,25 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             AddSliderRow(
                 "Tint Strength", debug.EnemyTintStrength,
                 0f, 1f, debug.SetEnemyTintStrength, "0.00");
+            AddHint("RECOLOR PRESETS");
+            AddEnemyRecolorPresetStrip(debug);
+            AddSliderRow(
+                "Hue Shift", debug.EnemyHueShift,
+                -180f, 180f, debug.SetEnemyHueShift, "0");
+            Color recolorTarget = debug.EnemyRecolorTarget;
+            AddRow(
+                "Target Color",
+                "#" + ColorUtility.ToHtmlStringRGB(recolorTarget),
+                recolorTarget,
+                string.Empty,
+                false,
+                null);
+            AddEnemyRecolorColorChannel(debug, "Target Color R", 0);
+            AddEnemyRecolorColorChannel(debug, "Target Color G", 1);
+            AddEnemyRecolorColorChannel(debug, "Target Color B", 2);
+            AddSliderRow(
+                "Recolor Strength", debug.EnemyRecolorStrength,
+                0f, 1f, debug.SetEnemyRecolorStrength, "0.00");
             AddToggleRow(
                 "OUTLINE", debug.EnemyOutlineEnabled, true,
                 () => debug.SetEnemyOutlineEnabled(!debug.EnemyOutlineEnabled));
@@ -1848,19 +1885,92 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         if (AddVisualSectionHeader(
                 VisualSection.Player,
                 "PLAYER",
-                "No existing numeric visual debug parameter"))
+                "Production SpriteLight2D and weapon orbit"))
         {
-            AddHint("Player art and gameplay values are outside this lab.");
+            if (worldRuleVisual != null && worldRuleVisual.PlayerGlowAvailable)
+            {
+                AddSliderRow(
+                    "Player Glow Intensity",
+                    worldRuleVisual.PlayerGlowIntensityMultiplier,
+                    0f, 5f,
+                    worldRuleVisual.SetPlayerGlowIntensityMultiplier,
+                    "0.00");
+                AddSliderRow(
+                    "Player Glow Radius",
+                    worldRuleVisual.PlayerGlowRadiusMultiplier,
+                    0.1f, 5f,
+                    worldRuleVisual.SetPlayerGlowRadiusMultiplier,
+                    "0.00");
+                AddHint("Multipliers: 1.00 = authored production value.");
+            }
+            else
+            {
+                AddHint("Player SpriteLight2D is not available yet.");
+            }
+
+            if (playerOrbitVisual != null &&
+                playerOrbitVisual.HasOrbitSource)
+            {
+                AddToggleRow(
+                    "ORBIT RING",
+                    playerOrbitVisual.RingEnabled,
+                    true,
+                    () => playerOrbitVisual.SetRingEnabled(
+                        !playerOrbitVisual.RingEnabled));
+                AddSliderRow(
+                    "Orbit Ring Intensity",
+                    playerOrbitVisual.RingIntensity,
+                    0f, 4f,
+                    playerOrbitVisual.SetRingIntensity,
+                    "0.00");
+                AddSliderRow(
+                    "Orbit Ring Width",
+                    playerOrbitVisual.RingWidth,
+                    0.005f, 0.15f,
+                    playerOrbitVisual.SetRingWidth,
+                    "0.000");
+                AddSliderRow(
+                    "Orbit Ring Alpha",
+                    playerOrbitVisual.RingAlpha,
+                    0f, 1f,
+                    playerOrbitVisual.SetRingAlpha,
+                    "0.00");
+                AddHint(
+                    $"Radius {playerOrbitVisual.CurrentOrbitRadius:0.###} is " +
+                    "read directly from BaseWeapon; presentation only.");
+            }
+            else
+            {
+                AddHint("Production weapon orbit source is not available yet.");
+            }
+
+            AddVisualSectionReset(
+                "PLAYER",
+                () =>
+                {
+                    worldRuleVisual?.ResetPlayerGlowDebugSettings();
+                    playerOrbitVisual?.ResetPresentationSettings();
+                });
         }
 
         if (AddVisualSectionHeader(
                 VisualSection.PostFx,
                 "POST FX",
-                "No shared production Volume control found"))
+                "URP global default VolumeProfile"))
         {
-            AddHint(
-                "World-rule Volumes are rule-owned runtime layers; Visual Lab " +
-                "does not duplicate their state.");
+            ProductionVisualTuningController tuning = productionVisualTuning;
+            bool available = tuning != null && tuning.VignetteAvailable;
+            if (available)
+            {
+                AddSliderRow(
+                    "Vignette Intensity", tuning.VignetteIntensity,
+                    0f, 1f, tuning.SetVignetteIntensity, "0.00");
+                AddVisualSectionReset("POST FX", tuning.ResetVignette);
+            }
+            else
+            {
+                AddHint("Production Vignette was not found in the active profile.");
+            }
         }
 
         if (AddVisualSectionHeader(
@@ -1885,14 +1995,32 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 AddSliderRow(
                     "Focus Transition", anomalyController.FocusTransition,
                     0.2f, 0.35f, anomalyController.SetFocusTransition, "0.000");
-                AddVisualSectionReset(
-                    "ATMOSPHERE",
-                    anomalyController.ResetFocusPresentationForDebug);
             }
             else
             {
                 AddHint("LevelAnomalyController not found in this scene.");
             }
+
+            if (worldRuleVisual != null)
+            {
+                AddSliderRow(
+                    "Wind Dust Amount",
+                    worldRuleVisual.WindDustAmountMultiplier,
+                    0f, 5f,
+                    worldRuleVisual.SetWindDustAmountMultiplier,
+                    "0.00");
+                AddHint(
+                    "Tunes production WindDustParticles; visible while the " +
+                    "Wind world rule is active. 1.00 = production.");
+            }
+
+            AddVisualSectionReset(
+                "ATMOSPHERE",
+                () =>
+                {
+                    anomalyController?.ResetFocusPresentationForDebug();
+                    worldRuleVisual?.ResetWindDustDebugSettings();
+                });
         }
 
         if (AddVisualSectionHeader(
@@ -1906,6 +2034,79 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             AddAnomalyTargetPanel(debug);
             AddAnomalyVisualTuner(debug);
             AddVisualSectionReset("ANOMALIES", debug.ResetAnomalyVisualSettings);
+        }
+
+        if (AddVisualSectionHeader(
+                VisualSection.Projectiles,
+                "PROJECTILES",
+                "Authored bullet visual child and TrailRenderer"))
+        {
+            ProductionVisualTuningController tuning = productionVisualTuning;
+            if (tuning != null)
+            {
+                AddSliderRow(
+                    "Projectile Visual Scale", tuning.ProjectileVisualScale,
+                    0.1f, 4f, tuning.SetProjectileVisualScale, "0.00");
+                AddSliderRow(
+                    "Trail Width", tuning.TrailWidth,
+                    0.1f, 5f, tuning.SetTrailWidth, "0.00");
+                AddSliderRow(
+                    "Trail Time / Length", tuning.TrailTime,
+                    0.1f, 6f, tuning.SetTrailTime, "0.00");
+                AddSliderRow(
+                    "Trail Alpha", tuning.TrailAlpha,
+                    0f, 3f, tuning.SetTrailAlpha, "0.00");
+                AddHint(
+                    "Multipliers: 1.00 = production. Visual child scale does " +
+                    "not change the root collider.");
+                AddVisualSectionReset(
+                    "PROJECTILES", tuning.ResetProjectileSettings);
+            }
+            else
+            {
+                AddHint("Production projectile tuner could not be created.");
+            }
+        }
+
+        if (AddVisualSectionHeader(
+                VisualSection.Camera,
+                "CAMERA",
+                "Production CameraFollow orthographic source"))
+        {
+            if (cameraFollow != null && cameraFollow.OrthographicZoomAvailable)
+            {
+                float productionSize = cameraFollow.ProductionOrthographicSize;
+                AddSliderRow(
+                    "Camera Zoom / Orthographic Size",
+                    cameraFollow.DebugOrthographicSize,
+                    2f, 16f,
+                    cameraFollow.SetDebugOrthographicSize,
+                    "0.00");
+                AddRow(
+                    "MVP DEFAULT", productionSize.ToString("0.00"),
+                    successColor, "APPLY", true,
+                    () =>
+                    {
+                        cameraFollow.SetDebugOrthographicSize(productionSize);
+                        RefreshCurrentTab();
+                    });
+                AddRow(
+                    "SANDBOX-LIKE", "12.50", successColor, "APPLY", true,
+                    () =>
+                    {
+                        cameraFollow.SetDebugOrthographicSize(12.5f);
+                        RefreshCurrentTab();
+                    });
+                AddHint(
+                    "Sandbox value 12.5 comes from the removed " +
+                    "GameplaySandboxBootstrap.CreateCamera().");
+                AddVisualSectionReset(
+                    "CAMERA", cameraFollow.ResetDebugOrthographicSize);
+            }
+            else
+            {
+                AddHint("Production orthographic CameraFollow was not found.");
+            }
         }
     }
 
@@ -4818,6 +5019,12 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             return;
 
         debug.ResetVisualSettings();
+        productionVisualTuning?.ResetProjectileSettings();
+        productionVisualTuning?.ResetVignette();
+        worldRuleVisual?.ResetPlayerGlowDebugSettings();
+        playerOrbitVisual?.ResetPresentationSettings();
+        worldRuleVisual?.ResetWindDustDebugSettings();
+        cameraFollow?.ResetDebugOrthographicSize();
         anomalyController?.ResetFocusPresentationForDebug();
         RefreshCurrentTab();
     }
@@ -4861,6 +5068,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         values.AppendLine("WORLD");
         values.AppendLine($"Readability = {debug.Preset}");
         values.AppendLine($"DecorBrightness = {debug.DecorBrightness:0.###}");
+        values.AppendLine($"EnvironmentDarken = {debug.EnvironmentDarken:0.###}");
         values.AppendLine();
         values.AppendLine("ENEMIES");
         values.AppendLine($"Readability = {debug.EnemyMode}");
@@ -4868,6 +5076,12 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         values.AppendLine($"Brightness = {debug.EnemyBrightness:0.###}");
         values.AppendLine($"Saturation = {debug.EnemySaturation:0.###}");
         values.AppendLine($"TintStrength = {debug.EnemyTintStrength:0.###}");
+        values.AppendLine($"HueShift = {debug.EnemyHueShift:0.###}");
+        Color recolor = debug.EnemyRecolorTarget;
+        values.AppendLine(
+            $"TargetColor = #{ColorUtility.ToHtmlStringRGB(recolor)}");
+        values.AppendLine(
+            $"RecolorStrength = {debug.EnemyRecolorStrength:0.###}");
         values.AppendLine($"OutlineEnabled = {debug.EnemyOutlineEnabled}");
         values.AppendLine($"OutlineStrength = {debug.EnemyOutlineStrength:0.###}");
         values.AppendLine($"OutlineWidth = {debug.EnemyOutlineWidth:0.###}");
@@ -4886,14 +5100,72 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 $"FocusTransition = {anomalyController.FocusTransition:0.###}");
         }
 
+        if (worldRuleVisual != null)
+        {
+            values.AppendLine($"WindDustAmount = " +
+                $"{worldRuleVisual.WindDustAmountMultiplier:0.###}");
+        }
+
+        if (worldRuleVisual != null || playerOrbitVisual != null)
+        {
+            values.AppendLine();
+            values.AppendLine("PLAYER");
+            if (worldRuleVisual != null)
+            {
+                values.AppendLine($"GlowIntensity = " +
+                    $"{worldRuleVisual.PlayerGlowIntensityMultiplier:0.###}");
+                values.AppendLine($"GlowRadius = " +
+                    $"{worldRuleVisual.PlayerGlowRadiusMultiplier:0.###}");
+            }
+            if (playerOrbitVisual != null)
+            {
+                values.AppendLine($"OrbitRing = {playerOrbitVisual.RingEnabled}");
+                values.AppendLine($"OrbitRadius = " +
+                    $"{playerOrbitVisual.CurrentOrbitRadius:0.###}");
+                values.AppendLine($"OrbitIntensity = " +
+                    $"{playerOrbitVisual.RingIntensity:0.###}");
+                values.AppendLine($"OrbitWidth = " +
+                    $"{playerOrbitVisual.RingWidth:0.###}");
+                values.AppendLine($"OrbitAlpha = " +
+                    $"{playerOrbitVisual.RingAlpha:0.###}");
+            }
+        }
+
         values.AppendLine();
         values.AppendLine("ANOMALIES");
         values.AppendLine($"GlobalAccent = {debug.AnomalyAccent:0.###}");
         values.AppendLine($"Monochrome = {debug.MonochromeAnomaliesEnabled}");
+
         if (debug.VisualTunerTarget != null)
         {
             values.AppendLine($"Target = {debug.VisualTunerTargetName}");
             values.Append(debug.VisualTunerTarget.GetVisualTunerValuesText());
+        }
+
+        if (productionVisualTuning != null)
+        {
+            values.AppendLine();
+            values.AppendLine("POST FX");
+            values.AppendLine($"VignetteIntensity = " +
+                $"{productionVisualTuning.VignetteIntensity:0.###}");
+            values.AppendLine();
+            values.AppendLine("PROJECTILES");
+            values.AppendLine($"VisualScale = " +
+                $"{productionVisualTuning.ProjectileVisualScale:0.###}");
+            values.AppendLine($"TrailWidth = " +
+                $"{productionVisualTuning.TrailWidth:0.###}");
+            values.AppendLine($"TrailTime = " +
+                $"{productionVisualTuning.TrailTime:0.###}");
+            values.AppendLine($"TrailAlpha = " +
+                $"{productionVisualTuning.TrailAlpha:0.###}");
+        }
+
+        if (cameraFollow != null)
+        {
+            values.AppendLine();
+            values.AppendLine("CAMERA");
+            values.AppendLine($"OrthographicSize = " +
+                $"{cameraFollow.DebugOrthographicSize:0.###}");
         }
 
         string result = values.ToString().TrimEnd();
@@ -5384,6 +5656,88 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             if (selected && button.targetGraphic is Image image)
                 image.color = successColor;
         }
+    }
+
+    private void AddEnemyRecolorPresetStrip(
+        ProductionSectorDebugController debug)
+    {
+        RectTransform row = CreateRect("Enemy Recolor Presets", contentRoot);
+        row.gameObject.AddComponent<Image>().color = rowColor;
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 30f;
+
+        string[] labels = { "ORIGINAL", "CYAN", "MAGENTA", "RED", "WHITE" };
+        Color[] colors =
+        {
+            Color.clear,
+            Color.cyan,
+            Color.magenta,
+            Color.red,
+            Color.white
+        };
+
+        for (int i = 0; i < labels.Length; i++)
+        {
+            int index = i;
+            bool original = index == 0;
+            bool selected = original
+                ? debug.EnemyRecolorStrength <= 0.001f &&
+                    Mathf.Abs(debug.EnemyHueShift) <= 0.001f
+                : debug.EnemyRecolorStrength >= 0.999f &&
+                    Mathf.Abs(debug.EnemyHueShift) <= 0.001f &&
+                    ColorsApproximately(debug.EnemyRecolorTarget, colors[index]);
+            Button button = CreateButton(
+                row,
+                labels[index],
+                () =>
+                {
+                    if (original)
+                        debug.ResetEnemyRecolor();
+                    else
+                        debug.SetEnemyRecolorPreset(colors[index]);
+                    RefreshCurrentTab();
+                },
+                100f);
+            RectTransform rect = button.GetComponent<RectTransform>();
+            float width = 1f / labels.Length;
+            rect.anchorMin = new Vector2(index * width, 0.12f);
+            rect.anchorMax = new Vector2((index + 1) * width, 0.88f);
+            rect.offsetMin = new Vector2(1f, 0f);
+            rect.offsetMax = new Vector2(-1f, 0f);
+            TextMeshProUGUI text = button.GetComponentInChildren<TextMeshProUGUI>();
+            if (text != null)
+                text.fontSize = 8f;
+            if (selected && button.targetGraphic is Image image)
+                image.color = successColor;
+        }
+    }
+
+    private void AddEnemyRecolorColorChannel(
+        ProductionSectorDebugController debug,
+        string label,
+        int channel)
+    {
+        AddSliderRow(
+            label,
+            GetColorChannel(debug.EnemyRecolorTarget, channel),
+            0f,
+            1f,
+            value =>
+            {
+                Color color = debug.EnemyRecolorTarget;
+                SetColorChannel(ref color, channel, value);
+                debug.SetEnemyRecolorTarget(color);
+            },
+            "0.00");
+    }
+
+    private static bool ColorsApproximately(Color first, Color second)
+    {
+        Vector3 delta = new(
+            first.r - second.r,
+            first.g - second.g,
+            first.b - second.b
+        );
+        return delta.sqrMagnitude <= 0.0001f;
     }
 
     private static float GetButtonWidth(string label) => label switch

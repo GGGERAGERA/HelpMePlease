@@ -111,6 +111,7 @@ public class CharacterSpawner : MonoBehaviour
 
         WeaponData selectedWeapon = GetSelectedWeapon();
         SetPrimaryWeapon(SpawnWeapon(player, selectedWeapon));
+        PlayerWeaponOrbitVisual.Ensure(player, PrimaryWeapon);
 
         return player;
     }
@@ -232,6 +233,12 @@ public class CharacterSpawner : MonoBehaviour
             return;
 
         PrimaryWeapon = weapon;
+        PlayerWeaponOrbitVisual orbitVisual = SpawnedPlayer != null
+            ? SpawnedPlayer.GetComponent<PlayerWeaponOrbitVisual>()
+            : weapon != null
+                ? weapon.GetComponentInParent<PlayerWeaponOrbitVisual>()
+                : null;
+        orbitVisual?.Bind(weapon);
         PrimaryWeaponChanged?.Invoke(weapon);
     }
 

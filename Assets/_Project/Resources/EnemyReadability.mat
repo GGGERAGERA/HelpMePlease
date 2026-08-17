@@ -35,12 +35,15 @@ Material:
     m_Floats:
     - _EnableExternalAlpha: 0
     - _ReadabilityBrightness: 1
+    - _ReadabilityHueShift: 0
     - _ReadabilityOutlineStrength: 0
     - _ReadabilityOutlineWidth: 1
+    - _ReadabilityRecolorStrength: 0
     - _ReadabilitySaturation: 1
     - _ReadabilityTintStrength: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _ReadabilityOutlineColor: {r: 0.025, g: 0.055, b: 0.09, a: 1}
+    - _ReadabilityRecolorTarget: {r: 0, g: 1, b: 1, a: 1}
     - _ReadabilityTint: {r: 0.05, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

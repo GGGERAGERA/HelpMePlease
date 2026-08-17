@@ -19,6 +19,9 @@ public class CameraFollow : MonoBehaviour
     private float focusOutDuration = 0.5f;
     private float normalOrthographicSize;
     private bool hasFocusSession;
+    private float productionOrthographicSize;
+    private float debugOrthographicSize = -1f;
+    private bool productionOrthographicSizeCaptured;
 
     private Object worldBoundsOwner;
     private Vector3 worldBoundsRootPosition;
@@ -39,6 +42,57 @@ public class CameraFollow : MonoBehaviour
     private void Awake()
     {
         ResolveCamera();
+        CaptureProductionOrthographicSize();
+    }
+
+    public bool OrthographicZoomAvailable
+    {
+        get
+        {
+            ResolveCamera();
+            return controlledCamera != null && controlledCamera.orthographic;
+        }
+    }
+
+    public float ProductionOrthographicSize
+    {
+        get
+        {
+            CaptureProductionOrthographicSize();
+            return productionOrthographicSize;
+        }
+    }
+
+    public float DebugOrthographicSize => debugOrthographicSize > 0f
+        ? debugOrthographicSize
+        : ProductionOrthographicSize;
+
+    public void SetDebugOrthographicSize(float value)
+    {
+        CaptureProductionOrthographicSize();
+        debugOrthographicSize = Mathf.Clamp(value, 2f, 16f);
+        normalOrthographicSize = debugOrthographicSize;
+
+        if (!hasWorldBoundsFocus && controlledCamera != null &&
+            controlledCamera.orthographic)
+        {
+            ApplyFocusZoom();
+        }
+    }
+
+    public void ResetDebugOrthographicSize()
+    {
+        CaptureProductionOrthographicSize();
+        debugOrthographicSize = -1f;
+        normalOrthographicSize = productionOrthographicSize;
+        if (!hasWorldBoundsFocus && controlledCamera != null &&
+            controlledCamera.orthographic)
+        {
+            if (hasFocusSession)
+                ApplyFocusZoom();
+            else
+                controlledCamera.orthographicSize = productionOrthographicSize;
+        }
     }
 
     private void LateUpdate()
@@ -198,7 +252,15 @@ public class CameraFollow : MonoBehaviour
 
         if (!hasFocusSession)
         {
-            normalOrthographicSize = controlledCamera.orthographicSize;
+            if (debugOrthographicSize > 0f)
+            {
+                normalOrthographicSize = debugOrthographicSize;
+                controlledCamera.orthographicSize = debugOrthographicSize;
+            }
+            else
+            {
+                normalOrthographicSize = controlledCamera.orthographicSize;
+            }
             return;
         }
 
@@ -221,6 +283,20 @@ public class CameraFollow : MonoBehaviour
     {
         if (controlledCamera != null && controlledCamera.orthographic && normalOrthographicSize > 0f)
             controlledCamera.orthographicSize = normalOrthographicSize;
+    }
+
+    private void CaptureProductionOrthographicSize()
+    {
+        ResolveCamera();
+        if (productionOrthographicSizeCaptured || controlledCamera == null ||
+            !controlledCamera.orthographic)
+        {
+            return;
+        }
+
+        productionOrthographicSize = controlledCamera.orthographicSize;
+        productionOrthographicSizeCaptured = true;
+        normalOrthographicSize = productionOrthographicSize;
     }
 
     private static float Ease(float value)
