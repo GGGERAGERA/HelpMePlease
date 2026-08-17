@@ -3471,7 +3471,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddRow("SCORE", available ? football.Score.ToString() : "-", mutedColor,
             null, false, null);
         AddRow("Arena Width", available ? football.ArenaWidth.ToString("0.00") : "-", mutedColor,
-            "SHOW ZONES", available,
+            available && football.ShowDebugZones ? "HIDE DEBUG" : "SHOW DEBUG",
+            available,
             () => { football.ToggleDebugZones(); RefreshCurrentTab(); });
         AddRow("Arena Height", available ? football.ArenaHeight.ToString("0.00") : "-", mutedColor,
             "FRAME CAMERA", available,

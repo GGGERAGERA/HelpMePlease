@@ -17,7 +17,8 @@ public sealed class FootballMinigame : BunkerMinigame
     [SerializeField] private BoxCollider2D anomalySpawnZone;
     [SerializeField] private BoxCollider2D targetSpawnZone;
     [SerializeField, Min(0f)] private float horizontalPadding = 0.5f;
-    [SerializeField] private bool showDebugZones = true;
+    [SerializeField] private bool showDebugZones;
+    [SerializeField] private bool showLaneDebug;
     [SerializeField] private FootballPlayerBoundary playerBoundary;
     [SerializeField, Min(0.05f)] private float playerBoundaryThickness = 0.2f;
     [SerializeField] private FootballStartZone startZone;
@@ -142,7 +143,6 @@ public sealed class FootballMinigame : BunkerMinigame
         EnsureTargetPool();
         EnsureGates();
         playerBoundary?.RefreshCollisionExceptions();
-        EnsureDebugZoneView();
         SynchronizeDebugZones();
         ResetRuntimeObjects();
         startZone?.SetAvailable(true);
@@ -284,6 +284,7 @@ public sealed class FootballMinigame : BunkerMinigame
     public void ToggleDebugZones()
     {
         showDebugZones = !showDebugZones;
+        showLaneDebug = showDebugZones;
         SynchronizeDebugZones();
     }
 
@@ -870,6 +871,16 @@ public sealed class FootballMinigame : BunkerMinigame
         if (!Application.isPlaying)
             return;
 
+        if (!showDebugZones)
+        {
+            debugZoneView?.Synchronize(
+                ballSpawnZone,
+                anomalySpawnZone,
+                targetSpawnZone,
+                false);
+            return;
+        }
+
         EnsureDebugZoneView();
         debugZoneView.Synchronize(
             ballSpawnZone,
@@ -910,14 +921,25 @@ public sealed class FootballMinigame : BunkerMinigame
 
     private void OnDrawGizmos()
     {
-        DrawZone(arenaBounds, Color.white);
-        DrawZone(ballSpawnZone, new Color(0.2f, 1f, 0.35f, 0.8f));
-        DrawZone(anomalySpawnZone, new Color(1f, 0.25f, 0.25f, 0.8f));
-        DrawZone(targetSpawnZone, new Color(0.15f, 0.65f, 1f, 0.8f));
-        if (playerBoundary != null)
-            DrawZone(playerBoundary.GetComponent<Collider2D>(), new Color(1f, 0.3f, 1f, 0.95f));
-        DrawLanes(anomalyLanes, new Color(1f, 0.45f, 0.2f, 0.9f));
-        DrawLanes(targetLanes, new Color(0.2f, 0.75f, 1f, 0.9f));
+        if (showDebugZones)
+        {
+            DrawZone(arenaBounds, Color.white);
+            DrawZone(ballSpawnZone, new Color(0.2f, 1f, 0.35f, 0.8f));
+            DrawZone(anomalySpawnZone, new Color(1f, 0.25f, 0.25f, 0.8f));
+            DrawZone(targetSpawnZone, new Color(0.15f, 0.65f, 1f, 0.8f));
+            if (playerBoundary != null)
+            {
+                DrawZone(
+                    playerBoundary.GetComponent<Collider2D>(),
+                    new Color(1f, 0.3f, 1f, 0.95f));
+            }
+        }
+
+        if (showLaneDebug)
+        {
+            DrawLanes(anomalyLanes, new Color(1f, 0.45f, 0.2f, 0.9f));
+            DrawLanes(targetLanes, new Color(0.2f, 0.75f, 1f, 0.9f));
+        }
     }
 
     private static void DrawZone(Collider2D zone, Color color)

@@ -38,6 +38,10 @@ public sealed class GlitchZone : LocalAnomalyZone
 
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
+    [SerializeField] private Transform visualRoot;
+    [SerializeField] private MeshRenderer visualRenderer;
+    [Tooltip("Editor-only prefab preview. Runtime Initialize size still wins.")]
+    [SerializeField] private Vector2 previewSize = new(4.5f, 3.2f);
     [SerializeField, Range(0.1f, 0.75f)] private float edgeWidth = 0.3f;
     [SerializeField, Range(0.1f, 1f)] private float fadeDuration = 0.55f;
 
@@ -45,7 +49,6 @@ public sealed class GlitchZone : LocalAnomalyZone
     private readonly Collider2D[] overlapResults =
         new Collider2D[OverlapCapacity];
 
-    private MeshRenderer visualRenderer;
     private MaterialPropertyBlock visualProperties;
     private GameplayAreaService gameplayArea;
     private float glitchInterval;
@@ -64,8 +67,37 @@ public sealed class GlitchZone : LocalAnomalyZone
 
     private void Awake()
     {
-        BuildVisual();
+        ResolveVisual();
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (Application.isPlaying || visualRoot == null)
+            return;
+
+        previewSize = new Vector2(
+            Mathf.Max(0.1f, previewSize.x),
+            Mathf.Max(0.1f, previewSize.y));
+        if (TryGetComponent(out BoxCollider2D previewCollider))
+            previewCollider.size = previewSize;
+        ConfigureVisual(previewSize);
+
+        if (visualRenderer == null)
+            visualRenderer = visualRoot.GetComponentInChildren<MeshRenderer>(true);
+
+        if (visualRenderer == null)
+            return;
+
+        MaterialPropertyBlock previewProperties = new();
+        visualRenderer.GetPropertyBlock(previewProperties);
+        previewProperties.SetFloat(FadeId, 1f);
+        previewProperties.SetFloat(EdgeWidthId, edgeWidth);
+        previewProperties.SetVector(RegionSizeId, previewSize);
+        previewProperties.SetFloat(PulseId, 0f);
+        visualRenderer.SetPropertyBlock(previewProperties);
+    }
+#endif
 
     private void OnEnable()
     {
@@ -504,39 +536,38 @@ public sealed class GlitchZone : LocalAnomalyZone
             Destroy(gameObject);
     }
 
-    private void BuildVisual()
+    private void ResolveVisual()
     {
-        if (visualMaterial == null)
+        if (visualRoot == null)
+        {
+            Debug.LogWarning(
+                "[GlitchZone] Serialized VisualRoot is missing.",
+                this);
             return;
+        }
 
-        Mesh quad = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
+        if (visualRenderer == null)
+            visualRenderer = visualRoot.GetComponentInChildren<MeshRenderer>(true);
 
-        if (quad == null)
+        if (visualRenderer == null)
+        {
+            Debug.LogWarning(
+                "[GlitchZone] Serialized VisualRoot has no MeshRenderer.",
+                this);
             return;
+        }
 
-        GameObject visualObject = new("GlitchZoneVisual");
-        visualObject.transform.SetParent(transform, false);
-
-        MeshFilter meshFilter = visualObject.AddComponent<MeshFilter>();
-        meshFilter.sharedMesh = quad;
-
-        visualRenderer = visualObject.AddComponent<MeshRenderer>();
-        visualRenderer.sharedMaterial = visualMaterial;
-        visualRenderer.shadowCastingMode =
-            UnityEngine.Rendering.ShadowCastingMode.Off;
-        visualRenderer.receiveShadows = false;
-        visualRenderer.sortingLayerName = "Midground";
-        visualRenderer.sortingOrder = 1;
         visualProperties = new MaterialPropertyBlock();
+        ApplyVisualProperties();
     }
 
     private void ConfigureVisual(Vector2 areaSize)
     {
-        if (visualRenderer != null)
-        {
-            visualRenderer.transform.localScale =
-                new Vector3(areaSize.x, areaSize.y, 1f);
-        }
+        if (visualRoot == null)
+            return;
+
+        visualRoot.localScale =
+            new Vector3(areaSize.x, areaSize.y, 1f);
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -581,13 +612,16 @@ public sealed class GlitchZone : LocalAnomalyZone
         if (visualValuesCaptured)
             return;
 
-        Color inner = visualMaterial != null &&
-            visualMaterial.HasProperty(InnerColorId)
-                ? visualMaterial.GetColor(InnerColorId)
+        Material sourceMaterial = visualRenderer != null
+            ? visualRenderer.sharedMaterial
+            : visualMaterial;
+        Color inner = sourceMaterial != null &&
+            sourceMaterial.HasProperty(InnerColorId)
+                ? sourceMaterial.GetColor(InnerColorId)
                 : Color.clear;
-        Color edge = visualMaterial != null &&
-            visualMaterial.HasProperty(EdgeColorId)
-                ? visualMaterial.GetColor(EdgeColorId)
+        Color edge = sourceMaterial != null &&
+            sourceMaterial.HasProperty(EdgeColorId)
+                ? sourceMaterial.GetColor(EdgeColorId)
                 : Color.white;
         debugVisualValues = new AnomalyVisualTuningValues
         {

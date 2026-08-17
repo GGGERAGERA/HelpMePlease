@@ -16,6 +16,17 @@ public sealed class FootballZoneDebugView : MonoBehaviour
         Collider2D targetZone,
         bool visible)
     {
+        if (!visible)
+        {
+            for (int i = 0; i < visuals.Length; i++)
+            {
+                if (visuals[i] != null)
+                    visuals[i].SetActive(false);
+            }
+
+            return;
+        }
+
         EnsureVisuals();
         Collider2D[] zones = { ballZone, anomalyZone, targetZone };
 
