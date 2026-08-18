@@ -57,9 +57,6 @@ public class BallRollVisual : MonoBehaviour
 
     [Header("Пунктирное кольцо")]
     public Color ringColor = new Color(1f, 0.8f, 0.2f, 0.8f);
-    [Range(0.01f, 0.2f)] public float ringThickness = 0.06f;
-    [Range(4, 64)] public int ringDashCount = 24;
-    [Range(0.1f, 0.9f)] [Tooltip("Доля штриха в шаге")] public float ringDashFill = 0.55f;
     public int ringSortOrder = 999;
 
     [Header("Подсветка мяча")]
@@ -104,16 +101,13 @@ public class BallRollVisual : MonoBehaviour
     private Color _hintBaseColor = Color.white;
     private Camera _cam;
 
-    private LineRenderer _line;
-    private LineRenderer _arrowHead;
-    private GameObject _ringGo;
-    private Mesh _ringMesh;
-    private Material _ringMat;
-    private SpriteRenderer _glow;
+    [Header("Prefab visuals")]
+    [SerializeField] private LineRenderer _line;
+    [SerializeField] private LineRenderer _arrowHead;
+    [SerializeField] private SpriteRenderer _ring;
+    [SerializeField] private SpriteRenderer _glow;
     private Image _sliderFill;
 
-    private float _bRingRadius, _bRingThick, _bRingFill;
-    private int _bRingDash;
     private float _distanceToKicker = Mathf.Infinity;
     private float _timeScaleBeforeAim = 1f;
     private bool _ownsSlowMotion;
@@ -132,6 +126,7 @@ public class BallRollVisual : MonoBehaviour
         _rb = GetComponent<Rigidbody2D>();
         _cam = Camera.main;
         EnsureZoneTrigger();
+        ConfigurePrefabVisuals();
         foreach (var c in GetComponents<Collider2D>())
             if (!c.isTrigger) _ballSolids.Add(c);
         if (chargeSlider != null && chargeSlider.fillRect != null)
@@ -145,7 +140,7 @@ public class BallRollVisual : MonoBehaviour
     {
         CancelAim(true);
         ReleaseActiveRangeBall();
-        if (_ringGo != null) _ringGo.SetActive(false);
+        if (_ring != null) _ring.gameObject.SetActive(false);
         SetAimVisualVisible(false);
     }
 
@@ -489,7 +484,7 @@ public class BallRollVisual : MonoBehaviour
         _kickerStep = Vector2.zero;
         _kickerSpeed = 0f;
         InKickRange = false;
-        if (_ringGo != null) _ringGo.SetActive(false);
+        if (_ring != null) _ring.gameObject.SetActive(false);
         if (_glow != null) _glow.enabled = false;
         UpdateHint();
     }
@@ -542,11 +537,11 @@ public class BallRollVisual : MonoBehaviour
 
     Vector2 MouseWorld() => _cam.ScreenToWorldPoint(Input.mousePosition);
 
-    static Material MakeSpriteMat() => new Material(Shader.Find("Sprites/Default"));
-
     void DrawRay()
     {
-        EnsureLine();
+        if (_line == null || _arrowHead == null)
+            return;
+
         Vector2 from = transform.position;
         Vector2 dirV = MouseWorld() - from;
         if (dirV.sqrMagnitude < 1e-6f) dirV = Vector2.up;
@@ -578,29 +573,42 @@ public class BallRollVisual : MonoBehaviour
         _arrowHead.enabled = true;
     }
 
-    void EnsureLine()
+    void ConfigurePrefabVisuals()
     {
-        if (_line != null) return;
-        var go = new GameObject("AimRay");
-        go.transform.SetParent(transform, false);
-        _line = go.AddComponent<LineRenderer>();
-        _line.useWorldSpace = true;
-        _line.positionCount = 2;
-        _line.widthCurve = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(1f, 0.6f));
-        _line.material = MakeSpriteMat();
-        _line.sortingOrder = raySortOrder;
-        _line.enabled = false;
+        if (_line != null)
+        {
+            _line.useWorldSpace = true;
+            _line.positionCount = 2;
+            _line.widthCurve = new AnimationCurve(
+                new Keyframe(0f, 1f),
+                new Keyframe(1f, 0.6f));
+            _line.sortingOrder = raySortOrder;
+            _line.enabled = false;
+        }
 
-        var arrowObject = new GameObject("AimRayArrowHead");
-        arrowObject.transform.SetParent(transform, false);
-        _arrowHead = arrowObject.AddComponent<LineRenderer>();
-        _arrowHead.useWorldSpace = true;
-        _arrowHead.positionCount = 3;
-        _arrowHead.numCapVertices = 3;
-        _arrowHead.numCornerVertices = 2;
-        _arrowHead.material = _line.material;
-        _arrowHead.sortingOrder = raySortOrder;
-        _arrowHead.enabled = false;
+        if (_arrowHead != null)
+        {
+            _arrowHead.useWorldSpace = true;
+            _arrowHead.positionCount = 3;
+            _arrowHead.numCapVertices = 3;
+            _arrowHead.numCornerVertices = 2;
+            _arrowHead.sortingOrder = raySortOrder;
+            _arrowHead.enabled = false;
+        }
+
+        if (_ring != null)
+        {
+            _ring.sortingOrder = ringSortOrder;
+            _ring.transform.localScale = Vector3.one * kickRange;
+            _ring.gameObject.SetActive(false);
+        }
+
+        if (_glow != null)
+        {
+            _glow.sortingOrder = glowSortOrder;
+            _glow.transform.localScale = Vector3.one * (radius * glowScale);
+            _glow.enabled = false;
+        }
     }
 
     void SetAimVisualVisible(bool visible)
@@ -637,7 +645,7 @@ public class BallRollVisual : MonoBehaviour
     void LoseActiveRangeBall()
     {
         CancelAim(false);
-        if (_ringGo != null) _ringGo.SetActive(false);
+        if (_ring != null) _ring.gameObject.SetActive(false);
         UpdateGlow(false);
     }
 
@@ -651,77 +659,24 @@ public class BallRollVisual : MonoBehaviour
 
     void UpdateRing(bool visible)
     {
-        if (!visible && _ringGo == null)
+        if (_ring == null)
             return;
 
-        EnsureRing();
-        _ringGo.SetActive(visible);
+        _ring.gameObject.SetActive(visible);
         if (!visible) return;
 
-        if (!Mathf.Approximately(kickRange, _bRingRadius) || !Mathf.Approximately(ringThickness, _bRingThick) ||
-            !Mathf.Approximately(ringDashFill, _bRingFill) || ringDashCount != _bRingDash)
-            BuildRingMesh();
-
-        _ringMat.color = ringColor;
-    }
-
-    void EnsureRing()
-    {
-        if (_ringGo != null) return;
-        _ringGo = new GameObject("KickRangeRing");
-        _ringGo.transform.SetParent(transform, false);
-        _ringGo.AddComponent<MeshFilter>();
-        var mr = _ringGo.AddComponent<MeshRenderer>();
-        _ringMat = MakeSpriteMat();
-        mr.material = _ringMat;
-        mr.sortingOrder = ringSortOrder;
-        _ringMesh = new Mesh();
-        _ringGo.GetComponent<MeshFilter>().mesh = _ringMesh;
-        BuildRingMesh();
-    }
-
-    void BuildRingMesh()
-    {
-        _bRingRadius = kickRange;
-        _bRingThick = ringThickness;
-        _bRingFill = ringDashFill;
-        _bRingDash = ringDashCount;
-
-        var verts = new List<Vector3>();
-        var tris = new List<int>();
-        float inner = Mathf.Max(0.01f, kickRange - ringThickness * 0.5f);
-        float outer = kickRange + ringThickness * 0.5f;
-        float step = Mathf.PI * 2f / ringDashCount;
-        float dashSpan = step * ringDashFill;
-        const int segPerDash = 6;
-
-        for (int d = 0; d < ringDashCount; d++)
-        {
-            float a0 = d * step;
-            for (int s = 0; s < segPerDash; s++)
-            {
-                float t0 = a0 + dashSpan * s / segPerDash;
-                float t1 = a0 + dashSpan * (s + 1) / segPerDash;
-                int i = verts.Count;
-                verts.Add(new Vector3(Mathf.Cos(t0) * inner, Mathf.Sin(t0) * inner, 0f));
-                verts.Add(new Vector3(Mathf.Cos(t0) * outer, Mathf.Sin(t0) * outer, 0f));
-                verts.Add(new Vector3(Mathf.Cos(t1) * outer, Mathf.Sin(t1) * outer, 0f));
-                verts.Add(new Vector3(Mathf.Cos(t1) * inner, Mathf.Sin(t1) * inner, 0f));
-                tris.AddRange(new[] { i, i + 1, i + 2, i, i + 2, i + 3 });
-            }
-        }
-
-        _ringMesh.Clear();
-        _ringMesh.SetVertices(verts);
-        _ringMesh.SetTriangles(tris, 0);
-        _ringMesh.RecalculateBounds();
+        _ring.color = ringColor;
+        _ring.sortingOrder = ringSortOrder;
+        _ring.transform.localScale = Vector3.one * kickRange;
     }
 
     // ================= ПОДСВЕТКА =================
 
     void UpdateGlow(bool visible)
     {
-        EnsureGlow();
+        if (_glow == null)
+            return;
+
         _glow.enabled = visible;
         if (!visible) return;
 
@@ -729,36 +684,8 @@ public class BallRollVisual : MonoBehaviour
         Color c = glowColor;
         c.a = glowAlpha * pulse;
         _glow.color = c;
-    }
-
-    void EnsureGlow()
-    {
-        if (_glow != null) return;
-        var go = new GameObject("BallGlow");
-        go.transform.SetParent(transform, false);
-        _glow = go.AddComponent<SpriteRenderer>();
-        _glow.sprite = Sprite.Create(MakeRadialTexture(), new Rect(0, 0, 64, 64), new Vector2(0.5f, 0.5f));
-        _glow.material = MakeSpriteMat();
         _glow.sortingOrder = glowSortOrder;
-        go.transform.localScale = Vector3.one * (radius * 2f * glowScale);
-        _glow.enabled = false;
-    }
-
-    static Texture2D MakeRadialTexture()
-    {
-        const int size = 64;
-        var tex = new Texture2D(size, size);
-        float c = size * 0.5f;
-        for (int x = 0; x < size; x++)
-            for (int y = 0; y < size; y++)
-            {
-                float d = Vector2.Distance(new Vector2(x, y), new Vector2(c, c)) / c;
-                float a = Mathf.Clamp01(1f - d);
-                a *= a;
-                tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
-            }
-        tex.Apply();
-        return tex;
+        _glow.transform.localScale = Vector3.one * (radius * glowScale);
     }
 
     // ================= UI =================

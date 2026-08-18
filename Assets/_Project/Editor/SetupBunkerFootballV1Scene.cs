@@ -110,6 +110,10 @@ public static class SetupBunkerFootballV1Scene
             anomaliesZone, zoneSprite, new Color(0.035f, 0.02f, 0.055f, 0.92f));
         SpriteRenderer targetsVisual = ConfigureZoneVisual(
             targetsZone, zoneSprite, new Color(0.18f, 0.42f, 0.22f, 0.65f));
+        FootballPlayerArea playerArea = ballsZone.GetComponent<FootballPlayerArea>();
+        if (playerArea == null)
+            playerArea = Undo.AddComponent<FootballPlayerArea>(ballsZone.gameObject);
+        playerArea.Configure(minigame);
 
         Transform boundaryRoot = GetOrCreate(area, "Player Boundary", center);
         BoxCollider2D boundaryCollider = boundaryRoot.GetComponent<BoxCollider2D>();
@@ -285,6 +289,7 @@ public static class SetupBunkerFootballV1Scene
         minigame.SynchronizeArenaGeometry();
         EditorUtility.SetDirty(layout);
         EditorUtility.SetDirty(minigame);
+        EditorUtility.SetDirty(playerArea);
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);

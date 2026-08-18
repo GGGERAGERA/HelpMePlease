@@ -201,6 +201,14 @@ public sealed class FootballMinigame : BunkerMinigame
             bestScore);
     }
 
+    public void CancelCurrentRound()
+    {
+        if (!IsRunning)
+            return;
+
+        ResetGame();
+    }
+
     public void OnGoalScored(FootballGoal goal) { }
 
     protected override void OnGameStarted()
@@ -225,7 +233,8 @@ public sealed class FootballMinigame : BunkerMinigame
         StopTargetRespawns();
         ResetRuntimeObjects();
         RestoreCamera();
-        startZone?.SetAvailable(false);
+        AllowRestart();
+        startZone?.SetAvailable(true);
         hud?.ShowCompleted(currentScore, bestScore, newRecord);
     }
 
@@ -235,7 +244,8 @@ public sealed class FootballMinigame : BunkerMinigame
         StopTargetRespawns();
         ResetRuntimeObjects();
         RestoreCamera();
-        startZone?.SetAvailable(false);
+        AllowRestart();
+        startZone?.SetAvailable(true);
         hud?.ShowCompleted(currentScore, bestScore, false);
     }
 

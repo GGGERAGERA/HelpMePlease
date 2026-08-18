@@ -50,6 +50,11 @@ public abstract class BunkerMinigame : MonoBehaviour
         OnGameReset();
     }
 
+    protected void AllowRestart()
+    {
+        State = BunkerMinigameState.Idle;
+    }
+
     protected virtual void OnGameStarted() { }
     protected virtual void OnGameCompleted() { }
     protected virtual void OnGameFailed() { }
