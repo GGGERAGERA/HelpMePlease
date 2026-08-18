@@ -1,43 +1,36 @@
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class CharacterCardView : MonoBehaviour
+public sealed class CharacterCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [Header("Data")]
     [SerializeField] private CharacterData character;
 
-    [Header("Visuals")]
-    [SerializeField] private Image portraitImage;
+    [Header("Prefab Visuals")]
+    [SerializeField] private Image backgroundImage;
+    [SerializeField] private Image characterImage;
+    [SerializeField] private Sprite characterSprite;
     [SerializeField] private TextMeshProUGUI nameText;
-    [SerializeField] private GameObject lockedOverlay;
+    [SerializeField] private Button button;
 
-    [Header("Colors")]
-    [SerializeField] private Color unlockedColor = Color.white;
-    [SerializeField] private Color lockedColor = new(0.35f, 0.35f, 0.35f, 1f);
-
-    [Header("Selection")]
-    [SerializeField] private GameObject selectedVisual;
-
-    private Button button;
-    private TextMeshProUGUI lockRequirementText;
-    private Image selectionOutlineImage;
-    private Outline selectionOutlineEffect;
+    private bool isHovered;
+    private bool isSelected;
 
     public CharacterData Character => character;
-
     public event Action<CharacterData> Clicked;
 
     private void Awake()
     {
-        button = GetComponent<Button>();
+        if (button == null)
+            button = GetComponent<Button>();
 
         if (button != null)
             button.onClick.AddListener(HandleClick);
 
         Refresh();
-        ConfigurePixelStateVisuals();
         SetSelected(false);
     }
 
@@ -47,153 +40,68 @@ public class CharacterCardView : MonoBehaviour
             button.onClick.RemoveListener(HandleClick);
     }
 
-    private void HandleClick()
-    {
-        if (character == null || !IsUnlocked())
-            return;
-
-        Clicked?.Invoke(character);
-    }
-
     public void Refresh()
     {
-        if (character == null)
+        bool isUnlocked = character != null && IsUnlocked();
+        gameObject.SetActive(isUnlocked);
+        if (!isUnlocked)
             return;
 
-        bool isUnlocked = IsUnlocked();
-
-        if (portraitImage != null)
+        if (characterImage != null)
         {
-            portraitImage.sprite = character.portrait;
-            portraitImage.color = isUnlocked ? unlockedColor : lockedColor;
+            characterImage.sprite = characterSprite;
+            characterImage.color = Color.white;
+            characterImage.enabled = characterSprite != null;
         }
 
         if (nameText != null)
         {
             nameText.text = character.characterName;
-            nameText.color = isUnlocked ? Color.white : Color.gray;
-        }
-
-        if (lockedOverlay != null)
-        {
-            lockedOverlay.SetActive(!isUnlocked);
-            if (!isUnlocked)
-                RefreshLockRequirement();
+            nameText.color = StationPixelVisuals.Text;
         }
 
         if (button != null)
-            button.interactable = isUnlocked;
+            button.interactable = true;
     }
 
     public void SetSelected(bool selected)
     {
-        if (selectedVisual != null)
-            selectedVisual.SetActive(false);
+        isSelected = selected;
+        RefreshVisualState();
+    }
 
-        if (selectionOutlineImage != null)
-        {
-            Color color = selectionOutlineImage.color;
-            color.a = selected ? 1f : 0f;
-            selectionOutlineImage.color = color;
-        }
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        isHovered = true;
+        RefreshVisualState();
+    }
 
-        if (selectionOutlineEffect != null)
-            selectionOutlineEffect.enabled = selected;
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        isHovered = false;
+        RefreshVisualState();
+    }
+
+    private void HandleClick()
+    {
+        if (character != null && IsUnlocked())
+            Clicked?.Invoke(character);
     }
 
     private bool IsUnlocked()
     {
-        if (character == null || character.unlockData == null)
-            return true;
-
-        return UnlockProgressService.IsUnlockedNow(character.unlockData);
+        return character.unlockData == null || UnlockProgressService.IsUnlockedNow(character.unlockData);
     }
 
-    private void RefreshLockRequirement()
+    private void RefreshVisualState()
     {
-        if (lockedOverlay == null || character == null || character.unlockData == null)
+        if (backgroundImage == null)
             return;
 
-        string description = UnlockProgressService.GetLockedDescription(character.unlockData);
-        if (string.IsNullOrWhiteSpace(description))
-            return;
-
-        if (lockRequirementText == null)
-        {
-            Transform existing = lockedOverlay.transform.Find("StationRequirementText");
-            lockRequirementText = existing != null ? existing.GetComponent<TextMeshProUGUI>() : null;
-        }
-
-        if (lockRequirementText == null)
-        {
-            GameObject requirement = new("StationRequirementText", typeof(RectTransform), typeof(TextMeshProUGUI));
-            requirement.layer = lockedOverlay.layer;
-            requirement.transform.SetParent(lockedOverlay.transform, false);
-            RectTransform rect = requirement.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.08f, 0.08f);
-            rect.anchorMax = new Vector2(0.92f, 0.42f);
-            rect.offsetMin = rect.offsetMax = Vector2.zero;
-
-            lockRequirementText = requirement.GetComponent<TextMeshProUGUI>();
-            lockRequirementText.font = nameText != null ? nameText.font : TMP_Settings.defaultFontAsset;
-            lockRequirementText.fontSize = 20f;
-            lockRequirementText.fontStyle = FontStyles.Bold;
-            lockRequirementText.alignment = TextAlignmentOptions.Center;
-            lockRequirementText.color = new Color(0.78f, 0.95f, 0.96f, 1f);
-            lockRequirementText.textWrappingMode = TextWrappingModes.Normal;
-            lockRequirementText.raycastTarget = false;
-        }
-
-        Transform legacyCondition = lockedOverlay.transform.Find("ConditionText");
-        if (legacyCondition != null)
-            legacyCondition.gameObject.SetActive(false);
-
-        lockRequirementText.text = description;
-    }
-
-    private void ConfigurePixelStateVisuals()
-    {
-        if (selectedVisual != null)
-            selectedVisual.SetActive(false);
-
-        Animator animator = GetComponent<Animator>();
-        if (animator != null)
-            animator.enabled = false;
-
-        if (button != null)
-        {
-            button.transition = Selectable.Transition.ColorTint;
-            ColorBlock colors = button.colors;
-            colors.normalColor = Color.white;
-            colors.highlightedColor = new Color(1.05f, 1.05f, 1.05f, 1f);
-            colors.pressedColor = new Color(0.88f, 0.92f, 0.94f, 1f);
-            colors.selectedColor = Color.white;
-            button.colors = colors;
-        }
-
-        Transform existingOutline = transform.Find("Background/BackgroundOutline");
-        selectionOutlineImage = existingOutline != null
-            ? existingOutline.GetComponent<Image>()
-            : null;
-
-        if (selectionOutlineImage != null)
-        {
-            selectionOutlineImage.material = null;
-            selectionOutlineImage.color = new Color(0.08f, 0.78f, 0.82f, 0f);
-            selectionOutlineImage.raycastTarget = false;
-            return;
-        }
-
-        Graphic target = button != null ? button.targetGraphic : GetComponent<Graphic>();
-        if (target != null)
-        {
-            selectionOutlineEffect = target.GetComponent<Outline>();
-            if (selectionOutlineEffect == null)
-                selectionOutlineEffect = target.gameObject.AddComponent<Outline>();
-            selectionOutlineEffect.effectColor = new Color(0.08f, 0.78f, 0.82f, 1f);
-            selectionOutlineEffect.effectDistance = new Vector2(2f, -2f);
-            selectionOutlineEffect.useGraphicAlpha = true;
-            selectionOutlineEffect.enabled = false;
-        }
+        backgroundImage.color = isSelected
+            ? new Color(0.055f, 0.22f, 0.25f, 1f)
+            : isHovered
+                ? new Color(0.05f, 0.13f, 0.15f, 1f)
+                : StationPixelVisuals.PanelRaised;
     }
 }
