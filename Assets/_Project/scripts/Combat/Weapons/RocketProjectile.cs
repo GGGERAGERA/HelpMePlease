@@ -22,10 +22,20 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile,
     private float knockbackForce;
     private PlayerCombatModifiers modifiers;
     private ProjectileCombatContext combatContext;
+    private PooledGameObject pooledObject;
+    private Collider2D[] explosionHits = new Collider2D[64];
+    private readonly HashSet<EnemyHealth> damagedEnemies = new();
+    private ContactFilter2D explosionFilter;
     private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
     private readonly AnomalyExternalVelocityStack
         anomalyExternalVelocity = new();
 
+    private void Awake()
+    {
+        explosionFilter = ContactFilter2D.noFilter;
+        explosionFilter.SetLayerMask(enemyMask);
+        explosionFilter.useTriggers = true;
+    }
 
     public void Initialize(
         float damage,
@@ -44,6 +54,12 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile,
         this.direction = direction.normalized;
         this.isCritical = isCritical;
         this.knockbackForce = knockbackForce;
+        exploded = false;
+        damagedEnemies.Clear();
+        anomalySpeed.Clear();
+        anomalyExternalVelocity.Clear();
+        pooledObject ??= GetComponent<PooledGameObject>();
+        combatContext ??= GetComponent<ProjectileCombatContext>();
 
         startPosition = transform.position;
 
@@ -95,16 +111,29 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile,
         if (combatContext == null)
             combatContext = GetComponent<ProjectileCombatContext>();
 
-        HashSet<EnemyHealth> damagedEnemies = new HashSet<EnemyHealth>();
-
-        Collider2D[] hits = Physics2D.OverlapCircleAll(
-            transform.position,
-            explosionRadius,
-            enemyMask
-        );
-
-        foreach (Collider2D hit in hits)
+        damagedEnemies.Clear();
+        int hitCount;
+        do
         {
+            hitCount = Physics2D.OverlapCircle(
+                transform.position,
+                explosionRadius,
+                explosionFilter,
+                explosionHits);
+
+            if (hitCount < explosionHits.Length)
+                break;
+
+            System.Array.Resize(
+                ref explosionHits,
+                explosionHits.Length * 2);
+        }
+        while (true);
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider2D hit = explosionHits[i];
+            explosionHits[i] = null;
             EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
 
             if (enemy == null)
@@ -134,7 +163,7 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile,
                 enemyMovement.ApplyKnockback(direction, knockbackForce);
         }
 
-        Destroy(gameObject);
+        Despawn();
     }
     private void SpawnExplosionFx()
     {
@@ -186,5 +215,13 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile,
         AnomalyProjectileLifecycle.NotifyDisabled(this);
         anomalySpeed.Clear();
         anomalyExternalVelocity.Clear();
+    }
+
+    private void Despawn()
+    {
+        if (pooledObject != null && pooledObject.Release())
+            return;
+
+        Destroy(gameObject);
     }
 }

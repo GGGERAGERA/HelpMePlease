@@ -209,8 +209,6 @@ public sealed class FootballMinigame : BunkerMinigame
         ResetGame();
     }
 
-    public void OnGoalScored(FootballGoal goal) { }
-
     protected override void OnGameStarted()
     {
         BallRollVisual.CancelActiveSlowMotion();

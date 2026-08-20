@@ -3,6 +3,11 @@ using UnityEngine;
 public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
 {
     [SerializeField] private GameObject projectilePrefab;
+    [Header("Runtime Pool")]
+    [SerializeField, Min(0)] private int prewarmCount = 24;
+    [SerializeField, Min(1)] private int maximumPoolSize = 192;
+
+    private SimplePrefabPool projectilePool;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public float DebugLastContextScale { get; private set; } = 1f;
@@ -22,6 +27,11 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
               WeaponUpgradeCapability.Knockback
             : WeaponUpgradeCapability.None;
 
+    private void Awake()
+    {
+        EnsurePool();
+    }
+
     public bool Fire(WeaponFireContext context)
     {
         if (projectilePrefab == null)
@@ -40,22 +50,48 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
 
         float angle = Mathf.Atan2(context.Direction.y, context.Direction.x) * Mathf.Rad2Deg;
 
-        GameObject projectileObject = Instantiate(
-            projectilePrefab,
+        EnsurePool();
+        Quaternion rotation = Quaternion.Euler(0f, 0f, angle);
+        PooledGameObject pooled = projectilePool?.Get(
             context.Origin,
-            Quaternion.Euler(0f, 0f, angle)
-        );
-        ScaleProjectileGeometry(
-            projectileObject.transform,
-            context.ShotVisualScale);
-        ProductionVisualTuningController.RegisterProjectile(projectileObject);
+            rotation,
+            context.ShotVisualScale,
+            true);
+        GameObject projectileObject;
+        IWeaponProjectile projectile;
 
-        IWeaponProjectile projectile = projectileObject.GetComponent<IWeaponProjectile>();
+        if (pooled != null)
+        {
+            projectileObject = pooled.gameObject;
+            projectile = pooled.WeaponProjectile;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            DebugLastContextScale = Mathf.Max(
+                0.1f,
+                context.ShotVisualScale);
+            DebugLastPrefabScale = pooled.AuthoredScale;
+            DebugLastFinalScale = projectileObject.transform.localScale;
+#endif
+        }
+        else
+        {
+            // Safe fallback for teardown/editor edge cases.
+            projectileObject = Instantiate(
+                projectilePrefab,
+                context.Origin,
+                rotation);
+            ScaleFallbackProjectileGeometry(
+                projectileObject.transform,
+                context.ShotVisualScale);
+            projectile = projectileObject.GetComponent<IWeaponProjectile>();
+        }
+
+        ProductionVisualTuningController.RegisterProjectile(projectileObject);
 
         if (projectile == null)
         {
             Debug.LogWarning("[ProjectileFireBehaviour] Spawned projectile has no IWeaponProjectile.");
-            Destroy(projectileObject);
+            if (pooled == null || !pooled.Release())
+                Destroy(projectileObject);
             return false;
         }
 
@@ -70,8 +106,9 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
             context.KnockbackForce
         );
 
-        ProjectileCombatContext projectileContext =
-            projectileObject.GetComponent<ProjectileCombatContext>();
+        ProjectileCombatContext projectileContext = pooled != null
+            ? pooled.CombatContext
+            : projectileObject.GetComponent<ProjectileCombatContext>();
 
         if (projectileContext == null)
             projectileContext = projectileObject.AddComponent<ProjectileCombatContext>();
@@ -80,7 +117,25 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
         return true;
     }
 
-    private void ScaleProjectileGeometry(Transform root, float scale)
+    private void EnsurePool()
+    {
+        if (projectilePool != null || projectilePrefab == null)
+            return;
+
+        projectilePool = new SimplePrefabPool(
+            this,
+            projectilePrefab,
+            prewarmCount,
+            maximumPoolSize);
+    }
+
+    private void OnDestroy()
+    {
+        projectilePool?.Dispose();
+        projectilePool = null;
+    }
+
+    private void ScaleFallbackProjectileGeometry(Transform root, float scale)
     {
         if (root == null)
             return;

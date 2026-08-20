@@ -17,12 +17,23 @@ public class Bullet : MonoBehaviour, IWeaponProjectile,
     private int ricochetCount;
     private bool isCritical;
     private float runtimeKnockbackForce;
+    private float remainingLifetime;
+    private float rangeSquared;
     private ProjectileCombatContext combatContext;
+    private PooledGameObject pooledObject;
+    private Collider2D[] ricochetHits = new Collider2D[32];
+    private ContactFilter2D ricochetFilter;
     private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
     private readonly AnomalyExternalVelocityStack
         anomalyExternalVelocity = new();
 
     private readonly HashSet<EnemyHealth> hitEnemies = new HashSet<EnemyHealth>();
+
+    private void Awake()
+    {
+        ricochetFilter = ContactFilter2D.noFilter;
+        ricochetFilter.useTriggers = true;
+    }
 
     public void Initialize(
         float bulletDamage,
@@ -44,13 +55,24 @@ public class Bullet : MonoBehaviour, IWeaponProjectile,
         ricochetCount = ricochet;
         startPosition = transform.position;
         runtimeKnockbackForce = knockbackForce;
+        remainingLifetime = maxLifetime;
+        rangeSquared = Mathf.Max(0f, range * range);
+        hitEnemies.Clear();
+        anomalySpeed.Clear();
+        anomalyExternalVelocity.Clear();
+        pooledObject ??= GetComponent<PooledGameObject>();
+        combatContext ??= GetComponent<ProjectileCombatContext>();
     }
-    private void Start()
-    {
-        Destroy(gameObject, maxLifetime);
-    }
+
     private void Update()
     {
+        remainingLifetime -= Time.deltaTime;
+        if (remainingLifetime <= 0f)
+        {
+            Despawn();
+            return;
+        }
+
         Vector2 windVelocity = WorldRuleController.Instance != null
             ? WorldRuleController.Instance.ProjectileWindVelocity
             : Vector2.zero;
@@ -61,8 +83,8 @@ public class Bullet : MonoBehaviour, IWeaponProjectile,
             Space.World
         );
 
-        if (Vector3.Distance(startPosition, transform.position) >= range)
-            Destroy(gameObject);
+        if ((transform.position - startPosition).sqrMagnitude >= rangeSquared)
+            Despawn();
     }
 
     public Component ProjectileComponent => this;
@@ -144,7 +166,7 @@ public class Bullet : MonoBehaviour, IWeaponProjectile,
             return;
         }
 
-        Destroy(gameObject);
+        Despawn();
     }
 
     private bool TryRicochet(EnemyHealth currentEnemy)
@@ -162,13 +184,31 @@ public class Bullet : MonoBehaviour, IWeaponProjectile,
 
     private EnemyHealth FindNearestEnemy(EnemyHealth ignoredEnemy)
     {
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, ricochetSearchRadius);
+        int hitCount;
+        do
+        {
+            hitCount = Physics2D.OverlapCircle(
+                transform.position,
+                ricochetSearchRadius,
+                ricochetFilter,
+                ricochetHits);
+
+            if (hitCount < ricochetHits.Length)
+                break;
+
+            System.Array.Resize(
+                ref ricochetHits,
+                ricochetHits.Length * 2);
+        }
+        while (true);
 
         EnemyHealth nearestEnemy = null;
-        float nearestDistance = float.MaxValue;
+        float nearestDistanceSquared = float.MaxValue;
 
-        foreach (Collider2D hit in hits)
+        for (int i = 0; i < hitCount; i++)
         {
+            Collider2D hit = ricochetHits[i];
+            ricochetHits[i] = null;
             EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
 
             if (enemy == null)
@@ -180,15 +220,25 @@ public class Bullet : MonoBehaviour, IWeaponProjectile,
             if (hitEnemies.Contains(enemy))
                 continue;
 
-            float distance = Vector2.Distance(transform.position, enemy.transform.position);
+            float distanceSquared =
+                ((Vector2)transform.position -
+                 (Vector2)enemy.transform.position).sqrMagnitude;
 
-            if (distance < nearestDistance)
+            if (distanceSquared < nearestDistanceSquared)
             {
-                nearestDistance = distance;
+                nearestDistanceSquared = distanceSquared;
                 nearestEnemy = enemy;
             }
         }
 
         return nearestEnemy;
+    }
+
+    private void Despawn()
+    {
+        if (pooledObject != null && pooledObject.Release())
+            return;
+
+        Destroy(gameObject);
     }
 }

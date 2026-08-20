@@ -90,6 +90,14 @@ public sealed class WorldRuleController : MonoBehaviour
         Instance = this;
     }
 
+    private void OnEnable()
+    {
+        // OnDisable releases the scene singleton after clearing runtime
+        // effects. Re-enabling the same component must publish it again.
+        if (Instance == null)
+            Instance = this;
+    }
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public void ConfigureDebugVisual(WorldRuleVisual visual)
     {

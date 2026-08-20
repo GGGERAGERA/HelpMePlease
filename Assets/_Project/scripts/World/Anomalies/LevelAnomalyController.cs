@@ -186,6 +186,14 @@ public sealed class LevelAnomalyController : MonoBehaviour
         CaptureFocusPresentationDefaults();
     }
 
+    private void OnEnable()
+    {
+        // OnDisable clears transient zones and releases the scene singleton.
+        // Re-enable restores discoverability without recreating cleared state.
+        if (Instance == null)
+            Instance = this;
+    }
+
     private void CaptureFocusPresentationDefaults()
     {
         if (focusDefaultsCaptured)

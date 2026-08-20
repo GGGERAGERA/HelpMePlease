@@ -8,6 +8,8 @@ public class EnemyProjectile : MonoBehaviour, IAnomalySpeedProjectile,
     [SerializeField] private float lifetime = 5f;
 
     private Vector2 direction;
+    private float remainingLifetime;
+    private PooledGameObject pooledObject;
     private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
     private readonly AnomalyExternalVelocityStack
         anomalyExternalVelocity = new();
@@ -15,11 +17,21 @@ public class EnemyProjectile : MonoBehaviour, IAnomalySpeedProjectile,
     public void Initialize(Vector2 shootDirection)
     {
         direction = shootDirection.normalized;
-        Destroy(gameObject, lifetime);
+        remainingLifetime = lifetime;
+        anomalySpeed.Clear();
+        anomalyExternalVelocity.Clear();
+        pooledObject ??= GetComponent<PooledGameObject>();
     }
 
     private void Update()
     {
+        remainingLifetime -= Time.deltaTime;
+        if (remainingLifetime <= 0f)
+        {
+            Despawn();
+            return;
+        }
+
         Vector2 windVelocity = WorldRuleController.Instance != null
             ? WorldRuleController.Instance.ProjectileWindVelocity
             : Vector2.zero;
@@ -43,7 +55,7 @@ public class EnemyProjectile : MonoBehaviour, IAnomalySpeedProjectile,
             health.TakeDamage(damage, hitDirection);
         }
 
-        Destroy(gameObject);
+        Despawn();
     }
 
     public Component ProjectileComponent => this;
@@ -82,5 +94,13 @@ public class EnemyProjectile : MonoBehaviour, IAnomalySpeedProjectile,
         AnomalyProjectileLifecycle.NotifyDisabled(this);
         anomalySpeed.Clear();
         anomalyExternalVelocity.Clear();
+    }
+
+    private void Despawn()
+    {
+        if (pooledObject != null && pooledObject.Release())
+            return;
+
+        Destroy(gameObject);
     }
 }

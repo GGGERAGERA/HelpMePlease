@@ -1,7 +1,16 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public sealed class LaserBeamRenderer : MonoBehaviour
 {
+    private sealed class BeamPair
+    {
+        public LineRenderer Core;
+        public LineRenderer Glow;
+        public float ReleaseAt;
+        public bool Active;
+    }
+
     [Header("Core")]
     [SerializeField] private Material coreMaterial;
     [SerializeField] private Color coreColor = Color.white;
@@ -23,12 +32,37 @@ public sealed class LaserBeamRenderer : MonoBehaviour
     [SerializeField] private string sortingLayerName = "Effects";
     [SerializeField] private int glowSortingOrder = 20;
     [SerializeField] private int coreSortingOrder = 21;
+    [SerializeField, Min(0)] private int prewarmPairs = 4;
+
+    private readonly List<BeamPair> beamPairs = new();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public float DebugLastWidthScale { get; private set; } = 1f;
     public float DebugLastCoreWidth { get; private set; }
     public float DebugLastGlowWidth { get; private set; }
 #endif
+
+    private void Awake()
+    {
+        for (int i = 0; i < prewarmPairs; i++)
+            beamPairs.Add(CreatePair());
+    }
+
+    private void Update()
+    {
+        float now = Time.time;
+
+        for (int i = 0; i < beamPairs.Count; i++)
+        {
+            BeamPair pair = beamPairs[i];
+            if (!pair.Active || now < pair.ReleaseAt)
+                continue;
+
+            pair.Active = false;
+            pair.Core.gameObject.SetActive(false);
+            pair.Glow.gameObject.SetActive(false);
+        }
+    }
 
     public void Render(Vector2 start, Vector2 end, float widthScale = 1f)
     {
@@ -39,13 +73,19 @@ public sealed class LaserBeamRenderer : MonoBehaviour
         DebugLastWidthScale = widthScale;
 #endif
 
-        CreateGlow(start, jitteredEnd, widthScale);
-        CreateCore(start, jitteredEnd, widthScale);
+        BeamPair pair = AcquirePair();
+        ConfigureGlow(pair.Glow, start, jitteredEnd, widthScale);
+        ConfigureCore(pair.Core, start, jitteredEnd, widthScale);
+        pair.ReleaseAt = Time.time + Mathf.Max(0f, beamDuration);
+        pair.Active = true;
     }
 
-    private void CreateCore(Vector2 start, Vector2 end, float widthScale)
+    private void ConfigureCore(
+        LineRenderer line,
+        Vector2 start,
+        Vector2 end,
+        float widthScale)
     {
-        LineRenderer line = CreateLine("LaserBeam_Core", coreMaterial, coreSortingOrder);
 
         float width = Mathf.Max(
             0.01f,
@@ -64,14 +104,14 @@ public sealed class LaserBeamRenderer : MonoBehaviour
 
         line.SetPosition(0, start);
         line.SetPosition(1, end);
-
-        Destroy(line.gameObject, beamDuration);
     }
 
-    private void CreateGlow(Vector2 start, Vector2 end, float widthScale)
+    private void ConfigureGlow(
+        LineRenderer line,
+        Vector2 start,
+        Vector2 end,
+        float widthScale)
     {
-        LineRenderer line = CreateLine("LaserBeam_Glow", glowMaterial, glowSortingOrder);
-
         float width = Mathf.Max(
             0.01f,
             (glowWidth + Random.Range(-widthJitter, widthJitter)) * widthScale
@@ -94,19 +134,59 @@ public sealed class LaserBeamRenderer : MonoBehaviour
 
         line.SetPosition(0, start);
         line.SetPosition(1, end);
+    }
 
-        Destroy(line.gameObject, beamDuration);
+    private BeamPair AcquirePair()
+    {
+        for (int i = 0; i < beamPairs.Count; i++)
+        {
+            if (beamPairs[i].Active)
+                continue;
+
+            Activate(beamPairs[i]);
+            return beamPairs[i];
+        }
+
+        BeamPair created = CreatePair();
+        beamPairs.Add(created);
+        Activate(created);
+        return created;
+    }
+
+    private static void Activate(BeamPair pair)
+    {
+        pair.Core.gameObject.SetActive(true);
+        pair.Glow.gameObject.SetActive(true);
+    }
+
+    private BeamPair CreatePair()
+    {
+        BeamPair pair = new()
+        {
+            Core = CreateLine(
+                "LaserBeam_Core",
+                coreMaterial,
+                coreSortingOrder),
+            Glow = CreateLine(
+                "LaserBeam_Glow",
+                glowMaterial,
+                glowSortingOrder)
+        };
+        pair.Core.gameObject.SetActive(false);
+        pair.Glow.gameObject.SetActive(false);
+        return pair;
     }
 
     private LineRenderer CreateLine(string objectName, Material material, int sortingOrder)
     {
         GameObject beamObject = new GameObject(objectName);
+        beamObject.transform.SetParent(transform, false);
         LineRenderer line = beamObject.AddComponent<LineRenderer>();
 
         line.positionCount = 2;
         line.useWorldSpace = true;
 
-        line.material = material;
+        line.sharedMaterial = material;
         line.sortingLayerName = sortingLayerName;
         line.sortingOrder = sortingOrder;
 

@@ -22,8 +22,15 @@ public sealed class TurretEnemyBehaviour : MonoBehaviour,
     private bool wasAiFrozen;
     private readonly AnomalyExternalVelocityStack anomalyExternalVelocity =
         new();
+    private SimplePrefabPool projectilePool;
 
     public Component ExternalVelocityComponent => this;
+    public GameObject ProjectilePrefab => projectilePrefab;
+
+    public void SetProjectilePool(SimplePrefabPool pool)
+    {
+        projectilePool = pool;
+    }
 
     private void Awake()
     {
@@ -140,12 +147,24 @@ public sealed class TurretEnemyBehaviour : MonoBehaviour,
         if (projectilePrefab == null || direction.sqrMagnitude <= Mathf.Epsilon)
             return;
 
-        GameObject projectile = Instantiate(
-            projectilePrefab,
-            GetFirePosition(),
-            Quaternion.identity
-        );
-        projectile.GetComponent<EnemyProjectile>()?.Initialize(direction);
+        Vector3 firePosition = GetFirePosition();
+        PooledGameObject pooled = projectilePool?.Get(
+            firePosition,
+            Quaternion.identity);
+        GameObject projectile = pooled != null
+            ? pooled.gameObject
+            : Instantiate(
+                projectilePrefab,
+                firePosition,
+                Quaternion.identity);
+        EnemyProjectile enemyProjectile = pooled != null
+            ? pooled.EnemyProjectile
+            : projectile.GetComponent<EnemyProjectile>();
+
+        if (enemyProjectile != null)
+            enemyProjectile.Initialize(direction);
+        else if (pooled == null || !pooled.Release())
+            Destroy(projectile);
     }
 
     private void RotateHead(Vector2 direction)

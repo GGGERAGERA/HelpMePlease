@@ -20,6 +20,7 @@ public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
 
 
     private Transform player;
+    private PlayerPickupRadius playerPickupRadius;
     private bool isCollected;
     private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
     private readonly AnomalyExternalVelocityStack
@@ -34,7 +35,11 @@ public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
         GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
 
         if (playerObject != null)
+        {
             player = playerObject.transform;
+            playerPickupRadius =
+                playerObject.GetComponent<PlayerPickupRadius>();
+        }
     }
 
     private void Update()
@@ -49,14 +54,10 @@ public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
         if (player == null)
             return;
 
-        PlayerPickupRadius pickupRadius = player.GetComponent<PlayerPickupRadius>();
-
         float currentMagnetRadius = magnetRadius;
 
-        if (pickupRadius != null)
-        {
-            currentMagnetRadius = pickupRadius.CurrentRadius;
-        }
+        if (playerPickupRadius != null)
+            currentMagnetRadius = playerPickupRadius.CurrentRadius;
 
         float distance = Vector2.Distance(transform.position, player.position);
 

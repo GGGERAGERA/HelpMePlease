@@ -10,6 +10,9 @@ public class EnemySpawnStage
 
 public class EnemySpawner : MonoBehaviour
 {
+    private static Collider2D[] additionalWaveOverlapBuffer =
+        new Collider2D[32];
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public enum DebugEnemyArchetype
     {
@@ -32,6 +35,14 @@ public class EnemySpawner : MonoBehaviour
     public float spawnRadius = 360f;
     [SerializeField, Min(1)] private int spawnPositionAttempts = 16;
     [SerializeField] private GameplayAreaService gameplayArea;
+
+    [Header("Enemy Projectile Pools")]
+    [SerializeField, Min(0)] private int projectilePrewarmPerPrefab = 24;
+    [SerializeField, Min(1)] private int projectilePoolMaximum = 256;
+
+    [Header("Enemy Feedback Pools")]
+    [SerializeField, Min(0)] private int feedbackPrewarmPerPrefab = 16;
+    [SerializeField, Min(1)] private int feedbackPoolMaximum = 256;
 
     [Header("Legacy Difficulty Scaling")]
     [SerializeField] private float difficultyIncreaseInterval = 30f;
@@ -66,6 +77,10 @@ public class EnemySpawner : MonoBehaviour
     }
 
     private readonly List<SpawnedEnemy> activeEnemies = new();
+    private readonly Dictionary<GameObject, SimplePrefabPool>
+        enemyProjectilePools = new();
+    private readonly Dictionary<GameObject, SimplePrefabPool>
+        enemyFeedbackPools = new();
 
     private Transform player;
     private EnemySpawnProfile spawnProfile;
@@ -110,6 +125,7 @@ public class EnemySpawner : MonoBehaviour
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
         ResolveGameplayArea();
         CaptureBaseSettings();
+        PrewarmProjectilePools(enemyPrefabs);
     }
 
     private void Update()
@@ -167,6 +183,7 @@ public class EnemySpawner : MonoBehaviour
             return;
         }
 
+        PrewarmProjectilePools(spawnProfile);
         UpdateActivePhase();
     }
 
@@ -525,20 +542,38 @@ public class EnemySpawner : MonoBehaviour
         if (safeClearance <= 0f)
             return true;
 
-        Collider2D[] overlaps = Physics2D.OverlapCircleAll(
-            position,
-            safeClearance
-        );
+        ContactFilter2D filter = ContactFilter2D.noFilter;
+        filter.useTriggers = true;
+        int overlapCount;
 
-        for (int i = 0; i < overlaps.Length; i++)
+        do
         {
-            Collider2D overlap = overlaps[i];
+            overlapCount = Physics2D.OverlapCircle(
+                position,
+                safeClearance,
+                filter,
+                additionalWaveOverlapBuffer);
+
+            if (overlapCount < additionalWaveOverlapBuffer.Length)
+                break;
+
+            System.Array.Resize(
+                ref additionalWaveOverlapBuffer,
+                additionalWaveOverlapBuffer.Length * 2);
+        }
+        while (true);
+
+        bool isClear = true;
+        for (int i = 0; i < overlapCount; i++)
+        {
+            Collider2D overlap = additionalWaveOverlapBuffer[i];
+            additionalWaveOverlapBuffer[i] = null;
 
             if (overlap != null && overlap.enabled && !overlap.isTrigger)
-                return false;
+                isClear = false;
         }
 
-        return true;
+        return isClear;
     }
 
     private void CaptureBaseSettings()
@@ -813,10 +848,12 @@ public class EnemySpawner : MonoBehaviour
             spawnPosition,
             Quaternion.identity
         );
+        ConfigureEnemyProjectilePool(enemy);
         EnemyHealth health = enemy.GetComponent<EnemyHealth>();
 
         if (health != null)
         {
+            ConfigureEnemyFeedbackPools(health);
             float phaseHealth = activePhase != null ? activePhase.healthMultiplier : 1f;
             health.SetMaxHealthMultiplier(currentHealthMultiplier * phaseHealth);
         }
@@ -846,6 +883,145 @@ public class EnemySpawner : MonoBehaviour
 
         health?.NotifySpawnConfigured();
         return enemy;
+    }
+
+    private void ConfigureEnemyProjectilePool(GameObject enemy)
+    {
+        EnemyShooterMovement shooter =
+            enemy.GetComponent<EnemyShooterMovement>();
+        if (shooter != null)
+        {
+            shooter.SetProjectilePool(
+                GetEnemyProjectilePool(shooter.ProjectilePrefab));
+        }
+
+        TurretEnemyBehaviour turret =
+            enemy.GetComponent<TurretEnemyBehaviour>();
+        if (turret != null)
+        {
+            turret.SetProjectilePool(
+                GetEnemyProjectilePool(turret.ProjectilePrefab));
+        }
+    }
+
+    private SimplePrefabPool GetEnemyProjectilePool(GameObject projectile)
+    {
+        if (projectile == null)
+            return null;
+
+        if (enemyProjectilePools.TryGetValue(
+                projectile,
+                out SimplePrefabPool existing))
+        {
+            return existing;
+        }
+
+        SimplePrefabPool created = new(
+            this,
+            projectile,
+            projectilePrewarmPerPrefab,
+            projectilePoolMaximum);
+        enemyProjectilePools.Add(projectile, created);
+        return created;
+    }
+
+    private void ConfigureEnemyFeedbackPools(EnemyHealth health)
+    {
+        health.SetFeedbackPools(
+            GetEnemyFeedbackPool(health.DamagePopupPrefab),
+            GetEnemyFeedbackPool(health.BloodHitPrefab),
+            GetEnemyFeedbackPool(health.DeathFxPrefab));
+    }
+
+    private SimplePrefabPool GetEnemyFeedbackPool(GameObject prefab)
+    {
+        if (prefab == null)
+            return null;
+
+        if (enemyFeedbackPools.TryGetValue(
+                prefab,
+                out SimplePrefabPool existing))
+        {
+            return existing;
+        }
+
+        SimplePrefabPool created = new(
+            this,
+            prefab,
+            feedbackPrewarmPerPrefab,
+            feedbackPoolMaximum);
+        enemyFeedbackPools.Add(prefab, created);
+        return created;
+    }
+
+    private void PrewarmProjectilePools(GameObject[] prefabs)
+    {
+        if (prefabs == null)
+            return;
+
+        for (int i = 0; i < prefabs.Length; i++)
+            PrewarmProjectilePool(prefabs[i]);
+    }
+
+    private void PrewarmProjectilePools(EnemySpawnProfile profile)
+    {
+        EnemySpawnPhase[] phases = profile != null ? profile.Phases : null;
+        if (phases == null)
+            return;
+
+        for (int phaseIndex = 0; phaseIndex < phases.Length; phaseIndex++)
+        {
+            EnemySpawnEntry[] entries = phases[phaseIndex]?.enemies;
+            if (entries == null)
+                continue;
+
+            for (int entryIndex = 0;
+                 entryIndex < entries.Length;
+                 entryIndex++)
+            {
+                PrewarmProjectilePool(entries[entryIndex]?.enemyPrefab);
+            }
+        }
+    }
+
+    private void PrewarmProjectilePool(GameObject enemyPrefab)
+    {
+        if (enemyPrefab == null)
+            return;
+
+        EnemyShooterMovement shooter =
+            enemyPrefab.GetComponent<EnemyShooterMovement>();
+        if (shooter != null)
+            GetEnemyProjectilePool(shooter.ProjectilePrefab);
+
+        TurretEnemyBehaviour turret =
+            enemyPrefab.GetComponent<TurretEnemyBehaviour>();
+        if (turret != null)
+            GetEnemyProjectilePool(turret.ProjectilePrefab);
+
+        EnemyHealth health = enemyPrefab.GetComponent<EnemyHealth>();
+        if (health != null)
+        {
+            GetEnemyFeedbackPool(health.DamagePopupPrefab);
+            GetEnemyFeedbackPool(health.BloodHitPrefab);
+            GetEnemyFeedbackPool(health.DeathFxPrefab);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        foreach (SimplePrefabPool projectilePool in
+                 enemyProjectilePools.Values)
+        {
+            projectilePool.Dispose();
+        }
+
+        enemyProjectilePools.Clear();
+
+        foreach (SimplePrefabPool feedbackPool in enemyFeedbackPools.Values)
+            feedbackPool.Dispose();
+
+        enemyFeedbackPools.Clear();
     }
 
     private GameObject SelectWeightedEnemy(EnemySpawnPhase phase)

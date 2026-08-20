@@ -15,8 +15,26 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
     [SerializeField] private DoubleOrLeave doubleOrLeave;
 
     private readonly StringBuilder textBuilder = new();
+    private bool displayStateCaptured;
+    private int previousWorldSeconds;
+    private int previousChallengeState;
+    private int previousChallengeSeconds;
+    private int previousDoubleOrLeaveState;
+
+    private void OnEnable()
+    {
+        displayStateCaptured = false;
+    }
 
     private void Update()
+    {
+        if (!CaptureDisplayState())
+            return;
+
+        RefreshContent();
+    }
+
+    private void RefreshContent()
     {
         bool hasContent = BuildContent();
 
@@ -36,6 +54,42 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
             float height = Mathf.Clamp(contentText.preferredHeight + 24f, 48f, 400f);
             panelRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
         }
+    }
+
+    private bool CaptureDisplayState()
+    {
+        int worldSeconds =
+            worldAccelerationRule != null && worldAccelerationRule.IsRunning
+                ? Mathf.CeilToInt(worldAccelerationRule.TimeRemaining)
+                : -1;
+        int challengeState =
+            noDamageChallenge != null &&
+            noDamageChallenge.State != NoDamageChallengeState.Inactive
+                ? (int)noDamageChallenge.State
+                : -1;
+        int challengeSeconds =
+            noDamageChallenge != null &&
+            noDamageChallenge.State == NoDamageChallengeState.Active
+                ? Mathf.CeilToInt(noDamageChallenge.TimeRemaining)
+                : -1;
+        int doubleOrLeaveState =
+            doubleOrLeave != null &&
+            doubleOrLeave.State != DoubleOrLeaveState.Inactive
+                ? (int)doubleOrLeave.State
+                : -1;
+
+        bool changed = !displayStateCaptured ||
+            previousWorldSeconds != worldSeconds ||
+            previousChallengeState != challengeState ||
+            previousChallengeSeconds != challengeSeconds ||
+            previousDoubleOrLeaveState != doubleOrLeaveState;
+
+        displayStateCaptured = true;
+        previousWorldSeconds = worldSeconds;
+        previousChallengeState = challengeState;
+        previousChallengeSeconds = challengeSeconds;
+        previousDoubleOrLeaveState = doubleOrLeaveState;
+        return changed;
     }
 
     private bool BuildContent()

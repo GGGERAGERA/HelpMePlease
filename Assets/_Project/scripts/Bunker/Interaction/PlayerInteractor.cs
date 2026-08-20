@@ -2,27 +2,32 @@ using UnityEngine;
 
 public class PlayerInteractor : MonoBehaviour
 {
+    private const int InteractionBufferSize = 128;
+
     [SerializeField] private float interactionRadius = 1.5f;
 
     private Interactable currentInteractable;
+    private readonly Collider2D[] interactionBuffer =
+        new Collider2D[InteractionBufferSize];
+    private ContactFilter2D interactionFilter;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-    private const int DebugInteractionBufferSize = 128;
-    private readonly Collider2D[] debugInteractionBuffer =
-        new Collider2D[DebugInteractionBufferSize];
-    private ContactFilter2D debugInteractionFilter;
-    private bool useDebugNonAllocScan;
+    private bool useDebugNonAllocScan = true;
 
     public void ConfigureDebugNonAllocScan(bool enabled)
     {
         useDebugNonAllocScan = enabled;
-        debugInteractionFilter = new ContactFilter2D
+    }
+#endif
+
+    private void Awake()
+    {
+        interactionFilter = new ContactFilter2D
         {
             useTriggers = true,
             useLayerMask = false,
             useDepth = false
         };
     }
-#endif
 
     private void Update()
     {
@@ -46,28 +51,27 @@ public class PlayerInteractor : MonoBehaviour
         currentInteractable = null;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        if (useDebugNonAllocScan)
+        if (!useDebugNonAllocScan)
         {
-            int hitCount = Physics2D.OverlapCircle(
+            Collider2D[] debugHits = Physics2D.OverlapCircleAll(
                 transform.position,
-                interactionRadius,
-                debugInteractionFilter,
-                debugInteractionBuffer
+                interactionRadius
             );
-            FindClosestInteractable(debugInteractionBuffer, hitCount);
-            for (int i = 0; i < hitCount; i++)
-                debugInteractionBuffer[i] = null;
+            FindClosestInteractable(debugHits, debugHits.Length);
             return;
         }
 #endif
 
-        Collider2D[] hits =
-            Physics2D.OverlapCircleAll(
-                transform.position,
-                interactionRadius
-            );
+        int hitCount = Physics2D.OverlapCircle(
+            transform.position,
+            interactionRadius,
+            interactionFilter,
+            interactionBuffer
+        );
+        FindClosestInteractable(interactionBuffer, hitCount);
 
-        FindClosestInteractable(hits, hits.Length);
+        for (int i = 0; i < hitCount; i++)
+            interactionBuffer[i] = null;
     }
 
     private void FindClosestInteractable(Collider2D[] hits, int hitCount)

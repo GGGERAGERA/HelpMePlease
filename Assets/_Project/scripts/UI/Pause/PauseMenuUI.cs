@@ -106,13 +106,18 @@ public class PauseMenuUI : MonoBehaviour
 
     private void UpdateStats(LocalizationService localization)
     {
-        int kills = RunStatsManager.Instance != null
-            ? RunStatsManager.Instance.Kills
-            : 0;
+        RunStateManager runState = RunStateManager.Instance;
+        int kills = runState != null
+            ? runState.GetCurrentRunKills()
+            : RunStatsManager.Instance != null
+                ? RunStatsManager.Instance.Kills
+                : 0;
 
-        float time = RunStatsManager.Instance != null
-            ? RunStatsManager.Instance.RunTime
-            : 0f;
+        float time = runState != null
+            ? runState.GetCurrentRunTime()
+            : RunStatsManager.Instance != null
+                ? RunStatsManager.Instance.RunTime
+                : 0f;
 
         int level = ExperienceManager.Instance != null
             ? ExperienceManager.Instance.currentLevel

@@ -3,8 +3,13 @@ using TMPro;
 
 public class DamagePopup : MonoBehaviour
 {
+    private const float Lifetime = 1f;
+
     private TextMeshPro text;
-    private float timer = 1f;
+    private PooledGameObject pooledObject;
+    private Color authoredColor;
+    private float authoredFontSize;
+    private float timer = Lifetime;
     private float floatSpeed = 1.5f;
 
     void Awake()
@@ -12,13 +17,25 @@ public class DamagePopup : MonoBehaviour
         text = GetComponent<TextMeshPro>();
         if (text == null)
             Debug.LogError("DamagePopup: TextMeshPro component not found!");
+        else
+        {
+            authoredColor = text.color;
+            authoredFontSize = text.fontSize;
+        }
     }
 
-    void Start()
+    private void OnEnable()
     {
-        // Автоматическое уничтожение через 1 секунду (запасной вариант)
-        Destroy(gameObject, 1.2f);
+        timer = Lifetime;
+        if (text == null)
+            return;
+
+        text.color = authoredColor;
+        text.fontSize = authoredFontSize;
     }
+
+    internal void ConfigurePoolHandle(PooledGameObject item) =>
+        pooledObject = item;
 
     public void SetDamage(int damage, bool isCritical = false)
     {
@@ -51,6 +68,9 @@ public class DamagePopup : MonoBehaviour
         // Уменьшаем таймер и уничтожаем
         timer -= Time.deltaTime;
         if (timer <= 0)
-            Destroy(gameObject);
+        {
+            if (pooledObject == null || !pooledObject.Release())
+                Destroy(gameObject);
+        }
     }
 }

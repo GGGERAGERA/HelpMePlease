@@ -120,6 +120,29 @@ public sealed class GameplayAreaService : MonoBehaviour
             }
         }
 
+        // Cover the requested ring deterministically before falling back to
+        // sampling the collider bounds. This is important when min and max are
+        // equal (for example, the boss spawn distance).
+        float angleOffset = Random.Range(0f, Mathf.PI * 2f);
+
+        for (int i = 0; i < sampleCount; i++)
+        {
+            float angle = angleOffset + Mathf.PI * 2f * i / sampleCount;
+            float distance = sampleCount > 1
+                ? Mathf.Lerp(minimum, maximum, (i + 0.5f) / sampleCount)
+                : (minimum + maximum) * 0.5f;
+            Vector2 candidate = (Vector2)origin + new Vector2(
+                Mathf.Cos(angle),
+                Mathf.Sin(angle)
+            ) * distance;
+
+            if (IsInside(spawnArea, candidate, padding))
+            {
+                position = new Vector3(candidate.x, candidate.y, origin.z);
+                return true;
+            }
+        }
+
         Bounds bounds = spawnArea.bounds;
 
         for (int i = 0; i < sampleCount; i++)
@@ -129,7 +152,11 @@ public sealed class GameplayAreaService : MonoBehaviour
                 Random.Range(bounds.min.y, bounds.max.y)
             );
 
-            if (IsInside(spawnArea, candidate, padding))
+            float distanceFromOrigin = Vector2.Distance(candidate, origin);
+
+            if (distanceFromOrigin >= minimum &&
+                distanceFromOrigin <= maximum &&
+                IsInside(spawnArea, candidate, padding))
             {
                 position = new Vector3(candidate.x, candidate.y, origin.z);
                 return true;

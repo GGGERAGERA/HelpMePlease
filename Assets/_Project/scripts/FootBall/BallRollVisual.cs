@@ -226,7 +226,6 @@ public class BallRollVisual : MonoBehaviour
 
     void Update()
     {
-        EnsureZoneTrigger();
         TrackKicker();
 
         if (_ownsSlowMotion && Time.timeScale <= 0f)

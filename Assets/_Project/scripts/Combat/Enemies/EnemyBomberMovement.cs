@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -239,6 +240,7 @@ public class EnemyBomberMovement : EnemyMovement
 
 internal sealed class BomberExplosionSequence : MonoBehaviour
 {
+    private static Collider2D[] explosionHits = new Collider2D[16];
     private float radius;
     private float delay;
     private int damage;
@@ -318,14 +320,29 @@ internal sealed class BomberExplosionSequence : MonoBehaviour
             return;
 
         exploded = true;
-        Collider2D[] hits = Physics2D.OverlapCircleAll(
-            explosionPosition,
-            radius
-        );
+        ContactFilter2D filter = ContactFilter2D.noFilter;
+        filter.useTriggers = true;
+        int hitCount;
 
-        for (int i = 0; i < hits.Length; i++)
+        do
         {
-            Collider2D hit = hits[i];
+            hitCount = Physics2D.OverlapCircle(
+                explosionPosition,
+                radius,
+                filter,
+                explosionHits);
+
+            if (hitCount < explosionHits.Length)
+                break;
+
+            Array.Resize(ref explosionHits, explosionHits.Length * 2);
+        }
+        while (true);
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider2D hit = explosionHits[i];
+            explosionHits[i] = null;
 
             if (hit == null || !hit.CompareTag("Player"))
                 continue;

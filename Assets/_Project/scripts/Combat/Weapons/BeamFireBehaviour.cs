@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,6 +8,10 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
     [SerializeField] private LaserBeamRenderer beamRenderer;
     [SerializeField, Min(0.01f)] private float baseHitHalfWidth = 0.08f;
 
+    private RaycastHit2D[] hitBuffer = new RaycastHit2D[64];
+    private readonly HashSet<EnemyHealth> damagedEnemies = new();
+    private ContactFilter2D enemyFilter;
+
     public bool HitEnemyLastFire { get; private set; }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -14,6 +19,11 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
     public float DebugLastHitHalfWidth { get; private set; }
     public LaserBeamRenderer DebugBeamRenderer => beamRenderer;
 #endif
+
+    private void Awake()
+    {
+        ConfigureFilter();
+    }
 
     public bool Fire(WeaponFireContext context)
     {
@@ -28,18 +38,30 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
         DebugLastContextScale = context.ShotVisualScale;
         DebugLastHitHalfWidth = hitHalfWidth;
 #endif
-        RaycastHit2D[] hits = Physics2D.CircleCastAll(
-            context.Origin,
-            hitHalfWidth,
-            context.Direction,
-            context.Range,
-            enemyMask
-        );
-
-        HashSet<EnemyHealth> damagedEnemies = new HashSet<EnemyHealth>();
-
-        foreach (RaycastHit2D hit in hits)
+        int hitCount;
+        do
         {
+            hitCount = Physics2D.CircleCast(
+                context.Origin,
+                hitHalfWidth,
+                context.Direction,
+                enemyFilter,
+                hitBuffer,
+                context.Range);
+
+            if (hitCount < hitBuffer.Length)
+                break;
+
+            Array.Resize(ref hitBuffer, hitBuffer.Length * 2);
+        }
+        while (true);
+
+        damagedEnemies.Clear();
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            RaycastHit2D hit = hitBuffer[i];
+            hitBuffer[i] = default;
             EnemyHealth enemyHealth = hit.collider.GetComponentInParent<EnemyHealth>();
 
             if (enemyHealth == null)
@@ -73,5 +95,13 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
     private void OnValidate()
     {
         baseHitHalfWidth = Mathf.Max(0.01f, baseHitHalfWidth);
+        ConfigureFilter();
+    }
+
+    private void ConfigureFilter()
+    {
+        enemyFilter = ContactFilter2D.noFilter;
+        enemyFilter.SetLayerMask(enemyMask);
+        enemyFilter.useTriggers = true;
     }
 }

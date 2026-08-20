@@ -6,6 +6,7 @@ public class GameOverManager : MonoBehaviour
     public static GameOverManager Instance;
 
     [SerializeField] private RunResultView runResultView;
+    private bool isRestarting;
 
     void Awake()
     {
@@ -28,12 +29,20 @@ public class GameOverManager : MonoBehaviour
 
     public void RestartGame()
     {
+        if (isRestarting)
+            return;
+
+        isRestarting = true;
         RunStateManager runState = RunStateManager.Instance;
 
         if (runState != null)
         {
             CharacterData character = runState.SelectedCharacter;
             WeaponData weapon = runState.SelectedWeapon;
+            // The result panel already presents this reward. Finalize the dead
+            // run before clearing its state so Restart cannot silently discard
+            // earned gold.
+            runState.EndRun(RunEndReason.PlayerDied);
             runState.BeginNewRun(character, weapon);
         }
 

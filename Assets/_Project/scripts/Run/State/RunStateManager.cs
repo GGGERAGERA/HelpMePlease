@@ -45,7 +45,7 @@ public sealed class RunStateManager : MonoBehaviour
     private float completedLevelRewardMultiplierTotal;
     private int lastCompletedSectorNumber;
 
-    private int lastCommittedStatsInstanceId;
+    private RunStatsManager lastCommittedStats;
     private bool runEnded;
 
     private RunSummary lastRunSummary;
@@ -69,14 +69,32 @@ public sealed class RunStateManager : MonoBehaviour
     public int CompletedLevels => completedLevels;
     public bool IsRunEnded => runEnded;
 
+    public int GetCurrentRunKills()
+    {
+        int kills = accumulatedKills;
+
+        if (TryGetUncommittedCurrentSceneStats(out RunStatsManager stats))
+            kills += stats.Kills;
+
+        return kills;
+    }
+
+    public float GetCurrentRunTime()
+    {
+        float runTime = accumulatedRunTime;
+
+        if (TryGetUncommittedCurrentSceneStats(out RunStatsManager stats))
+            runTime += stats.RunTime;
+
+        return runTime;
+    }
+
     public int GetCurrentGoldReward(RunEndReason endReason)
     {
         float killRewardUnits = accumulatedKillRewardUnits;
         float runTime = accumulatedRunTime;
-        RunStatsManager stats = RunStatsManager.Instance;
 
-        if (stats != null &&
-            stats.GetInstanceID() != lastCommittedStatsInstanceId)
+        if (TryGetUncommittedCurrentSceneStats(out RunStatsManager stats))
         {
             killRewardUnits += stats.KillRewardUnits;
             runTime += stats.RunTime;
@@ -88,6 +106,14 @@ public sealed class RunStateManager : MonoBehaviour
             completedLevelRewardMultiplierTotal,
             endReason
         );
+    }
+
+    private bool TryGetUncommittedCurrentSceneStats(
+        out RunStatsManager stats)
+    {
+        stats = RunStatsManager.Instance;
+        return stats != null &&
+            !ReferenceEquals(stats, lastCommittedStats);
     }
 
     public static RunStateManager EnsureExists()
@@ -160,7 +186,10 @@ public sealed class RunStateManager : MonoBehaviour
         completedLevelRewardMultiplierTotal = 0f;
         lastCompletedSectorNumber = 0;
 
-        lastCommittedStatsInstanceId = 0;
+        // Restart can begin before the current gameplay scene is unloaded.
+        // Treat its scene-local stats as belonging to the previous run until
+        // the replacement scene publishes a new RunStatsManager instance.
+        lastCommittedStats = RunStatsManager.Instance;
         runEnded = false;
         lastRunSummary = null;
 
@@ -486,9 +515,7 @@ public sealed class RunStateManager : MonoBehaviour
             return;
         }
 
-        int instanceId = stats.GetInstanceID();
-
-        if (lastCommittedStatsInstanceId == instanceId)
+        if (ReferenceEquals(lastCommittedStats, stats))
         {
             Debug.Log(
                 "[RunState] Current scene stats were already committed."
@@ -500,7 +527,7 @@ public sealed class RunStateManager : MonoBehaviour
         accumulatedKills += stats.Kills;
         accumulatedKillRewardUnits += stats.KillRewardUnits;
         accumulatedRunTime += stats.RunTime;
-        lastCommittedStatsInstanceId = instanceId;
+        lastCommittedStats = stats;
         CurrentRewardChanged?.Invoke();
 
         Debug.Log(

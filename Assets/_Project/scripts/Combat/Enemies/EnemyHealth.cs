@@ -56,6 +56,15 @@ public class EnemyHealth : MonoBehaviour
 
     private EnemyWhiteFlash whiteFlash;
     private EnemyIdentity identity;
+    private SimplePrefabPool damagePopupPool;
+    private SimplePrefabPool bloodHitPool;
+    private SimplePrefabPool deathFxPool;
+
+    public GameObject DamagePopupPrefab => damagePopupPrefab;
+    public GameObject BloodHitPrefab =>
+        bloodHitPrefab != null ? bloodHitPrefab.gameObject : null;
+    public GameObject DeathFxPrefab =>
+        deathFXPrefab != null ? deathFXPrefab.gameObject : null;
 
     private static float lastCritSoundTime;
     private static bool missingUnlockServiceWasReported;
@@ -139,6 +148,16 @@ public class EnemyHealth : MonoBehaviour
         SpawnConfigured?.Invoke(this);
     }
 
+    public void SetFeedbackPools(
+        SimplePrefabPool popupPool,
+        SimplePrefabPool hitPool,
+        SimplePrefabPool deathPool)
+    {
+        damagePopupPool = popupPool;
+        bloodHitPool = hitPool;
+        deathFxPool = deathPool;
+    }
+
     public void TakeDamage(float damage, Vector2 hitPoint, bool isCritical = false)
     {
         if (isDead) return;
@@ -167,11 +186,12 @@ public class EnemyHealth : MonoBehaviour
         if (bloodHitPrefab == null)
             return;
         float bloodHitDestroyTime = bloodHitPrefab.main.duration;
-        ParticleSystem blood = Instantiate(
-            bloodHitPrefab,
+        PooledGameObject pooledBlood = bloodHitPool?.Get(
             hitPoint,
-            Quaternion.identity
-        );
+            Quaternion.identity);
+        ParticleSystem blood = pooledBlood != null
+            ? pooledBlood.PrimaryParticleSystem
+            : Instantiate(bloodHitPrefab, hitPoint, Quaternion.identity);
         if (isCritical)
         {
             if (critSound != null)
@@ -199,7 +219,10 @@ public class EnemyHealth : MonoBehaviour
 
         blood.Play();
 
-        Destroy(blood.gameObject, bloodHitDestroyTime);
+        if (pooledBlood != null)
+            pooledBlood.ReleaseAfter(bloodHitDestroyTime);
+        else
+            Destroy(blood.gameObject, bloodHitDestroyTime);
     }
     private void Die()
     {
@@ -272,11 +295,17 @@ public class EnemyHealth : MonoBehaviour
             return;
 
         Vector3 spawnPos = transform.position + popupOffset;
-        GameObject popup = Instantiate(damagePopupPrefab, spawnPos, Quaternion.identity);
-
-        DamagePopup dp = popup.GetComponent<DamagePopup>();
+        PooledGameObject pooledPopup = damagePopupPool?.Get(
+            spawnPos,
+            Quaternion.identity);
+        DamagePopup dp = pooledPopup != null
+            ? pooledPopup.DamagePopup
+            : Instantiate(damagePopupPrefab, spawnPos, Quaternion.identity)
+                .GetComponent<DamagePopup>();
         if (dp != null)
             dp.SetDamage(damage, isCritical);
+        else
+            pooledPopup?.Release();
     }
 
     private void PlayHitSound()
@@ -308,15 +337,22 @@ public class EnemyHealth : MonoBehaviour
 
         if (deathFXPrefab != null)
         {
-            ParticleSystem blood = Instantiate(
-                deathFXPrefab,
+            PooledGameObject pooledBlood = deathFxPool?.Get(
                 transform.position,
-                Quaternion.identity
-            );
+                Quaternion.identity);
+            ParticleSystem blood = pooledBlood != null
+                ? pooledBlood.PrimaryParticleSystem
+                : Instantiate(
+                    deathFXPrefab,
+                    transform.position,
+                    Quaternion.identity);
 
             float destroyTime = blood.main.duration;
             blood.Play();
-            Destroy(blood.gameObject, destroyTime);
+            if (pooledBlood != null)
+                pooledBlood.ReleaseAfter(destroyTime);
+            else
+                Destroy(blood.gameObject, destroyTime);
         }
 
         DropLoot();

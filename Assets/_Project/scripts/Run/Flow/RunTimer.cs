@@ -17,6 +17,7 @@ public class RunTimer : MonoBehaviour
     [SerializeField] private float bossWarningVolume = 0.8f;
 #pragma warning restore CS0414
     [SerializeField] private float bossSpawnDelay = 1f;
+    [SerializeField, Min(0.1f)] private float bossSpawnRetryDelay = 1f;
 
     private float timeLeft;
     private bool bossSpawned;
@@ -149,7 +150,15 @@ public class RunTimer : MonoBehaviour
 
         yield return new WaitForSeconds(bossSpawnDelay);
 
-        SpawnBossObject();
+        WaitForSeconds retryDelay = new(
+            Mathf.Max(0.1f, bossSpawnRetryDelay)
+        );
+
+        // A position can be temporarily unavailable because the playable area
+        // or player has not settled yet. One failed sample must not permanently
+        // lock the final sector without a boss.
+        while (isActiveAndEnabled && !SpawnBossObject())
+            yield return retryDelay;
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

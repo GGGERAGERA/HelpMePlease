@@ -16,8 +16,17 @@ public class RunResultView : MonoBehaviour
         LocalizationService localization =
             LocalizationService.EnsureExists();
 
-        int kills = RunStatsManager.Instance != null ? RunStatsManager.Instance.Kills : 0;
-        float time = RunStatsManager.Instance != null ? RunStatsManager.Instance.RunTime : 0f;
+        RunStateManager runState = RunStateManager.Instance;
+        int kills = runState != null
+            ? runState.GetCurrentRunKills()
+            : RunStatsManager.Instance != null
+                ? RunStatsManager.Instance.Kills
+                : 0;
+        float time = runState != null
+            ? runState.GetCurrentRunTime()
+            : RunStatsManager.Instance != null
+                ? RunStatsManager.Instance.RunTime
+                : 0f;
         int level = ExperienceManager.Instance != null ? ExperienceManager.Instance.currentLevel : 1;
 
 
@@ -25,8 +34,8 @@ public class RunResultView : MonoBehaviour
         RunEndReason endReason = victory
             ? RunEndReason.ReturnedToBunker
             : RunEndReason.PlayerDied;
-        int runGold = RunStateManager.Instance != null
-            ? RunStateManager.Instance.GetCurrentGoldReward(endReason)
+        int runGold = runState != null
+            ? runState.GetCurrentGoldReward(endReason)
             : 0;
 
         HUDManager.Instance?.SetCurrentRunCurrency(runGold);

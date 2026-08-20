@@ -27,6 +27,14 @@ public class EnemyShooterMovement : EnemyMovement
     private float anomalySpeedMultiplier = 1f;
     private float worldRuleSpeedMultiplier = 1f;
     private Vector2 worldRuleExternalVelocity;
+    private SimplePrefabPool projectilePool;
+
+    public GameObject ProjectilePrefab => projectilePrefab;
+
+    public void SetProjectilePool(SimplePrefabPool pool)
+    {
+        projectilePool = pool;
+    }
 
     private void Awake()
     {
@@ -125,12 +133,23 @@ public class EnemyShooterMovement : EnemyMovement
 
         Vector2 direction = ((Vector2)player.position - (Vector2)firePoint.position).normalized;
 
-        GameObject projectile = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
-
-        EnemyProjectile enemyProjectile = projectile.GetComponent<EnemyProjectile>();
+        PooledGameObject pooled = projectilePool?.Get(
+            firePoint.position,
+            Quaternion.identity);
+        GameObject projectile = pooled != null
+            ? pooled.gameObject
+            : Instantiate(
+                projectilePrefab,
+                firePoint.position,
+                Quaternion.identity);
+        EnemyProjectile enemyProjectile = pooled != null
+            ? pooled.EnemyProjectile
+            : projectile.GetComponent<EnemyProjectile>();
 
         if (enemyProjectile != null)
             enemyProjectile.Initialize(direction);
+        else if (pooled == null || !pooled.Release())
+            Destroy(projectile);
     }
 
     public override void SetSpeedMultiplier(float multiplier)
