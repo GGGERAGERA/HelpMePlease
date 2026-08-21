@@ -80,6 +80,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
     [SerializeField] private GameplayAreaService gameplayArea;
 
     [Header("Production Anomaly Focus")]
+    [SerializeField] private SpriteRenderer focusOverlayPrefab;
     [SerializeField] private bool anomalyFocusEnabled = true;
     [SerializeField, Range(0f, 1f)] private float outsideDarkness = 1f;
     [SerializeField, Range(0f, 1f)] private float outsideDesaturation;
@@ -95,10 +96,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
     private Transform focusPlayer;
     private LocalAnomalyZone focusedZone;
     private SpriteRenderer focusOverlay;
-    private Material focusMaterial;
     private MaterialPropertyBlock focusProperties;
-    private Texture2D focusTexture;
-    private Sprite focusSprite;
     private float focusAmount;
     private Bounds focusBounds;
     private bool hasFocusGeometry;
@@ -319,36 +317,18 @@ public sealed class LevelAnomalyController : MonoBehaviour
         if (focusOverlay != null)
             return;
 
-        Material source = Resources.Load<Material>("AnomalyFocus");
-        if (source == null)
+        if (focusOverlayPrefab == null)
+        {
+            Debug.LogError(
+                "[LevelAnomalyController] Focus overlay prefab is not assigned.",
+                this);
             return;
+        }
 
-        focusMaterial = new Material(source)
-        {
-            name = "Anomaly Focus Runtime Material"
-        };
         focusProperties = new MaterialPropertyBlock();
-        focusTexture = new Texture2D(1, 1)
-        {
-            name = "Anomaly Focus Pixel",
-            hideFlags = HideFlags.HideAndDontSave
-        };
-        focusTexture.SetPixel(0, 0, Color.white);
-        focusTexture.Apply();
-        focusSprite = Sprite.Create(
-            focusTexture,
-            new Rect(0f, 0f, 1f, 1f),
-            new Vector2(0.5f, 0.5f),
-            1f
-        );
-
-        GameObject overlay = new("Production Anomaly Focus");
-        overlay.transform.SetParent(transform, false);
-        focusOverlay = overlay.AddComponent<SpriteRenderer>();
-        focusOverlay.sprite = focusSprite;
-        focusOverlay.sharedMaterial = focusMaterial;
-        focusOverlay.sortingLayerName = "Default";
-        focusOverlay.sortingOrder = 30000;
+        focusOverlay = Instantiate(focusOverlayPrefab, transform);
+        focusOverlay.name = focusOverlayPrefab.name;
+        focusOverlay.enabled = false;
     }
 
     public void Apply(LocalAnomalyData anomaly)
@@ -843,13 +823,4 @@ public sealed class LevelAnomalyController : MonoBehaviour
             Instance = null;
     }
 
-    private void OnDestroy()
-    {
-        if (focusMaterial != null)
-            Destroy(focusMaterial);
-        if (focusSprite != null)
-            Destroy(focusSprite);
-        if (focusTexture != null)
-            Destroy(focusTexture);
-    }
 }

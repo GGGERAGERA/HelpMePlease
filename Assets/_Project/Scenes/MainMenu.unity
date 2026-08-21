@@ -8660,6 +8660,8 @@ MonoBehaviour:
   shopUI: {fileID: 7464173497705637191}
   metaUpgradeShopUI: {fileID: 147915556}
   upgradeBackButton: {fileID: 977721241}
+  stationUpgradePanelPrefab: {fileID: 2926225604399824164, guid: 27a06037a1814de47ad313c276a4ba38, type: 3}
+  anomalyStabilizerPanelPrefab: {fileID: 2792533580210712542, guid: dd48b0dec57dbe048beb237d1be180d0, type: 3}
   runStarter: {fileID: 733148236}
 --- !u!4 &733148235
 Transform:

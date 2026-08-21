@@ -6,28 +6,72 @@ using UnityEngine.UI;
 
 public sealed class BunkerStationUpgradePanel : MonoBehaviour
 {
-    private static readonly Color PanelColor = new(0.025f, 0.04f, 0.055f, 0.96f);
     private static readonly Color Cyan = new(0.1f, 0.82f, 0.86f, 1f);
 
-    private GameObject canvasRoot;
-    private TextMeshProUGUI titleText;
-    private TextMeshProUGUI levelText;
-    private TextMeshProUGUI costText;
-    private TextMeshProUGUI unlocksText;
-    private TextMeshProUGUI goldText;
-    private Button upgradeButton;
-    private TextMeshProUGUI upgradeButtonText;
+    [Header("Prefab View")]
+    [SerializeField] private GameObject canvasRoot;
+    [SerializeField] private TextMeshProUGUI titleText;
+    [SerializeField] private TextMeshProUGUI levelText;
+    [SerializeField] private TextMeshProUGUI costText;
+    [SerializeField] private TextMeshProUGUI unlocksText;
+    [SerializeField] private TextMeshProUGUI goldText;
+    [SerializeField] private Button upgradeButton;
+    [SerializeField] private TextMeshProUGUI upgradeButtonText;
+    [SerializeField] private Button closeButton;
+    [SerializeField] private Button debugAddGoldButton;
+    [SerializeField] private Button debugResetButton;
     private BunkerStationId currentStationId;
     private Coroutine unlockFeedbackRoutine;
 
     public bool IsVisible => canvasRoot != null && canvasRoot.activeSelf;
 
+    private void Awake()
+    {
+        upgradeButton?.onClick.AddListener(Upgrade);
+        closeButton?.onClick.AddListener(Hide);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (debugAddGoldButton != null)
+        {
+            debugAddGoldButton.gameObject.SetActive(true);
+            debugAddGoldButton.onClick.AddListener(AddDebugGold);
+        }
+
+        if (debugResetButton != null)
+        {
+            debugResetButton.gameObject.SetActive(true);
+            debugResetButton.onClick.AddListener(ResetDebugLevels);
+        }
+#else
+        if (debugAddGoldButton != null)
+            debugAddGoldButton.gameObject.SetActive(false);
+        if (debugResetButton != null)
+            debugResetButton.gameObject.SetActive(false);
+#endif
+    }
+
     private void OnDisable() => UnbindEvents();
-    private void OnDestroy() => UnbindEvents();
+    private void OnDestroy()
+    {
+        UnbindEvents();
+        upgradeButton?.onClick.RemoveListener(Upgrade);
+        closeButton?.onClick.RemoveListener(Hide);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        debugAddGoldButton?.onClick.RemoveListener(AddDebugGold);
+        debugResetButton?.onClick.RemoveListener(ResetDebugLevels);
+#endif
+    }
 
     public void Show(BunkerStationId stationId)
     {
-        EnsureUi();
+        if (canvasRoot == null)
+        {
+            Debug.LogError(
+                "[BunkerStationUpgradePanel] Prefab view is not assigned.",
+                this);
+            return;
+        }
+
         currentStationId = stationId;
         canvasRoot.SetActive(true);
         BindEvents();
@@ -139,102 +183,11 @@ public sealed class BunkerStationUpgradePanel : MonoBehaviour
             Refresh();
     }
 
-    private void EnsureUi()
-    {
-        if (canvasRoot != null)
-            return;
-
-        canvasRoot = new GameObject("StationProgressionCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-        canvasRoot.transform.SetParent(transform, false);
-        Canvas canvas = canvasRoot.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 300;
-
-        CanvasScaler scaler = canvasRoot.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-        scaler.matchWidthOrHeight = 0.5f;
-
-        GameObject panel = CreateUiObject("Panel", canvasRoot.transform, typeof(Image));
-        RectTransform panelRect = panel.GetComponent<RectTransform>();
-        panelRect.anchorMin = panelRect.anchorMax = panelRect.pivot = Vector2.one;
-        panelRect.anchoredPosition = new Vector2(-28f, -28f);
-        panelRect.sizeDelta = new Vector2(360f, 380f);
-        panel.GetComponent<Image>().color = PanelColor;
-
-        titleText = CreateText(panel.transform, "Title", new Vector2(24f, -22f), new Vector2(250f, 36f), 25f, Cyan);
-        levelText = CreateText(panel.transform, "Level", new Vector2(24f, -68f), new Vector2(312f, 32f), 21f, Color.white);
-        costText = CreateText(panel.transform, "Cost", new Vector2(24f, -110f), new Vector2(312f, 32f), 18f, Color.white);
-        unlocksText = CreateText(panel.transform, "Unlocks", new Vector2(24f, -154f), new Vector2(312f, 94f), 17f, new Color(0.82f, 0.88f, 0.9f));
-        goldText = CreateText(panel.transform, "Gold", new Vector2(24f, -258f), new Vector2(180f, 28f), 17f, Color.white);
-
-        upgradeButton = CreateButton(panel.transform, "UpgradeButton", new Vector2(24f, -300f), new Vector2(200f, 52f), Cyan, out upgradeButtonText);
-        upgradeButton.onClick.AddListener(Upgrade);
-
-        Button closeButton = CreateButton(panel.transform, "CloseButton", new Vector2(286f, -12f), new Vector2(50f, 40f), new Color(0.18f, 0.23f, 0.26f), out TextMeshProUGUI closeText);
-        closeText.text = "×";
-        closeButton.onClick.AddListener(Hide);
-
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Button addGoldButton = CreateButton(panel.transform, "DebugGold", new Vector2(232f, -300f), new Vector2(104f, 24f), new Color(0.15f, 0.18f, 0.2f), out TextMeshProUGUI addGoldText);
-        addGoldText.fontSize = 11f;
-        addGoldText.text = "+1000 GOLD";
-        addGoldButton.onClick.AddListener(() => BunkerStationProgressionService.Instance?.DebugAddGold());
-        Button resetButton = CreateButton(panel.transform, "DebugReset", new Vector2(232f, -328f), new Vector2(104f, 24f), new Color(0.15f, 0.18f, 0.2f), out TextMeshProUGUI resetText);
-        resetText.fontSize = 10f;
-        resetText.text = "RESET LEVELS";
-        resetButton.onClick.AddListener(() => BunkerStationProgressionService.Instance?.DebugResetStationLevels());
+    private static void AddDebugGold() =>
+        BunkerStationProgressionService.Instance?.DebugAddGold();
+
+    private static void ResetDebugLevels() =>
+        BunkerStationProgressionService.Instance?.DebugResetStationLevels();
 #endif
-        canvasRoot.SetActive(false);
-    }
-
-    private static GameObject CreateUiObject(string name, Transform parent, params System.Type[] components)
-    {
-        GameObject result = new(name, typeof(RectTransform));
-        result.transform.SetParent(parent, false);
-        foreach (System.Type component in components)
-            if (component != typeof(RectTransform))
-                result.AddComponent(component);
-        return result;
-    }
-
-    private static TextMeshProUGUI CreateText(Transform parent, string name, Vector2 position, Vector2 size, float fontSize, Color color)
-    {
-        GameObject go = CreateUiObject(name, parent, typeof(TextMeshProUGUI));
-        RectTransform rect = go.GetComponent<RectTransform>();
-        rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f);
-        rect.pivot = new Vector2(0f, 1f);
-        rect.anchoredPosition = position;
-        rect.sizeDelta = size;
-        TextMeshProUGUI text = go.GetComponent<TextMeshProUGUI>();
-        text.font = TMP_Settings.defaultFontAsset;
-        text.fontSize = fontSize;
-        text.color = color;
-        text.alignment = TextAlignmentOptions.MidlineLeft;
-        return text;
-    }
-
-    private static Button CreateButton(Transform parent, string name, Vector2 position, Vector2 size, Color color, out TextMeshProUGUI label)
-    {
-        GameObject go = CreateUiObject(name, parent, typeof(Image), typeof(Button));
-        RectTransform rect = go.GetComponent<RectTransform>();
-        rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f);
-        rect.pivot = new Vector2(0f, 1f);
-        rect.anchoredPosition = position;
-        rect.sizeDelta = size;
-        Image image = go.GetComponent<Image>();
-        image.color = color;
-        Button button = go.GetComponent<Button>();
-        button.targetGraphic = image;
-        label = CreateText(go.transform, "Label", Vector2.zero, size, 16f, Color.white);
-        RectTransform labelRect = label.rectTransform;
-        labelRect.anchorMin = Vector2.zero;
-        labelRect.anchorMax = Vector2.one;
-        labelRect.pivot = new Vector2(0.5f, 0.5f);
-        labelRect.anchoredPosition = Vector2.zero;
-        labelRect.sizeDelta = Vector2.zero;
-        label.alignment = TextAlignmentOptions.Center;
-        label.raycastTarget = false;
-        return button;
-    }
 }

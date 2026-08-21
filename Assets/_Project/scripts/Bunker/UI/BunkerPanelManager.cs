@@ -12,6 +12,12 @@ public sealed class BunkerPanelManager : MonoBehaviour
     [SerializeField] private MetaUpgradeShopUI metaUpgradeShopUI;
     [SerializeField] private Button upgradeBackButton;
 
+    [Header("Prefab-Driven Station Panels")]
+    [SerializeField] private GameObject
+        stationUpgradePanelPrefab;
+    [SerializeField] private GameObject
+        anomalyStabilizerPanelPrefab;
+
     private BunkerStationUpgradePanel stationUpgradePanel;
     private BunkerAnomalyStabilizerPanel anomalyStabilizerPanel;
 
@@ -26,14 +32,55 @@ public sealed class BunkerPanelManager : MonoBehaviour
 
     private void Awake()
     {
-        stationUpgradePanel = GetComponent<BunkerStationUpgradePanel>();
-        if (stationUpgradePanel == null)
-            stationUpgradePanel = gameObject.AddComponent<BunkerStationUpgradePanel>();
+        if (stationUpgradePanelPrefab != null)
+        {
+            GameObject stationPanelObject = Instantiate(
+                stationUpgradePanelPrefab,
+                transform);
+            stationPanelObject.name = stationUpgradePanelPrefab.name;
+            stationUpgradePanel =
+                stationPanelObject.GetComponent<BunkerStationUpgradePanel>();
+            if (stationUpgradePanel == null)
+            {
+                Debug.LogError(
+                    "[BunkerPanelManager] StationUpgradePanel prefab has " +
+                    "no BunkerStationUpgradePanel component.",
+                    stationPanelObject);
+            }
+        }
+        else
+        {
+            Debug.LogError(
+                "[BunkerPanelManager] StationUpgradePanel prefab is not assigned.",
+                this);
+        }
 
-        anomalyStabilizerPanel = GetComponent<BunkerAnomalyStabilizerPanel>();
-        if (anomalyStabilizerPanel == null)
-            anomalyStabilizerPanel = gameObject.AddComponent<BunkerAnomalyStabilizerPanel>();
-        anomalyStabilizerPanel.Configure(this);
+        if (anomalyStabilizerPanelPrefab != null)
+        {
+            GameObject stabilizerPanelObject = Instantiate(
+                anomalyStabilizerPanelPrefab,
+                transform);
+            stabilizerPanelObject.name = anomalyStabilizerPanelPrefab.name;
+            anomalyStabilizerPanel = stabilizerPanelObject
+                .GetComponent<BunkerAnomalyStabilizerPanel>();
+            if (anomalyStabilizerPanel != null)
+            {
+                anomalyStabilizerPanel.Configure(this);
+            }
+            else
+            {
+                Debug.LogError(
+                    "[BunkerPanelManager] AnomalyStabilizerPanel prefab has " +
+                    "no BunkerAnomalyStabilizerPanel component.",
+                    stabilizerPanelObject);
+            }
+        }
+        else
+        {
+            Debug.LogError(
+                "[BunkerPanelManager] AnomalyStabilizerPanel prefab is not assigned.",
+                this);
+        }
 
         if (upgradeBackButton != null)
             upgradeBackButton.onClick.AddListener(CloseAll);
