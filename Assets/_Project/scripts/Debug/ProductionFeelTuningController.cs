@@ -54,6 +54,8 @@ public sealed class ProductionFeelTuningController : MonoBehaviour
     private float deathPunchStrength;
     private float deathPunchDuration;
 
+    public CombatFeelLabSettings Lab { get; } = new();
+
     public Preset CurrentPreset { get; private set; } = Preset.Production;
     public bool HasWeaponFx => weapons.Length > 0;
     public bool HasHitFlash => flashes.Length > 0;
@@ -391,11 +393,16 @@ public sealed class ProductionFeelTuningController : MonoBehaviour
         ResetCamera();
         ResetMovement();
         ResetPhysicalFeedback();
+        Lab.ResetAll();
         CurrentPreset = Preset.Production;
     }
 
     public string GetValuesText()
     {
+        string advanced = Lab.GetCompactConfig();
+        if (advanced != "COMBAT FEEL CONFIG")
+            return advanced;
+
         StringBuilder result = new();
         result.AppendLine("FEEL");
         if (HasWeaponFx)

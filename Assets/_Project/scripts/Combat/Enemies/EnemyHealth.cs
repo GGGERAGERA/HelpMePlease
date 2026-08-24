@@ -53,6 +53,8 @@ public class EnemyHealth : MonoBehaviour
     private bool isDead;
     public bool IsDead => isDead;
     public bool IsBoss => isBoss;
+    public float CurrentHealth => currentHealth;
+    public float MaxHealth => maxHealth;
 
     private EnemyWhiteFlash whiteFlash;
     private EnemyIdentity identity;

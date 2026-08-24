@@ -369,6 +369,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         true, true, true, false, true, true
     };
+    private CombatFeelGroup selectedFeelLabGroup = CombatFeelGroup.Global;
 
     private readonly Color panelColor = new(0.035f, 0.045f, 0.06f, 0.97f);
     private readonly Color rowColor = new(0.09f, 0.11f, 0.145f, 0.95f);
@@ -5124,6 +5125,13 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         }
 
         tuning.Configure();
+        AddAdvancedCombatFeelLab(tuning);
+    }
+
+    // Retained as a compact reference for the previous production-field view.
+    // Advanced Combat Feel Lab intentionally uses neutral runtime deltas instead.
+    private void AddLegacyInteractiveFeelLab(ProductionFeelTuningController tuning)
+    {
         AddVisualStatusLine("● LIVE   Existing production parameters");
         AddFeelPresetStrip(tuning);
 
@@ -5263,6 +5271,207 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             }
             AddHint("MISSING: independent direction-change responsiveness.");
         }
+    }
+
+    private void AddAdvancedCombatFeelLab(ProductionFeelTuningController tuning)
+    {
+        CombatFeelLabSettings lab = tuning.Lab;
+        AddSectionTitle("COMBAT FEEL LAB",
+            "INPUT → ANTICIPATION → SHOT → PROJECTILE → HIT → TARGET → KILL → CROWD");
+        AddVisualStatusLine("● LIVE RUNTIME OVERRIDES   Production defaults remain untouched");
+        AddFeelGroupTabs();
+        AddFeelCharacterPresets(lab);
+        AddFeelExperimentActions(lab);
+        AddFeelGroupControls(lab);
+
+        IReadOnlyList<CombatFeelDescriptor> descriptors =
+            CombatFeelLabSettings.Descriptors;
+        for (int i = 0; i < descriptors.Count; i++)
+        {
+            CombatFeelDescriptor descriptor = descriptors[i];
+            if (descriptor.Group != selectedFeelLabGroup) continue;
+            AddFeelParameterRow(lab, descriptor);
+        }
+    }
+
+    private void AddFeelGroupTabs()
+    {
+        CombatFeelGroup[] groups = (CombatFeelGroup[])System.Enum.GetValues(
+            typeof(CombatFeelGroup));
+        for (int rowIndex = 0; rowIndex < 2; rowIndex++)
+        {
+            RectTransform row = CreateRect("Feel Group Tabs", contentRoot);
+            row.gameObject.AddComponent<LayoutElement>().preferredHeight = 29f;
+            int start = rowIndex * 5;
+            for (int i = 0; i < 5; i++)
+            {
+                CombatFeelGroup group = groups[start + i];
+                int index = i;
+                Button button = CreateButton(row,
+                    group.ToString().ToUpperInvariant(), () =>
+                    {
+                        selectedFeelLabGroup = group;
+                        RefreshCurrentTab();
+                    }, 90f);
+                RectTransform rect = button.GetComponent<RectTransform>();
+                rect.anchorMin = new Vector2(index / 5f, 0f);
+                rect.anchorMax = new Vector2((index + 1) / 5f, 1f);
+                rect.offsetMin = new Vector2(2f, 2f);
+                rect.offsetMax = new Vector2(-2f, -2f);
+                if (selectedFeelLabGroup == group &&
+                    button.targetGraphic is Image image)
+                    image.color = accentColor;
+                TextMeshProUGUI text = button.GetComponentInChildren<TextMeshProUGUI>();
+                if (text != null) text.fontSize = 9f;
+            }
+        }
+    }
+
+    private void AddFeelCharacterPresets(CombatFeelLabSettings lab)
+    {
+        RectTransform row = CreateRect("Character Presets", contentRoot);
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 30f;
+        CombatFeelLabSettings.CharacterPreset[] presets =
+            (CombatFeelLabSettings.CharacterPreset[])System.Enum.GetValues(
+                typeof(CombatFeelLabSettings.CharacterPreset));
+        for (int i = 0; i < presets.Length; i++)
+        {
+            CombatFeelLabSettings.CharacterPreset preset = presets[i];
+            int index = i;
+            Button button = CreateButton(row, preset.ToString().ToUpperInvariant(), () =>
+            {
+                lab.ApplyCharacterPreset(preset);
+                RefreshCurrentTab();
+            }, 90f);
+            RectTransform rect = button.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(index / 5f, 0f);
+            rect.anchorMax = new Vector2((index + 1) / 5f, 1f);
+            rect.offsetMin = new Vector2(2f, 2f);
+            rect.offsetMax = new Vector2(-2f, -2f);
+            TextMeshProUGUI text = button.GetComponentInChildren<TextMeshProUGUI>();
+            if (text != null) text.fontSize = 9f;
+        }
+    }
+
+    private void AddFeelExperimentActions(CombatFeelLabSettings lab)
+    {
+        string[] labels = { "SAVE A", "LOAD A", "SAVE B", "LOAD B", "RANDOMIZE", "UNDO" };
+        System.Action[] actions =
+        {
+            lab.SaveA, () => lab.LoadA(), lab.SaveB, () => lab.LoadB(),
+            () => lab.Randomize(selectedFeelLabGroup), () => lab.UndoRandomize()
+        };
+        RectTransform row = CreateRect("A B Randomize", contentRoot);
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 30f;
+        for (int i = 0; i < labels.Length; i++)
+        {
+            int index = i;
+            Button button = CreateButton(row, labels[i], () =>
+            {
+                actions[index]();
+                RefreshCurrentTab();
+            }, 76f, i != 1 || lab.HasA);
+            if (i == 3) button.interactable = lab.HasB;
+            if (i == 5) button.interactable = lab.CanUndoRandomize;
+            RectTransform rect = button.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(index / 6f, 0f);
+            rect.anchorMax = new Vector2((index + 1) / 6f, 1f);
+            rect.offsetMin = new Vector2(2f, 2f);
+            rect.offsetMax = new Vector2(-2f, -2f);
+            TextMeshProUGUI text = button.GetComponentInChildren<TextMeshProUGUI>();
+            if (text != null) text.fontSize = 9f;
+        }
+    }
+
+    private void AddFeelGroupControls(CombatFeelLabSettings lab)
+    {
+        RectTransform row = CreateRect("Group Presets", contentRoot);
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 30f;
+        CombatFeelLabSettings.GroupPreset[] presets =
+            (CombatFeelLabSettings.GroupPreset[])System.Enum.GetValues(
+                typeof(CombatFeelLabSettings.GroupPreset));
+        for (int i = 0; i < presets.Length; i++)
+        {
+            CombatFeelLabSettings.GroupPreset preset = presets[i];
+            int index = i;
+            Button button = CreateButton(row, preset.ToString().ToUpperInvariant(), () =>
+            {
+                lab.ApplyGroupPreset(selectedFeelLabGroup, preset);
+                RefreshCurrentTab();
+            }, 70f);
+            RectTransform rect = button.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(index / 7f, 0f);
+            rect.anchorMax = new Vector2((index + 1) / 7f, 1f);
+            rect.offsetMin = new Vector2(2f, 2f);
+            rect.offsetMax = new Vector2(-2f, -2f);
+        }
+        Button solo = CreateButton(row,
+            lab.SoloGroup == selectedFeelLabGroup ? "UNSOLO" : "SOLO", () =>
+            {
+                lab.ToggleSolo(selectedFeelLabGroup);
+                RefreshCurrentTab();
+            }, 70f);
+        RectTransform soloRect = solo.GetComponent<RectTransform>();
+        soloRect.anchorMin = new Vector2(5f / 7f, 0f);
+        soloRect.anchorMax = new Vector2(6f / 7f, 1f);
+        soloRect.offsetMin = new Vector2(2f, 2f);
+        soloRect.offsetMax = new Vector2(-2f, -2f);
+        Button reset = CreateButton(row, "RESET GROUP", () =>
+        {
+            lab.ResetGroup(selectedFeelLabGroup);
+            RefreshCurrentTab();
+        }, 80f);
+        RectTransform resetRect = reset.GetComponent<RectTransform>();
+        resetRect.anchorMin = new Vector2(6f / 7f, 0f);
+        resetRect.anchorMax = Vector2.one;
+        resetRect.offsetMin = new Vector2(2f, 2f);
+        resetRect.offsetMax = new Vector2(-2f, -2f);
+    }
+
+    private void AddFeelParameterRow(
+        CombatFeelLabSettings lab, CombatFeelDescriptor descriptor)
+    {
+        if (descriptor.Toggle)
+        {
+            AddToggleRow(descriptor.Name,
+                lab.GetRaw(descriptor.Parameter) >= .5f, true, () =>
+                {
+                    lab.Set(descriptor.Parameter,
+                        lab.GetRaw(descriptor.Parameter) >= .5f ? 0f : 1f);
+                    RefreshCurrentTab();
+                });
+        }
+        else
+        {
+            float range = descriptor.Maximum - descriptor.Minimum;
+            string format = range <= .5f ? "0.000" : range <= 10f ? "0.00" : "0.0";
+            AddSliderRow(descriptor.Name, lab.GetRaw(descriptor.Parameter),
+                descriptor.Minimum, descriptor.Maximum,
+                value => lab.Set(descriptor.Parameter, value), format);
+        }
+
+        RectTransform row = contentRoot.GetChild(contentRoot.childCount - 1)
+            as RectTransform;
+        if (row != null)
+        {
+            Transform value = row.Find("Value");
+            if (value is RectTransform valueRect)
+                valueRect.offsetMax = new Vector2(-48f, valueRect.offsetMax.y);
+            Button reset = CreateButton(row, "↺", () =>
+            {
+                lab.Reset(descriptor.Parameter);
+                RefreshCurrentTab();
+            }, 34f, !lab.IsNeutral(descriptor.Parameter));
+            RectTransform resetRect = reset.GetComponent<RectTransform>();
+            resetRect.anchorMin = resetRect.anchorMax = new Vector2(1f, .5f);
+            resetRect.pivot = new Vector2(1f, .5f);
+            resetRect.anchoredPosition = new Vector2(-5f, 0f);
+            resetRect.sizeDelta = new Vector2(34f, 20f);
+            TextMeshProUGUI resetText = reset.GetComponentInChildren<TextMeshProUGUI>();
+            if (resetText != null) resetText.fontSize = 12f;
+        }
+        if (!string.IsNullOrWhiteSpace(descriptor.Tooltip))
+            AddHint("ⓘ " + descriptor.Tooltip);
     }
 
     private void AddFeelPresetStrip(ProductionFeelTuningController tuning)

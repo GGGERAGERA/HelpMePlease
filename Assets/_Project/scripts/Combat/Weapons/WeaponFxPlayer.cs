@@ -74,30 +74,49 @@ public sealed class WeaponFxPlayer : MonoBehaviour
 
     public void PlayFire(Vector2 position, Vector2 direction)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        PhysicalCombatFeedbackRuntime.NotifyWeaponFired(this, direction);
-#endif
-        SpawnParticle(
+        GameObject spawned = SpawnParticle(
             muzzlePool,
             muzzleFxPrefab,
             position,
             direction,
-            muzzleFxLifetime);
+            muzzleFxLifetime
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            * PhysicalCombatFeedbackRuntime.GetLabValue(
+                CombatFeelParameter.MuzzleDuration)
+#endif
+            );
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        PhysicalCombatFeedbackRuntime.ConfigureSpawnedEffect(
+            spawned, true, direction);
+#endif
 
         CameraShake.Instance?.Shake(
             fireShakeDuration,
             fireShakeMagnitude
         );
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Run additive debug response last so production shake cannot replace it.
+        PhysicalCombatFeedbackRuntime.NotifyWeaponFired(this, direction);
+#endif
     }
 
     public void PlayHit(Vector2 position, Vector2 normalDirection, bool isCritical)
     {
-        SpawnParticle(
+        GameObject spawned = SpawnParticle(
             impactPool,
             impactFxPrefab,
             position,
             normalDirection,
-            impactFxLifetime);
+            impactFxLifetime
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            * PhysicalCombatFeedbackRuntime.GetLabValue(
+                CombatFeelParameter.ImpactLifetime)
+#endif
+            );
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        PhysicalCombatFeedbackRuntime.ConfigureSpawnedEffect(
+            spawned, false, normalDirection);
+#endif
 
         CameraShake.Instance?.Shake(
             isCritical ? critShakeDuration : hitShakeDuration,
@@ -105,7 +124,7 @@ public sealed class WeaponFxPlayer : MonoBehaviour
         );
     }
 
-    private void SpawnParticle(
+    private GameObject SpawnParticle(
         SimplePrefabPool effectPool,
         GameObject prefab,
         Vector2 position,
@@ -114,7 +133,7 @@ public sealed class WeaponFxPlayer : MonoBehaviour
     )
     {
         if (prefab == null)
-            return;
+            return null;
 
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
 
@@ -124,11 +143,12 @@ public sealed class WeaponFxPlayer : MonoBehaviour
         if (pooled != null)
         {
             pooled.ReleaseAfter(lifetime);
-            return;
+            return pooled.gameObject;
         }
 
         GameObject fx = Instantiate(prefab, position, rotation);
         Destroy(fx, lifetime);
+        return fx;
     }
 
     private void OnDestroy()
