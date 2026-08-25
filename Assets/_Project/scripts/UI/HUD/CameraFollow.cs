@@ -22,6 +22,11 @@ public class CameraFollow : MonoBehaviour
     private float productionOrthographicSize;
     private float debugOrthographicSize = -1f;
     private bool productionOrthographicSizeCaptured;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private Vector3 mouseLookAheadOffset;
+    private Vector3 appliedMouseLookAheadOffset;
+    public Vector3 DebugMouseLookAheadOffset => mouseLookAheadOffset;
+#endif
 
     private Object worldBoundsOwner;
     private Vector3 worldBoundsRootPosition;
@@ -97,8 +102,14 @@ public class CameraFollow : MonoBehaviour
 
     private void LateUpdate()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        RemoveMouseLookAheadLayer();
+#endif
         if (hasWorldBoundsFocus)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            mouseLookAheadOffset = Vector3.zero;
+#endif
             transform.position = worldBoundsRootPosition;
             if (controlledCamera != null && controlledCamera.orthographic)
                 controlledCamera.orthographicSize = worldBoundsOrthographicSize;
@@ -122,8 +133,86 @@ public class CameraFollow : MonoBehaviour
             transform.position = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        UpdateMouseLookAheadLayer();
+#endif
+
         ApplyFocusZoom();
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private void UpdateMouseLookAheadLayer()
+    {
+        ResolveCamera();
+        bool enabled = PhysicalCombatFeedbackRuntime.GetLabValue(
+            CombatFeelParameter.MouseLookAhead) >= .5f;
+        bool neutralize = !enabled || target == null || controlledCamera == null ||
+            Subject42DebugMenu.IsDebugMenuOpen;
+        Vector3 targetOffset = Vector3.zero;
+        if (!neutralize)
+        {
+            Vector2 screenSignal = EvaluateMouseLookAheadSignal(
+                Input.mousePosition,
+                new Vector2(Screen.width, Screen.height),
+                PhysicalCombatFeedbackRuntime.GetLabValue(
+                    CombatFeelParameter.LookAheadDeadZone),
+                PhysicalCombatFeedbackRuntime.GetLabValue(
+                    CombatFeelParameter.MaxScreenFraction),
+                PhysicalCombatFeedbackRuntime.GetLabValue(
+                    CombatFeelParameter.LookAheadCurve));
+            float distance = PhysicalCombatFeedbackRuntime.GetLabValue(
+                CombatFeelParameter.LookAheadDistance);
+            float horizontal = PhysicalCombatFeedbackRuntime.GetLabValue(
+                CombatFeelParameter.HorizontalStrength);
+            float vertical = PhysicalCombatFeedbackRuntime.GetLabValue(
+                CombatFeelParameter.VerticalStrength);
+            targetOffset = controlledCamera.transform.right *
+                    (screenSignal.x * distance * horizontal) +
+                controlledCamera.transform.up *
+                    (screenSignal.y * distance * vertical);
+            targetOffset.z = 0f;
+        }
+
+        bool returning = targetOffset.sqrMagnitude < mouseLookAheadOffset.sqrMagnitude &&
+            Vector3.Dot(targetOffset, mouseLookAheadOffset) >= 0f;
+        float speed = PhysicalCombatFeedbackRuntime.GetLabValue(returning || neutralize
+            ? CombatFeelParameter.LookAheadReturn
+            : CombatFeelParameter.LookAheadResponse);
+        float deltaTime = Time.unscaledDeltaTime;
+        float blend = 1f - Mathf.Exp(-Mathf.Max(.01f, speed) * deltaTime);
+        mouseLookAheadOffset += (targetOffset - mouseLookAheadOffset) * blend;
+        if ((targetOffset - mouseLookAheadOffset).sqrMagnitude < .000001f)
+            mouseLookAheadOffset = targetOffset;
+        appliedMouseLookAheadOffset = mouseLookAheadOffset;
+        transform.position += appliedMouseLookAheadOffset;
+    }
+
+    private void RemoveMouseLookAheadLayer()
+    {
+        if (appliedMouseLookAheadOffset == Vector3.zero) return;
+        transform.position -= appliedMouseLookAheadOffset;
+        appliedMouseLookAheadOffset = Vector3.zero;
+    }
+
+    public static Vector2 EvaluateMouseLookAheadSignal(
+        Vector2 mousePosition, Vector2 screenSize, float deadZoneFraction,
+        float maxScreenFraction, float exponent)
+    {
+        if (screenSize.x <= 1f || screenSize.y <= 1f) return Vector2.zero;
+        Vector2 center = screenSize * .5f;
+        Vector2 delta = mousePosition - center;
+        float distance = delta.magnitude;
+        float halfShortSide = Mathf.Min(screenSize.x, screenSize.y) * .5f;
+        float deadPixels = Mathf.Clamp01(deadZoneFraction) * halfShortSide;
+        if (distance <= deadPixels || distance <= .001f) return Vector2.zero;
+        float saturationPixels = Mathf.Max(deadPixels + 1f,
+            Mathf.Clamp(maxScreenFraction, .01f, 1f) * halfShortSide);
+        float linear = Mathf.Clamp01((distance - deadPixels) /
+            (saturationPixels - deadPixels));
+        float shaped = Mathf.Pow(linear, Mathf.Clamp(exponent, .1f, 8f));
+        return delta / distance * shaped;
+    }
+#endif
 
     public void BeginTemporaryFocus(
         Object owner,
@@ -270,6 +359,10 @@ public class CameraFollow : MonoBehaviour
 
     private void OnDisable()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        RemoveMouseLookAheadLayer();
+        mouseLookAheadOffset = Vector3.zero;
+#endif
         EndWorldBoundsFocus(worldBoundsOwner);
         RestoreNormalZoom();
         hasFocusSession = false;

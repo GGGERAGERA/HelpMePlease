@@ -82,11 +82,11 @@ public sealed class CombatFeelLabSettingsTests
     public void AuditRegistryPartitionsAll209AndEveryUiParameterHasConsumer()
     {
         Array parameters = Enum.GetValues(typeof(CombatFeelParameter));
-        Assert.That(parameters.Length, Is.EqualTo(209));
+        Assert.That(parameters.Length, Is.EqualTo(218));
         Assert.That(CombatFeelConsumerRegistry.ParametersBeforeAudit, Is.EqualTo(209));
         Assert.That(CombatFeelConsumerRegistry.RemovedCount, Is.EqualTo(72));
         Assert.That(CombatFeelConsumerRegistry.FixedBrokenCount, Is.EqualTo(31));
-        Assert.That(CombatFeelLabSettings.Descriptors.Count, Is.EqualTo(137));
+        Assert.That(CombatFeelLabSettings.Descriptors.Count, Is.EqualTo(146));
         Assert.That(CombatFeelLabSettings.Descriptors.Count +
             CombatFeelConsumerRegistry.RemovedCount, Is.EqualTo(parameters.Length));
         HashSet<CombatFeelParameter> seen = new();
@@ -120,7 +120,7 @@ public sealed class CombatFeelLabSettingsTests
             Assert.That(float.IsNaN(m.Minimum) || float.IsInfinity(m.Minimum), Is.False);
             Assert.That(float.IsNaN(m.Maximum) || float.IsInfinity(m.Maximum), Is.False);
         }
-        Assert.That(seen.Count, Is.EqualTo(137));
+        Assert.That(seen.Count, Is.EqualTo(146));
         Assert.That(CombatFeelConsumerRegistry.WasRemoved(
             CombatFeelParameter.TrailLength), Is.True);
         StringAssert.Contains("REDUNDANT", CombatFeelConsumerRegistry.GetRemovalReason(
@@ -218,5 +218,36 @@ public sealed class CombatFeelLabSettingsTests
             Assert.That(cameraObject.transform.localPosition.y, Is.EqualTo(2.5f).Within(.001f));
         }
         finally { UnityEngine.Object.DestroyImmediate(cameraObject); }
+    }
+
+    [Test]
+    public void MouseLookAheadSignalUsesStableScreenSpaceDeadZoneAndSaturation()
+    {
+        Vector2 screen = new(1920f, 1080f);
+        Assert.That(CameraFollow.EvaluateMouseLookAheadSignal(
+            screen * .5f, screen, .1f, .65f, 1f), Is.EqualTo(Vector2.zero));
+        Assert.That(CameraFollow.EvaluateMouseLookAheadSignal(
+            screen * .5f + Vector2.right * 20f, screen, .1f, .65f, 1f),
+            Is.EqualTo(Vector2.zero));
+
+        Vector2 right = CameraFollow.EvaluateMouseLookAheadSignal(
+            new Vector2(1920f, 540f), screen, .1f, .65f, 1f);
+        Vector2 left = CameraFollow.EvaluateMouseLookAheadSignal(
+            new Vector2(0f, 540f), screen, .1f, .65f, 1f);
+        Assert.That(right.x, Is.EqualTo(1f).Within(.001f));
+        Assert.That(left.x, Is.EqualTo(-1f).Within(.001f));
+        Assert.That(right.y, Is.Zero.Within(.001f));
+    }
+
+    [Test]
+    public void HigherLookAheadExponentRespondsLessAtMidScreenDistance()
+    {
+        Vector2 screen = new(1920f, 1080f);
+        Vector2 mouse = screen * .5f + Vector2.right * 180f;
+        float linear = CameraFollow.EvaluateMouseLookAheadSignal(
+            mouse, screen, 0f, .65f, 1f).magnitude;
+        float delayed = CameraFollow.EvaluateMouseLookAheadSignal(
+            mouse, screen, 0f, .65f, 2f).magnitude;
+        Assert.That(delayed, Is.LessThan(linear));
     }
 }

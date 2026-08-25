@@ -88,7 +88,11 @@ public enum CombatFeelParameter
 
     HitVignette, KillVignette, ScreenBrightness, ScreenSaturation,
     LocalHitLight, LocalHitRadius, LocalHitIntensity, LocalHitLifetime,
-    PreFireDuration, PreFireGlow, PreFireCompression, PreFireAimEmphasis
+    PreFireDuration, PreFireGlow, PreFireCompression, PreFireAimEmphasis,
+
+    MouseLookAhead, LookAheadDistance, LookAheadResponse, LookAheadReturn,
+    LookAheadDeadZone, LookAheadCurve, HorizontalStrength, VerticalStrength,
+    MaxScreenFraction
 }
 
 public readonly struct CombatFeelConsumerDeclaration
@@ -198,6 +202,9 @@ public static class CombatFeelConsumerRegistry
             CombatFeelGroup.Kill => new(
                 "WeaponHitResolver/EnemyHealth.Die → PhysicalCombatFeedbackRuntime",
                 "отделённый death visual или presentation root цели"),
+            CombatFeelGroup.Camera when IsMouseLookAhead(parameter) => new(
+                "CameraFollow.LateUpdate → screen-space Mouse Look-Ahead layer",
+                "CameraFollow root presentation offset после normal follow"),
             CombatFeelGroup.Camera => new(
                 "PhysicalCombatFeedbackRuntime → CameraShake debug layer/Camera orthographicSize",
                 "presentation transform камеры или orthographic zoom"),
@@ -224,6 +231,13 @@ public static class CombatFeelConsumerRegistry
         CombatFeelGroup group) => group == CombatFeelGroup.Time || parameter is
         CombatFeelParameter.PhysicalRecoil or CombatFeelParameter.PlayerRecoilVelocity or
         CombatFeelParameter.MovementDamp or CombatFeelParameter.GlobalFreeze;
+
+    public static bool IsMouseLookAhead(CombatFeelParameter parameter) => parameter is
+        CombatFeelParameter.MouseLookAhead or CombatFeelParameter.LookAheadDistance or
+        CombatFeelParameter.LookAheadResponse or CombatFeelParameter.LookAheadReturn or
+        CombatFeelParameter.LookAheadDeadZone or CombatFeelParameter.LookAheadCurve or
+        CombatFeelParameter.HorizontalStrength or CombatFeelParameter.VerticalStrength or
+        CombatFeelParameter.MaxScreenFraction;
 }
 
 public readonly struct CombatFeelDescriptor
@@ -299,7 +313,10 @@ public sealed class CombatFeelParameterMetadata
         ["Shockwave"]="ударная волна", ["Rapid"]="серии", ["Window"]="окно", ["Gain"]="усиление",
         ["Decay"]="спад", ["Vignette"]="виньетка", ["Screen"]="экрана", ["Light"]="свет",
         ["Pre"]="пред", ["Compression"]="сжатие", ["Aim"]="прицел", ["Across"]="поперёк",
-        ["Along"]="вдоль", ["From"]="от", ["X"]="X", ["Y"]="Y", ["Normal"]="обычный"
+        ["Along"]="вдоль", ["From"]="от", ["X"]="X", ["Y"]="Y", ["Normal"]="обычный",
+        ["Mouse"]="мышью", ["Look"]="взгляд", ["Ahead"]="вперёд", ["Dead"]="мёртвая",
+        ["Zone"]="зона", ["Curve"]="кривая", ["Horizontal"]="горизонтальная",
+        ["Vertical"]="вертикальная", ["Fraction"]="доля"
     };
 
     public CombatFeelParameter Parameter { get; private set; }
@@ -420,6 +437,20 @@ public sealed class CombatFeelParameterMetadata
 
     private static string BuildRussianName(string technical)
     {
+        string authored = technical switch
+        {
+            "MouseLookAhead" => "Взгляд камеры за мышью",
+            "LookAheadDistance" => "Дистанция взгляда мышью",
+            "LookAheadResponse" => "Скорость реакции взгляда",
+            "LookAheadReturn" => "Скорость возврата взгляда",
+            "LookAheadDeadZone" => "Мёртвая зона взгляда",
+            "LookAheadCurve" => "Кривая реакции взгляда",
+            "HorizontalStrength" => "Горизонтальная сила взгляда",
+            "VerticalStrength" => "Вертикальная сила взгляда",
+            "MaxScreenFraction" => "Порог насыщения экрана",
+            _ => null
+        };
+        if (authored != null) return authored;
         List<string> tokens = Split(technical);
         StringBuilder result = new();
         for (int i = 0; i < tokens.Count; i++)
@@ -446,6 +477,9 @@ public sealed class CombatFeelParameterMetadata
     private static string GetUnit(string name, bool toggle)
     {
         if (toggle) return "вкл/выкл";
+        if (name == "LookAheadDistance") return "ед.";
+        if (name is "LookAheadResponse" or "LookAheadReturn") return "1/с";
+        if (name is "LookAheadDeadZone" or "MaxScreenFraction") return "% экрана";
         if (name is "MuzzleDuration" or "ImpactLifetime" or "TrailLifetime" or
             "CritPopupLifetime") return "×";
         if (name == "ProjectileSpin") return "°/с";
@@ -469,6 +503,8 @@ public sealed class CombatFeelParameterMetadata
 
     private static string BuildWhatToWatch(string name, CombatFeelGroup group)
     {
+        if (IsMouseLookAheadName(name))
+            return "Не стреляя, ведите курсор от центра к краям экрана и следите за положением игрока внутри кадра.";
         if (name.StartsWith("Weapon", StringComparison.Ordinal))
             return "Смотрите на спрайт оружия относительно fire point и рук персонажа.";
         if (name.StartsWith("Player", StringComparison.Ordinal))
@@ -494,6 +530,18 @@ public sealed class CombatFeelParameterMetadata
 
     private static string BuildEdgeMeaning(string name, CombatFeelGroup group, bool maximum)
     {
+        if (name == "LookAheadDistance")
+            return maximum ? "Намеренно огромное диагностическое смещение камеры."
+                : "Look-ahead не добавляет позиционного offset.";
+        if (name == "LookAheadDeadZone")
+            return maximum ? "Камера реагирует только далеко от центра экрана."
+                : "Камера реагирует на любое заметное движение мыши.";
+        if (name == "LookAheadCurve")
+            return maximum ? "Основное движение начинается только у края экрана."
+                : "Камера почти сразу набирает большую часть offset.";
+        if (name is "HorizontalStrength" or "VerticalStrength")
+            return maximum ? "Намеренно чрезмерное усиление выбранной оси."
+                : "Выбранная ось полностью отключена.";
         if (name.Contains("SlowdownScale"))
             return maximum ? "Мир сохраняет полную скорость: slow-motion практически отсутствует."
                 : "Самое сильное безопасное slow-motion, почти стоп-кадр.";
@@ -521,7 +569,25 @@ public sealed class CombatFeelParameterMetadata
     {
         string subject = GetGroupDescriptionRu(group).Split('.')[0].ToLowerInvariant();
         string increase;
-        if (name == "PhysicalRecoil")
+        if (name == "MouseLookAhead")
+            increase = "Включение добавляет presentation-offset камеры к normal follow; игрок, aim и projectile origin не перемещаются.";
+        else if (name == "LookAheadDistance")
+            increase = "Увеличение разрешает камере дальше смещаться в экранном направлении курсора.";
+        else if (name == "LookAheadResponse")
+            increase = "Увеличение сокращает время реакции камеры на новое положение курсора.";
+        else if (name == "LookAheadReturn")
+            increase = "Увеличение ускоряет плавный возврат камеры к normal follow position.";
+        else if (name == "LookAheadDeadZone")
+            increase = "Увеличение расширяет область около центра экрана, где мышь не вызывает смещение.";
+        else if (name == "LookAheadCurve")
+            increase = "Значения выше 1 откладывают сильную реакцию до края экрана; ниже 1 включают её раньше.";
+        else if (name == "HorizontalStrength")
+            increase = "Увеличение усиливает только горизонтальную составляющую look-ahead.";
+        else if (name == "VerticalStrength")
+            increase = "Увеличение усиливает только вертикальную составляющую look-ahead.";
+        else if (name == "MaxScreenFraction")
+            increase = "Увеличение отодвигает экранную точку насыщения: для полного offset курсор должен уйти дальше.";
+        else if (name == "PhysicalRecoil")
             increase = "Включение разрешает реальный импульс Rigidbody2D игрока; это не presentation-only эффект.";
         else if (name == "PlayerRecoilVelocity")
             increase = "Увеличение сильнее меняет реальную скорость Rigidbody2D игрока назад; работает вместе с Physical Recoil.";
@@ -558,6 +624,10 @@ public sealed class CombatFeelParameterMetadata
         return $"Определяет «{russianName.ToLowerInvariant()}» для: {subject}. {increase}{note}";
     }
 
+    private static bool IsMouseLookAheadName(string name) =>
+        name.Contains("LookAhead", StringComparison.Ordinal) || name is
+            "HorizontalStrength" or "VerticalStrength" or "MaxScreenFraction";
+
     private static string GetSafetyNote(string name, string authoredHint)
     {
         if (string.IsNullOrWhiteSpace(authoredHint)) return string.Empty;
@@ -590,6 +660,21 @@ public sealed class CombatFeelParameterMetadata
             expandedMax = Mathf.Min(Mathf.Max(maximum, cap), expandedMax);
         }
         if (name.Contains("Freeze") && !name.Contains("Blend")) expandedMax = Mathf.Min(.75f, expandedMax);
+        if (name is "LookAheadDeadZone" or "MaxScreenFraction")
+        {
+            expandedMin = Mathf.Max(0f, expandedMin);
+            expandedMax = Mathf.Min(1f, expandedMax);
+        }
+        if (name == "LookAheadCurve")
+        {
+            expandedMin = Mathf.Max(.1f, expandedMin);
+            expandedMax = Mathf.Min(8f, expandedMax);
+        }
+        if (name is "LookAheadResponse" or "LookAheadReturn")
+        {
+            expandedMin = Mathf.Max(.1f, expandedMin);
+            expandedMax = Mathf.Min(60f, expandedMax);
+        }
         expandedMin = Mathf.Min(expandedMin, neutral);
         expandedMax = Mathf.Max(expandedMax, neutral);
     }
@@ -711,7 +796,9 @@ public sealed class CombatFeelLabSettings
             if (d.Group != group) continue;
             if (d.Toggle)
             {
-                Set(d.Parameter, preset >= GroupPreset.Medium ? d.Hard : d.Neutral);
+                Set(d.Parameter, d.Parameter == CombatFeelParameter.MouseLookAhead
+                    ? d.Hard
+                    : preset >= GroupPreset.Medium ? d.Hard : d.Neutral);
                 continue;
             }
             float value = preset switch
@@ -912,7 +999,7 @@ public sealed class CombatFeelLabSettings
         AddHit(d, F);
         AddTarget(d, F, T);
         AddKill(d, F, T);
-        AddCamera(d, F);
+        AddCamera(d, F, T);
         AddTime(d, F, T);
         AddCrowd(d, F);
         AddExperimental(d, F);
@@ -980,7 +1067,7 @@ public sealed class CombatFeelLabSettings
         F(CombatFeelParameter.OverkillParticles,g,"Overkill Particle Multiplier",1,1,5,2); F(CombatFeelParameter.OverkillDeathPush,g,"Overkill Death Push",1,1,4,1.6f);
     }
 
-    private static void AddCamera(List<CombatFeelDescriptor> _, FloatAdder F)
+    private static void AddCamera(List<CombatFeelDescriptor> _, FloatAdder F, ToggleAdder T)
     {
         CombatFeelGroup g=CombatFeelGroup.Camera;
         F(CombatFeelParameter.ShotShakeAmplitude,g,"Shot Shake Amplitude",0,0,1,.08f); F(CombatFeelParameter.ShotShakeFrequency,g,"Shot Shake Frequency",25,1,80,32);
@@ -995,6 +1082,15 @@ public sealed class CombatFeelLabSettings
         F(CombatFeelParameter.CameraDamping,g,"Camera Spring Damping",1,.1f,4,1.2f); F(CombatFeelParameter.CameraOvershoot,g,"Camera Overshoot",0,0,.8f,.12f);
         F(CombatFeelParameter.TowardShot,g,"Toward Shot Direction",0,-1,1,.05f); F(CombatFeelParameter.AwayFromShot,g,"Away From Shot Direction",0,-1,1,0);
         F(CombatFeelParameter.TowardHit,g,"Toward Hit Position",0,0,1,.08f);
+        T(CombatFeelParameter.MouseLookAhead,g,"Mouse Look-Ahead");
+        F(CombatFeelParameter.LookAheadDistance,g,"Look-Ahead Distance",0,0,6,1.2f);
+        F(CombatFeelParameter.LookAheadResponse,g,"Look-Ahead Response",8,.25f,30,14);
+        F(CombatFeelParameter.LookAheadReturn,g,"Look-Ahead Return",6,.25f,24,12);
+        F(CombatFeelParameter.LookAheadDeadZone,g,"Look-Ahead Dead Zone",.08f,0,.45f,.05f);
+        F(CombatFeelParameter.LookAheadCurve,g,"Look-Ahead Curve",1,.25f,4,.8f);
+        F(CombatFeelParameter.HorizontalStrength,g,"Horizontal Strength",1,0,3,1.15f);
+        F(CombatFeelParameter.VerticalStrength,g,"Vertical Strength",1,0,3,1.15f);
+        F(CombatFeelParameter.MaxScreenFraction,g,"Max Screen Fraction",.65f,.1f,1,.5f);
     }
 
     private static void AddTime(List<CombatFeelDescriptor> _, FloatAdder F, ToggleAdder T)

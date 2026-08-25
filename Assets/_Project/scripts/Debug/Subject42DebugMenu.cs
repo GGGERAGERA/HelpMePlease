@@ -240,6 +240,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     [SerializeField] private WeaponData[] debugWeapons;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private static Subject42DebugMenu activeInstance;
+    public static bool IsDebugMenuOpen =>
+        activeInstance != null && activeInstance.isOpen;
+
     private enum DebugTab
     {
         Run,
@@ -405,6 +409,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void Awake()
     {
+        activeInstance = this;
         ResolveSceneReferences();
     }
 
@@ -480,6 +485,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         if (menuRoot != null)
             Destroy(menuRoot);
+        if (activeInstance == this)
+            activeInstance = null;
     }
 
     private void HandleAnomalyVisualTargetsChanged()
