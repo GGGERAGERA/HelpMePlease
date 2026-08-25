@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -196,6 +197,27 @@ public sealed class CombatLabDebugController : MonoBehaviour
 }
 #endif
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+public sealed class CombatFeelTooltipTrigger : MonoBehaviour,
+    IPointerEnterHandler, IPointerMoveHandler, IPointerExitHandler
+{
+    public Func<string> TextProvider;
+    public Action<string, Vector2> Show;
+    public Action Hide;
+
+    public void OnPointerEnter(PointerEventData eventData) => Present(eventData.position);
+    public void OnPointerMove(PointerEventData eventData) => Present(eventData.position);
+    public void OnPointerExit(PointerEventData eventData) => Hide?.Invoke();
+    private void OnDisable() => Hide?.Invoke();
+
+    private void Present(Vector2 position)
+    {
+        string text = TextProvider?.Invoke();
+        if (!string.IsNullOrWhiteSpace(text)) Show?.Invoke(text, position);
+    }
+}
+#endif
+
 public sealed class Subject42DebugMenu : MonoBehaviour
 {
     [Header("Existing scene systems")]
@@ -322,6 +344,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private GameObject visualBackButton;
     private GameObject previewPanelRoot;
     private TextMeshProUGUI previewText;
+    private RectTransform feelTooltipRoot;
+    private TextMeshProUGUI feelTooltipText;
     private RectTransform contentRoot;
     private readonly GameObject[] tabRoots = new GameObject[TabLabels.Length];
     private readonly Image[] tabButtonImages = new Image[TabLabels.Length];
@@ -358,6 +382,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private CombatLabDebugController combatLab;
     private ProductionVisualTuningController productionVisualTuning;
     private ProductionFeelTuningController productionFeelTuning;
+    private CombatFeelTestDummyController feelTestDummy;
     private WorldRuleVisual worldRuleVisual;
     private PlayerWeaponOrbitVisual playerOrbitVisual;
     private CameraFollow cameraFollow;
@@ -744,10 +769,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void EnsureProductionSectorDebug()
     {
-        if (productionSectorDebug != null)
-            return;
-
-        productionSectorDebug = GetComponent<ProductionSectorDebugController>();
+        productionSectorDebug ??=
+            GetComponent<ProductionSectorDebugController>();
         productionSectorDebug ??=
             gameObject.AddComponent<ProductionSectorDebugController>();
 
@@ -762,6 +785,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         productionFeelTuning ??=
             gameObject.AddComponent<ProductionFeelTuningController>();
         productionFeelTuning.Configure();
+
+        feelTestDummy ??= GetComponent<CombatFeelTestDummyController>();
+        feelTestDummy ??= gameObject.AddComponent<CombatFeelTestDummyController>();
+        feelTestDummy.Configure(enemySpawner);
     }
 
     private void WarnIfMissing(
@@ -886,6 +913,59 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         BuildFeelActionBar(tabRoots[(int)DebugTab.FeelTest].transform);
 
         BuildPreviewPanel();
+        BuildFeelTooltip();
+    }
+
+    private void BuildFeelTooltip()
+    {
+        feelTooltipRoot = CreateRect("Combat Feel Tooltip", menuRoot.transform);
+        feelTooltipRoot.anchorMin = feelTooltipRoot.anchorMax = new Vector2(.5f, .5f);
+        feelTooltipRoot.pivot = new Vector2(0f, 1f);
+        feelTooltipRoot.sizeDelta = new Vector2(540f, 270f);
+        Image background = feelTooltipRoot.gameObject.AddComponent<Image>();
+        background.color = new Color(.025f, .035f, .05f, .985f);
+        background.raycastTarget = false;
+        Outline outline = feelTooltipRoot.gameObject.AddComponent<Outline>();
+        outline.effectColor = new Color(accentColor.r, accentColor.g, accentColor.b, .8f);
+        outline.effectDistance = new Vector2(1f, -1f);
+        feelTooltipText = CreateText("Tooltip Text", feelTooltipRoot, string.Empty,
+            15f, TextAlignmentOptions.TopLeft, Color.white);
+        feelTooltipText.textWrappingMode = TextWrappingModes.Normal;
+        feelTooltipText.richText = true;
+        Stretch(feelTooltipText.rectTransform, 14f, 14f, 10f, 10f);
+        feelTooltipRoot.gameObject.SetActive(false);
+    }
+
+    private void AttachFeelTooltip(GameObject target, Func<string> textProvider)
+    {
+        if (target == null) return;
+        CombatFeelTooltipTrigger trigger = target.AddComponent<CombatFeelTooltipTrigger>();
+        trigger.TextProvider = textProvider;
+        trigger.Show = ShowFeelTooltip;
+        trigger.Hide = HideFeelTooltip;
+    }
+
+    private void ShowFeelTooltip(string text, Vector2 screenPosition)
+    {
+        if (feelTooltipRoot == null || feelTooltipText == null || menuRoot == null) return;
+        feelTooltipText.text = text;
+        feelTooltipRoot.gameObject.SetActive(true);
+        feelTooltipRoot.SetAsLastSibling();
+        RectTransform root = menuRoot.GetComponent<RectTransform>();
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                root, screenPosition, null, out Vector2 point)) return;
+        Rect bounds = root.rect;
+        Vector2 size = feelTooltipRoot.rect.size;
+        float x = Mathf.Clamp(point.x + 18f, bounds.xMin + 8f,
+            bounds.xMax - size.x - 8f);
+        float y = Mathf.Clamp(point.y - 18f, bounds.yMin + size.y + 8f,
+            bounds.yMax - 8f);
+        feelTooltipRoot.anchoredPosition = new Vector2(x, y);
+    }
+
+    private void HideFeelTooltip()
+    {
+        if (feelTooltipRoot != null) feelTooltipRoot.gameObject.SetActive(false);
     }
 
     private void BuildVisualBackButton(Transform header)
@@ -1146,6 +1226,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void RefreshCurrentTab()
     {
+        HideFeelTooltip();
         RefreshTab(activeTab);
     }
 
@@ -5125,7 +5206,84 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         }
 
         tuning.Configure();
+        AddFeelTestDummySection();
         AddAdvancedCombatFeelLab(tuning);
+    }
+
+    private void AddFeelTestDummySection()
+    {
+        CombatFeelTestDummyController controller = feelTestDummy;
+        AddSectionTitle("FEEL TEST DUMMY", "Debug-owned production enemy");
+        // Keep SPAWN actionable so the controller can perform a late scene
+        // lookup and report the precise missing dependency in its status/log.
+        bool available = controller != null;
+        AddRow("DUMMY", controller != null ? controller.Status : "UNAVAILABLE",
+            controller != null && controller.HasDummy ? successColor : mutedColor,
+            "SPAWN", available, () =>
+            {
+                ResolveSceneReferences();
+                EnsureProductionSectorDebug();
+                feelTestDummy.Spawn();
+                RefreshCurrentTab();
+            });
+        AddRow("DESPAWN", "No wave/progression registration", mutedColor,
+            "DESPAWN", controller != null && controller.HasDummy,
+            () => { controller.Despawn(); RefreshCurrentTab(); });
+        AddRow("RESET POSITION", "Anchor in front of player", mutedColor,
+            "RESET", controller != null && controller.HasDummy,
+            () => controller.ResetPosition());
+        AddRow("SIMULATE KILL", "Death FX + kill feel; no rewards", warningColor,
+            "KILL", controller != null && controller.HasDummy,
+            () => controller.SimulateHit(2.5f, true, true));
+
+        foreach (CombatFeelDummyArchetype archetype in
+                 (CombatFeelDummyArchetype[])System.Enum.GetValues(
+                     typeof(CombatFeelDummyArchetype)))
+        {
+            CombatFeelDummyArchetype captured = archetype;
+            AddOptionRow(archetype.ToString().ToUpperInvariant(),
+                controller != null && controller.Archetype == archetype,
+                controller != null && controller.CanSpawn(archetype),
+                () => controller.SetArchetype(captured));
+        }
+
+        foreach (CombatFeelDummyMode mode in
+                 (CombatFeelDummyMode[])System.Enum.GetValues(
+                     typeof(CombatFeelDummyMode)))
+        {
+            CombatFeelDummyMode captured = mode;
+            AddOptionRow(CombatFeelTestDummyController.GetModeLabel(mode),
+                controller != null && controller.Mode == mode, available,
+                () => controller.SetMode(captured));
+        }
+
+        AddToggleRow("INVULNERABLE", controller != null && controller.Invulnerable,
+            available, () => controller.SetInvulnerable(!controller.Invulnerable));
+        AddToggleRow("FACE PLAYER", controller != null && controller.FacePlayer,
+            available, () => controller.SetFacePlayer(!controller.FacePlayer));
+        AddToggleRow("ORBIT CLOCKWISE", controller != null && controller.Clockwise,
+            available, () => controller.SetClockwise(!controller.Clockwise));
+        if (controller == null)
+            return;
+        AddSliderRow("DISTANCE", controller.Distance, 1f, 12f,
+            controller.SetDistance, "0.0");
+        AddSliderRow("FOLLOW SPEED", controller.FollowSpeed, .25f, 12f,
+            controller.SetFollowSpeed, "0.0");
+        AddSliderRow("ORBIT SPEED", controller.OrbitSpeed, 1f, 180f,
+            controller.SetOrbitSpeed, "0");
+        AddSliderRow("ORBIT RADIUS", controller.OrbitRadius, 1f, 12f,
+            controller.SetOrbitRadius, "0.0");
+
+        AddRow("LIGHT HIT", "10% max HP feedback", mutedColor, "PLAY",
+            controller.HasDummy, () => controller.SimulateHit(.1f, false, false));
+        AddRow("NORMAL HIT", "25% max HP feedback", mutedColor, "PLAY",
+            controller.HasDummy, () => controller.SimulateHit(.25f, false, false));
+        AddRow("HEAVY HIT", "65% max HP feedback", mutedColor, "PLAY",
+            controller.HasDummy, () => controller.SimulateHit(.65f, false, false));
+        AddRow("CRIT HIT", "65% max HP critical feedback", mutedColor, "PLAY",
+            controller.HasDummy, () => controller.SimulateHit(.65f, true, false));
+        AddRow("OVERKILL", "250% max HP kill feedback", warningColor, "PLAY",
+            controller.HasDummy, () => controller.SimulateHit(2.5f, true, true));
     }
 
     // Retained as a compact reference for the previous production-field view.
@@ -5280,6 +5438,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             "INPUT → ANTICIPATION → SHOT → PROJECTILE → HIT → TARGET → KILL → CROWD");
         AddVisualStatusLine("● LIVE RUNTIME OVERRIDES   Production defaults remain untouched");
         AddFeelGroupTabs();
+        AddHint(CombatFeelParameterMetadata.GetGroupDescriptionRu(selectedFeelLabGroup));
         AddFeelCharacterPresets(lab);
         AddFeelExperimentActions(lab);
         AddFeelGroupControls(lab);
@@ -5296,26 +5455,35 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void AddFeelGroupTabs()
     {
-        CombatFeelGroup[] groups = (CombatFeelGroup[])System.Enum.GetValues(
-            typeof(CombatFeelGroup));
+        CombatFeelGroup[] groups =
+        {
+            CombatFeelGroup.Global, CombatFeelGroup.Shot,
+            CombatFeelGroup.Projectile, CombatFeelGroup.Hit,
+            CombatFeelGroup.Target, CombatFeelGroup.Kill,
+            CombatFeelGroup.Camera, CombatFeelGroup.Time,
+            CombatFeelGroup.Crowd
+        };
         for (int rowIndex = 0; rowIndex < 2; rowIndex++)
         {
             RectTransform row = CreateRect("Feel Group Tabs", contentRoot);
             row.gameObject.AddComponent<LayoutElement>().preferredHeight = 29f;
             int start = rowIndex * 5;
-            for (int i = 0; i < 5; i++)
+            int count = Mathf.Min(5, groups.Length - start);
+            for (int i = 0; i < count; i++)
             {
                 CombatFeelGroup group = groups[start + i];
                 int index = i;
                 Button button = CreateButton(row,
-                    group.ToString().ToUpperInvariant(), () =>
+                    CombatFeelParameterMetadata.GetGroupShortNameRu(group), () =>
                     {
                         selectedFeelLabGroup = group;
                         RefreshCurrentTab();
                     }, 90f);
+                AttachFeelTooltip(button.gameObject, () =>
+                    CombatFeelParameterMetadata.GetGroupDescriptionRu(group));
                 RectTransform rect = button.GetComponent<RectTransform>();
-                rect.anchorMin = new Vector2(index / 5f, 0f);
-                rect.anchorMax = new Vector2((index + 1) / 5f, 1f);
+                rect.anchorMin = new Vector2(index / (float)count, 0f);
+                rect.anchorMax = new Vector2((index + 1) / (float)count, 1f);
                 rect.offsetMin = new Vector2(2f, 2f);
                 rect.offsetMax = new Vector2(-2f, -2f);
                 if (selectedFeelLabGroup == group &&
@@ -5343,6 +5511,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 lab.ApplyCharacterPreset(preset);
                 RefreshCurrentTab();
             }, 90f);
+            string label = preset.ToString().ToUpperInvariant();
+            AttachFeelTooltip(button.gameObject, () =>
+                CombatFeelParameterMetadata.GetPresetDescriptionRu(label));
             RectTransform rect = button.GetComponent<RectTransform>();
             rect.anchorMin = new Vector2(index / 5f, 0f);
             rect.anchorMax = new Vector2((index + 1) / 5f, 1f);
@@ -5371,6 +5542,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 actions[index]();
                 RefreshCurrentTab();
             }, 76f, i != 1 || lab.HasA);
+            string tooltipKey = labels[i];
+            AttachFeelTooltip(button.gameObject, () =>
+                CombatFeelParameterMetadata.GetPresetDescriptionRu(tooltipKey));
             if (i == 3) button.interactable = lab.HasB;
             if (i == 5) button.interactable = lab.CanUndoRandomize;
             RectTransform rect = button.GetComponent<RectTransform>();
@@ -5399,6 +5573,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 lab.ApplyGroupPreset(selectedFeelLabGroup, preset);
                 RefreshCurrentTab();
             }, 70f);
+            string label = preset.ToString().ToUpperInvariant();
+            AttachFeelTooltip(button.gameObject, () =>
+                CombatFeelParameterMetadata.GetPresetDescriptionRu(label));
             RectTransform rect = button.GetComponent<RectTransform>();
             rect.anchorMin = new Vector2(index / 7f, 0f);
             rect.anchorMax = new Vector2((index + 1) / 7f, 1f);
@@ -5412,6 +5589,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 RefreshCurrentTab();
             }, 70f);
         RectTransform soloRect = solo.GetComponent<RectTransform>();
+        AttachFeelTooltip(solo.gameObject, () =>
+            CombatFeelParameterMetadata.GetPresetDescriptionRu(
+                lab.SoloGroup == selectedFeelLabGroup ? "UNSOLO" : "SOLO"));
         soloRect.anchorMin = new Vector2(5f / 7f, 0f);
         soloRect.anchorMax = new Vector2(6f / 7f, 1f);
         soloRect.offsetMin = new Vector2(2f, 2f);
@@ -5421,6 +5601,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             lab.ResetGroup(selectedFeelLabGroup);
             RefreshCurrentTab();
         }, 80f);
+        AttachFeelTooltip(reset.gameObject, () =>
+            CombatFeelParameterMetadata.GetPresetDescriptionRu("RESET GROUP"));
         RectTransform resetRect = reset.GetComponent<RectTransform>();
         resetRect.anchorMin = new Vector2(6f / 7f, 0f);
         resetRect.anchorMax = Vector2.one;
@@ -5431,9 +5613,11 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private void AddFeelParameterRow(
         CombatFeelLabSettings lab, CombatFeelDescriptor descriptor)
     {
+        string displayName = descriptor.Metadata.GameplayAffecting
+            ? "⚠ PHYSICAL  " + descriptor.Name : descriptor.Name;
         if (descriptor.Toggle)
         {
-            AddToggleRow(descriptor.Name,
+            AddToggleRow(displayName,
                 lab.GetRaw(descriptor.Parameter) >= .5f, true, () =>
                 {
                     lab.Set(descriptor.Parameter,
@@ -5445,21 +5629,29 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         {
             float range = descriptor.Maximum - descriptor.Minimum;
             string format = range <= .5f ? "0.000" : range <= 10f ? "0.00" : "0.0";
-            AddSliderRow(descriptor.Name, lab.GetRaw(descriptor.Parameter),
+            AddSliderRow(displayName, lab.GetRaw(descriptor.Parameter),
                 descriptor.Minimum, descriptor.Maximum,
-                value => lab.Set(descriptor.Parameter, value), format);
+                value => lab.Set(descriptor.Parameter, value), format,
+                descriptor.Metadata.Production,
+                value => FormatFeelValue(value, descriptor.Metadata, format));
         }
 
         RectTransform row = contentRoot.GetChild(contentRoot.childCount - 1)
             as RectTransform;
         if (row != null)
         {
+            AttachFeelTooltip(row.gameObject, () =>
+                BuildFeelParameterTooltip(lab, descriptor));
             Transform value = row.Find("Value");
             if (value is RectTransform valueRect)
                 valueRect.offsetMax = new Vector2(-48f, valueRect.offsetMax.y);
             Button reset = CreateButton(row, "↺", () =>
             {
-                lab.Reset(descriptor.Parameter);
+                bool extreme = Input.GetKey(KeyCode.LeftShift) ||
+                    Input.GetKey(KeyCode.RightShift);
+                if (extreme) lab.Set(descriptor.Parameter,
+                    descriptor.Metadata.DiagnosticExtreme);
+                else lab.Reset(descriptor.Parameter);
                 RefreshCurrentTab();
             }, 34f, !lab.IsNeutral(descriptor.Parameter));
             RectTransform resetRect = reset.GetComponent<RectTransform>();
@@ -5470,8 +5662,37 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             TextMeshProUGUI resetText = reset.GetComponentInChildren<TextMeshProUGUI>();
             if (resetText != null) resetText.fontSize = 12f;
         }
-        if (!string.IsNullOrWhiteSpace(descriptor.Tooltip))
-            AddHint("ⓘ " + descriptor.Tooltip);
+    }
+
+    private static string FormatFeelValue(float value,
+        CombatFeelParameterMetadata metadata, string format)
+    {
+        string current = metadata.FormatValue(value);
+        float delta = value - metadata.Production;
+        float epsilon = Mathf.Max(.0005f,
+            (metadata.Maximum - metadata.Minimum) * .0005f);
+        if (Mathf.Abs(delta) <= epsilon) return current + "  P";
+        return current + "  Δ" + (delta >= 0f ? "+" : string.Empty) +
+            metadata.FormatValue(delta);
+    }
+
+    private static string BuildFeelParameterTooltip(CombatFeelLabSettings lab,
+        CombatFeelDescriptor descriptor)
+    {
+        CombatFeelParameterMetadata m = descriptor.Metadata;
+        float current = lab.GetRaw(descriptor.Parameter);
+        string physical = m.GameplayAffecting
+            ? "<color=#FFB040>⚠ PHYSICAL — влияет на gameplay/time/physics.</color>\n"
+            : "<color=#68D98B>PRESENTATION ONLY</color>\n";
+        return $"<b>{m.RussianName.ToUpperInvariant()}</b>  <color=#7FCFE6>{m.TechnicalName}</color>\n" +
+            physical +
+            $"<b>Что меняет:</b> {m.DescriptionRu}\n" +
+            $"<b>Что смотреть:</b> {m.WhatToWatchRu}\n" +
+            $"<b>MIN {m.FormatValue(m.Minimum)}:</b> {m.MinimumMeaningRu}\n" +
+            $"<b>MAX {m.FormatValue(m.Maximum)}:</b> {m.MaximumMeaningRu}\n" +
+            $"Сейчас: {m.FormatValue(current)}   Production: {m.FormatValue(m.Production)}   Safe random: {m.FormatValue(m.SafeRandomMinimum)}…{m.FormatValue(m.SafeRandomMaximum)}\n" +
+            $"Audit: {m.AuditStatus}   Consumer: {m.ConsumerPath} → {m.ConsumerTarget}\n" +
+            $"↺ click: DEFAULT   Shift+↺: MAX EFFECT ({m.FormatValue(m.DiagnosticExtreme)})";
     }
 
     private void AddFeelPresetStrip(ProductionFeelTuningController tuning)
@@ -5888,7 +6109,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         float minimum,
         float maximum,
         System.Action<float> setter,
-        string format)
+        string format,
+        float? productionMarker = null,
+        Func<float, string> displayFormatter = null)
     {
         minimum = Mathf.Min(minimum, value);
         maximum = Mathf.Max(maximum, value);
@@ -5927,6 +6150,21 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         backgroundImage.color = new Color(0.28f, 0.31f, 0.35f, 1f);
         backgroundImage.raycastTarget = false;
 
+        RectTransform productionLine = null;
+        if (productionMarker.HasValue)
+        {
+            float normalized = Mathf.InverseLerp(minimum, maximum,
+                productionMarker.Value);
+            RectTransform marker = CreateRect("Production Marker", sliderRoot);
+            productionLine = marker;
+            marker.anchorMin = marker.anchorMax = new Vector2(normalized, .5f);
+            marker.pivot = new Vector2(.5f, .5f);
+            marker.sizeDelta = new Vector2(2f, 16f);
+            Image markerImage = marker.gameObject.AddComponent<Image>();
+            markerImage.color = warningColor;
+            markerImage.raycastTarget = false;
+        }
+
         RectTransform fillArea = CreateRect("Fill Area", sliderRoot);
         fillArea.anchorMin = new Vector2(0f, 0.5f);
         fillArea.anchorMax = new Vector2(1f, 0.5f);
@@ -5960,9 +6198,11 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         slider.targetGraphic = handleImage;
         slider.direction = Slider.Direction.LeftToRight;
         slider.navigation = new Navigation { mode = Navigation.Mode.None };
+        if (productionLine != null) productionLine.SetAsLastSibling();
 
         TextMeshProUGUI valueText = CreateText(
-            "Value", row, value.ToString(format), 11f,
+            "Value", row, displayFormatter != null
+                ? displayFormatter(value) : value.ToString(format), 11f,
             TextAlignmentOptions.MidlineRight, successColor);
         valueText.rectTransform.anchorMin = new Vector2(0.83f, 0f);
         valueText.rectTransform.anchorMax = Vector2.one;
@@ -5973,7 +6213,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         slider.SetValueWithoutNotify(Mathf.Clamp(value, minimum, maximum));
         slider.onValueChanged.AddListener(current =>
         {
-            valueText.text = current.ToString(format);
+            valueText.text = displayFormatter != null
+                ? displayFormatter(current) : current.ToString(format);
             setter?.Invoke(current);
         });
     }

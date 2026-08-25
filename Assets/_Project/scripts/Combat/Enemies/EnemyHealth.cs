@@ -180,9 +180,38 @@ public class EnemyHealth : MonoBehaviour
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
         OnDamageTaken?.Invoke(); // вызываем эффект урона
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        CombatFeelTestDummy testDummy = GetComponent<CombatFeelTestDummy>();
+        if (testDummy != null && testDummy.Invulnerable)
+        {
+            currentHealth = maxHealth;
+            OnHealthChanged?.Invoke(currentHealth, maxHealth);
+            return;
+        }
+#endif
+
         if (currentHealth <= 0)
             Die();
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void DebugSimulateFeedback(
+        float damage,
+        Vector2 hitPoint,
+        bool isCritical,
+        bool lethal)
+    {
+        if (isDead)
+            return;
+        whiteFlash?.Flash();
+        SpawnBlood(hitPoint, isCritical);
+        PlayHitSound();
+        ShowDamagePopup(Mathf.RoundToInt(damage), isCritical);
+        OnDamageTaken?.Invoke();
+        if (lethal)
+            PlayDebugDeathPresentation();
+    }
+#endif
     private void SpawnBlood(Vector2 hitPoint, bool isCritical)
     {
         if (bloodHitPrefab == null)
@@ -232,6 +261,16 @@ public class EnemyHealth : MonoBehaviour
             return;
 
         isDead = true;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (GetComponent<CombatFeelTestDummy>() != null)
+        {
+            PlayDebugDeathPresentation();
+            PhysicalCombatFeedbackRuntime.TryDetachDeathVisual(this);
+            Destroy(gameObject);
+            return;
+        }
+#endif
 
         AudioService.Instance?.PlayAt(
             isBoss ? AudioCueId.BossDeath : AudioCueId.CommonEnemyDeath,
@@ -363,6 +402,28 @@ public class EnemyHealth : MonoBehaviour
 #endif
         Destroy(gameObject);
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private void PlayDebugDeathPresentation()
+    {
+        AudioService.Instance?.PlayAt(
+            isBoss ? AudioCueId.BossDeath : AudioCueId.CommonEnemyDeath,
+            transform.position);
+        if (deathFXPrefab == null)
+            return;
+        PooledGameObject pooled = deathFxPool?.Get(
+            transform.position, Quaternion.identity);
+        ParticleSystem effect = pooled != null
+            ? pooled.PrimaryParticleSystem
+            : Instantiate(deathFXPrefab, transform.position, Quaternion.identity);
+        float lifetime = effect.main.duration;
+        effect.Play();
+        if (pooled != null)
+            pooled.ReleaseAfter(lifetime);
+        else
+            Destroy(effect.gameObject, lifetime);
+    }
+#endif
 
     private void DropLoot()
     {

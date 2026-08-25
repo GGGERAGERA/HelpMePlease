@@ -39,6 +39,7 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
     private sealed class WeaponPose
     {
         public WeaponFxPlayer Source;
+        public ProjectileWeapon Compositor;
         public Transform Visual;
         public Vector3 BasePosition;
         public Vector3 BaseScale;
@@ -113,8 +114,6 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
     private void Update()
     {
         UpdateHitStop();
-        UpdateEnemyPoses();
-        UpdateWeaponPoses();
         rapidKillIntensity = Mathf.MoveTowards(
             rapidKillIntensity, 0f,
             V(CombatFeelParameter.RapidKillDecay) * Time.unscaledDeltaTime);
@@ -122,6 +121,10 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
 
     private void LateUpdate()
     {
+        // Animator and production recoil evaluate during Update. Apply the
+        // presentation layer afterwards so authored animation cannot erase it.
+        UpdateEnemyPoses();
+        UpdateWeaponPoses();
         UpdateCameraResponse();
     }
 
@@ -135,6 +138,13 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
     public static void TryDetachDeathVisual(EnemyHealth enemy)
     {
         instance?.DetachDeathVisual(enemy);
+    }
+
+    public static void NotifySimulatedHit(
+        WeaponHitContext context,
+        bool killed)
+    {
+        instance?.HandleHitResolved(context, killed, true);
     }
 
     public static float GetLabValue(CombatFeelParameter parameter) =>
@@ -175,11 +185,21 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
 
     private void HandleHitResolved(WeaponHitContext context)
     {
+        HandleHitResolved(
+            context,
+            context.Target != null && context.Target.IsDead,
+            false);
+    }
+
+    private void HandleHitResolved(
+        WeaponHitContext context,
+        bool killed,
+        bool simulated)
+    {
         if (tuning == null || context.Target == null)
             return;
 
-        bool killed = context.Target.IsDead;
-        float strength = GetImpactStrength(context, killed);
+        float strength = GetImpactStrength(context, killed, simulated);
         if (killed)
         {
             if (Time.unscaledTime - lastKillAt <= V(CombatFeelParameter.RapidKillWindow))
@@ -200,6 +220,10 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
             V(killed ? CombatFeelParameter.KillSlowdownScale : CombatFeelParameter.HitSlowdownScale),
             V(killed ? CombatFeelParameter.KillRecovery : CombatFeelParameter.HitRecovery),
             context.Target);
+
+        WeaponFxPlayer hitFx = context.SourceWeapon != null
+            ? context.SourceWeapon.GetComponent<WeaponFxPlayer>() : null;
+        hitFx?.PlayHit(context.HitPoint, context.Direction, context.IsCritical);
 
         PlayEnemyHit(context.Target, context.Direction, killed, strength);
         PlayCameraEvent(context.Direction, context.HitPoint, killed, strength);
@@ -229,7 +253,10 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
     private float V(CombatFeelParameter parameter) =>
         tuning != null ? tuning.Lab.Get(parameter) : 0f;
 
-    private float GetImpactStrength(WeaponHitContext context, bool killed)
+    private float GetImpactStrength(
+        WeaponHitContext context,
+        bool killed,
+        bool simulated)
     {
         float influence = V(CombatFeelParameter.DamageInfluence);
         float ratio = context.Target.MaxHealth > 0f
@@ -245,7 +272,9 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
                 : V(CombatFeelParameter.BasicWeight);
         if (killed)
         {
-            float preHitHealth = Mathf.Max(.001f, context.Target.CurrentHealth + context.Damage);
+            float preHitHealth = Mathf.Max(.001f, simulated
+                ? context.Target.CurrentHealth
+                : context.Target.CurrentHealth + context.Damage);
             float overkill = context.Damage / preHitHealth;
             if (overkill >= V(CombatFeelParameter.OverkillThreshold))
                 strength *= V(CombatFeelParameter.OverkillFeedback);
@@ -292,12 +321,12 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
                     pose.FrozenUntil, Time.unscaledTime + local);
         }
 
-        bool globalEnabled = tuning.HitStopEnabled ||
-            V(CombatFeelParameter.GlobalFreeze) >= .5f ||
+        bool forcedGlobal = V(CombatFeelParameter.GlobalFreeze) >= .5f;
+        bool globalEnabled = tuning.HitStopEnabled || forcedGlobal ||
             V(CombatFeelParameter.FreezeBlend) > 0f;
         float globalFreeze = globalEnabled
             ? freeze * Mathf.Max(V(CombatFeelParameter.FreezeBlend),
-                tuning.HitStopEnabled ? 1f : 0f)
+                tuning.HitStopEnabled || forcedGlobal ? 1f : 0f)
             : 0f;
         if (globalFreeze <= 0f && slowdown <= 0f)
             return;
@@ -619,24 +648,34 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
         float emphasis)
     {
         float advancedDistance = V(CombatFeelParameter.WeaponKickDistance);
+        bool advancedPose = advancedDistance > 0f ||
+            !Mathf.Approximately(V(CombatFeelParameter.WeaponKickRotation), 0f) ||
+            V(CombatFeelParameter.WeaponKickRandomness) > 0f ||
+            !Mathf.Approximately(V(CombatFeelParameter.WeaponScalePunchX), 0f) ||
+            !Mathf.Approximately(V(CombatFeelParameter.WeaponScalePunchY), 0f);
         if (tuning == null || source == null ||
-            (!tuning.WeaponVisualRecoilEnabled && advancedDistance <= 0f))
+            (!tuning.WeaponVisualRecoilEnabled && !advancedPose))
             return;
 
         int id = source.GetInstanceID();
         if (!weaponPoses.TryGetValue(id, out WeaponPose pose))
         {
+            ProjectileWeapon compositor = source.GetComponent<ProjectileWeapon>();
             SpriteRenderer renderer = source.GetComponentInChildren<SpriteRenderer>(true);
-            if (renderer == null || renderer.transform == source.transform)
+            Transform visual = compositor != null && compositor.DebugRecoilVisual != null
+                ? compositor.DebugRecoilVisual
+                : renderer != null ? renderer.transform : null;
+            if (visual == null || visual == source.transform)
                 return;
 
             pose = new WeaponPose
             {
                 Source = source,
-                Visual = renderer.transform,
-                BasePosition = renderer.transform.localPosition,
-                BaseScale = renderer.transform.localScale,
-                BaseRotation = renderer.transform.localRotation
+                Compositor = compositor,
+                Visual = visual,
+                BasePosition = visual.localPosition,
+                BaseScale = visual.localScale,
+                BaseRotation = visual.localRotation
             };
             weaponPoses.Add(id, pose);
         }
@@ -688,21 +727,32 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
                 ? 1f - Smooth(returnT) -
                   Mathf.Sin(returnT * Mathf.PI) * pose.Overshoot
                 : 0f;
-            pose.Visual.localPosition = pose.BasePosition +
-                pose.RecoilOffset * offsetFactor;
+            Vector3 layerOffset = pose.RecoilOffset * offsetFactor;
             float envelope = 1f - Mathf.Clamp01(
                 (now - pose.StartedAt) /
                 Mathf.Max(.001f, pose.KickDuration + pose.ReturnDuration));
-            pose.Visual.localScale = Vector3.Scale(pose.BaseScale,
-                new Vector3(1f + pose.ScaleX * envelope,
-                    1f + pose.ScaleY * envelope, 1f));
-            pose.Visual.localRotation = pose.BaseRotation *
-                Quaternion.Euler(0f, 0f, pose.Rotation * envelope);
+            Vector2 layerScale = new(pose.ScaleX * envelope, pose.ScaleY * envelope);
+            float layerRotation = pose.Rotation * envelope;
+            if (pose.Compositor != null)
+                pose.Compositor.SetCombatFeelLayer(
+                    layerOffset, layerRotation, layerScale);
+            else
+            {
+                pose.Visual.localPosition = pose.BasePosition + layerOffset;
+                pose.Visual.localScale = Vector3.Scale(pose.BaseScale,
+                    new Vector3(1f + layerScale.x, 1f + layerScale.y, 1f));
+                pose.Visual.localRotation = pose.BaseRotation *
+                    Quaternion.Euler(0f, 0f, layerRotation);
+            }
             if (settleT >= 1f)
             {
-                pose.Visual.localPosition = pose.BasePosition;
-                pose.Visual.localScale = pose.BaseScale;
-                pose.Visual.localRotation = pose.BaseRotation;
+                if (pose.Compositor != null) pose.Compositor.ClearCombatFeelLayer();
+                else
+                {
+                    pose.Visual.localPosition = pose.BasePosition;
+                    pose.Visual.localScale = pose.BaseScale;
+                    pose.Visual.localRotation = pose.BaseRotation;
+                }
                 expiredKeys.Add(pair.Key);
             }
         }
@@ -737,7 +787,8 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
 
         float visualDistance = V(CombatFeelParameter.PlayerVisualRecoil);
         if (visualDistance <= 0f && V(CombatFeelParameter.PlayerSquash) <= 0f &&
-            V(CombatFeelParameter.PlayerStretch) <= 0f) return;
+            V(CombatFeelParameter.PlayerStretch) <= 0f &&
+            Mathf.Approximately(V(CombatFeelParameter.PlayerRotationKick), 0f)) return;
 
         SpriteRenderer renderer = movement.GetComponentInChildren<SpriteRenderer>(true);
         if (renderer == null) return;
@@ -815,11 +866,9 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
 
     private void UpdateCameraResponse()
     {
-        Transform cameraTransform = CameraShake.Instance != null
-            ? CameraShake.Instance.transform : null;
-        if (cameraTransform != null)
+        CameraShake cameraShake = CameraShake.Instance;
+        if (cameraShake != null)
         {
-            cameraTransform.localPosition -= cameraAppliedOffset;
             float age = Time.unscaledTime - cameraStartedAt;
             float factor;
             if (age < cameraKickDuration)
@@ -831,7 +880,7 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
                 factor = 1f - EaseWithOvershoot(t, cameraKickOvershoot);
             }
             cameraAppliedOffset = cameraKick * factor;
-            cameraTransform.localPosition += cameraAppliedOffset;
+            cameraShake.SetCombatFeelOffset(cameraAppliedOffset);
             if (age >= cameraKickDuration + cameraReturnDuration)
             {
                 cameraAppliedOffset = Vector3.zero;
@@ -906,14 +955,17 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
         foreach (WeaponPose pose in weaponPoses.Values)
             if (pose.Visual != null)
             {
-                pose.Visual.localPosition = pose.BasePosition;
-                pose.Visual.localScale = pose.BaseScale;
-                pose.Visual.localRotation = pose.BaseRotation;
+                if (pose.Compositor != null) pose.Compositor.ClearCombatFeelLayer();
+                else
+                {
+                    pose.Visual.localPosition = pose.BasePosition;
+                    pose.Visual.localScale = pose.BaseScale;
+                    pose.Visual.localRotation = pose.BaseRotation;
+                }
             }
         weaponPoses.Clear();
 
-        if (CameraShake.Instance != null)
-            CameraShake.Instance.transform.localPosition -= cameraAppliedOffset;
+        CameraShake.Instance?.SetCombatFeelOffset(Vector3.zero);
         cameraAppliedOffset = Vector3.zero;
         if (zoomCamera != null && zoomCamera.orthographic)
             zoomCamera.orthographicSize = zoomBaseline;

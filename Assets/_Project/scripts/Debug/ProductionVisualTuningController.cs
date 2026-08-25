@@ -223,6 +223,11 @@ public sealed class ProductionVisualTuningController : MonoBehaviour
                 TrailAlpha
             );
         }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        CombatFeelProjectileVisual feel = state.Projectile != null
+            ? state.Projectile.GetComponent<CombatFeelProjectileVisual>() : null;
+        feel?.RebaseAfterProductionVisualChange();
+#endif
     }
 
     private void ResolveVignette()

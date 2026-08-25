@@ -17,11 +17,17 @@ public class EnemySpawner : MonoBehaviour
     public enum DebugEnemyArchetype
     {
         Basic,
+        Elite,
         Shooter,
         Bomber,
         Eyes,
         Turret
     }
+
+    [Header("Feel Test Production Prefab Catalog")]
+    [SerializeField] private GameObject feelTestBasicPrefab;
+    [SerializeField] private GameObject feelTestElitePrefab;
+    [SerializeField] private GameObject feelTestShooterPrefab;
 #endif
     [Header("Legacy Spawn Settings")]
     [Tooltip("Used when the selected level has no EnemySpawnProfile.")]
@@ -110,6 +116,7 @@ public class EnemySpawner : MonoBehaviour
         worldEventSpawnPressureMultiplier;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public bool IsSpawningEnabled => spawningEnabled;
+    public int DebugTrackedEnemyCount => activeEnemies.Count;
 #endif
 
     private float baseSpawnInterval;
@@ -258,6 +265,20 @@ public class EnemySpawner : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public GameObject FindDebugEnemyPrefab(DebugEnemyArchetype archetype)
     {
+        GameObject catalogPrefab = archetype switch
+        {
+            DebugEnemyArchetype.Basic => feelTestBasicPrefab,
+            DebugEnemyArchetype.Elite => feelTestElitePrefab,
+            DebugEnemyArchetype.Shooter => feelTestShooterPrefab,
+            _ => null
+        };
+        if (archetype == DebugEnemyArchetype.Basic ||
+            archetype == DebugEnemyArchetype.Elite ||
+            archetype == DebugEnemyArchetype.Shooter)
+        {
+            return catalogPrefab;
+        }
+
         GameObject match = FindDebugEnemyPrefab(enemyPrefabs, archetype);
         if (match != null)
             return match;
@@ -325,16 +346,47 @@ public class EnemySpawner : MonoBehaviour
         bool bomber = prefab.GetComponent<EnemyBomberMovement>() != null;
         bool eyes = prefab.GetComponent<EyesEnemyBehaviour>() != null;
         bool turret = prefab.GetComponent<TurretEnemyBehaviour>() != null;
+        EnemyIdentity identity = prefab.GetComponent<EnemyIdentity>();
+        bool elite = identity != null &&
+            !string.IsNullOrWhiteSpace(identity.EnemyId) &&
+            identity.EnemyId.StartsWith(
+                "Elite_", System.StringComparison.OrdinalIgnoreCase);
 
         return archetype switch
         {
             DebugEnemyArchetype.Shooter => shooter,
+            DebugEnemyArchetype.Elite => elite,
             DebugEnemyArchetype.Bomber => bomber,
             DebugEnemyArchetype.Eyes => eyes,
             DebugEnemyArchetype.Turret => turret,
-            _ => !shooter && !bomber && !eyes && !turret
+            _ => !elite && !shooter && !bomber && !eyes && !turret
         };
     }
+
+    public GameObject SpawnDebugEnemyAt(GameObject prefab, Vector3 position)
+    {
+        if (prefab == null || !IsFinite(position))
+            return null;
+
+        // Intentionally bypasses SpawnCycle, maxAlive and wave gates while
+        // reusing the single production initialization path.
+        return SpawnEnemyAt(prefab, position, false);
+    }
+
+    public void ConfigureFeelTestPrefabCatalog(
+        GameObject basic,
+        GameObject elite,
+        GameObject shooter)
+    {
+        feelTestBasicPrefab = basic;
+        feelTestElitePrefab = elite;
+        feelTestShooterPrefab = shooter;
+    }
+
+    private static bool IsFinite(Vector3 value) =>
+        !float.IsNaN(value.x) && !float.IsInfinity(value.x) &&
+        !float.IsNaN(value.y) && !float.IsInfinity(value.y) &&
+        !float.IsNaN(value.z) && !float.IsInfinity(value.z);
 
     public void ConfigureDebugExplorationPressure(
         GameObject[] prefabs,

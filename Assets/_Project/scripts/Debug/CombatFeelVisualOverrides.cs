@@ -21,6 +21,12 @@ public sealed class CombatFeelProjectileVisual : MonoBehaviour
     private float pulseSpeed;
     private int appliedVersion;
     private Vector2 configuredDirection;
+    private SpriteRenderer rootRenderer;
+    private SpriteRenderer rootRendererProxy;
+    private bool rootRendererWasEnabled;
+
+    public Transform DebugPresentationTransform => visual;
+    public bool DebugUsesRootRendererProxy => rootRendererProxy != null;
 
     public void Configure(CombatFeelLabSettings lab, Vector2 direction)
     {
@@ -31,6 +37,7 @@ public sealed class CombatFeelProjectileVisual : MonoBehaviour
         appliedVersion = settings != null ? settings.Version : 0;
         configuredAt = Time.unscaledTime;
         if (visual == null || settings == null) return;
+        ActivateRootRendererProxy();
 
         float illusion = settings.Get(CombatFeelParameter.SpeedIllusion);
         float scale = settings.Get(CombatFeelParameter.ProjectileScale);
@@ -49,8 +56,7 @@ public sealed class CombatFeelProjectileVisual : MonoBehaviour
             renderers[i].color = MultiplyRgb(colors[i], brightness);
 
         float width = settings.Get(CombatFeelParameter.TrailWidth);
-        float lifetime = settings.Get(CombatFeelParameter.TrailLifetime) *
-            settings.Get(CombatFeelParameter.TrailLength);
+        float lifetime = settings.Get(CombatFeelParameter.TrailLifetime);
         float opacity = settings.Get(CombatFeelParameter.TrailOpacity);
         for (int i = 0; i < trails.Length; i++)
         {
@@ -59,6 +65,23 @@ public sealed class CombatFeelProjectileVisual : MonoBehaviour
             trails[i].colorGradient = CloneGradient(trailColors[i], opacity);
             trails[i].Clear();
         }
+    }
+
+    public void RebaseAfterProductionVisualChange()
+    {
+        Capture();
+        if (visual == null || settings == null) return;
+        // ProductionVisualTuningController has just written its absolute base.
+        // Capture only the channels it owns, then rebuild the feel layer.
+        baseScale = visual.localScale;
+        for (int i = 0; i < trails.Length; i++)
+        {
+            if (trails[i] == null) continue;
+            trailWidths[i] = trails[i].widthMultiplier;
+            trailTimes[i] = trails[i].time;
+            trailColors[i] = trails[i].colorGradient;
+        }
+        Configure(settings, configuredDirection);
     }
 
     private void Update()
@@ -89,8 +112,9 @@ public sealed class CombatFeelProjectileVisual : MonoBehaviour
     private void Capture()
     {
         if (visual != null) return;
-        SpriteRenderer primary = GetComponentInChildren<SpriteRenderer>(true);
-        visual = primary != null ? primary.transform : transform;
+        visual = ResolvePresentationTransform();
+        if (visual == null)
+            return;
         basePosition = visual.localPosition;
         baseScale = visual.localScale;
         baseRotation = visual.localRotation;
@@ -124,13 +148,84 @@ public sealed class CombatFeelProjectileVisual : MonoBehaviour
             trails[i].colorGradient = trailColors[i];
             trails[i].Clear();
         }
+        if (rootRendererProxy != null)
+            rootRendererProxy.enabled = false;
+        if (rootRenderer != null)
+            rootRenderer.enabled = rootRendererWasEnabled;
+    }
+
+    private Transform ResolvePresentationTransform()
+    {
+        SpriteRenderer primary = GetComponentInChildren<SpriteRenderer>(true);
+        if (primary != null && primary.transform != transform)
+            return GetDirectChildUnderRoot(primary.transform);
+
+        if (primary != null)
+        {
+            rootRenderer = primary;
+            rootRendererWasEnabled = primary.enabled;
+            rootRendererProxy = CreateRendererProxy(primary);
+            return rootRendererProxy.transform;
+        }
+
+        ParticleSystem particle = GetComponentInChildren<ParticleSystem>(true);
+        if (particle != null && particle.transform != transform)
+            return GetDirectChildUnderRoot(particle.transform);
+
+        TrailRenderer trail = GetComponentInChildren<TrailRenderer>(true);
+        if (trail != null && trail.transform != transform)
+            return GetDirectChildUnderRoot(trail.transform);
+
+        // A projectile with no separate presentation transform remains valid,
+        // but positional/scale feel overrides are deliberately unavailable.
+        return null;
+    }
+
+    private Transform GetDirectChildUnderRoot(Transform candidate)
+    {
+        Transform current = candidate;
+        while (current.parent != null && current.parent != transform)
+            current = current.parent;
+        return current.parent == transform ? current : null;
+    }
+
+    private SpriteRenderer CreateRendererProxy(SpriteRenderer source)
+    {
+        GameObject proxyObject = new("CombatFeel Visual Proxy");
+        Transform proxyTransform = proxyObject.transform;
+        proxyTransform.SetParent(transform, false);
+        proxyTransform.localPosition = Vector3.zero;
+        proxyTransform.localRotation = Quaternion.identity;
+        proxyTransform.localScale = Vector3.one;
+
+        SpriteRenderer proxy = proxyObject.AddComponent<SpriteRenderer>();
+        proxy.sharedMaterials = source.sharedMaterials;
+        proxy.sprite = source.sprite;
+        proxy.color = source.color;
+        proxy.flipX = source.flipX;
+        proxy.flipY = source.flipY;
+        proxy.drawMode = source.drawMode;
+        proxy.size = source.size;
+        proxy.maskInteraction = source.maskInteraction;
+        proxy.sortingLayerID = source.sortingLayerID;
+        proxy.sortingOrder = source.sortingOrder;
+        proxy.spriteSortPoint = source.spriteSortPoint;
+        proxy.enabled = false;
+        return proxy;
+    }
+
+    private void ActivateRootRendererProxy()
+    {
+        if (rootRendererProxy == null || rootRenderer == null)
+            return;
+        rootRenderer.enabled = false;
+        rootRendererProxy.enabled = rootRendererWasEnabled;
     }
 
     private void OnDisable() => Restore();
 
     private static Color MultiplyRgb(Color color, float value) => new(
-        Mathf.Clamp01(color.r * value), Mathf.Clamp01(color.g * value),
-        Mathf.Clamp01(color.b * value), color.a);
+        color.r * value, color.g * value, color.b * value, color.a);
 
     private static Gradient CloneGradient(Gradient source, float alpha)
     {
@@ -152,6 +247,7 @@ public sealed class CombatFeelParticleOverride : MonoBehaviour
     private float[] speeds;
     private float[] lifetimes;
     private float[] emissionRates;
+    private ParticleSystem.MinMaxGradient[] startColors;
     private CombatFeelLabSettings settings;
     private bool muzzle;
     private Vector2 direction;
@@ -193,8 +289,9 @@ public sealed class CombatFeelParticleOverride : MonoBehaviour
         {
             ParticleSystem.MainModule main = systems[i].main;
             main.startSizeMultiplier = sizes[i] * scale;
-            main.startSpeedMultiplier = speeds[i] * Mathf.Max(.1f, brightness);
+            main.startSpeedMultiplier = speeds[i];
             main.startLifetimeMultiplier = lifetimes[i] * lifetime;
+            main.startColor = ScaleGradient(startColors[i], brightness);
             ParticleSystem.EmissionModule emission = systems[i].emission;
             emission.rateOverTimeMultiplier = emissionRates[i] * amount;
         }
@@ -216,12 +313,14 @@ public sealed class CombatFeelParticleOverride : MonoBehaviour
         speeds = new float[systems.Length];
         lifetimes = new float[systems.Length];
         emissionRates = new float[systems.Length];
+        startColors = new ParticleSystem.MinMaxGradient[systems.Length];
         for (int i = 0; i < systems.Length; i++)
         {
             ParticleSystem.MainModule main = systems[i].main;
             sizes[i] = main.startSizeMultiplier;
             speeds[i] = main.startSpeedMultiplier;
             lifetimes[i] = main.startLifetimeMultiplier;
+            startColors[i] = main.startColor;
             emissionRates[i] = systems[i].emission.rateOverTimeMultiplier;
         }
     }
@@ -237,11 +336,44 @@ public sealed class CombatFeelParticleOverride : MonoBehaviour
             main.startSizeMultiplier = sizes[i];
             main.startSpeedMultiplier = speeds[i];
             main.startLifetimeMultiplier = lifetimes[i];
+            main.startColor = startColors[i];
             ParticleSystem.EmissionModule emission = systems[i].emission;
             emission.rateOverTimeMultiplier = emissionRates[i];
         }
     }
 
     private void OnDisable() => Restore();
+
+    private static ParticleSystem.MinMaxGradient ScaleGradient(
+        ParticleSystem.MinMaxGradient source, float multiplier)
+    {
+        return source.mode switch
+        {
+            ParticleSystemGradientMode.Color =>
+                new ParticleSystem.MinMaxGradient(ScaleColor(source.color, multiplier)),
+            ParticleSystemGradientMode.TwoColors => new ParticleSystem.MinMaxGradient(
+                ScaleColor(source.colorMin, multiplier), ScaleColor(source.colorMax, multiplier)),
+            ParticleSystemGradientMode.TwoGradients => new ParticleSystem.MinMaxGradient(
+                ScaleColorGradient(source.gradientMin, multiplier),
+                ScaleColorGradient(source.gradientMax, multiplier)),
+            _ => new ParticleSystem.MinMaxGradient(
+                ScaleColorGradient(source.gradient, multiplier))
+        };
+    }
+
+    private static Color ScaleColor(Color color, float multiplier) =>
+        new(color.r * multiplier, color.g * multiplier,
+            color.b * multiplier, color.a);
+
+    private static Gradient ScaleColorGradient(Gradient source, float multiplier)
+    {
+        if (source == null) return null;
+        Gradient result = new();
+        GradientColorKey[] colors = source.colorKeys;
+        for (int i = 0; i < colors.Length; i++)
+            colors[i].color = ScaleColor(colors[i].color, multiplier);
+        result.SetKeys(colors, source.alphaKeys);
+        return result;
+    }
 }
 #endif

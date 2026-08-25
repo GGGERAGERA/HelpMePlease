@@ -222,6 +222,11 @@ public sealed class PooledGameObject : MonoBehaviour
             Rigidbody2D body = bodies[i];
             body.linearVelocity = Vector2.zero;
             body.angularVelocity = 0f;
+            if (body.transform == transform)
+            {
+                body.position = position;
+                body.SetRotation(rotation.eulerAngles.z);
+            }
         }
 
         for (int i = 0; i < colliders.Length; i++)

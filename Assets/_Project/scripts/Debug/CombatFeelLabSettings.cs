@@ -91,6 +91,141 @@ public enum CombatFeelParameter
     PreFireDuration, PreFireGlow, PreFireCompression, PreFireAimEmphasis
 }
 
+public readonly struct CombatFeelConsumerDeclaration
+{
+    public readonly string RuntimePath;
+    public readonly string Target;
+    public CombatFeelConsumerDeclaration(string runtimePath, string target)
+    { RuntimePath = runtimePath; Target = target; }
+}
+
+public static class CombatFeelConsumerRegistry
+{
+    public const int ParametersBeforeAudit = 209;
+    private static readonly HashSet<CombatFeelParameter> removed = new()
+    {
+        CombatFeelParameter.TangentialSpread,
+        CombatFeelParameter.ShotInputDelay, CombatFeelParameter.FireResponseOffset,
+        CombatFeelParameter.ShotAnimationLead, CombatFeelParameter.ShotFxLead,
+        CombatFeelParameter.FireRateFeelMultiplier, CombatFeelParameter.CadenceVariance,
+        CombatFeelParameter.BurstRhythmBias, CombatFeelParameter.MovementDampDuration,
+        CombatFeelParameter.MuzzleDirectionality, CombatFeelParameter.MuzzleRingScale,
+        CombatFeelParameter.MuzzleRingDuration, CombatFeelParameter.MuzzleRingOpacity,
+        CombatFeelParameter.ProjectileAlign, CombatFeelParameter.ProjectileGlow,
+        CombatFeelParameter.TrailLength, CombatFeelParameter.TrailTaper,
+        CombatFeelParameter.ImpactDirectionality, CombatFeelParameter.ImpactRingSize,
+        CombatFeelParameter.ImpactRingSpeed, CombatFeelParameter.ImpactRingLifetime,
+        CombatFeelParameter.ImpactDebris, CombatFeelParameter.ForwardSpray,
+        CombatFeelParameter.BackSpray, CombatFeelParameter.SideSpray,
+        CombatFeelParameter.FlashStrength, CombatFeelParameter.FlashAttack,
+        CombatFeelParameter.FlashHold, CombatFeelParameter.FlashRelease,
+        CombatFeelParameter.BrightnessPunch, CombatFeelParameter.SaturationPunch,
+        CombatFeelParameter.ContrastPunch, CombatFeelParameter.PopupRiseDistance,
+        CombatFeelParameter.VisualStagger, CombatFeelParameter.PhysicalStagger,
+        CombatFeelParameter.DeathFlash, CombatFeelParameter.DeathFlashDuration,
+        CombatFeelParameter.DeathShrink, CombatFeelParameter.DeathExpand,
+        CombatFeelParameter.DeathParticleAmount, CombatFeelParameter.DeathParticleScale,
+        CombatFeelParameter.DeathParticleSpeed, CombatFeelParameter.DeathParticleLifetime,
+        CombatFeelParameter.DeathDirectionality, CombatFeelParameter.DeathRingSize,
+        CombatFeelParameter.DeathRingSpeed, CombatFeelParameter.DeathRingOpacity,
+        CombatFeelParameter.GhostPush, CombatFeelParameter.OverkillParticles,
+        CombatFeelParameter.OverkillDeathPush, CombatFeelParameter.ShotShakeFrequency,
+        CombatFeelParameter.HitShakeFrequency, CombatFeelParameter.CameraSpring,
+        CombatFeelParameter.CameraDamping, CombatFeelParameter.CameraOvershoot,
+        CombatFeelParameter.TowardShot, CombatFeelParameter.AwayFromShot,
+        CombatFeelParameter.CrowdFlash, CombatFeelParameter.CrowdWobble,
+        CombatFeelParameter.KillShockwave, CombatFeelParameter.HitVignette,
+        CombatFeelParameter.KillVignette, CombatFeelParameter.ScreenBrightness,
+        CombatFeelParameter.ScreenSaturation, CombatFeelParameter.LocalHitLight,
+        CombatFeelParameter.LocalHitRadius, CombatFeelParameter.LocalHitIntensity,
+        CombatFeelParameter.LocalHitLifetime, CombatFeelParameter.PreFireDuration,
+        CombatFeelParameter.PreFireGlow, CombatFeelParameter.PreFireCompression,
+        CombatFeelParameter.PreFireAimEmphasis
+    };
+    private static readonly HashSet<CombatFeelParameter> fixedBroken = new()
+    {
+        CombatFeelParameter.ImpactScale, CombatFeelParameter.ImpactLifetime,
+        CombatFeelParameter.ImpactBrightness, CombatFeelParameter.ImpactRotationRandomness,
+        CombatFeelParameter.ImpactSparks,
+        CombatFeelParameter.WeaponKickDistance, CombatFeelParameter.WeaponKickDuration,
+        CombatFeelParameter.WeaponReturnDuration, CombatFeelParameter.WeaponOvershoot,
+        CombatFeelParameter.WeaponSettleDuration, CombatFeelParameter.WeaponKickRotation,
+        CombatFeelParameter.WeaponKickRandomness, CombatFeelParameter.WeaponScalePunchX,
+        CombatFeelParameter.WeaponScalePunchY, CombatFeelParameter.PlayerRotationKick,
+        CombatFeelParameter.DirectionalKickDistance, CombatFeelParameter.DirectionalKickDuration,
+        CombatFeelParameter.DirectionalReturn, CombatFeelParameter.DirectionalOvershoot,
+        CombatFeelParameter.GlobalFreeze, CombatFeelParameter.MuzzleBrightness,
+        CombatFeelParameter.ProjectileBrightness,
+        CombatFeelParameter.ProjectileScale, CombatFeelParameter.ProjectileStretch,
+        CombatFeelParameter.ProjectileSquash, CombatFeelParameter.ProjectilePulse,
+        CombatFeelParameter.SpeedIllusion, CombatFeelParameter.InitialStreakLength,
+        CombatFeelParameter.TrailWidth, CombatFeelParameter.TrailLifetime,
+        CombatFeelParameter.TrailOpacity
+    };
+
+    public static int RemovedCount => removed.Count;
+    public static int FixedBrokenCount => fixedBroken.Count;
+    public static IReadOnlyCollection<CombatFeelParameter> RemovedParameters => removed;
+    public static bool WasRemoved(CombatFeelParameter parameter) => removed.Contains(parameter);
+    public static string GetAuditStatus(CombatFeelParameter parameter) =>
+        removed.Contains(parameter)
+            ? parameter == CombatFeelParameter.TrailLength ? "REDUNDANT" : "UNWIRED"
+            : fixedBroken.Contains(parameter) ? "WORKING (FIXED)" : "WORKING";
+    public static string GetRemovalReason(CombatFeelParameter parameter) =>
+        parameter == CombatFeelParameter.TrailLength
+            ? "REDUNDANT: дублировал TrailLifetime через тот же TrailRenderer.time."
+            : "UNWIRED: отсутствовал runtime consumer вне settings/UI.";
+
+    public static bool TryGet(CombatFeelParameter parameter, CombatFeelGroup group,
+        out CombatFeelConsumerDeclaration declaration)
+    {
+        if (removed.Contains(parameter)) { declaration = default; return false; }
+        string name = parameter.ToString();
+        declaration = group switch
+        {
+            CombatFeelGroup.Projectile => new(
+                "ProjectileFireBehaviour → CombatFeelProjectileVisual.Configure/Update",
+                "отдельный visual child, SpriteRenderer или TrailRenderer снаряда"),
+            CombatFeelGroup.Hit when name.StartsWith("Impact", StringComparison.Ordinal) => new(
+                "WeaponHitResolver → WeaponFxPlayer.PlayHit → CombatFeelParticleOverride",
+                "ParticleSystem эффекта попадания"),
+            CombatFeelGroup.Hit => new(
+                "EnemyHealth.ShowDamagePopup → DamagePopup.ConfigureFeel/UpdateFeel",
+                "Transform и TextMeshPro цифры урона"),
+            CombatFeelGroup.Target => new(
+                "WeaponHitResolver → PhysicalCombatFeedbackRuntime.PlayEnemyHit/LateUpdate",
+                "presentation root цели; gameplay root не перемещается"),
+            CombatFeelGroup.Kill => new(
+                "WeaponHitResolver/EnemyHealth.Die → PhysicalCombatFeedbackRuntime",
+                "отделённый death visual или presentation root цели"),
+            CombatFeelGroup.Camera => new(
+                "PhysicalCombatFeedbackRuntime → CameraShake debug layer/Camera orthographicSize",
+                "presentation transform камеры или orthographic zoom"),
+            CombatFeelGroup.Time => new(
+                "PhysicalCombatFeedbackRuntime.RequestEventTime/UpdateHitStop",
+                "Time.timeScale либо Animator.speed конкретной цели"),
+            CombatFeelGroup.Crowd => new(
+                "PhysicalCombatFeedbackRuntime.PlayCrowdResponse → PlayEnemyHit",
+                "presentation roots соседних живых врагов"),
+            CombatFeelGroup.Shot when name.StartsWith("Muzzle", StringComparison.Ordinal) => new(
+                "WeaponFxPlayer.PlayFire → CombatFeelParticleOverride",
+                "ParticleSystem muzzle-FX выбранного оружия"),
+            CombatFeelGroup.Shot => new(
+                "WeaponFxPlayer.PlayFire → PhysicalCombatFeedbackRuntime",
+                "weapon/player presentation layer, Rigidbody2D, Camera или Time.timeScale"),
+            _ => new(
+                "WeaponHitResolver/PhysicalCombatFeedbackRuntime.GetImpactStrength",
+                "коэффициент событий shot/hit/kill presentation pipeline")
+        };
+        return true;
+    }
+
+    public static bool IsGameplayAffecting(CombatFeelParameter parameter,
+        CombatFeelGroup group) => group == CombatFeelGroup.Time || parameter is
+        CombatFeelParameter.PhysicalRecoil or CombatFeelParameter.PlayerRecoilVelocity or
+        CombatFeelParameter.MovementDamp or CombatFeelParameter.GlobalFreeze;
+}
+
 public readonly struct CombatFeelDescriptor
 {
     public readonly CombatFeelParameter Parameter;
@@ -102,21 +237,361 @@ public readonly struct CombatFeelDescriptor
     public readonly float Maximum;
     public readonly float Hard;
     public readonly bool Toggle;
+    public readonly CombatFeelParameterMetadata Metadata;
 
     public CombatFeelDescriptor(
         CombatFeelParameter parameter, CombatFeelGroup group, string name,
         float neutral, float minimum, float maximum, float hard,
         string tooltip = null, bool toggle = false)
     {
+        Metadata = CombatFeelParameterMetadata.Create(
+            parameter, group, name, neutral, minimum, maximum, hard, tooltip, toggle);
         Parameter = parameter;
         Group = group;
-        Name = name;
-        Tooltip = tooltip;
+        Name = Metadata.RussianName;
+        Tooltip = Metadata.DescriptionRu;
         Neutral = neutral;
-        Minimum = minimum;
-        Maximum = maximum;
+        Minimum = Metadata.Minimum;
+        Maximum = Metadata.Maximum;
         Hard = hard;
         Toggle = toggle;
+    }
+}
+
+public sealed class CombatFeelParameterMetadata
+{
+    private static readonly Dictionary<string, string> Words = new(StringComparer.Ordinal)
+    {
+        ["Master"]="Общая", ["Intensity"]="интенсивность", ["Damage"]="урон", ["Influence"]="влияние",
+        ["Min"]="минимум", ["Max"]="максимум", ["Feedback"]="отдача", ["Crit"]="критическая",
+        ["Multiplier"]="множитель", ["Basic"]="обычный враг", ["Elite"]="элитный враг", ["Boss"]="босс",
+        ["Weight"]="вес", ["Direction"]="направление", ["Randomness"]="разброс", ["Tangential"]="боковой",
+        ["Spread"]="разлёт", ["Shot"]="выстрела", ["Input"]="ввода", ["Delay"]="задержка",
+        ["Fire"]="огня", ["Response"]="отклик", ["Offset"]="смещение", ["Animation"]="анимация",
+        ["Lead"]="опережение", ["Fx"]="эффектов", ["Rate"]="темпа", ["Feel"]="ощущения",
+        ["Cadence"]="каденс", ["Variance"]="вариативность", ["Burst"]="очереди", ["Rhythm"]="ритм",
+        ["Bias"]="акцент", ["First"]="первого", ["Emphasis"]="акцент", ["Weapon"]="оружия",
+        ["Kick"]="рывок", ["Distance"]="дистанция", ["Duration"]="длительность", ["Return"]="возврат",
+        ["Overshoot"]="перелёт", ["Settle"]="успокоение", ["Rotation"]="поворот", ["Scale"]="масштаб",
+        ["Punch"]="импульс", ["Player"]="игрока", ["Visual"]="визуальная", ["Recoil"]="отдача",
+        ["Squash"]="сжатие", ["Stretch"]="растяжение", ["Spring"]="пружина", ["Physical"]="физическая",
+        ["Velocity"]="скорость", ["Movement"]="движение", ["Damp"]="торможение", ["On"]="при",
+        ["Muzzle"]="дульной вспышки", ["Brightness"]="яркость", ["Random"]="случайный", ["Sparks"]="искры",
+        ["Directionality"]="направленность", ["Ring"]="кольцо", ["Opacity"]="прозрачность",
+        ["Projectile"]="снаряда", ["Align"]="ориентация", ["Spin"]="вращение", ["Glow"]="свечение",
+        ["Pulse"]="пульсация", ["Speed"]="скорость", ["Trail"]="следа", ["Width"]="ширина",
+        ["Length"]="длина", ["Lifetime"]="время жизни", ["Taper"]="сужение", ["Illusion"]="иллюзия",
+        ["Forward"]="вперёд", ["Initial"]="начальный", ["Streak"]="штрих", ["Impact"]="попадания",
+        ["Size"]="размер", ["Debris"]="осколки", ["Back"]="назад", ["Side"]="в стороны",
+        ["Spray"]="выброс", ["Flash"]="вспышка", ["Strength"]="сила", ["Attack"]="нарастание",
+        ["Hold"]="удержание", ["Release"]="затухание", ["Saturation"]="насыщенность", ["Contrast"]="контраст",
+        ["Popup"]="цифр урона", ["Rise"]="подъём", ["Fade"]="исчезновение", ["Horizontal"]="горизонтальный",
+        ["Drift"]="дрейф", ["Spawn"]="появление", ["Hit"]="попадания", ["Push"]="толчок",
+        ["Restore"]="восстановление", ["Wobble"]="качание", ["Frequency"]="частота", ["Damping"]="затухание",
+        ["Stagger"]="ошеломление", ["Death"]="смерти", ["Disappear"]="исчезновением", ["Shrink"]="уменьшение",
+        ["Expand"]="расширение", ["Particle"]="частиц", ["Amount"]="количество", ["Ghost"]="призрак",
+        ["Enabled"]="включён", ["Overkill"]="оверкилл", ["Threshold"]="порог", ["Particles"]="частицы",
+        ["Shake"]="тряска", ["Amplitude"]="амплитуда", ["Directional"]="направленный", ["Zoom"]="зум",
+        ["Camera"]="камеры", ["Toward"]="к", ["Away"]="от", ["Freeze"]="стоп-кадр",
+        ["Slowdown"]="замедление", ["Recovery"]="восстановление", ["Time"]="времени", ["Local"]="локальный",
+        ["Enemy"]="врага", ["Global"]="глобальный", ["Blend"]="смешивание", ["Crowd"]="толпы",
+        ["Radius"]="радиус", ["Falloff"]="спад", ["Targets"]="цели", ["Kill"]="убийства",
+        ["Shockwave"]="ударная волна", ["Rapid"]="серии", ["Window"]="окно", ["Gain"]="усиление",
+        ["Decay"]="спад", ["Vignette"]="виньетка", ["Screen"]="экрана", ["Light"]="свет",
+        ["Pre"]="пред", ["Compression"]="сжатие", ["Aim"]="прицел", ["Across"]="поперёк",
+        ["Along"]="вдоль", ["From"]="от", ["X"]="X", ["Y"]="Y", ["Normal"]="обычный"
+    };
+
+    public CombatFeelParameter Parameter { get; private set; }
+    public CombatFeelGroup Group { get; private set; }
+    public string TechnicalName { get; private set; }
+    public string RussianName { get; private set; }
+    public string DescriptionRu { get; private set; }
+    public string Unit { get; private set; }
+    public string ConsumerPath { get; private set; }
+    public string ConsumerTarget { get; private set; }
+    public string WhatToWatchRu { get; private set; }
+    public string MinimumMeaningRu { get; private set; }
+    public string MaximumMeaningRu { get; private set; }
+    public bool GameplayAffecting { get; private set; }
+    public string AuditStatus { get; private set; }
+    public float Production { get; private set; }
+    public float Neutral { get; private set; }
+    public float AuthoredMinimum { get; private set; }
+    public float AuthoredMaximum { get; private set; }
+    public float Minimum { get; private set; }
+    public float Maximum { get; private set; }
+    public float SafeRandomMinimum { get; private set; }
+    public float SafeRandomMaximum { get; private set; }
+    public float DiagnosticExtreme { get; private set; }
+    public bool Toggle { get; private set; }
+
+    public static CombatFeelParameterMetadata Create(CombatFeelParameter parameter,
+        CombatFeelGroup group, string englishName, float neutral, float minimum,
+        float maximum, float hard, string authoredHint, bool toggle)
+    {
+        string technical = parameter.ToString();
+        string russian = BuildRussianName(technical);
+        string unit = GetUnit(technical, toggle);
+        CombatFeelConsumerRegistry.TryGet(parameter, group,
+            out CombatFeelConsumerDeclaration consumer);
+        ExpandRange(technical, neutral, minimum, maximum, toggle,
+            out float experimentMin, out float experimentMax);
+        float safeA = toggle ? 0f : Mathf.Lerp(neutral, hard, .15f);
+        float safeB = toggle ? 1f : Mathf.Lerp(neutral, hard, .85f);
+        float diagnosticExtreme = toggle ? 1f : hard > neutral ? experimentMax
+            : hard < neutral ? experimentMin
+            : experimentMax - neutral >= neutral - experimentMin
+                ? experimentMax : experimentMin;
+        return new CombatFeelParameterMetadata
+        {
+            Parameter = parameter, Group = group, TechnicalName = technical,
+            RussianName = russian, Unit = unit, Production = neutral, Neutral = neutral,
+            ConsumerPath = consumer.RuntimePath, ConsumerTarget = consumer.Target,
+            GameplayAffecting = CombatFeelConsumerRegistry.IsGameplayAffecting(parameter, group),
+            AuditStatus = CombatFeelConsumerRegistry.GetAuditStatus(parameter),
+            WhatToWatchRu = BuildWhatToWatch(technical, group),
+            MinimumMeaningRu = BuildEdgeMeaning(technical, group, false),
+            MaximumMeaningRu = BuildEdgeMeaning(technical, group, true),
+            AuthoredMinimum = minimum, AuthoredMaximum = maximum,
+            Minimum = experimentMin, Maximum = experimentMax,
+            SafeRandomMinimum = Mathf.Clamp(Mathf.Min(safeA, safeB), experimentMin, experimentMax),
+            SafeRandomMaximum = Mathf.Clamp(Mathf.Max(safeA, safeB), experimentMin, experimentMax),
+            DiagnosticExtreme = diagnosticExtreme,
+            Toggle = toggle,
+            DescriptionRu = BuildDescription(technical, group, russian, toggle, authoredHint)
+        };
+    }
+
+    public string FormatValue(float value)
+    {
+        if (Toggle) return value >= .5f ? "ВКЛ" : "ВЫКЛ";
+        if (Unit == "%") return (value * 100f).ToString("0.#") + "%";
+        string format = Mathf.Abs(value) < 1f ? "0.###" : "0.##";
+        return value.ToString(format) + (string.IsNullOrEmpty(Unit) ? string.Empty : " " + Unit);
+    }
+
+    public static string GetGroupDescriptionRu(CombatFeelGroup group) => group switch
+    {
+        CombatFeelGroup.Global => "Общие коэффициенты, связывающие урон, класс врага и направление со всей визуальной отдачей.",
+        CombatFeelGroup.Shot => "Отклик оружия и игрока в момент выстрела: рывок, вспышка, ритм и декоративная отдача.",
+        CombatFeelGroup.Projectile => "Только внешний вид полёта снаряда и его следа; физическая скорость не меняется.",
+        CombatFeelGroup.Hit => "Эффекты точки попадания и цифры урона: вспышка, частицы, кольцо и popup-анимация.",
+        CombatFeelGroup.Target => "Реакция живой цели: визуальный толчок, деформация, поворот и качание.",
+        CombatFeelGroup.Kill => "Читаемость и зрелищность смерти: деформация, частицы, призрак и оверкилл.",
+        CombatFeelGroup.Camera => "Импульсы камеры и зума от выстрела, попадания и убийства.",
+        CombatFeelGroup.Time => "Короткие стоп-кадры и замедления; экстремумы остаются ограничены безопасными значениями.",
+        CombatFeelGroup.Crowd => "Передача импульса соседним врагам и усиление серии быстрых убийств.",
+        _ => "Экспериментальные экранные и предвыстрельные акценты, не добавляющие новых игровых механик."
+    };
+
+    public static string GetGroupShortNameRu(CombatFeelGroup group) => group switch
+    {
+        CombatFeelGroup.Global => "ОБЩЕЕ", CombatFeelGroup.Shot => "ВЫСТРЕЛ",
+        CombatFeelGroup.Projectile => "СНАРЯД", CombatFeelGroup.Hit => "ПОПАДАНИЕ",
+        CombatFeelGroup.Target => "ЦЕЛЬ", CombatFeelGroup.Kill => "УБИЙСТВО",
+        CombatFeelGroup.Camera => "КАМЕРА", CombatFeelGroup.Time => "ВРЕМЯ",
+        CombatFeelGroup.Crowd => "ТОЛПА", _ => "ЭКСПЕРИМЕНТ"
+    };
+
+    public static string GetPresetDescriptionRu(string key) => key switch
+    {
+        "CLEAN" => "Чистый и сдержанный профиль: минимум камеры и времени, ясный силуэт выстрела.",
+        "PUNCHY" => "Резкий профиль: сильнее выстрелы и попадания, умеренная камера и стоп-кадры.",
+        "HEAVY" => "Тяжёлый профиль: медленнее восстановление, сильные убийства и временные акценты.",
+        "ARCADE" => "Яркий аркадный профиль: заметные снаряды, вспышки и реакции толпы.",
+        "CHAOTIC" => "Предельно выразительный общий профиль для стресс-теста читаемости.",
+        "OFF" => "Вернуть параметры открытой группы к production-значениям.",
+        "SOFT" => "Лёгкое отклонение группы от production в сторону авторского акцента.",
+        "MEDIUM" => "Средняя, хорошо заметная сила авторского акцента группы.",
+        "HARD" => "Сильный авторский акцент без выхода к экспериментальному краю диапазона.",
+        "INSANE" => "Очевидный экстремум: уводит группу далеко за HARD, но остаётся в безопасных границах.",
+        "SAVE A" => "Сохранить текущие значения всех параметров в слот A.",
+        "LOAD A" => "Восстановить ранее сохранённый снимок A.",
+        "SAVE B" => "Сохранить текущие значения всех параметров в слот B.",
+        "LOAD B" => "Восстановить ранее сохранённый снимок B.",
+        "RANDOMIZE" => "Случайно изменить открытую группу только внутри её безопасных random-диапазонов.",
+        "UNDO" => "Точно отменить последнюю рандомизацию.",
+        "SOLO" => "Оставить активной открытую группу, временно нейтрализовав остальные.",
+        "UNSOLO" => "Вернуть одновременное действие всех групп.",
+        "RESET GROUP" => "Вернуть всю открытую группу к production-значениям.",
+        _ => "Выбрать раздел параметров лаборатории: " + key + "."
+    };
+
+    private static string BuildRussianName(string technical)
+    {
+        List<string> tokens = Split(technical);
+        StringBuilder result = new();
+        for (int i = 0; i < tokens.Count; i++)
+        {
+            if (result.Length > 0) result.Append(' ');
+            result.Append(Words.TryGetValue(tokens[i], out string word) ? word : tokens[i]);
+        }
+        if (result.Length == 0) return technical;
+        result[0] = char.ToUpperInvariant(result[0]);
+        return result.ToString();
+    }
+
+    private static List<string> Split(string value)
+    {
+        List<string> result = new();
+        int start = 0;
+        for (int i = 1; i < value.Length; i++)
+            if (char.IsUpper(value[i]) && !char.IsUpper(value[i - 1]))
+            { result.Add(value.Substring(start, i - start)); start = i; }
+        result.Add(value.Substring(start));
+        return result;
+    }
+
+    private static string GetUnit(string name, bool toggle)
+    {
+        if (toggle) return "вкл/выкл";
+        if (name is "MuzzleDuration" or "ImpactLifetime" or "TrailLifetime" or
+            "CritPopupLifetime") return "×";
+        if (name == "ProjectileSpin") return "°/с";
+        if (name == "PlayerRecoilVelocity" || name == "PopupRiseSpeed") return "ед./с";
+        if (name == "WobbleStrength") return "°";
+        if (name == "WobbleDamping") return "1/с";
+        if (name.Contains("ShakeAmplitude") || name.Contains("ZoomPunch")) return "ед.";
+        if (name == "MovementDamp" || name == "DirectionRandomness" ||
+            name.Contains("Opacity") || name.Contains("Fade") || name.Contains("Blend")) return "%";
+        if ((name.Contains("Freeze") && !name.Contains("Blend")) ||
+            name.EndsWith("Slowdown", StringComparison.Ordinal)) return "с";
+        if (name.Contains("Duration") || name.Contains("Lifetime") || name.Contains("Delay") ||
+            name.Contains("Recovery") || name.Contains("Return") || name.Contains("Window") ||
+            name.Contains("Hold") || name.Contains("Attack") || name.Contains("Release")) return "с";
+        if (name.Contains("Rotation") || name.Contains("Spin")) return "°";
+        if (name.Contains("Frequency")) return "Гц";
+        if (name.Contains("CrowdMaxTargets")) return "целей";
+        if (name.Contains("Distance") || name.Contains("Radius") || name.Contains("Offset") || name.Contains("Push")) return "ед.";
+        return "×";
+    }
+
+    private static string BuildWhatToWatch(string name, CombatFeelGroup group)
+    {
+        if (name.StartsWith("Weapon", StringComparison.Ordinal))
+            return "Смотрите на спрайт оружия относительно fire point и рук персонажа.";
+        if (name.StartsWith("Player", StringComparison.Ordinal))
+            return "Смотрите на visual персонажа; gameplay root и точка выстрела должны оставаться на месте.";
+        if (name.StartsWith("Muzzle", StringComparison.Ordinal))
+            return "Выберите оружие с muzzle-FX (например Laser) и смотрите на вспышку в момент выстрела.";
+        if (group == CombatFeelGroup.Projectile)
+            return "Следите за visual снаряда и его TrailRenderer во время полёта, не за скоростью Rigidbody.";
+        if (name.StartsWith("Impact", StringComparison.Ordinal))
+            return "Выберите оружие с impact-FX и смотрите точно в точку попадания.";
+        if (name.StartsWith("Popup", StringComparison.Ordinal) || name.StartsWith("CritPopup", StringComparison.Ordinal))
+            return "Смотрите на цифру урона от момента появления до полного исчезновения.";
+        if (group is CombatFeelGroup.Target or CombatFeelGroup.Kill or CombatFeelGroup.Crowd)
+            return "Смотрите на presentation root врага относительно неподвижного gameplay collider/root.";
+        if (group == CombatFeelGroup.Camera)
+            return name.Contains("Zoom") ? "Смотрите на изменение масштаба кадра вокруг Camera.main."
+                : "Смотрите на смещение всего кадра относительно мира.";
+        if (group == CombatFeelGroup.Time)
+            return name.Contains("Local") ? "Сравнивайте анимацию поражённого врага с остальным миром."
+                : "Сравнивайте паузу/скорость мира сразу после события.";
+        return "Сравнивайте силу всей реакции на одинаковый выстрел и одинаковую цель.";
+    }
+
+    private static string BuildEdgeMeaning(string name, CombatFeelGroup group, bool maximum)
+    {
+        if (name.Contains("SlowdownScale"))
+            return maximum ? "Мир сохраняет полную скорость: slow-motion практически отсутствует."
+                : "Самое сильное безопасное slow-motion, почти стоп-кадр.";
+        if (name.Contains("Opacity"))
+            return maximum ? "Максимально плотный/непрозрачный visual."
+                : "Visual полностью прозрачен и практически исчезает.";
+        if (!maximum)
+        {
+            if (name.Contains("Duration") || name.Contains("Lifetime") || name.Contains("Delay"))
+                return "Эффект почти мгновенный или отсутствует.";
+            if (name.Contains("Scale") && !name.Contains("Punch")) return "Минимальный безопасный размер visual.";
+            return "Минимально допустимое влияние этого компонента.";
+        }
+        if (name.Contains("Rotation") || name.Contains("Spin")) return "Намеренно чрезмерный, сразу заметный поворот.";
+        if (name.Contains("Squash")) return "Сильная мультяшная деформация без схлопывания transform.";
+        if (name.Contains("Stretch") || name.Contains("Scale") || name.Contains("Size")) return "Очень крупный диагностический visual.";
+        if (name.Contains("Duration") || name.Contains("Lifetime") || name.Contains("Delay") || name.Contains("Return")) return "Намеренно долгая реакция, удобная для сравнения тайминга.";
+        if (group == CombatFeelGroup.Camera) return "Сильное смещение/масштабирование кадра, которое невозможно пропустить.";
+        if (group == CombatFeelGroup.Time) return "Предельный безопасный временной акцент для диагностического сравнения.";
+        return "Диагностический перебор: эффект должен быть очевиден без всматривания.";
+    }
+
+    private static string BuildDescription(string name, CombatFeelGroup group,
+        string russianName, bool toggle, string authoredHint)
+    {
+        string subject = GetGroupDescriptionRu(group).Split('.')[0].ToLowerInvariant();
+        string increase;
+        if (name == "PhysicalRecoil")
+            increase = "Включение разрешает реальный импульс Rigidbody2D игрока; это не presentation-only эффект.";
+        else if (name == "PlayerRecoilVelocity")
+            increase = "Увеличение сильнее меняет реальную скорость Rigidbody2D игрока назад; работает вместе с Physical Recoil.";
+        else if (name == "MovementDamp")
+            increase = "Увеличение сильнее уменьшает реальную скорость Rigidbody2D игрока в момент выстрела.";
+        else if (name == "GlobalFreeze")
+            increase = "Включение разрешает глобальный стоп-кадр через Time.timeScale даже при выключенном production hit-stop.";
+        else if (name.Contains("SlowdownScale"))
+            increase = "Увеличение оставляет больше скорости во время замедления; MIN даёт самый сильный slow-motion.";
+        else if (toggle) increase = "Включение добавляет этот явно обозначенный режим; выключение оставляет production-поведение.";
+        else if (name.Contains("Duration") || name.Contains("Lifetime") || name.Contains("Hold") || name.Contains("Window"))
+            increase = "Увеличение дольше удерживает эффект на экране и делает реакцию протяжённее.";
+        else if (name.Contains("Delay") || name.Contains("Attack") || name.Contains("Recovery") || name.Contains("Return"))
+            increase = "Увеличение замедляет наступление или возврат эффекта, делая движение более вязким.";
+        else if (name.Contains("Speed") || name.Contains("Frequency"))
+            increase = "Увеличение ускоряет визуальное движение или колебание; игровая скорость не меняется, если это не указано отдельно.";
+        else if (name.Contains("Rotation") || name.Contains("Spin"))
+            increase = "Увеличение усиливает поворот по часовой стрелке; отрицательные значения меняют направление.";
+        else if (name.Contains("Random") || name.Contains("Variance") || name.Contains("Spread"))
+            increase = "Увеличение добавляет больше различий между событиями и менее ровный силуэт реакции.";
+        else if (name.Contains("Opacity") || name.Contains("Brightness") || name.Contains("Glow") || name.Contains("Flash") || name.Contains("Light") || name.Contains("Vignette"))
+            increase = "Увеличение делает экранный или световой акцент ярче и заметнее.";
+        else if (name.Contains("Scale") || name.Contains("Size") || name.Contains("Width") || name.Contains("Length") || name.Contains("Radius") || name.Contains("Expand"))
+            increase = "Увеличение визуально расширяет эффект и делает его силуэт крупнее.";
+        else if (name.Contains("Damping") || name.Contains("Damp") || name.Contains("Falloff") || name.Contains("Decay"))
+            increase = "Увеличение сильнее гасит движение или быстрее ослабляет эффект от центра/во времени.";
+        else if (name.Contains("Amount") || name.Contains("Particles") || name.Contains("Sparks") || name.Contains("Debris") || name.Contains("Targets"))
+            increase = "Увеличение показывает больше элементов или затрагивает больше визуальных целей.";
+        else if (name.Contains("Squash") || name.Contains("Compression") || name.Contains("Shrink"))
+            increase = "Увеличение сильнее сжимает визуальный силуэт; геометрия ограничена безопасным диапазоном.";
+        else
+            increase = "Увеличение усиливает видимую выраженность этого компонента реакции.";
+        string note = GetSafetyNote(name, authoredHint);
+        return $"Определяет «{russianName.ToLowerInvariant()}» для: {subject}. {increase}{note}";
+    }
+
+    private static string GetSafetyNote(string name, string authoredHint)
+    {
+        if (string.IsNullOrWhiteSpace(authoredHint)) return string.Empty;
+        if (name == "PhysicalRecoil") return " Внимание: режим явно меняет скорость Rigidbody и по умолчанию выключен.";
+        if (name == "PhysicalStagger") return " Внимание: экспериментально приостанавливает AI/анимацию и по умолчанию выключен.";
+        if (name == "ShotInputDelay") return " Это только задержка презентации: снаряд и DPS срабатывают сразу.";
+        if (name == "FireRateFeelMultiplier") return " Меняется только визуальный ритм, не cooldown оружия.";
+        if (name == "SpeedIllusion") return " Физическая скорость снаряда не меняется.";
+        if (name == "BossWeight") return " Смещение масштабируется отдельно от акцентов камеры и времени.";
+        return string.Empty;
+    }
+
+    private static void ExpandRange(string name, float neutral, float minimum,
+        float maximum, bool toggle, out float expandedMin, out float expandedMax)
+    {
+        if (toggle) { expandedMin = 0f; expandedMax = 1f; return; }
+        float span = Mathf.Max(maximum - minimum, .001f);
+        float factor = name.Contains("Freeze") ? 1.5f :
+            name.Contains("Rotation") || name.Contains("Spin") ? 2f :
+            name.Contains("Duration") || name.Contains("Lifetime") || name.Contains("Delay") ? 2f : 1.75f;
+        expandedMin = minimum < neutral ? neutral - (neutral - minimum) * factor : minimum;
+        expandedMax = maximum > neutral ? neutral + (maximum - neutral) * factor : maximum;
+        if (minimum >= 0f) expandedMin = Mathf.Max(0f, expandedMin);
+        if (name.Contains("Scale") && !name.Contains("Punch") && neutral > 0f)
+            expandedMin = Mathf.Max(.01f, expandedMin);
+        if (name.Contains("SlowdownScale")) { expandedMin = Mathf.Max(.02f, expandedMin); expandedMax = Mathf.Min(1f, expandedMax); }
+        if (name.Contains("Opacity") || name.Contains("Blend") || name.Contains("Randomness") || name.Contains("MovementDamp"))
+        {
+            float cap = name.Contains("Opacity") || name.Contains("Blend") ? 1f : 2f;
+            expandedMax = Mathf.Min(Mathf.Max(maximum, cap), expandedMax);
+        }
+        if (name.Contains("Freeze") && !name.Contains("Blend")) expandedMax = Mathf.Min(.75f, expandedMax);
+        expandedMin = Mathf.Min(expandedMin, neutral);
+        expandedMax = Mathf.Max(expandedMax, neutral);
     }
 }
 
@@ -210,12 +685,8 @@ public sealed class CombatFeelLabSettings
             if (d.Toggle)
                 Set(d.Parameter, UnityEngine.Random.value < 0.42f ? 1f : 0f);
             else
-            {
-                float low = Mathf.Lerp(d.Neutral, d.Hard, 0.18f);
-                float high = Mathf.Lerp(d.Neutral, d.Hard, 0.82f);
                 Set(d.Parameter, UnityEngine.Random.Range(
-                    Mathf.Min(low, high), Mathf.Max(low, high)));
-            }
+                    d.Metadata.SafeRandomMinimum, d.Metadata.SafeRandomMaximum));
         }
     }
 
@@ -234,20 +705,23 @@ public sealed class CombatFeelLabSettings
             ResetGroup(group);
             return;
         }
-        float amount = preset switch
-        {
-            GroupPreset.Soft => 0.25f,
-            GroupPreset.Medium => 0.5f,
-            GroupPreset.Hard => 0.78f,
-            _ => 1f
-        };
         for (int i = 0; i < descriptors.Count; i++)
         {
             CombatFeelDescriptor d = descriptors[i];
             if (d.Group != group) continue;
-            Set(d.Parameter, d.Toggle
-                ? (amount >= 0.45f ? d.Hard : d.Neutral)
-                : Mathf.Lerp(d.Neutral, d.Hard, amount));
+            if (d.Toggle)
+            {
+                Set(d.Parameter, preset >= GroupPreset.Medium ? d.Hard : d.Neutral);
+                continue;
+            }
+            float value = preset switch
+            {
+                GroupPreset.Soft => Mathf.Lerp(d.Neutral, d.Hard, .32f),
+                GroupPreset.Medium => Mathf.Lerp(d.Neutral, d.Hard, .68f),
+                GroupPreset.Hard => d.Hard,
+                _ => GetInsaneValue(d)
+            };
+            Set(d.Parameter, value);
         }
     }
 
@@ -324,6 +798,18 @@ public sealed class CombatFeelLabSettings
                 ? (amount >= 0.48f ? d.Hard : d.Neutral)
                 : Mathf.Lerp(d.Neutral, d.Hard, amount));
         }
+    }
+
+    private static float GetInsaneValue(CombatFeelDescriptor descriptor)
+    {
+        float towardMaximum = descriptor.Maximum - descriptor.Neutral;
+        float towardMinimum = descriptor.Neutral - descriptor.Minimum;
+        float edge;
+        if (descriptor.Hard > descriptor.Neutral) edge = descriptor.Maximum;
+        else if (descriptor.Hard < descriptor.Neutral) edge = descriptor.Minimum;
+        else edge = towardMaximum >= towardMinimum
+            ? descriptor.Maximum : descriptor.Minimum;
+        return Mathf.Lerp(descriptor.Hard, edge, .78f);
     }
 
     private Dictionary<CombatFeelParameter, float> Snapshot() => new(values);
@@ -416,7 +902,7 @@ public sealed class CombatFeelLabSettings
         F(CombatFeelParameter.TrailWidth, CombatFeelGroup.Projectile, "Trail Width", 1, 0, 5, 1.5f);
         F(CombatFeelParameter.TrailLength, CombatFeelGroup.Projectile, "Trail Length", 1, 0, 4, 1.45f);
         F(CombatFeelParameter.TrailLifetime, CombatFeelGroup.Projectile, "Trail Lifetime", 1, 0, 4, 1.35f);
-        F(CombatFeelParameter.TrailOpacity, CombatFeelGroup.Projectile, "Trail Opacity", 1, 0, 3, 1.25f);
+        F(CombatFeelParameter.TrailOpacity, CombatFeelGroup.Projectile, "Trail Opacity", 1, 0, 3, .25f);
         F(CombatFeelParameter.TrailTaper, CombatFeelGroup.Projectile, "Trail Taper", 1, 0, 2, 1.25f);
         F(CombatFeelParameter.SpeedIllusion, CombatFeelGroup.Projectile, "Speed Illusion Strength", 0, 0, 2, .65f, "Visual-only stretch/offset; physics speed is unchanged.");
         F(CombatFeelParameter.ForwardVisualOffset, CombatFeelGroup.Projectile, "Forward Visual Offset", 0, 0, 1, .12f);
@@ -430,6 +916,9 @@ public sealed class CombatFeelLabSettings
         AddTime(d, F, T);
         AddCrowd(d, F);
         AddExperimental(d, F);
+        d.RemoveAll(descriptor =>
+            !CombatFeelConsumerRegistry.TryGet(descriptor.Parameter,
+                descriptor.Group, out _));
         return d;
     }
 

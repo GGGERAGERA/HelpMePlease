@@ -183,6 +183,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   enemyPrefabs:
   - {fileID: 1432338969431510999, guid: bbeab41e755732443b4201b8641136c9, type: 3}
+  feelTestBasicPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
+  feelTestElitePrefab: {fileID: 1432338969431510999, guid: bbeab41e755732443b4201b8641136c9, type: 3}
+  feelTestShooterPrefab: {fileID: 2513438768801038890, guid: c234c537ed1fdfe489feaf994e3dbca7, type: 3}
   spawnInterval: 0.0001
   maxEnemies: 500
   minSpawnDistance: 10
