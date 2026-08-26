@@ -399,7 +399,7 @@ public sealed class ProductionFeelTuningController : MonoBehaviour
 
     public string GetValuesText()
     {
-        string advanced = Lab.GetCompactConfig();
+        string advanced = Lab.GetFullConfig();
         if (advanced != "COMBAT FEEL CONFIG")
             return advanced;
 
@@ -460,6 +460,9 @@ public sealed class ProductionFeelTuningController : MonoBehaviour
         result.AppendLine($"DeathPunchDuration = {DeathPunchDuration:0.###}");
         return result.ToString().TrimEnd();
     }
+
+    public bool SaveTuningPreset(out string message) =>
+        CombatFeelTuningPresetStorage.Save(Lab, out message);
 
     private void SetPhysicalValue(System.Action setter)
     {

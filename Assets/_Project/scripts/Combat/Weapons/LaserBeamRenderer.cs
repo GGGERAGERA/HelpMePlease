@@ -3,6 +3,18 @@ using UnityEngine;
 
 public sealed class LaserBeamRenderer : MonoBehaviour
 {
+    private static float debugCoreWidthMultiplier = 1f;
+    private static float debugGlowWidthMultiplier = 1f;
+    private static float debugBrightnessMultiplier = 1f;
+
+    public static void SetDebugVisualMultipliers(
+        float coreWidthMultiplier, float glowWidthMultiplier,
+        float brightnessMultiplier)
+    {
+        debugCoreWidthMultiplier = Mathf.Clamp(coreWidthMultiplier, .1f, 8f);
+        debugGlowWidthMultiplier = Mathf.Clamp(glowWidthMultiplier, .1f, 8f);
+        debugBrightnessMultiplier = Mathf.Clamp(brightnessMultiplier, 0f, 6f);
+    }
     private sealed class BeamPair
     {
         public LineRenderer Core;
@@ -89,7 +101,8 @@ public sealed class LaserBeamRenderer : MonoBehaviour
 
         float width = Mathf.Max(
             0.01f,
-            (coreWidth + Random.Range(-widthJitter, widthJitter)) * widthScale
+            (coreWidth + Random.Range(-widthJitter, widthJitter)) * widthScale *
+            debugCoreWidthMultiplier
         );
 
         line.startWidth = width;
@@ -99,8 +112,10 @@ public sealed class LaserBeamRenderer : MonoBehaviour
         DebugLastCoreWidth = width;
 #endif
 
-        line.startColor = coreColor;
-        line.endColor = coreColor;
+        Color brightCore = coreColor * debugBrightnessMultiplier;
+        brightCore.a = coreColor.a;
+        line.startColor = brightCore;
+        line.endColor = brightCore;
 
         line.SetPosition(0, start);
         line.SetPosition(1, end);
@@ -114,7 +129,8 @@ public sealed class LaserBeamRenderer : MonoBehaviour
     {
         float width = Mathf.Max(
             0.01f,
-            (glowWidth + Random.Range(-widthJitter, widthJitter)) * widthScale
+            (glowWidth + Random.Range(-widthJitter, widthJitter)) * widthScale *
+            debugGlowWidthMultiplier
         );
 
         line.startWidth = width;
@@ -124,11 +140,13 @@ public sealed class LaserBeamRenderer : MonoBehaviour
         DebugLastGlowWidth = width;
 #endif
 
-        line.startColor = glowColor;
+        Color brightGlow = glowColor * debugBrightnessMultiplier;
+        brightGlow.a = glowColor.a;
+        line.startColor = brightGlow;
         line.endColor = new Color(
-            glowColor.r,
-            glowColor.g,
-            glowColor.b,
+            brightGlow.r,
+            brightGlow.g,
+            brightGlow.b,
             0f
         );
 

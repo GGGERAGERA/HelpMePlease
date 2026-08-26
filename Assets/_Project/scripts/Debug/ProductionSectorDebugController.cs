@@ -172,6 +172,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     private bool sessionDefaultsCaptured;
     private ReadabilityPreset defaultReadabilityPreset;
     private float defaultDecorBrightness;
+    private float defaultEnvironmentDarken;
     private float defaultAnomalyAccent;
     private EnemyReadability defaultEnemyReadability;
     private EnemyScope defaultEnemyScope;
@@ -184,6 +185,8 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     private float defaultEnemyOutlineStrength;
     private float defaultEnemyOutlineWidth;
     private bool defaultEnemyOutlineEnabled;
+    private bool defaultMonochromeAnomalies;
+    private VisualAnomalyTuningSnapshot[] productionAnomalySnapshots;
 
     public ReadabilityPreset Preset => readabilityPreset;
     public float DecorBrightness => decorBrightness;
@@ -200,6 +203,15 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     public float EnemyOutlineStrength => enemyOutlineStrength;
     public float EnemyOutlineWidth => enemyOutlineWidth;
     public bool EnemyOutlineEnabled => enemyOutlineEnabled;
+    public float ProductionDecorBrightness => defaultDecorBrightness;
+    public float ProductionAnomalyAccent => defaultAnomalyAccent;
+    public float ProductionEnemySaturation => defaultEnemySaturation;
+    public float ProductionEnemyBrightness => defaultEnemyBrightness;
+    public float ProductionEnemyTintStrength => defaultEnemyTintStrength;
+    public float ProductionEnemyHueShift => defaultEnemyHueShift;
+    public float ProductionEnemyRecolorStrength => defaultEnemyRecolorStrength;
+    public float ProductionEnemyOutlineStrength => defaultEnemyOutlineStrength;
+    public float ProductionEnemyOutlineWidth => defaultEnemyOutlineWidth;
     public int RegisteredEnemyCount => enemyVisuals.Count;
     public int RegisteredEnemyRendererCount
     {
@@ -519,6 +531,50 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         ApplyEnvironment();
     }
 
+    public void ApplyProductionSnapshot(VisualTuningSnapshot values)
+    {
+        readabilityPreset = (ReadabilityPreset)values.WorldReadability;
+        decorBrightness = Mathf.Clamp(values.DecorBrightness, .25f, 1.5f);
+        environmentDarken = Mathf.Clamp01(values.EnvironmentDarken);
+        anomalyAccent = Mathf.Clamp(values.AnomalyAccent, 1f, 1.75f);
+        enemyReadability = (EnemyReadability)values.EnemyReadability;
+        enemyScope = (EnemyScope)values.EnemyScope;
+        enemySaturation = Mathf.Clamp(values.EnemySaturation, 0f, 3f);
+        enemyBrightness = Mathf.Clamp(values.EnemyBrightness, .5f, 2.5f);
+        enemyTintStrength = Mathf.Clamp01(values.EnemyTintStrength);
+        enemyHueShift = Mathf.Clamp(values.EnemyHueShift, -180f, 180f);
+        enemyRecolorTarget = values.EnemyRecolorTarget;
+        enemyRecolorStrength = Mathf.Clamp01(values.EnemyRecolorStrength);
+        enemyOutlineEnabled = values.EnemyOutlineEnabled;
+        enemyOutlineStrength = Mathf.Clamp(values.EnemyOutlineStrength, 0f, 2f);
+        enemyOutlineWidth = Mathf.Clamp(values.EnemyOutlineWidth, .5f, 4f);
+        productionAnomalySnapshots = values.Anomalies;
+
+        sessionDefaultsCaptured = true;
+        defaultReadabilityPreset = readabilityPreset;
+        defaultDecorBrightness = decorBrightness;
+        defaultEnvironmentDarken = environmentDarken;
+        defaultAnomalyAccent = anomalyAccent;
+        defaultEnemyReadability = enemyReadability;
+        defaultEnemyScope = enemyScope;
+        defaultEnemySaturation = enemySaturation;
+        defaultEnemyBrightness = enemyBrightness;
+        defaultEnemyTintStrength = enemyTintStrength;
+        defaultEnemyHueShift = enemyHueShift;
+        defaultEnemyRecolorTarget = enemyRecolorTarget;
+        defaultEnemyRecolorStrength = enemyRecolorStrength;
+        defaultEnemyOutlineStrength = enemyOutlineStrength;
+        defaultEnemyOutlineWidth = enemyOutlineWidth;
+        defaultEnemyOutlineEnabled = enemyOutlineEnabled;
+        defaultMonochromeAnomalies = values.MonochromeAnomalies;
+
+        ApplyEnvironment();
+        ApplyAllEnemies();
+        ApplyAnomalyAccent();
+        SetMonochromeAnomalies(values.MonochromeAnomalies);
+        ApplyProductionAnomalySnapshots();
+    }
+
     public void RefreshVisualTunerTargetCache()
     {
         RefreshVisualTunerTargets(false);
@@ -543,6 +599,43 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
             return;
 
         visualTunerIndex = (visualTunerIndex + 1) % visualTunerSites.Count;
+    }
+
+    public bool SelectVisualTunerTargetByType(string typeToken)
+    {
+        RefreshVisualTunerTargets(false);
+        for (int i = 0; i < visualTunerSites.Count; i++)
+        {
+            ProductionAnomalySite site = visualTunerSites[i];
+            if (site != null && site.VisualTunerTypeName.IndexOf(
+                    typeToken, System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                visualTunerIndex = i;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public VisualAnomalyTuningSnapshot[] CaptureVisualTunerSnapshots()
+    {
+        RefreshVisualTunerTargets(false);
+        VisualAnomalyTuningSnapshot[] snapshots =
+            new VisualAnomalyTuningSnapshot[visualTunerSites.Count];
+        for (int i = 0; i < visualTunerSites.Count; i++)
+        {
+            ProductionAnomalySite site = visualTunerSites[i];
+            if (site == null)
+                continue;
+            snapshots[i] = new VisualAnomalyTuningSnapshot
+            {
+                Target = site.DebugZoneName,
+                Type = site.VisualTunerTypeName,
+                ArtHooksVisible = site.ArtHooksVisible,
+                Values = site.VisualTunerValues
+            };
+        }
+        return snapshots;
     }
 
     public void ApplyVisualTunerValues(AnomalyVisualTuningValues values)
@@ -632,7 +725,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         CaptureSessionDefaults();
         readabilityPreset = defaultReadabilityPreset;
         decorBrightness = defaultDecorBrightness;
-        environmentDarken = 0f;
+        environmentDarken = defaultEnvironmentDarken;
         ApplyEnvironment();
     }
 
@@ -666,6 +759,8 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
             ProductionAnomalySite.ActiveSites;
         for (int i = 0; i < sites.Count; i++)
             sites[i]?.ResetVisualTuner();
+        SetMonochromeAnomalies(defaultMonochromeAnomalies);
+        ApplyProductionAnomalySnapshots();
     }
 
     public void RebuildCurrentSector()
@@ -719,6 +814,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         sessionDefaultsCaptured = true;
         defaultReadabilityPreset = readabilityPreset;
         defaultDecorBrightness = decorBrightness;
+        defaultEnvironmentDarken = environmentDarken;
         defaultAnomalyAccent = anomalyAccent;
         defaultEnemyReadability = enemyReadability;
         defaultEnemyScope = enemyScope;
@@ -731,11 +827,44 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         defaultEnemyOutlineStrength = enemyOutlineStrength;
         defaultEnemyOutlineWidth = enemyOutlineWidth;
         defaultEnemyOutlineEnabled = enemyOutlineEnabled;
+        defaultMonochromeAnomalies = monochromeAnomalies;
     }
 
     private void HandleVisualTargetsChanged()
     {
         RefreshVisualTunerTargets(false);
+        ApplyProductionAnomalySnapshots();
+    }
+
+    private void ApplyProductionAnomalySnapshots()
+    {
+        if (productionAnomalySnapshots == null)
+            return;
+        for (int siteIndex = 0; siteIndex < visualTunerSites.Count; siteIndex++)
+        {
+            ProductionAnomalySite site = visualTunerSites[siteIndex];
+            if (site == null || !site.HasVisualTuner)
+                continue;
+            for (int valueIndex = 0;
+                 valueIndex < productionAnomalySnapshots.Length;
+                 valueIndex++)
+            {
+                VisualAnomalyTuningSnapshot saved =
+                    productionAnomalySnapshots[valueIndex];
+                bool matches = saved.Target == site.DebugZoneName ||
+                    (string.IsNullOrWhiteSpace(saved.Target) &&
+                     saved.Type == site.VisualTunerTypeName);
+                if (!matches)
+                    continue;
+                AnomalyVisualTuningValues values = monochromeAnomalies
+                    ? BuildMonochromeValues(
+                        saved.Values, site.VisualTunerCapabilities)
+                    : saved.Values;
+                site.ApplyVisualTunerValues(values);
+                site.SetArtHooksVisible(saved.ArtHooksVisible);
+                break;
+            }
+        }
     }
 
     private void Update()

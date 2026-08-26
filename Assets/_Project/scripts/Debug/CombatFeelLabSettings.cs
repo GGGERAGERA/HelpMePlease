@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using UnityEngine;
 
@@ -383,7 +384,8 @@ public sealed class CombatFeelParameterMetadata
     public string FormatValue(float value)
     {
         if (Toggle) return value >= .5f ? "ВКЛ" : "ВЫКЛ";
-        if (Unit == "%") return (value * 100f).ToString("0.#") + "%";
+        if (Unit.StartsWith("%", StringComparison.Ordinal))
+            return (value * 100f).ToString("0.#") + Unit;
         string format = Mathf.Abs(value) < 1f ? "0.###" : "0.##";
         return value.ToString(format) + (string.IsNullOrEmpty(Unit) ? string.Empty : " " + Unit);
     }
@@ -418,10 +420,12 @@ public sealed class CombatFeelParameterMetadata
         "HEAVY" => "Тяжёлый профиль: медленнее восстановление, сильные убийства и временные акценты.",
         "ARCADE" => "Яркий аркадный профиль: заметные снаряды, вспышки и реакции толпы.",
         "CHAOTIC" => "Предельно выразительный общий профиль для стресс-теста читаемости.",
+        "PRODUCTION" => "Сразу вернуть все группы к сохранённым production-значениям.",
         "OFF" => "Вернуть параметры открытой группы к production-значениям.",
         "SOFT" => "Лёгкое отклонение группы от production в сторону авторского акцента.",
         "MEDIUM" => "Средняя, хорошо заметная сила авторского акцента группы.",
         "HARD" => "Сильный авторский акцент без выхода к экспериментальному краю диапазона.",
+        "STRONG" => "Сразу применить сильный авторский акцент ко всем группам.",
         "INSANE" => "Очевидный экстремум: уводит группу далеко за HARD, но остаётся в безопасных границах.",
         "SAVE A" => "Сохранить текущие значения всех параметров в слот A.",
         "LOAD A" => "Восстановить ранее сохранённый снимок A.",
@@ -570,31 +574,31 @@ public sealed class CombatFeelParameterMetadata
         string subject = GetGroupDescriptionRu(group).Split('.')[0].ToLowerInvariant();
         string increase;
         if (name == "MouseLookAhead")
-            increase = "Включение добавляет presentation-offset камеры к normal follow; игрок, aim и projectile origin не перемещаются.";
+            increase = "Включение позволяет камере мягко смотреть в сторону курсора. Сам игрок и точка выстрела остаются на месте.";
         else if (name == "LookAheadDistance")
-            increase = "Увеличение разрешает камере дальше смещаться в экранном направлении курсора.";
+            increase = "Чем выше значение, тем дальше камера уходит в сторону курсора.";
         else if (name == "LookAheadResponse")
             increase = "Увеличение сокращает время реакции камеры на новое положение курсора.";
         else if (name == "LookAheadReturn")
-            increase = "Увеличение ускоряет плавный возврат камеры к normal follow position.";
+            increase = "Увеличение ускоряет плавный возврат камеры к обычному положению за игроком.";
         else if (name == "LookAheadDeadZone")
             increase = "Увеличение расширяет область около центра экрана, где мышь не вызывает смещение.";
         else if (name == "LookAheadCurve")
             increase = "Значения выше 1 откладывают сильную реакцию до края экрана; ниже 1 включают её раньше.";
         else if (name == "HorizontalStrength")
-            increase = "Увеличение усиливает только горизонтальную составляющую look-ahead.";
+            increase = "Увеличение усиливает движение камеры влево и вправо за курсором.";
         else if (name == "VerticalStrength")
-            increase = "Увеличение усиливает только вертикальную составляющую look-ahead.";
+            increase = "Увеличение усиливает движение камеры вверх и вниз за курсором.";
         else if (name == "MaxScreenFraction")
-            increase = "Увеличение отодвигает экранную точку насыщения: для полного offset курсор должен уйти дальше.";
+            increase = "Увеличение требует увести курсор дальше от центра, чтобы камера дошла до полного смещения.";
         else if (name == "PhysicalRecoil")
-            increase = "Включение разрешает реальный импульс Rigidbody2D игрока; это не presentation-only эффект.";
+            increase = "Включение действительно отталкивает игрока назад при выстреле и влияет на движение.";
         else if (name == "PlayerRecoilVelocity")
-            increase = "Увеличение сильнее меняет реальную скорость Rigidbody2D игрока назад; работает вместе с Physical Recoil.";
+            increase = "Увеличение сильнее отбрасывает игрока назад; работает только при включённой физической отдаче.";
         else if (name == "MovementDamp")
-            increase = "Увеличение сильнее уменьшает реальную скорость Rigidbody2D игрока в момент выстрела.";
+            increase = "Увеличение сильнее притормаживает движение игрока в момент выстрела.";
         else if (name == "GlobalFreeze")
-            increase = "Включение разрешает глобальный стоп-кадр через Time.timeScale даже при выключенном production hit-stop.";
+            increase = "Включение на короткое время замирает весь мир после события, даже если обычный стоп-кадр выключен.";
         else if (name.Contains("SlowdownScale"))
             increase = "Увеличение оставляет больше скорости во время замедления; MIN даёт самый сильный slow-motion.";
         else if (toggle) increase = "Включение добавляет этот явно обозначенный режим; выключение оставляет production-поведение.";
@@ -621,7 +625,7 @@ public sealed class CombatFeelParameterMetadata
         else
             increase = "Увеличение усиливает видимую выраженность этого компонента реакции.";
         string note = GetSafetyNote(name, authoredHint);
-        return $"Определяет «{russianName.ToLowerInvariant()}» для: {subject}. {increase}{note}";
+        return $"Меняет «{russianName.ToLowerInvariant()}»: {subject}. {increase}{note}";
     }
 
     private static bool IsMouseLookAheadName(string name) =>
@@ -662,7 +666,8 @@ public sealed class CombatFeelParameterMetadata
         if (name.Contains("Freeze") && !name.Contains("Blend")) expandedMax = Mathf.Min(.75f, expandedMax);
         if (name is "LookAheadDeadZone" or "MaxScreenFraction")
         {
-            expandedMin = Mathf.Max(0f, expandedMin);
+            expandedMin = Mathf.Max(name == "MaxScreenFraction" ? .01f : 0f,
+                expandedMin);
             expandedMax = Mathf.Min(1f, expandedMax);
         }
         if (name == "LookAheadCurve")
@@ -689,6 +694,7 @@ public sealed class CombatFeelLabSettings
     private static readonly Dictionary<CombatFeelParameter, CombatFeelDescriptor>
         descriptorMap = BuildMap();
     private readonly Dictionary<CombatFeelParameter, float> values = new();
+    private Dictionary<CombatFeelParameter, float> savedValues = new();
     private Dictionary<CombatFeelParameter, float> slotA;
     private Dictionary<CombatFeelParameter, float> slotB;
     private Dictionary<CombatFeelParameter, float> randomUndo;
@@ -699,6 +705,7 @@ public sealed class CombatFeelLabSettings
     public bool HasB => slotB != null;
     public bool CanUndoRandomize => randomUndo != null;
     public int Version { get; private set; }
+    public bool HasUnsavedChanges => !SnapshotsEqual(values, savedValues);
 
     public float Get(CombatFeelParameter parameter)
     {
@@ -757,6 +764,15 @@ public sealed class CombatFeelLabSettings
     public bool LoadA() => Load(slotA);
     public bool LoadB() => Load(slotB);
 
+    public IReadOnlyDictionary<CombatFeelParameter, float> ExportValues() =>
+        Snapshot();
+
+    public void MarkSaved()
+    {
+        savedValues = Snapshot();
+        Version++;
+    }
+
     public void Randomize(CombatFeelGroup? group = null)
     {
         randomUndo = Snapshot();
@@ -810,6 +826,15 @@ public sealed class CombatFeelLabSettings
             };
             Set(d.Parameter, value);
         }
+    }
+
+    public void ApplyAllGroupsPreset(GroupPreset preset)
+    {
+        ResetAll();
+        if (preset == GroupPreset.Off)
+            return;
+        foreach (CombatFeelGroup group in Enum.GetValues(typeof(CombatFeelGroup)))
+            ApplyGroupPreset(group, preset);
     }
 
     public void ApplyCharacterPreset(CharacterPreset preset)
@@ -875,6 +900,33 @@ public sealed class CombatFeelLabSettings
         return result.ToString().TrimEnd();
     }
 
+    public string GetFullConfig()
+    {
+        StringBuilder result = new("COMBAT FEEL CONFIG — ALL CURRENT VALUES");
+        CombatFeelGroup? currentGroup = null;
+        for (int i = 0; i < descriptors.Count; i++)
+        {
+            CombatFeelDescriptor descriptor = descriptors[i];
+            if (currentGroup != descriptor.Group)
+            {
+                currentGroup = descriptor.Group;
+                result.AppendLine().AppendLine()
+                    .Append(descriptor.Group.ToString().ToUpperInvariant())
+                    .AppendLine(":");
+            }
+            result.Append(descriptor.Parameter).Append(" = ")
+                .Append(GetRaw(descriptor.Parameter).ToString(
+                    "0.######", CultureInfo.InvariantCulture))
+                .Append("    # Production: ")
+                .Append(descriptor.Neutral.ToString(
+                    "0.######", CultureInfo.InvariantCulture))
+                .AppendLine();
+        }
+        if (SoloGroup.HasValue)
+            result.AppendLine().Append("SOLO = ").Append(SoloGroup.Value);
+        return result.ToString().TrimEnd();
+    }
+
     private void ApplyAmount(CombatFeelGroup group, float amount)
     {
         for (int i = 0; i < descriptors.Count; i++)
@@ -900,6 +952,26 @@ public sealed class CombatFeelLabSettings
     }
 
     private Dictionary<CombatFeelParameter, float> Snapshot() => new(values);
+
+    private static bool SnapshotsEqual(
+        IReadOnlyDictionary<CombatFeelParameter, float> left,
+        IReadOnlyDictionary<CombatFeelParameter, float> right)
+    {
+        for (int i = 0; i < descriptors.Count; i++)
+        {
+            CombatFeelDescriptor descriptor = descriptors[i];
+            float leftValue = left.TryGetValue(descriptor.Parameter, out float l)
+                ? l : descriptor.Neutral;
+            float rightValue = right.TryGetValue(descriptor.Parameter, out float r)
+                ? r : descriptor.Neutral;
+            float epsilon = Mathf.Max(.00001f,
+                (descriptor.Maximum - descriptor.Minimum) * .00001f);
+            if (Mathf.Abs(leftValue - rightValue) > epsilon)
+                return false;
+        }
+        return true;
+    }
+
     private bool Load(Dictionary<CombatFeelParameter, float> source)
     {
         if (source == null) return false;

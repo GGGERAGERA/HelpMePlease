@@ -1,0 +1,268 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10eb537259104ec8a19a760a20c4852a, type: 3}
+  m_Name: VisualTuningSavedValues
+  m_EditorClassIdentifier: Assembly-CSharp::VisualTuningPreset
+  savedAtUtc: 2026-08-26T10:48:17.0883902Z
+  values:
+    WorldReadability: 0
+    DecorBrightness: 1
+    EnvironmentDarken: 0
+    EnemyReadability: 3
+    EnemyScope: 1
+    EnemyBrightness: 1.45
+    EnemySaturation: 1.9
+    EnemyTintStrength: 0.5
+    EnemyHueShift: 0
+    EnemyRecolorStrength: 0
+    EnemyRecolorTarget: {r: 0, g: 1, b: 1, a: 1}
+    EnemyOutlineEnabled: 0
+    EnemyOutlineStrength: 0
+    EnemyOutlineWidth: 1
+    PlayerScale: 1
+    PlayerOffsetX: 0
+    PlayerOffsetY: 0
+    PlayerBrightness: 1
+    PlayerSaturation: 1
+    PlayerOpacity: 1
+    PlayerTint: {r: 1, g: 1, b: 1, a: 1}
+    PlayerTintStrength: 0
+    PlayerGlowIntensity: 1
+    PlayerGlowRadius: 1
+    WeaponScale: 1
+    WeaponOffsetX: 0
+    WeaponOffsetY: 0
+    WeaponBrightness: 1
+    WeaponSaturation: 1
+    WeaponOpacity: 1
+    WeaponTint: {r: 1, g: 1, b: 1, a: 1}
+    WeaponTintStrength: 0
+    RingEnabled: 1
+    RingRadius: 1
+    RingWidth: 0.035
+    RingOpacity: 0.72
+    RingBrightness: 1.25
+    RingPulseAmount: 0.06
+    RingPulseSpeed: 0.22
+    RingRotationSpeed: 4
+    RingOffsetX: 0
+    RingOffsetY: 0
+    RingTint: {r: 0.04, g: 0.88, b: 1, a: 1}
+    ProjectileScale: 1
+    TrailWidth: 1
+    TrailLifetime: 1
+    TrailOpacity: 1
+    TrailBrightness: 1
+    LaserCoreWidth: 1
+    LaserGlowWidth: 1
+    LaserBrightness: 1
+    AnomalyFocus: 1
+    OutsideDarkness: 1
+    OutsideColor: 1
+    FocusTransition: 0.35
+    WindDustAmount: 1
+    AnomalyAccent: 1
+    MonochromeAnomalies: 0
+    AnomalyArtHooksVisible: 1
+    AnomalyTarget: NORMAL GLITCH
+    Anomalies:
+    - Target: NORMAL GLITCH
+      Type: GLITCH
+      ArtHooksVisible: 1
+    - Target: NORMAL BERSERK
+      Type: BERSERK
+      ArtHooksVisible: 1
+    - Target: NORMAL STASIS
+      Type: STASIS
+      ArtHooksVisible: 1
+    - Target: SPECIAL GRAVITY
+      Type: GRAVITY
+      ArtHooksVisible: 1
+    VignetteIntensity: 0
+    CameraOrthographicSize: 16
+  readableValues: 'WORLD
+
+    Readability = Original
+
+    DecorBrightness = 1
+
+    EnvironmentDarken
+    = 0
+
+    
+
+    ENEMIES
+
+    Readability = High
+
+    Scope = All
+
+    Brightness
+    = 1.45
+
+    Saturation = 1.9
+
+    TintStrength = 0.5
+
+    HueShift = 0
+
+    TargetColor
+    = #00FFFF
+
+    RecolorStrength = 0
+
+    OutlineEnabled = False
+
+    OutlineStrength
+    = 0
+
+    OutlineWidth = 1
+
+    
+
+    ATMOSPHERE
+
+    AnomalyFocus = True
+
+    OutsideDarkness
+    = 1
+
+    OutsideColor = 1
+
+    FocusTransition = 0.35
+
+    WindDustAmount
+    = 1
+
+    
+
+    PLAYER
+
+    GlowIntensity = 1
+
+    GlowRadius = 1
+
+    OrbitRing
+    = True
+
+    OrbitRadius = 0.5
+
+    OrbitVisualRadiusMultiplier = 1
+
+    OrbitIntensity
+    = 1.25
+
+    OrbitWidth = 0.035
+
+    OrbitAlpha = 0.72
+
+    OrbitPulseAmount
+    = 0.06
+
+    OrbitPulseSpeed = 0.22
+
+    OrbitRotationSpeed = 4
+
+    OrbitOffset
+    = (0.00, 0.00)
+
+    
+
+    ANOMALIES
+
+    GlobalAccent = 1
+
+    Monochrome
+    = False
+
+    Target = NORMAL GLITCH
+
+    GLITCH Visual
+
+    PrimaryColor =
+    (0.85, 0.08, 0.9, 0.65)
+
+    FillColor = (0.08, 0.015, 0.12, 0.09)
+
+    FillAlpha
+    = 0.09
+
+    BoundaryWidth = 0.3
+
+    VisualScale = 1
+
+    BoundaryAlpha =
+    1
+
+    PLAYER SPRITE
+
+    Scale = 1
+
+    Offset = (0.00, 0.00)
+
+    Brightness
+    = 1
+
+    Saturation = 1
+
+    Opacity = 1
+
+    
+
+    WEAPON SPRITE
+
+    Scale
+    = 1
+
+    Offset = (0.00, 0.00)
+
+    Brightness = 1
+
+    Saturation = 1
+
+    Opacity
+    = 1
+
+    
+
+    POST FX
+
+    VignetteIntensity = 0
+
+    
+
+    PROJECTILES
+
+    VisualScale
+    = 1
+
+    TrailWidth = 1
+
+    TrailTime = 1
+
+    TrailAlpha = 1
+
+    TrailBrightness
+    = 1
+
+    LaserCoreWidth = 1
+
+    LaserGlowWidth = 1
+
+    LaserBrightness =
+    1
+
+    
+
+    CAMERA
+
+    OrthographicSize = 16'

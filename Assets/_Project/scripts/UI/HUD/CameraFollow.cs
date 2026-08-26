@@ -146,8 +146,9 @@ public class CameraFollow : MonoBehaviour
         ResolveCamera();
         bool enabled = PhysicalCombatFeedbackRuntime.GetLabValue(
             CombatFeelParameter.MouseLookAhead) >= .5f;
-        bool neutralize = !enabled || target == null || controlledCamera == null ||
-            Subject42DebugMenu.IsDebugMenuOpen;
+        // FEEL LAB is a live overlay: opening it must not disable camera
+        // presentation. UI raycasts block clicks on the panel independently.
+        bool neutralize = !enabled || target == null || controlledCamera == null;
         Vector3 targetOffset = Vector3.zero;
         if (!neutralize)
         {

@@ -202,18 +202,19 @@ public sealed class CombatFeelTooltipTrigger : MonoBehaviour,
     IPointerEnterHandler, IPointerMoveHandler, IPointerExitHandler
 {
     public Func<string> TextProvider;
-    public Action<string, Vector2> Show;
+    public Action<string, RectTransform> Show;
     public Action Hide;
 
-    public void OnPointerEnter(PointerEventData eventData) => Present(eventData.position);
-    public void OnPointerMove(PointerEventData eventData) => Present(eventData.position);
+    public void OnPointerEnter(PointerEventData eventData) => Present();
+    public void OnPointerMove(PointerEventData eventData) => Present();
     public void OnPointerExit(PointerEventData eventData) => Hide?.Invoke();
     private void OnDisable() => Hide?.Invoke();
 
-    private void Present(Vector2 position)
+    private void Present()
     {
         string text = TextProvider?.Invoke();
-        if (!string.IsNullOrWhiteSpace(text)) Show?.Invoke(text, position);
+        if (!string.IsNullOrWhiteSpace(text))
+            Show?.Invoke(text, transform as RectTransform);
     }
 }
 #endif
@@ -285,10 +286,13 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         Background,
         Enemies,
         Player,
+        Weapon,
+        PlayerRing,
         PostFx,
         Atmosphere,
         Anomalies,
         Projectiles,
+        HitFx,
         Camera
     }
 
@@ -350,6 +354,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private TextMeshProUGUI previewText;
     private RectTransform feelTooltipRoot;
     private TextMeshProUGUI feelTooltipText;
+    private TextMeshProUGUI feelSaveStatusText;
+    private string feelSaveMessage;
     private RectTransform contentRoot;
     private readonly GameObject[] tabRoots = new GameObject[TabLabels.Length];
     private readonly Image[] tabButtonImages = new Image[TabLabels.Length];
@@ -392,13 +398,23 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private CameraFollow cameraFollow;
     private readonly bool[] visualSectionExpanded =
     {
-        true, false, true, true, true, true, true, true, true
+        true, false, true, true, true, true, true, true, true, true, false, true
     };
     private readonly bool[] feelSectionExpanded =
     {
         true, true, true, false, true, true
     };
     private CombatFeelGroup selectedFeelLabGroup = CombatFeelGroup.Global;
+    private TextMeshProUGUI visualSaveStatusText;
+    private string visualSavedBaselineJson;
+    private string visualSaveMessage;
+    private bool visualHasSavedPreset;
+    private bool visualProductionLoaded;
+    private VisualTuningSnapshot visualProductionSnapshot;
+    private WorldRuleVisual productionAppliedWorldRuleVisual;
+    private PlayerWeaponOrbitVisual productionAppliedOrbitVisual;
+    private LevelAnomalyController productionAppliedAnomalyController;
+    private CameraFollow productionAppliedCameraFollow;
 
     private readonly Color panelColor = new(0.035f, 0.045f, 0.06f, 0.97f);
     private readonly Color rowColor = new(0.09f, 0.11f, 0.145f, 0.95f);
@@ -422,6 +438,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private void Start()
     {
         EnsureProductionSectorDebug();
+        LoadVisualProductionValues();
         BuildMenu();
         RefreshAllTabs();
         SelectTab(activeTab, false);
@@ -765,6 +782,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         worldRuleVisual ??= FindFirstObjectByType<WorldRuleVisual>();
         playerOrbitVisual ??= FindFirstObjectByType<PlayerWeaponOrbitVisual>();
         cameraFollow ??= FindFirstObjectByType<CameraFollow>();
+        ApplyVisualProductionToLateTargets();
 
         WarnIfMissing(worldRuleController, ref warnedRuleController,
             "WorldRuleController");
@@ -952,21 +970,48 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         trigger.Hide = HideFeelTooltip;
     }
 
-    private void ShowFeelTooltip(string text, Vector2 screenPosition)
+    private void ShowFeelTooltip(string text, RectTransform hoveredRect)
     {
-        if (feelTooltipRoot == null || feelTooltipText == null || menuRoot == null) return;
+        if (feelTooltipRoot == null || feelTooltipText == null || menuRoot == null ||
+            hoveredRect == null) return;
         feelTooltipText.text = text;
         feelTooltipRoot.gameObject.SetActive(true);
         feelTooltipRoot.SetAsLastSibling();
+
+        float tooltipWidth = Mathf.Clamp(Screen.width - 16f, 280f, 540f);
+        float preferredHeight = feelTooltipText.GetPreferredValues(
+            text, tooltipWidth - 28f, 0f).y + 24f;
+        feelTooltipRoot.sizeDelta = new Vector2(tooltipWidth,
+            Mathf.Clamp(preferredHeight, 150f, 330f));
+
         RectTransform root = menuRoot.GetComponent<RectTransform>();
-        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                root, screenPosition, null, out Vector2 point)) return;
-        Rect bounds = root.rect;
+        Vector3[] corners = new Vector3[4];
+        hoveredRect.GetWorldCorners(corners);
+        Vector2 bottomLeft = RectTransformUtility.WorldToScreenPoint(null, corners[0]);
+        Vector2 topRight = RectTransformUtility.WorldToScreenPoint(null, corners[2]);
         Vector2 size = feelTooltipRoot.rect.size;
-        float x = Mathf.Clamp(point.x + 18f, bounds.xMin + 8f,
-            bounds.xMax - size.x - 8f);
-        float y = Mathf.Clamp(point.y - 18f, bounds.yMin + size.y + 8f,
-            bounds.yMax - 8f);
+        const float gap = 12f;
+        const float edge = 8f;
+
+        Vector2 screenPoint;
+        if (topRight.x + gap + size.x <= Screen.width - edge)
+            screenPoint = new Vector2(topRight.x + gap, topRight.y);
+        else if (bottomLeft.x - gap - size.x >= edge)
+            screenPoint = new Vector2(bottomLeft.x - gap - size.x, topRight.y);
+        else if (bottomLeft.y - gap - size.y >= edge)
+            screenPoint = new Vector2(bottomLeft.x, bottomLeft.y - gap);
+        else
+            screenPoint = new Vector2(bottomLeft.x, topRight.y + gap + size.y);
+
+        screenPoint.x = Mathf.Clamp(screenPoint.x, edge, Screen.width - size.x - edge);
+        screenPoint.y = Mathf.Clamp(screenPoint.y, size.y + edge, Screen.height - edge);
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                root, screenPoint, null, out Vector2 point)) return;
+        Rect bounds = root.rect;
+        float x = Mathf.Clamp(point.x, bounds.xMin + edge,
+            bounds.xMax - size.x - edge);
+        float y = Mathf.Clamp(point.y, bounds.yMin + size.y + edge,
+            bounds.yMax - edge);
         feelTooltipRoot.anchoredPosition = new Vector2(x, y);
     }
 
@@ -1016,34 +1061,47 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         Button reset = CreateButton(
             bar,
-            "RESET ALL",
+            "RESET ALL VISUAL",
             ResetAllVisualLabValues,
             120f
         );
         RectTransform resetRect = reset.GetComponent<RectTransform>();
         resetRect.anchorMin = new Vector2(0f, 0f);
-        resetRect.anchorMax = new Vector2(0.5f, 1f);
+        resetRect.anchorMax = new Vector2(1f / 3f, 1f);
         resetRect.offsetMin = new Vector2(4f, 5f);
         resetRect.offsetMax = new Vector2(-2f, -5f);
 
+        Button save = CreateButton(
+            bar, "СОХРАНИТЬ ЗНАЧЕНИЯ", SaveVisualLabValues, 120f);
+        RectTransform saveRect = save.GetComponent<RectTransform>();
+        saveRect.anchorMin = new Vector2(1f / 3f, 0f);
+        saveRect.anchorMax = new Vector2(2f / 3f, 1f);
+        saveRect.offsetMin = new Vector2(2f, 5f);
+        saveRect.offsetMax = new Vector2(-2f, -5f);
+
         Button copy = CreateButton(
             bar,
-            "COPY VALUES",
+            "COPY TO CLIPBOARD",
             CopyVisualLabValues,
             120f
         );
         RectTransform copyRect = copy.GetComponent<RectTransform>();
-        copyRect.anchorMin = new Vector2(0.5f, 0f);
+        copyRect.anchorMin = new Vector2(2f / 3f, 0f);
         copyRect.anchorMax = Vector2.one;
         copyRect.offsetMin = new Vector2(2f, 5f);
         copyRect.offsetMax = new Vector2(-4f, -5f);
 
         TextMeshProUGUI resetText = reset.GetComponentInChildren<TextMeshProUGUI>();
+        TextMeshProUGUI saveText = save.GetComponentInChildren<TextMeshProUGUI>();
         TextMeshProUGUI copyText = copy.GetComponentInChildren<TextMeshProUGUI>();
-        if (resetText != null)
-            resetText.fontSize = 12f;
-        if (copyText != null)
-            copyText.fontSize = 12f;
+        if (resetText != null) resetText.fontSize = 10f;
+        if (saveText != null) saveText.fontSize = 8.5f;
+        if (copyText != null) copyText.fontSize = 8.5f;
+        AttachFeelTooltip(save.gameObject, () =>
+            "Сохраняет текущие параметры как рабочие значения проекта. " +
+            "Они останутся после выхода из Play Mode.");
+        AttachFeelTooltip(copy.gameObject, () =>
+            "Копирует текущие параметры в буфер обмена. Не сохраняет их в игру.");
     }
 
     private void BuildFeelActionBar(Transform feelPage)
@@ -1069,22 +1127,43 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             bar, "RESET ALL", ResetAllFeelLabValues, 120f);
         RectTransform resetRect = reset.GetComponent<RectTransform>();
         resetRect.anchorMin = Vector2.zero;
-        resetRect.anchorMax = new Vector2(0.5f, 1f);
+        resetRect.anchorMax = new Vector2(1f / 3f, 1f);
         resetRect.offsetMin = new Vector2(4f, 5f);
         resetRect.offsetMax = new Vector2(-2f, -5f);
 
+        Button save = CreateButton(
+            bar, "SAVE VALUES", SaveFeelLabValues, 120f);
+        RectTransform saveRect = save.GetComponent<RectTransform>();
+        saveRect.anchorMin = new Vector2(1f / 3f, 0f);
+        saveRect.anchorMax = new Vector2(2f / 3f, 1f);
+        saveRect.offsetMin = new Vector2(2f, 5f);
+        saveRect.offsetMax = new Vector2(-2f, -5f);
+
         Button copy = CreateButton(
-            bar, "COPY VALUES", CopyFeelLabValues, 120f);
+            bar, "COPY TO CLIPBOARD", CopyFeelLabValues, 120f);
         RectTransform copyRect = copy.GetComponent<RectTransform>();
-        copyRect.anchorMin = new Vector2(0.5f, 0f);
+        copyRect.anchorMin = new Vector2(2f / 3f, 0f);
         copyRect.anchorMax = Vector2.one;
         copyRect.offsetMin = new Vector2(2f, 5f);
         copyRect.offsetMax = new Vector2(-4f, -5f);
 
+        AttachFeelTooltip(save.gameObject, () =>
+            "Сохраняет все текущие значения в отдельный asset проекта. " +
+            "Asset остаётся после выхода из Play Mode; production defaults " +
+            "не меняются автоматически.");
+        AttachFeelTooltip(copy.gameObject, () =>
+            "Копирует все текущие значения FEEL LAB в буфер обмена. " +
+            "Это не сохраняет их в production-настройки.");
+        AttachFeelTooltip(reset.gameObject, () =>
+            "Сразу возвращает параметры к production-значениям. " +
+            "RESET не сохраняет результат.");
+
         TextMeshProUGUI resetText = reset.GetComponentInChildren<TextMeshProUGUI>();
+        TextMeshProUGUI saveText = save.GetComponentInChildren<TextMeshProUGUI>();
         TextMeshProUGUI copyText = copy.GetComponentInChildren<TextMeshProUGUI>();
-        if (resetText != null) resetText.fontSize = 12f;
-        if (copyText != null) copyText.fontSize = 12f;
+        if (resetText != null) resetText.fontSize = 10f;
+        if (saveText != null) saveText.fontSize = 10f;
+        if (copyText != null) copyText.fontSize = 8.5f;
     }
 
     private void BuildPreviewPanel()
@@ -1531,6 +1610,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 action?.Invoke();
                 RefreshCurrentTab();
             });
+        if (activeTab == DebugTab.VisualTest && contentRoot.childCount > 0)
+            AttachFeelTooltip(contentRoot.GetChild(contentRoot.childCount - 1).gameObject,
+                () => BuildVisualTooltipRu(label, 0f, 1f, enabled ? 1f : 0f));
     }
 
     private void AddOptionRow(string label, bool selected, bool available,
@@ -1943,11 +2025,12 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             return;
         }
 
-        AddVisualStatusLine("● LIVE   Production runtime values");
+        AddVisualLiveStatus();
+        AddVisualObjectFocusButtons();
 
         if (AddVisualSectionHeader(
                 VisualSection.World,
-                "WORLD",
+                "ENVIRONMENT",
                 "Environment readability and decor"))
         {
             AddProductionReadabilityPreset(
@@ -1960,11 +2043,15 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 ProductionSectorDebugController.ReadabilityPreset.DarkWorld);
             AddSliderRow(
                 "Decor Brightness", debug.DecorBrightness,
-                0.25f, 1.5f, debug.SetDecorBrightness, "0.00");
+                0.25f, 1.5f, debug.SetDecorBrightness, "0.00",
+                debug.ProductionDecorBrightness);
             AddSliderRow(
                 "Environment Darken", debug.EnvironmentDarken,
-                0f, 1f, debug.SetEnvironmentDarken, "0.00");
-            AddVisualSectionReset("WORLD", debug.ResetWorldVisualSettings);
+                0f, 1f, debug.SetEnvironmentDarken, "0.00",
+                visualProductionLoaded
+                    ? visualProductionSnapshot.EnvironmentDarken : 0f);
+            AddVisualSectionReset("ENVIRONMENT", () =>
+                ResetVisualSectionToProduction(VisualSection.World));
         }
 
         if (AddVisualSectionHeader(
@@ -2000,18 +2087,22 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 ProductionSectorDebugController.EnemyScope.Boss);
             AddSliderRow(
                 "Brightness", debug.EnemyBrightness,
-                0.5f, 2.5f, debug.SetEnemyBrightness, "0.00");
+                0.5f, 2.5f, debug.SetEnemyBrightness, "0.00",
+                debug.ProductionEnemyBrightness);
             AddSliderRow(
                 "Saturation", debug.EnemySaturation,
-                0f, 3f, debug.SetEnemySaturation, "0.00");
+                0f, 3f, debug.SetEnemySaturation, "0.00",
+                debug.ProductionEnemySaturation);
             AddSliderRow(
                 "Tint Strength", debug.EnemyTintStrength,
-                0f, 1f, debug.SetEnemyTintStrength, "0.00");
+                0f, 1f, debug.SetEnemyTintStrength, "0.00",
+                debug.ProductionEnemyTintStrength);
             AddHint("RECOLOR PRESETS");
             AddEnemyRecolorPresetStrip(debug);
             AddSliderRow(
                 "Hue Shift", debug.EnemyHueShift,
-                -180f, 180f, debug.SetEnemyHueShift, "0");
+                -180f, 180f, debug.SetEnemyHueShift, "0",
+                debug.ProductionEnemyHueShift);
             Color recolorTarget = debug.EnemyRecolorTarget;
             AddRow(
                 "Target Color",
@@ -2025,7 +2116,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             AddEnemyRecolorColorChannel(debug, "Target Color B", 2);
             AddSliderRow(
                 "Recolor Strength", debug.EnemyRecolorStrength,
-                0f, 1f, debug.SetEnemyRecolorStrength, "0.00");
+                0f, 1f, debug.SetEnemyRecolorStrength, "0.00",
+                debug.ProductionEnemyRecolorStrength);
             AddToggleRow(
                 "OUTLINE", debug.EnemyOutlineEnabled, true,
                 () => debug.SetEnemyOutlineEnabled(!debug.EnemyOutlineEnabled));
@@ -2037,11 +2129,13 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                     debug.SetEnemyOutlineStrength(value);
                     debug.SetEnemyOutlineEnabled(value > 0f);
                 },
-                "0.00");
+                "0.00", debug.ProductionEnemyOutlineStrength);
             AddSliderRow(
                 "Outline Width", debug.EnemyOutlineWidth,
-                0.5f, 4f, debug.SetEnemyOutlineWidth, "0.00");
-            AddVisualSectionReset("ENEMIES", debug.ResetEnemyVisualSettings);
+                0.5f, 4f, debug.SetEnemyOutlineWidth, "0.00",
+                debug.ProductionEnemyOutlineWidth);
+            AddVisualSectionReset("ENEMIES", () =>
+                ResetVisualSectionToProduction(VisualSection.Enemies));
         }
 
         if (AddVisualSectionHeader(
@@ -2056,13 +2150,15 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                     worldRuleVisual.PlayerGlowIntensityMultiplier,
                     0f, 5f,
                     worldRuleVisual.SetPlayerGlowIntensityMultiplier,
-                    "0.00");
+                    "0.00", visualProductionLoaded
+                        ? visualProductionSnapshot.PlayerGlowIntensity : 1f);
                 AddSliderRow(
                     "Player Glow Radius",
                     worldRuleVisual.PlayerGlowRadiusMultiplier,
                     0.1f, 5f,
                     worldRuleVisual.SetPlayerGlowRadiusMultiplier,
-                    "0.00");
+                    "0.00", visualProductionLoaded
+                        ? visualProductionSnapshot.PlayerGlowRadius : 1f);
                 AddHint("Multipliers: 1.00 = authored production value.");
             }
             else
@@ -2070,54 +2166,121 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 AddHint("Player SpriteLight2D is not available yet.");
             }
 
-            if (playerOrbitVisual != null &&
-                playerOrbitVisual.HasOrbitSource)
+            ProductionVisualTuningController tuning = productionVisualTuning;
+            if (tuning != null && tuning.PlayerRendererCount > 0)
             {
-                AddToggleRow(
-                    "ORBIT RING",
-                    playerOrbitVisual.RingEnabled,
-                    true,
-                    () => playerOrbitVisual.SetRingEnabled(
-                        !playerOrbitVisual.RingEnabled));
-                AddSliderRow(
-                    "Orbit Ring Intensity",
-                    playerOrbitVisual.RingIntensity,
-                    0f, 4f,
-                    playerOrbitVisual.SetRingIntensity,
-                    "0.00");
-                AddSliderRow(
-                    "Orbit Ring Width",
-                    playerOrbitVisual.RingWidth,
-                    0.005f, 0.15f,
-                    playerOrbitVisual.SetRingWidth,
-                    "0.000");
-                AddSliderRow(
-                    "Orbit Ring Alpha",
-                    playerOrbitVisual.RingAlpha,
-                    0f, 1f,
-                    playerOrbitVisual.SetRingAlpha,
-                    "0.00");
-                AddHint(
-                    $"Radius {playerOrbitVisual.CurrentOrbitRadius:0.###} is " +
-                    "read directly from BaseWeapon; presentation only.");
+                AddSliderRow("Размер игрока", tuning.PlayerVisualScale,
+                    .5f, 2f, tuning.SetPlayerVisualScale, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.PlayerScale : 1f);
+                AddSliderRow("Смещение игрока X", tuning.PlayerVisualOffset.x,
+                    -2f, 2f, tuning.SetPlayerVisualOffsetX, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.PlayerOffsetX : 0f);
+                AddSliderRow("Смещение игрока Y", tuning.PlayerVisualOffset.y,
+                    -2f, 2f, tuning.SetPlayerVisualOffsetY, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.PlayerOffsetY : 0f);
+                AddSliderRow("Яркость игрока", tuning.PlayerBrightness,
+                    0f, 4f, tuning.SetPlayerBrightness, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.PlayerBrightness : 1f);
+                AddSliderRow("Насыщенность игрока", tuning.PlayerSaturation,
+                    0f, 3f, tuning.SetPlayerSaturation, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.PlayerSaturation : 1f);
+                AddSliderRow("Прозрачность игрока", tuning.PlayerOpacity,
+                    0f, 1f, tuning.SetPlayerOpacity, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.PlayerOpacity : 1f);
+                AddSliderRow("Сила оттенка игрока", tuning.PlayerTintStrength,
+                    0f, 1f, tuning.SetPlayerTintStrength, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.PlayerTintStrength : 0f);
+                AddVisualTintChannels("Оттенок игрока", tuning.PlayerTint,
+                    tuning.SetPlayerTint);
+                AddHint("Меняются только SpriteRenderer. Collider и gameplay root остаются без изменений.");
             }
-            else
-            {
-                AddHint("Production weapon orbit source is not available yet.");
-            }
+            else AddHint("SpriteRenderer игрока пока не найден.");
 
             AddVisualSectionReset(
                 "PLAYER",
-                () =>
-                {
-                    worldRuleVisual?.ResetPlayerGlowDebugSettings();
-                    playerOrbitVisual?.ResetPresentationSettings();
-                });
+                () => ResetVisualSectionToProduction(VisualSection.Player));
+        }
+
+        if (AddVisualSectionHeader(
+                VisualSection.Weapon, "WEAPON", "Visual дочерних SpriteRenderer оружия"))
+        {
+            ProductionVisualTuningController tuning = productionVisualTuning;
+            if (tuning != null && tuning.WeaponRendererCount > 0)
+            {
+                AddSliderRow("Размер оружия", tuning.WeaponVisualScale,
+                    .5f, 2.5f, tuning.SetWeaponVisualScale, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.WeaponScale : 1f);
+                AddSliderRow("Смещение оружия X", tuning.WeaponVisualOffset.x,
+                    -2f, 2f, tuning.SetWeaponVisualOffsetX, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.WeaponOffsetX : 0f);
+                AddSliderRow("Смещение оружия Y", tuning.WeaponVisualOffset.y,
+                    -2f, 2f, tuning.SetWeaponVisualOffsetY, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.WeaponOffsetY : 0f);
+                AddSliderRow("Яркость оружия", tuning.WeaponBrightness,
+                    0f, 4f, tuning.SetWeaponBrightness, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.WeaponBrightness : 1f);
+                AddSliderRow("Насыщенность оружия", tuning.WeaponSaturation,
+                    0f, 3f, tuning.SetWeaponSaturation, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.WeaponSaturation : 1f);
+                AddSliderRow("Прозрачность оружия", tuning.WeaponOpacity,
+                    0f, 1f, tuning.SetWeaponOpacity, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.WeaponOpacity : 1f);
+                AddSliderRow("Сила оттенка оружия", tuning.WeaponTintStrength,
+                    0f, 1f, tuning.SetWeaponTintStrength, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.WeaponTintStrength : 0f);
+                AddVisualTintChannels("Оттенок оружия", tuning.WeaponTint,
+                    tuning.SetWeaponTint);
+                AddHint("Fire Point и физическая точка вылета не смещаются.");
+            }
+            else AddHint("Активный SpriteRenderer оружия пока не найден.");
+            AddVisualSectionReset("WEAPON", () =>
+                ResetVisualSectionToProduction(VisualSection.Weapon));
+        }
+
+        if (AddVisualSectionHeader(
+                VisualSection.PlayerRing, "PLAYER RING", "Декоративное кольцо оружейной орбиты"))
+        {
+            if (playerOrbitVisual != null && playerOrbitVisual.HasOrbitSource)
+            {
+                AddToggleRow("КОЛЬЦО ВКЛЮЧЕНО", playerOrbitVisual.RingEnabled,
+                    true, () => playerOrbitVisual.SetRingEnabled(!playerOrbitVisual.RingEnabled));
+                AddSliderRow("Радиус кольца", playerOrbitVisual.RingRadiusMultiplier,
+                    .25f, 3f, playerOrbitVisual.SetRingRadiusMultiplier, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.RingRadius : 1f);
+                AddSliderRow("Толщина кольца", playerOrbitVisual.RingWidth,
+                    .005f, .15f, playerOrbitVisual.SetRingWidth, "0.000",
+                    visualProductionLoaded ? visualProductionSnapshot.RingWidth : .035f);
+                AddSliderRow("Яркость кольца", playerOrbitVisual.RingIntensity,
+                    0f, 4f, playerOrbitVisual.SetRingIntensity, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.RingBrightness : 1.25f);
+                AddSliderRow("Прозрачность кольца", playerOrbitVisual.RingAlpha,
+                    0f, 1f, playerOrbitVisual.SetRingAlpha, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.RingOpacity : .72f);
+                AddSliderRow("Сила пульсации", playerOrbitVisual.RingPulseAmount,
+                    0f, .75f, playerOrbitVisual.SetRingPulseAmount, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.RingPulseAmount : .06f);
+                AddSliderRow("Скорость пульсации", playerOrbitVisual.RingPulseSpeed,
+                    0f, 5f, playerOrbitVisual.SetRingPulseSpeed, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.RingPulseSpeed : .22f);
+                AddSliderRow("Скорость вращения", playerOrbitVisual.RingRotationSpeed,
+                    -180f, 180f, playerOrbitVisual.SetRingRotationSpeed, "0.0",
+                    visualProductionLoaded ? visualProductionSnapshot.RingRotationSpeed : 4f);
+                AddSliderRow("Смещение кольца X", playerOrbitVisual.RingOffset.x,
+                    -3f, 3f, playerOrbitVisual.SetRingOffsetX, "0.00", 0f);
+                AddSliderRow("Смещение кольца Y", playerOrbitVisual.RingOffset.y,
+                    -3f, 3f, playerOrbitVisual.SetRingOffsetY, "0.00", 0f);
+                AddVisualTintChannels("Цвет кольца", playerOrbitVisual.RingTint,
+                    playerOrbitVisual.SetRingTint);
+                AddHint($"Gameplay radius остаётся {playerOrbitVisual.CurrentOrbitRadius:0.###}; меняется только нарисованное кольцо.");
+            }
+            else AddHint("Production weapon orbit source is not available yet.");
+            AddVisualSectionReset("PLAYER RING", () =>
+                ResetVisualSectionToProduction(VisualSection.PlayerRing));
         }
 
         if (AddVisualSectionHeader(
                 VisualSection.PostFx,
-                "POST FX",
+                "CAMERA / SCREEN FX",
                 "URP global default VolumeProfile"))
         {
             ProductionVisualTuningController tuning = productionVisualTuning;
@@ -2126,8 +2289,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             {
                 AddSliderRow(
                     "Vignette Intensity", tuning.VignetteIntensity,
-                    0f, 1f, tuning.SetVignetteIntensity, "0.00");
-                AddVisualSectionReset("POST FX", tuning.ResetVignette);
+                    0f, 1f, tuning.SetVignetteIntensity, "0.00",
+                    tuning.ProductionVignetteIntensity);
+                AddVisualSectionReset("CAMERA / SCREEN FX", () =>
+                    ResetVisualSectionToProduction(VisualSection.PostFx));
             }
             else
             {
@@ -2150,13 +2315,19 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                         !anomalyController.AnomalyFocusEnabled));
                 AddSliderRow(
                     "Outside Darkness", anomalyController.OutsideDarkness,
-                    0f, 1f, anomalyController.SetOutsideDarkness, "0.00");
+                    0f, 1f, anomalyController.SetOutsideDarkness, "0.00",
+                    visualProductionLoaded
+                        ? visualProductionSnapshot.OutsideDarkness : null);
                 AddSliderRow(
                     "Outside Color", anomalyController.OutsideColor,
-                    0f, 1f, anomalyController.SetOutsideColor, "0.00");
+                    0f, 1f, anomalyController.SetOutsideColor, "0.00",
+                    visualProductionLoaded
+                        ? visualProductionSnapshot.OutsideColor : null);
                 AddSliderRow(
                     "Focus Transition", anomalyController.FocusTransition,
-                    0.2f, 0.35f, anomalyController.SetFocusTransition, "0.000");
+                    0.2f, 0.35f, anomalyController.SetFocusTransition, "0.000",
+                    visualProductionLoaded
+                        ? visualProductionSnapshot.FocusTransition : null);
             }
             else
             {
@@ -2170,7 +2341,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                     worldRuleVisual.WindDustAmountMultiplier,
                     0f, 5f,
                     worldRuleVisual.SetWindDustAmountMultiplier,
-                    "0.00");
+                    "0.00", visualProductionLoaded
+                        ? visualProductionSnapshot.WindDustAmount : 1f);
                 AddHint(
                     "Tunes production WindDustParticles; visible while the " +
                     "Wind world rule is active. 1.00 = production.");
@@ -2178,11 +2350,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
             AddVisualSectionReset(
                 "ATMOSPHERE",
-                () =>
-                {
-                    anomalyController?.ResetFocusPresentationForDebug();
-                    worldRuleVisual?.ResetWindDustDebugSettings();
-                });
+                () => ResetVisualSectionToProduction(VisualSection.Atmosphere));
         }
 
         if (AddVisualSectionHeader(
@@ -2192,10 +2360,12 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         {
             AddSliderRow(
                 "Global Accent", debug.AnomalyAccent,
-                1f, 1.75f, debug.SetAnomalyAccent, "0.00");
+                1f, 1.75f, debug.SetAnomalyAccent, "0.00",
+                debug.ProductionAnomalyAccent);
             AddAnomalyTargetPanel(debug);
             AddAnomalyVisualTuner(debug);
-            AddVisualSectionReset("ANOMALIES", debug.ResetAnomalyVisualSettings);
+            AddVisualSectionReset("ANOMALIES", () =>
+                ResetVisualSectionToProduction(VisualSection.Anomalies));
         }
 
         if (AddVisualSectionHeader(
@@ -2208,21 +2378,42 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             {
                 AddSliderRow(
                     "Projectile Visual Scale", tuning.ProjectileVisualScale,
-                    0.1f, 4f, tuning.SetProjectileVisualScale, "0.00");
+                    0.1f, 4f, tuning.SetProjectileVisualScale, "0.00",
+                    tuning.ProductionProjectileVisualScale);
                 AddSliderRow(
                     "Trail Width", tuning.TrailWidth,
-                    0.1f, 5f, tuning.SetTrailWidth, "0.00");
+                    0.1f, 5f, tuning.SetTrailWidth, "0.00",
+                    tuning.ProductionTrailWidth);
                 AddSliderRow(
                     "Trail Time / Length", tuning.TrailTime,
-                    0.1f, 6f, tuning.SetTrailTime, "0.00");
+                    0.1f, 6f, tuning.SetTrailTime, "0.00",
+                    tuning.ProductionTrailTime);
                 AddSliderRow(
                     "Trail Alpha", tuning.TrailAlpha,
-                    0f, 3f, tuning.SetTrailAlpha, "0.00");
+                    0f, 3f, tuning.SetTrailAlpha, "0.00",
+                    tuning.ProductionTrailAlpha);
+                AddSliderRow(
+                    "Яркость следа", tuning.TrailBrightness,
+                    0f, 6f, tuning.SetTrailBrightness, "0.00",
+                    tuning.ProductionTrailBrightness);
+                AddSliderRow(
+                    "Толщина ядра лазера", tuning.LaserCoreWidth,
+                    .1f, 8f, tuning.SetLaserCoreWidth, "0.00",
+                    tuning.ProductionLaserCoreWidth);
+                AddSliderRow(
+                    "Толщина свечения лазера", tuning.LaserGlowWidth,
+                    .1f, 8f, tuning.SetLaserGlowWidth, "0.00",
+                    tuning.ProductionLaserGlowWidth);
+                AddSliderRow(
+                    "Яркость лазера", tuning.LaserBrightness,
+                    0f, 6f, tuning.SetLaserBrightness, "0.00",
+                    tuning.ProductionLaserBrightness);
                 AddHint(
                     "Multipliers: 1.00 = production. Visual child scale does " +
                     "not change the root collider.");
                 AddVisualSectionReset(
-                    "PROJECTILES", tuning.ResetProjectileSettings);
+                    "PROJECTILES", () => ResetVisualSectionToProduction(
+                        VisualSection.Projectiles));
             }
             else
             {
@@ -2231,8 +2422,15 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         }
 
         if (AddVisualSectionHeader(
+                VisualSection.HitFx, "HIT / COMBAT FX",
+                "Существующие FX настраиваются в FEEL без дублирования"))
+        {
+            AddHint("Impact particles, hit flash, death FX и damage popup уже имеют live-параметры в COMBAT FEEL LAB. Здесь они не продублированы, чтобы сохранить один runtime source of truth.");
+        }
+
+        if (AddVisualSectionHeader(
                 VisualSection.Camera,
-                "CAMERA",
+                "CAMERA ZOOM",
                 "Production CameraFollow orthographic source"))
         {
             if (cameraFollow != null && cameraFollow.OrthographicZoomAvailable)
@@ -2243,7 +2441,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                     cameraFollow.DebugOrthographicSize,
                     2f, 16f,
                     cameraFollow.SetDebugOrthographicSize,
-                    "0.00");
+                    "0.00", visualProductionLoaded
+                        ? visualProductionSnapshot.CameraOrthographicSize
+                        : cameraFollow.ProductionOrthographicSize);
                 AddRow(
                     "MVP DEFAULT", productionSize.ToString("0.00"),
                     successColor, "APPLY", true,
@@ -2263,7 +2463,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                     "Sandbox value 12.5 comes from the removed " +
                     "GameplaySandboxBootstrap.CreateCamera().");
                 AddVisualSectionReset(
-                    "CAMERA", cameraFollow.ResetDebugOrthographicSize);
+                    "CAMERA", () =>
+                        ResetVisualSectionToProduction(VisualSection.Camera));
             }
             else
             {
@@ -2558,8 +2759,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             }
         );
         AddRow(
-            "COPY VALUES",
-            "Console + system clipboard",
+            "COPY TO CLIPBOARD",
+            "Только буфер обмена; production и saved asset не меняются",
             successColor,
             "COPY",
             true,
@@ -2585,6 +2786,28 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 ? $"Type: {debug.VisualTunerTypeName} | Distance: {distance}"
                 : "NO ACTIVE SUPPORTED ANOMALY"
         );
+
+        RectTransform typeRow = CreateRect("Anomaly Type Selector", contentRoot);
+        typeRow.gameObject.AddComponent<LayoutElement>().preferredHeight = 30f;
+        string[] typeLabels = { "GRAVITY", "ARC", "BEAM" };
+        for (int i = 0; i < typeLabels.Length; i++)
+        {
+            int index = i;
+            bool supported = typeLabels[i] != "GRAVITY";
+            Button button = CreateButton(typeRow, typeLabels[i], () =>
+            {
+                debug.SelectVisualTunerTargetByType(typeLabels[index]);
+                RefreshCurrentTab();
+            }, 90f, supported);
+            RectTransform rect = button.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(index / 3f, 0f);
+            rect.anchorMax = new Vector2((index + 1) / 3f, 1f);
+            rect.offsetMin = new Vector2(2f, 3f);
+            rect.offsetMax = new Vector2(-2f, -3f);
+            if (!supported)
+                AttachFeelTooltip(button.gameObject, () =>
+                    "Gravity site пока не предоставляет безопасный visual-only tuning contract; gameplay radius не изменяется.");
+        }
 
         if (target == null)
         {
@@ -5443,9 +5666,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         CombatFeelLabSettings lab = tuning.Lab;
         AddSectionTitle("COMBAT FEEL LAB",
             "INPUT → ANTICIPATION → SHOT → PROJECTILE → HIT → TARGET → KILL → CROWD");
-        AddVisualStatusLine("● LIVE RUNTIME OVERRIDES   Production defaults remain untouched");
+        AddFeelLiveStatus();
         AddFeelGroupTabs();
         AddHint(CombatFeelParameterMetadata.GetGroupDescriptionRu(selectedFeelLabGroup));
+        AddFeelGlobalPresets(lab);
         AddFeelCharacterPresets(lab);
         AddFeelExperimentActions(lab);
         AddFeelGroupControls(lab);
@@ -5528,6 +5752,36 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             rect.offsetMax = new Vector2(-2f, -2f);
             TextMeshProUGUI text = button.GetComponentInChildren<TextMeshProUGUI>();
             if (text != null) text.fontSize = 9f;
+        }
+    }
+
+    private void AddFeelGlobalPresets(CombatFeelLabSettings lab)
+    {
+        string[] labels = { "PRODUCTION", "SOFT", "STRONG" };
+        CombatFeelLabSettings.GroupPreset[] presets =
+        {
+            CombatFeelLabSettings.GroupPreset.Off,
+            CombatFeelLabSettings.GroupPreset.Soft,
+            CombatFeelLabSettings.GroupPreset.Hard
+        };
+        RectTransform row = CreateRect("Global Feel Presets", contentRoot);
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 30f;
+        for (int i = 0; i < labels.Length; i++)
+        {
+            int index = i;
+            Button button = CreateButton(row, labels[i], () =>
+            {
+                lab.ApplyAllGroupsPreset(presets[index]);
+                feelSaveMessage = labels[index] + " применён live; не сохранён.";
+                RefreshCurrentTab();
+            }, 100f);
+            AttachFeelTooltip(button.gameObject, () =>
+                CombatFeelParameterMetadata.GetPresetDescriptionRu(labels[index]));
+            RectTransform rect = button.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(index / 3f, 0f);
+            rect.anchorMax = new Vector2((index + 1) / 3f, 1f);
+            rect.offsetMin = new Vector2(2f, 3f);
+            rect.offsetMax = new Vector2(-2f, -3f);
         }
     }
 
@@ -5638,7 +5892,11 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             string format = range <= .5f ? "0.000" : range <= 10f ? "0.00" : "0.0";
             AddSliderRow(displayName, lab.GetRaw(descriptor.Parameter),
                 descriptor.Minimum, descriptor.Maximum,
-                value => lab.Set(descriptor.Parameter, value), format,
+                value =>
+                {
+                    lab.Set(descriptor.Parameter, value);
+                    UpdateFeelSaveStatus();
+                }, format,
                 descriptor.Metadata.Production,
                 value => FormatFeelValue(value, descriptor.Metadata, format));
         }
@@ -5694,9 +5952,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         return $"<b>{m.RussianName.ToUpperInvariant()}</b>  <color=#7FCFE6>{m.TechnicalName}</color>\n" +
             physical +
             $"<b>Что меняет:</b> {m.DescriptionRu}\n" +
-            $"<b>Что смотреть:</b> {m.WhatToWatchRu}\n" +
-            $"<b>MIN {m.FormatValue(m.Minimum)}:</b> {m.MinimumMeaningRu}\n" +
-            $"<b>MAX {m.FormatValue(m.Maximum)}:</b> {m.MaximumMeaningRu}\n" +
+            $"<b>Как это выглядит в игре:</b> {m.WhatToWatchRu}\n" +
+            $"<b>Маленькое значение · MIN {m.FormatValue(m.Minimum)}:</b> {m.MinimumMeaningRu}\n" +
+            $"<b>Большое значение · MAX {m.FormatValue(m.Maximum)}:</b> {m.MaximumMeaningRu}\n" +
             $"Сейчас: {m.FormatValue(current)}   Production: {m.FormatValue(m.Production)}   Safe random: {m.FormatValue(m.SafeRandomMinimum)}…{m.FormatValue(m.SafeRandomMaximum)}\n" +
             $"Audit: {m.AuditStatus}   Consumer: {m.ConsumerPath} → {m.ConsumerTarget}\n" +
             $"↺ click: DEFAULT   Shift+↺: MAX EFFECT ({m.FormatValue(m.DiagnosticExtreme)})";
@@ -5748,27 +6006,433 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         Stretch(text.rectTransform, 7f, 7f);
     }
 
+    private void LoadVisualProductionValues()
+    {
+        if (!VisualTuningPresetStorage.TryLoad(
+                out VisualTuningSnapshot snapshot,
+                out string source,
+                out string message))
+        {
+            visualSaveMessage = message;
+            return;
+        }
+
+        visualProductionSnapshot = snapshot;
+        visualProductionLoaded = true;
+        visualHasSavedPreset = true;
+        visualSaveMessage = "Production values загружены: " + source;
+        productionSectorDebug?.ApplyProductionSnapshot(snapshot);
+        productionVisualTuning?.ApplyProductionSnapshot(snapshot);
+        ApplyVisualProductionToLateTargets();
+        visualSavedBaselineJson = GetVisualGlobalJson(snapshot);
+        Debug.Log("[VisualLab LOAD]\n" +
+            $"ProjectileVisualScale={snapshot.ProjectileScale:0.###}\n" +
+            $"TrailWidth={snapshot.TrailWidth:0.###}\n" +
+            $"TrailTime={snapshot.TrailLifetime:0.###}\n" +
+            $"CameraZoom={snapshot.CameraOrthographicSize:0.###}\n" +
+            "source=" + source, this);
+    }
+
+    private void ApplyVisualProductionToLateTargets()
+    {
+        if (!visualProductionLoaded)
+            return;
+        VisualTuningSnapshot values = visualProductionSnapshot;
+        if (worldRuleVisual != null &&
+            productionAppliedWorldRuleVisual != worldRuleVisual)
+        {
+            worldRuleVisual.SetPlayerGlowIntensityMultiplier(
+                values.PlayerGlowIntensity);
+            worldRuleVisual.SetPlayerGlowRadiusMultiplier(values.PlayerGlowRadius);
+            worldRuleVisual.SetWindDustAmountMultiplier(values.WindDustAmount);
+            productionAppliedWorldRuleVisual = worldRuleVisual;
+        }
+        if (playerOrbitVisual != null &&
+            productionAppliedOrbitVisual != playerOrbitVisual)
+        {
+            ApplyRingProductionValues(values);
+            productionAppliedOrbitVisual = playerOrbitVisual;
+        }
+        if (anomalyController != null &&
+            productionAppliedAnomalyController != anomalyController)
+        {
+            ApplyAtmosphereProductionValues(values);
+            productionAppliedAnomalyController = anomalyController;
+        }
+        if (cameraFollow != null &&
+            productionAppliedCameraFollow != cameraFollow)
+        {
+            cameraFollow.SetDebugOrthographicSize(values.CameraOrthographicSize);
+            productionAppliedCameraFollow = cameraFollow;
+        }
+    }
+
+    private void ApplyRingProductionValues(VisualTuningSnapshot values)
+    {
+        if (playerOrbitVisual == null)
+            return;
+        playerOrbitVisual.SetRingEnabled(values.RingEnabled);
+        playerOrbitVisual.SetRingRadiusMultiplier(values.RingRadius);
+        playerOrbitVisual.SetRingWidth(values.RingWidth);
+        playerOrbitVisual.SetRingAlpha(values.RingOpacity);
+        playerOrbitVisual.SetRingIntensity(values.RingBrightness);
+        playerOrbitVisual.SetRingPulseAmount(values.RingPulseAmount);
+        playerOrbitVisual.SetRingPulseSpeed(values.RingPulseSpeed);
+        playerOrbitVisual.SetRingRotationSpeed(values.RingRotationSpeed);
+        playerOrbitVisual.SetRingOffsetX(values.RingOffsetX);
+        playerOrbitVisual.SetRingOffsetY(values.RingOffsetY);
+        playerOrbitVisual.SetRingTint(values.RingTint);
+    }
+
+    private void ApplyAtmosphereProductionValues(VisualTuningSnapshot values)
+    {
+        if (anomalyController == null)
+            return;
+        anomalyController.SetAnomalyFocusEnabled(values.AnomalyFocus);
+        anomalyController.SetOutsideDarkness(values.OutsideDarkness);
+        anomalyController.SetOutsideColor(values.OutsideColor);
+        anomalyController.SetFocusTransition(values.FocusTransition);
+    }
+
+    private void AddVisualLiveStatus()
+    {
+        RectTransform row = CreateRect("Visual Save Status", contentRoot);
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 38f;
+        visualSaveStatusText = CreateText("Label", row, string.Empty, 10.5f,
+            TextAlignmentOptions.MidlineLeft, successColor);
+        visualSaveStatusText.textWrappingMode = TextWrappingModes.Normal;
+        Stretch(visualSaveStatusText.rectTransform, 7f, 7f);
+        if (visualSavedBaselineJson == null)
+            visualSavedBaselineJson = GetVisualGlobalJson(BuildVisualSnapshot());
+        UpdateVisualSaveStatus();
+    }
+
+    private void UpdateVisualSaveStatus()
+    {
+        if (visualSaveStatusText == null || productionSectorDebug == null)
+            return;
+        VisualTuningSnapshot snapshot = BuildVisualSnapshot();
+        bool dirty = visualSavedBaselineJson != GetVisualGlobalJson(snapshot);
+        visualSaveStatusText.color = dirty ? warningColor : successColor;
+        string state = dirty ? "● Есть несохранённые изменения"
+            : visualHasSavedPreset ? "✓ Значения сохранены"
+            : "✓ Production values";
+        visualSaveStatusText.text =
+            "● LIVE — изменения применяются сразу   " +
+            state +
+            (string.IsNullOrWhiteSpace(visualSaveMessage)
+                ? string.Empty : "\n" + visualSaveMessage);
+    }
+
+    private void AddVisualObjectFocusButtons()
+    {
+        VisualSection[] sections =
+        {
+            VisualSection.Player, VisualSection.Weapon,
+            VisualSection.Enemies, VisualSection.Anomalies
+        };
+        string[] labels = { "PLAYER", "WEAPON", "ENEMY", "ANOMALY" };
+        RectTransform row = CreateRect("Visual Object Focus", contentRoot);
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 30f;
+        for (int i = 0; i < sections.Length; i++)
+        {
+            int index = i;
+            Button button = CreateButton(row, labels[i], () =>
+            {
+                for (int section = 0; section < visualSectionExpanded.Length; section++)
+                    visualSectionExpanded[section] = false;
+                visualSectionExpanded[(int)sections[index]] = true;
+                RefreshCurrentTab();
+            }, 80f);
+            RectTransform rect = button.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(index / 4f, 0f);
+            rect.anchorMax = new Vector2((index + 1) / 4f, 1f);
+            rect.offsetMin = new Vector2(2f, 3f);
+            rect.offsetMax = new Vector2(-2f, -3f);
+        }
+    }
+
+    private void AddVisualTintChannels(
+        string label, Color value, System.Action<Color> setter)
+    {
+        Color current = value;
+        AddSliderRow(label + " R", current.r, 0f, 1f, channel =>
+        { current.r = channel; setter?.Invoke(current); }, "0.00", 1f);
+        AddSliderRow(label + " G", current.g, 0f, 1f, channel =>
+        { current.g = channel; setter?.Invoke(current); }, "0.00", 1f);
+        AddSliderRow(label + " B", current.b, 0f, 1f, channel =>
+        { current.b = channel; setter?.Invoke(current); }, "0.00", 1f);
+    }
+
+    private VisualTuningSnapshot BuildVisualSnapshot()
+    {
+        VisualTuningSnapshot result = visualProductionLoaded
+            ? visualProductionSnapshot
+            : new VisualTuningSnapshot();
+        ProductionSectorDebugController debug = productionSectorDebug;
+        ProductionVisualTuningController tuning = productionVisualTuning;
+        if (debug != null)
+        {
+            result.WorldReadability = (int)debug.Preset;
+            result.DecorBrightness = debug.DecorBrightness;
+            result.EnvironmentDarken = debug.EnvironmentDarken;
+            result.EnemyReadability = (int)debug.EnemyMode;
+            result.EnemyScope = (int)debug.CurrentEnemyScope;
+            result.EnemyBrightness = debug.EnemyBrightness;
+            result.EnemySaturation = debug.EnemySaturation;
+            result.EnemyTintStrength = debug.EnemyTintStrength;
+            result.EnemyHueShift = debug.EnemyHueShift;
+            result.EnemyRecolorTarget = debug.EnemyRecolorTarget;
+            result.EnemyRecolorStrength = debug.EnemyRecolorStrength;
+            result.EnemyOutlineEnabled = debug.EnemyOutlineEnabled;
+            result.EnemyOutlineStrength = debug.EnemyOutlineStrength;
+            result.EnemyOutlineWidth = debug.EnemyOutlineWidth;
+            result.AnomalyAccent = debug.AnomalyAccent;
+            result.MonochromeAnomalies = debug.MonochromeAnomaliesEnabled;
+            result.Anomalies = debug.CaptureVisualTunerSnapshots();
+            result.AnomalyArtHooksVisible = debug.VisualTunerArtHooksVisible;
+            if (debug.VisualTunerTarget != null)
+            {
+                result.AnomalyTarget = debug.VisualTunerTargetName;
+                result.AnomalyValues = debug.VisualTunerValues;
+            }
+        }
+        if (tuning != null)
+        {
+            result.PlayerScale = tuning.PlayerVisualScale;
+            result.PlayerOffsetX = tuning.PlayerVisualOffset.x;
+            result.PlayerOffsetY = tuning.PlayerVisualOffset.y;
+            result.PlayerBrightness = tuning.PlayerBrightness;
+            result.PlayerSaturation = tuning.PlayerSaturation;
+            result.PlayerOpacity = tuning.PlayerOpacity;
+            result.PlayerTint = tuning.PlayerTint;
+            result.PlayerTintStrength = tuning.PlayerTintStrength;
+            result.WeaponScale = tuning.WeaponVisualScale;
+            result.WeaponOffsetX = tuning.WeaponVisualOffset.x;
+            result.WeaponOffsetY = tuning.WeaponVisualOffset.y;
+            result.WeaponBrightness = tuning.WeaponBrightness;
+            result.WeaponSaturation = tuning.WeaponSaturation;
+            result.WeaponOpacity = tuning.WeaponOpacity;
+            result.WeaponTint = tuning.WeaponTint;
+            result.WeaponTintStrength = tuning.WeaponTintStrength;
+            result.ProjectileScale = tuning.ProjectileVisualScale;
+            result.TrailWidth = tuning.TrailWidth;
+            result.TrailLifetime = tuning.TrailTime;
+            result.TrailOpacity = tuning.TrailAlpha;
+            result.TrailBrightness = tuning.TrailBrightness;
+            result.LaserCoreWidth = tuning.LaserCoreWidth;
+            result.LaserGlowWidth = tuning.LaserGlowWidth;
+            result.LaserBrightness = tuning.LaserBrightness;
+            result.VignetteIntensity = tuning.VignetteIntensity;
+        }
+        if (worldRuleVisual != null)
+        {
+            result.PlayerGlowIntensity = worldRuleVisual.PlayerGlowIntensityMultiplier;
+            result.PlayerGlowRadius = worldRuleVisual.PlayerGlowRadiusMultiplier;
+            result.WindDustAmount = worldRuleVisual.WindDustAmountMultiplier;
+        }
+        if (playerOrbitVisual != null)
+        {
+            result.RingEnabled = playerOrbitVisual.RingEnabled;
+            result.RingRadius = playerOrbitVisual.RingRadiusMultiplier;
+            result.RingWidth = playerOrbitVisual.RingWidth;
+            result.RingOpacity = playerOrbitVisual.RingAlpha;
+            result.RingBrightness = playerOrbitVisual.RingIntensity;
+            result.RingPulseAmount = playerOrbitVisual.RingPulseAmount;
+            result.RingPulseSpeed = playerOrbitVisual.RingPulseSpeed;
+            result.RingRotationSpeed = playerOrbitVisual.RingRotationSpeed;
+            result.RingOffsetX = playerOrbitVisual.RingOffset.x;
+            result.RingOffsetY = playerOrbitVisual.RingOffset.y;
+            result.RingTint = playerOrbitVisual.RingTint;
+        }
+        if (anomalyController != null)
+        {
+            result.AnomalyFocus = anomalyController.AnomalyFocusEnabled;
+            result.OutsideDarkness = anomalyController.OutsideDarkness;
+            result.OutsideColor = anomalyController.OutsideColor;
+            result.FocusTransition = anomalyController.FocusTransition;
+        }
+        if (cameraFollow != null)
+            result.CameraOrthographicSize = cameraFollow.DebugOrthographicSize;
+        return result;
+    }
+
+    private static string GetVisualGlobalJson(VisualTuningSnapshot snapshot)
+    {
+        snapshot.AnomalyTarget = null;
+        snapshot.AnomalyValues = default;
+        snapshot.AnomalyArtHooksVisible = false;
+        return JsonUtility.ToJson(snapshot);
+    }
+
+    private void AddFeelLiveStatus()
+    {
+        RectTransform row = CreateRect("Feel Save Status", contentRoot);
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 38f;
+        feelSaveStatusText = CreateText(
+            "Label", row, string.Empty, 10.5f,
+            TextAlignmentOptions.MidlineLeft, successColor);
+        feelSaveStatusText.textWrappingMode = TextWrappingModes.Normal;
+        Stretch(feelSaveStatusText.rectTransform, 7f, 7f);
+        UpdateFeelSaveStatus();
+    }
+
+    private void UpdateFeelSaveStatus()
+    {
+        if (feelSaveStatusText == null || productionFeelTuning == null)
+            return;
+        bool dirty = productionFeelTuning.Lab.HasUnsavedChanges;
+        feelSaveStatusText.color = dirty ? warningColor : successColor;
+        string state = dirty
+            ? "● Есть несохранённые изменения"
+            : "✓ Значения сохранены";
+        if (string.IsNullOrWhiteSpace(feelSaveMessage) && !dirty)
+            state = "✓ Production values";
+        feelSaveStatusText.text =
+            "● LIVE — изменения применяются сразу   " + state +
+            (string.IsNullOrWhiteSpace(feelSaveMessage)
+                ? string.Empty : "\n" + feelSaveMessage);
+    }
+
     private void ResetAllVisualLabValues()
     {
-        ProductionSectorDebugController debug = productionSectorDebug;
-        if (debug == null)
+        if (!visualProductionLoaded)
+        {
+            visualSaveMessage =
+                "RESET недоступен: сохранённый production preset не найден.";
+            RefreshCurrentTab();
             return;
+        }
+        ApplyFullVisualProductionSnapshot();
+        visualSaveMessage =
+            "RESET ALL применён: восстановлены последние сохранённые production values.";
+        RefreshCurrentTab();
+    }
 
-        debug.ResetVisualSettings();
-        productionVisualTuning?.ResetProjectileSettings();
-        productionVisualTuning?.ResetVignette();
-        worldRuleVisual?.ResetPlayerGlowDebugSettings();
-        playerOrbitVisual?.ResetPresentationSettings();
-        worldRuleVisual?.ResetWindDustDebugSettings();
-        cameraFollow?.ResetDebugOrthographicSize();
-        anomalyController?.ResetFocusPresentationForDebug();
+    private void ApplyFullVisualProductionSnapshot()
+    {
+        if (!visualProductionLoaded)
+            return;
+        VisualTuningSnapshot values = visualProductionSnapshot;
+        productionSectorDebug?.ApplyProductionSnapshot(values);
+        productionVisualTuning?.ApplyProductionSnapshot(values);
+        if (worldRuleVisual != null)
+        {
+            worldRuleVisual.SetPlayerGlowIntensityMultiplier(
+                values.PlayerGlowIntensity);
+            worldRuleVisual.SetPlayerGlowRadiusMultiplier(values.PlayerGlowRadius);
+            worldRuleVisual.SetWindDustAmountMultiplier(values.WindDustAmount);
+        }
+        ApplyRingProductionValues(values);
+        ApplyAtmosphereProductionValues(values);
+        cameraFollow?.SetDebugOrthographicSize(values.CameraOrthographicSize);
+    }
+
+    private void SaveVisualLabValues()
+    {
+        VisualTuningSnapshot snapshot = BuildVisualSnapshot();
+        bool saved = VisualTuningPresetStorage.Save(
+            snapshot, GetVisualLabValuesText(), out string message);
+        visualSaveMessage = (saved ? "✓ " : "⚠ ") + message;
+        if (saved)
+        {
+            visualProductionSnapshot = snapshot;
+            visualProductionLoaded = true;
+            visualHasSavedPreset = true;
+            productionSectorDebug?.ApplyProductionSnapshot(snapshot);
+            productionVisualTuning?.ApplyProductionSnapshot(snapshot);
+            visualSavedBaselineJson = GetVisualGlobalJson(snapshot);
+        }
         RefreshCurrentTab();
     }
 
     private void ResetAllFeelLabValues()
     {
         productionFeelTuning?.ResetAll();
+        feelSaveMessage = "RESET применён live; значения не сохранены.";
         RefreshCurrentTab();
+    }
+
+    private void SaveFeelLabValues()
+    {
+        if (productionFeelTuning == null)
+            return;
+        bool saved = productionFeelTuning.SaveTuningPreset(out string message);
+        feelSaveMessage = (saved ? "✓ " : "⚠ ") + message;
+        RefreshCurrentTab();
+    }
+
+    private void ResetVisualSectionToProduction(VisualSection section)
+    {
+        if (!visualProductionLoaded)
+        {
+            switch (section)
+            {
+                case VisualSection.World:
+                    productionSectorDebug?.ResetWorldVisualSettings(); break;
+                case VisualSection.Enemies:
+                    productionSectorDebug?.ResetEnemyVisualSettings(); break;
+                case VisualSection.Player:
+                    worldRuleVisual?.ResetPlayerGlowDebugSettings();
+                    productionVisualTuning?.ResetPlayerSettings(); break;
+                case VisualSection.Weapon:
+                    productionVisualTuning?.ResetWeaponSettings(); break;
+                case VisualSection.PlayerRing:
+                    playerOrbitVisual?.ResetPresentationSettings(); break;
+                case VisualSection.PostFx:
+                    productionVisualTuning?.ResetVignette(); break;
+                case VisualSection.Atmosphere:
+                    anomalyController?.ResetFocusPresentationForDebug();
+                    worldRuleVisual?.ResetWindDustDebugSettings(); break;
+                case VisualSection.Anomalies:
+                    productionSectorDebug?.ResetAnomalyVisualSettings(); break;
+                case VisualSection.Projectiles:
+                    productionVisualTuning?.ResetProjectileSettings();
+                    productionVisualTuning?.ResetLaserSettings(); break;
+                case VisualSection.Camera:
+                    cameraFollow?.ResetDebugOrthographicSize(); break;
+            }
+            return;
+        }
+
+        VisualTuningSnapshot values = visualProductionSnapshot;
+        switch (section)
+        {
+            case VisualSection.World:
+                productionSectorDebug?.ResetWorldVisualSettings(); break;
+            case VisualSection.Enemies:
+                productionSectorDebug?.ResetEnemyVisualSettings(); break;
+            case VisualSection.Player:
+                productionVisualTuning?.ResetPlayerSettings();
+                worldRuleVisual?.SetPlayerGlowIntensityMultiplier(
+                    values.PlayerGlowIntensity);
+                worldRuleVisual?.SetPlayerGlowRadiusMultiplier(
+                    values.PlayerGlowRadius);
+                break;
+            case VisualSection.Weapon:
+                productionVisualTuning?.ResetWeaponSettings(); break;
+            case VisualSection.PlayerRing:
+                ApplyRingProductionValues(values); break;
+            case VisualSection.PostFx:
+                productionVisualTuning?.ResetVignette(); break;
+            case VisualSection.Atmosphere:
+                ApplyAtmosphereProductionValues(values);
+                worldRuleVisual?.SetWindDustAmountMultiplier(
+                    values.WindDustAmount);
+                break;
+            case VisualSection.Anomalies:
+                productionSectorDebug?.ResetAnomalyVisualSettings(); break;
+            case VisualSection.Projectiles:
+                productionVisualTuning?.ResetProjectileSettings();
+                productionVisualTuning?.ResetLaserSettings();
+                break;
+            case VisualSection.Camera:
+                cameraFollow?.SetDebugOrthographicSize(
+                    values.CameraOrthographicSize);
+                break;
+        }
+        visualSaveMessage =
+            "RESET SECTION: восстановлены последние production values.";
     }
 
     private void AddVisualSectionReset(string section, System.Action reset)
@@ -5800,11 +6464,11 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         }
     }
 
-    private void CopyVisualLabValues()
+    private string GetVisualLabValuesText()
     {
         ProductionSectorDebugController debug = productionSectorDebug;
         if (debug == null)
-            return;
+            return string.Empty;
 
         StringBuilder values = new();
         values.AppendLine("WORLD");
@@ -5864,12 +6528,18 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 values.AppendLine($"OrbitRing = {playerOrbitVisual.RingEnabled}");
                 values.AppendLine($"OrbitRadius = " +
                     $"{playerOrbitVisual.CurrentOrbitRadius:0.###}");
+                values.AppendLine($"OrbitVisualRadiusMultiplier = " +
+                    $"{playerOrbitVisual.RingRadiusMultiplier:0.###}");
                 values.AppendLine($"OrbitIntensity = " +
                     $"{playerOrbitVisual.RingIntensity:0.###}");
                 values.AppendLine($"OrbitWidth = " +
                     $"{playerOrbitVisual.RingWidth:0.###}");
                 values.AppendLine($"OrbitAlpha = " +
                     $"{playerOrbitVisual.RingAlpha:0.###}");
+                values.AppendLine($"OrbitPulseAmount = {playerOrbitVisual.RingPulseAmount:0.###}");
+                values.AppendLine($"OrbitPulseSpeed = {playerOrbitVisual.RingPulseSpeed:0.###}");
+                values.AppendLine($"OrbitRotationSpeed = {playerOrbitVisual.RingRotationSpeed:0.###}");
+                values.AppendLine($"OrbitOffset = {playerOrbitVisual.RingOffset}");
             }
         }
 
@@ -5887,6 +6557,20 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         if (productionVisualTuning != null)
         {
             values.AppendLine();
+            values.AppendLine("PLAYER SPRITE");
+            values.AppendLine($"Scale = {productionVisualTuning.PlayerVisualScale:0.###}");
+            values.AppendLine($"Offset = {productionVisualTuning.PlayerVisualOffset}");
+            values.AppendLine($"Brightness = {productionVisualTuning.PlayerBrightness:0.###}");
+            values.AppendLine($"Saturation = {productionVisualTuning.PlayerSaturation:0.###}");
+            values.AppendLine($"Opacity = {productionVisualTuning.PlayerOpacity:0.###}");
+            values.AppendLine();
+            values.AppendLine("WEAPON SPRITE");
+            values.AppendLine($"Scale = {productionVisualTuning.WeaponVisualScale:0.###}");
+            values.AppendLine($"Offset = {productionVisualTuning.WeaponVisualOffset}");
+            values.AppendLine($"Brightness = {productionVisualTuning.WeaponBrightness:0.###}");
+            values.AppendLine($"Saturation = {productionVisualTuning.WeaponSaturation:0.###}");
+            values.AppendLine($"Opacity = {productionVisualTuning.WeaponOpacity:0.###}");
+            values.AppendLine();
             values.AppendLine("POST FX");
             values.AppendLine($"VignetteIntensity = " +
                 $"{productionVisualTuning.VignetteIntensity:0.###}");
@@ -5900,6 +6584,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 $"{productionVisualTuning.TrailTime:0.###}");
             values.AppendLine($"TrailAlpha = " +
                 $"{productionVisualTuning.TrailAlpha:0.###}");
+            values.AppendLine($"TrailBrightness = {productionVisualTuning.TrailBrightness:0.###}");
+            values.AppendLine($"LaserCoreWidth = {productionVisualTuning.LaserCoreWidth:0.###}");
+            values.AppendLine($"LaserGlowWidth = {productionVisualTuning.LaserGlowWidth:0.###}");
+            values.AppendLine($"LaserBrightness = {productionVisualTuning.LaserBrightness:0.###}");
         }
 
         if (cameraFollow != null)
@@ -5910,9 +6598,18 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 $"{cameraFollow.DebugOrthographicSize:0.###}");
         }
 
-        string result = values.ToString().TrimEnd();
+        return values.ToString().TrimEnd();
+    }
+
+    private void CopyVisualLabValues()
+    {
+        string result = GetVisualLabValuesText();
+        if (string.IsNullOrWhiteSpace(result)) return;
         GUIUtility.systemCopyBuffer = result;
+        visualSaveMessage =
+            "Скопировано в буфер обмена; saved visual preset не изменён.";
         Debug.Log($"[RuntimeVisualLab]\n{result}", this);
+        RefreshCurrentTab();
     }
 
     private void CopyFeelLabValues()
@@ -5922,7 +6619,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         string result = productionFeelTuning.GetValuesText();
         GUIUtility.systemCopyBuffer = result;
+        feelSaveMessage =
+            "Скопировано в буфер обмена; production и saved preset не изменены.";
         Debug.Log($"[RuntimeFeelLab]\n{result}", this);
+        RefreshCurrentTab();
     }
 
     private void AddSectionTitle(string title, string subtitle)
@@ -6218,12 +6918,45 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         valueText.raycastTarget = false;
 
         slider.SetValueWithoutNotify(Mathf.Clamp(value, minimum, maximum));
+        if (activeTab == DebugTab.VisualTest)
+            AttachFeelTooltip(row.gameObject, () =>
+                BuildVisualTooltipRu(label, minimum, maximum,
+                    productionMarker ?? value));
         slider.onValueChanged.AddListener(current =>
         {
             valueText.text = displayFormatter != null
                 ? displayFormatter(current) : current.ToString(format);
             setter?.Invoke(current);
+            if (activeTab == DebugTab.VisualTest)
+                UpdateVisualSaveStatus();
         });
+    }
+
+    private static string BuildVisualTooltipRu(
+        string label, float minimum, float maximum, float production)
+    {
+        string lower = label.ToLowerInvariant();
+        string effect = lower.Contains("размер") || lower.Contains("scale") ||
+            lower.Contains("radius") || lower.Contains("радиус")
+                ? "Меняет только видимый размер элемента. Gameplay collider и радиус действия не меняются."
+            : lower.Contains("смещение") || lower.Contains("offset")
+                ? "Сдвигает только изображение относительно его gameplay root."
+            : lower.Contains("ярк") || lower.Contains("brightness") || lower.Contains("glow")
+                ? "Управляет тем, насколько ярким и светящимся выглядит объект."
+            : lower.Contains("насыщ") || lower.Contains("saturation")
+                ? "Управляет насыщенностью цвета: минимум почти обесцвечивает, максимум делает цвета очень сочными."
+            : lower.Contains("прозрач") || lower.Contains("alpha") || lower.Contains("opacity")
+                ? "Управляет прозрачностью: минимум скрывает visual, максимум делает его полностью видимым."
+            : lower.Contains("width") || lower.Contains("толщ")
+                ? "Меняет видимую толщину линии или следа без изменения hitbox."
+            : lower.Contains("duration") || lower.Contains("time") || lower.Contains("lifetime")
+                ? "Меняет время, в течение которого визуальный эффект остаётся видимым."
+            : "Меняет существующее визуальное свойство объекта и сразу показывает результат в сцене.";
+        return $"<b>{label.ToUpperInvariant()}</b>\n<color=#68D98B>ТОЛЬКО VISUAL</color>\n" +
+            $"<b>Что меняет:</b> {effect}\n" +
+            $"<b>Маленькое значение:</b> эффект слабее или меньше.\n" +
+            $"<b>Большое значение:</b> эффект сильнее или заметнее.\n" +
+            $"Debug: {minimum:0.###}…{maximum:0.###}   Production: {production:0.###}";
     }
 
     private void AddFourStepButton(

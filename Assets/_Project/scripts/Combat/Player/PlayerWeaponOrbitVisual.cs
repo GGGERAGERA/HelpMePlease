@@ -8,8 +8,9 @@ public sealed class PlayerWeaponOrbitVisual : MonoBehaviour
     private const float DefaultIntensity = 1.25f;
     private const float DefaultWidth = 0.035f;
     private const float DefaultAlpha = 0.72f;
-    private const float RotationDegreesPerSecond = 4f;
-    private const float PulseCyclesPerSecond = 0.22f;
+    private const float DefaultRotationSpeed = 4f;
+    private const float DefaultPulseSpeed = 0.22f;
+    private const float DefaultPulseAmount = 0.06f;
 
     private static readonly Color OrbitColor =
         new(0.04f, 0.88f, 1f, 1f);
@@ -25,10 +26,17 @@ public sealed class PlayerWeaponOrbitVisual : MonoBehaviour
     public float RingIntensity { get; private set; } = DefaultIntensity;
     public float RingWidth { get; private set; } = DefaultWidth;
     public float RingAlpha { get; private set; } = DefaultAlpha;
+    public float RingRadiusMultiplier { get; private set; } = 1f;
+    public float RingPulseAmount { get; private set; } = DefaultPulseAmount;
+    public float RingPulseSpeed { get; private set; } = DefaultPulseSpeed;
+    public float RingRotationSpeed { get; private set; } = DefaultRotationSpeed;
+    public Vector2 RingOffset { get; private set; }
+    public Color RingTint { get; private set; } = OrbitColor;
     public bool HasOrbitSource => weapon != null;
     public float CurrentOrbitRadius => weapon != null
         ? weapon.CurrentOrbitRadius
         : 0f;
+    public float CurrentVisualRadius => CurrentOrbitRadius * RingRadiusMultiplier;
 
     public static PlayerWeaponOrbitVisual Ensure(
         GameObject player,
@@ -76,12 +84,33 @@ public sealed class PlayerWeaponOrbitVisual : MonoBehaviour
         RefreshPresentation();
     }
 
+    public void SetRingRadiusMultiplier(float value)
+    { RingRadiusMultiplier = Mathf.Clamp(value, .25f, 3f); RefreshGeometry(true); }
+    public void SetRingPulseAmount(float value)
+    { RingPulseAmount = Mathf.Clamp(value, 0f, .75f); RefreshColor(); }
+    public void SetRingPulseSpeed(float value)
+    { RingPulseSpeed = Mathf.Clamp(value, 0f, 5f); }
+    public void SetRingRotationSpeed(float value)
+    { RingRotationSpeed = Mathf.Clamp(value, -180f, 180f); }
+    public void SetRingOffsetX(float value)
+    { RingOffset = new Vector2(Mathf.Clamp(value, -3f, 3f), RingOffset.y); RefreshGeometry(true); }
+    public void SetRingOffsetY(float value)
+    { RingOffset = new Vector2(RingOffset.x, Mathf.Clamp(value, -3f, 3f)); RefreshGeometry(true); }
+    public void SetRingTint(Color value)
+    { RingTint = value; RefreshColor(); }
+
     public void ResetPresentationSettings()
     {
         RingEnabled = true;
         RingIntensity = DefaultIntensity;
         RingWidth = DefaultWidth;
         RingAlpha = DefaultAlpha;
+        RingRadiusMultiplier = 1f;
+        RingPulseAmount = DefaultPulseAmount;
+        RingPulseSpeed = DefaultPulseSpeed;
+        RingRotationSpeed = DefaultRotationSpeed;
+        RingOffset = Vector2.zero;
+        RingTint = OrbitColor;
         RefreshPresentation();
     }
 
@@ -102,7 +131,7 @@ public sealed class PlayerWeaponOrbitVisual : MonoBehaviour
         }
 
         rotationAngle = Mathf.Repeat(
-            rotationAngle + RotationDegreesPerSecond * Time.unscaledDeltaTime,
+            rotationAngle + RingRotationSpeed * Time.unscaledDeltaTime,
             360f
         );
         RefreshGeometry(true);
@@ -139,7 +168,7 @@ public sealed class PlayerWeaponOrbitVisual : MonoBehaviour
         if (ring == null || weapon == null)
             return;
 
-        float radius = weapon.CurrentOrbitRadius;
+        float radius = weapon.CurrentOrbitRadius * RingRadiusMultiplier;
         if (!force && Mathf.Approximately(renderedRadius, radius))
             return;
 
@@ -150,8 +179,8 @@ public sealed class PlayerWeaponOrbitVisual : MonoBehaviour
             float radians = Mathf.PI * 2f * i / SegmentCount +
                 rotationRadians;
             ring.SetPosition(i, new Vector3(
-                Mathf.Cos(radians) * radius,
-                Mathf.Sin(radians) * radius,
+                Mathf.Cos(radians) * radius + RingOffset.x,
+                Mathf.Sin(radians) * radius + RingOffset.y,
                 0f
             ));
         }
@@ -173,10 +202,11 @@ public sealed class PlayerWeaponOrbitVisual : MonoBehaviour
         if (ring == null)
             return;
 
-        float pulse = 0.94f + 0.06f * Mathf.Sin(
-            phase + Time.unscaledTime * Mathf.PI * 2f * PulseCyclesPerSecond
+        float pulse = 1f - RingPulseAmount + RingPulseAmount * Mathf.Sin(
+            phase + Time.unscaledTime * Mathf.PI * 2f * RingPulseSpeed
         );
-        Color color = OrbitColor * (RingIntensity * pulse);
+        pulse = Mathf.Max(0f, pulse);
+        Color color = RingTint * (RingIntensity * pulse);
         color.a = RingAlpha * pulse;
         if (ringMaterial != null)
             ringMaterial.color = color;

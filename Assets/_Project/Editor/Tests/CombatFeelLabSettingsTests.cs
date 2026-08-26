@@ -36,6 +36,33 @@ public sealed class CombatFeelLabSettingsTests
     }
 
     [Test]
+    public void DirtyStateTracksSavedValuesAndResetIsNotSave()
+    {
+        CombatFeelLabSettings settings = new();
+        Assert.That(settings.HasUnsavedChanges, Is.False);
+
+        settings.Set(CombatFeelParameter.WeaponKickDistance, .4f);
+        Assert.That(settings.HasUnsavedChanges, Is.True);
+        settings.MarkSaved();
+        Assert.That(settings.HasUnsavedChanges, Is.False);
+
+        settings.ResetAll();
+        Assert.That(settings.HasUnsavedChanges, Is.True,
+            "Reset must not replace the saved baseline");
+    }
+
+    [Test]
+    public void ScreenFractionsAreDisplayedAsReadablePercentages()
+    {
+        CombatFeelDescriptor deadZone = default;
+        foreach (CombatFeelDescriptor descriptor in CombatFeelLabSettings.Descriptors)
+            if (descriptor.Parameter == CombatFeelParameter.LookAheadDeadZone)
+                deadZone = descriptor;
+
+        Assert.That(deadZone.Metadata.FormatValue(.08f), Is.EqualTo("8% экрана"));
+    }
+
+    [Test]
     public void SoloNeutralizesOtherGroupsWithoutDestroyingTheirValues()
     {
         CombatFeelLabSettings settings = new();
