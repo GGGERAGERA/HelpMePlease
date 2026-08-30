@@ -46,6 +46,14 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
 
     [SerializeField] private Transform visualRoot;
 
+    public void SetVisualRoot(Transform value)
+    {
+        visualRoot = value;
+        animator = visualRoot != null
+            ? visualRoot.GetComponent<Animator>()
+            : GetComponentInChildren<Animator>();
+    }
+
     public float DashCooldown => Mathf.Max(0f, dashCooldown);
     public float DashCooldownRemaining =>
         Mathf.Max(0f, dashCooldownRemaining);

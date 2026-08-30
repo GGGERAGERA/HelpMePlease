@@ -48,8 +48,8 @@ public sealed class CharacterSelectionUI : MonoBehaviour
     {
         SubscribeToProgression();
         stationView?.Refresh();
-        ClearSelection();
         RefreshAllCards();
+        RestoreCurrentSelection();
     }
 
     private void Update()
@@ -183,6 +183,18 @@ public sealed class CharacterSelectionUI : MonoBehaviour
 
         RefreshCards(null);
         SetSelectButton(false);
+    }
+
+    private void RestoreCurrentSelection()
+    {
+        CharacterData current = RunSelectionManager.Instance != null
+            ? RunSelectionManager.Instance.SelectedCharacter
+            : null;
+
+        if (IsCharacterUnlocked(current))
+            SelectCharacter(current);
+        else
+            ClearSelection();
     }
 
     private void BindCards()

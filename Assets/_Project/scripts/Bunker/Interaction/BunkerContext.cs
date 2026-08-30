@@ -25,17 +25,12 @@ public sealed class BunkerContext : MonoBehaviour
         if (StationProgression == null)
             StationProgression = gameObject.AddComponent<BunkerStationProgressionService>();
 
+        if (GetComponent<BunkerPlayerLoadoutController>() == null)
+            gameObject.AddComponent<BunkerPlayerLoadoutController>();
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         EnsureDebugMenu();
 #endif
-    }
-
-    private void Start()
-    {
-        // The selection service survives the gameplay scene. Returning to the
-        // bunker must start a fresh selection flow instead of silently reusing
-        // the previous run loadout.
-        RunSelectionManager.Instance?.ClearRunSelection();
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

@@ -42,16 +42,17 @@ public sealed class WeaponSelectionUI : MonoBehaviour
     private void OnEnable()
     {
         SubscribeToProgression();
-        ClearSelection();
 
-        if (cards == null)
-            return;
-
-        foreach (WeaponCardView card in cards)
+        if (cards != null)
         {
-            if (card != null)
-                card.Refresh();
+            foreach (WeaponCardView card in cards)
+            {
+                if (card != null)
+                    card.Refresh();
+            }
         }
+
+        RestoreCurrentSelection();
     }
 
     private void OnDestroy()
@@ -235,6 +236,18 @@ public sealed class WeaponSelectionUI : MonoBehaviour
         SetWeaponIcon(null, Color.white);
         RefreshCards(null);
         SetConfirmButton(false);
+    }
+
+    private void RestoreCurrentSelection()
+    {
+        WeaponData current = RunSelectionManager.Instance != null
+            ? RunSelectionManager.Instance.SelectedWeapon
+            : null;
+
+        if (current != null)
+            SelectWeapon(current);
+        else
+            ClearSelection();
     }
 
     private void SetWeaponIcon(Sprite icon, Color color)
