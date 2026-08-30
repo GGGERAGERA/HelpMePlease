@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -9,6 +10,11 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
 {
     private const string WeaponPointName = "WeaponPoint";
 
+    [Header("Controlled Bunker Player")]
+    [SerializeField] private Transform controlledPlayerRoot;
+    [SerializeField] private Transform controlledPlayerVisualRoot;
+    [SerializeField] private Transform controlledPlayerFacingVisualRoot;
+
     private RunSelectionManager selection;
     private GameObject player;
     private Transform activeVisual;
@@ -17,16 +23,32 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
 
     private void Start()
     {
-        player = GameObject.FindGameObjectWithTag("Player");
-        if (player == null)
+        if (controlledPlayerRoot == null ||
+            controlledPlayerVisualRoot == null ||
+            controlledPlayerFacingVisualRoot == null)
         {
             Debug.LogError(
-                "[BunkerPlayerLoadout] Bunker player was not found.",
+                "[BunkerPlayerLoadout] Controlled player references are missing.",
                 this);
             return;
         }
 
-        activeVisual = FindVisual(player);
+        player = controlledPlayerRoot.gameObject;
+        if (player.GetComponent<CharacterMovement2D>() == null ||
+            player.GetComponent<Rigidbody2D>() == null ||
+            player.GetComponent<Collider2D>() == null)
+        {
+            Debug.LogError(
+                "[BunkerPlayerLoadout] Assigned root is not the controlled " +
+                "bunker player.",
+                controlledPlayerRoot);
+            player = null;
+            return;
+        }
+
+        activeVisual = controlledPlayerVisualRoot;
+        player.GetComponent<CharacterMovement2D>()
+            .SetVisualRoot(controlledPlayerFacingVisualRoot);
         BindSelectionManager();
         ApplyCurrentSelection();
     }
@@ -114,7 +136,11 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
 
         CharacterMovement2D movement =
             player.GetComponent<CharacterMovement2D>();
-        movement?.SetVisualRoot(activeVisual);
+        Transform facingVisual = ResolveFacingVisual(
+            character.characterPrefab,
+            sourceVisual,
+            replacement);
+        movement?.SetVisualRoot(facingVisual);
         PlayerLoadoutFactory.ApplyCharacterStats(player, character);
 
         if (selection != null && selection.SelectedWeapon != null)
@@ -151,5 +177,45 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
 
         Animator animator = root.GetComponentInChildren<Animator>(true);
         return animator != null ? animator.transform : null;
+    }
+
+    private static Transform ResolveFacingVisual(
+        GameObject characterPrefab,
+        Transform sourceVisual,
+        Transform replacementVisual)
+    {
+        CharacterMovement2D sourceMovement =
+            characterPrefab.GetComponent<CharacterMovement2D>();
+        Transform sourceFacing = sourceMovement != null
+            ? sourceMovement.VisualRoot
+            : null;
+
+        if (sourceFacing == null || !sourceFacing.IsChildOf(sourceVisual))
+        {
+            Debug.LogError(
+                $"[BunkerPlayerLoadout] Character '{characterPrefab.name}' " +
+                "has no facing visual below its Animator root.",
+                characterPrefab);
+            return replacementVisual;
+        }
+
+        var childIndices = new List<int>();
+        Transform current = sourceFacing;
+        while (current != sourceVisual)
+        {
+            childIndices.Add(current.GetSiblingIndex());
+            current = current.parent;
+        }
+
+        Transform resolved = replacementVisual;
+        for (int i = childIndices.Count - 1; i >= 0; i--)
+        {
+            int childIndex = childIndices[i];
+            if (childIndex < 0 || childIndex >= resolved.childCount)
+                return replacementVisual;
+            resolved = resolved.GetChild(childIndex);
+        }
+
+        return resolved;
     }
 }

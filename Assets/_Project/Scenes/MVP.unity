@@ -586,6 +586,7 @@ MonoBehaviour:
   bossWarningSound: {fileID: 0}
   bossWarningVolume: 0.8
   bossSpawnDelay: 2
+  bossSpawnRetryDelay: 1
 --- !u!114 &46915853
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9334,6 +9335,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1272361498082105137, guid: 4eb6b76f2dc0d6146a76c82677fcac4a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2299745350207424553, guid: 4eb6b76f2dc0d6146a76c82677fcac4a, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -9377,6 +9382,30 @@ PrefabInstance:
     - target: {fileID: 2914699097515975454, guid: 4eb6b76f2dc0d6146a76c82677fcac4a, type: 3}
       propertyPath: m_Name
       value: p_EnvirMine2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3975799798468147575, guid: 4eb6b76f2dc0d6146a76c82677fcac4a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5450731314770599009, guid: 4eb6b76f2dc0d6146a76c82677fcac4a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6037857311702284283, guid: 4eb6b76f2dc0d6146a76c82677fcac4a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6590671115366034147, guid: 4eb6b76f2dc0d6146a76c82677fcac4a, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7457959920510907334, guid: 4eb6b76f2dc0d6146a76c82677fcac4a, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9075442254046545061, guid: 4eb6b76f2dc0d6146a76c82677fcac4a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

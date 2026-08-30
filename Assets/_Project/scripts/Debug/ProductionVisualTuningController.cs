@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.Tilemaps;
 
 [DisallowMultipleComponent]
 public sealed class ProductionVisualTuningController : MonoBehaviour
@@ -23,6 +24,13 @@ public sealed class ProductionVisualTuningController : MonoBehaviour
         public float[] TrailWidths;
         public float[] TrailTimes;
         public Gradient[] TrailGradients;
+    }
+
+    private sealed class EnvironmentRendererState
+    {
+        public Renderer Renderer;
+        public Material OriginalMaterial;
+        public MaterialPropertyBlock Properties;
     }
 
     public static ProductionVisualTuningController Instance { get; private set; }
@@ -49,6 +57,25 @@ public sealed class ProductionVisualTuningController : MonoBehaviour
     public float LaserCoreWidth { get; private set; } = 1f;
     public float LaserGlowWidth { get; private set; } = 1f;
     public float LaserBrightness { get; private set; } = 1f;
+    public Color SceneTint { get; private set; } = Color.white;
+    public float SceneTintAmount { get; private set; }
+    public float SceneSaturation { get; private set; } = 1f;
+    public float SceneBrightness { get; private set; } = 1f;
+    public Color GrassTint { get; private set; } = Color.white;
+    public float GrassTintAmount { get; private set; }
+    public float GrassSaturation { get; private set; } = 1f;
+    public float GrassBrightness { get; private set; } = 1f;
+    public Color PlantsTint { get; private set; } = Color.white;
+    public float PlantsTintAmount { get; private set; }
+    public float PlantsSaturation { get; private set; } = 1f;
+    public float PlantsBrightness { get; private set; } = 1f;
+    public Color BackgroundTint { get; private set; } = Color.white;
+    public float BackgroundTintAmount { get; private set; }
+    public float BackgroundSaturation { get; private set; } = 1f;
+    public float BackgroundBrightness { get; private set; } = 1f;
+    public int GrassRendererCount => grassRenderers.Count;
+    public int PlantRendererCount => plantRenderers.Count;
+    public int BackgroundRendererCount => backgroundRenderers.Count;
     public int PlayerRendererCount => playerSprites.Count;
     public int WeaponRendererCount => weaponSprites.Count;
     public float ProductionProjectileVisualScale => hasProductionValues
@@ -99,7 +126,24 @@ public sealed class ProductionVisualTuningController : MonoBehaviour
     private readonly List<ProjectileVisualState> projectiles = new();
     private readonly List<SpriteVisualState> playerSprites = new();
     private readonly List<SpriteVisualState> weaponSprites = new();
+    private readonly List<EnvironmentRendererState> grassRenderers = new();
+    private readonly List<EnvironmentRendererState> plantRenderers = new();
+    private readonly List<EnvironmentRendererState> backgroundRenderers = new();
+    private static readonly int EnvironmentTintId =
+        Shader.PropertyToID("_EnvironmentTint");
+    private static readonly int EnvironmentTintAmountId =
+        Shader.PropertyToID("_EnvironmentTintAmount");
+    private static readonly int EnvironmentSaturationId =
+        Shader.PropertyToID("_EnvironmentSaturation");
+    private static readonly int EnvironmentBrightnessId =
+        Shader.PropertyToID("_EnvironmentBrightness");
     private bool existingProjectilesRegistered;
+    private bool environmentRenderersRegistered;
+    private Material environmentMaterial;
+    private GameObject sceneLookVolumeObject;
+    private Volume sceneLookVolume;
+    private VolumeProfile sceneLookProfile;
+    private ColorAdjustments sceneColorAdjustments;
     private Vignette vignette;
     private bool vignetteCaptured;
     private bool originalVignetteActive;
@@ -116,14 +160,33 @@ public sealed class ProductionVisualTuningController : MonoBehaviour
     public void Configure()
     {
         ResolveVignette();
+        EnsureSceneLookVolume();
+        RegisterEnvironmentRenderers();
         RegisterExistingProjectiles();
         RefreshCharacterVisuals();
     }
 
     public void ApplyProductionSnapshot(VisualTuningSnapshot values)
     {
+        VisualTuningPresetStorage.NormalizeEnvironmentColorValues(ref values);
         productionValues = values;
         hasProductionValues = true;
+        SetSceneTint(values.SceneTint);
+        SetSceneTintAmount(values.SceneTintAmount);
+        SetSceneSaturation(values.SceneSaturation);
+        SetSceneBrightness(values.SceneBrightness);
+        SetGrassTint(values.GrassTint);
+        SetGrassTintAmount(values.GrassTintAmount);
+        SetGrassSaturation(values.GrassSaturation);
+        SetGrassBrightness(values.GrassBrightness);
+        SetPlantsTint(values.PlantsTint);
+        SetPlantsTintAmount(values.PlantsTintAmount);
+        SetPlantsSaturation(values.PlantsSaturation);
+        SetPlantsBrightness(values.PlantsBrightness);
+        SetBackgroundTint(values.BackgroundTint);
+        SetBackgroundTintAmount(values.BackgroundTintAmount);
+        SetBackgroundSaturation(values.BackgroundSaturation);
+        SetBackgroundBrightness(values.BackgroundBrightness);
         SetProjectileVisualScale(values.ProjectileScale);
         SetTrailWidth(values.TrailWidth);
         SetTrailTime(values.TrailLifetime);
@@ -233,6 +296,42 @@ public sealed class ProductionVisualTuningController : MonoBehaviour
     public void SetLaserBrightness(float value)
     { LaserBrightness = Mathf.Clamp(value, 0f, 6f); ApplyLaserSettings(); }
 
+    public void SetSceneTint(Color value)
+    { SceneTint = ClampColor(value); ApplySceneLook(); }
+    public void SetSceneTintAmount(float value)
+    { SceneTintAmount = Mathf.Clamp01(value); ApplySceneLook(); }
+    public void SetSceneSaturation(float value)
+    { SceneSaturation = Mathf.Clamp(value, 0f, 3f); ApplySceneLook(); }
+    public void SetSceneBrightness(float value)
+    { SceneBrightness = Mathf.Clamp(value, .25f, 2.5f); ApplySceneLook(); }
+
+    public void SetGrassTint(Color value)
+    { GrassTint = ClampColor(value); ApplyGrassLook(); }
+    public void SetGrassTintAmount(float value)
+    { GrassTintAmount = Mathf.Clamp01(value); ApplyGrassLook(); }
+    public void SetGrassSaturation(float value)
+    { GrassSaturation = Mathf.Clamp(value, 0f, 3f); ApplyGrassLook(); }
+    public void SetGrassBrightness(float value)
+    { GrassBrightness = Mathf.Clamp(value, .25f, 2.5f); ApplyGrassLook(); }
+
+    public void SetPlantsTint(Color value)
+    { PlantsTint = ClampColor(value); ApplyPlantsLook(); }
+    public void SetPlantsTintAmount(float value)
+    { PlantsTintAmount = Mathf.Clamp01(value); ApplyPlantsLook(); }
+    public void SetPlantsSaturation(float value)
+    { PlantsSaturation = Mathf.Clamp(value, 0f, 3f); ApplyPlantsLook(); }
+    public void SetPlantsBrightness(float value)
+    { PlantsBrightness = Mathf.Clamp(value, .25f, 2.5f); ApplyPlantsLook(); }
+
+    public void SetBackgroundTint(Color value)
+    { BackgroundTint = ClampColor(value); ApplyBackgroundLook(); }
+    public void SetBackgroundTintAmount(float value)
+    { BackgroundTintAmount = Mathf.Clamp01(value); ApplyBackgroundLook(); }
+    public void SetBackgroundSaturation(float value)
+    { BackgroundSaturation = Mathf.Clamp(value, 0f, 3f); ApplyBackgroundLook(); }
+    public void SetBackgroundBrightness(float value)
+    { BackgroundBrightness = Mathf.Clamp(value, .25f, 2.5f); ApplyBackgroundLook(); }
+
     public void SetVignetteIntensity(float value)
     {
         ResolveVignette();
@@ -307,6 +406,191 @@ public sealed class ProductionVisualTuningController : MonoBehaviour
         vignette.active = originalVignetteActive;
         vignette.intensity.overrideState = originalVignetteOverride;
         vignette.intensity.value = originalVignetteIntensity;
+    }
+
+    public void ResetSceneLook()
+    {
+        SceneTint = hasProductionValues ? productionValues.SceneTint : Color.white;
+        SceneTintAmount = hasProductionValues ? productionValues.SceneTintAmount : 0f;
+        SceneSaturation = hasProductionValues ? productionValues.SceneSaturation : 1f;
+        SceneBrightness = hasProductionValues ? productionValues.SceneBrightness : 1f;
+        ApplySceneLook();
+    }
+
+    public void ResetGrassLook()
+    {
+        GrassTint = hasProductionValues ? productionValues.GrassTint : Color.white;
+        GrassTintAmount = hasProductionValues ? productionValues.GrassTintAmount : 0f;
+        GrassSaturation = hasProductionValues ? productionValues.GrassSaturation : 1f;
+        GrassBrightness = hasProductionValues ? productionValues.GrassBrightness : 1f;
+        ApplyGrassLook();
+    }
+
+    public void ResetPlantsLook()
+    {
+        PlantsTint = hasProductionValues ? productionValues.PlantsTint : Color.white;
+        PlantsTintAmount = hasProductionValues ? productionValues.PlantsTintAmount : 0f;
+        PlantsSaturation = hasProductionValues ? productionValues.PlantsSaturation : 1f;
+        PlantsBrightness = hasProductionValues ? productionValues.PlantsBrightness : 1f;
+        ApplyPlantsLook();
+    }
+
+    public void ResetBackgroundLook()
+    {
+        BackgroundTint = hasProductionValues ? productionValues.BackgroundTint : Color.white;
+        BackgroundTintAmount = hasProductionValues ? productionValues.BackgroundTintAmount : 0f;
+        BackgroundSaturation = hasProductionValues ? productionValues.BackgroundSaturation : 1f;
+        BackgroundBrightness = hasProductionValues ? productionValues.BackgroundBrightness : 1f;
+        ApplyBackgroundLook();
+    }
+
+    private void EnsureSceneLookVolume()
+    {
+        if (sceneColorAdjustments != null)
+            return;
+
+        sceneLookVolumeObject = new GameObject("Production Scene Look Volume");
+        sceneLookVolumeObject.transform.SetParent(transform, false);
+        sceneLookVolume = sceneLookVolumeObject.AddComponent<Volume>();
+        sceneLookVolume.isGlobal = true;
+        sceneLookVolume.priority = 10f;
+        sceneLookVolume.weight = 1f;
+        sceneLookProfile = ScriptableObject.CreateInstance<VolumeProfile>();
+        sceneLookProfile.name = "ProductionSceneLookProfile";
+        sceneColorAdjustments = sceneLookProfile.Add<ColorAdjustments>();
+        sceneColorAdjustments.active = true;
+        sceneLookVolume.sharedProfile = sceneLookProfile;
+        ApplySceneLook();
+    }
+
+    private void ApplySceneLook()
+    {
+        EnsureSceneLookVolume();
+        Color filter = Color.Lerp(Color.white, SceneTint, SceneTintAmount);
+        filter.a = 1f;
+        sceneColorAdjustments.colorFilter.Override(filter);
+        sceneColorAdjustments.saturation.Override(
+            Mathf.Clamp((SceneSaturation - 1f) * 100f, -100f, 200f));
+        sceneColorAdjustments.postExposure.Override(
+            Mathf.Log(Mathf.Max(.25f, SceneBrightness), 2f));
+    }
+
+    private void RegisterEnvironmentRenderers()
+    {
+        if (environmentRenderersRegistered)
+            return;
+
+        environmentRenderersRegistered = true;
+        environmentMaterial = Resources.Load<Material>("M_Environment_TileLit");
+        if (environmentMaterial == null)
+        {
+            Debug.LogWarning(
+                "[VisualLab] M_Environment_TileLit was not found; " +
+                "environment group tuning is unavailable.", this);
+            return;
+        }
+
+        Renderer[] renderers = FindObjectsByType<Renderer>(
+            FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+            if (renderer == null || renderer.GetComponentInParent<Canvas>() != null)
+                continue;
+            if (renderer is not SpriteRenderer && renderer is not TilemapRenderer)
+                continue;
+
+            List<EnvironmentRendererState> group = ResolveEnvironmentGroup(renderer);
+            if (group == null)
+                continue;
+
+            MaterialPropertyBlock properties = new();
+            renderer.GetPropertyBlock(properties);
+            group.Add(new EnvironmentRendererState
+            {
+                Renderer = renderer,
+                OriginalMaterial = renderer.sharedMaterial,
+                Properties = properties
+            });
+            renderer.sharedMaterial = environmentMaterial;
+        }
+
+        ApplyGrassLook();
+        ApplyPlantsLook();
+        ApplyBackgroundLook();
+    }
+
+    private List<EnvironmentRendererState> ResolveEnvironmentGroup(
+        Renderer renderer)
+    {
+        string objectName = renderer.gameObject.name;
+        if (renderer is TilemapRenderer && objectName == "Grass")
+            return grassRenderers;
+        if (HasExactAncestor(renderer.transform, "Plants"))
+            return plantRenderers;
+        if (renderer is TilemapRenderer &&
+            (objectName == "Grnd" || objectName == "BackgrndGrid1" ||
+             objectName == "BackgrndsTiles2"))
+        {
+            return backgroundRenderers;
+        }
+        return null;
+    }
+
+    private static bool HasExactAncestor(Transform target, string name)
+    {
+        for (Transform current = target; current != null; current = current.parent)
+            if (current.name == name)
+                return true;
+        return false;
+    }
+
+    private void ApplyGrassLook() => ApplyEnvironmentLook(
+        grassRenderers, GrassTint, GrassTintAmount,
+        GrassSaturation, GrassBrightness);
+
+    private void ApplyPlantsLook() => ApplyEnvironmentLook(
+        plantRenderers, PlantsTint, PlantsTintAmount,
+        PlantsSaturation, PlantsBrightness);
+
+    private void ApplyBackgroundLook() => ApplyEnvironmentLook(
+        backgroundRenderers, BackgroundTint, BackgroundTintAmount,
+        BackgroundSaturation, BackgroundBrightness);
+
+    private static void ApplyEnvironmentLook(
+        List<EnvironmentRendererState> renderers, Color tint,
+        float tintAmount, float saturation, float brightness)
+    {
+        for (int i = renderers.Count - 1; i >= 0; i--)
+        {
+            EnvironmentRendererState state = renderers[i];
+            if (state.Renderer == null)
+            {
+                renderers.RemoveAt(i);
+                continue;
+            }
+            state.Properties.SetColor(EnvironmentTintId, tint);
+            state.Properties.SetFloat(EnvironmentTintAmountId, tintAmount);
+            state.Properties.SetFloat(EnvironmentSaturationId, saturation);
+            state.Properties.SetFloat(EnvironmentBrightnessId, brightness);
+            state.Renderer.SetPropertyBlock(state.Properties);
+        }
+    }
+
+    private static Color ClampColor(Color value) => new(
+        Mathf.Clamp01(value.r), Mathf.Clamp01(value.g),
+        Mathf.Clamp01(value.b), 1f);
+
+    private static void RestoreEnvironmentMaterials(
+        List<EnvironmentRendererState> renderers)
+    {
+        for (int i = 0; i < renderers.Count; i++)
+        {
+            EnvironmentRendererState state = renderers[i];
+            if (state.Renderer != null)
+                state.Renderer.sharedMaterial = state.OriginalMaterial;
+        }
+        renderers.Clear();
     }
 
     private void RegisterExistingProjectiles()
@@ -549,6 +833,16 @@ public sealed class ProductionVisualTuningController : MonoBehaviour
         ResetWeaponSettings();
         ResetLaserSettings();
         ResetVignette();
+        RestoreEnvironmentMaterials(grassRenderers);
+        RestoreEnvironmentMaterials(plantRenderers);
+        RestoreEnvironmentMaterials(backgroundRenderers);
+        if (sceneLookProfile != null)
+        {
+            if (Application.isPlaying)
+                Destroy(sceneLookProfile);
+            else
+                DestroyImmediate(sceneLookProfile);
+        }
         if (Instance == this)
             Instance = null;
     }

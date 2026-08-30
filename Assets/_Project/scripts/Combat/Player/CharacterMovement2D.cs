@@ -45,13 +45,20 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
     private ContactFilter2D dashContactFilter;
 
     [SerializeField] private Transform visualRoot;
+    private float visualRootScaleMagnitudeX = 1f;
+    private float facingScaleSign = 1f;
+    private bool hasFacingDirection;
+
+    public Transform VisualRoot => visualRoot;
 
     public void SetVisualRoot(Transform value)
     {
         visualRoot = value;
         animator = visualRoot != null
-            ? visualRoot.GetComponent<Animator>()
+            ? visualRoot.GetComponentInParent<Animator>()
             : GetComponentInChildren<Animator>();
+        CacheVisualRootScale();
+        ApplyFacing();
     }
 
     public float DashCooldown => Mathf.Max(0f, dashCooldown);
@@ -78,6 +85,7 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponentInChildren<Animator>();
+        CacheVisualRootScale();
 
         if (rb != null)
         {
@@ -112,22 +120,41 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
                 TryStartDash();
         }
 
-        if (moveInput.x != 0 && visualRoot != null)
-        {
-            Vector3 scale = visualRoot.localScale;
-            scale.x = Mathf.Abs(scale.x) * -Mathf.Sign(moveInput.x);
-            visualRoot.localScale = scale;
-            
-            /*
-            if (scale.x < 0)
-                visualRoot.GetComponent<SpriteRenderer>().flipX = true;
-            else
-                visualRoot.GetComponent<SpriteRenderer>().flipX = false;
-            */
-        }
+        UpdateFacing(moveInput.x);
 
         if (animator != null)
             animator.SetFloat("Speed", moveInput.magnitude);
+    }
+
+    private void CacheVisualRootScale()
+    {
+        if (visualRoot == null)
+            return;
+
+        float scaleX = visualRoot.localScale.x;
+        visualRootScaleMagnitudeX = Mathf.Max(0.0001f, Mathf.Abs(scaleX));
+        if (!hasFacingDirection && !Mathf.Approximately(scaleX, 0f))
+            facingScaleSign = Mathf.Sign(scaleX);
+    }
+
+    private void UpdateFacing(float horizontalInput)
+    {
+        if (horizontalInput == 0f || visualRoot == null)
+            return;
+
+        facingScaleSign = -Mathf.Sign(horizontalInput);
+        hasFacingDirection = true;
+        ApplyFacing();
+    }
+
+    private void ApplyFacing()
+    {
+        if (visualRoot == null)
+            return;
+
+        Vector3 scale = visualRoot.localScale;
+        scale.x = visualRootScaleMagnitudeX * facingScaleSign;
+        visualRoot.localScale = scale;
     }
     public void AddMoveSpeed(float amount)
     {

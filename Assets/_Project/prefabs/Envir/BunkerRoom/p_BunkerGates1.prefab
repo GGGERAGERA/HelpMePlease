@@ -3557,6 +3557,7 @@ GameObject:
   - component: {fileID: 1742278836066472961}
   - component: {fileID: 1658224741829910117}
   - component: {fileID: 24918005211530909}
+  - component: {fileID: 24918005211530910}
   m_Layer: 0
   m_Name: p_BunkerGates1
   m_TagString: Untagged
@@ -3732,6 +3733,21 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &24918005211530910
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6022129806102080861}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c4ab1d35d4d4efc9be7e81b529f5ae2, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerGateVisual
+  openedDoor: {fileID: 95759153097582807}
+  closedDoor: {fileID: 91343287430305065}
+  startOpen: 0
 --- !u!1 &6263960695038589275
 GameObject:
   m_ObjectHideFlags: 0

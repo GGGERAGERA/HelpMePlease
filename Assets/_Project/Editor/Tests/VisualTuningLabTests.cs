@@ -4,11 +4,113 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+using UnityEngine.Tilemaps;
 
 public sealed class VisualTuningLabTests
 {
     private static string LifecycleBackupPath => Path.Combine(
         Path.GetTempPath(), "Subject42_VisualTuningSavedValues.backup");
+
+    [Test]
+    public void LegacySnapshotMigratesToNeutralEnvironmentLook()
+    {
+        VisualTuningSnapshot snapshot = default;
+        VisualTuningPresetStorage.NormalizeEnvironmentColorValues(ref snapshot);
+
+        Assert.That(snapshot.EnvironmentColorSchemaVersion, Is.EqualTo(1));
+        Assert.That(snapshot.SceneTint, Is.EqualTo(Color.white));
+        Assert.That(snapshot.SceneTintAmount, Is.Zero);
+        Assert.That(snapshot.SceneSaturation, Is.EqualTo(1f));
+        Assert.That(snapshot.SceneBrightness, Is.EqualTo(1f));
+        Assert.That(snapshot.GrassSaturation, Is.EqualTo(1f));
+        Assert.That(snapshot.PlantsSaturation, Is.EqualTo(1f));
+        Assert.That(snapshot.BackgroundSaturation, Is.EqualTo(1f));
+    }
+
+    [Test]
+    public void EnvironmentGroupsAreIsolatedAndKeepUniversal2DShader()
+    {
+        GameObject grass = new("Grass", typeof(Grid), typeof(Tilemap),
+            typeof(TilemapRenderer));
+        GameObject plants = new("Plants");
+        GameObject plantSprite = new("Tree");
+        plantSprite.transform.SetParent(plants.transform, false);
+        SpriteRenderer plantRenderer = plantSprite.AddComponent<SpriteRenderer>();
+        GameObject background = new("Grnd", typeof(Grid), typeof(Tilemap),
+            typeof(TilemapRenderer));
+        GameObject player = new("Player Visual");
+        SpriteRenderer playerRenderer = player.AddComponent<SpriteRenderer>();
+        Material playerMaterial = playerRenderer.sharedMaterial;
+        GameObject host = new("Environment Tuning Host");
+        try
+        {
+            ProductionVisualTuningController tuning =
+                host.AddComponent<ProductionVisualTuningController>();
+            tuning.Configure();
+
+            Assert.That(tuning.GrassRendererCount, Is.GreaterThanOrEqualTo(1));
+            Assert.That(tuning.PlantRendererCount, Is.GreaterThanOrEqualTo(1));
+            Assert.That(tuning.BackgroundRendererCount, Is.GreaterThanOrEqualTo(1));
+            Assert.That(grass.GetComponent<TilemapRenderer>().sharedMaterial.shader.name,
+                Is.EqualTo("Subject42/Environment Tile Lit"));
+            Assert.That(playerRenderer.sharedMaterial, Is.EqualTo(playerMaterial));
+
+            tuning.SetGrassTint(Color.magenta);
+            tuning.SetGrassTintAmount(1f);
+            tuning.SetGrassSaturation(2.2f);
+            MaterialPropertyBlock grassBlock = new();
+            grass.GetComponent<TilemapRenderer>().GetPropertyBlock(grassBlock);
+            MaterialPropertyBlock plantBlock = new();
+            plantRenderer.GetPropertyBlock(plantBlock);
+            int amountId = Shader.PropertyToID("_EnvironmentTintAmount");
+            int saturationId = Shader.PropertyToID("_EnvironmentSaturation");
+            Assert.That(grassBlock.GetFloat(amountId), Is.EqualTo(1f));
+            Assert.That(grassBlock.GetFloat(saturationId), Is.EqualTo(2.2f));
+            Assert.That(plantBlock.GetFloat(amountId), Is.EqualTo(0f));
+            Assert.That(plantBlock.GetFloat(saturationId), Is.EqualTo(1f));
+        }
+        finally
+        {
+            Object.DestroyImmediate(host);
+            Object.DestroyImmediate(grass);
+            Object.DestroyImmediate(plants);
+            Object.DestroyImmediate(background);
+            Object.DestroyImmediate(player);
+        }
+    }
+
+    [Test]
+    public void SceneLookUsesBaseVolumeBelowWorldRulePriorities()
+    {
+        GameObject host = new("Scene Look Host");
+        try
+        {
+            ProductionVisualTuningController tuning =
+                host.AddComponent<ProductionVisualTuningController>();
+            tuning.Configure();
+            tuning.SetSceneTint(Color.cyan);
+            tuning.SetSceneTintAmount(.5f);
+            tuning.SetSceneSaturation(2f);
+            tuning.SetSceneBrightness(2f);
+
+            Volume volume = host.GetComponentInChildren<Volume>();
+            Assert.That(volume, Is.Not.Null);
+            Assert.That(volume.isGlobal, Is.True);
+            Assert.That(volume.priority, Is.LessThan(99f));
+            Assert.That(volume.sharedProfile.TryGet(out ColorAdjustments color),
+                Is.True);
+            Assert.That(color.saturation.value, Is.EqualTo(100f).Within(.001f));
+            Assert.That(color.postExposure.value, Is.EqualTo(1f).Within(.001f));
+            Assert.That(color.colorFilter.value,
+                Is.EqualTo(Color.Lerp(Color.white, Color.cyan, .5f)));
+        }
+        finally
+        {
+            Object.DestroyImmediate(host);
+        }
+    }
 
     [Test]
     public void PlayerVisualScaleAndOffsetDoNotChangeCollider()

@@ -282,6 +282,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private enum VisualSection
     {
+        Scene,
+        Grass,
+        Plants,
         World,
         Background,
         Enemies,
@@ -398,7 +401,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private CameraFollow cameraFollow;
     private readonly bool[] visualSectionExpanded =
     {
-        true, false, true, true, true, true, true, true, true, true, false, true
+        true, true, true, true, true, false, true, true, true, true,
+        true, true, true, false, true
     };
     private readonly bool[] feelSectionExpanded =
     {
@@ -2028,6 +2032,77 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddVisualLiveStatus();
         AddVisualObjectFocusButtons();
 
+        ProductionVisualTuningController environment = productionVisualTuning;
+        if (AddVisualSectionHeader(
+                VisualSection.Scene, "СЦЕНА",
+                "Global Volume; Screen Space Overlay UI остаётся нейтральным"))
+        {
+            if (environment != null)
+            {
+                AddVisualTintChannels("Цвет сцены", environment.SceneTint,
+                    environment.SetSceneTint);
+                AddSliderRow("Сила цвета сцены", environment.SceneTintAmount,
+                    0f, 1f, environment.SetSceneTintAmount, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.SceneTintAmount : 0f);
+                AddSliderRow("Насыщенность сцены", environment.SceneSaturation,
+                    0f, 3f, environment.SetSceneSaturation, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.SceneSaturation : 1f);
+                AddSliderRow("Яркость сцены", environment.SceneBrightness,
+                    .25f, 2.5f, environment.SetSceneBrightness, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.SceneBrightness : 1f);
+                AddVisualSectionReset("SCENE", () =>
+                    ResetVisualSectionToProduction(VisualSection.Scene));
+            }
+        }
+
+        if (AddVisualSectionHeader(
+                VisualSection.Grass, "ТРАВА",
+                environment != null
+                    ? $"{environment.GrassRendererCount} renderer(s), только Grass"
+                    : "Environment controller unavailable"))
+        {
+            if (environment != null)
+            {
+                AddVisualTintChannels("Цвет травы", environment.GrassTint,
+                    environment.SetGrassTint);
+                AddSliderRow("Сила цвета травы", environment.GrassTintAmount,
+                    0f, 1f, environment.SetGrassTintAmount, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.GrassTintAmount : 0f);
+                AddSliderRow("Насыщенность травы", environment.GrassSaturation,
+                    0f, 3f, environment.SetGrassSaturation, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.GrassSaturation : 1f);
+                AddSliderRow("Яркость травы", environment.GrassBrightness,
+                    .25f, 2.5f, environment.SetGrassBrightness, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.GrassBrightness : 1f);
+                AddVisualSectionReset("GRASS", () =>
+                    ResetVisualSectionToProduction(VisualSection.Grass));
+            }
+        }
+
+        if (AddVisualSectionHeader(
+                VisualSection.Plants, "РАСТЕНИЯ / ДЕРЕВЬЯ",
+                environment != null
+                    ? $"{environment.PlantRendererCount} renderer(s), root Plants"
+                    : "Environment controller unavailable"))
+        {
+            if (environment != null)
+            {
+                AddVisualTintChannels("Цвет растений", environment.PlantsTint,
+                    environment.SetPlantsTint);
+                AddSliderRow("Сила цвета растений", environment.PlantsTintAmount,
+                    0f, 1f, environment.SetPlantsTintAmount, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.PlantsTintAmount : 0f);
+                AddSliderRow("Насыщенность растений", environment.PlantsSaturation,
+                    0f, 3f, environment.SetPlantsSaturation, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.PlantsSaturation : 1f);
+                AddSliderRow("Яркость растений", environment.PlantsBrightness,
+                    .25f, 2.5f, environment.SetPlantsBrightness, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.PlantsBrightness : 1f);
+                AddVisualSectionReset("PLANTS", () =>
+                    ResetVisualSectionToProduction(VisualSection.Plants));
+            }
+        }
+
         if (AddVisualSectionHeader(
                 VisualSection.World,
                 "ENVIRONMENT",
@@ -2056,12 +2131,27 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         if (AddVisualSectionHeader(
                 VisualSection.Background,
-                "BACKGROUND",
-                "No independent production runtime parameter found"))
+                "BACKGROUND TILES",
+                environment != null
+                    ? $"{environment.BackgroundRendererCount} TilemapRenderer(s)"
+                    : "Environment controller unavailable"))
         {
-            AddHint(
-                "Background renderers currently follow WORLD readability; " +
-                "no parallel debug state was created.");
+            if (environment != null)
+            {
+                AddVisualTintChannels("Цвет background", environment.BackgroundTint,
+                    environment.SetBackgroundTint);
+                AddSliderRow("Сила цвета background", environment.BackgroundTintAmount,
+                    0f, 1f, environment.SetBackgroundTintAmount, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.BackgroundTintAmount : 0f);
+                AddSliderRow("Насыщенность background", environment.BackgroundSaturation,
+                    0f, 3f, environment.SetBackgroundSaturation, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.BackgroundSaturation : 1f);
+                AddSliderRow("Яркость background", environment.BackgroundBrightness,
+                    .25f, 2.5f, environment.SetBackgroundBrightness, "0.00",
+                    visualProductionLoaded ? visualProductionSnapshot.BackgroundBrightness : 1f);
+                AddVisualSectionReset("BACKGROUND", () =>
+                    ResetVisualSectionToProduction(VisualSection.Background));
+            }
         }
 
         if (AddVisualSectionHeader(
@@ -6199,6 +6289,24 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         }
         if (tuning != null)
         {
+            result.EnvironmentColorSchemaVersion =
+                VisualTuningPresetStorage.CurrentEnvironmentColorSchemaVersion;
+            result.SceneTint = tuning.SceneTint;
+            result.SceneTintAmount = tuning.SceneTintAmount;
+            result.SceneSaturation = tuning.SceneSaturation;
+            result.SceneBrightness = tuning.SceneBrightness;
+            result.GrassTint = tuning.GrassTint;
+            result.GrassTintAmount = tuning.GrassTintAmount;
+            result.GrassSaturation = tuning.GrassSaturation;
+            result.GrassBrightness = tuning.GrassBrightness;
+            result.PlantsTint = tuning.PlantsTint;
+            result.PlantsTintAmount = tuning.PlantsTintAmount;
+            result.PlantsSaturation = tuning.PlantsSaturation;
+            result.PlantsBrightness = tuning.PlantsBrightness;
+            result.BackgroundTint = tuning.BackgroundTint;
+            result.BackgroundTintAmount = tuning.BackgroundTintAmount;
+            result.BackgroundSaturation = tuning.BackgroundSaturation;
+            result.BackgroundBrightness = tuning.BackgroundBrightness;
             result.PlayerScale = tuning.PlayerVisualScale;
             result.PlayerOffsetX = tuning.PlayerVisualOffset.x;
             result.PlayerOffsetY = tuning.PlayerVisualOffset.y;
@@ -6368,6 +6476,14 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         {
             switch (section)
             {
+                case VisualSection.Scene:
+                    productionVisualTuning?.ResetSceneLook(); break;
+                case VisualSection.Grass:
+                    productionVisualTuning?.ResetGrassLook(); break;
+                case VisualSection.Plants:
+                    productionVisualTuning?.ResetPlantsLook(); break;
+                case VisualSection.Background:
+                    productionVisualTuning?.ResetBackgroundLook(); break;
                 case VisualSection.World:
                     productionSectorDebug?.ResetWorldVisualSettings(); break;
                 case VisualSection.Enemies:
@@ -6398,6 +6514,14 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         VisualTuningSnapshot values = visualProductionSnapshot;
         switch (section)
         {
+            case VisualSection.Scene:
+                productionVisualTuning?.ResetSceneLook(); break;
+            case VisualSection.Grass:
+                productionVisualTuning?.ResetGrassLook(); break;
+            case VisualSection.Plants:
+                productionVisualTuning?.ResetPlantsLook(); break;
+            case VisualSection.Background:
+                productionVisualTuning?.ResetBackgroundLook(); break;
             case VisualSection.World:
                 productionSectorDebug?.ResetWorldVisualSettings(); break;
             case VisualSection.Enemies:
@@ -6556,6 +6680,30 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         if (productionVisualTuning != null)
         {
+            values.AppendLine();
+            values.AppendLine("SCENE LOOK");
+            values.AppendLine($"Tint = #{ColorUtility.ToHtmlStringRGB(productionVisualTuning.SceneTint)}");
+            values.AppendLine($"TintAmount = {productionVisualTuning.SceneTintAmount:0.###}");
+            values.AppendLine($"Saturation = {productionVisualTuning.SceneSaturation:0.###}");
+            values.AppendLine($"Brightness = {productionVisualTuning.SceneBrightness:0.###}");
+            values.AppendLine();
+            values.AppendLine("GRASS LOOK");
+            values.AppendLine($"Tint = #{ColorUtility.ToHtmlStringRGB(productionVisualTuning.GrassTint)}");
+            values.AppendLine($"TintAmount = {productionVisualTuning.GrassTintAmount:0.###}");
+            values.AppendLine($"Saturation = {productionVisualTuning.GrassSaturation:0.###}");
+            values.AppendLine($"Brightness = {productionVisualTuning.GrassBrightness:0.###}");
+            values.AppendLine();
+            values.AppendLine("PLANTS LOOK");
+            values.AppendLine($"Tint = #{ColorUtility.ToHtmlStringRGB(productionVisualTuning.PlantsTint)}");
+            values.AppendLine($"TintAmount = {productionVisualTuning.PlantsTintAmount:0.###}");
+            values.AppendLine($"Saturation = {productionVisualTuning.PlantsSaturation:0.###}");
+            values.AppendLine($"Brightness = {productionVisualTuning.PlantsBrightness:0.###}");
+            values.AppendLine();
+            values.AppendLine("BACKGROUND LOOK");
+            values.AppendLine($"Tint = #{ColorUtility.ToHtmlStringRGB(productionVisualTuning.BackgroundTint)}");
+            values.AppendLine($"TintAmount = {productionVisualTuning.BackgroundTintAmount:0.###}");
+            values.AppendLine($"Saturation = {productionVisualTuning.BackgroundSaturation:0.###}");
+            values.AppendLine($"Brightness = {productionVisualTuning.BackgroundBrightness:0.###}");
             values.AppendLine();
             values.AppendLine("PLAYER SPRITE");
             values.AppendLine($"Scale = {productionVisualTuning.PlayerVisualScale:0.###}");
@@ -6936,7 +7084,25 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         string label, float minimum, float maximum, float production)
     {
         string lower = label.ToLowerInvariant();
-        string effect = lower.Contains("размер") || lower.Contains("scale") ||
+        string effect = lower.Contains("насыщенность травы")
+                ? "Насколько яркими выглядят цвета травы. 0 — трава серая, 1 — исходный цвет, выше 1 — заметно насыщеннее. Меняет только траву."
+            : lower.Contains("насыщенность сцены")
+                ? "Насыщенность всего игрового мира. Не влияет на интерфейс. 0 — чёрно-белая картинка, 1 — обычный вид, выше 1 — более сочные цвета."
+            : lower.Contains("насыщенность растений")
+                ? "Насыщенность растений и деревьев. 0 — серые, 1 — исходный цвет, выше 1 — более сочные. Другие группы не меняются."
+            : lower.Contains("насыщенность background")
+                ? "Насыщенность фоновых Tilemap. 0 — серые, 1 — исходный цвет, выше 1 — более сочные. Трава и растения не меняются."
+            : lower.Contains("сила цвета")
+                ? "Смешивает исходные детали с выбранным оттенком: 0 — без перекраски, 1 — максимальное влияние цвета."
+            : lower.StartsWith("цвет сцены")
+                ? "Цветовой оттенок игрового мира. Интерфейс остаётся нейтральным; силу влияния задаёт отдельный параметр."
+            : lower.StartsWith("цвет травы")
+                ? "Выбранный оттенок только для Tilemap травы; исходные текстуры не изменяются."
+            : lower.StartsWith("цвет растений")
+                ? "Выбранный оттенок только для vegetation под root Plants."
+            : lower.StartsWith("цвет background")
+                ? "Выбранный оттенок только для фоновых Tilemap."
+            : lower.Contains("размер") || lower.Contains("scale") ||
             lower.Contains("radius") || lower.Contains("радиус")
                 ? "Меняет только видимый размер элемента. Gameplay collider и радиус действия не меняются."
             : lower.Contains("смещение") || lower.Contains("offset")

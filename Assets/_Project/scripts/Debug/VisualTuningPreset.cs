@@ -13,6 +13,17 @@ public struct VisualAnomalyTuningSnapshot
 [Serializable]
 public struct VisualTuningSnapshot
 {
+    public int EnvironmentColorSchemaVersion;
+    public Color SceneTint;
+    public float SceneTintAmount, SceneSaturation, SceneBrightness;
+    public Color GrassTint;
+    public float GrassTintAmount, GrassSaturation, GrassBrightness;
+    public Color PlantsTint;
+    public float PlantsTintAmount, PlantsSaturation, PlantsBrightness;
+    public Color BackgroundTint;
+    public float BackgroundTintAmount, BackgroundSaturation,
+        BackgroundBrightness;
+
     public int WorldReadability;
     public float DecorBrightness, EnvironmentDarken;
     public int EnemyReadability, EnemyScope;
@@ -76,6 +87,7 @@ public sealed class VisualTuningPreset : ScriptableObject
 
 public static class VisualTuningPresetStorage
 {
+    public const int CurrentEnvironmentColorSchemaVersion = 1;
     public const string AssetPath =
         "Assets/_Project/Resources/VisualTuningSavedValues.asset";
     public const string LegacyAssetPath =
@@ -110,6 +122,7 @@ public static class VisualTuningPresetStorage
         }
 
         snapshot = preset.Values;
+        NormalizeEnvironmentColorValues(ref snapshot);
         message = "Visual production preset загружен из " + source;
         return true;
     }
@@ -117,6 +130,7 @@ public static class VisualTuningPresetStorage
     public static bool Save(
         VisualTuningSnapshot snapshot, string text, out string message)
     {
+        NormalizeEnvironmentColorValues(ref snapshot);
 #if UNITY_EDITOR
         try
         {
@@ -182,6 +196,35 @@ public static class VisualTuningPresetStorage
         message = "Сохранение asset доступно только в Unity Editor.";
         return false;
 #endif
+    }
+
+    public static void NormalizeEnvironmentColorValues(
+        ref VisualTuningSnapshot snapshot)
+    {
+        if (snapshot.EnvironmentColorSchemaVersion >=
+            CurrentEnvironmentColorSchemaVersion)
+        {
+            return;
+        }
+
+        snapshot.EnvironmentColorSchemaVersion =
+            CurrentEnvironmentColorSchemaVersion;
+        snapshot.SceneTint = Color.white;
+        snapshot.SceneTintAmount = 0f;
+        snapshot.SceneSaturation = 1f;
+        snapshot.SceneBrightness = 1f;
+        snapshot.GrassTint = Color.white;
+        snapshot.GrassTintAmount = 0f;
+        snapshot.GrassSaturation = 1f;
+        snapshot.GrassBrightness = 1f;
+        snapshot.PlantsTint = Color.white;
+        snapshot.PlantsTintAmount = 0f;
+        snapshot.PlantsSaturation = 1f;
+        snapshot.PlantsBrightness = 1f;
+        snapshot.BackgroundTint = Color.white;
+        snapshot.BackgroundTintAmount = 0f;
+        snapshot.BackgroundSaturation = 1f;
+        snapshot.BackgroundBrightness = 1f;
     }
 
 #if UNITY_EDITOR

@@ -14,6 +14,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VisualTuningPreset
   savedAtUtc: 2026-08-30T20:50:26.0738801Z
   values:
+    EnvironmentColorSchemaVersion: 1
+    SceneTint: {r: 1, g: 1, b: 1, a: 1}
+    SceneTintAmount: 0
+    SceneSaturation: 1
+    SceneBrightness: 1
+    GrassTint: {r: 1, g: 1, b: 1, a: 1}
+    GrassTintAmount: 0
+    GrassSaturation: 1
+    GrassBrightness: 1
+    PlantsTint: {r: 1, g: 1, b: 1, a: 1}
+    PlantsTintAmount: 0
+    PlantsSaturation: 1
+    PlantsBrightness: 1
+    BackgroundTint: {r: 1, g: 1, b: 1, a: 1}
+    BackgroundTintAmount: 0
+    BackgroundSaturation: 1
+    BackgroundBrightness: 1
     WorldReadability: 0
     DecorBrightness: 1
     EnvironmentDarken: 0

@@ -17,8 +17,10 @@ public sealed class BunkerRunStarter : MonoBehaviour
     [SerializeField] private CameraFollow cameraFollow;
     [SerializeField] private Behaviour playerMovement;
     [SerializeField] private BunkerCursorInteractor bunkerCursor;
+    [SerializeField] private BunkerGateVisual runGate;
     [SerializeField, Range(0.6f, 1f)] private float transitionDuration = 0.8f;
     [SerializeField, Min(0.5f)] private float targetOrthographicSize = 3.5f;
+    [SerializeField, Range(0f, 1f)] private float gateOpenNormalizedTime = 0.35f;
 
     private bool isTransitioning;
 
@@ -38,7 +40,8 @@ public sealed class BunkerRunStarter : MonoBehaviour
         if (transitionTarget == null ||
             transitionCamera == null ||
             cameraRig == null ||
-            cameraFollow == null)
+            cameraFollow == null ||
+            runGate == null)
         {
             Debug.LogError(
                 "[BunkerRunStarter] Run transition references are incomplete.",
@@ -123,11 +126,19 @@ public sealed class BunkerRunStarter : MonoBehaviour
         float startSize = transitionCamera.orthographicSize;
         float duration = Mathf.Clamp(transitionDuration, 0.6f, 1f);
         float elapsed = 0f;
+        bool gateOpened = false;
 
         while (elapsed < duration)
         {
             elapsed += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsed / duration);
+
+            if (!gateOpened && t >= gateOpenNormalizedTime)
+            {
+                runGate.Open();
+                gateOpened = true;
+            }
+
             float easedT = t * t * (3f - 2f * t);
             cameraRig.position = Vector3.LerpUnclamped(
                 startPosition,
@@ -139,6 +150,9 @@ public sealed class BunkerRunStarter : MonoBehaviour
                 easedT);
             yield return null;
         }
+
+        if (!gateOpened)
+            runGate.Open();
 
         AnomalyStabilizerData stabilizer =
             RunSelectionManager.Instance.ConsumeAnomalyStabilizer();
