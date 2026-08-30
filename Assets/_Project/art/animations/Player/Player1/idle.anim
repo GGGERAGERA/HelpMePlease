@@ -50,28 +50,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     path: 
-  m_FloatCurves:
-  - serializedVersion: 2
-    curve:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 0
-        inSlope: Infinity
-        outSlope: Infinity
-        tangentMode: 103
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    attribute: m_IsActive
-    path: Player1(2)_0
-    classID: 1
-    script: {fileID: 0}
-    flags: 0
+  m_FloatCurves: []
   m_PPtrCurves:
   - serializedVersion: 2
     curve:
@@ -170,6 +149,23 @@ AnimationClip:
     classID: 212
     script: {fileID: 0}
     flags: 2
+  - serializedVersion: 2
+    curve:
+    - time: 0
+      value: {fileID: -386401705748685234, guid: 8c6d4adfa9a298d42a0aca3f3de80a59, type: 3}
+    - time: 0.1125
+      value: {fileID: 2020658438, guid: 8c6d4adfa9a298d42a0aca3f3de80a59, type: 3}
+    - time: 0.2375
+      value: {fileID: -642087744, guid: 8c6d4adfa9a298d42a0aca3f3de80a59, type: 3}
+    - time: 0.35
+      value: {fileID: -1868951077, guid: 8c6d4adfa9a298d42a0aca3f3de80a59, type: 3}
+    - time: 0.475
+      value: {fileID: -386401705748685234, guid: 8c6d4adfa9a298d42a0aca3f3de80a59, type: 3}
+    attribute: m_Sprite
+    path: Gera4(2)
+    classID: 212
+    script: {fileID: 0}
+    flags: 2
   m_SampleRate: 80
   m_WrapMode: 0
   m_Bounds:
@@ -182,15 +178,6 @@ AnimationClip:
       attribute: 3
       script: {fileID: 0}
       typeID: 4
-      customType: 0
-      isPPtrCurve: 0
-      isIntCurve: 0
-      isSerializeReferenceCurve: 0
-    - serializedVersion: 2
-      path: 3563741502
-      attribute: 2086281974
-      script: {fileID: 0}
-      typeID: 1
       customType: 0
       isPPtrCurve: 0
       isIntCurve: 0
@@ -258,6 +245,15 @@ AnimationClip:
       isPPtrCurve: 1
       isIntCurve: 0
       isSerializeReferenceCurve: 0
+    - serializedVersion: 2
+      path: 2610508123
+      attribute: 0
+      script: {fileID: 0}
+      typeID: 212
+      customType: 23
+      isPPtrCurve: 1
+      isIntCurve: 0
+      isSerializeReferenceCurve: 0
     pptrCurveMapping:
     - {fileID: -127222069670968614, guid: 1de589f4b34931b40a4348a8755b7f3d, type: 3}
     - {fileID: 7791145735890471271, guid: 1de589f4b34931b40a4348a8755b7f3d, type: 3}
@@ -283,6 +279,11 @@ AnimationClip:
     - {fileID: 4777145002104149586, guid: 62729604ef6bb3a46b3db8f808f500dd, type: 3}
     - {fileID: 21300000, guid: 47501295fb7165a4e928894085711b77, type: 3}
     - {fileID: 21300000, guid: ebfd10439ba7e8947830d18cad98fab1, type: 3}
+    - {fileID: -386401705748685234, guid: 8c6d4adfa9a298d42a0aca3f3de80a59, type: 3}
+    - {fileID: 2020658438, guid: 8c6d4adfa9a298d42a0aca3f3de80a59, type: 3}
+    - {fileID: -642087744, guid: 8c6d4adfa9a298d42a0aca3f3de80a59, type: 3}
+    - {fileID: -1868951077, guid: 8c6d4adfa9a298d42a0aca3f3de80a59, type: 3}
+    - {fileID: -386401705748685234, guid: 8c6d4adfa9a298d42a0aca3f3de80a59, type: 3}
   m_AnimationClipSettings:
     serializedVersion: 2
     m_AdditiveReferencePoseClip: {fileID: 0}
@@ -419,27 +420,6 @@ AnimationClip:
     attribute: m_LocalScale.z
     path: 
     classID: 4
-    script: {fileID: 0}
-    flags: 0
-  - serializedVersion: 2
-    curve:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 0
-        inSlope: Infinity
-        outSlope: Infinity
-        tangentMode: 103
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    attribute: m_IsActive
-    path: Player1(2)_0
-    classID: 1
     script: {fileID: 0}
     flags: 0
   m_EulerEditorCurves: []
