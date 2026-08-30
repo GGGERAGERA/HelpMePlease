@@ -32,6 +32,11 @@ public sealed class BunkerPanelManager : MonoBehaviour
 
     private void Awake()
     {
+        // MainMenu is artist-authored with the shared selection root active.
+        // Close it before the first cursor Update so IsAnyPanelOpen cannot
+        // disable the entire bunker interaction pipeline on scene load.
+        selectionPanelController?.Hide();
+
         if (stationUpgradePanelPrefab != null)
         {
             GameObject stationPanelObject = Instantiate(

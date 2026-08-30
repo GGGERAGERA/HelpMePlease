@@ -107,10 +107,14 @@ public class CharacterSpawner : MonoBehaviour
 
         player.tag = "Player";
 
-        ApplyCharacterStats(player, selectedCharacter);
+        PlayerLoadoutFactory.ApplyCharacterStats(player, selectedCharacter);
 
         WeaponData selectedWeapon = GetSelectedWeapon();
-        SetPrimaryWeapon(SpawnWeapon(player, selectedWeapon));
+        SetPrimaryWeapon(PlayerLoadoutFactory.SpawnWeapon(
+            player,
+            selectedWeapon,
+            CombatType,
+            weaponPointName));
         PlayerWeaponOrbitVisual.Ensure(player, PrimaryWeapon);
 
         return player;
@@ -148,83 +152,6 @@ public class CharacterSpawner : MonoBehaviour
         }
 
         return defaultWeapon;
-    }
-
-    private void ApplyCharacterStats(GameObject player, CharacterData characterData)
-    {
-        PlayerHealth health = player.GetComponent<PlayerHealth>();
-
-        if (health != null)
-        {
-            health.maxHealth = characterData.maxHealth;
-            health.currentHealth = characterData.maxHealth;
-        }
-
-        CharacterMovement2D movement = player.GetComponent<CharacterMovement2D>();
-
-        if (movement != null)
-            movement.speed = characterData.moveSpeed;
-    }
-
-    private BaseWeapon SpawnWeapon(GameObject player, WeaponData weaponData)
-    {
-        if (weaponData == null)
-        {
-            Debug.LogWarning("[CharacterSpawner] No selected/default weapon.");
-            return null;
-        }
-
-        if (weaponData.weaponPrefab == null)
-        {
-            Debug.LogWarning($"[CharacterSpawner] Weapon prefab is missing on {weaponData.name}.");
-            return null;
-        }
-
-        Transform weaponPoint = player.transform.Find(weaponPointName);
-
-        if (weaponPoint == null)
-            weaponPoint = player.transform;
-
-        GameObject weapon = Instantiate(
-            weaponData.weaponPrefab,
-            weaponPoint.position,
-            weaponPoint.rotation,
-            player.transform
-        );
-
-        weapon.transform.position = weaponPoint.position;
-        weapon.transform.rotation = weaponPoint.rotation;
-
-        return AssignWeaponData(weapon, weaponData);
-    }
-
-    private BaseWeapon AssignWeaponData(
-        GameObject weapon,
-        WeaponData weaponData)
-    {
-        BaseWeapon baseWeapon = weapon.GetComponent<BaseWeapon>();
-
-        if (baseWeapon != null)
-        {
-            baseWeapon.Initialize(weaponData);
-            baseWeapon.SetControlModeOverride(GetWeaponControlMode(CombatType));
-        }
-        else
-        {
-            Debug.LogWarning("CharacterSpawner: spawned weapon has no BaseWeapon component.");
-        }
-
-        return baseWeapon;
-    }
-
-    private static WeaponControlMode GetWeaponControlMode(
-        CharacterCombatType combatType)
-    {
-        return combatType switch
-        {
-            CharacterCombatType.AutoFire => WeaponControlMode.AutoAim,
-            _ => WeaponControlMode.AutoAim
-        };
     }
 
     private void SetPrimaryWeapon(BaseWeapon weapon)
@@ -283,7 +210,11 @@ public class CharacterSpawner : MonoBehaviour
         if (current != null)
             current.gameObject.SetActive(false);
 
-        replacement = SpawnWeapon(player, weaponData);
+        replacement = PlayerLoadoutFactory.SpawnWeapon(
+            player,
+            weaponData,
+            CombatType,
+            weaponPointName);
 
         if (replacement == null)
         {
@@ -312,7 +243,11 @@ public class CharacterSpawner : MonoBehaviour
         if (player == null || weaponData == null)
             return null;
 
-        BaseWeapon weapon = SpawnWeapon(player, weaponData);
+        BaseWeapon weapon = PlayerLoadoutFactory.SpawnWeapon(
+            player,
+            weaponData,
+            CombatType,
+            weaponPointName);
 
         if (weapon != null && modifierSource != null)
             weapon.CopyRuntimeUpgradeModifiersFrom(modifierSource);
@@ -327,7 +262,11 @@ public class CharacterSpawner : MonoBehaviour
         if (player == null || source == null || source.weaponData == null)
             return null;
 
-        BaseWeapon clone = SpawnWeapon(player, source.weaponData);
+        BaseWeapon clone = PlayerLoadoutFactory.SpawnWeapon(
+            player,
+            source.weaponData,
+            CombatType,
+            weaponPointName);
 
         if (clone == null)
             return null;
