@@ -88,15 +88,6 @@ public sealed class BunkerPanelManager : MonoBehaviour
         controller.ShowSelection(selectionSources?.Weapons, this);
     }
 
-    public void OpenShop()
-    {
-        if (!TryGetSelectionController(out SelectionPanelController controller))
-            return;
-
-        CloseAll(false);
-        controller.ShowShop();
-    }
-
     public void OpenMap()
     {
         CloseAll(false);

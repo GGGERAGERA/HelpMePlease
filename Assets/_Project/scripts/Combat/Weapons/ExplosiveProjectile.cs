@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RocketProjectile : MonoBehaviour, IWeaponProjectile,
+public class ExplosiveProjectile : MonoBehaviour, IWeaponProjectile,
     IAnomalySpeedProjectile, IAnomalyExternalVelocity
 {
     [Header("Explosion")]
@@ -103,7 +103,7 @@ public class RocketProjectile : MonoBehaviour, IWeaponProjectile,
 
         exploded = true;
         AudioService.Instance?.PlayAt(
-            AudioCueId.RocketExplosion,
+            AudioCueId.Explosion,
             transform.position
         );
         SpawnExplosionFx();

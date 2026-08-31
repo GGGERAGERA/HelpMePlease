@@ -22,10 +22,10 @@ public class ProjectileWeapon : BaseWeapon
     [SerializeField] private AudioCueId attackCue = AudioCueId.None;
 
     private IWeaponFireBehaviour fireBehaviour;
-    private bool usesRocketProjectile;
+    private bool usesExplosiveProjectile;
 
-    protected override WeaponShotKind ShotKind => usesRocketProjectile
-        ? WeaponShotKind.Rocket
+    protected override WeaponShotKind ShotKind => usesExplosiveProjectile
+        ? WeaponShotKind.Explosive
         : WeaponShotKind.Standard;
     public override WeaponUpgradeCapability UpgradeCapabilities =>
         fireBehaviourSource is ProjectileFireBehaviour projectileFire
@@ -79,10 +79,9 @@ public class ProjectileWeapon : BaseWeapon
         base.Awake();
 
         fireBehaviour = fireBehaviourSource as IWeaponFireBehaviour;
-        usesRocketProjectile =
+        usesExplosiveProjectile =
             fireBehaviourSource is ProjectileFireBehaviour projectileFire &&
-            projectileFire.UsesRocketProjectile;
-
+            projectileFire.UsesExplosiveProjectile;
         if (fireBehaviour == null)
             Debug.LogWarning("[Shoot] Fire behaviour source is missing or invalid.");
     }

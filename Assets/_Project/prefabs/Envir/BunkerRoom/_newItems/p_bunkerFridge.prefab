@@ -133,7 +133,6 @@ GameObject:
   m_Component:
   - component: {fileID: 7612828630395146426}
   - component: {fileID: 8527697646198691070}
-  - component: {fileID: 2644195677772859892}
   m_Layer: 0
   m_Name: p_bunkerFridge
   m_TagString: BunkerElements
@@ -172,21 +171,6 @@ SortingGroup:
   m_SortingOrder: 0
   m_SortAtRoot: 1
   m_Sort3DAs2D: 0
---- !u!114 &2644195677772859892
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2245978911744621776}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 659255100eb4abf49b55406b066ad60e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerContent
-  data: {fileID: 0}
-  unlockedRoot: {fileID: 3772842274496266288}
-  lockedRoot: {fileID: 563909822418435844}
 --- !u!1 &3772842274496266288
 GameObject:
   m_ObjectHideFlags: 0
@@ -202,7 +186,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &4980535203073091021
 Transform:
   m_ObjectHideFlags: 0

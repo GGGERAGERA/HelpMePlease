@@ -31,9 +31,6 @@ public static class AICommentGenerator
         if (weaponName.Contains("laser") || weaponName.Contains("лазер"))
             return RandomFrom(laser);
 
-        if (weaponName.Contains("rocket") || weaponName.Contains("ракет"))
-            return RandomFrom(rocketLauncher);
-
         return RandomFrom(general);
     }
 
@@ -107,13 +104,6 @@ public static class AICommentGenerator
         "Субъект предпочитает испарять проблемы вместо их решения.",
         "Использование лазера подтверждает отсутствие терпения.",
         "Лучевая технология применена без разрешения отдела безопасности. Отдел безопасности испарён."
-    };
-
-    private static readonly string[] rocketLauncher =
-    {
-        "Зафиксирована тяга субъекта решать проблемы взрывом.",
-        "Анализ показал: если всё взрывается, субъекта это устраивает.",
-        "Ракетница выбрана. Точность признана необязательной."
     };
 
     private static readonly string[] manyLevels =

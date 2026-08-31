@@ -4647,7 +4647,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SelectionPanelController
   root: {fileID: 322264725}
   sharedSelectionWindow: {fileID: 1952641333}
-  shopPanel: {fileID: 0}
   sceneSelectPanel: {fileID: 0}
 --- !u!1001 &322295868
 PrefabInstance:
@@ -7885,7 +7884,6 @@ GameObject:
   m_Component:
   - component: {fileID: 706591845}
   - component: {fileID: 706591844}
-  - component: {fileID: 706591843}
   - component: {fileID: 910000000000000200}
   m_Layer: 0
   m_Name: BunkerContext
@@ -7894,18 +7892,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &706591843
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 706591842}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 625aa384a142a9747ae9f778e85cb9fc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerContentRegistry
 --- !u!114 &706591844
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7921,9 +7907,7 @@ MonoBehaviour:
   <Panels>k__BackingField: {fileID: 733148234}
   <Notifications>k__BackingField: {fileID: 75423602}
   <Events>k__BackingField: {fileID: 735746298}
-  <Shop>k__BackingField: {fileID: 1274696265}
   <RunStarter>k__BackingField: {fileID: 733148236}
-  <ContentRegistry>k__BackingField: {fileID: 706591843}
 --- !u!4 &706591845
 Transform:
   m_ObjectHideFlags: 0
@@ -53378,7 +53362,7 @@ PrefabInstance:
     - target: {fileID: 971571797205999333, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
       propertyPath: legacyStationsRoot
       value: 
-      objectReference: {fileID: 2300000501}
+      objectReference: {fileID: 0}
     - target: {fileID: 1675017784238013216, guid: d39a4cf712c1ed942a93966da33bebb4, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -53621,7 +53605,6 @@ Transform:
   m_Children:
   - {fileID: 1873553520}
   - {fileID: 1914885783}
-  - {fileID: 1414305296}
   - {fileID: 383357135}
   - {fileID: 1580761371692661204}
   - {fileID: 583375175}
@@ -259854,50 +259837,6 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
---- !u!1 &1274696264
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1274696266}
-  - component: {fileID: 1274696265}
-  m_Layer: 0
-  m_Name: BunkerShopService
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1274696265
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1274696264}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c5b0b6cb42b7f8343b716cae649aa6c1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerShopService
---- !u!4 &1274696266
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1274696264}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 8.9426, y: -8.01818, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1300431260
 GameObject:
   m_ObjectHideFlags: 0
@@ -262616,76 +262555,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 225526f112a8181418b68979c36fe5c8, type: 3}
---- !u!1001 &1414305295
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1001258581}
-    m_Modifications:
-    - target: {fileID: 895848283552994882, guid: ebee71303b9118e429ad2ba8ec0c7d03, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 42.8
-      objectReference: {fileID: 0}
-    - target: {fileID: 895848283552994882, guid: ebee71303b9118e429ad2ba8ec0c7d03, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -19.4
-      objectReference: {fileID: 0}
-    - target: {fileID: 895848283552994882, guid: ebee71303b9118e429ad2ba8ec0c7d03, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 895848283552994882, guid: ebee71303b9118e429ad2ba8ec0c7d03, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 895848283552994882, guid: ebee71303b9118e429ad2ba8ec0c7d03, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 895848283552994882, guid: ebee71303b9118e429ad2ba8ec0c7d03, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 895848283552994882, guid: ebee71303b9118e429ad2ba8ec0c7d03, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 895848283552994882, guid: ebee71303b9118e429ad2ba8ec0c7d03, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 895848283552994882, guid: ebee71303b9118e429ad2ba8ec0c7d03, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 895848283552994882, guid: ebee71303b9118e429ad2ba8ec0c7d03, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 895848283552994882, guid: ebee71303b9118e429ad2ba8ec0c7d03, type: 3}
-      propertyPath: m_ConstrainProportionsScale
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4737281608205474900, guid: ebee71303b9118e429ad2ba8ec0c7d03, type: 3}
-      propertyPath: m_Name
-      value: p_bunkerShop1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6096585990859220859, guid: ebee71303b9118e429ad2ba8ec0c7d03, type: 3}
-      propertyPath: panelManager
-      value: 
-      objectReference: {fileID: 733148234}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: ebee71303b9118e429ad2ba8ec0c7d03, type: 3}
---- !u!4 &1414305296 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 895848283552994882, guid: ebee71303b9118e429ad2ba8ec0c7d03, type: 3}
-  m_PrefabInstance: {fileID: 1414305295}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1416823431
 GameObject:
   m_ObjectHideFlags: 0
@@ -268890,11 +268759,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 7672746889591957895, guid: b972bff1d6084994dab3eac0a508d314, type: 3}
   m_PrefabInstance: {fileID: 6370523255212067373}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &2300000501 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4737281608205474900, guid: ebee71303b9118e429ad2ba8ec0c7d03, type: 3}
-  m_PrefabInstance: {fileID: 1414305295}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &2300020001
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -272601,10 +272465,6 @@ PrefabInstance:
       propertyPath: panelManager
       value: 
       objectReference: {fileID: 733148234}
-    - target: {fileID: 8968378582121657692, guid: 3df0912ad634fc24185f74173543363f, type: 3}
-      propertyPath: data
-      value: 
-      objectReference: {fileID: 11400000, guid: 7d1a5cbf1caa7f542a257728ba0619e1, type: 2}
     - target: {fileID: 9011308876428421539, guid: 3df0912ad634fc24185f74173543363f, type: 3}
       propertyPath: targetRoot
       value: 
@@ -272962,7 +272822,6 @@ SceneRoots:
   - {fileID: 1750742712}
   - {fileID: 181013841}
   - {fileID: 733148235}
-  - {fileID: 1274696266}
   - {fileID: 2079708704}
   - {fileID: 738063615}
   - {fileID: 706591845}

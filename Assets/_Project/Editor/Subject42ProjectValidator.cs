@@ -420,16 +420,10 @@ public static class Subject42ProjectValidator
                     "Notifications",
                     report);
                 RequireReference(context.Events, context, "Events", report);
-                RequireReference(context.Shop, context, "Shop", report);
                 RequireReference(
                     context.RunStarter,
                     context,
                     "RunStarter",
-                    report);
-                RequireReference(
-                    context.ContentRegistry,
-                    context,
-                    "ContentRegistry",
                     report);
             }
 
@@ -630,10 +624,6 @@ public static class Subject42ProjectValidator
             true,
             report);
         ValidateUniqueIds<AnomalyStabilizerData>(
-            data => data.Id,
-            true,
-            report);
-        ValidateUniqueIds<BunkerContentData>(
             data => data.Id,
             true,
             report);

@@ -7,9 +7,7 @@ public sealed class BunkerContext : MonoBehaviour
     [field: SerializeField] public BunkerPanelManager Panels { get; private set; }
     [field: SerializeField] public BunkerNotificationManager Notifications { get; private set; }
     [field: SerializeField] public BunkerEventManager Events { get; private set; }
-    [field: SerializeField] public BunkerShopService Shop { get; private set; }
     [field: SerializeField] public BunkerRunStarter RunStarter { get; private set; }
-    [field: SerializeField] public BunkerContentRegistry ContentRegistry { get; private set; }
     public BunkerStationProgressionService StationProgression { get; private set; }
 
     private void Awake()

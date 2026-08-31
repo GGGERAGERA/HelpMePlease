@@ -257,7 +257,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2403809789572795953}
   - component: {fileID: 1136979527488050808}
-  - component: {fileID: 3836956224529393062}
   m_Layer: 0
   m_Name: p_bunkerSofa1
   m_TagString: BunkerElements
@@ -296,21 +295,6 @@ SortingGroup:
   m_SortingOrder: 0
   m_SortAtRoot: 1
   m_Sort3DAs2D: 0
---- !u!114 &3836956224529393062
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3551788592279379434}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 659255100eb4abf49b55406b066ad60e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerContent
-  itemId: Sofa
-  unlockedRoot: {fileID: 8630878595028326611}
-  lockedRoot: {fileID: 0}
 --- !u!1 &3766264833215662822
 GameObject:
   m_ObjectHideFlags: 0

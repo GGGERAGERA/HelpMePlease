@@ -3,6 +3,7 @@ public enum BunkerStationType
     None = 0,
     CharacterSelection = 1,
     WeaponSelection = 2,
+    [System.Obsolete("Serialized ID reserved; shop removed.")]
     Shop = 3,
     Map = 4,
     Upgrade = 5,

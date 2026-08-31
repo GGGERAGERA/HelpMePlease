@@ -268,8 +268,8 @@ public sealed class WorldRuleController : MonoBehaviour
                 activeRule.DarknessLaserRevealCooldown;
         }
 
-        float multiplier = shotKind == WeaponShotKind.Rocket
-            ? activeRule.DarknessRocketRevealMultiplier
+        float multiplier = shotKind == WeaponShotKind.Explosive
+            ? activeRule.DarknessExplosiveRevealMultiplier
             : 1f;
         worldRuleVisual?.RevealDarkness(origin, multiplier);
     }

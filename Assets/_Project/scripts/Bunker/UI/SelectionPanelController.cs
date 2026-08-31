@@ -6,7 +6,6 @@ public sealed class SelectionPanelController : MonoBehaviour
     {
         None,
         Selection,
-        Shop,
         Scenes
     }
 
@@ -14,7 +13,6 @@ public sealed class SelectionPanelController : MonoBehaviour
 
     [Header("Panels")]
     [SerializeField] private BunkerSelectionWindow sharedSelectionWindow;
-    [SerializeField] private GameObject shopPanel;
     [SerializeField] private GameObject sceneSelectPanel;
 
     public bool IsOpen => root != null && root.activeInHierarchy;
@@ -36,7 +34,6 @@ public sealed class SelectionPanelController : MonoBehaviour
         sharedSelectionWindow.Open(source, panelManager);
     }
 
-    public void ShowShop() => Show(PanelType.Shop);
     public void ShowScenes() => Show(PanelType.Scenes);
 
     public void Hide()
@@ -73,7 +70,6 @@ public sealed class SelectionPanelController : MonoBehaviour
             sharedSelectionWindow?.CloseView();
         else if (sharedSelectionWindow != null)
             sharedSelectionWindow.gameObject.SetActive(true);
-        SetActive(shopPanel, activePanel == PanelType.Shop);
         SetActive(sceneSelectPanel, activePanel == PanelType.Scenes);
     }
 
@@ -81,7 +77,6 @@ public sealed class SelectionPanelController : MonoBehaviour
     {
         return panelType switch
         {
-            PanelType.Shop => shopPanel,
             PanelType.Scenes => sceneSelectPanel,
             _ => null
         };

@@ -152,8 +152,8 @@ public sealed class WorldRuleData : ScriptableObject
     [SerializeField, Range(0.01f, 1f)] private float darknessShotRevealDuration = 0.12f;
     [Tooltip("Intensity of the short shot reveal light.")]
     [SerializeField, Min(0f)] private float darknessShotRevealIntensity = 1.25f;
-    [Tooltip("Radius and intensity multiplier used by rocket shots.")]
-    [SerializeField, Min(1f)] private float darknessRocketRevealMultiplier = 1.3f;
+    [Tooltip("Radius and intensity multiplier used by explosive shots.")]
+    [SerializeField, Min(1f)] private float darknessExplosiveRevealMultiplier = 1.3f;
     [Tooltip("Minimum interval between reveal flashes caused by a laser.")]
     [SerializeField, Min(0.01f)] private float darknessLaserRevealCooldown = 0.16f;
 
@@ -262,8 +262,8 @@ public sealed class WorldRuleData : ScriptableObject
         Mathf.Clamp(darknessShotRevealDuration, 0.01f, 1f);
     public float DarknessShotRevealIntensity =>
         Mathf.Max(0f, darknessShotRevealIntensity);
-    public float DarknessRocketRevealMultiplier =>
-        Mathf.Max(1f, darknessRocketRevealMultiplier);
+    public float DarknessExplosiveRevealMultiplier =>
+        Mathf.Max(1f, darknessExplosiveRevealMultiplier);
     public float DarknessLaserRevealCooldown =>
         Mathf.Max(0.01f, darknessLaserRevealCooldown);
     public string DisplayName => displayName;

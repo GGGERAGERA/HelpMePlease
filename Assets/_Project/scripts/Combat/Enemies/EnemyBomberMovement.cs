@@ -358,7 +358,7 @@ internal sealed class BomberExplosionSequence : MonoBehaviour
         }
 
         AudioService.Instance?.PlayAt(
-            AudioCueId.RocketExplosion,
+            AudioCueId.Explosion,
             explosionPosition
         );
 
