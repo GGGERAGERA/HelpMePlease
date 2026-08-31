@@ -16,7 +16,8 @@ public sealed class AnomalyRunModifiers
         if (stabilizer == null)
             return modifiers;
 
-        float value = Mathf.Max(0f, stabilizer.Value);
+        float value = Mathf.Max(0f,
+            AnomalyMetaProgressionManager.EnsureExists().GetEffectValue(stabilizer));
 
         switch (stabilizer.EffectType)
         {

@@ -23,6 +23,7 @@ public sealed class MetaProgressionManager : MonoBehaviour
     private const string XpGainLevelKey = "META_XP_GAIN_LEVEL";
     private const string GoldGainLevelKey = "META_GOLD_GAIN_LEVEL";
     private const string PickupRadiusLevelKey = "META_PICKUP_RADIUS_LEVEL";
+    private const string InvestmentKeyPrefix = "META_UPGRADE_INVESTED_";
 
     public event Action ProgressChanged;
 
@@ -35,6 +36,13 @@ public sealed class MetaProgressionManager : MonoBehaviour
 
     public int MaxLevel => MaxUpgradeLevel;
 
+    public int GetCurrentLevelCap()
+    {
+        return BunkerItemProgressionRules.GetLevelCap(
+            BunkerStationId.Upgrades,
+            MaxUpgradeLevel);
+    }
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -45,7 +53,7 @@ public sealed class MetaProgressionManager : MonoBehaviour
 
         Instance = this;
 
-        // Ìåíåäæåð îáÿçàí áûòü êîðíåâûì îáúåêòîì.
+        // ÐœÐµÐ½ÐµÐ´Ð¶ÐµÑ€ Ð¾Ð±ÑÐ·Ð°Ð½ Ð±Ñ‹Ñ‚ÑŒ ÐºÐ¾Ñ€Ð½ÐµÐ²Ñ‹Ð¼ Ð¾Ð±ÑŠÐµÐºÑ‚Ð¾Ð¼.
         if (transform.parent != null)
             transform.SetParent(null);
 
@@ -80,6 +88,7 @@ public sealed class MetaProgressionManager : MonoBehaviour
         XpGainLevel = PlayerPrefs.GetInt(XpGainLevelKey, 0);
         GoldGainLevel = PlayerPrefs.GetInt(GoldGainLevelKey, 0);
         PickupRadiusLevel = PlayerPrefs.GetInt(PickupRadiusLevelKey, 0);
+        SanitizeStoredInvestments();
     }
 
     public int GetLevel(MetaUpgradeType type)
@@ -99,6 +108,61 @@ public sealed class MetaProgressionManager : MonoBehaviour
     public int GetUpgradeCost(MetaUpgradeType type)
     {
         return GetUpgradeCostByLevel(GetLevel(type));
+    }
+
+    public int GetInvestedGold(MetaUpgradeType type)
+    {
+        int level = GetLevel(type);
+        if (level >= MaxUpgradeLevel)
+            return 0;
+        int cost = GetUpgradeCostByLevel(level);
+        return cost > 0
+            ? Mathf.Clamp(PlayerPrefs.GetInt(GetInvestmentKey(type), 0), 0, cost - 1)
+            : 0;
+    }
+
+    public bool CanInvest(MetaUpgradeType type)
+    {
+        int level = GetLevel(type);
+        return level < MaxUpgradeLevel && level < GetCurrentLevelCap() &&
+            GetUpgradeCostByLevel(level) > GetInvestedGold(type) &&
+            CurrencyManager.Instance != null && CurrencyManager.Instance.TotalGold > 0;
+    }
+
+    public bool TryInvestGold(
+        MetaUpgradeType type,
+        int requestedAmount,
+        out int actuallyInvested)
+    {
+        actuallyInvested = 0;
+        if (requestedAmount <= 0 || !CanInvest(type))
+            return false;
+
+        int level = GetLevel(type);
+        int cost = GetUpgradeCostByLevel(level);
+        int invested = GetInvestedGold(type);
+        int amount = Mathf.Min(
+            requestedAmount,
+            cost - invested,
+            CurrencyManager.Instance.TotalGold);
+        if (amount <= 0 || !CurrencyManager.Instance.SpendGold(amount))
+            return false;
+
+        actuallyInvested = amount;
+        invested += amount;
+        if (invested < cost)
+        {
+            PlayerPrefs.SetInt(GetInvestmentKey(type), invested);
+            PlayerPrefs.Save();
+            ProgressChanged?.Invoke();
+            return true;
+        }
+
+        SetLevel(type, level + 1);
+        PlayerPrefs.SetInt(GetInvestmentKey(type), 0);
+        PlayerPrefs.Save();
+        ProgressChanged?.Invoke();
+        return true;
     }
 
     public int GetUpgradeCostByLevel(int currentLevel)
@@ -122,29 +186,19 @@ public sealed class MetaProgressionManager : MonoBehaviour
         if (currentLevel >= MaxUpgradeLevel)
             return false;
 
-        CurrencyManager currency = CurrencyManager.Instance;
-
-        if (currency == null)
-        {
-            Debug.LogError("[MetaProgressionManager] CurrencyManager is missing.");
-            return false;
-        }
-
-        int cost = GetUpgradeCostByLevel(currentLevel);
-
-        if (!currency.SpendGold(cost))
+        if (currentLevel >= GetCurrentLevelCap())
             return false;
 
-        SetLevel(type, currentLevel + 1);
-        PlayerPrefs.Save();
+        int remaining = GetUpgradeCostByLevel(currentLevel) - GetInvestedGold(type);
+        if (CurrencyManager.Instance == null || CurrencyManager.Instance.TotalGold < remaining ||
+            !TryInvestGold(type, remaining, out _))
+            return false;
         Debug.Log(
     $"[MetaProgressionManager] Saved: " +
     $"HP={PlayerPrefs.GetInt("META_HP_LEVEL")}, " +
     $"DMG={PlayerPrefs.GetInt("META_DAMAGE_LEVEL")}, " +
     $"SPD={PlayerPrefs.GetInt("META_MOVE_SPEED_LEVEL")}"
 );
-
-        ProgressChanged?.Invoke();
 
         Debug.Log(
             $"[MetaProgressionManager] Purchased {type}: " +
@@ -190,5 +244,30 @@ public sealed class MetaProgressionManager : MonoBehaviour
                 PlayerPrefs.SetInt(PickupRadiusLevelKey, level);
                 break;
         }
+    }
+
+    private void SanitizeStoredInvestments()
+    {
+        bool changed = false;
+        foreach (MetaUpgradeType type in Enum.GetValues(typeof(MetaUpgradeType)))
+        {
+            string key = GetInvestmentKey(type);
+            int stored = PlayerPrefs.GetInt(key, 0);
+            int level = GetLevel(type);
+            int cost = GetUpgradeCostByLevel(level);
+            int safe = level >= MaxUpgradeLevel || cost <= 0
+                ? 0 : Mathf.Clamp(stored, 0, cost - 1);
+            if (stored == safe)
+                continue;
+            PlayerPrefs.SetInt(key, safe);
+            changed = true;
+        }
+        if (changed)
+            PlayerPrefs.Save();
+    }
+
+    private static string GetInvestmentKey(MetaUpgradeType type)
+    {
+        return InvestmentKeyPrefix + type;
     }
 }

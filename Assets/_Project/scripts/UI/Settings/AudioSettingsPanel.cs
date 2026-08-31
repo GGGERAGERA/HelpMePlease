@@ -7,6 +7,8 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public sealed class AudioSettingsPanel : MonoBehaviour
 {
+    public bool IsOpen => gameObject.activeInHierarchy;
+
     [Header("Sliders")]
     [SerializeField] private Slider masterSlider;
     [SerializeField] private Slider musicSlider;
