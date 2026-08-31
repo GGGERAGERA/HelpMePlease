@@ -9,7 +9,6 @@ public sealed class BunkerPanelManager : MonoBehaviour
     [SerializeField] private GameObject mapPanel;
 
     [Header("Panel UI")]
-    [SerializeField] private BunkerShopUI shopUI;
     [SerializeField] private AudioSettingsPanel audioSettingsPanel;
 
     [Header("Prefab-Driven Station Panels")]
@@ -96,7 +95,6 @@ public sealed class BunkerPanelManager : MonoBehaviour
 
         CloseAll(false);
         controller.ShowShop();
-        shopUI?.Refresh();
     }
 
     public void OpenMap()
