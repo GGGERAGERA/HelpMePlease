@@ -4,7 +4,8 @@ using UnityEngine.EventSystems;
 public enum WeaponShotKind
 {
     Standard = 0,
-    Rocket = 1,
+    [System.Obsolete("Serialized ID reserved; rocket weapon removed.")]
+    Explosive = 1,
     Laser = 2
 }
 

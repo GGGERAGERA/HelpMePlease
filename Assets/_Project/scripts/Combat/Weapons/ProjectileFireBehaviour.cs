@@ -15,9 +15,9 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
     public Vector3 DebugLastFinalScale { get; private set; } = Vector3.one;
 #endif
 
-    public bool UsesRocketProjectile =>
+    public bool UsesExplosiveProjectile =>
         projectilePrefab != null &&
-        projectilePrefab.GetComponent<RocketProjectile>() != null;
+        projectilePrefab.GetComponent<ExplosiveProjectile>() != null;
 
     public WeaponUpgradeCapability UpgradeCapabilities =>
         projectilePrefab != null && projectilePrefab.GetComponent<Bullet>() != null

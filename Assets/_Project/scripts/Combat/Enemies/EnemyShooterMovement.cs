@@ -39,6 +39,7 @@ public class EnemyShooterMovement : EnemyMovement
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        InitializeCrowdSteering();
     }
 
     private void Start()
@@ -112,6 +113,9 @@ public class EnemyShooterMovement : EnemyMovement
                  sqrDistance < minimumDistance * minimumDistance)
             moveDirection = -directionToPlayer;
 
+        moveDirection = ApplyCrowdSteering(moveDirection,
+            player.position, Time.fixedDeltaTime);
+
         rb.MovePosition(
             rb.position +
             (moveDirection *
@@ -184,6 +188,7 @@ public class EnemyShooterMovement : EnemyMovement
 
     private void OnDisable()
     {
+        ReleaseCrowdSteering();
         ClearAnomalyExternalVelocities();
     }
 

@@ -5,21 +5,16 @@ public sealed class BunkerPanelManager : MonoBehaviour
 {
     [Header("Navigation")]
     [SerializeField] private SelectionPanelController selectionPanelController;
+    [SerializeField] private BunkerSelectionSourceHub selectionSources;
     [SerializeField] private GameObject mapPanel;
 
     [Header("Panel UI")]
-    [SerializeField] private BunkerShopUI shopUI;
-    [SerializeField] private MetaUpgradeShopUI metaUpgradeShopUI;
-    [SerializeField] private Button upgradeBackButton;
+    [SerializeField] private AudioSettingsPanel audioSettingsPanel;
 
     [Header("Prefab-Driven Station Panels")]
     [SerializeField] private GameObject
         stationUpgradePanelPrefab;
-    [SerializeField] private GameObject
-        anomalyStabilizerPanelPrefab;
-
     private BunkerStationUpgradePanel stationUpgradePanel;
-    private BunkerAnomalyStabilizerPanel anomalyStabilizerPanel;
 
     [Header("Run")]
     [SerializeField] private BunkerRunStarter runStarter;
@@ -28,7 +23,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
         (selectionPanelController != null && selectionPanelController.IsOpen) ||
         (mapPanel != null && mapPanel.activeInHierarchy) ||
         (stationUpgradePanel != null && stationUpgradePanel.IsVisible) ||
-        (anomalyStabilizerPanel != null && anomalyStabilizerPanel.IsVisible);
+        (audioSettingsPanel != null && audioSettingsPanel.IsOpen);
 
     private void Awake()
     {
@@ -60,46 +55,18 @@ public sealed class BunkerPanelManager : MonoBehaviour
                 this);
         }
 
-        if (anomalyStabilizerPanelPrefab != null)
-        {
-            GameObject stabilizerPanelObject = Instantiate(
-                anomalyStabilizerPanelPrefab,
-                transform);
-            stabilizerPanelObject.name = anomalyStabilizerPanelPrefab.name;
-            anomalyStabilizerPanel = stabilizerPanelObject
-                .GetComponent<BunkerAnomalyStabilizerPanel>();
-            if (anomalyStabilizerPanel != null)
-            {
-                anomalyStabilizerPanel.Configure(this);
-            }
-            else
-            {
-                Debug.LogError(
-                    "[BunkerPanelManager] AnomalyStabilizerPanel prefab has " +
-                    "no BunkerAnomalyStabilizerPanel component.",
-                    stabilizerPanelObject);
-            }
-        }
-        else
-        {
-            Debug.LogError(
-                "[BunkerPanelManager] AnomalyStabilizerPanel prefab is not assigned.",
-                this);
-        }
-
-        if (upgradeBackButton != null)
-            upgradeBackButton.onClick.AddListener(CloseAll);
-    }
-
-    private void OnDestroy()
-    {
-        if (upgradeBackButton != null)
-            upgradeBackButton.onClick.RemoveListener(CloseAll);
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape) && IsAnyPanelOpen)
+        if (!Input.GetKeyDown(KeyCode.Escape))
+            return;
+        if (audioSettingsPanel != null && audioSettingsPanel.IsOpen)
+        {
+            audioSettingsPanel.Close();
+            return;
+        }
+        if (IsAnyPanelOpen)
             CloseAll();
     }
 
@@ -109,7 +76,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
             return;
 
         CloseAll(false);
-        controller.ShowCharacters();
+        controller.ShowSelection(selectionSources?.Characters, this);
     }
 
     public void OpenWeaponSelection()
@@ -118,17 +85,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
             return;
 
         CloseAll(false);
-        controller.ShowWeapons();
-    }
-
-    public void OpenShop()
-    {
-        if (!TryGetSelectionController(out SelectionPanelController controller))
-            return;
-
-        CloseAll(false);
-        controller.ShowShop();
-        shopUI?.Refresh();
+        controller.ShowSelection(selectionSources?.Weapons, this);
     }
 
     public void OpenMap()
@@ -150,14 +107,16 @@ public sealed class BunkerPanelManager : MonoBehaviour
             return;
 
         CloseAll(false);
-        controller.ShowUpgrade();
-        metaUpgradeShopUI?.Refresh();
+        controller.ShowSelection(selectionSources?.Upgrades, this);
     }
 
     public void OpenAnomalyStabilizers()
     {
+        if (!TryGetSelectionController(out SelectionPanelController controller))
+            return;
+
         CloseAll(false);
-        anomalyStabilizerPanel?.Show();
+        controller.ShowSelection(selectionSources?.Anomalies, this);
     }
 
     public void CloseAll()
@@ -173,16 +132,27 @@ public sealed class BunkerPanelManager : MonoBehaviour
             mapPanel.SetActive(false);
 
         stationUpgradePanel?.Hide();
-        anomalyStabilizerPanel?.Hide();
+        if (audioSettingsPanel != null && audioSettingsPanel.IsOpen)
+            audioSettingsPanel.Close();
 
     }
 
     public void ShowStationProgression(BunkerStationId stationId)
     {
-        if (stationId == BunkerStationId.Character)
+        if (selectionPanelController != null && selectionPanelController.IsOpen)
             return;
 
         stationUpgradePanel?.Show(stationId);
+    }
+
+    public void OpenSettings()
+    {
+        if (audioSettingsPanel == null)
+        {
+            Debug.LogWarning("[BunkerPanelManager] AudioSettingsPanel is not assigned.", this);
+            return;
+        }
+        audioSettingsPanel.Open();
     }
 
     public void StartRun(Transform transitionTarget)
@@ -213,8 +183,9 @@ public sealed class BunkerPanelManager : MonoBehaviour
         if (selectionPanelController == null)
             Debug.LogWarning("[BunkerPanelManager] SelectionPanelController is not assigned.", this);
 
-        if (upgradeBackButton == null)
-            Debug.LogWarning("[BunkerPanelManager] UpgradeBackButton is not assigned.", this);
+        if (selectionSources == null)
+            Debug.LogWarning("[BunkerPanelManager] Selection sources are not assigned.", this);
+
     }
 #endif
 }

@@ -6,7 +6,8 @@ public enum TacticalMapMarkerKind
     Event,
     Objective,
     Target,
-    Corridor
+    Corridor,
+    Breakable
 }
 
 public readonly struct TacticalMapMarkerDescriptor

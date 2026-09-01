@@ -11,8 +11,9 @@ public enum AudioCueId
 
     PistolShot = 20,
     LaserShot = 21,
+    [System.Obsolete("Serialized ID reserved; rocket launch removed.")]
     RocketLaunch = 22,
-    RocketExplosion = 23,
+    Explosion = 23,
 
     PlayerHurt = 30,
     PlayerDeath = 31,

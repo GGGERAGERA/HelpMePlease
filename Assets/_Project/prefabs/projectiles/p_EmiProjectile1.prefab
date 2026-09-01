@@ -44,7 +44,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cdacda9f9ec7fc4bb1c8b6c00975d5f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RocketProjectile
+  m_EditorClassIdentifier: Assembly-CSharp::ExplosiveProjectile
   explosionRadius: 2.2
   enemyMask:
     serializedVersion: 2

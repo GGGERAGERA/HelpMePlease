@@ -600,11 +600,11 @@ public sealed class StasisZone : LocalAnomalyZone
         if (bullet != null)
             return bullet;
 
-        RocketProjectile rocket =
-            other.GetComponentInParent<RocketProjectile>();
+        ExplosiveProjectile explosive =
+            other.GetComponentInParent<ExplosiveProjectile>();
 
-        if (rocket != null)
-            return rocket;
+        if (explosive != null)
+            return explosive;
 
         return other.GetComponentInParent<EnemyProjectile>();
     }

@@ -18,3 +18,11 @@ MonoBehaviour:
   requiredStationLevel: 2
   effectType: 3
   value: 0.65
+  maxMetaLevel: 3
+  metaUpgradeCosts:
+  - 100
+  - 250
+  metaEffectValues:
+  - 0.65
+  - 0.65
+  - 0.65

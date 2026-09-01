@@ -10,6 +10,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
     private const int SpecialLineSamples = 20;
     private const float MinimumCoverage = 0.85f;
     private const float MaximumCoverage = 0.95f;
+    private const int BreakableOverlapBufferSize = 16;
 
     private readonly struct SiteRegion
     {
@@ -59,6 +60,27 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
     private WorldEventSpawner eventSpawner;
     private LevelAnomalyController anomalyController;
     private RunFlowController runFlow;
+    private Vector2[] breakableNormalSitePositions;
+    private Vector2 breakableSpecialSitePosition;
+    private Vector2 breakableExitPosition;
+    private bool hasBreakableLayout;
+    private readonly List<WorldBreakable> spawnedBreakables = new();
+    private readonly Collider2D[] breakableOverlapBuffer =
+        new Collider2D[BreakableOverlapBufferSize];
+
+    public static ProductionExplorationSectorController ActiveInstance
+        { get; private set; }
+
+    private void OnEnable()
+    {
+        ActiveInstance = this;
+    }
+
+    private void OnDisable()
+    {
+        if (ActiveInstance == this)
+            ActiveInstance = null;
+    }
 
     public bool Initialize(
         ExplorationSectorConfig explorationConfig,
@@ -164,6 +186,17 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             exitObject.AddComponent<ProductionSectorExit>();
         sectorExit.Initialize(exitPosition, config.ExitRadius, runFlow);
 
+        breakableNormalSitePositions = normalPositions;
+        breakableSpecialSitePosition = specialPosition;
+        breakableExitPosition = exitPosition;
+        hasBreakableLayout = true;
+
+        int breakableCount = SpawnWorldBreakables(
+            normalPositions,
+            specialPosition,
+            exitPosition
+        );
+
         RunThreatController threatController =
             gameObject.GetComponent<RunThreatController>();
 
@@ -175,10 +208,340 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         Debug.Log(
             $"[ExplorationSector] Sector ready: 3 Normal, " +
             $"1 Special ({specialPower}), {layoutDiagnostics.Coverage:P0} " +
-            $"map coverage, Exit at {exitPosition}."
+            $"map coverage, {breakableCount} breakables, " +
+            $"Exit at {exitPosition}."
         );
         return true;
     }
+
+    private int SpawnWorldBreakables(
+        Vector2[] normalSitePositions,
+        Vector2 specialSitePosition,
+        Vector2 exitPosition)
+    {
+        WorldBreakable prefab = config.BreakablePrefab;
+        if (prefab == null)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning(
+                "[Breakables] requested=0 spawned=0 rejected=0 " +
+                "reason=missing-prefab",
+                this
+            );
+#endif
+            return 0;
+        }
+
+        ClearSpawnedBreakables();
+
+        Bounds bounds = gameplayArea.PlayableArea.bounds;
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        Vector2 playerPosition = playerObject != null
+            ? playerObject.transform.position
+            : bounds.center;
+        int targetCount = Random.Range(
+            config.BreakableMinCount,
+            config.BreakableMaxCount + 1
+        );
+        List<Vector2> placed = new(targetCount);
+        int failedAnchors = 0;
+        int rejected = 0;
+        int fallbackSpawned = 0;
+
+        while (placed.Count < targetCount &&
+            failedAnchors < config.BreakablePlacementAttempts)
+        {
+            Vector2 anchor = new(
+                Random.Range(bounds.min.x, bounds.max.x),
+                Random.Range(bounds.min.y, bounds.max.y)
+            );
+
+            if (!IsBreakablePositionValid(
+                    anchor,
+                    playerPosition,
+                    normalSitePositions,
+                    specialSitePosition,
+                    exitPosition,
+                    placed,
+                    config.BreakablePlayerClearance,
+                    1f))
+            {
+                failedAnchors++;
+                rejected++;
+                continue;
+            }
+
+            int patternCount = Random.value < config.BreakableClusterChance
+                ? Random.Range(2, 4)
+                : 1;
+            SpawnBreakable(prefab, anchor);
+            placed.Add(anchor);
+
+            for (int i = 1; i < patternCount && placed.Count < targetCount; i++)
+            {
+                Vector2 clusterPosition = anchor +
+                    Random.insideUnitCircle.normalized *
+                    Random.Range(
+                        config.BreakableSpacing,
+                        config.BreakableSpacing * 1.35f
+                    );
+
+                if (!IsBreakablePositionValid(
+                        clusterPosition,
+                        playerPosition,
+                        normalSitePositions,
+                        specialSitePosition,
+                        exitPosition,
+                        placed,
+                        config.BreakablePlayerClearance,
+                        1f))
+                {
+                    rejected++;
+                    continue;
+                }
+
+                SpawnBreakable(prefab, clusterPosition);
+                placed.Add(clusterPosition);
+            }
+
+            failedAnchors = 0;
+        }
+
+        int fallbackAttempts = 0;
+        while (placed.Count < targetCount &&
+            fallbackAttempts < config.BreakablePlacementAttempts)
+        {
+            fallbackAttempts++;
+            Vector2 candidate = new(
+                Random.Range(bounds.min.x, bounds.max.x),
+                Random.Range(bounds.min.y, bounds.max.y)
+            );
+
+            if (!IsBreakablePositionValid(
+                    candidate,
+                    playerPosition,
+                    normalSitePositions,
+                    specialSitePosition,
+                    exitPosition,
+                    placed,
+                    config.BreakablePlayerClearance,
+                    0.75f))
+            {
+                rejected++;
+                continue;
+            }
+
+            SpawnBreakable(prefab, candidate);
+            placed.Add(candidate);
+            fallbackSpawned++;
+        }
+
+        if (placed.Count < targetCount)
+        {
+            Debug.LogWarning(
+                $"[ExplorationSector] Placed {placed.Count}/{targetCount} " +
+                "world breakables after exhausting safe positions.",
+                this
+            );
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        int runtimeVisible = 0;
+        for (int i = 0; i < spawnedBreakables.Count; i++)
+        {
+            WorldBreakable breakable = spawnedBreakables[i];
+            if (breakable == null || !breakable.gameObject.activeInHierarchy)
+                continue;
+
+            SpriteRenderer[] renderers =
+                breakable.GetComponentsInChildren<SpriteRenderer>(false);
+            for (int rendererIndex = 0;
+                rendererIndex < renderers.Length;
+                rendererIndex++)
+            {
+                if (renderers[rendererIndex] != null &&
+                    renderers[rendererIndex].enabled)
+                {
+                    runtimeVisible++;
+                    break;
+                }
+            }
+        }
+
+        Debug.Log(
+            $"[Breakables] requested={targetCount} spawned={placed.Count} " +
+            $"visible={runtimeVisible} rejected={rejected} " +
+            $"fallback={fallbackSpawned} " +
+            $"bounds={bounds.size.x:0.#}x{bounds.size.y:0.#}",
+            this
+        );
+#endif
+
+        return placed.Count;
+    }
+
+    private bool IsBreakablePositionValid(
+        Vector2 position,
+        Vector2 playerPosition,
+        Vector2[] normalSitePositions,
+        Vector2 specialSitePosition,
+        Vector2 exitPosition,
+        List<Vector2> placed,
+        float playerClearance,
+        float spacingMultiplier)
+    {
+        float obstacleClearance = config.BreakableObstacleClearance;
+        if (!gameplayArea.IsInsidePlayableArea(position, obstacleClearance) ||
+            Vector2.Distance(position, playerPosition) <
+                playerClearance ||
+            Vector2.Distance(position, specialSitePosition) <
+                config.BreakableCriticalClearance ||
+            Vector2.Distance(position, exitPosition) <
+                config.BreakableCriticalClearance + config.ExitRadius)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < normalSitePositions.Length; i++)
+        {
+            if (Vector2.Distance(position, normalSitePositions[i]) <
+                config.BreakableCriticalClearance)
+            {
+                return false;
+            }
+        }
+
+        float minimumSpacingSquared =
+            config.BreakableSpacing * Mathf.Clamp01(spacingMultiplier);
+        minimumSpacingSquared *= minimumSpacingSquared;
+        for (int i = 0; i < placed.Count; i++)
+        {
+            if ((placed[i] - position).sqrMagnitude < minimumSpacingSquared)
+                return false;
+        }
+
+        ContactFilter2D filter = new();
+        filter.SetLayerMask(config.BreakableObstacleMask);
+        filter.useTriggers = false;
+        int overlapCount = Physics2D.OverlapCircle(
+            position,
+            obstacleClearance,
+            filter,
+            breakableOverlapBuffer
+        );
+        return overlapCount == 0;
+    }
+
+    private void SpawnBreakable(WorldBreakable prefab, Vector2 position)
+    {
+        WorldBreakable instance = Instantiate(
+            prefab,
+            position,
+            prefab.transform.rotation,
+            transform
+        );
+        instance.name = prefab.name;
+        spawnedBreakables.Add(instance);
+    }
+
+    private void ClearSpawnedBreakables()
+    {
+        for (int i = 0; i < spawnedBreakables.Count; i++)
+        {
+            WorldBreakable breakable = spawnedBreakables[i];
+            if (breakable == null)
+                continue;
+
+            breakable.gameObject.SetActive(false);
+            Destroy(breakable.gameObject);
+        }
+
+        spawnedBreakables.Clear();
+    }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool DebugSpawnCrateNearPlayer()
+    {
+        if (!hasBreakableLayout || config == null ||
+            config.BreakablePrefab == null || gameplayArea == null)
+        {
+            return false;
+        }
+
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        if (playerObject == null)
+            return false;
+
+        Vector2 playerPosition = playerObject.transform.position;
+        List<Vector2> occupied = new(spawnedBreakables.Count);
+        for (int i = 0; i < spawnedBreakables.Count; i++)
+        {
+            if (spawnedBreakables[i] != null &&
+                !spawnedBreakables[i].IsBroken)
+            {
+                occupied.Add(spawnedBreakables[i].transform.position);
+            }
+        }
+
+        for (int i = 0; i < config.BreakablePlacementAttempts; i++)
+        {
+            Vector2 direction = Random.insideUnitCircle;
+            if (direction.sqrMagnitude < 0.001f)
+                direction = Vector2.right;
+
+            Vector2 candidate = playerPosition + direction.normalized *
+                Random.Range(1.75f, 3.25f);
+            if (!IsBreakablePositionValid(
+                    candidate,
+                    playerPosition,
+                    breakableNormalSitePositions,
+                    breakableSpecialSitePosition,
+                    breakableExitPosition,
+                    occupied,
+                    1.5f,
+                    0.75f))
+            {
+                continue;
+            }
+
+            SpawnBreakable(config.BreakablePrefab, candidate);
+            return true;
+        }
+
+        return false;
+    }
+
+    public int DebugRespawnSectorBreakables()
+    {
+        if (!hasBreakableLayout)
+            return 0;
+
+        return SpawnWorldBreakables(
+            breakableNormalSitePositions,
+            breakableSpecialSitePosition,
+            breakableExitPosition
+        );
+    }
+
+    public int DebugBreakAll()
+    {
+        int brokenCount = 0;
+        List<WorldBreakable> snapshot = new(
+            WorldBreakable.ActiveInstances
+        );
+
+        for (int i = 0; i < snapshot.Count; i++)
+        {
+            if (snapshot[i] != null &&
+                snapshot[i].TakeDamage(float.MaxValue, snapshot[i].transform.position))
+            {
+                brokenCount++;
+            }
+        }
+
+        return brokenCount;
+    }
+#endif
 
     private bool ValidateDependencies()
     {

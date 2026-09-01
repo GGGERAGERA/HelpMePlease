@@ -152,7 +152,6 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
     {
         return doubleOrLeave.State switch
         {
-            DoubleOrLeaveState.WaitingForChoice => "Waiting for Choice",
             DoubleOrLeaveState.WaitingForChallenge => "Risk Event Pending",
             DoubleOrLeaveState.RewardGranted => "Reward Ready",
             DoubleOrLeaveState.Failed => "Reward Lost",

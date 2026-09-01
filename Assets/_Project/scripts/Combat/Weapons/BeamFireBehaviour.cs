@@ -10,6 +10,7 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
 
     private RaycastHit2D[] hitBuffer = new RaycastHit2D[64];
     private readonly HashSet<EnemyHealth> damagedEnemies = new();
+    private readonly HashSet<WorldBreakable> damagedBreakables = new();
     private ContactFilter2D enemyFilter;
 
     public bool HitEnemyLastFire { get; private set; }
@@ -57,6 +58,7 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
         while (true);
 
         damagedEnemies.Clear();
+        damagedBreakables.Clear();
 
         for (int i = 0; i < hitCount; i++)
         {
@@ -65,7 +67,19 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
             EnemyHealth enemyHealth = hit.collider.GetComponentInParent<EnemyHealth>();
 
             if (enemyHealth == null)
+            {
+                WorldBreakable breakable =
+                    hit.collider.GetComponentInParent<WorldBreakable>();
+
+                if (breakable == null ||
+                    !damagedBreakables.Add(breakable))
+                {
+                    continue;
+                }
+
+                breakable.TakeDamage(context.Damage, hit.point);
                 continue;
+            }
 
             if (damagedEnemies.Contains(enemyHealth))
                 continue;
@@ -101,7 +115,7 @@ public sealed class BeamFireBehaviour : MonoBehaviour, IWeaponFireBehaviour
     private void ConfigureFilter()
     {
         enemyFilter = ContactFilter2D.noFilter;
-        enemyFilter.SetLayerMask(enemyMask);
+        enemyFilter.SetLayerMask(enemyMask | (1 << 0));
         enemyFilter.useTriggers = true;
     }
 }

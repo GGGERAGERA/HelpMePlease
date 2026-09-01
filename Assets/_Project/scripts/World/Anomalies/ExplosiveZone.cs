@@ -316,7 +316,7 @@ public sealed class ExplosiveZone : LocalAnomalyZone
     private void Explode(Vector2 position, int sourceInstanceId)
     {
         SpawnExplosionFx(position);
-        AudioService.Instance?.PlayAt(AudioCueId.RocketExplosion, position);
+        AudioService.Instance?.PlayAt(AudioCueId.Explosion, position);
 
         int hitCount = Physics2D.OverlapCircle(
             position,

@@ -28,6 +28,8 @@ public class Bullet : MonoBehaviour, IWeaponProjectile,
         anomalyExternalVelocity = new();
 
     private readonly HashSet<EnemyHealth> hitEnemies = new HashSet<EnemyHealth>();
+    private readonly HashSet<WorldBreakable> hitBreakables =
+        new HashSet<WorldBreakable>();
 
     private void Awake()
     {
@@ -58,6 +60,7 @@ public class Bullet : MonoBehaviour, IWeaponProjectile,
         remainingLifetime = maxLifetime;
         rangeSquared = Mathf.Max(0f, range * range);
         hitEnemies.Clear();
+        hitBreakables.Clear();
         anomalySpeed.Clear();
         anomalyExternalVelocity.Clear();
         pooledObject ??= GetComponent<PooledGameObject>();
@@ -130,7 +133,25 @@ public class Bullet : MonoBehaviour, IWeaponProjectile,
         EnemyHealth enemyHealth = other.GetComponentInParent<EnemyHealth>();
 
         if (enemyHealth == null)
+        {
+            WorldBreakable breakable =
+                other.GetComponentInParent<WorldBreakable>();
+
+            if (breakable == null || hitBreakables.Contains(breakable))
+                return;
+
+            hitBreakables.Add(breakable);
+            breakable.TakeDamage(damage, transform.position);
+
+            if (pierceCount > 0)
+            {
+                pierceCount--;
+                return;
+            }
+
+            Despawn();
             return;
+        }
 
         if (hitEnemies.Contains(enemyHealth))
             return;

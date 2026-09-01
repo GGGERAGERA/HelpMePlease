@@ -2,9 +2,6 @@ using UnityEngine;
 
 public sealed class DoubleOrLeavePanel : MonoBehaviour
 {
-    [Header("View")]
-    [SerializeField] private GameObject panelRoot;
-
     [Header("Mechanics")]
     [SerializeField] private DoubleOrLeave doubleOrLeave;
     [SerializeField] private RunFlowController runFlow;
@@ -12,12 +9,6 @@ public sealed class DoubleOrLeavePanel : MonoBehaviour
     private PlayerHealth playerHealth;
     private DoubleOrLeaveState observedState;
     private bool resetHandled;
-
-    private void Awake()
-    {
-        if (panelRoot != null)
-            panelRoot.SetActive(false);
-    }
 
     private void OnEnable()
     {

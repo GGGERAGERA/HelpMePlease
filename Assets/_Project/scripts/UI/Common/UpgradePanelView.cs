@@ -14,10 +14,6 @@ public class UpgradePanelView : MonoBehaviour
     [Header("Cards")]
     [SerializeField] private UpgradeCardView[] cardViews;
 
-    [Header("World Event Choice")]
-    [SerializeField] private Sprite standardChoiceIcon;
-    [SerializeField] private Sprite riskChoiceIcon;
-
     [Header("Animation")]
     [SerializeField] private UpgradePanelAnimation panelAnimation;
 
@@ -126,70 +122,6 @@ public class UpgradePanelView : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    public void ShowWorldEventModeChoices(
-        string eventDisplayName,
-        string eventDescription,
-        Action onStandardSelected,
-        Action onRiskSelected
-    )
-    {
-        StopRewardReveal();
-        RestoreDefaultLayout();
-        gameObject.SetActive(true);
-        transform.SetAsLastSibling();
-
-        ApplyWorldEventChoiceTextLayout();
-        SetText(titleText, eventDisplayName);
-        SetText(subtitleText, eventDescription);
-
-        if (cardViews != null && cardViews.Length > 0 && cardViews[0] != null)
-        {
-            cardViews[0].SetupChoice(
-                "STANDARD",
-                "Обычная сложность\n3 варианта награды",
-                UpgradeCategory.Numeric,
-                standardChoiceIcon,
-                new Color(0.16f, 0.42f, 0.72f, 1f),
-                onStandardSelected
-            );
-        }
-
-        if (cardViews != null && cardViews.Length > 1 && cardViews[1] != null)
-        {
-            cardViews[1].SetupChoice(
-                "RISK",
-                "Повышенная сложность\nУлучшенная награда\nПоражение — без награды",
-                UpgradeCategory.Behavior,
-                riskChoiceIcon,
-                new Color(0.82f, 0.25f, 0.12f, 1f),
-                onRiskSelected
-            );
-        }
-
-        for (int i = 2; cardViews != null && i < cardViews.Length; i++)
-        {
-            if (cardViews[i] != null)
-                cardViews[i].gameObject.SetActive(false);
-        }
-
-        ApplyWorldEventChoiceLayout();
-        RebuildCardsLayout();
-        panelAnimation?.PlayShow();
-    }
-
-    public void ClearWorldEventModeChoices()
-    {
-        if (cardViews != null)
-        {
-            for (int i = 0; i < cardViews.Length; i++)
-                cardViews[i]?.ClearChoiceCallback();
-        }
-
-        Hide();
-        RestoreDefaultLayout();
-        RestoreDefaultTextLayout();
-    }
-
     private void CaptureLayoutDefaults()
     {
         if (layoutDefaultsCaptured || cardViews == null ||
@@ -228,31 +160,6 @@ public class UpgradePanelView : MonoBehaviour
         layoutDefaultsCaptured = true;
     }
 
-    private void ApplyWorldEventChoiceLayout()
-    {
-        CaptureLayoutDefaults();
-
-        if (!layoutDefaultsCaptured)
-            return;
-
-        panelContent.sizeDelta = new Vector2(
-            860f,
-            defaultPanelContentSize.y
-        );
-        cardsRoot.sizeDelta = new Vector2(780f, defaultCardsRootSize.y);
-        cardsLayout.spacing = 40f;
-
-        for (int i = 0; i < 2 && i < cardViews.Length; i++)
-        {
-            RectTransform card = cardViews[i] != null
-                ? cardViews[i].transform as RectTransform
-                : null;
-
-            if (card != null)
-                card.sizeDelta = new Vector2(350f, defaultCardSizes[i].y);
-        }
-    }
-
     private void RestoreDefaultLayout()
     {
         CaptureLayoutDefaults();
@@ -289,21 +196,6 @@ public class UpgradePanelView : MonoBehaviour
         defaultTitleFontSize = titleText.fontSize;
         defaultSubtitleFontSize = subtitleText.fontSize;
         textDefaultsCaptured = true;
-    }
-
-    private void ApplyWorldEventChoiceTextLayout()
-    {
-        CaptureTextDefaults();
-
-        if (!textDefaultsCaptured)
-            return;
-
-        titleText.enableAutoSizing = true;
-        titleText.fontSizeMin = 28f;
-        titleText.fontSizeMax = defaultTitleFontSize;
-        subtitleText.enableAutoSizing = true;
-        subtitleText.fontSizeMin = 22f;
-        subtitleText.fontSizeMax = defaultSubtitleFontSize;
     }
 
     private void RestoreDefaultTextLayout()

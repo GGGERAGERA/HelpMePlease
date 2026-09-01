@@ -5,28 +5,35 @@ public sealed class SelectionPanelController : MonoBehaviour
     private enum PanelType
     {
         None,
-        Characters,
-        Weapons,
-        Shop,
-        Upgrade,
+        Selection,
         Scenes
     }
 
     [SerializeField] private GameObject root;
 
     [Header("Panels")]
-    [SerializeField] private GameObject playerSelectPanel;
-    [SerializeField] private GameObject weaponSelectPanel;
-    [SerializeField] private GameObject shopPanel;
-    [SerializeField] private GameObject upgradePanel;
+    [SerializeField] private BunkerSelectionWindow sharedSelectionWindow;
     [SerializeField] private GameObject sceneSelectPanel;
 
     public bool IsOpen => root != null && root.activeInHierarchy;
 
-    public void ShowCharacters() => Show(PanelType.Characters);
-    public void ShowWeapons() => Show(PanelType.Weapons);
-    public void ShowShop() => Show(PanelType.Shop);
-    public void ShowUpgrade() => Show(PanelType.Upgrade);
+    public void ShowSelection(
+        IBunkerSelectionSource source,
+        BunkerPanelManager panelManager)
+    {
+        if (root == null || sharedSelectionWindow == null)
+        {
+            Debug.LogError(
+                "[SelectionPanelController] Shared selection window is not assigned.",
+                this);
+            return;
+        }
+
+        SetPanelStates(PanelType.Selection);
+        root.SetActive(true);
+        sharedSelectionWindow.Open(source, panelManager);
+    }
+
     public void ShowScenes() => Show(PanelType.Scenes);
 
     public void Hide()
@@ -59,10 +66,10 @@ public sealed class SelectionPanelController : MonoBehaviour
 
     private void SetPanelStates(PanelType activePanel)
     {
-        SetActive(playerSelectPanel, activePanel == PanelType.Characters);
-        SetActive(weaponSelectPanel, activePanel == PanelType.Weapons);
-        SetActive(shopPanel, activePanel == PanelType.Shop);
-        SetActive(upgradePanel, activePanel == PanelType.Upgrade);
+        if (activePanel != PanelType.Selection)
+            sharedSelectionWindow?.CloseView();
+        else if (sharedSelectionWindow != null)
+            sharedSelectionWindow.gameObject.SetActive(true);
         SetActive(sceneSelectPanel, activePanel == PanelType.Scenes);
     }
 
@@ -70,10 +77,6 @@ public sealed class SelectionPanelController : MonoBehaviour
     {
         return panelType switch
         {
-            PanelType.Characters => playerSelectPanel,
-            PanelType.Weapons => weaponSelectPanel,
-            PanelType.Shop => shopPanel,
-            PanelType.Upgrade => upgradePanel,
             PanelType.Scenes => sceneSelectPanel,
             _ => null
         };
@@ -90,6 +93,8 @@ public sealed class SelectionPanelController : MonoBehaviour
     {
         if (root == null)
             Debug.LogWarning("[SelectionPanelController] Root is not assigned.", this);
+        if (sharedSelectionWindow == null)
+            Debug.LogWarning("[SelectionPanelController] Shared selection window is not assigned.", this);
     }
 #endif
 }

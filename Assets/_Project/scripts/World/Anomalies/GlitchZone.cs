@@ -460,11 +460,11 @@ public sealed class GlitchZone : LocalAnomalyZone
         if (bullet != null)
             return bullet;
 
-        RocketProjectile rocket =
-            other.GetComponentInParent<RocketProjectile>();
+        ExplosiveProjectile explosive =
+            other.GetComponentInParent<ExplosiveProjectile>();
 
-        if (rocket != null)
-            return rocket;
+        if (explosive != null)
+            return explosive;
 
         EnemyProjectile enemyProjectile =
             other.GetComponentInParent<EnemyProjectile>();

@@ -41,6 +41,7 @@ public class EnemyBomberMovement : EnemyMovement
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        InitializeCrowdSteering();
     }
 
     private void Start()
@@ -75,7 +76,8 @@ public class EnemyBomberMovement : EnemyMovement
             return;
 
         Vector2 offset = (Vector2)player.position - rb.position;
-        Vector2 direction = offset.normalized;
+        Vector2 direction = ApplyCrowdSteering(offset.normalized,
+            player.position, Time.fixedDeltaTime);
 
         knockbackVelocity = Vector2.MoveTowards(
             knockbackVelocity,
@@ -224,6 +226,7 @@ public class EnemyBomberMovement : EnemyMovement
 
     private void OnDisable()
     {
+        ReleaseCrowdSteering();
         explosiveZoneRadiusMultipliers.Clear();
         ClearAnomalyExternalVelocities();
     }
@@ -358,7 +361,7 @@ internal sealed class BomberExplosionSequence : MonoBehaviour
         }
 
         AudioService.Instance?.PlayAt(
-            AudioCueId.RocketExplosion,
+            AudioCueId.Explosion,
             explosionPosition
         );
 

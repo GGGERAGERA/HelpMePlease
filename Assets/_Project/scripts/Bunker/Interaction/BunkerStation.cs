@@ -26,7 +26,10 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
 
     private bool interactionEnabled = true;
 
-    public bool CanInteract => interactionEnabled && stationType != BunkerStationType.None;
+    // Serialized shop ID is reserved, but the production feature is removed.
+    public bool CanInteract => interactionEnabled &&
+        stationType != BunkerStationType.None &&
+        stationType != BunkerStationType.Shop;
     public string InteractionText => interactionText;
 
     private BunkerPanelManager Panels =>
@@ -47,10 +50,6 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
 
             case BunkerStationType.WeaponSelection:
                 Panels?.OpenWeaponSelection();
-                break;
-
-            case BunkerStationType.Shop:
-                Panels?.OpenShop();
                 break;
 
             case BunkerStationType.Map:
