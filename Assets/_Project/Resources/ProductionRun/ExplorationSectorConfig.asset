@@ -29,3 +29,15 @@ MonoBehaviour:
   beamEnemyDamage: 180
   beamPlayerDamage: 30
   threatConfig: {fileID: 11400000, guid: 42a10000000000000000000000000004, type: 2}
+  breakablePrefab: {fileID: 8346575978315184608, guid: 57f6c0242a4383e48b834f8bc3063eb8, type: 3}
+  breakableMinCount: 4
+  breakableMaxCount: 8
+  breakablePlayerClearance: 4
+  breakableSpacing: 1.4
+  breakableObstacleClearance: 0.65
+  breakableCriticalClearance: 2.75
+  breakablePlacementAttempts: 25
+  breakableObstacleMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  breakableClusterChance: 0.35

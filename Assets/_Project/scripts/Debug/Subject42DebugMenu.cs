@@ -3769,6 +3769,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private void AddWorldEventsSection()
     {
         AddLootChestSection();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        AddWorldBreakablesSection();
+#endif
         AddSectionTitle("WORLD EVENTS", "Spawn/Clear through WorldEventSpawner");
         WorldEvent current = worldEventSpawner != null
             ? worldEventSpawner.CurrentEvent
@@ -3806,6 +3809,57 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 AddEventRow(GetEventDisplayName(prefab), prefab);
         }
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private void AddWorldBreakablesSection()
+    {
+        ProductionExplorationSectorController controller =
+            ProductionExplorationSectorController.ActiveInstance;
+        int activeCount = WorldBreakable.ActiveInstances.Count;
+        bool available = controller != null;
+
+        AddSectionTitle(
+            "WORLD BREAKABLES",
+            "Production p_Case1 placement and lifecycle"
+        );
+        AddRow(
+            "Active intact crates",
+            activeCount.ToString(),
+            activeCount > 0 ? successColor : warningColor,
+            "SPAWN NEAR PLAYER",
+            available,
+            () =>
+            {
+                controller.DebugSpawnCrateNearPlayer();
+                RefreshCurrentTab();
+            }
+        );
+        AddRow(
+            "Regenerate current sector set",
+            available ? "READY" : "EXPLORATION SECTOR NOT FOUND",
+            available ? mutedColor : warningColor,
+            "RESPAWN CRATES",
+            available,
+            () =>
+            {
+                controller.DebugRespawnSectorBreakables();
+                RefreshCurrentTab();
+            }
+        );
+        AddRow(
+            "Break every intact crate",
+            activeCount > 0 ? $"READY: {activeCount}" : "NONE",
+            activeCount > 0 ? mutedColor : warningColor,
+            "BREAK ALL",
+            activeCount > 0,
+            () =>
+            {
+                controller.DebugBreakAll();
+                RefreshCurrentTab();
+            }
+        );
+    }
+#endif
 
     private void AddRoomStateRows()
     {
@@ -5517,10 +5571,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     {
         EnsureProductionSectorDebug();
         ProductionFeelTuningController tuning = productionFeelTuning;
+        AddCrowdMovementLab();
 
         if (tuning == null)
         {
-            AddSectionTitle("FEEL", "Development / Editor only");
             AddHint("ProductionFeelTuningController was not created.");
             return;
         }
@@ -5528,6 +5582,135 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         tuning.Configure();
         AddFeelTestDummySection();
         AddAdvancedCombatFeelLab(tuning);
+    }
+
+    private void AddCrowdMovementLab()
+    {
+        CrowdSteeringValues values = CrowdSteeringRuntime.Values;
+        AddSectionTitle("CROWD MOVEMENT",
+            "Runtime steering поверх production movement");
+        AddHint("● LIVE — gameplay продолжается. PRODUCTION полностью " +
+            "отключает слой и не сохраняет экспериментальные значения.");
+
+        CrowdMovementPreset[] presets =
+        {
+            CrowdMovementPreset.Production, CrowdMovementPreset.Direct,
+            CrowdMovementPreset.Spread, CrowdMovementPreset.Swarm,
+            CrowdMovementPreset.Orbit, CrowdMovementPreset.Encircle,
+            CrowdMovementPreset.Chaotic
+        };
+        for (int i = 0; i < presets.Length; i++)
+        {
+            CrowdMovementPreset captured = presets[i];
+            AddOptionRow(captured.ToString().ToUpperInvariant(),
+                CrowdSteeringRuntime.CurrentPreset == captured, true, () =>
+                {
+                    CrowdSteeringRuntime.ApplyPreset(captured);
+                });
+            RectTransform row = contentRoot.GetChild(contentRoot.childCount - 1)
+                as RectTransform;
+            AttachFeelTooltip(row.gameObject, () =>
+                GetCrowdPresetTooltip(captured));
+        }
+
+        AddSectionTitle("GLOBAL", "");
+        AddToggleRow("Enable Crowd Steering", values.Enabled, true,
+            () => CrowdSteeringRuntime.SetEnabled(!CrowdSteeringRuntime.Values.Enabled));
+        AttachLastCrowdTooltip("Включает универсальный steering-слой. " +
+            "Выключение мгновенно возвращает штатное движение врагов.");
+        AddCrowdSlider("Global Strength", values.GlobalStrength, 0f, 4f,
+            CrowdSteeringRuntime.SetGlobalStrength,
+            "Общий множитель всех steering-модификаторов, кроме прямого " +
+            "production-направления. 0 отключает их влияние, 4 даёт экстремальный эффект.");
+        AddToggleRow("Debug Draw Steering", CrowdSteeringRuntime.DebugDraw,
+            true, () => CrowdSteeringRuntime.SetDebugDraw(!CrowdSteeringRuntime.DebugDraw));
+        AttachLastCrowdTooltip("Рисует в Scene view векторы только у 16 ближайших " +
+            "к игроку врагов: белый — итог, голубой — production, красный — " +
+            "separation, жёлтый — orbit, фиолетовый — персональная target point.");
+
+        AddSectionTitle("CHASE", "");
+        AddCrowdSlider("Direct Pressure", values.DirectPressure, 0f, 5f,
+            CrowdSteeringRuntime.SetDirectPressure,
+            "Вес штатного направления конкретного врага. Для обычного врага это " +
+            "движение к игроку, а для Shooter сохраняется его подход или отступление.");
+
+        AddSectionTitle("SEPARATION", "");
+        AddCrowdSlider("Separation Radius", values.SeparationRadius, 0f, 12f,
+            CrowdSteeringRuntime.SetSeparationRadius,
+            "Расстояние, внутри которого враги начинают расталкиваться. " +
+            "Большой радиус делает поток шире.");
+        AddCrowdSlider("Separation Strength", values.SeparationStrength, 0f, 5f,
+            CrowdSteeringRuntime.SetSeparationStrength,
+            "Насколько сильно враги расталкиваются друг от друга. Чем выше " +
+            "значение, тем меньше плотные комки.");
+
+        AddSectionTitle("COHESION", "");
+        AddCrowdSlider("Cohesion Radius", values.CohesionRadius, 0f, 16f,
+            CrowdSteeringRuntime.SetCohesionRadius,
+            "Радиус поиска соседей, к центру которых мягко тянется враг.");
+        AddCrowdSlider("Cohesion Strength", values.CohesionStrength, 0f, 5f,
+            CrowdSteeringRuntime.SetCohesionStrength,
+            "Насколько сильно соседние враги стараются двигаться одной группой. " +
+            "Высокие значения собирают толпу в массу.");
+
+        AddSectionTitle("ORBIT", "");
+        AddCrowdSlider("Orbit Strength", values.OrbitStrength, 0f, 5f,
+            CrowdSteeringRuntime.SetOrbitStrength,
+            "Насколько сильно враги пытаются двигаться вокруг игрока по дуге " +
+            "вместо прямого движения к нему.");
+        AddCrowdSlider("Direction Bias", values.OrbitDirectionBias, -1f, 1f,
+            CrowdSteeringRuntime.SetOrbitDirectionBias,
+            "Задаёт общее направление вращения: -1 и +1 закручивают толпу в " +
+            "противоположные стороны. При 0 сторона стабильно выбирается для каждого врага.");
+
+        AddSectionTitle("TARGET OFFSET", "");
+        AddCrowdSlider("Target Offset Radius", values.TargetOffsetRadius, 0f, 12f,
+            CrowdSteeringRuntime.SetTargetOffsetRadius,
+            "Насколько далеко от центра игрока разбросаны персональные точки, к " +
+            "которым стремятся враги. Помогает толпе окружать игрока.");
+        AddCrowdSlider("Target Offset Strength", values.TargetOffsetStrength, 0f, 5f,
+            CrowdSteeringRuntime.SetTargetOffsetStrength,
+            "Насколько сильно каждый враг стремится к своей стабильной точке вокруг игрока.");
+
+        AddSectionTitle("WANDER", "");
+        AddCrowdSlider("Wander Strength", values.WanderStrength, 0f, 5f,
+            CrowdSteeringRuntime.SetWanderStrength,
+            "Добавляет плавное блуждание направления. Большое значение делает " +
+            "движение менее предсказуемым без покадрового jitter.");
+        AddCrowdSlider("Wander Frequency", values.WanderFrequency, .02f, 4f,
+            CrowdSteeringRuntime.SetWanderFrequency,
+            "Скорость плавного изменения wander-направления. Малое значение даёт " +
+            "длинные волны, большое — более частые изгибы траектории.");
+    }
+
+    private void AddCrowdSlider(string label, float value, float minimum,
+        float maximum, Action<float> setter, string tooltip)
+    {
+        AddSliderRow(label, value, minimum, maximum, setter, "0.00");
+        AttachLastCrowdTooltip(tooltip + $"\nDebug range: {minimum:0.##}…{maximum:0.##}.");
+    }
+
+    private void AttachLastCrowdTooltip(string tooltip)
+    {
+        if (contentRoot == null || contentRoot.childCount == 0)
+            return;
+        GameObject row = contentRoot.GetChild(contentRoot.childCount - 1).gameObject;
+        AttachFeelTooltip(row, () => tooltip);
+    }
+
+    private static string GetCrowdPresetTooltip(CrowdMovementPreset preset)
+    {
+        return preset switch
+        {
+            CrowdMovementPreset.Production => "Точное штатное поведение: steering-слой выключен.",
+            CrowdMovementPreset.Direct => "Почти чистое прямое давление с минимальным расталкиванием.",
+            CrowdMovementPreset.Spread => "Сильное расталкивание и персональные цели широко распределяют толпу.",
+            CrowdMovementPreset.Swarm => "Мягкая связность, separation и wander создают органическую массу.",
+            CrowdMovementPreset.Orbit => "Сильная касательная составляющая формирует заметные дуговые потоки.",
+            CrowdMovementPreset.Encircle => "Персональные точки и orbit заставляют врагов заходить с разных сторон.",
+            CrowdMovementPreset.Chaotic => "Сильный плавный wander, разные стороны orbit и target offsets без jitter.",
+            _ => "Пользовательские значения."
+        };
     }
 
     private void AddFeelTestDummySection()

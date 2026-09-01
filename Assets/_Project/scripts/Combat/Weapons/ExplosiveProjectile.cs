@@ -25,6 +25,7 @@ public class ExplosiveProjectile : MonoBehaviour, IWeaponProjectile,
     private PooledGameObject pooledObject;
     private Collider2D[] explosionHits = new Collider2D[64];
     private readonly HashSet<EnemyHealth> damagedEnemies = new();
+    private readonly HashSet<WorldBreakable> damagedBreakables = new();
     private ContactFilter2D explosionFilter;
     private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
     private readonly AnomalyExternalVelocityStack
@@ -33,7 +34,7 @@ public class ExplosiveProjectile : MonoBehaviour, IWeaponProjectile,
     private void Awake()
     {
         explosionFilter = ContactFilter2D.noFilter;
-        explosionFilter.SetLayerMask(enemyMask);
+        explosionFilter.SetLayerMask(enemyMask | (1 << 0));
         explosionFilter.useTriggers = true;
     }
 
@@ -56,6 +57,7 @@ public class ExplosiveProjectile : MonoBehaviour, IWeaponProjectile,
         this.knockbackForce = knockbackForce;
         exploded = false;
         damagedEnemies.Clear();
+        damagedBreakables.Clear();
         anomalySpeed.Clear();
         anomalyExternalVelocity.Clear();
         pooledObject ??= GetComponent<PooledGameObject>();
@@ -91,8 +93,10 @@ public class ExplosiveProjectile : MonoBehaviour, IWeaponProjectile,
             return;
 
         EnemyHealth enemy = other.GetComponentInParent<EnemyHealth>();
+        WorldBreakable breakable =
+            other.GetComponentInParent<WorldBreakable>();
 
-        if (enemy != null)
+        if (enemy != null || breakable != null)
             Explode();
     }
 
@@ -112,6 +116,7 @@ public class ExplosiveProjectile : MonoBehaviour, IWeaponProjectile,
             combatContext = GetComponent<ProjectileCombatContext>();
 
         damagedEnemies.Clear();
+        damagedBreakables.Clear();
         int hitCount;
         do
         {
@@ -137,7 +142,18 @@ public class ExplosiveProjectile : MonoBehaviour, IWeaponProjectile,
             EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
 
             if (enemy == null)
+            {
+                WorldBreakable breakable =
+                    hit.GetComponentInParent<WorldBreakable>();
+
+                if (breakable != null &&
+                    damagedBreakables.Add(breakable))
+                {
+                    breakable.TakeDamage(damage, transform.position);
+                }
+
                 continue;
+            }
 
             if (damagedEnemies.Contains(enemy))
                 continue;

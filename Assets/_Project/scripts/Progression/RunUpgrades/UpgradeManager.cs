@@ -47,11 +47,8 @@ public sealed class UpgradeManager : MonoBehaviour
     private readonly Queue<UpgradeChoiceRequest> pendingChoices = new();
     private UpgradeRoller upgradeRoller;
     private bool isChoosingUpgrade;
-    private bool isChoosingWorldEventMode;
     private float previousTimeScale = 1f;
     private System.Action currentOnClosed;
-    private System.Action worldEventStandardSelected;
-    private System.Action worldEventRiskSelected;
     private bool currentRequestIsChestReward;
     private UpgradeChoiceRequest currentRequest;
     private bool hasCurrentRequest;
@@ -104,45 +101,6 @@ public sealed class UpgradeManager : MonoBehaviour
     }
 #endif
 
-    public bool ShowWorldEventModeChoices(
-        string eventDisplayName,
-        string eventDescription,
-        System.Action onStandardSelected,
-        System.Action onRiskSelected
-    )
-    {
-        if (isChoosingUpgrade || upgradePanelView == null)
-            return false;
-
-        isChoosingUpgrade = true;
-        isChoosingWorldEventMode = true;
-        worldEventStandardSelected = onStandardSelected;
-        worldEventRiskSelected = onRiskSelected;
-        previousTimeScale = Time.timeScale;
-        Time.timeScale = 0f;
-
-        upgradePanelView.ShowWorldEventModeChoices(
-            eventDisplayName,
-            eventDescription,
-            () => CompleteWorldEventModeChoice(false),
-            () => CompleteWorldEventModeChoice(true)
-        );
-        return true;
-    }
-
-    public void CancelWorldEventModeChoice()
-    {
-        if (!isChoosingWorldEventMode)
-            return;
-
-        isChoosingWorldEventMode = false;
-        isChoosingUpgrade = false;
-        worldEventStandardSelected = null;
-        worldEventRiskSelected = null;
-        upgradePanelView?.ClearWorldEventModeChoices();
-        Time.timeScale = previousTimeScale;
-    }
-
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -164,8 +122,6 @@ public sealed class UpgradeManager : MonoBehaviour
 
     private void OnDisable()
     {
-        CancelWorldEventModeChoice();
-
         if (!isChoosingUpgrade || !currentRequestIsChestReward)
             return;
 
@@ -496,21 +452,4 @@ public sealed class UpgradeManager : MonoBehaviour
         Time.timeScale = previousTimeScale;
     }
 
-    private void CompleteWorldEventModeChoice(bool risk)
-    {
-        if (!isChoosingUpgrade || !isChoosingWorldEventMode)
-            return;
-
-        System.Action selection = risk
-            ? worldEventRiskSelected
-            : worldEventStandardSelected;
-
-        isChoosingWorldEventMode = false;
-        isChoosingUpgrade = false;
-        worldEventStandardSelected = null;
-        worldEventRiskSelected = null;
-        upgradePanelView.ClearWorldEventModeChoices();
-        Time.timeScale = previousTimeScale;
-        selection?.Invoke();
-    }
 }

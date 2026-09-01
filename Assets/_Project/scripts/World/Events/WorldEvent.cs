@@ -1,5 +1,11 @@
 using UnityEngine;
 
+public enum WorldEventDifficulty
+{
+    Standard,
+    Risk
+}
+
 public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
 {
     [Header("Presentation")]
@@ -86,10 +92,11 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
         if (!CanInteract)
             return;
 
-        owner.TryChooseAndStartEvent(this);
+        owner.TryStartProductionEvent(this);
     }
 
-    public void StartSelectedEvent(bool riskMode = false)
+    public void StartEvent(
+        WorldEventDifficulty difficulty = WorldEventDifficulty.Standard)
     {
         if (IsStarted || owner == null ||
             !owner.TryStartEvent(this))
@@ -98,8 +105,17 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
         }
 
         IsStarted = true;
+        bool riskMode = difficulty == WorldEventDifficulty.Risk;
         owner.NotifyEventStarted(this, riskMode);
         OnEventStarted();
+
+        if (!IsCompleted)
+        {
+            RunMessageService.Instance?.ShowCustom(
+                EventDisplayName,
+                EventDescription
+            );
+        }
     }
 
     protected virtual bool CanStartFrom(Vector2 playerPosition)

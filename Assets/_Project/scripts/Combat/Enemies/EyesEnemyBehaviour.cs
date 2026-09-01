@@ -23,6 +23,7 @@ public sealed class EyesEnemyBehaviour : EnemyMovement
     private void Awake()
     {
         body = GetComponent<Rigidbody2D>();
+        InitializeCrowdSteering();
     }
 
     private void Start()
@@ -70,6 +71,8 @@ public sealed class EyesEnemyBehaviour : EnemyMovement
         Vector2 direction = offset.sqrMagnitude > Mathf.Epsilon
             ? offset.normalized
             : Vector2.zero;
+        direction = ApplyCrowdSteering(direction,
+            player.position, Time.fixedDeltaTime);
         Vector2 movement =
             direction * moveSpeed * speedMultiplier *
             anomalySpeedMultiplier * worldRuleSpeedMultiplier +
@@ -142,6 +145,7 @@ public sealed class EyesEnemyBehaviour : EnemyMovement
 
     private void OnDisable()
     {
+        ReleaseCrowdSteering();
         worldRuleVisual?.RemovePlayerLightRadiusMultiplier(this);
         ClearAnomalyExternalVelocities();
 

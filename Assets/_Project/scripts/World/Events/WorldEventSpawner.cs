@@ -3,6 +3,9 @@ using UnityEngine;
 
 public class WorldEventSpawner : MonoBehaviour
 {
+    private const WorldEventDifficulty ProductionEventDifficulty =
+        WorldEventDifficulty.Standard;
+
     public event System.Action<WorldEvent> EventCompleted;
     public event System.Action<WorldEvent> EventFailed;
     public IReadOnlyList<WorldEvent> SpawnedEvents => spawnedEvents;
@@ -27,7 +30,7 @@ public class WorldEventSpawner : MonoBehaviour
 
     [Header("Event Prefabs")]
     [SerializeField] private WorldEvent[] eventPrefabs;
-    [SerializeField] private WorldEventRewardChest rewardChestPrefab;
+    [SerializeField] private WorldBreakable eventRewardContainerPrefab;
     [SerializeField] private DoubleOrLeave doubleOrLeave;
     [SerializeField, Min(1f)] private float riskDifficultyMultiplier = 1.5f;
 
@@ -71,9 +74,9 @@ public class WorldEventSpawner : MonoBehaviour
         debugManualOnly = true;
     }
 
-    public void ConfigureDebugRewardChest(WorldEventRewardChest prefab)
+    public void ConfigureDebugRewardContainer(WorldBreakable prefab)
     {
-        rewardChestPrefab = prefab;
+        eventRewardContainerPrefab = prefab;
     }
 
     public void ConfigureDebugConcurrentEventCapacity(int capacity)
@@ -89,7 +92,7 @@ public class WorldEventSpawner : MonoBehaviour
 
     private void OnEnable()
     {
-        EventCompleted += SpawnRewardChest;
+        EventCompleted += SpawnRewardContainer;
         EventFailed += HandleEventFailed;
     }
 
@@ -97,7 +100,7 @@ public class WorldEventSpawner : MonoBehaviour
     {
         ClearEventSpawnPressure();
         siteRewardSuppressedEvents.Clear();
-        EventCompleted -= SpawnRewardChest;
+        EventCompleted -= SpawnRewardContainer;
         EventFailed -= HandleEventFailed;
     }
 
@@ -700,32 +703,30 @@ public class WorldEventSpawner : MonoBehaviour
         );
     }
 
-    public bool TryChooseAndStartEvent(WorldEvent worldEvent)
+    public bool TryStartProductionEvent(WorldEvent worldEvent)
+    {
+        return TryStartEvent(worldEvent, ProductionEventDifficulty);
+    }
+
+    public bool TryStartEvent(
+        WorldEvent worldEvent,
+        WorldEventDifficulty difficulty)
     {
         if (!CanStartEvent(worldEvent))
             return false;
 
+        bool riskMode = difficulty == WorldEventDifficulty.Risk;
+
+        if (riskMode)
+            worldEvent.ApplyDifficultyMultiplier(riskDifficultyMultiplier);
+
         ResolveDoubleOrLeave();
-
-        if (doubleOrLeave == null)
-        {
-            worldEvent.StartSelectedEvent(false);
-            return true;
-        }
-
-        return doubleOrLeave.BeginEventChoice(
-            worldEvent,
-            risk =>
-            {
-                if (risk)
-                worldEvent.ApplyDifficultyMultiplier(riskDifficultyMultiplier);
-
-                worldEvent.StartSelectedEvent(risk);
-            }
-        );
+        doubleOrLeave?.TrackStartedEvent(worldEvent, difficulty);
+        worldEvent.StartEvent(difficulty);
+        return worldEvent.IsStarted;
     }
 
-    private void SpawnRewardChest(WorldEvent completedEvent)
+    private void SpawnRewardContainer(WorldEvent completedEvent)
     {
         if (completedEvent == null)
             return;
@@ -741,25 +742,24 @@ public class WorldEventSpawner : MonoBehaviour
             return;
 #endif
 
-        if (rewardChestPrefab == null)
+        if (eventRewardContainerPrefab == null)
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.LogWarning(
-                "[WorldEventSpawner] Reward chest prefab is not assigned."
+                "[WorldEventSpawner] Event reward container is not assigned."
             );
 #endif
             return;
         }
 
-        WorldEventRewardChest chest = Instantiate(
-            rewardChestPrefab,
+        WorldBreakable container = Instantiate(
+            eventRewardContainerPrefab,
             completedEvent.RewardPosition,
             Quaternion.identity
         );
-        chest.Initialize(
+        container.InitializeEventReward(
             isImproved,
-            doubleOrLeave,
-            forceNumeric: siteControlledMode
+            numericOnly: siteControlledMode
         );
     }
 

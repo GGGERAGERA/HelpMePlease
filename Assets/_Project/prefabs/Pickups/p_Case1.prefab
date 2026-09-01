@@ -10348,9 +10348,30 @@ MonoBehaviour:
   m_GameObject: {fileID: 6834454687416602623}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8f7db273bad04985926e1c6ed40dc9cf, type: 3}
+  m_Script: {fileID: 11500000, guid: 42a10000000000000000000000000031, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GoldenCoinPickup
+  m_EditorClassIdentifier: Assembly-CSharp::WorldBreakable
+  maxHealth: 40
+  intactVisual: {fileID: 914700330127049877}
+  brokenVisual: {fileID: 2599720568983599656}
+  breakFx: {fileID: 2955519778623671563}
+  intactCollider: {fileID: 5501360080084924443}
+  hitRenderers:
+  - {fileID: 1333674272075437062}
+  hitFlashDuration: 0.06
+  hitFlashColor: {r: 1, g: 1, b: 1, a: 1}
+  goldPrefab: {fileID: 8849100027710031041, guid: dde4a96739496354da52757e7a1d4556, type: 3}
+  nothingWeight: 20
+  smallGoldWeight: 55
+  largeGoldWeight: 15
+  smallGoldCount: 1
+  largeGoldCount: 3
+  goldValue: 5
+  lootLifetime: 20
+  pickupRadius: 2.5
+  attractionSpeed: 7
+  scatterSpeed: 1.8
+  fadeDuration: 2
 --- !u!210 &7260418303699740501
 SortingGroup:
   m_ObjectHideFlags: 0

@@ -1,10 +1,8 @@
-using System;
 using UnityEngine;
 
 public enum DoubleOrLeaveState
 {
     Inactive,
-    WaitingForChoice,
     WaitingForChallenge,
     RewardGranted,
     Failed
@@ -22,50 +20,19 @@ public sealed class DoubleOrLeave : MonoBehaviour
         ResetState();
     }
 
-    public bool BeginEventChoice(
+    public void TrackStartedEvent(
         WorldEvent worldEvent,
-        Action<bool> onSelected
+        WorldEventDifficulty difficulty
     )
     {
-        if (worldEvent == null || State == DoubleOrLeaveState.WaitingForChoice)
-            return false;
-
-        UpgradeManager upgradeManager = UpgradeManager.Instance;
-
-        if (upgradeManager == null)
-            return false;
+        if (worldEvent == null)
+            return;
 
         selectedEvent = worldEvent;
-        State = DoubleOrLeaveState.WaitingForChoice;
-
-        bool shown = upgradeManager.ShowWorldEventModeChoices(
-            worldEvent.EventDisplayName,
-            worldEvent.EventDescription,
-            () => SelectEventMode(false, onSelected),
-            () => SelectEventMode(true, onSelected)
-        );
-
-        if (shown)
-            return true;
-
-        selectedEvent = null;
-        State = DoubleOrLeaveState.Inactive;
-        return false;
-    }
-
-    private void SelectEventMode(bool risk, Action<bool> onSelected)
-    {
-        if (selectedEvent == null ||
-            State != DoubleOrLeaveState.WaitingForChoice)
-        {
-            return;
-        }
-
-        selectedRisk = risk;
-        State = risk
+        selectedRisk = difficulty == WorldEventDifficulty.Risk;
+        State = selectedRisk
             ? DoubleOrLeaveState.WaitingForChallenge
             : DoubleOrLeaveState.Inactive;
-        onSelected?.Invoke(risk);
     }
 
     public bool ResolveCompletedEvent(WorldEvent worldEvent)
@@ -93,7 +60,6 @@ public sealed class DoubleOrLeave : MonoBehaviour
 
     public void ResetState()
     {
-        UpgradeManager.Instance?.CancelWorldEventModeChoice();
         selectedEvent = null;
         selectedRisk = false;
         State = DoubleOrLeaveState.Inactive;

@@ -46,6 +46,7 @@ public class EnemyChaseMovement : EnemyMovement
     {
         rb = GetComponent<Rigidbody2D>();
         hasRunParameter = HasBoolParameter(animator, runParameterName);
+        InitializeCrowdSteering();
     }
 
     private void Start()
@@ -120,7 +121,9 @@ public class EnemyChaseMovement : EnemyMovement
     {
         Vector2 offset = (Vector2)player.position - rb.position;
         float sqrDistance = offset.sqrMagnitude;
-        Vector2 direction = offset.normalized;
+        Vector2 productionDirection = offset.normalized;
+        Vector2 direction = ApplyCrowdSteering(productionDirection,
+            player.position, Time.fixedDeltaTime);
 
         bool isRunning = sqrDistance <= aggroDistance * aggroDistance;
 
@@ -205,6 +208,7 @@ public class EnemyChaseMovement : EnemyMovement
     }
     private void OnDisable()
     {
+        ReleaseCrowdSteering();
         ClearAnomalyExternalVelocities();
     }
     private static bool HasBoolParameter(

@@ -39,6 +39,10 @@ public sealed class TacticalMapHUD : MonoBehaviour
         new(0.78f, 0.84f, 0.86f, 0.95f);
     private static readonly Color EventFill =
         new(0.1f, 0.75f, 0.86f, 0.95f);
+    private static readonly Color BreakableFill =
+        new(0.96f, 0.58f, 0.14f, 0.92f);
+    private static readonly Color BreakableBorder =
+        new(1f, 0.86f, 0.42f, 1f);
     private static readonly Color NormalSiteFill =
         new(0.08f, 0.68f, 0.9f, 0.2f);
     private static readonly Color NormalSiteBorder =
@@ -63,12 +67,14 @@ public sealed class TacticalMapHUD : MonoBehaviour
     private RectTransform projectionRoot;
     private RectTransform anomalyRoot;
     private RectTransform eventRoot;
+    private RectTransform breakableRoot;
     private RectTransform legendRoot;
     private RectTransform playerLegendRow;
     private RectTransform normalSiteLegendRow;
     private RectTransform specialSiteLegendRow;
     private RectTransform exitLegendRow;
     private RectTransform eventLegendRow;
+    private RectTransform breakableLegendRow;
     private RectTransform bossLegendRow;
     private MarkerVisual playerMarker;
     private MarkerVisual exitMarker;
@@ -81,6 +87,7 @@ public sealed class TacticalMapHUD : MonoBehaviour
     private bool hasBounds;
     private bool isVisible;
     private bool hasVisibleEvents;
+    private bool hasVisibleBreakables;
     private bool hasVisibleBoss;
     private bool hasVisibleNormalSite;
     private bool hasVisibleSpecialSite;
@@ -88,11 +95,17 @@ public sealed class TacticalMapHUD : MonoBehaviour
     private float currentMapHeight = MaxMapSize;
     private float nextAnomalyRefresh;
     private float nextMarkerRefresh;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private int lastLoggedBreakableMarkerCount = -1;
+#endif
 
     private readonly List<LevelAnomalyController.LocalAnomalyZoneGeometry>
         anomalyZones = new();
     private readonly List<MarkerVisual> anomalyMarkers = new();
     private readonly List<MarkerVisual> eventMarkers = new();
+    private readonly List<MarkerVisual> breakableMarkers = new();
+    private readonly List<TacticalMapMarkerDescriptor> breakableDescriptors =
+        new();
 
     public bool IsVisible => isVisible;
 
@@ -100,6 +113,16 @@ public sealed class TacticalMapHUD : MonoBehaviour
     {
         BuildUI();
         SetVisible(visibleByDefault);
+    }
+
+    private void OnEnable()
+    {
+        WorldBreakable.MarkerStateChanged += HandleBreakableMarkersChanged;
+    }
+
+    private void OnDisable()
+    {
+        WorldBreakable.MarkerStateChanged -= HandleBreakableMarkersChanged;
     }
 
     private void Start()
@@ -191,6 +214,9 @@ public sealed class TacticalMapHUD : MonoBehaviour
         eventRoot = CreateRect("Events", projectionRoot);
         Stretch(eventRoot);
 
+        breakableRoot = CreateRect("Breakables", projectionRoot);
+        Stretch(breakableRoot);
+
         bossMarker = CreateMarker("Boss", projectionRoot);
         bossMarker.Rect.sizeDelta = new Vector2(10f, 10f);
         SetMarkerStyle(bossMarker, BossFill, BossBorder);
@@ -237,6 +263,11 @@ public sealed class TacticalMapHUD : MonoBehaviour
             45f
         );
         eventLegendRow = CreateLegendRow("ИСПЫТАНИЕ", EventFill, Cyan);
+        breakableLegendRow = CreateLegendRow(
+            "КОНТЕЙНЕР",
+            BreakableFill,
+            BreakableBorder
+        );
         bossLegendRow = CreateLegendRow("БОСС", BossFill, BossBorder);
 
         ApplyMapLayout(MaxMapSize, MaxMapSize);
@@ -516,6 +547,34 @@ public sealed class TacticalMapHUD : MonoBehaviour
 
         SetMarkerCount(eventMarkers, eventCount);
 
+        breakableDescriptors.Clear();
+        if (hasBounds)
+        {
+            foreach (WorldBreakable breakable in
+                WorldBreakable.ActiveInstances)
+            {
+                breakable?.CollectTacticalMapMarkers(breakableDescriptors);
+            }
+        }
+
+        EnsureMarkerCount(
+            breakableMarkers,
+            breakableDescriptors.Count,
+            "Breakable",
+            breakableRoot
+        );
+
+        for (int i = 0; i < breakableDescriptors.Count; i++)
+        {
+            MarkerVisual marker = breakableMarkers[i];
+            marker.Rect.anchoredPosition = WorldToMap(
+                breakableDescriptors[i].Position
+            );
+            marker.Rect.sizeDelta = new Vector2(6f, 6f);
+            marker.Rect.localRotation = Quaternion.identity;
+            SetMarkerStyle(marker, BreakableFill, BreakableBorder);
+        }
+
         hasVisibleExit = false;
         exitMarker.Rect.gameObject.SetActive(false);
         IReadOnlyList<ProductionSectorExit> exits =
@@ -551,6 +610,18 @@ public sealed class TacticalMapHUD : MonoBehaviour
         }
 
         hasVisibleEvents = eventCount > 0;
+        hasVisibleBreakables = breakableDescriptors.Count > 0;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (lastLoggedBreakableMarkerCount != breakableDescriptors.Count)
+        {
+            lastLoggedBreakableMarkerCount = breakableDescriptors.Count;
+            Debug.Log(
+                $"[TacticalMap] breakableMarkers=" +
+                $"{breakableDescriptors.Count}",
+                this
+            );
+        }
+#endif
         hasVisibleBoss = showBoss;
         RefreshLegend();
         playerMarker?.Rect.SetAsLastSibling();
@@ -577,7 +648,7 @@ public sealed class TacticalMapHUD : MonoBehaviour
 
         bool showLegend = hasBounds && player != null ||
             hasVisibleNormalSite || hasVisibleSpecialSite || hasVisibleExit ||
-            hasVisibleEvents || hasVisibleBoss;
+            hasVisibleEvents || hasVisibleBreakables || hasVisibleBoss;
         legendRoot.gameObject.SetActive(showLegend);
 
         int rowIndex = 0;
@@ -598,6 +669,11 @@ public sealed class TacticalMapHUD : MonoBehaviour
         );
         LayoutLegendRow(exitLegendRow, hasVisibleExit, ref rowIndex);
         LayoutLegendRow(eventLegendRow, hasVisibleEvents, ref rowIndex);
+        LayoutLegendRow(
+            breakableLegendRow,
+            hasVisibleBreakables,
+            ref rowIndex
+        );
         LayoutLegendRow(bossLegendRow, hasVisibleBoss, ref rowIndex);
 
         float legendHeight = rowIndex * LegendRowHeight;
@@ -606,6 +682,11 @@ public sealed class TacticalMapHUD : MonoBehaviour
             MaxMapSize,
             currentMapHeight + (showLegend ? LegendGap + legendHeight : 0f)
         );
+    }
+
+    private void HandleBreakableMarkersChanged()
+    {
+        nextMarkerRefresh = 0f;
     }
 
     private static void LayoutLegendRow(
