@@ -22,10 +22,14 @@ namespace Subject42.Prototype.OrbitalCombatLab.Editor
         private static int reactionFieldHits;
         private static int reactionResonances;
         private static int patternCapturePhase;
+        private static float editRotationSnapshot;
+        private static float editPhaseSnapshot;
+        private static float visualDamageSnapshot;
 
         [MenuItem("Tools/Prototype/Build Orbital Combat Lab")]
         public static void BuildScene()
         {
+            BuildMiniWeaponVisualWrappers();
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             scene.name = "OrbitalCombatLab";
             GameObject bootstrap = new("ORBITAL COMBAT LAB");
@@ -40,6 +44,54 @@ namespace Subject42.Prototype.OrbitalCombatLab.Editor
         {
             BuildScene();
             EditorApplication.Exit(0);
+        }
+
+        [MenuItem("Tools/Prototype/Build Orbital Mini Weapon Visuals")]
+        public static void BuildMiniWeaponVisualWrappers()
+        {
+            const string visualRoot = "Assets/_Project/Prototype/OrbitalCombatLab/Visuals";
+            EnsureAssetFolder(visualRoot);
+            EnsureAssetFolder(visualRoot + "/Resources");
+            EnsureAssetFolder(visualRoot + "/Resources/OrbitalCombatLab");
+            BuildVisualWrapper("Assets/_Project/prefabs/miniWeapons/p_miniWeaponPistol1.prefab",
+                visualRoot + "/Resources/OrbitalCombatLab/PistolVisual.prefab", "Lab Pistol Visual Wrapper");
+            BuildVisualWrapper("Assets/_Project/prefabs/miniWeapons/p_miniWeaponLaserSward1.prefab",
+                visualRoot + "/Resources/OrbitalCombatLab/LaserSwardVisual.prefab", "Lab LaserSward Visual Wrapper");
+            BuildVisualWrapper("Assets/_Project/prefabs/miniWeapons/p_miniWeaponImpulseGun1.prefab",
+                visualRoot + "/Resources/OrbitalCombatLab/ImpulsGunVisual.prefab", "Lab ImpulsGun Visual Wrapper");
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
+        public static void BuildMiniWeaponVisualWrappersBatch()
+        {
+            BuildMiniWeaponVisualWrappers();
+            EditorApplication.Exit(0);
+        }
+
+        private static void BuildVisualWrapper(string sourcePath, string destinationPath, string wrapperName)
+        {
+            GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);
+            if (source == null) throw new InvalidOperationException("Missing mini weapon prefab: " + sourcePath);
+            GameObject wrapper = new(wrapperName);
+            GameObject visual = PrefabUtility.InstantiatePrefab(source) as GameObject;
+            if (visual == null) throw new InvalidOperationException("Could not instantiate mini weapon prefab: " + sourcePath);
+            visual.transform.SetParent(wrapper.transform, false);
+            visual.transform.localPosition = Vector3.zero;
+            visual.transform.localRotation = Quaternion.identity;
+            visual.transform.localScale = Vector3.one;
+            PrefabUtility.SaveAsPrefabAsset(wrapper, destinationPath);
+            UnityEngine.Object.DestroyImmediate(wrapper);
+        }
+
+        private static void EnsureAssetFolder(string path)
+        {
+            if (AssetDatabase.IsValidFolder(path)) return;
+            int slash = path.LastIndexOf('/');
+            string parent = path.Substring(0, slash);
+            string name = path.Substring(slash + 1);
+            EnsureAssetFolder(parent);
+            AssetDatabase.CreateFolder(parent, name);
         }
 
         public static void RunSmokeTestBatch()
@@ -86,6 +138,52 @@ namespace Subject42.Prototype.OrbitalCombatLab.Editor
             EditorApplication.update -= PatternCaptureUpdate;
             EditorApplication.update += PatternCaptureUpdate;
             EditorApplication.EnterPlaymode();
+        }
+
+        public static void CaptureMiniWeaponsQABatch()
+        {
+            BuildScene();
+            EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            previousEnterPlayModeOptionsEnabled = EditorSettings.enterPlayModeOptionsEnabled;
+            previousEnterPlayModeOptions = EditorSettings.enterPlayModeOptions;
+            EditorSettings.enterPlayModeOptionsEnabled = true;
+            EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.DisableDomainReload;
+            captureFrames = 0;
+            patternCapturePhase = 0;
+            EditorApplication.update -= MiniWeaponsCaptureUpdate;
+            EditorApplication.update += MiniWeaponsCaptureUpdate;
+            EditorApplication.EnterPlaymode();
+        }
+
+        private static void MiniWeaponsCaptureUpdate()
+        {
+            if (!EditorApplication.isPlaying) return;
+            captureFrames++;
+            OrbitalCombatLabController lab = UnityEngine.Object.FindFirstObjectByType<OrbitalCombatLabController>();
+            if (lab == null) return;
+            if (captureFrames == 70) lab.ApplyMiniWeaponsStart();
+            else if (captureFrames == 220) CaptureMiniWeapon("MINI_WEAPONS_START");
+            else if (captureFrames == 250) lab.ApplyMiniWeaponsFlower();
+            else if (captureFrames == 470) CaptureMiniWeapon("MINI_WEAPONS_FLOWER");
+            else if (captureFrames == 500) lab.ApplyMiniWeaponsFortress();
+            else if (captureFrames == 780) CaptureMiniWeapon("MINI_WEAPONS_FORTRESS");
+            else if (captureFrames == 810) lab.ApplyLinkHypnosis();
+            else if (captureFrames == 1080) CaptureMiniWeapon("LINK_HYPNOSIS");
+            else if (captureFrames >= 1120)
+            {
+                EditorApplication.update -= MiniWeaponsCaptureUpdate;
+                EditorSettings.enterPlayModeOptionsEnabled = previousEnterPlayModeOptionsEnabled;
+                EditorSettings.enterPlayModeOptions = previousEnterPlayModeOptions;
+                AssetDatabase.Refresh();
+                EditorApplication.Exit(0);
+            }
+        }
+
+        private static void CaptureMiniWeapon(string name)
+        {
+            ScreenCapture.CaptureScreenshot($"Assets/_Project/Prototype/OrbitalCombatLab/QA_{name}.png");
+            patternCapturePhase++;
+            Debug.Log($"[OrbitalCombatLab Mini Weapons QA] Captured {patternCapturePhase}/4: {name}");
         }
 
         private static void PatternCaptureUpdate()
@@ -265,10 +363,116 @@ namespace Subject42.Prototype.OrbitalCombatLab.Editor
                         Check(lab.FreeMountPhase, "DIRECTED FORTRESS enables free mount phase");
                         Check(HasCustomPhases(lab), "Directed formation groups objects into custom arcs");
                         Check(lab.Crowd.DesiredCount == 200, "DIRECTED FORTRESS runs with 200 enemies");
+                        Check(lab.Trails.Mode == OrbitalTrailMode.Off, "DIRECTED FORTRESS defaults trails OFF");
+                        lab.ApplyMiniWeaponsStart();
+                        NextPhase();
+                        break;
+                    case 11 when smokeFrames >= 180:
+                    {
+                        OrbitalMountedObject pistol = FindType(lab, OrbitalMountType.Gun);
+                        Check(lab.WeaponVisuals.Mode == OrbitalWeaponVisualMode.MiniWeapons,
+                            "MINI WEAPONS is the default visual mode");
+                        Check(pistol != null && pistol.HasMiniWeaponVisual && pistol.MiniWeaponHasAnimator &&
+                            pistol.MiniWeaponParticleSystems >= 2, "Pistol wrapper supplies recoil Animator and muzzle particles");
+                        Check(pistol != null && pistol.DisabledProductionColliders == 1 &&
+                            pistol.ProductionCollidersDisabled, "Pistol production collider is disabled only on its Lab instance");
+                        Check(pistol != null && pistol.MiniWeaponUsesLabUnlitMaterial,
+                            "Pistol sprites use the Lab unlit material and remain readable without the production light rig");
+                        Check(pistol != null && pistol.VisualActionCount > 0, "Pistol visual action is synchronized with Lab shots");
+                        Check(lab.Trails.Mode == OrbitalTrailMode.Off, "MINI WEAPONS START has trails OFF");
+                        visualDamageSnapshot = lab.Gun.Damage;
+                        for (int i = 0; i < 3; i++)
+                        {
+                            lab.ApplyWeaponVisualMode(OrbitalWeaponVisualMode.Primitives);
+                            Check(CountMiniVisuals(lab) == 0, "PRIMITIVES removes mini weapon runtime visuals");
+                            lab.ApplyWeaponVisualMode(OrbitalWeaponVisualMode.MiniWeapons);
+                        }
+                        NextPhase();
+                        break;
+                    }
+                    case 12 when smokeFrames >= 120:
+                        Check(CountMiniVisuals(lab) == CountNonLinkObjects(lab),
+                            "Repeated visual switches leave exactly one mini visual per weapon");
+                        Check(Mathf.Approximately(lab.Gun.Damage, visualDamageSnapshot),
+                            "Visual switching preserves combat settings");
+                        lab.ApplyMiniWeaponsFlower();
+                        NextPhase();
+                        break;
+                    case 13 when smokeFrames >= 240:
+                        Check(lab.Trails.Mode == OrbitalTrailMode.Off, "MINI WEAPONS FLOWER isolates animations and links without trails");
+                        Check(lab.Stats.ActiveLinks > 0 && CountType(lab, OrbitalMountType.LinkNode) == 6,
+                            "MINI WEAPONS FLOWER preserves the magenta link network");
+                        Check(CountMiniVisuals(lab) == CountNonLinkObjects(lab),
+                            "Gun, Blade and Pusher all use mini weapon visuals");
+                        lab.SelectedRing = 0;
+                        lab.RingEditMode = true;
+                        lab.PauseSelectedRingWhileEditing = true;
+                        lab.Rings[0].RotationAngle = 27f;
+                        lab.Rings[0].PhaseOffset = 10f;
+                        lab.NudgeSelectedPhase(15f);
+                        Time.timeScale = 0f;
+                        lab.NudgeSelectedPhase(45f);
+                        editRotationSnapshot = lab.Rings[0].RotationAngle;
+                        editPhaseSnapshot = lab.Rings[0].PhaseOffset;
+                        Check(Mathf.Approximately(editPhaseSnapshot, 70f),
+                            "Ring Phase Offset accepts 15° and 45° edits at timeScale 0");
+                        NextPhase();
+                        break;
+                    case 14 when smokeFrames >= 150:
+                        Check(Mathf.Approximately(lab.Rings[0].RotationAngle, editRotationSnapshot),
+                            "Selected ring rotation pauses while editing without changing speed");
+                        Check(Mathf.Approximately(lab.Rings[0].PhaseOffset, editPhaseSnapshot),
+                            "Ring Phase Offset persists independently of rotation");
+                        Time.timeScale = 1f;
+                        lab.RingEditMode = false;
+                        NextPhase();
+                        break;
+                    case 15 when smokeFrames >= 140:
+                        Check(!Mathf.Approximately(lab.Rings[0].RotationAngle, editRotationSnapshot),
+                            "Ring rotation resumes after leaving edit mode");
+                        Check(Mathf.Approximately(lab.Rings[0].PhaseOffset, editPhaseSnapshot),
+                            "Leaving edit mode does not reset Ring Phase Offset");
+                        lab.ApplyMiniWeaponsFortress();
+                        NextPhase();
+                        break;
+                    case 16 when smokeFrames >= 360:
+                    {
+                        OrbitalMountedObject blade = FindType(lab, OrbitalMountType.Blade);
+                        OrbitalMountedObject pusher = FindType(lab, OrbitalMountType.Pusher);
+                        Check(lab.RingCount == 6 && lab.MountedCount == 28 && lab.Crowd.DesiredCount == 300,
+                            "MINI WEAPONS FORTRESS runs 28 mounts against 300 enemies");
+                        Check(lab.Trails.Mode == OrbitalTrailMode.Off, "MINI WEAPONS FORTRESS has trails OFF");
+                        Check(blade != null && blade.DisabledProductionColliders == 1 &&
+                            blade.ProductionCollidersDisabled,
+                            "LaserSward production collider is disabled on the Lab instance");
+                        Check(pusher != null && pusher.DisabledProductionColliders == 2 &&
+                            pusher.ProductionCollidersDisabled && pusher.MiniWeaponParticleSystems >= 2,
+                            "ImpulsGun colliders are disabled and its wrapper exposes pulse particles");
+                        Check(blade != null && blade.MiniWeaponUsesLabUnlitMaterial &&
+                            pusher != null && pusher.MiniWeaponUsesLabUnlitMaterial,
+                            "LaserSward and ImpulsGun sprites use the Lab unlit material");
+                        Check(TotalVisualActions(lab, OrbitalMountType.Gun) > 0 &&
+                            TotalVisualActions(lab, OrbitalMountType.Blade) > 0 &&
+                            TotalVisualActions(lab, OrbitalMountType.Pusher) > 0,
+                            "All prefab feedback is driven by Lab combat actions");
+                        Check(CountMiniVisuals(lab) == CountNonLinkObjects(lab),
+                            "Fortress has no missing or duplicate mini weapon visuals");
+                        LogPerformance("MINI FORTRESS 300", lab);
+                        lab.ApplyLinkHypnosis();
+                        NextPhase();
+                        break;
+                    }
+                    case 17 when smokeFrames >= 240:
+                        Check(lab.Crowd.DesiredCount == 0 && lab.MountedCount == 16 &&
+                            CountType(lab, OrbitalMountType.LinkNode) == 16,
+                            "LINK HYPNOSIS isolates sixteen Link Nodes without enemies");
+                        Check(lab.Trails.Mode == OrbitalTrailMode.Off && lab.Stats.ActiveLinks > 0,
+                            "LINK HYPNOSIS is generated by links rather than trails");
+                        Check(CountMiniVisuals(lab) == 0, "Link Nodes remain primitive magenta cores");
                         lab.ResetTest();
                         Check(!lab.PatternCombat && lab.Trails.Mode == OrbitalTrailMode.Off &&
                             lab.Stats.ActiveLinks == 0 && lab.Stats.Resonances == 0,
-                            "Reset clears pattern state, links, trails and resonance stats");
+                            "Reset clears prefab visuals, effects, links, trails and resonance stats");
                         FinishSmoke();
                         break;
                 }
@@ -286,6 +490,34 @@ namespace Subject42.Prototype.OrbitalCombatLab.Editor
             int count = 0;
             for (int i = 0; i < lab.MountedCount; i++)
                 if (lab.MountedObjects[i] != null && lab.MountedObjects[i].Type == type) count++;
+            return count;
+        }
+
+        private static OrbitalMountedObject FindType(OrbitalCombatLabController lab, OrbitalMountType type)
+        {
+            for (int i = 0; i < lab.MountedCount; i++)
+                if (lab.MountedObjects[i] != null && lab.MountedObjects[i].Type == type)
+                    return lab.MountedObjects[i];
+            return null;
+        }
+
+        private static int CountMiniVisuals(OrbitalCombatLabController lab)
+        {
+            int count = 0;
+            for (int i = 0; i < lab.MountedCount; i++)
+                if (lab.MountedObjects[i] != null && lab.MountedObjects[i].HasMiniWeaponVisual) count++;
+            return count;
+        }
+
+        private static int CountNonLinkObjects(OrbitalCombatLabController lab) =>
+            lab.MountedCount - CountType(lab, OrbitalMountType.LinkNode);
+
+        private static int TotalVisualActions(OrbitalCombatLabController lab, OrbitalMountType type)
+        {
+            int count = 0;
+            for (int i = 0; i < lab.MountedCount; i++)
+                if (lab.MountedObjects[i] != null && lab.MountedObjects[i].Type == type)
+                    count += lab.MountedObjects[i].VisualActionCount;
             return count;
         }
 
@@ -384,7 +616,7 @@ namespace Subject42.Prototype.OrbitalCombatLab.Editor
             float gearSpeed = lab.Rings[0].Settings.RotationSpeed;
             lab.ApplyMovementPreset(OrbitalMovementPreset.Flower);
             Check(!Mathf.Approximately(gearSpeed, lab.Rings[0].Settings.RotationSpeed) &&
-                !Mathf.Approximately(lab.Rings[0].Angle, lab.Rings[1].Angle),
+                !Mathf.Approximately(lab.Rings[0].PhaseOffset, lab.Rings[1].PhaseOffset),
                 "FLOWER produces a distinct speed and phase pattern");
             float saved = lab.Rings[0].Settings.RotationSpeed;
             lab.ToggleFreeze();

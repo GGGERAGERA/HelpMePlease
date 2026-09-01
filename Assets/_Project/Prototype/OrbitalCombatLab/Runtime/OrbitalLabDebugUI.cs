@@ -5,6 +5,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
     public sealed class OrbitalLabDebugUI : MonoBehaviour
     {
         public bool MenuOpen { get; private set; } = true;
+        public int HoveredRing { get; private set; } = -1;
         public bool PointerOverMenu
         {
             get
@@ -21,21 +22,25 @@ namespace Subject42.Prototype.OrbitalCombatLab
         private OrbitalCombatLabController lab;
         private Vector2 scroll;
         private GUIStyle title, section, hint, stat;
+        private float qPressedAt = -99f;
+        private float ePressedAt = -99f;
 
         public void Configure(OrbitalCombatLabController controller) => lab = controller;
 
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.F1)) MenuOpen = !MenuOpen;
+            HoveredRing = -1;
             if (!MenuOpen || !lab.RingEditMode || lab.RingCount == 0 || lab.Drag.IsDragging) return;
-            if (Input.GetKey(KeyCode.Q)) lab.NudgeSelectedPhase(-42f * Time.unscaledDeltaTime);
-            if (Input.GetKey(KeyCode.E)) lab.NudgeSelectedPhase(42f * Time.unscaledDeltaTime);
+            HandlePhaseKey(KeyCode.Q, -1f, ref qPressedAt);
+            HandlePhaseKey(KeyCode.E, 1f, ref ePressedAt);
             OrbitalRing selected = SelectedRing();
             if (Input.GetKeyDown(KeyCode.R)) selected.Settings.Clockwise = !selected.Settings.Clockwise;
             if (Input.GetKeyDown(KeyCode.Space)) selected.Settings.Paused = !selected.Settings.Paused;
             if (Camera.main == null || PointerOverMenu) return;
             Vector2 world = MouseWorld();
             int nearest = FindNearestRing(world, .5f);
+            HoveredRing = nearest;
             if (Input.GetMouseButtonDown(0) && nearest >= 0) lab.SelectedRing = nearest;
             float wheel = Input.mouseScrollDelta.y;
             if (Mathf.Abs(wheel) > .01f && nearest >= 0)
@@ -52,6 +57,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             EnsureStyles();
             if (MenuOpen) DrawMenu(); else GUI.Box(new Rect(12f, 12f, 322f, 31f), "F1 → ORBITAL COMBAT LAB", hint);
             if (lab.ShowStats) DrawStats();
+            if (MenuOpen && lab.RingEditMode && lab.RingCount > 0) DrawRingEditOverlay();
         }
 
         private void DrawMenu()
@@ -102,8 +108,10 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 () => Button("- RING", lab.RemoveRing, "Удалить внешнее кольцо вместе с объектами."));
             lab.ShowRings = Toggle(lab.ShowRings, "Показывать кольца", "Линии всех орбит.");
             lab.ShowMounts = Toggle(lab.ShowMounts, "Показывать точки", "Свободные и занятые позиции.");
-            lab.RingEditMode = Toggle(lab.RingEditMode, "RING EDIT MODE", "Клик линии, колесо скорости, Q/E фазы, R направления, Space паузы.");
-            if (lab.RingEditMode) GUILayout.Label("Клик — выбор; колесо — скорость; Q/E — фаза; R — reverse; Space — pause.", hint);
+            lab.RingEditMode = Toggle(lab.RingEditMode, "РЕДАКТИРОВАНИЕ КОЛЕЦ", "Клик линии, колесо скорости, Q/E постоянного смещения фазы, R направления, Space паузы.");
+            lab.PauseSelectedRingWhileEditing = Toggle(lab.PauseSelectedRingWhileEditing,
+                "PAUSE SELECTED RING WHILE EDITING", "Временно останавливает выбранное кольцо, не меняя его скорость. После выхода вращение продолжается.");
+            if (lab.RingEditMode) GUILayout.Label("Наведи на линию → клик → Q/E. Shift — точно, Ctrl — 45°. Колесо — скорость, R — reverse, Space — pause.", hint);
         }
 
         private void DrawSelectedRing()
@@ -123,7 +131,9 @@ namespace Subject42.Prototype.OrbitalCombatLab
             s.RotationSpeed = Slider("Rotation Speed", s.RotationSpeed, 0f, 220f, "Угловая скорость рисунка.");
             s.Clockwise = Toggle(s.Clockwise, "Reverse Direction / Clockwise", "Разворачивает поток объектов.");
             s.Paused = Toggle(s.Paused, "Pause Ring", "Замораживает только это кольцо, сохраняя фазу.");
-            ring.Angle = Slider("Phase Angle", ring.Angle, 0f, 360f, "Поворот всего рисунка кольца.");
+            GUILayout.Label($"Ring Rotation Angle: {ring.RotationAngle:0.0}°", hint);
+            ring.PhaseOffset = Slider("Ring Phase Offset", ring.PhaseOffset, 0f, 360f,
+                "Постоянное пользовательское смещение формации. Вращающийся угол продолжает жить отдельно.");
             int mounts = Mathf.RoundToInt(Slider("Max Mounts", s.MaxMounts, 1f, 8f, "Количество креплений."));
             if (mounts != s.MaxMounts) lab.SetSelectedRingMaxMounts(mounts);
             Row(() => Button("SYNC PREV", () => lab.SynchronizeSelectedWithPrevious(true), "Копирует скорость, направление и фазу предыдущего."),
@@ -132,9 +142,10 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 () => Button("×1", () => lab.MultiplySelectedSpeed(1f), "Сохранить."),
                 () => Button("×1.5", () => lab.MultiplySelectedSpeed(1.5f), "Ускорить."),
                 () => Button("×2", () => lab.MultiplySelectedSpeed(2f), "Ускорить вдвое."));
-            Row(() => Button("PHASE -15°", () => lab.NudgeSelectedPhase(-15f), "Повернуть назад."),
-                () => Button("PHASE +15°", () => lab.NudgeSelectedPhase(15f), "Повернуть вперёд."));
-            Button("ALIGN MOUNT 0 WITH PLAYER FORWARD", lab.AlignMountZeroWithForward, "Направить нулевое крепление по последнему движению игрока.");
+            Row(() => Button("−15°", () => lab.NudgeSelectedPhase(-15f), "Уменьшить постоянный Phase Offset."),
+                () => Button("+15°", () => lab.NudgeSelectedPhase(15f), "Увеличить постоянный Phase Offset."));
+            Button("СБРОСИТЬ ФАЗУ", lab.ResetSelectedPhase, "Вернуть Ring Phase Offset к 0°, не сбрасывая текущий вращающийся угол.");
+            Button("ВЫРОВНЯТЬ ПО НАПРАВЛЕНИЮ ИГРОКА", lab.AlignMountZeroWithForward, "Сместить формацию так, чтобы Mount 0 смотрел по последнему направлению движения.");
         }
 
         private void DrawObjects()
@@ -148,6 +159,29 @@ namespace Subject42.Prototype.OrbitalCombatLab
             lab.Gun.Damage = Slider("Gun Damage", lab.Gun.Damage, 1f, 60f, "Урон projectile.");
             lab.Blade.Damage = Slider("Blade Damage", lab.Blade.Damage, 1f, 90f, "Контактный урон.");
             lab.Pusher.PushForce = Slider("Pusher Force", lab.Pusher.PushForce, 1f, 35f, "Сила раздвигания толпы.");
+            GUILayout.Label("ВИЗУАЛ ОРУЖИЯ", section);
+            Row(() => Choice("PRIMITIVES", lab.WeaponVisuals.Mode == OrbitalWeaponVisualMode.Primitives,
+                    () => lab.ApplyWeaponVisualMode(OrbitalWeaponVisualMode.Primitives), "Контрольная геометрическая версия без prefab-визуалов."),
+                () => Choice("MINI WEAPONS", lab.WeaponVisuals.Mode == OrbitalWeaponVisualMode.MiniWeapons,
+                    () => lab.ApplyWeaponVisualMode(OrbitalWeaponVisualMode.MiniWeapons), "Production miniWeapons только как дочерние визуалы; Lab сохраняет весь бой."));
+            Row(() => Choice("TANGENTIAL", lab.WeaponVisuals.BladeOrientation == OrbitalBladeOrientation.Tangential,
+                    () => lab.WeaponVisuals.BladeOrientation = OrbitalBladeOrientation.Tangential, "LaserSward режет по касательной движения."),
+                () => Choice("RADIAL", lab.WeaponVisuals.BladeOrientation == OrbitalBladeOrientation.Radial,
+                    () => lab.WeaponVisuals.BladeOrientation = OrbitalBladeOrientation.Radial, "LaserSward смотрит лезвием наружу."));
+            lab.WeaponVisuals.PistolScale = Slider("Pistol Visual Scale", lab.WeaponVisuals.PistolScale, .4f, 3f, "Масштабирует только prefab visual, не projectile или drag root.");
+            lab.WeaponVisuals.LaserSwardScale = Slider("LaserSward Visual Scale", lab.WeaponVisuals.LaserSwardScale, .4f, 3f, "Масштабирует только корпус и свет меча.");
+            lab.WeaponVisuals.ImpulsGunScale = Slider("ImpulsGun Visual Scale", lab.WeaponVisuals.ImpulsGunScale, .4f, 3f, "Масштабирует только prefab visual, не Push Radius.");
+            lab.WeaponVisuals.LinkNodeScale = Slider("Link Node Visual Scale", lab.WeaponVisuals.LinkNodeScale, .5f, 2f, "Размер пурпурного core без изменения link damage.");
+            lab.WeaponVisuals.PistolRotationOffset = Slider("Pistol Rotation Offset", lab.WeaponVisuals.PistolRotationOffset, -180f, 180f, "Поправка +X forward Pistol относительно выстрела.");
+            lab.WeaponVisuals.LaserSwardRotationOffset = Slider("LaserSward Rotation Offset", lab.WeaponVisuals.LaserSwardRotationOffset, -180f, 180f, "Поправка локального +Y лезвия.");
+            lab.WeaponVisuals.ImpulsGunRotationOffset = Slider("ImpulsGun Rotation Offset", lab.WeaponVisuals.ImpulsGunRotationOffset, -180f, 180f, "Поправка направления корпуса ImpulsGun.");
+            lab.WeaponVisuals.SortingOffset = Mathf.RoundToInt(Slider("Weapon Sorting Offset", lab.WeaponVisuals.SortingOffset, 1f, 30f, "Порядок prefab sprites поверх колец и толпы."));
+            lab.WeaponVisuals.EffectsEnabled = Toggle(lab.WeaponVisuals.EffectsEnabled, "MINI WEAPON EFFECTS", "Recoil/muzzle/pulse запускаются только синхронно с Lab-действием.");
+            lab.WeaponVisuals.EffectIntensity = Slider("Effect Intensity", lab.WeaponVisuals.EffectIntensity, 0f, 1f, "Уменьшает размер и длительность готовых particles, если они создают шум.");
+            lab.WeaponVisuals.ShowPrototypeColliders = Toggle(lab.WeaponVisuals.ShowPrototypeColliders, "Show Prototype Colliders", "Оранжевый круг показывает область Lab-логики, независимую от prefab collider.");
+            lab.WeaponVisuals.ShowMuzzlePoints = Toggle(lab.WeaponVisuals.ShowMuzzlePoints, "Show Muzzle Points", "Жёлтая точка показывает фактический origin projectile.");
+            lab.WeaponVisuals.ShowVisualForward = Toggle(lab.WeaponVisuals.ShowVisualForward, "Show Visual Forward", "Зелёный луч показывает визуальный forward.");
+            lab.WeaponVisuals.ShowMountRoots = Toggle(lab.WeaponVisuals.ShowMountRoots, "Show Mount Roots", "Показывает нейтральный корень orbital/drag/combat.");
         }
 
         private void DrawLinks()
@@ -195,6 +229,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
             lab.Trails.Length = Slider("Length", lab.Trails.Length, .15f, 2.5f, "Длина цветной дуги.");
             lab.Trails.Width = Slider("Width", lab.Trails.Width, .015f, .24f, "Толщина следа.");
             lab.Trails.Alpha = Slider("Alpha", lab.Trails.Alpha, .05f, 1f, "Прозрачность до visual profile.");
+            lab.Trails.FollowVisualProfile = Toggle(lab.Trails.FollowVisualProfile, "TRAILS FOLLOW VISUAL PROFILE",
+                "CLEAN/COMBAT выключают следы, HYPNOTIC/MAXIMUM включают длинные. Отключите для ручной настройки.");
         }
 
         private void DrawFormations()
@@ -265,6 +301,11 @@ namespace Subject42.Prototype.OrbitalCombatLab
             Row(() => Button("ORBITAL FORTRESS", lab.ApplyOrbitalFortress, "Все роли и поля колец."),
                 () => Button("HYPNOSIS", lab.ApplyHypnosis, "Кинетическая скульптура без шума."));
             Button("DIRECTED FORTRESS", lab.ApplyDirectedFortress, "Направленная боевая формация.");
+            GUILayout.Label("MINI WEAPONS / LINKS", section);
+            Row(() => Button("MINI WEAPONS START", lab.ApplyMiniWeaponsStart, "Один Pistol, одно кольцо, 50 врагов, trails OFF."),
+                () => Button("MINI WEAPONS FLOWER", lab.ApplyMiniWeaponsFlower, "Три prefab-визуала и фиолетовые связи без trail-шума."));
+            Row(() => Button("MINI WEAPONS FORTRESS", lab.ApplyMiniWeaponsFortress, "28 объектов, шесть колец и 300 врагов."),
+                () => Button("LINK HYPNOSIS", lab.ApplyLinkHypnosis, "Только 16 Link Node и линии, без врагов и trails."));
         }
 
         private void DrawVisuals()
@@ -289,13 +330,41 @@ namespace Subject42.Prototype.OrbitalCombatLab
         {
             OrbitalRing selected = lab.RingCount > 0 ? SelectedRing() : null;
             string ring = selected == null ? "—" : $"#{lab.SelectedRing + 1} · {selected.Settings.RotationSpeed:0.#}°/с · " +
-                $"{(selected.Settings.Clockwise ? "CW" : "CCW")} · фаза {selected.Angle:0}° · {selected.Settings.Shape}";
+                $"{(selected.Settings.Clockwise ? "CW" : "CCW")} · rot {selected.RotationAngle:0}° · phase {selected.PhaseOffset:0}° · {selected.Settings.Shape}";
             string text = $"FPS ~ {lab.Stats.SmoothedFps:0}\nEnemies {lab.Stats.ActiveEnemies}/{lab.Crowd.DesiredCount}\n" +
                 $"Rings {lab.RingCount} · Mounts {lab.MountedCount} · Links {lab.Stats.ActiveLinks}\n" +
                 $"Resonances {lab.Stats.Resonances} ({lab.Stats.LastResonance})\n" +
                 $"Link Hits {lab.Stats.LinkHits} · Field Hits {lab.Stats.RingFieldHits}\n" +
-                $"Movement {lab.CurrentMovementPreset}\n{ring}";
-            GUI.Box(new Rect(Screen.width - 310f, 12f, 298f, 153f), text, stat);
+                $"Movement {lab.CurrentMovementPreset} · Visual {lab.WeaponVisuals.Mode}\n{ring}";
+            GUI.Box(new Rect(Screen.width - 360f, 12f, 348f, 153f), text, stat);
+        }
+
+        private void DrawRingEditOverlay()
+        {
+            OrbitalRing ring = SelectedRing();
+            Vector2 anchorWorld = ring.GetPositionForAngle(lab.PlayerPosition, ring.FormationAngle + 35f);
+            Vector3 screen = Camera.main != null ? Camera.main.WorldToScreenPoint(anchorWorld) : Vector3.zero;
+            if (screen.z < 0f) return;
+            float x = Mathf.Clamp(screen.x - 116f, PanelRect.xMax + 8f, Screen.width - 244f);
+            float y = Mathf.Clamp(Screen.height - screen.y - 19f, 174f, Screen.height - 46f);
+            string label = $"КОЛЬЦО {lab.SelectedRing + 1} | ФАЗА {ring.PhaseOffset:0}° | Q/E";
+            GUI.Box(new Rect(x, y, 236f, 32f), label, stat);
+        }
+
+        private void HandlePhaseKey(KeyCode key, float direction, ref float pressedAt)
+        {
+            bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            bool control = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+            if (Input.GetKeyDown(key))
+            {
+                pressedAt = Time.unscaledTime;
+                float step = control ? 45f : shift ? 3f : 15f;
+                lab.NudgeSelectedPhase(direction * step);
+            }
+            if (!Input.GetKey(key)) return;
+            if (Time.unscaledTime - pressedAt < .3f) return;
+            float speed = control ? 90f : shift ? 16f : 54f;
+            lab.NudgeSelectedPhase(direction * speed * Time.unscaledDeltaTime);
         }
 
         private OrbitalRing SelectedRing() => lab.Rings[Mathf.Clamp(lab.SelectedRing, 0, lab.RingCount - 1)];

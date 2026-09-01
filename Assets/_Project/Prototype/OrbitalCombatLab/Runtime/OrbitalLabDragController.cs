@@ -27,11 +27,11 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 if (!Input.GetMouseButtonDown(0) || lab.DebugUI.PointerOverMenu) return;
                 Vector2 world = MouseWorld();
                 OrbitalMountedObject best = null;
-                float bestSqr = .65f * .65f;
+                float bestSqr = float.MaxValue;
                 for (int i = 0; i < lab.MountedCount; i++)
                 {
                     OrbitalMountedObject mounted = lab.MountedObjects[i];
-                    if (mounted == null) continue;
+                    if (mounted == null || !mounted.HitTest(world)) continue;
                     float sqr = ((Vector2)mounted.Transform.position - world).sqrMagnitude;
                     if (sqr > bestSqr) continue;
                     bestSqr = sqr;

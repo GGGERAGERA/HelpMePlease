@@ -17,11 +17,15 @@ namespace Subject42.Prototype.OrbitalCombatLab
         protected override void TickCombat(float deltaTime)
         {
             BladeSettings settings = Lab.Blade;
-            Transform.localScale = new Vector3(.28f, settings.Size, 1f);
-            float tangent = Ring.GetMountedAngle(this) + 90f;
-            Transform.rotation = Quaternion.Euler(0f, 0f, tangent);
+            SetPrimitiveVisualSize(new Vector2(.28f, settings.Size));
+            float radial = Ring.GetMountedAngle(this);
+            float orientation = Lab.WeaponVisuals.BladeOrientation == OrbitalBladeOrientation.Tangential
+                ? radial : radial - 90f;
+            Transform.rotation = Quaternion.Euler(0f, 0f, orientation);
             float radius = Mathf.Max(.32f, settings.Size * .48f);
+            SetPrototypeColliderRadius(radius);
             float now = Time.time;
+            bool visualHit = false;
             for (int i = 0; i < Lab.Crowd.DesiredCount; i++)
             {
                 OrbitalEnemyCrowd.Enemy enemy = Lab.Crowd.Enemies[i];
@@ -32,7 +36,9 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 Lab.Crowd.Damage(i, settings.Damage);
                 Lab.Stats.BladeHits++;
                 Lab.EmitPulse(enemy.Transform.position, new Color(1f, .2f, .15f, .68f), .34f, .12f);
+                visualHit = true;
             }
+            if (visualHit) TriggerVisual(OrbitalVisualAction.BladeHit);
         }
 
         public override void SetRangesVisible(bool visible)
