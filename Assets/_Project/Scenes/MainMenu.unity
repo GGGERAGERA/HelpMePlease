@@ -8238,21 +8238,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &910000000000000200
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 706591842}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3af871b26d364fdfa762af3cf12313fc, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::BunkerPlayerLoadoutController
-  controlledPlayerRoot: {fileID: 1742332385}
-  controlledPlayerVisualRoot: {fileID: 910000000000000201}
-  controlledPlayerFacingVisualRoot: {fileID: 731609809}
 --- !u!1 &727778683
 GameObject:
   m_ObjectHideFlags: 0
@@ -8398,11 +8383,6 @@ CircleCollider2D:
 --- !u!4 &731609809 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7828678464210762920, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
-  m_PrefabInstance: {fileID: 1368619038}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &910000000000000201 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4226240603113477985, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
   m_PrefabInstance: {fileID: 1368619038}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &733148233
@@ -8874,6 +8854,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerHoverOutline
   autoFindRenderers: 1
   targetRenderers: []
+  outlineMaterialFallback: {fileID: 0}
+  useBoundsOutlineFallback: 0
+  boundsOutlinePadding: 0.08
+  boundsOutlineWidth: 0.06
+  boundsOutlineColor: {r: 1, g: 1, b: 1, a: 1}
+  boundsOutlineCollider: {fileID: 0}
 --- !u!114 &796771808
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -271770,6 +271756,37 @@ Animator:
   m_CorrespondingSourceObject: {fileID: 4399900168903702634, guid: 8cb53c066268ada4d826a7eeef6d8f2b, type: 3}
   m_PrefabInstance: {fileID: 756387017}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &910000000000000200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 706591842}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3af871b26d364fdfa762af3cf12313fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerPlayerLoadoutController
+  controlledPlayerRoot: {fileID: 1742332385}
+  controlledPlayerVisualRoot: {fileID: 910000000000000201}
+  controlledPlayerFacingVisualRoot: {fileID: 731609809}
+--- !u!4 &910000000000000201 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4226240603113477985, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
+  m_PrefabInstance: {fileID: 1368619038}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &910000000000000202 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 24918005211530910, guid: 7066cc072a384514ab4425d38bded1d7, type: 3}
+  m_PrefabInstance: {fileID: 9192244014658141270}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2022291723}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c4ab1d35d4d4efc9be7e81b529f5ae2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerGateVisual
 --- !u!1001 &920000000000000001
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -273239,7 +273256,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d6cd9f593f848084ea91bdce5a1ad098, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BunkerStation
   stationType: 6
   interactionText: "\u0421\u0442\u0430\u0440\u0442"
@@ -273262,7 +273279,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 74f55e459cc4282459103c6efa92cac3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BunkerHoverOutline
   autoFindRenderers: 1
   targetRenderers: []
@@ -274668,11 +274685,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 4097959814542842298}
   m_SourcePrefab: {fileID: 100100000, guid: 7066cc072a384514ab4425d38bded1d7, type: 3}
---- !u!114 &910000000000000202 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 24918005211530910, guid: 7066cc072a384514ab4425d38bded1d7, type: 3}
-  m_PrefabInstance: {fileID: 9192244014658141270}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
