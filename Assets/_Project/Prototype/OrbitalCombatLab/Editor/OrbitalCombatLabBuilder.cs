@@ -29,7 +29,7 @@ namespace Subject42.Prototype.OrbitalCombatLab.Editor
         [MenuItem("Tools/Prototype/Build Orbital Combat Lab")]
         public static void BuildScene()
         {
-            BuildMiniWeaponVisualWrappers();
+            BuildLabVisualWrappers();
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             scene.name = "OrbitalCombatLab";
             GameObject bootstrap = new("ORBITAL COMBAT LAB");
@@ -49,10 +49,7 @@ namespace Subject42.Prototype.OrbitalCombatLab.Editor
         [MenuItem("Tools/Prototype/Build Orbital Mini Weapon Visuals")]
         public static void BuildMiniWeaponVisualWrappers()
         {
-            const string visualRoot = "Assets/_Project/Prototype/OrbitalCombatLab/Visuals";
-            EnsureAssetFolder(visualRoot);
-            EnsureAssetFolder(visualRoot + "/Resources");
-            EnsureAssetFolder(visualRoot + "/Resources/OrbitalCombatLab");
+            string visualRoot = EnsureVisualRoot();
             BuildVisualWrapper("Assets/_Project/prefabs/miniWeapons/p_miniWeaponPistol1.prefab",
                 visualRoot + "/Resources/OrbitalCombatLab/PistolVisual.prefab", "Lab Pistol Visual Wrapper");
             BuildVisualWrapper("Assets/_Project/prefabs/miniWeapons/p_miniWeaponLaserSward1.prefab",
@@ -63,10 +60,58 @@ namespace Subject42.Prototype.OrbitalCombatLab.Editor
             AssetDatabase.Refresh();
         }
 
+        [MenuItem("Tools/Prototype/Build Orbital Actor Visuals")]
+        public static void BuildActorVisualWrappers()
+        {
+            string visualRoot = EnsureVisualRoot();
+            BuildActorVisualWrapper("Assets/_Project/prefabs/players/p_Player1 Variant.prefab",
+                visualRoot + "/Resources/OrbitalCombatLab/PlayerVisual.prefab", "Lab Player Visual Wrapper");
+            BuildActorVisualWrapper("Assets/_Project/prefabs/Enemies/p_Enemy_default.prefab",
+                visualRoot + "/Resources/OrbitalCombatLab/ZombieVisual.prefab", "Lab Zombie Visual Wrapper");
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
+        public static void BuildLabVisualWrappers()
+        {
+            BuildMiniWeaponVisualWrappers();
+            BuildActorVisualWrappers();
+        }
+
         public static void BuildMiniWeaponVisualWrappersBatch()
         {
             BuildMiniWeaponVisualWrappers();
             EditorApplication.Exit(0);
+        }
+
+        public static void BuildLabVisualWrappersBatch()
+        {
+            BuildLabVisualWrappers();
+            EditorApplication.Exit(0);
+        }
+
+        private static string EnsureVisualRoot()
+        {
+            const string visualRoot = "Assets/_Project/Prototype/OrbitalCombatLab/Visuals";
+            EnsureAssetFolder(visualRoot);
+            EnsureAssetFolder(visualRoot + "/Resources");
+            EnsureAssetFolder(visualRoot + "/Resources/OrbitalCombatLab");
+            return visualRoot;
+        }
+
+        private static void BuildActorVisualWrapper(string sourcePath, string destinationPath, string wrapperName)
+        {
+            GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);
+            if (source == null) throw new InvalidOperationException("Missing actor prefab: " + sourcePath);
+            GameObject wrapper = new(wrapperName);
+            wrapper.SetActive(false);
+            GameObject visual = PrefabUtility.InstantiatePrefab(source) as GameObject;
+            if (visual == null) throw new InvalidOperationException("Could not instantiate actor prefab: " + sourcePath);
+            visual.transform.SetParent(wrapper.transform, false);
+            visual.transform.localPosition = Vector3.zero;
+            visual.transform.localRotation = Quaternion.identity;
+            PrefabUtility.SaveAsPrefabAsset(wrapper, destinationPath);
+            UnityEngine.Object.DestroyImmediate(wrapper);
         }
 
         private static void BuildVisualWrapper(string sourcePath, string destinationPath, string wrapperName)
@@ -263,6 +308,26 @@ namespace Subject42.Prototype.OrbitalCombatLab.Editor
                 switch (smokePhase)
                 {
                     case 0:
+                        Check(lab.GlobalLight != null && lab.GlobalLight.lightType ==
+                            UnityEngine.Rendering.Universal.Light2D.LightType.Global,
+                            "Lab creates its own Global Light 2D for production lit sprites");
+                        Check(lab.PlayerVisual != null && lab.PlayerVisual.IsAvailable &&
+                            lab.PlayerVisual.AnimatorCount > 0,
+                            "Production player art and animation replace the cyan marker");
+                        Check(lab.PlayerVisual != null && lab.PlayerVisual.DisabledProductionBehaviours > 0 &&
+                            lab.PlayerVisual.ProductionPhysicsDisabled,
+                            "Player prefab gameplay and physics stay disabled in the Lab");
+                        Check(lab.Crowd.UsesZombieVisuals && lab.Crowd.Enemies[0].Visual.AnimatorCount > 0,
+                            "Production animated zombie visuals replace red enemy markers");
+                        Check(lab.Crowd.UsesPhysicsBodyBlocking &&
+                            lab.Crowd.Enemies[0].Body.bodyType == RigidbodyType2D.Dynamic,
+                            "Lab-owned dynamic colliders make zombies body-block each other");
+                        Check(lab.Crowd.Enemies[0].Visual.DisabledProductionBehaviours > 0 &&
+                            lab.Crowd.Enemies[0].Visual.DisabledProductionColliders > 0 &&
+                            lab.Crowd.Enemies[0].Visual.ProductionPhysicsDisabled,
+                            "Zombie prefab gameplay, colliders and rigidbody stay disabled in the Lab");
+                        Check(lab.Crowd.Enemies[0].Visual.UsesLitSpriteMaterial,
+                            "Zombie keeps its production lit sprite material under the Lab Global Light 2D");
                         Check(lab.RingCount == 1, "START has one ring");
                         Check(lab.MountedCount == 1, "START has one mounted object");
                         Check(lab.Crowd.DesiredCount == 50, "START has 50 enemies");

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 namespace Subject42.Prototype.OrbitalCombatLab
 {
@@ -29,6 +30,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public OrbitalLabCameraRig CameraRig { get; private set; }
         public OrbitalLabDebugUI DebugUI { get; private set; }
         public OrbitalPatternCombatSystem Pattern { get; private set; }
+        public Light2D GlobalLight { get; private set; }
+        public OrbitalActorVisual PlayerVisual { get; private set; }
         public int RingCount { get; private set; }
         public int MountedCount { get; private set; }
         public int SelectedRing { get; set; }
@@ -683,13 +686,23 @@ namespace Subject42.Prototype.OrbitalCombatLab
             factory = new OrbitalPrimitiveFactory();
             WorldRoot = new GameObject("ORBITAL COMBAT LAB - Runtime World").transform;
             WorldRoot.SetParent(transform, false);
+            GameObject globalLightObject = new("Global Light 2D");
+            globalLightObject.transform.SetParent(WorldRoot, false);
+            GlobalLight = globalLightObject.AddComponent<Light2D>();
+            GlobalLight.lightType = Light2D.LightType.Global;
+            GlobalLight.intensity = 1f;
+            GlobalLight.color = Color.white;
             SpriteRenderer arena = factory.CreateSprite("Arena", WorldRoot, factory.Square,
                 new Color(.018f, .027f, .045f, 1f), new Vector2(80f, 80f), -20);
             arena.transform.position = Vector3.zero;
             BuildGrid();
-            SpriteRenderer playerRenderer = factory.CreateSprite("Player", WorldRoot, factory.Circle,
+            Transform playerRoot = new GameObject("Player").transform;
+            playerRoot.SetParent(WorldRoot, false);
+            SpriteRenderer playerRenderer = factory.CreateSprite("Fallback", playerRoot, factory.Circle,
                 new Color(.74f, 1f, 1f, 1f), new Vector2(.7f, .7f), 15);
-            player = playerRenderer.transform;
+            PlayerVisual = OrbitalActorVisual.CreatePlayer(playerRoot);
+            playerRenderer.enabled = !PlayerVisual.IsAvailable;
+            player = playerRoot;
 
             Crowd = new OrbitalEnemyCrowd(WorldRoot, factory, Stats,
                 position => EmitPulse(position, new Color(1f, .16f, .12f, .72f), .62f, .16f));
@@ -757,10 +770,11 @@ namespace Subject42.Prototype.OrbitalCombatLab
 
         private void TickPlayer(float dt)
         {
-            if (Drag != null && Drag.IsDragging) return;
             Vector2 input = new(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
             if (input.sqrMagnitude > 1f) input.Normalize();
             if (input.sqrMagnitude > .01f) LastMoveDirection = input.normalized;
+            PlayerVisual?.SetMotion(LastMoveDirection, input.sqrMagnitude > .01f);
+            if (Drag != null && Drag.IsDragging) return;
             player.position += (Vector3)(input * (3.8f * dt));
         }
 

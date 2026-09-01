@@ -35,7 +35,22 @@ mount, cooldown или combat settings. Отдельные sliders управл�
 offset, sorting и интенсивностью эффектов. Production colliders/Rigidbody и
 небезопасные runtime behaviours отключаются только на созданных Lab-инстансах;
 исходные prefab не изменяются. Спрайты инстансов используют локальный unlit
-материал Lab, потому что изолированная сцена не содержит production 2D light rig.
+материал Lab. Персонаж и враги, напротив, сохраняют production Lit-материалы:
+Lab теперь всегда создаёт собственный белый `Global Light 2D`, поэтому они не
+становятся чёрными при запуске изолированной сцены.
+
+## Actor visuals
+
+- маркер игрока заменён на `p_Player1 Variant`, используемый только как
+  анимированный дочерний визуал;
+- красные шары заменены на один production-тип зомби `p_Enemy_default`;
+- movement, damage, health, pooling и respawn по-прежнему принадлежат Lab;
+  production MonoBehaviour, Collider2D, Rigidbody2D, audio и particles на
+  runtime-инстансах отключены до их активации;
+- каждый враг получает один простой Lab-owned `CircleCollider2D` и динамический
+  `Rigidbody2D`, поэтому зомби физически body-block'ают друг друга;
+- исходные player/enemy prefab не изменяются. Lab-only wrappers лежат рядом с
+  wrappers оружия в `Visuals/Resources/OrbitalCombatLab`.
 
 ## Pattern Combat iteration
 
@@ -60,6 +75,8 @@ offset, sorting и интенсивностью эффектов. Production col
 - Меню Unity: `Tools > Prototype > Build Orbital Combat Lab` пересобирает сцену.
 - Меню Unity: `Tools > Prototype > Build Orbital Mini Weapon Visuals`
   пересобирает только Lab wrappers из актуальных production prefab.
+- Меню Unity: `Tools > Prototype > Build Orbital Actor Visuals`
+  пересобирает Lab wrappers игрока и зомби.
 
 Прототип не добавлен в основной run и не использует production progression,
 инвентарь, экономику или каталоги контента. Вся орбитальная, target, projectile,

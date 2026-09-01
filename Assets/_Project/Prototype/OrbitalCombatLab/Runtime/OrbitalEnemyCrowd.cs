@@ -10,6 +10,9 @@ namespace Subject42.Prototype.OrbitalCombatLab
         {
             public Transform Transform;
             public SpriteRenderer Renderer;
+            public OrbitalActorVisual Visual;
+            public Rigidbody2D Body;
+            public CircleCollider2D BodyCollider;
             public Vector2 PushVelocity;
             public float Hp;
             public float RespawnAt;
@@ -27,6 +30,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public float EnemySpeed = 1.8f;
         public bool DamagePlayer;
         public float VisualAlpha = 1f;
+        public bool UsesZombieVisuals { get; private set; }
+        public bool UsesPhysicsBodyBlocking { get; private set; }
 
         private readonly Transform root;
         private readonly OrbitalLabStats stats;
@@ -44,11 +49,34 @@ namespace Subject42.Prototype.OrbitalCombatLab
             root.SetParent(parent, false);
             for (int i = 0; i < Capacity; i++)
             {
-                SpriteRenderer renderer = factory.CreateSprite($"Enemy {i + 1:000}", root,
+                Transform enemyRoot = new GameObject($"Enemy {i + 1:000}").transform;
+                enemyRoot.SetParent(root, false);
+                enemyRoot.gameObject.SetActive(false);
+                Rigidbody2D body = enemyRoot.gameObject.AddComponent<Rigidbody2D>();
+                body.bodyType = RigidbodyType2D.Dynamic;
+                body.gravityScale = 0f;
+                body.constraints = RigidbodyConstraints2D.FreezeRotation;
+                body.collisionDetectionMode = CollisionDetectionMode2D.Discrete;
+                body.interpolation = RigidbodyInterpolation2D.None;
+                body.sleepMode = RigidbodySleepMode2D.NeverSleep;
+                CircleCollider2D bodyCollider = enemyRoot.gameObject.AddComponent<CircleCollider2D>();
+                bodyCollider.radius = .38f;
+                SpriteRenderer renderer = factory.CreateSprite("Fallback", enemyRoot,
                     factory.Circle, new Color(.43f, .055f, .075f, 1f), new Vector2(.34f, .34f), 8);
-                renderer.gameObject.SetActive(false);
-                Enemies[i] = new Enemy { Transform = renderer.transform, Renderer = renderer };
+                OrbitalActorVisual visual = OrbitalActorVisual.CreateZombie(enemyRoot);
+                renderer.enabled = !visual.IsAvailable;
+                Enemies[i] = new Enemy
+                {
+                    Transform = enemyRoot,
+                    Renderer = renderer,
+                    Visual = visual,
+                    Body = body,
+                    BodyCollider = bodyCollider
+                };
             }
+            UsesZombieVisuals = Enemies[0].Visual.IsAvailable;
+            UsesPhysicsBodyBlocking = Enemies[0].Body != null &&
+                Enemies[0].BodyCollider != null && Enemies[0].BodyCollider.enabled;
         }
 
         public void SetCount(int count, Vector2 newCenter, float outerRadius)
@@ -90,13 +118,15 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 enemy.PushVelocity = Vector2.MoveTowards(enemy.PushVelocity, Vector2.zero,
                     8.5f * deltaTime);
                 float speedMultiplier = now < enemy.SlowUntil ? enemy.SlowMultiplier : 1f;
-                position += (direction * EnemySpeed * speedMultiplier + enemy.PushVelocity) * deltaTime;
-                enemy.Transform.position = new Vector3(position.x, position.y, 0f);
-                Color visual = now < enemy.FlashUntil
+                enemy.Body.linearVelocity = direction * EnemySpeed * speedMultiplier + enemy.PushVelocity;
+                bool hitFlash = now < enemy.FlashUntil;
+                Color visual = hitFlash
                     ? new Color(1f, .36f, .28f, 1f)
                     : new Color(.43f, .055f, .075f, 1f);
                 visual.a = Mathf.Clamp01(VisualAlpha);
                 enemy.Renderer.color = visual;
+                enemy.Visual.SetMotion(direction, direction.sqrMagnitude > .001f);
+                enemy.Visual.SetAppearance(VisualAlpha, hitFlash);
                 if (distance < .52f && DamagePlayer && !immortal)
                     playerHp = Mathf.Max(0f, playerHp - 9f * deltaTime);
                 count++;
@@ -128,7 +158,6 @@ namespace Subject42.Prototype.OrbitalCombatLab
             if (!enemy.Active) return false;
             enemy.Hp -= amount;
             enemy.FlashUntil = Time.unscaledTime + .075f;
-            enemy.Transform.localScale = Vector3.one * .39f;
             if (enemy.Hp > 0f) return true;
             Kill(index);
             return true;
@@ -185,7 +214,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
             Enemy enemy = Enemies[index];
             deathPop?.Invoke(enemy.Transform.position);
             enemy.Active = false;
-            enemy.Renderer.gameObject.SetActive(false);
+            enemy.Body.linearVelocity = Vector2.zero;
+            enemy.Transform.gameObject.SetActive(false);
             enemy.RespawnAt = Time.unscaledTime + .28f;
             stats.Kills++;
         }
@@ -196,12 +226,15 @@ namespace Subject42.Prototype.OrbitalCombatLab
             float angle = (float)(random.NextDouble() * Mathf.PI * 2f);
             float radius = spawnRadius + (float)random.NextDouble() * 4f;
             enemy.Transform.position = center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
-            enemy.Transform.localScale = Vector3.one * .34f;
+            enemy.Transform.localScale = Vector3.one;
+            enemy.Body.position = enemy.Transform.position;
+            enemy.Body.linearVelocity = Vector2.zero;
             enemy.Hp = EnemyMaxHp;
             enemy.PushVelocity = Vector2.zero;
             enemy.LastRingHit = -99f;
+            enemy.FlashUntil = -99f;
             enemy.Active = true;
-            enemy.Renderer.gameObject.SetActive(true);
+            enemy.Transform.gameObject.SetActive(true);
             if (stagger)
             {
                 float inward = (float)random.NextDouble() * Mathf.Max(0f, spawnRadius - 2f);
@@ -214,7 +247,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
         {
             Enemy enemy = Enemies[index];
             enemy.Active = false;
-            enemy.Renderer.gameObject.SetActive(false);
+            enemy.Body.linearVelocity = Vector2.zero;
+            enemy.Transform.gameObject.SetActive(false);
         }
 
         private void Recount()
