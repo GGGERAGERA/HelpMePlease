@@ -10,6 +10,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
     public enum OrbitalShape { Circle, Ellipse, Breathing, Wobble }
     public enum OrbitalRingFieldMode { Ghost, Slow, Pulse, Cut, Conductor }
     public enum OrbitalVisualProfile { Clean, Combat, Hypnotic, Maximum }
+    public enum OrbitalWeaponVisualMode { Primitives, MiniWeapons }
+    public enum OrbitalBladeOrientation { Tangential, Radial }
 
     [System.Serializable]
     public sealed class OrbitalRingSettings
@@ -101,6 +103,28 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public float Length = .75f;
         public float Width = .08f;
         public float Alpha = .38f;
+        public bool FollowVisualProfile = true;
+    }
+
+    [System.Serializable]
+    public sealed class WeaponVisualSettings
+    {
+        public OrbitalWeaponVisualMode Mode = OrbitalWeaponVisualMode.MiniWeapons;
+        public OrbitalBladeOrientation BladeOrientation = OrbitalBladeOrientation.Tangential;
+        public float PistolScale = 2.15f;
+        public float LaserSwardScale = 1.85f;
+        public float ImpulsGunScale = 2.15f;
+        public float LinkNodeScale = 1f;
+        public float PistolRotationOffset;
+        public float LaserSwardRotationOffset;
+        public float ImpulsGunRotationOffset;
+        public int SortingOffset = 12;
+        public bool EffectsEnabled = true;
+        public float EffectIntensity = .55f;
+        public bool ShowPrototypeColliders;
+        public bool ShowMuzzlePoints;
+        public bool ShowVisualForward;
+        public bool ShowMountRoots;
     }
 
     public sealed class OrbitalLabStats

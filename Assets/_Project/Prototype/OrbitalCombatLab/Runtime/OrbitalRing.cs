@@ -8,7 +8,9 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public readonly OrbitalRingSettings Settings = new();
         public readonly OrbitalMountedObject[] Mounts = new OrbitalMountedObject[AbsoluteMaxMounts];
         public readonly int Index;
-        public float Angle;
+        public float RotationAngle;
+        public float PhaseOffset;
+        public float FormationAngle => Mathf.Repeat(RotationAngle + PhaseOffset, 360f);
         public float MaximumVisualRadius => Settings.Radius +
             (Settings.Shape == OrbitalShape.Ellipse ? Settings.Radius * Mathf.Max(0f, Settings.AspectRatio - 1f) :
             Settings.Shape == OrbitalShape.Breathing ? Mathf.Abs(Settings.BreathingAmplitude) :
@@ -45,10 +47,11 @@ namespace Subject42.Prototype.OrbitalCombatLab
         }
 
         public void Tick(Vector2 center, float deltaTime, bool showRings, bool showMounts,
-            bool dropHighlight, bool selected, int previewSlot, float ringAlpha)
+            bool dropHighlight, bool selected, bool hovered, bool editPaused,
+            int previewSlot, float ringAlpha)
         {
-            if (!Settings.Paused)
-                Angle = Mathf.Repeat(Angle + Settings.RotationSpeed *
+            if (!Settings.Paused && !editPaused)
+                RotationAngle = Mathf.Repeat(RotationAngle + Settings.RotationSpeed *
                     (Settings.Clockwise ? -1f : 1f) * deltaTime, 360f);
             line.enabled = showRings && Settings.Visible;
             if (line.enabled)
@@ -56,11 +59,13 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 UpdateLine(center);
                 bool fieldFlash = Time.unscaledTime < fieldFlashUntil;
                 Color color = dropHighlight ? new Color(.2f, 1f, .45f, .9f) :
+                    selected ? new Color(.35f, .96f, 1f, .95f) :
+                    hovered ? new Color(.62f, .9f, 1f, .76f) :
                     fieldFlash ? new Color(1f, .28f, .92f, .92f) : Settings.Color;
-                color.a *= Mathf.Clamp01(ringAlpha) * (selected ? 1.65f : 1f);
+                color.a *= Mathf.Clamp01(ringAlpha);
                 line.startColor = line.endColor = color;
-                line.startWidth = line.endWidth = (dropHighlight || selected)
-                    ? Settings.LineWidth * 2f : Settings.LineWidth;
+                line.startWidth = line.endWidth = dropHighlight || selected
+                    ? Settings.LineWidth * 2.6f : hovered ? Settings.LineWidth * 1.75f : Settings.LineWidth;
             }
 
             int activeSlots = Mathf.Clamp(Settings.MaxMounts, 1, AbsoluteMaxMounts);
@@ -82,7 +87,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public Vector2 GetSlotPosition(Vector2 center, int slot)
         {
             int count = Mathf.Clamp(Settings.MaxMounts, 1, AbsoluteMaxMounts);
-            float degrees = Angle + slot * 360f / count;
+            float degrees = FormationAngle + slot * 360f / count;
             return GetPositionForAngle(center, degrees);
         }
 
@@ -92,7 +97,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public float GetMountedAngle(OrbitalMountedObject mounted)
         {
             int count = Mathf.Clamp(Settings.MaxMounts, 1, AbsoluteMaxMounts);
-            return Mathf.Repeat(Angle + mounted.Slot * 360f / count + mounted.PhaseOffset, 360f);
+            return Mathf.Repeat(FormationAngle + mounted.Slot * 360f / count + mounted.PhaseOffset, 360f);
         }
 
         public Vector2 GetPositionForAngle(Vector2 center, float degrees)

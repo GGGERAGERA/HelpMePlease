@@ -8,8 +8,34 @@
 - ЛКМ: перетащить Gun/Blade/Pusher на зелёную подсвеченную орбиту.
 - Esc или ПКМ: отменить drag.
 - `RING EDIT MODE`: клик по линии выбирает кольцо, колесо меняет скорость,
-  `Q/E` двигают фазу, `R` разворачивает направление, `Space` ставит кольцо
-  на паузу.
+  `Q/E` меняют постоянный `Ring Phase Offset`, `R` разворачивает направление,
+  `Space` ставит кольцо на паузу. Короткий `Q/E` даёт шаг 15°, удержание после
+  0.3 с — плавное движение; `Shift` включает точный шаг 3°/медленный hold,
+  `Ctrl` — шаг 45°/быстрый hold. Те же операции доступны slider'ом, кнопками
+  ±15°, reset и align в меню. По умолчанию выбранное кольцо временно перестаёт
+  вращаться только на время редактирования.
+
+## Mini Weapons iteration
+
+По умолчанию Gun/Blade/Pusher используют production miniWeapons только как
+дочерние визуалы через Lab-only wrappers в `Visuals/Resources/OrbitalCombatLab`:
+
+- Gun → `p_miniWeaponPistol1`: +X forward, штатный `FirePoint1`, recoil Animator
+  и muzzle particles запускаются событием Lab-выстрела;
+- Blade → `p_miniWeaponLaserSward1`: локальная ось лезвия +Y, по умолчанию
+  TANGENTIAL; production collider отключён на runtime-инстансе, contact damage
+  остаётся в Lab;
+- Pusher → `p_miniWeaponImpulseGun1`: локальные particles запускаются только
+  при Lab pulse, а точный радиус всё ещё показывает pooled Lab shockwave;
+- Link Node остаётся простым пульсирующим magenta core с исходными динамическими
+  PAIRS / CHAIN / ALL NEARBY линиями.
+
+`ВИЗУАЛ ОРУЖИЯ` переключает `PRIMITIVES` / `MINI WEAPONS` в runtime без смены
+mount, cooldown или combat settings. Отдельные sliders управляют scale, rotation
+offset, sorting и интенсивностью эффектов. Production colliders/Rigidbody и
+небезопасные runtime behaviours отключаются только на созданных Lab-инстансах;
+исходные prefab не изменяются. Спрайты инстансов используют локальный unlit
+материал Lab, потому что изолированная сцена не содержит production 2D light rig.
 
 ## Pattern Combat iteration
 
@@ -22,13 +48,20 @@
   и CYCLE, а также VISUAL ONLY.
 - Movement presets: GEAR, FLOWER, WAVE, SYNC, CHAOS и обратимый FREEZE.
 - Trails: OFF, SHORT, MEDIUM, HYPNOTIC.
+- `TRAILS FOLLOW VISUAL PROFILE`: CLEAN/COMBAT → OFF, HYPNOTIC/MAXIMUM →
+  HYPNOTIC. Основные боевые пресеты стартуют с OFF; PATTERN FLOWER использует
+  короткий малопрозрачный след, обычный HYPNOSIS сохраняет длинный.
 - Formations: DISTRIBUTE, CLUSTER, FRONT ARC, ALTERNATE и FREE MOUNT PHASE.
 - Shapes: CIRCLE, ELLIPSE, BREATHING, WOBBLE.
 - Ring fields: GHOST, SLOW, PULSE, CUT, CONDUCTOR.
 - Comparison presets: PATTERN FLOWER, COMBAT WEB, ORBITAL FORTRESS,
-  HYPNOSIS и DIRECTED FORTRESS.
+  HYPNOSIS, DIRECTED FORTRESS, MINI WEAPONS START/FLOWER/FORTRESS и
+  LINK HYPNOSIS.
 - Меню Unity: `Tools > Prototype > Build Orbital Combat Lab` пересобирает сцену.
+- Меню Unity: `Tools > Prototype > Build Orbital Mini Weapon Visuals`
+  пересобирает только Lab wrappers из актуальных production prefab.
 
 Прототип не добавлен в основной run и не использует production progression,
-инвентарь, экономику или каталоги контента. Визуалы создаются один раз из
-простых runtime-примитивов; толпа, projectiles и impact pulses используют pool.
+инвентарь, экономику или каталоги контента. Вся орбитальная, target, projectile,
+damage, push, drag, cooldown, pooling и stats логика остаётся собственной логикой
+Lab; miniWeapons не получают вторую боевую ответственность.

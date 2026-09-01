@@ -13,7 +13,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
         protected override void TickCombat(float deltaTime)
         {
             float pulse = 1f + Mathf.Sin(Time.unscaledTime * 4.6f + Slot) * .12f;
-            Transform.localScale *= pulse;
+            SetPrimitiveVisualScale(pulse * Lab.WeaponVisuals.LinkNodeScale);
             Renderer.color = Color.Lerp(BaseColor, new Color(.7f, .18f, 1f, 1f),
                 Mathf.Sin(Time.unscaledTime * 3.2f) * .25f + .25f);
         }

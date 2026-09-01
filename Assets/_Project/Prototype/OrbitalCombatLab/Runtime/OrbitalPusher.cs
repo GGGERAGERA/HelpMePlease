@@ -14,6 +14,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
         {
             PusherSettings settings = Lab.Pusher;
             SetRangeCircle(settings.PushRadius);
+            SetPrototypeColliderRadius(settings.PushRadius);
+            Transform.rotation = Quaternion.Euler(0f, 0f, Ring.GetMountedAngle(this));
             if (Time.time < NextActionTime) return;
             float radiusSqr = settings.PushRadius * settings.PushRadius;
             int hits = 0;
@@ -28,6 +30,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             if (hits == 0) return;
             NextActionTime = Time.time + Mathf.Max(.05f, settings.Cooldown);
             Lab.Stats.PushHits += hits;
+            TriggerVisual(OrbitalVisualAction.PusherPulse);
             Lab.EmitPulse(Transform.position, new Color(1f, .78f, .08f, .8f),
                 settings.PushRadius * 2f, .22f);
             if (hits >= 5) Lab.ImpulseCamera(Mathf.Clamp(hits * .008f, .035f, .12f));

@@ -15,6 +15,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
         {
             GunSettings settings = Lab.Gun;
             SetRangeCircle(settings.Range);
+            SetPrototypeColliderRadius(.34f);
             Renderer.color = Time.time < flashUntil ? Color.white : BaseColor;
             int target = Lab.Crowd.FindNearest(Transform.position, settings.Range);
             if (target < 0) return;
@@ -24,20 +25,25 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
             if (Time.time < NextActionTime) return;
             NextActionTime = Time.time + 1f / Mathf.Max(.05f, settings.FireRate);
-            Lab.Projectiles.Fire(Transform.position, direction, settings.ProjectileSpeed,
+            Vector2 muzzle = MuzzlePosition;
+            direction = targetPosition - muzzle;
+            Lab.Projectiles.Fire(muzzle, direction, settings.ProjectileSpeed,
                 settings.Damage, settings.Range);
             Lab.Stats.Shots++;
             flashUntil = Time.time + .055f;
-            Lab.EmitPulse(Transform.position, new Color(.15f, .9f, 1f, .75f), .3f, .09f);
+            TriggerVisual(OrbitalVisualAction.GunFire);
+            Lab.EmitPulse(muzzle, new Color(.15f, .9f, 1f, .75f), .3f, .09f);
         }
 
         public void FireResonance(Vector2 direction, float damageMultiplier = 1.8f)
         {
             GunSettings settings = Lab.Gun;
-            Lab.Projectiles.Fire(Transform.position, direction, settings.ProjectileSpeed * 1.25f,
+            Transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
+            Lab.Projectiles.Fire(MuzzlePosition, direction, settings.ProjectileSpeed * 1.25f,
                 settings.Damage * damageMultiplier, settings.Range * 1.25f);
             Lab.Stats.Shots++;
             flashUntil = Time.time + .12f;
+            TriggerVisual(OrbitalVisualAction.GunFire);
         }
     }
 }

@@ -157,6 +157,19 @@ MonoBehaviour:
   ShowAttackRanges: 0
   ShowStats: 1
   CameraImpulse: 1
+  PatternCombat: 0
+  RingEditMode: 0
+  PauseSelectedRingWhileEditing: 1
+  FreeMountPhase: 0
+  MinimumMountSpacing: 12
+  RingAlpha: 1
+  TrailAlpha: 1
+  LinkAlpha: 1
+  ResonanceFlash: 1
+  EnemyAlpha: 1
+  ProjectileAlpha: 1
+  CurrentMovementPreset: 0
+  CurrentVisualProfile: 1
   PlayerHp: 100
 --- !u!4 &895529891
 Transform:
