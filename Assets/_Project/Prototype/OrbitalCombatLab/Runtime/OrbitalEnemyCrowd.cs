@@ -15,6 +15,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
             public float RespawnAt;
             public float FlashUntil;
             public float LastRingHit;
+            public float SlowUntil;
+            public float SlowMultiplier = 1f;
             public bool Active;
         }
 
@@ -24,6 +26,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public float EnemyMaxHp = 38f;
         public float EnemySpeed = 1.8f;
         public bool DamagePlayer;
+        public float VisualAlpha = 1f;
 
         private readonly Transform root;
         private readonly OrbitalLabStats stats;
@@ -86,11 +89,14 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 Vector2 direction = distance > .001f ? toCenter / distance : Vector2.zero;
                 enemy.PushVelocity = Vector2.MoveTowards(enemy.PushVelocity, Vector2.zero,
                     8.5f * deltaTime);
-                position += (direction * EnemySpeed + enemy.PushVelocity) * deltaTime;
+                float speedMultiplier = now < enemy.SlowUntil ? enemy.SlowMultiplier : 1f;
+                position += (direction * EnemySpeed * speedMultiplier + enemy.PushVelocity) * deltaTime;
                 enemy.Transform.position = new Vector3(position.x, position.y, 0f);
-                enemy.Renderer.color = now < enemy.FlashUntil
+                Color visual = now < enemy.FlashUntil
                     ? new Color(1f, .36f, .28f, 1f)
                     : new Color(.43f, .055f, .075f, 1f);
+                visual.a = Mathf.Clamp01(VisualAlpha);
+                enemy.Renderer.color = visual;
                 if (distance < .52f && DamagePlayer && !immortal)
                     playerHp = Mathf.Max(0f, playerHp - 9f * deltaTime);
                 count++;
@@ -137,6 +143,15 @@ namespace Subject42.Prototype.OrbitalCombatLab
             if (direction.sqrMagnitude < .0001f)
                 direction = Vector2.right;
             enemy.PushVelocity += direction.normalized * force;
+        }
+
+        public void Slow(int index, float multiplier, float duration)
+        {
+            if (index < 0 || index >= DesiredCount) return;
+            Enemy enemy = Enemies[index];
+            if (!enemy.Active) return;
+            enemy.SlowMultiplier = Mathf.Clamp(multiplier, .05f, 1f);
+            enemy.SlowUntil = Mathf.Max(enemy.SlowUntil, Time.unscaledTime + duration);
         }
 
         public void ApplyRingContact(Vector2 newCenter, OrbitalRing[] rings, int ringCount,

@@ -18,7 +18,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
         {
             BladeSettings settings = Lab.Blade;
             Transform.localScale = new Vector3(.28f, settings.Size, 1f);
-            float tangent = Ring.Angle + Slot * 360f / Mathf.Max(1, Ring.Settings.MaxMounts) + 90f;
+            float tangent = Ring.GetMountedAngle(this) + 90f;
             Transform.rotation = Quaternion.Euler(0f, 0f, tangent);
             float radius = Mathf.Max(.32f, settings.Size * .48f);
             float now = Time.time;

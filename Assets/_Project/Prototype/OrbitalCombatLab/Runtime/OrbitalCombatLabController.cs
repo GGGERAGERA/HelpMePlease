@@ -13,6 +13,9 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public readonly GunSettings Gun = new();
         public readonly BladeSettings Blade = new();
         public readonly PusherSettings Pusher = new();
+        public readonly LinkSettings Links = new();
+        public readonly ResonanceSettings Resonance = new();
+        public readonly TrailSettings Trails = new();
         public readonly OrbitalLabStats Stats = new();
         public readonly OrbitalRing[] Rings = new OrbitalRing[MaxRings];
         public readonly OrbitalMountedObject[] MountedObjects = new OrbitalMountedObject[MaxMountedObjects];
@@ -24,6 +27,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public OrbitalLabDragController Drag { get; private set; }
         public OrbitalLabCameraRig CameraRig { get; private set; }
         public OrbitalLabDebugUI DebugUI { get; private set; }
+        public OrbitalPatternCombatSystem Pattern { get; private set; }
         public int RingCount { get; private set; }
         public int MountedCount { get; private set; }
         public int SelectedRing { get; set; }
@@ -36,6 +40,20 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public bool ShowAttackRanges;
         public bool ShowStats = true;
         public bool CameraImpulse = true;
+        public bool PatternCombat;
+        public bool RingEditMode;
+        public bool FreeMountPhase;
+        public float MinimumMountSpacing = 12f;
+        public float RingAlpha = 1f;
+        public float TrailAlpha = 1f;
+        public float LinkAlpha = 1f;
+        public float ResonanceFlash = 1f;
+        public float EnemyAlpha = 1f;
+        public float ProjectileAlpha = 1f;
+        public OrbitalMovementPreset CurrentMovementPreset = OrbitalMovementPreset.Default;
+        public OrbitalVisualProfile CurrentVisualProfile = OrbitalVisualProfile.Combat;
+        public OrbitalMountedObject SelectedMounted;
+        public Vector2 LastMoveDirection { get; private set; } = Vector2.right;
         public float PlayerHp = 100f;
 
         private sealed class Pulse
@@ -55,6 +73,9 @@ namespace Subject42.Prototype.OrbitalCombatLab
         private Transform player;
         private float fpsAccumulator;
         private int fpsFrames;
+        private readonly float[] frozenSpeeds = new float[MaxRings];
+        private readonly bool[] frozenPaused = new bool[MaxRings];
+        private bool movementFrozen;
 
         private void Awake()
         {
@@ -73,7 +94,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 bool highlighted = Drag != null && Drag.CandidateRing == i;
                 int previewSlot = highlighted ? Drag.CandidateSlot : -1;
                 Rings[i].Tick(PlayerPosition, dt, ShowRings, ShowMounts,
-                    highlighted, previewSlot);
+                    highlighted, RingEditMode && SelectedRing == i, previewSlot, RingAlpha);
             }
             for (int i = 0; i < MountedCount; i++)
             {
@@ -83,6 +104,9 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 mounted.Tick(dt);
             }
 
+            Pattern.Tick(dt);
+            Crowd.VisualAlpha = EnemyAlpha;
+            Projectiles.VisualAlpha = ProjectileAlpha;
             Crowd.Tick(PlayerPosition, OuterRingRadius, dt, PlayerImmortal, ref PlayerHp);
             Crowd.ApplyRingContact(PlayerPosition, Rings, RingCount,
                 RingContactDamage, RingContactPush, dt);
@@ -98,7 +122,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             {
                 float radius = 0f;
                 for (int i = 0; i < RingCount; i++)
-                    radius = Mathf.Max(radius, Rings[i].Settings.Radius);
+                    radius = Mathf.Max(radius, Rings[i].MaximumVisualRadius);
                 return radius;
             }
         }
@@ -157,6 +181,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             for (int i = 0; i < MountedObjects.Length; i++) MountedObjects[i] = null;
             MountedCount = 0;
             Projectiles.Clear();
+            Pattern?.Reset();
         }
 
         public void FillAllRings()
@@ -227,6 +252,278 @@ namespace Subject42.Prototype.OrbitalCombatLab
 
         public void SpawnEnemies(int count) => Crowd.SetCount(count, PlayerPosition, OuterRingRadius);
 
+        public void ApplyMovementPreset(OrbitalMovementPreset preset)
+        {
+            if (preset == OrbitalMovementPreset.Freeze)
+            {
+                ToggleFreeze();
+                return;
+            }
+            movementFrozen = false;
+            CurrentMovementPreset = preset;
+            for (int i = 0; i < RingCount; i++) Rings[i].Settings.Paused = false;
+            switch (preset)
+            {
+                case OrbitalMovementPreset.Gear:
+                    for (int i = 0; i < RingCount; i++)
+                    {
+                        Rings[i].Settings.RotationSpeed = Mathf.Max(22f, 112f - i * 16f);
+                        Rings[i].Settings.Clockwise = i % 2 == 1;
+                        Rings[i].Angle = i * 12f;
+                    }
+                    break;
+                case OrbitalMovementPreset.Flower:
+                {
+                    float[] speeds = { 96f, 64f, 48f, 38.4f, 32f, 27.43f };
+                    for (int i = 0; i < RingCount; i++)
+                    {
+                        Rings[i].Settings.RotationSpeed = speeds[i];
+                        Rings[i].Settings.Clockwise = i % 2 == 1;
+                        Rings[i].Angle = i * 36f;
+                    }
+                    break;
+                }
+                case OrbitalMovementPreset.Wave:
+                    for (int i = 0; i < RingCount; i++)
+                    {
+                        Rings[i].Settings.RotationSpeed = Mathf.Max(25f, 112f - i * 15f);
+                        Rings[i].Settings.Clockwise = false;
+                        Rings[i].Angle = i * 28f;
+                    }
+                    break;
+                case OrbitalMovementPreset.Sync:
+                    for (int i = 0; i < RingCount; i++)
+                    {
+                        Rings[i].Settings.RotationSpeed = 52f;
+                        Rings[i].Settings.Clockwise = false;
+                        Rings[i].Angle = i * 31f;
+                    }
+                    break;
+                case OrbitalMovementPreset.Chaos:
+                {
+                    float[] speeds = { 113f, 71f, 47f, 83f, 29f, 61f };
+                    for (int i = 0; i < RingCount; i++)
+                    {
+                        Rings[i].Settings.RotationSpeed = speeds[i];
+                        Rings[i].Settings.Clockwise = i == 1 || i == 4 || i == 5;
+                        Rings[i].Angle = (i * 67f + 19f) % 360f;
+                    }
+                    break;
+                }
+                default:
+                    for (int i = 0; i < RingCount; i++)
+                    {
+                        Rings[i].Settings.Radius = DefaultRadii[i];
+                        Rings[i].Settings.RotationSpeed = DefaultSpeeds[i];
+                        Rings[i].Settings.Clockwise = i % 2 == 1;
+                        Rings[i].Angle = 0f;
+                    }
+                    CurrentMovementPreset = OrbitalMovementPreset.Default;
+                    break;
+            }
+        }
+
+        public void ToggleFreeze()
+        {
+            if (!movementFrozen)
+            {
+                for (int i = 0; i < RingCount; i++)
+                {
+                    frozenSpeeds[i] = Rings[i].Settings.RotationSpeed;
+                    frozenPaused[i] = Rings[i].Settings.Paused;
+                    Rings[i].Settings.RotationSpeed = 0f;
+                    Rings[i].Settings.Paused = false;
+                }
+                movementFrozen = true;
+                CurrentMovementPreset = OrbitalMovementPreset.Freeze;
+            }
+            else
+            {
+                for (int i = 0; i < RingCount; i++)
+                {
+                    Rings[i].Settings.RotationSpeed = frozenSpeeds[i];
+                    Rings[i].Settings.Paused = frozenPaused[i];
+                }
+                movementFrozen = false;
+                CurrentMovementPreset = OrbitalMovementPreset.Default;
+            }
+        }
+
+        public void SynchronizeSelectedWithPrevious(bool copyPhase)
+        {
+            if (SelectedRing <= 0 || SelectedRing >= RingCount) return;
+            OrbitalRing current = Rings[SelectedRing];
+            OrbitalRing previous = Rings[SelectedRing - 1];
+            current.Settings.RotationSpeed = previous.Settings.RotationSpeed;
+            current.Settings.Clockwise = previous.Settings.Clockwise;
+            if (copyPhase) current.Angle = previous.Angle;
+        }
+
+        public void CopyPreviousSpeed()
+        {
+            if (SelectedRing <= 0 || SelectedRing >= RingCount) return;
+            Rings[SelectedRing].Settings.RotationSpeed = Rings[SelectedRing - 1].Settings.RotationSpeed;
+        }
+
+        public void MultiplySelectedSpeed(float multiplier)
+        {
+            if (RingCount == 0) return;
+            Rings[Mathf.Clamp(SelectedRing, 0, RingCount - 1)].Settings.RotationSpeed *= multiplier;
+        }
+
+        public void NudgeSelectedPhase(float degrees)
+        {
+            if (RingCount == 0) return;
+            OrbitalRing ring = Rings[Mathf.Clamp(SelectedRing, 0, RingCount - 1)];
+            ring.Angle = Mathf.Repeat(ring.Angle + degrees, 360f);
+        }
+
+        public void AlignMountZeroWithForward()
+        {
+            if (RingCount == 0) return;
+            Rings[Mathf.Clamp(SelectedRing, 0, RingCount - 1)].Angle =
+                Mathf.Atan2(LastMoveDirection.y, LastMoveDirection.x) * Mathf.Rad2Deg;
+        }
+
+        public void DistributeSelectedEvenly() => ApplyFormationToSelected(0);
+        public void ClusterSelected() => ApplyFormationToSelected(1);
+        public void FrontArcSelected() => ApplyFormationToSelected(2);
+        public void AlternateSelected() => ApplyFormationToSelected(3);
+
+        public bool CanUsePhase(OrbitalRing ring, OrbitalMountedObject moving, float phase)
+        {
+            float proposed = BaseSlotAngle(ring, moving.Slot) + phase;
+            for (int i = 0; i < ring.Mounts.Length; i++)
+            {
+                OrbitalMountedObject other = ring.Mounts[i];
+                if (other == null || other == moving) continue;
+                float angle = BaseSlotAngle(ring, other.Slot) + other.PhaseOffset;
+                if (Mathf.Abs(Mathf.DeltaAngle(proposed, angle)) < MinimumMountSpacing) return false;
+            }
+            return true;
+        }
+
+        public float PhaseFromWorld(OrbitalRing ring, int slot, Vector2 world)
+        {
+            float desired = Mathf.Atan2(world.y - PlayerPosition.y, world.x - PlayerPosition.x) * Mathf.Rad2Deg;
+            return Mathf.DeltaAngle(BaseSlotAngle(ring, slot), desired);
+        }
+
+        public int GetRingIndex(OrbitalRing ring)
+        {
+            for (int i = 0; i < RingCount; i++) if (Rings[i] == ring) return i;
+            return -1;
+        }
+
+        public void ApplyVisualProfile(OrbitalVisualProfile profile)
+        {
+            CurrentVisualProfile = profile;
+            switch (profile)
+            {
+                case OrbitalVisualProfile.Clean:
+                    RingAlpha = .52f; TrailAlpha = .25f; LinkAlpha = .42f;
+                    ResonanceFlash = .65f; EnemyAlpha = .82f; ProjectileAlpha = .9f;
+                    break;
+                case OrbitalVisualProfile.Hypnotic:
+                    RingAlpha = .9f; TrailAlpha = 1.25f; LinkAlpha = 1.2f;
+                    ResonanceFlash = 1.15f; EnemyAlpha = .28f; ProjectileAlpha = .55f;
+                    break;
+                case OrbitalVisualProfile.Maximum:
+                    RingAlpha = 1.35f; TrailAlpha = 1.5f; LinkAlpha = 1.5f;
+                    ResonanceFlash = 1.5f; EnemyAlpha = 1f; ProjectileAlpha = 1.35f;
+                    break;
+                default:
+                    RingAlpha = .72f; TrailAlpha = .68f; LinkAlpha = .82f;
+                    ResonanceFlash = .95f; EnemyAlpha = 1f; ProjectileAlpha = 1f;
+                    break;
+            }
+        }
+
+        public void ApplyPatternFlower()
+        {
+            ResetLab(5);
+            PatternCombat = true;
+            Links.Mode = OrbitalLinkMode.Chain; Links.DealDamage = false; Links.ShowLinks = true;
+            Resonance.Enabled = true; Resonance.Mode = OrbitalResonanceMode.Cycle; Resonance.VisualOnly = true;
+            Trails.Mode = OrbitalTrailMode.Short; Trails.Length = 1.15f;
+            for (int r = 0; r < RingCount; r++) { Rings[r].Settings.MaxMounts = 4; AddAt(r, OrbitalMountType.LinkNode, 2); }
+            AddAt(0, OrbitalMountType.Gun, 1); AddAt(2, OrbitalMountType.Blade, 1);
+            ApplyMovementPreset(OrbitalMovementPreset.Flower);
+            ApplyVisualProfile(OrbitalVisualProfile.Hypnotic);
+            Crowd.SetCount(120, PlayerPosition, OuterRingRadius);
+            CameraRig.Snap(PlayerPosition, OuterRingRadius);
+        }
+
+        public void ApplyCombatWeb()
+        {
+            ResetLab(5);
+            PatternCombat = true;
+            Links.Mode = OrbitalLinkMode.Chain; Links.DealDamage = true; Links.Damage = 11f;
+            Resonance.Enabled = true; Resonance.Mode = OrbitalResonanceMode.Beam; Resonance.VisualOnly = false;
+            // The wave starts neighbouring rings 28 degrees apart. A matching tolerance makes
+            // COMBAT WEB demonstrate its resonance immediately, then naturally unlatch as the
+            // different ring speeds pull the formation out of alignment.
+            Resonance.AlignmentTolerance = 30f; Resonance.Cooldown = .9f;
+            Trails.Mode = OrbitalTrailMode.Medium;
+            for (int r = 0; r < RingCount; r++) { Rings[r].Settings.MaxMounts = 5; AddAt(r, OrbitalMountType.LinkNode, 2); }
+            AddAt(0, OrbitalMountType.Gun, 2); AddAt(2, OrbitalMountType.Blade, 2); AddAt(4, OrbitalMountType.Pusher, 1);
+            ApplyMovementPreset(OrbitalMovementPreset.Wave);
+            ApplyVisualProfile(OrbitalVisualProfile.Combat);
+            Crowd.SetCount(200, PlayerPosition, OuterRingRadius);
+            CameraRig.Snap(PlayerPosition, OuterRingRadius);
+        }
+
+        public void ApplyOrbitalFortress()
+        {
+            ResetLab(6);
+            PatternCombat = true;
+            Links.Mode = OrbitalLinkMode.AllNearby; Links.MaxDistance = 7f; Links.DealDamage = true;
+            Resonance.Enabled = true; Resonance.Mode = OrbitalResonanceMode.Cycle; Resonance.VisualOnly = false;
+            Trails.Mode = OrbitalTrailMode.Medium;
+            for (int r = 0; r < RingCount; r++)
+            {
+                Rings[r].Settings.MaxMounts = 6;
+                Rings[r].Settings.FieldMode = (OrbitalRingFieldMode)(r % 5);
+                for (int slot = 0; slot < 6; slot++)
+                    CreateMountedAt(Rings[r], slot, (OrbitalMountType)((r + slot) % 4));
+            }
+            ApplyMovementPreset(OrbitalMovementPreset.Gear);
+            ApplyVisualProfile(OrbitalVisualProfile.Combat);
+            Crowd.SetCount(300, PlayerPosition, OuterRingRadius);
+            CameraRig.Snap(PlayerPosition, OuterRingRadius);
+        }
+
+        public void ApplyHypnosis()
+        {
+            ResetLab(6);
+            PatternCombat = true;
+            Links.Mode = OrbitalLinkMode.Chain; Links.DealDamage = false; Links.ShowLinks = true;
+            Resonance.Enabled = true; Resonance.Mode = OrbitalResonanceMode.Cycle; Resonance.VisualOnly = true;
+            Trails.Mode = OrbitalTrailMode.Hypnotic; Trails.Length = 1.4f; Trails.Alpha = .62f;
+            for (int r = 0; r < RingCount; r++) { Rings[r].Settings.MaxMounts = 5; AddAt(r, OrbitalMountType.LinkNode, 2); AddAt(r, OrbitalMountType.Gun, 1); }
+            ApplyMovementPreset(OrbitalMovementPreset.Flower);
+            ApplyVisualProfile(OrbitalVisualProfile.Hypnotic);
+            Crowd.SetCount(0, PlayerPosition, OuterRingRadius);
+            CameraRig.Snap(PlayerPosition, OuterRingRadius);
+        }
+
+        public void ApplyDirectedFortress()
+        {
+            ResetLab(4);
+            PatternCombat = true; FreeMountPhase = true;
+            Trails.Mode = OrbitalTrailMode.Short;
+            for (int r = 0; r < RingCount; r++) Rings[r].Settings.MaxMounts = 6;
+            AddAt(0, OrbitalMountType.Pusher, 3);
+            AddAt(1, OrbitalMountType.Blade, 4);
+            AddAt(2, OrbitalMountType.Gun, 4);
+            AddAt(3, OrbitalMountType.LinkNode, 3);
+            ApplyMovementPreset(OrbitalMovementPreset.Sync);
+            for (int r = 0; r < RingCount; r++) { SelectedRing = r; FrontArcSelected(); }
+            ApplyVisualProfile(OrbitalVisualProfile.Combat);
+            Crowd.SetCount(200, PlayerPosition, OuterRingRadius);
+            CameraRig.Snap(PlayerPosition, OuterRingRadius);
+        }
+
         public void SetSelectedRingMaxMounts(int value)
         {
             if (RingCount == 0) return;
@@ -283,6 +580,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 position => EmitPulse(position, new Color(1f, .16f, .12f, .72f), .62f, .16f));
             Projectiles = new OrbitalProjectilePool(WorldRoot, factory, Crowd);
             BuildPulses();
+            Pattern = new OrbitalPatternCombatSystem(this, WorldRoot, factory);
 
             Drag = gameObject.AddComponent<OrbitalLabDragController>();
             Drag.Configure(this);
@@ -347,6 +645,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             if (Drag != null && Drag.IsDragging) return;
             Vector2 input = new(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
             if (input.sqrMagnitude > 1f) input.Normalize();
+            if (input.sqrMagnitude > .01f) LastMoveDirection = input.normalized;
             player.position += (Vector3)(input * (3.8f * dt));
         }
 
@@ -374,8 +673,70 @@ namespace Subject42.Prototype.OrbitalCombatLab
             player.position = Vector3.zero;
             PlayerHp = 100f;
             Stats.Reset();
+            ResetPatternDefaults();
             for (int i = 0; i < desiredRings; i++) AddRing();
             SelectedRing = 0;
+        }
+
+        private void ResetPatternDefaults()
+        {
+            PatternCombat = false;
+            RingEditMode = false;
+            FreeMountPhase = false;
+            movementFrozen = false;
+            CurrentMovementPreset = OrbitalMovementPreset.Default;
+            Links.Mode = OrbitalLinkMode.Pairs;
+            Links.Damage = 8f; Links.HitCooldown = .35f; Links.LineWidth = .055f;
+            Links.MaxDistance = 9f; Links.PulseSpeed = 3f; Links.DealDamage = true; Links.ShowLinks = true;
+            Links.LineColor = new Color(1f, .06f, .84f, 1f);
+            Resonance.Enabled = true; Resonance.AlignmentTolerance = 10f; Resonance.MinimumObjects = 2;
+            Resonance.Cooldown = 1.15f; Resonance.Damage = 16f; Resonance.Range = 9f;
+            Resonance.Mode = OrbitalResonanceMode.Cycle; Resonance.VisualOnly = false;
+            Trails.Mode = OrbitalTrailMode.Off; Trails.Length = .75f; Trails.Width = .08f; Trails.Alpha = .38f;
+            ApplyVisualProfile(OrbitalVisualProfile.Combat);
+            SelectedMounted = null;
+            Pattern?.Reset();
+        }
+
+        private void ApplyFormationToSelected(int mode)
+        {
+            if (RingCount == 0) return;
+            OrbitalRing ring = Rings[Mathf.Clamp(SelectedRing, 0, RingCount - 1)];
+            int count = 0;
+            for (int i = 0; i < ring.Mounts.Length; i++) if (ring.Mounts[i] != null) count++;
+            if (count == 0) return;
+            float forward = Mathf.Atan2(LastMoveDirection.y, LastMoveDirection.x) * Mathf.Rad2Deg;
+            int ordinal = 0;
+            for (int slot = 0; slot < ring.Mounts.Length; slot++)
+            {
+                OrbitalMountedObject mounted = ring.Mounts[slot];
+                if (mounted == null) continue;
+                float desired;
+                if (mode == 0)
+                {
+                    mounted.PhaseOffset = 0f;
+                    ordinal++;
+                    continue;
+                }
+                if (mode == 1)
+                    desired = forward + (ordinal - (count - 1) * .5f) * Mathf.Max(MinimumMountSpacing, 15f);
+                else if (mode == 2)
+                    desired = forward + Mathf.Lerp(-62f, 62f, count <= 1 ? .5f : ordinal / (float)(count - 1));
+                else
+                {
+                    int side = ordinal & 1;
+                    int row = ordinal / 2;
+                    desired = forward + (side == 0 ? 38f : 218f) + row * 18f;
+                }
+                mounted.PhaseOffset = Mathf.DeltaAngle(BaseSlotAngle(ring, slot), desired);
+                ordinal++;
+            }
+        }
+
+        private static float BaseSlotAngle(OrbitalRing ring, int slot)
+        {
+            int count = Mathf.Clamp(ring.Settings.MaxMounts, 1, OrbitalRing.AbsoluteMaxMounts);
+            return ring.Angle + slot * 360f / count;
         }
 
         private void AddAt(int ring, OrbitalMountType type, int count)
@@ -392,7 +753,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
             {
                 OrbitalMountType.Gun => new OrbitalGun(this, factory),
                 OrbitalMountType.Blade => new OrbitalBlade(this, factory),
-                _ => new OrbitalPusher(this, factory)
+                OrbitalMountType.Pusher => new OrbitalPusher(this, factory),
+                _ => new OrbitalLinkNode(this, factory)
             };
             mounted.Attach(ring, slot);
             MountedObjects[MountedCount++] = mounted;
