@@ -488,6 +488,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: fx_ImpulseGunShoot1
       objectReference: {fileID: 0}
+    - target: {fileID: 4085118022654566591, guid: 8bc89a291ec696543b099267fbda483b, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4778976971936688588, guid: 8bc89a291ec696543b099267fbda483b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
