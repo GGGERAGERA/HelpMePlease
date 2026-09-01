@@ -9,11 +9,16 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public readonly OrbitalMountedObject[] Mounts = new OrbitalMountedObject[AbsoluteMaxMounts];
         public readonly int Index;
         public float Angle;
+        public float MaximumVisualRadius => Settings.Radius +
+            (Settings.Shape == OrbitalShape.Ellipse ? Settings.Radius * Mathf.Max(0f, Settings.AspectRatio - 1f) :
+            Settings.Shape == OrbitalShape.Breathing ? Mathf.Abs(Settings.BreathingAmplitude) :
+            Settings.Shape == OrbitalShape.Wobble ? Mathf.Abs(Settings.WobbleAmplitude) : 0f);
 
         private readonly LineRenderer line;
         private readonly SpriteRenderer[] points = new SpriteRenderer[AbsoluteMaxMounts];
         private readonly Transform root;
         private readonly Color baseColor;
+        private float fieldFlashUntil;
 
         public OrbitalRing(int index, Transform parent, OrbitalPrimitiveFactory factory)
         {
@@ -40,17 +45,22 @@ namespace Subject42.Prototype.OrbitalCombatLab
         }
 
         public void Tick(Vector2 center, float deltaTime, bool showRings, bool showMounts,
-            bool highlight, int previewSlot)
+            bool dropHighlight, bool selected, int previewSlot, float ringAlpha)
         {
-            Angle = Mathf.Repeat(Angle + Settings.RotationSpeed *
-                (Settings.Clockwise ? -1f : 1f) * deltaTime, 360f);
+            if (!Settings.Paused)
+                Angle = Mathf.Repeat(Angle + Settings.RotationSpeed *
+                    (Settings.Clockwise ? -1f : 1f) * deltaTime, 360f);
             line.enabled = showRings && Settings.Visible;
             if (line.enabled)
             {
-                OrbitalPrimitiveFactory.SetCircle(line, center, Settings.Radius);
-                Color color = highlight ? new Color(.2f, 1f, .45f, .9f) : Settings.Color;
+                UpdateLine(center);
+                bool fieldFlash = Time.unscaledTime < fieldFlashUntil;
+                Color color = dropHighlight ? new Color(.2f, 1f, .45f, .9f) :
+                    fieldFlash ? new Color(1f, .28f, .92f, .92f) : Settings.Color;
+                color.a *= Mathf.Clamp01(ringAlpha) * (selected ? 1.65f : 1f);
                 line.startColor = line.endColor = color;
-                line.startWidth = line.endWidth = highlight ? Settings.LineWidth * 2f : Settings.LineWidth;
+                line.startWidth = line.endWidth = (dropHighlight || selected)
+                    ? Settings.LineWidth * 2f : Settings.LineWidth;
             }
 
             int activeSlots = Mathf.Clamp(Settings.MaxMounts, 1, AbsoluteMaxMounts);
@@ -73,8 +83,56 @@ namespace Subject42.Prototype.OrbitalCombatLab
         {
             int count = Mathf.Clamp(Settings.MaxMounts, 1, AbsoluteMaxMounts);
             float degrees = Angle + slot * 360f / count;
+            return GetPositionForAngle(center, degrees);
+        }
+
+        public Vector2 GetMountedPosition(Vector2 center, OrbitalMountedObject mounted) =>
+            GetPositionForAngle(center, GetMountedAngle(mounted));
+
+        public float GetMountedAngle(OrbitalMountedObject mounted)
+        {
+            int count = Mathf.Clamp(Settings.MaxMounts, 1, AbsoluteMaxMounts);
+            return Mathf.Repeat(Angle + mounted.Slot * 360f / count + mounted.PhaseOffset, 360f);
+        }
+
+        public Vector2 GetPositionForAngle(Vector2 center, float degrees)
+        {
             float radians = degrees * Mathf.Deg2Rad;
-            return center + new Vector2(Mathf.Cos(radians), Mathf.Sin(radians)) * Settings.Radius;
+            float radius = Settings.Radius;
+            if (Settings.Shape == OrbitalShape.Breathing)
+                radius += Mathf.Sin(Time.unscaledTime * Settings.BreathingFrequency * Mathf.PI * 2f +
+                    Settings.BreathingPhase * Mathf.Deg2Rad) * Settings.BreathingAmplitude;
+            else if (Settings.Shape == OrbitalShape.Wobble)
+                radius += Mathf.Sin(radians * Mathf.Max(1, Settings.WobbleLobes) +
+                    Time.unscaledTime * Settings.WobbleSpeed) * Settings.WobbleAmplitude;
+
+            Vector2 local = new(Mathf.Cos(radians) * radius, Mathf.Sin(radians) * radius);
+            if (Settings.Shape == OrbitalShape.Ellipse)
+            {
+                local.x *= Mathf.Max(.35f, Settings.AspectRatio);
+                local = Quaternion.Euler(0f, 0f, Settings.ShapeRotation) * local;
+            }
+            return center + local;
+        }
+
+        public float DistanceToPath(Vector2 center, Vector2 position)
+        {
+            Vector2 delta = position - center;
+            float angle = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
+            return Vector2.Distance(position, GetPositionForAngle(center, angle));
+        }
+
+        public void FlashField(float duration) =>
+            fieldFlashUntil = Mathf.Max(fieldFlashUntil, Time.unscaledTime + duration);
+
+        private void UpdateLine(Vector2 center)
+        {
+            int count = line.positionCount;
+            for (int i = 0; i < count; i++)
+            {
+                Vector2 position = GetPositionForAngle(center, i * 360f / count);
+                line.SetPosition(i, new Vector3(position.x, position.y, 0f));
+            }
         }
 
         public int FindFreeSlot(Vector2 center, Vector2 nearPosition)

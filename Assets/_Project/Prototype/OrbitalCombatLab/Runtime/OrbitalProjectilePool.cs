@@ -19,6 +19,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
         private readonly Projectile[] projectiles = new Projectile[Capacity];
         private readonly OrbitalEnemyCrowd crowd;
         private int cursor;
+        public float VisualAlpha = 1f;
 
         public OrbitalProjectilePool(Transform parent, OrbitalPrimitiveFactory factory,
             OrbitalEnemyCrowd crowd)
@@ -44,6 +45,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             projectile.Damage = damage;
             projectile.DieAt = Time.time + Mathf.Max(.25f, range / Mathf.Max(.1f, speed) + .2f);
             projectile.Active = true;
+            projectile.Renderer.color = new Color(.25f, 1f, 1f, Mathf.Clamp01(VisualAlpha));
             projectile.Renderer.gameObject.SetActive(true);
         }
 

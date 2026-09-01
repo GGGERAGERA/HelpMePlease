@@ -7,11 +7,14 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public bool IsDragging => dragged != null;
         public int CandidateRing { get; private set; } = -1;
         public int CandidateSlot { get; private set; } = -1;
+        public bool CandidateValid { get; private set; }
 
         private OrbitalCombatLabController lab;
         private OrbitalMountedObject dragged;
         private OrbitalRing originalRing;
         private int originalSlot;
+        private float originalPhase;
+        private float candidatePhase;
         private float previousTimeScale = 1f;
 
         public void Configure(OrbitalCombatLabController controller) => lab = controller;
@@ -46,6 +49,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             Vector2 mouseWorld = MouseWorld();
             dragged.SetDraggedPosition(mouseWorld);
             FindCandidate(mouseWorld);
+            dragged.SetDragValidity(CandidateValid);
 
             if (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(1))
             {
@@ -63,6 +67,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
                     originalSlot >= 0 && originalSlot < originalRing.Settings.MaxMounts &&
                     originalRing.Mounts[originalSlot] == null)
                     dragged.Attach(originalRing, originalSlot);
+                if (dragged != null && dragged.Ring == originalRing)
+                    dragged.PhaseOffset = originalPhase;
                 else if (!dragged.IsDestroyed)
                     AttachToFirstFree(dragged);
             }
@@ -77,6 +83,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
             dragged = mounted;
             originalRing = mounted.Ring;
             originalSlot = mounted.Slot;
+            originalPhase = mounted.PhaseOffset;
+            lab.SelectedMounted = mounted;
             mounted.Detach();
             mounted.IsDragging = true;
             previousTimeScale = Time.timeScale;
@@ -86,11 +94,14 @@ namespace Subject42.Prototype.OrbitalCombatLab
 
         private void EndDrag()
         {
-            if (CandidateRing >= 0 && CandidateRing < lab.RingCount && CandidateSlot >= 0)
+            if (CandidateValid && CandidateRing >= 0 && CandidateRing < lab.RingCount && CandidateSlot >= 0)
             {
                 OrbitalRing ring = lab.Rings[CandidateRing];
                 if (CandidateSlot < ring.Settings.MaxMounts && ring.Mounts[CandidateSlot] == null)
+                {
                     dragged.Attach(ring, CandidateSlot);
+                    dragged.PhaseOffset = ring == originalRing && lab.FreeMountPhase ? candidatePhase : 0f;
+                }
                 else ReturnToOriginal();
             }
             else ReturnToOriginal();
@@ -105,6 +116,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             if (originalRing != null && lab.ContainsRing(originalRing) &&
                 originalSlot < originalRing.Settings.MaxMounts && originalRing.Mounts[originalSlot] == null)
                 dragged.Attach(originalRing, originalSlot);
+            if (dragged.Ring == originalRing) dragged.PhaseOffset = originalPhase;
             else AttachToFirstFree(dragged);
         }
 
@@ -116,6 +128,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 int slot = ring.FindFreeSlot(lab.PlayerPosition, mounted.Transform.position);
                 if (slot < 0) continue;
                 mounted.Attach(ring, slot);
+                mounted.PhaseOffset = 0f;
                 return;
             }
             mounted.IsDragging = false;
@@ -124,18 +137,29 @@ namespace Subject42.Prototype.OrbitalCombatLab
         private void FindCandidate(Vector2 mouseWorld)
         {
             CandidateRing = CandidateSlot = -1;
+            CandidateValid = false;
             float bestDistance = .72f;
             for (int i = 0; i < lab.RingCount; i++)
             {
                 OrbitalRing ring = lab.Rings[i];
-                float radialDistance = Mathf.Abs(Vector2.Distance(mouseWorld, lab.PlayerPosition) -
-                    ring.Settings.Radius);
+                float radialDistance = ring.DistanceToPath(lab.PlayerPosition, mouseWorld);
                 if (radialDistance >= bestDistance) continue;
+                if (lab.FreeMountPhase && ring == originalRing)
+                {
+                    float phase = lab.PhaseFromWorld(ring, originalSlot, mouseWorld);
+                    bestDistance = radialDistance;
+                    CandidateRing = i;
+                    CandidateSlot = originalSlot;
+                    candidatePhase = phase;
+                    CandidateValid = lab.CanUsePhase(ring, dragged, phase);
+                    continue;
+                }
                 int slot = ring.FindFreeSlot(lab.PlayerPosition, mouseWorld);
                 if (slot < 0) continue;
                 bestDistance = radialDistance;
                 CandidateRing = i;
                 CandidateSlot = slot;
+                CandidateValid = true;
             }
         }
 

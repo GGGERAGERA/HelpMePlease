@@ -30,5 +30,14 @@ namespace Subject42.Prototype.OrbitalCombatLab
             flashUntil = Time.time + .055f;
             Lab.EmitPulse(Transform.position, new Color(.15f, .9f, 1f, .75f), .3f, .09f);
         }
+
+        public void FireResonance(Vector2 direction, float damageMultiplier = 1.8f)
+        {
+            GunSettings settings = Lab.Gun;
+            Lab.Projectiles.Fire(Transform.position, direction, settings.ProjectileSpeed * 1.25f,
+                settings.Damage * damageMultiplier, settings.Range * 1.25f);
+            Lab.Stats.Shots++;
+            flashUntil = Time.time + .12f;
+        }
     }
 }

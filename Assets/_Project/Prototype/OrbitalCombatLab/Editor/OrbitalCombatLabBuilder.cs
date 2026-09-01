@@ -18,6 +18,10 @@ namespace Subject42.Prototype.OrbitalCombatLab.Editor
         private static bool previousEnterPlayModeOptionsEnabled;
         private static EnterPlayModeOptions previousEnterPlayModeOptions;
         private static int captureFrames;
+        private static int reactionLinkHits;
+        private static int reactionFieldHits;
+        private static int reactionResonances;
+        private static int patternCapturePhase;
 
         [MenuItem("Tools/Prototype/Build Orbital Combat Lab")]
         public static void BuildScene()
@@ -67,6 +71,55 @@ namespace Subject42.Prototype.OrbitalCombatLab.Editor
             EditorApplication.update -= CaptureUpdate;
             EditorApplication.update += CaptureUpdate;
             EditorApplication.EnterPlaymode();
+        }
+
+        public static void CapturePatternQABatch()
+        {
+            BuildScene();
+            EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            previousEnterPlayModeOptionsEnabled = EditorSettings.enterPlayModeOptionsEnabled;
+            previousEnterPlayModeOptions = EditorSettings.enterPlayModeOptions;
+            EditorSettings.enterPlayModeOptionsEnabled = true;
+            EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.DisableDomainReload;
+            captureFrames = 0;
+            patternCapturePhase = 0;
+            EditorApplication.update -= PatternCaptureUpdate;
+            EditorApplication.update += PatternCaptureUpdate;
+            EditorApplication.EnterPlaymode();
+        }
+
+        private static void PatternCaptureUpdate()
+        {
+            if (!EditorApplication.isPlaying) return;
+            captureFrames++;
+            OrbitalCombatLabController lab = UnityEngine.Object.FindFirstObjectByType<OrbitalCombatLabController>();
+            if (lab == null) return;
+            if (captureFrames == 70) lab.ApplyPatternFlower();
+            else if (captureFrames == 240) CapturePattern("PATTERN_FLOWER");
+            else if (captureFrames == 270) lab.ApplyCombatWeb();
+            else if (captureFrames == 470) CapturePattern("COMBAT_WEB");
+            else if (captureFrames == 500) lab.ApplyOrbitalFortress();
+            else if (captureFrames == 740) CapturePattern("ORBITAL_FORTRESS");
+            else if (captureFrames == 770) lab.ApplyHypnosis();
+            else if (captureFrames == 1030) CapturePattern("HYPNOSIS");
+            else if (captureFrames == 1060) lab.ApplyDirectedFortress();
+            else if (captureFrames == 1280) CapturePattern("DIRECTED_FORTRESS");
+            else if (captureFrames >= 1320)
+            {
+                EditorApplication.update -= PatternCaptureUpdate;
+                EditorSettings.enterPlayModeOptionsEnabled = previousEnterPlayModeOptionsEnabled;
+                EditorSettings.enterPlayModeOptions = previousEnterPlayModeOptions;
+                AssetDatabase.Refresh();
+                EditorApplication.Exit(0);
+            }
+        }
+
+        private static void CapturePattern(string name)
+        {
+            ScreenCapture.CaptureScreenshot(
+                $"Assets/_Project/Prototype/OrbitalCombatLab/QA_{name}.png");
+            patternCapturePhase++;
+            Debug.Log($"[OrbitalCombatLab QA] Captured {patternCapturePhase}/5: {name}");
         }
 
         private static void CaptureUpdate()
@@ -154,6 +207,68 @@ namespace Subject42.Prototype.OrbitalCombatLab.Editor
                         Check(lab.Stats.BladeHits > 0, "Blade deals contact damage");
                         Check(lab.Stats.PushHits > 0, "Pusher displaces the crowd");
                         LogPerformance("200", lab);
+                        lab.ApplyCombatWeb();
+                        ForceLinkContact(lab);
+                        NextPhase();
+                        break;
+                    case 5 when smokeFrames >= 300:
+                        Check(lab.PatternCombat, "COMBAT WEB enables PATTERN COMBAT");
+                        Check(CountType(lab, OrbitalMountType.LinkNode) >= 8, "COMBAT WEB has Link Nodes");
+                        Check(lab.Stats.ActiveLinks > 0, "Links rebuild while nodes move");
+                        Check(lab.Stats.LinkHits > 0, "Links damage enemies with cooldown");
+                        Check(lab.Stats.Resonances > 0, "Alignment resonance triggers");
+                        TestLinkDrag(lab);
+                        reactionLinkHits = lab.Stats.LinkHits;
+                        reactionFieldHits = lab.Stats.RingFieldHits;
+                        reactionResonances = lab.Stats.Resonances;
+                        lab.PatternCombat = false;
+                        NextPhase();
+                        break;
+                    case 6 when smokeFrames >= 240:
+                        Check(lab.Stats.LinkHits == reactionLinkHits &&
+                            lab.Stats.RingFieldHits == reactionFieldHits &&
+                            lab.Stats.Resonances == reactionResonances,
+                            "PATTERN COMBAT OFF disables all new combat reactions");
+                        Check(lab.Stats.ActiveLinks > 0, "Visual links remain available for comparison");
+                        lab.ClearMounted();
+                        NextPhase();
+                        break;
+                    case 7 when smokeFrames >= 120:
+                        Check(lab.Stats.ActiveLinks == 0, "Links disappear when nodes are removed");
+                        TestMovementShapesAndFreeze(lab);
+                        lab.ApplyOrbitalFortress();
+                        NextPhase();
+                        break;
+                    case 8 when smokeFrames >= 320:
+                        Check(lab.RingCount == 6 && lab.Crowd.DesiredCount == 300,
+                            "ORBITAL FORTRESS runs with six rings and 300 enemies");
+                        Check(CountType(lab, OrbitalMountType.LinkNode) > 0 &&
+                            CountType(lab, OrbitalMountType.Gun) > 0 &&
+                            CountType(lab, OrbitalMountType.Blade) > 0 &&
+                            CountType(lab, OrbitalMountType.Pusher) > 0,
+                            "ORBITAL FORTRESS contains all four object roles");
+                        Check(HasDifferentFields(lab), "Ring Field modes remain independent");
+                        Check(lab.Stats.SmoothedFps > 0f, "300 enemy pattern FPS sampling is active");
+                        LogPerformance("FORTRESS 300", lab);
+                        lab.ApplyHypnosis();
+                        NextPhase();
+                        break;
+                    case 9 when smokeFrames >= 180:
+                        Check(lab.Crowd.DesiredCount == 0, "HYPNOSIS removes combat noise");
+                        Check(lab.Trails.Mode == OrbitalTrailMode.Hypnotic &&
+                            CountType(lab, OrbitalMountType.LinkNode) >= 12,
+                            "HYPNOSIS enables long trails and many Link Nodes");
+                        lab.ApplyDirectedFortress();
+                        NextPhase();
+                        break;
+                    case 10 when smokeFrames >= 180:
+                        Check(lab.FreeMountPhase, "DIRECTED FORTRESS enables free mount phase");
+                        Check(HasCustomPhases(lab), "Directed formation groups objects into custom arcs");
+                        Check(lab.Crowd.DesiredCount == 200, "DIRECTED FORTRESS runs with 200 enemies");
+                        lab.ResetTest();
+                        Check(!lab.PatternCombat && lab.Trails.Mode == OrbitalTrailMode.Off &&
+                            lab.Stats.ActiveLinks == 0 && lab.Stats.Resonances == 0,
+                            "Reset clears pattern state, links, trails and resonance stats");
                         FinishSmoke();
                         break;
                 }
@@ -218,6 +333,90 @@ namespace Subject42.Prototype.OrbitalCombatLab.Editor
             lab.Drag.CancelDrag();
             Check(Mathf.Approximately(Time.timeScale, 0f), "Drag preserves an existing pause");
             Time.timeScale = 1f;
+        }
+
+        private static void TestLinkDrag(OrbitalCombatLabController lab)
+        {
+            OrbitalMountedObject link = null;
+            for (int i = 0; i < lab.MountedCount; i++)
+                if (lab.MountedObjects[i].Type == OrbitalMountType.LinkNode) { link = lab.MountedObjects[i]; break; }
+            if (link == null) { Check(false, "Link Node drag target exists"); return; }
+            OrbitalRing origin = link.Ring;
+            OrbitalRing targetRing = lab.Rings[lab.RingCount - 1];
+            if (origin == targetRing) targetRing = lab.Rings[0];
+            int freeSlot = targetRing.FindFreeSlot(lab.PlayerPosition,
+                lab.PlayerPosition + Vector2.up * targetRing.Settings.Radius);
+            if (freeSlot < 0)
+            {
+                Check(false, "Link Node target ring has a free slot");
+                return;
+            }
+            MethodInfo begin = typeof(OrbitalLabDragController).GetMethod("BeginDrag",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo find = typeof(OrbitalLabDragController).GetMethod("FindCandidate",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo end = typeof(OrbitalLabDragController).GetMethod("EndDrag",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            begin?.Invoke(lab.Drag, new object[] { link });
+            find?.Invoke(lab.Drag, new object[] { targetRing.GetSlotPosition(lab.PlayerPosition, freeSlot) });
+            end?.Invoke(lab.Drag, null);
+            Check(link.Ring != null && link.Ring != origin, "Link Node drag works between rings");
+        }
+
+        private static void ForceLinkContact(OrbitalCombatLabController lab)
+        {
+            OrbitalMountedObject first = null, second = null;
+            for (int i = 0; i < lab.MountedCount; i++)
+            {
+                if (lab.MountedObjects[i].Type != OrbitalMountType.LinkNode) continue;
+                if (first == null) first = lab.MountedObjects[i]; else { second = lab.MountedObjects[i]; break; }
+            }
+            if (first != null && second != null && lab.Crowd.DesiredCount > 0)
+                lab.Crowd.Enemies[0].Transform.position =
+                    ((Vector2)first.Transform.position + (Vector2)second.Transform.position) * .5f;
+        }
+
+        private static void TestMovementShapesAndFreeze(OrbitalCombatLabController lab)
+        {
+            lab.ApplyMovementPreset(OrbitalMovementPreset.Gear);
+            Check(lab.Rings[0].Settings.Clockwise != lab.Rings[1].Settings.Clockwise,
+                "GEAR alternates ring directions");
+            float gearSpeed = lab.Rings[0].Settings.RotationSpeed;
+            lab.ApplyMovementPreset(OrbitalMovementPreset.Flower);
+            Check(!Mathf.Approximately(gearSpeed, lab.Rings[0].Settings.RotationSpeed) &&
+                !Mathf.Approximately(lab.Rings[0].Angle, lab.Rings[1].Angle),
+                "FLOWER produces a distinct speed and phase pattern");
+            float saved = lab.Rings[0].Settings.RotationSpeed;
+            lab.ToggleFreeze();
+            Check(Mathf.Approximately(lab.Rings[0].Settings.RotationSpeed, 0f), "FREEZE stops rings");
+            lab.ToggleFreeze();
+            Check(Mathf.Approximately(lab.Rings[0].Settings.RotationSpeed, saved), "FREEZE restores prior speeds");
+            OrbitalRing ring = lab.Rings[0];
+            ring.Settings.Shape = OrbitalShape.Circle;
+            Vector2 circle = ring.GetPositionForAngle(lab.PlayerPosition, 0f);
+            ring.Settings.Shape = OrbitalShape.Ellipse;
+            Vector2 ellipse = ring.GetPositionForAngle(lab.PlayerPosition, 0f);
+            Check(Vector2.Distance(circle, ellipse) > .2f, "CIRCLE and ELLIPSE paths differ");
+            ring.Settings.Shape = OrbitalShape.Breathing;
+            Check(ring.MaximumVisualRadius > ring.Settings.Radius, "BREATHING reserves stable camera margin");
+            ring.Settings.Shape = OrbitalShape.Wobble;
+            Check(ring.MaximumVisualRadius > ring.Settings.Radius, "WOBBLE reserves stable camera margin");
+            ring.Settings.Shape = OrbitalShape.Circle;
+        }
+
+        private static bool HasDifferentFields(OrbitalCombatLabController lab)
+        {
+            if (lab.RingCount < 2) return false;
+            OrbitalRingFieldMode first = lab.Rings[0].Settings.FieldMode;
+            for (int i = 1; i < lab.RingCount; i++) if (lab.Rings[i].Settings.FieldMode != first) return true;
+            return false;
+        }
+
+        private static bool HasCustomPhases(OrbitalCombatLabController lab)
+        {
+            for (int i = 0; i < lab.MountedCount; i++)
+                if (Mathf.Abs(lab.MountedObjects[i].PhaseOffset) > 1f) return true;
+            return false;
         }
 
         private static void Check(bool condition, string label)
