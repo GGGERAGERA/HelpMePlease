@@ -24,8 +24,15 @@ namespace Subject42.Prototype.OrbitalCombatLab
         private float sizeVelocity;
         private float impulse;
 
-        public void Configure(OrbitalCombatLabController lab)
+        public void Configure(OrbitalCombatLabController lab, Camera existingCamera = null,
+            bool createCamera = true)
         {
+            if (existingCamera != null)
+            {
+                cameraComponent = existingCamera;
+                return;
+            }
+            if (!createCamera) return;
             GameObject cameraObject = new("Orbital Lab Camera");
             cameraObject.tag = "MainCamera";
             cameraComponent = cameraObject.AddComponent<Camera>();

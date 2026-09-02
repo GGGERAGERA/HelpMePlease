@@ -8,7 +8,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
     /// </summary>
     public sealed class OrbitalGoldenPath : MonoBehaviour
     {
-        private enum FlowState { Running, ChoosingCard, PlacingWeapon, ChoosingRing, FlyingWeapon, DeployingRing }
+        private enum FlowState { Running, ChoosingCard, PlacingWeapon, ChoosingMount, ChoosingRing, FlyingWeapon, DeployingRing }
         private enum RewardKind { Weapon, RingUpgrade, CoreUpgrade }
 
         private readonly struct Reward
@@ -50,9 +50,11 @@ namespace Subject42.Prototype.OrbitalCombatLab
 
         public bool AdvancedLab { get; private set; }
         public bool SelectionActive => !AdvancedLab &&
-            (state == FlowState.PlacingWeapon || state == FlowState.ChoosingRing || state == FlowState.FlyingWeapon);
+            (state == FlowState.PlacingWeapon || state == FlowState.ChoosingMount ||
+             state == FlowState.ChoosingRing || state == FlowState.FlyingWeapon);
         public int HoveredRing { get; private set; } = -1;
         public int CandidateSlot { get; private set; } = -1;
+        public bool InvalidHoveredRing { get; private set; }
         public float Elapsed => elapsed;
         public int RewardIndex => rewardIndex;
         public bool FixedTest => fixedTest;
@@ -87,6 +89,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
         private Vector2 flightTarget;
         private int flightRing;
         private int flightSlot;
+        private int placementRing = -1;
         private float elapsed;
         private float progressionSpeed = 1f;
         private int nextMilestoneIndex;
@@ -95,6 +98,10 @@ namespace Subject42.Prototype.OrbitalCombatLab
         private bool fixedTest = true;
         private bool menuOpen;
         private bool paused;
+        private bool diagnosticsEnabled;
+        private bool qaManualMode;
+        private string lastAttachResult = "—";
+        private string lastFailureReason = "—";
         private string banner = "";
         private float bannerUntil;
         private GUIStyle hudStyle;
@@ -110,6 +117,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             AdvancedLab = false;
             fixedTest = true;
             progressionSpeed = 1f;
+            qaManualMode = false;
             menuOpen = false;
             ApplyBeginning();
         }
@@ -120,7 +128,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             lab.ApplyStartState();
             ConfigureGoldenPresentation();
             lab.Crowd.SetCount(40, lab.PlayerPosition, lab.OuterRingRadius);
-            lab.Rings[0].Settings.MaxMounts = 4;
+            lab.Rings[0].Settings.MaxMounts = 3;
             elapsed = 0f;
             rewardIndex = 0;
             nextMilestoneIndex = 0;
@@ -134,6 +142,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             lab.ApplyStartState();
             ConfigureGoldenPresentation();
             lab.SetRingCount(6);
+            ResetGoldenMountCapacityToBase();
             PrepareAllRings();
             lab.ClearMounted();
             AddBaselineGuns();
@@ -159,6 +168,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             lab.ApplyStartState();
             ConfigureGoldenPresentation();
             lab.SetRingCount(12);
+            ResetGoldenMountCapacityToBase();
             PrepareAllRings();
             lab.ClearMounted();
             AddBaselineGuns();
@@ -197,9 +207,22 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 ShowBanner("QA FRAME SAVED", 1.2f);
             }
             if (Input.GetKeyDown(KeyCode.F7) && !AdvancedLab) ApplyFinale();
+#if UNITY_EDITOR
+            if (Input.GetKeyDown(KeyCode.F2) && !AdvancedLab && state == FlowState.Running)
+                OfferQaCards(Blade(), Gun(), Pusher());
+            if (Input.GetKeyDown(KeyCode.F3) && !AdvancedLab && state == FlowState.Running)
+                OfferQaCards(ExtraMount(), Overdrive(), Amplifier());
+            if (Input.GetKeyDown(KeyCode.F4) && !AdvancedLab && state == FlowState.Running)
+            {
+                progressionSpeed = progressionSpeed > 1.5f ? 1f : 2f;
+                ShowBanner(progressionSpeed > 1.5f ? "QA · ×2 PROGRESS" : "QA · NORMAL", 1.4f);
+            }
+            if (Input.GetKeyDown(KeyCode.F6) && !AdvancedLab) BeginFullRun();
+#endif
             if (Input.GetKeyDown(KeyCode.F1) && !AdvancedLab && state == FlowState.Running)
                 menuOpen = !menuOpen;
             HoveredRing = CandidateSlot = -1;
+            InvalidHoveredRing = false;
             if (AdvancedLab) return;
 
             if (state == FlowState.ChoosingCard)
@@ -210,10 +233,12 @@ namespace Subject42.Prototype.OrbitalCombatLab
             }
 
             if (state == FlowState.PlacingWeapon) { TickWeaponPlacement(); return; }
+            if (state == FlowState.ChoosingMount) { TickMountChoice(); return; }
             if (state == FlowState.ChoosingRing) { TickRingChoice(); return; }
             if (state == FlowState.FlyingWeapon) { TickWeaponFlight(); return; }
             if (state == FlowState.DeployingRing) { TickRingDeployment(); return; }
             if (state == FlowState.ChoosingCard || paused) return;
+            if (qaManualMode) return;
 
             elapsed += Time.unscaledDeltaTime * progressionSpeed;
             if (nextMilestoneIndex < RingMilestones.Length && elapsed >= RingMilestones[nextMilestoneIndex])
@@ -232,13 +257,17 @@ namespace Subject42.Prototype.OrbitalCombatLab
             if (AdvancedLab)
             {
                 if (GUI.Button(AdvancedReturnRect, "← ВЕРНУТЬСЯ В GOLDEN PATH")) ReturnToGoldenPath();
+                if (GUI.Button(new Rect(AdvancedReturnRect.x, 54f, AdvancedReturnRect.width, 30f),
+                    diagnosticsEnabled ? "GOLDEN DIAGNOSTICS: ON" : "GOLDEN DIAGNOSTICS: OFF"))
+                    diagnosticsEnabled = !diagnosticsEnabled;
+                if (diagnosticsEnabled) DrawAdvancedDiagnostics();
                 return;
             }
 
             DrawHud();
             if (menuOpen) DrawMenu();
             if (state == FlowState.ChoosingCard) DrawCards();
-            if (state == FlowState.PlacingWeapon || state == FlowState.ChoosingRing)
+            if (state == FlowState.PlacingWeapon || state == FlowState.ChoosingMount || state == FlowState.ChoosingRing)
                 DrawPlacementPrompt();
             if (Time.unscaledTime < bannerUntil)
                 GUI.Box(new Rect(Screen.width * .5f - 300f, 16f, 600f, 48f), banner, centerStyle);
@@ -303,16 +332,47 @@ namespace Subject42.Prototype.OrbitalCombatLab
 
         private void DrawPlacementPrompt()
         {
-            int ringIndex = HoveredRing >= 0 ? HoveredRing : Mathf.Clamp(lab.SelectedRing, 0, lab.RingCount - 1);
+            int ringIndex = placementRing >= 0 ? placementRing :
+                HoveredRing >= 0 ? HoveredRing : Mathf.Clamp(lab.SelectedRing, 0, lab.RingCount - 1);
             OrbitalRing ring = lab.Rings[ringIndex];
             string roles = RingRoles(ring);
-            string details = state == FlowState.ChoosingRing
-                ? lab.DescribeRingUpgrade(ringIndex, selectedReward.RingUpgrade)
-                : CandidateSlot >= 0 ? $"Свободная точка {CandidateSlot + 1}" : "Наведите на свободную точку кольца";
+            string details;
+            if (state == FlowState.ChoosingRing)
+                details = lab.DescribeRingUpgrade(ringIndex, selectedReward.RingUpgrade);
+            else if (state == FlowState.PlacingWeapon)
+                details = InvalidHoveredRing ? "НЕТ СВОБОДНЫХ КРЕПЛЕНИЙ" :
+                    HoveredRing >= 0 ? $"Свободно креплений: {FreeMountCount(ring)} · ЛКМ — выбрать кольцо" :
+                    "Шаг 1/2 · наведите на кольцо";
+            else
+                details = CandidateSlot >= 0 ? $"Шаг 2/2 · крепление {CandidateSlot + 1}" :
+                    "Шаг 2/2 · наведите на свободную точку";
             if (state == FlowState.ChoosingRing && selectedReward.RingUpgrade == OrbitalRingUpgradeType.Amplifier)
                 details += $" · МОЩНОСТЬ {Roman(ring.DamageUpgradeLevel)} → {Roman(ring.DamageUpgradeLevel + 1)}";
-            string text = $"{selectedReward.Title}\nКОЛЬЦО {ringIndex + 1} · {roles}\n{details}\nЛКМ — установить · 1–9/0/-/= — кольцо · ПКМ/Esc — отменить";
+            string controls = state == FlowState.ChoosingMount
+                ? "ЛКМ — установить · Enter — первое свободное · цифры — другое кольцо"
+                : "ЛКМ/1–9/0/-/= — выбрать кольцо · ПКМ/Esc — отменить";
+            string text = $"{selectedReward.Title}\nКОЛЬЦО {ringIndex + 1} · {roles}\n{details}\n{controls}";
             GUI.Box(new Rect(Screen.width * .5f - 330f, Screen.height - 118f, 660f, 102f), text, centerStyle);
+        }
+
+        private void DrawAdvancedDiagnostics()
+        {
+            int ringIndex = placementRing >= 0 ? placementRing :
+                Mathf.Clamp(HoveredRing >= 0 ? HoveredRing : lab.SelectedRing, 0, lab.RingCount - 1);
+            OrbitalRing ring = lab.Rings[ringIndex];
+            string pending = pendingWeapon == null ? "—" : pendingWeapon.Type.ToString();
+            string text =
+                $"GOLDEN PATH DIAGNOSTICS\n" +
+                $"Reward State: {state}\n" +
+                $"Selected Ring: {lab.SelectedRing + 1}\n" +
+                $"Hovered Ring: {(HoveredRing >= 0 ? (HoveredRing + 1).ToString() : "—")}\n" +
+                $"Selected Mount: {(CandidateSlot >= 0 ? (CandidateSlot + 1).ToString() : "—")}\n" +
+                $"Free Mount Count: {FreeMountCount(ring)} / {ring.Settings.MaxMounts}\n" +
+                $"Pending Weapon: {pending}\n" +
+                $"Flight State: {(state == FlowState.FlyingWeapon ? $"{flightRing + 1}:{flightSlot + 1}" : "—")}\n" +
+                $"Attach Result: {lastAttachResult}\n" +
+                $"Failure: {lastFailureReason}";
+            GUI.Box(new Rect(Screen.width - 422f, 92f, 410f, 238f), text, hudStyle);
         }
 
         private void OfferNextReward()
@@ -326,13 +386,34 @@ namespace Subject42.Prototype.OrbitalCombatLab
             menuOpen = false;
         }
 
+#if UNITY_EDITOR
+        private void OfferQaCards(Reward first, Reward second, Reward third)
+        {
+            qaManualMode = true;
+            SetCards(first, second, third);
+            state = FlowState.ChoosingCard;
+            SlowForChoice();
+            menuOpen = false;
+        }
+#endif
+
         private void SelectReward(Reward reward)
         {
             selectedReward = reward;
+            Debug.Log($"[OrbitalGoldenPath] Reward selected: {reward.Title} ({reward.Kind})");
+            lastFailureReason = "—";
+            lastAttachResult = "—";
+            placementRing = -1;
             if (reward.Kind == RewardKind.Weapon)
             {
+                lab.Drag.CancelDrag();
                 pendingWeapon = lab.CreateGoldenPendingMounted(reward.Weapon);
-                if (pendingWeapon == null) { FinishChoice("Нет свободного места для объекта."); return; }
+                if (pendingWeapon == null)
+                {
+                    lastFailureReason = "Не удалось создать preview оружия";
+                    FinishChoice("Не удалось создать оружие.");
+                    return;
+                }
                 state = FlowState.PlacingWeapon;
                 lab.ShowMounts = true;
                 return;
@@ -353,19 +434,68 @@ namespace Subject42.Prototype.OrbitalCombatLab
             if (pendingWeapon == null || Camera.main == null) { FinishChoice("РАЗМЕЩЕНИЕ ОТМЕНЕНО"); return; }
             if (TryKeyboardRing(out int keyboardRing))
             {
-                int slot = FirstFreeSlot(lab.Rings[keyboardRing]);
-                if (slot >= 0) BeginWeaponFlight(keyboardRing, slot);
+                SelectPlacementRing(keyboardRing);
                 return;
             }
             Vector2 world = MouseWorld();
             pendingWeapon.SetDraggedPosition(world);
-            FindWeaponCandidate(world);
-            pendingWeapon.SetDragValidity(HoveredRing >= 0 && CandidateSlot >= 0);
-            if (selectedReward.Weapon == OrbitalMountType.LinkNode && HoveredRing >= 0)
-                lab.Pattern.ShowGoldenLinkPreview(lab.Rings[HoveredRing].GetSlotPosition(lab.PlayerPosition, CandidateSlot));
+            HoveredRing = FindNearestRing(world, Mathf.Max(.62f, lab.OuterRingRadius * .028f));
+            if (HoveredRing >= 0)
+            {
+                lab.SelectedRing = HoveredRing;
+                InvalidHoveredRing = FreeMountCount(lab.Rings[HoveredRing]) == 0;
+            }
+            pendingWeapon.SetDragValidity(HoveredRing >= 0 && !InvalidHoveredRing);
+            lab.Pattern.ClearGoldenLinkPreview();
+            if (PointerOverUi || HoveredRing < 0 || !Input.GetMouseButtonDown(0)) return;
+            SelectPlacementRing(HoveredRing);
+        }
+
+        private void TickMountChoice()
+        {
+            if (CancelPressed()) { CancelPendingWeapon(); FinishChoice("НАГРАДА ОТМЕНЕНА"); return; }
+            if (pendingWeapon == null || placementRing < 0 || placementRing >= lab.RingCount)
+            {
+                lastFailureReason = "Потеряно выбранное кольцо или preview";
+                state = FlowState.PlacingWeapon;
+                placementRing = -1;
+                return;
+            }
+            if (TryKeyboardRing(out int keyboardRing))
+            {
+                SelectPlacementRing(keyboardRing);
+                return;
+            }
+
+            OrbitalRing ring = lab.Rings[placementRing];
+            HoveredRing = placementRing;
+            lab.SelectedRing = placementRing;
+            Vector2 world = MouseWorld();
+            pendingWeapon.SetDraggedPosition(world);
+            CandidateSlot = FindFreeMountNear(ring, world);
+            pendingWeapon.SetDragValidity(CandidateSlot >= 0);
+            if (selectedReward.Weapon == OrbitalMountType.LinkNode && CandidateSlot >= 0)
+                lab.Pattern.ShowGoldenLinkPreview(ring.GetSlotPosition(lab.PlayerPosition, CandidateSlot));
             else lab.Pattern.ClearGoldenLinkPreview();
-            if (PointerOverUi || HoveredRing < 0 || CandidateSlot < 0 || !Input.GetMouseButtonDown(0)) return;
-            BeginWeaponFlight(HoveredRing, CandidateSlot);
+
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+                CandidateSlot = FirstFreeSlot(ring);
+            if (CandidateSlot < 0)
+            {
+                if (Input.GetMouseButtonDown(0))
+                {
+                    lastFailureReason = FreeMountCount(ring) == 0
+                        ? "НЕТ СВОБОДНЫХ КРЕПЛЕНИЙ"
+                        : "Клик не попал в свободное крепление";
+                    InvalidHoveredRing = true;
+                    ring.FlashField(.35f);
+                    ShowBanner(lastFailureReason, 1.8f);
+                }
+                return;
+            }
+            if (!Input.GetMouseButtonDown(0) && !Input.GetKeyDown(KeyCode.Return) &&
+                !Input.GetKeyDown(KeyCode.KeypadEnter)) return;
+            BeginWeaponFlight(placementRing, CandidateSlot);
         }
 
         private void TickWeaponFlight()
@@ -376,14 +506,25 @@ namespace Subject42.Prototype.OrbitalCombatLab
             pendingWeapon.SetDraggedPosition(Vector2.Lerp(lab.PlayerPosition, flightTarget, eased));
             pendingWeapon.SetDragValidity(true);
             if (t < 1f) return;
-            if (!lab.AttachGoldenPendingMounted(pendingWeapon, flightRing, flightSlot))
+            if (!lab.AttachGoldenPendingMounted(pendingWeapon, flightRing, flightSlot, out string failureReason))
             {
-                CancelPendingWeapon();
-                FinishChoice("ТОЧКА УЖЕ ЗАНЯТА");
+                lastAttachResult = "FAILED";
+                lastFailureReason = failureReason;
+                pendingWeapon.SetDraggedPosition(lab.PlayerPosition);
+                pendingWeapon.SetDragValidity(false);
+                placementRing = -1;
+                state = FlowState.PlacingWeapon;
+                SlowForChoice();
+                ShowBanner(failureReason, 2.2f);
+                Debug.LogWarning($"[OrbitalGoldenPath] Attach failed: {failureReason}");
                 return;
             }
+            lastAttachResult = $"OK · кольцо {flightRing + 1}, крепление {flightSlot + 1}";
+            lastFailureReason = "—";
             string title = selectedReward.Title + " УСТАНОВЛЕН";
             pendingWeapon = null;
+            placementRing = -1;
+            Debug.Log($"[OrbitalGoldenPath] Attach OK: ring {flightRing + 1}, mount {flightSlot + 1}");
             FinishChoice(title);
         }
 
@@ -393,8 +534,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             if (CancelPressed()) { FinishChoice("НАГРАДА ОТМЕНЕНА"); return; }
             if (TryKeyboardRing(out int keyboardRing))
             {
-                lab.ApplyRingUpgrade(keyboardRing, selectedReward.RingUpgrade);
-                FinishChoice(selectedReward.Title + " · КОЛЬЦО " + (keyboardRing + 1));
+                ApplySelectedRingUpgrade(keyboardRing);
                 return;
             }
             if (Camera.main == null || PointerOverUi) return;
@@ -406,12 +546,81 @@ namespace Subject42.Prototype.OrbitalCombatLab
             ring.FlashUpgrade(.06f);
             if (selectedReward.RingUpgrade == OrbitalRingUpgradeType.Overdrive) ring.PreviewRotationMultiplier = 1.25f;
             if (!Input.GetMouseButtonDown(0)) return;
-            lab.ApplyRingUpgrade(HoveredRing, selectedReward.RingUpgrade);
-            FinishChoice(selectedReward.Title + " · КОЛЬЦО " + (HoveredRing + 1));
+            ApplySelectedRingUpgrade(HoveredRing);
+        }
+
+        private void ApplySelectedRingUpgrade(int ringIndex)
+        {
+            OrbitalRing ring = lab.Rings[ringIndex];
+            if (selectedReward.RingUpgrade == OrbitalRingUpgradeType.ExtraMount &&
+                ring.Settings.MaxMounts >= OrbitalRing.AbsoluteMaxMounts)
+            {
+                HoveredRing = ringIndex;
+                InvalidHoveredRing = true;
+                lastFailureReason = "Кольцо уже имеет максимум креплений";
+                ring.FlashField(.4f);
+                ShowBanner(lastFailureReason, 2f);
+                return;
+            }
+
+            int previousCapacity = ring.Settings.MaxMounts;
+            int previousBonus = ring.Upgrades.MountCapacityBonus;
+            OrbitalMountedObject[] occupants = new OrbitalMountedObject[ring.Mounts.Length];
+            System.Array.Copy(ring.Mounts, occupants, ring.Mounts.Length);
+            lab.ApplyRingUpgrade(ringIndex, selectedReward.RingUpgrade);
+            if (selectedReward.RingUpgrade == OrbitalRingUpgradeType.ExtraMount)
+            {
+                bool preserved = true;
+                for (int i = 0; i < occupants.Length; i++)
+                    if (occupants[i] != null && ring.Mounts[i] != occupants[i]) preserved = false;
+                bool increased = ring.Settings.MaxMounts == previousCapacity + 1 &&
+                    ring.Upgrades.MountCapacityBonus == previousBonus + 1;
+                if (!increased || !preserved)
+                {
+                    lastAttachResult = "MOUNT UPGRADE FAILED";
+                    lastFailureReason = !increased ? "Фактическая ёмкость не увеличилась" :
+                        "Установленные объекты не сохранились";
+                    ShowBanner(lastFailureReason, 2.4f);
+                    return;
+                }
+                lastAttachResult = $"MOUNT {previousCapacity} → {ring.Settings.MaxMounts}; старые объекты сохранены";
+                Debug.Log($"[OrbitalGoldenPath] {lastAttachResult}; free={FreeMountCount(ring)}");
+            }
+            lastFailureReason = "—";
+            FinishChoice(selectedReward.Title + " · КОЛЬЦО " + (ringIndex + 1));
+        }
+
+        private void SelectPlacementRing(int ringIndex)
+        {
+            if (ringIndex < 0 || ringIndex >= lab.RingCount) return;
+            OrbitalRing ring = lab.Rings[ringIndex];
+            HoveredRing = ringIndex;
+            lab.SelectedRing = ringIndex;
+            if (FreeMountCount(ring) <= 0)
+            {
+                InvalidHoveredRing = true;
+                lastFailureReason = "НЕТ СВОБОДНЫХ КРЕПЛЕНИЙ";
+                ring.FlashField(.4f);
+                ShowBanner(lastFailureReason, 2f);
+                return;
+            }
+            placementRing = ringIndex;
+            CandidateSlot = -1;
+            state = FlowState.ChoosingMount;
+            lastFailureReason = "—";
+            Debug.Log($"[OrbitalGoldenPath] Ring selected: {ringIndex + 1}; free mounts={FreeMountCount(ring)}");
         }
 
         private void BeginWeaponFlight(int ringIndex, int slot)
         {
+            if (ringIndex < 0 || ringIndex >= lab.RingCount || slot < 0 ||
+                slot >= lab.Rings[ringIndex].Settings.MaxMounts || lab.Rings[ringIndex].Mounts[slot] != null)
+            {
+                lastFailureReason = "Выбранное крепление больше не свободно";
+                state = FlowState.ChoosingMount;
+                ShowBanner(lastFailureReason, 2f);
+                return;
+            }
             flightRing = ringIndex;
             flightSlot = slot;
             flightTarget = lab.Rings[flightRing].GetSlotPosition(lab.PlayerPosition, flightSlot);
@@ -420,6 +629,24 @@ namespace Subject42.Prototype.OrbitalCombatLab
             state = FlowState.FlyingWeapon;
             lab.Pattern.ClearGoldenLinkPreview();
             lab.CoreSystem.ForcePulse();
+            Debug.Log($"[OrbitalGoldenPath] Flight started: ring {ringIndex + 1}, mount {slot + 1}");
+        }
+
+        private int FindFreeMountNear(OrbitalRing ring, Vector2 world)
+        {
+            int best = -1;
+            float threshold = Mathf.Max(.34f, lab.OuterRingRadius * .012f);
+            float bestSqr = threshold * threshold;
+            int max = Mathf.Min(ring.Settings.MaxMounts, ring.Mounts.Length);
+            for (int i = 0; i < max; i++)
+            {
+                if (ring.Mounts[i] != null) continue;
+                float sqr = (ring.GetSlotPosition(lab.PlayerPosition, i) - world).sqrMagnitude;
+                if (sqr >= bestSqr) continue;
+                bestSqr = sqr;
+                best = i;
+            }
+            return best;
         }
 
         private bool TryKeyboardRing(out int ringIndex)
@@ -447,6 +674,14 @@ namespace Subject42.Prototype.OrbitalCombatLab
             return -1;
         }
 
+        private static int FreeMountCount(OrbitalRing ring)
+        {
+            int free = 0;
+            int max = Mathf.Min(ring.Settings.MaxMounts, ring.Mounts.Length);
+            for (int i = 0; i < max; i++) if (ring.Mounts[i] == null) free++;
+            return free;
+        }
+
         private void BeginRingMilestone()
         {
             nextMilestoneIndex++;
@@ -454,7 +689,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             deployingRing = lab.Rings[lab.RingCount - 1];
             deployingRing.Settings.Shape = OrbitalShape.Circle;
             deployingRing.Settings.FieldMode = OrbitalRingFieldMode.Ghost;
-            deployingRing.Settings.MaxMounts = 4;
+            deployingRing.Settings.MaxMounts = 3;
             deployingTargetRadius = deployingRing.Settings.Radius;
             deployingRing.Settings.Radius = .16f;
             stateBorn = Time.unscaledTime;
@@ -517,6 +752,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
             ResetRingPreviews();
             lab.Pattern.ClearGoldenLinkPreview();
             lab.ShowMounts = false;
+            placementRing = -1;
+            InvalidHoveredRing = false;
             state = FlowState.Running;
             RestoreTimeScale();
             ShowBanner(message, 2.2f);
@@ -533,6 +770,9 @@ namespace Subject42.Prototype.OrbitalCombatLab
         {
             CancelPendingWeapon();
             ResetRingPreviews();
+            placementRing = -1;
+            lastAttachResult = "—";
+            lastFailureReason = "—";
             paused = false;
             Time.timeScale = 1f;
         }
@@ -588,8 +828,14 @@ namespace Subject42.Prototype.OrbitalCombatLab
             {
                 lab.Rings[i].Settings.Shape = OrbitalShape.Circle;
                 lab.Rings[i].Settings.FieldMode = OrbitalRingFieldMode.Ghost;
-                lab.Rings[i].Settings.MaxMounts = 4;
             }
+        }
+
+        private void ResetGoldenMountCapacityToBase()
+        {
+            for (int i = 0; i < lab.RingCount; i++)
+                lab.Rings[i].Settings.MaxMounts = Mathf.Clamp(3 + lab.Rings[i].Upgrades.MountCapacityBonus,
+                    1, OrbitalRing.AbsoluteMaxMounts);
         }
 
         private void AddBaselineGuns()
@@ -689,7 +935,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
         {
             if (paused) return "ПАУЗА";
             if (state == FlowState.ChoosingCard) return "ТЕКУЩАЯ НАГРАДА: ВЫБЕРИТЕ КАРТОЧКУ";
-            if (state == FlowState.PlacingWeapon || state == FlowState.FlyingWeapon) return "ТЕКУЩАЯ НАГРАДА: " + selectedReward.Title;
+            if (state == FlowState.PlacingWeapon || state == FlowState.ChoosingMount || state == FlowState.FlyingWeapon)
+                return "ТЕКУЩАЯ НАГРАДА: " + selectedReward.Title;
             if (state == FlowState.ChoosingRing) return "ТЕКУЩАЯ НАГРАДА: " + selectedReward.Title;
             if (state == FlowState.DeployingRing) return "НОВОЕ КОЛЬЦО РАЗВОРАЧИВАЕТСЯ";
             if (nextMilestoneIndex >= RingMilestones.Length) return "СТАНЦИЯ ЗАВЕРШЕНА · FINALE";
@@ -703,7 +950,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
         private string QaCapturePath()
         {
             string suffix = menuOpen ? "MENU" : state == FlowState.ChoosingCard ? "REWARD" :
-                state == FlowState.PlacingWeapon || state == FlowState.ChoosingRing || state == FlowState.FlyingWeapon
+                state == FlowState.PlacingWeapon || state == FlowState.ChoosingMount ||
+                state == FlowState.ChoosingRing || state == FlowState.FlyingWeapon
                     ? "PLACEMENT" : lab.RingCount >= 12 ? "FINALE" : lab.RingCount >= 6 ? "MIDPOINT" : "BEGINNING";
             return $"Assets/_Project/Prototype/OrbitalCombatLab/QA_GOLDEN_{suffix}.png";
         }

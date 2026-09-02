@@ -29,6 +29,20 @@ namespace Subject42.Prototype.OrbitalCombatLab.Editor
         private static int growthQaErrors;
         private static float growthUpgradeSnapshot;
 
+        [InitializeOnLoadMethod]
+        private static void LogGameViewGeometryForManualQa()
+        {
+            EditorApplication.delayCall += () =>
+            {
+                Type gameViewType = Type.GetType("UnityEditor.GameView,UnityEditor");
+                if (gameViewType == null) return;
+                UnityEngine.Object[] views = Resources.FindObjectsOfTypeAll(gameViewType);
+                for (int i = 0; i < views.Length; i++)
+                    if (views[i] is EditorWindow window)
+                        Debug.Log($"[OrbitalGoldenPathQA] GameView screen rect: {window.position}");
+            };
+        }
+
         [MenuItem("Tools/Prototype/Build Orbital Combat Lab")]
         public static void BuildScene()
         {

@@ -26,8 +26,18 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public readonly OrbitalRing[] Rings = new OrbitalRing[MaxRings];
         public readonly OrbitalMountedObject[] MountedObjects = new OrbitalMountedObject[MaxMountedObjects];
 
+        [Header("Integration Sandbox")]
+        [Tooltip("Uses the production player, enemies and camera without creating Lab replacements.")]
+        public bool IntegrationMode;
+        public Transform IntegrationPlayer;
+        public Camera IntegrationCamera;
+        [Tooltip("When enabled, the Lab may temporarily frame its station with the production camera.")]
+        public bool IntegrationCameraOverride;
+
         public Transform WorldRoot { get; private set; }
         public Vector2 PlayerPosition => player != null ? player.position : Vector2.zero;
+        public bool HasIntegrationPlayer => !IntegrationMode ||
+            (IntegrationPlayer != null && player == IntegrationPlayer);
         public OrbitalEnemyCrowd Crowd { get; private set; }
         public OrbitalProjectilePool Projectiles { get; private set; }
         public OrbitalLabDragController Drag { get; private set; }
@@ -95,12 +105,22 @@ namespace Subject42.Prototype.OrbitalCombatLab
         private readonly float[] frozenSpeeds = new float[MaxRings];
         private readonly bool[] frozenPaused = new bool[MaxRings];
         private bool movementFrozen;
+        private Vector2 previousIntegratedPlayerPosition;
 
         private void Awake()
         {
             BuildWorld();
-            ApplyStartState();
-            GoldenPath.BeginFullRun();
+            if (IntegrationMode)
+            {
+                ApplyIntegrationStart();
+                GoldenPath.enabled = false;
+                DebugUI.enabled = false;
+            }
+            else
+            {
+                ApplyStartState();
+                GoldenPath.BeginFullRun();
+            }
         }
 
         private void Update()
@@ -111,6 +131,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
 
             for (int i = 0; i < RingCount; i++)
             {
+                if (Rings[i] == null) continue;
                 bool goldenCandidate = GoldenPath != null && GoldenPath.SelectionActive &&
                     GoldenPath.HoveredRing == i;
                 bool highlighted = (Drag != null && Drag.CandidateRing == i) || goldenCandidate;
@@ -125,7 +146,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 Rings[i].Tick(PlayerPosition, dt, ShowRings, (ShowMounts && readableMounts) || selectionMode,
                     highlighted, selectedForEdit, hoveredForEdit,
                     selectedForEdit && PauseSelectedRingWhileEditing, previewSlot, RingAlpha,
-                    RingUpgradeVisuals, GoldenPath != null && GoldenPath.SelectionActive);
+                    RingUpgradeVisuals, GoldenPath != null && GoldenPath.SelectionActive,
+                    GoldenPath != null && GoldenPath.InvalidHoveredRing && GoldenPath.HoveredRing == i);
             }
             for (int i = 0; i < MountedCount; i++)
             {
@@ -146,8 +168,11 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 RingContactDamage, RingContactPush, dt);
             Projectiles.Tick(dt);
             TickPulses();
-            Drag.Tick();
-            CameraRig.Tick(PlayerPosition, OuterRingRadius);
+            // Golden Path owns its two-step ring/mount pointer flow. Letting the generic
+            // Lab drag controller see the same click makes it attach the preview early.
+            if (!IntegrationMode && (GoldenPath == null || !GoldenPath.SelectionActive)) Drag.Tick();
+            if (!IntegrationMode || IntegrationCameraOverride)
+                CameraRig.Tick(PlayerPosition, OuterRingRadius);
         }
 
         public float OuterRingRadius
@@ -236,14 +261,45 @@ namespace Subject42.Prototype.OrbitalCombatLab
         }
 
         public bool AttachGoldenPendingMounted(OrbitalMountedObject mounted, int ringIndex, int slot)
+            => AttachGoldenPendingMounted(mounted, ringIndex, slot, out _);
+
+        public bool AttachGoldenPendingMounted(OrbitalMountedObject mounted, int ringIndex, int slot,
+            out string failureReason)
         {
-            if (mounted == null || ringIndex < 0 || ringIndex >= RingCount) return false;
+            failureReason = string.Empty;
+            if (mounted == null)
+            {
+                failureReason = "Preview оружия отсутствует";
+                return false;
+            }
+            if (mounted.IsDestroyed)
+            {
+                failureReason = "Preview оружия уже уничтожен";
+                return false;
+            }
+            if (ringIndex < 0 || ringIndex >= RingCount)
+            {
+                failureReason = "Выбранное кольцо больше не существует";
+                return false;
+            }
             OrbitalRing ring = Rings[ringIndex];
-            if (slot < 0 || slot >= ring.Settings.MaxMounts || ring.Mounts[slot] != null) return false;
+            if (slot < 0 || slot >= ring.Settings.MaxMounts || slot >= ring.Mounts.Length)
+            {
+                failureReason = "Выбранное крепление вне ёмкости кольца";
+                return false;
+            }
+            if (ring.Mounts[slot] != null)
+            {
+                failureReason = "Крепление уже занято";
+                return false;
+            }
             mounted.Attach(ring, slot);
             SelectedRing = ringIndex;
             ring.FlashUpgrade(.7f);
-            return true;
+            bool attached = mounted.Ring == ring && mounted.Slot == slot && ring.Mounts[slot] == mounted &&
+                !mounted.IsDragging;
+            if (!attached) failureReason = "Attach не подтвердился логическим mount slot";
+            return attached;
         }
 
         public void CancelGoldenPendingMounted(OrbitalMountedObject mounted) => RemoveMounted(mounted);
@@ -675,6 +731,69 @@ namespace Subject42.Prototype.OrbitalCombatLab
             Crowd.SetCount(200, PlayerPosition, OuterRingRadius);
             CoreSystem.ForcePulse();
             CameraRig.Snap(PlayerPosition, OuterRingRadius);
+        }
+
+        public void ApplyIntegrationStart()
+        {
+            ResetLab(1);
+            Rings[0].Settings.MaxMounts = 3;
+            CreateGoldenMountedAt(0, 0, OrbitalMountType.Gun);
+            Core.Level = 1;
+            Core.PulseBrightness = .85f;
+            CameraSnapIfAllowed();
+        }
+
+        public void ApplyIntegrationMid()
+        {
+            ResetLab(6);
+            for (int ring = 0; ring < RingCount; ring++)
+            {
+                Rings[ring].Settings.MaxMounts = 4;
+                CreateGoldenMountedAt(ring, 0, (OrbitalMountType)(ring % 4));
+                CreateGoldenMountedAt(ring, 1, ring == 2 || ring == 4
+                    ? OrbitalMountType.LinkNode
+                    : ring == 5 ? OrbitalMountType.ArcEmitter : (OrbitalMountType)((ring + 1) % 3));
+            }
+            Links.Mode = OrbitalLinkMode.Chain;
+            Core.Level = 2;
+            Core.PulseBrightness = 1.05f;
+            CameraSnapIfAllowed();
+        }
+
+        public void ApplyIntegrationFinal()
+        {
+            ResetLab(12);
+            for (int ring = 0; ring < RingCount; ring++)
+            {
+                Rings[ring].Settings.MaxMounts = 4;
+                CreateGoldenMountedAt(ring, 0, (OrbitalMountType)(ring % 4));
+                CreateGoldenMountedAt(ring, 1, ring % 3 == 0
+                    ? OrbitalMountType.LinkNode
+                    : ring % 5 == 0 ? OrbitalMountType.ArcEmitter : (OrbitalMountType)((ring + 2) % 3));
+            }
+            Links.Mode = OrbitalLinkMode.Chain;
+            Links.MaxDistance = 12f;
+            Arc.ChainCount = 4;
+            Core.Level = 3;
+            Core.PulseBrightness = 1.2f;
+            Trails.Mode = OrbitalTrailMode.Off;
+            MineSystem?.Clear();
+            CameraSnapIfAllowed();
+        }
+
+        public void SetIntegrationPresentationActive(bool active)
+        {
+            if (WorldRoot != null) WorldRoot.gameObject.SetActive(active);
+        }
+
+        public void BindIntegrationPlayer(Transform target)
+        {
+            if (!IntegrationMode || target == null) return;
+            if (player == target && IntegrationPlayer == target) return;
+            IntegrationPlayer = target;
+            player = target;
+            previousIntegratedPlayerPosition = target.position;
+            Debug.Log($"[OrbitalIntegration] Bound production player: {target.name}");
         }
 
         public void ApplyLinkCathedral()
@@ -1238,26 +1357,36 @@ namespace Subject42.Prototype.OrbitalCombatLab
             factory = new OrbitalPrimitiveFactory();
             WorldRoot = new GameObject("ORBITAL COMBAT LAB - Runtime World").transform;
             WorldRoot.SetParent(transform, false);
-            GameObject globalLightObject = new("Global Light 2D");
-            globalLightObject.transform.SetParent(WorldRoot, false);
-            GlobalLight = globalLightObject.AddComponent<Light2D>();
-            GlobalLight.lightType = Light2D.LightType.Global;
-            GlobalLight.intensity = 1f;
-            GlobalLight.color = Color.white;
-            SpriteRenderer arena = factory.CreateSprite("Arena", WorldRoot, factory.Square,
-                new Color(.018f, .027f, .045f, 1f), new Vector2(80f, 80f), -20);
-            arena.transform.position = Vector3.zero;
-            BuildGrid();
-            Transform playerRoot = new GameObject("Player").transform;
-            playerRoot.SetParent(WorldRoot, false);
-            SpriteRenderer playerRenderer = factory.CreateSprite("Fallback", playerRoot, factory.Circle,
-                new Color(.74f, 1f, 1f, 1f), new Vector2(.7f, .7f), 15);
-            PlayerVisual = OrbitalActorVisual.CreatePlayer(playerRoot);
-            playerRenderer.enabled = !PlayerVisual.IsAvailable;
-            player = playerRoot;
+            if (IntegrationMode)
+            {
+                player = IntegrationPlayer != null ? IntegrationPlayer : transform;
+                previousIntegratedPlayerPosition = player.position;
+            }
+            else
+            {
+                GameObject globalLightObject = new("Global Light 2D");
+                globalLightObject.transform.SetParent(WorldRoot, false);
+                GlobalLight = globalLightObject.AddComponent<Light2D>();
+                GlobalLight.lightType = Light2D.LightType.Global;
+                GlobalLight.intensity = 1f;
+                GlobalLight.color = Color.white;
+                SpriteRenderer arena = factory.CreateSprite("Arena", WorldRoot, factory.Square,
+                    new Color(.018f, .027f, .045f, 1f), new Vector2(80f, 80f), -20);
+                arena.transform.position = Vector3.zero;
+                BuildGrid();
+                Transform playerRoot = new GameObject("Player").transform;
+                playerRoot.SetParent(WorldRoot, false);
+                SpriteRenderer playerRenderer = factory.CreateSprite("Fallback", playerRoot, factory.Circle,
+                    new Color(.74f, 1f, 1f, 1f), new Vector2(.7f, .7f), 15);
+                PlayerVisual = OrbitalActorVisual.CreatePlayer(playerRoot);
+                playerRenderer.enabled = !PlayerVisual.IsAvailable;
+                player = playerRoot;
+            }
 
             Crowd = new OrbitalEnemyCrowd(WorldRoot, factory, Stats,
-                position => EmitPulse(position, new Color(1f, .16f, .12f, .72f), .62f, .16f));
+                position => EmitPulse(position, new Color(1f, .16f, .12f, .72f), .62f, .16f),
+                !IntegrationMode);
+            if (IntegrationMode) Crowd.UseExternalEnemies();
             Projectiles = new OrbitalProjectilePool(WorldRoot, factory, Crowd);
             MineSystem = new OrbitalMineSystem(this, WorldRoot, factory);
             ArcSystem = new OrbitalArcSystem(WorldRoot, factory);
@@ -1268,7 +1397,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             Drag = gameObject.AddComponent<OrbitalLabDragController>();
             Drag.Configure(this);
             CameraRig = gameObject.AddComponent<OrbitalLabCameraRig>();
-            CameraRig.Configure(this);
+            CameraRig.Configure(this, IntegrationMode ? IntegrationCamera : null, !IntegrationMode);
             DebugUI = gameObject.AddComponent<OrbitalLabDebugUI>();
             DebugUI.Configure(this);
             GoldenPath = gameObject.AddComponent<OrbitalGoldenPath>();
@@ -1327,6 +1456,14 @@ namespace Subject42.Prototype.OrbitalCombatLab
 
         private void TickPlayer(float dt)
         {
+            if (IntegrationMode)
+            {
+                Vector2 current = PlayerPosition;
+                Vector2 delta = current - previousIntegratedPlayerPosition;
+                if (delta.sqrMagnitude > .000001f) LastMoveDirection = delta.normalized;
+                previousIntegratedPlayerPosition = current;
+                return;
+            }
             Vector2 input = new(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
             if (input.sqrMagnitude > 1f) input.Normalize();
             if (input.sqrMagnitude > .01f) LastMoveDirection = input.normalized;
@@ -1347,7 +1484,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
 
         private void ResetLab(int desiredRings)
         {
-            Time.timeScale = 1f;
+            if (!IntegrationMode) Time.timeScale = 1f;
             Drag?.CancelDrag();
             ClearMounted();
             for (int i = RingCount - 1; i >= 0; i--)
@@ -1356,12 +1493,18 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 Rings[i] = null;
             }
             RingCount = 0;
-            player.position = Vector3.zero;
+            if (!IntegrationMode && player != null) player.position = Vector3.zero;
             PlayerHp = 100f;
             Stats.Reset();
             ResetPatternDefaults();
             for (int i = 0; i < desiredRings; i++) AddRing();
             SelectedRing = 0;
+        }
+
+        private void CameraSnapIfAllowed()
+        {
+            if (CameraRig != null && (!IntegrationMode || IntegrationCameraOverride))
+                CameraRig.Snap(PlayerPosition, OuterRingRadius);
         }
 
         private void ResetPatternDefaults()

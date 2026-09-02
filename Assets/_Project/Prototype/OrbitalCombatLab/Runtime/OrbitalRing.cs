@@ -58,11 +58,12 @@ namespace Subject42.Prototype.OrbitalCombatLab
             bool dropHighlight, bool selected, bool hovered, bool editPaused,
             int previewSlot, float ringAlpha, bool upgradeVisuals = true)
             => Tick(center, deltaTime, showRings, showMounts, dropHighlight, selected, hovered,
-                editPaused, previewSlot, ringAlpha, upgradeVisuals, false);
+                editPaused, previewSlot, ringAlpha, upgradeVisuals, false, false);
 
         public void Tick(Vector2 center, float deltaTime, bool showRings, bool showMounts,
             bool dropHighlight, bool selected, bool hovered, bool editPaused,
-            int previewSlot, float ringAlpha, bool upgradeVisuals, bool dimForSelection)
+            int previewSlot, float ringAlpha, bool upgradeVisuals, bool dimForSelection,
+            bool invalidSelection = false)
         {
             if (!Settings.Paused && !editPaused)
                 RotationAngle = Mathf.Repeat(RotationAngle + Settings.RotationSpeed *
@@ -74,7 +75,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 UpdateLine(center);
                 bool fieldFlash = Time.unscaledTime < fieldFlashUntil;
                 bool upgradeFlash = Time.unscaledTime < upgradeFlashUntil;
-                Color color = dropHighlight ? new Color(.2f, 1f, .45f, .9f) :
+                Color color = invalidSelection ? new Color(1f, .08f, .12f, .98f) :
+                    dropHighlight ? new Color(.2f, 1f, .45f, .9f) :
                     selected ? new Color(.35f, .96f, 1f, .95f) :
                     hovered ? new Color(.62f, .9f, 1f, .76f) :
                     upgradeFlash ? new Color(.72f, 1f, 1f, .98f) :
@@ -84,7 +86,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 if (dimForSelection && !dropHighlight && !selected && !hovered) color.a *= .24f;
                 color.a *= Mathf.Clamp01(ringAlpha * Settings.GeneratedLineAlpha);
                 line.startColor = line.endColor = color;
-                line.startWidth = line.endWidth = dropHighlight || selected
+                line.startWidth = line.endWidth = invalidSelection ? Settings.LineWidth * 3f :
+                    dropHighlight || selected
                     ? Settings.LineWidth * 2.6f : hovered ? Settings.LineWidth * 1.75f :
                     Settings.LineWidth * (upgradeVisuals ? 1f + Mathf.Min(.5f, Upgrades.Level * .07f) : 1f);
             }

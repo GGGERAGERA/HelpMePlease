@@ -5,6 +5,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
     /// <summary>Short-lived pooled lightning flashes, intentionally distinct from persistent Link lines.</summary>
     public sealed class OrbitalArcSystem
     {
+        public float VisualBrightness = 1f;
         private const int Capacity = 64;
         private readonly LineRenderer[] lines = new LineRenderer[Capacity];
         private readonly float[] dieAt = new float[Capacity];
@@ -36,7 +37,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
             line.SetPosition(3, to);
             line.startWidth = width;
             line.endWidth = width * .35f;
-            Color color = new(.82f, .68f, 1f, .96f);
+            Color color = new Color(.82f, .68f, 1f, .96f) * Mathf.Max(.1f, VisualBrightness);
+            color.a = .96f;
             line.startColor = line.endColor = color;
             line.enabled = true;
             dieAt[index] = Time.unscaledTime + duration;
@@ -98,7 +100,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             for (int hop = 0; hop < count && current >= 0; hop++)
             {
                 OrbitalEnemyCrowd.Enemy enemy = Lab.Crowd.Enemies[current];
-                if (!enemy.Active) break;
+                if (!enemy.Active || enemy.Transform == null) break;
                 Vector2 to = enemy.Transform.position;
                 // Long enough to read as a branched discharge, still far shorter than a persistent Link line.
                 Lab.ArcSystem.Show(from, to, .075f * EffectSizeMultiplier, .19f, current + hop * 17f);
@@ -118,7 +120,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             for (int i = 0; i < Lab.Crowd.DesiredCount; i++)
             {
                 OrbitalEnemyCrowd.Enemy enemy = Lab.Crowd.Enemies[i];
-                if (!enemy.Active || WasUsed(i, used)) continue;
+                if (!enemy.Active || enemy.Transform == null || WasUsed(i, used)) continue;
                 float sqr = ((Vector2)enemy.Transform.position - position).sqrMagnitude;
                 if (sqr >= bestSqr) continue;
                 bestSqr = sqr;

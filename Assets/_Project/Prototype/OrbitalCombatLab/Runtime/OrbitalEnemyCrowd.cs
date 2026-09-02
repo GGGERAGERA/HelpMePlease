@@ -37,11 +37,13 @@ namespace Subject42.Prototype.OrbitalCombatLab
         private readonly OrbitalLabStats stats;
         private readonly System.Action<Vector2> deathPop;
         private readonly System.Random random = new(42042);
+        private readonly EnemyHealth[] externalHealth = new EnemyHealth[Capacity];
+        private bool externalMode;
         private Vector2 center;
         private float spawnRadius = 12f;
 
         public OrbitalEnemyCrowd(Transform parent, OrbitalPrimitiveFactory factory, OrbitalLabStats stats,
-            System.Action<Vector2> deathPop)
+            System.Action<Vector2> deathPop, bool createInternalPool = true)
         {
             this.stats = stats;
             this.deathPop = deathPop;
@@ -49,6 +51,11 @@ namespace Subject42.Prototype.OrbitalCombatLab
             root.SetParent(parent, false);
             for (int i = 0; i < Capacity; i++)
             {
+                if (!createInternalPool)
+                {
+                    Enemies[i] = new Enemy();
+                    continue;
+                }
                 Transform enemyRoot = new GameObject($"Enemy {i + 1:000}").transform;
                 enemyRoot.SetParent(root, false);
                 enemyRoot.gameObject.SetActive(false);
@@ -74,13 +81,21 @@ namespace Subject42.Prototype.OrbitalCombatLab
                     BodyCollider = bodyCollider
                 };
             }
-            UsesZombieVisuals = Enemies[0].Visual.IsAvailable;
+            UsesZombieVisuals = Enemies[0].Visual != null && Enemies[0].Visual.IsAvailable;
             UsesPhysicsBodyBlocking = Enemies[0].Body != null &&
                 Enemies[0].BodyCollider != null && Enemies[0].BodyCollider.enabled;
         }
 
+        public void UseExternalEnemies()
+        {
+            externalMode = true;
+            root.gameObject.SetActive(false);
+            SyncExternalEnemies();
+        }
+
         public void SetCount(int count, Vector2 newCenter, float outerRadius)
         {
+            if (externalMode) { SyncExternalEnemies(); return; }
             center = newCenter;
             spawnRadius = Mathf.Max(outerRadius + 4.5f, 10f);
             DesiredCount = Mathf.Clamp(count, 0, Capacity);
@@ -98,6 +113,12 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public void Tick(Vector2 newCenter, float outerRadius, float deltaTime, bool immortal,
             ref float playerHp)
         {
+            if (externalMode)
+            {
+                SyncExternalEnemies();
+                stats.ActiveEnemies = ActiveCount;
+                return;
+            }
             center = newCenter;
             spawnRadius = Mathf.Max(outerRadius + 4.5f, 10f);
             float now = Time.unscaledTime;
@@ -142,7 +163,11 @@ namespace Subject42.Prototype.OrbitalCombatLab
             for (int i = 0; i < DesiredCount; i++)
             {
                 Enemy enemy = Enemies[i];
-                if (!enemy.Active) continue;
+                if (enemy == null || !enemy.Active || enemy.Transform == null)
+                {
+                    if (enemy != null) enemy.Active = false;
+                    continue;
+                }
                 float sqr = ((Vector2)enemy.Transform.position - position).sqrMagnitude;
                 if (sqr >= bestSqr) continue;
                 bestSqr = sqr;
@@ -156,6 +181,14 @@ namespace Subject42.Prototype.OrbitalCombatLab
             if (index < 0 || index >= DesiredCount) return false;
             Enemy enemy = Enemies[index];
             if (!enemy.Active) return false;
+            if (externalMode)
+            {
+                EnemyHealth health = externalHealth[index];
+                if (health == null || health.IsDead) return false;
+                health.TakeDamage(amount, enemy.Transform.position, false);
+                enemy.FlashUntil = Time.unscaledTime + .075f;
+                return true;
+            }
             enemy.Hp -= amount;
             enemy.FlashUntil = Time.unscaledTime + .075f;
             if (enemy.Hp > 0f) return true;
@@ -171,6 +204,12 @@ namespace Subject42.Prototype.OrbitalCombatLab
             Vector2 direction = (Vector2)enemy.Transform.position - origin;
             if (direction.sqrMagnitude < .0001f)
                 direction = Vector2.right;
+            if (externalMode)
+            {
+                Rigidbody2D body = enemy.Body != null ? enemy.Body : enemy.Transform.GetComponent<Rigidbody2D>();
+                if (body != null) body.AddForce(direction.normalized * force, ForceMode2D.Impulse);
+                return;
+            }
             enemy.PushVelocity += direction.normalized * force;
         }
 
@@ -179,6 +218,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             if (index < 0 || index >= DesiredCount) return;
             Enemy enemy = Enemies[index];
             if (!enemy.Active) return;
+            if (externalMode) return;
             enemy.SlowMultiplier = Mathf.Clamp(multiplier, .05f, 1f);
             enemy.SlowUntil = Mathf.Max(enemy.SlowUntil, Time.unscaledTime + duration);
         }
@@ -257,6 +297,30 @@ namespace Subject42.Prototype.OrbitalCombatLab
             for (int i = 0; i < DesiredCount; i++) if (Enemies[i].Active) count++;
             ActiveCount = count;
             stats.ActiveEnemies = count;
+        }
+
+        private void SyncExternalEnemies()
+        {
+            int index = 0;
+            foreach (EnemyHealth health in EnemyHealth.ActiveInstances)
+            {
+                if (index >= Capacity || health == null || !health.isActiveAndEnabled || health.IsDead) continue;
+                Enemy proxy = Enemies[index];
+                proxy.Transform = health.transform;
+                proxy.Body = health.GetComponent<Rigidbody2D>();
+                proxy.Active = true;
+                proxy.Hp = health.CurrentHealth;
+                externalHealth[index] = health;
+                index++;
+            }
+            for (int i = index; i < DesiredCount; i++)
+            {
+                Enemies[i].Active = false;
+                Enemies[i].Transform = null;
+                Enemies[i].Body = null;
+                externalHealth[i] = null;
+            }
+            DesiredCount = ActiveCount = index;
         }
     }
 }
