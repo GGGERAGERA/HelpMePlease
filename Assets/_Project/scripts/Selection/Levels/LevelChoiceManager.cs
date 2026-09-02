@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Subject42.Combat.OrbitalStation;
 
 public sealed class LevelChoiceManager : MonoBehaviour
 {
@@ -26,6 +27,7 @@ public sealed class LevelChoiceManager : MonoBehaviour
     private readonly Dictionary<WorldRuleData, RunSector>
         currentSectorOptions = new();
     private bool isChoosing;
+    private bool waitingForUpgradeReward;
 
     public bool IsChoosing => isChoosing;
 
@@ -51,6 +53,26 @@ public sealed class LevelChoiceManager : MonoBehaviour
     {
         if (isChoosing)
             return false;
+
+        OrbitalRelocationController relocation =
+            FindFirstObjectByType<OrbitalRelocationController>();
+        if (relocation != null && relocation.IsDragging)
+            relocation.CancelDrag("level choice opened");
+
+        UpgradeManager upgrades = UpgradeManager.Instance;
+        if (upgrades != null && upgrades.IsChoosingUpgrade)
+        {
+            if (!waitingForUpgradeReward)
+            {
+                waitingForUpgradeReward = true;
+                upgrades.RunWhenRewardQueueIsIdle(() =>
+                {
+                    waitingForUpgradeReward = false;
+                    TryShowChoices();
+                });
+            }
+            return true;
+        }
 
         currentChoices.Clear();
         currentSectorOptions.Clear();

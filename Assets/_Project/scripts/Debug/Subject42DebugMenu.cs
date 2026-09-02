@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Subject42.Combat.OrbitalStation;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 public enum CombatLabControlStyle
@@ -257,6 +260,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         Telekinesis,
         VisualTest,
         FeelTest,
+        OrbitalProduction,
         SectorTest
     }
 
@@ -321,6 +325,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         "TELEKINESIS",
         "VISUAL",
         "FEEL",
+        "ORBITAL PRODUCTION TEST",
         "ТЕСТ СЕКТОРА"
     };
 
@@ -378,6 +383,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private bool warnedEventSpawner;
     private string lastUpgradeResult;
     private string lastAnomalyGrantResult;
+    private string lastOrbitalStateResult;
 
     private readonly List<LevelAnomalyController.LocalAnomalyZoneGeometry>
         activeAnomalyZones = new();
@@ -1371,6 +1377,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 break;
             case DebugTab.FeelTest:
                 AddInteractiveFeelLab();
+                break;
+            case DebugTab.OrbitalProduction:
+                AddOrbitalProductionSection();
                 break;
             case DebugTab.SectorTest:
                 AddProductionSectorTestSection();
@@ -2564,7 +2573,299 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     }
 
     private static bool IsRuntimeLabTab(DebugTab tab) =>
-        tab == DebugTab.VisualTest || tab == DebugTab.FeelTest;
+        tab == DebugTab.VisualTest || tab == DebugTab.FeelTest ||
+        tab == DebugTab.OrbitalProduction;
+
+    private void AddOrbitalProductionSection()
+    {
+        ResolveSceneReferences();
+        OrbitalStationRuntime station =
+            FindFirstObjectByType<OrbitalStationRuntime>();
+        bool available = station != null && station.IsInitialized;
+        string selected = CombatModeState.SelectedMode.ToString().ToUpperInvariant();
+        string active = CombatModeState.ActiveRunMode.ToString().ToUpperInvariant();
+
+        AddSectionTitle("ORBITAL PRODUCTION TEST",
+            "Session-only mode switch and production runtime checks");
+        AddRow("SELECTED / ACTIVE", $"{selected} / {active}", accentColor,
+            string.Empty, false, null);
+        AddRow("Combat Mode LEGACY", active == "LEGACY" ? "ACTIVE" : "SELECT",
+            active == "LEGACY" ? successColor : mutedColor, "APPLY", true,
+            () => ApplyOrbitalCombatMode(CombatMode.Legacy));
+        AddRow("Combat Mode ORBITAL", active == "ORBITAL" ? "ACTIVE" : "SELECT",
+            active == "ORBITAL" ? successColor : mutedColor, "APPLY", true,
+            () => ApplyOrbitalCombatMode(CombatMode.Orbital));
+        AddRow("Restart With Selected Mode", selected, warningColor, "RESTART", true,
+            RestartWithSelectedCombatMode);
+
+        AddSectionTitle("STATION", available
+            ? "Arena placement: click ring, then a free mount"
+            : "Switch to ORBITAL to create the runtime station");
+        AddRow("Runtime", available
+                ? $"CORE {station.Core.Level} / RINGS {station.Rings.Count} / MODULES {station.Modules.Count}"
+                : "NOT ACTIVE",
+            available ? successColor : mutedColor, string.Empty, false, null);
+        AddRow("Placement", available ? station.PlacementStatus : "NOT ACTIVE",
+            available && station.PlacementStatus != "READY" ? warningColor : mutedColor,
+            string.Empty, false, null);
+        AddRow("Add Ring", available ? "SELECTS NEW RING" : "NOT ACTIVE",
+            accentColor, "+RING", available, () =>
+            {
+                station.AddRing();
+                RefreshCurrentTab();
+            });
+        AddOrbitalModuleRow("Add Pistol", OrbitalModuleKind.Pistol, station);
+        AddOrbitalModuleRow("Add Laser Sword", OrbitalModuleKind.LaserSword, station);
+        AddOrbitalModuleRow("Add Impulse Gun", OrbitalModuleKind.ImpulseGun, station);
+        AddOrbitalModuleRow("Add Arc Emitter", OrbitalModuleKind.ArcEmitter, station);
+        AddOrbitalModuleRow("Add Link Node", OrbitalModuleKind.LinkNode, station);
+        AddRow("Upgrade Selected Ring Speed", available ? "×1.25" : "NOT ACTIVE",
+            accentColor, "UP", available, () =>
+            {
+                station.UpgradeSelectedRingSpeed();
+                RefreshCurrentTab();
+            });
+        AddRow("Upgrade Selected Ring Power", available ? "×1.25" : "NOT ACTIVE",
+            accentColor, "UP", available, () =>
+            {
+                station.UpgradeSelectedRingPower();
+                RefreshCurrentTab();
+            });
+        AddRow("Add Mount", available ? "+1 ON SELECTED RING" : "NOT ACTIVE",
+            accentColor, "+MOUNT", available, () =>
+            {
+                station.AddMount();
+                RefreshCurrentTab();
+            });
+        AddRow("Upgrade Core", available ? $"LEVEL {station.Core.Level}" : "NOT ACTIVE",
+            accentColor, "UP", available, () =>
+            {
+                station.UpgradeCore();
+                RefreshCurrentTab();
+            });
+        AddRow("Teardown Station", available ? "FULL CLEANUP" : "NOT ACTIVE",
+            warningColor, "STOP", available, () =>
+            {
+                station.Teardown();
+                RefreshCurrentTab();
+            });
+
+        RunStateManager manager = RunStateManager.Instance;
+        OrbitalRunState runState = manager != null
+            ? manager.OrbitalStationState
+            : null;
+        int mounts = runState != null
+            ? runState.Rings.Sum(value => value.MountCapacity)
+            : 0;
+        AddSectionTitle("RUN STATE", "Data owned by the current RunStateManager");
+        AddRow("Initialized", runState?.IsInitialized == true ? "YES" : "NO",
+            runState?.IsInitialized == true ? successColor : mutedColor,
+            string.Empty, false, null);
+        AddRow("Revision", runState?.Revision.ToString() ?? "-", mutedColor,
+            string.Empty, false, null);
+        AddRow("Core / Rings", runState != null
+                ? $"{runState.CoreState.Level} / {runState.Rings.Count}"
+                : "-",
+            mutedColor, string.Empty, false, null);
+        AddRow("Mounts / Modules", runState != null
+                ? $"{mounts} / {runState.Modules.Count}"
+                : "-",
+            mutedColor, string.Empty, false, null);
+        AddRow("Sector / Restores", runState != null
+                ? $"{manager.CurrentSector?.SectorNumber ?? manager.CurrentLevel} / {runState.RestoreCount}"
+                : "-",
+            mutedColor, string.Empty, false, null);
+        AddRow("CAPTURE STATE", lastOrbitalStateResult ?? "PHASE IS LIVE-SYNCED",
+            mutedColor, "CAPTURE", available, () =>
+            {
+                OrbitalRunState captured = station.CaptureState();
+                lastOrbitalStateResult = captured != null
+                    ? $"REV {captured.Revision}"
+                    : "NO STATE";
+                RefreshCurrentTab();
+            });
+        AddRow("REBUILD RUNTIME FROM STATE", "NO REWARD FX", accentColor,
+            "REBUILD", available, () =>
+            {
+                lastOrbitalStateResult = station.RebuildRuntimeFromState()
+                    ? "RESTORED"
+                    : "FAILED";
+                RefreshCurrentTab();
+            });
+        AddRow("VALIDATE STATE", lastOrbitalStateResult ?? "READY", mutedColor,
+            "VALIDATE", runState != null, () =>
+            {
+                bool valid = runState.Validate(out string error);
+                lastOrbitalStateResult = valid ? "VALID" : error;
+                RefreshCurrentTab();
+            });
+        AddRow("PRINT COMPACT STATE", "ONE STRUCTURED LOG", mutedColor,
+            "PRINT", runState != null, () =>
+            {
+                int sector = manager.CurrentSector?.SectorNumber ?? manager.CurrentLevel;
+                string compact = runState.ToCompactString(sector);
+                lastOrbitalStateResult = "PRINTED";
+                Debug.Log(compact, this);
+                RefreshCurrentTab();
+            });
+        AddRow("SIMULATE SECTOR RESTORE", "DESTROY/RESTORE PRESENTATION",
+            warningColor, "SIM", available, () =>
+            {
+                lastOrbitalStateResult = station.SimulateSectorRestore()
+                    ? "RESTORED"
+                    : "FAILED";
+                RefreshCurrentTab();
+            });
+
+        ExperienceManager experience = ExperienceManager.Instance;
+        UpgradeManager rewards = UpgradeManager.Instance;
+        int playerLevel = experience != null ? experience.CurrentLevel : 1;
+        int nextMilestone = OrbitalProgressionConfig.Default
+            .GetNextRingMilestone(playerLevel);
+        int freeMounts = runState != null
+            ? mounts - runState.Modules.Count
+            : 0;
+        string rewardStatus = station?.RewardFlow != null
+            ? station.RewardFlow.CompactStatus
+            : "NO FLOW";
+        AddSectionTitle("REWARD FLOW", "Production level-up provider and arena targeting");
+        AddRow("Player / Next Ring", $"LV {playerLevel} / " +
+            (nextMilestone > 0 ? $"LV {nextMilestone}" : "MAX"),
+            mutedColor, string.Empty, false, null);
+        AddRow("Free Mounts", freeMounts.ToString(), mutedColor,
+            string.Empty, false, null);
+        AddRow("Pending Reward", rewardStatus,
+            rewardStatus == "CardSelection" ? mutedColor : warningColor,
+            string.Empty, false, null);
+        AddRow("Show Reward Eligibility",
+            rewards?.GetOrbitalEligibilitySummary() ?? "NO PROVIDER",
+            mutedColor, "REFRESH", rewards != null, RefreshCurrentTab);
+        AddRow("Force Level Up", "REAL EXPERIENCE FLOW", accentColor,
+            "LEVEL", experience != null && rewards != null, () =>
+            {
+                CloseMenu();
+                experience.AddExperience(experience.ExpToNextLevel);
+            });
+        AddOrbitalRewardDebugRow("Force Module Reward",
+            OrbitalRewardKind.Pistol, rewards);
+        AddOrbitalRewardDebugRow("Force Link Pair",
+            OrbitalRewardKind.LinkPair, rewards);
+        AddOrbitalRewardDebugRow("Force Ring Speed",
+            OrbitalRewardKind.RingSpeed, rewards);
+        AddOrbitalRewardDebugRow("Force Ring Power",
+            OrbitalRewardKind.RingPower, rewards);
+        AddOrbitalRewardDebugRow("Force Add Mount",
+            OrbitalRewardKind.AddMount, rewards);
+        AddOrbitalRewardDebugRow("Force Core Upgrade",
+            OrbitalRewardKind.CoreUpgrade, rewards);
+        AddOrbitalRewardDebugRow("Force Link Matrix",
+            OrbitalRewardKind.LinkMatrix, rewards);
+        AddRow("Advance To Next Ring Milestone",
+            nextMilestone > 0 ? $"LEVEL {nextMilestone}" : "MAX RINGS",
+            accentColor, "ADVANCE", experience != null && nextMilestone > 0,
+            () =>
+            {
+                CloseMenu();
+                experience.RestoreRuntimeExperience(nextMilestone - 1, 0);
+                experience.AddExperience(
+                    experience.GetRequiredExpForCurrentLevel());
+            });
+        AddRow("Reset Orbital Progression", "BASE STATION / REWARD IDLE",
+            warningColor, "RESET", available &&
+                (rewards == null || !rewards.IsChoosingUpgrade), () =>
+            {
+                station.ApplyPresetStart();
+                RefreshCurrentTab();
+            });
+
+        AddSectionTitle("PRESET", "Single temporary visual QA state");
+        AddRow("READABILITY TEST", "3 RINGS / ALL MODULE VISUALS / FREE MOUNTS",
+            accentColor, "LOAD", available,
+            () => { station.ApplyReadabilityTestPreset(); RefreshCurrentTab(); });
+        OrbitalPresentationConfig visual = OrbitalPresentationConfig.Active;
+        System.Action<float> refreshVisuals = _ =>
+        {
+            station?.RebuildRuntimeFromState();
+            RefreshCurrentTab();
+        };
+        AddSectionTitle("READABILITY SETTINGS", "Production config · visual only");
+        AddSliderRow("Pistol Visual Scale", visual.PistolVisualScale, 0.5f, 2f,
+            value => { visual.PistolVisualScale = value; refreshVisuals(value); }, "0.00");
+        AddSliderRow("Laser Sword Visual Scale", visual.LaserSwordVisualScale, 0.5f, 2f,
+            value => { visual.LaserSwordVisualScale = value; refreshVisuals(value); }, "0.00");
+        AddSliderRow("Impulse Visual Scale", visual.ImpulseVisualScale, 0.5f, 2f,
+            value => { visual.ImpulseVisualScale = value; refreshVisuals(value); }, "0.00");
+        AddSliderRow("Arc Visual Scale", visual.ArcVisualScale, 0.15f, 0.8f,
+            value => { visual.ArcVisualScale = value; refreshVisuals(value); }, "0.00");
+        AddSliderRow("Link Node Visual Scale", visual.LinkNodeVisualScale, 0.15f, 0.8f,
+            value => { visual.LinkNodeVisualScale = value; refreshVisuals(value); }, "0.00");
+        AddSliderRow("Mounted Sorting Offset", visual.MountedWeaponSortingOffset, 0f, 8f,
+            value => { visual.MountedWeaponSortingOffset = Mathf.RoundToInt(value); refreshVisuals(value); }, "0");
+        AddSliderRow("Normal Mount Size", visual.NormalMountSize, 0.08f, 0.35f,
+            value => { visual.NormalMountSize = value; refreshVisuals(value); }, "0.00");
+        AddSliderRow("Selection Mount Size", visual.SelectionMountSize, 0.15f, 0.5f,
+            value => { visual.SelectionMountSize = value; refreshVisuals(value); }, "0.00");
+        AddSliderRow("Normal Alpha", visual.NormalAlpha, 0.2f, 1f,
+            value => { visual.NormalAlpha = value; refreshVisuals(value); }, "0.00");
+        AddSliderRow("Hover Alpha", visual.HoverAlpha, 0.2f, 1f,
+            value => { visual.HoverAlpha = value; refreshVisuals(value); }, "0.00");
+        AddSliderRow("Halo Size", visual.HaloSize, 0.15f, 0.7f,
+            value => { visual.HaloSize = value; refreshVisuals(value); }, "0.00");
+        AddSliderRow("Ring Line Alpha", visual.RingLineAlpha, 0.15f, 0.9f,
+            value => { visual.RingLineAlpha = value; refreshVisuals(value); }, "0.00");
+        AddHint("Number keys 1-9 select a ring. Module placement closes F1 so arena clicks remain explicit.");
+    }
+
+    private void AddOrbitalModuleRow(string label, OrbitalModuleKind kind,
+        OrbitalStationRuntime station)
+    {
+        bool available = station != null && station.IsInitialized;
+        AddRow(label, available ? "ARENA PLACEMENT" : "NOT ACTIVE",
+            available ? accentColor : mutedColor, "PLACE", available, () =>
+            {
+                station.BeginModulePlacement(kind);
+                CloseMenu();
+            });
+    }
+
+    private void AddOrbitalRewardDebugRow(string label,
+        OrbitalRewardKind kind, UpgradeManager rewards)
+    {
+        bool enabled = rewards != null && !rewards.IsChoosingUpgrade &&
+            CombatModeState.ActiveRunMode == CombatMode.Orbital;
+        AddRow(label, kind.ToString().ToUpperInvariant(), accentColor,
+            "FORCE", enabled, () =>
+            {
+                CloseMenu();
+                if (rewards.DebugForceOrbitalReward(kind))
+                    return;
+                else
+                {
+                    lastOrbitalStateResult = "REWARD INELIGIBLE";
+                    Debug.LogWarning($"[OrbitalRewards] Forced reward {kind} is ineligible.");
+                }
+            });
+    }
+
+    private void ApplyOrbitalCombatMode(CombatMode mode)
+    {
+        CombatModeState.Select(mode);
+        characterSpawner ??= FindFirstObjectByType<CharacterSpawner>();
+        if (characterSpawner != null && characterSpawner.SpawnedPlayer != null)
+            characterSpawner.DebugApplyCombatMode(mode);
+        RefreshCurrentTab();
+    }
+
+    private void RestartWithSelectedCombatMode()
+    {
+        RunStateManager runState = RunStateManager.Instance;
+        if (runState != null)
+            runState.BeginNewRun(runState.SelectedCharacter, runState.SelectedWeapon);
+        else
+            CombatModeState.DebugApplyToCurrentRun(CombatModeState.SelectedMode);
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
 
     private void SetMenuLiveSimulation(bool live)
     {

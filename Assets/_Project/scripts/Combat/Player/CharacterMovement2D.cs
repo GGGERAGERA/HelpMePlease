@@ -50,6 +50,7 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
     private bool hasFacingDirection;
 
     public Transform VisualRoot => visualRoot;
+    public Vector2 LastMoveDirection => lastMoveDirection;
 
     public void SetVisualRoot(Transform value)
     {

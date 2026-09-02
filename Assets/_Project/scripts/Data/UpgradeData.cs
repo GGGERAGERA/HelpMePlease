@@ -55,7 +55,11 @@ public enum UpgradeType
     XpGainPercent = 22,
     AttackSizePercent = 23,
     HpRegeneration = 24,
-    Multishot = 25
+    Multishot = 25,
+
+    // Runtime-only cards owned by OrbitalRewardProvider. Existing serialized
+    // legacy IDs remain unchanged.
+    OrbitalReward = 100
 }
 
 [CreateAssetMenu(fileName = "New UpgradeData", menuName = "Game/Upgrade Data")]
