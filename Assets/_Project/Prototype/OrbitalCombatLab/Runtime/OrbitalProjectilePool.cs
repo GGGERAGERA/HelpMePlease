@@ -41,6 +41,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
             Projectile projectile = projectiles[cursor++];
             if (cursor >= Capacity) cursor = 0;
             projectile.Transform.position = position;
+            float powerScale = Mathf.Clamp(.1f + damage * .0025f, .11f, .2f);
+            projectile.Transform.localScale = Vector3.one * powerScale;
             projectile.Velocity = direction.normalized * speed;
             projectile.Damage = damage;
             projectile.DieAt = Time.time + Mathf.Max(.25f, range / Mathf.Max(.1f, speed) + .2f);

@@ -5,32 +5,50 @@ namespace Subject42.Prototype.OrbitalCombatLab
     public sealed class OrbitalLabDebugUI : MonoBehaviour
     {
         public bool MenuOpen { get; private set; } = true;
+        public bool SuppressedByGoldenPath { get; set; }
         public int HoveredRing { get; private set; } = -1;
+        public bool UpgradeSelectionActive => upgradeSelection;
         public bool PointerOverMenu
         {
             get
             {
-                if (!MenuOpen) return false;
+                if (lab != null && lab.GoldenPath != null && lab.GoldenPath.PointerOverUi) return true;
+                if (SuppressedByGoldenPath || !MenuOpen) return false;
                 Vector2 mouse = Input.mousePosition;
                 mouse.y = Screen.height - mouse.y;
                 return PanelRect.Contains(mouse);
             }
         }
 
-        private Rect PanelRect => new(12f, 12f, Mathf.Min(470f, Screen.width - 24f), Screen.height - 24f);
-        private readonly bool[] open = { true, true, true, true, true, true, false, false, false, false, true, false };
+        private Rect PanelRect => new(12f, 12f, Mathf.Min(520f, Screen.width - 24f), Screen.height - 24f);
+        private readonly bool[] open = { true, true, true, true, true, true, false, false, false, false, true, false,
+            true, true, true, false };
         private OrbitalCombatLabController lab;
         private Vector2 scroll;
         private GUIStyle title, section, hint, stat;
         private float qPressedAt = -99f;
         private float ePressedAt = -99f;
+        private bool upgradeSelection;
+        private bool previewUpgrade = true;
+        private OrbitalRingUpgradeType pendingUpgrade = OrbitalRingUpgradeType.Amplifier;
+        private float savedTimeScale = 1f;
+        private bool massFillConfirmation;
+        private float pendingFillFraction;
+        private int pendingFillPerRing;
 
         public void Configure(OrbitalCombatLabController controller) => lab = controller;
+        public void SetMenuOpen(bool value) => MenuOpen = value;
 
         private void Update()
         {
+            if (SuppressedByGoldenPath) return;
             if (Input.GetKeyDown(KeyCode.F1)) MenuOpen = !MenuOpen;
             HoveredRing = -1;
+            if (upgradeSelection)
+            {
+                HandleUpgradeSelection();
+                return;
+            }
             if (!MenuOpen || !lab.RingEditMode || lab.RingCount == 0 || lab.Drag.IsDragging) return;
             HandlePhaseKey(KeyCode.Q, -1f, ref qPressedAt);
             HandlePhaseKey(KeyCode.E, 1f, ref ePressedAt);
@@ -53,11 +71,14 @@ namespace Subject42.Prototype.OrbitalCombatLab
 
         private void OnGUI()
         {
-            if (lab == null) return;
+            if (lab == null || SuppressedByGoldenPath) return;
             EnsureStyles();
             if (MenuOpen) DrawMenu(); else GUI.Box(new Rect(12f, 12f, 322f, 31f), "F1 → ORBITAL COMBAT LAB", hint);
             if (lab.ShowStats) DrawStats();
             if (MenuOpen && lab.RingEditMode && lab.RingCount > 0) DrawRingEditOverlay();
+            if (upgradeSelection) DrawUpgradeOverlay();
+            if (Time.unscaledTime < lab.UserMessageUntil)
+                GUI.Box(new Rect(Screen.width * .5f - 260f, 12f, 520f, 38f), lab.UserMessage, stat);
         }
 
         private void DrawMenu()
@@ -66,7 +87,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             GUI.Box(panel, GUIContent.none);
             GUILayout.BeginArea(new Rect(panel.x + 10f, panel.y + 8f, panel.width - 20f, panel.height - 16f));
             GUILayout.Label("ORBITAL COMBAT LAB", title);
-            GUILayout.Label("F1 — меню · WASD — движение · ЛКМ — drag · Ring Edit: Q/E, R, Space, колесо", hint);
+            GUILayout.Label("F1 — меню · WASD — движение · ЛКМ — drag · Tab — полный обзор станции", hint);
             scroll = GUILayout.BeginScrollView(scroll);
             lab.PatternCombat = Toggle(lab.PatternCombat, "PATTERN COMBAT",
                 "Выключено — исходный бой; включено — links, resonance и поля колец воздействуют на толпу.");
@@ -82,7 +103,13 @@ namespace Subject42.Prototype.OrbitalCombatLab
             if (Fold(9, "10. ПОЛЕ КОЛЬЦА")) DrawField();
             if (Fold(10, "11. ПРЕСЕТЫ")) DrawPresets();
             if (Fold(11, "12. СТАТИСТИКА И ВИЗУАЛ")) DrawVisuals();
-            if (!string.IsNullOrEmpty(GUI.tooltip)) GUILayout.Label("ⓘ " + GUI.tooltip, hint);
+            if (Fold(12, "13. МАСШТАБ И АВТО-КОЛЬЦА")) DrawScalability();
+            if (Fold(13, "14. UPGRADE TEST MODE")) DrawUpgrades();
+            if (Fold(14, "15. ORBITAL CORE")) DrawCore();
+            if (Fold(15, "16. БЫСТРЫЕ ТЕСТЫ")) DrawQuickTests();
+            // IMGUI must emit the same control count during Layout and Repaint. GUI.tooltip
+            // can differ between those events, so keep this label unconditional.
+            GUILayout.Label(string.IsNullOrEmpty(GUI.tooltip) ? " " : "ⓘ " + GUI.tooltip, hint);
             GUILayout.EndScrollView();
             GUILayout.EndArea();
         }
@@ -104,8 +131,12 @@ namespace Subject42.Prototype.OrbitalCombatLab
 
         private void DrawRings()
         {
-            Row(() => Button("+ RING", lab.AddRing, "Добавить кольцо, максимум шесть."),
-                () => Button("- RING", lab.RemoveRing, "Удалить внешнее кольцо вместе с объектами."));
+            Row(() => Button("+1 КОЛЬЦО", lab.AddRing, "Добавить автоматически настроенное кольцо."),
+                () => Button("−1 КОЛЬЦО", lab.RemoveRing, "Удалить внешнее кольцо вместе с объектами."));
+            Row(() => Button("+5 КОЛЕЦ", () => lab.AddRings(5), "Массовое добавление до Safety Ring Limit."),
+                () => Button("+10 КОЛЕЦ", () => lab.AddRings(10), "Массовое добавление до Safety Ring Limit."));
+            Row(() => Button("ОСТАВИТЬ ТОЛЬКО 1", lab.KeepOnlyOneRing, "Удалить внешние кольца и их оружие."),
+                () => Button("ОЧИСТИТЬ СТАНЦИЮ", lab.ClearStation, "Одно пустое кольцо и сброс улучшений."));
             lab.ShowRings = Toggle(lab.ShowRings, "Показывать кольца", "Линии всех орбит.");
             lab.ShowMounts = Toggle(lab.ShowMounts, "Показывать точки", "Свободные и занятые позиции.");
             lab.RingEditMode = Toggle(lab.RingEditMode, "РЕДАКТИРОВАНИЕ КОЛЕЦ", "Клик линии, колесо скорости, Q/E постоянного смещения фазы, R направления, Space паузы.");
@@ -117,24 +148,24 @@ namespace Subject42.Prototype.OrbitalCombatLab
         private void DrawSelectedRing()
         {
             if (lab.RingCount == 0) return;
-            GUILayout.BeginHorizontal();
             for (int i = 0; i < lab.RingCount; i++)
             {
+                if (i % 12 == 0) GUILayout.BeginHorizontal();
                 GUI.backgroundColor = i == lab.SelectedRing ? new Color(.2f, .9f, 1f) : Color.white;
                 if (GUILayout.Button((i + 1).ToString(), GUILayout.Height(25f))) lab.SelectedRing = i;
+                if (i % 12 == 11 || i == lab.RingCount - 1) GUILayout.EndHorizontal();
             }
             GUI.backgroundColor = Color.white;
-            GUILayout.EndHorizontal();
             OrbitalRing ring = SelectedRing();
             OrbitalRingSettings s = ring.Settings;
-            s.Radius = Slider("Radius", s.Radius, .8f, 11f, "Базовый размер орбиты.");
-            s.RotationSpeed = Slider("Rotation Speed", s.RotationSpeed, 0f, 220f, "Угловая скорость рисунка.");
-            s.Clockwise = Toggle(s.Clockwise, "Reverse Direction / Clockwise", "Разворачивает поток объектов.");
-            s.Paused = Toggle(s.Paused, "Pause Ring", "Замораживает только это кольцо, сохраняя фазу.");
-            GUILayout.Label($"Ring Rotation Angle: {ring.RotationAngle:0.0}°", hint);
-            ring.PhaseOffset = Slider("Ring Phase Offset", ring.PhaseOffset, 0f, 360f,
+            s.Radius = Slider("Radius · м", s.Radius, .8f, 60f, "Базовый размер орбиты.");
+            s.RotationSpeed = Slider("Скорость вращения · °/с · ОБА", s.RotationSpeed, 0f, 220f, "Угловая скорость рисунка и всего оружия на этом кольце.");
+            s.Clockwise = Toggle(s.Clockwise, "Вращение по часовой стрелке", "Разворачивает поток объектов.");
+            s.Paused = Toggle(s.Paused, "Пауза выбранного кольца", "Замораживает только это кольцо, сохраняя фазу.");
+            GUILayout.Label($"Текущий угол вращения: {ring.RotationAngle:0.0}°", hint);
+            ring.PhaseOffset = Slider("Смещение формации · ° · ВИЗУАЛ", ring.PhaseOffset, 0f, 360f,
                 "Постоянное пользовательское смещение формации. Вращающийся угол продолжает жить отдельно.");
-            int mounts = Mathf.RoundToInt(Slider("Max Mounts", s.MaxMounts, 1f, 8f, "Количество креплений."));
+            int mounts = Mathf.RoundToInt(Slider("Крепления · шт · ОБА", s.MaxMounts, 1f, OrbitalRing.AbsoluteMaxMounts, "Количество видимых позиций для оружия на этом кольце."));
             if (mounts != s.MaxMounts) lab.SetSelectedRingMaxMounts(mounts);
             Row(() => Button("SYNC PREV", () => lab.SynchronizeSelectedWithPrevious(true), "Копирует скорость, направление и фазу предыдущего."),
                 () => Button("COPY SPEED", lab.CopyPreviousSpeed, "Копирует только угловую скорость предыдущего кольца."));
@@ -154,11 +185,31 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 () => Button("+ BLADE", () => lab.AddMounted(OrbitalMountType.Blade), "Красный контактный урон."));
             Row(() => Button("+ PUSHER", () => lab.AddMounted(OrbitalMountType.Pusher), "Жёлтый crowd control."),
                 () => Button("+ LINK NODE", () => lab.AddMounted(OrbitalMountType.LinkNode), "Пурпурный узел геометрии."));
+            Row(() => Button("+ MINE LAYER", () => lab.AddMounted(OrbitalMountType.MineLayer), "Оставляет зелёно-оранжевые мины в мировой позиции."),
+                () => Button("+ ARC EMITTER", () => lab.AddMounted(OrbitalMountType.ArcEmitter), "Короткий цепной бело-фиолетовый разряд."));
             Button("FILL ALL RINGS", lab.FillAllRings, "Заполнить свободные точки базовыми объектами.");
             lab.ShowAttackRanges = Toggle(lab.ShowAttackRanges, "Радиусы атак", "Рабочие зоны Gun и Pusher.");
             lab.Gun.Damage = Slider("Gun Damage", lab.Gun.Damage, 1f, 60f, "Урон projectile.");
             lab.Blade.Damage = Slider("Blade Damage", lab.Blade.Damage, 1f, 90f, "Контактный урон.");
             lab.Pusher.PushForce = Slider("Pusher Force", lab.Pusher.PushForce, 1f, 35f, "Сила раздвигания толпы.");
+            GUILayout.Label("MINE LAYER · БОЙ", section);
+            lab.Mines.Damage = Slider("Урон мины · ед.", lab.Mines.Damage, 1f, 90f, "ВЛИЯЕТ НА: урон всем врагам внутри взрыва.");
+            lab.Mines.DropInterval = Slider("Интервал установки · сек", lab.Mines.DropInterval, .2f, 4f, "ВЛИЯЕТ НА: плотность минного рисунка вдоль орбиты.");
+            lab.Mines.TriggerRadius = Slider("Радиус срабатывания · м", lab.Mines.TriggerRadius, .2f, 2f, "ВЛИЯЕТ НА: дистанцию обнаружения врага.");
+            lab.Mines.ExplosionRadius = Slider("Радиус взрыва · м", lab.Mines.ExplosionRadius, .4f, 4f, "ВЛИЯЕТ НА: площадь AoE и видимый импульс.");
+            lab.Mines.Lifetime = Slider("Время жизни мины · сек", lab.Mines.Lifetime, 1f, 30f, "ВЛИЯЕТ НА: длину минного следа; старая мина возвращается в pool.");
+            lab.Mines.MaximumActivePerLayer = Mathf.RoundToInt(Slider("Мин на один модуль · шт", lab.Mines.MaximumActivePerLayer, 1f, 16f, "Ограничивает активные мины одного Mine Layer."));
+            lab.Mines.PushForce = Slider("Отталкивание взрыва · импульс", lab.Mines.PushForce, 0f, 20f, "ВЛИЯЕТ НА: crowd control внутри Explosion Radius.");
+            Button("RESET MINE PARAMETERS", ResetMineParameters, "Вернуть понятные исходные значения Mine Layer.");
+            GUILayout.Label("ARC EMITTER · БОЙ", section);
+            lab.Arc.Damage = Slider("Урон дуги · ед.", lab.Arc.Damage, 1f, 60f, "ВЛИЯЕТ НА: первый и затухающие chain hits.");
+            lab.Arc.Cooldown = Slider("Перезарядка дуги · сек", lab.Arc.Cooldown, .15f, 3f, "Меньше — короткие вспышки происходят чаще.");
+            lab.Arc.Range = Slider("Дальность дуги · м", lab.Arc.Range, 1f, 14f, "ВЛИЯЕТ НА: ранний перехват на внешних кольцах.");
+            lab.Arc.ChainCount = Mathf.RoundToInt(Slider("Целей в цепи · шт", lab.Arc.ChainCount, 1f, 10f, "Количество коротких последовательных разрядов."));
+            lab.Arc.ChainRange = Slider("Дальность следующего перехода · м", lab.Arc.ChainRange, .5f, 8f, "ВЛИЯЕТ НА: может ли молния найти следующую цель после первого попадания.");
+            lab.Arc.PulseBonus = Slider("Бонус Core Pulse · ×", lab.Arc.PulseBonus, 1f, 4f, "ВЛИЯЕТ НА: урон следующего discharge после прохождения волны ядра.");
+            lab.Arc.LinkConduction = Toggle(lab.Arc.LinkConduction, "LINK CONDUCTION · ОБА", "Link Node на том же кольце добавляет один переход цепи.");
+            Button("RESET ARC PARAMETERS", ResetArcParameters, "Вернуть понятные исходные значения Arc Emitter.");
             GUILayout.Label("ВИЗУАЛ ОРУЖИЯ", section);
             Row(() => Choice("PRIMITIVES", lab.WeaponVisuals.Mode == OrbitalWeaponVisualMode.Primitives,
                     () => lab.ApplyWeaponVisualMode(OrbitalWeaponVisualMode.Primitives), "Контрольная геометрическая версия без prefab-визуалов."),
@@ -189,19 +240,22 @@ namespace Subject42.Prototype.OrbitalCombatLab
             Row(() => Choice("PAIRS", lab.Links.Mode == OrbitalLinkMode.Pairs, () => lab.Links.Mode = OrbitalLinkMode.Pairs, "Попарные хорды."),
                 () => Choice("CHAIN", lab.Links.Mode == OrbitalLinkMode.Chain, () => lab.Links.Mode = OrbitalLinkMode.Chain, "Последовательная ломаная."),
                 () => Choice("ALL NEARBY", lab.Links.Mode == OrbitalLinkMode.AllNearby, () => lab.Links.Mode = OrbitalLinkMode.AllNearby, "Ближайшие связи в пределах дистанции."));
-            lab.Links.ShowLinks = Toggle(lab.Links.ShowLinks, "Show Links", "Показывать энергетические сегменты.");
-            lab.Links.DealDamage = Toggle(lab.Links.DealDamage, "Links Deal Damage", "Пересечение становится оружием при PATTERN COMBAT ON.");
-            lab.Links.Damage = Slider("Link Damage", lab.Links.Damage, 0f, 40f, "Урон пересечения с cooldown.");
-            lab.Links.HitCooldown = Slider("Hit Cooldown", lab.Links.HitCooldown, .08f, 1.5f, "Исключает урон каждый кадр.");
-            lab.Links.LineWidth = Slider("Line Width", lab.Links.LineWidth, .015f, .22f, "Толщина хорд.");
-            lab.Links.MaxDistance = Slider("Max Link Distance", lab.Links.MaxDistance, 2f, 18f, "Ограничивает ALL NEARBY и визуальную кашу.");
-            lab.Links.PulseSpeed = Slider("Pulse Speed", lab.Links.PulseSpeed, 0f, 10f, "Скорость дыхания линий.");
+            lab.Links.ShowLinks = Toggle(lab.Links.ShowLinks, "Показывать связи · ВИЗУАЛ", "Показывает постоянные энергетические сегменты Link Node.");
+            lab.Links.DealDamage = Toggle(lab.Links.DealDamage, "Урон связей · БОЙ", "Пересечение становится оружием при PATTERN COMBAT ON.");
+            lab.Links.Damage = Slider("Урон связи · ед./срабатывание · БОЙ", lab.Links.Damage, 0f, 40f, "Сколько урона получает враг, пересёкший фиолетовую линию. Для двух колец используется средний Damage Multiplier.");
+            lab.Links.HitCooldown = Slider("Повторный урон · сек · БОЙ", lab.Links.HitCooldown, .08f, 1.5f, "Минимальное время до следующего урона той же цели. Меньше — чаще.");
+            GUILayout.Label($"Максимум ≈ {1f / Mathf.Max(.01f, lab.Links.HitCooldown):0.##} попадания/сек по одной цели", hint);
+            lab.Links.LineWidth = Slider("Толщина связи · world units · ОБА", lab.Links.LineWidth, .015f, .22f, "Меняет видимую толщину и ширину hit-зоны.");
+            lab.Links.MaxDistance = Slider("Дальность связи · м · ОБА", lab.Links.MaxDistance, 2f, 24f, "Максимальное расстояние, на котором два Link Node соединяются в ALL NEARBY.");
+            lab.Links.PulseSpeed = Slider("Скорость пульсации · Гц · ВИЗУАЛ", lab.Links.PulseSpeed, 0f, 10f, "Скорость изменения яркости. На урон не влияет.");
+            Button("ТЕСТОВЫЙ ВРАГ НА ЛИНИЮ", lab.Pattern.PlaceTestEnemyOnLink, "Перемещает первого активного врага в центр первой видимой связи.");
             Color linkColor = lab.Links.LineColor;
             linkColor.r = Slider("Link Color R", linkColor.r, 0f, 1f, "Красный канал цвета энергетической геометрии.");
             linkColor.g = Slider("Link Color G", linkColor.g, 0f, 1f, "Зелёный канал: поднимите для cyan/white рисунка.");
             linkColor.b = Slider("Link Color B", linkColor.b, 0f, 1f, "Синий канал: вместе с красным создаёт magenta.");
             linkColor.a = 1f;
             lab.Links.LineColor = linkColor;
+            Button("RESET LINK PARAMETERS", ResetLinkParameters, "Вернуть исходные урон, частоту, толщину, дальность и цвет связей.");
         }
 
         private void DrawResonance()
@@ -212,12 +266,14 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 () => Choice("BEAM", lab.Resonance.Mode == OrbitalResonanceMode.Beam, () => lab.Resonance.Mode = OrbitalResonanceMode.Beam, "Короткий луч."),
                 () => Choice("SHOCK", lab.Resonance.Mode == OrbitalResonanceMode.Shockwave, () => lab.Resonance.Mode = OrbitalResonanceMode.Shockwave, "Ударная волна."),
                 () => Choice("CYCLE", lab.Resonance.Mode == OrbitalResonanceMode.Cycle, () => lab.Resonance.Mode = OrbitalResonanceMode.Cycle, "Чередование режимов."));
-            lab.Resonance.AlignmentTolerance = Slider("Допуск резонанса", lab.Resonance.AlignmentTolerance, 2f, 35f,
-                "Насколько точно объекты должны выстроиться. Чем больше значение, тем чаще резонансы.");
-            lab.Resonance.MinimumObjects = Mathf.RoundToInt(Slider("Minimum Objects", lab.Resonance.MinimumObjects, 2f, 4f, "Сколько разных колец должны совпасть."));
-            lab.Resonance.Cooldown = Slider("Cooldown", lab.Resonance.Cooldown, .25f, 4f, "Пауза между отдельными событиями.");
-            lab.Resonance.Damage = Slider("Damage", lab.Resonance.Damage, 0f, 60f, "Сила геометрической атаки.");
-            lab.Resonance.Range = Slider("Range", lab.Resonance.Range, 3f, 18f, "Длина beam/volley и масштаб shockwave.");
+            lab.Resonance.AlignmentTolerance = Slider("Допуск резонанса · ±° · ОБА", lab.Resonance.AlignmentTolerance, 2f, 35f,
+                "Насколько близко по углу должны оказаться объекты разных колец. Больше угол — чаще резонанс.");
+            lab.Resonance.MinimumObjects = Mathf.RoundToInt(Slider("Минимум объектов · шт · БОЙ", lab.Resonance.MinimumObjects, 2f, 6f, "Количество объектов именно с разных колец в одной радиальной линии."));
+            lab.Resonance.Cooldown = Slider("Cooldown резонанса · сек · БОЙ", lab.Resonance.Cooldown, .25f, 4f, "Пауза между событиями резонанса.");
+            GUILayout.Label($"Максимум ≈ {1f / Mathf.Max(.01f, lab.Resonance.Cooldown):0.##} резонанса/сек", hint);
+            lab.Resonance.Damage = Slider("Урон резонанса · ед. · БОЙ", lab.Resonance.Damage, 0f, 60f, "Используется BEAM/SHOCKWAVE и fallback VOLLEY.");
+            lab.Resonance.Range = Slider("Дальность резонанса · м · ОБА", lab.Resonance.Range, 3f, 24f, "Длина beam/volley и масштаб shockwave.");
+            Button("RESET RESONANCE PARAMETERS", ResetResonanceParameters, "Вернуть исходный допуск, частоту, урон и дальность резонанса.");
         }
 
         private void DrawTrails()
@@ -226,9 +282,9 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 () => Choice("SHORT", lab.Trails.Mode == OrbitalTrailMode.Short, () => lab.Trails.Mode = OrbitalTrailMode.Short, "Короткая дуга."),
                 () => Choice("MEDIUM", lab.Trails.Mode == OrbitalTrailMode.Medium, () => lab.Trails.Mode = OrbitalTrailMode.Medium, "Заметный рисунок."),
                 () => Choice("HYPNOTIC", lab.Trails.Mode == OrbitalTrailMode.Hypnotic, () => lab.Trails.Mode = OrbitalTrailMode.Hypnotic, "Длинная кинетическая скульптура."));
-            lab.Trails.Length = Slider("Length", lab.Trails.Length, .15f, 2.5f, "Длина цветной дуги.");
-            lab.Trails.Width = Slider("Width", lab.Trails.Width, .015f, .24f, "Толщина следа.");
-            lab.Trails.Alpha = Slider("Alpha", lab.Trails.Alpha, .05f, 1f, "Прозрачность до visual profile.");
+            lab.Trails.Length = Slider("Длина следа · сек · ВИЗУАЛ", lab.Trails.Length, .15f, 2.5f, "Сколько времени остаётся цветная дуга за объектом.");
+            lab.Trails.Width = Slider("Толщина следа · м · ВИЗУАЛ", lab.Trails.Width, .015f, .24f, "Видимая толщина дуги в мире.");
+            lab.Trails.Alpha = Slider("Яркость следа · ВИЗУАЛ", lab.Trails.Alpha, .05f, 1f, "Прозрачность до применения визуального профиля.");
             lab.Trails.FollowVisualProfile = Toggle(lab.Trails.FollowVisualProfile, "TRAILS FOLLOW VISUAL PROFILE",
                 "CLEAN/COMBAT выключают следы, HYPNOTIC/MAXIMUM включают длинные. Отключите для ручной настройки.");
         }
@@ -236,7 +292,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
         private void DrawFormations()
         {
             lab.FreeMountPhase = Toggle(lab.FreeMountPhase, "FREE MOUNT PHASE", "Drag вдоль текущего кольца меняет собственный угол; красный preview означает наложение.");
-            lab.MinimumMountSpacing = Slider("Minimum Angular Spacing", lab.MinimumMountSpacing, 4f, 35f, "Минимальная угловая дистанция.");
+            lab.MinimumMountSpacing = Slider("Минимальный угол между объектами · ° · ОБА", lab.MinimumMountSpacing, 4f, 35f, "Не даёт двум объектам занять почти одинаковую точку кольца.");
             Row(() => Button("DISTRIBUTE", lab.DistributeSelectedEvenly, "Вернуть равномерные углы."),
                 () => Button("CLUSTER", lab.ClusterSelected, "Собрать плотный сектор."));
             Row(() => Button("FRONT ARC", lab.FrontArcSelected, "Собрать по направлению движения."),
@@ -252,20 +308,20 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 () => Choice("WOBBLE", s.Shape == OrbitalShape.Wobble, () => s.Shape = OrbitalShape.Wobble, "Лепестковое искажение."));
             if (s.Shape == OrbitalShape.Ellipse)
             {
-                s.AspectRatio = Slider("Aspect Ratio", s.AspectRatio, .55f, 2.3f, "Сила вытяжки.");
-                s.ShapeRotation = Slider("Rotation Angle", s.ShapeRotation, 0f, 360f, "Ориентация длинной оси.");
+                s.AspectRatio = Slider("Вытянутость · отношение · ВИЗУАЛ", s.AspectRatio, .55f, 2.3f, "1 — круг; дальше от 1 — сильнее эллипс.");
+                s.ShapeRotation = Slider("Поворот эллипса · ° · ВИЗУАЛ", s.ShapeRotation, 0f, 360f, "Ориентация длинной оси.");
             }
             else if (s.Shape == OrbitalShape.Breathing)
             {
-                s.BreathingAmplitude = Slider("Amplitude", s.BreathingAmplitude, 0f, 1.5f, "Амплитуда дыхания.");
-                s.BreathingFrequency = Slider("Frequency", s.BreathingFrequency, .05f, 2f, "Частота дыхания.");
-                s.BreathingPhase = Slider("Phase Offset", s.BreathingPhase, 0f, 360f, "Сдвиг относительно соседей.");
+                s.BreathingAmplitude = Slider("Амплитуда дыхания · м · ОБА", s.BreathingAmplitude, 0f, 1.5f, "Насколько радиус кольца расширяется и сжимается.");
+                s.BreathingFrequency = Slider("Частота дыхания · Гц · ОБА", s.BreathingFrequency, .05f, 2f, "Сколько циклов расширения происходит в секунду.");
+                s.BreathingPhase = Slider("Фаза дыхания · ° · ВИЗУАЛ", s.BreathingPhase, 0f, 360f, "Сдвиг волны относительно соседних колец.");
             }
             else if (s.Shape == OrbitalShape.Wobble)
             {
-                s.WobbleLobes = Mathf.RoundToInt(Slider("Lobes", s.WobbleLobes, 2f, 10f, "Количество лепестков."));
-                s.WobbleAmplitude = Slider("Amplitude", s.WobbleAmplitude, 0f, .9f, "Глубина волн." );
-                s.WobbleSpeed = Slider("Speed", s.WobbleSpeed, 0f, 8f, "Скорость искажения.");
+                s.WobbleLobes = Mathf.RoundToInt(Slider("Лепестки · шт · ВИЗУАЛ", s.WobbleLobes, 2f, 10f, "Количество волн по окружности."));
+                s.WobbleAmplitude = Slider("Глубина лепестков · м · ОБА", s.WobbleAmplitude, 0f, .9f, "Насколько траектория отклоняется от базового радиуса." );
+                s.WobbleSpeed = Slider("Скорость деформации · рад/с · ВИЗУАЛ", s.WobbleSpeed, 0f, 8f, "Скорость движения волн по орбите.");
             }
         }
 
@@ -277,12 +333,12 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 () => Choice("PULSE", s.FieldMode == OrbitalRingFieldMode.Pulse, () => s.FieldMode = OrbitalRingFieldMode.Pulse, "Периодический push."));
             Row(() => Choice("CUT", s.FieldMode == OrbitalRingFieldMode.Cut, () => s.FieldMode = OrbitalRingFieldMode.Cut, "Контактный урон линии."),
                 () => Choice("CONDUCTOR", s.FieldMode == OrbitalRingFieldMode.Conductor, () => s.FieldMode = OrbitalRingFieldMode.Conductor, "Урон при resonance Link Node."));
-            s.FieldWidth = Slider("Field Width", s.FieldWidth, .05f, .8f, "Толщина зоны.");
-            s.FieldDamage = Slider("Damage", s.FieldDamage, 0f, 30f, "Урон CUT/CONDUCTOR.");
-            s.SlowMultiplier = Slider("Slow Multiplier", s.SlowMultiplier, .1f, 1f, "Меньше — сильнее slow.");
-            s.FieldPushForce = Slider("Push Force", s.FieldPushForce, 0f, 20f, "Сила PULSE.");
-            s.PulseInterval = Slider("Pulse Interval", s.PulseInterval, .2f, 5f, "Интервал импульсов.");
-            s.FieldTargetCooldown = Slider("Target Cooldown", s.FieldTargetCooldown, .08f, 1.5f, "Защита от урона каждый кадр.");
+            s.FieldWidth = Slider("Толщина поля · м · ОБА", s.FieldWidth, .05f, .8f, "Ширина активной полосы вокруг линии; апгрейд области визуально и физически расширяет её.");
+            s.FieldDamage = Slider("Урон поля · ед. · БОЙ", s.FieldDamage, 0f, 30f, "Урон режимов CUT и CONDUCTOR за одно срабатывание.");
+            s.SlowMultiplier = Slider("Остаток скорости врага · × · БОЙ", s.SlowMultiplier, .1f, 1f, "0.3 оставляет врагу 30% скорости; меньше — сильнее замедление.");
+            s.FieldPushForce = Slider("Сила отталкивания · импульс · БОЙ", s.FieldPushForce, 0f, 20f, "Насколько сильно режим PULSE отбрасывает толпу.");
+            s.PulseInterval = Slider("Интервал поля PULSE · сек · ОБА", s.PulseInterval, .2f, 5f, "Пауза между видимыми и игровыми импульсами кольца.");
+            s.FieldTargetCooldown = Slider("Повторный урон одной цели · сек · БОЙ", s.FieldTargetCooldown, .08f, 1.5f, "Защита от нанесения урона каждый кадр.");
         }
 
         private void DrawPresets()
@@ -326,17 +382,267 @@ namespace Subject42.Prototype.OrbitalCombatLab
             lab.SlowDuringDrag = Toggle(lab.SlowDuringDrag, "Замедлять drag", "TimeScale 0.2 с восстановлением.");
         }
 
+        private void DrawScalability()
+        {
+            lab.SafetyRingLimit = Mathf.RoundToInt(Slider("Safety Ring Limit · колец", lab.SafetyRingLimit, 1f, 64f,
+                "Мягкий предел Play Mode. Попытка превысить показывает предупреждение."));
+            lab.SafetyObjectLimit = Mathf.RoundToInt(Slider("Safety Object Limit · объектов", lab.SafetyObjectLimit, 32f, 512f,
+                "Выше этого числа массовое заполнение требует второго подтверждения."));
+            GUILayout.Label("STRESS-ПРЕСЕТЫ", section);
+            Row(() => Button("1 RING", () => lab.SetRingCount(1), "Точка отсчёта."),
+                () => Button("3 RINGS", () => lab.SetRingCount(3), "Ранний рост."),
+                () => Button("6 RINGS", () => lab.SetRingCount(6), "Старый максимум."),
+                () => Button("8 RINGS", () => lab.SetRingCount(8), "Первый большой силуэт."));
+            Row(() => Button("12 RINGS", () => lab.SetRingCount(12), "Гипнотическая середина."),
+                () => Button("16 RINGS", () => lab.SetRingCount(16), "Предел читаемого роста."),
+                () => Button("24 RINGS", () => lab.SetRingCount(24), "Экстремальный тест."),
+                () => Button("32 RINGS", () => lab.SetRingCount(32), "Safety limit по умолчанию."));
+            GUILayout.Label("РАСПРЕДЕЛЕНИЕ РАДИУСОВ", section);
+            Row(() => Choice("CONSTANT GAP", lab.RingGeneration.SpacingMode == OrbitalRingSpacingMode.ConstantGap,
+                    () => SetSpacing(OrbitalRingSpacingMode.ConstantGap), "Одинаковый интервал."),
+                () => Choice("GROWING GAP", lab.RingGeneration.SpacingMode == OrbitalRingSpacingMode.GrowingGap,
+                    () => SetSpacing(OrbitalRingSpacingMode.GrowingGap), "Внешние кольца дальше."),
+                () => Choice("COMPRESSED", lab.RingGeneration.SpacingMode == OrbitalRingSpacingMode.Compressed,
+                    () => SetSpacing(OrbitalRingSpacingMode.Compressed), "После порога интервал плавно сжимается."));
+            lab.RingGeneration.FirstRingRadius = Slider("Первый радиус · м", lab.RingGeneration.FirstRingRadius, .8f, 3f, "Радиус внутреннего кольца.");
+            lab.RingGeneration.BaseRingGap = Slider("Базовый интервал · м", lab.RingGeneration.BaseRingGap, .4f, 2f, "Расстояние между ранними кольцами.");
+            lab.RingGeneration.GapGrowth = Slider("Рост/сжатие интервала", lab.RingGeneration.GapGrowth, .01f, .2f, "GROWING: прибавка; COMPRESSED: сила сжатия.");
+            lab.RingGeneration.MinimumGap = Slider("Минимальный интервал · м", lab.RingGeneration.MinimumGap, .3f, 1.2f, "Не даёт внешним кольцам слиться.");
+            lab.RingGeneration.CompressionStartRing = Mathf.RoundToInt(Slider("Начало сжатия · кольцо", lab.RingGeneration.CompressionStartRing, 4f, 24f, "С какого эшелона COMPRESSED уменьшает gap."));
+            GUILayout.Label("СКОРОСТЬ НОВЫХ КОЛЕЦ", section);
+            Row(() => Choice("ALTERNATING", lab.RingGeneration.SpeedMode == OrbitalRingSpeedMode.Alternating, () => SetSpeed(OrbitalRingSpeedMode.Alternating), "Чередование направления."),
+                () => Choice("OUTER SLOWER", lab.RingGeneration.SpeedMode == OrbitalRingSpeedMode.OuterSlower, () => SetSpeed(OrbitalRingSpeedMode.OuterSlower), "Внешние медленнее."));
+            Row(() => Choice("CONSTANT", lab.RingGeneration.SpeedMode == OrbitalRingSpeedMode.Constant, () => SetSpeed(OrbitalRingSpeedMode.Constant), "Одинаковая скорость."),
+                () => Choice("GOLDEN RATIO", lab.RingGeneration.SpeedMode == OrbitalRingSpeedMode.GoldenRatio, () => SetSpeed(OrbitalRingSpeedMode.GoldenRatio), "Долго не повторяющиеся фигуры."),
+                () => Choice("CONTROLLED CHAOS", lab.RingGeneration.SpeedMode == OrbitalRingSpeedMode.ControlledChaos, () => SetSpeed(OrbitalRingSpeedMode.ControlledChaos), "Воспроизводимо по seed."));
+            lab.RingGeneration.ChaosSeed = Mathf.RoundToInt(Slider("Chaos seed", lab.RingGeneration.ChaosSeed, 1f, 9999f, "Один seed всегда даёт одинаковые скорости/фазы."));
+            Button("ПЕРЕСЧИТАТЬ ВСЕ КОЛЬЦА", lab.RegenerateRingLayout, "Применить генератор к существующим кольцам.");
+        }
+
+        private void DrawUpgrades()
+        {
+            GUILayout.Label($"УСЛОВНЫЙ УРОВЕНЬ: {lab.LabLevel}", section);
+            previewUpgrade = Toggle(previewUpgrade, "PREVIEW UPGRADE EFFECT", "Hover ярко показывает выбранное кольцо и старое → новое значение до применения.");
+            Row(() => Button("ПОКАЗАТЬ УЛУЧШЕНИЕ", () => BeginUpgrade(OrbitalRingUpgradeType.Amplifier), "Запускает главный UX-тест выбора прямо на арене."),
+                () => Button("СЛУЧАЙНОЕ УЛУЧШЕНИЕ", () => BeginUpgrade((OrbitalRingUpgradeType)Random.Range(0, 7)), "Случайная карточка кольца."),
+                () => Button("+ УРОВЕНЬ", () => lab.LabLevel++, "Только тестовый счётчик."));
+            Row(() => Button("СКОРОСТЬ +25%", () => BeginUpgrade(OrbitalRingUpgradeType.Overdrive), "Покажет °/с до и после."),
+                () => Button("УРОН +25%", () => BeginUpgrade(OrbitalRingUpgradeType.Amplifier), "Все оружия кольца; Link использует среднее двух колец."));
+            Row(() => Button("COOLDOWN −15%", () => BeginUpgrade(OrbitalRingUpgradeType.SystemsAcceleration), "Gun, Pusher, Mine и Arc. Контактный cooldown Blade не меняется."),
+                () => Button("+1 КРЕПЛЕНИЕ", () => BeginUpgrade(OrbitalRingUpgradeType.ExtraMount), "Добавляет новую видимую точку."));
+            Row(() => Button("ОБЛАСТЬ +20%", () => BeginUpgrade(OrbitalRingUpgradeType.EffectField), "AoE, ranges, Arc и толщина эффектов."),
+                () => Button("LINK +25%", () => BeginUpgrade(OrbitalRingUpgradeType.ResonantRing), "Точный вклад в Link/Resonance."),
+                () => Button("PUSH +30%", () => BeginUpgrade(OrbitalRingUpgradeType.Stabilizer), "Crowd control специализация."));
+            lab.RingUpgradeVisuals = Toggle(lab.RingUpgradeVisuals, "RING UPGRADE VISUALS ON/OFF", "Уровень виден через толщину, яркость и короткую вспышку без trails.");
+            Row(() => Button("RESET UPGRADES", lab.ResetAllUpgrades, "Сброс Core и всех колец."),
+                () => Button("MAX CORE", lab.MaxCore, "Пять ступеней глобальной мощности."));
+            Row(() => Button("MAX SELECTED RING", lab.MaxSelectedRing, "По одному уровню каждой специализации."),
+                () => Button("MAX STATION", lab.MaxStation, "Усиливает Core и все существующие кольца."));
+        }
+
+        private void DrawCore()
+        {
+            GUILayout.Label($"CORE LEVEL {lab.Core.Level} · импульсов {lab.Stats.CorePulses}", section);
+            Row(() => Choice("VISUAL", lab.Core.PulseMode == OrbitalCorePulseMode.Visual, () => lab.Core.PulseMode = OrbitalCorePulseMode.Visual, "Только гипнотическая волна."),
+                () => Choice("VOLLEY", lab.Core.PulseMode == OrbitalCorePulseMode.Volley, () => lab.Core.PulseMode = OrbitalCorePulseMode.Volley, "Синхронный залп Pistol."));
+            Row(() => Choice("RESONANCE", lab.Core.PulseMode == OrbitalCorePulseMode.Resonance, () => lab.Core.PulseMode = OrbitalCorePulseMode.Resonance, "Кратко усиливает Link."),
+                () => Choice("CASCADE", lab.Core.PulseMode == OrbitalCorePulseMode.Cascade, () => lab.Core.PulseMode = OrbitalCorePulseMode.Cascade, "Кольца и оружие срабатывают эшелонами."));
+            lab.Core.PulseGameplayEffect = Toggle(lab.Core.PulseGameplayEffect, "PULSE GAMEPLAY EFFECT · БОЙ", "OFF оставляет только волну и charge flash.");
+            lab.Core.PulseInterval = Slider("Интервал импульса · сек · ОБА", lab.Core.PulseInterval, .75f, 12f, "Пауза после завершения волны.");
+            lab.Core.PulseTravelSpeed = Slider("Скорость волны · м/с · ВИЗУАЛ", lab.Core.PulseTravelSpeed, 2f, 30f, "Определяет задержку между эшелонами.");
+            lab.Core.PulseWidth = Slider("Ширина волны · м · ВИЗУАЛ", lab.Core.PulseWidth, .1f, 2f, "Толщина cyan-кольца.");
+            lab.Core.PulseBrightness = Slider("Яркость волны · ВИЗУАЛ", lab.Core.PulseBrightness, .1f, 2f, "На бой не влияет.");
+            Button("FORCE CORE PULSE", lab.CoreSystem.ForcePulse, "Немедленно начать волну из центра.");
+            GUILayout.Label("CORE UPGRADES", section);
+            Row(() => Button("НОВОЕ КОЛЬЦО", () => lab.ApplyCoreUpgrade(OrbitalCoreUpgradeType.NewRing), "Главный апгрейд видимого роста."),
+                () => Button("МОЩНОСТЬ +10%", () => lab.ApplyCoreUpgrade(OrbitalCoreUpgradeType.CorePower), "Global Damage всех систем."));
+            Row(() => Button("ЧАСТОТА −15%", () => lab.ApplyCoreUpgrade(OrbitalCoreUpgradeType.PulseFrequency), "Ускоряет темп каскада."),
+                () => Button("МАСШТАБ +10%", () => lab.ApplyCoreUpgrade(OrbitalCoreUpgradeType.FieldScale), "Только AoE/beam/link effects."));
+            Row(() => Button("СВЯЗУЮЩАЯ МАТРИЦА", () => lab.ApplyCoreUpgrade(OrbitalCoreUpgradeType.LinkMatrix), "+2 links, +10% дальность и resonance."),
+                () => Button("СТАБИЛИЗАЦИЯ", () => lab.ApplyCoreUpgrade(OrbitalCoreUpgradeType.Stabilization), "+4 к Safety Ring Limit."));
+        }
+
+        private void DrawQuickTests()
+        {
+            GUILayout.Label("ЗАПОЛНЕНИЕ", section);
+            Row(() => Button("1 OBJECT / RING", () => RequestFill(0f, 1), $"Будет создано {lab.EstimateFill(0f, 1)} объектов."),
+                () => Button("2 OBJECTS / RING", () => RequestFill(0f, 2), $"Будет создано {lab.EstimateFill(0f, 2)} объектов."));
+            Row(() => Button("FILL 25%", () => RequestFill(.25f, 0), $"Будет создано {lab.EstimateFill(.25f)} объектов."),
+                () => Button("FILL 50%", () => RequestFill(.5f, 0), $"Будет создано {lab.EstimateFill(.5f)} объектов."),
+                () => Button("FILL 100%", () => RequestFill(1f, 0), $"Будет создано {lab.EstimateFill(1f)} объектов."));
+            if (massFillConfirmation)
+                Button("ПОДТВЕРДИТЬ ПРЕВЫШЕНИЕ LIMIT", () =>
+                {
+                    lab.FillStation(pendingFillFraction, pendingFillPerRing, true);
+                    massFillConfirmation = false;
+                }, "Создать именно запрошенное заполнение сверх Safety Object Limit.");
+            Row(() => Button("LINK NETWORK", () => lab.FillTheme(OrbitalMountType.LinkNode, OrbitalMountType.Gun, 2), "Link + редкий Pistol."),
+                () => Button("MINE FORTRESS", () => lab.FillTheme(OrbitalMountType.MineLayer, OrbitalMountType.Pusher, 3), "Mine + Pusher."),
+                () => Button("ARC CASCADE", () => lab.FillTheme(OrbitalMountType.ArcEmitter, OrbitalMountType.LinkNode, 3), "Arc + проводники."));
+            Row(() => Button("RANDOM BALANCED", lab.FillRandomBalanced, "По два объекта на кольцо; все роли распределяются равномерно."),
+                () => Button("HYPNOTIC STATION", lab.ApplyHypnoticStation, "16 колец, Golden Ratio, Link + редкие Arc, trails OFF."));
+            GUILayout.Label("НОВЫЕ ПРЕСЕТЫ", section);
+            Row(() => Button("CORE CASCADE", lab.ApplyCoreCascade, "12 колец, четыре типа оружия, 200 врагов."),
+                () => Button("LINK CATHEDRAL", lab.ApplyLinkCathedral, "16 колец, чистая сеть, Full Station."));
+            Row(() => Button("MINE PERIMETER", lab.ApplyMinePerimeter, "Мины снаружи, push внутри."),
+                () => Button("ARC REACTOR", lab.ApplyArcReactor, "Arc + Link + Core resonance."),
+                () => Button("ABSURD STATION", lab.ApplyAbsurdStation, "24 кольца и 300 врагов."));
+            GUILayout.Label("SOLO TEST", section);
+            Row(() => Button("SOLO LINK", lab.ApplySoloLink, "Только Link и несколько тестовых врагов."),
+                () => Button("SOLO RESONANCE", lab.ApplySoloResonance, "Синхронные кольца для понятного alignment."),
+                () => Button("SOLO CORE PULSE", lab.ApplySoloCorePulse, "Восемь эшелонов одного каскада."));
+            Row(() => Button("SOLO MINE", lab.ApplySoloMine, "Четыре радиуса минного рисунка."),
+                () => Button("SOLO ARC", lab.ApplySoloArc, "Короткие вспышки и один проводник."),
+                () => Button("ВОССТАНОВИТЬ СТАНЦИЮ", lab.ApplyCoreCascade, "Вернуть демонстрационную конфигурацию Core Cascade."));
+            GUILayout.Label("GROWTH TIMELINE", section);
+            Row(() => Button("MIN 1", () => lab.ApplyGrowthStage(0), "1 ring"),
+                () => Button("MIN 3", () => lab.ApplyGrowthStage(1), "3 rings"),
+                () => Button("MIN 6", () => lab.ApplyGrowthStage(2), "6 rings"),
+                () => Button("MIN 10", () => lab.ApplyGrowthStage(3), "10 rings"),
+                () => Button("MIN 15", () => lab.ApplyGrowthStage(4), "16 rings"),
+                () => Button("EXTREME", () => lab.ApplyGrowthStage(5), "24 rings"));
+            GUILayout.Label("КАМЕРА", section);
+            Row(() => Choice("FULL STATION", lab.CameraRig.Mode == OrbitalCameraMode.FullStation, () => lab.CameraRig.Mode = OrbitalCameraMode.FullStation, "Вмещает весь силуэт."),
+                () => Choice("COMBAT FOCUS", lab.CameraRig.Mode == OrbitalCameraMode.CombatFocus, () => lab.CameraRig.Mode = OrbitalCameraMode.CombatFocus, "Ограничивает отдаление; Tab временно показывает всё."));
+            lab.CameraRig.MaximumAutoCameraSize = Slider("Максимальное отдаление Combat Focus · м", lab.CameraRig.MaximumAutoCameraSize, 5f, 40f, "Предел размера камеры в боевом режиме; Tab временно игнорирует его.");
+            lab.CameraRig.MinimumPlayerScreenSize = Slider("Минимальный размер игрока · доля экрана", lab.CameraRig.MinimumPlayerScreenSize, .01f, .08f, "Нижний предел читаемости игрока при автоматическом отдалении.");
+            lab.CameraRig.OuterRingMargin = Slider("Outer Ring Margin · м", lab.CameraRig.OuterRingMargin, .2f, 4f, "Отступ Full Station от внешнего кольца.");
+            lab.CameraRig.SmoothTime = Slider("Плавность камеры · сек", lab.CameraRig.SmoothTime, .05f, 1.5f, "Время сглаживания перехода Full/Combat и удержания Tab.");
+        }
+
+        private void SetSpacing(OrbitalRingSpacingMode mode) { lab.RingGeneration.SpacingMode = mode; lab.RegenerateRingLayout(); }
+        private void SetSpeed(OrbitalRingSpeedMode mode) { lab.RingGeneration.SpeedMode = mode; lab.RegenerateRingLayout(); }
+
+        private void RequestFill(float fraction, int fixedPerRing)
+        {
+            pendingFillFraction = fraction;
+            pendingFillPerRing = fixedPerRing;
+            massFillConfirmation = !lab.FillStation(fraction, fixedPerRing, false);
+        }
+
+        private void ResetMineParameters()
+        {
+            lab.Mines.Damage = 24f;
+            lab.Mines.DropInterval = 1.25f;
+            lab.Mines.TriggerRadius = .72f;
+            lab.Mines.ExplosionRadius = 1.55f;
+            lab.Mines.Lifetime = 10f;
+            lab.Mines.MaximumActivePerLayer = 6;
+            lab.Mines.PushForce = 5f;
+        }
+
+        private void ResetArcParameters()
+        {
+            lab.Arc.Damage = 13f;
+            lab.Arc.Cooldown = .9f;
+            lab.Arc.Range = 5.5f;
+            lab.Arc.ChainCount = 3;
+            lab.Arc.ChainRange = 2.4f;
+            lab.Arc.LinkConduction = true;
+            lab.Arc.PulseBonus = 1.75f;
+        }
+
+        private void ResetLinkParameters()
+        {
+            lab.Links.Damage = 8f;
+            lab.Links.HitCooldown = .35f;
+            lab.Links.LineWidth = .055f;
+            lab.Links.MaxDistance = 9f;
+            lab.Links.PulseSpeed = 3f;
+            lab.Links.LineColor = new Color(1f, .06f, .84f, 1f);
+        }
+
+        private void ResetResonanceParameters()
+        {
+            lab.Resonance.AlignmentTolerance = 10f;
+            lab.Resonance.MinimumObjects = 2;
+            lab.Resonance.Cooldown = 1.15f;
+            lab.Resonance.Damage = 16f;
+            lab.Resonance.Range = 9f;
+        }
+
+        private void BeginUpgrade(OrbitalRingUpgradeType type)
+        {
+            if (lab.RingCount == 0) return;
+            pendingUpgrade = type;
+            upgradeSelection = true;
+            savedTimeScale = Time.timeScale;
+            Time.timeScale = .06f;
+            lab.RingEditMode = false;
+            lab.Notify("Выберите кольцо прямо на арене. ЛКМ применить · ПКМ/Esc отменить · ←/→ выбрать · колесо zoom", 8f);
+        }
+
+        private void HandleUpgradeSelection()
+        {
+            for (int i = 0; i < lab.RingCount; i++) lab.Rings[i].PreviewRotationMultiplier = 1f;
+            if (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(1))
+            {
+                FinishUpgradeSelection();
+                return;
+            }
+            if (Input.GetKeyDown(KeyCode.LeftArrow)) lab.SelectedRing = (lab.SelectedRing - 1 + lab.RingCount) % lab.RingCount;
+            if (Input.GetKeyDown(KeyCode.RightArrow)) lab.SelectedRing = (lab.SelectedRing + 1) % lab.RingCount;
+            float wheel = Input.mouseScrollDelta.y;
+            if (Mathf.Abs(wheel) > .01f) lab.CameraRig.Zoom(wheel * 1.2f);
+            if (Camera.main != null && !PointerOverMenu)
+            {
+                HoveredRing = FindNearestRing(MouseWorld(), Mathf.Max(.35f, lab.OuterRingRadius * .018f));
+                if (HoveredRing >= 0)
+                {
+                    lab.SelectedRing = HoveredRing;
+                    if (previewUpgrade)
+                    {
+                        lab.Rings[HoveredRing].FlashUpgrade(.06f);
+                        if (pendingUpgrade == OrbitalRingUpgradeType.Overdrive)
+                            lab.Rings[HoveredRing].PreviewRotationMultiplier = 1.25f;
+                    }
+                    if (Input.GetMouseButtonDown(0))
+                    {
+                        lab.ApplyRingUpgrade(HoveredRing, pendingUpgrade);
+                        FinishUpgradeSelection();
+                    }
+                }
+            }
+        }
+
+        private void FinishUpgradeSelection()
+        {
+            upgradeSelection = false;
+            HoveredRing = -1;
+            for (int i = 0; i < lab.RingCount; i++) lab.Rings[i].PreviewRotationMultiplier = 1f;
+            Time.timeScale = savedTimeScale;
+        }
+
+        private void DrawUpgradeOverlay()
+        {
+            int index = Mathf.Clamp(HoveredRing >= 0 ? HoveredRing : lab.SelectedRing, 0, lab.RingCount - 1);
+            OrbitalRing ring = lab.Rings[index];
+            int objects = 0;
+            string roles = "";
+            for (int i = 0; i < ring.Mounts.Length; i++)
+            {
+                if (ring.Mounts[i] == null) continue;
+                if (objects < 4) roles += (objects == 0 ? "" : ", ") + ring.Mounts[i].Type;
+                objects++;
+            }
+            string text = $"{OrbitalCombatLabController.RingUpgradeName(pendingUpgrade)}\n" +
+                $"КОЛЬЦО {index + 1} · уровень {RomanLevel(ring.Upgrades.Level)} · объектов {objects}: {(objects == 0 ? "пусто" : roles)}\n" +
+                $"{lab.DescribeRingUpgrade(index, pendingUpgrade)}\nЛКМ — применить · ПКМ/Esc — отменить · ←/→ — кольцо · колесо — zoom";
+            GUI.Box(new Rect(Screen.width * .5f - 310f, Screen.height - 118f, 620f, 104f), text, stat);
+        }
+
         private void DrawStats()
         {
             OrbitalRing selected = lab.RingCount > 0 ? SelectedRing() : null;
-            string ring = selected == null ? "—" : $"#{lab.SelectedRing + 1} · {selected.Settings.RotationSpeed:0.#}°/с · " +
-                $"{(selected.Settings.Clockwise ? "CW" : "CCW")} · rot {selected.RotationAngle:0}° · phase {selected.PhaseOffset:0}° · {selected.Settings.Shape}";
+            string ring = selected == null ? "—" : $"#{lab.SelectedRing + 1} · {selected.EffectiveRotationSpeed:0.#}°/с · " +
+                $"LV {selected.Upgrades.Level} · DMG ×{selected.Upgrades.DamageMultiplier:0.##} · CD ×{selected.Upgrades.CooldownMultiplier:0.##}";
             string text = $"FPS ~ {lab.Stats.SmoothedFps:0}\nEnemies {lab.Stats.ActiveEnemies}/{lab.Crowd.DesiredCount}\n" +
                 $"Rings {lab.RingCount} · Mounts {lab.MountedCount} · Links {lab.Stats.ActiveLinks}\n" +
+                $"Mines {lab.Stats.ActiveMines} · Arc {lab.Stats.ArcDischarges}/{lab.Stats.ArcHits} hits · Core {lab.Stats.CorePulses}\n" +
                 $"Resonances {lab.Stats.Resonances} ({lab.Stats.LastResonance})\n" +
-                $"Link Hits {lab.Stats.LinkHits} · Field Hits {lab.Stats.RingFieldHits}\n" +
-                $"Movement {lab.CurrentMovementPreset} · Visual {lab.WeaponVisuals.Mode}\n{ring}";
-            GUI.Box(new Rect(Screen.width - 360f, 12f, 348f, 153f), text, stat);
+                $"Camera {lab.CameraRig.CurrentSize:0.0} · object ~{lab.CameraRig.ApproximateObjectScreenSize * 100f:0.0}% screen\n" +
+                $"Movement {lab.CurrentMovementPreset} · {lab.CameraRig.Mode}\n{ring}";
+            GUI.Box(new Rect(Screen.width - 380f, 12f, 368f, 174f), text, stat);
         }
 
         private void DrawRingEditOverlay()
@@ -347,7 +653,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             if (screen.z < 0f) return;
             float x = Mathf.Clamp(screen.x - 116f, PanelRect.xMax + 8f, Screen.width - 244f);
             float y = Mathf.Clamp(Screen.height - screen.y - 19f, 174f, Screen.height - 46f);
-            string label = $"КОЛЬЦО {lab.SelectedRing + 1} | ФАЗА {ring.PhaseOffset:0}° | Q/E";
+            string label = $"КОЛЬЦО {lab.SelectedRing + 1} · LV {RomanLevel(ring.Upgrades.Level)} | ФАЗА {ring.PhaseOffset:0}° | Q/E";
             GUI.Box(new Rect(x, y, 236f, 32f), label, stat);
         }
 
@@ -426,6 +732,15 @@ namespace Subject42.Prototype.OrbitalCombatLab
         private static void Row(params System.Action[] cells)
         {
             GUILayout.BeginHorizontal(); for (int i = 0; i < cells.Length; i++) cells[i](); GUILayout.EndHorizontal();
+        }
+        private static string RomanLevel(int level)
+        {
+            if (level <= 0) return "0";
+            if (level == 1) return "I";
+            if (level == 2) return "II";
+            if (level == 3) return "III";
+            if (level == 4) return "IV";
+            return "V+";
         }
     }
 }

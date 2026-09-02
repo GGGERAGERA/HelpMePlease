@@ -10,6 +10,14 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public float EdgePadding = 1.25f;
         public float ManualSize = 9f;
         public float SmoothTime = .42f;
+        public OrbitalCameraMode Mode = OrbitalCameraMode.CombatFocus;
+        public float MaximumAutoCameraSize = 13f;
+        [Range(.01f, .12f)] public float MinimumPlayerScreenSize = .028f;
+        public float OuterRingMargin = 1.35f;
+        public bool TemporaryFullStation => Input.GetKey(KeyCode.Tab);
+        public float CurrentSize => cameraComponent != null ? cameraComponent.orthographicSize : 0f;
+        public float ApproximateObjectScreenSize => cameraComponent != null
+            ? .7f / Mathf.Max(.1f, cameraComponent.orthographicSize * 2f) : 0f;
 
         private Camera cameraComponent;
         private Vector3 positionVelocity;
@@ -32,7 +40,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public void Tick(Vector2 center, float outerRadius)
         {
             if (cameraComponent == null) return;
-            float targetSize = AutoCamera ? CalculateSize(outerRadius) : ManualSize;
+            float targetSize = AutoCamera ? CalculateSize(outerRadius, TemporaryFullStation) : ManualSize;
             cameraComponent.orthographicSize = Mathf.SmoothDamp(cameraComponent.orthographicSize,
                 targetSize, ref sizeVelocity, SmoothTime, 100f, Time.unscaledDeltaTime);
             impulse = Mathf.MoveTowards(impulse, 0f, Time.unscaledDeltaTime * .42f);
@@ -45,7 +53,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public void Snap(Vector2 center, float outerRadius)
         {
             if (cameraComponent == null) return;
-            cameraComponent.orthographicSize = AutoCamera ? CalculateSize(outerRadius) : ManualSize;
+            cameraComponent.orthographicSize = AutoCamera ? CalculateSize(outerRadius, TemporaryFullStation) : ManualSize;
             cameraComponent.transform.position = new Vector3(center.x, center.y, -10f);
             sizeVelocity = 0f;
             positionVelocity = Vector3.zero;
@@ -53,7 +61,22 @@ namespace Subject42.Prototype.OrbitalCombatLab
 
         public void AddImpulse(float amount) => impulse = Mathf.Max(impulse, amount);
 
-        private float CalculateSize(float outerRadius) =>
-            Mathf.Max(BaseSize, BaseSize + outerRadius * RadiusMultiplier + EdgePadding);
+        public void Zoom(float delta)
+        {
+            if (cameraComponent == null) return;
+            float next = Mathf.Clamp(cameraComponent.orthographicSize - delta, 3f, 80f);
+            cameraComponent.orthographicSize = next;
+            ManualSize = next;
+        }
+
+        private float CalculateSize(float outerRadius, bool temporaryFull)
+        {
+            float aspect = cameraComponent != null ? Mathf.Max(1f, cameraComponent.aspect) : 1.777f;
+            float full = Mathf.Max(BaseSize, outerRadius + OuterRingMargin);
+            if (aspect < 1f) full /= aspect;
+            if (temporaryFull || Mode == OrbitalCameraMode.FullStation) return full;
+            float playerReadableLimit = .7f / Mathf.Max(.01f, MinimumPlayerScreenSize * 2f);
+            return Mathf.Min(full, Mathf.Min(MaximumAutoCameraSize, playerReadableLimit));
+        }
     }
 }

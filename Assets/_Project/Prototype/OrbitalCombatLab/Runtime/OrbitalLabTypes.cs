@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Subject42.Prototype.OrbitalCombatLab
 {
-    public enum OrbitalMountType { Gun, Blade, Pusher, LinkNode }
+    public enum OrbitalMountType { Gun, Blade, Pusher, LinkNode, MineLayer, ArcEmitter }
     public enum OrbitalLinkMode { Pairs, Chain, AllNearby }
     public enum OrbitalResonanceMode { RadialVolley, Beam, Shockwave, Cycle }
     public enum OrbitalMovementPreset { Default, Gear, Flower, Wave, Sync, Chaos, Freeze }
@@ -12,6 +12,96 @@ namespace Subject42.Prototype.OrbitalCombatLab
     public enum OrbitalVisualProfile { Clean, Combat, Hypnotic, Maximum }
     public enum OrbitalWeaponVisualMode { Primitives, MiniWeapons }
     public enum OrbitalBladeOrientation { Tangential, Radial }
+    public enum OrbitalRingSpacingMode { ConstantGap, GrowingGap, Compressed }
+    public enum OrbitalRingSpeedMode { Alternating, OuterSlower, Constant, GoldenRatio, ControlledChaos }
+    public enum OrbitalCameraMode { FullStation, CombatFocus }
+    public enum OrbitalCorePulseMode { Visual, Volley, Resonance, Cascade }
+    public enum OrbitalUpgradeLayer { Core, Ring, Weapon }
+    public enum OrbitalRingUpgradeType { Overdrive, Amplifier, SystemsAcceleration, ExtraMount, EffectField, ResonantRing, Stabilizer }
+    public enum OrbitalCoreUpgradeType { NewRing, CorePower, PulseFrequency, FieldScale, LinkMatrix, Stabilization }
+
+    [System.Serializable]
+    public sealed class OrbitalRingGenerationSettings
+    {
+        public OrbitalRingSpacingMode SpacingMode = OrbitalRingSpacingMode.Compressed;
+        public OrbitalRingSpeedMode SpeedMode = OrbitalRingSpeedMode.GoldenRatio;
+        public float FirstRingRadius = 1.5f;
+        public float BaseRingGap = 1.05f;
+        public float GapGrowth = .075f;
+        public float MinimumGap = .52f;
+        public int CompressionStartRing = 10;
+        public float BaseSpeed = 105f;
+        public int ChaosSeed = 4242;
+    }
+
+    [System.Serializable]
+    public sealed class OrbitalRingUpgradeState
+    {
+        public int Level;
+        public float DamageMultiplier = 1f;
+        public float CooldownMultiplier = 1f;
+        public float EffectSizeMultiplier = 1f;
+        public float RotationSpeedMultiplier = 1f;
+        public float PushMultiplier = 1f;
+        public float LinkPowerMultiplier = 1f;
+        public int MountCapacityBonus;
+        public float ResonancePower = 1f;
+
+        public void Reset()
+        {
+            Level = MountCapacityBonus = 0;
+            DamageMultiplier = CooldownMultiplier = EffectSizeMultiplier =
+                RotationSpeedMultiplier = PushMultiplier = LinkPowerMultiplier = ResonancePower = 1f;
+        }
+    }
+
+    [System.Serializable]
+    public sealed class OrbitalCoreSettings
+    {
+        public int Level;
+        public float GlobalDamageMultiplier = 1f;
+        public float GlobalEffectSizeMultiplier = 1f;
+        public float PulseInterval = 4.8f;
+        public float PulseTravelSpeed = 8f;
+        public float PulseWidth = .55f;
+        public float PulseBrightness = 1f;
+        public bool PulseGameplayEffect = true;
+        public OrbitalCorePulseMode PulseMode = OrbitalCorePulseMode.Cascade;
+        public int LinkCapacityBonus;
+        public float LinkRangeMultiplier = 1f;
+        public float ResonancePowerMultiplier = 1f;
+
+        public void Reset()
+        {
+            Level = LinkCapacityBonus = 0;
+            GlobalDamageMultiplier = GlobalEffectSizeMultiplier = LinkRangeMultiplier = ResonancePowerMultiplier = 1f;
+            PulseInterval = 4.8f;
+        }
+    }
+
+    [System.Serializable]
+    public sealed class MineSettings
+    {
+        public float Damage = 24f;
+        public float DropInterval = 1.25f;
+        public float TriggerRadius = .72f;
+        public float ExplosionRadius = 1.55f;
+        public float Lifetime = 10f;
+        public int MaximumActivePerLayer = 6;
+        public float PushForce = 5f;
+    }
+
+    [System.Serializable]
+    public sealed class ArcSettings
+    {
+        public float Damage = 13f;
+        public float Cooldown = .9f;
+        public float Range = 5.5f;
+        public int ChainCount = 3;
+        public float ChainRange = 2.4f;
+        public bool LinkConduction = true;
+        public float PulseBonus = 1.75f;
+    }
 
     [System.Serializable]
     public sealed class OrbitalRingSettings
@@ -42,6 +132,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public float FieldPushForce = 7f;
         public float PulseInterval = 1.8f;
         public float FieldTargetCooldown = .35f;
+        public float GeneratedLineAlpha = 1f;
     }
 
     [System.Serializable]
@@ -137,6 +228,11 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public int RingFieldHits;
         public int Resonances;
         public int ActiveLinks;
+        public int ActiveMines;
+        public int ArcChecks;
+        public int ArcDischarges;
+        public int ArcHits;
+        public int CorePulses;
         public string LastResonance = "—";
         public int ActiveEnemies;
         public float SmoothedFps;
@@ -144,7 +240,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public void Reset()
         {
             Kills = Shots = BladeHits = PushHits = LinkHits = RingFieldHits =
-                Resonances = ActiveLinks = ActiveEnemies = 0;
+                Resonances = ActiveLinks = ActiveMines = ArcChecks = ArcDischarges = ArcHits =
+                CorePulses = ActiveEnemies = 0;
             LastResonance = "—";
         }
     }

@@ -25,6 +25,9 @@ namespace Subject42.Prototype.OrbitalCombatLab.Editor
         private static float editRotationSnapshot;
         private static float editPhaseSnapshot;
         private static float visualDamageSnapshot;
+        private static int growthQaFrames;
+        private static int growthQaErrors;
+        private static float growthUpgradeSnapshot;
 
         [MenuItem("Tools/Prototype/Build Orbital Combat Lab")]
         public static void BuildScene()
@@ -198,6 +201,133 @@ namespace Subject42.Prototype.OrbitalCombatLab.Editor
             EditorApplication.update -= MiniWeaponsCaptureUpdate;
             EditorApplication.update += MiniWeaponsCaptureUpdate;
             EditorApplication.EnterPlaymode();
+        }
+
+        [MenuItem("Tools/Prototype/Run Orbital Growth QA")]
+        public static void RunGrowthQABatch()
+        {
+            if (EditorApplication.isPlaying)
+            {
+                Debug.LogWarning("[Orbital Growth QA] Stop Play Mode before starting the automated pass.");
+                return;
+            }
+            BuildScene();
+            EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            growthQaFrames = growthQaErrors = 0;
+            previousEnterPlayModeOptionsEnabled = EditorSettings.enterPlayModeOptionsEnabled;
+            previousEnterPlayModeOptions = EditorSettings.enterPlayModeOptions;
+            EditorSettings.enterPlayModeOptionsEnabled = true;
+            EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.DisableDomainReload;
+            EditorApplication.update -= GrowthQaUpdate;
+            EditorApplication.update += GrowthQaUpdate;
+            EditorApplication.EnterPlaymode();
+        }
+
+        private static void GrowthQaUpdate()
+        {
+            if (!EditorApplication.isPlaying) return;
+            growthQaFrames++;
+            OrbitalCombatLabController lab = UnityEngine.Object.FindFirstObjectByType<OrbitalCombatLabController>();
+            if (lab == null) return;
+            if (growthQaFrames == 25)
+            {
+                lab.DebugUI.SetMenuOpen(false);
+                lab.ApplyCoreCascade();
+                GrowthCheck(lab.RingCount == 12, "CORE CASCADE creates 12 rings");
+            }
+            else if (growthQaFrames == 190) GrowthCapture("GROWTH_CORE_CASCADE_12");
+            else if (growthQaFrames == 220)
+            {
+                lab.ApplyLinkCathedral();
+                lab.DebugUI.SetMenuOpen(false);
+                GrowthCheck(lab.RingCount == 16, "LINK CATHEDRAL creates 16 rings");
+            }
+            else if (growthQaFrames == 390) GrowthCapture("GROWTH_LINK_CATHEDRAL_16");
+            else if (growthQaFrames == 420)
+            {
+                lab.ApplyAbsurdStation();
+                lab.DebugUI.SetMenuOpen(false);
+                GrowthCheck(lab.RingCount == 24, "ABSURD STATION creates 24 rings");
+            }
+            else if (growthQaFrames == 600) GrowthCapture("GROWTH_ABSURD_24");
+            else if (growthQaFrames == 630)
+            {
+                lab.SetRingCount(32);
+                lab.ClearMounted();
+                lab.FillStation(0f, 1, true);
+                lab.CameraRig.Mode = OrbitalCameraMode.FullStation;
+                lab.SpawnEnemies(300);
+                lab.CoreSystem.ForcePulse();
+                GrowthCheck(lab.RingCount == 32, "32-ring stress state is reachable");
+                GrowthCheck(lab.MountedCount == 32, "One-object-per-ring creates 32 objects");
+            }
+            else if (growthQaFrames == 810) GrowthCapture("GROWTH_STRESS_32");
+            else if (growthQaFrames == 840)
+            {
+                growthUpgradeSnapshot = lab.Rings[5].Upgrades.DamageMultiplier;
+                lab.ApplyRingUpgrade(5, OrbitalRingUpgradeType.Amplifier);
+                lab.ApplyRingUpgrade(5, OrbitalRingUpgradeType.Overdrive);
+                lab.ApplyRingUpgrade(5, OrbitalRingUpgradeType.ExtraMount);
+                GrowthCheck(lab.Rings[5].Upgrades.DamageMultiplier > growthUpgradeSnapshot,
+                    "Selected-ring damage multiplier changes independently");
+                GrowthCheck(Mathf.Approximately(lab.Rings[4].Upgrades.DamageMultiplier, 1f),
+                    "Adjacent ring is not affected by selected-ring upgrade");
+            }
+            else if (growthQaFrames == 875)
+            {
+                lab.ApplyMinePerimeter();
+                lab.DebugUI.SetMenuOpen(false);
+            }
+            else if (growthQaFrames == 1080)
+            {
+                GrowthCheck(lab.MineSystem.ActiveCount > 0, "Mine Layers populate the pooled mine field");
+                GrowthCapture("GROWTH_MINE_PERIMETER");
+            }
+            else if (growthQaFrames == 1110)
+            {
+                lab.ApplyArcReactor();
+                lab.DebugUI.SetMenuOpen(false);
+            }
+            else if (growthQaFrames == 1310)
+            {
+                GrowthCheck(lab.Stats.ArcDischarges > 0 && lab.Stats.ArcHits > 0,
+                    "Arc Emitters discharge and damage chained targets");
+                GrowthCapture("GROWTH_ARC_REACTOR");
+            }
+            else if (growthQaFrames == 1340)
+            {
+                lab.SafetyRingLimit = lab.RingCount;
+                GrowthCheck(!lab.AddRing(), "Safety Ring Limit blocks creation without exception");
+                GrowthCheck(lab.Stats.CorePulses > 0, "Core Pulse executed in Play Mode");
+            }
+            else if (growthQaFrames >= 1380)
+            {
+                Debug.Log($"[Orbital Growth QA] COMPLETE errors={growthQaErrors}; " +
+                    $"rings={lab.RingCount}; mounts={lab.MountedCount}; links={lab.Stats.ActiveLinks}; " +
+                    $"mines={lab.Stats.ActiveMines}; arc={lab.Stats.ArcDischarges}/{lab.Stats.ArcHits} hits; " +
+                    $"checks={lab.Stats.ArcChecks}; fps={lab.Stats.SmoothedFps:0}");
+                EditorApplication.update -= GrowthQaUpdate;
+                EditorSettings.enterPlayModeOptionsEnabled = previousEnterPlayModeOptionsEnabled;
+                EditorSettings.enterPlayModeOptions = previousEnterPlayModeOptions;
+                AssetDatabase.Refresh();
+                EditorApplication.ExitPlaymode();
+            }
+        }
+
+        private static void GrowthCapture(string name)
+        {
+            ScreenCapture.CaptureScreenshot($"Assets/_Project/Prototype/OrbitalCombatLab/QA_{name}.png");
+            Debug.Log("[Orbital Growth QA] Captured " + name);
+        }
+
+        private static void GrowthCheck(bool condition, string label)
+        {
+            if (condition) Debug.Log("[Orbital Growth QA][PASS] " + label);
+            else
+            {
+                growthQaErrors++;
+                Debug.LogError("[Orbital Growth QA][FAIL] " + label);
+            }
         }
 
         private static void MiniWeaponsCaptureUpdate()
@@ -618,9 +748,9 @@ namespace Subject42.Prototype.OrbitalCombatLab.Editor
             Check(lab.MountedCount == beforeRemove - 1,
                 "Removing a ring safely removes its mounted object");
 
-            while (lab.RingCount < OrbitalCombatLabController.MaxRings) lab.AddRing();
-            Check(!lab.AddRing() && lab.RingCount == OrbitalCombatLabController.MaxRings,
-                "Ring count is capped at six");
+            while (lab.RingCount < lab.SafetyRingLimit && lab.AddRing()) { }
+            Check(!lab.AddRing() && lab.RingCount == lab.SafetyRingLimit,
+                "Ring count respects Safety Ring Limit");
             lab.ResetTest();
             Check(lab.RingCount == 1 && lab.MountedCount == 1 && lab.Crowd.DesiredCount == 50,
                 "Reset restores a clean START state");

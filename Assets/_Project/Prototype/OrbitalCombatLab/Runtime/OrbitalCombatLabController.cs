@@ -6,10 +6,10 @@ namespace Subject42.Prototype.OrbitalCombatLab
     [DisallowMultipleComponent]
     public sealed class OrbitalCombatLabController : MonoBehaviour
     {
-        public const int MaxRings = 6;
-        public const int MaxMountedObjects = 48;
-        private static readonly float[] DefaultRadii = { 1.5f, 2.5f, 3.7f, 5f, 6.5f, 8.2f };
-        private static readonly float[] DefaultSpeeds = { 105f, 72f, 57f, 43f, 34f, 27f };
+        // Absolute prototype storage ceilings. Play-mode creation is governed by the
+        // user-facing safety limits below, not by the old six-ring design cap.
+        public const int MaxRings = 64;
+        public const int MaxMountedObjects = 768;
 
         public readonly GunSettings Gun = new();
         public readonly BladeSettings Blade = new();
@@ -18,6 +18,10 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public readonly ResonanceSettings Resonance = new();
         public readonly TrailSettings Trails = new();
         public readonly WeaponVisualSettings WeaponVisuals = new();
+        public readonly OrbitalRingGenerationSettings RingGeneration = new();
+        public readonly OrbitalCoreSettings Core = new();
+        public readonly MineSettings Mines = new();
+        public readonly ArcSettings Arc = new();
         public readonly OrbitalLabStats Stats = new();
         public readonly OrbitalRing[] Rings = new OrbitalRing[MaxRings];
         public readonly OrbitalMountedObject[] MountedObjects = new OrbitalMountedObject[MaxMountedObjects];
@@ -30,6 +34,10 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public OrbitalLabCameraRig CameraRig { get; private set; }
         public OrbitalLabDebugUI DebugUI { get; private set; }
         public OrbitalPatternCombatSystem Pattern { get; private set; }
+        public OrbitalMineSystem MineSystem { get; private set; }
+        public OrbitalArcSystem ArcSystem { get; private set; }
+        public OrbitalCoreSystem CoreSystem { get; private set; }
+        public OrbitalGoldenPath GoldenPath { get; private set; }
         public Light2D GlobalLight { get; private set; }
         public OrbitalActorVisual PlayerVisual { get; private set; }
         public int RingCount { get; private set; }
@@ -44,6 +52,12 @@ namespace Subject42.Prototype.OrbitalCombatLab
         public bool ShowAttackRanges;
         public bool ShowStats = true;
         public bool CameraImpulse = true;
+        public bool RingUpgradeVisuals = true;
+        public int SafetyRingLimit = 32;
+        public int SafetyObjectLimit = 256;
+        public int LabLevel = 1;
+        public string UserMessage { get; private set; } = "";
+        public float UserMessageUntil { get; private set; }
         public bool PatternCombat;
         public bool RingEditMode;
         public bool PauseSelectedRingWhileEditing = true;
@@ -86,6 +100,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
         {
             BuildWorld();
             ApplyStartState();
+            GoldenPath.BeginFullRun();
         }
 
         private void Update()
@@ -96,13 +111,21 @@ namespace Subject42.Prototype.OrbitalCombatLab
 
             for (int i = 0; i < RingCount; i++)
             {
-                bool highlighted = Drag != null && Drag.CandidateRing == i;
-                int previewSlot = highlighted ? Drag.CandidateSlot : -1;
-                bool selectedForEdit = RingEditMode && SelectedRing == i;
-                bool hoveredForEdit = RingEditMode && DebugUI != null && DebugUI.HoveredRing == i;
-                Rings[i].Tick(PlayerPosition, dt, ShowRings, ShowMounts || RingEditMode,
+                bool goldenCandidate = GoldenPath != null && GoldenPath.SelectionActive &&
+                    GoldenPath.HoveredRing == i;
+                bool highlighted = (Drag != null && Drag.CandidateRing == i) || goldenCandidate;
+                int previewSlot = Drag != null && Drag.CandidateRing == i ? Drag.CandidateSlot :
+                    goldenCandidate ? GoldenPath.CandidateSlot : -1;
+                bool selectionMode = RingEditMode || (DebugUI != null && DebugUI.UpgradeSelectionActive) ||
+                    (GoldenPath != null && GoldenPath.SelectionActive);
+                bool selectedForEdit = selectionMode && SelectedRing == i;
+                bool hoveredForEdit = selectionMode && ((DebugUI != null && DebugUI.HoveredRing == i) ||
+                    (GoldenPath != null && GoldenPath.HoveredRing == i));
+                bool readableMounts = CameraRig == null || CameraRig.ApproximateObjectScreenSize > .012f;
+                Rings[i].Tick(PlayerPosition, dt, ShowRings, (ShowMounts && readableMounts) || selectionMode,
                     highlighted, selectedForEdit, hoveredForEdit,
-                    selectedForEdit && PauseSelectedRingWhileEditing, previewSlot, RingAlpha);
+                    selectedForEdit && PauseSelectedRingWhileEditing, previewSlot, RingAlpha,
+                    RingUpgradeVisuals, GoldenPath != null && GoldenPath.SelectionActive);
             }
             for (int i = 0; i < MountedCount; i++)
             {
@@ -113,6 +136,9 @@ namespace Subject42.Prototype.OrbitalCombatLab
             }
 
             Pattern.Tick(dt);
+            MineSystem.Tick();
+            ArcSystem.Tick();
+            CoreSystem.Tick();
             Crowd.VisualAlpha = EnemyAlpha;
             Projectiles.VisualAlpha = ProjectileAlpha;
             Crowd.Tick(PlayerPosition, OuterRingRadius, dt, PlayerImmortal, ref PlayerHp);
@@ -137,13 +163,24 @@ namespace Subject42.Prototype.OrbitalCombatLab
 
         public bool AddRing()
         {
-            if (RingCount >= MaxRings) return false;
+            int limit = Mathf.Clamp(SafetyRingLimit, 1, MaxRings);
+            if (RingCount >= limit)
+            {
+                Notify($"Safety Ring Limit: {limit}. Увеличьте лимит осознанно (максимум {MaxRings}).");
+                return false;
+            }
             int index = RingCount;
             OrbitalRing ring = new(index, WorldRoot, factory);
-            ring.ApplyDefaults(DefaultRadii[index], DefaultSpeeds[index], index % 2 == 1,
-                index < 2 ? 4 : 6);
+            ring.ApplyDefaults(CalculateGeneratedRadius(index), CalculateGeneratedSpeed(index),
+                CalculateGeneratedClockwise(index), index < 2 ? 4 : index < 10 ? 6 : 8);
+            ring.RotationAngle = Mathf.Repeat(index * 37f, 360f);
+            ring.PhaseOffset = CalculateGeneratedPhase(index);
+            ring.Settings.GeneratedLineAlpha = index < 12 ? 1f : Mathf.Max(.36f, 1f - (index - 11) * .028f);
+            ring.Settings.LineWidth = Mathf.Max(.025f, .048f - index * .00065f);
             Rings[RingCount++] = ring;
             SelectedRing = RingCount - 1;
+            ring.FlashUpgrade(.8f);
+            Notify($"Добавлено кольцо {RingCount}: R {ring.Settings.Radius:0.##}, {ring.Settings.RotationSpeed:0.#}°/с");
             return true;
         }
 
@@ -151,6 +188,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
         {
             if (RingCount <= 1) return false;
             Drag.CancelDrag();
+            MineSystem?.Clear();
             int index = RingCount - 1;
             OrbitalRing ring = Rings[index];
             for (int slot = 0; slot < OrbitalRing.AbsoluteMaxMounts; slot++)
@@ -181,6 +219,35 @@ namespace Subject42.Prototype.OrbitalCombatLab
             return CreateMountedAt(ring, slot, type);
         }
 
+        public bool CreateGoldenMountedAt(int ringIndex, int slot, OrbitalMountType type)
+        {
+            if (ringIndex < 0 || ringIndex >= RingCount) return false;
+            return CreateMountedAt(Rings[ringIndex], slot, type);
+        }
+
+        public OrbitalMountedObject CreateGoldenPendingMounted(OrbitalMountType type)
+        {
+            if (type == OrbitalMountType.MineLayer || MountedCount >= MaxMountedObjects) return null;
+            OrbitalMountedObject mounted = CreateMountedInstance(type);
+            MountedObjects[MountedCount++] = mounted;
+            mounted.IsDragging = true;
+            mounted.SetDraggedPosition(PlayerPosition);
+            return mounted;
+        }
+
+        public bool AttachGoldenPendingMounted(OrbitalMountedObject mounted, int ringIndex, int slot)
+        {
+            if (mounted == null || ringIndex < 0 || ringIndex >= RingCount) return false;
+            OrbitalRing ring = Rings[ringIndex];
+            if (slot < 0 || slot >= ring.Settings.MaxMounts || ring.Mounts[slot] != null) return false;
+            mounted.Attach(ring, slot);
+            SelectedRing = ringIndex;
+            ring.FlashUpgrade(.7f);
+            return true;
+        }
+
+        public void CancelGoldenPendingMounted(OrbitalMountedObject mounted) => RemoveMounted(mounted);
+
         public void ClearMounted()
         {
             Drag.CancelDrag();
@@ -189,6 +256,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
             for (int i = 0; i < MountedObjects.Length; i++) MountedObjects[i] = null;
             MountedCount = 0;
             Projectiles.Clear();
+            MineSystem?.Clear();
+            ArcSystem?.Clear();
             Pattern?.Reset();
         }
 
@@ -260,6 +329,479 @@ namespace Subject42.Prototype.OrbitalCombatLab
 
         public void SpawnEnemies(int count) => Crowd.SetCount(count, PlayerPosition, OuterRingRadius);
 
+        public void Notify(string message, float duration = 4f)
+        {
+            UserMessage = message ?? string.Empty;
+            UserMessageUntil = Time.unscaledTime + duration;
+        }
+
+        public int AddRings(int count)
+        {
+            int added = 0;
+            for (int i = 0; i < count && AddRing(); i++) added++;
+            if (CameraRig != null) CameraRig.Snap(PlayerPosition, OuterRingRadius);
+            return added;
+        }
+
+        public void SetRingCount(int count)
+        {
+            count = Mathf.Clamp(count, 1, Mathf.Clamp(SafetyRingLimit, 1, MaxRings));
+            while (RingCount < count && AddRing()) { }
+            while (RingCount > count) RemoveRing();
+            CameraRig?.Snap(PlayerPosition, OuterRingRadius);
+        }
+
+        public void KeepOnlyOneRing() => SetRingCount(1);
+
+        public void ClearStation()
+        {
+            ClearMounted();
+            KeepOnlyOneRing();
+            ResetAllUpgrades();
+            Notify("Станция очищена: оставлено одно пустое кольцо.");
+        }
+
+        public void RegenerateRingLayout()
+        {
+            for (int i = 0; i < RingCount; i++)
+            {
+                OrbitalRing ring = Rings[i];
+                ring.Settings.Radius = CalculateGeneratedRadius(i);
+                ring.Settings.RotationSpeed = CalculateGeneratedSpeed(i);
+                ring.Settings.Clockwise = CalculateGeneratedClockwise(i);
+                ring.PhaseOffset = CalculateGeneratedPhase(i);
+            }
+            CameraRig?.Snap(PlayerPosition, OuterRingRadius);
+        }
+
+        public float CalculateGeneratedRadius(int index)
+        {
+            if (index <= 0) return Mathf.Max(.6f, RingGeneration.FirstRingRadius);
+            float radius = Mathf.Max(.6f, RingGeneration.FirstRingRadius);
+            for (int i = 1; i <= index; i++)
+            {
+                float gap;
+                if (RingGeneration.SpacingMode == OrbitalRingSpacingMode.ConstantGap)
+                    gap = RingGeneration.BaseRingGap;
+                else if (RingGeneration.SpacingMode == OrbitalRingSpacingMode.GrowingGap)
+                    gap = RingGeneration.BaseRingGap + RingGeneration.GapGrowth * i;
+                else
+                {
+                    int after = Mathf.Max(0, i - Mathf.Max(1, RingGeneration.CompressionStartRing));
+                    gap = RingGeneration.BaseRingGap / (1f + after * Mathf.Max(.01f, RingGeneration.GapGrowth));
+                }
+                radius += Mathf.Max(RingGeneration.MinimumGap, gap);
+            }
+            return radius;
+        }
+
+        public float CalculateGeneratedSpeed(int index)
+        {
+            float baseSpeed = Mathf.Max(1f, RingGeneration.BaseSpeed);
+            switch (RingGeneration.SpeedMode)
+            {
+                case OrbitalRingSpeedMode.Constant: return baseSpeed;
+                case OrbitalRingSpeedMode.OuterSlower: return Mathf.Max(12f, baseSpeed / (1f + index * .16f));
+                case OrbitalRingSpeedMode.GoldenRatio:
+                    return Mathf.Max(15f, baseSpeed / (1f + index * .115f)) * (index % 3 == 2 ? .918f : 1f);
+                case OrbitalRingSpeedMode.ControlledChaos:
+                    return 24f + Hash01(index, RingGeneration.ChaosSeed) * (baseSpeed - 16f);
+                default: return Mathf.Max(18f, baseSpeed / (1f + index * .12f));
+            }
+        }
+
+        public bool CalculateGeneratedClockwise(int index)
+        {
+            if (RingGeneration.SpeedMode == OrbitalRingSpeedMode.ControlledChaos)
+                return Hash01(index + 83, RingGeneration.ChaosSeed) > .5f;
+            return index % 2 == 1;
+        }
+
+        private float CalculateGeneratedPhase(int index)
+        {
+            if (RingGeneration.SpeedMode == OrbitalRingSpeedMode.ControlledChaos)
+                return Hash01(index + 191, RingGeneration.ChaosSeed) * 360f;
+            return Mathf.Repeat(index * 137.508f, 360f);
+        }
+
+        private static float Hash01(int index, int seed)
+        {
+            unchecked
+            {
+                uint value = (uint)index * 747796405u + (uint)seed * 2891336453u;
+                value = (value >> ((int)(value >> 28) + 4)) ^ value;
+                value *= 277803737u;
+                value = (value >> 22) ^ value;
+                return (value & 0x00ffffff) / 16777215f;
+            }
+        }
+
+        public void ApplyRingUpgrade(int ringIndex, OrbitalRingUpgradeType type)
+        {
+            if (ringIndex < 0 || ringIndex >= RingCount) return;
+            OrbitalRing ring = Rings[ringIndex];
+            switch (type)
+            {
+                case OrbitalRingUpgradeType.Overdrive: ring.Upgrades.RotationSpeedMultiplier *= 1.25f; break;
+                case OrbitalRingUpgradeType.Amplifier: ring.Upgrades.DamageMultiplier *= 1.25f; break;
+                case OrbitalRingUpgradeType.SystemsAcceleration: ring.Upgrades.CooldownMultiplier *= .85f; break;
+                case OrbitalRingUpgradeType.ExtraMount:
+                    if (ring.Settings.MaxMounts < OrbitalRing.AbsoluteMaxMounts)
+                    {
+                        ring.Settings.MaxMounts++;
+                        ring.Upgrades.MountCapacityBonus++;
+                    }
+                    break;
+                case OrbitalRingUpgradeType.EffectField: ring.Upgrades.EffectSizeMultiplier *= 1.2f; break;
+                case OrbitalRingUpgradeType.ResonantRing:
+                    ring.Upgrades.LinkPowerMultiplier *= 1.25f;
+                    ring.Upgrades.ResonancePower *= 1.25f;
+                    break;
+                case OrbitalRingUpgradeType.Stabilizer: ring.Upgrades.PushMultiplier *= 1.3f; break;
+            }
+            ring.Upgrades.Level++;
+            ring.FlashUpgrade();
+            for (int i = 0; i < ring.Mounts.Length; i++) ring.Mounts[i]?.FlashResonance(.55f);
+            SelectedRing = ringIndex;
+            Notify($"Кольцо {ringIndex + 1} усилено: {RingUpgradeName(type)}");
+        }
+
+        public string DescribeRingUpgrade(int ringIndex, OrbitalRingUpgradeType type)
+        {
+            if (ringIndex < 0 || ringIndex >= RingCount) return "—";
+            OrbitalRing ring = Rings[ringIndex];
+            switch (type)
+            {
+                case OrbitalRingUpgradeType.Overdrive:
+                    return $"{ring.EffectiveRotationSpeed:0.#}°/с → {ring.EffectiveRotationSpeed * 1.25f:0.#}°/с";
+                case OrbitalRingUpgradeType.Amplifier:
+                    return $"урон ×{ring.Upgrades.DamageMultiplier:0.##} → ×{ring.Upgrades.DamageMultiplier * 1.25f:0.##}";
+                case OrbitalRingUpgradeType.SystemsAcceleration:
+                    return $"перезарядка ×{ring.Upgrades.CooldownMultiplier:0.##} → ×{ring.Upgrades.CooldownMultiplier * .85f:0.##}";
+                case OrbitalRingUpgradeType.ExtraMount:
+                    return $"крепления {ring.Settings.MaxMounts} → {Mathf.Min(OrbitalRing.AbsoluteMaxMounts, ring.Settings.MaxMounts + 1)}";
+                case OrbitalRingUpgradeType.EffectField:
+                    return $"область ×{ring.Upgrades.EffectSizeMultiplier:0.##} → ×{ring.Upgrades.EffectSizeMultiplier * 1.2f:0.##}";
+                case OrbitalRingUpgradeType.ResonantRing:
+                    return $"Link/Resonance ×{ring.Upgrades.LinkPowerMultiplier:0.##} → ×{ring.Upgrades.LinkPowerMultiplier * 1.25f:0.##}";
+                default:
+                    return $"push ×{ring.Upgrades.PushMultiplier:0.##} → ×{ring.Upgrades.PushMultiplier * 1.3f:0.##}";
+            }
+        }
+
+        public static string RingUpgradeName(OrbitalRingUpgradeType type) => type switch
+        {
+            OrbitalRingUpgradeType.Overdrive => "ПЕРЕГРУЗКА КОЛЬЦА +25% скорости",
+            OrbitalRingUpgradeType.Amplifier => "УСИЛИТЕЛЬ КОЛЬЦА +25% урона",
+            OrbitalRingUpgradeType.SystemsAcceleration => "УСКОРЕНИЕ СИСТЕМ −15% cooldown",
+            OrbitalRingUpgradeType.ExtraMount => "РАСШИРЕНИЕ КРЕПЛЕНИЙ +1",
+            OrbitalRingUpgradeType.EffectField => "УСИЛЕНИЕ ПОЛЯ +20% области",
+            OrbitalRingUpgradeType.ResonantRing => "РЕЗОНАНСНОЕ КОЛЬЦО +25% Link",
+            _ => "СТАБИЛИЗАТОР +30% push"
+        };
+
+        public void ApplyCoreUpgrade(OrbitalCoreUpgradeType type)
+        {
+            switch (type)
+            {
+                case OrbitalCoreUpgradeType.NewRing: AddRing(); break;
+                case OrbitalCoreUpgradeType.CorePower: Core.GlobalDamageMultiplier *= 1.1f; break;
+                case OrbitalCoreUpgradeType.PulseFrequency: Core.PulseInterval = Mathf.Max(.75f, Core.PulseInterval * .85f); break;
+                case OrbitalCoreUpgradeType.FieldScale: Core.GlobalEffectSizeMultiplier *= 1.1f; break;
+                case OrbitalCoreUpgradeType.LinkMatrix:
+                    Core.LinkCapacityBonus += 2; Core.LinkRangeMultiplier *= 1.1f; Core.ResonancePowerMultiplier *= 1.1f; break;
+                case OrbitalCoreUpgradeType.Stabilization: SafetyRingLimit = Mathf.Min(MaxRings, SafetyRingLimit + 4); break;
+            }
+            Core.Level++;
+            CoreSystem?.ForcePulse();
+            Notify($"Ядро усилено: {type}");
+        }
+
+        public void ResetAllUpgrades()
+        {
+            Core.Reset();
+            for (int i = 0; i < RingCount; i++) Rings[i].Upgrades.Reset();
+            LabLevel = 1;
+            Notify("Все тестовые улучшения сброшены.");
+        }
+
+        public void MaxSelectedRing()
+        {
+            if (RingCount == 0) return;
+            foreach (OrbitalRingUpgradeType type in System.Enum.GetValues(typeof(OrbitalRingUpgradeType)))
+                ApplyRingUpgrade(SelectedRing, type);
+        }
+
+        public void MaxCore()
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                ApplyCoreUpgrade(OrbitalCoreUpgradeType.CorePower);
+                ApplyCoreUpgrade(OrbitalCoreUpgradeType.PulseFrequency);
+                ApplyCoreUpgrade(OrbitalCoreUpgradeType.FieldScale);
+            }
+            ApplyCoreUpgrade(OrbitalCoreUpgradeType.LinkMatrix);
+        }
+
+        public void MaxStation()
+        {
+            MaxCore();
+            for (int ring = 0; ring < RingCount; ring++)
+                foreach (OrbitalRingUpgradeType type in System.Enum.GetValues(typeof(OrbitalRingUpgradeType)))
+                    ApplyRingUpgrade(ring, type);
+        }
+
+        public int EstimateFill(float fraction, int fixedPerRing = 0)
+        {
+            int total = 0;
+            for (int i = 0; i < RingCount; i++)
+            {
+                int capacity = Mathf.Clamp(Rings[i].Settings.MaxMounts, 1, OrbitalRing.AbsoluteMaxMounts);
+                int desired = fixedPerRing > 0 ? Mathf.Min(fixedPerRing, capacity) : Mathf.CeilToInt(capacity * fraction);
+                for (int slot = 0; slot < desired; slot++) if (Rings[i].Mounts[slot] == null) total++;
+            }
+            return total;
+        }
+
+        public bool FillStation(float fraction, int fixedPerRing = 0, bool confirmed = false)
+        {
+            int amount = EstimateFill(fraction, fixedPerRing);
+            if (MountedCount + amount > SafetyObjectLimit && !confirmed)
+            {
+                Notify($"Будет создано {amount} объектов (итого {MountedCount + amount}). Нажмите подтверждение массового заполнения.", 7f);
+                return false;
+            }
+            int typeCount = System.Enum.GetValues(typeof(OrbitalMountType)).Length;
+            for (int r = 0; r < RingCount; r++)
+            {
+                OrbitalRing ring = Rings[r];
+                int capacity = Mathf.Clamp(ring.Settings.MaxMounts, 1, OrbitalRing.AbsoluteMaxMounts);
+                int desired = fixedPerRing > 0 ? Mathf.Min(fixedPerRing, capacity) : Mathf.CeilToInt(capacity * fraction);
+                for (int slot = 0; slot < desired; slot++)
+                    if (ring.Mounts[slot] == null)
+                        CreateMountedAt(ring, slot, (OrbitalMountType)((r * 3 + slot) % typeCount));
+            }
+            Notify($"Создано {amount} объектов.");
+            return true;
+        }
+
+        public void FillTheme(OrbitalMountType primary, OrbitalMountType secondary, int perRing)
+        {
+            int amount = EstimateFill(1f, perRing);
+            if (MountedCount + amount > SafetyObjectLimit)
+            {
+                Notify($"Будет создано {amount} объектов — выше Safety Object Limit {SafetyObjectLimit}.", 7f);
+                return;
+            }
+            for (int r = 0; r < RingCount; r++)
+            {
+                OrbitalRing ring = Rings[r];
+                int count = Mathf.Min(perRing, ring.Settings.MaxMounts);
+                for (int slot = 0; slot < count; slot++)
+                    if (ring.Mounts[slot] == null)
+                        CreateMountedAt(ring, slot, slot % 3 == 0 ? secondary : primary);
+            }
+        }
+
+        public void FillRandomBalanced()
+        {
+            ClearMounted();
+            int desired = EstimateFill(0f, 2);
+            if (desired > SafetyObjectLimit)
+            {
+                Notify($"Будет создано {desired} объектов — выше Safety Object Limit {SafetyObjectLimit}.", 7f);
+                return;
+            }
+            FillStation(0f, 2, true);
+            Notify($"RANDOM BALANCED: создано {desired} объектов, роли равномерно перемешаны по кольцам.");
+        }
+
+        public void ApplyHypnoticStation()
+        {
+            ResetLab(16);
+            PatternCombat = true;
+            Links.Mode = OrbitalLinkMode.AllNearby;
+            Links.DealDamage = false;
+            Links.MaxDistance = 9.5f;
+            Core.PulseMode = OrbitalCorePulseMode.Resonance;
+            Core.PulseGameplayEffect = false;
+            RingGeneration.SpeedMode = OrbitalRingSpeedMode.GoldenRatio;
+            RegenerateRingLayout();
+            for (int r = 0; r < RingCount; r++)
+            {
+                Rings[r].Settings.MaxMounts = 4;
+                if ((r & 1) == 0 || r < 3) AddAt(r, OrbitalMountType.LinkNode, r % 4 == 0 ? 2 : 1);
+                if (r % 5 == 2) AddAt(r, OrbitalMountType.ArcEmitter, 1);
+            }
+            Trails.Mode = OrbitalTrailMode.Off;
+            ApplyVisualProfile(OrbitalVisualProfile.Hypnotic);
+            Trails.Mode = OrbitalTrailMode.Off;
+            Crowd.SetCount(80, PlayerPosition, OuterRingRadius);
+            CameraRig.Mode = OrbitalCameraMode.FullStation;
+            CoreSystem.ForcePulse();
+            CameraRig.Snap(PlayerPosition, OuterRingRadius);
+            Notify("HYPNOTIC STATION: Golden Ratio, Link-собор, короткие Arc-вспышки, trails OFF.");
+        }
+
+        public void ApplyGrowthStage(int stage)
+        {
+            int[] rings = { 1, 3, 6, 10, 16, 24 };
+            int index = Mathf.Clamp(stage, 0, rings.Length - 1);
+            ResetLab(rings[index]);
+            ApplyMovementPreset(index >= 3 ? OrbitalMovementPreset.Flower : OrbitalMovementPreset.Gear);
+            FillStation(0f, index < 2 ? 1 : 2, true);
+            Crowd.SetCount(index < 2 ? 50 : index < 4 ? 120 : 200, PlayerPosition, OuterRingRadius);
+            CameraRig.Snap(PlayerPosition, OuterRingRadius);
+            Notify($"GROWTH TIMELINE: {new[] { "Minute 1", "Minute 3", "Minute 6", "Minute 10", "Minute 15", "Extreme" }[index]}");
+        }
+
+        public void ApplyCoreCascade()
+        {
+            ResetLab(12);
+            PatternCombat = true;
+            Core.PulseMode = OrbitalCorePulseMode.Cascade;
+            Core.PulseGameplayEffect = true;
+            Links.Mode = OrbitalLinkMode.Chain;
+            for (int r = 0; r < RingCount; r++)
+            {
+                Rings[r].Settings.MaxMounts = 5;
+                CreateMountedAt(Rings[r], 0, OrbitalMountType.Gun);
+                CreateMountedAt(Rings[r], 1, OrbitalMountType.MineLayer);
+                CreateMountedAt(Rings[r], 2, OrbitalMountType.ArcEmitter);
+                if ((r & 1) == 0) CreateMountedAt(Rings[r], 3, OrbitalMountType.LinkNode);
+            }
+            ApplyMovementPreset(OrbitalMovementPreset.Flower);
+            Trails.Mode = OrbitalTrailMode.Off;
+            Crowd.SetCount(200, PlayerPosition, OuterRingRadius);
+            CoreSystem.ForcePulse();
+            CameraRig.Snap(PlayerPosition, OuterRingRadius);
+        }
+
+        public void ApplyLinkCathedral()
+        {
+            ResetLab(16);
+            PatternCombat = true;
+            Links.Mode = OrbitalLinkMode.AllNearby;
+            Links.DealDamage = false;
+            Links.MaxDistance = 10f;
+            for (int r = 0; r < RingCount; r++)
+            {
+                Rings[r].Settings.MaxMounts = 4;
+                if (r % 2 == 0 || r < 3) AddAt(r, OrbitalMountType.LinkNode, r % 3 == 0 ? 2 : 1);
+            }
+            RingGeneration.SpeedMode = OrbitalRingSpeedMode.GoldenRatio;
+            RegenerateRingLayout();
+            Trails.Mode = OrbitalTrailMode.Off;
+            Crowd.SetCount(50, PlayerPosition, OuterRingRadius);
+            CameraRig.Mode = OrbitalCameraMode.FullStation;
+            CameraRig.Snap(PlayerPosition, OuterRingRadius);
+        }
+
+        public void ApplyMinePerimeter()
+        {
+            ResetLab(8);
+            PatternCombat = true;
+            for (int r = 0; r < RingCount; r++)
+            {
+                Rings[r].Settings.MaxMounts = 5;
+                AddAt(r, r < 3 ? OrbitalMountType.Pusher : OrbitalMountType.MineLayer, r < 3 ? 2 : 3);
+            }
+            Crowd.SetCount(200, PlayerPosition, OuterRingRadius);
+            CameraRig.Snap(PlayerPosition, OuterRingRadius);
+        }
+
+        public void ApplyArcReactor()
+        {
+            ResetLab(10);
+            PatternCombat = true;
+            Core.PulseMode = OrbitalCorePulseMode.Resonance;
+            Links.Mode = OrbitalLinkMode.Chain;
+            for (int r = 0; r < RingCount; r++)
+            {
+                Rings[r].Settings.MaxMounts = 5;
+                AddAt(r, OrbitalMountType.ArcEmitter, 2);
+                if ((r & 1) == 0) AddAt(r, OrbitalMountType.LinkNode, 1);
+            }
+            Crowd.SetCount(200, PlayerPosition, OuterRingRadius);
+            CameraRig.Snap(PlayerPosition, OuterRingRadius);
+        }
+
+        public void ApplyAbsurdStation()
+        {
+            ResetLab(24);
+            PatternCombat = true;
+            Links.Mode = OrbitalLinkMode.Chain;
+            for (int r = 0; r < RingCount; r++)
+            {
+                Rings[r].Settings.MaxMounts = 5;
+                CreateMountedAt(Rings[r], 0, (OrbitalMountType)(r % 6));
+                if (r % 3 == 0) CreateMountedAt(Rings[r], 1, OrbitalMountType.LinkNode);
+            }
+            RingAlpha = .72f;
+            Trails.Mode = OrbitalTrailMode.Off;
+            CameraRig.Mode = OrbitalCameraMode.FullStation;
+            Crowd.SetCount(300, PlayerPosition, OuterRingRadius);
+            CameraRig.Snap(PlayerPosition, OuterRingRadius);
+        }
+
+        public void ApplySoloLink()
+        {
+            ResetLab(3);
+            PatternCombat = true;
+            Links.Mode = OrbitalLinkMode.Chain;
+            Links.DealDamage = true;
+            for (int r = 0; r < RingCount; r++) AddAt(r, OrbitalMountType.LinkNode, 2);
+            Crowd.SetCount(24, PlayerPosition, OuterRingRadius);
+            Trails.Mode = OrbitalTrailMode.Off;
+            CameraRig.Snap(PlayerPosition, OuterRingRadius);
+        }
+
+        public void ApplySoloResonance()
+        {
+            ResetLab(4);
+            PatternCombat = true;
+            Resonance.Enabled = true;
+            Resonance.VisualOnly = false;
+            for (int r = 0; r < RingCount; r++)
+            {
+                AddAt(r, r % 2 == 0 ? OrbitalMountType.Gun : OrbitalMountType.LinkNode, 1);
+                Rings[r].Settings.RotationSpeed = 38f;
+                Rings[r].Settings.Clockwise = false;
+                Rings[r].PhaseOffset = 0f;
+            }
+            Crowd.SetCount(36, PlayerPosition, OuterRingRadius);
+            CameraRig.Snap(PlayerPosition, OuterRingRadius);
+        }
+
+        public void ApplySoloCorePulse()
+        {
+            ResetLab(8);
+            Core.PulseMode = OrbitalCorePulseMode.Cascade;
+            for (int r = 0; r < RingCount; r++) AddAt(r, OrbitalMountType.Gun, 1);
+            Crowd.SetCount(60, PlayerPosition, OuterRingRadius);
+            CoreSystem.ForcePulse();
+            CameraRig.Snap(PlayerPosition, OuterRingRadius);
+        }
+
+        public void ApplySoloMine()
+        {
+            ResetLab(4);
+            for (int r = 0; r < RingCount; r++) AddAt(r, OrbitalMountType.MineLayer, 1);
+            ShowAttackRanges = true;
+            Crowd.SetCount(60, PlayerPosition, OuterRingRadius);
+            CameraRig.Snap(PlayerPosition, OuterRingRadius);
+        }
+
+        public void ApplySoloArc()
+        {
+            ResetLab(4);
+            for (int r = 0; r < RingCount; r++) AddAt(r, OrbitalMountType.ArcEmitter, 1);
+            AddAt(2, OrbitalMountType.LinkNode, 1);
+            ShowAttackRanges = true;
+            Crowd.SetCount(60, PlayerPosition, OuterRingRadius);
+            CameraRig.Snap(PlayerPosition, OuterRingRadius);
+        }
+
         public void ApplyMovementPreset(OrbitalMovementPreset preset)
         {
             if (preset == OrbitalMovementPreset.Freeze)
@@ -286,7 +828,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
                     float[] speeds = { 96f, 64f, 48f, 38.4f, 32f, 27.43f };
                     for (int i = 0; i < RingCount; i++)
                     {
-                        Rings[i].Settings.RotationSpeed = speeds[i];
+                        Rings[i].Settings.RotationSpeed = speeds[i % speeds.Length] *
+                            Mathf.Pow(.985f, i / speeds.Length);
                         Rings[i].Settings.Clockwise = i % 2 == 1;
                         Rings[i].RotationAngle = 0f;
                         Rings[i].PhaseOffset = i * 36f;
@@ -316,8 +859,9 @@ namespace Subject42.Prototype.OrbitalCombatLab
                     float[] speeds = { 113f, 71f, 47f, 83f, 29f, 61f };
                     for (int i = 0; i < RingCount; i++)
                     {
-                        Rings[i].Settings.RotationSpeed = speeds[i];
-                        Rings[i].Settings.Clockwise = i == 1 || i == 4 || i == 5;
+                        Rings[i].Settings.RotationSpeed = speeds[i % speeds.Length] *
+                            Mathf.Pow(.99f, i / speeds.Length);
+                        Rings[i].Settings.Clockwise = ((i * 17 + 3) % 7) < 3;
                         Rings[i].RotationAngle = 0f;
                         Rings[i].PhaseOffset = (i * 67f + 19f) % 360f;
                     }
@@ -326,9 +870,9 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 default:
                     for (int i = 0; i < RingCount; i++)
                     {
-                        Rings[i].Settings.Radius = DefaultRadii[i];
-                        Rings[i].Settings.RotationSpeed = DefaultSpeeds[i];
-                        Rings[i].Settings.Clockwise = i % 2 == 1;
+                        Rings[i].Settings.Radius = CalculateGeneratedRadius(i);
+                        Rings[i].Settings.RotationSpeed = CalculateGeneratedSpeed(i);
+                        Rings[i].Settings.Clockwise = CalculateGeneratedClockwise(i);
                         Rings[i].RotationAngle = 0f;
                         Rings[i].PhaseOffset = 0f;
                     }
@@ -661,6 +1205,14 @@ namespace Subject42.Prototype.OrbitalCombatLab
             return false;
         }
 
+        public bool HasLinkNodeOnRing(OrbitalRing ring)
+        {
+            if (ring == null) return false;
+            for (int i = 0; i < ring.Mounts.Length; i++)
+                if (ring.Mounts[i] is OrbitalLinkNode) return true;
+            return false;
+        }
+
         public void EmitPulse(Vector2 position, Color color, float finalSize, float duration)
         {
             Pulse pulse = pulses[pulseCursor++];
@@ -707,8 +1259,11 @@ namespace Subject42.Prototype.OrbitalCombatLab
             Crowd = new OrbitalEnemyCrowd(WorldRoot, factory, Stats,
                 position => EmitPulse(position, new Color(1f, .16f, .12f, .72f), .62f, .16f));
             Projectiles = new OrbitalProjectilePool(WorldRoot, factory, Crowd);
+            MineSystem = new OrbitalMineSystem(this, WorldRoot, factory);
+            ArcSystem = new OrbitalArcSystem(WorldRoot, factory);
             BuildPulses();
             Pattern = new OrbitalPatternCombatSystem(this, WorldRoot, factory);
+            CoreSystem = new OrbitalCoreSystem(this, WorldRoot, factory);
 
             Drag = gameObject.AddComponent<OrbitalLabDragController>();
             Drag.Configure(this);
@@ -716,6 +1271,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
             CameraRig.Configure(this);
             DebugUI = gameObject.AddComponent<OrbitalLabDebugUI>();
             DebugUI.Configure(this);
+            GoldenPath = gameObject.AddComponent<OrbitalGoldenPath>();
+            GoldenPath.Configure(this);
         }
 
         private void BuildGrid()
@@ -819,6 +1376,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             Links.Damage = 8f; Links.HitCooldown = .35f; Links.LineWidth = .055f;
             Links.MaxDistance = 9f; Links.PulseSpeed = 3f; Links.DealDamage = true; Links.ShowLinks = true;
             Links.LineColor = new Color(1f, .06f, .84f, 1f);
+            Core.Reset();
             Resonance.Enabled = true; Resonance.AlignmentTolerance = 10f; Resonance.MinimumObjects = 2;
             Resonance.Cooldown = 1.15f; Resonance.Damage = 16f; Resonance.Range = 9f;
             Resonance.Mode = OrbitalResonanceMode.Cycle; Resonance.VisualOnly = false;
@@ -836,6 +1394,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             ApplyVisualProfile(OrbitalVisualProfile.Combat);
             SelectedMounted = null;
             Pattern?.Reset();
+            CoreSystem?.Reset();
         }
 
         private void ApplyFormationToSelected(int mode)
@@ -889,21 +1448,26 @@ namespace Subject42.Prototype.OrbitalCombatLab
         {
             if (ring == null || slot < 0 || slot >= ring.Settings.MaxMounts ||
                 ring.Mounts[slot] != null || MountedCount >= MaxMountedObjects) return false;
-            OrbitalMountedObject mounted = type switch
-            {
-                OrbitalMountType.Gun => new OrbitalGun(this, factory),
-                OrbitalMountType.Blade => new OrbitalBlade(this, factory),
-                OrbitalMountType.Pusher => new OrbitalPusher(this, factory),
-                _ => new OrbitalLinkNode(this, factory)
-            };
+            OrbitalMountedObject mounted = CreateMountedInstance(type);
             mounted.Attach(ring, slot);
             MountedObjects[MountedCount++] = mounted;
             return true;
         }
 
+        private OrbitalMountedObject CreateMountedInstance(OrbitalMountType type) => type switch
+        {
+            OrbitalMountType.Gun => new OrbitalGun(this, factory),
+            OrbitalMountType.Blade => new OrbitalBlade(this, factory),
+            OrbitalMountType.Pusher => new OrbitalPusher(this, factory),
+            OrbitalMountType.LinkNode => new OrbitalLinkNode(this, factory),
+            OrbitalMountType.MineLayer => new OrbitalMineLayer(this, factory),
+            _ => new OrbitalArcEmitter(this, factory)
+        };
+
         private void RemoveMounted(OrbitalMountedObject target)
         {
             if (target == null) return;
+            if (target is OrbitalMineLayer) MineSystem?.Clear();
             int index = -1;
             for (int i = 0; i < MountedCount; i++) if (MountedObjects[i] == target) { index = i; break; }
             target.Destroy();

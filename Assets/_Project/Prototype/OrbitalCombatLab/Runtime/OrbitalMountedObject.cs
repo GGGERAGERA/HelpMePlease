@@ -69,7 +69,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             colliderLine.startColor = colliderLine.endColor = new Color(1f, .48f, .08f, .8f);
             mountMarker.enabled = muzzleMarker.enabled = forwardLine.enabled = colliderLine.enabled = false;
 
-            if (type != OrbitalMountType.LinkNode)
+            if (type == OrbitalMountType.Gun || type == OrbitalMountType.Blade || type == OrbitalMountType.Pusher)
                 miniVisual = new OrbitalMiniWeaponVisual(type, Transform, lab, factory.LineMaterial);
             RefreshVisualMode();
         }
@@ -104,6 +104,9 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 ? primitiveBaseScale * Lab.WeaponVisuals.LinkNodeScale : primitiveBaseScale;
             // Apply live visual scale/offset before combat so a shot on the first frame
             // (or immediately after a mode switch) uses the actual prefab muzzle socket.
+            float powerGlow = Ring != null ? Mathf.Clamp01((Ring.Upgrades.DamageMultiplier - 1f) * .72f) : 0f;
+            Renderer.color = Color.Lerp(BaseColor, Color.white, powerGlow * .28f);
+            miniVisual?.SetPowerGlow(powerGlow);
             miniVisual?.Tick();
             TickCombat(deltaTime);
             RefreshPrimitiveVisibility();
@@ -161,6 +164,11 @@ namespace Subject42.Prototype.OrbitalCombatLab
             miniVisual?.Flash(duration);
         }
 
+        public virtual void OnCorePulse(float power)
+        {
+            FlashResonance(.24f);
+        }
+
         public void ClearTrail()
         {
             trail.emitting = false;
@@ -175,6 +183,12 @@ namespace Subject42.Prototype.OrbitalCombatLab
 
         protected abstract Color BaseColor { get; }
         protected abstract void TickCombat(float deltaTime);
+        protected float DamageMultiplier => (Ring != null ? Ring.Upgrades.DamageMultiplier : 1f) *
+            Lab.Core.GlobalDamageMultiplier;
+        protected float CooldownMultiplier => Ring != null ? Ring.Upgrades.CooldownMultiplier : 1f;
+        protected float EffectSizeMultiplier => (Ring != null ? Ring.Upgrades.EffectSizeMultiplier : 1f) *
+            Lab.Core.GlobalEffectSizeMultiplier;
+        protected float PushMultiplier => Ring != null ? Ring.Upgrades.PushMultiplier : 1f;
         protected Vector2 MuzzlePosition => miniVisual != null && miniVisual.HasInstance
             ? miniVisual.MuzzlePosition : (Vector2)Transform.position;
 

@@ -14,21 +14,22 @@ namespace Subject42.Prototype.OrbitalCombatLab
         protected override void TickCombat(float deltaTime)
         {
             GunSettings settings = Lab.Gun;
-            SetRangeCircle(settings.Range);
+            SetRangeCircle(settings.Range * EffectSizeMultiplier);
             SetPrototypeColliderRadius(.34f);
             Renderer.color = Time.time < flashUntil ? Color.white : BaseColor;
-            int target = Lab.Crowd.FindNearest(Transform.position, settings.Range);
+            float range = settings.Range * EffectSizeMultiplier;
+            int target = Lab.Crowd.FindNearest(Transform.position, range);
             if (target < 0) return;
             Vector2 targetPosition = Lab.Crowd.Enemies[target].Transform.position;
             Vector2 direction = targetPosition - (Vector2)Transform.position;
             Transform.rotation = Quaternion.Euler(0f, 0f,
                 Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
             if (Time.time < NextActionTime) return;
-            NextActionTime = Time.time + 1f / Mathf.Max(.05f, settings.FireRate);
+            NextActionTime = Time.time + CooldownMultiplier / Mathf.Max(.05f, settings.FireRate);
             Vector2 muzzle = MuzzlePosition;
             direction = targetPosition - muzzle;
             Lab.Projectiles.Fire(muzzle, direction, settings.ProjectileSpeed,
-                settings.Damage, settings.Range);
+                settings.Damage * DamageMultiplier, range);
             Lab.Stats.Shots++;
             flashUntil = Time.time + .055f;
             TriggerVisual(OrbitalVisualAction.GunFire);
@@ -40,10 +41,19 @@ namespace Subject42.Prototype.OrbitalCombatLab
             GunSettings settings = Lab.Gun;
             Transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
             Lab.Projectiles.Fire(MuzzlePosition, direction, settings.ProjectileSpeed * 1.25f,
-                settings.Damage * damageMultiplier, settings.Range * 1.25f);
+                settings.Damage * DamageMultiplier * damageMultiplier,
+                settings.Range * EffectSizeMultiplier * 1.25f);
             Lab.Stats.Shots++;
             flashUntil = Time.time + .12f;
             TriggerVisual(OrbitalVisualAction.GunFire);
+        }
+
+        public override void OnCorePulse(float power)
+        {
+            base.OnCorePulse(power);
+            Vector2 direction = ((Vector2)Transform.position - Lab.PlayerPosition).normalized;
+            if (direction.sqrMagnitude < .01f) direction = Vector2.right;
+            FireResonance(direction, Mathf.Max(.35f, power));
         }
     }
 }

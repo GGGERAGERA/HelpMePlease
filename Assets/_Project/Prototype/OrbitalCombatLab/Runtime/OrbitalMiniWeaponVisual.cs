@@ -35,6 +35,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
         private float flashUntil;
         private bool dragging;
         private bool dragValid;
+        private float powerGlow;
 
         public bool HasInstance => instance != null;
         public int DisabledColliderCount { get; private set; }
@@ -156,6 +157,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
             dragValid = valid;
             if (active) StopParticles();
         }
+
+        public void SetPowerGlow(float value) => powerGlow = Mathf.Clamp01(value);
 
         public bool HitTest(Vector2 world, float padding)
         {
@@ -298,6 +301,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 if (dragging) color = Color.Lerp(color,
                     dragValid ? new Color(.25f, 1f, .55f, color.a) : new Color(1f, .12f, .18f, color.a), .72f);
                 else if (Time.unscaledTime < flashUntil) color = Color.Lerp(color, Color.white, .72f);
+                else if (powerGlow > .01f) color = Color.Lerp(color, new Color(.7f, 1f, 1f, color.a), powerGlow * .24f);
                 sprites[i].color = color;
             }
         }

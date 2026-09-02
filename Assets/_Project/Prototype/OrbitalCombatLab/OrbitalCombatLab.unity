@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &895529889
+--- !u!1 &1141574908
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,8 +127,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 895529891}
-  - component: {fileID: 895529890}
+  - component: {fileID: 1141574910}
+  - component: {fileID: 1141574909}
   m_Layer: 0
   m_Name: ORBITAL COMBAT LAB
   m_TagString: Untagged
@@ -136,13 +136,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &895529890
+--- !u!114 &1141574909
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 895529889}
+  m_GameObject: {fileID: 1141574908}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e189b0f8a3b119243a9b713a369a44f7, type: 3}
@@ -157,6 +157,10 @@ MonoBehaviour:
   ShowAttackRanges: 0
   ShowStats: 1
   CameraImpulse: 1
+  RingUpgradeVisuals: 1
+  SafetyRingLimit: 32
+  SafetyObjectLimit: 256
+  LabLevel: 1
   PatternCombat: 0
   RingEditMode: 0
   PauseSelectedRingWhileEditing: 1
@@ -171,13 +175,13 @@ MonoBehaviour:
   CurrentMovementPreset: 0
   CurrentVisualProfile: 1
   PlayerHp: 100
---- !u!4 &895529891
+--- !u!4 &1141574910
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 895529889}
+  m_GameObject: {fileID: 1141574908}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -190,4 +194,4 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 895529891}
+  - {fileID: 1141574910}

@@ -4,8 +4,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
 {
     public sealed class OrbitalPatternCombatSystem
     {
-        private const int MaxNodes = 16;
-        private const int MaxLinks = 24;
+        private const int MaxNodes = 64;
+        private const int MaxLinks = 128;
         private readonly OrbitalCombatLabController lab;
         private readonly OrbitalLinkNode[] nodes = new OrbitalLinkNode[MaxNodes];
         private readonly OrbitalMountedObject[] aligned = new OrbitalMountedObject[OrbitalCombatLabController.MaxMountedObjects];
@@ -17,6 +17,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
         private readonly float[] nextRingPulse = new float[OrbitalCombatLabController.MaxRings];
         private readonly float[] conductorUntil = new float[OrbitalCombatLabController.MaxRings];
         private readonly LineRenderer resonanceLine;
+        private readonly LineRenderer placementPreview;
         private int nodeCount;
         private int linkCount;
         private int cycleIndex;
@@ -25,8 +26,32 @@ namespace Subject42.Prototype.OrbitalCombatLab
         private float resonanceLineUntil;
         private int currentAlignmentSignature;
         private int lastTriggeredSignature;
+        private float linksBoostUntil;
+        private float linksBoostPower = 1f;
 
         public int ActiveLinks => linkCount;
+
+        public void BoostLinks(float duration, float power)
+        {
+            linksBoostUntil = Mathf.Max(linksBoostUntil, Time.unscaledTime + duration);
+            linksBoostPower = Mathf.Max(linksBoostPower, power);
+        }
+
+        public void PlaceTestEnemyOnLink()
+        {
+            if (linkCount == 0 || lab.Crowd.DesiredCount == 0)
+            {
+                lab.Notify("Нужны хотя бы одна Link-связь и один враг.");
+                return;
+            }
+            OrbitalEnemyCrowd.Enemy enemy = lab.Crowd.Enemies[0];
+            Vector2 a = nodes[linkA[0]].Transform.position;
+            Vector2 b = nodes[linkB[0]].Transform.position;
+            Vector2 position = Vector2.Lerp(a, b, .5f);
+            enemy.Transform.position = position;
+            if (enemy.Body != null) enemy.Body.position = position;
+            lab.Notify("Тестовый враг помещён на первую фиолетовую связь.");
+        }
 
         public OrbitalPatternCombatSystem(OrbitalCombatLabController lab,
             Transform parent, OrbitalPrimitiveFactory factory)
@@ -43,6 +68,10 @@ namespace Subject42.Prototype.OrbitalCombatLab
             resonanceLine = factory.CreateCircleLine("Alignment Resonance", root, 14, 2);
             resonanceLine.loop = false;
             resonanceLine.enabled = false;
+            placementPreview = factory.CreateCircleLine("Golden Path Link Preview", root, 15, 2);
+            placementPreview.loop = false;
+            placementPreview.startWidth = placementPreview.endWidth = .045f;
+            placementPreview.enabled = false;
         }
 
         public void Tick(float deltaTime)
@@ -73,6 +102,7 @@ namespace Subject42.Prototype.OrbitalCombatLab
             currentAlignmentSignature = lastTriggeredSignature = 0;
             for (int i = 0; i < links.Length; i++) links[i].enabled = false;
             resonanceLine.enabled = false;
+            placementPreview.enabled = false;
             for (int i = 0; i < targetLinkCooldown.Length; i++) targetLinkCooldown[i] = 0f;
             for (int r = 0; r < OrbitalCombatLabController.MaxRings; r++)
             {
@@ -98,20 +128,22 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 DisableUnusedLinks();
                 return;
             }
+            int allowedLinks = Mathf.Clamp(24 + lab.Core.LinkCapacityBonus, 1, MaxLinks);
             if (lab.Links.Mode == OrbitalLinkMode.Pairs)
             {
-                for (int i = 0; i + 1 < nodeCount && linkCount < MaxLinks; i += 2)
+                for (int i = 0; i + 1 < nodeCount && linkCount < allowedLinks; i += 2)
                     AddLink(i, i + 1);
             }
             else if (lab.Links.Mode == OrbitalLinkMode.Chain)
             {
-                for (int i = 0; i + 1 < nodeCount && linkCount < MaxLinks; i++)
+                for (int i = 0; i + 1 < nodeCount && linkCount < allowedLinks; i++)
                     AddLink(i, i + 1);
             }
             else
             {
-                float maxSqr = lab.Links.MaxDistance * lab.Links.MaxDistance;
-                for (int i = 0; i < nodeCount && linkCount < MaxLinks; i++)
+                float distance = lab.Links.MaxDistance * lab.Core.LinkRangeMultiplier;
+                float maxSqr = distance * distance;
+                for (int i = 0; i < nodeCount && linkCount < allowedLinks; i++)
                 {
                     int nearest = -1;
                     float nearestSqr = maxSqr;
@@ -153,16 +185,23 @@ namespace Subject42.Prototype.OrbitalCombatLab
         private void UpdateLinks()
         {
             float pulse = 1f + Mathf.Sin(Time.unscaledTime * lab.Links.PulseSpeed) * .22f;
+            bool boosted = Time.unscaledTime < linksBoostUntil;
+            float coreBoost = boosted ? Mathf.Max(1.25f, linksBoostPower) : 1f;
+            if (!boosted) linksBoostPower = 1f;
             Color color = lab.Links.LineColor;
-            color.a = Mathf.Clamp01(lab.LinkAlpha * (.58f + pulse * .18f));
             for (int i = 0; i < linkCount; i++)
             {
                 LineRenderer line = links[i];
                 line.enabled = true;
                 line.SetPosition(0, nodes[linkA[i]].Transform.position);
                 line.SetPosition(1, nodes[linkB[i]].Transform.position);
-                line.startWidth = line.endWidth = lab.Links.LineWidth * pulse;
-                line.startColor = line.endColor = color;
+                float ringPower = LinkRingPower(i);
+                line.startWidth = line.endWidth = lab.Links.LineWidth * pulse *
+                    Mathf.Lerp(1f, ringPower, .35f) * coreBoost;
+                Color poweredColor = color;
+                poweredColor.a = Mathf.Clamp01(lab.LinkAlpha * (.58f + pulse * .18f) *
+                    Mathf.Lerp(1f, ringPower, .28f) * Mathf.Lerp(1f, coreBoost, .35f));
+                line.startColor = line.endColor = poweredColor;
             }
         }
 
@@ -183,7 +222,8 @@ namespace Subject42.Prototype.OrbitalCombatLab
                     Vector2 point = enemy.Transform.position;
                     if (DistanceToSegmentSqr(point, a, b) > hitRadiusSqr) continue;
                     targetLinkCooldown[enemyIndex] = now + lab.Links.HitCooldown;
-                    lab.Crowd.Damage(enemyIndex, lab.Links.Damage);
+                    lab.Crowd.Damage(enemyIndex, lab.Links.Damage * LinkRingPower(link) *
+                        lab.Core.GlobalDamageMultiplier * (Time.unscaledTime < linksBoostUntil ? linksBoostPower : 1f));
                     lab.Stats.LinkHits++;
                     lab.EmitPulse(point, new Color(1f, .08f, .88f, .82f), .38f, .11f);
                 }
@@ -280,13 +320,16 @@ namespace Subject42.Prototype.OrbitalCombatLab
                     if (aligned[i] is OrbitalGun gun) { gun.FireResonance(direction); guns++; }
                 if (guns == 0)
                     lab.Projectiles.Fire(outer.Transform.position, direction, 24f,
-                        lab.Resonance.Damage, lab.Resonance.Range);
+                        lab.Resonance.Damage * ResonanceRingPower(count) * lab.Core.GlobalDamageMultiplier,
+                        lab.Resonance.Range * lab.Core.GlobalEffectSizeMultiplier);
             }
             else if (mode == OrbitalResonanceMode.Beam)
-                DamageSegment(center, end, lab.Resonance.Damage, .24f);
+                DamageSegment(center, end,
+                    lab.Resonance.Damage * ResonanceRingPower(count) * lab.Core.GlobalDamageMultiplier,
+                    .24f * lab.Core.GlobalEffectSizeMultiplier);
             else
-                Shockwave(outer.Transform.position, lab.Resonance.Range * .42f,
-                    lab.Resonance.Damage * .55f, 11f);
+                Shockwave(outer.Transform.position, lab.Resonance.Range * .42f * lab.Core.GlobalEffectSizeMultiplier,
+                    lab.Resonance.Damage * .55f * lab.Core.GlobalDamageMultiplier, 11f);
         }
 
         private void ShowResonanceLine(Vector2 start, Vector2 end, OrbitalResonanceMode mode)
@@ -351,14 +394,17 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 for (int enemyIndex = 0; enemyIndex < lab.Crowd.DesiredCount; enemyIndex++)
                 {
                     OrbitalEnemyCrowd.Enemy enemy = lab.Crowd.Enemies[enemyIndex];
+                    float effectiveFieldWidth = settings.FieldWidth * ring.Upgrades.EffectSizeMultiplier *
+                        lab.Core.GlobalEffectSizeMultiplier;
                     if (!enemy.Active || ring.DistanceToPath(lab.PlayerPosition,
-                        enemy.Transform.position) > settings.FieldWidth) continue;
+                        enemy.Transform.position) > effectiveFieldWidth) continue;
                     if (settings.FieldMode == OrbitalRingFieldMode.Slow)
                         lab.Crowd.Slow(enemyIndex, settings.SlowMultiplier, .18f);
                     else if (now >= targetFieldCooldown[ringIndex, enemyIndex])
                     {
                         targetFieldCooldown[ringIndex, enemyIndex] = now + settings.FieldTargetCooldown;
-                        lab.Crowd.Damage(enemyIndex, settings.FieldDamage);
+                        lab.Crowd.Damage(enemyIndex, settings.FieldDamage * ring.Upgrades.DamageMultiplier *
+                            lab.Core.GlobalDamageMultiplier);
                         lab.Stats.RingFieldHits++;
                     }
                 }
@@ -372,8 +418,9 @@ namespace Subject42.Prototype.OrbitalCombatLab
             {
                 OrbitalEnemyCrowd.Enemy enemy = lab.Crowd.Enemies[i];
                 if (!enemy.Active || ring.DistanceToPath(lab.PlayerPosition,
-                    enemy.Transform.position) > settings.FieldWidth * 2.2f) continue;
-                lab.Crowd.Push(i, lab.PlayerPosition, settings.FieldPushForce);
+                    enemy.Transform.position) > settings.FieldWidth * 2.2f * ring.Upgrades.EffectSizeMultiplier *
+                    lab.Core.GlobalEffectSizeMultiplier) continue;
+                lab.Crowd.Push(i, lab.PlayerPosition, settings.FieldPushForce * ring.Upgrades.PushMultiplier);
                 lab.Stats.RingFieldHits++;
             }
             ring.FlashField(.22f);
@@ -382,6 +429,46 @@ namespace Subject42.Prototype.OrbitalCombatLab
         }
 
         private static float AngleOf(Vector2 value) => Mathf.Atan2(value.y, value.x) * Mathf.Rad2Deg;
+
+        private float LinkRingPower(int link)
+        {
+            OrbitalRing a = nodes[linkA[link]].Ring;
+            OrbitalRing b = nodes[linkB[link]].Ring;
+            float powerA = a != null ? a.Upgrades.DamageMultiplier * a.Upgrades.LinkPowerMultiplier : 1f;
+            float powerB = b != null ? b.Upgrades.DamageMultiplier * b.Upgrades.LinkPowerMultiplier : 1f;
+            return (powerA + powerB) * .5f;
+        }
+
+        public void ShowGoldenLinkPreview(Vector2 prospectivePosition)
+        {
+            OrbitalLinkNode previous = null;
+            for (int i = 0; i < lab.MountedCount; i++)
+                if (lab.MountedObjects[i] is OrbitalLinkNode node && !node.IsDragging) previous = node;
+            if (previous == null)
+            {
+                placementPreview.enabled = false;
+                return;
+            }
+            placementPreview.enabled = true;
+            placementPreview.SetPosition(0, previous.Transform.position);
+            placementPreview.SetPosition(1, prospectivePosition);
+            Color color = lab.Links.LineColor;
+            color.a = .34f;
+            placementPreview.startColor = placementPreview.endColor = color;
+        }
+
+        public void ClearGoldenLinkPreview() => placementPreview.enabled = false;
+
+        private float ResonanceRingPower(int count)
+        {
+            float sum = 0f;
+            for (int i = 0; i < count; i++)
+            {
+                OrbitalRing ring = aligned[i] != null ? aligned[i].Ring : null;
+                sum += ring != null ? ring.Upgrades.DamageMultiplier * ring.Upgrades.LinkPowerMultiplier : 1f;
+            }
+            return sum / Mathf.Max(1, count);
+        }
 
         private static float DistanceToSegmentSqr(Vector2 point, Vector2 start, Vector2 end)
         {

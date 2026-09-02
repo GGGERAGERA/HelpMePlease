@@ -4,12 +4,14 @@ namespace Subject42.Prototype.OrbitalCombatLab
 {
     public sealed class OrbitalRing
     {
-        public const int AbsoluteMaxMounts = 8;
+        public const int AbsoluteMaxMounts = 12;
         public readonly OrbitalRingSettings Settings = new();
+        public readonly OrbitalRingUpgradeState Upgrades = new();
         public readonly OrbitalMountedObject[] Mounts = new OrbitalMountedObject[AbsoluteMaxMounts];
         public readonly int Index;
         public float RotationAngle;
         public float PhaseOffset;
+        public float PreviewRotationMultiplier = 1f;
         public float FormationAngle => Mathf.Repeat(RotationAngle + PhaseOffset, 360f);
         public float MaximumVisualRadius => Settings.Radius +
             (Settings.Shape == OrbitalShape.Ellipse ? Settings.Radius * Mathf.Max(0f, Settings.AspectRatio - 1f) :
@@ -18,16 +20,19 @@ namespace Subject42.Prototype.OrbitalCombatLab
 
         private readonly LineRenderer line;
         private readonly SpriteRenderer[] points = new SpriteRenderer[AbsoluteMaxMounts];
+        private readonly SpriteRenderer[] powerSegments = new SpriteRenderer[4];
         private readonly Transform root;
         private readonly Color baseColor;
         private float fieldFlashUntil;
+        private float upgradeFlashUntil;
 
         public OrbitalRing(int index, Transform parent, OrbitalPrimitiveFactory factory)
         {
             Index = index;
             root = new GameObject($"Ring {index + 1}").transform;
             root.SetParent(parent, false);
-            line = factory.CreateCircleLine("Orbit", root, 2, 112);
+            int segments = index < 8 ? 112 : index < 16 ? 72 : 48;
+            line = factory.CreateCircleLine("Orbit", root, 2 + Mathf.Min(index / 8, 3), segments);
             baseColor = Color.HSVToRGB((.51f + index * .105f) % 1f, .72f, 1f);
             baseColor.a = .38f;
             Settings.Color = baseColor;
@@ -36,6 +41,9 @@ namespace Subject42.Prototype.OrbitalCombatLab
                 points[i] = factory.CreateSprite($"Mount {i + 1}", root, factory.Circle,
                     new Color(.7f, .78f, .82f, .34f), new Vector2(.14f, .14f), 4);
             }
+            for (int i = 0; i < powerSegments.Length; i++)
+                powerSegments[i] = factory.CreateSprite($"Power Segment {i + 1}", root, factory.Square,
+                    new Color(.45f, 1f, 1f, .78f), new Vector2(.08f, .32f), 5);
         }
 
         public void ApplyDefaults(float radius, float speed, bool clockwise, int mounts)
@@ -48,24 +56,51 @@ namespace Subject42.Prototype.OrbitalCombatLab
 
         public void Tick(Vector2 center, float deltaTime, bool showRings, bool showMounts,
             bool dropHighlight, bool selected, bool hovered, bool editPaused,
-            int previewSlot, float ringAlpha)
+            int previewSlot, float ringAlpha, bool upgradeVisuals = true)
+            => Tick(center, deltaTime, showRings, showMounts, dropHighlight, selected, hovered,
+                editPaused, previewSlot, ringAlpha, upgradeVisuals, false);
+
+        public void Tick(Vector2 center, float deltaTime, bool showRings, bool showMounts,
+            bool dropHighlight, bool selected, bool hovered, bool editPaused,
+            int previewSlot, float ringAlpha, bool upgradeVisuals, bool dimForSelection)
         {
             if (!Settings.Paused && !editPaused)
                 RotationAngle = Mathf.Repeat(RotationAngle + Settings.RotationSpeed *
+                    Upgrades.RotationSpeedMultiplier * PreviewRotationMultiplier *
                     (Settings.Clockwise ? -1f : 1f) * deltaTime, 360f);
             line.enabled = showRings && Settings.Visible;
             if (line.enabled)
             {
                 UpdateLine(center);
                 bool fieldFlash = Time.unscaledTime < fieldFlashUntil;
+                bool upgradeFlash = Time.unscaledTime < upgradeFlashUntil;
                 Color color = dropHighlight ? new Color(.2f, 1f, .45f, .9f) :
                     selected ? new Color(.35f, .96f, 1f, .95f) :
                     hovered ? new Color(.62f, .9f, 1f, .76f) :
+                    upgradeFlash ? new Color(.72f, 1f, 1f, .98f) :
                     fieldFlash ? new Color(1f, .28f, .92f, .92f) : Settings.Color;
-                color.a *= Mathf.Clamp01(ringAlpha);
+                if (upgradeVisuals && Upgrades.Level > 0 && !selected && !hovered)
+                    color = Color.Lerp(color, new Color(.3f, .92f, 1f, color.a), Mathf.Min(.34f, Upgrades.Level * .055f));
+                if (dimForSelection && !dropHighlight && !selected && !hovered) color.a *= .24f;
+                color.a *= Mathf.Clamp01(ringAlpha * Settings.GeneratedLineAlpha);
                 line.startColor = line.endColor = color;
                 line.startWidth = line.endWidth = dropHighlight || selected
-                    ? Settings.LineWidth * 2.6f : hovered ? Settings.LineWidth * 1.75f : Settings.LineWidth;
+                    ? Settings.LineWidth * 2.6f : hovered ? Settings.LineWidth * 1.75f :
+                    Settings.LineWidth * (upgradeVisuals ? 1f + Mathf.Min(.5f, Upgrades.Level * .07f) : 1f);
+            }
+
+            int powerLevel = DamageUpgradeLevel;
+            float powerPulse = .76f + Mathf.Sin(Time.unscaledTime * 4.2f + Index) * .16f;
+            for (int i = 0; i < powerSegments.Length; i++)
+            {
+                bool active = showRings && upgradeVisuals && i < powerLevel;
+                powerSegments[i].gameObject.SetActive(active);
+                if (!active) continue;
+                float angle = FormationAngle + 22f + i * 13f;
+                powerSegments[i].transform.position = GetPositionForAngle(center, angle);
+                powerSegments[i].transform.rotation = Quaternion.Euler(0f, 0f, angle + 90f);
+                Color segmentColor = new(.42f, 1f, 1f, powerPulse * (dimForSelection && !selected && !hovered ? .28f : 1f));
+                powerSegments[i].color = segmentColor;
             }
 
             int activeSlots = Mathf.Clamp(Settings.MaxMounts, 1, AbsoluteMaxMounts);
@@ -129,6 +164,13 @@ namespace Subject42.Prototype.OrbitalCombatLab
 
         public void FlashField(float duration) =>
             fieldFlashUntil = Mathf.Max(fieldFlashUntil, Time.unscaledTime + duration);
+
+        public void FlashUpgrade(float duration = .65f) =>
+            upgradeFlashUntil = Mathf.Max(upgradeFlashUntil, Time.unscaledTime + duration);
+
+        public float EffectiveRotationSpeed => Settings.RotationSpeed * Upgrades.RotationSpeedMultiplier;
+        public int DamageUpgradeLevel => Mathf.Clamp(Mathf.RoundToInt(
+            Mathf.Log(Mathf.Max(1f, Upgrades.DamageMultiplier)) / Mathf.Log(1.25f)), 0, powerSegments.Length);
 
         private void UpdateLine(Vector2 center)
         {
