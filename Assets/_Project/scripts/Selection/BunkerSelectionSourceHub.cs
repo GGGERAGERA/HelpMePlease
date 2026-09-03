@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Subject42.Combat.OrbitalStation;
 using UnityEngine;
 
 public sealed class BunkerSelectionSourceHub : MonoBehaviour
@@ -252,48 +253,184 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
     {
         var model = NewModel(
             "ОРБИТАЛЬНЫЕ МОДУЛИ",
-            "ОТКРЫТИЯ WEAPON STATION",
-            "МОДУЛИ НЕ НАСТРОЕНЫ",
-            "ИНФОРМАЦИЯ",
+            "ОТКРЫТЫЕ МОДУЛИ",
+            string.Empty,
+            string.Empty,
             BunkerStationId.Weapon);
         model.CloseOnConfirm = false;
-        int stationLevel = model.Station != null ? model.Station.Level :
-            BunkerStationProgressionService.GetStoredLevel(BunkerStationId.Weapon);
-        AddOrbitalModuleCard(model, "Pistol", "Pistol", 1, stationLevel,
-            "Стартовый автоматический модуль каждого нового run.");
-        AddOrbitalModuleCard(model, "LaserSword", "Laser Sword", 2, stationLevel,
-            "Контактный орбитальный клинок.");
-        AddOrbitalModuleCard(model, "ImpulseGun", "Impulse Gun", 3, stationLevel,
-            "Орбитальное оружие с отталкиванием.");
+        model.ShowConfirmButton = false;
+        MetaProgressionManager progression = MetaProgressionManager.EnsureExists();
+        progression.ReloadFromStorage();
+        AddOrbitalModuleCard(model, OrbitalModuleKind.Pistol, "Pistol",
+            "АВТОМАТИЧЕСКОЕ ОРУЖИЕ",
+            "Автоматическая стрельба по ближайшим целям.", progression);
+        AddOrbitalModuleCard(model, OrbitalModuleKind.LaserSword, "Laser Sword",
+            "КОНТАКТНОЕ ОРУЖИЕ",
+            "Контактный урон врагам на траектории орбиты.", progression);
+        AddOrbitalModuleCard(model, OrbitalModuleKind.ImpulseGun, "Impulse Gun",
+            "ИМПУЛЬСНОЕ ОРУЖИЕ",
+            "Периодический импульс с уроном и отталкиванием.", progression);
+        model.SelectedId = model.Entries.Count > 0
+            ? model.Entries[0].Id : null;
         FinalizeUnlockPresentation(model);
         return model;
     }
 
     private static void AddOrbitalModuleCard(
         BunkerSelectionWindowModel model,
-        string id,
+        OrbitalModuleKind kind,
         string displayName,
-        int requiredLevel,
-        int stationLevel,
-        string description)
+        string role,
+        string description,
+        MetaProgressionManager progression)
     {
-        bool available = stationLevel >= requiredLevel;
-        string status = available
-            ? "ДОСТУПНО"
-            : $"ТРЕБУЕТ УРОВЕНЬ СТАНЦИИ {requiredLevel}";
-        model.Entries.Add(new BunkerSelectionEntryModel
+        int requiredLevel = OrbitalRewardProvider
+            .GetRequiredWeaponStationLevel(kind);
+        model.Unlocks.Add(new BunkerSelectionUnlockModel(
+            displayName, requiredLevel));
+        if (!OrbitalRewardProvider.IsModuleUnlocked(kind))
+            return;
+        Sprite icon = ResolveOrbitalModuleIcon(kind, out Color iconColor);
+        var entry = new BunkerSelectionEntryModel
         {
-            Id = id,
+            Id = kind.ToString(),
             DisplayName = displayName,
-            Category = "ОРБИТАЛЬНЫЙ МОДУЛЬ",
-            Feature = status,
+            Category = role,
+            Icon = icon,
+            IconColor = iconColor,
+            // The shared progression panel already presents the meta-damage
+            // bonus. Keeping the generic feature block empty leaves the same
+            // vertical space for stats and description as the other
+            // progression stations.
+            Feature = string.Empty,
             Description = description,
-            Locked = !available,
-            LockReason = available ? null : status,
+            Locked = false,
             CanConfirm = false,
             RequiredStationLevel = requiredLevel
-        });
-        model.Unlocks.Add(new BunkerSelectionUnlockModel(displayName, requiredLevel));
+        };
+        entry.Progression = BuildOrbitalModuleProgression(
+            progression, kind, displayName);
+        AddOrbitalModuleStats(entry, progression, kind);
+        model.Entries.Add(entry);
+    }
+
+    private static BunkerProgressionModel BuildOrbitalModuleProgression(
+        MetaProgressionManager progression,
+        OrbitalModuleKind kind,
+        string displayName)
+    {
+        int level = progression.GetOrbitalModuleLevel(kind);
+        int cap = progression.GetCurrentOrbitalModuleLevelCap();
+        int cost = progression.GetOrbitalModuleUpgradeCost(kind);
+        bool capped = level < progression.MaxLevel && level >= cap;
+        bool unavailable = level < progression.MaxLevel && cost <= 0;
+        return new BunkerProgressionModel
+        {
+            TargetId = $"orbital-module:{kind}",
+            Title = displayName,
+            Level = level,
+            MaxLevel = progression.MaxLevel,
+            Cost = cost,
+            Progress = progression.GetOrbitalModuleInvestedGold(kind),
+            RequiredProgress = cost,
+            AvailableCurrency = CurrencyManager.Instance != null
+                ? CurrencyManager.Instance.TotalGold : 0,
+            BonusText = GetOrbitalModuleBonus(kind, progression),
+            ContextText = level >= progression.MaxLevel
+                ? $"ТЕКУЩИЙ ЛИМИТ: {cap}"
+                : $"СЛЕДУЮЩИЙ: УРОН ×{MetaProgressionManager.GetOrbitalModuleDamageMultiplier(level + 1):0.0}\n" +
+                  $"ТЕКУЩИЙ ЛИМИТ: {cap}",
+            Locked = capped || unavailable,
+            SupportsPartialInvestment = true,
+            LockReason = capped
+                ? $"ТРЕБУЕТСЯ УРОВЕНЬ СТАНЦИИ {GetRequiredStationLevel(BunkerStationId.Weapon, level + 1, progression.MaxLevel)}"
+                : unavailable ? "ПРОГРЕССИЯ НЕДОСТУПНА" : null,
+            ButtonText = "УЛУЧШИТЬ МОДУЛЬ",
+            CanUpgrade = () => MetaProgressionManager.Instance != null &&
+                MetaProgressionManager.Instance.CanInvestOrbitalModule(kind),
+            Invest = amount =>
+            {
+                MetaProgressionManager manager = MetaProgressionManager.EnsureExists();
+                int oldLevel = manager.GetOrbitalModuleLevel(kind);
+                if (manager.TryInvestGoldOrbitalModule(kind, amount, out _) &&
+                    manager.GetOrbitalModuleLevel(kind) > oldLevel)
+                    AudioService.Instance?.Play(AudioCueId.Purchase);
+            }
+        };
+    }
+
+    private static string GetOrbitalModuleBonus(
+        OrbitalModuleKind kind,
+        MetaProgressionManager progression)
+    {
+        int level = progression.GetOrbitalModuleLevel(kind);
+        return $"META-УРОН ×{MetaProgressionManager.GetOrbitalModuleDamageMultiplier(level):0.0}";
+    }
+
+    private static void AddOrbitalModuleStats(
+        BunkerSelectionEntryModel entry,
+        MetaProgressionManager progression,
+        OrbitalModuleKind kind)
+    {
+        int level = progression.GetOrbitalModuleLevel(kind);
+        float multiplier = MetaProgressionManager
+            .GetOrbitalModuleDamageMultiplier(level);
+        float damage = OrbitalModuleRuntime.GetBaseDamage(kind) * multiplier;
+        entry.Stats.Add(new BunkerSelectionStatModel(
+            "УРОВЕНЬ", $"{level} / {progression.MaxLevel}"));
+        entry.Stats.Add(new BunkerSelectionStatModel(
+            "УРОН", damage.ToString("0.#")));
+        switch (kind)
+        {
+            case OrbitalModuleKind.Pistol:
+                entry.Stats.Add(new BunkerSelectionStatModel("ДАЛЬНОСТЬ", "8"));
+                entry.Stats.Add(new BunkerSelectionStatModel("ИНТЕРВАЛ", "0.55 С"));
+                break;
+            case OrbitalModuleKind.LaserSword:
+                entry.Stats.Add(new BunkerSelectionStatModel("РАДИУС", "0.75"));
+                entry.Stats.Add(new BunkerSelectionStatModel("ИНТЕРВАЛ", "0.32 С"));
+                break;
+            case OrbitalModuleKind.ImpulseGun:
+                entry.Stats.Add(new BunkerSelectionStatModel("ДАЛЬНОСТЬ", "5"));
+                entry.Stats.Add(new BunkerSelectionStatModel("ИНТЕРВАЛ", "1.25 С"));
+                break;
+        }
+    }
+
+    private static Sprite ResolveOrbitalModuleIcon(
+        OrbitalModuleKind kind,
+        out Color color)
+    {
+        color = Color.white;
+        GameObject prefab = OrbitalPresentationConfig.Active.GetPrefab(kind);
+        if (prefab == null)
+            return null;
+        SpriteRenderer[] renderers =
+            prefab.GetComponentsInChildren<SpriteRenderer>(true);
+        string preferredName = kind switch
+        {
+            OrbitalModuleKind.Pistol => "barrel",
+            OrbitalModuleKind.LaserSword => "blade",
+            OrbitalModuleKind.ImpulseGun => "p1",
+            _ => string.Empty
+        };
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer renderer = renderers[i];
+            if (renderer == null || renderer.sprite == null ||
+                !renderer.gameObject.name.ToLowerInvariant()
+                    .Contains(preferredName))
+                continue;
+            color = renderer.color;
+            return renderer.sprite;
+        }
+        for (int i = 0; i < renderers.Length; i++)
+            if (renderers[i] != null && renderers[i].sprite != null)
+            {
+                color = renderers[i].color;
+                return renderers[i].sprite;
+            }
+        return null;
     }
 
     private BunkerSelectionWindowModel BuildUpgrades()

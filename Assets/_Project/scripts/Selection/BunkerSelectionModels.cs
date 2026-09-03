@@ -18,6 +18,8 @@ public sealed class BunkerSelectionWindowModel
     public string ConfirmText;
     public string SelectedId;
     public bool CloseOnConfirm = true;
+    public bool CardsOnly;
+    public bool ShowConfirmButton = true;
     public readonly List<BunkerSelectionEntryModel> Entries = new();
     public readonly List<BunkerSelectionUnlockModel> Unlocks = new();
     public BunkerStationProgressModel Station;
@@ -29,6 +31,7 @@ public sealed class BunkerSelectionEntryModel
     public string DisplayName;
     public string Category;
     public Sprite Icon;
+    public Color IconColor = Color.white;
     public string Feature;
     public string Description;
     public string LockReason;

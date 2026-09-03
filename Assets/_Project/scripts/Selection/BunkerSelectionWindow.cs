@@ -92,6 +92,7 @@ public sealed class BunkerSelectionWindow : MonoBehaviour
         SetText(sectionTitleText, model.SectionTitle);
         SetText(confirmButtonText, model.ConfirmText);
         stationProgress?.Bind(model.Station);
+        ApplyLayout(model.CardsOnly, model.ShowConfirmButton);
 
         for (int i = 0; i < model.Entries.Count; i++)
         {
@@ -117,7 +118,7 @@ public sealed class BunkerSelectionWindow : MonoBehaviour
         string desiredId = !string.IsNullOrWhiteSpace(previousId)
             ? previousId
             : model.SelectedId;
-        selected = FindEntry(desiredId);
+        selected = FindEntry(desiredId) ?? FindEntry(model.SelectedId);
         RefreshSelection();
     }
 
@@ -146,6 +147,14 @@ public sealed class BunkerSelectionWindow : MonoBehaviour
         if (confirmButton != null)
             confirmButton.interactable = selected != null &&
                 selected.Enabled && !selected.Locked && selected.CanConfirm;
+    }
+
+    private void ApplyLayout(bool cardsOnly, bool showConfirmButton)
+    {
+        if (detailView != null)
+            detailView.gameObject.SetActive(!cardsOnly);
+        if (confirmButton != null)
+            confirmButton.gameObject.SetActive(!cardsOnly && showConfirmButton);
     }
 
     private void Confirm()

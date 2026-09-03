@@ -1,4 +1,5 @@
 using System;
+using Subject42.Combat.OrbitalStation;
 using UnityEngine;
 
 public enum MetaUpgradeType
@@ -24,6 +25,11 @@ public sealed class MetaProgressionManager : MonoBehaviour
     private const string GoldGainLevelKey = "META_GOLD_GAIN_LEVEL";
     private const string PickupRadiusLevelKey = "META_PICKUP_RADIUS_LEVEL";
     private const string InvestmentKeyPrefix = "META_UPGRADE_INVESTED_";
+    private const string OrbitalModuleLevelKeyPrefix =
+        "META_ORBITAL_MODULE_LEVEL_";
+    private const string OrbitalModuleInvestmentKeyPrefix =
+        "META_ORBITAL_MODULE_INVESTED_";
+    private const int DefaultOrbitalModuleLevel = 1;
 
     public event Action ProgressChanged;
 
@@ -40,6 +46,13 @@ public sealed class MetaProgressionManager : MonoBehaviour
     {
         return BunkerItemProgressionRules.GetLevelCap(
             BunkerStationId.Upgrades,
+            MaxUpgradeLevel);
+    }
+
+    public int GetCurrentOrbitalModuleLevelCap()
+    {
+        return BunkerItemProgressionRules.GetLevelCap(
+            BunkerStationId.Weapon,
             MaxUpgradeLevel);
     }
 
@@ -108,6 +121,106 @@ public sealed class MetaProgressionManager : MonoBehaviour
     public int GetUpgradeCost(MetaUpgradeType type)
     {
         return GetUpgradeCostByLevel(GetLevel(type));
+    }
+
+    public int GetOrbitalModuleLevel(OrbitalModuleKind kind)
+    {
+        if (!IsMetaOrbitalModule(kind))
+            return DefaultOrbitalModuleLevel;
+        string key = GetOrbitalModuleLevelKey(kind);
+        int stored = PlayerPrefs.GetInt(key, DefaultOrbitalModuleLevel);
+        int safe = Mathf.Clamp(stored, DefaultOrbitalModuleLevel,
+            MaxUpgradeLevel);
+        if (stored != safe)
+        {
+            PlayerPrefs.SetInt(key, safe);
+            PlayerPrefs.Save();
+        }
+        return safe;
+    }
+
+    public int GetOrbitalModuleUpgradeCost(OrbitalModuleKind kind)
+    {
+        int level = GetOrbitalModuleLevel(kind);
+        return level >= MaxUpgradeLevel
+            ? 0
+            : GetUpgradeCostByLevel(level - DefaultOrbitalModuleLevel);
+    }
+
+    public int GetOrbitalModuleInvestedGold(OrbitalModuleKind kind)
+    {
+        if (!IsMetaOrbitalModule(kind))
+            return 0;
+        int level = GetOrbitalModuleLevel(kind);
+        if (level >= MaxUpgradeLevel)
+            return 0;
+        int cost = GetOrbitalModuleUpgradeCost(kind);
+        return cost > 0
+            ? Mathf.Clamp(PlayerPrefs.GetInt(
+                GetOrbitalModuleInvestmentKey(kind), 0), 0, cost - 1)
+            : 0;
+    }
+
+    public bool CanInvestOrbitalModule(OrbitalModuleKind kind)
+    {
+        if (!IsMetaOrbitalModule(kind) ||
+            !OrbitalRewardProvider.IsModuleUnlocked(kind))
+            return false;
+        int level = GetOrbitalModuleLevel(kind);
+        return level < MaxUpgradeLevel &&
+            level < GetCurrentOrbitalModuleLevelCap() &&
+            GetOrbitalModuleUpgradeCost(kind) >
+                GetOrbitalModuleInvestedGold(kind) &&
+            CurrencyManager.Instance != null &&
+            CurrencyManager.Instance.TotalGold > 0;
+    }
+
+    public bool TryInvestGoldOrbitalModule(
+        OrbitalModuleKind kind,
+        int requestedAmount,
+        out int actuallyInvested)
+    {
+        actuallyInvested = 0;
+        if (requestedAmount <= 0 || !CanInvestOrbitalModule(kind))
+            return false;
+        int level = GetOrbitalModuleLevel(kind);
+        int cost = GetOrbitalModuleUpgradeCost(kind);
+        int invested = GetOrbitalModuleInvestedGold(kind);
+        int amount = Mathf.Min(requestedAmount, cost - invested,
+            CurrencyManager.Instance.TotalGold);
+        if (amount <= 0 || !CurrencyManager.Instance.SpendGold(amount))
+            return false;
+        actuallyInvested = amount;
+        invested += amount;
+        if (invested < cost)
+        {
+            PlayerPrefs.SetInt(GetOrbitalModuleInvestmentKey(kind), invested);
+        }
+        else
+        {
+            PlayerPrefs.SetInt(GetOrbitalModuleLevelKey(kind), level + 1);
+            PlayerPrefs.SetInt(GetOrbitalModuleInvestmentKey(kind), 0);
+        }
+        PlayerPrefs.Save();
+        ProgressChanged?.Invoke();
+        return true;
+    }
+
+    public static float GetOrbitalModuleDamageMultiplier(int level)
+    {
+        return 1f + Mathf.Max(0, level - DefaultOrbitalModuleLevel) * 0.10f;
+    }
+
+    public static float GetStoredOrbitalModuleDamageMultiplier(
+        OrbitalModuleKind kind)
+    {
+        if (!IsMetaOrbitalModule(kind))
+            return 1f;
+        int level = Mathf.Clamp(PlayerPrefs.GetInt(
+            GetOrbitalModuleLevelKey(kind), DefaultOrbitalModuleLevel),
+            DefaultOrbitalModuleLevel,
+            MaxUpgradeLevel);
+        return GetOrbitalModuleDamageMultiplier(level);
     }
 
     public int GetInvestedGold(MetaUpgradeType type)
@@ -262,6 +375,26 @@ public sealed class MetaProgressionManager : MonoBehaviour
             PlayerPrefs.SetInt(key, safe);
             changed = true;
         }
+        OrbitalModuleKind[] moduleKinds =
+        {
+            OrbitalModuleKind.Pistol,
+            OrbitalModuleKind.LaserSword,
+            OrbitalModuleKind.ImpulseGun
+        };
+        for (int i = 0; i < moduleKinds.Length; i++)
+        {
+            OrbitalModuleKind kind = moduleKinds[i];
+            int level = GetOrbitalModuleLevel(kind);
+            string investmentKey = GetOrbitalModuleInvestmentKey(kind);
+            int stored = PlayerPrefs.GetInt(investmentKey, 0);
+            int cost = GetOrbitalModuleUpgradeCost(kind);
+            int safe = level >= MaxUpgradeLevel || cost <= 0
+                ? 0 : Mathf.Clamp(stored, 0, cost - 1);
+            if (stored == safe)
+                continue;
+            PlayerPrefs.SetInt(investmentKey, safe);
+            changed = true;
+        }
         if (changed)
             PlayerPrefs.Save();
     }
@@ -270,4 +403,15 @@ public sealed class MetaProgressionManager : MonoBehaviour
     {
         return InvestmentKeyPrefix + type;
     }
+
+    private static bool IsMetaOrbitalModule(OrbitalModuleKind kind) =>
+        kind == OrbitalModuleKind.Pistol ||
+        kind == OrbitalModuleKind.LaserSword ||
+        kind == OrbitalModuleKind.ImpulseGun;
+
+    private static string GetOrbitalModuleLevelKey(
+        OrbitalModuleKind kind) => OrbitalModuleLevelKeyPrefix + kind;
+
+    private static string GetOrbitalModuleInvestmentKey(
+        OrbitalModuleKind kind) => OrbitalModuleInvestmentKeyPrefix + kind;
 }

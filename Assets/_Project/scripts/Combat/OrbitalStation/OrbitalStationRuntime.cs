@@ -566,6 +566,12 @@ namespace Subject42.Combat.OrbitalStation
             return 1f + Mathf.Max(0, module?.DamageLevel ?? 0) * 0.25f;
         }
 
+        public float GetModuleMetaDamageMultiplier(OrbitalModuleKind kind)
+        {
+            return MetaProgressionManager
+                .GetStoredOrbitalModuleDamageMultiplier(kind);
+        }
+
         public bool UpgradeModuleDamage(int stableModuleId)
         {
             if (State == null || !State.UpgradeModuleDamage(stableModuleId))

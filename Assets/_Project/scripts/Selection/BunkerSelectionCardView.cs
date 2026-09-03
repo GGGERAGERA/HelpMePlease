@@ -47,7 +47,9 @@ public sealed class BunkerSelectionCardView : MonoBehaviour,
             icon.sprite = value.Icon;
             icon.enabled = value.Icon != null;
             icon.preserveAspect = true;
-            icon.color = value.Locked ? StationPixelVisuals.Disabled : Color.white;
+            icon.color = value.Locked
+                ? StationPixelVisuals.Disabled
+                : value.IconColor;
         }
 
         if (nameText != null)
@@ -58,13 +60,10 @@ public sealed class BunkerSelectionCardView : MonoBehaviour,
                 : StationPixelVisuals.Text;
         }
 
-        bool orbitalModuleInfo = value.Category == "ОРБИТАЛЬНЫЙ МОДУЛЬ";
         if (lockedOverlay != null)
-            lockedOverlay.SetActive(value.Locked || orbitalModuleInfo);
+            lockedOverlay.SetActive(value.Locked);
         if (lockedText != null)
-            lockedText.text = orbitalModuleInfo
-                ? value.Feature
-                : value.Locked ? "ЗАКРЫТО" : string.Empty;
+            lockedText.text = value.Locked ? "ЗАКРЫТО" : string.Empty;
         if (button != null)
             button.interactable = value.Enabled;
 

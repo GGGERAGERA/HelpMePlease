@@ -51,7 +51,9 @@ public sealed class BunkerSelectionDetailView : MonoBehaviour
             portrait.sprite = entry.Icon;
             portrait.enabled = entry.Icon != null;
             portrait.preserveAspect = true;
-            portrait.color = entry.Locked ? StationPixelVisuals.Disabled : Color.white;
+            portrait.color = entry.Locked
+                ? StationPixelVisuals.Disabled
+                : entry.IconColor;
         }
 
         if (entry.Stats.Count == 0)

@@ -32,7 +32,16 @@ namespace Subject42.Combat.OrbitalStation
         }
         protected float Power => (Mount?.Ring.PowerMultiplier ?? 1f) *
             Station.Core.DamageMultiplier *
+            Station.GetModuleMetaDamageMultiplier(Kind) *
             Station.GetModuleDamageMultiplier(StableModuleId);
+
+        public static float GetBaseDamage(OrbitalModuleKind kind) => kind switch
+        {
+            OrbitalModuleKind.Pistol => OrbitalPistolModule.BaseDamage,
+            OrbitalModuleKind.LaserSword => OrbitalLaserSwordModule.BaseDamage,
+            OrbitalModuleKind.ImpulseGun => OrbitalImpulseGunModule.BaseDamage,
+            _ => 0f
+        };
 
         protected OrbitalModuleRuntime(OrbitalStationRuntime station,
             int stableModuleId, Color color)
@@ -137,6 +146,7 @@ namespace Subject42.Combat.OrbitalStation
 
     public sealed class OrbitalPistolModule : OrbitalModuleRuntime
     {
+        public const float BaseDamage = 8f;
         public override OrbitalModuleKind Kind => OrbitalModuleKind.Pistol;
         public OrbitalPistolModule(OrbitalStationRuntime station, int stableModuleId) :
             base(station, stableModuleId, new Color(0.35f, 0.95f, 1f)) { }
@@ -167,7 +177,7 @@ namespace Subject42.Combat.OrbitalStation
                 return;
             AimAt(target.transform.position);
             Combat.SpawnProjectile(Visual.transform.position, target, 13f,
-                8f * Power, new Color(0.25f, 0.95f, 1f));
+                BaseDamage * Power, new Color(0.25f, 0.95f, 1f));
             TriggerPresentation();
             Cooldown = 0.55f * Station.Core.CooldownMultiplier;
             Station.FlashCore(new Color(0.25f, 0.95f, 1f));
@@ -176,6 +186,7 @@ namespace Subject42.Combat.OrbitalStation
 
     public sealed class OrbitalLaserSwordModule : OrbitalModuleRuntime
     {
+        public const float BaseDamage = 13f;
         public override OrbitalModuleKind Kind => OrbitalModuleKind.LaserSword;
         public OrbitalLaserSwordModule(OrbitalStationRuntime station, int stableModuleId) :
             base(station, stableModuleId, new Color(1f, 0.25f, 0.8f)) { }
@@ -188,7 +199,8 @@ namespace Subject42.Combat.OrbitalStation
             EnemyHealth target = Combat.FindNearest(Visual.transform.position, 0.75f);
             if (target != null)
             {
-                Combat.ApplyDamage(target, 13f * Power, Visual.transform.position);
+                Combat.ApplyDamage(target, BaseDamage * Power,
+                    Visual.transform.position);
                 TriggerPresentation();
                 Cooldown = 0.32f * Station.Core.CooldownMultiplier;
             }
@@ -197,6 +209,7 @@ namespace Subject42.Combat.OrbitalStation
 
     public sealed class OrbitalImpulseGunModule : OrbitalModuleRuntime
     {
+        public const float BaseDamage = 6f;
         public override OrbitalModuleKind Kind => OrbitalModuleKind.ImpulseGun;
         public OrbitalImpulseGunModule(OrbitalStationRuntime station, int stableModuleId) :
             base(station, stableModuleId, new Color(1f, 0.75f, 0.2f)) { }
@@ -217,7 +230,8 @@ namespace Subject42.Combat.OrbitalStation
                 return;
             Vector2 direction = ((Vector2)target.transform.position -
                 (Vector2)Station.Owner.Transform.position).normalized;
-            Combat.ApplyDamage(target, 6f * Power, target.transform.position);
+            Combat.ApplyDamage(target, BaseDamage * Power,
+                target.transform.position);
             TriggerPresentation();
             Rigidbody2D body = target.GetComponent<Rigidbody2D>();
             if (body != null)

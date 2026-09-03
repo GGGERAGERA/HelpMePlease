@@ -116,12 +116,13 @@ namespace Subject42.Combat.OrbitalStation
                 OrbitalRewardData reward = definitions[i];
                 bool eligible = reward.RewardKind switch
                 {
-                    OrbitalRewardKind.Pistol or
+                    OrbitalRewardKind.Pistol => freeMounts >= 1 &&
+                        IsModuleUnlocked(OrbitalModuleKind.Pistol),
                     OrbitalRewardKind.ArcEmitter => freeMounts >= 1,
                     OrbitalRewardKind.LaserSword => freeMounts >= 1 &&
-                        GetWeaponStationLevel() >= 2,
+                        IsModuleUnlocked(OrbitalModuleKind.LaserSword),
                     OrbitalRewardKind.ImpulseGun => freeMounts >= 1 &&
-                        GetWeaponStationLevel() >= 3,
+                        IsModuleUnlocked(OrbitalModuleKind.ImpulseGun),
                     OrbitalRewardKind.LinkPair => freeMounts >= 2,
                     OrbitalRewardKind.ModuleDamage => state.Modules.Any(module =>
                         module.ModuleType != OrbitalModuleKind.LinkNode),
@@ -248,7 +249,16 @@ namespace Subject42.Combat.OrbitalStation
             return upgrade != null && (slots == null || slots.CanAccept(upgrade));
         }
 
-        private static int GetWeaponStationLevel() =>
-            BunkerStationProgressionService.GetStoredLevel(BunkerStationId.Weapon);
+        public static bool IsModuleUnlocked(OrbitalModuleKind kind) =>
+            BunkerStationProgressionService.GetStoredLevel(BunkerStationId.Weapon) >=
+            GetRequiredWeaponStationLevel(kind);
+
+        public static int GetRequiredWeaponStationLevel(
+            OrbitalModuleKind kind) => kind switch
+        {
+            OrbitalModuleKind.LaserSword => 2,
+            OrbitalModuleKind.ImpulseGun => 3,
+            _ => 1
+        };
     }
 }
