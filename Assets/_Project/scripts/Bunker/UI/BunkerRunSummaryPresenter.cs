@@ -1,69 +1,122 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public sealed class BunkerRunSummaryPresenter : MonoBehaviour
 {
-    [SerializeField, Min(0f)]
-    private float showDelay = 0.25f;
+    [SerializeField, Min(0f)] private float showDelay = 0.25f;
+    [SerializeField] private RectTransform notificationParent;
+    [SerializeField] private RectTransform panelTemplate;
+    [SerializeField] private TextMeshProUGUI goldTextTemplate;
+
+    private RectTransform notification;
+    private CanvasGroup notificationGroup;
+    private GameObject notificationCanvas;
+    private const float VisibleDuration = 3f;
+    private const float FadeDuration = 0.2f;
 
     private IEnumerator Start()
     {
         yield return new WaitForSecondsRealtime(showDelay);
 
-        if (RunStateManager.Instance == null)
+        if (RunStateManager.Instance == null ||
+            !RunStateManager.Instance.TryConsumeLastRunSummary(out RunSummary summary))
             yield break;
-
-        if (!RunStateManager.Instance.TryConsumeLastRunSummary(
-                out RunSummary summary))
-        {
-            yield break;
-        }
 
         if (summary.EndReason == RunEndReason.Victory)
             RunStateManager.Instance.ClearFinishedRunCompatibilityState();
 
-        string reasonText = summary.EndReason switch
+        if (notificationParent == null || panelTemplate == null || goldTextTemplate == null)
         {
-            RunEndReason.Victory => "\u0417\u0410\u0411\u0415\u0413 \u0417\u0410\u0412\u0415\u0420\u0428\u0401\u041d",
-            RunEndReason.PlayerDied => "\u0417\u0430\u0431\u0435\u0433 \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d",
-            RunEndReason.ReturnedToBunker => "\u0412\u043e\u0437\u0432\u0440\u0430\u0449\u0435\u043d\u0438\u0435 \u0432 \u0431\u0443\u043d\u043a\u0435\u0440",
-            _ => "\u0418\u0442\u043e\u0433\u0438 \u0437\u0430\u0431\u0435\u0433\u0430"
+            Debug.LogError("[BunkerRunSummaryPresenter] Notification UI references are missing.", this);
+            yield break;
+        }
+
+        // Use the same framed header and typography as BunkerSelectionWindow's
+        // StationWindow base. Do not route post-run data into the old banner.
+        // The station-window canvas can be hidden by the bunker panel manager.
+        // Keep the transient notification independent, using its Canvas Scaler.
+        notificationCanvas = new GameObject("PostRunNotificationCanvas", typeof(RectTransform));
+        notificationCanvas.transform.SetParent(transform, false);
+        Canvas canvas = notificationCanvas.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 1100;
+        CanvasScaler sourceScaler = notificationParent.GetComponentInParent<CanvasScaler>();
+        CanvasScaler scaler = notificationCanvas.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = sourceScaler.uiScaleMode;
+        scaler.referenceResolution = sourceScaler.referenceResolution;
+        scaler.screenMatchMode = sourceScaler.screenMatchMode;
+        scaler.matchWidthOrHeight = sourceScaler.matchWidthOrHeight;
+        scaler.referencePixelsPerUnit = sourceScaler.referencePixelsPerUnit;
+        notification = Instantiate(panelTemplate, notificationCanvas.transform);
+        notification.name = "PostRunNotification";
+        notification.gameObject.SetActive(true);
+        notification.anchorMin = notification.anchorMax = new Vector2(0.5f, 1f);
+        notification.pivot = new Vector2(0.5f, 1f);
+        notification.anchoredPosition = new Vector2(0f, -24f);
+        notification.sizeDelta = new Vector2(520f, 100f);
+        notification.localScale = Vector3.one;
+        LayoutElement layout = notification.GetComponent<LayoutElement>();
+        if (layout != null) layout.ignoreLayout = true;
+
+        notificationGroup = notification.gameObject.AddComponent<CanvasGroup>();
+        notificationGroup.interactable = false;
+        notificationGroup.blocksRaycasts = false;
+        foreach (Graphic graphic in notification.GetComponentsInChildren<Graphic>(true))
+            graphic.raycastTarget = false;
+
+        TextMeshProUGUI title = notification.GetComponentInChildren<TextMeshProUGUI>(true);
+        string reason = summary.EndReason switch
+        {
+            RunEndReason.PlayerDied => "ЭКСПЕРИМЕНТ ПРЕРВАН",
+            RunEndReason.Victory => "ЗАБЕГ ЗАВЕРШЁН",
+            _ => "ВОЗВРАЩЕНИЕ В БУНКЕР"
         };
+        SetLine(title, reason, 0.7f);
+        TextMeshProUGUI gold = Instantiate(goldTextTemplate, notification);
+        gold.name = "GoldEarned";
+        gold.gameObject.SetActive(true);
+        SetLine(gold, $"ПОЛУЧЕНО ЗОЛОТА: +{summary.GoldEarned}", 0.3f);
 
-        string progressLabel = summary.EndReason == RunEndReason.Victory
-            ? "\u0421\u0435\u043a\u0442\u043e\u0440\u043e\u0432 \u043f\u0440\u043e\u0439\u0434\u0435\u043d\u043e"
-            : "\u0423\u0440\u043e\u0432\u043d\u0435\u0439 \u043f\u0440\u043e\u0439\u0434\u0435\u043d\u043e";
-        string message =
-            $"{reasonText}\n" +
-            $"{progressLabel}: {summary.CompletedLevels}\n" +
-            $"\u0423\u0431\u0438\u0439\u0441\u0442\u0432: {summary.Kills}\n" +
-            $"\u0412\u0440\u0435\u043c\u044f: {FormatTime(summary.RunTime)}\n" +
-            $"\u041f\u043e\u043b\u0443\u0447\u0435\u043d\u043e \u0437\u043e\u043b\u043e\u0442\u0430: +{summary.GoldEarned}";
-
-        BunkerNotificationManager notifications =
-            BunkerContext.Instance != null
-                ? BunkerContext.Instance.Notifications
-                : null;
-
-        if (notifications != null)
+        yield return new WaitForSecondsRealtime(VisibleDuration);
+        float elapsed = 0f;
+        while (elapsed < FadeDuration)
         {
-            notifications.ShowSuccess(message);
+            elapsed += Time.unscaledDeltaTime;
+            notificationGroup.alpha = 1f - Mathf.Clamp01(elapsed / FadeDuration);
+            yield return null;
         }
-        else
-        {
-            Debug.LogWarning(
-                "[BunkerRunSummaryPresenter] " +
-                "BunkerNotificationManager is missing."
-            );
-
-            Debug.Log(message);
-        }
+        Hide();
     }
 
-    private static string FormatTime(float secondsTotal)
+    private static void SetLine(TextMeshProUGUI text, string content, float anchorY)
     {
-        int seconds = Mathf.Max(0, Mathf.FloorToInt(secondsTotal));
-        int minutes = seconds / 60;
-        return $"{minutes:00}:{seconds % 60:00}";
+        text.text = content;
+        text.fontSize = 20f;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = 16f;
+        text.fontSizeMax = 20f;
+        text.alignment = TextAlignmentOptions.Center;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.overflowMode = TextOverflowModes.Ellipsis;
+        text.raycastTarget = false;
+        RectTransform rect = text.rectTransform;
+        rect.anchorMin = new Vector2(0f, anchorY);
+        rect.anchorMax = new Vector2(1f, anchorY);
+        rect.pivot = Vector2.one * 0.5f;
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = new Vector2(-32f, 32f);
+        rect.localScale = Vector3.one;
     }
+
+    private void Hide()
+    {
+        if (notification != null) Destroy(notification.gameObject);
+        if (notificationCanvas != null) Destroy(notificationCanvas);
+        notification = null;
+        notificationCanvas = null;
+    }
+
+    private void OnDisable() => Hide();
 }

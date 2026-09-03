@@ -264414,6 +264414,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BunkerRunSummaryPresenter
   showDelay: 0.5
+  notificationParent: {fileID: 992930127}
+  panelTemplate: {fileID: 1761540669757191168, guid: e6644250905ee2f49a9e55781e882d9a, type: 3}
+  goldTextTemplate: {fileID: 7298711819576734483, guid: e6644250905ee2f49a9e55781e882d9a, type: 3}
 --- !u!1001 &1798315907
 PrefabInstance:
   m_ObjectHideFlags: 0
