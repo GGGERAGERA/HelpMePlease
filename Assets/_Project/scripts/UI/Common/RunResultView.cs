@@ -13,6 +13,27 @@ public class RunResultView : MonoBehaviour
     {
         gameObject.SetActive(true);
 
+        DeathResultPresentation death = GetComponent<DeathResultPresentation>();
+        if (!victory && death != null)
+        {
+            RunSummary summary = RunStateManager.Instance != null
+                ? RunStateManager.Instance.GetRunSummarySnapshot(RunEndReason.PlayerDied)
+                : new RunSummary(RunEndReason.PlayerDied, 0,
+                    RunStatsManager.Instance?.Kills ?? 0,
+                    RunStatsManager.Instance?.RunTime ?? 0f, 0)
+                {
+                    PlayerLevel = ExperienceManager.Instance?.currentLevel ?? 1,
+                    SectorNumber = 1
+                };
+            if (summary != null)
+            {
+                HUDManager.Instance?.SetCurrentRunCurrency(summary.GoldEarned);
+                death.Show(summary, AICommentGenerator.GetComment(false));
+                return;
+            }
+        }
+        death?.RestoreLegacyView();
+
         LocalizationService localization =
             LocalizationService.EnsureExists();
 

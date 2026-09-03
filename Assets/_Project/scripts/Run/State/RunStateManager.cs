@@ -576,6 +576,26 @@ public sealed class RunStateManager : MonoBehaviour
         );
     }
 
+    // Presentation snapshot only: no commit, payout, consumption or state reset.
+    public RunSummary GetRunSummarySnapshot(RunEndReason reason)
+    {
+        if (runEnded)
+            return lastRunSummary;
+        return PopulateSummaryDetails(new RunSummary(reason, completedLevels,
+            GetCurrentRunKills(), GetCurrentRunTime(), GetCurrentGoldReward(reason)));
+    }
+
+    private RunSummary PopulateSummaryDetails(RunSummary summary)
+    {
+        summary.SectorNumber = CurrentSector?.SectorNumber ?? CurrentLevel;
+        summary.PlayerLevel = ExperienceManager.Instance != null
+            ? ExperienceManager.Instance.currentLevel : savedXpLevel;
+        summary.OrbitalRingCount = OrbitalStationState?.Rings.Count ?? 0;
+        summary.OrbitalModuleCount = OrbitalStationState?.Modules.Count ?? 0;
+        summary.OrbitalCoreLevel = OrbitalStationState?.CoreState.Level ?? 0;
+        return summary;
+    }
+
     public RunSummary EndRun(RunEndReason reason)
     {
         if (runEnded)
@@ -587,13 +607,13 @@ public sealed class RunStateManager : MonoBehaviour
 
         CurrencyManager.Instance?.AddGold(goldEarned);
 
-        lastRunSummary = new RunSummary(
+        lastRunSummary = PopulateSummaryDetails(new RunSummary(
             reason,
             completedLevels,
             accumulatedKills,
             accumulatedRunTime,
             goldEarned
-        );
+        ));
 
         runEnded = true;
         CurrentAnomalyStabilizer = null;

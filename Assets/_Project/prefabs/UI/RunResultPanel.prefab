@@ -104,6 +104,7 @@ GameObject:
   - component: {fileID: 4205908397512326386}
   - component: {fileID: 5830504992299610569}
   - component: {fileID: 5787986609203565913}
+  - component: {fileID: 8910000000000000001}
   m_Layer: 5
   m_Name: RunResultPanel
   m_TagString: Untagged
@@ -1267,3 +1268,18 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
   localizationKey: result.bunker
+
+--- !u!114 &8910000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1361134541483955124}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8a7e3fe8df64dfb93df9c542bf8f5e0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DeathResultPresentation
+  stationWindowPrefab: {fileID: 643300541937612208, guid: e6644250905ee2f49a9e55781e882d9a, type: 3}
+  detailTextTemplate: {fileID: 8292014582595325334, guid: f9e2f278235b3f244a08ac09ddbcea4a, type: 3}
