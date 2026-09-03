@@ -5,7 +5,6 @@ public class MetaUpgradeApplier : MonoBehaviour
     [Header("Bonuses Per Level")]
     [SerializeField] private float hpPerLevel = 1f;
     [SerializeField] private float damagePercentPerLevel = 0.05f;
-    [SerializeField] private float moveSpeedPercentPerLevel = 0.03f;
     [SerializeField] private float xpGainPercentPerLevel = 0.05f;
     [SerializeField] private float goldGainPercentPerLevel = 0.10f;
     [SerializeField] private float pickupRadiusPercentPerLevel = 0.05f;
@@ -29,13 +28,9 @@ public class MetaUpgradeApplier : MonoBehaviour
         );
 
         PlayerHealth health = player.GetComponent<PlayerHealth>();
-        CharacterMovement2D movement = player.GetComponent<CharacterMovement2D>();
 
         if (health != null)
             health.AddMaxHealth(meta.HpLevel * hpPerLevel);
-
-        if (movement != null)
-            movement.AddMoveSpeedPercent(meta.MoveSpeedLevel * moveSpeedPercentPerLevel);
 
         if (weapons != null)
         {

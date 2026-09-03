@@ -6,15 +6,21 @@ using UnityEngine;
 /// </summary>
 public static class PlayerLoadoutFactory
 {
+    private const float MetaMoveSpeedPercentPerLevel = 0.03f;
+
     public static void ApplyCharacterStats(
         GameObject player,
-        CharacterData characterData)
+        CharacterData characterData,
+        float fallbackMoveSpeed = float.NaN)
     {
-        if (player == null || characterData == null)
+        if (player == null)
             return;
 
+        MetaProgressionManager meta = MetaProgressionManager.EnsureExists();
+        meta.ReloadFromStorage();
+
         PlayerHealth health = player.GetComponent<PlayerHealth>();
-        if (health != null)
+        if (health != null && characterData != null)
         {
             health.maxHealth = characterData.maxHealth;
             health.currentHealth = characterData.maxHealth;
@@ -23,7 +29,35 @@ public static class PlayerLoadoutFactory
         CharacterMovement2D movement =
             player.GetComponent<CharacterMovement2D>();
         if (movement != null)
-            movement.speed = characterData.moveSpeed;
+        {
+            float baseMoveSpeed = characterData != null
+                ? characterData.moveSpeed
+                : float.IsNaN(fallbackMoveSpeed)
+                    ? movement.speed
+                    : fallbackMoveSpeed;
+            movement.speed = CalculateFinalMoveSpeed(baseMoveSpeed, meta);
+        }
+    }
+
+    public static float CalculateFinalMoveSpeed(
+        CharacterData characterData,
+        float fallbackMoveSpeed = 0f)
+    {
+        MetaProgressionManager meta = MetaProgressionManager.EnsureExists();
+        meta.ReloadFromStorage();
+        float baseMoveSpeed = characterData != null
+            ? characterData.moveSpeed
+            : fallbackMoveSpeed;
+        return CalculateFinalMoveSpeed(baseMoveSpeed, meta);
+    }
+
+    private static float CalculateFinalMoveSpeed(
+        float baseMoveSpeed,
+        MetaProgressionManager meta)
+    {
+        float metaMultiplier = 1f +
+            meta.MoveSpeedLevel * MetaMoveSpeedPercentPerLevel;
+        return Mathf.Max(0f, baseMoveSpeed) * metaMultiplier;
     }
 
     public static BaseWeapon SpawnWeapon(

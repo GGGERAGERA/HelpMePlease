@@ -20,6 +20,7 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
     private Transform activeVisual;
     private BaseWeapon activeWeapon;
     private CharacterData activeCharacter;
+    private float fallbackMoveSpeed;
 
     private void Start()
     {
@@ -47,8 +48,10 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
         }
 
         activeVisual = controlledPlayerVisualRoot;
-        player.GetComponent<CharacterMovement2D>()
-            .SetVisualRoot(controlledPlayerFacingVisualRoot);
+        CharacterMovement2D movement =
+            player.GetComponent<CharacterMovement2D>();
+        fallbackMoveSpeed = movement.speed;
+        movement.SetVisualRoot(controlledPlayerFacingVisualRoot);
         BindSelectionManager();
         ApplyCurrentSelection();
     }
@@ -92,18 +95,30 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
         if (selection == null || player == null)
             return;
 
-        if (selection.SelectedCharacter != null)
-            ApplyCharacter(selection.SelectedCharacter);
-
+        CharacterData character = selection.SelectedCharacter;
+        if (character != null)
+            ApplyCharacter(character);
+        else
+            PlayerLoadoutFactory.ApplyCharacterStats(
+                player, null, fallbackMoveSpeed);
     }
 
     private void ApplyCharacter(CharacterData character)
     {
-        if (player == null || character == null ||
-            character.characterPrefab == null || character == activeCharacter)
+        if (player == null || character == null)
         {
             return;
         }
+
+        if (character == activeCharacter)
+        {
+            PlayerLoadoutFactory.ApplyCharacterStats(
+                player, character, fallbackMoveSpeed);
+            return;
+        }
+
+        if (character.characterPrefab == null)
+            return;
 
         Transform sourceVisual = FindVisual(character.characterPrefab);
         if (sourceVisual == null)
@@ -137,7 +152,8 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
             sourceVisual,
             replacement);
         movement?.SetVisualRoot(facingVisual);
-        PlayerLoadoutFactory.ApplyCharacterStats(player, character);
+        PlayerLoadoutFactory.ApplyCharacterStats(
+            player, character, fallbackMoveSpeed);
 
     }
 
