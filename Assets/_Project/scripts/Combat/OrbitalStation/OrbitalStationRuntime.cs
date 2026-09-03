@@ -828,7 +828,7 @@ namespace Subject42.Combat.OrbitalStation
             return Vector2.Distance(point, a + ab * t);
         }
 
-        private static Sprite CreateCircleSprite()
+        internal static Sprite CreateCircleSprite()
         {
             const int size = 64;
             Texture2D texture = new(size, size, TextureFormat.RGBA32, false)

@@ -50,7 +50,7 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
         activeVisual = controlledPlayerVisualRoot;
         CharacterMovement2D movement =
             player.GetComponent<CharacterMovement2D>();
-        fallbackMoveSpeed = movement.speed;
+        fallbackMoveSpeed = movement.AuthoredMoveSpeed;
         movement.SetVisualRoot(controlledPlayerFacingVisualRoot);
         BindSelectionManager();
         ApplyCurrentSelection();
@@ -96,6 +96,20 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
             return;
 
         CharacterData character = selection.SelectedCharacter;
+        if (character == null)
+        {
+            // Use the station's content order and unlock rules before the first
+            // interaction, rather than moving with the scene prefab's speed.
+            BunkerSelectionSourceHub source =
+                FindFirstObjectByType<BunkerSelectionSourceHub>(FindObjectsInactive.Include);
+            character = source != null ? source.GetDefaultCharacter() : null;
+            if (character != null)
+            {
+                // The subscribed handler applies the loadout exactly once.
+                selection.SelectCharacter(character);
+                return;
+            }
+        }
         if (character != null)
             ApplyCharacter(character);
         else
@@ -111,11 +125,7 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
         }
 
         if (character == activeCharacter)
-        {
-            PlayerLoadoutFactory.ApplyCharacterStats(
-                player, character, fallbackMoveSpeed);
             return;
-        }
 
         if (character.characterPrefab == null)
             return;

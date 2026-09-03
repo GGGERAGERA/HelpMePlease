@@ -689,7 +689,7 @@ public sealed class ProductionFeelTuningController : MonoBehaviour
 
         public void Apply(CharacterMovement2D target)
         {
-            target.SetDebugMoveSpeed(Speed);
+            PlayerLoadoutFactory.ApplyDebugMoveSpeed(target, Speed);
             target.SetDebugAcceleration(Acceleration);
             target.SetDebugDeceleration(Deceleration);
         }

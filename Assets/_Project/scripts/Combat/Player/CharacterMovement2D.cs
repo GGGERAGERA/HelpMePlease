@@ -3,7 +3,17 @@
 public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
 {
     [Header("Движение")]
-    public float speed = 5f;
+    [UnityEngine.Serialization.FormerlySerializedAs("speed")]
+    [SerializeField] private float baseMoveSpeed = 5f;
+    private float? calculatedMoveSpeed;
+    public float speed => (calculatedMoveSpeed ?? baseMoveSpeed) * runUpgradeSpeedMultiplier;
+    internal float AuthoredMoveSpeed => baseMoveSpeed;
+
+    // Only PlayerLoadoutFactory supplies the calculated character/meta value.
+    internal void ApplyCalculatedMoveSpeed(float value)
+    {
+        calculatedMoveSpeed = Mathf.Max(0f, value);
+    }
 
     private Rigidbody2D rb;
     private Animator animator;
@@ -75,7 +85,6 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
     public float DebugAcceleration => acceleration;
     public float DebugDeceleration => deceleration;
 
-    public void SetDebugMoveSpeed(float value) => speed = Mathf.Max(0f, value);
     public void SetDebugAcceleration(float value) =>
         acceleration = Mathf.Max(0f, value);
     public void SetDebugDeceleration(float value) =>
@@ -157,14 +166,6 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
         scale.x = visualRootScaleMagnitudeX * facingScaleSign;
         visualRoot.localScale = scale;
     }
-    public void AddMoveSpeed(float amount)
-    {
-        speed += amount;
-    }
-    public void AddMoveSpeedPercent(float percent)
-    {
-        speed *= 1f + percent;
-    }
     public void SetAnomalySpeedMultiplier(float multiplier)
     {
         legacyAnomalySpeedMultiplier = Mathf.Max(0.1f, multiplier);
@@ -198,7 +199,6 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
     public void SetRunUpgradeMoveSpeedMultiplier(float multiplier)
     {
         multiplier = Mathf.Max(0.1f, multiplier);
-        speed = speed / Mathf.Max(0.1f, runUpgradeSpeedMultiplier) * multiplier;
         runUpgradeSpeedMultiplier = multiplier;
     }
     public float RunUpgradeMoveSpeedMultiplier => runUpgradeSpeedMultiplier;

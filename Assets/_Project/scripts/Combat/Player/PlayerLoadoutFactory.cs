@@ -33,11 +33,20 @@ public static class PlayerLoadoutFactory
             float baseMoveSpeed = characterData != null
                 ? characterData.moveSpeed
                 : float.IsNaN(fallbackMoveSpeed)
-                    ? movement.speed
+                    ? movement.AuthoredMoveSpeed
                     : fallbackMoveSpeed;
-            movement.speed = CalculateFinalMoveSpeed(baseMoveSpeed, meta);
+            movement.ApplyCalculatedMoveSpeed(CalculateFinalMoveSpeed(baseMoveSpeed, meta));
         }
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    internal static void ApplyDebugMoveSpeed(CharacterMovement2D movement, float value)
+    {
+        if (movement != null)
+            movement.ApplyCalculatedMoveSpeed(
+                Mathf.Max(0f, value) / movement.RunUpgradeMoveSpeedMultiplier);
+    }
+#endif
 
     public static float CalculateFinalMoveSpeed(
         CharacterData characterData,

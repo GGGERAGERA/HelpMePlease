@@ -1,4 +1,5 @@
 using System;
+using Subject42.Combat.OrbitalStation;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -33,6 +34,10 @@ public class UpgradeCardView : MonoBehaviour
     private bool defaultRarityGlowEnabled;
     private bool defaultRarityDecorationActive;
     private bool visualDefaultsCaptured;
+    private bool defaultIconPreserveAspect;
+    private Image.Type defaultIconType;
+    private Vector2 defaultIconOffsetMin;
+    private Vector2 defaultIconOffsetMax;
 
     private void Awake()
     {
@@ -84,7 +89,21 @@ public class UpgradeCardView : MonoBehaviour
             ProductionUpgradePresentation.GetCardDescription(upgrade));
 
         SetCategory(upgrade.category);
-        SetIcon(upgrade.icon, GetCategoryColor(upgrade.category));
+        if (upgrade is OrbitalRewardData orbitalReward)
+        {
+            OrbitalRewardIconResolver.Icon icon = OrbitalRewardIconResolver.Resolve(orbitalReward);
+            SetIcon(icon.Sprite, icon.Tint);
+            if (iconImage != null)
+            {
+                iconImage.type = Image.Type.Simple;
+                iconImage.preserveAspect = true;
+                // Inset only the image inside the existing upper icon frame.
+                iconImage.rectTransform.offsetMin = defaultIconOffsetMin + Vector2.one * 16f;
+                iconImage.rectTransform.offsetMax = defaultIconOffsetMax - Vector2.one * 16f;
+            }
+        }
+        else
+            SetIcon(upgrade.icon, GetCategoryColor(upgrade.category));
         hoverAnimation?.RefreshRestingState();
     }
 
@@ -114,6 +133,14 @@ public class UpgradeCardView : MonoBehaviour
         if (iconImage != null && iconImage.transform.parent != null)
             iconFrameImage = iconImage.transform.parent.GetComponent<Image>();
 
+        if (iconImage != null)
+        {
+            defaultIconPreserveAspect = iconImage.preserveAspect;
+            defaultIconType = iconImage.type;
+            defaultIconOffsetMin = iconImage.rectTransform.offsetMin;
+            defaultIconOffsetMax = iconImage.rectTransform.offsetMax;
+        }
+
         if (iconFrameImage != null)
         {
             defaultIconFrameColor = iconFrameImage.color;
@@ -132,6 +159,14 @@ public class UpgradeCardView : MonoBehaviour
     private void RestoreChoiceVisuals()
     {
         CaptureVisualDefaults();
+
+        if (iconImage != null)
+        {
+            iconImage.preserveAspect = defaultIconPreserveAspect;
+            iconImage.type = defaultIconType;
+            iconImage.rectTransform.offsetMin = defaultIconOffsetMin;
+            iconImage.rectTransform.offsetMax = defaultIconOffsetMax;
+        }
 
         if (iconFrameImage != null)
         {

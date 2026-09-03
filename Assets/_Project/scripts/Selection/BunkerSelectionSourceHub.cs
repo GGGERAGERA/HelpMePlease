@@ -70,6 +70,21 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
     public IBunkerSelectionSource Anomalies =>
         anomalySource ??= new SourceAdapter(this, SourceKind.Anomalies);
 
+    public CharacterData GetDefaultCharacter()
+    {
+        if (characters == null)
+            return null;
+
+        foreach (CharacterData character in characters)
+        {
+            if (character != null && character.characterPrefab != null &&
+                IsUnlocked(character.unlockData))
+                return character;
+        }
+
+        return null;
+    }
+
     private void OnEnable() => BindServices();
     private void Update() => BindServices();
     private void OnDisable() => UnbindServices();
