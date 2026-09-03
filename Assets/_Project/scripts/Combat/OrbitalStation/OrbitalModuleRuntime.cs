@@ -31,7 +31,8 @@ namespace Subject42.Combat.OrbitalStation
             set => Cooldown = value;
         }
         protected float Power => (Mount?.Ring.PowerMultiplier ?? 1f) *
-            Station.Core.DamageMultiplier;
+            Station.Core.DamageMultiplier *
+            Station.GetModuleDamageMultiplier(StableModuleId);
 
         protected OrbitalModuleRuntime(OrbitalStationRuntime station,
             int stableModuleId, Color color)
@@ -107,6 +108,7 @@ namespace Subject42.Combat.OrbitalStation
         public virtual void ActivateCombat() { }
         public virtual void OnCorePulse() => ActivateCombat();
         protected void TriggerPresentation() => presentation.Trigger();
+        public void TriggerUpgradePresentation() => presentation.Trigger();
 
         protected void AimAt(Vector2 worldTarget)
         {

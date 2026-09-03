@@ -559,6 +559,24 @@ namespace Subject42.Combat.OrbitalStation
             return true;
         }
 
+        public float GetModuleDamageMultiplier(int stableModuleId)
+        {
+            OrbitalModuleState module = State?.Modules.Find(value =>
+                value.StableModuleId == stableModuleId);
+            return 1f + Mathf.Max(0, module?.DamageLevel ?? 0) * 0.25f;
+        }
+
+        public bool UpgradeModuleDamage(int stableModuleId)
+        {
+            if (State == null || !State.UpgradeModuleDamage(stableModuleId))
+                return false;
+            OrbitalModuleRuntime module = modules.Find(value =>
+                value.StableModuleId == stableModuleId);
+            module?.TriggerUpgradePresentation();
+            FlashCore(new Color(1f, 0.82f, 0.28f));
+            return true;
+        }
+
         public bool SetModuleRewardPresentationVisible(int stableModuleId,
             bool visible)
         {

@@ -38,12 +38,11 @@ public class GameOverManager : MonoBehaviour
         if (runState != null)
         {
             CharacterData character = runState.SelectedCharacter;
-            WeaponData weapon = runState.SelectedWeapon;
             // The result panel already presents this reward. Finalize the dead
             // run before clearing its state so Restart cannot silently discard
             // earned gold.
             runState.EndRun(RunEndReason.PlayerDied);
-            runState.BeginNewRun(character, weapon);
+            runState.BeginNewRun(character, null);
         }
 
         Time.timeScale = 1f;

@@ -95,8 +95,7 @@ public class PauseMenuUI : MonoBehaviour
         if (runState != null)
         {
             CharacterData character = runState.SelectedCharacter;
-            WeaponData weapon = runState.SelectedWeapon;
-            runState.BeginNewRun(character, weapon);
+            runState.BeginNewRun(character, null);
         }
 
         Time.timeScale = 1f;

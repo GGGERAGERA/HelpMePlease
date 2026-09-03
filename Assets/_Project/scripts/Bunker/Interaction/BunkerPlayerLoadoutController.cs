@@ -76,7 +76,6 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
             return;
 
         selection.CharacterSelected += ApplyCharacter;
-        selection.WeaponSelected += ApplyWeapon;
     }
 
     private void UnbindSelectionManager()
@@ -85,7 +84,6 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
             return;
 
         selection.CharacterSelected -= ApplyCharacter;
-        selection.WeaponSelected -= ApplyWeapon;
         selection = null;
     }
 
@@ -97,8 +95,6 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
         if (selection.SelectedCharacter != null)
             ApplyCharacter(selection.SelectedCharacter);
 
-        if (selection.SelectedWeapon != null && activeWeapon == null)
-            ApplyWeapon(selection.SelectedWeapon);
     }
 
     private void ApplyCharacter(CharacterData character)
@@ -143,8 +139,6 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
         movement?.SetVisualRoot(facingVisual);
         PlayerLoadoutFactory.ApplyCharacterStats(player, character);
 
-        if (selection != null && selection.SelectedWeapon != null)
-            ApplyWeapon(selection.SelectedWeapon);
     }
 
     private void ApplyWeapon(WeaponData weapon)

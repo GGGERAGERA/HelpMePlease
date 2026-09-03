@@ -181,12 +181,9 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
                 break;
 
             case SourceKind.Weapons:
-                WeaponData weapon = FindByName(weapons, entryId);
-                if (weapon != null && IsUnlocked(weapon.unlockData))
-                {
-                    RunSelectionManager.Instance?.SelectWeapon(weapon);
-                    AudioService.Instance?.Play(AudioCueId.UIConfirm);
-                }
+                // Weapon Station cards describe Orbital unlocks. Starting
+                // equipment is fixed and the cards intentionally do not
+                // mutate the legacy weapon selection.
                 break;
 
             case SourceKind.Upgrades:
@@ -254,40 +251,49 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
     private BunkerSelectionWindowModel BuildWeapons()
     {
         var model = NewModel(
-            "ВЫБЕРИТЕ ОРУЖИЕ",
-            "ДОСТУПНОЕ ОРУЖИЕ",
-            "ВЫБЕРИТЕ ОРУЖИЕ",
-            "ВЫБРАТЬ",
+            "ОРБИТАЛЬНЫЕ МОДУЛИ",
+            "ОТКРЫТИЯ WEAPON STATION",
+            "МОДУЛИ НЕ НАСТРОЕНЫ",
+            "ИНФОРМАЦИЯ",
             BunkerStationId.Weapon);
-        WeaponData current = RunSelectionManager.Instance?.SelectedWeapon;
-        model.SelectedId = current != null ? current.name : null;
-
-        AddNonNull(weapons, weapon =>
-        {
-            int requiredLevel = BunkerSelectionUnlockRules.GetRequiredStationLevel(
-                weapon.unlockData,
-                BunkerStationId.Weapon);
-            bool unlocked = IsUnlocked(weapon.unlockData);
-            var entry = new BunkerSelectionEntryModel
-            {
-                Id = weapon.name,
-                DisplayName = weapon.weaponName,
-                Category = "ОРУЖИЕ",
-                Icon = weapon.icon,
-                Feature = weapon.specialDescription,
-                Description = weapon.description,
-                Locked = !unlocked,
-                LockReason = GetLockReason(weapon.unlockData),
-                CanConfirm = unlocked
-            };
-            entry.Stats.Add(new BunkerSelectionStatModel("УРОН", weapon.damage.ToString()));
-            if (weapon.fireRateRPM > 0)
-                entry.Stats.Add(new BunkerSelectionStatModel("ТЕМП", $"{weapon.fireRateRPM:0} RPM"));
-            entry.Stats.Add(new BunkerSelectionStatModel("ДАЛЬНОСТЬ", weapon.range.ToString("0.#")));
-            AddVisibleEntry(model, entry, requiredLevel);
-        });
+        model.CloseOnConfirm = false;
+        int stationLevel = model.Station != null ? model.Station.Level :
+            BunkerStationProgressionService.GetStoredLevel(BunkerStationId.Weapon);
+        AddOrbitalModuleCard(model, "Pistol", "Pistol", 1, stationLevel,
+            "Стартовый автоматический модуль каждого нового run.");
+        AddOrbitalModuleCard(model, "LaserSword", "Laser Sword", 2, stationLevel,
+            "Контактный орбитальный клинок.");
+        AddOrbitalModuleCard(model, "ImpulseGun", "Impulse Gun", 3, stationLevel,
+            "Орбитальное оружие с отталкиванием.");
         FinalizeUnlockPresentation(model);
         return model;
+    }
+
+    private static void AddOrbitalModuleCard(
+        BunkerSelectionWindowModel model,
+        string id,
+        string displayName,
+        int requiredLevel,
+        int stationLevel,
+        string description)
+    {
+        bool available = stationLevel >= requiredLevel;
+        string status = available
+            ? "ДОСТУПНО"
+            : $"ТРЕБУЕТ УРОВЕНЬ СТАНЦИИ {requiredLevel}";
+        model.Entries.Add(new BunkerSelectionEntryModel
+        {
+            Id = id,
+            DisplayName = displayName,
+            Category = "ОРБИТАЛЬНЫЙ МОДУЛЬ",
+            Feature = status,
+            Description = description,
+            Locked = !available,
+            LockReason = available ? null : status,
+            CanConfirm = false,
+            RequiredStationLevel = requiredLevel
+        });
+        model.Unlocks.Add(new BunkerSelectionUnlockModel(displayName, requiredLevel));
     }
 
     private BunkerSelectionWindowModel BuildUpgrades()

@@ -58,10 +58,16 @@ public sealed class ProductionAnomalySite : MonoBehaviour
             VisualTargetsChanged?.Invoke();
 #endif
         }
+
+        if (initialized)
+            SubscribeToEventSpawner();
     }
 
     private void OnDisable()
     {
+        UnsubscribeFromEventSpawner();
+        StopAllCoroutines();
+
         if (activeSites.Remove(this))
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -394,10 +400,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         if (eventSpawner == null || eventPrefab == null)
             return false;
 
-        eventSpawner.EventCompleted -= HandleEventCompleted;
-        eventSpawner.EventFailed -= HandleEventFailed;
-        eventSpawner.EventCompleted += HandleEventCompleted;
-        eventSpawner.EventFailed += HandleEventFailed;
+        SubscribeToEventSpawner();
 
         bool spawned = eventSpawner.SpawnSiteEventAt(
             eventPrefab,
@@ -518,7 +521,8 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 
     private void HandleEventCompleted(WorldEvent worldEvent)
     {
-        if (completed || worldEvent != activeEvent)
+        if (this == null || !isActiveAndEnabled || completed ||
+            worldEvent != activeEvent)
             return;
 
         completed = true;
@@ -537,7 +541,8 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 
     private void HandleEventFailed(WorldEvent worldEvent)
     {
-        if (completed || worldEvent != activeEvent)
+        if (this == null || !isActiveAndEnabled || completed ||
+            worldEvent != activeEvent)
             return;
 
         activeEvent = null;
@@ -678,13 +683,29 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 #endif
         }
 
-        if (eventSpawner != null)
-        {
-            eventSpawner.EventCompleted -= HandleEventCompleted;
-            eventSpawner.EventFailed -= HandleEventFailed;
-        }
+        UnsubscribeFromEventSpawner();
 
         if (material != null)
             Destroy(material);
+    }
+
+    private void SubscribeToEventSpawner()
+    {
+        if (eventSpawner == null)
+            return;
+
+        eventSpawner.EventCompleted -= HandleEventCompleted;
+        eventSpawner.EventFailed -= HandleEventFailed;
+        eventSpawner.EventCompleted += HandleEventCompleted;
+        eventSpawner.EventFailed += HandleEventFailed;
+    }
+
+    private void UnsubscribeFromEventSpawner()
+    {
+        if (eventSpawner == null)
+            return;
+
+        eventSpawner.EventCompleted -= HandleEventCompleted;
+        eventSpawner.EventFailed -= HandleEventFailed;
     }
 }

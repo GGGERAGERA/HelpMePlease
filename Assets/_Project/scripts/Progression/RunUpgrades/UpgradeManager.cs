@@ -239,7 +239,13 @@ public sealed class UpgradeManager : MonoBehaviour
             milestoneChoices.Enqueue(request);
             milestoneLevels.Enqueue(playerLevel);
             if (!milestoneSequenceRunning)
+            {
+                // One XP pickup can grant several levels before the first
+                // coroutine receives a frame. Reserve the sequence now so
+                // every milestone is handled by the same queue runner.
+                milestoneSequenceRunning = true;
                 StartCoroutine(FlushMilestoneChoices());
+            }
             return;
         }
         station?.ProcessPlayerLevelMilestone(playerLevel);
@@ -548,6 +554,7 @@ public sealed class UpgradeManager : MonoBehaviour
         }
 
         Time.timeScale = previousTimeScale;
+        InvokeIdleCallbacksIfReady();
     }
 
     private void BeginChoiceRequest(UpgradeChoiceRequest request,
@@ -566,7 +573,6 @@ public sealed class UpgradeManager : MonoBehaviour
 
     private IEnumerator FlushMilestoneChoices()
     {
-        milestoneSequenceRunning = true;
         // Let ExperienceManager finish a possible multi-level while-loop first.
         yield return null;
         while (milestoneLevels.Count > 0)
@@ -588,6 +594,17 @@ public sealed class UpgradeManager : MonoBehaviour
         milestoneSequenceRunning = false;
         while (milestoneChoices.Count > 0)
             RequestUpgradeChoices(milestoneChoices.Dequeue());
+        InvokeIdleCallbacksIfReady();
+    }
+
+    private void InvokeIdleCallbacksIfReady()
+    {
+        if (isChoosingUpgrade || pendingChoices.Count > 0 ||
+            milestoneSequenceRunning || milestoneChoices.Count > 0)
+            return;
+
+        while (idleCallbacks.Count > 0)
+            idleCallbacks.Dequeue()?.Invoke();
     }
 
 }

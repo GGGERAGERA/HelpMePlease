@@ -34,7 +34,7 @@ public sealed class BunkerRunStarter : MonoBehaviour
         if (isTransitioning)
             return;
 
-        if (!TryValidateRun(out CharacterData character, out WeaponData weapon))
+        if (!TryValidateRun(out CharacterData character))
             return;
 
         if (transitionTarget == null ||
@@ -52,14 +52,12 @@ public sealed class BunkerRunStarter : MonoBehaviour
 
         StartCoroutine(PlayTransitionAndStartRun(
             transitionTarget,
-            character,
-            weapon));
+            character));
     }
 
-    private bool TryValidateRun(out CharacterData character, out WeaponData weapon)
+    private bool TryValidateRun(out CharacterData character)
     {
         character = null;
-        weapon = null;
 
         if (RunSelectionManager.Instance == null)
         {
@@ -73,14 +71,7 @@ public sealed class BunkerRunStarter : MonoBehaviour
             return false;
         }
 
-        if (RunSelectionManager.Instance.SelectedWeapon == null)
-        {
-            Notifications?.ShowWarning("Сначала выбери оружие.");
-            return false;
-        }
-
         character = RunSelectionManager.Instance.SelectedCharacter;
-        weapon = RunSelectionManager.Instance.SelectedWeapon;
 
         if (startingStageProfile == null ||
             startingWorldRule == null ||
@@ -107,8 +98,7 @@ public sealed class BunkerRunStarter : MonoBehaviour
 
     private IEnumerator PlayTransitionAndStartRun(
         Transform transitionTarget,
-        CharacterData character,
-        WeaponData weapon)
+        CharacterData character)
     {
         isTransitioning = true;
         Time.timeScale = 1f;
@@ -159,7 +149,7 @@ public sealed class BunkerRunStarter : MonoBehaviour
 
         RunStateManager.EnsureExists().BeginNewRun(
             character,
-            weapon,
+            null,
             startingStageProfile,
             startingWorldRule,
             startingLocalAnomaly,

@@ -2,12 +2,35 @@ using UnityEngine;
 
 public sealed class UnlockProgressService : MonoBehaviour
 {
+    private const string RegistryResourcePath = "Unlocks/UnlockRegistry";
+
     public static UnlockProgressService Instance { get; private set; }
     
     [SerializeField] private UnlockRegistry registry;
 
     private const string UnlockKeyPrefix = "Unlock_";
     private const string ProgressKeyPrefix = "UnlockProgress_";
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void Bootstrap()
+    {
+        EnsureExists();
+    }
+
+    public static UnlockProgressService EnsureExists()
+    {
+        if (Instance != null)
+            return Instance;
+
+        UnlockProgressService existing =
+            FindFirstObjectByType<UnlockProgressService>(
+                FindObjectsInactive.Include);
+        if (existing != null)
+            return existing;
+
+        GameObject serviceObject = new("UnlockProgressService");
+        return serviceObject.AddComponent<UnlockProgressService>();
+    }
 
     private void Awake()
     {
@@ -18,6 +41,17 @@ public sealed class UnlockProgressService : MonoBehaviour
         }
 
         Instance = this;
+        if (registry == null)
+            registry = Resources.Load<UnlockRegistry>(RegistryResourcePath);
+
+        if (registry == null)
+        {
+            Debug.LogError(
+                $"[UnlockProgressService] Registry resource " +
+                $"'{RegistryResourcePath}' was not found.",
+                this);
+        }
+
         DontDestroyOnLoad(gameObject);
     }
 

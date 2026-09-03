@@ -18,7 +18,8 @@ namespace Subject42.Combat.OrbitalStation
         CoreUpgrade,
         LinkMatrix,
         MaxHealth,
-        MoveSpeed
+        MoveSpeed,
+        ModuleDamage
     }
 
     public sealed class OrbitalRewardData : UpgradeData
@@ -116,10 +117,14 @@ namespace Subject42.Combat.OrbitalStation
                 bool eligible = reward.RewardKind switch
                 {
                     OrbitalRewardKind.Pistol or
-                    OrbitalRewardKind.LaserSword or
-                    OrbitalRewardKind.ImpulseGun or
                     OrbitalRewardKind.ArcEmitter => freeMounts >= 1,
+                    OrbitalRewardKind.LaserSword => freeMounts >= 1 &&
+                        GetWeaponStationLevel() >= 2,
+                    OrbitalRewardKind.ImpulseGun => freeMounts >= 1 &&
+                        GetWeaponStationLevel() >= 3,
                     OrbitalRewardKind.LinkPair => freeMounts >= 2,
+                    OrbitalRewardKind.ModuleDamage => state.Modules.Any(module =>
+                        module.ModuleType != OrbitalModuleKind.LinkNode),
                     OrbitalRewardKind.RingSpeed => state.Rings.Any(ring =>
                         ring.SpeedUpgradeLevel < config.MaxSpeedUpgradeLevel),
                     OrbitalRewardKind.RingPower => state.Rings.Any(ring =>
@@ -160,6 +165,9 @@ namespace Subject42.Combat.OrbitalStation
             Add(OrbitalRewardKind.LinkPair, "LINK PAIR",
                 "МОДУЛЬ\nДва узла создают повреждающую энергетическую связь. Установите оба узла.",
                 config.LinkPairWeight, true);
+            Add(OrbitalRewardKind.ModuleDamage, "УСИЛИТЬ МОДУЛЬ",
+                "МОДУЛЬ\nВыберите установленное оружие. Damage Level +1 даёт +25% базового урона.",
+                config.ModuleWeight, true);
             Add(OrbitalRewardKind.RingSpeed, "ПЕРЕГРУЗКА КОЛЬЦА",
                 "КОЛЬЦО\nВыбранная орбита вращается на 25% быстрее. После выбора укажите кольцо.",
                 config.RingWeight, true);
@@ -239,5 +247,8 @@ namespace Subject42.Combat.OrbitalStation
         {
             return upgrade != null && (slots == null || slots.CanAccept(upgrade));
         }
+
+        private static int GetWeaponStationLevel() =>
+            BunkerStationProgressionService.GetStoredLevel(BunkerStationId.Weapon);
     }
 }

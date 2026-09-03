@@ -11,7 +11,7 @@ public sealed class RunSelectionManager : MonoBehaviour
     public WeaponData SelectedWeapon { get; private set; }
     public AnomalyStabilizerData SelectedAnomalyStabilizer { get; private set; }
 
-    public bool IsReady => SelectedCharacter != null && SelectedWeapon != null;
+    public bool IsReady => SelectedCharacter != null;
 
     private void Awake()
     {

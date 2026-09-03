@@ -58,10 +58,13 @@ public sealed class BunkerSelectionCardView : MonoBehaviour,
                 : StationPixelVisuals.Text;
         }
 
+        bool orbitalModuleInfo = value.Category == "ОРБИТАЛЬНЫЙ МОДУЛЬ";
         if (lockedOverlay != null)
-            lockedOverlay.SetActive(value.Locked);
+            lockedOverlay.SetActive(value.Locked || orbitalModuleInfo);
         if (lockedText != null)
-            lockedText.text = value.Locked ? "ЗАКРЫТО" : string.Empty;
+            lockedText.text = orbitalModuleInfo
+                ? value.Feature
+                : value.Locked ? "ЗАКРЫТО" : string.Empty;
         if (button != null)
             button.interactable = value.Enabled;
 

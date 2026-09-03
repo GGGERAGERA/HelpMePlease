@@ -200,7 +200,9 @@ public sealed class RunStateManager : MonoBehaviour
 
         ClearCurrentSector();
         SelectedCharacter = character;
-        SelectedWeapon = weapon;
+        // Production Orbital runs always start from OrbitalRunState's Pistol.
+        // Keep the legacy parameter for old debug callers, but never persist it.
+        SelectedWeapon = null;
         CurrentAnomalyStabilizer = anomalyStabilizer;
         AnomalyModifiers = AnomalyRunModifiers.From(anomalyStabilizer);
         CurrentLevel = 1;

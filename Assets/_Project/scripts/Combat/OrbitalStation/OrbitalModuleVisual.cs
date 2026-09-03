@@ -120,9 +120,15 @@ namespace Subject42.Combat.OrbitalStation
         {
             if (instance == null)
             {
-                if (fallbackBody != null && kind == OrbitalModuleKind.LinkNode)
-                    fallbackBody.localScale = Vector3.one * baseScale *
-                        (1f + Mathf.Sin(Time.unscaledTime * 4.6f) * 0.12f);
+                if (fallbackBody != null)
+                {
+                    float fallbackScale = Time.unscaledTime < flashUntil
+                        ? 1.14f
+                        : kind == OrbitalModuleKind.LinkNode
+                            ? 1f + Mathf.Sin(Time.unscaledTime * 4.6f) * 0.12f
+                            : 1f;
+                    fallbackBody.localScale = Vector3.one * baseScale * fallbackScale;
+                }
                 ApplyTint();
                 return;
             }
@@ -146,8 +152,6 @@ namespace Subject42.Combat.OrbitalStation
 
         public void Trigger()
         {
-            if (instance == null)
-                return;
             flashUntil = Time.unscaledTime +
                 (kind == OrbitalModuleKind.ImpulseGun ? 0.16f : 0.08f);
             if (animator != null && kind == OrbitalModuleKind.Pistol)

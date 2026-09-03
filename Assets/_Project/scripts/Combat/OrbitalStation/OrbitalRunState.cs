@@ -40,6 +40,7 @@ namespace Subject42.Combat.OrbitalStation
         public OrbitalModuleKind ModuleType;
         public int StableRingId;
         public int MountIndex;
+        public int DamageLevel;
     }
 
     [Serializable]
@@ -172,6 +173,17 @@ namespace Subject42.Combat.OrbitalStation
             if (removed > 0)
                 Revision++;
             return removed > 0;
+        }
+
+        public bool UpgradeModuleDamage(int stableModuleId)
+        {
+            OrbitalModuleState module = Modules.Find(value =>
+                value.StableModuleId == stableModuleId);
+            if (module == null || module.ModuleType == OrbitalModuleKind.LinkNode)
+                return false;
+            module.DamageLevel++;
+            Revision++;
+            return true;
         }
 
         public bool UpgradeRingSpeed(int stableRingId)
@@ -309,6 +321,7 @@ namespace Subject42.Combat.OrbitalStation
             {
                 OrbitalModuleState module = Modules[i];
                 if (module == null || module.StableModuleId <= 0 ||
+                    module.DamageLevel < 0 ||
                     !Enum.IsDefined(typeof(OrbitalModuleKind),
                         module.ModuleType))
                 {
@@ -353,7 +366,7 @@ namespace Subject42.Combat.OrbitalStation
                     $"R{value.StableRingId}[m{value.MountCapacity},s{value.SpeedUpgradeLevel},p{value.PowerUpgradeLevel},a{value.CurrentPhase:0.0}]"));
             string modules = string.Join(",", Modules.OrderBy(value => value.StableModuleId)
                 .Select(value =>
-                    $"M{value.StableModuleId}:{value.ModuleType}@R{value.StableRingId}.{value.MountIndex}"));
+                    $"M{value.StableModuleId}:{value.ModuleType}[d{value.DamageLevel}]@R{value.StableRingId}.{value.MountIndex}"));
             return $"ORBITAL_STATE v={Version} run={RunId} rev={Revision} sector={currentSector} playerLevel={LastProcessedPlayerLevel} core={CoreState.Level} restore={RestoreCount} rings=[{rings}] modules=[{modules}]";
         }
 
