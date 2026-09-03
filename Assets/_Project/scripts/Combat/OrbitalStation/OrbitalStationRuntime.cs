@@ -27,6 +27,7 @@ namespace Subject42.Combat.OrbitalStation
         private bool initialized;
         private bool tearingDown;
         private OrbitalRelocationController relocation;
+        private OrbitalWorldTelekinesisController worldTelekinesis;
 
         public IOrbitalOwnerAdapter Owner { get; private set; }
         public IOrbitalCombatAdapter Combat { get; private set; }
@@ -41,6 +42,7 @@ namespace Subject42.Combat.OrbitalStation
         internal Transform RuntimeRoot => runtimeRoot;
         internal Material VisualMaterial => lineMaterial;
         internal bool IsDebugPlacementActive => placementStep != PlacementStep.None;
+        internal bool IsRelocating => relocation != null && relocation.IsDragging;
         public string PlacementStatus => placementStep switch
         {
             PlacementStep.Ring => $"{pendingKind}: CLICK RING",
@@ -120,6 +122,10 @@ namespace Subject42.Combat.OrbitalStation
             relocation = GetComponent<OrbitalRelocationController>();
             relocation ??= gameObject.AddComponent<OrbitalRelocationController>();
             relocation.Bind(this);
+            worldTelekinesis = GetComponent<OrbitalWorldTelekinesisController>();
+            worldTelekinesis ??=
+                gameObject.AddComponent<OrbitalWorldTelekinesisController>();
+            worldTelekinesis.Bind(this);
             initialized = true;
             if (!BuildPresentationFromState(out string restoreError))
             {
@@ -389,6 +395,7 @@ namespace Subject42.Combat.OrbitalStation
             if (!initialized || tearingDown)
                 return;
             tearingDown = true;
+            worldTelekinesis?.CancelInteraction();
             relocation?.CancelDrag("station teardown");
             Interaction?.Release();
             placementStep = PlacementStep.None;
@@ -430,6 +437,7 @@ namespace Subject42.Combat.OrbitalStation
             RewardFlow = null;
             Interaction = null;
             relocation = null;
+            worldTelekinesis = null;
             State = null;
             initialized = false;
             tearingDown = false;

@@ -30,7 +30,18 @@ namespace Subject42.Combat.OrbitalStation
         [Range(0f, 1f)] public float RingLineAlpha = 0.52f;
         [Min(0.1f)] public float ModuleHitRadius = 0.16f;
         [Min(0.1f)] public float MountHitRadius = 0.72f;
+        [Min(8f)] public float MountSelectionRadiusPixels = 26f;
+        [Min(0f)] public float MountHoverHysteresisPixels = 8f;
+        [Min(0f)] public float MountSwitchAdvantagePixels = 4f;
         [Range(0.05f, 1f)] public float RelocationTimeScale = 0.2f;
+
+        [Header("World telekinesis")]
+        [Min(0.5f)] public float TelekinesisGrabRange = 8f;
+        [Min(0.1f)] public float TelekinesisPullSpeed = 12f;
+        [Range(0.01f, 1f)] public float TelekinesisFollowSmoothness = 0.12f;
+        [Min(0f)] public float TelekinesisThrowStrength = 1f;
+        [Min(0f)] public float TelekinesisMaxThrowSpeed = 18f;
+        [Min(0f)] public float TelekinesisThrowDrag = 3.5f;
 
         public static OrbitalPresentationConfig Active
         {

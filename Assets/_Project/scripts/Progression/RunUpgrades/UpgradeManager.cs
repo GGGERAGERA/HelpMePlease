@@ -14,7 +14,6 @@ public sealed class UpgradeManager : MonoBehaviour
         public readonly bool GuaranteeBehavior;
         public readonly bool NumericOnly;
         public readonly bool IsChestReward;
-        public readonly bool UseOrbitalProvider;
         public readonly System.Action OnClosed;
 
         public UpgradeChoiceRequest(
@@ -33,8 +32,6 @@ public sealed class UpgradeManager : MonoBehaviour
             GuaranteeBehavior = guaranteeBehavior;
             NumericOnly = numericOnly;
             IsChestReward = isChestReward;
-            UseOrbitalProvider = !isChestReward &&
-                CombatModeState.ActiveRunMode == CombatMode.Orbital;
             OnClosed = onClosed;
         }
     }
@@ -53,8 +50,6 @@ public sealed class UpgradeManager : MonoBehaviour
     private readonly Queue<UpgradeChoiceRequest> milestoneChoices = new();
     private readonly Queue<int> milestoneLevels = new();
     private readonly Queue<System.Action> idleCallbacks = new();
-    private UpgradeRoller upgradeRoller;
-    private LegacyRewardProvider legacyRewardProvider;
     private OrbitalRewardProvider orbitalRewardProvider;
     private OrbitalRewardFlowController orbitalRewardFlow;
     private List<UpgradeData> currentChoices;
@@ -63,7 +58,6 @@ public sealed class UpgradeManager : MonoBehaviour
     private bool isChoosingUpgrade;
     private float previousTimeScale = 1f;
     private System.Action currentOnClosed;
-    private bool currentRequestIsChestReward;
     private UpgradeChoiceRequest currentRequest;
     private bool hasCurrentRequest;
 
@@ -92,8 +86,6 @@ public sealed class UpgradeManager : MonoBehaviour
     {
         allUpgrades = upgrades ?? System.Array.Empty<UpgradeData>();
         upgradeApplier = applier != null ? applier : GetComponent<UpgradeApplier>();
-        upgradeRoller = new UpgradeRoller(allUpgrades);
-        legacyRewardProvider = new LegacyRewardProvider(allUpgrades);
         orbitalRewardProvider?.Dispose();
         orbitalRewardProvider = new OrbitalRewardProvider(allUpgrades);
     }
@@ -107,11 +99,7 @@ public sealed class UpgradeManager : MonoBehaviour
 
     public int GetEligibleProductionUpgradeCount(int playerLevel)
     {
-        if (CombatModeState.ActiveRunMode == CombatMode.Orbital)
-            return orbitalRewardProvider?.GetEligibleKinds().Count ?? 0;
-        return upgradeRoller != null
-            ? upgradeRoller.CountEligibleChoices(playerLevel)
-            : 0;
+        return orbitalRewardProvider?.GetEligibleKinds().Count ?? 0;
     }
 
     public int GetStationAvailableProductionUpgradeCount()
@@ -138,8 +126,7 @@ public sealed class UpgradeManager : MonoBehaviour
 
     public bool DebugForceOrbitalReward(OrbitalRewardKind kind)
     {
-        if (CombatModeState.ActiveRunMode != CombatMode.Orbital ||
-            isChoosingUpgrade || orbitalRewardProvider == null ||
+        if (isChoosingUpgrade || orbitalRewardProvider == null ||
             !orbitalRewardProvider.IsEligible(kind))
             return false;
         OrbitalRewardData reward = orbitalRewardProvider.GetDefinition(kind);
@@ -176,8 +163,6 @@ public sealed class UpgradeManager : MonoBehaviour
         if (upgradeApplier == null)
             upgradeApplier = GetComponent<UpgradeApplier>();
 
-        upgradeRoller = new UpgradeRoller(allUpgrades);
-        legacyRewardProvider = new LegacyRewardProvider(allUpgrades);
         orbitalRewardProvider = new OrbitalRewardProvider(allUpgrades);
 
         if (upgradePanelView != null)
@@ -186,16 +171,13 @@ public sealed class UpgradeManager : MonoBehaviour
 
     private void OnDisable()
     {
-        if (!IsChoosingUpgrade || (!currentRequestIsChestReward &&
-            (!hasCurrentRequest || !currentRequest.UseOrbitalProvider) &&
-            milestoneChoices.Count == 0))
+        if (!IsChoosingUpgrade)
             return;
 
         shuttingDown = true;
         if (orbitalRewardFlow != null)
             orbitalRewardFlow.CancelForSceneTransition();
         isChoosingUpgrade = false;
-        currentRequestIsChestReward = false;
         hasCurrentRequest = false;
         if (upgradePanelView != null)
             upgradePanelView.Hide();
@@ -248,22 +230,19 @@ public sealed class UpgradeManager : MonoBehaviour
                 guaranteeBehavior: false,
                 isChestReward: false
             );
-        if (CombatModeState.ActiveRunMode == CombatMode.Orbital)
+        OrbitalStationRuntime station =
+            FindFirstObjectByType<OrbitalStationRuntime>();
+        bool requiresSequence = milestoneSequenceRunning ||
+            OrbitalProgressionConfig.Default.IsRingMilestone(playerLevel);
+        if (requiresSequence)
         {
-            OrbitalStationRuntime station =
-                FindFirstObjectByType<OrbitalStationRuntime>();
-            bool requiresSequence = milestoneSequenceRunning ||
-                OrbitalProgressionConfig.Default.IsRingMilestone(playerLevel);
-            if (requiresSequence)
-            {
-                milestoneChoices.Enqueue(request);
-                milestoneLevels.Enqueue(playerLevel);
-                if (!milestoneSequenceRunning)
-                    StartCoroutine(FlushMilestoneChoices());
-                return;
-            }
-            station?.ProcessPlayerLevelMilestone(playerLevel);
+            milestoneChoices.Enqueue(request);
+            milestoneLevels.Enqueue(playerLevel);
+            if (!milestoneSequenceRunning)
+                StartCoroutine(FlushMilestoneChoices());
+            return;
         }
+        station?.ProcessPlayerLevelMilestone(playerLevel);
         RequestUpgradeChoices(request);
     }
 
@@ -340,18 +319,8 @@ public sealed class UpgradeManager : MonoBehaviour
             return false;
         }
 
-        if (!request.UseOrbitalProvider &&
-            (allUpgrades == null || allUpgrades.Length == 0))
-        {
-            Debug.LogWarning("[UpgradeManager] allUpgrades is empty.");
-            return false;
-        }
-
-        choices = request.UseOrbitalProvider
-            ? orbitalRewardProvider.BuildChoices(request.ChoiceCount)
-            : legacyRewardProvider.BuildChoices(request.PlayerLevel,
-                request.ChoiceCount, request.GuaranteeBehavior,
-                request.NumericOnly);
+        choices = orbitalRewardProvider?.BuildChoices(request.ChoiceCount) ??
+            new List<UpgradeData>();
 
         if (choices.Count > 0)
             return true;
@@ -408,8 +377,7 @@ public sealed class UpgradeManager : MonoBehaviour
         if (!isChoosingUpgrade)
             return;
 
-        if (upgrade is OrbitalRewardData orbitalReward &&
-            currentRequest.UseOrbitalProvider)
+        if (upgrade is OrbitalRewardData orbitalReward)
         {
             SelectOrbitalReward(orbitalReward);
             return;
@@ -555,7 +523,6 @@ public sealed class UpgradeManager : MonoBehaviour
 
         isChoosingUpgrade = false;
         orbitalRewardFlow = null;
-        currentRequestIsChestReward = false;
         hasCurrentRequest = false;
         System.Action onClosed = currentOnClosed;
         currentOnClosed = null;
@@ -575,7 +542,6 @@ public sealed class UpgradeManager : MonoBehaviour
             currentRequest = nextRequest;
             hasCurrentRequest = true;
             currentOnClosed = nextRequest.OnClosed;
-            currentRequestIsChestReward = nextRequest.IsChestReward;
             currentChoices = choices;
             ShowChoiceRequest(nextRequest, choices);
             return;
@@ -594,7 +560,6 @@ public sealed class UpgradeManager : MonoBehaviour
         currentRequest = request;
         hasCurrentRequest = true;
         currentOnClosed = request.OnClosed;
-        currentRequestIsChestReward = request.IsChestReward;
         currentChoices = choices;
         ShowChoiceRequest(request, choices);
     }

@@ -21,6 +21,8 @@ namespace Subject42.Combat.OrbitalStation
         private float flashUntil;
         private bool dragging;
         private bool dragValid;
+        private bool previewing;
+        private bool previewSnapped;
         private Transform fallbackBody;
 
         public GameObject GameObject => root;
@@ -58,6 +60,7 @@ namespace Subject42.Combat.OrbitalStation
             else
             {
                 CreateFallback(station, kind, fallbackColor, config);
+                CacheFallbackPresentation();
             }
         }
 
@@ -90,6 +93,29 @@ namespace Subject42.Combat.OrbitalStation
             ApplyTint();
         }
 
+        public void SetPreviewState(bool snapped)
+        {
+            previewing = true;
+            previewSnapped = snapped;
+            StopParticles();
+            if (halo != null)
+                halo.enabled = snapped;
+            ApplyTint();
+        }
+
+        public void SetWorldPosition(Vector2 position) =>
+            root.transform.position = position;
+
+        public void SetWorldRotation(float radians) =>
+            root.transform.rotation = Quaternion.Euler(0f, 0f,
+                radians * Mathf.Rad2Deg);
+
+        public void Teardown()
+        {
+            if (root != null)
+                Object.Destroy(root);
+        }
+
         public void Tick()
         {
             if (instance == null)
@@ -97,6 +123,7 @@ namespace Subject42.Combat.OrbitalStation
                 if (fallbackBody != null && kind == OrbitalModuleKind.LinkNode)
                     fallbackBody.localScale = Vector3.one * baseScale *
                         (1f + Mathf.Sin(Time.unscaledTime * 4.6f) * 0.12f);
+                ApplyTint();
                 return;
             }
             instance.transform.localPosition = Vector3.zero;
@@ -209,6 +236,21 @@ namespace Subject42.Combat.OrbitalStation
             StopParticles();
         }
 
+        private void CacheFallbackPresentation()
+        {
+            sprites = root.GetComponentsInChildren<SpriteRenderer>(true);
+            spriteColors = new Color[sprites.Length];
+            spriteOrders = new int[sprites.Length];
+            for (int i = 0; i < sprites.Length; i++)
+            {
+                spriteColors[i] = sprites[i].color;
+                spriteOrders[i] = sprites[i].sortingOrder;
+            }
+            particles = System.Array.Empty<ParticleSystem>();
+            sortingGroups = System.Array.Empty<SortingGroup>();
+            sortingGroupOrders = System.Array.Empty<int>();
+        }
+
         private static void DisableCombatComponents(GameObject instance)
         {
             MonoBehaviour[] behaviours = instance.GetComponentsInChildren<MonoBehaviour>(true);
@@ -240,7 +282,14 @@ namespace Subject42.Combat.OrbitalStation
             {
                 if (sprites[i] == null) continue;
                 Color color = spriteColors[i];
-                if (dragging)
+                if (previewing)
+                {
+                    if (previewSnapped)
+                        color = Color.Lerp(color,
+                            new Color(0.35f, 1f, 0.62f, color.a), 0.28f);
+                    color.a *= previewSnapped ? 0.9f : 0.52f;
+                }
+                else if (dragging)
                     color = Color.Lerp(color, dragValid
                         ? new Color(0.25f, 1f, 0.55f, color.a)
                         : new Color(1f, 0.12f, 0.18f, color.a), 0.72f);

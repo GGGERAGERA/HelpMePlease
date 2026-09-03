@@ -2582,25 +2582,12 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         OrbitalStationRuntime station =
             FindFirstObjectByType<OrbitalStationRuntime>();
         bool available = station != null && station.IsInitialized;
-        string selected = CombatModeState.SelectedMode.ToString().ToUpperInvariant();
-        string active = CombatModeState.ActiveRunMode.ToString().ToUpperInvariant();
-
         AddSectionTitle("ORBITAL PRODUCTION TEST",
-            "Session-only mode switch and production runtime checks");
-        AddRow("SELECTED / ACTIVE", $"{selected} / {active}", accentColor,
-            string.Empty, false, null);
-        AddRow("Combat Mode LEGACY", active == "LEGACY" ? "ACTIVE" : "SELECT",
-            active == "LEGACY" ? successColor : mutedColor, "APPLY", true,
-            () => ApplyOrbitalCombatMode(CombatMode.Legacy));
-        AddRow("Combat Mode ORBITAL", active == "ORBITAL" ? "ACTIVE" : "SELECT",
-            active == "ORBITAL" ? successColor : mutedColor, "APPLY", true,
-            () => ApplyOrbitalCombatMode(CombatMode.Orbital));
-        AddRow("Restart With Selected Mode", selected, warningColor, "RESTART", true,
-            RestartWithSelectedCombatMode);
+            "Production runtime checks");
 
         AddSectionTitle("STATION", available
             ? "Arena placement: click ring, then a free mount"
-            : "Switch to ORBITAL to create the runtime station");
+            : "Runtime station is not ready");
         AddRow("Runtime", available
                 ? $"CORE {station.Core.Level} / RINGS {station.Rings.Count} / MODULES {station.Modules.Count}"
                 : "NOT ACTIVE",
@@ -2813,6 +2800,13 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             value => { visual.HaloSize = value; refreshVisuals(value); }, "0.00");
         AddSliderRow("Ring Line Alpha", visual.RingLineAlpha, 0.15f, 0.9f,
             value => { visual.RingLineAlpha = value; refreshVisuals(value); }, "0.00");
+        AddSectionTitle("WORLD TELEKINESIS", "XP pickups and ordinary breakables");
+        AddSliderRow("Throw Strength", visual.TelekinesisThrowStrength,
+            0f, 2.5f, value => visual.TelekinesisThrowStrength = value, "0.00");
+        AddSliderRow("Max Throw Speed", visual.TelekinesisMaxThrowSpeed,
+            2f, 30f, value => visual.TelekinesisMaxThrowSpeed = value, "0.0");
+        AddSliderRow("Throw Drag", visual.TelekinesisThrowDrag,
+            0f, 10f, value => visual.TelekinesisThrowDrag = value, "0.0");
         AddHint("Number keys 1-9 select a ring. Module placement closes F1 so arena clicks remain explicit.");
     }
 
@@ -2831,8 +2825,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private void AddOrbitalRewardDebugRow(string label,
         OrbitalRewardKind kind, UpgradeManager rewards)
     {
-        bool enabled = rewards != null && !rewards.IsChoosingUpgrade &&
-            CombatModeState.ActiveRunMode == CombatMode.Orbital;
+        bool enabled = rewards != null && !rewards.IsChoosingUpgrade;
         AddRow(label, kind.ToString().ToUpperInvariant(), accentColor,
             "FORCE", enabled, () =>
             {
@@ -2845,26 +2838,6 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                     Debug.LogWarning($"[OrbitalRewards] Forced reward {kind} is ineligible.");
                 }
             });
-    }
-
-    private void ApplyOrbitalCombatMode(CombatMode mode)
-    {
-        CombatModeState.Select(mode);
-        characterSpawner ??= FindFirstObjectByType<CharacterSpawner>();
-        if (characterSpawner != null && characterSpawner.SpawnedPlayer != null)
-            characterSpawner.DebugApplyCombatMode(mode);
-        RefreshCurrentTab();
-    }
-
-    private void RestartWithSelectedCombatMode()
-    {
-        RunStateManager runState = RunStateManager.Instance;
-        if (runState != null)
-            runState.BeginNewRun(runState.SelectedCharacter, runState.SelectedWeapon);
-        else
-            CombatModeState.DebugApplyToCurrentRun(CombatModeState.SelectedMode);
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     private void SetMenuLiveSimulation(bool live)

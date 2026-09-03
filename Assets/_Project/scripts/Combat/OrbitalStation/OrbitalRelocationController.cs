@@ -8,6 +8,7 @@ namespace Subject42.Combat.OrbitalStation
     [DisallowMultipleComponent]
     public sealed class OrbitalRelocationController : MonoBehaviour
     {
+        private readonly OrbitalMountHoverResolver mountResolver = new();
         private OrbitalStationRuntime station;
         private OrbitalModuleRuntime hoveredModule;
         private OrbitalModuleRuntime draggedModule;
@@ -52,6 +53,7 @@ namespace Subject42.Combat.OrbitalStation
                 hoveredModule?.SetHighlighted(true);
                 if (hoveredModule != null)
                 {
+                    SetHoverAffordance(true);
                     station.Interaction?.ShowHint(DisplayName(hoveredModule.Kind),
                         $"Орбита {hoveredModule.CurrentMount.Ring.State.Order + 1} · " +
                         "Зажмите ЛКМ и перетащите");
@@ -59,6 +61,7 @@ namespace Subject42.Combat.OrbitalStation
                 }
                 else
                 {
+                    SetHoverAffordance(false);
                     station.Interaction?.ClearHint();
                     station.Interaction?.SetCursor(OrbitalCursorState.Normal);
                 }
@@ -87,7 +90,7 @@ namespace Subject42.Combat.OrbitalStation
             Time.timeScale = Mathf.Min(previousTimeScale,
                 OrbitalPresentationConfig.Active.RelocationTimeScale);
             module.BeginPresentationDrag(station.RuntimeRoot);
-            SetAllMounts(OrbitalMountRuntime.VisualState.Invalid, freeOnly: false);
+            OrbitalMountInteractionPresentation.Apply(station, null, sourceMount);
             station.Interaction?.ShowHint(DisplayName(module.Kind),
                 "Перетащите на зелёное крепление\nEsc / ПКМ — отменить");
             station.Interaction?.SetCursor(OrbitalCursorState.Dragging);
@@ -106,25 +109,33 @@ namespace Subject42.Combat.OrbitalStation
             }
 
             Vector2 world = MouseWorld();
-            draggedModule.SetDragPosition(world);
-            targetMount = FindMountOnRingPath(world,
-                OrbitalPresentationConfig.Active.MountHitRadius);
+            targetMount = mountResolver.Resolve(station, Camera.main,
+                Input.mousePosition, targetMount);
             bool valid = targetMount != null && targetMount != sourceMount &&
                 !targetMount.Occupied;
+            draggedModule.SetDragPosition(valid
+                ? targetMount.Transform.position
+                : world);
             draggedModule.SetDragValidity(valid);
             station.Interaction?.SetCursor(valid
                 ? OrbitalCursorState.ValidDrop
                 : OrbitalCursorState.InvalidDrop);
             station.Interaction?.ShowHint(DisplayName(draggedModule.Kind), valid
-                ? $"Отпустить: орбита {targetMount.Ring.State.Order + 1}"
-                : "Найдите свободное зелёное крепление\nEsc / ПКМ — отменить");
-            RefreshMountStates();
+                ? $"Кольцо {targetMount.Ring.State.Order + 1} · " +
+                  $"крепление {targetMount.MountIndex + 1}\nОтпустить: переместить"
+                : targetMount != null && targetMount.Occupied
+                    ? "Крепление занято\nEsc / ПКМ — отменить"
+                    : "Наведите оружие на свободное крепление\nEsc / ПКМ — отменить");
+            OrbitalMountInteractionPresentation.Apply(station, targetMount,
+                sourceMount);
             if (draggedModule is OrbitalLinkNodeModule)
             {
                 OrbitalLinkNodeModule partner = FindLinkPartner(draggedModule.StableModuleId);
                 if (partner?.CurrentMount != null)
-                    station.FlashLink(world, partner.CurrentMount.Transform.position,
-                        new Color(0.85f, 0.3f, 1f, 0.42f), 0.05f);
+                    station.FlashLink(valid ? targetMount.Transform.position : world,
+                        partner.CurrentMount.Transform.position, valid
+                            ? new Color(0.85f, 0.3f, 1f, 0.58f)
+                            : new Color(1f, 0.18f, 0.22f, 0.45f), 0.05f);
             }
             if (!Input.GetMouseButtonUp(0))
                 return;
@@ -136,10 +147,11 @@ namespace Subject42.Combat.OrbitalStation
             int id = draggedModule.StableModuleId;
             int ringId = targetMount.Ring.RingId;
             int mountIndex = targetMount.MountIndex;
-            SetAllMounts(OrbitalMountRuntime.VisualState.Normal, freeOnly: false);
+            OrbitalMountInteractionPresentation.Clear(station);
             RestoreTimeScale();
             draggedModule.SetHighlighted(false);
             draggedModule = null;
+            hoveredModule = null;
             sourceMount = null;
             targetMount = null;
             station.Interaction?.ClearHint();
@@ -154,8 +166,9 @@ namespace Subject42.Combat.OrbitalStation
                 return;
             draggedModule.CancelPresentationDrag();
             draggedModule.SetHighlighted(false);
-            SetAllMounts(OrbitalMountRuntime.VisualState.Normal, freeOnly: false);
+            OrbitalMountInteractionPresentation.Clear(station);
             draggedModule = null;
+            hoveredModule = null;
             sourceMount = null;
             targetMount = null;
             RestoreTimeScale();
@@ -169,26 +182,7 @@ namespace Subject42.Combat.OrbitalStation
             previousTimeScale = 1f;
         }
 
-        private void RefreshMountStates()
-        {
-            for (int r = 0; r < station.Rings.Count; r++)
-                for (int m = 0; m < station.Rings[r].Mounts.Count; m++)
-                {
-                    OrbitalMountRuntime mount = station.Rings[r].Mounts[m];
-                    if (mount == sourceMount)
-                        mount.SetVisualState(OrbitalMountRuntime.VisualState.Occupied);
-                    else if (mount == targetMount)
-                        mount.SetVisualState(mount.Occupied
-                            ? OrbitalMountRuntime.VisualState.Invalid
-                            : OrbitalMountRuntime.VisualState.Valid);
-                    else
-                        mount.SetVisualState(mount.Occupied
-                            ? OrbitalMountRuntime.VisualState.Invalid
-                            : OrbitalMountRuntime.VisualState.Valid);
-                }
-        }
-
-        private void SetAllMounts(OrbitalMountRuntime.VisualState state, bool freeOnly)
+        private void SetHoverAffordance(bool visible)
         {
             for (int r = 0; r < station.Rings.Count; r++)
                 for (int m = 0; m < station.Rings[r].Mounts.Count; m++)
@@ -196,7 +190,9 @@ namespace Subject42.Combat.OrbitalStation
                     OrbitalMountRuntime mount = station.Rings[r].Mounts[m];
                     mount.SetVisualState(mount.Occupied
                         ? OrbitalMountRuntime.VisualState.Occupied
-                        : state);
+                        : visible
+                            ? OrbitalMountRuntime.VisualState.Preview
+                            : OrbitalMountRuntime.VisualState.Normal);
                 }
         }
 
@@ -214,41 +210,6 @@ namespace Subject42.Combat.OrbitalStation
                 {
                     bestDistance = distance;
                     best = module;
-                }
-            }
-            return best;
-        }
-
-        private OrbitalMountRuntime FindMountOnRingPath(Vector2 world,
-            float ringTolerance)
-        {
-            OrbitalMountRuntime best = null;
-            float bestRingDistance = ringTolerance;
-            for (int r = station.Rings.Count - 1; r >= 0; r--)
-            {
-                OrbitalRingRuntime ring = station.Rings[r];
-                float distanceToRing = Mathf.Abs(Vector2.Distance(transform.position,
-                    world) - ring.Radius);
-                if (distanceToRing >= bestRingDistance)
-                    continue;
-                OrbitalMountRuntime nearest = null;
-                float nearestSqr = float.MaxValue;
-                for (int m = ring.Mounts.Count - 1; m >= 0; m--)
-                {
-                    OrbitalMountRuntime mount = ring.Mounts[m];
-                    if (mount.Occupied)
-                        continue;
-                    float distance = ((Vector2)mount.Transform.position - world).sqrMagnitude;
-                    if (distance < nearestSqr)
-                    {
-                        nearestSqr = distance;
-                        nearest = mount;
-                    }
-                }
-                if (nearest != null)
-                {
-                    bestRingDistance = distanceToRing;
-                    best = nearest;
                 }
             }
             return best;

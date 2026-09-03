@@ -293,7 +293,9 @@ namespace Subject42.Combat.OrbitalStation
             {
                 OrbitalRingState ring = Rings[i];
                 if (ring == null || ring.StableRingId <= 0 || ring.Order != i ||
-                    ring.MountCapacity < 1 || !IsFinitePositive(ring.Radius) ||
+                    ring.MountCapacity < 1 || ring.MountCapacity >
+                        OrbitalProgressionConfig.Default.MaxMountsPerRing ||
+                    !IsFinitePositive(ring.Radius) ||
                     !IsFiniteNonNegative(ring.BaseRotationSpeed) ||
                     float.IsNaN(ring.CurrentPhase) || float.IsInfinity(ring.CurrentPhase) ||
                     (ring.Direction != 1 && ring.Direction != -1) ||

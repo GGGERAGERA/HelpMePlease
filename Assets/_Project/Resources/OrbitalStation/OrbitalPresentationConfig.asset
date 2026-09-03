@@ -29,4 +29,13 @@ MonoBehaviour:
   RingLineAlpha: 0.52
   ModuleHitRadius: 0.16
   MountHitRadius: 0.72
+  MountSelectionRadiusPixels: 26
+  MountHoverHysteresisPixels: 8
+  MountSwitchAdvantagePixels: 4
   RelocationTimeScale: 0.2
+  TelekinesisGrabRange: 8
+  TelekinesisPullSpeed: 12
+  TelekinesisFollowSmoothness: 0.12
+  TelekinesisThrowStrength: 1
+  TelekinesisMaxThrowSpeed: 18
+  TelekinesisThrowDrag: 3.5

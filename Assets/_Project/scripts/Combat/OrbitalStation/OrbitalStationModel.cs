@@ -61,6 +61,7 @@ namespace Subject42.Combat.OrbitalStation
         private bool selected;
         private bool interactionEligible;
         private bool interactionHovered;
+        private bool interactionDimmed;
 
         public OrbitalRingState State { get; }
 
@@ -129,6 +130,11 @@ namespace Subject42.Combat.OrbitalStation
                 displayColor = Color.Lerp(displayColor,
                     new Color(0.25f, 1f, 0.62f, 0.92f),
                     interactionHovered ? 0.9f : 0.38f + interactionPulse * 0.18f);
+            if (interactionDimmed)
+            {
+                displayColor *= new Color(0.55f, 0.62f, 0.68f, 0.48f);
+                displayColor.a = baseColor.a * 0.32f;
+            }
             if (selected)
                 displayColor = Color.Lerp(displayColor,
                     new Color(0.45f, 0.92f, 1f, 0.95f), 0.68f);
@@ -157,10 +163,12 @@ namespace Subject42.Combat.OrbitalStation
             this.selected = selected;
         }
 
-        public void SetInteractionState(bool eligible, bool hovered)
+        public void SetInteractionState(bool eligible, bool hovered,
+            bool dimmed = false)
         {
             interactionEligible = eligible;
             interactionHovered = eligible && hovered;
+            interactionDimmed = dimmed;
         }
 
         public void Teardown()
@@ -181,7 +189,10 @@ namespace Subject42.Combat.OrbitalStation
 
     public sealed class OrbitalMountRuntime
     {
-        public enum VisualState { Normal, Occupied, Hover, Valid, Invalid, Preview }
+        public enum VisualState
+        {
+            Normal, Occupied, Hover, Valid, ValidHover, Invalid, Preview
+        }
 
         private readonly Transform root;
         private readonly SpriteRenderer marker;
@@ -267,8 +278,14 @@ namespace Subject42.Combat.OrbitalStation
                     showHalo = true;
                     break;
                 case VisualState.Valid:
-                    color = new Color(0.25f, 1f, 0.5f, 1f);
-                    size = config.SelectionMountSize * (1f + 0.08f * Mathf.Sin(Time.unscaledTime * 8f));
+                    color = new Color(0.28f, 0.92f, 0.62f, 0.8f);
+                    size = config.SelectionMountSize * 0.82f *
+                        (1f + 0.025f * Mathf.Sin(Time.unscaledTime * 6f));
+                    showHalo = false;
+                    break;
+                case VisualState.ValidHover:
+                    color = new Color(0.32f, 1f, 0.48f, 1f);
+                    size = config.SelectionMountSize * 1.18f;
                     showHalo = true;
                     break;
                 case VisualState.Invalid:

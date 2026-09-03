@@ -29,29 +29,6 @@ namespace Subject42.Combat.OrbitalStation
         public bool RequiresArenaSelection;
     }
 
-    public sealed class LegacyRewardProvider
-    {
-        private readonly UpgradeRoller roller;
-
-        public LegacyRewardProvider(UpgradeData[] upgrades)
-        {
-            roller = new UpgradeRoller(upgrades);
-        }
-
-        public List<UpgradeData> BuildChoices(int playerLevel, int count,
-            bool guaranteeBehavior, bool numericOnly)
-        {
-            return numericOnly
-                ? roller.RollNumericChoices(playerLevel, count)
-                : guaranteeBehavior
-                    ? roller.RollRewardChoices(playerLevel, count)
-                    : roller.RollChoices(playerLevel, count);
-        }
-
-        public int CountEligible(int playerLevel) =>
-            roller.CountEligibleChoices(playerLevel);
-    }
-
     public sealed class OrbitalRewardProvider : IDisposable
     {
         private readonly OrbitalProgressionConfig config;

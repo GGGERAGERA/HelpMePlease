@@ -1,50 +1,47 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace Subject42.Combat.OrbitalStation
 {
     public enum OrbitalRewardFlowState
     {
-        CardSelection,
-        RingSelection,
-        MountSelection,
-        ModuleFlight,
-        SecondLinkPlacement,
-        Applying,
-        Completed,
-        Cancelled
+        CardSelection, RingSelection, DirectMountSelection, ModuleFlight,
+        SecondLinkPlacement, Applying, Completed, Cancelled
     }
 
     [DisallowMultipleComponent]
     public sealed class OrbitalRewardFlowController : MonoBehaviour
     {
+        private readonly OrbitalMountHoverResolver mountResolver = new();
         private OrbitalStationRuntime station;
         private OrbitalRewardData reward;
-        private OrbitalRingRuntime selectedRing;
         private OrbitalRingRuntime hoveredRing;
         private OrbitalMountRuntime hoveredMount;
+        private OrbitalMountRuntime reservedMount;
+        private OrbitalModuleVisual modulePreview;
+        private GameObject addMountPreview;
         private Action completed;
         private Action cancelled;
         private int firstLinkModuleId;
-        private int pendingModuleId;
-        private bool secondLinkChoosingRing;
         private Coroutine flightRoutine;
 
         public OrbitalRewardFlowState State { get; private set; } =
             OrbitalRewardFlowState.CardSelection;
         public OrbitalRewardKind? PendingReward => reward != null
-            ? reward.RewardKind
-            : null;
+            ? reward.RewardKind : null;
         public string CompactStatus => reward == null
-            ? State.ToString()
-            : $"{State}:{reward.RewardKind}";
+            ? State.ToString() : $"{State}:{reward.RewardKind}";
+        public string CompactTargetStatus => hoveredMount == null
+            ? "NONE"
+            : $"R{hoveredMount.Ring.State.Order + 1}:M{hoveredMount.MountIndex + 1}:" +
+              (hoveredMount.Occupied ? "OCCUPIED" : "FREE");
 
-        public void Bind(OrbitalStationRuntime runtime)
-        {
-            station = runtime;
-        }
+        public void Bind(OrbitalStationRuntime runtime) => station = runtime;
 
         public bool Begin(OrbitalRewardData selected,
             Action onCompleted, Action onCancelled)
@@ -55,25 +52,27 @@ namespace Subject42.Combat.OrbitalStation
             reward = selected;
             completed = onCompleted;
             cancelled = onCancelled;
-            selectedRing = null;
             hoveredRing = null;
             hoveredMount = null;
+            reservedMount = null;
             firstLinkModuleId = 0;
-            pendingModuleId = 0;
-            secondLinkChoosingRing = false;
-
             if (!selected.RequiresArenaSelection)
                 return ApplyImmediate();
-            State = OrbitalRewardFlowState.RingSelection;
+            if (IsRingReward(selected.RewardKind))
+                State = OrbitalRewardFlowState.RingSelection;
+            else
+            {
+                State = OrbitalRewardFlowState.DirectMountSelection;
+                CreateModulePreview();
+            }
             RefreshArenaPresentation();
             return true;
         }
 
         public void CancelForSceneTransition()
         {
-            if (reward == null)
-                return;
-            CancelToCards();
+            if (reward != null)
+                CancelToCards();
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -81,33 +80,22 @@ namespace Subject42.Combat.OrbitalStation
         {
             hoveredRing = station?.Rings.FirstOrDefault(value =>
                 value.RingId == stableRingId);
-            if (hoveredRing == null)
+            if (hoveredRing == null || State != OrbitalRewardFlowState.RingSelection)
                 return false;
-            if (State == OrbitalRewardFlowState.RingSelection)
-                SelectRing();
-            else if (State == OrbitalRewardFlowState.SecondLinkPlacement &&
-                secondLinkChoosingRing)
-                SelectSecondLinkRing();
-            else
-                return false;
+            SelectRingUpgrade();
             return true;
         }
 
         public bool DebugChooseMount(int stableRingId, int mountIndex)
         {
-            selectedRing = station?.Rings.FirstOrDefault(value =>
+            OrbitalRingRuntime ring = station?.Rings.FirstOrDefault(value =>
                 value.RingId == stableRingId);
-            if (selectedRing == null || mountIndex < 0 ||
-                mountIndex >= selectedRing.Mounts.Count)
+            if (ring == null || mountIndex < 0 || mountIndex >= ring.Mounts.Count ||
+                (State != OrbitalRewardFlowState.DirectMountSelection &&
+                 State != OrbitalRewardFlowState.SecondLinkPlacement))
                 return false;
-            hoveredMount = selectedRing.Mounts[mountIndex];
-            if (State == OrbitalRewardFlowState.MountSelection)
-                SelectMount(false);
-            else if (State == OrbitalRewardFlowState.SecondLinkPlacement &&
-                !secondLinkChoosingRing)
-                SelectMount(true);
-            else
-                return false;
+            hoveredMount = ring.Mounts[mountIndex];
+            ConfirmDirectMount(State == OrbitalRewardFlowState.SecondLinkPlacement);
             return true;
         }
 #endif
@@ -126,130 +114,125 @@ namespace Subject42.Combat.OrbitalStation
                 State == OrbitalRewardFlowState.Applying)
                 return;
             UpdateHover();
+            UpdateModulePreview();
             RefreshArenaPresentation();
             DrawSecondLinkPreview();
-            if (!Input.GetMouseButtonDown(0))
+            if (!Input.GetMouseButtonDown(0) || PointerOverInteractiveUi())
                 return;
             if (State == OrbitalRewardFlowState.RingSelection)
-                SelectRing();
-            else if (State == OrbitalRewardFlowState.MountSelection)
-                SelectMount(false);
+                SelectRingUpgrade();
+            else if (State == OrbitalRewardFlowState.DirectMountSelection)
+                ConfirmDirectMount(false);
             else if (State == OrbitalRewardFlowState.SecondLinkPlacement)
-            {
-                if (secondLinkChoosingRing)
-                    SelectSecondLinkRing();
-                else
-                    SelectMount(true);
-            }
+                ConfirmDirectMount(true);
         }
 
-        private void SelectRing()
+        private void SelectRingUpgrade()
         {
             if (hoveredRing == null || !CanUseRing(hoveredRing))
                 return;
-            selectedRing = hoveredRing;
-            if (IsRingReward(reward.RewardKind))
+            State = OrbitalRewardFlowState.Applying;
+            int ringId = hoveredRing.RingId;
+            bool applied = reward.RewardKind switch
             {
-                State = OrbitalRewardFlowState.Applying;
-                int selectedRingId = selectedRing.RingId;
-                bool applied = reward.RewardKind switch
-                {
-                    OrbitalRewardKind.RingSpeed =>
-                        station.UpgradeRingSpeed(selectedRingId),
-                    OrbitalRewardKind.RingPower =>
-                        station.UpgradeRingPower(selectedRingId),
-                    OrbitalRewardKind.AddMount =>
-                        station.AddMount(selectedRingId, out _),
-                    _ => false
-                };
-                if (applied)
-                {
-                    station.Rings.FirstOrDefault(value =>
-                        value.RingId == selectedRingId)?.Pulse();
-                    station.FlashCore(new Color(0.35f, 0.9f, 1f));
-                    CompleteReward();
-                }
-                else
-                {
-                    State = OrbitalRewardFlowState.RingSelection;
-                }
+                OrbitalRewardKind.RingSpeed => station.UpgradeRingSpeed(ringId),
+                OrbitalRewardKind.RingPower => station.UpgradeRingPower(ringId),
+                OrbitalRewardKind.AddMount => ApplyAddMount(ringId),
+                _ => false
+            };
+            if (!applied)
+            {
+                State = OrbitalRewardFlowState.RingSelection;
                 return;
             }
-            State = OrbitalRewardFlowState.MountSelection;
+            station.Rings.FirstOrDefault(value => value.RingId == ringId)?.Pulse();
+            station.FlashCore(new Color(0.35f, 0.9f, 1f));
+            CompleteReward();
         }
 
-        private void SelectSecondLinkRing()
+        private void ConfirmDirectMount(bool secondLink)
         {
-            if (hoveredRing == null || !HasFreeMount(hoveredRing))
+            if (hoveredMount == null || hoveredMount.Occupied)
                 return;
-            selectedRing = hoveredRing;
-            secondLinkChoosingRing = false;
+            reservedMount = hoveredMount;
+            StartFlight(secondLink);
         }
 
-        private void SelectMount(bool secondLink)
-        {
-            if (selectedRing == null || hoveredMount == null ||
-                hoveredMount.Ring != selectedRing || hoveredMount.Occupied)
-                return;
-            OrbitalModuleKind kind = ToModuleKind(reward.RewardKind);
-            int previousNextId = station.State.NextStableModuleId;
-            if (!station.InstallModule(kind, selectedRing.RingId,
-                    hoveredMount.MountIndex, out _))
-                return;
-            int installedId = previousNextId;
-            pendingModuleId = installedId;
-            station.SetModuleRewardPresentationVisible(installedId, false);
-            if (reward.RewardKind == OrbitalRewardKind.LinkPair && !secondLink)
-                firstLinkModuleId = installedId;
-            StartFlight(hoveredMount.Transform.position, secondLink);
-        }
-
-        private void StartFlight(Vector3 destination, bool secondLink)
+        private void StartFlight(bool secondLink)
         {
             State = OrbitalRewardFlowState.ModuleFlight;
             ClearArenaVisuals();
+            station.Interaction?.ClearHint();
             station.Interaction?.SetCursor(OrbitalCursorState.Normal);
             if (flightRoutine != null)
                 StopCoroutine(flightRoutine);
-            flightRoutine = StartCoroutine(PlayFlight(destination, secondLink));
+            flightRoutine = StartCoroutine(PlayFlight(secondLink));
         }
 
-        private IEnumerator PlayFlight(Vector3 destination, bool secondLink)
+        private IEnumerator PlayFlight(bool secondLink)
         {
-            Color color = reward.RewardKind == OrbitalRewardKind.LinkPair
-                ? new Color(0.85f, 0.25f, 1f)
-                : new Color(0.35f, 0.95f, 1f);
-            GameObject visual = station.CreateModuleVisual(
-                "Orbital Reward Flight", color, Vector2.one * 0.13f);
+            OrbitalMountRuntime destinationMount = reservedMount;
+            Vector3 destination = destinationMount.Transform.position;
             Vector3 origin = station.transform.position;
             float elapsed = 0f;
             const float duration = 0.32f;
-            while (elapsed < duration && visual != null)
+            modulePreview?.SetPreviewState(true);
+            while (elapsed < duration && modulePreview != null &&
+                station != null && destinationMount.Transform != null)
             {
                 elapsed += Time.unscaledDeltaTime;
                 float t = Mathf.Clamp01(elapsed / duration);
-                visual.transform.position = Vector3.LerpUnclamped(origin,
-                    destination, 1f - Mathf.Pow(1f - t, 3f));
+                destination = destinationMount.Transform.position;
+                modulePreview.SetWorldPosition(Vector3.LerpUnclamped(origin,
+                    destination, 1f - Mathf.Pow(1f - t, 3f)));
+                modulePreview.Tick();
                 yield return null;
             }
-            if (visual != null)
-                Destroy(visual);
-            if (station != null && pendingModuleId > 0)
-                station.SetModuleRewardPresentationVisible(pendingModuleId, true);
-            pendingModuleId = 0;
+            DestroyModulePreview();
             flightRoutine = null;
-            if (reward == null)
+            if (reward == null || station == null || destinationMount == null ||
+                destinationMount.Occupied)
+            {
+                ResumeMountSelection(secondLink,
+                    "Крепление стало недоступно — выберите другое");
                 yield break;
+            }
+            OrbitalModuleKind kind = ToModuleKind(reward.RewardKind);
+            int expectedId = station.State.NextStableModuleId;
+            if (!station.InstallModule(kind, destinationMount.Ring.RingId,
+                    destinationMount.MountIndex, out string error))
+            {
+                Debug.LogWarning($"[OrbitalRewards] Direct placement failed: {error}",
+                    station);
+                ResumeMountSelection(secondLink,
+                    "Установка не удалась — выберите другое крепление");
+                yield break;
+            }
+            destinationMount.Ring.Pulse();
+            station.FlashCore(reward.RewardKind == OrbitalRewardKind.LinkPair
+                ? new Color(0.85f, 0.3f, 1f)
+                : new Color(0.35f, 0.95f, 1f));
+            reservedMount = null;
             if (reward.RewardKind == OrbitalRewardKind.LinkPair && !secondLink)
             {
+                firstLinkModuleId = expectedId;
                 State = OrbitalRewardFlowState.SecondLinkPlacement;
-                selectedRing = null;
-                secondLinkChoosingRing = true;
+                hoveredMount = null;
+                CreateModulePreview();
+                RefreshArenaPresentation();
             }
             else
-            {
                 CompleteReward();
-            }
+        }
+
+        private void ResumeMountSelection(bool secondLink, string hint)
+        {
+            reservedMount = null;
+            hoveredMount = null;
+            State = secondLink ? OrbitalRewardFlowState.SecondLinkPlacement :
+                OrbitalRewardFlowState.DirectMountSelection;
+            CreateModulePreview();
+            station?.Interaction?.ShowHint(reward?.upgradeName, hint);
         }
 
         private bool ApplyImmediate()
@@ -280,32 +263,21 @@ namespace Subject42.Combat.OrbitalStation
 
         private void HandleBack()
         {
-            if (State == OrbitalRewardFlowState.MountSelection)
-            {
-                selectedRing = null;
-                State = OrbitalRewardFlowState.RingSelection;
-                return;
-            }
-            if (State == OrbitalRewardFlowState.SecondLinkPlacement)
-            {
-                if (!secondLinkChoosingRing)
-                {
-                    selectedRing = null;
-                    secondLinkChoosingRing = true;
-                    return;
-                }
-                if (firstLinkModuleId > 0)
-                    station.RemoveModule(firstLinkModuleId);
-            }
+            if (State == OrbitalRewardFlowState.SecondLinkPlacement &&
+                firstLinkModuleId > 0)
+                station.RemoveModule(firstLinkModuleId);
             CancelToCards();
         }
 
         private void CancelToCards()
         {
-            if (pendingModuleId > 0 && station != null && station.State != null &&
-                station.State.Modules.Any(value =>
-                    value.StableModuleId == pendingModuleId))
-                station.RemoveModule(pendingModuleId);
+            if (flightRoutine != null)
+            {
+                StopCoroutine(flightRoutine);
+                flightRoutine = null;
+            }
+            DestroyModulePreview();
+            reservedMount = null;
             if (firstLinkModuleId > 0 && station != null && station.State != null &&
                 station.State.Modules.Any(value =>
                     value.StableModuleId == firstLinkModuleId))
@@ -323,32 +295,33 @@ namespace Subject42.Combat.OrbitalStation
         private void Clear(bool success)
         {
             Action callback = success ? completed : cancelled;
+            DestroyModulePreview();
             ClearArenaVisuals();
             station?.Interaction?.ClearHint();
             station?.Interaction?.SetCursor(OrbitalCursorState.Normal);
             reward = null;
-            selectedRing = null;
             hoveredRing = null;
             hoveredMount = null;
+            reservedMount = null;
             completed = null;
             cancelled = null;
             firstLinkModuleId = 0;
-            pendingModuleId = 0;
             callback?.Invoke();
         }
 
         private void UpdateHover()
         {
             hoveredRing = null;
-            hoveredMount = null;
             if (Camera.main == null)
-                return;
-            Vector3 world = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            Vector2 local = transform.InverseTransformPoint(world);
-            if (State == OrbitalRewardFlowState.RingSelection ||
-                (State == OrbitalRewardFlowState.SecondLinkPlacement &&
-                 secondLinkChoosingRing))
             {
+                hoveredMount = null;
+                return;
+            }
+            if (State == OrbitalRewardFlowState.RingSelection)
+            {
+                hoveredMount = null;
+                Vector3 world = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                Vector2 local = transform.InverseTransformPoint(world);
                 float best = 0.34f;
                 for (int i = 0; i < station.Rings.Count; i++)
                 {
@@ -362,43 +335,183 @@ namespace Subject42.Combat.OrbitalStation
                 }
                 return;
             }
-            if (selectedRing == null)
+            hoveredMount = mountResolver.Resolve(station, Camera.main,
+                Input.mousePosition, hoveredMount);
+        }
+
+        private void UpdateModulePreview()
+        {
+            if (modulePreview == null || Camera.main == null ||
+                (State != OrbitalRewardFlowState.DirectMountSelection &&
+                 State != OrbitalRewardFlowState.SecondLinkPlacement))
                 return;
-            float bestMount = 0.38f * 0.38f;
-            for (int i = 0; i < selectedRing.Mounts.Count; i++)
+            bool valid = hoveredMount != null && !hoveredMount.Occupied;
+            Vector3 mouse = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 position = valid ? hoveredMount.Transform.position : mouse;
+            modulePreview.SetWorldPosition(position);
+            if (valid)
             {
-                OrbitalMountRuntime mount = selectedRing.Mounts[i];
-                if (mount.Occupied || mount.Transform == null)
-                    continue;
-                float distance = ((Vector2)mount.Transform.position -
-                    (Vector2)world).sqrMagnitude;
-                if (distance < bestMount)
-                {
-                    bestMount = distance;
-                    hoveredMount = mount;
-                }
+                Vector2 radial = (Vector2)hoveredMount.Transform.position -
+                    (Vector2)station.transform.position;
+                modulePreview.SetWorldRotation(Mathf.Atan2(radial.y, radial.x));
             }
+            modulePreview.SetPreviewState(valid);
+            modulePreview.Tick();
+        }
+
+        private void CreateModulePreview()
+        {
+            DestroyModulePreview();
+            if (reward == null || station == null)
+                return;
+            OrbitalModuleKind kind = ToModuleKind(reward.RewardKind);
+            modulePreview = new OrbitalModuleVisual(station, kind,
+                $"{kind} Reward Preview", ModuleColor(kind));
+            modulePreview.SetPreviewState(false);
+        }
+
+        private void DestroyModulePreview()
+        {
+            modulePreview?.Teardown();
+            modulePreview = null;
         }
 
         private void DrawSecondLinkPreview()
         {
             if (State != OrbitalRewardFlowState.SecondLinkPlacement ||
-                firstLinkModuleId <= 0 || hoveredMount == null)
+                firstLinkModuleId <= 0 || Camera.main == null)
                 return;
             OrbitalModuleState first = station.State.Modules.Find(value =>
                 value.StableModuleId == firstLinkModuleId);
             OrbitalRingRuntime firstRing = first != null
                 ? station.Rings.FirstOrDefault(value =>
-                    value.RingId == first.StableRingId)
-                : null;
+                    value.RingId == first.StableRingId) : null;
             if (firstRing == null || first.MountIndex < 0 ||
-                first.MountIndex >= firstRing.Mounts.Count ||
-                firstRing.Mounts[first.MountIndex].Transform == null)
+                first.MountIndex >= firstRing.Mounts.Count)
                 return;
-            station.FlashLink(
-                firstRing.Mounts[first.MountIndex].Transform.position,
-                hoveredMount.Transform.position,
-                new Color(0.85f, 0.25f, 1f, 0.7f), 0.06f);
+            bool valid = hoveredMount != null && !hoveredMount.Occupied;
+            Vector3 mouse = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 end = valid ? hoveredMount.Transform.position : mouse;
+            station.FlashLink(firstRing.Mounts[first.MountIndex].Transform.position,
+                end, valid ? new Color(0.85f, 0.25f, 1f, 0.72f) :
+                new Color(1f, 0.18f, 0.22f, 0.55f), 0.06f);
+        }
+
+        private void RefreshArenaPresentation()
+        {
+            if (reward == null || station == null)
+                return;
+            if (State == OrbitalRewardFlowState.DirectMountSelection ||
+                State == OrbitalRewardFlowState.SecondLinkPlacement)
+                OrbitalMountInteractionPresentation.Apply(station, hoveredMount);
+            else if (State == OrbitalRewardFlowState.RingSelection)
+            {
+                for (int r = 0; r < station.Rings.Count; r++)
+                {
+                    OrbitalRingRuntime ring = station.Rings[r];
+                    bool eligible = CanUseRing(ring);
+                    ring.SetInteractionState(eligible, ring == hoveredRing,
+                        !eligible || hoveredRing != null && ring != hoveredRing);
+                    for (int m = 0; m < ring.Mounts.Count; m++)
+                    {
+                        OrbitalMountRuntime mount = ring.Mounts[m];
+                        mount.SetVisualState(mount.Occupied
+                            ? OrbitalMountRuntime.VisualState.Occupied
+                            : OrbitalMountRuntime.VisualState.Normal);
+                    }
+                }
+                UpdateAddMountPreview();
+            }
+            station.Interaction?.ShowHint(reward.upgradeName, GetHint());
+            bool valid = State == OrbitalRewardFlowState.RingSelection
+                ? hoveredRing != null
+                : hoveredMount != null && !hoveredMount.Occupied;
+            station.Interaction?.SetCursor(valid
+                ? OrbitalCursorState.ValidDrop
+                : OrbitalCursorState.InvalidDrop);
+        }
+
+        private void ClearArenaVisuals()
+        {
+            DestroyAddMountPreview();
+            OrbitalMountInteractionPresentation.Clear(station);
+        }
+
+        private bool ApplyAddMount(int ringId)
+        {
+            if (station.AddMount(ringId, out string error))
+                return true;
+            Debug.LogWarning($"[OrbitalRewards] Add Mount rejected: {error}", station);
+            return false;
+        }
+
+        private void UpdateAddMountPreview()
+        {
+            if (reward.RewardKind != OrbitalRewardKind.AddMount ||
+                hoveredRing == null || !CanUseRing(hoveredRing))
+            {
+                DestroyAddMountPreview();
+                return;
+            }
+            if (addMountPreview == null)
+            {
+                addMountPreview = station.CreateCircleVisual(
+                    "Future Orbital Mount", new Color(0.3f, 1f, 0.55f, 0.9f),
+                    Vector2.one * OrbitalPresentationConfig.Active.SelectionMountSize,
+                    15);
+            }
+            int futureCapacity = hoveredRing.MountCapacity + 1;
+            float localPhase = hoveredRing.MountCapacity * 360f / futureCapacity;
+            float radians = (hoveredRing.Phase + localPhase) * Mathf.Deg2Rad;
+            addMountPreview.transform.localPosition = new Vector3(
+                Mathf.Cos(radians) * hoveredRing.Radius,
+                Mathf.Sin(radians) * hoveredRing.Radius, 0f);
+            float pulse = 1f + 0.12f * Mathf.Sin(Time.unscaledTime * 7f);
+            addMountPreview.transform.localScale = Vector3.one *
+                OrbitalPresentationConfig.Active.SelectionMountSize * pulse;
+        }
+
+        private void DestroyAddMountPreview()
+        {
+            if (addMountPreview != null)
+                Destroy(addMountPreview);
+            addMountPreview = null;
+        }
+
+        private string GetHint()
+        {
+            if (State == OrbitalRewardFlowState.DirectMountSelection ||
+                State == OrbitalRewardFlowState.SecondLinkPlacement)
+            {
+                string step = State == OrbitalRewardFlowState.SecondLinkPlacement
+                    ? "Установите второй узел"
+                    : reward.RewardKind == OrbitalRewardKind.LinkPair
+                        ? "Установите первый узел"
+                        : "Выберите свободное крепление";
+                if (hoveredMount == null)
+                    return step + "\nНаведите оружие на свободное крепление";
+                if (hoveredMount.Occupied)
+                    return "Крепление занято";
+                return $"Кольцо {hoveredMount.Ring.State.Order + 1} · " +
+                    $"Крепление {hoveredMount.MountIndex + 1}\nЛКМ: установить";
+            }
+            if (hoveredRing == null)
+                return "Выберите подсвеченную орбиту · Esc — к карточкам";
+            OrbitalRingState ringState = hoveredRing.State;
+            return reward.RewardKind switch
+            {
+                OrbitalRewardKind.RingSpeed =>
+                    $"ОРБИТА {ringState.Order + 1}\n{hoveredRing.RotationSpeed:0.#}°/с → " +
+                    $"{hoveredRing.RotationSpeed * 1.25f:0.#}°/с",
+                OrbitalRewardKind.RingPower =>
+                    $"ОРБИТА {ringState.Order + 1} · СИЛА {ringState.PowerUpgradeLevel}\n" +
+                    $"{ringState.PowerMultiplier:0.##}× → {ringState.PowerMultiplier * 1.25f:0.##}×\n" +
+                    GetModuleList(ringState.StableRingId),
+                OrbitalRewardKind.AddMount =>
+                    $"ОРБИТА {ringState.Order + 1}\nКрепления {ringState.MountCapacity} → " +
+                    $"{ringState.MountCapacity + 1}",
+                _ => $"ОРБИТА {ringState.Order + 1}"
+            };
         }
 
         private bool CanUseRing(OrbitalRingRuntime ring)
@@ -414,12 +527,18 @@ namespace Subject42.Combat.OrbitalStation
                     ring.State.PowerUpgradeLevel < config.MaxPowerUpgradeLevel,
                 OrbitalRewardKind.AddMount =>
                     ring.State.MountCapacity < config.MaxMountsPerRing,
-                _ => HasFreeMount(ring)
+                _ => ring.Mounts.Any(mount => !mount.Occupied)
             };
         }
 
-        private static bool HasFreeMount(OrbitalRingRuntime ring) =>
-            ring != null && ring.Mounts.Any(mount => !mount.Occupied);
+        private string GetModuleList(int ringId)
+        {
+            string[] names = station.State.Modules
+                .Where(value => value.StableRingId == ringId)
+                .Select(value => value.ModuleType.ToString()).ToArray();
+            return names.Length == 0 ? "Пока без модулей" :
+                "Модули: " + string.Join(", ", names);
+        }
 
         private static bool IsRingReward(OrbitalRewardKind kind) =>
             kind == OrbitalRewardKind.RingSpeed ||
@@ -437,107 +556,33 @@ namespace Subject42.Combat.OrbitalStation
                 _ => OrbitalModuleKind.Pistol
             };
 
-        private void RefreshArenaPresentation()
+        private static Color ModuleColor(OrbitalModuleKind kind) => kind switch
         {
-            if (reward == null || station == null)
-                return;
-            bool choosingRing = State == OrbitalRewardFlowState.RingSelection ||
-                (State == OrbitalRewardFlowState.SecondLinkPlacement &&
-                 secondLinkChoosingRing);
-            bool choosingMount = State == OrbitalRewardFlowState.MountSelection ||
-                (State == OrbitalRewardFlowState.SecondLinkPlacement &&
-                 !secondLinkChoosingRing);
-            for (int r = 0; r < station.Rings.Count; r++)
-            {
-                OrbitalRingRuntime ring = station.Rings[r];
-                bool eligible = choosingRing && CanUseRing(ring);
-                ring.SetSelected(choosingMount && ring == selectedRing);
-                ring.SetInteractionState(eligible, ring == hoveredRing);
-                for (int m = 0; m < ring.Mounts.Count; m++)
-                {
-                    OrbitalMountRuntime mount = ring.Mounts[m];
-                    OrbitalMountRuntime.VisualState state;
-                    if (mount.Occupied)
-                        state = OrbitalMountRuntime.VisualState.Occupied;
-                    else if (choosingMount && ring == selectedRing)
-                        state = mount == hoveredMount
-                            ? OrbitalMountRuntime.VisualState.Hover
-                            : OrbitalMountRuntime.VisualState.Valid;
-                    else if (choosingRing && eligible && !IsRingReward(reward.RewardKind))
-                        state = OrbitalMountRuntime.VisualState.Valid;
-                    else
-                        state = OrbitalMountRuntime.VisualState.Normal;
-                    mount.SetVisualState(state);
-                }
-            }
-            station.Interaction?.ShowHint(reward.upgradeName, GetHint());
-            bool validTarget = choosingRing ? hoveredRing != null :
-                choosingMount && hoveredMount != null;
-            station.Interaction?.SetCursor(validTarget
-                ? OrbitalCursorState.ValidDrop
-                : OrbitalCursorState.InvalidDrop);
-        }
+            OrbitalModuleKind.Pistol => new Color(0.35f, 0.95f, 1f),
+            OrbitalModuleKind.LaserSword => new Color(1f, 0.25f, 0.8f),
+            OrbitalModuleKind.ImpulseGun => new Color(1f, 0.75f, 0.2f),
+            OrbitalModuleKind.ArcEmitter => new Color(0.72f, 0.3f, 1f),
+            _ => new Color(0.85f, 0.25f, 1f)
+        };
 
-        private void ClearArenaVisuals()
+        private static bool PointerOverInteractiveUi()
         {
-            if (station == null)
-                return;
-            for (int r = 0; r < station.Rings.Count; r++)
+            if (EventSystem.current == null)
+                return false;
+            PointerEventData pointer = new(EventSystem.current)
             {
-                OrbitalRingRuntime ring = station.Rings[r];
-                ring.SetSelected(false);
-                ring.SetInteractionState(false, false);
-                for (int m = 0; m < ring.Mounts.Count; m++)
-                {
-                    OrbitalMountRuntime mount = ring.Mounts[m];
-                    mount.SetVisualState(mount.Occupied
-                        ? OrbitalMountRuntime.VisualState.Occupied
-                        : OrbitalMountRuntime.VisualState.Normal);
-                }
-            }
-        }
-
-        private string GetHint()
-        {
-            if (State == OrbitalRewardFlowState.MountSelection ||
-                (State == OrbitalRewardFlowState.SecondLinkPlacement &&
-                 !secondLinkChoosingRing))
-            {
-                if (hoveredMount != null)
-                    return $"Крепление {hoveredMount.MountIndex + 1} · ЛКМ: установить";
-                return selectedRing == null
-                    ? "Выберите подсвеченную орбиту"
-                    : $"Орбита {selectedRing.State.Order + 1} · выберите зелёное крепление\nEsc — назад";
-            }
-            if (hoveredRing == null)
-            {
-                return IsRingReward(reward.RewardKind)
-                    ? "Выберите подсвеченную орбиту · Esc — к карточкам"
-                    : "Зелёные точки — доступные крепления\nСначала выберите орбиту";
-            }
-            OrbitalRingState ring = hoveredRing.State;
-            return reward.RewardKind switch
-            {
-                OrbitalRewardKind.RingSpeed =>
-                    $"ОРБИТА {ring.Order + 1}\n{hoveredRing.RotationSpeed:0.#}°/с → " +
-                    $"{hoveredRing.RotationSpeed * 1.25f:0.#}°/с",
-                OrbitalRewardKind.RingPower =>
-                    $"ОРБИТА {ring.Order + 1} · СИЛА {ring.PowerUpgradeLevel}\n" +
-                    $"{ring.PowerMultiplier:0.##}× → {ring.PowerMultiplier * 1.25f:0.##}×\n" +
-                    GetModuleList(ring.StableRingId),
-                OrbitalRewardKind.AddMount =>
-                    $"ОРБИТА {ring.Order + 1}\nКрепления {ring.MountCapacity} → {ring.MountCapacity + 1}",
-                _ => $"ОРБИТА {ring.Order + 1}\nВыберите свободное крепление"
+                position = Input.mousePosition
             };
-        }
-
-        private string GetModuleList(int ringId)
-        {
-            string[] names = station.State.Modules
-                .Where(value => value.StableRingId == ringId)
-                .Select(value => value.ModuleType.ToString()).ToArray();
-            return names.Length == 0 ? "Пока без модулей" :
-                "Модули: " + string.Join(", ", names);
+            List<RaycastResult> hits = new();
+            EventSystem.current.RaycastAll(pointer, hits);
+            for (int i = 0; i < hits.Count; i++)
+            {
+                GameObject hit = hits[i].gameObject;
+                if (hit != null && (hit.GetComponentInParent<Selectable>() != null ||
+                    hit.GetComponentInParent<ScrollRect>() != null))
+                    return true;
+            }
+            return false;
         }
 
         private void OnDisable()

@@ -76,8 +76,7 @@ public class CharacterSpawner : MonoBehaviour
         evolutionRuntime ??= player.AddComponent<EvolutionRuntimeController>();
         evolutionRuntime.Initialize(this, PrimaryWeapon);
 
-        if (CombatModeState.ActiveRunMode == CombatMode.Orbital)
-            OrbitalStationRuntime.Ensure(player);
+        OrbitalStationRuntime.Ensure(player);
 
         SpawnedPlayer = player;
         CharacterSpawned?.Invoke(player);
@@ -113,25 +112,12 @@ public class CharacterSpawner : MonoBehaviour
 
         PlayerLoadoutFactory.ApplyCharacterStats(player, selectedCharacter);
 
-        if (CombatModeState.ActiveRunMode == CombatMode.Legacy)
-        {
-            WeaponData selectedWeapon = GetSelectedWeapon();
-            SetPrimaryWeapon(PlayerLoadoutFactory.SpawnWeapon(
-                player,
-                selectedWeapon,
-                CombatType,
-                weaponPointName));
-            PlayerWeaponOrbitVisual.Ensure(player, PrimaryWeapon);
-        }
-        else
-        {
-            DisableAllLegacyWeapons(player);
-            SetPrimaryWeapon(null);
-            PlayerWeaponOrbitVisual orbitVisual =
-                player.GetComponent<PlayerWeaponOrbitVisual>();
-            if (orbitVisual != null)
-                orbitVisual.enabled = false;
-        }
+        DisableAllLegacyWeapons(player);
+        SetPrimaryWeapon(null);
+        PlayerWeaponOrbitVisual orbitVisual =
+            player.GetComponent<PlayerWeaponOrbitVisual>();
+        if (orbitVisual != null)
+            orbitVisual.enabled = false;
 
         return player;
     }
@@ -193,49 +179,6 @@ public class CharacterSpawner : MonoBehaviour
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-    public bool DebugApplyCombatMode(CombatMode mode)
-    {
-        if (SpawnedPlayer == null)
-            return false;
-
-        CombatModeState.DebugApplyToCurrentRun(mode);
-        if (mode == CombatMode.Orbital)
-        {
-            DisableAllLegacyWeapons(SpawnedPlayer);
-            SetPrimaryWeapon(null);
-            PlayerWeaponOrbitVisual orbitVisual =
-                SpawnedPlayer.GetComponent<PlayerWeaponOrbitVisual>();
-            if (orbitVisual != null)
-                orbitVisual.enabled = false;
-            OrbitalStationRuntime.Ensure(SpawnedPlayer);
-            return true;
-        }
-
-        OrbitalStationRuntime station =
-            SpawnedPlayer.GetComponent<OrbitalStationRuntime>();
-        if (station != null)
-        {
-            station.Teardown();
-            Destroy(station);
-        }
-
-        OrbitalLegacyPresentationAdapter.Ensure(SpawnedPlayer).EnterLegacy();
-
-        BaseWeapon legacy = FindDebugPrimaryWeapon(SpawnedPlayer);
-        if (legacy != null)
-            legacy.gameObject.SetActive(true);
-        else
-            legacy = PlayerLoadoutFactory.SpawnWeapon(
-                SpawnedPlayer, GetSelectedWeapon(), CombatType, weaponPointName);
-
-        SetPrimaryWeapon(legacy);
-        PlayerWeaponOrbitVisual visual =
-            PlayerWeaponOrbitVisual.Ensure(SpawnedPlayer, PrimaryWeapon);
-        if (visual != null)
-            visual.enabled = true;
-        return PrimaryWeapon != null;
-    }
-
     public void ConfigureDebugDefaults(
         CharacterData character,
         WeaponData weapon,

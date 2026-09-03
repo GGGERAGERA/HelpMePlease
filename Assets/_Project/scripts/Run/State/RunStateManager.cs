@@ -195,14 +195,7 @@ public sealed class RunStateManager : MonoBehaviour
         WeaponData weapon,
         AnomalyStabilizerData anomalyStabilizer)
     {
-        CombatModeState.LatchForNewRun();
-        if (CombatModeState.ActiveRunMode == CombatMode.Orbital)
-            ResetOrbitalRunState();
-        else
-        {
-            OrbitalStationState = null;
-            warnedInvalidOrbitalState = false;
-        }
+        ResetOrbitalRunState();
         FindFirstObjectByType<DoubleOrLeave>()?.ResetState();
 
         ClearCurrentSector();

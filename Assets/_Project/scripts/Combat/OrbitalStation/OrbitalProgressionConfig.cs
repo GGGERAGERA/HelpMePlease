@@ -13,7 +13,7 @@ namespace Subject42.Combat.OrbitalStation
 
         public int[] RingMilestoneLevels = { 2, 3, 4, 6, 8, 10, 13 };
         public int MaxNormalRings = 8;
-        public int MaxMountsPerRing = 6;
+        public int MaxMountsPerRing = 4;
         public int MaxSpeedUpgradeLevel = 4;
         public int MaxPowerUpgradeLevel = 4;
         public int MaxCoreLevel = 3;
