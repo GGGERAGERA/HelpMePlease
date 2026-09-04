@@ -25,6 +25,7 @@ namespace Subject42.Combat.OrbitalStation
         public OrbitalMountRuntime CurrentMount => Mount;
         public int StableModuleId { get; }
         public Vector2 WorldPosition => Visual != null ? Visual.transform.position : Vector2.zero;
+        public float PresentationReach => presentation.FramingReach;
         internal float RuntimeCooldown
         {
             get => Cooldown;

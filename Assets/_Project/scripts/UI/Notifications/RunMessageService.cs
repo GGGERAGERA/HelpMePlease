@@ -8,6 +8,7 @@ public sealed class RunMessageService : MonoBehaviour
     public static RunMessageService Instance { get; private set; }
 
     [SerializeField] private RunMessageView view;
+    public RunMessageView View => view;
     [SerializeField] private RunMessageData[] messages;
 
     private void Awake()
@@ -53,8 +54,7 @@ public sealed class RunMessageService : MonoBehaviour
                 runState.CurrentSector.SectorNumber
             );
 
-        ShowCustom(
-            string.Empty,
+        view?.ShowStartupHint(
             exploration
                 ? "WASD — ДВИЖЕНИЕ\n" +
                   "ИССЛЕДУЙТЕ ANOMALY SITES ИЛИ СРАЗУ ИДИТЕ К EXIT\n" +
@@ -62,8 +62,7 @@ public sealed class RunMessageService : MonoBehaviour
                 : "WASD — ДВИЖЕНИЕ\n" +
                   "ОРУЖИЕ СТРЕЛЯЕТ АВТОМАТИЧЕСКИ\n" +
                   "ПОБЕДИТЕ БОССА",
-            FirstRunHintDuration,
-            true
+            FirstRunHintDuration
         );
 
         float visibleTime = 0f;

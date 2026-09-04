@@ -1,4 +1,5 @@
 using UnityEngine;
+using Subject42.Combat.OrbitalStation;
 
 public class CameraFollow : MonoBehaviour
 {
@@ -22,6 +23,11 @@ public class CameraFollow : MonoBehaviour
     private float productionOrthographicSize;
     private float debugOrthographicSize = -1f;
     private bool productionOrthographicSizeCaptured;
+    private OrbitalStationRuntime orbitalStation;
+    private Transform orbitalTarget;
+    private float framedSize;
+    private float framingVelocity;
+    public float FramedOrthographicSize => framedSize > 0f ? framedSize : normalOrthographicSize;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private Vector3 mouseLookAheadOffset;
     private Vector3 appliedMouseLookAheadOffset;
@@ -228,7 +234,7 @@ public class CameraFollow : MonoBehaviour
         ResolveCamera();
         if (!hasFocusSession)
         {
-            if (controlledCamera != null && controlledCamera.orthographic)
+            if (controlledCamera != null && controlledCamera.orthographic && framedSize <= 0f)
                 normalOrthographicSize = controlledCamera.orthographicSize;
 
             hasFocusSession = true;
@@ -345,17 +351,61 @@ public class CameraFollow : MonoBehaviour
             if (debugOrthographicSize > 0f)
             {
                 normalOrthographicSize = debugOrthographicSize;
-                controlledCamera.orthographicSize = debugOrthographicSize;
             }
             else
             {
-                normalOrthographicSize = controlledCamera.orthographicSize;
+                if (framedSize <= 0f)
+                    normalOrthographicSize = controlledCamera.orthographicSize;
             }
+            ApplyOrbitalFraming(normalOrthographicSize);
             return;
         }
 
         float focusedSize = normalOrthographicSize * focusZoomMultiplier;
-        controlledCamera.orthographicSize = Mathf.Lerp(normalOrthographicSize, focusedSize, Ease(focusBlend));
+        ApplyOrbitalFraming(Mathf.Lerp(normalOrthographicSize, focusedSize, Ease(focusBlend)));
+    }
+
+    private void ApplyOrbitalFraming(float baseSize)
+    {
+        if (orbitalTarget != target || orbitalStation == null)
+        {
+            orbitalTarget = target;
+            orbitalStation = target != null ? target.GetComponentInChildren<OrbitalStationRuntime>() : null;
+        }
+        bool available = orbitalStation != null && orbitalStation.IsInitialized;
+        if (!available && framedSize <= 0f)
+        {
+            controlledCamera.orthographicSize = baseSize;
+            return;
+        }
+        float desired = baseSize;
+        if (available)
+        {
+            // Full orbit envelope avoids zoom breathing as modules rotate or turrets aim.
+            float radius = orbitalStation.PresentationRadius + .12f;
+            desired = Mathf.Max(desired, baseSize + Mathf.Max(0f, radius - baseSize * .25f) * .3f,
+                radius / .67f); // Conservative orbit envelope leaves the visible silhouette near 60%.
+            Rect pixels = controlledCamera.pixelRect;
+            Rect safe = HUDManager.Instance != null
+                ? HUDManager.Instance.GetOrbitalSafePixelRect(controlledCamera)
+                : pixels;
+            Vector3 delta = orbitalStation.transform.position - controlledCamera.transform.position;
+            float dx = Vector3.Dot(delta, controlledCamera.transform.right);
+            float dy = Vector3.Dot(delta, controlledCamera.transform.up);
+            float left = (safe.xMin - pixels.xMin) / pixels.width;
+            float right = (safe.xMax - pixels.xMin) / pixels.width;
+            float bottom = (safe.yMin - pixels.yMin) / pixels.height;
+            float top = (safe.yMax - pixels.yMin) / pixels.height;
+            desired = Mathf.Max(desired,
+                (radius - dx) / (2f * controlledCamera.aspect * Mathf.Max(.05f, .5f - left)),
+                (radius + dx) / (2f * controlledCamera.aspect * Mathf.Max(.05f, right - .5f)),
+                (radius - dy) / (2f * Mathf.Max(.05f, .5f - bottom)),
+                (radius + dy) / (2f * Mathf.Max(.05f, top - .5f)));
+        }
+        if (framedSize <= 0f) framedSize = controlledCamera.orthographicSize;
+        framedSize = Mathf.SmoothDamp(framedSize, desired, ref framingVelocity,
+            .55f, Mathf.Infinity, Time.unscaledDeltaTime);
+        controlledCamera.orthographicSize = framedSize;
     }
 
     private void OnDisable()
@@ -366,6 +416,9 @@ public class CameraFollow : MonoBehaviour
 #endif
         EndWorldBoundsFocus(worldBoundsOwner);
         RestoreNormalZoom();
+        framedSize = 0f;
+        framingVelocity = 0f;
+        orbitalStation = null;
         hasFocusSession = false;
         focusBlend = 0f;
         focusBlendTarget = 0f;
@@ -376,7 +429,7 @@ public class CameraFollow : MonoBehaviour
     private void RestoreNormalZoom()
     {
         if (controlledCamera != null && controlledCamera.orthographic && normalOrthographicSize > 0f)
-            controlledCamera.orthographicSize = normalOrthographicSize;
+            controlledCamera.orthographicSize = framedSize > 0f ? framedSize : normalOrthographicSize;
     }
 
     private void CaptureProductionOrthographicSize()

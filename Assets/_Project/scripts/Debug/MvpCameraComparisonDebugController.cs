@@ -60,7 +60,9 @@ public sealed class MvpCameraComparisonDebugController : MonoBehaviour
         if (activeCamera == null || !activeCamera.orthographic)
             return;
 
-        activeCamera.orthographicSize = size;
+        CameraFollow follow = activeCamera.GetComponentInParent<CameraFollow>();
+        if (follow != null) follow.SetDebugOrthographicSize(size);
+        else activeCamera.orthographicSize = size;
         Debug.Log(
             "DEBUG CAMERA SIZE: " +
             size.ToString("0.0", CultureInfo.InvariantCulture)

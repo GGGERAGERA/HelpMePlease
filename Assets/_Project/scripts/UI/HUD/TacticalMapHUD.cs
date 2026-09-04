@@ -55,6 +55,7 @@ public sealed class TacticalMapHUD : MonoBehaviour
     [SerializeField] private bool visibleByDefault = true;
 
     [SerializeField] private RectTransform mapRoot;
+    public RectTransform LayoutRoot => mapRoot;
     [SerializeField] private RectTransform mapFrame;
     [SerializeField] private RectTransform projectionRoot;
     [SerializeField] private RectTransform anomalyRoot;

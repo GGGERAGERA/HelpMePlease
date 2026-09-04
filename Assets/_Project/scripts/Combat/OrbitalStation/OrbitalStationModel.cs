@@ -255,8 +255,6 @@ namespace Subject42.Combat.OrbitalStation
             switch (state)
             {
                 case VisualState.Occupied:
-                    color = new Color(1f, 0.24f, 0.22f, 0.22f);
-                    size *= 0.7f;
                     break;
                 case VisualState.Hover:
                     color.a = config.HoverAlpha;
@@ -264,10 +262,10 @@ namespace Subject42.Combat.OrbitalStation
                     showHalo = true;
                     break;
                 case VisualState.Valid:
-                    color = new Color(0.28f, 0.92f, 0.62f, 0.8f);
+                    color = new Color(0.38f, 1f, 0.72f, 0.95f);
                     size = config.SelectionMountSize * 0.82f *
                         (1f + 0.025f * Mathf.Sin(Time.unscaledTime * 6f));
-                    showHalo = false;
+                    showHalo = true;
                     break;
                 case VisualState.ValidHover:
                     color = new Color(0.32f, 1f, 0.48f, 1f);
@@ -285,10 +283,12 @@ namespace Subject42.Combat.OrbitalStation
                     break;
             }
             marker.transform.localScale = Vector3.one * size;
+            marker.enabled = state != VisualState.Occupied;
             marker.color = color;
             halo.enabled = showHalo;
             halo.transform.localScale = Vector3.one * config.HaloSize;
-            halo.color = new Color(color.r, color.g, color.b, 0.2f);
+            halo.color = new Color(color.r, color.g, color.b,
+                state == VisualState.Valid ? 0.12f : 0.2f);
         }
 
         public void Teardown()

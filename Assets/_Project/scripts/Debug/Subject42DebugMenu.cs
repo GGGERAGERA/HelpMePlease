@@ -388,6 +388,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private string lastUpgradeResult;
     private string lastAnomalyGrantResult;
     private string lastOrbitalStateResult;
+    private OrbitalStationRuntime.GrowthPreset nextOrbitalGrowthPreset;
 
     private readonly List<LevelAnomalyController.LocalAnomalyZoneGeometry>
         activeAnomalyZones = new();
@@ -2607,6 +2608,17 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 ? $"CORE {station.Core.Level} / RINGS {station.Rings.Count} / MODULES {station.Modules.Count}"
                 : "NOT ACTIVE",
             available ? successColor : mutedColor, string.Empty, false, null);
+        bool canLoadGrowth = available &&
+            (UpgradeManager.Instance == null || UpgradeManager.Instance.IsRewardQueueIdle);
+        AddSectionTitle("GROWTH TEST", "Explicit dev reset / production state + restore");
+        AddRow("BEGINNING", "1 RING / 3 MOUNTS / 1 PISTOL", accentColor,
+            "LOAD", canLoadGrowth, () => LoadOrbitalGrowthPreset(station, OrbitalStationRuntime.GrowthPreset.Beginning));
+        AddRow("MID", "4 RINGS / 12 MOUNTS / 8 MODULES", accentColor,
+            "LOAD", canLoadGrowth, () => LoadOrbitalGrowthPreset(station, OrbitalStationRuntime.GrowthPreset.Mid));
+        AddRow("FINAL", "8 RINGS / 24 MOUNTS / 16 MODULES / 2 LINK PAIRS", accentColor,
+            "LOAD", canLoadGrowth, () => LoadOrbitalGrowthPreset(station, OrbitalStationRuntime.GrowthPreset.Final));
+        AddRow("BEGINNING → MID → FINAL", $"NEXT: {nextOrbitalGrowthPreset.ToString().ToUpperInvariant()}",
+            accentColor, "NEXT", canLoadGrowth, () => LoadOrbitalGrowthPreset(station, nextOrbitalGrowthPreset));
         AddRow("Placement", available ? station.PlacementStatus : "NOT ACTIVE",
             available && station.PlacementStatus != "READY" ? warningColor : mutedColor,
             string.Empty, false, null);
@@ -2828,6 +2840,20 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddSliderRow("Throw Drag", visual.TelekinesisThrowDrag,
             0f, 10f, value => visual.TelekinesisThrowDrag = value, "0.0");
         AddHint("Number keys 1-9 select a ring. Module placement closes F1 so arena clicks remain explicit.");
+    }
+
+    private void LoadOrbitalGrowthPreset(OrbitalStationRuntime station,
+        OrbitalStationRuntime.GrowthPreset preset)
+    {
+        if (station.DebugApplyGrowthPreset(preset))
+        {
+            lastOrbitalStateResult = $"GROWTH {preset.ToString().ToUpperInvariant()}";
+            nextOrbitalGrowthPreset = (OrbitalStationRuntime.GrowthPreset)(((int)preset + 1) % 3);
+            CloseMenu();
+        }
+        else
+            lastOrbitalStateResult = "GROWTH RESET UNAVAILABLE / WAIT FOR REWARD IDLE";
+        RefreshCurrentTab();
     }
 
     private void AddOrbitalModuleRow(string label, OrbitalModuleKind kind,

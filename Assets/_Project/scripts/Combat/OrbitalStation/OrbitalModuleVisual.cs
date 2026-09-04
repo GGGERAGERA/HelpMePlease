@@ -25,6 +25,28 @@ namespace Subject42.Combat.OrbitalStation
         public GameObject GameObject => root;
         public Transform Transform => root.transform;
 
+        // Rotation-independent envelope of the authored sprites, excluding selection halos.
+        public float FramingReach
+        {
+            get
+            {
+                float reach = 0f;
+                foreach (var sprite in sprites)
+                {
+                    if (sprite == null || sprite == halo || !sprite.enabled) continue;
+                    Bounds b = sprite.localBounds;
+                    for (int x = -1; x <= 1; x += 2)
+                        for (int y = -1; y <= 1; y += 2)
+                        {
+                            Vector3 corner = b.center + Vector3.Scale(b.extents, new Vector3(x, y, 0f));
+                            reach = Mathf.Max(reach, Vector2.Distance(root.transform.position,
+                                sprite.transform.TransformPoint(corner)));
+                        }
+                }
+                return reach;
+            }
+        }
+
         public OrbitalModuleVisual(OrbitalStationRuntime station,
             OrbitalModuleKind kind, string name, Color fallbackColor)
         {

@@ -34,7 +34,7 @@ namespace Subject42.Combat.OrbitalStation
         [Header("Mount readability")]
         [Min(0.05f)] public float NormalMountSize = 0.18f;
         [Min(0.05f)] public float SelectionMountSize = 0.30f;
-        [Range(0f, 1f)] public float NormalAlpha = 0.9f;
+        [Range(0f, 1f)] public float NormalAlpha = 0.48f;
         [Range(0f, 1f)] public float HoverAlpha = 1f;
         [Min(0.05f)] public float HaloSize = 0.38f;
         [Range(0f, 1f)] public float RingLineAlpha = 0.52f;

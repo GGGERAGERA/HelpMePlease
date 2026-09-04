@@ -59,6 +59,61 @@ public class HUDManager : MonoBehaviour
     private RunStateManager runStateManager;
     private int lastDisplayedTimerSecond = int.MinValue;
     private ThreatTier? lastDisplayedThreatTier;
+    private readonly Vector3[] framingCorners = new Vector3[4];
+
+    // Screen-space allowance from the existing authored HUD; never moves the player/station.
+    public Rect GetOrbitalSafePixelRect(Camera camera, bool includeMessage = true)
+    {
+        Rect pixels = camera.pixelRect;
+        Rect device = Screen.safeArea;
+        Rect safe = Rect.MinMaxRect(Mathf.Max(pixels.xMin, device.xMin), Mathf.Max(pixels.yMin, device.yMin),
+            Mathf.Min(pixels.xMax, device.xMax), Mathf.Min(pixels.yMax, device.yMax));
+        float padding = pixels.height * .015f;
+        void Reserve(Component component, bool bottom)
+        {
+            if (component == null || !component.gameObject.activeInHierarchy || component.transform is not RectTransform rect) return;
+            Canvas canvas = rect.GetComponentInParent<Canvas>();
+            Camera uiCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+            rect.GetWorldCorners(framingCorners);
+            float min = float.PositiveInfinity, max = float.NegativeInfinity;
+            foreach (var corner in framingCorners)
+            {
+                float y = RectTransformUtility.WorldToScreenPoint(uiCamera, corner).y;
+                min = Mathf.Min(min, y); max = Mathf.Max(max, y);
+            }
+            if (bottom && max < pixels.center.y) safe.yMin = Mathf.Max(safe.yMin, max + padding);
+            if (!bottom && min > pixels.center.y) safe.yMax = Mathf.Min(safe.yMax, min - padding);
+        }
+        Reserve(experienceSlider, true);
+        Reserve(dashCooldownView, true);
+        Reserve(anomalySlot, true);
+        Reserve(routeProgressView, false);
+        if (bossHpPanel != null && bossHpPanel.activeInHierarchy) Reserve(bossHpPanel.transform, false);
+        if (includeMessage && runMessageView != null && runMessageView.IsPanelVisible)
+            Reserve(runMessageView, false);
+        var startup = RunMessageService.Instance != null ? RunMessageService.Instance.View : null;
+        if (includeMessage && startup != null && startup.IsPanelVisible) Reserve(startup, false);
+        void ReserveSide(Component component, bool left)
+        {
+            if (component == null || !component.gameObject.activeInHierarchy || component.transform is not RectTransform rect) return;
+            Canvas canvas = rect.GetComponentInParent<Canvas>();
+            Camera uiCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+            rect.GetWorldCorners(framingCorners);
+            float min = float.PositiveInfinity, max = float.NegativeInfinity;
+            foreach (var corner in framingCorners)
+            {
+                float x = RectTransformUtility.WorldToScreenPoint(uiCamera, corner).x;
+                min = Mathf.Min(min, x); max = Mathf.Max(max, x);
+            }
+            if (left && max < pixels.center.x) safe.xMin = Mathf.Max(safe.xMin, max + padding);
+            if (!left && min > pixels.center.x) safe.xMax = Mathf.Min(safe.xMax, min - padding);
+        }
+        ReserveSide(healthSlider, true);
+        ReserveSide(threatPanel, true);
+        ReserveSide(anomalySlot, true);
+        if (tacticalMap != null) ReserveSide(tacticalMap.LayoutRoot, false);
+        return safe;
+    }
 
     private void Awake()
     {

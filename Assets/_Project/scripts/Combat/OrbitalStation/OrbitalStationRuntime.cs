@@ -45,6 +45,18 @@ namespace Subject42.Combat.OrbitalStation
         public IReadOnlyList<OrbitalModuleRuntime> Modules => modules;
         public OrbitalRingRuntime SelectedRing => selectedRing;
         public bool IsInitialized => initialized;
+        public float PresentationRadius
+        {
+            get
+            {
+                float radius = 0f;
+                foreach (var ring in rings) radius = Mathf.Max(radius, ring.Radius);
+                foreach (var module in modules)
+                    if (module.CurrentMount != null)
+                        radius = Mathf.Max(radius, module.CurrentMount.Ring.Radius + module.PresentationReach);
+                return radius;
+            }
+        }
         // Transient module previews, drag and interaction lines share this authored parent.
         internal Transform RuntimeRoot => authoredView.InteractionRoot;
         internal Material VisualMaterial => lineMaterial;
@@ -324,42 +336,68 @@ namespace Subject42.Combat.OrbitalStation
                 FlashCore(new Color(0.75f, 0.25f, 1f));
                 RunMessageService.Instance?.ShowCustom(string.Empty,
                     $"ТЕЛЕКИНЕТИЧЕСКИЙ УРОВЕНЬ: {State.Rings.Count}", 1.35f);
-                StartCoroutine(CompensateCameraForRadius(ring.Radius));
             });
             return true;
         }
 
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        public void ApplyPresetStart()
-        {
-            if (runStateManager == null)
-                return;
-            State = runStateManager.DebugResetOrbitalRunState();
-            RebuildRuntimeFromState();
-        }
+        public enum GrowthPreset { Beginning, Mid, Final }
 
-        public void ApplyPresetMid()
-        {
-            ResetStation();
-            OrbitalRingState second = AddRing();
-            InstallFirstFree(rings[0].State, OrbitalModuleKind.LaserSword);
-            InstallFirstFree(second, OrbitalModuleKind.ArcEmitter);
-            UpgradeCore();
-        }
+        public void ApplyPresetStart() => DebugApplyGrowthPreset(GrowthPreset.Beginning);
 
-        public void ApplyPresetFinal()
+        public void ApplyPresetMid() => DebugApplyGrowthPreset(GrowthPreset.Mid);
+
+        public void ApplyPresetFinal() => DebugApplyGrowthPreset(GrowthPreset.Final);
+
+        // Explicit dev reset only. Build authoritative state with production operations,
+        // then restore authored presentation once; no rewards, levels or camera overrides.
+        public bool DebugApplyGrowthPreset(GrowthPreset preset)
         {
-            ApplyPresetMid();
-            OrbitalRingState third = AddRing();
-            InstallFirstFree(rings[0].State, OrbitalModuleKind.LinkNode);
-            InstallFirstFree(rings[1].State, OrbitalModuleKind.LinkNode);
-            InstallFirstFree(third, OrbitalModuleKind.ImpulseGun);
-            SelectRing(rings[0]);
-            UpgradeSelectedRingPower();
-            SelectRing(rings[1]);
-            UpgradeSelectedRingSpeed();
-            UpgradeCore();
+            if (runStateManager == null || !System.Enum.IsDefined(typeof(GrowthPreset), preset) ||
+                (UpgradeManager.Instance != null && !UpgradeManager.Instance.IsRewardQueueIdle))
+                return false;
+
+            Teardown();
+            OrbitalRunState state = runStateManager.DebugResetOrbitalRunState();
+            int ringCount = preset == GrowthPreset.Beginning ? 1 :
+                preset == GrowthPreset.Mid ? 4 : 8;
+            while (state.Rings.Count < ringCount)
+                if (state.AddRing() == null)
+                    throw new System.InvalidOperationException("Growth preset: AddRing rejected");
+
+            void Install(int ringOrder, int mount, OrbitalModuleKind kind)
+            {
+                if (!state.InstallModule(kind, state.Rings[ringOrder].StableRingId, mount, out _))
+                    throw new System.InvalidOperationException($"Growth preset: {kind} at {ringOrder}:{mount} rejected");
+            }
+            void Link(int ringA, int mountA, int ringB, int mountB)
+            {
+                if (!state.InstallLinkPair(state.Rings[ringA].StableRingId, mountA,
+                        state.Rings[ringB].StableRingId, mountB, out _, out _, out string error))
+                    throw new System.InvalidOperationException($"Growth preset: Link pair rejected: {error}");
+            }
+
+            if (ringCount >= 4)
+            {
+                Install(0, 2, OrbitalModuleKind.LaserSword);
+                Install(1, 1, OrbitalModuleKind.ImpulseGun);
+                Install(2, 2, OrbitalModuleKind.ArcEmitter);
+                Install(2, 0, OrbitalModuleKind.Pistol);
+                Install(3, 0, OrbitalModuleKind.LaserSword);
+                Link(1, 0, 3, 2);
+            }
+            if (ringCount == 8)
+            {
+                Install(4, 1, OrbitalModuleKind.ArcEmitter);
+                Install(4, 2, OrbitalModuleKind.ImpulseGun);
+                Install(5, 0, OrbitalModuleKind.LaserSword);
+                Install(6, 1, OrbitalModuleKind.Pistol);
+                Install(6, 0, OrbitalModuleKind.ArcEmitter);
+                Install(7, 2, OrbitalModuleKind.ImpulseGun);
+                Link(5, 2, 7, 1);
+            }
+            return RebuildRuntimeFromState();
         }
 
         public void ApplyReadabilityTestPreset()
@@ -747,26 +785,6 @@ namespace Subject42.Combat.OrbitalStation
                 lineMaterial, sharedCircleSprite, animateSpawn);
             rings.Add(ring);
             return ring;
-        }
-
-        private System.Collections.IEnumerator CompensateCameraForRadius(
-            float radius)
-        {
-            Camera camera = Camera.main;
-            if (camera == null || !camera.orthographic)
-                yield break;
-            float start = camera.orthographicSize;
-            float target = Mathf.Max(start, radius + 1.6f);
-            float elapsed = 0f;
-            const float duration = 0.45f;
-            while (elapsed < duration && camera != null)
-            {
-                elapsed += Time.unscaledDeltaTime;
-                float t = Mathf.Clamp01(elapsed / duration);
-                camera.orthographicSize = Mathf.Lerp(start, target,
-                    1f - Mathf.Pow(1f - t, 3f));
-                yield return null;
-            }
         }
 
         private void SelectRing(OrbitalRingRuntime ring)
