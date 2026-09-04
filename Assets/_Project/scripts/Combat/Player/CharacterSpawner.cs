@@ -64,7 +64,6 @@ public class CharacterSpawner : MonoBehaviour
             RunStateManager.Instance.ApplyToSpawnedPlayer(player, upgradeApplier);
 
         AnomalyPowerRuntime.ApplyRunLoadout(player);
-        AnomalySlotHUD.EnsureExists();
 
         AnomalyCoreRuntime coreRuntime =
             player.GetComponent<AnomalyCoreRuntime>();
@@ -81,6 +80,26 @@ public class CharacterSpawner : MonoBehaviour
         SpawnedPlayer = player;
         CharacterSpawned?.Invoke(player);
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    [ContextMenu("Debug/Start default run if missing")]
+    public void DebugStartDefaultRunIfMissing()
+    {
+        if (!Application.isPlaying)
+            return;
+        RunStateManager manager = RunStateManager.EnsureExists();
+        if (manager.OrbitalStationState != null)
+            return;
+        Debug.Log("[CharacterSpawner] Explicit development bootstrap: default ORBITAL state for direct scene launch.", this);
+        manager.DebugResetOrbitalRunState();
+        if (SpawnedPlayer != null)
+        {
+            OrbitalStationRuntime station = SpawnedPlayer.GetComponentInChildren<OrbitalStationRuntime>(true);
+            if (station != null) station.RebuildRuntimeFromState();
+            else OrbitalStationRuntime.Ensure(SpawnedPlayer);
+        }
+    }
+#endif
 
     private GameObject SpawnCharacter()
     {
@@ -102,8 +121,12 @@ public class CharacterSpawner : MonoBehaviour
 
         Vector3 spawnPosition = spawnPoint != null ? spawnPoint.position : transform.position;
 
+        var config = OrbitalPresentationConfig.Active;
+        GameObject productionPrefab = config != null ? config.GetPlayerPrefab(selectedCharacter.characterPrefab) : null;
+        if (productionPrefab == null)
+        { Debug.LogError($"[CharacterSpawner] Required ORBITAL variant missing for {selectedCharacter.name}"); return null; }
         GameObject player = Instantiate(
-            selectedCharacter.characterPrefab,
+            productionPrefab,
             spawnPosition,
             Quaternion.identity
         );
@@ -112,7 +135,6 @@ public class CharacterSpawner : MonoBehaviour
 
         PlayerLoadoutFactory.ApplyCharacterStats(player, selectedCharacter);
 
-        DisableAllLegacyWeapons(player);
         SetPrimaryWeapon(null);
         PlayerWeaponOrbitVisual orbitVisual =
             player.GetComponent<PlayerWeaponOrbitVisual>();
@@ -169,13 +191,6 @@ public class CharacterSpawner : MonoBehaviour
                 : null;
         orbitVisual?.Bind(weapon);
         PrimaryWeaponChanged?.Invoke(weapon);
-    }
-
-    private static void DisableAllLegacyWeapons(GameObject player)
-    {
-        if (player == null)
-            return;
-        OrbitalLegacyPresentationAdapter.Ensure(player).EnterOrbital();
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

@@ -107,8 +107,6 @@ namespace Subject42.Combat.OrbitalStation
                 return new List<OrbitalRewardData>();
             int freeMounts = state.Rings.Sum(ring => ring.MountCapacity) -
                 state.Modules.Count;
-            int linkNodes = state.Modules.Count(module =>
-                module.ModuleType == OrbitalModuleKind.LinkNode);
             RunItemSlots slots = RunStateManager.Instance?.ItemSlots;
             List<OrbitalRewardData> result = new();
             for (int i = 0; i < definitions.Count; i++)
@@ -125,18 +123,16 @@ namespace Subject42.Combat.OrbitalStation
                         IsModuleUnlocked(OrbitalModuleKind.ImpulseGun),
                     OrbitalRewardKind.LinkPair => freeMounts >= 2,
                     OrbitalRewardKind.ModuleDamage => state.Modules.Any(module =>
-                        module.ModuleType != OrbitalModuleKind.LinkNode),
+                        state.CanUpgradeModuleDamage(module.StableModuleId, out _)),
                     OrbitalRewardKind.RingSpeed => state.Rings.Any(ring =>
-                        ring.SpeedUpgradeLevel < config.MaxSpeedUpgradeLevel),
+                        state.CanUpgradeRingSpeed(ring.StableRingId, out _)),
                     OrbitalRewardKind.RingPower => state.Rings.Any(ring =>
-                        ring.PowerUpgradeLevel < config.MaxPowerUpgradeLevel),
+                        state.CanUpgradeRingPower(ring.StableRingId, out _)),
                     OrbitalRewardKind.AddMount => state.Rings.Any(ring =>
-                        ring.MountCapacity < config.MaxMountsPerRing),
+                        state.CanAddMount(ring.StableRingId, out _)),
                     OrbitalRewardKind.CoreUpgrade =>
-                        state.CoreState.Level < config.MaxCoreLevel,
-                    OrbitalRewardKind.LinkMatrix => linkNodes >= 2 &&
-                        state.CoreState.LinkMatrixUpgradeLevel <
-                        config.MaxLinkMatrixLevel,
+                        state.CanUpgradeCore(out _),
+                    OrbitalRewardKind.LinkMatrix => state.CanUpgradeLinkMatrix(out _),
                     OrbitalRewardKind.MaxHealth => CanTakeBody(
                         reward.BodyUpgrade, slots),
                     OrbitalRewardKind.MoveSpeed => CanTakeBody(

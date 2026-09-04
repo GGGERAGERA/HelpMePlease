@@ -53,6 +53,8 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private RunMessageView runMessageView;
     [Header("Tactical Map")]
     [SerializeField] private TacticalMapHUD tacticalMap;
+    [SerializeField] private AnomalySlotHUD anomalySlot;
+    [SerializeField] private WorldLootRewardReel lootReel;
     private RunStatsManager runStatsManager;
     private RunStateManager runStateManager;
     private int lastDisplayedTimerSecond = int.MinValue;
@@ -68,14 +70,15 @@ public class HUDManager : MonoBehaviour
         if (bossHpPanel != null)
             bossHpPanel.SetActive(false);
 
-        if (tacticalMap == null)
-            tacticalMap = GetComponent<TacticalMapHUD>();
-
-        if (tacticalMap == null)
-            tacticalMap = gameObject.AddComponent<TacticalMapHUD>();
+        if (tacticalMap == null || anomalySlot == null || lootReel == null ||
+            threatPanel == null || threatLevelText == null || threatValueText == null || threatFill == null)
+        {
+            Debug.LogError("[HUDManager] Authored map, anomaly, loot or threat references are missing.", this);
+            enabled = false;
+            return;
+        }
 
         HideLowHpVignette();
-        EnsureThreatView();
     }
 
     private void Start()
@@ -163,7 +166,6 @@ public class HUDManager : MonoBehaviour
 
     public void SetThreat(float value, ThreatTier tier)
     {
-        EnsureThreatView();
 
         if (threatPanel == null)
             return;
@@ -195,136 +197,6 @@ public class HUDManager : MonoBehaviour
             max.x = clampedValue / 100f;
             threatFill.anchorMax = max;
         }
-    }
-
-    private void EnsureThreatView()
-    {
-        if (threatPanel != null)
-        {
-            ConfigureThreatPanelRect();
-            return;
-        }
-
-        GameObject panelObject = new(
-            "ThreatPanel",
-            typeof(RectTransform),
-            typeof(CanvasRenderer),
-            typeof(Image),
-            typeof(Outline)
-        );
-        panelObject.transform.SetParent(transform, false);
-        panelObject.SetActive(false);
-
-        threatPanel = panelObject.GetComponent<RectTransform>();
-        ConfigureThreatPanelRect();
-
-        Image panelImage = panelObject.GetComponent<Image>();
-        panelImage.color = new Color(0.01f, 0.025f, 0.03f, 0.92f);
-        panelImage.raycastTarget = false;
-
-        Outline panelOutline = panelObject.GetComponent<Outline>();
-        panelOutline.effectColor = new Color(0f, 0.75f, 0.78f, 0.9f);
-        panelOutline.effectDistance = new Vector2(1f, -1f);
-
-        threatLevelText = CreateThreatText(
-            "ThreatLevel",
-            threatPanel,
-            TextAlignmentOptions.MidlineLeft
-        );
-        SetRect(
-            threatLevelText.rectTransform,
-            new Vector2(0f, 0.34f),
-            Vector2.one,
-            new Vector2(10f, 0f),
-            new Vector2(-10f, -1f)
-        );
-
-        threatValueText = CreateThreatText(
-            "ThreatValue",
-            threatPanel,
-            TextAlignmentOptions.MidlineRight
-        );
-        SetRect(
-            threatValueText.rectTransform,
-            new Vector2(0.72f, 0.34f),
-            Vector2.one,
-            Vector2.zero,
-            new Vector2(-10f, -1f)
-        );
-
-        GameObject barObject = new(
-            "ThreatBar",
-            typeof(RectTransform),
-            typeof(CanvasRenderer),
-            typeof(Image)
-        );
-        barObject.transform.SetParent(threatPanel, false);
-        RectTransform barRect = barObject.GetComponent<RectTransform>();
-        SetRect(
-            barRect,
-            new Vector2(0f, 0f),
-            new Vector2(1f, 0f),
-            new Vector2(10f, 8f),
-            new Vector2(-10f, 16f)
-        );
-        Image barImage = barObject.GetComponent<Image>();
-        barImage.color = new Color(0.08f, 0.12f, 0.13f, 1f);
-        barImage.raycastTarget = false;
-
-        GameObject fillObject = new(
-            "Fill",
-            typeof(RectTransform),
-            typeof(CanvasRenderer),
-            typeof(Image)
-        );
-        fillObject.transform.SetParent(barRect, false);
-        threatFill = fillObject.GetComponent<RectTransform>();
-        threatFill.anchorMin = Vector2.zero;
-        threatFill.anchorMax = new Vector2(0f, 1f);
-        threatFill.offsetMin = Vector2.zero;
-        threatFill.offsetMax = Vector2.zero;
-        Image fillImage = fillObject.GetComponent<Image>();
-        fillImage.color = new Color(0f, 0.88f, 0.82f, 1f);
-        fillImage.raycastTarget = false;
-    }
-
-    private void ConfigureThreatPanelRect()
-    {
-        if (threatPanel == null)
-            return;
-
-        if (threatPanel.parent != transform)
-            threatPanel.SetParent(transform, false);
-        threatPanel.anchorMin = new Vector2(0f, 1f);
-        threatPanel.anchorMax = new Vector2(0f, 1f);
-        threatPanel.pivot = new Vector2(0f, 1f);
-        threatPanel.anchoredPosition = new Vector2(40f, -207f);
-        threatPanel.sizeDelta = new Vector2(240f, 50f);
-    }
-
-    private TextMeshProUGUI CreateThreatText(
-        string objectName,
-        Transform parent,
-        TextAlignmentOptions alignment)
-    {
-        GameObject textObject = new(
-            objectName,
-            typeof(RectTransform),
-            typeof(CanvasRenderer),
-            typeof(TextMeshProUGUI)
-        );
-        textObject.transform.SetParent(parent, false);
-
-        TextMeshProUGUI text = textObject.GetComponent<TextMeshProUGUI>();
-        text.font = timerText != null ? timerText.font : null;
-        text.fontSize = 19f;
-        text.fontStyle = FontStyles.Bold;
-        text.color = Color.white;
-        text.alignment = alignment;
-        text.textWrappingMode = TextWrappingModes.NoWrap;
-        text.overflowMode = TextOverflowModes.Overflow;
-        text.raycastTarget = false;
-        return text;
     }
 
     private static void SetRect(

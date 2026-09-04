@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
@@ -68,24 +67,26 @@ public sealed class WorldLootRewardReel : MonoBehaviour
     private static WorldLootRewardReel instance;
     private static string lastClaimedReward;
     private static bool openingReserved;
+    private static bool missingReported;
+    private bool viewValid;
 
     private readonly List<WorldLootRewardDefinition> rewards = new();
     private readonly List<RewardCard> cards = new();
 
-    private GameObject canvasRoot;
-    private RectTransform canvasRect;
-    private RectTransform panelRect;
-    private CanvasGroup panelCanvasGroup;
-    private RectTransform transferPacket;
-    private Image transferPacketImage;
-    private RectTransform markerRect;
-    private Image markerImage;
-    private RectTransform cardsRoot;
-    private Button stopButton;
-    private TextMeshProUGUI stopButtonText;
-    private GameObject revealRoot;
-    private TextMeshProUGUI revealText;
-    private TextMeshProUGUI statusText;
+    [SerializeField] private GameObject canvasRoot;
+    [SerializeField] private RectTransform canvasRect;
+    [SerializeField] private RectTransform panelRect;
+    [SerializeField] private CanvasGroup panelCanvasGroup;
+    [SerializeField] private RectTransform transferPacket;
+    [SerializeField] private Image transferPacketImage;
+    [SerializeField] private RectTransform markerRect;
+    [SerializeField] private Image markerImage;
+    [SerializeField] private RectTransform cardsRoot;
+    [SerializeField] private Button stopButton;
+    [SerializeField] private TextMeshProUGUI stopButtonText;
+    [SerializeField] private GameObject revealRoot;
+    [SerializeField] private TextMeshProUGUI revealText;
+    [SerializeField] private TextMeshProUGUI statusText;
     private ReelState state;
     private Action<WorldLootRewardDefinition> claimedCallback;
     private RewardCard winningCard;
@@ -140,27 +141,21 @@ public sealed class WorldLootRewardReel : MonoBehaviour
             rewardPool == null || rewardPool.Count == 0)
             return false;
 
-        EnsureInstance();
+        if (instance == null || !instance.viewValid)
+        {
+            if (!missingReported)
+            {
+                Debug.LogError("[WorldLootRewardReel] Authored reel view is missing or invalid.");
+                missingReported = true;
+            }
+            openingReserved = false;
+            return false;
+        }
         return instance.ShowInternal(
             rewardPool,
             chestWorldPosition,
             onClaimed
         );
-    }
-
-    private static void EnsureInstance()
-    {
-        if (instance != null)
-            return;
-
-        GameObject root = new(
-            "World Loot Reward Reel (Runtime)",
-            typeof(RectTransform),
-            typeof(Canvas),
-            typeof(CanvasScaler),
-            typeof(GraphicRaycaster)
-        );
-        instance = root.AddComponent<WorldLootRewardReel>();
     }
 
     private void Awake()
@@ -172,7 +167,23 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         }
 
         instance = this;
-        BuildUi();
+        missingReported = false;
+        viewValid = canvasRoot != null && canvasRect != null && panelRect != null &&
+            panelCanvasGroup != null && transferPacket != null && transferPacketImage != null &&
+            markerRect != null && markerImage != null && cardsRoot != null && stopButton != null &&
+            stopButtonText != null && revealRoot != null && revealText != null && statusText != null;
+        if (!viewValid)
+        {
+            Debug.LogError("[WorldLootRewardReel] Authored shell references are missing.", this);
+            missingReported = true;
+            enabled = false;
+            gameObject.SetActive(false);
+            return;
+        }
+        int count = Mathf.Clamp(visibleCardCount, 7, 11);
+        for (int i = 0; i < count; i++)
+            cards.Add(CreateCard(cardsRoot, i));
+        stopButton.onClick.AddListener(BeginBraking);
         canvasRoot.SetActive(false);
         state = ReelState.Hidden;
     }
@@ -193,7 +204,6 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         if (rewards.Count == 0)
             return false;
 
-        EnsureEventSystem();
         claimedCallback = onClaimed;
         rewardApplied = false;
         GameObject player = GameObject.FindGameObjectWithTag("Player");
@@ -727,105 +737,6 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         CloseOverlay();
     }
 
-    private void BuildUi()
-    {
-        Canvas canvas = GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = short.MaxValue - 1;
-
-        CanvasScaler scaler = GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-        scaler.matchWidthOrHeight = 0.5f;
-
-        canvasRoot = gameObject;
-        canvasRect = transform as RectTransform;
-        panelRect = CreateRect("Compact Reward Reel", transform);
-        panelRect.anchorMin = panelRect.anchorMax = new Vector2(0.5f, 1f);
-        panelRect.pivot = new Vector2(0.5f, 1f);
-        panelRect.anchoredPosition = new Vector2(0f, -18f);
-        panelRect.sizeDelta = panelSize;
-        Image panelImage = panelRect.gameObject.AddComponent<Image>();
-        panelImage.color = new Color(0.035f, 0.05f, 0.075f, 0.88f);
-        panelImage.raycastTarget = false;
-        panelCanvasGroup = panelRect.gameObject.AddComponent<CanvasGroup>();
-
-        TextMeshProUGUI title = CreateText(
-            "Title", panelRect, "КОНТЕЙНЕР // ДЕКОДИРОВАНИЕ", 14f,
-            TextAlignmentOptions.Left, Color.white
-        );
-        SetRect(title.rectTransform, new Vector2(-112f, 57f),
-            new Vector2(280f, 22f));
-
-        statusText = CreateText(
-            "Status", panelRect, string.Empty, 13f,
-            TextAlignmentOptions.Right,
-            new Color(0.58f, 0.82f, 0.9f, 1f)
-        );
-        SetRect(statusText.rectTransform, new Vector2(160f, 57f),
-            new Vector2(190f, 22f));
-
-        RectTransform viewport = CreateRect("Reel Viewport", panelRect);
-        SetRect(viewport, new Vector2(0f, 10f), new Vector2(510f, 68f));
-        Image viewportImage = viewport.gameObject.AddComponent<Image>();
-        viewportImage.color = new Color(0.015f, 0.025f, 0.04f, 0.94f);
-        viewportImage.raycastTarget = false;
-        viewport.gameObject.AddComponent<Mask>().showMaskGraphic = true;
-
-        cardsRoot = CreateRect("Recycled Cards", viewport);
-        Stretch(cardsRoot);
-
-        int count = Mathf.Clamp(visibleCardCount, 7, 11);
-        for (int i = 0; i < count; i++)
-            cards.Add(CreateCard(cardsRoot, i));
-
-        markerRect = CreateRect("Winner Marker", viewport);
-        markerRect.anchorMin = markerRect.anchorMax =
-            new Vector2(0.5f, 0.5f);
-        markerRect.pivot = new Vector2(0.5f, 0.5f);
-        markerRect.sizeDelta = new Vector2(3f, 64f);
-        markerImage = markerRect.gameObject.AddComponent<Image>();
-        markerImage.color = new Color(1f, 0.78f, 0.18f, 0.9f);
-        markerImage.raycastTarget = false;
-
-        TextMeshProUGUI markerLabel = CreateText(
-            "Winner Label", viewport, "▲", 15f,
-            TextAlignmentOptions.Center,
-            new Color(1f, 0.82f, 0.26f, 1f)
-        );
-        SetRect(markerLabel.rectTransform, new Vector2(0f, -25f),
-            new Vector2(60f, 18f));
-
-        stopButton = CreateButton(
-            "Stop", panelRect, "[R — СТОП]", BeginBraking,
-            new Vector2(0f, -53f), new Vector2(170f, 28f),
-            out stopButtonText
-        );
-
-        RectTransform reveal = CreateRect("Reveal", panelRect);
-        revealRoot = reveal.gameObject;
-        SetRect(reveal, new Vector2(0f, -53f), new Vector2(220f, 30f));
-        Image revealImage = reveal.gameObject.AddComponent<Image>();
-        revealImage.color = new Color(0.08f, 0.28f, 0.32f, 0.96f);
-        revealImage.raycastTarget = false;
-
-        revealText = CreateText(
-            "Reward", reveal, string.Empty, 18f,
-            TextAlignmentOptions.Center, Color.white
-        );
-        Stretch(revealText.rectTransform, 8f, 8f, 4f, 4f);
-        revealRoot.SetActive(false);
-
-        transferPacket = CreateRect("Chest Data Packet", transform);
-        transferPacket.anchorMin = transferPacket.anchorMax =
-            new Vector2(0.5f, 0.5f);
-        transferPacket.pivot = new Vector2(0.5f, 0.5f);
-        transferPacket.sizeDelta = new Vector2(14f, 14f);
-        transferPacketImage = transferPacket.gameObject.AddComponent<Image>();
-        transferPacketImage.raycastTarget = false;
-        transferPacket.gameObject.SetActive(false);
-    }
-
     private RewardCard CreateCard(Transform parent, int index)
     {
         RectTransform rect = CreateRect($"Reward Card {index}", parent);
@@ -884,30 +795,6 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         return text;
     }
 
-    private static Button CreateButton(
-        string name,
-        Transform parent,
-        string label,
-        UnityEngine.Events.UnityAction action,
-        Vector2 position,
-        Vector2 size,
-        out TextMeshProUGUI labelText)
-    {
-        RectTransform rect = CreateRect(name, parent);
-        SetRect(rect, position, size);
-        Image image = rect.gameObject.AddComponent<Image>();
-        image.color = new Color(0.12f, 0.55f, 0.7f, 1f);
-        Button button = rect.gameObject.AddComponent<Button>();
-        button.targetGraphic = image;
-        button.onClick.AddListener(action);
-        labelText = CreateText(
-            "Label", rect, label, 14f,
-            TextAlignmentOptions.Center, Color.white
-        );
-        Stretch(labelText.rectTransform);
-        return button;
-    }
-
     private static void SetRect(
         RectTransform rect,
         Vector2 position,
@@ -932,21 +819,9 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         rect.offsetMax = new Vector2(-right, -top);
     }
 
-    private static void EnsureEventSystem()
-    {
-        if (EventSystem.current != null)
-            return;
-
-        GameObject eventSystem = new(
-            "EventSystem (World Loot Runtime)",
-            typeof(EventSystem),
-            typeof(StandaloneInputModule)
-        );
-        DontDestroyOnLoad(eventSystem);
-    }
-
     private void OnDestroy()
     {
+        if (stopButton != null) stopButton.onClick.RemoveListener(BeginBraking);
         claimedCallback = null;
         openingReserved = false;
 

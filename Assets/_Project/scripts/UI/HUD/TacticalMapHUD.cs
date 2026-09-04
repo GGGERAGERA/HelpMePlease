@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -25,18 +24,11 @@ public sealed class TacticalMapHUD : MonoBehaviour
     private const float MaxMapSize = 220f;
     private const float LegendGap = 8f;
     private const float LegendRowHeight = 20f;
-    private const int GridCellCount = 8;
     private const float AnomalyRefreshInterval = 0.5f;
     private const float MarkerRefreshInterval = 0.1f;
 
-    private static readonly Color FrameColor =
-        new(0.008f, 0.025f, 0.032f, 0.84f);
     private static readonly Color Cyan =
         new(0.12f, 0.82f, 0.92f, 0.92f);
-    private static readonly Color GridColor =
-        new(0.08f, 0.38f, 0.43f, 0.2f);
-    private static readonly Color LegendTextColor =
-        new(0.78f, 0.84f, 0.86f, 0.95f);
     private static readonly Color EventFill =
         new(0.1f, 0.75f, 0.86f, 0.95f);
     private static readonly Color BreakableFill =
@@ -62,26 +54,26 @@ public sealed class TacticalMapHUD : MonoBehaviour
 
     [SerializeField] private bool visibleByDefault = true;
 
-    private RectTransform mapRoot;
-    private RectTransform mapFrame;
-    private RectTransform projectionRoot;
-    private RectTransform anomalyRoot;
-    private RectTransform eventRoot;
-    private RectTransform breakableRoot;
-    private RectTransform legendRoot;
-    private RectTransform playerLegendRow;
-    private RectTransform normalSiteLegendRow;
-    private RectTransform specialSiteLegendRow;
-    private RectTransform exitLegendRow;
-    private RectTransform eventLegendRow;
-    private RectTransform breakableLegendRow;
-    private RectTransform bossLegendRow;
+    [SerializeField] private RectTransform mapRoot;
+    [SerializeField] private RectTransform mapFrame;
+    [SerializeField] private RectTransform projectionRoot;
+    [SerializeField] private RectTransform anomalyRoot;
+    [SerializeField] private RectTransform eventRoot;
+    [SerializeField] private RectTransform breakableRoot;
+    [SerializeField] private RectTransform legendRoot;
+    [SerializeField] private RectTransform playerLegendRow;
+    [SerializeField] private RectTransform normalSiteLegendRow;
+    [SerializeField] private RectTransform specialSiteLegendRow;
+    [SerializeField] private RectTransform exitLegendRow;
+    [SerializeField] private RectTransform eventLegendRow;
+    [SerializeField] private RectTransform breakableLegendRow;
+    [SerializeField] private RectTransform bossLegendRow;
     private MarkerVisual playerMarker;
     private MarkerVisual exitMarker;
     private MarkerVisual bossMarker;
-    private GameplayAreaService gameplayArea;
-    private LevelAnomalyController anomalyController;
-    private WorldEventSpawner eventSpawner;
+    [SerializeField] private GameplayAreaService gameplayArea;
+    [SerializeField] private LevelAnomalyController anomalyController;
+    [SerializeField] private WorldEventSpawner eventSpawner;
     private Transform player;
     private Bounds worldBounds;
     private bool hasBounds;
@@ -111,7 +103,20 @@ public sealed class TacticalMapHUD : MonoBehaviour
 
     private void Awake()
     {
-        BuildUI();
+        if (mapRoot == null || mapFrame == null || projectionRoot == null ||
+            anomalyRoot == null || eventRoot == null || breakableRoot == null ||
+            legendRoot == null || playerLegendRow == null || normalSiteLegendRow == null ||
+            specialSiteLegendRow == null || exitLegendRow == null || eventLegendRow == null ||
+            breakableLegendRow == null || bossLegendRow == null || gameplayArea == null ||
+            anomalyController == null || eventSpawner == null)
+        {
+            Debug.LogError("[TacticalMapHUD] Authored shell or scene references are missing.", this);
+            enabled = false;
+            if (mapRoot != null) mapRoot.gameObject.SetActive(false);
+            return;
+        }
+        CreateRuntimeMarkers();
+        ApplyMapLayout(MaxMapSize, MaxMapSize);
         SetVisible(visibleByDefault);
     }
 
@@ -127,7 +132,6 @@ public sealed class TacticalMapHUD : MonoBehaviour
 
     private void Start()
     {
-        ResolveSceneReferences();
         ResolvePlayer();
         RefreshBounds(true);
         RefreshAnomalies();
@@ -180,43 +184,9 @@ public sealed class TacticalMapHUD : MonoBehaviour
         }
     }
 
-    private void BuildUI()
+    // Marker instances remain dynamic and are reused for the lifetime of this HUD.
+    private void CreateRuntimeMarkers()
     {
-        Canvas canvas = GetComponentInParent<Canvas>();
-        Transform parent = canvas != null ? canvas.transform : transform;
-
-        mapRoot = CreateRect("TacticalMapRoot", parent);
-        mapRoot.anchorMin = mapRoot.anchorMax = new Vector2(1f, 1f);
-        mapRoot.pivot = new Vector2(1f, 1f);
-        mapRoot.anchoredPosition = new Vector2(-24f, -24f);
-
-        mapFrame = CreateRect("MapFrame", mapRoot);
-        mapFrame.anchorMin = mapFrame.anchorMax = new Vector2(1f, 1f);
-        mapFrame.pivot = new Vector2(1f, 1f);
-        mapFrame.anchoredPosition = Vector2.zero;
-
-        Image background = mapFrame.gameObject.AddComponent<Image>();
-        background.color = FrameColor;
-        background.raycastTarget = false;
-
-        Outline frameBorder = mapFrame.gameObject.AddComponent<Outline>();
-        frameBorder.effectColor = Cyan;
-        frameBorder.effectDistance = new Vector2(1f, -1f);
-        frameBorder.useGraphicAlpha = true;
-
-        projectionRoot = CreateRect("ProjectionRoot", mapFrame);
-        Stretch(projectionRoot);
-        BuildGrid(projectionRoot);
-
-        anomalyRoot = CreateRect("Anomaly Zones", projectionRoot);
-        Stretch(anomalyRoot);
-
-        eventRoot = CreateRect("Events", projectionRoot);
-        Stretch(eventRoot);
-
-        breakableRoot = CreateRect("Breakables", projectionRoot);
-        Stretch(breakableRoot);
-
         bossMarker = CreateMarker("Boss", projectionRoot);
         bossMarker.Rect.sizeDelta = new Vector2(10f, 10f);
         SetMarkerStyle(bossMarker, BossFill, BossBorder);
@@ -237,120 +207,6 @@ public sealed class TacticalMapHUD : MonoBehaviour
         );
         playerMarker.Rect.SetAsLastSibling();
 
-        legendRoot = CreateRect("LegendRoot", mapRoot);
-        legendRoot.anchorMin = legendRoot.anchorMax = new Vector2(1f, 1f);
-        legendRoot.pivot = new Vector2(1f, 1f);
-
-        playerLegendRow = CreateLegendRow(
-            "ИГРОК",
-            new Color(0.94f, 0.98f, 1f, 1f),
-            Cyan
-        );
-        normalSiteLegendRow = CreateLegendRow(
-            "ОБЫЧНАЯ АНОМАЛИЯ",
-            NormalSiteFill,
-            NormalSiteBorder
-        );
-        specialSiteLegendRow = CreateLegendRow(
-            "ОСОБАЯ АНОМАЛИЯ",
-            SpecialSiteFill,
-            SpecialSiteBorder
-        );
-        exitLegendRow = CreateLegendRow(
-            "ВЫХОД",
-            ExitFill,
-            ExitBorder,
-            45f
-        );
-        eventLegendRow = CreateLegendRow("ИСПЫТАНИЕ", EventFill, Cyan);
-        breakableLegendRow = CreateLegendRow(
-            "КОНТЕЙНЕР",
-            BreakableFill,
-            BreakableBorder
-        );
-        bossLegendRow = CreateLegendRow("БОСС", BossFill, BossBorder);
-
-        ApplyMapLayout(MaxMapSize, MaxMapSize);
-        RefreshLegend();
-    }
-
-    private void BuildGrid(Transform parent)
-    {
-        RectTransform gridRoot = CreateRect("Grid", parent);
-        Stretch(gridRoot);
-
-        for (int i = 1; i < GridCellCount; i++)
-        {
-            float normalized = (float)i / GridCellCount;
-
-            RectTransform vertical = CreateRect("Grid V " + i, gridRoot);
-            vertical.anchorMin = new Vector2(normalized, 0f);
-            vertical.anchorMax = new Vector2(normalized, 1f);
-            vertical.pivot = new Vector2(0.5f, 0.5f);
-            vertical.anchoredPosition = Vector2.zero;
-            vertical.sizeDelta = new Vector2(1f, 0f);
-            AddDecorativeImage(vertical.gameObject, GridColor);
-
-            RectTransform horizontal = CreateRect("Grid H " + i, gridRoot);
-            horizontal.anchorMin = new Vector2(0f, normalized);
-            horizontal.anchorMax = new Vector2(1f, normalized);
-            horizontal.pivot = new Vector2(0.5f, 0.5f);
-            horizontal.anchoredPosition = Vector2.zero;
-            horizontal.sizeDelta = new Vector2(0f, 1f);
-            AddDecorativeImage(horizontal.gameObject, GridColor);
-        }
-    }
-
-    private RectTransform CreateLegendRow(
-        string label,
-        Color fill,
-        Color border,
-        float markerRotation = 0f)
-    {
-        RectTransform row = CreateRect("Legend " + label, legendRoot);
-        row.anchorMin = new Vector2(0f, 1f);
-        row.anchorMax = new Vector2(1f, 1f);
-        row.pivot = new Vector2(0f, 1f);
-        row.sizeDelta = new Vector2(0f, LegendRowHeight);
-
-        MarkerVisual swatch = CreateMarker("Swatch", row);
-        swatch.Rect.anchorMin = swatch.Rect.anchorMax = new Vector2(0f, 1f);
-        swatch.Rect.pivot = new Vector2(0f, 1f);
-        swatch.Rect.anchoredPosition = new Vector2(3f, -6f);
-        swatch.Rect.sizeDelta = new Vector2(8f, 8f);
-        swatch.Rect.localRotation = Quaternion.Euler(
-            0f,
-            0f,
-            markerRotation
-        );
-        SetMarkerStyle(swatch, fill, border);
-
-        RectTransform textRect = CreateRect("Label", row);
-        textRect.anchorMin = new Vector2(0f, 0f);
-        textRect.anchorMax = new Vector2(1f, 1f);
-        textRect.offsetMin = new Vector2(19f, 0f);
-        textRect.offsetMax = Vector2.zero;
-
-        TextMeshProUGUI text = textRect.gameObject.AddComponent<TextMeshProUGUI>();
-        text.font = TMP_Settings.defaultFontAsset;
-        text.fontSize = 13f;
-        text.fontStyle = FontStyles.Normal;
-        text.alignment = TextAlignmentOptions.MidlineLeft;
-        text.color = LegendTextColor;
-        text.textWrappingMode = TextWrappingModes.NoWrap;
-        text.overflowMode = TextOverflowModes.Truncate;
-        text.raycastTarget = false;
-        text.text = label;
-        return row;
-    }
-
-    private void ResolveSceneReferences()
-    {
-        gameplayArea ??= GameplayAreaService.Instance;
-        gameplayArea ??= FindFirstObjectByType<GameplayAreaService>();
-        anomalyController ??= LevelAnomalyController.Instance;
-        anomalyController ??= FindFirstObjectByType<LevelAnomalyController>();
-        eventSpawner ??= FindFirstObjectByType<WorldEventSpawner>();
     }
 
     private void ResolvePlayer()
@@ -361,9 +217,6 @@ public sealed class TacticalMapHUD : MonoBehaviour
 
     private void RefreshBounds(bool force)
     {
-        if (gameplayArea == null)
-            ResolveSceneReferences();
-
         Collider2D playable = gameplayArea != null
             ? gameplayArea.PlayableArea
             : null;
@@ -479,9 +332,6 @@ public sealed class TacticalMapHUD : MonoBehaviour
             return;
         }
 
-        if (anomalyController == null)
-            ResolveSceneReferences();
-
         anomalyZones.Clear();
         anomalyController?.CollectActiveLocalZones(anomalyZones);
         EnsureMarkerCount(
@@ -508,9 +358,6 @@ public sealed class TacticalMapHUD : MonoBehaviour
 
     private void RefreshMarkers()
     {
-        if (eventSpawner == null)
-            ResolveSceneReferences();
-
         int eventCount = 0;
         IReadOnlyList<WorldEvent> events = eventSpawner != null
             ? eventSpawner.SpawnedEvents
@@ -813,16 +660,6 @@ public sealed class TacticalMapHUD : MonoBehaviour
         return new MarkerVisual(rect, image, outline);
     }
 
-    private static Image AddDecorativeImage(
-        GameObject target,
-        Color color)
-    {
-        Image image = target.AddComponent<Image>();
-        image.color = color;
-        image.raycastTarget = false;
-        return image;
-    }
-
     private static RectTransform CreateRect(
         string objectName,
         Transform parent)
@@ -834,11 +671,4 @@ public sealed class TacticalMapHUD : MonoBehaviour
         return rect;
     }
 
-    private static void Stretch(RectTransform rect)
-    {
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-    }
 }

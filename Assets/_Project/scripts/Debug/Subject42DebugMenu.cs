@@ -248,6 +248,10 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     public static bool IsDebugMenuOpen =>
         activeInstance != null && activeInstance.isOpen;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void BindOrbitalInputBlocker() =>
+        OrbitalDevelopmentInput.DevelopmentBlocker = () => IsDebugMenuOpen;
+
     private enum DebugTab
     {
         Run,
@@ -542,6 +546,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
 #endif
         ResolveSceneReferences();
+        FindFirstObjectByType<OrbitalInteractionController>()?.PrepareForExternalPause();
         previousTimeScale = Time.timeScale;
         previousCursorVisible = Cursor.visible;
         previousCursorLockMode = Cursor.lockState;
@@ -2585,6 +2590,16 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddSectionTitle("ORBITAL PRODUCTION TEST",
             "Production runtime checks");
 
+        CharacterSpawner spawner = FindFirstObjectByType<CharacterSpawner>();
+        bool canStart = spawner != null &&
+            (RunStateManager.Instance == null || RunStateManager.Instance.OrbitalStationState == null);
+        AddRow("Direct scene launch", canStart ? "EXPLICIT DEV NEW RUN" : "RUN EXISTS",
+            warningColor, "START", canStart, () =>
+            {
+                spawner.DebugStartDefaultRunIfMissing();
+                RefreshCurrentTab();
+            });
+
         AddSectionTitle("STATION", available
             ? "Arena placement: click ring, then a free mount"
             : "Runtime station is not ready");
@@ -2598,7 +2613,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddRow("Add Ring", available ? "SELECTS NEW RING" : "NOT ACTIVE",
             accentColor, "+RING", available, () =>
             {
-                station.AddRing();
+                station.DebugAddRingBeyondCap();
                 RefreshCurrentTab();
             });
         AddOrbitalModuleRow("Add Pistol", OrbitalModuleKind.Pistol, station);
@@ -2641,6 +2656,11 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         OrbitalRunState runState = manager != null
             ? manager.OrbitalStationState
             : null;
+        if (runState != null && !runState.Validate(out string stateError))
+        {
+            AddHint($"ORBITAL state invalid: {stateError}. Restore does not repair or reset it.");
+            return;
+        }
         int mounts = runState != null
             ? runState.Rings.Sum(value => value.MountCapacity)
             : 0;

@@ -49,9 +49,7 @@ namespace Subject42.Combat.OrbitalStation
                 if (held != null || hovered != null || line != null ||
                     highlightedRenderers.Count > 0)
                 {
-                    bool orbitalOwnsInput = station != null &&
-                        (station.IsRelocating || station.IsDebugPlacementActive ||
-                         station.RewardFlow?.PendingReward != null);
+                    bool orbitalOwnsInput = station?.InputOwner != null && !station.InputOwner.IsIdle;
                     CancelInteraction(!orbitalOwnsInput);
                 }
                 StopAllFlights();
@@ -69,15 +67,7 @@ namespace Subject42.Combat.OrbitalStation
 
         private bool CanInteract()
         {
-            if (station == null || !station.IsInitialized || Camera.main == null ||
-                Time.timeScale <= 0f || station.Owner == null ||
-                station.Owner.IsDead || station.IsRelocating ||
-                station.IsDebugPlacementActive ||
-                station.RewardFlow?.PendingReward != null ||
-                Subject42DebugMenu.IsDebugMenuOpen)
-                return false;
-            PlayerHealth health = station.GetComponent<PlayerHealth>();
-            return health == null || !health.IsDead;
+            return station?.InputOwner != null && station.InputOwner.CanContinueWorldTelekinesis && Camera.main != null;
         }
 
         private void UpdateHover()
@@ -107,6 +97,7 @@ namespace Subject42.Combat.OrbitalStation
 
         private void BeginHold(Component target)
         {
+            if (!station.InputOwner.BeginWorldTelekinesis()) return;
             RemoveFlight(target);
             held = target;
             hovered = null;
@@ -466,6 +457,7 @@ namespace Subject42.Combat.OrbitalStation
 
         private void ClearHeldVisuals(bool clearUi)
         {
+            station?.InputOwner?.EndWorldTelekinesis();
             held = null;
             pullVelocity = Vector2.zero;
             cursorSampleCount = 0;

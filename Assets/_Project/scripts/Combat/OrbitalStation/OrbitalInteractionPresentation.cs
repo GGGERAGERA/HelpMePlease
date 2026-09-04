@@ -30,11 +30,13 @@ namespace Subject42.Combat.OrbitalStation
         private GUIStyle panelStyle;
         private Texture2D panelTexture;
         private bool bound;
+        private OrbitalStationRuntime station;
 
         public void Bind(OrbitalStationRuntime station)
         {
             if (bound)
                 Release();
+            this.station = station;
             UICrosshairFollowMouse crosshair =
                 FindFirstObjectByType<UICrosshairFollowMouse>();
             if (crosshair == null)
@@ -107,7 +109,7 @@ namespace Subject42.Combat.OrbitalStation
         private void OnGUI()
         {
             if (!bound || string.IsNullOrEmpty(hintBody) ||
-                Subject42DebugMenu.IsDebugMenuOpen)
+                station.InputOwner.IsGameplayInputBlocked)
                 return;
             EnsureStyles();
             const float width = 252f;

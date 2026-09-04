@@ -12,9 +12,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d9a4eb785e240ae85dc7632df617dd1, type: 3}
   m_Name: OrbitalPresentationConfig
   m_EditorClassIdentifier: Assembly-CSharp::Subject42.Combat.OrbitalStation.OrbitalPresentationConfig
-  PistolPrefab: {fileID: 2602756999783095975, guid: 25d10a8e7dac3ba4e9cfd7177cb9c050, type: 3}
-  LaserSwordPrefab: {fileID: 2178963149591528507, guid: d8846ab959f9d4d4cb23e5ee1d778d9f, type: 3}
-  ImpulseGunPrefab: {fileID: 2866242113316305053, guid: 45e0447c8c4f7934fa27db6c5241ca56, type: 3}
+  StationPrefab: {fileID: 3588729804154917386, guid: ff2e17705544a184c937303c9ea8dcc4, type: 3}
+  RingPrefab: {fileID: 3288090662345424011, guid: d6ae1d52a5c1f604f935151e75ce217d, type: 3}
+  MountPrefab: {fileID: 5281931980349366774, guid: e7526e87822eb134f89574d1a62def78, type: 3}
+  VisualMaterial: {fileID: 2100000, guid: 1800b25f5e1f7754b8d5b7d7595c0afd, type: 2}
+  PixelSprite: {fileID: 3883298416164446047, guid: 842791f4876552648b2118a0575f7a6d, type: 3}
+  CircleSprite: {fileID: -2413806693520163455, guid: ceb8225d9461f5a4bbe86004909390d0, type: 3}
+  RingIcon: {fileID: 2773572355569149612, guid: ef3b39e2cb6eab245aee02cf778f58eb, type: 3}
+  PlayerVariants:
+  - Source: {fileID: 3267337206729473661, guid: 1868b54bca0976a44b3b858e4529d00d, type: 3}
+    Production: {fileID: 8899567883607463258, guid: 50fd004411bc2bc40bb6a21478296cc8, type: 3}
+  - Source: {fileID: 3267337206729473661, guid: d454a110e5c63d64f90569865c165982, type: 3}
+    Production: {fileID: 6780075107756483522, guid: 586616dfa41374a43ac464cb7dcb2282, type: 3}
+  - Source: {fileID: 5653916710608092070, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
+    Production: {fileID: 6095222015538505522, guid: 8522b3d6a57df2648903eb77fc00ecb6, type: 3}
+  PistolPrefab: {fileID: 874321222499448941, guid: 061397fe35d9a524f9ac8e1c58b25f4a, type: 3}
+  LaserSwordPrefab: {fileID: 2312076188107168206, guid: 354ad5f6587b07b4ba24642a0aa52a35, type: 3}
+  ImpulseGunPrefab: {fileID: 4564007662578592406, guid: e0b02d3b73e5c424d958aba343c83a95, type: 3}
+  ArcPrefab: {fileID: 7715781409812007907, guid: 38c8927e5d970394aa4e821a63f73ac9, type: 3}
+  LinkPrefab: {fileID: 1657534402609365111, guid: a64bd75b4f740ba48be9197c1d6ae0d6, type: 3}
   PistolVisualScale: 2.15
   LaserSwordVisualScale: 1.85
   ImpulseVisualScale: 2.15

@@ -61,6 +61,11 @@ public sealed class UpgradeManager : MonoBehaviour
     private UpgradeChoiceRequest currentRequest;
     private bool hasCurrentRequest;
 
+    public float TimeScaleAfterRewards => previousTimeScale;
+
+    public bool IsRewardQueueIdle => !isChoosingUpgrade && !hasCurrentRequest &&
+        pendingChoices.Count == 0 && !milestoneSequenceRunning && milestoneChoices.Count == 0;
+
     public bool IsChoosingUpgrade => isChoosingUpgrade ||
         milestoneSequenceRunning || milestoneChoices.Count > 0;
 
@@ -194,7 +199,7 @@ public sealed class UpgradeManager : MonoBehaviour
         milestoneSequenceRunning = false;
         idleCallbacks.Clear();
 
-        Time.timeScale = previousTimeScale;
+        RestoreRewardTimeScale();
         while (idleCallbacks.Count > 0)
             idleCallbacks.Dequeue()?.Invoke();
     }
@@ -223,6 +228,7 @@ public sealed class UpgradeManager : MonoBehaviour
 
     public void ShowLevelUpChoices(int playerLevel)
     {
+        FindFirstObjectByType<OrbitalInteractionController>()?.PrepareForExternalPause();
         UpgradeChoiceRequest request = new(
                 playerLevel,
                 playLevelUpSound: true,
@@ -553,13 +559,20 @@ public sealed class UpgradeManager : MonoBehaviour
             return;
         }
 
-        Time.timeScale = previousTimeScale;
+        RestoreRewardTimeScale();
         InvokeIdleCallbacksIfReady();
+    }
+
+    private void RestoreRewardTimeScale()
+    {
+        PauseMenuUI pause = FindFirstObjectByType<PauseMenuUI>();
+        if (pause == null || !pause.IsPaused) Time.timeScale = previousTimeScale;
     }
 
     private void BeginChoiceRequest(UpgradeChoiceRequest request,
         List<UpgradeData> choices)
     {
+        FindFirstObjectByType<OrbitalInteractionController>()?.PrepareForExternalPause();
         shuttingDown = false;
         isChoosingUpgrade = true;
         previousTimeScale = Time.timeScale;

@@ -51,7 +51,6 @@ public sealed class RunStateManager : MonoBehaviour
 
     private RunSummary lastRunSummary;
     private int orbitalRunSequence;
-    private bool warnedInvalidOrbitalState;
 
     public OrbitalRunState OrbitalStationState { get; private set; }
 
@@ -143,35 +142,32 @@ public sealed class RunStateManager : MonoBehaviour
         CurrentSector = null;
     }
 
-    public OrbitalRunState EnsureOrbitalRunState()
+    // Strict access: the caller owns diagnostics; absence never starts a run.
+    public bool TryGetOrbitalRunState(out OrbitalRunState state, out string error)
     {
-        if (OrbitalStationState != null &&
-            OrbitalStationState.Validate(out _))
+        state = OrbitalStationState;
+        if (state == null)
         {
-            return OrbitalStationState;
+            error = "state is missing; start a run explicitly through BeginNewRun";
+            return false;
         }
+        return state.Validate(out error);
+    }
 
-        if (!warnedInvalidOrbitalState)
-        {
-            warnedInvalidOrbitalState = true;
-            string error = "state is missing";
-            OrbitalStationState?.Validate(out error);
-            Debug.LogWarning(
-                $"[OrbitalRunState] Invalid state ({error}); rebuilding default.");
-        }
-
+    private OrbitalRunState CreateDefaultOrbitalRunState()
+    {
         orbitalRunSequence++;
         OrbitalStationState = OrbitalRunState.CreateDefault(orbitalRunSequence);
         return OrbitalStationState;
     }
 
-    public OrbitalRunState ResetOrbitalRunState()
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public OrbitalRunState DebugResetOrbitalRunState()
     {
-        orbitalRunSequence++;
-        warnedInvalidOrbitalState = false;
-        OrbitalStationState = OrbitalRunState.CreateDefault(orbitalRunSequence);
-        return OrbitalStationState;
+        Debug.Log("[OrbitalRunState] Explicit development preset: creating default ORBITAL state.", this);
+        return CreateDefaultOrbitalRunState();
     }
+#endif
 
     private void Awake()
     {
@@ -195,7 +191,7 @@ public sealed class RunStateManager : MonoBehaviour
         WeaponData weapon,
         AnomalyStabilizerData anomalyStabilizer)
     {
-        ResetOrbitalRunState();
+        CreateDefaultOrbitalRunState();
         FindFirstObjectByType<DoubleOrLeave>()?.ResetState();
 
         ClearCurrentSector();
@@ -623,7 +619,6 @@ public sealed class RunStateManager : MonoBehaviour
         threatValue = 0f;
         threatElapsedTime = 0f;
         OrbitalStationState = null;
-        warnedInvalidOrbitalState = false;
 
         Debug.Log(
             $"[RunState] Run ended. " +

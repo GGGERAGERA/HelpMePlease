@@ -16,6 +16,10 @@ public sealed class LevelModifiersApplier : MonoBehaviour
     [SerializeField] private WorldRuleController worldRuleController;
     [SerializeField] private ExplorationSectorConfig explorationConfig;
 
+    [SerializeField] private RunThreatController threatController;
+    [SerializeField] private GameplayAreaService gameplayArea;
+    [SerializeField] private WorldEventSpawner eventSpawner;
+
     private void Awake()
     {
 #if UNITY_EDITOR
@@ -68,16 +72,12 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         if (enemySpawner == null || !enemySpawner.gameObject.scene.IsValid())
             enemySpawner = FindFirstObjectByType<EnemySpawner>();
 
-        if (runFlowController == null || !runFlowController.gameObject.scene.IsValid())
-            runFlowController = FindFirstObjectByType<RunFlowController>();
-
-        if (anomalyController == null || !anomalyController.gameObject.scene.IsValid())
-            anomalyController = FindFirstObjectByType<LevelAnomalyController>();
-
-        if (worldRuleController == null ||
-            !worldRuleController.gameObject.scene.IsValid())
+        if (runFlowController == null || anomalyController == null || worldRuleController == null ||
+            threatController == null || gameplayArea == null || eventSpawner == null || explorationConfig == null)
         {
-            worldRuleController = FindFirstObjectByType<WorldRuleController>();
+            Debug.LogError("[LevelModifiersApplier] Authored scene-host references are missing.", this);
+            enabled = false;
+            yield break;
         }
 
         ApplySelectedNode();
@@ -157,20 +157,6 @@ public sealed class LevelModifiersApplier : MonoBehaviour
 
     private void ApplyExplorationSector()
     {
-        if (explorationConfig == null)
-        {
-            explorationConfig = Resources.Load<ExplorationSectorConfig>(
-                "ProductionRun/ExplorationSectorConfig"
-            );
-        }
-
-        GameplayAreaService gameplayArea = GameplayAreaService.Instance;
-
-        if (gameplayArea == null)
-            gameplayArea = FindFirstObjectByType<GameplayAreaService>();
-
-        WorldEventSpawner eventSpawner =
-            FindFirstObjectByType<WorldEventSpawner>();
         ProductionExplorationSectorController exploration =
             gameObject.GetComponent<ProductionExplorationSectorController>();
 
@@ -194,24 +180,8 @@ public sealed class LevelModifiersApplier : MonoBehaviour
     {
         anomalyController?.Apply(sector.LocalAnomaly);
 
-        if (explorationConfig == null)
-        {
-            explorationConfig = Resources.Load<ExplorationSectorConfig>(
-                "ProductionRun/ExplorationSectorConfig"
-            );
-        }
-
-        if (explorationConfig == null ||
-            explorationConfig.ThreatConfig == null)
-        {
+        if (explorationConfig.ThreatConfig == null)
             return;
-        }
-
-        RunThreatController threatController =
-            gameObject.GetComponent<RunThreatController>();
-
-        if (threatController == null)
-            threatController = gameObject.AddComponent<RunThreatController>();
 
         threatController.Initialize(
             explorationConfig.ThreatConfig,

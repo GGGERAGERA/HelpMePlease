@@ -90,6 +90,17 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         LevelAnomalyController anomalies,
         RunFlowController flow)
     {
+        RunThreatController threatController =
+            gameObject.GetComponent<RunThreatController>();
+
+        if (threatController == null)
+        {
+            Debug.LogError("[ExplorationSector] Authored RunThreatController is missing.", this);
+            enabled = false;
+            return false;
+        }
+
+
         config = explorationConfig != null
             ? explorationConfig
             : Resources.Load<ExplorationSectorConfig>(
@@ -196,12 +207,6 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             specialPosition,
             exitPosition
         );
-
-        RunThreatController threatController =
-            gameObject.GetComponent<RunThreatController>();
-
-        if (threatController == null)
-            threatController = gameObject.AddComponent<RunThreatController>();
 
         threatController.Initialize(config.ThreatConfig, enemySpawner);
 

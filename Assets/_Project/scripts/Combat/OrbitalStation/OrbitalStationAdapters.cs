@@ -28,7 +28,7 @@ namespace Subject42.Combat.OrbitalStation
 
     public interface IOrbitalProgressionAdapter
     {
-        OrbitalRingRuntime AddRing();
+        OrbitalRingState AddRing();
         bool RemoveRing(int stableRingId, out string error);
         void BeginModulePlacement(OrbitalModuleKind kind);
         bool InstallModule(OrbitalModuleKind kind, int stableRingId,
@@ -42,7 +42,7 @@ namespace Subject42.Combat.OrbitalStation
         void UpgradeSelectedRingSpeed();
         void UpgradeSelectedRingPower();
         void AddMount();
-        void UpgradeCore();
+        bool UpgradeCore();
         bool UpgradeLinkMatrix();
     }
 

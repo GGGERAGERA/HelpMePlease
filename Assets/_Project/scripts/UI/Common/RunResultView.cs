@@ -3,17 +3,30 @@ using UnityEngine;
 
 public class RunResultView : MonoBehaviour
 {
+    [SerializeField] private DeathResultPresentation death;
     [Header("UI")]
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI statsText;
     [SerializeField] private TextMeshProUGUI aiCommentText;
 
 
+    private bool missingReported;
+
     public void Show(bool victory)
     {
+        if (death == null || titleText == null || statsText == null || aiCommentText == null)
+        {
+            if (!missingReported)
+            {
+                Debug.LogError("[RunResultView] Authored result references are missing.", this);
+                missingReported = true;
+            }
+            enabled = false;
+            return;
+        }
         gameObject.SetActive(true);
 
-        DeathResultPresentation death = GetComponent<DeathResultPresentation>();
+
         if (!victory && death != null)
         {
             RunSummary summary = RunStateManager.Instance != null

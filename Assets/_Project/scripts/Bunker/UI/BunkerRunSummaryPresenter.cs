@@ -7,6 +7,7 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
 {
     [SerializeField, Min(0f)] private float showDelay = 0.25f;
     [SerializeField] private RectTransform notificationParent;
+    [SerializeField] private CanvasScaler sourceScaler;
     [SerializeField] private RectTransform panelTemplate;
     [SerializeField] private TextMeshProUGUI goldTextTemplate;
 
@@ -27,7 +28,7 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
         if (summary.EndReason == RunEndReason.Victory)
             RunStateManager.Instance.ClearFinishedRunCompatibilityState();
 
-        if (notificationParent == null || panelTemplate == null || goldTextTemplate == null)
+        if (notificationParent == null || panelTemplate == null || goldTextTemplate == null || sourceScaler == null)
         {
             Debug.LogError("[BunkerRunSummaryPresenter] Notification UI references are missing.", this);
             yield break;
@@ -42,7 +43,6 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
         Canvas canvas = notificationCanvas.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 1100;
-        CanvasScaler sourceScaler = notificationParent.GetComponentInParent<CanvasScaler>();
         CanvasScaler scaler = notificationCanvas.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = sourceScaler.uiScaleMode;
         scaler.referenceResolution = sourceScaler.referenceResolution;

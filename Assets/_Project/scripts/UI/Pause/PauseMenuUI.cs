@@ -1,3 +1,4 @@
+using Subject42.Combat.OrbitalStation;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -12,29 +13,32 @@ public class PauseMenuUI : MonoBehaviour
 
     private bool isPaused;
     private bool settingsOpen;
+    private float resumeTimeScale = 1f;
+    public bool IsPaused => isPaused;
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            if (settingsOpen)
-            {
-                audioSettingsPanel?.Close();
-                return;
-            }
+        if (Input.GetKeyDown(KeyCode.Escape)) HandleEscape();
+    }
 
-            if (isPaused)
-                Resume();
-            else
-                Pause();
-        }
+    private void HandleEscape()
+    {
+        var interaction = FindFirstObjectByType<OrbitalInteractionController>();
+        if (interaction != null && interaction.TryConsumeEscape()) return;
+        if (settingsOpen) { audioSettingsPanel?.Close(); return; }
+        if (isPaused) Resume();
+        else Pause();
     }
 
     public void Pause()
     {
-        if (!isPaused && Time.timeScale <= 0f)
-            return;
+        if (isPaused) return;
+        UpgradeManager rewards = UpgradeManager.Instance;
+        bool rewardPaused = rewards != null && !rewards.IsRewardQueueIdle;
+        if (Time.timeScale <= 0f && !rewardPaused) return;
 
+        FindFirstObjectByType<OrbitalInteractionController>()?.PrepareForExternalPause();
+        resumeTimeScale = rewardPaused ? rewards.TimeScaleAfterRewards : Time.timeScale;
         isPaused = true;
 
         if (pausePanel != null)
@@ -58,7 +62,8 @@ public class PauseMenuUI : MonoBehaviour
         if (pausePanel != null)
             pausePanel.SetActive(false);
 
-        Time.timeScale = 1f;
+        Time.timeScale = UpgradeManager.Instance != null && !UpgradeManager.Instance.IsRewardQueueIdle
+            ? 0f : resumeTimeScale;
     }
 
     public void OpenSettings()

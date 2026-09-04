@@ -54,13 +54,8 @@ public sealed class LevelChoiceManager : MonoBehaviour
         if (isChoosing)
             return false;
 
-        OrbitalRelocationController relocation =
-            FindFirstObjectByType<OrbitalRelocationController>();
-        if (relocation != null && relocation.IsDragging)
-            relocation.CancelDrag("level choice opened");
-
         UpgradeManager upgrades = UpgradeManager.Instance;
-        if (upgrades != null && upgrades.IsChoosingUpgrade)
+        if (upgrades != null && !upgrades.IsRewardQueueIdle)
         {
             if (!waitingForUpgradeReward)
             {
@@ -73,6 +68,9 @@ public sealed class LevelChoiceManager : MonoBehaviour
             }
             return true;
         }
+
+        var interaction = FindFirstObjectByType<OrbitalInteractionController>();
+        if (interaction != null && !interaction.CanTransition) return false;
 
         currentChoices.Clear();
         currentSectorOptions.Clear();
@@ -254,12 +252,15 @@ public sealed class LevelChoiceManager : MonoBehaviour
             return;
         }
 
-        isChoosing = false;
         TransitionToSector(sector);
     }
 
     private void TransitionToSector(RunSector sector)
     {
+        var interaction = FindFirstObjectByType<OrbitalInteractionController>();
+        if ((UpgradeManager.Instance != null && !UpgradeManager.Instance.IsRewardQueueIdle) ||
+            (interaction != null && !interaction.CanTransition)) return;
+        isChoosing = false;
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         RunStateManager runState = RunStateManager.EnsureExists();
         runState.CommitCurrentSceneStats();

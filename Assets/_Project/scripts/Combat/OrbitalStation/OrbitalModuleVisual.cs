@@ -14,16 +14,13 @@ namespace Subject42.Combat.OrbitalStation
         private ParticleSystem[] particles;
         private SpriteRenderer[] sprites;
         private Color[] spriteColors;
-        private int[] spriteOrders;
-        private SortingGroup[] sortingGroups;
-        private int[] sortingGroupOrders;
         private float effectStopAt;
         private float flashUntil;
         private bool dragging;
         private bool dragValid;
         private bool previewing;
         private bool previewSnapped;
-        private Transform fallbackBody;
+        private Transform pulseBody;
 
         public GameObject GameObject => root;
         public Transform Transform => root.transform;
@@ -34,34 +31,27 @@ namespace Subject42.Combat.OrbitalStation
             OrbitalPresentationConfig config = OrbitalPresentationConfig.Active;
             this.kind = kind;
             baseScale = config.GetScale(kind);
-            root = new GameObject(name + " Visual Wrapper");
-            root.transform.SetParent(station.RuntimeRoot, false);
-            root.transform.localScale = Vector3.one;
-
-            GameObject haloObject = station.CreateCircleVisual(name + " Selection Halo",
-                new Color(fallbackColor.r, fallbackColor.g, fallbackColor.b, 0.22f),
-                Vector2.one * Mathf.Max(0.42f, baseScale * 0.44f), 12);
-            haloObject.transform.SetParent(root.transform, false);
-            halo = haloObject.GetComponent<SpriteRenderer>();
-            halo.enabled = false;
-
             GameObject prefab = config.GetPrefab(kind);
-            if (prefab != null)
+            if (prefab == null) throw new System.InvalidOperationException($"required {kind} visual prefab missing");
+            root = Object.Instantiate(prefab, station.RuntimeRoot, false);
+            root.name = name + " Visual";
+            var view = root.GetComponent<OrbitalModuleView>();
+            if (view == null || !view.IsValid) throw new System.InvalidOperationException($"required {kind} visual references missing");
+            halo = view.Halo;
+            animator = view.Animator;
+            particles = view.Particles;
+            sprites = view.Sprites;
+            spriteColors = new Color[sprites.Length];
+            for (int i = 0; i < sprites.Length; i++) spriteColors[i] = sprites[i].color;
+            if (view.PulseBody != null) pulseBody = view.PulseBody;
+            else instance = view.Body.gameObject;
+            if (animator != null && kind == OrbitalModuleKind.Pistol)
             {
-                instance = Object.Instantiate(prefab, root.transform);
-                instance.name = prefab.name + " [ORBITAL VISUAL ONLY]";
-                instance.transform.localPosition = Vector3.zero;
-                instance.transform.localRotation = Quaternion.identity;
-                instance.transform.localScale = Vector3.one * baseScale;
-                DisableCombatComponents(instance);
-                CachePresentation(instance, station.VisualMaterial,
-                    config.MountedWeaponSortingOffset);
+                animator.speed = 0f;
+                animator.Play("PistolShoot1", 0, 0.99f);
+                animator.Update(0f);
             }
-            else
-            {
-                CreateFallback(station, kind, fallbackColor, config);
-                CacheFallbackPresentation();
-            }
+            StopParticles();
         }
 
         public void SetHighlighted(bool value)
@@ -120,14 +110,14 @@ namespace Subject42.Combat.OrbitalStation
         {
             if (instance == null)
             {
-                if (fallbackBody != null)
+                if (pulseBody != null)
                 {
                     float fallbackScale = Time.unscaledTime < flashUntil
                         ? 1.14f
                         : kind == OrbitalModuleKind.LinkNode
                             ? 1f + Mathf.Sin(Time.unscaledTime * 4.6f) * 0.12f
                             : 1f;
-                    fallbackBody.localScale = Vector3.one * baseScale * fallbackScale;
+                    pulseBody.localScale = Vector3.one * baseScale * fallbackScale;
                 }
                 ApplyTint();
                 return;
@@ -169,113 +159,6 @@ namespace Subject42.Combat.OrbitalStation
                 }
             effectStopAt = Time.unscaledTime +
                 (kind == OrbitalModuleKind.ImpulseGun ? 0.22f : 0.12f);
-        }
-
-        private void CreateFallback(OrbitalStationRuntime station,
-            OrbitalModuleKind kind, Color color, OrbitalPresentationConfig config)
-        {
-            if (kind == OrbitalModuleKind.ArcEmitter)
-            {
-                GameObject body = station.CreateCircleVisual("Arc Emitter", 
-                    new Color(0.82f, 0.66f, 1f),
-                    Vector2.one * baseScale, 14);
-                body.transform.SetParent(root.transform, false);
-                fallbackBody = body.transform;
-                GameObject core = station.CreatePixelVisual("Arc Emitter Core", Color.white,
-                    Vector2.one * baseScale * 0.34f, 15);
-                core.transform.SetParent(root.transform, false);
-            }
-            else
-            {
-                GameObject body = station.CreateCircleVisual("Link Node", color,
-                    Vector2.one * baseScale, 14);
-                body.transform.SetParent(root.transform, false);
-                fallbackBody = body.transform;
-                GameObject core = station.CreateCircleVisual("Link Node Core",
-                    new Color(1f, 0.72f, 1f), Vector2.one * baseScale * 0.46f, 15);
-                core.transform.SetParent(root.transform, false);
-            }
-        }
-
-        private void CachePresentation(GameObject target, Material material, int offset)
-        {
-            sprites = target.GetComponentsInChildren<SpriteRenderer>(true);
-            spriteColors = new Color[sprites.Length];
-            spriteOrders = new int[sprites.Length];
-            for (int i = 0; i < sprites.Length; i++)
-            {
-                spriteColors[i] = sprites[i].color;
-                spriteOrders[i] = sprites[i].sortingOrder;
-                sprites[i].sharedMaterial = material;
-                sprites[i].sortingLayerName = "Player";
-                sprites[i].sortingOrder = offset + spriteOrders[i];
-            }
-            sortingGroups = target.GetComponentsInChildren<SortingGroup>(true);
-            sortingGroupOrders = new int[sortingGroups.Length];
-            for (int i = 0; i < sortingGroups.Length; i++)
-            {
-                sortingGroupOrders[i] = sortingGroups[i].sortingOrder;
-                sortingGroups[i].sortingLayerName = "Player";
-                sortingGroups[i].sortingOrder = offset + sortingGroupOrders[i];
-            }
-            ParticleSystemRenderer[] particles =
-                target.GetComponentsInChildren<ParticleSystemRenderer>(true);
-            for (int i = 0; i < particles.Length; i++)
-            {
-                particles[i].sortingLayerName = "Player";
-                particles[i].sortingOrder = offset + 2;
-            }
-            animator = target.GetComponentInChildren<Animator>(true);
-            if (animator != null)
-            {
-                animator.enabled = kind == OrbitalModuleKind.Pistol;
-                animator.speed = 0f;
-                if (animator.enabled)
-                {
-                    animator.Play("PistolShoot1", 0, 0.99f);
-                    animator.Update(0f);
-                }
-            }
-            this.particles = target.GetComponentsInChildren<ParticleSystem>(true);
-            StopParticles();
-        }
-
-        private void CacheFallbackPresentation()
-        {
-            sprites = root.GetComponentsInChildren<SpriteRenderer>(true);
-            spriteColors = new Color[sprites.Length];
-            spriteOrders = new int[sprites.Length];
-            for (int i = 0; i < sprites.Length; i++)
-            {
-                spriteColors[i] = sprites[i].color;
-                spriteOrders[i] = sprites[i].sortingOrder;
-            }
-            particles = System.Array.Empty<ParticleSystem>();
-            sortingGroups = System.Array.Empty<SortingGroup>();
-            sortingGroupOrders = System.Array.Empty<int>();
-        }
-
-        private static void DisableCombatComponents(GameObject instance)
-        {
-            MonoBehaviour[] behaviours = instance.GetComponentsInChildren<MonoBehaviour>(true);
-            for (int i = 0; i < behaviours.Length; i++)
-            {
-                string typeName = behaviours[i].GetType().FullName ?? string.Empty;
-                if (!typeName.Contains("Rendering.Universal.Light2D"))
-                    behaviours[i].enabled = false;
-            }
-            Collider2D[] colliders = instance.GetComponentsInChildren<Collider2D>(true);
-            for (int i = 0; i < colliders.Length; i++)
-                colliders[i].enabled = false;
-            Rigidbody2D[] bodies = instance.GetComponentsInChildren<Rigidbody2D>(true);
-            for (int i = 0; i < bodies.Length; i++)
-                bodies[i].simulated = false;
-            AudioSource[] audio = instance.GetComponentsInChildren<AudioSource>(true);
-            for (int i = 0; i < audio.Length; i++)
-            {
-                audio[i].Stop();
-                audio[i].enabled = false;
-            }
         }
 
         private void ApplyTint()

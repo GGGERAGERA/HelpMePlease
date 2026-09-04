@@ -55,6 +55,7 @@ namespace Subject42.Combat.OrbitalStation
     public sealed class OrbitalRingRuntime
     {
         private readonly LineRenderer line;
+        private readonly OrbitalRingView view;
         private readonly Color baseColor;
         private float pulse;
         private float spawnScale = 1f;
@@ -82,16 +83,9 @@ namespace Subject42.Combat.OrbitalStation
             bool animateSpawn = false)
         {
             State = state;
-            GameObject ringObject = new($"Orbital Ring {RingId}");
-            ringObject.transform.SetParent(root, false);
-            line = ringObject.AddComponent<LineRenderer>();
-            line.useWorldSpace = false;
-            line.loop = true;
-            line.positionCount = 112;
-            line.widthMultiplier = 0.045f;
-            line.sharedMaterial = material;
-            line.sortingLayerName = "Player";
-            line.sortingOrder = 6;
+            view = Object.Instantiate(OrbitalPresentationConfig.Active.RingPrefab, root, false);
+            if (!view.IsValid) throw new System.InvalidOperationException("authored ring references missing");
+            line = view.Line;
             float ringAlpha = OrbitalPresentationConfig.Active.RingLineAlpha;
             baseColor = Color.HSVToRGB((0.51f + State.Order * 0.105f) % 1f,
                 0.72f, 1f);
@@ -105,7 +99,7 @@ namespace Subject42.Combat.OrbitalStation
                 line.SetPosition(i, new Vector3(Mathf.Cos(angle), Mathf.Sin(angle)) * Radius);
             }
             for (int i = 0; i < Mathf.Max(1, State.MountCapacity); i++)
-                Mounts.Add(new OrbitalMountRuntime(this, i, root, sprite));
+                Mounts.Add(new OrbitalMountRuntime(this, i, view.MountsRoot, sprite));
             RebalanceMounts();
         }
 
@@ -145,7 +139,7 @@ namespace Subject42.Combat.OrbitalStation
 
         public OrbitalMountRuntime AddMount(Transform root, Sprite sprite)
         {
-            OrbitalMountRuntime mount = new(this, Mounts.Count, root, sprite);
+            OrbitalMountRuntime mount = new(this, Mounts.Count, view.MountsRoot, sprite);
             Mounts.Add(mount);
             RebalanceMounts();
             return mount;
@@ -177,13 +171,16 @@ namespace Subject42.Combat.OrbitalStation
                 Mounts[i].Teardown();
             Mounts.Clear();
             if (line != null)
-                Object.Destroy(line.gameObject);
+                Object.Destroy(view.gameObject);
         }
 
         private void RebalanceMounts()
         {
             for (int i = 0; i < Mounts.Count; i++)
+            {
                 Mounts[i].SetLocalPhase(i * 360f / Mounts.Count);
+                Mounts[i].UpdatePosition(State.CurrentPhase, Radius * spawnScale);
+            }
         }
     }
 
@@ -209,22 +206,11 @@ namespace Subject42.Combat.OrbitalStation
         {
             Ring = ring;
             MountIndex = index;
-            GameObject gameObject = new($"Mount {ring.RingId}.{index + 1}");
-            gameObject.transform.SetParent(root, false);
-            gameObject.transform.localScale = Vector3.one;
-            this.root = gameObject.transform;
-            GameObject markerObject = new("Marker");
-            markerObject.transform.SetParent(this.root, false);
-            marker = markerObject.AddComponent<SpriteRenderer>();
-            marker.sprite = sprite;
-            marker.sortingLayerName = "Player";
-            marker.sortingOrder = 9;
-            GameObject haloObject = new("Halo");
-            haloObject.transform.SetParent(this.root, false);
-            halo = haloObject.AddComponent<SpriteRenderer>();
-            halo.sprite = sprite;
-            halo.sortingLayerName = "Player";
-            halo.sortingOrder = 8;
+            var view = Object.Instantiate(OrbitalPresentationConfig.Active.MountPrefab, root, false);
+            if (!view.IsValid) throw new System.InvalidOperationException("authored mount references missing");
+            this.root = view.transform;
+            marker = view.Marker;
+            halo = view.Halo;
             SetVisualState(VisualState.Normal);
         }
 

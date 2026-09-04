@@ -13,7 +13,12 @@ namespace Subject42.Combat.OrbitalStation
         private readonly List<OrbitalRingRuntime> rings = new();
         private readonly List<OrbitalModuleRuntime> modules = new();
         private readonly List<(LineRenderer line, float life)> flashes = new();
+        private readonly Dictionary<(int First, int Second), LineRenderer> linkLines = new();
+        private readonly HashSet<(int First, int Second)> activeLinkPairs = new();
+        private readonly List<(int First, int Second)> staleLinkPairs = new();
         private Transform runtimeRoot;
+        private OrbitalStationView authoredView;
+        private GameObject boundPlayer;
         private Material lineMaterial;
         private Sprite sharedSprite;
         private Sprite sharedCircleSprite;
@@ -26,6 +31,7 @@ namespace Subject42.Combat.OrbitalStation
         private OrbitalRingRuntime selectedRing;
         private bool initialized;
         private bool tearingDown;
+        private bool restoreFailed;
         private OrbitalRelocationController relocation;
         private OrbitalWorldTelekinesisController worldTelekinesis;
 
@@ -39,7 +45,8 @@ namespace Subject42.Combat.OrbitalStation
         public IReadOnlyList<OrbitalModuleRuntime> Modules => modules;
         public OrbitalRingRuntime SelectedRing => selectedRing;
         public bool IsInitialized => initialized;
-        internal Transform RuntimeRoot => runtimeRoot;
+        // Transient module previews, drag and interaction lines share this authored parent.
+        internal Transform RuntimeRoot => authoredView.InteractionRoot;
         internal Material VisualMaterial => lineMaterial;
         internal bool IsDebugPlacementActive => placementStep != PlacementStep.None;
         internal bool IsRelocating => relocation != null && relocation.IsDragging;
@@ -54,8 +61,16 @@ namespace Subject42.Combat.OrbitalStation
         {
             if (player == null)
                 return null;
-            OrbitalStationRuntime station = player.GetComponent<OrbitalStationRuntime>();
-            station ??= player.AddComponent<OrbitalStationRuntime>();
+            OrbitalStationRuntime station = player.GetComponentInChildren<OrbitalStationRuntime>(true);
+            if (station == null)
+            {
+                var config = OrbitalPresentationConfig.Active;
+                if (config == null || config.StationPrefab == null)
+                { Debug.LogError("[OrbitalStation] required authored station prefab is missing", player); return null; }
+                station = Instantiate(config.StationPrefab, player.transform, false).GetComponent<OrbitalStationRuntime>();
+                if (station == null) { Debug.LogError("[OrbitalStation] authored station owner is missing", player); return null; }
+            }
+            station.boundPlayer = player;
             station.Initialize();
             return station;
         }
@@ -77,68 +92,89 @@ namespace Subject42.Combat.OrbitalStation
 
         public void Initialize()
         {
-            if (initialized)
+            if (initialized || restoreFailed)
                 return;
             runStateManager = RunStateManager.EnsureExists();
-            State = runStateManager.EnsureOrbitalRunState();
-            if (!State.Validate(out string stateError))
+            if (!runStateManager.TryGetOrbitalRunState(out OrbitalRunState state, out string error))
             {
-                Debug.LogWarning(
-                    $"[OrbitalStation] Restore state invalid ({stateError}); using base state.", this);
-                State = runStateManager.ResetOrbitalRunState();
-            }
-            tearingDown = false;
-            runtimeRoot = new GameObject("Orbital Station Runtime").transform;
-            runtimeRoot.SetParent(transform, false);
-            Texture2D texture = new(1, 1, TextureFormat.RGBA32, false)
-            {
-                name = "Orbital Station Pixel",
-                hideFlags = HideFlags.DontSave
-            };
-            texture.SetPixel(0, 0, Color.white);
-            texture.Apply();
-            sharedSprite = Sprite.Create(texture, new Rect(0, 0, 1, 1),
-                new Vector2(0.5f, 0.5f), 1f);
-            sharedSprite.name = "Orbital Station Sprite";
-            sharedCircleSprite = CreateCircleSprite();
-            lineMaterial = new Material(Shader.Find("Sprites/Default"))
-            {
-                name = "Orbital Station Lines",
-                hideFlags = HideFlags.DontSave
-            };
-            GameObject coreObject = CreateCircleVisual("Orbital Core",
-                new Color(0.72f, 0.25f, 1f), new Vector2(0.34f, 0.34f), 16);
-            coreObject.transform.SetParent(runtimeRoot, false);
-            coreVisual = coreObject.GetComponent<SpriteRenderer>();
-            Owner = new ProductionOrbitalOwnerAdapter(gameObject);
-            Combat = new ProductionOrbitalCombatAdapter(runtimeRoot, sharedSprite);
-            Core = new OrbitalCoreRuntime(State.CoreState);
-            Interaction = GetComponent<OrbitalInteractionPresentation>();
-            Interaction ??= gameObject.AddComponent<OrbitalInteractionPresentation>();
-            Interaction.Bind(this);
-            RewardFlow = GetComponent<OrbitalRewardFlowController>();
-            RewardFlow ??= gameObject.AddComponent<OrbitalRewardFlowController>();
-            RewardFlow.Bind(this);
-            relocation = GetComponent<OrbitalRelocationController>();
-            relocation ??= gameObject.AddComponent<OrbitalRelocationController>();
-            relocation.Bind(this);
-            worldTelekinesis = GetComponent<OrbitalWorldTelekinesisController>();
-            worldTelekinesis ??=
-                gameObject.AddComponent<OrbitalWorldTelekinesisController>();
-            worldTelekinesis.Bind(this);
-            initialized = true;
-            if (!BuildPresentationFromState(out string restoreError))
-            {
-                Debug.LogWarning(
-                    $"[OrbitalStation] Restore failed ({restoreError}); rebuilding base state.", this);
-                Teardown();
-                State = runStateManager.ResetOrbitalRunState();
-                Initialize();
+                FailRestore(error);
                 return;
             }
-            State.MarkRestored();
-            Debug.Log($"[OrbitalStation] Restored run {State.RunId}: " +
-                $"Core {Core.Level}, Rings {rings.Count}, Modules {modules.Count}.", this);
+            State = state;
+            try
+            {
+                if (!OrbitalPresentationConfig.TryGetRequired(out var config, out error))
+                {
+                    FailRestore(error);
+                    return;
+                }
+                authoredView = GetComponent<OrbitalStationView>();
+                if (authoredView == null || !authoredView.IsValid)
+                { FailRestore("required authored station references are missing"); return; }
+                tearingDown = false;
+                runtimeRoot = authoredView.transform;
+                sharedSprite = config.PixelSprite;
+                sharedCircleSprite = config.CircleSprite;
+                lineMaterial = config.VisualMaterial;
+                coreVisual = authoredView.Core;
+                coreVisual.enabled = true;
+                Owner = new ProductionOrbitalOwnerAdapter(boundPlayer != null ? boundPlayer : gameObject);
+                Combat = new ProductionOrbitalCombatAdapter(authoredView.EffectsRoot, sharedSprite);
+                Core = new OrbitalCoreRuntime(State.CoreState);
+                InputOwner = authoredView.Input;
+                InputOwner.Bind(this);
+                Interaction = authoredView.Presentation;
+                Interaction.Bind(this);
+                RewardFlow = authoredView.Rewards;
+                RewardFlow.Bind(this);
+                relocation = authoredView.Relocation;
+                relocation.Bind(this);
+                worldTelekinesis = authoredView.World;
+                worldTelekinesis.Bind(this);
+                if (!BuildPresentationFromState(out string restoreError))
+                {
+                    FailRestore(restoreError);
+                    return;
+                }
+                initialized = true;
+                enabled = true;
+                InputOwner.enabled = true;
+                Interaction.enabled = true;
+                RewardFlow.enabled = true;
+                relocation.enabled = true;
+                worldTelekinesis.enabled = true;
+                gameObject.SetActive(true);
+            }
+            catch (System.Exception exception)
+            {
+                FailRestore($"presentation exception {exception.GetType().Name}: {exception.Message}");
+            }
+        }
+
+        private void FailRestore(string reason)
+        {
+            if (restoreFailed)
+                return;
+            restoreFailed = true;
+            initialized = false;
+            enabled = false;
+            StopAllCoroutines();
+            // Cancel staged presentation before disabling; cancellation never mutates run state.
+            OrbitalRewardFlowController reward = GetComponent<OrbitalRewardFlowController>();
+            reward?.AbortForRestoreFailure();
+            if (reward != null) reward.enabled = false;
+            relocation = GetComponent<OrbitalRelocationController>();
+            worldTelekinesis = GetComponent<OrbitalWorldTelekinesisController>();
+            Interaction = GetComponent<OrbitalInteractionPresentation>();
+            if (relocation != null) relocation.enabled = false;
+            if (worldTelekinesis != null) worldTelekinesis.enabled = false;
+            if (Interaction != null) Interaction.enabled = false;
+            Teardown();
+            gameObject.SetActive(false);
+            // Retain the authoritative reference for diagnostics and existing operation callers.
+            State = runStateManager?.OrbitalStationState;
+            Debug.LogError($"[OrbitalStation] operation=restore RunId={runStateManager?.OrbitalStationState?.RunId.ToString() ?? "missing"} " +
+                $"scene={gameObject.scene.name} component={nameof(OrbitalStationRuntime)} reason={reason}", this);
         }
 
         private void Update()
@@ -179,28 +215,27 @@ namespace Subject42.Combat.OrbitalStation
 #endif
         }
 
-        public OrbitalRingRuntime AddRing()
+        public OrbitalRingState AddRing()
         {
-            if (!initialized || State == null)
-                return null;
-            OrbitalRingState ringState = State.AddRing();
-            try
-            {
-                OrbitalRingRuntime ring = CreateRingPresentation(ringState, true);
-                SelectRing(ring);
-                return ring;
-            }
-            catch (System.Exception exception)
-            {
-                Debug.LogException(exception, this);
-                RebuildRuntimeFromState();
-                return rings.Find(value => value.RingId == ringState.StableRingId);
-            }
+            OrbitalRingState ring = State?.AddRing();
+            if (ring == null) return null;
+            SyncCommitted("AddRing", ring.StableRingId, 0, () => SelectRing(CreateRingPresentation(ring, true)));
+            return ring;
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public OrbitalRingState DebugAddRingBeyondCap()
+        {
+            OrbitalRingState ring = State?.DebugAddRingBeyondCap();
+            if (ring == null) return null;
+            SyncCommitted("DebugAddRingBeyondCap", ring.StableRingId, 0, () => SelectRing(CreateRingPresentation(ring, true)));
+            return ring;
+        }
+#endif
 
         public void BeginModulePlacement(OrbitalModuleKind kind)
         {
-            if (!initialized)
+            if (!initialized || InputOwner == null || !InputOwner.CanQueueDebugPlacement)
                 return;
             pendingKind = kind;
             placementStep = PlacementStep.Ring;
@@ -222,16 +257,16 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool UpgradeRingSpeed(int stableRingId)
         {
-            if (State == null || !State.UpgradeRingSpeed(stableRingId))
-                return false;
-            return RebuildRuntimeFromState(stableRingId);
+            if (State == null || !State.UpgradeRingSpeed(stableRingId)) return false;
+            SyncCommitted("RingSpeed", stableRingId, 0, () => SelectRing(RequireRing(stableRingId)));
+            return true;
         }
 
         public bool UpgradeRingPower(int stableRingId)
         {
-            if (State == null || !State.UpgradeRingPower(stableRingId))
-                return false;
-            return RebuildRuntimeFromState(stableRingId);
+            if (State == null || !State.UpgradeRingPower(stableRingId)) return false;
+            SyncCommitted("RingPower", stableRingId, 0, () => SelectRing(RequireRing(stableRingId)));
+            return true;
         }
 
         public void AddMount()
@@ -254,59 +289,61 @@ namespace Subject42.Combat.OrbitalStation
             }
             if (!State.AddMount(stableRingId, out error))
                 return false;
-            return RebuildRuntimeFromState(stableRingId);
+            SyncCommitted("AddMount", stableRingId, 0, () =>
+            {
+                OrbitalRingRuntime ring = RequireRing(stableRingId);
+                if (ring.Mounts.Count != ring.State.MountCapacity - 1)
+                    throw new System.InvalidOperationException("mount cache does not match pre-commit capacity");
+                ring.AddMount(runtimeRoot, sharedCircleSprite);
+            });
+            return true;
         }
 
-        public void UpgradeCore()
+        public bool UpgradeCore()
         {
-            if (State == null)
-                return;
-            if (State.UpgradeCore())
-                FlashCore(new Color(0.85f, 0.3f, 1f));
+            if (State == null || !State.UpgradeCore()) return false;
+            SyncCommitted("CoreUpgrade", 0, 0, () => FlashCore(new Color(0.85f, 0.3f, 1f)));
+            return true;
         }
 
         public bool UpgradeLinkMatrix()
         {
             if (State == null || !State.UpgradeLinkMatrix())
                 return false;
-            FlashCore(new Color(0.9f, 0.2f, 1f));
+            SyncCommitted("LinkMatrix", 0, 0, () => FlashCore(new Color(0.9f, 0.2f, 1f)));
             return true;
         }
 
         public bool ProcessPlayerLevelMilestone(int playerLevel)
         {
-            if (State == null || playerLevel <= State.LastProcessedPlayerLevel)
-                return false;
-            State.MarkPlayerLevelProcessed(playerLevel);
-            OrbitalProgressionConfig config = OrbitalProgressionConfig.Default;
-            if (!config.IsRingMilestone(playerLevel) ||
-                State.Rings.Count >= config.MaxNormalRings)
-                return false;
-            OrbitalRingRuntime ring = AddRing();
-            if (ring == null)
-                return false;
-            FlashCore(new Color(0.75f, 0.25f, 1f));
-            RunMessageService.Instance?.ShowCustom(
-                string.Empty,
-                $"ТЕЛЕКИНЕТИЧЕСКИЙ УРОВЕНЬ: {State.Rings.Count}",
-                1.35f);
-            StartCoroutine(CompensateCameraForRadius(ring.Radius));
+            if (State == null || !State.ProcessPlayerLevelMilestone(playerLevel, out OrbitalRingState ring)) return false;
+            if (ring == null) return true; // The level marker was committed without a ring milestone.
+            SyncCommitted("PlayerLevelMilestone", ring.StableRingId, 0, () =>
+            {
+                SelectRing(CreateRingPresentation(ring, true));
+                FlashCore(new Color(0.75f, 0.25f, 1f));
+                RunMessageService.Instance?.ShowCustom(string.Empty,
+                    $"ТЕЛЕКИНЕТИЧЕСКИЙ УРОВЕНЬ: {State.Rings.Count}", 1.35f);
+                StartCoroutine(CompensateCameraForRadius(ring.Radius));
+            });
             return true;
         }
 
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         public void ApplyPresetStart()
         {
             if (runStateManager == null)
                 return;
-            State = runStateManager.ResetOrbitalRunState();
+            State = runStateManager.DebugResetOrbitalRunState();
             RebuildRuntimeFromState();
         }
 
         public void ApplyPresetMid()
         {
             ResetStation();
-            OrbitalRingRuntime second = AddRing();
-            InstallFirstFree(rings[0], OrbitalModuleKind.LaserSword);
+            OrbitalRingState second = AddRing();
+            InstallFirstFree(rings[0].State, OrbitalModuleKind.LaserSword);
             InstallFirstFree(second, OrbitalModuleKind.ArcEmitter);
             UpgradeCore();
         }
@@ -314,9 +351,9 @@ namespace Subject42.Combat.OrbitalStation
         public void ApplyPresetFinal()
         {
             ApplyPresetMid();
-            OrbitalRingRuntime third = AddRing();
-            InstallFirstFree(rings[0], OrbitalModuleKind.LinkNode);
-            InstallFirstFree(rings[1], OrbitalModuleKind.LinkNode);
+            OrbitalRingState third = AddRing();
+            InstallFirstFree(rings[0].State, OrbitalModuleKind.LinkNode);
+            InstallFirstFree(rings[1].State, OrbitalModuleKind.LinkNode);
             InstallFirstFree(third, OrbitalModuleKind.ImpulseGun);
             SelectRing(rings[0]);
             UpgradeSelectedRingPower();
@@ -328,16 +365,18 @@ namespace Subject42.Combat.OrbitalStation
         public void ApplyReadabilityTestPreset()
         {
             ApplyPresetStart();
-            OrbitalRingRuntime second = AddRing();
-            OrbitalRingRuntime third = AddRing();
+            OrbitalRingState second = AddRing();
+            OrbitalRingState third = AddRing();
             InstallModule(OrbitalModuleKind.LinkNode, rings[0].RingId, 1, out _);
-            InstallModule(OrbitalModuleKind.LinkNode, second.RingId, 0, out _);
-            InstallModule(OrbitalModuleKind.LaserSword, second.RingId, 1, out _);
-            InstallModule(OrbitalModuleKind.ImpulseGun, third.RingId, 0, out _);
-            InstallModule(OrbitalModuleKind.ArcEmitter, third.RingId, 1, out _);
+            InstallModule(OrbitalModuleKind.LinkNode, second.StableRingId, 0, out _);
+            InstallModule(OrbitalModuleKind.LaserSword, second.StableRingId, 1, out _);
+            InstallModule(OrbitalModuleKind.ImpulseGun, third.StableRingId, 0, out _);
+            InstallModule(OrbitalModuleKind.ArcEmitter, third.StableRingId, 1, out _);
             if (Camera.main != null && Camera.main.orthographic)
                 Camera.main.orthographicSize = 8.1f;
         }
+
+#endif
 
         internal GameObject CreatePixelVisual(string name, Color color,
             Vector2 scale, int sortingOrder)
@@ -376,7 +415,7 @@ namespace Subject42.Combat.OrbitalStation
             if (!initialized)
                 return;
             GameObject gameObject = new("Orbital Arc Flash");
-            gameObject.transform.SetParent(runtimeRoot, true);
+            gameObject.transform.SetParent(authoredView.EffectsRoot, true);
             LineRenderer line = gameObject.AddComponent<LineRenderer>();
             line.useWorldSpace = true;
             line.positionCount = 2;
@@ -390,11 +429,15 @@ namespace Subject42.Combat.OrbitalStation
             flashes.Add((line, life));
         }
 
+        public OrbitalInteractionController InputOwner { get; private set; }
+
         public void Teardown()
         {
-            if (!initialized || tearingDown)
+            if (tearingDown)
                 return;
             tearingDown = true;
+            RewardFlow?.CancelForSceneTransition();
+            initialized = false;
             worldTelekinesis?.CancelInteraction();
             relocation?.CancelDrag("station teardown");
             Interaction?.Release();
@@ -408,24 +451,12 @@ namespace Subject42.Combat.OrbitalStation
                 if (flashes[i].line != null)
                     Destroy(flashes[i].line.gameObject);
             flashes.Clear();
-            if (runtimeRoot != null)
-                Destroy(runtimeRoot.gameObject);
-            if (lineMaterial != null)
-                Destroy(lineMaterial);
-            if (sharedSprite != null)
-            {
-                Texture2D texture = sharedSprite.texture;
-                Destroy(sharedSprite);
-                if (texture != null)
-                    Destroy(texture);
-            }
-            if (sharedCircleSprite != null)
-            {
-                Texture2D texture = sharedCircleSprite.texture;
-                Destroy(sharedCircleSprite);
-                if (texture != null)
-                    Destroy(texture);
-            }
+            foreach (LineRenderer line in linkLines.Values)
+                if (line != null) Destroy(line.gameObject);
+            linkLines.Clear();
+            activeLinkPairs.Clear();
+            staleLinkPairs.Clear();
+            if (coreVisual != null) coreVisual.enabled = false;
             runtimeRoot = null;
             lineMaterial = null;
             sharedSprite = null;
@@ -441,31 +472,30 @@ namespace Subject42.Combat.OrbitalStation
             State = null;
             initialized = false;
             tearingDown = false;
-            Debug.Log("[OrbitalStation] Teardown complete.", this);
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         private void ResetStation()
         {
             ApplyPresetStart();
         }
 
-        private void InstallFirstFree(OrbitalRingRuntime ring, OrbitalModuleKind kind)
+#endif
+
+        private void InstallFirstFree(OrbitalRingState ring, OrbitalModuleKind kind)
         {
-            if (ring == null)
-                return;
-            for (int i = 0; i < ring.Mounts.Count; i++)
-            {
-                if (!ring.Mounts[i].Occupied)
+            if (ring == null) return;
+            for (int i = 0; i < ring.MountCapacity; i++)
+                if (State.CanInstallModule(kind, ring.StableRingId, i, out _))
                 {
-                    InstallModule(ring.Mounts[i], kind);
+                    InstallModule(kind, ring.StableRingId, i, out _);
                     return;
                 }
-            }
         }
 
         private bool InstallModule(OrbitalMountRuntime mount, OrbitalModuleKind kind)
         {
-            if (mount == null || mount.Occupied)
+            if (mount == null)
                 return false;
             return InstallModule(kind, mount.Ring.RingId, mount.MountIndex,
                 out _);
@@ -474,32 +504,34 @@ namespace Subject42.Combat.OrbitalStation
         public bool InstallModule(OrbitalModuleKind kind, int stableRingId,
             int mountIndex, out string error)
         {
+            error = "state is missing";
+            if (State == null || !State.CanInstallModule(kind, stableRingId, mountIndex, out error)) return false;
+            if (!State.InstallModule(kind, stableRingId, mountIndex, out OrbitalModuleState module)) return false;
             error = null;
-            if (State == null)
+            SyncCommitted("Install", stableRingId, module.StableModuleId, () =>
             {
-                error = "state is missing";
-                return false;
-            }
-            OrbitalRingRuntime ring = rings.Find(value =>
-                value.RingId == stableRingId);
-            if (ring == null || mountIndex < 0 || mountIndex >= ring.Mounts.Count)
+                if (!OrbitalPresentationConfig.TryGetRequired(out _, out string reason))
+                    throw new System.InvalidOperationException(reason);
+                if (!InstallModulePresentation(RequireMount(stableRingId, mountIndex), module))
+                    throw new System.InvalidOperationException("module visual attach failed");
+            });
+            return true;
+        }
+
+        public bool InstallLinkPair(int ringA, int mountA, int ringB, int mountB, out string error)
+        {
+            error = "state is missing";
+            if (State == null || !State.InstallLinkPair(ringA, mountA, ringB, mountB,
+                out var first, out var second, out error)) return false;
+            SyncCommitted("InstallLinkPair", ringA, first.StableModuleId, () =>
             {
-                error = $"runtime mount {stableRingId}:{mountIndex} is missing";
-                return false;
-            }
-            OrbitalMountRuntime mount = ring.Mounts[mountIndex];
-            if (!State.InstallModule(kind, stableRingId, mountIndex,
-                    out OrbitalModuleState moduleState))
-            {
-                error = $"state rejected module at {stableRingId}:{mountIndex}";
-                return false;
-            }
-            if (InstallModulePresentation(mount, moduleState))
-                return true;
-            State.RemoveModule(moduleState.StableModuleId);
-            RebuildRuntimeFromState(stableRingId);
-            error = $"presentation rejected module at {stableRingId}:{mountIndex}";
-            return false;
+                if (!OrbitalPresentationConfig.TryGetRequired(out _, out string reason))
+                    throw new System.InvalidOperationException(reason);
+                if (!InstallModulePresentation(RequireMount(ringA, mountA), first) ||
+                    !InstallModulePresentation(RequireMount(ringB, mountB), second))
+                    throw new System.InvalidOperationException("Link pair visual attach failed");
+            });
+            return true;
         }
 
         private bool InstallModulePresentation(OrbitalMountRuntime mount,
@@ -527,35 +559,24 @@ namespace Subject42.Combat.OrbitalStation
         public bool MoveModule(int stableModuleId, int targetRingId,
             int targetMountIndex, out string error)
         {
-            error = null;
-            OrbitalModuleState original = State?.Modules.Find(value =>
-                value.StableModuleId == stableModuleId);
-            if (original == null)
+            error = "state is missing";
+            if (State == null || !State.MoveModule(stableModuleId, targetRingId, targetMountIndex, out error)) return false;
+            SyncCommitted("Move", targetRingId, stableModuleId, () =>
             {
-                error = $"module {stableModuleId} does not exist";
-                return false;
-            }
-            int sourceRingId = original.StableRingId;
-            int sourceMountIndex = original.MountIndex;
-            if (State == null || !State.MoveModule(stableModuleId,
-                    targetRingId, targetMountIndex, out error))
-            {
-                return false;
-            }
-            if (RebuildRuntimeFromState(targetRingId))
-                return true;
-            State?.MoveModule(stableModuleId, sourceRingId, sourceMountIndex, out _);
-            RebuildRuntimeFromState(sourceRingId);
-            error = $"runtime attach failed at {targetRingId}:{targetMountIndex}; state rolled back";
-            Debug.LogError($"[OrbitalStation] Relocation failed: {error}", this);
-            return false;
+                OrbitalModuleRuntime module = RequireModule(stableModuleId);
+                OrbitalMountRuntime target = RequireMount(targetRingId, targetMountIndex);
+                if (module.CurrentMount == null) throw new System.InvalidOperationException("source mount cache missing");
+                module.CurrentMount.Detach();
+                if (!target.Attach(module)) throw new System.InvalidOperationException("target mount cache rejected attach");
+                module.CancelPresentationDrag();
+            });
+            return true;
         }
 
         public bool RemoveModule(int stableModuleId)
         {
-            if (State == null || !State.RemoveModule(stableModuleId))
-                return false;
-            RebuildRuntimeFromState();
+            if (State == null || !State.RemoveModule(stableModuleId)) return false;
+            SyncCommitted("RemoveModule", 0, stableModuleId, () => RemoveModulePresentation(RequireModule(stableModuleId)));
             return true;
         }
 
@@ -574,35 +595,87 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool UpgradeModuleDamage(int stableModuleId)
         {
-            if (State == null || !State.UpgradeModuleDamage(stableModuleId))
-                return false;
-            OrbitalModuleRuntime module = modules.Find(value =>
-                value.StableModuleId == stableModuleId);
-            module?.TriggerUpgradePresentation();
-            FlashCore(new Color(1f, 0.82f, 0.28f));
+            if (State == null || !State.UpgradeModuleDamage(stableModuleId)) return false;
+            SyncCommitted("ModuleUpgrade", 0, stableModuleId, () => RequireModule(stableModuleId).TriggerUpgradePresentation());
             return true;
         }
 
-        public bool SetModuleRewardPresentationVisible(int stableModuleId,
-            bool visible)
+        public bool SetModuleRewardPresentationVisible(int stableModuleId, bool visible)
         {
-            if (State == null)
-                return false;
-            int index = State.Modules.FindIndex(value =>
-                value.StableModuleId == stableModuleId);
-            if (index < 0 || index >= modules.Count || modules[index] == null)
-                return false;
-            modules[index].SetRewardPresentationVisible(visible);
+            OrbitalModuleRuntime module = modules.Find(value => value.StableModuleId == stableModuleId);
+            if (module == null) return false;
+            module.SetRewardPresentationVisible(visible);
             return true;
         }
 
         public bool RemoveRing(int stableRingId, out string error)
         {
-            error = null;
-            if (State == null || !State.RemoveRing(stableRingId, out error))
-                return false;
-            RebuildRuntimeFromState();
+            error = "state is missing";
+            if (State == null || !State.RemoveRing(stableRingId, out error)) return false;
+            SyncCommitted("RemoveRing", stableRingId, 0, () =>
+            {
+                OrbitalRingRuntime ring = RequireRing(stableRingId);
+                foreach (OrbitalModuleRuntime module in modules.Where(m => m.CurrentMount?.Ring.RingId == stableRingId).ToArray())
+                    RemoveModulePresentation(module);
+                ring.Teardown();
+                rings.Remove(ring);
+                if (selectedRing == ring) SelectRing(rings.FirstOrDefault());
+            });
             return true;
+        }
+
+        public bool IsMountFree(OrbitalMountRuntime mount) => mount != null && State != null &&
+            State.IsMountFree(mount.Ring.RingId, mount.MountIndex);
+
+        private OrbitalRingRuntime RequireRing(int id) => rings.Find(r => r.RingId == id) ??
+            throw new System.InvalidOperationException($"ring runtime {id} missing");
+
+        private OrbitalModuleRuntime RequireModule(int id) => modules.Find(m => m.StableModuleId == id) ??
+            throw new System.InvalidOperationException($"module runtime {id} missing");
+
+        private OrbitalMountRuntime RequireMount(int ringId, int index)
+        {
+            OrbitalMountRuntime mount = RequireRing(ringId).Mounts.Find(m => m.MountIndex == index);
+            if (mount == null || mount.Transform == null)
+                throw new System.InvalidOperationException($"mount runtime {ringId}:{index} missing");
+            return mount;
+        }
+
+        private void RemoveModulePresentation(OrbitalModuleRuntime module)
+        {
+            module.CurrentMount?.Detach();
+            module.Teardown();
+            modules.Remove(module);
+        }
+
+        private void SyncCommitted(string operation, int ringId, int moduleId, System.Action sync)
+        {
+            try
+            {
+                if (!initialized) throw new System.InvalidOperationException("station presentation is not initialized");
+                sync();
+            }
+            catch (System.Exception exception)
+            {
+                // Keep the committed data and runtime references. Explicit restore owns full cleanup.
+                // Do not disable/cancel an in-flight reward here: its caller must observe the commit.
+                restoreFailed = true;
+                initialized = false;
+                enabled = false;
+                string reason = exception.Message;
+                try
+                {
+                    relocation?.CancelDrag("presentation failed");
+                    worldTelekinesis?.CancelInteraction();
+                    Interaction?.Release();
+                }
+                catch (System.Exception cleanupError)
+                {
+                    reason += $"; interaction cleanup failed: {cleanupError.Message}";
+                }
+                Debug.LogError($"[OrbitalStation] operation={operation} RunId={State?.RunId} ring={ringId} module={moduleId} " +
+                    $"state committed; incremental presentation sync failed: {reason}", this);
+            }
         }
 
         public OrbitalRunState CaptureState()
@@ -622,14 +695,10 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool RebuildRuntimeFromState(int preferredRingId = 0)
         {
-            if (runStateManager == null ||
-                runStateManager.OrbitalStationState == null)
-            {
-                return false;
-            }
             if (preferredRingId == 0 && selectedRing != null)
                 preferredRingId = selectedRing.RingId;
             Teardown();
+            restoreFailed = false; // Explicit retry only; Ensure never retries a failed station.
             Initialize();
             OrbitalRingRuntime preferred = rings.Find(value =>
                 value.RingId == preferredRingId);
@@ -674,7 +743,7 @@ namespace Subject42.Combat.OrbitalStation
         private OrbitalRingRuntime CreateRingPresentation(
             OrbitalRingState ringState, bool animateSpawn = false)
         {
-            OrbitalRingRuntime ring = new(ringState, runtimeRoot,
+            OrbitalRingRuntime ring = new(ringState, authoredView.RingsRoot,
                 lineMaterial, sharedCircleSprite, animateSpawn);
             rings.Add(ring);
             return ring;
@@ -715,7 +784,7 @@ namespace Subject42.Combat.OrbitalStation
                     SelectRing(rings[i]);
             if (placementStep == PlacementStep.None || Time.timeScale <= 0f ||
                 !Input.GetMouseButtonDown(0) || Camera.main == null ||
-                Subject42DebugMenu.IsDebugMenuOpen)
+                (InputOwner == null || !InputOwner.CanUseDebugPlacement))
                 return;
             Vector3 world3 = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Vector2 local = transform.InverseTransformPoint(world3);
@@ -752,7 +821,7 @@ namespace Subject42.Combat.OrbitalStation
             return best;
         }
 
-        private static OrbitalMountRuntime FindMountAt(OrbitalRingRuntime ring,
+        private OrbitalMountRuntime FindMountAt(OrbitalRingRuntime ring,
             Vector2 world)
         {
             if (ring == null)
@@ -762,7 +831,7 @@ namespace Subject42.Combat.OrbitalStation
             for (int i = 0; i < ring.Mounts.Count; i++)
             {
                 OrbitalMountRuntime mount = ring.Mounts[i];
-                if (mount.Occupied || mount.Transform == null)
+                if (!IsMountFree(mount) || mount.Transform == null)
                     continue;
                 float distance = ((Vector2)mount.Transform.position - world).sqrMagnitude;
                 if (distance < bestDistance)
@@ -776,29 +845,62 @@ namespace Subject42.Combat.OrbitalStation
 
         private void UpdateLinkNodes(float deltaTime)
         {
-            List<OrbitalLinkNodeModule> nodes = new();
-            for (int i = 0; i < modules.Count; i++)
-                if (modules[i] is OrbitalLinkNodeModule node && node.CurrentMount != null)
-                    nodes.Add(node);
-            for (int i = 0; i + 1 < nodes.Count; i += 2)
+            activeLinkPairs.Clear();
+            foreach (var pair in State.ResolveLinkPairs())
             {
-                Vector2 from = nodes[i].CurrentMount.Transform.position;
-                Vector2 to = nodes[i + 1].CurrentMount.Transform.position;
-                FlashLink(from, to, new Color(0.7f, 0.2f, 1f, 0.35f),
-                    Mathf.Max(0.03f, deltaTime * 1.5f));
-                if (nodes[i].RuntimeCooldown > 0f)
+                var first = modules.Find(m => m.StableModuleId == pair.First) as OrbitalLinkNodeModule;
+                var second = modules.Find(m => m.StableModuleId == pair.Second) as OrbitalLinkNodeModule;
+                if (first?.CurrentMount == null || second?.CurrentMount == null) continue;
+                Vector2 from = first.CurrentMount.Transform.position;
+                Vector2 to = second.CurrentMount.Transform.position;
+                activeLinkPairs.Add(pair);
+                UpdateLinkLine(pair, from, to);
+                if (first.RuntimeCooldown > 0f)
                     continue;
                 EnemyHealth target = Combat.FindNearest((from + to) * 0.5f, 2f);
                 if (target != null && DistanceToSegment(target.transform.position,
                     from, to) < 0.4f)
                 {
-                    float linkPower = (nodes[i].CurrentMount.Ring.PowerMultiplier +
-                        nodes[i + 1].CurrentMount.Ring.PowerMultiplier) * 0.5f;
+                    float linkPower = (first.CurrentMount.Ring.PowerMultiplier +
+                        second.CurrentMount.Ring.PowerMultiplier) * 0.5f;
                     float matrixPower = 1f + State.CoreState.LinkMatrixUpgradeLevel * 0.25f;
                     Combat.ApplyDamage(target, 5f * linkPower * matrixPower *
                         Core.DamageMultiplier, target.transform.position);
-                    nodes[i].RuntimeCooldown = 0.55f;
+                    first.RuntimeCooldown = 0.55f;
                 }
+            }
+            ReleaseInactiveLinkLines();
+        }
+
+        private void UpdateLinkLine((int First, int Second) pair, Vector2 from, Vector2 to)
+        {
+            if (!linkLines.TryGetValue(pair, out LineRenderer line) || line == null)
+            {
+                GameObject linkObject = new("Orbital Link");
+                linkObject.transform.SetParent(authoredView.EffectsRoot, true);
+                line = linkObject.AddComponent<LineRenderer>();
+                line.useWorldSpace = true;
+                line.positionCount = 2;
+                line.widthMultiplier = 0.045f;
+                line.sharedMaterial = lineMaterial;
+                line.sortingLayerName = "Player";
+                line.sortingOrder = 13;
+                line.startColor = line.endColor = new Color(0.7f, 0.2f, 1f, 0.35f);
+                linkLines[pair] = line;
+            }
+            line.SetPosition(0, from);
+            line.SetPosition(1, to);
+        }
+
+        private void ReleaseInactiveLinkLines()
+        {
+            staleLinkPairs.Clear();
+            foreach (var entry in linkLines)
+                if (!activeLinkPairs.Contains(entry.Key)) staleLinkPairs.Add(entry.Key);
+            foreach (var key in staleLinkPairs)
+            {
+                if (linkLines[key] != null) Destroy(linkLines[key].gameObject);
+                linkLines.Remove(key);
             }
         }
 
@@ -826,35 +928,6 @@ namespace Subject42.Combat.OrbitalStation
                 return Vector2.Distance(point, a);
             float t = Mathf.Clamp01(Vector2.Dot(point - a, ab) / ab.sqrMagnitude);
             return Vector2.Distance(point, a + ab * t);
-        }
-
-        internal static Sprite CreateCircleSprite()
-        {
-            const int size = 64;
-            Texture2D texture = new(size, size, TextureFormat.RGBA32, false)
-            {
-                name = "Orbital Station Circle Texture",
-                filterMode = FilterMode.Bilinear,
-                wrapMode = TextureWrapMode.Clamp,
-                hideFlags = HideFlags.DontSave
-            };
-            Color[] pixels = new Color[size * size];
-            Vector2 center = Vector2.one * ((size - 1) * 0.5f);
-            float radius = size * 0.48f;
-            for (int y = 0; y < size; y++)
-                for (int x = 0; x < size; x++)
-                {
-                    float alpha = Mathf.Clamp01(radius -
-                        Vector2.Distance(new Vector2(x, y), center) + 0.75f);
-                    pixels[y * size + x] = new Color(1f, 1f, 1f, alpha);
-                }
-            texture.SetPixels(pixels);
-            texture.Apply(false, true);
-            Sprite sprite = Sprite.Create(texture, new Rect(0, 0, size, size),
-                new Vector2(0.5f, 0.5f), size);
-            sprite.name = "Orbital Station Circle";
-            sprite.hideFlags = HideFlags.DontSave;
-            return sprite;
         }
 
         private void OnDestroy()

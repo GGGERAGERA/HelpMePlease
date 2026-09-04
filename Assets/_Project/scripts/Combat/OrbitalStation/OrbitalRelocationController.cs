@@ -14,7 +14,6 @@ namespace Subject42.Combat.OrbitalStation
         private OrbitalModuleRuntime draggedModule;
         private OrbitalMountRuntime sourceMount;
         private OrbitalMountRuntime targetMount;
-        private float previousTimeScale = 1f;
 
         public bool IsDragging => draggedModule != null;
 
@@ -41,7 +40,8 @@ namespace Subject42.Combat.OrbitalStation
 
         private void UpdateHover()
         {
-            if (station.RewardFlow?.PendingReward != null)
+            if (station.InputOwner.Mode != OrbitalInteractionMode.Idle &&
+                station.InputOwner.Mode != OrbitalInteractionMode.WorldTelekinesis)
                 return;
             OrbitalModuleRuntime next = CanStartInteraction()
                 ? FindModuleAt(MouseWorld(), OrbitalPresentationConfig.Active.ModuleHitRadius)
@@ -72,23 +72,15 @@ namespace Subject42.Combat.OrbitalStation
 
         private bool CanStartInteraction()
         {
-            if (Time.timeScale <= 0f || Camera.main == null ||
-                Subject42DebugMenu.IsDebugMenuOpen || station.IsDebugPlacementActive ||
-                station.RewardFlow?.PendingReward != null || PointerOverInteractiveUi())
-                return false;
-            if (UpgradeManager.Instance != null && UpgradeManager.Instance.IsChoosingUpgrade)
-                return false;
-            return true;
+            return station.InputOwner.CanStartRelocation && Camera.main != null && !PointerOverInteractiveUi();
         }
 
         private void BeginDrag(OrbitalModuleRuntime module)
         {
+            if (!station.InputOwner.BeginRelocation()) return;
             draggedModule = module;
             sourceMount = module.CurrentMount;
             targetMount = null;
-            previousTimeScale = Time.timeScale;
-            Time.timeScale = Mathf.Min(previousTimeScale,
-                OrbitalPresentationConfig.Active.RelocationTimeScale);
             module.BeginPresentationDrag(station.RuntimeRoot);
             OrbitalMountInteractionPresentation.Apply(station, null, sourceMount);
             station.Interaction?.ShowHint(DisplayName(module.Kind),
@@ -98,21 +90,11 @@ namespace Subject42.Combat.OrbitalStation
 
         private void UpdateDrag()
         {
-            if (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(1) ||
-                station.RewardFlow?.PendingReward != null ||
-                (Time.timeScale <= 0f && previousTimeScale > 0f))
-            {
-                if (Time.timeScale <= 0f && previousTimeScale > 0f)
-                    previousTimeScale = 0f;
-                CancelDrag("cancelled");
-                return;
-            }
-
             Vector2 world = MouseWorld();
             targetMount = mountResolver.Resolve(station, Camera.main,
                 Input.mousePosition, targetMount);
             bool valid = targetMount != null && targetMount != sourceMount &&
-                !targetMount.Occupied;
+                station.State.CanMoveModule(draggedModule.StableModuleId, targetMount.Ring.RingId, targetMount.MountIndex, out _);
             draggedModule.SetDragPosition(valid
                 ? targetMount.Transform.position
                 : world);
@@ -123,7 +105,7 @@ namespace Subject42.Combat.OrbitalStation
             station.Interaction?.ShowHint(DisplayName(draggedModule.Kind), valid
                 ? $"Кольцо {targetMount.Ring.State.Order + 1} · " +
                   $"крепление {targetMount.MountIndex + 1}\nОтпустить: переместить"
-                : targetMount != null && targetMount.Occupied
+                : targetMount != null && !station.IsMountFree(targetMount)
                     ? "Крепление занято\nEsc / ПКМ — отменить"
                     : "Наведите оружие на свободное крепление\nEsc / ПКМ — отменить");
             OrbitalMountInteractionPresentation.Apply(station, targetMount,
@@ -139,11 +121,13 @@ namespace Subject42.Combat.OrbitalStation
             }
             if (!Input.GetMouseButtonUp(0))
                 return;
-            if (targetMount == null || targetMount == sourceMount || targetMount.Occupied)
+            if (targetMount == null || targetMount == sourceMount ||
+                !station.State.CanMoveModule(draggedModule.StableModuleId, targetMount.Ring.RingId, targetMount.MountIndex, out _))
             {
                 CancelDrag("invalid target");
                 return;
             }
+            OrbitalModuleRuntime movedModule = draggedModule;
             int id = draggedModule.StableModuleId;
             int ringId = targetMount.Ring.RingId;
             int mountIndex = targetMount.MountIndex;
@@ -157,7 +141,10 @@ namespace Subject42.Combat.OrbitalStation
             station.Interaction?.ClearHint();
             station.Interaction?.SetCursor(OrbitalCursorState.Normal);
             if (!station.MoveModule(id, ringId, mountIndex, out string error))
+            {
+                movedModule.CancelPresentationDrag();
                 Debug.LogWarning($"[OrbitalStation] Relocation rejected: {error}", station);
+            }
         }
 
         public void CancelDrag(string reason)
@@ -178,8 +165,7 @@ namespace Subject42.Combat.OrbitalStation
 
         private void RestoreTimeScale()
         {
-            Time.timeScale = previousTimeScale;
-            previousTimeScale = 1f;
+            station?.InputOwner?.EndRelocation();
         }
 
         private void SetHoverAffordance(bool visible)
@@ -188,7 +174,7 @@ namespace Subject42.Combat.OrbitalStation
                 for (int m = 0; m < station.Rings[r].Mounts.Count; m++)
                 {
                     OrbitalMountRuntime mount = station.Rings[r].Mounts[m];
-                    mount.SetVisualState(mount.Occupied
+                    mount.SetVisualState(!station.IsMountFree(mount)
                         ? OrbitalMountRuntime.VisualState.Occupied
                         : visible
                             ? OrbitalMountRuntime.VisualState.Preview
@@ -237,22 +223,9 @@ namespace Subject42.Combat.OrbitalStation
 
         private OrbitalLinkNodeModule FindLinkPartner(int stableId)
         {
-            OrbitalLinkNodeModule pending = null;
+            int partner = station.State.FindLinkPartner(stableId);
             for (int i = 0; i < station.Modules.Count; i++)
-            {
-                if (station.Modules[i] is not OrbitalLinkNodeModule node)
-                    continue;
-                if (pending == null)
-                    pending = node;
-                else
-                {
-                    if (pending.StableModuleId == stableId)
-                        return node;
-                    if (node.StableModuleId == stableId)
-                        return pending;
-                    pending = null;
-                }
-            }
+                if (station.Modules[i].StableModuleId == partner) return station.Modules[i] as OrbitalLinkNodeModule;
             return null;
         }
 

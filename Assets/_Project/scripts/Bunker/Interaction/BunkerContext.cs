@@ -8,7 +8,8 @@ public sealed class BunkerContext : MonoBehaviour
     [field: SerializeField] public BunkerNotificationManager Notifications { get; private set; }
     [field: SerializeField] public BunkerEventManager Events { get; private set; }
     [field: SerializeField] public BunkerRunStarter RunStarter { get; private set; }
-    public BunkerStationProgressionService StationProgression { get; private set; }
+    [field: SerializeField] public BunkerStationProgressionService StationProgression { get; private set; }
+    [SerializeField] private BunkerPlayerLoadoutController playerLoadout;
 
     private void Awake()
     {
@@ -19,12 +20,12 @@ public sealed class BunkerContext : MonoBehaviour
         }
 
         Instance = this;
-        StationProgression = GetComponent<BunkerStationProgressionService>();
-        if (StationProgression == null)
-            StationProgression = gameObject.AddComponent<BunkerStationProgressionService>();
-
-        if (GetComponent<BunkerPlayerLoadoutController>() == null)
-            gameObject.AddComponent<BunkerPlayerLoadoutController>();
+        if (StationProgression == null || playerLoadout == null)
+        {
+            Debug.LogError("[BunkerContext] Authored progression/loadout components are missing.", this);
+            enabled = false;
+            return;
+        }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         EnsureDebugMenu();

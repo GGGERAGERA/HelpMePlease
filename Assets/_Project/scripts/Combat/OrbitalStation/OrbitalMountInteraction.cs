@@ -79,10 +79,10 @@ namespace Subject42.Combat.OrbitalStation
                     OrbitalMountRuntime mount = ring.Mounts[m];
                     OrbitalMountRuntime.VisualState state;
                     if (mount == hovered)
-                        state = mount.Occupied || mount == reservedSource
+                        state = !station.IsMountFree(mount) || mount == reservedSource
                             ? OrbitalMountRuntime.VisualState.Invalid
                             : OrbitalMountRuntime.VisualState.ValidHover;
-                    else if (mount.Occupied || mount == reservedSource)
+                    else if (!station.IsMountFree(mount) || mount == reservedSource)
                         state = OrbitalMountRuntime.VisualState.Occupied;
                     else
                         state = OrbitalMountRuntime.VisualState.Valid;
@@ -103,7 +103,7 @@ namespace Subject42.Combat.OrbitalStation
                 for (int m = 0; m < ring.Mounts.Count; m++)
                 {
                     OrbitalMountRuntime mount = ring.Mounts[m];
-                    mount.SetVisualState(mount.Occupied
+                    mount.SetVisualState(!station.IsMountFree(mount)
                         ? OrbitalMountRuntime.VisualState.Occupied
                         : OrbitalMountRuntime.VisualState.Normal);
                 }

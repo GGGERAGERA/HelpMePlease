@@ -152,7 +152,13 @@ public static class Subject42ProjectValidator
         ValidateMainMenuScene(report);
         ValidateGameplayScene(report);
         ValidateDataAssets(report);
+        ValidateAuthoredUi(report);
         ValidateProductionDependencies(report);
+        var orbitalConfig = Resources.Load<Subject42.Combat.OrbitalStation.OrbitalPresentationConfig>(
+            "OrbitalStation/OrbitalPresentationConfig");
+        string orbitalError = "required OrbitalPresentationConfig resource is missing";
+        if (orbitalConfig == null || !orbitalConfig.ValidateRequiredReferences(out orbitalError))
+            report.Add(Subject42ValidationSeverity.Error, "ORBITAL_PRESENTATION", orbitalError, orbitalConfig);
 
         report.Add(
             Subject42ValidationSeverity.Info,
@@ -187,6 +193,101 @@ public static class Subject42ProjectValidator
             $"errors={report.ErrorCount}, " +
             $"warnings={report.WarningCount}, " +
             $"info={report.InfoCount}.");
+    }
+
+    // Production entry scenes own their EventSystem. Additive VisualLab is deliberately excluded.
+    public static Subject42ValidationReport ValidateAuthoredUi(Subject42ValidationReport report = null)
+    {
+        report ??= new Subject42ValidationReport();
+        foreach (EditorBuildSettingsScene entry in EditorBuildSettings.scenes)
+        {
+            if (!entry.enabled || entry.path.EndsWith("/MVP_VisualLab.unity", StringComparison.OrdinalIgnoreCase))
+                continue;
+            ValidatePreviewScene(entry.path, scene =>
+            {
+                var events = FindAll<UnityEngine.EventSystems.EventSystem>(scene);
+                if (events.Count != 1 || !events[0].enabled || !events[0].gameObject.activeInHierarchy ||
+                    events[0].GetComponent<UnityEngine.EventSystems.StandaloneInputModule>() == null ||
+                    !events[0].GetComponent<UnityEngine.EventSystems.StandaloneInputModule>().enabled ||
+                    events[0].GetComponents<UnityEngine.EventSystems.BaseInputModule>().Length != 1)
+                    report.Add(Subject42ValidationSeverity.Error, "AUTHORED_UI_EVENTSYSTEM",
+                        $"'{entry.path}' requires exactly one active EventSystem with one StandaloneInputModule.");
+                if (entry.path == MainMenuScene)
+                {
+                    UiRefs(RequireSingle<BunkerContext>(scene, report), report,
+                        "<StationProgression>k__BackingField", "playerLoadout");
+                    RequireSingle<BunkerStationProgressionService>(scene, report);
+                    RequireSingle<BunkerPlayerLoadoutController>(scene, report);
+                    UiRefs(RequireSingle<BunkerRunSummaryPresenter>(scene, report), report,
+                        "notificationParent", "sourceScaler", "panelTemplate", "goldTextTemplate");
+                }
+                if (entry.path != GameplayScene) return;
+                UiRefs(RequireSingle<AnomalySlotHUD>(scene, report), report, "titleText", "valueText");
+                UiRefs(RequireSingle<TacticalMapHUD>(scene, report), report,
+                    "mapRoot", "mapFrame", "projectionRoot", "anomalyRoot", "eventRoot", "breakableRoot",
+                    "legendRoot", "playerLegendRow", "normalSiteLegendRow", "specialSiteLegendRow",
+                    "exitLegendRow", "eventLegendRow", "breakableLegendRow", "bossLegendRow",
+                    "gameplayArea", "anomalyController", "eventSpawner");
+                UiRefs(RequireSingle<WorldLootRewardReel>(scene, report), report,
+                    "canvasRoot", "canvasRect", "panelRect", "panelCanvasGroup", "transferPacket",
+                    "transferPacketImage", "markerRect", "markerImage", "cardsRoot", "stopButton",
+                    "stopButtonText", "revealRoot", "revealText", "statusText");
+                var death = RequireSingle<DeathResultPresentation>(scene, report);
+                UiRefs(death, report, "window", "backdrop", "windowImage", "rootCanvasRect", "modalCanvas",
+                    "modalRaycaster", "sector", "time", "kills", "level", "gold", "rings", "modules",
+                    "core", "comment", "restartButton", "bunkerButton");
+                if (death != null)
+                {
+                    RequireSerializedArray(death, "legacyObjects", 1, report);
+                    var data = new SerializedObject(death);
+                    var modal = data.FindProperty("modalCanvas").objectReferenceValue as Canvas;
+                    if (modal != null && !modal.overrideSorting)
+                        report.Add(Subject42ValidationSeverity.Error, "AUTHORED_UI_MODAL_SORTING",
+                            "Death result canvas must override sorting.", death);
+                    if (data.FindProperty("legacyObjects").arraySize != data.FindProperty("legacyActive").arraySize)
+                        report.Add(Subject42ValidationSeverity.Error, "AUTHORED_UI_RESULT_VISIBILITY",
+                            "Death result visibility arrays must have matching lengths.", death);
+                }
+                UiRefs(RequireSingle<RunResultView>(scene, report), report,
+                    "death", "titleText", "statsText", "aiCommentText");
+                UiRefs(RequireSingle<HUDManager>(scene, report), report,
+                    "tacticalMap", "anomalySlot", "lootReel", "threatPanel", "threatLevelText", "threatValueText", "threatFill");
+                UiRefs(RequireSingle<LevelModifiersApplier>(scene, report), report,
+                    "threatController", "gameplayArea", "eventSpawner", "explorationConfig",
+                    "runFlowController", "anomalyController", "worldRuleController");
+                RequireSingle<RunThreatController>(scene, report);
+            }, report);
+        }
+        foreach (string name in new[] { "AnomalySlotHUD", "TacticalMapShell", "WorldLootReelView", "DeathResultWindow" })
+        {
+            string path = ProjectRoot + "/prefabs/UI/Authored/" + name + ".prefab";
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (prefab == null || prefab.GetComponent<RectTransform>() == null)
+                report.Add(Subject42ValidationSeverity.Error, "AUTHORED_UI_PREFAB", $"Missing UI shell: {path}");
+        }
+        foreach (string path in new[] {
+            "scripts/UI/HUD/AnomalySlotHUD.cs", "scripts/UI/HUD/TacticalMapHUD.cs",
+            "scripts/UI/HUD/HUDManager.cs", "scripts/World/Loot/WorldLootRewardReel.cs",
+            "scripts/UI/Common/DeathResultPresentation.cs" })
+        {
+            string source = File.ReadAllText(ProjectRoot + "/" + path);
+            if (Regex.IsMatch(source, @"AddComponent<(Canvas|CanvasScaler|Button|EventSystem)>|void (BuildUI|BuildUi|BuildVisual|BuildGrid|EnsureThreatView|EnsureEventSystem)\("))
+                report.Add(Subject42ValidationSeverity.Error, "AUTHORED_UI_BUILDER", "Fixed UI builder remains in " + path);
+        }
+        foreach (var entry in new[] {
+            ("scripts/Bunker/Interaction/BunkerContext.cs", @"AddComponent<(BunkerStationProgressionService|BunkerPlayerLoadoutController)>"),
+            ("scripts/World/Weather/LevelModifiersApplier.cs", @"AddComponent<RunThreatController>"),
+            ("scripts/Run/Exploration/ProductionExplorationSectorController.cs", @"AddComponent<RunThreatController>"),
+            ("scripts/UI/Common/DeathResultPresentation.cs", @"\.Find\(" ) })
+            if (Regex.IsMatch(File.ReadAllText(ProjectRoot + "/" + entry.Item1), entry.Item2))
+                report.Add(Subject42ValidationSeverity.Error, "AUTHORED_UI_REPAIR", "Fixed composition repair remains in " + entry.Item1);
+        return report;
+    }
+
+    private static void UiRefs(UnityEngine.Object owner, Subject42ValidationReport report, params string[] names)
+    {
+        if (owner == null) return;
+        foreach (string name in names) RequireSerializedObject(owner, name, report);
     }
 
     private static void ValidateBuildScenes(Subject42ValidationReport report)

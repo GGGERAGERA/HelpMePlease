@@ -7885,6 +7885,7 @@ GameObject:
   - component: {fileID: 706591845}
   - component: {fileID: 706591844}
   - component: {fileID: 910000000000000200}
+  - component: {fileID: 910000000000000203}
   m_Layer: 0
   m_Name: BunkerContext
   m_TagString: Untagged
@@ -7908,6 +7909,8 @@ MonoBehaviour:
   <Notifications>k__BackingField: {fileID: 75423602}
   <Events>k__BackingField: {fileID: 735746298}
   <RunStarter>k__BackingField: {fileID: 733148236}
+  <StationProgression>k__BackingField: {fileID: 910000000000000203}
+  playerLoadout: {fileID: 910000000000000200}
 --- !u!4 &706591845
 Transform:
   m_ObjectHideFlags: 0
@@ -264415,6 +264418,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerRunSummaryPresenter
   showDelay: 0.5
   notificationParent: {fileID: 992930127}
+  sourceScaler: {fileID: 992930125}
   panelTemplate: {fileID: 1761540669757191168, guid: e6644250905ee2f49a9e55781e882d9a, type: 3}
   goldTextTemplate: {fileID: 7298711819576734483, guid: e6644250905ee2f49a9e55781e882d9a, type: 3}
 --- !u!1001 &1798315907
@@ -271320,6 +271324,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c4ab1d35d4d4efc9be7e81b529f5ae2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BunkerGateVisual
+--- !u!114 &910000000000000203
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 706591842}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4ea98cb435741c19c2dc88f7a3654f1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerStationProgressionService
 --- !u!1001 &920000000000000001
 PrefabInstance:
   m_ObjectHideFlags: 0
