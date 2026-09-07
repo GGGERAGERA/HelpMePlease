@@ -253521,6 +253521,12 @@ MonoBehaviour:
   offset: {x: 0, y: 0, z: -10}
   smoothSpeed: 0.125
   controlledCamera: {fileID: 1648039033}
+  minZoom: 5
+  maxZoom: 7
+  wheelSensitivity: 0.5
+  zoomSmoothTime: 0.18
+  scaleZoomLimitsWithAutoFraming: 0
+  maxViewWidth: 24.88889
 --- !u!4 &1111020599
 Transform:
   m_ObjectHideFlags: 0

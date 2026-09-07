@@ -3882,6 +3882,12 @@ MonoBehaviour:
   offset: {x: 0, y: 0, z: -10}
   smoothSpeed: 0.125
   controlledCamera: {fileID: 0}
+  minZoom: 5.6
+  maxZoom: 10.5
+  wheelSensitivity: 0.7
+  zoomSmoothTime: 0.18
+  scaleZoomLimitsWithAutoFraming: 1
+  maxViewWidth: 0
 --- !u!4 &1586499094
 Transform:
   m_ObjectHideFlags: 0

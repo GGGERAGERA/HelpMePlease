@@ -31,6 +31,42 @@ namespace Subject42.Combat.OrbitalStation
         [Min(0.1f)] public float LinkNodeVisualScale = 0.42f;
         public int MountedWeaponSortingOffset = 12;
 
+        [System.Serializable]
+        public struct RingTierStyle
+        {
+            public Color BaseColor;
+            [Range(0f, 1f)] public float Alpha;
+            [Min(0f)] public float Emission;
+            [Range(0f, 1f)] public float Glow;
+            [Range(0f, 1f)] public float CoreWhitening;
+            [Range(0f, .2f)] public float PulseStrength;
+            [Min(0f), Tooltip("Cycles per second")] public float PulseSpeed;
+
+            public RingTierStyle(Color color, float alpha, float emission, float glow,
+                float coreWhitening, float pulseStrength, float pulseSpeed)
+            {
+                BaseColor = color; Alpha = alpha; Emission = emission; Glow = glow;
+                CoreWhitening = coreWhitening; PulseStrength = pulseStrength; PulseSpeed = pulseSpeed;
+            }
+        }
+
+        [Header("Ring tiers: 0 / 1 / 2 / 3+ ring upgrades")]
+        public RingTierStyle TierI = new(new Color(.88f, .96f, 1f), .72f, 1f, .12f, .08f, 0f, 0f);
+        public RingTierStyle TierII = new(new Color(.04f, .65f, 1f), .82f, 1.15f, .22f, .12f, 0f, 0f);
+        public RingTierStyle TierIII = new(new Color(.65f, .16f, 1f), .9f, 1.3f, .32f, .18f, .045f, .65f);
+        public RingTierStyle TierIV = new(new Color(1f, .57f, .10f), 1f, 1.5f, .42f, .55f, .055f, .75f);
+        [Min(.001f)] public float RingLineWidth = .045f;
+        [Range(.25f, .5f)] public float RingTierTransitionDuration = .4f;
+        [Min(0f)] public float RingUpgradeBrightness = .65f;
+        [Range(0f, 1f)] public float RingUpgradeGlow = .3f;
+        [Min(0f)] public float RingHighlightBrightness = .25f;
+        [Range(0f, 1f)] public float RingDimmedAlpha = .32f;
+
+        public RingTierStyle GetRingTier(int tier) => tier switch
+        {
+            1 => TierI, 2 => TierII, 3 => TierIII, _ => TierIV
+        };
+
         [Header("Mount readability")]
         [Min(0.05f)] public float NormalMountSize = 0.18f;
         [Min(0.05f)] public float SelectionMountSize = 0.30f;

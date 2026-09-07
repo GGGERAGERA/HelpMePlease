@@ -54,9 +54,7 @@ namespace Subject42.Combat.OrbitalStation
 
     public sealed class OrbitalRingRuntime
     {
-        private readonly LineRenderer line;
         private readonly OrbitalRingView view;
-        private readonly Color baseColor;
         private float pulse;
         private float spawnScale = 1f;
         private bool selected;
@@ -75,7 +73,8 @@ namespace Subject42.Combat.OrbitalStation
         public float Phase => State.CurrentPhase;
         public int MountCapacity => Mounts.Count;
         public float PowerMultiplier => State.PowerMultiplier;
-        public int VisualLevel => State.VisualUpgradeLevel;
+        public int VisualTier => State.VisualTier;
+        public Color AccentColor => view.AccentColor;
         public List<OrbitalMountRuntime> Mounts { get; } = new();
 
         public OrbitalRingRuntime(OrbitalRingState state,
@@ -85,19 +84,10 @@ namespace Subject42.Combat.OrbitalStation
             State = state;
             view = Object.Instantiate(OrbitalPresentationConfig.Active.RingPrefab, root, false);
             if (!view.IsValid) throw new System.InvalidOperationException("authored ring references missing");
-            line = view.Line;
-            float ringAlpha = OrbitalPresentationConfig.Active.RingLineAlpha;
-            baseColor = Color.HSVToRGB((0.51f + State.Order * 0.105f) % 1f,
-                0.72f, 1f);
-            baseColor.a = ringAlpha;
-            line.startColor = line.endColor = baseColor;
             spawnScale = animateSpawn ? 0.05f : 1f;
-            line.transform.localScale = Vector3.one * spawnScale;
-            for (int i = 0; i < line.positionCount; i++)
-            {
-                float angle = i * Mathf.PI * 2f / line.positionCount;
-                line.SetPosition(i, new Vector3(Mathf.Cos(angle), Mathf.Sin(angle)) * Radius);
-            }
+            view.InitializeTier(VisualTier);
+            view.UpdateTierAppearance(VisualTier, Radius * spawnScale, 0f, 0f, false,
+                State.Order == 0, 0f);
             for (int i = 0; i < Mathf.Max(1, State.MountCapacity); i++)
                 Mounts.Add(new OrbitalMountRuntime(this, i, view.MountsRoot, sprite));
             RebalanceMounts();
@@ -110,29 +100,14 @@ namespace Subject42.Combat.OrbitalStation
             pulse = Mathf.MoveTowards(pulse, 0f, deltaTime * 2.5f);
             spawnScale = Mathf.MoveTowards(spawnScale, 1f,
                 Time.unscaledDeltaTime * 2.8f);
-            line.transform.localScale = Vector3.one * spawnScale;
             float interactionPulse = interactionEligible
                 ? 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 7f)
                 : 0f;
-            line.widthMultiplier = 0.045f + pulse * 0.07f +
-                (selected ? 0.03f : 0f) +
-                (interactionEligible ? 0.012f + interactionPulse * 0.008f : 0f) +
-                (interactionHovered ? 0.025f : 0f);
-            Color displayColor = Color.Lerp(baseColor,
-                new Color(0.85f, 0.3f, 1f, 0.95f), pulse);
-            if (interactionEligible)
-                displayColor = Color.Lerp(displayColor,
-                    new Color(0.25f, 1f, 0.62f, 0.92f),
-                    interactionHovered ? 0.9f : 0.38f + interactionPulse * 0.18f);
-            if (interactionDimmed)
-            {
-                displayColor *= new Color(0.55f, 0.62f, 0.68f, 0.48f);
-                displayColor.a = baseColor.a * 0.32f;
-            }
-            if (selected)
-                displayColor = Color.Lerp(displayColor,
-                    new Color(0.45f, 0.92f, 1f, 0.95f), 0.68f);
-            line.startColor = line.endColor = displayColor;
+            float highlight = (selected ? 1f : 0f) +
+                (interactionEligible ? .5f + interactionPulse * .5f : 0f) +
+                (interactionHovered ? 1f : 0f);
+            view.UpdateTierAppearance(VisualTier, Radius * spawnScale, pulse, highlight,
+                interactionDimmed, State.Order == 0, Time.unscaledDeltaTime);
             for (int i = 0; i < Mounts.Count; i++)
                 Mounts[i].UpdatePosition(State.CurrentPhase, Radius * spawnScale);
         }
@@ -170,7 +145,7 @@ namespace Subject42.Combat.OrbitalStation
             for (int i = 0; i < Mounts.Count; i++)
                 Mounts[i].Teardown();
             Mounts.Clear();
-            if (line != null)
+            if (view != null)
                 Object.Destroy(view.gameObject);
         }
 
@@ -192,8 +167,10 @@ namespace Subject42.Combat.OrbitalStation
         }
 
         private readonly Transform root;
+        private readonly OrbitalMountView view;
         private readonly SpriteRenderer marker;
         private readonly SpriteRenderer halo;
+        private VisualState visualState;
         public OrbitalRingRuntime Ring { get; }
         public int MountIndex { get; }
         public float LocalPhase { get; private set; }
@@ -206,7 +183,7 @@ namespace Subject42.Combat.OrbitalStation
         {
             Ring = ring;
             MountIndex = index;
-            var view = Object.Instantiate(OrbitalPresentationConfig.Active.MountPrefab, root, false);
+            view = Object.Instantiate(OrbitalPresentationConfig.Active.MountPrefab, root, false);
             if (!view.IsValid) throw new System.InvalidOperationException("authored mount references missing");
             this.root = view.transform;
             marker = view.Marker;
@@ -223,7 +200,9 @@ namespace Subject42.Combat.OrbitalStation
             float radians = (ringPhase + LocalPhase) * Mathf.Deg2Rad;
             root.localPosition = new Vector3(
                 Mathf.Cos(radians) * radius, Mathf.Sin(radians) * radius, 0f);
+            view.UpdateDepth(root.localPosition.y, Ring.State.Order == 0);
             Module?.UpdateVisualRotation(radians);
+            SetVisualState(visualState);
         }
 
         public bool Attach(OrbitalModuleRuntime module)
@@ -249,7 +228,9 @@ namespace Subject42.Combat.OrbitalStation
             if (marker == null || halo == null)
                 return;
             OrbitalPresentationConfig config = OrbitalPresentationConfig.Active;
-            Color color = new(0.72f, 0.8f, 0.85f, config.NormalAlpha);
+            visualState = state;
+            Color color = Ring.AccentColor;
+            color.a = config.NormalAlpha;
             float size = config.NormalMountSize;
             bool showHalo = false;
             switch (state)

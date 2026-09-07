@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4185965069176011689}
   - component: {fileID: 5281931980349366774}
+  - component: {fileID: 910000000000000010}
   m_Layer: 0
   m_Name: Mount
   m_TagString: Untagged
@@ -48,6 +49,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Subject42.Combat.OrbitalStation.OrbitalMountView
   Marker: {fileID: 7250416810811092592}
   Halo: {fileID: 1097139470858376162}
+  DepthGroup: {fileID: 910000000000000010}
+  backSortingOrder: -5
+  frontSortingOrder: 8
+--- !u!210 &910000000000000010
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2379824975995474547}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 1
+  m_SortingOrder: 8
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!1 &4514374931771247835
 GameObject:
   m_ObjectHideFlags: 0
