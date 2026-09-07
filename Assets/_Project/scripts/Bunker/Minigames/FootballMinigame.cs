@@ -630,7 +630,13 @@ public sealed class FootballMinigame : BunkerMinigame
             return;
         }
     }
-    public void OnPlayerLeftArena() => CancelCurrentRound();
+    public void OnPlayerLeftArena()
+    {
+        CancelCurrentRound();
+        // Completed rounds already allow a restart (Idle), but their results
+        // remain visible until the player leaves the arena.
+        hud?.Hide();
+    }
     private void OnDisable()
     {
         BallRollVisual.CancelActiveSlowMotion();

@@ -39,6 +39,12 @@ public sealed class FootballMinigameHUD : MonoBehaviour
         SetResult(newRecord ? "НОВЫЙ РЕКОРД!" : "РАУНД ЗАВЕРШЁН");
     }
 
+    public void Hide()
+    {
+        viewportMaskRoot.SetActive(false);
+        SetVisible(false);
+    }
+
     private void SetValues(float time, int score, int best)
     {
         if (timeText != null)

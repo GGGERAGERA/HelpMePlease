@@ -264156,7 +264156,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.035, g: 0.12, b: 0.145, a: 1}
@@ -265454,20 +265454,26 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7219808618289439419, guid: b12870e38d6d2b241a1ec166b32df667, type: 3}
+      propertyPath: anomalyForce
+      value: 20.28
+      objectReference: {fileID: 0}
+    - target: {fileID: 7219808618289439419, guid: b12870e38d6d2b241a1ec166b32df667, type: 3}
       propertyPath: cameraFollow
       value: 
       objectReference: {fileID: 1111020598}
+    - target: {fileID: 7219808618289439419, guid: b12870e38d6d2b241a1ec166b32df667, type: 3}
+      propertyPath: anomalyFieldSize.x
+      value: 11.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 8328962570673480061, guid: b12870e38d6d2b241a1ec166b32df667, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3434276416
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 7053337149597253679, guid: b12870e38d6d2b241a1ec166b32df667, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
-    - targetCorrespondingSourceObject: {fileID: 3224883838894517217, guid: b12870e38d6d2b241a1ec166b32df667, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
-    - targetCorrespondingSourceObject: {fileID: 7569559769816016556, guid: b12870e38d6d2b241a1ec166b32df667, type: 3}
       insertIndex: -1
       addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: b12870e38d6d2b241a1ec166b32df667, type: 3}
@@ -265567,7 +265573,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -265586,7 +265592,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294506744
+    rgba: 4294308062
   m_fontColor: {r: 0.87, g: 0.94, b: 0.96, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -266306,7 +266312,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
     m_Mode: 3
@@ -266346,10 +266352,10 @@ MonoBehaviour:
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName:
+          m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument:
+          m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &7010915959680935261
@@ -266362,7 +266368,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
   m_EffectColor: {r: 0.08, g: 0.55, b: 0.61, a: 0.5}
   m_EffectDistance: {x: 1, y: -1}
