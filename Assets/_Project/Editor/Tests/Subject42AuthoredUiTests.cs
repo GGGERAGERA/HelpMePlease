@@ -89,6 +89,11 @@ public sealed class Subject42AuthoredUiTests
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
         yield return new EnterPlayMode();
         yield return ExerciseProductionUi();
+        // Unload scene-local UI while its persistent localization/audio owners still exist.
+        // ExitPlayMode otherwise tears both ownership scopes down in unspecified order.
+        var completedScene = SceneManager.GetActiveScene();
+        SceneManager.SetActiveScene(SceneManager.CreateScene("Completed UI test"));
+        yield return SceneManager.UnloadSceneAsync(completedScene);
         yield return new ExitPlayMode();
     }
 
@@ -165,7 +170,42 @@ public sealed class Subject42AuthoredUiTests
         var pause = One<PauseMenuUI>();
         Time.timeScale = 1;
         Call(pause, "HandleEscape"); Assert.That(pause.IsPaused, Is.True); Assert.That(Time.timeScale, Is.Zero);
+        var overview = (PauseBuildOverview)Get(pause, "overview");
+        var beforePause = JsonUtility.ToJson(RunStateManager.Instance.OrbitalStationState);
+        pause.OpenSettings();
+        Assert.That(((AudioSettingsPanel)Get(pause, "audioSettingsPanel")).IsOpen, Is.True);
+        Assert.That(Time.timeScale, Is.Zero);
+        Call(pause, "HandleEscape");
+        Assert.That(pause.IsPaused, Is.True);
+        Assert.That(((GameObject)Get(pause, "pausePanel")).activeSelf, Is.True);
+        pause.RestartGame();
+        Assert.That(overview.IsConfirming, Is.True);
+        Call(pause, "HandleEscape");
+        Assert.That(overview.IsConfirming, Is.False);
+        Assert.That(pause.IsPaused, Is.True);
+        Assert.That(JsonUtility.ToJson(RunStateManager.Instance.OrbitalStationState), Is.EqualTo(beforePause));
         Call(pause, "HandleEscape"); Assert.That(pause.IsPaused, Is.False); Assert.That(Time.timeScale, Is.EqualTo(1));
+        for (int i = 0; i < 10; i++)
+        {
+            Call(pause, "HandleEscape"); Assert.That(pause.IsPaused, Is.True);
+            Call(pause, "HandleEscape"); Assert.That(pause.IsPaused, Is.False);
+        }
+        pause.Pause();
+        var pauseStation = One<OrbitalStationRuntime>();
+        pause.RestartGame();
+        yield return RenderFrames();
+        PointerClick((Button)Get(overview, "confirmButton"), true);
+        yield return Await(() => One<OrbitalStationRuntime>() != null && One<OrbitalStationRuntime>() != pauseStation && One<OrbitalStationRuntime>().IsInitialized);
+        pause = One<PauseMenuUI>();
+        Assert.That(pause.IsPaused, Is.False);
+        Assert.That(RunStateManager.Instance.OrbitalStationState.Rings.Count, Is.EqualTo(1));
+        pause.Pause();
+        overview = (PauseBuildOverview)Get(pause, "overview");
+        pause.MainMenu();
+        yield return RenderFrames();
+        PointerClick((Button)Get(overview, "confirmButton"), true);
+        yield return Await(() => SceneManager.GetActiveScene().name == "MainMenu" && One<BunkerContext>() != null);
+        yield return StartRun();
         Time.timeScale = 0;
 
         // Sector reload must replace scene-local UI, including EventSystem and the hidden reel.

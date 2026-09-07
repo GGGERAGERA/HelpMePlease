@@ -1,5 +1,4 @@
 using Subject42.Combat.OrbitalStation;
-using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -7,14 +6,25 @@ public class PauseMenuUI : MonoBehaviour
 {
     [Header("UI")]
     [SerializeField] private GameObject pausePanel;
-    [SerializeField] private TextMeshProUGUI statsText;
-    [SerializeField] private TextMeshProUGUI titleText;
+    [SerializeField] private PauseBuildOverview overview;
     [SerializeField] private AudioSettingsPanel audioSettingsPanel;
+    [SerializeField] private CharacterSpawner characterSpawner;
 
     private bool isPaused;
     private bool settingsOpen;
     private float resumeTimeScale = 1f;
     public bool IsPaused => isPaused;
+
+    private OrbitalInteractionController Interaction => characterSpawner.SpawnedPlayer != null
+        ? characterSpawner.SpawnedPlayer.GetComponentInChildren<OrbitalInteractionController>()
+        : null;
+
+    private void Awake()
+    {
+        if (pausePanel != null && overview != null && audioSettingsPanel != null && characterSpawner != null) return;
+        Debug.LogError("[PauseMenuUI] Authored overview or scene references are missing.", this);
+        enabled = false;
+    }
 
     private void Update()
     {
@@ -23,21 +33,22 @@ public class PauseMenuUI : MonoBehaviour
 
     private void HandleEscape()
     {
-        var interaction = FindFirstObjectByType<OrbitalInteractionController>();
-        if (interaction != null && interaction.TryConsumeEscape()) return;
+        if (isPaused && overview.IsConfirming) { overview.CancelConfirmation(); return; }
         if (settingsOpen) { audioSettingsPanel?.Close(); return; }
-        if (isPaused) Resume();
-        else Pause();
+        if (isPaused) { Resume(); return; }
+        var interaction = Interaction;
+        if (interaction != null && interaction.TryConsumeEscape()) return;
+        Pause();
     }
 
     public void Pause()
     {
-        if (isPaused) return;
+        if (isPaused || (RunStateManager.Instance != null && RunStateManager.Instance.IsRunEnded)) return;
         UpgradeManager rewards = UpgradeManager.Instance;
         bool rewardPaused = rewards != null && !rewards.IsRewardQueueIdle;
         if (Time.timeScale <= 0f && !rewardPaused) return;
 
-        FindFirstObjectByType<OrbitalInteractionController>()?.PrepareForExternalPause();
+        Interaction?.PrepareForExternalPause();
         resumeTimeScale = rewardPaused ? rewards.TimeScaleAfterRewards : Time.timeScale;
         isPaused = true;
 
@@ -51,6 +62,8 @@ public class PauseMenuUI : MonoBehaviour
 
     public void Resume()
     {
+        if (!isPaused) return;
+        overview.CancelConfirmation();
         isPaused = false;
 
         if (settingsOpen)
@@ -68,7 +81,7 @@ public class PauseMenuUI : MonoBehaviour
 
     public void OpenSettings()
     {
-        if (!isPaused || audioSettingsPanel == null)
+        if (!isPaused || settingsOpen || overview.IsConfirming || audioSettingsPanel == null)
             return;
 
         settingsOpen = true;
@@ -80,6 +93,12 @@ public class PauseMenuUI : MonoBehaviour
     }
 
     public void MainMenu()
+    {
+        if (!isPaused || settingsOpen) return;
+        overview.AskConfirmation("pause.confirmBunker", ReturnToBunker);
+    }
+
+    private void ReturnToBunker()
     {
         if (RunEndService.Instance == null)
         {
@@ -95,6 +114,12 @@ public class PauseMenuUI : MonoBehaviour
 
     public void RestartGame()
     {
+        if (!isPaused || settingsOpen) return;
+        overview.AskConfirmation("pause.confirmRestart", RestartConfirmed);
+    }
+
+    private void RestartConfirmed()
+    {
         RunStateManager runState = RunStateManager.Instance;
 
         if (runState != null)
@@ -108,47 +133,9 @@ public class PauseMenuUI : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
-    private void UpdateStats(LocalizationService localization)
-    {
-        RunStateManager runState = RunStateManager.Instance;
-        int kills = runState != null
-            ? runState.GetCurrentRunKills()
-            : RunStatsManager.Instance != null
-                ? RunStatsManager.Instance.Kills
-                : 0;
-
-        float time = runState != null
-            ? runState.GetCurrentRunTime()
-            : RunStatsManager.Instance != null
-                ? RunStatsManager.Instance.RunTime
-                : 0f;
-
-        int level = ExperienceManager.Instance != null
-            ? ExperienceManager.Instance.currentLevel
-            : 1;
-
-        int minutes = Mathf.FloorToInt(time / 60f);
-        int seconds = Mathf.FloorToInt(time % 60f);
-
-        if (statsText != null)
-        {
-            statsText.text =
-                $"{localization.Get("stats.time")}: " +
-                $"{minutes:00}:{seconds:00}\n" +
-                $"{localization.Get("stats.kills")}: {kills}\n" +
-                $"{localization.Get("stats.level")}: {level}";
-        }
-    }
-
     private void UpdateLocalizedContent()
     {
-        LocalizationService localization =
-            LocalizationService.EnsureExists();
-
-        if (titleText != null)
-            titleText.text = localization.Get("pause.title");
-
-        UpdateStats(localization);
+        overview.Refresh(RunStateManager.Instance);
     }
 
     private void ReturnFromSettings()

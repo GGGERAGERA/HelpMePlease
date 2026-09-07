@@ -97,3 +97,36 @@ MonoBehaviour:
   - key: stats.runGold
     ru: "\u0417\u041E\u041B\u041E\u0422\u041E \u0417\u0410 \u0417\u0410\u0411\u0415\u0413"
     en: RUN GOLD
+  - key: pause.sector
+    ru: Сектор
+    en: Sector
+  - key: pause.rings
+    ru: КОЛЕЦ
+    en: RINGS
+  - key: pause.ring
+    ru: КОЛЬЦО
+    en: RING
+  - key: pause.mounts
+    ru: ЗАНЯТО КРЕПЛЕНИЙ
+    en: OCCUPIED MOUNTS
+  - key: pause.noModules
+    ru: Нет установленных модулей
+    en: No installed modules
+  - key: pause.confirmRestart
+    ru: "НАЧАТЬ ЗАНОВО?\nТекущий забег будет сброшен."
+    en: "RESTART?\nThe current run will be reset."
+  - key: pause.confirmBunker
+    ru: "ВЕРНУТЬСЯ В БУНКЕР?\nТекущий забег будет завершён."
+    en: "RETURN TO BUNKER?\nThe current run will end."
+  - key: pause.confirm
+    ru: ПОДТВЕРДИТЬ
+    en: CONFIRM
+  - key: pause.cancel
+    ru: ОТМЕНА
+    en: CANCEL
+  - key: pause.overview
+    ru: ОБЗОР СБОРКИ
+    en: BUILD OVERVIEW
+  - key: pause.esc
+    ru: ESC — ПРОДОЛЖИТЬ
+    en: ESC — RESUME
