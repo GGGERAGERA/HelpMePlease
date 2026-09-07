@@ -7,9 +7,6 @@ public sealed class RunSector
     public WorldRuleData WorldRule { get; }
     public LocalAnomalyData LocalAnomaly { get; }
 
-    public float Duration => StageProfile != null
-        ? StageProfile.Duration
-        : 0f;
     public EnemySpawnProfile SpawnProfile => StageProfile != null
         ? StageProfile.SpawnProfile
         : null;

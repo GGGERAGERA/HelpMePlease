@@ -575,17 +575,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bddeb846b618d9e4f8e3f0aee017ce4a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RunTimer
-  runDuration: 60
-  bossPrefab: {fileID: 8074722678228422782, guid: 8f73b608ef0309744b732a66e85e86d7, type: 3}
+  m_EditorClassIdentifier: Assembly-CSharp::RunBossSpawner
   spawnDistanceFromPlayer: 25
   bossEdgePadding: 2
   spawnPositionAttempts: 24
   gameplayArea: {fileID: 2147020003}
-  bossWarningSound: {fileID: 0}
-  bossWarningVolume: 0.8
-  bossSpawnDelay: 2
-  bossSpawnRetryDelay: 1
 --- !u!114 &46915853
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -645,6 +639,10 @@ MonoBehaviour:
   levelChoiceManager: {fileID: 1304651476}
   worldEventSpawner: {fileID: 46915853}
   noDamageChallenge: {fileID: 46915857}
+  bossSpawner: {fileID: 46915852}
+  characterSpawner: {fileID: 46915846}
+  bossIntroDuration: 4
+  finalBossPressureMultiplier: 1.6
 --- !u!114 &46915857
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5829,7 +5827,6 @@ MonoBehaviour:
   enemySpawner: {fileID: 0}
   characterSpawner: {fileID: 46915846}
   upgradeManager: {fileID: 46915847}
-  runTimer: {fileID: 0}
   runFlowController: {fileID: 0}
   levelChoiceManager: {fileID: 0}
   worldRules:

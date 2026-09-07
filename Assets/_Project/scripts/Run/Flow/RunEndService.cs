@@ -44,11 +44,12 @@ public sealed class RunEndService : MonoBehaviour
         RunStateManager runState = RunStateManager.EnsureExists();
         RunSector sector = runState.CurrentSector;
 
-        if (sector == null || !RunRoute.IsBossSector(sector.SectorNumber))
+        if (sector == null || !RunRoute.IsFinalSector(sector.SectorNumber) ||
+            RunFlowController.Instance == null || !RunFlowController.Instance.IsVictoryConfirmed)
         {
             Debug.LogError(
                 $"[RunEndService] Victory requires CurrentSector " +
-                $"{RunRoute.FinalBossSector}."
+                $"{RunRoute.FinalSector} and a confirmed final boss death."
             );
             return;
         }
@@ -84,6 +85,7 @@ public sealed class RunEndService : MonoBehaviour
         isEndingRun = true;
 
         RunStateManager runState = RunStateManager.EnsureExists();
+        StopActiveGameplay();
         RunSummary summary = runState.EndRun(reason);
 
         Debug.Log(
@@ -98,7 +100,7 @@ public sealed class RunEndService : MonoBehaviour
     private static void StopActiveGameplay()
     {
         FindFirstObjectByType<EnemySpawner>()?.StopSpawning();
-        FindFirstObjectByType<RunTimer>()?.StopTimer();
+        RunFlowController.Instance?.StopRunGameplay();
 
         WorldEventSpawner eventSpawner =
             FindFirstObjectByType<WorldEventSpawner>();

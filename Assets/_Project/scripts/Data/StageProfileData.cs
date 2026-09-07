@@ -10,16 +10,12 @@ public sealed class StageProfileData : ScriptableObject
     [Tooltip("One-based sector number in the finite route.")]
     private int sectorNumber = 1;
 
-    [SerializeField, Min(1f)]
-    [Tooltip("Duration of the sector in seconds before its boss appears.")]
-    private float duration = 90f;
-
     [SerializeField]
     [Tooltip("Enemy spawn phases used by this sector.")]
     private EnemySpawnProfile spawnProfile;
 
     [SerializeField]
-    [Tooltip("Boss spawned after the sector duration expires.")]
+    [Tooltip("Boss spawned when the final sector zone is reached.")]
     private GameObject bossPrefab;
 
     [SerializeField, Min(0.1f)]
@@ -43,7 +39,6 @@ public sealed class StageProfileData : ScriptableObject
     private float completionGoldMultiplier = 1f;
 
     public int SectorNumber => sectorNumber;
-    public float Duration => duration;
     public EnemySpawnProfile SpawnProfile => spawnProfile;
     public GameObject BossPrefab => bossPrefab;
     public float EnemyHealthMultiplier => enemyHealthMultiplier;

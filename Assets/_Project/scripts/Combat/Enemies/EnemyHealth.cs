@@ -366,7 +366,7 @@ public class EnemyHealth : MonoBehaviour
 
             if (RunFlowController.Instance != null)
             {
-                RunFlowController.Instance.HandleBossDefeated();
+                RunFlowController.Instance.HandleBossDefeated(this);
             }
             else
             {

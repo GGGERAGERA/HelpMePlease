@@ -154,22 +154,16 @@ internal sealed class ProductionAnomalySiteDefinition
         IProductionAnomalySiteEnvironment> createEnvironment;
 
     public AnomalyPowerType Type { get; }
-    public AnomalyPowerType PowerReward { get; }
     public string SiteDisplayName { get; }
-    public string PowerDisplayName { get; }
 
     public ProductionAnomalySiteDefinition(
         AnomalyPowerType type,
-        AnomalyPowerType powerReward,
         string siteDisplayName,
-        string powerDisplayName,
         Func<ProductionAnomalySiteContext,
             IProductionAnomalySiteEnvironment> environmentFactory)
     {
         Type = type;
-        PowerReward = powerReward;
         SiteDisplayName = siteDisplayName;
-        PowerDisplayName = powerDisplayName;
         createEnvironment = environmentFactory ??
             throw new ArgumentNullException(nameof(environmentFactory));
     }

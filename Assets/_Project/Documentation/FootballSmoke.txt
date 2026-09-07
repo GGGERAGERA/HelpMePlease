@@ -1,0 +1,53 @@
+PASS: Original composition 24x28 
+PASS: Original round content 
+PASS: 60 second round 
+PASS: Anomaly movement restored 
+PASS: Target movement restored 
+PASS: Left wall 
+PASS: Right wall 
+PASS: Top wall 
+PASS: Top-left corner 
+PASS: Top-right corner 
+PASS: Bottom-left corner 
+PASS: Bottom-right corner 
+PASS: CCD / max speed 
+PASS: Local player barrier exceptions 
+PASS: Original player shooting zone retained 
+PASS: Player can exit entrance 
+PASS: Exit resets round 
+PASS: Reentry can start round 
+PASS: Outside recovery 
+PASS: Stuck recovery 
+PASS: Gate restores +20, not victory score=20
+PASS: Gate contact is not double-counted 
+PASS: Goal session stats 
+PASS: Restart clears goal stats 
+PASS: Restart recreates original content 
+PASS: Colored target scores expected=5 score=5
+PASS: Target popup shows awarded points 
+PASS: Target respawns 
+PASS: Score popup rises and fades at hit location 
+PASS: Reset all four to authored points 
+PASS: Authored camera bounds 
+PASS: Round cleanup clears popup 
+PASS: Timer ends round 
+PASS: Disable cancels and restores 
+PASS: Reenable restores 4 balls 
+PASS: First current goal scores on a shot 
+PASS: Goal feedback appears 
+PASS: Both current goals contribute 
+PASS: HUD displays goal subtotal 
+PASS: Goal feedback expires 
+PASS: No automatic restart while standing in start 
+PASS: Start marker sorts below player 
+PASS: Trigger reentry starts fresh round 
+PASS: Target popup expires 
+PASS: Longer gravity fields 
+PASS: First field attracts ball 
+PASS: Second field repels ball 
+PASS: Smooth complementary polarity transition 
+PASS: Roles exchange 
+PASS: Next exchange scheduled in 10 to 15 seconds 
+PASS: Former attractor now repels velocity=(0.49, 0.00) position=(89.42, 6.01) center=(88.38, 6.01, 0.00)
+PASS: Former repeller now attracts velocity=(-0.49, 0.00)
+PASS: Restart resets initial polarity 

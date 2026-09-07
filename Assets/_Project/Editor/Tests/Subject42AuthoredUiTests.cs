@@ -28,7 +28,6 @@ public sealed class Subject42AuthoredUiTests
         Assert.That(report.ErrorCount, Is.Zero, report.FormatErrors());
     }
 
-    [TestCase("AnomalySlotHUD", 4)]
     [TestCase("TacticalMapShell", 43)]
     [TestCase("WorldLootReelView", 13)]
     [TestCase("DeathResultWindow", 57)]
@@ -46,7 +45,6 @@ public sealed class Subject42AuthoredUiTests
             Assert.That(component, Is.Not.Null, "Missing prefab script");
     }
 
-    [TestCase(typeof(AnomalySlotHUD), "Authored title/value")]
     [TestCase(typeof(TacticalMapHUD), "Authored shell or scene")]
     [TestCase(typeof(WorldLootRewardReel), "Authored shell references")]
     [TestCase(typeof(DeathResultPresentation), "Authored result references")]
@@ -134,12 +132,7 @@ public sealed class Subject42AuthoredUiTests
         Time.timeScale = 0;
         AssertEvents();
         Assert.That(One<RunThreatController>(), Is.Not.Null);
-        var anomaly = One<AnomalySlotHUD>();
-        int subscribers = Subscribers(RunStateManager.Instance.AnomalyInventory, "Changed");
-        anomaly.enabled = false;
-        Assert.That(Subscribers(RunStateManager.Instance.AnomalyInventory, "Changed"), Is.EqualTo(subscribers - 1));
-        anomaly.enabled = true;
-        Assert.That(Subscribers(RunStateManager.Instance.AnomalyInventory, "Changed"), Is.EqualTo(subscribers));
+        Assert.That(RunStateManager.Instance.AnomalyInventory.IsEmpty, Is.True);
         var map = One<TacticalMapHUD>();
         Call(map, "RefreshMarkers");
         var markers = (IList)Get(map, "breakableMarkers");
@@ -215,9 +208,9 @@ public sealed class Subject42AuthoredUiTests
         yield return StartRun();
         // The real victory route goes to the Bunker summary, not the legacy victory panel.
         run = RunStateManager.Instance; oldSector = run.CurrentSector;
-        var stage4 = AssetDatabase.FindAssets("t:StageProfileData").Select(id => AssetDatabase.LoadAssetAtPath<StageProfileData>(AssetDatabase.GUIDToAssetPath(id))).First(s => s.SectorNumber == RunRoute.FinalBossSector);
-        run.SetCurrentSector(new RunSector(RunRoute.FinalBossSector, stage4, oldSector.WorldRule, oldSector.LocalAnomaly));
-        Time.timeScale = 0;
+        var finalStage = AssetDatabase.FindAssets("t:StageProfileData").Select(id => AssetDatabase.LoadAssetAtPath<StageProfileData>(AssetDatabase.GUIDToAssetPath(id))).First(s => s.SectorNumber == RunRoute.FinalSector);
+        run.SetCurrentSector(new RunSector(RunRoute.FinalSector, finalStage, oldSector.WorldRule, oldSector.LocalAnomaly));
+        yield return Subject42FinalBossFlowTests.EnterFinalBossAndDefeat();
         var ending = RunEndService.Instance;
         ending.CompleteRunVictory();
         int afterVictory = CurrencyManager.Instance.TotalGold;

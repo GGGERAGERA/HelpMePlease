@@ -8,6 +8,7 @@ Shader "World/Gravity Zone"
         _CenterColor ("Center Color", Color) = (0.68, 0.42, 1, 0.24)
         _EdgeWidth ("Edge Width (World Units)", Range(0.1, 0.75)) = 0.35
         _FlowSpeed ("Inward Flow Speed", Float) = 0.65
+        _FlowPhaseOffset ("Flow Phase Offset", Float) = 0
         _CenterPulseSpeed ("Center Pulse Speed", Float) = 1.1
         _RegionSize ("Region Size", Vector) = (1, 1, 0, 0)
         _Fade ("Fade", Range(0, 1)) = 0
@@ -42,6 +43,7 @@ Shader "World/Gravity Zone"
                 half4 _CenterColor;
                 float _EdgeWidth;
                 float _FlowSpeed;
+                float _FlowPhaseOffset;
                 float _CenterPulseSpeed;
                 float4 _RegionSize;
                 float _Fade;
@@ -93,7 +95,7 @@ Shader "World/Gravity Zone"
 
                 float radius = length(worldPoint);
                 float inwardPhase = frac(
-                    radius * 0.42 + _VisualTime * _FlowSpeed
+                    radius * 0.42 + _VisualTime * _FlowSpeed + _FlowPhaseOffset
                 );
                 float ringDistance = abs(inwardPhase - 0.5);
                 float inwardRing = 1.0 - smoothstep(

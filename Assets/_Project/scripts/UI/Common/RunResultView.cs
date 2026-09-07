@@ -90,15 +90,6 @@ public class RunResultView : MonoBehaviour
                 $"{localization.Get("stats.kills")}: {kills}\n" +
                 $"{localization.Get("stats.level")}: {level}\n";
 
-            RunTimer runTimer = FindAnyObjectByType<RunTimer>();
-
-            if (runTimer != null && runTimer.IsSurvivalPhaseStarted())
-            {
-                result +=
-                    $"{localization.Get("stats.survived")}: " +
-                    $"{FormatTime(runTimer.GetSurvivalTime())}\n";
-            }
-
             result +=
                 $"{localization.Get("stats.runGold")}: {runGold}";
 

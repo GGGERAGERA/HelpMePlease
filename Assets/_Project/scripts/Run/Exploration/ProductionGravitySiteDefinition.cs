@@ -8,9 +8,7 @@ internal static class ProductionGravitySiteDefinition
         ProductionAnomalySiteDefinitionRegistry.Register(
             new ProductionAnomalySiteDefinition(
                 AnomalyPowerType.GravityOrb,
-                AnomalyPowerType.GravityOrb,
                 "GRAVITY",
-                "GRAVITY ORB",
                 CreateEnvironment
             )
         );

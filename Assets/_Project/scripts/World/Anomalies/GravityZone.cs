@@ -60,6 +60,13 @@ public sealed class GravityZone : LocalAnomalyZone
     private AnomalyArtHooks artHookRuntime;
     private MaterialPropertyBlock visualProperties;
     private float gravityForce;
+    private float radialPolarity = 1f;
+    private bool hasRadialColor;
+    private Color radialColor;
+    private float radialFlowPhase;
+    private static readonly int FlowPhaseOffsetId = Shader.PropertyToID("_FlowPhaseOffset");
+    private static readonly int FlowColorId = Shader.PropertyToID("_FlowColor");
+    private static readonly int CenterColorId = Shader.PropertyToID("_CenterColor");
     private float visualFade;
     private float targetVisualFade;
     private float debugVisualEmphasis = 1f;
@@ -99,6 +106,14 @@ public sealed class GravityZone : LocalAnomalyZone
     public void ConfigureForce(float force)
     {
         gravityForce = Mathf.Max(0f, force);
+    }
+
+    // Positive polarity attracts; negative polarity repels. Existing zones default to attraction.
+    public void ConfigureRadialPolarity(float polarity, Color color)
+    {
+        radialPolarity = Mathf.Clamp(polarity, -1f, 1f);
+        radialColor = color;
+        hasRadialColor = true;
     }
 
     public void ConfigureAffectedColliderFilter(
@@ -211,6 +226,7 @@ public sealed class GravityZone : LocalAnomalyZone
 
     private void Update()
     {
+        if (hasRadialColor) radialFlowPhase += Time.unscaledDeltaTime * flowSpeed * radialPolarity;
         visualFade = Mathf.MoveTowards(
             visualFade,
             targetVisualFade,
@@ -341,7 +357,7 @@ public sealed class GravityZone : LocalAnomalyZone
             else
             {
                 velocity = offset.sqrMagnitude > 0.0001f
-                    ? offset.normalized * gravityForce
+                    ? offset.normalized * gravityForce * radialPolarity
                     : Vector2.zero;
 
                 if (affected.Component is IAnomalySpeedProjectile)
@@ -673,6 +689,17 @@ public sealed class GravityZone : LocalAnomalyZone
         else
 #endif
             visualProperties.SetVector(RegionSizeId, AreaSize);
+        if (hasRadialColor)
+        {
+            visualProperties.SetColor(EdgeColorId, radialColor);
+            Color fill = radialColor * 0.12f;
+            fill.a = 0.12f;
+            visualProperties.SetColor(InnerColorId, fill);
+            visualProperties.SetColor(FlowColorId, radialColor);
+            visualProperties.SetColor(CenterColorId, radialColor);
+            visualProperties.SetFloat(FlowSpeedId, 0f);
+            visualProperties.SetFloat(FlowPhaseOffsetId, radialFlowPhase);
+        }
         visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
         visualRenderer.SetPropertyBlock(visualProperties);
     }

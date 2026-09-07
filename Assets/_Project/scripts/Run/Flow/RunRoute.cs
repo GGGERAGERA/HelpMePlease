@@ -1,9 +1,14 @@
 public static class RunRoute
 {
     public const int FirstSector = 1;
-    public const int ExplorationSectorCount = 3;
-    public const int FinalBossSector = ExplorationSectorCount + 1;
-    public const int TotalSectors = FinalBossSector;
+    public const int TotalSectors = 3;
+    public const int ExplorationSectorCount = TotalSectors;
+    public const int FinalSector = TotalSectors;
+
+    public static bool HasNextSector(int sectorNumber)
+    {
+        return IsExplorationSector(sectorNumber) && sectorNumber < TotalSectors;
+    }
 
     public static bool IsExplorationSector(int sectorNumber)
     {
@@ -11,8 +16,8 @@ public static class RunRoute
             sectorNumber <= ExplorationSectorCount;
     }
 
-    public static bool IsBossSector(int sectorNumber)
+    public static bool IsFinalSector(int sectorNumber)
     {
-        return sectorNumber == FinalBossSector;
+        return sectorNumber == FinalSector;
     }
 }

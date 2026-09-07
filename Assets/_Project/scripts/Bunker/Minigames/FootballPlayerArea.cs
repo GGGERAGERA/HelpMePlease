@@ -28,7 +28,7 @@ public sealed class FootballPlayerArea : MonoBehaviour
         playerColliders.Remove(other);
         playerColliders.RemoveWhere(item => item == null);
         if (playerColliders.Count == 0)
-            minigame?.CancelCurrentRound();
+            minigame?.OnPlayerLeftArena();
     }
 
     private void OnDisable()

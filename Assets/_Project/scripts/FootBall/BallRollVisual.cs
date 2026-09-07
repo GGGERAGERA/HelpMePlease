@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class BallRollVisual : MonoBehaviour
@@ -100,6 +101,9 @@ public class BallRollVisual : MonoBehaviour
     private bool _hintShown;
     private Color _hintBaseColor = Color.white;
     private Camera _cam;
+    private readonly List<RaycastResult> _pointerHits = new();
+    private PointerEventData _pointerEvent;
+    private EventSystem _pointerEventSystem;
 
     [Header("Prefab visuals")]
     [SerializeField] private LineRenderer _line;
@@ -139,6 +143,7 @@ public class BallRollVisual : MonoBehaviour
     void OnDisable()
     {
         CancelAim(true);
+        if (_dribbling) StopDribble();
         ReleaseActiveRangeBall();
         if (_ring != null) _ring.gameObject.SetActive(false);
         SetAimVisualVisible(false);
@@ -231,7 +236,9 @@ public class BallRollVisual : MonoBehaviour
         if (_ownsSlowMotion && Time.timeScale <= 0f)
             CancelAim(false);
 
-        bool hold = (kickMouseLeft && Input.GetMouseButton(0)) || Input.GetKey(kickKey);
+        bool pointerOverUi = IsPointerOverUi();
+        if (pointerOverUi && _aiming) CancelAim(false);
+        bool hold = !pointerOverUi && ((kickMouseLeft && Input.GetMouseButton(0)) || Input.GetKey(kickKey));
         bool inZone = _playerContacts > 0 && _kicker != null;
         float dist = inZone ? Vector2.Distance(_kicker.position, transform.position) : Mathf.Infinity;
         InKickRange = inZone && dist <= kickRange;
@@ -247,8 +254,6 @@ public class BallRollVisual : MonoBehaviour
             if (_dribbling) StopDribble();
             else if (InKickRange) StartDribble();
         }
-
-        if (_dribbling) UpdateDribble();
 
         UpdateGlow(isActiveRangeBall);
 
@@ -289,6 +294,29 @@ public class BallRollVisual : MonoBehaviour
 
         UpdateHint();
         _wasInRange = InKickRange;
+    }
+
+    // Physics2DRaycaster also reports arena colliders; only UI graphics block aiming.
+    private bool IsPointerOverUi()
+    {
+        var events = EventSystem.current;
+        if (events == null) return false;
+        if (_pointerEvent == null || _pointerEventSystem != events)
+        {
+            _pointerEventSystem = events;
+            _pointerEvent = new PointerEventData(events);
+        }
+        _pointerEvent.position = Input.mousePosition;
+        events.RaycastAll(_pointerEvent, _pointerHits);
+        bool overUi = _pointerHits.Exists(hit => hit.module is GraphicRaycaster);
+        _pointerHits.Clear();
+        return overUi;
+    }
+
+    void FixedUpdate()
+    {
+        if (_dribbling) UpdateDribble();
+        _rb.linearVelocity = Vector2.ClampMagnitude(_rb.linearVelocity, maxSpeed);
     }
 
     void LateUpdate()
@@ -448,6 +476,9 @@ public class BallRollVisual : MonoBehaviour
 
         _rb.WakeUp();
         _rb.linearVelocity += direction.normalized * power;
+        // A strong kick against incoming momentum must still leave a readable shot.
+        if (power >= minPower && _rb.linearVelocity.sqrMagnitude < minPower * minPower)
+            _rb.linearVelocity = direction.normalized * minPower;
         if (_rb.linearVelocity.sqrMagnitude > maxSpeed * maxSpeed)
             _rb.linearVelocity = _rb.linearVelocity.normalized * maxSpeed;
 
@@ -475,6 +506,8 @@ public class BallRollVisual : MonoBehaviour
         _rb.rotation = spawnPoint.eulerAngles.z;
         transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
 
+        _touchKickNext = 0f;
+        _wasInRange = false;
         _prev = transform.position;
         _playerContacts = 0;
         _kicker = null;
