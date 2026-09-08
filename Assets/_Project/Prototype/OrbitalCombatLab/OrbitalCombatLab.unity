@@ -148,6 +148,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e189b0f8a3b119243a9b713a369a44f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Subject42.Prototype.OrbitalCombatLab.OrbitalCombatLabController
+  IntegrationMode: 0
+  IntegrationPlayer: {fileID: 0}
+  IntegrationCamera: {fileID: 0}
+  IntegrationCameraOverride: 0
   ShowRings: 1
   ShowMounts: 1
   PlayerImmortal: 1
