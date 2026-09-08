@@ -82,7 +82,7 @@ public sealed class DeathResultPresentation : MonoBehaviour
             color.a = 0.96f;
             backdrop.color = color;
         }
-        sector.text = $"СЕКТОР {Mathf.Clamp(summary.SectorNumber, 1, 4)} / 4";
+        sector.text = $"СЕКТОР {Mathf.Clamp(summary.SectorNumber, 1, RunRoute.TotalSectors)} / {RunRoute.TotalSectors}";
         int seconds = Mathf.Max(0, Mathf.FloorToInt(summary.RunTime));
         time.text = $"{seconds / 60:00}:{seconds % 60:00}";
         kills.text = summary.Kills.ToString();

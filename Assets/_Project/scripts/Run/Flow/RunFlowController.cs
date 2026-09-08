@@ -1,5 +1,8 @@
 using System.Collections;
 using UnityEngine;
+using Subject42.Combat.OrbitalStation;
+
+public enum RunPhase { NormalSector, WaitingForRewards, FinalBossIntro, FinalBossCombat, Victory, Stopped }
 
 public sealed class RunFlowController : MonoBehaviour
 {
@@ -12,7 +15,41 @@ public sealed class RunFlowController : MonoBehaviour
     [SerializeField] private WorldEventSpawner worldEventSpawner;
     [SerializeField] private NoDamageChallenge noDamageChallenge;
 
+    [Header("Final Boss Phase")]
+    [SerializeField] private RunBossSpawner bossSpawner;
+    [SerializeField] private CharacterSpawner characterSpawner;
+    [SerializeField, Min(0f)] private float bossIntroDuration = 4f;
+    [SerializeField, Min(1f)] private float finalBossPressureMultiplier = 1.6f;
+
+    private EnemySpawner enemySpawner;
+    private EnemyHealth finalBoss;
     private bool levelCompleted;
+    public RunPhase Phase { get; private set; }
+    public EnemyHealth FinalBoss => finalBoss;
+    public bool IsVictoryConfirmed => Phase == RunPhase.Victory;
+
+    public void BindEnemySpawner(EnemySpawner spawner) => enemySpawner = spawner;
+
+    private bool CanContinue => isActiveAndEnabled &&
+        Phase != RunPhase.Stopped && Phase != RunPhase.Victory &&
+        RunStateManager.Instance != null && !RunStateManager.Instance.IsRunEnded &&
+        characterSpawner != null && characterSpawner.SpawnedPlayer != null &&
+        !characterSpawner.SpawnedPlayer.GetComponent<PlayerHealth>().IsDead &&
+        characterSpawner.SpawnedPlayer.GetComponentInChildren<OrbitalStationRuntime>() is { IsInitialized: true };
+
+    private bool RewardsResolved =>
+        (UpgradeManager.Instance == null || UpgradeManager.Instance.IsRewardQueueIdle) &&
+        characterSpawner.SpawnedPlayer.GetComponentInChildren<OrbitalStationRuntime>().InputOwner.CanTransition;
+
+    public void StopRunGameplay()
+    {
+        StopAllCoroutines();
+        if (Phase != RunPhase.Victory) Phase = RunPhase.Stopped;
+        enemySpawner?.SetFinalBossPressure(1f);
+        enemySpawner?.StopSpawning();
+    }
+
+    private void OnDisable() => StopRunGameplay();
 
     public bool IsLevelCompleted => levelCompleted;
 
@@ -33,22 +70,27 @@ public sealed class RunFlowController : MonoBehaviour
             Instance = null;
     }
 
-    /// <summary>
-    /// Вызывается ровно один раз после смерти босса.
-    /// </summary>
-    public void HandleBossDefeated()
+    public void HandleBossDefeated(EnemyHealth boss)
     {
-        if (levelCompleted)
+        if (!CanContinue || Phase != RunPhase.FinalBossCombat ||
+            boss == null || boss != finalBoss || !boss.IsDead)
             return;
 
-        levelCompleted = true;
+        Phase = RunPhase.Victory;
+        StopRunGameplay();
+        // Let EnemyHealth finish its death/loot callbacks before unloading the scene.
+        StartCoroutine(CompleteVictory());
+    }
 
-        StartCoroutine(BossDefeatedRoutine());
+    private IEnumerator CompleteVictory()
+    {
+        yield return null;
+        RunEndService.Instance.CompleteRunVictory();
     }
 
     public bool HandleExitReached()
     {
-        if (levelCompleted)
+        if (levelCompleted || Phase != RunPhase.NormalSector)
             return false;
 
         RunStateManager runState = RunStateManager.Instance;
@@ -62,6 +104,23 @@ public sealed class RunFlowController : MonoBehaviour
                 $"[RunFlowController] Exit ignored in sector {sectorNumber}."
             );
             return false;
+        }
+
+        if (RunRoute.IsFinalSector(sectorNumber))
+        {
+            if (!CanContinue || bossSpawner == null || enemySpawner == null ||
+                RunEndService.Instance == null || !bossSpawner.CanSpawn(runState.CurrentSector))
+            {
+                Debug.LogError("[RunFlowController] Final boss phase dependencies are missing.", this);
+                return false;
+            }
+
+            levelCompleted = true;
+            Phase = RunPhase.WaitingForRewards;
+            RegisterCurrentLevelCompletion();
+            runState.RegisterCompletedLevel();
+            StartCoroutine(FinalBossRoutine());
+            return true;
         }
 
         LevelChoiceManager manager = ResolveLevelChoiceManager();
@@ -94,43 +153,40 @@ public sealed class RunFlowController : MonoBehaviour
         noDamageChallenge?.CancelChallenge();
     }
 
-    private IEnumerator BossDefeatedRoutine()
+    private IEnumerator FinalBossRoutine()
     {
-        RunStateManager runState = RunStateManager.Instance;
+        // Defer to the next frame so all callbacks from entering the zone finish
+        // enqueueing rewards. Polling owns no callbacks in the reward manager.
+        yield return null;
+        while (CanContinue && !RewardsResolved) yield return null;
+        if (!CanContinue) { StopRunGameplay(); yield break; }
 
-        if (runState == null || runState.CurrentSector == null)
+        Phase = RunPhase.FinalBossIntro;
+        enemySpawner.SetFinalBossPressure(finalBossPressureMultiplier);
+        RunMessageService.Instance?.Show(RunMessageType.BossIncoming);
+        AudioService.Instance?.Play(AudioCueId.BossSpawn);
+        CameraShake.Instance?.Shake(2f, 0.05f);
+
+        float remaining = bossIntroDuration;
+        while (CanContinue && (remaining > 0f || !RewardsResolved))
         {
-            Debug.LogError(
-                "[RunFlowController] CurrentSector is missing after boss defeat."
-            );
-            yield break;
+            if (RewardsResolved) remaining -= Time.deltaTime;
+            yield return null;
         }
 
-        RegisterCurrentLevelCompletion();
-
-        int sectorNumber = runState.CurrentSector.SectorNumber;
-
-        if (RunRoute.IsBossSector(sectorNumber))
+        while (CanContinue)
         {
-            RunEndService endService = RunEndService.Instance;
-
-            if (endService == null)
+            if (RewardsResolved && bossSpawner.TrySpawn(
+                RunStateManager.Instance.CurrentSector,
+                characterSpawner.SpawnedPlayer.transform, out finalBoss))
             {
-                Debug.LogError(
-                    "[RunFlowController] RunEndService is missing. " +
-                    "Victory cannot be completed."
-                );
+                Phase = RunPhase.FinalBossCombat;
                 yield break;
             }
-
-            endService.CompleteRunVictory();
-            yield break;
+            // A temporarily blocked spawn area must not permanently lock the run.
+            yield return new WaitForSeconds(0.5f);
         }
-
-        Debug.LogError(
-            $"[RunFlowController] Boss defeat is only valid in sector " +
-            $"{RunRoute.FinalBossSector}; current sector is {sectorNumber}."
-        );
+        StopRunGameplay();
     }
 
     private void RegisterCurrentLevelCompletion()
@@ -243,7 +299,7 @@ public sealed class RunFlowController : MonoBehaviour
             RunStateManager runState = RunStateManager.Instance;
             LevelChoiceManager manager = ResolveLevelChoiceManager();
 
-            if (levelCompleted || runState == null ||
+            if (levelCompleted || Phase != RunPhase.NormalSector || runState == null ||
                 runState.CurrentSector == null)
             {
                 return false;
@@ -251,8 +307,8 @@ public sealed class RunFlowController : MonoBehaviour
 
             int sectorNumber = runState.CurrentSector.SectorNumber;
 
-            if (RunRoute.IsBossSector(sectorNumber))
-                return RunEndService.Instance != null;
+            if (RunRoute.IsFinalSector(sectorNumber))
+                return CanContinue && bossSpawner != null && enemySpawner != null;
 
             return RunRoute.IsExplorationSector(sectorNumber) &&
                 manager != null && !manager.IsChoosing;
@@ -264,14 +320,7 @@ public sealed class RunFlowController : MonoBehaviour
         if (!CanDebugCompleteCurrentLevel)
             return false;
 
-        RunStateManager runState = RunStateManager.Instance;
-        int sectorNumber = runState.CurrentSector.SectorNumber;
-
-        if (RunRoute.IsExplorationSector(sectorNumber))
-            return HandleExitReached();
-
-        HandleBossDefeated();
-        return levelCompleted;
+        return HandleExitReached();
     }
 
     public bool CanDebugOpenLevelChoice
@@ -283,7 +332,7 @@ public sealed class RunFlowController : MonoBehaviour
             return levelCompleted &&
                 runState != null &&
                 runState.CurrentSector != null &&
-                RunRoute.IsExplorationSector(
+                RunRoute.HasNextSector(
                     runState.CurrentSector.SectorNumber
                 ) &&
                 manager != null &&

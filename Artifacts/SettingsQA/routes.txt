@@ -1,0 +1,5 @@
+PASS: Bunker -> Settings -> Back -> reopen
+PASS: MVP -> Pause -> Settings -> Back -> Pause -> Resume
+PASS: settings Escape returns to Pause
+PASS: audio, language, automatic fire persistence across reopen and scene transition
+PASS: actual EventSystem raycasts for buttons and dropdown

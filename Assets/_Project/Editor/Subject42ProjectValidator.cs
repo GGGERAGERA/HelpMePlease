@@ -222,7 +222,6 @@ public static class Subject42ProjectValidator
                         "notificationParent", "sourceScaler", "panelTemplate", "goldTextTemplate");
                 }
                 if (entry.path != GameplayScene) return;
-                UiRefs(RequireSingle<AnomalySlotHUD>(scene, report), report, "titleText", "valueText");
                 UiRefs(RequireSingle<TacticalMapHUD>(scene, report), report,
                     "mapRoot", "mapFrame", "projectionRoot", "anomalyRoot", "eventRoot", "breakableRoot",
                     "legendRoot", "playerLegendRow", "normalSiteLegendRow", "specialSiteLegendRow",
@@ -251,14 +250,14 @@ public static class Subject42ProjectValidator
                 UiRefs(RequireSingle<RunResultView>(scene, report), report,
                     "death", "titleText", "statsText", "aiCommentText");
                 UiRefs(RequireSingle<HUDManager>(scene, report), report,
-                    "tacticalMap", "anomalySlot", "lootReel", "threatPanel", "threatLevelText", "threatValueText", "threatFill");
+                    "tacticalMap", "lootReel", "threatPanel", "threatLevelText", "threatValueText", "threatFill");
                 UiRefs(RequireSingle<LevelModifiersApplier>(scene, report), report,
                     "threatController", "gameplayArea", "eventSpawner", "explorationConfig",
                     "runFlowController", "anomalyController", "worldRuleController");
                 RequireSingle<RunThreatController>(scene, report);
             }, report);
         }
-        foreach (string name in new[] { "AnomalySlotHUD", "TacticalMapShell", "WorldLootReelView", "DeathResultWindow" })
+        foreach (string name in new[] { "TacticalMapShell", "WorldLootReelView", "DeathResultWindow" })
         {
             string path = ProjectRoot + "/prefabs/UI/Authored/" + name + ".prefab";
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -266,7 +265,7 @@ public static class Subject42ProjectValidator
                 report.Add(Subject42ValidationSeverity.Error, "AUTHORED_UI_PREFAB", $"Missing UI shell: {path}");
         }
         foreach (string path in new[] {
-            "scripts/UI/HUD/AnomalySlotHUD.cs", "scripts/UI/HUD/TacticalMapHUD.cs",
+            "scripts/UI/HUD/TacticalMapHUD.cs",
             "scripts/UI/HUD/HUDManager.cs", "scripts/World/Loot/WorldLootRewardReel.cs",
             "scripts/UI/Common/DeathResultPresentation.cs" })
         {
@@ -558,8 +557,13 @@ public static class Subject42ProjectValidator
                 RequireSingle<UpgradeManager>(scene, report);
             RequireSingle<RunStatsManager>(scene, report);
             RequireSingle<KillManager>(scene, report);
-            RunTimer timer = RequireSingle<RunTimer>(scene, report);
-            RequireSingle<RunFlowController>(scene, report);
+            RunBossSpawner bossSpawner = RequireSingle<RunBossSpawner>(scene, report);
+            RunFlowController flow = RequireSingle<RunFlowController>(scene, report);
+            if (flow != null)
+            {
+                RequireSerializedObject(flow, "bossSpawner", report);
+                RequireSerializedObject(flow, "characterSpawner", report);
+            }
             RunEndService endService =
                 RequireSingle<RunEndService>(scene, report);
             RequireSingle<HUDManager>(scene, report);
@@ -599,8 +603,8 @@ public static class Subject42ProjectValidator
                     upgradeManager, "allUpgrades", 1, report);
             }
 
-            if (timer != null)
-                RequireSerializedObject(timer, "gameplayArea", report);
+            if (bossSpawner != null)
+                RequireSerializedObject(bossSpawner, "gameplayArea", report);
 
             if (endService != null)
                 RequireSerializedString(endService, "bunkerSceneName", report);
@@ -640,7 +644,7 @@ public static class Subject42ProjectValidator
                     choice, "availableWorldRules", 3, report);
                 RequireSerializedObject(
                     choice, "defaultLocalAnomaly", report);
-                RequireSerializedArray(choice, "stageProfiles", 4, report);
+                RequireSerializedArray(choice, "stageProfiles", RunRoute.TotalSectors, report);
                 RequireSerializedString(choice, "gameplaySceneName", report);
             }
 
@@ -679,21 +683,8 @@ public static class Subject42ProjectValidator
     {
         string[] requiredReferences =
         {
-            "arenaBounds",
-            "ballSpawnZone",
-            "anomalySpawnZone",
-            "targetSpawnZone",
-            "playerBoundary",
-            "startZone",
-            "hud",
-            "cameraFollow",
-            "ballsRuntime",
-            "anomaliesRuntime",
-            "targetsRuntime",
-            "ballPrefab",
-            "gravityAnomalyPrefab",
-            "gravityAnomalyData",
-            "targetTemplate"
+            "arenaBounds", "cameraBounds", "playerStart",
+            "ballSpawnZone", "anomalySpawnZone", "targetSpawnZone", "playerBoundary", "startZone", "hud", "cameraFollow"
         };
 
         for (int i = 0; i < requiredReferences.Length; i++)
@@ -703,6 +694,26 @@ public static class Subject42ProjectValidator
                 requiredReferences[i],
                 report);
         }
+        RequireSerializedArray(football, "walls", 5, report);
+        RequireSerializedArray(football, "ballSpawnPoints", 4, report);
+        RequireSerializedArray(football, "balls", 4, report);
+        RequireSerializedArray(football, "gates", 2, report);
+        RequireSerializedArray(football, "targetPool", 3, report);
+        var arena = football.transform.parent;
+        foreach (var target in arena.GetComponentsInChildren<FootballScoreZone>(true))
+            RequireSerializedArray(target, "scorePopups", 3, report);
+        foreach (var goal in arena.GetComponentsInChildren<FootballGateScoreZone>(true))
+        {
+            RequireSerializedObject(goal, "minigame", report);
+            RequireSerializedObject(goal, "goalFeedback", report);
+            RequireSerializedObject(goal, "goalFlash", report);
+        }
+        var start = arena.GetComponentInChildren<FootballStartZone>(true);
+        RequireSerializedObject(start, "minigame", report);
+        RequireSerializedObject(start, "startText", report);
+        RequireSerializedArray(start, "visualRenderers", 1, report);
+        RequireSerializedObject(arena.GetComponentInChildren<FootballMinigameHUD>(true), "goalStatsText", report);
+
     }
 
     private static void ValidateDataAssets(

@@ -28,7 +28,6 @@ public sealed class Subject42AuthoredUiTests
         Assert.That(report.ErrorCount, Is.Zero, report.FormatErrors());
     }
 
-    [TestCase("AnomalySlotHUD", 4)]
     [TestCase("TacticalMapShell", 43)]
     [TestCase("WorldLootReelView", 13)]
     [TestCase("DeathResultWindow", 57)]
@@ -46,7 +45,6 @@ public sealed class Subject42AuthoredUiTests
             Assert.That(component, Is.Not.Null, "Missing prefab script");
     }
 
-    [TestCase(typeof(AnomalySlotHUD), "Authored title/value")]
     [TestCase(typeof(TacticalMapHUD), "Authored shell or scene")]
     [TestCase(typeof(WorldLootRewardReel), "Authored shell references")]
     [TestCase(typeof(DeathResultPresentation), "Authored result references")]
@@ -91,6 +89,11 @@ public sealed class Subject42AuthoredUiTests
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
         yield return new EnterPlayMode();
         yield return ExerciseProductionUi();
+        // Unload scene-local UI while its persistent localization/audio owners still exist.
+        // ExitPlayMode otherwise tears both ownership scopes down in unspecified order.
+        var completedScene = SceneManager.GetActiveScene();
+        SceneManager.SetActiveScene(SceneManager.CreateScene("Completed UI test"));
+        yield return SceneManager.UnloadSceneAsync(completedScene);
         yield return new ExitPlayMode();
     }
 
@@ -134,12 +137,7 @@ public sealed class Subject42AuthoredUiTests
         Time.timeScale = 0;
         AssertEvents();
         Assert.That(One<RunThreatController>(), Is.Not.Null);
-        var anomaly = One<AnomalySlotHUD>();
-        int subscribers = Subscribers(RunStateManager.Instance.AnomalyInventory, "Changed");
-        anomaly.enabled = false;
-        Assert.That(Subscribers(RunStateManager.Instance.AnomalyInventory, "Changed"), Is.EqualTo(subscribers - 1));
-        anomaly.enabled = true;
-        Assert.That(Subscribers(RunStateManager.Instance.AnomalyInventory, "Changed"), Is.EqualTo(subscribers));
+        Assert.That(RunStateManager.Instance.AnomalyInventory.IsEmpty, Is.True);
         var map = One<TacticalMapHUD>();
         Call(map, "RefreshMarkers");
         var markers = (IList)Get(map, "breakableMarkers");
@@ -172,7 +170,42 @@ public sealed class Subject42AuthoredUiTests
         var pause = One<PauseMenuUI>();
         Time.timeScale = 1;
         Call(pause, "HandleEscape"); Assert.That(pause.IsPaused, Is.True); Assert.That(Time.timeScale, Is.Zero);
+        var overview = (PauseBuildOverview)Get(pause, "overview");
+        var beforePause = JsonUtility.ToJson(RunStateManager.Instance.OrbitalStationState);
+        pause.OpenSettings();
+        Assert.That(((AudioSettingsPanel)Get(pause, "audioSettingsPanel")).IsOpen, Is.True);
+        Assert.That(Time.timeScale, Is.Zero);
+        Call(pause, "HandleEscape");
+        Assert.That(pause.IsPaused, Is.True);
+        Assert.That(((GameObject)Get(pause, "pausePanel")).activeSelf, Is.True);
+        pause.RestartGame();
+        Assert.That(overview.IsConfirming, Is.True);
+        Call(pause, "HandleEscape");
+        Assert.That(overview.IsConfirming, Is.False);
+        Assert.That(pause.IsPaused, Is.True);
+        Assert.That(JsonUtility.ToJson(RunStateManager.Instance.OrbitalStationState), Is.EqualTo(beforePause));
         Call(pause, "HandleEscape"); Assert.That(pause.IsPaused, Is.False); Assert.That(Time.timeScale, Is.EqualTo(1));
+        for (int i = 0; i < 10; i++)
+        {
+            Call(pause, "HandleEscape"); Assert.That(pause.IsPaused, Is.True);
+            Call(pause, "HandleEscape"); Assert.That(pause.IsPaused, Is.False);
+        }
+        pause.Pause();
+        var pauseStation = One<OrbitalStationRuntime>();
+        pause.RestartGame();
+        yield return RenderFrames();
+        PointerClick((Button)Get(overview, "confirmButton"), true);
+        yield return Await(() => One<OrbitalStationRuntime>() != null && One<OrbitalStationRuntime>() != pauseStation && One<OrbitalStationRuntime>().IsInitialized);
+        pause = One<PauseMenuUI>();
+        Assert.That(pause.IsPaused, Is.False);
+        Assert.That(RunStateManager.Instance.OrbitalStationState.Rings.Count, Is.EqualTo(1));
+        pause.Pause();
+        overview = (PauseBuildOverview)Get(pause, "overview");
+        pause.MainMenu();
+        yield return RenderFrames();
+        PointerClick((Button)Get(overview, "confirmButton"), true);
+        yield return Await(() => SceneManager.GetActiveScene().name == "MainMenu" && One<BunkerContext>() != null);
+        yield return StartRun();
         Time.timeScale = 0;
 
         // Sector reload must replace scene-local UI, including EventSystem and the hidden reel.
@@ -215,9 +248,9 @@ public sealed class Subject42AuthoredUiTests
         yield return StartRun();
         // The real victory route goes to the Bunker summary, not the legacy victory panel.
         run = RunStateManager.Instance; oldSector = run.CurrentSector;
-        var stage4 = AssetDatabase.FindAssets("t:StageProfileData").Select(id => AssetDatabase.LoadAssetAtPath<StageProfileData>(AssetDatabase.GUIDToAssetPath(id))).First(s => s.SectorNumber == RunRoute.FinalBossSector);
-        run.SetCurrentSector(new RunSector(RunRoute.FinalBossSector, stage4, oldSector.WorldRule, oldSector.LocalAnomaly));
-        Time.timeScale = 0;
+        var finalStage = AssetDatabase.FindAssets("t:StageProfileData").Select(id => AssetDatabase.LoadAssetAtPath<StageProfileData>(AssetDatabase.GUIDToAssetPath(id))).First(s => s.SectorNumber == RunRoute.FinalSector);
+        run.SetCurrentSector(new RunSector(RunRoute.FinalSector, finalStage, oldSector.WorldRule, oldSector.LocalAnomaly));
+        yield return Subject42FinalBossFlowTests.EnterFinalBossAndDefeat();
         var ending = RunEndService.Instance;
         ending.CompleteRunVictory();
         int afterVictory = CurrencyManager.Instance.TotalGold;

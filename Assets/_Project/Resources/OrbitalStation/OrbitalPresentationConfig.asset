@@ -42,7 +42,7 @@ MonoBehaviour:
   NormalAlpha: 0.48
   HoverAlpha: 1
   HaloSize: 0.38
-  RingLineAlpha: 0.52
+  RingLineAlpha: 0.8
   ModuleHitRadius: 0.16
   MountHitRadius: 0.72
   MountSelectionRadiusPixels: 26
@@ -55,3 +55,41 @@ MonoBehaviour:
   TelekinesisThrowStrength: 1
   TelekinesisMaxThrowSpeed: 18
   TelekinesisThrowDrag: 3.5
+  TierI:
+    BaseColor: {r: 0.88, g: 0.96, b: 1, a: 1}
+    Alpha: 0.72
+    Emission: 1
+    Glow: 0.12
+    CoreWhitening: 0.08
+    PulseStrength: 0
+    PulseSpeed: 0
+  TierII:
+    BaseColor: {r: 0.04, g: 0.65, b: 1, a: 1}
+    Alpha: 0.82
+    Emission: 1.15
+    Glow: 0.22
+    CoreWhitening: 0.12
+    PulseStrength: 0
+    PulseSpeed: 0
+  TierIII:
+    BaseColor: {r: 0.65, g: 0.16, b: 1, a: 1}
+    Alpha: 0.9
+    Emission: 1.3
+    Glow: 0.32
+    CoreWhitening: 0.18
+    PulseStrength: 0.045
+    PulseSpeed: 0.65
+  TierIV:
+    BaseColor: {r: 1, g: 0.57, b: 0.1, a: 1}
+    Alpha: 1
+    Emission: 1.5
+    Glow: 0.42
+    CoreWhitening: 0.55
+    PulseStrength: 0.055
+    PulseSpeed: 0.75
+  RingLineWidth: 0.045
+  RingTierTransitionDuration: 0.4
+  RingUpgradeBrightness: 0.65
+  RingUpgradeGlow: 0.3
+  RingHighlightBrightness: 0.25
+  RingDimmedAlpha: 0.32

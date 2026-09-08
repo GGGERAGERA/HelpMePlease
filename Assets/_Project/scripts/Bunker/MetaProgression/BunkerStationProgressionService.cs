@@ -2,8 +2,39 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum BunkerOnboardingStep { Character, Weapon, RunGate, Complete }
+
 public sealed class BunkerStationProgressionService : MonoBehaviour
 {
+    public const string OnboardingKey = "BunkerOnboarding.v1";
+    // Bits retain out-of-order visits without duplicating the current target.
+    public static BunkerOnboardingStep OnboardingStep => GetOnboardingStep(PlayerPrefs.GetInt(OnboardingKey, 0));
+    public static BunkerOnboardingStep GetOnboardingStep(int progress)
+    {
+        if ((progress & 4) != 0) return BunkerOnboardingStep.Complete;
+        if ((progress & 1) == 0) return BunkerOnboardingStep.Character;
+        return (progress & 2) == 0 ? BunkerOnboardingStep.Weapon : BunkerOnboardingStep.RunGate;
+    }
+
+    public static void RecordOnboarding(BunkerOnboardingStep step)
+    {
+        int bit = step == BunkerOnboardingStep.Character ? 1 :
+            step == BunkerOnboardingStep.Weapon ? 2 : step == BunkerOnboardingStep.Complete ? 4 : 0;
+        int current = PlayerPrefs.GetInt(OnboardingKey, 0);
+        if ((current | bit) == current) return;
+        PlayerPrefs.SetInt(OnboardingKey, current | bit);
+        PlayerPrefs.Save();
+    }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public static void DebugSetOnboarding(BunkerOnboardingStep step)
+    {
+        PlayerPrefs.SetInt(OnboardingKey, step == BunkerOnboardingStep.Character ? 0 :
+            step == BunkerOnboardingStep.Weapon ? 1 : step == BunkerOnboardingStep.RunGate ? 3 : 7);
+        PlayerPrefs.Save();
+    }
+#endif
+
     private const string LevelKeyPrefix = "BunkerStationLevel_";
     private const string InvestedKeyPrefix = "BunkerStationInvested_";
     private const int DefaultLevel = 1;

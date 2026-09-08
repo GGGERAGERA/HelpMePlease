@@ -19,6 +19,7 @@ public class GameOverManager : MonoBehaviour
 
     public void GameOver()
     {
+        if (RunFlowController.Instance != null && RunFlowController.Instance.IsVictoryConfirmed) return;
         HUDManager.Instance?.HideLowHpVignette();
 
         if (runResultView != null)

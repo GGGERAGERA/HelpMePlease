@@ -1,60 +1,30 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
+[RequireComponent(typeof(BoxCollider2D))]
 public sealed class FootballStartZone : MonoBehaviour
 {
     [SerializeField] private FootballMinigame minigame;
-    [SerializeField] private BunkerMinigameTerminal terminal;
     [SerializeField] private SpriteRenderer[] visualRenderers;
     [SerializeField] private TMP_Text startText;
-    [SerializeField] private Color availableColor = Color.white;
-    [SerializeField] private Color unavailableColor = new(0.35f, 0.35f, 0.35f, 1f);
-    [SerializeField] private bool hideVisualWhileRunning = true;
+    private readonly HashSet<Collider2D> playerContacts = new();
 
-    private Color[] baseColors;
-
-    public void Interact()
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        if (minigame != null && minigame.CanStart)
-            terminal?.Interact();
+        if (other.isTrigger || other.GetComponentInParent<CharacterMovement2D>() == null) return;
+        bool firstContact = playerContacts.Count == 0;
+        playerContacts.Add(other);
+        if (firstContact && minigame.CanStart) minigame.StartGame();
     }
+
+    private void OnTriggerExit2D(Collider2D other) => playerContacts.Remove(other);
+    private void OnDisable() => playerContacts.Clear();
 
     public void SetAvailable(bool available)
     {
-        Color tint = available ? availableColor : unavailableColor;
-        EnsureBaseColors();
-
-        if (visualRenderers != null)
-        {
-            for (int i = 0; i < visualRenderers.Length; i++)
-            {
-                SpriteRenderer renderer = visualRenderers[i];
-                if (renderer != null)
-                {
-                    renderer.color = baseColors[i] * tint;
-                    renderer.enabled = available || !hideVisualWhileRunning;
-                }
-            }
-        }
-
-        if (startText != null)
-        {
-            startText.gameObject.SetActive(available || !hideVisualWhileRunning);
-            startText.text = available ? "START" : "RUNNING";
-            startText.color = available
-                ? new Color(0.2f, 1f, 0.45f, 1f)
-                : new Color(0.65f, 0.65f, 0.65f, 1f);
-        }
-    }
-
-    private void EnsureBaseColors()
-    {
-        if (baseColors != null && baseColors.Length == (visualRenderers?.Length ?? 0))
-            return;
-
-        int count = visualRenderers?.Length ?? 0;
-        baseColors = new Color[count];
-        for (int i = 0; i < count; i++)
-            baseColors[i] = visualRenderers[i] != null ? visualRenderers[i].color : Color.white;
+        foreach (var renderer in visualRenderers) renderer.enabled = available;
+        startText.gameObject.SetActive(available);
+        startText.text = "ВОЙДИТЕ — СТАРТ";
     }
 }

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="5" result="Passed" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-07 18:02:09Z" end-time="2026-09-07 18:02:21Z" duration="12,6133576">
+  <test-suite type="TestSuite" id="1000" name="Help Me Please" fullname="Help Me Please" runstate="Runnable" testcasecount="172" result="Passed" start-time="2026-09-07 18:02:09Z" end-time="2026-09-07 18:02:21Z" duration="12.613358" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1211" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="172" result="Passed" start-time="2026-09-07 18:02:09Z" end-time="2026-09-07 18:02:21Z" duration="12.513532" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="21016" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="1060" name="PauseOverviewTests" fullname="PauseOverviewTests" classname="PauseOverviewTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-07 18:02:02Z" end-time="2026-09-07 18:02:03Z" duration="1.276613" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1061" name="AuthoredOverviewHasAllRequiredReferences" fullname="PauseOverviewTests.AuthoredOverviewHasAllRequiredReferences" methodname="AuthoredOverviewHasAllRequiredReferences" classname="PauseOverviewTests" runstate="Runnable" seed="1331766127" result="Passed" start-time="2026-09-07 18:02:02Z" end-time="2026-09-07 18:02:02Z" duration="0.029013" asserts="0">
+          <properties />
+        </test-case>
+        <test-case id="1062" name="AuthoredOverviewReadsStateAndFitsSupportedAspectRatios" fullname="PauseOverviewTests.AuthoredOverviewReadsStateAndFitsSupportedAspectRatios" methodname="AuthoredOverviewReadsStateAndFitsSupportedAspectRatios" classname="PauseOverviewTests" runstate="Runnable" seed="1031624419" result="Passed" start-time="2026-09-07 18:02:02Z" end-time="2026-09-07 18:02:03Z" duration="1.223121" asserts="0">
+          <properties />
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="1063" name="SettingsPresentationTests" fullname="SettingsPresentationTests" classname="SettingsPresentationTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-07 18:02:09Z" end-time="2026-09-07 18:02:19Z" duration="9.792596" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1065" name="BothProductionRoutesPreserveValuesNavigationAndPause" fullname="SettingsPresentationTests.BothProductionRoutesPreserveValuesNavigationAndPause" methodname="BothProductionRoutesPreserveValuesNavigationAndPause" classname="SettingsPresentationTests" runstate="Runnable" seed="1125779736" result="Passed" start-time="2026-09-07 18:02:03Z" end-time="2026-09-07 18:02:18Z" duration="15.512155" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[[BunkerInteractableCollider] Interaction source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerWeaponShowcase renderers=8
+[GoldenCoin] Awake: object='p_Case3 (1)', renderers=2, lights=2, active=True.
+[GoldenCoin] Awake: object='p_Case3', renderers=2, lights=2, active=True.
+[BunkerInteractableCollider] Interaction source=p_bunkerUpgrade1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerUpgrade1 renderers=20
+[BunkerInteractableCollider] Interaction source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerPlayerShowcase 1 renderers=16
+[BunkerInteractableCollider] Interaction source=p_AnomalyTable1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_AnomalyTable1 renderers=32
+[BunkerInteractableCollider] Interaction source=p_Shelf1 (1), interactable=False, hoverable=True
+[BunkerHoverOutline] p_Shelf1 (1) renderers=30
+[BunkerInteractableCollider] Interaction source=p_Shelf1, interactable=False, hoverable=True
+[BunkerHoverOutline] p_Shelf1 renderers=30
+[Subject42DebugMenu] WorldRuleController was not found. The related tab is diagnostics-only until it is available.
+[Subject42DebugMenu] LevelAnomalyController was not found. The related tab is diagnostics-only until it is available.
+[Subject42DebugMenu] WorldEventSpawner was not found. The related tab is diagnostics-only until it is available.
+[BunkerInteractableCollider] Interaction source=p_BunkerGates1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_BunkerGates1 renderers=45
+[VisualLab LOAD]
+ProjectileVisualScale=1
+TrailWidth=1
+TrailTime=1
+CameraZoom=8,087
+source=Assets/_Project/Resources/VisualTuningSavedValues.asset
+[RunSelectionManager] Character selected: 01_Gera
+[RunSelectionManager] Character selected: 01_Gera
+[RunState] New run: character=01_Gera, weapon=NULL, stabilizer=NULL
+[CharacterSpawner] Weapons found: 0
+[MetaUpgradeApplier] Loaded meta: HP=0, DMG=0, SPD=0, XP=0, GOLD=0, PICKUP=0
+[RunState] Applied to spawned player. Upgrades: 0, hasHealth: False
+[VisualLab LOAD]
+ProjectileVisualScale=1
+TrailWidth=1
+TrailTime=1
+CameraZoom=8,087
+source=Assets/_Project/Resources/VisualTuningSavedValues.asset
+[WorldEventSpawner] Event 'CaptureZoneEvent' requires the hold-point feature, but it is not enabled. The event will be skipped.
+[TacticalMap] breakableMarkers=0
+[EnemySpawner] Phase 1: interval 1,50, max alive 10.
+[EnemySpawner] Level scaling: HP x1,00, speed x1,00, pressure x1,00.
+SECTOR LAYOUT
+Coverage: 88,0%
+Player: (0.00, 0.00, 0.00)
+Normal 1: center (-22.34, -32.72), size (51.39, 32.25)
+Normal 2: center (-31.76, 17.71), size (34.50, 61.18)
+Normal 3: center (19.16, 17.35), size (58.92, 61.97)
+Special ArcNode: center (26.49, -32.73), size (42.04, 33.01), distance 42,1/70,6
+Line-to-Special in Normal: 40%
+Exit: (22.91, 14.82), inside NORMAL
+Attempts: 1
+[ExplorationSector] Special Site: ELECTRIC (ProductionElectricSiteHazard).
+[Breakables] requested=8 spawned=8 visible=8 rejected=0 fallback=0 bounds=100x100
+[ExplorationSector] Sector ready: 3 Normal, 1 Special (ArcNode), 88% map coverage, 8 breakables, Exit at (22.91, 14.82).
+[SectorRuntime]
+Source=RunSector
+Sector=1
+StageProfile='StageProfile_01'
+WorldRule='WorldRule_None'
+LocalAnomaly='LocalAnomaly_Berserk'
+[TacticalMap] breakableMarkers=8
+[EnemySpawner] Spawning stopped.
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+]]></output>
+        </test-case>
+        <test-case id="1064" name="SharedSettingsHasAuthoredControlsWithoutLegacySpritesOrAnimations" fullname="SettingsPresentationTests.SharedSettingsHasAuthoredControlsWithoutLegacySpritesOrAnimations" methodname="SharedSettingsHasAuthoredControlsWithoutLegacySpritesOrAnimations" classname="SettingsPresentationTests" runstate="Runnable" seed="521378847" result="Passed" start-time="2026-09-07 18:02:18Z" end-time="2026-09-07 18:02:18Z" duration="0.012778" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="1066" name="Subject42AuthoredUiTests" fullname="Subject42AuthoredUiTests" classname="Subject42AuthoredUiTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-09-07 18:02:19Z" end-time="2026-09-07 18:02:21Z" duration="2.707736" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1067" name="ProductionScenesHaveRequiredUiReferencesAndOneEventSystem" fullname="Subject42AuthoredUiTests.ProductionScenesHaveRequiredUiReferencesAndOneEventSystem" methodname="ProductionScenesHaveRequiredUiReferencesAndOneEventSystem" classname="Subject42AuthoredUiTests" runstate="Runnable" seed="1948236574" result="Passed" start-time="2026-09-07 18:02:19Z" end-time="2026-09-07 18:02:21Z" duration="2.702443" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Saving results to: Artifacts/SettingsQA/results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

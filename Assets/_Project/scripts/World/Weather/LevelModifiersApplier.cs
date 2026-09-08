@@ -144,15 +144,15 @@ public sealed class LevelModifiersApplier : MonoBehaviour
             sector.SpawnPressureMultiplier
         );
         worldRuleController?.Apply(sector.WorldRule);
-        runFlowController?.ApplyLevelMechanics();
+        runFlowController.BindEnemySpawner(enemySpawner);
+        runFlowController.ApplyLevelMechanics();
+        HUDManager.Instance?.SetTimerVisible(false);
         ExperienceManager.Instance?.SetLevelXpGainMultiplier(
             sector.ExperienceGainMultiplier
         );
 
         if (RunRoute.IsExplorationSector(sector.SectorNumber))
             ApplyExplorationSector();
-        else
-            ApplyBossSector(sector);
     }
 
     private void ApplyExplorationSector()
@@ -173,19 +173,6 @@ public sealed class LevelModifiersApplier : MonoBehaviour
             eventSpawner,
             anomalyController,
             runFlowController
-        );
-    }
-
-    private void ApplyBossSector(RunSector sector)
-    {
-        anomalyController?.Apply(sector.LocalAnomaly);
-
-        if (explorationConfig.ThreatConfig == null)
-            return;
-
-        threatController.Initialize(
-            explorationConfig.ThreatConfig,
-            enemySpawner
         );
     }
 

@@ -113,6 +113,8 @@ public class PlayerHealth : MonoBehaviour
         Debug.Log("Player died");
         if (isDead) return;
         isDead = true;
+        if (RunFlowController.Instance != null && !RunFlowController.Instance.IsVictoryConfirmed)
+            RunFlowController.Instance.StopRunGameplay();
 
         AudioService.Instance?.PlayAt(
             AudioCueId.PlayerDeath,

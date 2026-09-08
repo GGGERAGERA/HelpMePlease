@@ -44,13 +44,6 @@ public sealed class RunRouteProgressView : MonoBehaviour
 
     private void Show(int sectorNumber, int totalSectors)
     {
-        // Boss is outside the three-sector production HUD route.
-        if (RunRoute.IsBossSector(sectorNumber))
-        {
-            Hide();
-            return;
-        }
-
         int safeTotal = Mathf.Max(1, totalSectors);
         int safeSector = Mathf.Clamp(sectorNumber, 1, safeTotal);
 
@@ -85,7 +78,7 @@ public sealed class RunRouteProgressView : MonoBehaviour
             pointRect.sizeDelta = new Vector2(size, size);
         }
 
-        finalLabel.text = "EXIT";
+        finalLabel.text = "BOSS";
         finalLabel.gameObject.SetActive(true);
     }
 

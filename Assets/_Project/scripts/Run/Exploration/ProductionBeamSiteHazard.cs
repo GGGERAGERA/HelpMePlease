@@ -8,9 +8,7 @@ internal static class ProductionBeamSiteDefinition
         ProductionAnomalySiteDefinitionRegistry.Register(
             new ProductionAnomalySiteDefinition(
                 AnomalyPowerType.RedBeam,
-                AnomalyPowerType.RedBeam,
                 "BEAM",
-                "RED BEAM",
                 CreateEnvironment
             )
         );

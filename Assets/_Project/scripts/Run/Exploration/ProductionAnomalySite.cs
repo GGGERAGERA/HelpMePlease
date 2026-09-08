@@ -530,7 +530,11 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         CollapseEnvironment();
 
         if (isSpecial)
-            GrantSpecialPower();
+        {
+            // Completion owns duplicate protection; the existing queue owns
+            // cards, staged placement, cancellation and sector-transition gating.
+            UpgradeManager.Instance.ShowUpgradeChoices();
+        }
         else
             RunMessageService.Instance?.ShowCustom(
                 "ANOMALY STABILIZED",
@@ -560,71 +564,6 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         if (!completed)
             SpawnEvent(isSpecial);
     }
-
-    private void GrantSpecialPower()
-    {
-        if (specialDefinition == null)
-        {
-            Debug.LogError(
-                "[AnomalySite] Cannot grant a special power without a " +
-                "Site definition.",
-                this
-            );
-            return;
-        }
-
-        AnomalyItemData item = AnomalyItemCatalog.Find(
-            specialDefinition.PowerReward);
-        RunStateManager runState = RunStateManager.Instance;
-        AnomalyGrantResult result = runState != null
-            ? runState.TryGrantAnomalyItem(item)
-            : AnomalyGrantResult.Invalid;
-
-        if (result == AnomalyGrantResult.Accepted ||
-            result == AnomalyGrantResult.Upgraded)
-        {
-            RunMessageService.Instance?.ShowCustom(
-                result == AnomalyGrantResult.Accepted
-                    ? "ANOMALY ITEM ACQUIRED"
-                    : "ANOMALY ITEM UPGRADED",
-                $"{item.DisplayName}  " +
-                $"{ToRoman(runState.AnomalyInventory.Level)} / III",
-                2.5f
-            );
-        }
-        else if (result == AnomalyGrantResult.RequiresReplacement)
-        {
-            RunMessageService.Instance?.ShowCustom(
-                "ANOMALY SLOT OCCUPIED",
-                "REPLACEMENT UI IS NOT AVAILABLE — CURRENT ITEM KEPT",
-                3f
-            );
-        }
-        else if (result == AnomalyGrantResult.Maxed)
-        {
-            RunMessageService.Instance?.ShowCustom(
-                "ANOMALY ITEM MAXED",
-                $"{item.DisplayName}  III / III",
-                2.5f
-            );
-        }
-        else
-        {
-            RunMessageService.Instance?.ShowCustom(
-                "ANOMALY REWARD INVALID",
-                "ANOMALY ITEM DATA IS MISSING",
-                2.5f
-            );
-        }
-    }
-
-    private static string ToRoman(int level) => level switch
-    {
-        1 => "I",
-        2 => "II",
-        3 => "III",
-        _ => "—"
-    };
 
     private void CollapseEnvironment()
     {

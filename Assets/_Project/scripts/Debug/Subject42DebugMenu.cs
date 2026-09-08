@@ -231,7 +231,6 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     [SerializeField] private EnemySpawner enemySpawner;
     [SerializeField] private CharacterSpawner characterSpawner;
     [SerializeField] private UpgradeManager upgradeManager;
-    [SerializeField] private RunTimer runTimer;
     [SerializeField] private RunFlowController runFlowController;
     [SerializeField] private LevelChoiceManager levelChoiceManager;
 
@@ -790,7 +789,6 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         upgradeManager ??= UpgradeManager.Instance != null
             ? UpgradeManager.Instance
             : FindFirstObjectByType<UpgradeManager>();
-        runTimer ??= FindFirstObjectByType<RunTimer>();
         runFlowController ??= RunFlowController.Instance != null
             ? RunFlowController.Instance
             : FindFirstObjectByType<RunFlowController>();
@@ -1955,9 +1953,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddRow(
             "ТЕКУЩИЙ СЕКТОР",
             debug.CurrentSectorNumber > 0
-                ? RunRoute.IsBossSector(debug.CurrentSectorNumber)
-                    ? "BOSS / EXIT COMPLETE"
-                    : $"{debug.CurrentSectorNumber}/{debug.ProductionSectorCount}"
+                ? $"{debug.CurrentSectorNumber}/{debug.ProductionSectorCount}"
                 : "НЕТ АКТИВНОГО RUNSTATE",
             debug.CurrentSectorNumber > 0 ? successColor : warningColor,
             "ИНФО",
@@ -3600,6 +3596,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                   $"{(currentEvent.IsStarted ? "ACTIVE" : "WAITING")}",
             currentEvent != null ? successColor : mutedColor,
             null, false, null);
+        AddRow("Run phase", runFlowController != null ? runFlowController.Phase.ToString() : "NONE",
+            mutedColor, null, false, null);
         AddRow("Boss alive", boss != null ? "YES" : "NO",
             boss != null ? successColor : mutedColor,
             null, false, null);
@@ -3609,17 +3607,18 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         AddSectionTitle(
             "LEVEL FLOW",
-            "Production Sector 1 -> 2 -> 3 -> Exit/Boss lifecycle"
+            $"Production: {RunRoute.TotalSectors} sectors; final zone -> boss"
         );
-        bool canSpawnBoss = runTimer != null &&
-            runTimer.CanDebugSpawnBoss &&
+        bool canSpawnBoss = runFlowController != null &&
+            RunRoute.IsFinalSector(RunStateManager.Instance?.CurrentLevel ?? 0) &&
+            runFlowController.CanDebugCompleteCurrentLevel &&
             boss == null && !completed && !choiceOpen;
         AddRow("Spawn the configured current-sector boss",
             canSpawnBoss ? "READY" : "UNAVAILABLE IN CURRENT STATE",
             canSpawnBoss ? mutedColor : warningColor,
             "SPAWN BOSS", canSpawnBoss, SpawnBoss);
 
-        bool canKillBoss = boss != null && !completed && !choiceOpen;
+        bool canKillBoss = boss != null && !choiceOpen;
         AddRow("Defeat the live boss through EnemyHealth",
             canKillBoss ? "READY" : "NO LIVE BOSS",
             canKillBoss ? mutedColor : warningColor,
@@ -3634,7 +3633,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
         bool canOpenCards = runFlowController != null &&
             runFlowController.CanDebugOpenLevelChoice;
-        AddRow("Skip only the post-boss presentation delay",
+        AddRow("Reopen the completed intermediate sector choice",
             choiceOpen ? "ALREADY OPEN" : canOpenCards ? "READY" :
                 "COMPLETE LEVEL FIRST",
             canOpenCards ? mutedColor : warningColor,
@@ -3810,7 +3809,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void SpawnBoss()
     {
-        runTimer?.TryDebugSpawnBoss();
+        runFlowController?.TryDebugCompleteCurrentLevel();
         RefreshCurrentTab();
     }
 
@@ -4077,7 +4076,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         AddManualEnemyRows("БОМБЕР", ResolveEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Bomber));
         AddManualEnemyRows("EYES", eyesEnemyPrefab != null ? eyesEnemyPrefab : ResolveEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Eyes));
         AddManualEnemyRows("ТУРЕЛЬ", turretEnemyPrefab != null ? turretEnemyPrefab : ResolveEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Turret));
-        AddManualEnemyRows("БОСС", runTimer != null ? runTimer.DebugBossPrefab : null);
+        AddManualEnemyRows("БОСС", RunStateManager.Instance?.CurrentSector?.BossPrefab);
 
         AddRow("Создано вручную",
             debugEnemies.Count > 0 ? $"Активно: {debugEnemies.Count}" : "Нет",
@@ -4183,6 +4182,17 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void AddRoomStateRows()
     {
+        AddSectionTitle("BUNKER ONBOARDING", BunkerStationProgressionService.OnboardingStep.ToString());
+        AddRow("Reset Onboarding", "First visit", accentColor, "RESET", true,
+            () => { BunkerStationProgressionService.DebugSetOnboarding(BunkerOnboardingStep.Character); RefreshCurrentTab(); });
+        foreach (BunkerOnboardingStep step in Enum.GetValues(typeof(BunkerOnboardingStep)))
+        {
+            BunkerOnboardingStep target = step;
+            string label = step == BunkerOnboardingStep.Complete ? "Complete Onboarding" : "Step: " + step;
+            AddRow(label, "Saved", mutedColor, "SET", true,
+                () => { BunkerStationProgressionService.DebugSetOnboarding(target); RefreshCurrentTab(); });
+        }
+
         AddSectionTitle("ROOM ACCESS", "Runtime only; values are not saved");
         BunkerRoomAccess[] rooms =
             FindObjectsByType<BunkerRoomAccess>(FindObjectsSortMode.None);
@@ -4230,72 +4240,17 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void AddFootballMinigameSection()
     {
-        FootballMinigame football = FindFirstObjectByType<FootballMinigame>(
-            FindObjectsInactive.Include);
+        FootballMinigame football = FindFirstObjectByType<FootballMinigame>(FindObjectsInactive.Include);
         bool available = football != null;
-
-        AddSectionTitle("FOOTBALL MINIGAME", "Bunker V1 lifecycle and runtime objects");
-        AddRow("State", available ? football.State.ToString() : "NOT FOUND",
-            available ? successColor : warningColor,
-            "START", available && football.CanStart,
-            () => { football.StartGame(); RefreshCurrentTab(); });
-        AddRow("Score", available ? football.Score.ToString() : "-", mutedColor,
-            "RESET", available,
-            () => { football.ResetGame(); RefreshCurrentTab(); });
-        AddRow("TIME", available ? football.RemainingTime.ToString("0.0") : "-", mutedColor,
-            null, false, null);
-        AddRow("SCORE", available ? football.Score.ToString() : "-", mutedColor,
-            null, false, null);
-        AddRow("Arena Width", available ? football.ArenaWidth.ToString("0.00") : "-", mutedColor,
-            available && football.ShowDebugZones ? "HIDE DEBUG" : "SHOW DEBUG",
-            available,
-            () => { football.ToggleDebugZones(); RefreshCurrentTab(); });
-        AddRow("Arena Height", available ? football.ArenaHeight.ToString("0.00") : "-", mutedColor,
-            "FRAME CAMERA", available,
-            () => { football.FrameCamera(); RefreshCurrentTab(); });
-        AddRow("Camera Ortho Size",
-            available ? football.CameraOrthographicSize.ToString("0.00") : "-", mutedColor,
-            "RESTORE CAMERA", available,
-            () => { football.RestoreCamera(); RefreshCurrentTab(); });
-        AddRow("Ball Zone Height", available ? football.BallZoneHeight.ToString("0.00") : "-",
-            mutedColor, null, false, null);
-        AddRow("Anomaly Zone Height", available ? football.AnomalyZoneHeight.ToString("0.00") : "-",
-            mutedColor, null, false, null);
-        AddRow("Target Zone Height", available ? football.TargetZoneHeight.ToString("0.00") : "-",
-            mutedColor, null, false, null);
-        AddRow("Balls active", available ? football.ActiveBallCount.ToString() : "-", mutedColor,
-            "+1 BALL", available && football.IsRunning,
-            () => { football.DebugAddBall(); RefreshCurrentTab(); });
-        AddRow("Anomalies", available ? football.ActiveAnomalyCount.ToString() : "-", mutedColor,
-            "SPAWN ANOMALY", available && football.IsRunning,
-            () => { football.DebugSpawnAnomaly(); RefreshCurrentTab(); });
-        AddRow("Targets", available ? football.ActiveTargetCount.ToString() : "-", mutedColor,
-            "SPAWN TARGET", available && football.IsRunning,
-            () => { football.DebugSpawnTarget(); RefreshCurrentTab(); });
-        AddRow("Green Targets", available ? football.GreenTargetCount.ToString() : "-", mutedColor,
-            "+2 SCORE", available && football.IsRunning,
-            () => { football.DebugAddScore(2); RefreshCurrentTab(); });
-        AddRow("Yellow Targets", available ? football.YellowTargetCount.ToString() : "-", mutedColor,
-            "+5 SCORE", available && football.IsRunning,
-            () => { football.DebugAddScore(5); RefreshCurrentTab(); });
-        AddRow("Red Targets", available ? football.RedTargetCount.ToString() : "-", mutedColor,
-            "+10 SCORE", available && football.IsRunning,
-            () => { football.DebugAddScore(10); RefreshCurrentTab(); });
-        AddRow("Gates", available ? football.GateCount.ToString() : "-", mutedColor,
-            "+20 SCORE", available && football.IsRunning,
-            () => { football.DebugAddScore(20); RefreshCurrentTab(); });
-        AddRow("Target types", available ? "RANDOM PER LANE" : "-", accentColor,
-            "REROLL TARGETS", available && football.IsRunning,
-            () => { football.DebugRerollTargets(); RefreshCurrentTab(); });
-        AddRow("Clear runtime balls", available ? "READY" : "NOT FOUND", warningColor,
-            "CLEAR BALLS", available,
-            () => { football.DebugClearBalls(); RefreshCurrentTab(); });
-        AddRow("Clear runtime anomalies", available ? "READY" : "NOT FOUND", warningColor,
-            "CLEAR ANOMALIES", available,
-            () => { football.DebugClearAnomalies(); RefreshCurrentTab(); });
-        AddRow("Clear runtime targets", available ? "READY" : "NOT FOUND", warningColor,
-            "CLEAR TARGETS", available,
-            () => { football.DebugClearTargets(); RefreshCurrentTab(); });
+        AddSectionTitle("FOOTBALL", "Original rules / authored arena");
+        AddRow("State", available ? football.State.ToString() : "NOT FOUND", mutedColor,
+            "START", available && football.CanStart, () => { football.StartGame(); RefreshCurrentTab(); });
+        AddRow("Balls", available ? football.ActiveBallCount.ToString() : "-", mutedColor,
+            "RESET BALLS", available && football.IsRunning, () => football.ResetBall());
+        AddRow("Round", "Return to bunker", mutedColor,
+            "CANCEL", available, () => { football.ResetGame(); RefreshCurrentTab(); });
+        AddRow("Arena", available ? $"{football.ArenaWidth:0} x {football.ArenaHeight:0}" : "-", mutedColor,
+            "GIZMOS", available, () => football.ToggleDebugZones());
     }
 
     private void SetAllRooms(BunkerRoomAccess[] rooms, bool unlocked)
@@ -7738,7 +7693,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         if (runState == null)
             return;
 
-        AnomalyGrantResult result = runState.TryGrantAnomalyItem(item);
+        AnomalyGrantResult result = runState.DebugTryGrantAnomalyItem(item);
         lastAnomalyGrantResult = result.ToString();
 
         RefreshCurrentTab();
@@ -7751,12 +7706,12 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             return;
 
         if (!runState.AnomalyInventory.IsEmpty)
-            runState.ClearAnomalyItem();
+            runState.DebugClearAnomalyItem();
 
         AnomalyGrantResult result = AnomalyGrantResult.Invalid;
         int grants = Mathf.Clamp(targetLevel, 1, item.MaxLevel);
         for (int i = 0; i < grants; i++)
-            result = runState.TryGrantAnomalyItem(item);
+            result = runState.DebugTryGrantAnomalyItem(item);
 
         lastAnomalyGrantResult =
             $"{item.DisplayName} {ToRomanLevel(grants)}: {result}";
@@ -7769,7 +7724,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         if (runState == null || runState.AnomalyInventory.IsEmpty)
             return;
 
-        runState.ClearAnomalyItem();
+        runState.DebugClearAnomalyItem();
         lastAnomalyGrantResult = "Cleared";
         RefreshCurrentTab();
     }

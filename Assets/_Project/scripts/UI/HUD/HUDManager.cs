@@ -53,7 +53,6 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private RunMessageView runMessageView;
     [Header("Tactical Map")]
     [SerializeField] private TacticalMapHUD tacticalMap;
-    [SerializeField] private AnomalySlotHUD anomalySlot;
     [SerializeField] private WorldLootRewardReel lootReel;
     private RunStatsManager runStatsManager;
     private RunStateManager runStateManager;
@@ -86,7 +85,6 @@ public class HUDManager : MonoBehaviour
         }
         Reserve(experienceSlider, true);
         Reserve(dashCooldownView, true);
-        Reserve(anomalySlot, true);
         Reserve(routeProgressView, false);
         if (bossHpPanel != null && bossHpPanel.activeInHierarchy) Reserve(bossHpPanel.transform, false);
         if (includeMessage && runMessageView != null && runMessageView.IsPanelVisible)
@@ -110,7 +108,6 @@ public class HUDManager : MonoBehaviour
         }
         ReserveSide(healthSlider, true);
         ReserveSide(threatPanel, true);
-        ReserveSide(anomalySlot, true);
         if (tacticalMap != null) ReserveSide(tacticalMap.LayoutRoot, false);
         return safe;
     }
@@ -125,10 +122,10 @@ public class HUDManager : MonoBehaviour
         if (bossHpPanel != null)
             bossHpPanel.SetActive(false);
 
-        if (tacticalMap == null || anomalySlot == null || lootReel == null ||
+        if (tacticalMap == null || lootReel == null ||
             threatPanel == null || threatLevelText == null || threatValueText == null || threatFill == null)
         {
-            Debug.LogError("[HUDManager] Authored map, anomaly, loot or threat references are missing.", this);
+            Debug.LogError("[HUDManager] Authored map, loot or threat references are missing.", this);
             enabled = false;
             return;
         }

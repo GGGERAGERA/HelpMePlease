@@ -56,39 +56,46 @@ public sealed class Subject42OrbitalRestoreFlowTests
         Debug.Log("PASS1 normal Bunker StartRun -> MVP -> restore x2: " + before);
 
         // Exercise the real production transition method, including saves and LoadScene.
-        var choice = Object.FindFirstObjectByType<LevelChoiceManager>();
-        Assert.That(choice, Is.Not.Null);
-        var stage = AssetDatabase.FindAssets("t:StageProfileData")
-            .Select(id => AssetDatabase.LoadAssetAtPath<StageProfileData>(AssetDatabase.GUIDToAssetPath(id)))
-            .First(p => p.SectorNumber == 2);
-        var next = new RunSector(2, stage, manager.CurrentSector.WorldRule, manager.CurrentSector.LocalAnomaly);
-        int oldScene = station.gameObject.scene.handle;
-        UnityEngine.Events.UnityAction<Scene, LoadSceneMode> freeze = (scene, mode) => Time.timeScale = 0f;
-        SceneManager.sceneLoaded += freeze;
-        try
+        for (int sectorNumber = 2; sectorNumber <= 3; sectorNumber++)
         {
-            typeof(LevelChoiceManager).GetMethod("TransitionToSector", BindingFlags.Instance | BindingFlags.NonPublic)
-                .Invoke(choice, new object[] { next });
-            deadline = Time.realtimeSinceStartup + 30f;
-            while (Time.realtimeSinceStartup < deadline)
+            var choice = Object.FindFirstObjectByType<LevelChoiceManager>();
+            Assert.That(choice, Is.Not.Null);
+            var stage = AssetDatabase.FindAssets("t:StageProfileData")
+                .Select(id => AssetDatabase.LoadAssetAtPath<StageProfileData>(AssetDatabase.GUIDToAssetPath(id)))
+                .First(p => p.SectorNumber == sectorNumber);
+            var next = new RunSector(sectorNumber, stage, manager.CurrentSector.WorldRule, manager.CurrentSector.LocalAnomaly);
+            int oldScene = station.gameObject.scene.handle;
+            UnityEngine.Events.UnityAction<Scene, LoadSceneMode> freeze = (scene, mode) => Time.timeScale = 0f;
+            SceneManager.sceneLoaded += freeze;
+            try
             {
-                station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
-                if (station != null && station.gameObject.scene.handle != oldScene && station.IsInitialized) break;
-                yield return null;
+                typeof(LevelChoiceManager).GetMethod("TransitionToSector", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(choice, new object[] { next });
+                deadline = Time.realtimeSinceStartup + 30f;
+                while (Time.realtimeSinceStartup < deadline)
+                {
+                    station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
+                    if (station != null && station.gameObject.scene.handle != oldScene && station.IsInitialized) break;
+                    yield return null;
+                }
+                Assert.That(station, Is.Not.Null);
+                Assert.That(station.gameObject.scene.handle, Is.Not.EqualTo(oldScene));
+                Assert.That(station.State, Is.SameAs(state));
+                Assert.That(manager.OrbitalStationState, Is.SameAs(state));
+                Assert.That(manager.CurrentSector.SectorNumber, Is.EqualTo(sectorNumber));
+                // CharacterSpawner.Start restores timeScale=1; phase may advance before the test resumes.
+                // Compare every other field; explicit restore above compares phase too.
+                string WithoutPhase(string snapshot) => System.Text.RegularExpressions.Regex.Replace(
+                    snapshot, @"CurrentPhase=[^,}]+", "CurrentPhase=<live>");
+                Assert.That(WithoutPhase(Subject42OrbitalRestoreTests.Snapshot(state)), Is.EqualTo(WithoutPhase(before)));
+                foreach (var ring in station.Rings)
+                    Assert.That(ring.AccentColor, Is.EqualTo(OrbitalPresentationConfig.Active.GetRingTier(ring.State.VisualTier).BaseColor));
+                foreach (var ringView in station.GetComponentsInChildren<OrbitalRingView>())
+                    Assert.That(ringView.IsTierTransitionActive, Is.False, "Sector restore must not replay upgrades");
+                Debug.Log($"PASS actual sector -> {sectorNumber}: state and ring tiers preserved.");
             }
-            Assert.That(station, Is.Not.Null);
-            Assert.That(station.gameObject.scene.handle, Is.Not.EqualTo(oldScene));
-            Assert.That(station.State, Is.SameAs(state));
-            Assert.That(manager.OrbitalStationState, Is.SameAs(state));
-            Assert.That(manager.CurrentSector.SectorNumber, Is.EqualTo(2));
-            // CharacterSpawner.Start restores timeScale=1; phase may advance before the test resumes.
-            // Compare every other field; explicit restore above compares phase too.
-            string WithoutPhase(string snapshot) => System.Text.RegularExpressions.Regex.Replace(
-                snapshot, @"CurrentPhase=[^,}]+", "CurrentPhase=<live>");
-            Assert.That(WithoutPhase(Subject42OrbitalRestoreTests.Snapshot(state)), Is.EqualTo(WithoutPhase(before)));
-            Debug.Log("PASS1 actual sector 1 -> 2: same object; all fields preserved except live phase ticks.");
+            finally { SceneManager.sceneLoaded -= freeze; Time.timeScale = 1f; }
         }
-        finally { SceneManager.sceneLoaded -= freeze; Time.timeScale = 1f; }
         yield return new ExitPlayMode();
     }
 }

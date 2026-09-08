@@ -51,6 +51,10 @@ public sealed class LevelChoiceManager : MonoBehaviour
 
     public bool TryShowChoices()
     {
+        RunStateManager activeRun = RunStateManager.Instance;
+        if (activeRun == null || activeRun.IsRunEnded || activeRun.CurrentSector == null ||
+            !RunRoute.HasNextSector(activeRun.CurrentSector.SectorNumber)) return false;
+
         if (isChoosing)
             return false;
 
@@ -257,6 +261,9 @@ public sealed class LevelChoiceManager : MonoBehaviour
 
     private void TransitionToSector(RunSector sector)
     {
+        RunSector current = RunStateManager.Instance?.CurrentSector;
+        if (current == null || !RunRoute.HasNextSector(current.SectorNumber) ||
+            sector == null || sector.SectorNumber != current.SectorNumber + 1) return;
         var interaction = FindFirstObjectByType<OrbitalInteractionController>();
         if ((UpgradeManager.Instance != null && !UpgradeManager.Instance.IsRewardQueueIdle) ||
             (interaction != null && !interaction.CanTransition)) return;

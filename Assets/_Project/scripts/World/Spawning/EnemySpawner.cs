@@ -107,6 +107,12 @@ public class EnemySpawner : MonoBehaviour
     private float worldRuleSpawnPressureMultiplier = 1f;
     private float worldEventSpawnPressureMultiplier = 1f;
     private float worldAccelerationMultiplier = 1f;
+    // Refill faster during the finale without increasing the director alive cap or batch size.
+    private float finalBossPressureMultiplier = 1f;
+    public float FinalBossPressureMultiplier => finalBossPressureMultiplier;
+    public void SetFinalBossPressure(float multiplier) =>
+        finalBossPressureMultiplier = Mathf.Max(1f, multiplier);
+
     private bool runThreatControlsPhase;
     private float runThreatSpawnIntervalMultiplier = 1f;
     private int runThreatMaxAliveCap;
@@ -253,6 +259,7 @@ public class EnemySpawner : MonoBehaviour
     public void StopSpawning()
     {
         spawningEnabled = false;
+        finalBossPressureMultiplier = 1f;
         Debug.Log("[EnemySpawner] Spawning stopped.");
     }
 
@@ -498,6 +505,8 @@ public class EnemySpawner : MonoBehaviour
         float maxDistance = 3f,
         float minimumDistanceFromPlayer = 0f)
     {
+        if (!spawningEnabled) return;
+
         if (gameplayArea == null)
             ResolveGameplayArea();
 
@@ -739,7 +748,8 @@ public class EnemySpawner : MonoBehaviour
             0.1f,
             limitedInterval /
             GetExternalSpawnPressureMultiplier() /
-            worldAccelerationMultiplier
+            worldAccelerationMultiplier /
+            finalBossPressureMultiplier
         );
     }
 
@@ -752,6 +762,9 @@ public class EnemySpawner : MonoBehaviour
         bool countTowardSpawnLimits = true,
         float spawnClearance = 0f)
     {
+        // Explicit untracked debug spawns remain available when auto-spawn is paused.
+        if (!spawningEnabled && countTowardSpawnLimits) return null;
+
         if (enemyPrefab == null)
             return null;
 

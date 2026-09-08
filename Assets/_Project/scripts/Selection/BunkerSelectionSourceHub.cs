@@ -189,9 +189,10 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
         {
             case SourceKind.Characters:
                 CharacterData character = FindByName(characters, entryId);
-                if (character != null && IsUnlocked(character.unlockData))
+                if (character != null && IsUnlocked(character.unlockData) && RunSelectionManager.Instance != null)
                 {
-                    RunSelectionManager.Instance?.SelectCharacter(character);
+                    RunSelectionManager.Instance.SelectCharacter(character);
+                    BunkerStationProgressionService.RecordOnboarding(BunkerOnboardingStep.Character);
                     AudioService.Instance?.Play(AudioCueId.UIConfirm);
                 }
                 break;

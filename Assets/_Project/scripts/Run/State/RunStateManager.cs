@@ -425,7 +425,9 @@ public sealed class RunStateManager : MonoBehaviour
     }
 #endif
 
-    public AnomalyGrantResult TryGrantAnomalyItem(AnomalyItemData item)
+    // Legacy sandbox commands only; production rewards use UpgradeManager.
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public AnomalyGrantResult DebugTryGrantAnomalyItem(AnomalyItemData item)
     {
         AnomalyGrantResult result = runEnded
             ? AnomalyGrantResult.Invalid
@@ -448,7 +450,7 @@ public sealed class RunStateManager : MonoBehaviour
         return result;
     }
 
-    public void ClearAnomalyItem()
+    public void DebugClearAnomalyItem()
     {
         if (runEnded || anomalyInventory.IsEmpty)
             return;
@@ -458,6 +460,8 @@ public sealed class RunStateManager : MonoBehaviour
             anomalyInventory.CurrentItem.PowerType);
         anomalyInventory.Clear();
     }
+
+#endif
 
     public void ResolveCurrentEvolution(
         IReadOnlyList<EvolutionRecipe> recipes)

@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Collections.Generic;
+using UnityEngine.EventSystems;
 using Subject42.Combat.OrbitalStation;
 
 public class CameraFollow : MonoBehaviour
@@ -9,6 +11,25 @@ public class CameraFollow : MonoBehaviour
 
     [Header("Temporary Focus")]
     [SerializeField] private Camera controlledCamera;
+
+    [Header("Mouse Wheel Zoom")]
+    [Tooltip("Orthographic size limits at the authored camera size. With adaptive limits, these scale with ORBITAL auto framing.")]
+    [SerializeField, Min(.01f)] private float minZoom = 5.6f;
+    [SerializeField, Min(.01f)] private float maxZoom = 10.5f;
+    [SerializeField, Min(0f)] private float wheelSensitivity = .7f;
+    [SerializeField, Min(.01f)] private float zoomSmoothTime = .18f;
+    [SerializeField] private bool scaleZoomLimitsWithAutoFraming = true;
+    [Tooltip("Maximum visible world width; zero disables. Keeps the bunker authored overview on wide displays.")]
+    [SerializeField, Min(0f)] private float maxViewWidth;
+
+    private float userZoomOffset;
+    private float smoothedUserZoomOffset;
+    private float userZoomVelocity;
+    private float pendingWheel;
+    private int orbitalRunId;
+    private readonly List<RaycastResult> scrollRaycasts = new();
+    private PointerEventData scrollPointer;
+    private EventSystem scrollEventSystem;
 
     private Object focusOwner;
     private Transform focusTarget;
@@ -99,10 +120,7 @@ public class CameraFollow : MonoBehaviour
         if (!hasWorldBoundsFocus && controlledCamera != null &&
             controlledCamera.orthographic)
         {
-            if (hasFocusSession)
-                ApplyFocusZoom();
-            else
-                controlledCamera.orthographicSize = productionOrthographicSize;
+            ApplyFocusZoom();
         }
     }
 
@@ -143,6 +161,7 @@ public class CameraFollow : MonoBehaviour
         UpdateMouseLookAheadLayer();
 #endif
 
+        pendingWheel = Input.mouseScrollDelta.y;
         ApplyFocusZoom();
     }
 
@@ -232,13 +251,7 @@ public class CameraFollow : MonoBehaviour
             return;
 
         ResolveCamera();
-        if (!hasFocusSession)
-        {
-            if (controlledCamera != null && controlledCamera.orthographic && framedSize <= 0f)
-                normalOrthographicSize = controlledCamera.orthographicSize;
-
-            hasFocusSession = true;
-        }
+        hasFocusSession = true;
 
         focusOwner = owner;
         focusTarget = newFocusTarget;
@@ -333,7 +346,6 @@ public class CameraFollow : MonoBehaviour
         if (focusBlendTarget <= 0f && focusBlend <= 0f)
         {
             focusBlend = 0f;
-            RestoreNormalZoom();
             hasFocusSession = false;
             focusOwner = null;
             focusTarget = null;
@@ -352,11 +364,6 @@ public class CameraFollow : MonoBehaviour
             {
                 normalOrthographicSize = debugOrthographicSize;
             }
-            else
-            {
-                if (framedSize <= 0f)
-                    normalOrthographicSize = controlledCamera.orthographicSize;
-            }
             ApplyOrbitalFraming(normalOrthographicSize);
             return;
         }
@@ -373,9 +380,14 @@ public class CameraFollow : MonoBehaviour
             orbitalStation = target != null ? target.GetComponentInChildren<OrbitalStationRuntime>() : null;
         }
         bool available = orbitalStation != null && orbitalStation.IsInitialized;
+        if (available && orbitalRunId != orbitalStation.State.RunId)
+        {
+            orbitalRunId = orbitalStation.State.RunId;
+            ResetUserZoom();
+        }
         if (!available && framedSize <= 0f)
         {
-            controlledCamera.orthographicSize = baseSize;
+            ApplyUserZoom(baseSize, Time.unscaledDeltaTime);
             return;
         }
         float desired = baseSize;
@@ -402,10 +414,69 @@ public class CameraFollow : MonoBehaviour
                 (radius - dy) / (2f * Mathf.Max(.05f, .5f - bottom)),
                 (radius + dy) / (2f * Mathf.Max(.05f, top - .5f)));
         }
-        if (framedSize <= 0f) framedSize = controlledCamera.orthographicSize;
+        if (framedSize <= 0f) framedSize = normalOrthographicSize;
         framedSize = Mathf.SmoothDamp(framedSize, desired, ref framingVelocity,
             .55f, Mathf.Infinity, Time.unscaledDeltaTime);
-        controlledCamera.orthographicSize = framedSize;
+        ApplyUserZoom(framedSize, Time.unscaledDeltaTime);
+    }
+
+    private void ApplyUserZoom(float autoSize, float deltaTime)
+    {
+        float scale = scaleZoomLimitsWithAutoFraming
+            ? Mathf.Max(1f, autoSize / ProductionOrthographicSize) : 1f;
+        // Scripted bunker focus retains its authored magnification.
+        if (!scaleZoomLimitsWithAutoFraming && hasFocusSession)
+            scale *= Mathf.Lerp(1f, focusZoomMultiplier, Ease(focusBlend));
+        float upper = maxZoom * scale;
+        if (maxViewWidth > 0f)
+            upper = Mathf.Min(upper, maxViewWidth / (2f * controlledCamera.aspect));
+        float lower = Mathf.Min(minZoom * scale, upper);
+        float minOffset = (lower - autoSize) / scale;
+        float maxOffset = (upper - autoSize) / scale;
+
+        float wheel = pendingWheel;
+        pendingWheel = 0f;
+        if (wheel != 0f && !IsPointerOverScrollHandler(Input.mousePosition))
+            userZoomOffset -= wheel * wheelSensitivity;
+        // Saturate the target, so reversing the wheel responds immediately at either limit.
+        userZoomOffset = Mathf.Clamp(userZoomOffset, minOffset, maxOffset);
+        smoothedUserZoomOffset = Mathf.SmoothDamp(smoothedUserZoomOffset, userZoomOffset,
+            ref userZoomVelocity, zoomSmoothTime, Mathf.Infinity, deltaTime);
+        controlledCamera.orthographicSize = Mathf.Clamp(
+            autoSize + smoothedUserZoomOffset * scale, lower, upper);
+    }
+
+    private bool IsPointerOverScrollHandler(Vector2 pointerPosition)
+    {
+        EventSystem current = EventSystem.current;
+        if (current == null) return false;
+        if (scrollEventSystem != current)
+        {
+            scrollEventSystem = current;
+            scrollPointer = new PointerEventData(current);
+        }
+        scrollPointer.Reset();
+        scrollPointer.position = pointerPosition;
+        scrollRaycasts.Clear();
+        current.RaycastAll(scrollPointer, scrollRaycasts);
+        // Match EventSystem dispatch: only the first hit and its parent chain receive scroll.
+        return scrollRaycasts.Count > 0 &&
+            ExecuteEvents.GetEventHandler<IScrollHandler>(scrollRaycasts[0].gameObject) != null;
+    }
+
+    private void ResetUserZoom()
+    {
+        userZoomOffset = 0f;
+        smoothedUserZoomOffset = 0f;
+        userZoomVelocity = 0f;
+    }
+
+    private void OnValidate()
+    {
+        minZoom = Mathf.Max(.01f, minZoom);
+        maxZoom = Mathf.Max(minZoom, maxZoom);
+        wheelSensitivity = Mathf.Max(0f, wheelSensitivity);
+        zoomSmoothTime = Mathf.Max(.01f, zoomSmoothTime);
     }
 
     private void OnDisable()
@@ -415,7 +486,8 @@ public class CameraFollow : MonoBehaviour
         mouseLookAheadOffset = Vector3.zero;
 #endif
         EndWorldBoundsFocus(worldBoundsOwner);
-        RestoreNormalZoom();
+        ResetUserZoom();
+        orbitalRunId = 0;
         framedSize = 0f;
         framingVelocity = 0f;
         orbitalStation = null;
@@ -424,12 +496,6 @@ public class CameraFollow : MonoBehaviour
         focusBlendTarget = 0f;
         focusOwner = null;
         focusTarget = null;
-    }
-
-    private void RestoreNormalZoom()
-    {
-        if (controlledCamera != null && controlledCamera.orthographic && normalOrthographicSize > 0f)
-            controlledCamera.orthographicSize = framedSize > 0f ? framedSize : normalOrthographicSize;
     }
 
     private void CaptureProductionOrthographicSize()

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public enum FootballScoreZoneType
 {
@@ -12,6 +13,48 @@ public enum FootballScoreZoneType
 public sealed class FootballScoreZone : MonoBehaviour
 {
     [SerializeField] private FootballMinigame minigame;
+
+    [SerializeField] private TMP_Text[] scorePopups;
+    private float[] popupAges;
+    private Vector3[] popupOrigins;
+    private int nextPopup;
+    private const float PopupDuration = 1.25f;
+    private const float PopupRise = 1.1f;
+
+    public void ShowScoreFeedback()
+    {
+        int slot = nextPopup;
+        nextPopup = (nextPopup + 1) % scorePopups.Length;
+        TMP_Text text = scorePopups[slot];
+        popupAges[slot] = 0f;
+        popupOrigins[slot] = transform.position + Vector3.up * 0.2f;
+        text.transform.position = popupOrigins[slot];
+        text.text = $"+{Points}";
+        Color color = zoneRenderer.color;
+        color.a = 1f;
+        text.color = Color.Lerp(color, Color.white, 0.35f);
+        text.gameObject.SetActive(true);
+    }
+
+    private void LateUpdate()
+    {
+        for (int i = 0; i < scorePopups.Length; i++)
+        {
+            TMP_Text text = scorePopups[i];
+            if (!text.gameObject.activeSelf) continue;
+            popupAges[i] += Time.deltaTime;
+            float progress = Mathf.Clamp01(popupAges[i] / PopupDuration);
+            text.transform.position = popupOrigins[i] + Vector3.up * (PopupRise * progress);
+            text.alpha = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.25f, 1f, progress));
+            if (progress >= 1f) text.gameObject.SetActive(false);
+        }
+    }
+
+    private void OnDisable()
+    {
+        foreach (var text in scorePopups) text.gameObject.SetActive(false);
+        nextPopup = 0;
+    }
 
     private CircleCollider2D zoneCollider;
     private SpriteRenderer zoneRenderer;
@@ -26,6 +69,8 @@ public sealed class FootballScoreZone : MonoBehaviour
 
     private void Awake()
     {
+        popupAges = new float[scorePopups.Length];
+        popupOrigins = new Vector3[scorePopups.Length];
         zoneCollider = GetComponent<CircleCollider2D>();
         zoneRenderer = GetComponent<SpriteRenderer>();
         zoneCollider.isTrigger = true;

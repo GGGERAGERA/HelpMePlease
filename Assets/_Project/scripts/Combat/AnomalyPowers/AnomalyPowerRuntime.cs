@@ -2,23 +2,6 @@ using UnityEngine;
 
 public static class AnomalyPowerRuntime
 {
-    public static void ApplyRunLoadout(GameObject player)
-    {
-        RunStateManager runState = RunStateManager.Instance;
-
-        if (player == null || runState == null)
-            return;
-
-        AnomalyInventory inventory = runState.AnomalyInventory;
-        if (inventory.IsEmpty)
-            return;
-
-        EnsurePower(
-            player,
-            inventory.CurrentItem.PowerType,
-            inventory.Level);
-    }
-
     public static void EnsurePower(
         GameObject player,
         AnomalyPowerType power,

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(BoxCollider2D))]
@@ -8,28 +9,39 @@ public sealed class FootballGateScoreZone : MonoBehaviour
     [SerializeField] private FootballMinigame minigame;
     [SerializeField, Min(0)] private int points = 20;
 
+    [SerializeField] private TMP_Text goalFeedback;
+    [SerializeField] private SpriteRenderer goalFlash;
+    private float feedbackRemaining;
+    private const float FeedbackDuration = 0.85f;
+
+    private void Update()
+    {
+        if (feedbackRemaining <= 0f) return;
+        feedbackRemaining = Mathf.Max(0f, feedbackRemaining - Time.deltaTime);
+        float alpha = Mathf.Clamp01(feedbackRemaining / 0.35f);
+        goalFeedback.alpha = alpha;
+        Color color = goalFlash.color;
+        color.a = alpha * 0.35f;
+        goalFlash.color = color;
+        if (feedbackRemaining == 0f) HideFeedback();
+    }
+
+    private void HideFeedback()
+    {
+        feedbackRemaining = 0f;
+        goalFeedback.gameObject.SetActive(false);
+        goalFlash.enabled = false;
+    }
+
     private readonly HashSet<BallRollVisual> ballsInside = new();
     private BoxCollider2D scoreTrigger;
 
-    public void Configure(
-        FootballMinigame owner,
-        int score,
-        Vector2 worldSize)
-    {
-        minigame = owner;
-        points = Mathf.Max(0, score);
-        scoreTrigger ??= GetComponent<BoxCollider2D>();
-        scoreTrigger.isTrigger = true;
-        Vector3 scale = transform.lossyScale;
-        scoreTrigger.size = new Vector2(
-            worldSize.x / Mathf.Max(0.0001f, Mathf.Abs(scale.x)),
-            worldSize.y / Mathf.Max(0.0001f, Mathf.Abs(scale.y)));
-        scoreTrigger.offset = Vector2.zero;
-    }
+    private void Awake() => scoreTrigger = GetComponent<BoxCollider2D>();
 
     public void ResetContacts()
     {
         ballsInside.Clear();
+        HideFeedback();
     }
 
     private void FixedUpdate()
@@ -47,7 +59,14 @@ public sealed class FootballGateScoreZone : MonoBehaviour
 
         BallRollVisual ball = minigame.GetRegisteredBall(other);
         if (ball != null && ballsInside.Add(ball))
-            minigame.AddScore(points);
+        {
+            minigame.AddGoal(points);
+            feedbackRemaining = FeedbackDuration;
+            goalFeedback.text = $"ГОЛ +{points}";
+            goalFeedback.alpha = 1f;
+            goalFeedback.gameObject.SetActive(true);
+            goalFlash.enabled = true;
+        }
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -63,6 +82,7 @@ public sealed class FootballGateScoreZone : MonoBehaviour
     private void OnDisable()
     {
         ballsInside.Clear();
+        HideFeedback();
     }
 
     private bool OverlapsBall(BallRollVisual ball)
@@ -72,7 +92,7 @@ public sealed class FootballGateScoreZone : MonoBehaviour
 
         foreach (Collider2D collider in ball.GetComponentsInChildren<Collider2D>())
         {
-            if (collider != null && collider.enabled &&
+            if (collider != null && collider.enabled && !collider.isTrigger &&
                 scoreTrigger.Distance(collider).isOverlapped)
             {
                 return true;

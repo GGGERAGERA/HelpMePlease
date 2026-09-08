@@ -9,9 +9,7 @@ internal static class ProductionElectricSiteDefinition
         ProductionAnomalySiteDefinitionRegistry.Register(
             new ProductionAnomalySiteDefinition(
                 AnomalyPowerType.ArcNode,
-                AnomalyPowerType.ArcNode,
                 "ELECTRIC",
-                "ARC NODE",
                 CreateEnvironment
             )
         );

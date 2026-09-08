@@ -31,6 +31,8 @@ namespace Subject42.Combat.OrbitalStation
         public int PowerUpgradeLevel;
         public int MountUpgradeLevel;
         public int VisualUpgradeLevel;
+        // Existing persisted counter includes Power, Speed and Capacity; never save a second level.
+        public int VisualTier => 1 + UnityEngine.Mathf.Clamp(VisualUpgradeLevel, 0, 3);
     }
 
     [Serializable]

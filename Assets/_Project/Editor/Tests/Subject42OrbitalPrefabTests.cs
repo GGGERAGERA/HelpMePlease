@@ -8,9 +8,151 @@ using NUnit.Framework;
 using Subject42.Combat.OrbitalStation;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 public sealed class Subject42OrbitalPrefabTests
 {
     private static OrbitalPresentationConfig Config => Resources.Load<OrbitalPresentationConfig>("OrbitalStation/OrbitalPresentationConfig");
+
+    [Test]
+    public void RingDepth_AuthoredSemicirclesShareEndpointsAndBlendOpacity()
+    {
+        var view = Object.Instantiate(Config.RingPrefab);
+        try
+        {
+            Assert.That(view.GetComponentsInChildren<LineRenderer>().Length, Is.EqualTo(2));
+            var back = view.BackLine;
+            var front = view.FrontLine;
+            Assert.That(back.loop || front.loop || back.useWorldSpace || front.useWorldSpace, Is.False);
+            Assert.That(back.positionCount, Is.EqualTo(front.positionCount));
+            for (int i = 0; i < back.positionCount; i++)
+            {
+                Vector3 b = back.GetPosition(i), f = front.GetPosition(i);
+                Assert.That(b.y, Is.GreaterThanOrEqualTo(0f));
+                Assert.That(f.y, Is.LessThanOrEqualTo(0f));
+                Assert.That(b.magnitude, Is.EqualTo(1f).Within(.00001f));
+                Assert.That(f, Is.EqualTo(new Vector3(b.x, -b.y, 0f)));
+            }
+            Assert.That(back.GetPosition(0), Is.EqualTo(front.GetPosition(0)));
+            Assert.That(back.GetPosition(back.positionCount - 1), Is.EqualTo(front.GetPosition(front.positionCount - 1)));
+            foreach (float alpha in new[] { .52f, .95f, .16f })
+            {
+                var color = new Color(.4f, .8f, 1f, alpha);
+                view.SetAppearance(3.7f, .08f, color);
+                Assert.That(back.transform.localScale, Is.EqualTo(front.transform.localScale));
+                Assert.That(front.transform.localScale.x, Is.EqualTo(3.7f));
+                Assert.That(back.widthMultiplier, Is.EqualTo(front.widthMultiplier));
+                Assert.That(back.colorGradient.Evaluate(.5f).a, Is.EqualTo(alpha * .5f).Within(.0001f));
+                foreach (float endpoint in new[] { 0f, 1f })
+                    Assert.That(back.colorGradient.Evaluate(endpoint).a,
+                        Is.EqualTo(front.colorGradient.Evaluate(endpoint).a).Within(.0001f));
+                float previous = alpha;
+                for (int i = 0; i <= 12; i++)
+                {
+                    float current = back.colorGradient.Evaluate(i * .01f).a;
+                    Assert.That(current, Is.LessThanOrEqualTo(previous + .0001f));
+                    previous = current;
+                }
+            }
+        }
+        finally { Object.DestroyImmediate(view.gameObject); }
+    }
+
+    [Test]
+    public void DepthSorting_UsesPlayerInternalLayerAndKeepsWeaponArtIntact()
+    {
+        foreach (var entry in Config.PlayerVariants)
+        {
+            var playerGroup = entry.Production.GetComponent<SortingGroup>();
+            Assert.That(playerGroup, Is.Not.Null);
+            Assert.That(playerGroup.sortingLayerName, Is.EqualTo("Player"));
+            foreach (var body in entry.Production.transform.Find("Graphic").GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                Assert.That(Config.RingPrefab.BackLine.sortingLayerID, Is.EqualTo(body.sortingLayerID));
+                Assert.That(Config.MountPrefab.DepthGroup.sortingLayerID, Is.EqualTo(body.sortingLayerID));
+                Assert.That(Config.RingPrefab.BackLine.sortingOrder, Is.LessThan(body.sortingOrder));
+                Assert.That(Config.RingPrefab.FrontLine.sortingOrder, Is.GreaterThan(body.sortingOrder));
+            }
+        }
+        var mount = Object.Instantiate(Config.MountPrefab);
+        try
+        {
+            Assert.That(mount.DepthGroup.sortAtRoot, Is.False);
+            foreach (OrbitalModuleKind kind in System.Enum.GetValues(typeof(OrbitalModuleKind)))
+            {
+                var module = Object.Instantiate(Config.GetPrefab(kind), mount.transform, false);
+                try
+                {
+                    foreach (float y in new[] { 1f, -1f, .001f, -.001f, 1f })
+                    {
+                        mount.UpdateDepth(y);
+                        Assert.That(mount.DepthGroup.sortingOrder, y > 0f ? Is.LessThan(-1) : Is.GreaterThan(1));
+                        foreach (var renderer in module.GetComponentsInChildren<Renderer>(true))
+                        {
+                            var groups = renderer.GetComponentsInParent<SortingGroup>(true);
+                            Assert.That(groups, Does.Contain(mount.DepthGroup));
+                            foreach (var group in groups)
+                                Assert.That(group.sortAtRoot, Is.False, "A weapon must not escape the mount's depth group");
+                        }
+                    }
+                }
+                finally { Object.DestroyImmediate(module); }
+            }
+        }
+        finally { Object.DestroyImmediate(mount.gameObject); }
+    }
+
+    [Test]
+    public void OuterRings_KeepFullOpacityAndAuthoredSortingAfterReorder()
+    {
+        var root = new GameObject("Outer ring depth fixture");
+        try
+        {
+            var state = OrbitalRunState.CreateDefault(7).AddRing();
+            var ring = new OrbitalRingRuntime(state, root.transform, Config.VisualMaterial, Config.PixelSprite);
+            var view = root.GetComponentInChildren<OrbitalRingView>();
+            foreach (int order in new[] { 1, 0, 2, 0 })
+            {
+                state.Order = order;
+                ring.Tick(0f);
+                bool first = order == 0;
+                Assert.That(view.BackLine.sortingLayerName, Is.EqualTo(first ? "Default" : "Player"));
+                Assert.That(view.BackLine.colorGradient.Evaluate(.5f).a,
+                    Is.EqualTo(view.FrontLine.colorGradient.Evaluate(.5f).a * (first ? .5f : 1f)).Within(.0001f));
+                if (!first) Assert.That(view.BackLine.sortingOrder, Is.EqualTo(view.FrontLine.sortingOrder));
+                foreach (var mount in ring.Mounts)
+                    Assert.That(mount.Transform.GetComponent<OrbitalMountView>().DepthGroup.enabled, Is.EqualTo(first));
+            }
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
+
+    [Test]
+    public void RingDepth_TickKeepsStateAndMountMotionUnchanged()
+    {
+        var root = new GameObject("Ring depth fixture");
+        try
+        {
+            var state = OrbitalRunState.CreateDefault(7).Rings[0];
+            var ring = new OrbitalRingRuntime(state, root.transform, Config.VisualMaterial, Config.PixelSprite);
+            for (int i = 0; i < 24; i++)
+            {
+                float expectedPhase = Mathf.Repeat(state.CurrentPhase + ring.RotationSpeed * ring.Direction * .5f, 360f);
+                ring.Tick(.5f);
+                Assert.That(state.CurrentPhase, Is.EqualTo(expectedPhase));
+                Assert.That(state.Radius, Is.EqualTo(1.25f));
+                Assert.That(state.MountCapacity, Is.EqualTo(3));
+                foreach (var mount in ring.Mounts)
+                {
+                    float angle = (expectedPhase + mount.LocalPhase) * Mathf.Deg2Rad;
+                    Assert.That(Vector3.Distance(mount.Transform.localPosition,
+                        new Vector3(Mathf.Cos(angle), Mathf.Sin(angle)) * state.Radius), Is.LessThan(.00001f));
+                    var group = mount.Transform.GetComponent<OrbitalMountView>().DepthGroup;
+                    Assert.That(group.sortingOrder, mount.Transform.localPosition.y > 0f ? Is.LessThan(0) : Is.GreaterThan(0));
+                }
+            }
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
     [TestCase(OrbitalModuleKind.Pistol)]
     [TestCase(OrbitalModuleKind.LaserSword)]
     [TestCase(OrbitalModuleKind.ImpulseGun)]

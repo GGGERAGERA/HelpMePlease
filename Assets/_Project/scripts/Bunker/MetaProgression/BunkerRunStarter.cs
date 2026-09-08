@@ -37,6 +37,12 @@ public sealed class BunkerRunStarter : MonoBehaviour
         if (!TryValidateRun(out CharacterData character))
             return;
 
+        if (!Application.CanStreamedLevelBeLoaded(gameplaySceneName))
+        {
+            Debug.LogError($"[BunkerRunStarter] Scene '{gameplaySceneName}' is not available.", this);
+            return;
+        }
+
         if (transitionTarget == null ||
             transitionCamera == null ||
             cameraRig == null ||
@@ -157,6 +163,8 @@ public sealed class BunkerRunStarter : MonoBehaviour
         );
 
         AudioService.Instance?.Play(AudioCueId.StartRun);
-        SceneManager.LoadScene(gameplaySceneName);
+        AsyncOperation load = SceneManager.LoadSceneAsync(gameplaySceneName);
+        // The operation outlives the bunker; failed/cancelled transitions never complete guidance.
+        load.completed += _ => BunkerStationProgressionService.RecordOnboarding(BunkerOnboardingStep.Complete);
     }
 }
