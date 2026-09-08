@@ -1,0 +1,50 @@
+CameraFollow.m_Script=CameraFollow #39854
+CameraFollow.target=p_Player1 Variant #142440
+CameraFollow.controlledCamera=Main Camera #142408
+TILE Tilemap2 Default/0 Center: (34.00, -11.00, 0.00), Extents: (88.99, 56.99, 0.00)
+TILE TilemapMirrorOutline Default/6 Center: (34.00, -11.00, 0.00), Extents: (88.99, 56.99, 0.00)
+TILE TilemapZoneUpgrades Player/1 Center: (34.00, -11.00, 0.00), Extents: (88.99, 56.99, 0.00)
+TILE TilemapZoneAnomalys Player/1 Center: (34.00, -11.00, 0.00), Extents: (88.99, 56.99, 0.00)
+TILE TilemapZoneShop Player/1 Center: (34.00, -11.00, 0.00), Extents: (88.99, 56.99, 0.00)
+TILE TilemapZoneOther Player/1 Center: (34.00, -11.00, 0.00), Extents: (88.99, 56.99, 0.00)
+BunkerRunStarter.m_Script=BunkerRunStarter #30986
+BunkerRunStarter.startingStageProfile=StageProfile_01 #44838
+BunkerRunStarter.startingWorldRule=WorldRule_None #51954
+BunkerRunStarter.startingLocalAnomaly=LocalAnomaly_Berserk #50494
+BunkerRunStarter.transitionCamera=Main Camera #142408
+BunkerRunStarter.cameraRig=camHelper #142246
+BunkerRunStarter.cameraFollow=camHelper #142244
+BunkerRunStarter.playerMovement=p_Player1 Variant #142334
+BunkerRunStarter.bunkerCursor=BunkerInteractionSystem #141990
+BunkerRunStarter.runGate=p_BunkerGates1 #142610
+BunkerContext.m_Script=BunkerContext #32968
+BunkerContext.<Panels>k__BackingField=BunkerUIManager #142126
+BunkerContext.<Notifications>k__BackingField=NotificationRoot #141930
+BunkerContext.<Events>k__BackingField=BunkerEventManager #142138
+BunkerContext.<RunStarter>k__BackingField=BunkerUIManager #142130
+BunkerContext.<StationProgression>k__BackingField=BunkerContext #142612
+BunkerContext.playerLoadout=BunkerContext #142606
+BunkerPlayerLoadoutController.m_Script=BunkerPlayerLoadoutController #35556
+BunkerPlayerLoadoutController.controlledPlayerRoot=p_Player1 Variant #142440
+BunkerPlayerLoadoutController.controlledPlayerVisualRoot=Graphic #142608
+BunkerPlayerLoadoutController.controlledPlayerFacingVisualRoot=Gera4 #142122
+BunkerIntroController.m_Script=BunkerIntroController #38798
+BunkerIntroController.view=BunkerIntroCanvas #142006
+BunkerIntroController.cameraFollow=camHelper #142244
+BunkerIntroController.cameraRig=camHelper #142246
+BunkerIntroController.introCameraPoint=IntroCameraPoint #141924
+BunkerIntroController.player=p_Player1 Variant #142440
+BunkerIntroController.awakeningProp=NULL
+BunkerIntroController.gameplayBehavioursToDisable.Array.data[0]=p_Player1 Variant #142334
+BunkerIntroController.gameplayBehavioursToDisable.Array.data[1]=BunkerInteractionSystem #141990
+BunkerIntroController.gameplayBehavioursToDisable.Array.data[2]=BunkerUIManager #142126
+BunkerIntroController.gameplayUiToHide.Array.data[0]=MainCanvas #142194
+BunkerIntroController.recordingSource=BunkerIntroController #142312
+BunkerIntroController.ambienceSource=BunkerIntroController #142310
+BunkerIntroController.sfxSource=BunkerIntroController #142308
+BunkerIntroController.humanRecordingClip=NULL
+BunkerIntroController.radioNoiseClip=NULL
+BunkerIntroController.glassCrackClip=impactGlass_heavy_000 #142936
+BunkerIntroController.alarmPulseClip=NULL
+BunkerIntroController.systemErrorClip=glitch_002 #142938
+BunkerIntroController.metalDropClip=impactMetal_light_000 #142940

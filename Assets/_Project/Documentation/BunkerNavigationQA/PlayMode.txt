@@ -1,0 +1,17 @@
+PASS Authored navigation loaded
+PASS New save targets Character
+PASS Persistence/regression assertions passed
+PASS Opening Character without confirmation does not advance
+PASS Confirmed Character targets Weapon
+PASS Repeated Character does not advance
+PASS Weapon Station opened its production panel
+PASS Visited Weapon targets Run Gate
+PASS Gate transition does not complete onboarding before scene load
+PASS Successful MVP load completes onboarding
+PASS Death returns to a clean Bunker
+PASS Weapon first preserves Character target
+PASS Earlier Weapon visit is retained
+PASS Direct Gate works with defaults and completes guidance
+PASS Victory summary return does not restart onboarding (final boss flow not simulated)
+PASS Repeat station interactions after completion stay complete
+PASS QA finished; restoring prior onboarding, intro and gold preferences

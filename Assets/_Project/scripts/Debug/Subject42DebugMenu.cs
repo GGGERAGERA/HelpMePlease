@@ -4182,6 +4182,17 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void AddRoomStateRows()
     {
+        AddSectionTitle("BUNKER ONBOARDING", BunkerStationProgressionService.OnboardingStep.ToString());
+        AddRow("Reset Onboarding", "First visit", accentColor, "RESET", true,
+            () => { BunkerStationProgressionService.DebugSetOnboarding(BunkerOnboardingStep.Character); RefreshCurrentTab(); });
+        foreach (BunkerOnboardingStep step in Enum.GetValues(typeof(BunkerOnboardingStep)))
+        {
+            BunkerOnboardingStep target = step;
+            string label = step == BunkerOnboardingStep.Complete ? "Complete Onboarding" : "Step: " + step;
+            AddRow(label, "Saved", mutedColor, "SET", true,
+                () => { BunkerStationProgressionService.DebugSetOnboarding(target); RefreshCurrentTab(); });
+        }
+
         AddSectionTitle("ROOM ACCESS", "Runtime only; values are not saved");
         BunkerRoomAccess[] rooms =
             FindObjectsByType<BunkerRoomAccess>(FindObjectsSortMode.None);

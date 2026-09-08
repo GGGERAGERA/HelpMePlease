@@ -1,0 +1,167 @@
+Main Camera pos=(90.38, 20.31, -10.00) components=Transform,Camera,AudioListener,UniversalAdditionalCameraData,Physics2DRaycaster
+p_AnomalyTable1 pos=(34.14, -21.46, 0.00) components=Transform,SortingGroup,BoxCollider2D,BunkerHoverOutline,BunkerStation,BunkerStationLevelView station=9
+p_Player1 Variant pos=(22.50, -16.36, 0.00) components=Transform,CapsuleCollider2D,CircleCollider2D,Rigidbody2D,CharacterMovement2D,EnemySpawner,PlayerHealth,SortingGroup,PlayerWhiteFlash,AudioSource,PlayerHitSound,PlayerPickupRadius,PlayerCombatModifiers,PlayerInteractor
+p_Player1 Variant pos=(19.00, -16.36, 0.00) components=Transform,CapsuleCollider2D,CircleCollider2D,Rigidbody2D,CharacterMovement2D,EnemySpawner,PlayerHealth,SortingGroup,PlayerWhiteFlash,AudioSource,PlayerHitSound,PlayerPickupRadius,PlayerCombatModifiers,PlayerInteractor
+p_Player1 Variant pos=(15.50, -16.36, 0.00) components=Transform,CapsuleCollider2D,CircleCollider2D,Rigidbody2D,CharacterMovement2D,EnemySpawner,PlayerHealth,SortingGroup,PlayerWhiteFlash,AudioSource,PlayerHitSound,PlayerPickupRadius,PlayerCombatModifiers,PlayerInteractor
+p_Player1 Variant pos=(12.00, -16.36, 0.00) components=Transform,CapsuleCollider2D,CircleCollider2D,Rigidbody2D,CharacterMovement2D,EnemySpawner,PlayerHealth,SortingGroup,PlayerWhiteFlash,AudioSource,PlayerHitSound,PlayerPickupRadius,PlayerCombatModifiers,PlayerInteractor
+p_Player1 Variant pos=(8.50, -16.36, 0.00) components=Transform,CapsuleCollider2D,CircleCollider2D,Rigidbody2D,CharacterMovement2D,EnemySpawner,PlayerHealth,SortingGroup,PlayerWhiteFlash,AudioSource,PlayerHitSound,PlayerPickupRadius,PlayerCombatModifiers,PlayerInteractor
+p_Player1 Variant pos=(5.00, -16.36, 0.00) components=Transform,CapsuleCollider2D,CircleCollider2D,Rigidbody2D,CharacterMovement2D,EnemySpawner,PlayerHealth,SortingGroup,PlayerWhiteFlash,AudioSource,PlayerHitSound,PlayerPickupRadius,PlayerCombatModifiers,PlayerInteractor
+p_Player1 Variant pos=(5.84, -9.76, 0.00) components=Transform,CapsuleCollider2D,CircleCollider2D,Rigidbody2D,CharacterMovement2D,EnemySpawner,PlayerHealth,SortingGroup,PlayerWhiteFlash,AudioSource,PlayerHitSound,PlayerPickupRadius,PlayerCombatModifiers,PlayerInteractor
+p_Player1 Variant pos=(13.47, -8.20, -0.25) components=Transform,CapsuleCollider2D,CircleCollider2D,Rigidbody2D,CharacterMovement2D,EnemySpawner,PlayerHealth,SortingGroup,PlayerWhiteFlash,AudioSource,PlayerHitSound,PlayerPickupRadius,PlayerCombatModifiers,PlayerInteractor
+BunkerBack1 pos=(0.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-30
+BunkerBack2 pos=(-80.00, 80.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-30
+BunkerBack3 pos=(0.00, 80.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-30
+BunkerBack4 pos=(80.00, 80.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-30
+BunkerBack5 pos=(-80.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-30
+BunkerBack6 pos=(80.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-30
+BunkerBack7 pos=(-80.00, -80.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-30
+BunkerBack8 pos=(0.00, -80.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-30
+BunkerBack9 pos=(80.00, -80.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-30
+BunkerOutline1 pos=(0.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Player order=3
+BunkerFloor pos=(0.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-11
+BunkerWall pos=(0.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-10
+BunkerWallShadows1 pos=(0.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+BunkerFloorShadows1 pos=(0.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-7
+BunkerOutline1 pos=(1.00, -10.00, 0.00) components=Transform,Tilemap,TilemapRenderer,BoxCollider2D layer=Player order=3
+BunkerWall pos=(1.00, -10.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-10
+BunkerGrnd pos=(1.00, -10.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Player order=2
+BunkerWallShadows1 pos=(1.00, -10.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+BunkerFloorShadows1 pos=(1.00, -10.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-7
+BunkerOutline1 pos=(11.00, -10.00, 0.00) components=Transform,Tilemap,TilemapRenderer,BoxCollider2D layer=Player order=3
+BunkerWall pos=(11.00, -10.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-10
+BunkerGrnd pos=(11.00, -10.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Player order=2
+BunkerWallShadows1 pos=(11.00, -10.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+BunkerFloorShadows1 pos=(11.00, -10.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-7
+p_bunkerBase1 pos=(16.17, -9.42, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation,BunkerStationLevelView station=5
+p_bunkerWeaponShowcase pos=(11.67, -6.44, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation,BunkerStationLevelView station=2
+BunkerOutline1 pos=(31.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Player order=3
+BunkerFloor pos=(31.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-11
+BunkerWall pos=(31.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-10
+BunkerWallShadows1 pos=(31.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+BunkerFloorShadows1 pos=(31.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-7
+BunkerOutline1 pos=(45.00, -8.00, 0.00) components=Transform,Tilemap,TilemapRenderer,BoxCollider2D layer=Player order=3
+BunkerWall pos=(45.00, -8.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-10
+BunkerGrnd pos=(45.00, -8.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Player order=2
+BunkerWallShadows1 pos=(45.00, -8.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+BunkerFloorShadows1 pos=(45.00, -8.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-7
+p_bunkerBase1 pos=(47.17, -9.42, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation,BunkerStationLevelView station=5
+p_bunkerWeaponShowcase pos=(42.67, -6.44, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation,BunkerStationLevelView station=2
+BunkerOutline1 pos=(32.00, -24.00, 0.00) components=Transform,Tilemap,TilemapRenderer,BoxCollider2D layer=Player order=3
+BunkerWall pos=(32.00, -24.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-10
+BunkerGrnd pos=(32.00, -24.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Player order=2
+BunkerWallShadows1 pos=(32.00, -24.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+BunkerFloorShadows1 pos=(32.00, -24.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-7
+BunkerOutline1 pos=(60.00, -25.00, 0.00) components=Transform,Tilemap,TilemapRenderer,BoxCollider2D layer=Player order=3
+BunkerWall pos=(60.00, -25.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-10
+BunkerGrnd pos=(60.00, -25.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Player order=2
+BunkerWallShadows1 pos=(60.00, -25.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+BunkerFloorShadows1 pos=(60.00, -25.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-7
+BunkerOutline1 pos=(50.00, -25.00, 0.00) components=Transform,Tilemap,TilemapRenderer,BoxCollider2D layer=Player order=3
+BunkerWall pos=(50.00, -25.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-10
+BunkerGrnd pos=(50.00, -25.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Player order=2
+BunkerWallShadows1 pos=(50.00, -25.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+BunkerFloorShadows1 pos=(50.00, -25.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-7
+BunkerOutline1 pos=(60.00, -15.00, 0.00) components=Transform,Tilemap,TilemapRenderer,BoxCollider2D layer=Player order=3
+BunkerWall pos=(60.00, -15.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-10
+BunkerGrnd pos=(60.00, -15.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Player order=2
+BunkerWallShadows1 pos=(60.00, -15.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+BunkerFloorShadows1 pos=(60.00, -15.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-7
+BunkerOutline1 pos=(50.00, -15.00, 0.00) components=Transform,Tilemap,TilemapRenderer,BoxCollider2D layer=Player order=3
+BunkerWall pos=(50.00, -15.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-10
+BunkerGrnd pos=(50.00, -15.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Player order=2
+BunkerWallShadows1 pos=(50.00, -15.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+BunkerFloorShadows1 pos=(50.00, -15.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-7
+BunkerOutline1 pos=(39.00, 17.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Player order=3
+BunkerFloor pos=(39.00, 17.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-11
+BunkerWall pos=(39.00, 17.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-10
+BunkerWallShadows1 pos=(39.00, 17.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+BunkerFloorShadows1 pos=(39.00, 17.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-7
+BunkerOutline1 pos=(29.00, 32.00, 0.00) components=Transform,Tilemap,TilemapRenderer,BoxCollider2D layer=Player order=3
+BunkerWall pos=(29.00, 32.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-10
+BunkerGrnd pos=(29.00, 32.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Player order=2
+BunkerWallShadows1 pos=(29.00, 32.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+BunkerFloorShadows1 pos=(29.00, 32.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-7
+p_bunkerBase1 pos=(55.17, 7.58, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation,BunkerStationLevelView station=5
+p_bunkerWeaponShowcase pos=(50.67, 10.56, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation,BunkerStationLevelView station=2
+BunkerOutline1 pos=(53.00, -58.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Player order=3
+BunkerFloor pos=(53.00, -58.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-11
+BunkerWall pos=(53.00, -58.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-10
+BunkerWallShadows1 pos=(53.00, -58.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+BunkerFloorShadows1 pos=(53.00, -58.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-7
+BunkerOutline1 pos=(67.00, -72.00, 0.00) components=Transform,Tilemap,TilemapRenderer,BoxCollider2D layer=Player order=3
+BunkerWall pos=(67.00, -72.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-10
+BunkerGrnd pos=(67.00, -72.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Player order=2
+BunkerWallShadows1 pos=(67.00, -72.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+BunkerFloorShadows1 pos=(67.00, -72.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-7
+p_bunkerBase1 pos=(69.17, -67.42, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation,BunkerStationLevelView station=5
+p_bunkerWeaponShowcase pos=(64.67, -64.44, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation,BunkerStationLevelView station=2
+BunkerOutline1 pos=(57.00, -72.00, 0.00) components=Transform,Tilemap,TilemapRenderer,BoxCollider2D layer=Player order=3
+BunkerWall pos=(57.00, -72.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-10
+BunkerGrnd pos=(57.00, -72.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Player order=2
+BunkerWallShadows1 pos=(57.00, -72.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+BunkerFloorShadows1 pos=(57.00, -72.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-7
+BunkerOutlineTilemap1Test pos=(24.00, -5.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Player order=3
+BunkerFloor pos=(24.00, -5.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-10
+BunkerWall pos=(24.00, -5.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-8
+BunkerWallShadows1 pos=(24.00, -5.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-5
+BunkerFloorShadows1 pos=(24.00, -5.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+p_BunkerDoorVertical1 pos=(24.00, -6.00, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation station=6
+p_BunkerDoorVertical1 (1) pos=(31.00, -6.00, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation station=6
+BunkerOutlineTilemap1Test pos=(24.00, -5.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Player order=3
+BunkerFloor pos=(24.00, -5.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-10
+BunkerWall pos=(24.00, -5.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-8
+BunkerWallShadows1 pos=(24.00, -5.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-5
+BunkerFloorShadows1 pos=(24.00, -5.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+p_BunkerDoorVertical1 pos=(24.00, -6.00, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation station=6
+p_BunkerDoorVertical1 (1) pos=(31.00, -6.00, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation station=6
+BunkerOutlineTilemap1Test pos=(39.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Player order=3
+BunkerFloor pos=(39.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-10
+BunkerWall pos=(39.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-8
+BunkerWallShadows1 pos=(39.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-5
+BunkerFloorShadows1 pos=(39.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+p_BunkerDoorVertical1 Variant pos=(41.00, 0.00, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation station=6
+p_BunkerDoorVertical1 Variant (1) pos=(41.00, 15.00, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation station=6
+BunkerOutlineTilemap1Test pos=(39.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Player order=3
+BunkerFloor pos=(39.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-10
+BunkerWall pos=(39.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-8
+BunkerWallShadows1 pos=(39.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-5
+BunkerFloorShadows1 pos=(39.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+p_BunkerDoorVertical1 pos=(39.00, -1.00, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation station=6
+p_BunkerDoorVertical1 (1) pos=(46.00, -1.00, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation station=6
+BunkerOutlineTilemap1Test pos=(70.00, -18.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Player order=3
+BunkerFloor pos=(70.00, -18.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-10
+BunkerWall pos=(70.00, -18.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-8
+BunkerWallShadows1 pos=(70.00, -18.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-5
+BunkerFloorShadows1 pos=(70.00, -18.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+p_BunkerDoorVertical1 pos=(70.00, -19.00, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation station=6
+p_BunkerDoorVertical1 Variant pos=(54.00, -58.00, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation station=6
+BunkerOutlineTilemap1Test pos=(70.00, -18.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Player order=3
+BunkerFloor pos=(70.00, -18.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-10
+BunkerWall pos=(70.00, -18.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Background order=-8
+BunkerWallShadows1 pos=(70.00, -18.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-5
+BunkerFloorShadows1 pos=(70.00, -18.00, 0.00) components=Transform,Tilemap,TilemapRenderer layer=Background order=-6
+p_BunkerDoorVertical1 pos=(70.00, -19.00, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation station=6
+p_BunkerDoorVertical1 (1) pos=(77.00, -19.00, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation station=6
+Tilemap1 pos=(0.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Default order=107
+Tilemap2 pos=(0.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Default order=0
+TilemapMirror pos=(0.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Default order=0
+TilemapMirrorOutline pos=(0.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Default order=6
+TilemapZoneWapons pos=(0.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Player order=1
+TilemapZoneUpgrades pos=(0.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Player order=1
+TilemapZoneAnomalys pos=(0.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Player order=1
+TilemapZoneShop pos=(0.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Player order=1
+TilemapZoneOther pos=(0.00, 0.00, 0.00) components=Transform,Tilemap,TilemapRenderer,TilemapCollider2D layer=Player order=1
+p_bunkerWeaponShowcase pos=(43.40, -3.20, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation,BunkerStationLevelView station=2
+p_bunkerPlayerShowcase 1 pos=(34.20, -3.60, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation,BunkerStationLevelView station=1
+p_bunkerUpgrade1 pos=(52.40, -3.60, 0.00) components=Transform,SortingGroup,BunkerHoverOutline,BunkerStation,BunkerStationLevelView station=5
+CharacterRoom pos=(37.50, -8.00, 0.00) components=Transform,SortingGroup,BoxCollider2D,BunkerRoomAccess
+WeaponRoom pos=(46.50, -8.00, 0.00) components=Transform,SortingGroup,BoxCollider2D,BunkerRoomAccess
+FutureRoom pos=(46.50, -17.00, 0.00) components=Transform,SortingGroup,BoxCollider2D,BunkerRoomAccess
+AnomalyRoom pos=(37.50, -17.00, 0.00) components=Transform,SortingGroup,BoxCollider2D,BunkerRoomAccess
+SecretRoom pos=(55.50, -17.00, 0.00) components=Transform,SortingGroup,BoxCollider2D,BunkerRoomAccess
+UpgradeRoom pos=(55.50, -8.00, 0.00) components=Transform,SortingGroup,BoxCollider2D,BunkerRoomAccess
+p_BunkerGates1 pos=(64.00, 2.00, 0.00) components=Transform,SortingGroup,BoxCollider2D,BunkerGateVisual,BunkerStation,BunkerHoverOutline station=6
+BunkerContext pos=(0.00, 0.00, 0.00) components=Transform,BunkerContext,BunkerPlayerLoadoutController,BunkerStationProgressionService
+p_Player1 Variant pos=(29.50, 4.14, 0.00) components=Transform,CapsuleCollider2D,CircleCollider2D,Rigidbody2D,CharacterMovement2D,EnemySpawner,PlayerHealth,SortingGroup,PlayerWhiteFlash,AudioSource,PlayerHitSound,PlayerPickupRadius,PlayerCombatModifiers,PlayerInteractor
+p_Player1 Variant pos=(32.50, 4.14, 0.00) components=Transform,CapsuleCollider2D,CircleCollider2D,Rigidbody2D,CharacterMovement2D,EnemySpawner,PlayerHealth,SortingGroup,PlayerWhiteFlash,AudioSource,PlayerHitSound,PlayerPickupRadius,PlayerCombatModifiers,PlayerInteractor
+p_Player1 Variant pos=(35.50, 4.14, 0.00) components=Transform,CapsuleCollider2D,CircleCollider2D,Rigidbody2D,CharacterMovement2D,EnemySpawner,PlayerHealth,SortingGroup,PlayerWhiteFlash,AudioSource,PlayerHitSound,PlayerPickupRadius,PlayerCombatModifiers,PlayerInteractor
