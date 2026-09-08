@@ -86,8 +86,6 @@ public sealed class BunkerPanelManager : MonoBehaviour
 
         CloseAll(false);
         controller.ShowSelection(selectionSources?.Weapons, this);
-        if (selectionSources != null && controller.IsOpen)
-            BunkerStationProgressionService.RecordOnboarding(BunkerOnboardingStep.Weapon);
     }
 
     public void OpenMap()

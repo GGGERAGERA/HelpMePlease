@@ -163,8 +163,6 @@ public sealed class BunkerRunStarter : MonoBehaviour
         );
 
         AudioService.Instance?.Play(AudioCueId.StartRun);
-        AsyncOperation load = SceneManager.LoadSceneAsync(gameplaySceneName);
-        // The operation outlives the bunker; failed/cancelled transitions never complete guidance.
-        load.completed += _ => BunkerStationProgressionService.RecordOnboarding(BunkerOnboardingStep.Complete);
+        SceneManager.LoadSceneAsync(gameplaySceneName);
     }
 }

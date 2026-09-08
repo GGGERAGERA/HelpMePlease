@@ -637,8 +637,9 @@ public sealed class FootballMinigame : BunkerMinigame
         // remain visible until the player leaves the arena.
         hud?.Hide();
     }
-    private void OnDisable()
+    protected override void OnDisable()
     {
+        base.OnDisable();
         BallRollVisual.CancelActiveSlowMotion();
         StopAllCoroutines();
         RestoreCamera();

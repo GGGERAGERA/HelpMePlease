@@ -25,6 +25,9 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
     [SerializeField] private UnityEvent onInteract;
 
     private bool interactionEnabled = true;
+    public event System.Action AvailabilityChanged;
+    private void OnEnable() => AvailabilityChanged?.Invoke();
+    private void OnDisable() => AvailabilityChanged?.Invoke();
 
     // Serialized shop ID is reserved, but the production feature is removed.
     public bool CanInteract => interactionEnabled &&
@@ -86,6 +89,8 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
 
     public void SetInteractionEnabled(bool enabled)
     {
+        if (interactionEnabled == enabled) return;
         interactionEnabled = enabled;
+        AvailabilityChanged?.Invoke();
     }
 }

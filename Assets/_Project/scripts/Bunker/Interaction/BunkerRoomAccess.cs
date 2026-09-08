@@ -21,6 +21,7 @@ public sealed class BunkerRoomAccess : MonoBehaviour
     public BunkerRoomId RoomId => roomId;
     public bool Unlocked => unlocked;
     public bool DefaultUnlocked => defaultUnlocked;
+    public event System.Action AvailabilityChanged;
 
     private void Awake()
     {
@@ -31,12 +32,17 @@ public sealed class BunkerRoomAccess : MonoBehaviour
     private void OnEnable()
     {
         ApplyState();
+        AvailabilityChanged?.Invoke();
     }
+
+    private void OnDisable() => AvailabilityChanged?.Invoke();
 
     public void SetUnlocked(bool value)
     {
+        bool changed = unlocked != value;
         unlocked = value;
         ApplyState();
+        if (changed) AvailabilityChanged?.Invoke();
     }
 
     public void ResetToDefault() => SetUnlocked(defaultUnlocked);

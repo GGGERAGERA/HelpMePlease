@@ -10,6 +10,10 @@ public enum BunkerMinigameState
 
 public abstract class BunkerMinigame : MonoBehaviour
 {
+    // Guidance follows room access, not the running/finished round state.
+    public event System.Action AvailabilityChanged;
+    protected virtual void OnEnable() => AvailabilityChanged?.Invoke();
+    protected virtual void OnDisable() => AvailabilityChanged?.Invoke();
     public BunkerMinigameState State { get; private set; } =
         BunkerMinigameState.Idle;
 

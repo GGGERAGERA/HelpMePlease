@@ -192,7 +192,6 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
                 if (character != null && IsUnlocked(character.unlockData) && RunSelectionManager.Instance != null)
                 {
                     RunSelectionManager.Instance.SelectCharacter(character);
-                    BunkerStationProgressionService.RecordOnboarding(BunkerOnboardingStep.Character);
                     AudioService.Instance?.Play(AudioCueId.UIConfirm);
                 }
                 break;

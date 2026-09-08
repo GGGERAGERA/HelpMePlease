@@ -3,7 +3,7 @@ Shader "Subject42/Bunker Floor Navigation"
     Properties
     {
         _Color ("Guide light", Color) = (0.26, 0.72, 0.65, 1)
-        _Active ("Guidance", Range(0,1)) = 0
+        _Active ("Route brightness", Range(0,1)) = 0.75
     }
     SubShader
     {
@@ -39,8 +39,8 @@ Shader "Subject42/Bunker Floor Navigation"
                 float travel = pow(saturate(.5 + .5 * cos((i.uv.x - _Time.y * 1.6) * 2.5)), 10);
                 float pulse = .5 + .5 * sin(_Time.y * 2);
                 float light = lerp(travel, pulse, i.marker);
-                float intensity = lerp(.12, .48 + .42 * light, _Active);
-                return half4(_Color.rgb * (1 + _Active * light * .45), (core + halo) * intensity * _Color.a);
+                float intensity = _Active * (.65 + .15 * light);
+                return half4(_Color.rgb * (1.1 + light * .15), (core + halo) * intensity * _Color.a);
             }
             ENDHLSL
         }

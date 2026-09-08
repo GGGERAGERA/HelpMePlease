@@ -8,6 +8,10 @@ public sealed class BunkerGateVisual : MonoBehaviour
     [SerializeField] private bool startOpen;
 
     public bool IsOpen { get; private set; }
+    public event System.Action AvailabilityChanged;
+
+    private void OnEnable() => AvailabilityChanged?.Invoke();
+    private void OnDisable() => AvailabilityChanged?.Invoke();
 
     private void Awake()
     {
@@ -16,12 +20,14 @@ public sealed class BunkerGateVisual : MonoBehaviour
 
     public void SetOpen(bool open)
     {
+        bool changed = IsOpen != open;
         IsOpen = open;
 
         if (openedDoor != null)
             openedDoor.SetActive(open);
         if (closedDoor != null)
             closedDoor.SetActive(!open);
+        if (changed) AvailabilityChanged?.Invoke();
     }
 
     public void Open() => SetOpen(true);
