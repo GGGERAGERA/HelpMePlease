@@ -267,17 +267,18 @@ public sealed class LevelChoiceManager : MonoBehaviour
         var interaction = FindFirstObjectByType<OrbitalInteractionController>();
         if ((UpgradeManager.Instance != null && !UpgradeManager.Instance.IsRewardQueueIdle) ||
             (interaction != null && !interaction.CanTransition)) return;
-        isChoosing = false;
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        RunStateManager runState = RunStateManager.EnsureExists();
-        runState.CommitCurrentSceneStats();
-        runState.SaveExperienceState();
-        runState.SavePlayerState(player);
-        runState.SetCurrentSector(sector);
+        SceneTransitionOverlay.Load(gameplaySceneName, () =>
+        {
+            isChoosing = false;
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            RunStateManager runState = RunStateManager.EnsureExists();
+            runState.CommitCurrentSceneStats();
+            runState.SaveExperienceState();
+            runState.SavePlayerState(player);
+            runState.SetCurrentSector(sector);
 
-        Time.timeScale = 1f;
-        panelView?.Hide();
-        SceneManager.LoadScene(gameplaySceneName);
+            panelView?.Hide();
+        });
     }
 
 #if UNITY_EDITOR

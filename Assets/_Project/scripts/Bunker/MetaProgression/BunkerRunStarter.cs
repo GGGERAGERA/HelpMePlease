@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -18,7 +17,6 @@ public sealed class BunkerRunStarter : MonoBehaviour
     [SerializeField] private Behaviour playerMovement;
     [SerializeField] private BunkerCursorInteractor bunkerCursor;
     [SerializeField] private BunkerGateVisual runGate;
-    [SerializeField, Range(0.6f, 1f)] private float transitionDuration = 0.8f;
     [SerializeField, Min(0.5f)] private float targetOrthographicSize = 3.5f;
     [SerializeField, Range(0f, 1f)] private float gateOpenNormalizedTime = 0.35f;
 
@@ -31,7 +29,7 @@ public sealed class BunkerRunStarter : MonoBehaviour
 
     public void StartRun(Transform transitionTarget)
     {
-        if (isTransitioning)
+        if (isTransitioning || SceneTransitionOverlay.IsTransitioning)
             return;
 
         if (!TryValidateRun(out CharacterData character))
@@ -56,9 +54,27 @@ public sealed class BunkerRunStarter : MonoBehaviour
             return;
         }
 
-        StartCoroutine(PlayTransitionAndStartRun(
-            transitionTarget,
-            character));
+        Vector3 startPosition = cameraRig.position;
+        Vector3 targetPosition = transitionTarget.position;
+        targetPosition.z = startPosition.z;
+        float startSize = transitionCamera.orthographicSize;
+        bool gateOpened = false;
+        SceneTransitionOverlay.Load(gameplaySceneName, () =>
+        {
+            isTransitioning = true;
+            BunkerContext.Instance?.Panels?.CloseAll(false);
+            AnomalyStabilizerData stabilizer = RunSelectionManager.Instance.ConsumeAnomalyStabilizer();
+            RunStateManager.EnsureExists().BeginNewRun(character, null, startingStageProfile,
+                startingWorldRule, startingLocalAnomaly, stabilizer);
+            AudioService.Instance?.Play(AudioCueId.StartRun);
+        }, t =>
+        {
+            if (this == null || cameraFollow == null) return;
+            cameraFollow.enabled = false;
+            if (!gateOpened && t >= gateOpenNormalizedTime) { runGate.Open(); gateOpened = true; }
+            cameraRig.position = Vector3.LerpUnclamped(startPosition, targetPosition, t);
+            transitionCamera.orthographicSize = Mathf.Lerp(startSize, targetOrthographicSize, t);
+        });
     }
 
     private bool TryValidateRun(out CharacterData character)
@@ -102,67 +118,4 @@ public sealed class BunkerRunStarter : MonoBehaviour
         return true;
     }
 
-    private IEnumerator PlayTransitionAndStartRun(
-        Transform transitionTarget,
-        CharacterData character)
-    {
-        isTransitioning = true;
-        Time.timeScale = 1f;
-        BunkerContext.Instance?.Panels?.CloseAll(false);
-
-        if (playerMovement != null)
-            playerMovement.enabled = false;
-        if (bunkerCursor != null)
-            bunkerCursor.enabled = false;
-        cameraFollow.enabled = false;
-
-        Vector3 startPosition = cameraRig.position;
-        Vector3 targetPosition = transitionTarget.position;
-        targetPosition.z = startPosition.z;
-        float startSize = transitionCamera.orthographicSize;
-        float duration = Mathf.Clamp(transitionDuration, 0.6f, 1f);
-        float elapsed = 0f;
-        bool gateOpened = false;
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(elapsed / duration);
-
-            if (!gateOpened && t >= gateOpenNormalizedTime)
-            {
-                runGate.Open();
-                gateOpened = true;
-            }
-
-            float easedT = t * t * (3f - 2f * t);
-            cameraRig.position = Vector3.LerpUnclamped(
-                startPosition,
-                targetPosition,
-                easedT);
-            transitionCamera.orthographicSize = Mathf.Lerp(
-                startSize,
-                Mathf.Max(0.5f, targetOrthographicSize),
-                easedT);
-            yield return null;
-        }
-
-        if (!gateOpened)
-            runGate.Open();
-
-        AnomalyStabilizerData stabilizer =
-            RunSelectionManager.Instance.ConsumeAnomalyStabilizer();
-
-        RunStateManager.EnsureExists().BeginNewRun(
-            character,
-            null,
-            startingStageProfile,
-            startingWorldRule,
-            startingLocalAnomaly,
-            stabilizer
-        );
-
-        AudioService.Instance?.Play(AudioCueId.StartRun);
-        SceneManager.LoadSceneAsync(gameplaySceneName);
-    }
 }

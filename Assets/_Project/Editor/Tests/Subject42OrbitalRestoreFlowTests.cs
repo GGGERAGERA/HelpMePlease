@@ -41,6 +41,7 @@ public sealed class Subject42OrbitalRestoreFlowTests
         }
         Assert.That(station, Is.Not.Null);
         Assert.That(station.IsInitialized, Is.True);
+        while (SceneTransitionOverlay.IsTransitioning) yield return null;
         Time.timeScale = 0f;
         RunStateManager manager = RunStateManager.Instance;
         var state = manager.OrbitalStationState;
@@ -78,6 +79,7 @@ public sealed class Subject42OrbitalRestoreFlowTests
                     if (station != null && station.gameObject.scene.handle != oldScene && station.IsInitialized) break;
                     yield return null;
                 }
+                while (SceneTransitionOverlay.IsTransitioning) yield return null;
                 Assert.That(station, Is.Not.Null);
                 Assert.That(station.gameObject.scene.handle, Is.Not.EqualTo(oldScene));
                 Assert.That(station.State, Is.SameAs(state));

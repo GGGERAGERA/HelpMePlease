@@ -30,24 +30,25 @@ public class GameOverManager : MonoBehaviour
 
     public void RestartGame()
     {
-        if (isRestarting)
+        if (isRestarting || SceneTransitionOverlay.IsTransitioning)
             return;
 
-        isRestarting = true;
-        RunStateManager runState = RunStateManager.Instance;
-
-        if (runState != null)
+        SceneTransitionOverlay.Load(SceneManager.GetActiveScene().name, () =>
         {
-            CharacterData character = runState.SelectedCharacter;
-            // The result panel already presents this reward. Finalize the dead
-            // run before clearing its state so Restart cannot silently discard
-            // earned gold.
-            runState.EndRun(RunEndReason.PlayerDied);
-            runState.BeginNewRun(character, null);
-        }
+            isRestarting = true;
+            RunStateManager runState = RunStateManager.Instance;
 
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            if (runState != null)
+            {
+                CharacterData character = runState.SelectedCharacter;
+                // The result panel already presents this reward. Finalize the dead
+                // run before clearing its state so Restart cannot silently discard
+                // earned gold.
+                runState.EndRun(RunEndReason.PlayerDied);
+                runState.BeginNewRun(character, null);
+            }
+
+        });
     }
     public void MainMenu()
     {

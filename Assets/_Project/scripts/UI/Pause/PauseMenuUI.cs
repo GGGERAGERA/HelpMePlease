@@ -28,6 +28,7 @@ public class PauseMenuUI : MonoBehaviour
 
     private void Update()
     {
+        if (SceneTransitionOverlay.IsTransitioning) return;
         if (Input.GetKeyDown(KeyCode.Escape)) HandleEscape();
     }
 
@@ -43,7 +44,7 @@ public class PauseMenuUI : MonoBehaviour
 
     public void Pause()
     {
-        if (isPaused || (RunStateManager.Instance != null && RunStateManager.Instance.IsRunEnded)) return;
+        if (SceneTransitionOverlay.IsTransitioning || isPaused || (RunStateManager.Instance != null && RunStateManager.Instance.IsRunEnded)) return;
         UpgradeManager rewards = UpgradeManager.Instance;
         bool rewardPaused = rewards != null && !rewards.IsRewardQueueIdle;
         if (Time.timeScale <= 0f && !rewardPaused) return;
@@ -62,7 +63,7 @@ public class PauseMenuUI : MonoBehaviour
 
     public void Resume()
     {
-        if (!isPaused) return;
+        if (SceneTransitionOverlay.IsTransitioning || !isPaused) return;
         overview.CancelConfirmation();
         isPaused = false;
 
@@ -120,17 +121,18 @@ public class PauseMenuUI : MonoBehaviour
 
     private void RestartConfirmed()
     {
-        RunStateManager runState = RunStateManager.Instance;
-
-        if (runState != null)
+        SceneTransitionOverlay.Load(SceneManager.GetActiveScene().name, () =>
         {
-            CharacterData character = runState.SelectedCharacter;
-            runState.BeginNewRun(character, null);
-        }
+            RunStateManager runState = RunStateManager.Instance;
 
-        Time.timeScale = 1f;
-        isPaused = false;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            if (runState != null)
+            {
+                CharacterData character = runState.SelectedCharacter;
+                runState.BeginNewRun(character, null);
+            }
+
+            isPaused = false;
+        });
     }
 
     private void UpdateLocalizedContent()

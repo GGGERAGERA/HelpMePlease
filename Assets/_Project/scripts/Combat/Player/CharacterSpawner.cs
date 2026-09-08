@@ -36,7 +36,7 @@ public class CharacterSpawner : MonoBehaviour
     }
     private void Start()
     {
-        Time.timeScale = 1f;
+        if (!SceneTransitionOverlay.IsTransitioning) Time.timeScale = 1f;
 
         GameObject player = SpawnCharacter();
 

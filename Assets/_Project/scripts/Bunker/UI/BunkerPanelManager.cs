@@ -59,6 +59,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
 
     private void Update()
     {
+        if (SceneTransitionOverlay.IsTransitioning) return;
         if (!Input.GetKeyDown(KeyCode.Escape))
             return;
         if (audioSettingsPanel != null && audioSettingsPanel.IsOpen)

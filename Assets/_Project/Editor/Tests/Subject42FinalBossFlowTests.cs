@@ -186,7 +186,7 @@ public sealed class Subject42FinalBossFlowTests
         Assert.That(One<EnemySpawner>().IsSpawningEnabled, Is.False);
         Assert.That(One<EnemySpawner>().FinalBossPressureMultiplier, Is.EqualTo(1f));
         Assert.That(((TMP_Text)Get(One<DeathResultPresentation>(), "sector")).text,
-            Is.EqualTo($"Ð¡Ð•ÐšÐ¢ÐžÐ  {RunRoute.TotalSectors} / {RunRoute.TotalSectors}"));
+            Is.EqualTo($"ÑÅÊÒÎÐ {RunRoute.TotalSectors} / {RunRoute.TotalSectors}"));
         if (afterSpawn)
         {
             flow.FinalBoss.TakeDamage(float.MaxValue, flow.FinalBoss.transform.position);
@@ -256,6 +256,7 @@ public sealed class Subject42FinalBossFlowTests
     {
         yield return Await(() => One<OrbitalStationRuntime>() != null && One<OrbitalStationRuntime>().IsInitialized &&
             ProductionSectorExit.ActiveExits.Count == 1 && One<RunThreatController>().AppliedPresetIndex >= 0);
+        yield return Await(() => !SceneTransitionOverlay.IsTransitioning);
         Player().GetComponent<PlayerHealth>().AddMaxHealth(1000000f);
         Time.timeScale = 1f;
         yield return null;
