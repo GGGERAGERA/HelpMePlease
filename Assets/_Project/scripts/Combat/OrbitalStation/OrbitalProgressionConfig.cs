@@ -11,12 +11,22 @@ namespace Subject42.Combat.OrbitalStation
     {
         public static OrbitalProgressionConfig Default { get; } = new();
 
-        public int[] RingMilestoneLevels = { 2, 3, 4, 6, 8, 10, 13 };
+        public float BaseRingOfferChance = 0.05f;
+        public float RingOfferChanceStep = 0.02f;
+        public float MaxRingOfferChance = 0.45f;
         public int MaxNormalRings = 8;
-        public int MaxMountsPerRing = 4;
+        public int MaxMountsPerRing = 6;
         public int MaxSpeedUpgradeLevel = 4;
         public int MaxPowerUpgradeLevel = 4;
         public int MaxCoreLevel = 3;
+        public float CoreIntervalI = 7.5f;
+        public float CoreIntervalII = 6.5f;
+        public float CoreIntervalIII = 5.5f;
+        public float CoreChargeDuration = .35f;
+        public float CoreRingDelay = .12f;
+        public float CoreWaveSpacing = .35f;
+        public float GetCoreInterval(int level) => level switch
+        { 1 => CoreIntervalI, 2 => CoreIntervalII, _ => CoreIntervalIII };
         public int MaxLinkMatrixLevel = 3;
         public float SpeedIncrement = 0.25f;
         public float PowerIncrement = 0.25f;
@@ -24,23 +34,13 @@ namespace Subject42.Combat.OrbitalStation
         public float ModuleWeight = 1f;
         public float LinkPairWeight = 0.65f;
         public float RingWeight = 0.9f;
-        public float CoreWeight = 0.7f;
+        public float CoreWeight = 0.10f;
+        public int MinRingsForCoreOffer = 2;
         public float SubjectWeight = 0.8f;
 
-        public int GetNextRingMilestone(int playerLevel)
-        {
-            for (int i = 0; i < RingMilestoneLevels.Length; i++)
-                if (RingMilestoneLevels[i] > playerLevel)
-                    return RingMilestoneLevels[i];
-            return -1;
-        }
-
-        public bool IsRingMilestone(int playerLevel)
-        {
-            for (int i = 0; i < RingMilestoneLevels.Length; i++)
-                if (RingMilestoneLevels[i] == playerLevel)
-                    return true;
-            return false;
-        }
+        public float GetRingOfferChance(int missedOpportunities) =>
+            UnityEngine.Mathf.Clamp(BaseRingOfferChance +
+                missedOpportunities * RingOfferChanceStep,
+                BaseRingOfferChance, MaxRingOfferChance);
     }
 }

@@ -46,11 +46,13 @@ public sealed class Subject42OrbitalTransactionSceneTests
         while (Time.realtimeSinceStartup < deadline)
         {
             station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
-            if (SceneManager.GetActiveScene().name == "MVP" && station != null && station.IsInitialized) break;
+            if (SceneManager.GetActiveScene().name == "MVP" && station != null && station.IsInitialized &&
+                !SceneTransitionOverlay.IsTransitioning) break;
             yield return null;
         }
         Assert.That(station, Is.Not.Null);
         Assert.That(station.IsInitialized, Is.True);
+        Assert.That(SceneTransitionOverlay.IsTransitioning, Is.False, "input is intentionally blocked until the arena reveal completes");
 
         station.enabled = false; // Freeze phase only, real scene/controllers/UI/queue remain alive.
         var upgrades = UpgradeManager.Instance;
@@ -60,6 +62,8 @@ public sealed class Subject42OrbitalTransactionSceneTests
         var sector = RunStateManager.Instance.CurrentSector;
         Assert.That(upgrades.IsRewardQueueIdle, Is.True);
         Time.timeScale = 1f;
+        Assert.That(station.State.Rings[0].MountCount, Is.EqualTo(1));
+        Assert.That(station.AddMount(1, out _), Is.True);
         Assert.That(upgrades.DebugForceOrbitalReward(OrbitalRewardKind.ArcEmitter), Is.True);
         Assert.That(upgrades.DebugSelectCurrentChoice(0), Is.True);
         string before = Snapshot(station);
@@ -89,6 +93,7 @@ public sealed class Subject42OrbitalTransactionSceneTests
         Assert.That(Time.timeScale, Is.EqualTo(1f));
         Debug.Log("PASS3 real queue normal cancel: current request retained, state unchanged; retry completes queue once. " + Snapshot(station));
         station.AddRing();
+        Assert.That(station.AddMount(2, out _), Is.True);
         Assert.That(upgrades.DebugForceOrbitalReward(OrbitalRewardKind.LinkPair), Is.True);
         upgrades.DebugSelectCurrentChoice(0);
         before = Snapshot(station);

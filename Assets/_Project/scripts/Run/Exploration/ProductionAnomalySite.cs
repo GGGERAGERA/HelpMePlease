@@ -533,7 +533,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         {
             // Completion owns duplicate protection; the existing queue owns
             // cards, staged placement, cancellation and sector-transition gating.
-            UpgradeManager.Instance.ShowUpgradeChoices();
+            UpgradeManager.Instance.GrantSpecialAnomalyRing();
         }
         else
             RunMessageService.Instance?.ShowCustom(

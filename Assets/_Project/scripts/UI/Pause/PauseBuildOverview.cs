@@ -69,21 +69,22 @@ public sealed class PauseBuildOverview : MonoBehaviour
                 string tier = ring.VisualTier switch { 1 => "WHITE", 2 => "CYAN", 3 => "VIOLET", _ => "GOLD" };
                 int occupied = state.Modules.Count(m => m.StableRingId == ring.StableRingId);
                 text.AppendLine($"<color=#{color}>■</color>  <b>{localization.Get("pause.ring")} {ring.Order + 1}</b>   <color=#{color}>{tier}</color>");
-                text.AppendLine($"<size=19>POWER +{ring.PowerUpgradeLevel}    SPEED +{ring.SpeedUpgradeLevel}    CAPACITY +{ring.MountUpgradeLevel}</size>");
-                text.AppendLine($"<size=19><color=#9AB3BE>{localization.Get("pause.mounts")}  {occupied} / {ring.MountCapacity}</color></size>\n");
+                float speed = Mathf.Pow(1f + OrbitalProgressionConfig.Default.SpeedIncrement, ring.SpeedUpgradeLevel);
+                text.AppendLine($"<size=19>DAMAGE ×{ring.PowerMultiplier:0.##}    SPEED ×{speed:0.##}    MODULES {occupied}</size>");
+                text.AppendLine($"<size=19><color=#9AB3BE>ТОЧКИ  {ring.MountCount} / {ring.MountCapacity}</color></size>\n");
             }
         }
         ringsText.text = text.ToString().TrimEnd();
         text.Clear();
         if (state != null)
             foreach (var group in state.Modules.GroupBy(m => m.ModuleType).OrderBy(g => g.Key))
-                text.AppendLine($"{ModuleName(group.Key)} <color=#14D1DB>×{group.Count()}</color>");
+                text.AppendLine($"<color=#{ColorUtility.ToHtmlStringRGB(OrbitalRewardIconResolver.ModuleColor(group.Key))}>{ModuleName(group.Key)} ×{group.Count()}</color>");
         modulesText.text = text.Length == 0 ? localization.Get("pause.noModules") : text.ToString().TrimEnd();
         text.Clear();
         if (state != null)
         {
-            AppendUpgrade(text, "Core Pulse", state.CoreState.PulseUpgradeLevel);
-            AppendUpgrade(text, "Core Cascade", state.CoreState.CascadeUpgradeLevel);
+            if (state.CoreState.Level > 0)
+                text.AppendLine("CORE " + (state.CoreState.Level switch { 1 => "I — 1 волна импульса", 2 => "II — 2 волны импульса", _ => "III — 3 волны импульса" }));
             AppendUpgrade(text, "Link Matrix", state.CoreState.LinkMatrixUpgradeLevel);
         }
         coreText.text = text.ToString().TrimEnd();
@@ -91,8 +92,15 @@ public sealed class PauseBuildOverview : MonoBehaviour
         text.Clear();
         if (items != null)
             foreach (var slot in items.Slots)
+            {
                 if (slot.Item != null && slot.Level > 0)
-                    AppendUpgrade(text, slot.Item.upgradeName, slot.Level);
+                {
+                    if (slot.Item.upgradeType == UpgradeType.MaxHealthFlat)
+                        text.AppendLine($"MAX HP  {slot.Level}/3 · +{ProductionUpgradeProfiles.MaxHealthBonus(slot.Level):0} HP");
+                    else if (slot.Item.upgradeType == UpgradeType.MoveSpeedPercent)
+                        text.AppendLine($"MOVE SPEED  {slot.Level}/3 · ×{ProductionUpgradeProfiles.MoveSpeedMultiplier(slot.Level):0.00}");
+                }
+            }
         playerText.text = text.ToString().TrimEnd();
         playerSection.SetActive(text.Length > 0);
         Canvas.ForceUpdateCanvases();
@@ -112,7 +120,7 @@ public sealed class PauseBuildOverview : MonoBehaviour
         OrbitalModuleKind.ImpulseGun => "Impulse Gun",
         OrbitalModuleKind.ArcEmitter => "Arc Emitter",
         OrbitalModuleKind.LinkNode => "Link Node",
-        _ => kind.ToString()
+        _ => "Gun"
     };
 
     public void AskConfirmation(string key, System.Action action)

@@ -25,6 +25,13 @@ public sealed class AudioSettingsService : MonoBehaviour
     public float MusicVolume { get; private set; }
     public float SoundsVolume { get; private set; }
 
+    private float transitionGain = 1f;
+    public void SetTransitionGain(float gain)
+    {
+        transitionGain = Mathf.Clamp01(gain);
+        Apply(MasterVolumeParameter, MasterVolume);
+    }
+
     private AudioMixer mixer;
     private bool hasPendingChanges;
     private bool warnedAboutMissingMixer;
@@ -149,6 +156,7 @@ public sealed class AudioSettingsService : MonoBehaviour
             return;
         }
 
+        if (parameterName == MasterVolumeParameter) linearValue *= transitionGain;
         float decibels = linearValue <= 0f
             ? MutedDecibels
             : Mathf.Log10(Mathf.Max(linearValue, 0.0001f)) * 20f;

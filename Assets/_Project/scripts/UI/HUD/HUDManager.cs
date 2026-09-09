@@ -278,8 +278,11 @@ public class HUDManager : MonoBehaviour
             currencyText.text = amount.ToString();
     }
 
+    public bool IsPlayerBound { get; private set; }
+
     public void BindPlayer(GameObject player)
     {
+        IsPlayerBound = player != null;
         CharacterMovement2D movement = player != null
             ? player.GetComponent<CharacterMovement2D>()
             : null;

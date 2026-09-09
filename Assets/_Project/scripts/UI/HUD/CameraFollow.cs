@@ -394,7 +394,8 @@ public class CameraFollow : MonoBehaviour
         if (available)
         {
             // Full orbit envelope avoids zoom breathing as modules rotate or turrets aim.
-            float radius = orbitalStation.PresentationRadius + .12f;
+            Vector2 extents = orbitalStation.PresentationExtents + Vector2.one * .12f;
+            float radius = extents.y;
             desired = Mathf.Max(desired, baseSize + Mathf.Max(0f, radius - baseSize * .25f) * .3f,
                 radius / .67f); // Conservative orbit envelope leaves the visible silhouette near 60%.
             Rect pixels = controlledCamera.pixelRect;
@@ -409,8 +410,8 @@ public class CameraFollow : MonoBehaviour
             float bottom = (safe.yMin - pixels.yMin) / pixels.height;
             float top = (safe.yMax - pixels.yMin) / pixels.height;
             desired = Mathf.Max(desired,
-                (radius - dx) / (2f * controlledCamera.aspect * Mathf.Max(.05f, .5f - left)),
-                (radius + dx) / (2f * controlledCamera.aspect * Mathf.Max(.05f, right - .5f)),
+                (extents.x - dx) / (2f * controlledCamera.aspect * Mathf.Max(.05f, .5f - left)),
+                (extents.x + dx) / (2f * controlledCamera.aspect * Mathf.Max(.05f, right - .5f)),
                 (radius - dy) / (2f * Mathf.Max(.05f, .5f - bottom)),
                 (radius + dy) / (2f * Mathf.Max(.05f, top - .5f)));
         }

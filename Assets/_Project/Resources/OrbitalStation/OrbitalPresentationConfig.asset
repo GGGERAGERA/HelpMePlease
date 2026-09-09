@@ -19,6 +19,28 @@ MonoBehaviour:
   PixelSprite: {fileID: 3883298416164446047, guid: 842791f4876552648b2118a0575f7a6d, type: 3}
   CircleSprite: {fileID: -2413806693520163455, guid: ceb8225d9461f5a4bbe86004909390d0, type: 3}
   RingIcon: {fileID: 2773572355569149612, guid: ef3b39e2cb6eab245aee02cf778f58eb, type: 3}
+  CoreIcon: {fileID: 0}
+  NewMountIcon: {fileID: 0}
+  RingCapacityIcon: {fileID: 0}
+  RingDamageIcon: {fileID: 0}
+  RingSpeedIcon: {fileID: 0}
+  NewRingIcon: {fileID: 0}
+  EnergyLinePrefab: {fileID: 8029792597844833736, guid: db8249cd301190e488b9d6ff70d5a1e7, type: 3}
+  CoreCyan: {r: 0.15, g: 0.85, b: 1, a: 1}
+  CoreViolet: {r: 0.65, g: 0.35, b: 1, a: 1}
+  CoreGold: {r: 1, g: 0.85, b: 0.4, a: 1}
+  CoreIdleHighlight: 0.045
+  CorePulseBrightness: 2
+  CoreIdleParticleInterval: 0.7
+  CoreChargeParticleInterval: 0.06
+  CoreRingSparkCount: 2
+  CoreHaloSize: 0.75
+  CoreHaloPulseSize: 1.45
+  CoreRayDuration: 0.16
+  CoreShakeDuration: 0.08
+  CoreShakeMagnitude: 0.025
+  FlashPoolCapacity: 128
+  ProjectilePrewarmCount: 96
   PlayerVariants:
   - Source: {fileID: 3267337206729473661, guid: 1868b54bca0976a44b3b858e4529d00d, type: 3}
     Production: {fileID: 8899567883607463258, guid: 50fd004411bc2bc40bb6a21478296cc8, type: 3}
@@ -37,24 +59,10 @@ MonoBehaviour:
   ArcVisualScale: 0.46
   LinkNodeVisualScale: 0.42
   MountedWeaponSortingOffset: 12
-  NormalMountSize: 0.18
-  SelectionMountSize: 0.3
-  NormalAlpha: 0.48
-  HoverAlpha: 1
-  HaloSize: 0.38
-  RingLineAlpha: 0.8
-  ModuleHitRadius: 0.16
-  MountHitRadius: 0.72
-  MountSelectionRadiusPixels: 26
-  MountHoverHysteresisPixels: 8
-  MountSwitchAdvantagePixels: 4
-  RelocationTimeScale: 0.2
-  TelekinesisGrabRange: 8
-  TelekinesisPullSpeed: 12
-  TelekinesisFollowSmoothness: 0.12
-  TelekinesisThrowStrength: 1
-  TelekinesisMaxThrowSpeed: 18
-  TelekinesisThrowDrag: 3.5
+  FigureEightWidth: 1.4
+  FigureEightHeight: 0.65
+  FigureEightSpacing: 1.1
+  FigureEightDepthRange: 0.3
   TierI:
     BaseColor: {r: 0.88, g: 0.96, b: 1, a: 1}
     Alpha: 0.72
@@ -93,3 +101,21 @@ MonoBehaviour:
   RingUpgradeGlow: 0.3
   RingHighlightBrightness: 0.25
   RingDimmedAlpha: 0.32
+  NormalMountSize: 0.18
+  SelectionMountSize: 0.3
+  NormalAlpha: 0.48
+  HoverAlpha: 1
+  HaloSize: 0.38
+  RingLineAlpha: 0.8
+  ModuleHitRadius: 0.16
+  MountHitRadius: 0.72
+  MountSelectionRadiusPixels: 26
+  MountHoverHysteresisPixels: 8
+  MountSwitchAdvantagePixels: 4
+  RelocationTimeScale: 0.2
+  TelekinesisGrabRange: 8
+  TelekinesisPullSpeed: 12
+  TelekinesisFollowSmoothness: 0.12
+  TelekinesisThrowStrength: 1
+  TelekinesisMaxThrowSpeed: 18
+  TelekinesisThrowDrag: 3.5

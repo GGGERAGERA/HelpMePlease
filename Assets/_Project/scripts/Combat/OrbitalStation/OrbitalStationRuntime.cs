@@ -12,9 +12,17 @@ namespace Subject42.Combat.OrbitalStation
 
         private readonly List<OrbitalRingRuntime> rings = new();
         private readonly List<OrbitalModuleRuntime> modules = new();
-        private readonly List<(LineRenderer line, float life)> flashes = new();
+        private readonly List<(LineRenderer line, float life)> flashes = new(128);
+        private readonly Stack<LineRenderer> idleFlashes = new(128);
+        private LineRenderer coreWave;
+        private float coreWaveAge = -1f;
+        private Color coreWaveColor;
+        private float coreParticleTimer;
+        private int idleSparkRing;
         private readonly Dictionary<(int First, int Second), LineRenderer> linkLines = new();
         private readonly HashSet<(int First, int Second)> activeLinkPairs = new();
+        private readonly List<(int First, int Second)> resolvedLinkPairs = new();
+        private int resolvedLinkRevision = -1;
         private readonly List<(int First, int Second)> staleLinkPairs = new();
         private Transform runtimeRoot;
         private OrbitalStationView authoredView;
@@ -45,16 +53,18 @@ namespace Subject42.Combat.OrbitalStation
         public IReadOnlyList<OrbitalModuleRuntime> Modules => modules;
         public OrbitalRingRuntime SelectedRing => selectedRing;
         public bool IsInitialized => initialized;
-        public float PresentationRadius
+        public OrbitalPathGeometry Geometry { get; private set; } = OrbitalPathGeometry.Circle;
+        private CharacterData boundCharacter;
+        public Vector2 PresentationExtents
         {
             get
             {
-                float radius = 0f;
-                foreach (var ring in rings) radius = Mathf.Max(radius, ring.Radius);
+                Vector2 extents = Vector2.zero;
+                foreach (var ring in rings) extents = Vector2.Max(extents, Geometry.Extents(ring.Radius));
                 foreach (var module in modules)
                     if (module.CurrentMount != null)
-                        radius = Mathf.Max(radius, module.CurrentMount.Ring.Radius + module.PresentationReach);
-                return radius;
+                        extents = Vector2.Max(extents, Geometry.Extents(module.CurrentMount.Ring.Radius) + Vector2.one * module.PresentationReach);
+                return extents;
             }
         }
         // Transient module previews, drag and interaction lines share this authored parent.
@@ -69,7 +79,7 @@ namespace Subject42.Combat.OrbitalStation
             _ => "READY"
         };
 
-        public static OrbitalStationRuntime Ensure(GameObject player)
+        public static OrbitalStationRuntime Ensure(GameObject player, CharacterData character = null)
         {
             if (player == null)
                 return null;
@@ -83,6 +93,7 @@ namespace Subject42.Combat.OrbitalStation
                 if (station == null) { Debug.LogError("[OrbitalStation] authored station owner is missing", player); return null; }
             }
             station.boundPlayer = player;
+            if (!station.initialized) station.boundCharacter = character;
             station.Initialize();
             return station;
         }
@@ -120,6 +131,9 @@ namespace Subject42.Combat.OrbitalStation
                     FailRestore(error);
                     return;
                 }
+                var character = boundCharacter != null ? boundCharacter : runStateManager.SelectedCharacter;
+                Geometry = character != null && character.orbitalPath == OrbitalPathType.FigureEight
+                    ? new OrbitalPathGeometry(config) : OrbitalPathGeometry.Circle;
                 authoredView = GetComponent<OrbitalStationView>();
                 if (authoredView == null || !authoredView.IsValid)
                 { FailRestore("required authored station references are missing"); return; }
@@ -133,6 +147,17 @@ namespace Subject42.Combat.OrbitalStation
                 Owner = new ProductionOrbitalOwnerAdapter(boundPlayer != null ? boundPlayer : gameObject);
                 Combat = new ProductionOrbitalCombatAdapter(authoredView.EffectsRoot, sharedSprite);
                 Core = new OrbitalCoreRuntime(State.CoreState);
+                coreWaveColor = config.GetCoreWaveColor(Mathf.Max(1, Core.Level));
+                authoredView.CoreParticles.Play();
+                Core.WaveStarted += OnCoreWave;
+                Core.RingActivated += OnCoreRing;
+                for (int i = 0; i < config.FlashPoolCapacity; i++)
+                    idleFlashes.Push(CreateFlashLine());
+                coreWave = CreateFlashLine();
+                coreWave.useWorldSpace = false;
+                coreWave.positionCount = 65;
+                for (int i = 0; i <= 64; i++)
+                    coreWave.SetPosition(i, Geometry.Position(i / 64f, 1f));
                 InputOwner = authoredView.Input;
                 InputOwner.Bind(this);
                 Interaction = authoredView.Presentation;
@@ -149,6 +174,7 @@ namespace Subject42.Combat.OrbitalStation
                     return;
                 }
                 initialized = true;
+                UpgradeManager.Instance?.BindOrbitalStation(this);
                 enabled = true;
                 InputOwner.enabled = true;
                 Interaction.enabled = true;
@@ -205,26 +231,56 @@ namespace Subject42.Combat.OrbitalStation
                 Teardown();
                 return;
             }
-            float deltaTime = Time.deltaTime;
+            TickStation(Time.deltaTime);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            HandlePlacementInput();
+#endif
+        }
+
+        // Shared production step, also exercised by deterministic combat QA.
+        private void TickStation(float deltaTime)
+        {
             Core.Tick(deltaTime, rings);
             for (int i = 0; i < rings.Count; i++)
+            {
+                rings[i].SetCoreVisual(Core.Level, coreWaveColor);
                 rings[i].Tick(deltaTime);
+            }
             for (int i = 0; i < modules.Count; i++)
                 modules[i].Tick(deltaTime);
             Combat.Tick(deltaTime);
             UpdateLinkNodes(deltaTime);
-            UpdateFlashes(Time.unscaledDeltaTime);
+            UpdateFlashes(deltaTime);
+            UpdateCoreWave(deltaTime);
             coreFlash = Mathf.MoveTowards(coreFlash, 0f, deltaTime * 5f);
             if (coreVisual != null)
             {
                 coreVisual.transform.localScale = Vector3.one *
-                    Mathf.Lerp(0.34f, 0.48f, coreFlash);
-                coreVisual.color = Color.Lerp(new Color(0.72f, 0.25f, 1f),
-                    Color.white, coreFlash);
+                    Mathf.Lerp(0.34f, 0.55f, Mathf.Max(coreFlash, Core.Charge));
+                Color idle = Core.Level == 0 ? new Color(0.72f, 0.25f, 1f) :
+                    OrbitalPresentationConfig.Active.GetCoreWaveColor(Core.Level);
+                coreVisual.color = Color.Lerp(idle, Color.white, Mathf.Max(coreFlash, Core.Charge));
+                var config = OrbitalPresentationConfig.Active;
+                float energy = Mathf.Max(coreFlash, Core.Charge);
+                authoredView.CoreHalo.enabled = Core.Level > 0;
+                authoredView.CoreHalo.color = new Color(idle.r, idle.g, idle.b,
+                    .025f * Core.Level + .2f * energy);
+                authoredView.CoreHalo.transform.localScale = Vector3.one *
+                    Mathf.Lerp(config.CoreHaloSize, config.CoreHaloPulseSize, energy);
+                coreParticleTimer -= deltaTime;
+                if (deltaTime > 0f && Core.Level > 0 && coreParticleTimer <= 0f)
+                {
+                    bool charge = Core.Charge > 0f;
+                    coreParticleTimer = charge ? config.CoreChargeParticleInterval : config.CoreIdleParticleInterval;
+                    if (charge || Core.Level > 1) EmitCoreSparks(runtimeRoot.position, idle, Core.Level);
+                    if (!charge && Core.Level > 1 && rings.Count > 0)
+                    {
+                        var ring = rings[idleSparkRing++ % rings.Count];
+                        EmitCoreSparks((Vector2)runtimeRoot.position + Geometry.Position(
+                            Mathf.Repeat(Time.time * .1f, 1f), ring.Radius), idle, 1);
+                    }
+                }
             }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            HandlePlacementInput();
-#endif
         }
 
         public OrbitalRingState AddRing()
@@ -304,10 +360,17 @@ namespace Subject42.Combat.OrbitalStation
             SyncCommitted("AddMount", stableRingId, 0, () =>
             {
                 OrbitalRingRuntime ring = RequireRing(stableRingId);
-                if (ring.Mounts.Count != ring.State.MountCapacity - 1)
+                if (ring.Mounts.Count != ring.State.MountCount - 1)
                     throw new System.InvalidOperationException("mount cache does not match pre-commit capacity");
                 ring.AddMount(runtimeRoot, sharedCircleSprite);
             });
+            return true;
+        }
+
+        public bool UpgradeRingCapacity(int stableRingId)
+        {
+            if (State == null || !State.UpgradeRingCapacity(stableRingId)) return false;
+            SyncCommitted("RingCapacity", stableRingId, 0, () => SelectRing(RequireRing(stableRingId)));
             return true;
         }
 
@@ -325,21 +388,6 @@ namespace Subject42.Combat.OrbitalStation
             SyncCommitted("LinkMatrix", 0, 0, () => FlashCore(new Color(0.9f, 0.2f, 1f)));
             return true;
         }
-
-        public bool ProcessPlayerLevelMilestone(int playerLevel)
-        {
-            if (State == null || !State.ProcessPlayerLevelMilestone(playerLevel, out OrbitalRingState ring)) return false;
-            if (ring == null) return true; // The level marker was committed without a ring milestone.
-            SyncCommitted("PlayerLevelMilestone", ring.StableRingId, 0, () =>
-            {
-                SelectRing(CreateRingPresentation(ring, true));
-                FlashCore(new Color(0.75f, 0.25f, 1f));
-                RunMessageService.Instance?.ShowCustom(string.Empty,
-                    $"ТЕЛЕКИНЕТИЧЕСКИЙ УРОВЕНЬ: {State.Rings.Count}", 1.35f);
-            });
-            return true;
-        }
-
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public enum GrowthPreset { Beginning, Mid, Final }
@@ -365,6 +413,10 @@ namespace Subject42.Combat.OrbitalStation
             while (state.Rings.Count < ringCount)
                 if (state.AddRing() == null)
                     throw new System.InvalidOperationException("Growth preset: AddRing rejected");
+
+            if (ringCount > 1)
+                foreach (var ring in state.Rings)
+                    while (ring.MountCount < ring.MountCapacity) state.AddMount(ring.StableRingId, out _);
 
             void Install(int ringOrder, int mount, OrbitalModuleKind kind)
             {
@@ -405,6 +457,8 @@ namespace Subject42.Combat.OrbitalStation
             ApplyPresetStart();
             OrbitalRingState second = AddRing();
             OrbitalRingState third = AddRing();
+            foreach (var ring in rings)
+                while (ring.MountCount < ring.MountCapacity) AddMount(ring.RingId, out _);
             InstallModule(OrbitalModuleKind.LinkNode, rings[0].RingId, 1, out _);
             InstallModule(OrbitalModuleKind.LinkNode, second.StableRingId, 0, out _);
             InstallModule(OrbitalModuleKind.LaserSword, second.StableRingId, 1, out _);
@@ -450,21 +504,66 @@ namespace Subject42.Combat.OrbitalStation
 
         public void FlashLink(Vector2 from, Vector2 to, Color color, float life)
         {
-            if (!initialized)
+            if (!initialized || idleFlashes.Count == 0)
                 return;
-            GameObject gameObject = new("Orbital Arc Flash");
-            gameObject.transform.SetParent(authoredView.EffectsRoot, true);
-            LineRenderer line = gameObject.AddComponent<LineRenderer>();
-            line.useWorldSpace = true;
-            line.positionCount = 2;
+            LineRenderer line = idleFlashes.Pop();
+            line.enabled = true;
             line.SetPosition(0, from);
             line.SetPosition(1, to);
-            line.widthMultiplier = 0.045f;
-            line.sharedMaterial = lineMaterial;
-            line.sortingLayerName = "Player";
-            line.sortingOrder = 13;
             line.startColor = line.endColor = color;
             flashes.Add((line, life));
+        }
+
+        private LineRenderer CreateFlashLine()
+        {
+            LineRenderer line = Instantiate(OrbitalPresentationConfig.Active.EnergyLinePrefab,
+                authoredView.EffectsRoot, false);
+            line.enabled = false;
+            return line;
+        }
+
+        private void OnCoreWave(int level, int wave)
+        {
+            coreWaveAge = 0f;
+            coreWaveColor = OrbitalPresentationConfig.Active.GetCoreWaveColor(wave);
+            FlashCore(coreWaveColor);
+            EmitCoreSparks(runtimeRoot.position, coreWaveColor, level * 3);
+            if ((level == 2 && wave == 1) || (level == 3 && wave == 3))
+                CameraShake.Instance?.Shake(OrbitalPresentationConfig.Active.CoreShakeDuration,
+                    OrbitalPresentationConfig.Active.CoreShakeMagnitude);
+        }
+
+        private void OnCoreRing(OrbitalRingRuntime ring, int level, int wave)
+        {
+            int index = rings.IndexOf(ring);
+            Vector2 center = runtimeRoot.position;
+            float phase = .125f;
+            Vector2 end = center + Geometry.Position(phase, ring.Radius);
+            Vector2 start = index == 0 ? center : center + Geometry.Position(phase, rings[index - 1].Radius);
+            FlashLink(start, end, coreWaveColor, OrbitalPresentationConfig.Active.CoreRayDuration);
+            for (int i = 0; i < level; i++)
+                EmitCoreSparks(center + Geometry.Position(phase + i / (float)level, ring.Radius),
+                    coreWaveColor, OrbitalPresentationConfig.Active.CoreRingSparkCount);
+        }
+
+        private void EmitCoreSparks(Vector2 position, Color color, int count)
+        {
+            var emit = new ParticleSystem.EmitParams { position = position, startColor = color };
+            authoredView.CoreParticles.Emit(emit, count);
+        }
+
+        private void UpdateCoreWave(float deltaTime)
+        {
+            if (coreWaveAge < 0f || rings.Count == 0) { coreWave.enabled = false; return; }
+            coreWaveAge += deltaTime;
+            float step = coreWaveAge / OrbitalProgressionConfig.Default.CoreRingDelay;
+            int next = Mathf.FloorToInt(step);
+            if (next >= rings.Count) { coreWaveAge = -1f; coreWave.enabled = false; return; }
+            float radius = Mathf.Lerp(next == 0 ? 0f : rings[next - 1].Radius,
+                rings[next].Radius, step - next);
+            coreWave.transform.localScale = Vector3.one * radius;
+            coreWave.startColor = coreWave.endColor = coreWaveColor;
+            coreWave.enabled = true;
         }
 
         public OrbitalInteractionController InputOwner { get; private set; }
@@ -489,11 +588,25 @@ namespace Subject42.Combat.OrbitalStation
                 if (flashes[i].line != null)
                     Destroy(flashes[i].line.gameObject);
             flashes.Clear();
+            while (idleFlashes.Count > 0) Destroy(idleFlashes.Pop().gameObject);
+            if (coreWave != null) Destroy(coreWave.gameObject);
+            coreWave = null;
+            coreWaveAge = -1f;
+            coreFlash = 0f;
+            coreParticleTimer = 0f;
+            idleSparkRing = 0;
+            if (authoredView != null)
+            {
+                if (authoredView.CoreHalo != null) authoredView.CoreHalo.enabled = false;
+                if (authoredView.CoreParticles != null) authoredView.CoreParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
             foreach (LineRenderer line in linkLines.Values)
                 if (line != null) Destroy(line.gameObject);
             linkLines.Clear();
             activeLinkPairs.Clear();
             staleLinkPairs.Clear();
+            resolvedLinkPairs.Clear();
+            resolvedLinkRevision = -1;
             if (coreVisual != null) coreVisual.enabled = false;
             runtimeRoot = null;
             lineMaterial = null;
@@ -523,7 +636,7 @@ namespace Subject42.Combat.OrbitalStation
         private void InstallFirstFree(OrbitalRingState ring, OrbitalModuleKind kind)
         {
             if (ring == null) return;
-            for (int i = 0; i < ring.MountCapacity; i++)
+            for (int i = 0; i < ring.MountCount; i++)
                 if (State.CanInstallModule(kind, ring.StableRingId, i, out _))
                 {
                     InstallModule(kind, ring.StableRingId, i, out _);
@@ -782,7 +895,7 @@ namespace Subject42.Combat.OrbitalStation
             OrbitalRingState ringState, bool animateSpawn = false)
         {
             OrbitalRingRuntime ring = new(ringState, authoredView.RingsRoot,
-                lineMaterial, sharedCircleSprite, animateSpawn);
+                lineMaterial, sharedCircleSprite, animateSpawn, Geometry);
             rings.Add(ring);
             return ring;
         }
@@ -829,7 +942,7 @@ namespace Subject42.Combat.OrbitalStation
             float bestDelta = 0.3f;
             for (int i = 0; i < rings.Count; i++)
             {
-                float delta = Mathf.Abs(local.magnitude - rings[i].Radius);
+                float delta = Geometry.Distance(local, rings[i].Radius);
                 if (delta < bestDelta)
                 {
                     bestDelta = delta;
@@ -863,11 +976,22 @@ namespace Subject42.Combat.OrbitalStation
 
         private void UpdateLinkNodes(float deltaTime)
         {
-            activeLinkPairs.Clear();
-            foreach (var pair in State.ResolveLinkPairs())
+            // Pairing is derived from committed state, not from phase. Preserve state order.
+            if (resolvedLinkRevision != State.Revision)
             {
-                var first = modules.Find(m => m.StableModuleId == pair.First) as OrbitalLinkNodeModule;
-                var second = modules.Find(m => m.StableModuleId == pair.Second) as OrbitalLinkNodeModule;
+                resolvedLinkPairs.Clear();
+                resolvedLinkPairs.AddRange(State.ResolveLinkPairs());
+                resolvedLinkRevision = State.Revision;
+            }
+            activeLinkPairs.Clear();
+            foreach (var pair in resolvedLinkPairs)
+            {
+                OrbitalLinkNodeModule first = null, second = null;
+                for (int i = 0; i < modules.Count; i++)
+                {
+                    if (modules[i].StableModuleId == pair.First) first = modules[i] as OrbitalLinkNodeModule;
+                    if (modules[i].StableModuleId == pair.Second) second = modules[i] as OrbitalLinkNodeModule;
+                }
                 if (first?.CurrentMount == null || second?.CurrentMount == null) continue;
                 Vector2 from = first.CurrentMount.Transform.position;
                 Vector2 to = second.CurrentMount.Transform.position;
@@ -882,8 +1006,7 @@ namespace Subject42.Combat.OrbitalStation
                     float linkPower = (first.CurrentMount.Ring.PowerMultiplier +
                         second.CurrentMount.Ring.PowerMultiplier) * 0.5f;
                     float matrixPower = 1f + State.CoreState.LinkMatrixUpgradeLevel * 0.25f;
-                    Combat.ApplyDamage(target, 5f * linkPower * matrixPower *
-                        Core.DamageMultiplier, target.transform.position);
+                    Combat.ApplyDamage(target, 5f * linkPower * matrixPower, target.transform.position);
                     first.RuntimeCooldown = 0.55f;
                 }
             }
@@ -903,7 +1026,9 @@ namespace Subject42.Combat.OrbitalStation
                 line.sharedMaterial = lineMaterial;
                 line.sortingLayerName = "Player";
                 line.sortingOrder = 13;
-                line.startColor = line.endColor = new Color(0.7f, 0.2f, 1f, 0.35f);
+                var linkColor = OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.LinkNode);
+                linkColor.a = .35f;
+                line.startColor = line.endColor = linkColor;
                 linkLines[pair] = line;
             }
             line.SetPosition(0, from);
@@ -933,8 +1058,8 @@ namespace Subject42.Combat.OrbitalStation
                     flashes[i] = item;
                     continue;
                 }
-                if (item.line != null)
-                    Destroy(item.line.gameObject);
+                item.line.enabled = false;
+                idleFlashes.Push(item.line);
                 flashes.RemoveAt(i);
             }
         }

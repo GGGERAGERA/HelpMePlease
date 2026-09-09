@@ -39,6 +39,7 @@ namespace Subject42.Combat.OrbitalStation
         bool UpgradeRingSpeed(int stableRingId);
         bool UpgradeRingPower(int stableRingId);
         bool AddMount(int stableRingId, out string error);
+        bool UpgradeRingCapacity(int stableRingId);
         void UpgradeSelectedRingSpeed();
         void UpgradeSelectedRingPower();
         void AddMount();
@@ -91,6 +92,10 @@ namespace Subject42.Combat.OrbitalStation
         private readonly Transform root;
         private readonly Sprite sprite;
         private readonly List<Projectile> projectiles = new();
+        // Borrowed by the synchronous Arc attack until the next query on this adapter.
+        private readonly List<EnemyHealth> nearestTargets = new();
+        private readonly System.Comparison<EnemyHealth> nearestComparison;
+        private Vector2 nearestOrigin;
 
         public event Action<EnemyHealth, float> Hit;
         public event Action<EnemyHealth> Death;
@@ -99,14 +104,32 @@ namespace Subject42.Combat.OrbitalStation
         {
             root = runtimeRoot;
             sprite = sharedSprite;
+            nearestComparison = CompareNearestTargets;
+            for (int i = 0; i < OrbitalPresentationConfig.Active.ProjectilePrewarmCount; i++)
+                CreateProjectile();
+        }
+
+        private Projectile CreateProjectile()
+        {
+            GameObject gameObject = new("Orbital Projectile");
+            gameObject.transform.SetParent(root, false);
+            SpriteRenderer renderer = gameObject.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            renderer.sortingOrder = 15;
+            var projectile = new Projectile { GameObject = gameObject, Renderer = renderer };
+            gameObject.SetActive(false);
+            projectiles.Add(projectile);
+            return projectile;
         }
 
         public EnemyHealth FindNearest(Vector2 origin, float range)
         {
             EnemyHealth best = null;
             float bestDistance = range * range;
-            foreach (EnemyHealth enemy in EnemyHealth.ActiveInstances)
+            var enemies = EnemyHealth.GetActiveEnumerator();
+            while (enemies.MoveNext())
             {
+                EnemyHealth enemy = enemies.Current;
                 if (!IsValid(enemy))
                     continue;
                 float distance = ((Vector2)enemy.transform.position - origin).sqrMagnitude;
@@ -120,19 +143,25 @@ namespace Subject42.Combat.OrbitalStation
 
         public List<EnemyHealth> FindNearestMany(Vector2 origin, float range, int count)
         {
-            List<EnemyHealth> result = new();
-            foreach (EnemyHealth enemy in EnemyHealth.ActiveInstances)
+            var result = nearestTargets;
+            result.Clear();
+            nearestOrigin = origin;
+            var enemies = EnemyHealth.GetActiveEnumerator();
+            while (enemies.MoveNext())
             {
+                EnemyHealth enemy = enemies.Current;
                 if (IsValid(enemy) && Vector2.Distance(origin, enemy.transform.position) <= range)
                     result.Add(enemy);
             }
-            result.Sort((a, b) =>
-                ((Vector2)a.transform.position - origin).sqrMagnitude.CompareTo(
-                ((Vector2)b.transform.position - origin).sqrMagnitude));
+            result.Sort(nearestComparison);
             if (result.Count > count)
                 result.RemoveRange(count, result.Count - count);
             return result;
         }
+
+        private int CompareNearestTargets(EnemyHealth a, EnemyHealth b) =>
+            ((Vector2)a.transform.position - nearestOrigin).sqrMagnitude.CompareTo(
+                ((Vector2)b.transform.position - nearestOrigin).sqrMagnitude);
 
         public bool ApplyDamage(EnemyHealth enemy, float damage, Vector2 hitPoint)
         {
@@ -162,12 +191,7 @@ namespace Subject42.Combat.OrbitalStation
             }
             if (projectile == null)
             {
-                GameObject gameObject = new("Orbital Projectile");
-                SpriteRenderer renderer = gameObject.AddComponent<SpriteRenderer>();
-                renderer.sprite = sprite;
-                renderer.sortingOrder = 15;
-                projectile = new Projectile { GameObject = gameObject, Renderer = renderer };
-                projectiles.Add(projectile);
+                projectile = CreateProjectile();
             }
             projectile.Active = true;
             projectile.Target = target;

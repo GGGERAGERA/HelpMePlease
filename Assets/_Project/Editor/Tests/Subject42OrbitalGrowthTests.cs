@@ -15,7 +15,7 @@ using Object = UnityEngine.Object;
 
 public sealed class Subject42OrbitalGrowthTests
 {
-    private const string Output = "Artifacts/OrbitalGrowth/After";
+    private const string Output = "Artifacts/GeneratedQA/RewardProgression/Growth";
     private static void Call(object target, string name, params object[] args) => target.GetType()
         .GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(target, args);
 
@@ -168,7 +168,7 @@ public sealed class Subject42OrbitalGrowthTests
         Assert.That(station.Rings.Count, Is.EqualTo(rings));
         Assert.That(station.Modules.Count, Is.EqualTo(modules));
         Assert.That(station.GetComponentsInChildren<OrbitalRingView>(true).Length, Is.EqualTo(rings));
-        Assert.That(station.GetComponentsInChildren<OrbitalMountView>(true).Length, Is.EqualTo(rings * 3));
+        Assert.That(station.GetComponentsInChildren<OrbitalMountView>(true).Length, Is.EqualTo(rings == 1 ? 1 : rings * 3));
         Assert.That(station.GetComponentsInChildren<OrbitalModuleView>(true).Length, Is.EqualTo(modules));
         Assert.That(station.State.ResolveLinkPairs().Count(), Is.EqualTo(rings / 4));
         Assert.That(station.GetComponent<OrbitalStationView>().EffectsRoot.GetComponentsInChildren<LineRenderer>().Count(l => l.name == "Orbital Link"), Is.EqualTo(rings / 4));
@@ -181,7 +181,7 @@ public sealed class Subject42OrbitalGrowthTests
         }
         foreach (var ring in station.Rings)
         {
-            Assert.That(ring.Mounts.Count, Is.EqualTo(ring.State.MountCapacity));
+            Assert.That(ring.Mounts.Count, Is.EqualTo(ring.State.MountCount));
             foreach (var mount in ring.Mounts)
                 Assert.That(station.IsMountFree(mount), Is.EqualTo(mount.Module == null));
         }
@@ -215,7 +215,7 @@ public sealed class Subject42OrbitalGrowthTests
         }).Select(m => $"{m.StableModuleId}:{m.Kind}"));
         File.AppendAllText(Output + "/measurements.txt", $"{preset}: frame={Screen.width}x{Screen.height}; camera pixels={camera.pixelWidth}x{camera.pixelHeight}; ortho={camera.orthographicSize:F3}; pos={camera.transform.position}; ring diameter={diameter:F1}px; station bounds=({min.x:F1},{min.y:F1})..({max.x:F1},{max.y:F1}), size={max.x-min.x:F1}x{max.y-min.y:F1}px; outside modules=[{outside}]\n");
         float heightPercent = (max.y - min.y) / camera.pixelHeight * 100f;
-        File.AppendAllText(Output + "/measurements.txt", $"viewport height={heightPercent:F2}%; safe pixels={safe}; presentation radius={station.PresentationRadius:F3}; HUD overlap={!safe.Contains(min) || !safe.Contains(max)}\n");
+        File.AppendAllText(Output + "/measurements.txt", $"viewport height={heightPercent:F2}%; safe pixels={safe}; presentation extents={station.PresentationExtents}; HUD overlap={!safe.Contains(min) || !safe.Contains(max)}\n");
         Assert.That(safe.Contains(min) && safe.Contains(max), Is.True, "station must fit the HUD allowance");
         Assert.That(outside, Is.Empty);
         if (preset == OrbitalStationRuntime.GrowthPreset.Final)

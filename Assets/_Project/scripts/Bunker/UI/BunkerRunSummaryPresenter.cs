@@ -19,6 +19,7 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
 
     private IEnumerator Start()
     {
+        while (SceneTransitionOverlay.IsTransitioning) yield return null;
         yield return new WaitForSecondsRealtime(showDelay);
 
         if (RunStateManager.Instance == null ||

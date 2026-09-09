@@ -36,7 +36,7 @@ public class CharacterSpawner : MonoBehaviour
     }
     private void Start()
     {
-        Time.timeScale = 1f;
+        if (!SceneTransitionOverlay.IsTransitioning) Time.timeScale = 1f;
 
         GameObject player = SpawnCharacter();
 
@@ -63,7 +63,7 @@ public class CharacterSpawner : MonoBehaviour
         if (RunStateManager.Instance != null)
             RunStateManager.Instance.ApplyToSpawnedPlayer(player, upgradeApplier);
 
-        OrbitalStationRuntime.Ensure(player);
+        OrbitalStationRuntime.Ensure(player, SpawnedCharacterData);
 
         SpawnedPlayer = player;
         CharacterSpawned?.Invoke(player);

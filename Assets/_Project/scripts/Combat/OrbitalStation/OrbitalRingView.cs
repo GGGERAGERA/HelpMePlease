@@ -21,8 +21,33 @@ namespace Subject42.Combat.OrbitalStation
         private bool lastDepthAware;
         private int depthSortingLayer;
         private int backSortingOrder;
+        private OrbitalPathGeometry geometry = OrbitalPathGeometry.Circle;
+
+        public void InitializeGeometry(OrbitalPathGeometry path)
+        {
+            geometry = path;
+            if (path.Type == OrbitalPathType.Circle) return;
+            const int segments = 128;
+            BackLine.positionCount = FrontLine.positionCount = segments + 1;
+            for (int i = 0; i <= segments; i++)
+            {
+                Vector3 upper = path.UpperPoint(i / (float)segments);
+                BackLine.SetPosition(i, upper);
+                FrontLine.SetPosition(i, new Vector3(upper.x, -upper.y, 0f));
+            }
+        }
 
         private static readonly int SurfaceId = Shader.PropertyToID("_RingSurface");
+        private static readonly int CoreId = Shader.PropertyToID("_CoreEnergy");
+        private static readonly int CoreColorId = Shader.PropertyToID("_CoreColor");
+        private Vector4 coreEnergy;
+        private Color coreColor;
+        public void SetCoreEnergy(int level, Color color, float pulse, float time)
+        {
+            coreEnergy = new Vector4(level * OrbitalPresentationConfig.Active.CoreIdleHighlight,
+                pulse * OrbitalPresentationConfig.Active.CorePulseBrightness, time, 0f);
+            coreColor = color;
+        }
         private MaterialPropertyBlock surface;
         private OrbitalPresentationConfig.RingTierStyle previousStyle, currentStyle;
         private int displayedTier;
@@ -71,6 +96,8 @@ namespace Subject42.Combat.OrbitalStation
             SetAppearance(radius, config.RingLineWidth * 3f, color, depthAware);
             surface.SetVector(SurfaceId, new Vector4(currentStyle.Emission * brightness,
                 currentStyle.Glow + burst * config.RingUpgradeGlow, currentStyle.CoreWhitening, 0f));
+            surface.SetVector(CoreId, coreEnergy);
+            surface.SetColor(CoreColorId, coreColor);
             BackLine.SetPropertyBlock(surface);
             FrontLine.SetPropertyBlock(surface);
             transitionAge = Mathf.Min(transitionAge + unscaledDeltaTime, config.RingTierTransitionDuration);
@@ -80,10 +107,10 @@ namespace Subject42.Combat.OrbitalStation
         public bool IsValid => BackLine != null && FrontLine != null &&
             BackLine != FrontLine && MountsRoot != null;
 
-        // Unit semicircles are authored once; only their presentation changes at runtime.
+        // Geometry is set once at construction; only scale and appearance change per frame.
         public void SetAppearance(float radius, float width, Color color, bool depthAware = true)
         {
-            Vector3 scale = Vector3.one * radius;
+            Vector3 scale = Vector3.one * geometry.Scale(radius);
             BackLine.transform.localScale = FrontLine.transform.localScale = scale;
             BackLine.widthMultiplier = FrontLine.widthMultiplier = width;
             if (hasColor && lastColor == color && lastDepthAware == depthAware) return;
@@ -108,6 +135,19 @@ namespace Subject42.Combat.OrbitalStation
             if (!depthAware)
             {
                 BackLine.colorGradient = frontGradient;
+                return;
+            }
+            if (geometry.Type == OrbitalPathType.FigureEight)
+            {
+                // The upper halves meet at the crossing: restore opacity there and at both tips.
+                for (int i = 0; i < alphaKeys.Length; i++)
+                {
+                    float t = i / (float)(alphaKeys.Length - 1);
+                    float back = Mathf.SmoothStep(0f, 1f, Mathf.Abs(Mathf.Sin(t * Mathf.PI * 2f)));
+                    alphaKeys[i] = new GradientAlphaKey(color.a * Mathf.Lerp(1f, backOpacityMultiplier, back), t);
+                }
+                backGradient.SetKeys(colorKeys, alphaKeys);
+                BackLine.colorGradient = backGradient;
                 return;
             }
             // Equal opacity at both shared endpoints, without overlapping transparent caps.

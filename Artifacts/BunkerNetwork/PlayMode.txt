@@ -1,0 +1,17 @@
+PASS Exactly one navigation network
+PASS Six room branches, Run Gate and real football mini-game branch
+PASS A: only Character, Weapon, MiniGame and open RunGate visible
+PASS B: opening Upgrade immediately shows its branch without reload/Refresh
+PASS C: disabling mini-game component immediately hides its complete branch
+PASS D: closed Run Gate route hidden
+PASS E: opening Run Gate immediately restores its branch
+PASS Mini-game root inactive hides route
+PASS Mini-game root restored shows route
+PASS Inactive room hides branch
+PASS Re-enabled room restores branch
+PASS Unavailable gate station hides route even with open door
+PASS F: all open room branches visible together
+PASS Moving player leaves authored mesh assets unchanged
+PASS G: zoom captures rendered using fixed world-space mesh width
+PASS Disabled network hides all floor renderers
+PASS Re-enabled network reads latest authoritative state

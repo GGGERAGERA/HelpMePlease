@@ -29,6 +29,7 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
 
     private void Update()
     {
+        if (SceneTransitionOverlay.IsTransitioning) return;
         UpdateHover();
 
         if (Input.GetMouseButtonDown(0))

@@ -765,9 +765,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
 
     public void RebuildCurrentSector()
     {
-        RestoreAll();
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        SceneTransitionOverlay.Load(SceneManager.GetActiveScene().name, RestoreAll);
     }
 
     public static bool TryGetSpecialOverride(out AnomalyPowerType power)

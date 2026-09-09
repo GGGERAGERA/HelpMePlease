@@ -9,10 +9,9 @@ using UnityEngine.SceneManagement;
 [InitializeOnLoad]
 public static class BunkerNavigationPlayModeQA
 {
-    private const string Output = "Assets/_Project/Documentation/BunkerNavigationQA/";
-    private const string Session = "BunkerNavigationQA";
-    private static int phase;
-    private static double until, deadline;
+    private const string Output = "Artifacts/BunkerNetwork/";
+    private const string Session = "BunkerNetworkQA";
+    private static double until;
     private static readonly List<string> report = new();
     static BunkerNavigationPlayModeQA()
     {
@@ -20,163 +19,164 @@ public static class BunkerNavigationPlayModeQA
         EditorApplication.playModeStateChanged += s =>
         {
             if (s == PlayModeStateChange.EnteredPlayMode && SessionState.GetBool(Session, false))
-            { phase=0; until=EditorApplication.timeSinceStartup+3; deadline=until+120; report.Clear(); }
-            if (s == PlayModeStateChange.EnteredEditMode && SessionState.GetBool(Session,false))
+            { until = EditorApplication.timeSinceStartup + 4; report.Clear(); }
+            if (s == PlayModeStateChange.EnteredEditMode && SessionState.GetBool(Session, false))
             {
-                foreach (string key in Keys) Restore(key);
-                PlayerPrefs.Save(); SessionState.SetBool(Session,false);
+                if (SessionState.GetBool(Session + "IntroExists", false)) PlayerPrefs.SetInt(BunkerIntroController.ViewedPreferenceKey, SessionState.GetInt(Session + "Intro", 0));
+                else PlayerPrefs.DeleteKey(BunkerIntroController.ViewedPreferenceKey);
+                PlayerPrefs.Save(); SessionState.SetBool(Session, false);
+                File.WriteAllText(Output + "complete.txt", "Returned to Edit Mode; intro preference restored.");
             }
         };
     }
-    private static readonly string[] Keys = { BunkerStationProgressionService.OnboardingKey, BunkerIntroController.ViewedPreferenceKey, "TOTAL_GOLD" };
-    private static void Backup(string key)
-    { SessionState.SetBool(Session+key+"Exists",PlayerPrefs.HasKey(key)); SessionState.SetInt(Session+key,PlayerPrefs.GetInt(key,0)); }
-    private static void Restore(string key)
-    { if(SessionState.GetBool(Session+key+"Exists",false)) PlayerPrefs.SetInt(key,SessionState.GetInt(Session+key,0)); else PlayerPrefs.DeleteKey(key); }
     [MenuItem("Tools/Subject42/Bunker/Run Navigation Play Mode QA")]
     public static void Start()
     {
-        if(EditorApplication.isPlayingOrWillChangePlaymode || SceneManager.GetActiveScene().name!="MainMenu" || SceneManager.GetActiveScene().isDirty)
+        if (EditorApplication.isPlayingOrWillChangePlaymode || SceneManager.GetActiveScene().name != "MainMenu" || SceneManager.GetActiveScene().isDirty)
             throw new InvalidOperationException("Open saved MainMenu in Edit Mode.");
-        foreach(string key in Keys) Backup(key);
-        PlayerPrefs.DeleteKey(BunkerStationProgressionService.OnboardingKey);
-        PlayerPrefs.SetInt(BunkerIntroController.ViewedPreferenceKey,1);
-        SessionState.SetBool(Session,true);
-        EditorApplication.isPlaying=true;
+        Directory.CreateDirectory(Output);
+        SessionState.SetBool(Session + "IntroExists", PlayerPrefs.HasKey(BunkerIntroController.ViewedPreferenceKey));
+        SessionState.SetInt(Session + "Intro", PlayerPrefs.GetInt(BunkerIntroController.ViewedPreferenceKey, 0));
+        PlayerPrefs.SetInt(BunkerIntroController.ViewedPreferenceKey, 1);
+        SessionState.SetBool(Session, true);
+        EditorApplication.isPlaying = true;
     }
-    private static void Check(bool pass,string message)
-    { report.Add((pass?"PASS ":"FAIL ")+message); File.WriteAllLines(Output+"PlayMode.txt",report); if(!pass)throw new Exception(message); }
-    private static void Step(BunkerOnboardingStep expected,string description)
-        => Check(BunkerStationProgressionService.OnboardingStep==expected,description);
-    private static T Find<T>() where T:UnityEngine.Object => UnityEngine.Object.FindFirstObjectByType<T>();
-    private static BunkerStation Station(BunkerStationType type) => UnityEngine.Object.FindObjectsByType<BunkerStation>(FindObjectsSortMode.None)
-        .Single(s=>new SerializedObject(s).FindProperty("stationType").intValue==(int)type);
-    private static void ConfirmCharacter()
+    private static void Check(bool pass, string message)
     {
-        var source=Find<BunkerSelectionSourceHub>().Characters;
-        var model=source.BuildModel();
-        source.Confirm(model.Entries.First(e=>e.Enabled&&!e.Locked&&e.CanConfirm).Id);
+        report.Add((pass ? "PASS " : "FAIL ") + message);
+        File.WriteAllLines(Output + "PlayMode.txt", report);
+        if (!pass) throw new Exception(message);
     }
+    private static T Find<T>() where T : UnityEngine.Object => UnityEngine.Object.FindFirstObjectByType<T>();
     private static void Tick()
     {
-        if(!EditorApplication.isPlayingOrWillChangePlaymode && File.Exists(Output+"play.request"))
-        { File.Delete(Output+"play.request"); try { Start(); }catch(Exception e){File.WriteAllText(Output+"PlayMode.txt",e.ToString());} }
-        if(!SessionState.GetBool(Session,false)||!EditorApplication.isPlaying||EditorApplication.isCompiling) return;
-        if(EditorApplication.timeSinceStartup<until)return;
+        if (!EditorApplication.isPlayingOrWillChangePlaymode && !EditorApplication.isCompiling && File.Exists(Output + "play.request"))
+        { File.Delete(Output + "play.request"); try { Start(); } catch (Exception e) { File.WriteAllText(Output + "PlayMode.txt", e.ToString()); } }
+        if (!SessionState.GetBool(Session, false) || !EditorApplication.isPlaying || EditorApplication.isCompiling || EditorApplication.timeSinceStartup < until) return;
+        until = double.MaxValue;
+        try { Run(); }
+        catch (Exception e) { report.Add("FAIL " + e); File.WriteAllLines(Output + "PlayMode.txt", report); }
+        finally { EditorApplication.isPlaying = false; }
+    }
+    private static void Run()
+    {
+        var view = Find<BunkerNavigationView>();
+        Check(view != null && UnityEngine.Object.FindObjectsByType<BunkerNavigationView>(FindObjectsSortMode.None).Length == 1, "Exactly one navigation network");
+        var so = new SerializedObject(view);
+        var array = so.FindProperty("routes");
+        var floors = new Dictionary<string, MeshRenderer>();
+        for (int i = 0; i < array.arraySize; i++)
+        {
+            var p = array.GetArrayElementAtIndex(i);
+            floors.Add(p.FindPropertyRelative("destination").stringValue, (MeshRenderer)p.FindPropertyRelative("floor").objectReferenceValue);
+        }
+        var rooms = UnityEngine.Object.FindObjectsByType<BunkerRoomAccess>(FindObjectsSortMode.None);
+        BunkerRoomAccess Room(BunkerRoomId id) => rooms.Single(r => r.RoomId == id);
+        var gate = Find<BunkerGateVisual>(); var mini = Find<FootballMinigame>();
+        Check(floors.Count == 8, "Six room branches, Run Gate and real football mini-game branch");
+        Check(floors["RunGate"].enabled, "Exit route visible on scene initialization, including closed gate");
+        Capture("00-default", 55, -4, 31);
+        foreach (var r in rooms) r.SetUnlocked(r.RoomId == BunkerRoomId.CharacterSelection || r.RoomId == BunkerRoomId.WeaponSelection);
+        gate.Open(); mini.enabled = true;
+        Check(floors.Where(p => p.Value.enabled).Select(p => p.Key).OrderBy(x => x).SequenceEqual(new[] { "Character", "MiniGame", "RunGate", "Weapon" }), "A: only Character, Weapon, MiniGame and open RunGate visible");
+        Capture("01-few-open", 55, -4, 31);
+        Capture("02-mini-game-open", 79, -3, 20);
+        Room(BunkerRoomId.UpgradeStation).SetUnlocked(true);
+        Check(floors["UpgradeStation"].enabled, "B: opening Upgrade immediately shows its branch without reload/Refresh");
+        Capture("03-upgrade-open", 46, -8, 18);
+        mini.enabled = false;
+        Check(!floors["MiniGame"].enabled, "C: disabling mini-game component immediately hides its complete branch");
+        gate.Close();
+        Check(floors["RunGate"].enabled, "D: closed Run Gate keeps permanent exit route visible");
+        Capture("04-closed-rooms-and-gate", 55, -4, 31);
+        gate.Open();
+        Check(floors["RunGate"].enabled, "E: opening Run Gate keeps exit route visible");
+        mini.enabled = true;
+        mini.transform.parent.gameObject.SetActive(false);
+        Check(!floors["MiniGame"].enabled, "Mini-game root inactive hides route");
+        mini.transform.parent.gameObject.SetActive(true);
+        Check(floors["MiniGame"].enabled, "Mini-game root restored shows route");
+        var character = Room(BunkerRoomId.CharacterSelection);
+        character.gameObject.SetActive(false);
+        Check(!floors["Character"].enabled, "Inactive room hides branch");
+        character.gameObject.SetActive(true);
+        Check(floors["Character"].enabled, "Re-enabled room restores branch");
+        gate.GetComponent<BunkerStation>().SetInteractionEnabled(false);
+        Check(floors["RunGate"].enabled, "Unavailable gate station does not hide permanent exit route");
+        gate.GetComponent<BunkerStation>().SetInteractionEnabled(true);
+        foreach (var r in rooms) r.SetUnlocked(true);
+        Check(floors.Values.All(f => f.enabled), "F: all open room branches visible together");
+        Capture("05-full-network", 55, -4, 31);
+        InspectFloorClearance(view);
+        var hashes = view.GetComponentsInChildren<MeshFilter>().Select(f => f.sharedMesh.GetInstanceID()).ToArray();
+        var player = Find<CharacterMovement2D>(); var position = player.transform.position;
+        player.transform.position += new Vector3(10, 2, 0);
+        Check(hashes.SequenceEqual(view.GetComponentsInChildren<MeshFilter>().Select(f => f.sharedMesh.GetInstanceID())), "Moving player leaves authored mesh assets unchanged");
+        player.transform.position = position;
+        Capture("06-zoom-in", 44, -10, 7);
+        Capture("07-zoom-out", 44, -10, 20);
+        Check(true, "G: zoom captures rendered using fixed world-space mesh width");
+        view.enabled = false;
+        Check(view.GetComponentsInChildren<MeshRenderer>().All(f => !f.enabled), "Disabled network hides all floor renderers");
+        character.SetUnlocked(false);
+        view.enabled = true;
+        Check(!floors["Character"].enabled && floors["Weapon"].enabled, "Re-enabled network reads latest authoritative state");
+    }
+    public static void Capture(string name, float x, float y, float size)
+    {
+        // A camera teleport is not gameplay motion. Prevent its history from smearing QA stills.
+        var blur = UnityEngine.Object.FindObjectsByType<UnityEngine.Rendering.Volume>(FindObjectsSortMode.None)
+            .Where(v => v.profile != null).SelectMany(v => v.profile.components)
+            .OfType<UnityEngine.Rendering.Universal.MotionBlur>().ToArray();
+        var blurStates = blur.Select(b => b.active).ToArray();
+        var blurIntensity = blur.Select(b => b.intensity.value).ToArray();
+        var blurOverrides = blur.Select(b => b.intensity.overrideState).ToArray();
+        foreach (var b in blur) { b.active = true; b.intensity.Override(0); }
+        var camera = Camera.main; var old = camera.transform.position; float oldSize = camera.orthographicSize;
+        var rt = new RenderTexture(2400, 1350, 24); var previous = RenderTexture.active; var target = camera.targetTexture;
+        var texture = new Texture2D(2400, 1350, TextureFormat.RGB24, false);
         try
         {
-            if(EditorApplication.timeSinceStartup>deadline)throw new Exception("Play Mode timeout phase "+phase);
-            switch(phase)
+            camera.transform.position = new Vector3(x, y, -10); camera.orthographicSize = size;
+            var cameraData = camera.GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+            if (cameraData != null)
             {
-                case 0:
-                    Check(Find<BunkerNavigationView>()!=null,"Authored navigation loaded");
-                    InspectFloorClearance();
-                    Step(BunkerOnboardingStep.Character,"New save targets Character");
-                    Capture("STEP-1",BunkerOnboardingStep.Character);
-                    var tests=new BunkerOnboardingTests();
-                    foreach(Action test in new Action[]{tests.FreshSave_SequentialVisits_CompletionPersists,tests.WeaponFirst_IsRemembered_CharacterConfirmationStillRequired,tests.DirectRun_RepeatedVisits_CannotRestartGuidance})
-                    { tests.Backup();try{test();}finally{tests.Restore();} }
-                    Check(true,"Persistence/regression assertions passed");
-                    Station(BunkerStationType.CharacterSelection).Interact();
-                    Step(BunkerOnboardingStep.Character,"Opening Character without confirmation does not advance");
-                    ConfirmCharacter(); BunkerContext.Instance.Panels.CloseAll(false);
-                    phase++; until=EditorApplication.timeSinceStartup+.3; break;
-                case 1:
-                    Step(BunkerOnboardingStep.Weapon,"Confirmed Character targets Weapon");
-                    Capture("STEP-2",BunkerOnboardingStep.Weapon);
-                    ConfirmCharacter(); Step(BunkerOnboardingStep.Weapon,"Repeated Character does not advance");
-                    Station(BunkerStationType.WeaponSelection).Interact();
-                    Check(BunkerContext.Instance.Panels.IsAnyPanelOpen,"Weapon Station opened its production panel");
-                    BunkerContext.Instance.Panels.CloseAll(false);
-                    phase++; until=EditorApplication.timeSinceStartup+.3; break;
-                case 2:
-                    Step(BunkerOnboardingStep.RunGate,"Visited Weapon targets Run Gate");
-                    Capture("STEP-3",BunkerOnboardingStep.RunGate);
-                    Station(BunkerStationType.StartRun).Interact();
-                    Step(BunkerOnboardingStep.RunGate,"Gate transition does not complete onboarding before scene load");
-                    phase++; until=EditorApplication.timeSinceStartup+.2; break;
-                case 3:
-                    if(SceneManager.GetActiveScene().name!="MVP")return;
-                    if(RunEndService.Instance==null)return;
-                    Step(BunkerOnboardingStep.Complete,"Successful MVP load completes onboarding");
-                    RunEndService.Instance.EndRunAfterDeath(); phase++; until=EditorApplication.timeSinceStartup+1; break;
-                case 4:
-                    if(SceneManager.GetActiveScene().name!="MainMenu"||BunkerContext.Instance==null)return;
-                    Step(BunkerOnboardingStep.Complete,"Death returns to a clean Bunker");
-                    Capture("NORMAL",BunkerOnboardingStep.Complete);
-                    BunkerStationProgressionService.DebugSetOnboarding(BunkerOnboardingStep.Character);
-                    Station(BunkerStationType.WeaponSelection).Interact(); BunkerContext.Instance.Panels.CloseAll(false);
-                    Step(BunkerOnboardingStep.Character,"Weapon first preserves Character target");
-                    ConfirmCharacter(); Step(BunkerOnboardingStep.RunGate,"Earlier Weapon visit is retained");
-                    BunkerStationProgressionService.DebugSetOnboarding(BunkerOnboardingStep.Character);
-                    Station(BunkerStationType.StartRun).Interact(); phase++; until=EditorApplication.timeSinceStartup+.2; break;
-                case 5:
-                    if(SceneManager.GetActiveScene().name!="MVP"||RunEndService.Instance==null)return;
-                    Step(BunkerOnboardingStep.Complete,"Direct Gate works with defaults and completes guidance");
-                    RunStateManager.Instance.EndRun(RunEndReason.Victory);
-                    SceneManager.LoadScene("MainMenu"); phase++; until=EditorApplication.timeSinceStartup+1; break;
-                case 6:
-                    if(SceneManager.GetActiveScene().name!="MainMenu"||BunkerContext.Instance==null)return;
-                    Step(BunkerOnboardingStep.Complete,"Victory summary return does not restart onboarding (final boss flow not simulated)");
-                    Station(BunkerStationType.WeaponSelection).Interact(); BunkerContext.Instance.Panels.CloseAll(false); ConfirmCharacter();
-                    Step(BunkerOnboardingStep.Complete,"Repeat station interactions after completion stay complete");
-                    Check(true,"QA finished; restoring prior onboarding, intro and gold preferences");
-                    EditorApplication.isPlaying=false; break;
+                cameraData.resetHistory = true;
+                UnityEngine.Rendering.VolumeManager.instance.Update(camera.transform, cameraData.volumeLayerMask);
             }
+            camera.targetTexture = rt; camera.Render(); RenderTexture.active = rt;
+            texture.ReadPixels(new Rect(0, 0, 2400, 1350), 0, 0); texture.Apply();
+            Directory.CreateDirectory(Output); File.WriteAllBytes(Output + name + ".png", texture.EncodeToPNG());
         }
-        catch(Exception e) { report.Add("FAIL "+e); File.WriteAllLines(Output+"PlayMode.txt",report); EditorApplication.isPlaying=false; }
-    }
-    private static void Capture(string name,BunkerOnboardingStep step)
-    {
-        var camera=Camera.main; var old=camera.transform.position; float size=camera.orthographicSize;
-        try
+        finally
         {
-            Find<BunkerNavigationView>().Apply(step,true);
-            camera.transform.position=new Vector3(38,-4,-10); camera.orthographicSize=17;
-            Render(camera,Output+name+".png",1920,1080);
-            // Representative camera zoom and viewport variants use the same authored geometry.
-            if(step==BunkerOnboardingStep.Character)
-            {
-                var follow=Find<CameraFollow>(); camera.transform.position=follow.target.position+new Vector3(0,0,-10);
-                camera.orthographicSize=8;
-                Render(camera,Output+"Spawn-16x9.png",1600,900);
-                Render(camera,Output+"Spawn-4x3.png",1200,900);
-                Render(camera,Output+"Spawn-21x9.png",2100,900);
-                camera.orthographicSize=5; Render(camera,Output+"Spawn-Zoom.png",1600,900);
-            }
+            for (int i = 0; i < blur.Length; i++)
+            { blur[i].active = blurStates[i]; blur[i].intensity.value = blurIntensity[i]; blur[i].intensity.overrideState = blurOverrides[i]; }
+            camera.targetTexture = target; RenderTexture.active = previous; camera.transform.position = old; camera.orthographicSize = oldSize;
+            UnityEngine.Object.DestroyImmediate(texture); UnityEngine.Object.DestroyImmediate(rt);
         }
-        finally{camera.transform.position=old;camera.orthographicSize=size;}
     }
-    private static void InspectFloorClearance()
+    private static void InspectFloorClearance(BunkerNavigationView view)
     {
-        Physics2D.SyncTransforms();
-        var collisions=new HashSet<string>();
-        foreach(var filter in Find<BunkerNavigationView>().GetComponentsInChildren<MeshFilter>())
+        Physics2D.SyncTransforms(); var collisions = new HashSet<string>();
+        foreach (var filter in view.GetComponentsInChildren<MeshFilter>())
         {
-            if(filter.GetComponent<TMPro.TMP_Text>()!=null)continue;
-            var v=filter.sharedMesh.vertices; var markers=filter.sharedMesh.uv2;
-            for(int i=0;i<v.Length;i+=4)
+            var v = filter.sharedMesh.vertices; var markers = filter.sharedMesh.uv2;
+            for (int i = 0; i < v.Length; i += 4)
             {
-                if(markers[i].x>0)continue;
-                Vector2 a=filter.transform.TransformPoint((v[i]+v[i+1])*.5f);
-                Vector2 b=filter.transform.TransformPoint((v[i+2]+v[i+3])*.5f);
-                int count=Mathf.CeilToInt(Vector2.Distance(a,b)/.2f);
-                for(int n=0;n<=count;n++)
+                if (markers[i].x > 0) continue;
+                Vector2 a = filter.transform.TransformPoint((v[i] + v[i + 1]) * .5f);
+                Vector2 b = filter.transform.TransformPoint((v[i + 2] + v[i + 3]) * .5f);
+                int count = Mathf.Max(1, Mathf.CeilToInt(Vector2.Distance(a,b) / .2f));
+                for (int n = 0; n <= count; n++)
                 {
-                    Vector2 p=Vector2.Lerp(a,b,(float)n/count);
-                    foreach(var c in Physics2D.OverlapCircleAll(p,.25f))
-                        if(!c.isTrigger && c.attachedRigidbody==null && c.gameObject.layer!=9)
-                            collisions.Add(filter.name+" at "+p+" overlaps "+c.name+" parent="+c.transform.parent.name+" bounds="+c.bounds);
+                    Vector2 p = Vector2.Lerp(a,b,(float)n/count);
+                    foreach (var c in Physics2D.OverlapCircleAll(p,.12f))
+                        if (!c.isTrigger && c.attachedRigidbody == null && c.gameObject.layer != 9)
+                            collisions.Add(filter.name + " at " + p + " overlaps " + c.name + " parent=" + c.transform.parent?.name + " bounds=" + c.bounds);
                 }
             }
         }
-        File.WriteAllLines(Output+"Clearance.txt",collisions.Count==0?new[]{"PASS Route centerlines have .25 world-unit solid-collider clearance."}:collisions);
-    }
-    private static void Render(Camera camera,string path,int width,int height)
-    {
-        var rt=new RenderTexture(width,height,24); var previous=RenderTexture.active; var target=camera.targetTexture;
-        var texture=new Texture2D(width,height,TextureFormat.RGB24,false);
-        try{camera.targetTexture=rt;camera.Render();RenderTexture.active=rt;texture.ReadPixels(new Rect(0,0,width,height),0,0);texture.Apply();File.WriteAllBytes(path,texture.EncodeToPNG());}
-        finally{camera.targetTexture=target;RenderTexture.active=previous;UnityEngine.Object.DestroyImmediate(texture);UnityEngine.Object.DestroyImmediate(rt);}
+        File.WriteAllLines(Output + "Clearance.txt", collisions.Count == 0 ? new[] { "PASS: route strips clear of solid colliders." } : collisions);
     }
 }

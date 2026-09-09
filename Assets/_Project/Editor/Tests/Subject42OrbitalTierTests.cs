@@ -113,7 +113,7 @@ public sealed class Subject42OrbitalTierTests
                 RenderTexture.active = target;
                 pixels.ReadPixels(new Rect(0, 0, 1024, 1024), 0, 0);
                 pixels.Apply();
-                string folder = System.IO.Path.GetFullPath("Artifacts/OrbitalTiers");
+                string folder = System.IO.Path.GetFullPath("Artifacts/GeneratedQA/OrbitalTiers");
                 System.IO.Directory.CreateDirectory(folder);
                 System.IO.File.WriteAllBytes(System.IO.Path.Combine(folder, $"mixed-{zoom:0.0}.png"), pixels.EncodeToPNG());
             }

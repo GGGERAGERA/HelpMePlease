@@ -32,7 +32,6 @@ namespace Subject42.Combat.OrbitalStation
             set => Cooldown = value;
         }
         protected float Power => (Mount?.Ring.PowerMultiplier ?? 1f) *
-            Station.Core.DamageMultiplier *
             Station.GetModuleMetaDamageMultiplier(Kind) *
             Station.GetModuleDamageMultiplier(StableModuleId);
 
@@ -112,11 +111,21 @@ namespace Subject42.Combat.OrbitalStation
         public virtual void Tick(float deltaTime)
         {
             Cooldown -= deltaTime;
+            if (Mount != null && Mount.Ring.Geometry.Type == OrbitalPathType.FigureEight)
+                presentation.DepthOpacity = Mathf.Lerp(1f, .6f,
+                    Mount.Ring.Geometry.BackAmount(Mount.Transform.localPosition));
             presentation.Tick();
         }
 
         public virtual void ActivateCombat() { }
-        public virtual void OnCorePulse() => ActivateCombat();
+        public virtual void OnCorePulse()
+        {
+            if (Mount == null) return;
+            float normalCooldown = Cooldown;
+            presentation.Trigger();
+            ActivateCombat();
+            Cooldown = normalCooldown;
+        }
         protected void TriggerPresentation() => presentation.Trigger();
         public void TriggerUpgradePresentation() => presentation.Trigger();
 
@@ -150,7 +159,7 @@ namespace Subject42.Combat.OrbitalStation
         public const float BaseDamage = 8f;
         public override OrbitalModuleKind Kind => OrbitalModuleKind.Pistol;
         public OrbitalPistolModule(OrbitalStationRuntime station, int stableModuleId) :
-            base(station, stableModuleId, new Color(0.35f, 0.95f, 1f)) { }
+            base(station, stableModuleId, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.Pistol)) { }
 
         // A turret keeps its last aim instead of inheriting the ring's spin.
         public override void UpdateVisualRotation(float radians) { }
@@ -178,10 +187,9 @@ namespace Subject42.Combat.OrbitalStation
                 return;
             AimAt(target.transform.position);
             Combat.SpawnProjectile(Visual.transform.position, target, 13f,
-                BaseDamage * Power, new Color(0.25f, 0.95f, 1f));
+                BaseDamage * Power, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.Pistol));
             TriggerPresentation();
-            Cooldown = 0.55f * Station.Core.CooldownMultiplier;
-            Station.FlashCore(new Color(0.25f, 0.95f, 1f));
+            Cooldown = 0.55f;
         }
     }
 
@@ -190,20 +198,24 @@ namespace Subject42.Combat.OrbitalStation
         public const float BaseDamage = 13f;
         public override OrbitalModuleKind Kind => OrbitalModuleKind.LaserSword;
         public OrbitalLaserSwordModule(OrbitalStationRuntime station, int stableModuleId) :
-            base(station, stableModuleId, new Color(1f, 0.25f, 0.8f)) { }
+            base(station, stableModuleId, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.LaserSword)) { }
 
         public override void Tick(float deltaTime)
         {
             base.Tick(deltaTime);
-            if (Cooldown > 0f || Mount == null)
-                return;
+            if (Cooldown <= 0f) ActivateCombat();
+        }
+
+        public override void ActivateCombat()
+        {
+            if (Mount == null) return;
             EnemyHealth target = Combat.FindNearest(Visual.transform.position, 0.75f);
             if (target != null)
             {
                 Combat.ApplyDamage(target, BaseDamage * Power,
                     Visual.transform.position);
                 TriggerPresentation();
-                Cooldown = 0.32f * Station.Core.CooldownMultiplier;
+                Cooldown = 0.32f;
             }
         }
     }
@@ -213,7 +225,7 @@ namespace Subject42.Combat.OrbitalStation
         public const float BaseDamage = 6f;
         public override OrbitalModuleKind Kind => OrbitalModuleKind.ImpulseGun;
         public OrbitalImpulseGunModule(OrbitalStationRuntime station, int stableModuleId) :
-            base(station, stableModuleId, new Color(1f, 0.75f, 0.2f)) { }
+            base(station, stableModuleId, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.ImpulseGun)) { }
 
         public override void Tick(float deltaTime)
         {
@@ -238,7 +250,7 @@ namespace Subject42.Combat.OrbitalStation
             if (body != null)
                 body.AddForce(direction * 4.5f *
                     Mount.Ring.PowerMultiplier, ForceMode2D.Impulse);
-            Cooldown = 1.25f * Station.Core.CooldownMultiplier;
+            Cooldown = 1.25f;
         }
     }
 
@@ -246,7 +258,7 @@ namespace Subject42.Combat.OrbitalStation
     {
         public override OrbitalModuleKind Kind => OrbitalModuleKind.ArcEmitter;
         public OrbitalArcEmitterModule(OrbitalStationRuntime station, int stableModuleId) :
-            base(station, stableModuleId, new Color(0.72f, 0.3f, 1f)) { }
+            base(station, stableModuleId, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.ArcEmitter)) { }
 
         public override void Tick(float deltaTime)
         {
@@ -266,13 +278,13 @@ namespace Subject42.Combat.OrbitalStation
             {
                 EnemyHealth target = targets[i];
                 Station.FlashLink(from, target.transform.position,
-                    new Color(0.72f, 0.3f, 1f), 0.12f);
+                    OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.ArcEmitter), 0.12f);
                 Combat.ApplyDamage(target, (7f - i * 1.25f) * Power,
                     target.transform.position);
                 from = target.transform.position;
             }
             if (targets.Count > 0)
-                Cooldown = 1.15f * Station.Core.CooldownMultiplier;
+                Cooldown = 1.15f;
         }
     }
 
@@ -280,7 +292,7 @@ namespace Subject42.Combat.OrbitalStation
     {
         public override OrbitalModuleKind Kind => OrbitalModuleKind.LinkNode;
         public OrbitalLinkNodeModule(OrbitalStationRuntime station, int stableModuleId) :
-            base(station, stableModuleId, new Color(0.85f, 0.25f, 1f)) { }
+            base(station, stableModuleId, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.LinkNode)) { }
         public override void Tick(float deltaTime) => base.Tick(deltaTime);
     }
 }

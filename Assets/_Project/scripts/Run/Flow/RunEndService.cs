@@ -38,7 +38,7 @@ public sealed class RunEndService : MonoBehaviour
 
     public void CompleteRunVictory()
     {
-        if (isEndingRun)
+        if (isEndingRun || !SceneTransitionOverlay.CanLoad(bunkerSceneName))
             return;
 
         RunStateManager runState = RunStateManager.EnsureExists();
@@ -54,47 +54,49 @@ public sealed class RunEndService : MonoBehaviour
             return;
         }
 
-        isEndingRun = true;
-        StopActiveGameplay();
-        runState.CommitCurrentSceneStats();
-        runState.RegisterCompletedLevel();
+        SceneTransitionOverlay.Load(bunkerSceneName, () =>
+        {
+            isEndingRun = true;
+            StopActiveGameplay();
+            runState.CommitCurrentSceneStats();
+            runState.RegisterCompletedLevel();
 
-        UnlockProgressService.Instance?.AddProgressByCondition(
-            UnlockConditionType.CompleteRun,
-            string.Empty,
-            1
-        );
+            UnlockProgressService.Instance?.AddProgressByCondition(
+                UnlockConditionType.CompleteRun,
+                string.Empty,
+                1
+            );
 
-        RunSummary summary = runState.EndRun(RunEndReason.Victory);
-        ClearActiveSectorEffects();
+            RunSummary summary = runState.EndRun(RunEndReason.Victory);
+            ClearActiveSectorEffects();
 
-        Debug.Log(
-            $"[RunEndService] Victory. Returning to bunker. " +
-            $"Gold earned: {summary?.GoldEarned ?? 0}"
-        );
+            Debug.Log(
+                $"[RunEndService] Victory. Returning to bunker. " +
+                $"Gold earned: {summary?.GoldEarned ?? 0}"
+            );
 
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(bunkerSceneName);
+        });
     }
 
     private void EndRun(RunEndReason reason)
     {
-        if (isEndingRun)
+        if (isEndingRun || !SceneTransitionOverlay.CanLoad(bunkerSceneName))
             return;
 
-        isEndingRun = true;
+        SceneTransitionOverlay.Load(bunkerSceneName, () =>
+        {
+            isEndingRun = true;
 
-        RunStateManager runState = RunStateManager.EnsureExists();
-        StopActiveGameplay();
-        RunSummary summary = runState.EndRun(reason);
+            RunStateManager runState = RunStateManager.EnsureExists();
+            StopActiveGameplay();
+            RunSummary summary = runState.EndRun(reason);
 
-        Debug.Log(
-            $"[RunEndService] Returning to bunker. " +
-            $"Gold earned: {summary?.GoldEarned ?? 0}"
-        );
+            Debug.Log(
+                $"[RunEndService] Returning to bunker. " +
+                $"Gold earned: {summary?.GoldEarned ?? 0}"
+            );
 
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(bunkerSceneName);
+        });
     }
 
     private static void StopActiveGameplay()

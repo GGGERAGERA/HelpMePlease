@@ -1,79 +1,49 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Subject42.Combat.OrbitalStation
 {
-    /// <summary>Session-cached presentation only; never instantiates weapon prefabs.</summary>
+    /// <summary>Module presentation is authored once on its visual prefab.</summary>
     public static class OrbitalRewardIconResolver
     {
         public readonly struct Icon
         {
             public readonly Sprite Sprite;
             public readonly Color Tint;
-
-            public Icon(Sprite sprite, Color tint)
-            {
-                Sprite = sprite;
-                Tint = tint;
-            }
+            public Icon(Sprite sprite, Color tint) { Sprite = sprite; Tint = tint; }
         }
 
-        private static Dictionary<OrbitalRewardKind, Icon> icons;
-        private static Icon fallback;
-
-        public static Icon Resolve(OrbitalRewardKind kind)
+        public static Icon Resolve(OrbitalModuleKind kind)
         {
-            EnsureInitialized();
-            return icons.TryGetValue(kind, out Icon icon) && icon.Sprite != null
-                ? icon : fallback;
+            var view = OrbitalPresentationConfig.Active.GetPrefab(kind).GetComponent<OrbitalModuleView>();
+            return new Icon(view.Icon, view.IconTint);
         }
+
+        public static Color ModuleColor(OrbitalModuleKind kind) => Resolve(kind).Tint;
+
+        public static Icon Resolve(OrbitalRewardKind kind) => kind switch
+        {
+            OrbitalRewardKind.Pistol => Resolve(OrbitalModuleKind.Pistol),
+            OrbitalRewardKind.LaserSword => Resolve(OrbitalModuleKind.LaserSword),
+            OrbitalRewardKind.ImpulseGun => Resolve(OrbitalModuleKind.ImpulseGun),
+            OrbitalRewardKind.ArcEmitter => Resolve(OrbitalModuleKind.ArcEmitter),
+            OrbitalRewardKind.LinkPair => Resolve(OrbitalModuleKind.LinkNode),
+            OrbitalRewardKind.ModuleDamage => Resolve(OrbitalModuleKind.Pistol),
+            OrbitalRewardKind.CoreUpgrade => new Icon(OrbitalPresentationConfig.Active.CoreIcon, Color.white),
+            OrbitalRewardKind.AddMount => new Icon(OrbitalPresentationConfig.Active.NewMountIcon, Color.white),
+            OrbitalRewardKind.RingCapacity => new Icon(OrbitalPresentationConfig.Active.RingCapacityIcon, Color.white),
+            OrbitalRewardKind.RingPower => new Icon(OrbitalPresentationConfig.Active.RingDamageIcon, Color.white),
+            OrbitalRewardKind.RingSpeed => new Icon(OrbitalPresentationConfig.Active.RingSpeedIcon, Color.white),
+            OrbitalRewardKind.NewRing => new Icon(OrbitalPresentationConfig.Active.NewRingIcon, Color.white),
+            // ART REQUIRED: no unrelated circle/ring placeholders in production cards.
+            _ => new Icon(null, Color.white)
+        };
 
         public static Icon Resolve(OrbitalRewardData reward)
         {
-            Icon icon = Resolve(reward.RewardKind);
-            // Read the existing subject icon without modifying the legacy asset.
-            if ((reward.RewardKind == OrbitalRewardKind.MaxHealth ||
-                 reward.RewardKind == OrbitalRewardKind.MoveSpeed) &&
-                reward.BodyUpgrade != null && reward.BodyUpgrade.icon != null)
+            if ((reward.RewardKind == OrbitalRewardKind.MaxHealth || reward.RewardKind == OrbitalRewardKind.MoveSpeed) &&
+                reward.BodyUpgrade != null)
                 return new Icon(reward.BodyUpgrade.icon, Color.white);
-            return icon;
-        }
-
-        private static void EnsureInitialized()
-        {
-            if (icons != null && fallback.Sprite != null)
-                return;
-
-            icons = new Dictionary<OrbitalRewardKind, Icon>();
-            OrbitalPresentationConfig config = OrbitalPresentationConfig.Active;
-            if (config == null) return;
-            Sprite circle = config.CircleSprite;
-            fallback = new Icon(circle, new Color(0.72f, 0.25f, 1f));
-            icons[OrbitalRewardKind.CoreUpgrade] = fallback;
-            icons[OrbitalRewardKind.LinkMatrix] = fallback;
-            icons[OrbitalRewardKind.MaxHealth] = fallback;
-            icons[OrbitalRewardKind.MoveSpeed] = fallback;
-            icons[OrbitalRewardKind.AddMount] =
-                new Icon(circle, new Color(0.72f, 0.8f, 0.85f));
-            Icon ring = new(config.RingIcon, Color.HSVToRGB(0.51f, 0.72f, 1f));
-            icons[OrbitalRewardKind.RingSpeed] = ring;
-            icons[OrbitalRewardKind.RingPower] = ring;
-            foreach (OrbitalModuleKind module in System.Enum.GetValues(typeof(OrbitalModuleKind)))
-            {
-                var prefab = config.GetPrefab(module);
-                if (prefab == null || !prefab.TryGetComponent<OrbitalModuleView>(out var view)) continue;
-                OrbitalRewardKind reward = module == OrbitalModuleKind.LinkNode ? OrbitalRewardKind.LinkPair :
-                    (OrbitalRewardKind)System.Enum.Parse(typeof(OrbitalRewardKind), module.ToString());
-                icons[reward] = new Icon(view.Icon, view.IconTint);
-            }
-            icons[OrbitalRewardKind.ModuleDamage] = icons[OrbitalRewardKind.Pistol];
-        }
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetCache()
-        {
-            icons = null;
-            fallback = default;
+            return Resolve(reward.RewardKind);
         }
     }
 }

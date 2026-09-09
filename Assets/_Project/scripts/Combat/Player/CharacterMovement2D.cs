@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
 {
@@ -111,6 +111,7 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
 
     void Update()
     {
+        if (SceneTransitionOverlay.IsTransitioning) { moveInput = Vector2.zero; return; }
         moveInput = new Vector2(
             Input.GetAxisRaw("Horizontal"),
             Input.GetAxisRaw("Vertical")
@@ -216,6 +217,7 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
 
     private void FixedUpdate()
     {
+        if (SceneTransitionOverlay.IsTransitioning) { if (rb != null) rb.linearVelocity = Vector2.zero; return; }
         if (rb == null)
             return;
 

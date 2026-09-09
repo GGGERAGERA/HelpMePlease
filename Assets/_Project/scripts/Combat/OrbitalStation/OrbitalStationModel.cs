@@ -9,11 +9,19 @@ namespace Subject42.Combat.OrbitalStation
         private float pulseTimer;
         private int cascadeIndex = -1;
         private float cascadeTimer;
+        private int activationLevel;
+        private int wave;
+        private bool charging;
+        public event System.Action<int, int> WaveStarted;
+        public event System.Action<OrbitalRingRuntime, int, int> RingActivated;
+        public float Charge => charging ? 1f - Mathf.Clamp01(cascadeTimer /
+            OrbitalProgressionConfig.Default.CoreChargeDuration) : 0f;
 
         public int Level => state.Level;
-        public float DamageMultiplier => state.DamageMultiplier;
-        public float CooldownMultiplier => state.CooldownMultiplier;
-        public bool CascadeActive => Level > 0 && cascadeIndex >= 0;
+        // Legacy API: persisted stat fields never influence production combat.
+        public float DamageMultiplier => 1f;
+        public float CooldownMultiplier => 1f;
+        public bool CascadeActive => activationLevel > 0;
 
         public OrbitalCoreRuntime(OrbitalCoreState coreState)
         {
@@ -23,25 +31,47 @@ namespace Subject42.Combat.OrbitalStation
         public void Tick(float deltaTime, IReadOnlyList<OrbitalRingRuntime> rings)
         {
             if (Level <= 0 || rings.Count == 0)
-                return;
-            pulseTimer += deltaTime;
-            if (cascadeIndex < 0 && pulseTimer >= Mathf.Max(2.8f, 6f - Level * 0.35f))
             {
-                pulseTimer = 0f;
-                cascadeIndex = 0;
-                cascadeTimer = 0f;
+                Reset();
+                return;
             }
-            if (cascadeIndex < 0)
-                return;
-            cascadeTimer -= deltaTime;
-            if (cascadeTimer > 0f)
-                return;
-            OrbitalRingRuntime ring = rings[cascadeIndex];
-            ring.Pulse();
-            cascadeIndex++;
-            cascadeTimer = 0.12f;
-            if (cascadeIndex >= rings.Count)
+            if (deltaTime <= 0f) return;
+            var config = OrbitalProgressionConfig.Default;
+            pulseTimer += deltaTime;
+            if (!CascadeActive)
+            {
+                if (pulseTimer < config.GetCoreInterval(Level)) return;
+                float overshoot = pulseTimer - config.GetCoreInterval(Level);
+                pulseTimer = overshoot;
+                activationLevel = Level;
+                wave = 0;
+                charging = true;
                 cascadeIndex = -1;
+                cascadeTimer = config.CoreChargeDuration - overshoot;
+            }
+            else cascadeTimer -= deltaTime;
+            while (CascadeActive && cascadeTimer <= 0f)
+            {
+                if (cascadeIndex < 0)
+                {
+                    charging = false;
+                    wave++;
+                    WaveStarted?.Invoke(activationLevel, wave);
+                    cascadeIndex = 0;
+                    cascadeTimer += config.CoreRingDelay;
+                    continue;
+                }
+                OrbitalRingRuntime ring = rings[cascadeIndex++];
+                ring.Pulse();
+                RingActivated?.Invoke(ring, activationLevel, wave);
+                if (cascadeIndex < rings.Count) cascadeTimer += config.CoreRingDelay;
+                else if (wave < activationLevel)
+                {
+                    cascadeIndex = -1;
+                    cascadeTimer += config.CoreWaveSpacing;
+                }
+                else activationLevel = 0;
+            }
         }
 
         public void Reset()
@@ -49,6 +79,8 @@ namespace Subject42.Combat.OrbitalStation
             pulseTimer = 0f;
             cascadeIndex = -1;
             cascadeTimer = 0f;
+            activationLevel = wave = 0;
+            charging = false;
         }
     }
 
@@ -61,7 +93,16 @@ namespace Subject42.Combat.OrbitalStation
         private bool interactionEligible;
         private bool interactionHovered;
         private bool interactionDimmed;
+        private int coreLevel;
+        private Color coreColor;
+        private float coreTime;
+        public void SetCoreVisual(int level, Color color)
+        {
+            coreLevel = level;
+            coreColor = color;
+        }
 
+        public OrbitalPathGeometry Geometry { get; }
         public OrbitalRingState State { get; }
 
         public int RingId => State.StableRingId;
@@ -71,7 +112,8 @@ namespace Subject42.Combat.OrbitalStation
                 State.SpeedUpgradeLevel);
         public int Direction => State.Direction;
         public float Phase => State.CurrentPhase;
-        public int MountCapacity => Mounts.Count;
+        public int MountCapacity => State.MountCapacity;
+        public int MountCount => State.MountCount;
         public float PowerMultiplier => State.PowerMultiplier;
         public int VisualTier => State.VisualTier;
         public Color AccentColor => view.AccentColor;
@@ -79,16 +121,18 @@ namespace Subject42.Combat.OrbitalStation
 
         public OrbitalRingRuntime(OrbitalRingState state,
             Transform root, Material material, Sprite sprite,
-            bool animateSpawn = false)
+            bool animateSpawn = false, OrbitalPathGeometry geometry = null)
         {
             State = state;
+            Geometry = geometry ?? OrbitalPathGeometry.Circle;
             view = Object.Instantiate(OrbitalPresentationConfig.Active.RingPrefab, root, false);
             if (!view.IsValid) throw new System.InvalidOperationException("authored ring references missing");
             spawnScale = animateSpawn ? 0.05f : 1f;
+            view.InitializeGeometry(Geometry);
             view.InitializeTier(VisualTier);
             view.UpdateTierAppearance(VisualTier, Radius * spawnScale, 0f, 0f, false,
-                State.Order == 0, 0f);
-            for (int i = 0; i < Mathf.Max(1, State.MountCapacity); i++)
+                Geometry.Type == OrbitalPathType.FigureEight || State.Order == 0, 0f);
+            for (int i = 0; i < State.MountCount; i++)
                 Mounts.Add(new OrbitalMountRuntime(this, i, view.MountsRoot, sprite));
             RebalanceMounts();
         }
@@ -98,6 +142,8 @@ namespace Subject42.Combat.OrbitalStation
             State.CurrentPhase = Mathf.Repeat(
                 State.CurrentPhase + RotationSpeed * Direction * deltaTime, 360f);
             pulse = Mathf.MoveTowards(pulse, 0f, deltaTime * 2.5f);
+            coreTime += deltaTime;
+            view.SetCoreEnergy(coreLevel, coreColor, pulse, coreTime);
             spawnScale = Mathf.MoveTowards(spawnScale, 1f,
                 Time.unscaledDeltaTime * 2.8f);
             float interactionPulse = interactionEligible
@@ -107,7 +153,7 @@ namespace Subject42.Combat.OrbitalStation
                 (interactionEligible ? .5f + interactionPulse * .5f : 0f) +
                 (interactionHovered ? 1f : 0f);
             view.UpdateTierAppearance(VisualTier, Radius * spawnScale, pulse, highlight,
-                interactionDimmed, State.Order == 0, Time.unscaledDeltaTime);
+                interactionDimmed, Geometry.Type == OrbitalPathType.FigureEight || State.Order == 0, Time.unscaledDeltaTime);
             for (int i = 0; i < Mounts.Count; i++)
                 Mounts[i].UpdatePosition(State.CurrentPhase, Radius * spawnScale);
         }
@@ -197,11 +243,12 @@ namespace Subject42.Combat.OrbitalStation
         {
             if (root == null)
                 return;
-            float radians = (ringPhase + LocalPhase) * Mathf.Deg2Rad;
-            root.localPosition = new Vector3(
-                Mathf.Cos(radians) * radius, Mathf.Sin(radians) * radius, 0f);
-            view.UpdateDepth(root.localPosition.y, Ring.State.Order == 0);
-            Module?.UpdateVisualRotation(radians);
+            root.localPosition = Ring.Geometry.PositionDegrees(ringPhase + LocalPhase, radius);
+            if (Ring.Geometry.Type == OrbitalPathType.FigureEight)
+                view.UpdateFigureEightDepth(Ring.Geometry.IsBehind(root.localPosition));
+            else
+                view.UpdateDepth(root.localPosition.y, Ring.State.Order == 0);
+            Module?.UpdateVisualRotation(Ring.Geometry.Rotation(ringPhase + LocalPhase));
             SetVisualState(visualState);
         }
 

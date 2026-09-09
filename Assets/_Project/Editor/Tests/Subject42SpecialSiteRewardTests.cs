@@ -84,20 +84,28 @@ public sealed class Subject42SpecialSiteRewardTests
     }
 
     [UnityTest]
-    public IEnumerator SpecialSitesUseOneOrbitalQueueThroughCancelCommitTransitionAndRestart()
+    public IEnumerator SpecialSitesGrantRingsAndUseExistingQueueAtCap()
     {
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
         yield return new EnterPlayMode();
         yield return ExerciseRun();
     }
 
-    private static IEnumerator ExerciseRun()
+    [UnityTest]
+    public IEnumerator Vika_SpecialSitesGrantFigureEightRings()
+    {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        yield return new EnterPlayMode();
+        yield return ExerciseRun("Vika");
+    }
+
+    private static IEnumerator ExerciseRun(string characterName = "Gera")
     {
         yield return SceneManager.LoadSceneAsync("MainMenu");
-        yield return Await(() => Object.FindFirstObjectByType<BunkerRunStarter>() != null);
+        yield return Await(() => Object.FindFirstObjectByType<BunkerRunStarter>() != null && !SceneTransitionOverlay.IsTransitioning);
         var character = AssetDatabase.FindAssets("t:CharacterData")
             .Select(id => AssetDatabase.LoadAssetAtPath<CharacterData>(AssetDatabase.GUIDToAssetPath(id)))
-            .First(c => c.characterPrefab != null);
+            .First(c => c.characterName == characterName);
         RunSelectionManager.Instance.SelectCharacter(character);
         var starter = Object.FindFirstObjectByType<BunkerRunStarter>();
         starter.StartRun((Transform)Get(starter, "cameraRig"));
@@ -105,6 +113,8 @@ public sealed class Subject42SpecialSiteRewardTests
             ProductionAnomalySite.ActiveSites.Count == 4);
         OrbitalStationRuntime station = null;
         yield return Await(() => (station = Object.FindFirstObjectByType<OrbitalStationRuntime>()) != null && station.IsInitialized);
+        yield return Await(() => !SceneTransitionOverlay.IsTransitioning);
+        Assert.That(station.Geometry.Type, Is.EqualTo(character.orbitalPath));
         station.enabled = false; // Stable snapshot; production input/placement controllers remain enabled.
         var spawner = Object.FindFirstObjectByType<CharacterSpawner>();
         Assert.That(spawner, Is.Not.Null, "production CharacterSpawner");
@@ -143,11 +153,11 @@ public sealed class Subject42SpecialSiteRewardTests
             .Select(id => AssetDatabase.LoadAssetAtPath<StageProfileData>(AssetDatabase.GUIDToAssetPath(id)))
             .First(p => p.SectorNumber == 2);
         var next = new RunSector(2, stage, runState.CurrentSector.WorldRule, runState.CurrentSector.LocalAnomaly);
-        int index = 0;
+        System.IO.Directory.CreateDirectory(Subject42RewardProgressionTests.Output);
         foreach (var type in new[] { AnomalyPowerType.GravityOrb, AnomalyPowerType.ArcNode, AnomalyPowerType.RedBeam })
         {
-            station.AddRing();
-            int ringId = station.Rings.Last().RingId;
+            int ringCount = station.State.Rings.Count;
+            station.State.BeginLevelUpOpportunity(station.State.LastProcessedPlayerLevel + 1, .99f);
             var site = new GameObject("Special Site Reward Test " + type).AddComponent<ProductionAnomalySite>();
             Assert.That(site.InitializeSpecial(position, size, type, capturePrefab, events,
                 LevelAnomalyController.Instance, exploration.gameObject, config, exitPosition, config.ExitRadius), Is.True);
@@ -161,53 +171,55 @@ public sealed class Subject42SpecialSiteRewardTests
             yield return Await(() => site.IsCompleted);
             Assert.That(Get(site, "specialEnvironment"), Is.Null, "hazard collapsed before reward placement");
             Assert.That(site.IsMapVisible, Is.False);
-            Assert.That(upgrades.IsRewardQueueIdle, Is.False);
-            Assert.That(upgrades.DebugCurrentChoices.All(c => c is OrbitalRewardData), Is.True);
-            // Repeated completion notifications must not create another queued reward.
+            Assert.That(upgrades.IsRewardQueueIdle, Is.True, "special reward is not a random card");
+            Assert.That(station.State.Rings.Count, Is.EqualTo(ringCount + 1));
+            Assert.That(station.State.RingOfferMissCount, Is.Zero);
             Call(site, "HandleEventCompleted", encounter);
             Call(site, "HandleEventCompleted", new object[] { null });
-            Assert.That(((ICollection)Get(upgrades, "pendingChoices")).Count, Is.Zero);
-            string before = Subject42OrbitalRestoreTests.Snapshot(station.State);
-            var kind = index++ == 1 ? OrbitalRewardKind.LinkPair : OrbitalRewardKind.ArcEmitter;
-            Select(upgrades, kind);
-            Assert.That(station.GetComponent<OrbitalInteractionController>().TryConsumeEscape(), Is.True);
-            Assert.That(Subject42OrbitalRestoreTests.Snapshot(station.State), Is.EqualTo(before));
-            Assert.That(upgrades.IsRewardQueueIdle, Is.False);
+            Assert.That(station.State.Rings.Count, Is.EqualTo(ringCount + 1), "duplicate completion");
             yield return null;
-            Select(upgrades, kind);
-            Assert.That(station.RewardFlow.DebugChooseMount(ringId, 0), Is.True);
-            var sceneHandle = SceneManager.GetActiveScene().handle;
-            Call(Object.FindFirstObjectByType<LevelChoiceManager>(), "TransitionToSector", next);
-            Assert.That(SceneManager.GetActiveScene().handle, Is.EqualTo(sceneHandle));
-            Assert.That(runState.CurrentSector.SectorNumber, Is.EqualTo(1));
-            Call(station.GetComponent<OrbitalInteractionController>(), "CancelActive"); // Same cancellation path as RMB.
-            Assert.That(Subject42OrbitalRestoreTests.Snapshot(station.State), Is.EqualTo(before));
-            Assert.That(upgrades.IsRewardQueueIdle, Is.False);
-            Select(upgrades, kind);
-            station.RewardFlow.DebugChooseMount(ringId, 0);
-            if (kind == OrbitalRewardKind.LinkPair)
+            float settleUntil = Time.realtimeSinceStartup + .5f;
+            while (Time.realtimeSinceStartup < settleUntil)
             {
-                yield return Await(() => station.RewardFlow.State == OrbitalRewardFlowState.SecondLinkPlacement);
-                Assert.That(Subject42OrbitalRestoreTests.Snapshot(station.State), Is.EqualTo(before));
-                Call(station.GetComponent<OrbitalInteractionController>(), "CancelActive");
-                Assert.That(Subject42OrbitalRestoreTests.Snapshot(station.State), Is.EqualTo(before));
-                Select(upgrades, kind);
-                station.RewardFlow.DebugChooseMount(ringId, 0);
-                yield return Await(() => station.RewardFlow.State == OrbitalRewardFlowState.SecondLinkPlacement);
-                station.RewardFlow.DebugChooseMount(ringId, 1);
+                // Station simulation is frozen for snapshot equality; still let
+                // its real unscaled ring presentation finish the acquisition.
+                foreach (var ring in station.Rings) ring.Tick(0f);
+                yield return null;
             }
-            yield return Await(() => upgrades.IsRewardQueueIdle);
-            Assert.That(Time.timeScale, Is.EqualTo(1f));
+            ScreenCapture.CaptureScreenshot(Subject42RewardProgressionTests.Output + "strong-anomaly-" + type + ".png");
+            yield return null;
             AssertNoLegacy(station);
             Object.Destroy(site.gameObject);
             yield return null;
         }
+        // At cap use the same normal random reward queue, without a ninth ring.
+        while (station.AddRing() != null) { }
+        Assert.That(station.AddMount(1, out _), Is.True);
+        Assert.That(upgrades.DebugForceOrbitalReward(OrbitalRewardKind.Pistol), Is.True);
+        upgrades.DebugSelectCurrentChoice(0);
+        station.RewardFlow.DebugChooseMount(1, 1);
+        upgrades.GrantSpecialAnomalyRing();
+        bool transitionAllowed = false;
+        upgrades.RunWhenRewardQueueIsIdle(() => transitionAllowed = true);
+        yield return Await(() => station.RewardFlow.PendingReward == null && upgrades.DebugCurrentChoices.Count > 1);
+        Assert.That(transitionAllowed, Is.False, "fallback hand must retain transition barrier");
+        Assert.That(upgrades.IsChoosingUpgrade, Is.True);
+        Assert.That(upgrades.DebugCurrentChoices.OfType<OrbitalRewardData>().Any(r => r.RewardKind == OrbitalRewardKind.NewRing), Is.False);
+        Select(upgrades, OrbitalRewardKind.ArcEmitter);
+        Call(station.GetComponent<OrbitalInteractionController>(), "CancelActive");
+        Assert.That(station.State.Rings.Count, Is.EqualTo(8));
+        Select(upgrades, OrbitalRewardKind.ArcEmitter);
+        int freeRing = station.State.Rings.First(r => station.State.HasFreeMount(r.StableRingId)).StableRingId;
+        int freeMount = Enumerable.Range(0, station.State.FindRing(freeRing).MountCount).First(m => station.State.IsMountFree(freeRing, m));
+        station.RewardFlow.DebugChooseMount(freeRing, freeMount);
+        yield return Await(() => upgrades.IsRewardQueueIdle);
+        Assert.That(transitionAllowed, Is.True);
         string committed = Subject42OrbitalRestoreTests.Snapshot(station.State);
         var previousScene = SceneManager.GetActiveScene().handle;
         Call(Object.FindFirstObjectByType<LevelChoiceManager>(), "TransitionToSector", next);
         yield return Await(() => SceneManager.GetActiveScene().handle != previousScene &&
             Object.FindFirstObjectByType<OrbitalStationRuntime>() != null &&
-            Object.FindFirstObjectByType<OrbitalStationRuntime>().IsInitialized);
+            Object.FindFirstObjectByType<OrbitalStationRuntime>().IsInitialized && !SceneTransitionOverlay.IsTransitioning);
         station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
         string WithoutLivePhase(string snapshot) => System.Text.RegularExpressions.Regex.Replace(
             snapshot, @"CurrentPhase=[^,}]+", "CurrentPhase=<live>");
@@ -218,12 +230,12 @@ public sealed class Subject42SpecialSiteRewardTests
         // Exit with an unresolved reward, then start a clean run from the bunker.
         UpgradeManager.Instance.ShowUpgradeChoices();
         RunEndService.Instance.ReturnToBunker();
-        yield return Await(() => Object.FindFirstObjectByType<BunkerRunStarter>() != null);
+        yield return Await(() => Object.FindFirstObjectByType<BunkerRunStarter>() != null && !SceneTransitionOverlay.IsTransitioning);
         RunSelectionManager.Instance.SelectCharacter(character);
         starter = Object.FindFirstObjectByType<BunkerRunStarter>();
         starter.StartRun((Transform)Get(starter, "cameraRig"));
         yield return Await(() => Object.FindFirstObjectByType<OrbitalStationRuntime>() != null &&
-            Object.FindFirstObjectByType<OrbitalStationRuntime>().IsInitialized);
+            Object.FindFirstObjectByType<OrbitalStationRuntime>().IsInitialized && !SceneTransitionOverlay.IsTransitioning);
         station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
         Assert.That(station.State.Modules.Count, Is.EqualTo(1));
         Assert.That(UpgradeManager.Instance.IsRewardQueueIdle, Is.True);

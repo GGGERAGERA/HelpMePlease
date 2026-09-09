@@ -44,12 +44,12 @@ public sealed class Subject42OrbitalRestoreTests
             case "null ring": s.Rings.Add(null); break;
             case "null module": s.Modules.Add(null); break;
             case "duplicate ring": s.AddRing().StableRingId = 1; break;
-            case "duplicate module": s.InstallModule(OrbitalModuleKind.ArcEmitter, 1, 1, out var m); m.StableModuleId = 1; break;
+            case "duplicate module": s.AddMount(1, out _); s.InstallModule(OrbitalModuleKind.ArcEmitter, 1, 1, out var m); m.StableModuleId = 1; break;
             case "ring ID": s.Rings[0].StableRingId = 0; break;
             case "module ID": s.Modules[0].StableModuleId = 0; break;
             case "missing ring": s.Modules[0].StableRingId = 99; break;
             case "mount": s.Modules[0].MountIndex = 3; break;
-            case "occupancy": s.InstallModule(OrbitalModuleKind.ArcEmitter, 1, 1, out var other); other.MountIndex = 0; break;
+            case "occupancy": s.AddMount(1, out _); s.InstallModule(OrbitalModuleKind.ArcEmitter, 1, 1, out var other); other.MountIndex = 0; break;
             case "ring allocator": s.NextStableRingId = 1; break;
             case "module allocator": s.NextStableModuleId = 1; break;
             case "enum": s.Modules[0].ModuleType = (OrbitalModuleKind)99; break;
@@ -116,6 +116,7 @@ public sealed class Subject42OrbitalRestoreTests
         Assert.That(state.AddMount(1, out _), Is.True);
         Assert.That(state.UpgradeCore(), Is.True);
         Assert.That(state.UpgradeModuleDamage(module.StableModuleId), Is.True);
+        Assert.That(state.AddMount(1, out _), Is.True);
         Assert.That(state.MoveModule(module.StableModuleId, 1, 2, out _), Is.True);
         state.SetPhase(1, 17.5f);
         state.SetPhase(second.StableRingId, 81.25f);

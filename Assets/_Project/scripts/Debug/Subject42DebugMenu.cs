@@ -2670,7 +2670,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             return;
         }
         int mounts = runState != null
-            ? runState.Rings.Sum(value => value.MountCapacity)
+            ? runState.Rings.Sum(value => value.MountCount)
             : 0;
         AddSectionTitle("RUN STATE", "Data owned by the current RunStateManager");
         AddRow("Initialized", runState?.IsInitialized == true ? "YES" : "NO",
@@ -2735,8 +2735,6 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         ExperienceManager experience = ExperienceManager.Instance;
         UpgradeManager rewards = UpgradeManager.Instance;
         int playerLevel = experience != null ? experience.CurrentLevel : 1;
-        int nextMilestone = OrbitalProgressionConfig.Default
-            .GetNextRingMilestone(playerLevel);
         int freeMounts = runState != null
             ? mounts - runState.Modules.Count
             : 0;
@@ -2744,8 +2742,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             ? station.RewardFlow.CompactStatus
             : "NO FLOW";
         AddSectionTitle("REWARD FLOW", "Production level-up provider and arena targeting");
-        AddRow("Player / Next Ring", $"LV {playerLevel} / " +
-            (nextMilestone > 0 ? $"LV {nextMilestone}" : "MAX"),
+        AddRow("Player / Ring offer", $"LV {playerLevel} / " +
+            $"{OrbitalProgressionConfig.Default.GetRingOfferChance(runState?.RingOfferMissCount ?? 0):P0}",
             mutedColor, string.Empty, false, null);
         AddRow("Free Mounts", freeMounts.ToString(), mutedColor,
             string.Empty, false, null);
@@ -2775,16 +2773,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             OrbitalRewardKind.CoreUpgrade, rewards);
         AddOrbitalRewardDebugRow("Force Link Matrix",
             OrbitalRewardKind.LinkMatrix, rewards);
-        AddRow("Advance To Next Ring Milestone",
-            nextMilestone > 0 ? $"LEVEL {nextMilestone}" : "MAX RINGS",
-            accentColor, "ADVANCE", experience != null && nextMilestone > 0,
-            () =>
-            {
-                CloseMenu();
-                experience.RestoreRuntimeExperience(nextMilestone - 1, 0);
-                experience.AddExperience(
-                    experience.GetRequiredExpForCurrentLevel());
-            });
+        AddOrbitalRewardDebugRow("Force New Ring", OrbitalRewardKind.NewRing, rewards);
         AddRow("Reset Orbital Progression", "BASE STATION / REWARD IDLE",
             warningColor, "RESET", available &&
                 (rewards == null || !rewards.IsChoosingUpgrade), () =>
@@ -4182,17 +4171,6 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void AddRoomStateRows()
     {
-        AddSectionTitle("BUNKER ONBOARDING", BunkerStationProgressionService.OnboardingStep.ToString());
-        AddRow("Reset Onboarding", "First visit", accentColor, "RESET", true,
-            () => { BunkerStationProgressionService.DebugSetOnboarding(BunkerOnboardingStep.Character); RefreshCurrentTab(); });
-        foreach (BunkerOnboardingStep step in Enum.GetValues(typeof(BunkerOnboardingStep)))
-        {
-            BunkerOnboardingStep target = step;
-            string label = step == BunkerOnboardingStep.Complete ? "Complete Onboarding" : "Step: " + step;
-            AddRow(label, "Saved", mutedColor, "SET", true,
-                () => { BunkerStationProgressionService.DebugSetOnboarding(target); RefreshCurrentTab(); });
-        }
-
         AddSectionTitle("ROOM ACCESS", "Runtime only; values are not saved");
         BunkerRoomAccess[] rooms =
             FindObjectsByType<BunkerRoomAccess>(FindObjectsSortMode.None);

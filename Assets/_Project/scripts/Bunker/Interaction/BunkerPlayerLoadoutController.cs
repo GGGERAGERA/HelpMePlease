@@ -21,6 +21,7 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
     private BaseWeapon activeWeapon;
     private CharacterData activeCharacter;
     private float fallbackMoveSpeed;
+    public bool IsReady => player != null && selection != null && activeCharacter != null;
 
     private void Start()
     {

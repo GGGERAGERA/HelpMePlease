@@ -55,6 +55,7 @@ public sealed class Subject42OrbitalOperationsTests
     public void RejectedCommand_PreservesEveryField(string kind)
     {
         var s = OrbitalRunState.CreateDefault(1);
+        s.AddMount(1, out _); s.AddMount(1, out _);
         s.InstallModule(OrbitalModuleKind.ArcEmitter, 1, 1, out _);
         Func<bool> command = kind switch
         {
@@ -91,19 +92,19 @@ public sealed class Subject42OrbitalOperationsTests
     }
 
     [Test]
-    public void Milestone_CommitsOnce_AndDuplicateDoesNothing()
+    public void LevelOpportunity_CommitsOnce_WithoutAutomaticRing()
     {
         var state = OrbitalRunState.CreateDefault(1);
         int revision = state.Revision;
-        Assert.That(state.ProcessPlayerLevelMilestone(2, out var ring), Is.True);
-        Assert.That(ring.StableRingId, Is.EqualTo(2));
+        Assert.That(state.BeginLevelUpOpportunity(2, 0f), Is.True);
+        Assert.That(state.Rings.Count, Is.EqualTo(1));
         Assert.That(state.Revision, Is.EqualTo(revision + 1));
         Assert.That(state.LastProcessedPlayerLevel, Is.EqualTo(2));
         string before = Snapshot(state);
-        Assert.That(state.ProcessPlayerLevelMilestone(2, out _), Is.False);
+        Assert.That(state.BeginLevelUpOpportunity(2, 0f), Is.False);
         Assert.That(Snapshot(state), Is.EqualTo(before));
-        Assert.That(state.ProcessPlayerLevelMilestone(5, out var noRing), Is.True);
-        Assert.That(noRing, Is.Null);
+        Assert.That(state.BeginLevelUpOpportunity(5, 0f), Is.True);
+        Assert.That(state.Rings.Count, Is.EqualTo(1));
         Assert.That(state.LastProcessedPlayerLevel, Is.EqualTo(5));
         Assert.That(state.Revision, Is.EqualTo(revision + 2));
     }
@@ -119,9 +120,13 @@ public sealed class Subject42OrbitalOperationsTests
         private readonly LocalAnomalyData anomaly = ScriptableObject.CreateInstance<LocalAnomalyData>();
         public Fixture()
         {
+            Application.runInBackground = true;
+            UnityEditor.EditorApplication.isPaused = false;
             Manager = RunStateManager.EnsureExists();
             Manager.BeginNewRun(null, null, stage, rule, anomaly);
             State = Manager.OrbitalStationState;
+            // This fixture exercises occupied/free targeting on three explicitly built points.
+            State.AddMount(1, out _); State.AddMount(1, out _);
             Player = new GameObject("Operations fixture");
             Station = OrbitalStationRuntime.Ensure(Player);
             Assert.That(Station.IsInitialized, Is.True);
@@ -153,6 +158,42 @@ public sealed class Subject42OrbitalOperationsTests
     }
 
     [UnityTest]
+    public IEnumerator CapacityExpansionPreservesBuiltMountsAndCombat()
+    {
+        yield return new EnterPlayMode();
+        using (var f = new Fixture())
+        {
+            var ring = f.Station.Rings.Single();
+            var firstMount = ring.Mounts[0];
+            var module = f.Station.Modules.Single();
+            var target = new GameObject("Capacity must not fire a bonus wave");
+            target.transform.position = new Vector3(4, 0, 0);
+            target.AddComponent<EnemyHealth>();
+            Set(module, "Cooldown", .37f);
+            var projectiles = (IList)Get(f.Station.Combat, "projectiles");
+            for (int cap = 4; cap <= 6; cap++)
+            {
+                Assert.That(f.Station.UpgradeRingCapacity(1), Is.True);
+                Assert.That(ring.MountCapacity, Is.EqualTo(cap));
+                Assert.That(ring.Mounts.Count, Is.EqualTo(cap - 1));
+                Assert.That(ring.Mounts[0], Is.SameAs(firstMount));
+                Assert.That(Get(module, "Cooldown"), Is.EqualTo(.37f));
+                Assert.That(projectiles.Cast<object>().Any(p => (bool)Get(p, "Active")), Is.False);
+                Assert.That(f.Station.UpgradeRingCapacity(1), Is.False);
+                Assert.That(f.Station.AddMount(1, out _), Is.True);
+                Assert.That(ring.Mounts.Count, Is.EqualTo(cap));
+            }
+            Assert.That(f.Station.AddMount(1, out _), Is.False);
+            Assert.That(f.Station.UpgradeRingCapacity(1), Is.False);
+            Assert.That(f.Station.SimulateSectorRestore(), Is.True);
+            Assert.That(f.Station.Rings[0].Mounts.Count, Is.EqualTo(6));
+            Assert.That(f.Station.Rings[0].MountCapacity, Is.EqualTo(6));
+            Object.Destroy(target);
+        }
+        yield return new ExitPlayMode();
+    }
+
+    [UnityTest]
     public IEnumerator GoldenFlow_TransientCombatContinuity()
     {
         yield return new EnterPlayMode();
@@ -172,7 +213,8 @@ public sealed class Subject42OrbitalOperationsTests
         var enemy = enemyGo.AddComponent<EnemyHealth>();
         pistol.ActivateCombat(); // Actual initial Pistol fire through production combat adapter.
         var projectiles = (IList)Get(combat, "projectiles");
-        Assert.That(projectiles.Count, Is.EqualTo(1));
+        Assert.That(projectiles.Cast<object>().Count(p => (bool)Get(p, "Active")), Is.EqualTo(1));
+        int poolCount = projectiles.Count;
         var projectile = projectiles[0];
         var projectileObject = (GameObject)Get(projectile, "GameObject");
         Set(pistol, "Cooldown", 0.37f);
@@ -192,7 +234,7 @@ public sealed class Subject42OrbitalOperationsTests
             Assert.That(Get(core, "cascadeTimer"), Is.EqualTo(0.07f));
             Assert.That(Get(core, "cascadeIndex"), Is.EqualTo(0));
             Assert.That(ring.State.CurrentPhase, Is.EqualTo(37.5f));
-            Assert.That(projectiles.Count, Is.EqualTo(1)); Assert.That(projectiles[0], Is.SameAs(projectile));
+            Assert.That(projectiles.Cast<object>().Count(p => (bool)Get(p, "Active")), Is.EqualTo(1)); Assert.That(projectiles.Count, Is.EqualTo(poolCount)); Assert.That(projectiles[0], Is.SameAs(projectile));
             Assert.That((GameObject)Get(projectile, "GameObject"), Is.SameAs(projectileObject));
             Assert.That(Get(projectile, "Active"), Is.EqualTo(true));
             if (arc != null) Assert.That(Get(arc, "Cooldown"), Is.EqualTo(0.81f));
@@ -203,6 +245,7 @@ public sealed class Subject42OrbitalOperationsTests
         arc = station.Modules.Single(m => m.StableModuleId == 2); Set(arc, "Cooldown", 0.81f);
         Assert.That(station.UpgradeRingSpeed(1), Is.True); Check();
         Assert.That(station.UpgradeRingPower(1), Is.True); Check();
+        Assert.That(station.UpgradeRingCapacity(1), Is.True); Check();
         Assert.That(station.AddMount(1, out _), Is.True); Check();
         Assert.That(station.MoveModule(2, 1, 3, out _), Is.True); Check();
         Assert.That(station.Modules.Single(m => m.StableModuleId == 2), Is.SameAs(arc));
@@ -292,6 +335,12 @@ public sealed class Subject42OrbitalOperationsTests
         int completed = 0, cancelled = 0;
         foreach (var kind in new[] { OrbitalRewardKind.RingSpeed, OrbitalRewardKind.RingPower, OrbitalRewardKind.AddMount })
         {
+            if (kind == OrbitalRewardKind.AddMount)
+            {
+                Assert.That(f.Station.UpgradeRingCapacity(1), Is.True);
+                f.Station.InstallModule(OrbitalModuleKind.Pistol, 1, 1, out _);
+                f.Station.InstallModule(OrbitalModuleKind.Pistol, 1, 2, out _);
+            }
             Assert.That(flow.Begin(provider.GetDefinition(kind), () => completed++, () => cancelled++), Is.True);
             Assert.That(flow.DebugChooseRing(1), Is.True);
             Assert.That(flow.PendingReward, Is.Null);
@@ -300,6 +349,8 @@ public sealed class Subject42OrbitalOperationsTests
             Assert.That(Snapshot(f.State), Is.EqualTo(committed));
             AssertView(f);
         }
+        foreach (var module in f.State.Modules.Where(m => m.StableModuleId != 1).ToArray())
+            f.Station.RemoveModule(module.StableModuleId);
         Assert.That(completed, Is.EqualTo(3));
         Assert.That(flow.Begin(provider.GetDefinition(OrbitalRewardKind.ArcEmitter), () => completed++, () => cancelled++), Is.True);
         Assert.That(flow.DebugChooseMount(1, 1), Is.True);
@@ -357,6 +408,8 @@ public sealed class Subject42OrbitalOperationsTests
         Assert.That(flow.DebugChooseMount(1, 1), Is.True);
         float deadline = Time.realtimeSinceStartup + 3f;
         while (flow.State != OrbitalRewardFlowState.SecondLinkPlacement && Time.realtimeSinceStartup < deadline) yield return null;
+        float flightDeadline = Time.realtimeSinceStartup + 5f;
+        while (flow.State == OrbitalRewardFlowState.ModuleFlight && Time.realtimeSinceStartup < flightDeadline) yield return null;
         Assert.That(flow.State, Is.EqualTo(OrbitalRewardFlowState.SecondLinkPlacement));
         Assert.That(f.State.Modules.Count, Is.EqualTo(1), "first Link is preview only");
         flow.CancelForSceneTransition();
@@ -385,6 +438,7 @@ public sealed class Subject42OrbitalOperationsTests
     public void LinkPair_RejectedAtomically(string reason)
     {
         var state = OrbitalRunState.CreateDefault(1);
+        state.AddMount(1, out _); state.AddMount(1, out _);
         if (reason == "allocator") state.NextStableModuleId = int.MaxValue - 1;
         string before = Snapshot(state);
         Assert.That(state.InstallLinkPair(1, 1, reason == "missing" ? 99 : 1,
@@ -397,6 +451,8 @@ public sealed class Subject42OrbitalOperationsTests
     {
         var state = OrbitalRunState.CreateDefault(1);
         state.AddRing();
+        foreach (var ring in state.Rings)
+            while (ring.MountCount < ring.MountCapacity) state.AddMount(ring.StableRingId, out _);
         int rev = state.Revision, next = state.NextStableModuleId;
         Assert.That(state.InstallLinkPair(1, 1, 1, 2, out var a, out var b, out _), Is.True);
         Assert.That(state.Revision, Is.EqualTo(rev + 1));
@@ -469,6 +525,8 @@ public sealed class Subject42OrbitalOperationsTests
         string occupied = Snapshot(f.State);
         FinishCurrentFlight(flow, true);
         Assert.That(Snapshot(f.State), Is.EqualTo(occupied));
+        float flightDeadline = Time.realtimeSinceStartup + 5f;
+        while (flow.State == OrbitalRewardFlowState.ModuleFlight && Time.realtimeSinceStartup < flightDeadline) yield return null;
         Assert.That(flow.State, Is.EqualTo(OrbitalRewardFlowState.SecondLinkPlacement));
         flow.CancelForSceneTransition();
         f.Station.RemoveModule(2);
