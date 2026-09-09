@@ -62,6 +62,8 @@ public sealed class Subject42OrbitalTransactionSceneTests
         var sector = RunStateManager.Instance.CurrentSector;
         Assert.That(upgrades.IsRewardQueueIdle, Is.True);
         Time.timeScale = 1f;
+        Assert.That(station.State.Rings[0].MountCount, Is.EqualTo(1));
+        Assert.That(station.AddMount(1, out _), Is.True);
         Assert.That(upgrades.DebugForceOrbitalReward(OrbitalRewardKind.ArcEmitter), Is.True);
         Assert.That(upgrades.DebugSelectCurrentChoice(0), Is.True);
         string before = Snapshot(station);
@@ -91,6 +93,7 @@ public sealed class Subject42OrbitalTransactionSceneTests
         Assert.That(Time.timeScale, Is.EqualTo(1f));
         Debug.Log("PASS3 real queue normal cancel: current request retained, state unchanged; retry completes queue once. " + Snapshot(station));
         station.AddRing();
+        Assert.That(station.AddMount(2, out _), Is.True);
         Assert.That(upgrades.DebugForceOrbitalReward(OrbitalRewardKind.LinkPair), Is.True);
         upgrades.DebugSelectCurrentChoice(0);
         before = Snapshot(station);

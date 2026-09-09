@@ -15,7 +15,7 @@ using Object = UnityEngine.Object;
 
 public sealed class Subject42OrbitalSliceAuditTests
 {
-    const string Output = "Artifacts/GeneratedQA/OrbitalProductionPass/Regression/";
+    const string Output = "Artifacts/GeneratedQA/RewardProgression/Live/";
     const string WeaponKey = "BunkerStationLevel_Weapon";
     static object Get(object target, string field) => target.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(target);
     [Serializable] public class Card { public string id, title, description, source; public float weight; public int width, height; }
@@ -126,12 +126,22 @@ public sealed class Subject42OrbitalSliceAuditTests
             Assert.That(Subject42OrbitalRestoreTests.Snapshot(station.State), Is.EqualTo(cancelSnapshot));
             manager.enabled = false; manager.enabled = true;
             File.AppendAllText(Output + "flow.txt", "PASS Escape handler cancels target, next real frame opens Pause, Resume retains reward pause; RMB shared CancelActive path leaves state unchanged. Physical key injection not used.\n");
-            foreach (OrbitalRewardKind kind in Enum.GetValues(typeof(OrbitalRewardKind)).Cast<OrbitalRewardKind>().OrderBy(k => OrbitalRewardProvider.IsDemoReward(k) ? 0 : 1))
+            foreach (OrbitalRewardKind kind in Enum.GetValues(typeof(OrbitalRewardKind)).Cast<OrbitalRewardKind>().Where(OrbitalRewardProvider.IsDemoReward))
             {
-                if (kind == OrbitalRewardKind.LinkPair || !station.State.Rings.Any(r => station.State.HasFreeMount(r.StableRingId))) station.AddRing();
-                if (kind == OrbitalRewardKind.AddMount)
-                    for (int m = 0; m < station.State.Rings[0].MountCapacity; m++)
-                        if (station.State.IsMountFree(1, m)) station.InstallModule(OrbitalModuleKind.Pistol, 1, m, out _);
+                if (Subject42RewardProgressionTests.ModuleKinds.Contains(kind))
+                {
+                    int required = kind == OrbitalRewardKind.LinkPair ? 2 : 1;
+                    while (station.State.FreeBuiltMounts < required)
+                    {
+                        var build = station.State.Rings.FirstOrDefault(r => station.State.CanAddMount(r.StableRingId, out _));
+                        if (build != null) Assert.That(station.AddMount(build.StableRingId, out _), Is.True);
+                        else Assert.That(station.AddRing(), Is.Not.Null);
+                    }
+                }
+                if (kind == OrbitalRewardKind.AddMount && !provider.IsEligible(kind)) Assert.That(station.AddRing(), Is.Not.Null);
+                if (kind == OrbitalRewardKind.RingCapacity)
+                    while (station.State.Rings[0].MountCount < station.State.Rings[0].MountCapacity)
+                        Assert.That(station.AddMount(1, out _), Is.True);
                 Assert.That(manager.DebugForceOrbitalReward(kind), Is.True, kind + " eligible/appears");
                 var definition = (OrbitalRewardData)manager.DebugCurrentChoices[0];
                 ExportIcon(definition, cards);
@@ -143,8 +153,8 @@ public sealed class Subject42OrbitalSliceAuditTests
                 int bodyLevel = definition.BodyUpgrade != null ? RunStateManager.Instance.ItemSlots.GetLevel(definition.BodyUpgrade) : -1;
                 Assert.That(manager.DebugSelectCurrentChoice(0), Is.True, kind + " selectable");
                 var flow = station.RewardFlow;
-                if (kind == OrbitalRewardKind.RingSpeed || kind == OrbitalRewardKind.RingPower || kind == OrbitalRewardKind.AddMount)
-                    Assert.That(flow.DebugChooseRing(station.State.Rings[0].StableRingId), Is.True);
+                if (kind == OrbitalRewardKind.RingSpeed || kind == OrbitalRewardKind.RingPower || kind == OrbitalRewardKind.AddMount || kind == OrbitalRewardKind.RingCapacity)
+                    Assert.That(flow.DebugChooseRing(station.State.Rings.First(r => station.State.CanTargetRingReward(kind, r.StableRingId)).StableRingId), Is.True);
                 else if (kind == OrbitalRewardKind.ModuleDamage)
                     Assert.That(flow.DebugChooseModule(station.State.Modules.First(m => m.ModuleType != OrbitalModuleKind.LinkNode).StableModuleId), Is.True);
                 else if (definition.RequiresArenaSelection)
@@ -319,6 +329,7 @@ public sealed class Subject42OrbitalSliceAuditTests
             Assert.That(station.State.Rings.Count, Is.EqualTo(1));
             Time.timeScale = 0;
             manager = UpgradeManager.Instance;
+            Assert.That(station.AddMount(1, out _), Is.True);
             Assert.That(manager.DebugForceOrbitalReward(OrbitalRewardKind.Pistol), Is.True);
             manager.DebugSelectCurrentChoice(0);
             var deathState = station.State;
@@ -346,6 +357,7 @@ public sealed class Subject42OrbitalSliceAuditTests
             Assert.That(UpgradeManager.Instance.IsRewardQueueIdle, Is.True);
             Assert.That(station.State.RingOfferMissCount, Is.Zero, "restart discards dead run pity");
             Time.timeScale = 0;
+            Assert.That(station.AddMount(1, out _), Is.True);
             Assert.That(UpgradeManager.Instance.DebugForceOrbitalReward(OrbitalRewardKind.Pistol), Is.True);
             UpgradeManager.Instance.DebugSelectCurrentChoice(0);
             RunEndService.Instance.ReturnToBunker();
@@ -471,7 +483,12 @@ public sealed class Subject42OrbitalSliceAuditTests
             cards.cards.Add(new Card { id = "NewRing", title = reward.upgradeName, description = reward.description, source = "ART REQUIRED: ring +" });
             return;
         }
-        Assert.That(icon.Sprite, Is.Not.Null, reward.RewardKind + " sprite");
+        if (icon.Sprite == null)
+        {
+            cards.cards.Add(new Card { id = id ?? reward.RewardKind.ToString(), title = reward.upgradeName,
+                description = reward.description, source = "ART REQUIRED", weight = reward.Weight });
+            return;
+        }
         var sprite = icon.Sprite;
         var texture = sprite.texture;
         var rect = sprite.rect;

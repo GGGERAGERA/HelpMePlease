@@ -56,8 +56,8 @@ MonoBehaviour:
   - {fileID: 6630109873973625741}
   Animator: {fileID: 0}
   Particles: []
-  Icon: {fileID: -4636102518217451232, guid: 26e9d644095d2c64fb4685500f8d1e41, type: 3}
-  IconTint: {r: 1, g: 1, b: 1, a: 1}
+  Icon: {fileID: 0}
+  IconTint: {r: 0.1, g: 0.85, b: 0.55, a: 1}
 --- !u!1 &4623561389518500734
 GameObject:
   m_ObjectHideFlags: 0
@@ -140,7 +140,7 @@ SpriteRenderer:
   m_SortingOrder: 12
   m_MaskInteraction: 0
   m_Sprite: {fileID: -2413806693520163455, guid: ceb8225d9461f5a4bbe86004909390d0, type: 3}
-  m_Color: {r: 0.85, g: 0.25, b: 1, a: 0.22}
+  m_Color: {r: 0.1, g: 0.85, b: 0.55, a: 0.22}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -231,7 +231,7 @@ SpriteRenderer:
   m_SortingOrder: 15
   m_MaskInteraction: 0
   m_Sprite: {fileID: -2413806693520163455, guid: ceb8225d9461f5a4bbe86004909390d0, type: 3}
-  m_Color: {r: 0.96, g: 0.73, b: 0.94, a: 1}
+  m_Color: {r: 0.7, g: 1, b: 0.85, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -322,7 +322,7 @@ SpriteRenderer:
   m_SortingOrder: 14
   m_MaskInteraction: 0
   m_Sprite: {fileID: -2413806693520163455, guid: ceb8225d9461f5a4bbe86004909390d0, type: 3}
-  m_Color: {r: 0.62, g: 0.2, b: 0.75, a: 1}
+  m_Color: {r: 0.1, g: 0.65, b: 0.4, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0

@@ -15,7 +15,7 @@ using Object = UnityEngine.Object;
 
 public sealed class Subject42CorePulseTests
 {
-    private const string Output = "Artifacts/GeneratedQA/CorePulse/Final/";
+    private const string Output = "Artifacts/GeneratedQA/RewardProgression/Combat/";
     private static readonly BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
 
     [UnityTearDown]
@@ -114,8 +114,13 @@ public sealed class Subject42CorePulseTests
                     int moduleIndex = 0;
                     foreach (var ring in state.Rings)
                     {
-                        if (count == 8) state.AddMount(ring.StableRingId, out _);
-                        for (int m = 0; m < ring.MountCapacity; m++)
+                        while (ring.MountCount < ring.MountCapacity) state.AddMount(ring.StableRingId, out _);
+                        if (count == 8)
+                        {
+                            Assert.That(state.UpgradeRingCapacity(ring.StableRingId), Is.True);
+                            Assert.That(state.AddMount(ring.StableRingId, out _), Is.True);
+                        }
+                        for (int m = 0; m < ring.MountCount; m++)
                             Assert.That(state.InstallModule((OrbitalModuleKind)(moduleIndex++ % 4), ring.StableRingId, m, out _), Is.True);
                     }
                     for (int i = 0; i < level; i++) Assert.That(state.UpgradeCore(), Is.True);

@@ -26,6 +26,7 @@ namespace Subject42.Combat.OrbitalStation
         public float CurrentPhase;
         public float PhaseOffset;
         public int MountCapacity;
+        public int MountCount;
         public float PowerMultiplier = 1f;
         public int SpeedUpgradeLevel;
         public int PowerUpgradeLevel;
@@ -46,11 +47,21 @@ namespace Subject42.Combat.OrbitalStation
     }
 
     [Serializable]
-    public sealed class OrbitalRunState
+    public sealed class OrbitalRunState : UnityEngine.ISerializationCallbackReceiver
     {
-        public const int CurrentVersion = 1;
+        public const int CurrentVersion = 2;
 
         public int Version = CurrentVersion;
+        public void OnBeforeSerialize() { }
+        public void OnAfterDeserialize()
+        {
+            // Version 1 built every available mount. Preserve existing occupancy on migration.
+            if (Version != 1 || Rings == null) return;
+            foreach (var ring in Rings)
+                if (ring != null) ring.MountCount = ring.MountCapacity;
+            Version = CurrentVersion;
+        }
+
         public bool IsInitialized;
         public int RunId;
         public OrbitalCoreState CoreState = new();
@@ -113,7 +124,8 @@ namespace Subject42.Combat.OrbitalStation
                 Direction = order % 2 == 0 ? 1 : -1,
                 CurrentPhase = order * 23f,
                 PhaseOffset = order * 23f,
-                MountCapacity = 3
+                MountCapacity = 3,
+                MountCount = 1
             };
             Rings.Add(ring);
             RingOfferMissCount = 0;
@@ -137,13 +149,24 @@ namespace Subject42.Combat.OrbitalStation
         {
             if (!CanAddMount(stableRingId, out error)) return false;
             OrbitalRingState ring = FindRing(stableRingId);
-            ring.MountCapacity++;
+            ring.MountCount++;
             ring.MountUpgradeLevel++;
             ring.VisualUpgradeLevel++;
             Revision++;
             error = null;
             return true;
         }
+
+        public bool UpgradeRingCapacity(int stableRingId)
+        {
+            if (!CanUpgradeRingCapacity(stableRingId, out _)) return false;
+            FindRing(stableRingId).MountCapacity++;
+            FindRing(stableRingId).VisualUpgradeLevel++;
+            Revision++;
+            return true;
+        }
+
+        public int FreeBuiltMounts => Rings.Sum(r => r.MountCount) - Modules.Count;
 
         public bool InstallModule(OrbitalModuleKind type, int stableRingId,
             int mountIndex, out OrbitalModuleState module)
@@ -318,7 +341,7 @@ namespace Subject42.Combat.OrbitalStation
         }
 
         public bool HasFreeMount(int ringId) => CanRemoveRing(ringId, out _) &&
-            Modules.Count(m => m.StableRingId == ringId) < FindRing(ringId).MountCapacity;
+            Modules.Count(m => m.StableRingId == ringId) < FindRing(ringId).MountCount;
 
         public bool CanAddRing(out string error) => CanCommit(out error) &&
             Rule(Rings.Count < OrbitalProgressionConfig.Default.MaxNormalRings && NextStableRingId < int.MaxValue,
@@ -328,9 +351,16 @@ namespace Subject42.Combat.OrbitalStation
             Rule(FindRing(id) != null, $"ring {id} is missing", out error);
 
         public bool CanAddMount(int id, out string error) => CanRemoveRing(id, out error) &&
-            Rule(FindRing(id).MountCapacity < OrbitalProgressionConfig.Default.MaxMountsPerRing &&
+            Rule(FindRing(id).MountCount < FindRing(id).MountCapacity &&
+                FindRing(id).MountCount < OrbitalProgressionConfig.Default.MaxMountsPerRing &&
                 FindRing(id).MountUpgradeLevel < int.MaxValue && FindRing(id).VisualUpgradeLevel < int.MaxValue,
                 $"ring {id} reached mount capacity limit", out error);
+
+        public bool CanUpgradeRingCapacity(int id, out string error) => CanRemoveRing(id, out error) &&
+            Rule(FindRing(id).MountCount == FindRing(id).MountCapacity &&
+                FindRing(id).MountCapacity < OrbitalProgressionConfig.Default.MaxMountsPerRing &&
+                FindRing(id).VisualUpgradeLevel < int.MaxValue,
+                $"ring {id} must fill built mounts before expanding capacity", out error);
 
         public bool CanInstallModule(OrbitalModuleKind kind, int ringId, int mountIndex, out string error) =>
             CanCommit(out error) && Rule(Enum.IsDefined(typeof(OrbitalModuleKind), kind) && NextStableModuleId < int.MaxValue,
@@ -367,7 +397,8 @@ namespace Subject42.Combat.OrbitalStation
             {
                 OrbitalRewardKind.RingPower => occupied > 0 && CanUpgradeRingPower(id, out _),
                 OrbitalRewardKind.RingSpeed => occupied > 0 && CanUpgradeRingSpeed(id, out _),
-                OrbitalRewardKind.AddMount => CanAddMount(id, out _) && occupied == FindRing(id).MountCapacity,
+                OrbitalRewardKind.AddMount => CanAddMount(id, out _),
+                OrbitalRewardKind.RingCapacity => CanUpgradeRingCapacity(id, out _),
                 _ => false
             };
         }
@@ -417,7 +448,8 @@ namespace Subject42.Combat.OrbitalStation
             {
                 OrbitalRingState ring = Rings[i];
                 if (ring == null || ring.StableRingId <= 0 || ring.Order != i ||
-                    ring.MountCapacity < 1 || ring.MountCapacity >
+                    ring.MountCount < 1 || ring.MountCount > ring.MountCapacity ||
+                    ring.MountCapacity < 3 || ring.MountCapacity >
                         OrbitalProgressionConfig.Default.MaxMountsPerRing ||
                     !IsFinitePositive(ring.Radius) ||
                     !IsFiniteNonNegative(ring.BaseRotationSpeed) ||
@@ -461,7 +493,7 @@ namespace Subject42.Combat.OrbitalStation
                     error = $"module {module.StableModuleId} references missing ring {module.StableRingId}";
                     return false;
                 }
-                if (module.MountIndex < 0 || module.MountIndex >= ring.MountCapacity)
+                if (module.MountIndex < 0 || module.MountIndex >= ring.MountCount)
                 {
                     error = $"module {module.StableModuleId} mount {module.MountIndex} outside capacity {ring.MountCapacity}";
                     return false;
@@ -490,7 +522,7 @@ namespace Subject42.Combat.OrbitalStation
         {
             string rings = string.Join(",", Rings.OrderBy(value => value.Order)
                 .Select(value =>
-                    $"R{value.StableRingId}[m{value.MountCapacity},s{value.SpeedUpgradeLevel},p{value.PowerUpgradeLevel},a{value.CurrentPhase:0.0}]"));
+                    $"R{value.StableRingId}[m{value.MountCount}/{value.MountCapacity},s{value.SpeedUpgradeLevel},p{value.PowerUpgradeLevel},a{value.CurrentPhase:0.0}]"));
             string modules = string.Join(",", Modules.OrderBy(value => value.StableModuleId)
                 .Select(value =>
                     $"M{value.StableModuleId}:{value.ModuleType}[d{value.DamageLevel}]@R{value.StableRingId}.{value.MountIndex}"));
@@ -507,7 +539,7 @@ namespace Subject42.Combat.OrbitalStation
                 error = $"ring {ringId} does not exist";
                 return false;
             }
-            if (mountIndex < 0 || mountIndex >= ring.MountCapacity)
+            if (mountIndex < 0 || mountIndex >= ring.MountCount)
             {
                 error = $"mount {mountIndex} outside ring {ringId} capacity";
                 return false;

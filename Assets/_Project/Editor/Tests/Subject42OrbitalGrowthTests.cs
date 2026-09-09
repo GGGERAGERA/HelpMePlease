@@ -15,7 +15,7 @@ using Object = UnityEngine.Object;
 
 public sealed class Subject42OrbitalGrowthTests
 {
-    private const string Output = "Artifacts/GeneratedQA/OrbitalGrowth/After";
+    private const string Output = "Artifacts/GeneratedQA/RewardProgression/Growth";
     private static void Call(object target, string name, params object[] args) => target.GetType()
         .GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(target, args);
 
@@ -168,7 +168,7 @@ public sealed class Subject42OrbitalGrowthTests
         Assert.That(station.Rings.Count, Is.EqualTo(rings));
         Assert.That(station.Modules.Count, Is.EqualTo(modules));
         Assert.That(station.GetComponentsInChildren<OrbitalRingView>(true).Length, Is.EqualTo(rings));
-        Assert.That(station.GetComponentsInChildren<OrbitalMountView>(true).Length, Is.EqualTo(rings * 3));
+        Assert.That(station.GetComponentsInChildren<OrbitalMountView>(true).Length, Is.EqualTo(rings == 1 ? 1 : rings * 3));
         Assert.That(station.GetComponentsInChildren<OrbitalModuleView>(true).Length, Is.EqualTo(modules));
         Assert.That(station.State.ResolveLinkPairs().Count(), Is.EqualTo(rings / 4));
         Assert.That(station.GetComponent<OrbitalStationView>().EffectsRoot.GetComponentsInChildren<LineRenderer>().Count(l => l.name == "Orbital Link"), Is.EqualTo(rings / 4));
@@ -181,7 +181,7 @@ public sealed class Subject42OrbitalGrowthTests
         }
         foreach (var ring in station.Rings)
         {
-            Assert.That(ring.Mounts.Count, Is.EqualTo(ring.State.MountCapacity));
+            Assert.That(ring.Mounts.Count, Is.EqualTo(ring.State.MountCount));
             foreach (var mount in ring.Mounts)
                 Assert.That(station.IsMountFree(mount), Is.EqualTo(mount.Module == null));
         }

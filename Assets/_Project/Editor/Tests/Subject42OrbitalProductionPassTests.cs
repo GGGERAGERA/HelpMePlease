@@ -52,12 +52,15 @@ public sealed class Subject42OrbitalProductionPassTests
         int empty = s.AddRing().StableRingId;
         Assert.That(s.CanTargetRingReward(OrbitalRewardKind.RingPower, empty), Is.False);
         Assert.That(s.CanTargetRingReward(OrbitalRewardKind.RingSpeed, empty), Is.False);
-        Assert.That(s.CanTargetRingReward(OrbitalRewardKind.AddMount, 1), Is.False);
+        Assert.That(s.CanTargetRingReward(OrbitalRewardKind.AddMount, 1), Is.True);
+        Assert.That(s.CanTargetRingReward(OrbitalRewardKind.RingCapacity, 1), Is.False);
+        s.AddMount(1, out _); s.AddMount(1, out _);
         s.InstallModule(OrbitalModuleKind.Pistol, 1, 1, out _);
         s.InstallModule(OrbitalModuleKind.Pistol, 1, 2, out _);
-        Assert.That(s.CanTargetRingReward(OrbitalRewardKind.AddMount, 1), Is.True);
-        s.AddMount(1, out _);
         Assert.That(s.CanTargetRingReward(OrbitalRewardKind.AddMount, 1), Is.False);
+        Assert.That(s.CanTargetRingReward(OrbitalRewardKind.RingCapacity, 1), Is.True);
+        s.UpgradeRingCapacity(1);
+        Assert.That(s.CanTargetRingReward(OrbitalRewardKind.AddMount, 1), Is.True);
         s.MoveModule(1, empty, 0, out _);
         Assert.That(s.CanTargetRingReward(OrbitalRewardKind.RingPower, empty), Is.True);
         Assert.That(s.CanTargetRingReward(OrbitalRewardKind.RingSpeed, empty), Is.True);
@@ -105,17 +108,8 @@ public sealed class Subject42OrbitalProductionPassTests
     public static bool IsModule(OrbitalRewardKind kind) => kind is OrbitalRewardKind.Pistol or OrbitalRewardKind.LaserSword or OrbitalRewardKind.ImpulseGun or OrbitalRewardKind.ArcEmitter;
     public static void Apply(OrbitalRunState s, OrbitalRewardKind kind)
     {
-        if (kind == OrbitalRewardKind.NewRing) { Assert.That(s.AddRing(), Is.Not.Null); return; }
-        if (kind == OrbitalRewardKind.CoreUpgrade) { Assert.That(s.UpgradeCore(), Is.True); return; }
-        if (IsModule(kind))
-        {
-            var ring = s.Rings.First(r => s.HasFreeMount(r.StableRingId));
-            int mount = Enumerable.Range(0, ring.MountCapacity).First(m => s.IsMountFree(ring.StableRingId, m));
-            Assert.That(s.InstallModule((OrbitalModuleKind)Enum.Parse(typeof(OrbitalModuleKind), kind.ToString()), ring.StableRingId, mount, out _), Is.True);
-            return;
-        }
-        int id = s.Rings.First(r => s.CanTargetRingReward(kind, r.StableRingId)).StableRingId;
-        Assert.That(kind switch { OrbitalRewardKind.RingPower => s.UpgradeRingPower(id), OrbitalRewardKind.RingSpeed => s.UpgradeRingSpeed(id), OrbitalRewardKind.AddMount => s.AddMount(id, out _), _ => false }, Is.True);
+        using var provider = new OrbitalRewardProvider(Array.Empty<UpgradeData>());
+        Subject42RewardProgressionTests.Apply(s, new RunItemSlots(), provider.GetDefinition(kind));
     }
 
     [UnityTest]

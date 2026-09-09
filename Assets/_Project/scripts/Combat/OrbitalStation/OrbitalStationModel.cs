@@ -112,7 +112,8 @@ namespace Subject42.Combat.OrbitalStation
                 State.SpeedUpgradeLevel);
         public int Direction => State.Direction;
         public float Phase => State.CurrentPhase;
-        public int MountCapacity => Mounts.Count;
+        public int MountCapacity => State.MountCapacity;
+        public int MountCount => State.MountCount;
         public float PowerMultiplier => State.PowerMultiplier;
         public int VisualTier => State.VisualTier;
         public Color AccentColor => view.AccentColor;
@@ -131,7 +132,7 @@ namespace Subject42.Combat.OrbitalStation
             view.InitializeTier(VisualTier);
             view.UpdateTierAppearance(VisualTier, Radius * spawnScale, 0f, 0f, false,
                 Geometry.Type == OrbitalPathType.FigureEight || State.Order == 0, 0f);
-            for (int i = 0; i < Mathf.Max(1, State.MountCapacity); i++)
+            for (int i = 0; i < State.MountCount; i++)
                 Mounts.Add(new OrbitalMountRuntime(this, i, view.MountsRoot, sprite));
             RebalanceMounts();
         }

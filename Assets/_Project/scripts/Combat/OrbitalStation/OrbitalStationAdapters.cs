@@ -39,6 +39,7 @@ namespace Subject42.Combat.OrbitalStation
         bool UpgradeRingSpeed(int stableRingId);
         bool UpgradeRingPower(int stableRingId);
         bool AddMount(int stableRingId, out string error);
+        bool UpgradeRingCapacity(int stableRingId);
         void UpgradeSelectedRingSpeed();
         void UpgradeSelectedRingPower();
         void AddMount();

@@ -2670,7 +2670,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
             return;
         }
         int mounts = runState != null
-            ? runState.Rings.Sum(value => value.MountCapacity)
+            ? runState.Rings.Sum(value => value.MountCount)
             : 0;
         AddSectionTitle("RUN STATE", "Data owned by the current RunStateManager");
         AddRow("Initialized", runState?.IsInitialized == true ? "YES" : "NO",

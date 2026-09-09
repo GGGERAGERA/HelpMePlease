@@ -159,7 +159,7 @@ namespace Subject42.Combat.OrbitalStation
         public const float BaseDamage = 8f;
         public override OrbitalModuleKind Kind => OrbitalModuleKind.Pistol;
         public OrbitalPistolModule(OrbitalStationRuntime station, int stableModuleId) :
-            base(station, stableModuleId, new Color(0.35f, 0.95f, 1f)) { }
+            base(station, stableModuleId, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.Pistol)) { }
 
         // A turret keeps its last aim instead of inheriting the ring's spin.
         public override void UpdateVisualRotation(float radians) { }
@@ -187,7 +187,7 @@ namespace Subject42.Combat.OrbitalStation
                 return;
             AimAt(target.transform.position);
             Combat.SpawnProjectile(Visual.transform.position, target, 13f,
-                BaseDamage * Power, new Color(0.25f, 0.95f, 1f));
+                BaseDamage * Power, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.Pistol));
             TriggerPresentation();
             Cooldown = 0.55f;
         }
@@ -198,7 +198,7 @@ namespace Subject42.Combat.OrbitalStation
         public const float BaseDamage = 13f;
         public override OrbitalModuleKind Kind => OrbitalModuleKind.LaserSword;
         public OrbitalLaserSwordModule(OrbitalStationRuntime station, int stableModuleId) :
-            base(station, stableModuleId, new Color(1f, 0.25f, 0.8f)) { }
+            base(station, stableModuleId, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.LaserSword)) { }
 
         public override void Tick(float deltaTime)
         {
@@ -225,7 +225,7 @@ namespace Subject42.Combat.OrbitalStation
         public const float BaseDamage = 6f;
         public override OrbitalModuleKind Kind => OrbitalModuleKind.ImpulseGun;
         public OrbitalImpulseGunModule(OrbitalStationRuntime station, int stableModuleId) :
-            base(station, stableModuleId, new Color(1f, 0.75f, 0.2f)) { }
+            base(station, stableModuleId, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.ImpulseGun)) { }
 
         public override void Tick(float deltaTime)
         {
@@ -258,7 +258,7 @@ namespace Subject42.Combat.OrbitalStation
     {
         public override OrbitalModuleKind Kind => OrbitalModuleKind.ArcEmitter;
         public OrbitalArcEmitterModule(OrbitalStationRuntime station, int stableModuleId) :
-            base(station, stableModuleId, new Color(0.72f, 0.3f, 1f)) { }
+            base(station, stableModuleId, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.ArcEmitter)) { }
 
         public override void Tick(float deltaTime)
         {
@@ -278,7 +278,7 @@ namespace Subject42.Combat.OrbitalStation
             {
                 EnemyHealth target = targets[i];
                 Station.FlashLink(from, target.transform.position,
-                    new Color(0.72f, 0.3f, 1f), 0.12f);
+                    OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.ArcEmitter), 0.12f);
                 Combat.ApplyDamage(target, (7f - i * 1.25f) * Power,
                     target.transform.position);
                 from = target.transform.position;
@@ -292,7 +292,7 @@ namespace Subject42.Combat.OrbitalStation
     {
         public override OrbitalModuleKind Kind => OrbitalModuleKind.LinkNode;
         public OrbitalLinkNodeModule(OrbitalStationRuntime station, int stableModuleId) :
-            base(station, stableModuleId, new Color(0.85f, 0.25f, 1f)) { }
+            base(station, stableModuleId, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.LinkNode)) { }
         public override void Tick(float deltaTime) => base.Tick(deltaTime);
     }
 }

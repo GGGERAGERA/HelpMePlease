@@ -153,7 +153,7 @@ public sealed class Subject42SpecialSiteRewardTests
             .Select(id => AssetDatabase.LoadAssetAtPath<StageProfileData>(AssetDatabase.GUIDToAssetPath(id)))
             .First(p => p.SectorNumber == 2);
         var next = new RunSector(2, stage, runState.CurrentSector.WorldRule, runState.CurrentSector.LocalAnomaly);
-        System.IO.Directory.CreateDirectory(Subject42OrbitalProductionPassTests.Output);
+        System.IO.Directory.CreateDirectory(Subject42RewardProgressionTests.Output);
         foreach (var type in new[] { AnomalyPowerType.GravityOrb, AnomalyPowerType.ArcNode, AnomalyPowerType.RedBeam })
         {
             int ringCount = station.State.Rings.Count;
@@ -186,7 +186,7 @@ public sealed class Subject42SpecialSiteRewardTests
                 foreach (var ring in station.Rings) ring.Tick(0f);
                 yield return null;
             }
-            ScreenCapture.CaptureScreenshot(Subject42OrbitalProductionPassTests.Output + "strong-anomaly-" + type + ".png");
+            ScreenCapture.CaptureScreenshot(Subject42RewardProgressionTests.Output + "strong-anomaly-" + type + ".png");
             yield return null;
             AssertNoLegacy(station);
             Object.Destroy(site.gameObject);
@@ -194,6 +194,7 @@ public sealed class Subject42SpecialSiteRewardTests
         }
         // At cap use the same normal random reward queue, without a ninth ring.
         while (station.AddRing() != null) { }
+        Assert.That(station.AddMount(1, out _), Is.True);
         Assert.That(upgrades.DebugForceOrbitalReward(OrbitalRewardKind.Pistol), Is.True);
         upgrades.DebugSelectCurrentChoice(0);
         station.RewardFlow.DebugChooseMount(1, 1);
@@ -209,7 +210,7 @@ public sealed class Subject42SpecialSiteRewardTests
         Assert.That(station.State.Rings.Count, Is.EqualTo(8));
         Select(upgrades, OrbitalRewardKind.ArcEmitter);
         int freeRing = station.State.Rings.First(r => station.State.HasFreeMount(r.StableRingId)).StableRingId;
-        int freeMount = Enumerable.Range(0, station.State.FindRing(freeRing).MountCapacity).First(m => station.State.IsMountFree(freeRing, m));
+        int freeMount = Enumerable.Range(0, station.State.FindRing(freeRing).MountCount).First(m => station.State.IsMountFree(freeRing, m));
         station.RewardFlow.DebugChooseMount(freeRing, freeMount);
         yield return Await(() => upgrades.IsRewardQueueIdle);
         Assert.That(transitionAllowed, Is.True);

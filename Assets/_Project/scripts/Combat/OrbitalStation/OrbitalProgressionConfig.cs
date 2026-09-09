@@ -15,7 +15,7 @@ namespace Subject42.Combat.OrbitalStation
         public float RingOfferChanceStep = 0.02f;
         public float MaxRingOfferChance = 0.45f;
         public int MaxNormalRings = 8;
-        public int MaxMountsPerRing = 4;
+        public int MaxMountsPerRing = 6;
         public int MaxSpeedUpgradeLevel = 4;
         public int MaxPowerUpgradeLevel = 4;
         public int MaxCoreLevel = 3;

@@ -17,6 +17,8 @@ namespace Subject42.Combat.OrbitalStation
         public Material VisualMaterial;
         public Sprite PixelSprite, CircleSprite, RingIcon;
         public Sprite CoreIcon;
+        [Header("Run reward icons — leave missing authored art unassigned")]
+        public Sprite NewMountIcon, RingCapacityIcon, RingDamageIcon, RingSpeedIcon, NewRingIcon;
         public LineRenderer EnergyLinePrefab;
         [Header("Core pulse overlay")]
         public Color CoreCyan = new(.15f, .85f, 1f);

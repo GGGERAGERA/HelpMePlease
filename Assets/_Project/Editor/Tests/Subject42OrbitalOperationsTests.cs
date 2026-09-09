@@ -55,6 +55,7 @@ public sealed class Subject42OrbitalOperationsTests
     public void RejectedCommand_PreservesEveryField(string kind)
     {
         var s = OrbitalRunState.CreateDefault(1);
+        s.AddMount(1, out _); s.AddMount(1, out _);
         s.InstallModule(OrbitalModuleKind.ArcEmitter, 1, 1, out _);
         Func<bool> command = kind switch
         {
@@ -124,6 +125,8 @@ public sealed class Subject42OrbitalOperationsTests
             Manager = RunStateManager.EnsureExists();
             Manager.BeginNewRun(null, null, stage, rule, anomaly);
             State = Manager.OrbitalStationState;
+            // This fixture exercises occupied/free targeting on three explicitly built points.
+            State.AddMount(1, out _); State.AddMount(1, out _);
             Player = new GameObject("Operations fixture");
             Station = OrbitalStationRuntime.Ensure(Player);
             Assert.That(Station.IsInitialized, Is.True);
@@ -152,6 +155,42 @@ public sealed class Subject42OrbitalOperationsTests
         foreach (var ring in f.Station.Rings)
         foreach (var mount in ring.Mounts)
             Assert.That(mount.Module != null, Is.EqualTo(!f.State.IsMountFree(ring.RingId, mount.MountIndex)));
+    }
+
+    [UnityTest]
+    public IEnumerator CapacityExpansionPreservesBuiltMountsAndCombat()
+    {
+        yield return new EnterPlayMode();
+        using (var f = new Fixture())
+        {
+            var ring = f.Station.Rings.Single();
+            var firstMount = ring.Mounts[0];
+            var module = f.Station.Modules.Single();
+            var target = new GameObject("Capacity must not fire a bonus wave");
+            target.transform.position = new Vector3(4, 0, 0);
+            target.AddComponent<EnemyHealth>();
+            Set(module, "Cooldown", .37f);
+            var projectiles = (IList)Get(f.Station.Combat, "projectiles");
+            for (int cap = 4; cap <= 6; cap++)
+            {
+                Assert.That(f.Station.UpgradeRingCapacity(1), Is.True);
+                Assert.That(ring.MountCapacity, Is.EqualTo(cap));
+                Assert.That(ring.Mounts.Count, Is.EqualTo(cap - 1));
+                Assert.That(ring.Mounts[0], Is.SameAs(firstMount));
+                Assert.That(Get(module, "Cooldown"), Is.EqualTo(.37f));
+                Assert.That(projectiles.Cast<object>().Any(p => (bool)Get(p, "Active")), Is.False);
+                Assert.That(f.Station.UpgradeRingCapacity(1), Is.False);
+                Assert.That(f.Station.AddMount(1, out _), Is.True);
+                Assert.That(ring.Mounts.Count, Is.EqualTo(cap));
+            }
+            Assert.That(f.Station.AddMount(1, out _), Is.False);
+            Assert.That(f.Station.UpgradeRingCapacity(1), Is.False);
+            Assert.That(f.Station.SimulateSectorRestore(), Is.True);
+            Assert.That(f.Station.Rings[0].Mounts.Count, Is.EqualTo(6));
+            Assert.That(f.Station.Rings[0].MountCapacity, Is.EqualTo(6));
+            Object.Destroy(target);
+        }
+        yield return new ExitPlayMode();
     }
 
     [UnityTest]
@@ -206,6 +245,7 @@ public sealed class Subject42OrbitalOperationsTests
         arc = station.Modules.Single(m => m.StableModuleId == 2); Set(arc, "Cooldown", 0.81f);
         Assert.That(station.UpgradeRingSpeed(1), Is.True); Check();
         Assert.That(station.UpgradeRingPower(1), Is.True); Check();
+        Assert.That(station.UpgradeRingCapacity(1), Is.True); Check();
         Assert.That(station.AddMount(1, out _), Is.True); Check();
         Assert.That(station.MoveModule(2, 1, 3, out _), Is.True); Check();
         Assert.That(station.Modules.Single(m => m.StableModuleId == 2), Is.SameAs(arc));
@@ -297,6 +337,7 @@ public sealed class Subject42OrbitalOperationsTests
         {
             if (kind == OrbitalRewardKind.AddMount)
             {
+                Assert.That(f.Station.UpgradeRingCapacity(1), Is.True);
                 f.Station.InstallModule(OrbitalModuleKind.Pistol, 1, 1, out _);
                 f.Station.InstallModule(OrbitalModuleKind.Pistol, 1, 2, out _);
             }
@@ -397,6 +438,7 @@ public sealed class Subject42OrbitalOperationsTests
     public void LinkPair_RejectedAtomically(string reason)
     {
         var state = OrbitalRunState.CreateDefault(1);
+        state.AddMount(1, out _); state.AddMount(1, out _);
         if (reason == "allocator") state.NextStableModuleId = int.MaxValue - 1;
         string before = Snapshot(state);
         Assert.That(state.InstallLinkPair(1, 1, reason == "missing" ? 99 : 1,
@@ -409,6 +451,8 @@ public sealed class Subject42OrbitalOperationsTests
     {
         var state = OrbitalRunState.CreateDefault(1);
         state.AddRing();
+        foreach (var ring in state.Rings)
+            while (ring.MountCount < ring.MountCapacity) state.AddMount(ring.StableRingId, out _);
         int rev = state.Revision, next = state.NextStableModuleId;
         Assert.That(state.InstallLinkPair(1, 1, 1, 2, out var a, out var b, out _), Is.True);
         Assert.That(state.Revision, Is.EqualTo(rev + 1));

@@ -416,36 +416,9 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
         OrbitalModuleKind kind,
         out Color color)
     {
-        color = Color.white;
-        GameObject prefab = OrbitalPresentationConfig.Active.GetPrefab(kind);
-        if (prefab == null)
-            return null;
-        SpriteRenderer[] renderers =
-            prefab.GetComponentsInChildren<SpriteRenderer>(true);
-        string preferredName = kind switch
-        {
-            OrbitalModuleKind.Pistol => "barrel",
-            OrbitalModuleKind.LaserSword => "blade",
-            OrbitalModuleKind.ImpulseGun => "p1",
-            _ => string.Empty
-        };
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            SpriteRenderer renderer = renderers[i];
-            if (renderer == null || renderer.sprite == null ||
-                !renderer.gameObject.name.ToLowerInvariant()
-                    .Contains(preferredName))
-                continue;
-            color = renderer.color;
-            return renderer.sprite;
-        }
-        for (int i = 0; i < renderers.Length; i++)
-            if (renderers[i] != null && renderers[i].sprite != null)
-            {
-                color = renderers[i].color;
-                return renderers[i].sprite;
-            }
-        return null;
+        var presentation = OrbitalRewardIconResolver.Resolve(kind);
+        color = presentation.Tint;
+        return presentation.Sprite;
     }
 
     private BunkerSelectionWindowModel BuildUpgrades()

@@ -170,6 +170,7 @@ namespace Subject42.Combat.OrbitalStation
                 OrbitalRewardKind.RingSpeed => station.UpgradeRingSpeed(ringId),
                 OrbitalRewardKind.RingPower => station.UpgradeRingPower(ringId),
                 OrbitalRewardKind.AddMount => ApplyAddMount(ringId),
+                OrbitalRewardKind.RingCapacity => station.UpgradeRingCapacity(ringId),
                 _ => false
             };
             if (!applied)
@@ -497,7 +498,7 @@ namespace Subject42.Combat.OrbitalStation
             linkPreviewLine.SetPosition(0, firstRing.Mounts[firstMountIndex].Transform.position);
             linkPreviewLine.SetPosition(1, end);
             linkPreviewLine.startColor = linkPreviewLine.endColor = valid
-                ? new Color(0.85f, 0.25f, 1f, 0.72f) : new Color(1f, 0.18f, 0.22f, 0.55f);
+                ? ModuleColor(OrbitalModuleKind.LinkNode) : new Color(1f, 0.18f, 0.22f, 0.55f);
         }
 
         private void RefreshArenaPresentation()
@@ -578,8 +579,8 @@ namespace Subject42.Combat.OrbitalStation
                     Vector2.one * OrbitalPresentationConfig.Active.SelectionMountSize,
                     15);
             }
-            int futureCapacity = hoveredRing.MountCapacity + 1;
-            float localPhase = hoveredRing.MountCapacity * 360f / futureCapacity;
+            int futureMountCount = hoveredRing.MountCount + 1;
+            float localPhase = hoveredRing.MountCount * 360f / futureMountCount;
             addMountPreview.transform.localPosition = station.Geometry.PositionDegrees(
                 hoveredRing.Phase + localPhase, hoveredRing.Radius);
             float pulse = 1f + 0.12f * Mathf.Sin(Time.unscaledTime * 7f);
@@ -631,12 +632,14 @@ namespace Subject42.Combat.OrbitalStation
                     $"ОРБИТА {ringState.Order + 1}\n{hoveredRing.RotationSpeed:0.#}°/с → " +
                     $"{hoveredRing.RotationSpeed * 1.25f:0.#}°/с",
                 OrbitalRewardKind.RingPower =>
-                    $"ОРБИТА {ringState.Order + 1} · СИЛА {ringState.PowerUpgradeLevel}\n" +
+                    $"ОРБИТА {ringState.Order + 1} · УРОН {ringState.PowerUpgradeLevel}\n" +
                     $"{ringState.PowerMultiplier:0.##}× → {ringState.PowerMultiplier * 1.25f:0.##}×\n" +
                     GetModuleList(ringState.StableRingId),
                 OrbitalRewardKind.AddMount =>
-                    $"ОРБИТА {ringState.Order + 1}\nКрепления {ringState.MountCapacity} → " +
-                    $"{ringState.MountCapacity + 1}",
+                    $"ОРБИТА {ringState.Order + 1}\nТочки {ringState.MountCount}/{ringState.MountCapacity} → " +
+                    $"{ringState.MountCount + 1}/{ringState.MountCapacity}",
+                OrbitalRewardKind.RingCapacity =>
+                    $"ЁМКОСТЬ {ringState.MountCapacity} → {ringState.MountCapacity + 1}",
                 _ => $"ОРБИТА {ringState.Order + 1}"
             };
         }
@@ -653,6 +656,8 @@ namespace Subject42.Combat.OrbitalStation
                     station.State.CanTargetRingReward(OrbitalRewardKind.RingPower, ring.RingId),
                 OrbitalRewardKind.AddMount =>
                     station.State.CanTargetRingReward(OrbitalRewardKind.AddMount, ring.RingId),
+                OrbitalRewardKind.RingCapacity =>
+                    station.State.CanTargetRingReward(OrbitalRewardKind.RingCapacity, ring.RingId),
                 _ => station.State.HasFreeMount(ring.RingId)
             };
         }
@@ -669,7 +674,7 @@ namespace Subject42.Combat.OrbitalStation
         private static bool IsRingReward(OrbitalRewardKind kind) =>
             kind == OrbitalRewardKind.RingSpeed ||
             kind == OrbitalRewardKind.RingPower ||
-            kind == OrbitalRewardKind.AddMount;
+            kind == OrbitalRewardKind.AddMount || kind == OrbitalRewardKind.RingCapacity;
 
         private static OrbitalModuleKind ToModuleKind(OrbitalRewardKind kind) =>
             kind switch
@@ -682,14 +687,7 @@ namespace Subject42.Combat.OrbitalStation
                 _ => OrbitalModuleKind.Pistol
             };
 
-        private static Color ModuleColor(OrbitalModuleKind kind) => kind switch
-        {
-            OrbitalModuleKind.Pistol => new Color(0.35f, 0.95f, 1f),
-            OrbitalModuleKind.LaserSword => new Color(1f, 0.25f, 0.8f),
-            OrbitalModuleKind.ImpulseGun => new Color(1f, 0.75f, 0.2f),
-            OrbitalModuleKind.ArcEmitter => new Color(0.72f, 0.3f, 1f),
-            _ => new Color(0.85f, 0.25f, 1f)
-        };
+        private static Color ModuleColor(OrbitalModuleKind kind) => OrbitalRewardIconResolver.ModuleColor(kind);
 
         private static bool PointerOverInteractiveUi()
         {

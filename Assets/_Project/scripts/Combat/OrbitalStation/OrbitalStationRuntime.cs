@@ -360,10 +360,17 @@ namespace Subject42.Combat.OrbitalStation
             SyncCommitted("AddMount", stableRingId, 0, () =>
             {
                 OrbitalRingRuntime ring = RequireRing(stableRingId);
-                if (ring.Mounts.Count != ring.State.MountCapacity - 1)
+                if (ring.Mounts.Count != ring.State.MountCount - 1)
                     throw new System.InvalidOperationException("mount cache does not match pre-commit capacity");
                 ring.AddMount(runtimeRoot, sharedCircleSprite);
             });
+            return true;
+        }
+
+        public bool UpgradeRingCapacity(int stableRingId)
+        {
+            if (State == null || !State.UpgradeRingCapacity(stableRingId)) return false;
+            SyncCommitted("RingCapacity", stableRingId, 0, () => SelectRing(RequireRing(stableRingId)));
             return true;
         }
 
@@ -407,6 +414,10 @@ namespace Subject42.Combat.OrbitalStation
                 if (state.AddRing() == null)
                     throw new System.InvalidOperationException("Growth preset: AddRing rejected");
 
+            if (ringCount > 1)
+                foreach (var ring in state.Rings)
+                    while (ring.MountCount < ring.MountCapacity) state.AddMount(ring.StableRingId, out _);
+
             void Install(int ringOrder, int mount, OrbitalModuleKind kind)
             {
                 if (!state.InstallModule(kind, state.Rings[ringOrder].StableRingId, mount, out _))
@@ -446,6 +457,8 @@ namespace Subject42.Combat.OrbitalStation
             ApplyPresetStart();
             OrbitalRingState second = AddRing();
             OrbitalRingState third = AddRing();
+            foreach (var ring in rings)
+                while (ring.MountCount < ring.MountCapacity) AddMount(ring.RingId, out _);
             InstallModule(OrbitalModuleKind.LinkNode, rings[0].RingId, 1, out _);
             InstallModule(OrbitalModuleKind.LinkNode, second.StableRingId, 0, out _);
             InstallModule(OrbitalModuleKind.LaserSword, second.StableRingId, 1, out _);
@@ -623,7 +636,7 @@ namespace Subject42.Combat.OrbitalStation
         private void InstallFirstFree(OrbitalRingState ring, OrbitalModuleKind kind)
         {
             if (ring == null) return;
-            for (int i = 0; i < ring.MountCapacity; i++)
+            for (int i = 0; i < ring.MountCount; i++)
                 if (State.CanInstallModule(kind, ring.StableRingId, i, out _))
                 {
                     InstallModule(kind, ring.StableRingId, i, out _);
@@ -1013,7 +1026,9 @@ namespace Subject42.Combat.OrbitalStation
                 line.sharedMaterial = lineMaterial;
                 line.sortingLayerName = "Player";
                 line.sortingOrder = 13;
-                line.startColor = line.endColor = new Color(0.7f, 0.2f, 1f, 0.35f);
+                var linkColor = OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.LinkNode);
+                linkColor.a = .35f;
+                line.startColor = line.endColor = linkColor;
                 linkLines[pair] = line;
             }
             line.SetPosition(0, from);
