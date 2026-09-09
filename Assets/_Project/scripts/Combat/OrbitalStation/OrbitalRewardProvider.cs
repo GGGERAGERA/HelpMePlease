@@ -19,7 +19,8 @@ namespace Subject42.Combat.OrbitalStation
         LinkMatrix,
         MaxHealth,
         MoveSpeed,
-        ModuleDamage
+        ModuleDamage,
+        NewRing
     }
 
     public sealed class OrbitalRewardData : UpgradeData
@@ -46,11 +47,15 @@ namespace Subject42.Combat.OrbitalStation
             CreateDefinitions();
         }
 
-        public List<UpgradeData> BuildChoices(int count)
+        public List<UpgradeData> BuildChoices(int count, bool offerNewRing = false)
         {
             RefreshPresentation();
-            List<OrbitalRewardData> pool = GetEligibleDefinitions();
+            List<OrbitalRewardData> pool = GetEligibleDefinitions(demoOnly: true)
+                .Where(value => value.RewardKind != OrbitalRewardKind.NewRing)
+                .ToList();
             List<UpgradeData> result = new();
+            if (count > 0 && offerNewRing && IsEligible(OrbitalRewardKind.NewRing))
+                result.Add(GetDefinition(OrbitalRewardKind.NewRing));
             while (result.Count < count && pool.Count > 0)
             {
                 float total = pool.Sum(value => Mathf.Max(0.01f, value.Weight));
@@ -71,6 +76,13 @@ namespace Subject42.Combat.OrbitalStation
             return result;
         }
 
+        public static bool IsDemoReward(OrbitalRewardKind kind) => kind is
+            OrbitalRewardKind.Pistol or OrbitalRewardKind.LaserSword or
+            OrbitalRewardKind.ImpulseGun or OrbitalRewardKind.ArcEmitter or
+            OrbitalRewardKind.NewRing or OrbitalRewardKind.RingPower or
+            OrbitalRewardKind.RingSpeed or OrbitalRewardKind.AddMount or
+            OrbitalRewardKind.CoreUpgrade;
+
         public bool IsEligible(OrbitalRewardKind kind) =>
             GetEligibleDefinitions().Any(value => value.RewardKind == kind);
 
@@ -81,7 +93,7 @@ namespace Subject42.Combat.OrbitalStation
         }
 
         public IReadOnlyList<OrbitalRewardKind> GetEligibleKinds() =>
-            GetEligibleDefinitions().Select(value => value.RewardKind).ToArray();
+            GetEligibleDefinitions(demoOnly: true).Select(value => value.RewardKind).ToArray();
 
         public string GetEligibilitySummary()
         {
@@ -100,7 +112,7 @@ namespace Subject42.Combat.OrbitalStation
             definitions.Clear();
         }
 
-        private List<OrbitalRewardData> GetEligibleDefinitions()
+        private List<OrbitalRewardData> GetEligibleDefinitions(bool demoOnly = false)
         {
             OrbitalRunState state = RunStateManager.Instance?.OrbitalStationState;
             if (state == null || !state.Validate(out _))
@@ -112,24 +124,25 @@ namespace Subject42.Combat.OrbitalStation
             for (int i = 0; i < definitions.Count; i++)
             {
                 OrbitalRewardData reward = definitions[i];
+                if (demoOnly && (!IsDemoReward(reward.RewardKind) ||
+                    (reward.RewardKind == OrbitalRewardKind.CoreUpgrade &&
+                     state.Rings.Count < config.MinRingsForCoreOffer))) continue;
                 bool eligible = reward.RewardKind switch
                 {
-                    OrbitalRewardKind.Pistol => freeMounts >= 1 &&
-                        IsModuleUnlocked(OrbitalModuleKind.Pistol),
+                    OrbitalRewardKind.NewRing => state.CanAddRing(out _),
+                    OrbitalRewardKind.Pistol => freeMounts >= 1,
                     OrbitalRewardKind.ArcEmitter => freeMounts >= 1,
-                    OrbitalRewardKind.LaserSword => freeMounts >= 1 &&
-                        IsModuleUnlocked(OrbitalModuleKind.LaserSword),
-                    OrbitalRewardKind.ImpulseGun => freeMounts >= 1 &&
-                        IsModuleUnlocked(OrbitalModuleKind.ImpulseGun),
+                    OrbitalRewardKind.LaserSword => freeMounts >= 1,
+                    OrbitalRewardKind.ImpulseGun => freeMounts >= 1,
                     OrbitalRewardKind.LinkPair => freeMounts >= 2,
                     OrbitalRewardKind.ModuleDamage => state.Modules.Any(module =>
                         state.CanUpgradeModuleDamage(module.StableModuleId, out _)),
                     OrbitalRewardKind.RingSpeed => state.Rings.Any(ring =>
-                        state.CanUpgradeRingSpeed(ring.StableRingId, out _)),
+                        state.CanTargetRingReward(OrbitalRewardKind.RingSpeed, ring.StableRingId)),
                     OrbitalRewardKind.RingPower => state.Rings.Any(ring =>
-                        state.CanUpgradeRingPower(ring.StableRingId, out _)),
+                        state.CanTargetRingReward(OrbitalRewardKind.RingPower, ring.StableRingId)),
                     OrbitalRewardKind.AddMount => state.Rings.Any(ring =>
-                        state.CanAddMount(ring.StableRingId, out _)),
+                        state.CanTargetRingReward(OrbitalRewardKind.AddMount, ring.StableRingId)),
                     OrbitalRewardKind.CoreUpgrade =>
                         state.CanUpgradeCore(out _),
                     OrbitalRewardKind.LinkMatrix => state.CanUpgradeLinkMatrix(out _),
@@ -147,16 +160,18 @@ namespace Subject42.Combat.OrbitalStation
 
         private void CreateDefinitions()
         {
-            Add(OrbitalRewardKind.Pistol, "НОВЫЙ PISTOL",
-                "МОДУЛЬ\nУстановите Pistol на свободное крепление.",
+            Add(OrbitalRewardKind.NewRing, "НОВАЯ ОРБИТА",
+                "+1 кольцо\n3 точки крепления\nБазовая сила и скорость.", 0f, false);
+            Add(OrbitalRewardKind.Pistol, "ПИСТОЛЕТ",
+                "МОДУЛЬ\nУстановите оружие на свободное крепление.",
                 config.ModuleWeight, true);
-            Add(OrbitalRewardKind.LaserSword, "LASER SWORD",
+            Add(OrbitalRewardKind.LaserSword, "ЛАЗЕРНЫЙ КЛИНОК",
                 "МОДУЛЬ\nКонтактный клинок для выбранной орбиты. Укажите крепление.",
                 config.ModuleWeight, true);
-            Add(OrbitalRewardKind.ImpulseGun, "IMPULSE GUN",
+            Add(OrbitalRewardKind.ImpulseGun, "ИМПУЛЬСНАЯ ПУШКА",
                 "МОДУЛЬ\nВыстрел наносит урон и отталкивает цель. Укажите крепление.",
                 config.ModuleWeight, true);
-            Add(OrbitalRewardKind.ArcEmitter, "ARC EMITTER",
+            Add(OrbitalRewardKind.ArcEmitter, "ДУГОВОЙ ИЗЛУЧАТЕЛЬ",
                 "МОДУЛЬ\nФиолетовый разряд перескакивает между целями. Укажите крепление.",
                 config.ModuleWeight, true);
             Add(OrbitalRewardKind.LinkPair, "LINK PAIR",
@@ -165,14 +180,14 @@ namespace Subject42.Combat.OrbitalStation
             Add(OrbitalRewardKind.ModuleDamage, "УСИЛИТЬ МОДУЛЬ",
                 "МОДУЛЬ\nВыберите установленное оружие. Damage Level +1 даёт +25% базового урона.",
                 config.ModuleWeight, true);
-            Add(OrbitalRewardKind.RingSpeed, "ПЕРЕГРУЗКА КОЛЬЦА",
+            Add(OrbitalRewardKind.RingSpeed, "СКОРОСТЬ КОЛЬЦА",
                 "КОЛЬЦО\nВыбранная орбита вращается на 25% быстрее. После выбора укажите кольцо.",
                 config.RingWeight, true);
-            Add(OrbitalRewardKind.RingPower, "УСИЛИТЕЛЬ КОЛЬЦА",
-                "КОЛЬЦО\nСила объектов выбранной орбиты увеличивается на 25%. Сила связи — среднее двух колец.",
+            Add(OrbitalRewardKind.RingPower, "УСИЛЕНИЕ КОЛЬЦА",
+                "КОЛЬЦО\nУрон оружия на выбранной орбите +25%.",
                 config.RingWeight, true);
             Add(OrbitalRewardKind.AddMount, "НОВОЕ КРЕПЛЕНИЕ",
-                "КОЛЬЦО\nДобавляет одну рабочую точку на выбранную орбиту.",
+                "КОЛЬЦО\nТочки крепления: 3 → 4.\nВыберите заполненную орбиту.",
                 config.RingWeight, true);
             Add(OrbitalRewardKind.CoreUpgrade, "АКТИВИРОВАТЬ ЯДРО",
                 "ЯДРО\nЗапускает каскад импульсов по орбитам.",
@@ -196,21 +211,11 @@ namespace Subject42.Combat.OrbitalStation
                 value.RewardKind == OrbitalRewardKind.CoreUpgrade);
             if (reward == null || core == null)
                 return;
-            if (core.Level <= 0)
-            {
-                reward.upgradeName = "АКТИВИРОВАТЬ ЯДРО";
-                reward.description = "ЯДРО\nЗапускает каскад импульсов по орбитам.";
-            }
-            else if (core.Level == 1)
-            {
-                reward.upgradeName = "CORE II: УСКОРЕНИЕ КАСКАДА";
-                reward.description = "ЯДРО\nКаскад срабатывает чаще, а модули наносят больше урона.";
-            }
-            else
-            {
-                reward.upgradeName = "CORE III: УСИЛЕННЫЙ ИМПУЛЬС";
-                reward.description = "ЯДРО\nФинальное усиление силы и частоты каскада.";
-            }
+            int next = Mathf.Min(3, core.Level + 1);
+            reward.upgradeName = next switch { 1 => "CORE I", 2 => "CORE II", _ => "CORE III" };
+            reward.description = next == 1
+                ? "ЯДРО\nУрон всех модулей +12%, атаки чаще. Запускает каскад дополнительных атак."
+                : $"ЯДРО\nБонус урона: +{core.Level * 12}% → +{next * 12}%. Атаки и каскад срабатывают чаще.";
         }
 
         private void Add(OrbitalRewardKind kind, string title,

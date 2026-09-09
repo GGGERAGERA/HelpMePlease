@@ -151,7 +151,7 @@ public sealed class Subject42SceneTransitionTests
         float deadline = Time.realtimeSinceStartup + 30f;
         float nextCapture = 0f;
         int frame = 0;
-        string folder = Path.GetFullPath("Artifacts/SceneTransitions/" + capture);
+        string folder = Path.GetFullPath("Artifacts/GeneratedQA/SceneTransitions/" + capture);
         if (capture != null) Directory.CreateDirectory(folder);
         while (SceneTransitionOverlay.IsTransitioning && Time.realtimeSinceStartup < deadline)
         {

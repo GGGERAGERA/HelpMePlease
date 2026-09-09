@@ -46,11 +46,13 @@ public sealed class Subject42OrbitalTransactionSceneTests
         while (Time.realtimeSinceStartup < deadline)
         {
             station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
-            if (SceneManager.GetActiveScene().name == "MVP" && station != null && station.IsInitialized) break;
+            if (SceneManager.GetActiveScene().name == "MVP" && station != null && station.IsInitialized &&
+                !SceneTransitionOverlay.IsTransitioning) break;
             yield return null;
         }
         Assert.That(station, Is.Not.Null);
         Assert.That(station.IsInitialized, Is.True);
+        Assert.That(SceneTransitionOverlay.IsTransitioning, Is.False, "input is intentionally blocked until the arena reveal completes");
 
         station.enabled = false; // Freeze phase only, real scene/controllers/UI/queue remain alive.
         var upgrades = UpgradeManager.Instance;

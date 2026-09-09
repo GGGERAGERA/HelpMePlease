@@ -15,7 +15,7 @@ using Object = UnityEngine.Object;
 
 public sealed class Subject42OrbitalGrowthTests
 {
-    private const string Output = "Artifacts/OrbitalGrowth/After";
+    private const string Output = "Artifacts/GeneratedQA/OrbitalGrowth/After";
     private static void Call(object target, string name, params object[] args) => target.GetType()
         .GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(target, args);
 

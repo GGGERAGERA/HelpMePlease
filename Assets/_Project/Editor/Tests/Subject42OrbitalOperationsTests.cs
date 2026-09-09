@@ -91,19 +91,19 @@ public sealed class Subject42OrbitalOperationsTests
     }
 
     [Test]
-    public void Milestone_CommitsOnce_AndDuplicateDoesNothing()
+    public void LevelOpportunity_CommitsOnce_WithoutAutomaticRing()
     {
         var state = OrbitalRunState.CreateDefault(1);
         int revision = state.Revision;
-        Assert.That(state.ProcessPlayerLevelMilestone(2, out var ring), Is.True);
-        Assert.That(ring.StableRingId, Is.EqualTo(2));
+        Assert.That(state.BeginLevelUpOpportunity(2, 0f), Is.True);
+        Assert.That(state.Rings.Count, Is.EqualTo(1));
         Assert.That(state.Revision, Is.EqualTo(revision + 1));
         Assert.That(state.LastProcessedPlayerLevel, Is.EqualTo(2));
         string before = Snapshot(state);
-        Assert.That(state.ProcessPlayerLevelMilestone(2, out _), Is.False);
+        Assert.That(state.BeginLevelUpOpportunity(2, 0f), Is.False);
         Assert.That(Snapshot(state), Is.EqualTo(before));
-        Assert.That(state.ProcessPlayerLevelMilestone(5, out var noRing), Is.True);
-        Assert.That(noRing, Is.Null);
+        Assert.That(state.BeginLevelUpOpportunity(5, 0f), Is.True);
+        Assert.That(state.Rings.Count, Is.EqualTo(1));
         Assert.That(state.LastProcessedPlayerLevel, Is.EqualTo(5));
         Assert.That(state.Revision, Is.EqualTo(revision + 2));
     }
@@ -292,6 +292,11 @@ public sealed class Subject42OrbitalOperationsTests
         int completed = 0, cancelled = 0;
         foreach (var kind in new[] { OrbitalRewardKind.RingSpeed, OrbitalRewardKind.RingPower, OrbitalRewardKind.AddMount })
         {
+            if (kind == OrbitalRewardKind.AddMount)
+            {
+                f.Station.InstallModule(OrbitalModuleKind.Pistol, 1, 1, out _);
+                f.Station.InstallModule(OrbitalModuleKind.Pistol, 1, 2, out _);
+            }
             Assert.That(flow.Begin(provider.GetDefinition(kind), () => completed++, () => cancelled++), Is.True);
             Assert.That(flow.DebugChooseRing(1), Is.True);
             Assert.That(flow.PendingReward, Is.Null);
@@ -300,6 +305,8 @@ public sealed class Subject42OrbitalOperationsTests
             Assert.That(Snapshot(f.State), Is.EqualTo(committed));
             AssertView(f);
         }
+        foreach (var module in f.State.Modules.Where(m => m.StableModuleId != 1).ToArray())
+            f.Station.RemoveModule(module.StableModuleId);
         Assert.That(completed, Is.EqualTo(3));
         Assert.That(flow.Begin(provider.GetDefinition(OrbitalRewardKind.ArcEmitter), () => completed++, () => cancelled++), Is.True);
         Assert.That(flow.DebugChooseMount(1, 1), Is.True);

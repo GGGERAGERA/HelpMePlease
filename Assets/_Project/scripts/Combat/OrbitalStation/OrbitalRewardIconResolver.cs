@@ -23,6 +23,8 @@ namespace Subject42.Combat.OrbitalStation
 
         public static Icon Resolve(OrbitalRewardKind kind)
         {
+            // No authored ring-plus art exists yet. Do not substitute an unrelated icon.
+            if (kind == OrbitalRewardKind.NewRing) return new Icon(null, Color.white);
             EnsureInitialized();
             return icons.TryGetValue(kind, out Icon icon) && icon.Sprite != null
                 ? icon : fallback;

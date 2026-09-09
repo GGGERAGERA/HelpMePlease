@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Subject42.Combat.OrbitalStation;
@@ -6,10 +5,12 @@ using Subject42.Combat.OrbitalStation;
 [RequireComponent(typeof(UpgradeApplier))]
 public sealed class UpgradeManager : MonoBehaviour
 {
-    private readonly struct UpgradeChoiceRequest
+    private sealed class UpgradeChoiceRequest
     {
+        public bool RingOfferEvaluated;
+        public bool OfferNewRing;
         public readonly int PlayerLevel;
-        public readonly bool PlayLevelUpSound;
+        public readonly bool IsLevelUp;
         public readonly int ChoiceCount;
         public readonly bool GuaranteeBehavior;
         public readonly bool NumericOnly;
@@ -18,7 +19,7 @@ public sealed class UpgradeManager : MonoBehaviour
 
         public UpgradeChoiceRequest(
             int playerLevel,
-            bool playLevelUpSound,
+            bool isLevelUp,
             int choiceCount,
             bool guaranteeBehavior,
             bool isChestReward,
@@ -27,7 +28,7 @@ public sealed class UpgradeManager : MonoBehaviour
         )
         {
             PlayerLevel = playerLevel;
-            PlayLevelUpSound = playLevelUpSound;
+            IsLevelUp = isLevelUp;
             ChoiceCount = choiceCount;
             GuaranteeBehavior = guaranteeBehavior;
             NumericOnly = numericOnly;
@@ -47,13 +48,11 @@ public sealed class UpgradeManager : MonoBehaviour
     [SerializeField] private int choicesCount = 3;
 
     private readonly Queue<UpgradeChoiceRequest> pendingChoices = new();
-    private readonly Queue<UpgradeChoiceRequest> milestoneChoices = new();
-    private readonly Queue<int> milestoneLevels = new();
     private readonly Queue<System.Action> idleCallbacks = new();
     private OrbitalRewardProvider orbitalRewardProvider;
     private OrbitalRewardFlowController orbitalRewardFlow;
+    private OrbitalStationRuntime orbitalStation;
     private List<UpgradeData> currentChoices;
-    private bool milestoneSequenceRunning;
     private bool shuttingDown;
     private bool isChoosingUpgrade;
     private float previousTimeScale = 1f;
@@ -63,18 +62,18 @@ public sealed class UpgradeManager : MonoBehaviour
 
     public float TimeScaleAfterRewards => previousTimeScale;
 
-    public bool IsRewardQueueIdle => !isChoosingUpgrade && !hasCurrentRequest &&
-        pendingChoices.Count == 0 && !milestoneSequenceRunning && milestoneChoices.Count == 0;
+    public void BindOrbitalStation(OrbitalStationRuntime station) => orbitalStation = station;
 
-    public bool IsChoosingUpgrade => isChoosingUpgrade ||
-        milestoneSequenceRunning || milestoneChoices.Count > 0;
+    public bool IsRewardQueueIdle => !isChoosingUpgrade && !hasCurrentRequest &&
+        pendingChoices.Count == 0;
+
+    public bool IsChoosingUpgrade => isChoosingUpgrade;
 
     public void RunWhenRewardQueueIsIdle(System.Action callback)
     {
         if (callback == null)
             return;
-        if (isChoosingUpgrade || pendingChoices.Count > 0 ||
-            milestoneSequenceRunning || milestoneChoices.Count > 0)
+        if (isChoosingUpgrade || pendingChoices.Count > 0)
         {
             idleCallbacks.Enqueue(callback);
             return;
@@ -131,7 +130,7 @@ public sealed class UpgradeManager : MonoBehaviour
 
     public bool DebugForceOrbitalReward(OrbitalRewardKind kind)
     {
-        if (isChoosingUpgrade || orbitalRewardProvider == null ||
+        if (shuttingDown || isChoosingUpgrade || orbitalRewardProvider == null ||
             !orbitalRewardProvider.IsEligible(kind))
             return false;
         OrbitalRewardData reward = orbitalRewardProvider.GetDefinition(kind);
@@ -174,16 +173,22 @@ public sealed class UpgradeManager : MonoBehaviour
             upgradePanelView.Hide();
     }
 
-    private void OnDisable()
+    private void OnEnable() => shuttingDown = false;
+    private void OnDisable() => CancelPendingRewards();
+
+    // Terminal cancellation happens before run replacement/UI destruction, not
+    // in whichever scene component happens to receive OnDisable first.
+    public void CancelPendingRewards()
     {
+        shuttingDown = true;
         if (!IsChoosingUpgrade)
             return;
 
-        shuttingDown = true;
         if (orbitalRewardFlow != null)
             orbitalRewardFlow.CancelForSceneTransition();
         isChoosingUpgrade = false;
         hasCurrentRequest = false;
+        currentChoices = null;
         if (upgradePanelView != null)
             upgradePanelView.Hide();
 
@@ -194,18 +199,14 @@ public sealed class UpgradeManager : MonoBehaviour
         while (pendingChoices.Count > 0)
             pendingChoices.Dequeue().OnClosed?.Invoke();
 
-        milestoneChoices.Clear();
-        milestoneLevels.Clear();
-        milestoneSequenceRunning = false;
         idleCallbacks.Clear();
 
         RestoreRewardTimeScale();
-        while (idleCallbacks.Count > 0)
-            idleCallbacks.Dequeue()?.Invoke();
     }
 
     private void OnDestroy()
     {
+        if (Instance == this) Instance = null;
         orbitalRewardProvider?.Dispose();
     }
 
@@ -218,7 +219,7 @@ public sealed class UpgradeManager : MonoBehaviour
         RequestUpgradeChoices(
             new UpgradeChoiceRequest(
                 playerLevel,
-                playLevelUpSound: false,
+                isLevelUp: false,
                 choicesCount,
                 guaranteeBehavior: false,
                 isChestReward: false
@@ -226,35 +227,32 @@ public sealed class UpgradeManager : MonoBehaviour
         );
     }
 
+    public void GrantSpecialAnomalyRing()
+    {
+        if (shuttingDown) return;
+        // Use the existing reward barrier: do not mutate targets during a flight,
+        // and finish this grant before allowing a queued sector transition.
+        RunWhenRewardQueueIsIdle(() =>
+        {
+            OrbitalStationRuntime station = orbitalStation;
+            if (station != null && station.IsInitialized && station.AddRing() != null)
+                RunMessageService.Instance?.ShowCustom("УСИЛЕННАЯ АНОМАЛИЯ",
+                    "НОВАЯ ОРБИТА · +1 КОЛЬЦО", 2f);
+            else
+                ShowUpgradeChoices();
+        });
+    }
+
     public void ShowLevelUpChoices(int playerLevel)
     {
         FindFirstObjectByType<OrbitalInteractionController>()?.PrepareForExternalPause();
         UpgradeChoiceRequest request = new(
                 playerLevel,
-                playLevelUpSound: true,
+                isLevelUp: true,
                 choicesCount,
                 guaranteeBehavior: false,
                 isChestReward: false
             );
-        OrbitalStationRuntime station =
-            FindFirstObjectByType<OrbitalStationRuntime>();
-        bool requiresSequence = milestoneSequenceRunning ||
-            OrbitalProgressionConfig.Default.IsRingMilestone(playerLevel);
-        if (requiresSequence)
-        {
-            milestoneChoices.Enqueue(request);
-            milestoneLevels.Enqueue(playerLevel);
-            if (!milestoneSequenceRunning)
-            {
-                // One XP pickup can grant several levels before the first
-                // coroutine receives a frame. Reserve the sequence now so
-                // every milestone is handled by the same queue runner.
-                milestoneSequenceRunning = true;
-                StartCoroutine(FlushMilestoneChoices());
-            }
-            return;
-        }
-        station?.ProcessPlayerLevelMilestone(playerLevel);
         RequestUpgradeChoices(request);
     }
 
@@ -271,7 +269,7 @@ public sealed class UpgradeManager : MonoBehaviour
         RequestUpgradeChoices(
             new UpgradeChoiceRequest(
                 playerLevel,
-                playLevelUpSound: false,
+                isLevelUp: false,
                 choiceCount,
                 guaranteeBehavior,
                 isChestReward: true,
@@ -291,7 +289,7 @@ public sealed class UpgradeManager : MonoBehaviour
         RequestUpgradeChoices(
             new UpgradeChoiceRequest(
                 playerLevel,
-                playLevelUpSound: false,
+                isLevelUp: false,
                 choiceCount,
                 guaranteeBehavior: false,
                 isChestReward: true,
@@ -303,6 +301,11 @@ public sealed class UpgradeManager : MonoBehaviour
 
     private void RequestUpgradeChoices(UpgradeChoiceRequest request)
     {
+        if (shuttingDown)
+        {
+            request.OnClosed?.Invoke();
+            return;
+        }
         if (isChoosingUpgrade)
         {
             pendingChoices.Enqueue(request);
@@ -331,7 +334,13 @@ public sealed class UpgradeManager : MonoBehaviour
             return false;
         }
 
-        choices = orbitalRewardProvider?.BuildChoices(request.ChoiceCount) ??
+        if (request.IsLevelUp && !request.RingOfferEvaluated)
+        {
+            request.RingOfferEvaluated = true;
+            request.OfferNewRing = RunStateManager.Instance.OrbitalStationState
+                .BeginLevelUpOpportunity(request.PlayerLevel, Random.value);
+        }
+        choices = orbitalRewardProvider?.BuildChoices(request.ChoiceCount, request.OfferNewRing) ??
             new List<UpgradeData>();
 
         if (choices.Count > 0)
@@ -362,7 +371,7 @@ public sealed class UpgradeManager : MonoBehaviour
         IReadOnlyList<UpgradeData> choices
     )
     {
-        if (request.PlayLevelUpSound)
+        if (request.IsLevelUp)
             AudioService.Instance?.Play(AudioCueId.LevelUp);
 
         if (request.IsChestReward)
@@ -413,6 +422,13 @@ public sealed class UpgradeManager : MonoBehaviour
 
     private void SelectOrbitalReward(OrbitalRewardData reward)
     {
+        // Targets may have changed since the hand was shown.
+        if (!orbitalRewardProvider.IsEligible(reward.RewardKind))
+        {
+            RefreshChoicesAfterGrantFailure();
+            return;
+        }
+
         if (reward.BodyUpgrade != null)
         {
             if (TryGrantUpgrade(reward.BodyUpgrade,
@@ -426,8 +442,7 @@ public sealed class UpgradeManager : MonoBehaviour
             return;
         }
 
-        OrbitalStationRuntime station =
-            FindFirstObjectByType<OrbitalStationRuntime>();
+        OrbitalStationRuntime station = orbitalStation;
         if (station == null || station.RewardFlow == null)
         {
             RefreshChoicesAfterGrantFailure();
@@ -446,6 +461,8 @@ public sealed class UpgradeManager : MonoBehaviour
         orbitalRewardFlow = null;
         if (shuttingDown || !isChoosingUpgrade)
             return;
+        currentChoices?.RemoveAll(choice => choice is OrbitalRewardData orbital &&
+            !orbitalRewardProvider.IsEligible(orbital.RewardKind));
         if (currentChoices != null && currentChoices.Count > 0)
             ShowChoiceRequest(currentRequest, currentChoices);
         else
@@ -573,7 +590,6 @@ public sealed class UpgradeManager : MonoBehaviour
         List<UpgradeData> choices)
     {
         FindFirstObjectByType<OrbitalInteractionController>()?.PrepareForExternalPause();
-        shuttingDown = false;
         isChoosingUpgrade = true;
         previousTimeScale = Time.timeScale;
         Time.timeScale = 0f;
@@ -584,39 +600,12 @@ public sealed class UpgradeManager : MonoBehaviour
         ShowChoiceRequest(request, choices);
     }
 
-    private IEnumerator FlushMilestoneChoices()
-    {
-        // Let ExperienceManager finish a possible multi-level while-loop first.
-        yield return null;
-        while (milestoneLevels.Count > 0)
-        {
-            int level = milestoneLevels.Dequeue();
-            OrbitalStationRuntime station =
-                FindFirstObjectByType<OrbitalStationRuntime>();
-            bool addedRing = station != null &&
-                station.ProcessPlayerLevelMilestone(level);
-            if (!addedRing)
-                continue;
-            float elapsed = 0f;
-            while (elapsed < 0.45f)
-            {
-                elapsed += Time.unscaledDeltaTime;
-                yield return null;
-            }
-        }
-        milestoneSequenceRunning = false;
-        while (milestoneChoices.Count > 0)
-            RequestUpgradeChoices(milestoneChoices.Dequeue());
-        InvokeIdleCallbacksIfReady();
-    }
-
     private void InvokeIdleCallbacksIfReady()
     {
-        if (isChoosingUpgrade || pendingChoices.Count > 0 ||
-            milestoneSequenceRunning || milestoneChoices.Count > 0)
+        if (isChoosingUpgrade || pendingChoices.Count > 0)
             return;
 
-        while (idleCallbacks.Count > 0)
+        while (idleCallbacks.Count > 0 && !isChoosingUpgrade && pendingChoices.Count == 0)
             idleCallbacks.Dequeue()?.Invoke();
     }
 

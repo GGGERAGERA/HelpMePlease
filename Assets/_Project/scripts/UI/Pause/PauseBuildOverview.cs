@@ -69,7 +69,8 @@ public sealed class PauseBuildOverview : MonoBehaviour
                 string tier = ring.VisualTier switch { 1 => "WHITE", 2 => "CYAN", 3 => "VIOLET", _ => "GOLD" };
                 int occupied = state.Modules.Count(m => m.StableRingId == ring.StableRingId);
                 text.AppendLine($"<color=#{color}>■</color>  <b>{localization.Get("pause.ring")} {ring.Order + 1}</b>   <color=#{color}>{tier}</color>");
-                text.AppendLine($"<size=19>POWER +{ring.PowerUpgradeLevel}    SPEED +{ring.SpeedUpgradeLevel}    CAPACITY +{ring.MountUpgradeLevel}</size>");
+                float speed = Mathf.Pow(1f + OrbitalProgressionConfig.Default.SpeedIncrement, ring.SpeedUpgradeLevel);
+                text.AppendLine($"<size=19>POWER ×{ring.PowerMultiplier:0.##}    SPEED ×{speed:0.##}    CAPACITY {ring.MountCapacity}</size>");
                 text.AppendLine($"<size=19><color=#9AB3BE>{localization.Get("pause.mounts")}  {occupied} / {ring.MountCapacity}</color></size>\n");
             }
         }
@@ -82,8 +83,8 @@ public sealed class PauseBuildOverview : MonoBehaviour
         text.Clear();
         if (state != null)
         {
-            AppendUpgrade(text, "Core Pulse", state.CoreState.PulseUpgradeLevel);
-            AppendUpgrade(text, "Core Cascade", state.CoreState.CascadeUpgradeLevel);
+            if (state.CoreState.Level > 0)
+                text.AppendLine("CORE " + (state.CoreState.Level switch { 1 => "I", 2 => "II", _ => "III" }));
             AppendUpgrade(text, "Link Matrix", state.CoreState.LinkMatrixUpgradeLevel);
         }
         coreText.text = text.ToString().TrimEnd();

@@ -20,6 +20,7 @@ public class GameOverManager : MonoBehaviour
     public void GameOver()
     {
         if (RunFlowController.Instance != null && RunFlowController.Instance.IsVictoryConfirmed) return;
+        UpgradeManager.Instance?.CancelPendingRewards();
         HUDManager.Instance?.HideLowHpVignette();
 
         if (runResultView != null)

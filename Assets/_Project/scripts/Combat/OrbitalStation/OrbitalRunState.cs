@@ -61,6 +61,18 @@ namespace Subject42.Combat.OrbitalStation
         public int Revision;
         public int RestoreCount;
         public int LastProcessedPlayerLevel = 1;
+        public int RingOfferMissCount;
+
+        // Called once when an XP opportunity is opened, never on UI refresh.
+        // Count this opportunity provisionally; an actual acquisition resets it.
+        public bool BeginLevelUpOpportunity(int playerLevel, float roll)
+        {
+            if (!MarkPlayerLevelProcessed(playerLevel)) return false;
+            bool offer = CanAddRing(out _) && roll <
+                OrbitalProgressionConfig.Default.GetRingOfferChance(RingOfferMissCount);
+            if (RingOfferMissCount < int.MaxValue) RingOfferMissCount++;
+            return offer;
+        }
 
         public static OrbitalRunState CreateDefault(int runId)
         {
@@ -104,6 +116,7 @@ namespace Subject42.Combat.OrbitalStation
                 MountCapacity = 3
             };
             Rings.Add(ring);
+            RingOfferMissCount = 0;
             if (incrementRevision) Revision++;
             return ring;
         }
@@ -274,18 +287,6 @@ namespace Subject42.Combat.OrbitalStation
             return true;
         }
 
-        public bool ProcessPlayerLevelMilestone(int playerLevel, out OrbitalRingState addedRing)
-        {
-            addedRing = null;
-            if (!CanCommit(out _) || playerLevel <= LastProcessedPlayerLevel) return false;
-            bool addRing = OrbitalProgressionConfig.Default.IsRingMilestone(playerLevel) &&
-                Rings.Count < OrbitalProgressionConfig.Default.MaxNormalRings;
-            if (addRing && !CanAddRing(out _)) return false;
-            MarkPlayerLevelProcessed(playerLevel);
-            if (addRing) addedRing = CommitAddRing(false);
-            return true;
-        }
-
         public void SetPhase(int stableRingId, float phase)
         {
             OrbitalRingState ring = FindRing(stableRingId);
@@ -361,6 +362,20 @@ namespace Subject42.Combat.OrbitalStation
             Rule(CoreState.Level < OrbitalProgressionConfig.Default.MaxCoreLevel &&
                 CoreState.PulseUpgradeLevel < int.MaxValue && CoreState.CascadeUpgradeLevel < int.MaxValue, "core cap reached", out error);
 
+        // Reward targeting is stricter than structural commands used by Editor/QA.
+        // Provider and arena selection share this one predicate.
+        public bool CanTargetRingReward(OrbitalRewardKind kind, int id)
+        {
+            int occupied = Modules.Count(m => m.StableRingId == id);
+            return kind switch
+            {
+                OrbitalRewardKind.RingPower => occupied > 0 && CanUpgradeRingPower(id, out _),
+                OrbitalRewardKind.RingSpeed => occupied > 0 && CanUpgradeRingSpeed(id, out _),
+                OrbitalRewardKind.AddMount => CanAddMount(id, out _) && occupied == FindRing(id).MountCapacity,
+                _ => false
+            };
+        }
+
         public bool CanUpgradeLinkMatrix(out string error) => CanCommit(out error) &&
             Rule(CoreState.LinkMatrixUpgradeLevel < OrbitalProgressionConfig.Default.MaxLinkMatrixLevel &&
                 ResolveLinkPairs().Any(),
@@ -387,6 +402,11 @@ namespace Subject42.Combat.OrbitalStation
                 !IsFinitePositive(CoreState.CooldownMultiplier))
             {
                 error = "invalid Core state";
+                return false;
+            }
+            if (RingOfferMissCount < 0)
+            {
+                error = "negative ring opportunity count";
                 return false;
             }
             if (Rings == null || Modules == null)

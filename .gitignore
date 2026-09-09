@@ -97,3 +97,7 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Generated QA captures, frame sequences, CSV/contact sheets and test result exports.
+# Route temporary QA scripts/reports and CLI -testResults here too.
+/Artifacts/GeneratedQA/

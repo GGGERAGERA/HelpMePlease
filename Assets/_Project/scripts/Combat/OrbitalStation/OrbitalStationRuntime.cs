@@ -149,6 +149,7 @@ namespace Subject42.Combat.OrbitalStation
                     return;
                 }
                 initialized = true;
+                UpgradeManager.Instance?.BindOrbitalStation(this);
                 enabled = true;
                 InputOwner.enabled = true;
                 Interaction.enabled = true;
@@ -325,21 +326,6 @@ namespace Subject42.Combat.OrbitalStation
             SyncCommitted("LinkMatrix", 0, 0, () => FlashCore(new Color(0.9f, 0.2f, 1f)));
             return true;
         }
-
-        public bool ProcessPlayerLevelMilestone(int playerLevel)
-        {
-            if (State == null || !State.ProcessPlayerLevelMilestone(playerLevel, out OrbitalRingState ring)) return false;
-            if (ring == null) return true; // The level marker was committed without a ring milestone.
-            SyncCommitted("PlayerLevelMilestone", ring.StableRingId, 0, () =>
-            {
-                SelectRing(CreateRingPresentation(ring, true));
-                FlashCore(new Color(0.75f, 0.25f, 1f));
-                RunMessageService.Instance?.ShowCustom(string.Empty,
-                    $"ТЕЛЕКИНЕТИЧЕСКИЙ УРОВЕНЬ: {State.Rings.Count}", 1.35f);
-            });
-            return true;
-        }
-
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public enum GrowthPreset { Beginning, Mid, Final }

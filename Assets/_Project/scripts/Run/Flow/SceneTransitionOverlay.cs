@@ -117,6 +117,7 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
         returning = scene == "MainMenu";
         canvas.enabled = true;
         group.blocksRaycasts = true;
+        UpgradeManager.Instance?.CancelPendingRewards();
         Time.timeScale = 0f;
         try
         {

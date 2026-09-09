@@ -11,7 +11,9 @@ namespace Subject42.Combat.OrbitalStation
     {
         public static OrbitalProgressionConfig Default { get; } = new();
 
-        public int[] RingMilestoneLevels = { 2, 3, 4, 6, 8, 10, 13 };
+        public float BaseRingOfferChance = 0.05f;
+        public float RingOfferChanceStep = 0.02f;
+        public float MaxRingOfferChance = 0.45f;
         public int MaxNormalRings = 8;
         public int MaxMountsPerRing = 4;
         public int MaxSpeedUpgradeLevel = 4;
@@ -24,23 +26,13 @@ namespace Subject42.Combat.OrbitalStation
         public float ModuleWeight = 1f;
         public float LinkPairWeight = 0.65f;
         public float RingWeight = 0.9f;
-        public float CoreWeight = 0.7f;
+        public float CoreWeight = 0.10f;
+        public int MinRingsForCoreOffer = 2;
         public float SubjectWeight = 0.8f;
 
-        public int GetNextRingMilestone(int playerLevel)
-        {
-            for (int i = 0; i < RingMilestoneLevels.Length; i++)
-                if (RingMilestoneLevels[i] > playerLevel)
-                    return RingMilestoneLevels[i];
-            return -1;
-        }
-
-        public bool IsRingMilestone(int playerLevel)
-        {
-            for (int i = 0; i < RingMilestoneLevels.Length; i++)
-                if (RingMilestoneLevels[i] == playerLevel)
-                    return true;
-            return false;
-        }
+        public float GetRingOfferChance(int missedOpportunities) =>
+            UnityEngine.Mathf.Clamp(BaseRingOfferChance +
+                missedOpportunities * RingOfferChanceStep,
+                BaseRingOfferChance, MaxRingOfferChance);
     }
 }

@@ -321,6 +321,7 @@ namespace Subject42.Combat.OrbitalStation
             State = OrbitalRewardFlowState.Applying;
             bool applied = reward.RewardKind switch
             {
+                OrbitalRewardKind.NewRing => station.AddRing() != null,
                 OrbitalRewardKind.CoreUpgrade => ApplyCore(),
                 OrbitalRewardKind.LinkMatrix => station.UpgradeLinkMatrix(),
                 _ => false
@@ -649,11 +650,11 @@ namespace Subject42.Combat.OrbitalStation
             return reward.RewardKind switch
             {
                 OrbitalRewardKind.RingSpeed =>
-                    station.State.CanUpgradeRingSpeed(ring.RingId, out _),
+                    station.State.CanTargetRingReward(OrbitalRewardKind.RingSpeed, ring.RingId),
                 OrbitalRewardKind.RingPower =>
-                    station.State.CanUpgradeRingPower(ring.RingId, out _),
+                    station.State.CanTargetRingReward(OrbitalRewardKind.RingPower, ring.RingId),
                 OrbitalRewardKind.AddMount =>
-                    station.State.CanAddMount(ring.RingId, out _),
+                    station.State.CanTargetRingReward(OrbitalRewardKind.AddMount, ring.RingId),
                 _ => station.State.HasFreeMount(ring.RingId)
             };
         }

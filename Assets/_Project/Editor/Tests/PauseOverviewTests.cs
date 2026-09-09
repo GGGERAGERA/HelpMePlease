@@ -87,7 +87,8 @@ public sealed class PauseOverviewTests
                 Assert.That(Field<GameObject>(view,"playerSection").activeSelf,Is.EqualTo(count==9));
                 if(count==9)Assert.That(Field<TMP_Text>(view,"coreText").text,Does.Contain("Link Matrix"));
                 Assert.That(Field<TMP_Text>(view,"ringsTitle").text,Does.EndWith(count.ToString()));
-                Assert.That(Field<TMP_Text>(view,"ringsText").text,Does.Contain("POWER +0"));
+                Assert.That(Field<TMP_Text>(view,"ringsText").text,Does.Contain("POWER ×1").And.Contain("SPEED ×").And.Contain("CAPACITY"));
+                if(count>1) Assert.That(Field<TMP_Text>(view,"coreText").text,Does.Contain("CORE II").And.Not.Contain("Core Pulse").And.Not.Contain("Core Cascade"));
                 var texture=new RenderTexture(size.x,size.y,24);camera.targetTexture=texture;
                 ((RectTransform)root.transform).sizeDelta = size;
                 camera.orthographicSize = size.y / 2f;
@@ -118,7 +119,7 @@ public sealed class PauseOverviewTests
                 camera.Render();
                 var old=RenderTexture.active;RenderTexture.active=texture;
                 var png=new Texture2D(size.x,size.y,TextureFormat.RGB24,false);png.ReadPixels(new Rect(0,0,size.x,size.y),0,0);png.Apply();
-                Directory.CreateDirectory("../PauseScreenshots");File.WriteAllBytes($"../PauseScreenshots/pause-{count}rings-{size.x}x{size.y}.png",png.EncodeToPNG());
+                Directory.CreateDirectory("Artifacts/GeneratedQA/OrbitalProductionPass/PauseFixtures");File.WriteAllBytes($"Artifacts/GeneratedQA/OrbitalProductionPass/PauseFixtures/pause-{count}rings-{size.x}x{size.y}.png",png.EncodeToPNG());
                 RenderTexture.active=old;camera.targetTexture=null;Object.DestroyImmediate(texture);Object.DestroyImmediate(png);
             }
             int confirmations=0;
