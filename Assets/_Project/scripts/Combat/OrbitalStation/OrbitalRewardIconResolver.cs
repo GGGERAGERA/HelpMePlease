@@ -25,6 +25,8 @@ namespace Subject42.Combat.OrbitalStation
         {
             // No authored ring-plus art exists yet. Do not substitute an unrelated icon.
             if (kind == OrbitalRewardKind.NewRing) return new Icon(null, Color.white);
+            if (kind == OrbitalRewardKind.CoreUpgrade)
+                return new Icon(OrbitalPresentationConfig.Active.CoreIcon, Color.white);
             EnsureInitialized();
             return icons.TryGetValue(kind, out Icon icon) && icon.Sprite != null
                 ? icon : fallback;
@@ -51,7 +53,6 @@ namespace Subject42.Combat.OrbitalStation
             if (config == null) return;
             Sprite circle = config.CircleSprite;
             fallback = new Icon(circle, new Color(0.72f, 0.25f, 1f));
-            icons[OrbitalRewardKind.CoreUpgrade] = fallback;
             icons[OrbitalRewardKind.LinkMatrix] = fallback;
             icons[OrbitalRewardKind.MaxHealth] = fallback;
             icons[OrbitalRewardKind.MoveSpeed] = fallback;

@@ -17,6 +17,18 @@ public sealed class Subject42OrbitalRestoreFlowTests
     public IEnumerator BunkerStart_AndActualSectorReload_PreserveAuthoritativeState()
     {
         yield return new EnterPlayMode();
+        yield return Exercise("Gera");
+    }
+
+    [UnityTest]
+    public IEnumerator Vika_ActualSectorReload_PreservesFigureEight()
+    {
+        yield return new EnterPlayMode();
+        yield return Exercise("Vika");
+    }
+
+    private static IEnumerator Exercise(string characterName)
+    {
         yield return SceneManager.LoadSceneAsync("MainMenu");
         float deadline = Time.realtimeSinceStartup + 20f;
         BunkerRunStarter starter;
@@ -25,7 +37,7 @@ public sealed class Subject42OrbitalRestoreFlowTests
         Assert.That(starter, Is.Not.Null);
         CharacterData character = AssetDatabase.FindAssets("t:CharacterData")
             .Select(id => AssetDatabase.LoadAssetAtPath<CharacterData>(AssetDatabase.GUIDToAssetPath(id)))
-            .First(c => c != null && c.characterPrefab != null);
+            .First(c => c != null && c.characterName == characterName);
         Assert.That(RunSelectionManager.Instance, Is.Not.Null);
         RunSelectionManager.Instance.SelectCharacter(character);
         var target = (Transform)typeof(BunkerRunStarter).GetField("cameraRig", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(starter);
@@ -46,6 +58,7 @@ public sealed class Subject42OrbitalRestoreFlowTests
         RunStateManager manager = RunStateManager.Instance;
         var state = manager.OrbitalStationState;
         Assert.That(station.State, Is.SameAs(state));
+        Assert.That(station.Geometry.Type, Is.EqualTo(character.orbitalPath));
         Assert.That(state.Rings.Count, Is.EqualTo(1));
         Assert.That(state.Modules.Count, Is.EqualTo(1));
         Assert.That(state.Modules[0].ModuleType, Is.EqualTo(OrbitalModuleKind.Pistol));
@@ -83,6 +96,7 @@ public sealed class Subject42OrbitalRestoreFlowTests
                 Assert.That(station, Is.Not.Null);
                 Assert.That(station.gameObject.scene.handle, Is.Not.EqualTo(oldScene));
                 Assert.That(station.State, Is.SameAs(state));
+        Assert.That(station.Geometry.Type, Is.EqualTo(character.orbitalPath));
                 Assert.That(manager.OrbitalStationState, Is.SameAs(state));
                 Assert.That(manager.CurrentSector.SectorNumber, Is.EqualTo(sectorNumber));
                 // CharacterSpawner.Start restores timeScale=1; phase may advance before the test resumes.

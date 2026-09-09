@@ -6734,7 +6734,6 @@ MonoBehaviour:
   playerMovement: {fileID: 1368619039}
   bunkerCursor: {fileID: 181013842}
   runGate: {fileID: 910000000000000202}
-  transitionDuration: 0.8
   targetOrthographicSize: 3.5
   gateOpenNormalizedTime: 0.35
 --- !u!114 &733148237
@@ -259311,11 +259310,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8770723759076525695, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 13.47
+      value: 63.8
       objectReference: {fileID: 0}
     - target: {fileID: 8770723759076525695, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -8.2
+      value: -4.1
       objectReference: {fileID: 0}
     - target: {fileID: 8770723759076525695, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
       propertyPath: m_LocalPosition.z

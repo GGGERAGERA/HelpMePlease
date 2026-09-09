@@ -16,9 +16,10 @@ public sealed class Subject42OrbitalLinkRendererTests {
  static LineRenderer Line(OrbitalStationRuntime s)=>((IDictionary)Get(s,"linkLines")).Values.Cast<LineRenderer>().Single();
  static IEnumerator Frames(){int end=Time.frameCount+2;while(Time.frameCount<end)yield return null;}
  [UnityTest] public IEnumerator LinkRenderer_LifetimeAndCombatCompatibility(){EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);yield return new EnterPlayMode();yield return Run();yield return new ExitPlayMode();}
- static IEnumerator Run(){
- var stage=ScriptableObject.CreateInstance<StageProfileData>();var rule=ScriptableObject.CreateInstance<WorldRuleData>();var anomaly=ScriptableObject.CreateInstance<LocalAnomalyData>();var manager=RunStateManager.EnsureExists();manager.BeginNewRun(null,null,stage,rule,anomaly);
- var player=new GameObject("Link renderer regression");var station=OrbitalStationRuntime.Ensure(player);Assert.That(station.IsInitialized,Is.True);station.enabled=false;
+ [UnityTest] public IEnumerator Vika_LinkRenderer_LifetimeAndCombatCompatibility(){EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);yield return new EnterPlayMode();yield return Run(true);yield return new ExitPlayMode();}
+ static IEnumerator Run(bool figureEight = false){
+ var stage=ScriptableObject.CreateInstance<StageProfileData>();var rule=ScriptableObject.CreateInstance<WorldRuleData>();var anomaly=ScriptableObject.CreateInstance<LocalAnomalyData>();var manager=RunStateManager.EnsureExists();manager.BeginNewRun(figureEight ? UnityEditor.AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Scriptable Objects/Characters/03_Vika.asset") : null,null,stage,rule,anomaly);
+ var player=new GameObject("Link renderer regression");var station=OrbitalStationRuntime.Ensure(player);Assert.That(station.IsInitialized,Is.True);Assert.That(station.Geometry.Type,Is.EqualTo(figureEight ? OrbitalPathType.FigureEight : OrbitalPathType.Circle));station.enabled=false;
  var enemyObject=new GameObject("Link segment target");var enemy=enemyObject.AddComponent<EnemyHealth>();enemy.SetRuntimeMaxHealth(1000);
  try{
  Assert.That(station.InstallLinkPair(1,1,1,2,out _),Is.True);var pair=station.State.ResolveLinkPairs().Single();var first=station.Modules.Single(m=>m.StableModuleId==pair.First);var second=station.Modules.Single(m=>m.StableModuleId==pair.Second);

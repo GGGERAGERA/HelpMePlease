@@ -33,7 +33,15 @@ public sealed class Subject42SceneTransitionTests
         yield return Exercise();
     }
 
-    private static IEnumerator Exercise()
+    [UnityTest]
+    public IEnumerator Vika_TransitionsRestartDeathAndBunker()
+    {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        yield return new EnterPlayMode();
+        yield return Exercise("Vika");
+    }
+
+    private static IEnumerator Exercise(string characterName = "Gera")
     {
         Application.runInBackground = true;
         PlayerPrefs.SetInt(BunkerIntroController.ViewedPreferenceKey, 1);
@@ -45,7 +53,7 @@ public sealed class Subject42SceneTransitionTests
         for (int i = 0; i < 5; i++) yield return null;
         var character = AssetDatabase.FindAssets("t:CharacterData").Select(id =>
             AssetDatabase.LoadAssetAtPath<CharacterData>(AssetDatabase.GUIDToAssetPath(id)))
-            .First(c => c.characterPrefab != null);
+            .First(c => c.characterName == characterName);
         Assert.That(RunSelectionManager.Instance, Is.Not.Null, "Persistent selection after MainMenu Start");
         RunSelectionManager.Instance.SelectCharacter(character);
         StartRun();
@@ -54,14 +62,15 @@ public sealed class Subject42SceneTransitionTests
         bool duplicatePrepared = false;
         Assert.That(SceneTransitionOverlay.Load("MVP", () => duplicatePrepared = true), Is.False);
         Assert.That(duplicatePrepared, Is.False);
-        yield return Finished("bunker-to-mvp");
+        yield return Finished();
         CheckGameplay(character);
+        Assert.That(Object.FindFirstObjectByType<OrbitalStationRuntime>().Geometry.Type, Is.EqualTo(character.orbitalPath));
 
         var pause = Object.FindFirstObjectByType<PauseMenuUI>();
         pause.Pause();
         Assert.That(Time.timeScale, Is.Zero);
         Call(pause, "ReturnToBunker");
-        yield return Finished("mvp-to-bunker");
+        yield return Finished();
         Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo("MainMenu"));
         Assert.That(RunSelectionManager.Instance.SelectedCharacter, Is.SameAs(character));
         CheckOwner(owner);
@@ -71,11 +80,13 @@ public sealed class Subject42SceneTransitionTests
         StartRun();
         yield return Finished();
         CheckGameplay(character);
+        Assert.That(Object.FindFirstObjectByType<OrbitalStationRuntime>().Geometry.Type, Is.EqualTo(character.orbitalPath));
         pause = Object.FindFirstObjectByType<PauseMenuUI>();
         pause.Pause();
         Call(pause, "RestartConfirmed");
         yield return Finished();
         CheckGameplay(character);
+        Assert.That(Object.FindFirstObjectByType<OrbitalStationRuntime>().Geometry.Type, Is.EqualTo(character.orbitalPath));
         CheckOwner(owner);
 
         // Exercise actual death result entry point, including a slow loading hold.
@@ -91,11 +102,13 @@ public sealed class Subject42SceneTransitionTests
         StartRun();
         yield return Finished();
         CheckGameplay(character);
+        Assert.That(Object.FindFirstObjectByType<OrbitalStationRuntime>().Geometry.Type, Is.EqualTo(character.orbitalPath));
         Object.FindFirstObjectByType<CharacterSpawner>().SpawnedPlayer.GetComponent<PlayerHealth>()
             .TakeDamage(float.MaxValue, Vector2.zero);
         GameOverManager.Instance.RestartGame();
         yield return Finished();
         CheckGameplay(character);
+        Assert.That(Object.FindFirstObjectByType<OrbitalStationRuntime>().Geometry.Type, Is.EqualTo(character.orbitalPath));
         CheckOwner(owner);
 
         LogAssert.Expect(LogType.Error, "[SceneTransition] Scene '__missing_scene__' is not in the build.");
@@ -112,6 +125,7 @@ public sealed class Subject42SceneTransitionTests
         typeof(SceneTransitionOverlay).GetMethod("Recover", Private).Invoke(owner, new object[] { false });
         yield return Finished();
         CheckGameplay(character);
+        Assert.That(Object.FindFirstObjectByType<OrbitalStationRuntime>().Geometry.Type, Is.EqualTo(character.orbitalPath));
 
         // Delay camera readiness past the watchdog; retry loads a fresh authored camera.
         Set(owner, "readyTimeout", .1f);
@@ -136,6 +150,7 @@ public sealed class Subject42SceneTransitionTests
         typeof(SceneTransitionOverlay).GetMethod("Recover", Private).Invoke(owner, new object[] { false });
         yield return Finished();
         CheckGameplay(character);
+        Assert.That(Object.FindFirstObjectByType<OrbitalStationRuntime>().Geometry.Type, Is.EqualTo(character.orbitalPath));
         CheckOwner(owner);
     }
 

@@ -32,7 +32,6 @@ namespace Subject42.Combat.OrbitalStation
             set => Cooldown = value;
         }
         protected float Power => (Mount?.Ring.PowerMultiplier ?? 1f) *
-            Station.Core.DamageMultiplier *
             Station.GetModuleMetaDamageMultiplier(Kind) *
             Station.GetModuleDamageMultiplier(StableModuleId);
 
@@ -112,11 +111,21 @@ namespace Subject42.Combat.OrbitalStation
         public virtual void Tick(float deltaTime)
         {
             Cooldown -= deltaTime;
+            if (Mount != null && Mount.Ring.Geometry.Type == OrbitalPathType.FigureEight)
+                presentation.DepthOpacity = Mathf.Lerp(1f, .6f,
+                    Mount.Ring.Geometry.BackAmount(Mount.Transform.localPosition));
             presentation.Tick();
         }
 
         public virtual void ActivateCombat() { }
-        public virtual void OnCorePulse() => ActivateCombat();
+        public virtual void OnCorePulse()
+        {
+            if (Mount == null) return;
+            float normalCooldown = Cooldown;
+            presentation.Trigger();
+            ActivateCombat();
+            Cooldown = normalCooldown;
+        }
         protected void TriggerPresentation() => presentation.Trigger();
         public void TriggerUpgradePresentation() => presentation.Trigger();
 
@@ -180,8 +189,7 @@ namespace Subject42.Combat.OrbitalStation
             Combat.SpawnProjectile(Visual.transform.position, target, 13f,
                 BaseDamage * Power, new Color(0.25f, 0.95f, 1f));
             TriggerPresentation();
-            Cooldown = 0.55f * Station.Core.CooldownMultiplier;
-            Station.FlashCore(new Color(0.25f, 0.95f, 1f));
+            Cooldown = 0.55f;
         }
     }
 
@@ -195,15 +203,19 @@ namespace Subject42.Combat.OrbitalStation
         public override void Tick(float deltaTime)
         {
             base.Tick(deltaTime);
-            if (Cooldown > 0f || Mount == null)
-                return;
+            if (Cooldown <= 0f) ActivateCombat();
+        }
+
+        public override void ActivateCombat()
+        {
+            if (Mount == null) return;
             EnemyHealth target = Combat.FindNearest(Visual.transform.position, 0.75f);
             if (target != null)
             {
                 Combat.ApplyDamage(target, BaseDamage * Power,
                     Visual.transform.position);
                 TriggerPresentation();
-                Cooldown = 0.32f * Station.Core.CooldownMultiplier;
+                Cooldown = 0.32f;
             }
         }
     }
@@ -238,7 +250,7 @@ namespace Subject42.Combat.OrbitalStation
             if (body != null)
                 body.AddForce(direction * 4.5f *
                     Mount.Ring.PowerMultiplier, ForceMode2D.Impulse);
-            Cooldown = 1.25f * Station.Core.CooldownMultiplier;
+            Cooldown = 1.25f;
         }
     }
 
@@ -272,7 +284,7 @@ namespace Subject42.Combat.OrbitalStation
                 from = target.transform.position;
             }
             if (targets.Count > 0)
-                Cooldown = 1.15f * Station.Core.CooldownMultiplier;
+                Cooldown = 1.15f;
         }
     }
 

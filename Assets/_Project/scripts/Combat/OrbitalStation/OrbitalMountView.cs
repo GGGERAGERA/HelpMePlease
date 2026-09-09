@@ -21,5 +21,11 @@ namespace Subject42.Combat.OrbitalStation
             if (!depthAware) return;
             DepthGroup.sortingOrder = localY > 0f ? backSortingOrder : frontSortingOrder;
         }
+
+        public void UpdateFigureEightDepth(bool behind)
+        {
+            DepthGroup.enabled = true;
+            DepthGroup.sortingOrder = behind ? backSortingOrder : frontSortingOrder;
+        }
     }
 }

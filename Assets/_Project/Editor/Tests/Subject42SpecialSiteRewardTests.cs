@@ -91,13 +91,21 @@ public sealed class Subject42SpecialSiteRewardTests
         yield return ExerciseRun();
     }
 
-    private static IEnumerator ExerciseRun()
+    [UnityTest]
+    public IEnumerator Vika_SpecialSitesGrantFigureEightRings()
+    {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        yield return new EnterPlayMode();
+        yield return ExerciseRun("Vika");
+    }
+
+    private static IEnumerator ExerciseRun(string characterName = "Gera")
     {
         yield return SceneManager.LoadSceneAsync("MainMenu");
         yield return Await(() => Object.FindFirstObjectByType<BunkerRunStarter>() != null && !SceneTransitionOverlay.IsTransitioning);
         var character = AssetDatabase.FindAssets("t:CharacterData")
             .Select(id => AssetDatabase.LoadAssetAtPath<CharacterData>(AssetDatabase.GUIDToAssetPath(id)))
-            .First(c => c.characterPrefab != null);
+            .First(c => c.characterName == characterName);
         RunSelectionManager.Instance.SelectCharacter(character);
         var starter = Object.FindFirstObjectByType<BunkerRunStarter>();
         starter.StartRun((Transform)Get(starter, "cameraRig"));
@@ -106,6 +114,7 @@ public sealed class Subject42SpecialSiteRewardTests
         OrbitalStationRuntime station = null;
         yield return Await(() => (station = Object.FindFirstObjectByType<OrbitalStationRuntime>()) != null && station.IsInitialized);
         yield return Await(() => !SceneTransitionOverlay.IsTransitioning);
+        Assert.That(station.Geometry.Type, Is.EqualTo(character.orbitalPath));
         station.enabled = false; // Stable snapshot; production input/placement controllers remain enabled.
         var spawner = Object.FindFirstObjectByType<CharacterSpawner>();
         Assert.That(spawner, Is.Not.Null, "production CharacterSpawner");

@@ -407,7 +407,7 @@ namespace Subject42.Combat.OrbitalStation
                 for (int i = 0; i < station.Rings.Count; i++)
                 {
                     OrbitalRingRuntime ring = station.Rings[i];
-                    float delta = Mathf.Abs(local.magnitude - ring.Radius);
+                    float delta = station.Geometry.Distance(local, ring.Radius);
                     if (delta < best && CanUseRing(ring))
                     {
                         best = delta;
@@ -580,10 +580,8 @@ namespace Subject42.Combat.OrbitalStation
             }
             int futureCapacity = hoveredRing.MountCapacity + 1;
             float localPhase = hoveredRing.MountCapacity * 360f / futureCapacity;
-            float radians = (hoveredRing.Phase + localPhase) * Mathf.Deg2Rad;
-            addMountPreview.transform.localPosition = new Vector3(
-                Mathf.Cos(radians) * hoveredRing.Radius,
-                Mathf.Sin(radians) * hoveredRing.Radius, 0f);
+            addMountPreview.transform.localPosition = station.Geometry.PositionDegrees(
+                hoveredRing.Phase + localPhase, hoveredRing.Radius);
             float pulse = 1f + 0.12f * Mathf.Sin(Time.unscaledTime * 7f);
             addMountPreview.transform.localScale = Vector3.one *
                 OrbitalPresentationConfig.Active.SelectionMountSize * pulse;

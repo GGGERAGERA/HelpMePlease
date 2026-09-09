@@ -10,6 +10,9 @@ public class CharacterData : ScriptableObject
     [Header("Identity")]
     public string characterName;
 
+    public Subject42.Combat.OrbitalStation.OrbitalPathType orbitalPath =
+        Subject42.Combat.OrbitalStation.OrbitalPathType.Circle;
+
     [TextArea(3, 6)]
     public string description;
 

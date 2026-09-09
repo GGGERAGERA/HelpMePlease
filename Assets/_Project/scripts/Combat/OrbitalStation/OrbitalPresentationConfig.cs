@@ -16,6 +16,26 @@ namespace Subject42.Combat.OrbitalStation
         public OrbitalMountView MountPrefab;
         public Material VisualMaterial;
         public Sprite PixelSprite, CircleSprite, RingIcon;
+        public Sprite CoreIcon;
+        public LineRenderer EnergyLinePrefab;
+        [Header("Core pulse overlay")]
+        public Color CoreCyan = new(.15f, .85f, 1f);
+        public Color CoreViolet = new(.65f, .35f, 1f);
+        public Color CoreGold = new(1f, .85f, .4f);
+        public float CoreIdleHighlight = .045f;
+        public float CorePulseBrightness = 2f;
+        public float CoreIdleParticleInterval = .7f;
+        public float CoreChargeParticleInterval = .06f;
+        public int CoreRingSparkCount = 2;
+        public float CoreHaloSize = .75f;
+        public float CoreHaloPulseSize = 1.45f;
+        public float CoreRayDuration = .16f;
+        public float CoreShakeDuration = .08f;
+        public float CoreShakeMagnitude = .025f;
+        public int FlashPoolCapacity = 128;
+        public int ProjectilePrewarmCount = 96;
+        public Color GetCoreWaveColor(int wave) => wave switch
+        { 1 => CoreCyan, 2 => CoreViolet, _ => CoreGold };
         public PlayerVariant[] PlayerVariants;
         [Header("Visual-only modules")]
         public GameObject PistolPrefab;
@@ -30,6 +50,13 @@ namespace Subject42.Combat.OrbitalStation
         [Min(0.1f)] public float ArcVisualScale = 0.46f;
         [Min(0.1f)] public float LinkNodeVisualScale = 0.42f;
         public int MountedWeaponSortingOffset = 12;
+
+        [Header("Figure-eight spatial presentation")]
+        [Min(.1f)] public float FigureEightWidth = 1.4f;
+        [Min(.1f)] public float FigureEightHeight = .65f;
+        [Min(1f)] public float FigureEightSpacing = 1.1f;
+        [Min(.05f), Tooltip("World-space front/back blend range above the crossing.")]
+        public float FigureEightDepthRange = .3f;
 
         [System.Serializable]
         public struct RingTierStyle
@@ -117,7 +144,7 @@ namespace Subject42.Combat.OrbitalStation
             if (StationPrefab == null || !StationPrefab.TryGetComponent<OrbitalStationView>(out var station) ||
                 !station.IsValid || StationPrefab.GetComponent<OrbitalStationRuntime>() == null ||
                 RingPrefab == null || !RingPrefab.IsValid || MountPrefab == null || !MountPrefab.IsValid ||
-                VisualMaterial == null || CircleSprite == null || PixelSprite == null)
+                VisualMaterial == null || EnergyLinePrefab == null || CircleSprite == null || PixelSprite == null)
             { error = "required authored station/ring/mount/material/sprite reference is missing"; return false; }
             foreach (OrbitalModuleKind kind in System.Enum.GetValues(typeof(OrbitalModuleKind)))
             {

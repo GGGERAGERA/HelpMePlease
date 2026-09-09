@@ -21,6 +21,7 @@ namespace Subject42.Combat.OrbitalStation
         private bool previewing;
         private bool previewSnapped;
         private Transform pulseBody;
+        public float DepthOpacity { get; set; } = 1f;
 
         public GameObject GameObject => root;
         public Transform Transform => root.transform;
@@ -204,6 +205,7 @@ namespace Subject42.Combat.OrbitalStation
                         : new Color(1f, 0.12f, 0.18f, color.a), 0.72f);
                 else if (Time.unscaledTime < flashUntil)
                     color = Color.Lerp(color, Color.white, 0.72f);
+                color.a *= DepthOpacity;
                 sprites[i].color = color;
             }
         }

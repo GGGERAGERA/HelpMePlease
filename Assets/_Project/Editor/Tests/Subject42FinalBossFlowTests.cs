@@ -76,9 +76,17 @@ public sealed class Subject42FinalBossFlowTests
         yield return ExerciseVictory();
     }
 
-    private static IEnumerator ExerciseVictory()
+    [UnityTest]
+    public IEnumerator Vika_FinalBossVictoryAndReturnToBunker()
     {
-        yield return StartRun();
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        yield return new EnterPlayMode();
+        yield return ExerciseVictory("Vika");
+    }
+
+    private static IEnumerator ExerciseVictory(string characterName = "Gera")
+    {
+        yield return StartRun(characterName);
         yield return ReachFinalSector();
         Assert.That(Application.isPlaying, Is.True);
         Assert.That(RunStateManager.Instance, Is.Not.Null, "RunState after sector transition");
@@ -206,10 +214,10 @@ public sealed class Subject42FinalBossFlowTests
         Assert.That(summary.OrbitalModuleCount, Is.EqualTo(modules));
     }
 
-    private static IEnumerator StartRun()
+    private static IEnumerator StartRun(string characterName = "Gera")
     {
         var character = AssetDatabase.FindAssets("t:CharacterData").Select(g =>
-            AssetDatabase.LoadAssetAtPath<CharacterData>(AssetDatabase.GUIDToAssetPath(g))).First(c => c.characterPrefab != null);
+            AssetDatabase.LoadAssetAtPath<CharacterData>(AssetDatabase.GUIDToAssetPath(g))).First(c => c.characterName == characterName);
         SceneManager.LoadSceneAsync("MainMenu");
         yield return Await(() => SceneManager.GetActiveScene().name == "MainMenu" && One<BunkerContext>() != null);
         for (int i = 0; i < 5; i++) yield return null;

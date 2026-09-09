@@ -10,6 +10,7 @@ public class EnemyHealth : MonoBehaviour
     public static event System.Action<EnemyHealth> Spawned;
     public static event System.Action<EnemyHealth> Despawned;
     public static IReadOnlyCollection<EnemyHealth> ActiveInstances => activeInstances;
+    internal static HashSet<EnemyHealth>.Enumerator GetActiveEnumerator() => activeInstances.GetEnumerator();
     public static event System.Action<EnemyHealth> SpawnConfigured;
 
     public float maxHealth = 30f;

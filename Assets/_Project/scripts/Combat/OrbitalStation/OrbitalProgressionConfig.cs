@@ -19,6 +19,14 @@ namespace Subject42.Combat.OrbitalStation
         public int MaxSpeedUpgradeLevel = 4;
         public int MaxPowerUpgradeLevel = 4;
         public int MaxCoreLevel = 3;
+        public float CoreIntervalI = 7.5f;
+        public float CoreIntervalII = 6.5f;
+        public float CoreIntervalIII = 5.5f;
+        public float CoreChargeDuration = .35f;
+        public float CoreRingDelay = .12f;
+        public float CoreWaveSpacing = .35f;
+        public float GetCoreInterval(int level) => level switch
+        { 1 => CoreIntervalI, 2 => CoreIntervalII, _ => CoreIntervalIII };
         public int MaxLinkMatrixLevel = 3;
         public float SpeedIncrement = 0.25f;
         public float PowerIncrement = 0.25f;

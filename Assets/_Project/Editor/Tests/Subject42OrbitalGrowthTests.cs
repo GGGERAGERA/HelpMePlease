@@ -215,7 +215,7 @@ public sealed class Subject42OrbitalGrowthTests
         }).Select(m => $"{m.StableModuleId}:{m.Kind}"));
         File.AppendAllText(Output + "/measurements.txt", $"{preset}: frame={Screen.width}x{Screen.height}; camera pixels={camera.pixelWidth}x{camera.pixelHeight}; ortho={camera.orthographicSize:F3}; pos={camera.transform.position}; ring diameter={diameter:F1}px; station bounds=({min.x:F1},{min.y:F1})..({max.x:F1},{max.y:F1}), size={max.x-min.x:F1}x{max.y-min.y:F1}px; outside modules=[{outside}]\n");
         float heightPercent = (max.y - min.y) / camera.pixelHeight * 100f;
-        File.AppendAllText(Output + "/measurements.txt", $"viewport height={heightPercent:F2}%; safe pixels={safe}; presentation radius={station.PresentationRadius:F3}; HUD overlap={!safe.Contains(min) || !safe.Contains(max)}\n");
+        File.AppendAllText(Output + "/measurements.txt", $"viewport height={heightPercent:F2}%; safe pixels={safe}; presentation extents={station.PresentationExtents}; HUD overlap={!safe.Contains(min) || !safe.Contains(max)}\n");
         Assert.That(safe.Contains(min) && safe.Contains(max), Is.True, "station must fit the HUD allowance");
         Assert.That(outside, Is.Empty);
         if (preset == OrbitalStationRuntime.GrowthPreset.Final)

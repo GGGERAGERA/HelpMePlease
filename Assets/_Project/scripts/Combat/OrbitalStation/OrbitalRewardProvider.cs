@@ -213,9 +213,12 @@ namespace Subject42.Combat.OrbitalStation
                 return;
             int next = Mathf.Min(3, core.Level + 1);
             reward.upgradeName = next switch { 1 => "CORE I", 2 => "CORE II", _ => "CORE III" };
-            reward.description = next == 1
-                ? "ЯДРО\nУрон всех модулей +12%, атаки чаще. Запускает каскад дополнительных атак."
-                : $"ЯДРО\nБонус урона: +{core.Level * 12}% → +{next * 12}%. Атаки и каскад срабатывают чаще.";
+            reward.description = next switch
+            {
+                1 => "СИНХРОНИЗАЦИЯ\nСтанция периодически выпускает дополнительную волну атак.\n1 ВОЛНА",
+                2 => "РЕЗОНАНС\nИмпульс станции проходит дважды.\n2 ВОЛНЫ",
+                _ => "КАСКАД\nИмпульс станции проходит трижды.\n3 ВОЛНЫ"
+            };
         }
 
         private void Add(OrbitalRewardKind kind, string title,

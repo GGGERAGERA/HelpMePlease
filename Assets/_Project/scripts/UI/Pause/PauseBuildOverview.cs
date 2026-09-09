@@ -84,7 +84,7 @@ public sealed class PauseBuildOverview : MonoBehaviour
         if (state != null)
         {
             if (state.CoreState.Level > 0)
-                text.AppendLine("CORE " + (state.CoreState.Level switch { 1 => "I", 2 => "II", _ => "III" }));
+                text.AppendLine("CORE " + (state.CoreState.Level switch { 1 => "I — 1 волна импульса", 2 => "II — 2 волны импульса", _ => "III — 3 волны импульса" }));
             AppendUpgrade(text, "Link Matrix", state.CoreState.LinkMatrixUpgradeLevel);
         }
         coreText.text = text.ToString().TrimEnd();

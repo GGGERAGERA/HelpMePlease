@@ -262,10 +262,7 @@ namespace Subject42.Combat.OrbitalStation
         {
             if (!CanUpgradeCore(out _)) return false;
             CoreState.Level++;
-            CoreState.DamageMultiplier = 1f + CoreState.Level * 0.12f;
-            CoreState.CooldownMultiplier = 1f / (1f + CoreState.Level * 0.08f);
-            CoreState.PulseUpgradeLevel++;
-            CoreState.CascadeUpgradeLevel++;
+            CoreState.DamageMultiplier = CoreState.CooldownMultiplier = 1f;
             Revision++;
             return true;
         }
@@ -359,8 +356,7 @@ namespace Subject42.Combat.OrbitalStation
                 $"ring {id} reached power cap", out error);
 
         public bool CanUpgradeCore(out string error) => CanCommit(out error) &&
-            Rule(CoreState.Level < OrbitalProgressionConfig.Default.MaxCoreLevel &&
-                CoreState.PulseUpgradeLevel < int.MaxValue && CoreState.CascadeUpgradeLevel < int.MaxValue, "core cap reached", out error);
+            Rule(CoreState.Level < OrbitalProgressionConfig.Default.MaxCoreLevel, "core cap reached", out error);
 
         // Reward targeting is stricter than structural commands used by Editor/QA.
         // Provider and arena selection share this one predicate.
