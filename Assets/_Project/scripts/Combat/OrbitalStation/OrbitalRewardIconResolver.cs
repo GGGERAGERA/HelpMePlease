@@ -9,13 +9,19 @@ namespace Subject42.Combat.OrbitalStation
         {
             public readonly Sprite Sprite;
             public readonly Color Tint;
-            public Icon(Sprite sprite, Color tint) { Sprite = sprite; Tint = tint; }
+            public readonly Color ImageTint;
+            public Icon(Sprite sprite, Color tint, bool usesOwnColors = false)
+            {
+                Sprite = sprite;
+                Tint = tint;
+                ImageTint = usesOwnColors ? Color.white : tint;
+            }
         }
 
         public static Icon Resolve(OrbitalModuleKind kind)
         {
             var view = OrbitalPresentationConfig.Active.GetPrefab(kind).GetComponent<OrbitalModuleView>();
-            return new Icon(view.Icon, view.IconTint);
+            return new Icon(view.Icon, view.IconTint, view.IconUsesOwnColors);
         }
 
         public static Color ModuleColor(OrbitalModuleKind kind) => Resolve(kind).Tint;

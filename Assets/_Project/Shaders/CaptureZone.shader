@@ -31,6 +31,8 @@ Shader "World/Capture Zone"
             #pragma fragment Frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
+            #include "AnomalyPixel.hlsl"
+
             CBUFFER_START(UnityPerMaterial)
                 half4 _EdgeColor;
                 half4 _ProgressColor;
@@ -64,24 +66,19 @@ Shader "World/Capture Zone"
             half4 Frag(Varyings input) : SV_Target
             {
                 const float TwoPi = 6.28318530718;
-                float2 samplePoint = (input.uv - 0.5) * 2.0;
+                float2 size = float2(length(unity_ObjectToWorld._m00_m10_m20),
+                    length(unity_ObjectToWorld._m01_m11_m21));
+                float2 pixelUV = AnomalyUV(input.uv, size);
+                float2 samplePoint = (pixelUV - 0.5) * 2.0;
                 float radius = length(samplePoint);
                 float angle = atan2(samplePoint.y, samplePoint.x);
                 float angle01 = frac(0.25 - angle / TwoPi);
                 float boundary = 0.855;
 
                 float edgeDistance = abs(radius - boundary);
-                float edge = 1.0 - smoothstep(
-                    _EdgeWidth * 0.25,
-                    _EdgeWidth,
-                    edgeDistance
-                );
+                float edge = 1.0 - step(_EdgeWidth * 0.55, edgeDistance);
                 float progressVisible = step(0.001, _Progress);
-                float progressArc = 1.0 - smoothstep(
-                    _Progress,
-                    _Progress + 0.012,
-                    angle01
-                );
+                float progressArc = 1.0 - step(saturate(_Progress), angle01);
                 progressArc *= progressVisible;
                 float progressEdge = edge * progressArc;
                 float progressBrightness = lerp(

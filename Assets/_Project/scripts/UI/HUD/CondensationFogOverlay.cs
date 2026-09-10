@@ -146,7 +146,7 @@ public sealed class CondensationFogOverlay : MonoBehaviour
         )
         {
             name = "Condensation Fog Mask",
-            filterMode = FilterMode.Bilinear,
+            filterMode = FilterMode.Point,
             wrapMode = TextureWrapMode.Clamp,
             useMipMap = false,
             autoGenerateMips = false

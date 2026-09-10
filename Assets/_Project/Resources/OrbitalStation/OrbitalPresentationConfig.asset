@@ -19,12 +19,12 @@ MonoBehaviour:
   PixelSprite: {fileID: 3883298416164446047, guid: 842791f4876552648b2118a0575f7a6d, type: 3}
   CircleSprite: {fileID: -2413806693520163455, guid: ceb8225d9461f5a4bbe86004909390d0, type: 3}
   RingIcon: {fileID: 2773572355569149612, guid: ef3b39e2cb6eab245aee02cf778f58eb, type: 3}
-  CoreIcon: {fileID: 0}
-  NewMountIcon: {fileID: 0}
-  RingCapacityIcon: {fileID: 0}
-  RingDamageIcon: {fileID: 0}
-  RingSpeedIcon: {fileID: 0}
-  NewRingIcon: {fileID: 0}
+  CoreIcon: {fileID: 1976563965, guid: 682eea2f9d704c04dbd54827c34d5d67, type: 3}
+  NewMountIcon: {fileID: -307806634, guid: 682eea2f9d704c04dbd54827c34d5d67, type: 3}
+  RingCapacityIcon: {fileID: -396039924, guid: 682eea2f9d704c04dbd54827c34d5d67, type: 3}
+  RingDamageIcon: {fileID: -1636822819, guid: 682eea2f9d704c04dbd54827c34d5d67, type: 3}
+  RingSpeedIcon: {fileID: 1877856116, guid: 682eea2f9d704c04dbd54827c34d5d67, type: 3}
+  NewRingIcon: {fileID: -1955852563, guid: 682eea2f9d704c04dbd54827c34d5d67, type: 3}
   EnergyLinePrefab: {fileID: 8029792597844833736, guid: db8249cd301190e488b9d6ff70d5a1e7, type: 3}
   CoreCyan: {r: 0.15, g: 0.85, b: 1, a: 1}
   CoreViolet: {r: 0.65, g: 0.35, b: 1, a: 1}

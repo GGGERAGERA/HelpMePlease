@@ -92,7 +92,7 @@ public class UpgradeCardView : MonoBehaviour
         if (upgrade is OrbitalRewardData orbitalReward)
         {
             OrbitalRewardIconResolver.Icon icon = OrbitalRewardIconResolver.Resolve(orbitalReward);
-            SetIcon(icon.Sprite, icon.Tint);
+            SetIcon(icon.Sprite, icon.ImageTint);
             if (orbitalReward.RewardKind is OrbitalRewardKind.Pistol or OrbitalRewardKind.LaserSword or
                 OrbitalRewardKind.ImpulseGun or OrbitalRewardKind.ArcEmitter or OrbitalRewardKind.LinkPair)
                 SetText(titleText, $"<color=#{ColorUtility.ToHtmlStringRGB(icon.Tint)}>{orbitalReward.upgradeName}</color>");

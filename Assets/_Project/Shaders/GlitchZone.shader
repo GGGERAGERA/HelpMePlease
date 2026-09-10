@@ -33,6 +33,8 @@ Shader "World/Glitch Zone"
             #pragma fragment Frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
+            #include "AnomalyPixel.hlsl"
+
             CBUFFER_START(UnityPerMaterial)
                 half4 _InnerColor;
                 half4 _EdgeColor;
@@ -65,67 +67,36 @@ Shader "World/Glitch Zone"
             Varyings Vert(Attributes input)
             {
                 Varyings output;
-                float rowIndex = floor(input.uv.y * 38.0);
-                float shiftGate = step(0.86, Hash(float2(rowIndex,
-                    floor(_VisualTime * 7.0))));
-                float shift = (Hash(float2(rowIndex, 4.17)) - 0.5) *
-                    0.025 * shiftGate * (0.3 + _Pulse * 1.7);
-                float3 position = input.positionOS.xyz;
-                position.x += shift;
-                output.positionCS = TransformObjectToHClip(position);
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
                 output.uv = input.uv;
                 return output;
             }
 
             half4 Frag(Varyings input) : SV_Target
             {
-                float2 distanceToEdgeUv = min(input.uv, 1.0 - input.uv);
-                float2 uvPerPixel = max(
-                    fwidth(input.uv),
-                    float2(0.00001, 0.00001)
-                );
-                float2 pixelsToEdge = distanceToEdgeUv / uvPerPixel;
-                float edgeDistancePixels = min(
-                    pixelsToEdge.x,
-                    pixelsToEdge.y
-                );
-                float edge = 1.0 - smoothstep(
-                    2.0,
-                    4.0,
-                    edgeDistancePixels
-                );
-
-                float lineIndex = floor(input.uv.y * 42.0);
-                float lineCell = frac(input.uv.y * 42.0);
-                float lineShape = 1.0 - smoothstep(
-                    0.06,
-                    0.16,
-                    abs(lineCell - 0.5)
-                );
+                float2 size = max(_RegionSize.xy, float2(0.0625, 0.0625));
+                float2 worldPoint = AnomalySnap((input.uv - 0.5) * size);
+                // Keep scanlines on the same world-space pixel grid as other zones.
+                float rowHeight = max(0.25, size.y / 42.0);
+                float row = (worldPoint.y + size.y * 0.5) / rowHeight;
+                float lineIndex = floor(row);
+                float lineDistance = abs(frac(row) - 0.5) * rowHeight;
+                float lineShape = 1.0 - step(0.0625, lineDistance);
                 float lineGate = step(
                     0.66,
                     Hash(float2(lineIndex, floor(_VisualTime * 5.0)))
                 );
                 float glitchLine = lineShape * lineGate *
                     (0.38 + _Pulse * 0.9);
-                float scan = 0.5 + 0.5 * sin(
-                    input.uv.y * 150.0 + _VisualTime * 5.0
-                );
+                float scan = step(0.0, sin(
+                    worldPoint.y / size.y * 150.0 + _VisualTime * 5.0
+                ));
 
                 half3 color = _InnerColor.rgb;
                 color = lerp(color, _LineColor.rgb, glitchLine);
-                float edgeIntensity = lerp(0.72, 1.0, _Pulse);
-                color = lerp(
-                    color,
-                    _EdgeColor.rgb,
-                    edge * edgeIntensity
-                );
-
                 float alpha = _InnerColor.a + scan * 0.025 +
                     glitchLine * _LineColor.a + _Pulse * 0.07;
-                float edgeAlpha = _EdgeColor.a *
-                    lerp(0.62, 0.75, _Pulse);
-                alpha = lerp(alpha, edgeAlpha, edge);
+
 
                 return half4(color, saturate(alpha) * _Fade);
             }

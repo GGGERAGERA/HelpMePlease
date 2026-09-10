@@ -354,6 +354,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
         EnsureSnowResources();
         EnsureRainResources();
+        PixelWeatherParticles.Attach(rainEffect, PixelWeatherParticles.Kind.Rain);
         EnsureGoldenResources();
         SetNeutral();
     }
@@ -385,6 +386,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
         EnsureSnowResources();
         EnsureRainResources();
+        PixelWeatherParticles.Attach(rainEffect, PixelWeatherParticles.Kind.Rain);
         EnsureGoldenResources();
         SetNeutral();
     }
@@ -1043,6 +1045,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
     private void SetRainActive(bool active)
     {
         EnsureRainResources();
+        PixelWeatherParticles.Attach(rainEffect, PixelWeatherParticles.Kind.Rain);
         targetRainIntensity = active ? 1f : 0f;
 
         if (active)
@@ -1105,6 +1108,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
         if (active)
         {
+            PixelWeatherParticles.Attach(windParticleSystem.gameObject, PixelWeatherParticles.Kind.Wind);
             UpdateWindParticlesDirection();
 
             if (!windParticleSystem.isPlaying)
@@ -1371,6 +1375,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
             transform
         );
         snowParticleInstance.name = "Snow1";
+        PixelWeatherParticles.Attach(snowParticleInstance, PixelWeatherParticles.Kind.Snow);
         snowParticleSystems =
             snowParticleInstance.GetComponentsInChildren<ParticleSystem>(true);
         snowParticleEmissionRates =

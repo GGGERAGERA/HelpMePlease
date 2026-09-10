@@ -119,6 +119,7 @@ public sealed class FalseSignalPoint : MonoBehaviour
         int sortingOrder)
     {
         LineRenderer line = gameObject.AddComponent<LineRenderer>();
+        PixelEventLine.Attach(line);
         line.sharedMaterial = lineMaterial;
         line.useWorldSpace = false;
         line.loop = true;

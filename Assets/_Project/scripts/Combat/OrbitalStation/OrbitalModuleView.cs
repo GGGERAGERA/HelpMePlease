@@ -13,6 +13,7 @@ namespace Subject42.Combat.OrbitalStation
         public ParticleSystem[] Particles;
         public Sprite Icon;
         public Color IconTint = Color.white;
+        public bool IconUsesOwnColors;
         public bool IsValid => Body != null && Halo != null && Sprites != null && Sprites.Length > 0;
     }
 }

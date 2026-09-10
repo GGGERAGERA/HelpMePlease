@@ -113,6 +113,7 @@ public sealed class CarrierTargetMarker : MonoBehaviour
         int sortingOrder)
     {
         LineRenderer line = gameObject.AddComponent<LineRenderer>();
+        PixelEventLine.Attach(line);
         line.sharedMaterial = material;
         line.useWorldSpace = false;
         line.loop = loop;

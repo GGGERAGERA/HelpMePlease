@@ -30,6 +30,7 @@ Shader "Subject42/AnomalyFocus"
             #pragma vertex vert
             #pragma fragment frag
             #include "UnityCG.cginc"
+            #include "AnomalyPixel.hlsl"
 
             struct appdata
             {
@@ -58,13 +59,8 @@ Shader "Subject42/AnomalyFocus"
 
             fixed4 frag(v2f input) : SV_Target
             {
-                float2 distanceFromCenter = abs(input.uv - 0.5) * 2.0;
-                float2 edge = max(fwidth(distanceFromCenter) * 2.0, 0.003);
-                float2 outsideAxis = smoothstep(
-                    _ClearRatio.xy - edge,
-                    _ClearRatio.xy + edge,
-                    distanceFromCenter
-                );
+                float2 distanceFromCenter = abs(PixelScreenUV(input.uv, _ScreenParams.xy) - 0.5) * 2.0;
+                float2 outsideAxis = step(_ClearRatio.xy, distanceFromCenter);
                 float outside = max(outsideAxis.x, outsideAxis.y);
                 float neutral = lerp(0.0, 0.28, _OutsideDesaturation);
                 float alpha = max(

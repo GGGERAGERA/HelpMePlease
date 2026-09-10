@@ -28,6 +28,7 @@ Shader "World/Rain Wet Ground"
             #pragma vertex vert
             #pragma fragment frag
             #include "UnityCG.cginc"
+            #include "AnomalyPixel.hlsl"
 
             float _WetGroundIntensity;
             float _WetPatternScale;
@@ -82,11 +83,11 @@ Shader "World/Rain Wet Ground"
 
             fixed4 frag(v2f input) : SV_Target
             {
-                float2 patternUv = input.worldPosition *
+                float2 patternUv = AnomalySnap(input.worldPosition) *
                     max(0.25, _WetPatternScale) * 0.12;
                 float broad = ValueNoise(patternUv);
                 float detail = ValueNoise(patternUv * 3.7 + 12.4);
-                float wetMask = smoothstep(
+                float wetMask = PixelHardStep(
                     0.38,
                     0.76,
                     broad * 0.78 + detail * 0.22
@@ -98,7 +99,7 @@ Shader "World/Rain Wet Ground"
                     _VisualTime * 0.65 + glintSeed * 18.0
                 );
                 float glint = step(0.965, glintSeed) *
-                    smoothstep(0.78, 1.0, glintPulse) * wetMask;
+                    PixelHardStep(0.78, 1.0, glintPulse) * wetMask;
 
                 fixed3 darkWet = fixed3(0.025, 0.045, 0.055);
                 fixed3 softGlint = fixed3(0.48, 0.62, 0.68);

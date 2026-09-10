@@ -29,6 +29,7 @@ Shader "UI/Condensation Fog"
             #pragma vertex Vert
             #pragma fragment Frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "AnomalyPixel.hlsl"
 
             TEXTURE2D(_MaskTex);
             SAMPLER(sampler_MaskTex);
@@ -71,11 +72,12 @@ Shader "UI/Condensation Fog"
                 float mask = SAMPLE_TEXTURE2D(
                     _MaskTex,
                     sampler_MaskTex,
-                    input.uv
+                    PixelScreenUV(input.uv, _ScreenParams.xy)
                 ).r;
                 float2 noiseCell = floor(input.uv * float2(64.0, 36.0));
                 float noise = Hash21(noiseCell + floor(_FogTime * 0.35));
-                float density = lerp(0.78, 1.0, noise);
+                float density = lerp(0.78, 1.0, floor(noise * 3.0) / 3.0);
+                mask = floor(mask * 4.0 + 0.5) / 4.0;
                 return half4(
                     _FogColor.rgb,
                     mask * density * _Fade * _FogColor.a
@@ -170,11 +172,7 @@ Shader "UI/Condensation Fog"
                 float2 delta = input.uv - _BrushCenter.xy;
                 delta.x *= max(0.01, _ScreenAspect);
                 float distanceToBrush = length(delta);
-                float strength = 1.0 - smoothstep(
-                    _BrushRadius * 0.62,
-                    _BrushRadius,
-                    distanceToBrush
-                );
+                float strength = 1.0 - step(_BrushRadius, distanceToBrush);
                 return half4(0.0, 0.0, 0.0, strength);
             }
             ENDHLSL

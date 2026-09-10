@@ -26,6 +26,7 @@ public class WorldEventMarker : MonoBehaviour
         if (targetCamera == null)
             targetCamera = Camera.main;
 
+        PixelEventArrow.Apply(arrowTransform);
         Hide();
     }
 
@@ -88,6 +89,7 @@ public class WorldEventMarker : MonoBehaviour
                 if (glow == null)
                     glow = arrowTransform.gameObject.AddComponent<Outline>();
 
+                glow.enabled = false;
                 glow.effectColor = new Color(1f, 0.9f, 0.1f, 0.55f);
                 glow.effectDistance = new Vector2(2f, -2f);
                 glow.useGraphicAlpha = true;
@@ -181,8 +183,8 @@ public class WorldEventMarker : MonoBehaviour
         );
 
         markerRoot.position = new Vector3(
-            markerPosition.x,
-            markerPosition.y,
+            Mathf.Round(markerPosition.x),
+            Mathf.Round(markerPosition.y),
             0f
         );
 
@@ -191,14 +193,19 @@ public class WorldEventMarker : MonoBehaviour
 
         if (arrowTransform != null)
         {
-            arrowTransform.rotation = Quaternion.Euler(0f, 0f, angle - 90f);
+            arrowTransform.rotation = Quaternion.Euler(0f, 0f, Mathf.Round((angle - 90f) / 45f) * 45f);
 
             if (pulseArrow)
             {
                 arrowPulseTime += Time.unscaledDeltaTime;
-                float pulse = 1f + Mathf.Sin(arrowPulseTime * 4.5f) *
-                    0.06f;
-                arrowTransform.localScale = arrowBaseScale * pulse;
+                float pulse = Mathf.Floor((0.5f + Mathf.Sin(arrowPulseTime * 4.5f) * 0.5f) * 3f) / 3f;
+                if (arrowTransform.TryGetComponent<Image>(out var arrowImage))
+                {
+                    Color tint = arrowImage.color;
+                    tint.a = Mathf.Lerp(0.75f, 0.95f, pulse);
+                    arrowImage.color = tint;
+                }
+                arrowTransform.localScale = arrowBaseScale;
             }
         }
     }
@@ -221,7 +228,7 @@ public class WorldEventMarker : MonoBehaviour
             screenPadding,
             Screen.height - screenPadding
         );
-        markerRoot.position = new Vector3(clampedX, clampedY, 0f);
+        markerRoot.position = new Vector3(Mathf.Round(clampedX), Mathf.Round(clampedY), 0f);
 
         Vector2 screenCenter = new(
             Screen.width * 0.5f,
@@ -232,7 +239,7 @@ public class WorldEventMarker : MonoBehaviour
             Mathf.Rad2Deg;
 
         if (arrowTransform != null)
-            arrowTransform.rotation = Quaternion.Euler(0f, 0f, angle - 90f);
+            arrowTransform.rotation = Quaternion.Euler(0f, 0f, Mathf.Round((angle - 90f) / 45f) * 45f);
     }
 
     private void SetMarkerVisible(bool visible)

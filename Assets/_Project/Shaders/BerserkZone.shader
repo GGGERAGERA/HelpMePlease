@@ -38,6 +38,8 @@ Shader "World/Berserk Zone"
             #pragma fragment Frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
+            #include "AnomalyPixel.hlsl"
+
             CBUFFER_START(UnityPerMaterial)
                 half4 _InnerColor;
                 half4 _EdgeColor;
@@ -91,7 +93,7 @@ Shader "World/Berserk Zone"
                 float2 perpendicular = float2(-direction.y, direction.x);
                 float2 flowPosition = float2(
                     dot(positionWS, direction) -
-                        _VisualTime * _InnerPatternSpeed,
+                        floor(_VisualTime * _InnerPatternSpeed * 16.0) / 16.0,
                     dot(positionWS, perpendicular)
                 );
                 float cellSize = max(0.5, _InnerPatternScale);
@@ -102,8 +104,8 @@ Shader "World/Berserk Zone"
                 localPosition.y += (randomValue - 0.5) * 0.12;
 
                 float shortDash =
-                    (1.0 - smoothstep(0.28, 0.38, abs(localPosition.x))) *
-                    (1.0 - smoothstep(0.025, 0.07, abs(localPosition.y)));
+                    (1.0 - step(0.33, abs(localPosition.x))) *
+                    (1.0 - step(max(0.04, 0.0625 / cellSize), abs(localPosition.y)));
                 shortDash *= step(0.42, randomValue);
 
                 float warningPhase = frac(
@@ -111,7 +113,7 @@ Shader "World/Berserk Zone"
                     randomValue
                 );
                 float brightPulse =
-                    1.0 - smoothstep(0.0, 0.12, warningPhase);
+                    1.0 - AnomalyRamp(0.0, 0.12, warningPhase);
                 return shortDash * (0.62 + brightPulse * 0.38);
             }
 
@@ -133,45 +135,22 @@ Shader "World/Berserk Zone"
                     randomValue
                 );
                 float active = step(0.76, randomValue) *
-                    (1.0 - smoothstep(0.0, 0.3, age));
+                    (1.0 - AnomalyRamp(0.0, 0.3, age));
                 float expansion = saturate(
                     age * max(0.1, _InnerPatternSpeed) * 4.0
                 );
                 float distanceToCenter = length(localPosition);
-                float ringRadius = lerp(0.055, 0.24, expansion);
-                float ring = 1.0 - smoothstep(
-                    0.018,
-                    0.045,
+                float ringRadius = floor(lerp(0.055, 0.24, expansion) * cellSize * 16.0) / (cellSize * 16.0);
+                float ring = 1.0 - step(
+                    0.0625 / cellSize,
                     abs(distanceToCenter - ringRadius)
                 );
-                float centerPoint  = 1.0 - smoothstep(
-                    0.025,
-                    0.075,
-                    distanceToCenter
-                );
+                float centerPoint = 1.0 - step(max(0.05, 0.0625 / cellSize), distanceToCenter);
                 return active * max(ring, centerPoint  * (1.0 - expansion));
             }
 
             half4 Frag(Varyings input) : SV_Target
             {
-                float2 rectanglePoint = abs((input.uv - 0.5) * 2.0);
-                float2 halfSize = max(
-                    _RegionSize.xy * 0.5,
-                    float2(0.001, 0.001)
-                );
-                float2 distanceToEdge =
-                    (1.0 - rectanglePoint) * halfSize;
-                float insideDistance = min(
-                    distanceToEdge.x,
-                    distanceToEdge.y
-                );
-                float antialias = max(fwidth(insideDistance), 0.002);
-                float edge = 1.0 - smoothstep(
-                    max(0.0, _EdgeWidth - antialias),
-                    _EdgeWidth + antialias,
-                    insideDistance
-                );
-
                 float pulseWave =
                     sin(_VisualTime * _PulseSpeed) * 0.5 + 0.5;
                 float sharpPulse = pow(
@@ -179,19 +158,15 @@ Shader "World/Berserk Zone"
                     max(1.0, _PulseSharpness)
                 );
                 float warningMode = step(2.0, _PulseSharpness);
-                float berserkPattern = BerserkStrokes(input.positionWS);
+                float berserkPattern = BerserkStrokes(AnomalySnap(input.positionWS));
                 float explosivePattern =
-                    ExplosiveWarnings(input.positionWS);
+                    ExplosiveWarnings(AnomalySnap(input.positionWS));
                 float innerPattern = lerp(
                     berserkPattern,
                     explosivePattern,
                     warningMode
-                ) * saturate(1.0 - edge);
-                float borderPulse = lerp(
-                    1.0 - _PulseStrength + _PulseStrength * pulseWave,
-                    1.0,
-                    warningMode
                 );
+
                 float innerPulse = 1.0 + _PulseStrength * lerp(
                     pulseWave * 0.25,
                     sharpPulse,
@@ -200,15 +175,11 @@ Shader "World/Berserk Zone"
                 half3 color = lerp(
                     _InnerColor.rgb,
                     _EdgeColor.rgb,
-                    saturate(edge + innerPattern * 0.55)
+                    saturate(innerPattern * 0.55)
                 );
                 float patternAlpha = innerPattern *
                     _InnerPatternIntensity * 0.6;
-                float alpha = lerp(
-                    _InnerColor.a * innerPulse + patternAlpha,
-                    _EdgeColor.a * borderPulse,
-                    edge
-                );
+                float alpha = _InnerColor.a * innerPulse + patternAlpha;
 
                 return half4(color, saturate(alpha) * _Fade);
             }

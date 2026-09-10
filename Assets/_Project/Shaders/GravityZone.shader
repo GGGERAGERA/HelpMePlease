@@ -36,6 +36,8 @@ Shader "World/Gravity Zone"
             #pragma fragment Frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
+            #include "AnomalyPixel.hlsl"
+
             CBUFFER_START(UnityPerMaterial)
                 half4 _InnerColor;
                 half4 _EdgeColor;
@@ -73,46 +75,24 @@ Shader "World/Gravity Zone"
 
             half4 Frag(Varyings input) : SV_Target
             {
-                float2 samplePoint = (input.uv - 0.5) * 2.0;
-                float2 rectanglePoint = abs(samplePoint);
-                float2 halfSize = max(
-                    _RegionSize.xy * 0.5,
-                    float2(0.001, 0.001)
-                );
-                float2 worldPoint = samplePoint * halfSize;
-                float2 distanceToEdge =
-                    (1.0 - rectanglePoint) * halfSize;
-                float insideDistance = min(
-                    distanceToEdge.x,
-                    distanceToEdge.y
-                );
-                float antialias = max(fwidth(insideDistance), 0.002);
-                float edge = 1.0 - smoothstep(
-                    max(0.0, _EdgeWidth - antialias),
-                    _EdgeWidth + antialias,
-                    insideDistance
-                );
-
+                float2 size = max(_RegionSize.xy, float2(0.0625, 0.0625));
+                float2 worldPoint = AnomalySnap((input.uv - 0.5) * size);
+                const float texel = 1.0 / 16.0;
                 float radius = length(worldPoint);
                 float inwardPhase = frac(
-                    radius * 0.42 + _VisualTime * _FlowSpeed + _FlowPhaseOffset
+                    radius * 0.42 + floor(_VisualTime * _FlowSpeed / (0.42 * texel)) * (0.42 * texel) + _FlowPhaseOffset
                 );
                 float ringDistance = abs(inwardPhase - 0.5);
-                float inwardRing = 1.0 - smoothstep(
-                    0.035,
-                    0.12,
-                    ringDistance
-                );
+                float inwardRing = 1.0 - step(texel * 0.42, ringDistance);
                 float angle = atan2(worldPoint.y, worldPoint.x);
                 float spoke = pow(
                     saturate(abs(cos(angle * 6.0))),
                     12.0
                 );
                 float inwardFlow = inwardRing *
-                    lerp(0.28, 1.0, spoke) *
-                    saturate(1.0 - edge);
+                    lerp(0.28, 1.0, floor(spoke * 3.0 + 0.5) / 3.0);
 
-                float centerGlow = exp2(-radius * radius * 0.32);
+                float centerGlow = floor(exp2(-radius * radius * 0.32) * 4.0 + 0.5) / 4.0;
                 float centerPulse = 0.82 +
                     sin(_VisualTime * _CenterPulseSpeed * 6.28318) * 0.18;
                 centerGlow *= centerPulse;
@@ -120,12 +100,12 @@ Shader "World/Gravity Zone"
                 half3 color = _InnerColor.rgb;
                 color = lerp(color, _FlowColor.rgb, inwardFlow * 0.6);
                 color = lerp(color, _CenterColor.rgb, centerGlow * 0.7);
-                color = lerp(color, _EdgeColor.rgb, edge);
+
 
                 float alpha = _InnerColor.a +
                     inwardFlow * _FlowColor.a +
                     centerGlow * _CenterColor.a;
-                alpha = lerp(alpha, _EdgeColor.a, edge);
+
 
                 return half4(color, saturate(alpha) * _Fade);
             }

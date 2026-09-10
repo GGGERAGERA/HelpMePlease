@@ -32,6 +32,7 @@ Shader "World/Evacuation Corridor"
             #pragma vertex Vert
             #pragma fragment Frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "AnomalyPixel.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _InsideColor;
@@ -67,7 +68,10 @@ Shader "World/Evacuation Corridor"
 
             half4 Frag(Varyings input) : SV_Target
             {
-                float2 localPosition = input.localPosition;
+                float2 worldSize = max(float2(0.0625, 0.0625),
+                    float2(length(unity_ObjectToWorld._m00_m10_m20),
+                    length(unity_ObjectToWorld._m01_m11_m21)));
+                float2 localPosition = AnomalySnap(input.localPosition * worldSize) / worldSize;
                 float2 halfSize = max(
                     _CorridorRatio.xy,
                     float2(0.0001, 0.0001)
@@ -77,7 +81,7 @@ Shader "World/Evacuation Corridor"
                     halfSize.x,
                     _Reveal
                 );
-                float revealMask = 1.0 - smoothstep(
+                float revealMask = 1.0 - PixelHardStep(
                     revealFront,
                     revealFront + 0.012,
                     localPosition.x
@@ -88,14 +92,14 @@ Shader "World/Evacuation Corridor"
                 float signedDistance =
                     max(rectangleDistance.x, rectangleDistance.y);
                 float softness = 0.008;
-                float inside = 1.0 - smoothstep(
+                float inside = 1.0 - PixelHardStep(
                     -softness,
                     softness,
                     signedDistance
                 );
                 inside *= revealMask;
 
-                float edge = 1.0 - smoothstep(
+                float edge = 1.0 - PixelHardStep(
                     0.0,
                     0.014,
                     abs(signedDistance)
@@ -113,13 +117,13 @@ Shader "World/Evacuation Corridor"
                     abs(normalized.y) * 0.22 -
                     abs(movingCell - 0.5)
                 );
-                float directionMark = 1.0 - smoothstep(
+                float directionMark = 1.0 - PixelHardStep(
                     0.025,
                     0.07,
                     chevronDistance
                 );
                 directionMark *= inside *
-                    (1.0 - smoothstep(
+                    (1.0 - PixelHardStep(
                         0.45,
                         0.92,
                         abs(normalized.y)

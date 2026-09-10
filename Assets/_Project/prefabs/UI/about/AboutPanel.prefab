@@ -1023,7 +1023,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2030403348863393899, guid: 63160bda7609811499676be6d473d491, type: 3}
       propertyPath: m_fontSize
-      value: 32.65
+      value: 45.5
       objectReference: {fileID: 0}
     - target: {fileID: 4806060227944189492, guid: 63160bda7609811499676be6d473d491, type: 3}
       propertyPath: m_Pivot.x
@@ -1144,6 +1144,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6057135903794781013, guid: 63160bda7609811499676be6d473d491, type: 3}
       insertIndex: 4
       addedObject: {fileID: 5538344893358052211}
+    - targetCorrespondingSourceObject: {fileID: 6057135903794781013, guid: 63160bda7609811499676be6d473d491, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5940052265248799187}
   m_SourcePrefab: {fileID: 100100000, guid: 63160bda7609811499676be6d473d491, type: 3}
 --- !u!114 &2843546989979595017 stripped
 MonoBehaviour:
@@ -1178,7 +1181,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efbf73e14ba5d3f4390859f0d3068d50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterClickHandler
-  character: {fileID: 11400000, guid: 6aad8e558b07e8243b3b79a85aefa335, type: 2}
+  selectionUI: {fileID: 0}
+--- !u!114 &5940052265248799187
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8630010137033909703}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f807e296a882ed419dc5b9e05a0a1ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterCardView
+  character: {fileID: 0}
+  backgroundImage: {fileID: 0}
+  characterImage: {fileID: 0}
+  characterSprite: {fileID: 0}
+  nameText: {fileID: 0}
+  button: {fileID: 0}
 --- !u!1001 &3303200776539720670
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1358,7 +1379,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2030403348863393899, guid: 63160bda7609811499676be6d473d491, type: 3}
       propertyPath: m_fontSize
-      value: 32.65
+      value: 45.5
       objectReference: {fileID: 0}
     - target: {fileID: 4806060227944189492, guid: 63160bda7609811499676be6d473d491, type: 3}
       propertyPath: m_Pivot.x
@@ -1479,6 +1500,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6057135903794781013, guid: 63160bda7609811499676be6d473d491, type: 3}
       insertIndex: 4
       addedObject: {fileID: 1675963367819736436}
+    - targetCorrespondingSourceObject: {fileID: 6057135903794781013, guid: 63160bda7609811499676be6d473d491, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5794040607682936949}
   m_SourcePrefab: {fileID: 100100000, guid: 63160bda7609811499676be6d473d491, type: 3}
 --- !u!1 &1034192285314151314 stripped
 GameObject:
@@ -1497,7 +1521,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efbf73e14ba5d3f4390859f0d3068d50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterClickHandler
-  character: {fileID: 11400000, guid: 6957f9cb24cd10646b1d8c718701e654, type: 2}
+  selectionUI: {fileID: 0}
+--- !u!114 &5794040607682936949
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1034192285314151314}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f807e296a882ed419dc5b9e05a0a1ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterCardView
+  character: {fileID: 0}
+  backgroundImage: {fileID: 0}
+  characterImage: {fileID: 0}
+  characterSprite: {fileID: 0}
+  nameText: {fileID: 0}
+  button: {fileID: 0}
 --- !u!224 &1794679177586517747 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4806060227944189492, guid: 63160bda7609811499676be6d473d491, type: 3}

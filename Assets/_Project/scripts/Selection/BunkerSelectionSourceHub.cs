@@ -417,7 +417,7 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
         out Color color)
     {
         var presentation = OrbitalRewardIconResolver.Resolve(kind);
-        color = presentation.Tint;
+        color = presentation.ImageTint;
         return presentation.Sprite;
     }
 

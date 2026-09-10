@@ -1,0 +1,370 @@
+fileFormatVersion: 2
+guid: 682eea2f9d704c04dbd54827c34d5d67
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -2401122057955831063
+    second: OrbitalUpgradeIcons_0
+  - first:
+      213: -3932397986542548906
+    second: OrbitalUpgradeIcons_1
+  - first:
+      213: 3773319055603779336
+    second: OrbitalUpgradeIcons_2
+  - first:
+      213: -8472315363239838292
+    second: OrbitalUpgradeIcons_3
+  - first:
+      213: -1661748562314857831
+    second: OrbitalUpgradeIcons_4
+  - first:
+      213: -7847927534287620410
+    second: OrbitalUpgradeIcons_5
+  - first:
+      213: 3796624758761268685
+    second: OrbitalUpgradeIcons_6
+  - first:
+      213: -8073426811763798285
+    second: OrbitalUpgradeIcons_7
+  - first:
+      213: 3595018620305372129
+    second: OrbitalUpgradeIcons_8
+  - first:
+      213: -1174965896673118145
+    second: OrbitalUpgradeIcons_9
+  - first:
+      213: 1626202677492803441
+    second: OrbitalUpgradeIcons_10
+  - first:
+      213: -6377989997278748313
+    second: OrbitalUpgradeIcons_11
+  - first:
+      213: 8420689036102871904
+    second: OrbitalUpgradeIcons_12
+  - first:
+      213: -7729029750361282661
+    second: OrbitalUpgradeIcons_13
+  - first:
+      213: -6874492768466400182
+    second: OrbitalUpgradeIcons_14
+  - first:
+      213: -6363171601597172515
+    second: OrbitalUpgradeIcons_15
+  - first:
+      213: 5985036601057509713
+    second: OrbitalUpgradeIcons_16
+  - first:
+      213: -554860961968568452
+    second: OrbitalUpgradeIcons_17
+  - first:
+      213: 2228084996281572962
+    second: OrbitalUpgradeIcons_18
+  - first:
+      213: -5885761336553858637
+    second: OrbitalUpgradeIcons_19
+  - first:
+      213: -8709075434740281849
+    second: OrbitalUpgradeIcons_20
+  - first:
+      213: 5413564586489582826
+    second: OrbitalUpgradeIcons_21
+  - first:
+      213: 4406689011321691272
+    second: OrbitalUpgradeIcons_22
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: ARC
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 443
+        width: 443
+        height: 444
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 03e9033dbffa9bf4591786cddf5780c4
+      internalID: 98816687
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LINK
+      rect:
+        serializedVersion: 2
+        x: 443
+        y: 443
+        width: 444
+        height: 444
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d463edfbded5c684ab3978a31c35a4d7
+      internalID: -1417272457
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mount
+      rect:
+        serializedVersion: 2
+        x: 887
+        y: 443
+        width: 443
+        height: 444
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 122fa7b7f967e5e49a78147519e6c013
+      internalID: -307806634
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RingCapacity
+      rect:
+        serializedVersion: 2
+        x: 1330
+        y: 443
+        width: 444
+        height: 444
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bb0a8fa67a76f8f4db5e8518d81ce453
+      internalID: -396039924
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RingDamage
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 443
+        height: 443
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: efee830a09247ae48bfce4a635c9ebc1
+      internalID: -1636822819
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RingSpeed
+      rect:
+        serializedVersion: 2
+        x: 443
+        y: 0
+        width: 444
+        height: 443
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 51e3a08c5d6e3b94ebc9d49763504f7a
+      internalID: 1877856116
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CORE
+      rect:
+        serializedVersion: 2
+        x: 887
+        y: 0
+        width: 443
+        height: 443
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e692c0e46adad544ebe8ece4b89c7406
+      internalID: 1976563965
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NewOrbit
+      rect:
+        serializedVersion: 2
+        x: 1330
+        y: 0
+        width: 444
+        height: 443
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b7839c10962fa884ea0d8973d5e7445e
+      internalID: -1955852563
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 48cd8a4f1f37de94d9130d94b922d2d3
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      ARC: 98816687
+      CORE: 1976563965
+      LINK: -1417272457
+      Mount: -307806634
+      NewOrbit: -1955852563
+      RingCapacity: -396039924
+      RingDamage: -1636822819
+      RingSpeed: 1877856116
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

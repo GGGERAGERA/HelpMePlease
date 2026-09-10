@@ -651,6 +651,7 @@ public sealed class EvacuationCorridorEvent : WorldEvent
         lineObject.transform.SetParent(transform, false);
 
         LineRenderer line = lineObject.AddComponent<LineRenderer>();
+        PixelEventLine.Attach(line);
         line.sharedMaterial = lineMaterial;
         line.useWorldSpace = false;
         line.alignment = LineAlignment.View;

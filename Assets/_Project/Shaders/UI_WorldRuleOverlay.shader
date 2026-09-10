@@ -54,6 +54,7 @@ Shader "UI/World Rule Overlay"
             #pragma vertex vert
             #pragma fragment frag
             #include "UnityCG.cginc"
+            #include "AnomalyPixel.hlsl"
 
             sampler2D _MainTex;
             fixed4 _HasteColor;
@@ -111,7 +112,7 @@ Shader "UI/World Rule Overlay"
             {
                 float2 edgeDistance = min(uv, 1.0 - uv);
                 float nearestEdge = min(edgeDistance.x, edgeDistance.y);
-                return 1.0 - smoothstep(0.0, 0.3, nearestEdge);
+                return 1.0 - AnomalyRamp(0.0, 0.3, nearestEdge);
             }
 
             float Hash(float2 value)
@@ -146,15 +147,15 @@ Shader "UI/World Rule Overlay"
                 );
                 float dropY = 1.15 - phase * 1.3;
                 float2 delta = local - float2(dropX, dropY);
-                float head = 1.0 - smoothstep(
+                float head = 1.0 - PixelHardStep(
                     0.025,
                     0.085,
                     length(float2(delta.x * 1.8, delta.y))
                 );
                 float trail =
-                    (1.0 - smoothstep(0.018, 0.045, abs(delta.x))) *
-                    smoothstep(0.0, 0.22, delta.y) *
-                    (1.0 - smoothstep(0.22, 0.5, delta.y));
+                    (1.0 - PixelHardStep(0.018, 0.045, abs(delta.x))) *
+                    PixelHardStep(0.0, 0.22, delta.y) *
+                    (1.0 - PixelHardStep(0.22, 0.5, delta.y));
                 return enabled * saturate(head + trail * 0.32);
             }
 
@@ -209,12 +210,12 @@ Shader "UI/World Rule Overlay"
                         Hash(float2(index + 29.0, cycle + 47.0))
                     );
                     float distanceToDrop = length(dropSpace);
-                    float outer = 1.0 - smoothstep(
+                    float outer = 1.0 - PixelHardStep(
                         0.88,
                         1.04,
                         distanceToDrop
                     );
-                    float inner = 1.0 - smoothstep(
+                    float inner = 1.0 - PixelHardStep(
                         0.56,
                         0.9,
                         distanceToDrop
@@ -222,12 +223,12 @@ Shader "UI/World Rule Overlay"
                     float edge = saturate(outer - inner * 0.78);
                     float2 highlightOffset =
                         dropSpace - float2(-0.2, 0.36);
-                    float highlight = 1.0 - smoothstep(
+                    float highlight = 1.0 - PixelHardStep(
                         0.1,
                         0.4,
                         length(highlightOffset)
                     );
-                    float verticalFlow = 1.0 - smoothstep(
+                    float verticalFlow = 1.0 - PixelHardStep(
                         0.0,
                         0.92,
                         abs(dropSpace.x)
@@ -276,8 +277,8 @@ Shader "UI/World Rule Overlay"
                     Hash(float2(cell + 41.0, row + 7.0))
                 );
                 float alongShape =
-                    smoothstep(lineStart, lineStart + 0.035, localAlong) *
-                    (1.0 - smoothstep(
+                    PixelHardStep(lineStart, lineStart + 0.035, localAlong) *
+                    (1.0 - PixelHardStep(
                         lineStart + lineLength,
                         lineStart + lineLength + 0.05,
                         localAlong
@@ -288,8 +289,8 @@ Shader "UI/World Rule Overlay"
                     Hash(float2(cell + 71.0, row + 17.0))
                 );
                 float crossDistance = abs(rowUv - rowOffset);
-                float thinCore = 1.0 - smoothstep(0.012, 0.035, crossDistance);
-                float softEdge = 1.0 - smoothstep(0.035, 0.09, crossDistance);
+                float thinCore = 1.0 - PixelHardStep(0.012, 0.035, crossDistance);
+                float softEdge = 1.0 - PixelHardStep(0.035, 0.09, crossDistance);
                 return enabled * alongShape *
                     (thinCore * 0.7 + softEdge * 0.3);
             }
@@ -328,8 +329,8 @@ Shader "UI/World Rule Overlay"
                     Hash(float2(cell + 7.0, row + 73.0))
                 );
                 float alongShape =
-                    smoothstep(lineStart, lineStart + 0.025, localAlong) *
-                    (1.0 - smoothstep(
+                    PixelHardStep(lineStart, lineStart + 0.025, localAlong) *
+                    (1.0 - PixelHardStep(
                         lineStart + lineLength,
                         lineStart + lineLength + 0.045,
                         localAlong
@@ -340,7 +341,7 @@ Shader "UI/World Rule Overlay"
                     Hash(float2(cell + 89.0, row + 5.0))
                 );
                 float crossDistance = abs(rowUv - rowOffset);
-                float lineCore = 1.0 - smoothstep(
+                float lineCore = 1.0 - PixelHardStep(
                     0.018,
                     0.055,
                     crossDistance
@@ -350,7 +351,7 @@ Shader "UI/World Rule Overlay"
 
             fixed4 frag(v2f input) : SV_Target
             {
-                float2 uv = input.uv;
+                float2 uv = PixelScreenUV(input.uv, _ScreenParams.xy);
                 float2 centered = uv - 0.5;
                 float edge = EdgeMask(uv);
                 float time = _VisualTime * _PulseSpeed;
@@ -360,7 +361,7 @@ Shader "UI/World Rule Overlay"
                 if (_RuleType > 1.5)
                 {
                     float radius = length(centered);
-                    float ring = 1.0 - smoothstep(
+                    float ring = 1.0 - PixelHardStep(
                         0.0,
                         0.035,
                         abs(frac(radius * 4.0 - time * 0.18) - 0.5)
@@ -396,20 +397,20 @@ Shader "UI/World Rule Overlay"
                     float lineY =
                         (row + verticalJitter) / rowCount;
                     float horizontalShape =
-                        smoothstep(0.0, 0.035, localX) *
-                        (1.0 - smoothstep(
+                        PixelHardStep(0.0, 0.035, localX) *
+                        (1.0 - PixelHardStep(
                             segmentLength,
                             segmentLength + 0.045,
                             localX
                         ));
                     float verticalShape =
-                        1.0 - smoothstep(
+                        1.0 - PixelHardStep(
                             0.002,
                             0.0065,
                             abs(uv.y - lineY)
                         );
                     float glowShape =
-                        1.0 - smoothstep(
+                        1.0 - PixelHardStep(
                             0.0065,
                             0.018,
                             abs(uv.y - lineY)
@@ -430,7 +431,7 @@ Shader "UI/World Rule Overlay"
                         (
                             0.055 +
                             streakCore * 0.15 +
-                            streakGlow * 0.065
+                            streakGlow * 0.0
                         ) * flow;
                 }
                 else
@@ -462,7 +463,7 @@ Shader "UI/World Rule Overlay"
                     input.color.a;
                 float blizzardLineAlpha = BlizzardLines(uv) *
                     _BlizzardIntensity * input.color.a;
-                float farSnow = smoothstep(
+                float farSnow = PixelHardStep(
                     0.08,
                     0.68,
                     length(centered * float2(1.12, 0.9))

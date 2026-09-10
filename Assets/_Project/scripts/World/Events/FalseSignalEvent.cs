@@ -435,6 +435,7 @@ public sealed class FalseSignalEvent : WorldEvent
 
         const int Segments = 48;
         startVisual = gameObject.AddComponent<LineRenderer>();
+        PixelEventLine.Attach(startVisual);
         startVisual.sharedMaterial = lineMaterial;
         startVisual.useWorldSpace = false;
         startVisual.loop = true;

@@ -406,6 +406,7 @@ public sealed class CarrierHuntEvent : WorldEvent
 
         const int Segments = 40;
         startVisual = gameObject.AddComponent<LineRenderer>();
+        PixelEventLine.Attach(startVisual);
         startVisual.sharedMaterial = lineMaterial;
         startVisual.useWorldSpace = false;
         startVisual.loop = true;

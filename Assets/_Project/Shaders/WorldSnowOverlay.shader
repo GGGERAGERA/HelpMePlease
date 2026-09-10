@@ -29,6 +29,7 @@ Shader "World/Snow Overlay"
             #pragma vertex vert
             #pragma fragment frag
             #include "UnityCG.cginc"
+            #include "AnomalyPixel.hlsl"
 
             fixed4 _SnowColor;
             float _SnowIntensity;
@@ -85,7 +86,7 @@ Shader "World/Snow Overlay"
             fixed4 frag(v2f input) : SV_Target
             {
                 float2 coverageUv =
-                    input.worldPosition *
+                    AnomalySnap(input.worldPosition) *
                     (_SnowDensity / max(0.25, _SnowScale)) *
                     0.085;
 
@@ -97,7 +98,7 @@ Shader "World/Snow Overlay"
                     coverageUv * 6.8 - 9.1
                 );
 
-                float patchMask = smoothstep(
+                float patchMask = PixelHardStep(
                     0.28,
                     0.72,
                     broadPatches * 0.72 +
@@ -106,7 +107,7 @@ Shader "World/Snow Overlay"
                 float textureVariation = lerp(
                     0.72,
                     1.0,
-                    fineTexture
+                    floor(fineTexture * 3.0) / 3.0
                 );
                 float coverage = lerp(
                     0.18,
@@ -120,7 +121,7 @@ Shader "World/Snow Overlay"
                 fixed3 shadedSnow = _SnowColor.rgb * lerp(
                     0.84,
                     1.04,
-                    mediumVariation
+                    floor(mediumVariation * 3.0) / 3.0
                 );
                 return fixed4(shadedSnow, alpha);
             }

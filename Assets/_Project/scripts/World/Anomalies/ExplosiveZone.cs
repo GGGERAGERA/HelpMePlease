@@ -696,6 +696,7 @@ internal static class ExplosionWarningVisual
             renderers[i].sortingOrder = WarningSortingOrder;
         }
 
+        PixelWeatherParticles.Attach(warning, PixelWeatherParticles.Kind.WarningRing);
         return warning;
     }
 }
