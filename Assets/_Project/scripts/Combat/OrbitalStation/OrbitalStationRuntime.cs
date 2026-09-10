@@ -10,6 +10,27 @@ namespace Subject42.Combat.OrbitalStation
     {
         private enum PlacementStep { None, Ring, Mount }
 
+        public enum RmbMode { CompressRings, Repulse, ReverseRotation }
+        public RmbMode RightMouseMode { get; set; } = RmbMode.CompressRings;
+        [Header("Compress Rings (runtime feel)")]
+        [SerializeField, Range(0.1f, 1f)] private float compressedRadiusMultiplier = 0.3f;
+        [SerializeField, Min(0.01f)] private float compressDuration = 0.15f;
+        [SerializeField, Range(1f, 1.3f)] private float releaseOvershoot = 1.15f;
+        [SerializeField, Min(0.01f)] private float releaseDuration = 0.32f;
+        public const float RepulseRadius = 3f;
+        public const float RepulseCooldown = 2.5f;
+        public const float RepulseForce = 8f;
+        private float compressionRadius = 1f;
+        private float compressionStartRadius = 1f;
+        private float compressionTime;
+        private bool compressionHeld;
+        private bool compressionAnimating;
+        private int rotationSign = 1;
+        private float repulseCooldown;
+        private LineRenderer repulseRing;
+        private float repulseAge = 1f;
+        private readonly List<(EnemyMovement movement, Vector2 velocity)> repulsedEnemies = new();
+
         private readonly List<OrbitalRingRuntime> rings = new();
         private readonly List<OrbitalModuleRuntime> modules = new();
         private readonly List<(LineRenderer line, float life)> flashes = new(128);
@@ -180,7 +201,7 @@ namespace Subject42.Combat.OrbitalStation
                 Interaction.enabled = true;
                 RewardFlow.enabled = true;
                 relocation.enabled = true;
-                worldTelekinesis.enabled = true;
+                worldTelekinesis.enabled = false; // RMB belongs to the action prototype.
                 gameObject.SetActive(true);
             }
             catch (System.Exception exception)
@@ -231,6 +252,7 @@ namespace Subject42.Combat.OrbitalStation
                 Teardown();
                 return;
             }
+            UpdateRightMouse(Time.deltaTime);
             TickStation(Time.deltaTime);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             HandlePlacementInput();
@@ -238,6 +260,134 @@ namespace Subject42.Combat.OrbitalStation
         }
 
         // Shared production step, also exercised by deterministic combat QA.
+        private void UpdateRightMouse(float deltaTime)
+        {
+            bool canInput = Application.isFocused && Owner.CanControl &&
+                Time.timeScale > 0f && InputOwner != null &&
+                InputOwner.CanUseDebugPlacement && InputOwner.IsIdle &&
+                !IsDebugPlacementActive;
+            TickRightMouse(deltaTime, canInput && Input.GetMouseButton(1),
+                canInput && Input.GetMouseButtonDown(1));
+        }
+
+        private void TickRightMouse(float deltaTime, bool held, bool pressed)
+        {
+            for (int i = repulsedEnemies.Count - 1; i >= 0; i--)
+            {
+                var item = repulsedEnemies[i];
+                item.velocity = Vector2.MoveTowards(item.velocity, Vector2.zero, 24f * deltaTime);
+                if (item.movement == null || !item.movement.isActiveAndEnabled || item.velocity == Vector2.zero)
+                {
+                    if (item.movement != null) item.movement.RemoveAnomalyExternalVelocity(this);
+                    repulsedEnemies.RemoveAt(i);
+                    continue;
+                }
+                item.movement.SetAnomalyExternalVelocity(this, item.velocity);
+                repulsedEnemies[i] = item;
+            }
+            float radiusScale = UpdateCompression(deltaTime,
+                held && RightMouseMode == RmbMode.CompressRings);
+            repulseCooldown = Mathf.Max(0f, repulseCooldown - deltaTime);
+            if (pressed && RightMouseMode == RmbMode.ReverseRotation)
+            {
+                rotationSign *= -1;
+                foreach (var ring in rings) ring.FlashDirectionChange();
+            }
+            foreach (var ring in rings)
+            {
+                ring.RuntimeRadiusMultiplier = radiusScale;
+                ring.RuntimeDirectionMultiplier = rotationSign;
+            }
+            if (pressed && RightMouseMode == RmbMode.Repulse && repulseCooldown <= 0f)
+            {
+                repulseCooldown = RepulseCooldown;
+                Vector2 origin = Owner.Transform.position;
+                foreach (var enemy in Combat.FindNearestMany(origin, RepulseRadius, int.MaxValue))
+                {
+                    Vector2 away = (Vector2)enemy.transform.position - origin;
+                    var movement = enemy.GetComponent<EnemyMovement>();
+                    if (movement == null) continue;
+                    Vector2 velocity = (away.sqrMagnitude > 0.0001f ? away.normalized : Vector2.up) * RepulseForce;
+                    movement.SetAnomalyExternalVelocity(this, velocity);
+                    repulsedEnemies.Add((movement, velocity));
+                }
+                if (repulseRing == null)
+                {
+                    var go = new GameObject("RMB Repulse FX");
+                    go.transform.SetParent(authoredView.EffectsRoot, false);
+                    repulseRing = go.AddComponent<LineRenderer>();
+                    repulseRing.sharedMaterial = lineMaterial;
+                    repulseRing.useWorldSpace = true;
+                    repulseRing.loop = true;
+                    repulseRing.positionCount = 64;
+                    repulseRing.widthMultiplier = 0.045f;
+                    repulseRing.sortingLayerName = "Player";
+                    repulseRing.sortingOrder = 15;
+                }
+                repulseAge = 0f;
+                repulseRing.transform.position = origin;
+            }
+            if (repulseRing != null)
+            {
+                repulseAge += deltaTime;
+                float t = Mathf.Clamp01(repulseAge / 0.25f);
+                repulseRing.enabled = t < 1f;
+                Color color = new Color(0.4f, 0.9f, 1f, 1f - t);
+                repulseRing.startColor = repulseRing.endColor = color;
+                for (int i = 0; i < 64; i++)
+                {
+                    float angle = i * Mathf.PI * 2f / 64f;
+                    repulseRing.SetPosition(i, repulseRing.transform.position +
+                        new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) *
+                        Mathf.Lerp(0.25f, RepulseRadius, t));
+                }
+            }
+        }
+
+        private float UpdateCompression(float deltaTime, bool held)
+        {
+            if (held != compressionHeld)
+            {
+                compressionHeld = held;
+                compressionStartRadius = compressionRadius;
+                compressionTime = 0f;
+                compressionAnimating = true;
+            }
+            if (!compressionAnimating) return compressionRadius;
+
+            compressionTime += Mathf.Max(0f, deltaTime);
+            float duration = Mathf.Max(0.01f, held ? compressDuration : releaseDuration);
+            float t = Mathf.Clamp01(compressionTime / duration);
+            if (held)
+            {
+                // Quick initial pull, soft landing; every interruption starts at the live radius.
+                float eased = 1f - Mathf.Pow(1f - t, 3f);
+                compressionRadius = Mathf.Lerp(compressionStartRadius, compressedRadiusMultiplier, eased);
+            }
+            else
+            {
+                // Outward burst, then a short recoil. These are multipliers of EACH ring's radius.
+                const float peakTime = 0.55f;
+                float peak = Mathf.Max(compressionStartRadius, releaseOvershoot);
+                if (t < peakTime)
+                {
+                    float outward = 1f - Mathf.Pow(1f - t / peakTime, 3f);
+                    compressionRadius = Mathf.Lerp(compressionStartRadius, peak, outward);
+                }
+                else
+                {
+                    float settle = Mathf.SmoothStep(0f, 1f, (t - peakTime) / (1f - peakTime));
+                    compressionRadius = Mathf.Lerp(peak, 1f, settle);
+                }
+            }
+            if (t >= 1f)
+            {
+                compressionRadius = held ? compressedRadiusMultiplier : 1f;
+                compressionAnimating = false;
+            }
+            return compressionRadius;
+        }
+
         private void TickStation(float deltaTime)
         {
             Core.Tick(deltaTime, rings);
@@ -573,6 +723,16 @@ namespace Subject42.Combat.OrbitalStation
             if (tearingDown)
                 return;
             tearingDown = true;
+            foreach (var item in repulsedEnemies)
+                if (item.movement != null) item.movement.RemoveAnomalyExternalVelocity(this);
+            repulsedEnemies.Clear();
+            compressionRadius = compressionStartRadius = 1f;
+            compressionTime = 0f;
+            compressionHeld = compressionAnimating = false;
+            rotationSign = 1;
+            repulseCooldown = 0f;
+            if (repulseRing != null) Destroy(repulseRing.gameObject);
+            repulseRing = null;
             RewardFlow?.CancelForSceneTransition();
             initialized = false;
             worldTelekinesis?.CancelInteraction();

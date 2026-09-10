@@ -106,11 +106,13 @@ namespace Subject42.Combat.OrbitalStation
         public OrbitalRingState State { get; }
 
         public int RingId => State.StableRingId;
-        public float Radius => State.Radius;
+        public float RuntimeRadiusMultiplier { get; set; } = 1f;
+        public int RuntimeDirectionMultiplier { get; set; } = 1;
+        public float Radius => State.Radius * RuntimeRadiusMultiplier;
         public float RotationSpeed => State.BaseRotationSpeed *
             Mathf.Pow(1f + OrbitalProgressionConfig.Default.SpeedIncrement,
                 State.SpeedUpgradeLevel);
-        public int Direction => State.Direction;
+        public int Direction => State.Direction * RuntimeDirectionMultiplier;
         public float Phase => State.CurrentPhase;
         public int MountCapacity => State.MountCapacity;
         public int MountCount => State.MountCount;
@@ -172,6 +174,9 @@ namespace Subject42.Combat.OrbitalStation
             for (int i = 0; i < Mounts.Count; i++)
                 Mounts[i].Module?.OnCorePulse();
         }
+
+        // Visual feedback only; unlike Pulse this does not activate modules.
+        public void FlashDirectionChange() => pulse = 1f;
 
         public void SetSelected(bool selected)
         {

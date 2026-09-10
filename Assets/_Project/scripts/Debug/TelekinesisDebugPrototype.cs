@@ -295,8 +295,7 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
         switch (CurrentMode)
         {
             case TelekinesisDebugMode.Remote:
-                if (Input.GetMouseButtonDown(1))
-                    SetRemotePointFromMouse();
+                // Legacy RMB actions are disabled for the orbital action prototype.
                 break;
 
             case TelekinesisDebugMode.DualSwitch:
@@ -305,8 +304,6 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
                 break;
 
             case TelekinesisDebugMode.CommandPoint:
-                if (Input.GetMouseButtonDown(1))
-                    SetCommandPointFromMouse();
                 break;
 
             case TelekinesisDebugMode.FocusTarget:
@@ -315,13 +312,9 @@ public sealed class TelekinesisDebugPrototype : MonoBehaviour
                 break;
 
             case TelekinesisDebugMode.WeaponThrow:
-                if (Input.GetMouseButtonDown(1))
-                    StartOrRetargetWeaponThrow();
                 break;
 
             case TelekinesisDebugMode.FullAutoCommand:
-                if (Input.GetMouseButtonDown(1))
-                    SetCommandPointFromMouse();
                 if (Input.GetMouseButtonDown(0))
                     SetFocusTargetFromMouse();
                 break;

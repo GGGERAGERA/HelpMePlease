@@ -107,6 +107,15 @@ public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
         );
 
         visual?.PlayPickupFeedback(ExperienceManager.Instance);
+        Despawn();
+    }
+
+    // XP pickups currently use Instantiate/Destroy; only their feedback FX is pooled.
+    // Clearing must suppress pickup callbacks until deferred destruction completes.
+    public void Despawn()
+    {
+        isCollected = true;
+        gameObject.SetActive(false);
         Destroy(gameObject);
     }
 

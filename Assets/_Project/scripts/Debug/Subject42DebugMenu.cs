@@ -403,6 +403,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private readonly List<UpgradeData> visibleUpgrades = new();
     private TelekinesisDebugPrototype telekinesisPrototype;
     private CombatLabDebugController combatLab;
+    private TextMeshProUGUI activeXpCounter;
+    private float nextXpCounterRefresh;
     private ProductionVisualTuningController productionVisualTuning;
     private ProductionFeelTuningController productionFeelTuning;
     private CombatFeelTestDummyController feelTestDummy;
@@ -462,6 +464,14 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void Update()
     {
+        if (isOpen && activeXpCounter != null &&
+            activeXpCounter.gameObject.activeInHierarchy &&
+            Time.unscaledTime >= nextXpCounterRefresh)
+        {
+            RefreshActiveXpCounter();
+            nextXpCounterRefresh = Time.unscaledTime + 0.25f;
+        }
+
         if (waitingForF1Release)
         {
             if (!Input.GetKey(KeyCode.F1))
@@ -1374,6 +1384,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 AddProductionUpgradeBuildSection();
                 break;
             case DebugTab.Telekinesis:
+                AddExperienceVisualLabSection();
                 AddTelekinesisSection();
                 break;
             case DebugTab.VisualTest:
@@ -3544,6 +3555,20 @@ public sealed class Subject42DebugMenu : MonoBehaviour
     private void AddRunSection()
     {
         ResolveSceneReferences();
+        var rmbStation = FindFirstObjectByType<OrbitalStationRuntime>();
+        AddSectionTitle("RMB MODE", "ПКМ: удержание Compress / нажатие Repulse и Reverse");
+        string[] rmbLabels = { "Compress Rings", "Repulse", "Reverse Rotation" };
+        for (int i = 0; i < rmbLabels.Length; i++)
+        {
+            var mode = (OrbitalStationRuntime.RmbMode)i;
+            bool selected = rmbStation != null && rmbStation.RightMouseMode == mode;
+            AddRow(rmbLabels[i], selected ? "ACTIVE" : "", selected ? successColor : mutedColor,
+                "SELECT", rmbStation != null, () =>
+                {
+                    if (rmbStation != null) rmbStation.RightMouseMode = mode;
+                    RefreshCurrentTab();
+                });
+        }
         RunStateManager runState = RunStateManager.Instance;
         RunSector sector = runState != null ? runState.CurrentSector : null;
         WorldEvent currentEvent = worldEventSpawner != null
@@ -4780,6 +4805,77 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 image.color = successColor;
             }
         }
+    }
+
+    private EnemyHealth ResolveExperienceLootSource()
+    {
+        EnemyHealth source = turretEnemyPrefab != null
+            ? turretEnemyPrefab.GetComponent<EnemyHealth>() : null;
+        if (source != null && source.HasExperienceLoot)
+            return source;
+        source = eyesEnemyPrefab != null
+            ? eyesEnemyPrefab.GetComponent<EnemyHealth>() : null;
+        return source != null && source.HasExperienceLoot ? source : null;
+    }
+
+    private void AddExperienceVisualLabSection()
+    {
+        AddSectionTitle("XP VISUALS / COMBAT LAB", "Production enemy loot / dev only");
+        activeXpCounter = CreateText("Active XP", contentRoot, "", 15f,
+            TextAlignmentOptions.MidlineLeft, successColor);
+        activeXpCounter.gameObject.AddComponent<LayoutElement>().preferredHeight = 28f;
+        RefreshActiveXpCounter();
+        bool available = ResolveExperienceLootSource() != null &&
+            GameObject.FindGameObjectWithTag("Player") != null;
+        foreach (int count in new[] { 10, 50, 100, 250 })
+        {
+            int captured = count;
+            AddRow($"{count} PICKUPS", "RADIUS 4–10", mutedColor,
+                $"Spawn {count} XP", available, () => SpawnDebugExperience(captured));
+        }
+        AddRow("STRESS / 250 PICKUPS", "5 RINGS", mutedColor,
+            "Spawn Stress Field", available, () => SpawnDebugExperience(250, true));
+        AddRow("ALL ACTIVE XP", "NO XP AWARD", warningColor,
+            "Clear XP", true, ClearDebugExperience);
+        AddHint(available
+            ? "Counts are pickups, not XP values. Close F1 to test pickup / telekinesis."
+            : "Requires a player and an enemy prefab with production XP loot.");
+    }
+
+    private void RefreshActiveXpCounter()
+    {
+        if (activeXpCounter != null)
+            activeXpCounter.text = $"ACTIVE XP: {FindObjectsByType<ExperiencePickup>(FindObjectsSortMode.None).Length}";
+    }
+
+    private void SpawnDebugExperience(int count, bool stress = false)
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        EnemyHealth source = ResolveExperienceLootSource();
+        if (player == null || source == null)
+            return;
+
+        Vector3 center = player.transform.position;
+        for (int i = 0; i < count; i++)
+        {
+            float angle = stress
+                ? (i / 5 + UnityEngine.Random.value) * (Mathf.PI * 2f / 50f)
+                : UnityEngine.Random.value * Mathf.PI * 2f;
+            float radius = stress
+                ? 4.5f + i % 5 * 1.25f + UnityEngine.Random.Range(-0.4f, 0.4f)
+                : Mathf.Sqrt(UnityEngine.Random.Range(16f, 100f));
+            source.SpawnLootPickup(center + new Vector3(
+                Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius, 0f));
+        }
+        RefreshActiveXpCounter();
+    }
+
+    private void ClearDebugExperience()
+    {
+        foreach (ExperiencePickup pickup in
+            FindObjectsByType<ExperiencePickup>(FindObjectsSortMode.None))
+            pickup.Despawn();
+        RefreshActiveXpCounter();
     }
 
     private void AddCombatLabSection()

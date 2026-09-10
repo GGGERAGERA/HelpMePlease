@@ -68,6 +68,118 @@ public sealed class ExperiencePresentationTests
     }
 
     [UnityTest]
+    public IEnumerator DebugXpButtonsUseProductionLootAndLifecycle()
+    {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        yield return new EnterPlayMode();
+        yield return ExerciseDebugScene();
+    }
+
+    private static IEnumerator ExerciseDebugScene()
+    {
+        var start = typeof(Subject42FinalBossFlowTests).GetMethod("StartRun", BindingFlags.Static | BindingFlags.NonPublic);
+        yield return (IEnumerator)start.Invoke(null, new object[] { "Gera" });
+        var player = One<CharacterSpawner>().SpawnedPlayer;
+        player.GetComponent<PlayerHealth>().SetRuntimeHealth(100000, 100000);
+        player.GetComponent<CharacterMovement2D>().enabled = false;
+        player.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
+        One<EnemySpawner>().enabled = false;
+        var menu = One<Subject42DebugMenu>();
+        Assert.That(menu, Is.Not.Null);
+        var tabType = typeof(Subject42DebugMenu).GetNestedType("DebugTab", BindingFlags.NonPublic);
+        Call(menu, "SelectTab", Enum.Parse(tabType, "Telekinesis"), true);
+        Call(menu, "SetOpen", true);
+        yield return null; // Allow deferred UI rebuild destruction before resolving buttons.
+        void Click(string label)
+        {
+            var button = ((GameObject)Get(menu, "menuRoot")).GetComponentsInChildren<UnityEngine.UI.Button>(true)
+                .Single(b => b.name == label + " Button");
+            Assert.That(button.interactable, Is.True, label);
+            button.onClick.Invoke();
+        }
+        ExperiencePickup[] Drops() => Object.FindObjectsByType<ExperiencePickup>(FindObjectsSortMode.None);
+        var manager = ExperienceManager.Instance;
+        manager.RestoreRuntimeExperience(1, 0);
+        Set(manager, "expToNextLevel", 100000);
+        int notifications = 0;
+        manager.OnExperienceChanged.AddListener((a, b) => notifications++);
+        Click("Clear XP");
+        int before = manager.CurrentExp;
+        foreach (int count in new[] { 10, 50, 100, 250 })
+        {
+            Click($"Spawn {count} XP");
+            var drops = Drops();
+            Assert.That(drops.Length, Is.EqualTo(count));
+            Assert.That(((TMPro.TextMeshProUGUI)Get(menu, "activeXpCounter")).text, Is.EqualTo($"ACTIVE XP: {count}"));
+            foreach (var drop in drops)
+            {
+                Assert.That(Vector2.Distance(drop.transform.position, player.transform.position), Is.InRange(3.99f, 10.01f));
+                var visual = drop.GetComponent<ExperiencePickupVisual>();
+                Assert.That(visual, Is.Not.Null);
+                Assert.That(((ExperienceVisualPreset)Get(visual, "current")).productionWeight, Is.GreaterThan(0));
+            }
+            Assert.That(drops.Select(p => p.transform.position).Distinct().Count(), Is.EqualTo(count));
+            Assert.That(manager.CurrentExp, Is.EqualTo(before));
+            Click("Clear XP");
+            Assert.That(Drops(), Is.Empty, "Clear immediately removes active pickups");
+            foreach (var drop in drops) Call(drop, "Collect");
+            Assert.That(notifications, Is.Zero, "Cleared objects cannot award XP during deferred destruction");
+            yield return null;
+            Assert.That(drops.All(p => p == null), Is.True);
+        }
+        Click("Spawn Stress Field");
+        var field = Drops();
+        Assert.That(field.Length, Is.EqualTo(250));
+        Assert.That(manager.CurrentExp, Is.EqualTo(before));
+        Assert.That(field.All(p => Vector2.Distance(p.transform.position, player.transform.position) is >= 4f and <= 10f), Is.True);
+        ScreenCapture.CaptureScreenshot(Output + "/03-debug-xp-menu.png");
+        yield return null;
+        Call(menu, "SetOpen", false);
+        var station = One<OrbitalStationRuntime>();
+        var tele = station.GetComponent<OrbitalWorldTelekinesisController>();
+        tele.enabled = false;
+        yield return null;
+        // Production telekinesis holds one target at a time; exercise every pickup in the large field.
+        foreach (var drop in field)
+        {
+            Vector3 position = drop.transform.position;
+            Call(tele, "BeginHold", drop);
+            Assert.That(tele.IsHolding, Is.True);
+            Call(tele, "MoveHeldTowards", (Vector2)player.transform.position + Vector2.right * 5f);
+            Assert.That(Vector3.Distance(position, drop.transform.position), Is.GreaterThan(0f));
+            Call(tele, "ReleaseHeld");
+            Assert.That(tele.IsHolding, Is.False);
+        }
+        Call(tele, "BeginHold", field[0]);
+        Call(menu, "ClearDebugExperience");
+        Call(tele, "UpdateHeld");
+        Call(tele, "UpdateFlights");
+        Assert.That(tele.IsHolding, Is.False, "Clear while held releases interaction");
+        Assert.That(station.InputOwner.IsIdle, Is.True);
+        Assert.That(notifications, Is.Zero);
+        yield return null;
+        Call(menu, "SpawnDebugExperience", 250, false);
+        field = Drops();
+        Assert.That(field.Length, Is.EqualTo(250));
+        yield return null;
+        Call(field[0], "Collect");
+        int award = manager.CurrentExp - before;
+        Call(field[0], "Collect");
+        Assert.That(award, Is.GreaterThan(0));
+        Assert.That(notifications, Is.EqualTo(1));
+        foreach (var drop in field.Skip(1)) drop.transform.position = player.transform.position + Vector3.right * .5f;
+        float deadline = Time.realtimeSinceStartup + 5f;
+        while (field.Any(p => p != null) && Time.realtimeSinceStartup < deadline) yield return null;
+        Assert.That(Drops(), Is.Empty, "Normal magnet/pickup absorbs respawned field");
+        Assert.That(notifications, Is.EqualTo(250));
+        Assert.That(manager.CurrentExp - before, Is.EqualTo(award * 250));
+        yield return Wait(.25f);
+        Assert.That(Object.FindObjectsByType<ExperiencePickupEffect>(FindObjectsSortMode.None), Is.Empty);
+        Assert.That(Get(manager, "pickupEffectPool"), Is.Not.Null);
+        File.WriteAllText(Output + "/debug-runtime.txt", "PASS: real F1 buttons 10/50/100/250, production presets, annulus, live count, Clear without award, 250 stress pickups, telekinesis on all 250 targets, Clear while held, respawn, normal magnet pickup, exactly 250 XP awards, pooled FX completion.\n");
+    }
+
+    [UnityTest]
     public IEnumerator EnemyDropsMagnetTelekinesisAndPooledFeedbackInProductionScene()
     {
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);

@@ -434,12 +434,21 @@ public class EnemyHealth : MonoBehaviour
         for (int i = 0; i < lootAmount; i++)
         {
             Vector2 randomOffset = Random.insideUnitCircle * lootScatterRadius;
-            Instantiate(
-                lootPrefab,
-                (Vector2)transform.position + randomOffset,
-                Quaternion.identity
-            );
+            SpawnLootPickup((Vector2)transform.position + randomOffset);
         }
     }
+
+    // Shared by enemy death and development tools; retains the authored loot prefab.
+    public GameObject SpawnLootPickup(Vector3 position)
+    {
+        return lootPrefab != null
+            ? Instantiate(lootPrefab, position, Quaternion.identity)
+            : null;
+    }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool HasExperienceLoot => lootPrefab != null &&
+        lootPrefab.GetComponent<ExperiencePickup>() != null;
+#endif
 
 }
