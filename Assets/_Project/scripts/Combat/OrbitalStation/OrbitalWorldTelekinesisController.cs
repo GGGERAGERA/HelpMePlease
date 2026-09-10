@@ -120,9 +120,13 @@ namespace Subject42.Combat.OrbitalStation
                 ReleaseHeld();
                 return;
             }
+            MoveHeldTowards(MouseWorld());
+        }
+
+        private void MoveHeldTowards(Vector2 desired)
+        {
             OrbitalPresentationConfig config = OrbitalPresentationConfig.Active;
             Vector2 core = station.transform.position;
-            Vector2 desired = MouseWorld();
             Vector2 offset = desired - core;
             if (offset.sqrMagnitude > config.TelekinesisGrabRange *
                 config.TelekinesisGrabRange)

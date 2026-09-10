@@ -15,11 +15,30 @@ public class ExperienceManager : MonoBehaviour
     private float levelXpGainMultiplier = 1f;
     private float anomalyXpGainMultiplier = 1f;
     private float runUpgradeXpGainMultiplier = 1f;
+    private SimplePrefabPool pickupEffectPool;
+    private float nextPickupEffectTime;
 
     public UnityEvent<int, int> OnExperienceChanged;
     public UnityEvent<int> OnLevelUp;
 
     public int CurrentLevel => currentLevel;
+
+    public void PlayPickupEffect(ExperiencePickupEffect prefab, Vector3 position, Color color)
+    {
+        // Coalesce simultaneous absorption: at most ten short effects alive at once.
+        if (Time.time < nextPickupEffectTime) return;
+        nextPickupEffectTime = Time.time + 1f / 60f;
+        pickupEffectPool ??= new SimplePrefabPool(this, prefab.gameObject, 10, 10);
+        var item = pickupEffectPool.Get(position, Quaternion.identity);
+        item.GetComponent<ExperiencePickupEffect>().Play(color);
+        item.ReleaseAfter(ExperiencePickupEffect.Duration);
+    }
+
+    private void OnDestroy()
+    {
+        pickupEffectPool?.Dispose();
+        if (Instance == this) Instance = null;
+    }
     public int CurrentExp => currentExp;
     public int ExpToNextLevel => expToNextLevel;
 

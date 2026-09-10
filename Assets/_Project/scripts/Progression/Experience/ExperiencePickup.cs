@@ -5,6 +5,7 @@ public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
 {
     [Header("Experience")]
     [SerializeField] private int expValue = 10;
+    [SerializeField] private ExperiencePickupVisual visual;
 
     [Header("Magnet")]
     [SerializeField] private float magnetRadius = 3f;
@@ -105,6 +106,7 @@ public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
             transform.position
         );
 
+        visual?.PlayPickupFeedback(ExperienceManager.Instance);
         Destroy(gameObject);
     }
 
