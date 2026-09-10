@@ -117,7 +117,7 @@
 - `WorldEvent/*`: отдельная система событий; `LevelModifiersApplier` сейчас управляет только `holdZoneEventObject`, а обязательный VS не требует world events.
 - `BunkerCallTimer`, `MenuZombieWalker`, `MatrixRainBackground`, `MenuAnimatedTransformDetector`: presentation/menu helpers, использование может быть только из сцен.
 - `prefabs/Envir/p_chest.prefab` и `LevelNodeData.hasExtraChest`: данные есть, gameplay-обработчика сундука в текущем коде нет; сохранить на будущее.
-- Debug: `DebugGoldCheat`, `DebugSaveResetButton`, `UnlockDebugHotkeys`; нужны для тестов, но должны быть исключены/недоступны в release UI.
+- Debug: `DebugGoldCheat`, `UnlockDebugHotkeys`; нужны для тестов, но должны быть исключены/недоступны в release UI. Неиспользуемый `DebugSaveResetButton` удалён при аудите 2026-09-10.
 
 ## Инвентаризация типов
 

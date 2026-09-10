@@ -6,12 +6,12 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/_Project/Scenes/MainMenu.unity
-    guid: 23049e0bb6a590a40a1a50bcd72a3755
+    path: Assets/_Project/Scenes/MainBuild/MainMenu.unity
+    guid: d6d3b611d0480be44bf38ebec73a7ae0
   - enabled: 1
-    path: Assets/_Project/Scenes/MVP.unity
+    path: Assets/_Project/Scenes/MainBuild/MVP.unity
     guid: 4f8b268c1d6f65441a609aff813a070c
-  - enabled: 1
+  - enabled: 0
     path: Assets/_Project/Scenes/MVP_VisualLab.unity
     guid: a42a1000000000000000000000000045
   m_configObjects: {}

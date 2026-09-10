@@ -14,7 +14,7 @@ using Object = UnityEngine.Object;
 public static class EnemyGalleryAuthoring
 {
     public const string ScenePath = "Assets/_Project/Scenes/EnemyGallery.unity";
-    private const string ProductionScene = "Assets/_Project/Scenes/MVP.unity";
+    private const string ProductionScene = "Assets/_Project/Scenes/MainBuild/MVP.unity";
     public const string PreparedVariantsPath = "Assets/_Project/prefabs/Enemies/PreparedVariants";
 
     // Current content, including future entries in the existing production data types.

@@ -168,7 +168,7 @@ The following remain intentionally pending a separate risk decision:
 
 - `TelekinesisDebugPrototype`, `WeaponCoreDebugSelector`;
 - `NoDamageChallenge`, `WorldAccelerationRule`;
-- `MainMenuController`, `DebugSaveResetButton`, `UISoundPlayer`;
+- `MainMenuController`, `UISoundPlayer`;
 - football authoring/test scripts;
 - `RescueCapsuleEvent`, `DoorInteractable`, `RunLevelManager`.
 

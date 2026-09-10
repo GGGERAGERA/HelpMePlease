@@ -202,7 +202,9 @@ public sealed class Subject42OrbitalPrefabTests
             var view = root.GetComponent<OrbitalStationView>();
             Assert.That(view.IsValid, Is.True);
             Assert.That(view.RingsRoot.childCount, Is.Zero);
-            Assert.That(view.EffectsRoot.childCount, Is.Zero);
+            Assert.That(view.EffectsRoot.childCount, Is.EqualTo(1));
+            Assert.That(view.EffectsRoot.GetChild(0), Is.SameAs(view.CoreParticles.transform),
+                "Only the authored core particles belong here before runtime effects spawn");
             Assert.That(view.Core.transform.IsChildOf(root.transform), Is.True);
             Assert.That(root.GetComponents<OrbitalStationRuntime>().Length, Is.EqualTo(1));
         }

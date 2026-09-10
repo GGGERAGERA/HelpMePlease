@@ -50,7 +50,7 @@ public static class FootballArenaSmoke
     public static void Start()
     {
         if (EditorApplication.isPlaying || SceneManager.GetActiveScene().isDirty ||
-            SceneManager.GetActiveScene().path != "Assets/_Project/Scenes/MainMenu.unity")
+            SceneManager.GetActiveScene().path != "Assets/_Project/Scenes/MainBuild/MainMenu.unity")
             throw new InvalidOperationException("Open saved MainMenu in Edit Mode.");
         SessionState.SetBool("FootballRunInBackground", Application.runInBackground);
         SessionState.SetBool("FootballOriginalSmoke", true);

@@ -96,9 +96,9 @@ public static class Subject42ProjectValidator
 {
     private const string ProjectRoot = "Assets/_Project";
     private const string MainMenuScene =
-        "Assets/_Project/Scenes/MainMenu.unity";
+        "Assets/_Project/Scenes/MainBuild/MainMenu.unity";
     private const string GameplayScene =
-        "Assets/_Project/Scenes/MVP.unity";
+        "Assets/_Project/Scenes/MainBuild/MVP.unity";
 
     private static readonly Regex MissingScriptRegex = new(
         @"m_Script:\s*\{fileID:\s*0(?:\s*,|\s*\})",

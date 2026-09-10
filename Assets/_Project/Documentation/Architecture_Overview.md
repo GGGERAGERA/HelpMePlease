@@ -185,7 +185,7 @@ Completed weather modifier
 
 - Currency загружает/сохраняет total gold; единственная gameplay-награда приходит из `RunStateManager.EndRun`.
 - `MetaProgressionManager.BuyUpgrade` проверяет cost, списывает через Currency и сохраняет уровень.
-- `MetaUpgradeShopUI`/cards только отображают и вызывают manager.
+- Актуальный UI станции: `BunkerStationUpgradePanel`. Неиспользуемые `MetaUpgradeShopUI`/cards/summary удалены при аудите 2026-09-10; `MetaProgressionManager` и формат сохранений сохранены.
 - Inspector: shop cards/views; managers — без обязательных data refs.
 - Console: missing Currency/Meta managers.
 
@@ -214,7 +214,7 @@ Completed weather modifier
 ## 34. Debug-инструменты
 
 - `DebugGoldCheat`: добавляет gold.
-- `DebugSaveResetButton`: `PlayerPrefs.DeleteAll` и reload — затрагивает все сохранения.
+- `DebugSaveResetButton` удалён при аудите 2026-09-10: serialized-подключений и вызывающего кода не было.
 - `UnlockDebugHotkeys`: editor-only методы unlock service.
 - Должны использоваться только при тестировании; scene `MainMenu` сейчас содержит debug objects, поэтому release visibility нужно проверить вручную.
 
