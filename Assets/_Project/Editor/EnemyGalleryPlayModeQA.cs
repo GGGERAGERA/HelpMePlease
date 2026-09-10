@@ -11,7 +11,7 @@ using UnityEngine.SceneManagement;
 [InitializeOnLoad]
 public static class EnemyGalleryPlayModeQA
 {
-    private const string Output = "Artifacts/EnemyGallery/";
+    private const string Output = "Artifacts/GeneratedQA/EnemyGallery/";
     private const string Session = "EnemyGalleryQA";
     private static EnemyGalleryController gallery;
     private static Vector3[] anchors;
@@ -112,6 +112,12 @@ public static class EnemyGalleryPlayModeQA
                 UnityEngine.Object.FindObjectsByType<PlayerHealth>(FindObjectsSortMode.None).Length == 0, "No damage receivers");
             gallery.SetNamesVisible(false); Check(gallery.Exhibits.All(e => !e.label.activeSelf), "Names OFF");
             gallery.SetNamesVisible(true); Check(gallery.Exhibits.All(e => e.label.activeSelf), "Names ON");
+            var candidates = UnityEngine.Object.FindObjectsByType<EnemyGalleryCandidateMarker>(FindObjectsSortMode.None);
+            Check(candidates.Length > 0 && candidates.Select(m => m.DesignId).Distinct().Count() == candidates.Length, "Unique static candidates: " + candidates.Length);
+            Check(candidates.All(m => m.SourceAsset != null && m.Display != null && m.Label != null), "Candidate source and display references intact");
+            Check(candidates.All(m => m.Display.GetComponentsInChildren<MonoBehaviour>(true).Length == 0 && m.Display.GetComponentsInChildren<Collider2D>(true).Length == 0 && m.Display.GetComponentsInChildren<Collider>(true).Length == 0), "Static candidates contain no gameplay or colliders");
+            gallery.SetNamesVisible(false); Check(candidates.All(m => !m.Label.activeSelf), "Candidate names OFF");
+            gallery.SetNamesVisible(true); Check(candidates.All(m => m.Label.activeSelf), "Candidate names ON");
             messages.Add("Keyboard movement and F1 key delivery require a separate interactive Game View check.");
         }
         for (int i = 0; i < gallery.Exhibits.Length; i++)
@@ -130,7 +136,7 @@ public static class EnemyGalleryPlayModeQA
             UnityEngine.Object.FindObjectsByType<RunFlowController>(FindObjectsSortMode.None).Length != 0)
             throw new InvalidOperationException("Combat or run system appeared");
         double elapsed = EditorApplication.timeSinceStartup - started;
-        int nextZone = Math.Min(gallery.Exhibits.Length - 1, (int)(elapsed / 23));
+        int nextZone = Math.Min(gallery.Exhibits.Length - 1, (int)(elapsed / (180.0 / gallery.Exhibits.Length)));
         if (nextZone != zone)
         {
             if (zone >= 0) Capture(gallery.Exhibits[zone].instance.name);

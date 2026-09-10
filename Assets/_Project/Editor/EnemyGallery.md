@@ -1,85 +1,50 @@
 # Enemy Gallery
 
-Open `Assets/_Project/Scenes/EnemyGallery.unity` directly and press Play.
-Move with WASD/arrows, zoom with the gameplay mouse wheel, toggle enemy labels with F1.
-There is no run bootstrap, HUD, weapon loadout, rewards or progression.
+Открыть `Assets/_Project/Scenes/EnemyGallery.unity`, нажать Play.
+WASD / стрелки — движение, колесо — zoom, F1 — подписи обеих зон.
 
-## Current content audit (2026-09-10)
+- Зона A: 7 исходных production prefabs и 4 подготовленных Prefab Variants.
+- Зона B справа (X >= 36): 48 статических визуальных кандидатов.
+- Источник, тип, описание и масштаб предпросмотра — в EnemyGalleryCandidateMarker.
 
-All prefab assets in Assets were inspected for EnemyHealth/CharacterMovement2D,
-including inherited components. References were traced through current spawn profiles,
-stage profiles, enabled production scenes and their prefab dependencies.
+## Обновление
 
-| Enemy prefab | Path relative to Assets/_Project | Production reference |
-| --- | --- | --- |
-| p_Boss1 | prefabs/Enemies/p_Boss1.prefab | VerticalSlice/StageProfiles/StageProfile_01–10 |
-| p_EnemyEye1 Variant | prefabs/Enemies/p_EnemyEye1 Variant.prefab | ESP_Level_02–10, MVP |
-| p_EnemyTurret1 | prefabs/Enemies/p_EnemyTurret1.prefab | ESP_Level_03–10, MVP, FalseSignalEvent |
-| p_Enemy_Bomber | prefabs/Enemies/p_Enemy_Bomber.prefab | ESP_Level_01–10 |
-| p_Enemy_Shooter | prefabs/Enemies/p_Enemy_Shooter.prefab | ESP_Level_01–10 |
-| p_Enemy_classic | prefabs/Enemies/p_Enemy_classic.prefab | ESP_Level_01–10 |
-| p_Enemy_default | prefabs/Enemies/p_Enemy_default.prefab | ESP_Level_06–10 |
+`Tools > Subject42 > Refresh Enemy Gallery` обновляет production references
+и варианты из `prefabs/Enemies/PreparedVariants`. Сохраняет позиции и зону B.
 
-Excluded: `p_Enemy` is an inheritance base with no movement/active animation;
-`p_Enemy1 Variant Mos` has no AI or references; `EnemyDebugTest` is an unused group
-of test shooters. The two `locationElements` turret variants have their health and
-AI disabled and are bunker decorations. Robot prefabs have no enemy health/AI.
-Prototype visual copies and capsule/player displays are not enemy archetypes.
+`Tools > Subject42 > Refresh Enemy Visual Candidates` обновляет displays из
+проверенного списка `EnemyGalleryVisualAuthoring.Selections`, сохраняет позиции
+и удаляет display только при исчезновении source asset. Новый арт нужно сначала
+визуально проверить и добавить в список; кадры и части атласов не распознаются
+автоматически как новые персонажи. Refresh не генерирует отчёты или скриншоты.
 
-## Isolation and presentation
+## Подготовленные варианты
 
-Enemies remain linked production prefab instances. Scene-only removal overrides
-remove EnemyMovement subclasses, TurretEnemyBehaviour, EnemyCollisionHandler and
-EnemyHealth. Physics simulation and enemy colliders are disabled. Removing contact
-handlers matters because Unity can deliver physics callbacks to disabled behaviours;
-disabling a health behaviour also does not disable its public TakeDamage method.
-No production combat code or prefab asset is modified.
+| Base prefab | Alternate Graphic | Анимация |
+|---|---|---|
+| p_Enemy_Bomber | Graphic/Enemy1Bomber | animWalk1 через общий idle override |
+| p_Enemy_Shooter | Graphic/Enemy1Shooter | исходный animIdle1 |
+| p_Enemy_classic | Graphic/Enemy1_0 | animWalk1 через общий idle override |
+| p_Enemy_default | Graphic/Enemy1Elite1 | animWalk1 через общий idle override |
 
-Original visual hierarchies, sprites, materials, scales and controllers are retained.
-The scene controller starts the existing animated idle state, or the boss's existing
-walk state in place. Animator root motion and animation events are locally disabled.
+Файлы `*_Alt.prefab` находятся в `prefabs/Enemies/PreparedVariants`.
+Health, collider, AI и attack наследуются. Исходные prefabs и spawn tables не менялись.
+Общий override нужен потому, что исходный idle не анимирует три старые Graphic-ветки.
 
-**Turret exception:** its active production model has no Animator; its old animated
-model is an inactive child. The old model stays inactive. With the user's approval,
-Gallery slowly sweeps the actual production aimPivot by ±25 degrees, independent
-of player position. Thus six enemies have changing production sprite frames and the
-turret has procedural articulation. No artificial Animator or replacement art is added.
+В галерее боевые компоненты удалены только у scene instances. Production-турель
+плавно поворачивает свой ствол без стрельбы. Player и camera остались исходными.
+Кандидаты статические, без gameplay scripts и colliders. Sprite selections и
+материалы предпросмотра моделей хранятся вложенными объектами в одном
+`art/EnemyGalleryVisuals.asset`; отдельные файлы для них не создаются;
+оригинальные текстуры, import settings и материалы не меняются.
 
-Player: `Resources/OrbitalStation/Authored/Player_0_p_Player3.prefab`, resolved through
-the same OrbitalPresentationConfig mapping as CharacterSpawner for `01_Gera`.
-The authored ORBITAL subtree is locally inactive. EnemySpawner, PlayerHealth,
-PlayerPickupRadius, PlayerCombatModifiers, PlayerInteractor and PlayerHitSound are
-removed only from this scene instance. Movement, animation and player visuals remain.
-The camera copies current MVP Camera/CameraFollow settings with an explicit player
-target. Its neutral clear colour provides the floor; simple colliders bound the room.
+## Проверка
 
-## Maintenance
+`Tools > Subject42 > Validate Enemy Gallery (3 minute Play Mode)` запускает
+проверку анимаций, scales, неподвижности, отсутствия боя и подписей обеих зон.
+Результаты сохраняются только в игнорируемый Git каталог
+`Artifacts/GeneratedQA/EnemyGallery` и не попадают в рабочие изменения.
 
-`Tools > Subject42 > Refresh Enemy Gallery` re-reads existing EnemySpawnProfile and
-StageProfileData assets plus enabled production scene dependencies. It keeps existing
-instance positions/labels, adds missing instances and removes obsolete entries without
-duplicates. It saves only the Gallery scene, never production prefab assets.
-New unknown behaviour components cause an explicit authoring error for review instead
-of silently being allowed to attack. Refresh requires Edit Mode. The current room is
-authored for the current lineup; expand its boundaries when adding further rows.
-
-`Tools > Subject42 > Validate Enemy Gallery (3 minute Play Mode)` verifies linked
-prefabs in Edit Mode, then samples actual sprite frames, visual scales, root positions,
-turret articulation and combat isolation for 180 seconds beside successive exhibits.
-It writes reports and gameplay-camera PNGs under `Artifacts/EnemyGallery` and returns
-to Edit Mode. Save any scene edits before running this opt-in check.
-
-## Validation recorded
-
-- Enemy prefabs found: 7; Enemy prefabs displayed: 7.
-- 180.1 seconds in Play Mode beside the exhibits: all roots stationary, all sprites
-  visible, no deaths/despawns/projectiles/weapons/spawners/run progression.
-- Production root and every visual-child scale matched each source prefab.
-- Actual sprite-frame signatures changed: Boss 4, Eye 3, Bomber/Shooter/classic/default
-  4 each. Turret's approved production pivot sweep also changed during the run.
-- Console during the soak: 0 errors, 0 warnings.
-- Two successive Refresh commands retained the same instance identities and layout.
-- A separate interactive Play Mode run received real keyboard input: player moved
-  1.284 units, 9 distinct player sprite frames were observed, and F1 hid/restored names.
-  Camera target remained the real player. The temporary observer was removed afterward.
-- Reports and seven gameplay-camera captures: `Artifacts/EnemyGallery`.
+Проверено: 180 секунд, 0 errors / warnings, все 10 Animator-экспонатов меняли кадры,
+ствол турели двигался. Повторные Refresh сохранили identities и позиции обеих зон.
+Кандидаты остаются арт-предложениями; модельные previews используют unlit-материалы.

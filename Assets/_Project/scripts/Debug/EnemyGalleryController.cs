@@ -18,6 +18,7 @@ public sealed class EnemyGalleryController : MonoBehaviour
 
     [SerializeField] private Exhibit[] exhibits = Array.Empty<Exhibit>();
     [SerializeField] private CharacterMovement2D player;
+    [SerializeField] private GameObject[] candidateLabels = Array.Empty<GameObject>();
     public Exhibit[] Exhibits => exhibits;
     public CharacterMovement2D Player => player;
     public bool NamesVisible { get; private set; } = true;
@@ -45,5 +46,7 @@ public sealed class EnemyGalleryController : MonoBehaviour
     {
         NamesVisible = visible;
         foreach (var exhibit in exhibits) exhibit.label.SetActive(visible);
+        foreach (var label in candidateLabels) label.SetActive(visible);
+        foreach (var label in candidateLabels) label.SetActive(visible);
     }
 }

@@ -15,11 +15,15 @@ public static class EnemyGalleryAuthoring
 {
     public const string ScenePath = "Assets/_Project/Scenes/EnemyGallery.unity";
     private const string ProductionScene = "Assets/_Project/Scenes/MVP.unity";
+    public const string PreparedVariantsPath = "Assets/_Project/prefabs/Enemies/PreparedVariants";
 
     // Current content, including future entries in the existing production data types.
     public static GameObject[] FindEnemies()
     {
         var found = new HashSet<GameObject>();
+        if (AssetDatabase.IsValidFolder(PreparedVariantsPath))
+            foreach (string guid in AssetDatabase.FindAssets("t:Prefab", new[] { PreparedVariantsPath }))
+                found.Add(AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(guid)));
         foreach (string guid in AssetDatabase.FindAssets("t:EnemySpawnProfile"))
         {
             var profile = AssetDatabase.LoadAssetAtPath<EnemySpawnProfile>(AssetDatabase.GUIDToAssetPath(guid));
@@ -179,13 +183,27 @@ public static class EnemyGalleryAuthoring
 
     private static string ChooseAnimation(Animator animator)
     {
-        if (animator == null || animator.runtimeAnimatorController is not AnimatorController controller)
+        var overrides = animator != null ? animator.runtimeAnimatorController as AnimatorOverrideController : null;
+        var controller = (overrides != null ? overrides.runtimeAnimatorController : animator != null ? animator.runtimeAnimatorController : null) as AnimatorController;
+        if (controller == null)
             throw new InvalidOperationException("Review missing/override animation controller: " + (animator != null ? animator.transform.root.name + " / " + animator.runtimeAnimatorController : "no Animator"));
         var machine = controller.layers[0].stateMachine;
         var states = machine.states.Select(s => s.state).ToArray();
-        bool Animated(AnimatorState s) => s.motion is AnimationClip clip &&
-            AnimationUtility.GetObjectReferenceCurveBindings(clip).Any(b =>
-                AnimationUtility.GetObjectReferenceCurve(clip, b).Select(k => k.value).Distinct().Count() > 1);
+        bool Animated(AnimatorState s)
+        {
+            if (s.motion is not AnimationClip clip) return false;
+            if (overrides != null) clip = overrides[clip];
+            return AnimationUtility.GetObjectReferenceCurveBindings(clip).Any(b =>
+            {
+                var target = string.IsNullOrEmpty(b.path) ? animator.transform : animator.transform.Find(b.path);
+                // A changing curve on an inactive alternate is not a visible animation.
+                if (target == null) return false;
+                var renderer = target.GetComponent<SpriteRenderer>();
+                if (renderer == null || !renderer.enabled) return false;
+                for (var t = target; t != animator.transform; t = t.parent) if (!t.gameObject.activeSelf) return false;
+                return AnimationUtility.GetObjectReferenceCurve(clip, b).Select(k => k.value).Distinct().Count() > 1;
+            });
+        }
         var state = states.FirstOrDefault(s => s.name.IndexOf("idle", StringComparison.OrdinalIgnoreCase) >= 0 && Animated(s))
             ?? states.FirstOrDefault(s => (s.name.IndexOf("walk", StringComparison.OrdinalIgnoreCase) >= 0 ||
                 s.name.IndexOf("run", StringComparison.OrdinalIgnoreCase) >= 0) && Animated(s))
