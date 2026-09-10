@@ -6,7 +6,7 @@ AnimationClip:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: animBossWalk
+  m_Name: animBossIdle1
   serializedVersion: 7
   m_Legacy: 0
   m_Compressed: 0
@@ -36,13 +36,13 @@ AnimationClip:
   - serializedVersion: 2
     curve:
     - time: 0
-      value: {fileID: -2424223687428098641, guid: 3937c736737c3244cac1b036a5a497a5, type: 3}
+      value: {fileID: 5661201818702077634, guid: 3937c736737c3244cac1b036a5a497a5, type: 3}
     - time: 0.083333336
-      value: {fileID: -2681235700711201223, guid: 3937c736737c3244cac1b036a5a497a5, type: 3}
+      value: {fileID: 5268069803452485712, guid: 3937c736737c3244cac1b036a5a497a5, type: 3}
     - time: 0.16666667
-      value: {fileID: -514257254441152864, guid: 3937c736737c3244cac1b036a5a497a5, type: 3}
+      value: {fileID: 621696716240865523, guid: 3937c736737c3244cac1b036a5a497a5, type: 3}
     - time: 0.25
-      value: {fileID: -2113710882, guid: 3937c736737c3244cac1b036a5a497a5, type: 3}
+      value: {fileID: 870767279044268220, guid: 3937c736737c3244cac1b036a5a497a5, type: 3}
     attribute: m_Sprite
     path: Boss2P1
     classID: 212
@@ -126,10 +126,10 @@ AnimationClip:
     - {fileID: -1374223935073179459, guid: 90577dace333ef347b064abd708338ac, type: 3}
     - {fileID: 963400842054379146, guid: 90577dace333ef347b064abd708338ac, type: 3}
     - {fileID: 8723241377798403360, guid: 90577dace333ef347b064abd708338ac, type: 3}
-    - {fileID: -2424223687428098641, guid: 3937c736737c3244cac1b036a5a497a5, type: 3}
-    - {fileID: -2681235700711201223, guid: 3937c736737c3244cac1b036a5a497a5, type: 3}
-    - {fileID: -514257254441152864, guid: 3937c736737c3244cac1b036a5a497a5, type: 3}
-    - {fileID: -2113710882, guid: 3937c736737c3244cac1b036a5a497a5, type: 3}
+    - {fileID: 5661201818702077634, guid: 3937c736737c3244cac1b036a5a497a5, type: 3}
+    - {fileID: 5268069803452485712, guid: 3937c736737c3244cac1b036a5a497a5, type: 3}
+    - {fileID: 621696716240865523, guid: 3937c736737c3244cac1b036a5a497a5, type: 3}
+    - {fileID: 870767279044268220, guid: 3937c736737c3244cac1b036a5a497a5, type: 3}
     - {fileID: -5345605096610560149, guid: fa171b4ab15fe1a4eaff9c583dfd0360, type: 3}
     - {fileID: 2651082128645160017, guid: fa171b4ab15fe1a4eaff9c583dfd0360, type: 3}
     - {fileID: -8797276191525307940, guid: fa171b4ab15fe1a4eaff9c583dfd0360, type: 3}
