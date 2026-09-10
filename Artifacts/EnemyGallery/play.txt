@@ -1,0 +1,67 @@
+PASS Production player and movement active
+PASS All production enemies present exactly once: 7
+PASS p_Boss1 root scale matches prefab
+PASS p_Boss1/Boss2_0 visual scale matches prefab
+PASS p_Boss1/p_shadow1 visual scale matches prefab
+PASS p_Boss1/Shadow1_0 visual scale matches prefab
+PASS p_EnemyEye1 Variant root scale matches prefab
+PASS p_EnemyEye1 Variant/Graphic visual scale matches prefab
+PASS p_EnemyEye1 Variant/enemyEye1_0 visual scale matches prefab
+PASS p_EnemyEye1 Variant/p_shadow1 visual scale matches prefab
+PASS p_EnemyEye1 Variant/Shadow1_0 visual scale matches prefab
+PASS p_EnemyTurret1 root scale matches prefab
+PASS p_EnemyTurret1/Graphic visual scale matches prefab
+PASS p_EnemyTurret1/Turret2_0 visual scale matches prefab
+PASS p_EnemyTurret1/Turret3_3 visual scale matches prefab
+PASS p_EnemyTurret1/GunHelper visual scale matches prefab
+PASS p_EnemyTurret1/Gun1 visual scale matches prefab
+PASS p_EnemyTurret1/GunMuzzle visual scale matches prefab
+PASS p_EnemyTurret1/Turret3_2 visual scale matches prefab
+PASS p_EnemyTurret1/Turret3_0 visual scale matches prefab
+PASS p_EnemyTurret1/p_shadow1 visual scale matches prefab
+PASS p_EnemyTurret1/Shadow1_0 visual scale matches prefab
+PASS p_Enemy_Bomber root scale matches prefab
+PASS p_Enemy_Bomber/Graphic visual scale matches prefab
+PASS p_Enemy_Bomber/Enemy1Bomber visual scale matches prefab
+PASS p_Enemy_Bomber/Enemy2Bomber1 visual scale matches prefab
+PASS p_Enemy_Bomber/Enemy2BomberEyes visual scale matches prefab
+PASS p_Enemy_Bomber/p_shadow1 visual scale matches prefab
+PASS p_Enemy_Bomber/Shadow1_0 visual scale matches prefab
+PASS p_Enemy_Shooter root scale matches prefab
+PASS p_Enemy_Shooter/Graphic visual scale matches prefab
+PASS p_Enemy_Shooter/Enemy1Shooter visual scale matches prefab
+PASS p_Enemy_Shooter/Enemy2Shooter1 visual scale matches prefab
+PASS p_Enemy_Shooter/Enemy2ShooterEyes visual scale matches prefab
+PASS p_Enemy_Shooter/Enemy2ShooterWeapon visual scale matches prefab
+PASS p_Enemy_Shooter/p_shadow1 visual scale matches prefab
+PASS p_Enemy_Shooter/Shadow1_0 visual scale matches prefab
+PASS p_Enemy_Shooter/FirePoint visual scale matches prefab
+PASS p_Enemy_classic root scale matches prefab
+PASS p_Enemy_classic/Graphic visual scale matches prefab
+PASS p_Enemy_classic/Enemy1_0 visual scale matches prefab
+PASS p_Enemy_classic/Enemy2Simple1 visual scale matches prefab
+PASS p_Enemy_classic/Enemy2SimpleEyes visual scale matches prefab
+PASS p_Enemy_classic/p_shadow1 visual scale matches prefab
+PASS p_Enemy_classic/Shadow1_0 visual scale matches prefab
+PASS p_Enemy_default root scale matches prefab
+PASS p_Enemy_default/Graphic visual scale matches prefab
+PASS p_Enemy_default/Enemy1Elite1 visual scale matches prefab
+PASS p_Enemy_default/Enemy1Elite2 visual scale matches prefab
+PASS p_Enemy_default/Enemy1Eyes1 visual scale matches prefab
+PASS p_Enemy_default/p_shadow1 visual scale matches prefab
+PASS p_Enemy_default/Shadow1_0 visual scale matches prefab
+PASS No damage receivers
+PASS Names OFF
+PASS Names ON
+INPUT GameView W displacement=0
+PASS p_Boss1 changing sprite frames: 4
+PASS p_EnemyEye1 Variant changing sprite frames: 3
+PASS p_EnemyTurret1 production articulated pivot moves; no active production Animator
+PASS p_Enemy_Bomber changing sprite frames: 4
+PASS p_Enemy_Shooter changing sprite frames: 4
+PASS p_Enemy_classic changing sprite frames: 4
+PASS p_Enemy_default changing sprite frames: 4
+PASS No Console errors/exceptions during 180 second proximity soak
+PASS All anchors stable; no enemies disappeared, no projectiles/weapons/spawners/run progression
+Console errors: 0
+Console warnings: 0
