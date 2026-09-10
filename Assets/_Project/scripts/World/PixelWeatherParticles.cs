@@ -10,6 +10,10 @@ public sealed class PixelWeatherParticles : MonoBehaviour
     private PixelEffectMesh raster;
     private Kind kind;
     private bool originalForceOff;
+    private Material originalSnowMaterial;
+    private Material snowMaterial;
+    private bool originalSnowTextureAnimation;
+    public bool UsesNativeRenderer => kind == Kind.Snow && snowMaterial != null;
     public int CellCount => raster?.CellCount ?? 0;
 
     public static void Attach(GameObject root, Kind kind)
@@ -25,16 +29,45 @@ public sealed class PixelWeatherParticles : MonoBehaviour
             adapter.kind = kind;
             if (adapter.sourceRenderer == null) { Destroy(adapter); continue; }
             adapter.originalForceOff = adapter.sourceRenderer.forceRenderingOff;
+            if (kind == Kind.Snow)
+            {
+                adapter.originalSnowMaterial = adapter.sourceRenderer.sharedMaterial;
+                adapter.originalSnowTextureAnimation = system.textureSheetAnimation.enabled;
+                adapter.snowMaterial = Resources.Load<Material>("PixelSnowParticle");
+                adapter.ApplySnowMaterial();
+                continue;
+            }
             adapter.sourceRenderer.forceRenderingOff = true;
             adapter.raster = new PixelEffectMesh(system.transform);
         }
     }
 
-    private void LateUpdate() => Refresh();
+    private void OnEnable() => ApplySnowMaterial();
+
+    private void ApplySnowMaterial()
+    {
+        if (sourceRenderer != null && snowMaterial != null)
+        {
+            // The prefab uses an atlas sprite. The procedural shader needs a
+            // complete 0..1 quad, not the sprite's atlas coordinates.
+            var textureAnimation = source.textureSheetAnimation;
+            textureAnimation.enabled = false;
+            sourceRenderer.sharedMaterial = snowMaterial;
+            sourceRenderer.forceRenderingOff = originalForceOff;
+        }
+    }
+
+    private void LateUpdate()
+    {
+        if (kind != Kind.Snow) Refresh();
+    }
 
     // Read simulation state; never quantize particle positions back into the simulation.
     public void Refresh()
     {
+        // Snow uses Unity's native particle renderer and a GPU pixel shader.
+        // In particular, do not GetParticles or rebuild/upload a mesh here.
+        if (kind == Kind.Snow) return;
         if (source == null || raster == null) return;
         sourceRenderer.forceRenderingOff = true;
         if (!sourceRenderer.enabled) { raster.Hide(); return; }
@@ -70,13 +103,6 @@ public sealed class PixelWeatherParticles : MonoBehaviour
                         y + Mathf.RoundToInt(Mathf.Sin(angle) * radius), p.z, color);
                 }
             }
-            else if (kind == Kind.Snow)
-            {
-                for (int dy = 0; dy < size; dy++)
-                for (int dx = 0; dx < size; dx++)
-                    if (size < 3 || dx == size / 2 || dy == size / 2)
-                        raster.Cell(x + dx - size / 2, y + dy - size / 2, p.z, color, false);
-            }
             else
             {
                 Vector2 direction = ((Vector2)velocity).sqrMagnitude > 0.001f ? ((Vector2)velocity).normalized :
@@ -89,6 +115,18 @@ public sealed class PixelWeatherParticles : MonoBehaviour
         raster.End();
     }
 
-    private void OnDisable() { raster?.Hide(); if (sourceRenderer != null) sourceRenderer.forceRenderingOff = originalForceOff; }
-    private void OnDestroy() { if (sourceRenderer != null) sourceRenderer.forceRenderingOff = originalForceOff; raster?.Dispose(); }
+    private void RestoreRenderer()
+    {
+        if (sourceRenderer == null) return;
+        sourceRenderer.forceRenderingOff = originalForceOff;
+        if (snowMaterial != null && sourceRenderer.sharedMaterial == snowMaterial)
+        {
+            sourceRenderer.sharedMaterial = originalSnowMaterial;
+            var textureAnimation = source.textureSheetAnimation;
+            textureAnimation.enabled = originalSnowTextureAnimation;
+        }
+    }
+
+    private void OnDisable() { raster?.Hide(); RestoreRenderer(); }
+    private void OnDestroy() { RestoreRenderer(); raster?.Dispose(); }
 }

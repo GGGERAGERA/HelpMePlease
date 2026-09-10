@@ -248,7 +248,10 @@ public sealed class WorldRuleVisual : MonoBehaviour
     private Image debugDarknessImage;
     private Material debugVisualMaterial;
 
-    private const float SnowParticleSizeMultiplier = 1.25f;
+    // Native snow was authored for soft textures; solid pixel flakes need a
+    // bounded screen population and a one-texel size to preserve combat visibility.
+    private const int SnowParticleBudget = 384;
+    private const float SnowPixelSize = 1f / 16f;
     private const float SnowParticleSpeedMultiplier = 1.35f;
 
     public Sprite DarknessMarkerSprite => darknessMarkerSprite;
@@ -1527,12 +1530,14 @@ public sealed class WorldRuleVisual : MonoBehaviour
                         currentSnowBlizzardIntensity
                     );
                 ParticleSystem.MainModule main = particleSystem.main;
-                main.startSizeMultiplier = snowParticleStartSizes[i] *
-                    Mathf.Lerp(
-                        1f,
-                        SnowParticleSizeMultiplier,
-                        normalized
-                    );
+                main.startSize = new ParticleSystem.MinMaxCurve(SnowPixelSize);
+                float emissionBudget = SnowParticleBudget /
+                    (float)Mathf.Max(1, snowParticleSystems.Length) /
+                    Mathf.Max(0.1f, main.startLifetimeMultiplier);
+                emission.rateOverTimeMultiplier = Mathf.Min(
+                    emission.rateOverTimeMultiplier,
+                    emissionBudget * normalized *
+                    Mathf.Lerp(0.35f, 1f, currentSnowBlizzardIntensity));
                 main.startSpeedMultiplier = snowParticleStartSpeeds[i] *
                     Mathf.Lerp(
                         1f,
@@ -1663,10 +1668,9 @@ public sealed class WorldRuleVisual : MonoBehaviour
             int requiredMaxParticles = Mathf.CeilToInt(
                 peakEmission * lifetime * snowMaxParticlesHeadroom
             );
-            main.maxParticles = Mathf.Max(
-                snowParticleMaxCounts[i],
-                requiredMaxParticles
-            );
+            main.maxParticles = Mathf.Clamp(
+                requiredMaxParticles, 1,
+                Mathf.Max(1, SnowParticleBudget / snowParticleSystems.Length));
         }
     }
 

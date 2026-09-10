@@ -63,16 +63,35 @@ public sealed class PixelWorldEffectTests
         var before = new ParticleSystem.Particle[8];
         int count = ps.GetParticles(before);
         Assert.That(count, Is.EqualTo(1));
+        var atlas = ps.textureSheetAnimation;
+        atlas.enabled = true;
+        atlas.mode = ParticleSystemAnimationMode.Sprites;
         PixelWeatherParticles.Attach(root, PixelWeatherParticles.Kind.Snow);
+        Assert.That(ps.textureSheetAnimation.enabled, Is.False);
         var raster = root.GetComponent<PixelWeatherParticles>();
         raster.Refresh();
-        Assert.That(raster.CellCount, Is.GreaterThan(0));
+        Assert.That(raster.UsesNativeRenderer, Is.True);
+        Assert.That(root.GetComponentsInChildren<MeshFilter>(), Is.Empty);
+        var particleRenderer = ps.GetComponent<ParticleSystemRenderer>();
+        Assert.That(particleRenderer.forceRenderingOff, Is.False);
+        Assert.That(particleRenderer.sharedMaterial, Is.EqualTo(Resources.Load<Material>("PixelSnowParticle")));
+
         AssertGrid();
         var after = new ParticleSystem.Particle[8];
         Assert.That(ps.GetParticles(after), Is.EqualTo(count));
         Assert.That(after[0].position, Is.EqualTo(before[0].position));
         Assert.That(after[0].velocity, Is.EqualTo(before[0].velocity));
         Assert.That(after[0].remainingLifetime, Is.EqualTo(before[0].remainingLifetime));
+        // Toggling the whole effect restarts Unity's particle system by design.
+        // Verify material restoration separately from simulation invariance above.
+        // EditMode does not dispatch normal gameplay MonoBehaviour callbacks.
+        typeof(PixelWeatherParticles).GetMethod("OnDisable", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(raster, null);
+        root.SetActive(false);
+        Assert.That(ps.textureSheetAnimation.enabled, Is.True);
+        root.SetActive(true);
+        typeof(PixelWeatherParticles).GetMethod("OnEnable", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(raster, null);
+        Assert.That(ps.textureSheetAnimation.enabled, Is.False);
+        Assert.That(particleRenderer.sharedMaterial, Is.EqualTo(Resources.Load<Material>("PixelSnowParticle")));
     }
 
     private void AssertGrid()
