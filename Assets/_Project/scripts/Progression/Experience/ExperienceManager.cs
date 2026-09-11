@@ -60,8 +60,9 @@ public class ExperienceManager : MonoBehaviour
 
         if (RunStateManager.Instance != null)
             RunStateManager.Instance.ApplyToExperienceManager(this);
-        else
-            UpdateExperienceHUD();
+
+        // A fresh run has no snapshot to restore, but still needs its initial XP display.
+        UpdateExperienceHUD();
     }
 
     public void AddExperience(int amount)

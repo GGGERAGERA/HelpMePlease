@@ -18,6 +18,7 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private Slider experienceSlider;
     [SerializeField] private TextMeshProUGUI levelText;
     [SerializeField] private TextMeshProUGUI experienceText;
+    [SerializeField] private GameplayTargetTracker targetTracker;
 
     [Header("Stats")]
     [SerializeField] private TextMeshProUGUI killsText;
@@ -50,6 +51,10 @@ public class HUDManager : MonoBehaviour
         !(runFlow.IsLevelCompleted && runFlow.Phase == RunPhase.NormalSector) && !pauseMenu.IsPaused &&
         !SceneTransitionOverlay.IsTransitioning && Time.timeScale > 0f &&
         (UpgradeManager.Instance == null || UpgradeManager.Instance.IsRewardQueueIdle);
+
+    public bool IsBossForegroundVisible =>
+        runFlow.Phase == RunPhase.FinalBossIntro ||
+        (bossHpPanel != null && bossHpPanel.activeInHierarchy);
 
     [Header("Low HP")]
     [SerializeField] private CanvasGroup lowHpVignette;
@@ -132,7 +137,7 @@ public class HUDManager : MonoBehaviour
         if (bossHpPanel != null)
             bossHpPanel.SetActive(false);
 
-        if (tacticalMap == null || lootReel == null || runFlow == null || pauseMenu == null ||
+        if (tacticalMap == null || targetTracker == null || lootReel == null || runFlow == null || pauseMenu == null ||
             informationGroup == null || interactionPrompt == null || runMessages == null ||
             threatPanel == null || threatLevelText == null || threatValueText == null || threatFill == null)
         {
@@ -340,6 +345,7 @@ public class HUDManager : MonoBehaviour
             : null;
         dashCooldownView?.Bind(movement);
         tacticalMap?.BindPlayer(player != null ? player.transform : null);
+        targetTracker.BindPlayer(player != null ? player.transform : null);
     }
 
     public bool IsTacticalMapVisible =>
@@ -370,7 +376,7 @@ public class HUDManager : MonoBehaviour
 
         if (levelText != null)
         {
-            levelText.text = $"Lv. {level}";
+            levelText.text = $"LV {level}";
         }
 
         if (experienceText != null)
