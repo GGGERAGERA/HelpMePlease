@@ -135,8 +135,9 @@ public sealed class Subject42BotBatchTests
         var flags = BindingFlags.NonPublic | BindingFlags.Instance;
         Assert.That(menu, Is.Not.Null, "Production Bot Lab menu available");
         typeof(Subject42DebugMenu).GetMethod("SetOpen", flags).Invoke(menu, new object[] { true });
-        var tab = Enum.Parse(typeof(Subject42DebugMenu).GetNestedType("DebugTab", BindingFlags.NonPublic), "BotLab");
+        var tab = Enum.Parse(typeof(Subject42DebugMenu).GetNestedType("DebugTab", BindingFlags.NonPublic), "QA");
         typeof(Subject42DebugMenu).GetMethod("SelectTab", flags).Invoke(menu, new[] { tab, (object)true });
+        typeof(Subject42DebugMenu).GetMethod("SelectQaSection", flags).Invoke(menu, new object[] { 2 });
         yield return null; // Let the menu finish replacing the previous tab's controls.
         Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None)
             .Single(b => b.GetComponentInChildren<TMPro.TextMeshProUGUI>()?.text == "RUN SEED").onClick.Invoke();
@@ -245,8 +246,9 @@ public sealed class Subject42BotBatchTests
         var menu = Object.FindFirstObjectByType<Subject42DebugMenu>();
         var flags = BindingFlags.NonPublic | BindingFlags.Instance;
         typeof(Subject42DebugMenu).GetMethod("SetOpen", flags).Invoke(menu, new object[] { true });
-        var tab = Enum.Parse(typeof(Subject42DebugMenu).GetNestedType("DebugTab", BindingFlags.NonPublic), "BotLab");
+        var tab = Enum.Parse(typeof(Subject42DebugMenu).GetNestedType("DebugTab", BindingFlags.NonPublic), "QA");
         typeof(Subject42DebugMenu).GetMethod("SelectTab", flags).Invoke(menu, new[] { tab, (object)true });
+        typeof(Subject42DebugMenu).GetMethod("SelectQaSection", flags).Invoke(menu, new object[] { 2 });
         yield return null; yield return null;
         ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/BotLab/phase2-menu.png");
         yield return null;

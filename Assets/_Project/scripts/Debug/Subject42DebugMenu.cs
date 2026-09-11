@@ -225,9 +225,7 @@ public sealed class CombatFeelTooltipTrigger : MonoBehaviour,
 public sealed partial class Subject42DebugMenu : MonoBehaviour
 {
     [Header("Existing scene systems")]
-    [SerializeField] private WorldRuleController worldRuleController;
     [SerializeField] private LevelAnomalyController anomalyController;
-    [SerializeField] private WorldEventSpawner worldEventSpawner;
     [SerializeField] private EnemySpawner enemySpawner;
     [SerializeField] private CharacterSpawner characterSpawner;
     [SerializeField] private UpgradeManager upgradeManager;
@@ -235,12 +233,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     [SerializeField] private LevelChoiceManager levelChoiceManager;
 
     [Header("Known project content")]
-    [SerializeField] private WorldRuleData[] worldRules;
-    [SerializeField] private LocalAnomalyData[] localAnomalies;
-    [SerializeField] private WorldEvent[] worldEventPrefabs;
     [SerializeField] private GameObject turretEnemyPrefab;
     [SerializeField] private GameObject eyesEnemyPrefab;
-    [SerializeField] private WeaponData[] debugWeapons;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private static Subject42DebugMenu activeInstance;
@@ -254,27 +248,13 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private enum DebugTab
     {
         Run,
-        Bunker,
-        BunkerRooms,
-        World,
-        Enemies,
-        Events,
-        WeaponsAndUpgrades,
-        Telekinesis,
-        VisualTest,
-        FeelTest,
         OrbitalProduction,
-        SectorTest,
-        BotLab
+        Bunker,
+        FeelTest,
+        VisualTest,
+        QA
     }
 
-    private enum UpgradeFilter
-    {
-        All,
-        Numeric,
-        Behavior,
-        OutOfPool
-    }
 
     private enum PreviewParameter
     {
@@ -307,51 +287,13 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         Camera
     }
 
-    private enum FeelSection
-    {
-        PhysicalFeedback,
-        Weapon,
-        Hit,
-        Death,
-        Camera,
-        Movement
-    }
 
     private static readonly string[] TabLabels =
     {
-        "RUN",
-        "BUNKER",
-        "BUNKER ROOMS",
-        "WORLD",
-        "ENEMIES",
-        "EVENTS",
-        "WEAPONS & BUILD",
-        "TELEKINESIS",
-        "VISUAL",
-        "FEEL",
-        "ORBITAL PRODUCTION TEST",
-        "ТЕСТ СЕКТОРА",
-        "BOT LAB"
+        "RUN", "ORBITAL", "BUNKER", "COMBAT", "VISUAL", "QA"
     };
 
-    private static readonly WorldRuleType[] DebugRuleTypes =
-    {
-        WorldRuleType.Snow,
-        WorldRuleType.Rain,
-        WorldRuleType.Darkness,
-        WorldRuleType.Wind,
-        WorldRuleType.Golden,
-        WorldRuleType.Condensation
-    };
 
-    private static readonly LocalAnomalyType[] DebugAnomalyTypes =
-    {
-        LocalAnomalyType.Berserk,
-        LocalAnomalyType.Stasis,
-        LocalAnomalyType.ExplosiveZone,
-        LocalAnomalyType.Gravity,
-        LocalAnomalyType.Glitch
-    };
 
     private GameObject menuRoot;
     private GameObject fullMenuBlocker;
@@ -373,7 +315,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private readonly GameObject[] tabRoots = new GameObject[TabLabels.Length];
     private readonly Image[] tabButtonImages = new Image[TabLabels.Length];
     private DebugTab activeTab = DebugTab.Run;
-    private UpgradeFilter upgradeFilter = UpgradeFilter.All;
     private ProductionSectorDebugController productionSectorDebug;
     private bool isOpen;
     private bool isPreview;
@@ -383,28 +324,13 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private float previousTimeScale;
     private bool previousCursorVisible;
     private CursorLockMode previousCursorLockMode;
-    private bool warnedRuleController;
-    private bool warnedAnomalyController;
-    private bool warnedEventSpawner;
-    private string lastUpgradeResult;
-    private string lastAnomalyGrantResult;
     private string lastOrbitalStateResult;
     private OrbitalStationRuntime.GrowthPreset nextOrbitalGrowthPreset;
 
-    private readonly List<LevelAnomalyController.LocalAnomalyZoneGeometry>
-        activeAnomalyZones = new();
-    private readonly List<LocalAnomalyType> activeAnomalyTypes = new();
-    private readonly List<int> activeAnomalyTypeCounts = new();
-    private readonly StringBuilder activeAnomalySummary = new();
     private readonly StringBuilder previewSummary = new();
-    private readonly List<WorldEvent> addedEventPrefabs = new();
     private readonly List<CharacterData> debugCharacters = new();
     private readonly List<GameObject> debugEnemies = new();
     private string enemyDebugStatus = "Готово к ручному тесту.";
-    private string lootChestDebugStatus = "Готово к тесту сундука.";
-    private readonly List<UpgradeData> visibleUpgrades = new();
-    private TelekinesisDebugPrototype telekinesisPrototype;
-    private CombatLabDebugController combatLab;
     private TextMeshProUGUI activeXpCounter;
     private float nextXpCounterRefresh;
     private ProductionVisualTuningController productionVisualTuning;
@@ -417,10 +343,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     {
         true, true, true, true, true, false, true, true, true, true,
         true, true, true, false, true
-    };
-    private readonly bool[] feelSectionExpanded =
-    {
-        true, true, true, false, true, true
     };
     private CombatFeelGroup selectedFeelLabGroup = CombatFeelGroup.Global;
     private TextMeshProUGUI visualSaveStatusText;
@@ -456,10 +378,15 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private void Start()
     {
         BindBotLabScene();
-        EnsureProductionSectorDebug();
-        LoadVisualProductionValues();
+        if (characterSpawner != null)
+        {
+            EnsureProductionSectorDebug();
+            LoadVisualProductionValues();
+        }
+        else
+            activeTab = DebugTab.Bunker;
         BuildMenu();
-        RefreshAllTabs();
+        RefreshTab(activeTab);
         SelectTab(activeTab, false);
         if (menuRoot != null)
             menuRoot.SetActive(false);
@@ -795,9 +722,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private void ResolveSceneReferences()
     {
-        worldRuleController ??= FindFirstObjectByType<WorldRuleController>();
         anomalyController ??= FindFirstObjectByType<LevelAnomalyController>();
-        worldEventSpawner ??= FindFirstObjectByType<WorldEventSpawner>();
         enemySpawner ??= FindFirstObjectByType<EnemySpawner>();
         characterSpawner ??= FindFirstObjectByType<CharacterSpawner>();
         upgradeManager ??= UpgradeManager.Instance != null
@@ -812,12 +737,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         cameraFollow ??= FindFirstObjectByType<CameraFollow>();
         ApplyVisualProductionToLateTargets();
 
-        WarnIfMissing(worldRuleController, ref warnedRuleController,
-            "WorldRuleController");
-        WarnIfMissing(anomalyController, ref warnedAnomalyController,
-            "LevelAnomalyController");
-        WarnIfMissing(worldEventSpawner, ref warnedEventSpawner,
-            "WorldEventSpawner");
+
     }
 
     private void EnsureProductionSectorDebug()
@@ -842,22 +762,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         feelTestDummy ??= GetComponent<CombatFeelTestDummyController>();
         feelTestDummy ??= gameObject.AddComponent<CombatFeelTestDummyController>();
         feelTestDummy.Configure(enemySpawner);
-    }
-
-    private void WarnIfMissing(
-        UnityEngine.Object target,
-        ref bool wasWarned,
-        string systemName)
-    {
-        if (target != null || wasWarned)
-            return;
-
-        wasWarned = true;
-        Debug.LogWarning(
-            $"[Subject42DebugMenu] {systemName} was not found. " +
-            "The related tab is diagnostics-only until it is available.",
-            this
-        );
     }
 
     private void BuildMenu()
@@ -941,6 +845,9 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
                 () => SelectTab((DebugTab)captured),
                 100f
             );
+            button.interactable = (DebugTab)i == DebugTab.Bunker
+                ? FindFirstObjectByType<BunkerRunStarter>() != null
+                : characterSpawner != null;
             Stretch(button.GetComponent<RectTransform>());
             TextMeshProUGUI tabText = button.GetComponentInChildren<TextMeshProUGUI>();
             if (tabText != null && labels.Length > 7)
@@ -962,8 +869,11 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         }
 
         BuildVisualBackButton(header);
-        BuildVisualActionBar(tabRoots[(int)DebugTab.VisualTest].transform);
-        BuildFeelActionBar(tabRoots[(int)DebugTab.FeelTest].transform);
+        if (characterSpawner != null)
+        {
+            BuildVisualActionBar(tabRoots[(int)DebugTab.VisualTest].transform);
+            BuildFeelActionBar(tabRoots[(int)DebugTab.FeelTest].transform);
+        }
 
         BuildPreviewPanel();
         BuildFeelTooltip();
@@ -1053,7 +963,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         Button button = CreateButton(
             header,
             "MENU",
-            () => SelectTab(DebugTab.Run),
+            () => SelectTab(characterSpawner != null ? DebugTab.Run : DebugTab.Bunker),
             54f
         );
         visualBackButton = button.gameObject;
@@ -1332,12 +1242,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             RefreshTab(tab);
     }
 
-    private void RefreshAllTabs()
-    {
-        for (int i = 0; i < tabRoots.Length; i++)
-            RefreshTab((DebugTab)i);
-    }
-
     private void RefreshCurrentTab()
     {
         HideFeelTooltip();
@@ -1356,55 +1260,44 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             return;
 
         for (int i = contentRoot.childCount - 1; i >= 0; i--)
-            Destroy(contentRoot.GetChild(i).gameObject);
+        {
+            GameObject oldRow = contentRoot.GetChild(i).gameObject;
+            oldRow.SetActive(false);
+            Destroy(oldRow);
+        }
 
         if (!IsRuntimeLabTab(tab))
             AddTabHeading(TabLabels[(int)tab]);
+
+        bool runTab = tab == DebugTab.Run || tab == DebugTab.OrbitalProduction ||
+            tab == DebugTab.FeelTest || tab == DebugTab.VisualTest || tab == DebugTab.QA;
+        if (runTab && characterSpawner == null)
+        {
+            AddHint("Start a run from Bunker to use these tools.");
+            return;
+        }
 
         switch (tab)
         {
             case DebugTab.Run:
                 AddRunSection();
-                break;
-            case DebugTab.Bunker:
-                AddBunkerSection();
-                break;
-            case DebugTab.BunkerRooms:
-                AddRoomStateRows();
-                break;
-            case DebugTab.World:
-                AddWorldRulesSection();
-                AddLocalAnomaliesSection();
-                break;
-            case DebugTab.Enemies:
-                AddEnemiesSection();
-                break;
-            case DebugTab.Events:
-                AddWorldEventsSection();
-                break;
-            case DebugTab.WeaponsAndUpgrades:
-                AddProductionWeaponBuildSection();
-                AddProductionAnomalyBuildSection();
-                AddProductionUpgradeBuildSection();
-                break;
-            case DebugTab.Telekinesis:
-                AddExperienceVisualLabSection();
-                AddTelekinesisSection();
-                break;
-            case DebugTab.VisualTest:
-                AddInteractiveAnomalyVisualTest();
-                break;
-            case DebugTab.FeelTest:
-                AddInteractiveFeelLab();
+                AddSectorFlowSection();
                 break;
             case DebugTab.OrbitalProduction:
                 AddOrbitalProductionSection();
                 break;
-            case DebugTab.SectorTest:
-                AddProductionSectorTestSection();
+            case DebugTab.Bunker:
+                AddBunkerSection();
+                AddRoomStateRows();
                 break;
-            case DebugTab.BotLab:
-                AddBotLabSection();
+            case DebugTab.FeelTest:
+                AddInteractiveFeelLab();
+                break;
+            case DebugTab.VisualTest:
+                AddInteractiveAnomalyVisualTest();
+                break;
+            case DebugTab.QA:
+                AddQaSection();
                 break;
         }
 
@@ -1446,8 +1339,10 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             menuTitle.text = activeTab == DebugTab.VisualTest
                 ? "RUNTIME VISUAL LAB"
                 : activeTab == DebugTab.FeelTest
-                    ? "RUNTIME FEEL LAB"
-                    : "SUBJECT#42 — ОТЛАДОЧНОЕ МЕНЮ";
+                    ? "COMBAT"
+                    : activeTab == DebugTab.OrbitalProduction
+                        ? "ORBITAL"
+                        : "SUBJECT#42 — ОТЛАДОЧНОЕ МЕНЮ";
             menuTitle.fontSize = compact ? 17f : 28f;
             Stretch(menuTitle.rectTransform,
                 compact ? 12f : 22f,
@@ -1484,156 +1379,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         }
     }
 
-    private void AddGravityConstructSection()
-    {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        AnomalyCoreRuntime coreRuntime = player != null
-            ? player.GetComponent<AnomalyCoreRuntime>()
-            : null;
-        bool enabled = coreRuntime != null &&
-            coreRuntime.IsCoreActive(AnomalyCoreId.Gravity);
-        bool available = coreRuntime != null &&
-            coreRuntime.CurrentWeapon != null;
-
-        AddSectionTitle(
-            "GRAVITY CONSTRUCT CONTRACT",
-            "Independent gravity orb with optional weapon payload"
-        );
-        AddRow(
-            "GRAVITY CONSTRUCT",
-            enabled
-                ? $"ACTIVE - {GetWeaponName(coreRuntime.CurrentWeapon.weaponData)}"
-                : available ? "READY" : "PLAYER/WEAPON NOT FOUND",
-            enabled ? successColor : available ? mutedColor : warningColor,
-            enabled ? "TURN OFF" : "TURN ON",
-            available,
-            ToggleGravityConstruct
-        );
-
-        bool payloadEnabled = false;
-        bool hasPayloadToggle = coreRuntime != null &&
-            coreRuntime.TryGetWeaponPayloadEnabled(
-                AnomalyCoreId.Gravity,
-                out payloadEnabled);
-        AddRow(
-            "WEAPON PAYLOAD",
-            hasPayloadToggle
-                ? payloadEnabled ? "PISTOL/LASER PAYLOAD ON" : "BASE GRAVITY ONLY"
-                : "ACTIVATE GRAVITY FIRST",
-            hasPayloadToggle && payloadEnabled ? successColor : mutedColor,
-            hasPayloadToggle && payloadEnabled ? "TURN OFF" : "TURN ON",
-            hasPayloadToggle,
-            ToggleGravityWeaponPayload
-        );
-        AddHint(
-            "The orb always orbits and deals direct base damage. Weapon " +
-            "payload optionally emits the current BaseWeapon attack outward."
-        );
-    }
-
-    private void ToggleGravityConstruct()
-    {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        AnomalyCoreRuntime coreRuntime = player != null
-            ? player.GetComponent<AnomalyCoreRuntime>()
-            : null;
-
-        if (coreRuntime == null)
-            return;
-
-        if (coreRuntime.IsCoreActive(AnomalyCoreId.Gravity))
-            coreRuntime.DeactivateCore(AnomalyCoreId.Gravity);
-        else
-            coreRuntime.ActivateCore(AnomalyCoreId.Gravity);
-
-        RefreshTab(DebugTab.WeaponsAndUpgrades);
-    }
-
-    private void ToggleGravityWeaponPayload()
-    {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        AnomalyCoreRuntime coreRuntime = player != null
-            ? player.GetComponent<AnomalyCoreRuntime>()
-            : null;
-
-        if (coreRuntime == null ||
-            !coreRuntime.TryGetWeaponPayloadEnabled(
-                AnomalyCoreId.Gravity,
-                out bool enabled))
-        {
-            return;
-        }
-
-        coreRuntime.TrySetWeaponPayloadEnabled(
-            AnomalyCoreId.Gravity,
-            !enabled
-        );
-        RefreshTab(DebugTab.WeaponsAndUpgrades);
-    }
-
-    private void AddRiftConstructSection()
-    {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        AnomalyCoreRuntime coreRuntime = player != null
-            ? player.GetComponent<AnomalyCoreRuntime>()
-            : null;
-        bool enabled = coreRuntime != null &&
-            coreRuntime.IsCoreActive(AnomalyCoreId.Rift);
-        bool available = coreRuntime != null &&
-            coreRuntime.CurrentWeapon != null;
-
-        AddSectionTitle(
-            "RIFT CONSTRUCT CONTRACT",
-            "Delayed impact with radial polymorphic weapon burst"
-        );
-        AddRow(
-            "RIFT",
-            enabled
-                ? $"ACTIVE - {GetWeaponName(coreRuntime.CurrentWeapon.weaponData)}"
-                : available ? "READY" : "PLAYER/WEAPON NOT FOUND",
-            enabled ? successColor : available ? mutedColor : warningColor,
-            enabled ? "TURN OFF" : "TURN ON",
-            available,
-            ToggleRiftConstruct
-        );
-        AddHint(
-            "AnomalyCoreRuntime owns Rift independently from Gravity. " +
-            "Both may be active at the same time."
-        );
-    }
-
-    private void ToggleRiftConstruct()
-    {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        AnomalyCoreRuntime coreRuntime = player != null
-            ? player.GetComponent<AnomalyCoreRuntime>()
-            : null;
-
-        if (coreRuntime == null)
-            return;
-
-        if (coreRuntime.IsCoreActive(AnomalyCoreId.Rift))
-            coreRuntime.DeactivateCore(AnomalyCoreId.Rift);
-        else
-            coreRuntime.ActivateCore(AnomalyCoreId.Rift);
-
-        RefreshTab(DebugTab.WeaponsAndUpgrades);
-    }
-
-    private void AddWeaponCoreSection()
-    {
-        AddSectionTitle("ЯДРО ОРУЖИЯ",
-            "Runtime-переключатель существующего debug core");
-        AddOptionRow("БЕЗ ЯДРА",
-            WeaponCoreDebugSelector.ActiveCore == WeaponCoreType.None,
-            true, () => WeaponCoreDebugSelector.Select(WeaponCoreType.None));
-        AddOptionRow("ЦЕПНОЕ ЯДРО",
-            WeaponCoreDebugSelector.ActiveCore == WeaponCoreType.Chain,
-            true, () => WeaponCoreDebugSelector.Select(WeaponCoreType.Chain));
-        AddHint("Цепное ядро передаёт часть урона основного оружия " +
-            "соседней цели; без ядра оружие работает штатно.");
-    }
-
     private void AddToggleRow(string label, bool enabled, bool available,
         UnityEngine.Events.UnityAction action)
     {
@@ -1663,389 +1408,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             });
     }
 
-    private void AddProductionSectorTestSection()
-    {
-        EnsureProductionSectorDebug();
-        ProductionSectorDebugController debug = productionSectorDebug;
-        bool available = debug != null;
-
-        if (!available)
-        {
-            AddSectionTitle("ТЕСТ СЕКТОРА", "Development / Editor only");
-            AddHint("ProductionSectorDebugController не создан.");
-            return;
-        }
-
-        AddSectionTitle(
-            "ПРЕДПРОСМОТР СЦЕНЫ",
-            "Компактная панель; gameplay продолжает работать без паузы"
-        );
-        AddRow(
-            "ВИЗУАЛЬНЫЙ TUNING",
-            "80–90% сцены остаётся открытым",
-            successColor,
-            "ПРЕДПРОСМОТР",
-            true,
-            EnterScenePreview
-        );
-
-        AddSectionTitle(
-            "ИГРОК",
-            "Урон HP ×0; knockback, gravity, hit flash, sound и camera shake остаются"
-        );
-        AddToggleRow(
-            "НЕУЯЗВИМОСТЬ ИГРОКА",
-            debug.InvulnerabilityEnabled,
-            true,
-            () => debug.SetInvulnerability(!debug.InvulnerabilityEnabled)
-        );
-
-        AddSectionTitle(
-            "ЧИТАЕМОСТЬ ЗОНЫ",
-            "Меняет существующее окружение сектора сразу; gameplay-объекты исключены"
-        );
-        AddProductionReadabilityPreset(
-            ProductionSectorDebugController.ReadabilityPreset.Original
-        );
-        AddProductionReadabilityPreset(
-            ProductionSectorDebugController.ReadabilityPreset.Muted
-        );
-        AddProductionReadabilityPreset(
-            ProductionSectorDebugController.ReadabilityPreset.HighGameplayContrast
-        );
-        AddProductionReadabilityPreset(
-            ProductionSectorDebugController.ReadabilityPreset.DarkWorld
-        );
-        AddHint(
-            "Player, enemies, projectiles, weapons, anomaly visuals, Event/Exit/chest markers, HUD и World Rule overlays исключены. " +
-            "Активный World Rule остаётся нижним слоем визуала."
-        );
-
-        AddSectionTitle(
-            "ЯРКОСТЬ ДЕКОРА",
-            $"Меняет деревья / траву / декор карты. Объектов: {debug.DecorObjectCount}; renderer'ов: {debug.DecorRendererCount}"
-        );
-        AddProductionFloatOptions(
-            new[] { 1.2f, 1f, 0.75f, 0.5f, 0.25f },
-            debug.DecorBrightness,
-            value => debug.SetDecorBrightness(value),
-            value => $"{value * 100f:0}%"
-        );
-        AddHint(debug.DecorRendererCount > 0
-            ? $"✓ Применено к {debug.DecorRendererCount} renderer'ам декора."
-            : "⚠ Renderer'ы декора не найдены.");
-        AddRow(
-            "ОБНОВИТЬ ЦЕЛИ ВИЗУАЛА",
-            "Ручной поиск нового runtime-декора и anomaly renderer'ов",
-            mutedColor,
-            "ОБНОВИТЬ",
-            true,
-            RefreshSectorVisualTargets
-        );
-
-        AddSectionTitle(
-            "АКЦЕНТ АНОМАЛИИ",
-            $"Визуальное выделение активных зон. Зон: {debug.AnomalyZoneCount}; renderer'ов: {debug.AnomalyRendererCount}"
-        );
-        AddProductionFloatOptions(
-            new[] { 1f, 1.25f, 1.5f, 1.75f },
-            debug.AnomalyAccent,
-            value => debug.SetAnomalyAccent(value),
-            value => $"{value * 100f:0}%"
-        );
-        AddHint(debug.AnomalyZoneCount > 0
-            ? $"✓ Акцент применён к {debug.AnomalyZoneCount} зонам."
-            : "⚠ Активные anomaly visuals не найдены.");
-
-        AddHint("Anomaly instance tuning перенесён во вкладку VISUAL.");
-
-        AddSectionTitle(
-            "ФОКУС ВНУТРИ АНОМАЛИИ",
-            anomalyController != null && anomalyController.IsAnomalyFocusActive
-                ? $"Активен: {anomalyController.FocusedZoneName}"
-                : "Снаружи зоны: эффект не активен"
-        );
-        if (anomalyController != null)
-        {
-            AddToggleRow(
-                "PRODUCTION FOCUS",
-                anomalyController.AnomalyFocusEnabled,
-                true,
-                () => anomalyController.SetAnomalyFocusEnabled(
-                    !anomalyController.AnomalyFocusEnabled
-                )
-            );
-            AddSectionTitle("ЗАТЕМНЕНИЕ СНАРУЖИ", "Внутри зоны остаётся прозрачное окно");
-            AddProductionFloatOptions(
-                new[] { 0f, 0.25f, 0.5f, 0.75f, 1f },
-                anomalyController.OutsideDarkness,
-                value => anomalyController.SetOutsideDarkness(value),
-                value => $"{value:0.00}"
-            );
-            AddSectionTitle("ЦВЕТ СНАРУЖИ", "0 = полностью серый; 1 = исходные цвета");
-            AddProductionFloatOptions(
-                new[] { 0f, 0.25f, 0.5f, 0.75f, 1f },
-                anomalyController.OutsideColor,
-                value => anomalyController.SetOutsideColor(value),
-                value => $"{value:0.00}"
-            );
-            AddSectionTitle("ПЛАВНОСТЬ ПЕРЕХОДА", "Вход / выход / collapse");
-            AddProductionFloatOptions(
-                new[] { 0.2f, 0.25f, 0.3f, 0.35f },
-                anomalyController.FocusTransition,
-                value => anomalyController.SetFocusTransition(value),
-                value => $"{value:0.00} сек"
-            );
-        }
-        else
-        {
-            AddHint("⚠ LevelAnomalyController не найден.");
-        }
-
-        AddSectionTitle(
-            "ЧИТАЕМОСТЬ ВРАГОВ",
-            "Яркость, насыщенность, холодный оттенок и контур"
-        );
-        AddProductionEnemyMode(
-            ProductionSectorDebugController.EnemyReadability.Off
-        );
-        AddProductionEnemyMode(
-            ProductionSectorDebugController.EnemyReadability.Low
-        );
-        AddProductionEnemyMode(
-            ProductionSectorDebugController.EnemyReadability.Medium
-        );
-        AddProductionEnemyMode(
-            ProductionSectorDebugController.EnemyReadability.High
-        );
-        AddHint(
-            $"Режим: {GetEnemyReadabilityName(debug.EnemyMode)} | " +
-            $"насыщенность {debug.EnemySaturation:0.00} | " +
-            $"яркость {debug.EnemyBrightness:0.00} | " +
-            $"оттенок {debug.EnemyTintStrength:0.00} | " +
-            $"контур {(debug.EnemyOutlineEnabled ? debug.EnemyOutlineStrength.ToString("0.00") : "ВЫКЛ")} | " +
-            $"толщина {debug.EnemyOutlineWidth:0.0} texel"
-        );
-
-        AddSectionTitle("НАСЫЩЕННОСТЬ", "0 = серый; 1 = исходный цвет; 2+ = усиленный цвет");
-        AddProductionFloatOptions(
-            new[] { 0f, 0.5f, 1f, 1.5f, 2f, 2.5f, 3f },
-            debug.EnemySaturation,
-            value => debug.SetEnemySaturation(value),
-            value => $"{value:0.00}"
-        );
-        AddSectionTitle("ЯРКОСТЬ", "0.5 = темнее; 1 = исходная; 2.5 = экстремально ярко");
-        AddProductionFloatOptions(
-            new[] { 0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f, 2.5f },
-            debug.EnemyBrightness,
-            value => debug.SetEnemyBrightness(value),
-            value => $"{value:0.00}"
-        );
-        AddSectionTitle("ХОЛОДНЫЙ ОТТЕНОК", "0 = нет; 1 = максимально заметный cyan/teal");
-        AddProductionFloatOptions(
-            new[] { 0f, 0.25f, 0.5f, 0.75f, 1f },
-            debug.EnemyTintStrength,
-            value => debug.SetEnemyTintStrength(value),
-            value => $"{value:0.00}"
-        );
-        AddSectionTitle("КОНТУР", "0 = нет; 2 = максимальная сила");
-        AddHint(
-            "⚠ Контур ограничен tight-геометрией production sprite. " +
-            "Он оставлен для диагностики и не используется preset СИЛЬНО."
-        );
-        AddToggleRow(
-            "КОНТУР",
-            debug.EnemyOutlineEnabled,
-            true,
-            () => debug.SetEnemyOutlineEnabled(
-                !debug.EnemyOutlineEnabled
-            )
-        );
-        AddProductionFloatOptions(
-            new[] { 0f, 0.5f, 1f, 1.5f, 2f },
-            debug.EnemyOutlineStrength,
-            value => debug.SetEnemyOutlineStrength(value),
-            value => $"{value:0.00}"
-        );
-        AddSectionTitle("ТОЛЩИНА КОНТУРА", "Ширина выборки прозрачности: 0.5–4 texel");
-        AddProductionFloatOptions(
-            new[] { 0.5f, 1f, 2f, 3f, 4f },
-            debug.EnemyOutlineWidth,
-            value => debug.SetEnemyOutlineWidth(value),
-            value => $"{value:0.0} texel"
-        );
-
-        AddSectionTitle(
-            "ОБЛАСТЬ ЧИТАЕМОСТИ",
-            "ВСЕ / текущая зона / тип врага; ЭЛИТА = Eyes и Turret"
-        );
-        AddProductionEnemyScope(
-            ProductionSectorDebugController.EnemyScope.All
-        );
-        AddProductionEnemyScope(
-            ProductionSectorDebugController.EnemyScope.CurrentZone
-        );
-        AddProductionEnemyScope(
-            ProductionSectorDebugController.EnemyScope.Basic
-        );
-        AddProductionEnemyScope(
-            ProductionSectorDebugController.EnemyScope.Elite
-        );
-        AddProductionEnemyScope(
-            ProductionSectorDebugController.EnemyScope.Shooter
-        );
-        AddProductionEnemyScope(
-            ProductionSectorDebugController.EnemyScope.Bomber
-        );
-        AddProductionEnemyScope(
-            ProductionSectorDebugController.EnemyScope.Boss
-        );
-        AddHint(
-            $"Зарегистрировано врагов: {debug.RegisteredEnemyCount}; " +
-            $"renderer'ов: {debug.RegisteredEnemyRendererCount}. " +
-            $"Изменено врагов: {debug.AffectedEnemyCount}; " +
-            $"renderer'ов: {debug.AffectedEnemyRendererCount}."
-        );
-        AddHint(!debug.EnemyReadabilityMaterialReady
-            ? "⚠ Материал EnemyReadability не загружен."
-            : debug.EnemyMode == ProductionSectorDebugController.EnemyReadability.Off
-                ? "Читаемость выключена: исходные материалы восстановлены."
-                : $"✓ Применено к {debug.AffectedEnemyCount} врагам. " +
-                  $"Активный EnemyReadability material: " +
-                  $"{debug.ActiveReadabilityMaterialRendererCount}/" +
-                  $"{debug.AffectedEnemyRendererCount} renderer'ов.");
-
-        AddSectionTitle(
-            "ОСОБАЯ АНОМАЛИЯ",
-            "Применится только при безопасной полной пересборке текущего сектора"
-        );
-        AddRow(
-            "ТЕКУЩАЯ",
-            debug.CurrentSpecialName,
-            debug.CurrentSpecialName != "NONE" ? successColor : mutedColor,
-            "ИНФО",
-            false,
-            null
-        );
-        AddProductionSpecialOverride(
-            ProductionSectorDebugController.SpecialOverride.Random
-        );
-        AddProductionSpecialOverride(
-            ProductionSectorDebugController.SpecialOverride.Gravity
-        );
-        AddProductionSpecialOverride(
-            ProductionSectorDebugController.SpecialOverride.Electric
-        );
-        AddProductionSpecialOverride(
-            ProductionSectorDebugController.SpecialOverride.Beam
-        );
-        AddRow(
-            "ПЕРЕСОЗДАТЬ ТЕКУЩИЙ СЕКТОР",
-            "FULL SCENE REBUILD / RUNSTATE СОХРАНЁН",
-            warningColor,
-            "ПЕРЕСОЗДАТЬ",
-            RunStateManager.Instance != null,
-            () => debug.RebuildCurrentSector()
-        );
-        AddHint(
-            "Live hot-swap Special Site отключён: reset не двигает маршрут, не завершает Event и не выдаёт награду."
-        );
-
-        AddRow(
-            "СБРОСИТЬ ВИЗУАЛ",
-            "ORIGINAL / 100 / 100 / ВРАГИ СИЛЬНО",
-            mutedColor,
-            "СБРОСИТЬ",
-            true,
-            () => debug.ResetVisualSettings()
-        );
-        AddHint(
-            "Сброс визуала не меняет неуязвимость и выбор особой аномалии. " +
-            "Текущий test default: враги СИЛЬНО, область — все."
-        );
-
-        AddSectionTitle(
-            "ДИАГНОСТИКА",
-            "Session-only инструменты; сохранение и meta-прогресс не меняются"
-        );
-        AddRow(
-            "ТЕКУЩИЙ СЕКТОР",
-            debug.CurrentSectorNumber > 0
-                ? $"{debug.CurrentSectorNumber}/{debug.ProductionSectorCount}"
-                : "НЕТ АКТИВНОГО RUNSTATE",
-            debug.CurrentSectorNumber > 0 ? successColor : warningColor,
-            "ИНФО",
-            false,
-            null
-        );
-        AddRow(
-            "THREAT TIER",
-            ThreatTierPresentation.Format(debug.CurrentThreatTier),
-            successColor,
-            "ИНФО",
-            false,
-            null
-        );
-        AddRow(
-            "INTERNAL PRESSURE",
-            $"{debug.InternalPressure:0.0} / 100",
-            mutedColor,
-            "ИНФО",
-            false,
-            null
-        );
-        AddRow(
-            "ПРОВЕРИТЬ THREAT I",
-            "PRESSURE 0",
-            mutedColor,
-            "TIER I",
-            true,
-            () => SetDebugThreatTier(ThreatTier.Tier1)
-        );
-        AddRow(
-            "ПРОВЕРИТЬ THREAT II",
-            $"PRESSURE {ThreatTierPresentation.Tier2Minimum:0}",
-            mutedColor,
-            "TIER II",
-            true,
-            () => SetDebugThreatTier(ThreatTier.Tier2)
-        );
-        AddRow(
-            "ПРОВЕРИТЬ THREAT III",
-            $"PRESSURE {ThreatTierPresentation.Tier3Minimum:0}",
-            mutedColor,
-            "TIER III",
-            true,
-            () => SetDebugThreatTier(ThreatTier.Tier3)
-        );
-        AddRow(
-            "ПРОВЕРИТЬ THREAT IV",
-            $"PRESSURE {ThreatTierPresentation.Tier4Minimum:0}",
-            mutedColor,
-            "TIER IV",
-            true,
-            () => SetDebugThreatTier(ThreatTier.Tier4)
-        );
-        AddRow(
-            "ТЕКУЩАЯ ЗОНА",
-            debug.CurrentZoneName,
-            debug.CurrentSite != null ? successColor : mutedColor,
-            "ИНФО",
-            false,
-            null
-        );
-        AddHint(
-            $"Читаемость: {GetProductionPresetName(debug.Preset)} | " +
-            $"декор {debug.DecorBrightness * 100f:0}% | " +
-            $"акцент аномалии {debug.AnomalyAccent * 100f:0}% | " +
-            $"враги {GetEnemyReadabilityName(debug.EnemyMode)} " +
-            $"({GetEnemyScopeName(debug.CurrentEnemyScope)})\n" +
-            $"Override особой аномалии: {debug.Override.ToString().ToUpperInvariant()} | " +
-            $"бессмертие: {(debug.InvulnerabilityEnabled ? "ДА" : "НЕТ")} | " +
-            $"renderer'ов окружения в секторе: {debug.EnvironmentRendererCount}"
-        );
-    }
-
     private void AddInteractiveAnomalyVisualTest()
     {
         EnsureProductionSectorDebug();
@@ -2059,6 +1421,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         }
 
         AddVisualLiveStatus();
+        AddRow("Scene preview", "F1 RETURNS TO MENU", accentColor, "PREVIEW", true, EnterScenePreview);
         AddVisualObjectFocusButtons();
 
         ProductionVisualTuningController environment = productionVisualTuning;
@@ -2320,7 +1683,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
                 () => ResetVisualSectionToProduction(VisualSection.Player));
         }
 
-        if (AddVisualSectionHeader(
+        if (productionVisualTuning != null && productionVisualTuning.WeaponRendererCount > 0 && AddVisualSectionHeader(
                 VisualSection.Weapon, "WEAPON", "Visual дочерних SpriteRenderer оружия"))
         {
             ProductionVisualTuningController tuning = productionVisualTuning;
@@ -2356,7 +1719,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
                 ResetVisualSectionToProduction(VisualSection.Weapon));
         }
 
-        if (AddVisualSectionHeader(
+        if (playerOrbitVisual != null && AddVisualSectionHeader(
                 VisualSection.PlayerRing, "PLAYER RING", "Декоративное кольцо оружейной орбиты"))
         {
             if (playerOrbitVisual != null && playerOrbitVisual.HasOrbitSource)
@@ -2602,7 +1965,10 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         OrbitalStationRuntime station =
             FindFirstObjectByType<OrbitalStationRuntime>();
         bool available = station != null && station.IsInitialized;
-        AddSectionTitle("ORBITAL PRODUCTION TEST",
+        OrbitalRunState state = available ? station.State : null;
+        int ringId = available && station.SelectedRing != null ? station.SelectedRing.RingId : 0;
+        bool canEdit = available && (upgradeManager == null || upgradeManager.IsRewardQueueIdle);
+        AddSectionTitle("ORBITAL",
             "Production runtime checks");
 
         CharacterSpawner spawner = FindFirstObjectByType<CharacterSpawner>();
@@ -2625,7 +1991,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         bool canLoadGrowth = available &&
             (UpgradeManager.Instance == null || UpgradeManager.Instance.IsRewardQueueIdle);
         AddSectionTitle("GROWTH TEST", "Explicit dev reset / production state + restore");
-        AddRow("BEGINNING", "1 RING / 3 MOUNTS / 1 PISTOL", accentColor,
+        AddRow("BEGINNING", "1 RING / 1 MOUNT / CAPACITY 3 / 1 PISTOL", accentColor,
             "LOAD", canLoadGrowth, () => LoadOrbitalGrowthPreset(station, OrbitalStationRuntime.GrowthPreset.Beginning));
         AddRow("MID", "4 RINGS / 12 MOUNTS / 8 MODULES", accentColor,
             "LOAD", canLoadGrowth, () => LoadOrbitalGrowthPreset(station, OrbitalStationRuntime.GrowthPreset.Mid));
@@ -2636,8 +2002,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         AddRow("Placement", available ? station.PlacementStatus : "NOT ACTIVE",
             available && station.PlacementStatus != "READY" ? warningColor : mutedColor,
             string.Empty, false, null);
-        AddRow("Add Ring", available ? "SELECTS NEW RING" : "NOT ACTIVE",
-            accentColor, "+RING", available, () =>
+        AddRow("New Ring (debug beyond cap)", available ? "SELECTS NEW RING" : "NOT ACTIVE",
+            accentColor, "+RING", canEdit, () =>
             {
                 station.DebugAddRingBeyondCap();
                 RefreshCurrentTab();
@@ -2647,34 +2013,38 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         AddOrbitalModuleRow("Add Impulse Gun", OrbitalModuleKind.ImpulseGun, station);
         AddOrbitalModuleRow("Add Arc Emitter", OrbitalModuleKind.ArcEmitter, station);
         AddOrbitalModuleRow("Add Link Node", OrbitalModuleKind.LinkNode, station);
-        AddRow("Upgrade Selected Ring Speed", available ? "×1.25" : "NOT ACTIVE",
-            accentColor, "UP", available, () =>
+        AddRow("Selected Ring Speed", available ? "×1.25" : "NOT ACTIVE",
+            accentColor, "UP", canEdit && state.CanUpgradeRingSpeed(ringId, out _), () =>
             {
                 station.UpgradeSelectedRingSpeed();
                 RefreshCurrentTab();
             });
-        AddRow("Upgrade Selected Ring Power", available ? "×1.25" : "NOT ACTIVE",
-            accentColor, "UP", available, () =>
+        AddRow("Selected Ring Damage", available ? "×1.25" : "NOT ACTIVE",
+            accentColor, "UP", canEdit && state.CanUpgradeRingPower(ringId, out _), () =>
             {
                 station.UpgradeSelectedRingPower();
                 RefreshCurrentTab();
             });
-        AddRow("Add Mount", available ? "+1 ON SELECTED RING" : "NOT ACTIVE",
-            accentColor, "+MOUNT", available, () =>
+        var selectedState = state?.Rings.FirstOrDefault(ring => ring.StableRingId == ringId);
+        AddRow("Selected ring mounts / capacity", selectedState != null
+                ? $"R{ringId}: {selectedState.MountCount} / {selectedState.MountCapacity}" : "SELECT A RING",
+            mutedColor, null, false, null);
+        AddRow("New Mount Point", available ? "+1 ON SELECTED RING" : "NOT ACTIVE",
+            accentColor, "+MOUNT", canEdit && state.CanAddMount(ringId, out _), () =>
             {
                 station.AddMount();
                 RefreshCurrentTab();
             });
-        AddRow("Upgrade Core", available ? $"LEVEL {station.Core.Level}" : "NOT ACTIVE",
-            accentColor, "UP", available, () =>
+        AddRow("Ring Capacity", available ? "+1 LIMIT / BUILD MOUNTS SEPARATELY" : "NOT ACTIVE",
+            accentColor, "+CAPACITY", canEdit && state.CanUpgradeRingCapacity(ringId, out _), () =>
             {
-                station.UpgradeCore();
+                station.UpgradeRingCapacity(ringId);
                 RefreshCurrentTab();
             });
-        AddRow("Teardown Station", available ? "FULL CLEANUP" : "NOT ACTIVE",
-            warningColor, "STOP", available, () =>
+        AddRow("Core I / II / III", available ? $"CORE {ToRomanLevel(station.Core.Level)}" : "NOT ACTIVE",
+            accentColor, "UP", canEdit && state.CanUpgradeCore(out _), () =>
             {
-                station.Teardown();
+                station.UpgradeCore();
                 RefreshCurrentTab();
             });
 
@@ -2718,7 +2088,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
                 RefreshCurrentTab();
             });
         AddRow("REBUILD RUNTIME FROM STATE", "NO REWARD FX", accentColor,
-            "REBUILD", available, () =>
+            "REBUILD", canEdit, () =>
             {
                 lastOrbitalStateResult = station.RebuildRuntimeFromState()
                     ? "RESTORED"
@@ -2742,7 +2112,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
                 RefreshCurrentTab();
             });
         AddRow("SIMULATE SECTOR RESTORE", "DESTROY/RESTORE PRESENTATION",
-            warningColor, "SIM", available, () =>
+            warningColor, "SIM", canEdit, () =>
             {
                 lastOrbitalStateResult = station.SimulateSectorRestore()
                     ? "RESTORED"
@@ -2772,7 +2142,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             rewards?.GetOrbitalEligibilitySummary() ?? "NO PROVIDER",
             mutedColor, "REFRESH", rewards != null, RefreshCurrentTab);
         AddRow("Force Level Up", "REAL EXPERIENCE FLOW", accentColor,
-            "LEVEL", experience != null && rewards != null, () =>
+            "LEVEL", available && experience != null && rewards != null && rewards.IsRewardQueueIdle, () =>
             {
                 CloseMenu();
                 experience.AddExperience(experience.ExpToNextLevel);
@@ -2783,18 +2153,18 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             OrbitalRewardKind.LinkPair, rewards);
         AddOrbitalRewardDebugRow("Force Ring Speed",
             OrbitalRewardKind.RingSpeed, rewards);
-        AddOrbitalRewardDebugRow("Force Ring Power",
+        AddOrbitalRewardDebugRow("Force Ring Damage",
             OrbitalRewardKind.RingPower, rewards);
-        AddOrbitalRewardDebugRow("Force Add Mount",
+        AddOrbitalRewardDebugRow("Force New Mount Point",
             OrbitalRewardKind.AddMount, rewards);
-        AddOrbitalRewardDebugRow("Force Core Upgrade",
+        AddOrbitalRewardDebugRow("Force Core I / II / III",
             OrbitalRewardKind.CoreUpgrade, rewards);
-        AddOrbitalRewardDebugRow("Force Link Matrix",
-            OrbitalRewardKind.LinkMatrix, rewards);
+        AddOrbitalRewardDebugRow("Force Ring Capacity",
+            OrbitalRewardKind.RingCapacity, rewards);
         AddOrbitalRewardDebugRow("Force New Ring", OrbitalRewardKind.NewRing, rewards);
         AddRow("Reset Orbital Progression", "BASE STATION / REWARD IDLE",
             warningColor, "RESET", available &&
-                (rewards == null || !rewards.IsChoosingUpgrade), () =>
+                (rewards == null || rewards.IsRewardQueueIdle), () =>
             {
                 station.ApplyPresetStart();
                 RefreshCurrentTab();
@@ -2802,7 +2172,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
         AddSectionTitle("PRESET", "Single temporary visual QA state");
         AddRow("READABILITY TEST", "3 RINGS / ALL MODULE VISUALS / FREE MOUNTS",
-            accentColor, "LOAD", available,
+            accentColor, "LOAD", canEdit,
             () => { station.ApplyReadabilityTestPreset(); RefreshCurrentTab(); });
         OrbitalPresentationConfig visual = OrbitalPresentationConfig.Active;
         System.Action<float> refreshVisuals = _ =>
@@ -2862,7 +2232,10 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private void AddOrbitalModuleRow(string label, OrbitalModuleKind kind,
         OrbitalStationRuntime station)
     {
-        bool available = station != null && station.IsInitialized;
+        bool available = station != null && station.IsInitialized &&
+            station.InputOwner != null && station.InputOwner.CanQueueDebugPlacement &&
+            station.State.FreeBuiltMounts > 0 &&
+            (UpgradeManager.Instance == null || UpgradeManager.Instance.IsRewardQueueIdle);
         AddRow(label, available ? "ARENA PLACEMENT" : "NOT ACTIVE",
             available ? accentColor : mutedColor, "PLACE", available, () =>
             {
@@ -2874,7 +2247,9 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private void AddOrbitalRewardDebugRow(string label,
         OrbitalRewardKind kind, UpgradeManager rewards)
     {
-        bool enabled = rewards != null && !rewards.IsChoosingUpgrade;
+        bool enabled;
+        using (var provider = new OrbitalRewardProvider(rewards != null ? rewards.AllUpgrades.ToArray() : null))
+            enabled = rewards != null && rewards.IsRewardQueueIdle && provider.IsEligible(kind);
         AddRow(label, kind.ToString().ToUpperInvariant(), accentColor,
             "FORCE", enabled, () =>
             {
@@ -2887,16 +2262,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
                     Debug.LogWarning($"[OrbitalRewards] Forced reward {kind} is ineligible.");
                 }
             });
-    }
-
-    private void SetMenuLiveSimulation(bool live)
-    {
-        bool choiceIsOpen =
-            (levelChoiceManager != null && levelChoiceManager.IsChoosing) ||
-            (upgradeManager != null && upgradeManager.IsChoosingUpgrade);
-        menuLiveSimulation = live && !choiceIsOpen && previousTimeScale > 0f;
-        Time.timeScale = menuLiveSimulation ? previousTimeScale : 0f;
-        RefreshCurrentTab();
     }
 
     private void SetDebugThreatTier(ThreatTier tier)
@@ -3462,40 +2827,10 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         }
     }
 
-    private void AddProductionFloatOptions(
-        float[] values,
-        float current,
-        System.Action<float> setter,
-        System.Func<float, string> label)
-    {
-        for (int i = 0; i < values.Length; i++)
-        {
-            float captured = values[i];
-            AddOptionRow(
-                label(captured),
-                Mathf.Approximately(captured, current),
-                true,
-                () => setter(captured)
-            );
-        }
-    }
-
     private void RefreshSectorVisualTargets()
     {
         productionSectorDebug?.RefreshVisualTargets();
         RefreshCurrentTab();
-    }
-
-    private void AddProductionEnemyMode(
-        ProductionSectorDebugController.EnemyReadability value)
-    {
-        ProductionSectorDebugController debug = productionSectorDebug;
-        AddOptionRow(
-            GetEnemyReadabilityName(value),
-            debug != null && debug.EnemyMode == value,
-            debug != null,
-            () => debug.SetEnemyReadability(value)
-        );
     }
 
     private void AddProductionEnemyScope(
@@ -3559,6 +2894,61 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             _ => "ТЕКУЩАЯ ЗОНА"
         };
 
+    private void AddSectorFlowSection()
+    {
+        EnsureProductionSectorDebug();
+        var debug = productionSectorDebug;
+        bool available = RunStateManager.Instance?.CurrentSector != null;
+        AddSectionTitle("SECTOR", "Three-sector production route; transitions use the sector choice above");
+        AddRow("Reload current sector", "PRESERVES RUN STATE", warningColor, "RELOAD", available, () =>
+        {
+            CloseMenu();
+            debug.RebuildCurrentSector();
+        });
+        AddSectionTitle("SPECIAL SITE", "Applied on the next sector reload");
+        foreach (ProductionSectorDebugController.SpecialOverride value in
+                 Enum.GetValues(typeof(ProductionSectorDebugController.SpecialOverride)))
+            AddProductionSpecialOverride(value);
+        AddSectionTitle("THREAT", "Current production pressure / tier");
+        AddRow("Pressure", $"{debug.InternalPressure:0.0} / {ThreatTierPresentation.Format(debug.CurrentThreatTier)}",
+            mutedColor, null, false, null);
+        foreach (ThreatTier tier in Enum.GetValues(typeof(ThreatTier)))
+        {
+            ThreatTier captured = tier;
+            AddRow(ThreatTierPresentation.Format(tier), "SET PRESSURE", mutedColor,
+                "SET", available, () => SetDebugThreatTier(captured));
+        }
+    }
+
+    private int qaSection;
+
+    private void SelectQaSection(int section)
+    {
+        qaSection = section;
+        RefreshCurrentTab();
+    }
+
+    private void AddQaSection()
+    {
+        EnsureProductionSectorDebug();
+        AddSectionTitle("PLAYER", "Current runtime only");
+        AddToggleRow("INVULNERABILITY", productionSectorDebug.InvulnerabilityEnabled,
+            characterSpawner != null && characterSpawner.SpawnedPlayer != null,
+            () => productionSectorDebug.SetInvulnerability(!productionSectorDebug.InvulnerabilityEnabled));
+        string[] sections = { "ENEMIES", "XP", "BOT LAB" };
+        for (int i = 0; i < sections.Length; i++)
+        {
+            int captured = i;
+            AddOptionRow(sections[i], qaSection == i, true, () => SelectQaSection(captured));
+        }
+        switch (qaSection)
+        {
+            case 0: AddEnemiesSection(); break;
+            case 1: AddExperienceVisualLabSection(); break;
+            case 2: AddBotLabSection(); break;
+        }
+    }
+
     private void AddRunSection()
     {
         ResolveSceneReferences();
@@ -3578,9 +2968,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         }
         RunStateManager runState = RunStateManager.Instance;
         RunSector sector = runState != null ? runState.CurrentSector : null;
-        WorldEvent currentEvent = worldEventSpawner != null
-            ? worldEventSpawner.CurrentEvent
-            : null;
         EnemyHealth boss = FindAliveBoss();
         bool choiceOpen = levelChoiceManager != null &&
             levelChoiceManager.IsChoosing;
@@ -3588,47 +2975,22 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             runFlowController.IsLevelCompleted;
 
         AddSectionTitle("CURRENT RUN", "Read-only production state");
-        AddRow("Current level",
+        AddRow("Current sector",
             sector != null ? sector.SectorNumber.ToString() : "NOT AVAILABLE",
             sector != null ? successColor : warningColor,
-            null, false, null);
-        AddRow("Current World Rule",
-            sector != null && sector.WorldRule != null
-                ? GetWorldRuleName(sector.WorldRule.RuleType, sector.WorldRule)
-                : "None",
-            mutedColor, null, false, null);
-        AddRow("Current Local Anomaly",
-            sector != null && sector.LocalAnomaly != null
-                ? sector.LocalAnomaly.name
-                : "None",
-            mutedColor, null, false, null);
-        AddRow("ANOMALY STABILIZER",
-            runState != null && runState.CurrentAnomalyStabilizer != null
-                ? runState.CurrentAnomalyStabilizer.DisplayName
-                : "NONE",
-            runState != null && runState.CurrentAnomalyStabilizer != null
-                ? successColor
-                : mutedColor,
-            null, false, null);
-        AddRow("Current Event",
-            currentEvent == null
-                ? "None"
-                : $"{GetEventDisplayName(currentEvent)} - " +
-                  $"{(currentEvent.IsStarted ? "ACTIVE" : "WAITING")}",
-            currentEvent != null ? successColor : mutedColor,
             null, false, null);
         AddRow("Run phase", runFlowController != null ? runFlowController.Phase.ToString() : "NONE",
             mutedColor, null, false, null);
         AddRow("Boss alive", boss != null ? "YES" : "NO",
             boss != null ? successColor : mutedColor,
             null, false, null);
-        AddRow("Level choice open", choiceOpen ? "YES" : "NO",
+        AddRow("Sector choice open", choiceOpen ? "YES" : "NO",
             choiceOpen ? successColor : mutedColor,
             null, false, null);
 
         AddSectionTitle(
-            "LEVEL FLOW",
-            $"Production: {RunRoute.TotalSectors} sectors; final zone -> boss"
+            "SECTOR FLOW",
+            $"Production: {RunRoute.TotalSectors} sectors; Sector 3 objective -> boss"
         );
         bool canSpawnBoss = runFlowController != null &&
             RunRoute.IsFinalSector(RunStateManager.Instance?.CurrentLevel ?? 0) &&
@@ -3647,10 +3009,10 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
         bool canComplete = runFlowController != null &&
             runFlowController.CanDebugCompleteCurrentLevel;
-        AddRow("Advance through production Exit/Boss flow",
+        AddRow("Complete sector objective / final boss",
             canComplete ? "READY" : completed ? "ALREADY COMPLETED" : "UNAVAILABLE",
             canComplete ? successColor : warningColor,
-            "COMPLETE LEVEL", canComplete, CompleteLevel);
+            "COMPLETE SECTOR", canComplete, CompleteLevel);
 
         bool canOpenCards = runFlowController != null &&
             runFlowController.CanDebugOpenLevelChoice;
@@ -3658,22 +3020,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             choiceOpen ? "ALREADY OPEN" : canOpenCards ? "READY" :
                 "COMPLETE LEVEL FIRST",
             canOpenCards ? mutedColor : warningColor,
-            "OPEN LEVEL CARDS", canOpenCards, OpenLevelCards);
-
-        bool canClearEvent = worldEventSpawner != null && currentEvent != null;
-        AddRow("Current World Event",
-            canClearEvent ? GetEventDisplayName(currentEvent) : "None",
-            canClearEvent ? mutedColor : warningColor,
-            "CLEAR CURRENT EVENT", canClearEvent, ClearWorldEvent);
-
-        AddHint(
-            "NEXT LEVEL remains the production card-confirmation action; " +
-            "there is no safe no-choice transition API."
-        );
-        AddHint(
-            "REROLL LEVEL CARDS is not exposed because LevelChoiceManager " +
-            "has no safe production reroll lifecycle."
-        );
+            "OPEN SECTOR CHOICE", canOpenCards, OpenLevelCards);
 
         AddSectionTitle("HUD", "Runtime-only comparison setting");
         HUDManager hud = HUDManager.Instance;
@@ -3687,7 +3034,20 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private void AddBunkerSection()
     {
+        if (FindFirstObjectByType<BunkerRunStarter>() == null)
+        {
+            AddHint("Bunker tools are available in MainMenu.");
+            return;
+        }
         AddFootballMinigameSection();
+#if UNITY_EDITOR
+        UnlockProgressService unlocks = UnlockProgressService.Instance;
+        AddSectionTitle("CONTENT UNLOCKS", "Persistent debug actions");
+        AddRow("Unlock all content", "PERSISTENT", warningColor, "UNLOCK ALL", unlocks != null,
+            () => { unlocks.DebugUnlockAll(); RefreshCurrentTab(); });
+        AddRow("Reset content unlocks", "PERSISTENT", warningColor, "RESET UNLOCKS", unlocks != null,
+            () => { unlocks.DebugResetAll(); RefreshCurrentTab(); });
+#endif
 
         BunkerStationProgressionService service = BunkerStationProgressionService.Instance;
         AddSectionTitle("CHARACTER STATION", "Persistent station investment");
@@ -3740,23 +3100,16 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
                 : "-",
             selectedCharacter != null ? successColor : mutedColor,
             null, false, null);
-        CharacterSelectionUI characterUi = FindFirstObjectByType<CharacterSelectionUI>();
-        bool uiAvailable = characterUi != null;
-        AddRow("Character Selection", uiAvailable ? "OPEN" : "NOT OPEN",
-            uiAvailable ? successColor : warningColor,
-            "REFRESH", uiAvailable, () => DebugRefreshCharacterUi(characterUi));
-
-        debugCharacters.Clear();
-        characterUi?.CollectDebugCharacters(debugCharacters);
-
-        if (debugCharacters.Count == 0)
+        CharacterSelectionUI characterUi = FindFirstObjectByType<CharacterSelectionUI>(FindObjectsInactive.Include);
+        if (characterUi == null)
         {
-            AddRow("Debug character source",
-                characterUi == null ? "NOT AVAILABLE" : "NO CHARACTER DATA",
-                warningColor, null, false, null);
+            AddHint("Open the Character Station panel to inspect its selection controls.");
             return;
         }
-
+        AddRow("Character Selection", "AVAILABLE", successColor,
+            "REFRESH", true, () => DebugRefreshCharacterUi(characterUi));
+        debugCharacters.Clear();
+        characterUi.CollectDebugCharacters(debugCharacters);
         for (int i = 0; i < debugCharacters.Count; i++)
             AddCharacterDebugSelection(characterUi, debugCharacters[i]);
     }
@@ -3830,12 +3183,14 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private void SpawnBoss()
     {
+        CloseMenu();
         runFlowController?.TryDebugCompleteCurrentLevel();
         RefreshCurrentTab();
     }
 
     private void KillBoss()
     {
+        CloseMenu();
         EnemyHealth boss = FindAliveBoss();
         boss?.TakeDamage(float.MaxValue, boss.transform.position);
         RefreshCurrentTab();
@@ -3843,6 +3198,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private void CompleteLevel()
     {
+        CloseMenu();
         EnemyHealth boss = FindAliveBoss();
 
         if (boss != null)
@@ -3862,6 +3218,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private void OpenLevelCards()
     {
+        CloseMenu();
         if (runFlowController != null &&
             runFlowController.TryDebugOpenLevelChoice())
         {
@@ -3903,148 +3260,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             TextAlignmentOptions.MidlineLeft, Color.white
         );
         heading.gameObject.AddComponent<LayoutElement>().preferredHeight = 42f;
-    }
-
-    private void AddWorldRulesSection()
-    {
-        AddSectionTitle("WORLD RULES", "Apply/Clear through WorldRuleController");
-        AddRow(
-            "None / Clear",
-            worldRuleController == null ? "CONTROLLER NOT FOUND" :
-                worldRuleController.ActiveRule == null ? "ACTIVE" : "AVAILABLE",
-            worldRuleController == null ? warningColor : successColor,
-            "CLEAR", worldRuleController != null, ClearWorldRule
-        );
-
-        for (int i = 0; i < DebugRuleTypes.Length; i++)
-        {
-            WorldRuleType type = DebugRuleTypes[i];
-            WorldRuleData data = worldRules != null && i < worldRules.Length
-                ? worldRules[i]
-                : null;
-            bool valid = worldRuleController != null && data != null &&
-                data.RuleType == type;
-            bool active = valid && worldRuleController.ActiveRule != null &&
-                worldRuleController.ActiveRule.RuleType == type;
-            string status = data == null ? "MISSING" :
-                data.RuleType != type ? "NOT CONFIGURED" :
-                worldRuleController == null ? "CONTROLLER NOT FOUND" :
-                active ? "ACTIVE" : "AVAILABLE";
-            WorldRuleData captured = data;
-            AddRow(GetWorldRuleName(type, data), status,
-                active ? successColor : valid ? mutedColor : warningColor,
-                "APPLY", valid, () => ApplyWorldRule(captured));
-        }
-    }
-
-    private void AddLocalAnomaliesSection()
-    {
-        AddSectionTitle("LOCAL ANOMALIES",
-            "Apply or clear through LevelAnomalyController");
-
-        if (localAnomalies != null)
-        {
-            for (int i = 0; i < localAnomalies.Length; i++)
-            {
-                LocalAnomalyData data = localAnomalies[i];
-
-                if (data != null && !WasAnomalyAlreadyAdded(data, i))
-                    AddLocalAnomalyRow(data);
-            }
-        }
-
-        for (int i = 0; i < DebugAnomalyTypes.Length; i++)
-        {
-            LocalAnomalyType type = DebugAnomalyTypes[i];
-
-            if (FindLocalAnomaly(type) == null)
-            {
-                AddRow($"{GetAnomalyTypeName(type)} - {type}",
-                    "NOT CONFIGURED", warningColor, "APPLY", false, null);
-            }
-        }
-
-        bool hasActive = anomalyController != null &&
-            anomalyController.ActiveAnomaly != null;
-        AddRow("All local anomaly zones",
-            anomalyController == null ? "CONTROLLER NOT FOUND" :
-                hasActive ? "ACTIVE" : "CLEAR",
-            hasActive ? successColor : mutedColor,
-            "CLEAR ANOMALIES", anomalyController != null,
-            ClearLocalAnomalies);
-        AddActiveAnomalySummary();
-    }
-
-    private void AddLocalAnomalyRow(LocalAnomalyData data)
-    {
-        bool valid = anomalyController != null && data.ZonePrefab != null;
-        bool active = valid && anomalyController.ActiveAnomaly == data;
-        string status = data.ZonePrefab == null ? "MISSING PREFAB" :
-            anomalyController == null ? "CONTROLLER NOT FOUND" :
-            active ? "ACTIVE" : "AVAILABLE";
-        string displayName = !string.IsNullOrWhiteSpace(data.Presentation.Title)
-            ? data.Presentation.Title
-            : data.name;
-        LocalAnomalyData captured = data;
-        AddRow($"{displayName} - {GetAnomalyTypeName(data.AnomalyType)}",
-            status, active ? successColor : valid ? mutedColor : warningColor,
-            "APPLY", valid, () => ApplyLocalAnomaly(captured));
-    }
-
-    private void AddActiveAnomalySummary()
-    {
-        LocalAnomalyData active = anomalyController != null
-            ? anomalyController.ActiveAnomaly
-            : null;
-        AddRow("Active profile",
-            active != null ? GetAnomalyTypeName(active.AnomalyType) : "None",
-            active != null ? successColor : mutedColor, null, false, null);
-        AddRow("Active zones", BuildActiveZoneSummary(),
-            activeAnomalyZones.Count > 0 ? successColor : mutedColor,
-            null, false, null);
-    }
-
-    private string BuildActiveZoneSummary()
-    {
-        activeAnomalyZones.Clear();
-        activeAnomalyTypes.Clear();
-        activeAnomalyTypeCounts.Clear();
-
-        if (anomalyController == null)
-            return "None";
-
-        anomalyController.CollectActiveLocalZones(activeAnomalyZones);
-
-        for (int i = 0; i < activeAnomalyZones.Count; i++)
-        {
-            LocalAnomalyType type = activeAnomalyZones[i].Type;
-            int index = activeAnomalyTypes.IndexOf(type);
-
-            if (index >= 0)
-                activeAnomalyTypeCounts[index]++;
-            else
-            {
-                activeAnomalyTypes.Add(type);
-                activeAnomalyTypeCounts.Add(1);
-            }
-        }
-
-        if (activeAnomalyTypes.Count == 0)
-            return "None";
-
-        activeAnomalySummary.Clear();
-
-        for (int i = 0; i < activeAnomalyTypes.Count; i++)
-        {
-            if (i > 0)
-                activeAnomalySummary.Append(", ");
-
-            activeAnomalySummary.Append(GetAnomalyTypeName(activeAnomalyTypes[i]));
-            activeAnomalySummary.Append(" x");
-            activeAnomalySummary.Append(activeAnomalyTypeCounts[i]);
-        }
-
-        return activeAnomalySummary.ToString();
     }
 
     private void AddEnemiesSection()
@@ -4106,103 +3321,10 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             ClearDebugEnemies);
     }
 
-    private void AddWorldEventsSection()
-    {
-        AddLootChestSection();
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        AddWorldBreakablesSection();
-#endif
-        AddSectionTitle("WORLD EVENTS", "Spawn/Clear through WorldEventSpawner");
-        WorldEvent current = worldEventSpawner != null
-            ? worldEventSpawner.CurrentEvent
-            : null;
-        AddRow($"Active event: {GetEventDisplayName(current)}",
-            current != null ? "ACTIVE" : "None",
-            current != null ? successColor : mutedColor,
-            "CLEAR EVENT", current != null, ClearWorldEvent);
-
-        addedEventPrefabs.Clear();
-
-        if (worldEventPrefabs != null)
-        {
-            for (int i = 0; i < worldEventPrefabs.Length; i++)
-            {
-                WorldEvent prefab = worldEventPrefabs[i];
-
-                if (prefab != null && !addedEventPrefabs.Contains(prefab))
-                    AddEventRow(GetEventDisplayName(prefab), prefab);
-            }
-        }
-
-        IReadOnlyList<WorldEvent> connected = worldEventSpawner != null
-            ? worldEventSpawner.EventPrefabs
-            : null;
-
-        if (connected == null)
-            return;
-
-        for (int i = 0; i < connected.Count; i++)
-        {
-            WorldEvent prefab = connected[i];
-
-            if (prefab != null && !addedEventPrefabs.Contains(prefab))
-                AddEventRow(GetEventDisplayName(prefab), prefab);
-        }
-    }
-
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-    private void AddWorldBreakablesSection()
-    {
-        ProductionExplorationSectorController controller =
-            ProductionExplorationSectorController.ActiveInstance;
-        int activeCount = WorldBreakable.ActiveInstances.Count;
-        bool available = controller != null;
-
-        AddSectionTitle(
-            "WORLD BREAKABLES",
-            "Production p_Case1 placement and lifecycle"
-        );
-        AddRow(
-            "Active intact crates",
-            activeCount.ToString(),
-            activeCount > 0 ? successColor : warningColor,
-            "SPAWN NEAR PLAYER",
-            available,
-            () =>
-            {
-                controller.DebugSpawnCrateNearPlayer();
-                RefreshCurrentTab();
-            }
-        );
-        AddRow(
-            "Regenerate current sector set",
-            available ? "READY" : "EXPLORATION SECTOR NOT FOUND",
-            available ? mutedColor : warningColor,
-            "RESPAWN CRATES",
-            available,
-            () =>
-            {
-                controller.DebugRespawnSectorBreakables();
-                RefreshCurrentTab();
-            }
-        );
-        AddRow(
-            "Break every intact crate",
-            activeCount > 0 ? $"READY: {activeCount}" : "NONE",
-            activeCount > 0 ? mutedColor : warningColor,
-            "BREAK ALL",
-            activeCount > 0,
-            () =>
-            {
-                controller.DebugBreakAll();
-                RefreshCurrentTab();
-            }
-        );
-    }
-#endif
 
     private void AddRoomStateRows()
     {
+        if (FindFirstObjectByType<BunkerRunStarter>() == null) return;
         AddSectionTitle("ROOM ACCESS", "Runtime only; values are not saved");
         BunkerRoomAccess[] rooms =
             FindObjectsByType<BunkerRoomAccess>(FindObjectsSortMode.None);
@@ -4219,19 +3341,16 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
                 }
             }
 
-            string state = room == null
-                ? "MISSING"
-                : room.Unlocked ? "OPEN" : "CLOSED";
-            Color color = room == null
-                ? warningColor
-                : room.Unlocked ? successColor : mutedColor;
+            if (room == null) continue;
+            string state = room.Unlocked ? "OPEN" : "CLOSED";
+            Color color = room.Unlocked ? successColor : mutedColor;
             BunkerRoomAccess captured = room;
             AddRow(
                 GetRoomDisplayName(roomId),
                 $"[ {state} ]",
                 color,
-                room != null && room.Unlocked ? "CLOSE" : "OPEN",
-                room != null,
+                room.Unlocked ? "CLOSE" : "OPEN",
+                true,
                 () =>
                 {
                     captured.SetUnlocked(!captured.Unlocked);
@@ -4252,6 +3371,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     {
         FootballMinigame football = FindFirstObjectByType<FootballMinigame>(FindObjectsInactive.Include);
         bool available = football != null;
+        if (!available) return;
         AddSectionTitle("FOOTBALL", "Original rules / authored arena");
         AddRow("State", available ? football.State.ToString() : "NOT FOUND", mutedColor,
             "START", available && football.CanStart, () => { football.StartGame(); RefreshCurrentTab(); });
@@ -4289,530 +3409,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         BunkerRoomId.SecretRoom => "Secret Room",
         _ => roomId.ToString()
     };
-
-    private void AddLootChestSection()
-    {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        WorldLootChest prefab = Resources.Load<WorldLootChest>(
-            "WorldLoot/WorldLootChestV1"
-        );
-        bool available = player != null && prefab != null;
-
-        AddSectionTitle(
-            "СУНДУКИ",
-            "Production World Loot Chest V1.2; non-blocking Reel"
-        );
-        AddRow(
-            "WORLD LOOT CHEST",
-            !available
-                ? player == null ? "ИГРОК НЕ НАЙДЕН" : "PREFAB НЕ НАЙДЕН"
-                : "ГОТОВ",
-            available ? successColor : warningColor,
-            "СОЗДАТЬ СУНДУК РЯДОМ",
-            available,
-            SpawnWorldLootChestNearPlayer
-        );
-        AddHint(
-            "Reward Pool: 50 GOLD x6 · 100 GOLD x3 · 300 GOLD x1\n" +
-            "REEL PRESENTATION: " +
-            $"{WorldLootRewardReel.PresentationPanelSize.x:0}x" +
-            $"{WorldLootRewardReel.PresentationPanelSize.y:0} · " +
-            $"transfer {WorldLootRewardReel.PresentationTransferDuration:0.00}s\n" +
-            "Active Reel: " +
-            (WorldLootRewardReel.IsActive ? "YES" : "NO") + "\n" +
-            "State: " + WorldLootRewardReel.ActiveStateLabel + "\n" +
-            lootChestDebugStatus + "\n" +
-            "Последняя награда: " +
-            (string.IsNullOrWhiteSpace(WorldLootRewardReel.LastClaimedReward)
-                ? "нет"
-                : WorldLootRewardReel.LastClaimedReward)
-        );
-    }
-
-    private void SpawnWorldLootChestNearPlayer()
-    {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-
-        if (player == null)
-        {
-            lootChestDebugStatus = "⚠ Игрок не найден.";
-            RefreshCurrentTab();
-            return;
-        }
-
-        Vector2 position = (Vector2)player.transform.position +
-            Vector2.right * 2.5f;
-        WorldLootChest chest = WorldLootChestSpawner.SpawnChest(position);
-        lootChestDebugStatus = chest != null
-            ? "✓ Сундук создан в 2.5 м справа от игрока."
-            : "⚠ Не удалось создать production prefab.";
-        RefreshCurrentTab();
-    }
-
-    private void AddProductionWeaponBuildSection()
-    {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        BaseWeapon current = FindPrimaryWeapon(player);
-        AddSectionTitle(
-            "WEAPON",
-            $"Current: {(current != null ? GetWeaponName(current.weaponData) : "None")}");
-
-        WeaponData pistol = FindCombatLabWeapon("pistol");
-        WeaponData laser = FindCombatLabWeapon("laser");
-        AddProductionWeaponRow("PISTOL", pistol, current, player);
-        AddProductionWeaponRow("LASER", laser, current, player);
-    }
-
-    private void AddProductionWeaponRow(
-        string label,
-        WeaponData weapon,
-        BaseWeapon current,
-        GameObject player)
-    {
-        bool selected = weapon != null && current != null &&
-            current.weaponData == weapon;
-        bool available = weapon != null && weapon.weaponPrefab != null &&
-            player != null && characterSpawner != null;
-        AddRow(
-            label,
-            selected ? "CURRENT" : available ? "AVAILABLE" : "NOT FOUND",
-            selected ? successColor : available ? mutedColor : warningColor,
-            "SELECT",
-            available,
-            () => UseWeapon(weapon));
-    }
-
-    private void AddProductionAnomalyBuildSection()
-    {
-        RunStateManager runState = RunStateManager.Instance;
-        AnomalyInventory inventory = runState != null
-            ? runState.AnomalyInventory
-            : null;
-        string current = inventory != null && !inventory.IsEmpty
-            ? $"{inventory.CurrentItem.DisplayName} " +
-                ToRomanLevel(inventory.Level)
-            : "None";
-        string mode = inventory == null || inventory.IsEmpty
-            ? "NONE"
-            : runState != null && runState.HasEvolution
-                ? inventory.Level >= 3 ? "OVERDRIVE" : "HYBRID"
-                : "PURE";
-        AddSectionTitle("ANOMALY", $"Current: {current}  •  Mode: {mode}");
-
-        AnomalyItemData[] items = AnomalyItemCatalog.GetAll();
-        AddAnomalyLevelRow(items, AnomalyPowerType.GravityOrb, "GRAVITY");
-        AddAnomalyLevelRow(items, AnomalyPowerType.ArcNode, "ARC");
-        AddAnomalyLevelRow(items, AnomalyPowerType.RedBeam, "BEAM");
-        AddRow(
-            "CLEAR ANOMALY",
-            inventory != null && !inventory.IsEmpty ? current : "EMPTY",
-            warningColor,
-            "CLEAR",
-            inventory != null && !inventory.IsEmpty,
-            ClearDebugAnomaly);
-    }
-
-    private void AddAnomalyLevelRow(
-        AnomalyItemData[] items,
-        AnomalyPowerType type,
-        string label)
-    {
-        AnomalyItemData item = null;
-        if (items != null)
-        {
-            for (int i = 0; i < items.Length; i++)
-            {
-                if (items[i] != null && items[i].PowerType == type)
-                {
-                    item = items[i];
-                    break;
-                }
-            }
-        }
-
-        AnomalyItemData captured = item;
-        int currentLevel = RunStateManager.Instance != null && item != null &&
-            RunStateManager.Instance.AnomalyInventory.CurrentItem == item
-            ? RunStateManager.Instance.AnomalyInventory.Level
-            : 0;
-        AddThreeLevelRow(
-            label,
-            currentLevel,
-            item != null,
-            level => SetDebugAnomalyLevel(captured, level));
-    }
-
-    private void AddProductionUpgradeBuildSection()
-    {
-        AddSectionTitle(
-            "UPGRADES",
-            "Set exact production target level (4 unique slots)");
-        RunStateManager runState = RunStateManager.Instance;
-        UpgradeType[] types =
-        {
-            UpgradeType.WeaponDamagePercent,
-            UpgradeType.MaxHealthFlat,
-            UpgradeType.MoveSpeedPercent,
-            UpgradeType.XpGainPercent,
-            UpgradeType.AttackSizePercent,
-            UpgradeType.CritChance,
-            UpgradeType.HpRegeneration,
-            UpgradeType.Multishot,
-            UpgradeType.FireRatePercent
-        };
-        string[] labels =
-        {
-            "DAMAGE",
-            "MAX HP",
-            "MOVE SPEED",
-            "XP GAIN",
-            "ATTACK SIZE",
-            "CRIT CHANCE",
-            "HP REGEN",
-            "MULTISHOT",
-            "FIRE RATE"
-        };
-
-        for (int i = 0; i < types.Length; i++)
-        {
-            UpgradeData upgrade = FindProductionUpgrade(types[i]);
-            UpgradeData captured = upgrade;
-            int level = runState != null && upgrade != null
-                ? runState.ItemSlots.GetLevel(upgrade)
-                : 0;
-            AddThreeLevelRow(
-                labels[i],
-                level,
-                runState != null && upgrade != null,
-                targetLevel => SetDebugUpgradeLevel(
-                    captured,
-                    targetLevel));
-        }
-
-        AddMultishotTestRow();
-        AddAttackSizeTestRow();
-        AddFireRateTestRow();
-
-        AddRow(
-            "CLEAR UPGRADES",
-            runState != null
-                ? $"{runState.ItemSlots.UsedSlotCount} / " +
-                    runState.ItemSlots.Capacity
-                : "NO RUN STATE",
-            warningColor,
-            "CLEAR",
-            runState != null && runState.ItemSlots.UsedSlotCount > 0,
-            ClearDebugUpgrades);
-    }
-
-    private void AddMultishotTestRow()
-    {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        BaseWeapon weapon = FindPrimaryWeapon(player);
-        int currentBonus = weapon != null
-            ? weapon.RuntimeProjectileCountBonus
-            : 0;
-
-        RectTransform row = CreateRect("Multishot Test", contentRoot);
-        row.gameObject.AddComponent<Image>().color = rowColor;
-        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 54f;
-
-        TextMeshProUGUI labelText = CreateText(
-            "Name",
-            row,
-            "MULTISHOT TEST",
-            18f,
-            TextAlignmentOptions.MidlineLeft,
-            Color.white);
-        labelText.rectTransform.anchorMin = Vector2.zero;
-        labelText.rectTransform.anchorMax = new Vector2(0.42f, 1f);
-        labelText.rectTransform.offsetMin = new Vector2(16f, 0f);
-        labelText.rectTransform.offsetMax = Vector2.zero;
-
-        for (int bonus = 0; bonus <= 4; bonus++)
-        {
-            int capturedBonus = bonus;
-            Button button = CreateButton(
-                row,
-                $"+{bonus}",
-                () => SetDebugMultishotBonus(capturedBonus),
-                56f,
-                weapon != null);
-            RectTransform rect = button.GetComponent<RectTransform>();
-            rect.anchorMin = rect.anchorMax = new Vector2(1f, 0.5f);
-            rect.pivot = new Vector2(1f, 0.5f);
-            rect.anchoredPosition = new Vector2(
-                -12f - (4 - bonus) * 62f,
-                0f);
-            rect.sizeDelta = new Vector2(56f, 38f);
-            if (currentBonus == bonus && button.targetGraphic is Image image)
-                image.color = successColor;
-        }
-    }
-
-    private void SetDebugMultishotBonus(int bonus)
-    {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        BaseWeapon weapon = FindPrimaryWeapon(player);
-        if (weapon == null)
-        {
-            lastUpgradeResult = "Primary weapon not found.";
-            RefreshCurrentTab();
-            return;
-        }
-
-        weapon.SetProjectileCountBonus(Mathf.Clamp(bonus, 0, 4));
-        lastUpgradeResult =
-            $"Runtime Multishot set to +{weapon.RuntimeProjectileCountBonus}.";
-        RefreshCurrentTab();
-    }
-
-    private void AddAttackSizeTestRow()
-    {
-        GameObject player = FindRuntimePlayer();
-        BaseWeapon weapon = characterSpawner != null &&
-            characterSpawner.PrimaryWeapon != null
-                ? characterSpawner.PrimaryWeapon
-                : FindPrimaryWeapon(player);
-        PlayerCombatModifiers modifiers = weapon != null
-            ? weapon.DebugResolvedCombatModifiers
-            : player != null
-                ? player.GetComponent<PlayerCombatModifiers>()
-                : null;
-        float currentScale = modifiers != null
-            ? modifiers.RunAttackSizeMultiplier
-            : 1f;
-        float[] scales = { 1f, 1.25f, 1.5f, 2f, 3f };
-
-        RectTransform row = CreateRect("Attack Size Test", contentRoot);
-        row.gameObject.AddComponent<Image>().color = rowColor;
-        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 54f;
-
-        TextMeshProUGUI labelText = CreateText(
-            "Name",
-            row,
-            "ATTACK SIZE TEST",
-            18f,
-            TextAlignmentOptions.MidlineLeft,
-            Color.white);
-        labelText.rectTransform.anchorMin = Vector2.zero;
-        labelText.rectTransform.anchorMax = new Vector2(0.42f, 1f);
-        labelText.rectTransform.offsetMin = new Vector2(16f, 0f);
-        labelText.rectTransform.offsetMax = Vector2.zero;
-
-        for (int i = 0; i < scales.Length; i++)
-        {
-            float capturedScale = scales[i];
-            Button button = CreateButton(
-                row,
-                $"{capturedScale:0.##}x",
-                () => SetDebugAttackSize(capturedScale),
-                56f,
-                player != null);
-            RectTransform rect = button.GetComponent<RectTransform>();
-            rect.anchorMin = rect.anchorMax = new Vector2(1f, 0.5f);
-            rect.pivot = new Vector2(1f, 0.5f);
-            rect.anchoredPosition = new Vector2(
-                -12f - (scales.Length - 1 - i) * 62f,
-                0f);
-            rect.sizeDelta = new Vector2(56f, 38f);
-            if (Mathf.Approximately(currentScale, capturedScale) &&
-                button.targetGraphic is Image image)
-            {
-                image.color = successColor;
-            }
-        }
-    }
-
-    private void AddFireRateTestRow()
-    {
-        GameObject player = FindRuntimePlayer();
-        BaseWeapon weapon = characterSpawner != null &&
-            characterSpawner.PrimaryWeapon != null
-                ? characterSpawner.PrimaryWeapon
-                : FindPrimaryWeapon(player);
-        float currentMultiplier = weapon != null
-            ? weapon.RuntimeFireRateMultiplier
-            : 1f;
-        float[] multipliers = { 1f, 1.25f, 1.5f, 2f, 3f };
-
-        RectTransform row = CreateRect("Fire Rate Test", contentRoot);
-        row.gameObject.AddComponent<Image>().color = rowColor;
-        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 54f;
-
-        TextMeshProUGUI labelText = CreateText(
-            "Name",
-            row,
-            "FIRE RATE TEST",
-            18f,
-            TextAlignmentOptions.MidlineLeft,
-            Color.white);
-        labelText.rectTransform.anchorMin = Vector2.zero;
-        labelText.rectTransform.anchorMax = new Vector2(0.42f, 1f);
-        labelText.rectTransform.offsetMin = new Vector2(16f, 0f);
-        labelText.rectTransform.offsetMax = Vector2.zero;
-
-        for (int i = 0; i < multipliers.Length; i++)
-        {
-            float capturedMultiplier = multipliers[i];
-            Button button = CreateButton(
-                row,
-                $"{capturedMultiplier:0.##}x",
-                () => SetDebugFireRate(capturedMultiplier),
-                56f,
-                weapon != null);
-            RectTransform rect = button.GetComponent<RectTransform>();
-            rect.anchorMin = rect.anchorMax = new Vector2(1f, 0.5f);
-            rect.pivot = new Vector2(1f, 0.5f);
-            rect.anchoredPosition = new Vector2(
-                -12f - (multipliers.Length - 1 - i) * 62f,
-                0f);
-            rect.sizeDelta = new Vector2(56f, 38f);
-            if (Mathf.Approximately(currentMultiplier, capturedMultiplier) &&
-                button.targetGraphic is Image image)
-            {
-                image.color = successColor;
-            }
-        }
-    }
-
-    private void SetDebugFireRate(float multiplier)
-    {
-        GameObject player = FindRuntimePlayer();
-        BaseWeapon weapon = characterSpawner != null &&
-            characterSpawner.PrimaryWeapon != null
-                ? characterSpawner.PrimaryWeapon
-                : FindPrimaryWeapon(player);
-        if (weapon == null)
-        {
-            lastUpgradeResult = "Primary weapon not found.";
-            RefreshCurrentTab();
-            return;
-        }
-
-        weapon.SetFireRateMultiplier(multiplier);
-        lastUpgradeResult =
-            $"Runtime Fire Rate set to x{weapon.RuntimeFireRateMultiplier:0.##} " +
-            $"({weapon.RuntimeShotsPerSecond:0.##} attacks/sec).";
-        RefreshCurrentTab();
-    }
-
-    private void SetDebugAttackSize(float scale)
-    {
-        GameObject player = FindRuntimePlayer();
-        if (player == null)
-        {
-            lastUpgradeResult = "Player not found.";
-            RefreshCurrentTab();
-            return;
-        }
-
-        BaseWeapon weapon = characterSpawner != null &&
-            characterSpawner.PrimaryWeapon != null
-                ? characterSpawner.PrimaryWeapon
-                : FindPrimaryWeapon(player);
-        PlayerCombatModifiers modifiers = weapon != null
-            ? weapon.DebugResolvedCombatModifiers
-            : null;
-        modifiers ??= player.GetComponent<PlayerCombatModifiers>() ??
-            player.AddComponent<PlayerCombatModifiers>();
-        modifiers.SetRunAttackSizeMultiplier(scale);
-        lastUpgradeResult =
-            $"Runtime Attack Size set to x" +
-            $"{modifiers.RunAttackSizeMultiplier:0.##}.";
-        RefreshCurrentTab();
-    }
-
-    private UpgradeData FindProductionUpgrade(UpgradeType type)
-    {
-        IReadOnlyList<UpgradeData> pool = upgradeManager != null
-            ? upgradeManager.AllUpgrades
-            : null;
-        if (pool == null)
-            return null;
-
-        for (int i = 0; i < pool.Count; i++)
-        {
-            if (pool[i] != null && pool[i].upgradeType == type)
-                return pool[i];
-        }
-
-        return null;
-    }
-
-    private void SetDebugUpgradeLevel(UpgradeData upgrade, int targetLevel)
-    {
-        RunStateManager runState = RunStateManager.Instance;
-        UpgradeApplier applier = upgradeManager != null
-            ? upgradeManager.GetComponent<UpgradeApplier>()
-            : null;
-        bool applied = runState != null &&
-            runState.TrySetUpgradeLevelForDebug(
-                upgrade,
-                targetLevel,
-                applier);
-        lastUpgradeResult = applied
-            ? $"{GetUpgradeName(upgrade)} set to {ToRomanLevel(targetLevel)}."
-            : $"Could not set {GetUpgradeName(upgrade)} to " +
-                $"{ToRomanLevel(targetLevel)}.";
-        RefreshCurrentTab();
-    }
-
-    private void ClearDebugUpgrades()
-    {
-        RunStateManager runState = RunStateManager.Instance;
-        UpgradeApplier applier = upgradeManager != null
-            ? upgradeManager.GetComponent<UpgradeApplier>()
-            : null;
-        runState?.ClearUpgradesForDebug(applier);
-        lastUpgradeResult = "Production upgrades cleared.";
-        RefreshCurrentTab();
-    }
-
-    private void AddThreeLevelRow(
-        string label,
-        int currentLevel,
-        bool interactable,
-        System.Action<int> setter)
-    {
-        RectTransform row = CreateRect(label, contentRoot);
-        row.gameObject.AddComponent<Image>().color = rowColor;
-        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 54f;
-
-        TextMeshProUGUI labelText = CreateText(
-            "Name",
-            row,
-            label,
-            18f,
-            TextAlignmentOptions.MidlineLeft,
-            Color.white);
-        labelText.rectTransform.anchorMin = Vector2.zero;
-        labelText.rectTransform.anchorMax = new Vector2(0.48f, 1f);
-        labelText.rectTransform.offsetMin = new Vector2(16f, 0f);
-        labelText.rectTransform.offsetMax = Vector2.zero;
-
-        string[] levels = { "I", "II", "III" };
-        for (int i = 0; i < levels.Length; i++)
-        {
-            int capturedLevel = i + 1;
-            Button button = CreateButton(
-                row,
-                levels[i],
-                () => setter?.Invoke(capturedLevel),
-                72f,
-                interactable);
-            RectTransform rect = button.GetComponent<RectTransform>();
-            rect.anchorMin = rect.anchorMax = new Vector2(1f, 0.5f);
-            rect.pivot = new Vector2(1f, 0.5f);
-            rect.anchoredPosition = new Vector2(-12f - (2 - i) * 78f, 0f);
-            rect.sizeDelta = new Vector2(72f, 38f);
-            if (currentLevel == capturedLevel &&
-                button.targetGraphic is Image image)
-            {
-                image.color = successColor;
-            }
-        }
-    }
 
     private EnemyHealth ResolveExperienceLootSource()
     {
@@ -4883,681 +3479,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             FindObjectsByType<ExperiencePickup>(FindObjectsSortMode.None))
             pickup.Despawn();
         RefreshActiveXpCounter();
-    }
-
-    private void AddCombatLabSection()
-    {
-        ResolveCombatLab();
-
-        bool available = combatLab != null && combatLab.RefreshBinding();
-        CombatLabControlStyle style = combatLab != null
-            ? combatLab.ControlStyle
-            : CombatLabControlStyle.Orbit;
-        WeaponControlMode fireMode = combatLab != null
-            ? combatLab.FireMode
-            : WeaponControlSettings.CurrentMode;
-        WeaponData selectedWeapon = combatLab != null
-            ? combatLab.SelectedWeapon
-            : null;
-        WeaponData pistol = combatLab != null ? combatLab.Pistol : null;
-        WeaponData laser = combatLab != null ? combatLab.Laser : null;
-
-        AddSectionTitle(
-            "COMBAT LAB",
-            combatLab != null ? $"CURRENT: {combatLab.CurrentSummary}" :
-                "CURRENT: PLAYER/WEAPON NOT FOUND"
-        );
-
-        AddRow(
-            "CONTROL / ORBIT",
-            style == CombatLabControlStyle.Orbit ? "ACTIVE" : "AVAILABLE",
-            style == CombatLabControlStyle.Orbit ? successColor : mutedColor,
-            "ORBIT",
-            available,
-            () => SelectCombatLabControl(CombatLabControlStyle.Orbit)
-        );
-        AddRow(
-            "CONTROL / REMOTE",
-            style == CombatLabControlStyle.Remote ? "ACTIVE" : "AVAILABLE",
-            style == CombatLabControlStyle.Remote ? successColor : mutedColor,
-            "REMOTE",
-            available,
-            () => SelectCombatLabControl(CombatLabControlStyle.Remote)
-        );
-
-        AddRow(
-            "WEAPON / PISTOL",
-            selectedWeapon == pistol ? "ACTIVE" :
-                pistol != null ? "AVAILABLE" : "WEAPON DATA NOT FOUND",
-            selectedWeapon == pistol ? successColor :
-                pistol != null ? mutedColor : warningColor,
-            "PISTOL",
-            available && pistol != null && pistol.weaponPrefab != null,
-            () => SelectCombatLabWeapon(pistol)
-        );
-        AddRow(
-            "WEAPON / LASER",
-            selectedWeapon == laser ? "ACTIVE" :
-                laser != null ? "AVAILABLE" : "WEAPON DATA NOT FOUND",
-            selectedWeapon == laser ? successColor :
-                laser != null ? mutedColor : warningColor,
-            "LASER",
-            available && laser != null && laser.weaponPrefab != null,
-            () => SelectCombatLabWeapon(laser)
-        );
-
-        AddRow(
-            "FIRE / AUTO",
-            fireMode == WeaponControlMode.AutoAim ? "ACTIVE" : "AVAILABLE",
-            fireMode == WeaponControlMode.AutoAim ? successColor : mutedColor,
-            "AUTO",
-            combatLab != null,
-            () => SelectCombatLabFire(WeaponControlMode.AutoAim)
-        );
-        AddRow(
-            "FIRE / MANUAL",
-            fireMode == WeaponControlMode.Manual ? "ACTIVE" : "AVAILABLE",
-            fireMode == WeaponControlMode.Manual ? successColor : mutedColor,
-            "MANUAL",
-            combatLab != null,
-            () => SelectCombatLabFire(WeaponControlMode.Manual)
-        );
-        AddHint(
-            "REMOTE: RMB sets the primary weapon position inside radius 8. " +
-            "AUTO targets from the weapon. MANUAL aims at mouse and fires on LMB."
-        );
-    }
-
-    private void ResolveCombatLab()
-    {
-        combatLab ??= GetComponent<CombatLabDebugController>();
-        combatLab ??= gameObject.AddComponent<CombatLabDebugController>();
-        combatLab.Configure(
-            characterSpawner,
-            FindCombatLabWeapon("pistol"),
-            FindCombatLabWeapon("laser")
-        );
-    }
-
-    private WeaponData FindCombatLabWeapon(string namePart)
-    {
-        if (debugWeapons == null)
-            return null;
-
-        for (int i = 0; i < debugWeapons.Length; i++)
-        {
-            WeaponData data = debugWeapons[i];
-            if (data == null)
-                continue;
-
-            string displayName = string.IsNullOrWhiteSpace(data.weaponName)
-                ? data.name
-                : data.weaponName;
-
-            if (displayName.IndexOf(
-                    namePart,
-                    StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                return data;
-            }
-        }
-
-        return null;
-    }
-
-    private void SelectCombatLabControl(CombatLabControlStyle style)
-    {
-        ResolveCombatLab();
-        combatLab?.SelectControlStyle(style);
-        RefreshTab(DebugTab.WeaponsAndUpgrades);
-        RefreshTab(DebugTab.Telekinesis);
-    }
-
-    private void SelectCombatLabWeapon(WeaponData weaponData)
-    {
-        ResolveCombatLab();
-        combatLab?.SelectWeapon(weaponData);
-        telekinesisPrototype = GameObject.FindGameObjectWithTag("Player")
-            ?.GetComponent<TelekinesisDebugPrototype>();
-        RefreshTab(DebugTab.WeaponsAndUpgrades);
-        RefreshTab(DebugTab.Telekinesis);
-    }
-
-    private void SelectCombatLabFire(WeaponControlMode mode)
-    {
-        ResolveCombatLab();
-        combatLab?.SelectFireMode(mode);
-        RefreshTab(DebugTab.WeaponsAndUpgrades);
-    }
-
-    private void AddWeaponsSection()
-    {
-        AddSectionTitle("АКТИВНОЕ ОРУЖИЕ",
-            "Замена только на текущую сессию через CharacterSpawner");
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        BaseWeapon current = FindPrimaryWeapon(player);
-        AddRow("ТЕКУЩЕЕ ОРУЖИЕ",
-            current != null ? GetWeaponName(current.weaponData) : "НЕ НАЙДЕНО",
-            current != null ? successColor : warningColor,
-            null, false, null);
-
-        if (debugWeapons == null || debugWeapons.Length == 0)
-        {
-            AddHint("Недоступно: в debug menu не назначены WeaponData assets.");
-            return;
-        }
-
-        for (int i = 0; i < debugWeapons.Length; i++)
-        {
-            WeaponData data = debugWeapons[i];
-
-            if (data == null || WasWeaponAlreadyAdded(data, i))
-                continue;
-
-            bool active = current != null && current.weaponData == data;
-            bool available = player != null && characterSpawner != null &&
-                data.weaponPrefab != null;
-            WeaponData captured = data;
-            AddRow(GetWeaponName(data),
-                active ? "АКТИВНО" : data.weaponPrefab == null
-                    ? "PREFAB НЕ НАЗНАЧЕН"
-                    : available ? "ДОСТУПНО" : "PLAYER/SPAWNER НЕ НАЙДЕН",
-                active ? successColor : available ? mutedColor : warningColor,
-                "ВЫБРАТЬ", available, () => UseWeapon(captured));
-        }
-        AddHint("Что делает: заменяет primary weapon у текущего player. " +
-            "Сохранение и production loadout не изменяются.");
-    }
-
-    private void AddUpgradesSection()
-    {
-        AddSectionTitle("RUN UPGRADES",
-            "Production UpgradeManager apply; runtime rarity is not defined");
-        AddUpgradeFilterRow();
-
-        if (!string.IsNullOrWhiteSpace(lastUpgradeResult))
-            AddHint(lastUpgradeResult);
-
-        BuildUpgradeList();
-
-        RunStateManager runState = RunStateManager.Instance;
-        int playerLevel = ExperienceManager.Instance != null
-            ? ExperienceManager.Instance.CurrentLevel
-            : 1;
-        int usedSlots = runState != null
-            ? runState.ItemSlots.UsedSlotCount
-            : 0;
-        int eligibleProduction = upgradeManager != null
-            ? upgradeManager.GetEligibleProductionUpgradeCount(playerLevel)
-            : 0;
-        int stationLevel = BunkerStationProgressionService.GetStoredLevel(
-            BunkerStationId.Upgrades);
-        int stationAvailable = upgradeManager != null
-            ? upgradeManager.GetStationAvailableProductionUpgradeCount()
-            : 0;
-        int productionPoolSize = upgradeManager?.AllUpgrades?.Count ?? 0;
-        WeaponUpgradeCapability weaponCapabilities =
-            WeaponUpgradeCapabilityResolver.GetCurrentCapabilities();
-        AddHint(
-            $"Upgrade Station: Lv{stationLevel} | " +
-            $"Production Pool Available: {stationAvailable}/{productionPoolSize}"
-        );
-        int slotCapacity = runState != null
-            ? runState.ItemSlots.Capacity
-            : RunItemSlots.SlotCount;
-        AddHint(
-            $"Upgrade Slots: {usedSlots} / {slotCapacity} | " +
-            $"Eligible Current Choices: {eligibleProduction}"
-        );
-        AddHint($"Current Weapon Capabilities: {weaponCapabilities}");
-
-        GameObject player = FindRuntimePlayer();
-        PlayerCombatModifiers offensive = player != null
-            ? player.GetComponent<PlayerCombatModifiers>()
-            : null;
-        PlayerHealth health = player != null
-            ? player.GetComponent<PlayerHealth>()
-            : null;
-        CharacterMovement2D movement = player != null
-            ? player.GetComponent<CharacterMovement2D>()
-            : null;
-        BaseWeapon weapon = FindPrimaryWeapon(player);
-        ExperienceManager experience = ExperienceManager.Instance;
-
-        if (offensive != null)
-        {
-            AddHint(
-                $"Offensive: Damage x{offensive.RunDamageMultiplier:0.00} | " +
-                $"Crit +{offensive.RunCritChanceBonus:P0} | " +
-                $"Attack Size x{offensive.RunAttackSizeMultiplier:0.00}"
-            );
-        }
-
-        if (weapon != null)
-        {
-            int modifierCount = player != null
-                ? player.GetComponents<PlayerCombatModifiers>().Length
-                : 0;
-            string contextAge = weapon.DebugLastFireContextFrame >= 0
-                ? $"frame {weapon.DebugLastFireContextFrame}"
-                : "no shot yet";
-            AddHint(
-                $"ATTACK SIZE TRACE: runtime " +
-                $"x{weapon.DebugResolvedCombatModifiers?.RunAttackSizeMultiplier ?? 1f:0.00} | " +
-                $"modifier instances {modifierCount} | " +
-                $"last BuildFireContext runtime " +
-                $"x{weapon.DebugLastAttackSizeMultiplier:0.00} | " +
-                $"ShotVisualScale x{weapon.DebugLastContextShotVisualScale:0.00} | " +
-                contextAge
-            );
-
-            ProjectileFireBehaviour projectileFire =
-                weapon.GetComponent<ProjectileFireBehaviour>();
-            if (projectileFire != null)
-            {
-                AddHint(
-                    $"Pistol geometry: context x{projectileFire.DebugLastContextScale:0.00} | " +
-                    $"prefab {projectileFire.DebugLastPrefabScale} | " +
-                    $"spawned {projectileFire.DebugLastFinalScale}"
-                );
-            }
-
-            BeamFireBehaviour beamFire = weapon.GetComponent<BeamFireBehaviour>();
-            if (beamFire != null)
-            {
-                LaserBeamRenderer renderer = beamFire.DebugBeamRenderer;
-                AddHint(
-                    $"Laser geometry: context x{beamFire.DebugLastContextScale:0.00} | " +
-                    $"hit half-width {beamFire.DebugLastHitHalfWidth:0.###} | " +
-                    $"visual core/glow " +
-                    $"{(renderer != null ? renderer.DebugLastCoreWidth : 0f):0.###}/" +
-                    $"{(renderer != null ? renderer.DebugLastGlowWidth : 0f):0.###}"
-                );
-            }
-        }
-
-        AddHint(
-            $"Player: HP Bonus +{(health != null ? health.RunUpgradeMaxHealthBonus : 0f):0.#} | " +
-            $"Move x{(movement != null ? movement.RunUpgradeMoveSpeedMultiplier : 1f):0.00} | " +
-            $"XP x{(experience != null ? experience.RunUpgradeXpGainMultiplier : 1f):0.00} | " +
-            $"Regen {(health != null ? health.RunUpgradeRegenerationPerSecond : 0f):0.#}/s"
-        );
-        AddHint(
-            $"Weapon: Multishot +{(weapon != null ? weapon.RuntimeProjectileCountBonus : 0)} | " +
-            $"Attack Count {(weapon != null ? weapon.RuntimeProjectileCount : 1)} | " +
-            $"Fire Rate stat x{(weapon != null ? weapon.RuntimeFireRateMultiplier : 1f):0.00} | " +
-            $"effective x{(weapon != null ? weapon.RuntimeEffectiveFireRateMultiplier : 1f):0.00} | " +
-            $"{(weapon != null ? weapon.RuntimeShotsPerSecond : 0f):0.##}/sec"
-        );
-        AddAnomalySlotSection();
-
-        if (visibleUpgrades.Count == 0)
-        {
-            AddHint("No UpgradeData assets are available for this filter.");
-            return;
-        }
-
-        for (int i = 0; i < visibleUpgrades.Count; i++)
-        {
-            UpgradeData data = visibleUpgrades[i];
-            bool inPool = IsUpgradeInCurrentPool(data);
-
-            if (!MatchesUpgradeFilter(data, inPool))
-                continue;
-
-            int stack = runState != null
-                ? runState.ItemSlots.GetLevel(data)
-                : 0;
-            string displayName = string.IsNullOrWhiteSpace(data.upgradeName)
-                ? data.name
-                : data.upgradeName;
-            string status = $"{data.category} - {data.upgradeType} - x{stack}";
-            bool isUnlocked = UnlockProgressService.IsUnlockedNow(data.unlockData);
-            bool hasEligibleLevel = playerLevel >= data.minPlayerLevel;
-            bool hasEligibleSlot = runState == null ||
-                runState.ItemSlots.CanAccept(data);
-            bool stationLocked = !isUnlocked &&
-                data.unlockData != null &&
-                data.unlockData.condition != null &&
-                data.unlockData.condition.type == UnlockConditionType.StationLevelRequirement;
-            bool weaponCompatible = UpgradeEligibilityRules.IsWeaponCompatible(
-                data,
-                weaponCapabilities);
-            bool exclusiveConflict = UpgradeEligibilityRules.HasExclusiveConflict(
-                data,
-                runState != null ? runState.ItemSlots : null);
-
-            if (!inPool)
-                status += " - OUT OF CURRENT POOL";
-            else if (stationLocked)
-                status += $" - REQUIRES {data.unlockData.condition.stationId.ToString().ToUpperInvariant()} " +
-                    $"STATION LV{Mathf.Max(1, data.unlockData.condition.requiredAmount)}";
-            else if (!isUnlocked)
-                status += " - LOCKED";
-            else if (!hasEligibleLevel)
-                status += $" - REQUIRES PLAYER LV{data.minPlayerLevel}";
-            else if (!weaponCompatible)
-                status += " - INCOMPATIBLE WITH CURRENT WEAPON";
-            else if (exclusiveConflict)
-                status += $" - BLOCKED BY EXCLUSIVE GROUP {data.exclusiveGroup}";
-            else if (stack >= RunItemSlots.MaxItemLevel)
-                status += " - MAXED";
-            else if (!hasEligibleSlot)
-                status += " - NOT OWNED / NO FREE SLOT";
-            else
-                status += " - ELIGIBLE";
-
-            bool canApply = upgradeManager != null &&
-                player != null &&
-                isUnlocked &&
-                hasEligibleLevel &&
-                weaponCompatible &&
-                !exclusiveConflict &&
-                hasEligibleSlot;
-            UpgradeData captured = data;
-            AddRow(displayName, status,
-                stack > 0 ? successColor :
-                    inPool && isUnlocked && hasEligibleLevel &&
-                    weaponCompatible && !exclusiveConflict && hasEligibleSlot
-                        ? mutedColor
-                        : warningColor,
-                stack >= RunItemSlots.MaxItemLevel ? "MAX" : "APPLY",
-                canApply, () => ApplyUpgrade(captured));
-        }
-
-        AddHint(
-            "GRAY/BLUE/PURPLE/LEGENDARY filters are intentionally absent: " +
-            "UpgradeData has no rarity enum or serialized rarity field."
-        );
-        AddHint(
-            "RESET RUN UPGRADES is unavailable: the production systems do not " +
-            "provide a safe combat-state rebuild/reset lifecycle."
-        );
-    }
-
-    private void AddUpgradeFilterRow()
-    {
-        RectTransform row = CreateRect("Upgrade Filters", contentRoot);
-        row.gameObject.AddComponent<Image>().color = rowColor;
-        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 50f;
-        string[] labels = { "ALL", "NUMERIC", "BEHAVIOR", "OUT OF POOL" };
-
-        for (int i = 0; i < labels.Length; i++)
-        {
-            int captured = i;
-            RectTransform slot = CreateRect(labels[i] + " Slot", row);
-            slot.anchorMin = new Vector2((float)i / labels.Length, 0f);
-            slot.anchorMax = new Vector2((float)(i + 1) / labels.Length, 1f);
-            slot.offsetMin = new Vector2(5f, 6f);
-            slot.offsetMax = new Vector2(-5f, -6f);
-            Button button = CreateButton(slot, labels[i], () =>
-            {
-                upgradeFilter = (UpgradeFilter)captured;
-                RefreshTab(DebugTab.WeaponsAndUpgrades);
-            }, 100f);
-            Stretch(button.GetComponent<RectTransform>());
-            Image image = button.targetGraphic as Image;
-
-            if (image != null && captured == (int)upgradeFilter)
-                image.color = new Color(0.2f, 0.73f, 0.88f, 1f);
-        }
-    }
-
-    private void BuildUpgradeList()
-    {
-        visibleUpgrades.Clear();
-        IReadOnlyList<UpgradeData> pool = upgradeManager != null
-            ? upgradeManager.AllUpgrades
-            : null;
-
-        AddUniqueUpgrades(pool);
-    }
-
-    private void AddUniqueUpgrades(IReadOnlyList<UpgradeData> upgrades)
-    {
-        if (upgrades == null)
-            return;
-
-        for (int i = 0; i < upgrades.Count; i++)
-        {
-            UpgradeData data = upgrades[i];
-
-            if (data != null && !visibleUpgrades.Contains(data))
-                visibleUpgrades.Add(data);
-        }
-    }
-
-    private bool MatchesUpgradeFilter(UpgradeData data, bool inPool)
-    {
-        return upgradeFilter switch
-        {
-            UpgradeFilter.Numeric => data.category == UpgradeCategory.Numeric,
-            UpgradeFilter.Behavior => data.category == UpgradeCategory.Behavior,
-            UpgradeFilter.OutOfPool => !inPool,
-            _ => true
-        };
-    }
-
-    private bool IsUpgradeInCurrentPool(UpgradeData target)
-    {
-        IReadOnlyList<UpgradeData> pool = upgradeManager != null
-            ? upgradeManager.AllUpgrades
-            : null;
-
-        if (pool == null)
-            return false;
-
-        for (int i = 0; i < pool.Count; i++)
-        {
-            if (pool[i] == target)
-                return true;
-        }
-
-        return false;
-    }
-
-    private void ApplyUpgrade(UpgradeData data)
-    {
-        if (upgradeManager == null || data == null)
-            return;
-
-        bool applied = upgradeManager.TryApplyDebugUpgrade(
-            data,
-            out ItemGrantResult result
-        );
-        lastUpgradeResult = applied
-            ? $"Applied {GetUpgradeName(data)} through UpgradeManager ({result})."
-            : $"Could not apply {GetUpgradeName(data)} ({result}).";
-        RefreshCurrentTab();
-    }
-
-    private void UseWeapon(WeaponData data)
-    {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-
-        if (player == null || characterSpawner == null || data == null)
-            return;
-
-        if (!characterSpawner.TryReplaceDebugPrimaryWeapon(
-            player,
-            data,
-            out _
-        ))
-        {
-            return;
-        }
-
-        RunStateManager.Instance?.SetSelectedWeaponForDebug(data);
-
-        telekinesisPrototype = player.GetComponent<TelekinesisDebugPrototype>();
-        RefreshTab(DebugTab.WeaponsAndUpgrades);
-        RefreshTab(DebugTab.Telekinesis);
-    }
-
-    private void AddTelekinesisSection()
-    {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        PlayerHealth health = player != null
-            ? player.GetComponent<PlayerHealth>()
-            : null;
-        BaseWeapon primary = FindPrimaryWeapon(player);
-        bool available = player != null && primary != null &&
-            (health == null || !health.IsDead);
-
-        if (telekinesisPrototype == null && player != null)
-            telekinesisPrototype = player.GetComponent<TelekinesisDebugPrototype>();
-
-        TelekinesisDebugMode currentMode = telekinesisPrototype != null
-            ? telekinesisPrototype.CurrentMode
-            : TelekinesisDebugMode.Base;
-
-        AddSectionTitle("SECONDARY DEBUG WEAPON",
-            "Used by DUAL CONTROL / DUAL SWITCH / command modes");
-        AddRow("Same as primary",
-            telekinesisPrototype == null ||
-                telekinesisPrototype.SecondaryDebugWeaponData == null
-                    ? "SELECTED" : "AVAILABLE",
-            telekinesisPrototype == null ||
-                telekinesisPrototype.SecondaryDebugWeaponData == null
-                    ? successColor : mutedColor,
-            "USE", available, () => SelectSecondaryWeapon(null));
-
-        if (debugWeapons != null)
-        {
-            for (int i = 0; i < debugWeapons.Length; i++)
-            {
-                WeaponData data = debugWeapons[i];
-
-                if (data == null || WasWeaponAlreadyAdded(data, i))
-                    continue;
-
-                bool selected = telekinesisPrototype != null &&
-                    telekinesisPrototype.SecondaryDebugWeaponData == data;
-                WeaponData captured = data;
-                AddRow(GetWeaponName(data), selected ? "SELECTED" : "AVAILABLE",
-                    selected ? successColor : mutedColor,
-                    "USE", available && data.weaponPrefab != null,
-                    () => SelectSecondaryWeapon(captured));
-            }
-        }
-
-        AddSectionTitle("TELEKINESIS DEBUG PROTOTYPE",
-            $"Current: {GetTelekinesisModeName(currentMode)}");
-        AddTelekinesisModeRow("Current gameplay control", "BASE",
-            TelekinesisDebugMode.Base, currentMode, available);
-        AddTelekinesisModeRow("Mouse position / auto target", "MANUAL POSITION",
-            TelekinesisDebugMode.ManualPosition, currentMode, available);
-        AddTelekinesisModeRow("Mouse aim and position / LMB fire", "MANUAL FIRE",
-            TelekinesisDebugMode.ManualFire, currentMode, available);
-        AddTelekinesisModeRow("Manual primary + auto secondary", "DUAL CONTROL",
-            TelekinesisDebugMode.DualControl, currentMode, available);
-        AddTelekinesisModeRow("TAB switches the manual weapon", "DUAL SWITCH",
-            TelekinesisDebugMode.DualSwitch, currentMode, available);
-        AddTelekinesisModeRow("RMB moves two auto weapons", "COMMAND POINT",
-            TelekinesisDebugMode.CommandPoint, currentMode, available);
-        AddTelekinesisModeRow("LMB selects priority enemy", "FOCUS TARGET",
-            TelekinesisDebugMode.FocusTarget, currentMode, available);
-        AddTelekinesisModeRow("RMB throws the auto weapon", "WEAPON THROW",
-            TelekinesisDebugMode.WeaponThrow, currentMode, available);
-        AddTelekinesisModeRow("RMB position / LMB priority", "FULL AUTO COMMAND",
-            TelekinesisDebugMode.FullAutoCommand, currentMode, available);
-        AddRow("Return to current gameplay",
-            available ? "READY" : "PLAYER/WEAPON NOT FOUND",
-            available ? mutedColor : warningColor,
-            "RESET", available, ResetTelekinesisPrototype);
-    }
-
-    private void SelectSecondaryWeapon(WeaponData data)
-    {
-        if (!ResolveTelekinesisPrototype())
-            return;
-
-        telekinesisPrototype.SetSecondaryDebugWeapon(data);
-        RefreshCurrentTab();
-    }
-
-    private void AddTelekinesisModeRow(
-        string description,
-        string buttonLabel,
-        TelekinesisDebugMode mode,
-        TelekinesisDebugMode currentMode,
-        bool available)
-    {
-        bool active = currentMode == mode;
-        AddRow(description,
-            active ? "ACTIVE" : available ? "AVAILABLE" : "UNAVAILABLE",
-            active ? successColor : available ? mutedColor : warningColor,
-            buttonLabel, available, () => ApplyTelekinesisMode(mode));
-    }
-
-    private void ApplyTelekinesisMode(TelekinesisDebugMode mode)
-    {
-        if (!ResolveTelekinesisPrototype())
-            return;
-
-        telekinesisPrototype.ApplyMode(mode);
-        RefreshCurrentTab();
-    }
-
-    private void ResetTelekinesisPrototype()
-    {
-        telekinesisPrototype?.ResetPrototype();
-        RefreshCurrentTab();
-    }
-
-    private bool ResolveTelekinesisPrototype()
-    {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-
-        if (player == null)
-            return false;
-
-        if (telekinesisPrototype == null ||
-            telekinesisPrototype.gameObject != player)
-        {
-            telekinesisPrototype = player.GetComponent<TelekinesisDebugPrototype>();
-            telekinesisPrototype ??= player.AddComponent<TelekinesisDebugPrototype>();
-        }
-
-        telekinesisPrototype.Configure(characterSpawner);
-        return telekinesisPrototype.IsAvailable;
-    }
-
-    private static BaseWeapon FindPrimaryWeapon(GameObject player)
-    {
-        if (player == null)
-            return null;
-
-        BaseWeapon[] weapons = player.GetComponentsInChildren<BaseWeapon>(true);
-
-        for (int i = 0; i < weapons.Length; i++)
-        {
-            BaseWeapon weapon = weapons[i];
-
-            if (weapon != null && weapon.gameObject.activeInHierarchy &&
-                !weapon.IsTelekinesisDebugSecondary)
-                return weapon;
-        }
-
-        // Replacement destroys the previous weapon at the end of the frame.
-        // Only fall back to inactive objects if no active primary exists.
-        for (int i = 0; i < weapons.Length; i++)
-        {
-            BaseWeapon weapon = weapons[i];
-
-            if (weapon != null && !weapon.IsTelekinesisDebugSecondary)
-                return weapon;
-        }
-
-        return null;
-    }
-
-    private GameObject FindRuntimePlayer()
-    {
-        if (characterSpawner != null && characterSpawner.SpawnedPlayer != null)
-            return characterSpawner.SpawnedPlayer;
-
-        return GameObject.FindGameObjectWithTag("Player");
     }
 
     private GameObject ResolveEnemyPrefab(
@@ -5691,125 +3612,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         }
     }
 
-    private void AddEventRow(string displayName, WorldEvent prefab)
-    {
-        if (prefab != null && !addedEventPrefabs.Contains(prefab))
-            addedEventPrefabs.Add(prefab);
-
-        bool connected = prefab != null && worldEventSpawner != null &&
-            ContainsEventPrefab(worldEventSpawner.EventPrefabs, prefab);
-        bool enabledPrefab = connected &&
-            worldEventSpawner.IsEventPrefabEnabled(prefab);
-        bool active = enabledPrefab && worldEventSpawner.CurrentEvent != null &&
-            worldEventSpawner.CurrentEvent.GetType() == prefab.GetType();
-        string status = prefab == null ? "MISSING" :
-            worldEventSpawner == null ? "SPAWNER NOT FOUND" :
-            !connected ? "PREFAB NOT CONNECTED" :
-            !enabledPrefab ? "CONNECTED BUT DISABLED" :
-            active ? "ACTIVE" : "AVAILABLE";
-        AddRow(displayName, status,
-            active ? successColor : enabledPrefab ? mutedColor : warningColor,
-            "SPAWN", enabledPrefab, () => SpawnWorldEvent(prefab));
-    }
-
-    private void SpawnWorldEvent(WorldEvent prefab)
-    {
-        if (worldEventSpawner == null || prefab == null)
-            return;
-
-        worldEventSpawner.SpawnDebugEvent(prefab);
-        RefreshCurrentTab();
-    }
-
-    private void ClearWorldEvent()
-    {
-        worldEventSpawner?.ClearDebugEvent();
-        RefreshCurrentTab();
-    }
-
-    private void ApplyWorldRule(WorldRuleData data)
-    {
-        if (worldRuleController == null || data == null)
-            return;
-
-        worldRuleController.Apply(data);
-        RefreshCurrentTab();
-    }
-
-    private void ClearWorldRule()
-    {
-        worldRuleController?.Clear();
-        RefreshCurrentTab();
-    }
-
-    private void ApplyLocalAnomaly(LocalAnomalyData data)
-    {
-        if (anomalyController == null || data == null || data.ZonePrefab == null)
-            return;
-
-        anomalyController.Apply(data);
-        RefreshCurrentTab();
-    }
-
-    private void ClearLocalAnomalies()
-    {
-        anomalyController?.Clear();
-        RefreshCurrentTab();
-    }
-
-    private LocalAnomalyData FindLocalAnomaly(LocalAnomalyType type)
-    {
-        if (localAnomalies == null)
-            return null;
-
-        for (int i = 0; i < localAnomalies.Length; i++)
-        {
-            if (localAnomalies[i] != null &&
-                localAnomalies[i].AnomalyType == type)
-            {
-                return localAnomalies[i];
-            }
-        }
-
-        return null;
-    }
-
-    private bool WasAnomalyAlreadyAdded(LocalAnomalyData data, int beforeIndex)
-    {
-        for (int i = 0; i < beforeIndex; i++)
-        {
-            if (localAnomalies[i] == data)
-                return true;
-        }
-
-        return false;
-    }
-
-    private bool WasWeaponAlreadyAdded(WeaponData data, int beforeIndex)
-    {
-        for (int i = 0; i < beforeIndex; i++)
-        {
-            if (debugWeapons[i] == data)
-                return true;
-        }
-
-        return false;
-    }
-
-    private static string GetTelekinesisModeName(TelekinesisDebugMode mode) =>
-        mode switch
-        {
-            TelekinesisDebugMode.Remote => "REMOTE",
-            TelekinesisDebugMode.ManualPosition => "MANUAL POSITION",
-            TelekinesisDebugMode.ManualFire => "MANUAL FIRE",
-            TelekinesisDebugMode.DualControl => "DUAL CONTROL",
-            TelekinesisDebugMode.DualSwitch => "DUAL SWITCH",
-            TelekinesisDebugMode.CommandPoint => "COMMAND POINT",
-            TelekinesisDebugMode.FocusTarget => "FOCUS TARGET",
-            TelekinesisDebugMode.WeaponThrow => "WEAPON THROW",
-            TelekinesisDebugMode.FullAutoCommand => "FULL AUTO COMMAND",
-            _ => "BASE"
-        };
 
     private static string GetAnomalyTypeName(LocalAnomalyType type) =>
         type == LocalAnomalyType.ExplosiveZone ? "Explosive" : type.ToString();
@@ -5821,31 +3623,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private static string GetUpgradeName(UpgradeData data) =>
         data == null ? "None" :
             string.IsNullOrWhiteSpace(data.upgradeName) ? data.name : data.upgradeName;
-
-    private static string GetEventDisplayName(WorldEvent worldEvent)
-    {
-        if (worldEvent == null)
-            return "None";
-        return string.IsNullOrWhiteSpace(worldEvent.EventDisplayName)
-            ? worldEvent.name
-            : worldEvent.EventDisplayName;
-    }
-
-    private static bool ContainsEventPrefab(
-        IReadOnlyList<WorldEvent> prefabs,
-        WorldEvent target)
-    {
-        if (prefabs == null)
-            return false;
-
-        for (int i = 0; i < prefabs.Count; i++)
-        {
-            if (prefabs[i] == target)
-                return true;
-        }
-
-        return false;
-    }
 
     private static string GetWorldRuleName(WorldRuleType type, WorldRuleData data) =>
         data != null && !string.IsNullOrWhiteSpace(data.DisplayName)
@@ -5886,38 +3663,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             TextAlignmentOptions.MidlineLeft,
             Color.white
         );
-        text.raycastTarget = false;
-        Stretch(text.rectTransform, 9f, 9f, 2f, 2f);
-        return expanded;
-    }
-
-    private bool AddFeelSectionHeader(
-        FeelSection section,
-        string title,
-        string subtitle)
-    {
-        int index = (int)section;
-        bool expanded = feelSectionExpanded[index];
-        RectTransform header = CreateRect(title, contentRoot);
-        Image image = header.gameObject.AddComponent<Image>();
-        image.color = new Color(
-            accentColor.r, accentColor.g, accentColor.b,
-            expanded ? 0.28f : 0.16f);
-        header.gameObject.AddComponent<LayoutElement>().preferredHeight = 34f;
-
-        Button button = header.gameObject.AddComponent<Button>();
-        button.targetGraphic = image;
-        button.navigation = new Navigation { mode = Navigation.Mode.None };
-        button.onClick.AddListener(() =>
-        {
-            feelSectionExpanded[index] = !feelSectionExpanded[index];
-            RefreshCurrentTab();
-        });
-
-        TextMeshProUGUI text = CreateText(
-            "Label", header,
-            $"<b>{(expanded ? "▼" : "▶")} {title}</b>",
-            13f, TextAlignmentOptions.MidlineLeft, Color.white);
         text.raycastTarget = false;
         Stretch(text.rectTransform, 9f, 9f, 2f, 2f);
         return expanded;
@@ -6075,7 +3820,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         AddSectionTitle("FEEL TEST DUMMY", "Debug-owned production enemy");
         // Keep SPAWN actionable so the controller can perform a late scene
         // lookup and report the precise missing dependency in its status/log.
-        bool available = controller != null;
+        bool available = controller != null && characterSpawner != null &&
+            characterSpawner.SpawnedPlayer != null && controller.CanSpawn(controller.Archetype);
         AddRow("DUMMY", controller != null ? controller.Status : "UNAVAILABLE",
             controller != null && controller.HasDummy ? successColor : mutedColor,
             "SPAWN", available, () =>
@@ -6147,149 +3893,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     // Retained as a compact reference for the previous production-field view.
     // Advanced Combat Feel Lab intentionally uses neutral runtime deltas instead.
-    private void AddLegacyInteractiveFeelLab(ProductionFeelTuningController tuning)
-    {
-        AddVisualStatusLine("● LIVE   Existing production parameters");
-        AddFeelPresetStrip(tuning);
-
-        if (AddFeelSectionHeader(
-                FeelSection.PhysicalFeedback,
-                "PHYSICAL FEEDBACK",
-                "Experimental presentation-only combat response"))
-        {
-            AddToggleRow("Hit Stop", tuning.HitStopEnabled, true,
-                tuning.ToggleHitStop);
-            AddSliderRow("Normal Hit Stop Duration",
-                tuning.NormalHitStopDuration, 0f, 0.1f,
-                tuning.SetNormalHitStopDuration, "0.000");
-            AddSliderRow("Crit Hit Stop Duration",
-                tuning.CritHitStopDuration, 0f, 0.15f,
-                tuning.SetCritHitStopDuration, "0.000");
-            AddSliderRow("Kill Hit Stop Duration",
-                tuning.KillHitStopDuration, 0f, 0.15f,
-                tuning.SetKillHitStopDuration, "0.000");
-
-            AddToggleRow("Enemy Hit Punch", tuning.EnemyHitPunchEnabled,
-                true, tuning.ToggleEnemyHitPunch);
-            AddSliderRow("Punch Strength", tuning.EnemyPunchStrength,
-                0f, 0.35f, tuning.SetEnemyPunchStrength, "0.000");
-            AddSliderRow("Punch Duration", tuning.EnemyPunchDuration,
-                0.02f, 0.2f, tuning.SetEnemyPunchDuration, "0.000");
-
-            AddToggleRow("Enemy Visual Kick", tuning.EnemyVisualKickEnabled,
-                true, tuning.ToggleEnemyVisualKick);
-            AddSliderRow("Kick Distance", tuning.EnemyKickDistance,
-                0f, 1f, tuning.SetEnemyKickDistance, "0.000");
-            AddSliderRow("Kick Return Duration",
-                tuning.EnemyKickReturnDuration, 0.02f, 0.2f,
-                tuning.SetEnemyKickReturnDuration, "0.000");
-
-            AddToggleRow("Weapon Visual Recoil",
-                tuning.WeaponVisualRecoilEnabled, true,
-                tuning.ToggleWeaponVisualRecoil);
-            AddSliderRow("Recoil Distance", tuning.WeaponRecoilDistance,
-                0f, 1f, tuning.SetWeaponRecoilDistance, "0.000");
-            AddSliderRow("Recoil Return Duration",
-                tuning.WeaponRecoilReturnDuration, 0.02f, 0.2f,
-                tuning.SetWeaponRecoilReturnDuration, "0.000");
-
-            AddToggleRow("Death Punch", tuning.DeathPunchEnabled, true,
-                tuning.ToggleDeathPunch);
-            AddSliderRow("Death Punch Strength", tuning.DeathPunchStrength,
-                0f, 0.5f, tuning.SetDeathPunchStrength, "0.000");
-            AddSliderRow("Death Punch Duration", tuning.DeathPunchDuration,
-                0.02f, 0.2f, tuning.SetDeathPunchDuration, "0.000");
-            AddVisualSectionReset(
-                "PHYSICAL FEEDBACK", tuning.ResetPhysicalFeedback);
-        }
-
-        if (AddFeelSectionHeader(
-                FeelSection.Weapon, "WEAPON", "Production weapon feedback"))
-        {
-            if (tuning.HasWeaponFx)
-            {
-                AddSliderRow("Weapon Camera Kick", tuning.FireShakeMagnitude,
-                    0f, 1f, tuning.SetFireShakeMagnitude, "0.000");
-                AddSliderRow("Fire Shake Duration", tuning.FireShakeDuration,
-                    0f, 1f, tuning.SetFireShakeDuration, "0.000");
-                AddVisualSectionReset("WEAPON", tuning.ResetWeapon);
-            }
-            else
-            {
-                AddHint("No active production WeaponFxPlayer was found.");
-            }
-        }
-
-        if (AddFeelSectionHeader(
-                FeelSection.Hit, "HIT", "EnemyWhiteFlash production source"))
-        {
-            if (tuning.HasHitFlash)
-            {
-                AddSliderRow("Hit Flash Duration", tuning.HitFlashDuration,
-                    0f, 1f, tuning.SetHitFlashDuration, "0.000");
-                AddVisualSectionReset("HIT", tuning.ResetHit);
-            }
-            else
-            {
-                AddHint("No active production EnemyWhiteFlash was found.");
-            }
-        }
-
-        if (AddFeelSectionHeader(
-                FeelSection.Death, "DEATH", "Production enemy death audit"))
-        {
-            AddHint(
-                "Death Punch is configured in PHYSICAL FEEDBACK. Gameplay " +
-                "death remains immediate; only the detached visual survives.");
-        }
-
-        if (AddFeelSectionHeader(
-                FeelSection.Camera, "CAMERA", "Production follow and impulses"))
-        {
-            if (tuning.HasCameraFollow)
-            {
-                AddSliderRow("Follow Smoothness", tuning.CameraDamping,
-                    0f, 1f, tuning.SetCameraDamping, "0.000");
-            }
-            if (tuning.HasWeaponFx)
-            {
-                AddSliderRow("Hit Impulse Strength", tuning.HitShakeMagnitude,
-                    0f, 1.5f, tuning.SetHitShakeMagnitude, "0.000");
-                AddSliderRow("Hit Impulse Duration", tuning.HitShakeDuration,
-                    0f, 1f, tuning.SetHitShakeDuration, "0.000");
-                AddSliderRow("Crit Impulse Strength", tuning.CritShakeMagnitude,
-                    0f, 2f, tuning.SetCritShakeMagnitude, "0.000");
-                AddSliderRow("Crit Impulse Duration", tuning.CritShakeDuration,
-                    0f, 1.5f, tuning.SetCritShakeDuration, "0.000");
-            }
-            if (!tuning.HasCameraFollow && !tuning.HasWeaponFx)
-                AddHint("No production camera feel parameters were found.");
-            else
-                AddVisualSectionReset("CAMERA", tuning.ResetCamera);
-            AddHint("Camera Zoom remains in VISUAL (same source of truth).");
-        }
-
-        if (AddFeelSectionHeader(
-                FeelSection.Movement, "MOVEMENT", "CharacterMovement2D fields"))
-        {
-            if (tuning.HasMovement)
-            {
-                AddSliderRow("Move Speed", tuning.MoveSpeed,
-                    0f, 20f, tuning.SetMoveSpeed, "0.00");
-                AddSliderRow("Acceleration", tuning.Acceleration,
-                    0f, 100f, tuning.SetAcceleration, "0.0");
-                AddSliderRow("Deceleration", tuning.Deceleration,
-                    0f, 100f, tuning.SetDeceleration, "0.0");
-                AddVisualSectionReset("MOVEMENT", tuning.ResetMovement);
-            }
-            else
-            {
-                AddHint("No active production CharacterMovement2D was found.");
-            }
-            AddHint("MISSING: independent direction-change responsiveness.");
-        }
-    }
-
     private void AddAdvancedCombatFeelLab(ProductionFeelTuningController tuning)
     {
         CombatFeelLabSettings lab = tuning.Lab;
@@ -6589,52 +4192,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             $"↺ click: DEFAULT   Shift+↺: MAX EFFECT ({m.FormatValue(m.DiagnosticExtreme)})";
     }
 
-    private void AddFeelPresetStrip(ProductionFeelTuningController tuning)
-    {
-        RectTransform row = CreateRect("FEEL Presets", contentRoot);
-        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 30f;
-        row.gameObject.AddComponent<Image>().color =
-            new Color(rowColor.r, rowColor.g, rowColor.b, 0.72f);
-
-        ProductionFeelTuningController.Preset[] presets =
-        {
-            ProductionFeelTuningController.Preset.Production,
-            ProductionFeelTuningController.Preset.Soft,
-            ProductionFeelTuningController.Preset.Strong
-        };
-
-        for (int i = 0; i < presets.Length; i++)
-        {
-            int captured = i;
-            Button button = CreateButton(
-                row, presets[i].ToString().ToUpperInvariant(), () =>
-                {
-                    tuning.ApplyPreset(presets[captured]);
-                    RefreshCurrentTab();
-                }, 100f);
-            RectTransform rect = button.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2((float)i / presets.Length, 0f);
-            rect.anchorMax = new Vector2((float)(i + 1) / presets.Length, 1f);
-            rect.offsetMin = new Vector2(2f, 3f);
-            rect.offsetMax = new Vector2(-2f, -3f);
-            if (tuning.CurrentPreset == presets[i] &&
-                button.targetGraphic is Image image)
-                image.color = successColor;
-            TextMeshProUGUI text = button.GetComponentInChildren<TextMeshProUGUI>();
-            if (text != null) text.fontSize = 10f;
-        }
-    }
-
-    private void AddVisualStatusLine(string message)
-    {
-        RectTransform row = CreateRect("Visual Status", contentRoot);
-        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 26f;
-        TextMeshProUGUI text = CreateText(
-            "Label", row, message, 11f,
-            TextAlignmentOptions.MidlineLeft, successColor);
-        Stretch(text.rectTransform, 7f, 7f);
-    }
-
     private void LoadVisualProductionValues()
     {
         if (!VisualTuningPresetStorage.TryLoad(
@@ -6757,10 +4314,9 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     {
         VisualSection[] sections =
         {
-            VisualSection.Player, VisualSection.Weapon,
-            VisualSection.Enemies, VisualSection.Anomalies
+            VisualSection.Player, VisualSection.Enemies, VisualSection.Anomalies
         };
-        string[] labels = { "PLAYER", "WEAPON", "ENEMY", "ANOMALY" };
+        string[] labels = { "PLAYER", "ENEMY", "ANOMALY" };
         RectTransform row = CreateRect("Visual Object Focus", contentRoot);
         row.gameObject.AddComponent<LayoutElement>().preferredHeight = 30f;
         for (int i = 0; i < sections.Length; i++)
@@ -6774,8 +4330,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
                 RefreshCurrentTab();
             }, 80f);
             RectTransform rect = button.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(index / 4f, 0f);
-            rect.anchorMax = new Vector2((index + 1) / 4f, 1f);
+            rect.anchorMin = new Vector2((float)index / sections.Length, 0f);
+            rect.anchorMax = new Vector2((float)(index + 1) / sections.Length, 1f);
             rect.offsetMin = new Vector2(2f, 3f);
             rect.offsetMax = new Vector2(-2f, -3f);
         }
@@ -6977,6 +4533,9 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private void SaveVisualLabValues()
     {
+        // Bunker has no loaded production tuning snapshot to persist.
+        if (characterSpawner == null || productionVisualTuning == null || !visualProductionLoaded)
+            return;
         VisualTuningSnapshot snapshot = BuildVisualSnapshot();
         bool saved = VisualTuningPresetStorage.Save(
             snapshot, GetVisualLabValuesText(), out string message);
@@ -7399,104 +4958,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         }
     }
 
-    private void AddStepperRow(
-        string label,
-        string value,
-        bool canDecrease,
-        bool canIncrease,
-        UnityEngine.Events.UnityAction decrease,
-        UnityEngine.Events.UnityAction increase)
-    {
-        RectTransform row = CreateRect(label, contentRoot);
-        row.gameObject.AddComponent<Image>().color = rowColor;
-        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 54f;
-
-        TextMeshProUGUI labelText = CreateText(
-            "Name", row, label, 19f,
-            TextAlignmentOptions.MidlineLeft, Color.white
-        );
-        labelText.rectTransform.anchorMin = Vector2.zero;
-        labelText.rectTransform.anchorMax = new Vector2(0.48f, 1f);
-        labelText.rectTransform.offsetMin = new Vector2(16f, 0f);
-        labelText.rectTransform.offsetMax = Vector2.zero;
-
-        TextMeshProUGUI valueText = CreateText(
-            "Value", row, value, 17f,
-            TextAlignmentOptions.MidlineRight, successColor
-        );
-        valueText.rectTransform.anchorMin = new Vector2(0.45f, 0f);
-        valueText.rectTransform.anchorMax = Vector2.one;
-        valueText.rectTransform.offsetMin = Vector2.zero;
-        valueText.rectTransform.offsetMax = new Vector2(-158f, 0f);
-
-        Button minus = CreateButton(
-            row,
-            "−",
-            decrease,
-            64f,
-            canDecrease
-        );
-        RectTransform minusRect = minus.GetComponent<RectTransform>();
-        minusRect.anchorMin = minusRect.anchorMax = new Vector2(1f, 0.5f);
-        minusRect.pivot = new Vector2(1f, 0.5f);
-        minusRect.anchoredPosition = new Vector2(-82f, 0f);
-        minusRect.sizeDelta = new Vector2(64f, 38f);
-
-        Button plus = CreateButton(
-            row,
-            "+",
-            increase,
-            64f,
-            canIncrease
-        );
-        RectTransform plusRect = plus.GetComponent<RectTransform>();
-        plusRect.anchorMin = plusRect.anchorMax = new Vector2(1f, 0.5f);
-        plusRect.pivot = new Vector2(1f, 0.5f);
-        plusRect.anchoredPosition = new Vector2(-12f, 0f);
-        plusRect.sizeDelta = new Vector2(64f, 38f);
-    }
-
-    private void AddFourStepRow(
-        string label,
-        float value,
-        float smallStep,
-        float largeStep,
-        float minimum,
-        float maximum,
-        System.Action<float> setter,
-        string format)
-    {
-        RectTransform row = CreateRect(label, contentRoot);
-        row.gameObject.AddComponent<Image>().color = rowColor;
-        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 50f;
-
-        TextMeshProUGUI labelText = CreateText(
-            "Name", row, label, 17f,
-            TextAlignmentOptions.MidlineLeft, Color.white);
-        labelText.rectTransform.anchorMin = Vector2.zero;
-        labelText.rectTransform.anchorMax = new Vector2(0.68f, 1f);
-        labelText.rectTransform.offsetMin = new Vector2(14f, 0f);
-        labelText.rectTransform.offsetMax = Vector2.zero;
-
-        TextMeshProUGUI valueText = CreateText(
-            "Value", row, value.ToString(format), 16f,
-            TextAlignmentOptions.Center, successColor);
-        RectTransform valueRect = valueText.rectTransform;
-        valueRect.anchorMin = valueRect.anchorMax = new Vector2(1f, 0.5f);
-        valueRect.pivot = new Vector2(1f, 0.5f);
-        valueRect.anchoredPosition = new Vector2(-132f, 0f);
-        valueRect.sizeDelta = new Vector2(82f, 38f);
-
-        AddFourStepButton(row, "--", -280f, value > minimum,
-            () => ApplyFourStep(setter, value - largeStep, minimum, maximum));
-        AddFourStepButton(row, "-", -220f, value > minimum,
-            () => ApplyFourStep(setter, value - smallStep, minimum, maximum));
-        AddFourStepButton(row, "+", -72f, value < maximum,
-            () => ApplyFourStep(setter, value + smallStep, minimum, maximum));
-        AddFourStepButton(row, "++", -12f, value < maximum,
-            () => ApplyFourStep(setter, value + largeStep, minimum, maximum));
-    }
-
     private void AddSliderRow(
         string label,
         float value,
@@ -7664,152 +5125,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             $"Debug: {minimum:0.###}…{maximum:0.###}   Production: {production:0.###}";
     }
 
-    private void AddFourStepButton(
-        Transform parent,
-        string label,
-        float rightOffset,
-        bool interactable,
-        UnityEngine.Events.UnityAction action)
-    {
-        Button button = CreateButton(parent, label, action, 54f, interactable);
-        RectTransform rect = button.GetComponent<RectTransform>();
-        rect.anchorMin = rect.anchorMax = new Vector2(1f, 0.5f);
-        rect.pivot = new Vector2(1f, 0.5f);
-        rect.anchoredPosition = new Vector2(rightOffset, 0f);
-        rect.sizeDelta = new Vector2(54f, 36f);
-    }
-
-    private void ApplyFourStep(
-        System.Action<float> setter,
-        float value,
-        float minimum,
-        float maximum)
-    {
-        setter?.Invoke(Mathf.Clamp(value, minimum, maximum));
-        RefreshCurrentTab();
-    }
-
-    private void AddAnomalySlotSection()
-    {
-        AddSectionTitle("ANOMALY SLOT", "Production AnomalyInventory (1 slot)");
-        RunStateManager runState = RunStateManager.Instance;
-        AnomalyInventory inventory = runState != null
-            ? runState.AnomalyInventory
-            : null;
-        bool hasItem = inventory != null && !inventory.IsEmpty;
-        AddRow("ANOMALY", hasItem
-                ? $"{inventory.CurrentItem.DisplayName} " +
-                    ToRomanLevel(inventory.Level)
-                : "EMPTY",
-            inventory != null && !inventory.IsEmpty ? successColor : mutedColor,
-            null, false, null);
-
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        BaseWeapon selectedWeapon = FindPrimaryWeapon(player);
-        AddRow("WEAPON",
-            selectedWeapon != null && selectedWeapon.weaponData != null
-                ? GetWeaponName(selectedWeapon.weaponData)
-                : "NONE",
-            selectedWeapon != null ? successColor : mutedColor,
-            null, false, null);
-
-        EvolutionRecipe recipe = runState != null
-            ? runState.EvolutionState.CurrentRecipe
-            : null;
-        EvolutionRuntimeController runtime = player != null
-            ? player.GetComponent<EvolutionRuntimeController>()
-            : null;
-        AddRow("EVOLUTION",
-            recipe != null ? recipe.DisplayName : "NONE",
-            recipe != null ? successColor : mutedColor,
-            null, false, null);
-        AddRow("MODE",
-            recipe == null
-                ? "PURE"
-                : inventory.Level >= 3 ? "OVERDRIVE" : "HYBRID",
-            recipe != null ? successColor : mutedColor,
-            null, false, null);
-        AddRow("EVOLUTION RUNTIME",
-            runtime != null && runtime.IsRuntimeActive ? "ACTIVE" : "INACTIVE",
-            runtime != null && runtime.IsRuntimeActive
-                ? successColor
-                : mutedColor,
-            null, false, null);
-
-        if (!string.IsNullOrWhiteSpace(lastAnomalyGrantResult))
-            AddHint($"Last result: {lastAnomalyGrantResult}");
-
-        AnomalyItemData[] items = AnomalyItemCatalog.GetAll();
-        for (int i = 0; i < items.Length; i++)
-        {
-            AnomalyItemData item = items[i];
-            if (item == null)
-                continue;
-
-            for (int targetLevel = 1; targetLevel <= 3; targetLevel++)
-            {
-                AnomalyItemData captured = item;
-                int capturedLevel = targetLevel;
-                AddRow(
-                    $"SET {item.DisplayName.ToUpperInvariant()} " +
-                        ToRomanLevel(targetLevel),
-                    targetLevel == 1
-                        ? "PURE"
-                        : targetLevel == 2 ? "HYBRID" : "OVERDRIVE",
-                    mutedColor,
-                    "SET",
-                    runState != null,
-                    () => SetDebugAnomalyLevel(captured, capturedLevel));
-            }
-        }
-
-        AddRow("CLEAR SLOT", "Keeps upgrade slots unchanged", warningColor,
-            "CLEAR", inventory != null && !inventory.IsEmpty,
-            ClearDebugAnomaly);
-    }
-
-    private void GrantDebugAnomaly(AnomalyItemData item)
-    {
-        RunStateManager runState = RunStateManager.Instance;
-        if (runState == null)
-            return;
-
-        AnomalyGrantResult result = runState.DebugTryGrantAnomalyItem(item);
-        lastAnomalyGrantResult = result.ToString();
-
-        RefreshCurrentTab();
-    }
-
-    private void SetDebugAnomalyLevel(AnomalyItemData item, int targetLevel)
-    {
-        RunStateManager runState = RunStateManager.Instance;
-        if (runState == null || item == null)
-            return;
-
-        if (!runState.AnomalyInventory.IsEmpty)
-            runState.DebugClearAnomalyItem();
-
-        AnomalyGrantResult result = AnomalyGrantResult.Invalid;
-        int grants = Mathf.Clamp(targetLevel, 1, item.MaxLevel);
-        for (int i = 0; i < grants; i++)
-            result = runState.DebugTryGrantAnomalyItem(item);
-
-        lastAnomalyGrantResult =
-            $"{item.DisplayName} {ToRomanLevel(grants)}: {result}";
-        RefreshCurrentTab();
-    }
-
-    private void ClearDebugAnomaly()
-    {
-        RunStateManager runState = RunStateManager.Instance;
-        if (runState == null || runState.AnomalyInventory.IsEmpty)
-            return;
-
-        runState.DebugClearAnomalyItem();
-        lastAnomalyGrantResult = "Cleared";
-        RefreshCurrentTab();
-    }
-
     private static string ToRomanLevel(int level) => level switch
     {
         1 => "I",
@@ -7966,8 +5281,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         "SPAWN EYES" => 150f,
         "SPAWN BOSS" => 156f,
         "KILL BOSS" => 146f,
-        "COMPLETE LEVEL" => 188f,
-        "OPEN LEVEL CARDS" => 210f,
+        "COMPLETE SECTOR" => 188f,
+        "OPEN SECTOR CHOICE" => 210f,
         "SET INVESTED 0" => 190f,
         "SET INVESTED 50%" => 214f,
         "+1000 GOLD" => 150f,

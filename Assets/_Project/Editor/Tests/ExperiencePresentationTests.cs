@@ -87,7 +87,8 @@ public sealed class ExperiencePresentationTests
         var menu = One<Subject42DebugMenu>();
         Assert.That(menu, Is.Not.Null);
         var tabType = typeof(Subject42DebugMenu).GetNestedType("DebugTab", BindingFlags.NonPublic);
-        Call(menu, "SelectTab", Enum.Parse(tabType, "Telekinesis"), true);
+        Call(menu, "SelectTab", Enum.Parse(tabType, "QA"), true);
+        Call(menu, "SelectQaSection", 1);
         Call(menu, "SetOpen", true);
         yield return null; // Allow deferred UI rebuild destruction before resolving buttons.
         void Click(string label)

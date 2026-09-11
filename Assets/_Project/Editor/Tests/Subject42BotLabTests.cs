@@ -116,8 +116,9 @@ public sealed class Subject42BotLabTests
         var menu = Object.FindFirstObjectByType<Subject42DebugMenu>();
         var flags = BindingFlags.NonPublic | BindingFlags.Instance;
         typeof(Subject42DebugMenu).GetMethod("SetOpen", flags).Invoke(menu, new object[] { true });
-        var tab = Enum.Parse(typeof(Subject42DebugMenu).GetNestedType("DebugTab", BindingFlags.NonPublic), "BotLab");
+        var tab = Enum.Parse(typeof(Subject42DebugMenu).GetNestedType("DebugTab", BindingFlags.NonPublic), "QA");
         typeof(Subject42DebugMenu).GetMethod("SelectTab", flags).Invoke(menu, new[] { tab, (object)true });
+        typeof(Subject42DebugMenu).GetMethod("SelectQaSection", flags).Invoke(menu, new object[] { 2 });
         yield return null;
         yield return null;
         System.IO.Directory.CreateDirectory("Artifacts/GeneratedQA/BotLab");

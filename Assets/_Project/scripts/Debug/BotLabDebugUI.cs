@@ -133,7 +133,7 @@ public sealed partial class Subject42DebugMenu
     }
     private void UpdateBotLabTelemetry()
     {
-        if (!isOpen || activeTab != DebugTab.BotLab || Time.unscaledTime < nextBotUiRefresh) return;
+        if (!isOpen || activeTab != DebugTab.QA || Time.unscaledTime < nextBotUiRefresh) return;
         nextBotUiRefresh = Time.unscaledTime + .25f;
         RefreshBotLabTelemetry();
     }

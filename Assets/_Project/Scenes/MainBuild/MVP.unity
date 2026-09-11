@@ -5736,37 +5736,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d7b2f19a8e64a59b0c3d4219f76e812, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Subject42DebugMenu
-  worldRuleController: {fileID: 2147010006}
   anomalyController: {fileID: 2147010005}
-  worldEventSpawner: {fileID: 46915853}
   enemySpawner: {fileID: 0}
   characterSpawner: {fileID: 46915846}
   upgradeManager: {fileID: 46915847}
   runFlowController: {fileID: 0}
   levelChoiceManager: {fileID: 0}
-  worldRules:
-  - {fileID: 11400000, guid: a5bdb85030fd4b90a621084eb9990d11, type: 2}
-  - {fileID: 11400000, guid: b6cce96141ae4ca1b732195fcaaa1e22, type: 2}
-  - {fileID: 11400000, guid: c7ddfa7252bf4db2c8432a60dbbb2f33, type: 2}
-  - {fileID: 11400000, guid: d8ee0b8363c04ec3d9543b71eccc3044, type: 2}
-  - {fileID: 11400000, guid: e9ff1c9474d14fd4ea654c82fddd4155, type: 2}
-  - {fileID: 11400000, guid: c016d34b1d8f4fe797a9483ca0d30016, type: 2}
-  localAnomalies:
-  - {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}
-  - {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca002, type: 2}
-  - {fileID: 11400000, guid: 4e7a23f4bc9f4e65a021dd9d286ca003, type: 2}
-  - {fileID: 11400000, guid: d17a42a1000000000000000000000006, type: 2}
-  - {fileID: 11400000, guid: f28b42a1000000000000000000000005, type: 2}
-  worldEventPrefabs:
-  - {fileID: 350149527517610057, guid: 176dbf5e68a24ca49b3595472b14d121, type: 3}
-  - {fileID: 530000000000000004, guid: e47c3f95a8a34c18a619b70ec785f142, type: 3}
-  - {fileID: 520000000000000004, guid: f51a1e2d8b0c4d0a9e07f4e27b6d1201, type: 3}
-  - {fileID: 590000000000000004, guid: c39b42a1000000000000000000000003, type: 3}
   turretEnemyPrefab: {fileID: 1334349216365075605, guid: 9a2217687199c7b41894a7ab9673f951, type: 3}
   eyesEnemyPrefab: {fileID: 3350373065324294653, guid: 74d98ca6a4a3cc94daabdf7b81bb7f13, type: 3}
-  debugWeapons:
-  - {fileID: 11400000, guid: acd6c980f3b758a409e5285b329a175a, type: 2}
-  - {fileID: 11400000, guid: a0a46b236f3b65c40b5c4cc5573d7c47, type: 2}
 --- !u!1 &2147020001
 GameObject:
   m_ObjectHideFlags: 0
