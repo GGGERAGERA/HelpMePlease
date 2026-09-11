@@ -37,6 +37,19 @@ public class HUDManager : MonoBehaviour
 
     [Header("Route Progress")]
     [SerializeField] private RunRouteProgressView routeProgressView;
+    [SerializeField] private RunFlowController runFlow;
+    [SerializeField] private PauseMenuUI pauseMenu;
+    [SerializeField] private InteractionPromptUI interactionPrompt;
+    [SerializeField] private RunMessageService runMessages;
+    [SerializeField] private CanvasGroup informationGroup;
+    private PlayerHealth boundPlayer;
+
+    public bool IsInformationVisible => boundPlayer != null && !boundPlayer.IsDead &&
+        runStateManager != null && !runStateManager.IsRunEnded &&
+        runFlow != null && runFlow.Phase != RunPhase.Victory && runFlow.Phase != RunPhase.Stopped &&
+        !(runFlow.IsLevelCompleted && runFlow.Phase == RunPhase.NormalSector) && !pauseMenu.IsPaused &&
+        !SceneTransitionOverlay.IsTransitioning && Time.timeScale > 0f &&
+        (UpgradeManager.Instance == null || UpgradeManager.Instance.IsRewardQueueIdle);
 
     [Header("Low HP")]
     [SerializeField] private CanvasGroup lowHpVignette;
@@ -50,7 +63,6 @@ public class HUDManager : MonoBehaviour
     [Header("World Event Marker")]
     [SerializeField] private WorldEventMarker worldEventMarker;
 
-    [SerializeField] private RunMessageView runMessageView;
     [Header("Tactical Map")]
     [SerializeField] private TacticalMapHUD tacticalMap;
     [SerializeField] private WorldLootRewardReel lootReel;
@@ -85,12 +97,10 @@ public class HUDManager : MonoBehaviour
         }
         Reserve(experienceSlider, true);
         Reserve(dashCooldownView, true);
-        Reserve(routeProgressView, false);
+        if (IsInformationVisible) Reserve(routeProgressView, false);
         if (bossHpPanel != null && bossHpPanel.activeInHierarchy) Reserve(bossHpPanel.transform, false);
-        if (includeMessage && runMessageView != null && runMessageView.IsPanelVisible)
-            Reserve(runMessageView, false);
-        var startup = RunMessageService.Instance != null ? RunMessageService.Instance.View : null;
-        if (includeMessage && startup != null && startup.IsPanelVisible) Reserve(startup, false);
+        if (includeMessage && IsInformationVisible && runMessages.View.IsPanelVisible)
+            Reserve(runMessages.View, false);
         void ReserveSide(Component component, bool left)
         {
             if (component == null || !component.gameObject.activeInHierarchy || component.transform is not RectTransform rect) return;
@@ -122,10 +132,11 @@ public class HUDManager : MonoBehaviour
         if (bossHpPanel != null)
             bossHpPanel.SetActive(false);
 
-        if (tacticalMap == null || lootReel == null ||
+        if (tacticalMap == null || lootReel == null || runFlow == null || pauseMenu == null ||
+            informationGroup == null || interactionPrompt == null || runMessages == null ||
             threatPanel == null || threatLevelText == null || threatValueText == null || threatFill == null)
         {
-            Debug.LogError("[HUDManager] Authored map, loot or threat references are missing.", this);
+            Debug.LogError("[HUDManager] Authored HUD or scene references are missing.", this);
             enabled = false;
             return;
         }
@@ -164,6 +175,45 @@ public class HUDManager : MonoBehaviour
             runStatsManager.RewardRelevantStatsChanged -= RefreshRunCurrency;
         if (runStateManager != null)
             runStateManager.CurrentRewardChanged -= RefreshRunCurrency;
+    }
+
+    public static string ResolveObjectiveKey(RunPhase phase, bool exitAvailable) => phase switch
+    {
+        RunPhase.NormalSector => exitAvailable ? "hud.objective.exit" : "hud.objective.explore",
+        RunPhase.WaitingForRewards or RunPhase.FinalBossIntro => "hud.objective.prepare",
+        RunPhase.FinalBossCombat => "hud.objective.boss",
+        _ => null
+    };
+
+    private void LateUpdate()
+    {
+        informationGroup.alpha = IsInformationVisible ? 1f : 0f;
+        if (runStateManager == null || runStateManager.CurrentSector == null || runFlow == null)
+            return;
+
+        bool exitAvailable = false;
+        var exits = ProductionSectorExit.ActiveExits;
+        for (int i = 0; i < exits.Count; i++)
+        {
+            var exit = exits[i];
+            if (exit.gameObject.scene == gameObject.scene && exit.IsAvailable)
+            { exitAvailable = true; break; }
+        }
+
+        bool specialAvailable = false;
+        if (runFlow.Phase == RunPhase.NormalSector)
+        {
+            var sites = ProductionAnomalySite.ActiveSites;
+            for (int i = 0; i < sites.Count; i++)
+            {
+                var site = sites[i];
+                if (site.gameObject.scene == gameObject.scene && site.IsSpecial && site.IsMapVisible)
+                { specialAvailable = true; break; }
+            }
+        }
+
+        routeProgressView.ShowObjective(runStateManager.CurrentSector.SectorNumber,
+            ProductionSectorCount, ResolveObjectiveKey(runFlow.Phase, exitAvailable), specialAvailable);
     }
 
     private static void ConfigureIndicatorSlider(Slider slider)
@@ -283,6 +333,8 @@ public class HUDManager : MonoBehaviour
     public void BindPlayer(GameObject player)
     {
         IsPlayerBound = player != null;
+        boundPlayer = player != null ? player.GetComponent<PlayerHealth>() : null;
+        interactionPrompt.Bind(player != null ? player.GetComponent<PlayerInteractor>() : null);
         CharacterMovement2D movement = player != null
             ? player.GetComponent<CharacterMovement2D>()
             : null;
@@ -413,9 +465,4 @@ public class HUDManager : MonoBehaviour
         Destroy(marker.gameObject);
     }
 
-    public void ShowRunMessage(string title, string description, float duration = 3f)
-    {
-        if (runMessageView != null)
-            runMessageView.Show(title, description, duration);
-    }
 }

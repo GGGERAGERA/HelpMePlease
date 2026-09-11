@@ -15,6 +15,8 @@ public sealed class ProductionSectorExit : MonoBehaviour
     public static IReadOnlyList<ProductionSectorExit> ActiveExits =>
         activeExits;
     public bool IsMapVisible => initialized && isActiveAndEnabled;
+    public bool IsAvailable => IsMapVisible && runFlow != null &&
+        !runFlow.IsLevelCompleted && runFlow.Phase == RunPhase.NormalSector;
 
     private void OnEnable()
     {

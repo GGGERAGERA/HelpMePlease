@@ -1,3 +1,6 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using Random = BotRunSeed.EventRandom;
+#endif
 using UnityEngine;
 
 [RequireComponent(typeof(CircleCollider2D))]

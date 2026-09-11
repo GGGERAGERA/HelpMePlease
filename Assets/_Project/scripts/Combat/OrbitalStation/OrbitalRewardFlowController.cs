@@ -95,6 +95,31 @@ namespace Subject42.Combat.OrbitalStation
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Uses exactly the same validation and commit/flight path as pointer selection.
+        public bool DebugChooseFirstValidTarget()
+        {
+            if (reward == null || station == null) return false;
+            if (State == OrbitalRewardFlowState.RingSelection)
+            {
+                foreach (var ring in station.Rings)
+                    if (CanUseRing(ring)) return DebugChooseRing(ring.RingId);
+            }
+            else if (State == OrbitalRewardFlowState.ModuleSelection)
+            {
+                foreach (var module in station.Modules)
+                    if (station.State.CanUpgradeModuleDamage(module.StableModuleId, out _))
+                        return DebugChooseModule(module.StableModuleId);
+            }
+            else if (State == OrbitalRewardFlowState.DirectMountSelection ||
+                     State == OrbitalRewardFlowState.SecondLinkPlacement)
+            {
+                foreach (var ring in station.Rings)
+                    foreach (var mount in ring.Mounts)
+                        if (CanStageMount(mount)) return DebugChooseMount(ring.RingId, mount.MountIndex);
+            }
+            return false;
+        }
+
         public bool DebugChooseRing(int stableRingId)
         {
             hoveredRing = station?.Rings.FirstOrDefault(value =>

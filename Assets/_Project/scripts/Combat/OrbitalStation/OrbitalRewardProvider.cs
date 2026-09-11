@@ -1,5 +1,10 @@
 using System;
 using System.Collections.Generic;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using RewardRandom = BotRunSeed.RewardRandom;
+#else
+using RewardRandom = UnityEngine.Random;
+#endif
 using System.Linq;
 using UnityEngine;
 
@@ -65,7 +70,7 @@ namespace Subject42.Combat.OrbitalStation
             while (result.Count < count && pool.Count > 0)
             {
                 float total = pool.Sum(value => Mathf.Max(0.01f, value.Weight));
-                float roll = UnityEngine.Random.value * total;
+                float roll = RewardRandom.value * total;
                 int selectedIndex = pool.Count - 1;
                 for (int i = 0; i < pool.Count; i++)
                 {

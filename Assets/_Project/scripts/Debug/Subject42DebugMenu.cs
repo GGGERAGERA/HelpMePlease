@@ -222,7 +222,7 @@ public sealed class CombatFeelTooltipTrigger : MonoBehaviour,
 }
 #endif
 
-public sealed class Subject42DebugMenu : MonoBehaviour
+public sealed partial class Subject42DebugMenu : MonoBehaviour
 {
     [Header("Existing scene systems")]
     [SerializeField] private WorldRuleController worldRuleController;
@@ -264,7 +264,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         VisualTest,
         FeelTest,
         OrbitalProduction,
-        SectorTest
+        SectorTest,
+        BotLab
     }
 
     private enum UpgradeFilter
@@ -329,7 +330,8 @@ public sealed class Subject42DebugMenu : MonoBehaviour
         "VISUAL",
         "FEEL",
         "ORBITAL PRODUCTION TEST",
-        "ТЕСТ СЕКТОРА"
+        "ТЕСТ СЕКТОРА",
+        "BOT LAB"
     };
 
     private static readonly WorldRuleType[] DebugRuleTypes =
@@ -453,6 +455,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void Start()
     {
+        BindBotLabScene();
         EnsureProductionSectorDebug();
         LoadVisualProductionValues();
         BuildMenu();
@@ -464,6 +467,7 @@ public sealed class Subject42DebugMenu : MonoBehaviour
 
     private void Update()
     {
+        UpdateBotLabTelemetry();
         if (isOpen && activeXpCounter != null &&
             activeXpCounter.gameObject.activeInHierarchy &&
             Time.unscaledTime >= nextXpCounterRefresh)
@@ -1398,6 +1402,9 @@ public sealed class Subject42DebugMenu : MonoBehaviour
                 break;
             case DebugTab.SectorTest:
                 AddProductionSectorTestSection();
+                break;
+            case DebugTab.BotLab:
+                AddBotLabSection();
                 break;
         }
 

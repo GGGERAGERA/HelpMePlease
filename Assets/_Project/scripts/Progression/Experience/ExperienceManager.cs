@@ -22,6 +22,9 @@ public class ExperienceManager : MonoBehaviour
     public UnityEvent<int> OnLevelUp;
 
     public int CurrentLevel => currentLevel;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public event System.Action<int> DebugExperienceAdded;
+#endif
 
     public void PlayPickupEffect(ExperiencePickupEffect prefab, Vector3 position, Color color)
     {
@@ -68,13 +71,17 @@ public class ExperienceManager : MonoBehaviour
             return;
         }
 
-        currentExp += Mathf.RoundToInt(
+        int gained = Mathf.RoundToInt(
             amount *
             xpGainMultiplier *
             runUpgradeXpGainMultiplier *
             levelXpGainMultiplier *
             anomalyXpGainMultiplier
         );
+        currentExp += gained;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        DebugExperienceAdded?.Invoke(gained);
+#endif
 
         while (currentExp >= expToNextLevel && currentLevel < levelData.maxLevel)
         {

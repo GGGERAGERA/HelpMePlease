@@ -120,7 +120,7 @@ public sealed class Subject42OrbitalGrowthTests
             Verify(station, OrbitalStationRuntime.GrowthPreset.Final);
             VerifyMountPresentation(station);
             var message = RunMessageService.Instance.View;
-            message.ShowStartupHint("WASD — ДВИЖЕНИЕ\nИССЛЕДУЙТЕ ANOMALY SITES ИЛИ СРАЗУ ИДИТЕ К EXIT\nE — ВЗАИМОДЕЙСТВИЕ С EVENT", 6f);
+            message.Show("ПРОВЕРКА УВЕДОМЛЕНИЯ", "Короткое сообщение во время игры", 6f);
             deadline = Time.realtimeSinceStartup + 2.5f;
             while (Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(message.IsPanelVisible, Is.True);

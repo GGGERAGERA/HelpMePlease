@@ -30,6 +30,11 @@ public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
     public Component PickupComponent => this;
     public Component ExternalVelocityComponent => this;
     public float AnomalySpeedMultiplier => anomalySpeed.Value;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private static readonly System.Collections.Generic.HashSet<ExperiencePickup> active = new();
+    public static System.Collections.Generic.IReadOnlyCollection<ExperiencePickup> DebugActive => active;
+    private void OnEnable() => active.Add(this);
+#endif
 
     private void Start()
     {
@@ -143,6 +148,9 @@ public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
 
     private void OnDisable()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        active.Remove(this);
+#endif
         AnomalySpeedPickupLifecycle.NotifyDisabled(this);
         anomalySpeed.Clear();
         anomalyExternalVelocity.Clear();

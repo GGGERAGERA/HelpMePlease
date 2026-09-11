@@ -4,6 +4,9 @@ using System.Collections;
 public class PlayerHealth : MonoBehaviour
 {
     public event System.Action DamageTaken;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public event System.Action<float> DebugDamageApplied;
+#endif
 
     public float maxHealth = 100f;
     public float currentHealth;
@@ -60,7 +63,13 @@ public class PlayerHealth : MonoBehaviour
             return false;
         isInvulnerable = true;
         float finalDamage = Mathf.Max(0f, damage) * incomingDamageMultiplier;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        float lostHealth = Mathf.Min(Mathf.Max(0f, currentHealth), finalDamage);
+#endif
         currentHealth -= finalDamage;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        DebugDamageApplied?.Invoke(lostHealth);
+#endif
 
         movement?.ApplyKnockback(hitDirection);
         whiteFlash?.Flash();

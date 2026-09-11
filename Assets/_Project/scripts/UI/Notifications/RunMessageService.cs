@@ -1,23 +1,32 @@
 using System.Collections;
 using UnityEngine;
+using TMPro;
 
 public sealed class RunMessageService : MonoBehaviour
 {
     private const float InitialLevelMessageDuration = 4.5f;
     private const float FirstRunHintDuration = 4.5f;
+    public const string MovementHintPreferenceKey = "onboarding.mvp.movement.seen";
     public static RunMessageService Instance { get; private set; }
 
     [SerializeField] private RunMessageView view;
     public RunMessageView View => view;
     [SerializeField] private RunMessageData[] messages;
+    [SerializeField] private GameObject movementHint;
+    [SerializeField] private TextMeshProUGUI movementText;
+    [SerializeField] private HUDManager hud;
+    private float movementHintRemaining;
 
     private void Awake()
     {
-        Instance = this;
+        movementHint.SetActive(false);
     }
+
+    private void OnEnable() => Instance = this;
 
     private IEnumerator Start()
     {
+        if (PlayerPrefs.GetInt(MovementHintPreferenceKey, 0) != 0) yield break;
         LevelAnomalyController anomalyController =
             LevelAnomalyController.Instance;
         WorldRuleController worldRuleController =
@@ -42,42 +51,22 @@ public sealed class RunMessageService : MonoBehaviour
 
         RunStateManager runState = RunStateManager.Instance;
 
-        if (runState != null && runState.CurrentLevel > 1)
-            yield break;
+        if (runState == null || runState.CurrentSector == null ||
+            runState.CurrentSector.SectorNumber != RunRoute.FirstSector) yield break;
+        movementHintRemaining = FirstRunHintDuration;
+    }
 
-        while (Time.timeScale <= 0f)
-            yield return null;
-
-        bool exploration = runState != null &&
-            runState.CurrentSector != null &&
-            RunRoute.IsExplorationSector(
-                runState.CurrentSector.SectorNumber
-            );
-
-        view?.ShowStartupHint(
-            exploration
-                ? "WASD — ДВИЖЕНИЕ\n" +
-                  "ИССЛЕДУЙТЕ ANOMALY SITES ИЛИ СРАЗУ ИДИТЕ К EXIT\n" +
-                  "E — ВЗАИМОДЕЙСТВИЕ С EVENT"
-                : "WASD — ДВИЖЕНИЕ\n" +
-                  "ОРУЖИЕ СТРЕЛЯЕТ АВТОМАТИЧЕСКИ\n" +
-                  "ПОБЕДИТЕ БОССА",
-            FirstRunHintDuration
-        );
-
-        float visibleTime = 0f;
-
-        while (visibleTime < FirstRunHintDuration + 0.5f)
-        {
-            if (Time.timeScale <= 0f)
-            {
-                view?.HideInstant();
-                yield break;
-            }
-
-            visibleTime += Time.unscaledDeltaTime;
-            yield return null;
-        }
+    private void LateUpdate()
+    {
+        bool visible = movementHintRemaining > 0f && hud.IsInformationVisible;
+        movementHint.SetActive(visible);
+        if (!visible) return;
+        movementText.text = "WASD\n" + LocalizationService.Instance.Get("hud.movement");
+        movementHintRemaining = Mathf.Max(0f, movementHintRemaining - Time.unscaledDeltaTime);
+        if (movementHintRemaining > 0f) return;
+        movementHint.SetActive(false);
+        PlayerPrefs.SetInt(MovementHintPreferenceKey, 1);
+        PlayerPrefs.Save();
     }
 
     public void Show(RunMessageType type)
@@ -124,6 +113,7 @@ public sealed class RunMessageService : MonoBehaviour
 
     private void OnDisable()
     {
+        movementHint.SetActive(false);
         if (Instance == this)
             Instance = null;
     }

@@ -1,3 +1,6 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using Random = BotRunSeed.RewardRandom;
+#endif
 using System.Collections.Generic;
 using UnityEngine;
 using Subject42.Combat.OrbitalStation;
@@ -82,6 +85,8 @@ public sealed class UpgradeManager : MonoBehaviour
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public event System.Action<UpgradeData> DebugRewardCommitted;
+    public void DebugSetRewardResumeScale(float value) => previousTimeScale = value;
     public IReadOnlyList<UpgradeData> AllUpgrades => allUpgrades;
 
     public void ConfigureDebugUpgradePool(
@@ -417,7 +422,7 @@ public sealed class UpgradeManager : MonoBehaviour
             return;
         }
 
-        CloseUpgradeSelection();
+        CompleteGrantedReward(upgrade);
     }
 
     private void SelectOrbitalReward(OrbitalRewardData reward)
@@ -433,7 +438,7 @@ public sealed class UpgradeManager : MonoBehaviour
         {
             if (TryGrantUpgrade(reward.BodyUpgrade,
                     out ItemGrantResult bodyResult))
-                CloseUpgradeSelection();
+                CompleteGrantedReward(reward);
             else
             {
                 Debug.LogWarning($"[OrbitalRewards] Subject reward failed: {bodyResult}.");
@@ -451,7 +456,7 @@ public sealed class UpgradeManager : MonoBehaviour
         upgradePanelView.Hide();
         orbitalRewardFlow = station.RewardFlow;
         bool started = orbitalRewardFlow.Begin(reward,
-            CloseUpgradeSelection, ReturnToCurrentChoices);
+            () => CompleteGrantedReward(reward), ReturnToCurrentChoices);
         if (!started && isChoosingUpgrade)
             RefreshChoicesAfterGrantFailure();
     }
@@ -545,6 +550,14 @@ public sealed class UpgradeManager : MonoBehaviour
         return true;
     }
 
+    private void CompleteGrantedReward(UpgradeData upgrade)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        DebugRewardCommitted?.Invoke(upgrade);
+#endif
+        CloseUpgradeSelection();
+    }
+
     private void CloseUpgradeSelection()
     {
         if (upgradePanelView != null)
@@ -589,6 +602,9 @@ public sealed class UpgradeManager : MonoBehaviour
     private void BeginChoiceRequest(UpgradeChoiceRequest request,
         List<UpgradeData> choices)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
+#endif
         FindFirstObjectByType<OrbitalInteractionController>()?.PrepareForExternalPause();
         isChoosingUpgrade = true;
         previousTimeScale = Time.timeScale;

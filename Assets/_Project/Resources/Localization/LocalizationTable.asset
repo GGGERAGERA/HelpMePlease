@@ -142,3 +142,27 @@ MonoBehaviour:
   - key: pause.esc
     ru: ESC — ПРОДОЛЖИТЬ
     en: ESC — RESUME
+  - key: hud.sector
+    ru: "СЕКТОР {0} / {1}"
+    en: "SECTOR {0} / {1}"
+  - key: hud.objective.explore
+    ru: "ИССЛЕДУЙТЕ СЕКТОР"
+    en: "EXPLORE THE SECTOR"
+  - key: hud.objective.exit
+    ru: "ДОБЕРИТЕСЬ ДО ВЫХОДА"
+    en: "REACH THE EXIT"
+  - key: hud.objective.prepare
+    ru: "ПРИГОТОВЬТЕСЬ К БОЮ"
+    en: "PREPARE FOR COMBAT"
+  - key: hud.objective.boss
+    ru: "ПОБЕДИТЕ БОССА"
+    en: "DEFEAT THE BOSS"
+  - key: hud.specialOpportunity
+    ru: "УСИЛЕННАЯ АНОМАЛИЯ\n+ НОВАЯ ОРБИТА"
+    en: "ENHANCED ANOMALY\n+ NEW ORBIT"
+  - key: hud.interact
+    ru: "ВЗАИМОДЕЙСТВОВАТЬ"
+    en: "INTERACT"
+  - key: hud.movement
+    ru: "ДВИЖЕНИЕ"
+    en: "MOVEMENT"

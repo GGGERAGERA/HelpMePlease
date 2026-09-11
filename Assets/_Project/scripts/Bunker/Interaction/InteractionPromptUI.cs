@@ -10,6 +10,12 @@ public class InteractionPromptUI : MonoBehaviour
 
     private Camera targetCamera;
 
+    public void Bind(PlayerInteractor interactor)
+    {
+        playerInteractor = interactor;
+        promptPanel.SetActive(false);
+    }
+
     private void Awake()
     {
         if (promptPanel != null)
@@ -18,12 +24,9 @@ public class InteractionPromptUI : MonoBehaviour
         targetCamera = Camera.main;
     }
 
-    private void Update()
+    private void LateUpdate()
     {
-        if (playerInteractor == null)
-            playerInteractor = FindFirstObjectByType<PlayerInteractor>();
-
-        if (playerInteractor == null)
+        if (playerInteractor == null || Time.timeScale <= 0f || SceneTransitionOverlay.IsTransitioning)
         {
             if (promptPanel != null)
                 promptPanel.SetActive(false);
@@ -33,7 +36,7 @@ public class InteractionPromptUI : MonoBehaviour
 
         Interactable interactable = playerInteractor.GetCurrentInteractable();
 
-        if (interactable == null)
+        if (interactable == null || !interactable.isActiveAndEnabled || !interactable.CanInteract)
         {
             if (promptPanel != null)
                 promptPanel.SetActive(false);
@@ -48,7 +51,9 @@ public class InteractionPromptUI : MonoBehaviour
         }
 
         if (promptText != null)
-            promptText.text = $"[E] {interactable.PromptText}";
+            promptText.text = interactable is WorldEvent
+                ? "[E] " + LocalizationService.Instance.Get("hud.interact")
+                : $"[E] {interactable.PromptText}";
     }
 
     private void PositionPromptAbovePlayer()

@@ -20,9 +20,6 @@ public sealed class RunMessageView : MonoBehaviour
     private RectTransform titleRect;
     private RectTransform descriptionRect;
     private bool feedbackLayoutApplied;
-    private bool startupLayoutApplied;
-    private bool defaultAutoSizing;
-    private float defaultFontSize, defaultFontSizeMin, defaultFontSizeMax;
     public bool IsPanelVisible => canvasGroup != null && canvasGroup.alpha > .01f && !feedbackLayoutApplied;
     private Vector2 defaultPanelAnchorMin;
     private Vector2 defaultPanelAnchorMax;
@@ -108,56 +105,6 @@ public sealed class RunMessageView : MonoBehaviour
         ));
     }
 
-    public void ShowStartupHint(string description, float duration)
-    {
-        Show(string.Empty, description, duration, true);
-        startupLayoutApplied = true;
-        defaultAutoSizing = descriptionText.enableAutoSizing;
-        defaultFontSize = descriptionText.fontSize;
-        defaultFontSizeMin = descriptionText.fontSizeMin;
-        defaultFontSizeMax = descriptionText.fontSizeMax;
-        descriptionText.enableAutoSizing = true;
-        descriptionText.fontSizeMin = 18f;
-        descriptionText.fontSizeMax = 25f;
-        LayoutStartupHint();
-    }
-
-    private void LateUpdate()
-    {
-        if (startupLayoutApplied) LayoutStartupHint();
-    }
-
-    private void LayoutStartupHint()
-    {
-        Canvas canvas = GetComponentInParent<Canvas>();
-        Camera camera = Camera.main;
-        if (canvas == null || camera == null || panelRect.parent is not RectTransform parent) return;
-        Rect safe = HUDManager.Instance != null
-            ? HUDManager.Instance.GetOrbitalSafePixelRect(camera, false) : Screen.safeArea;
-        Camera uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(parent,
-            new Vector2(safe.center.x, safe.yMax - 8f), uiCamera, out Vector2 top);
-        panelRect.anchorMin = panelRect.anchorMax = parent.pivot;
-        panelRect.pivot = new Vector2(.5f, 1f);
-        panelRect.anchoredPosition = top;
-        panelRect.sizeDelta = new Vector2(Mathf.Min(1120f, parent.rect.width * .7f), 88f);
-    }
-
-    private void RestoreStartupLayout()
-    {
-        if (!startupLayoutApplied) return;
-        startupLayoutApplied = false;
-        panelRect.anchorMin = defaultPanelAnchorMin;
-        panelRect.anchorMax = defaultPanelAnchorMax;
-        panelRect.anchoredPosition = defaultPanelAnchoredPosition;
-        panelRect.sizeDelta = defaultPanelSizeDelta;
-        panelRect.pivot = defaultPanelPivot;
-        descriptionText.enableAutoSizing = defaultAutoSizing;
-        descriptionText.fontSize = defaultFontSize;
-        descriptionText.fontSizeMin = defaultFontSizeMin;
-        descriptionText.fontSizeMax = defaultFontSizeMax;
-    }
-
     private IEnumerator ShowRoutine(
         string title,
         string description,
@@ -185,7 +132,6 @@ public sealed class RunMessageView : MonoBehaviour
             yield return new WaitForSecondsRealtime(remainingVisibleTime);
 
         yield return FadeTo(0f, 0.25f);
-        RestoreStartupLayout();
         ClearDisplayedText();
         routine = null;
     }
@@ -296,7 +242,6 @@ public sealed class RunMessageView : MonoBehaviour
 
         RestoreFeedbackLayout();
         canvasGroup.alpha = 0f;
-        RestoreStartupLayout();
         ClearDisplayedText();
     }
 

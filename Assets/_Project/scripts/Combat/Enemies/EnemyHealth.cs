@@ -1,5 +1,10 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using DropRandom = BotRunSeed.DropRandom;
+#else
+using DropRandom = UnityEngine.Random;
+#endif
 using System.Collections;
 using System.Collections.Generic;
 
@@ -433,7 +438,7 @@ public class EnemyHealth : MonoBehaviour
 
         for (int i = 0; i < lootAmount; i++)
         {
-            Vector2 randomOffset = Random.insideUnitCircle * lootScatterRadius;
+            Vector2 randomOffset = DropRandom.insideUnitCircle * lootScatterRadius;
             SpawnLootPickup((Vector2)transform.position + randomOffset);
         }
     }

@@ -101,3 +101,7 @@ InitTestScene*.unity*
 # Generated QA captures, frame sequences, CSV/contact sheets and test result exports.
 # Route temporary QA scripts/reports and CLI -testResults here too.
 /Artifacts/GeneratedQA/
+
+# Local Bot Lab results
+/Artifacts/BotRuns/
+/Artifacts/BotBatches/

@@ -10,10 +10,17 @@ public sealed class RunRouteProgressView : MonoBehaviour
     [SerializeField] private bool showPoints = true;
 
     private readonly List<Image> points = new();
-    private TextMeshProUGUI sectorText;
+    [SerializeField] private TextMeshProUGUI sectorText;
+    [SerializeField] private TextMeshProUGUI objectiveText;
+    [SerializeField] private TextMeshProUGUI optionalText;
+    [SerializeField] private CanvasGroup canvasGroup;
     private RectTransform pointsRoot;
     private TextMeshProUGUI finalLabel;
     private bool built;
+    private int displayedSector, displayedTotal;
+    private string displayedObjectiveKey;
+    private bool displayedSpecial;
+    private GameLanguage displayedLanguage;
 
     private static readonly Color Cyan =
         new(0.12f, 0.78f, 0.9f, 1f);
@@ -24,7 +31,7 @@ public sealed class RunRouteProgressView : MonoBehaviour
 
     private void Awake()
     {
-        ConfigureRootLayout();
+        if (objectiveText == null) ConfigureRootLayout();
     }
 
     public void ShowCurrent(int currentSector, int totalSectors)
@@ -39,11 +46,38 @@ public sealed class RunRouteProgressView : MonoBehaviour
 
     public void Hide()
     {
-        gameObject.SetActive(false);
+        if (canvasGroup != null) canvasGroup.alpha = 0f;
+        else gameObject.SetActive(false);
+    }
+
+    public void ShowObjective(int sector, int total, string objectiveKey, bool specialAvailable)
+    {
+        canvasGroup.alpha = objectiveKey == null ? 0f : 1f;
+        if (objectiveKey == null) return;
+        var localization = LocalizationService.Instance;
+        if (displayedSector == sector && displayedTotal == total && displayedObjectiveKey == objectiveKey &&
+            displayedSpecial == specialAvailable && displayedLanguage == localization.CurrentLanguage) return;
+        displayedSector = sector;
+        displayedTotal = total;
+        displayedObjectiveKey = objectiveKey;
+        displayedSpecial = specialAvailable;
+        displayedLanguage = localization.CurrentLanguage;
+        string heading = string.Format(localization.Get("hud.sector"), sector, total);
+        string objective = localization.Get(objectiveKey);
+        string optional = specialAvailable ? localization.Get("hud.specialOpportunity") : string.Empty;
+        sectorText.text = heading;
+        objectiveText.text = objective;
+        optionalText.text = optional;
+        optionalText.gameObject.SetActive(specialAvailable);
+        // Only content-dependent sizing belongs at runtime; all visual elements are authored.
+        float width = Mathf.Max(sectorText.preferredWidth, objectiveText.preferredWidth,
+            specialAvailable ? optionalText.preferredWidth : 0f) + 36f;
+        ((RectTransform)transform).sizeDelta = new Vector2(Mathf.Clamp(width, 220f, 480f), specialAvailable ? 122f : 72f);
     }
 
     private void Show(int sectorNumber, int totalSectors)
     {
+        if (objectiveText != null) return; // Gameplay is projected by HUDManager; selection uses route points.
         int safeTotal = Mathf.Max(1, totalSectors);
         int safeSector = Mathf.Clamp(sectorNumber, 1, safeTotal);
 
@@ -51,7 +85,7 @@ public sealed class RunRouteProgressView : MonoBehaviour
         Build();
 
         gameObject.SetActive(true);
-        sectorText.text = $"SECTOR {safeSector} / {safeTotal}";
+        sectorText.text = string.Format(LocalizationService.EnsureExists().Get("hud.sector"), safeSector, safeTotal);
 
         if (!showPoints)
             return;

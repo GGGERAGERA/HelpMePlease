@@ -1,3 +1,6 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using Random = BotRunSeed.RuleRandom;
+#endif
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;

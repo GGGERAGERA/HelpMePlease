@@ -17,7 +17,14 @@ namespace Subject42.Combat.OrbitalStation
         private bool ownsScale;
         public OrbitalInteractionMode Mode { get; private set; }
         public bool IsIdle => Mode == OrbitalInteractionMode.Idle;
-        public bool IsGameplayInputBlocked => SceneTransitionOverlay.IsTransitioning || OrbitalDevelopmentInput.IsGameplayInputBlocked;
+        public bool IsGameplayInputBlocked => SceneTransitionOverlay.IsTransitioning || OrbitalDevelopmentInput.IsGameplayInputBlocked
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            || DebugSuppressPlayerInput
+#endif
+            ;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public bool DebugSuppressPlayerInput { get; set; }
+#endif
         private bool Alive => station != null && station.IsInitialized && station.Owner != null && !station.Owner.IsDead;
         private bool QueueIdle => UpgradeManager.Instance == null || UpgradeManager.Instance.IsRewardQueueIdle;
         public bool CanTransition => IsIdle && QueueIdle;

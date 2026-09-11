@@ -62,6 +62,9 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
     public Transform VisualRoot => visualRoot;
     public Vector2 LastMoveDirection => lastMoveDirection;
 
+    // Optional input ownership; physics, animation and status effects remain here.
+    public System.Func<Vector2> MovementIntent { get; set; }
+
     public void SetVisualRoot(Transform value)
     {
         visualRoot = value;
@@ -112,7 +115,7 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
     void Update()
     {
         if (SceneTransitionOverlay.IsTransitioning) { moveInput = Vector2.zero; return; }
-        moveInput = new Vector2(
+        moveInput = MovementIntent != null ? Vector2.ClampMagnitude(MovementIntent(), 1f) : new Vector2(
             Input.GetAxisRaw("Horizontal"),
             Input.GetAxisRaw("Vertical")
         ).normalized;
@@ -127,7 +130,7 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
                 dashCooldownRemaining - Time.deltaTime
             );
 
-            if (Input.GetKeyDown(dashKey))
+            if (MovementIntent == null && Input.GetKeyDown(dashKey))
                 TryStartDash();
         }
 
@@ -368,6 +371,7 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
 
     private void OnDisable()
     {
+        MovementIntent = null;
         moveInput = Vector2.zero;
         currentVelocity = Vector2.zero;
         dashDirection = Vector2.zero;

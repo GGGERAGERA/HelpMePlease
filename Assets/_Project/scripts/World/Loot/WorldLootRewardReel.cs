@@ -654,7 +654,12 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         for (int i = 0; i < rewards.Count; i++)
             totalWeight += rewards[i].Weight;
 
-        float roll = UnityEngine.Random.value * totalWeight;
+        float roll =
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            BotRunSeed.DropRandom.value * totalWeight;
+#else
+            UnityEngine.Random.value * totalWeight;
+#endif
 
         for (int i = 0; i < rewards.Count; i++)
         {
