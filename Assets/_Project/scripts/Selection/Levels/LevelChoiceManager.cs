@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Subject42.Combat.OrbitalStation;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using Random = BotRunSeed.RuleRandom;
+#endif
 
 public sealed class LevelChoiceManager : MonoBehaviour
 {
@@ -30,6 +33,14 @@ public sealed class LevelChoiceManager : MonoBehaviour
     private bool waitingForUpgradeReward;
 
     public bool IsChoosing => isChoosing;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool DebugSelectFirstRule()
+    {
+        if (!isChoosing || currentChoices.Count == 0) return false;
+        SelectRule(currentChoices[0]);
+        return SceneTransitionOverlay.IsTransitioning;
+    }
+#endif
 
     private void Awake()
     {

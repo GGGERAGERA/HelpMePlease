@@ -271,8 +271,10 @@ public sealed class PooledGameObject : MonoBehaviour
 
     public bool Release()
     {
+        // True means despawn was handled. A second physics/lifetime callback must
+        // not fall back to Destroy on an object already stored in the pool.
         if (released)
-            return false;
+            return true;
 
         released = true;
         releaseAt = -1f;

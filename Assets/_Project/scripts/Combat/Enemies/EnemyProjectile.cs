@@ -13,6 +13,10 @@ public class EnemyProjectile : MonoBehaviour, IAnomalySpeedProjectile,
     private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
     private readonly AnomalyExternalVelocityStack
         anomalyExternalVelocity = new();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public Vector2 DebugTravelVelocity => direction * speed * anomalySpeed.Value +
+        (WorldRuleController.Instance != null ? WorldRuleController.Instance.ProjectileWindVelocity : Vector2.zero) + anomalyExternalVelocity.Value;
+#endif
 
     public void Initialize(Vector2 shootDirection)
     {

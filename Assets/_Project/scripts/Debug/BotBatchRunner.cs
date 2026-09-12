@@ -14,14 +14,23 @@ public sealed class BotBatchRunner : MonoBehaviour
     private BotRunSession session;
     private bool nextPending, stopping;
     private float nextDeadline, originalScale;
+    private bool goldenPath;
+
+    public bool StartGoldenPathBatch(int count, BotSeedMode mode, int fixedSeed, float speed)
+        => StartBatchInternal(count, mode, fixedSeed, speed, true);
 
     private void Awake() => session = GetComponent<BotRunSession>();
     public bool StartBatch(int count, BotSeedMode mode, int fixedSeed, float speed)
+        => StartBatchInternal(count, mode, fixedSeed, speed, false);
+
+    private bool StartBatchInternal(int count, BotSeedMode mode, int fixedSeed, float speed, bool golden)
     {
-        if (IsActive || count < 1 || count > 100 || !session.CanStart || (speed != 1f && speed != 5f && speed != 10f)) return false;
+        if (IsActive || count < 1 || count > 100 || !(golden ? session.CanStartGoldenPath : session.CanStart) || (speed != 1f && speed != 5f && speed != 10f)) return false;
+        goldenPath = golden;
         PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
         originalScale = Time.timeScale > 0f ? Time.timeScale : 1f;
         Result = new BotBatchResult { RequestedRuns = count, SeedMode = mode.ToString(), FixedSeed = fixedSeed, SimulationSpeed = speed };
+        if (golden) Result.Strategy = "GoldenPath";
         OutputPath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Artifacts", "BotBatches",
             "latest_batch.json"));
         IsActive = true; stopping = false;
@@ -35,14 +44,17 @@ public sealed class BotBatchRunner : MonoBehaviour
         if (!IsActive || !nextPending) return;
         // User inspection pauses batch orchestration, without consuming an infrastructure timeout.
         if (Subject42DebugMenu.IsDebugMenuOpen) { nextDeadline = Time.realtimeSinceStartup + 30f; return; }
-        if (!session.CanStart)
+        if (!(goldenPath ? session.CanStartGoldenPath : session.CanStart))
         {
             if (Time.realtimeSinceStartup > nextDeadline) Complete("Error", "Next sector cannot start: transition or required scene dependencies unavailable");
             return;
         }
         nextPending = false;
-        int seed = Result.SeedMode == BotSeedMode.Fixed.ToString() ? Result.FixedSeed : BotRunSeed.NextAuto();
-        if (!session.StartBotRun(seed, Result.SimulationSpeed, originalScale, saveStandaloneResult: false))
+        int seed = Result.SeedMode == BotSeedMode.Fixed.ToString() ? Result.FixedSeed : goldenPath
+            ? unchecked(Result.FixedSeed + Result.Results.Count) : BotRunSeed.NextAuto();
+        bool started = goldenPath ? session.StartGoldenPath(seed, Result.SimulationSpeed, originalScale)
+            : session.StartBotRun(seed, Result.SimulationSpeed, originalScale, saveStandaloneResult: false);
+        if (!started)
             Complete("Error", "Single-run session rejected the next run");
     }
     private void OnFinished(BotRunResult run)
@@ -51,6 +63,8 @@ public sealed class BotBatchRunner : MonoBehaviour
         Result.Results.Add(run);
         Result.Recalculate();
         if (stopping) return;
+        if (goldenPath && run.Result != BotRunOutcome.GoldenPathPassed.ToString())
+        { Complete("Failed", $"Seed {run.Seed}: {run.Reason}"); return; }
         if (run.Result == BotRunOutcome.Aborted.ToString()) { Complete("Stopped", run.Reason); return; }
         if (Result.CompletedRuns >= Result.RequestedRuns) { Complete("Completed", null); return; }
         if (!Save()) { Complete("Error", "Could not checkpoint batch results"); return; }
@@ -75,6 +89,22 @@ public sealed class BotBatchRunner : MonoBehaviour
         {
             Result.Status = "Error";
             Result.StopReason = "Final JSON/CSV save failed; all collected results remain available in memory";
+        }
+        if (goldenPath)
+        {
+            try
+            {
+                string historyPath = Path.Combine(Path.GetDirectoryName(OutputPath), "golden_path_history.json");
+                var history = File.Exists(historyPath) ? JsonUtility.FromJson<GoldenPathBatchHistory>(File.ReadAllText(historyPath)) : new GoldenPathBatchHistory();
+                history.Batches.RemoveAll(b => b.BatchId == Result.BatchId);
+                history.Batches.Add(Result);
+                File.WriteAllText(historyPath, JsonUtility.ToJson(history, true));
+            }
+            catch (Exception error)
+            {
+                Result.Status = "Error"; Result.StopReason = "Golden Path history save failed: " + error.Message;
+                Save();
+            }
         }
         Debug.Log(Result.Report());
         if (Result.Status == "Error") Debug.LogWarning("[Bot Batch] " + Result.StopReason);

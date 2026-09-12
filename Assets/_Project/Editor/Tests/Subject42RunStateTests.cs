@@ -39,6 +39,19 @@ public sealed class Subject42RunStateTests
     }
 
     [Test]
+    public void EndRunClearsGameplayStateWithoutWaitingForBunkerPresentation()
+    {
+        runState.RegisterCompletedLevel();
+        var summary = runState.EndRun(RunEndReason.Victory);
+        Assert.That(summary.CompletedLevels, Is.EqualTo(1));
+        Assert.That(runState.CurrentSector, Is.Null, "Cleanup must not depend on delayed UI");
+        Assert.That(runState.CompletedLevels, Is.Zero);
+        Assert.That(runState.OrbitalStationState, Is.Null);
+        Assert.That(runState.PickedUpgrades, Is.Empty);
+        Assert.That(runState.EndRun(RunEndReason.Victory), Is.SameAs(summary));
+    }
+
+    [Test]
     public void CommitCurrentSceneStats_IsIdempotentAcrossSceneManagers()
     {
         RunStatsManager first = CreateStats(3, 65f);

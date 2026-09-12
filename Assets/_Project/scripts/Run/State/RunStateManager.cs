@@ -633,6 +633,9 @@ public sealed class RunStateManager : MonoBehaviour
             $"gold={goldEarned}"
         );
 
+        // The immutable summary owns completed-run statistics. Gameplay cleanup must
+        // not wait for a bunker notification (which can be delayed or disabled).
+        ClearFinishedRunCompatibilityState();
         return lastRunSummary;
     }
 
@@ -711,5 +714,18 @@ public sealed class RunStateManager : MonoBehaviour
 
         ClearCurrentSector();
         CurrentLevel = 1;
+        SelectedCharacter = null;
+        SelectedWeapon = null;
+        pickedUpgrades.Clear();
+        itemSlots.Clear();
+        ClearExperienceSnapshot();
+        ClearHealthSnapshot();
+        upgradesAppliedToCurrentScene = false;
+        accumulatedKills = 0;
+        accumulatedKillRewardUnits = 0f;
+        accumulatedRunTime = 0f;
+        completedLevels = 0;
+        completedLevelRewardMultiplierTotal = 0f;
+        lastCompletedSectorNumber = 0;
     }
 }

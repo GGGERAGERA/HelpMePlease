@@ -88,6 +88,20 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
     public float DebugAcceleration => acceleration;
     public float DebugDeceleration => deceleration;
 
+    public Vector2 DebugForecastDisplacement(Vector2 intent, float seconds)
+    {
+        Vector2 velocity = currentVelocity;
+        Vector2 displacement = Vector2.zero;
+        Vector2 target = Vector2.ClampMagnitude(intent, 1f) * speed * anomalySpeedMultiplier * worldRuleSpeedMultiplier;
+        float step = seconds / 8f;
+        for (int i = 0; i < 8; i++)
+        {
+            velocity = Vector2.MoveTowards(velocity, target, acceleration * step);
+            displacement += (velocity + worldRuleExternalVelocity + anomalyExternalVelocity.Value) * step;
+        }
+        return displacement;
+    }
+
     public void SetDebugAcceleration(float value) =>
         acceleration = Mathf.Max(0f, value);
     public void SetDebugDeceleration(float value) =>
@@ -223,6 +237,9 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
         if (SceneTransitionOverlay.IsTransitioning) { if (rb != null) rb.linearVelocity = Vector2.zero; return; }
         if (rb == null)
             return;
+
+        // Accelerated simulations can run several physics steps per rendered frame.
+        if (MovementIntent != null) moveInput = Vector2.ClampMagnitude(MovementIntent(), 1f);
 
         if (isDashing)
         {

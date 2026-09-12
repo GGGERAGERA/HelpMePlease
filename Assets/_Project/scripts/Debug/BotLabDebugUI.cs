@@ -63,6 +63,17 @@ public sealed partial class Subject42DebugMenu
                 current.StartBotRun(current.FixedSeed);
             });
         AddBotBatchButtons(!busy && characterSpawner != null && (session == null || session.CanStart));
+        foreach (int count in new[] { 1, 10, 100 })
+            AddRow("Golden Path ×" + count, "3 sectors → boss → victory → bunker → second run", mutedColor, "GOLDEN ×" + count,
+                !busy, () =>
+                {
+                    var current = GetBotSession();
+                    if (!current.CanStartGoldenPath) return;
+                    var runner = current.GetComponent<BotBatchRunner>();
+                    if (runner == null) runner = current.gameObject.AddComponent<BotBatchRunner>();
+                    CloseMenu();
+                    runner.StartGoldenPathBatch(count, current.SeedMode, current.FixedSeed, current.SelectedSpeed);
+                });
         AddRow("Stop Bot", "Возвращает обычное управление", mutedColor, "STOP",
             busy, () =>
             {
