@@ -14,49 +14,32 @@ public sealed class Subject42OrbitalPrefabTests
     private static OrbitalPresentationConfig Config => Resources.Load<OrbitalPresentationConfig>("OrbitalStation/OrbitalPresentationConfig");
 
     [Test]
-    public void RingDepth_AuthoredSemicirclesShareEndpointsAndBlendOpacity()
+    public void RingLine_ContinuousTrajectoryHasUniformOpacity()
     {
         var view = Object.Instantiate(Config.RingPrefab);
         try
         {
-            Assert.That(view.GetComponentsInChildren<LineRenderer>().Length, Is.EqualTo(2));
-            var back = view.BackLine;
-            var front = view.FrontLine;
-            Assert.That(back.loop || front.loop || back.useWorldSpace || front.useWorldSpace, Is.False);
-            Assert.That(back.positionCount, Is.EqualTo(front.positionCount));
-            for (int i = 0; i < back.positionCount; i++)
+            foreach (var path in new[] { OrbitalPathGeometry.Circle, new OrbitalPathGeometry(Config) })
             {
-                Vector3 b = back.GetPosition(i), f = front.GetPosition(i);
-                Assert.That(b.y, Is.GreaterThanOrEqualTo(0f));
-                Assert.That(f.y, Is.LessThanOrEqualTo(0f));
-                Assert.That(b.magnitude, Is.EqualTo(1f).Within(.00001f));
-                Assert.That(f, Is.EqualTo(new Vector3(b.x, -b.y, 0f)));
-            }
-            Assert.That(back.GetPosition(0), Is.EqualTo(front.GetPosition(0)));
-            Assert.That(back.GetPosition(back.positionCount - 1), Is.EqualTo(front.GetPosition(front.positionCount - 1)));
-            foreach (float alpha in new[] { .52f, .95f, .16f })
-            {
-                var color = new Color(.4f, .8f, 1f, alpha);
-                view.SetAppearance(3.7f, .08f, color);
-                Assert.That(back.transform.localScale, Is.EqualTo(front.transform.localScale));
-                Assert.That(front.transform.localScale.x, Is.EqualTo(3.7f));
-                Assert.That(back.widthMultiplier, Is.EqualTo(front.widthMultiplier));
-                Assert.That(back.colorGradient.Evaluate(.5f).a, Is.EqualTo(alpha * .5f).Within(.0001f));
-                foreach (float endpoint in new[] { 0f, 1f })
-                    Assert.That(back.colorGradient.Evaluate(endpoint).a,
-                        Is.EqualTo(front.colorGradient.Evaluate(endpoint).a).Within(.0001f));
-                float previous = alpha;
-                for (int i = 0; i <= 12; i++)
+                view.InitializeGeometry(path);
+                Assert.That(view.BackLine.enabled, Is.False);
+                var line = view.FrontLine;
+                Assert.That(line.loop, Is.True);
+                Assert.That(line.useWorldSpace, Is.False);
+                for (int i = 0; i < line.positionCount; i++)
+                    Assert.That(Vector2.Distance(line.GetPosition(i) * path.Scale(1f),
+                        path.Position(i / (float)line.positionCount, 1f)), Is.LessThan(.00001f));
+                foreach (float alpha in new[] { .52f, .95f, .16f })
                 {
-                    float current = back.colorGradient.Evaluate(i * .01f).a;
-                    Assert.That(current, Is.LessThanOrEqualTo(previous + .0001f));
-                    previous = current;
+                    view.SetAppearance(3.7f, .08f, new Color(.4f, .8f, 1f, alpha));
+                    Assert.That(line.transform.localScale.x, Is.EqualTo(path.Scale(3.7f)));
+                    for (int i = 0; i <= 100; i++)
+                        Assert.That(line.colorGradient.Evaluate(i / 100f).a, Is.EqualTo(alpha).Within(.0001f));
                 }
             }
         }
         finally { Object.DestroyImmediate(view.gameObject); }
     }
-
     [Test]
     public void DepthSorting_UsesPlayerInternalLayerAndKeepsWeaponArtIntact()
     {
@@ -114,13 +97,12 @@ public sealed class Subject42OrbitalPrefabTests
             {
                 state.Order = order;
                 ring.Tick(0f);
-                bool first = order == 0;
-                Assert.That(view.BackLine.sortingLayerName, Is.EqualTo(first ? "Default" : "Player"));
-                Assert.That(view.BackLine.colorGradient.Evaluate(.5f).a,
-                    Is.EqualTo(view.FrontLine.colorGradient.Evaluate(.5f).a * (first ? .5f : 1f)).Within(.0001f));
-                if (!first) Assert.That(view.BackLine.sortingOrder, Is.EqualTo(view.FrontLine.sortingOrder));
+                Assert.That(view.BackLine.enabled, Is.False);
+                Assert.That(view.FrontLine.sortingLayerName, Is.EqualTo("Player"));
+                Assert.That(view.FrontLine.colorGradient.Evaluate(.25f).a,
+                    Is.EqualTo(view.FrontLine.colorGradient.Evaluate(.75f).a).Within(.0001f));
                 foreach (var mount in ring.Mounts)
-                    Assert.That(mount.Transform.GetComponent<OrbitalMountView>().DepthGroup.enabled, Is.EqualTo(first));
+                    Assert.That(mount.Transform.GetComponent<OrbitalMountView>().DepthGroup.enabled, Is.False);
             }
         }
         finally { Object.DestroyImmediate(root); }
@@ -145,9 +127,9 @@ public sealed class Subject42OrbitalPrefabTests
                 {
                     float angle = (expectedPhase + mount.LocalPhase) * Mathf.Deg2Rad;
                     Assert.That(Vector3.Distance(mount.Transform.localPosition,
-                        new Vector3(Mathf.Cos(angle), Mathf.Sin(angle)) * state.Radius), Is.LessThan(.00001f));
+                        new Vector3(Mathf.Cos(angle), Mathf.Sin(angle)) * ring.Radius), Is.LessThan(.00001f));
                     var group = mount.Transform.GetComponent<OrbitalMountView>().DepthGroup;
-                    Assert.That(group.sortingOrder, mount.Transform.localPosition.y > 0f ? Is.LessThan(0) : Is.GreaterThan(0));
+                    Assert.That(group.enabled, Is.False, "Circle mounts must retain authored weapon sorting above the continuous ring");
                 }
             }
         }

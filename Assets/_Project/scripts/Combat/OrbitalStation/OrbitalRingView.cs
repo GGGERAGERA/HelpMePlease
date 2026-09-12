@@ -7,36 +7,25 @@ namespace Subject42.Combat.OrbitalStation
     {
         public LineRenderer BackLine, FrontLine;
         public Transform MountsRoot;
-        [SerializeField, Range(0f, 1f)] private float backOpacityMultiplier = .5f;
-        [Tooltip("Fraction of the back semicircle used to blend opacity at each side.")]
-        [SerializeField, Range(.01f, .5f)] private float sideBlendFraction = .12f;
-
-        private readonly Gradient backGradient = new();
         private readonly Gradient frontGradient = new();
         private readonly GradientColorKey[] colorKeys = new GradientColorKey[2];
         private readonly GradientAlphaKey[] frontAlphaKeys = new GradientAlphaKey[2];
-        private readonly GradientAlphaKey[] alphaKeys = new GradientAlphaKey[8];
         private Color lastColor;
         private bool hasColor;
-        private bool lastDepthAware;
-        private int depthSortingLayer;
-        private int backSortingOrder;
         private OrbitalPathGeometry geometry = OrbitalPathGeometry.Circle;
 
         public void InitializeGeometry(OrbitalPathGeometry path)
         {
             geometry = path;
-            if (path.Type == OrbitalPathType.Circle) return;
-            const int segments = 128;
-            BackLine.positionCount = FrontLine.positionCount = segments + 1;
-            for (int i = 0; i <= segments; i++)
-            {
-                Vector3 upper = path.UpperPoint(i / (float)segments);
-                BackLine.SetPosition(i, upper);
-                FrontLine.SetPosition(i, new Vector3(upper.x, -upper.y, 0f));
-            }
+            // Keep the legacy prefab reference, but render one continuous closed trajectory.
+            BackLine.enabled = false;
+            FrontLine.loop = true;
+            FrontLine.sortingLayerID = SortingLayer.NameToID("Player");
+            const int segments = 256;
+            FrontLine.positionCount = segments;
+            for (int i = 0; i < segments; i++)
+                FrontLine.SetPosition(i, path.Position(i / (float)segments, 1f) / path.Scale(1f));
         }
-
         private static readonly int SurfaceId = Shader.PropertyToID("_RingSurface");
         private static readonly int CoreId = Shader.PropertyToID("_CoreEnergy");
         private static readonly int CoreColorId = Shader.PropertyToID("_CoreColor");
@@ -98,7 +87,6 @@ namespace Subject42.Combat.OrbitalStation
                 currentStyle.Glow + burst * config.RingUpgradeGlow, currentStyle.CoreWhitening, 0f));
             surface.SetVector(CoreId, coreEnergy);
             surface.SetColor(CoreColorId, coreColor);
-            BackLine.SetPropertyBlock(surface);
             FrontLine.SetPropertyBlock(surface);
             transitionAge = Mathf.Min(transitionAge + unscaledDeltaTime, config.RingTierTransitionDuration);
             energyTime = Mathf.Repeat(energyTime + unscaledDeltaTime * currentStyle.PulseSpeed, 1f);
@@ -107,60 +95,20 @@ namespace Subject42.Combat.OrbitalStation
         public bool IsValid => BackLine != null && FrontLine != null &&
             BackLine != FrontLine && MountsRoot != null;
 
-        // Geometry is set once at construction; only scale and appearance change per frame.
+        // depthAware is retained for callers of the old view API; ring lines no longer split by depth.
         public void SetAppearance(float radius, float width, Color color, bool depthAware = true)
         {
-            Vector3 scale = Vector3.one * geometry.Scale(radius);
-            BackLine.transform.localScale = FrontLine.transform.localScale = scale;
-            BackLine.widthMultiplier = FrontLine.widthMultiplier = width;
-            if (hasColor && lastColor == color && lastDepthAware == depthAware) return;
-            if (!hasColor)
-            {
-                depthSortingLayer = BackLine.sortingLayerID;
-                backSortingOrder = BackLine.sortingOrder;
-            }
-            BackLine.sortingLayerID = FrontLine.sortingLayerID = depthAware
-                ? depthSortingLayer : SortingLayer.NameToID("Player");
-            BackLine.sortingOrder = depthAware ? backSortingOrder : FrontLine.sortingOrder;
+            FrontLine.transform.localScale = Vector3.one * geometry.Scale(radius);
+            FrontLine.widthMultiplier = width;
+            if (hasColor && lastColor == color) return;
             hasColor = true;
-            lastDepthAware = depthAware;
             lastColor = color;
             colorKeys[0] = new GradientColorKey(color, 0f);
             colorKeys[1] = new GradientColorKey(color, 1f);
-            // Use gradients for both arcs: startColor/endColor quantize to Color32.
             frontAlphaKeys[0] = new GradientAlphaKey(color.a, 0f);
             frontAlphaKeys[1] = new GradientAlphaKey(color.a, 1f);
             frontGradient.SetKeys(colorKeys, frontAlphaKeys);
             FrontLine.colorGradient = frontGradient;
-            if (!depthAware)
-            {
-                BackLine.colorGradient = frontGradient;
-                return;
-            }
-            if (geometry.Type == OrbitalPathType.FigureEight)
-            {
-                // The upper halves meet at the crossing: restore opacity there and at both tips.
-                for (int i = 0; i < alphaKeys.Length; i++)
-                {
-                    float t = i / (float)(alphaKeys.Length - 1);
-                    float back = Mathf.SmoothStep(0f, 1f, Mathf.Abs(Mathf.Sin(t * Mathf.PI * 2f)));
-                    alphaKeys[i] = new GradientAlphaKey(color.a * Mathf.Lerp(1f, backOpacityMultiplier, back), t);
-                }
-                backGradient.SetKeys(colorKeys, alphaKeys);
-                BackLine.colorGradient = backGradient;
-                return;
-            }
-            // Equal opacity at both shared endpoints, without overlapping transparent caps.
-            // Intermediate keys approximate a smoothstep, avoiding a sharp fade boundary.
-            for (int i = 0; i < 4; i++)
-            {
-                float t = i / 3f;
-                float alpha = color.a * Mathf.Lerp(1f, backOpacityMultiplier, t * t * (3f - 2f * t));
-                alphaKeys[i] = new GradientAlphaKey(alpha, sideBlendFraction * t);
-                alphaKeys[7 - i] = new GradientAlphaKey(alpha, 1f - sideBlendFraction * t);
-            }
-            backGradient.SetKeys(colorKeys, alphaKeys);
-            BackLine.colorGradient = backGradient;
         }
     }
 }

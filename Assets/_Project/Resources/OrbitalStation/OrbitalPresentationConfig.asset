@@ -59,9 +59,11 @@ MonoBehaviour:
   ArcVisualScale: 0.46
   LinkNodeVisualScale: 0.42
   MountedWeaponSortingOffset: 12
+  RingRadiusPadding: 0.75
+  LaserSwordTangentOffset: -180
   FigureEightWidth: 1.4
   FigureEightHeight: 0.65
-  FigureEightSpacing: 1.1
+  FigureEightSpacing: 1.25
   FigureEightDepthRange: 0.3
   TierI:
     BaseColor: {r: 0.88, g: 0.96, b: 1, a: 1}

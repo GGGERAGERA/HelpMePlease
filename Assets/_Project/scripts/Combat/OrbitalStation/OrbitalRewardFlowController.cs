@@ -474,7 +474,11 @@ namespace Subject42.Combat.OrbitalStation
             {
                 Vector2 radial = (Vector2)hoveredMount.Transform.position -
                     (Vector2)station.transform.position;
-                modulePreview.SetWorldRotation(Mathf.Atan2(radial.y, radial.x));
+                float rotation = Mathf.Atan2(radial.y, radial.x);
+                if (reward.RewardKind == OrbitalRewardKind.LaserSword)
+                    rotation = hoveredMount.Ring.Geometry.TangentRotation(hoveredMount.Ring.Phase + hoveredMount.LocalPhase)
+                        + OrbitalPresentationConfig.Active.LaserSwordTangentOffset * Mathf.Deg2Rad;
+                modulePreview.SetWorldRotation(rotation);
             }
             modulePreview.SetPreviewState(valid);
             modulePreview.Tick();
