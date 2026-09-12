@@ -82,7 +82,6 @@ namespace Subject42.Combat.OrbitalStation
         private sealed class Projectile
         {
             public GameObject GameObject;
-            public SpriteRenderer Renderer;
             public EnemyHealth Target;
             public float Speed;
             public float Damage;
@@ -90,7 +89,7 @@ namespace Subject42.Combat.OrbitalStation
         }
 
         private readonly Transform root;
-        private readonly Sprite sprite;
+        private readonly GameObject projectilePrefab;
         private readonly List<Projectile> projectiles = new();
         // Borrowed by the synchronous Arc attack until the next query on this adapter.
         private readonly List<EnemyHealth> nearestTargets = new();
@@ -103,7 +102,7 @@ namespace Subject42.Combat.OrbitalStation
         public ProductionOrbitalCombatAdapter(Transform runtimeRoot, Sprite sharedSprite)
         {
             root = runtimeRoot;
-            sprite = sharedSprite;
+            projectilePrefab = OrbitalPresentationConfig.Active.PistolProjectilePrefab;
             nearestComparison = CompareNearestTargets;
             for (int i = 0; i < OrbitalPresentationConfig.Active.ProjectilePrewarmCount; i++)
                 CreateProjectile();
@@ -111,12 +110,11 @@ namespace Subject42.Combat.OrbitalStation
 
         private Projectile CreateProjectile()
         {
-            GameObject gameObject = new("Orbital Projectile");
-            gameObject.transform.SetParent(root, false);
-            SpriteRenderer renderer = gameObject.AddComponent<SpriteRenderer>();
-            renderer.sprite = sprite;
-            renderer.sortingOrder = 15;
-            var projectile = new Projectile { GameObject = gameObject, Renderer = renderer };
+            GameObject gameObject = UnityEngine.Object.Instantiate(projectilePrefab, root, false);
+            // Hits remain owned by this adapter, not the authored prefab's trigger.
+            foreach (var collider in gameObject.GetComponentsInChildren<Collider2D>(true))
+                collider.enabled = false;
+            var projectile = new Projectile { GameObject = gameObject };
             gameObject.SetActive(false);
             projectiles.Add(projectile);
             return projectile;
@@ -198,8 +196,6 @@ namespace Subject42.Combat.OrbitalStation
             projectile.Speed = Mathf.Max(1f, speed);
             projectile.Damage = damage;
             projectile.GameObject.transform.position = origin;
-            projectile.GameObject.transform.localScale = new Vector3(0.14f, 0.07f, 1f);
-            projectile.Renderer.color = color;
             projectile.GameObject.SetActive(true);
         }
 
