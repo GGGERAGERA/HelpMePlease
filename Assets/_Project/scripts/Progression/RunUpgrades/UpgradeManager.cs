@@ -86,6 +86,7 @@ public sealed class UpgradeManager : MonoBehaviour
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public event System.Action<UpgradeData> DebugRewardCommitted;
+    public object DebugCurrentRewardRequest => hasCurrentRequest ? currentRequest : null;
     public void DebugSetRewardResumeScale(float value) => previousTimeScale = value;
     public IReadOnlyList<UpgradeData> AllUpgrades => allUpgrades;
 

@@ -7,14 +7,14 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 // Created only by BOT LAB. Survives the explicit restart, never binds by global object search.
-public sealed class BotRunSession : MonoBehaviour
+public sealed partial class BotRunSession : MonoBehaviour
 {
     public static BotRunSession Current { get; private set; }
     public bool BotEnabled { get; private set; }
     public bool IsRunning { get; private set; }
     public bool IsStarting { get; private set; }
     public BotRunResult Result { get; private set; }
-    public string State => IsStarting ? "Starting fresh sector" : IsRunning ? controller.State : Result?.Result ?? "Idle";
+    public string State => goldenStage ?? (IsStarting ? "Starting fresh sector" : IsRunning ? controller.State : Result?.Result ?? "Idle");
     public string OutputPath { get; private set; }
     public event Action<BotRunResult> Finished;
     public BotSeedMode SeedMode { get; set; } = BotSeedMode.Auto;
@@ -54,7 +54,7 @@ public sealed class BotRunSession : MonoBehaviour
     public void BindScene(CharacterSpawner playerSpawner, RunFlowController runFlow,
         UpgradeManager upgradeManager, GameplayAreaService gameplayArea)
     {
-        if (IsRunning) Finish(BotRunOutcome.Aborted, "Scene changed during run");
+        if (IsRunning && goldenStage == null) Finish(BotRunOutcome.Aborted, "Scene changed during run");
         spawner = playerSpawner;
         flow = runFlow;
         rewards = upgradeManager;
@@ -158,6 +158,7 @@ public sealed class BotRunSession : MonoBehaviour
     }
     private void Tick()
     {
+        if (goldenStage != null) { TickGoldenPath(); return; }
         if (!IsRunning && !IsStarting) return;
         if (pendingException != null) { Finish(BotRunOutcome.Error, pendingException); return; }
         if (IsStarting)
@@ -211,6 +212,7 @@ public sealed class BotRunSession : MonoBehaviour
     public void Finish(BotRunOutcome outcome, string reason)
     {
         if (!IsRunning && !IsStarting && controller == null) return;
+        if (goldenStage != null) EndGoldenPath(outcome, reason);
         IsRunning = IsStarting = false;
         // Release ownership before serialization or reporting can fail. Do not overwrite another pause owner's scale.
         controller?.Dispose(); controller = null;

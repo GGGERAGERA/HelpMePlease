@@ -56,7 +56,17 @@ public sealed class BotTelemetry : IDisposable
         // Adapter publishes after TakeDamage. Negative remaining HP is the overkill portion.
         result.DamageDealt += Mathf.Max(0f, amount + Mathf.Min(0f, enemy.CurrentHealth));
     }
-    private void DamageTaken(float amount) { result.DamageTaken += amount; SampleHealth(); }
+    private void DamageTaken(float amount)
+    {
+        result.DamageTaken += amount;
+        SampleHealth();
+        if (result.GoldenPath == null) return;
+        var trace = new System.Diagnostics.StackTrace();
+        string source = trace.FrameCount > 2 ? trace.GetFrame(2).GetMethod()?.DeclaringType?.Name : "unknown";
+        var boss = RunFlowController.Instance?.FinalBoss;
+        result.GoldenPath.RecentDamage.Add($"t={result.Duration:F1}; sector={result.Sector}; source={source}; damage={amount}; hp={health.CurrentHealth}; position={health.transform.position}; bossHP={boss?.CurrentHealth}");
+        if (result.GoldenPath.RecentDamage.Count > 20) result.GoldenPath.RecentDamage.RemoveAt(0);
+    }
     private void ExperienceAdded(int amount) { result.XPCollected += amount; ProgressVersion++; }
     private void RewardTaken(UpgradeData reward) { result.RewardsTaken.Add(reward.upgradeName); ProgressVersion++; }
     private void SampleHealth()

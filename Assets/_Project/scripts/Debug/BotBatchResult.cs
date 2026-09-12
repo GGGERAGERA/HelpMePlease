@@ -43,6 +43,7 @@ public sealed class BotBatchResult
     public int SeedVersion = BotRunSeed.Version;
     public float SimulationSpeed;
     public int RequestedRuns, CompletedRuns, SectorCompleted, PlayerDead, StuckErrors, Aborted;
+    public int GoldenPathPassed, GoldenPathFailed;
     public float CompletionRate, DeathRate;
     public List<BotRunResult> Results = new();
     public BotDistribution Duration = new(), DamageTaken = new();
@@ -58,9 +59,11 @@ public sealed class BotBatchResult
         CompletedRuns = complete.Length;
         Aborted = Results.Count - CompletedRuns;
         SectorCompleted = complete.Count(r => r.Result == BotRunOutcome.SectorCompleted.ToString());
+        GoldenPathPassed = complete.Count(r => r.GoldenPath?.Result == "PASS");
+        GoldenPathFailed = Results.Count(r => r.GoldenPath?.Result == "FAIL");
         PlayerDead = complete.Count(r => r.Result == BotRunOutcome.PlayerDead.ToString());
         StuckErrors = complete.Count(r => r.Result == "Stuck" || r.Result == "Error");
-        CompletionRate = CompletedRuns > 0 ? (float)SectorCompleted / CompletedRuns : 0f;
+        CompletionRate = CompletedRuns > 0 ? (float)(Strategy == "GoldenPath" ? GoldenPathPassed : SectorCompleted) / CompletedRuns : 0f;
         DeathRate = CompletedRuns > 0 ? (float)PlayerDead / CompletedRuns : 0f;
         Duration = BotDistribution.From(complete.Select(r => r.Duration));
         DamageTaken = BotDistribution.From(complete.Select(r => r.DamageTaken));
@@ -95,6 +98,7 @@ public sealed class BotBatchResult
     {
         var text = new StringBuilder("=== BOT BATCH COMPLETE ===\n");
         text.AppendLine($"Batch: {BatchId}\nStatus: {Status} {StopReason}\nRuns: {CompletedRuns}/{RequestedRuns} · Aborted: {Aborted}");
+        if (Strategy == "GoldenPath") text.AppendLine($"Golden Path: PASS {GoldenPathPassed} / FAIL {GoldenPathFailed}");
         text.AppendLine($"Sector Completed: {SectorCompleted} ({CompletionRate:P1}) · Player Dead: {PlayerDead} ({DeathRate:P1}) · Stuck/Error: {StuckErrors}");
         text.AppendLine($"Duration (game seconds): avg {Duration.Average:0.0}, median {Duration.Median:0.0}, min/max {Duration.Minimum:0.0}/{Duration.Maximum:0.0}, P10/P50/P90 {Duration.P10:0.0}/{Duration.P50:0.0}/{Duration.P90:0.0}");
         text.AppendLine($"Combat averages: kills {AverageKills:0.0}, ORBITAL damage {AverageDamageDealt:0.0}, damage taken {DamageTaken.Average:0.0}");
@@ -108,6 +112,19 @@ public sealed class BotBatchResult
     }
     public string Csv()
     {
+        if (Strategy == "GoldenPath")
+        {
+            var goldenCsv = new StringBuilder("RunIndex,Result,Seed,Duration,SectorsCompleted,RewardsTaken,BossKilled,FinalRingCount,FinalModuleCount,AssertionsPassed,AssertionsFailed\n");
+            for (int i = 0; i < Results.Count; i++)
+            {
+                var g = Results[i].GoldenPath;
+                if (g == null) continue;
+                goldenCsv.AppendLine(string.Join(",", new object[] { i + 1, g.Result, g.Seed, g.Duration, g.SectorsCompleted,
+                    g.RewardsTaken, g.BossKilled, g.FinalRingCount, g.FinalModuleCount, g.AssertionsPassed, g.AssertionsFailed }
+                    .Select(v => Convert.ToString(v, CultureInfo.InvariantCulture))));
+            }
+            return goldenCsv.ToString();
+        }
         var csv = new StringBuilder("RunIndex,Seed,Result,Duration,Kills,DamageDealt,DamageTaken,XP,Levels,MinHP,MaxEnemiesAlive\n");
         for (int i = 0; i < Results.Count; i++)
         {

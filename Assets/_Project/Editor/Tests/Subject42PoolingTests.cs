@@ -50,6 +50,21 @@ public sealed class Subject42PoolingTests
     }
 
     [Test]
+    public void RepeatedDespawnDoesNotDestroyAnObjectAlreadyReturnedToPool()
+    {
+        var first = pool.Get(Vector3.zero, Quaternion.identity);
+        // Projectile callers destroy only when the pool did not handle despawn.
+        if (!first.Release()) Object.DestroyImmediate(first.gameObject);
+        if (!first.Release()) Object.DestroyImmediate(first.gameObject);
+        Assert.That(first != null, Is.True, "Second despawn destroyed an inactive pooled projectile");
+        var reused = pool.Get(Vector3.one, Quaternion.identity);
+        Assert.That(reused, Is.SameAs(first));
+        var concurrent = pool.Get(Vector3.zero, Quaternion.identity);
+        Assert.That(concurrent, Is.Not.SameAs(reused), "Repeated release must not enqueue twice");
+        reused.Release(); concurrent.Release();
+    }
+
+    [Test]
     public void ReusedProjectile_RestoresPhysicsColliderTrailAndScale()
     {
         PooledGameObject first = pool.Get(

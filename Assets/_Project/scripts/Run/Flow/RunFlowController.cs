@@ -6,6 +6,9 @@ public enum RunPhase { NormalSector, WaitingForRewards, FinalBossIntro, FinalBos
 
 public sealed class RunFlowController : MonoBehaviour
 {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public static event System.Action DebugVictoryConfirmed;
+#endif
     public static RunFlowController Instance { get; private set; }
 
     [Header("Level Choice")]
@@ -77,6 +80,9 @@ public sealed class RunFlowController : MonoBehaviour
             return;
 
         Phase = RunPhase.Victory;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        DebugVictoryConfirmed?.Invoke();
+#endif
         StopRunGameplay();
         // Let EnemyHealth finish its death/loot callbacks before unloading the scene.
         StartCoroutine(CompleteVictory());

@@ -19,6 +19,25 @@ public sealed class Subject42BotLabTests
         if (Application.isPlaying) yield return new ExitPlayMode();
     }
     [Test]
+    public void BotIntentIsSampledForEveryPhysicsStep()
+    {
+        var owner = new GameObject("Physics intent test", typeof(Rigidbody2D));
+        try
+        {
+            var movement = owner.AddComponent<CharacterMovement2D>();
+            var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            typeof(CharacterMovement2D).GetMethod("Start", flags).Invoke(movement, null);
+            movement.MovementIntent = () => Vector2.left;
+            typeof(CharacterMovement2D).GetMethod("FixedUpdate", flags).Invoke(movement, null);
+            Assert.That(typeof(CharacterMovement2D).GetField("moveInput", flags).GetValue(movement), Is.EqualTo(Vector2.left));
+            movement.MovementIntent = () => Vector2.up;
+            typeof(CharacterMovement2D).GetMethod("FixedUpdate", flags).Invoke(movement, null);
+            Assert.That(typeof(CharacterMovement2D).GetField("moveInput", flags).GetValue(movement), Is.EqualTo(Vector2.up));
+        }
+        finally { Object.DestroyImmediate(owner); }
+    }
+
+    [Test]
     public void MovementHasAnOptionalIntentSource()
     {
         Assert.That(typeof(CharacterMovement2D).GetProperty("MovementIntent"), Is.Not.Null,

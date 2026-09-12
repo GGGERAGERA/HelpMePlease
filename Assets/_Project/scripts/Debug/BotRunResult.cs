@@ -5,11 +5,12 @@ using System.Linq;
 using System.Text;
 using Subject42.Combat.OrbitalStation;
 
-public enum BotRunOutcome { SectorCompleted, PlayerDead, Aborted, Stuck, Error }
+public enum BotRunOutcome { SectorCompleted, PlayerDead, Aborted, Stuck, Error, GoldenPathPassed, GoldenPathFailed }
 
 [Serializable]
 public sealed class BotRunResult
 {
+    public GoldenPathResult GoldenPath;
     public string RunId = Guid.NewGuid().ToString("N");
     public string StartedUtc = DateTime.UtcNow.ToString("O");
     public int Seed;
