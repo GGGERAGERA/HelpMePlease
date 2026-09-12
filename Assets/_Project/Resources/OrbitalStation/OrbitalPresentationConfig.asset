@@ -41,6 +41,7 @@ MonoBehaviour:
   CoreShakeMagnitude: 0.025
   FlashPoolCapacity: 128
   ProjectilePrewarmCount: 96
+  PistolProjectilePrefab: {fileID: 6821974247563523827, guid: 079789641f804d74b80b16bc9a7fd3a8, type: 3}
   PlayerVariants:
   - Source: {fileID: 3267337206729473661, guid: 1868b54bca0976a44b3b858e4529d00d, type: 3}
     Production: {fileID: 8899567883607463258, guid: 50fd004411bc2bc40bb6a21478296cc8, type: 3}

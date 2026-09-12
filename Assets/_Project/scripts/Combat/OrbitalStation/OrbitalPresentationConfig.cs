@@ -36,6 +36,7 @@ namespace Subject42.Combat.OrbitalStation
         public float CoreShakeMagnitude = .025f;
         public int FlashPoolCapacity = 128;
         public int ProjectilePrewarmCount = 96;
+        public GameObject PistolProjectilePrefab;
         public Color GetCoreWaveColor(int wave) => wave switch
         { 1 => CoreCyan, 2 => CoreViolet, _ => CoreGold };
         public PlayerVariant[] PlayerVariants;
