@@ -57,6 +57,14 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         }
     }
 
+    [SerializeField] private PropScatterProfile propScatterProfile;
+    private ProductionSectorProps propScatter;
+    public int PropSeed => propScatter != null ? propScatter.Seed : 0;
+    public int PropCount => propScatter != null ? propScatter.Count : 0;
+    public void RegenerateProps() => propScatter?.Regenerate();
+    public void ClearProps() => propScatter?.Clear();
+    public void ChangePropSeed(int delta) => propScatter?.ChangeSeed(delta);
+
     private ExplorationSectorConfig config;
     private GameplayAreaService gameplayArea;
     private EnemySpawner enemySpawner;
@@ -68,6 +76,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
     private Vector2 breakableExitPosition;
     private bool hasBreakableLayout;
     private readonly List<WorldBreakable> spawnedBreakables = new();
+    private readonly List<ResourceNode> resourceNodes = new();
     private readonly Collider2D[] breakableOverlapBuffer =
         new Collider2D[BreakableOverlapBufferSize];
 
@@ -211,8 +220,12 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             exitPosition
         );
 
-        ProductionSectorProps.Place(transform, gameplayArea, normalPositions,
-            specialPosition, exitPosition, config.ExitRadius, spawnedBreakables);
+        SpawnResourceNodes();
+        // Place decoration after gameplay objects so its profile/seed never drives their placement.
+        propScatter = new ProductionSectorProps(transform, gameplayArea, normalPositions,
+            specialPosition, exitPosition, config.ExitRadius, propScatterProfile != null
+                ? propScatterProfile : Resources.Load<PropScatterProfile>("PropScatterProfile"));
+        propScatter.Regenerate();
 
         threatController.Initialize(config.ThreatConfig, enemySpawner);
 
@@ -223,6 +236,63 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             $"Exit at {exitPosition}."
         );
         return true;
+    }
+
+    public void ClearResourceNodes()
+    {
+        foreach (var node in resourceNodes)
+        {
+            if (node == null) continue;
+            node.gameObject.SetActive(false);
+            Destroy(node.gameObject);
+        }
+        resourceNodes.Clear();
+    }
+
+    public int SpawnResourceNodes()
+    {
+        if (!hasBreakableLayout || gameplayArea == null) return 0;
+        var player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null) return 0;
+        ClearResourceNodes();
+        Physics2D.SyncTransforms();
+        var bounds = gameplayArea.PlayableArea.bounds;
+        var placed = new List<Vector2>();
+        var propsRoot = transform.Find("Sector visual props");
+        var props = propsRoot != null ? propsRoot.GetComponentsInChildren<Renderer>() :
+            System.Array.Empty<Renderer>();
+        int target = Random.Range(5, 9);
+        for (int attempt = 0; attempt < 1000 && placed.Count < target; attempt++)
+        {
+            var position = new Vector2(Random.Range(bounds.min.x, bounds.max.x),
+                Random.Range(bounds.min.y, bounds.max.y));
+            if (!IsBreakablePositionValid(position, player.transform.position,
+                    breakableNormalSitePositions, breakableSpecialSitePosition,
+                    breakableExitPosition, placed, 2f, 1f)) continue;
+            // Also exclude decoration without colliders and obstacles on other layers.
+            bool blocked = false;
+            foreach (var prop in props)
+            {
+                var b = prop.bounds;
+                if (position.x >= b.min.x - .65f && position.x <= b.max.x + .65f &&
+                    position.y >= b.min.y - .65f && position.y <= b.max.y + .65f)
+                { blocked = true; break; }
+            }
+            if (blocked) continue;
+            var filter = new ContactFilter2D { useTriggers = false };
+            if (Physics2D.OverlapCircle(position, .65f, filter, breakableOverlapBuffer) > 0)
+                continue;
+            var go = new GameObject("Resource Node");
+            go.transform.SetParent(transform, false);
+            go.transform.position = position;
+            var node = go.AddComponent<ResourceNode>();
+            node.Initialize(player.transform);
+            resourceNodes.Add(node);
+            placed.Add(position);
+        }
+        if (placed.Count < target)
+            Debug.LogWarning($"[ResourceNode] Only {placed.Count}/{target} safe positions found.", this);
+        return placed.Count;
     }
 
     private int SpawnWorldBreakables(

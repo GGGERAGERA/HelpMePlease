@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5b83510947549a7ad7c9277f36610c4, type: 3}
+  m_Name: PropScatterProfile
+  m_EditorClassIdentifier: Assembly-CSharp::PropScatterProfile
+  entries:
+  - prefab: {fileID: 4347968268465724665, guid: 206788ef30e88624ca0413aba6a29b74, type: 3}
+    weight: 1
+    minCount: 8
+    maxCount: 40
+    varyScale: 1
+    scaleRange: {x: 0.92, y: 1.06}
+    varyRotation: 1
+    rotationRange: {x: -8, y: 8}
+  - prefab: {fileID: 3654534448209230114, guid: d47c717d19e4db8488938ac3b32ecd76, type: 3}
+    weight: 1
+    minCount: 8
+    maxCount: 40
+    varyScale: 1
+    scaleRange: {x: 0.92, y: 1.06}
+    varyRotation: 1
+    rotationRange: {x: -8, y: 8}
+  - prefab: {fileID: 4054196898598802901, guid: 1a98c02862d42c44aa7b04a7275ef4ac, type: 3}
+    weight: 1
+    minCount: 8
+    maxCount: 40
+    varyScale: 1
+    scaleRange: {x: 0.92, y: 1.06}
+    varyRotation: 1
+    rotationRange: {x: -180, y: 180}
+  - prefab: {fileID: 7126374022098793200, guid: e3eb1ea10278cd044987db82d404f19d, type: 3}
+    weight: 1
+    minCount: 8
+    maxCount: 40
+    varyScale: 1
+    scaleRange: {x: 0.92, y: 1.06}
+    varyRotation: 1
+    rotationRange: {x: -8, y: 8}
+  - prefab: {fileID: 5440511255011642023, guid: f4510fa597f8fab4db4d6df5a962ddd8, type: 3}
+    weight: 1
+    minCount: 8
+    maxCount: 40
+    varyScale: 1
+    scaleRange: {x: 0.92, y: 1.06}
+    varyRotation: 1
+    rotationRange: {x: -8, y: 8}
+  - prefab: {fileID: 5231355241825300175, guid: 73bc9638b7127b54a8132388a5554720, type: 3}
+    weight: 1
+    minCount: 8
+    maxCount: 40
+    varyScale: 1
+    scaleRange: {x: 0.92, y: 1.06}
+    varyRotation: 1
+    rotationRange: {x: -8, y: 8}
+  - prefab: {fileID: 6846802472151927056, guid: 9e48d25f811055341aaa1256b7f12592, type: 3}
+    weight: 1
+    minCount: 8
+    maxCount: 40
+    varyScale: 1
+    scaleRange: {x: 0.92, y: 1.06}
+    varyRotation: 1
+    rotationRange: {x: -180, y: 180}
+  - prefab: {fileID: 7581359837238470308, guid: 5330d9fe92cd65946adaf03cac4ac65f, type: 3}
+    weight: 1
+    minCount: 8
+    maxCount: 40
+    varyScale: 1
+    scaleRange: {x: 0.92, y: 1.06}
+    varyRotation: 1
+    rotationRange: {x: -180, y: 180}
+  - prefab: {fileID: 935229878985820737, guid: eb444138efc99f745bac0fe9791b13b4, type: 3}
+    weight: 1
+    minCount: 8
+    maxCount: 40
+    varyScale: 1
+    scaleRange: {x: 0.92, y: 1.06}
+    varyRotation: 1
+    rotationRange: {x: -8, y: 8}
+  seed: 42073
+  totalCount: 238
+  minDistance: 3.5
+  edgeClearance: 1
+  wallClearance: 0.6
+  playerClearance: 3
+  exitClearance: 3
+  interactableClearance: 2.5

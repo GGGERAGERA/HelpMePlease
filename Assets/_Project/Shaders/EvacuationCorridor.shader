@@ -2,9 +2,9 @@ Shader "World/Evacuation Corridor"
 {
     Properties
     {
-        _InsideColor ("Inside Color", Color) = (0.22, 0.82, 0.95, 0.11)
-        _EdgeColor ("Edge Color", Color) = (0.24, 0.94, 1, 0.48)
-        _DirectionColor ("Direction Color", Color) = (0.48, 1, 1, 0.2)
+        _InsideColor ("Inside Color", Color) = (0.025, 0.045, 0.055, 0.26)
+        _EdgeColor ("Edge Color", Color) = (0.12, 0.68, 0.74, 0.38)
+        _DirectionColor ("Direction Color", Color) = (0.16, 0.28, 0.3, 0.06)
         _OutsideDarkness ("Outside Darkness", Range(0, 0.8)) = 0.32
         _Reveal ("Reveal", Range(0, 1)) = 0
         _Fade ("Fade", Range(0, 1)) = 0
@@ -101,7 +101,7 @@ Shader "World/Evacuation Corridor"
 
                 float edge = 1.0 - PixelHardStep(
                     0.0,
-                    0.014,
+                    0.004,
                     abs(signedDistance)
                 );
                 edge *= revealMask;
@@ -111,7 +111,7 @@ Shader "World/Evacuation Corridor"
 
                 float2 normalized = localPosition / halfSize;
                 float movingCell = frac(
-                    (normalized.x - time * 0.12) * 2.5
+                    (normalized.x - time * 0.12) * 1.0
                 );
                 float chevronDistance = abs(
                     abs(normalized.y) * 0.22 -
@@ -138,7 +138,7 @@ Shader "World/Evacuation Corridor"
                 color = lerp(
                     color,
                     _DirectionColor.rgb,
-                    directionMark * 0.45
+                    directionMark * 0.12
                 );
                 color = lerp(color, _EdgeColor.rgb, edge);
 

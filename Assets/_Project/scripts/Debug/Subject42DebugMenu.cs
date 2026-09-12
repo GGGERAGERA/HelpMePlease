@@ -1421,6 +1421,17 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         }
 
         AddVisualLiveStatus();
+        var scatterSector = ProductionExplorationSectorController.ActiveInstance;
+        AddSectionTitle("PROP SCATTER", scatterSector != null
+            ? $"Seed {scatterSector.PropSeed} | {scatterSector.PropCount} props" : "MVP sector required");
+        AddRow("Regenerate Props", "Same seed / current profile", accentColor, "REGENERATE", scatterSector != null,
+            () => { scatterSector.RegenerateProps(); RefreshCurrentTab(); });
+        AddRow("Clear Props", "Visual decoration only", accentColor, "CLEAR", scatterSector != null,
+            () => { scatterSector.ClearProps(); RefreshCurrentTab(); });
+        AddRow("Seed +1", "Regenerate with next seed", accentColor, "+1", scatterSector != null,
+            () => { scatterSector.ChangePropSeed(1); RefreshCurrentTab(); });
+        AddRow("Seed -1", "Regenerate with previous seed", accentColor, "-1", scatterSector != null,
+            () => { scatterSector.ChangePropSeed(-1); RefreshCurrentTab(); });
         AddRow("Scene preview", "F1 RETURNS TO MENU", accentColor, "PREVIEW", true, EnterScenePreview);
         AddVisualObjectFocusButtons();
 
@@ -2931,6 +2942,11 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private void AddQaSection()
     {
         EnsureProductionSectorDebug();
+        var nodeSector = ProductionExplorationSectorController.ActiveInstance;
+        AddRow("Spawn Nodes", "", mutedColor, "SPAWN", nodeSector != null,
+            () => nodeSector.SpawnResourceNodes());
+        AddRow("Clear Nodes", "", mutedColor, "CLEAR", nodeSector != null,
+            () => nodeSector.ClearResourceNodes());
         AddSectionTitle("PLAYER", "Current runtime only");
         AddToggleRow("INVULNERABILITY", productionSectorDebug.InvulnerabilityEnabled,
             characterSpawner != null && characterSpawner.SpawnedPlayer != null,

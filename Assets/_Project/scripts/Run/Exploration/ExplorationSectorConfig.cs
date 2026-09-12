@@ -6,6 +6,12 @@ using UnityEngine;
 )]
 public sealed class ExplorationSectorConfig : ScriptableObject
 {
+    [Header("Resource Node Feedback")]
+    [SerializeField] private GameObject resourceNodePopupPrefab;
+    [SerializeField] private ExperiencePickupEffect resourceNodePickupEffect;
+    public GameObject ResourceNodePopupPrefab => resourceNodePopupPrefab;
+    public ExperiencePickupEffect ResourceNodePickupEffect => resourceNodePickupEffect;
+
     [Header("Normal Sites")]
     [SerializeField] private LocalAnomalyData[] normalAnomalies;
 

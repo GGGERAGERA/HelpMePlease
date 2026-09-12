@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-12 21:57:13Z" end-time="2026-09-12 21:57:20Z" duration="6,8716">
+  <test-suite type="TestSuite" id="1000" name="Help Me Please" fullname="Help Me Please" runstate="Runnable" testcasecount="281" result="Passed" start-time="2026-09-12 21:57:13Z" end-time="2026-09-12 21:57:20Z" duration="6.871600" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1347" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="281" result="Passed" start-time="2026-09-12 21:57:13Z" end-time="2026-09-12 21:57:20Z" duration="6.796633" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="35428" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="1093" name="PropScatterSmoke" fullname="PropScatterSmoke" classname="PropScatterSmoke" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-12 21:57:13Z" end-time="2026-09-12 21:57:20Z" duration="6.791814" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1094" name="ProductionProfileTwoSeeds" fullname="PropScatterSmoke.ProductionProfileTwoSeeds" methodname="ProductionProfileTwoSeeds" classname="PropScatterSmoke" runstate="Runnable" seed="898657529" result="Passed" start-time="2026-09-12 21:57:03Z" end-time="2026-09-12 21:57:20Z" duration="16.868786" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[[EnemyChaseMovement] 'Boss2_0' has no Bool parameter 'IsRunning'.
+[BunkerInteractableCollider] Interaction source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerWeaponShowcase renderers=8
+[BunkerInteractableCollider] Interaction source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerPlayerShowcase 1 renderers=16
+[BunkerInteractableCollider] Interaction source=p_Shelf1, interactable=False, hoverable=True
+[BunkerHoverOutline] p_Shelf1 renderers=30
+[BunkerInteractableCollider] Interaction source=p_AnomalyTable1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_AnomalyTable1 renderers=32
+[BunkerInteractableCollider] Interaction source=p_Shelf1 (1), interactable=False, hoverable=True
+[BunkerHoverOutline] p_Shelf1 (1) renderers=30
+[BunkerInteractableCollider] Interaction source=p_bunkerUpgrade1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerUpgrade1 renderers=20
+[BunkerInteractableCollider] Interaction source=p_BunkerGates1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_BunkerGates1 renderers=45
+[RunSelectionManager] Character selected: 01_Gera
+[RunSelectionManager] Character selected: 01_Gera
+[RunState] New run: character=01_Gera, weapon=NULL, stabilizer=NULL
+[CharacterSpawner] Weapons found: 0
+[MetaUpgradeApplier] Loaded meta: HP=2, DMG=0, SPD=0, XP=1, GOLD=2, PICKUP=0
+[RunState] Applied to spawned player. Upgrades: 0, hasHealth: False
+[VisualLab LOAD]
+ProjectileVisualScale=1
+TrailWidth=1
+TrailTime=1
+CameraZoom=8,087
+source=Assets/_Project/Resources/VisualTuningSavedValues.asset
+[TacticalMap] breakableMarkers=0
+[EnemySpawner] Phase 1: interval 1,50, max alive 10.
+[EnemySpawner] Level scaling: HP x1,00, speed x1,00, pressure x1,00.
+SECTOR LAYOUT
+Coverage: 91,4%
+Player: (0.00, 0.00, 0.00)
+Normal 1: center (31.51, 18.05), size (35.04, 61.17)
+Normal 2: center (-17.25, -21.43), size (58.69, 52.22)
+Normal 3: center (-17.67, 28.61), size (58.95, 41.41)
+Special GravityOrb: center (31.51, -31.79), size (34.23, 33.53), distance 44,8/70,6
+Line-to-Special in Normal: 40%
+Exit: (-20.72, -14.74), inside NORMAL
+Attempts: 2
+[ExplorationSector] Special Site: GRAVITY (GravityZone).
+[Breakables] requested=5 spawned=5 visible=5 rejected=0 fallback=0 bounds=100x100
+[PropScatter] seed=1956144, count=238/238. Safety takes priority over requested counts.
+[ExplorationSector] Sector ready: 3 Normal, 1 Special (GravityOrb), 91% map coverage, 5 breakables, Exit at (-20.72, -14.74).
+[SectorRuntime]
+Source=RunSector
+Sector=1
+StageProfile='StageProfile_01'
+WorldRule='WorldRule_None'
+LocalAnomaly='LocalAnomaly_Berserk'
+[TacticalMap] breakableMarkers=5
+[PropScatter] seed=1956144, count=238/238. Safety takes priority over requested counts.
+[PropScatter] seed=1956145, count=238/238. Safety takes priority over requested counts.
+[PropScatter] seed=1956144, count=238/238. Safety takes priority over requested counts.
+[PropScatter] seed=1956144, count=238/238. Safety takes priority over requested counts.
+[EnemySpawner] Spawning stopped.
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+Saving results to: Artifacts/GeneratedQA/CorePulse/results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

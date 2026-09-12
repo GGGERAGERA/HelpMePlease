@@ -1,0 +1,109 @@
+using System;
+using System.IO;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+[InitializeOnLoad]
+public static class ResourceNodeFeedbackSmoke
+{
+    const string Root = "Artifacts/ResourceNodeFeedbackSmoke/";
+    const string Key = "ResourceNodeFeedbackSmoke";
+    static double deadline;
+    static ResourceNode collectedNode;
+    static int after;
+    static bool clicked; static float approachAt = -1f, collectedAt; static TMPro.TextMeshPro popup; static ExperiencePickupEffect flash;
+
+    static ResourceNodeFeedbackSmoke()
+    {
+        EditorApplication.update += Tick;
+        EditorApplication.playModeStateChanged += state =>
+        {
+            if (!SessionState.GetBool(Key, false)) return;
+            if (state == PlayModeStateChange.EnteredPlayMode)
+            { deadline = EditorApplication.timeSinceStartup + 30; clicked = false; approachAt = -1f; }
+            if (state == PlayModeStateChange.EnteredEditMode)
+            {
+                if (SessionState.GetBool(Key + "HadGold", false))
+                    PlayerPrefs.SetInt("TOTAL_GOLD", SessionState.GetInt(Key + "Gold", 0));
+                else PlayerPrefs.DeleteKey("TOTAL_GOLD");
+                PlayerPrefs.Save();
+                SessionState.SetBool(Key, false);
+                var previous = SessionState.GetString(Key + "Scene", "");
+                if (!string.IsNullOrEmpty(previous)) EditorSceneManager.OpenScene(previous);
+                File.AppendAllText(Root + "result.txt", "Returned to Edit Mode; saved gold restored.\n");
+            }
+        };
+    }
+
+    static void Tick()
+    {
+        if (EditorApplication.isCompiling || EditorApplication.isUpdating) return;
+        if (!EditorApplication.isPlayingOrWillChangePlaymode && File.Exists(Root + "run.request"))
+        {
+            File.Delete(Root + "run.request");
+            if (SceneManager.GetActiveScene().isDirty)
+            { File.WriteAllText(Root + "result.txt", "BLOCKED: active scene has unsaved changes."); return; }
+            File.WriteAllText(Root + "result.txt", "PASS Unity compile (loaded new scripts).\n");
+            SessionState.SetString(Key + "Scene", SceneManager.GetActiveScene().path);
+            SessionState.SetBool(Key + "HadGold", PlayerPrefs.HasKey("TOTAL_GOLD"));
+            SessionState.SetInt(Key + "Gold", PlayerPrefs.GetInt("TOTAL_GOLD", 0));
+            SessionState.SetBool(Key, true);
+            EditorSceneManager.OpenScene("Assets/_Project/Scenes/MainBuild/MVP.unity");
+            EditorApplication.isPlaying = true;
+            return;
+        }
+        if (!SessionState.GetBool(Key, false) || !EditorApplication.isPlaying) return;
+        try
+        {
+            if (EditorApplication.timeSinceStartup > deadline) throw new Exception("MVP readiness timeout");
+            var sector = ProductionExplorationSectorController.ActiveInstance;
+            var player = GameObject.FindGameObjectWithTag("Player");
+            if (sector == null || player == null || CurrencyManager.Instance == null) return;
+            if (clicked)
+            {
+                if (Time.time - collectedAt < 1.2f) return; if (popup != null || (flash != null && flash.gameObject.activeInHierarchy)) throw new Exception("Feedback not cleaned up"); if (collectedNode != null || CurrencyManager.Instance.TotalGold != after)
+                    throw new Exception("Node not destroyed or currency changed again");
+                File.AppendAllText(Root + "result.txt", "PASS node destroyed; popup expired; pooled flash released; currency unchanged.\n");
+                EditorApplication.isPlaying = false;
+                return;
+            }
+            var nodes = UnityEngine.Object.FindObjectsByType<ResourceNode>(FindObjectsSortMode.None);
+            if (nodes.Length == 0) return;
+            if (nodes.Length < 5 || nodes.Length > 8) throw new Exception("Spawn count " + nodes.Length);
+            collectedNode = nodes[0];
+            player.transform.position = collectedNode.transform.position + Vector3.right;
+            Physics2D.SyncTransforms();
+            if (!(bool)typeof(ResourceNode).GetProperty("CanCollect", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(collectedNode)) return; if (approachAt < 0f) { approachAt = Time.time; return; } if (Time.time - approachAt < .08f) return; if (collectedNode.transform.Find("Diamond").localScale.x <= 1.01f) throw new Exception("Approach pulse missing"); int before = CurrencyManager.Instance.TotalGold;
+            if (!collectedNode.TryCollectAt(collectedNode.transform.position))
+            {
+                var station = UnityEngine.Object.FindFirstObjectByType<Subject42.Combat.OrbitalStation.OrbitalStationRuntime>();
+                var field = typeof(ResourceNode).GetField("station", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                File.WriteAllText(Root + "blocked.txt", $"nodes={nodes.Length} scale={Time.timeScale} station={station} cached={field.GetValue(collectedNode)} owner={station?.Owner} dead={station?.Owner?.IsDead} input={station?.InputOwner} canUse={station?.InputOwner?.CanUseDebugPlacement} blocked={station?.InputOwner?.IsGameplayInputBlocked} mode={station?.InputOwner?.Mode} distance={Vector2.Distance(player.transform.position, collectedNode.transform.position)}");
+                return;
+            }
+            after = CurrencyManager.Instance.TotalGold;
+            if (after <= before) throw new Exception("Currency did not increase");
+            if (collectedNode.TryCollectAt(collectedNode.transform.position) || CurrencyManager.Instance.TotalGold != after)
+                throw new Exception("Duplicate collection");
+            File.AppendAllText(Root + "result.txt", $"PASS spawn={nodes.Length}; click handler gold {before}->{after}; repeat rejected.\n");
+                        foreach (var text in UnityEngine.Object.FindObjectsByType<TMPro.TextMeshPro>(FindObjectsSortMode.None))
+                if (text.text == $"+{after - before}" && Vector2.Distance(text.transform.position, collectedNode.transform.position) < 1.5f) popup = text;
+            flash = UnityEngine.Object.FindFirstObjectByType<ExperiencePickupEffect>();
+            if (popup == null || popup.color.r < .9f || popup.color.g < .6f || flash == null)
+                throw new Exception("Gold popup or pickup flash missing");
+            File.AppendAllText(Root + "result.txt", $"PASS approach pulse; gold popup {popup.text}; existing pooled pickup flash.\n");
+            collectedAt = Time.time;
+            clicked = true;
+        }
+        catch (Exception e)
+        {
+            File.AppendAllText(Root + "result.txt", "FAIL " + e + "\n");
+            EditorApplication.isPlaying = false;
+        }
+    }
+}
+
+
+
