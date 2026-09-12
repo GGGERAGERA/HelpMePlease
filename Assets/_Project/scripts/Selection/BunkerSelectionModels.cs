@@ -31,6 +31,9 @@ public sealed class BunkerSelectionEntryModel
     public string DisplayName;
     public string Category;
     public Sprite Icon;
+    // Character cards show the authored gameplay visual; Icon remains the detail portrait.
+    public Sprite CharacterVisual;
+    public bool IsCharacter;
     public Color IconColor = Color.white;
     public string Feature;
     public string Description;

@@ -44,8 +44,9 @@ public sealed class BunkerSelectionCardView : MonoBehaviour,
 
         if (icon != null)
         {
-            icon.sprite = value.Icon;
-            icon.enabled = value.Icon != null;
+            icon.sprite = value.IsCharacter ? value.CharacterVisual : value.Icon;
+            icon.enabled = icon.sprite != null;
+            icon.rectTransform.localScale = Vector3.one;
             icon.preserveAspect = true;
             icon.color = value.Locked
                 ? StationPixelVisuals.Disabled
@@ -76,6 +77,21 @@ public sealed class BunkerSelectionCardView : MonoBehaviour,
         if (selectedFrame != null)
             selectedFrame.SetActive(value);
         RefreshBackground();
+    }
+
+    private void LateUpdate()
+    {
+        if (icon == null || entry?.CharacterVisual == null)
+            return;
+
+        // Quantize to physical screen pixels after the CanvasScaler/layout pass.
+        // Production body textures are imported with Point filtering.
+        Rect rect = icon.rectTransform.rect;
+        Vector2 pixels = entry.CharacterVisual.rect.size;
+        float canvasScale = icon.canvas != null ? icon.canvas.scaleFactor : 1f;
+        float fit = Mathf.Min(rect.width / pixels.x, rect.height / pixels.y) * canvasScale;
+        float scale = fit >= 1f ? Mathf.Floor(fit) / fit : 1f;
+        icon.rectTransform.localScale = new Vector3(scale, scale, 1f);
     }
 
     public void OnPointerEnter(PointerEventData eventData)

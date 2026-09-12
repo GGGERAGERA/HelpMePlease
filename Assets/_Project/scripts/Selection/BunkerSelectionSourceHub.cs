@@ -250,6 +250,8 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
                     ? character.combatType.ToString().ToUpperInvariant()
                     : character.combatTypeDisplayName.ToUpperInvariant(),
                 Icon = character.portrait,
+                CharacterVisual = GetCharacterVisual(character),
+                IsCharacter = true,
                 Feature = character.combatTypeDescription,
                 Description = character.description,
                 Locked = !unlocked,
@@ -262,6 +264,26 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
         });
         FinalizeUnlockPresentation(model);
         return model;
+    }
+
+    private static Sprite GetCharacterVisual(CharacterData character)
+    {
+        if (character.characterPrefab == null)
+            return null;
+
+        // Production characters each have one active body renderer. The other
+        // children are disabled art variants; never pick one by its asset name.
+        foreach (SpriteRenderer renderer in character.characterPrefab.GetComponentsInChildren<SpriteRenderer>(true))
+        {
+            if (!renderer.enabled || renderer.sprite == null)
+                continue;
+            bool active = true;
+            for (Transform node = renderer.transform; node != null; node = node.parent)
+                active &= node.gameObject.activeSelf;
+            if (active)
+                return renderer.sprite;
+        }
+        return null;
     }
 
     private BunkerSelectionWindowModel BuildWeapons()
