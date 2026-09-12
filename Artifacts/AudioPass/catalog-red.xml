@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="2" result="Failed(Child)" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-12 15:52:50Z" end-time="2026-09-12 15:52:58Z" duration="8,1116309">
+  <test-suite type="TestSuite" id="1000" name="Help Me Please" fullname="Help Me Please" runstate="Runnable" testcasecount="275" result="Failed" site="Child" start-time="2026-09-12 15:52:50Z" end-time="2026-09-12 15:52:58Z" duration="8.111631" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1339" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="275" result="Failed" site="Child" start-time="2026-09-12 15:52:50Z" end-time="2026-09-12 15:52:58Z" duration="7.996087" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="376" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestFixture" id="1299" name="Subject42ProductionAudioTests" fullname="Subject42ProductionAudioTests" classname="Subject42ProductionAudioTests" runstate="Runnable" testcasecount="2" result="Failed" site="Child" start-time="2026-09-12 15:52:50Z" end-time="2026-09-12 15:52:58Z" duration="7.916993" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-case id="1301" name="InspectExistingCandidates" fullname="Subject42ProductionAudioTests.InspectExistingCandidates" methodname="InspectExistingCandidates" classname="Subject42ProductionAudioTests" runstate="Runnable" seed="2022113196" result="Passed" start-time="2026-09-12 15:52:50Z" end-time="2026-09-12 15:52:58Z" duration="7.791739" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1300" name="ProductionCatalogIsAvailableWithoutBunker" fullname="Subject42ProductionAudioTests.ProductionCatalogIsAvailableWithoutBunker" methodname="ProductionCatalogIsAvailableWithoutBunker" classname="Subject42ProductionAudioTests" runstate="Runnable" seed="1167340257" result="Failed" start-time="2026-09-12 15:52:58Z" end-time="2026-09-12 15:52:58Z" duration="0.013979" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <failure>
+            <message><![CDATA[  Direct MVP must resolve the production catalog without visiting MainMenu
+  Expected: not null
+  But was:  null
+]]></message>
+            <stack-trace><![CDATA[at Subject42ProductionAudioTests.ProductionCatalogIsAvailableWithoutBunker () [0x0000a] in D:\fork\HelpMePlease\Assets\_Project\Editor\Tests\Subject42ProductionAudioTests.cs:15
+]]></stack-trace>
+          </failure>
+          <output><![CDATA[Saving results to: Artifacts/GeneratedQA/CorePulse/results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -1,0 +1,34 @@
+Assert: Setting the duration while system is still playing is not supported. Please wait until the system has stopped and all particles have expired or call Stop with ParticleSystemStopBehavior.StopEmittingAndClear to completely stop the system.
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+WorldRuleVisual:EnsureWindResources () (at Assets/_Project/scripts/World/Rules/WorldRuleVisual.cs:1138)
+WorldRuleVisual:SetWindActive (bool) (at Assets/_Project/scripts/World/Rules/WorldRuleVisual.cs:1103)
+WorldRuleVisual:ShowWind (UnityEngine.Vector2) (at Assets/_Project/scripts/World/Rules/WorldRuleVisual.cs:623)
+WorldRuleController:ApplyWindDirection (UnityEngine.Vector2) (at Assets/_Project/scripts/World/Rules/WorldRuleController.cs:430)
+WorldRuleController:ApplyWind () (at Assets/_Project/scripts/World/Rules/WorldRuleController.cs:399)
+WorldRuleController:Apply (WorldRuleData) (at Assets/_Project/scripts/World/Rules/WorldRuleController.cs:184)
+LevelModifiersApplier:ApplyCurrentSector (RunSector,int) (at Assets/_Project/scripts/World/Weather/LevelModifiersApplier.cs:146)
+LevelModifiersApplier:ApplySelectedNode () (at Assets/_Project/scripts/World/Weather/LevelModifiersApplier.cs:98)
+LevelModifiersApplier/<Start>d__12:MoveNext () (at Assets/_Project/scripts/World/Weather/LevelModifiersApplier.cs:83)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+Warning: [EnemyChaseMovement] 'Boss2_0' has no Bool parameter 'IsRunning'.
+UnityEngine.Debug:LogWarning (object,UnityEngine.Object)
+EnemyChaseMovement:HasBoolParameter (UnityEngine.Animator,string) (at Assets/_Project/scripts/Combat/Enemies/EnemyChaseMovement.cs:246)
+EnemyChaseMovement:Awake () (at Assets/_Project/scripts/Combat/Enemies/EnemyChaseMovement.cs:48)
+UnityEngine.Object:Instantiate<UnityEngine.GameObject> (UnityEngine.GameObject,UnityEngine.Vector3,UnityEngine.Quaternion)
+RunBossSpawner:TrySpawn (RunSector,UnityEngine.Transform,EnemyHealth&) (at Assets/_Project/scripts/Run/Flow/RunBossSpawner.cs:25)
+RunFlowController/<FinalBossRoutine>d__40:MoveNext () (at Assets/_Project/scripts/Run/Flow/RunFlowController.cs:186)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+Warning: [RunState] Sector 3 completion was already registered.
+UnityEngine.Debug:LogWarning (object)
+RunStateManager:RegisterCompletedLevel () (at Assets/_Project/scripts/Run/State/RunStateManager.cs:520)
+RunEndService/<>c__DisplayClass10_0:<CompleteRunVictory>b__0 () (at Assets/_Project/scripts/Run/Flow/RunEndService.cs:62)
+SceneTransitionOverlay/<Transition>d__26:MoveNext () (at Assets/_Project/scripts/Run/Flow/SceneTransitionOverlay.cs:124)
+SceneTransitionOverlay/<GuardedTransition>d__25:MoveNext () (at Assets/_Project/scripts/Run/Flow/SceneTransitionOverlay.cs:95)
+UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator)
+SceneTransitionOverlay:Load (string,System.Action,System.Action`1<single>) (at Assets/_Project/scripts/Run/Flow/SceneTransitionOverlay.cs:53)
+RunEndService:CompleteRunVictory () (at Assets/_Project/scripts/Run/Flow/RunEndService.cs:57)
+RunFlowController/<CompleteVictory>d__37:MoveNext () (at Assets/_Project/scripts/Run/Flow/RunFlowController.cs:95)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+

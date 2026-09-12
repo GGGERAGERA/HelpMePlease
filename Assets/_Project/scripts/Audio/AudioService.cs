@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.SceneManagement;
 
 public sealed class AudioLoopHandle
 {
@@ -29,6 +30,11 @@ public sealed class AudioLoopHandle
         service.StopLoop(slotIndex, generation);
     }
 
+    public void SetIntensity(float intensity)
+    {
+        owner?.SetLoopIntensity(slotIndex, generation, intensity);
+    }
+
     internal void Invalidate()
     {
         owner = null;
@@ -48,9 +54,13 @@ public sealed class AudioService : MonoBehaviour
         public AudioLoopHandle Handle;
         public int Generation;
         public bool ManagedLoop;
+        public bool HasFollowTarget;
     }
 
     public static AudioService Instance { get; private set; }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public event System.Action<AudioCueId> DebugCuePlayed;
+#endif
 
     [Header("Configuration")]
     [SerializeField] private AudioCatalog catalog;
@@ -113,11 +123,20 @@ public sealed class AudioService : MonoBehaviour
 
     private void Update()
     {
+        if (Time.timeScale <= 0f) StopAllManagedLoops();
         RefreshPool();
 
         for (int i = 0; i < pool.Count; i++)
         {
             PoolSlot slot = pool[i];
+
+            if (slot.ManagedLoop && slot.HasFollowTarget &&
+                (slot.FollowTarget == null || !slot.FollowTarget.gameObject.activeInHierarchy))
+            {
+                slot.Source.Stop();
+                ClearSlot(slot);
+                continue;
+            }
 
             if (slot.CueId == AudioCueId.None || slot.FollowTarget == null)
                 continue;
@@ -135,6 +154,14 @@ public sealed class AudioService : MonoBehaviour
         Instance = null;
     }
 
+    private void OnEnable() => SceneManager.sceneLoaded += HandleSceneLoaded;
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= HandleSceneLoaded;
+        StopAllManagedLoops();
+    }
+    private void HandleSceneLoaded(Scene scene, LoadSceneMode mode) => StopAllManagedLoops();
+
     public bool Play(AudioCueId cueId)
     {
         return PlayInternal(cueId, transform.position, false);
@@ -151,6 +178,7 @@ public sealed class AudioService : MonoBehaviour
         Vector3? position = null
     )
     {
+        if (Time.timeScale <= 0f) return null;
         if (!TryPreparePlayback(cueId, out AudioCueDefinition definition, out AudioClip clip))
             return null;
 
@@ -173,6 +201,7 @@ public sealed class AudioService : MonoBehaviour
         slot.CueId = cueId;
         slot.Definition = definition;
         slot.FollowTarget = followTarget;
+        slot.HasFollowTarget = followTarget != null;
         slot.ManagedLoop = true;
         slot.Generation++;
         slot.Handle = new AudioLoopHandle(this, pool.IndexOf(slot), slot.Generation);
@@ -332,6 +361,15 @@ public sealed class AudioService : MonoBehaviour
         ClearSlot(slot);
     }
 
+    internal void SetLoopIntensity(int slotIndex, int generation, float intensity)
+    {
+        if (!IsLoopPlaying(slotIndex, generation)) return;
+        PoolSlot slot = pool[slotIndex];
+        float t = Mathf.Clamp01(intensity);
+        slot.Source.volume = slot.Definition.Volume * GetCategoryVolume(slot.Definition.Category) * Mathf.Lerp(.55f, 1f, t);
+        slot.Source.pitch = Mathf.Lerp(.9f, 1.12f, t);
+    }
+
     private bool PlayInternal(AudioCueId cueId, Vector3 position, bool positional)
     {
         if (!TryPreparePlayback(cueId, out AudioCueDefinition definition, out AudioClip clip))
@@ -410,7 +448,18 @@ public sealed class AudioService : MonoBehaviour
                 return pool[i];
         }
 
-        return null;
+        PoolSlot victim = null;
+        foreach (PoolSlot candidate in pool)
+        {
+            if (candidate.Definition == null || candidate.Definition.Priority >= definition.Priority)
+                continue;
+            if (victim == null || candidate.Definition.Priority < victim.Definition.Priority)
+                victim = candidate;
+        }
+        if (victim == null) return null;
+        victim.Source.Stop();
+        ClearSlot(victim);
+        return victim;
     }
 
     private int CountActive(AudioCueId cueId)
@@ -468,7 +517,8 @@ public sealed class AudioService : MonoBehaviour
         source.transform.position = position;
         source.outputAudioMixerGroup = GetMixerGroup(definition.Category);
         source.volume = definition.Volume * GetCategoryVolume(definition.Category);
-        source.pitch = Random.Range(definition.PitchMin, definition.PitchMax);
+        source.pitch = AudioCueDefinition.RandomPitch(definition.PitchMin, definition.PitchMax);
+        source.priority = 128 - definition.Priority;
         source.spatialBlend = positional ? definition.SpatialBlend : 0f;
         source.playOnAwake = false;
     }
@@ -476,7 +526,7 @@ public sealed class AudioService : MonoBehaviour
     private void ConfigureDedicatedSource(AudioSource source, AudioCueDefinition definition)
     {
         source.outputAudioMixerGroup = GetMixerGroup(definition.Category);
-        source.pitch = Random.Range(definition.PitchMin, definition.PitchMax);
+        source.pitch = AudioCueDefinition.RandomPitch(definition.PitchMin, definition.PitchMax);
         source.spatialBlend = 0f;
         source.playOnAwake = false;
     }
@@ -540,11 +590,12 @@ public sealed class AudioService : MonoBehaviour
         slot.Definition = null;
         slot.FollowTarget = null;
         slot.ManagedLoop = false;
+        slot.HasFollowTarget = false;
         slot.Source.clip = null;
         slot.Source.loop = false;
     }
 
-    private void StopAllManagedLoops()
+    public void StopAllManagedLoops()
     {
         for (int i = 0; i < pool.Count; i++)
         {
@@ -644,6 +695,9 @@ public sealed class AudioService : MonoBehaviour
     private void MarkPlayed(AudioCueId cueId)
     {
         lastPlayTimes[cueId] = Time.unscaledTime;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        DebugCuePlayed?.Invoke(cueId);
+#endif
     }
 
     private void AdoptCatalogIfMissing(AudioCatalog candidate)

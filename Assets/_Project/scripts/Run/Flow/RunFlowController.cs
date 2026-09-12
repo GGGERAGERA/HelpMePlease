@@ -46,6 +46,7 @@ public sealed class RunFlowController : MonoBehaviour
 
     public void StopRunGameplay()
     {
+        AudioService.Instance?.StopAllManagedLoops();
         StopAllCoroutines();
         if (Phase != RunPhase.Victory) Phase = RunPhase.Stopped;
         enemySpawner?.SetFinalBossPressure(1f);

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Events;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using DropRandom = BotRunSeed.DropRandom;
@@ -33,15 +33,6 @@ public class EnemyHealth : MonoBehaviour
 
 
 
-    [SerializeField] private AudioClip critSound;
-
-    
-    [Header("Hit Sound")]
-    [SerializeField] private AudioSource audioSource;
-    [SerializeField] private AudioClip hitSound;
-    [SerializeField] private Vector2 hitPitchRange = new Vector2(0.95f, 1.05f);
-    [SerializeField] private float hitVolume = 0.35f;
-
     [Header("Loot")]
     [SerializeField] private GameObject lootPrefab;
     [SerializeField] private int lootAmount = 1;
@@ -74,7 +65,6 @@ public class EnemyHealth : MonoBehaviour
     public GameObject DeathFxPrefab =>
         deathFXPrefab != null ? deathFXPrefab.gameObject : null;
 
-    private static float lastCritSoundTime;
     private static bool missingUnlockServiceWasReported;
     void Start()
     {
@@ -93,21 +83,7 @@ public class EnemyHealth : MonoBehaviour
         whiteFlash = GetComponent<EnemyWhiteFlash>();
         identity = GetComponent<EnemyIdentity>();
 
-        if (hitSound == null)
-            return;
 
-        if (audioSource == null)
-            audioSource = GetComponent<AudioSource>();
-
-        if (audioSource == null)
-            audioSource = gameObject.AddComponent<AudioSource>();
-
-        audioSource.playOnAwake = false;
-        audioSource.spatialBlend = 0f;
-        AudioService.Instance?.RouteExternalSource(
-            audioSource,
-            AudioCategory.SFX
-        );
     }
 
     private void OnEnable()
@@ -180,7 +156,7 @@ public class EnemyHealth : MonoBehaviour
             HUDManager.Instance?.UpdateBossHp(currentHealth, maxHealth);
         }
         SpawnBlood(hitPoint, isCritical);
-        PlayHitSound();
+        PlayHitSound(isCritical);
         // Показать цифру урона
         ShowDamagePopup(Mathf.RoundToInt(damage), isCritical);
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
@@ -211,7 +187,7 @@ public class EnemyHealth : MonoBehaviour
             return;
         whiteFlash?.Flash();
         SpawnBlood(hitPoint, isCritical);
-        PlayHitSound();
+        PlayHitSound(isCritical);
         ShowDamagePopup(Mathf.RoundToInt(damage), isCritical);
         OnDamageTaken?.Invoke();
         if (lethal)
@@ -231,21 +207,6 @@ public class EnemyHealth : MonoBehaviour
             : Instantiate(bloodHitPrefab, hitPoint, Quaternion.identity);
         if (isCritical)
         {
-            if (critSound != null)
-            {
-                if (Time.time > lastCritSoundTime + 0.08f)
-                {
-                    AudioService.Instance?.PlayExternalOneShot(
-                        critSound,
-                        transform.position,
-                        0.7f,
-                        AudioCategory.SFX,
-                        1f
-                    );
-
-                    lastCritSoundTime = Time.time;
-                }
-            }
             var main = blood.main;
             main.startSizeMultiplier *= 1.4f;
             main.startSpeedMultiplier *= 1.3f;
@@ -355,13 +316,12 @@ public class EnemyHealth : MonoBehaviour
             pooledPopup?.Release();
     }
 
-    private void PlayHitSound()
+    private void PlayHitSound(bool isCritical)
     {
-        if (hitSound == null || audioSource == null)
-            return;
-
-        audioSource.pitch = Random.Range(hitPitchRange.x, hitPitchRange.y);
-        audioSource.PlayOneShot(hitSound, hitVolume);
+        // One bounded cue per damage event; critical replaces the ordinary hit.
+        AudioService.Instance?.PlayAt(
+            isCritical ? AudioCueId.EnemyCritical : AudioCueId.EnemyHit,
+            transform.position);
     }
 
     private void Death()

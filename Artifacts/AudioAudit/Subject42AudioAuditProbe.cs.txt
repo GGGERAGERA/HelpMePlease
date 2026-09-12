@@ -1,0 +1,57 @@
+#if UNITY_EDITOR
+using System;
+using System.IO;
+using System.Linq;
+using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.TestTools;
+
+// Temporary observation-only audio audit; does not edit scenes or playback settings.
+[InitializeOnLoad]
+public static class Subject42AudioAuditProbe
+{
+    static double next;
+    static int maxSources, maxPlaying;
+    static readonly HashSet<string> seen = new();
+    static readonly string output = "Artifacts/AudioAudit/runtime.txt";
+    static Subject42AudioAuditProbe() { EditorApplication.update += Poll; }
+    static void Poll()
+    {
+        if (!Application.isPlaying || EditorApplication.timeSinceStartup < next) return;
+        next = EditorApplication.timeSinceStartup + 0.1;
+        var all = UnityEngine.Object.FindObjectsByType<AudioSource>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        int playing = all.Count(s => s.isPlaying);
+        if (all.Length > maxSources || playing > maxPlaying)
+        {
+            maxSources = Math.Max(maxSources, all.Length); maxPlaying = Math.Max(maxPlaying, playing);
+            File.AppendAllText(output, $"MAX scene={SceneManager.GetActiveScene().name} sources={maxSources} playing={maxPlaying}\n");
+        }
+        foreach (var s in all.Where(s => s.isPlaying && s.clip != null))
+        {
+            string key = SceneManager.GetActiveScene().name + " | " + s.name + " | " + AssetDatabase.GetAssetPath(s.clip);
+            if (seen.Add(key)) File.AppendAllText(output, key + $" | volume={s.volume} mixer={s.outputAudioMixerGroup?.name}\n");
+        }
+        var service = AudioService.Instance;
+        if (service != null)
+        {
+            var cat = typeof(AudioService).GetField("catalog", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(service) as AudioCatalog;
+            string key = "CATALOG " + (cat != null ? AssetDatabase.GetAssetPath(cat) : "NULL");
+            if (seen.Add(key)) File.AppendAllText(output, key + "\n");
+        }
+    }
+}
+public sealed class Subject42AudioAuditRun
+{
+    [UnityTest]
+    public IEnumerator GoldenPathOnceAtFive()
+    {
+        return (IEnumerator)typeof(Subject42GoldenPathTests)
+            .GetMethod("Run", BindingFlags.Static | BindingFlags.NonPublic)
+            .Invoke(null, new object[] { 1, 48151623, 5f });
+    }
+}
+#endif

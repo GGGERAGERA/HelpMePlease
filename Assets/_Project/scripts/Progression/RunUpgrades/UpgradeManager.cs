@@ -62,6 +62,7 @@ public sealed class UpgradeManager : MonoBehaviour
     private System.Action currentOnClosed;
     private UpgradeChoiceRequest currentRequest;
     private bool hasCurrentRequest;
+    private bool levelUpAudioAnnounced;
 
     public float TimeScaleAfterRewards => previousTimeScale;
 
@@ -377,8 +378,11 @@ public sealed class UpgradeManager : MonoBehaviour
         IReadOnlyList<UpgradeData> choices
     )
     {
-        if (request.IsLevelUp)
+        if (request.IsLevelUp && !levelUpAudioAnnounced)
+        {
+            levelUpAudioAnnounced = true;
             AudioService.Instance?.Play(AudioCueId.LevelUp);
+        }
 
         if (request.IsChestReward)
         {
@@ -423,6 +427,7 @@ public sealed class UpgradeManager : MonoBehaviour
             return;
         }
 
+        AudioService.Instance?.Play(AudioCueId.RewardSelect);
         CompleteGrantedReward(upgrade);
     }
 
@@ -439,7 +444,10 @@ public sealed class UpgradeManager : MonoBehaviour
         {
             if (TryGrantUpgrade(reward.BodyUpgrade,
                     out ItemGrantResult bodyResult))
+            {
+                AudioService.Instance?.Play(AudioCueId.RewardSelect);
                 CompleteGrantedReward(reward);
+            }
             else
             {
                 Debug.LogWarning($"[OrbitalRewards] Subject reward failed: {bodyResult}.");
@@ -458,6 +466,7 @@ public sealed class UpgradeManager : MonoBehaviour
         orbitalRewardFlow = station.RewardFlow;
         bool started = orbitalRewardFlow.Begin(reward,
             () => CompleteGrantedReward(reward), ReturnToCurrentChoices);
+        if (started) AudioService.Instance?.Play(AudioCueId.RewardSelect);
         if (!started && isChoosingUpgrade)
             RefreshChoicesAfterGrantFailure();
     }
@@ -583,6 +592,7 @@ public sealed class UpgradeManager : MonoBehaviour
 
             isChoosingUpgrade = true;
             currentRequest = nextRequest;
+            levelUpAudioAnnounced = false;
             hasCurrentRequest = true;
             currentOnClosed = nextRequest.OnClosed;
             currentChoices = choices;
@@ -611,6 +621,7 @@ public sealed class UpgradeManager : MonoBehaviour
         previousTimeScale = Time.timeScale;
         Time.timeScale = 0f;
         currentRequest = request;
+        levelUpAudioAnnounced = false;
         hasCurrentRequest = true;
         currentOnClosed = request.OnClosed;
         currentChoices = choices;

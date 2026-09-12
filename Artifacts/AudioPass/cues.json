@@ -1,0 +1,246 @@
+[
+  {
+    "id": 20,
+    "clips": [
+      "Assets/_Project/AudioEffects/SFX/Game/Pistol_shot_SFX.mp3"
+    ],
+    "volume": 0.22,
+    "pitch": [
+      0.96,
+      1.04
+    ],
+    "cooldown": 0.085,
+    "maxSimultaneous": 3,
+    "loop": 0,
+    "priority": 20
+  },
+  {
+    "id": 70,
+    "clips": [
+      "Assets/_Project/AudioEffects/packs/kenney_impact-sounds/impactSoft_medium_000.mp3",
+      "Assets/_Project/AudioEffects/packs/kenney_impact-sounds/impactSoft_medium_001.mp3",
+      "Assets/_Project/AudioEffects/packs/kenney_impact-sounds/impactSoft_medium_002.mp3"
+    ],
+    "volume": 0.09,
+    "pitch": [
+      0.92,
+      1.08
+    ],
+    "cooldown": 0.065,
+    "maxSimultaneous": 2,
+    "loop": 0,
+    "priority": 0
+  },
+  {
+    "id": 71,
+    "clips": [
+      "Assets/_Project/AudioEffects/crit.mp3"
+    ],
+    "volume": 0.1,
+    "pitch": [
+      0.98,
+      1.04
+    ],
+    "cooldown": 0.12,
+    "maxSimultaneous": 1,
+    "loop": 0,
+    "priority": 5
+  },
+  {
+    "id": 40,
+    "clips": [
+      "Assets/_Project/AudioEffects/packs/kenney_impact-sounds/impactPunch_heavy_000.mp3",
+      "Assets/_Project/AudioEffects/packs/kenney_impact-sounds/impactPunch_heavy_001.mp3",
+      "Assets/_Project/AudioEffects/packs/kenney_impact-sounds/impactPunch_heavy_002.mp3"
+    ],
+    "volume": 0.16,
+    "pitch": [
+      0.92,
+      1.08
+    ],
+    "cooldown": 0.1,
+    "maxSimultaneous": 2,
+    "loop": 0,
+    "priority": 10
+  },
+  {
+    "id": 30,
+    "clips": [
+      "Assets/_Project/AudioEffects/packs/kenney_impact-sounds/impactPunch_medium_001.mp3"
+    ],
+    "volume": 0.45,
+    "pitch": [
+      0.97,
+      1.03
+    ],
+    "cooldown": 0.18,
+    "maxSimultaneous": 1,
+    "loop": 0,
+    "priority": 100
+  },
+  {
+    "id": 80,
+    "clips": [
+      "Assets/_Project/AudioEffects/Sword_Laser.mp3"
+    ],
+    "volume": 0.12,
+    "pitch": [
+      0.95,
+      1.05
+    ],
+    "cooldown": 0.12,
+    "maxSimultaneous": 2,
+    "loop": 0,
+    "priority": 20
+  },
+  {
+    "id": 81,
+    "clips": [
+      "Assets/_Project/AudioEffects/packs/kenney_sci-fi-sounds/lowFrequency_explosion_001.mp3"
+    ],
+    "volume": 0.28,
+    "pitch": [
+      0.93,
+      1.03
+    ],
+    "cooldown": 0.15,
+    "maxSimultaneous": 2,
+    "loop": 0,
+    "priority": 25
+  },
+  {
+    "id": 82,
+    "clips": [
+      "Assets/Epic Toon FX/Sound/etfx_shoot_lightning2.wav"
+    ],
+    "volume": 0.2,
+    "pitch": [
+      0.96,
+      1.04
+    ],
+    "cooldown": 0.15,
+    "maxSimultaneous": 2,
+    "loop": 0,
+    "priority": 25
+  },
+  {
+    "id": 90,
+    "clips": [
+      "Assets/_Project/AudioEffects/packs/kenney_sci-fi-sounds/engineCircular_000.mp3"
+    ],
+    "volume": 0.1,
+    "pitch": [
+      1,
+      1
+    ],
+    "cooldown": 0,
+    "maxSimultaneous": 1,
+    "loop": 1,
+    "priority": 30
+  },
+  {
+    "id": 91,
+    "clips": [
+      "Assets/_Project/AudioEffects/packs/kenney_sci-fi-sounds/laserLarge_003.mp3"
+    ],
+    "volume": 0.34,
+    "pitch": [
+      0.97,
+      1.03
+    ],
+    "cooldown": 0.12,
+    "maxSimultaneous": 1,
+    "loop": 0,
+    "priority": 60
+  },
+  {
+    "id": 92,
+    "clips": [
+      "Assets/_Project/AudioEffects/packs/kenney_sci-fi-sounds/forceField_000.mp3"
+    ],
+    "volume": 0.22,
+    "pitch": [
+      0.99,
+      1.01
+    ],
+    "cooldown": 0.12,
+    "maxSimultaneous": 1,
+    "loop": 0,
+    "priority": 40
+  },
+  {
+    "id": 93,
+    "clips": [
+      "Assets/_Project/AudioEffects/packs/kenney_sci-fi-sounds/explosionCrunch_000.mp3"
+    ],
+    "volume": 0.28,
+    "pitch": [
+      0.98,
+      1.02
+    ],
+    "cooldown": 0.15,
+    "maxSimultaneous": 2,
+    "loop": 0,
+    "priority": 45
+  },
+  {
+    "id": 94,
+    "clips": [
+      "Assets/_Project/AudioEffects/packs/kenney_interface-sounds/confirmation_001.mp3"
+    ],
+    "volume": 0.32,
+    "pitch": [
+      0.98,
+      1.02
+    ],
+    "cooldown": 0.08,
+    "maxSimultaneous": 2,
+    "loop": 0,
+    "priority": 60
+  },
+  {
+    "id": 50,
+    "clips": [
+      "Assets/_Project/AudioEffects/pickupCoin.wav"
+    ],
+    "volume": 0.045,
+    "pitch": [
+      0.98,
+      1.1
+    ],
+    "cooldown": 0.08,
+    "maxSimultaneous": 1,
+    "loop": 0,
+    "priority": 0
+  },
+  {
+    "id": 51,
+    "clips": [
+      "Assets/_Project/AudioEffects/new/Level_up_test.mp3"
+    ],
+    "volume": 0.7,
+    "pitch": [
+      1,
+      1
+    ],
+    "cooldown": 0.5,
+    "maxSimultaneous": 1,
+    "loop": 0,
+    "priority": 80
+  },
+  {
+    "id": 95,
+    "clips": [
+      "Assets/_Project/AudioEffects/SFX/UI/Menu/Button_confirm.wav"
+    ],
+    "volume": 0.38,
+    "pitch": [
+      0.98,
+      1.02
+    ],
+    "cooldown": 0.08,
+    "maxSimultaneous": 1,
+    "loop": 0,
+    "priority": 80
+  }
+]

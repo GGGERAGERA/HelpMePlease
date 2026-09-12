@@ -313,6 +313,8 @@ namespace Subject42.Combat.OrbitalStation
             {
                 if (station.IsInitialized)
                 {
+                    AudioService.Instance?.PlayAt(AudioCueId.ModuleInstall,
+                        reservedMount?.Transform != null ? reservedMount.Transform.position : station.transform.position);
                     station.Rings.FirstOrDefault(r => r.RingId == targetRingId)?.Pulse();
                     station.FlashCore(reward.RewardKind == OrbitalRewardKind.LinkPair
                         ? new Color(0.85f, 0.3f, 1f) : new Color(0.35f, 0.95f, 1f));

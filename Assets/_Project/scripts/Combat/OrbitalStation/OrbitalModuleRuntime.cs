@@ -188,6 +188,7 @@ namespace Subject42.Combat.OrbitalStation
             AimAt(target.transform.position);
             Combat.SpawnProjectile(Visual.transform.position, target, 13f,
                 BaseDamage * Power, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.Pistol));
+            AudioService.Instance?.PlayAt(AudioCueId.PistolShot, Visual.transform.position);
             TriggerPresentation();
             Cooldown = 0.55f;
         }
@@ -214,6 +215,7 @@ namespace Subject42.Combat.OrbitalStation
             {
                 Combat.ApplyDamage(target, BaseDamage * Power,
                     Visual.transform.position);
+                AudioService.Instance?.PlayAt(AudioCueId.OrbitalSwordHit, Visual.transform.position);
                 TriggerPresentation();
                 Cooldown = 0.32f;
             }
@@ -245,6 +247,7 @@ namespace Subject42.Combat.OrbitalStation
                 (Vector2)Station.Owner.Transform.position).normalized;
             Combat.ApplyDamage(target, BaseDamage * Power,
                 target.transform.position);
+            AudioService.Instance?.PlayAt(AudioCueId.OrbitalImpulseFire, Visual.transform.position);
             TriggerPresentation();
             Rigidbody2D body = target.GetComponent<Rigidbody2D>();
             if (body != null)
@@ -284,7 +287,10 @@ namespace Subject42.Combat.OrbitalStation
                 from = target.transform.position;
             }
             if (targets.Count > 0)
+            {
+                AudioService.Instance?.PlayAt(AudioCueId.OrbitalArcFire, Visual.transform.position);
                 Cooldown = 1.15f;
+            }
         }
     }
 

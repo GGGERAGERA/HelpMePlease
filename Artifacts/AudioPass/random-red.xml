@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-12 16:13:15Z" end-time="2026-09-12 16:13:16Z" duration="0,3817632">
+  <test-suite type="TestSuite" id="1000" name="Help Me Please" fullname="Help Me Please" runstate="Runnable" testcasecount="279" result="Failed" site="Child" start-time="2026-09-12 16:13:15Z" end-time="2026-09-12 16:13:16Z" duration="0.381763" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1344" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="279" result="Failed" site="Child" start-time="2026-09-12 16:13:16Z" end-time="2026-09-12 16:13:16Z" duration="0.260150" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="376" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestFixture" id="1302" name="Subject42ProductionAudioTests" fullname="Subject42ProductionAudioTests" classname="Subject42ProductionAudioTests" runstate="Runnable" testcasecount="4" result="Failed" site="Child" start-time="2026-09-12 16:13:16Z" end-time="2026-09-12 16:13:16Z" duration="0.186093" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-case id="1303" name="ClipSelectionDoesNotConsumeGameplayRandom" fullname="Subject42ProductionAudioTests.ClipSelectionDoesNotConsumeGameplayRandom" methodname="ClipSelectionDoesNotConsumeGameplayRandom" classname="Subject42ProductionAudioTests" runstate="Runnable" seed="299839386" result="Failed" start-time="2026-09-12 16:13:16Z" end-time="2026-09-12 16:13:16Z" duration="0.077126" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <failure>
+            <message><![CDATA[  Expected string length 58 but was 65. Strings differ at index 6.
+  Expected: "...":421,"s1":-1469779174,"s2":329438019,"s3":-316590992}"
+  But was:  "...":-1469779174,"s1":329438019,"s2":-316590992,"s3":-315880104}"
+  ----------------^
+]]></message>
+            <stack-trace><![CDATA[at Subject42ProductionAudioTests.ClipSelectionDoesNotConsumeGameplayRandom () [0x0004f] in D:\fork\HelpMePlease\Assets\_Project\Editor\Tests\Subject42ProductionAudioTests.cs:25
+]]></stack-trace>
+          </failure>
+          <output><![CDATA[Saving results to: Artifacts/GeneratedQA/CorePulse/results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

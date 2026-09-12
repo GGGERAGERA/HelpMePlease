@@ -25,6 +25,8 @@ namespace Subject42.Combat.OrbitalStation
         private float compressionTime;
         private bool compressionHeld;
         private bool compressionAnimating;
+        private AudioLoopHandle compressionAudio;
+        private float nextCompressionAudioAttempt;
         private int rotationSign = 1;
         private float repulseCooldown;
         private LineRenderer repulseRing;
@@ -346,13 +348,33 @@ namespace Subject42.Combat.OrbitalStation
 
         private float UpdateCompression(float deltaTime, bool held)
         {
+            bool audioAllowed = Time.timeScale > 0f && isActiveAndEnabled &&
+                Owner != null && !Owner.IsDead && Owner.CanControl &&
+                (RunStateManager.Instance == null || !RunStateManager.Instance.IsRunEnded) &&
+                (RunFlowController.Instance == null ||
+                 (RunFlowController.Instance.Phase != RunPhase.Stopped && RunFlowController.Instance.Phase != RunPhase.Victory));
             if (held != compressionHeld)
             {
+                StopCompressionAudio();
+                nextCompressionAudioAttempt = 0f;
+                if (audioAllowed)
+                {
+                    if (!held)
+                        AudioService.Instance?.PlayAt(AudioCueId.OrbitalRelease, transform.position);
+                }
                 compressionHeld = held;
                 compressionStartRadius = compressionRadius;
                 compressionTime = 0f;
                 compressionAnimating = true;
             }
+            if (!audioAllowed) StopCompressionAudio();
+            if (held && audioAllowed && (compressionAudio == null || !compressionAudio.IsPlaying) &&
+                Time.unscaledTime >= nextCompressionAudioAttempt)
+            {
+                nextCompressionAudioAttempt = Time.unscaledTime + .2f;
+                compressionAudio = AudioService.Instance?.StartLoop(AudioCueId.OrbitalCompress, transform);
+            }
+            compressionAudio?.SetIntensity(Mathf.InverseLerp(1f, compressedRadiusMultiplier, compressionRadius));
             if (!compressionAnimating) return compressionRadius;
 
             compressionTime += Mathf.Max(0f, deltaTime);
@@ -674,6 +696,7 @@ namespace Subject42.Combat.OrbitalStation
 
         private void OnCoreWave(int level, int wave)
         {
+            AudioService.Instance?.PlayAt(level >= 2 ? AudioCueId.CoreCascade : AudioCueId.CorePulse, transform.position);
             coreWaveAge = 0f;
             coreWaveColor = OrbitalPresentationConfig.Active.GetCoreWaveColor(wave);
             FlashCore(coreWaveColor);
@@ -720,6 +743,7 @@ namespace Subject42.Combat.OrbitalStation
 
         public void Teardown()
         {
+            StopCompressionAudio();
             if (tearingDown)
                 return;
             tearingDown = true;
@@ -1231,6 +1255,14 @@ namespace Subject42.Combat.OrbitalStation
                 return Vector2.Distance(point, a);
             float t = Mathf.Clamp01(Vector2.Dot(point - a, ab) / ab.sqrMagnitude);
             return Vector2.Distance(point, a + ab * t);
+        }
+
+        private void OnDisable() => StopCompressionAudio();
+
+        private void StopCompressionAudio()
+        {
+            compressionAudio?.Stop();
+            compressionAudio = null;
         }
 
         private void OnDestroy()

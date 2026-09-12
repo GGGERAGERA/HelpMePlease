@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-12 16:08:29Z" end-time="2026-09-12 16:11:22Z" duration="172,9640252">
+  <test-suite type="TestSuite" id="1000" name="Help Me Please" fullname="Help Me Please" runstate="Runnable" testcasecount="278" result="Failed" site="Child" start-time="2026-09-12 16:08:29Z" end-time="2026-09-12 16:11:22Z" duration="172.964025" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1343" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="278" result="Failed" site="Child" start-time="2026-09-12 16:08:30Z" end-time="2026-09-12 16:11:22Z" duration="171.844224" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="376" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestFixture" id="1096" name="Subject42AudioRuntimeTests" fullname="Subject42AudioRuntimeTests" classname="Subject42AudioRuntimeTests" runstate="Runnable" testcasecount="2" result="Failed" site="Child" start-time="2026-09-12 16:08:30Z" end-time="2026-09-12 16:11:22Z" duration="171.836925" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-case id="1097" name="GoldenPathAtFive" fullname="Subject42AudioRuntimeTests.GoldenPathAtFive" methodname="GoldenPathAtFive" classname="Subject42AudioRuntimeTests" runstate="Runnable" seed="2012364517" result="Failed" start-time="2026-09-12 16:08:18Z" end-time="2026-09-12 16:11:22Z" duration="184.284434" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <failure>
+            <message><![CDATA[Timeout value of 180000 ms was exceeded. If this is intended, increase the timeout value using a TimeoutAttribute.]]></message>
+            <stack-trace><![CDATA[]]></stack-trace>
+          </failure>
+          <output><![CDATA[[BunkerInteractableCollider] Interaction source=p_Shelf1, interactable=False, hoverable=True
+[BunkerHoverOutline] p_Shelf1 renderers=30
+[BunkerInteractableCollider] Interaction source=p_AnomalyTable1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_AnomalyTable1 renderers=32
+[BunkerInteractableCollider] Interaction source=p_Shelf1 (1), interactable=False, hoverable=True
+[BunkerHoverOutline] p_Shelf1 (1) renderers=30
+[BunkerInteractableCollider] Interaction source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerPlayerShowcase 1 renderers=16
+[BunkerInteractableCollider] Interaction source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerWeaponShowcase renderers=8
+[BunkerInteractableCollider] Interaction source=p_bunkerUpgrade1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerUpgrade1 renderers=20
+[BunkerInteractableCollider] Interaction source=p_BunkerGates1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_BunkerGates1 renderers=45
+[RunSelectionManager] Character selected: 01_Gera
+[RunSelectionManager] Character selected: 01_Gera
+[Golden Path] seed=48151623 sector=0 t=0,0 Start Run
+[Golden Path] seed=48151623 sector=0 t=0,0 Sector Startup
+[RunState] New run: character=01_Gera, weapon=NULL, stabilizer=NULL
+[CharacterSpawner] Weapons found: 0
+[MetaUpgradeApplier] Loaded meta: HP=2, DMG=0, SPD=0, XP=1, GOLD=2, PICKUP=0
+[RunState] Applied to spawned player. Upgrades: 0, hasHealth: False
+[VisualLab LOAD]
+ProjectileVisualScale=1
+TrailWidth=1
+TrailTime=1
+CameraZoom=8,087
+source=Assets/_Project/Resources/VisualTuningSavedValues.asset
+[TacticalMap] breakableMarkers=0
+[EnemySpawner] Phase 1: interval 1,50, max alive 10.
+[EnemySpawner] Level scaling: HP x1,00, speed x1,00, pressure x1,00.
+SECTOR LAYOUT
+Coverage: 92,0%
+Player: (0.00, 0.00, 0.00)
+Normal 1: center (32.64, 20.56), size (32.29, 56.97)
+Normal 2: center (-17.49, -21.20), size (61.93, 53.97)
+Normal 3: center (-17.46, 28.33), size (61.01, 40.67)
+Special ArcNode: center (32.77, -30.04), size (33.10, 37.29), distance 44,5/70,6
+Line-to-Special in Normal: 40%
+Exit: (44.57, -28.09), inside SPECIAL
+Attempts: 1
+[ExplorationSector] Special Site: ELECTRIC (ProductionElectricSiteHazard).
+[Breakables] requested=5 spawned=5 visible=5 rejected=0 fallback=0 bounds=100x100
+[ExplorationSector] Sector ready: 3 Normal, 1 Special (ArcNode), 92% map coverage, 5 breakables, Exit at (44.57, -28.09).
+[SectorRuntime]
+Source=RunSector
+Sector=1
+StageProfile='StageProfile_01'
+WorldRule='WorldRule_None'
+LocalAnomaly='LocalAnomaly_Berserk'
+[TacticalMap] breakableMarkers=5
+[Golden Path] seed=48151623 sector=1 t=0,0 Gameplay
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Bomber, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Bomber, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[GoldenCoin] Awake: object='p_coin1(Clone)', renderers=4, lights=1, active=True.
+[GoldenCoin] Initialize: object='p_coin1(Clone)', position=(-21.88, 34.19, 0.00), player='Player_0_p_Player3(Clone)', value=5, lifetime=20,00, pickupRadius=3,00.
+[TacticalMap] breakableMarkers=4
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[GoldenCoin] Collected: object='p_coin1(Clone)', value=5.
+[CurrencyManager] AddGold called: +5. Before=21143
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+Level up! Now level 2
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Bomber, amount=1
+[TacticalMap] breakableMarkers=5
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[SectorChoice]
+Current=1
+Next=2
+Rules=Wind,Snow,Darkness
+StageProfile='StageProfile_02'
+LocalAnomaly='LocalAnomaly_Berserk'
+[RunState] Completed sector 1. Completed levels: 1, reward total x1,00
+[Golden Path] seed=48151623 sector=1 t=95,1 Sector Startup
+[RunState] Scene stats committed. Total kills=17, time=93,4, levels=1
+[RunState] Saved XP: level=2, exp=90
+[RunState] Saved player health: 140/140
+[EnemySpawner] Spawning stopped.
+[RunState] Applied XP: level=2, exp=90
+[CharacterSpawner] Weapons found: 0
+[MetaUpgradeApplier] Loaded meta: HP=2, DMG=0, SPD=0, XP=1, GOLD=2, PICKUP=0
+[RunState] Applied to spawned player. Upgrades: 0, hasHealth: True
+[VisualLab LOAD]
+ProjectileVisualScale=1
+TrailWidth=1
+TrailTime=1
+CameraZoom=8,087
+source=Assets/_Project/Resources/VisualTuningSavedValues.asset
+[TacticalMap] breakableMarkers=0
+[EnemySpawner] Phase 1: interval 1,60, max alive 12.
+[EnemySpawner] Level scaling: HP x1,04, speed x1,00, pressure x1,12.
+Setting the duration while system is still playing is not supported. Please wait until the system has stopped and all particles have expired or call Stop with ParticleSystemStopBehavior.StopEmittingAndClear to completely stop the system.
+SECTOR LAYOUT
+Coverage: 87,1%
+Player: (0.00, 0.00, 0.00)
+Normal 1: center (32.01, -22.25), size (33.47, 53.71)
+Normal 2: center (-17.32, -29.04), size (59.80, 40.55)
+Normal 3: center (-16.95, 22.04), size (61.22, 53.80)
+Special RedBeam: center (32.24, 27.64), size (33.63, 40.46), distance 42,5/70,6
+Line-to-Special in Normal: 40%
+Exit: (24.25, 7.08), inside NONE
+Attempts: 2
+[ExplorationSector] Special Site: BEAM (ProductionBeamSiteHazard).
+[Breakables] requested=5 spawned=5 visible=5 rejected=0 fallback=0 bounds=100x100
+[ExplorationSector] Sector ready: 3 Normal, 1 Special (RedBeam), 87% map coverage, 5 breakables, Exit at (24.25, 7.08).
+[SectorRuntime]
+Source=RunSector
+Sector=2
+StageProfile='StageProfile_02'
+WorldRule='WorldRule_Wind'
+LocalAnomaly='LocalAnomaly_Berserk'
+[TacticalMap] breakableMarkers=5
+[Golden Path] seed=48151623 sector=2 t=95,1 Gameplay
+[GoldenCoin] Awake: object='p_coin1(Clone)', renderers=4, lights=1, active=True.
+[GoldenCoin] Initialize: object='p_coin1(Clone)', position=(-14.00, 26.82, 0.00), player='Player_0_p_Player3(Clone)', value=5, lifetime=20,00, pickupRadius=3,00.
+[TacticalMap] breakableMarkers=4
+[GoldenCoin] Collected: object='p_coin1(Clone)', value=5.
+[CurrencyManager] AddGold called: +5. Before=21149
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+Level up! Now level 3
+[EnemySpawner] Phase 2: interval 1,50, max alive 15.
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[SectorChoice]
+Current=2
+Next=3
+Rules=Condensation,Wind,Golden
+StageProfile='StageProfile_03'
+LocalAnomaly='LocalAnomaly_Berserk'
+[RunState] Completed sector 2. Completed levels: 2, reward total x2,00
+[Golden Path] seed=48151623 sector=2 t=162,6 Sector Startup
+[RunState] Scene stats committed. Total kills=29, time=161,0, levels=2
+[RunState] Saved XP: level=3, exp=45
+[RunState] Saved player health: 125/140
+[EnemySpawner] Spawning stopped.
+[RunState] Applied XP: level=3, exp=45
+[CharacterSpawner] Weapons found: 0
+[MetaUpgradeApplier] Loaded meta: HP=2, DMG=0, SPD=0, XP=1, GOLD=2, PICKUP=0
+[RunState] Applied to spawned player. Upgrades: 0, hasHealth: True
+[VisualLab LOAD]
+ProjectileVisualScale=1
+TrailWidth=1
+TrailTime=1
+CameraZoom=8,087
+source=Assets/_Project/Resources/VisualTuningSavedValues.asset
+[TacticalMap] breakableMarkers=0
+[EnemySpawner] Phase 1: interval 1,55, max alive 14.
+[EnemySpawner] Level scaling: HP x1,08, speed x1,00, pressure x1,24.
+SECTOR LAYOUT
+Coverage: 87,1%
+Player: (0.00, 0.00, 0.00)
+Normal 1: center (-32.15, -16.07), size (33.55, 60.23)
+Normal 2: center (17.22, -31.18), size (61.29, 35.55)
+Normal 3: center (17.01, 18.40), size (60.52, 57.79)
+Special GravityOrb: center (-32.68, 32.61), size (33.20, 32.73), distance 46,2/70,6
+Line-to-Special in Normal: 40%
+Exit: (-9.23, -23.38), inside NORMAL
+Attempts: 2
+[ExplorationSector] Special Site: GRAVITY (GravityZone).
+[Breakables] requested=5 spawned=5 visible=5 rejected=0 fallback=0 bounds=100x100
+[EnemySpawner] Phase 2: interval 1,45, max alive 17.
+[ExplorationSector] Sector ready: 3 Normal, 1 Special (GravityOrb), 87% map coverage, 5 breakables, Exit at (-9.23, -23.38).
+[SectorRuntime]
+Source=RunSector
+Sector=3
+StageProfile='StageProfile_03'
+WorldRule='WorldRule_Condensation'
+LocalAnomaly='LocalAnomaly_Berserk'
+[TacticalMap] breakableMarkers=5
+[Golden Path] seed=48151623 sector=3 t=162,6 Gameplay
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Eyes, amount=1
+[TacticalMap] breakableMarkers=6
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[RunState] Completed sector 3. Completed levels: 3, reward total x3,00
+[EnemyChaseMovement] 'Boss2_0' has no Bool parameter 'IsRunning'.
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+Level up! Now level 4
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Turret, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[GoldenCoin] Awake: object='p_coin1(Clone)', renderers=4, lights=1, active=True.
+[GoldenCoin] Initialize: object='p_coin1(Clone)', position=(-21.61, -26.92, 0.00), player='Player_0_p_Player3(Clone)', value=5, lifetime=20,00, pickupRadius=3,00.
+[TacticalMap] breakableMarkers=5
+[GoldenCoin] Collected: object='p_coin1(Clone)', value=5.
+[CurrencyManager] AddGold called: +5. Before=21155
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+Level up! Now level 5
+[EnemySpawner] Phase 3: interval 1,40, max alive 19.
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[TacticalMap] breakableMarkers=4
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Shooter, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+Level up! Now level 6
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Shooter, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Eyes, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+Level up! Now level 7
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Eyes, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Eyes, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+Level up! Now level 8
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[EnemySpawner] Spawning stopped.
+[Golden Path] FAIL seed=48151623 sectors=3 rewards=9 boss=False assertions=21573/1
+=== BOT RUN COMPLETE ===
+RunId: 9279719ff5d44b61bd2075a66fc31d21
+Result: Aborted
+Reason: Bot Lab disabled / Play Mode stopped
+Seed: 48151623 (v1) · 5x · 01_Gera · MVP
+Duration: 06:51 (wall 161,7s)
+Kills: 163
+Damage dealt (ORBITAL): 5742,78
+Damage taken: 15
+XP collected: 1995
+Levels gained: 5
+Minimum HP: 89%
+Remaining HP: 125/140
+Rewards:
+УРОН КОЛЬЦА
+ТОЧКА УСТАНОВКИ
+НОВАЯ ОРБИТА
+ТОЧКА УСТАНОВКИ
+ARC
+GUN
+GUN
+НОВАЯ ОРБИТА
+GUN
+Max enemies alive: 25
+Average enemies alive: 12,4
+=========================
+=== BOT BATCH COMPLETE ===
+Batch: 067c9d8794064aee9acab8bc31917591
+Status: Failed Seed 48151623: Bot Lab disabled / Play Mode stopped
+Runs: 0/1 · Aborted: 1
+Golden Path: PASS 0 / FAIL 1
+Sector Completed: 0 (0,0%) · Player Dead: 0 (0,0%) · Stuck/Error: 0
+Duration (game seconds): avg 0,0, median 0,0, min/max 0,0/0,0, P10/P50/P90 0,0/0,0/0,0
+Combat averages: kills 0,0, ORBITAL damage 0,0, damage taken 0,0
+Damage taken P10/P50/P90: 0,0/0,0/0,0
+HP: average minimum 0,0% · No damage: 0/0
+Progression averages: XP 0,0, levels 0,0
+Enemies: average max alive 0,0, highest 0
+Rewards (grants):
+
+Suspicious Runs:
+
+==========================
+Saving results to: Artifacts/GeneratedQA/CorePulse/results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

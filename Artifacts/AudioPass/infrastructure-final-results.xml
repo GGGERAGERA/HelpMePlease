@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="4" result="Passed" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-12 16:37:05Z" end-time="2026-09-12 16:37:06Z" duration="1,7871175">
+  <test-suite type="TestSuite" id="1000" name="Help Me Please" fullname="Help Me Please" runstate="Runnable" testcasecount="280" result="Passed" start-time="2026-09-12 16:37:05Z" end-time="2026-09-12 16:37:06Z" duration="1.787118" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1345" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="280" result="Passed" start-time="2026-09-12 16:37:05Z" end-time="2026-09-12 16:37:06Z" duration="1.584452" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="376" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="1302" name="Subject42ProductionAudioTests" fullname="Subject42ProductionAudioTests" classname="Subject42ProductionAudioTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-12 16:37:05Z" end-time="2026-09-12 16:37:06Z" duration="1.576414" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1303" name="BothProductionEntryPathsUseOnePlayableCatalog" fullname="Subject42ProductionAudioTests.BothProductionEntryPathsUseOnePlayableCatalog" methodname="BothProductionEntryPathsUseOnePlayableCatalog" classname="Subject42ProductionAudioTests" runstate="Runnable" seed="1835820451" result="Passed" start-time="2026-09-12 16:36:24Z" end-time="2026-09-12 16:36:50Z" duration="25.634182" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="Timeout" value="180000" />
+          </properties>
+          <output><![CDATA[[EnemySpawner] Spawning stopped.
+[BunkerInteractableCollider] Interaction source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerPlayerShowcase 1 renderers=16
+[BunkerInteractableCollider] Interaction source=p_Shelf1, interactable=False, hoverable=True
+[BunkerHoverOutline] p_Shelf1 renderers=30
+[BunkerInteractableCollider] Interaction source=p_bunkerUpgrade1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerUpgrade1 renderers=20
+[BunkerInteractableCollider] Interaction source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerWeaponShowcase renderers=8
+[BunkerInteractableCollider] Interaction source=p_Shelf1 (1), interactable=False, hoverable=True
+[BunkerHoverOutline] p_Shelf1 (1) renderers=30
+[BunkerInteractableCollider] Interaction source=p_AnomalyTable1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_AnomalyTable1 renderers=32
+[BunkerInteractableCollider] Interaction source=p_BunkerGates1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_BunkerGates1 renderers=45
+[RunSelectionManager] Character selected: 01_Gera
+[RunSelectionManager] Character selected: 01_Gera
+[RunState] New run: character=01_Gera, weapon=NULL, stabilizer=NULL
+[CharacterSpawner] Weapons found: 0
+[MetaUpgradeApplier] Loaded meta: HP=2, DMG=0, SPD=0, XP=1, GOLD=2, PICKUP=0
+[RunState] Applied to spawned player. Upgrades: 0, hasHealth: False
+[VisualLab LOAD]
+ProjectileVisualScale=1
+TrailWidth=1
+TrailTime=1
+CameraZoom=8,087
+source=Assets/_Project/Resources/VisualTuningSavedValues.asset
+[TacticalMap] breakableMarkers=0
+[EnemySpawner] Phase 1: interval 1,50, max alive 10.
+[EnemySpawner] Level scaling: HP x1,00, speed x1,00, pressure x1,00.
+SECTOR LAYOUT
+Coverage: 90,3%
+Player: (0.00, 0.00, 0.00)
+Normal 1: center (24.73, -31.18), size (48.90, 34.69)
+Normal 2: center (-17.30, 17.60), size (60.89, 59.76)
+Normal 3: center (33.05, 18.57), size (33.03, 59.25)
+Special RedBeam: center (-25.68, -32.14), size (45.80, 34.73), distance 41,1/70,6
+Line-to-Special in Normal: 40%
+Exit: (30.86, -8.36), inside NORMAL
+Attempts: 3
+[ExplorationSector] Special Site: BEAM (ProductionBeamSiteHazard).
+[Breakables] requested=8 spawned=8 visible=8 rejected=1 fallback=0 bounds=100x100
+[ExplorationSector] Sector ready: 3 Normal, 1 Special (RedBeam), 90% map coverage, 8 breakables, Exit at (30.86, -8.36).
+[SectorRuntime]
+Source=RunSector
+Sector=1
+StageProfile='StageProfile_01'
+WorldRule='WorldRule_None'
+LocalAnomaly='LocalAnomaly_Berserk'
+[TacticalMap] breakableMarkers=8
+[EnemySpawner] Spawning stopped.
+]]></output>
+        </test-case>
+        <test-case id="1304" name="ClipSelectionDoesNotConsumeGameplayRandom" fullname="Subject42ProductionAudioTests.ClipSelectionDoesNotConsumeGameplayRandom" methodname="ClipSelectionDoesNotConsumeGameplayRandom" classname="Subject42ProductionAudioTests" runstate="Runnable" seed="1711559287" result="Passed" start-time="2026-09-12 16:36:50Z" end-time="2026-09-12 16:36:50Z" duration="0.004116" asserts="0">
+          <properties />
+        </test-case>
+        <test-case id="1306" name="ProductionCatalogIsAvailableWithoutBunker" fullname="Subject42ProductionAudioTests.ProductionCatalogIsAvailableWithoutBunker" methodname="ProductionCatalogIsAvailableWithoutBunker" classname="Subject42ProductionAudioTests" runstate="Runnable" seed="1014958010" result="Passed" start-time="2026-09-12 16:36:50Z" end-time="2026-09-12 16:36:50Z" duration="0.015442" asserts="0">
+          <properties />
+        </test-case>
+        <test-case id="1305" name="SaturationPreservesPlayerHurtAndPauseStopsLoop" fullname="Subject42ProductionAudioTests.SaturationPreservesPlayerHurtAndPauseStopsLoop" methodname="SaturationPreservesPlayerHurtAndPauseStopsLoop" classname="Subject42ProductionAudioTests" runstate="Runnable" seed="533028571" result="Passed" start-time="2026-09-12 16:36:50Z" end-time="2026-09-12 16:37:06Z" duration="16.538296" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Saving results to: Artifacts/GeneratedQA/CorePulse/results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

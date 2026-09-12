@@ -13,6 +13,11 @@ public enum AudioCategory
 [Serializable]
 public sealed class AudioCueDefinition
 {
+    // Audio variation must not advance Unity's gameplay random stream.
+    private static readonly System.Random audioRandom = new();
+
+    internal static float RandomPitch(float min, float max) =>
+        Mathf.Lerp(min, max, (float)audioRandom.NextDouble());
     [SerializeField] private AudioCueId id;
     [SerializeField] private AudioClip[] clips;
     [SerializeField, Range(0f, 1f)] private float volume = 1f;
@@ -23,6 +28,9 @@ public sealed class AudioCueDefinition
     [SerializeField, Min(1)] private int maxSimultaneous = 1;
     [SerializeField] private bool loop;
     [SerializeField] private AudioCategory category = AudioCategory.SFX;
+
+    [SerializeField, Range(0, 100)] private int priority;
+    public int Priority => Mathf.Clamp(priority, 0, 100);
 
     public AudioCueId Id => id;
     public float Volume => Mathf.Clamp01(volume);
@@ -41,7 +49,7 @@ public sealed class AudioCueDefinition
         if (clips == null || clips.Length == 0)
             return false;
 
-        int startIndex = UnityEngine.Random.Range(0, clips.Length);
+        int startIndex = audioRandom.Next(clips.Length);
 
         for (int offset = 0; offset < clips.Length; offset++)
         {

@@ -1,0 +1,273 @@
+{
+    "BatchId": "3953989d30f2443fa5b0a6e938f4d91f",
+    "StartedAt": "2026-09-12T16:25:37.3937807Z",
+    "CompletedAt": "2026-09-12T16:26:35.4887850Z",
+    "Status": "Completed",
+    "StopReason": "",
+    "Strategy": "GoldenPath",
+    "SeedMode": "Auto",
+    "FixedSeed": 48151623,
+    "SeedVersion": 1,
+    "SimulationSpeed": 5.0,
+    "RequestedRuns": 1,
+    "CompletedRuns": 1,
+    "SectorCompleted": 0,
+    "PlayerDead": 0,
+    "StuckErrors": 0,
+    "Aborted": 0,
+    "GoldenPathPassed": 1,
+    "GoldenPathFailed": 0,
+    "CompletionRate": 1.0,
+    "DeathRate": 0.0,
+    "Results": [
+        {
+            "GoldenPath": {
+                "Result": "PASS",
+                "Seed": 48151623,
+                "Duration": 224.6095428466797,
+                "SectorsCompleted": 3,
+                "RewardsTaken": 9,
+                "BossKilled": true,
+                "FinalRingCount": 2,
+                "FinalModuleCount": 3,
+                "AssertionsPassed": 86430,
+                "AssertionsFailed": 0,
+                "BossSpawns": 1,
+                "VictoryCalls": 1,
+                "ObjectivesCompleted": 3,
+                "DirectMountSelections": 2,
+                "BunkerClean": true,
+                "SecondRunBaseline": true,
+                "CheckedAssertions": [
+                    "Run.ActiveAfterStart",
+                    "Run.SectorSequence",
+                    "Orbital.StartingBaseline",
+                    "Cleanup.CompleteBaseline",
+                    "Orbital.CoreExists",
+                    "Orbital.ValidState",
+                    "Orbital.RuntimeMatchesState",
+                    "Run.SceneStillPresent",
+                    "Run.PlayerAlive",
+                    "Run.NoSector4",
+                    "Orbital.StableRunId",
+                    "Orbital.RingsAndMountsPersist",
+                    "Orbital.RingUpgradesPersist",
+                    "Orbital.CoreUpgradesPersist",
+                    "Orbital.ModulesNeverOverwritten",
+                    "Rewards.SelectionReleased",
+                    "Progression.SectorDeadline",
+                    "Rewards.GrantedOnce",
+                    "Rewards.ChosenRewardApplied",
+                    "Run.CompletedSectorOnce",
+                    "Progression.SectorChoiceDeadline",
+                    "Rewards.TransitionOnlyWhenResolved",
+                    "Rewards.DirectMountSelectionCompleted",
+                    "Boss.AfterSector3Only",
+                    "Boss.SpawnOnceAfterSector3",
+                    "Boss.Exists",
+                    "Boss.DeathRegistered",
+                    "Boss.VictoryOnce",
+                    "Cleanup.BunkerRunState",
+                    "Cleanup.SceneObjects",
+                    "Cleanup.RewardsAndBoss",
+                    "Cleanup.NewRunIdentity",
+                    "Cleanup.SecondRunBoss",
+                    "GoldenPath.Complete"
+                ],
+                "Failures": [],
+                "RecentDamage": [
+                    "t=50,0; sector=1; source=BomberExplosionSequence; damage=15; hp=125; position=(-46.59, 3.13, 0.00); bossHP=",
+                    "t=55,2; sector=1; source=EnemyCollisionHandler; damage=15; hp=110; position=(-48.65, 3.53, 0.00); bossHP=",
+                    "t=77,3; sector=1; source=ProductionSiteHazardUtility; damage=18; hp=92; position=(39.91, -25.46, 0.00); bossHP="
+                ]
+            },
+            "RunId": "bc42ad67377343d7b8f132ff4bca049b",
+            "StartedUtc": "2026-09-12T16:25:37.4938031Z",
+            "Seed": 48151623,
+            "SeedVersion": 1,
+            "Strategy": "GoldenPath",
+            "Scene": "MVP",
+            "SimulationSpeed": 5.0,
+            "Timing": "Duration: scaled game seconds; inactivity/reward/startup watchdog: active real seconds",
+            "LayoutSignature": "",
+            "InitialEnemyTypes": [
+                "Tupik",
+                "Bomber",
+                "Bomber",
+                "Bomber",
+                "Tupik",
+                "Tupik",
+                "Tupik",
+                "Tupik",
+                "Bomber",
+                "Bomber",
+                "Tupik",
+                "Bomber",
+                "Bomber",
+                "Tupik",
+                "Bomber",
+                "Tupik"
+            ],
+            "Character": "01_Gera",
+            "Sector": 3,
+            "Duration": 224.6095428466797,
+            "WallDuration": 57.977081298828128,
+            "Result": "GoldenPathPassed",
+            "Reason": "Three sectors, boss victory, bunker cleanup and second run verified",
+            "Kills": 124,
+            "DamageScope": "ORBITAL effective HP damage; kills include all enemy deaths",
+            "DamageDealt": 4409.84326171875,
+            "DamageTaken": 48.0,
+            "XPCollected": 1890,
+            "LevelsGained": 3,
+            "Level": 8,
+            "RewardsTaken": [
+                "УРОН КОЛЬЦА",
+                "УРОН КОЛЬЦА",
+                "MAX HP",
+                "УРОН КОЛЬЦА",
+                "ТОЧКА УСТАНОВКИ",
+                "НОВАЯ ОРБИТА",
+                "GUN",
+                "ИМПУЛЬСНАЯ ПУШКА",
+                "ТОЧКА УСТАНОВКИ"
+            ],
+            "FinalOrbital": {
+                "Version": 2,
+                "IsInitialized": true,
+                "RunId": 1,
+                "CoreState": {
+                    "Level": 0,
+                    "DamageMultiplier": 1.0,
+                    "CooldownMultiplier": 1.0,
+                    "PulseUpgradeLevel": 0,
+                    "CascadeUpgradeLevel": 0,
+                    "LinkMatrixUpgradeLevel": 0
+                },
+                "Rings": [
+                    {
+                        "StableRingId": 1,
+                        "Order": 0,
+                        "Radius": 1.25,
+                        "BaseRotationSpeed": 42.0,
+                        "Direction": 1,
+                        "CurrentPhase": 74.81765747070313,
+                        "PhaseOffset": 0.0,
+                        "MountCapacity": 3,
+                        "MountCount": 3,
+                        "PowerMultiplier": 1.953125,
+                        "SpeedUpgradeLevel": 0,
+                        "PowerUpgradeLevel": 3,
+                        "MountUpgradeLevel": 2,
+                        "VisualUpgradeLevel": 5
+                    },
+                    {
+                        "StableRingId": 2,
+                        "Order": 1,
+                        "Radius": 1.9700000286102296,
+                        "BaseRotationSpeed": 36.2068977355957,
+                        "Direction": -1,
+                        "CurrentPhase": 220.2058563232422,
+                        "PhaseOffset": 23.0,
+                        "MountCapacity": 3,
+                        "MountCount": 1,
+                        "PowerMultiplier": 1.0,
+                        "SpeedUpgradeLevel": 0,
+                        "PowerUpgradeLevel": 0,
+                        "MountUpgradeLevel": 0,
+                        "VisualUpgradeLevel": 0
+                    }
+                ],
+                "Modules": [
+                    {
+                        "StableModuleId": 1,
+                        "ModuleType": 0,
+                        "StableRingId": 1,
+                        "MountIndex": 0,
+                        "DamageLevel": 0
+                    },
+                    {
+                        "StableModuleId": 2,
+                        "ModuleType": 0,
+                        "StableRingId": 1,
+                        "MountIndex": 1,
+                        "DamageLevel": 0
+                    },
+                    {
+                        "StableModuleId": 3,
+                        "ModuleType": 2,
+                        "StableRingId": 2,
+                        "MountIndex": 0,
+                        "DamageLevel": 0
+                    }
+                ],
+                "NextStableRingId": 3,
+                "NextStableModuleId": 4,
+                "Revision": 17,
+                "RestoreCount": 0,
+                "LastProcessedPlayerLevel": 8,
+                "RingOfferMissCount": 2
+            },
+            "RemainingHP": 112.0,
+            "MaximumHP": 160.0,
+            "MinimumHP": 112.0,
+            "MinimumHPFraction": 0.6571428775787354,
+            "EnemiesAlive": 16,
+            "MaxEnemiesAlive": 17,
+            "AverageEnemiesAlive": 2.1843714714050295
+        }
+    ],
+    "Duration": {
+        "Average": 224.6095428466797,
+        "Median": 224.6095428466797,
+        "Minimum": 224.6095428466797,
+        "Maximum": 224.6095428466797,
+        "P10": 224.6095428466797,
+        "P50": 224.6095428466797,
+        "P90": 224.6095428466797
+    },
+    "DamageTaken": {
+        "Average": 48.0,
+        "Median": 48.0,
+        "Minimum": 48.0,
+        "Maximum": 48.0,
+        "P10": 48.0,
+        "P50": 48.0,
+        "P90": 48.0
+    },
+    "AverageKills": 124.0,
+    "AverageDamageDealt": 4409.84326171875,
+    "AverageMinimumHP": 0.6571428775787354,
+    "AverageXP": 1890.0,
+    "AverageLevelsGained": 3.0,
+    "AverageMaxEnemiesAlive": 17.0,
+    "ZeroDamageRuns": 0,
+    "HighestMaxEnemiesAlive": 17,
+    "Rewards": [
+        {
+            "Reward": "УРОН КОЛЬЦА",
+            "Count": 3
+        },
+        {
+            "Reward": "ТОЧКА УСТАНОВКИ",
+            "Count": 2
+        },
+        {
+            "Reward": "GUN",
+            "Count": 1
+        },
+        {
+            "Reward": "MAX HP",
+            "Count": 1
+        },
+        {
+            "Reward": "ИМПУЛЬСНАЯ ПУШКА",
+            "Count": 1
+        },
+        {
+            "Reward": "НОВАЯ ОРБИТА",
+            "Count": 1
+        }
+    ],
+    "SuspiciousRuns": []
+}

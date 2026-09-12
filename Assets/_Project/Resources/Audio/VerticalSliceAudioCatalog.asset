@@ -74,14 +74,15 @@ MonoBehaviour:
   - id: 20
     clips:
     - {fileID: 8300000, guid: 907d3442b4fc4244ea4e9c020e3966d6, type: 3}
-    volume: 0.35
+    volume: 0.22
     pitchMin: 0.96
     pitchMax: 1.04
-    spatialBlend: 0.15
-    cooldown: 0.04
-    maxSimultaneous: 4
+    spatialBlend: 0
+    cooldown: 0.085
+    maxSimultaneous: 3
     loop: 0
     category: 1
+    priority: 20
   - id: 21
     clips:
     - {fileID: 8300000, guid: c93f09800b8e6b0489e179d0ef8675bc, type: 3}
@@ -114,15 +115,17 @@ MonoBehaviour:
     loop: 0
     category: 1
   - id: 30
-    clips: []
-    volume: 0.55
-    pitchMin: 0.96
-    pitchMax: 1.04
+    clips:
+    - {fileID: 8300000, guid: 722f1d31ef078fc48af3109cf2069a1e, type: 3}
+    volume: 0.45
+    pitchMin: 0.97
+    pitchMax: 1.03
     spatialBlend: 0
     cooldown: 0.18
     maxSimultaneous: 1
     loop: 0
     category: 1
+    priority: 100
   - id: 31
     clips: []
     volume: 0.75
@@ -134,27 +137,34 @@ MonoBehaviour:
     loop: 0
     category: 1
   - id: 40
-    clips: []
-    volume: 0.4
-    pitchMin: 0.9
-    pitchMax: 1.1
-    spatialBlend: 0.6
-    cooldown: 0.03
-    maxSimultaneous: 4
-    loop: 0
-    category: 1
-  - id: 50
-    clips: []
-    volume: 0.22
-    pitchMin: 1
+    clips:
+    - {fileID: 8300000, guid: e928823a6be6cf343b31cbcfb5a5c6a2, type: 3}
+    - {fileID: 8300000, guid: 51aa7a030296f364aae45bcc931779e8, type: 3}
+    - {fileID: 8300000, guid: 8a67168fb1e9d0e4f98c9f3ac0d8216e, type: 3}
+    volume: 0.16
+    pitchMin: 0.92
     pitchMax: 1.08
-    spatialBlend: 0.2
-    cooldown: 0.035
-    maxSimultaneous: 3
+    spatialBlend: 0
+    cooldown: 0.1
+    maxSimultaneous: 2
     loop: 0
     category: 1
+    priority: 10
+  - id: 50
+    clips:
+    - {fileID: 8300000, guid: b9b0bd14a48640140a280ebd1048c7be, type: 3}
+    volume: 0.045
+    pitchMin: 0.98
+    pitchMax: 1.1
+    spatialBlend: 0
+    cooldown: 0.08
+    maxSimultaneous: 1
+    loop: 0
+    category: 1
+    priority: 0
   - id: 51
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: fe8ce4db164af044898406314d8d878e, type: 3}
     volume: 0.7
     pitchMin: 1
     pitchMax: 1
@@ -163,6 +173,7 @@ MonoBehaviour:
     maxSimultaneous: 1
     loop: 0
     category: 1
+    priority: 80
   - id: 41
     clips: []
     volume: 0.8
@@ -213,3 +224,137 @@ MonoBehaviour:
     maxSimultaneous: 1
     loop: 0
     category: 2
+  - id: 70
+    clips:
+    - {fileID: 8300000, guid: 49e9896848916944d896a0fcfab2aa1d, type: 3}
+    - {fileID: 8300000, guid: ca923a28360675342a7ebadc7036bd9c, type: 3}
+    - {fileID: 8300000, guid: ced62b595fdd5154a97bc8dbe13b0f6e, type: 3}
+    volume: 0.09
+    pitchMin: 0.92
+    pitchMax: 1.08
+    spatialBlend: 0
+    cooldown: 0.065
+    maxSimultaneous: 2
+    loop: 0
+    category: 1
+    priority: 0
+  - id: 71
+    clips:
+    - {fileID: 8300000, guid: 418d270b861135f4cadc5fbafd2ea2e6, type: 3}
+    volume: 0.1
+    pitchMin: 0.98
+    pitchMax: 1.04
+    spatialBlend: 0
+    cooldown: 0.12
+    maxSimultaneous: 1
+    loop: 0
+    category: 1
+    priority: 5
+  - id: 80
+    clips:
+    - {fileID: 8300000, guid: e3164229730f70742904e306605d22d3, type: 3}
+    volume: 0.12
+    pitchMin: 0.95
+    pitchMax: 1.05
+    spatialBlend: 0
+    cooldown: 0.12
+    maxSimultaneous: 2
+    loop: 0
+    category: 1
+    priority: 20
+  - id: 81
+    clips:
+    - {fileID: 8300000, guid: a4b958a38064e1141b22dc991f0a50c1, type: 3}
+    volume: 0.28
+    pitchMin: 0.93
+    pitchMax: 1.03
+    spatialBlend: 0
+    cooldown: 0.15
+    maxSimultaneous: 2
+    loop: 0
+    category: 1
+    priority: 25
+  - id: 82
+    clips:
+    - {fileID: 8300000, guid: 0bab18109cc0d434fa35ed3a525ef1e2, type: 3}
+    volume: 0.2
+    pitchMin: 0.96
+    pitchMax: 1.04
+    spatialBlend: 0
+    cooldown: 0.15
+    maxSimultaneous: 2
+    loop: 0
+    category: 1
+    priority: 25
+  - id: 90
+    clips:
+    - {fileID: 8300000, guid: 0353aecf3a7584944b4825daa3bdca85, type: 3}
+    volume: 0.1
+    pitchMin: 1
+    pitchMax: 1
+    spatialBlend: 0
+    cooldown: 0
+    maxSimultaneous: 1
+    loop: 1
+    category: 1
+    priority: 30
+  - id: 91
+    clips:
+    - {fileID: 8300000, guid: 177e4ab0c4a5190418064fc42dd4f780, type: 3}
+    volume: 0.34
+    pitchMin: 0.97
+    pitchMax: 1.03
+    spatialBlend: 0
+    cooldown: 0.12
+    maxSimultaneous: 1
+    loop: 0
+    category: 1
+    priority: 60
+  - id: 92
+    clips:
+    - {fileID: 8300000, guid: 61e7f1c7145ab2b4bb9e2134f3dea46c, type: 3}
+    volume: 0.22
+    pitchMin: 0.99
+    pitchMax: 1.01
+    spatialBlend: 0
+    cooldown: 0.12
+    maxSimultaneous: 1
+    loop: 0
+    category: 1
+    priority: 40
+  - id: 93
+    clips:
+    - {fileID: 8300000, guid: 0d1ea7a458408574484ada9ee292a3e4, type: 3}
+    volume: 0.28
+    pitchMin: 0.98
+    pitchMax: 1.02
+    spatialBlend: 0
+    cooldown: 0.15
+    maxSimultaneous: 2
+    loop: 0
+    category: 1
+    priority: 45
+  - id: 94
+    clips:
+    - {fileID: 8300000, guid: b4a6fedc76185014789d540e80720c83, type: 3}
+    volume: 0.32
+    pitchMin: 0.98
+    pitchMax: 1.02
+    spatialBlend: 0
+    cooldown: 0.08
+    maxSimultaneous: 2
+    loop: 0
+    category: 1
+    priority: 60
+  - id: 95
+    clips:
+    - {fileID: 8300000, guid: d8a26d1288c42474f80d9fbf6195e49f, type: 3}
+    volume: 0.38
+    pitchMin: 0.98
+    pitchMax: 1.02
+    spatialBlend: 0
+    cooldown: 0.08
+    maxSimultaneous: 1
+    loop: 0
+    category: 2
+    priority: 80

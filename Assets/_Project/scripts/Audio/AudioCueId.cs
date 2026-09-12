@@ -27,5 +27,16 @@ public enum AudioCueId
 
     Purchase = 60,
     PurchaseFail = 61,
-    StartRun = 62
+    StartRun = 62,
+    EnemyHit = 70,
+    EnemyCritical = 71,
+    OrbitalSwordHit = 80,
+    OrbitalImpulseFire = 81,
+    OrbitalArcFire = 82,
+    OrbitalCompress = 90,
+    OrbitalRelease = 91,
+    CorePulse = 92,
+    CoreCascade = 93,
+    ModuleInstall = 94,
+    RewardSelect = 95
 }
