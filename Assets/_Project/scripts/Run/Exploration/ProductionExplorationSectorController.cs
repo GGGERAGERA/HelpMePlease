@@ -211,6 +211,9 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             exitPosition
         );
 
+        ProductionSectorProps.Place(transform, gameplayArea, normalPositions,
+            specialPosition, exitPosition, config.ExitRadius, spawnedBreakables);
+
         threatController.Initialize(config.ThreatConfig, enemySpawner);
 
         Debug.Log(

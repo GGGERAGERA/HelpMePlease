@@ -1,0 +1,20 @@
+Scene after StartRun: Assets/_Project/Scenes/MainBuild/MVP.unity
+Loaded roots: EventSystem active=True,GameManager active=True,MainCanvas active=True,MusicPlayer active=True,GameOverManager active=True,CameraRig active=True,LevelStartPoint active=True,LevelChoiceManager active=True,LevelModifiersApplier active=True,RunSystems active=True,GameplayArea active=True,PlayerBoundaryHazard active=True,World Loot Reward Reel active=False,Cold Ash Ground active=True,Player_0_p_Player3(Clone) active=True,Subject42 Debug Menu (Runtime) active=False,Normal Anomaly Site 1 active=True,StasisZone_World(Clone) active=True,FalseSignalEvent(Clone) active=True,Normal Anomaly Site 2 active=True,GlitchZone_World(Clone) active=True,EvacuationCorridorEvent(Clone) active=True,Normal Anomaly Site 3 active=True,BerserkZone_World(Clone) active=True,CaptureZoneEvent(Clone) active=True,Special Anomaly Site - ArcNode active=True,FalseSignalEvent(Clone) active=True,Sector Exit active=True
+Tilemaps: Ground active=True
+PASS 238 visual props; zero colliders/scripts; Background/-105.
+00-whole-production-sector: scene=MVP sector=1 phase=NormalSector enemies=0 XP=0 sites=4 crates=4 camera=55
+01-sector-start: scene=MVP sector=1 phase=NormalSector enemies=0 XP=0 sites=4 crates=4 camera=8,254045
+PASS production movement motor across Cold Ash; no decorative collision.
+02-movement-open-field: scene=MVP sector=1 phase=NormalSector enemies=0 XP=0 sites=4 crates=4 camera=8,594737
+03-medium-crowd-orbital-xp: scene=MVP sector=1 phase=NormalSector enemies=24 XP=24 sites=4 crates=4 camera=9,008182
+Crowd diagnostic: moved=21 frozen=False physics seconds=2,02
+PASS 21 enemies advanced through visual decoration.
+04-dense-combat: scene=MVP sector=1 phase=NormalSector enemies=64 XP=24 sites=4 crates=4 camera=9,064401
+PASS live ORBITAL hits=20, rings=4, modules=8
+05-production-breakable: scene=MVP sector=1 phase=NormalSector enemies=62 XP=24 sites=4 crates=4 camera=10,68379
+PASS production crate damage/break.
+06-anomaly-event: scene=MVP sector=1 phase=NormalSector enemies=62 XP=24 sites=4 crates=3 camera=10,10663
+PASS actual site event: FalseSignalEvent
+07-final-sector-after-transitions: scene=MVP sector=3 phase=NormalSector enemies=0 XP=0 sites=4 crates=4 camera=9,057811
+08-final-boss: scene=MVP sector=3 phase=FinalBossCombat enemies=6 XP=1 sites=4 crates=4 camera=9,917354
+PASS real transitions through sectors 1–3 and single final boss; original spawning remains enabled.

@@ -129,8 +129,27 @@ public class ColdAshProductionTests
         Assert.That(ground.transform.parent.GetComponentsInChildren<Collider2D>(),Is.Empty);
         Assert.That(ProductionAnomalySite.ActiveSites.Count,Is.EqualTo(4));
         Assert.That(WorldBreakable.ActiveInstances.Count,Is.GreaterThanOrEqualTo(4));
+        var props=GameObject.Find("Sector visual props");
+        Assert.That(props,Is.Not.Null,"Production props are not connected");
+        Assert.That(props.transform.childCount,Is.InRange(200,300));
+        Assert.That(props.GetComponentsInChildren<Collider2D>(),Is.Empty);
+        Assert.That(props.GetComponentsInChildren<MonoBehaviour>(),Is.Empty);
+        Assert.That(props.GetComponentsInChildren<SpriteRenderer>().All(r=>r.sprite!=null&&r.sortingLayerName=="Background"&&r.sortingOrder==-105),Is.True);
+        Log($"PASS {props.transform.childCount} visual props; zero colliders/scripts; Background/-105.");
+        // Inspect the whole actual sector for clumps and repetition, then restore normal framing.
+        var camera=Camera.main;var follow=One<CameraFollow>();
+        bool followed=follow!=null&&follow.enabled;if(follow!=null)follow.enabled=false;
+        var cameraPosition=camera.transform.position;float cameraSize=camera.orthographicSize;
+        var area=One<GameplayAreaService>().PlayableArea.bounds;
+        camera.transform.position=new Vector3(area.center.x,area.center.y,cameraPosition.z);
+        camera.orthographicSize=area.size.y*.55f;
+        yield return Capture("00-whole-production-sector");
+        camera.transform.position=cameraPosition;camera.orthographicSize=cameraSize;
+        if(follow!=null)follow.enabled=followed;
         yield return Capture("01-sector-start");
-        var movement=player.GetComponent<CharacterMovement2D>();var rb=player.GetComponent<Rigidbody2D>();var origin=rb.position;
+        var movement=player.GetComponent<CharacterMovement2D>();var rb=player.GetComponent<Rigidbody2D>();
+        rb.position=(Vector2)props.transform.GetChild(0).position+Vector2.left*.35f;
+        Physics2D.SyncTransforms();var origin=rb.position;
         // Exercise the actual FixedUpdate motor with its normal input state, without an input shim in production.
         movement.enabled=false;Set(movement,"moveInput",Vector2.right);
         for(int i=0;i<50;i++){Call(movement,"FixedUpdate");yield return new WaitForFixedUpdate();}
@@ -152,7 +171,16 @@ public class ColdAshProductionTests
         void SpawnCrowd(int count)
         {for(int i=0;i<count;i++){float a=i*2.39996f;float r=4.5f+(i%5)*.7f;var e=spawner.SpawnDebugEnemyAt(prefabs[i%4],player.transform.position+new Vector3(Mathf.Cos(a)*r*1.4f,Mathf.Sin(a)*r));e.GetComponent<EnemyHealth>().SetRuntimeMaxHealth(100000);}}
         for(int i=0;i<24;i++){float a=i*2.39996f;Object.Instantiate(xp,player.transform.position+new Vector3(Mathf.Cos(a)*(7+i%3),Mathf.Sin(a)*(7+i%3)),Quaternion.identity);}
-        SpawnCrowd(24);yield return new WaitForSeconds(.6f);yield return Capture("03-medium-crowd-orbital-xp");
+        SpawnCrowd(24);
+        yield return Capture("03-medium-crowd-orbital-xp");
+        var crowdPositions=EnemyHealth.ActiveInstances.ToDictionary(e=>e,e=>e.transform.position);
+        // Edit-mode test runner can consume WaitForSeconds without waiting for player-loop physics.
+        float crowdStart=Time.fixedTime;
+        while(Time.fixedTime-crowdStart<2f)yield return null;
+        int moving=crowdPositions.Count(p=>p.Key!=null&&Vector3.Distance(p.Key.transform.position,p.Value)>.1f);
+        Log($"Crowd diagnostic: moved={moving} frozen={EnemyDebugAiFreeze.IsFrozen} physics seconds={Time.fixedTime-crowdStart:0.00}");
+        Assert.That(moving,Is.GreaterThanOrEqualTo(8),"Production crowd must advance through decoration");
+        Log($"PASS {moving} enemies advanced through visual decoration.");
         SpawnCrowd(38);yield return new WaitForSeconds(.6f);yield return Capture("04-dense-combat");
         Assert.That(hits,Is.GreaterThan(0));Assert.That(station.ValidateState(out string error),Is.True,error);Log($"PASS live ORBITAL hits={hits}, rings={station.Rings.Count}, modules={station.Modules.Count}");
         var crate=WorldBreakable.ActiveInstances.First(c=>!c.IsBroken);

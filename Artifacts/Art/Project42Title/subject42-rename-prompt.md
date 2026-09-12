@@ -1,0 +1,3 @@
+Built-in ImageGen edit of project42-capsule-pixel-v1.png. Output: Assets/_Project/art/Sprites/renders/subject42-capsule-pixel-v1.png
+
+Edit only the title lettering in the supplied image. Replace "PROJECT" with "Subject" (capital S, lowercase ubject), and replace "№42" with "#42" using a literal hash # symbol. Exact new title: "Subject #42", arranged on two centered lines, "Subject" above "#42". Match the existing pale icy white distressed pixel lettering with cyan edging, dark shadow, visual weight, position and overall title area. Preserve EVERYTHING outside the lettering: exact same robot, eye, arms, hero, flashlight, capsules, cables, room, colors, lighting, pixel art style, framing and dimensions. Do not redesign or reinterpret the scene. Only change the name.
