@@ -99,6 +99,8 @@ public sealed class BotBatchRunner : MonoBehaviour
                 history.Batches.RemoveAll(b => b.BatchId == Result.BatchId);
                 history.Batches.Add(Result);
                 File.WriteAllText(historyPath, JsonUtility.ToJson(history, true));
+                try { GoldenPathSummary.WriteFromHistory(historyPath); }
+                catch (Exception summaryError) { Debug.LogWarning("[Bot Batch] Golden Path summary save failed: " + summaryError.Message); }
             }
             catch (Exception error)
             {

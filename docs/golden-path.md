@@ -1,5 +1,34 @@
 # Subject#42 Golden Path regression
 
+## Developer lab
+
+Open `Assets/_Project/Scenes/Dev/GoldenPathLab.unity` (or Unity menu
+`Tools > Subject42 > Golden Path Lab > Open scene`), press Play and use the Game
+view. The editor-only panel provides ×1/×10/×100, 5×/10× speed, an initial seed,
+rerun of the last non-aborted failure at its original speed, Stop, refresh and
+file-open buttons. It uses existing production bunker startup and BotBatchRunner,
+persists as a dev panel during the run, and returns to the lab after the batch.
+No production Build Settings entry or production menu integration is added.
+
+Status and counters assess the latest batch: red for a recorded game regression,
+yellow (BOT FAILS / ABORTED PRESENT) for combat/assertion/aborted/incomplete results, green for a complete clean
+batch. History-wide unresolved issues remain in the existing summary. Up to 20
+run rows are shown in a scrollable table. Latest batch, History and Failures tabs
+let you find older failed attempts without opening files. Click a row for a
+scrollable detail panel with the exact assertion, full reason, combat/cleanup
+metrics and last 10 damage records. Row colors distinguish PASS (green), combat
+failure/abort (yellow), game regression (red) and assertion failure (orange).
+RERUN SELECTED SEED starts one run with that attempt's seed and original speed;
+COPY SEED and COPY FAILURE copy the seed or full detail text. Selection tracks
+the exact run and survives Refresh. Live mode
+shows the current seed, sector, speed and completed/requested runs. File changes
+and batch completion refresh the display automatically.
+
+The lab UI integration check completed seed `48151623` at 5× with PASS and
+verified the automatic scene return and new result row. Fixed screenshots are
+in `Artifacts/BotBatches/golden_path_lab_running.png` and
+`golden_path_lab_after.png`; these are UI checks, not another result store.
+
 The existing `BotRunSession`, `BotController`, `BotTelemetry`, `BotRunSeed` and
 `BotBatchRunner` own this mode. Ordinary Survivor batches keep their original API.
 Runtime bot code remains restricted to Editor/development builds.
