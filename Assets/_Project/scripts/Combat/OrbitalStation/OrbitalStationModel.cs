@@ -108,7 +108,7 @@ namespace Subject42.Combat.OrbitalStation
         public int RingId => State.StableRingId;
         public float RuntimeRadiusMultiplier { get; set; } = 1f;
         public int RuntimeDirectionMultiplier { get; set; } = 1;
-        public float Radius => State.Radius * RuntimeRadiusMultiplier;
+        public float Radius => (State.Radius + OrbitalPresentationConfig.Active.RingRadiusPadding) * RuntimeRadiusMultiplier;
         public float RotationSpeed => State.BaseRotationSpeed *
             Mathf.Pow(1f + OrbitalProgressionConfig.Default.SpeedIncrement,
                 State.SpeedUpgradeLevel);
@@ -252,7 +252,8 @@ namespace Subject42.Combat.OrbitalStation
             if (Ring.Geometry.Type == OrbitalPathType.FigureEight)
                 view.UpdateFigureEightDepth(Ring.Geometry.IsBehind(root.localPosition));
             else
-                view.UpdateDepth(root.localPosition.y, Ring.State.Order == 0);
+                // Continuous circle lines use Player sorting; keep every weapon above them.
+                view.UpdateDepth(root.localPosition.y, false);
             Module?.UpdateVisualRotation(Ring.Geometry.Rotation(ringPhase + LocalPhase));
             SetVisualState(visualState);
         }

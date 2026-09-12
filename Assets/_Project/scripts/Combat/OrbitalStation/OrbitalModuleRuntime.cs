@@ -201,6 +201,13 @@ namespace Subject42.Combat.OrbitalStation
         public OrbitalLaserSwordModule(OrbitalStationRuntime station, int stableModuleId) :
             base(station, stableModuleId, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.LaserSword)) { }
 
+        public override void UpdateVisualRotation(float radians)
+        {
+            if (Mount == null) return;
+            float tangent = Mount.Ring.Geometry.TangentRotation(Mount.Ring.Phase + Mount.LocalPhase);
+            base.UpdateVisualRotation(tangent + OrbitalPresentationConfig.Active.LaserSwordTangentOffset * Mathf.Deg2Rad);
+        }
+
         public override void Tick(float deltaTime)
         {
             base.Tick(deltaTime);

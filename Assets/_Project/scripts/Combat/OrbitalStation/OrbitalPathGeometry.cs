@@ -84,6 +84,10 @@ namespace Subject42.Combat.OrbitalStation
             return Mathf.Atan2(2f * height * Mathf.Cos(2f * t), -width * Mathf.Sin(t));
         }
 
+        // Rotation retains the existing orientation of other modules.
+        public float TangentRotation(float degrees) => Type == OrbitalPathType.Circle
+            ? Rotation(degrees) + Mathf.PI * .5f : Rotation(degrees);
+
         public float BackAmount(Vector2 position) => Type == OrbitalPathType.Circle ? 0f
             : Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(depthRange, depthRange * 2f, position.y));
         public bool IsBehind(Vector2 position) => position.y > depthRange * 1.5f;
@@ -104,8 +108,5 @@ namespace Subject42.Combat.OrbitalStation
             return Mathf.Sqrt(best) * scale;
         }
 
-        // Two continuous spatial halves reuse the authored front/back renderers and material.
-        public Vector3 UpperPoint(float fraction) => new(-width * Mathf.Cos(fraction * Mathf.PI),
-            height * Mathf.Abs(Mathf.Sin(fraction * Mathf.PI * 2f)), 0f);
     }
 }

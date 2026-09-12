@@ -153,8 +153,9 @@ public sealed class Subject42OrbitalGeometryTests
             }), GCIs.Not.AllocatingGCMemory());
             foreach (var view in root.GetComponentsInChildren<OrbitalRingView>())
             {
-                Assert.That(view.BackLine.positionCount, Is.EqualTo(129));
-                Assert.That(view.BackLine.GetPosition(64).magnitude, Is.LessThan(.0001f));
+                Assert.That(view.BackLine.enabled, Is.False);
+                Assert.That(view.FrontLine.loop, Is.True);
+                Assert.That(view.FrontLine.GetPosition(view.FrontLine.positionCount / 4).magnitude, Is.LessThan(.0001f));
                 Assert.That(view.FrontLine.sharedMaterial, Is.SameAs(config.RingPrefab.FrontLine.sharedMaterial));
             }
         }

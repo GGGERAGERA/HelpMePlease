@@ -53,10 +53,15 @@ namespace Subject42.Combat.OrbitalStation
         [Min(0.1f)] public float LinkNodeVisualScale = 0.42f;
         public int MountedWeaponSortingOffset = 12;
 
+        [Header("Ring spatial presentation")]
+        [Min(0f)] public float RingRadiusPadding = .75f;
+        [Tooltip("The production blade points along local +Y; -180 aligns it across the path, along its normal.")]
+        public float LaserSwordTangentOffset = -180f;
+
         [Header("Figure-eight spatial presentation")]
         [Min(.1f)] public float FigureEightWidth = 1.4f;
         [Min(.1f)] public float FigureEightHeight = .65f;
-        [Min(1f)] public float FigureEightSpacing = 1.1f;
+        [Min(1f)] public float FigureEightSpacing = 1.25f;
         [Min(.05f), Tooltip("World-space front/back blend range above the crossing.")]
         public float FigureEightDepthRange = .3f;
 
