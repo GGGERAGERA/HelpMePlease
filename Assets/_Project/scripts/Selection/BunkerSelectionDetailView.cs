@@ -19,6 +19,14 @@ public sealed class BunkerSelectionDetailView : MonoBehaviour
     [SerializeField] private GameObject lockBlock;
     [SerializeField] private TextMeshProUGUI lockText;
 
+    private Transform portraitParent;
+    private int portraitSibling;
+    private VerticalLayoutGroup contentLayout;
+    private LayoutElement identityLayout;
+    private float identityHeight;
+    private int originalRightPadding;
+    private bool characterLayout;
+
     public void ShowEmpty(string message)
     {
         contentRoot?.SetActive(false);
@@ -39,6 +47,7 @@ public sealed class BunkerSelectionDetailView : MonoBehaviour
 
         contentRoot?.SetActive(true);
         emptyText?.gameObject.SetActive(false);
+        ApplyCharacterLayout(entry.IsCharacter);
 
         SetText(nameText, entry.DisplayName);
         SetOptional(categoryText, entry.Category);
@@ -74,6 +83,56 @@ public sealed class BunkerSelectionDetailView : MonoBehaviour
             }
             SetText(statsText, builder.ToString());
         }
+    }
+
+    private void ApplyCharacterLayout(bool enabled)
+    {
+        if (portrait == null || contentRoot == null || characterLayout == enabled)
+            return;
+        if (portraitParent == null)
+        {
+            portraitParent = portrait.transform.parent;
+            portraitSibling = portrait.transform.GetSiblingIndex();
+            contentLayout = contentRoot.GetComponent<VerticalLayoutGroup>();
+            identityLayout = portraitParent.GetComponent<LayoutElement>();
+            identityHeight = identityLayout.preferredHeight;
+            originalRightPadding = contentLayout.padding.right;
+        }
+
+        characterLayout = enabled;
+        portrait.GetComponent<LayoutElement>().ignoreLayout = enabled;
+        portrait.transform.SetParent(enabled ? contentRoot.transform : portraitParent, false);
+        identityLayout.preferredHeight = enabled ? 76f : identityHeight;
+        if (enabled)
+        {
+            RectTransform rect = portrait.rectTransform;
+            rect.anchorMin = new Vector2(.5f, 0f);
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = new Vector2(8f, 24f);
+            rect.offsetMax = new Vector2(-16f, -24f);
+            UpdateCharacterPadding();
+        }
+        else
+        {
+            portrait.transform.SetSiblingIndex(portraitSibling);
+            contentLayout.padding.right = originalRightPadding;
+        }
+        LayoutRebuilder.MarkLayoutForRebuild((RectTransform)contentRoot.transform);
+    }
+
+    private void LateUpdate()
+    {
+        if (characterLayout)
+            UpdateCharacterPadding();
+    }
+
+    private void UpdateCharacterPadding()
+    {
+        int padding = Mathf.CeilToInt(((RectTransform)contentRoot.transform).rect.width * .5f) + 8;
+        if (contentLayout.padding.right == padding)
+            return;
+        contentLayout.padding.right = padding;
+        LayoutRebuilder.MarkLayoutForRebuild((RectTransform)contentRoot.transform);
     }
 
     private static void SetBlock(GameObject root, TextMeshProUGUI text, string value)
