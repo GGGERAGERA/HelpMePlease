@@ -840,6 +840,7 @@ GameObject:
   - component: {fileID: 1329760117982389465}
   - component: {fileID: -8970330571610309405}
   - component: {fileID: -4685123070590477603}
+  - component: {fileID: 602135892101001}
   m_Layer: 8
   m_Name: p_Boss1
   m_TagString: Enemy
@@ -1043,7 +1044,7 @@ MonoBehaviour:
   knockbackDecay: 16
   visualRoot: {fileID: 3060955031055097430}
   flipVisual: 1
-  animator: {fileID: 8106179503796228276}
+  animator: {fileID: 0}
   runParameterName: IsRunning
 --- !u!114 &-4685123070590477603
 MonoBehaviour:
@@ -1068,6 +1069,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3897427553403789582}
   - component: {fileID: 3007696995223303618}
+  - component: {fileID: 602135892101002}
   m_Layer: 8
   m_Name: graphic
   m_TagString: Untagged
@@ -1407,3 +1409,47 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 476560, guid: 1f3cae7ad2a3fb34fbfe072ecf4b6b44, type: 3}
   m_PrefabInstance: {fileID: 6351223414019979194}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &602135892101001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8074722678228422782}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30c57f35ab344cf7ba36750a96140292, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BossRocketAttack
+  AttackCooldown: 6
+  PreAttackDuration: 0.75
+  StopDuration: 0.15
+  RocketFallDelay: 1.2
+  RocketFallDuration: 0.4
+  RecoveryDuration: 0.55
+  RocketSpawnHeight: 14
+  ExplosionRadius: 2
+  ExplosionDamage: 25
+  TargetPrediction: 0
+  MinAttackDistance: 0
+  MaxAttackDistance: 30
+  RocketCount: 1
+  animator: {fileID: 3007696995223303618}
+  leftMuzzle: {fileID: 7421145088796927726}
+  rightMuzzle: {fileID: 1313954894201624828}
+  rocketPrefab: {fileID: 6415994172789663665, guid: 703da712b72d21341ae48974468d51ca, type: 3}
+  targetPrefab: {fileID: 3431147270733573790, guid: c941bc18f7e086648bae2a23e2a87208, type: 3}
+  explosionPrefab: {fileID: 1774385019753254698, guid: f91913de896646447a357936450e42c5, type: 3}
+--- !u!114 &602135892101002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9142794880305064717}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f06c2a4b61784e5d8cabdcfe5d80d930, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BossRocketAnimationEvents
+  attack: {fileID: 602135892101001}

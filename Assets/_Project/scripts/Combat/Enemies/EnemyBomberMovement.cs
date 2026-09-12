@@ -243,7 +243,7 @@ public class EnemyBomberMovement : EnemyMovement
 
 internal sealed class BomberExplosionSequence : MonoBehaviour
 {
-    private static Collider2D[] explosionHits = new Collider2D[16];
+
     private float radius;
     private float delay;
     private int damage;
@@ -323,58 +323,7 @@ internal sealed class BomberExplosionSequence : MonoBehaviour
             return;
 
         exploded = true;
-        ContactFilter2D filter = ContactFilter2D.noFilter;
-        filter.useTriggers = true;
-        int hitCount;
-
-        do
-        {
-            hitCount = Physics2D.OverlapCircle(
-                explosionPosition,
-                radius,
-                filter,
-                explosionHits);
-
-            if (hitCount < explosionHits.Length)
-                break;
-
-            Array.Resize(ref explosionHits, explosionHits.Length * 2);
-        }
-        while (true);
-
-        for (int i = 0; i < hitCount; i++)
-        {
-            Collider2D hit = explosionHits[i];
-            explosionHits[i] = null;
-
-            if (hit == null || !hit.CompareTag("Player"))
-                continue;
-
-            PlayerHealth health = hit.GetComponent<PlayerHealth>();
-
-            if (health == null)
-                continue;
-
-            Vector2 hitDirection =
-                (Vector2)hit.transform.position - explosionPosition;
-            health.TakeDamage(damage, hitDirection);
-        }
-
-        AudioService.Instance?.PlayAt(
-            AudioCueId.Explosion,
-            explosionPosition
-        );
-
-        if (explosionFxPrefab != null)
-        {
-            ParticleSystem fx = Instantiate(
-                explosionFxPrefab,
-                explosionPosition,
-                Quaternion.identity
-            );
-            fx.Play();
-            Destroy(fx.gameObject, fx.main.duration);
-        }
+        EnemyExplosion.Detonate(explosionPosition, radius, damage, explosionFxPrefab);
 
         if (shockwaveFxPrefab != null)
         {
