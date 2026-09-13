@@ -335,7 +335,16 @@ internal sealed class BomberExplosionSequence : MonoBehaviour
         }
 
         if (owner != null)
-            Destroy(owner);
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            // Honor the existing combat-dummy invulnerability for self-destruction too.
+            var dummy = owner.GetComponent<CombatFeelTestDummy>();
+            if (dummy != null && dummy.Invulnerable)
+                owner.GetComponent<EnemyBomberMovement>()?.NotifyExplosionSequenceCanceled(this);
+            else
+#endif
+                Destroy(owner);
+        }
 
         Destroy(gameObject);
     }

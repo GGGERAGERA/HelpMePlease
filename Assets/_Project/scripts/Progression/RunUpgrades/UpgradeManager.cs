@@ -189,7 +189,10 @@ public sealed class UpgradeManager : MonoBehaviour
     {
         shuttingDown = true;
         if (!IsChoosingUpgrade)
+        {
+            currentChoices = null;
             return;
+        }
 
         if (orbitalRewardFlow != null)
             orbitalRewardFlow.CancelForSceneTransition();

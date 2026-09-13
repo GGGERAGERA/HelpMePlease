@@ -12,6 +12,15 @@ namespace Subject42.Combat.OrbitalStation
 
         public enum RmbMode { CompressRings, Repulse, ReverseRotation }
         public RmbMode RightMouseMode { get; set; } = RmbMode.CompressRings;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public bool DebugCompressionHeld { get; set; }
+        public bool DebugRotationPaused { get; set; }
+        public void DebugReverseRotation()
+        {
+            rotationSign *= -1;
+            foreach (var ring in rings) ring.FlashDirectionChange();
+        }
+#endif
         [Header("Compress Rings (runtime feel)")]
         [SerializeField, Range(0.1f, 1f)] private float compressedRadiusMultiplier = 0.3f;
         [SerializeField, Min(0.01f)] private float compressDuration = 0.15f;
@@ -268,7 +277,11 @@ namespace Subject42.Combat.OrbitalStation
                 Time.timeScale > 0f && InputOwner != null &&
                 InputOwner.CanUseDebugPlacement && InputOwner.IsIdle &&
                 !IsDebugPlacementActive;
-            TickRightMouse(deltaTime, canInput && Input.GetMouseButton(1),
+            bool held = canInput && Input.GetMouseButton(1);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            held |= DebugCompressionHeld;
+#endif
+            TickRightMouse(deltaTime, held,
                 canInput && Input.GetMouseButtonDown(1));
         }
 
@@ -299,6 +312,9 @@ namespace Subject42.Combat.OrbitalStation
             {
                 ring.RuntimeRadiusMultiplier = radiusScale;
                 ring.RuntimeDirectionMultiplier = rotationSign;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                if (DebugRotationPaused) ring.RuntimeDirectionMultiplier = 0;
+#endif
             }
             if (pressed && RightMouseMode == RmbMode.Repulse && repulseCooldown <= 0f)
             {
@@ -753,6 +769,9 @@ namespace Subject42.Combat.OrbitalStation
             compressionRadius = compressionStartRadius = 1f;
             compressionTime = 0f;
             compressionHeld = compressionAnimating = false;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            DebugCompressionHeld = DebugRotationPaused = false;
+#endif
             rotationSign = 1;
             repulseCooldown = 0f;
             if (repulseRing != null) Destroy(repulseRing.gameObject);
