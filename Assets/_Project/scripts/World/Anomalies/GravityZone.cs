@@ -42,6 +42,9 @@ public sealed class GravityZone : LocalAnomalyZone
 
     private const float DefaultProjectileForceMultiplier = 0.5f;
 
+    [Header("Circular anomaly props")]
+    [SerializeField, Min(0f)] private float propOrbitDegreesPerSecond = 8f;
+
     [Header("Visual")]
     [SerializeField] private Material visualMaterial;
     [SerializeField] private Transform visualRoot;
@@ -235,10 +238,32 @@ public sealed class GravityZone : LocalAnomalyZone
         ApplyVisualProperties();
 
         if (!effectsCleared)
+        {
             ApplyGravity();
+            if (orbitMode) MoveOrbitProps();
+        }
 
         if (despawning && visualFade <= 0f)
             Destroy(gameObject);
+    }
+
+    private void MoveOrbitProps()
+    {
+        if (AreaCollider == null || !AreaCollider.enabled || Time.deltaTime <= 0f ||
+            propOrbitDegreesPerSecond <= 0f) return;
+
+        float angle = propOrbitDegreesPerSecond * Mathf.Deg2Rad * Time.deltaTime;
+        float cosine = Mathf.Cos(angle);
+        float sine = Mathf.Sin(angle);
+        Vector2 center = AreaCollider.transform.TransformPoint(AreaCollider.offset);
+        var props = AnomalyMovableProp.ActiveProps;
+        for (int i = 0; i < props.Count; i++)
+        {
+            AnomalyMovableProp prop = props[i];
+            if (prop != null && prop.isActiveAndEnabled &&
+                ContainsWorldPosition(prop.transform.position))
+                prop.Orbit(center, cosine, sine);
+        }
     }
 
     protected override void InitializeFromData(

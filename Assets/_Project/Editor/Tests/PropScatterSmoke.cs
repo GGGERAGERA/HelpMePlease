@@ -49,7 +49,7 @@ public sealed class PropScatterSmoke
         {
             var root = sector.transform.Find("Sector visual props");
             Assert.That(root.GetComponentsInChildren<Collider2D>(), Is.Empty);
-            Assert.That(root.GetComponentsInChildren<MonoBehaviour>(), Is.Empty);
+            Assert.That(root.GetComponentsInChildren<MonoBehaviour>().All(c => c is AnomalyMovableProp), Is.True);
             var points = root.Cast<Transform>().Select(t => (Vector2)t.position).ToArray();
             foreach (var p in points) Assert.That(GameplayAreaService.Instance.IsInsidePlayableArea(p), Is.True);
             for (int i = 0; i < points.Length; i++)

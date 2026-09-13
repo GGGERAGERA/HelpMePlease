@@ -126,6 +126,8 @@ internal sealed class ProductionSectorProps
                 new Vector3(random.Next(2) == 0 ? -scale : scale, scale, 1));
             foreach (var r in prop.GetComponentsInChildren<SpriteRenderer>(true))
             { r.sortingLayerName = "Background"; r.sortingOrder = -105; }
+            // Only the existing, validated visual scatter opts in. No extra props or physics.
+            prop.AddComponent<AnomalyMovableProp>();
             positions.Add(best); radii.Add(radius); counts[kind]++;
             return true;
         }
