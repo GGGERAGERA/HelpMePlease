@@ -10,9 +10,8 @@ public sealed class ProductionPortalPair : MonoBehaviour
     private const float RearmRadius = 1.2f;
     private Transform player;
     private Rigidbody2D playerBody;
-    private Material material;
-    private LineRenderer ringA;
-    private LineRenderer ringB;
+    private ProductionPortalVisual visualA;
+    private ProductionPortalVisual visualB;
     private bool armed;
     private float nextTeleportTime;
     private float flashUntil;
@@ -23,22 +22,18 @@ public sealed class ProductionPortalPair : MonoBehaviour
     {
         PositionA = a;
         PositionB = b;
-        material = AnomalyPowerVisuals.CreateMaterial("Portal pair material");
-        ringA = CreateRing("Portal A", a, ColorA);
-        ringB = CreateRing("Portal B", b, ColorB);
+        var visualPrefab = Resources.Load<ProductionPortalVisual>("PortalVisual");
+        if (visualPrefab != null)
+        {
+            visualA = Instantiate(visualPrefab, new Vector3(a.x, a.y), Quaternion.identity, transform);
+            visualA.name = "Portal A";
+            visualA.Initialize(new Color(0.85f, 0.12f, 1f), 0f);
+            visualB = Instantiate(visualPrefab, new Vector3(b.x, b.y), Quaternion.identity, transform);
+            visualB.name = "Portal B";
+            visualB.Initialize(new Color(0.1f, 0.72f, 1f), 1.2f);
+        }
         // A player already standing on a newly spawned portal must first leave it.
         armed = false;
-    }
-
-    private LineRenderer CreateRing(string label, Vector2 position, Color color)
-    {
-        var line = AnomalyPowerVisuals.CreateLine(transform, label, color, 0.12f, 33, material);
-        for (int i = 0; i <= 32; i++)
-        {
-            float angle = i * Mathf.PI * 2f / 32f;
-            line.SetPosition(i, position + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * EntryRadius);
-        }
-        return line;
     }
 
     private void FixedUpdate()
@@ -69,14 +64,7 @@ public sealed class ProductionPortalPair : MonoBehaviour
 
     private void Update()
     {
-        if (ringA == null || ringB == null) return;
-        float width = Time.time < flashUntil ? 0.32f : 0.12f + 0.02f * Mathf.Sin(Time.time * 4f);
-        ringA.startWidth = ringA.endWidth = width;
-        ringB.startWidth = ringB.endWidth = width;
-    }
-
-    private void OnDestroy()
-    {
-        if (material != null) Destroy(material);
+        visualA?.Render(Time.time, nextTeleportTime - Time.time, flashUntil - Time.time);
+        visualB?.Render(Time.time, nextTeleportTime - Time.time, flashUntil - Time.time);
     }
 }

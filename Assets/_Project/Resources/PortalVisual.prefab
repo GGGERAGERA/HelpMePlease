@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &100100
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 400100}
+  - component: {fileID: 114100}
+  m_Layer: 0
+  m_Name: PortalVisual
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &400100
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100100}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+--- !u!114 &114100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2354dfb339f43038f6088b9adba426c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  centerMaterial: {fileID: 2100000, guid: 150aee38b5d848b42b75593618992bb7, type: 2}
+  ringMaterial: {fileID: 2100000, guid: d48b6c46b04ba5d4193ecfa1d3ade5e9, type: 2}
+  arcMaterial: {fileID: 2100000, guid: d48b6c46b04ba5d4193ecfa1d3ade5e9, type: 2}
+  glowMaterial: {fileID: 2100000, guid: b2e8acd4ba642d74a939033f33df790c, type: 2}
+  sparkMaterial: {fileID: 2100000, guid: a976a44ca501e564bb2adee42f573b4d, type: 2}
