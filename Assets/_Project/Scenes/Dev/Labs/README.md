@@ -1,6 +1,7 @@
 # ORBITAL development labs
 
-Open either scene directly and press Play, or use **Tools → Subject42 → Orbital Labs → Open OrbitalRewardLab / Open EnemyOrbitalLab**.
+Open an individual Lab scene directly and press Play. World systems are in
+`WorldSystemsLab.unity`; ORBITAL labs remain available from the existing menu.
 These are isolated Editor/development scenes, intentionally absent from production Build Settings.
 
 **WASD:** move. **Mouse wheel:** production camera zoom. **F1:** hide/show the panel. **Esc:** cancel reward placement back to its cards.
@@ -56,3 +57,14 @@ Both scenes were opened in the running Editor and exercised in actual Play Mode.
 - Enemy: all six production prefabs/Spawn All, 5-enemy Line and 10-enemy Cluster, Freeze/Resume, speed settings, player/enemy invincibility (including repeated Bomber explosions), ARC/Sword/Impulse/Mixed presets, kill/clear, layout reset and full Lab reset.
 - ORBITAL: compressed radius 2 → 0.6 → 2, frozen phases while rotation paused, and resumed movement with reversed direction. F1 hides the panel.
 - Scripts compiled in Unity; no errors/exceptions observed in the final Play Mode passes. No new per-button automated tests were added.
+
+## WorldSystemsLab
+
+This lightweight scene uses the production World Rule, anomaly territory,
+World Event, portal, prop scatter, player, camera, and tactical-map code. It has
+no EnemySpawner, Threat, XP/reward flow, boss, ORBITAL, or combat HUD. The panel
+can switch every authored World Rule, spawn/clear normal and special anomaly
+territories, spawn/clear each production Event, manage a production portal pair,
+reset the Lab, center the player, and toggle the map. Carrier Hunt is explicitly
+labelled `preview only`: it creates the real authored event and initial visual,
+but never starts or creates an enemy carrier.

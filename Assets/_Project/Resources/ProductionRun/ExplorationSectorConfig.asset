@@ -12,6 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42a10000000000000000000000000009, type: 3}
   m_Name: ExplorationSectorConfig
   m_EditorClassIdentifier: Assembly-CSharp::ExplorationSectorConfig
+  clickPropPrefabs:
+  - {fileID: 7000000000000000002, guid: b62432102c995f043a3958d72a8ede9e, type: 3}
+  - {fileID: 7000000000000000001, guid: 9a695828916228c469d78d11eff1442b, type: 3}
   normalAnomalies:
   - {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca002, type: 2}
   - {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}

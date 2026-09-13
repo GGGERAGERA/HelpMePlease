@@ -326,6 +326,12 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         var player = GameObject.FindGameObjectWithTag("Player");
         if (player == null) return 0;
         ClearResourceNodes();
+        ResourceNode[] clickPropPrefabs = config.ClickPropPrefabs;
+        if (clickPropPrefabs == null || clickPropPrefabs.Length == 0)
+        {
+            Debug.LogWarning("[ResourceNode] No ClickProp prefabs configured.", this);
+            return 0;
+        }
         Physics2D.SyncTransforms();
         var bounds = gameplayArea.PlayableArea.bounds;
         var placed = new List<Vector2>();
@@ -353,10 +359,12 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             var filter = new ContactFilter2D { useTriggers = false };
             if (Physics2D.OverlapCircle(position, .65f, filter, breakableOverlapBuffer) > 0)
                 continue;
-            var go = new GameObject("Resource Node");
-            go.transform.SetParent(transform, false);
-            go.transform.position = position;
-            var node = go.AddComponent<ResourceNode>();
+            ResourceNode prefab = clickPropPrefabs[
+                Random.Range(0, clickPropPrefabs.Length)];
+            if (prefab == null) continue;
+            ResourceNode node = Instantiate(
+                prefab, position, Quaternion.identity, transform);
+            node.name = prefab.name;
             node.Initialize(player.transform);
             resourceNodes.Add(node);
             placed.Add(position);
