@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 093109e1c72e57a469606674dbe7230c
+guid: 404d94181691cb741ac94ec21242f71d
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -127,9 +127,9 @@ ScriptedImporter:
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
   animatedSpriteImportData:
-  - name: mapTrashElements1
+  - name: WeaponRoom2
     originalName: 
-    pivot: {x: 1.3368146, y: -9.778948}
+    pivot: {x: 0.7320917, y: -1.1512606}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -137,9 +137,9 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 383
-      height: 95
-    spriteID: 40bf8f0968fd2cc4fa9f0f85d7631944
+      width: 698
+      height: 476
+    spriteID: 0fa00a483fe77fa42baae6c06345a967
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -153,25 +153,25 @@ ScriptedImporter:
   asepriteLayers:
   - layerIndex: 0
     uuid:
-      value0: 3182034962
+      value0: 2496490207
       value1: 0
       value2: 0
       value3: 0
     guid: 0
-    name: mapTrashElements1
+    name: WeaponRoom2
     layerFlags: 0
     layerType: 0
     blendMode: 0
     cells:
-    - name: mapTrashElements1
+    - name: WeaponRoom2
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:
-        x: 0
-        y: 929
-        width: 383
-        height: 95
-      spriteId: 40bf8f0968fd2cc4fa9f0f85d7631944
+        x: 1
+        y: 548
+        width: 698
+        height: 476
+      spriteId: 0fa00a483fe77fa42baae6c06345a967
     linkedCells: []
     tileCells: []
     tileSetIndex: 0
@@ -182,4 +182,4 @@ ScriptedImporter:
   secondarySpriteTextures: []
   spritePackingTag: 
   canvasSize: {x: 1024, y: 1024}
-  previousTextureSize: {x: 512, y: 128}
+  previousTextureSize: {x: 1024, y: 512}
