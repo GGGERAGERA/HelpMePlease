@@ -6,13 +6,13 @@ using UnityEngine;
 
 public sealed class ProductionExplorationSectorController : MonoBehaviour
 {
-    private const int NormalSiteCount = 3;
-    private const int TotalSiteCount = 4;
+    private const int NormalSiteCount = 6;
+    private const int TotalSiteCount = NormalSiteCount + 1;
     private const int LayoutAttempts = 200;
     private const int CoverageGridSize = 30;
     private const int SpecialLineSamples = 20;
-    private const float MinimumCoverage = 0.85f;
-    private const float MaximumCoverage = 0.95f;
+
+
     private const int BreakableOverlapBufferSize = 16;
 
     private readonly struct SiteRegion
@@ -75,6 +75,8 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
     private Vector2 breakableSpecialSitePosition;
     private Vector2 breakableExitPosition;
     private bool hasBreakableLayout;
+    private Vector2? layoutSpawnPosition;
+    private readonly HashSet<WorldEvent> layoutIgnoredEvents = new();
     private readonly List<WorldBreakable> spawnedBreakables = new();
     private readonly List<ResourceNode> resourceNodes = new();
     private readonly Collider2D[] breakableOverlapBuffer =
@@ -123,6 +125,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         eventSpawner = events;
         anomalyController = anomalies;
         runFlow = flow;
+        layoutSpawnPosition = null;
 
         if (!ValidateDependencies())
             return false;
@@ -227,16 +230,84 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
                 ? propScatterProfile : Resources.Load<PropScatterProfile>("PropScatterProfile"));
         propScatter.Regenerate();
 
+        SpawnPortalPair();
         threatController.Initialize(config.ThreatConfig, enemySpawner);
 
         Debug.Log(
-            $"[ExplorationSector] Sector ready: 3 Normal, " +
+            $"[ExplorationSector] Sector ready: {NormalSiteCount} Normal, " +
             $"1 Special ({specialPower}), {layoutDiagnostics.Coverage:P0} " +
             $"map coverage, {breakableCount} breakables, " +
             $"Exit at {exitPosition}."
         );
         return true;
     }
+
+    public ProductionPortalPair PortalPair { get; private set; }
+
+    public bool SpawnPortalPair()
+    {
+        if (!hasBreakableLayout) return false;
+        Physics2D.SyncTransforms();
+        Bounds bounds = gameplayArea.PlayableArea.bounds;
+        var candidates = new List<Vector2>();
+        for (int i = 0; i < 1500; i++)
+        {
+            Vector2 point = new(Random.Range(bounds.min.x, bounds.max.x), Random.Range(bounds.min.y, bounds.max.y));
+            if (!IsFootprintClear(point, Vector2.one * 3f) ||
+                Vector2.Distance(point, breakableExitPosition) < config.ExitRadius + 2f) continue;
+            // Territories tile the map; portals may occupy them. Physical clearance still applies above.
+            foreach (Vector2 other in candidates)
+            {
+                if (Vector2.Distance(point, other) < Mathf.Max(12f, bounds.size.magnitude * 0.4f)) continue;
+                if (PortalPair != null) { PortalPair.gameObject.SetActive(false); Destroy(PortalPair.gameObject); }
+                var root = new GameObject("Sector Portal Pair");
+                root.transform.SetParent(transform, false);
+                PortalPair = root.AddComponent<ProductionPortalPair>();
+                PortalPair.Initialize(other, point);
+                return true;
+            }
+            candidates.Add(point);
+        }
+        Debug.LogWarning("[ExplorationSector] No safe distant portal pair found.");
+        return false;
+    }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool RegenerateAnomalyLayout()
+    {
+        if (!hasBreakableLayout) return false;
+        var previousSites = new List<ProductionAnomalySite>(ProductionAnomalySite.ActiveSites);
+        foreach (var site in previousSites)
+            if (site.SiteEvent != null) layoutIgnoredEvents.Add(site.SiteEvent);
+        bool built;
+        Vector2[] positions, sizes;
+        Vector2 specialPosition, specialSize, exit;
+        try
+        {
+            built = BuildLayout(out positions, out sizes, out specialPosition,
+                out specialSize, out exit, out _);
+        }
+        finally { layoutIgnoredEvents.Clear(); }
+        if (!built) return false;
+        foreach (var site in previousSites) site.RemoveForLayout();
+        anomalyController.BeginSiteLayout();
+        eventSpawner.ConfigureSiteControlledMode(TotalSiteCount);
+        var events = BuildSiteEventPool();
+        var anomalies = BuildNormalAnomalyPool();
+        for (int i = 0; i < NormalSiteCount; i++)
+            new GameObject($"Normal Anomaly Site {i + 1}").AddComponent<ProductionAnomalySite>()
+                .InitializeNormal(positions[i], sizes[i], anomalies[i % anomalies.Length],
+                    events[i % events.Count], eventSpawner, anomalyController, exit, config.ExitRadius);
+        bool special = new GameObject("Special Anomaly Site").AddComponent<ProductionAnomalySite>()
+            .InitializeSpecial(specialPosition, specialSize, SelectSpecialPower(),
+                events[NormalSiteCount % events.Count], eventSpawner, anomalyController,
+                gameObject, config, exit, config.ExitRadius);
+        breakableNormalSitePositions = positions;
+        breakableSpecialSitePosition = specialPosition;
+        SpawnPortalPair();
+        return special;
+    }
+#endif
 
     public void ClearResourceNodes()
     {
@@ -670,356 +741,114 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         diagnostics = default;
 
         Bounds bounds = gameplayArea.PlayableArea.bounds;
+        Rect playable = new(bounds.min, bounds.size);
+        if (!layoutSpawnPosition.HasValue)
+            layoutSpawnPosition = GameObject.FindGameObjectWithTag("Player")?.transform.position ?? bounds.center;
+        Vector2 playerPosition = layoutSpawnPosition.Value;
 
-        if (bounds.size.x <= 0f || bounds.size.y <= 0f)
+        // Keep the existing physical exit placement; territories may reach its location.
+        Physics2D.SyncTransforms();
+        bool exitFound = false;
+        for (int attempt = 0; attempt < LayoutAttempts; attempt++)
         {
-            Debug.LogError(
-                "[ExplorationSector] Gameplay bounds have no usable area."
-            );
-            return false;
+            exitPosition = hasBreakableLayout ? breakableExitPosition : SelectExitPosition(playable, playerPosition);
+            if (!IsFootprintClear(exitPosition, Vector2.one * (config.ExitRadius * 2f), true)) continue;
+            exitFound = true;
+            break;
         }
+        if (!exitFound) return false;
 
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        Vector2 playerPosition = player != null
-            ? player.transform.position
-            : bounds.center;
-        Rect playable = new(
-            bounds.min.x,
-            bounds.min.y,
-            bounds.size.x,
-            bounds.size.y
-        );
-        Rect usable = InsetRect(playable, config.EdgePadding);
-        float maximumTravelDistance = GetMaximumCornerDistance(
-            usable,
-            playerPosition
-        );
+        SiteRegion[] regions = CreateMosaicRegions(playable, playerPosition, out int specialIndex);
+        ApplyLayout(regions, specialIndex, normalPositions, normalSizes, out specialPosition, out specialSize);
+        diagnostics = new LayoutDiagnostics(1, SampleCoverage(playable, regions),
+            Vector2.Distance(playerPosition, specialPosition), GetMaximumCornerDistance(playable, playerPosition),
+            SampleNormalShareOnSpecialLine(playerPosition, regions, specialIndex),
+            GetExitMembership(exitPosition, regions, specialIndex), false);
+        return true;
+    }
 
-        for (int attempt = 1; attempt <= LayoutAttempts; attempt++)
+    private static SiteRegion[] CreateMosaicRegions(Rect area, Vector2 spawn, out int specialIndex)
+    {
+        // A single neutral spawn rectangle is the only hole in the partition.
+        Vector2 safeHalf = new(area.width * Random.Range(0.08f, 0.11f),
+            area.height * Random.Range(0.08f, 0.11f));
+        Rect safe = Rect.MinMaxRect(Mathf.Max(area.xMin, spawn.x - safeHalf.x),
+            Mathf.Max(area.yMin, spawn.y - safeHalf.y), Mathf.Min(area.xMax, spawn.x + safeHalf.x),
+            Mathf.Min(area.yMax, spawn.y + safeHalf.y));
+        var cells = new List<Rect>();
+        // Alternating windings vary the T-junctions without overlaps or seams.
+        if (Random.value < 0.5f)
         {
-            SiteRegion[] regions = CreateRandomRegions(
-                usable,
-                playerPosition,
-                out int specialIndex
-            );
-
-            if (!ValidateLayout(
-                    playable,
-                    playerPosition,
-                    regions,
-                    specialIndex,
-                    maximumTravelDistance,
-                    out float coverage,
-                    out float lineShare))
+            cells.Add(Rect.MinMaxRect(area.xMin, safe.yMax, safe.xMax, area.yMax));
+            cells.Add(Rect.MinMaxRect(safe.xMax, safe.yMin, area.xMax, area.yMax));
+            cells.Add(Rect.MinMaxRect(safe.xMin, area.yMin, area.xMax, safe.yMin));
+            cells.Add(Rect.MinMaxRect(area.xMin, area.yMin, safe.xMin, safe.yMax));
+        }
+        else
+        {
+            cells.Add(Rect.MinMaxRect(safe.xMin, safe.yMax, area.xMax, area.yMax));
+            cells.Add(Rect.MinMaxRect(safe.xMax, area.yMin, area.xMax, safe.yMax));
+            cells.Add(Rect.MinMaxRect(area.xMin, area.yMin, safe.xMax, safe.yMin));
+            cells.Add(Rect.MinMaxRect(area.xMin, safe.yMin, safe.xMin, area.yMax));
+        }
+        // Leave one broad territory whole for the Special; split each of the other three.
+        specialIndex = Random.Range(0, cells.Count);
+        Rect special = cells[specialIndex];
+        cells.RemoveAt(specialIndex);
+        var regions = new List<SiteRegion>();
+        foreach (Rect cell in cells)
+        {
+            float split = Random.Range(0.38f, 0.62f);
+            bool vertical = cell.width > cell.height * Random.Range(0.85f, 1.15f);
+            Rect first, second;
+            if (vertical)
             {
-                continue;
+                float cut = Mathf.Lerp(cell.xMin, cell.xMax, split);
+                first = Rect.MinMaxRect(cell.xMin, cell.yMin, cut, cell.yMax);
+                second = Rect.MinMaxRect(cut, cell.yMin, cell.xMax, cell.yMax);
             }
-
-            exitPosition = SelectExitPosition(playable, playerPosition);
-            ApplyLayout(
-                regions,
-                specialIndex,
-                normalPositions,
-                normalSizes,
-                out specialPosition,
-                out specialSize
-            );
-            diagnostics = new LayoutDiagnostics(
-                attempt,
-                coverage,
-                Vector2.Distance(playerPosition, specialPosition),
-                maximumTravelDistance,
-                lineShare,
-                GetExitMembership(exitPosition, regions, specialIndex),
-                false
-            );
-            return true;
-        }
-
-        for (int fallback = 0; fallback < 4; fallback++)
-        {
-            SiteRegion[] regions = CreateFallbackRegions(
-                usable,
-                playerPosition,
-                fallback,
-                out int specialIndex
-            );
-
-            if (!ValidateLayout(
-                    playable,
-                    playerPosition,
-                    regions,
-                    specialIndex,
-                    maximumTravelDistance,
-                    out float coverage,
-                    out float lineShare))
+            else
             {
-                continue;
+                float cut = Mathf.Lerp(cell.yMin, cell.yMax, split);
+                first = Rect.MinMaxRect(cell.xMin, cell.yMin, cell.xMax, cut);
+                second = Rect.MinMaxRect(cell.xMin, cut, cell.xMax, cell.yMax);
             }
-
-            exitPosition = SelectExitPosition(playable, playerPosition);
-            ApplyLayout(
-                regions,
-                specialIndex,
-                normalPositions,
-                normalSizes,
-                out specialPosition,
-                out specialSize
-            );
-            diagnostics = new LayoutDiagnostics(
-                LayoutAttempts + fallback + 1,
-                coverage,
-                Vector2.Distance(playerPosition, specialPosition),
-                maximumTravelDistance,
-                lineShare,
-                GetExitMembership(exitPosition, regions, specialIndex),
-                true
-            );
-            Debug.LogWarning(
-                $"[ExplorationSector] Layout generator used asymmetric " +
-                $"fallback {fallback + 1}."
-            );
-            return true;
+            regions.Add(new SiteRegion(first.center, first.size));
+            regions.Add(new SiteRegion(second.center, second.size));
         }
-
-        Debug.LogError(
-            "[ExplorationSector] Could not produce a valid asymmetric layout."
-        );
-        return false;
+        // Type assignment uses the existing shuffled pool against a shuffled territory order.
+        Shuffle(regions);
+        specialIndex = regions.Count;
+        regions.Add(new SiteRegion(special.center, special.size));
+        return regions.ToArray();
     }
+    private static float DistanceToRect(Vector2 point, Rect rect) => Vector2.Distance(point,
+        new Vector2(Mathf.Clamp(point.x, rect.xMin, rect.xMax), Mathf.Clamp(point.y, rect.yMin, rect.yMax)));
 
-    private SiteRegion[] CreateRandomRegions(
-        Rect usable,
-        Vector2 playerPosition,
-        out int specialIndex)
+    private bool IsFootprintClear(Vector2 position, Vector2 size, bool ignoreExit = false)
     {
-        bool vertical = Random.value < 0.5f;
-        bool farLow = vertical
-            ? playerPosition.x - usable.xMin >= usable.xMax - playerPosition.x
-            : playerPosition.y - usable.yMin >= usable.yMax - playerPosition.y;
-
-        if (Mathf.Abs(vertical
-                ? playerPosition.x - usable.center.x
-                : playerPosition.y - usable.center.y) < 0.5f)
+        Vector2 half = size * 0.5f + Vector2.one * 0.25f;
+        for (int y = -1; y <= 1; y++)
+        for (int x = -1; x <= 1; x++)
+            if (!gameplayArea.IsInsidePlayableArea(position + new Vector2(x * half.x, y * half.y))) return false;
+        foreach (var hit in Physics2D.OverlapBoxAll(position, half * 2f, 0f))
         {
-            farLow = Random.value < 0.5f;
+            if (hit == gameplayArea.PlayableArea || hit == gameplayArea.SpawnArea) continue;
+            // Actors are transient; only the static footprint constrains sector layout.
+            if (hit.GetComponentInParent<EnemyHealth>() != null) continue;
+            var hitEvent = hit.GetComponentInParent<WorldEvent>();
+            if (hitEvent != null && layoutIgnoredEvents.Contains(hitEvent)) continue;
+            if (ignoreExit && hit.GetComponentInParent<ProductionSectorExit>() != null) continue;
+            if (!hit.isTrigger || hit.GetComponentInParent<WorldEvent>() != null ||
+                hit.GetComponentInParent<ResourceNode>() != null ||
+                hit.GetComponentInParent<ProductionSectorExit>() != null) return false;
         }
-
-        float narrowRatio = Random.Range(0.34f, 0.39f);
-        float splitA = Random.Range(0.34f, 0.66f);
-        float splitB;
-
-        do
-        {
-            splitB = Random.Range(0.34f, 0.66f);
-        }
-        while (Mathf.Abs(splitA - splitB) < 0.12f);
-
-        Rect[] cells = BuildStaggeredCells(
-            usable,
-            vertical,
-            farLow,
-            narrowRatio,
-            splitA,
-            splitB
-        );
-        SiteRegion[] regions = BuildRegionsFromCells(
-            cells,
-            Mathf.Clamp(config.TargetAnomalyCoverage, 0.87f, 0.92f),
-            true
-        );
-        specialIndex = SelectFarSpecial(
-            regions,
-            0,
-            playerPosition
-        );
-        return regions;
-    }
-
-    private static SiteRegion[] CreateFallbackRegions(
-        Rect usable,
-        Vector2 playerPosition,
-        int fallbackIndex,
-        out int specialIndex)
-    {
-        bool vertical = fallbackIndex % 2 == 0;
-        bool farLow = vertical
-            ? playerPosition.x >= usable.center.x
-            : playerPosition.y >= usable.center.y;
-        float narrowRatio = fallbackIndex < 2 ? 0.36f : 0.38f;
-        float splitA = fallbackIndex % 2 == 0 ? 0.36f : 0.63f;
-        float splitB = fallbackIndex % 2 == 0 ? 0.61f : 0.38f;
-        Rect[] cells = BuildStaggeredCells(
-            usable,
-            vertical,
-            farLow,
-            narrowRatio,
-            splitA,
-            splitB
-        );
-        SiteRegion[] regions = BuildRegionsFromCells(cells, 0.89f, false);
-        specialIndex = SelectFarSpecial(
-            regions,
-            0,
-            playerPosition
-        );
-        return regions;
-    }
-
-    private static Rect[] BuildStaggeredCells(
-        Rect area,
-        bool vertical,
-        bool farLow,
-        float narrowRatio,
-        float narrowSplit,
-        float broadSplit)
-    {
-        if (!vertical)
-        {
-            Rect[] rotated = BuildStaggeredCells(
-                new Rect(area.yMin, area.xMin, area.height, area.width),
-                true,
-                farLow,
-                narrowRatio,
-                narrowSplit,
-                broadSplit
-            );
-
-            for (int i = 0; i < rotated.Length; i++)
-            {
-                Rect rect = rotated[i];
-                rotated[i] = new Rect(
-                    rect.yMin,
-                    rect.xMin,
-                    rect.height,
-                    rect.width
-                );
-            }
-
-            return rotated;
-        }
-
-        float cut = farLow
-            ? area.xMin + area.width * narrowRatio
-            : area.xMax - area.width * narrowRatio;
-        Rect low = new(area.xMin, area.yMin, cut - area.xMin, area.height);
-        Rect high = new(cut, area.yMin, area.xMax - cut, area.height);
-        Rect left = farLow ? low : high;
-        Rect right = farLow ? high : low;
-        float leftSplit = farLow ? narrowSplit : broadSplit;
-        float rightSplit = farLow ? broadSplit : narrowSplit;
-
-        return new[]
-        {
-            BottomCell(left, leftSplit),
-            TopCell(left, leftSplit),
-            BottomCell(right, rightSplit),
-            TopCell(right, rightSplit)
-        };
-    }
-
-    private static Rect BottomCell(Rect source, float split) => new(
-        source.xMin,
-        source.yMin,
-        source.width,
-        source.height * split
-    );
-
-    private static Rect TopCell(Rect source, float split) => new(
-        source.xMin,
-        source.yMin + source.height * split,
-        source.width,
-        source.height * (1f - split)
-    );
-
-    private static SiteRegion[] BuildRegionsFromCells(
-        Rect[] cells,
-        float targetCoverage,
-        bool randomize)
-    {
-        SiteRegion[] result = new SiteRegion[cells.Length];
-        float baseScale = Mathf.Sqrt(targetCoverage);
-
-        for (int i = 0; i < cells.Length; i++)
-        {
-            Rect cell = cells[i];
-            float xVariation = randomize ? Random.Range(0.985f, 1.015f) : 1f;
-            float yVariation = randomize ? Random.Range(0.985f, 1.015f) : 1f;
-            float scaleX = Mathf.Clamp(baseScale * xVariation, 0.91f, 0.975f);
-            float scaleY = Mathf.Clamp(baseScale * yVariation, 0.91f, 0.975f);
-            Vector2 size = new(cell.width * scaleX, cell.height * scaleY);
-            Vector2 slack = cell.size - size;
-            Vector2 jitter = randomize
-                ? new Vector2(
-                    Random.Range(-slack.x, slack.x) * 0.32f,
-                    Random.Range(-slack.y, slack.y) * 0.32f
-                )
-                : Vector2.zero;
-            result[i] = new SiteRegion(cell.center + jitter, size);
-        }
-
-        return result;
-    }
-
-    private static int SelectFarSpecial(
-        SiteRegion[] regions,
-        int narrowStartIndex,
-        Vector2 playerPosition)
-    {
-        int first = Mathf.Clamp(narrowStartIndex, 0, regions.Length - 2);
-        int second = first + 1;
-        return Vector2.SqrMagnitude(regions[first].Center - playerPosition) >=
-            Vector2.SqrMagnitude(regions[second].Center - playerPosition)
-                ? first
-                : second;
-    }
-
-    private static bool ValidateLayout(
-        Rect playable,
-        Vector2 playerPosition,
-        SiteRegion[] regions,
-        int specialIndex,
-        float maximumTravelDistance,
-        out float coverage,
-        out float lineShare)
-    {
-        coverage = SampleCoverage(playable, regions);
-        lineShare = SampleNormalShareOnSpecialLine(
-            playerPosition,
-            regions,
-            specialIndex
-        );
-
-        float specialDistance = Vector2.Distance(
-            playerPosition,
-            regions[specialIndex].Center
-        );
-        float normalDistanceSum = 0f;
-        float smallestArea = float.PositiveInfinity;
-        float largestArea = 0f;
-
-        for (int i = 0; i < regions.Length; i++)
-        {
-            float area = regions[i].Size.x * regions[i].Size.y;
-            smallestArea = Mathf.Min(smallestArea, area);
-            largestArea = Mathf.Max(largestArea, area);
-
-            if (i != specialIndex)
-            {
-                normalDistanceSum += Vector2.Distance(
-                    playerPosition,
-                    regions[i].Center
-                );
-            }
-        }
-
-        float averageNormalDistance = normalDistanceSum / NormalSiteCount;
-        return coverage >= MinimumCoverage && coverage <= MaximumCoverage &&
-            specialDistance >= maximumTravelDistance * 0.55f &&
-            specialDistance >= averageNormalDistance +
-                maximumTravelDistance * 0.035f &&
-            lineShare >= 0.4f && lineShare <= 0.65f &&
-            largestArea >= smallestArea * 1.12f;
+        Rect footprint = new(position - half, half * 2f);
+        foreach (var worldEvent in eventSpawner.SpawnedEvents)
+            if (worldEvent != null && !layoutIgnoredEvents.Contains(worldEvent) && worldEvent.gameObject.activeInHierarchy &&
+                DistanceToRect(worldEvent.transform.position, footprint) <
+                eventSpawner.GetSiteEventFootprintRadius(worldEvent) + 0.5f) return false;
+        return true;
     }
 
     private static float SampleCoverage(Rect playable, SiteRegion[] regions)

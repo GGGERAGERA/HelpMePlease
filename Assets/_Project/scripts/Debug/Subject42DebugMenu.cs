@@ -2943,6 +2943,10 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     {
         EnsureProductionSectorDebug();
         var nodeSector = ProductionExplorationSectorController.ActiveInstance;
+        AddRow("Regenerate Anomaly Layout", "6 normal + 1 special", mutedColor, "REGENERATE", nodeSector != null,
+            () => { nodeSector.RegenerateAnomalyLayout(); RefreshCurrentTab(); });
+        AddRow("Spawn Portal Pair", "A <-> B", mutedColor, "SPAWN", nodeSector != null,
+            () => nodeSector.SpawnPortalPair());
         AddRow("Spawn Nodes", "", mutedColor, "SPAWN", nodeSector != null,
             () => nodeSector.SpawnResourceNodes());
         AddRow("Clear Nodes", "", mutedColor, "CLEAR", nodeSector != null,

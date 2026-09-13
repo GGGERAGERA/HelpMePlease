@@ -30,12 +30,21 @@ public sealed class ProductionAnomalySite : MonoBehaviour
     private bool isSpecial;
     private bool completed;
     private bool initialized;
+    private int completedMainEvents;
+    private bool specialAssaultStarted;
+    private bool specialInstructionsShown;
+    private float nextAssaultAttempt;
+    private EnemySpawner assaultSpawner;
     private Vector2 siteSize;
     private Material material;
     private LineRenderer boundary;
+    private Mesh territoryMesh;
+    private MeshRenderer territoryFill;
 
     public bool IsCompleted => completed;
     public bool IsSpecial => isSpecial;
+    public int CompletedMainEvents => completedMainEvents;
+    public bool HasStartedSpecialAssault => specialAssaultStarted;
     public bool IsMapVisible => initialized && !completed &&
         isActiveAndEnabled;
     public Vector2 SiteSize => siteSize;
@@ -103,7 +112,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 #endif
         siteSize = size;
         initialized = true;
-        BuildBoundary(size, new Color(0.2f, 0.8f, 0.9f, 0.8f));
+        BuildBoundary(size, TerritoryColor(anomaly));
         anomalyZone = anomalyController?.SpawnSiteZone(
             anomaly,
             position,
@@ -175,7 +184,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         }
 
         initialized = true;
-        BuildBoundary(size, new Color(1f, 0.35f, 0.1f, 0.9f));
+        BuildBoundary(size, new Color(0.9f, 0.3f, 0.85f, 0.9f));
 
         eventPosition = SelectEventPosition();
         bool spawned = SpawnEvent(true);
@@ -186,6 +195,20 @@ public sealed class ProductionAnomalySite : MonoBehaviour
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    internal WorldEvent SiteEvent => activeEvent;
+
+    public void RemoveForLayout()
+    {
+        CollapseEnvironment();
+        gameObject.SetActive(false);
+        if (activeEvent != null)
+        {
+            activeEvent.gameObject.SetActive(false);
+            eventSpawner.ClearDebugEvent(activeEvent);
+        }
+        Destroy(gameObject);
+    }
+
     public bool ContainsWorldPosition(Vector2 position)
     {
         Vector2 offset = position - (Vector2)transform.position;
@@ -524,12 +547,23 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 
     private void HandleEventCompleted(WorldEvent worldEvent)
     {
-        if (this == null || !isActiveAndEnabled || completed ||
+        if (this == null || worldEvent == null || !isActiveAndEnabled || completed ||
             worldEvent != activeEvent)
             return;
 
-        completed = true;
         activeEvent = null;
+        completedMainEvents++;
+        if (isSpecial && completedMainEvents < 2)
+        {
+            specialInstructionsShown = true;
+            RunMessageService.Instance?.ShowCustom("ОСОБАЯ АНОМАЛИЯ: 1/2",
+                "Выполните второе событие. При его запуске начнётся Assault.", 4f);
+            eventPosition = SelectEventPosition();
+            StartCoroutine(RespawnEventAfterDelay());
+            return;
+        }
+
+        completed = true;
         CollapseEnvironment();
 
         if (isSpecial)
@@ -548,7 +582,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 
     private void HandleEventFailed(WorldEvent worldEvent)
     {
-        if (this == null || !isActiveAndEnabled || completed ||
+        if (this == null || worldEvent == null || !isActiveAndEnabled || completed ||
             worldEvent != activeEvent)
             return;
 
@@ -562,10 +596,37 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 
     private IEnumerator RespawnEventAfterDelay()
     {
-        yield return new WaitForSeconds(2f);
+        do
+        {
+            yield return new WaitForSeconds(2f);
+            if (completed || activeEvent != null) yield break;
+        } while (!SpawnEvent(isSpecial) && isSpecial);
+    }
 
-        if (!completed)
-            SpawnEvent(isSpecial);
+    private void Update()
+    {
+        if (!initialized || !isSpecial || completed) return;
+        if (!specialInstructionsShown)
+        {
+            var player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+            {
+                Vector2 offset = player.transform.position - transform.position;
+                if (Mathf.Abs(offset.x) < siteSize.x * 0.5f && Mathf.Abs(offset.y) < siteSize.y * 0.5f)
+                {
+                    specialInstructionsShown = true;
+                    RunMessageService.Instance?.ShowCustom("ОСОБАЯ АНОМАЛИЯ: 0/2",
+                        "Выполните два события, чтобы получить новое кольцо.", 4f);
+                }
+            }
+        }
+        if (completedMainEvents != 1 || specialAssaultStarted || activeEvent == null ||
+            !activeEvent.IsStarted || Time.time < nextAssaultAttempt) return;
+        nextAssaultAttempt = Time.time + 1f;
+        if (assaultSpawner == null) assaultSpawner = FindFirstObjectByType<EnemySpawner>();
+        // A busy/unsafe assault window is retried; failures and event retries never duplicate a launched assault.
+        if (assaultSpawner != null && assaultSpawner.TryStartRandomSiteAssault())
+            specialAssaultStarted = true;
     }
 
     private void CollapseEnvironment()
@@ -584,10 +645,26 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 
         if (boundary != null)
             boundary.enabled = false;
+        if (territoryFill != null)
+            territoryFill.enabled = false;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         VisualTargetsChanged?.Invoke();
 #endif
+    }
+
+    private static Color TerritoryColor(LocalAnomalyData anomaly)
+    {
+        if (anomaly == null) return new Color(0.25f, 0.8f, 0.9f, 0.9f);
+        return anomaly.AnomalyType switch
+        {
+            LocalAnomalyType.Berserk => new Color(1f, 0.35f, 0.3f, 0.9f),
+            LocalAnomalyType.Stasis => new Color(0.25f, 0.7f, 1f, 0.9f),
+            LocalAnomalyType.ExplosiveZone => new Color(1f, 0.75f, 0.2f, 0.9f),
+            LocalAnomalyType.Gravity => new Color(0.65f, 0.5f, 1f, 0.9f),
+            LocalAnomalyType.Glitch => new Color(0.35f, 0.95f, 0.6f, 0.9f),
+            _ => new Color(0.25f, 0.8f, 0.9f, 0.9f)
+        };
     }
 
     private void BuildBoundary(Vector2 size, Color color)
@@ -599,7 +676,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
             transform,
             "Site Boundary",
             color,
-            0.065f,
+            0.18f,
             5,
             material
         );
@@ -610,6 +687,25 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         boundary.SetPosition(2, new Vector3(half.x, half.y));
         boundary.SetPosition(3, new Vector3(half.x, -half.y));
         boundary.SetPosition(4, new Vector3(-half.x, -half.y));
+        // A quiet territory tint makes the partition readable at sector zoom-out.
+        // This mesh has no collider and does not participate in anomaly effects.
+        Color fillColor = new(color.r, color.g, color.b, 0.2f);
+        territoryMesh = new Mesh
+        {
+            name = "Anomaly territory fill",
+            vertices = new[] { new Vector3(-half.x, -half.y), new Vector3(-half.x, half.y),
+                new Vector3(half.x, half.y), new Vector3(half.x, -half.y) },
+            triangles = new[] { 0, 1, 2, 0, 2, 3 },
+            colors = new[] { fillColor, fillColor, fillColor, fillColor }
+        };
+        territoryMesh.RecalculateBounds();
+        var fillObject = new GameObject("Territory tint", typeof(MeshFilter), typeof(MeshRenderer));
+        fillObject.transform.SetParent(transform, false);
+        fillObject.GetComponent<MeshFilter>().sharedMesh = territoryMesh;
+        territoryFill = fillObject.GetComponent<MeshRenderer>();
+        territoryFill.sharedMaterial = material;
+        territoryFill.sortingLayerName = "Effects";
+        territoryFill.sortingOrder = -10;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         originalBoundaryColor = color;
         originalBoundaryWidth = boundary.startWidth;
@@ -629,6 +725,8 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 
         if (material != null)
             Destroy(material);
+        if (territoryMesh != null)
+            Destroy(territoryMesh);
     }
 
     private void SubscribeToEventSpawner()

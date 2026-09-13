@@ -393,6 +393,21 @@ public sealed class TacticalMapHUD : MonoBehaviour
             }
         }
 
+        var portals = ProductionExplorationSectorController.ActiveInstance?.PortalPair;
+        if (hasBounds && portals != null && portals.isActiveAndEnabled)
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                EnsureMarkerCount(eventMarkers, eventCount + 1, "Portal", eventRoot);
+                MarkerVisual marker = eventMarkers[eventCount++];
+                marker.Rect.anchoredPosition = WorldToMap(i == 0 ? portals.PositionA : portals.PositionB);
+                marker.Rect.sizeDelta = new Vector2(10f, 10f);
+                marker.Rect.localRotation = Quaternion.Euler(0f, 0f, 45f);
+                Color color = i == 0 ? ProductionPortalPair.ColorA : ProductionPortalPair.ColorB;
+                SetMarkerStyle(marker, color * new Color(1f, 1f, 1f, 0.45f), color);
+            }
+        }
+
         SetMarkerCount(eventMarkers, eventCount);
 
         breakableDescriptors.Clear();

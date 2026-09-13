@@ -83,6 +83,8 @@ public partial class EnemySpawner
     public bool ForceAssaultEvent(AssaultEventType type) => TryStartAssault(type);
 #endif
 
+    public bool TryStartRandomSiteAssault() => TryStartAssault((AssaultEventType)assaultRandom.Next(5));
+
     private bool TryStartAssault(AssaultEventType type)
     {
         if (!CanStartAssault || IsAssaultActive || (int)type < 0 || (int)type > 4) return false;
