@@ -239,7 +239,7 @@ public sealed partial class BotRunSession : MonoBehaviour
                 Debug.LogWarning("[Bot Lab] " + outcome + ": " + reason);
             if (saveStandaloneResult)
             {
-                string root = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Artifacts", "BotRuns"));
+                string root = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Artifacts", "GeneratedQA", "BotRuns"));
                 Directory.CreateDirectory(root);
                 string path = Path.Combine(root, "latest_run.json");
                 File.WriteAllText(path, JsonUtility.ToJson(Result, true));

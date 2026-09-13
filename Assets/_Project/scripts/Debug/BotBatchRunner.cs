@@ -31,7 +31,7 @@ public sealed class BotBatchRunner : MonoBehaviour
         originalScale = Time.timeScale > 0f ? Time.timeScale : 1f;
         Result = new BotBatchResult { RequestedRuns = count, SeedMode = mode.ToString(), FixedSeed = fixedSeed, SimulationSpeed = speed };
         if (golden) Result.Strategy = "GoldenPath";
-        OutputPath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Artifacts", "BotBatches",
+        OutputPath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Artifacts", "GeneratedQA", "BotBatches",
             "latest_batch.json"));
         IsActive = true; stopping = false;
         session.Finished += OnFinished;

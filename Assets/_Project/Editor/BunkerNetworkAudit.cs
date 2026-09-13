@@ -11,7 +11,7 @@ public static class BunkerNetworkAudit
     private static void Command()
     {
         if (EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode) return;
-        const string request = "Artifacts/BunkerNetwork/refresh.request";
+        const string request = "Artifacts/GeneratedQA/BunkerNetwork/refresh.request";
         if (!File.Exists(request)) return;
         File.Delete(request);
         AssetDatabase.Refresh();
@@ -36,10 +36,10 @@ public static class BunkerNetworkAudit
                     lines.Add("  " + p.propertyPath + "=" + PathOf(go.transform) + " " + go.transform.position);
             }
         }
-        Directory.CreateDirectory("Artifacts/BunkerNetwork");
+        Directory.CreateDirectory("Artifacts/GeneratedQA/BunkerNetwork");
         foreach (var r in all.Select(t => t.GetComponent<Renderer>()).Where(r => r != null && r.gameObject.activeInHierarchy && r.bounds.max.x > 30 && r.bounds.min.x < 36 && r.bounds.max.y > -15 && r.bounds.min.y < -5))
             lines.Add("RENDER " + PathOf(r.transform) + " " + r.bounds + " sort=" + r.sortingLayerName + "/" + r.sortingOrder);
-        File.WriteAllLines("Artifacts/BunkerNetwork/audit.txt", lines);
+        File.WriteAllLines("Artifacts/GeneratedQA/BunkerNetwork/audit.txt", lines);
         BunkerNavigationPlayModeQA.Capture("audit-layout", 55, -4, 31);
     }
 }

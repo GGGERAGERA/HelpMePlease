@@ -43,7 +43,7 @@ public sealed class GoldenPathLab : MonoBehaviour
             .SelectMany(b => b.Results.Where(r => r?.GoldenPath != null).Select(r => new RunRow { Batch = b, Run = r })))
         .Where(e => View != ResultsView.Failures || GoldenPathSummary.Classify(e.Run) != "PASS")
         .Reverse().Take(20).ToArray();
-    public string HistoryPath => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Artifacts/BotBatches/golden_path_history.json"));
+    public string HistoryPath => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Artifacts/GeneratedQA/BotBatches/golden_path_history.json"));
     public string SummaryPath => Path.Combine(Path.GetDirectoryName(HistoryPath), "golden_path_summary.md");
 
     private GoldenPathBatchHistory history;

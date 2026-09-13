@@ -84,7 +84,7 @@ public sealed partial class Subject42DebugMenu
             TextAlignmentOptions.TopLeft, Color.white);
         botTelemetryText.gameObject.AddComponent<LayoutElement>().preferredHeight = 285f;
         RefreshBotLabTelemetry();
-        AddHint("Duration — game time; watchdog — active real time. FIXED batch повторяет один seed.\nConsole + Artifacts/BotRuns и BotBatches (JSON/CSV). Stop во время reward оставляет выбор игроку.");
+        AddHint("Duration — game time; watchdog — active real time. FIXED batch повторяет один seed.\nConsole + Artifacts/GeneratedQA/BotRuns и BotBatches (JSON/CSV). Stop во время reward оставляет выбор игроку.");
     }
     private void StopBotLab()
     {

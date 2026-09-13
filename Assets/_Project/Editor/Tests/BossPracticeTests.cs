@@ -84,7 +84,7 @@ public sealed class BossPracticeTests
         Assert.That(arena.Player.CurrentHealth, Is.EqualTo(arena.Player.MaxHealth));
         Assert.That(arena.Boss.PendingRocketCount, Is.Zero);
         Assert.That(Object.FindObjectsByType<BossRocketAttack>(FindObjectsSortMode.None).Length, Is.EqualTo(1));
-        Directory.CreateDirectory("Artifacts/BossPractice");
-        File.WriteAllText("Artifacts/BossPractice/checks.txt", "PASS authored tuning: 3 Attack cycles, 6 launches, 6 falling rockets; real player movement, camera and restart. Delays: " + string.Join(", ", delays) + "\n");
+        Directory.CreateDirectory("Artifacts/GeneratedQA/BossPractice");
+        File.WriteAllText("Artifacts/GeneratedQA/BossPractice/checks.txt", "PASS authored tuning: 3 Attack cycles, 6 launches, 6 falling rockets; real player movement, camera and restart. Delays: " + string.Join(", ", delays) + "\n");
     }
 }

@@ -11,7 +11,7 @@ public class EnemySpawnStage
     public GameObject[] enemyPrefabs;
 }
 
-public class EnemySpawner : MonoBehaviour
+public partial class EnemySpawner : MonoBehaviour
 {
     private static Collider2D[] additionalWaveOverlapBuffer =
         new Collider2D[32];
@@ -142,6 +142,7 @@ public class EnemySpawner : MonoBehaviour
         ResolveGameplayArea();
         CaptureBaseSettings();
         PrewarmProjectilePools(enemyPrefabs);
+        ResetAssaultEvents();
     }
 
     private void Update()
@@ -156,6 +157,7 @@ public class EnemySpawner : MonoBehaviour
             return;
 
         runTime += Time.deltaTime;
+        UpdateAssaultEvents();
         if (!runThreatControlsPhase)
             UpdateActivePhase();
 
@@ -191,6 +193,7 @@ public class EnemySpawner : MonoBehaviour
         runThreatBatchSize = 1;
         runTime = 0f;
         spawnTimer = 0f;
+        ResetAssaultEvents();
         legacyDifficultySteps = 0;
 
         if (spawnProfile == null)
@@ -261,6 +264,7 @@ public class EnemySpawner : MonoBehaviour
 
     public void StopSpawning()
     {
+        EndAssault();
         spawningEnabled = false;
         finalBossPressureMultiplier = 1f;
         Debug.Log("[EnemySpawner] Spawning stopped.");
@@ -468,6 +472,7 @@ public class EnemySpawner : MonoBehaviour
 
     public void ResetForNewLevel()
     {
+        ResetAssaultEvents();
         spawnTimer = 0f;
         difficultyTimer = 0f;
         runTime = 0f;
@@ -484,6 +489,7 @@ public class EnemySpawner : MonoBehaviour
 
     public void ResetSpawner()
     {
+        ResetAssaultEvents();
         if (!initialized)
             CaptureBaseSettings();
 
@@ -1202,6 +1208,7 @@ public class EnemySpawner : MonoBehaviour
 
     private void RefreshActiveEnemySpeeds()
     {
+        RefreshAssaultEnemySpeeds();
         RemoveDestroyedEnemies();
 
         for (int i = 0; i < activeEnemies.Count; i++)

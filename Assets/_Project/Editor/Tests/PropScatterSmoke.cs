@@ -12,7 +12,7 @@ using Object = UnityEngine.Object;
 
 public sealed class PropScatterSmoke
 {
-    const string Output = "Artifacts/PropScatterSmoke";
+    const string Output = "Artifacts/GeneratedQA/PropScatterSmoke";
     readonly Subject42FinalBossFlowTests preferences = new();
     [SetUp] public void Preserve() => preferences.PreserveRewardsAndUnlockProgress();
     [UnityTearDown] public IEnumerator Cleanup() => preferences.CleanupPlayMode();

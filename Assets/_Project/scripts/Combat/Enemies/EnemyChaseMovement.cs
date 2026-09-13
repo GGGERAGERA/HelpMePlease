@@ -30,6 +30,10 @@ public class EnemyChaseMovement : EnemyMovement
     private int movementSpeedHash;
     private bool hasMovementSpeed;
     private float attackPauseRemaining;
+    private Vector2? assaultDestination;
+    public float BaseChaseSpeed => normalSpeed;
+    public bool HasAssaultDestination => assaultDestination.HasValue;
+    public void SetAssaultDestination(Vector2? destination) => assaultDestination = destination;
     public Transform Target => player;
     public bool IsAttackPaused => attackPauseRemaining > 0f;
     public void PauseForAttack(float timeout) => attackPauseRemaining = Mathf.Max(0f, timeout);
@@ -151,9 +155,14 @@ public class EnemyChaseMovement : EnemyMovement
     {
         Vector2 offset = (Vector2)player.position - rb.position;
         float sqrDistance = offset.sqrMagnitude;
+        if (assaultDestination.HasValue &&
+            Vector2.Distance(rb.position, assaultDestination.Value) < .75f)
+            assaultDestination = null;
+        if (assaultDestination.HasValue)
+            offset = assaultDestination.Value - rb.position;
         Vector2 productionDirection = offset.normalized;
-        Vector2 direction = ApplyCrowdSteering(productionDirection,
-            player.position, Time.fixedDeltaTime);
+        Vector2 direction = assaultDestination.HasValue ? productionDirection :
+            ApplyCrowdSteering(productionDirection, player.position, Time.fixedDeltaTime);
 
         bool isRunning = sqrDistance <= aggroDistance * aggroDistance;
 
@@ -240,6 +249,7 @@ public class EnemyChaseMovement : EnemyMovement
     }
     private void OnDisable()
     {
+        assaultDestination = null;
         ResumeAfterAttack();
         SetMovementSpeed(0f);
         ReleaseCrowdSteering();

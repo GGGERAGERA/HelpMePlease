@@ -63,14 +63,14 @@ public sealed class Subject42GoldenPathTests
     [UnityTest, Timeout(7200000)]
     public IEnumerator ReplayLastFailure()
     {
-        var history = JsonUtility.FromJson<GoldenPathBatchHistory>(System.IO.File.ReadAllText("Artifacts/BotBatches/golden_path_history.json"));
+        var history = JsonUtility.FromJson<GoldenPathBatchHistory>(System.IO.File.ReadAllText("Artifacts/GeneratedQA/BotBatches/golden_path_history.json"));
         int seed = history.Batches.SelectMany(b => b.Results).Last(r => r.GoldenPath?.Result == "FAIL").Seed;
         return Run(1, seed);
     }
     [UnityTest, Timeout(7200000)]
     public IEnumerator ReplayLastFailureAtFive()
     {
-        var history = JsonUtility.FromJson<GoldenPathBatchHistory>(System.IO.File.ReadAllText("Artifacts/BotBatches/golden_path_history.json"));
+        var history = JsonUtility.FromJson<GoldenPathBatchHistory>(System.IO.File.ReadAllText("Artifacts/GeneratedQA/BotBatches/golden_path_history.json"));
         int seed = history.Batches.SelectMany(b => b.Results).Last(r => r.GoldenPath?.Result == "FAIL").Seed;
         return Run(1, seed, 5f);
     }

@@ -20,7 +20,7 @@ using Object = UnityEngine.Object;
 public sealed class SettingsPresentationTests
 {
     const string Prefab = "Assets/_Project/prefabs/UI/SettingsPanel/SettingsPanel.prefab";
-    const string Output = "Artifacts/SettingsQA";
+    const string Output = "Artifacts/GeneratedQA/SettingsQA";
     const string FireKey = "accessibility.weapon.autoAim";
     static readonly string[] FloatKeys = { AudioSettingsService.MasterVolumeKey, AudioSettingsService.MusicVolumeKey, AudioSettingsService.SoundsVolumeKey };
 

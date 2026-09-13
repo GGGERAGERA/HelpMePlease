@@ -31,7 +31,7 @@ public sealed class Subject42GoldenPathLabTests
     public IEnumerator ExistingFailureOpensByRowClickWithoutChangingHistory()
     {
         yield return new EnterPlayMode();
-        byte[] historyBefore = File.ReadAllBytes("Artifacts/BotBatches/golden_path_history.json");
+        byte[] historyBefore = File.ReadAllBytes("Artifacts/GeneratedQA/BotBatches/golden_path_history.json");
         string clipboardBefore = GUIUtility.systemCopyBuffer;
         yield return EditorSceneManager.LoadSceneAsyncInPlayMode(GoldenPathLab.ScenePath, new LoadSceneParameters(LoadSceneMode.Single));
         var lab = GoldenPathLab.Current;
@@ -45,7 +45,7 @@ public sealed class Subject42GoldenPathLabTests
         var point = new Vector2((Screen.width - 1440 * scale) / 2 + 65 * scale,
             (Screen.height - 900 * scale) / 2 + (560 + index * 34 + 17) * scale);
         yield return new WaitForEndOfFrame();
-        ScreenCapture.CaptureScreenshot("Artifacts/BotBatches/golden_path_lab_selected.png");
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/BotBatches/golden_path_lab_selected.png");
         yield return null;
         queue.Invoke(null, new object[] { new Event { type = EventType.MouseMove, mousePosition = point } });
         yield return new WaitForSecondsRealtime(.1f);
@@ -71,10 +71,10 @@ public sealed class Subject42GoldenPathLabTests
         lab.RefreshResults();
         Assert.That(lab.SelectedRow.Run.RunId, Is.EqualTo(selectedId), "Refresh must preserve exact selected attempt");
         yield return new WaitForEndOfFrame();
-        ScreenCapture.CaptureScreenshot("Artifacts/BotBatches/golden_path_lab_selected.png");
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/BotBatches/golden_path_lab_selected.png");
         yield return null;
         Assert.That(lab.IsBusy, Is.False);
-        Assert.That(File.ReadAllBytes("Artifacts/BotBatches/golden_path_history.json").SequenceEqual(historyBefore), Is.True);
+        Assert.That(File.ReadAllBytes("Artifacts/GeneratedQA/BotBatches/golden_path_history.json").SequenceEqual(historyBefore), Is.True);
         yield return new ExitPlayMode();
     }
 
@@ -107,7 +107,7 @@ public sealed class Subject42GoldenPathLabTests
         Assert.That(lab, Is.Not.Null);
         var oldId = lab.DisplayedBatch?.BatchId;
         yield return new WaitForEndOfFrame();
-        ScreenCapture.CaptureScreenshot("Artifacts/BotBatches/golden_path_lab_before.png");
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/BotBatches/golden_path_lab_before.png");
         yield return null;
         Assert.That(lab.StartBatch(1), Is.True);
         float deadline = Time.realtimeSinceStartup + 240f;
@@ -117,7 +117,7 @@ public sealed class Subject42GoldenPathLabTests
             if (!captured && BotRunSession.Current?.IsRunning == true)
             {
                 yield return new WaitForEndOfFrame();
-                ScreenCapture.CaptureScreenshot("Artifacts/BotBatches/golden_path_lab_running.png");
+                ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/BotBatches/golden_path_lab_running.png");
                 captured = true;
             }
             yield return null;
@@ -131,7 +131,7 @@ public sealed class Subject42GoldenPathLabTests
         Assert.That(lab.DisplayedStatus, Is.EqualTo(lab.DisplayedBatch.Results[0].Result == "GoldenPathPassed" ? "GAMEPLAY REGRESSION CLEAN" :
             GoldenPathSummary.Classify(lab.DisplayedBatch.Results[0]) == "GAME_REGRESSION" ? "GAME REGRESSION FOUND" : "BOT FAILS / ABORTED PRESENT"));
         yield return new WaitForEndOfFrame();
-        ScreenCapture.CaptureScreenshot("Artifacts/BotBatches/golden_path_lab_after.png");
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/BotBatches/golden_path_lab_after.png");
         yield return null;
         yield return new ExitPlayMode();
     }
@@ -140,7 +140,7 @@ public sealed class Subject42GoldenPathLabTests
     public IEnumerator PreviewExistingResultsWithoutStartingRun()
     {
         yield return new EnterPlayMode();
-        byte[] historyBefore = File.ReadAllBytes("Artifacts/BotBatches/golden_path_history.json");
+        byte[] historyBefore = File.ReadAllBytes("Artifacts/GeneratedQA/BotBatches/golden_path_history.json");
         yield return EditorSceneManager.LoadSceneAsyncInPlayMode(GoldenPathLab.ScenePath, new LoadSceneParameters(LoadSceneMode.Single));
         var lab = GoldenPathLab.Current;
         Assert.That(lab.IsBusy, Is.False);
@@ -150,9 +150,9 @@ public sealed class Subject42GoldenPathLabTests
         Assert.That(failed.Result, Is.Not.EqualTo("Aborted"));
         Assert.That(speed, Is.EqualTo(5f).Or.EqualTo(10f));
         yield return new WaitForEndOfFrame();
-        ScreenCapture.CaptureScreenshot("Artifacts/BotBatches/golden_path_lab_after.png");
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/BotBatches/golden_path_lab_after.png");
         yield return null;
-        Assert.That(File.ReadAllBytes("Artifacts/BotBatches/golden_path_history.json").SequenceEqual(historyBefore), Is.True, "Viewing the lab must not change history");
+        Assert.That(File.ReadAllBytes("Artifacts/GeneratedQA/BotBatches/golden_path_history.json").SequenceEqual(historyBefore), Is.True, "Viewing the lab must not change history");
         yield return new ExitPlayMode();
     }
 

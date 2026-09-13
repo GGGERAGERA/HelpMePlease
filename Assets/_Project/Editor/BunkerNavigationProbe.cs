@@ -8,7 +8,7 @@ public static class BunkerNavigationProbe
     static BunkerNavigationProbe() { EditorApplication.update += Command; }
     private static void Command()
     {
-        const string request = "Artifacts/BunkerNetwork/author.request";
+        const string request = "Artifacts/GeneratedQA/BunkerNetwork/author.request";
         if (!File.Exists(request) || EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode) return;
         File.Delete(request);
         try

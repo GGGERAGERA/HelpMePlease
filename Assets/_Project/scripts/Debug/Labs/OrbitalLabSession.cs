@@ -46,6 +46,7 @@ public abstract class OrbitalLabSession : MonoBehaviour
     public void ResetBuild(Action afterReset = null)
     {
         if (resetting) return;
+        PanelVisible = true;
         StartCoroutine(RecreateBuild(afterReset));
     }
 
@@ -63,8 +64,15 @@ public abstract class OrbitalLabSession : MonoBehaviour
         Time.timeScale = 1f;
         // Let Unity retire old views, coroutines and subscriptions before creating replacements.
         yield return null;
-        manager.DebugResetOrbitalRunState();
-        manager.ClearUpgradesForDebug(null);
+        if (Character == null) Character = manager.SelectedCharacter;
+        if (Character == null || Character.characterPrefab == null)
+        {
+            resetting = false;
+            Notice = "INIT FAILED — assign the Lab default Character";
+            Debug.LogError("[OrbitalLab] missing selected/default character", this);
+            yield break;
+        }
+        BeginLabRun(manager);
         var prefab = OrbitalPresentationConfig.Active.GetPlayerPrefab(Character.characterPrefab);
         var player = Instantiate(prefab, transform);
         player.name = "Player (production)";
@@ -89,6 +97,12 @@ public abstract class OrbitalLabSession : MonoBehaviour
     }
 
     protected virtual void BeforeBuildReset() { }
+
+    protected virtual void BeginLabRun(RunStateManager runManager)
+    {
+        runManager.DebugResetOrbitalRunState();
+        runManager.ClearUpgradesForDebug(null);
+    }
 
     protected void ClearLooseObjects()
     {

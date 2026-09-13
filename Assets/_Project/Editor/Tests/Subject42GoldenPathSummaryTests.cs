@@ -118,12 +118,12 @@ public sealed class Subject42GoldenPathSummaryTests
     [Test]
     public void RegenerateExistingHistoryWithoutChangingJson()
     {
-        const string path = "Artifacts/BotBatches/golden_path_history.json";
+        const string path = "Artifacts/GeneratedQA/BotBatches/golden_path_history.json";
         byte[] before = File.ReadAllBytes(path);
         string text = Render(JsonUtility.FromJson<GoldenPathBatchHistory>(File.ReadAllText(path)));
         var type = typeof(BotBatchRunner).Assembly.GetType("GoldenPathSummary");
         type.GetMethod("WriteFromHistory").Invoke(null, new object[] { Path.GetFullPath(path) });
-        Assert.That(File.ReadAllText("Artifacts/BotBatches/golden_path_summary.md"), Is.EqualTo(text));
+        Assert.That(File.ReadAllText("Artifacts/GeneratedQA/BotBatches/golden_path_summary.md"), Is.EqualTo(text));
         CollectionAssert.AreEqual(before, File.ReadAllBytes(path));
     }
 }

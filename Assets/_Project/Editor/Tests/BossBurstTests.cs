@@ -13,7 +13,7 @@ using Object = UnityEngine.Object;
 public sealed class BossBurstTests
 {
     const string Path = "Assets/_Project/prefabs/Enemies/p_Boss1.prefab";
-    const string Output = "Artifacts/BossBurst";
+    const string Output = "Artifacts/GeneratedQA/BossBurst";
     static Camera testCamera;
     [UnityTearDown] public IEnumerator Cleanup()
     {

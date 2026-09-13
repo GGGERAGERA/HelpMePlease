@@ -130,8 +130,8 @@ public sealed class Subject42ProductionAudioTests
     [Test]
     public void InspectExistingCandidates()
     {
-        Directory.CreateDirectory("Artifacts/AudioPass");
-        using var writer = new StreamWriter("Artifacts/AudioPass/candidates.tsv");
+        Directory.CreateDirectory("Artifacts/GeneratedQA/AudioPass");
+        using var writer = new StreamWriter("Artifacts/GeneratedQA/AudioPass/candidates.tsv");
         writer.WriteLine("path\tduration\tpeak\trms");
         foreach (var id in AssetDatabase.FindAssets("t:AudioClip", new[]{"Assets/_Project/AudioEffects"}))
         {

@@ -3322,6 +3322,27 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         );
         AddHint(enemyDebugStatus);
 
+        AddSectionTitle("ASSAULT EVENTS", "Force пропускает таймер; одно событие одновременно");
+        foreach (AssaultEventType type in Enum.GetValues(typeof(AssaultEventType)))
+        {
+            AssaultEventType captured = type;
+            string label = type switch
+            {
+                AssaultEventType.BomberRush => "Force Bomber Rush",
+                AssaultEventType.ShooterSquad => "Force Shooter Squad",
+                AssaultEventType.Encirclement => "Force Encirclement",
+                AssaultEventType.Crossfire => "Force Crossfire",
+                _ => "Force Stampede"
+            };
+            AddRow(label, enemySpawner != null && enemySpawner.IsAssaultActive ? "ACTIVE" : "READY",
+                accentColor, "FORCE", enemySpawner != null && !enemySpawner.IsAssaultActive, () =>
+                {
+                    CloseMenu();
+                    if (!enemySpawner.ForceAssaultEvent(captured))
+                        enemyDebugStatus = "Assault заблокирован состоянием run или нет безопасной формации.";
+                });
+        }
+
         AddSectionTitle("РУЧНОЙ SPAWN", "Безопасные разные позиции вокруг игрока");
         AddManualEnemyRows("ОБЫЧНЫЙ", ResolveEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Basic));
         AddManualEnemyRows("СТРЕЛОК", ResolveEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Shooter));

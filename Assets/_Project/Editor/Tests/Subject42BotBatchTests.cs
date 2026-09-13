@@ -123,7 +123,7 @@ public sealed class Subject42BotBatchTests
         yield return StartManualSector();
         var session = BotRunSession.Ensure();
         session.BindScene(Object.FindFirstObjectByType<CharacterSpawner>(), RunFlowController.Instance, UpgradeManager.Instance, GameplayAreaService.Instance);
-        string runs = Path.GetFullPath("Artifacts/BotRuns"), batches = Path.GetFullPath("Artifacts/BotBatches");
+        string runs = Path.GetFullPath("Artifacts/GeneratedQA/BotRuns"), batches = Path.GetFullPath("Artifacts/GeneratedQA/BotBatches");
         string latestRun = Path.Combine(runs, "latest_run.json");
         string latestBatch = Path.Combine(batches, "latest_batch.json");
         string[] originalRuns = Directory.Exists(runs) ? Directory.GetFiles(runs) : Array.Empty<string>();

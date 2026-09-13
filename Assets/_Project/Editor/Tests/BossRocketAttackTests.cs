@@ -10,7 +10,7 @@ using UnityEngine.TestTools;
 public sealed class BossRocketAttackTests
 {
     const string BossPath = "Assets/_Project/prefabs/Enemies/p_Boss1.prefab";
-    const string Output = "Artifacts/BossRocketSmoke";
+    const string Output = "Artifacts/GeneratedQA/BossRocketSmoke";
     [Test]
     public void BossHasRocketAttackAndKeepsContactAndChase()
     {

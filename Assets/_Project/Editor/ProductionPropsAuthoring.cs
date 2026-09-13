@@ -7,7 +7,7 @@ using UnityEngine;
 public static class ProductionPropsAuthoring
 {
     const string Root = "Assets/_Project/Environment/Props";
-    const string Request = "Artifacts/EnvironmentProps/author.request";
+    const string Request = "Artifacts/GeneratedQA/EnvironmentProps/author.request";
     static ProductionPropsAuthoring() { EditorApplication.update += Poll; }
     static void Poll()
     {
@@ -15,7 +15,7 @@ public static class ProductionPropsAuthoring
             EditorApplication.isPlayingOrWillChangePlaymode) return;
         File.Delete(Request);
         Author();
-        File.WriteAllText("Artifacts/EnvironmentProps/author.result", "OK");
+        File.WriteAllText("Artifacts/GeneratedQA/EnvironmentProps/author.result", "OK");
     }
 
     [MenuItem("Tools/Subject42/Environment/Author sector props")]

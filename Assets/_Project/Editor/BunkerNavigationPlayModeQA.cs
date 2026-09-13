@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 [InitializeOnLoad]
 public static class BunkerNavigationPlayModeQA
 {
-    private const string Output = "Artifacts/BunkerNetwork/";
+    private const string Output = "Artifacts/GeneratedQA/BunkerNetwork/";
     private const string Session = "BunkerNetworkQA";
     private static double until;
     private static readonly List<string> report = new();

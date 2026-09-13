@@ -16,7 +16,7 @@ using Object = UnityEngine.Object;
 [InitializeOnLoad]
 public static class Subject42AudioPassTelemetry
 {
-    const string Root = "Artifacts/AudioPass/";
+    const string Root = "Artifacts/GeneratedQA/AudioPass/";
     static AudioService service;
     static string label;
     public static readonly Dictionary<AudioCueId, int> Counts = new();
@@ -132,7 +132,7 @@ public sealed class Subject42AudioRuntimeTests
         Time.timeScale = 1;
         Debug.Log("[AudioSmoke] locating initialized station");
         var station = Object.FindObjectsByType<OrbitalStationRuntime>(FindObjectsSortMode.None).FirstOrDefault(s => s != null && s.IsInitialized);
-        File.WriteAllLines("Artifacts/AudioPass/smoke-startup.txt", Object.FindObjectsByType<CharacterSpawner>(FindObjectsSortMode.None)
+        File.WriteAllLines("Artifacts/GeneratedQA/AudioPass/smoke-startup.txt", Object.FindObjectsByType<CharacterSpawner>(FindObjectsSortMode.None)
             .Where(s => s != null).Select(s => $"{s.name}: player={s.SpawnedPlayer}, scene={s.gameObject.scene.name}, enabled={s.enabled}"));
         Assert.That(station, Is.Not.Null, "Production ORBITAL must finish startup");
         var player = station.Owner.Transform.gameObject;

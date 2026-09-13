@@ -6,6 +6,15 @@ using UnityEngine;
 
 public sealed class OrbitalRewardLabController : OrbitalLabSession
 {
+    public StageProfileData StartingStageProfile;
+    public WorldRuleData StartingWorldRule;
+    public LocalAnomalyData StartingLocalAnomaly;
+
+    // Match production run startup without invoking the bunker transition/spawner.
+    protected override void BeginLabRun(RunStateManager runManager) =>
+        runManager.BeginNewRun(Character, null, StartingStageProfile,
+            StartingWorldRule, StartingLocalAnomaly);
+
     public const string ScenePath = "Assets/_Project/Scenes/Dev/Labs/OrbitalRewardLab.unity";
     private int tab;
     public void OpenNormalReward() { if (CanEdit()) Rewards.ShowUpgradeChoices(); }
