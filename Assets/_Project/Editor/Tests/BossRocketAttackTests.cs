@@ -28,11 +28,12 @@ public sealed class BossRocketAttackTests
         if (Application.isPlaying) yield return new ExitPlayMode();
     }
 
-    static IEnumerator Until(System.Func<bool> ready, float timeout = 8f)
+    static IEnumerator Until(System.Func<bool> ready, float timeout = 8f,
+        [System.Runtime.CompilerServices.CallerLineNumber] int sourceLine = 0)
     {
         float end = Time.time + timeout;
         while (!ready() && Time.time < end) yield return null;
-        Assert.That(ready(), Is.True, "Timed out waiting for boss stage");
+        Assert.That(ready(), Is.True, $"Timed out waiting for boss stage at line {sourceLine}");
     }
 
     static IEnumerator Delay(float seconds)
@@ -103,19 +104,24 @@ public sealed class BossRocketAttackTests
         var healthSettings = new SerializedObject(bossHealth);
         healthSettings.FindProperty("lootPrefab").objectReferenceValue = null;
         healthSettings.ApplyModifiedPropertiesWithoutUndo();
-        attack.AttackCooldown = .25f; // The initial authored six-second cooldown still runs.
+        attack.ShotsPerBurst = 1; // This test isolates one pair's damage; burst counts are covered separately.
+        attack.RocketFallDelayMin = attack.RocketFallDelayMax = 1.2f;
+        attack.TargetSpreadRadius = .01f;
+        attack.AttackCooldown = 1.5f; // Isolate damage checks from overlapping bursts.
         yield return Delay(.3f);
         Assert.That(boss.transform.position.x, Is.GreaterThan(-20f), "Chase still moves");
         yield return Until(() => attack.State == BossRocketAttack.AttackState.PreparingAttack);
-        Assert.That(chase.enabled, Is.False);
+        Assert.That(chase.enabled, Is.True);
+        Assert.That(chase.IsAttackPaused, Is.True);
+        yield return Delay(.04f);
         Vector3 stopped = boss.transform.position;
         var animator = boss.transform.Find("graphic").GetComponent<Animator>();
         yield return Until(() => animator.GetCurrentAnimatorStateInfo(1).IsName("animBossPrepareToShootIDle"));
-        yield return Until(() => attack.State == BossRocketAttack.AttackState.WaitingForImpact);
-        Assert.That(Vector3.Distance(stopped, boss.transform.position), Is.LessThan(.01f));
-        Assert.That(attack.PendingRocketCount, Is.EqualTo(1));
+        yield return Until(() => attack.PendingRocketCount > 0);
+        Assert.That(Vector3.Distance(stopped, boss.transform.position), Is.LessThan(.06f));
+        Assert.That(attack.PendingRocketCount, Is.EqualTo(2));
         attack.FireRocket();
-        Assert.That(attack.PendingRocketCount, Is.EqualTo(1), "Repeated Animation Event ignored");
+        Assert.That(attack.PendingRocketCount, Is.EqualTo(2), "Repeated Animation Event ignored");
         var marker = FindFx("fx_BossTaget1");
         Assert.That(marker, Is.Not.Null);
         Vector3 target = marker.transform.position;
@@ -124,20 +130,20 @@ public sealed class BossRocketAttackTests
         yield return Delay(.08f);
         Capture(camera, "01-launch-marker");
         playerBody.position = new Vector2(5, 0);
-        yield return Delay(attack.RocketFallDelay + .1f);
+        yield return Delay(attack.RocketFallDelayMax + .1f);
         Assert.That(marker.transform.position, Is.EqualTo(target), "Target is fixed in world");
         var falling = FindFx("p_fxRocket1");
         Assert.That(falling, Is.Not.Null);
-        Assert.That(falling.transform.position.x, Is.EqualTo(target.x).Within(.001f));
+        Assert.That(falling.transform.position.x, Is.EqualTo(target.x).Within(.03f));
         Assert.That(falling.transform.position.y, Is.GreaterThan(target.y));
         Assert.That(marker.GetComponentsInChildren<ParticleSystem>().Any(p => p.particleCount > 0), Is.True);
         Capture(camera, "02-falling");
-        yield return Until(() => attack.State == BossRocketAttack.AttackState.Recovering);
+        yield return Until(() => !attack.IsBurstActive && attack.PendingRocketCount == 0);
         yield return null;
         Assert.That(player.CurrentHealth, Is.EqualTo(100), "Outside radius is safe");
         var explosion = FindFx("fx_BomberExplosion");
         Assert.That(explosion, Is.Not.Null);
-        Assert.That(explosion.transform.position, Is.EqualTo(target));
+        Assert.That(Vector3.Distance(explosion.transform.position, target), Is.LessThan(.03f));
         yield return Delay(.12f);
         Capture(camera, "03-impact");
         Assert.That(FindFx("fx_BossTaget1"), Is.Null);
@@ -145,11 +151,13 @@ public sealed class BossRocketAttackTests
         Assert.That(chase.enabled, Is.True, "Recovery restores chase");
         int hits = 0;
         player.DebugDamageApplied += _ => hits++;
-        yield return Until(() => attack.State == BossRocketAttack.AttackState.Recovering);
+        yield return Until(() => attack.PendingRocketCount > 0);
+        yield return Until(() => !attack.IsBurstActive && attack.PendingRocketCount == 0);
         Assert.That(player.CurrentHealth, Is.EqualTo(75), "Inside radius receives configured damage");
         Assert.That(hits, Is.EqualTo(1), "Compound collider takes one hit");
+        boss.GetComponent<Rigidbody2D>().position = playerBody.position + Vector2.left * 20;
         // Component disable must clean a fired sequence and restore movement.
-        yield return Until(() => attack.State == BossRocketAttack.AttackState.WaitingForImpact);
+        yield return Until(() => attack.PendingRocketCount > 0);
         attack.enabled = false;
         yield return null;
         Assert.That(chase.enabled, Is.True);
@@ -158,7 +166,7 @@ public sealed class BossRocketAttackTests
         yield return Delay(2f);
         Assert.That(hits, Is.EqualTo(1), "Canceled sequence cannot hit later");
         attack.enabled = true;
-        yield return Until(() => attack.State == BossRocketAttack.AttackState.WaitingForImpact);
+        yield return Until(() => attack.PendingRocketCount > 0);
         bossHealth.TakeDamage(10000, boss.transform.position);
         yield return null;
         Assert.That(FindFx("fx_BossTaget1"), Is.Null);
@@ -170,7 +178,7 @@ public sealed class BossRocketAttackTests
         attack.enabled = false;
         attack.AttackCooldown = .25f;
         attack.enabled = true;
-        yield return Until(() => attack.State == BossRocketAttack.AttackState.WaitingForImpact);
+        yield return Until(() => attack.PendingRocketCount > 0);
         player.TakeDamage(10000, Vector2.zero);
         yield return null;
         yield return null;
@@ -180,7 +188,7 @@ public sealed class BossRocketAttackTests
         Object.Destroy(flow.gameObject);
         yield return null;
         player.SetRuntimeHealth(100, 100);
-        yield return Until(() => attack.State == BossRocketAttack.AttackState.WaitingForImpact);
+        yield return Until(() => attack.PendingRocketCount > 0);
         flow = new GameObject("Run flow").AddComponent<RunFlowController>();
         flow.StopRunGameplay();
         yield return null;

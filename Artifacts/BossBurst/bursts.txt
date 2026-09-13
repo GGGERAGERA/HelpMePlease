@@ -1,0 +1,3 @@
+PASS ShotsPerBurst=1: 1 Attack cycles, 2 launches, 2 falling instances; stationary Idle throughout burst; Walk resumes before last impact. Delays: 0.493, 1.089
+PASS ShotsPerBurst=3: 3 Attack cycles, 6 launches, 6 falling instances; stationary Idle throughout burst; Walk resumes before last impact. Delays: 0.779, 1.619, 0.957, 1.066, 1.616, 1.161
+PASS ShotsPerBurst=5: 5 Attack cycles, 10 launches, 10 falling instances; stationary Idle throughout burst; Walk resumes before last impact. Delays: 1.601, 1.291, 1.527, 1.998, 1.716, 0.877, 1.069, 0.431, 0.590, 1.306

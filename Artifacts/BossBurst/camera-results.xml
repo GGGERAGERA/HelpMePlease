@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="2" result="Passed" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-13 09:17:30Z" end-time="2026-09-13 09:17:33Z" duration="2,8599738">
+  <test-suite type="TestSuite" id="1000" name="Help Me Please" fullname="Help Me Please" runstate="Runnable" testcasecount="287" result="Passed" start-time="2026-09-13 09:17:30Z" end-time="2026-09-13 09:17:33Z" duration="2.859974" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1355" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="287" result="Passed" start-time="2026-09-13 09:17:30Z" end-time="2026-09-13 09:17:33Z" duration="2.751704" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="13460" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="1001" name="BossBurstTests" fullname="BossBurstTests" classname="BossBurstTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-13 09:17:30Z" end-time="2026-09-13 09:17:33Z" duration="2.743797" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1004" name="BurstsOneThreeFiveKeepIdleAndScheduleIndependentRockets" fullname="BossBurstTests.BurstsOneThreeFiveKeepIdleAndScheduleIndependentRockets" methodname="BurstsOneThreeFiveKeepIdleAndScheduleIndependentRockets" classname="BossBurstTests" runstate="Runnable" seed="825093626" result="Passed" start-time="2026-09-13 09:17:01Z" end-time="2026-09-13 09:17:25Z" duration="23.613395" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+          </properties>
+        </test-case>
+        <test-case id="1002" name="OneEventLaunchesBothHands" fullname="BossBurstTests.OneEventLaunchesBothHands" methodname="OneEventLaunchesBothHands" classname="BossBurstTests" runstate="Runnable" seed="317353499" result="Passed" start-time="2026-09-13 09:17:25Z" end-time="2026-09-13 09:17:33Z" duration="8.531245" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Saving results to: Artifacts/GeneratedQA/CorePulse/results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

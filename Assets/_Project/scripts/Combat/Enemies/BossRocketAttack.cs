@@ -5,14 +5,18 @@ using UnityEngine;
 [RequireComponent(typeof(EnemyChaseMovement), typeof(EnemyHealth))]
 public sealed class BossRocketAttack : MonoBehaviour
 {
-    public enum AttackState { Chasing, PreparingAttack, WaitingForImpact, Recovering }
+    public enum AttackState { Chasing, PreparingAttack, Firing, BetweenShots, Recovering }
 
     [Header("Cycle (seconds)")]
     [Min(0.1f)] public float AttackCooldown = 6f;
+    [Range(1, 5)] public int ShotsPerBurst = 1;
+    [Min(0f)] public float DelayBetweenShots = 0.15f;
     [Min(0f)] public float PreAttackDuration = 0.75f;
     [Tooltip("Stationary pause before PAttack.")]
     [Min(0f)] public float StopDuration = 0.15f;
-    [Min(0.01f)] public float RocketFallDelay = 1.2f;
+    [Header("Independent rocket flight (seconds)")]
+    [Min(0.01f)] public float RocketFallDelayMin = 0.4f;
+    [Min(0.01f)] public float RocketFallDelayMax = 2f;
     [Min(0.05f)] public float RocketFallDuration = 0.4f;
     [Min(0f)] public float RecoveryDuration = 0.55f;
     [Header("Rocket")]
@@ -22,7 +26,7 @@ public sealed class BossRocketAttack : MonoBehaviour
     [Min(0f)] public float TargetPrediction = 0f;
     [Min(0f)] public float MinAttackDistance = 0f;
     [Min(0f)] public float MaxAttackDistance = 30f;
-    [Min(1)] public int RocketCount = 1;
+    [Min(0.01f)] public float TargetSpreadRadius = 1.5f;
     [Header("Existing assets")]
     [SerializeField] private Animator animator;
     [SerializeField] private Transform leftMuzzle;
@@ -35,15 +39,15 @@ public sealed class BossRocketAttack : MonoBehaviour
     public int PendingRocketCount => shots.Count;
     private EnemyChaseMovement chase;
     private EnemyHealth health;
-    private Rigidbody2D body;
     private PlayerHealth player;
     private Rigidbody2D playerBody;
     private float timer;
-    private float shotTime;
     private bool preparing;
     private bool attackTriggered;
-    private bool movementHeld;
-    private bool resumeChase;
+    private int remainingShots;
+    public bool IsBurstActive => State == AttackState.PreparingAttack ||
+        State == AttackState.Firing || State == AttackState.BetweenShots;
+    private Transform cachedTarget;
     private int handsLayer;
     private ParticleSystem[] muzzles;
     private readonly List<Shot> shots = new();
@@ -51,6 +55,9 @@ public sealed class BossRocketAttack : MonoBehaviour
 
     private sealed class Shot
     {
+        public float age;
+        public float delay;
+        public float duration;
         public Vector3 target;
         public GameObject marker;
         public GameObject launch;
@@ -63,7 +70,6 @@ public sealed class BossRocketAttack : MonoBehaviour
     {
         chase = GetComponent<EnemyChaseMovement>();
         health = GetComponent<EnemyHealth>();
-        body = GetComponent<Rigidbody2D>();
         handsLayer = animator != null ? animator.GetLayerIndex("Hands1") : -1;
         var particles = new List<ParticleSystem>();
         if (leftMuzzle != null) particles.AddRange(leftMuzzle.GetComponentsInChildren<ParticleSystem>(true));
@@ -92,28 +98,33 @@ public sealed class BossRocketAttack : MonoBehaviour
 
     private void Update()
     {
-        if (player == null && State == AttackState.Chasing)
+        if (chase.Target != cachedTarget)
         {
-            var target = GameObject.FindGameObjectWithTag("Player");
-            if (target != null)
-            {
-                player = target.GetComponent<PlayerHealth>();
-                playerBody = target.GetComponent<Rigidbody2D>();
-            }
+            cachedTarget = chase.Target;
+            player = cachedTarget != null ? cachedTarget.GetComponent<PlayerHealth>() : null;
+            playerBody = cachedTarget != null ? cachedTarget.GetComponent<Rigidbody2D>() : null;
         }
         if (!CombatAllowed())
         {
             CancelAttack();
             return;
         }
-        if (Time.timeScale == 0f || EnemyDebugAiFreeze.IsFrozen || animator == null) return;
+        if (animator == null || !animator.isActiveAndEnabled || !chase.isActiveAndEnabled)
+        {
+            CancelAttack();
+            return;
+        }
+        if (Time.timeScale == 0f || EnemyDebugAiFreeze.IsFrozen) return;
+        if (IsBurstActive && !chase.IsAttackPaused) { CancelAttack(); return; }
         impactEffects.RemoveAll(fx => fx == null);
+        // Already-launched rockets advance independently of the animation/burst state.
+        TickRockets();
+        if (!CombatAllowed()) return;
         timer -= Time.deltaTime;
         switch (State)
         {
             case AttackState.Chasing:
-                animator.SetFloat("Speed", chase.enabled ? body.linearVelocity.magnitude : 0f);
-                float distance = Vector2.Distance(body.position, player.transform.position);
+                float distance = Vector2.Distance(transform.position, player.transform.position);
                 if (timer <= 0f && chase.enabled && distance >= MinAttackDistance && distance <= MaxAttackDistance)
                     BeginAttack();
                 break;
@@ -130,11 +141,28 @@ public sealed class BossRocketAttack : MonoBehaviour
                     attackTriggered = true;
                     animator.SetTrigger("Attack");
                 }
-                // A missing/interrupted event must never leave a stationary boss forever.
-                if (timer < -5f) CancelAttack();
                 break;
-            case AttackState.WaitingForImpact:
-                TickRockets();
+            case AttackState.Firing:
+                // FireRocket consumes one event; wait for the authored nonlooping shot to exit.
+                if (!animator.IsInTransition(handsLayer) &&
+                    animator.GetCurrentAnimatorStateInfo(handsLayer).IsName("animHandsEmpty"))
+                {
+                    if (remainingShots > 0)
+                    {
+                        State = AttackState.BetweenShots;
+                        timer = Mathf.Max(0f, DelayBetweenShots);
+                        chase.PauseForAttack(timer + 2f);
+                    }
+                    else
+                    {
+                        RestoreMovement();
+                        State = AttackState.Recovering;
+                        timer = Mathf.Max(0f, RecoveryDuration);
+                    }
+                }
+                break;
+            case AttackState.BetweenShots:
+                if (timer <= 0f) BeginShot(false);
                 break;
             case AttackState.Recovering:
                 if (timer <= 0f)
@@ -147,37 +175,35 @@ public sealed class BossRocketAttack : MonoBehaviour
         }
     }
 
-    private void FixedUpdate()
-    {
-        if (!movementHeld) return;
-        body.linearVelocity = Vector2.zero;
-        body.angularVelocity = 0f;
-    }
-
     private void BeginAttack()
     {
         if (animator == null || !animator.isActiveAndEnabled || handsLayer < 0 ||
-            rocketPrefab == null || targetPrefab == null || explosionPrefab == null) return;
-        resumeChase = chase.enabled;
-        movementHeld = true;
-        chase.enabled = false;
-        body.linearVelocity = Vector2.zero;
-        // Chase already faces the player; lock that facing through the attack.
-        animator.SetFloat("Speed", 0f);
+            rocketPrefab == null || targetPrefab == null || explosionPrefab == null ||
+            leftMuzzle == null || rightMuzzle == null) return;
+        remainingShots = Mathf.Clamp(ShotsPerBurst, 1, 5);
+        BeginShot(true);
+    }
+
+    private void BeginShot(bool first)
+    {
+        timer = first ? Mathf.Max(0f, StopDuration) : 0f;
+        chase.PauseForAttack(timer + Mathf.Max(0f, PreAttackDuration) + 3f);
         animator.ResetTrigger("PAttack");
         animator.ResetTrigger("Attack");
         preparing = attackTriggered = false;
         State = AttackState.PreparingAttack;
-        timer = Mathf.Max(0f, StopDuration);
     }
 
     // Called only by the authored Attack clip via BossRocketAnimationEvents.
     public void FireRocket()
     {
         if (!isActiveAndEnabled || State != AttackState.PreparingAttack ||
-            !attackTriggered || !CombatAllowed()) return;
-        State = AttackState.WaitingForImpact; // Consume the event before spawning anything.
-        shotTime = 0f;
+            !attackTriggered || !CombatAllowed() || animator == null || !animator.isActiveAndEnabled) return;
+        if (!animator.GetCurrentAnimatorStateInfo(handsLayer).IsName("animBossShoot1") &&
+            !(animator.IsInTransition(handsLayer) && animator.GetNextAnimatorStateInfo(handsLayer).IsName("animBossShoot1"))) return;
+        State = AttackState.Firing; // Consume once, then launch BOTH hands.
+        remainingShots--;
+        chase.PauseForAttack(3f);
         Vector3 target = player.transform.position;
         if (playerBody != null) target += (Vector3)(playerBody.linearVelocity * Mathf.Max(0f, TargetPrediction));
         target.z = 0f;
@@ -187,20 +213,27 @@ public sealed class BossRocketAttack : MonoBehaviour
             muzzle.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
             muzzle.Play(false);
         }
-        for (int i = 0; i < Mathf.Max(1, RocketCount); i++)
+        Vector2 firstOffset = Vector2.zero;
+        float spread = Mathf.Max(0.01f, TargetSpreadRadius);
+        for (int i = 0; i < 2; i++)
         {
-            // For a salvo, spread fixed targets around the predicted center.
-            Vector3 point = target;
-            if (RocketCount > 1)
+            Vector2 offset = Random.insideUnitCircle * spread;
+            if (i == 0) firstOffset = offset;
+            else if (Vector2.Distance(offset, firstOffset) < spread * .25f)
             {
-                float angle = i * Mathf.PI * 2f / RocketCount;
-                point += new Vector3(Mathf.Cos(angle), Mathf.Sin(angle)) * ExplosionRadius;
+                // Keep independently sampled targets visibly separated, even for near-identical samples.
+                offset = firstOffset.sqrMagnitude > spread * spread * .01f
+                    ? -firstOffset.normalized * spread : Vector2.right * spread;
             }
-            Transform muzzle = i % 2 == 0 ? leftMuzzle : rightMuzzle;
-            Vector3 origin = muzzle != null ? muzzle.position : transform.position;
-            var shot = new Shot { target = point, launchStart = origin };
+            Vector3 point = target + (Vector3)offset;
+            Transform muzzle = i == 0 ? leftMuzzle : rightMuzzle;
+            Vector3 origin = muzzle.position;
+            float minDelay = Mathf.Max(.01f, Mathf.Min(RocketFallDelayMin, RocketFallDelayMax));
+            float maxDelay = Mathf.Max(minDelay, Mathf.Max(RocketFallDelayMin, RocketFallDelayMax));
+            var shot = new Shot { target = point, launchStart = origin,
+                delay = Random.Range(minDelay, maxDelay), duration = Mathf.Max(.05f, RocketFallDuration) };
             shot.marker = ExplosionWarningVisual.Spawn(targetPrefab, point, ExplosionRadius,
-                Mathf.Max(0.01f, RocketFallDelay) + Mathf.Max(0.05f, RocketFallDuration));
+                shot.delay + shot.duration);
             foreach (var ps in shot.marker.GetComponentsInChildren<ParticleSystem>(true))
             {
                 ps.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
@@ -235,20 +268,18 @@ public sealed class BossRocketAttack : MonoBehaviour
 
     private void TickRockets()
     {
-        shotTime += Time.deltaTime;
-        float delay = Mathf.Max(0.01f, RocketFallDelay);
-        float fallDuration = Mathf.Max(0.05f, RocketFallDuration);
-        float launchDuration = Mathf.Min(0.35f, delay);
         for (int i = shots.Count - 1; i >= 0; i--)
         {
             Shot shot = shots[i];
+            shot.age += Time.deltaTime;
+            float launchDuration = Mathf.Min(.35f, shot.delay);
             if (shot.launch != null)
             {
                 shot.launch.transform.position = shot.launchStart + Vector3.up *
-                    Mathf.Max(1f, RocketSpawnHeight) * Mathf.Clamp01(shotTime / launchDuration);
-                if (shotTime >= launchDuration) Destroy(shot.launch);
+                    Mathf.Max(1f, RocketSpawnHeight) * Mathf.Clamp01(shot.age / launchDuration);
+                if (shot.age >= launchDuration) Destroy(shot.launch);
             }
-            if (shotTime < delay) continue;
+            if (shot.age < shot.delay) continue;
             if (shot.falling == null)
             {
                 float spawnY = shot.target.y + Mathf.Max(1f, RocketSpawnHeight);
@@ -258,7 +289,7 @@ public sealed class BossRocketAttack : MonoBehaviour
                 shot.fallStart = new Vector3(shot.target.x, spawnY, shot.target.z);
                 shot.falling = SpawnRocket(shot.fallStart, true);
             }
-            float progress = Mathf.Clamp01((shotTime - delay) / fallDuration);
+            float progress = Mathf.Clamp01((shot.age - shot.delay) / shot.duration);
             shot.falling.transform.position = Vector3.Lerp(shot.fallStart, shot.target, progress);
             if (progress < 1f) continue;
             shots.RemoveAt(i); // Remove before damage callbacks can cancel the ability.
@@ -268,9 +299,6 @@ public sealed class BossRocketAttack : MonoBehaviour
             if (fx != null) impactEffects.Add(fx.gameObject);
             if (!CombatAllowed()) { CancelAttack(); return; }
         }
-        if (shots.Count != 0) return;
-        State = AttackState.Recovering;
-        timer = Mathf.Max(0f, RecoveryDuration);
     }
 
     private static void DestroyShot(Shot shot)
@@ -282,9 +310,7 @@ public sealed class BossRocketAttack : MonoBehaviour
 
     private void RestoreMovement()
     {
-        if (movementHeld && chase != null && health != null && !health.IsDead)
-            chase.enabled = resumeChase;
-        movementHeld = false;
+        if (chase != null) chase.ResumeAfterAttack();
     }
 
     private void StopMuzzles()
@@ -309,6 +335,7 @@ public sealed class BossRocketAttack : MonoBehaviour
         }
         StopMuzzles();
         RestoreMovement();
+        remainingShots = 0;
         State = AttackState.Chasing;
         timer = Mathf.Max(0.1f, AttackCooldown);
     }

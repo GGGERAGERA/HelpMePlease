@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="7" result="Passed" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-12 23:29:38Z" end-time="2026-09-12 23:29:53Z" duration="15,7050993">
+  <test-suite type="TestSuite" id="1000" name="Help Me Please" fullname="Help Me Please" runstate="Runnable" testcasecount="287" result="Passed" start-time="2026-09-12 23:29:38Z" end-time="2026-09-12 23:29:53Z" duration="15.705099" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1355" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="287" result="Passed" start-time="2026-09-12 23:29:38Z" end-time="2026-09-12 23:29:53Z" duration="15.573140" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="35428" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="1001" name="BossBurstTests" fullname="BossBurstTests" classname="BossBurstTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-12 23:28:56Z" end-time="2026-09-12 23:28:59Z" duration="2.970615" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1004" name="BurstsOneThreeFiveKeepIdleAndScheduleIndependentRockets" fullname="BossBurstTests.BurstsOneThreeFiveKeepIdleAndScheduleIndependentRockets" methodname="BurstsOneThreeFiveKeepIdleAndScheduleIndependentRockets" classname="BossBurstTests" runstate="Runnable" seed="183422089" result="Passed" start-time="2026-09-12 23:27:54Z" end-time="2026-09-12 23:28:21Z" duration="26.344004" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+          </properties>
+        </test-case>
+        <test-case id="1005" name="DeathDisableAndMissingEventReleaseBurst" fullname="BossBurstTests.DeathDisableAndMissingEventReleaseBurst" methodname="DeathDisableAndMissingEventReleaseBurst" classname="BossBurstTests" runstate="Runnable" seed="446373638" result="Passed" start-time="2026-09-12 23:28:21Z" end-time="2026-09-12 23:28:40Z" duration="19.293424" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+          </properties>
+          <output><![CDATA[[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Boss_01, amount=1
+]]></output>
+        </test-case>
+        <test-case id="1003" name="MovementUsesWalkSprites" fullname="BossBurstTests.MovementUsesWalkSprites" methodname="MovementUsesWalkSprites" classname="BossBurstTests" runstate="Runnable" seed="962136813" result="Passed" start-time="2026-09-12 23:28:40Z" end-time="2026-09-12 23:28:49Z" duration="8.969215" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+          </properties>
+        </test-case>
+        <test-case id="1002" name="OneEventLaunchesBothHands" fullname="BossBurstTests.OneEventLaunchesBothHands" methodname="OneEventLaunchesBothHands" classname="BossBurstTests" runstate="Runnable" seed="808841662" result="Passed" start-time="2026-09-12 23:28:49Z" end-time="2026-09-12 23:28:59Z" duration="9.367817" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="1006" name="BossRocketAttackTests" fullname="BossRocketAttackTests" classname="BossRocketAttackTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-12 23:29:06Z" end-time="2026-09-12 23:29:31Z" duration="25.406017" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1007" name="BossHasRocketAttackAndKeepsContactAndChase" fullname="BossRocketAttackTests.BossHasRocketAttackAndKeepsContactAndChase" methodname="BossHasRocketAttackAndKeepsContactAndChase" classname="BossRocketAttackTests" runstate="Runnable" seed="1324922071" result="Passed" start-time="2026-09-12 23:28:59Z" end-time="2026-09-12 23:28:59Z" duration="0.019404" asserts="0">
+          <properties />
+        </test-case>
+        <test-case id="1008" name="CycleLocksTargetHitsOnceAndCancelsPendingRockets" fullname="BossRocketAttackTests.CycleLocksTargetHitsOnceAndCancelsPendingRockets" methodname="CycleLocksTargetHitsOnceAndCancelsPendingRockets" classname="BossRocketAttackTests" runstate="Runnable" seed="1566812439" result="Passed" start-time="2026-09-12 23:28:59Z" end-time="2026-09-12 23:29:31Z" duration="32.901673" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+          </properties>
+          <output><![CDATA[[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Boss_01, amount=1
+Player died
+]]></output>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="1142" name="Subject42FinalBossFlowTests" fullname="Subject42FinalBossFlowTests" classname="Subject42FinalBossFlowTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-12 23:29:38Z" end-time="2026-09-12 23:29:53Z" duration="15.547457" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1144" name="FinalZoneWaitsForRewardsSpawnsOneBossAndReturnsVictoryToBunker" fullname="Subject42FinalBossFlowTests.FinalZoneWaitsForRewardsSpawnsOneBossAndReturnsVictoryToBunker" methodname="FinalZoneWaitsForRewardsSpawnsOneBossAndReturnsVictoryToBunker" classname="Subject42FinalBossFlowTests" runstate="Runnable" seed="245974636" result="Passed" start-time="2026-09-12 23:29:31Z" end-time="2026-09-12 23:29:53Z" duration="21.832818" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[[BunkerInteractableCollider] Interaction source=p_Shelf1, interactable=False, hoverable=True
+[BunkerHoverOutline] p_Shelf1 renderers=30
+[BunkerInteractableCollider] Interaction source=p_bunkerUpgrade1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerUpgrade1 renderers=20
+[BunkerInteractableCollider] Interaction source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerWeaponShowcase renderers=8
+[BunkerInteractableCollider] Interaction source=p_AnomalyTable1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_AnomalyTable1 renderers=32
+[BunkerInteractableCollider] Interaction source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerPlayerShowcase 1 renderers=16
+[BunkerInteractableCollider] Interaction source=p_Shelf1 (1), interactable=False, hoverable=True
+[BunkerHoverOutline] p_Shelf1 (1) renderers=30
+[BunkerInteractableCollider] Interaction source=p_BunkerGates1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_BunkerGates1 renderers=45
+[RunSelectionManager] Character selected: 01_Gera
+[RunSelectionManager] Character selected: 01_Gera
+[RunState] New run: character=01_Gera, weapon=NULL, stabilizer=NULL
+[CharacterSpawner] Weapons found: 0
+[MetaUpgradeApplier] Loaded meta: HP=2, DMG=0, SPD=0, XP=1, GOLD=2, PICKUP=0
+[RunState] Applied to spawned player. Upgrades: 0, hasHealth: False
+[VisualLab LOAD]
+ProjectileVisualScale=1
+TrailWidth=1
+TrailTime=1
+CameraZoom=8,087
+source=Assets/_Project/Resources/VisualTuningSavedValues.asset
+[TacticalMap] breakableMarkers=0
+[EnemySpawner] Phase 1: interval 1,50, max alive 10.
+[EnemySpawner] Level scaling: HP x1,00, speed x1,00, pressure x1,00.
+SECTOR LAYOUT
+Coverage: 87,2%
+Player: (0.00, 0.00, 0.00)
+Normal 1: center (17.58, 32.38), size (59.91, 31.68)
+Normal 2: center (-18.56, -15.99), size (58.71, 62.09)
+Normal 3: center (30.71, -15.93), size (34.49, 61.94)
+Special ArcNode: center (-31.42, 32.77), size (34.11, 31.88), distance 45,4/70,6
+Line-to-Special in Normal: 45%
+Exit: (-2.04, -26.02), inside NORMAL
+Attempts: 3
+[ExplorationSector] Special Site: ELECTRIC (ProductionElectricSiteHazard).
+[Breakables] requested=4 spawned=4 visible=4 rejected=0 fallback=0 bounds=100x100
+[PropScatter] seed=3451878, count=238/238. Safety takes priority over requested counts.
+[ExplorationSector] Sector ready: 3 Normal, 1 Special (ArcNode), 87% map coverage, 4 breakables, Exit at (-2.04, -26.02).
+[SectorRuntime]
+Source=RunSector
+Sector=1
+StageProfile='StageProfile_01'
+WorldRule='WorldRule_None'
+LocalAnomaly='LocalAnomaly_Berserk'
+[TacticalMap] breakableMarkers=4
+[SectorChoice]
+Current=1
+Next=2
+Rules=Wind,Rain,Snow
+StageProfile='StageProfile_02'
+LocalAnomaly='LocalAnomaly_Berserk'
+[RunState] Completed sector 1. Completed levels: 1, reward total x1,00
+[RunState] Scene stats committed. Total kills=0, time=0,0, levels=1
+[RunState] Saved XP: level=1, exp=0
+[RunState] Saved player health: 1000140/1000140
+[EnemySpawner] Spawning stopped.
+[RunState] Applied XP: level=1, exp=0
+[CharacterSpawner] Weapons found: 0
+[MetaUpgradeApplier] Loaded meta: HP=2, DMG=0, SPD=0, XP=1, GOLD=2, PICKUP=0
+[RunState] Applied to spawned player. Upgrades: 0, hasHealth: True
+[VisualLab LOAD]
+ProjectileVisualScale=1
+TrailWidth=1
+TrailTime=1
+CameraZoom=8,087
+source=Assets/_Project/Resources/VisualTuningSavedValues.asset
+[TacticalMap] breakableMarkers=0
+[EnemySpawner] Phase 1: interval 1,60, max alive 12.
+[EnemySpawner] Level scaling: HP x1,04, speed x1,00, pressure x1,12.
+SECTOR LAYOUT
+Coverage: 94,0%
+Player: (0.00, 0.00, 0.00)
+Normal 1: center (19.65, -32.25), size (59.23, 33.05)
+Normal 2: center (-23.28, 17.66), size (50.41, 62.07)
+Normal 3: center (26.42, 17.28), size (44.10, 61.81)
+Special ArcNode: center (-30.84, -32.07), size (35.98, 33.06), distance 44,5/70,6
+Line-to-Special in Normal: 40%
+Exit: (26.83, 44.09), inside NORMAL
+Attempts: 2
+[ExplorationSector] Special Site: ELECTRIC (ProductionElectricSiteHazard).
+[Breakables] requested=4 spawned=4 visible=4 rejected=0 fallback=0 bounds=100x100
+[PropScatter] seed=5805826, count=238/238. Safety takes priority over requested counts.
+[ExplorationSector] Sector ready: 3 Normal, 1 Special (ArcNode), 94% map coverage, 4 breakables, Exit at (26.83, 44.09).
+[SectorRuntime]
+Source=RunSector
+Sector=2
+StageProfile='StageProfile_02'
+WorldRule='WorldRule_Rain'
+LocalAnomaly='LocalAnomaly_Berserk'
+[TacticalMap] breakableMarkers=4
+[SectorChoice]
+Current=2
+Next=3
+Rules=Rain,Snow,Darkness
+StageProfile='StageProfile_03'
+LocalAnomaly='LocalAnomaly_Berserk'
+[RunFlowController] Register completion: type=CompleteLevelModifier, targetId='Rain', worldRule='WorldRule_Rain'
+[UnlockProgressService] AddProgress: type=CompleteLevelModifier, targetId=Rain, amount=1
+[RunFlowController] Completed level modifier: Rain
+[RunState] Completed sector 2. Completed levels: 2, reward total x2,00
+[RunState] Scene stats committed. Total kills=0, time=0,1, levels=2
+[RunState] Saved XP: level=1, exp=0
+[RunState] Saved player health: 2000140/2000140
+[EnemySpawner] Spawning stopped.
+[RunState] Applied XP: level=1, exp=0
+[CharacterSpawner] Weapons found: 0
+[MetaUpgradeApplier] Loaded meta: HP=2, DMG=0, SPD=0, XP=1, GOLD=2, PICKUP=0
+[RunState] Applied to spawned player. Upgrades: 0, hasHealth: True
+[VisualLab LOAD]
+ProjectileVisualScale=1
+TrailWidth=1
+TrailTime=1
+CameraZoom=8,087
+source=Assets/_Project/Resources/VisualTuningSavedValues.asset
+[TacticalMap] breakableMarkers=0
+[EnemySpawner] Phase 1: interval 1,55, max alive 14.
+[EnemySpawner] Level scaling: HP x1,08, speed x1,00, pressure x1,24.
+SECTOR LAYOUT
+Coverage: 90,2%
+Player: (0.00, 0.00, 0.00)
+Normal 1: center (31.42, 20.73), size (34.49, 54.45)
+Normal 2: center (-17.34, -21.48), size (58.93, 51.47)
+Normal 3: center (-16.88, 27.34), size (59.19, 42.37)
+Special ArcNode: center (31.59, -28.84), size (33.94, 40.55), distance 42,8/70,6
+Line-to-Special in Normal: 40%
+Exit: (-45.84, -18.15), inside NORMAL
+Attempts: 3
+[ExplorationSector] Special Site: ELECTRIC (ProductionElectricSiteHazard).
+[Breakables] requested=5 spawned=5 visible=5 rejected=2 fallback=0 bounds=100x100
+[PropScatter] seed=2420252, count=238/238. Safety takes priority over requested counts.
+[ExplorationSector] Sector ready: 3 Normal, 1 Special (ArcNode), 90% map coverage, 5 breakables, Exit at (-45.84, -18.15).
+[SectorRuntime]
+Source=RunSector
+Sector=3
+StageProfile='StageProfile_03'
+WorldRule='WorldRule_Rain'
+LocalAnomaly='LocalAnomaly_Berserk'
+[TacticalMap] breakableMarkers=5
+[RunFlowController] Register completion: type=CompleteLevelModifier, targetId='Rain', worldRule='WorldRule_Rain'
+[UnlockProgressService] AddProgress: type=CompleteLevelModifier, targetId=Rain, amount=1
+[RunFlowController] Completed level modifier: Rain
+[RunState] Completed sector 3. Completed levels: 3, reward total x3,00
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Tupik, amount=1
+[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Boss_01, amount=1
+[EnemySpawner] Spawning stopped.
+[EnemySpawner] Spawning stopped.
+[EnemySpawner] Spawning stopped.
+[RunState] Scene stats committed. Total kills=2, time=4,2, levels=3
+[RunState] Sector 3 completion was already registered.
+[UnlockProgressService] AddProgress: type=CompleteRun, targetId=, amount=1
+[RunState] Current scene stats were already committed.
+[CurrencyManager] AddGold called: +300. Before=21676
+[RunState] Run ended. Reason=Victory, levels=3, kills=2, time=4,2, gold=300
+[RunEndService] Victory. Returning to bunker. Gold earned: 300
+[EnemySpawner] Spawning stopped.
+[BunkerInteractableCollider] Interaction source=p_bunkerUpgrade1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerUpgrade1 renderers=20
+[BunkerInteractableCollider] Interaction source=p_AnomalyTable1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_AnomalyTable1 renderers=32
+[BunkerInteractableCollider] Interaction source=p_Shelf1, interactable=False, hoverable=True
+[BunkerHoverOutline] p_Shelf1 renderers=30
+[BunkerInteractableCollider] Interaction source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerPlayerShowcase 1 renderers=16
+[BunkerInteractableCollider] Interaction source=p_Shelf1 (1), interactable=False, hoverable=True
+[BunkerHoverOutline] p_Shelf1 (1) renderers=30
+[BunkerInteractableCollider] Interaction source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerWeaponShowcase renderers=8
+[BunkerInteractableCollider] Interaction source=p_BunkerGates1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_BunkerGates1 renderers=45
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+Saving results to: Artifacts/GeneratedQA/CorePulse/results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

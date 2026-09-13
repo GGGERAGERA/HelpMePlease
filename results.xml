@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="2" result="Passed" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-13 09:14:41Z" end-time="2026-09-13 09:15:06Z" duration="25,2750229">
+  <test-suite type="TestSuite" id="1000" name="Help Me Please" fullname="Help Me Please" runstate="Runnable" testcasecount="287" result="Passed" start-time="2026-09-13 09:14:41Z" end-time="2026-09-13 09:15:06Z" duration="25.275023" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1355" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="287" result="Passed" start-time="2026-09-13 09:14:41Z" end-time="2026-09-13 09:15:06Z" duration="25.193410" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="13460" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="1006" name="BossRocketAttackTests" fullname="BossRocketAttackTests" classname="BossRocketAttackTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-13 09:14:41Z" end-time="2026-09-13 09:15:06Z" duration="25.189500" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1007" name="BossHasRocketAttackAndKeepsContactAndChase" fullname="BossRocketAttackTests.BossHasRocketAttackAndKeepsContactAndChase" methodname="BossHasRocketAttackAndKeepsContactAndChase" classname="BossRocketAttackTests" runstate="Runnable" seed="946474515" result="Passed" start-time="2026-09-13 09:14:35Z" end-time="2026-09-13 09:14:35Z" duration="0.010802" asserts="0">
+          <properties />
+        </test-case>
+        <test-case id="1008" name="CycleLocksTargetHitsOnceAndCancelsPendingRockets" fullname="BossRocketAttackTests.CycleLocksTargetHitsOnceAndCancelsPendingRockets" methodname="CycleLocksTargetHitsOnceAndCancelsPendingRockets" classname="BossRocketAttackTests" runstate="Runnable" seed="461090764" result="Passed" start-time="2026-09-13 09:14:35Z" end-time="2026-09-13 09:15:06Z" duration="31.007309" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[[UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Boss_01, amount=1
+Player died
+Saving results to: results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

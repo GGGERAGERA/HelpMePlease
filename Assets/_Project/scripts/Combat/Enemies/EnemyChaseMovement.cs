@@ -25,6 +25,15 @@ public class EnemyChaseMovement : EnemyMovement
     [Header("Animation")]
     [SerializeField] private Animator animator;
     [SerializeField] private string runParameterName = "IsRunning";
+    [Tooltip("Optional MovePosition locomotion speed. Empty keeps existing enemy animators unchanged.")]
+    [SerializeField] private string movementSpeedParameterName;
+    private int movementSpeedHash;
+    private bool hasMovementSpeed;
+    private float attackPauseRemaining;
+    public Transform Target => player;
+    public bool IsAttackPaused => attackPauseRemaining > 0f;
+    public void PauseForAttack(float timeout) => attackPauseRemaining = Mathf.Max(0f, timeout);
+    public void ResumeAfterAttack() => attackPauseRemaining = 0f;
     private bool hasRunParameter;
 
     private Rigidbody2D rb;
@@ -46,6 +55,13 @@ public class EnemyChaseMovement : EnemyMovement
     {
         rb = GetComponent<Rigidbody2D>();
         hasRunParameter = HasBoolParameter(animator, runParameterName);
+        if (animator != null && !string.IsNullOrEmpty(movementSpeedParameterName))
+        {
+            movementSpeedHash = Animator.StringToHash(movementSpeedParameterName);
+            foreach (var parameter in animator.parameters)
+                if (parameter.nameHash == movementSpeedHash && parameter.type == AnimatorControllerParameterType.Float)
+                    hasMovementSpeed = true;
+        }
         InitializeCrowdSteering();
     }
 
@@ -59,6 +75,15 @@ public class EnemyChaseMovement : EnemyMovement
         if (Time.timeScale == 0f)
             return;
 
+        if (IsAttackPaused)
+        {
+            if (!EnemyDebugAiFreeze.IsFrozen)
+                attackPauseRemaining = Mathf.Max(0f, attackPauseRemaining - Time.fixedDeltaTime);
+            rb.linearVelocity = Vector2.zero;
+            SetMovementSpeed(0f);
+            return;
+        }
+
         if (EnemyDebugAiFreeze.IsFrozen)
         {
             MoveWithoutAi();
@@ -69,10 +94,14 @@ public class EnemyChaseMovement : EnemyMovement
             FindPlayer();
 
         if (player == null)
+        {
+            SetMovementSpeed(0f);
             return;
+        }
 
         if (stopTimer > 0f)
         {
+            SetMovementSpeed(0f);
             stopTimer -= Time.fixedDeltaTime;
             rb.linearVelocity = Vector2.zero;
             rb.MovePosition(
@@ -88,6 +117,7 @@ public class EnemyChaseMovement : EnemyMovement
 
     private void MoveWithoutAi()
     {
+        SetMovementSpeed(0f);
         if (animator != null && hasRunParameter &&
             (!animatorStateInitialized || animatorRunning))
         {
@@ -153,6 +183,8 @@ public class EnemyChaseMovement : EnemyMovement
             AnomalyExternalVelocity;
         Vector2 nextPosition = rb.position + movement * Time.fixedDeltaTime;
 
+        // MovePosition's command is the locomotion source, not transient linearVelocity.
+        SetMovementSpeed(movement.magnitude);
         rb.MovePosition(nextPosition);
 
         UpdateVisual(direction);
@@ -208,8 +240,14 @@ public class EnemyChaseMovement : EnemyMovement
     }
     private void OnDisable()
     {
+        ResumeAfterAttack();
+        SetMovementSpeed(0f);
         ReleaseCrowdSteering();
         ClearAnomalyExternalVelocities();
+    }
+    private void SetMovementSpeed(float speed)
+    {
+        if (animator != null && hasMovementSpeed) animator.SetFloat(movementSpeedHash, speed);
     }
     private static bool HasBoolParameter(
     Animator targetAnimator,

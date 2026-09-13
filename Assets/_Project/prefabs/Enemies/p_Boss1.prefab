@@ -1046,6 +1046,7 @@ MonoBehaviour:
   flipVisual: 1
   animator: {fileID: 3007696995223303618}
   runParameterName: IsRunning
+  movementSpeedParameterName: Speed
 --- !u!114 &-4685123070590477603
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1074,7 +1075,8 @@ MonoBehaviour:
   AttackCooldown: 6
   PreAttackDuration: 0.75
   StopDuration: 0.15
-  RocketFallDelay: 1.2
+  RocketFallDelayMin: 0.35
+  RocketFallDelayMax: 1.8
   RocketFallDuration: 0.4
   RecoveryDuration: 0.55
   RocketSpawnHeight: 14
@@ -1083,7 +1085,9 @@ MonoBehaviour:
   TargetPrediction: 0
   MinAttackDistance: 0
   MaxAttackDistance: 30
-  RocketCount: 1
+  ShotsPerBurst: 3
+  DelayBetweenShots: 0.275
+  TargetSpreadRadius: 3.25
   animator: {fileID: 3007696995223303618}
   leftMuzzle: {fileID: 7421145088796927726}
   rightMuzzle: {fileID: 1313954894201624828}
