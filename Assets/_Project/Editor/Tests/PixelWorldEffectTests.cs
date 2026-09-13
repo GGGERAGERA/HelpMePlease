@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 
 public sealed class PixelWorldEffectTests
@@ -92,6 +93,39 @@ public sealed class PixelWorldEffectTests
         typeof(PixelWeatherParticles).GetMethod("OnEnable", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(raster, null);
         Assert.That(ps.textureSheetAnimation.enabled, Is.False);
         Assert.That(particleRenderer.sharedMaterial, Is.EqualTo(Resources.Load<Material>("PixelSnowParticle")));
+    }
+
+    [Test]
+    public void WorldRuleVisualKeepsAuthoredRainRendererNative()
+    {
+        root = new GameObject("World rule visual test");
+        root.SetActive(false);
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/_Project/prefabs/fx/rainFX1.prefab"
+        );
+        GameObject rain = Object.Instantiate(prefab, root.transform);
+        rain.SetActive(false);
+        ParticleSystemRenderer renderer =
+            rain.GetComponentInChildren<ParticleSystemRenderer>(true);
+        WorldRuleVisual visual = root.AddComponent<WorldRuleVisual>();
+        SerializedObject data = new(visual);
+        data.FindProperty("rainEffect").objectReferenceValue = rain;
+        data.ApplyModifiedPropertiesWithoutUndo();
+
+        root.SetActive(true);
+        typeof(WorldRuleVisual).GetMethod(
+            "SetRainActive",
+            System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.NonPublic
+        )?.Invoke(visual, new object[] { true });
+
+        Assert.That(
+            rain.GetComponentsInChildren<PixelWeatherParticles>(true),
+            Is.Empty,
+            "The artist-authored rain must not be replaced by the legacy " +
+            "procedural pixel renderer."
+        );
+        Assert.That(renderer.forceRenderingOff, Is.False);
     }
 
     private void AssertGrid()

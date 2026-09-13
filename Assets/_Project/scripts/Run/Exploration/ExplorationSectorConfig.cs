@@ -6,6 +6,10 @@ using UnityEngine;
 )]
 public sealed class ExplorationSectorConfig : ScriptableObject
 {
+    [Header("Click Props")]
+    [SerializeField] private ResourceNode[] clickPropPrefabs;
+    public ResourceNode[] ClickPropPrefabs => clickPropPrefabs;
+
     [Header("Resource Node Feedback")]
     [SerializeField] private GameObject resourceNodePopupPrefab;
     [SerializeField] private ExperiencePickupEffect resourceNodePickupEffect;

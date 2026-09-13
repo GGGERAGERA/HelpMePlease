@@ -357,7 +357,6 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
         EnsureSnowResources();
         EnsureRainResources();
-        PixelWeatherParticles.Attach(rainEffect, PixelWeatherParticles.Kind.Rain);
         EnsureGoldenResources();
         SetNeutral();
     }
@@ -389,7 +388,6 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
         EnsureSnowResources();
         EnsureRainResources();
-        PixelWeatherParticles.Attach(rainEffect, PixelWeatherParticles.Kind.Rain);
         EnsureGoldenResources();
         SetNeutral();
     }
@@ -1048,7 +1046,6 @@ public sealed class WorldRuleVisual : MonoBehaviour
     private void SetRainActive(bool active)
     {
         EnsureRainResources();
-        PixelWeatherParticles.Attach(rainEffect, PixelWeatherParticles.Kind.Rain);
         targetRainIntensity = active ? 1f : 0f;
 
         if (active)

@@ -23,6 +23,8 @@ public static class WorldSystemsLabAuthoring
         "Assets/_Project/Environment/Props/Resources/PropScatterProfile.asset";
     private const string ExplorationConfig =
         "Assets/_Project/Resources/ProductionRun/ExplorationSectorConfig.asset";
+    private const string RainPrefab =
+        "Assets/_Project/prefabs/fx/rainFX1.prefab";
 
     [MenuItem("Tools/Subject42/World Systems Lab/Open")]
     public static void Open()
@@ -46,12 +48,36 @@ public static class WorldSystemsLabAuthoring
             WorldSystemsLabController.ScenePath
         ));
         Scene previous = SceneManager.GetActiveScene();
+        Scene openLab = SceneManager.GetSceneByPath(
+            WorldSystemsLabController.ScenePath
+        );
+        bool reopenLab = openLab.IsValid() && openLab.isLoaded;
+        bool labWasActive = reopenLab && previous.handle == openLab.handle;
+        bool openedFallback = false;
+
+        if (reopenLab)
+        {
+            if (labWasActive)
+            {
+                previous = Enumerable.Range(0, SceneManager.sceneCount)
+                    .Select(SceneManager.GetSceneAt)
+                    .FirstOrDefault(candidate =>
+                        candidate.IsValid() &&
+                        candidate.isLoaded &&
+                        candidate.handle != openLab.handle
+                    );
+            }
+
+            EditorSceneManager.CloseScene(openLab, true);
+        }
+
         if (!previous.IsValid() || string.IsNullOrEmpty(previous.path))
         {
             previous = EditorSceneManager.OpenScene(
                 "Assets/_Project/Scenes/MainBuild/MainMenu.unity",
                 OpenSceneMode.Single
             );
+            openedFallback = true;
         }
         Light2D[] existingLights = UnityEngine.Object.FindObjectsByType<Light2D>(
             FindObjectsInactive.Exclude,
@@ -182,6 +208,18 @@ public static class WorldSystemsLabAuthoring
         }
 
         AssetDatabase.Refresh();
+
+        if (reopenLab)
+        {
+            Scene rebuiltLab = EditorSceneManager.OpenScene(
+                WorldSystemsLabController.ScenePath,
+                openedFallback
+                    ? OpenSceneMode.Single
+                    : OpenSceneMode.Additive
+            );
+            if (labWasActive)
+                SceneManager.SetActiveScene(rebuiltLab);
+        }
     }
 
     private static GameObject CreatePlayer(Scene scene)
@@ -387,11 +425,24 @@ public static class WorldSystemsLabAuthoring
 
         GameObject sourceRain = new SerializedObject(source)
             .FindProperty("rainEffect").objectReferenceValue as GameObject;
-        GameObject rain = sourceRain != null
-            ? CloneIntoScene(sourceRain, scene)
+        GameObject rainPrefab =
+            AssetDatabase.LoadAssetAtPath<GameObject>(RainPrefab);
+        GameObject rain = rainPrefab != null
+            ? PrefabUtility.InstantiatePrefab(rainPrefab, scene) as GameObject
             : null;
         if (rain != null)
+        {
             rain.name = "Production Rain";
+            if (sourceRain != null)
+            {
+                rain.transform.SetPositionAndRotation(
+                    sourceRain.transform.position,
+                    sourceRain.transform.rotation
+                );
+                rain.transform.localScale = sourceRain.transform.lossyScale;
+                rain.SetActive(sourceRain.activeSelf);
+            }
+        }
 
         SetObject(target, "fullscreenImage", overlay);
         SetObject(target, "windIndicator", wind);
