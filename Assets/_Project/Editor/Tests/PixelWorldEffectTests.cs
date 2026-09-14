@@ -101,23 +101,16 @@ public sealed class PixelWorldEffectTests
         root = new GameObject("World rule visual test");
         root.SetActive(false);
         GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
-            "Assets/_Project/prefabs/fx/rainFX1.prefab"
+            "Assets/_Project/prefabs/fx/WorldRules/WorldRule_Rain_Visual.prefab"
         );
         GameObject rain = Object.Instantiate(prefab, root.transform);
         rain.SetActive(false);
         ParticleSystemRenderer renderer =
             rain.GetComponentInChildren<ParticleSystemRenderer>(true);
-        WorldRuleVisual visual = root.AddComponent<WorldRuleVisual>();
-        SerializedObject data = new(visual);
-        data.FindProperty("rainEffect").objectReferenceValue = rain;
-        data.ApplyModifiedPropertiesWithoutUndo();
-
+        WorldRuleAuthoredVisual visual = rain.GetComponent<WorldRuleAuthoredVisual>();
+        visual.Bind(null);
         root.SetActive(true);
-        typeof(WorldRuleVisual).GetMethod(
-            "SetRainActive",
-            System.Reflection.BindingFlags.Instance |
-            System.Reflection.BindingFlags.NonPublic
-        )?.Invoke(visual, new object[] { true });
+        visual.SetRuleActive(true, Vector2.down);
 
         Assert.That(
             rain.GetComponentsInChildren<PixelWeatherParticles>(true),

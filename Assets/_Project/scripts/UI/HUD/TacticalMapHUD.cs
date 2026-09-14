@@ -212,8 +212,7 @@ public sealed class TacticalMapHUD : MonoBehaviour
 
     private void ResolvePlayer()
     {
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        player = playerObject != null ? playerObject.transform : null;
+        player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
     }
 
     private void RefreshBounds(bool force)

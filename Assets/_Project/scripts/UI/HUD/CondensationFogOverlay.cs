@@ -24,6 +24,7 @@ public sealed class CondensationFogOverlay : MonoBehaviour
     [Header("References")]
     [SerializeField] private RawImage fogImage;
     [SerializeField] private Shader fogShader;
+    [SerializeField] private Material fogMaterial;
 
     [Header("Mask")]
     [SerializeField] private Vector2Int maskResolution =
@@ -117,7 +118,7 @@ public sealed class CondensationFogOverlay : MonoBehaviour
             return;
         }
 
-        if (fogImage == null || fogShader == null)
+        if (fogImage == null || (fogMaterial == null && fogShader == null))
         {
             Debug.LogWarning(
                 "[CondensationFogOverlay] RawImage or fog shader is not assigned.",
@@ -126,12 +127,9 @@ public sealed class CondensationFogOverlay : MonoBehaviour
             return;
         }
 
-        runtimeMaterial = new Material(fogShader)
-        {
-            name = "Condensation Fog (Runtime)",
-            hideFlags = HideFlags.HideAndDontSave
-        };
-
+        runtimeMaterial = fogMaterial != null ? new Material(fogMaterial) : new Material(fogShader);
+        runtimeMaterial.name = "Condensation Fog (Runtime)";
+        runtimeMaterial.hideFlags = HideFlags.HideAndDontSave;
         RenderTextureFormat format = SystemInfo.SupportsRenderTextureFormat(
             RenderTextureFormat.R8
         )

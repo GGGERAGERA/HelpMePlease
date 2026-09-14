@@ -59,7 +59,9 @@ Shader "Subject42/AnomalyFocus"
 
             fixed4 frag(v2f input) : SV_Target
             {
-                float2 distanceFromCenter = abs(PixelScreenUV(input.uv, _ScreenParams.xy) - 0.5) * 2.0;
+                // This is a world-space quad: screen-grid UV snapping shifts the
+                // clear rectangle away from the actual zone boundary.
+                float2 distanceFromCenter = abs(input.uv - 0.5) * 2.0;
                 float2 outsideAxis = step(_ClearRatio.xy, distanceFromCenter);
                 float outside = max(outsideAxis.x, outsideAxis.y);
                 float neutral = lerp(0.0, 0.28, _OutsideDesaturation);

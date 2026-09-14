@@ -7,9 +7,11 @@ public sealed class BunkerPanelManager : MonoBehaviour
     [SerializeField] private SelectionPanelController selectionPanelController;
     [SerializeField] private BunkerSelectionSourceHub selectionSources;
     [SerializeField] private GameObject mapPanel;
+    [SerializeField] private EscapeProtocolView escapeProtocolPanel;
 
     [Header("Panel UI")]
     [SerializeField] private AudioSettingsPanel audioSettingsPanel;
+    [SerializeField] private BunkerOrbitalSlotPanel orbitalSlotPanel;
 
     [Header("Prefab-Driven Station Panels")]
     [SerializeField] private GameObject
@@ -20,6 +22,8 @@ public sealed class BunkerPanelManager : MonoBehaviour
     [SerializeField] private BunkerRunStarter runStarter;
 
     public bool IsAnyPanelOpen =>
+        (escapeProtocolPanel != null && escapeProtocolPanel.gameObject.activeInHierarchy) ||
+        (orbitalSlotPanel != null && orbitalSlotPanel.IsOpen) ||
         (selectionPanelController != null && selectionPanelController.IsOpen) ||
         (mapPanel != null && mapPanel.activeInHierarchy) ||
         (stationUpgradePanel != null && stationUpgradePanel.IsVisible) ||
@@ -31,6 +35,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
         // Close it before the first cursor Update so IsAnyPanelOpen cannot
         // disable the entire bunker interaction pipeline on scene load.
         selectionPanelController?.Hide();
+        escapeProtocolPanel?.gameObject.SetActive(false);
 
         if (stationUpgradePanelPrefab != null)
         {
@@ -69,6 +74,19 @@ public sealed class BunkerPanelManager : MonoBehaviour
         }
         if (IsAnyPanelOpen)
             CloseAll();
+    }
+
+    public void OpenEscapeProtocol()
+    {
+        CloseAll(false);
+        escapeProtocolPanel.Show(MetaProgressionManager.EnsureExists().EscapeAccess, runStarter.Depths);
+    }
+
+    public void OpenDepthSelect(Transform transitionTarget)
+    {
+        CloseAll(false);
+        escapeProtocolPanel.ShowDepthSelect(
+            MetaProgressionManager.EnsureExists().EscapeAccess, runStarter.Depths, this, transitionTarget);
     }
 
     public void OpenCharacterSelection()
@@ -127,7 +145,9 @@ public sealed class BunkerPanelManager : MonoBehaviour
 
     public void CloseAll(bool playSound)
     {
+        orbitalSlotPanel?.Hide();
         selectionPanelController?.Hide();
+        escapeProtocolPanel?.gameObject.SetActive(false);
 
         if (mapPanel != null)
             mapPanel.SetActive(false);
@@ -136,6 +156,12 @@ public sealed class BunkerPanelManager : MonoBehaviour
         if (audioSettingsPanel != null && audioSettingsPanel.IsOpen)
             audioSettingsPanel.Close();
 
+    }
+
+    public void OpenOrbitalSlot()
+    {
+        CloseAll(false);
+        orbitalSlotPanel.Show();
     }
 
     public void ShowStationProgression(BunkerStationId stationId)
@@ -156,7 +182,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
         audioSettingsPanel.Open();
     }
 
-    public void StartRun(Transform transitionTarget)
+    public void StartRun(Transform transitionTarget, int depthId)
     {
         if (runStarter == null)
         {
@@ -164,7 +190,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
             return;
         }
 
-        runStarter.StartRun(transitionTarget);
+        runStarter.StartRun(transitionTarget, depthId);
     }
 
     private bool TryGetSelectionController(out SelectionPanelController controller)

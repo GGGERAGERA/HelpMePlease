@@ -16,10 +16,8 @@ public class DoorInteractable : Interactable
 
         if (player == null)
         {
-            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-
-            if (playerObject != null)
-                player = playerObject.transform;
+            player = PlayerRuntimeReference.ResolvePlayerTransform(
+                forceLookup: true);
         }
 
         if (player == null)

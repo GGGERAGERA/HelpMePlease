@@ -25,7 +25,6 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private LocalAnomalyData normalAnomaly;
     private Color originalBoundaryColor;
-    private float originalBoundaryWidth;
 #endif
     private bool isSpecial;
     private bool completed;
@@ -37,7 +36,13 @@ public sealed class ProductionAnomalySite : MonoBehaviour
     private EnemySpawner assaultSpawner;
     private Vector2 siteSize;
     private Material material;
-    private LineRenderer boundary;
+    private sealed class BoundarySegment
+    {
+        public LineRenderer Renderer;
+        public ProductionAnomalySite Neighbor;
+    }
+    private readonly List<BoundarySegment> boundarySegments = new();
+    private Color boundaryColor;
     private Mesh territoryMesh;
     private MeshRenderer territoryFill;
 
@@ -48,6 +53,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
     public bool IsMapVisible => initialized && !completed &&
         isActiveAndEnabled;
     public Vector2 SiteSize => siteSize;
+    public Rect TerritoryBounds => new((Vector2)transform.position - siteSize * 0.5f, siteSize);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public LocalAnomalyZone AnomalyZone => isSpecial
         ? specialEnvironment?.AnomalyZone
@@ -72,7 +78,10 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         }
 
         if (initialized)
+        {
             SubscribeToEventSpawner();
+            RefreshTerritoryBoundaries();
+        }
     }
 
     private void OnDisable()
@@ -86,6 +95,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
             VisualTargetsChanged?.Invoke();
 #endif
         }
+        RefreshTerritoryBoundaries();
     }
 
     public bool InitializeNormal(
@@ -252,6 +262,8 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         if (tunable == null)
             return;
 
+        // Visual tuning must not expand territory fill beyond its partition.
+        values.VisualScale = 1f;
         tunable.ApplyVisualValues(values);
         ApplyBoundaryPresentation(values, tunable.VisualCapabilities);
     }
@@ -268,14 +280,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         IAnomalyVisualTunable tunable = ResolveVisualTunable();
         tunable?.ResetVisualValues();
 
-        if (boundary != null)
-        {
-            boundary.startColor = originalBoundaryColor;
-            boundary.endColor = originalBoundaryColor;
-            boundary.startWidth = originalBoundaryWidth;
-            boundary.endWidth = originalBoundaryWidth;
-            UpdateBoundaryGeometry(1f);
-        }
+        boundaryColor = originalBoundaryColor;
     }
 
     internal void ApplyVisualTunerPreset(string preset)
@@ -388,7 +393,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         AnomalyVisualTuningValues values,
         AnomalyVisualTuningCapabilities capabilities)
     {
-        if (boundary == null)
+        if (territoryFill == null)
             return;
 
         if ((capabilities & AnomalyVisualTuningCapabilities.PrimaryColor) != 0)
@@ -400,24 +405,9 @@ public sealed class ProductionAnomalySite : MonoBehaviour
                     ? Mathf.Clamp01(values.BoundaryAlpha)
                     : 1f;
             color.a = originalBoundaryColor.a * alphaMultiplier;
-            boundary.startColor = color;
-            boundary.endColor = color;
+            boundaryColor = color;
         }
 
-        UpdateBoundaryGeometry(values.VisualScale);
-    }
-
-    private void UpdateBoundaryGeometry(float scale)
-    {
-        if (boundary == null)
-            return;
-
-        Vector2 half = siteSize * 0.5f * Mathf.Clamp(scale, 0.25f, 3f);
-        boundary.SetPosition(0, new Vector3(-half.x, -half.y));
-        boundary.SetPosition(1, new Vector3(-half.x, half.y));
-        boundary.SetPosition(2, new Vector3(half.x, half.y));
-        boundary.SetPosition(3, new Vector3(half.x, -half.y));
-        boundary.SetPosition(4, new Vector3(-half.x, -half.y));
     }
 #endif
 
@@ -469,9 +459,9 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         if (available.x <= 0f || available.y <= 0f)
             return transform.position;
 
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        Transform player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
         Vector2 playerPosition = player != null
-            ? player.transform.position
+            ? player.position
             : new Vector2(float.PositiveInfinity, float.PositiveInfinity);
         float minimumCenterOffset = Mathf.Min(siteSize.x, siteSize.y) * 0.16f;
 
@@ -608,10 +598,10 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         if (!initialized || !isSpecial || completed) return;
         if (!specialInstructionsShown)
         {
-            var player = GameObject.FindGameObjectWithTag("Player");
+            var player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
             if (player != null)
             {
-                Vector2 offset = player.transform.position - transform.position;
+                Vector2 offset = player.position - transform.position;
                 if (Mathf.Abs(offset.x) < siteSize.x * 0.5f && Mathf.Abs(offset.y) < siteSize.y * 0.5f)
                 {
                     specialInstructionsShown = true;
@@ -643,10 +633,11 @@ public sealed class ProductionAnomalySite : MonoBehaviour
             specialEnvironment = null;
         }
 
-        if (boundary != null)
-            boundary.enabled = false;
+        foreach (BoundarySegment segment in boundarySegments)
+            segment.Renderer.enabled = false;
         if (territoryFill != null)
             territoryFill.enabled = false;
+        RefreshTerritoryBoundaries();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         VisualTargetsChanged?.Invoke();
@@ -667,26 +658,32 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         };
     }
 
+    private void LateUpdate()
+    {
+        if (!initialized || completed)
+            return;
+
+        float focus = BoundaryFocus;
+        foreach (BoundarySegment segment in boundarySegments)
+        {
+            float neighborFocus = segment.Neighbor != null ? segment.Neighbor.BoundaryFocus : 0f;
+            Color color = neighborFocus > focus ? segment.Neighbor.boundaryColor : boundaryColor;
+            color.a *= Mathf.Lerp(0.55f, 1f, Mathf.Max(focus, neighborFocus));
+            segment.Renderer.startColor = segment.Renderer.endColor = color;
+        }
+    }
+
+    private float BoundaryFocus => anomalyController != null
+        ? anomalyController.GetZoneFocusAmount(isSpecial ? specialEnvironment?.AnomalyZone : anomalyZone)
+        : 0f;
+
     private void BuildBoundary(Vector2 size, Color color)
     {
         material = AnomalyPowerVisuals.CreateMaterial(
             "Anomaly Site Runtime Material"
         );
-        boundary = AnomalyPowerVisuals.CreateLine(
-            transform,
-            "Site Boundary",
-            color,
-            0.18f,
-            5,
-            material
-        );
-        boundary.useWorldSpace = false;
+        boundaryColor = color;
         Vector2 half = size * 0.5f;
-        boundary.SetPosition(0, new Vector3(-half.x, -half.y));
-        boundary.SetPosition(1, new Vector3(-half.x, half.y));
-        boundary.SetPosition(2, new Vector3(half.x, half.y));
-        boundary.SetPosition(3, new Vector3(half.x, -half.y));
-        boundary.SetPosition(4, new Vector3(-half.x, -half.y));
         // A quiet territory tint makes the partition readable at sector zoom-out.
         // This mesh has no collider and does not participate in anomaly effects.
         Color fillColor = new(color.r, color.g, color.b, 0.2f);
@@ -703,13 +700,104 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         fillObject.transform.SetParent(transform, false);
         fillObject.GetComponent<MeshFilter>().sharedMesh = territoryMesh;
         territoryFill = fillObject.GetComponent<MeshRenderer>();
-        territoryFill.sharedMaterial = material;
+        territoryFill.sharedMaterial = isSpecial
+            ? material
+            : Resources.Load<Material>("AnomalyTerritoryFill");
         territoryFill.sortingLayerName = "Effects";
         territoryFill.sortingOrder = -10;
+        RefreshTerritoryBoundaries();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         originalBoundaryColor = color;
-        originalBoundaryWidth = boundary.startWidth;
 #endif
+    }
+
+    private bool HasTerritoryBoundary => initialized && !completed && isActiveAndEnabled &&
+        territoryFill != null && territoryFill.enabled;
+
+    private static void RefreshTerritoryBoundaries()
+    {
+        // Split at T-junctions. The earlier territory owns each shared segment;
+        // the neighbor contributes highlight, never a second coincident line.
+        for (int i = 0; i < activeSites.Count; i++)
+        {
+            ProductionAnomalySite site = activeSites[i];
+            if (!site.HasTerritoryBoundary)
+                continue;
+
+            Rect bounds = site.TerritoryBounds;
+            int count = 0;
+            site.BuildBoundarySide(i, true, bounds.xMin, bounds.yMin, bounds.yMax, ref count);
+            site.BuildBoundarySide(i, true, bounds.xMax, bounds.yMin, bounds.yMax, ref count);
+            site.BuildBoundarySide(i, false, bounds.yMin, bounds.xMin, bounds.xMax, ref count);
+            site.BuildBoundarySide(i, false, bounds.yMax, bounds.xMin, bounds.xMax, ref count);
+            while (site.boundarySegments.Count > count)
+            {
+                int last = site.boundarySegments.Count - 1;
+                GameObject unused = site.boundarySegments[last].Renderer.gameObject;
+                unused.SetActive(false);
+                Destroy(unused);
+                site.boundarySegments.RemoveAt(last);
+            }
+        }
+    }
+
+    private void BuildBoundarySide(int ownerIndex, bool vertical, float coordinate,
+        float start, float end, ref int count)
+    {
+        List<float> cuts = new() { start, end };
+        for (int i = 0; i < activeSites.Count; i++)
+        {
+            if (!SharesBoundarySide(activeSites[i], vertical, coordinate, out float low, out float high))
+                continue;
+            if (low > start && low < end) cuts.Add(low);
+            if (high > start && high < end) cuts.Add(high);
+        }
+        cuts.Sort();
+        for (int c = 1; c < cuts.Count; c++)
+        {
+            float low = cuts[c - 1], high = cuts[c];
+            if (high <= low) continue;
+            float midpoint = (low + high) * 0.5f;
+            ProductionAnomalySite neighbor = null;
+            int neighborIndex = -1;
+            for (int i = 0; i < activeSites.Count; i++)
+            {
+                if (SharesBoundarySide(activeSites[i], vertical, coordinate, out float min, out float max) &&
+                    midpoint > min && midpoint < max)
+                {
+                    neighbor = activeSites[i];
+                    neighborIndex = i;
+                    break;
+                }
+            }
+            if (neighborIndex >= 0 && neighborIndex < ownerIndex) continue;
+            if (count == boundarySegments.Count)
+            {
+                LineRenderer line = AnomalyPowerVisuals.CreateLine(
+                    transform, "Site Boundary", boundaryColor, 0.0625f, 2, material);
+                line.numCapVertices = 0;
+                anomalyController?.ConfigureZoneBoundaryRenderer(line);
+                boundarySegments.Add(new BoundarySegment { Renderer = line });
+            }
+            BoundarySegment segment = boundarySegments[count++];
+            segment.Neighbor = neighbor;
+            segment.Renderer.SetPosition(0, vertical ? new Vector3(coordinate, low) : new Vector3(low, coordinate));
+            segment.Renderer.SetPosition(1, vertical ? new Vector3(coordinate, high) : new Vector3(high, coordinate));
+            segment.Renderer.enabled = true;
+        }
+    }
+
+    private bool SharesBoundarySide(ProductionAnomalySite other, bool vertical,
+        float coordinate, out float low, out float high)
+    {
+        Rect bounds = other.TerritoryBounds;
+        low = vertical ? bounds.yMin : bounds.xMin;
+        high = vertical ? bounds.yMax : bounds.xMax;
+        if (other == this || !other.HasTerritoryBoundary || other.anomalyController != anomalyController)
+            return false;
+        float min = vertical ? bounds.xMin : bounds.yMin;
+        float max = vertical ? bounds.xMax : bounds.yMax;
+        return Mathf.Approximately(coordinate, min) || Mathf.Approximately(coordinate, max);
     }
 
     private void OnDestroy()

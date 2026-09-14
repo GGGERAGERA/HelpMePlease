@@ -17,6 +17,7 @@ public sealed class EnemyAnomalyEffects : MonoBehaviour
     private EnemyMovement movement;
     private SpriteRenderer bodyRenderer;
     private Color baseColor = Color.white;
+    private Color worldRuleTint = Color.white;
     private uint nextOrder;
     private bool hasBaseColor;
 
@@ -97,6 +98,22 @@ public sealed class EnemyAnomalyEffects : MonoBehaviour
         ApplyTint();
     }
 
+    // Presentation only: compose with the current base/territory tint without touching movement.
+    public void SetWorldRuleTint(Color tint)
+    {
+        ResolveReferences();
+        worldRuleTint = tint;
+        ApplyTint();
+    }
+
+    private void LateUpdate()
+    {
+        // Existing enemy clips also key SpriteRenderer.color. Compose Golden after
+        // animation, through the same tint owner as territory and assignment FX.
+        if (worldRuleTint != Color.white)
+            ApplyTint();
+    }
+
     private void ResolveReferences()
     {
         if (movement == null)
@@ -113,7 +130,8 @@ public sealed class EnemyAnomalyEffects : MonoBehaviour
         if (bodyRenderer == null)
         {
             EnemyWhiteFlash whiteFlash = GetComponent<EnemyWhiteFlash>();
-            bodyRenderer = whiteFlash != null
+            // Spawned can fire before EnemyWhiteFlash.Awake initializes its target.
+            bodyRenderer = whiteFlash != null && whiteFlash.TargetRenderer != null
                 ? whiteFlash.TargetRenderer
                 : GetComponentInChildren<SpriteRenderer>();
         }
@@ -165,21 +183,23 @@ public sealed class EnemyAnomalyEffects : MonoBehaviour
 
         if (latestIndex < 0)
         {
-            bodyRenderer.color = baseColor;
+            bodyRenderer.color = new Color(baseColor.r * worldRuleTint.r,
+                baseColor.g * worldRuleTint.g, baseColor.b * worldRuleTint.b, baseColor.a);
             return;
         }
 
         Color tint = effects[latestIndex].tint;
         bodyRenderer.color = new Color(
-            baseColor.r * tint.r,
-            baseColor.g * tint.g,
-            baseColor.b * tint.b,
+            baseColor.r * tint.r * worldRuleTint.r,
+            baseColor.g * tint.g * worldRuleTint.g,
+            baseColor.b * tint.b * worldRuleTint.b,
             baseColor.a
         );
     }
 
     private void OnDisable()
     {
+        worldRuleTint = Color.white;
         effects.Clear();
         nextOrder = 0;
 

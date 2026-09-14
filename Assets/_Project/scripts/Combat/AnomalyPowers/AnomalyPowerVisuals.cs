@@ -36,7 +36,7 @@ internal static class AnomalyPowerVisuals
         line.startColor = color;
         line.endColor = color;
         line.numCapVertices = 5;
-        line.sortingLayerName = "Effects";
+        line.sortingLayerName = "Midground";
         line.sortingOrder = 30;
 
         if (material != null)

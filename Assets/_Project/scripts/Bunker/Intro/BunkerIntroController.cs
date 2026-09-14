@@ -737,8 +737,7 @@ public sealed class BunkerIntroController : MonoBehaviour
 
         if (player == null)
         {
-            GameObject foundPlayer = GameObject.FindGameObjectWithTag("Player");
-            player = foundPlayer != null ? foundPlayer.transform : null;
+            player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
         }
 
         if (player == null)

@@ -18,6 +18,7 @@ public sealed class RunStateManager : MonoBehaviour
     public AnomalyRunModifiers AnomalyModifiers { get; private set; } =
         AnomalyRunModifiers.None;
     public int CurrentLevel { get; private set; } = 1;
+    public int CurrentDepthId { get; private set; } = DepthCatalog.SurfaceId;
 
     public RunSector CurrentSector { get; private set; }
 
@@ -192,6 +193,7 @@ public sealed class RunStateManager : MonoBehaviour
         AnomalyStabilizerData anomalyStabilizer)
     {
         CreateDefaultOrbitalRunState();
+        ApplyPendingSlotBonus();
         FindFirstObjectByType<DoubleOrLeave>()?.ResetState();
 
         ClearCurrentSector();
@@ -237,6 +239,20 @@ public sealed class RunStateManager : MonoBehaviour
             $"weapon={GetName(weapon)}, " +
             $"stabilizer={GetName(anomalyStabilizer)}"
         );
+    }
+
+    private void ApplyPendingSlotBonus()
+    {
+        var bonus = OrbitalSlotMachine.Pending;
+        if (bonus == OrbitalSlotSymbol.None) return;
+        var candidate = JsonUtility.FromJson<OrbitalRunState>(JsonUtility.ToJson(OrbitalStationState));
+        if (!OrbitalSlotMachine.TryApplyBonus(candidate, bonus) || !candidate.Validate(out _))
+        {
+            Debug.LogError($"[OrbitalSlot] Cannot apply {bonus}; pending bonus retained.", this);
+            return;
+        }
+        OrbitalStationState = candidate;
+        OrbitalSlotMachine.ClearPending();
     }
 
     public void SavePlayerState(GameObject player)
@@ -442,7 +458,7 @@ public sealed class RunStateManager : MonoBehaviour
             result == AnomalyGrantResult.Upgraded)
         {
             AnomalyPowerRuntime.EnsurePower(
-                GameObject.FindGameObjectWithTag("Player"),
+                PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true)?.gameObject,
                 anomalyInventory.CurrentItem.PowerType,
                 anomalyInventory.Level);
         }
@@ -456,7 +472,7 @@ public sealed class RunStateManager : MonoBehaviour
             return;
 
         AnomalyPowerRuntime.DeactivatePower(
-            GameObject.FindGameObjectWithTag("Player"),
+            PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true)?.gameObject,
             anomalyInventory.CurrentItem.PowerType);
         anomalyInventory.Clear();
     }
@@ -657,6 +673,7 @@ public sealed class RunStateManager : MonoBehaviour
         WorldRuleData worldRule,
         LocalAnomalyData localAnomaly)
     {
+        CurrentDepthId = DepthCatalog.SurfaceId;
         startingStageProfile = stageProfile;
         startingWorldRule = worldRule;
         startingLocalAnomaly = localAnomaly;
@@ -669,8 +686,10 @@ public sealed class RunStateManager : MonoBehaviour
         StageProfileData stageProfile,
         WorldRuleData worldRule,
         LocalAnomalyData localAnomaly,
-        AnomalyStabilizerData anomalyStabilizer)
+        AnomalyStabilizerData anomalyStabilizer,
+        int depthId = DepthCatalog.SurfaceId)
     {
+        CurrentDepthId = depthId;
         startingStageProfile = stageProfile;
         startingWorldRule = worldRule;
         startingLocalAnomaly = localAnomaly;

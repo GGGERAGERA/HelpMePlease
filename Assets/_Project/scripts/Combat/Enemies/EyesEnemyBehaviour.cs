@@ -28,7 +28,7 @@ public sealed class EyesEnemyBehaviour : EnemyMovement
 
     private void Start()
     {
-        player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
         worldRuleVisual = FindFirstObjectByType<WorldRuleVisual>();
 
         if (!EnemyDebugAiFreeze.IsFrozen)

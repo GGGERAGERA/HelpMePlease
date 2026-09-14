@@ -55,8 +55,13 @@ public class CurrencyManager : MonoBehaviour
         );
 #endif
 
-        int finalAmount = Mathf.RoundToInt(amount * goldGainMultiplier);
-        long nextTotal = (long)TotalGold + finalAmount;
+        AddGoldExact(Mathf.RoundToInt(amount * goldGainMultiplier));
+    }
+
+    // Fixed payouts/refunds must not receive the run income multiplier.
+    public void AddGoldExact(int amount)
+    {
+        long nextTotal = (long)TotalGold + amount;
 
         if (nextTotal <= 0)
             TotalGold = 0;

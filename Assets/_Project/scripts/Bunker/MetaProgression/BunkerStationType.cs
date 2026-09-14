@@ -10,5 +10,6 @@ public enum BunkerStationType
     StartRun = 6,
     Animation = 7,
     CustomEvent = 8,
-    AnomalyStabilizer = 9
+    AnomalyStabilizer = 9,
+    EscapeProtocol = 10
 }

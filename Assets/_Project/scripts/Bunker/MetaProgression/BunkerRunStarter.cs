@@ -3,10 +3,10 @@ using UnityEngine.SceneManagement;
 
 public sealed class BunkerRunStarter : MonoBehaviour
 {
-    [SerializeField] private string gameplaySceneName = "MVP";
+    [SerializeField] private DepthCatalog depths;
+    public DepthCatalog Depths => depths;
 
     [Header("Starting Sector")]
-    [SerializeField] private StageProfileData startingStageProfile;
     [SerializeField] private WorldRuleData startingWorldRule;
     [SerializeField] private LocalAnomalyData startingLocalAnomaly;
 
@@ -27,12 +27,18 @@ public sealed class BunkerRunStarter : MonoBehaviour
     private BunkerNotificationManager Notifications =>
     BunkerContext.Instance != null ? BunkerContext.Instance.Notifications : null;
 
-    public void StartRun(Transform transitionTarget)
+    public void StartRun(Transform transitionTarget, int depthId = DepthCatalog.SurfaceId)
     {
         if (isTransitioning || SceneTransitionOverlay.IsTransitioning)
             return;
 
-        if (!TryValidateRun(out CharacterData character))
+        DepthCatalog.Entry depth = depths.Find(depthId);
+        if (depth == null || depth.GetAvailability(MetaProgressionManager.EnsureExists().EscapeAccess) != DepthAvailability.Available)
+            return;
+        string gameplaySceneName = depth.gameplaySceneName;
+        StageProfileData startingStageProfile = depth.startingStageProfile;
+
+        if (!TryValidateRun(startingStageProfile, out CharacterData character))
             return;
 
         if (!Application.CanStreamedLevelBeLoaded(gameplaySceneName))
@@ -65,7 +71,7 @@ public sealed class BunkerRunStarter : MonoBehaviour
             BunkerContext.Instance?.Panels?.CloseAll(false);
             AnomalyStabilizerData stabilizer = RunSelectionManager.Instance.ConsumeAnomalyStabilizer();
             RunStateManager.EnsureExists().BeginNewRun(character, null, startingStageProfile,
-                startingWorldRule, startingLocalAnomaly, stabilizer);
+                startingWorldRule, startingLocalAnomaly, stabilizer, depth.id);
             AudioService.Instance?.Play(AudioCueId.StartRun);
         }, t =>
         {
@@ -77,7 +83,7 @@ public sealed class BunkerRunStarter : MonoBehaviour
         });
     }
 
-    private bool TryValidateRun(out CharacterData character)
+    private bool TryValidateRun(StageProfileData startingStageProfile, out CharacterData character)
     {
         character = null;
 

@@ -23,8 +23,7 @@ public static class WorldSystemsLabAuthoring
         "Assets/_Project/Environment/Props/Resources/PropScatterProfile.asset";
     private const string ExplorationConfig =
         "Assets/_Project/Resources/ProductionRun/ExplorationSectorConfig.asset";
-    private const string RainPrefab =
-        "Assets/_Project/prefabs/fx/rainFX1.prefab";
+
 
     [MenuItem("Tools/Subject42/World Systems Lab/Open")]
     public static void Open()
@@ -423,31 +422,9 @@ public static class WorldSystemsLabAuthoring
         CondensationFogOverlay condensation =
             canvas.GetComponentInChildren<CondensationFogOverlay>(true);
 
-        GameObject sourceRain = new SerializedObject(source)
-            .FindProperty("rainEffect").objectReferenceValue as GameObject;
-        GameObject rainPrefab =
-            AssetDatabase.LoadAssetAtPath<GameObject>(RainPrefab);
-        GameObject rain = rainPrefab != null
-            ? PrefabUtility.InstantiatePrefab(rainPrefab, scene) as GameObject
-            : null;
-        if (rain != null)
-        {
-            rain.name = "Production Rain";
-            if (sourceRain != null)
-            {
-                rain.transform.SetPositionAndRotation(
-                    sourceRain.transform.position,
-                    sourceRain.transform.rotation
-                );
-                rain.transform.localScale = sourceRain.transform.lossyScale;
-                rain.SetActive(sourceRain.activeSelf);
-            }
-        }
-
         SetObject(target, "fullscreenImage", overlay);
         SetObject(target, "windIndicator", wind);
         SetObject(target, "condensationFogOverlay", condensation);
-        SetObject(target, "rainEffect", rain);
         SetObject(target, "globalLight", globalLight);
         SetObject(target, "targetCamera", camera);
     }

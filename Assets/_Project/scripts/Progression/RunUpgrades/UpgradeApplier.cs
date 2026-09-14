@@ -165,12 +165,13 @@ public sealed class UpgradeApplier : MonoBehaviour
 
     private PlayerUpgradeContext FindPlayerContext()
     {
-        GameObject player = GameObject.FindGameObjectWithTag(playerTag);
+        Transform playerTransform =
+            PlayerRuntimeReference.ResolvePlayerTransform(playerTag, true);
 
-        if (player == null)
+        if (playerTransform == null)
             return PlayerUpgradeContext.Empty;
 
-        return new PlayerUpgradeContext(player);
+        return new PlayerUpgradeContext(playerTransform.gameObject);
     }
 
     private void ApplyMaxHealth(PlayerUpgradeContext context, int level)

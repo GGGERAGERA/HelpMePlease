@@ -15,7 +15,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
 
     private const int BreakableOverlapBufferSize = 16;
 
-    private readonly struct SiteRegion
+    internal readonly struct SiteRegion
     {
         public Vector2 Center { get; }
         public Vector2 Size { get; }
@@ -323,7 +323,8 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
     public int SpawnResourceNodes()
     {
         if (!hasBreakableLayout || gameplayArea == null) return 0;
-        var player = GameObject.FindGameObjectWithTag("Player");
+        Transform player = PlayerRuntimeReference.ResolvePlayerTransform(
+            forceLookup: true);
         if (player == null) return 0;
         ClearResourceNodes();
         ResourceNode[] clickPropPrefabs = config.ClickPropPrefabs;
@@ -343,7 +344,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         {
             var position = new Vector2(Random.Range(bounds.min.x, bounds.max.x),
                 Random.Range(bounds.min.y, bounds.max.y));
-            if (!IsBreakablePositionValid(position, player.transform.position,
+        if (!IsBreakablePositionValid(position, player.position,
                     breakableNormalSitePositions, breakableSpecialSitePosition,
                     breakableExitPosition, placed, 2f, 1f)) continue;
             // Also exclude decoration without colliders and obstacles on other layers.
@@ -365,7 +366,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             ResourceNode node = Instantiate(
                 prefab, position, Quaternion.identity, transform);
             node.name = prefab.name;
-            node.Initialize(player.transform);
+            node.Initialize(player);
             resourceNodes.Add(node);
             placed.Add(position);
         }
@@ -395,9 +396,10 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         ClearSpawnedBreakables();
 
         Bounds bounds = gameplayArea.PlayableArea.bounds;
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        Transform playerObject = PlayerRuntimeReference.ResolvePlayerTransform(
+            forceLookup: true);
         Vector2 playerPosition = playerObject != null
-            ? playerObject.transform.position
+            ? playerObject.position
             : bounds.center;
         int targetCount = Random.Range(
             config.BreakableMinCount,
@@ -628,11 +630,12 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             return false;
         }
 
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        if (playerObject == null)
+        Transform player = PlayerRuntimeReference.ResolvePlayerTransform(
+            forceLookup: true);
+        if (player == null)
             return false;
 
-        Vector2 playerPosition = playerObject.transform.position;
+        Vector2 playerPosition = player.position;
         List<Vector2> occupied = new(spawnedBreakables.Count);
         for (int i = 0; i < spawnedBreakables.Count; i++)
         {
@@ -751,7 +754,9 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         Bounds bounds = gameplayArea.PlayableArea.bounds;
         Rect playable = new(bounds.min, bounds.size);
         if (!layoutSpawnPosition.HasValue)
-            layoutSpawnPosition = GameObject.FindGameObjectWithTag("Player")?.transform.position ?? bounds.center;
+            layoutSpawnPosition =
+                PlayerRuntimeReference.ResolvePlayerTransform()?.position ??
+                bounds.center;
         Vector2 playerPosition = layoutSpawnPosition.Value;
 
         // Keep the existing physical exit placement; territories may reach its location.
@@ -775,14 +780,14 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         return true;
     }
 
-    private static SiteRegion[] CreateMosaicRegions(Rect area, Vector2 spawn, out int specialIndex)
+    internal static SiteRegion[] CreateMosaicRegions(Rect area, Vector2 spawn, out int specialIndex)
     {
         // A single neutral spawn rectangle is the only hole in the partition.
         Vector2 safeHalf = new(area.width * Random.Range(0.08f, 0.11f),
             area.height * Random.Range(0.08f, 0.11f));
-        Rect safe = Rect.MinMaxRect(Mathf.Max(area.xMin, spawn.x - safeHalf.x),
-            Mathf.Max(area.yMin, spawn.y - safeHalf.y), Mathf.Min(area.xMax, spawn.x + safeHalf.x),
-            Mathf.Min(area.yMax, spawn.y + safeHalf.y));
+        Rect safe = Rect.MinMaxRect(Mathf.Max(area.xMin, PartitionCoordinate(spawn.x - safeHalf.x)),
+            Mathf.Max(area.yMin, PartitionCoordinate(spawn.y - safeHalf.y)), Mathf.Min(area.xMax, PartitionCoordinate(spawn.x + safeHalf.x)),
+            Mathf.Min(area.yMax, PartitionCoordinate(spawn.y + safeHalf.y)));
         var cells = new List<Rect>();
         // Alternating windings vary the T-junctions without overlaps or seams.
         if (Random.value < 0.5f)
@@ -811,13 +816,13 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             Rect first, second;
             if (vertical)
             {
-                float cut = Mathf.Lerp(cell.xMin, cell.xMax, split);
+                float cut = PartitionCoordinate(Mathf.Lerp(cell.xMin, cell.xMax, split));
                 first = Rect.MinMaxRect(cell.xMin, cell.yMin, cut, cell.yMax);
                 second = Rect.MinMaxRect(cut, cell.yMin, cell.xMax, cell.yMax);
             }
             else
             {
-                float cut = Mathf.Lerp(cell.yMin, cell.yMax, split);
+                float cut = PartitionCoordinate(Mathf.Lerp(cell.yMin, cell.yMax, split));
                 first = Rect.MinMaxRect(cell.xMin, cell.yMin, cell.xMax, cut);
                 second = Rect.MinMaxRect(cell.xMin, cut, cell.xMax, cell.yMax);
             }
@@ -830,6 +835,11 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         regions.Add(new SiteRegion(special.center, special.size));
         return regions.ToArray();
     }
+
+    // Shared cuts must survive the Rect -> center/size -> mesh/collider round trip
+    // identically on both sides. This sub-pixel binary precision adds no gap/inset.
+    private static float PartitionCoordinate(float value) => Mathf.Round(value * 4096f) / 4096f;
+
     private static float DistanceToRect(Vector2 point, Rect rect) => Vector2.Distance(point,
         new Vector2(Mathf.Clamp(point.x, rect.xMin, rect.xMax), Mathf.Clamp(point.y, rect.yMin, rect.yMax)));
 
@@ -1042,7 +1052,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         Debug.Log(
             "SECTOR LAYOUT\n" +
             $"Coverage: {diagnostics.Coverage:P1}\n" +
-            $"Player: {GameObject.FindGameObjectWithTag("Player")?.transform.position}\n" +
+            $"Player: {PlayerRuntimeReference.ResolvePlayerTransform()?.position}\n" +
             $"Normal 1: center {normalPositions[0]}, size {normalSizes[0]}\n" +
             $"Normal 2: center {normalPositions[1]}, size {normalSizes[1]}\n" +
             $"Normal 3: center {normalPositions[2]}, size {normalSizes[2]}\n" +

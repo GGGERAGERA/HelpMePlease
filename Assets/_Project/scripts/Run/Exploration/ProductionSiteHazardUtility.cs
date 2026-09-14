@@ -26,20 +26,17 @@ internal static class ProductionSiteHazardUtility
             enemy.TakeDamage(enemyDamage, enemy.transform.position, false);
         }
 
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        PlayerHealth playerHealth = player != null
-            ? player.GetComponent<PlayerHealth>()
-            : null;
-
+        Transform player = PlayerRuntimeReference.ResolvePlayerTransform();
+        PlayerHealth playerHealth = PlayerRuntimeReference.ResolvePlayerHealth(forceLookup: false);
         if (playerHealth == null || playerHealth.IsDead ||
-            DistanceToSegment(player.transform.position, start, end) >
+            DistanceToSegment(player.position, start, end) >
             halfWidth)
         {
             return;
         }
 
-        Vector2 nearest = ClosestPoint(player.transform.position, start, end);
-        Vector2 knockback = (Vector2)player.transform.position - nearest;
+        Vector2 nearest = ClosestPoint(player.position, start, end);
+        Vector2 knockback = (Vector2)player.position - nearest;
 
         if (knockback.sqrMagnitude < 0.001f)
             knockback = Vector2.up;

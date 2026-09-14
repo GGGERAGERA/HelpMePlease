@@ -303,8 +303,8 @@ public sealed class WorldBreakable : MonoBehaviour,
         int count = roll < configuredNothingWeight + configuredSmallWeight
             ? configuredSmallCount
             : configuredLargeCount;
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        Transform player = playerObject != null ? playerObject.transform : null;
+        Transform player = PlayerRuntimeReference.ResolvePlayerTransform(
+            forceLookup: true);
 
         for (int i = 0; i < count; i++)
         {

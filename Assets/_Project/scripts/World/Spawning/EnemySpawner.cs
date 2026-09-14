@@ -138,7 +138,7 @@ public partial class EnemySpawner : MonoBehaviour
 
     private void Start()
     {
-        player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
         ResolveGameplayArea();
         CaptureBaseSettings();
         PrewarmProjectilePools(enemyPrefabs);
@@ -151,7 +151,7 @@ public partial class EnemySpawner : MonoBehaviour
             return;
 
         if (player == null)
-            player = GameObject.FindGameObjectWithTag("Player")?.transform;
+            player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
 
         if (player == null)
             return;
@@ -520,7 +520,7 @@ public partial class EnemySpawner : MonoBehaviour
             ResolveGameplayArea();
 
         if (player == null)
-            player = GameObject.FindGameObjectWithTag("Player")?.transform;
+            player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
 
         RemoveDestroyedEnemies();
 
@@ -781,7 +781,7 @@ public partial class EnemySpawner : MonoBehaviour
             ResolveGameplayArea();
 
         if (player == null)
-            player = GameObject.FindGameObjectWithTag("Player")?.transform;
+            player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
 
         RemoveDestroyedEnemies();
 

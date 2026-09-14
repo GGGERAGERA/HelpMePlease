@@ -42,6 +42,27 @@ public sealed class MetaProgressionManager : MonoBehaviour
 
     public int MaxLevel => MaxUpgradeLevel;
 
+    public const int EscapeAccessRequired = 5;
+    public const string EscapeAccessKey = "META_ESCAPE_ACCESS";
+    public const string EscapeAnnouncedAccessKey = "META_ESCAPE_ANNOUNCED_ACCESS";
+    public int EscapeAccess => PlayerPrefs.GetInt(EscapeAccessKey, 0);
+    public bool HasEscapeUpdate => EscapeAccess > PlayerPrefs.GetInt(EscapeAnnouncedAccessKey, 0);
+
+    // The slice awards only the first stage, regardless of repeat victories.
+    public bool AcquireGuardianAccess()
+    {
+        if (EscapeAccess >= 1) return false;
+        PlayerPrefs.SetInt(EscapeAccessKey, 1);
+        PlayerPrefs.Save();
+        return true;
+    }
+
+    public void AcknowledgeEscapeUpdate()
+    {
+        PlayerPrefs.SetInt(EscapeAnnouncedAccessKey, EscapeAccess);
+        PlayerPrefs.Save();
+    }
+
     public int GetCurrentLevelCap()
     {
         return BunkerItemProgressionRules.GetLevelCap(

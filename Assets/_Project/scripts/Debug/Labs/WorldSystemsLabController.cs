@@ -30,6 +30,10 @@ public sealed class WorldSystemsLabController : MonoBehaviour
     [SerializeField] private PropScatterProfile propScatterProfile;
 
     private readonly List<ProductionAnomalySite> spawnedSites = new();
+    private ProductionExplorationSectorController.SiteRegion[] territoryRegions;
+    private int specialTerritoryIndex;
+    private int nextNormalTerritory;
+    private bool specialTerritoryOccupied;
     private ProductionPortalPair portalPair;
     private ProductionSectorProps props;
     private int nextNormalAnomaly;
@@ -89,15 +93,23 @@ public sealed class WorldSystemsLabController : MonoBehaviour
         if (!CanSpawnSite() || normalAnomalyAssets.Length == 0)
             return false;
 
+        EnsureTerritoryPartition();
+        if (nextNormalTerritory >= specialTerritoryIndex)
+        {
+            notice = "All six normal territories are occupied";
+            return false;
+        }
+
         LocalAnomalyData data = normalAnomalyAssets[
             nextNormalAnomaly++ % normalAnomalyAssets.Length
         ];
-        Vector2 position = NextSitePosition(false);
+        var region = territoryRegions[nextNormalTerritory];
+        Vector2 position = region.Center;
         GameObject root = new($"Lab Normal Anomaly - {data.AnomalyType}");
         ProductionAnomalySite site = root.AddComponent<ProductionAnomalySite>();
         bool initialized = site.InitializeNormal(
             position,
-            new Vector2(13f, 10f),
+            region.Size,
             data,
             FirstSiteEvent(),
             events,
@@ -114,6 +126,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
         }
 
         spawnedSites.Add(site);
+        nextNormalTerritory++;
         notice = $"Normal anomaly: {data.AnomalyType}";
         return true;
     }
@@ -123,15 +136,23 @@ public sealed class WorldSystemsLabController : MonoBehaviour
         if (!CanSpawnSite() || explorationConfig.SpecialPowerPool.Length == 0)
             return false;
 
+        EnsureTerritoryPartition();
+        if (specialTerritoryOccupied)
+        {
+            notice = "The special territory is occupied";
+            return false;
+        }
+
         AnomalyPowerType power = explorationConfig.SpecialPowerPool[
             nextSpecialAnomaly++ % explorationConfig.SpecialPowerPool.Length
         ];
-        Vector2 position = NextSitePosition(true);
+        var region = territoryRegions[specialTerritoryIndex];
+        Vector2 position = region.Center;
         GameObject root = new($"Lab Special Anomaly - {power}");
         ProductionAnomalySite site = root.AddComponent<ProductionAnomalySite>();
         bool initialized = site.InitializeSpecial(
             position,
-            new Vector2(15f, 11f),
+            region.Size,
             power,
             FirstSiteEvent(),
             events,
@@ -150,6 +171,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
         }
 
         spawnedSites.Add(site);
+        specialTerritoryOccupied = true;
         notice = $"Special anomaly: {power}";
         return true;
     }
@@ -163,6 +185,9 @@ public sealed class WorldSystemsLabController : MonoBehaviour
         }
 
         spawnedSites.Clear();
+        territoryRegions = null;
+        nextNormalTerritory = 0;
+        specialTerritoryOccupied = false;
         anomalies?.BeginSiteLayout();
         notice = "Anomalies cleared";
     }
@@ -272,12 +297,14 @@ public sealed class WorldSystemsLabController : MonoBehaviour
             prefab != null && prefab.AllowedInSite);
     }
 
-    private Vector2 NextSitePosition(bool special)
+    private void EnsureTerritoryPartition()
     {
-        int index = spawnedSites.Count;
-        float x = special ? 14f : -14f;
-        float y = -11f + index % 3 * 11f;
-        return new Vector2(x, y);
+        if (territoryRegions != null)
+            return;
+
+        Bounds area = gameplayArea.PlayableArea.bounds;
+        territoryRegions = ProductionExplorationSectorController.CreateMosaicRegions(
+            new Rect(area.min, area.size), Vector2.zero, out specialTerritoryIndex);
     }
 
     private void ClearBootstrapEvent(ProductionAnomalySite site)

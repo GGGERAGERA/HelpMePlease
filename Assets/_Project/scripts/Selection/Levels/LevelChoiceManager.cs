@@ -281,11 +281,11 @@ public sealed class LevelChoiceManager : MonoBehaviour
         SceneTransitionOverlay.Load(gameplaySceneName, () =>
         {
             isChoosing = false;
-            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            Transform player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
             RunStateManager runState = RunStateManager.EnsureExists();
             runState.CommitCurrentSceneStats();
             runState.SaveExperienceState();
-            runState.SavePlayerState(player);
+            runState.SavePlayerState(player != null ? player.gameObject : null);
             runState.SetCurrentSector(sector);
 
             panelView?.Hide();
