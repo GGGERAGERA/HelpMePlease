@@ -937,7 +937,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
         playerLightStateCaptured = false;
 
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        Transform player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
 
         if (player == null)
             return;

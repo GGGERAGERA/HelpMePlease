@@ -336,7 +336,7 @@ public sealed class WorldRuleController : MonoBehaviour
 
     private void ResolvePlayerReferences()
     {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        Transform player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
 
         if (player == null)
             return;

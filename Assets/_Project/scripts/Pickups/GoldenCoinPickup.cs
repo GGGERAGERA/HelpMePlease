@@ -87,9 +87,7 @@ public sealed class GoldenCoinPickup : MonoBehaviour, IAnomalySpeedPickup,
 
         if (player == null)
         {
-            GameObject playerObject =
-                GameObject.FindGameObjectWithTag("Player");
-            player = playerObject != null ? playerObject.transform : null;
+            player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
         }
 
         value = Mathf.Max(1, coinValue);

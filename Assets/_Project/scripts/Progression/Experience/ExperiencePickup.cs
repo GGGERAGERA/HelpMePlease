@@ -38,11 +38,11 @@ public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
 
     private void Start()
     {
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        Transform playerObject = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
 
         if (playerObject != null)
         {
-            player = playerObject.transform;
+            player = playerObject;
             playerPickupRadius =
                 playerObject.GetComponent<PlayerPickupRadius>();
         }

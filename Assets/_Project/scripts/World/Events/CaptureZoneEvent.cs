@@ -47,9 +47,7 @@ public class CaptureZoneEvent : WorldEvent
 
     private void Start()
     {
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        if (playerObject != null)
-            player = playerObject.transform;
+        player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
 
         currentHoldTime = 0f;
         playerInside = false;
@@ -94,15 +92,13 @@ public class CaptureZoneEvent : WorldEvent
     {
         if (player == null)
         {
-            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+            player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
 
-            if (playerObject == null)
+            if (player == null)
             {
                 playerInside = false;
                 return;
             }
-
-            player = playerObject.transform;
         }
 
         float distance = Vector2.Distance(transform.position, player.position);

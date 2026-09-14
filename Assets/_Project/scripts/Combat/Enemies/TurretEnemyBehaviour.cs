@@ -212,7 +212,7 @@ public sealed class TurretEnemyBehaviour : MonoBehaviour,
 
     private void FindPlayer()
     {
-        player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        player = PlayerRuntimeReference.ResolvePlayerTransform(playerTag, true);
     }
 
     private void OnDisable()

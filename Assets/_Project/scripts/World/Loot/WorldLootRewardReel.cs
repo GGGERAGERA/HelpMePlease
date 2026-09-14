@@ -206,10 +206,8 @@ public sealed class WorldLootRewardReel : MonoBehaviour
 
         claimedCallback = onClaimed;
         rewardApplied = false;
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        observedPlayerHealth = player != null
-            ? player.GetComponent<PlayerHealth>()
-            : null;
+        observedPlayerHealth = PlayerRuntimeReference.ResolvePlayerHealth(
+            forceLookup: true);
         hadObservedPlayer = observedPlayerHealth != null;
         winningCard = null;
         stateElapsed = 0f;

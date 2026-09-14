@@ -194,10 +194,10 @@ public sealed class CarrierHuntEvent : WorldEvent
 
         CarrierEscapeBehaviour newEscapeBehaviour =
             selected.gameObject.AddComponent<CarrierEscapeBehaviour>();
-        GameObject playerObject =
-            GameObject.FindGameObjectWithTag("Player");
-        Vector2 playerPosition = playerObject != null
-            ? playerObject.transform.position
+        Transform player = PlayerRuntimeReference.ResolvePlayerTransform(
+            forceLookup: true);
+        Vector2 playerPosition = player != null
+            ? player.position
             : selected.transform.position;
         float speedMultiplier = riskMode
             ? RiskCarrierSpeedMultiplier

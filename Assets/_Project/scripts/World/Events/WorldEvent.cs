@@ -43,8 +43,8 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
                 return false;
             }
 
-            GameObject player = GameObject.FindGameObjectWithTag("Player");
-            return player != null && CanStartFrom(player.transform.position);
+            Transform player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
+            return player != null && CanStartFrom(player.position);
         }
     }
 

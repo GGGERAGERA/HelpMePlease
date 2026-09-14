@@ -469,9 +469,9 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         if (available.x <= 0f || available.y <= 0f)
             return transform.position;
 
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        Transform player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
         Vector2 playerPosition = player != null
-            ? player.transform.position
+            ? player.position
             : new Vector2(float.PositiveInfinity, float.PositiveInfinity);
         float minimumCenterOffset = Mathf.Min(siteSize.x, siteSize.y) * 0.16f;
 
@@ -608,10 +608,10 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         if (!initialized || !isSpecial || completed) return;
         if (!specialInstructionsShown)
         {
-            var player = GameObject.FindGameObjectWithTag("Player");
+            var player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
             if (player != null)
             {
-                Vector2 offset = player.transform.position - transform.position;
+                Vector2 offset = player.position - transform.position;
                 if (Mathf.Abs(offset.x) < siteSize.x * 0.5f && Mathf.Abs(offset.y) < siteSize.y * 0.5f)
                 {
                     specialInstructionsShown = true;

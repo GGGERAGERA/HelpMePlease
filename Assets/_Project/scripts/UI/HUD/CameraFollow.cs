@@ -324,9 +324,7 @@ public class CameraFollow : MonoBehaviour
         if (target != null)
             return;
 
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
-            target = player.transform;
+        target = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
     }
 
     private void ResolveCamera()

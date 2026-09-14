@@ -143,8 +143,8 @@ public sealed class ProductionSectorExit : MonoBehaviour
         if (player == null && Time.time >= nextPlayerSearch)
         {
             nextPlayerSearch = Time.time + 1f;
-            var actor = GameObject.FindGameObjectWithTag("Player");
-            if (actor != null) player = actor.transform;
+            var actor = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
+            if (actor != null) player = actor;
         }
         float target = player != null
             ? 1f - Mathf.InverseLerp(visualRadius, visualRadius + 4f, Vector2.Distance(player.position, transform.position))

@@ -144,7 +144,7 @@ public class WorldEventSpawner : MonoBehaviour
 
     private void SpawnRandomEvent()
     {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        Transform player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
 
         if (player == null)
             return;
@@ -159,7 +159,7 @@ public class WorldEventSpawner : MonoBehaviour
 
     private bool TrySpawnEvent(
         WorldEvent prefab,
-        GameObject player,
+        Transform player,
         out WorldEvent spawnedEvent)
     {
         spawnedEvent = null;
@@ -191,7 +191,7 @@ public class WorldEventSpawner : MonoBehaviour
             placedInsideAnomaly =
                 TryGetPositionInsideLocalAnomaly(
                     prefab,
-                    player.transform.position,
+                    player.position,
                     out spawnPosition,
                     out selectedAnomalyType
                 );
@@ -200,7 +200,7 @@ public class WorldEventSpawner : MonoBehaviour
 
         if (!placedInsideAnomaly &&
             !gameplayArea.TryGetSpawnPosition(
-                player.transform.position,
+                player.position,
                 minDistanceFromPlayer,
                 maxDistanceFromPlayer,
                 spawnPositionAttempts,
@@ -619,7 +619,7 @@ public class WorldEventSpawner : MonoBehaviour
         if (spawnedEventCount >= maxActiveEvents)
             return false;
 
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        Transform player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
 
         if (!TrySpawnEvent(prefab, player, out WorldEvent spawnedEvent))
             return false;

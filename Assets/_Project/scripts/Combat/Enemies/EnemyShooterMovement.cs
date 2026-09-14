@@ -91,9 +91,9 @@ public class EnemyShooterMovement : EnemyMovement
 
     private void FindPlayer()
     {
-        GameObject playerObject = GameObject.FindGameObjectWithTag(playerTag);
-        if (playerObject != null)
-            player = playerObject.transform;
+        player = PlayerRuntimeReference.ResolvePlayerTransform(
+            playerTag,
+            true);
     }
 
     private void Move()

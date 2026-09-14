@@ -323,7 +323,8 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
     public int SpawnResourceNodes()
     {
         if (!hasBreakableLayout || gameplayArea == null) return 0;
-        var player = GameObject.FindGameObjectWithTag("Player");
+        Transform player = PlayerRuntimeReference.ResolvePlayerTransform(
+            forceLookup: true);
         if (player == null) return 0;
         ClearResourceNodes();
         ResourceNode[] clickPropPrefabs = config.ClickPropPrefabs;
@@ -343,7 +344,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         {
             var position = new Vector2(Random.Range(bounds.min.x, bounds.max.x),
                 Random.Range(bounds.min.y, bounds.max.y));
-            if (!IsBreakablePositionValid(position, player.transform.position,
+        if (!IsBreakablePositionValid(position, player.position,
                     breakableNormalSitePositions, breakableSpecialSitePosition,
                     breakableExitPosition, placed, 2f, 1f)) continue;
             // Also exclude decoration without colliders and obstacles on other layers.
@@ -365,7 +366,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             ResourceNode node = Instantiate(
                 prefab, position, Quaternion.identity, transform);
             node.name = prefab.name;
-            node.Initialize(player.transform);
+            node.Initialize(player);
             resourceNodes.Add(node);
             placed.Add(position);
         }
@@ -395,9 +396,10 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         ClearSpawnedBreakables();
 
         Bounds bounds = gameplayArea.PlayableArea.bounds;
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        Transform playerObject = PlayerRuntimeReference.ResolvePlayerTransform(
+            forceLookup: true);
         Vector2 playerPosition = playerObject != null
-            ? playerObject.transform.position
+            ? playerObject.position
             : bounds.center;
         int targetCount = Random.Range(
             config.BreakableMinCount,
@@ -628,11 +630,12 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             return false;
         }
 
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        if (playerObject == null)
+        Transform player = PlayerRuntimeReference.ResolvePlayerTransform(
+            forceLookup: true);
+        if (player == null)
             return false;
 
-        Vector2 playerPosition = playerObject.transform.position;
+        Vector2 playerPosition = player.position;
         List<Vector2> occupied = new(spawnedBreakables.Count);
         for (int i = 0; i < spawnedBreakables.Count; i++)
         {
@@ -751,7 +754,9 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         Bounds bounds = gameplayArea.PlayableArea.bounds;
         Rect playable = new(bounds.min, bounds.size);
         if (!layoutSpawnPosition.HasValue)
-            layoutSpawnPosition = GameObject.FindGameObjectWithTag("Player")?.transform.position ?? bounds.center;
+            layoutSpawnPosition =
+                PlayerRuntimeReference.ResolvePlayerTransform()?.position ??
+                bounds.center;
         Vector2 playerPosition = layoutSpawnPosition.Value;
 
         // Keep the existing physical exit placement; territories may reach its location.
@@ -1042,7 +1047,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         Debug.Log(
             "SECTOR LAYOUT\n" +
             $"Coverage: {diagnostics.Coverage:P1}\n" +
-            $"Player: {GameObject.FindGameObjectWithTag("Player")?.transform.position}\n" +
+            $"Player: {PlayerRuntimeReference.ResolvePlayerTransform()?.position}\n" +
             $"Normal 1: center {normalPositions[0]}, size {normalSizes[0]}\n" +
             $"Normal 2: center {normalPositions[1]}, size {normalSizes[1]}\n" +
             $"Normal 3: center {normalPositions[2]}, size {normalSizes[2]}\n" +

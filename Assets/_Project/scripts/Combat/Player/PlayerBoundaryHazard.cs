@@ -143,13 +143,13 @@ public sealed class PlayerBoundaryHazard : MonoBehaviour
 
     private void FindPlayer()
     {
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        Transform playerTransform = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
 
-        if (playerObject == null)
+        if (playerTransform == null)
             return;
 
-        player = playerObject.transform;
-        playerHealth = playerObject.GetComponent<PlayerHealth>();
+        player = playerTransform;
+        playerHealth = PlayerRuntimeReference.ResolvePlayerHealth(forceLookup: true);
     }
 
     private void ResolveGameplayArea()

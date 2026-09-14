@@ -213,8 +213,8 @@ public sealed class LevelAnomalyController : MonoBehaviour
     {
         if (focusPlayer == null)
         {
-            GameObject player = GameObject.FindGameObjectWithTag("Player");
-            focusPlayer = player != null ? player.transform : null;
+            focusPlayer = PlayerRuntimeReference.ResolvePlayerTransform(
+                forceLookup: true);
         }
 
         LocalAnomalyZone next = anomalyFocusEnabled && focusPlayer != null

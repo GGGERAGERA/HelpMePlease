@@ -442,7 +442,7 @@ public sealed class RunStateManager : MonoBehaviour
             result == AnomalyGrantResult.Upgraded)
         {
             AnomalyPowerRuntime.EnsurePower(
-                GameObject.FindGameObjectWithTag("Player"),
+                PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true)?.gameObject,
                 anomalyInventory.CurrentItem.PowerType,
                 anomalyInventory.Level);
         }
@@ -456,7 +456,7 @@ public sealed class RunStateManager : MonoBehaviour
             return;
 
         AnomalyPowerRuntime.DeactivatePower(
-            GameObject.FindGameObjectWithTag("Player"),
+            PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true)?.gameObject,
             anomalyInventory.CurrentItem.PowerType);
         anomalyInventory.Clear();
     }

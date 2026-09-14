@@ -40,9 +40,9 @@ public sealed class ProductionPortalPair : MonoBehaviour
     {
         if (player == null)
         {
-            var actor = GameObject.FindGameObjectWithTag("Player");
+            Transform actor = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
             if (actor == null) return;
-            player = actor.transform;
+            player = actor;
             playerBody = actor.GetComponent<Rigidbody2D>();
         }
         if (!player.gameObject.activeInHierarchy) return;

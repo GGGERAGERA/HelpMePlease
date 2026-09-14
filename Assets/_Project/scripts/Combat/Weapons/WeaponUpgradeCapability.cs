@@ -15,11 +15,11 @@ public static class WeaponUpgradeCapabilityResolver
 {
     public static WeaponUpgradeCapability GetCurrentCapabilities()
     {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
+        Transform playerTransform = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
+        if (playerTransform != null)
         {
             WeaponUpgradeCapability current = WeaponUpgradeCapability.None;
-            BaseWeapon[] weapons = player.GetComponentsInChildren<BaseWeapon>(false);
+            BaseWeapon[] weapons = playerTransform.GetComponentsInChildren<BaseWeapon>(false);
             for (int i = 0; i < weapons.Length; i++)
             {
                 if (weapons[i] != null)

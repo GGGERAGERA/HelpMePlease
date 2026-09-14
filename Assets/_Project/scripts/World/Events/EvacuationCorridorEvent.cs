@@ -495,8 +495,8 @@ public sealed class EvacuationCorridorEvent : WorldEvent
 
     private void FindPlayer()
     {
-        GameObject playerObject =
-            GameObject.FindGameObjectWithTag("Player");
+        Transform playerObject =
+            PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
 
         if (playerObject == null)
         {
@@ -505,7 +505,7 @@ public sealed class EvacuationCorridorEvent : WorldEvent
             return;
         }
 
-        player = playerObject.transform;
+        player = playerObject;
         playerHealth = playerObject.GetComponent<PlayerHealth>();
     }
 
