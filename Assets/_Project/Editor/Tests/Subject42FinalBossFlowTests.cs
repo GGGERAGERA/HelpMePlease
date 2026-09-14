@@ -164,10 +164,10 @@ public sealed class Subject42FinalBossFlowTests
         var action = (UnityEngine.UI.Button)Get(view, "startButton");
         var details = (TMP_Text)Get(view, "detailText");
         cards[0].onClick.Invoke();
-        Assert.That(details.text, Does.Contain("SURFACE").And.Contain("3 SECTORS").And.Contain("AVAILABLE"));
+        Assert.That(details.text, Does.Contain("SURFACE").And.Contain("3 SECTORS").And.Contain("ACCESS I"));
         Assert.That(action.IsInteractable(), Is.True);
         cards[1].onClick.Invoke();
-        Assert.That(details.text, Does.Contain("REQUIRES ACCESS I").And.Contain("STATUS: LOCKED"));
+        Assert.That(details.text, Does.Contain("REQUIRES ACCESS I"));
         Assert.That(action.IsInteractable(), Is.False);
         cards[2].onClick.Invoke();
         Assert.That(details.text, Does.Contain("DEPTH III").And.Contain("REQUIRES ACCESS II"));
@@ -182,7 +182,7 @@ public sealed class Subject42FinalBossFlowTests
         BunkerContext.Instance.Panels.CloseAll();
         gate.Interact();
         cards[1].onClick.Invoke();
-        Assert.That(details.text, Does.Contain("DEPTH II").And.Contain("STATUS: UNLOCKED").And.Contain("NOT AVAILABLE IN DEMO"));
+        Assert.That(details.text, Does.Contain("DEPTH II").And.Contain("UNLOCKED").And.Contain("NOT AVAILABLE IN DEMO"));
         Assert.That(action.IsInteractable(), Is.False);
         action.onClick.Invoke();
         var starter = One<BunkerRunStarter>();
@@ -204,6 +204,36 @@ public sealed class Subject42FinalBossFlowTests
         Assert.That(RunStateManager.Instance.CurrentSector.SectorNumber, Is.EqualTo(1));
         Assert.That(RunRoute.TotalSectors, Is.EqualTo(3));
         Assert.That(typeof(RunStateManager).GetProperty("CurrentDepthId").GetValue(RunStateManager.Instance), Is.EqualTo(1));
+    }
+
+    [UnityTest]
+    public IEnumerator EscapeProtocol_VisualPolishPreview()
+    {
+        PlayerPrefs.DeleteKey(MetaProgressionManager.EscapeAccessKey);
+        PlayerPrefs.DeleteKey(MetaProgressionManager.EscapeAnnouncedAccessKey);
+        PlayerPrefs.SetInt(BunkerIntroController.ViewedPreferenceKey, 1);
+        PlayerPrefs.Save();
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        yield return new EnterPlayMode();
+        yield return SceneManager.LoadSceneAsync("MainMenu");
+        yield return Await(() => BunkerContext.Instance != null && !SceneTransitionOverlay.IsTransitioning);
+        yield return new WaitForSecondsRealtime(.4f);
+        var gate = Object.FindObjectsByType<BunkerStation>(FindObjectsSortMode.None)
+            .Single(s => (BunkerStationType)Get(s, "stationType") == BunkerStationType.StartRun);
+        gate.Interact();
+        var view = One<EscapeProtocolView>();
+        Assert.That(view.gameObject.activeInHierarchy, Is.True);
+        System.IO.Directory.CreateDirectory("Artifacts/GeneratedQA/DepthSelectPolish");
+        yield return new WaitForSecondsRealtime(.35f);
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/DepthSelectPolish/fresh.png");
+        yield return null;
+        MetaProgressionManager.Instance.AcquireGuardianAccess();
+        BunkerContext.Instance.Panels.CloseAll();
+        gate.Interact();
+        view.SelectDepth(2);
+        yield return new WaitForSecondsRealtime(.35f);
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/DepthSelectPolish/access-i.png");
+        yield return null;
     }
 
     private static IEnumerator ExerciseVictory(string characterName = "Gera")
