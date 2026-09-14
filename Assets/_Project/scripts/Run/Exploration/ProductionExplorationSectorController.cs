@@ -15,7 +15,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
 
     private const int BreakableOverlapBufferSize = 16;
 
-    private readonly struct SiteRegion
+    internal readonly struct SiteRegion
     {
         public Vector2 Center { get; }
         public Vector2 Size { get; }
@@ -780,14 +780,14 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         return true;
     }
 
-    private static SiteRegion[] CreateMosaicRegions(Rect area, Vector2 spawn, out int specialIndex)
+    internal static SiteRegion[] CreateMosaicRegions(Rect area, Vector2 spawn, out int specialIndex)
     {
         // A single neutral spawn rectangle is the only hole in the partition.
         Vector2 safeHalf = new(area.width * Random.Range(0.08f, 0.11f),
             area.height * Random.Range(0.08f, 0.11f));
-        Rect safe = Rect.MinMaxRect(Mathf.Max(area.xMin, spawn.x - safeHalf.x),
-            Mathf.Max(area.yMin, spawn.y - safeHalf.y), Mathf.Min(area.xMax, spawn.x + safeHalf.x),
-            Mathf.Min(area.yMax, spawn.y + safeHalf.y));
+        Rect safe = Rect.MinMaxRect(Mathf.Max(area.xMin, PartitionCoordinate(spawn.x - safeHalf.x)),
+            Mathf.Max(area.yMin, PartitionCoordinate(spawn.y - safeHalf.y)), Mathf.Min(area.xMax, PartitionCoordinate(spawn.x + safeHalf.x)),
+            Mathf.Min(area.yMax, PartitionCoordinate(spawn.y + safeHalf.y)));
         var cells = new List<Rect>();
         // Alternating windings vary the T-junctions without overlaps or seams.
         if (Random.value < 0.5f)
@@ -816,13 +816,13 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             Rect first, second;
             if (vertical)
             {
-                float cut = Mathf.Lerp(cell.xMin, cell.xMax, split);
+                float cut = PartitionCoordinate(Mathf.Lerp(cell.xMin, cell.xMax, split));
                 first = Rect.MinMaxRect(cell.xMin, cell.yMin, cut, cell.yMax);
                 second = Rect.MinMaxRect(cut, cell.yMin, cell.xMax, cell.yMax);
             }
             else
             {
-                float cut = Mathf.Lerp(cell.yMin, cell.yMax, split);
+                float cut = PartitionCoordinate(Mathf.Lerp(cell.yMin, cell.yMax, split));
                 first = Rect.MinMaxRect(cell.xMin, cell.yMin, cell.xMax, cut);
                 second = Rect.MinMaxRect(cell.xMin, cut, cell.xMax, cell.yMax);
             }
@@ -835,6 +835,11 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         regions.Add(new SiteRegion(special.center, special.size));
         return regions.ToArray();
     }
+
+    // Shared cuts must survive the Rect -> center/size -> mesh/collider round trip
+    // identically on both sides. This sub-pixel binary precision adds no gap/inset.
+    private static float PartitionCoordinate(float value) => Mathf.Round(value * 4096f) / 4096f;
+
     private static float DistanceToRect(Vector2 point, Rect rect) => Vector2.Distance(point,
         new Vector2(Mathf.Clamp(point.x, rect.xMin, rect.xMax), Mathf.Clamp(point.y, rect.yMin, rect.yMax)));
 

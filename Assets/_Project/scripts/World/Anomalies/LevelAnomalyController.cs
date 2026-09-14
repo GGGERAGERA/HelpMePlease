@@ -124,6 +124,19 @@ public sealed class LevelAnomalyController : MonoBehaviour
     public float OutsideColor => 1f - outsideDesaturation;
     public float FocusTransition => focusTransition;
 
+    public float GetZoneFocusAmount(LocalAnomalyZone zone) =>
+        zone != null && zone == focusedZone ? focusAmount : 0f;
+
+    public void ConfigureZoneBoundaryRenderer(Renderer boundary)
+    {
+        if (focusOverlayPrefab == null)
+            return;
+
+        // The outside mask must not cover half of the thin boundary or its corners.
+        boundary.sortingLayerID = focusOverlayPrefab.sortingLayerID;
+        boundary.sortingOrder = focusOverlayPrefab.sortingOrder + 1;
+    }
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public void SetAnomalyFocusEnabled(bool value) => anomalyFocusEnabled = value;
     public void SetOutsideDarkness(float value) => outsideDarkness = Mathf.Clamp01(value);

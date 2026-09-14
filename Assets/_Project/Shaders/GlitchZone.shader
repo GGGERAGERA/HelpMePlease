@@ -26,6 +26,9 @@ Shader "World/Glitch Zone"
         ZWrite Off
         Blend SrcAlpha OneMinusSrcAlpha
 
+        // User stencil bit 3: inner effects cover each pixel once, even across zones.
+        Stencil { Ref 8 ReadMask 8 WriteMask 8 Comp NotEqual Pass Replace }
+
         Pass
         {
             HLSLPROGRAM
@@ -74,6 +77,7 @@ Shader "World/Glitch Zone"
 
             half4 Frag(Varyings input) : SV_Target
             {
+                clip(_Fade - 0.0001);
                 float2 size = max(_RegionSize.xy, float2(0.0625, 0.0625));
                 float2 worldPoint = AnomalySnap((input.uv - 0.5) * size);
                 // Keep scanlines on the same world-space pixel grid as other zones.
