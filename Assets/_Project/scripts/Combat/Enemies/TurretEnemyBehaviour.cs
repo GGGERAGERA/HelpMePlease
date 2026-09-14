@@ -212,7 +212,8 @@ public sealed class TurretEnemyBehaviour : MonoBehaviour,
 
     private void FindPlayer()
     {
-        player = PlayerRuntimeReference.ResolvePlayerTransform(playerTag, true);
+        // This component uses the resolver's default Player tag.
+        player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
     }
 
     private void OnDisable()

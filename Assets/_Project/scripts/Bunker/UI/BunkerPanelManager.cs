@@ -10,6 +10,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
 
     [Header("Panel UI")]
     [SerializeField] private AudioSettingsPanel audioSettingsPanel;
+    [SerializeField] private BunkerOrbitalSlotPanel orbitalSlotPanel;
 
     [Header("Prefab-Driven Station Panels")]
     [SerializeField] private GameObject
@@ -20,6 +21,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
     [SerializeField] private BunkerRunStarter runStarter;
 
     public bool IsAnyPanelOpen =>
+        (orbitalSlotPanel != null && orbitalSlotPanel.IsOpen) ||
         (selectionPanelController != null && selectionPanelController.IsOpen) ||
         (mapPanel != null && mapPanel.activeInHierarchy) ||
         (stationUpgradePanel != null && stationUpgradePanel.IsVisible) ||
@@ -127,6 +129,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
 
     public void CloseAll(bool playSound)
     {
+        orbitalSlotPanel?.Hide();
         selectionPanelController?.Hide();
 
         if (mapPanel != null)
@@ -136,6 +139,12 @@ public sealed class BunkerPanelManager : MonoBehaviour
         if (audioSettingsPanel != null && audioSettingsPanel.IsOpen)
             audioSettingsPanel.Close();
 
+    }
+
+    public void OpenOrbitalSlot()
+    {
+        CloseAll(false);
+        orbitalSlotPanel.Show();
     }
 
     public void ShowStationProgression(BunkerStationId stationId)

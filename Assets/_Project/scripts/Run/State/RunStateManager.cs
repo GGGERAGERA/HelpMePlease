@@ -192,6 +192,7 @@ public sealed class RunStateManager : MonoBehaviour
         AnomalyStabilizerData anomalyStabilizer)
     {
         CreateDefaultOrbitalRunState();
+        ApplyPendingSlotBonus();
         FindFirstObjectByType<DoubleOrLeave>()?.ResetState();
 
         ClearCurrentSector();
@@ -237,6 +238,20 @@ public sealed class RunStateManager : MonoBehaviour
             $"weapon={GetName(weapon)}, " +
             $"stabilizer={GetName(anomalyStabilizer)}"
         );
+    }
+
+    private void ApplyPendingSlotBonus()
+    {
+        var bonus = OrbitalSlotMachine.Pending;
+        if (bonus == OrbitalSlotSymbol.None) return;
+        var candidate = JsonUtility.FromJson<OrbitalRunState>(JsonUtility.ToJson(OrbitalStationState));
+        if (!OrbitalSlotMachine.TryApplyBonus(candidate, bonus) || !candidate.Validate(out _))
+        {
+            Debug.LogError($"[OrbitalSlot] Cannot apply {bonus}; pending bonus retained.", this);
+            return;
+        }
+        OrbitalStationState = candidate;
+        OrbitalSlotMachine.ClearPending();
     }
 
     public void SavePlayerState(GameObject player)
