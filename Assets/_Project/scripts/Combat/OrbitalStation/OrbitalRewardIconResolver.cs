@@ -48,7 +48,8 @@ namespace Subject42.Combat.OrbitalStation
         {
             if ((reward.RewardKind == OrbitalRewardKind.MaxHealth || reward.RewardKind == OrbitalRewardKind.MoveSpeed) &&
                 reward.BodyUpgrade != null)
-                return new Icon(reward.BodyUpgrade.icon, Color.white);
+                return new Icon(reward.BodyUpgrade.icon,
+                    reward.RewardKind == OrbitalRewardKind.MaxHealth ? Color.red : Color.blue);
             return Resolve(reward.RewardKind);
         }
     }
