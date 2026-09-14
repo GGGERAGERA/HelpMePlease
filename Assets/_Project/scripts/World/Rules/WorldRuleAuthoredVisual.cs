@@ -16,6 +16,26 @@ public sealed class WorldRuleAuthoredVisual : MonoBehaviour
     [SerializeField] private bool tintEnemies;
     [SerializeField] private Color enemyTint = new Color(1f, 0.78f, 0.32f, 1f);
 
+    [Header("Snow authored resources")]
+    public MeshRenderer snowGround;
+    public UnityEngine.Rendering.Volume snowVolume;
+    public GameObject snowParticles;
+    [Header("Snow presentation tuning")]
+    [Range(0f, 1f)] public float snowVisualIntensity = 0.58f;
+    [Range(0f, 1f)] public float snowVolumeWeight = 1f;
+    [Range(0f, 0.25f)] public float snowScreenOpacity = 0.04f;
+    [Range(0f, 4f)] public float blizzardIntensity = 0.32f;
+    [Range(0f, 16f)] public float blizzardLineDensity = 8f;
+    [Range(0f, 4f)] public float blizzardLineSpeed = 1.4f;
+    [Range(0f, 4f)] public float blizzardVeil = 0.14f;
+    [Range(0f, 4f)] public float snowParticleEmissionMultiplier = 1.8f;
+    [Min(0f)] public float snowFallSpeedMultiplier = 1.35f;
+    [Header("Darkness world veil (below gameplay layers)")]
+    [SerializeField] private SpriteRenderer darknessVeil;
+    public UnityEngine.Rendering.Universal.Light2D darknessShotReveal;
+    [Range(0f, 1f)] public float darknessGlobalIntensity = 0.05f;
+    [SerializeField, Range(0f, 1f)] private float darknessOpacity = 0.985f;
+
     private Camera view;
     private float[] emissionMultipliers;
     private MaterialPropertyBlock wetProperties;
@@ -61,6 +81,8 @@ public sealed class WorldRuleAuthoredVisual : MonoBehaviour
 
     public void SetIntensity(float intensity)
     {
+        if (darknessVeil != null)
+            darknessVeil.color = new Color(0f, 0f, 0f, darknessOpacity * intensity);
         if (vignette != null) vignette.alpha = intensity;
         if (wetGround == null) return;
         wetGround.GetPropertyBlock(wetProperties);
@@ -78,10 +100,17 @@ public sealed class WorldRuleAuthoredVisual : MonoBehaviour
     {
         if (view == null) return;
         Vector3 cameraPosition = new Vector3(view.transform.position.x, view.transform.position.y, 0f);
-        if (!IsScreenOverlay)
+        Vector3 revealPosition = darknessShotReveal != null ? darknessShotReveal.transform.position : Vector3.zero;
+        if (!IsScreenOverlay && snowParticles == null)
             transform.position = cameraPosition;
+        if (darknessShotReveal != null && darknessShotReveal.enabled)
+            darknessShotReveal.transform.position = revealPosition;
         float height = view.orthographicSize * 2f;
         float width = height * view.aspect;
+        if (darknessVeil != null)
+            darknessVeil.transform.localScale = new Vector3(
+                (width + 2f) / darknessVeil.sprite.bounds.size.x,
+                (height + 2f) / darknessVeil.sprite.bounds.size.y, 1f);
         // Project the viewport onto the emitter's local axes, including diagonal wind.
         Vector3 right = transform.right, up = transform.up;
         float localWidth = Mathf.Abs(right.x) * width + Mathf.Abs(right.y) * height;

@@ -41,6 +41,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2060449581770367168}
   - component: {fileID: 7338036249803697899}
+  - component: {fileID: 5024739515256764810}
   m_Layer: 0
   m_Name: Enemy2ShooterEyes
   m_TagString: Untagged
@@ -122,6 +123,19 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!210 &5024739515256764810
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3058808696858246250}
+  m_Enabled: 0
+  m_SortingLayerID: 1745937391
+  m_SortingLayer: 1
+  m_SortingOrder: 20
+  m_SortAtRoot: 1
+  m_Sort3DAs2D: 0
 --- !u!1 &7106779362139084517
 GameObject:
   m_ObjectHideFlags: 0
@@ -405,6 +419,42 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: fallbackEyes
+      value:
+      objectReference: {fileID: 0}
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: eyes.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: 'eyes.Array.data[0]'
+      value:
+      objectReference: {fileID: 7338036249803697899}
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: 'eyes.Array.data[1]'
+      value:
+      objectReference: {fileID: 2554096648493910053}
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: 'eyes.Array.data[2]'
+      value:
+      objectReference: {fileID: 1493356881385401269}
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: eyeGroups.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: 'eyeGroups.Array.data[0]'
+      value:
+      objectReference: {fileID: 5024739515256764810}
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: 'eyeGroups.Array.data[1]'
+      value:
+      objectReference: {fileID: 5901122112331309415}
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: 'eyeGroups.Array.data[2]'
+      value:
+      objectReference: {fileID: 3978673304473533369}
     - target: {fileID: 330473454747600092, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: enemyId
       value: Shooter
@@ -525,6 +575,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 7585222145449660943}
   m_SourcePrefab: {fileID: 100100000, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+--- !u!212 &1493356881385401269 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 2647908302607373971, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+  m_PrefabInstance: {fileID: 3460517932262817062}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1519862368115378757 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2671083716182587235, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
@@ -556,6 +611,11 @@ MonoBehaviour:
   fireInterval: 4
   visualRoot: {fileID: 6973859611331924579}
   flipVisual: 1
+--- !u!212 &2554096648493910053 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 1402805206191322371, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+  m_PrefabInstance: {fileID: 3460517932262817062}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &3632775731541157496 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 174528772103428958, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
@@ -583,6 +643,11 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!210 &3978673304473533369 stripped
+SortingGroup:
+  m_CorrespondingSourceObject: {fileID: 518244857888474783, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+  m_PrefabInstance: {fileID: 3460517932262817062}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &4773886692617478305 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8234403241518505351, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
@@ -599,3 +664,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 521b7b5f1c0953542a0fdea451de698c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyWhiteFlash
+--- !u!210 &5901122112331309415 stripped
+SortingGroup:
+  m_CorrespondingSourceObject: {fileID: 7053417610575158337, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+  m_PrefabInstance: {fileID: 3460517932262817062}
+  m_PrefabAsset: {fileID: 0}

@@ -553,13 +553,17 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-      propertyPath: m_Name
-      value: p_EnemyTurret1
-      objectReference: {fileID: 0}
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: fallbackEyes
+      value:
+      objectReference: {fileID: 5401076637062242688}
     - target: {fileID: 330473454747600092, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: enemyId
       value: Turret
+      objectReference: {fileID: 0}
+    - target: {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: m_Name
+      value: p_EnemyTurret1
       objectReference: {fileID: 0}
     - target: {fileID: 1650459043932727762, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: m_Size.x
@@ -647,11 +651,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 6018367976647202281}
   m_SourcePrefab: {fileID: 100100000, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
---- !u!4 &8225059544858623518 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8234403241518505351, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-  m_PrefabInstance: {fileID: 27921055179006873}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1334349216365075605 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
@@ -675,3 +674,13 @@ MonoBehaviour:
   aimLineMaterial: {fileID: 2100000, guid: dca396c6aa60fe549b61f941be335967, type: 2}
   aimDuration: 1
   cooldown: 2.5
+--- !u!1 &5401076637062242688 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5374844501912404505, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+  m_PrefabInstance: {fileID: 27921055179006873}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &8225059544858623518 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8234403241518505351, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+  m_PrefabInstance: {fileID: 27921055179006873}
+  m_PrefabAsset: {fileID: 0}

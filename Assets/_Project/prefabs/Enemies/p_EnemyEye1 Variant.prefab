@@ -99,13 +99,49 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-      propertyPath: m_Name
-      value: p_EnemyEye1 Variant
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: fallbackEyes
+      value:
+      objectReference: {fileID: 8506771460033055976}
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: eyes.Array.size
+      value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: 'eyes.Array.data[0]'
+      value:
+      objectReference: {fileID: 3453861712214293490}
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: 'eyes.Array.data[1]'
+      value:
+      objectReference: {fileID: 1740102052655700066}
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: 'eyes.Array.data[2]'
+      value:
+      objectReference: {fileID: 1740102052655700066}
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: eyeGroups.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: 'eyeGroups.Array.data[0]'
+      value:
+      objectReference: {fileID: 6736139264281662128}
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: 'eyeGroups.Array.data[1]'
+      value:
+      objectReference: {fileID: 4298822154958227566}
+    - target: {fileID: 290436255382512980, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: 'eyeGroups.Array.data[2]'
+      value:
+      objectReference: {fileID: 4298822154958227566}
     - target: {fileID: 330473454747600092, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: enemyId
       value: Eyes
+      objectReference: {fileID: 0}
+    - target: {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      propertyPath: m_Name
+      value: p_EnemyEye1 Variant
       objectReference: {fileID: 0}
     - target: {fileID: 1915675553744595750, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: m_LocalScale.x
@@ -166,13 +202,47 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 4524904278419929960}
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 174528772103428958, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 9133520138962506031}
     - targetCorrespondingSourceObject: {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8921193840297014073}
+    - targetCorrespondingSourceObject: {fileID: 174528772103428958, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9133520138962506031}
   m_SourcePrefab: {fileID: 100100000, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+--- !u!212 &1740102052655700066 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 2647908302607373971, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+  m_PrefabInstance: {fileID: 4366617016853909233}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &3350373065324294653 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+  m_PrefabInstance: {fileID: 4366617016853909233}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8921193840297014073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3350373065324294653}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a42e1100000000000000000000000002, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EyesEnemyBehaviour
+  eyeVisual: {fileID: 4524904278419929960}
+  moveSpeed: 1.2
+--- !u!212 &3453861712214293490 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 1402805206191322371, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+  m_PrefabInstance: {fileID: 4366617016853909233}
+  m_PrefabAsset: {fileID: 0}
+--- !u!210 &4298822154958227566 stripped
+SortingGroup:
+  m_CorrespondingSourceObject: {fileID: 518244857888474783, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+  m_PrefabInstance: {fileID: 4366617016853909233}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &4536633306523866543 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 174528772103428958, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
@@ -205,22 +275,13 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8234403241518505351, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
   m_PrefabInstance: {fileID: 4366617016853909233}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &3350373065324294653 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+--- !u!210 &6736139264281662128 stripped
+SortingGroup:
+  m_CorrespondingSourceObject: {fileID: 7053417610575158337, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
   m_PrefabInstance: {fileID: 4366617016853909233}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8921193840297014073
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+--- !u!1 &8506771460033055976 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5374844501912404505, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+  m_PrefabInstance: {fileID: 4366617016853909233}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3350373065324294653}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a42e1100000000000000000000000002, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::EyesEnemyBehaviour
-  eyeVisual: {fileID: 4524904278419929960}
-  moveSpeed: 1.2

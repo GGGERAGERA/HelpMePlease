@@ -76,7 +76,7 @@ public sealed class ProductionSectorExit : MonoBehaviour
         platform.GetComponent<MeshFilter>().sharedMesh = platformMesh;
         var surface = platform.GetComponent<MeshRenderer>();
         surface.sharedMaterial = material;
-        surface.sortingLayerName = "Effects";
+        surface.sortingLayerName = "Midground";
         surface.sortingOrder = 26;
         glow = CreateContour("Exit contour glow", vertices, 0.32f, new Color(0.1f, 0.8f, 1f, 0.18f), 27);
         ring = CreateContour("Exit energy contour", vertices, 0.065f, new Color(0.55f, 0.95f, 1f), 28);
@@ -123,7 +123,7 @@ public sealed class ProductionSectorExit : MonoBehaviour
         fade.color = gradient;
         var renderer = particles.GetComponent<ParticleSystemRenderer>();
         renderer.sharedMaterial = energy;
-        renderer.sortingLayerName = "Effects";
+        renderer.sortingLayerName = "Midground";
         renderer.sortingOrder = 29;
         particles.Play();
     }

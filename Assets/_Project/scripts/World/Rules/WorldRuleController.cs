@@ -713,25 +713,8 @@ public sealed class WorldRuleController : MonoBehaviour
         DarknessEnemyMarker marker =
             enemy.GetComponent<DarknessEnemyMarker>();
 
-        if (active && marker == null)
-            marker = enemy.gameObject.AddComponent<DarknessEnemyMarker>();
-
-        if (marker == null)
-            return;
-
-        marker.SetActive(
-            active,
-            worldRuleVisual != null
-                ? worldRuleVisual.DarknessMarkerSprite
-                : null,
-            worldRuleVisual != null
-                ? worldRuleVisual.DarknessMarkerMaterial
-                : null,
-            activeRule != null
-                ? activeRule.DarknessEnemyMarkerIntensity
-                : 0f,
-            enemy
-        );
+        if (marker != null)
+            marker.SetActive(active, activeRule != null ? activeRule.DarknessEnemyMarkerIntensity : 0f);
     }
 
     private void RestoreRuntimeEffects()

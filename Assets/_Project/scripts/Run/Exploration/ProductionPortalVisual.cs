@@ -54,7 +54,7 @@ public sealed class ProductionPortalVisual : MonoBehaviour
         var renderer = child.AddComponent<SpriteRenderer>();
         renderer.sprite = sprite;
         renderer.sharedMaterial = source;
-        renderer.sortingLayerName = "Effects";
+        renderer.sortingLayerName = "Midground";
         renderer.sortingOrder = order;
         return renderer;
     }
@@ -90,7 +90,7 @@ public sealed class ProductionPortalVisual : MonoBehaviour
         moteMaterial = new Material(sparkMaterial) { name = "Portal spark tint" };
         var renderer = motes.GetComponent<ParticleSystemRenderer>();
         renderer.sharedMaterial = moteMaterial;
-        renderer.sortingLayerName = "Effects";
+        renderer.sortingLayerName = "Midground";
         renderer.sortingOrder = 31;
         motes.Play();
     }
