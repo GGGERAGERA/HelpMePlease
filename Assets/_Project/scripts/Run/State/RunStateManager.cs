@@ -18,6 +18,7 @@ public sealed class RunStateManager : MonoBehaviour
     public AnomalyRunModifiers AnomalyModifiers { get; private set; } =
         AnomalyRunModifiers.None;
     public int CurrentLevel { get; private set; } = 1;
+    public int CurrentDepthId { get; private set; } = DepthCatalog.SurfaceId;
 
     public RunSector CurrentSector { get; private set; }
 
@@ -672,6 +673,7 @@ public sealed class RunStateManager : MonoBehaviour
         WorldRuleData worldRule,
         LocalAnomalyData localAnomaly)
     {
+        CurrentDepthId = DepthCatalog.SurfaceId;
         startingStageProfile = stageProfile;
         startingWorldRule = worldRule;
         startingLocalAnomaly = localAnomaly;
@@ -684,8 +686,10 @@ public sealed class RunStateManager : MonoBehaviour
         StageProfileData stageProfile,
         WorldRuleData worldRule,
         LocalAnomalyData localAnomaly,
-        AnomalyStabilizerData anomalyStabilizer)
+        AnomalyStabilizerData anomalyStabilizer,
+        int depthId = DepthCatalog.SurfaceId)
     {
+        CurrentDepthId = depthId;
         startingStageProfile = stageProfile;
         startingWorldRule = worldRule;
         startingLocalAnomaly = localAnomaly;

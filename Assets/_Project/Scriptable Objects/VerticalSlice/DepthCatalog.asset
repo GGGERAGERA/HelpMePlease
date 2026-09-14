@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b41dae3378a4dc8ac3844f043116241, type: 3}
+  m_Name: DepthCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::DepthCatalog
+  entries:
+  - id: 1
+    displayName: SURFACE
+    requiredAccess: 0
+    availableInCurrentBuild: 1
+    gameplaySceneName: MVP
+    startingStageProfile: {fileID: 11400000, guid: d387815bd32a4a639c4ac0f811ee3251, type: 2}
+    description: "3 SECTORS\nSECTOR GUARDIAN"
+  - id: 2
+    displayName: DEPTH II
+    requiredAccess: 1
+    availableInCurrentBuild: 0
+    gameplaySceneName: ''
+    startingStageProfile: {fileID: 0}
+    description: "Future stage of Escape Protocol."
+  - id: 3
+    displayName: DEPTH III
+    requiredAccess: 2
+    availableInCurrentBuild: 0
+    gameplaySceneName: ''
+    startingStageProfile: {fileID: 0}
+    description: "Future stage of Escape Protocol."
+  - id: 4
+    displayName: DEPTH IV
+    requiredAccess: 3
+    availableInCurrentBuild: 0
+    gameplaySceneName: ''
+    startingStageProfile: {fileID: 0}
+    description: "Future stage of Escape Protocol."
+  - id: 5
+    displayName: ESCAPE
+    requiredAccess: 4
+    availableInCurrentBuild: 0
+    gameplaySceneName: ''
+    startingStageProfile: {fileID: 0}
+    description: "Future stage of Escape Protocol."

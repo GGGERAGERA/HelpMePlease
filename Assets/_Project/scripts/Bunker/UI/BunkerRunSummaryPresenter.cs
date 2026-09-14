@@ -22,11 +22,14 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
         while (SceneTransitionOverlay.IsTransitioning) yield return null;
         yield return new WaitForSecondsRealtime(showDelay);
 
-        if (RunStateManager.Instance == null ||
-            !RunStateManager.Instance.TryConsumeLastRunSummary(out RunSummary summary))
-            yield break;
+        MetaProgressionManager meta = MetaProgressionManager.EnsureExists();
+        bool escapeUpdated = meta.HasEscapeUpdate;
+        RunSummary summary = null;
+        if (RunStateManager.Instance != null)
+            RunStateManager.Instance.TryConsumeLastRunSummary(out summary);
+        if (summary == null && !escapeUpdated) yield break;
 
-        if (summary.EndReason == RunEndReason.Victory)
+        if (summary?.EndReason == RunEndReason.Victory)
             RunStateManager.Instance.ClearFinishedRunCompatibilityState();
 
         if (notificationParent == null || panelTemplate == null || goldTextTemplate == null || sourceScaler == null)
@@ -56,7 +59,7 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
         notification.anchorMin = notification.anchorMax = new Vector2(0.5f, 1f);
         notification.pivot = new Vector2(0.5f, 1f);
         notification.anchoredPosition = new Vector2(0f, -24f);
-        notification.sizeDelta = new Vector2(520f, 100f);
+        notification.sizeDelta = new Vector2(520f, escapeUpdated && summary != null ? 140f : 100f);
         notification.localScale = Vector3.one;
         LayoutElement layout = notification.GetComponent<LayoutElement>();
         if (layout != null) layout.ignoreLayout = true;
@@ -68,17 +71,28 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
             graphic.raycastTarget = false;
 
         TextMeshProUGUI title = notification.GetComponentInChildren<TextMeshProUGUI>(true);
-        string reason = summary.EndReason switch
+        string reason = summary?.EndReason switch
         {
             RunEndReason.PlayerDied => "ЭКСПЕРИМЕНТ ПРЕРВАН",
             RunEndReason.Victory => "ЗАБЕГ ЗАВЕРШЁН",
             _ => "ВОЗВРАЩЕНИЕ В БУНКЕР"
         };
-        SetLine(title, reason, 0.7f);
+        SetLine(title, escapeUpdated ? "ESCAPE PROTOCOL UPDATED" : reason, escapeUpdated && summary != null ? 0.8f : 0.7f);
         TextMeshProUGUI gold = Instantiate(goldTextTemplate, notification);
         gold.name = "GoldEarned";
         gold.gameObject.SetActive(true);
-        SetLine(gold, $"ПОЛУЧЕНО ЗОЛОТА: +{summary.GoldEarned}", 0.3f);
+        SetLine(gold, escapeUpdated ? "ACCESS I ACQUIRED" : $"ПОЛУЧЕНО ЗОЛОТА: +{summary.GoldEarned}",
+            escapeUpdated && summary != null ? 0.5f : 0.3f);
+        if (escapeUpdated)
+        {
+            if (summary != null)
+            {
+                TextMeshProUGUI earned = Instantiate(goldTextTemplate, notification);
+                earned.gameObject.SetActive(true);
+                SetLine(earned, $"ПОЛУЧЕНО ЗОЛОТА: +{summary.GoldEarned}", 0.2f);
+            }
+            meta.AcknowledgeEscapeUpdate();
+        }
 
         yield return new WaitForSecondsRealtime(VisibleDuration);
         float elapsed = 0f;

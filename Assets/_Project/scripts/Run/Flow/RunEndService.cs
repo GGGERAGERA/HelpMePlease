@@ -60,6 +60,7 @@ public sealed class RunEndService : MonoBehaviour
             StopActiveGameplay();
             runState.CommitCurrentSceneStats();
             runState.RegisterCompletedLevel();
+            MetaProgressionManager.EnsureExists().AcquireGuardianAccess();
 
             UnlockProgressService.Instance?.AddProgressByCondition(
                 UnlockConditionType.CompleteRun,

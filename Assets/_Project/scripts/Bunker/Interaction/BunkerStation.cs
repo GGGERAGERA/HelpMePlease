@@ -47,6 +47,10 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
 
         switch (stationType)
         {
+            case BunkerStationType.EscapeProtocol:
+                Panels?.OpenEscapeProtocol();
+                break;
+
             case BunkerStationType.CharacterSelection:
                 Panels?.OpenCharacterSelection();
                 break;
@@ -64,7 +68,7 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
                 break;
 
             case BunkerStationType.StartRun:
-                Panels?.StartRun(runTransitionTarget);
+                Panels?.OpenDepthSelect(runTransitionTarget);
                 break;
 
             case BunkerStationType.Animation:
