@@ -22,6 +22,7 @@ public sealed class BunkerIntroStep
     public bool typewriter = true;
     public bool glitch;
     public BunkerIntroTextStyle style;
+    [Min(0f)] public float pauseAfter = 0.4f;
 }
 
 public sealed class BunkerIntroController : MonoBehaviour
@@ -51,6 +52,7 @@ public sealed class BunkerIntroController : MonoBehaviour
     [Header("Staging")]
     [SerializeField, Min(0.05f)] private float cameraMoveDuration = 1.65f;
     [SerializeField, Min(0.05f)] private float finalFadeDuration = 0.55f;
+    [SerializeField, Min(0f)] private float finalBlackHoldDuration = 0.45f;
     [SerializeField] private Vector3 propLiftOffset =
         new(-0.32f, 0.55f, 0f);
     [SerializeField, Min(0.1f)] private float propAnimationDuration = 0.9f;
@@ -140,6 +142,7 @@ public sealed class BunkerIntroController : MonoBehaviour
             return;
 
         hasFinished = false;
+        PopulateDefaultSteps();
 
         if (!ValidateCriticalReferences())
         {
@@ -167,32 +170,46 @@ public sealed class BunkerIntroController : MonoBehaviour
         if (FinishIfSkipped())
             yield break;
 
-        yield return PlayHumanRecordingStage();
+        StartLoop(ambienceSource, radioNoiseClip, 0.12f);
+
+        for (int i = 0; i < recordingSteps.Count && !skipRequested; i++)
+            yield return PlayProtocolStep(recordingSteps[i], false);
+
+        for (int i = 0; i < systemSteps.Count && !skipRequested; i++)
+            yield return PlayProtocolStep(systemSteps[i], false);
+
+        if (!skipRequested)
+            yield return PlayProtocolStep(finalStep, true);
 
         if (FinishIfSkipped())
             yield break;
 
-        yield return PlayEmergencyAwakeningStage();
+        StopSource(ambienceSource);
+        view.ClearText();
+        view.SetOverlayAlpha(1f);
+        yield return WaitUnscaled(finalBlackHoldDuration);
+        yield return FadeOutView();
 
-        if (FinishIfSkipped())
+        if (!FinishIfSkipped())
+            FinishIntro(true);
+    }
+
+    private IEnumerator PlayProtocolStep(BunkerIntroStep step, bool confirm)
+    {
+        if (step == null)
             yield break;
 
-        yield return PlaySystemReactionStage();
+        if (confirm)
+            AudioService.Instance?.Play(AudioCueId.UIConfirm);
+        else if (step.style == BunkerIntroTextStyle.Error || step.glitch)
+            PlayClip(sfxSource, systemErrorClip, 0.45f);
 
-        if (FinishIfSkipped())
-            yield break;
+        yield return PlayTextStep(step, 1f);
+        view.ClearText();
+        view.SetFlash(Color.red, 0f);
 
-        yield return PlayPropReactionStage();
-
-        if (FinishIfSkipped())
-            yield break;
-
-        yield return PlayReturnControlStage();
-
-        if (FinishIfSkipped())
-            yield break;
-
-        FinishIntro(true);
+        if (!skipRequested && step.pauseAfter > 0f)
+            yield return WaitUnscaled(step.pauseAfter);
     }
 
     private IEnumerator PlayHumanRecordingStage()
@@ -351,10 +368,25 @@ public sealed class BunkerIntroController : MonoBehaviour
             Mathf.Max(0f, step.fadeOut),
             Mathf.Max(0f, duration - fadeIn));
         float elapsed = 0f;
+        float visibleCharacterAccumulator = 0f;
+        int processedCharacters = 0;
+        int nonWhitespaceCharacters = 0;
+        float nextTypingTickAt = 0f;
+
+        view.SetText(
+            main,
+            secondary,
+            step.style,
+            0,
+            0,
+            0f,
+            false,
+            mainCharacters > 0);
 
         while (elapsed < duration && !skipRequested)
         {
-            elapsed += Time.unscaledDeltaTime;
+            float frameDelta = Time.unscaledDeltaTime;
+            elapsed += frameDelta;
             float alpha = fadeIn <= 0f
                 ? 1f
                 : Mathf.Clamp01(elapsed / fadeIn);
@@ -362,13 +394,16 @@ public sealed class BunkerIntroController : MonoBehaviour
             if (fadeOut > 0f && elapsed > duration - fadeOut)
                 alpha *= Mathf.Clamp01((duration - elapsed) / fadeOut);
 
+            alpha *= 0.975f + Mathf.Sin(elapsed * 19f) * 0.015f;
+
             int visibleMain = mainCharacters;
             int visibleSecondary = secondaryCharacters;
 
             if (step.typewriter)
             {
-                int visible = Mathf.FloorToInt(
-                    elapsed * Mathf.Max(1f, step.charactersPerSecond));
+                visibleCharacterAccumulator +=
+                    frameDelta * Mathf.Max(1f, step.charactersPerSecond);
+                int visible = Mathf.FloorToInt(visibleCharacterAccumulator);
                 visibleMain = Mathf.Min(mainCharacters, visible);
                 visibleSecondary = Mathf.Clamp(
                     visible - mainCharacters,
@@ -389,6 +424,45 @@ public sealed class BunkerIntroController : MonoBehaviour
                 }
             }
 
+            int visibleCharacters = visibleMain + visibleSecondary;
+            bool typingTickDue = false;
+            while (step.typewriter && processedCharacters < visibleCharacters)
+            {
+                char character = processedCharacters < mainCharacters
+                    ? main[processedCharacters]
+                    : secondary[processedCharacters - mainCharacters];
+                processedCharacters++;
+
+                if (!char.IsWhiteSpace(character))
+                {
+                    nonWhitespaceCharacters++;
+                    typingTickDue |= (nonWhitespaceCharacters & 1) == 0;
+                }
+            }
+
+            if (step.typewriter &&
+                typingTickDue &&
+                elapsed >= nextTypingTickAt)
+            {
+                nextTypingTickAt = elapsed + 0.09f;
+                AudioService.Instance?.Play(AudioCueId.UIHover);
+            }
+
+            bool showCursor = step.typewriter &&
+                (Mathf.FloorToInt(elapsed * 3f) & 1) == 0;
+            bool cursorOnMain = mainCharacters > 0 &&
+                (visibleMain < mainCharacters || secondaryCharacters == 0);
+
+            if (step.style == BunkerIntroTextStyle.Error && step.glitch && elapsed < 0.14f)
+            {
+                float redGlitch = Mathf.Sin(Mathf.Clamp01(elapsed / 0.14f) * Mathf.PI);
+                view.SetFlash(new Color(0.9f, 0.02f, 0.01f), redGlitch * 0.08f);
+            }
+            else
+            {
+                view.SetFlash(Color.red, 0f);
+            }
+
             view.SetTextOffset(glitchOffset);
             view.SetText(
                 main,
@@ -396,7 +470,9 @@ public sealed class BunkerIntroController : MonoBehaviour
                 step.style,
                 visibleMain,
                 visibleSecondary,
-                alpha);
+                alpha,
+                showCursor,
+                cursorOnMain);
             view.SetOverlayAlpha(overlayAlpha);
             yield return null;
         }
@@ -749,19 +825,6 @@ public sealed class BunkerIntroController : MonoBehaviour
             valid = false;
         }
 
-        if (recordingSteps == null ||
-            recordingSteps.Count == 0 ||
-            systemSteps == null ||
-            systemSteps.Count == 0 ||
-            finalStep == null)
-        {
-            Debug.LogError(
-                "[BunkerIntro] Narrative steps are not configured. " +
-                "The intro was cancelled safely.",
-                this);
-            valid = false;
-        }
-
         return valid;
     }
 
@@ -895,36 +958,44 @@ public sealed class BunkerIntroController : MonoBehaviour
     [ContextMenu("Restore Default Intro Steps")]
     public void PopulateDefaultSteps()
     {
+        initialBlackDuration = 0.8f;
+        finalBlackHoldDuration = 0.55f;
+        finalFadeDuration = 0.7f;
+
         recordingSteps = new List<BunkerIntroStep>
         {
             Step(
                 "...слышишь меня?",
                 "ПОВРЕЖДЁННАЯ ЗАПИСЬ",
-                1.35f,
+                3.2f,
                 BunkerIntroTextStyle.HumanRecording,
                 false,
-                26f),
+                13f,
+                0.7f),
             Step(
                 "Если ты проснулся...",
                 "ПОВРЕЖДЁННАЯ ЗАПИСЬ",
-                2.55f,
+                3.5f,
                 BunkerIntroTextStyle.HumanRecording,
                 false,
-                24f),
+                13f,
+                0.8f),
             Step(
                 "...значит мы проиграли.",
                 "ПОВРЕЖДЁННАЯ ЗАПИСЬ",
-                3.05f,
+                4.1f,
                 BunkerIntroTextStyle.HumanRecording,
                 false,
-                23f),
+                12f,
+                1.1f),
             Step(
                 "Прости нас.",
                 "ПОВРЕЖДЁННАЯ ЗАПИСЬ",
-                1.65f,
+                3.2f,
                 BunkerIntroTextStyle.HumanRecording,
                 false,
-                22f)
+                12f,
+                1.3f)
         };
 
         systemSteps = new List<BunkerIntroStep>
@@ -932,33 +1003,39 @@ public sealed class BunkerIntroController : MonoBehaviour
             Step(
                 "БИОЛОГИЧЕСКАЯ АКТИВНОСТЬ ОБНАРУЖЕНА",
                 string.Empty,
-                1.65f,
+                2.9f,
                 BunkerIntroTextStyle.System,
                 false,
-                38f),
+                15f,
+                0.65f),
             Step(
                 "НЕВОЗМОЖНО",
                 string.Empty,
-                1.05f,
+                1.55f,
                 BunkerIntroTextStyle.Error,
                 true,
-                30f),
+                10f,
+                1f),
             Step(
-                "ИДЕНТИФИКАЦИЯ...\n\nАРХИВ ПОВРЕЖДЁН\n\nОБЪЕКТ НЕ ОПОЗНАН",
+                "ИДЕНТИФИКАЦИЯ...\n\n" +
+                "АРХИВ ПОВРЕЖДЁН\n\n" +
+                "ОБЪЕКТ НЕ ОПОЗНАН",
                 string.Empty,
-                2.45f,
+                4.4f,
                 BunkerIntroTextStyle.System,
                 true,
-                39f)
+                14f,
+                0.75f)
         };
 
         finalStep = Step(
             "НАЙДИТЕ ВЫХОД",
             string.Empty,
-            1.15f,
+            3.8f,
             BunkerIntroTextStyle.System,
             false,
-            32f);
+            10f,
+            0f);
     }
 
     private static BunkerIntroStep Step(
@@ -967,7 +1044,8 @@ public sealed class BunkerIntroController : MonoBehaviour
         float duration,
         BunkerIntroTextStyle style,
         bool glitch,
-        float charactersPerSecond)
+        float charactersPerSecond,
+        float pauseAfter)
     {
         return new BunkerIntroStep
         {
@@ -976,14 +1054,15 @@ public sealed class BunkerIntroController : MonoBehaviour
             duration = duration,
             fadeIn = style == BunkerIntroTextStyle.HumanRecording
                 ? 0.35f
-                : 0.2f,
+                : style == BunkerIntroTextStyle.Error ? 0.14f : 0.2f,
             fadeOut = style == BunkerIntroTextStyle.HumanRecording
                 ? 0.28f
-                : 0.18f,
+                : style == BunkerIntroTextStyle.Error ? 0.22f : 0.16f,
             charactersPerSecond = charactersPerSecond,
             typewriter = true,
             glitch = glitch,
-            style = style
+            style = style,
+            pauseAfter = pauseAfter
         };
     }
 }

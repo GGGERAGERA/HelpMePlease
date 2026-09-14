@@ -831,6 +831,9 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         tabBar.sizeDelta = new Vector2(0f, 54f);
 
         string[] labels = TabLabels;
+        bool bunkerAvailable = FindFirstObjectByType<BunkerRunStarter>() != null;
+        bool bunkerQaAvailable = SceneManager.GetActiveScene().name == "MainMenu" &&
+            FindFirstObjectByType<BunkerIntroController>(FindObjectsInactive.Include) != null;
         for (int i = 0; i < labels.Length; i++)
         {
             int captured = i;
@@ -845,9 +848,12 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
                 () => SelectTab((DebugTab)captured),
                 100f
             );
-            button.interactable = (DebugTab)i == DebugTab.Bunker
-                ? FindFirstObjectByType<BunkerRunStarter>() != null
-                : characterSpawner != null;
+            DebugTab buttonTab = (DebugTab)i;
+            button.interactable = buttonTab == DebugTab.Bunker
+                ? bunkerAvailable
+                : buttonTab == DebugTab.QA
+                    ? characterSpawner != null || bunkerQaAvailable
+                    : characterSpawner != null;
             Stretch(button.GetComponent<RectTransform>());
             TextMeshProUGUI tabText = button.GetComponentInChildren<TextMeshProUGUI>();
             if (tabText != null && labels.Length > 7)
@@ -1271,7 +1277,10 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
         bool runTab = tab == DebugTab.Run || tab == DebugTab.OrbitalProduction ||
             tab == DebugTab.FeelTest || tab == DebugTab.VisualTest || tab == DebugTab.QA;
-        if (runTab && characterSpawner == null)
+        bool bunkerIntroQa = tab == DebugTab.QA &&
+            SceneManager.GetActiveScene().name == "MainMenu" &&
+            FindFirstObjectByType<BunkerIntroController>(FindObjectsInactive.Include) != null;
+        if (runTab && characterSpawner == null && !bunkerIntroQa)
         {
             AddHint("Start a run from Bunker to use these tools.");
             return;
@@ -2941,6 +2950,18 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private void AddQaSection()
     {
+        BunkerIntroController intro = SceneManager.GetActiveScene().name == "MainMenu"
+            ? FindFirstObjectByType<BunkerIntroController>(FindObjectsInactive.Include)
+            : null;
+        AddRow("Replay Intro", intro != null ? "BUNKER INTRO" : "BUNKER ONLY",
+            accentColor, "REPLAY", intro != null, () =>
+            {
+                CloseMenu();
+                intro.PlayIntroFromStartForTesting();
+            });
+        if (characterSpawner == null)
+            return;
+
         EnsureProductionSectorDebug();
         var nodeSector = ProductionExplorationSectorController.ActiveInstance;
         AddRow("Regenerate Anomaly Layout", "6 normal + 1 special", mutedColor, "REGENERATE", nodeSector != null,

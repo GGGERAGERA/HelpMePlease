@@ -15,9 +15,12 @@ MonoBehaviour:
   stableId: Darkness
   ruleType: 13
   displayName: "\u0422\u0415\u041C\u041D\u041E\u0422\u0410"
-  description: "\u0422\u0451\u043C\u043D\u044B\u0439 \u0441\u0435\u043A\u0442\u043E\u0440 \u0441 \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0435\u043D\u043D\u043E\u0439 \u0432\u0438\u0434\u0438\u043C\u043E\u0441\u0442\u044C\u044E."
-  shortDescription: "\u0422\u0435\u043C\u043D\u043E\u0442\u0430 \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0438\u0432\u0430\u0435\u0442 \u0432\u0438\u0434\u0438\u043C\u043E\u0441\u0442\u044C"
-  icon: {fileID: -501882847, guid: c99f220d81f76e94a813e51a3de93b58, type: 3}
+  description: "\u0422\u0451\u043C\u043D\u044B\u0439 \u0441\u0435\u043A\u0442\u043E\u0440
+    \u0441 \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0435\u043D\u043D\u043E\u0439
+    \u0432\u0438\u0434\u0438\u043C\u043E\u0441\u0442\u044C\u044E."
+  shortDescription: "\u0422\u0435\u043C\u043D\u043E\u0442\u0430 \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0438\u0432\u0430\u0435\u0442
+    \u0432\u0438\u0434\u0438\u043C\u043E\u0441\u0442\u044C"
+  icon: {fileID: -1136307083359506751, guid: 12b175be7e1f7df4fafe9e350506485c, type: 3}
   presentationColor: {r: 0.35, g: 0.18, b: 0.55, a: 1}
   pinnedDescription: "\u0422\u0435\u043C\u043D\u043E\u0442\u0430"
   selectionWeight: 1
@@ -30,9 +33,35 @@ MonoBehaviour:
   goldenEnemyChance: 0
   goldenEnemyHealthMultiplier: 1
   goldenEnemyRewardMultiplier: 1
+  goldenCoinCountMin: 2
+  goldenCoinCountMax: 4
+  goldenCoinValue: 1
+  goldenCoinLifetime: 6
+  goldenCoinPickupRadius: 3
+  goldenCoinAttractSpeed: 8
+  goldenCoinScatterSpeed: 2.4
+  goldenCoinFadeDuration: 1.25
+  goldenCoinActiveLimit: 48
+  snowCalmDurationMin: 15
+  snowCalmDurationMax: 24
+  snowWarningDuration: 2.5
+  snowBlizzardDurationMin: 5
+  snowBlizzardDurationMax: 7
+  snowCalmEmissionMultiplier: 1
+  snowBlizzardEmissionMultiplier: 3.5
+  snowCalmParticleSpeedMultiplier: 1
+  snowBlizzardParticleSpeedMultiplier: 2.1
+  snowBlizzardVisibilityMultiplier: 0.65
+  snowTransitionDuration: 1
+  snowBlizzardHorizontalSpeed: 2.4
   windForce: 0
   windDirectionMode: 0
   fixedWindDirection: {x: 1, y: 0}
+  windMinDirectionDuration: 18
+  windMaxDirectionDuration: 30
+  windDirectionWarningDuration: 2.5
+  windEnemyForceMultiplier: 0.4
+  windProjectileForceMultiplier: 0.12
   darknessPlayerLightRadius: 4.8
   darknessPlayerLightIntensity: 1.15
   darknessEnemyMarkerIntensity: 0.75
