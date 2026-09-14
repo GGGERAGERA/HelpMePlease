@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Rendering.Universal;
 
 public sealed class GoldenEnemyModifier : MonoBehaviour
 {
@@ -17,7 +16,6 @@ public sealed class GoldenEnemyModifier : MonoBehaviour
     private bool rolledThisSpawn;
     private bool deathSubscribed;
     private bool deathHandled;
-    private Light2D goldenGlow;
 
     public bool IsGolden { get; private set; }
     public float HealthMultiplier { get; private set; } = 1f;
@@ -90,7 +88,6 @@ public sealed class GoldenEnemyModifier : MonoBehaviour
         originalMaxHealth = health.maxHealth;
         health.SetRuntimeMaxHealth(originalMaxHealth * HealthMultiplier);
         ApplyTint();
-        EnableGoldenGlow();
         assignmentPulseRemaining = assignmentPulseDuration;
         SubscribeToDeath();
     }
@@ -224,8 +221,6 @@ public sealed class GoldenEnemyModifier : MonoBehaviour
         RewardMultiplier = 1f;
         originalMaxHealth = 0f;
 
-        if (goldenGlow != null)
-            goldenGlow.enabled = false;
     }
 
     private void OnDisable()
@@ -252,21 +247,11 @@ public sealed class GoldenEnemyModifier : MonoBehaviour
             bodyRenderer.color = color;
     }
 
-    private void EnableGoldenGlow()
+    public void ClearRulePresentation()
     {
-        if (goldenGlow == null)
-        {
-            GameObject glowObject = new("GoldenGlow");
-            glowObject.layer = gameObject.layer;
-            glowObject.transform.SetParent(transform, false);
-            goldenGlow = glowObject.AddComponent<Light2D>();
-            goldenGlow.lightType = Light2D.LightType.Point;
-            goldenGlow.color = new Color(1f, 0.58f, 0.12f, 1f);
-            goldenGlow.intensity = 0.28f;
-            goldenGlow.pointLightOuterRadius = 0.8f;
-            goldenGlow.falloffIntensity = 0.82f;
-        }
-
-        goldenGlow.enabled = true;
+        assignmentPulseRemaining = 0f;
+        if (hasOriginalColor && bodyRenderer != null)
+            SetBodyColor(originalColor);
+        hasOriginalColor = false;
     }
 }

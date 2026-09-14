@@ -28,75 +28,19 @@ public sealed class WorldRuleVisual : MonoBehaviour
         Shader.PropertyToID("_BlizzardVeil");
     private static readonly int BlizzardDirectionId =
         Shader.PropertyToID("_BlizzardDirection");
-    private static readonly int WetGroundIntensityId =
-        Shader.PropertyToID("_WetGroundIntensity");
-    private static readonly int WetPatternScaleId =
-        Shader.PropertyToID("_WetPatternScale");
-    private static readonly int RainDropsIntensityId =
-        Shader.PropertyToID("_RainDropsIntensity");
-    private static readonly int RainDropsFrequencyId =
-        Shader.PropertyToID("_RainDropsFrequency");
-    private static readonly int RainLargeDropsIntensityId =
-        Shader.PropertyToID("_RainLargeDropsIntensity");
-    private static readonly int RainLargeDropsCountId =
-        Shader.PropertyToID("_RainLargeDropsCount");
-    private static readonly int RainLargeDropsSpeedId =
-        Shader.PropertyToID("_RainLargeDropsSpeed");
-    private static readonly int RainLargeDropsScaleId =
-        Shader.PropertyToID("_RainLargeDropsScale");
-    private static readonly int GoldenOverlayIntensityId =
-        Shader.PropertyToID("_GoldenOverlayIntensity");
-    private static readonly int GoldenOverlayColorId =
-        Shader.PropertyToID("_GoldenOverlayColor");
-    private static readonly int WindVisualIntensityId =
-        Shader.PropertyToID("_WindVisualIntensity");
-    private static readonly int WindLineDensityId =
-        Shader.PropertyToID("_WindLineDensity");
-    private static readonly int WindLineSpeedId =
-        Shader.PropertyToID("_WindLineSpeed");
-    private static readonly int WindDirectionId =
-        Shader.PropertyToID("_WindDirection");
-
     [Header("References")]
     [SerializeField] private Image fullscreenImage;
     [SerializeField] private Material visualMaterial;
     [SerializeField] private WindRuleIndicator windIndicator;
     [SerializeField] private CondensationFogOverlay condensationFogOverlay;
 
-    [Header("Rain / Existing Scene Effect")]
-    [SerializeField] private GameObject rainEffect;
-
-    [Header("Rain / Wet Ground")]
-    [SerializeField] private Material rainWorldMaterial;
-    [SerializeField, Range(0f, 1f)] private float wetGroundIntensity = 0.32f;
-    [SerializeField, Range(0.25f, 8f)] private float wetPatternScale = 2.8f;
-
-    [Header("Rain / Screen Drops")]
-    [SerializeField, Range(0f, 0.5f)] private float screenDropsIntensity = 0.025f;
-    [SerializeField, Range(0.05f, 2f)] private float screenDropsFrequency = 0.35f;
-    [SerializeField, Range(0f, 0.6f)]
-    private float rainLargeDropsIntensity = 0.32f;
-    [SerializeField, Range(4, 8)] private int rainLargeDropsCount = 6;
-    [SerializeField, Range(0.05f, 0.5f)]
-    private float rainLargeDropsSpeed = 0.18f;
-    [SerializeField, Range(0.5f, 2f)]
-    private float rainLargeDropsScale = 1f;
-
-    [Header("Golden / World Visual")]
-    [SerializeField, Range(0f, 0.2f)] private float goldenOverlayIntensity = 0.025f;
-    [SerializeField, ColorUsage(false, true)] private Color goldenColorFilter =
-        new Color(1f, 0.94f, 0.78f, 1f);
-
-    [Header("Wind / Screen Flow")]
-    [SerializeField, Range(0f, 0.4f)] private float windVisualIntensity = 0.16f;
-    [SerializeField, Range(2f, 12f)] private float windLineDensity = 3f;
-    [SerializeField, Range(0.05f, 2f)] private float windLineSpeed = 0.45f;
-
-    [Header("Wind / Dust Particles")]
-    [SerializeField] private ParticleSystem windParticleSystem;
-    [SerializeField, Range(0f, 60f)] private float windParticleEmission = 22f;
-    [SerializeField, Range(0.1f, 5f)] private float windParticleSpeed = 2.2f;
-    [SerializeField] private Vector2 windParticleArea = new(22f, 13f);
+    [Header("Authored World Rule Visuals")]
+    [SerializeField] private WorldRuleAuthoredVisual rainVisualPrefab;
+    [SerializeField] private WorldRuleAuthoredVisual windVisualPrefab;
+    [SerializeField] private WorldRuleAuthoredVisual goldenVisualPrefab;
+    private WorldRuleAuthoredVisual rainVisual;
+    private WorldRuleAuthoredVisual windVisual;
+    private WorldRuleAuthoredVisual goldenVisual;
 
     [Header("Darkness / Existing 2D Lights")]
     [SerializeField] private Light2D globalLight;
@@ -212,10 +156,6 @@ public sealed class WorldRuleVisual : MonoBehaviour
     private float darknessShotRevealRadius = 3.5f;
     private float darknessShotRevealDuration = 0.12f;
     private float darknessShotRevealIntensity = 1.25f;
-    private GameObject rainWorldObject;
-    private Mesh rainWorldMesh;
-    private MeshRenderer rainWorldRenderer;
-    private MaterialPropertyBlock rainProperties;
     private GameObject snowWorldObject;
     private Mesh snowWorldMesh;
     private MeshRenderer snowWorldRenderer;
@@ -223,9 +163,6 @@ public sealed class WorldRuleVisual : MonoBehaviour
     private GameObject snowVolumeObject;
     private Volume snowVolume;
     private VolumeProfile snowVolumeProfile;
-    private GameObject goldenVolumeObject;
-    private Volume goldenVolume;
-    private VolumeProfile goldenVolumeProfile;
     private GameObject snowParticleInstance;
     private ParticleSystem[] snowParticleSystems;
     private float[] snowParticleEmissionRates;
@@ -244,7 +181,6 @@ public sealed class WorldRuleVisual : MonoBehaviour
     private float cachedSnowViewportHeight = -1f;
     private float cachedSnowOrthographicSize = -1f;
     private float cachedSnowAspect = -1f;
-    private GameObject windParticleObject;
     private Image debugDarknessImage;
     private Material debugVisualMaterial;
 
@@ -293,12 +229,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
     public void SetWindDustAmountMultiplier(float value)
     {
         debugWindDustAmountMultiplier = Mathf.Clamp(value, 0f, 5f);
-        if (windParticleSystem == null)
-            return;
-
-        ParticleSystem.EmissionModule emission = windParticleSystem.emission;
-        emission.rateOverTime =
-            windParticleEmission * debugWindDustAmountMultiplier;
+        if (windVisual != null) windVisual.SetAmount(debugWindDustAmountMultiplier);
     }
 
     public void ResetWindDustDebugSettings()
@@ -327,7 +258,6 @@ public sealed class WorldRuleVisual : MonoBehaviour
         fullscreenImage = screenImage;
         debugDarknessImage = darknessImage;
         condensationFogOverlay = condensation;
-        rainWorldMaterial = rainMaterial;
         snowWorldMaterial = snowMaterial;
         snowParticlePrefab = snowParticles;
         targetCamera = camera;
@@ -356,8 +286,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
         }
 
         EnsureSnowResources();
-        EnsureRainResources();
-        EnsureGoldenResources();
+        EnsureAuthoredVisuals();
         SetNeutral();
     }
 #endif
@@ -387,8 +316,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
         }
 
         EnsureSnowResources();
-        EnsureRainResources();
-        EnsureGoldenResources();
+        EnsureAuthoredVisuals();
         SetNeutral();
     }
 
@@ -472,53 +400,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
                 BlizzardDirectionId,
                 snowBlizzardDirection
             );
-            visualMaterial.SetFloat(
-                RainDropsIntensityId,
-                currentRainIntensity * screenDropsIntensity
-            );
-            visualMaterial.SetFloat(
-                RainDropsFrequencyId,
-                screenDropsFrequency
-            );
-            visualMaterial.SetFloat(
-                RainLargeDropsIntensityId,
-                currentRainIntensity * rainLargeDropsIntensity
-            );
-            visualMaterial.SetFloat(
-                RainLargeDropsCountId,
-                rainLargeDropsCount
-            );
-            visualMaterial.SetFloat(
-                RainLargeDropsSpeedId,
-                rainLargeDropsSpeed
-            );
-            visualMaterial.SetFloat(
-                RainLargeDropsScaleId,
-                rainLargeDropsScale
-            );
-            visualMaterial.SetFloat(
-                GoldenOverlayIntensityId,
-                currentGoldenIntensity * goldenOverlayIntensity
-            );
-            visualMaterial.SetColor(
-                GoldenOverlayColorId,
-                goldenColorFilter
-            );
-            visualMaterial.SetFloat(
-                WindVisualIntensityId,
-                currentWindIntensity * windVisualIntensity
-            );
-            visualMaterial.SetFloat(WindLineDensityId, windLineDensity);
-            visualMaterial.SetFloat(WindLineSpeedId, windLineSpeed);
-            visualMaterial.SetVector(
-                WindDirectionId,
-                new Vector4(
-                    windVisualDirection.x,
-                    windVisualDirection.y,
-                    0f,
-                    0f
-                )
-            );
+
         }
 
         UpdateSnowResources();
@@ -535,7 +417,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
                 currentDarknessIntensity > 0f ||
                 targetDarknessIntensity > 0f;
         }
-        UpdateGoldenResources();
+        if (goldenVisual != null) goldenVisual.SetIntensity(currentGoldenIntensity);
 
 #if UNITY_EDITOR
         UpdateSnowDiagnostics();
@@ -619,7 +501,6 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
         windVisualDirection = direction.normalized;
         SetWindActive(true);
-        UpdateWindParticlesDirection();
         windIndicator?.ShowApplied(windVisualDirection);
     }
 
@@ -733,7 +614,8 @@ public sealed class WorldRuleVisual : MonoBehaviour
         currentWindIntensity = 0f;
         targetWindIntensity = 0f;
         windVisualDirection = Vector2.zero;
-        StopWindParticles();
+        SetWindActive(false);
+        SetGoldenActive(false);
 
 #if UNITY_EDITOR
         snowDiagnosticElapsed = 0f;
@@ -747,10 +629,6 @@ public sealed class WorldRuleVisual : MonoBehaviour
             visualMaterial.SetFloat(BlizzardIntensityId, 0f);
             visualMaterial.SetFloat(BlizzardVeilId, 0f);
             visualMaterial.SetFloat(BlizzardDirectionId, 0f);
-            visualMaterial.SetFloat(RainDropsIntensityId, 0f);
-            visualMaterial.SetFloat(RainLargeDropsIntensityId, 0f);
-            visualMaterial.SetFloat(GoldenOverlayIntensityId, 0f);
-            visualMaterial.SetFloat(WindVisualIntensityId, 0f);
         }
 
         if (fullscreenImage != null)
@@ -759,7 +637,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
         UpdateSnowResources();
         UpdateRainResources();
         UpdateDarknessResources();
-        UpdateGoldenResources();
+        if (goldenVisual != null) goldenVisual.SetIntensity(currentGoldenIntensity);
     }
 
     private void SetCondensationActive(bool active)
@@ -1045,17 +923,8 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
     private void SetRainActive(bool active)
     {
-        EnsureRainResources();
         targetRainIntensity = active ? 1f : 0f;
-
-        if (active)
-        {
-            if (rainEffect != null)
-                rainEffect.SetActive(true);
-
-            if (fullscreenImage != null)
-                fullscreenImage.enabled = true;
-        }
+        if (rainVisual != null) rainVisual.SetRuleActive(active, Vector2.down);
     }
 
     private void EnsureSnowResources()
@@ -1070,241 +939,39 @@ public sealed class WorldRuleVisual : MonoBehaviour
             CreateSnowParticles();
     }
 
-    private void EnsureRainResources()
+    private void EnsureAuthoredVisuals()
     {
-        if (rainWorldObject == null && rainWorldMaterial != null)
-            CreateRainWorldOverlay();
+        if (rainVisual == null && rainVisualPrefab != null)
+            rainVisual = CreateAuthoredVisual(rainVisualPrefab);
+        if (windVisual == null && windVisualPrefab != null)
+            windVisual = CreateAuthoredVisual(windVisualPrefab);
+        if (goldenVisual == null && goldenVisualPrefab != null)
+            goldenVisual = CreateAuthoredVisual(goldenVisualPrefab);
     }
 
-    private void EnsureGoldenResources()
+    private WorldRuleAuthoredVisual CreateAuthoredVisual(WorldRuleAuthoredVisual prefab)
     {
-        if (goldenVolume == null)
-            CreateGoldenColorVolume();
+        var instance = Instantiate(prefab, prefab.IsScreenOverlay ? null : transform);
+        instance.gameObject.SetActive(false);
+        instance.Bind(targetCamera);
+        return instance;
     }
 
     private void SetGoldenActive(bool active)
     {
-        EnsureGoldenResources();
         targetGoldenIntensity = active ? 1f : 0f;
-
-        if (active && fullscreenImage != null)
-            fullscreenImage.enabled = true;
+        if (goldenVisual != null) goldenVisual.SetRuleActive(active, Vector2.zero);
     }
 
     private void SetWindActive(bool active)
     {
         targetWindIntensity = active ? 1f : 0f;
-
-        if (active)
-        {
-            EnsureWindResources();
-
-            if (fullscreenImage != null)
-                fullscreenImage.enabled = true;
-        }
-
-        if (windParticleSystem == null)
-            return;
-
-        if (active)
-        {
-            PixelWeatherParticles.Attach(windParticleSystem.gameObject, PixelWeatherParticles.Kind.Wind);
-            UpdateWindParticlesDirection();
-
-            if (!windParticleSystem.isPlaying)
-                windParticleSystem.Play(true);
-        }
-        else
-        {
-            StopWindParticles();
-        }
-    }
-
-    private void EnsureWindResources()
-    {
-        if (windParticleSystem != null)
-            return;
-
-        windParticleObject = new GameObject("WindDustParticles");
-        windParticleObject.layer = 0;
-        windParticleSystem =
-            windParticleObject.AddComponent<ParticleSystem>();
-
-        ParticleSystem.MainModule main = windParticleSystem.main;
-        main.loop = true;
-        main.duration = 5f;
-        main.startLifetime = 2.5f;
-        main.startSpeed = 0f;
-        main.startSize = new ParticleSystem.MinMaxCurve(0.025f, 0.07f);
-        main.startColor = new ParticleSystem.MinMaxGradient(
-            new Color(0.72f, 0.78f, 0.82f, 0.12f),
-            new Color(0.9f, 0.94f, 1f, 0.28f)
-        );
-        main.simulationSpace = ParticleSystemSimulationSpace.World;
-        main.maxParticles = 96;
-
-        ParticleSystem.EmissionModule emission = windParticleSystem.emission;
-        emission.rateOverTime =
-            windParticleEmission * debugWindDustAmountMultiplier;
-
-        ParticleSystem.ShapeModule shape = windParticleSystem.shape;
-        shape.shapeType = ParticleSystemShapeType.Box;
-        shape.scale = new Vector3(
-            Mathf.Max(0.1f, windParticleArea.x),
-            Mathf.Max(0.1f, windParticleArea.y),
-            0.1f
-        );
-
-        ParticleSystemRenderer particleRenderer =
-            windParticleObject.GetComponent<ParticleSystemRenderer>();
-        particleRenderer.renderMode = ParticleSystemRenderMode.Stretch;
-        particleRenderer.velocityScale = 0.08f;
-        particleRenderer.lengthScale = 0.18f;
-        particleRenderer.sortingLayerName = "Foreground";
-        particleRenderer.sortingOrder = 2;
-
-        windParticleSystem.Stop(
-            true,
-            ParticleSystemStopBehavior.StopEmittingAndClear
-        );
-    }
-
-    private void UpdateWindParticlesDirection()
-    {
-        if (windParticleSystem == null)
-            return;
-
-        Vector2 velocity = windVisualDirection * windParticleSpeed;
-        ParticleSystem.VelocityOverLifetimeModule velocityModule =
-            windParticleSystem.velocityOverLifetime;
-        velocityModule.enabled = true;
-        velocityModule.space = ParticleSystemSimulationSpace.World;
-        velocityModule.x = velocity.x;
-        velocityModule.y = velocity.y;
-        velocityModule.z = 0f;
-    }
-
-    private void StopWindParticles()
-    {
-        if (windParticleSystem == null)
-            return;
-
-        windParticleSystem.Stop(
-            true,
-            ParticleSystemStopBehavior.StopEmittingAndClear
-        );
-    }
-
-    private void CreateGoldenColorVolume()
-    {
-        goldenVolumeObject = new GameObject("GoldenColorVolume");
-        goldenVolumeObject.transform.SetParent(transform, false);
-        goldenVolume = goldenVolumeObject.AddComponent<Volume>();
-        goldenVolume.isGlobal = true;
-        goldenVolume.priority = 99f;
-        goldenVolume.weight = 0f;
-
-        goldenVolumeProfile = ScriptableObject.CreateInstance<VolumeProfile>();
-        goldenVolumeProfile.name = "GoldenColorVolumeProfile";
-        ColorAdjustments colorAdjustments =
-            goldenVolumeProfile.Add<ColorAdjustments>();
-        colorAdjustments.active = true;
-        colorAdjustments.colorFilter.Override(goldenColorFilter);
-        goldenVolume.sharedProfile = goldenVolumeProfile;
-    }
-
-    private void UpdateGoldenResources()
-    {
-        if (goldenVolume == null)
-            return;
-
-        goldenVolume.weight = currentGoldenIntensity * 0.3f;
-    }
-
-    private void CreateRainWorldOverlay()
-    {
-        rainWorldObject = new GameObject("RainWetGroundOverlay");
-        rainWorldObject.transform.SetParent(transform, false);
-
-        MeshFilter filter = rainWorldObject.AddComponent<MeshFilter>();
-        rainWorldRenderer = rainWorldObject.AddComponent<MeshRenderer>();
-        rainWorldRenderer.sharedMaterial = rainWorldMaterial;
-        rainWorldRenderer.sortingLayerName = "Background";
-        rainWorldRenderer.sortingOrder = 29;
-
-        rainWorldMesh = new Mesh
-        {
-            name = "RainWetGroundOverlayMesh",
-            vertices = new[]
-            {
-                new Vector3(-0.5f, -0.5f, 0f),
-                new Vector3(0.5f, -0.5f, 0f),
-                new Vector3(-0.5f, 0.5f, 0f),
-                new Vector3(0.5f, 0.5f, 0f)
-            },
-            uv = new[]
-            {
-                new Vector2(0f, 0f),
-                new Vector2(1f, 0f),
-                new Vector2(0f, 1f),
-                new Vector2(1f, 1f)
-            },
-            triangles = new[] { 0, 2, 1, 2, 3, 1 }
-        };
-        filter.sharedMesh = rainWorldMesh;
-        rainProperties = new MaterialPropertyBlock();
-        rainWorldObject.SetActive(false);
+        if (windVisual != null) windVisual.SetRuleActive(active, windVisualDirection);
     }
 
     private void UpdateRainResources()
     {
-        if (rainWorldRenderer != null && rainWorldObject != null)
-        {
-            bool visible = currentRainIntensity > 0f ||
-                targetRainIntensity > 0f;
-            rainWorldObject.SetActive(visible);
-
-            if (visible)
-            {
-                if (targetCamera == null)
-                    targetCamera = Camera.main;
-
-                Vector3 cameraPosition = targetCamera != null
-                    ? targetCamera.transform.position
-                    : transform.position;
-                rainWorldObject.transform.position = new Vector3(
-                    cameraPosition.x,
-                    cameraPosition.y,
-                    snowWorldDepth
-                );
-                rainWorldObject.transform.localScale = new Vector3(
-                    snowWorldSize.x,
-                    snowWorldSize.y,
-                    1f
-                );
-                rainWorldRenderer.GetPropertyBlock(rainProperties);
-                rainProperties.SetFloat(
-                    WetGroundIntensityId,
-                    currentRainIntensity * wetGroundIntensity
-                );
-                rainProperties.SetFloat(
-                    WetPatternScaleId,
-                    wetPatternScale
-                );
-                rainProperties.SetFloat(
-                    VisualTimeId,
-                    Time.unscaledTime
-                );
-                rainWorldRenderer.SetPropertyBlock(rainProperties);
-            }
-        }
-
-        if (rainEffect != null &&
-            targetRainIntensity <= 0f &&
-            currentRainIntensity <= 0f)
-        {
-            rainEffect.SetActive(false);
-        }
+        if (rainVisual != null) rainVisual.SetIntensity(currentRainIntensity);
     }
 
     private void CreateSnowWorldOverlay()
@@ -1824,15 +1491,6 @@ public sealed class WorldRuleVisual : MonoBehaviour
             );
         }
 
-        if (rainWorldObject != null && rainWorldObject.activeSelf)
-        {
-            rainWorldObject.transform.position = new Vector3(
-                cameraPosition.x,
-                cameraPosition.y,
-                snowWorldDepth
-            );
-        }
-
         if (snowParticleInstance != null &&
             snowParticleInstance.activeSelf)
         {
@@ -1840,14 +1498,6 @@ public sealed class WorldRuleVisual : MonoBehaviour
                 GetSnowEmitterPosition(cameraPosition);
         }
 
-        if (windParticleSystem != null && windParticleSystem.isPlaying)
-        {
-            windParticleSystem.transform.position = new Vector3(
-                cameraPosition.x,
-                cameraPosition.y,
-                0f
-            );
-        }
     }
 
     private void OnDisable()
@@ -1861,20 +1511,15 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
     private void OnDestroy()
     {
+        // The screen Canvas is a scene root; this controller still owns its lifetime.
+        if (goldenVisual != null)
+            Destroy(goldenVisual.gameObject);
+
         if (snowWorldMesh != null)
             Destroy(snowWorldMesh);
 
-        if (rainWorldMesh != null)
-            Destroy(rainWorldMesh);
-
         if (snowVolumeProfile != null)
             Destroy(snowVolumeProfile);
-
-        if (goldenVolumeProfile != null)
-            Destroy(goldenVolumeProfile);
-
-        if (windParticleObject != null)
-            Destroy(windParticleObject);
 
         if (darknessRevealObject != null)
             Destroy(darknessRevealObject);

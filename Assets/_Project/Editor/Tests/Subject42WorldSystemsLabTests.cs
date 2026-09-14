@@ -88,7 +88,7 @@ public sealed class Subject42WorldSystemsLabTests
 
         Assert.That(
             dependencies,
-            Does.Contain("Assets/_Project/prefabs/fx/rainFX1.prefab"),
+            Does.Contain("Assets/_Project/prefabs/fx/WorldRules/WorldRule_Rain_Visual.prefab"),
             "The Lab must preview the shared production rain prefab, " +
             "not a disconnected scene copy."
         );

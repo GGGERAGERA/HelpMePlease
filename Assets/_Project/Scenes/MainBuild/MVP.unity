@@ -1241,11 +1241,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunEndService
   bunkerSceneName: MainMenu
---- !u!1 &610461739 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4862666318955076680, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-  m_PrefabInstance: {fileID: 848610011}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &668022352 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3991565997419163978, guid: 7a11732926af9a64689345aa18c22cfb, type: 3}
@@ -1973,72 +1968,6 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
---- !u!1001 &848610011
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1586499094}
-    m_Modifications:
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 12
-      objectReference: {fileID: 0}
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4862666318955076680, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_Name
-      value: RainEffect
-      objectReference: {fileID: 0}
-    - target: {fileID: 4862666318955076680, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
---- !u!4 &848610012 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-  m_PrefabInstance: {fileID: 848610011}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &918258695
 GameObject:
   m_ObjectHideFlags: 0
@@ -3886,7 +3815,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1621092228}
-  - {fileID: 848610012}
   - {fileID: 1615053064}
   - {fileID: 2007231649}
   m_Father: {fileID: 0}
@@ -6379,25 +6307,9 @@ MonoBehaviour:
   visualMaterial: {fileID: 2100000, guid: d31bb530e01b4594a58b27501624ddec, type: 2}
   windIndicator: {fileID: 900000000000003002}
   condensationFogOverlay: {fileID: 2147030005}
-  rainEffect: {fileID: 610461739}
-  rainWorldMaterial: {fileID: 2100000, guid: 4c7fd535216f4b90bf61d62e90bb160d, type: 2}
-  wetGroundIntensity: 0.32
-  wetPatternScale: 2.8
-  screenDropsIntensity: 0.025
-  screenDropsFrequency: 0.35
-  rainLargeDropsIntensity: 0.32
-  rainLargeDropsCount: 6
-  rainLargeDropsSpeed: 0.18
-  rainLargeDropsScale: 1
-  goldenOverlayIntensity: 0.025
-  goldenColorFilter: {r: 1, g: 0.94, b: 0.78, a: 1}
-  windVisualIntensity: 0.16
-  windLineDensity: 3
-  windLineSpeed: 0.45
-  windParticleSystem: {fileID: 0}
-  windParticleEmission: 22
-  windParticleSpeed: 2.2
-  windParticleArea: {x: 22, y: 13}
+  rainVisualPrefab: {fileID: 2145880255744974890, guid: 50d7bc4137228e9409cb78cd3f3c19d1, type: 3}
+  windVisualPrefab: {fileID: 873373562687330924, guid: 367cef6d868778f43bcdd9aa44cb1c7b, type: 3}
+  goldenVisualPrefab: {fileID: 1381165063802922839, guid: 91318a296297a8344b0344241b126989, type: 3}
   globalLight: {fileID: 1615053065}
   darknessGlobalIntensity: 0.05
   playerLightRadius: 6.5

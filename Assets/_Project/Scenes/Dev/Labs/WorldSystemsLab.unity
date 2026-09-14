@@ -579,25 +579,9 @@ MonoBehaviour:
   visualMaterial: {fileID: 2100000, guid: d31bb530e01b4594a58b27501624ddec, type: 2}
   windIndicator: {fileID: 27905393}
   condensationFogOverlay: {fileID: 1985831952}
-  rainEffect: {fileID: 2051873683}
-  rainWorldMaterial: {fileID: 2100000, guid: 4c7fd535216f4b90bf61d62e90bb160d, type: 2}
-  wetGroundIntensity: 0.32
-  wetPatternScale: 2.8
-  screenDropsIntensity: 0.025
-  screenDropsFrequency: 0.35
-  rainLargeDropsIntensity: 0.32
-  rainLargeDropsCount: 6
-  rainLargeDropsSpeed: 0.18
-  rainLargeDropsScale: 1
-  goldenOverlayIntensity: 0.025
-  goldenColorFilter: {r: 1, g: 0.94, b: 0.78, a: 1}
-  windVisualIntensity: 0.16
-  windLineDensity: 3
-  windLineSpeed: 0.45
-  windParticleSystem: {fileID: 0}
-  windParticleEmission: 22
-  windParticleSpeed: 2.2
-  windParticleArea: {x: 22, y: 13}
+  rainVisualPrefab: {fileID: 2145880255744974890, guid: 50d7bc4137228e9409cb78cd3f3c19d1, type: 3}
+  windVisualPrefab: {fileID: 873373562687330924, guid: 367cef6d868778f43bcdd9aa44cb1c7b, type: 3}
+  goldenVisualPrefab: {fileID: 1381165063802922839, guid: 91318a296297a8344b0344241b126989, type: 3}
   globalLight: {fileID: 2091398047}
   darknessGlobalIntensity: 0.05
   playerLightRadius: 6.5
@@ -5947,72 +5931,6 @@ Transform:
   - {fileID: 1036029512}
   m_Father: {fileID: 41954967}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &2051873682
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 12
-      objectReference: {fileID: 0}
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1317337247912727461, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4862666318955076680, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_Name
-      value: Production Rain
-      objectReference: {fileID: 0}
-    - target: {fileID: 4862666318955076680, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
---- !u!1 &2051873683 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4862666318955076680, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
-  m_PrefabInstance: {fileID: 2051873682}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2066529815
 GameObject:
   m_ObjectHideFlags: 0
@@ -12320,6 +12238,5 @@ SceneRoots:
   - {fileID: 168311847}
   - {fileID: 723940718}
   - {fileID: 676399729}
-  - {fileID: 2051873682}
   - {fileID: 2066529817}
   - {fileID: 2123162232}

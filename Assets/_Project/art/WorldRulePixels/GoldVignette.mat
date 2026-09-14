@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_WorldRainWetGround
-  m_Shader: {fileID: 4800000, guid: 9d4e8a753e2948c896a6aef078247994, type: 3}
+  m_Name: GoldVignette
+  m_Shader: {fileID: 4800000, guid: 0c893860db12c4245949e7e43b0becaa, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -25,9 +25,8 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _VisualTime: 0
-    - _WetGroundIntensity: 0.32
-    - _WetPatternScale: 2.8
-    m_Colors: []
+    - _EdgeWidth: 0.22
+    m_Colors:
+    - _Color: {r: 1, g: 0.68, b: 0.12, a: 0.62}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
