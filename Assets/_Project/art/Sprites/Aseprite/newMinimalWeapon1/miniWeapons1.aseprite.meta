@@ -129,7 +129,7 @@ ScriptedImporter:
   animatedSpriteImportData:
   - name: miniWeapons1
     originalName: 
-    pivot: {x: 0.7380952, y: -1.7540983}
+    pivot: {x: 0.61124694, y: -1.0277778}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -137,8 +137,8 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 336
-      height: 183
+      width: 409
+      height: 252
     spriteID: 0d796fcebb2d34d49bb72312fb07189b
     spriteBone: []
     spriteOutline: []
@@ -167,10 +167,10 @@ ScriptedImporter:
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:
-        x: 8
-        y: 321
-        width: 336
-        height: 183
+        x: 6
+        y: 259
+        width: 409
+        height: 252
       spriteId: 0d796fcebb2d34d49bb72312fb07189b
     linkedCells: []
     tileCells: []
@@ -182,4 +182,4 @@ ScriptedImporter:
   secondarySpriteTextures: []
   spritePackingTag: 
   canvasSize: {x: 512, y: 512}
-  previousTextureSize: {x: 512, y: 256}
+  previousTextureSize: {x: 512, y: 512}

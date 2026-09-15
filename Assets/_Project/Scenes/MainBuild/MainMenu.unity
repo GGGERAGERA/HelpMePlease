@@ -258675,6 +258675,7 @@ MonoBehaviour:
     typewriter: 1
     glitch: 0
     style: 0
+    pauseAfter: 0.4
   - mainText: intro.awake
     secondaryText: intro.recording
     duration: 2.55
@@ -258684,6 +258685,7 @@ MonoBehaviour:
     typewriter: 1
     glitch: 0
     style: 0
+    pauseAfter: 0.4
   - mainText: intro.lost
     secondaryText: intro.recording
     duration: 3.05
@@ -258693,6 +258695,7 @@ MonoBehaviour:
     typewriter: 1
     glitch: 0
     style: 0
+    pauseAfter: 0.4
   - mainText: intro.sorry
     secondaryText: intro.recording
     duration: 1.65
@@ -258702,6 +258705,7 @@ MonoBehaviour:
     typewriter: 1
     glitch: 0
     style: 0
+    pauseAfter: 0.4
   initialBlackDuration: 0.65
   systemSteps:
   - mainText: intro.activity
@@ -258713,6 +258717,7 @@ MonoBehaviour:
     typewriter: 1
     glitch: 0
     style: 1
+    pauseAfter: 0.4
   - mainText: intro.impossible
     secondaryText: 
     duration: 1.05
@@ -258722,6 +258727,7 @@ MonoBehaviour:
     typewriter: 1
     glitch: 1
     style: 2
+    pauseAfter: 0.4
   - mainText: intro.identify
     secondaryText: 
     duration: 2.45
@@ -258731,6 +258737,7 @@ MonoBehaviour:
     typewriter: 1
     glitch: 1
     style: 1
+    pauseAfter: 0.4
   finalStep:
     mainText: intro.exit
     secondaryText: 
@@ -258741,8 +258748,10 @@ MonoBehaviour:
     typewriter: 1
     glitch: 0
     style: 1
+    pauseAfter: 0.4
   cameraMoveDuration: 2.25
   finalFadeDuration: 0.65
+  finalBlackHoldDuration: 0.45
   propLiftOffset: {x: -0.32, y: 0.55, z: 0}
   propAnimationDuration: 0.9
   recordingSource: {fileID: 1305876756}
@@ -260437,8 +260446,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 980000000000000000}
   - component: {fileID: 1350807769}
+  - component: {fileID: 980000000000000000}
   - component: {fileID: 1350807771}
   - component: {fileID: 1350807770}
   m_Layer: 0
@@ -260487,7 +260496,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u0417\u0410\u041a\u0420\u042b\u0422\u042c  [ESC]"
+  m_text: "\u0417\u0410\u041A\u0420\u042B\u0422\u042C  [ESC]"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -264208,6 +264217,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1190325099723718780, guid: 7299b4ba064c30443b59cbbe7a22f590, type: 3}
+      propertyPath: m_fontSize
+      value: 0.95
+      objectReference: {fileID: 0}
     - target: {fileID: 2129564713534745497, guid: 7299b4ba064c30443b59cbbe7a22f590, type: 3}
       propertyPath: panelManager
       value: 
@@ -264215,6 +264228,10 @@ PrefabInstance:
     - target: {fileID: 4737281608205474900, guid: 7299b4ba064c30443b59cbbe7a22f590, type: 3}
       propertyPath: m_Name
       value: p_bunkerPlayerShowcase 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6165698492690374980, guid: 7299b4ba064c30443b59cbbe7a22f590, type: 3}
+      propertyPath: m_fontSize
+      value: 0.25
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -264245,8 +264262,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 980000000000000001}
   - component: {fileID: 1935003222}
+  - component: {fileID: 980000000000000001}
   - component: {fileID: 1935003224}
   - component: {fileID: 1935003223}
   m_Layer: 0
@@ -264295,7 +264312,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u041e\u0420\u0411\u0418\u0422\u0410\u041b\u042c\u041d\u042b\u0419 \u0410\u0412\u0422\u041e\u041c\u0410\u0422  50 \u0417\u041e\u041b\u041e\u0422\u0410"
+  m_text: "\u041E\u0420\u0411\u0418\u0422\u0410\u041B\u042C\u041D\u042B\u0419 \u0410\u0412\u0422\u041E\u041C\u0410\u0422 
+    50 \u0417\u041E\u041B\u041E\u0422\u0410"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -272939,6 +272957,32 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1002, guid: f36f8c2ed1678cdde564bd6968314785, type: 3}
   m_PrefabInstance: {fileID: 920000000000000001}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &980000000000000000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1350807768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: common.closeEsc
+--- !u!114 &980000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1935003221}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: slot.open
 --- !u!1 &1283074403289359923
 GameObject:
   m_ObjectHideFlags: 0
@@ -274837,29 +274881,3 @@ SceneRoots:
   - {fileID: 1809675265}
   - {fileID: 1204627045}
   - {fileID: 875039428}
---- !u!114 &980000000000000000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1350807768}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
-  localizationKey: common.closeEsc
---- !u!114 &980000000000000001
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1935003221}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
-  localizationKey: slot.open
