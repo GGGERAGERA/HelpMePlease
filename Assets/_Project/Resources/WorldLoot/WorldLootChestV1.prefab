@@ -91,10 +91,12 @@ MonoBehaviour:
   interactionRadius: 1.15
   openingDelay: 3.35
   claimedDestroyDelay: 0.15
+  retainOpenedAfterClaim: 1
   rewardPool:
   - {fileID: 11400000, guid: e6011e8a6bc84ae9b793e02c923af106, type: 2}
   - {fileID: 11400000, guid: f7011e8a6bc84ae9b793e02c923af107, type: 2}
   - {fileID: 11400000, guid: 08011e8a6bc84ae9b793e02c923af108, type: 2}
+  useNormalUpgradePool: 1
 --- !u!1001 &200000
 PrefabInstance:
   m_ObjectHideFlags: 0

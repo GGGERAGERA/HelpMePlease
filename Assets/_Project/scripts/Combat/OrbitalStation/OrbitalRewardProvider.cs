@@ -115,6 +115,19 @@ namespace Subject42.Combat.OrbitalStation
             GetEligibleDefinitions(RunStateManager.Instance?.OrbitalStationState,
                 RunStateManager.Instance?.ItemSlots, demoOnly: true).Select(value => value.RewardKind).ToArray();
 
+        public IReadOnlyList<UpgradeData> GetEligibleNormalRewards()
+        {
+            OrbitalRunState state = RunStateManager.Instance?.OrbitalStationState;
+            RefreshPresentation(state);
+            return GetEligibleDefinitions(
+                    state,
+                    RunStateManager.Instance?.ItemSlots,
+                    demoOnly: true)
+                .Where(value => value.RewardKind != OrbitalRewardKind.NewRing)
+                .Cast<UpgradeData>()
+                .ToArray();
+        }
+
         public string GetEligibilitySummary()
         {
             OrbitalRunState state = RunStateManager.Instance?.OrbitalStationState;

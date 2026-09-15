@@ -417,6 +417,8 @@ public sealed class TacticalMapHUD : MonoBehaviour
             {
                 breakable?.CollectTacticalMapMarkers(breakableDescriptors);
             }
+            foreach (WorldLootChest chest in WorldLootChest.ActiveInstances)
+                chest?.CollectTacticalMapMarkers(breakableDescriptors);
         }
 
         EnsureMarkerCount(

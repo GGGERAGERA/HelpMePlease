@@ -4,7 +4,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
 [DisallowMultipleComponent]
-public sealed class WorldLootChest : Interactable
+public sealed class WorldLootChest : Interactable, ITacticalMapMarkerProvider
 {
     public enum ChestState
     {
@@ -25,18 +25,28 @@ public sealed class WorldLootChest : Interactable
     [SerializeField, Min(0.1f)] private float interactionRadius = 1.15f;
     [SerializeField, Min(0f)] private float openingDelay = 3.35f;
     [SerializeField, Min(0f)] private float claimedDestroyDelay = 0.15f;
+    [SerializeField] private bool retainOpenedAfterClaim;
 
     [Header("Reward Pool")]
     [SerializeField] private WorldLootRewardDefinition[] rewardPool;
+    [SerializeField] private bool useNormalUpgradePool;
 
     private Collider2D interactionCollider;
     private Coroutine openingRoutine;
     private ChestState state;
+    private static readonly List<WorldLootChest> activeInstances = new();
 
     public override bool CanInteract => state == ChestState.Closed &&
         !WorldLootRewardReel.IsActive;
     public ChestState State => state;
     public IReadOnlyList<WorldLootRewardDefinition> RewardPool => rewardPool;
+    public static IReadOnlyList<WorldLootChest> ActiveInstances => activeInstances;
+
+    private void OnEnable()
+    {
+        if (!activeInstances.Contains(this))
+            activeInstances.Add(this);
+    }
 
     private void Awake()
     {
@@ -106,11 +116,29 @@ public sealed class WorldLootChest : Interactable
         state = ChestState.RewardReel;
         ApplyOpenedVisual();
 
-        if (WorldLootRewardReel.TryShow(
-            rewardPool,
-            transform.position,
-            HandleRewardClaimed))
+        if (useNormalUpgradePool)
+        {
+            UpgradeManager manager = UpgradeManager.Instance;
+            IReadOnlyList<UpgradeData> normalRewards =
+                manager?.GetEligibleNormalRewards();
+            if (manager != null && WorldLootRewardReel.TryShow(
+                    normalRewards,
+                    transform.position,
+                    reward => manager.TryBeginDirectNormalReward(
+                        reward,
+                        HandleUpgradeCommitted),
+                    HandleUpgradeRewardAccepted))
+            {
+                return;
+            }
+        }
+        else if (WorldLootRewardReel.TryShow(
+                     rewardPool,
+                     transform.position,
+                     HandleRewardClaimed))
+        {
             return;
+        }
 
         WorldLootRewardReel.ReleaseOpeningReservation();
 
@@ -129,7 +157,42 @@ public sealed class WorldLootChest : Interactable
 
         state = ChestState.Claimed;
         ApplyOpenedVisual();
-        StartCoroutine(DestroyAfterClaim());
+        if (!retainOpenedAfterClaim)
+            StartCoroutine(DestroyAfterClaim());
+    }
+
+    private void HandleUpgradeRewardAccepted(UpgradeData reward)
+    {
+        if (this == null || !isActiveAndEnabled ||
+            state != ChestState.RewardReel || reward == null)
+            return;
+
+        state = ChestState.Claimed;
+        ApplyOpenedVisual();
+        if (!retainOpenedAfterClaim)
+            StartCoroutine(DestroyAfterClaim());
+    }
+
+    private void HandleUpgradeCommitted(UpgradeData reward)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log(
+            $"[WorldLootChest] Reel reward committed: " +
+            $"{reward?.upgradeName ?? "NULL"}.",
+            this);
+#endif
+    }
+
+    public void CollectTacticalMapMarkers(
+        List<TacticalMapMarkerDescriptor> markers)
+    {
+        if (markers == null || state != ChestState.Closed ||
+            !isActiveAndEnabled || !gameObject.activeInHierarchy)
+            return;
+
+        markers.Add(new TacticalMapMarkerDescriptor(
+            TacticalMapMarkerKind.Breakable,
+            transform.position));
     }
 
     private IEnumerator DestroyAfterClaim()
@@ -186,6 +249,7 @@ public sealed class WorldLootChest : Interactable
 
     private void OnDisable()
     {
+        activeInstances.Remove(this);
         if (state == ChestState.Opening)
             WorldLootRewardReel.ReleaseOpeningReservation();
 

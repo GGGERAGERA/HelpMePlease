@@ -129,7 +129,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
             size
         );
         eventPosition = SelectEventPosition();
-        bool spawned = SpawnEvent(false);
+        bool spawned = SpawnEvent();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         VisualTargetsChanged?.Invoke();
 #endif
@@ -197,7 +197,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         BuildBoundary(size, new Color(0.9f, 0.3f, 0.85f, 0.9f));
 
         eventPosition = SelectEventPosition();
-        bool spawned = SpawnEvent(true);
+        bool spawned = SpawnEvent();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         VisualTargetsChanged?.Invoke();
 #endif
@@ -411,7 +411,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
     }
 #endif
 
-    private bool SpawnEvent(bool suppressStandardReward)
+    private bool SpawnEvent()
     {
         if (eventSpawner == null || eventPrefab == null)
             return false;
@@ -423,7 +423,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
             eventPosition,
             transform.position,
             siteSize,
-            suppressStandardReward,
+            suppressStandardReward: true,
             out activeEvent
         );
 
@@ -553,21 +553,21 @@ public sealed class ProductionAnomalySite : MonoBehaviour
             return;
         }
 
-        completed = true;
-        CollapseEnvironment();
-
         if (isSpecial)
         {
+            CompleteSite();
             // Completion owns duplicate protection; the existing queue owns
             // cards, staged placement, cancellation and sector-transition gating.
             UpgradeManager.Instance.GrantSpecialAnomalyRing();
+            return;
         }
-        else
-            RunMessageService.Instance?.ShowCustom(
-                "site.stabilized",
-                "site.reward",
-                2f
-            );
+
+        RunMessageService.Instance?.ShowCustom(
+            "site.stabilized",
+            string.Empty,
+            2f
+        );
+        UpgradeManager.Instance.ShowNumericChestRewardChoices(CompleteSite);
     }
 
     private void HandleEventFailed(WorldEvent worldEvent)
@@ -590,7 +590,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         {
             yield return new WaitForSeconds(2f);
             if (completed || activeEvent != null) yield break;
-        } while (!SpawnEvent(isSpecial) && isSpecial);
+        } while (!SpawnEvent() && isSpecial);
     }
 
     private void Update()
@@ -642,6 +642,15 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         VisualTargetsChanged?.Invoke();
 #endif
+    }
+
+    private void CompleteSite()
+    {
+        if (completed)
+            return;
+
+        completed = true;
+        CollapseEnvironment();
     }
 
     private static Color TerritoryColor(LocalAnomalyData anomaly)

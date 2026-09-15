@@ -222,6 +222,10 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             specialPosition,
             exitPosition
         );
+        SpawnProductionRewardChest(
+            normalPositions,
+            specialPosition,
+            exitPosition);
 
         SpawnResourceNodes();
         // Place decoration after gameplay objects so its profile/seed never drives their placement.
@@ -373,6 +377,75 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         if (placed.Count < target)
             Debug.LogWarning($"[ResourceNode] Only {placed.Count}/{target} safe positions found.", this);
         return placed.Count;
+    }
+
+    private bool SpawnProductionRewardChest(
+        Vector2[] normalSitePositions,
+        Vector2 specialSitePosition,
+        Vector2 exitPosition)
+    {
+        RunStateManager runState = RunStateManager.Instance;
+        int sectorNumber = runState?.CurrentSector?.SectorNumber ?? 0;
+        if (runState == null ||
+            !runState.ShouldSpawnProductionRewardChest(sectorNumber))
+        {
+            return false;
+        }
+
+        Physics2D.SyncTransforms();
+        Bounds bounds = gameplayArea.PlayableArea.bounds;
+        Transform player = PlayerRuntimeReference.ResolvePlayerTransform(
+            forceLookup: true);
+        Vector2 playerPosition = player != null
+            ? player.position
+            : bounds.center;
+        List<Vector2> noOtherRewardChests = new(1);
+        int attempts = Mathf.Max(200, config.BreakablePlacementAttempts * 8);
+
+        for (int i = 0; i < attempts; i++)
+        {
+            Vector2 candidate = new(
+                Random.Range(bounds.min.x, bounds.max.x),
+                Random.Range(bounds.min.y, bounds.max.y));
+            if (!IsBreakablePositionValid(
+                    candidate,
+                    playerPosition,
+                    normalSitePositions,
+                    specialSitePosition,
+                    exitPosition,
+                    noOtherRewardChests,
+                    config.BreakablePlayerClearance,
+                    1f))
+            {
+                continue;
+            }
+
+            WorldLootChest chest = WorldLootChestSpawner.SpawnChest(candidate);
+            if (chest == null)
+                return false;
+
+            chest.transform.SetParent(transform, true);
+            if (!runState.TryMarkProductionRewardChestSpawned(sectorNumber))
+            {
+                chest.gameObject.SetActive(false);
+                Destroy(chest.gameObject);
+                return false;
+            }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log(
+                $"[WorldLootChest] Production chest spawned in sector " +
+                $"{sectorNumber} at {candidate}.",
+                chest);
+#endif
+            return true;
+        }
+
+        Debug.LogError(
+            $"[WorldLootChest] No safe placement found in selected sector " +
+            $"{sectorNumber}.",
+            this);
+        return false;
     }
 
     private int SpawnWorldBreakables(
@@ -622,6 +695,48 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool DebugSpawnRewardChestNearPlayer()
+    {
+        if (!hasBreakableLayout || gameplayArea == null || config == null)
+            return false;
+
+        Transform player = PlayerRuntimeReference.ResolvePlayerTransform(
+            forceLookup: true);
+        if (player == null)
+            return false;
+
+        Physics2D.SyncTransforms();
+        Vector2 playerPosition = player.position;
+        List<Vector2> occupied = new(1);
+        for (int i = 0; i < 64; i++)
+        {
+            Vector2 direction = Random.insideUnitCircle;
+            if (direction.sqrMagnitude < 0.001f)
+                direction = Vector2.right;
+            Vector2 candidate = playerPosition + direction.normalized *
+                Random.Range(1.75f, 3.25f);
+            if (!IsBreakablePositionValid(
+                    candidate,
+                    playerPosition,
+                    breakableNormalSitePositions,
+                    breakableSpecialSitePosition,
+                    breakableExitPosition,
+                    occupied,
+                    1.5f,
+                    0.75f))
+            {
+                continue;
+            }
+
+            WorldLootChest chest = WorldLootChestSpawner.SpawnChest(candidate);
+            if (chest == null)
+                return false;
+            chest.transform.SetParent(transform, true);
+            return true;
+        }
+        return false;
+    }
+
     public bool DebugSpawnCrateNearPlayer()
     {
         if (!hasBreakableLayout || config == null ||

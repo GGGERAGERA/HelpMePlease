@@ -338,7 +338,10 @@ public class HUDManager : MonoBehaviour
     {
         if (killsText != null)
         {
-            killsText.text = kills.ToString();
+            RunStateManager runState = RunStateManager.Instance;
+            killsText.text = (runState != null
+                ? runState.GetCurrentRunKills()
+                : kills).ToString();
         }
     }
 

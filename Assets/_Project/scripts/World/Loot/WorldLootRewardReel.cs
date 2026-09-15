@@ -3,10 +3,22 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Subject42.Combat.OrbitalStation;
 
 [DisallowMultipleComponent]
 public sealed class WorldLootRewardReel : MonoBehaviour
 {
+    private sealed class ReelReward
+    {
+        public WorldLootRewardDefinition LegacyDefinition;
+        public UpgradeData Upgrade;
+        public string DisplayName;
+        public Sprite Icon;
+        public Color IconTint = Color.white;
+        public float Weight;
+        public Func<bool> TryApply;
+    }
+
     private enum ReelState
     {
         Hidden,
@@ -26,7 +38,7 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         public Image Background;
         public Image Icon;
         public TextMeshProUGUI Label;
-        public WorldLootRewardDefinition Reward;
+        public ReelReward Reward;
     }
 
     [Header("Spin")]
@@ -66,11 +78,13 @@ public sealed class WorldLootRewardReel : MonoBehaviour
 
     private static WorldLootRewardReel instance;
     private static string lastClaimedReward;
+    private static UpgradeData lastStoppedUpgrade;
+    private static UpgradeData lastClaimedUpgrade;
     private static bool openingReserved;
     private static bool missingReported;
     private bool viewValid;
 
-    private readonly List<WorldLootRewardDefinition> rewards = new();
+    private readonly List<ReelReward> rewards = new();
     private readonly List<RewardCard> cards = new();
 
     [SerializeField] private GameObject canvasRoot;
@@ -115,7 +129,7 @@ public sealed class WorldLootRewardReel : MonoBehaviour
                 ? "+" + winningCard.Reward.DisplayName : localization.Get("loot.error");
     }
     private ReelState state;
-    private Action<WorldLootRewardDefinition> claimedCallback;
+    private Action<ReelReward> claimedCallback;
     private RewardCard winningCard;
     private float stateElapsed;
     private float brakeDuration;
@@ -133,6 +147,8 @@ public sealed class WorldLootRewardReel : MonoBehaviour
     public static bool IsActive => openingReserved ||
         (instance != null && instance.state != ReelState.Hidden);
     public static string LastClaimedReward => lastClaimedReward;
+    public static UpgradeData LastStoppedUpgrade => lastStoppedUpgrade;
+    public static UpgradeData LastClaimedUpgrade => lastClaimedUpgrade;
     public static Vector2 PresentationPanelSize => instance != null
         ? instance.panelSize
         : new Vector2(540f, 144f);
@@ -178,11 +194,79 @@ public sealed class WorldLootRewardReel : MonoBehaviour
             openingReserved = false;
             return false;
         }
-        return instance.ShowInternal(
-            rewardPool,
-            chestWorldPosition,
-            onClaimed
-        );
+        List<ReelReward> entries = new(rewardPool.Count);
+        for (int i = 0; i < rewardPool.Count; i++)
+        {
+            WorldLootRewardDefinition definition = rewardPool[i];
+            if (definition == null)
+                continue;
+            entries.Add(new ReelReward
+            {
+                LegacyDefinition = definition,
+                DisplayName = definition.DisplayName,
+                Icon = definition.Icon,
+                Weight = definition.Weight,
+                TryApply = definition.Apply
+            });
+        }
+        return instance.ShowInternal(entries, chestWorldPosition,
+            reward => onClaimed?.Invoke(reward.LegacyDefinition));
+    }
+
+    public static bool TryShow(
+        IReadOnlyList<UpgradeData> rewardPool,
+        Vector3 chestWorldPosition,
+        Func<UpgradeData, bool> tryApply,
+        Action<UpgradeData> onClaimed)
+    {
+        if ((instance != null && instance.state != ReelState.Hidden) ||
+            rewardPool == null || rewardPool.Count == 0 || tryApply == null)
+            return false;
+
+        if (instance == null || !instance.viewValid)
+        {
+            if (!missingReported)
+            {
+                Debug.LogError("[WorldLootRewardReel] Authored reel view is missing or invalid.");
+                missingReported = true;
+            }
+            openingReserved = false;
+            return false;
+        }
+
+        List<ReelReward> entries = new(rewardPool.Count);
+        for (int i = 0; i < rewardPool.Count; i++)
+        {
+            UpgradeData upgrade = rewardPool[i];
+            if (upgrade == null)
+                continue;
+
+            Sprite icon = upgrade.icon;
+            Color iconTint = Color.white;
+            float weight = 1f;
+            if (upgrade is OrbitalRewardData orbital)
+            {
+                OrbitalRewardIconResolver.Icon resolved =
+                    OrbitalRewardIconResolver.Resolve(orbital);
+                icon = resolved.Sprite;
+                iconTint = resolved.ImageTint;
+                weight = Mathf.Max(0.01f, orbital.Weight);
+            }
+
+            UpgradeData captured = upgrade;
+            entries.Add(new ReelReward
+            {
+                Upgrade = upgrade,
+                DisplayName = LocalizationService.EnsureExists().Get(
+                    upgrade.upgradeName),
+                Icon = icon,
+                IconTint = iconTint,
+                Weight = weight,
+                TryApply = () => tryApply(captured)
+            });
+        }
+        return instance.ShowInternal(entries, chestWorldPosition,
+            reward => onClaimed?.Invoke(reward.Upgrade));
     }
 
     private void Awake()
@@ -216,9 +300,9 @@ public sealed class WorldLootRewardReel : MonoBehaviour
     }
 
     private bool ShowInternal(
-        IReadOnlyList<WorldLootRewardDefinition> rewardPool,
+        IReadOnlyList<ReelReward> rewardPool,
         Vector3 chestWorldPosition,
-        Action<WorldLootRewardDefinition> onClaimed)
+        Action<ReelReward> onClaimed)
     {
         rewards.Clear();
 
@@ -233,6 +317,8 @@ public sealed class WorldLootRewardReel : MonoBehaviour
 
         claimedCallback = onClaimed;
         rewardApplied = false;
+        lastStoppedUpgrade = null;
+        lastClaimedUpgrade = null;
         observedPlayerHealth = PlayerRuntimeReference.ResolvePlayerHealth(
             forceLookup: true);
         hadObservedPlayer = observedPlayerHealth != null;
@@ -542,9 +628,10 @@ public sealed class WorldLootRewardReel : MonoBehaviour
             return;
         }
 
-        WorldLootRewardDefinition reward = winningCard.Reward;
+        ReelReward reward = winningCard.Reward;
+        lastStoppedUpgrade = reward.Upgrade;
 
-        if (!reward.Apply())
+        if (reward.TryApply == null || !reward.TryApply())
         {
             revealText.text = LocalizationService.EnsureExists().Get("loot.error");
             statusText.text = LocalizationService.EnsureExists().Get("loot.notApplied");
@@ -556,6 +643,7 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         }
 
         rewardApplied = true;
+        lastClaimedUpgrade = reward.Upgrade;
         lastClaimedReward = reward.DisplayName;
         revealText.text = $"+{reward.DisplayName}";
         revealRoot.SetActive(true);
@@ -672,7 +760,7 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         winningCard.Background.color = new Color(0.22f, 0.64f, 0.72f, 1f);
     }
 
-    private WorldLootRewardDefinition RollWeightedReward()
+    private ReelReward RollWeightedReward()
     {
         float totalWeight = 0f;
 
@@ -699,7 +787,7 @@ public sealed class WorldLootRewardReel : MonoBehaviour
 
     private static void AssignReward(
         RewardCard card,
-        WorldLootRewardDefinition reward)
+        ReelReward reward)
     {
         card.Reward = reward;
         card.Label.text = reward != null ? reward.DisplayName : "—";
@@ -708,7 +796,10 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         card.Icon.gameObject.SetActive(hasIcon);
 
         if (hasIcon)
+        {
             card.Icon.sprite = reward.Icon;
+            card.Icon.color = reward.IconTint;
+        }
     }
 
     private string GetStateLabel()

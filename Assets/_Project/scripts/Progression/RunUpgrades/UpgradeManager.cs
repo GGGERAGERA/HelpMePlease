@@ -63,6 +63,7 @@ public sealed class UpgradeManager : MonoBehaviour
     private UpgradeChoiceRequest currentRequest;
     private bool hasCurrentRequest;
     private bool levelUpAudioAnnounced;
+    private System.Action<UpgradeData> directRewardCommitted;
 
     public float TimeScaleAfterRewards => previousTimeScale;
 
@@ -73,6 +74,46 @@ public sealed class UpgradeManager : MonoBehaviour
     private bool CustomDrawingPending => orbitalStation != null && orbitalStation.HasPendingCustomRings;
 
     public bool IsChoosingUpgrade => isChoosingUpgrade;
+
+    public IReadOnlyList<UpgradeData> GetEligibleNormalRewards() =>
+        orbitalRewardProvider?.GetEligibleNormalRewards() ??
+        System.Array.Empty<UpgradeData>();
+
+    public bool TryBeginDirectNormalReward(
+        UpgradeData reward,
+        System.Action<UpgradeData> onCommitted)
+    {
+        if (reward == null || shuttingDown || isChoosingUpgrade ||
+            pendingChoices.Count > 0 || CustomDrawingPending ||
+            reward is not OrbitalRewardData orbitalReward ||
+            orbitalRewardProvider == null ||
+            !orbitalRewardProvider.IsEligible(orbitalReward.RewardKind) ||
+            orbitalReward.RewardKind == OrbitalRewardKind.NewRing)
+        {
+            return false;
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
+#endif
+        FindFirstObjectByType<OrbitalInteractionController>()?
+            .PrepareForExternalPause();
+        isChoosingUpgrade = true;
+        previousTimeScale = Time.timeScale;
+        Time.timeScale = 0f;
+        hasCurrentRequest = false;
+        currentRequest = null;
+        currentOnClosed = null;
+        currentChoices = new List<UpgradeData> { reward };
+        bool committedSynchronously = false;
+        directRewardCommitted = granted =>
+        {
+            committedSynchronously = true;
+            onCommitted?.Invoke(granted);
+        };
+        SelectUpgrade(reward);
+        return committedSynchronously || isChoosingUpgrade;
+    }
 
     public void RunWhenRewardQueueIsIdle(System.Action callback)
     {
@@ -192,6 +233,7 @@ public sealed class UpgradeManager : MonoBehaviour
         if (!IsChoosingUpgrade)
         {
             currentChoices = null;
+            directRewardCommitted = null;
             while (pendingChoices.Count > 0)
                 pendingChoices.Dequeue().OnClosed?.Invoke();
             idleCallbacks.Clear();
@@ -312,6 +354,9 @@ public sealed class UpgradeManager : MonoBehaviour
             )
         );
     }
+
+    public void ShowNumericChestRewardChoices(System.Action onClosed) =>
+        ShowNumericChestRewardChoices(choicesCount, onClosed);
 
     private void RequestUpgradeChoices(UpgradeChoiceRequest request)
     {
@@ -483,6 +528,30 @@ public sealed class UpgradeManager : MonoBehaviour
         orbitalRewardFlow = null;
         if (shuttingDown || !isChoosingUpgrade)
             return;
+        if (!hasCurrentRequest)
+        {
+            OrbitalRewardData directReward = currentChoices != null &&
+                currentChoices.Count == 1
+                    ? currentChoices[0] as OrbitalRewardData
+                    : null;
+            if (directReward != null && orbitalRewardProvider != null &&
+                orbitalRewardProvider.IsEligible(directReward.RewardKind) &&
+                orbitalStation != null && orbitalStation.RewardFlow != null)
+            {
+                orbitalRewardFlow = orbitalStation.RewardFlow;
+                bool restarted = orbitalRewardFlow.Begin(
+                    directReward,
+                    () => CompleteGrantedReward(directReward),
+                    ReturnToCurrentChoices);
+                if (restarted)
+                    return;
+            }
+            Debug.LogWarning(
+                "[UpgradeManager] Direct reel reward is no longer eligible; " +
+                "closing without substituting another reward.");
+            CloseUpgradeSelection();
+            return;
+        }
         currentChoices?.RemoveAll(choice => choice is OrbitalRewardData orbital &&
             !orbitalRewardProvider.IsEligible(orbital.RewardKind));
         if (currentChoices != null && currentChoices.Count > 0)
@@ -572,6 +641,9 @@ public sealed class UpgradeManager : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         DebugRewardCommitted?.Invoke(upgrade);
 #endif
+        System.Action<UpgradeData> committed = directRewardCommitted;
+        directRewardCommitted = null;
+        committed?.Invoke(upgrade);
         CloseUpgradeSelection();
     }
 
@@ -583,6 +655,7 @@ public sealed class UpgradeManager : MonoBehaviour
         isChoosingUpgrade = false;
         orbitalRewardFlow = null;
         hasCurrentRequest = false;
+        directRewardCommitted = null;
         System.Action onClosed = currentOnClosed;
         currentOnClosed = null;
         onClosed?.Invoke();

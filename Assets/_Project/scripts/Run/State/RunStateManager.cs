@@ -46,6 +46,8 @@ public sealed class RunStateManager : MonoBehaviour
     private int completedLevels;
     private float completedLevelRewardMultiplierTotal;
     private int lastCompletedSectorNumber;
+    private int productionRewardChestSectorNumber;
+    private bool productionRewardChestSpawned;
 
     private RunStatsManager lastCommittedStats;
     private bool runEnded;
@@ -73,6 +75,23 @@ public sealed class RunStateManager : MonoBehaviour
     public float AccumulatedRunTime => accumulatedRunTime;
     public int CompletedLevels => completedLevels;
     public bool IsRunEnded => runEnded;
+    public int ProductionRewardChestSectorNumber =>
+        productionRewardChestSectorNumber;
+    public bool ProductionRewardChestSpawned => productionRewardChestSpawned;
+
+    public bool ShouldSpawnProductionRewardChest(int sectorNumber) =>
+        CurrentDepthId == DepthCatalog.SurfaceId &&
+        !productionRewardChestSpawned &&
+        sectorNumber == productionRewardChestSectorNumber;
+
+    public bool TryMarkProductionRewardChestSpawned(int sectorNumber)
+    {
+        if (!ShouldSpawnProductionRewardChest(sectorNumber))
+            return false;
+
+        productionRewardChestSpawned = true;
+        return true;
+    }
 
     public int GetCurrentRunKills()
     {
@@ -222,6 +241,11 @@ public sealed class RunStateManager : MonoBehaviour
         completedLevels = 0;
         completedLevelRewardMultiplierTotal = 0f;
         lastCompletedSectorNumber = 0;
+        productionRewardChestSectorNumber =
+            CurrentDepthId == DepthCatalog.SurfaceId
+                ? UnityEngine.Random.Range(1, 4)
+                : 0;
+        productionRewardChestSpawned = false;
 
         // Restart can begin before the current gameplay scene is unloaded.
         // Treat its scene-local stats as belonging to the previous run until
