@@ -43,6 +43,8 @@ public class CharacterSpawner : MonoBehaviour
         if (player == null)
             return;
 
+        // Publish the spawned player before camera readiness; tag lookup cooldown uses paused game time.
+        PlayerRuntimeReference.Bind(player);
         HUDManager.Instance?.BindPlayer(player);
 
         BaseWeapon[] weapons = player.GetComponentsInChildren<BaseWeapon>(true);

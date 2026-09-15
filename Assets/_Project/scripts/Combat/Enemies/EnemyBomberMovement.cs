@@ -15,6 +15,9 @@ public class EnemyBomberMovement : EnemyMovement
     [Header("Knockback")]
     [SerializeField] private float knockbackDecay = 18f;
 
+    [Header("Visual")]
+    [SerializeField] private Transform visualRoot;
+
     [Header("Explosion")]
     [SerializeField] private float triggerRadius = 1.4f;
     [SerializeField] private float explosionRadius = 2f;
@@ -76,6 +79,7 @@ public class EnemyBomberMovement : EnemyMovement
             return;
 
         Vector2 offset = (Vector2)player.position - rb.position;
+        UpdateVisualFacing(visualRoot, offset.normalized);
         Vector2 direction = ApplyCrowdSteering(offset.normalized,
             player.position, Time.fixedDeltaTime);
 

@@ -74,6 +74,11 @@ namespace Subject42.Combat.OrbitalStation
         private bool restoreFailed;
         private OrbitalRelocationController relocation;
         private OrbitalWorldTelekinesisController worldTelekinesis;
+        private CustomOrbitDrawing customDrawing;
+        private CameraFollow drawCameraRig;
+        private int drawingRingId, drawnInBatch;
+        public bool HasPendingCustomRings => State != null && State.PendingRingCount > 0;
+        public CustomOrbitDrawing CustomDrawing => customDrawing;
 
         public IOrbitalOwnerAdapter Owner { get; private set; }
         public IOrbitalCombatAdapter Combat { get; private set; }
@@ -92,10 +97,10 @@ namespace Subject42.Combat.OrbitalStation
             get
             {
                 Vector2 extents = Vector2.zero;
-                foreach (var ring in rings) extents = Vector2.Max(extents, Geometry.Extents(ring.Radius));
+                foreach (var ring in rings) extents = Vector2.Max(extents, ring.Geometry.Extents(ring.Radius));
                 foreach (var module in modules)
                     if (module.CurrentMount != null)
-                        extents = Vector2.Max(extents, Geometry.Extents(module.CurrentMount.Ring.Radius) + Vector2.one * module.PresentationReach);
+                        extents = Vector2.Max(extents, module.CurrentMount.Ring.Geometry.Extents(module.CurrentMount.Ring.Radius) + Vector2.one * module.PresentationReach);
                 return extents;
             }
         }
@@ -263,6 +268,8 @@ namespace Subject42.Combat.OrbitalStation
                 Teardown();
                 return;
             }
+            UpdateCustomDrawing();
+            if (HasPendingCustomRings) return;
             UpdateRightMouse(Time.deltaTime);
             TickStation(Time.deltaTime);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -464,7 +471,7 @@ namespace Subject42.Combat.OrbitalStation
                     if (!charge && Core.Level > 1 && rings.Count > 0)
                     {
                         var ring = rings[idleSparkRing++ % rings.Count];
-                        EmitCoreSparks((Vector2)runtimeRoot.position + Geometry.Position(
+                        EmitCoreSparks((Vector2)runtimeRoot.position + ring.Geometry.Position(
                             Mathf.Repeat(Time.time * .1f, 1f), ring.Radius), idle, 1);
                     }
                 }
@@ -475,8 +482,77 @@ namespace Subject42.Combat.OrbitalStation
         {
             OrbitalRingState ring = State?.AddRing();
             if (ring == null) return null;
-            SyncCommitted("AddRing", ring.StableRingId, 0, () => SelectRing(CreateRingPresentation(ring, true)));
+            if (!State.IsPending(ring))
+                SyncCommitted("AddRing", ring.StableRingId, 0, () => SelectRing(CreateRingPresentation(ring, true)));
             return ring;
+        }
+
+        private void UpdateCustomDrawing()
+        {
+            if (SceneTransitionOverlay.IsTransitioning)
+            {
+                if (drawingRingId != 0) EndCustomDrawing();
+                return;
+            }
+            if (!HasPendingCustomRings) return;
+            if (customDrawing == null)
+            {
+                var prefab = OrbitalPresentationConfig.Active.CustomDrawingPrefab;
+                if (prefab == null) throw new System.InvalidOperationException("Custom orbit drawing prefab is not authored.");
+                customDrawing = Instantiate(prefab, authoredView.InteractionRoot, false);
+                customDrawing.Player = Owner.Transform.GetComponent<CharacterMovement2D>();
+                customDrawing.OrbitRoot = Owner.Transform;
+                customDrawing.DrawingCamera = Camera.main;
+                drawCameraRig = customDrawing.DrawingCamera.GetComponentInParent<CameraFollow>();
+                customDrawing.Confirmed += path => ConfirmCustomRing(path);
+            }
+            if (drawingRingId == 0)
+            {
+                InputOwner.BeginCustomDraw();
+                drawingRingId = State.NextPendingRing.StableRingId;
+                customDrawing.gameObject.SetActive(true);
+                customDrawing.Clear();
+                if (drawCameraRig != null)
+                    drawCameraRig.BeginWorldBoundsFocus(this, Owner.Transform.position,
+                        customDrawing.MaxDrawRadius * 1.65f / Mathf.Min(1f, customDrawing.DrawingCamera.aspect));
+            }
+            Time.timeScale = 0f;
+            customDrawing.ProgressLabel = $"RING {drawnInBatch + 1} / {drawnInBatch + State.PendingRingCount}";
+            Interaction.ClearHint();
+        }
+
+        public bool ConfirmCustomRing(CustomOrbitPath path)
+        {
+            if (!initialized || drawingRingId == 0 || !State.FinalizeCustomRing(drawingRingId, path, customDrawing.MaxDrawRadius)) return false;
+            var state = State.FindRing(drawingRingId);
+            SyncCommitted("FinalizeCustomRing", drawingRingId, 0, () =>
+            {
+                var ring = CreateRingPresentation(state);
+                foreach (var module in State.Modules.Where(m => m.StableRingId == state.StableRingId))
+                    if (!InstallModulePresentation(ring.Mounts[module.MountIndex], module))
+                        throw new System.InvalidOperationException("Pending ring module presentation failed.");
+                SelectRing(ring);
+            });
+            runStateManager.CompletePendingOrbitalSlotBonus();
+            drawingRingId = 0;
+            drawnInBatch++;
+            customDrawing.gameObject.SetActive(false);
+            if (!HasPendingCustomRings)
+            {
+                drawnInBatch = 0;
+                EndCustomDrawing();
+                UpgradeManager.Instance?.ResumeAfterCustomDrawing();
+            }
+            return true;
+        }
+
+        private void EndCustomDrawing()
+        {
+            if (customDrawing != null) customDrawing.gameObject.SetActive(false);
+            if (drawCameraRig != null) drawCameraRig.EndWorldBoundsFocus(this);
+            InputOwner?.EndCustomDraw();
+            Interaction?.ClearHint();
+            drawingRingId = 0;
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -484,7 +560,8 @@ namespace Subject42.Combat.OrbitalStation
         {
             OrbitalRingState ring = State?.DebugAddRingBeyondCap();
             if (ring == null) return null;
-            SyncCommitted("DebugAddRingBeyondCap", ring.StableRingId, 0, () => SelectRing(CreateRingPresentation(ring, true)));
+            if (!State.IsPending(ring))
+                SyncCommitted("DebugAddRingBeyondCap", ring.StableRingId, 0, () => SelectRing(CreateRingPresentation(ring, true)));
             return ring;
         }
 #endif
@@ -727,11 +804,11 @@ namespace Subject42.Combat.OrbitalStation
             int index = rings.IndexOf(ring);
             Vector2 center = runtimeRoot.position;
             float phase = .125f;
-            Vector2 end = center + Geometry.Position(phase, ring.Radius);
-            Vector2 start = index == 0 ? center : center + Geometry.Position(phase, rings[index - 1].Radius);
+            Vector2 end = center + ring.Geometry.Position(phase, ring.Radius);
+            Vector2 start = index == 0 ? center : center + rings[index - 1].Geometry.Position(phase, rings[index - 1].Radius);
             FlashLink(start, end, coreWaveColor, OrbitalPresentationConfig.Active.CoreRayDuration);
             for (int i = 0; i < level; i++)
-                EmitCoreSparks(center + Geometry.Position(phase + i / (float)level, ring.Radius),
+                EmitCoreSparks(center + ring.Geometry.Position(phase + i / (float)level, ring.Radius),
                     coreWaveColor, OrbitalPresentationConfig.Active.CoreRingSparkCount);
         }
 
@@ -763,6 +840,10 @@ namespace Subject42.Combat.OrbitalStation
             if (tearingDown)
                 return;
             tearingDown = true;
+            EndCustomDrawing();
+            if (customDrawing != null) Destroy(customDrawing.gameObject);
+            customDrawing = null;
+            drawnInBatch = 0;
             foreach (var item in repulsedEnemies)
                 if (item.movement != null) item.movement.RemoveAnomalyExternalVelocity(this);
             repulsedEnemies.Clear();
@@ -1074,10 +1155,11 @@ namespace Subject42.Combat.OrbitalStation
             List<OrbitalRingState> ordered = State.Rings
                 .OrderBy(value => value.Order).ToList();
             for (int i = 0; i < ordered.Count; i++)
-                CreateRingPresentation(ordered[i]);
+                if (!State.IsPending(ordered[i])) CreateRingPresentation(ordered[i]);
             for (int i = 0; i < State.Modules.Count; i++)
             {
                 OrbitalModuleState moduleState = State.Modules[i];
+                if (State.IsPending(State.FindRing(moduleState.StableRingId))) continue;
                 OrbitalRingRuntime ring = rings.Find(value =>
                     value.RingId == moduleState.StableRingId);
                 if (ring == null || moduleState.MountIndex < 0 ||
@@ -1097,8 +1179,14 @@ namespace Subject42.Combat.OrbitalStation
         private OrbitalRingRuntime CreateRingPresentation(
             OrbitalRingState ringState, bool animateSpawn = false)
         {
+            var geometry = Geometry;
+            if (ringState.CustomPath != null && ringState.CustomPath.Length > 0)
+            {
+                if (!CustomOrbitPath.TryRestore(ringState.CustomPath, out var path)) throw new System.InvalidOperationException("Invalid saved custom path.");
+                geometry = new OrbitalPathGeometry(path);
+            }
             OrbitalRingRuntime ring = new(ringState, authoredView.RingsRoot,
-                lineMaterial, sharedCircleSprite, animateSpawn, Geometry);
+                lineMaterial, sharedCircleSprite, animateSpawn, geometry);
             rings.Add(ring);
             return ring;
         }
@@ -1145,7 +1233,7 @@ namespace Subject42.Combat.OrbitalStation
             float bestDelta = 0.3f;
             for (int i = 0; i < rings.Count; i++)
             {
-                float delta = Geometry.Distance(local, rings[i].Radius);
+                float delta = rings[i].Geometry.Distance(local, rings[i].Radius);
                 if (delta < bestDelta)
                 {
                     bestDelta = delta;

@@ -20,13 +20,6 @@ public sealed class Subject42OrbitalRestoreFlowTests
         yield return Exercise("Gera");
     }
 
-    [UnityTest]
-    public IEnumerator Vika_ActualSectorReload_PreservesFigureEight()
-    {
-        yield return new EnterPlayMode();
-        yield return Exercise("Vika");
-    }
-
     private static IEnumerator Exercise(string characterName)
     {
         yield return SceneManager.LoadSceneAsync("MainMenu");

@@ -32,6 +32,7 @@ namespace Subject42.Combat.OrbitalStation
         public int PowerUpgradeLevel;
         public int MountUpgradeLevel;
         public int VisualUpgradeLevel;
+        public UnityEngine.Vector2[] CustomPath;
         // Existing persisted counter includes Power, Speed and Capacity; never save a second level.
         public int VisualTier => 1 + UnityEngine.Mathf.Clamp(VisualUpgradeLevel, 0, 3);
     }
@@ -73,6 +74,38 @@ namespace Subject42.Combat.OrbitalStation
         public int RestoreCount;
         public int LastProcessedPlayerLevel = 1;
         public int RingOfferMissCount;
+        public bool UsesCustomPaths;
+        public int PendingCasinoRingId;
+        // Ring order is the authoritative creation queue; a missing path is a reservation.
+        public bool IsPending(OrbitalRingState ring) => UsesCustomPaths && (ring.CustomPath == null || ring.CustomPath.Length == 0);
+        public int PendingRingCount
+        {
+            get
+            {
+                if (!UsesCustomPaths) return 0;
+                int count = 0;
+                for (int i = 0; i < Rings.Count; i++) if (IsPending(Rings[i])) count++;
+                return count;
+            }
+        }
+        public OrbitalRingState NextPendingRing
+        {
+            get
+            {
+                for (int i = 0; i < Rings.Count; i++) if (IsPending(Rings[i])) return Rings[i];
+                return null;
+            }
+        }
+
+        public bool FinalizeCustomRing(int id, CustomOrbitPath path, float maxRadius)
+        {
+            if (path == null || !CanCommit(out _) || NextPendingRing?.StableRingId != id) return false;
+            for (int i = 0; i < path.PointCount; i++)
+                if (path.GetPoint(i).sqrMagnitude > maxRadius * maxRadius) return false;
+            NextPendingRing.CustomPath = path.CapturePoints();
+            Revision++;
+            return true;
+        }
 
         // Called once when an XP opportunity is opened, never on UI refresh.
         // Count this opportunity provisionally; an actual acquisition resets it.
@@ -85,12 +118,13 @@ namespace Subject42.Combat.OrbitalStation
             return offer;
         }
 
-        public static OrbitalRunState CreateDefault(int runId)
+        public static OrbitalRunState CreateDefault(int runId, bool customPaths = false)
         {
             OrbitalRunState state = new()
             {
                 IsInitialized = true,
-                RunId = runId
+                RunId = runId,
+                UsesCustomPaths = customPaths
             };
             OrbitalRingState ring = state.AddRing();
             state.InstallModule(OrbitalModuleKind.Pistol,
@@ -468,6 +502,11 @@ namespace Subject42.Combat.OrbitalStation
                 if (!ringIds.Add(ring.StableRingId))
                 {
                     error = $"duplicate ring ID {ring.StableRingId}";
+                    return false;
+                }
+                if (ring.CustomPath != null && ring.CustomPath.Length > 0 && (!UsesCustomPaths || !CustomOrbitPath.IsValidSavedPath(ring.CustomPath)))
+                {
+                    error = $"invalid custom path on ring {ring.StableRingId}";
                     return false;
                 }
             }

@@ -44,6 +44,7 @@ public class PauseMenuUI : MonoBehaviour
 
     public void Pause()
     {
+        if (Interaction != null && Interaction.IsCustomDrawing) return;
         if (SceneTransitionOverlay.IsTransitioning || isPaused || (RunStateManager.Instance != null && RunStateManager.Instance.IsRunEnded)) return;
         UpgradeManager rewards = UpgradeManager.Instance;
         bool rewardPaused = rewards != null && !rewards.IsRewardQueueIdle;

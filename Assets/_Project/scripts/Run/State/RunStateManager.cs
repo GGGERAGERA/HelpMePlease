@@ -155,10 +155,11 @@ public sealed class RunStateManager : MonoBehaviour
         return state.Validate(out error);
     }
 
-    private OrbitalRunState CreateDefaultOrbitalRunState()
+    private OrbitalRunState CreateDefaultOrbitalRunState(CharacterData character = null)
     {
         orbitalRunSequence++;
-        OrbitalStationState = OrbitalRunState.CreateDefault(orbitalRunSequence);
+        OrbitalStationState = OrbitalRunState.CreateDefault(orbitalRunSequence,
+            character != null && character.orbitalPath == OrbitalPathType.Custom);
         return OrbitalStationState;
     }
 
@@ -192,7 +193,7 @@ public sealed class RunStateManager : MonoBehaviour
         WeaponData weapon,
         AnomalyStabilizerData anomalyStabilizer)
     {
-        CreateDefaultOrbitalRunState();
+        CreateDefaultOrbitalRunState(character);
         ApplyPendingSlotBonus();
         FindFirstObjectByType<DoubleOrLeave>()?.ResetState();
 
@@ -252,7 +253,19 @@ public sealed class RunStateManager : MonoBehaviour
             return;
         }
         OrbitalStationState = candidate;
-        OrbitalSlotMachine.ClearPending();
+        if (bonus == OrbitalSlotSymbol.Ring && candidate.UsesCustomPaths)
+            candidate.PendingCasinoRingId = candidate.Rings[candidate.Rings.Count - 1].StableRingId;
+        else OrbitalSlotMachine.ClearPending();
+    }
+
+    public void CompletePendingOrbitalSlotBonus()
+    {
+        var state = OrbitalStationState;
+        if (state == null || state.PendingCasinoRingId == 0) return;
+        var ring = state.FindRing(state.PendingCasinoRingId);
+        if (ring == null || state.IsPending(ring)) return;
+        if (OrbitalSlotMachine.Pending == OrbitalSlotSymbol.Ring) OrbitalSlotMachine.ClearPending();
+        state.PendingCasinoRingId = 0;
     }
 
     public void SavePlayerState(GameObject player)

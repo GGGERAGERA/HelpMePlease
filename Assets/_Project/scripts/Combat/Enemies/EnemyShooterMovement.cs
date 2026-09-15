@@ -127,7 +127,8 @@ public class EnemyShooterMovement : EnemyMovement
              AnomalyExternalVelocity) *
             Time.fixedDeltaTime
         );
-        UpdateVisual(directionToPlayer);
+        if (flipVisual)
+            UpdateVisualFacing(visualRoot, directionToPlayer);
     }
 
     private void Shoot()
@@ -192,22 +193,4 @@ public class EnemyShooterMovement : EnemyMovement
         ClearAnomalyExternalVelocities();
     }
 
-    private void UpdateVisual(Vector2 direction)
-    {
-        if (!flipVisual || visualRoot == null)
-            return;
-
-        if (Mathf.Abs(direction.x) < 0.05f)
-            return;
-
-        Vector3 scale = visualRoot.localScale;
-        float targetScaleX =
-            direction.x > 0f ? -Mathf.Abs(scale.x) : Mathf.Abs(scale.x);
-
-        if (Mathf.Approximately(scale.x, targetScaleX))
-            return;
-
-        scale.x = targetScaleX;
-        visualRoot.localScale = scale;
-    }
 }

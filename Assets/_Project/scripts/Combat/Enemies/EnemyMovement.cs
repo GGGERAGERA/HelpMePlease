@@ -32,6 +32,22 @@ public abstract class EnemyMovement : MonoBehaviour, IAnomalyExternalVelocity
     public abstract void ApplyKnockback(Vector2 direction, float force);
     public abstract void StopAfterHit();
 
+    protected static void UpdateVisualFacing(Transform visualRoot, Vector2 direction)
+    {
+        if (visualRoot == null || Mathf.Abs(direction.x) < 0.05f)
+            return;
+
+        Vector3 scale = visualRoot.localScale;
+        float targetScaleX =
+            direction.x > 0f ? -Mathf.Abs(scale.x) : Mathf.Abs(scale.x);
+
+        if (Mathf.Approximately(scale.x, targetScaleX))
+            return;
+
+        scale.x = targetScaleX;
+        visualRoot.localScale = scale;
+    }
+
     private int crowdSeed;
     private float nextNeighbourSampleTime;
     private Vector2 cachedSeparation;

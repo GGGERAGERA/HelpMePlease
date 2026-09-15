@@ -69,7 +69,8 @@ public sealed class UpgradeManager : MonoBehaviour
     public void BindOrbitalStation(OrbitalStationRuntime station) => orbitalStation = station;
 
     public bool IsRewardQueueIdle => !isChoosingUpgrade && !hasCurrentRequest &&
-        pendingChoices.Count == 0;
+        pendingChoices.Count == 0 && !CustomDrawingPending;
+    private bool CustomDrawingPending => orbitalStation != null && orbitalStation.HasPendingCustomRings;
 
     public bool IsChoosingUpgrade => isChoosingUpgrade;
 
@@ -77,7 +78,7 @@ public sealed class UpgradeManager : MonoBehaviour
     {
         if (callback == null)
             return;
-        if (isChoosingUpgrade || pendingChoices.Count > 0)
+        if (isChoosingUpgrade || pendingChoices.Count > 0 || CustomDrawingPending)
         {
             idleCallbacks.Enqueue(callback);
             return;
@@ -191,6 +192,9 @@ public sealed class UpgradeManager : MonoBehaviour
         if (!IsChoosingUpgrade)
         {
             currentChoices = null;
+            while (pendingChoices.Count > 0)
+                pendingChoices.Dequeue().OnClosed?.Invoke();
+            idleCallbacks.Clear();
             return;
         }
 
@@ -316,7 +320,7 @@ public sealed class UpgradeManager : MonoBehaviour
             request.OnClosed?.Invoke();
             return;
         }
-        if (isChoosingUpgrade)
+        if (isChoosingUpgrade || CustomDrawingPending)
         {
             pendingChoices.Enqueue(request);
             return;
@@ -583,6 +587,12 @@ public sealed class UpgradeManager : MonoBehaviour
         currentOnClosed = null;
         onClosed?.Invoke();
 
+        ResumeAfterCustomDrawing();
+    }
+
+    public void ResumeAfterCustomDrawing()
+    {
+        if (shuttingDown || isChoosingUpgrade || CustomDrawingPending) return;
         while (pendingChoices.Count > 0)
         {
             UpgradeChoiceRequest nextRequest = pendingChoices.Dequeue();
@@ -593,6 +603,9 @@ public sealed class UpgradeManager : MonoBehaviour
                 continue;
             }
 
+            // A request queued during authoring may start after drawing restored gameplay time.
+            if (Time.timeScale > 0f) previousTimeScale = Time.timeScale;
+            Time.timeScale = 0f;
             isChoosingUpgrade = true;
             currentRequest = nextRequest;
             levelUpAudioAnnounced = false;
@@ -609,6 +622,7 @@ public sealed class UpgradeManager : MonoBehaviour
 
     private void RestoreRewardTimeScale()
     {
+        if (CustomDrawingPending) return;
         PauseMenuUI pause = FindFirstObjectByType<PauseMenuUI>();
         if (pause == null || !pause.IsPaused) Time.timeScale = previousTimeScale;
     }
@@ -633,10 +647,10 @@ public sealed class UpgradeManager : MonoBehaviour
 
     private void InvokeIdleCallbacksIfReady()
     {
-        if (isChoosingUpgrade || pendingChoices.Count > 0)
+        if (isChoosingUpgrade || pendingChoices.Count > 0 || CustomDrawingPending)
             return;
 
-        while (idleCallbacks.Count > 0 && !isChoosingUpgrade && pendingChoices.Count == 0)
+        while (idleCallbacks.Count > 0 && !isChoosingUpgrade && pendingChoices.Count == 0 && !CustomDrawingPending)
             idleCallbacks.Dequeue()?.Invoke();
     }
 

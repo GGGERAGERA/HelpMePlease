@@ -34,6 +34,7 @@ namespace Subject42.Combat.OrbitalStation
         private ulong sessionToken, flightToken;
         private bool terminal = true;
         private bool committed;
+        private int pendingCustomRing;
         public ulong SessionToken => sessionToken;
         private Coroutine flightRoutine;
 
@@ -162,6 +163,15 @@ namespace Subject42.Combat.OrbitalStation
 
         private void Update()
         {
+            if (pendingCustomRing != 0)
+            {
+                if (station != null && !station.State.IsPending(station.State.FindRing(pendingCustomRing)))
+                {
+                    pendingCustomRing = 0;
+                    CompleteReward();
+                }
+                return;
+            }
             if (reward == null || station == null || !station.IsInitialized ||
                 !station.InputOwner.CanConsumeRewardPointer)
                 return;
@@ -347,6 +357,14 @@ namespace Subject42.Combat.OrbitalStation
         private bool ApplyImmediate()
         {
             State = OrbitalRewardFlowState.Applying;
+            if (reward.RewardKind == OrbitalRewardKind.NewRing && station.State.UsesCustomPaths)
+            {
+                var ring = station.AddRing();
+                if (ring == null) { Clear(false); return false; }
+                committed = true;
+                pendingCustomRing = ring.StableRingId;
+                return true;
+            }
             bool applied = reward.RewardKind switch
             {
                 OrbitalRewardKind.NewRing => station.AddRing() != null,
@@ -396,6 +414,7 @@ namespace Subject42.Combat.OrbitalStation
         {
             if (terminal) return;
             terminal = true;
+            pendingCustomRing = 0;
             flightToken++;
             station?.InputOwner?.EndReward();
             firstLinkPreview?.Teardown();
@@ -435,7 +454,7 @@ namespace Subject42.Combat.OrbitalStation
                 for (int i = 0; i < station.Rings.Count; i++)
                 {
                     OrbitalRingRuntime ring = station.Rings[i];
-                    float delta = station.Geometry.Distance(local, ring.Radius);
+                    float delta = ring.Geometry.Distance(local, ring.Radius);
                     if (delta < best && CanUseRing(ring))
                     {
                         best = delta;
@@ -612,7 +631,7 @@ namespace Subject42.Combat.OrbitalStation
             }
             int futureMountCount = hoveredRing.MountCount + 1;
             float localPhase = hoveredRing.MountCount * 360f / futureMountCount;
-            addMountPreview.transform.localPosition = station.Geometry.PositionDegrees(
+            addMountPreview.transform.localPosition = hoveredRing.Geometry.PositionDegrees(
                 hoveredRing.Phase + localPhase, hoveredRing.Radius);
             float pulse = 1f + 0.12f * Mathf.Sin(Time.unscaledTime * 7f);
             addMountPreview.transform.localScale = Vector3.one *

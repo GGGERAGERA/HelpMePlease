@@ -14,6 +14,7 @@ namespace Subject42.Combat.OrbitalStation
         public GameObject StationPrefab;
         public OrbitalRingView RingPrefab;
         public OrbitalMountView MountPrefab;
+        public CustomOrbitDrawing CustomDrawingPrefab;
         public Material VisualMaterial;
         public Sprite PixelSprite, CircleSprite, RingIcon;
         public Sprite CoreIcon;

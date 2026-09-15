@@ -16,9 +16,10 @@ public sealed class Subject42OrbitalLinkRendererTests {
  static LineRenderer Line(OrbitalStationRuntime s)=>((IDictionary)Get(s,"linkLines")).Values.Cast<LineRenderer>().Single();
  static IEnumerator Frames(){int end=Time.frameCount+2;while(Time.frameCount<end)yield return null;}
  [UnityTest] public IEnumerator LinkRenderer_LifetimeAndCombatCompatibility(){EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);yield return new EnterPlayMode();yield return Run();yield return new ExitPlayMode();}
- [UnityTest] public IEnumerator Vika_LinkRenderer_LifetimeAndCombatCompatibility(){EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);yield return new EnterPlayMode();yield return Run(true);yield return new ExitPlayMode();}
+ [UnityTest] public IEnumerator FigureEight_LinkRenderer_LifetimeAndCombatCompatibility(){EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);yield return new EnterPlayMode();yield return Run(true);yield return new ExitPlayMode();}
  static IEnumerator Run(bool figureEight = false){
- var stage=ScriptableObject.CreateInstance<StageProfileData>();var rule=ScriptableObject.CreateInstance<WorldRuleData>();var anomaly=ScriptableObject.CreateInstance<LocalAnomalyData>();var manager=RunStateManager.EnsureExists();manager.BeginNewRun(figureEight ? UnityEditor.AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Scriptable Objects/Characters/03_Vika.asset") : null,null,stage,rule,anomaly);
+ var character=ScriptableObject.CreateInstance<CharacterData>();character.orbitalPath=figureEight ? OrbitalPathType.FigureEight : OrbitalPathType.Circle;
+ var stage=ScriptableObject.CreateInstance<StageProfileData>();var rule=ScriptableObject.CreateInstance<WorldRuleData>();var anomaly=ScriptableObject.CreateInstance<LocalAnomalyData>();var manager=RunStateManager.EnsureExists();manager.BeginNewRun(character,null,stage,rule,anomaly);
  var player=new GameObject("Link renderer regression");var station=OrbitalStationRuntime.Ensure(player);Assert.That(station.IsInitialized,Is.True);Assert.That(station.Geometry.Type,Is.EqualTo(figureEight ? OrbitalPathType.FigureEight : OrbitalPathType.Circle));station.enabled=false;
  var enemyObject=new GameObject("Link segment target");var enemy=enemyObject.AddComponent<EnemyHealth>();enemy.SetRuntimeMaxHealth(1000);
  try{
@@ -33,7 +34,7 @@ public sealed class Subject42OrbitalLinkRendererTests {
  Assert.That(station.RemoveModule(pair.First),Is.True);Tick(station);Assert.That(((IDictionary)Get(station,"linkLines")).Count,Is.Zero);yield return Frames();Assert.That(line==null,Is.True);
  Assert.That(station.AddMount(ring.StableRingId,out _),Is.True);Assert.That(station.InstallModule(OrbitalModuleKind.LinkNode,ring.StableRingId,1,out _),Is.True);Tick(station);var repaired=Line(station);Assert.That(station.State.ResolveLinkPairs().Count(),Is.EqualTo(1));Assert.That(repaired.GetInstanceID(),Is.Not.EqualTo(instance));
  Assert.That(station.RebuildRuntimeFromState(),Is.True);station.enabled=false;Tick(station);var restored=Line(station);Assert.That(restored,Is.Not.SameAs(repaired));station.Teardown();Assert.That(((IDictionary)Get(station,"linkLines")).Count,Is.Zero);yield return Frames();Assert.That(restored==null,Is.True);
- }finally{Time.timeScale=1;Object.Destroy(enemyObject);Object.Destroy(player);Object.Destroy(manager.gameObject);Object.Destroy(stage);Object.Destroy(rule);Object.Destroy(anomaly);}
+ }finally{Time.timeScale=1;Object.Destroy(enemyObject);Object.Destroy(player);Object.Destroy(manager.gameObject);Object.Destroy(stage);Object.Destroy(rule);Object.Destroy(anomaly);Object.Destroy(character);}
  }
 }
 #endif

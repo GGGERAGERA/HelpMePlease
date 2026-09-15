@@ -193,26 +193,8 @@ public class EnemyChaseMovement : EnemyMovement
         SetMovementSpeed(movement.magnitude);
         rb.MovePosition(nextPosition);
 
-        UpdateVisual(direction);
-    }
-
-    private void UpdateVisual(Vector2 direction)
-    {
-        if (!flipVisual || visualRoot == null)
-            return;
-
-        if (Mathf.Abs(direction.x) < 0.05f)
-            return;
-
-        Vector3 scale = visualRoot.localScale;
-        float targetScaleX =
-            direction.x > 0f ? -Mathf.Abs(scale.x) : Mathf.Abs(scale.x);
-
-        if (Mathf.Approximately(scale.x, targetScaleX))
-            return;
-
-        scale.x = targetScaleX;
-        visualRoot.localScale = scale;
+        if (flipVisual)
+            UpdateVisualFacing(visualRoot, direction);
     }
 
     public override void SetSpeedMultiplier(float multiplier)

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Subject42.Combat.OrbitalStation
 {
-    public enum OrbitalInteractionMode { Idle, RewardSelection, RewardFlight, RewardSecondTarget, Relocation, WorldTelekinesis }
+    public enum OrbitalInteractionMode { Idle, RewardSelection, RewardFlight, RewardSecondTarget, Relocation, WorldTelekinesis, CustomDrawing }
 
     // One player-local owner. Controllers retain their domain behavior and presentation.
     [DefaultExecutionOrder(-200)]
@@ -15,9 +15,12 @@ namespace Subject42.Combat.OrbitalStation
         private float previousScale;
         private float ownedScale;
         private bool ownsScale;
+        private OrbitalInteractionMode beforeDraw;
+        private float beforeDrawScale;
+        public bool IsCustomDrawing => Mode == OrbitalInteractionMode.CustomDrawing || station != null && station.HasPendingCustomRings;
         public OrbitalInteractionMode Mode { get; private set; }
         public bool IsIdle => Mode == OrbitalInteractionMode.Idle;
-        public bool IsGameplayInputBlocked => SceneTransitionOverlay.IsTransitioning || OrbitalDevelopmentInput.IsGameplayInputBlocked
+        public bool IsGameplayInputBlocked => IsCustomDrawing || SceneTransitionOverlay.IsTransitioning || OrbitalDevelopmentInput.IsGameplayInputBlocked
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             || DebugSuppressPlayerInput
 #endif
@@ -27,7 +30,7 @@ namespace Subject42.Combat.OrbitalStation
 #endif
         private bool Alive => station != null && station.IsInitialized && station.Owner != null && !station.Owner.IsDead;
         private bool QueueIdle => UpgradeManager.Instance == null || UpgradeManager.Instance.IsRewardQueueIdle;
-        public bool CanTransition => IsIdle && QueueIdle;
+        public bool CanTransition => IsIdle && QueueIdle && !IsCustomDrawing;
         public bool CanQueueDebugPlacement => IsIdle && QueueIdle;
         public bool CanUseDebugPlacement => CanQueueDebugPlacement && !IsGameplayInputBlocked && consumedFrame != Time.frameCount;
         public bool CanStartRelocation => Alive && !IsGameplayInputBlocked && QueueIdle &&
@@ -56,7 +59,32 @@ namespace Subject42.Combat.OrbitalStation
             return true;
         }
         public void SetRewardPhase(OrbitalInteractionMode mode) => Mode = mode;
-        public void EndReward() { Mode = OrbitalInteractionMode.Idle; consumedFrame = Time.frameCount; }
+        public void EndReward()
+        {
+            if (Mode == OrbitalInteractionMode.CustomDrawing) beforeDraw = OrbitalInteractionMode.Idle;
+            else Mode = OrbitalInteractionMode.Idle;
+            consumedFrame = Time.frameCount;
+        }
+        public void BeginCustomDraw()
+        {
+            if (Mode == OrbitalInteractionMode.CustomDrawing) return;
+            PrepareForExternalPause();
+            beforeDraw = Mode;
+            beforeDrawScale = Time.timeScale;
+            Mode = OrbitalInteractionMode.CustomDrawing;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
+#endif
+            Time.timeScale = 0f;
+        }
+        public void EndCustomDraw()
+        {
+            if (Mode != OrbitalInteractionMode.CustomDrawing) return;
+            Mode = beforeDraw;
+            consumedFrame = Time.frameCount;
+            if (!SceneTransitionOverlay.IsTransitioning && station?.Owner != null && !station.Owner.IsDead)
+                Time.timeScale = UpgradeManager.Instance != null && UpgradeManager.Instance.IsChoosingUpgrade ? 0f : beforeDrawScale;
+        }
         public bool BeginRelocation()
         {
             if (!CanStartRelocation) return false;

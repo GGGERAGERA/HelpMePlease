@@ -21,6 +21,12 @@ namespace Subject42.Combat.OrbitalStation
             BackLine.enabled = false;
             FrontLine.loop = true;
             FrontLine.sortingLayerID = SortingLayer.NameToID("Player");
+            if (path.CustomPath != null)
+            {
+                FrontLine.positionCount = path.CustomPath.PointCount;
+                for (int i = 0; i < path.CustomPath.PointCount; i++) FrontLine.SetPosition(i, path.CustomPath.GetPoint(i));
+                return;
+            }
             const int segments = 256;
             FrontLine.positionCount = segments;
             for (int i = 0; i < segments; i++)

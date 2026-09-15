@@ -2,9 +2,9 @@ using UnityEngine;
 
 namespace Subject42.Combat.OrbitalStation
 {
-    public enum OrbitalPathType { Circle, FigureEight }
+    public enum OrbitalPathType { Circle, FigureEight, Custom }
 
-    // One immutable spatial evaluator per station. No progression or saved state lives here.
+    // Immutable geometry: shared for conventional rings, individual for each custom ring.
     public sealed class OrbitalPathGeometry
     {
         private const int Samples = 1024;
@@ -13,6 +13,20 @@ namespace Subject42.Combat.OrbitalStation
         private readonly float width, height, spacing, depthRange;
         private readonly float[] parameters;
         private readonly Vector2[] points;
+        private readonly CustomOrbitPath custom;
+        private readonly Vector2 customExtents;
+        public CustomOrbitPath CustomPath => custom;
+
+        public OrbitalPathGeometry(CustomOrbitPath path)
+        {
+            Type = OrbitalPathType.Custom;
+            custom = path;
+            for (int i = 0; i < path.PointCount; i++)
+            {
+                var p = path.GetPoint(i);
+                customExtents = Vector2.Max(customExtents, new Vector2(Mathf.Abs(p.x), Mathf.Abs(p.y)));
+            }
+        }
 
         private OrbitalPathGeometry() { Type = OrbitalPathType.Circle; }
         public OrbitalPathGeometry(OrbitalPresentationConfig config)
@@ -46,13 +60,14 @@ namespace Subject42.Combat.OrbitalStation
         }
 
         private Vector2 Parametric(float t) => new(width * Mathf.Cos(t), height * Mathf.Sin(2f * t));
-        public float Scale(float radius) => Type == OrbitalPathType.Circle ? radius : radius * spacing;
-        public Vector2 Extents(float radius) => Type == OrbitalPathType.Circle
+        public float Scale(float radius) => Type == OrbitalPathType.Custom ? radius : Type == OrbitalPathType.Circle ? radius : radius * spacing;
+        public Vector2 Extents(float radius) => Type == OrbitalPathType.Custom ? customExtents * radius : Type == OrbitalPathType.Circle
             ? Vector2.one * radius : new Vector2(width, height) * Scale(radius);
 
         // Public phase is cyclic 0..1; persisted CurrentPhase remains degrees for existing runs.
         public Vector2 Position(float phase, float radius)
         {
+            if (custom != null) return custom.PositionAtDistance(phase * custom.TotalPathLength) * radius;
             if (Type == OrbitalPathType.Circle)
             {
                 float radians = phase * 360f * Mathf.Deg2Rad;
@@ -76,6 +91,12 @@ namespace Subject42.Combat.OrbitalStation
 
         public float Rotation(float degrees)
         {
+            if (custom != null)
+            {
+                float distance = degrees / 360f * custom.TotalPathLength;
+                Vector2 tangent = custom.PositionAtDistance(distance + .005f) - custom.PositionAtDistance(distance - .005f);
+                return Mathf.Atan2(tangent.y, tangent.x);
+            }
             if (Type == OrbitalPathType.Circle) return degrees * Mathf.Deg2Rad;
             float sample = Mathf.Repeat(degrees / 360f, 1f) * Samples;
             int index = (int)sample;
@@ -95,6 +116,18 @@ namespace Subject42.Combat.OrbitalStation
         // Used for picking only. Segment projection avoids selecting an imaginary circular radius.
         public float Distance(Vector2 local, float radius)
         {
+            if (custom != null)
+            {
+                float nearest = float.PositiveInfinity;
+                for (int i = 0; i < custom.PointCount; i++)
+                {
+                    Vector2 a = custom.GetPoint(i) * radius;
+                    Vector2 delta = custom.GetPoint((i + 1) % custom.PointCount) * radius - a;
+                    float t = Mathf.Clamp01(Vector2.Dot(local - a, delta) / delta.sqrMagnitude);
+                    nearest = Mathf.Min(nearest, (local - a - delta * t).sqrMagnitude);
+                }
+                return Mathf.Sqrt(nearest);
+            }
             if (Type == OrbitalPathType.Circle) return Mathf.Abs(local.magnitude - radius);
             float scale = Scale(radius);
             Vector2 point = local / scale;

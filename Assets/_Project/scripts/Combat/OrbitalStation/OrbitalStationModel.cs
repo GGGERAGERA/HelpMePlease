@@ -108,7 +108,8 @@ namespace Subject42.Combat.OrbitalStation
         public int RingId => State.StableRingId;
         public float RuntimeRadiusMultiplier { get; set; } = 1f;
         public int RuntimeDirectionMultiplier { get; set; } = 1;
-        public float Radius => (State.Radius + OrbitalPresentationConfig.Active.RingRadiusPadding) * RuntimeRadiusMultiplier;
+        public float Radius => Geometry.Type == OrbitalPathType.Custom ? RuntimeRadiusMultiplier :
+            (State.Radius + OrbitalPresentationConfig.Active.RingRadiusPadding) * RuntimeRadiusMultiplier;
         public float RotationSpeed => State.BaseRotationSpeed *
             Mathf.Pow(1f + OrbitalProgressionConfig.Default.SpeedIncrement,
                 State.SpeedUpgradeLevel);
