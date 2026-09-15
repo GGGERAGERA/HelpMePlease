@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42a10000000000000000000000000002, type: 3}
   m_Name: RunThreatConfig
   m_EditorClassIdentifier: Assembly-CSharp::RunThreatConfig
-  valuePerSecond: 0.12
+  valuePerSecond: 0.16
   presets:
   - minimumValue: 0
     spawnIntervalMultiplier: 1.05
@@ -23,18 +23,18 @@ MonoBehaviour:
     maxAliveCap: 22
     batchSize: 1
   - minimumValue: 33.33
-    spawnIntervalMultiplier: 0.9
+    spawnIntervalMultiplier: 1.65
     maxAliveCap: 27
     batchSize: 2
   - minimumValue: 50
-    spawnIntervalMultiplier: 0.82
+    spawnIntervalMultiplier: 1.45
     maxAliveCap: 32
     batchSize: 2
   - minimumValue: 66.67
-    spawnIntervalMultiplier: 0.74
+    spawnIntervalMultiplier: 1.9
     maxAliveCap: 36
     batchSize: 3
   - minimumValue: 83.33
-    spawnIntervalMultiplier: 0.68
+    spawnIntervalMultiplier: 1.6
     maxAliveCap: 40
     batchSize: 3

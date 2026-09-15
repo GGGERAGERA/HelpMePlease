@@ -15,6 +15,10 @@ MonoBehaviour:
   sectorNumber: 1
   spawnProfile: {fileID: 11400000, guid: 10000000000000000000000000000001, type: 2}
   bossPrefab: {fileID: 8074722678228422782, guid: 8f73b608ef0309744b732a66e85e86d7, type: 3}
+  exitActivationTime: 90
+  exitUnlockTimeout: 140
+  assaultSizeMultiplier: 0.6
+  bossPreparationDuration: 10
   enemyHealthMultiplier: 1
   enemySpeedMultiplier: 1
   spawnPressureMultiplier: 1

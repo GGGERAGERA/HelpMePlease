@@ -203,6 +203,12 @@ MonoBehaviour:
   enemySpeedMultiplier: 1
   maxEnemiesIncreasePerStep: 8
   legacyStepsPerBatchIncrease: 1
+  firstAssaultDelay: {x: 70, y: 80}
+  assaultInterval: {x: 110, y: 130}
+  assaultDuration: 24
+  assaultBreathDuration: 8
+  assaultRecoveryDuration: 6
+  assaultNormalRefillMultiplier: 0.5
   baseEnemiesPerCycle: 1
   phasesPerBatchIncrease: 2
   spawnPressurePerBatchIncrease: 0.5

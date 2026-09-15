@@ -7,7 +7,7 @@ using Object = UnityEngine.Object;
 
 public sealed class ObjectiveHudTests
 {
-    [TestCase(RunPhase.NormalSector, false, "hud.objective.explore")]
+    [TestCase(RunPhase.NormalSector, false, "hud.objective.survive")]
     [TestCase(RunPhase.NormalSector, true, "hud.objective.exit")]
     [TestCase(RunPhase.WaitingForRewards, true, "hud.objective.prepare")]
     [TestCase(RunPhase.FinalBossIntro, true, "hud.objective.prepare")]

@@ -267,8 +267,8 @@ public sealed class Subject42FinalBossFlowTests
         string before = BuildSnapshot(state);
         yield return Await(() => flow.Phase == RunPhase.FinalBossIntro);
         var spawner = One<EnemySpawner>();
-        Assert.That(spawner.FinalBossPressureMultiplier, Is.GreaterThan(1f));
-        Assert.That(spawner.IsSpawningEnabled, Is.True);
+        Assert.That(spawner.CanStartAssault, Is.False);
+        Assert.That(spawner.IsSpawningEnabled, Is.False);
         Assert.That(flow.FinalBoss, Is.Null);
         yield return Await(() => flow.Phase == RunPhase.FinalBossCombat);
         Assert.That(SceneManager.GetActiveScene(), Is.EqualTo(scene));
@@ -281,8 +281,7 @@ public sealed class Subject42FinalBossFlowTests
         Assert.That(Vector2.Distance(boss.transform.position, Player().transform.position), Is.GreaterThan(20f));
         Assert.That(GameplayAreaService.Instance.IsInsideSpawnArea(boss.transform.position), Is.True);
         Assert.That(EnemyHealth.ActiveInstances.Count(e => e.IsBoss), Is.EqualTo(1));
-        Assert.That(spawner.IsSpawningEnabled, Is.True);
-        Assert.That(EnemyHealth.ActiveInstances.Any(e => !e.IsBoss), Is.True);
+        Assert.That(spawner.IsSpawningEnabled, Is.False);
         Assert.That(flow.HandleExitReached(), Is.False);
         Assert.That(station.RebuildRuntimeFromState(), Is.True);
         Assert.That(station.RebuildRuntimeFromState(), Is.True);
@@ -296,7 +295,7 @@ public sealed class Subject42FinalBossFlowTests
         flow.HandleBossDefeated(boss);
         Assert.That(flow.IsVictoryConfirmed, Is.True);
         Assert.That(spawner.IsSpawningEnabled, Is.False);
-        Assert.That(spawner.FinalBossPressureMultiplier, Is.EqualTo(1f));
+        Assert.That(spawner.CanStartAssault, Is.False);
         int enemiesAtVictory = EnemyHealth.ActiveInstances.Count;
         spawner.SpawnAdditionalWave(Player().transform.position, 3);
         Assert.That(spawner.SpawnSpecificEnemyAround(run.CurrentSector.BossPrefab,
@@ -344,7 +343,7 @@ public sealed class Subject42FinalBossFlowTests
         Call(Player().GetComponent<PlayerHealth>(), "Die");
         Assert.That(flow.Phase, Is.EqualTo(RunPhase.Stopped));
         Assert.That(One<EnemySpawner>().IsSpawningEnabled, Is.False);
-        Assert.That(One<EnemySpawner>().FinalBossPressureMultiplier, Is.EqualTo(1f));
+        Assert.That(One<EnemySpawner>().CanStartAssault, Is.False);
         Assert.That(((TMP_Text)Get(One<DeathResultPresentation>(), "sector")).text,
             Is.EqualTo($"ÑÅÊÒÎÐ {RunRoute.TotalSectors} / {RunRoute.TotalSectors}"));
         if (afterSpawn)
@@ -417,6 +416,10 @@ public sealed class Subject42FinalBossFlowTests
         yield return Await(() => One<OrbitalStationRuntime>() != null && One<OrbitalStationRuntime>().IsInitialized &&
             ProductionSectorExit.ActiveExits.Count == 1 && One<RunThreatController>().AppliedPresetIndex >= 0);
         yield return Await(() => !SceneTransitionOverlay.IsTransitioning);
+        // These reward/victory tests enter the exit directly; pacing is exercised separately.
+        var flow = RunFlowController.Instance;
+        typeof(RunFlowController).GetProperty(nameof(RunFlowController.SectorElapsedTime))
+            .SetValue(flow, RunStateManager.Instance.CurrentSector.StageProfile.ExitUnlockTimeout);
         Player().GetComponent<PlayerHealth>().AddMaxHealth(1000000f);
         Time.timeScale = 1f;
         yield return null;

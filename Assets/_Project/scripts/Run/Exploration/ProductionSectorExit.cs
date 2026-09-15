@@ -17,12 +17,14 @@ public sealed class ProductionSectorExit : MonoBehaviour
     private float nextPlayerSearch;
     private float pulse;
     private bool initialized;
+    private ParticleSystem energyParticles;
+    private readonly List<LineRenderer> chevrons = new();
 
     public static IReadOnlyList<ProductionSectorExit> ActiveExits =>
         activeExits;
     public bool IsMapVisible => initialized && isActiveAndEnabled;
     public bool IsAvailable => IsMapVisible && runFlow != null &&
-        !runFlow.IsLevelCompleted && runFlow.Phase == RunPhase.NormalSector;
+        runFlow.IsExitUnlocked && !runFlow.IsLevelCompleted && runFlow.Phase == RunPhase.NormalSector;
 
     private void OnEnable()
     {
@@ -88,6 +90,7 @@ public sealed class ProductionSectorExit : MonoBehaviour
             arrow.SetPosition(0, new Vector3(-0.3f * radius, y, 0f));
             arrow.SetPosition(1, new Vector3(0f, y + 0.22f * radius, 0f));
             arrow.SetPosition(2, new Vector3(0.3f * radius, y, 0f));
+            chevrons.Add(arrow);
         }
 
         // Reuse Epic Toon FX's portal glow texture without its vortex/gameplay prefab.
@@ -97,6 +100,7 @@ public sealed class ProductionSectorExit : MonoBehaviour
         fxObject.transform.SetParent(transform, false);
         fxObject.transform.localPosition = new Vector3(0f, radius * 0.3f, 0f);
         var particles = fxObject.AddComponent<ParticleSystem>();
+        energyParticles = particles;
         particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         var main = particles.main;
         main.loop = true;
@@ -125,7 +129,7 @@ public sealed class ProductionSectorExit : MonoBehaviour
         renderer.sharedMaterial = energy;
         renderer.sortingLayerName = "Midground";
         renderer.sortingOrder = 29;
-        particles.Play();
+        if (IsAvailable) particles.Play();
     }
 
     private LineRenderer CreateContour(string label, Vector3[] vertices, float width, Color color, int order)
@@ -154,6 +158,19 @@ public sealed class ProductionSectorExit : MonoBehaviour
         float brightness = 0.78f + Mathf.Sin(pulse) * 0.06f + proximity * 0.16f;
         ring.startColor = ring.endColor = new Color(0.55f, 0.95f, 1f, brightness);
         glow.startColor = glow.endColor = new Color(0.1f, 0.8f, 1f, 0.16f + proximity * 0.13f + Mathf.Sin(pulse) * 0.025f);
+        // A closed, dim amber contour reads as locked without a localized label.
+        if (!IsAvailable)
+        {
+            ring.startColor = ring.endColor = new Color(0.6f, 0.34f, 0.12f, 0.55f);
+            glow.startColor = glow.endColor = Color.clear;
+        }
+        foreach (var chevron in chevrons) chevron.enabled = IsAvailable;
+        if (energyParticles != null)
+        {
+            if (IsAvailable && !energyParticles.isPlaying) energyParticles.Play();
+            else if (!IsAvailable && energyParticles.isPlaying)
+                energyParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -161,9 +178,11 @@ public sealed class ProductionSectorExit : MonoBehaviour
         if (other.GetComponentInParent<PlayerHealth>() == null)
             return;
 
-        if (runFlow != null && runFlow.HandleExitReached())
+        if (IsAvailable && runFlow.HandleExitReached())
             enabled = false;
     }
+
+    private void OnTriggerStay2D(Collider2D other) => OnTriggerEnter2D(other);
 
     private void OnDestroy()
     {

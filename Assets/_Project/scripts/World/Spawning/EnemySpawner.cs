@@ -110,11 +110,6 @@ public partial class EnemySpawner : MonoBehaviour
     private float worldRuleSpawnPressureMultiplier = 1f;
     private float worldEventSpawnPressureMultiplier = 1f;
     private float worldAccelerationMultiplier = 1f;
-    // Refill faster during the finale without increasing the director alive cap or batch size.
-    private float finalBossPressureMultiplier = 1f;
-    public float FinalBossPressureMultiplier => finalBossPressureMultiplier;
-    public void SetFinalBossPressure(float multiplier) =>
-        finalBossPressureMultiplier = Mathf.Max(1f, multiplier);
 
     private bool runThreatControlsPhase;
     private float runThreatSpawnIntervalMultiplier = 1f;
@@ -172,7 +167,12 @@ public partial class EnemySpawner : MonoBehaviour
                 UpdateLegacyDifficulty();
         }
 
-        spawnTimer += Time.deltaTime;
+        if (IsAssaultBreathing)
+        {
+            spawnTimer = 0f;
+            return;
+        }
+        spawnTimer += Time.deltaTime * NormalRefillMultiplier;
 
         if (spawnTimer < GetCurrentSpawnInterval())
             return;
@@ -265,8 +265,10 @@ public partial class EnemySpawner : MonoBehaviour
     public void StopSpawning()
     {
         EndAssault();
+        pendingAssault = null;
+        breathRemaining = recoveryRemaining = 0f;
+        spawnTimer = 0f;
         spawningEnabled = false;
-        finalBossPressureMultiplier = 1f;
         Debug.Log("[EnemySpawner] Spawning stopped.");
     }
 
@@ -757,8 +759,7 @@ public partial class EnemySpawner : MonoBehaviour
             0.1f,
             limitedInterval /
             GetExternalSpawnPressureMultiplier() /
-            worldAccelerationMultiplier /
-            finalBossPressureMultiplier
+            worldAccelerationMultiplier
         );
     }
 

@@ -21,17 +21,40 @@ public sealed class RunFlowController : MonoBehaviour
     [Header("Final Boss Phase")]
     [SerializeField] private RunBossSpawner bossSpawner;
     [SerializeField] private CharacterSpawner characterSpawner;
-    [SerializeField, Min(0f)] private float bossIntroDuration = 4f;
-    [SerializeField, Min(1f)] private float finalBossPressureMultiplier = 1.6f;
 
     private EnemySpawner enemySpawner;
     private EnemyHealth finalBoss;
     private bool levelCompleted;
+    private StageProfileData sectorProfile;
+    public float SectorElapsedTime { get; private set; }
+    public bool IsExitUnlocked { get; private set; }
+    private bool CanUnlockExit => sectorProfile != null &&
+        SectorElapsedTime >= sectorProfile.ExitActivationTime &&
+        ((enemySpawner != null && enemySpawner.HasRecoveredFromFirstAutomaticAssault) ||
+         (SectorElapsedTime >= sectorProfile.ExitUnlockTimeout &&
+          (enemySpawner == null || !enemySpawner.HasStartedFirstAutomaticAssault)));
     public RunPhase Phase { get; private set; }
     public EnemyHealth FinalBoss => finalBoss;
     public bool IsVictoryConfirmed => Phase == RunPhase.Victory;
 
     public void BindEnemySpawner(EnemySpawner spawner) => enemySpawner = spawner;
+
+    public void InitializeSector(StageProfileData profile)
+    {
+        sectorProfile = profile;
+        SectorElapsedTime = 0f;
+        IsExitUnlocked = false;
+    }
+
+    private void Update()
+    {
+        if (Phase == RunPhase.NormalSector && !levelCompleted)
+        {
+            SectorElapsedTime += Time.deltaTime;
+            // Availability is permanent within this sector, including a timeout unlock.
+            IsExitUnlocked |= CanUnlockExit;
+        }
+    }
 
     private bool CanContinue => isActiveAndEnabled &&
         Phase != RunPhase.Stopped && Phase != RunPhase.Victory &&
@@ -49,7 +72,6 @@ public sealed class RunFlowController : MonoBehaviour
         AudioService.Instance?.StopAllManagedLoops();
         StopAllCoroutines();
         if (Phase != RunPhase.Victory) Phase = RunPhase.Stopped;
-        enemySpawner?.SetFinalBossPressure(1f);
         enemySpawner?.StopSpawning();
     }
 
@@ -97,7 +119,7 @@ public sealed class RunFlowController : MonoBehaviour
 
     public bool HandleExitReached()
     {
-        if (levelCompleted || Phase != RunPhase.NormalSector)
+        if (levelCompleted || Phase != RunPhase.NormalSector || !IsExitUnlocked)
             return false;
 
         RunStateManager runState = RunStateManager.Instance;
@@ -124,6 +146,7 @@ public sealed class RunFlowController : MonoBehaviour
 
             levelCompleted = true;
             Phase = RunPhase.WaitingForRewards;
+            enemySpawner.StopSpawning();
             RegisterCurrentLevelCompletion();
             runState.RegisterCompletedLevel();
             StartCoroutine(FinalBossRoutine());
@@ -169,12 +192,11 @@ public sealed class RunFlowController : MonoBehaviour
         if (!CanContinue) { StopRunGameplay(); yield break; }
 
         Phase = RunPhase.FinalBossIntro;
-        enemySpawner.SetFinalBossPressure(finalBossPressureMultiplier);
         RunMessageService.Instance?.Show(RunMessageType.BossIncoming);
         AudioService.Instance?.Play(AudioCueId.BossSpawn);
         CameraShake.Instance?.Shake(2f, 0.05f);
 
-        float remaining = bossIntroDuration;
+        float remaining = sectorProfile.BossPreparationDuration;
         while (CanContinue && (remaining > 0f || !RewardsResolved))
         {
             if (RewardsResolved) remaining -= Time.deltaTime;

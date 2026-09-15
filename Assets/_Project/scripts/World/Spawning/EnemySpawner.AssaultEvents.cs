@@ -7,10 +7,13 @@ public partial class EnemySpawner
 {
     [Header("Assault Events (production prototype)")]
     [SerializeField] private bool assaultEventsEnabled = true;
-    [SerializeField, Min(30f)] private float assaultWarmup = 30f;
+    [SerializeField] private Vector2 firstAssaultDelay = new(70f, 80f);
     [Tooltip("Gameplay seconds between event starts; also guarantees a cooldown after the assault window.")]
-    [SerializeField] private Vector2 assaultInterval = new(45f, 75f);
+    [SerializeField] private Vector2 assaultInterval = new(110f, 130f);
     [SerializeField, Min(1f)] private float assaultDuration = 24f;
+    [SerializeField, Min(0f)] private float assaultBreathDuration = 8f;
+    [SerializeField, Min(0.1f)] private float assaultRecoveryDuration = 6f;
+    [SerializeField, Range(0.1f, 1f)] private float assaultNormalRefillMultiplier = 0.5f;
     [SerializeField, Min(0.5f)] private float assaultScreenPadding = 2f;
     [SerializeField, Min(1f)] private float assaultMinDistance = 12f;
     [SerializeField, Min(0.5f)] private float assaultSpacing = 1.25f;
@@ -30,6 +33,18 @@ public partial class EnemySpawner
     // Separate RNG: formations must not consume the Threat/normal spawn random stream.
     private readonly System.Random assaultRandom = new();
     private float assaultElapsed, assaultNextAt, assaultRemaining;
+    private AssaultEventType? pendingAssault;
+    private bool pendingAssaultIsAutomatic;
+    private enum FirstAutomaticAssaultProgress { NotStarted, Active, Recovering, Complete }
+    private FirstAutomaticAssaultProgress firstAutomaticAssault;
+    public bool HasStartedFirstAutomaticAssault => firstAutomaticAssault != FirstAutomaticAssaultProgress.NotStarted;
+    public bool HasRecoveredFromFirstAutomaticAssault => firstAutomaticAssault == FirstAutomaticAssaultProgress.Complete;
+    private float breathRemaining, recoveryRemaining;
+    public bool IsAssaultBreathing => pendingAssault.HasValue;
+    public float NormalRefillMultiplier => IsAssaultBreathing ? 0f :
+        IsAssaultActive ? assaultNormalRefillMultiplier :
+        Mathf.Lerp(1f, assaultNormalRefillMultiplier,
+            Mathf.Clamp01(recoveryRemaining / assaultRecoveryDuration));
     public bool IsAssaultActive => assaultRemaining > 0f;
     public AssaultEventType? ActiveAssault { get; private set; }
     public bool CanStartAssault => isActiveAndEnabled && spawningEnabled &&
@@ -37,8 +52,7 @@ public partial class EnemySpawner
         (UpgradeManager.Instance == null || UpgradeManager.Instance.IsRewardQueueIdle) &&
         (RunStateManager.Instance == null || !RunStateManager.Instance.IsRunEnded) &&
         RunFlowController.Instance != null &&
-        (RunFlowController.Instance.Phase == RunPhase.NormalSector && !RunFlowController.Instance.IsLevelCompleted ||
-         RunFlowController.Instance.Phase == RunPhase.FinalBossCombat) &&
+        RunFlowController.Instance.Phase == RunPhase.NormalSector && !RunFlowController.Instance.IsLevelCompleted &&
         player != null && player.TryGetComponent<PlayerHealth>(out var health) && !health.IsDead;
 
     private float NextAssaultInterval() => Mathf.Max(assaultDuration + 5f,
@@ -48,12 +62,26 @@ public partial class EnemySpawner
     private void ResetAssaultEvents()
     {
         EndAssault();
+        firstAutomaticAssault = FirstAutomaticAssaultProgress.NotStarted;
+        pendingAssault = null;
+        breathRemaining = recoveryRemaining = 0f;
         assaultElapsed = 0f;
-        assaultNextAt = Mathf.Max(30f, Mathf.Max(assaultWarmup, NextAssaultInterval()));
+        assaultNextAt = Mathf.Max(assaultBreathDuration,
+            Mathf.Lerp(firstAssaultDelay.x, firstAssaultDelay.y, (float)assaultRandom.NextDouble()));
     }
 
-    private void EndAssault()
+    private void EndAssault(bool completed = false)
     {
+        // Stop/reset cancels a wave; only the normal completion path satisfies the exit gate.
+        if (completed && firstAutomaticAssault == FirstAutomaticAssaultProgress.Active)
+            firstAutomaticAssault = FirstAutomaticAssaultProgress.Recovering;
+        else if (!completed && firstAutomaticAssault != FirstAutomaticAssaultProgress.Complete)
+            firstAutomaticAssault = FirstAutomaticAssaultProgress.NotStarted;
+        if (ActiveAssault.HasValue)
+        {
+            recoveryRemaining = assaultRecoveryDuration;
+            spawnTimer = 0f;
+        }
         foreach (var enemy in currentAssault)
             if (enemy != null && enemy.TryGetComponent<EnemyChaseMovement>(out var chase))
                 chase.SetAssaultDestination(null);
@@ -66,16 +94,33 @@ public partial class EnemySpawner
     {
         if (!CanStartAssault) return;
         assaultElapsed += Time.deltaTime;
+        recoveryRemaining = Mathf.Max(0f, recoveryRemaining - Time.deltaTime);
+        if (firstAutomaticAssault == FirstAutomaticAssaultProgress.Recovering && recoveryRemaining <= 0f)
+            firstAutomaticAssault = FirstAutomaticAssaultProgress.Complete;
         assaultEnemies.RemoveAll(e => e.instance == null);
         if (IsAssaultActive)
         {
             assaultRemaining -= Time.deltaTime;
             currentAssault.RemoveAll(e => e == null || e.IsDead);
-            if (assaultRemaining <= 0f || currentAssault.Count == 0) EndAssault();
+            if (assaultRemaining <= 0f || currentAssault.Count == 0) EndAssault(completed: true);
         }
-        if (!assaultEventsEnabled || IsAssaultActive || assaultElapsed < assaultNextAt) return;
-        if (!TryStartAssault((AssaultEventType)assaultRandom.Next(5)))
-            assaultNextAt = assaultElapsed + 5f; // No safe full formation: retry later, never clamp it on screen.
+        if (pendingAssault.HasValue)
+        {
+            breathRemaining -= Time.deltaTime;
+            if (breathRemaining > 0f) return;
+            var type = pendingAssault.Value;
+            pendingAssault = null;
+            if (!TryStartAssault(type, pendingAssaultIsAutomatic))
+            {
+                // Resume refill if geometry is blocked; retry with a fresh breath later.
+                recoveryRemaining = assaultRecoveryDuration;
+                assaultNextAt = assaultElapsed + 5f + assaultBreathDuration;
+            }
+            return;
+        }
+        if (!assaultEventsEnabled || IsAssaultActive || recoveryRemaining > 0f ||
+            assaultElapsed < assaultNextAt - assaultBreathDuration) return;
+        BeginAssaultBreath(automatic: true);
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -83,9 +128,23 @@ public partial class EnemySpawner
     public bool ForceAssaultEvent(AssaultEventType type) => TryStartAssault(type);
 #endif
 
-    public bool TryStartRandomSiteAssault() => TryStartAssault((AssaultEventType)assaultRandom.Next(5));
+    // True acknowledges ownership of the request, including its preparation window.
+    public bool TryStartRandomSiteAssault()
+    {
+        if (!CanStartAssault || IsAssaultActive || IsAssaultBreathing || recoveryRemaining > 0f) return false;
+        BeginAssaultBreath(automatic: false);
+        return true;
+    }
 
-    private bool TryStartAssault(AssaultEventType type)
+    private void BeginAssaultBreath(bool automatic)
+    {
+        pendingAssault = (AssaultEventType)assaultRandom.Next(5);
+        pendingAssaultIsAutomatic = automatic;
+        breathRemaining = assaultBreathDuration;
+        spawnTimer = 0f;
+    }
+
+    private bool TryStartAssault(AssaultEventType type, bool automatic = false)
     {
         if (!CanStartAssault || IsAssaultActive || (int)type < 0 || (int)type > 4) return false;
         GameObject prefab = ResolveAssaultPrefab(type);
@@ -100,7 +159,10 @@ public partial class EnemySpawner
             AssaultEventType.Crossfire => crossfireCountPerSide,
             _ => stampedeCount
         };
-        int count = assaultRandom.Next(Mathf.Max(1, range.x), Mathf.Max(1, Mathf.Max(range.x, range.y)) + 1);
+        float size = RunStateManager.Instance.CurrentSector.StageProfile.AssaultSizeMultiplier;
+        int minimum = Mathf.Max(1, Mathf.RoundToInt(range.x * size));
+        int maximum = Mathf.Max(minimum, Mathf.RoundToInt(range.y * size));
+        int count = assaultRandom.Next(minimum, maximum + 1);
         if (type == AssaultEventType.Crossfire) count *= 2;
         var positions = new List<Vector3>(count);
         Vector2 flow = Vector2.zero;
@@ -121,7 +183,11 @@ public partial class EnemySpawner
         RunMessageService.Instance?.ShowCustom(title, string.Empty, 2.5f);
         ActiveAssault = type;
         assaultRemaining = Mathf.Max(1f, assaultDuration);
-        assaultNextAt = assaultElapsed + NextAssaultInterval();
+        if (automatic && !HasStartedFirstAutomaticAssault)
+            firstAutomaticAssault = FirstAutomaticAssaultProgress.Active;
+        // A site wave cannot consume or postpone the sector's first automatic slot.
+        if (HasStartedFirstAutomaticAssault)
+            assaultNextAt = assaultElapsed + NextAssaultInterval();
         foreach (Vector3 position in positions)
         {
             GameObject enemy = SpawnEnemyAt(prefab, position, false);

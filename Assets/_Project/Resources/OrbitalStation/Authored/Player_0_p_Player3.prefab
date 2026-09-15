@@ -5229,9 +5229,12 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   assaultEventsEnabled: 1
-  assaultWarmup: 30
-  assaultInterval: {x: 45, y: 75}
+  firstAssaultDelay: {x: 70, y: 80}
+  assaultInterval: {x: 110, y: 130}
   assaultDuration: 24
+  assaultBreathDuration: 8
+  assaultRecoveryDuration: 6
+  assaultNormalRefillMultiplier: 0.5
   assaultScreenPadding: 2
   assaultMinDistance: 12
   assaultSpacing: 1.25

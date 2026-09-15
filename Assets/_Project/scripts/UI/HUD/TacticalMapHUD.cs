@@ -455,6 +455,9 @@ public sealed class TacticalMapHUD : MonoBehaviour
                     sectorExit.transform.position
                 );
                 exitMarker.Rect.gameObject.SetActive(true);
+                SetMarkerStyle(exitMarker,
+                    sectorExit.IsAvailable ? ExitFill : new Color(0.25f, 0.18f, 0.1f, 0.8f),
+                    sectorExit.IsAvailable ? ExitBorder : new Color(0.6f, 0.34f, 0.12f, 0.8f));
                 hasVisibleExit = true;
                 break;
             }

@@ -199,7 +199,7 @@ public class HUDManager : MonoBehaviour
 
     public static string ResolveObjectiveKey(RunPhase phase, bool exitAvailable) => phase switch
     {
-        RunPhase.NormalSector => exitAvailable ? "hud.objective.exit" : "hud.objective.explore",
+        RunPhase.NormalSector => exitAvailable ? "hud.objective.exit" : "hud.objective.survive",
         RunPhase.WaitingForRewards or RunPhase.FinalBossIntro => "hud.objective.prepare",
         RunPhase.FinalBossCombat => "hud.objective.boss",
         _ => null

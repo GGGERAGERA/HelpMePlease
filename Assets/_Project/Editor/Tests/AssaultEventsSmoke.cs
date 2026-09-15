@@ -45,7 +45,11 @@ public sealed class AssaultEventsSmoke
                 AssaultEventType.Crossfire => (6, 10),
                 _ => (20, 30)
             };
-            Assert.That(spawned.Length, Is.InRange(limits.Item1, limits.Item2));
+            float size = RunStateManager.Instance.CurrentSector.StageProfile.AssaultSizeMultiplier;
+            int sides = type == AssaultEventType.Crossfire ? 2 : 1;
+            int minimum = Mathf.Max(1, Mathf.RoundToInt(limits.Item1 / (float)sides * size)) * sides;
+            int maximum = Mathf.Max(1, Mathf.RoundToInt(limits.Item2 / (float)sides * size)) * sides;
+            Assert.That(spawned.Length, Is.InRange(minimum, maximum));
             Assert.That(spawner.IsAssaultActive, Is.True);
             Vector3 center = player.transform.position;
             Vector3[] starts = spawned.Select(e => e.transform.position).ToArray();

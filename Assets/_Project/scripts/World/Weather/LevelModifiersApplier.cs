@@ -145,6 +145,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         );
         worldRuleController?.Apply(sector.WorldRule);
         runFlowController.BindEnemySpawner(enemySpawner);
+        runFlowController.InitializeSector(sector.StageProfile);
         runFlowController.ApplyLevelMechanics();
         HUDManager.Instance?.SetTimerVisible(false);
         ExperienceManager.Instance?.SetLevelXpGainMultiplier(
