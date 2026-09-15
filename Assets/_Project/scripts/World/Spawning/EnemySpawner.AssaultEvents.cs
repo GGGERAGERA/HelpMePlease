@@ -39,6 +39,7 @@ public partial class EnemySpawner
     private FirstAutomaticAssaultProgress firstAutomaticAssault;
     public bool HasStartedFirstAutomaticAssault => firstAutomaticAssault != FirstAutomaticAssaultProgress.NotStarted;
     public bool HasRecoveredFromFirstAutomaticAssault => firstAutomaticAssault == FirstAutomaticAssaultProgress.Complete;
+    public bool IsRecoveringFromFirstAutomaticAssault => firstAutomaticAssault == FirstAutomaticAssaultProgress.Recovering;
     private float breathRemaining, recoveryRemaining;
     public bool IsAssaultBreathing => pendingAssault.HasValue;
     public float NormalRefillMultiplier => IsAssaultBreathing ? 0f :

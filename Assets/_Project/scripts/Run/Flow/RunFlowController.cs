@@ -28,6 +28,9 @@ public sealed class RunFlowController : MonoBehaviour
     private StageProfileData sectorProfile;
     public float SectorElapsedTime { get; private set; }
     public bool IsExitUnlocked { get; private set; }
+    public float ExitMinimumTimeRemaining => sectorProfile != null
+        ? Mathf.Max(0f, sectorProfile.ExitActivationTime - SectorElapsedTime) : 0f;
+    public bool IsExitRecovering => enemySpawner != null && enemySpawner.IsRecoveringFromFirstAutomaticAssault;
     private bool CanUnlockExit => sectorProfile != null &&
         SectorElapsedTime >= sectorProfile.ExitActivationTime &&
         ((enemySpawner != null && enemySpawner.HasRecoveredFromFirstAutomaticAssault) ||

@@ -13,6 +13,15 @@ MonoBehaviour:
   m_Name: LocalizationTable
   m_EditorClassIdentifier: Assembly-CSharp::LocalizationTable
   entries:
+  - key: hud.exitPacing.assault
+    ru: "ВОЛНА"
+    en: "ASSAULT"
+  - key: hud.exitPacing.recovery
+    ru: "СТАБИЛИЗАЦИЯ"
+    en: "STABILIZING"
+  - key: hud.exitPacing.open
+    ru: "ВЫХОД ОТКРЫТ"
+    en: "EXIT OPEN"
   - key: settings.audio
     ru: "ЗВУК"
     en: "AUDIO"
