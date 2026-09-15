@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Reflection;
 using NUnit.Framework;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 public sealed class BunkerSelectionUnlockRulesTests
@@ -58,18 +60,41 @@ public sealed class BunkerSelectionUnlockRulesTests
     [Test]
     public void NextUnlockTextUsesSameDescriptorListAsVisibility()
     {
-        var unlocks = new List<BunkerSelectionUnlockModel>
+        var scene = EditorSceneManager.NewPreviewScene();
+        var previousLocalization = LocalizationService.Instance;
+        var instanceField = typeof(LocalizationService).GetField(
+            "<Instance>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
+        try
         {
-            new("Pistol", 1),
-            new("LaserCannon", 2),
-            new("Future", 4)
-        };
+            var localizationObject = new GameObject("Test Localization");
+            localizationObject.SetActive(false);
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(localizationObject, scene);
+            var localization = localizationObject.AddComponent<LocalizationService>();
+            typeof(LocalizationService).GetField("table", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(localization, Resources.Load<LocalizationTable>("Localization/LocalizationTable"));
+            // EditMode does not bootstrap the runtime service. Keep this fixture's
+            // language isolated without writing the user's saved preference.
+            typeof(LocalizationService).GetField("<CurrentLanguage>k__BackingField",
+                BindingFlags.Instance | BindingFlags.NonPublic).SetValue(localization, GameLanguage.Russian);
+            instanceField.SetValue(null, localization);
+            var unlocks = new List<BunkerSelectionUnlockModel>
+            {
+                new("Pistol", 1),
+                new("LaserCannon", 2),
+                new("Future", 4)
+            };
 
-        string text = BunkerSelectionUnlockRules.BuildNextUnlockText(unlocks, 1, 3);
+            string text = BunkerSelectionUnlockRules.BuildNextUnlockText(unlocks, 1, 3);
 
-        Assert.That(text, Does.Contain("LaserCannon"));
-        Assert.That(text, Does.Not.Contain("Future"));
-        Assert.That(BunkerSelectionUnlockRules.BuildNextUnlockText(unlocks, 3, 3),
-            Is.EqualTo("ВСЕ ДОСТУПНЫЕ ОБЪЕКТЫ ОТКРЫТЫ"));
+            Assert.That(text, Does.Contain("LaserCannon"));
+            Assert.That(text, Does.Not.Contain("Future"));
+            Assert.That(BunkerSelectionUnlockRules.BuildNextUnlockText(unlocks, 3, 3),
+                Is.EqualTo("ВСЕ ДОСТУПНЫЕ ОБЪЕКТЫ ОТКРЫТЫ"));
+        }
+        finally
+        {
+            EditorSceneManager.ClosePreviewScene(scene);
+            instanceField.SetValue(null, previousLocalization);
+        }
     }
 }

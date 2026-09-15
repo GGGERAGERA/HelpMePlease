@@ -56,7 +56,7 @@ public sealed class BunkerRunStarter : MonoBehaviour
             Debug.LogError(
                 "[BunkerRunStarter] Run transition references are incomplete.",
                 this);
-            Notifications?.ShowError("Переход запуска не настроен.");
+            Notifications?.ShowError("bunker.run_transition_unavailable");
             return;
         }
 
@@ -89,13 +89,13 @@ public sealed class BunkerRunStarter : MonoBehaviour
 
         if (RunSelectionManager.Instance == null)
         {
-            Notifications?.ShowError("Система выбора не найдена.");
+            Notifications?.ShowError("bunker.run_selection_unavailable");
             return false;
         }
 
         if (RunSelectionManager.Instance.SelectedCharacter == null)
         {
-            Notifications?.ShowWarning("Сначала выбери персонажа.");
+            Notifications?.ShowWarning("bunker.run_choose_subject");
             return false;
         }
 

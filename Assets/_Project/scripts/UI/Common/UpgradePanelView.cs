@@ -24,6 +24,17 @@ public class UpgradePanelView : MonoBehaviour
     [SerializeField, Range(0.1f, 1f)]
     private float rewardCardStartScale = 0.92f;
 
+    private string displayedTitleKey;
+    private string displayedSubtitleKey;
+    private int? displayedLevel;
+    private void OnEnable() => LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
+    private void RefreshLanguage(GameLanguage language)
+    {
+        SetText(titleText, displayedLevel.HasValue
+            ? string.Format(LocalizationService.EnsureExists().Get("reward.panel.level"), displayedLevel.Value)
+            : displayedTitleKey);
+        SetText(subtitleText, displayedSubtitleKey);
+    }
     private RectTransform cardsRoot;
     private RectTransform panelContent;
     private HorizontalLayoutGroup cardsLayout;
@@ -56,11 +67,12 @@ public class UpgradePanelView : MonoBehaviour
     public void Show(int level, IReadOnlyList<UpgradeData> upgrades, Action<UpgradeData> onUpgradeSelected)
     {
         Show(
-            $"УРОВЕНЬ {level}",
-            "Выберите улучшение",
+            string.Format(LocalizationService.EnsureExists().Get("reward.panel.level"), level),
+            "reward.panel.chooseUpgrade",
             upgrades,
             onUpgradeSelected
         );
+        displayedLevel = level;
     }
 
     public void Show(
@@ -76,8 +88,10 @@ public class UpgradePanelView : MonoBehaviour
         gameObject.SetActive(true);
         transform.SetAsLastSibling();
 
-        SetText(titleText, title);
-        SetText(subtitleText, subtitle);
+        displayedLevel = null;
+        displayedTitleKey = title;
+        displayedSubtitleKey = subtitle;
+        RefreshLanguage(LocalizationService.EnsureExists().CurrentLanguage);
 
         for (int i = 0; i < cardViews.Length; i++)
         {
@@ -107,8 +121,10 @@ public class UpgradePanelView : MonoBehaviour
         gameObject.SetActive(true);
         transform.SetAsLastSibling();
 
-        SetText(titleText, title);
-        SetText(subtitleText, subtitle);
+        displayedLevel = null;
+        displayedTitleKey = title;
+        displayedSubtitleKey = subtitle;
+        RefreshLanguage(LocalizationService.EnsureExists().CurrentLanguage);
         SetupUpgradeCards(upgrades, onUpgradeSelected);
         PrepareRewardCards();
         RebuildCardsLayout();
@@ -357,6 +373,7 @@ public class UpgradePanelView : MonoBehaviour
 
     private void OnDisable()
     {
+        if (LocalizationService.Instance != null) LocalizationService.Instance.LanguageChanged -= RefreshLanguage;
         StopRewardReveal();
     }
 
@@ -385,6 +402,6 @@ public class UpgradePanelView : MonoBehaviour
     private void SetText(TextMeshProUGUI text, string value)
     {
         if (text != null)
-            text.text = value;
+            text.text = LocalizationService.EnsureExists().Get(value ?? string.Empty);
     }
 }

@@ -742,9 +742,8 @@ public class BallRollVisual : MonoBehaviour
 
         if (show)
         {
-            hintText.text = _dribbling
-                ? "[" + dribbleKey.ToString() + "] отпустить мяч"
-                : "[" + dribbleKey.ToString() + "] вести мяч";
+            hintText.text = string.Format(LocalizationService.EnsureExists().Get(
+                _dribbling ? "football.releaseBall" : "football.dribbleBall"), dribbleKey);
 
             if (!_hintShown) _hintPop = 0f;
             _hintPop = Mathf.Min(1f, _hintPop + Time.deltaTime * 6f);

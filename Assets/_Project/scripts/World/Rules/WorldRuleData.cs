@@ -266,8 +266,8 @@ public sealed class WorldRuleData : ScriptableObject
         Mathf.Max(1f, darknessExplosiveRevealMultiplier);
     public float DarknessLaserRevealCooldown =>
         Mathf.Max(0.01f, darknessLaserRevealCooldown);
-    public string DisplayName => displayName;
-    public string ShortDescription => shortDescription;
+    public string DisplayName => LocalizationService.EnsureExists().Get(displayName);
+    public string ShortDescription => LocalizationService.EnsureExists().Get(shortDescription);
     public Sprite Icon => icon;
     public Color PresentationColor => presentationColor;
     public LevelMechanicPresentationData Presentation =>

@@ -14,6 +14,29 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
     private RectTransform notification;
     private CanvasGroup notificationGroup;
     private GameObject notificationCanvas;
+    private TextMeshProUGUI displayedTitle;
+    private TextMeshProUGUI displayedGold;
+    private TextMeshProUGUI displayedExtraGold;
+    private RunSummary displayedSummary;
+    private bool displayedEscapeUpdate;
+
+    private void OnEnable() => LocalizationService.Instance.LanguageChanged += HandleLanguageChanged;
+    private void HandleLanguageChanged(GameLanguage language)
+    {
+        if (notification == null) return;
+        string reasonKey = displayedSummary?.EndReason switch
+        {
+            RunEndReason.PlayerDied => "bunker.summary_interrupted",
+            RunEndReason.Victory => "bunker.summary_completed",
+            _ => "bunker.summary_return"
+        };
+        displayedTitle.text = LocalizationService.Instance.Get(displayedEscapeUpdate ? "bunker.summary_protocol" : reasonKey);
+        displayedGold.text = displayedEscapeUpdate ? LocalizationService.Instance.Get("bunker.summary_access")
+            : string.Format(LocalizationService.Instance.Get("bunker.summary_gold"), displayedSummary.GoldEarned);
+        if (displayedExtraGold != null)
+            displayedExtraGold.text = string.Format(LocalizationService.Instance.Get("bunker.summary_gold"), displayedSummary.GoldEarned);
+    }
+
     private const float VisibleDuration = 3f;
     private const float FadeDuration = 0.2f;
 
@@ -71,25 +94,30 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
             graphic.raycastTarget = false;
 
         TextMeshProUGUI title = notification.GetComponentInChildren<TextMeshProUGUI>(true);
+        displayedTitle = title;
+        displayedSummary = summary;
+        displayedEscapeUpdate = escapeUpdated;
         string reason = summary?.EndReason switch
         {
-            RunEndReason.PlayerDied => "ЭКСПЕРИМЕНТ ПРЕРВАН",
-            RunEndReason.Victory => "ЗАБЕГ ЗАВЕРШЁН",
-            _ => "ВОЗВРАЩЕНИЕ В БУНКЕР"
+            RunEndReason.PlayerDied => LocalizationService.Instance.Get("bunker.summary_interrupted"),
+            RunEndReason.Victory => LocalizationService.Instance.Get("bunker.summary_completed"),
+            _ => LocalizationService.Instance.Get("bunker.summary_return")
         };
-        SetLine(title, escapeUpdated ? "ESCAPE PROTOCOL UPDATED" : reason, escapeUpdated && summary != null ? 0.8f : 0.7f);
+        SetLine(title, escapeUpdated ? LocalizationService.Instance.Get("bunker.summary_protocol") : reason, escapeUpdated && summary != null ? 0.8f : 0.7f);
         TextMeshProUGUI gold = Instantiate(goldTextTemplate, notification);
+        displayedGold = gold;
         gold.name = "GoldEarned";
         gold.gameObject.SetActive(true);
-        SetLine(gold, escapeUpdated ? "ACCESS I ACQUIRED" : $"ПОЛУЧЕНО ЗОЛОТА: +{summary.GoldEarned}",
+        SetLine(gold, escapeUpdated ? LocalizationService.Instance.Get("bunker.summary_access") : string.Format(LocalizationService.Instance.Get("bunker.summary_gold"), summary.GoldEarned),
             escapeUpdated && summary != null ? 0.5f : 0.3f);
         if (escapeUpdated)
         {
             if (summary != null)
             {
                 TextMeshProUGUI earned = Instantiate(goldTextTemplate, notification);
+                displayedExtraGold = earned;
                 earned.gameObject.SetActive(true);
-                SetLine(earned, $"ПОЛУЧЕНО ЗОЛОТА: +{summary.GoldEarned}", 0.2f);
+                SetLine(earned, string.Format(LocalizationService.Instance.Get("bunker.summary_gold"), summary.GoldEarned), 0.2f);
             }
             meta.AcknowledgeEscapeUpdate();
         }
@@ -133,5 +161,10 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
         notificationCanvas = null;
     }
 
-    private void OnDisable() => Hide();
+    private void OnDisable()
+    {
+        if (LocalizationService.Instance != null)
+            LocalizationService.Instance.LanguageChanged -= HandleLanguageChanged;
+        Hide();
+    }
 }

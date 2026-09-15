@@ -10,7 +10,7 @@ public abstract class WorldLootRewardDefinition : ScriptableObject
     public string RewardId => rewardId;
     public string DisplayName => string.IsNullOrWhiteSpace(displayName)
         ? name
-        : displayName;
+        : LocalizationService.EnsureExists().Get(displayName);
     public Sprite Icon => icon;
     public float Weight => Mathf.Max(0.01f, weight);
 

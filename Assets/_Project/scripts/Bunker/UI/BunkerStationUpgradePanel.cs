@@ -126,29 +126,29 @@ public sealed class BunkerStationUpgradePanel : MonoBehaviour
         string[] unlocks = isMax ? System.Array.Empty<string>() : data.GetUnlocksForLevel(level + 1);
 
         titleText.text = data.DisplayName;
-        levelText.text = $"LEVEL {level} / {data.MaxLevel}";
-        costText.text = isMax ? "MAX LEVEL" : $"NEXT LEVEL: {cost} GOLD";
+        levelText.text = string.Format(LocalizationService.Instance.Get("bunker.station_level_value"), level, data.MaxLevel);
+        costText.text = isMax ? LocalizationService.Instance.Get("bunker.station_max") : string.Format(LocalizationService.Instance.Get("bunker.station_cost"), cost);
         string nextUnlocks = isMax ? "" : unlocks.Length == 0
-            ? "NEXT: —"
-            : $"NEXT: {string.Join(", ", unlocks)}";
+            ? LocalizationService.Instance.Get("bunker.station_next_empty")
+            : string.Format(LocalizationService.Instance.Get("bunker.station_next"), string.Join(", ", unlocks));
         unlocksText.text = currentStationId == BunkerStationId.Upgrades
-            ? "TIERS: LV1 CORE (6) • LV2 ADVANCED (+4) • LV3 BUILD (+2)" +
+            ? LocalizationService.Instance.Get("bunker.station_tiers") +
               (string.IsNullOrEmpty(nextUnlocks) ? "" : $"\n{nextUnlocks}")
             : isMax ? "" : unlocks.Length == 0
-                ? "UNLOCKS:\n—"
-                : $"UNLOCKS:\n{string.Join("\n", unlocks.Select(value => "• " + value))}";
+                ? LocalizationService.Instance.Get("bunker.station_unlock_empty")
+                : string.Format(LocalizationService.Instance.Get("bunker.station_unlocks"), string.Join("\n", unlocks.Select(value => "• " + value)));
         unlocksText.color = new Color(0.82f, 0.88f, 0.9f);
 
         int gold = CurrencyManager.Instance != null ? CurrencyManager.Instance.TotalGold : 0;
-        goldText.text = $"GOLD: {gold}";
+        goldText.text = string.Format(LocalizationService.Instance.Get("bunker.station_wallet"), gold);
         upgradeButton.interactable = !isMax && service.CanUpgrade(currentStationId);
-        upgradeButtonText.text = isMax ? "MAX LEVEL" : "UPGRADE";
+        upgradeButtonText.text = isMax ? LocalizationService.Instance.Get("bunker.station_max") : LocalizationService.Instance.Get("bunker.station_upgrade");
     }
 
     private IEnumerator ShowUnlockFeedback(string[] unlockedContent)
     {
         unlocksText.color = Cyan;
-        unlocksText.text = "ОТКРЫТО: " +
+        unlocksText.text = LocalizationService.Instance.Get("bunker.station_unlocked") +
             string.Join(", ", unlockedContent.Select(value => value.ToUpperInvariant()));
         yield return new WaitForSecondsRealtime(1.1f);
         unlockFeedbackRoutine = null;
@@ -161,6 +161,7 @@ public sealed class BunkerStationUpgradePanel : MonoBehaviour
         if (!IsVisible)
             return;
 
+        LocalizationService.Instance.LanguageChanged += HandleLanguageChanged;
         if (CurrencyManager.Instance != null)
             CurrencyManager.Instance.OnGoldUpdated += HandleGoldChanged;
         if (BunkerStationProgressionService.Instance != null)
@@ -169,11 +170,15 @@ public sealed class BunkerStationUpgradePanel : MonoBehaviour
 
     private void UnbindEvents()
     {
+        if (LocalizationService.Instance != null)
+            LocalizationService.Instance.LanguageChanged -= HandleLanguageChanged;
         if (CurrencyManager.Instance != null)
             CurrencyManager.Instance.OnGoldUpdated -= HandleGoldChanged;
         if (BunkerStationProgressionService.Instance != null)
             BunkerStationProgressionService.Instance.StationLevelChanged -= HandleStationLevelChanged;
     }
+
+    private void HandleLanguageChanged(GameLanguage language) => Refresh();
 
     private void HandleGoldChanged(int value) => Refresh();
 

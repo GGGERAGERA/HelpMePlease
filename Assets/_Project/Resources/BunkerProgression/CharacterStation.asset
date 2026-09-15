@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: CharacterStation
   m_EditorClassIdentifier: Assembly-CSharp::BunkerStationProgressionData
   stationId: 0
-  displayName: CHARACTER STATION
+  displayName: bunker.station_data.CharacterStation.name
   maxLevel: 3
   level2Cost: 500
   level3Cost: 1200
   level2Unlocks:
-  - Di-mag
+  - bunker.station_data.CharacterStation.level2
   level3Unlocks:
-  - Vika
+  - bunker.station_data.CharacterStation.level3

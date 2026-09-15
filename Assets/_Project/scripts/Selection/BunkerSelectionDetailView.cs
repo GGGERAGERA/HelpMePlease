@@ -41,7 +41,7 @@ public sealed class BunkerSelectionDetailView : MonoBehaviour
     {
         if (entry == null)
         {
-            ShowEmpty("ВЫБЕРИТЕ ЭЛЕМЕНТ");
+            ShowEmpty(LocalizationService.Instance.Get("bunker.select_item"));
             return;
         }
 

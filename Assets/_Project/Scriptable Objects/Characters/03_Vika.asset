@@ -14,13 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
   unlockData: {fileID: 11400000, guid: 959fe3a8ce8fd0746965a06ab6d013b3, type: 2}
   characterName: Vika
+  nameKey: character.vika.name
+  orbitalPatternKey: character.pattern.experimental
+  traitKey: character.trait.custom
+  descriptionKey: character.vika.description
   orbitalPath: 2
-  description: "\u041C\u0418\u041B\u0424\u0410"
   combatType: 0
-  combatTypeDisplayName: "ОРБИТАЛЬНЫЙ ПАТТЕРН\nСВОЯ ОРБИТА"
-  combatTypeDescription: "Нарисуйте замкнутую траекторию для каждого нового кольца.\nМодули движутся равномерно по длине линии."
   portrait: {fileID: -4156162664150254173, guid: a5b1c7aa692913c49b908b8a80a34de6, type: 3}
   characterPrefab: {fileID: 3267337206729473661, guid: 1868b54bca0976a44b3b858e4529d00d, type: 3}
   maxHealth: 150
   moveSpeed: 5
-  specialDescription: No

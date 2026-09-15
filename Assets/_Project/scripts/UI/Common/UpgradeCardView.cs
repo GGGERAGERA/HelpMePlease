@@ -25,6 +25,17 @@ public class UpgradeCardView : MonoBehaviour
     [SerializeField] private GameObject rarityDecorationRoot;
     [SerializeField] private Image rarityGlowImage;
 
+    private void OnEnable() => LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
+    private void OnDisable()
+    {
+        if (LocalizationService.Instance != null) LocalizationService.Instance.LanguageChanged -= RefreshLanguage;
+    }
+    private void RefreshLanguage(GameLanguage language)
+    {
+        if (currentUpgrade is OrbitalRewardData orbital)
+            orbital.PresentationOwner.RefreshPresentation(RunStateManager.Instance?.OrbitalStationState);
+        if (currentUpgrade != null) Setup(currentUpgrade, onClicked);
+    }
     private UpgradeData currentUpgrade;
     private Action<UpgradeData> onClicked;
     private UICardHoverAnimation hoverAnimation;
@@ -83,7 +94,7 @@ public class UpgradeCardView : MonoBehaviour
 
         gameObject.SetActive(true);
 
-        SetText(titleText, upgrade.upgradeName);
+        SetText(titleText, LocalizationService.EnsureExists().Get(upgrade.upgradeName));
         SetText(
             descriptionText,
             ProductionUpgradePresentation.GetCardDescription(upgrade));
@@ -95,7 +106,7 @@ public class UpgradeCardView : MonoBehaviour
             SetIcon(icon.Sprite, icon.ImageTint);
             if (orbitalReward.RewardKind is OrbitalRewardKind.Pistol or OrbitalRewardKind.LaserSword or
                 OrbitalRewardKind.ImpulseGun or OrbitalRewardKind.ArcEmitter or OrbitalRewardKind.LinkPair)
-                SetText(titleText, $"<color=#{ColorUtility.ToHtmlStringRGB(icon.Tint)}>{orbitalReward.upgradeName}</color>");
+                SetText(titleText, $"<color=#{ColorUtility.ToHtmlStringRGB(icon.Tint)}>{LocalizationService.EnsureExists().Get(orbitalReward.upgradeName)}</color>");
             if (iconImage != null)
             {
                 iconImage.type = Image.Type.Simple;

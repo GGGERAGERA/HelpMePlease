@@ -14,6 +14,10 @@ public sealed class FootballGateScoreZone : MonoBehaviour
     private float feedbackRemaining;
     private const float FeedbackDuration = 0.85f;
 
+    private void OnEnable() => LocalizationService.Instance.LanguageChanged += HandleLanguageChanged;
+    private void HandleLanguageChanged(GameLanguage language) =>
+        goalFeedback.text = string.Format(LocalizationService.Instance.Get("bunker.football_goal"), points);
+
     private void Update()
     {
         if (feedbackRemaining <= 0f) return;
@@ -62,7 +66,7 @@ public sealed class FootballGateScoreZone : MonoBehaviour
         {
             minigame.AddGoal(points);
             feedbackRemaining = FeedbackDuration;
-            goalFeedback.text = $"ГОЛ +{points}";
+            goalFeedback.text = string.Format(LocalizationService.Instance.Get("bunker.football_goal"), points);
             goalFeedback.alpha = 1f;
             goalFeedback.gameObject.SetActive(true);
             goalFlash.enabled = true;
@@ -81,6 +85,8 @@ public sealed class FootballGateScoreZone : MonoBehaviour
 
     private void OnDisable()
     {
+        if (LocalizationService.Instance != null)
+            LocalizationService.Instance.LanguageChanged -= HandleLanguageChanged;
         ballsInside.Clear();
         HideFeedback();
     }

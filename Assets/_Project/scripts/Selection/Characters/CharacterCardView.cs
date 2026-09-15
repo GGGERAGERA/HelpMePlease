@@ -56,7 +56,7 @@ public sealed class CharacterCardView : MonoBehaviour, IPointerEnterHandler, IPo
 
         if (nameText != null)
         {
-            nameText.text = character.characterName;
+            nameText.text = character.LocalizedName;
             nameText.color = StationPixelVisuals.Text;
         }
 

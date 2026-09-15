@@ -25,6 +25,13 @@ public sealed class LevelAnomalyView : MonoBehaviour
     private TextMeshProUGUI descriptionText;
     private Coroutine cardRoutine;
     private bool built;
+    private TextMeshProUGUI header;
+    private LevelMechanicPresentationData currentPresentation;
+    private void OnEnable() => LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
+    private void RefreshLanguage(GameLanguage language)
+    {
+        if (built) SetData(currentPresentation);
+    }
 
     private void Awake()
     {
@@ -99,7 +106,7 @@ public sealed class LevelAnomalyView : MonoBehaviour
         cardGroup.interactable = false;
         cardGroup.blocksRaycasts = false;
 
-        TextMeshProUGUI header = CreateTextChild(
+        header = CreateTextChild(
             card.transform,
             "Header",
             new Vector2(0f, 49f),
@@ -109,7 +116,7 @@ public sealed class LevelAnomalyView : MonoBehaviour
             TextAlignmentOptions.MidlineLeft,
             Cyan
         );
-        header.text = "АНОМАЛИЯ";
+        header.text = LocalizationService.EnsureExists().Get("hud.anomaly");
 
         nameText = CreateTextChild(
             card.transform,
@@ -139,6 +146,8 @@ public sealed class LevelAnomalyView : MonoBehaviour
 
     private void SetData(LevelMechanicPresentationData presentation)
     {
+        currentPresentation = presentation;
+        header.text = LocalizationService.EnsureExists().Get("hud.anomaly");
         nameText.text = GetCompactName(presentation.Title);
         descriptionText.text = string.IsNullOrWhiteSpace(
                 presentation.PinnedDescription)
@@ -253,6 +262,7 @@ public sealed class LevelAnomalyView : MonoBehaviour
 
     private void OnDisable()
     {
+        if (LocalizationService.Instance != null) LocalizationService.Instance.LanguageChanged -= RefreshLanguage;
         HideLocalAnomaly();
     }
 }

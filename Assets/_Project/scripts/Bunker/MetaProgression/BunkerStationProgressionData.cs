@@ -14,7 +14,7 @@ public sealed class BunkerStationProgressionData : ScriptableObject
     [SerializeField] private string[] level3Unlocks;
 
     public BunkerStationId StationId => stationId;
-    public string DisplayName => displayName;
+    public string DisplayName => LocalizationService.Instance.Get(displayName);
     public int MaxLevel => Mathf.Clamp(maxLevel, 1, 3);
 
     public int GetUpgradeCost(int currentLevel)
@@ -29,12 +29,13 @@ public sealed class BunkerStationProgressionData : ScriptableObject
 
     public string[] GetUnlocksForLevel(int level)
     {
-        return level switch
+        string[] keys = level switch
         {
             2 => level2Unlocks,
             3 => level3Unlocks,
             _ => System.Array.Empty<string>()
         };
+        return System.Array.ConvertAll(keys, key => LocalizationService.Instance.Get(key));
     }
 
 #if UNITY_EDITOR

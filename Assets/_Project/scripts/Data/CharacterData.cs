@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 [CreateAssetMenu(fileName = "New Character", menuName = "Game/Character Data")]
 public class CharacterData : ScriptableObject
@@ -13,17 +13,19 @@ public class CharacterData : ScriptableObject
     public Subject42.Combat.OrbitalStation.OrbitalPathType orbitalPath =
         Subject42.Combat.OrbitalStation.OrbitalPathType.Circle;
 
-    [TextArea(3, 6)]
-    public string description;
+    [Header("Localized Presentation")]
+    public string nameKey;
+    public string orbitalPatternKey;
+    public string traitKey;
+    public string descriptionKey;
+
+    public string LocalizedName => LocalizationService.EnsureExists().Get(nameKey);
+    public string LocalizedCombatTypeDisplayName => LocalizationService.EnsureExists().Get(orbitalPatternKey);
+    public string LocalizedCombatTypeDescription => LocalizationService.EnsureExists().Get(traitKey);
+    public string LocalizedDescription => LocalizationService.EnsureExists().Get(descriptionKey);
 
     [Header("Combat")]
     public CharacterCombatType combatType = CharacterCombatType.AutoFire;
-
-    public string combatTypeDisplayName = "AUTO FIRE";
-
-    [TextArea(2, 4)]
-    public string combatTypeDescription =
-        "Weapon automatically targets and attacks enemies.";
 
     public Sprite portrait;
 
@@ -34,7 +36,4 @@ public class CharacterData : ScriptableObject
     public int maxHealth = 100;
     public float moveSpeed = 5f;
 
-    [Header("Special")]
-    [TextArea(2, 4)]
-    public string specialDescription = "No special ability yet.";
 }

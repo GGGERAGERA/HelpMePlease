@@ -64,7 +64,7 @@ public sealed class BunkerSelectionCardView : MonoBehaviour,
         if (lockedOverlay != null)
             lockedOverlay.SetActive(value.Locked);
         if (lockedText != null)
-            lockedText.text = value.Locked ? "ЗАКРЫТО" : string.Empty;
+            lockedText.text = value.Locked ? LocalizationService.Instance.Get("bunker.locked") : string.Empty;
         if (button != null)
             button.interactable = value.Enabled;
 

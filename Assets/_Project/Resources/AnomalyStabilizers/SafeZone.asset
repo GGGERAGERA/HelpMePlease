@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: SafeZone
   m_EditorClassIdentifier: Assembly-CSharp::AnomalyStabilizerData
   id: safe_zone
-  displayName: "БЕЗОПАСНАЯ ЗОНА"
-  description: "Stasis замедляет игрока слабее. Враги и снаряды не изменены."
+  displayName: bunker.anomaly.SafeZone.name
+  description: bunker.anomaly.SafeZone.description
   requiredStationLevel: 2
   effectType: 2
   value: 0.65

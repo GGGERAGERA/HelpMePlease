@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: FieldCompression
   m_EditorClassIdentifier: Assembly-CSharp::AnomalyStabilizerData
   id: field_compression
-  displayName: "СЖАТИЕ ПОЛЯ"
-  description: "Зоны локальных аномалий в следующем Run на 20% меньше."
+  displayName: bunker.anomaly.FieldCompression.name
+  description: bunker.anomaly.FieldCompression.description
   requiredStationLevel: 1
   effectType: 0
   value: 0.8

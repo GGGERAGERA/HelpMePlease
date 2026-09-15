@@ -35,7 +35,9 @@ public sealed class DashCooldownView : MonoBehaviour
             KeyCode key = movement != null
                 ? movement.DashKey
                 : KeyCode.Space;
-            keyText.text = key.ToString().ToUpperInvariant();
+            keyText.text = key == KeyCode.Space
+                ? LocalizationService.EnsureExists().Get("input.space")
+                : key.ToString().ToUpperInvariant();
         }
     }
 }

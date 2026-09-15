@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: AnomalyStation
   m_EditorClassIdentifier: Assembly-CSharp::BunkerStationProgressionData
   stationId: 3
-  displayName: ANOMALY STATION
+  displayName: bunker.station_data.AnomalyStation.name
   maxLevel: 3
   level2Cost: 500
   level3Cost: 1200
   level2Unlocks:
-  - MORE STABILIZERS
+  - bunker.station_data.AnomalyStation.level2
   level3Unlocks:
-  - ADVANCED STABILIZERS
+  - bunker.station_data.AnomalyStation.level3

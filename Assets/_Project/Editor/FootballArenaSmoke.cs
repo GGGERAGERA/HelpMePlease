@@ -27,6 +27,8 @@ public static class FootballArenaSmoke
     private static GravityZone anomaly;
     private static GravityZone[] fields;
     private static readonly BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
+    private static readonly string[] ProgressKeys =
+        { "BunkerFootballBestScore", "BunkerFootballDevRewardClaimed", "TOTAL_GOLD" };
 
     static FootballArenaSmoke()
     {
@@ -43,6 +45,15 @@ public static class FootballArenaSmoke
                 running = false;
                 Application.runInBackground = SessionState.GetBool("FootballRunInBackground", false);
             }
+            if (state == PlayModeStateChange.EnteredEditMode && SessionState.GetBool("FootballOriginalSmoke", false))
+            {
+                foreach (string key in ProgressKeys)
+                    if (SessionState.GetBool("FootballSmoke.Had." + key, false))
+                        PlayerPrefs.SetInt(key, SessionState.GetInt("FootballSmoke.Saved." + key, 0));
+                    else PlayerPrefs.DeleteKey(key);
+                PlayerPrefs.Save();
+                SessionState.SetBool("FootballOriginalSmoke", false);
+            }
         };
         EditorApplication.update += Tick;
     }
@@ -54,8 +65,11 @@ public static class FootballArenaSmoke
             throw new InvalidOperationException("Open saved MainMenu in Edit Mode.");
         SessionState.SetBool("FootballRunInBackground", Application.runInBackground);
         SessionState.SetBool("FootballOriginalSmoke", true);
-        SessionState.SetBool("FootballHadRecord", PlayerPrefs.HasKey("BunkerFootballBestScore"));
-        SessionState.SetInt("FootballSavedRecord", PlayerPrefs.GetInt("BunkerFootballBestScore", 0));
+        foreach (string key in ProgressKeys)
+        {
+            SessionState.SetBool("FootballSmoke.Had." + key, PlayerPrefs.HasKey(key));
+            SessionState.SetInt("FootballSmoke.Saved." + key, PlayerPrefs.GetInt(key, 0));
+        }
         EditorApplication.isPlaying = true;
     }
     private static void Check(string name, bool pass, string detail = "")
@@ -269,12 +283,9 @@ public static class FootballArenaSmoke
     }
     private static void Finish()
     {
-        running=false;SessionState.SetBool("FootballOriginalSmoke",false);
+        running=false;
         if(game!=null)game.ResetGame();
         if(movement!=null)movement.enabled=true;
-        if(SessionState.GetBool("FootballHadRecord",false))PlayerPrefs.SetInt("BunkerFootballBestScore",SessionState.GetInt("FootballSavedRecord",0));
-        else PlayerPrefs.DeleteKey("BunkerFootballBestScore");
-        PlayerPrefs.Save();
         game=null;EditorApplication.isPlaying=false;
     }
 }

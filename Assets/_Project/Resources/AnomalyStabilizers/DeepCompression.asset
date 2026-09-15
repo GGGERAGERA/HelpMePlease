@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: DeepCompression
   m_EditorClassIdentifier: Assembly-CSharp::AnomalyStabilizerData
   id: deep_compression
-  displayName: "ГЛУБОКОЕ СЖАТИЕ"
-  description: "Продвинутая стабилизация: зоны локальных аномалий на 35% меньше."
+  displayName: bunker.anomaly.DeepCompression.name
+  description: bunker.anomaly.DeepCompression.description
   requiredStationLevel: 3
   effectType: 0
   value: 0.65

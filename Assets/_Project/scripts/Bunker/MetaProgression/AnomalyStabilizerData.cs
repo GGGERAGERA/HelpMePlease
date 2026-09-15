@@ -28,10 +28,8 @@ public sealed class AnomalyStabilizerData : ScriptableObject
     [SerializeField] private float[] metaEffectValues;
 
     public string Id => string.IsNullOrWhiteSpace(id) ? name : id;
-    public string DisplayName => string.IsNullOrWhiteSpace(displayName)
-        ? name
-        : displayName;
-    public string Description => description;
+    public string DisplayName => LocalizationService.Instance.Get(displayName);
+    public string Description => LocalizationService.Instance.Get(description);
     public int RequiredStationLevel => Mathf.Clamp(requiredStationLevel, 1, 3);
     public AnomalyStabilizerEffectType EffectType => effectType;
     public float Value => value;

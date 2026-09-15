@@ -3,19 +3,18 @@ using TMPro;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(TextMeshProUGUI))]
 public sealed class LocalizedText : MonoBehaviour
 {
     private static readonly HashSet<string> WarnedKeys = new();
 
     [SerializeField] private string localizationKey;
 
-    private TextMeshProUGUI targetText;
+    private TMP_Text targetText;
     private LocalizationService service;
 
     private void Awake()
     {
-        targetText = GetComponent<TextMeshProUGUI>();
+        targetText = GetComponent<TMP_Text>();
     }
 
     private void OnEnable()
@@ -42,7 +41,7 @@ public sealed class LocalizedText : MonoBehaviour
     public void Refresh()
     {
         if (targetText == null)
-            targetText = GetComponent<TextMeshProUGUI>();
+            targetText = GetComponent<TMP_Text>();
 
         if (service == null)
             service = LocalizationService.EnsureExists();

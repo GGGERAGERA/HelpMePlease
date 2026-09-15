@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: WeaponStation
   m_EditorClassIdentifier: Assembly-CSharp::BunkerStationProgressionData
   stationId: 1
-  displayName: WEAPON STATION
+  displayName: bunker.station_data.WeaponStation.name
   maxLevel: 3
   level2Cost: 500
   level3Cost: 1200
   level2Unlocks:
-  - LaserCannon
+  - bunker.station_data.WeaponStation.level2
   level3Unlocks:
+  - bunker.station_data.WeaponStation.level3

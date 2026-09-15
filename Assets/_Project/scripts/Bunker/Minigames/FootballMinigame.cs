@@ -16,6 +16,10 @@ public sealed class FootballMinigame : BunkerMinigame
     public Transform PlayerStart => playerStart;
 
     private const string BestScoreKey = "BunkerFootballBestScore";
+    private const string DevRewardClaimedKey = "BunkerFootballDevRewardClaimed";
+    public const int DevRecord = 450;
+    public const int PersonalRecordGoldReward = 50;
+    public const int DevRecordGoldReward = 200;
     [Header("Arena geometry")]
     [SerializeField] private BoxCollider2D arenaBounds;
     [SerializeField] private BoxCollider2D ballSpawnZone;
@@ -92,6 +96,7 @@ public sealed class FootballMinigame : BunkerMinigame
     private readonly Dictionary<FootballScoreZone, Coroutine> targetRespawns = new();
     private int currentScore;
     private int bestScore;
+    public bool DevRewardClaimed { get; private set; }
     private float remainingTime;
 
     public int GoalCount { get; private set; }
@@ -123,12 +128,14 @@ public sealed class FootballMinigame : BunkerMinigame
     private void Awake()
     {
         bestScore = PlayerPrefs.GetInt(BestScoreKey, 0);
+        DevRewardClaimed = PlayerPrefs.GetInt(DevRewardClaimedKey, 0) != 0;
         remainingTime = roundDuration;
         EnsureTargetSettings();
         foreach (var target in targetPool) target.ConfigureOwner(this);
         ResetRuntimeObjects();
         startZone?.SetAvailable(true);
         hud?.ShowIdle(roundDuration, bestScore);
+        hud?.SetDevRecord(DevRewardClaimed);
     }
 
     private void Update()
@@ -228,25 +235,17 @@ public sealed class FootballMinigame : BunkerMinigame
 
     protected override void OnGameCompleted()
     {
-        bool newRecord = SaveBestScore();
+        var (newRecord, devReward) = SaveRecordRewards();
         StopTargetRespawns();
         ResetRuntimeObjects();
         RestoreCamera();
         AllowRestart();
         startZone?.SetAvailable(true);
-        hud?.ShowCompleted(currentScore, bestScore, newRecord);
+        hud?.SetDevRecord(DevRewardClaimed);
+        hud?.ShowCompleted(currentScore, bestScore, newRecord, devReward);
     }
 
-    protected override void OnGameFailed()
-    {
-        SaveBestScore();
-        StopTargetRespawns();
-        ResetRuntimeObjects();
-        RestoreCamera();
-        AllowRestart();
-        startZone?.SetAvailable(true);
-        hud?.ShowCompleted(currentScore, bestScore, false);
-    }
+    protected override void OnGameFailed() => OnGameCompleted();
 
     protected override void OnGameReset()
     {
@@ -462,13 +461,29 @@ public sealed class FootballMinigame : BunkerMinigame
         return count;
     }
 
-    private bool SaveBestScore()
+    private (bool newRecord, bool devReward) SaveRecordRewards()
     {
-        if (currentScore <= bestScore) return false;
-        bestScore = currentScore;
-        PlayerPrefs.SetInt(BestScoreKey, bestScore);
-        PlayerPrefs.Save();
-        return true;
+        bool newRecord = currentScore > bestScore;
+        bool devReward = !DevRewardClaimed && currentScore >= DevRecord;
+        int gold = (newRecord ? PersonalRecordGoldReward : 0)
+            + (devReward ? DevRecordGoldReward : 0);
+        if (gold == 0) return (false, false);
+
+        if (newRecord)
+        {
+            bestScore = currentScore;
+            PlayerPrefs.SetInt(BestScoreKey, bestScore);
+        }
+        if (devReward)
+        {
+            DevRewardClaimed = true;
+            PlayerPrefs.SetInt(DevRewardClaimedKey, 1);
+        }
+
+        // AddGoldExact saves these pending record changes together with the gold,
+        // before notifying currency listeners. Fixed rewards ignore income bonuses.
+        CurrencyManager.Instance.AddGoldExact(gold);
+        return (newRecord, devReward);
     }
 
     private void EnsureTargetSettings()

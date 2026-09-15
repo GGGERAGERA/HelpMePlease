@@ -44,8 +44,8 @@ public sealed class NoDamageChallenge : MonoBehaviour
         State = NoDamageChallengeState.Active;
 
         RunMessageService.Instance?.ShowCustom(
-            "ИСПЫТАНИЕ",
-            "НЕ ПОЛУЧАЙТЕ УРОН 30 СЕКУНД"
+            "challenge.start",
+            "challenge.instruction"
         );
     }
 
@@ -96,7 +96,7 @@ public sealed class NoDamageChallenge : MonoBehaviour
         State = NoDamageChallengeState.Failed;
 
         RunMessageService.Instance?.ShowCustom(
-            "ИСПЫТАНИЕ ПРОВАЛЕНО",
+            "challenge.failed",
             string.Empty
         );
 
@@ -111,7 +111,7 @@ public sealed class NoDamageChallenge : MonoBehaviour
         State = NoDamageChallengeState.Completed;
 
         RunMessageService.Instance?.ShowCustom(
-            "ИСПЫТАНИЕ ВЫПОЛНЕНО",
+            "challenge.complete",
             string.Empty
         );
 

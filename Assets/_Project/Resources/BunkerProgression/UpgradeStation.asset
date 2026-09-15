@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: UpgradeStation
   m_EditorClassIdentifier: Assembly-CSharp::BunkerStationProgressionData
   stationId: 2
-  displayName: UPGRADES STATION
+  displayName: bunker.station_data.UpgradeStation.name
   maxLevel: 3
   level2Cost: 500
   level3Cost: 1200
   level2Unlocks:
-  - "ADVANCED (+3): ATTACK SIZE, HP REGEN, MULTISHOT"
+  - bunker.station_data.UpgradeStation.level2
   level3Unlocks:
-  - "NO NEW PRODUCTION UPGRADES"
+  - bunker.station_data.UpgradeStation.level3

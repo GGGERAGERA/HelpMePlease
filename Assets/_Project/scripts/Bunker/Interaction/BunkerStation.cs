@@ -5,7 +5,7 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
 {
     [Header("Station")]
     [SerializeField] private BunkerStationType stationType;
-    [SerializeField] private string interactionText = "Взаимодействовать";
+    [SerializeField] private string interactionText = "hud.interact";
 
     [Header("Progression")]
     [SerializeField] private bool progressionEnabled;
@@ -33,7 +33,7 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
     public bool CanInteract => interactionEnabled &&
         stationType != BunkerStationType.None &&
         stationType != BunkerStationType.Shop;
-    public string InteractionText => interactionText;
+    public string InteractionText => LocalizationService.Instance.Get(interactionText);
 
     private BunkerPanelManager Panels =>
         BunkerContext.Instance != null && BunkerContext.Instance.Panels != null

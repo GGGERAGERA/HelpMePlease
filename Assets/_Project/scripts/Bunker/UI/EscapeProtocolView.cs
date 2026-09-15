@@ -66,11 +66,16 @@ public sealed class EscapeProtocolView : MonoBehaviour
         launchTarget = null;
         SelectedDepthId = 0;
         SetMode(false, access);
+        RefreshTerminal(access);
+        gameObject.SetActive(true);
+    }
+
+    private void RefreshTerminal(int access)
+    {
         DepthCatalog.Entry next = depths.Find(access + 1);
         terminalStatusText.text = access == 0
-            ? "CURRENT OBJECTIVE\n<size=26>SECTOR GUARDIAN</size>\n\nПолучите уровень доступа, чтобы открыть путь из комплекса."
-            : $"ACCESS {DepthCatalog.Numeral(access)} ACQUIRED\n\nNEXT: {next?.displayName}\nUNLOCKED\n<size=18>NOT AVAILABLE IN DEMO</size>";
-        gameObject.SetActive(true);
+            ? LocalizationService.Instance.Get("bunker.depth.objective")
+            : string.Format(LocalizationService.Instance.Get("bunker.depth.acquired"), DepthCatalog.Numeral(access), next?.LocalizedName);
     }
 
     public void ShowDepthSelect(int access, DepthCatalog catalog, BunkerPanelManager owner, Transform transitionTarget)
@@ -100,8 +105,20 @@ public sealed class EscapeProtocolView : MonoBehaviour
         launchOwner.StartRun(launchTarget, SelectedDepthId);
     }
 
+    private void OnEnable() => LocalizationService.Instance.LanguageChanged += HandleLanguageChanged;
+    private void HandleLanguageChanged(GameLanguage language)
+    {
+        if (depths == null) return;
+        int access = MetaProgressionManager.EnsureExists().EscapeAccess;
+        SetMode(launchOwner != null, access);
+        if (launchOwner != null) RefreshSelection(access);
+        else RefreshTerminal(access);
+    }
+
     private void OnDisable()
     {
+        if (LocalizationService.Instance != null)
+            LocalizationService.Instance.LanguageChanged -= HandleLanguageChanged;
         launchOwner = null;
         launchTarget = null;
         SelectedDepthId = 0;
@@ -111,8 +128,8 @@ public sealed class EscapeProtocolView : MonoBehaviour
 
     private void SetMode(bool selecting, int access)
     {
-        titleText.text = selecting ? "ESCAPE PROTOCOL <size=15><color=#739296>/ DEPTH SELECT</color></size>" : "ESCAPE PROTOCOL";
-        accessText.text = $"ACCESS: {access} / {MetaProgressionManager.EscapeAccessRequired}";
+        titleText.text = selecting ? LocalizationService.Instance.Get("bunker.depth.select_title") : LocalizationService.Instance.Get("bunker.depth.title");
+        accessText.text = string.Format(LocalizationService.Instance.Get("bunker.depth.access"), access, MetaProgressionManager.EscapeAccessRequired);
         startButton.gameObject.SetActive(selecting);
         detailPanel.SetActive(selecting);
         detailText.gameObject.SetActive(selecting);
@@ -131,10 +148,10 @@ public sealed class EscapeProtocolView : MonoBehaviour
             DepthAvailability state = depth.GetAvailability(access);
             bool selected = depth.id == SelectedDepthId;
             bool locked = state == DepthAvailability.Locked;
-            string status = locked ? "LOCKED" : state == DepthAvailability.Available ? "AVAILABLE"
-                : "UNLOCKED\n<size=12>NOT AVAILABLE IN DEMO</size>";
+            string status = locked ? LocalizationService.Instance.Get("bunker.depth.locked") : state == DepthAvailability.Available ? LocalizationService.Instance.Get("bunker.depth.available")
+                : LocalizationService.Instance.Get("bunker.depth.demo_status");
             string accent = locked ? "#40575E" : "#16D2DB";
-            card.label.text = $"<color={accent}><size=40>{DepthCatalog.Numeral(depth.id)}</size></color>\n<size=22>{depth.displayName}</size>\n\n<color={accent}><size=13>{status}</size></color>";
+            card.label.text = $"<color={accent}><size=40>{DepthCatalog.Numeral(depth.id)}</size></color>\n<size=22>{depth.LocalizedName}</size>\n\n<color={accent}><size=13>{status}</size></color>";
             card.label.color = locked ? new Color(.34f, .43f, .47f) : StationPixelVisuals.Text;
             card.background.color = locked ? new Color(.009f, .018f, .025f)
                 : selected ? StationPixelVisuals.PanelRaised : StationPixelVisuals.Panel;
@@ -145,12 +162,12 @@ public sealed class EscapeProtocolView : MonoBehaviour
         }
         DepthCatalog.Entry choice = depths.Find(SelectedDepthId);
         DepthAvailability availability = choice.GetAvailability(access);
-        string heading = $"<size=32><color=#E6F0F2>{choice.displayName}</color></size>";
+        string heading = $"<size=32><color=#E6F0F2>{choice.LocalizedName}</color></size>";
         detailText.text = availability switch
         {
-            DepthAvailability.Locked => $"{heading}\n\n<size=17><color=#77939A>REQUIRES ACCESS {DepthCatalog.Numeral(choice.requiredAccess)}</color></size>",
-            DepthAvailability.UnavailableInBuild => $"{heading}\n<size=16><color=#16D2DB>UNLOCKED</color></size>\n\n<size=18><color=#77939A>NOT AVAILABLE IN DEMO</color></size>",
-            _ => $"{heading}\n<size=16><color=#16D2DB>{choice.description.Replace("\n", "  ·  ")}  ·  ACCESS {DepthCatalog.Numeral(choice.requiredAccess + 1)}</color></size>\n\n<size=18><color=#94ADB3>Defeat the Guardian. Unlock the next depth.</color></size>"
+            DepthAvailability.Locked => string.Format(LocalizationService.Instance.Get("bunker.depth.requires"), heading, DepthCatalog.Numeral(choice.requiredAccess)),
+            DepthAvailability.UnavailableInBuild => string.Format(LocalizationService.Instance.Get("bunker.depth.demo_detail"), heading),
+            _ => string.Format(LocalizationService.Instance.Get("bunker.depth.available_detail"), heading, choice.LocalizedDescription.Replace("\n", "  ·  "), DepthCatalog.Numeral(choice.requiredAccess + 1))
         };
         detailFadeTime = 0f;
         reachedPath.fillAmount = pathGlow.fillAmount = Mathf.Clamp01(access / (float)(cards.Length - 1));
@@ -159,7 +176,7 @@ public sealed class EscapeProtocolView : MonoBehaviour
         startButtonText.color = availability == DepthAvailability.Available
             ? new Color(.015f, .09f, .12f) : StationPixelVisuals.MutedText;
         startButton.interactable = availability == DepthAvailability.Available;
-        startButtonText.text = availability == DepthAvailability.Locked ? "LOCKED"
-            : availability == DepthAvailability.UnavailableInBuild ? "UNAVAILABLE" : "START RUN";
+        startButtonText.text = availability == DepthAvailability.Locked ? LocalizationService.Instance.Get("bunker.depth.locked")
+            : availability == DepthAvailability.UnavailableInBuild ? LocalizationService.Instance.Get("bunker.depth.unavailable") : LocalizationService.Instance.Get("bunker.depth.start");
     }
 }

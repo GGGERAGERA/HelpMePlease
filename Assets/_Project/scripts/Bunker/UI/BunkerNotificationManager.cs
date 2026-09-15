@@ -25,6 +25,19 @@ public sealed class BunkerNotificationManager : MonoBehaviour
     [SerializeField] private Color warningColor = new(0.55f, 0.38f, 0.08f, 0.95f);
     [SerializeField] private Color errorColor = new(0.45f, 0.08f, 0.08f, 0.95f);
 
+    private string displayedMessageKey;
+    private void OnEnable() => LocalizationService.Instance.LanguageChanged += HandleLanguageChanged;
+    private void OnDisable()
+    {
+        if (LocalizationService.Instance != null)
+            LocalizationService.Instance.LanguageChanged -= HandleLanguageChanged;
+    }
+    private void HandleLanguageChanged(GameLanguage language)
+    {
+        if (!string.IsNullOrEmpty(displayedMessageKey))
+            messageText.text = LocalizationService.Instance.Get(displayedMessageKey);
+    }
+
     private Coroutine routine;
     private Vector2 basePosition;
 
@@ -44,23 +57,23 @@ public sealed class BunkerNotificationManager : MonoBehaviour
         HideImmediate();
     }
 
-    public void ShowInfo(string message) => Show(message, BunkerNotificationType.Info);
-    public void ShowSuccess(string message) => Show(message, BunkerNotificationType.Success);
-    public void ShowWarning(string message) => Show(message, BunkerNotificationType.Warning);
-    public void ShowError(string message) => Show(message, BunkerNotificationType.Error);
+    public void ShowInfo(string messageKey) => Show(messageKey, BunkerNotificationType.Info);
+    public void ShowSuccess(string messageKey) => Show(messageKey, BunkerNotificationType.Success);
+    public void ShowWarning(string messageKey) => Show(messageKey, BunkerNotificationType.Warning);
+    public void ShowError(string messageKey) => Show(messageKey, BunkerNotificationType.Error);
 
-    public void Show(string message, BunkerNotificationType type = BunkerNotificationType.Info)
+    public void Show(string messageKey, BunkerNotificationType type = BunkerNotificationType.Info)
     {
-        if (string.IsNullOrWhiteSpace(message))
+        if (string.IsNullOrWhiteSpace(messageKey))
             return;
 
         if (routine != null)
             StopCoroutine(routine);
 
-        routine = StartCoroutine(ShowRoutine(message, type));
+        routine = StartCoroutine(ShowRoutine(messageKey, type));
     }
 
-    private IEnumerator ShowRoutine(string message, BunkerNotificationType type)
+    private IEnumerator ShowRoutine(string messageKey, BunkerNotificationType type)
     {
         if (root == null || canvasGroup == null || panel == null || messageText == null)
             yield break;
@@ -69,7 +82,8 @@ public sealed class BunkerNotificationManager : MonoBehaviour
         canvasGroup.interactable = false;
         canvasGroup.blocksRaycasts = false;
 
-        messageText.text = message;
+        displayedMessageKey = messageKey;
+        messageText.text = LocalizationService.Instance.Get(messageKey);
 
         if (backgroundImage != null)
             backgroundImage.color = GetColor(type);
@@ -124,6 +138,7 @@ public sealed class BunkerNotificationManager : MonoBehaviour
 
     private void HideImmediate()
     {
+        displayedMessageKey = null;
         if (root != null)
             root.SetActive(true);
 

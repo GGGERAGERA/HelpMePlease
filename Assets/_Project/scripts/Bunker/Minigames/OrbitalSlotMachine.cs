@@ -104,9 +104,15 @@ public static class OrbitalSlotMachine
 
     public static string Label(OrbitalSlotSymbol symbol) => symbol switch
     {
-        OrbitalSlotSymbol.Sword => "LASER SWORD",
-        OrbitalSlotSymbol.Link => "LINK PAIR",
-        OrbitalSlotSymbol.Ring => "NEW RING",
+        OrbitalSlotSymbol.Sword => LocalizationService.Instance.Get("bunker.slot_sword"),
+        OrbitalSlotSymbol.Link => LocalizationService.Instance.Get("bunker.slot_link"),
+        OrbitalSlotSymbol.Ring => LocalizationService.Instance.Get("bunker.slot_new_ring"),
+        OrbitalSlotSymbol.None => LocalizationService.Instance.Get("bunker.slot_symbol.None"),
+        OrbitalSlotSymbol.Gun => LocalizationService.Instance.Get("bunker.slot_symbol.Gun"),
+        OrbitalSlotSymbol.Impulse => LocalizationService.Instance.Get("bunker.slot_symbol.Impulse"),
+        OrbitalSlotSymbol.Arc => LocalizationService.Instance.Get("bunker.slot_symbol.Arc"),
+        OrbitalSlotSymbol.Gold => LocalizationService.Instance.Get("bunker.slot_symbol.Gold"),
+        OrbitalSlotSymbol.Skull => LocalizationService.Instance.Get("bunker.slot_symbol.Skull"),
         _ => symbol.ToString().ToUpperInvariant()
     };
 
@@ -114,9 +120,9 @@ public static class OrbitalSlotMachine
     {
         var a = reels[0]; var b = reels[1]; var c = reels[2];
         if (a == b && b == c)
-            return a == OrbitalSlotSymbol.Gold ? "+250 GOLD" :
-                a == OrbitalSlotSymbol.Skull ? "SKULL — БЕЗ ВЫИГРЫША" :
-                $"JACKPOT: +1 {Label(a)} В СЛЕДУЮЩЕМ RUN";
-        return a == b || a == c || b == c ? "ВОЗВРАТ СТАВКИ: +50 GOLD" : "БЕЗ ВЫИГРЫША";
+            return a == OrbitalSlotSymbol.Gold ? LocalizationService.Instance.Get("bunker.slot_250") :
+                a == OrbitalSlotSymbol.Skull ? LocalizationService.Instance.Get("bunker.slot_skull_none") :
+                string.Format(LocalizationService.Instance.Get("bunker.slot_bonus"), Label(a));
+        return a == b || a == c || b == c ? LocalizationService.Instance.Get("bunker.slot_stake_returned") : LocalizationService.Instance.Get("bunker.slot_no_reward");
     }
 }

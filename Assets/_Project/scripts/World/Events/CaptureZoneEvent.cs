@@ -37,7 +37,7 @@ public class CaptureZoneEvent : WorldEvent
         base.Initialize(spawner);
         completionTriggered = false;
 
-        ShowEventMarker(transform, "CAPTURE");
+        ShowEventMarker(transform, "event.capture");
     }
 
     public override void ApplyDifficultyMultiplier(float multiplier)
@@ -134,7 +134,7 @@ public class CaptureZoneEvent : WorldEvent
             timerText.text = IsStarted &&
                 (playerInside || currentHoldTime > 0f)
                 ? $"{Mathf.CeilToInt(timeLeft)}s"
-                : "ENTER";
+                : LocalizationService.EnsureExists().Get("event.enter");
 
     }
 

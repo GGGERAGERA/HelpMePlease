@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LocalAnomalyData
   stableId: ExplosiveZone
   anomalyType: 2
-  displayName: "АНОМАЛИЯ: ВЗРЫВНАЯ ЗОНА"
-  description: "Враги, погибшие внутри зоны, взрываются"
-  pinnedDescription: "Смерть врага в зоне вызывает взрыв"
+  displayName: world.anomaly.explosivezone.displayName
+  description: world.anomaly.explosivezone.description
+  pinnedDescription: world.anomaly.explosivezone.pinnedDescription
   selectionWeight: 1
   zonePrefab: {fileID: 593000000000000004, guid: c3e49c2f707f414ea4fed56e82ad2c83, type: 3}
   zoneSize: {x: 12, y: 9}

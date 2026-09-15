@@ -249,7 +249,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2395c4dcc2be965448b24f47813244fc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorInteractable
-  promptText: Enter Room
+  promptText: hud.enter_room
   targetPoint: {fileID: 0}
   player: {fileID: 0}
 --- !u!58 &3314694913503890142

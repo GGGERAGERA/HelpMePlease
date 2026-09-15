@@ -65,7 +65,7 @@ public sealed class ResourceNode : MonoBehaviour
             !(EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) &&
             hitArea.OverlapPoint(camera.ScreenToWorldPoint(Input.mousePosition));
         if (over)
-            station?.Interaction?.ShowHint("RESOURCE NODE", "ЛКМ · собрать золото");
+            station?.Interaction?.ShowHint("resource.title", "resource.collect");
         else if (hovered)
             station?.Interaction?.ClearHint();
         hovered = over;

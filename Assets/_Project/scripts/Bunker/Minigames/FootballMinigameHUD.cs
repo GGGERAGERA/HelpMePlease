@@ -9,14 +9,40 @@ public sealed class FootballMinigameHUD : MonoBehaviour
     [SerializeField] private TMP_Text timeText;
     [SerializeField] private TMP_Text scoreText;
     [SerializeField] private TMP_Text bestScoreText;
+    [SerializeField] private TMP_Text devRecordText;
     [SerializeField] private TMP_Text resultText;
     [SerializeField] private TMP_Text goalStatsText;
 
-    public void SetGoalStats(int count, int points) =>
-        goalStatsText.text = $"ГОЛЫ  {count}   /   +{points} ОЧКОВ";
+    private int displayedGoalCount;
+    private int displayedGoalPoints;
+    private bool displayedClaimed;
+    private bool completed;
+    private bool completedRecord;
+    private bool completedBenchmark;
+
+    private void OnEnable() => LocalizationService.Instance.LanguageChanged += HandleLanguageChanged;
+    private void OnDisable()
+    {
+        if (LocalizationService.Instance != null)
+            LocalizationService.Instance.LanguageChanged -= HandleLanguageChanged;
+    }
+    private void HandleLanguageChanged(GameLanguage language)
+    {
+        SetGoalStats(displayedGoalCount, displayedGoalPoints);
+        SetDevRecord(displayedClaimed);
+        if (completed) RefreshCompletedResult();
+    }
+
+    public void SetGoalStats(int count, int points)
+    {
+        displayedGoalCount = count;
+        displayedGoalPoints = points;
+        goalStatsText.text = string.Format(LocalizationService.Instance.Get("bunker.football_goals"), count, points);
+    }
 
     public void ShowIdle(float duration, int bestScore)
     {
+        completed = false;
         viewportMaskRoot.SetActive(false);
         SetValues(duration, 0, bestScore);
         SetGoalStats(0, 0);
@@ -26,17 +52,43 @@ public sealed class FootballMinigameHUD : MonoBehaviour
 
     public void ShowRunning(float remainingTime, int score, int bestScore)
     {
+        completed = false;
         SetVisible(true);
         SetValues(remainingTime, score, bestScore);
         SetResult(string.Empty);
     }
 
-    public void ShowCompleted(int score, int bestScore, bool newRecord)
+    public void SetDevRecord(bool claimed)
+    {
+        displayedClaimed = claimed;
+        if (devRecordText != null)
+            devRecordText.text = string.Format(LocalizationService.Instance.Get("bunker.football_benchmark"), FootballMinigame.DevRecord)
+                + (claimed ? LocalizationService.Instance.Get("bunker.football_claimed") : string.Format(LocalizationService.Instance.Get("bunker.football_reward"), FootballMinigame.DevRecordGoldReward))
+                + "</size>";
+    }
+
+    public void ShowCompleted(int score, int bestScore, bool newRecord, bool devReward = false)
     {
         SetVisible(true);
         viewportMaskRoot.SetActive(false);
         SetValues(0f, score, bestScore);
-        SetResult(newRecord ? "НОВЫЙ РЕКОРД!" : "РАУНД ЗАВЕРШЁН");
+        completed = true;
+        completedRecord = newRecord;
+        completedBenchmark = devReward;
+        RefreshCompletedResult();
+    }
+
+    private void RefreshCompletedResult()
+    {
+        bool newRecord = completedRecord;
+        bool devReward = completedBenchmark;
+        string result = newRecord
+            ? string.Format(LocalizationService.Instance.Get("bunker.football_record"), FootballMinigame.PersonalRecordGoldReward)
+            : LocalizationService.Instance.Get("bunker.football_complete");
+        if (devReward)
+            result = (newRecord ? result + "\n" : string.Empty)
+                + string.Format(LocalizationService.Instance.Get("bunker.football_benchmark_reward"), FootballMinigame.DevRecordGoldReward);
+        SetResult(result);
     }
 
     public void Hide()

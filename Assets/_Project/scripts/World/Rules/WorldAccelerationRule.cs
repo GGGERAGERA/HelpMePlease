@@ -32,8 +32,8 @@ public sealed class WorldAccelerationRule : MonoBehaviour
         IsRunning = true;
 
         RunMessageService.Instance?.ShowCustom(
-            "ПРАВИЛО МИРА",
-            "УСКОРЕНИЕ"
+            "world.message.rule",
+            "world.message.acceleration"
         );
     }
 
@@ -49,7 +49,7 @@ public sealed class WorldAccelerationRule : MonoBehaviour
         TimeRemaining = 0f;
 
         RunMessageService.Instance?.ShowCustom(
-            "УСКОРЕНИЕ ЗАВЕРШЕНО",
+            "world.message.accelerationEnded",
             string.Empty
         );
     }

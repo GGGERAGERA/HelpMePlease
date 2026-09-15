@@ -19,6 +19,7 @@ public sealed class BunkerStationLevelView : MonoBehaviour
 
     private void OnEnable()
     {
+        LocalizationService.Instance.LanguageChanged += HandleLanguageChanged;
         BindProgression();
         Refresh();
     }
@@ -32,6 +33,8 @@ public sealed class BunkerStationLevelView : MonoBehaviour
 
     private void OnDisable()
     {
+        if (LocalizationService.Instance != null)
+            LocalizationService.Instance.LanguageChanged -= HandleLanguageChanged;
         UnbindProgression();
         if (feedbackRoutine != null)
         {
@@ -66,11 +69,17 @@ public sealed class BunkerStationLevelView : MonoBehaviour
         feedbackRoutine = StartCoroutine(PlayLevelUpFeedback(level));
     }
 
+    private void HandleLanguageChanged(GameLanguage language)
+    {
+        Refresh();
+        feedbackText.text = string.Format(LocalizationService.Instance.Get("bunker.station_badge_feedback"), BunkerStationProgressionService.GetStoredLevel(stationId));
+    }
+
     private void Refresh()
     {
         EnsureView();
         int level = BunkerStationProgressionService.GetStoredLevel(stationId);
-        levelText.text = $"LV.{level}";
+        levelText.text = string.Format(LocalizationService.Instance.Get("bunker.station_badge"), level);
         levelText.color = level switch
         {
             3 => new Color(0.55f, 1f, 1f, 1f),
@@ -81,7 +90,7 @@ public sealed class BunkerStationLevelView : MonoBehaviour
 
     private IEnumerator PlayLevelUpFeedback(int level)
     {
-        feedbackText.text = $"STATION LV.{level}";
+        feedbackText.text = string.Format(LocalizationService.Instance.Get("bunker.station_badge_feedback"), level);
         feedbackText.gameObject.SetActive(true);
         Vector3 baseScale = Vector3.one * 0.22f;
         float elapsed = 0f;

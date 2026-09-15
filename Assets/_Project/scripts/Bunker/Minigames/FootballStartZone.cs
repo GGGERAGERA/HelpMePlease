@@ -19,12 +19,24 @@ public sealed class FootballStartZone : MonoBehaviour
     }
 
     private void OnTriggerExit2D(Collider2D other) => playerContacts.Remove(other);
-    private void OnDisable() => playerContacts.Clear();
+    private void OnEnable()
+    {
+        LocalizationService.Instance.LanguageChanged += HandleLanguageChanged;
+        HandleLanguageChanged(LocalizationService.Instance.CurrentLanguage);
+    }
+    private void OnDisable()
+    {
+        if (LocalizationService.Instance != null)
+            LocalizationService.Instance.LanguageChanged -= HandleLanguageChanged;
+        playerContacts.Clear();
+    }
+    private void HandleLanguageChanged(GameLanguage language) =>
+        startText.text = LocalizationService.Instance.Get("bunker.football_enter");
 
     public void SetAvailable(bool available)
     {
         foreach (var renderer in visualRenderers) renderer.enabled = available;
         startText.gameObject.SetActive(available);
-        startText.text = "ВОЙДИТЕ — СТАРТ";
+        startText.text = LocalizationService.Instance.Get("bunker.football_enter");
     }
 }

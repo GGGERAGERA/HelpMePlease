@@ -87,8 +87,8 @@ public sealed class RunThreatController : MonoBehaviour
     private static void ShowTierIncrease(ThreatTier tier)
     {
         RunMessageService.Instance?.ShowCustom(
-            $"THREAT {ThreatTierPresentation.Format(tier)}",
-            "ENEMY PRESSURE INCREASED",
+            "run.threatIncreased",
+            "run.pressureIncreased",
             1.8f
         );
     }

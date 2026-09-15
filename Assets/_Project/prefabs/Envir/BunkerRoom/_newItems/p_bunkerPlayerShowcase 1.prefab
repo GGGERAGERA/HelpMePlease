@@ -747,7 +747,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BunkerStation
   stationType: 1
-  interactionText: "\u0412\u044B\u0431\u0440\u0430\u0442\u044C \u0438\u0433\u0440\u043E\u043A\u0430"
+  interactionText: interaction.character
   progressionEnabled: 1
   progressionStationId: 0
   runTransitionTarget: {fileID: 0}
@@ -1040,6 +1040,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 980000000000000016}
   - component: {fileID: 7880703033654290228}
   - component: {fileID: 518847900249651579}
   - component: {fileID: 1190325099723718780}
@@ -1097,7 +1098,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Welcome to \nPlaytest v.0.1"
+  m_text: "\u041f\u0420\u041e\u0422\u041e\u041a\u041e\u041b\n\u0418\u0421\u041f\u042b\u0422\u0410\u041d\u0418\u0419"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1177,6 +1178,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 980000000000000017}
   - component: {fileID: 5905637202596761642}
   - component: {fileID: 764742788495551176}
   - component: {fileID: 6165698492690374980}
@@ -1234,7 +1236,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Players
+  m_text: "\u0421\u0423\u0411\u042a\u0415\u041a\u0422\u042b"
 
 '
   m_isRightToLeft: 0
@@ -1464,3 +1466,29 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 9202719056316678885, guid: 24b02b5fd54527248ac9b6933180331e, type: 3}
   m_PrefabInstance: {fileID: 7257666835429927945}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &980000000000000016
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8446185707129614399}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: bunker.protocol
+--- !u!114 &980000000000000017
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8834990351512121633}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: bunker.subjects

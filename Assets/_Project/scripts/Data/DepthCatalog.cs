@@ -21,6 +21,9 @@ public sealed class DepthCatalog : ScriptableObject
         public StageProfileData startingStageProfile;
         [TextArea] public string description;
 
+        public string LocalizedName => LocalizationService.Instance.Get(displayName);
+        public string LocalizedDescription => LocalizationService.Instance.Get(description);
+
         public DepthAvailability GetAvailability(int access)
         {
             if (access < requiredAccess) return DepthAvailability.Locked;

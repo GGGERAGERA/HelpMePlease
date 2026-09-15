@@ -74,6 +74,21 @@ public class HUDManager : MonoBehaviour
     private RunStatsManager runStatsManager;
     private RunStateManager runStateManager;
     private int lastDisplayedTimerSecond = int.MinValue;
+    private int displayedLevel = 1;
+    private string displayedBossName;
+    private void OnEnable() => LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
+    private void OnDisable()
+    {
+        if (LocalizationService.Instance != null) LocalizationService.Instance.LanguageChanged -= RefreshLanguage;
+    }
+    private void RefreshLanguage(GameLanguage language)
+    {
+        var localization = LocalizationService.EnsureExists();
+        if (levelText != null) levelText.text = string.Format(localization.Get("hud.level"), displayedLevel);
+        if (bossNameText != null && displayedBossName != null) bossNameText.text = localization.Get(displayedBossName);
+        if (threatLevelText != null && lastDisplayedThreatTier.HasValue)
+            threatLevelText.text = string.Format(localization.Get("hud.threat"), ThreatTierPresentation.Format(lastDisplayedThreatTier.Value));
+    }
     private ThreatTier? lastDisplayedThreatTier;
     private readonly Vector3[] framingCorners = new Vector3[4];
 
@@ -285,7 +300,7 @@ public class HUDManager : MonoBehaviour
         {
             lastDisplayedThreatTier = tier;
             threatLevelText.text =
-                $"THREAT {ThreatTierPresentation.Format(tier)}";
+                string.Format(LocalizationService.EnsureExists().Get("hud.threat"), ThreatTierPresentation.Format(tier));
             SetRect(
                 threatLevelText.rectTransform,
                 new Vector2(0f, 0.34f),
@@ -376,7 +391,8 @@ public class HUDManager : MonoBehaviour
 
         if (levelText != null)
         {
-            levelText.text = $"LV {level}";
+            displayedLevel = level;
+            levelText.text = string.Format(LocalizationService.EnsureExists().Get("hud.level"), level);
         }
 
         if (experienceText != null)
@@ -408,8 +424,9 @@ public class HUDManager : MonoBehaviour
         if (bossHpPanel != null)
             bossHpPanel.SetActive(true);
 
+        displayedBossName = bossName;
         if (bossNameText != null)
-            bossNameText.text = bossName;
+            bossNameText.text = LocalizationService.EnsureExists().Get(bossName);
 
         UpdateBossHp(currentHp, maxHp);
     }

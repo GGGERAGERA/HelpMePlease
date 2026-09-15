@@ -99,7 +99,7 @@ public sealed class FalseSignalEvent : WorldEvent
         blackoutRemaining = 0f;
         blackoutActive = false;
         spawnedAmbushTurrets.Clear();
-        ShowEventMarker(transform, "FALSE SIGNAL");
+        ShowEventMarker(transform, "event.false");
     }
 
     private void Awake()
@@ -245,8 +245,8 @@ public sealed class FalseSignalEvent : WorldEvent
     private void TriggerAmbush(Vector3 origin)
     {
         RunMessageService.Instance?.ShowWorldEventFeedback(
-            "ЛОЖНЫЙ СИГНАЛ",
-            "ЗАСАДА",
+            "event.falseTitle",
+            "event.ambush",
             falseSignalPulseColor,
             feedbackPulseDuration
         );
@@ -267,8 +267,8 @@ public sealed class FalseSignalEvent : WorldEvent
     private void TriggerBlackout()
     {
         RunMessageService.Instance?.ShowWorldEventFeedback(
-            "ЛОЖНЫЙ СИГНАЛ",
-            "BLACKOUT",
+            "event.falseTitle",
+            "event.blackout",
             falseSignalPulseColor,
             feedbackPulseDuration
         );
@@ -368,7 +368,7 @@ public sealed class FalseSignalEvent : WorldEvent
             WorldEventMarker marker =
                 HUDManager.Instance?.CreateWorldEventMarker(
                     point.transform,
-                    "SIGNAL"
+                    "event.signal"
                 );
             signalPointMarkers[point] = marker;
         }

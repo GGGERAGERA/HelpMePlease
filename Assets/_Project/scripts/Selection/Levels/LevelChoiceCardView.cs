@@ -29,6 +29,16 @@ public sealed class LevelChoiceCardView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI tagText;
     [SerializeField] private TextMeshProUGUI rewardText;
 
+    private RunSector displayedSector;
+    private void OnEnable() => LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
+    private void OnDisable()
+    {
+        if (LocalizationService.Instance != null) LocalizationService.Instance.LanguageChanged -= RefreshLanguage;
+    }
+    private void RefreshLanguage(GameLanguage language)
+    {
+        if (worldRuleData != null) ApplySectorPresentation(worldRuleData, displayedSector);
+    }
     private WorldRuleData worldRuleData;
     private Action<WorldRuleData> onRuleClicked;
     private UICardHoverAnimation hoverAnimation;
@@ -70,6 +80,7 @@ public sealed class LevelChoiceCardView : MonoBehaviour
     {
         presentationMode = LevelChoiceCardPresentationMode.SectorChoice;
         worldRuleData = rule;
+        displayedSector = sector;
         onRuleClicked = clickCallback;
         gameObject.SetActive(rule != null);
 
@@ -140,17 +151,17 @@ public sealed class LevelChoiceCardView : MonoBehaviour
         switch (rule.RuleType)
         {
             case WorldRuleType.Rain:
-                AddLine(lines, "\u0412\u0440\u0430\u0433\u0438 \u0434\u0432\u0438\u0433\u0430\u044e\u0442\u0441\u044f \u0431\u044b\u0441\u0442\u0440\u0435\u0435");
-                AddLine(lines, "\u0412\u0440\u0430\u0433\u0438 \u043f\u043e\u044f\u0432\u043b\u044f\u044e\u0442\u0441\u044f \u0447\u0430\u0449\u0435");
+                AddLine(lines, LocalizationService.EnsureExists().Get("sector.choice.fasterEnemies"));
+                AddLine(lines, LocalizationService.EnsureExists().Get("sector.choice.moreEnemies"));
                 break;
 
             case WorldRuleType.Snow:
-                AddLine(lines, "\u0414\u0432\u0438\u0436\u0435\u043d\u0438\u0435 \u0437\u0430\u043c\u0435\u0434\u043b\u0435\u043d\u043e");
-                AddLine(lines, "\u0412\u0440\u0430\u0433\u0438 \u043f\u043e\u044f\u0432\u043b\u044f\u044e\u0442\u0441\u044f \u0447\u0430\u0449\u0435");
+                AddLine(lines, LocalizationService.EnsureExists().Get("sector.choice.slowed"));
+                AddLine(lines, LocalizationService.EnsureExists().Get("sector.choice.moreEnemies"));
                 break;
 
             case WorldRuleType.Wind:
-                AddLine(lines, "\u041d\u0430\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u0432\u0435\u0442\u0440\u0430 \u043c\u0435\u043d\u044f\u0435\u0442\u0441\u044f");
+                AddLine(lines, LocalizationService.EnsureExists().Get("sector.choice.wind"));
                 break;
         }
 
@@ -173,8 +184,7 @@ public sealed class LevelChoiceCardView : MonoBehaviour
             rule.GoldenEnemyRewardMultiplier > 1f)
         {
             lines.Add(
-                "\u0417\u043e\u043b\u043e\u0442\u044b\u0435 \u0432\u0440\u0430\u0433\u0438 \u0434\u0430\u044e\u0442 " +
-                "\u0431\u043e\u043b\u044c\u0448\u0435 \u0437\u043e\u043b\u043e\u0442\u0430"
+                LocalizationService.EnsureExists().Get("sector.choice.golden")
             );
         }
 
@@ -186,18 +196,18 @@ public sealed class LevelChoiceCardView : MonoBehaviour
             : 1f;
 
         if (!Mathf.Approximately(experienceMultiplier, 1f))
-            lines.Add($"XP \u00d7{FormatMultiplier(experienceMultiplier)}");
+            lines.Add($"XP ×{FormatMultiplier(experienceMultiplier)}");
 
         if (!Mathf.Approximately(completionGoldMultiplier, 1f))
         {
             lines.Add(
-                $"\u0417\u043e\u043b\u043e\u0442\u043e \u00d7" +
+                LocalizationService.EnsureExists().Get("sector.choice.gold") +
                 FormatMultiplier(completionGoldMultiplier)
             );
         }
 
         if (lines.Count == 0)
-            return "\u0421\u0442\u0430\u043d\u0434\u0430\u0440\u0442\u043d\u0430\u044f \u043d\u0430\u0433\u0440\u0430\u0434\u0430";
+            return LocalizationService.EnsureExists().Get("sector.choice.standard");
 
         return string.Join("\n", lines);
     }

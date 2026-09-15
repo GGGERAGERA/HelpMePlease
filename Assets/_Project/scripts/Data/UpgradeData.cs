@@ -99,7 +99,7 @@ public static class ProductionUpgradePresentation
             return string.Empty;
 
         if (upgrade.upgradeType != UpgradeType.HpRegeneration)
-            return upgrade.description;
+            return LocalizationService.EnsureExists().Get(upgrade.description);
 
         RunItemSlots slots = RunStateManager.Instance != null
             ? RunStateManager.Instance.ItemSlots
@@ -115,6 +115,6 @@ public static class ProductionUpgradePresentation
         float nextValue =
             ProductionUpgradeProfiles.RegenerationPerSecond(nextLevel);
         float increment = Mathf.Max(0f, nextValue - currentValue);
-        return $"Регенерация +{increment:0.#} HP/с";
+        return string.Format(LocalizationService.EnsureExists().Get("reward.regeneration"), increment);
     }
 }

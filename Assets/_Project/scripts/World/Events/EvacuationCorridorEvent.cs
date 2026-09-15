@@ -115,7 +115,7 @@ public sealed class EvacuationCorridorEvent : WorldEvent
         base.Initialize(spawner);
         ShowEventMarker(
             transform,
-            "EVACUATION"
+            "event.evacuation"
         );
     }
 

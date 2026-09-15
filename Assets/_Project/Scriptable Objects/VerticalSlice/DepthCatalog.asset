@@ -14,37 +14,37 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DepthCatalog
   entries:
   - id: 1
-    displayName: SURFACE
+    displayName: bunker.depth_data.1.name
     requiredAccess: 0
     availableInCurrentBuild: 1
     gameplaySceneName: MVP
     startingStageProfile: {fileID: 11400000, guid: d387815bd32a4a639c4ac0f811ee3251, type: 2}
-    description: "3 SECTORS\nSECTOR GUARDIAN"
+    description: bunker.depth_data.1.description
   - id: 2
-    displayName: DEPTH II
+    displayName: bunker.depth_data.2.name
     requiredAccess: 1
     availableInCurrentBuild: 0
     gameplaySceneName: ''
     startingStageProfile: {fileID: 0}
-    description: "Future stage of Escape Protocol."
+    description: bunker.depth_data.2.description
   - id: 3
-    displayName: DEPTH III
+    displayName: bunker.depth_data.3.name
     requiredAccess: 2
     availableInCurrentBuild: 0
     gameplaySceneName: ''
     startingStageProfile: {fileID: 0}
-    description: "Future stage of Escape Protocol."
+    description: bunker.depth_data.3.description
   - id: 4
-    displayName: DEPTH IV
+    displayName: bunker.depth_data.4.name
     requiredAccess: 3
     availableInCurrentBuild: 0
     gameplaySceneName: ''
     startingStageProfile: {fileID: 0}
-    description: "Future stage of Escape Protocol."
+    description: bunker.depth_data.4.description
   - id: 5
-    displayName: ESCAPE
+    displayName: bunker.depth_data.5.name
     requiredAccess: 4
     availableInCurrentBuild: 0
     gameplaySceneName: ''
     startingStageProfile: {fileID: 0}
-    description: "Future stage of Escape Protocol."
+    description: bunker.depth_data.5.description

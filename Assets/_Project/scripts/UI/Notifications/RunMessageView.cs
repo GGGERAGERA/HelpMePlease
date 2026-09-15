@@ -14,6 +14,14 @@ public sealed class RunMessageView : MonoBehaviour
     [SerializeField, Range(1f, 120f)]
     private float typewriterCharactersPerSecond = 45f;
 
+    private string displayedTitleKey;
+    private string displayedDescriptionKey;
+    private void OnEnable() => LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
+    private void RefreshLanguage(GameLanguage language)
+    {
+        titleText.text = LocalizationService.EnsureExists().Get(displayedTitleKey ?? string.Empty);
+        descriptionText.text = LocalizationService.EnsureExists().Get(displayedDescriptionKey ?? string.Empty);
+    }
     private Coroutine routine;
     private Image backgroundImage;
     private RectTransform panelRect;
@@ -111,6 +119,8 @@ public sealed class RunMessageView : MonoBehaviour
         float duration,
         bool useTypewriter)
     {
+        displayedTitleKey = title;
+        displayedDescriptionKey = description;
         PrepareText(titleText, title, useTypewriter);
         PrepareText(descriptionText, description, useTypewriter);
         ApplyDescriptionLayout(string.IsNullOrWhiteSpace(title));
@@ -166,8 +176,9 @@ public sealed class RunMessageView : MonoBehaviour
         Color accentColor)
     {
         feedbackLayoutApplied = true;
-        titleText.text = title;
-        descriptionText.text = description;
+        displayedTitleKey = title;
+        displayedDescriptionKey = description;
+        RefreshLanguage(LocalizationService.EnsureExists().CurrentLanguage);
         titleText.color = Color.Lerp(Color.white, accentColor, 0.6f);
 
         panelRect.anchorMin = Vector2.zero;
@@ -253,7 +264,7 @@ public sealed class RunMessageView : MonoBehaviour
         if (target == null)
             return 0;
 
-        target.text = value ?? string.Empty;
+        target.text = LocalizationService.EnsureExists().Get(value ?? string.Empty);
         target.maxVisibleCharacters = hideCharacters ? 0 : int.MaxValue;
         target.ForceMeshUpdate();
         return target.textInfo.characterCount;
@@ -285,6 +296,7 @@ public sealed class RunMessageView : MonoBehaviour
 
     private void ClearDisplayedText()
     {
+        displayedTitleKey = displayedDescriptionKey = string.Empty;
         if (titleText != null)
         {
             titleText.maxVisibleCharacters = int.MaxValue;
@@ -349,6 +361,7 @@ public sealed class RunMessageView : MonoBehaviour
 
     private void OnDisable()
     {
+        if (LocalizationService.Instance != null) LocalizationService.Instance.LanguageChanged -= RefreshLanguage;
         HideInstant();
     }
 }

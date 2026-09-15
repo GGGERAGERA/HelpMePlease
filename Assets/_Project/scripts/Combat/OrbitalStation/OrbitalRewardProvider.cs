@@ -35,6 +35,7 @@ namespace Subject42.Combat.OrbitalStation
         public UpgradeData BodyUpgrade;
         public float Weight;
         public bool RequiresArenaSelection;
+        internal OrbitalRewardProvider PresentationOwner;
     }
 
     public sealed class OrbitalRewardProvider : IDisposable
@@ -180,68 +181,72 @@ namespace Subject42.Combat.OrbitalStation
 
         private void CreateDefinitions()
         {
-            Add(OrbitalRewardKind.NewRing, "НОВАЯ ОРБИТА",
-                "+1 кольцо\n1 точка / ёмкость 3.", 0f, false);
-            Add(OrbitalRewardKind.Pistol, "GUN",
-                "ОРУЖИЕ\nАвтоматический дальний выстрел.\nНужна 1 свободная точка.",
+            Add(OrbitalRewardKind.NewRing, "reward.newRing",
+                "reward.newRingDescription", 0f, false);
+            Add(OrbitalRewardKind.Pistol, "reward.gun",
+                "reward.gunDescription",
                 config.ModuleWeight, true);
-            Add(OrbitalRewardKind.LaserSword, "ЛАЗЕРНЫЙ КЛИНОК",
-                "ОРУЖИЕ\nКонтактный режущий клинок.\nНужна 1 свободная точка.",
+            Add(OrbitalRewardKind.LaserSword, "reward.sword",
+                "reward.swordDescription",
                 config.ModuleWeight, true);
-            Add(OrbitalRewardKind.ImpulseGun, "ИМПУЛЬСНАЯ ПУШКА",
-                "ОРУЖИЕ\nУрон и отталкивание.\nНужна 1 свободная точка.",
+            Add(OrbitalRewardKind.ImpulseGun, "reward.impulse",
+                "reward.impulseDescription",
                 config.ModuleWeight, true);
-            Add(OrbitalRewardKind.ArcEmitter, "ARC",
-                "ОРУЖИЕ\nРазряд между врагами.\nНужна 1 свободная точка.",
+            Add(OrbitalRewardKind.ArcEmitter, "reward.arc",
+                "reward.arcDescription",
                 config.ModuleWeight, true);
-            Add(OrbitalRewardKind.LinkPair, "LINK",
-                "ОРУЖИЕ\nУстановите два узла: между ними повреждающая связь.\nНужны 2 свободные точки.",
+            Add(OrbitalRewardKind.LinkPair, "reward.link",
+                "reward.linkDescription",
                 config.LinkPairWeight, true);
-            Add(OrbitalRewardKind.ModuleDamage, "УСИЛИТЬ МОДУЛЬ",
-                "МОДУЛЬ\nВыберите установленное оружие. Damage Level +1 даёт +25% базового урона.",
+            Add(OrbitalRewardKind.ModuleDamage, "reward.damage",
+                "reward.damageDescription",
                 config.ModuleWeight, true);
-            Add(OrbitalRewardKind.RingSpeed, "СКОРОСТЬ КОЛЬЦА",
-                "КОЛЬЦО\nСкорость движения модулей ×1.25.\nВыберите кольцо.",
+            Add(OrbitalRewardKind.RingSpeed, "reward.speed",
+                "reward.speedDescription",
                 config.RingWeight, true);
-            Add(OrbitalRewardKind.RingPower, "УРОН КОЛЬЦА",
-                "КОЛЬЦО\nУрон оружия на выбранной орбите +25%.",
+            Add(OrbitalRewardKind.RingPower, "reward.power",
+                "reward.powerDescription",
                 config.RingWeight, true);
-            Add(OrbitalRewardKind.AddMount, "ТОЧКА УСТАНОВКИ",
-                "КОЛЬЦО\n+1 построенная точка.\nВыберите кольцо со свободной ёмкостью.",
+            Add(OrbitalRewardKind.AddMount, "reward.mount",
+                "reward.mountDescription",
                 config.RingWeight, true);
-            Add(OrbitalRewardKind.RingCapacity, "ЁМКОСТЬ КОЛЬЦА",
-                "КОЛЬЦО\nПредел точек +1 (до 6).\nВыберите кольцо с полной ёмкостью.", config.RingWeight, true);
-            Add(OrbitalRewardKind.CoreUpgrade, "CORE I",
-                "ЯДРО\n1 ВОЛНА",
+            Add(OrbitalRewardKind.RingCapacity, "reward.capacity",
+                "reward.capacityDescription", config.RingWeight, true);
+            Add(OrbitalRewardKind.CoreUpgrade, "reward.core1",
+                "reward.coreWave1",
                 config.CoreWeight, false);
-            Add(OrbitalRewardKind.LinkMatrix, "LINK MATRIX",
-                "ЯДРО\nУсиливает урон существующей энергетической сети.",
+            Add(OrbitalRewardKind.LinkMatrix, "reward.matrix",
+                "reward.matrixDescription",
                 config.CoreWeight, false);
-            Add(OrbitalRewardKind.MaxHealth, "MAX HP",
-                $"ИГРОК\n+{ProductionUpgradeProfiles.MaxHealthBonus(1):0} HP\nДо {RunItemSlots.MaxItemLevel} уровней.",
+            Add(OrbitalRewardKind.MaxHealth, "reward.health",
+                string.Format(LocalizationService.EnsureExists().Get("reward.healthDescription"), ProductionUpgradeProfiles.MaxHealthBonus(1), RunItemSlots.MaxItemLevel),
                 config.SubjectWeight, false, maxHealthUpgrade);
-            Add(OrbitalRewardKind.MoveSpeed, "СКОРОСТЬ ПЕРЕДВИЖЕНИЯ",
-                $"ИГРОК\n+{(ProductionUpgradeProfiles.MoveSpeedMultiplier(1) - 1f) * 100f:0}% базовой скорости\nДо {RunItemSlots.MaxItemLevel} уровней.",
+            Add(OrbitalRewardKind.MoveSpeed, "reward.movement",
+                string.Format(LocalizationService.EnsureExists().Get("reward.movementDescription"), (ProductionUpgradeProfiles.MoveSpeedMultiplier(1) - 1f) * 100f, RunItemSlots.MaxItemLevel),
                 config.SubjectWeight, false, moveSpeedUpgrade);
         }
 
-        private void RefreshPresentation(OrbitalRunState state)
+        internal void RefreshPresentation(OrbitalRunState state)
         {
             foreach (var definition in definitions)
             {
+                if (definition.RewardKind == OrbitalRewardKind.MaxHealth)
+                    definition.description = string.Format(LocalizationService.EnsureExists().Get("reward.healthDescription"), ProductionUpgradeProfiles.MaxHealthBonus(1), RunItemSlots.MaxItemLevel);
+                if (definition.RewardKind == OrbitalRewardKind.MoveSpeed)
+                    definition.description = string.Format(LocalizationService.EnsureExists().Get("reward.movementDescription"), (ProductionUpgradeProfiles.MoveSpeedMultiplier(1) - 1f) * 100f, RunItemSlots.MaxItemLevel);
                 if (definition.RewardKind is not (OrbitalRewardKind.RingPower or OrbitalRewardKind.RingSpeed or
                     OrbitalRewardKind.AddMount or OrbitalRewardKind.RingCapacity)) continue;
                 var ring = state?.Rings.FirstOrDefault(r => state.CanTargetRingReward(definition.RewardKind, r.StableRingId));
-                string target = ring == null ? "Выберите кольцо." : $"Кольцо {ring.Order + 1}: ";
+                string target = ring == null ? LocalizationService.EnsureExists().Get("reward.selectRing") : string.Format(LocalizationService.EnsureExists().Get("reward.ringTarget"), ring.Order + 1);
                 definition.description = definition.RewardKind switch
                 {
-                    OrbitalRewardKind.AddMount => "КОЛЬЦО\n+1 построенная точка.\n" + target +
+                    OrbitalRewardKind.AddMount => LocalizationService.EnsureExists().Get("reward.mountDetail") + target +
                         (ring == null ? "" : $"{ring.MountCount}/{ring.MountCapacity} → {ring.MountCount + 1}/{ring.MountCapacity}"),
-                    OrbitalRewardKind.RingCapacity => "КОЛЬЦО\nПредел точек +1 (до 6).\n" + target +
+                    OrbitalRewardKind.RingCapacity => LocalizationService.EnsureExists().Get("reward.capacityDetail") + target +
                         (ring == null ? "" : $"{ring.MountCapacity} → {ring.MountCapacity + 1}"),
-                    OrbitalRewardKind.RingPower => "КОЛЬЦО\nУрон всех модулей ×1.25.\n" + target +
+                    OrbitalRewardKind.RingPower => LocalizationService.EnsureExists().Get("reward.powerDetail") + target +
                         (ring == null ? "" : $"×{ring.PowerMultiplier:0.00} → ×{ring.PowerMultiplier * (1f + config.PowerIncrement):0.00}"),
-                    _ => "КОЛЬЦО\nСкорость движения модулей ×1.25.\n" + target +
+                    _ => LocalizationService.EnsureExists().Get("reward.speedDetail") + target +
                         (ring == null ? "" : $"×{Mathf.Pow(1f + config.SpeedIncrement, ring.SpeedUpgradeLevel):0.00} → ×{Mathf.Pow(1f + config.SpeedIncrement, ring.SpeedUpgradeLevel + 1):0.00}")
                 };
             }
@@ -251,12 +256,12 @@ namespace Subject42.Combat.OrbitalStation
             if (reward == null || core == null)
                 return;
             int next = Mathf.Min(3, core.Level + 1);
-            reward.upgradeName = next switch { 1 => "CORE I", 2 => "CORE II", _ => "CORE III" };
+            reward.upgradeName = next switch { 1 => "reward.core1", 2 => "reward.core2", _ => "reward.core3" };
             reward.description = next switch
             {
-                1 => "ЯДРО\n1 ВОЛНА",
-                2 => "ЯДРО\n2 ВОЛНЫ",
-                _ => "ЯДРО\n3 ВОЛНЫ"
+                1 => "reward.coreWave1",
+                2 => "reward.coreWave2",
+                _ => "reward.coreWave3"
             };
         }
 
@@ -273,6 +278,7 @@ namespace Subject42.Combat.OrbitalStation
             data.category = arena ? UpgradeCategory.Behavior : UpgradeCategory.Numeric;
             data.upgradeType = UpgradeType.OrbitalReward;
             data.RewardKind = kind;
+            data.PresentationOwner = this;
             data.BodyUpgrade = bodyUpgrade;
             data.Weight = weight;
             data.RequiresArenaSelection = arena;

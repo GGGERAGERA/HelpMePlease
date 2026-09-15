@@ -23,6 +23,7 @@ public sealed class CharacterStationEmbeddedView : MonoBehaviour
     [SerializeField] private Button upgradeButton;
     [SerializeField] private TextMeshProUGUI upgradeButtonText;
 
+    private LocalizationService localization;
     private BunkerStationProgressionService boundService;
     private CurrencyManager boundCurrency;
     private HoldInvestmentInput holdInput;
@@ -37,6 +38,8 @@ public sealed class CharacterStationEmbeddedView : MonoBehaviour
 
     private void OnEnable()
     {
+        localization = LocalizationService.EnsureExists();
+        localization.LanguageChanged += HandleLanguageChanged;
         BindInput();
         BindEvents();
         Refresh();
@@ -44,6 +47,9 @@ public sealed class CharacterStationEmbeddedView : MonoBehaviour
 
     private void OnDisable()
     {
+        if (localization != null)
+            localization.LanguageChanged -= HandleLanguageChanged;
+        localization = null;
         StopInvesting();
         UnbindEvents();
     }
@@ -110,17 +116,17 @@ public sealed class CharacterStationEmbeddedView : MonoBehaviour
         int gold = CurrencyManager.Instance != null ? CurrencyManager.Instance.TotalGold : 0;
 
         if (titleText != null)
-            titleText.text = "СТАНЦИЯ ПЕРСОНАЖЕЙ";
+            titleText.text = LocalizationService.EnsureExists().Get("character.station.title");
         if (levelText != null)
-            levelText.text = $"УРОВЕНЬ СТАНЦИИ {level} / {data.MaxLevel}";
+            levelText.text = string.Format(LocalizationService.EnsureExists().Get("character.station.level"), level, data.MaxLevel);
         if (availableGoldText != null)
         {
             availableGoldText.gameObject.SetActive(!isMax);
-            availableGoldText.text = $"GOLD: {gold}";
+            availableGoldText.text = string.Format(LocalizationService.EnsureExists().Get("character.station.gold"), gold);
         }
         if (goldProgressText != null)
         {
-            goldProgressText.text = isMax ? "МАКСИМАЛЬНЫЙ УРОВЕНЬ" : $"{invested} / {cost}";
+            goldProgressText.text = isMax ? LocalizationService.EnsureExists().Get("character.station.max") : $"{invested} / {cost}";
             LayoutElement labelLayout = goldProgressText.GetComponent<LayoutElement>();
             if (labelLayout != null)
                 labelLayout.preferredWidth = isMax ? 230f : 100f;
@@ -144,8 +150,8 @@ public sealed class CharacterStationEmbeddedView : MonoBehaviour
         {
             int remaining = Mathf.Max(0, cost - invested);
             upgradeButtonText.text = isInvesting
-                ? "УЛУЧШЕНИЕ..."
-                : $"УЛУЧШИТЬ СТАНЦИЮ — {remaining}";
+                ? LocalizationService.EnsureExists().Get("character.station.investing")
+                : string.Format(LocalizationService.EnsureExists().Get("character.station.upgrade"), remaining);
         }
     }
 
@@ -196,7 +202,7 @@ public sealed class CharacterStationEmbeddedView : MonoBehaviour
         investedDuringCurrentPress = false;
         investmentAccumulator = 0f;
         if (upgradeButtonText != null)
-            upgradeButtonText.text = "УЛУЧШЕНИЕ...";
+            upgradeButtonText.text = LocalizationService.EnsureExists().Get("character.station.investing");
     }
 
     private void EndInvesting()
@@ -273,6 +279,8 @@ public sealed class CharacterStationEmbeddedView : MonoBehaviour
         boundCurrency = null;
         boundService = null;
     }
+
+    private void HandleLanguageChanged(GameLanguage language) => Refresh();
 
     private void HandleGoldChanged(int value) => Refresh();
 

@@ -14,116 +14,116 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LocalizationTable
   entries:
   - key: settings.audio
-    ru: ЗВУК
-    en: AUDIO
+    ru: "ЗВУК"
+    en: "AUDIO"
   - key: settings.gameplay
-    ru: УПРАВЛЕНИЕ
-    en: GAMEPLAY
+    ru: "УПРАВЛЕНИЕ"
+    en: "CONTROLS"
   - key: settings.savedHint
-    ru: Изменения сохраняются автоматически
-    en: Changes are saved automatically
+    ru: "Изменения сохраняются автоматически"
+    en: "Changes are saved automatically"
   - key: settings.backHint
-    ru: ESC / Назад
-    en: ESC / Back
+    ru: "ESC / Назад"
+    en: "ESC / Back"
   - key: settings.title
-    ru: "\u041D\u0410\u0421\u0422\u0420\u041E\u0419\u041A\u0418"
-    en: SETTINGS
+    ru: "НАСТРОЙКИ"
+    en: "SETTINGS"
   - key: settings.master
-    ru: "\u041E\u0411\u0429\u0410\u042F \u0413\u0420\u041E\u041C\u041A\u041E\u0421\u0422\u042C"
-    en: MASTER VOLUME
+    ru: "ОБЩАЯ ГРОМКОСТЬ"
+    en: "MASTER VOLUME"
   - key: settings.music
-    ru: "\u041C\u0423\u0417\u042B\u041A\u0410"
-    en: MUSIC
+    ru: "МУЗЫКА"
+    en: "MUSIC"
   - key: settings.sounds
-    ru: "\u0417\u0412\u0423\u041A\u0418"
-    en: SOUNDS
+    ru: "ЗВУКИ"
+    en: "SOUNDS"
   - key: settings.language
-    ru: "\u042F\u0417\u042B\u041A"
-    en: LANGUAGE
+    ru: "ЯЗЫК"
+    en: "LANGUAGE"
   - key: settings.back
-    ru: "\u041D\u0410\u0417\u0410\u0414"
-    en: BACK
+    ru: "НАЗАД"
+    en: "BACK"
   - key: settings.automaticFire
-    ru: "\u0410\u0412\u0422\u041E\u041C\u0410\u0422\u0418\u0427\u0415\u0421\u041A\u0410\u042F \u0421\u0422\u0420\u0415\u041B\u042C\u0411\u0410"
-    en: AUTOMATIC FIRE
+    ru: "АВТОМАТИЧЕСКАЯ СТРЕЛЬБА"
+    en: "AUTOMATIC FIRE"
   - key: language.russian
-    ru: "\u0420\u0423\u0421\u0421\u041A\u0418\u0419"
-    en: RUSSIAN
+    ru: "РУССКИЙ"
+    en: "RUSSIAN"
   - key: language.english
-    ru: "\u0410\u041D\u0413\u041B\u0418\u0419\u0421\u041A\u0418\u0419"
-    en: ENGLISH
+    ru: "АНГЛИЙСКИЙ"
+    en: "ENGLISH"
   - key: menu.start
-    ru: "\u041D\u0410\u0427\u0410\u0422\u042C"
-    en: START
+    ru: "НАЧАТЬ"
+    en: "START"
   - key: menu.settings
-    ru: "\u041D\u0410\u0421\u0422\u0420\u041E\u0419\u041A\u0418"
-    en: SETTINGS
+    ru: "НАСТРОЙКИ"
+    en: "SETTINGS"
   - key: menu.about
-    ru: "\u041E\u0411 \u0418\u0413\u0420\u0415"
-    en: ABOUT
+    ru: "ОБ ИГРЕ"
+    en: "ABOUT"
   - key: menu.quit
-    ru: "\u0412\u042B\u0425\u041E\u0414"
-    en: QUIT
+    ru: "ВЫХОД"
+    en: "QUIT"
   - key: pause.title
-    ru: "\u041F\u0410\u0423\u0417\u0410"
-    en: PAUSED
+    ru: "ПАУЗА"
+    en: "PAUSED"
   - key: pause.resume
-    ru: "\u041F\u0420\u041E\u0414\u041E\u041B\u0416\u0418\u0422\u042C"
-    en: RESUME
+    ru: "ПРОДОЛЖИТЬ"
+    en: "RESUME"
   - key: pause.restart
-    ru: "\u041D\u0410\u0427\u0410\u0422\u042C \u0417\u0410\u041D\u041E\u0412\u041E"
-    en: RESTART
+    ru: "НАЧАТЬ ЗАНОВО"
+    en: "RESTART"
   - key: pause.settings
-    ru: "\u041D\u0410\u0421\u0422\u0420\u041E\u0419\u041A\u0418"
-    en: SETTINGS
+    ru: "НАСТРОЙКИ"
+    en: "SETTINGS"
   - key: pause.bunker
-    ru: "\u0412\u0415\u0420\u041D\u0423\u0422\u042C\u0421\u042F \u0412 \u0411\u0423\u041D\u041A\u0415\u0420"
-    en: RETURN TO BUNKER
+    ru: "ВЕРНУТЬСЯ В БУНКЕР"
+    en: "RETURN TO BUNKER"
   - key: result.victory
-    ru: "\u041F\u041E\u0411\u0415\u0414\u0410"
-    en: VICTORY
+    ru: "ПОБЕДА"
+    en: "VICTORY"
   - key: result.defeat
-    ru: "\u0412\u042B \u041F\u041E\u0413\u0418\u0411\u041B\u0418"
-    en: YOU DIED
+    ru: "ВЫ ПОГИБЛИ"
+    en: "YOU DIED"
   - key: result.retry
-    ru: "\u041F\u041E\u0412\u0422\u041E\u0420\u0418\u0422\u042C"
-    en: RETRY
+    ru: "ПОВТОРИТЬ"
+    en: "RETRY"
   - key: result.bunker
-    ru: "\u0412\u0415\u0420\u041D\u0423\u0422\u042C\u0421\u042F \u0412 \u0411\u0423\u041D\u041A\u0415\u0420"
-    en: RETURN TO BUNKER
+    ru: "ВЕРНУТЬСЯ В БУНКЕР"
+    en: "RETURN TO BUNKER"
   - key: stats.time
-    ru: "\u0412\u0420\u0415\u041C\u042F"
-    en: TIME
+    ru: "ВРЕМЯ"
+    en: "TIME"
   - key: stats.kills
-    ru: "\u0423\u0411\u0418\u0419\u0421\u0422\u0412\u0410"
-    en: KILLS
+    ru: "УБИЙСТВА"
+    en: "KILLS"
   - key: stats.level
-    ru: "\u0423\u0420\u041E\u0412\u0415\u041D\u042C"
-    en: LEVEL
+    ru: "УРОВЕНЬ"
+    en: "LEVEL"
   - key: stats.survived
-    ru: "\u0412\u042B\u0416\u0418\u0412\u0410\u041D\u0418\u0415"
-    en: SURVIVED
+    ru: "ВЫЖИВАНИЕ"
+    en: "SURVIVED"
   - key: stats.totalGold
-    ru: "\u0412\u0421\u0415\u0413\u041E \u0417\u041E\u041B\u041E\u0422\u0410"
-    en: TOTAL GOLD
+    ru: "ВСЕГО ЗОЛОТА"
+    en: "TOTAL GOLD"
   - key: stats.runGold
-    ru: "\u0417\u041E\u041B\u041E\u0422\u041E \u0417\u0410 \u0417\u0410\u0411\u0415\u0413"
-    en: RUN GOLD
+    ru: "ЗОЛОТО ЗА ЗАБЕГ"
+    en: "RUN GOLD"
   - key: pause.sector
-    ru: Сектор
-    en: Sector
+    ru: "Сектор"
+    en: "Sector"
   - key: pause.rings
-    ru: КОЛЕЦ
-    en: RINGS
+    ru: "КОЛЕЦ"
+    en: "RINGS"
   - key: pause.ring
-    ru: КОЛЬЦО
-    en: RING
+    ru: "КОЛЬЦО"
+    en: "RING"
   - key: pause.mounts
-    ru: ЗАНЯТО КРЕПЛЕНИЙ
-    en: OCCUPIED MOUNTS
+    ru: "ТОЧКИ"
+    en: "MOUNTS"
   - key: pause.noModules
-    ru: Нет установленных модулей
-    en: No installed modules
+    ru: "Нет установленных модулей"
+    en: "No installed modules"
   - key: pause.confirmRestart
     ru: "НАЧАТЬ ЗАНОВО?\nТекущий забег будет сброшен."
     en: "RESTART?\nThe current run will be reset."
@@ -131,17 +131,17 @@ MonoBehaviour:
     ru: "ВЕРНУТЬСЯ В БУНКЕР?\nТекущий забег будет завершён."
     en: "RETURN TO BUNKER?\nThe current run will end."
   - key: pause.confirm
-    ru: ПОДТВЕРДИТЬ
-    en: CONFIRM
+    ru: "ПОДТВЕРДИТЬ"
+    en: "CONFIRM"
   - key: pause.cancel
-    ru: ОТМЕНА
-    en: CANCEL
+    ru: "ОТМЕНА"
+    en: "CANCEL"
   - key: pause.overview
-    ru: ОБЗОР СБОРКИ
-    en: BUILD OVERVIEW
+    ru: "ОБЗОР СБОРКИ"
+    en: "BUILD OVERVIEW"
   - key: pause.esc
-    ru: ESC — ПРОДОЛЖИТЬ
-    en: ESC — RESUME
+    ru: "ESC — ПРОДОЛЖИТЬ"
+    en: "ESC — RESUME"
   - key: hud.sector
     ru: "СЕКТОР {0} / {1}"
     en: "SECTOR {0} / {1}"
@@ -155,7 +155,7 @@ MonoBehaviour:
     ru: "ПРИГОТОВЬТЕСЬ К БОЮ"
     en: "PREPARE FOR COMBAT"
   - key: hud.objective.boss
-    ru: "SECTOR GUARDIAN / ACCESS TARGET"
+    ru: "СТРАЖ СЕКТОРА / ЦЕЛЬ ДОСТУПА"
     en: "SECTOR GUARDIAN / ACCESS TARGET"
   - key: hud.specialOpportunity
     ru: "УСИЛЕННАЯ АНОМАЛИЯ\n+ НОВАЯ ОРБИТА"
@@ -181,3 +181,1605 @@ MonoBehaviour:
   - key: hud.target.anomaly
     ru: "АНОМАЛИЯ"
     en: "ANOMALY"
+  - key: bunker.select
+    ru: "ВЫБРАТЬ"
+    en: "SELECT"
+  - key: bunker.select_subject
+    ru: "ВЫБЕРИТЕ СУБЪЕКТА"
+    en: "SELECT SUBJECT"
+  - key: bunker.subjects
+    ru: "СУБЪЕКТЫ"
+    en: "SUBJECTS"
+  - key: bunker.select_item
+    ru: "ВЫБЕРИТЕ ОБЪЕКТ"
+    en: "SELECT ITEM"
+  - key: bunker.locked
+    ru: "ЗАКРЫТО"
+    en: "LOCKED"
+  - key: bunker.level
+    ru: "УРОВЕНЬ"
+    en: "LEVEL"
+  - key: bunker.upgrade
+    ru: "УЛУЧШИТЬ"
+    en: "UPGRADE"
+  - key: bunker.max_level
+    ru: "МАКСИМАЛЬНЫЙ УРОВЕНЬ"
+    en: "MAXIMUM LEVEL"
+  - key: bunker.insufficient_gold
+    ru: "НЕДОСТАТОЧНО ЗОЛОТА"
+    en: "INSUFFICIENT GOLD"
+  - key: bunker.all_unlocked
+    ru: "ВСЕ ДОСТУПНЫЕ ОБЪЕКТЫ ОТКРЫТЫ"
+    en: "ALL AVAILABLE ITEMS UNLOCKED"
+  - key: bunker.no_next_unlocks
+    ru: "СЛЕДУЮЩИЙ УРОВЕНЬ: НОВЫХ ОБЪЕКТОВ НЕТ"
+    en: "NEXT LEVEL: NO NEW ITEMS"
+  - key: bunker.next_unlocks
+    ru: "СЛЕДУЮЩИЙ УРОВЕНЬ ОТКРОЕТ:\n• "
+    en: "NEXT LEVEL UNLOCKS:\n• "
+  - key: bunker.health
+    ru: "ЗДОРОВЬЕ"
+    en: "HEALTH"
+  - key: bunker.speed
+    ru: "СКОРОСТЬ"
+    en: "SPEED"
+  - key: bunker.modules
+    ru: "ОРБИТАЛЬНЫЕ МОДУЛИ"
+    en: "ORBITAL MODULES"
+  - key: bunker.modules_unlocked
+    ru: "ОТКРЫТЫЕ МОДУЛИ"
+    en: "UNLOCKED MODULES"
+  - key: bunker.module_auto
+    ru: "АВТОМАТИЧЕСКОЕ ОРУЖИЕ"
+    en: "AUTOMATIC WEAPON"
+  - key: bunker.module_auto_desc
+    ru: "Автоматическая стрельба по ближайшим целям."
+    en: "Automatically fires at nearby targets."
+  - key: bunker.module_contact
+    ru: "КОНТАКТНОЕ ОРУЖИЕ"
+    en: "CONTACT WEAPON"
+  - key: bunker.module_contact_desc
+    ru: "Наносит контактный урон противникам на траектории орбиты."
+    en: "Deals contact damage to enemies along its orbit."
+  - key: bunker.module_impulse
+    ru: "ИМПУЛЬСНОЕ ОРУЖИЕ"
+    en: "IMPULSE WEAPON"
+  - key: bunker.module_impulse_desc
+    ru: "Периодический импульс наносит урон и отталкивает противников."
+    en: "Periodic pulses damage and repel enemies."
+  - key: bunker.progress_unavailable
+    ru: "УЛУЧШЕНИЕ НЕДОСТУПНО"
+    en: "UPGRADE UNAVAILABLE"
+  - key: bunker.upgrade_module
+    ru: "УЛУЧШИТЬ МОДУЛЬ"
+    en: "UPGRADE MODULE"
+  - key: bunker.damage
+    ru: "УРОН"
+    en: "DAMAGE"
+  - key: bunker.range
+    ru: "ДАЛЬНОСТЬ"
+    en: "RANGE"
+  - key: bunker.interval
+    ru: "ИНТЕРВАЛ"
+    en: "INTERVAL"
+  - key: bunker.radius
+    ru: "РАДИУС"
+    en: "RADIUS"
+  - key: bunker.interval_auto
+    ru: "0.55 С"
+    en: "0.55 S"
+  - key: bunker.interval_contact
+    ru: "0.32 С"
+    en: "0.32 S"
+  - key: bunker.interval_impulse
+    ru: "1.25 С"
+    en: "1.25 S"
+  - key: bunker.upgrades
+    ru: "УЛУЧШЕНИЯ БУНКЕРА"
+    en: "BUNKER UPGRADES"
+  - key: bunker.permanent_upgrades
+    ru: "ПОСТОЯННЫЕ УЛУЧШЕНИЯ"
+    en: "PERMANENT UPGRADES"
+  - key: bunker.select_upgrade
+    ru: "ВЫБЕРИТЕ УЛУЧШЕНИЕ"
+    en: "SELECT UPGRADE"
+  - key: bunker.hold_upgrade
+    ru: "УДЕРЖИВАЙТЕ ДЛЯ УЛУЧШЕНИЯ"
+    en: "HOLD TO UPGRADE"
+  - key: bunker.meta_upgrade
+    ru: "ПОСТОЯННОЕ УЛУЧШЕНИЕ"
+    en: "PERMANENT UPGRADE"
+  - key: bunker.invested
+    ru: "ВЛОЖЕНО"
+    en: "INVESTED"
+  - key: bunker.max
+    ru: "МАКС."
+    en: "MAX"
+  - key: bunker.stabilization
+    ru: "СТАБИЛИЗАЦИЯ АНОМАЛИЙ"
+    en: "ANOMALY STABILIZATION"
+  - key: bunker.stabilizers
+    ru: "ДОСТУПНЫЕ СТАБИЛИЗАТОРЫ"
+    en: "AVAILABLE STABILIZERS"
+  - key: bunker.select_stabilizer
+    ru: "ВЫБЕРИТЕ СТАБИЛИЗАТОР"
+    en: "SELECT STABILIZER"
+  - key: bunker.stabilizer
+    ru: "СТАБИЛИЗАТОР"
+    en: "STABILIZER"
+  - key: bunker.requirement
+    ru: "ТРЕБОВАНИЕ"
+    en: "REQUIREMENT"
+  - key: bunker.station_level
+    ru: "УРОВЕНЬ СТАНЦИИ"
+    en: "STATION LEVEL"
+  - key: bunker.upgrade_station
+    ru: "УЛУЧШИТЬ СТАНЦИЮ"
+    en: "UPGRADE STATION"
+  - key: bunker.unlock_unavailable
+    ru: "ДОСТУП НЕДОСТУПЕН"
+    en: "ACCESS UNAVAILABLE"
+  - key: bunker.station_character
+    ru: "СТАНЦИЯ СУБЪЕКТОВ"
+    en: "SUBJECT STATION"
+  - key: bunker.station_weapon
+    ru: "ОРУЖЕЙНАЯ СТАНЦИЯ"
+    en: "WEAPON STATION"
+  - key: bunker.station_upgrades
+    ru: "СТАНЦИЯ УЛУЧШЕНИЙ"
+    en: "UPGRADE STATION"
+  - key: bunker.station_anomaly
+    ru: "СТАНЦИЯ АНОМАЛИЙ"
+    en: "ANOMALY STATION"
+  - key: bunker.station
+    ru: "СТАНЦИЯ"
+    en: "STATION"
+  - key: bunker.zone_size
+    ru: "РАЗМЕР ЗОНЫ"
+    en: "ZONE SIZE"
+  - key: bunker.anomaly_gold
+    ru: "ЗОЛОТО В АНОМАЛИИ"
+    en: "GOLD IN ANOMALY"
+  - key: bunker.stasis_effect
+    ru: "ЭФФЕКТ СТАЗИСА"
+    en: "STASIS EFFECT"
+  - key: bunker.gravity_force
+    ru: "СИЛА ГРАВИТАЦИИ"
+    en: "GRAVITY FORCE"
+  - key: bunker.effect
+    ru: "ЭФФЕКТ"
+    en: "EFFECT"
+  - key: bunker.slot_ready
+    ru: "СИСТЕМА ГОТОВА"
+    en: "SYSTEM READY"
+  - key: bunker.slot_rules
+    ru: "3 СОВПАДЕНИЯ — НАГРАДА · 2 — ВОЗВРАТ"
+    en: "3 MATCHES — REWARD · 2 — REFUND"
+  - key: bunker.slot_spinning
+    ru: "ВРАЩЕНИЕ"
+    en: "SPINNING"
+  - key: bunker.slot_reward
+    ru: "НАГРАДА ПОЛУЧЕНА"
+    en: "REWARD ACQUIRED"
+  - key: bunker.slot_failure
+    ru: "НАГРАДА НЕ ВЫДАНА"
+    en: "NO REWARD ISSUED"
+  - key: bunker.slot_refund
+    ru: "СТАВКА ВОЗВРАЩЕНА"
+    en: "STAKE REFUNDED"
+  - key: bunker.slot_no_reward
+    ru: "НАГРАДА НЕ ВЫДАНА"
+    en: "NO REWARD ISSUED"
+  - key: bunker.slot_skulls
+    ru: "ЧЕРЕП ×3 · НАГРАДА НЕ ВЫДАНА"
+    en: "SKULL ×3 · NO REWARD ISSUED"
+  - key: bunker.slot_retry
+    ru: "ДОСТУПЕН ПОВТОРНЫЙ ЗАПУСК"
+    en: "READY FOR ANOTHER SPIN"
+  - key: bunker.slot_50
+    ru: "+50 ЗОЛОТА"
+    en: "+50 GOLD"
+  - key: bunker.slot_250
+    ru: "+250 ЗОЛОТА"
+    en: "+250 GOLD"
+  - key: bunker.slot_ring
+    ru: "+1 КОЛЬЦО"
+    en: "+1 RING"
+  - key: bunker.slot_pending
+    ru: "БОНУС СЛЕДУЮЩЕГО ВЫХОДА:  "
+    en: "NEXT RUN BONUS:  "
+  - key: bunker.slot_sync
+    ru: "СИНХРОНИЗАЦИЯ БАРАБАНОВ…"
+    en: "SYNCHRONIZING REELS…"
+  - key: bunker.slot_begin_run
+    ru: "НАЧНИТЕ ВЫХОД ДЛЯ ПОВТОРНОГО ЗАПУСКА"
+    en: "START A RUN TO SPIN AGAIN"
+  - key: bunker.slot_need_gold
+    ru: "НЕДОСТАТОЧНО ЗОЛОТА — ТРЕБУЕТСЯ 50"
+    en: "INSUFFICIENT GOLD — 50 REQUIRED"
+  - key: bunker.slot_next_run
+    ru: "БОНУС ДЕЙСТВУЕТ НА СЛЕДУЮЩИЙ ВЫХОД"
+    en: "BONUS APPLIES TO THE NEXT RUN"
+  - key: bunker.slot_skull_none
+    ru: "ЧЕРЕП — НАГРАДА НЕ ВЫДАНА"
+    en: "SKULL — NO REWARD ISSUED"
+  - key: bunker.slot_stake_returned
+    ru: "ВОЗВРАТ СТАВКИ: +50 ЗОЛОТА"
+    en: "STAKE REFUNDED: +50 GOLD"
+  - key: bunker.slot_sword
+    ru: "ЛАЗЕРНЫЙ МЕЧ"
+    en: "LASER SWORD"
+  - key: bunker.slot_link
+    ru: "ПАРА УЗЛОВ СВЯЗИ"
+    en: "LINK PAIR"
+  - key: bunker.slot_new_ring
+    ru: "НОВОЕ КОЛЬЦО"
+    en: "NEW RING"
+  - key: bunker.run_transition_unavailable
+    ru: "Запуск недоступен."
+    en: "Launch unavailable."
+  - key: bunker.run_selection_unavailable
+    ru: "Выбор субъекта недоступен."
+    en: "Subject selection unavailable."
+  - key: bunker.run_choose_subject
+    ru: "Выберите субъекта перед выходом."
+    en: "Select a subject before deployment."
+  - key: bunker.football_enter
+    ru: "ВОЙДИТЕ В ЗОНУ ДЛЯ ЗАПУСКА"
+    en: "ENTER ZONE TO START"
+  - key: bunker.football_claimed
+    ru: "КОНТРОЛЬНЫЙ РЕКОРД ПРЕВЫШЕН"
+    en: "BENCHMARK EXCEEDED"
+  - key: bunker.football_complete
+    ru: "ИСПЫТАНИЕ ЗАВЕРШЕНО"
+    en: "TEST COMPLETE"
+  - key: bunker.summary_interrupted
+    ru: "ЭКСПЕРИМЕНТ ПРЕРВАН"
+    en: "EXPERIMENT INTERRUPTED"
+  - key: bunker.summary_completed
+    ru: "ВЫХОД ЗАВЕРШЁН"
+    en: "RUN COMPLETE"
+  - key: bunker.summary_return
+    ru: "ВОЗВРАЩЕНИЕ В БУНКЕР"
+    en: "RETURNING TO BUNKER"
+  - key: bunker.summary_protocol
+    ru: "ПРОТОКОЛ ЭВАКУАЦИИ ОБНОВЛЁН"
+    en: "ESCAPE PROTOCOL UPDATED"
+  - key: bunker.summary_access
+    ru: "ДОСТУП I ПОЛУЧЕН"
+    en: "ACCESS I ACQUIRED"
+  - key: bunker.station_max
+    ru: "МАКСИМАЛЬНЫЙ УРОВЕНЬ"
+    en: "MAXIMUM LEVEL"
+  - key: bunker.station_upgrade
+    ru: "УЛУЧШИТЬ"
+    en: "UPGRADE"
+  - key: bunker.station_next_empty
+    ru: "ДАЛЕЕ: —"
+    en: "NEXT: —"
+  - key: bunker.station_tiers
+    ru: "УРОВНИ: 1 — ЗДОРОВЬЕ · 2 — МОБИЛЬНОСТЬ И ОПЫТ · 3 — СБОР РЕСУРСОВ"
+    en: "LEVELS: 1 — HEALTH · 2 — MOVEMENT AND EXPERIENCE · 3 — RESOURCE COLLECTION"
+  - key: bunker.station_unlock_empty
+    ru: "ОТКРЫВАЕТ:\n—"
+    en: "UNLOCKS:\n—"
+  - key: bunker.station_unlocked
+    ru: "ОТКРЫТО: "
+    en: "UNLOCKED:"
+  - key: bunker.cap
+    ru: "ТЕКУЩИЙ ЛИМИТ: {0}"
+    en: "CURRENT LIMIT: {0}"
+  - key: bunker.next_damage
+    ru: "СЛЕДУЮЩИЙ: УРОН ×{0:0.0}\n"
+    en: "NEXT: DAMAGE ×{0:0.0}\n"
+  - key: bunker.module_damage
+    ru: "ПОСТОЯННЫЙ УРОН ×{0:0.0}"
+    en: "PERMANENT DAMAGE ×{0:0.0}"
+  - key: bunker.next_bonus
+    ru: "СЛЕДУЮЩИЙ: {0}\nТЕКУЩИЙ ЛИМИТ: {1}"
+    en: "NEXT: {0}\nCURRENT LIMIT: {1}"
+  - key: bunker.next_anomaly
+    ru: "СЛЕДУЮЩИЙ: {0}\nТЕКУЩИЙ ЛИМИТ: {1}"
+    en: "NEXT: {0}\nCURRENT LIMIT: {1}"
+  - key: bunker.required_station
+    ru: "ТРЕБУЕТСЯ УРОВЕНЬ СТАНЦИИ {0}"
+    en: "REQUIRES STATION LEVEL {0}"
+  - key: bunker.required_weapon_station
+    ru: "ТРЕБУЕТСЯ УРОВЕНЬ СТАНЦИИ {0}"
+    en: "REQUIRES STATION LEVEL {0}"
+  - key: bunker.required_upgrade_station
+    ru: "ТРЕБУЕТСЯ УРОВЕНЬ СТАНЦИИ {0}"
+    en: "REQUIRES STATION LEVEL {0}"
+  - key: bunker.required_anomaly_station
+    ru: "ТРЕБУЕТСЯ УРОВЕНЬ СТАНЦИИ {0}"
+    en: "REQUIRES STATION LEVEL {0}"
+  - key: bunker.require_level
+    ru: "УР. {0}"
+    en: "LV {0}"
+  - key: bunker.require_station_named
+    ru: "ТРЕБУЕТСЯ: {0}, УР. {1}"
+    en: "REQUIRES: {0}, LV {1}"
+  - key: bunker.unlock_progress
+    ru: "ПРОГРЕСС: {0} / {1}"
+    en: "PROGRESS: {0} / {1}"
+  - key: bunker.bonus_hp
+    ru: "ТЕКУЩИЙ БОНУС: +{0} ЗДОРОВЬЯ"
+    en: "CURRENT BONUS: +{0} HEALTH"
+  - key: bunker.bonus_damage
+    ru: "ТЕКУЩИЙ БОНУС: +{0}% УРОНА"
+    en: "CURRENT BONUS: +{0}% DAMAGE"
+  - key: bunker.bonus_speed
+    ru: "ТЕКУЩИЙ БОНУС: +{0}% СКОРОСТИ"
+    en: "CURRENT BONUS: +{0}% SPEED"
+  - key: bunker.bonus_xp
+    ru: "ТЕКУЩИЙ БОНУС: +{0}% ОПЫТА"
+    en: "CURRENT BONUS: +{0}% EXPERIENCE"
+  - key: bunker.bonus_gold
+    ru: "ТЕКУЩИЙ БОНУС: +{0}% ЗОЛОТА"
+    en: "CURRENT BONUS: +{0}% GOLD"
+  - key: bunker.bonus_pickup
+    ru: "ТЕКУЩИЙ БОНУС: +{0}% РАДИУСА"
+    en: "CURRENT BONUS: +{0}% RADIUS"
+  - key: bunker.wallet
+    ru: "ЗОЛОТО: {0}"
+    en: "GOLD: {0}"
+  - key: bunker.station_wallet
+    ru: "ЗОЛОТО: {0}"
+    en: "GOLD: {0}"
+  - key: bunker.slot_wallet
+    ru: "ЗОЛОТО  {0}"
+    en: "GOLD  {0}"
+  - key: bunker.station_level_value
+    ru: "УРОВЕНЬ {0} / {1}"
+    en: "LEVEL {0} / {1}"
+  - key: bunker.station_cost
+    ru: "СЛЕДУЮЩИЙ УРОВЕНЬ: {0} ЗОЛОТА"
+    en: "NEXT LEVEL: {0} GOLD"
+  - key: bunker.station_next
+    ru: "ДАЛЕЕ: {0}"
+    en: "NEXT: {0}"
+  - key: bunker.station_unlocks
+    ru: "ОТКРЫВАЕТ:\n{0}"
+    en: "UNLOCKS:\n{0}"
+  - key: bunker.football_goals
+    ru: "ГОЛЫ  {0}   /   +{1} ОЧКОВ"
+    en: "GOALS  {0}   /   +{1} POINTS"
+  - key: bunker.football_goal
+    ru: "ГОЛ +{0}"
+    en: "GOAL +{0}"
+  - key: bunker.football_benchmark
+    ru: "КОНТРОЛЬНЫЙ РЕКОРД\n<size=30>{0}</size>\n<size=12>"
+    en: "BENCHMARK\n<size=30>{0}</size>\n<size=12>"
+  - key: bunker.football_reward
+    ru: "НАГРАДА: +{0} ЗОЛОТА"
+    en: "REWARD: +{0} GOLD"
+  - key: bunker.football_record
+    ru: "ЛИЧНЫЙ РЕКОРД ОБНОВЛЁН. +{0} ЗОЛОТА"
+    en: "PERSONAL RECORD UPDATED. +{0} GOLD"
+  - key: bunker.football_benchmark_reward
+    ru: "КОНТРОЛЬНЫЙ РЕКОРД ПРЕВЫШЕН\n+{0} ЗОЛОТА"
+    en: "BENCHMARK EXCEEDED\n+{0} GOLD"
+  - key: bunker.summary_gold
+    ru: "ПОЛУЧЕНО ЗОЛОТА: +{0}"
+    en: "GOLD ACQUIRED: +{0}"
+  - key: bunker.slot_bonus
+    ru: "НАГРАДА: +1 {0} В СЛЕДУЮЩЕМ ВЫХОДЕ"
+    en: "REWARD: +1 {0} IN THE NEXT RUN"
+  - key: bunker.station_badge
+    ru: "УР.{0}"
+    en: "LV.{0}"
+  - key: bunker.station_badge_feedback
+    ru: "СТАНЦИЯ УР.{0}"
+    en: "STATION LV.{0}"
+  - key: bunker.slot_symbol.None
+    ru: "НЕТ"
+    en: "NONE"
+  - key: bunker.slot_symbol.Gun
+    ru: "ОРУДИЕ"
+    en: "GUN"
+  - key: bunker.slot_symbol.Impulse
+    ru: "ИМПУЛЬС"
+    en: "IMPULSE"
+  - key: bunker.slot_symbol.Arc
+    ru: "ДУГОВОЙ ИЗЛУЧАТЕЛЬ"
+    en: "ARC EMITTER"
+  - key: bunker.slot_symbol.Gold
+    ru: "ЗОЛОТО"
+    en: "GOLD"
+  - key: bunker.slot_symbol.Skull
+    ru: "ЧЕРЕП"
+    en: "SKULL"
+  - key: bunker.depth.objective
+    ru: "ТЕКУЩАЯ ЦЕЛЬ\n<size=26>СТРАЖ СЕКТОРА</size>\n\nПолучите уровень доступа, чтобы открыть путь из комплекса."
+    en: "CURRENT OBJECTIVE\n<size=26>SECTOR GUARDIAN</size>\n\nAcquire access to open a route out of the facility."
+  - key: bunker.depth.acquired
+    ru: "ДОСТУП {0} ПОЛУЧЕН\n\nДАЛЕЕ: {1}\nОТКРЫТО\n<size=18>НЕДОСТУПНО В ДЕМОВЕРСИИ</size>"
+    en: "ACCESS {0} ACQUIRED\n\nNEXT: {1}\nUNLOCKED\n<size=18>NOT AVAILABLE IN DEMO</size>"
+  - key: bunker.depth.select_title
+    ru: "ПРОТОКОЛ ЭВАКУАЦИИ <size=15><color=#739296>/ ВЫБОР ГЛУБИНЫ</color></size>"
+    en: "ESCAPE PROTOCOL <size=15><color=#739296>/ DEPTH SELECT</color></size>"
+  - key: bunker.depth.title
+    ru: "ПРОТОКОЛ ЭВАКУАЦИИ"
+    en: "ESCAPE PROTOCOL"
+  - key: bunker.depth.access
+    ru: "ДОСТУП: {0} / {1}"
+    en: "ACCESS: {0} / {1}"
+  - key: bunker.depth.locked
+    ru: "ЗАКРЫТО"
+    en: "LOCKED"
+  - key: bunker.depth.available
+    ru: "ДОСТУПНО"
+    en: "AVAILABLE"
+  - key: bunker.depth.demo_status
+    ru: "ОТКРЫТО\n<size=12>НЕДОСТУПНО В ДЕМОВЕРСИИ</size>"
+    en: "UNLOCKED\n<size=12>NOT AVAILABLE IN DEMO</size>"
+  - key: bunker.depth.requires
+    ru: "{0}\n\n<size=17><color=#77939A>ТРЕБУЕТСЯ ДОСТУП {1}</color></size>"
+    en: "{0}\n\n<size=17><color=#77939A>REQUIRES ACCESS {1}</color></size>"
+  - key: bunker.depth.demo_detail
+    ru: "{0}\n<size=16><color=#16D2DB>ОТКРЫТО</color></size>\n\n<size=18><color=#77939A>НЕДОСТУПНО В ДЕМОВЕРСИИ</color></size>"
+    en: "{0}\n<size=16><color=#16D2DB>UNLOCKED</color></size>\n\n<size=18><color=#77939A>NOT AVAILABLE IN DEMO</color></size>"
+  - key: bunker.depth.available_detail
+    ru: "{0}\n<size=16><color=#16D2DB>{1}  ·  ДОСТУП {2}</color></size>\n\n<size=18><color=#94ADB3>Уничтожьте Стража, чтобы открыть следующую глубину.</color></size>"
+    en: "{0}\n<size=16><color=#16D2DB>{1}  ·  ACCESS {2}</color></size>\n\n<size=18><color=#94ADB3>Defeat the Guardian to unlock the next depth.</color></size>"
+  - key: bunker.depth.unavailable
+    ru: "НЕДОСТУПНО"
+    en: "UNAVAILABLE"
+  - key: bunker.depth.start
+    ru: "НАЧАТЬ ВЫХОД"
+    en: "START RUN"
+  - key: bunker.upgrade.0.name
+    ru: "ЗАПАС ЗДОРОВЬЯ"
+    en: "HEALTH RESERVE"
+  - key: bunker.upgrade.0.description
+    ru: "Увеличивает базовое здоровье при каждом выходе."
+    en: "Increases base health in every run."
+  - key: bunker.upgrade.0.category
+    ru: "ВЫЖИВАЕМОСТЬ"
+    en: "SURVIVAL"
+  - key: bunker.upgrade.1.name
+    ru: "УРОН"
+    en: "DAMAGE"
+  - key: bunker.upgrade.1.description
+    ru: "Увеличивает наносимый урон."
+    en: "Increases damage dealt."
+  - key: bunker.upgrade.1.category
+    ru: "БОЕВАЯ ЭФФЕКТИВНОСТЬ"
+    en: "COMBAT"
+  - key: bunker.upgrade.2.name
+    ru: "СКОРОСТЬ ДВИЖЕНИЯ"
+    en: "MOVEMENT SPEED"
+  - key: bunker.upgrade.2.description
+    ru: "Повышает скорость перемещения субъекта."
+    en: "Increases subject movement speed."
+  - key: bunker.upgrade.2.category
+    ru: "МОБИЛЬНОСТЬ"
+    en: "MOBILITY"
+  - key: bunker.upgrade.3.name
+    ru: "ПОЛУЧЕНИЕ ОПЫТА"
+    en: "EXPERIENCE GAIN"
+  - key: bunker.upgrade.3.description
+    ru: "Увеличивает количество получаемого опыта."
+    en: "Increases experience gained."
+  - key: bunker.upgrade.3.category
+    ru: "ПРОГРЕСС"
+    en: "PROGRESSION"
+  - key: bunker.upgrade.4.name
+    ru: "ПОЛУЧЕНИЕ ЗОЛОТА"
+    en: "GOLD GAIN"
+  - key: bunker.upgrade.4.description
+    ru: "Увеличивает количество получаемого золота."
+    en: "Increases gold gained."
+  - key: bunker.upgrade.4.category
+    ru: "ЭКОНОМИКА"
+    en: "ECONOMY"
+  - key: bunker.upgrade.5.name
+    ru: "РАДИУС ПОДБОРА"
+    en: "PICKUP RADIUS"
+  - key: bunker.upgrade.5.description
+    ru: "Увеличивает радиус подбора ресурсов."
+    en: "Increases resource pickup radius."
+  - key: bunker.upgrade.5.category
+    ru: "СБОР РЕСУРСОВ"
+    en: "RESOURCE COLLECTION"
+  - key: bunker.anomaly.DeepCompression.name
+    ru: "ГЛУБОКОЕ СЖАТИЕ"
+    en: "DEEP COMPRESSION"
+  - key: bunker.anomaly.DeepCompression.description
+    ru: "Уменьшает зоны локальных аномалий на 35%."
+    en: "Reduces local anomaly zones by 35%."
+  - key: bunker.anomaly.FieldCompression.name
+    ru: "СЖАТИЕ ПОЛЯ"
+    en: "FIELD COMPRESSION"
+  - key: bunker.anomaly.FieldCompression.description
+    ru: "Уменьшает зоны локальных аномалий на 20% в следующем выходе."
+    en: "Reduces local anomaly zones by 20% in the next run."
+  - key: bunker.anomaly.GoldenResonance.name
+    ru: "ЗОЛОТОЙ РЕЗОНАНС"
+    en: "GOLDEN RESONANCE"
+  - key: bunker.anomaly.GoldenResonance.description
+    ru: "Уничтожение противников внутри активной аномалии приносит на 30% больше золота."
+    en: "Enemies eliminated inside an active anomaly yield 30% more gold."
+  - key: bunker.anomaly.ReducedGravity.name
+    ru: "СНИЖЕНИЕ ГРАВИТАЦИИ"
+    en: "REDUCED GRAVITY"
+  - key: bunker.anomaly.ReducedGravity.description
+    ru: "Ослабляет притяжение субъекта гравитационной аномалией на 35%."
+    en: "Reduces the gravity anomaly pull on the subject by 35%."
+  - key: bunker.anomaly.SafeZone.name
+    ru: "БЕЗОПАСНАЯ ЗОНА"
+    en: "SAFE ZONE"
+  - key: bunker.anomaly.SafeZone.description
+    ru: "Ослабляет замедление субъекта в стазисе."
+    en: "Reduces the stasis slowdown applied to the subject."
+  - key: bunker.station_data.CharacterStation.name
+    ru: "СТАНЦИЯ СУБЪЕКТОВ"
+    en: "SUBJECT STATION"
+  - key: bunker.station_data.CharacterStation.level2
+    ru: "Di-mag"
+    en: "Di-mag"
+  - key: bunker.station_data.CharacterStation.level3
+    ru: "Vika"
+    en: "Vika"
+  - key: bunker.station_data.WeaponStation.name
+    ru: "ОРУЖЕЙНАЯ СТАНЦИЯ"
+    en: "WEAPON STATION"
+  - key: bunker.station_data.WeaponStation.level2
+    ru: "ЛАЗЕРНЫЙ МЕЧ"
+    en: "LASER SWORD"
+  - key: bunker.station_data.UpgradeStation.name
+    ru: "СТАНЦИЯ УЛУЧШЕНИЙ"
+    en: "UPGRADE STATION"
+  - key: bunker.station_data.UpgradeStation.level2
+    ru: "СКОРОСТЬ ДВИЖЕНИЯ, ПОЛУЧЕНИЕ ОПЫТА"
+    en: "MOVEMENT SPEED, EXPERIENCE GAIN"
+  - key: bunker.station_data.UpgradeStation.level3
+    ru: "ПОЛУЧЕНИЕ ЗОЛОТА, РАДИУС ПОДБОРА"
+    en: "GOLD GAIN, PICKUP RADIUS"
+  - key: bunker.station_data.AnomalyStation.name
+    ru: "СТАНЦИЯ АНОМАЛИЙ"
+    en: "ANOMALY STATION"
+  - key: bunker.station_data.AnomalyStation.level2
+    ru: "БЕЗОПАСНАЯ ЗОНА, СНИЖЕНИЕ ГРАВИТАЦИИ"
+    en: "SAFE ZONE, REDUCED GRAVITY"
+  - key: bunker.station_data.AnomalyStation.level3
+    ru: "ГЛУБОКОЕ СЖАТИЕ"
+    en: "DEEP COMPRESSION"
+  - key: bunker.depth_data.1.name
+    ru: "ПОВЕРХНОСТЬ"
+    en: "SURFACE"
+  - key: bunker.depth_data.1.description
+    ru: "3 СЕКТОРА\nСТРАЖ СЕКТОРА"
+    en: "3 SECTORS\nSECTOR GUARDIAN"
+  - key: bunker.depth_data.2.name
+    ru: "ГЛУБИНА II"
+    en: "DEPTH II"
+  - key: bunker.depth_data.2.description
+    ru: "Следующий этап протокола эвакуации."
+    en: "Next stage of the escape protocol."
+  - key: bunker.depth_data.3.name
+    ru: "ГЛУБИНА III"
+    en: "DEPTH III"
+  - key: bunker.depth_data.3.description
+    ru: "Следующий этап протокола эвакуации."
+    en: "Next stage of the escape protocol."
+  - key: bunker.depth_data.4.name
+    ru: "ГЛУБИНА IV"
+    en: "DEPTH IV"
+  - key: bunker.depth_data.4.description
+    ru: "Следующий этап протокола эвакуации."
+    en: "Next stage of the escape protocol."
+  - key: bunker.depth_data.5.name
+    ru: "ЭВАКУАЦИЯ"
+    en: "ESCAPE"
+  - key: bunker.depth_data.5.description
+    ru: "Следующий этап протокола эвакуации."
+    en: "Next stage of the escape protocol."
+  - key: bunker.module_name.pistol
+    ru: "ПИСТОЛЕТ"
+    en: "PISTOL"
+  - key: bunker.module_name.laser_sword
+    ru: "ЛАЗЕРНЫЙ МЕЧ"
+    en: "LASER SWORD"
+  - key: bunker.module_name.impulse_gun
+    ru: "ИМПУЛЬСНОЕ ОРУДИЕ"
+    en: "IMPULSE GUN"
+  - key: hud.enter_room
+    ru: "ВОЙТИ В ПОМЕЩЕНИЕ"
+    en: "ENTER ROOM"
+  - key: bunker.station_data.WeaponStation.level3
+    ru: "ИМПУЛЬСНОЕ ОРУДИЕ"
+    en: "IMPULSE GUN"
+  - key: boundary.warning
+    ru: "ВНИМАНИЕ"
+    en: "WARNING"
+  - key: boundary.leavingZone
+    ru: "ВЫ ПОКИДАЕТЕ ЗОНУ ЭКСПЕРИМЕНТА"
+    en: "LEAVING THE EXPERIMENT ZONE"
+  - key: character.gera.name
+    ru: "Gera"
+    en: "Gera"
+  - key: character.dimag.name
+    ru: "Di-mag"
+    en: "Di-mag"
+  - key: character.vika.name
+    ru: "Vika"
+    en: "Vika"
+  - key: character.pattern.circle
+    ru: "ОРБИТАЛЬНЫЙ ПАТТЕРН\nКРУГОВОЙ"
+    en: "ORBITAL PATTERN\nCIRCULAR"
+  - key: character.pattern.experimental
+    ru: "ОРБИТАЛЬНЫЙ ПАТТЕРН\nЭКСПЕРИМЕНТАЛЬНЫЙ"
+    en: "ORBITAL PATTERN\nEXPERIMENTAL"
+  - key: character.trait.circle
+    ru: "Модули движутся вокруг субъекта по круговым орбитам."
+    en: "Modules move around the subject along circular orbits."
+  - key: character.trait.custom
+    ru: "Пользователь сам формирует траекторию каждого нового кольца."
+    en: "The user defines the trajectory of each new ring."
+  - key: character.gera.description
+    ru: "СУБЪЕКТ С КРУГОВЫМ ОРБИТАЛЬНЫМ ПАТТЕРНОМ."
+    en: "SUBJECT WITH A CIRCULAR ORBITAL PATTERN."
+  - key: character.dimag.description
+    ru: "СУБЪЕКТ С КРУГОВЫМ ОРБИТАЛЬНЫМ ПАТТЕРНОМ."
+    en: "SUBJECT WITH A CIRCULAR ORBITAL PATTERN."
+  - key: character.vika.description
+    ru: "ДАННЫЕ ЭКСПЕРИМЕНТА НЕПОЛНЫЕ."
+    en: "EXPERIMENT DATA INCOMPLETE."
+  - key: character.details.feature
+    ru: "<color=#14D1DB><b>ОСОБЕННОСТЬ</b></color>\n{0}"
+    en: "<color=#14D1DB><b>TRAIT</b></color>\n{0}"
+  - key: character.details.description
+    ru: "<color=#14D1DB><b>ОПИСАНИЕ</b></color>\n{0}"
+    en: "<color=#14D1DB><b>DESCRIPTION</b></color>\n{0}"
+  - key: character.details.stats
+    ru: "<color=#14D1DB><b>ХАРАКТЕРИСТИКИ</b></color>\nЗДОРОВЬЕ   {0,3:0}   {1}\nСКОРОСТЬ   {2,3:0.#}   {3}"
+    en: "<color=#14D1DB><b>STATS</b></color>\nHEALTH   {0,3:0}   {1}\nSPEED   {2,3:0.#}   {3}"
+  - key: character.choose
+    ru: "ВЫБЕРИТЕ ПЕРСОНАЖА"
+    en: "CHOOSE A CHARACTER"
+  - key: character.station.title
+    ru: "СТАНЦИЯ ПЕРСОНАЖЕЙ"
+    en: "CHARACTER STATION"
+  - key: character.station.level
+    ru: "УРОВЕНЬ СТАНЦИИ {0} / {1}"
+    en: "STATION LEVEL {0} / {1}"
+  - key: character.station.gold
+    ru: "ЗОЛОТО: {0}"
+    en: "GOLD: {0}"
+  - key: character.station.max
+    ru: "МАКСИМАЛЬНЫЙ УРОВЕНЬ"
+    en: "MAXIMUM LEVEL"
+  - key: character.station.investing
+    ru: "УЛУЧШЕНИЕ..."
+    en: "UPGRADING..."
+  - key: character.station.upgrade
+    ru: "УЛУЧШИТЬ СТАНЦИЮ — {0}"
+    en: "UPGRADE STATION — {0}"
+  - key: result.comment.victory
+    ru: "Протокол завершён. Данные эксперимента сохранены."
+    en: "Protocol complete. Experiment data saved."
+  - key: result.comment.defeat
+    ru: "Сигнал субъекта потерян. Данные эксперимента сохранены."
+    en: "Subject signal lost. Experiment data saved."
+  - key: orbit.draw.title
+    ru: "НАРИСУЙТЕ ОРБИТУ"
+    en: "DRAW AN ORBIT"
+  - key: orbit.draw.confirmHint
+    ru: "<b><color=#70FFD4>ENTER</color></b> — подтвердить орбиту"
+    en: "<b><color=#70FFD4>ENTER</color></b> — confirm orbit"
+  - key: orbit.draw.drawHint
+    ru: "<b><color=#55DFFF>ЛКМ</color></b> — удерживайте и рисуйте"
+    en: "<b><color=#55DFFF>LMB</color></b> — hold to draw"
+  - key: orbit.draw.ready
+    ru: "ГОТОВО · замкнутая орбита"
+    en: "READY · closed orbit"
+  - key: orbit.draw.invalid
+    ru: "ОШИБКА · замкните линию у НАЧАЛА внутри области"
+    en: "INVALID · close the path at START inside the area"
+  - key: orbit.draw.closeHint
+    ru: "Вернитесь к НАЧАЛУ и отпустите ЛКМ"
+    en: "Return to START and release LMB"
+  - key: orbit.draw.confirm
+    ru: "<color=#70FFD4>ENTER</color>  ПОДТВЕРДИТЬ"
+    en: "<color=#70FFD4>ENTER</color>  CONFIRM"
+  - key: orbit.draw.redraw
+    ru: "R  ПЕРЕРИСОВАТЬ"
+    en: "R  REDRAW"
+  - key: orbit.draw.start
+    ru: "НАЧАЛО"
+    en: "START"
+  - key: sector.choice.fasterEnemies
+    ru: "Враги двигаются быстрее"
+    en: "Enemies move faster"
+  - key: sector.choice.moreEnemies
+    ru: "Враги появляются чаще"
+    en: "Enemies spawn more often"
+  - key: sector.choice.slowed
+    ru: "Движение замедлено"
+    en: "Movement slowed"
+  - key: sector.choice.wind
+    ru: "Направление ветра меняется"
+    en: "Wind direction changes"
+  - key: sector.choice.golden
+    ru: "Золотые враги дают больше золота"
+    en: "Golden enemies yield more gold"
+  - key: sector.choice.standard
+    ru: "Стандартная награда"
+    en: "Standard reward"
+  - key: sector.choice.gold
+    ru: "Золото ×"
+    en: "Gold ×"
+  - key: sector.choice.title
+    ru: "ВЫБЕРИТЕ УСЛОВИЯ СЕКТОРА"
+    en: "SELECT SECTOR CONDITIONS"
+  - key: world.rule.darkness.displayName
+    ru: "ТЕМНОТА"
+    en: "DARKNESS"
+  - key: world.rule.darkness.description
+    ru: "Темнота ограничивает видимость."
+    en: "Darkness limits visibility."
+  - key: world.rule.darkness.shortDescription
+    ru: "Темнота ограничивает видимость."
+    en: "Darkness limits visibility."
+  - key: world.rule.darkness.pinnedDescription
+    ru: "ТЕМНОТА"
+    en: "DARKNESS"
+  - key: world.rule.golden.displayName
+    ru: "ЗОЛОТЫЕ ВРАГИ"
+    en: "GOLDEN ENEMIES"
+  - key: world.rule.golden.description
+    ru: "Золотые враги сильнее и дают больше золота."
+    en: "Golden enemies are stronger and yield more gold."
+  - key: world.rule.golden.shortDescription
+    ru: "Золотые враги сильнее и дают больше золота."
+    en: "Golden enemies are stronger and yield more gold."
+  - key: world.rule.golden.pinnedDescription
+    ru: "ЗОЛОТЫЕ ВРАГИ"
+    en: "GOLDEN ENEMIES"
+  - key: world.rule.rain.displayName
+    ru: "ДОЖДЬ"
+    en: "RAIN"
+  - key: world.rule.rain.description
+    ru: "Дождь снижает видимость. Враги движутся быстрее."
+    en: "Rain reduces visibility. Enemies move faster."
+  - key: world.rule.rain.shortDescription
+    ru: "Дождь снижает видимость. Враги движутся быстрее."
+    en: "Rain reduces visibility. Enemies move faster."
+  - key: world.rule.rain.pinnedDescription
+    ru: "ДОЖДЬ"
+    en: "RAIN"
+  - key: world.rule.snow.displayName
+    ru: "СНЕГ"
+    en: "SNOW"
+  - key: world.rule.snow.description
+    ru: "Снег замедляет движение. Возможна метель."
+    en: "Snow slows movement. Blizzards may occur."
+  - key: world.rule.snow.shortDescription
+    ru: "Снег замедляет движение. Возможна метель."
+    en: "Snow slows movement. Blizzards may occur."
+  - key: world.rule.snow.pinnedDescription
+    ru: "СНЕГ"
+    en: "SNOW"
+  - key: world.rule.wind.displayName
+    ru: "ВЕТЕР"
+    en: "WIND"
+  - key: world.rule.wind.description
+    ru: "Ветер сносит объекты и меняет направление."
+    en: "Wind pushes objects and changes direction."
+  - key: world.rule.wind.shortDescription
+    ru: "Ветер сносит объекты и меняет направление."
+    en: "Wind pushes objects and changes direction."
+  - key: world.rule.wind.pinnedDescription
+    ru: "ВЕТЕР"
+    en: "WIND"
+  - key: world.rule.condensation.displayName
+    ru: "КОНДЕНСАТ"
+    en: "CONDENSATION"
+  - key: world.rule.condensation.description
+    ru: "Очищайте обзор движением мыши."
+    en: "Move the mouse to clear your view."
+  - key: world.rule.condensation.shortDescription
+    ru: "Очищайте обзор движением мыши."
+    en: "Move the mouse to clear your view."
+  - key: world.rule.condensation.pinnedDescription
+    ru: "КОНДЕНСАТ"
+    en: "CONDENSATION"
+  - key: world.anomaly.berserk.displayName
+    ru: "БЕРСЕРК"
+    en: "BERSERK"
+  - key: world.anomaly.berserk.description
+    ru: "Враги внутри зоны движутся быстрее."
+    en: "Enemies inside the zone move faster."
+  - key: world.anomaly.berserk.pinnedDescription
+    ru: "Враги внутри зоны движутся быстрее."
+    en: "Enemies inside the zone move faster."
+  - key: world.anomaly.explosivezone.displayName
+    ru: "ВЗРЫВНАЯ ЗОНА"
+    en: "EXPLOSIVE ZONE"
+  - key: world.anomaly.explosivezone.description
+    ru: "Враги, погибшие внутри зоны, взрываются."
+    en: "Enemies killed inside the zone explode."
+  - key: world.anomaly.explosivezone.pinnedDescription
+    ru: "Враги, погибшие внутри зоны, взрываются."
+    en: "Enemies killed inside the zone explode."
+  - key: world.anomaly.glitch.displayName
+    ru: "ГЛИТЧ"
+    en: "GLITCH"
+  - key: world.anomaly.glitch.description
+    ru: "Зона периодически смещает находящиеся внутри объекты."
+    en: "The zone periodically displaces objects inside."
+  - key: world.anomaly.glitch.pinnedDescription
+    ru: "Зона периодически смещает находящиеся внутри объекты."
+    en: "The zone periodically displaces objects inside."
+  - key: world.anomaly.gravity.displayName
+    ru: "ГРАВИТАЦИЯ"
+    en: "GRAVITY"
+  - key: world.anomaly.gravity.description
+    ru: "Зона притягивает объекты к центру."
+    en: "The zone pulls objects toward its center."
+  - key: world.anomaly.gravity.pinnedDescription
+    ru: "Зона притягивает объекты к центру."
+    en: "The zone pulls objects toward its center."
+  - key: world.anomaly.stasis.displayName
+    ru: "СТАЗИС"
+    en: "STASIS"
+  - key: world.anomaly.stasis.description
+    ru: "Движение внутри зоны замедлено."
+    en: "Movement inside the zone is slowed."
+  - key: world.anomaly.stasis.pinnedDescription
+    ru: "Движение внутри зоны замедлено."
+    en: "Movement inside the zone is slowed."
+  - key: run.message.start.title
+    ru: "СЕКТОР АКТИВЕН"
+    en: "SECTOR ACTIVE"
+  - key: run.message.start.description
+    ru: "Выполните протокол сектора."
+    en: "Complete the sector protocol."
+  - key: run.message.boss.title
+    ru: "ОБНАРУЖЕН БОСС"
+    en: "BOSS DETECTED"
+  - key: run.message.boss.description
+    ru: "Подготовьтесь к бою."
+    en: "Prepare for combat."
+  - key: hud.anomaly
+    ru: "АНОМАЛИЯ"
+    en: "ANOMALY"
+  - key: hud.level
+    ru: "УР {0}"
+    en: "LV {0}"
+  - key: hud.threat
+    ru: "УГРОЗА {0}"
+    en: "THREAT {0}"
+  - key: hud.boss
+    ru: "БОСС"
+    en: "BOSS"
+  - key: pause.tier1
+    ru: "БЕЛЫЙ"
+    en: "WHITE"
+  - key: pause.tier2
+    ru: "ГОЛУБОЙ"
+    en: "CYAN"
+  - key: pause.tier3
+    ru: "ФИОЛЕТОВЫЙ"
+    en: "VIOLET"
+  - key: pause.tier4
+    ru: "ЗОЛОТОЙ"
+    en: "GOLD"
+  - key: pause.matrix
+    ru: "Матрица связей"
+    en: "Link matrix"
+  - key: pause.sword
+    ru: "Лазерный клинок"
+    en: "Laser sword"
+  - key: pause.impulse
+    ru: "Импульсная пушка"
+    en: "Impulse gun"
+  - key: pause.arc
+    ru: "Дуговой излучатель"
+    en: "Arc emitter"
+  - key: pause.link
+    ru: "Узел связи"
+    en: "Link node"
+  - key: pause.gun
+    ru: "Пушка"
+    en: "Gun"
+  - key: pause.station
+    ru: "ОРБИТАЛЬНАЯ СТАНЦИЯ"
+    en: "ORBITAL STATION"
+  - key: pause.damage
+    ru: "УРОН"
+    en: "DAMAGE"
+  - key: pause.speed
+    ru: "СКОРОСТЬ"
+    en: "SPEED"
+  - key: pause.coreWaves
+    ru: "ЯДРО {0} · волн импульса: {0}"
+    en: "CORE {0} · pulse waves: {0}"
+  - key: pause.maxHealth
+    ru: "МАКС. ЗДОРОВЬЕ"
+    en: "MAX HEALTH"
+  - key: pause.moveSpeed
+    ru: "СКОРОСТЬ ДВИЖЕНИЯ"
+    en: "MOVE SPEED"
+  - key: reward.newRing
+    ru: "НОВАЯ ОРБИТА"
+    en: "NEW ORBIT"
+  - key: reward.newRingDescription
+    ru: "+1 кольцо\n1 точка / ёмкость 3."
+    en: "+1 ring\n1 mount / capacity 3."
+  - key: reward.gun
+    ru: "ПУШКА"
+    en: "GUN"
+  - key: reward.gunDescription
+    ru: "ОРУЖИЕ\nАвтоматический дальний выстрел.\nНужна 1 свободная точка."
+    en: "WEAPON\nAutomatic ranged fire.\nRequires 1 free mount."
+  - key: reward.sword
+    ru: "ЛАЗЕРНЫЙ КЛИНОК"
+    en: "LASER BLADE"
+  - key: reward.swordDescription
+    ru: "ОРУЖИЕ\nКонтактный режущий клинок.\nНужна 1 свободная точка."
+    en: "WEAPON\nContact cutting blade.\nRequires 1 free mount."
+  - key: reward.impulse
+    ru: "ИМПУЛЬСНАЯ ПУШКА"
+    en: "IMPULSE GUN"
+  - key: reward.impulseDescription
+    ru: "ОРУЖИЕ\nУрон и отталкивание.\nНужна 1 свободная точка."
+    en: "WEAPON\nDamage and knockback.\nRequires 1 free mount."
+  - key: reward.arc
+    ru: "ДУГОВОЙ ИЗЛУЧАТЕЛЬ"
+    en: "ARC EMITTER"
+  - key: reward.arcDescription
+    ru: "ОРУЖИЕ\nРазряд между врагами.\nНужна 1 свободная точка."
+    en: "WEAPON\nArc between enemies.\nRequires 1 free mount."
+  - key: reward.link
+    ru: "УЗЛЫ СВЯЗИ"
+    en: "LINK NODES"
+  - key: reward.linkDescription
+    ru: "ОРУЖИЕ\nУстановите два узла: между ними повреждающая связь.\nНужны 2 свободные точки."
+    en: "WEAPON\nTwo nodes create a damaging link.\nRequires 2 free mounts."
+  - key: reward.damage
+    ru: "УСИЛИТЬ МОДУЛЬ"
+    en: "UPGRADE MODULE"
+  - key: reward.damageDescription
+    ru: "МОДУЛЬ\nВыберите установленное оружие. Уровень урона +1 даёт +25% базового урона."
+    en: "MODULE\nSelect an installed weapon. Damage level +1 grants +25% base damage."
+  - key: reward.speed
+    ru: "СКОРОСТЬ КОЛЬЦА"
+    en: "RING SPEED"
+  - key: reward.speedDescription
+    ru: "КОЛЬЦО\nСкорость движения модулей ×1.25.\nВыберите кольцо."
+    en: "RING\nModule movement speed ×1.25.\nSelect a ring."
+  - key: reward.power
+    ru: "УРОН КОЛЬЦА"
+    en: "RING DAMAGE"
+  - key: reward.powerDescription
+    ru: "КОЛЬЦО\nУрон оружия на выбранной орбите +25%."
+    en: "RING\nWeapon damage on the selected ring +25%."
+  - key: reward.mount
+    ru: "ТОЧКА УСТАНОВКИ"
+    en: "INSTALLATION MOUNT"
+  - key: reward.mountDescription
+    ru: "КОЛЬЦО\n+1 построенная точка.\nВыберите кольцо со свободной ёмкостью."
+    en: "RING\n+1 built mount.\nSelect a ring with spare capacity."
+  - key: reward.capacity
+    ru: "ЁМКОСТЬ КОЛЬЦА"
+    en: "RING CAPACITY"
+  - key: reward.capacityDescription
+    ru: "КОЛЬЦО\nПредел точек +1 (до 6).\nВыберите кольцо с полной ёмкостью."
+    en: "RING\nMount capacity +1 (up to 6).\nSelect a ring at full capacity."
+  - key: reward.core1
+    ru: "ЯДРО I"
+    en: "CORE I"
+  - key: reward.core2
+    ru: "ЯДРО II"
+    en: "CORE II"
+  - key: reward.core3
+    ru: "ЯДРО III"
+    en: "CORE III"
+  - key: reward.coreWave1
+    ru: "ЯДРО\n1 ВОЛНА"
+    en: "CORE\n1 WAVE"
+  - key: reward.coreWave2
+    ru: "ЯДРО\n2 ВОЛНЫ"
+    en: "CORE\n2 WAVES"
+  - key: reward.coreWave3
+    ru: "ЯДРО\n3 ВОЛНЫ"
+    en: "CORE\n3 WAVES"
+  - key: reward.matrix
+    ru: "МАТРИЦА СВЯЗЕЙ"
+    en: "LINK MATRIX"
+  - key: reward.matrixDescription
+    ru: "ЯДРО\nУсиливает урон существующей энергетической сети."
+    en: "CORE\nIncreases damage of the existing energy network."
+  - key: reward.health
+    ru: "МАКС. ЗДОРОВЬЕ"
+    en: "MAX HEALTH"
+  - key: reward.movement
+    ru: "СКОРОСТЬ ПЕРЕДВИЖЕНИЯ"
+    en: "MOVEMENT SPEED"
+  - key: reward.selectRing
+    ru: "Выберите кольцо."
+    en: "Select a ring."
+  - key: reward.mountDetail
+    ru: "КОЛЬЦО\n+1 построенная точка.\n"
+    en: "RING\n+1 built mount.\n"
+  - key: reward.capacityDetail
+    ru: "КОЛЬЦО\nПредел точек +1 (до 6).\n"
+    en: "RING\nMount capacity +1 (up to 6).\n"
+  - key: reward.powerDetail
+    ru: "КОЛЬЦО\nУрон всех модулей ×1.25.\n"
+    en: "RING\nAll module damage ×1.25.\n"
+  - key: reward.speedDetail
+    ru: "КОЛЬЦО\nСкорость движения модулей ×1.25.\n"
+    en: "RING\nModule movement speed ×1.25.\n"
+  - key: reward.ringTarget
+    ru: "Кольцо {0}: "
+    en: "Ring {0}: "
+  - key: reward.healthDescription
+    ru: "СУБЪЕКТ\n+{0:0} здоровья\nДо {1} уровней."
+    en: "SUBJECT\n+{0:0} health\nUp to {1} levels."
+  - key: reward.movementDescription
+    ru: "СУБЪЕКТ\n+{0:0}% базовой скорости\nДо {1} уровней."
+    en: "SUBJECT\n+{0:0}% base speed\nUp to {1} levels."
+  - key: reward.regeneration
+    ru: "Регенерация +{0:0.#} здоровья/с"
+    en: "Regeneration +{0:0.#} health/s"
+  - key: reward.hint.unavailable
+    ru: "Крепление стало недоступно"
+    en: "Mount unavailable"
+  - key: reward.hint.second
+    ru: "Выберите второе крепление"
+    en: "Select the second mount"
+  - key: reward.hint.unavailableOther
+    ru: "Крепление стало недоступно — выберите другое"
+    en: "Mount unavailable. Select another."
+  - key: reward.hint.selectWeapon
+    ru: "Выберите установленное оружие · Esc — к карточкам"
+    en: "Select an installed weapon · Esc — cards"
+  - key: reward.hint.damageLevel
+    ru: "{0} · УРОВЕНЬ УРОНА {1} → {2}\n"
+    en: "{0} · DAMAGE LEVEL {1} → {2}\n"
+  - key: reward.hint.damage
+    ru: "УРОН {0:0.##}× → {1:0.##}×\n"
+    en: "DAMAGE {0:0.##}× → {1:0.##}×\n"
+  - key: reward.hint.upgrade
+    ru: "ЛКМ: усилить"
+    en: "LMB: upgrade"
+  - key: reward.hint.secondNode
+    ru: "Установите второй узел"
+    en: "Place the second node"
+  - key: reward.hint.firstNode
+    ru: "Установите первый узел"
+    en: "Place the first node"
+  - key: reward.hint.freeMount
+    ru: "Выберите свободное крепление"
+    en: "Select a free mount"
+  - key: reward.hint.hoverMount
+    ru: "\nНаведите оружие на свободное крепление"
+    en: "\nMove the weapon over a free mount"
+  - key: reward.hint.occupied
+    ru: "Крепление занято"
+    en: "Mount occupied"
+  - key: reward.hint.ring
+    ru: "Кольцо {0} · "
+    en: "Ring {0} · "
+  - key: reward.hint.install
+    ru: "Крепление {0}\nЛКМ: установить"
+    en: "Mount {0}\nLMB: install"
+  - key: reward.hint.selectOrbit
+    ru: "Выберите подсвеченную орбиту · Esc — к карточкам"
+    en: "Select a highlighted orbit · Esc — cards"
+  - key: reward.hint.speed
+    ru: "ОРБИТА {0}\n{1:0.#}°/с → "
+    en: "ORBIT {0}\n{1:0.#}°/s → "
+  - key: reward.hint.speedNext
+    ru: "{0:0.#}°/с"
+    en: "{0:0.#}°/s"
+  - key: reward.hint.ringDamage
+    ru: "ОРБИТА {0} · УРОН {1}\n"
+    en: "ORBIT {0} · DAMAGE {1}\n"
+  - key: reward.hint.mounts
+    ru: "ОРБИТА {0}\nТочки {1}/{2} → "
+    en: "ORBIT {0}\nMounts {1}/{2} → "
+  - key: reward.hint.capacity
+    ru: "ЁМКОСТЬ {0} → {1}"
+    en: "CAPACITY {0} → {1}"
+  - key: reward.hint.orbit
+    ru: "ОРБИТА {0}"
+    en: "ORBIT {0}"
+  - key: reward.hint.noModules
+    ru: "Пока без модулей"
+    en: "No modules installed"
+  - key: reward.hint.modules
+    ru: "Модули: "
+    en: "Modules: "
+  - key: orbit.move.orbit
+    ru: "Орбита {0} · "
+    en: "Orbit {0} · "
+  - key: orbit.move.drag
+    ru: "Зажмите ЛКМ и перетащите"
+    en: "Hold LMB and drag"
+  - key: orbit.move.target
+    ru: "Перетащите на зелёное крепление\nEsc / ПКМ — отменить"
+    en: "Drag to a green mount\nEsc / RMB — cancel"
+  - key: orbit.move.ring
+    ru: "Кольцо {0} · "
+    en: "Ring {0} · "
+  - key: orbit.move.release
+    ru: "крепление {0}\nОтпустить: переместить"
+    en: "mount {0}\nRelease: relocate"
+  - key: orbit.move.occupied
+    ru: "Крепление занято\nEsc / ПКМ — отменить"
+    en: "Mount occupied\nEsc / RMB — cancel"
+  - key: orbit.move.hover
+    ru: "Наведите оружие на свободное крепление\nEsc / ПКМ — отменить"
+    en: "Move weapon to a free mount\nEsc / RMB — cancel"
+  - key: orbit.move.gun
+    ru: "ПУШКА"
+    en: "GUN"
+  - key: orbit.move.sword
+    ru: "ЛАЗЕРНЫЙ КЛИНОК"
+    en: "LASER BLADE"
+  - key: orbit.move.impulse
+    ru: "ИМПУЛЬСНАЯ ПУШКА"
+    en: "IMPULSE GUN"
+  - key: orbit.move.arc
+    ru: "ДУГОВОЙ ИЗЛУЧАТЕЛЬ"
+    en: "ARC EMITTER"
+  - key: orbit.move.link
+    ru: "УЗЕЛ СВЯЗИ"
+    en: "LINK NODE"
+  - key: orbit.telekinesis
+    ru: "ПКМ — ТЕЛЕКИНЕЗ"
+    en: "RMB — TELEKINESIS"
+  - key: reward.panel.special
+    ru: "УСИЛЕННАЯ АНОМАЛИЯ"
+    en: "ENHANCED ANOMALY"
+  - key: reward.panel.newRing
+    ru: "НОВАЯ ОРБИТА · +1 КОЛЬЦО"
+    en: "NEW ORBIT · +1 RING"
+  - key: reward.panel.title
+    ru: "НАГРАДА"
+    en: "REWARD"
+  - key: reward.panel.choose
+    ru: "Выберите предмет"
+    en: "Select an item"
+  - key: event.capture
+    ru: "ЗАХВАТ"
+    en: "CAPTURE"
+  - key: event.carrier
+    ru: "ОХОТА НА НОСИТЕЛЯ"
+    en: "CARRIER HUNT"
+  - key: event.evacuation
+    ru: "ЭВАКУАЦИЯ"
+    en: "EVACUATION"
+  - key: event.false
+    ru: "ЛОЖНЫЙ СИГНАЛ"
+    en: "FALSE SIGNAL"
+  - key: event.falseTitle
+    ru: "ЛОЖНЫЙ СИГНАЛ"
+    en: "FALSE SIGNAL"
+  - key: event.ambush
+    ru: "ЗАСАДА"
+    en: "AMBUSH"
+  - key: event.blackout
+    ru: "ЗАТМЕНИЕ"
+    en: "BLACKOUT"
+  - key: event.signal
+    ru: "СИГНАЛ"
+    en: "SIGNAL"
+  - key: event.enter
+    ru: "ВОЙДИТЕ"
+    en: "ENTER"
+  - key: site.half
+    ru: "ОСОБАЯ АНОМАЛИЯ: 1/2"
+    en: "SPECIAL ANOMALY: 1/2"
+  - key: site.halfDescription
+    ru: "Выполните второе событие. При его запуске начнётся штурм."
+    en: "Complete the second event. Starting it triggers an assault."
+  - key: site.start
+    ru: "ОСОБАЯ АНОМАЛИЯ: 0/2"
+    en: "SPECIAL ANOMALY: 0/2"
+  - key: site.startDescription
+    ru: "Выполните два события, чтобы получить новое кольцо."
+    en: "Complete two events to acquire a new ring."
+  - key: site.stabilized
+    ru: "АНОМАЛИЯ СТАБИЛИЗИРОВАНА"
+    en: "ANOMALY STABILIZED"
+  - key: site.reward
+    ru: "НАГРАДА ДОСТУПНА"
+    en: "STANDARD REWARD AVAILABLE"
+  - key: resource.title
+    ru: "РЕСУРСНЫЙ УЗЕЛ"
+    en: "RESOURCE NODE"
+  - key: resource.collect
+    ru: "ЛКМ · собрать золото"
+    en: "LMB · collect gold"
+  - key: reward.panel.level
+    ru: "УРОВЕНЬ {0}"
+    en: "LEVEL {0}"
+  - key: reward.panel.chooseUpgrade
+    ru: "Выберите улучшение"
+    en: "Select an upgrade"
+  - key: orbit.draw.progress
+    ru: "КОЛЬЦО {0} / {1}"
+    en: "RING {0} / {1}"
+  - key: transition.failure
+    ru: "СБОЙ СИНХРОНИЗАЦИИ\n\nENTER — ПОВТОРИТЬ\nESC — В БУНКЕР"
+    en: "SYNCHRONIZATION FAILED\n\nENTER — RETRY\nESC — BUNKER"
+  - key: loot.gold50
+    ru: "50 ЗОЛОТА"
+    en: "50 GOLD"
+  - key: loot.gold100
+    ru: "100 ЗОЛОТА"
+    en: "100 GOLD"
+  - key: loot.gold300
+    ru: "300 ЗОЛОТА"
+    en: "300 GOLD"
+  - key: loot.decode
+    ru: "ДЕКОДИРОВАНИЕ"
+    en: "DECODING"
+  - key: loot.sync
+    ru: "СИНХРОНИЗАЦИЯ..."
+    en: "SYNCHRONIZING..."
+  - key: loot.brake
+    ru: "ОСТАНОВКА..."
+    en: "STOPPING..."
+  - key: loot.lock
+    ru: "ФИКСАЦИЯ НАГРАДЫ"
+    en: "LOCKING REWARD"
+  - key: loot.selected
+    ru: "НАГРАДА ОПРЕДЕЛЕНА"
+    en: "REWARD SELECTED"
+  - key: loot.error
+    ru: "ОШИБКА НАЧИСЛЕНИЯ"
+    en: "GRANT FAILED"
+  - key: loot.notApplied
+    ru: "НАГРАДА НЕ ПРИМЕНЕНА"
+    en: "REWARD NOT APPLIED"
+  - key: loot.received
+    ru: "ПОЛУЧЕНО"
+    en: "RECEIVED"
+  - key: loot.stop
+    ru: "[{0} — СТОП]"
+    en: "[{0} — STOP]"
+  - key: upgrade.health.upgradeName
+    ru: "Здоровье"
+    en: "Health"
+  - key: upgrade.health.description
+    ru: "Макс. здоровье +20"
+    en: "Max health +20"
+  - key: upgrade.movement.upgradeName
+    ru: "Скорость движения"
+    en: "Movement speed"
+  - key: upgrade.movement.description
+    ru: "Скорость движения +10%"
+    en: "Movement speed +10%"
+  - key: pause.modules
+    ru: "МОДУЛИ"
+    en: "MODULES"
+  - key: mechanic.rules
+    ru: "ПРАВИЛА СЕКТОРА"
+    en: "SECTOR RULES"
+  - key: mechanic.acceleration
+    ru: "- Ускорение мира - "
+    en: "- World acceleration - "
+  - key: mechanic.challenges
+    ru: "ИСПЫТАНИЯ"
+    en: "CHALLENGES"
+  - key: mechanic.noDamage
+    ru: "- Без урона - "
+    en: "- No damage - "
+  - key: mechanic.risk
+    ru: "ПОЛУЧИТЬ ИЛИ РИСКНУТЬ"
+    en: "TAKE OR RISK"
+  - key: mechanic.pending
+    ru: "Ожидание события"
+    en: "Event pending"
+  - key: mechanic.ready
+    ru: "Награда доступна"
+    en: "Reward ready"
+  - key: mechanic.lost
+    ru: "Награда потеряна"
+    en: "Reward lost"
+  - key: mechanic.seconds
+    ru: "с"
+    en: "s"
+  - key: hud.goldMultiplier
+    ru: "ЗОЛОТО ×{0:0.#}"
+    en: "GOLD ×{0:0.#}"
+  - key: mechanic.challenge.Inactive
+    ru: "Неактивно"
+    en: "Inactive"
+  - key: mechanic.challenge.Active
+    ru: "Активно"
+    en: "Active"
+  - key: mechanic.challenge.Completed
+    ru: "Выполнено"
+    en: "Completed"
+  - key: mechanic.challenge.Failed
+    ru: "Провалено"
+    en: "Failed"
+  - key: challenge.start
+    ru: "ИСПЫТАНИЕ"
+    en: "CHALLENGE"
+  - key: challenge.instruction
+    ru: "Не получайте урон до завершения отсчёта."
+    en: "Avoid damage until the timer expires."
+  - key: challenge.failed
+    ru: "ИСПЫТАНИЕ ПРОВАЛЕНО"
+    en: "CHALLENGE FAILED"
+  - key: challenge.complete
+    ru: "ИСПЫТАНИЕ ВЫПОЛНЕНО"
+    en: "CHALLENGE COMPLETE"
+  - key: run.threatIncreased
+    ru: "УГРОЗА ПОВЫШЕНА"
+    en: "THREAT INCREASED"
+  - key: run.pressureIncreased
+    ru: "НАТИСК ВРАГОВ УСИЛЕН"
+    en: "ENEMY PRESSURE INCREASED"
+  - key: intro.hear
+    ru: "...слышишь меня?"
+    en: "...can you hear me?"
+  - key: intro.awake
+    ru: "Если ты проснулся..."
+    en: "If you have awakened..."
+  - key: intro.lost
+    ru: "...значит мы проиграли."
+    en: "...then we have failed."
+  - key: intro.sorry
+    ru: "Прости нас."
+    en: "Forgive us."
+  - key: intro.recording
+    ru: "ПОВРЕЖДЁННАЯ ЗАПИСЬ"
+    en: "DAMAGED RECORDING"
+  - key: intro.activity
+    ru: "БИОЛОГИЧЕСКАЯ АКТИВНОСТЬ ОБНАРУЖЕНА"
+    en: "BIOLOGICAL ACTIVITY DETECTED"
+  - key: intro.impossible
+    ru: "НЕВОЗМОЖНО"
+    en: "IMPOSSIBLE"
+  - key: intro.identify
+    ru: "ИДЕНТИФИКАЦИЯ...\n\nАРХИВ ПОВРЕЖДЁН\n\nОБЪЕКТ НЕ ОПОЗНАН"
+    en: "IDENTIFYING...\n\nARCHIVE CORRUPTED\n\nSUBJECT UNKNOWN"
+  - key: intro.exit
+    ru: "НАЙДИТЕ ВЫХОД"
+    en: "FIND THE EXIT"
+  - key: intro.archive
+    ru: "АРХИВ ПОВРЕЖДЁН"
+    en: "ARCHIVE CORRUPTED"
+  - key: intro.skip
+    ru: "УДЕРЖИВАЙТЕ, ЧТОБЫ ПРОПУСТИТЬ"
+    en: "HOLD TO SKIP"
+  - key: interaction.escape
+    ru: "ПРОТОКОЛ ВЫХОДА"
+    en: "ESCAPE PROTOCOL"
+  - key: interaction.depth
+    ru: "ВЫБОР ГЛУБИНЫ"
+    en: "DEPTH SELECT"
+  - key: interaction.slot
+    ru: "ОРБИТАЛЬНЫЙ АВТОМАТ — 50 ЗОЛОТА"
+    en: "ORBITAL SLOT — 50 GOLD"
+  - key: interaction.anomaly
+    ru: "НАСТРОИТЬ СТАБИЛИЗАТОР"
+    en: "CONFIGURE STABILIZER"
+  - key: interaction.character
+    ru: "ВЫБРАТЬ ПЕРСОНАЖА"
+    en: "SELECT CHARACTER"
+  - key: interaction.upgrade
+    ru: "УЛУЧШЕНИЯ"
+    en: "UPGRADES"
+  - key: interaction.module
+    ru: "ВЫБРАТЬ МОДУЛЬ"
+    en: "SELECT MODULE"
+  - key: interaction.start
+    ru: "НАЧАТЬ ЗАБЕГ"
+    en: "START RUN"
+  - key: event.carrier.name
+    ru: "ОХОТА НА НОСИТЕЛЯ"
+    en: "CARRIER HUNT"
+  - key: event.carrier.description
+    ru: "Уничтожьте носителя до его выхода из зоны."
+    en: "Destroy the carrier before it leaves the area."
+  - key: event.signal.name
+    ru: "ЛОЖНЫЙ СИГНАЛ"
+    en: "FALSE SIGNAL"
+  - key: event.signal.description
+    ru: "Найдите настоящий источник сигнала."
+    en: "Find the true signal source."
+  - key: event.capture.name
+    ru: "УДЕРЖАНИЕ ЗОНЫ"
+    en: "ZONE CAPTURE"
+  - key: event.capture.description
+    ru: "Удерживайте отмеченную область."
+    en: "Hold the marked area."
+  - key: event.evacuation.name
+    ru: "ЭВАКУАЦИОННЫЙ КОРИДОР"
+    en: "EVACUATION CORRIDOR"
+  - key: event.evacuation.description
+    ru: "Двигайтесь внутри безопасного коридора."
+    en: "Stay within the safe corridor."
+  - key: boss.guardian
+    ru: "СТРАЖ СЕКТОРА"
+    en: "SECTOR GUARDIAN"
+  - key: menu.subjectStatus
+    ru: "СТАТУС СУБЪЕКТА: АКТИВЕН"
+    en: "SUBJECT STATUS: ACTIVE"
+  - key: common.closeEsc
+    ru: "ЗАКРЫТЬ  [ESC]"
+    en: "CLOSE  [ESC]"
+  - key: slot.open
+    ru: "ОРБИТАЛЬНЫЙ АВТОМАТ  50 ЗОЛОТА"
+    en: "ORBITAL SLOT  50 GOLD"
+  - key: world.wind.label
+    ru: "ВЕТЕР"
+    en: "WIND"
+  - key: input.space
+    ru: "ПРОБЕЛ"
+    en: "SPACE"
+  - key: football.score
+    ru: "СЧЁТ"
+    en: "SCORE"
+  - key: football.time
+    ru: "ВРЕМЯ"
+    en: "TIME"
+  - key: football.best
+    ru: "РЕКОРД"
+    en: "BEST"
+  - key: football.controls
+    ru: "<b>УПРАВЛЕНИЕ</b>\n\n<b>F</b>       ДРИБЛИНГ\n\n<b>ЛКМ</b>   СИЛА УДАРА\n          ЗАЖАТЬ\n\n<b>ЛКМ</b>   УДАР\n          ОТПУСТИТЬ"
+    en: "<b>CONTROLS</b>\n\n<b>F</b>       DRIBBLE\n\n<b>LMB</b>   SHOT POWER\n          HOLD\n\n<b>LMB</b>   SHOOT\n          RELEASE"
+  - key: football.legend
+    ru: "<b>ОЧКИ</b>\n\nБОЛЬШАЯ             <b>+2</b>\nСРЕДНЯЯ             <b>+5</b>\nМАЛЕНЬКАЯ          <b>+10</b>\nВОРОТА              <b>+20</b>"
+    en: "<b>POINTS</b>\n\nLARGE               <b>+2</b>\nMEDIUM              <b>+5</b>\nSMALL              <b>+10</b>\nGOAL               <b>+20</b>"
+  - key: football.reset
+    ru: "СБРОС МЯЧЕЙ [R]"
+    en: "RESET BALLS [R]"
+  - key: bunker.subject3
+    ru: "СУБЪЕКТ №3"
+    en: "SUBJECT №3"
+  - key: bunker.protocol
+    ru: "ПРОТОКОЛ\nИСПЫТАНИЙ"
+    en: "EXPERIMENT\nPROTOCOL"
+  - key: pause.runHeading
+    ru: "ЗАБЕГ"
+    en: "RUN"
+  - key: pause.coreHeading
+    ru: "УЛУЧШЕНИЯ ЯДРА"
+    en: "CORE UPGRADES"
+  - key: pause.moduleHeading
+    ru: "МОДУЛИ"
+    en: "MODULE SUMMARY"
+  - key: pause.subjectHeading
+    ru: "УЛУЧШЕНИЯ СУБЪЕКТА"
+    en: "SUBJECT UPGRADES"
+  - key: result.analysis
+    ru: "АНАЛИЗ ЭКСПЕРИМЕНТА"
+    en: "EXPERIMENT ANALYSIS"
+  - key: about.protocol
+    ru: "СУБЪЕКТ №42\n\nОрбитальная станция активна. Исследуйте комплекс, собирайте модули и найдите выход."
+    en: "SUBJECT №42\n\nOrbital station active. Explore the facility, collect modules and find the exit."
+  - key: about.experiment
+    ru: "ДАННЫЕ ЭКСПЕРИМЕНТА\n\nУсловия каждого сектора нестабильны. Результаты испытаний сохраняются в бункере."
+    en: "EXPERIMENT DATA\n\nSector conditions are unstable. Test results are recorded in the bunker."
+  - key: result.modules
+    ru: "МОДУЛИ"
+    en: "MODULES"
+  - key: result.kills
+    ru: "УБИЙСТВА"
+    en: "KILLS"
+  - key: station.upgrade
+    ru: "УЛУЧШИТЬ СТАНЦИЮ"
+    en: "UPGRADE STATION"
+  - key: result.gold
+    ru: "ПОЛУЧЕННОЕ ЗОЛОТО"
+    en: "GOLD EARNED"
+  - key: result.core
+    ru: "УРОВЕНЬ ЯДРА"
+    en: "CORE LEVEL"
+  - key: result.time
+    ru: "ВРЕМЯ"
+    en: "TIME"
+  - key: result.orbital
+    ru: "ОРБИТАЛЬНАЯ СТАНЦИЯ"
+    en: "ORBITAL STATION"
+  - key: result.rings
+    ru: "КОЛЬЦА"
+    en: "RINGS"
+  - key: result.level
+    ru: "УРОВЕНЬ"
+    en: "LEVEL"
+  - key: result.interrupted
+    ru: "ЭКСПЕРИМЕНТ ПРЕРВАН"
+    en: "EXPERIMENT INTERRUPTED"
+  - key: result.subjectLost
+    ru: "СУБЪЕКТ УТРАЧЕН"
+    en: "SUBJECT LOST"
+  - key: map.chest
+    ru: "КОНТЕЙНЕР"
+    en: "CONTAINER"
+  - key: map.event
+    ru: "ИСПЫТАНИЕ"
+    en: "TRIAL"
+  - key: map.boss
+    ru: "БОСС"
+    en: "BOSS"
+  - key: map.special
+    ru: "ОСОБАЯ АНОМАЛИЯ"
+    en: "SPECIAL ANOMALY"
+  - key: map.exit
+    ru: "ВЫХОД"
+    en: "EXIT"
+  - key: map.player
+    ru: "ИГРОК"
+    en: "PLAYER"
+  - key: map.anomaly
+    ru: "ОБЫЧНАЯ АНОМАЛИЯ"
+    en: "STANDARD ANOMALY"
+  - key: loot.title
+    ru: "КОНТЕЙНЕР // ДЕКОДИРОВАНИЕ"
+    en: "CONTAINER // DECODING"
+  - key: settings.system
+    ru: "СИСТЕМА / 01"
+    en: "SYSTEM / 01"
+  - key: selection.trait
+    ru: "ОСОБЕННОСТЬ"
+    en: "TRAIT"
+  - key: selection.unlock
+    ru: "УСЛОВИЕ ОТКРЫТИЯ"
+    en: "UNLOCK CONDITION"
+  - key: selection.description
+    ru: "ОПИСАНИЕ"
+    en: "DESCRIPTION"
+  - key: selection.stats
+    ru: "ХАРАКТЕРИСТИКИ"
+    en: "STATS"
+  - key: slot.stake
+    ru: "СТАВКА: 50"
+    en: "STAKE: 50"
+  - key: slot.title
+    ru: "ОРБИТАЛЬНЫЙ АВТОМАТ"
+    en: "ORBITAL SLOT MACHINE"
+  - key: slot.serial
+    ru: "БУНКЕР / ОРБИТАЛЬНЫЙ ТЕРМИНАЛ  •  03"
+    en: "BUNKER / ORBITAL TERMINAL  •  03"
+  - key: slot.spin
+    ru: "ЗАПУСК"
+    en: "SPIN"
+  - key: common.back
+    ru: "НАЗАД"
+    en: "BACK"
+  - key: common.select
+    ru: "ВЫБРАТЬ"
+    en: "SELECT"
+  - key: world.message.bomber
+    ru: "ВОЛНА: БОМБЕРЫ"
+    en: "WAVE: BOMBERS"
+  - key: world.message.shooter
+    ru: "ВОЛНА: СТРЕЛКИ"
+    en: "WAVE: SHOOTERS"
+  - key: world.message.encirclement
+    ru: "ОКРУЖЕНИЕ"
+    en: "ENCIRCLEMENT"
+  - key: world.message.crossfire
+    ru: "ПЕРЕКРЁСТНЫЙ ОГОНЬ"
+    en: "CROSSFIRE"
+  - key: world.message.stampede
+    ru: "ВОЛНА: СТАЯ"
+    en: "WAVE: STAMPEDE"
+  - key: world.message.rule
+    ru: "ПРАВИЛО МИРА"
+    en: "WORLD RULE"
+  - key: world.message.acceleration
+    ru: "УСКОРЕНИЕ"
+    en: "ACCELERATION"
+  - key: world.message.accelerationEnded
+    ru: "УСКОРЕНИЕ ЗАВЕРШЕНО"
+    en: "ACCELERATION ENDED"
+  - key: football.releaseBall
+    ru: "[{0}] отпустить мяч"
+    en: "[{0}] release ball"
+  - key: football.dribbleBall
+    ru: "[{0}] вести мяч"
+    en: "[{0}] dribble ball"

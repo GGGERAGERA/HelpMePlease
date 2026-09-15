@@ -297,13 +297,13 @@ namespace Subject42.Combat.OrbitalStation
             if (reward.RewardKind == OrbitalRewardKind.LinkPair && !secondLink)
             {
                 if (!station.State.IsMountFree(targetRingId, targetMountIndex))
-                { ResumeMountSelection(false, "Крепление стало недоступно"); return; }
+                { ResumeMountSelection(false, LocalizationService.EnsureExists().Get("reward.hint.unavailable")); return; }
                 firstRingId = targetRingId;
                 firstMountIndex = targetMountIndex;
                 firstLinkPreview = modulePreview;
                 modulePreview = null;
                 reservedMount = null;
-                ResumeMountSelection(true, "Выберите второе крепление");
+                ResumeMountSelection(true, LocalizationService.EnsureExists().Get("reward.hint.second"));
                 return;
             }
             DestroyModulePreview();
@@ -314,7 +314,7 @@ namespace Subject42.Combat.OrbitalStation
                 : station.InstallModule(ToModuleKind(reward.RewardKind), targetRingId, targetMountIndex, out error);
             if (!applied)
             {
-                ResumeMountSelection(secondLink, "Крепление стало недоступно — выберите другое");
+                ResumeMountSelection(secondLink, LocalizationService.EnsureExists().Get("reward.hint.unavailableOther"));
                 return;
             }
             committed = true;
@@ -650,47 +650,47 @@ namespace Subject42.Combat.OrbitalStation
             if (State == OrbitalRewardFlowState.ModuleSelection)
             {
                 if (hoveredModule == null)
-                    return "Выберите установленное оружие · Esc — к карточкам";
+                    return LocalizationService.EnsureExists().Get("reward.hint.selectWeapon");
                 OrbitalModuleState module = station.State.Modules.Find(value =>
                     value.StableModuleId == hoveredModule.StableModuleId);
                 int level = module?.DamageLevel ?? 0;
-                return $"{hoveredModule.Kind} · DAMAGE LEVEL {level} → {level + 1}\n" +
-                    $"УРОН {1f + level * 0.25f:0.##}× → {1f + (level + 1) * 0.25f:0.##}×\n" +
-                    "ЛКМ: усилить";
+                return string.Format(LocalizationService.EnsureExists().Get("reward.hint.damageLevel"), OrbitalRelocationController.DisplayName(hoveredModule.Kind), level, level + 1) +
+                    string.Format(LocalizationService.EnsureExists().Get("reward.hint.damage"), 1f + level * 0.25f, 1f + (level + 1) * 0.25f) +
+                    LocalizationService.EnsureExists().Get("reward.hint.upgrade");
             }
             if (State == OrbitalRewardFlowState.DirectMountSelection ||
                 State == OrbitalRewardFlowState.SecondLinkPlacement)
             {
                 string step = State == OrbitalRewardFlowState.SecondLinkPlacement
-                    ? "Установите второй узел"
+                    ? LocalizationService.EnsureExists().Get("reward.hint.secondNode")
                     : reward.RewardKind == OrbitalRewardKind.LinkPair
-                        ? "Установите первый узел"
-                        : "Выберите свободное крепление";
+                        ? LocalizationService.EnsureExists().Get("reward.hint.firstNode")
+                        : LocalizationService.EnsureExists().Get("reward.hint.freeMount");
                 if (hoveredMount == null)
-                    return step + "\nНаведите оружие на свободное крепление";
+                    return step + LocalizationService.EnsureExists().Get("reward.hint.hoverMount");
                 if (!station.IsMountFree(hoveredMount))
-                    return "Крепление занято";
-                return $"Кольцо {hoveredMount.Ring.State.Order + 1} · " +
-                    $"Крепление {hoveredMount.MountIndex + 1}\nЛКМ: установить";
+                    return LocalizationService.EnsureExists().Get("reward.hint.occupied");
+                return string.Format(LocalizationService.EnsureExists().Get("reward.hint.ring"), hoveredMount.Ring.State.Order + 1) +
+                    string.Format(LocalizationService.EnsureExists().Get("reward.hint.install"), hoveredMount.MountIndex + 1);
             }
             if (hoveredRing == null)
-                return "Выберите подсвеченную орбиту · Esc — к карточкам";
+                return LocalizationService.EnsureExists().Get("reward.hint.selectOrbit");
             OrbitalRingState ringState = hoveredRing.State;
             return reward.RewardKind switch
             {
                 OrbitalRewardKind.RingSpeed =>
-                    $"ОРБИТА {ringState.Order + 1}\n{hoveredRing.RotationSpeed:0.#}°/с → " +
-                    $"{hoveredRing.RotationSpeed * 1.25f:0.#}°/с",
+                    string.Format(LocalizationService.EnsureExists().Get("reward.hint.speed"), ringState.Order + 1, hoveredRing.RotationSpeed) +
+                    string.Format(LocalizationService.EnsureExists().Get("reward.hint.speedNext"), hoveredRing.RotationSpeed * 1.25f),
                 OrbitalRewardKind.RingPower =>
-                    $"ОРБИТА {ringState.Order + 1} · УРОН {ringState.PowerUpgradeLevel}\n" +
+                    string.Format(LocalizationService.EnsureExists().Get("reward.hint.ringDamage"), ringState.Order + 1, ringState.PowerUpgradeLevel) +
                     $"{ringState.PowerMultiplier:0.##}× → {ringState.PowerMultiplier * 1.25f:0.##}×\n" +
                     GetModuleList(ringState.StableRingId),
                 OrbitalRewardKind.AddMount =>
-                    $"ОРБИТА {ringState.Order + 1}\nТочки {ringState.MountCount}/{ringState.MountCapacity} → " +
+                    string.Format(LocalizationService.EnsureExists().Get("reward.hint.mounts"), ringState.Order + 1, ringState.MountCount, ringState.MountCapacity) +
                     $"{ringState.MountCount + 1}/{ringState.MountCapacity}",
                 OrbitalRewardKind.RingCapacity =>
-                    $"ЁМКОСТЬ {ringState.MountCapacity} → {ringState.MountCapacity + 1}",
-                _ => $"ОРБИТА {ringState.Order + 1}"
+                    string.Format(LocalizationService.EnsureExists().Get("reward.hint.capacity"), ringState.MountCapacity, ringState.MountCapacity + 1),
+                _ => string.Format(LocalizationService.EnsureExists().Get("reward.hint.orbit"), ringState.Order + 1)
             };
         }
 
@@ -716,9 +716,9 @@ namespace Subject42.Combat.OrbitalStation
         {
             string[] names = station.State.Modules
                 .Where(value => value.StableRingId == ringId)
-                .Select(value => value.ModuleType.ToString()).ToArray();
-            return names.Length == 0 ? "Пока без модулей" :
-                "Модули: " + string.Join(", ", names);
+                .Select(value => OrbitalRelocationController.DisplayName(value.ModuleType)).ToArray();
+            return names.Length == 0 ? LocalizationService.EnsureExists().Get("reward.hint.noModules") :
+                LocalizationService.EnsureExists().Get("reward.hint.modules") + string.Join(", ", names);
         }
 
         private static bool IsRingReward(OrbitalRewardKind kind) =>

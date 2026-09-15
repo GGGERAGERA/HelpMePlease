@@ -55,8 +55,8 @@ namespace Subject42.Combat.OrbitalStation
                 {
                     SetHoverAffordance(true);
                     station.Interaction?.ShowHint(DisplayName(hoveredModule.Kind),
-                        $"Орбита {hoveredModule.CurrentMount.Ring.State.Order + 1} · " +
-                        "Зажмите ЛКМ и перетащите");
+                        string.Format(LocalizationService.EnsureExists().Get("orbit.move.orbit"), hoveredModule.CurrentMount.Ring.State.Order + 1) +
+                        LocalizationService.EnsureExists().Get("orbit.move.drag"));
                     station.Interaction?.SetCursor(OrbitalCursorState.Grabbable);
                 }
                 else
@@ -84,7 +84,7 @@ namespace Subject42.Combat.OrbitalStation
             module.BeginPresentationDrag(station.RuntimeRoot);
             OrbitalMountInteractionPresentation.Apply(station, null, sourceMount);
             station.Interaction?.ShowHint(DisplayName(module.Kind),
-                "Перетащите на зелёное крепление\nEsc / ПКМ — отменить");
+                LocalizationService.EnsureExists().Get("orbit.move.target"));
             station.Interaction?.SetCursor(OrbitalCursorState.Dragging);
         }
 
@@ -103,11 +103,11 @@ namespace Subject42.Combat.OrbitalStation
                 ? OrbitalCursorState.ValidDrop
                 : OrbitalCursorState.InvalidDrop);
             station.Interaction?.ShowHint(DisplayName(draggedModule.Kind), valid
-                ? $"Кольцо {targetMount.Ring.State.Order + 1} · " +
-                  $"крепление {targetMount.MountIndex + 1}\nОтпустить: переместить"
+                ? string.Format(LocalizationService.EnsureExists().Get("orbit.move.ring"), targetMount.Ring.State.Order + 1) +
+                  string.Format(LocalizationService.EnsureExists().Get("orbit.move.release"), targetMount.MountIndex + 1)
                 : targetMount != null && !station.IsMountFree(targetMount)
-                    ? "Крепление занято\nEsc / ПКМ — отменить"
-                    : "Наведите оружие на свободное крепление\nEsc / ПКМ — отменить");
+                    ? LocalizationService.EnsureExists().Get("orbit.move.occupied")
+                    : LocalizationService.EnsureExists().Get("orbit.move.hover"));
             OrbitalMountInteractionPresentation.Apply(station, targetMount,
                 sourceMount);
             if (draggedModule is OrbitalLinkNodeModule)
@@ -235,13 +235,13 @@ namespace Subject42.Combat.OrbitalStation
             return new Vector2(point.x, point.y);
         }
 
-        private static string DisplayName(OrbitalModuleKind kind) => kind switch
+        internal static string DisplayName(OrbitalModuleKind kind) => kind switch
         {
-            OrbitalModuleKind.Pistol => "PISTOL",
-            OrbitalModuleKind.LaserSword => "LASER SWORD",
-            OrbitalModuleKind.ImpulseGun => "IMPULSE GUN",
-            OrbitalModuleKind.ArcEmitter => "ARC EMITTER",
-            OrbitalModuleKind.LinkNode => "LINK NODE",
+            OrbitalModuleKind.Pistol => LocalizationService.EnsureExists().Get("orbit.move.gun"),
+            OrbitalModuleKind.LaserSword => LocalizationService.EnsureExists().Get("orbit.move.sword"),
+            OrbitalModuleKind.ImpulseGun => LocalizationService.EnsureExists().Get("orbit.move.impulse"),
+            OrbitalModuleKind.ArcEmitter => LocalizationService.EnsureExists().Get("orbit.move.arc"),
+            OrbitalModuleKind.LinkNode => LocalizationService.EnsureExists().Get("orbit.move.link"),
             _ => kind.ToString().ToUpperInvariant()
         };
 

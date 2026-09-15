@@ -6,7 +6,7 @@ public sealed class BunkerIntroView : MonoBehaviour
 {
     private const string PixelFontResource =
         "Fonts & Materials/PressStart2P-vaV7 SDF";
-    private const string ArchiveDamageText = "АРХИВ ПОВРЕЖДЁН";
+    private static string ArchiveDamageText => LocalizationService.EnsureExists().Get("intro.archive");
 
     [Header("Root")]
     [SerializeField] private CanvasGroup rootGroup;
@@ -134,8 +134,8 @@ public sealed class BunkerIntroView : MonoBehaviour
         float alpha = Mathf.Lerp(0.42f, 1f, Mathf.Clamp01(progress));
         skipHint.alpha = alpha;
         skipHint.text = progress > 0f
-            ? $"УДЕРЖИВАЙТЕ, ЧТОБЫ ПРОПУСТИТЬ  {Mathf.RoundToInt(progress * 100f)}%"
-            : "УДЕРЖИВАЙТЕ, ЧТОБЫ ПРОПУСТИТЬ";
+            ? $"{LocalizationService.EnsureExists().Get("intro.skip")}  {Mathf.RoundToInt(progress * 100f)}%"
+            : LocalizationService.EnsureExists().Get("intro.skip");
     }
 
     public void SetRootAlpha(float alpha)

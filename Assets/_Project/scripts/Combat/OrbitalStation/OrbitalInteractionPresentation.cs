@@ -119,10 +119,10 @@ namespace Subject42.Combat.OrbitalStation
             GUI.Box(panel, GUIContent.none, panelStyle);
             if (!string.IsNullOrEmpty(hintTitle))
                 GUI.Label(new Rect(panel.x + 14f, panel.y + 9f,
-                    width - 28f, 22f), hintTitle, titleStyle);
+                    width - 28f, 22f), LocalizationService.EnsureExists().Get(hintTitle), titleStyle);
             GUI.Label(new Rect(panel.x + 14f,
                 panel.y + (string.IsNullOrEmpty(hintTitle) ? 11f : 34f),
-                width - 28f, height - 18f), hintBody, bodyStyle);
+                width - 28f, height - 18f), LocalizationService.EnsureExists().Get(hintBody), bodyStyle);
         }
 
         private void EnsureStyles()

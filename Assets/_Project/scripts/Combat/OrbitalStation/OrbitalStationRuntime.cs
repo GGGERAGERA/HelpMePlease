@@ -517,7 +517,7 @@ namespace Subject42.Combat.OrbitalStation
                         customDrawing.MaxDrawRadius * 1.65f / Mathf.Min(1f, customDrawing.DrawingCamera.aspect));
             }
             Time.timeScale = 0f;
-            customDrawing.ProgressLabel = $"RING {drawnInBatch + 1} / {drawnInBatch + State.PendingRingCount}";
+            customDrawing.ProgressLabel = string.Format(LocalizationService.EnsureExists().Get("orbit.draw.progress"), drawnInBatch + 1, drawnInBatch + State.PendingRingCount);
             Interaction.ClearHint();
         }
 

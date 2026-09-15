@@ -17,6 +17,16 @@ public sealed class RunRouteProgressView : MonoBehaviour
     private RectTransform pointsRoot;
     private TextMeshProUGUI finalLabel;
     private bool built;
+    private void OnEnable() => LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
+    private void OnDisable()
+    {
+        if (LocalizationService.Instance != null) LocalizationService.Instance.LanguageChanged -= RefreshLanguage;
+    }
+    private void RefreshLanguage(GameLanguage language)
+    {
+        if (objectiveText == null && displayedTotal > 0) Show(displayedSector, displayedTotal);
+        else if (displayedObjectiveKey != null) ShowObjective(displayedSector, displayedTotal, displayedObjectiveKey, displayedSpecial);
+    }
     private int displayedSector, displayedTotal;
     private string displayedObjectiveKey;
     private bool displayedSpecial;
@@ -81,6 +91,8 @@ public sealed class RunRouteProgressView : MonoBehaviour
         int safeTotal = Mathf.Max(1, totalSectors);
         int safeSector = Mathf.Clamp(sectorNumber, 1, safeTotal);
 
+        displayedSector = safeSector;
+        displayedTotal = safeTotal;
         ConfigureRootLayout();
         Build();
 
@@ -112,7 +124,7 @@ public sealed class RunRouteProgressView : MonoBehaviour
             pointRect.sizeDelta = new Vector2(size, size);
         }
 
-        finalLabel.text = "BOSS";
+        finalLabel.text = LocalizationService.EnsureExists().Get("hud.boss");
         finalLabel.gameObject.SetActive(true);
     }
 

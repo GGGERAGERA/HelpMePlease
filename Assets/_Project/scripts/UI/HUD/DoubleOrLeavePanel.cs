@@ -53,7 +53,7 @@ public sealed class DoubleOrLeavePanel : MonoBehaviour
         if (observedState == DoubleOrLeaveState.Failed)
         {
             RunMessageService.Instance?.ShowCustom(
-                "\u041d\u0410\u0413\u0420\u0410\u0414\u0410 \u041f\u041e\u0422\u0415\u0420\u042f\u041d\u0410",
+                "mechanic.lost",
                 string.Empty
             );
         }

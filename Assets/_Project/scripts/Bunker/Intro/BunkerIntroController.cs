@@ -358,8 +358,10 @@ public sealed class BunkerIntroController : MonoBehaviour
         if (step == null)
             yield break;
 
-        string main = step.mainText ?? string.Empty;
-        string secondary = step.secondaryText ?? string.Empty;
+        LocalizationService localization = LocalizationService.EnsureExists();
+        GameLanguage language = localization.CurrentLanguage;
+        string main = string.IsNullOrEmpty(step.mainText) ? string.Empty : localization.Get(step.mainText);
+        string secondary = string.IsNullOrEmpty(step.secondaryText) ? string.Empty : localization.Get(step.secondaryText);
         int mainCharacters = main.Length;
         int secondaryCharacters = secondary.Length;
         float duration = Mathf.Max(0.1f, step.duration);
@@ -385,6 +387,15 @@ public sealed class BunkerIntroController : MonoBehaviour
 
         while (elapsed < duration && !skipRequested)
         {
+            if (language != localization.CurrentLanguage)
+            {
+                language = localization.CurrentLanguage;
+                main = string.IsNullOrEmpty(step.mainText) ? string.Empty : localization.Get(step.mainText);
+                secondary = string.IsNullOrEmpty(step.secondaryText) ? string.Empty : localization.Get(step.secondaryText);
+                mainCharacters = main.Length;
+                secondaryCharacters = secondary.Length;
+                processedCharacters = Mathf.Min(processedCharacters, mainCharacters + secondaryCharacters);
+            }
             float frameDelta = Time.unscaledDeltaTime;
             elapsed += frameDelta;
             float alpha = fadeIn <= 0f
@@ -965,32 +976,32 @@ public sealed class BunkerIntroController : MonoBehaviour
         recordingSteps = new List<BunkerIntroStep>
         {
             Step(
-                "...слышишь меня?",
-                "ПОВРЕЖДЁННАЯ ЗАПИСЬ",
+                "intro.hear",
+                "intro.recording",
                 3.2f,
                 BunkerIntroTextStyle.HumanRecording,
                 false,
                 13f,
                 0.7f),
             Step(
-                "Если ты проснулся...",
-                "ПОВРЕЖДЁННАЯ ЗАПИСЬ",
+                "intro.awake",
+                "intro.recording",
                 3.5f,
                 BunkerIntroTextStyle.HumanRecording,
                 false,
                 13f,
                 0.8f),
             Step(
-                "...значит мы проиграли.",
-                "ПОВРЕЖДЁННАЯ ЗАПИСЬ",
+                "intro.lost",
+                "intro.recording",
                 4.1f,
                 BunkerIntroTextStyle.HumanRecording,
                 false,
                 12f,
                 1.1f),
             Step(
-                "Прости нас.",
-                "ПОВРЕЖДЁННАЯ ЗАПИСЬ",
+                "intro.sorry",
+                "intro.recording",
                 3.2f,
                 BunkerIntroTextStyle.HumanRecording,
                 false,
@@ -1001,7 +1012,7 @@ public sealed class BunkerIntroController : MonoBehaviour
         systemSteps = new List<BunkerIntroStep>
         {
             Step(
-                "БИОЛОГИЧЕСКАЯ АКТИВНОСТЬ ОБНАРУЖЕНА",
+                "intro.activity",
                 string.Empty,
                 2.9f,
                 BunkerIntroTextStyle.System,
@@ -1009,7 +1020,7 @@ public sealed class BunkerIntroController : MonoBehaviour
                 15f,
                 0.65f),
             Step(
-                "НЕВОЗМОЖНО",
+                "intro.impossible",
                 string.Empty,
                 1.55f,
                 BunkerIntroTextStyle.Error,
@@ -1017,9 +1028,7 @@ public sealed class BunkerIntroController : MonoBehaviour
                 10f,
                 1f),
             Step(
-                "ИДЕНТИФИКАЦИЯ...\n\n" +
-                "АРХИВ ПОВРЕЖДЁН\n\n" +
-                "ОБЪЕКТ НЕ ОПОЗНАН",
+                "intro.identify",
                 string.Empty,
                 4.4f,
                 BunkerIntroTextStyle.System,
@@ -1029,7 +1038,7 @@ public sealed class BunkerIntroController : MonoBehaviour
         };
 
         finalStep = Step(
-            "НАЙДИТЕ ВЫХОД",
+            "intro.exit",
             string.Empty,
             3.8f,
             BunkerIntroTextStyle.System,

@@ -87,6 +87,33 @@ public sealed class WorldLootRewardReel : MonoBehaviour
     [SerializeField] private GameObject revealRoot;
     [SerializeField] private TextMeshProUGUI revealText;
     [SerializeField] private TextMeshProUGUI statusText;
+    private void OnEnable() => LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
+    private void OnDisable()
+    {
+        if (LocalizationService.Instance != null) LocalizationService.Instance.LanguageChanged -= RefreshLanguage;
+    }
+    private void RefreshLanguage(GameLanguage language)
+    {
+        if (!viewValid || state == ReelState.Hidden) return;
+        var localization = LocalizationService.EnsureExists();
+        foreach (var card in cards)
+            if (card.Reward != null) card.Label.text = card.Reward.DisplayName;
+        stopButtonText.text = state == ReelState.Braking
+            ? localization.Get("loot.brake") : string.Format(localization.Get("loot.stop"), stopHotkey);
+        statusText.text = state switch
+        {
+            ReelState.Transfer => localization.Get("loot.decode"),
+            ReelState.Braking => localization.Get("loot.brake"),
+            ReelState.Snapping => localization.Get("loot.lock"),
+            ReelState.RevealDelay => localization.Get("loot.selected"),
+            ReelState.Result or ReelState.Closing => localization.Get(rewardApplied ? "loot.received" : "loot.notApplied"),
+            ReelState.Spinning when stopButton.interactable => string.Format(localization.Get("loot.stop"), stopHotkey),
+            _ => localization.Get("loot.sync")
+        };
+        if (revealRoot.activeSelf)
+            revealText.text = rewardApplied && winningCard?.Reward != null
+                ? "+" + winningCard.Reward.DisplayName : localization.Get("loot.error");
+    }
     private ReelState state;
     private Action<WorldLootRewardDefinition> claimedCallback;
     private RewardCard winningCard;
@@ -212,11 +239,11 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         winningCard = null;
         stateElapsed = 0f;
         state = ReelState.Transfer;
-        statusText.text = "ДЕКОДИРОВАНИЕ";
+        statusText.text = LocalizationService.EnsureExists().Get("loot.decode");
         revealRoot.SetActive(false);
         stopButton.gameObject.SetActive(true);
         stopButton.interactable = false;
-        stopButtonText.text = $"[{stopHotkey} — СТОП]";
+        stopButtonText.text = string.Format(LocalizationService.EnsureExists().Get("loot.stop"), stopHotkey);
         ResetCards();
         canvasRoot.SetActive(true);
         PrepareTransfer(chestWorldPosition);
@@ -251,8 +278,8 @@ public sealed class WorldLootRewardReel : MonoBehaviour
                 MoveCards(spinSpeed * deltaTime);
                 stopButton.interactable = stateElapsed >= minimumSpinTime;
                 statusText.text = stopButton.interactable
-                    ? $"[{stopHotkey} — СТОП]"
-                    : "СИНХРОНИЗАЦИЯ...";
+                    ? string.Format(LocalizationService.EnsureExists().Get("loot.stop"), stopHotkey)
+                    : LocalizationService.EnsureExists().Get("loot.sync");
 
                 if (stateElapsed >= minimumSpinTime &&
                     Input.GetKeyDown(stopHotkey))
@@ -372,7 +399,7 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         panelRect.localScale = Vector3.one;
         state = ReelState.Spinning;
         stateElapsed = 0f;
-        statusText.text = "СИНХРОНИЗАЦИЯ...";
+        statusText.text = LocalizationService.EnsureExists().Get("loot.sync");
         PlayOptional(reelStartClip);
     }
 
@@ -448,8 +475,8 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         );
         brakeDistance = travelCards * cardSpacing;
         stopButton.interactable = false;
-        stopButtonText.text = "ОСТАНОВКА...";
-        statusText.text = "ОСТАНОВКА...";
+        stopButtonText.text = LocalizationService.EnsureExists().Get("loot.brake");
+        statusText.text = LocalizationService.EnsureExists().Get("loot.brake");
         TriggerMarkerPulse(1.4f);
         PlayOptional(stopClip);
     }
@@ -478,7 +505,7 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         stateElapsed = 0f;
         snapStartX = winningCard.Rect.anchoredPosition.x;
         previousSnapShift = 0f;
-        statusText.text = "ФИКСАЦИЯ НАГРАДЫ";
+        statusText.text = LocalizationService.EnsureExists().Get("loot.lock");
     }
 
     private void UpdateSnapping()
@@ -496,7 +523,7 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         HighlightWinner();
         state = ReelState.RevealDelay;
         stateElapsed = 0f;
-        statusText.text = "ПОБЕДИТЕЛЬ ОПРЕДЕЛЁН";
+        statusText.text = LocalizationService.EnsureExists().Get("loot.selected");
     }
 
     private float EvaluateBrakeProgress(float t)
@@ -519,8 +546,8 @@ public sealed class WorldLootRewardReel : MonoBehaviour
 
         if (!reward.Apply())
         {
-            revealText.text = "ОШИБКА НАЧИСЛЕНИЯ";
-            statusText.text = "НАГРАДА НЕ ПРИМЕНЕНА";
+            revealText.text = LocalizationService.EnsureExists().Get("loot.error");
+            statusText.text = LocalizationService.EnsureExists().Get("loot.notApplied");
             revealRoot.SetActive(true);
             stopButton.gameObject.SetActive(false);
             state = ReelState.Result;
@@ -533,7 +560,7 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         revealText.text = $"+{reward.DisplayName}";
         revealRoot.SetActive(true);
         stopButton.gameObject.SetActive(false);
-        statusText.text = "ПОЛУЧЕНО";
+        statusText.text = LocalizationService.EnsureExists().Get("loot.received");
         state = ReelState.Result;
         stateElapsed = 0f;
         PlayOptional(rewardClip);

@@ -62,6 +62,12 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
         BuildView();
     }
 
+    private void OnEnable() => LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
+    private void RefreshLanguage(GameLanguage language)
+    {
+        if (errorText != null) errorText.text = LocalizationService.EnsureExists().Get("transition.failure");
+    }
+
     private void Update()
     {
         if (!busy) return;
@@ -189,7 +195,7 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
             errorText.color = new Color(.4f, .75f, .85f);
             errorText.raycastTarget = false;
             errorText.rectTransform.sizeDelta = new Vector2(800f, 200f);
-            errorText.text = "СБОЙ СИНХРОНИЗАЦИИ\n\nENTER — ПОВТОРИТЬ\nESC — В БУНКЕР";
+            RefreshLanguage(LocalizationService.EnsureExists().CurrentLanguage);
         }
         errorText.gameObject.SetActive(true);
     }
@@ -233,7 +239,12 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
         Time.timeScale = timeScale;
     }
 
-    private void OnDisable() { StopAllCoroutines(); Release(previousTimeScale); }
+    private void OnDisable()
+    {
+        if (LocalizationService.Instance != null) LocalizationService.Instance.LanguageChanged -= RefreshLanguage;
+        StopAllCoroutines();
+        Release(previousTimeScale);
+    }
     private void OnDestroy() { if (Instance == this) Instance = null; }
 
     private void BuildView()

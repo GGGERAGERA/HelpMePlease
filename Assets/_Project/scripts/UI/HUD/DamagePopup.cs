@@ -76,7 +76,7 @@ public class DamagePopup : MonoBehaviour
     public void SetRewardMultiplier(float multiplier, Color color)
     {
         if (text == null) return;
-        text.text = $"GOLD ×{multiplier:0.#}";
+        text.text = string.Format(LocalizationService.EnsureExists().Get("hud.goldMultiplier"), multiplier);
         text.color = color;
         text.fontSize *= 1.15f;
     }

@@ -32,6 +32,41 @@ public sealed class CharacterIdentityConfigurationTests
         AssertActiveFacingVisual(vika.characterPrefab, "Vika4");
     }
 
+    [Test]
+    public void CharacterPresentationHasBothLanguagesAndMatchesProductionPatterns()
+    {
+        var table = Resources.Load<LocalizationTable>("Localization/LocalizationTable");
+        Assert.That(table, Is.Not.Null);
+        string[] paths = { GeraDataPath,
+            "Assets/_Project/Scriptable Objects/Characters/02_Di-mag.asset", VikaDataPath };
+        foreach (string path in paths)
+        {
+            var character = AssetDatabase.LoadAssetAtPath<CharacterData>(path);
+            Assert.That(character, Is.Not.Null, path);
+            foreach (string key in new[] { character.nameKey, character.orbitalPatternKey,
+                         character.traitKey, character.descriptionKey })
+            {
+                foreach (GameLanguage language in new[] { GameLanguage.Russian, GameLanguage.English })
+                {
+                    Assert.That(table.TryGet(key, language, out string text), Is.True, key);
+                    Assert.That(text, Is.Not.Empty, key);
+                }
+            }
+            Assert.That(character.orbitalPath, Is.EqualTo(path == VikaDataPath
+                ? Subject42.Combat.OrbitalStation.OrbitalPathType.Custom
+                : Subject42.Combat.OrbitalStation.OrbitalPathType.Circle));
+        }
+        var vika = AssetDatabase.LoadAssetAtPath<CharacterData>(VikaDataPath);
+        Assert.That(table.TryGet(vika.orbitalPatternKey, GameLanguage.Russian, out string pattern), Is.True);
+        Assert.That(pattern, Is.EqualTo("ОРБИТАЛЬНЫЙ ПАТТЕРН\nЭКСПЕРИМЕНТАЛЬНЫЙ"));
+        Assert.That(table.TryGet(vika.traitKey, GameLanguage.Russian, out string trait), Is.True);
+        Assert.That(trait, Is.EqualTo("Пользователь сам формирует траекторию каждого нового кольца."));
+        Assert.That(table.TryGet(vika.descriptionKey, GameLanguage.Russian, out string description), Is.True);
+        Assert.That(description, Is.EqualTo("ДАННЫЕ ЭКСПЕРИМЕНТА НЕПОЛНЫЕ."));
+        Assert.That(table.TryGet(vika.descriptionKey, GameLanguage.English, out description), Is.True);
+        Assert.That(description, Is.EqualTo("EXPERIMENT DATA INCOMPLETE."));
+    }
+
     private static void AssertActiveFacingVisual(
         GameObject characterPrefab,
         string expectedName)

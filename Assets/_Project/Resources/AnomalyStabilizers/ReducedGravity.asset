@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: ReducedGravity
   m_EditorClassIdentifier: Assembly-CSharp::AnomalyStabilizerData
   id: reduced_gravity
-  displayName: "СНИЖЕНИЕ ГРАВИТАЦИИ"
-  description: "Gravity тянет игрока на 35% слабее. Остальные объекты не изменены."
+  displayName: bunker.anomaly.ReducedGravity.name
+  description: bunker.anomaly.ReducedGravity.description
   requiredStationLevel: 2
   effectType: 3
   value: 0.65

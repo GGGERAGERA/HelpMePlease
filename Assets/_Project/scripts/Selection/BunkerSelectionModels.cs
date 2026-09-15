@@ -74,7 +74,7 @@ public class BunkerProgressionModel
 {
     public string TargetId;
     public string Title;
-    public string LevelPrefix = "УРОВЕНЬ";
+    public string LevelPrefix = LocalizationService.Instance.Get("bunker.level");
     public int Level;
     public int MaxLevel;
     public int Progress;
@@ -84,7 +84,7 @@ public class BunkerProgressionModel
     public string BonusText;
     public string ContextText;
     public string LockReason;
-    public string ButtonText = "УЛУЧШИТЬ";
+    public string ButtonText = LocalizationService.Instance.Get("bunker.upgrade");
     public bool Locked;
     public bool SupportsPartialInvestment;
     public Func<bool> CanUpgrade;

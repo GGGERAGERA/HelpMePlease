@@ -53,7 +53,7 @@ public sealed class CarrierHuntEvent : WorldEvent
         despawnSubscribed = false;
         resolved = false;
         hasRewardPosition = false;
-        ShowEventMarker(transform, "CARRIER HUNT");
+        ShowEventMarker(transform, "event.carrier");
     }
 
     public override void ApplyDifficultyMultiplier(float multiplier)

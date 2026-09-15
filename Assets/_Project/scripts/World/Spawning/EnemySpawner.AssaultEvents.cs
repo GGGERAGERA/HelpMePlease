@@ -112,11 +112,11 @@ public partial class EnemySpawner
 
         string title = type switch
         {
-            AssaultEventType.BomberRush => "ВОЛНА: БОМБЕРЫ",
-            AssaultEventType.ShooterSquad => "ВОЛНА: СТРЕЛКИ",
-            AssaultEventType.Encirclement => "ОКРУЖЕНИЕ",
-            AssaultEventType.Crossfire => "ПЕРЕКРЁСТНЫЙ ОГОНЬ",
-            _ => "ВОЛНА: СТАЯ"
+            AssaultEventType.BomberRush => "world.message.bomber",
+            AssaultEventType.ShooterSquad => "world.message.shooter",
+            AssaultEventType.Encirclement => "world.message.encirclement",
+            AssaultEventType.Crossfire => "world.message.crossfire",
+            _ => "world.message.stampede"
         };
         RunMessageService.Instance?.ShowCustom(title, string.Empty, 2.5f);
         ActiveAssault = type;

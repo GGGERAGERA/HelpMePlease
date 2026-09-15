@@ -28,7 +28,27 @@ public sealed class PauseBuildOverview : MonoBehaviour
 
     public bool IsConfirming => confirmation.activeSelf;
 
-    private void OnEnable() => FitWindow();
+    private RunStateManager displayedRun;
+    private OrbitalRunState displayedState;
+    private RunItemSlots displayedItems;
+    private string confirmationKey;
+    private bool hasBuild;
+    private void OnEnable()
+    {
+        FitWindow();
+        LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
+        RefreshLanguage(LocalizationService.Instance.CurrentLanguage);
+    }
+    private void OnDisable()
+    {
+        if (LocalizationService.Instance != null) LocalizationService.Instance.LanguageChanged -= RefreshLanguage;
+    }
+    private void RefreshLanguage(GameLanguage language)
+    {
+        if (displayedRun != null) Refresh(displayedRun);
+        else if (hasBuild) RefreshBuild(displayedState, displayedItems);
+        if (pendingAction != null) confirmationText.text = LocalizationService.EnsureExists().Get(confirmationKey);
+    }
     private void OnRectTransformDimensionsChange() => FitWindow();
     private void FitWindow()
     {
@@ -46,6 +66,7 @@ public sealed class PauseBuildOverview : MonoBehaviour
 
     public void Refresh(RunStateManager run)
     {
+        displayedRun = run;
         var localization = LocalizationService.EnsureExists();
         float time = run != null ? run.GetCurrentRunTime() : RunStatsManager.Instance?.RunTime ?? 0f;
         int kills = run != null ? run.GetCurrentRunKills() : RunStatsManager.Instance?.Kills ?? 0;
@@ -58,20 +79,23 @@ public sealed class PauseBuildOverview : MonoBehaviour
 
     public void RefreshBuild(OrbitalRunState state, RunItemSlots items)
     {
+        displayedState = state;
+        displayedItems = items;
+        hasBuild = true;
         var localization = LocalizationService.EnsureExists();
-        ringsTitle.text = $"ORBITAL STATION  /  {localization.Get("pause.rings")}: {state?.Rings.Count ?? 0}";
+        ringsTitle.text = $"{localization.Get("pause.station")}  /  {localization.Get("pause.rings")}: {state?.Rings.Count ?? 0}";
         var text = new StringBuilder();
         if (state != null)
         {
             foreach (var ring in state.Rings.OrderBy(r => r.Order))
             {
                 string color = ColorUtility.ToHtmlStringRGB(OrbitalPresentationConfig.Active.GetRingTier(ring.VisualTier).BaseColor);
-                string tier = ring.VisualTier switch { 1 => "WHITE", 2 => "CYAN", 3 => "VIOLET", _ => "GOLD" };
+                string tier = ring.VisualTier switch { 1 => LocalizationService.EnsureExists().Get("pause.tier1"), 2 => LocalizationService.EnsureExists().Get("pause.tier2"), 3 => LocalizationService.EnsureExists().Get("pause.tier3"), _ => LocalizationService.EnsureExists().Get("pause.tier4") };
                 int occupied = state.Modules.Count(m => m.StableRingId == ring.StableRingId);
                 text.AppendLine($"<color=#{color}>■</color>  <b>{localization.Get("pause.ring")} {ring.Order + 1}</b>   <color=#{color}>{tier}</color>");
                 float speed = Mathf.Pow(1f + OrbitalProgressionConfig.Default.SpeedIncrement, ring.SpeedUpgradeLevel);
-                text.AppendLine($"<size=19>DAMAGE ×{ring.PowerMultiplier:0.##}    SPEED ×{speed:0.##}    MODULES {occupied}</size>");
-                text.AppendLine($"<size=19><color=#9AB3BE>ТОЧКИ  {ring.MountCount} / {ring.MountCapacity}</color></size>\n");
+                text.AppendLine($"<size=19>{localization.Get("pause.damage")} ×{ring.PowerMultiplier:0.##}    {localization.Get("pause.speed")} ×{speed:0.##}    {localization.Get("pause.modules")} {occupied}</size>");
+                text.AppendLine($"<size=19><color=#9AB3BE>{localization.Get("pause.mounts")}  {ring.MountCount} / {ring.MountCapacity}</color></size>\n");
             }
         }
         ringsText.text = text.ToString().TrimEnd();
@@ -84,8 +108,8 @@ public sealed class PauseBuildOverview : MonoBehaviour
         if (state != null)
         {
             if (state.CoreState.Level > 0)
-                text.AppendLine("CORE " + (state.CoreState.Level switch { 1 => "I — 1 волна импульса", 2 => "II — 2 волны импульса", _ => "III — 3 волны импульса" }));
-            AppendUpgrade(text, "Link Matrix", state.CoreState.LinkMatrixUpgradeLevel);
+                text.AppendLine(string.Format(localization.Get("pause.coreWaves"), state.CoreState.Level));
+            AppendUpgrade(text, LocalizationService.EnsureExists().Get("pause.matrix"), state.CoreState.LinkMatrixUpgradeLevel);
         }
         coreText.text = text.ToString().TrimEnd();
         coreSection.SetActive(text.Length > 0);
@@ -96,9 +120,9 @@ public sealed class PauseBuildOverview : MonoBehaviour
                 if (slot.Item != null && slot.Level > 0)
                 {
                     if (slot.Item.upgradeType == UpgradeType.MaxHealthFlat)
-                        text.AppendLine($"MAX HP  {slot.Level}/3 · +{ProductionUpgradeProfiles.MaxHealthBonus(slot.Level):0} HP");
+                        text.AppendLine($"{localization.Get("pause.maxHealth")}  {slot.Level}/3 · +{ProductionUpgradeProfiles.MaxHealthBonus(slot.Level):0}");
                     else if (slot.Item.upgradeType == UpgradeType.MoveSpeedPercent)
-                        text.AppendLine($"MOVE SPEED  {slot.Level}/3 · ×{ProductionUpgradeProfiles.MoveSpeedMultiplier(slot.Level):0.00}");
+                        text.AppendLine($"{localization.Get("pause.moveSpeed")}  {slot.Level}/3 · ×{ProductionUpgradeProfiles.MoveSpeedMultiplier(slot.Level):0.00}");
                 }
             }
         playerText.text = text.ToString().TrimEnd();
@@ -116,16 +140,17 @@ public sealed class PauseBuildOverview : MonoBehaviour
 
     private static string ModuleName(OrbitalModuleKind kind) => kind switch
     {
-        OrbitalModuleKind.LaserSword => "Laser Sword",
-        OrbitalModuleKind.ImpulseGun => "Impulse Gun",
-        OrbitalModuleKind.ArcEmitter => "Arc Emitter",
-        OrbitalModuleKind.LinkNode => "Link Node",
-        _ => "Gun"
+        OrbitalModuleKind.LaserSword => LocalizationService.EnsureExists().Get("pause.sword"),
+        OrbitalModuleKind.ImpulseGun => LocalizationService.EnsureExists().Get("pause.impulse"),
+        OrbitalModuleKind.ArcEmitter => LocalizationService.EnsureExists().Get("pause.arc"),
+        OrbitalModuleKind.LinkNode => LocalizationService.EnsureExists().Get("pause.link"),
+        _ => LocalizationService.EnsureExists().Get("pause.gun")
     };
 
     public void AskConfirmation(string key, System.Action action)
     {
         pendingAction = action;
+        confirmationKey = key;
         confirmationText.text = LocalizationService.EnsureExists().Get(key);
         content.interactable = false;
         content.blocksRaycasts = false;

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: GoldenResonance
   m_EditorClassIdentifier: Assembly-CSharp::AnomalyStabilizerData
   id: golden_resonance
-  displayName: "ЗОЛОТОЙ РЕЗОНАНС"
-  description: "Убийства внутри активной зоны аномалии дают на 30% больше kill Gold."
+  displayName: bunker.anomaly.GoldenResonance.name
+  description: bunker.anomaly.GoldenResonance.description
   requiredStationLevel: 1
   effectType: 1
   value: 1.3

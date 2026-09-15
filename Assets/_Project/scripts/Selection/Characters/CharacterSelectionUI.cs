@@ -27,6 +27,7 @@ public sealed class CharacterSelectionUI : MonoBehaviour
     [Header("Navigation")]
     [SerializeField] private BunkerPanelManager panelManager;
 
+    private LocalizationService localization;
     private CharacterData selectedCharacter;
     private BunkerStationProgressionService boundProgressionService;
 
@@ -46,6 +47,8 @@ public sealed class CharacterSelectionUI : MonoBehaviour
 
     private void OnEnable()
     {
+        localization = LocalizationService.EnsureExists();
+        localization.LanguageChanged += HandleLanguageChanged;
         SubscribeToProgression();
         stationView?.Refresh();
         RefreshAllCards();
@@ -60,6 +63,9 @@ public sealed class CharacterSelectionUI : MonoBehaviour
 
     private void OnDisable()
     {
+        if (localization != null)
+            localization.LanguageChanged -= HandleLanguageChanged;
+        localization = null;
         UnsubscribeFromProgression();
     }
 
@@ -129,13 +135,13 @@ public sealed class CharacterSelectionUI : MonoBehaviour
             portraitImage.color = Color.white;
         }
 
-        SetText(characterNameText, character.characterName);
-        SetText(combatTypeText, GetCombatName(character));
+        SetText(characterNameText, character.LocalizedName);
+        SetText(combatTypeText, character.LocalizedCombatTypeDisplayName);
         SetText(featureText,
-            $"<color=#14D1DB><b>ОСОБЕННОСТЬ</b></color>\n{character.combatTypeDescription ?? string.Empty}");
+            string.Format(LocalizationService.EnsureExists().Get("character.details.feature"), character.LocalizedCombatTypeDescription));
         SetText(statsText, GetStatsText(character));
         SetText(descriptionText,
-            $"<color=#14D1DB><b>ОПИСАНИЕ</b></color>\n{character.description ?? string.Empty}");
+            string.Format(LocalizationService.EnsureExists().Get("character.details.description"), character.LocalizedDescription));
     }
 
     private static string GetStatsText(CharacterData character)
@@ -145,16 +151,8 @@ public sealed class CharacterSelectionUI : MonoBehaviour
         string speedBar = BuildPixelBar(
             Mathf.Clamp(Mathf.RoundToInt(character.moveSpeed), 1, 8));
 
-        return "<color=#14D1DB><b>ХАРАКТЕРИСТИКИ</b></color>\n" +
-               $"ЗДОРОВЬЕ   {character.maxHealth,3:0}   {healthBar}\n" +
-               $"СКОРОСТЬ   {character.moveSpeed,3:0.#}   {speedBar}";
-    }
-
-    private static string GetCombatName(CharacterData character)
-    {
-        return string.IsNullOrWhiteSpace(character.combatTypeDisplayName)
-            ? character.combatType.ToString().ToUpperInvariant()
-            : character.combatTypeDisplayName.ToUpperInvariant();
+        return string.Format(LocalizationService.EnsureExists().Get("character.details.stats"),
+            character.maxHealth, healthBar, character.moveSpeed, speedBar);
     }
 
     private static string BuildPixelBar(int filled)
@@ -178,11 +176,20 @@ public sealed class CharacterSelectionUI : MonoBehaviour
         if (emptyStateText != null)
         {
             emptyStateText.gameObject.SetActive(true);
-            emptyStateText.text = "ВЫБЕРИТЕ ПЕРСОНАЖА";
+            emptyStateText.text = LocalizationService.EnsureExists().Get("character.choose");
         }
 
         RefreshCards(null);
         SetSelectButton(false);
+    }
+
+    private void HandleLanguageChanged(GameLanguage language)
+    {
+        RefreshAllCards();
+        if (selectedCharacter != null)
+            RefreshDetails(selectedCharacter);
+        else if (emptyStateText != null)
+            emptyStateText.text = localization.Get("character.choose");
     }
 
     private void RestoreCurrentSelection()

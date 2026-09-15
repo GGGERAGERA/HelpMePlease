@@ -54,6 +54,7 @@ public sealed class BunkerOrbitalSlotPanel : MonoBehaviour
 
     private void OnEnable()
     {
+        LocalizationService.Instance.LanguageChanged += HandleLanguageChanged;
         currency = CurrencyManager.Instance;
         if (currency != null) currency.OnGoldUpdated += Refresh;
         ResetEffects();
@@ -61,19 +62,36 @@ public sealed class BunkerOrbitalSlotPanel : MonoBehaviour
         if (hasSpun) ShowResult();
         else
         {
-            statusText.text = "ИСПЫТАЙ УДАЧУ";
-            rewardText.text = "3 ОДИНАКОВЫХ — JACKPOT · 2 — ВОЗВРАТ";
+            statusText.text = LocalizationService.Instance.Get("bunker.slot_ready");
+            rewardText.text = LocalizationService.Instance.Get("bunker.slot_rules");
         }
         Refresh(0);
     }
 
     private void OnDisable()
     {
+        if (LocalizationService.Instance != null)
+            LocalizationService.Instance.LanguageChanged -= HandleLanguageChanged;
         if (currency != null) currency.OnGoldUpdated -= Refresh;
         StopAllCoroutines();
         spinning = false;
         ResetEffects();
         // The outcome was committed before animation; closing never cancels a paid spin.
+    }
+
+    private void HandleLanguageChanged(GameLanguage language)
+    {
+        if (spinning)
+            statusText.text = LocalizationService.Instance.Get("bunker.slot_spinning");
+        else if (hasSpun)
+            ShowResult();
+        else
+        {
+            statusText.text = LocalizationService.Instance.Get("bunker.slot_ready");
+            rewardText.text = LocalizationService.Instance.Get("bunker.slot_rules");
+        }
+        if (!spinning) ShowReels(result);
+        Refresh(0);
     }
 
     public void Show() => gameObject.SetActive(true);
@@ -92,7 +110,7 @@ public sealed class BunkerOrbitalSlotPanel : MonoBehaviour
         result = rolled;
         hasSpun = true;
         ResetEffects();
-        statusText.text = "ВРАЩЕНИЕ";
+        statusText.text = LocalizationService.Instance.Get("bunker.slot_spinning");
         rewardText.text = "";
         Refresh(0);
         StartCoroutine(Animate());
@@ -154,17 +172,17 @@ public sealed class BunkerOrbitalSlotPanel : MonoBehaviour
     private bool Pair => result[0] == result[1] || result[0] == result[2] || result[1] == result[2];
 
     private static string RewardLabel(OrbitalSlotSymbol symbol) =>
-        symbol == OrbitalSlotSymbol.Gold ? "+250 GOLD" :
-        symbol == OrbitalSlotSymbol.Ring ? "+1 RING" : "+1 " + OrbitalSlotMachine.Label(symbol);
+        symbol == OrbitalSlotSymbol.Gold ? LocalizationService.Instance.Get("bunker.slot_250") :
+        symbol == OrbitalSlotSymbol.Ring ? LocalizationService.Instance.Get("bunker.slot_ring") : "+1 " + OrbitalSlotMachine.Label(symbol);
 
     private void ShowResult()
     {
         bool jackpot = Triple && result[0] != OrbitalSlotSymbol.Skull;
-        statusText.text = jackpot ? "JACKPOT" : Triple ? "СИСТЕМА ШУТИТ" :
-            Pair ? "СТАВКА ВОЗВРАЩЕНА" : "БЕЗ ВЫИГРЫША";
+        statusText.text = jackpot ? LocalizationService.Instance.Get("bunker.slot_reward") : Triple ? LocalizationService.Instance.Get("bunker.slot_failure") :
+            Pair ? LocalizationService.Instance.Get("bunker.slot_refund") : LocalizationService.Instance.Get("bunker.slot_no_reward");
         statusText.color = jackpot ? Cyan : Triple ? Violet : Pair ? Cyan : new Color(.55f, .64f, .68f);
         rewardText.text = jackpot ? RewardLabel(result[0]) :
-            Triple ? "SKULL ×3 · БЕЗ ВЫИГРЫША" : Pair ? "+50 GOLD" : "ПОПРОБУЙ ЕЩЁ";
+            Triple ? LocalizationService.Instance.Get("bunker.slot_skulls") : Pair ? LocalizationService.Instance.Get("bunker.slot_50") : LocalizationService.Instance.Get("bunker.slot_retry");
         for (int i = 0; i < 3; i++)
             reelBorders[i].color = jackpot ? Cyan : Triple ? Violet : IdleBorder;
     }
@@ -200,7 +218,7 @@ public sealed class BunkerOrbitalSlotPanel : MonoBehaviour
 
     private void Refresh(int unused)
     {
-        walletText.text = $"GOLD  {(currency != null ? currency.TotalGold : 0)}";
+        walletText.text = string.Format(LocalizationService.Instance.Get("bunker.slot_wallet"), (currency != null ? currency.TotalGold : 0));
         spinButton.interactable = !spinning && OrbitalSlotMachine.CanSpin(currency);
         OrbitalSlotSymbol pending = OrbitalSlotMachine.Pending;
         bool showPending = !spinning && pending != OrbitalSlotSymbol.None;
@@ -208,12 +226,12 @@ public sealed class BunkerOrbitalSlotPanel : MonoBehaviour
         if (showPending)
         {
             SetIcon(pendingIcon, pending, 1f);
-            pendingText.text = "NEXT RUN BONUS:  " + RewardLabel(pending);
+            pendingText.text = LocalizationService.Instance.Get("bunker.slot_pending") + RewardLabel(pending);
         }
-        hintText.text = spinning ? "СИНХРОНИЗАЦИЯ БАРАБАНОВ…" :
-            showPending ? "НАЧНИТЕ RUN, ЧТОБЫ ИГРАТЬ СНОВА" :
+        hintText.text = spinning ? LocalizationService.Instance.Get("bunker.slot_sync") :
+            showPending ? LocalizationService.Instance.Get("bunker.slot_begin_run") :
             currency == null || currency.TotalGold < OrbitalSlotMachine.Stake ?
-                "НЕДОСТАТОЧНО GOLD — НУЖНО 50" : "БОНУС ДЕЙСТВУЕТ НА СЛЕДУЮЩИЙ RUN";
+                LocalizationService.Instance.Get("bunker.slot_need_gold") : LocalizationService.Instance.Get("bunker.slot_next_run");
     }
 
     private void ResetEffects()

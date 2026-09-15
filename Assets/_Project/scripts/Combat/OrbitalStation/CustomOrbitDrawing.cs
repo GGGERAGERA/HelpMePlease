@@ -232,13 +232,13 @@ namespace Subject42.Combat.OrbitalStation
             GUI.color = new Color(.2f, .85f, 1f, .65f);
             GUI.DrawTexture(new Rect(area.x, area.y, area.width, 2 * scale), Texture2D.whiteTexture);
             GUI.color = Color.white;
-            GUI.Label(new Rect(area.x + 16 * scale, area.y + 9 * scale, area.width - 170 * scale, 32 * scale), "НАРИСУЙТЕ ОРБИТУ", titleStyle);
+            GUI.Label(new Rect(area.x + 16 * scale, area.y + 9 * scale, area.width - 170 * scale, 32 * scale), LocalizationService.EnsureExists().Get("orbit.draw.title"), titleStyle);
             GUI.Label(new Rect(area.x + area.width - 166 * scale, area.y + 12 * scale, 150 * scale, 26 * scale), ProgressLabel, statusStyle);
             string instruction = State == PathState.VALID
-                ? "<b><color=#70FFD4>ENTER</color></b> — подтвердить орбиту"
-                : "<b><color=#55DFFF>ЛКМ</color></b> — удерживайте и рисуйте";
-            string detail = State == PathState.VALID ? "ГОТОВО · замкнутая орбита" : State == PathState.INVALID
-                ? "INVALID · замкните линию у START внутри области" : "Вернитесь к START и отпустите ЛКМ";
+                ? LocalizationService.EnsureExists().Get("orbit.draw.confirmHint")
+                : LocalizationService.EnsureExists().Get("orbit.draw.drawHint");
+            string detail = State == PathState.VALID ? LocalizationService.EnsureExists().Get("orbit.draw.ready") : State == PathState.INVALID
+                ? LocalizationService.EnsureExists().Get("orbit.draw.invalid") : LocalizationService.EnsureExists().Get("orbit.draw.closeHint");
             GUI.Label(new Rect(area.x + 10 * scale, area.y + 44 * scale, area.width - 20 * scale, 30 * scale), instruction, instructionStyle);
             int largeFont = instructionStyle.fontSize;
             instructionStyle.fontSize = Mathf.RoundToInt(16 * scale);
@@ -246,9 +246,9 @@ namespace Subject42.Combat.OrbitalStation
             instructionStyle.fontSize = largeFont;
             float buttonWidth = (area.width - 42 * scale) * .5f;
             GUI.enabled = State == PathState.VALID;
-            if (GUI.Button(new Rect(area.x + 16 * scale, area.y + 110 * scale, buttonWidth, 34 * scale), "<color=#70FFD4>ENTER</color>  ПОДТВЕРДИТЬ", buttonStyle)) Confirm();
+            if (GUI.Button(new Rect(area.x + 16 * scale, area.y + 110 * scale, buttonWidth, 34 * scale), LocalizationService.EnsureExists().Get("orbit.draw.confirm"), buttonStyle)) Confirm();
             GUI.enabled = true;
-            if (GUI.Button(new Rect(area.x + 26 * scale + buttonWidth, area.y + 110 * scale, buttonWidth, 34 * scale), "R  ПЕРЕРИСОВАТЬ", buttonStyle)) Clear();
+            if (GUI.Button(new Rect(area.x + 26 * scale + buttonWidth, area.y + 110 * scale, buttonWidth, 34 * scale), LocalizationService.EnsureExists().Get("orbit.draw.redraw"), buttonStyle)) Clear();
             DrawStartLabel();
             GUI.color = previousColor;
             GUI.enabled = previousEnabled;
@@ -259,7 +259,7 @@ namespace Subject42.Combat.OrbitalStation
             if (StartCircle.gameObject.activeSelf)
             {
                 Vector3 start = DrawingCamera.WorldToScreenPoint(StartCircle.transform.position);
-                GUI.Label(new Rect(start.x + 10, Screen.height - start.y - 25, 80, 24), "START");
+                GUI.Label(new Rect(start.x + 10, Screen.height - start.y - 25, 80, 24), LocalizationService.EnsureExists().Get("orbit.draw.start"));
             }
         }
     }

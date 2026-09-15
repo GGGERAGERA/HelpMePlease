@@ -98,11 +98,11 @@ public class BunkerProgressionView : MonoBehaviour
 
         SetText(titleText, value.Title);
         SetText(levelText, $"{value.LevelPrefix} {value.Level} / {value.MaxLevel}");
-        SetText(currencyText, maxed ? null : $"GOLD: {value.AvailableCurrency}");
+        SetText(currencyText, maxed ? null : string.Format(LocalizationService.Instance.Get("bunker.wallet"), value.AvailableCurrency));
         SetText(bonusText, value.BonusText);
         SetText(contextText, value.ContextText);
-        SetText(stateText, maxed ? "МАКСИМАЛЬНЫЙ УРОВЕНЬ" : locked
-            ? value.LockReason : !canUpgrade ? "НЕДОСТАТОЧНО ЗОЛОТА" : null);
+        SetText(stateText, maxed ? LocalizationService.Instance.Get("bunker.max_level") : locked
+            ? value.LockReason : !canUpgrade ? LocalizationService.Instance.Get("bunker.insufficient_gold") : null);
 
         int required = Mathf.Max(0, value.RequiredProgress);
         int progress = Mathf.Clamp(value.Progress, 0, required);

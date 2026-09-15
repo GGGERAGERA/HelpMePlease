@@ -30,6 +30,17 @@ public sealed class BunkerSelectionWindow : MonoBehaviour
 
     public bool IsOpen => gameObject.activeInHierarchy && source != null;
 
+    private void OnEnable() => LocalizationService.Instance.LanguageChanged += HandleLanguageChanged;
+    private void OnDisable()
+    {
+        if (LocalizationService.Instance != null)
+            LocalizationService.Instance.LanguageChanged -= HandleLanguageChanged;
+    }
+    private void HandleLanguageChanged(GameLanguage language)
+    {
+        Rebuild();
+    }
+
     private void Awake()
     {
         backButton?.onClick.AddListener(Back);

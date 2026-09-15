@@ -22,6 +22,16 @@ public sealed class LevelChoicePanelView : MonoBehaviour
     [Header("Confirm")]
     [SerializeField] private Button confirmButton;
 
+    private void OnEnable()
+    {
+        LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
+        RefreshLanguage(LocalizationService.Instance.CurrentLanguage);
+    }
+    private void OnDisable()
+    {
+        if (LocalizationService.Instance != null) LocalizationService.Instance.LanguageChanged -= RefreshLanguage;
+    }
+    private void RefreshLanguage(GameLanguage language) => SetText(titleText, LocalizationService.EnsureExists().Get("sector.choice.title"));
     private WorldRuleData selectedRule;
     private Action<WorldRuleData> onChoiceConfirmed;
 
@@ -63,12 +73,7 @@ public sealed class LevelChoicePanelView : MonoBehaviour
     {
         gameObject.SetActive(true);
 
-        SetText(
-            titleText,
-            "\u0412\u042b\u0411\u0415\u0420\u0418\u0422\u0415 " +
-            "\u0423\u0421\u041b\u041e\u0412\u0418\u042f " +
-            "\u0421\u0415\u041a\u0422\u041e\u0420\u0410"
-        );
+        RefreshLanguage(LocalizationService.EnsureExists().CurrentLanguage);
 
         selectedRule = null;
         onChoiceConfirmed = onChoiceSelected;

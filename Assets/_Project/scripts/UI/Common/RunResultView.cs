@@ -11,6 +11,28 @@ public class RunResultView : MonoBehaviour
 
 
     private bool missingReported;
+    private bool resultShown;
+    private bool shownVictory;
+    private int shownKills, shownLevel, shownGold;
+    private float shownTime;
+
+    private void OnEnable() => LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
+    private void OnDisable()
+    {
+        if (LocalizationService.Instance != null)
+            LocalizationService.Instance.LanguageChanged -= RefreshLanguage;
+    }
+    private void RefreshLanguage(GameLanguage language)
+    {
+        if (!resultShown || !shownVictory) return;
+        var localization = LocalizationService.EnsureExists();
+        titleText.text = localization.Get("result.victory");
+        statsText.text = $"{localization.Get("stats.time")}: {FormatTime(shownTime)}\n" +
+            $"{localization.Get("stats.kills")}: {shownKills}\n" +
+            $"{localization.Get("stats.level")}: {shownLevel}\n" +
+            $"{localization.Get("stats.runGold")}: {shownGold}";
+        aiCommentText.text = AICommentGenerator.GetComment(true);
+    }
 
     public void Show(bool victory)
     {
@@ -24,6 +46,8 @@ public class RunResultView : MonoBehaviour
             enabled = false;
             return;
         }
+        resultShown = true;
+        shownVictory = victory;
         gameObject.SetActive(true);
 
 
@@ -72,6 +96,10 @@ public class RunResultView : MonoBehaviour
             ? runState.GetCurrentGoldReward(endReason)
             : 0;
 
+        shownKills = kills;
+        shownTime = time;
+        shownLevel = level;
+        shownGold = runGold;
         HUDManager.Instance?.SetCurrentRunCurrency(runGold);
 
         if (titleText != null)

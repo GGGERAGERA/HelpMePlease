@@ -546,8 +546,8 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         if (isSpecial && completedMainEvents < 2)
         {
             specialInstructionsShown = true;
-            RunMessageService.Instance?.ShowCustom("ОСОБАЯ АНОМАЛИЯ: 1/2",
-                "Выполните второе событие. При его запуске начнётся Assault.", 4f);
+            RunMessageService.Instance?.ShowCustom("site.half",
+                "site.halfDescription", 4f);
             eventPosition = SelectEventPosition();
             StartCoroutine(RespawnEventAfterDelay());
             return;
@@ -564,8 +564,8 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         }
         else
             RunMessageService.Instance?.ShowCustom(
-                "ANOMALY STABILIZED",
-                "STANDARD REWARD AVAILABLE",
+                "site.stabilized",
+                "site.reward",
                 2f
             );
     }
@@ -605,8 +605,8 @@ public sealed class ProductionAnomalySite : MonoBehaviour
                 if (Mathf.Abs(offset.x) < siteSize.x * 0.5f && Mathf.Abs(offset.y) < siteSize.y * 0.5f)
                 {
                     specialInstructionsShown = true;
-                    RunMessageService.Instance?.ShowCustom("ОСОБАЯ АНОМАЛИЯ: 0/2",
-                        "Выполните два события, чтобы получить новое кольцо.", 4f);
+                    RunMessageService.Instance?.ShowCustom("site.start",
+                        "site.startDescription", 4f);
                 }
             }
         }

@@ -82,7 +82,7 @@ namespace Subject42.Combat.OrbitalStation
                 {
                     ApplyHighlight(hovered);
                     station.Interaction?.ShowHint(string.Empty,
-                        "ПКМ — ТЕЛЕКИНЕЗ");
+                        LocalizationService.EnsureExists().Get("orbit.telekinesis"));
                     station.Interaction?.SetCursor(OrbitalCursorState.Grabbable);
                 }
                 else

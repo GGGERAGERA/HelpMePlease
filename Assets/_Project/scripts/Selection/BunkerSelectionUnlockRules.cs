@@ -34,7 +34,7 @@ public static class BunkerSelectionUnlockRules
         int maxLevel)
     {
         if (currentLevel >= maxLevel)
-            return "ВСЕ ДОСТУПНЫЕ ОБЪЕКТЫ ОТКРЫТЫ";
+            return LocalizationService.Instance.Get("bunker.all_unlocked");
 
         int nextLevel = currentLevel + 1;
         var names = new List<string>();
@@ -49,7 +49,7 @@ public static class BunkerSelectionUnlockRules
             }
         }
         return names.Count == 0
-            ? "СЛЕДУЮЩИЙ УРОВЕНЬ: НОВЫХ ОБЪЕКТОВ НЕТ"
-            : "СЛЕДУЮЩИЙ УРОВЕНЬ ОТКРОЕТ:\n• " + string.Join("\n• ", names);
+            ? LocalizationService.Instance.Get("bunker.no_next_unlocks")
+            : LocalizationService.Instance.Get("bunker.next_unlocks") + string.Join("\n• ", names);
     }
 }

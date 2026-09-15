@@ -24,7 +24,14 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
     private void OnEnable()
     {
         displayStateCaptured = false;
+        LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
     }
+
+    private void OnDisable()
+    {
+        if (LocalizationService.Instance != null) LocalizationService.Instance.LanguageChanged -= RefreshLanguage;
+    }
+    private void RefreshLanguage(GameLanguage language) => RefreshContent();
 
     private void Update()
     {
@@ -109,10 +116,10 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
         if (worldAccelerationRule == null || !worldAccelerationRule.IsRunning)
             return;
 
-        AppendHeader(ref hasSection, "WORLD RULES");
-        textBuilder.Append("- World Acceleration - ")
+        AppendHeader(ref hasSection, LocalizationService.EnsureExists().Get("mechanic.rules"));
+        textBuilder.Append(LocalizationService.EnsureExists().Get("mechanic.acceleration"))
             .Append(Mathf.CeilToInt(worldAccelerationRule.TimeRemaining))
-            .AppendLine("s");
+            .AppendLine(LocalizationService.EnsureExists().Get("mechanic.seconds"));
     }
 
     private void AppendChallenges(ref bool hasSection)
@@ -123,15 +130,15 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
             return;
         }
 
-        AppendHeader(ref hasSection, "CHALLENGES");
-        textBuilder.Append("- No Damage - ")
-            .Append(noDamageChallenge.State);
+        AppendHeader(ref hasSection, LocalizationService.EnsureExists().Get("mechanic.challenges"));
+        textBuilder.Append(LocalizationService.EnsureExists().Get("mechanic.noDamage"))
+            .Append(LocalizationService.EnsureExists().Get("mechanic.challenge." + noDamageChallenge.State));
 
         if (noDamageChallenge.State == NoDamageChallengeState.Active)
         {
             textBuilder.Append(" - ")
                 .Append(Mathf.CeilToInt(noDamageChallenge.TimeRemaining))
-                .Append('s');
+                .Append(LocalizationService.EnsureExists().Get("mechanic.seconds"));
         }
 
         textBuilder.AppendLine();
@@ -142,7 +149,7 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
         if (doubleOrLeave == null || doubleOrLeave.State == DoubleOrLeaveState.Inactive)
             return;
 
-        AppendHeader(ref hasSection, "TAKE OR RISK");
+        AppendHeader(ref hasSection, LocalizationService.EnsureExists().Get("mechanic.risk"));
         textBuilder.Append("- ").Append(GetDoubleOrLeaveStateLabel());
 
         textBuilder.AppendLine();
@@ -152,9 +159,9 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
     {
         return doubleOrLeave.State switch
         {
-            DoubleOrLeaveState.WaitingForChallenge => "Risk Event Pending",
-            DoubleOrLeaveState.RewardGranted => "Reward Ready",
-            DoubleOrLeaveState.Failed => "Reward Lost",
+            DoubleOrLeaveState.WaitingForChallenge => LocalizationService.EnsureExists().Get("mechanic.pending"),
+            DoubleOrLeaveState.RewardGranted => LocalizationService.EnsureExists().Get("mechanic.ready"),
+            DoubleOrLeaveState.Failed => LocalizationService.EnsureExists().Get("mechanic.lost"),
             _ => string.Empty
         };
     }

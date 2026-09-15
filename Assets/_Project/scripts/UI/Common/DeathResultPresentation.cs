@@ -29,6 +29,19 @@ public sealed class DeathResultPresentation : MonoBehaviour
     [SerializeField] private Canvas modalCanvas;
     [SerializeField] private GraphicRaycaster modalRaycaster;
 
+    private RunSummary displayedSummary;
+    private void OnEnable() => LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
+    private void OnDisable()
+    {
+        if (LocalizationService.Instance != null) LocalizationService.Instance.LanguageChanged -= RefreshLanguage;
+    }
+    private void RefreshLanguage(GameLanguage language)
+    {
+        if (!viewValid || displayedSummary == null) return;
+        sector.text = string.Format(LocalizationService.EnsureExists().Get("hud.sector"),
+            Mathf.Clamp(displayedSummary.SectorNumber, 1, RunRoute.TotalSectors), RunRoute.TotalSectors);
+        comment.text = AICommentGenerator.GetComment(false);
+    }
     private bool viewValid;
 
     private void Awake()
@@ -64,6 +77,7 @@ public sealed class DeathResultPresentation : MonoBehaviour
     public void Show(RunSummary summary, string commentText)
     {
         if (!viewValid || summary == null) return;
+        displayedSummary = summary;
         modalCanvas.enabled = true;
         modalRaycaster.enabled = true;
         int topOrder = 0;
@@ -82,7 +96,7 @@ public sealed class DeathResultPresentation : MonoBehaviour
             color.a = 0.96f;
             backdrop.color = color;
         }
-        sector.text = $"СЕКТОР {Mathf.Clamp(summary.SectorNumber, 1, RunRoute.TotalSectors)} / {RunRoute.TotalSectors}";
+        sector.text = string.Format(LocalizationService.EnsureExists().Get("hud.sector"), Mathf.Clamp(summary.SectorNumber, 1, RunRoute.TotalSectors), RunRoute.TotalSectors);
         int seconds = Mathf.Max(0, Mathf.FloorToInt(summary.RunTime));
         time.text = $"{seconds / 60:00}:{seconds % 60:00}";
         kills.text = summary.Kills.ToString();
@@ -91,9 +105,7 @@ public sealed class DeathResultPresentation : MonoBehaviour
         rings.text = summary.OrbitalRingCount.ToString();
         modules.text = summary.OrbitalModuleCount.ToString();
         core.text = summary.OrbitalCoreLevel.ToString();
-        comment.text = string.IsNullOrWhiteSpace(commentText) || commentText.Contains("\uFFFD")
-            ? "Данные эксперимента сохранены. Подготовьте следующего субъекта."
-            : commentText;
+        comment.text = AICommentGenerator.GetComment(false);
         FitToCanvas();
     }
 

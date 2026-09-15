@@ -13,6 +13,15 @@ public class WorldEventMarker : MonoBehaviour
     [SerializeField] private Camera targetCamera;
     [SerializeField] private float screenPadding = 80f;
 
+    private void OnEnable() => LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
+    private void OnDisable()
+    {
+        if (LocalizationService.Instance != null) LocalizationService.Instance.LanguageChanged -= RefreshLanguage;
+    }
+    private void RefreshLanguage(GameLanguage language)
+    {
+        if (labelText != null) labelText.text = LocalizationService.EnsureExists().Get(targetLabel ?? string.Empty);
+    }
     private Transform target;
     private string targetLabel;
     private bool showOnlyOffscreen;
@@ -50,7 +59,7 @@ public class WorldEventMarker : MonoBehaviour
         targetLabel = label;
 
         if (labelText != null)
-            labelText.text = targetLabel;
+            labelText.text = LocalizationService.EnsureExists().Get(targetLabel ?? string.Empty);
 
         SetMarkerVisible(!suppressed);
     }

@@ -3,9 +3,9 @@ using UnityEngine;
 
 public sealed class PlayerBoundaryHazard : MonoBehaviour
 {
-    private const string WarningTitle = "ВНИМАНИЕ";
+    private const string WarningTitle = "boundary.warning";
     private const string WarningDescription =
-        "ВЫ ПОКИДАЕТЕ ЗОНУ ЭКСПЕРИМЕНТА";
+        "boundary.leavingZone";
 
     [Header("Scene References")]
     [SerializeField] private GameplayAreaService gameplayArea;

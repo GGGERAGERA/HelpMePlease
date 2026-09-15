@@ -250,8 +250,8 @@ public sealed class UpgradeManager : MonoBehaviour
         {
             OrbitalStationRuntime station = orbitalStation;
             if (station != null && station.IsInitialized && station.AddRing() != null)
-                RunMessageService.Instance?.ShowCustom("УСИЛЕННАЯ АНОМАЛИЯ",
-                    "НОВАЯ ОРБИТА · +1 КОЛЬЦО", 2f);
+                RunMessageService.Instance?.ShowCustom("reward.panel.special",
+                    "reward.panel.newRing", 2f);
             else
                 ShowUpgradeChoices();
         });
@@ -394,8 +394,8 @@ public sealed class UpgradeManager : MonoBehaviour
         if (request.IsChestReward)
         {
             upgradePanelView.ShowWorldEventReward(
-                "НАГРАДА",
-                "Выберите предмет",
+                "reward.panel.title",
+                "reward.panel.choose",
                 choices,
                 SelectUpgrade
             );
