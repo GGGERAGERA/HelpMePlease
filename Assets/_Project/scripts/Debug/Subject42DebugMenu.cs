@@ -2161,17 +2161,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         AddRow("Show Reward Eligibility",
             rewards?.GetOrbitalEligibilitySummary() ?? "NO PROVIDER",
             mutedColor, "REFRESH", rewards != null, RefreshCurrentTab);
-        ProductionExplorationSectorController exploration =
-            ProductionExplorationSectorController.ActiveInstance;
-        AddRow("Spawn Reward Chest", "p_Case3 / SCROLLING REWARD",
-            accentColor, "SPAWN", available && exploration != null &&
-                !WorldLootRewardReel.IsActive, () =>
-            {
-                CloseMenu();
-                if (!exploration.DebugSpawnRewardChestNearPlayer())
-                    Debug.LogWarning(
-                        "[WorldLootChest] F1 spawn could not find a safe position.");
-            });
         AddRow("Force Level Up", "REAL EXPERIENCE FLOW", accentColor,
             "LEVEL", available && experience != null && rewards != null && rewards.IsRewardQueueIdle, () =>
             {
@@ -2975,6 +2964,16 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
         EnsureProductionSectorDebug();
         var nodeSector = ProductionExplorationSectorController.ActiveInstance;
+        AddRow("SPAWN REWARD CHEST", "p_Case3 / SCROLLING REWARD",
+            accentColor, "SPAWN", nodeSector != null &&
+                characterSpawner.SpawnedPlayer != null &&
+                !WorldLootRewardReel.IsActive, () =>
+            {
+                CloseMenu();
+                if (!nodeSector.DebugSpawnRewardChestNearPlayer())
+                    Debug.LogWarning(
+                        "[WorldLootChest] F1 spawn could not find a safe position.");
+            });
         AddRow("Regenerate Anomaly Layout", "6 normal + 1 special", mutedColor, "REGENERATE", nodeSector != null,
             () => { nodeSector.RegenerateAnomalyLayout(); RefreshCurrentTab(); });
         AddRow("Spawn Portal Pair", "A <-> B", mutedColor, "SPAWN", nodeSector != null,

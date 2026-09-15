@@ -27,16 +27,6 @@ public class HUDManager : MonoBehaviour
     [Header("Timer")]
     [SerializeField] private TextMeshProUGUI timerText;
 
-    [Header("Exit Pacing")]
-    [SerializeField] private TextMeshProUGUI exitPacingText;
-    [SerializeField] private Image exitPacingIcon;
-    [SerializeField] private Sprite exitCountdownSprite;
-    [SerializeField] private Sprite exitAssaultSprite;
-    [SerializeField] private Sprite exitOpenSprite;
-    [SerializeField, Min(0f)] private float exitOpenDisplayDuration = 2.5f;
-    private float exitOpenVisibleTime;
-    private int exitPacingSector = -1;
-
     [Header("Threat")]
     [SerializeField] private RectTransform threatPanel;
     [SerializeField] private TextMeshProUGUI threatLevelText;
@@ -218,7 +208,7 @@ public class HUDManager : MonoBehaviour
     private void LateUpdate()
     {
         informationGroup.alpha = IsInformationVisible ? 1f : 0f;
-        RefreshExitPacing();
+        RefreshRunCounters();
         if (runStateManager == null || runStateManager.CurrentSector == null || runFlow == null)
             return;
 
@@ -247,52 +237,19 @@ public class HUDManager : MonoBehaviour
             ProductionSectorCount, ResolveObjectiveKey(runFlow.Phase, exitAvailable), specialAvailable);
     }
 
-    private void RefreshExitPacing()
+    private void RefreshRunCounters()
     {
-        if (exitPacingText == null || exitPacingIcon == null) return;
-        int sector = runStateManager?.CurrentSector?.SectorNumber ?? -1;
-        if (sector != exitPacingSector || (runFlow != null && !runFlow.IsExitUnlocked))
-            exitOpenVisibleTime = 0f;
-        exitPacingSector = sector;
-        bool visible = sector > 0 && runFlow != null &&
-            runFlow.Phase == RunPhase.NormalSector && !runFlow.IsLevelCompleted;
-        if (visible && runFlow.IsExitUnlocked)
-        {
-            // Presentation lifetime only; sector time and unlock remain owned by RunFlow.
-            if (IsInformationVisible) exitOpenVisibleTime += Time.unscaledDeltaTime;
-            visible = exitOpenVisibleTime < exitOpenDisplayDuration;
-        }
-        exitPacingText.gameObject.SetActive(visible);
-        exitPacingIcon.gameObject.SetActive(visible);
-        if (!visible) return;
-
-        Color tint = new(0.55f, 0.92f, 1f);
-        Sprite icon = exitCountdownSprite;
-        if (runFlow.IsExitUnlocked)
-        {
-            exitPacingText.text = LocalizationService.EnsureExists().Get("hud.exitPacing.open");
-            icon = exitOpenSprite;
-            tint = new Color(0.45f, 1f, 0.7f);
-        }
-        else if (runFlow.ExitMinimumTimeRemaining > 0f)
+        if (timerText != null && runFlow != null)
         {
             int seconds = Mathf.CeilToInt(runFlow.ExitMinimumTimeRemaining);
-            exitPacingText.SetText("{0:00}:{1:00}", seconds / 60, seconds % 60);
+            if (seconds != lastDisplayedTimerSecond)
+            {
+                lastDisplayedTimerSecond = seconds;
+                timerText.SetText("TIME: {0}:{1:00}", seconds / 60, seconds % 60);
+            }
         }
-        else if (runFlow.IsExitRecovering)
-        {
-            exitPacingText.text = LocalizationService.EnsureExists().Get("hud.exitPacing.recovery");
-            icon = exitOpenSprite;
-        }
-        else
-        {
-            exitPacingText.text = LocalizationService.EnsureExists().Get("hud.exitPacing.assault");
-            icon = exitAssaultSprite;
-            tint = new Color(1f, 0.67f, 0.3f);
-        }
-        exitPacingText.color = tint;
-        exitPacingIcon.color = tint;
-        exitPacingIcon.sprite = icon;
+        // Read after gameplay Update: KillManager notifies before run stats are committed.
+        SetKills(0);
     }
 
     private static void ConfigureIndicatorSlider(Slider slider)
@@ -320,29 +277,6 @@ public class HUDManager : MonoBehaviour
             healthText.text = $"{Mathf.CeilToInt(currentHealth)} / {Mathf.CeilToInt(maxHealth)}";
         }
         UpdateLowHpVignette(currentHealth, maxHealth);
-    }
-
-    public void SetTimer(float timeLeft)
-    {
-        timeLeft = Mathf.Max(0f, timeLeft);
-        int totalSeconds = Mathf.FloorToInt(timeLeft);
-
-        if (totalSeconds == lastDisplayedTimerSecond)
-            return;
-
-        lastDisplayedTimerSecond = totalSeconds;
-
-        int minutes = totalSeconds / 60;
-        int seconds = totalSeconds % 60;
-
-        if (timerText != null)
-            timerText.SetText("{0:00}:{1:00}", minutes, seconds);
-    }
-
-    public void SetTimerVisible(bool visible)
-    {
-        if (timerText != null)
-            timerText.gameObject.SetActive(visible);
     }
 
     public void SetThreat(float value, ThreatTier tier)
@@ -400,7 +334,7 @@ public class HUDManager : MonoBehaviour
             RunStateManager runState = RunStateManager.Instance;
             killsText.text = (runState != null
                 ? runState.GetCurrentRunKills()
-                : kills).ToString();
+                : 0).ToString();
         }
     }
 
