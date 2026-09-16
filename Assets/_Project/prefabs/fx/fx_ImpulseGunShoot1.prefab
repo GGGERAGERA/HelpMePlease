@@ -287,7 +287,7 @@ ParticleSystem:
     startSize:
       serializedVersion: 2
       minMaxState: 3
-      scalar: 0.95
+      scalar: 1
       minScalar: 1
       maxCurve:
         serializedVersion: 2
@@ -4804,9 +4804,9 @@ ParticleSystemRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingLayerID: -1183170747
+  m_SortingLayer: 2
+  m_SortingOrder: 12
   m_MaskInteraction: 0
   m_RenderMode: 0
   m_MeshDistribution: 0
@@ -5126,8 +5126,8 @@ ParticleSystem:
         m_NumAlphaKeys: 2
     startSize:
       serializedVersion: 2
-      minMaxState: 3
-      scalar: 0.95
+      minMaxState: 0
+      scalar: 1
       minScalar: 1
       maxCurve:
         serializedVersion: 2
@@ -5179,7 +5179,7 @@ ParticleSystem:
         m_RotationOrder: 4
     startSizeY:
       serializedVersion: 2
-      minMaxState: 3
+      minMaxState: 0
       scalar: 0.5
       minScalar: 1
       maxCurve:
@@ -5232,7 +5232,7 @@ ParticleSystem:
         m_RotationOrder: 4
     startSizeZ:
       serializedVersion: 2
-      minMaxState: 3
+      minMaxState: 0
       scalar: 0.5
       minScalar: 1
       maxCurve:
@@ -5816,7 +5816,7 @@ ParticleSystem:
     m_BurstCount: 0
     m_Bursts: []
   SizeModule:
-    enabled: 0
+    enabled: 1
     curve:
       serializedVersion: 2
       minMaxState: 1
@@ -6223,8 +6223,8 @@ ParticleSystem:
         - serializedVersion: 3
           time: 0
           value: 0
-          inSlope: 2
-          outSlope: 2
+          inSlope: 0
+          outSlope: 0
           tangentMode: 0
           weightedMode: 0
           inWeight: 0
@@ -6232,8 +6232,8 @@ ParticleSystem:
         - serializedVersion: 3
           time: 1
           value: 1
-          inSlope: 0
-          outSlope: 0
+          inSlope: 2
+          outSlope: 2
           tangentMode: 0
           weightedMode: 0
           inWeight: 0
@@ -6327,11 +6327,10 @@ ParticleSystem:
     uvChannelMask: -1
     rowMode: 1
     sprites:
+    - sprite: {fileID: -6895513104094734412, guid: 63a689a32b7c31445ad10b16154c11e5, type: 3}
+    - sprite: {fileID: 5872705551461304407, guid: 63a689a32b7c31445ad10b16154c11e5, type: 3}
+    - sprite: {fileID: 1365942985429823017, guid: 63a689a32b7c31445ad10b16154c11e5, type: 3}
     - sprite: {fileID: 7178256622405612620, guid: 63a689a32b7c31445ad10b16154c11e5, type: 3}
-    - sprite: {fileID: 7194957244408196020, guid: 63a689a32b7c31445ad10b16154c11e5, type: 3}
-    - sprite: {fileID: -1188665346, guid: 63a689a32b7c31445ad10b16154c11e5, type: 3}
-    - sprite: {fileID: 1833255152, guid: 63a689a32b7c31445ad10b16154c11e5, type: 3}
-    - sprite: {fileID: -1308142433, guid: 63a689a32b7c31445ad10b16154c11e5, type: 3}
     flipU: 0
     flipV: 0
   VelocityModule:
@@ -9645,9 +9644,9 @@ ParticleSystemRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingLayerID: -1183170747
+  m_SortingLayer: 2
+  m_SortingOrder: 12
   m_MaskInteraction: 0
   m_RenderMode: 0
   m_MeshDistribution: 0
