@@ -13,7 +13,7 @@ public sealed class CharacterIdentityConfigurationTests
         string assetName, CharacterId id, OrbitalPathType path)
     {
         var character = AssetDatabase.LoadAssetAtPath<CharacterData>(
-            "Assets/_Project/Scriptable Objects/Characters/" + assetName + ".asset");
+            "Assets/_Project/Data/Characters/" + assetName + ".asset");
         Assert.That(character, Is.Not.Null);
         Assert.That(character.HasValidProductionIdentity, Is.True);
         Assert.That(character.Id, Is.EqualTo(id));

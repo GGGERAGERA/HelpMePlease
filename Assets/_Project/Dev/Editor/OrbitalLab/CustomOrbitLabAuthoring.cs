@@ -65,7 +65,7 @@ public static class CustomOrbitLabAuthoring
         try
         {
             var config = AssetDatabase.LoadAssetAtPath<OrbitalPresentationConfig>("Assets/_Project/Resources/OrbitalStation/OrbitalPresentationConfig.asset");
-            var character = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Scriptable Objects/Characters/03_Vika.asset");
+            var character = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Data/Characters/03_Vika.asset");
             var player = (GameObject)PrefabUtility.InstantiatePrefab(character.characterPrefab, scene);
             PrefabUtility.UnpackPrefabInstance(player, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
             player.name = "Vika (lab movement and visuals only)";

@@ -25,7 +25,7 @@ public static class GoldenPathLabAuthoring
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
         SceneManager.SetActiveScene(scene);
         var lab = new GameObject("Golden Path Lab (Editor Only)").AddComponent<GoldenPathLab>();
-        lab.Character = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Scriptable Objects/Characters/01_Gera.asset");
+        lab.Character = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Data/Characters/01_Gera.asset");
         var camera = new GameObject("Lab Camera").AddComponent<Camera>();
         camera.orthographic = true; camera.clearFlags = CameraClearFlags.SolidColor;
         camera.backgroundColor = new Color(.045f, .063f, .095f);

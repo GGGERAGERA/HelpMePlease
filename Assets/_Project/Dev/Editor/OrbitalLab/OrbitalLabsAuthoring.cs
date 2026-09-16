@@ -89,7 +89,7 @@ public static class OrbitalLabsAuthoring
         try
         {
             var lab = new GameObject(typeof(T).Name).AddComponent<T>();
-            lab.Character = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Scriptable Objects/Characters/01_Gera.asset");
+            lab.Character = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Data/Characters/01_Gera.asset");
             var sourceRig = Find<CameraFollow>(production);
             var rig = new GameObject("Production Camera");
             var camera = rig.AddComponent<Camera>(); EditorUtility.CopySerialized(sourceRig.ControlledCamera, camera);

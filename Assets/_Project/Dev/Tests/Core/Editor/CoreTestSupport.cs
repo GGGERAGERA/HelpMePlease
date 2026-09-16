@@ -44,7 +44,7 @@ public static class CoreTestSupport
         yield return new EnterPlayMode();
         yield return LoadBunker();
         var character = AssetDatabase.LoadAssetAtPath<CharacterData>(
-            "Assets/_Project/Scriptable Objects/Characters/01_Gera.asset");
+            "Assets/_Project/Data/Characters/01_Gera.asset");
         RunSelectionManager.Instance.SelectCharacter(character);
         var starter = Object.FindFirstObjectByType<BunkerRunStarter>();
         starter.StartRun(starter.transform);

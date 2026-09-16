@@ -1,6 +1,6 @@
 # Subject#42 — current project map candidate
 
-Updated for Cleanup Step 1 + Step 2 (2026-09-16). This is the current navigation map; older QA reports describe historical checks, not the current production contract.
+Updated for Cleanup Step 3 (2026-09-16). This is the current navigation map; older QA reports describe historical checks, not the current production contract.
 
 ## Production
 
@@ -14,7 +14,7 @@ Enabled build scenes, in order:
 
 CharacterData selects each production prefab: Gera — Circle, Di-mag — FigureEight, Vika — Custom. ORBITAL runtime and rewards are the current character loadout path; legacy weapon assets remain pending a separate dependency review.
 
-Runtime owners remain under `scripts/`: Combat/OrbitalStation, Progression, Run, World, Bunker and UI. Production prefabs, Scriptable Objects, Resources/loaders and initialization are unchanged by this cleanup.
+Runtime owners remain under `scripts/`: Combat/OrbitalStation, Progression, Run, World, Bunker and UI. Data assets live in `Data/`: Characters, Weapons, Upgrades, Stages, World, Anomalies, Meta and UI. Production characters live in `prefabs/Characters/Production`, originals in `Characters/Legacy`. Bunker composition and minigames live in `prefabs/Bunker`; world props/events/anomalies in `prefabs/Environment`. Asset contents, GUIDs and runtime initialization remain unchanged.
 
 ## Development
 
@@ -29,7 +29,7 @@ All development domains live under `Assets/_Project/Dev/`:
 
 Editor commands are grouped under `Tools > Subject42 > Dev`. `Dev/Editor` contains authoring and diagnostics; `Dev/Debug` contains Editor/development runtime tools. The useful SurfaceVisualLab prototype is retained under `Dev/Labs/F1`.
 
-Two release-runtime types remain in `scripts/Debug`: `ProductionVisualTuningController` and `VisualTuningPreset`. They have real production callers/serialized data and are not cleanup candidates based on their folder name.
+Two release-runtime presentation types, `ProductionVisualTuningController` and `VisualTuningPreset`, now live in `scripts/World/Presentation`. Prop scripts are in `scripts/World/Props`; `BallRollVisual` joins `scripts/Bunker/Minigames`.
 
 ## Tests and output
 
@@ -39,4 +39,4 @@ Two release-runtime types remain in `scripts/Debug`: `ProductionVisualTuningCont
 
 ## Boundaries
 
-`art/` belongs to the artist and is untouched. AudioEffects is not cleaned by reference count. Production prefab/SO ownership and Resources removal are separate later steps. No production gameplay or balance change is part of this cleanup.
+`art/` belongs to the artist and is untouched. AudioEffects is not cleaned by reference count. Resources removal is Step 4. Root `Environment/Props` temporarily contains its untouched `Resources` subtree and the profile README. `prefabs/miniWeapons` remains the authoritative miniWeapon source; `prefabs/Orbital` is unchanged. The two loose root assets moved to `Materials` and `Materials/RenderTextures`. No production gameplay or balance change is part of this cleanup.

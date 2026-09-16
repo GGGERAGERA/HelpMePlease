@@ -25,7 +25,7 @@ public sealed class Subject42GoldenPathTests
     {
         yield return CoreTestSupport.LoadBunker();
         RunSelectionManager.Instance.SelectCharacter(AssetDatabase.LoadAssetAtPath<CharacterData>(
-            "Assets/_Project/Scriptable Objects/Characters/01_Gera.asset"));
+            "Assets/_Project/Data/Characters/01_Gera.asset"));
         var session = BotRunSession.Ensure();
         var batch = session.GetComponent<BotBatchRunner>() ?? session.gameObject.AddComponent<BotBatchRunner>();
         Assert.That(batch.StartGoldenPathBatch(1, BotSeedMode.Fixed, 48151623, 5f), Is.True);

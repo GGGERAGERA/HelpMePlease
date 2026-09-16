@@ -15,9 +15,9 @@ public static class WorldSystemsLabAuthoring
     private const string ProductionScene =
         "Assets/_Project/Scenes/MainBuild/MVP.unity";
     private const string ProductionCharacter =
-        "Assets/_Project/Scriptable Objects/Characters/03_Vika.asset";
+        "Assets/_Project/Data/Characters/03_Vika.asset";
     private const string RuleFolder =
-        "Assets/_Project/Scriptable Objects/WorldRules";
+        "Assets/_Project/Data/World/Rules";
     private const string PropProfile =
         "Assets/_Project/Environment/Props/Resources/PropScatterProfile.asset";
     private const string ExplorationConfig =

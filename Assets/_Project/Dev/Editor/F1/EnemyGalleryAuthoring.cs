@@ -125,7 +125,7 @@ public static class EnemyGalleryAuthoring
         }
         if (created)
         {
-            var character = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Scriptable Objects/Characters/01_Gera.asset");
+            var character = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Data/Characters/01_Gera.asset");
             var player = (GameObject)PrefabUtility.InstantiatePrefab(character.ProductionPrefab, scene);
             player.transform.position = new Vector3(0, -5, 0);
             ConfigurePlayer(player);

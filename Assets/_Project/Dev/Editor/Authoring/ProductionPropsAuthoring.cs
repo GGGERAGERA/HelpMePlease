@@ -6,11 +6,13 @@ using UnityEngine;
 public static class ProductionPropsAuthoring
 {
     const string Root = "Assets/_Project/Environment/Props";
+    const string Sprites = "Assets/_Project/prefabs/Environment/Props/Sprites";
 
     [MenuItem("Tools/Subject42/Dev/Authoring/Environment/Author sector props")]
     public static void Author()
     {
         Directory.CreateDirectory(Root + "/Resources/SectorProps");
+        Directory.CreateDirectory(Sprites);
         AssetDatabase.Refresh();
         var material = AssetDatabase.LoadAssetAtPath<Material>(
             "Assets/_Project/art/Sprites/Environment/ColdAsh/ColdAshLit.mat");
@@ -32,7 +34,7 @@ public static class ProductionPropsAuthoring
         {
             var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(
                 "Assets/_Project/art/Sprites/Environment/" + sheet + ".png");
-            string spritePath = Root + "/" + name + ".asset";
+            string spritePath = Sprites + "/" + name + ".asset";
             var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
             var authored = Sprite.Create(texture, new Rect(x, texture.height - top - height, width, height),
                 new Vector2(.5f, .5f), 32, 0, SpriteMeshType.FullRect);

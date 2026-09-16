@@ -30,7 +30,7 @@ public static class BossPracticeAuthoring
         {
             var arena = new GameObject("Boss Practice").AddComponent<BossPracticeArena>();
             arena.bossPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/prefabs/Enemies/p_Boss1.prefab");
-            var character = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Scriptable Objects/Characters/01_Gera.asset");
+            var character = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Data/Characters/01_Gera.asset");
             var player = (GameObject)PrefabUtility.InstantiatePrefab(character.ProductionPrefab, scene);
             player.name = "Player template (inactive)";
             foreach (var station in player.GetComponentsInChildren<OrbitalStationRuntime>(true))
