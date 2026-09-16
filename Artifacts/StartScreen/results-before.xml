@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="5" result="Failed(Child)" total="5" passed="0" failed="5" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-16 21:20:32Z" end-time="2026-09-16 21:20:33Z" duration="0,9098893">
+  <test-suite type="TestSuite" id="1000" name="Help Me Please" fullname="Help Me Please" runstate="Runnable" testcasecount="21" result="Failed" site="Child" start-time="2026-09-16 21:20:32Z" end-time="2026-09-16 21:20:33Z" duration="0.909889" total="5" passed="0" failed="5" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1033" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="21" result="Failed" site="Child" start-time="2026-09-16 21:20:32Z" end-time="2026-09-16 21:20:33Z" duration="0.781961" total="5" passed="0" failed="5" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="49520" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestFixture" id="1011" name="StartScreenPresentationTests" fullname="StartScreenPresentationTests" classname="StartScreenPresentationTests" runstate="Runnable" testcasecount="5" result="Failed" site="Child" start-time="2026-09-16 21:20:32Z" end-time="2026-09-16 21:20:33Z" duration="0.776731" total="5" passed="0" failed="5" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="ParameterizedMethod" id="1016" name="BackgroundCoversViewportAtBothParallaxExtremes" fullname="StartScreenPresentationTests.BackgroundCoversViewportAtBothParallaxExtremes" classname="StartScreenPresentationTests" runstate="Runnable" testcasecount="3" result="Failed" site="Child" start-time="2026-09-16 21:20:21Z" end-time="2026-09-16 21:20:21Z" duration="0.055531" total="3" passed="0" failed="3" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-case id="1013" name="BackgroundCoversViewportAtBothParallaxExtremes(1920,1080)" fullname="StartScreenPresentationTests.BackgroundCoversViewportAtBothParallaxExtremes(1920,1080)" methodname="BackgroundCoversViewportAtBothParallaxExtremes" classname="StartScreenPresentationTests" runstate="Runnable" seed="1532895307" result="Failed" start-time="2026-09-16 21:20:21Z" end-time="2026-09-16 21:20:21Z" duration="0.039457" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[  Expected: not null
+  But was:  null
+]]></message>
+              <stack-trace><![CDATA[at StartScreenPresentationTests.BackgroundCoversViewportAtBothParallaxExtremes (System.Int32 width, System.Int32 height) [0x00000] in D:\fork\HelpMePlease\Assets\_Project\Dev\Tests\Core\Editor\StartScreenPresentationTests.cs:45
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case id="1014" name="BackgroundCoversViewportAtBothParallaxExtremes(1024,768)" fullname="StartScreenPresentationTests.BackgroundCoversViewportAtBothParallaxExtremes(1024,768)" methodname="BackgroundCoversViewportAtBothParallaxExtremes" classname="StartScreenPresentationTests" runstate="Runnable" seed="1284292134" result="Failed" start-time="2026-09-16 21:20:21Z" end-time="2026-09-16 21:20:21Z" duration="0.000790" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[  Expected: not null
+  But was:  null
+]]></message>
+              <stack-trace><![CDATA[at StartScreenPresentationTests.BackgroundCoversViewportAtBothParallaxExtremes (System.Int32 width, System.Int32 height) [0x00000] in D:\fork\HelpMePlease\Assets\_Project\Dev\Tests\Core\Editor\StartScreenPresentationTests.cs:45
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case id="1015" name="BackgroundCoversViewportAtBothParallaxExtremes(2560,1080)" fullname="StartScreenPresentationTests.BackgroundCoversViewportAtBothParallaxExtremes(2560,1080)" methodname="BackgroundCoversViewportAtBothParallaxExtremes" classname="StartScreenPresentationTests" runstate="Runnable" seed="1133772215" result="Failed" start-time="2026-09-16 21:20:21Z" end-time="2026-09-16 21:20:21Z" duration="0.000912" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[  Expected: not null
+  But was:  null
+]]></message>
+              <stack-trace><![CDATA[at StartScreenPresentationTests.BackgroundCoversViewportAtBothParallaxExtremes (System.Int32 width, System.Int32 height) [0x00000] in D:\fork\HelpMePlease\Assets\_Project\Dev\Tests\Core\Editor\StartScreenPresentationTests.cs:45
+]]></stack-trace>
+            </failure>
+          </test-case>
+        </test-suite>
+        <test-case id="1012" name="BackgroundIsAuthoredAndDoesNotInterceptButtons" fullname="StartScreenPresentationTests.BackgroundIsAuthoredAndDoesNotInterceptButtons" methodname="BackgroundIsAuthoredAndDoesNotInterceptButtons" classname="StartScreenPresentationTests" runstate="Runnable" seed="1696031806" result="Failed" start-time="2026-09-16 21:20:21Z" end-time="2026-09-16 21:20:22Z" duration="0.142586" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[  Missing capsule atmosphere component
+  Expected: not null
+  But was:  null
+]]></message>
+            <stack-trace><![CDATA[at StartScreenPresentationTests.BackgroundIsAuthoredAndDoesNotInterceptButtons () [0x0000c] in D:\fork\HelpMePlease\Assets\_Project\Dev\Tests\Core\Editor\StartScreenPresentationTests.cs:26
+]]></stack-trace>
+          </failure>
+        </test-case>
+        <test-case id="1017" name="SettingsCloseRestoresMenuAndStartLoadsBunker" fullname="StartScreenPresentationTests.SettingsCloseRestoresMenuAndStartLoadsBunker" methodname="SettingsCloseRestoresMenuAndStartLoadsBunker" classname="StartScreenPresentationTests" runstate="Runnable" seed="683479140" result="Failed" label="Error" start-time="2026-09-16 21:20:22Z" end-time="2026-09-16 21:20:33Z" duration="11.308089" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <failure>
+            <message><![CDATA[System.InvalidOperationException : Sequence contains no matching element]]></message>
+            <stack-trace><![CDATA[  at System.Linq.Enumerable.Single[TSource] (System.Collections.Generic.IEnumerable`1[T] source, System.Func`2[T,TResult] predicate) [0x00070] in <80564d689e48448fa2a7101993ee7201>:0 
+  at StartScreenPresentationTests+<SettingsCloseRestoresMenuAndStartLoadsBunker>d__5.MoveNext () [0x00129] in D:\fork\HelpMePlease\Assets\_Project\Dev\Tests\Core\Editor\StartScreenPresentationTests.cs:72 
+  at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@aebcb98460c6\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44 ]]></stack-trace>
+          </failure>
+          <output><![CDATA[Saving results to: Artifacts/StartScreen/results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

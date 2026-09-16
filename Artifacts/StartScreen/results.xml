@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="5" result="Passed" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-16 21:28:27Z" end-time="2026-09-16 21:28:32Z" duration="5,175495">
+  <test-suite type="TestSuite" id="1000" name="Help Me Please" fullname="Help Me Please" runstate="Runnable" testcasecount="21" result="Passed" start-time="2026-09-16 21:28:27Z" end-time="2026-09-16 21:28:32Z" duration="5.175495" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1033" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="21" result="Passed" start-time="2026-09-16 21:28:27Z" end-time="2026-09-16 21:28:32Z" duration="4.980413" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="49520" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="1011" name="StartScreenPresentationTests" fullname="StartScreenPresentationTests" classname="StartScreenPresentationTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-16 21:28:27Z" end-time="2026-09-16 21:28:32Z" duration="4.972384" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="ParameterizedMethod" id="1016" name="BackgroundCoversViewportAtBothParallaxExtremes" fullname="StartScreenPresentationTests.BackgroundCoversViewportAtBothParallaxExtremes" classname="StartScreenPresentationTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-16 21:28:18Z" end-time="2026-09-16 21:28:19Z" duration="0.207412" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="1013" name="BackgroundCoversViewportAtBothParallaxExtremes(1920,1080)" fullname="StartScreenPresentationTests.BackgroundCoversViewportAtBothParallaxExtremes(1920,1080)" methodname="BackgroundCoversViewportAtBothParallaxExtremes" classname="StartScreenPresentationTests" runstate="Runnable" seed="77921257" result="Passed" start-time="2026-09-16 21:28:18Z" end-time="2026-09-16 21:28:19Z" duration="0.170778" asserts="0">
+            <properties />
+          </test-case>
+          <test-case id="1014" name="BackgroundCoversViewportAtBothParallaxExtremes(1024,768)" fullname="StartScreenPresentationTests.BackgroundCoversViewportAtBothParallaxExtremes(1024,768)" methodname="BackgroundCoversViewportAtBothParallaxExtremes" classname="StartScreenPresentationTests" runstate="Runnable" seed="1560459081" result="Passed" start-time="2026-09-16 21:28:19Z" end-time="2026-09-16 21:28:19Z" duration="0.013591" asserts="0">
+            <properties />
+          </test-case>
+          <test-case id="1015" name="BackgroundCoversViewportAtBothParallaxExtremes(2560,1080)" fullname="StartScreenPresentationTests.BackgroundCoversViewportAtBothParallaxExtremes(2560,1080)" methodname="BackgroundCoversViewportAtBothParallaxExtremes" classname="StartScreenPresentationTests" runstate="Runnable" seed="1502147724" result="Passed" start-time="2026-09-16 21:28:19Z" end-time="2026-09-16 21:28:19Z" duration="0.014808" asserts="0">
+            <properties />
+          </test-case>
+        </test-suite>
+        <test-case id="1012" name="BackgroundIsAuthoredAndDoesNotInterceptButtons" fullname="StartScreenPresentationTests.BackgroundIsAuthoredAndDoesNotInterceptButtons" methodname="BackgroundIsAuthoredAndDoesNotInterceptButtons" classname="StartScreenPresentationTests" runstate="Runnable" seed="830221921" result="Passed" start-time="2026-09-16 21:28:19Z" end-time="2026-09-16 21:28:19Z" duration="0.135927" asserts="0">
+          <properties />
+        </test-case>
+        <test-case id="1017" name="SettingsCloseRestoresMenuAndStartLoadsBunker" fullname="StartScreenPresentationTests.SettingsCloseRestoresMenuAndStartLoadsBunker" methodname="SettingsCloseRestoresMenuAndStartLoadsBunker" classname="StartScreenPresentationTests" runstate="Runnable" seed="597503233" result="Passed" start-time="2026-09-16 21:28:19Z" end-time="2026-09-16 21:28:32Z" duration="13.135543" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[[BunkerInteractableCollider] Interaction source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerPlayerShowcase 1 renderers=16
+[BunkerInteractableCollider] Interaction source=p_AnomalyTable1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_AnomalyTable1 renderers=32
+[BunkerInteractableCollider] Interaction source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerWeaponShowcase renderers=9
+[BunkerInteractableCollider] Interaction source=p_bunkerWeaponTable3, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerWeaponTable3 renderers=11
+[BunkerInteractableCollider] Interaction source=SlotMachine, interactable=True, hoverable=True
+[BunkerHoverOutline] SlotMachine renderers=55
+[BunkerInteractableCollider] SlotMachine source=SlotMachine, interactable=True, hoverable=True
+[BunkerInteractableCollider] Interaction source=p_Shelf1 (1), interactable=False, hoverable=True
+[BunkerHoverOutline] p_Shelf1 (1) renderers=30
+[BunkerInteractableCollider] Interaction source=p_Shelf1, interactable=False, hoverable=True
+[BunkerHoverOutline] p_Shelf1 renderers=30
+[BunkerInteractableCollider] Interaction source=p_bunkerUpgrade1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerUpgrade1 renderers=20
+[BunkerHoverOutline] Escape Terminal renderers=2
+[BunkerInteractableCollider] Interaction source=Escape Terminal, interactable=True, hoverable=True
+[BunkerInteractableCollider] Interaction source=p_BunkerGates1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_BunkerGates1 renderers=45
+[RunSelectionManager] Character selected: 01_Gera
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+Saving results to: Artifacts/StartScreen/results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
