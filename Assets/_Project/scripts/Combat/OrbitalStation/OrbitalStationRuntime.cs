@@ -168,9 +168,12 @@ namespace Subject42.Combat.OrbitalStation
                     FailRestore(error);
                     return;
                 }
-                var character = boundCharacter != null ? boundCharacter : runStateManager.SelectedCharacter;
-                Geometry = character != null && character.orbitalPath == OrbitalPathType.FigureEight
-                    ? new OrbitalPathGeometry(config) : OrbitalPathGeometry.Circle;
+                if (!TryResolveCharacterGeometry(config, out OrbitalPathGeometry geometry, out error))
+                {
+                    FailRestore(error);
+                    return;
+                }
+                Geometry = geometry;
                 authoredView = GetComponent<OrbitalStationView>();
                 if (authoredView == null || !authoredView.IsValid)
                 { FailRestore("required authored station references are missing"); return; }
@@ -250,6 +253,50 @@ namespace Subject42.Combat.OrbitalStation
             State = runStateManager?.OrbitalStationState;
             Debug.LogError($"[OrbitalStation] operation=restore RunId={runStateManager?.OrbitalStationState?.RunId.ToString() ?? "missing"} " +
                 $"scene={gameObject.scene.name} component={nameof(OrbitalStationRuntime)} reason={reason}", this);
+        }
+
+        private bool TryResolveCharacterGeometry(
+            OrbitalPresentationConfig config,
+            out OrbitalPathGeometry geometry,
+            out string error)
+        {
+            geometry = null;
+            CharacterData character = boundCharacter != null
+                ? boundCharacter
+                : runStateManager.SelectedCharacter;
+            if (character == null)
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.LogWarning(
+                    "[OrbitalStation] Development fallback: missing CharacterData, using Circle geometry.",
+                    this);
+                geometry = OrbitalPathGeometry.Circle;
+                error = null;
+                return true;
+#else
+                error = "production CharacterData is missing; cannot resolve ORBITAL path";
+                return false;
+#endif
+            }
+
+            switch (character.orbitalPath)
+            {
+                case OrbitalPathType.Circle:
+                    geometry = OrbitalPathGeometry.Circle;
+                    error = null;
+                    return true;
+                case OrbitalPathType.FigureEight:
+                    geometry = new OrbitalPathGeometry(config);
+                    error = null;
+                    return true;
+                case OrbitalPathType.Custom:
+                    geometry = OrbitalPathGeometry.Circle;
+                    error = null;
+                    return true;
+                default:
+                    error = $"invalid ORBITAL path '{character.orbitalPath}' on CharacterData '{character.name}'";
+                    return false;
+            }
         }
 
         private void Update()

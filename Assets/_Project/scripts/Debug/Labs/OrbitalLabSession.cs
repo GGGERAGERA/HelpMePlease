@@ -65,7 +65,7 @@ public abstract class OrbitalLabSession : MonoBehaviour
         // Let Unity retire old views, coroutines and subscriptions before creating replacements.
         yield return null;
         if (Character == null) Character = manager.SelectedCharacter;
-        if (Character == null || Character.characterPrefab == null)
+        if (Character == null || Character.ProductionPrefab == null)
         {
             resetting = false;
             Notice = "INIT FAILED — assign the Lab default Character";
@@ -73,8 +73,7 @@ public abstract class OrbitalLabSession : MonoBehaviour
             yield break;
         }
         BeginLabRun(manager);
-        var prefab = OrbitalPresentationConfig.Active.GetPlayerPrefab(Character.characterPrefab);
-        var player = Instantiate(prefab, transform);
+        var player = Instantiate(Character.ProductionPrefab, transform);
         player.name = "Player (production)";
         player.transform.position = Vector3.zero;
         player.SetActive(true);

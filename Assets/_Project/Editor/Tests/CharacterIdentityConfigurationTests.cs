@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using Subject42.Combat.OrbitalStation;
 using System.Reflection;
+using System.Linq;
 
 public sealed class CharacterIdentityConfigurationTests
 {
@@ -13,12 +14,16 @@ public sealed class CharacterIdentityConfigurationTests
     private const string DimagDataPath =
         "Assets/_Project/Scriptable Objects/Characters/02_Di-mag.asset";
 
-    [TestCase(GeraDataPath, OrbitalPathType.Circle, false)]
-    [TestCase(DimagDataPath, OrbitalPathType.FigureEight, false)]
-    [TestCase(VikaDataPath, OrbitalPathType.Custom, true)]
-    public void CharacterOwnsItsProductionPath(string assetPath, OrbitalPathType expected, bool draws)
+    [TestCase(GeraDataPath, CharacterId.Gera, OrbitalPathType.Circle, false)]
+    [TestCase(DimagDataPath, CharacterId.DiMag, OrbitalPathType.FigureEight, false)]
+    [TestCase(VikaDataPath, CharacterId.Vika, OrbitalPathType.Custom, true)]
+    public void CharacterOwnsItsProductionPath(string assetPath, CharacterId id, OrbitalPathType expected, bool draws)
     {
         var character = AssetDatabase.LoadAssetAtPath<CharacterData>(assetPath);
+        Assert.That(character.Id, Is.EqualTo(id));
+        Assert.That(character.ProductionPrefab, Is.Not.Null);
+        Assert.That(character.Portrait, Is.Not.Null);
+        Assert.That(character.GameplayIcon, Is.Not.Null);
         Assert.That(character.orbitalPath, Is.EqualTo(expected));
         var manager = RunStateManager.EnsureExists();
         var stage = ScriptableObject.CreateInstance<StageProfileData>();
@@ -39,12 +44,42 @@ public sealed class CharacterIdentityConfigurationTests
     }
 
     [Test]
+    public void ProductionCharacterIdsAreUniqueAndExpected()
+    {
+        CharacterData[] characters =
+        {
+            AssetDatabase.LoadAssetAtPath<CharacterData>(GeraDataPath),
+            AssetDatabase.LoadAssetAtPath<CharacterData>(DimagDataPath),
+            AssetDatabase.LoadAssetAtPath<CharacterData>(VikaDataPath)
+        };
+
+        Assert.That(characters.Select(character => character.Id),
+            Is.EquivalentTo(new[] { CharacterId.Gera, CharacterId.DiMag, CharacterId.Vika }));
+        Assert.That(characters.Select(character => character.Id).Distinct().Count(),
+            Is.EqualTo(characters.Length));
+        Assert.That(ProductionCharacterValidator.Validate(characters, out string error),
+            Is.True,
+            error);
+    }
+
+    [Test]
+    public void CharacterSelectionModelUsesStableIdAndAuthoredIcon()
+    {
+        CharacterData character = AssetDatabase.LoadAssetAtPath<CharacterData>(GeraDataPath);
+        var entry = BunkerSelectionSourceHub.BuildCharacterEntryForTests(character, selected: false);
+
+        Assert.That(entry.Id, Is.EqualTo(CharacterId.Gera.ToString()));
+        Assert.That(entry.Icon, Is.SameAs(character.Portrait));
+        Assert.That(entry.CharacterVisual, Is.SameAs(character.GameplayIcon));
+    }
+
+    [Test]
     public void ProductionFacingFlipsTheVisibleCharacterWithoutFlippingStation()
     {
         foreach (string path in new[] { GeraDataPath, DimagDataPath, VikaDataPath })
         {
             var character = AssetDatabase.LoadAssetAtPath<CharacterData>(path);
-            var player = Object.Instantiate(OrbitalPresentationConfig.Active.GetPlayerPrefab(character.characterPrefab));
+            var player = Object.Instantiate(character.ProductionPrefab);
             try
             {
                 var movement = player.GetComponent<CharacterMovement2D>();
@@ -78,19 +113,19 @@ public sealed class CharacterIdentityConfigurationTests
 
         Assert.That(gera, Is.Not.Null);
         Assert.That(gera.characterName, Is.EqualTo("Gera"));
-        Assert.That(AssetDatabase.GetAssetPath(gera.characterPrefab),
-            Is.EqualTo("Assets/_Project/prefabs/players/p_Player1 Variant.prefab"));
-        Assert.That(AssetDatabase.GetAssetPath(gera.portrait),
+        Assert.That(AssetDatabase.GetAssetPath(gera.ProductionPrefab),
+            Is.EqualTo("Assets/_Project/Resources/OrbitalStation/Authored/Player_2_p_Player1 Variant.prefab"));
+        Assert.That(AssetDatabase.GetAssetPath(gera.Portrait),
             Is.EqualTo("Assets/_Project/art/image_2026-04-26_01-41-48.png"));
-        AssertActiveFacingVisual(gera.characterPrefab, "Gera4");
+        AssertActiveFacingVisual(gera.ProductionPrefab, "Gera4");
 
         Assert.That(vika, Is.Not.Null);
         Assert.That(vika.characterName, Is.EqualTo("Vika"));
-        Assert.That(AssetDatabase.GetAssetPath(vika.characterPrefab),
-            Is.EqualTo("Assets/_Project/prefabs/players/p_Player3.prefab"));
-        Assert.That(AssetDatabase.GetAssetPath(vika.portrait),
+        Assert.That(AssetDatabase.GetAssetPath(vika.ProductionPrefab),
+            Is.EqualTo("Assets/_Project/Resources/OrbitalStation/Authored/Player_0_p_Player3.prefab"));
+        Assert.That(AssetDatabase.GetAssetPath(vika.Portrait),
             Is.EqualTo("Assets/_Project/art/339a1a4a-a7df-475a-9ca7-579919373785.png"));
-        AssertActiveFacingVisual(vika.characterPrefab, "Vika4");
+        AssertActiveFacingVisual(vika.ProductionPrefab, "Vika4");
     }
 
     [Test]

@@ -101,9 +101,12 @@ public class CharacterSpawner : MonoBehaviour
             return null;
         }
 
-        if (selectedCharacter.characterPrefab == null)
+        if (!selectedCharacter.HasValidProductionIdentity)
         {
-            Debug.LogError($"[CharacterSpawner] Character prefab is missing on {selectedCharacter.name}.");
+            Debug.LogError(
+                $"[CharacterSpawner] Invalid production CharacterData '{selectedCharacter.name}'. " +
+                "Check CharacterId, production prefab, portrait, gameplay icon and orbital path.",
+                selectedCharacter);
             return null;
         }
 
@@ -111,12 +114,8 @@ public class CharacterSpawner : MonoBehaviour
 
         Vector3 spawnPosition = spawnPoint != null ? spawnPoint.position : transform.position;
 
-        var config = OrbitalPresentationConfig.Active;
-        GameObject productionPrefab = config != null ? config.GetPlayerPrefab(selectedCharacter.characterPrefab) : null;
-        if (productionPrefab == null)
-        { Debug.LogError($"[CharacterSpawner] Required ORBITAL variant missing for {selectedCharacter.name}"); return null; }
         GameObject player = Instantiate(
-            productionPrefab,
+            selectedCharacter.ProductionPrefab,
             spawnPosition,
             Quaternion.identity
         );

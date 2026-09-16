@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: 01_Gera
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
   unlockData: {fileID: 11400000, guid: f00d42b9cb016a44f825ce1932affc15, type: 2}
+  characterId: 1
   characterName: Gera
   orbitalPath: 0
   nameKey: character.gera.name
@@ -21,6 +22,8 @@ MonoBehaviour:
   descriptionKey: character.gera.description
   combatType: 0
   portrait: {fileID: -1355447741393180930, guid: e4a213a041071994daa5664d7c0e1020, type: 3}
+  gameplayIcon: {fileID: -1355447741393180930, guid: e4a213a041071994daa5664d7c0e1020, type: 3}
   characterPrefab: {fileID: 5653916710608092070, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
+  productionPrefab: {fileID: 6095222015538505522, guid: 8522b3d6a57df2648903eb77fc00ecb6, type: 3}
   maxHealth: 100
   moveSpeed: 6

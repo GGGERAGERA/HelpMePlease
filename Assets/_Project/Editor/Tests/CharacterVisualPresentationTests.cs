@@ -151,16 +151,16 @@ public sealed class CharacterVisualPresentationTests
     [Test]
     public void BunkerAndProductionShareEachCharactersVisual()
     {
-        foreach (var entry in OrbitalPresentationConfig.Active.PlayerVariants)
+        foreach (var character in LoadProductionCharacters())
         {
-            var source = entry.Source.GetComponentInChildren<Animator>(true);
-            var production = entry.Production.GetComponentInChildren<Animator>(true);
+            var source = character.characterPrefab.GetComponentInChildren<Animator>(true);
+            var production = character.ProductionPrefab.GetComponentInChildren<Animator>(true);
             Assert.That(PrefabUtility.GetCorrespondingObjectFromOriginalSource(production.gameObject),
-                Is.SameAs(PrefabUtility.GetCorrespondingObjectFromOriginalSource(source.gameObject)), entry.Source.name);
+                Is.SameAs(PrefabUtility.GetCorrespondingObjectFromOriginalSource(source.gameObject)), character.name);
             string[] Appearance(Animator root) => root.GetComponentsInChildren<SpriteRenderer>(true)
                 .Select(r => $"{AnimationUtility.CalculateTransformPath(r.transform, root.transform)}:{r.sprite?.name}:{r.enabled}:{r.gameObject.activeSelf}")
                 .OrderBy(s => s).ToArray();
-            Assert.That(Appearance(production), Is.EqualTo(Appearance(source)), entry.Source.name);
+            Assert.That(Appearance(production), Is.EqualTo(Appearance(source)), character.name);
         }
     }
 
@@ -210,5 +210,12 @@ public sealed class CharacterVisualPresentationTests
         Assert.That(Time.timeScale, Is.EqualTo(1f));
         yield return new ExitPlayMode();
     }
+
+    private static CharacterData[] LoadProductionCharacters() => new[]
+    {
+        AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Scriptable Objects/Characters/01_Gera.asset"),
+        AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Scriptable Objects/Characters/02_Di-mag.asset"),
+        AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Scriptable Objects/Characters/03_Vika.asset")
+    };
 }
 #endif

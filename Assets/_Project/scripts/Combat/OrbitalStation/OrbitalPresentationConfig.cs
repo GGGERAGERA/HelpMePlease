@@ -8,8 +8,6 @@ namespace Subject42.Combat.OrbitalStation
         private const string ResourcePath = "OrbitalStation/OrbitalPresentationConfig";
         private static OrbitalPresentationConfig active;
 
-        [System.Serializable]
-        public sealed class PlayerVariant { public GameObject Source; public GameObject Production; }
         [Header("Authored composition")]
         public GameObject StationPrefab;
         public OrbitalRingView RingPrefab;
@@ -40,7 +38,6 @@ namespace Subject42.Combat.OrbitalStation
         public GameObject PistolProjectilePrefab;
         public Color GetCoreWaveColor(int wave) => wave switch
         { 1 => CoreCyan, 2 => CoreViolet, _ => CoreGold };
-        public PlayerVariant[] PlayerVariants;
         [Header("Visual-only modules")]
         public GameObject PistolPrefab;
         public GameObject LaserSwordPrefab;
@@ -169,13 +166,8 @@ namespace Subject42.Combat.OrbitalStation
                     { error = $"{kind} visual prefab contains missing or gameplay component"; return false; }
                 }
             }
-            if (PlayerVariants == null || PlayerVariants.Length == 0 || RingIcon == null)
-            { error = "required production player variants or ring icon missing"; return false; }
-            foreach (var entry in PlayerVariants)
-                if (entry.Source == null || entry.Production == null ||
-                    entry.Production.GetComponentsInChildren<OrbitalStationView>(true).Length != 1 ||
-                    entry.Production.GetComponentsInChildren<BaseWeapon>(true).Length != 0)
-                { error = "invalid ORBITAL production player variant"; return false; }
+            if (RingIcon == null)
+            { error = "required ring icon missing"; return false; }
             error = "OK";
             return true;
         }
@@ -189,14 +181,6 @@ namespace Subject42.Combat.OrbitalStation
             OrbitalModuleKind.LinkNode => LinkPrefab,
             _ => null
         };
-
-        public GameObject GetPlayerPrefab(GameObject source)
-        {
-            if (PlayerVariants != null)
-                foreach (var entry in PlayerVariants)
-                    if (entry.Source == source) return entry.Production;
-            return null;
-        }
 
         public float GetScale(OrbitalModuleKind kind) => kind switch
         {

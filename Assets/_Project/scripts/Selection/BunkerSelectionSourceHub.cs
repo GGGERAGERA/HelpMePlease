@@ -77,7 +77,7 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
 
         foreach (CharacterData character in characters)
         {
-            if (character != null && character.characterPrefab != null &&
+            if (character != null && character.ProductionPrefab != null &&
                 IsUnlocked(character.unlockData))
                 return character;
         }
@@ -188,7 +188,7 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
         switch (kind)
         {
             case SourceKind.Characters:
-                CharacterData character = FindByName(characters, entryId);
+                CharacterData character = FindCharacter(characters, entryId);
                 if (character != null && IsUnlocked(character.unlockData) && RunSelectionManager.Instance != null)
                 {
                     RunSelectionManager.Instance.SelectCharacter(character);
@@ -234,7 +234,7 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
             LocalizationService.Instance.Get("bunker.select"),
             BunkerStationId.Character);
         CharacterData current = RunSelectionManager.Instance?.SelectedCharacter;
-        model.SelectedId = current != null ? current.name : null;
+        model.SelectedId = current != null ? current.Id.ToString() : null;
 
         AddNonNull(characters, character =>
         {
@@ -242,20 +242,7 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
                 character.unlockData,
                 BunkerStationId.Character);
             bool unlocked = IsUnlocked(character.unlockData);
-            var entry = new BunkerSelectionEntryModel
-            {
-                Id = character.name,
-                DisplayName = character.LocalizedName,
-                Category = character.LocalizedCombatTypeDisplayName.ToUpperInvariant(),
-                Icon = character.portrait,
-                CharacterVisual = GetCharacterVisual(character),
-                IsCharacter = true,
-                Feature = character.LocalizedCombatTypeDescription,
-                Description = character.LocalizedDescription,
-                Locked = !unlocked,
-                LockReason = GetLockReason(character.unlockData),
-                CanConfirm = unlocked
-            };
+            var entry = BuildCharacterEntry(character, unlocked);
             entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.health"), character.maxHealth.ToString("0")));
             entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.speed"), character.moveSpeed.ToString("0.#")));
             AddVisibleEntry(model, entry, requiredLevel);
@@ -264,24 +251,31 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
         return model;
     }
 
-    private static Sprite GetCharacterVisual(CharacterData character)
+    public static BunkerSelectionEntryModel BuildCharacterEntryForTests(
+        CharacterData character,
+        bool selected)
     {
-        if (character.characterPrefab == null)
-            return null;
+        return BuildCharacterEntry(character, true);
+    }
 
-        // Production characters each have one active body renderer. The other
-        // children are disabled art variants; never pick one by its asset name.
-        foreach (SpriteRenderer renderer in character.characterPrefab.GetComponentsInChildren<SpriteRenderer>(true))
+    private static BunkerSelectionEntryModel BuildCharacterEntry(
+        CharacterData character,
+        bool unlocked)
+    {
+        return new BunkerSelectionEntryModel
         {
-            if (!renderer.enabled || renderer.sprite == null)
-                continue;
-            bool active = true;
-            for (Transform node = renderer.transform; node != null; node = node.parent)
-                active &= node.gameObject.activeSelf;
-            if (active)
-                return renderer.sprite;
-        }
-        return null;
+            Id = character.Id.ToString(),
+            DisplayName = character.LocalizedName,
+            Category = character.LocalizedCombatTypeDisplayName.ToUpperInvariant(),
+            Icon = character.Portrait,
+            CharacterVisual = character.GameplayIcon,
+            IsCharacter = true,
+            Feature = character.LocalizedCombatTypeDescription,
+            Description = character.LocalizedDescription,
+            Locked = !unlocked,
+            LockReason = GetLockReason(character.unlockData),
+            CanConfirm = unlocked
+        };
     }
 
     private BunkerSelectionWindowModel BuildWeapons()
@@ -793,6 +787,25 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
         if (source == null)
             return null;
         return Array.Find(source, value => value != null && value.name == id);
+    }
+
+    private CharacterData FindCharacter(CharacterData[] source, string id)
+    {
+        if (source == null || string.IsNullOrWhiteSpace(id))
+            return null;
+        if (Enum.TryParse(id, ignoreCase: true, out CharacterId characterId) &&
+            characterId != CharacterId.None)
+        {
+            CharacterData byId = Array.Find(source, value =>
+                value != null && value.Id == characterId);
+            if (byId != null)
+                return byId;
+        }
+
+        // Backward compatibility for old UI/debug callers that used asset names
+        // or legacy display identifiers before CharacterId existed.
+        return Array.Find(source, value => value != null &&
+            (value.name == id || value.characterName == id));
     }
 
     private WeaponData FindByName(WeaponData[] source, string id)

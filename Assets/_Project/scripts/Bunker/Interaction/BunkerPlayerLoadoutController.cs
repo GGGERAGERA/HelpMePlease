@@ -128,10 +128,10 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
         if (character == activeCharacter)
             return;
 
-        if (character.characterPrefab == null)
+        if (character.ProductionPrefab == null)
             return;
 
-        Transform sourceVisual = FindVisual(character.characterPrefab);
+        Transform sourceVisual = FindVisual(character.ProductionPrefab);
         if (sourceVisual == null)
         {
             Debug.LogError(
@@ -159,7 +159,7 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
         CharacterMovement2D movement =
             player.GetComponent<CharacterMovement2D>();
         Transform facingVisual = ResolveFacingVisual(
-            character.characterPrefab,
+            character.ProductionPrefab,
             sourceVisual,
             replacement);
         movement?.SetVisualRoot(facingVisual);

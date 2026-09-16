@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: 03_Vika
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
   unlockData: {fileID: 11400000, guid: 959fe3a8ce8fd0746965a06ab6d013b3, type: 2}
+  characterId: 3
   characterName: Vika
   nameKey: character.vika.name
   orbitalPatternKey: character.pattern.experimental
@@ -21,6 +22,8 @@ MonoBehaviour:
   orbitalPath: 2
   combatType: 0
   portrait: {fileID: -4156162664150254173, guid: a5b1c7aa692913c49b908b8a80a34de6, type: 3}
+  gameplayIcon: {fileID: -4156162664150254173, guid: a5b1c7aa692913c49b908b8a80a34de6, type: 3}
   characterPrefab: {fileID: 3267337206729473661, guid: 1868b54bca0976a44b3b858e4529d00d, type: 3}
+  productionPrefab: {fileID: 8899567883607463258, guid: 50fd004411bc2bc40bb6a21478296cc8, type: 3}
   maxHealth: 150
   moveSpeed: 5

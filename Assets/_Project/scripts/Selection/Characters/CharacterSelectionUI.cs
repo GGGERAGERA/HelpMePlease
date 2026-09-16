@@ -129,8 +129,8 @@ public sealed class CharacterSelectionUI : MonoBehaviour
             emptyStateText.gameObject.SetActive(false);
         if (portraitImage != null)
         {
-            portraitImage.sprite = character.portrait;
-            portraitImage.enabled = character.portrait != null;
+            portraitImage.sprite = character.Portrait;
+            portraitImage.enabled = character.Portrait != null;
             portraitImage.preserveAspect = true;
             portraitImage.color = Color.white;
         }

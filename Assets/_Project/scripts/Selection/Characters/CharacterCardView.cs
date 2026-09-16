@@ -49,9 +49,11 @@ public sealed class CharacterCardView : MonoBehaviour, IPointerEnterHandler, IPo
 
         if (characterImage != null)
         {
-            characterImage.sprite = characterSprite;
+            characterImage.sprite = characterSprite != null
+                ? characterSprite
+                : character.GameplayIcon;
             characterImage.color = Color.white;
-            characterImage.enabled = characterSprite != null;
+            characterImage.enabled = characterImage.sprite != null;
         }
 
         if (nameText != null)

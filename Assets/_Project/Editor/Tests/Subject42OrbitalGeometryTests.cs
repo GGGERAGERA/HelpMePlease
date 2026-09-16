@@ -175,7 +175,7 @@ public sealed class Subject42OrbitalGeometryTests
         var character = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Scriptable Objects/Characters/01_Gera.asset");
         foreach (int count in new[] { 1, 4, 8 })
         {
-            var player = Object.Instantiate(config.GetPlayerPrefab(character.characterPrefab));
+            var player = Object.Instantiate(character.ProductionPrefab);
             var cameraRoot = new GameObject("Geometry capture camera");
             var target = new RenderTexture(1280, 720, 24);
             var pixels = new Texture2D(1280, 720, TextureFormat.RGB24, false);

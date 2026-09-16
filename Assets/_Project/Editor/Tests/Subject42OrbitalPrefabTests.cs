@@ -12,6 +12,12 @@ using UnityEngine.Rendering;
 public sealed class Subject42OrbitalPrefabTests
 {
     private static OrbitalPresentationConfig Config => Resources.Load<OrbitalPresentationConfig>("OrbitalStation/OrbitalPresentationConfig");
+    private static CharacterData[] ProductionCharacters => new[]
+    {
+        AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Scriptable Objects/Characters/01_Gera.asset"),
+        AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Scriptable Objects/Characters/02_Di-mag.asset"),
+        AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Scriptable Objects/Characters/03_Vika.asset")
+    };
 
     [Test]
     public void RingLine_ContinuousTrajectoryHasUniformOpacity()
@@ -43,12 +49,12 @@ public sealed class Subject42OrbitalPrefabTests
     [Test]
     public void DepthSorting_UsesPlayerInternalLayerAndKeepsWeaponArtIntact()
     {
-        foreach (var entry in Config.PlayerVariants)
+        foreach (var character in ProductionCharacters)
         {
-            var playerGroup = entry.Production.GetComponent<SortingGroup>();
+            var playerGroup = character.ProductionPrefab.GetComponent<SortingGroup>();
             Assert.That(playerGroup, Is.Not.Null);
             Assert.That(playerGroup.sortingLayerName, Is.EqualTo("Player"));
-            foreach (var body in entry.Production.transform.Find("Graphic").GetComponentsInChildren<SpriteRenderer>(true))
+            foreach (var body in character.ProductionPrefab.transform.Find("Graphic").GetComponentsInChildren<SpriteRenderer>(true))
             {
                 Assert.That(Config.RingPrefab.BackLine.sortingLayerID, Is.EqualTo(body.sortingLayerID));
                 Assert.That(Config.MountPrefab.DepthGroup.sortingLayerID, Is.EqualTo(body.sortingLayerID));
@@ -219,11 +225,11 @@ public sealed class Subject42OrbitalPrefabTests
     [Test]
     public void ProductionCharacters_AreSeparateFromLegacySources()
     {
-        Assert.That(Config.PlayerVariants.Length, Is.GreaterThan(0));
-        foreach (var entry in Config.PlayerVariants)
+        Assert.That(ProductionCharacters.Length, Is.GreaterThan(0));
+        foreach (var character in ProductionCharacters)
         {
-            Assert.That(entry.Production, Is.Not.SameAs(entry.Source));
-            var root = PrefabUtility.LoadPrefabContents(AssetDatabase.GetAssetPath(entry.Production));
+            Assert.That(character.ProductionPrefab, Is.Not.SameAs(character.characterPrefab));
+            var root = PrefabUtility.LoadPrefabContents(AssetDatabase.GetAssetPath(character.ProductionPrefab));
             try
             {
                 Assert.That(root.GetComponentsInChildren<BaseWeapon>(true), Is.Empty);
