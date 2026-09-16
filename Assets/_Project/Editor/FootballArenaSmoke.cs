@@ -11,6 +11,7 @@ using UnityEngine.SceneManagement;
 [InitializeOnLoad]
 public static class FootballArenaSmoke
 {
+    private const string Output = "Artifacts/GeneratedQA/FootballSmoke/";
     private static readonly List<string> results = new();
     private static FootballMinigame game;
     private static Rigidbody2D ballBody, playerBody;
@@ -63,6 +64,7 @@ public static class FootballArenaSmoke
         if (EditorApplication.isPlaying || SceneManager.GetActiveScene().isDirty ||
             SceneManager.GetActiveScene().path != "Assets/_Project/Scenes/MainBuild/MainMenu.unity")
             throw new InvalidOperationException("Open saved MainMenu in Edit Mode.");
+        Directory.CreateDirectory(Output);
         SessionState.SetBool("FootballRunInBackground", Application.runInBackground);
         SessionState.SetBool("FootballOriginalSmoke", true);
         foreach (string key in ProgressKeys)
@@ -75,7 +77,7 @@ public static class FootballArenaSmoke
     private static void Check(string name, bool pass, string detail = "")
     {
         results.Add($"{(pass ? "PASS" : "FAIL")}: {name} {detail}");
-        File.WriteAllLines("Assets/_Project/Documentation/FootballSmoke.txt", results);
+        File.WriteAllLines(Output + "FootballSmoke.txt", results);
     }
     private static void Shot(Vector2 p, Vector2 velocity)
     {
@@ -120,7 +122,7 @@ public static class FootballArenaSmoke
                 case 1:
                     Check("Anomaly movement restored",Vector3.Distance(anomalyStart,anomaly.transform.position)>.1f);
                     Check("Target movement restored",Vector3.Distance(targetStart,target.transform.position)>.1f);
-                    ScreenCapture.CaptureScreenshot("Assets/_Project/Documentation/FootballArena_HUD.png");
+                    ScreenCapture.CaptureScreenshot(Output + "FootballArena_HUD.png");
                     until=Time.time+.2f;break;
                 case 2:
                     // Remove only dynamic interference for repeatable perimeter checks.
@@ -195,7 +197,7 @@ public static class FootballArenaSmoke
                     popup=((TMPro.TMP_Text[])typeof(FootballScoreZone).GetField("scorePopups",Private).GetValue(target)).First(t=>t.gameObject.activeSelf);
                     popupStart=popup.transform.position;
                     Check("Target popup shows awarded points",popup.text=="+"+targetPoints);
-                    ScreenCapture.CaptureScreenshot("Assets/_Project/Documentation/FootballTargetPoints.png");
+                    ScreenCapture.CaptureScreenshot(Output + "FootballTargetPoints.png");
                     Shot(game.BallSpawnPoints[0].position,Vector2.zero);
                     until=Time.time+.6f;break;
                 case 18:
@@ -225,7 +227,7 @@ public static class FootballArenaSmoke
                     var hud=game.transform.parent.GetComponentInChildren<FootballMinigameHUD>();
                     var stat=(TMPro.TMP_Text)typeof(FootballMinigameHUD).GetField("goalStatsText",Private).GetValue(hud);
                     Check("HUD displays goal subtotal",stat.text.Contains("2") && stat.text.Contains("40"));
-                    ScreenCapture.CaptureScreenshot("Assets/_Project/Documentation/FootballGoals_HUD.png");
+                    ScreenCapture.CaptureScreenshot(Output + "FootballGoals_HUD.png");
                     until=Time.time+1;break;
                 case 22:
                     Check("Goal feedback expires",gate.GetComponentInChildren<TMPro.TMP_Text>()==null);
@@ -252,7 +254,7 @@ public static class FootballArenaSmoke
                     Check("Longer gravity fields",fields.All(f=>Mathf.Abs(f.FocusArea.bounds.size.x-7)<.01f));
                     Shot((Vector2)fields[0].transform.position+Vector2.right,Vector2.zero);break;
                 case 28:
-                    ScreenCapture.CaptureScreenshot("Assets/_Project/Documentation/FootballPolarity.png");
+                    ScreenCapture.CaptureScreenshot(Output + "FootballPolarity.png");
                     Check("First field attracts ball",ballBody.linearVelocity.x<-.1f);
                     Shot((Vector2)fields[1].transform.position+Vector2.right,Vector2.zero);break;
                 case 29:

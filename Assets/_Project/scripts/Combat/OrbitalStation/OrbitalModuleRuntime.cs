@@ -256,10 +256,10 @@ namespace Subject42.Combat.OrbitalStation
                 target.transform.position);
             AudioService.Instance?.PlayAt(AudioCueId.OrbitalImpulseFire, Visual.transform.position);
             TriggerPresentation();
-            Rigidbody2D body = target.GetComponent<Rigidbody2D>();
-            if (body != null)
-                body.AddForce(direction * 4.5f *
-                    Mount.Ring.PowerMultiplier, ForceMode2D.Impulse);
+            // Movement owns knockback; its next MovePosition would replace a raw body impulse.
+            EnemyMovement movement = target.GetComponent<EnemyMovement>();
+            if (movement != null)
+                movement.ApplyKnockback(direction, 4.5f * Mount.Ring.PowerMultiplier);
             Cooldown = 1.25f;
         }
     }

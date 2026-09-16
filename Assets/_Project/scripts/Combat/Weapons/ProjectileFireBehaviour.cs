@@ -85,7 +85,9 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
             projectile = projectileObject.GetComponent<IWeaponProjectile>();
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         ProductionVisualTuningController.RegisterProjectile(projectileObject);
+#endif
 
         if (projectile == null)
         {

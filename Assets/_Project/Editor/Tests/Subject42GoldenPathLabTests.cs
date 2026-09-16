@@ -14,6 +14,20 @@ using UnityEngine.TestTools;
 public sealed class Subject42GoldenPathLabTests
 {
     [Test]
+    public void EntryPointUsesExistingAuthoredDevScene()
+    {
+        Assert.That(GoldenPathLab.ScenePath,
+            Is.EqualTo("Assets/_Project/Scenes/Dev/Labs/GoldenPathLab.unity"));
+        Assert.That(AssetDatabase.LoadAssetAtPath<SceneAsset>(GoldenPathLab.ScenePath), Is.Not.Null);
+        CollectionAssert.AreEqual(new[]
+        {
+            "Assets/_Project/Scenes/MainBuild/StartScreen.unity",
+            "Assets/_Project/Scenes/MainBuild/MainMenu.unity",
+            "Assets/_Project/Scenes/MainBuild/MVP.unity"
+        }, EditorBuildSettings.scenes.Where(scene => scene.enabled).Select(scene => scene.path).ToArray());
+    }
+
+    [Test]
     public void RowColoursSeparatePassCombatRegressionAndAssertion()
     {
         Color pass = GoldenPathLab.RowColor("PASS");

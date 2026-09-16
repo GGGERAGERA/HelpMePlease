@@ -12,7 +12,7 @@ using UnityEngine.SceneManagement;
 // Only instantiated by the isolated editor lab scene. Uses the existing run/session/results.
 public sealed class GoldenPathLab : MonoBehaviour
 {
-    public const string ScenePath = "Assets/_Project/Scenes/Dev/GoldenPathLab.unity";
+    public const string ScenePath = "Assets/_Project/Scenes/Dev/Labs/GoldenPathLab.unity";
     public static GoldenPathLab Current { get; private set; }
     public CharacterData Character;
     public float SelectedSpeed { get; private set; } = 5f;
