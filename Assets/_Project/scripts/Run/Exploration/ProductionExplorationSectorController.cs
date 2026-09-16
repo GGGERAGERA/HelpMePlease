@@ -66,6 +66,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
     public void ChangePropSeed(int delta) => propScatter?.ChangeSeed(delta);
 
     private ExplorationSectorConfig config;
+    public ExplorationSectorConfig Config => config;
     private GameplayAreaService gameplayArea;
     private EnemySpawner enemySpawner;
     private WorldEventSpawner eventSpawner;
@@ -115,11 +116,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         }
 
 
-        config = explorationConfig != null
-            ? explorationConfig
-            : Resources.Load<ExplorationSectorConfig>(
-                "ProductionRun/ExplorationSectorConfig"
-            );
+        config = explorationConfig;
         gameplayArea = area;
         enemySpawner = enemies;
         eventSpawner = events;
@@ -170,7 +167,8 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
                 eventSpawner,
                 anomalyController,
                 exitPosition,
-                config.ExitRadius
+                config.ExitRadius,
+                config.AnomalyTerritoryFill
             );
         }
 
@@ -210,7 +208,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         GameObject exitObject = new("Sector Exit");
         ProductionSectorExit sectorExit =
             exitObject.AddComponent<ProductionSectorExit>();
-        sectorExit.Initialize(exitPosition, config.ExitRadius, runFlow);
+        sectorExit.Initialize(exitPosition, config.ExitRadius, runFlow, config.SectorExitGlow);
 
         breakableNormalSitePositions = normalPositions;
         breakableSpecialSitePosition = specialPosition;
@@ -231,7 +229,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         // Place decoration after gameplay objects so its profile/seed never drives their placement.
         propScatter = new ProductionSectorProps(transform, gameplayArea, normalPositions,
             specialPosition, exitPosition, config.ExitRadius, propScatterProfile != null
-                ? propScatterProfile : Resources.Load<PropScatterProfile>("PropScatterProfile"));
+                ? propScatterProfile : config.PropScatterProfile);
         propScatter.Regenerate();
 
         SpawnPortalPair();
@@ -267,7 +265,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
                 var root = new GameObject("Sector Portal Pair");
                 root.transform.SetParent(transform, false);
                 PortalPair = root.AddComponent<ProductionPortalPair>();
-                PortalPair.Initialize(other, point);
+                PortalPair.Initialize(other, point, config.PortalVisualPrefab);
                 return true;
             }
             candidates.Add(point);
@@ -301,7 +299,8 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         for (int i = 0; i < NormalSiteCount; i++)
             new GameObject($"Normal Anomaly Site {i + 1}").AddComponent<ProductionAnomalySite>()
                 .InitializeNormal(positions[i], sizes[i], anomalies[i % anomalies.Length],
-                    events[i % events.Count], eventSpawner, anomalyController, exit, config.ExitRadius);
+                    events[i % events.Count], eventSpawner, anomalyController, exit, config.ExitRadius,
+                    config.AnomalyTerritoryFill);
         bool special = new GameObject("Special Anomaly Site").AddComponent<ProductionAnomalySite>()
             .InitializeSpecial(specialPosition, specialSize, SelectSpecialPower(),
                 events[NormalSiteCount % events.Count], eventSpawner, anomalyController,
@@ -370,7 +369,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             ResourceNode node = Instantiate(
                 prefab, position, Quaternion.identity, transform);
             node.name = prefab.name;
-            node.Initialize(player);
+            node.Initialize(player, config);
             resourceNodes.Add(node);
             placed.Add(position);
         }
@@ -420,7 +419,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
                 continue;
             }
 
-            WorldLootChest chest = WorldLootChestSpawner.SpawnChest(candidate);
+            WorldLootChest chest = WorldLootChestSpawner.SpawnChest(config.WorldLootChestPrefab, candidate);
             if (chest == null)
                 return false;
 
@@ -728,7 +727,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
                 continue;
             }
 
-            WorldLootChest chest = WorldLootChestSpawner.SpawnChest(candidate);
+            WorldLootChest chest = WorldLootChestSpawner.SpawnChest(config.WorldLootChestPrefab, candidate);
             if (chest == null)
                 return false;
             chest.transform.SetParent(transform, true);

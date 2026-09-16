@@ -13,7 +13,6 @@ public sealed class AudioSettingsService : MonoBehaviour
     public const string MusicVolumeParameter = "MusicVolume";
     public const string SoundsVolumeParameter = "SFXVolume";
 
-    private const string MixerResourcePath = "Audio/VerticalSliceAudioMixer";
     private const float DefaultMasterVolume = 1f;
     private const float DefaultMusicVolume = 0.8f;
     private const float DefaultSoundsVolume = 0.9f;
@@ -32,21 +31,28 @@ public sealed class AudioSettingsService : MonoBehaviour
         Apply(MasterVolumeParameter, MasterVolume);
     }
 
-    private AudioMixer mixer;
+    [SerializeField] private AudioMixer mixer;
     private bool hasPendingChanges;
     private bool warnedAboutMissingMixer;
     private bool warnedAboutMissingParameter;
 
-    private void Awake()
+    private void Awake() => InitializeAuthored();
+
+    public void InitializeAuthored()
     {
+        if (Instance == this)
+            return;
+
         if (Instance != null && Instance != this)
         {
             Destroy(this);
             return;
         }
 
+        if (mixer == null)
+            throw new InvalidOperationException("AudioSettingsService requires an assigned mixer in the scene composition.");
+
         Instance = this;
-        mixer = Resources.Load<AudioMixer>(MixerResourcePath);
 
         LoadValues();
         ConfigurePlaybackRouting();
@@ -148,7 +154,7 @@ public sealed class AudioSettingsService : MonoBehaviour
             if (!warnedAboutMissingMixer)
             {
                 Debug.LogWarning(
-                    $"[AudioSettingsService] AudioMixer Resources/{MixerResourcePath} is missing."
+                    "[AudioSettingsService] Assigned AudioMixer is missing."
                 );
                 warnedAboutMissingMixer = true;
             }

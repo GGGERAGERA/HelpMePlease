@@ -68,6 +68,11 @@ public struct VisualTuningSnapshot
 [CreateAssetMenu(menuName = "Subject42/Debug/Visual Tuning Preset")]
 public sealed class VisualTuningPreset : ScriptableObject
 {
+    public Material PixelEffectMaterial;
+    public Material SnowMaterial;
+    public Material EnvironmentMaterial;
+    public Material EnemyReadabilityMaterial;
+
     [SerializeField] private string savedAtUtc;
     [SerializeField] private VisualTuningSnapshot values;
     [SerializeField, TextArea(12, 40)] private string readableValues;
@@ -89,10 +94,25 @@ public static class VisualTuningPresetStorage
 {
     public const int CurrentEnvironmentColorSchemaVersion = 1;
     public const string AssetPath =
-        "Assets/_Project/Resources/VisualTuningSavedValues.asset";
+        "Assets/_Project/Data/World/Presentation/VisualTuningSavedValues.asset";
     public const string LegacyAssetPath =
         "Assets/_Project/VisualTuningSavedValues.asset";
-    public const string ResourcePath = "VisualTuningSavedValues";
+    private static VisualTuningPreset configuredPreset;
+
+    public static void Configure(VisualTuningPreset preset)
+    {
+        if (preset == null)
+            throw new ArgumentNullException(nameof(preset));
+        configuredPreset = preset;
+    }
+
+    public static VisualTuningPreset RequireConfigured()
+    {
+        if (configuredPreset == null)
+            throw new InvalidOperationException(
+                "VisualTuningPreset is not configured. Assign the shared production preset to the scene composition.");
+        return configuredPreset;
+    }
 
     public static bool TryLoad(
         out VisualTuningSnapshot snapshot,
@@ -101,21 +121,8 @@ public static class VisualTuningPresetStorage
     {
         snapshot = default;
         source = AssetPath;
-        VisualTuningPreset preset = null;
-#if UNITY_EDITOR
-        preset = UnityEditor.AssetDatabase.LoadAssetAtPath<VisualTuningPreset>(
-            AssetPath);
-        if (preset == null)
-        {
-            preset = UnityEditor.AssetDatabase.LoadAssetAtPath<VisualTuningPreset>(
-                LegacyAssetPath);
-            if (preset != null)
-                source = LegacyAssetPath;
-        }
-#else
-        preset = Resources.Load<VisualTuningPreset>(ResourcePath);
-#endif
-        if (preset == null || !preset.HasValues)
+        VisualTuningPreset preset = RequireConfigured();
+        if (!preset.HasValues)
         {
             message = "Visual production preset ещё не создан.";
             return false;
@@ -183,6 +190,7 @@ public static class VisualTuningPresetStorage
             }
 
             Debug.Log(BuildSaveDiagnostic(oldProduction, verified.Values));
+            Configure(verified);
             message = "Значения сохранены и проверены: " + AssetPath;
             return true;
         }
@@ -230,10 +238,14 @@ public static class VisualTuningPresetStorage
 #if UNITY_EDITOR
     private static void EnsureAssetFolder()
     {
-        const string folder = "Assets/_Project/Resources";
-        if (!UnityEditor.AssetDatabase.IsValidFolder(folder))
-            UnityEditor.AssetDatabase.CreateFolder(
-                "Assets/_Project", "Resources");
+        string parent = "Assets/_Project";
+        foreach (string segment in new[] { "Data", "World", "Presentation" })
+        {
+            string folder = parent + "/" + segment;
+            if (!UnityEditor.AssetDatabase.IsValidFolder(folder))
+                UnityEditor.AssetDatabase.CreateFolder(parent, segment);
+            parent = folder;
+        }
     }
 
     private static string BuildSaveDiagnostic(

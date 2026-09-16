@@ -1453,15 +1453,13 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         if (enemyReadabilityMaterial != null)
             return;
 
-        enemyReadabilityMaterial = Resources.Load<Material>(
-            "EnemyReadability"
-        );
+        enemyReadabilityMaterial = VisualTuningPresetStorage.RequireConfigured().EnemyReadabilityMaterial;
 
         if (enemyReadabilityMaterial == null)
         {
             Debug.LogWarning(
                 "[ProductionSectorDebug] EnemyReadability shared material " +
-                "was not found in Resources.",
+                "is not assigned in the production visual preset.",
                 this
             );
         }

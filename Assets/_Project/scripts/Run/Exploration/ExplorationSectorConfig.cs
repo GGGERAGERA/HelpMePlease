@@ -6,6 +6,19 @@ using UnityEngine;
 )]
 public sealed class ExplorationSectorConfig : ScriptableObject
 {
+    [Header("Sector Assets")]
+    [SerializeField] private PropScatterProfile propScatterProfile;
+    [SerializeField] private WorldLootChest worldLootChestPrefab;
+    [SerializeField] private ProductionPortalVisual portalVisualPrefab;
+    [SerializeField] private Material sectorExitGlow;
+    [SerializeField] private Material anomalyTerritoryFill;
+
+    public PropScatterProfile PropScatterProfile => propScatterProfile;
+    public WorldLootChest WorldLootChestPrefab => worldLootChestPrefab;
+    public ProductionPortalVisual PortalVisualPrefab => portalVisualPrefab;
+    public Material SectorExitGlow => sectorExitGlow;
+    public Material AnomalyTerritoryFill => anomalyTerritoryFill;
+
     [Header("Click Props")]
     [SerializeField] private ResourceNode[] clickPropPrefabs;
     public ResourceNode[] ClickPropPrefabs => clickPropPrefabs;

@@ -33,7 +33,7 @@ public sealed class PixelWeatherParticles : MonoBehaviour
             {
                 adapter.originalSnowMaterial = adapter.sourceRenderer.sharedMaterial;
                 adapter.originalSnowTextureAnimation = system.textureSheetAnimation.enabled;
-                adapter.snowMaterial = Resources.Load<Material>("PixelSnowParticle");
+                adapter.snowMaterial = VisualTuningPresetStorage.RequireConfigured().SnowMaterial;
                 adapter.ApplySnowMaterial();
                 continue;
             }

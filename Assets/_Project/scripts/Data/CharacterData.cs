@@ -40,7 +40,6 @@ public class CharacterData : ScriptableObject
     [SerializeField] private Sprite gameplayIcon;
 
     [Header("Prefabs")]
-    public GameObject characterPrefab;
     [SerializeField] private GameObject productionPrefab;
 
     [Header("Base Character Stats")]
@@ -50,9 +49,7 @@ public class CharacterData : ScriptableObject
     public CharacterId Id => characterId;
     public Sprite Portrait => portrait;
     public Sprite GameplayIcon => gameplayIcon;
-    public GameObject ProductionPrefab => productionPrefab != null
-        ? productionPrefab
-        : characterPrefab;
+    public GameObject ProductionPrefab => productionPrefab;
 
     public bool HasValidProductionIdentity =>
         characterId != CharacterId.None &&

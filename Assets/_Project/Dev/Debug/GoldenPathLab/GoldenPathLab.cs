@@ -152,7 +152,7 @@ public sealed class GoldenPathLab : MonoBehaviour
     private bool StartBatch(int count, int seed, float speed)
     {
         if (IsBusy || BotRunSession.Current?.GetComponent<BotBatchRunner>()?.IsActive == true) return false;
-        if (Character == null || Character.characterPrefab == null) { notice = "Assign a production CharacterData in the lab Inspector."; return false; }
+        if (Character == null || Character.ProductionPrefab == null) { notice = "Assign a production CharacterData in the lab Inspector."; return false; }
         IsBusy = true; cancel = false; SelectedSpeed = speed;
         StartCoroutine(ExecuteBatch(count, seed, speed));
         return true;

@@ -41,7 +41,8 @@ public sealed class Subject42RewardProgressionTests
             .Where(reward => reward.BodyUpgrade != null)
             .ToDictionary(reward => reward.BodyUpgrade,
                 reward => RunStateManager.Instance.ItemSlots.GetLevel(reward.BodyUpgrade));
-        var chest = WorldLootChestSpawner.SpawnChest(Vector2.zero);
+        var sector = Object.FindFirstObjectByType<ProductionExplorationSectorController>();
+        var chest = WorldLootChestSpawner.SpawnChest(sector.Config.WorldLootChestPrefab, Vector2.zero);
         Assert.That(chest, Is.Not.Null);
         chest.Interact();
         Assert.That(chest.State, Is.EqualTo(WorldLootChest.ChestState.Opening));

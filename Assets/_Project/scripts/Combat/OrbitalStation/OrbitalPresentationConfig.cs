@@ -5,7 +5,7 @@ namespace Subject42.Combat.OrbitalStation
     [CreateAssetMenu(menuName = "Subject42/Orbital Presentation Config")]
     public sealed class OrbitalPresentationConfig : ScriptableObject
     {
-        private const string ResourcePath = "OrbitalStation/OrbitalPresentationConfig";
+
         private static OrbitalPresentationConfig active;
 
         [Header("Authored composition")]
@@ -122,24 +122,24 @@ namespace Subject42.Combat.OrbitalStation
         [Min(0f)] public float TelekinesisMaxThrowSpeed = 18f;
         [Min(0f)] public float TelekinesisThrowDrag = 3.5f;
 
-        public static OrbitalPresentationConfig Active
+        public static void Configure(OrbitalPresentationConfig config)
         {
-            get
-            {
-                if (active == null)
-                    active = Resources.Load<OrbitalPresentationConfig>(ResourcePath);
-                return active;
-            }
+            if (config == null) throw new System.ArgumentNullException(nameof(config));
+            active = config;
         }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetConfiguration() => active = null;
+
+        public static OrbitalPresentationConfig Active => active != null ? active :
+            throw new System.InvalidOperationException("OrbitalPresentationConfig is not assigned by ProductionSceneComposition.");
 
         public static bool TryGetRequired(out OrbitalPresentationConfig config, out string error)
         {
-            if (active == null)
-                active = Resources.Load<OrbitalPresentationConfig>(ResourcePath);
             config = active;
             if (config == null)
             {
-                error = "required OrbitalPresentationConfig resource is missing";
+                error = "ProductionSceneComposition must assign OrbitalPresentationConfig before station creation.";
                 return false;
             }
             return config.ValidateRequiredReferences(out error);

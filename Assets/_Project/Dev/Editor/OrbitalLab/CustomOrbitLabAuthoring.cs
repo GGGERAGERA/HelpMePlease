@@ -36,7 +36,7 @@ public static class CustomOrbitLabAuthoring
             draw.PathLine.positionCount = 0;
             const string path = "Assets/_Project/prefabs/Orbital/Rings/CustomOrbitDrawing.prefab";
             var prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
-            var config = AssetDatabase.LoadAssetAtPath<OrbitalPresentationConfig>("Assets/_Project/Resources/OrbitalStation/OrbitalPresentationConfig.asset");
+            var config = AssetDatabase.LoadAssetAtPath<OrbitalPresentationConfig>("Assets/_Project/Data/Orbital/OrbitalPresentationConfig.asset");
             config.CustomDrawingPrefab = prefab.GetComponent<CustomOrbitDrawing>();
             EditorUtility.SetDirty(config);
             AssetDatabase.SaveAssetIfDirty(config);
@@ -64,10 +64,9 @@ public static class CustomOrbitLabAuthoring
         SceneManager.SetActiveScene(scene);
         try
         {
-            var config = AssetDatabase.LoadAssetAtPath<OrbitalPresentationConfig>("Assets/_Project/Resources/OrbitalStation/OrbitalPresentationConfig.asset");
+            var config = AssetDatabase.LoadAssetAtPath<OrbitalPresentationConfig>("Assets/_Project/Data/Orbital/OrbitalPresentationConfig.asset");
             var character = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Data/Characters/03_Vika.asset");
-            var player = (GameObject)PrefabUtility.InstantiatePrefab(character.characterPrefab, scene);
-            PrefabUtility.UnpackPrefabInstance(player, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+            var player = (GameObject)PrefabUtility.InstantiatePrefab(character.ProductionPrefab, scene);
             player.name = "Vika (lab movement and visuals only)";
             player.transform.position = Vector3.zero;
             // Strip combat in the authored scene, before any runtime lifecycle can start.
@@ -121,6 +120,7 @@ public static class CustomOrbitLabAuthoring
                 lab.Mounts[i] = mount;
             }
             Directory.CreateDirectory(Path.GetDirectoryName(CustomOrbitLab.ScenePath));
+            ProductionSceneCompositionAuthoring.EnsureScene(scene);
             EditorSceneManager.SaveScene(scene, CustomOrbitLab.ScenePath);
         }
         finally

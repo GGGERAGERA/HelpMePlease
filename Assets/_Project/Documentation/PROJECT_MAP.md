@@ -1,6 +1,6 @@
 # Subject#42 — current project map candidate
 
-Updated for Cleanup Step 3 (2026-09-16). This is the current navigation map; older QA reports describe historical checks, not the current production contract.
+Updated for Cleanup Step 4 (2026-09-16). This is the current navigation map; older QA reports describe historical checks, not the current production contract.
 
 ## Production
 
@@ -14,7 +14,7 @@ Enabled build scenes, in order:
 
 CharacterData selects each production prefab: Gera — Circle, Di-mag — FigureEight, Vika — Custom. ORBITAL runtime and rewards are the current character loadout path; legacy weapon assets remain pending a separate dependency review.
 
-Runtime owners remain under `scripts/`: Combat/OrbitalStation, Progression, Run, World, Bunker and UI. Data assets live in `Data/`: Characters, Weapons, Upgrades, Stages, World, Anomalies, Meta and UI. Production characters live in `prefabs/Characters/Production`, originals in `Characters/Legacy`. Bunker composition and minigames live in `prefabs/Bunker`; world props/events/anomalies in `prefabs/Environment`. Asset contents, GUIDs and runtime initialization remain unchanged.
+Runtime owners remain under `scripts/`: Combat/OrbitalStation, Progression, Run, World, Bunker and UI. Data assets live in `Data/`: Characters, Weapons, Upgrades, Stages, World, Anomalies, Meta and UI. The three authoritative gameplay prefabs are `prefabs/Characters/Gera.prefab`, `DiMag.prefab` and `Vika.prefab`. CharacterData has one productionPrefab reference; character visuals are embedded, with no Legacy/Production pair. Bunker composition and minigames live in `prefabs/Bunker`; world props/events/anomalies in `prefabs/Environment`. Moved assets retain their GUIDs. ProductionSceneComposition assigns typed service/config dependencies before scene consumers run; shared service prefabs live in prefabs/Bootstrap.
 
 ## Development
 
@@ -39,4 +39,4 @@ Two release-runtime presentation types, `ProductionVisualTuningController` and `
 
 ## Boundaries
 
-`art/` belongs to the artist and is untouched. AudioEffects is not cleaned by reference count. Resources removal is Step 4. Root `Environment/Props` temporarily contains its untouched `Resources` subtree and the profile README. `prefabs/miniWeapons` remains the authoritative miniWeapon source; `prefabs/Orbital` is unchanged. The two loose root assets moved to `Materials` and `Materials/RenderTextures`. No production gameplay or balance change is part of this cleanup.
+`art/` belongs to the artist and is untouched. AudioEffects is not cleaned by reference count. Own Resources loaders and folders have been removed. Their assets live in Data, Materials and prefabs; the props guide is Documentation/ProductionSectorProps.md. `prefabs/miniWeapons` remains the authoritative miniWeapon source; `prefabs/Orbital` is unchanged. The two loose root assets moved to `Materials` and `Materials/RenderTextures`. No production gameplay or balance change is part of this cleanup.

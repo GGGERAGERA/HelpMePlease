@@ -45,6 +45,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
     private Color boundaryColor;
     private Mesh territoryMesh;
     private MeshRenderer territoryFill;
+    private Material territoryFillMaterial;
 
     public bool IsCompleted => completed;
     public bool IsSpecial => isSpecial;
@@ -106,8 +107,10 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         WorldEventSpawner events,
         LevelAnomalyController anomalies,
         Vector2 sectorExitPosition,
-        float sectorExitRadius)
+        float sectorExitRadius,
+        Material territoryFillMaterial)
     {
+        this.territoryFillMaterial = territoryFillMaterial;
         transform.position = position;
         eventSpawner = events;
         anomalyController = anomalies;
@@ -711,7 +714,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         territoryFill = fillObject.GetComponent<MeshRenderer>();
         territoryFill.sharedMaterial = isSpecial
             ? material
-            : Resources.Load<Material>("AnomalyTerritoryFill");
+            : territoryFillMaterial;
         territoryFill.sortingLayerName = "Effects";
         territoryFill.sortingOrder = -10;
         RefreshTerritoryBoundaries();

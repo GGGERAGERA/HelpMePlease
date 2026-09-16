@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3921958142675405504
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1752506775860598411}
+  - component: {fileID: 8922974676419922881}
+  m_Layer: 0
+  m_Name: ProductionSceneComposition
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1752506775860598411
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3921958142675405504}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8922974676419922881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3921958142675405504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 051a8ac737bba6f40bcba0472d56705b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProductionSceneComposition
+  localization: {fileID: 232913479040525401, guid: 67fe3c398428358498f0a715ce743f5e, type: 3}
+  audio: {fileID: 6265256453729899378, guid: 04916b72c92753e4b9aa67a5c6548191, type: 3}
+  unlocks: {fileID: 4702492489052914984, guid: 32fcdf348ff81cd488bc6be6208de7ed, type: 3}
+  bunkerProgression: {fileID: 6498563092686928650, guid: 8e88b018380e10d46969b6a21a5a5493, type: 3}
+  transition: {fileID: 114000, guid: c0bb48260cb042b19c34c7e8e63f710b, type: 3}
+  orbital: {fileID: 11400000, guid: bf8a7540e7cc42199b5616c936aef759, type: 2}
+  visualPreset: {fileID: 11400000, guid: cd5db3ea9942e44469fb9648b8a66142, type: 2}
+  anomalyItems:
+  - {fileID: 11400000, guid: 9c300000000000000000000000000002, type: 2}
+  - {fileID: 11400000, guid: 9c300000000000000000000000000003, type: 2}
+  - {fileID: 11400000, guid: 9c300000000000000000000000000001, type: 2}
+  evolutionRecipes:
+  - {fileID: 11400000, guid: 9d300000000000000000000000000007, type: 2}
+  - {fileID: 11400000, guid: 9d300000000000000000000000000009, type: 2}
+  - {fileID: 11400000, guid: 9d300000000000000000000000000005, type: 2}
+  - {fileID: 11400000, guid: 9d300000000000000000000000000006, type: 2}
+  - {fileID: 11400000, guid: 9d300000000000000000000000000008, type: 2}
+  - {fileID: 11400000, guid: 9d300000000000000000000000000002, type: 2}

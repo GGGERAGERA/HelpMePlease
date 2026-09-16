@@ -2,8 +2,6 @@ using UnityEngine;
 
 public sealed class UnlockProgressService : MonoBehaviour
 {
-    private const string RegistryResourcePath = "Unlocks/UnlockRegistry";
-
     public static UnlockProgressService Instance { get; private set; }
     
     [SerializeField] private UnlockRegistry registry;
@@ -11,47 +9,31 @@ public sealed class UnlockProgressService : MonoBehaviour
     private const string UnlockKeyPrefix = "Unlock_";
     private const string ProgressKeyPrefix = "UnlockProgress_";
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    private static void Bootstrap()
-    {
-        EnsureExists();
-    }
-
     public static UnlockProgressService EnsureExists()
     {
         if (Instance != null)
             return Instance;
 
-        UnlockProgressService existing =
-            FindFirstObjectByType<UnlockProgressService>(
-                FindObjectsInactive.Include);
-        if (existing != null)
-            return existing;
-
-        GameObject serviceObject = new("UnlockProgressService");
-        return serviceObject.AddComponent<UnlockProgressService>();
+        throw new System.InvalidOperationException("UnlockProgressService is missing. Add the configured service to the scene composition before it is used.");
     }
 
-    private void Awake()
+    private void Awake() => InitializeAuthored();
+
+    public void InitializeAuthored()
     {
+        if (Instance == this)
+            return;
+
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
 
+        if (registry == null)
+            throw new System.InvalidOperationException("UnlockProgressService requires an assigned registry in the scene composition.");
+
         Instance = this;
-        if (registry == null)
-            registry = Resources.Load<UnlockRegistry>(RegistryResourcePath);
-
-        if (registry == null)
-        {
-            Debug.LogError(
-                $"[UnlockProgressService] Registry resource " +
-                $"'{RegistryResourcePath}' was not found.",
-                this);
-        }
-
         DontDestroyOnLoad(gameObject);
     }
 

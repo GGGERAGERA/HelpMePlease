@@ -242,16 +242,6 @@ public sealed class WorldLootChest : Interactable, ITacticalMapMarkerProvider
 
 public static class WorldLootChestSpawner
 {
-    private const string DefaultResourcePath =
-        "WorldLoot/WorldLootChestV1";
-
-    public static WorldLootChest SpawnChest(Vector2 position)
-    {
-        WorldLootChest prefab =
-            Resources.Load<WorldLootChest>(DefaultResourcePath);
-        return SpawnChest(prefab, position);
-    }
-
     public static WorldLootChest SpawnChest(
         WorldLootChest prefab,
         Vector2 position)
@@ -259,8 +249,7 @@ public static class WorldLootChestSpawner
         if (prefab == null)
         {
             Debug.LogError(
-                $"[WorldLootChestSpawner] Chest prefab is missing at " +
-                $"Resources/{DefaultResourcePath}."
+                "[WorldLootChestSpawner] An authored chest prefab must be supplied."
             );
             return null;
         }

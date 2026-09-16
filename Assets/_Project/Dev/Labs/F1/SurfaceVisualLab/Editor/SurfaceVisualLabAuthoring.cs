@@ -101,6 +101,7 @@ public static partial class SurfaceVisualLabEditor
         foreach(var v in new[]{new Vector4(-36,0,1,56),new Vector4(36,0,1,56),new Vector4(0,-27,72,1),new Vector4(0,27,72,1)})
         { var wall=new GameObject("Lab extent");wall.transform.position=new Vector3(v.x,v.y);wall.AddComponent<BoxCollider2D>().size=new Vector2(v.z,v.w); }
         lab.SelectPreset(3);
+        ProductionSceneCompositionAuthoring.EnsureScene(scene);
         EditorSceneManager.SaveScene(scene,ScenePath);
     }
     static Color32 C(int r,int g,int b,int a=255)=>new Color32((byte)r,(byte)g,(byte)b,(byte)a);

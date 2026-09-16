@@ -134,6 +134,7 @@ public static class EnemyGalleryAuthoring
         }
         serialized.ApplyModifiedPropertiesWithoutUndo();
         EditorSceneManager.MarkSceneDirty(scene);
+        ProductionSceneCompositionAuthoring.EnsureScene(scene);
         EditorSceneManager.SaveScene(scene, ScenePath);
         Selection.activeGameObject = gallery.gameObject;
         Debug.Log($"Enemy Gallery refreshed: {next.Count} production prefab instances.");

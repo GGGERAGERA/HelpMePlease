@@ -6,56 +6,41 @@ public sealed class LocalizationService : MonoBehaviour
 {
     public const string LanguagePreferenceKey = "localization.language";
 
-    private const string TableResourcePath =
-        "Localization/LocalizationTable";
-
     public static LocalizationService Instance { get; private set; }
 
     public GameLanguage CurrentLanguage { get; private set; }
 
     public event Action<GameLanguage> LanguageChanged;
 
-    private LocalizationTable table;
-
-    [RuntimeInitializeOnLoadMethod(
-        RuntimeInitializeLoadType.BeforeSceneLoad
-    )]
-    private static void Bootstrap()
-    {
-        EnsureExists();
-    }
+    [SerializeField] private LocalizationTable table;
 
     public static LocalizationService EnsureExists()
     {
         if (Instance != null)
             return Instance;
 
-        GameObject serviceObject =
-            new GameObject(nameof(LocalizationService));
-        return serviceObject.AddComponent<LocalizationService>();
+        throw new InvalidOperationException("LocalizationService is missing. Add the configured service to the scene composition before it is used.");
     }
 
-    private void Awake()
+    private void Awake() => InitializeAuthored();
+
+    public void InitializeAuthored()
     {
+        if (Instance == this)
+            return;
+
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
 
+        if (table == null)
+            throw new InvalidOperationException("LocalizationService requires an assigned table in the scene composition.");
+
         Instance = this;
         DontDestroyOnLoad(gameObject);
-
-        table = Resources.Load<LocalizationTable>(TableResourcePath);
         CurrentLanguage = LoadLanguage();
-
-        if (table == null)
-        {
-            Debug.LogWarning(
-                $"[LocalizationService] Missing Resources/" +
-                $"{TableResourcePath}."
-            );
-        }
     }
 
     public string Get(string key)

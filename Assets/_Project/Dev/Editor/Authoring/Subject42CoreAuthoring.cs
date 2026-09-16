@@ -8,7 +8,9 @@ public static class Subject42CoreAuthoring
     [MenuItem("Tools/Subject42/Dev/Authoring/Author Core Pulse FX")]
     public static void Author()
     {
-        var config = OrbitalPresentationConfig.Active;
+        var config = AssetDatabase.LoadAssetAtPath<OrbitalPresentationConfig>(
+            "Assets/_Project/Data/Orbital/OrbitalPresentationConfig.asset");
+        if (config == null) throw new System.InvalidOperationException("Authored orbital presentation config is missing.");
         if (config.EnergyLinePrefab == null)
         {
             var lineObject = new GameObject("Station Energy Line");

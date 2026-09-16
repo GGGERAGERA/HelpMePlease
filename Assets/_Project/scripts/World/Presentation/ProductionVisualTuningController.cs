@@ -481,7 +481,7 @@ public sealed class ProductionVisualTuningController : MonoBehaviour
             return;
 
         environmentRenderersRegistered = true;
-        environmentMaterial = Resources.Load<Material>("M_Environment_TileLit");
+        environmentMaterial = VisualTuningPresetStorage.RequireConfigured().EnvironmentMaterial;
         if (environmentMaterial == null)
         {
             Debug.LogWarning(

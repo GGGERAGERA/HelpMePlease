@@ -19,9 +19,9 @@ public static class WorldSystemsLabAuthoring
     private const string RuleFolder =
         "Assets/_Project/Data/World/Rules";
     private const string PropProfile =
-        "Assets/_Project/Environment/Props/Resources/PropScatterProfile.asset";
+        "Assets/_Project/Data/World/Props/PropScatterProfile.asset";
     private const string ExplorationConfig =
-        "Assets/_Project/Resources/ProductionRun/ExplorationSectorConfig.asset";
+        "Assets/_Project/Data/World/ExplorationSectorConfig.asset";
 
 
     [MenuItem("Tools/Subject42/Dev/WorldSystemsLab/Open")]
@@ -189,6 +189,7 @@ public static class WorldSystemsLabAuthoring
             SetObject(lab, "propScatterProfile",
                 AssetDatabase.LoadAssetAtPath<PropScatterProfile>(PropProfile));
 
+            ProductionSceneCompositionAuthoring.EnsureScene(scene);
             EditorSceneManager.SaveScene(scene, WorldSystemsLabController.ScenePath);
         }
         finally
@@ -232,11 +233,6 @@ public static class WorldSystemsLabAuthoring
         GameObject player = (GameObject)PrefabUtility.InstantiatePrefab(
             prefab,
             scene
-        );
-        PrefabUtility.UnpackPrefabInstance(
-            player,
-            PrefabUnpackMode.Completely,
-            InteractionMode.AutomatedAction
         );
         player.name = "Player";
         player.tag = "Player";

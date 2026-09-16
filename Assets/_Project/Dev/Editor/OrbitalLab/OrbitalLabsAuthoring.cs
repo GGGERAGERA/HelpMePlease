@@ -47,6 +47,7 @@ public static class OrbitalLabsAuthoring
         var lab = Find<EnemyOrbitalLabController>(scene);
         lab.EnemyPrefabs = FindProductionEnemies();
         EditorUtility.SetDirty(lab);
+        ProductionSceneCompositionAuthoring.EnsureScene(scene);
         EditorSceneManager.SaveScene(scene);
         if (opened) EditorSceneManager.CloseScene(scene, true);
         if (previous.IsValid()) SceneManager.SetActiveScene(previous);
@@ -133,6 +134,7 @@ public static class OrbitalLabsAuthoring
                 enemyLab.EnemyPrefabs = FindProductionEnemies();
                 if (enemyLab.EnemyPrefabs.Length == 0) throw new InvalidOperationException("No production enemy references found.");
             }
+            ProductionSceneCompositionAuthoring.EnsureScene(scene);
             EditorSceneManager.SaveScene(scene, path);
         }
         finally { EditorSceneManager.CloseScene(scene, true); }

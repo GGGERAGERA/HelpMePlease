@@ -30,6 +30,7 @@ public static class GoldenPathLabAuthoring
         camera.orthographic = true; camera.clearFlags = CameraClearFlags.SolidColor;
         camera.backgroundColor = new Color(.045f, .063f, .095f);
         camera.transform.position = new Vector3(0, 0, -10);
+        ProductionSceneCompositionAuthoring.EnsureScene(scene);
         EditorSceneManager.SaveScene(scene, GoldenPathLab.ScenePath);
         EditorSceneManager.CloseScene(scene, true);
         if (previous.IsValid()) SceneManager.SetActiveScene(previous);

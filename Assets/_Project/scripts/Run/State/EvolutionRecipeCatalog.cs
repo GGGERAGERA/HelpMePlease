@@ -2,13 +2,19 @@ using UnityEngine;
 
 public static class EvolutionRecipeCatalog
 {
-    private const string ResourcePath = "RunBuild/Evolutions";
+
     private static EvolutionRecipe[] recipes;
+
+    public static void Configure(EvolutionRecipe[] definitions)
+    {
+        if (definitions == null || definitions.Length == 0) throw new System.ArgumentException("Assign evolution recipes in ProductionSceneComposition.");
+        recipes = (EvolutionRecipe[])definitions.Clone();
+    }
 
     public static EvolutionRecipe[] GetAll()
     {
         if (recipes == null)
-            recipes = Resources.LoadAll<EvolutionRecipe>(ResourcePath);
+            throw new System.InvalidOperationException("Evolution recipes are not assigned by ProductionSceneComposition.");
 
         return (EvolutionRecipe[])recipes.Clone();
     }

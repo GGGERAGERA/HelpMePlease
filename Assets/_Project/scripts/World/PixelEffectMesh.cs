@@ -25,7 +25,7 @@ public sealed class PixelEffectMesh
         mesh.MarkDynamic();
         root.AddComponent<MeshFilter>().sharedMesh = mesh;
         renderer = root.AddComponent<MeshRenderer>();
-        renderer.sharedMaterial = Resources.Load<Material>("PixelWorldEffect");
+        renderer.sharedMaterial = VisualTuningPresetStorage.RequireConfigured().PixelEffectMaterial;
         renderer.shadowCastingMode = ShadowCastingMode.Off;
         renderer.receiveShadows = false;
     }

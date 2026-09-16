@@ -43,8 +43,6 @@ public sealed class AudioLoopHandle
 
 public sealed class AudioService : MonoBehaviour
 {
-    private const string DefaultCatalogResourcePath = "Audio/VerticalSliceAudioCatalog";
-
     private sealed class PoolSlot
     {
         public AudioSource Source;
@@ -89,35 +87,30 @@ public sealed class AudioService : MonoBehaviour
     private AudioCueId currentAmbienceCue;
     private Coroutine musicFadeRoutine;
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void EnsureRuntimeInstance()
+    private void Awake() => InitializeAuthored();
+
+    public void InitializeAuthored()
     {
-        if (Instance != null)
+        if (Instance == this)
             return;
 
-        GameObject bootstrap = new("[AudioService]");
-        bootstrap.AddComponent<AudioService>();
-        bootstrap.AddComponent<AudioSceneDirector>();
-    }
-
-    private void Awake()
-    {
         if (Instance != null && Instance != this)
         {
-            Instance.AdoptCatalogIfMissing(catalog);
             Destroy(gameObject);
             return;
         }
 
+        if (catalog == null)
+            throw new System.InvalidOperationException("AudioService requires an assigned catalog in the scene composition.");
+
+        AudioSettingsService settings = GetComponent<AudioSettingsService>();
+        if (settings == null)
+            throw new System.InvalidOperationException("AudioService requires a configured AudioSettingsService on the same GameObject.");
+
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        if (catalog == null)
-            catalog = Resources.Load<AudioCatalog>(DefaultCatalogResourcePath);
-
-        if (GetComponent<AudioSettingsService>() == null)
-            gameObject.AddComponent<AudioSettingsService>();
-
+        settings.InitializeAuthored();
         CreateFixedSources();
     }
 
@@ -698,12 +691,6 @@ public sealed class AudioService : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         DebugCuePlayed?.Invoke(cueId);
 #endif
-    }
-
-    private void AdoptCatalogIfMissing(AudioCatalog candidate)
-    {
-        if (catalog == null && candidate != null)
-            catalog = candidate;
     }
 
 #if UNITY_EDITOR

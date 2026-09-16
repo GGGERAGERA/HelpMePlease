@@ -154,9 +154,9 @@ public static class Subject42ProjectValidator
         ValidateDataAssets(report);
         ValidateAuthoredUi(report);
         ValidateProductionDependencies(report);
-        var orbitalConfig = Resources.Load<Subject42.Combat.OrbitalStation.OrbitalPresentationConfig>(
-            "OrbitalStation/OrbitalPresentationConfig");
-        string orbitalError = "required OrbitalPresentationConfig resource is missing";
+        var orbitalConfig = AssetDatabase.LoadAssetAtPath<Subject42.Combat.OrbitalStation.OrbitalPresentationConfig>(
+            "Assets/_Project/Data/Orbital/OrbitalPresentationConfig.asset");
+        string orbitalError = "required OrbitalPresentationConfig asset is missing";
         if (orbitalConfig == null || !orbitalConfig.ValidateRequiredReferences(out orbitalError))
             report.Add(Subject42ValidationSeverity.Error, "ORBITAL_PRESENTATION", orbitalError, orbitalConfig);
 
@@ -482,13 +482,6 @@ public static class Subject42ProjectValidator
             }
         }
 
-        string resourcesRoot = $"{ProjectRoot}/Resources";
-        string[] resourceGuids = AssetDatabase.FindAssets(
-            string.Empty,
-            new[] { resourcesRoot });
-        for (int i = 0; i < resourceGuids.Length; i++)
-            paths.Add(AssetDatabase.GUIDToAssetPath(resourceGuids[i]));
-
         return paths;
     }
 
@@ -612,25 +605,7 @@ public static class Subject42ProjectValidator
                 RequireSerializedObject(modifiers, "anomalyController", report);
                 RequireSerializedObject(modifiers, "worldRuleController", report);
 
-                ExplorationSectorConfig fallback =
-                    Resources.Load<ExplorationSectorConfig>(
-                        "ProductionRun/ExplorationSectorConfig");
-                if (fallback == null)
-                {
-                    report.Add(
-                        Subject42ValidationSeverity.Error,
-                        "EXPLORATION_FALLBACK",
-                        "Resources fallback ExplorationSectorConfig is missing.",
-                        modifiers);
-                }
-                else
-                {
-                    report.Add(
-                        Subject42ValidationSeverity.Info,
-                        "EXPLORATION_FALLBACK",
-                        "ExplorationSectorConfig Resources fallback is present.",
-                        fallback);
-                }
+                RequireSerializedObject(modifiers, "explorationConfig", report);
             }
 
             if (choice != null)
@@ -817,7 +792,7 @@ public static class Subject42ProjectValidator
                 data);
         }
 
-        if (data.characterPrefab == null)
+        if (data.ProductionPrefab == null)
         {
             report.Add(
                 Subject42ValidationSeverity.Error,
@@ -827,7 +802,7 @@ public static class Subject42ProjectValidator
             return;
         }
 
-        GameObject prefab = data.characterPrefab;
+        GameObject prefab = data.ProductionPrefab;
         RequirePrefabComponent<PlayerHealth>(prefab, data, report);
         RequirePrefabComponent<CharacterMovement2D>(prefab, data, report);
         RequirePrefabComponent<Rigidbody2D>(prefab, data, report);

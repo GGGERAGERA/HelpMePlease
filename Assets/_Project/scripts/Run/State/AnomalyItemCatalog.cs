@@ -2,7 +2,7 @@ using UnityEngine;
 
 public static class AnomalyItemCatalog
 {
-    private const string ResourcePath = "RunBuild/AnomalyItems";
+
     private static AnomalyItemData[] items;
 
     public static AnomalyItemData Find(AnomalyPowerType powerType)
@@ -24,10 +24,16 @@ public static class AnomalyItemCatalog
         return (AnomalyItemData[])items.Clone();
     }
 
+    public static void Configure(AnomalyItemData[] definitions)
+    {
+        if (definitions == null || definitions.Length == 0) throw new System.ArgumentException("Assign anomaly items in ProductionSceneComposition.");
+        items = (AnomalyItemData[])definitions.Clone();
+    }
+
     private static void EnsureLoaded()
     {
         if (items == null)
-            items = Resources.LoadAll<AnomalyItemData>(ResourcePath);
+            throw new System.InvalidOperationException("Anomaly items are not assigned by ProductionSceneComposition.");
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

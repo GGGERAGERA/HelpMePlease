@@ -74,6 +74,7 @@ public static class BossPracticeAuthoring
             Wall(new Vector2(30, 0), new Vector2(1, 61));
             Wall(new Vector2(0, -30), new Vector2(61, 1));
             Wall(new Vector2(0, 30), new Vector2(61, 1));
+            ProductionSceneCompositionAuthoring.EnsureScene(scene);
             EditorSceneManager.SaveScene(scene, ScenePath);
         }
         finally

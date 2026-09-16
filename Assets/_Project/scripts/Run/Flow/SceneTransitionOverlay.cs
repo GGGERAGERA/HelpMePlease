@@ -46,16 +46,18 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
         }
         if (Instance == null)
         {
-            var prefab = Resources.Load<GameObject>("SceneTransitionOverlay");
-            if (prefab != null) Instantiate(prefab);
-            else new GameObject("SceneTransitionOverlay").AddComponent<SceneTransitionOverlay>();
+            Debug.LogError("[SceneTransition] ProductionSceneComposition must assign the authored transition overlay.");
+            return false;
         }
         Instance.StartCoroutine(Instance.GuardedTransition(scene, prepare, closing));
         return true;
     }
 
-    private void Awake()
+    private void Awake() => InitializeAuthored();
+
+    public void InitializeAuthored()
     {
+        if (Instance == this) return;
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);

@@ -18,7 +18,7 @@ public sealed class ResourceNode : MonoBehaviour
     private ExplorationSectorConfig feedback;
     private static readonly Color GoldColor = new(1f, 0.8f, 0.2f);
 
-    public void Initialize(Transform owner)
+    public void Initialize(Transform owner, ExplorationSectorConfig config)
     {
         player = owner;
         playerHealth = owner.GetComponent<PlayerHealth>();
@@ -29,7 +29,7 @@ public sealed class ResourceNode : MonoBehaviour
         closedVisual.SetActive(false);
         hitArea = CreateHitArea();
         hitArea.isTrigger = true;
-        feedback = Resources.Load<ExplorationSectorConfig>("ProductionRun/ExplorationSectorConfig");
+        feedback = config;
     }
 
     private Collider2D CreateHitArea()

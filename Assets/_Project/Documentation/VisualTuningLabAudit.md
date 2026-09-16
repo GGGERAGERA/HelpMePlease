@@ -1,12 +1,12 @@
 # Visual Tuning Lab — runtime mapping
 
-SAVE создаёт `Assets/_Project/Resources/VisualTuningSavedValues.asset` и фиксирует все доступные anomaly targets, а не только текущий selector. При следующем Play Mode `Subject42DebugMenu.Start` загружает этот asset и применяет snapshot к production consumers до построения Visual Lab UI. RESET использует тот же загруженный snapshot. Значения ниже применяются live. `Captured` означает production-значение, захваченное существующим consumer при запуске, если сохранённого preset ещё нет.
+SAVE создаёт `Assets/_Project/Data/World/Presentation/VisualTuningSavedValues.asset` и фиксирует все доступные anomaly targets, а не только текущий selector. При следующем Play Mode `Subject42DebugMenu.Start` загружает этот asset и применяет snapshot к production consumers до построения Visual Lab UI. RESET использует тот же загруженный snapshot. Значения ниже применяются live. `Captured` означает production-значение, захваченное существующим consumer при запуске, если сохранённого preset ещё нет.
 
 ## Persistence flow
 
-`Visual UI → VisualTuningSnapshot → Resources/VisualTuningSavedValues.asset → Subject42DebugMenu.Start → existing runtime consumers`.
+`Visual UI → VisualTuningSnapshot → Data/World/Presentation/VisualTuningSavedValues.asset → Subject42DebugMenu.Start → existing runtime consumers`.
 
-SAVE доступен только в Editor, перечитывает asset после `SaveAssets` и сравнивает сохранённый snapshot с runtime snapshot. В development build загрузка использует `Resources.Load`; зависимости от `UnityEditor` находятся только под `#if UNITY_EDITOR`.
+SAVE доступен только в Editor, перечитывает asset после `SaveAssets` и сравнивает сохранённый snapshot с runtime snapshot. В development build preset назначается через сериализованную ссылку ProductionSceneComposition; зависимости от `UnityEditor` находятся только под `#if UNITY_EDITOR`.
 
 | Section | Parameter | Debug MIN | Production | Debug MAX | Runtime consumer | Saved asset |
 |---|---|---:|---:|---:|---|---|

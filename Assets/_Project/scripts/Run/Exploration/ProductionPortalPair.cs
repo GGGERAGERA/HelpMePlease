@@ -18,11 +18,10 @@ public sealed class ProductionPortalPair : MonoBehaviour
     public Vector2 PositionA { get; private set; }
     public Vector2 PositionB { get; private set; }
 
-    public void Initialize(Vector2 a, Vector2 b)
+    public void Initialize(Vector2 a, Vector2 b, ProductionPortalVisual visualPrefab)
     {
         PositionA = a;
         PositionB = b;
-        var visualPrefab = Resources.Load<ProductionPortalVisual>("PortalVisual");
         if (visualPrefab != null)
         {
             visualA = Instantiate(visualPrefab, new Vector3(a.x, a.y), Quaternion.identity, transform);

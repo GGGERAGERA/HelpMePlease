@@ -5,13 +5,13 @@ using UnityEngine;
 // Small, repeatable asset authoring pass; no texture copies or runtime sprite creation.
 public static class ProductionPropsAuthoring
 {
-    const string Root = "Assets/_Project/Environment/Props";
+    const string Root = "Assets/_Project/prefabs/Environment/Props";
     const string Sprites = "Assets/_Project/prefabs/Environment/Props/Sprites";
 
     [MenuItem("Tools/Subject42/Dev/Authoring/Environment/Author sector props")]
     public static void Author()
     {
-        Directory.CreateDirectory(Root + "/Resources/SectorProps");
+        Directory.CreateDirectory(Root + "/SectorProps");
         Directory.CreateDirectory(Sprites);
         AssetDatabase.Refresh();
         var material = AssetDatabase.LoadAssetAtPath<Material>(
@@ -60,7 +60,7 @@ public static class ProductionPropsAuthoring
             renderer.color = tint;
             renderer.sortingLayerName = "Background";
             renderer.sortingOrder = -105;
-            PrefabUtility.SaveAsPrefabAsset(go, Root + "/Resources/SectorProps/" + name + ".prefab");
+            PrefabUtility.SaveAsPrefabAsset(go, Root + "/SectorProps/" + name + ".prefab");
             Object.DestroyImmediate(go);
         }
     }

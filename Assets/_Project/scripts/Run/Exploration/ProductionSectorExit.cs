@@ -40,7 +40,8 @@ public sealed class ProductionSectorExit : MonoBehaviour
     public void Initialize(
         Vector2 position,
         float radius,
-        RunFlowController flow)
+        RunFlowController flow,
+        Material energy)
     {
         transform.position = position;
         runFlow = flow;
@@ -50,11 +51,11 @@ public sealed class ProductionSectorExit : MonoBehaviour
         trigger.isTrigger = true;
         trigger.radius = Mathf.Max(0.5f, radius);
 
-        CreateVisual(trigger.radius);
+        CreateVisual(trigger.radius, energy);
     }
 
     // Presentation only: root transform and trigger geometry never animate.
-    private void CreateVisual(float radius)
+    private void CreateVisual(float radius, Material energy)
     {
         visualRadius = radius;
         material = AnomalyPowerVisuals.CreateMaterial("Sector Exit Runtime Material");
@@ -94,7 +95,6 @@ public sealed class ProductionSectorExit : MonoBehaviour
         }
 
         // Reuse Epic Toon FX's portal glow texture without its vortex/gameplay prefab.
-        Material energy = Resources.Load<Material>("SectorExitGlow");
         if (energy == null) return;
         var fxObject = new GameObject("Exit ascending energy");
         fxObject.transform.SetParent(transform, false);

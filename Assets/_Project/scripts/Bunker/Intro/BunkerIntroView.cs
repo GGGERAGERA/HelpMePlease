@@ -4,8 +4,6 @@ using UnityEngine.UI;
 
 public sealed class BunkerIntroView : MonoBehaviour
 {
-    private const string PixelFontResource =
-        "Fonts & Materials/PressStart2P-vaV7 SDF";
     private static string ArchiveDamageText => LocalizationService.EnsureExists().Get("intro.archive");
 
     [Header("Root")]
@@ -18,7 +16,7 @@ public sealed class BunkerIntroView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI systemText;
     [SerializeField] private TextMeshProUGUI skipHint;
 
-    private TMP_FontAsset pixelFont;
+    [SerializeField] private TMP_FontAsset pixelFont;
     private Image cursorBlock;
     private RectTransform cursorRect;
     private string cachedMainText;
@@ -40,7 +38,8 @@ public sealed class BunkerIntroView : MonoBehaviour
         emergencyFlash != null &&
         mainText != null &&
         systemText != null &&
-        skipHint != null;
+        skipHint != null &&
+        pixelFont != null;
 
     public void Prepare()
     {
@@ -190,13 +189,10 @@ public sealed class BunkerIntroView : MonoBehaviour
     private void ConfigureTerminalLayout()
     {
         if (pixelFont == null)
-            pixelFont = Resources.Load<TMP_FontAsset>(PixelFontResource);
+            throw new System.InvalidOperationException("BunkerIntroView requires an assigned pixelFont in the scene composition.");
 
-        if (pixelFont != null)
-        {
-            mainText.font = pixelFont;
-            systemText.font = pixelFont;
-        }
+        mainText.font = pixelFont;
+        systemText.font = pixelFont;
 
         RectTransform title = mainText.rectTransform;
         title.anchorMin = new Vector2(0.11f, 0.57f);

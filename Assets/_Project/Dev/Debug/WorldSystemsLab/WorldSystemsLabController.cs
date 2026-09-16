@@ -115,7 +115,8 @@ public sealed class WorldSystemsLabController : MonoBehaviour
             events,
             anomalies,
             new Vector2(1000f, 1000f),
-            0.5f
+            0.5f,
+            explorationConfig.AnomalyTerritoryFill
         );
         ClearBootstrapEvent(site);
 
@@ -229,7 +230,8 @@ public sealed class WorldSystemsLabController : MonoBehaviour
         ClearPortals();
         GameObject root = new("Lab Production Portal Pair");
         portalPair = root.AddComponent<ProductionPortalPair>();
-        portalPair.Initialize(new Vector2(-14f, -8f), new Vector2(14f, 8f));
+        portalPair.Initialize(new Vector2(-14f, -8f), new Vector2(14f, 8f),
+            explorationConfig.PortalVisualPrefab);
         notice = "Portal pair spawned";
         return true;
     }

@@ -13,10 +13,17 @@ public sealed class BunkerStationProgressionService : MonoBehaviour
     public event Action<BunkerStationId, int> StationLevelChanged;
     public event Action<BunkerStationId, int> StationInvestmentChanged;
 
+    [SerializeField] private BunkerStationProgressionData[] configurations;
+
     private readonly Dictionary<BunkerStationId, BunkerStationProgressionData> dataById = new();
 
-    private void Awake()
+    private void Awake() => InitializeAuthored();
+
+    public void InitializeAuthored()
     {
+        if (Instance == this)
+            return;
+
         if (Instance != null && Instance != this)
         {
             Destroy(this);
@@ -215,10 +222,10 @@ public sealed class BunkerStationProgressionService : MonoBehaviour
     private void LoadConfiguration()
     {
         dataById.Clear();
-        BunkerStationProgressionData[] allData =
-            Resources.LoadAll<BunkerStationProgressionData>("BunkerProgression");
+        if (configurations == null || configurations.Length == 0)
+            throw new InvalidOperationException("BunkerStationProgressionService requires assigned configurations in the scene composition.");
 
-        foreach (BunkerStationProgressionData data in allData)
+        foreach (BunkerStationProgressionData data in configurations)
         {
             if (data == null)
                 continue;
