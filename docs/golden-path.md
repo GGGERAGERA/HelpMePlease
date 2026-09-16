@@ -2,8 +2,8 @@
 
 ## Developer lab
 
-Open `Assets/_Project/Scenes/Dev/GoldenPathLab.unity` (or Unity menu
-`Tools > Subject42 > Golden Path Lab > Open scene`), press Play and use the Game
+Open `Assets/_Project/Dev/Labs/GoldenPathLab/GoldenPathLab.unity` (or Unity menu
+`Tools > Subject42 > Dev > GoldenPathLab > Open scene`), press Play and use the Game
 view. The editor-only panel provides ×1/×10/×100, 5×/10× speed, an initial seed,
 rerun of the last non-aborted failure at its original speed, Stop, refresh and
 file-open buttons. It uses existing production bunker startup and BotBatchRunner,
@@ -62,19 +62,17 @@ with a fresh baseline, and a final return to the bunker.
 `Artifacts/BotBatches/latest_batch.json` and `.csv` remain the current batch
 artifacts. Each existing BotRunResult contains a GoldenPathResult. Completed
 Golden Path batches, including failed attempts, are also retained in the single
-`Artifacts/BotBatches/golden_path_history.json`; no per-run files are created.
+`Artifacts/GeneratedQA/BotBatches/golden_path_history.json`; no per-run files are created.
 The JSON includes assertion name, sector, simulation time, observed state and
 reason for every failure. PASS requires every route milestone, one boss spawn,
 one victory, applied rewards, DirectMountSelection coverage and second-run cleanup.
 
-Unity tests `Subject42GoldenPathTests.One`, `.Ten`, `.Hundred` use this same batch
-mode, not a separate simulation. Run them in that order, stopping and replaying
-the failing seed before continuing. Existing `Subject42CoreQARunner` request-file
-execution is supported. Refresh imported scripts first using the existing
-`Artifacts/BunkerNetwork/refresh.request` command; wait for compilation before
-writing the desired fully qualified test name (without a trailing newline) into
-`Artifacts/GeneratedQA/CorePulse/run.request`. Verify the test result count is
-nonzero in its `results.xml`.
+The Core category contains separate `Gera_Circle_GoldenPath`,
+`DiMag_FigureEight_GoldenPath` and `Vika_Custom_GoldenPath` tests. They use
+the existing batch runner and verify the requested character through sectors
+and second-run startup. Run Core from Unity Test Runner. Batch sizes, fixed
+seeds and failure replay remain in GoldenPathLab; the old request-file runners
+and duplicate One/Ten/Hundred test wrappers have been removed.
 
 This suite checks gameplay/state/progression. It does not test rendering. Its
 test host accepts only the known ParticleSystem duration assertion from
@@ -154,27 +152,27 @@ Production fixes / optional input adapter:
 - Assets/_Project/scripts/Combat/Player/CharacterMovement2D.cs
 
 Existing bot integration and diagnostic hooks:
-- Assets/_Project/scripts/Debug/BotBatchResult.cs
-- Assets/_Project/scripts/Debug/BotBatchRunner.cs
-- Assets/_Project/scripts/Debug/BotController.cs
-- Assets/_Project/scripts/Debug/BotLabDebugUI.cs
-- Assets/_Project/scripts/Debug/BotRunResult.cs
-- Assets/_Project/scripts/Debug/BotRunSession.cs
-- Assets/_Project/scripts/Debug/BotTelemetry.cs
+- Assets/_Project/Dev/Debug/GoldenPathLab/BotBatchResult.cs
+- Assets/_Project/Dev/Debug/GoldenPathLab/BotBatchRunner.cs
+- Assets/_Project/Dev/Debug/GoldenPathLab/BotController.cs
+- Assets/_Project/Dev/Debug/F1/BotLabDebugUI.cs
+- Assets/_Project/Dev/Debug/GoldenPathLab/BotRunResult.cs
+- Assets/_Project/Dev/Debug/GoldenPathLab/BotRunSession.cs
+- Assets/_Project/Dev/Debug/GoldenPathLab/BotTelemetry.cs
 - Assets/_Project/scripts/Combat/Enemies/EnemyProjectile.cs
 - Assets/_Project/scripts/Progression/RunUpgrades/UpgradeManager.cs
 - Assets/_Project/scripts/Run/Flow/RunFlowController.cs
 - Assets/_Project/scripts/Selection/Levels/LevelChoiceManager.cs
 
 New runner files (each with its Unity .meta):
-- Assets/_Project/scripts/Debug/BotRunSession.GoldenPath.cs
-- Assets/_Project/scripts/Debug/GoldenPathResult.cs
-- Assets/_Project/Editor/Tests/Subject42GoldenPathTests.cs
+- Assets/_Project/Dev/Debug/GoldenPathLab/BotRunSession.GoldenPath.cs
+- Assets/_Project/Dev/Debug/GoldenPathLab/GoldenPathResult.cs
+- Assets/_Project/Dev/Tests/Core/Editor/Subject42GoldenPathTests.cs
 
 Extended existing regression fixtures and documentation:
-- Assets/_Project/Editor/Tests/Subject42BotLabTests.cs
-- Assets/_Project/Editor/Tests/Subject42PoolingTests.cs
-- Assets/_Project/Editor/Tests/Subject42RunStateTests.cs
+- Assets/_Project/Dev/Tests/Extended/Editor/Subject42BotLabTests.cs
+- Assets/_Project/Dev/Tests/Extended/Editor/Subject42PoolingTests.cs
+- Assets/_Project/Dev/Tests/Core/Editor/Subject42RunStateTests.cs
 - docs/golden-path.md
 
 Two pre-existing dirty assets were preserved and also appear in git status;

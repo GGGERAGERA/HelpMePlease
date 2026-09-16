@@ -40,7 +40,7 @@ Nine visual-only prefab variants reuse the existing `BunkerCase1`, `BunkerElemen
 and `BunkerElements3` textures through serialized Sprite assets. No texture copies,
 colliders, behaviours, loot, lights or minimap markers are added to the prefabs.
 
-Prefabs: `Resources/SectorProps`. Sprite assets and placement helper live here.
+Prefabs: `Resources/SectorProps`. Sprite assets live in `Assets/_Project/prefabs/Environment/Props/Sprites`; runtime placement scripts live in `Assets/_Project/scripts/World/Props`.
 Regenerate assets with **Tools > Subject42 > Environment > Author sector props**.
 Source crop rectangles, scale and palette are in `Editor/ProductionPropsAuthoring.cs`.
 
