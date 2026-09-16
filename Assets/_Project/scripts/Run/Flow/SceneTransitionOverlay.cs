@@ -123,7 +123,6 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
         returning = scene == "MainMenu";
         canvas.enabled = true;
         group.blocksRaycasts = true;
-        UpgradeManager.Instance?.CancelPendingRewards();
         Time.timeScale = 0f;
         try
         {
@@ -205,11 +204,8 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
         string scene = bunker ? "MainMenu" : requestedScene;
         if (!Application.CanStreamedLevelBeLoaded(scene)) return;
         busy = false;
-        Load(scene, () =>
-        {
-            if (bunker && RunStateManager.Instance != null && !RunStateManager.Instance.IsRunEnded)
-                RunStateManager.Instance.EndRun(RunEndReason.ReturnedToBunker);
-        });
+        if (bunker) RunEndService.RecoverToBunker();
+        else Load(scene);
     }
 
     private IEnumerator Fade(float from, float to, float duration, Action<float> closing)

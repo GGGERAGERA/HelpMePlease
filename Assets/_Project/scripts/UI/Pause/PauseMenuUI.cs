@@ -13,6 +13,10 @@ public class PauseMenuUI : MonoBehaviour
     private bool isPaused;
     private bool settingsOpen;
     private float resumeTimeScale = 1f;
+    private int runId;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    internal void DebugBindRun(int id) => runId = id;
+#endif
     public bool IsPaused => isPaused;
 
     private OrbitalInteractionController Interaction => characterSpawner.SpawnedPlayer != null
@@ -102,6 +106,7 @@ public class PauseMenuUI : MonoBehaviour
 
     private void ReturnToBunker()
     {
+        if (RunStateManager.Instance == null || !RunStateManager.Instance.IsActiveRun(runId)) return;
         if (RunEndService.Instance == null)
         {
             Debug.LogError(
@@ -122,18 +127,25 @@ public class PauseMenuUI : MonoBehaviour
 
     private void RestartConfirmed()
     {
-        SceneTransitionOverlay.Load(SceneManager.GetActiveScene().name, () =>
-        {
-            RunStateManager runState = RunStateManager.Instance;
+        if (RunStateManager.Instance == null || !RunStateManager.Instance.IsActiveRun(runId)) return;
+        RunEndService.Instance?.RestartRun(RunEndReason.ReturnedToBunker);
+    }
 
-            if (runState != null)
-            {
-                CharacterData character = runState.SelectedCharacter;
-                runState.BeginNewRun(character, null);
-            }
+    private void OnEnable()
+    {
+        var run = RunStateManager.EnsureExists();
+        runId = run.RunId;
+        run.RegisterSceneCleanup(ReleaseRunScene);
+    }
+    private void OnDisable() => RunStateManager.Instance?.UnregisterSceneCleanup(ReleaseRunScene);
 
-            isPaused = false;
-        });
+    private void ReleaseRunScene()
+    {
+        isPaused = settingsOpen = false;
+        resumeTimeScale = 1f;
+        overview?.CancelConfirmation();
+        audioSettingsPanel?.Close();
+        if (pausePanel != null) pausePanel.SetActive(false);
     }
 
     private void UpdateLocalizedContent()

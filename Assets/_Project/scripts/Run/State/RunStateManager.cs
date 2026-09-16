@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using Subject42.Combat.OrbitalStation;
 
+public enum RunSceneCleanupPhase { Rewards, Gameplay }
+
 /// <summary>
 /// Persistent state of the current run. Stores data, not scene objects.
 /// New gameplay scenes can be reloaded safely, then this state is applied to the newly spawned player.
@@ -49,8 +51,12 @@ public sealed class RunStateManager : MonoBehaviour
     private int productionRewardChestSectorNumber;
     private bool productionRewardChestSpawned;
 
-    private RunStatsManager lastCommittedStats;
-    private bool runEnded;
+    private int lastCommittedStatsId;
+    private bool runEnded = true;
+    private bool lifecycleBusy;
+    private bool developmentRun;
+    private readonly List<System.Action> rewardCleanup = new();
+    private readonly List<System.Action> sceneCleanup = new();
 
     private RunSummary lastRunSummary;
     private int orbitalRunSequence;
@@ -75,6 +81,59 @@ public sealed class RunStateManager : MonoBehaviour
     public float AccumulatedRunTime => accumulatedRunTime;
     public int CompletedLevels => completedLevels;
     public bool IsRunEnded => runEnded;
+    public int RunId => orbitalRunSequence;
+    public bool IsDevelopmentRun => developmentRun;
+    public bool IsActiveRun(int runId) => !runEnded && !lifecycleBusy && RunId == runId;
+
+    // Scene owners register their existing release API; rewards are cancelled
+    // first so drawing/placement cancellation cannot enqueue another choice.
+    public void RegisterSceneCleanup(System.Action cleanup,
+        RunSceneCleanupPhase phase = RunSceneCleanupPhase.Gameplay)
+    {
+        if (cleanup == null || lifecycleBusy) return;
+        UnregisterSceneCleanup(cleanup);
+        (phase == RunSceneCleanupPhase.Rewards ? rewardCleanup : sceneCleanup).Add(cleanup);
+    }
+
+    public void UnregisterSceneCleanup(System.Action cleanup)
+    {
+        rewardCleanup.Remove(cleanup);
+        sceneCleanup.Remove(cleanup);
+    }
+
+    public bool ReleaseCurrentSector(int expectedRunId)
+    {
+        if (!IsActiveRun(expectedRunId)) return false;
+        lifecycleBusy = true;
+        try { ReleaseSceneRuntime(); }
+        finally { lifecycleBusy = false; }
+        return true;
+    }
+
+    private void ReleaseSceneRuntime()
+    {
+        var rewards = rewardCleanup.ToArray();
+        var gameplay = sceneCleanup.ToArray();
+        rewardCleanup.Clear();
+        sceneCleanup.Clear();
+        ReleaseParticipants(rewards);
+        ReleaseParticipants(gameplay);
+        PlayerRuntimeReference.Clear();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
+#endif
+        Time.timeScale = SceneTransitionOverlay.IsTransitioning ? 0f : 1f;
+    }
+
+    private static void ReleaseParticipants(System.Action[] participants)
+    {
+        foreach (var cleanup in participants)
+        {
+            if (cleanup.Target is Object target && target == null) continue;
+            try { cleanup(); }
+            catch (System.Exception error) { Debug.LogException(error); }
+        }
+    }
     public int ProductionRewardChestSectorNumber =>
         productionRewardChestSectorNumber;
     public bool ProductionRewardChestSpawned => productionRewardChestSpawned;
@@ -136,8 +195,8 @@ public sealed class RunStateManager : MonoBehaviour
         out RunStatsManager stats)
     {
         stats = RunStatsManager.Instance;
-        return stats != null &&
-            !ReferenceEquals(stats, lastCommittedStats);
+        return !runEnded && stats != null &&
+            stats.GetInstanceID() != lastCommittedStatsId;
     }
 
     public static RunStateManager EnsureExists()
@@ -176,7 +235,6 @@ public sealed class RunStateManager : MonoBehaviour
 
     private OrbitalRunState CreateDefaultOrbitalRunState(CharacterData character = null)
     {
-        orbitalRunSequence++;
         OrbitalStationState = OrbitalRunState.CreateDefault(orbitalRunSequence,
             character != null && character.orbitalPath == OrbitalPathType.Custom);
         return OrbitalStationState;
@@ -185,6 +243,9 @@ public sealed class RunStateManager : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public OrbitalRunState DebugResetOrbitalRunState()
     {
+        developmentRun = true;
+        if (runEnded) orbitalRunSequence++;
+        runEnded = false;
         Debug.Log("[OrbitalRunState] Explicit development preset: creating default ORBITAL state.", this);
         return CreateDefaultOrbitalRunState();
     }
@@ -202,19 +263,31 @@ public sealed class RunStateManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    public void BeginNewRun(CharacterData character, WeaponData weapon)
+    private void OnDestroy()
     {
-        BeginNewRunInternal(character, weapon, null);
+        rewardCleanup.Clear();
+        sceneCleanup.Clear();
+        if (Instance == this) Instance = null;
+    }
+
+    public void BeginNewRun(CharacterData character, WeaponData weapon, bool isDevelopmentRun = false)
+    {
+        BeginNewRun(character, weapon, startingStageProfile, startingWorldRule,
+            startingLocalAnomaly, null, CurrentDepthId, isDevelopmentRun);
     }
 
     private void BeginNewRunInternal(
         CharacterData character,
         WeaponData weapon,
-        AnomalyStabilizerData anomalyStabilizer)
+        AnomalyStabilizerData anomalyStabilizer,
+        bool isDevelopmentRun = false)
     {
+        if (lifecycleBusy) return;
+        if (!runEnded) EndRun(RunEndReason.ReturnedToBunker, RunId);
+        developmentRun = isDevelopmentRun;
+        orbitalRunSequence++;
         CreateDefaultOrbitalRunState(character);
-        ApplyPendingSlotBonus();
-        FindFirstObjectByType<DoubleOrLeave>()?.ResetState();
+        if (!developmentRun) ApplyPendingSlotBonus();
 
         ClearCurrentSector();
         SelectedCharacter = character;
@@ -250,7 +323,8 @@ public sealed class RunStateManager : MonoBehaviour
         // Restart can begin before the current gameplay scene is unloaded.
         // Treat its scene-local stats as belonging to the previous run until
         // the replacement scene publishes a new RunStatsManager instance.
-        lastCommittedStats = RunStatsManager.Instance;
+        lastCommittedStatsId = RunStatsManager.Instance != null
+            ? RunStatsManager.Instance.GetInstanceID() : 0;
         runEnded = false;
         lastRunSummary = null;
 
@@ -276,7 +350,9 @@ public sealed class RunStateManager : MonoBehaviour
             return;
         }
         OrbitalStationState = candidate;
-        if (candidate.PendingCasinoRingId == 0) OrbitalSlotMachine.ClearPending();
+        // The bonus now belongs to this run, including an unfinished custom
+        // ring. Ending during drawing must not replay the pre-run win.
+        OrbitalSlotMachine.ClearPending();
     }
 
     public void CompletePendingOrbitalSlotBonus()
@@ -285,7 +361,6 @@ public sealed class RunStateManager : MonoBehaviour
         if (state == null || state.PendingCasinoRingId == 0) return;
         var ring = state.FindRing(state.PendingCasinoRingId);
         if (ring == null || state.IsPending(ring)) return;
-        if (OrbitalSlotMachine.Pending == OrbitalSlotSymbol.Ring) OrbitalSlotMachine.ClearPending();
         state.TryClearPendingCasinoRing(out _);
     }
 
@@ -603,7 +678,7 @@ public sealed class RunStateManager : MonoBehaviour
             return;
         }
 
-        if (ReferenceEquals(lastCommittedStats, stats))
+        if (lastCommittedStatsId == stats.GetInstanceID())
         {
             Debug.Log(
                 "[RunState] Current scene stats were already committed."
@@ -615,7 +690,7 @@ public sealed class RunStateManager : MonoBehaviour
         accumulatedKills += stats.Kills;
         accumulatedKillRewardUnits += stats.KillRewardUnits;
         accumulatedRunTime += stats.RunTime;
-        lastCommittedStats = stats;
+        lastCommittedStatsId = stats.GetInstanceID();
         CurrentRewardChanged?.Invoke();
 
         Debug.Log(
@@ -646,51 +721,67 @@ public sealed class RunStateManager : MonoBehaviour
         return summary;
     }
 
-    public RunSummary EndRun(RunEndReason reason)
+    public RunSummary EndRun(RunEndReason reason) => EndRun(reason, RunId);
+
+    public RunSummary EndRun(RunEndReason reason, int expectedRunId)
     {
-        if (runEnded)
+        if (expectedRunId != RunId) return null;
+        if (runEnded || lifecycleBusy)
             return lastRunSummary;
 
-        CommitCurrentSceneStats();
+        lifecycleBusy = true;
+        try
+        {
+            CommitCurrentSceneStats();
+            bool confirmedVictory = reason == RunEndReason.Victory &&
+                CurrentSector != null && RunRoute.IsFinalSector(CurrentSector.SectorNumber) &&
+                RunFlowController.Instance != null && RunFlowController.Instance.IsVictoryConfirmed;
+            if (confirmedVictory) RegisterCompletedLevel();
+            lastRunSummary = PopulateSummaryDetails(new RunSummary(reason, completedLevels,
+                accumulatedKills, accumulatedRunTime, GetCurrentGoldReward(reason)));
 
-        int goldEarned = GetCurrentGoldReward(reason);
-
-        CurrencyManager.Instance?.AddGold(goldEarned);
-
-        lastRunSummary = PopulateSummaryDetails(new RunSummary(
-            reason,
-            completedLevels,
-            accumulatedKills,
-            accumulatedRunTime,
-            goldEarned
-        ));
-
-        runEnded = true;
-        CurrentAnomalyStabilizer = null;
-        AnomalyModifiers = AnomalyRunModifiers.None;
-        anomalyInventory.Clear();
-        evolutionState.Clear();
-        threatValue = 0f;
-        threatElapsedTime = 0f;
-        OrbitalStationState = null;
-
-        Debug.Log(
-            $"[RunState] Run ended. " +
-            $"Reason={reason}, " +
-            $"levels={completedLevels}, " +
-            $"kills={accumulatedKills}, " +
-            $"time={accumulatedRunTime:F1}, " +
-            $"gold={goldEarned}"
-        );
-
-        // The immutable summary owns completed-run statistics. Gameplay cleanup must
-        // not wait for a bunker notification (which can be delayed or disabled).
-        ClearFinishedRunCompatibilityState();
+            // Latch before meta notifications: reentrant end/begin cannot pay
+            // twice or replace the state while this boundary still owns it.
+            runEnded = true;
+            if (!developmentRun)
+            {
+                CurrencyManager.Instance?.AddGold(lastRunSummary.GoldEarned);
+                if (confirmedVictory)
+                {
+                    MetaProgressionManager.EnsureExists().AcquireGuardianAccess();
+                    UnlockProgressService.Instance?.AddProgressByCondition(
+                        UnlockConditionType.CompleteRun, string.Empty, 1);
+                }
+            }
+        }
+        finally
+        {
+            runEnded = true;
+            ReleaseSceneRuntime();
+            ClearFinishedRunCompatibilityState();
+            lifecycleBusy = false;
+        }
         return lastRunSummary;
+    }
+
+    public bool RestartRun(RunEndReason reason, int expectedRunId)
+    {
+        if (!IsActiveRun(expectedRunId)) return false;
+        var character = SelectedCharacter;
+        var stage = startingStageProfile;
+        var rule = startingWorldRule;
+        var anomaly = startingLocalAnomaly;
+        var stabilizer = CurrentAnomalyStabilizer;
+        int depth = CurrentDepthId;
+        bool dev = developmentRun;
+        EndRun(reason, expectedRunId);
+        BeginNewRun(character, null, stage, rule, anomaly, stabilizer, depth, dev);
+        return true;
     }
 
     public bool TryConsumeLastRunSummary(out RunSummary summary)
     {
+        if (lifecycleBusy) { summary = null; return false; }
         summary = lastRunSummary;
 
         if (summary == null)
@@ -705,13 +796,17 @@ public sealed class RunStateManager : MonoBehaviour
         WeaponData weapon,
         StageProfileData stageProfile,
         WorldRuleData worldRule,
-        LocalAnomalyData localAnomaly)
+        LocalAnomalyData localAnomaly,
+        bool isDevelopmentRun = false)
     {
+        if (lifecycleBusy) return;
+        if (isDevelopmentRun) developmentRun = true;
+        if (!runEnded) EndRun(RunEndReason.ReturnedToBunker, RunId);
         CurrentDepthId = DepthCatalog.SurfaceId;
         startingStageProfile = stageProfile;
         startingWorldRule = worldRule;
         startingLocalAnomaly = localAnomaly;
-        BeginNewRun(character, weapon);
+        BeginNewRunInternal(character, weapon, null, isDevelopmentRun);
     }
 
     public void BeginNewRun(
@@ -721,13 +816,17 @@ public sealed class RunStateManager : MonoBehaviour
         WorldRuleData worldRule,
         LocalAnomalyData localAnomaly,
         AnomalyStabilizerData anomalyStabilizer,
-        int depthId = DepthCatalog.SurfaceId)
+        int depthId = DepthCatalog.SurfaceId,
+        bool isDevelopmentRun = false)
     {
+        if (lifecycleBusy) return;
+        if (isDevelopmentRun) developmentRun = true;
+        if (!runEnded) EndRun(RunEndReason.ReturnedToBunker, RunId);
         CurrentDepthId = depthId;
         startingStageProfile = stageProfile;
         startingWorldRule = worldRule;
         startingLocalAnomaly = localAnomaly;
-        BeginNewRunInternal(character, weapon, anomalyStabilizer);
+        BeginNewRunInternal(character, weapon, anomalyStabilizer, isDevelopmentRun);
     }
 
     private void CreateStartingSector()
@@ -780,5 +879,18 @@ public sealed class RunStateManager : MonoBehaviour
         completedLevels = 0;
         completedLevelRewardMultiplierTotal = 0f;
         lastCompletedSectorNumber = 0;
+        productionRewardChestSectorNumber = 0;
+        productionRewardChestSpawned = false;
+        lastCommittedStatsId = 0;
+        CurrentAnomalyStabilizer = null;
+        AnomalyModifiers = AnomalyRunModifiers.None;
+        anomalyInventory.Clear();
+        evolutionState.Clear();
+        threatValue = threatElapsedTime = 0f;
+        OrbitalStationState = null;
+        startingStageProfile = null;
+        startingWorldRule = null;
+        startingLocalAnomaly = null;
+        CurrentDepthId = DepthCatalog.SurfaceId;
     }
 }

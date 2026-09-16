@@ -299,8 +299,36 @@ public sealed class UpgradeManager : MonoBehaviour
             upgradePanelView.Hide();
     }
 
-    private void OnEnable() => shuttingDown = false;
-    private void OnDisable() => CancelPendingRewards();
+    private void OnEnable()
+    {
+        shuttingDown = false;
+        RunStateManager.EnsureExists().RegisterSceneCleanup(ReleaseRunScene, RunSceneCleanupPhase.Rewards);
+    }
+
+    private void OnDisable()
+    {
+        RunStateManager.Instance?.UnregisterSceneCleanup(ReleaseRunScene);
+        CancelPendingRewards();
+    }
+
+    private void ReleaseRunScene()
+    {
+        shuttingDown = true;
+        WorldLootRewardReel.CancelForSceneExit();
+        try { CancelPendingRewards(); }
+        finally
+        {
+            pendingChoices.Clear();
+            idleCallbacks.Clear();
+            currentRequest = null;
+            currentOnClosed = null;
+            directRewardCommitted = null;
+            currentChoices = null;
+            isChoosingUpgrade = hasCurrentRequest = reelPending = false;
+            orbitalRewardFlow = null;
+            orbitalStation = null;
+        }
+    }
 
     // Terminal cancellation happens before run replacement/UI destruction, not
     // in whichever scene component happens to receive OnDisable first.

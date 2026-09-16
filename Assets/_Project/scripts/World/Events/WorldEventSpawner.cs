@@ -95,16 +95,29 @@ public class WorldEventSpawner : MonoBehaviour
 
     private void OnEnable()
     {
+        RunStateManager.EnsureExists().RegisterSceneCleanup(ReleaseRunScene);
         EventCompleted += SpawnRewardContainer;
         EventFailed += HandleEventFailed;
     }
 
     private void OnDisable()
     {
+        RunStateManager.Instance?.UnregisterSceneCleanup(ReleaseRunScene);
         ClearEventSpawnPressure();
         siteRewardSuppressedEvents.Clear();
         EventCompleted -= SpawnRewardContainer;
         EventFailed -= HandleEventFailed;
+    }
+
+    private void ReleaseRunScene()
+    {
+        enabled = false;
+        foreach (var worldEvent in spawnedEvents)
+            if (worldEvent != null) worldEvent.gameObject.SetActive(false);
+        spawnedEvents.Clear();
+        ActiveEvent = null;
+        timer = 0f;
+        doubleOrLeave?.ResetState();
     }
 
     private void Start()

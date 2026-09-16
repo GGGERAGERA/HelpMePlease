@@ -248,7 +248,8 @@ public class EnemyHealth : MonoBehaviour
             identity != null &&
             !string.IsNullOrWhiteSpace(identity.EnemyId))
         {
-            UnlockProgressService.Instance.AddProgressByCondition(
+            if (RunStateManager.Instance?.IsDevelopmentRun != true)
+                UnlockProgressService.Instance.AddProgressByCondition(
                 UnlockConditionType.KillEnemyType,
                 identity.EnemyId,
                 1

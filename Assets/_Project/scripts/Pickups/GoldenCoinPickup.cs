@@ -211,7 +211,8 @@ public sealed class GoldenCoinPickup : MonoBehaviour, IAnomalySpeedPickup,
             this
         );
 #endif
-        CurrencyManager.Instance.AddGold(value);
+        if (RunStateManager.Instance?.IsDevelopmentRun != true)
+            CurrencyManager.Instance.AddGold(value);
         DestroyForReason(DestructionReason.Collected);
     }
 

@@ -82,6 +82,10 @@ public class CharacterSpawner : MonoBehaviour
             return;
         Debug.Log("[CharacterSpawner] Explicit development bootstrap: default ORBITAL state for direct scene launch.", this);
         manager.DebugResetOrbitalRunState();
+        RunEndService.Instance?.DebugBindRun(manager.RunId);
+        GameOverManager.Instance?.DebugBindRun(manager.RunId);
+        RunFlowController.Instance?.DebugBindRun(manager.RunId);
+        FindFirstObjectByType<PauseMenuUI>()?.DebugBindRun(manager.RunId);
         if (SpawnedPlayer != null)
         {
             OrbitalStationRuntime station = SpawnedPlayer.GetComponentInChildren<OrbitalStationRuntime>(true);

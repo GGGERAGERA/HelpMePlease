@@ -199,6 +199,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
     private void OnEnable()
     {
+        RunStateManager.EnsureExists().RegisterSceneCleanup(ReleaseRunScene);
         // OnDisable clears transient zones and releases the scene singleton.
         // Re-enable restores discoverability without recreating cleared state.
         if (Instance == null)
@@ -825,6 +826,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
     private void OnDisable()
     {
+        RunStateManager.Instance?.UnregisterSceneCleanup(ReleaseRunScene);
         Clear();
         focusedZone = null;
         hasFocusGeometry = false;
@@ -835,5 +837,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
         if (Instance == this)
             Instance = null;
     }
+
+    private void ReleaseRunScene() => enabled = false;
 
 }

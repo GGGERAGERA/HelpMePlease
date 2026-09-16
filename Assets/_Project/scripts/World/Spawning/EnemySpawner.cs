@@ -272,6 +272,15 @@ public partial class EnemySpawner : MonoBehaviour
         Debug.Log("[EnemySpawner] Spawning stopped.");
     }
 
+    private void OnEnable() => RunStateManager.EnsureExists().RegisterSceneCleanup(ReleaseRunScene);
+    private void OnDisable() => RunStateManager.Instance?.UnregisterSceneCleanup(ReleaseRunScene);
+
+    private void ReleaseRunScene()
+    {
+        StopSpawning();
+        enabled = false;
+    }
+
     public void ResumeSpawning()
     {
         spawningEnabled = true;

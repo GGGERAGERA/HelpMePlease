@@ -152,6 +152,18 @@ public sealed class WorldLootRewardReel : MonoBehaviour
     public static string LastClaimedReward => lastClaimedReward;
     public static UpgradeData LastStoppedUpgrade => lastStoppedUpgrade;
     public static UpgradeData LastClaimedUpgrade => lastClaimedUpgrade;
+    public static void CancelForSceneExit()
+    {
+        openingReserved = false;
+        lastClaimedReward = null;
+        lastStoppedUpgrade = lastClaimedUpgrade = null;
+        if (instance == null) return;
+        instance.claimedCallback = null;
+        instance.applyCallback = null;
+        instance.closedCallback = null;
+        if (instance.viewValid) instance.CloseOverlay();
+        instance.rewards.Clear();
+    }
     public static Vector2 PresentationPanelSize => instance != null
         ? instance.panelSize
         : new Vector2(540f, 144f);
@@ -956,10 +968,13 @@ public sealed class WorldLootRewardReel : MonoBehaviour
     {
         if (stopButton != null) stopButton.onClick.RemoveListener(BeginBraking);
         claimedCallback = null;
-        openingReserved = false;
-
         if (instance == this)
+        {
+            openingReserved = false;
+            lastClaimedReward = null;
+            lastStoppedUpgrade = lastClaimedUpgrade = null;
             instance = null;
+        }
         Action closed = closedCallback;
         closedCallback = null;
         applyCallback = null;

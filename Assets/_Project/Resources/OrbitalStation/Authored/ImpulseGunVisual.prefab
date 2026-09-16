@@ -57,7 +57,7 @@ MonoBehaviour:
   Particles:
   - {fileID: 3820666331086725311}
   - {fileID: 4789945066142043706}
-  Icon: {fileID: 5872705551461304407, guid: 63a689a32b7c31445ad10b16154c11e5, type: 3}
+  Icon: {fileID: -1188665346, guid: 63a689a32b7c31445ad10b16154c11e5, type: 3}
   IconTint: {r: 1, g: 0.81607765, b: 0, a: 1}
   IconUsesOwnColors: 0
 --- !u!1 &5278561668882231450
@@ -159,6 +159,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 3877444091116132195}
     m_Modifications:
+    - target: {fileID: 748002599861226279, guid: 45e0447c8c4f7934fa27db6c5241ca56, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: -9186860613315624432, guid: 45e0447c8c4f7934fa27db6c5241ca56, type: 3}
       propertyPath: m_SortingOrder
       value: 12

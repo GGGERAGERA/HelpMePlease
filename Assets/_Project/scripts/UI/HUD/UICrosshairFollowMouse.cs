@@ -28,8 +28,16 @@ public class UICrosshairFollowMouse : MonoBehaviour
         crosshairRect.position = Input.mousePosition;
     }
 
+    private void OnEnable() => RunStateManager.EnsureExists().RegisterSceneCleanup(ReleaseRunScene);
+    private void ReleaseRunScene()
+    {
+        enabled = false;
+        Cursor.lockState = CursorLockMode.None;
+    }
+
     private void OnDisable()
     {
+        RunStateManager.Instance?.UnregisterSceneCleanup(ReleaseRunScene);
         Cursor.visible = true;
     }
 }

@@ -25,6 +25,8 @@ public sealed class RunSelectionManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    private void OnDestroy() { if (Instance == this) Instance = null; }
+
     public void SelectCharacter(CharacterData character)
     {
         if (character == null)

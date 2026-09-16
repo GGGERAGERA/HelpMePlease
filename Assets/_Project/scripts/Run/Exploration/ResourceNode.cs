@@ -82,7 +82,8 @@ public sealed class ResourceNode : MonoBehaviour
         openedVisual.SetActive(false);
         closedVisual.SetActive(true);
         int before = CurrencyManager.Instance.TotalGold;
-        CurrencyManager.Instance.AddGold(gold);
+        if (RunStateManager.Instance?.IsDevelopmentRun != true)
+            CurrencyManager.Instance.AddGold(gold);
         PlayCollectionFeedback(CurrencyManager.Instance.TotalGold - before);
         AudioService.Instance?.PlayAt(AudioCueId.UIConfirm, transform.position);
         return true;

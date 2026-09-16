@@ -6,10 +6,14 @@ public class GameOverManager : MonoBehaviour
     public static GameOverManager Instance;
 
     [SerializeField] private RunResultView runResultView;
-    private bool isRestarting;
+    private int runId;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    internal void DebugBindRun(int id) => runId = id;
+#endif
 
     void Awake()
     {
+        runId = RunStateManager.Instance != null ? RunStateManager.Instance.RunId : 0;
         if (Instance == null)
             Instance = this;
         else
@@ -19,6 +23,7 @@ public class GameOverManager : MonoBehaviour
 
     public void GameOver()
     {
+        if (RunStateManager.Instance == null || !RunStateManager.Instance.IsActiveRun(runId)) return;
         if (RunFlowController.Instance != null && RunFlowController.Instance.IsVictoryConfirmed) return;
         UpgradeManager.Instance?.CancelPendingRewards();
         HUDManager.Instance?.HideLowHpVignette();
@@ -31,28 +36,13 @@ public class GameOverManager : MonoBehaviour
 
     public void RestartGame()
     {
-        if (isRestarting || SceneTransitionOverlay.IsTransitioning)
-            return;
-
-        SceneTransitionOverlay.Load(SceneManager.GetActiveScene().name, () =>
-        {
-            isRestarting = true;
-            RunStateManager runState = RunStateManager.Instance;
-
-            if (runState != null)
-            {
-                CharacterData character = runState.SelectedCharacter;
-                // The result panel already presents this reward. Finalize the dead
-                // run before clearing its state so Restart cannot silently discard
-                // earned gold.
-                runState.EndRun(RunEndReason.PlayerDied);
-                runState.BeginNewRun(character, null);
-            }
-
-        });
+        if (RunStateManager.Instance == null || !RunStateManager.Instance.IsActiveRun(runId)) return;
+        RunEndService.Instance?.RestartRun(RunEndReason.PlayerDied);
     }
+    private void OnDestroy() { if (Instance == this) Instance = null; }
     public void MainMenu()
     {
+        if (RunStateManager.Instance == null || !RunStateManager.Instance.IsActiveRun(runId)) return;
         if (RunEndService.Instance == null)
         {
             Debug.LogError(

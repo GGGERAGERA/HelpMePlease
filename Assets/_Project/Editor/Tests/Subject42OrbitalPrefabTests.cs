@@ -11,6 +11,18 @@ using UnityEngine;
 using UnityEngine.Rendering;
 public sealed class Subject42OrbitalPrefabTests
 {
+    [Test]
+    public void AuthoredBodyTransformWritesUseCapturedBaseline()
+    {
+        string source = File.ReadAllText("Assets/_Project/scripts/Combat/OrbitalStation/OrbitalModuleVisual.cs");
+        var writes = Regex.Matches(source,
+            @"instance\.transform\.local(?:Position|Rotation|Scale)\s*=\s*([^;]+);");
+        Assert.That(writes.Count, Is.GreaterThan(0));
+        foreach (Match write in writes)
+            Assert.That(write.Groups[1].Value, Does.Contain("authoredBody"),
+                "Authored body must not use placeholder transform values: " + write.Value);
+    }
+
     private static OrbitalPresentationConfig Config => Resources.Load<OrbitalPresentationConfig>("OrbitalStation/OrbitalPresentationConfig");
     private static CharacterData[] ProductionCharacters => new[]
     {

@@ -184,17 +184,41 @@ public class HUDManager : MonoBehaviour
         if (runStatsManager != null)
             runStatsManager.RewardRelevantStatsChanged += RefreshRunCurrency;
         if (runStateManager != null)
+        {
             runStateManager.CurrentRewardChanged += RefreshRunCurrency;
+            runStateManager.RegisterSceneCleanup(ReleaseRunScene);
+        }
 
         RefreshRunCurrency();
     }
 
     private void OnDestroy()
     {
+        UnbindRunSubscriptions();
+        if (Instance == this) Instance = null;
+    }
+
+    private void UnbindRunSubscriptions()
+    {
         if (runStatsManager != null)
             runStatsManager.RewardRelevantStatsChanged -= RefreshRunCurrency;
         if (runStateManager != null)
+        {
             runStateManager.CurrentRewardChanged -= RefreshRunCurrency;
+            runStateManager.UnregisterSceneCleanup(ReleaseRunScene);
+        }
+        runStateManager = null;
+        runStatsManager = null;
+    }
+
+    private void ReleaseRunScene()
+    {
+        UnbindRunSubscriptions();
+        HideBossHp();
+        HideWorldEventMarker();
+        HideLowHpVignette();
+        runMessages?.View?.HideInstant();
+        enabled = false;
     }
 
     public static string ResolveObjectiveKey(RunPhase phase, bool exitAvailable) => phase switch

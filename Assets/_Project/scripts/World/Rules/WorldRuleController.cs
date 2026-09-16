@@ -95,6 +95,7 @@ public sealed class WorldRuleController : MonoBehaviour
 
     private void OnEnable()
     {
+        RunStateManager.EnsureExists().RegisterSceneCleanup(ReleaseRunScene);
         // OnDisable releases the scene singleton after clearing runtime
         // effects. Re-enabling the same component must publish it again.
         if (Instance == null)
@@ -661,7 +662,8 @@ public sealed class WorldRuleController : MonoBehaviour
             activeRule.GoldenCoinValue;
 
         if (overflowValue > 0)
-            CurrencyManager.Instance?.AddGold(overflowValue);
+            if (RunStateManager.Instance?.IsDevelopmentRun != true)
+                CurrencyManager.Instance?.AddGold(overflowValue);
     }
 
     private void SubscribeEnemyLifecycle()
@@ -777,6 +779,7 @@ public sealed class WorldRuleController : MonoBehaviour
 
     private void OnDisable()
     {
+        RunStateManager.Instance?.UnregisterSceneCleanup(ReleaseRunScene);
         if (Instance != this)
             return;
 
@@ -785,4 +788,6 @@ public sealed class WorldRuleController : MonoBehaviour
         if (Instance == this)
             Instance = null;
     }
+
+    private void ReleaseRunScene() => enabled = false;
 }

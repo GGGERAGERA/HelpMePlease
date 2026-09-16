@@ -12,11 +12,23 @@ public sealed class Subject42RunStateTests
     private StageProfileData stage;
     private WorldRuleData worldRule;
     private LocalAnomalyData anomaly;
+    private int savedCasinoPending;
+    private bool hadCasinoPending;
+    private CurrencyManager savedCurrency;
+    private int savedGold;
+    private bool hadGold;
 
     [SetUp]
     public void SetUp()
     {
         ResetStatics();
+        savedCurrency = CurrencyManager.Instance;
+        CurrencyManager.Instance = null;
+        hadGold = PlayerPrefs.HasKey("TOTAL_GOLD");
+        savedGold = PlayerPrefs.GetInt("TOTAL_GOLD", 0);
+        hadCasinoPending = PlayerPrefs.HasKey("ORBITAL_SLOT_PENDING");
+        savedCasinoPending = PlayerPrefs.GetInt("ORBITAL_SLOT_PENDING", 0);
+        PlayerPrefs.DeleteKey("ORBITAL_SLOT_PENDING");
         stage = Track(ScriptableObject.CreateInstance<StageProfileData>());
         worldRule = Track(ScriptableObject.CreateInstance<WorldRuleData>());
         anomaly = Track(ScriptableObject.CreateInstance<LocalAnomalyData>());
@@ -35,6 +47,12 @@ public sealed class Subject42RunStateTests
         }
 
         cleanup.Clear();
+        if (hadCasinoPending) PlayerPrefs.SetInt("ORBITAL_SLOT_PENDING", savedCasinoPending);
+        else PlayerPrefs.DeleteKey("ORBITAL_SLOT_PENDING");
+        if (hadGold) PlayerPrefs.SetInt("TOTAL_GOLD", savedGold);
+        else PlayerPrefs.DeleteKey("TOTAL_GOLD");
+        CurrencyManager.Instance = savedCurrency;
+        PlayerPrefs.Save();
         ResetStatics();
     }
 
@@ -147,6 +165,142 @@ public sealed class Subject42RunStateTests
             RunEndReason.ReturnedToBunker);
 
         Assert.That(reward, Is.Zero);
+    }
+
+    [TestCase(RunEndReason.PlayerDied)]
+    [TestCase(RunEndReason.Victory)]
+    public void EndThenBegin_HasFreshRunIdentityAndState(RunEndReason reason)
+    {
+        int oldId = runState.RunId;
+        var oldOrbital = runState.OrbitalStationState;
+        runState.AdvanceThreat(10f, 2f);
+        runState.RegisterUpgrade(Track(ScriptableObject.CreateInstance<UpgradeData>()));
+        runState.EndRun(reason, oldId);
+        runState.BeginNewRun(null, null, stage, worldRule, anomaly);
+        Assert.That(runState.RunId, Is.GreaterThan(oldId));
+        Assert.That(runState.OrbitalStationState, Is.Not.SameAs(oldOrbital));
+        Assert.That(runState.ThreatValue, Is.Zero);
+        Assert.That(runState.PickedUpgrades, Is.Empty);
+        Assert.That(runState.CurrentSector.SectorNumber, Is.EqualTo(1));
+        Assert.That(runState.ProductionRewardChestSpawned, Is.False);
+    }
+
+    [Test]
+    public void OldEndSignal_CannotEndReplacementRun()
+    {
+        int oldId = runState.RunId;
+        runState.RestartRun(RunEndReason.PlayerDied, oldId);
+        Assert.That(runState.EndRun(RunEndReason.Victory, oldId), Is.Null);
+        Assert.That(runState.IsRunEnded, Is.False);
+        Assert.That(runState.CurrentSector.SectorNumber, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Cleanup_CancelsRewardsBeforeGameplay_AndRunsOnce()
+    {
+        var calls = new List<string>();
+        runState.RegisterSceneCleanup(() => calls.Add("orbital"));
+        runState.RegisterSceneCleanup(() => calls.Add("rewards"), RunSceneCleanupPhase.Rewards);
+        runState.EndRun(RunEndReason.PlayerDied);
+        runState.EndRun(RunEndReason.Victory);
+        CollectionAssert.AreEqual(new[] { "rewards", "orbital" }, calls);
+        Assert.That(Time.timeScale, Is.EqualTo(1f));
+    }
+
+    [Test]
+    public void ReentrantBeginDuringCleanup_CannotReplaceRun()
+    {
+        int id = runState.RunId;
+        runState.RegisterSceneCleanup(() => runState.BeginNewRun(null, null, stage, worldRule, anomaly));
+        runState.EndRun(RunEndReason.PlayerDied);
+        Assert.That(runState.RunId, Is.EqualTo(id));
+        Assert.That(runState.IsRunEnded, Is.True);
+        Assert.That(runState.OrbitalStationState, Is.Null);
+    }
+
+    [Test]
+    public void SectorRelease_PreservesRunData_ButClearsSceneReferences()
+    {
+        var orbital = runState.OrbitalStationState;
+        int id = runState.RunId;
+        runState.RegisterUpgrade(Track(ScriptableObject.CreateInstance<UpgradeData>()));
+        runState.AdvanceThreat(5f, 2f);
+        CreateStats(2, 10f);
+        runState.CommitCurrentSceneStats();
+        bool released = false;
+        runState.RegisterSceneCleanup(() => released = true);
+        Assert.That(runState.ReleaseCurrentSector(id), Is.True);
+        Assert.That(released, Is.True);
+        Assert.That(runState.OrbitalStationState, Is.SameAs(orbital));
+        Assert.That(runState.PickedUpgrades.Count, Is.EqualTo(1));
+        Assert.That(runState.AccumulatedKills, Is.EqualTo(2));
+        Assert.That(runState.ThreatValue, Is.EqualTo(10f));
+        Assert.That(runState.IsRunEnded, Is.False);
+    }
+
+    [Test]
+    public void CustomCasinoBonus_IsTransferredOnce_EvenIfDrawingNeverCompletes()
+    {
+        runState.EndRun(RunEndReason.PlayerDied);
+        PlayerPrefs.SetInt("ORBITAL_SLOT_PENDING", (int)OrbitalSlotSymbol.Ring);
+        var character = Track(ScriptableObject.CreateInstance<CharacterData>());
+        character.orbitalPath = Subject42.Combat.OrbitalStation.OrbitalPathType.Custom;
+        runState.BeginNewRun(character, null, stage, worldRule, anomaly);
+        Assert.That(runState.OrbitalStationState.PendingCasinoRingId, Is.Not.Zero);
+        Assert.That(OrbitalSlotMachine.Pending, Is.EqualTo(OrbitalSlotSymbol.None));
+        runState.EndRun(RunEndReason.PlayerDied);
+        runState.BeginNewRun(character, null, stage, worldRule, anomaly);
+        Assert.That(runState.OrbitalStationState.PendingCasinoRingId, Is.Zero);
+    }
+
+    [Test]
+    public void RepeatedOldCleanup_PreservesNewBunkerCasinoWin()
+    {
+        runState.EndRun(RunEndReason.PlayerDied);
+        PlayerPrefs.SetInt("ORBITAL_SLOT_PENDING", (int)OrbitalSlotSymbol.Impulse);
+        runState.EndRun(RunEndReason.Victory);
+        runState.ClearFinishedRunCompatibilityState();
+        Assert.That(OrbitalSlotMachine.Pending, Is.EqualTo(OrbitalSlotSymbol.Impulse));
+    }
+
+    [Test]
+    public void MetaNotification_CannotReenterEndBeginOrConsumeSummary()
+    {
+        var go = Track(new GameObject("Isolated currency"));
+        go.SetActive(false);
+        var currency = go.AddComponent<CurrencyManager>();
+        CurrencyManager.Instance = currency;
+        CreateStats(5, 120f);
+        int id = runState.RunId;
+        int notifications = 0;
+        currency.OnGoldUpdated += amount =>
+        {
+            notifications++;
+            runState.EndRun(RunEndReason.Victory, id);
+            runState.BeginNewRun(null, null, stage, worldRule, anomaly);
+            Assert.That(runState.TryConsumeLastRunSummary(out _), Is.False);
+        };
+        var summary = runState.EndRun(RunEndReason.PlayerDied, id);
+        Assert.That(runState.EndRun(RunEndReason.PlayerDied, id), Is.SameAs(summary));
+        Assert.That(notifications, Is.EqualTo(1));
+        Assert.That(currency.TotalGold, Is.EqualTo(summary.GoldEarned));
+        Assert.That(runState.RunId, Is.EqualTo(id));
+    }
+
+    [Test]
+    public void DevelopmentRun_DoesNotConsumeCasinoOrCommitGold()
+    {
+        runState.EndRun(RunEndReason.PlayerDied);
+        PlayerPrefs.SetInt("ORBITAL_SLOT_PENDING", (int)OrbitalSlotSymbol.Gun);
+        var go = Track(new GameObject("Isolated currency"));
+        go.SetActive(false);
+        var currency = go.AddComponent<CurrencyManager>();
+        CurrencyManager.Instance = currency;
+        runState.BeginNewRun(null, null, stage, worldRule, anomaly, isDevelopmentRun: true);
+        CreateStats(5, 120f);
+        runState.EndRun(RunEndReason.PlayerDied);
+        Assert.That(currency.TotalGold, Is.Zero);
+        Assert.That(OrbitalSlotMachine.Pending, Is.EqualTo(OrbitalSlotSymbol.Gun));
     }
 
     private RunStatsManager CreateStats(int kills, float runTime)

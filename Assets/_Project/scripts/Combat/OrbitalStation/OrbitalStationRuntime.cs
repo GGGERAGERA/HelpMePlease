@@ -215,6 +215,7 @@ namespace Subject42.Combat.OrbitalStation
                 }
                 initialized = true;
                 UpgradeManager.Instance?.BindOrbitalStation(this);
+                runStateManager.RegisterSceneCleanup(Teardown);
                 enabled = true;
                 InputOwner.enabled = true;
                 Interaction.enabled = true;
@@ -870,6 +871,7 @@ namespace Subject42.Combat.OrbitalStation
 
         public void Teardown()
         {
+            runStateManager?.UnregisterSceneCleanup(Teardown);
             StopCompressionAudio();
             if (tearingDown)
                 return;
@@ -896,6 +898,13 @@ namespace Subject42.Combat.OrbitalStation
             worldTelekinesis?.CancelInteraction();
             relocation?.CancelDrag("station teardown");
             Interaction?.Release();
+            InputOwner?.Bind(null);
+            InputOwner = null;
+            if (Core != null)
+            {
+                Core.WaveStarted -= OnCoreWave;
+                Core.RingActivated -= OnCoreRing;
+            }
             placementStep = PlacementStep.None;
             for (int i = 0; i < rings.Count; i++)
                 rings[i].Teardown();

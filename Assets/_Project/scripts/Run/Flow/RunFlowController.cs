@@ -26,6 +26,10 @@ public sealed class RunFlowController : MonoBehaviour
     private EnemyHealth finalBoss;
     private bool levelCompleted;
     private StageProfileData sectorProfile;
+    private int runId;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    internal void DebugBindRun(int id) => runId = id;
+#endif
     public float SectorElapsedTime { get; private set; }
     public bool IsExitUnlocked { get; private set; }
     public float ExitMinimumTimeRemaining => sectorProfile != null
@@ -44,6 +48,10 @@ public sealed class RunFlowController : MonoBehaviour
 
     public void InitializeSector(StageProfileData profile)
     {
+        runId = RunStateManager.Instance.RunId;
+        Phase = RunPhase.NormalSector;
+        levelCompleted = false;
+        finalBoss = null;
         sectorProfile = profile;
         SectorElapsedTime = 0f;
         IsExitUnlocked = false;
@@ -61,7 +69,7 @@ public sealed class RunFlowController : MonoBehaviour
 
     private bool CanContinue => isActiveAndEnabled &&
         Phase != RunPhase.Stopped && Phase != RunPhase.Victory &&
-        RunStateManager.Instance != null && !RunStateManager.Instance.IsRunEnded &&
+        RunStateManager.Instance != null && RunStateManager.Instance.IsActiveRun(runId) &&
         characterSpawner != null && characterSpawner.SpawnedPlayer != null &&
         !characterSpawner.SpawnedPlayer.GetComponent<PlayerHealth>().IsDead &&
         characterSpawner.SpawnedPlayer.GetComponentInChildren<OrbitalStationRuntime>() is { IsInitialized: true };
@@ -78,7 +86,23 @@ public sealed class RunFlowController : MonoBehaviour
         enemySpawner?.StopSpawning();
     }
 
-    private void OnDisable() => StopRunGameplay();
+    private void OnEnable() => RunStateManager.EnsureExists().RegisterSceneCleanup(ReleaseRunScene);
+    private void OnDisable()
+    {
+        RunStateManager.Instance?.UnregisterSceneCleanup(ReleaseRunScene);
+        StopRunGameplay();
+    }
+
+    private void ReleaseRunScene()
+    {
+        StopRunGameplay();
+        Phase = RunPhase.Stopped;
+        finalBoss = null;
+        sectorProfile = null;
+        SectorElapsedTime = 0f;
+        IsExitUnlocked = false;
+        noDamageChallenge?.CancelChallenge();
+    }
 
     public bool IsLevelCompleted => levelCompleted;
 
@@ -117,12 +141,14 @@ public sealed class RunFlowController : MonoBehaviour
     private IEnumerator CompleteVictory()
     {
         yield return null;
-        RunEndService.Instance.CompleteRunVictory();
+        if (RunStateManager.Instance != null && RunStateManager.Instance.IsActiveRun(runId))
+            RunEndService.Instance?.CompleteRunVictory();
     }
 
     public bool HandleExitReached()
     {
-        if (levelCompleted || Phase != RunPhase.NormalSector || !IsExitUnlocked)
+        if (levelCompleted || Phase != RunPhase.NormalSector || !IsExitUnlocked ||
+            RunStateManager.Instance == null || !RunStateManager.Instance.IsActiveRun(runId))
             return false;
 
         RunStateManager runState = RunStateManager.Instance;
@@ -236,6 +262,7 @@ public sealed class RunFlowController : MonoBehaviour
         }
 
         WorldRuleData completedRule = runState.CurrentSector.WorldRule;
+        if (runState.IsDevelopmentRun) return;
 
         if (completedRule == null)
         {

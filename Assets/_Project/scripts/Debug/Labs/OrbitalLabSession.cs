@@ -31,12 +31,16 @@ public abstract class OrbitalLabSession : MonoBehaviour
     private RectTransform panelBlocker;
     protected Rect PanelRect => new(8, 8, Mathf.Min(320, Screen.width * .32f), Mathf.Min(780, Screen.height - 16));
 
-    protected virtual void Start()
+    protected virtual void Awake()
     {
-        foreach (var root in gameObject.scene.GetRootGameObjects()) authoredRoots.Add(root);
         ownsManager = RunStateManager.Instance == null;
         manager = RunStateManager.EnsureExists();
         if (ownsManager) UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(manager.gameObject, gameObject.scene);
+    }
+
+    protected virtual void Start()
+    {
+        foreach (var root in gameObject.scene.GetRootGameObjects()) authoredRoots.Add(root);
         authoredRoots.Add(manager.gameObject);
         CreatePanelBlocker();
         Provider = new OrbitalRewardProvider(Rewards != null ? Rewards.AllUpgrades.ToArray() : Array.Empty<UpgradeData>());

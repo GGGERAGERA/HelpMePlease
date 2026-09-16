@@ -23,7 +23,8 @@ public sealed class GoldLootRewardDefinition : WorldLootRewardDefinition
             return false;
         }
 
-        currency.AddGold(Amount);
+        if (RunStateManager.Instance?.IsDevelopmentRun != true)
+            currency.AddGold(Amount);
         return true;
     }
 }

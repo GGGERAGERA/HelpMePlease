@@ -11,9 +11,17 @@ public sealed class OrbitalRewardLabController : OrbitalLabSession
     public LocalAnomalyData StartingLocalAnomaly;
 
     // Match production run startup without invoking the bunker transition/spawner.
-    protected override void BeginLabRun(RunStateManager runManager) =>
+    protected override void BeginLabRun(RunStateManager runManager)
+    {
+        // RESET BUILD reuses this lab scene; it is not a production run restart.
+        if (runManager.IsDevelopmentRun && !runManager.IsRunEnded)
+        {
+            base.BeginLabRun(runManager);
+            return;
+        }
         runManager.BeginNewRun(Character, null, StartingStageProfile,
-            StartingWorldRule, StartingLocalAnomaly);
+            StartingWorldRule, StartingLocalAnomaly, isDevelopmentRun: true);
+    }
 
     public const string ScenePath = "Assets/_Project/Scenes/Dev/Labs/OrbitalRewardLab.unity";
     private int tab;

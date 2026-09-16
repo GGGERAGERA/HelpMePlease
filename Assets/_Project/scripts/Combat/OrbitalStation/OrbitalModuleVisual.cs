@@ -10,6 +10,10 @@ namespace Subject42.Combat.OrbitalStation
         private readonly float baseScale;
         private readonly OrbitalModuleKind kind;
         private GameObject instance;
+        private readonly Vector3 authoredBodyPosition;
+        private readonly Quaternion authoredBodyRotation;
+        private readonly Vector3 authoredBodyScale;
+        private bool bodyFeedbackActive;
         private Animator animator;
         private ParticleSystem[] particles;
         private SpriteRenderer[] sprites;
@@ -68,6 +72,9 @@ namespace Subject42.Combat.OrbitalStation
             for (int i = 0; i < sprites.Length; i++) spriteColors[i] = sprites[i].color;
             if (view.PulseBody != null) pulseBody = view.PulseBody;
             else instance = view.Body.gameObject;
+            authoredBodyPosition = view.Body.localPosition;
+            authoredBodyRotation = view.Body.localRotation;
+            authoredBodyScale = view.Body.localScale;
             if (animator != null && kind == OrbitalModuleKind.Pistol)
             {
                 animator.speed = 0f;
@@ -151,10 +158,20 @@ namespace Subject42.Combat.OrbitalStation
                 ApplyTint();
                 return;
             }
-            instance.transform.localPosition = Vector3.zero;
-            instance.transform.localRotation = Quaternion.identity;
-            float scale = baseScale * (Time.unscaledTime < flashUntil ? 1.14f : 1f);
-            instance.transform.localScale = Vector3.one * scale;
+            float feedbackScale = Time.unscaledTime < flashUntil ? 1.14f : 1f;
+            if (kind == OrbitalModuleKind.ImpulseGun)
+            {
+                // Recompute feedback from the authored pose; never compound offsets.
+                instance.transform.localPosition = authoredBodyPosition;
+                instance.transform.localRotation = authoredBodyRotation;
+                instance.transform.localScale = authoredBodyScale * feedbackScale;
+            }
+            else if (feedbackScale != 1f || bodyFeedbackActive)
+            {
+                // Gun/Arc pulse only scales the body; leave the shoot animation's pose alone.
+                instance.transform.localScale = authoredBodyScale * feedbackScale;
+                bodyFeedbackActive = feedbackScale != 1f;
+            }
             if (effectStopAt > 0f && Time.unscaledTime >= effectStopAt)
             {
                 StopParticles();

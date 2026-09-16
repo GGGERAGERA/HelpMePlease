@@ -97,7 +97,7 @@ public sealed partial class BotRunSession : MonoBehaviour
             {
                 BotRunSeed.Begin(Result.Seed);
                 ownsSeed = true;
-                RunStateManager.Instance.BeginNewRun(character, null);
+                RunStateManager.Instance.BeginNewRun(character, null, isDevelopmentRun: true);
             }))
             { Finish(BotRunOutcome.Error, "Production scene transition was rejected"); return false; }
             return true;

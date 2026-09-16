@@ -286,6 +286,7 @@ public sealed class LevelChoiceManager : MonoBehaviour
             runState.CommitCurrentSceneStats();
             runState.SaveExperienceState();
             runState.SavePlayerState(player != null ? player.gameObject : null);
+            runState.ReleaseCurrentSector(runState.RunId);
             runState.SetCurrentSector(sector);
 
             panelView?.Hide();

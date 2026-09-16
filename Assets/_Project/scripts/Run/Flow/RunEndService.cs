@@ -8,6 +8,10 @@ public sealed class RunEndService : MonoBehaviour
     [SerializeField] private string bunkerSceneName = "MainMenu";
 
     private bool isEndingRun;
+    private int runId;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    internal void DebugBindRun(int id) => runId = id;
+#endif
 
     private void Awake()
     {
@@ -18,6 +22,7 @@ public sealed class RunEndService : MonoBehaviour
         }
 
         Instance = this;
+        runId = RunStateManager.Instance != null ? RunStateManager.Instance.RunId : 0;
     }
 
     private void OnDestroy()
@@ -54,43 +59,20 @@ public sealed class RunEndService : MonoBehaviour
             return;
         }
 
-        SceneTransitionOverlay.Load(bunkerSceneName, () =>
-        {
-            isEndingRun = true;
-            StopActiveGameplay();
-            runState.CommitCurrentSceneStats();
-            runState.RegisterCompletedLevel();
-            MetaProgressionManager.EnsureExists().AcquireGuardianAccess();
-
-            UnlockProgressService.Instance?.AddProgressByCondition(
-                UnlockConditionType.CompleteRun,
-                string.Empty,
-                1
-            );
-
-            RunSummary summary = runState.EndRun(RunEndReason.Victory);
-            ClearActiveSectorEffects();
-
-            Debug.Log(
-                $"[RunEndService] Victory. Returning to bunker. " +
-                $"Gold earned: {summary?.GoldEarned ?? 0}"
-            );
-
-        });
+        EndRun(RunEndReason.Victory);
     }
 
     private void EndRun(RunEndReason reason)
     {
         if (isEndingRun || !SceneTransitionOverlay.CanLoad(bunkerSceneName))
             return;
+        var runState = RunStateManager.Instance;
+        if (runState == null || !runState.IsActiveRun(runId)) return;
 
         SceneTransitionOverlay.Load(bunkerSceneName, () =>
         {
             isEndingRun = true;
-
-            RunStateManager runState = RunStateManager.EnsureExists();
-            StopActiveGameplay();
-            RunSummary summary = runState.EndRun(reason);
+            RunSummary summary = runState.EndRun(reason, runId);
 
             Debug.Log(
                 $"[RunEndService] Returning to bunker. " +
@@ -100,21 +82,25 @@ public sealed class RunEndService : MonoBehaviour
         });
     }
 
-    private static void StopActiveGameplay()
+    public void RestartRun(RunEndReason reason)
     {
-        FindFirstObjectByType<EnemySpawner>()?.StopSpawning();
-        RunFlowController.Instance?.StopRunGameplay();
-
-        WorldEventSpawner eventSpawner =
-            FindFirstObjectByType<WorldEventSpawner>();
-
-        if (eventSpawner != null)
-            eventSpawner.enabled = false;
+        var runState = RunStateManager.Instance;
+        string scene = SceneManager.GetActiveScene().name;
+        if (isEndingRun || runState == null || !runState.IsActiveRun(runId) ||
+            !SceneTransitionOverlay.CanLoad(scene)) return;
+        SceneTransitionOverlay.Load(scene, () =>
+        {
+            isEndingRun = true;
+            runState.RestartRun(reason, runId);
+        });
     }
 
-    private static void ClearActiveSectorEffects()
+    // Recovery can be offered after the gameplay scene has already unloaded.
+    public static void RecoverToBunker()
     {
-        WorldRuleController.Instance?.Clear();
-        LevelAnomalyController.Instance?.Clear();
+        var runState = RunStateManager.Instance;
+        int expectedRunId = runState != null ? runState.RunId : 0;
+        SceneTransitionOverlay.Load("MainMenu",
+            () => runState?.EndRun(RunEndReason.ReturnedToBunker, expectedRunId));
     }
 }
