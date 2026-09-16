@@ -14,9 +14,8 @@ public static class WorldSystemsLabAuthoring
 {
     private const string ProductionScene =
         "Assets/_Project/Scenes/MainBuild/MVP.unity";
-    private const string ProductionPlayer =
-        "Assets/_Project/Resources/OrbitalStation/Authored/" +
-        "Player_0_p_Player3.prefab";
+    private const string ProductionCharacter =
+        "Assets/_Project/Scriptable Objects/Characters/03_Vika.asset";
     private const string RuleFolder =
         "Assets/_Project/Scriptable Objects/WorldRules";
     private const string PropProfile =
@@ -223,9 +222,10 @@ public static class WorldSystemsLabAuthoring
 
     private static GameObject CreatePlayer(Scene scene)
     {
-        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
-            ProductionPlayer
+        CharacterData character = AssetDatabase.LoadAssetAtPath<CharacterData>(
+            ProductionCharacter
         );
+        GameObject prefab = character != null ? character.ProductionPrefab : null;
         if (prefab == null)
             throw new InvalidOperationException("Production player prefab missing.");
 

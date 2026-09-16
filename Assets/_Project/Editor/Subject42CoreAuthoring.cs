@@ -19,7 +19,7 @@ public static class Subject42CoreAuthoring
                 line.widthMultiplier = .045f; line.sharedMaterial = config.VisualMaterial;
                 line.sortingLayerName = "Player"; line.sortingOrder = 13; line.enabled = false;
                 var prefab = PrefabUtility.SaveAsPrefabAsset(lineObject,
-                    "Assets/_Project/Resources/OrbitalStation/Authored/StationEnergyLine.prefab");
+                    "Assets/_Project/prefabs/Orbital/FX/StationEnergyLine.prefab");
                 config.EnergyLinePrefab = prefab.GetComponent<LineRenderer>();
             }
             finally { Object.DestroyImmediate(lineObject); }

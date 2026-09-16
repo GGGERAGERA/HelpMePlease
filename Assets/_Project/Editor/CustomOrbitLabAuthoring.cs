@@ -45,7 +45,7 @@ public static class CustomOrbitLabAuthoring
             draw.StartCircle = Object.Instantiate(lab.StartCircle, root.transform, false);
             draw.DrawArea = Object.Instantiate(lab.DrawArea, root.transform, false);
             draw.PathLine.positionCount = 0;
-            const string path = "Assets/_Project/Resources/OrbitalStation/Authored/CustomOrbitDrawing.prefab";
+            const string path = "Assets/_Project/prefabs/Orbital/Rings/CustomOrbitDrawing.prefab";
             var prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
             var config = AssetDatabase.LoadAssetAtPath<OrbitalPresentationConfig>("Assets/_Project/Resources/OrbitalStation/OrbitalPresentationConfig.asset");
             config.CustomDrawingPrefab = prefab.GetComponent<CustomOrbitDrawing>();

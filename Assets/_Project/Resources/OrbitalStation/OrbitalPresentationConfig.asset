@@ -43,13 +43,6 @@ MonoBehaviour:
   FlashPoolCapacity: 128
   ProjectilePrewarmCount: 96
   PistolProjectilePrefab: {fileID: 6821974247563523827, guid: 079789641f804d74b80b16bc9a7fd3a8, type: 3}
-  PlayerVariants:
-  - Source: {fileID: 3267337206729473661, guid: 1868b54bca0976a44b3b858e4529d00d, type: 3}
-    Production: {fileID: 8899567883607463258, guid: 50fd004411bc2bc40bb6a21478296cc8, type: 3}
-  - Source: {fileID: 3267337206729473661, guid: d454a110e5c63d64f90569865c165982, type: 3}
-    Production: {fileID: 6780075107756483522, guid: 586616dfa41374a43ac464cb7dcb2282, type: 3}
-  - Source: {fileID: 5653916710608092070, guid: 855e860ea7ac79e4daf24ee6324c3892, type: 3}
-    Production: {fileID: 6095222015538505522, guid: 8522b3d6a57df2648903eb77fc00ecb6, type: 3}
   PistolPrefab: {fileID: 874321222499448941, guid: 061397fe35d9a524f9ac8e1c58b25f4a, type: 3}
   LaserSwordPrefab: {fileID: 2312076188107168206, guid: 354ad5f6587b07b4ba24642a0aa52a35, type: 3}
   ImpulseGunPrefab: {fileID: 4564007662578592406, guid: e0b02d3b73e5c424d958aba343c83a95, type: 3}
