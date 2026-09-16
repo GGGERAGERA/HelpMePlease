@@ -1421,7 +1421,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: 0.17825127, y: 0.7724098}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -1431,7 +1431,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 2.5, y: 2}
+  m_Size: {x: 2.1434975, y: 2.6579063}
   m_EdgeRadius: 0
 --- !u!114 &786122576521338006
 MonoBehaviour:
@@ -5756,7 +5756,8 @@ GameObject:
   - component: {fileID: 2247941606788535239}
   - component: {fileID: 1155568920350449325}
   - component: {fileID: 1121600383254654469}
-  - component: {fileID: 8951399244656600627}
+  - component: {fileID: 4039536216186504836}
+  - component: {fileID: 2099618555600827821}
   - component: {fileID: 3900904833612233024}
   m_Layer: 0
   m_Name: SlotMachine
@@ -5829,7 +5830,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.430171}
+  m_Offset: {x: 0.15287209, y: 0.54435897}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -5839,9 +5840,9 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1.87, y: 0.897522}
+  m_Size: {x: 1.9938393, y: 1.233746}
   m_EdgeRadius: 0
---- !u!114 &8951399244656600627
+--- !u!114 &4039536216186504836
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -5853,8 +5854,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6cd9f593f848084ea91bdce5a1ad098, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BunkerStation
-  stationType: 10
-  interactionText: interaction.escape
+  stationType: 8
+  interactionText: interaction.slot
   progressionEnabled: 0
   progressionStationId: 0
   runTransitionTarget: {fileID: 0}
@@ -5863,7 +5864,32 @@ MonoBehaviour:
   animationTrigger: Interact
   onInteract:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: BunkerPanelManager, Assembly-CSharp
+        m_MethodName: OpenOrbitalSlot
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &2099618555600827821
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9168058536673317035}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5f1e59bfbccc4243a18b9deb388fb8d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerInteractableCollider
+  sourceRoot: {fileID: 9168058536673317035}
 --- !u!114 &3900904833612233024
 MonoBehaviour:
   m_ObjectHideFlags: 0
