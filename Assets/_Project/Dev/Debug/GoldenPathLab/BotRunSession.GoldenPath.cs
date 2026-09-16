@@ -174,12 +174,17 @@ public sealed partial class BotRunSession
             if (!GoldenCheck("Cleanup.BunkerRunState", run.IsRunEnded && run.CurrentSector == null && run.OrbitalStationState == null &&
                 run.CurrentLevel == 1 && run.CompletedLevels == 0 && run.PickedUpgrades.Count == 0 && run.AccumulatedKills == 0 && run.AccumulatedRunTime == 0,
                 "Active sector or ORBITAL state remains in bunker")) return;
+            // Bunker contains authored inactive character stations. They are not
+            // run leftovers; all tracked run objects must still be destroyed,
+            // and no active or initialized combat station may remain.
             if (!GoldenCheck("Cleanup.SceneObjects", goldenOldObjects.All(t => t == null) && goldenSceneObjects.All(o => o == null) &&
-                FindObjectsByType<OrbitalStationRuntime>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length == 0,
+                !FindObjectsByType<OrbitalStationRuntime>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                    .Any(s => s.gameObject.activeInHierarchy || s.IsInitialized),
                 "Previous rings, mounts, modules or scene controllers survived")) return;
             if (!GoldenCheck("Cleanup.RewardsAndBoss", UpgradeManager.Instance == null && RunFlowController.Instance == null &&
                 !EnemyHealth.ActiveInstances.Any(e => e != null && e.IsBoss) &&
-                FindObjectsByType<OrbitalRewardFlowController>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length == 0,
+                !FindObjectsByType<OrbitalRewardFlowController>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                    .Any(r => r.gameObject.activeInHierarchy || r.PendingReward.HasValue),
                 "Reward queue, selection or boss survived scene cleanup")) return;
             golden.BunkerClean = true;
             if (goldenStage == "Victory Bunker") { SetGoldenStage("Start Second Run"); return; }

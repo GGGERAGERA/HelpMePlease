@@ -13,6 +13,15 @@ MonoBehaviour:
   m_Name: LocalizationTable
   m_EditorClassIdentifier: Assembly-CSharp::LocalizationTable
   entries:
+  - key: settings.windowMode
+    ru: "РЕЖИМ ЭКРАНА"
+    en: "DISPLAY MODE"
+  - key: settings.windowed
+    ru: "В окне"
+    en: "Windowed"
+  - key: settings.fullscreen
+    ru: "Полный экран"
+    en: "Fullscreen"
   - key: hud.exitPacing.assault
     ru: "ВОЛНА"
     en: "ASSAULT"

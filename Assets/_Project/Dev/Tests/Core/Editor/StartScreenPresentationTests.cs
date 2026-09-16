@@ -4,6 +4,7 @@ using System.Collections;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -20,6 +21,44 @@ public sealed class StartScreenPresentationTests
 
     private const string ScenePath = "Assets/_Project/Scenes/MainBuild/StartScreen.unity";
     private static Type PresentationType => typeof(StartScreenController).Assembly.GetType("StartScreenAtmosphere");
+
+    [Test]
+    public void SharedSettingsOfferWindowMode()
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/_Project/prefabs/UI/SettingsPanel/SettingsPanel.prefab");
+        var serialized = new SerializedObject(prefab.GetComponent<AudioSettingsPanel>());
+        var property = serialized.FindProperty("windowModeDropdown");
+        Assert.That(property, Is.Not.Null, "Shared settings must expose the screen mode control.");
+        var dropdown = property.objectReferenceValue as TMP_Dropdown;
+        Assert.That(dropdown, Is.Not.Null);
+        Assert.That(dropdown.options.Count, Is.EqualTo(2));
+    }
+
+    private static void AssertWindowModeSelectionPersists(AudioSettingsPanel panel)
+    {
+        var dropdown = (TMP_Dropdown)new SerializedObject(panel)
+            .FindProperty("windowModeDropdown").objectReferenceValue;
+        const string key = "display.fullscreen";
+        bool existed = PlayerPrefs.HasKey(key);
+        int saved = PlayerPrefs.GetInt(key);
+        try
+        {
+            dropdown.SetValueWithoutNotify(0);
+            dropdown.value = 1;
+            Assert.That(PlayerPrefs.GetInt(key), Is.EqualTo(1));
+            dropdown.value = 0;
+            Assert.That(PlayerPrefs.GetInt(key), Is.Zero);
+            Assert.That(dropdown.options[1].text,
+                Is.EqualTo(LocalizationService.Instance.Get("settings.fullscreen")));
+        }
+        finally
+        {
+            if (existed) PlayerPrefs.SetInt(key, saved);
+            else PlayerPrefs.DeleteKey(key);
+            PlayerPrefs.Save();
+        }
+    }
 
     [Test]
     public void BackgroundIsAuthoredAndDoesNotInterceptButtons()
@@ -77,6 +116,7 @@ public sealed class StartScreenPresentationTests
         settingsButton.onClick.Invoke();
         Assert.That(settings.IsOpen, Is.True);
         Assert.That(menu.interactable, Is.False);
+        AssertWindowModeSelectionPersists(settings);
         yield return null;
         ScreenCapture.CaptureScreenshot("Artifacts/StartScreen/menu-settings.png");
         yield return new WaitForSecondsRealtime(.4f);

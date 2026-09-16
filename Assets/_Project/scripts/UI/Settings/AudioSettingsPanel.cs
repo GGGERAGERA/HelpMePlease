@@ -17,6 +17,9 @@ public sealed class AudioSettingsPanel : MonoBehaviour
     [Header("Language")]
     [SerializeField] private TMP_Dropdown languageDropdown;
 
+    [Header("Display")]
+    [SerializeField] private TMP_Dropdown windowModeDropdown;
+
     [Header("Accessibility")]
     [SerializeField] private Toggle automaticFireToggle;
 
@@ -92,6 +95,7 @@ public sealed class AudioSettingsPanel : MonoBehaviour
             (int)localization.CurrentLanguage
         );
         languageDropdown?.RefreshShownValue();
+        RefreshWindowModes(localization.CurrentLanguage);
         automaticFireToggle?.SetIsOnWithoutNotify(
             WeaponControlSettings.AutomaticFireEnabled
         );
@@ -112,6 +116,8 @@ public sealed class AudioSettingsPanel : MonoBehaviour
             HandleAutomaticFireChanged
         );
         backButton?.onClick.AddListener(Close);
+        windowModeDropdown?.onValueChanged.AddListener(HandleWindowModeChanged);
+        LocalizationService.EnsureExists().LanguageChanged += RefreshWindowModes;
         listenersRegistered = true;
     }
 
@@ -130,6 +136,9 @@ public sealed class AudioSettingsPanel : MonoBehaviour
             HandleAutomaticFireChanged
         );
         backButton?.onClick.RemoveListener(Close);
+        windowModeDropdown?.onValueChanged.RemoveListener(HandleWindowModeChanged);
+        if (LocalizationService.Instance != null)
+            LocalizationService.Instance.LanguageChanged -= RefreshWindowModes;
         listenersRegistered = false;
     }
 
@@ -185,4 +194,21 @@ public sealed class AudioSettingsPanel : MonoBehaviour
     {
         WeaponControlSettings.SetAutomaticFire(enabled);
     }
+
+    private void RefreshWindowModes(GameLanguage language)
+    {
+        if (windowModeDropdown == null) return;
+        var localization = LocalizationService.EnsureExists();
+        windowModeDropdown.ClearOptions();
+        windowModeDropdown.AddOptions(new List<string>
+        {
+            localization.Get("settings.windowed"),
+            localization.Get("settings.fullscreen")
+        });
+        windowModeDropdown.SetValueWithoutNotify(WindowModeSettings.Fullscreen ? 1 : 0);
+        windowModeDropdown.RefreshShownValue();
+    }
+
+    private static void HandleWindowModeChanged(int value) =>
+        WindowModeSettings.SetFullscreen(value == 1);
 }
