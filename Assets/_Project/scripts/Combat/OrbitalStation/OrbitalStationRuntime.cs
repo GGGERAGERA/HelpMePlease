@@ -450,11 +450,9 @@ namespace Subject42.Combat.OrbitalStation
             coreFlash = Mathf.MoveTowards(coreFlash, 0f, deltaTime * 5f);
             if (coreVisual != null)
             {
-                coreVisual.transform.localScale = Vector3.one *
-                    Mathf.Lerp(0.34f, 0.55f, Mathf.Max(coreFlash, Core.Charge));
+                // Pulse the energy effects, keeping the linked miniWeapon art at its authored size/color.
                 Color idle = Core.Level == 0 ? new Color(0.72f, 0.25f, 1f) :
                     OrbitalPresentationConfig.Active.GetCoreWaveColor(Core.Level);
-                coreVisual.color = Color.Lerp(idle, Color.white, Mathf.Max(coreFlash, Core.Charge));
                 var config = OrbitalPresentationConfig.Active;
                 float energy = Mathf.Max(coreFlash, Core.Charge);
                 authoredView.CoreHalo.enabled = Core.Level > 0;
@@ -764,7 +762,7 @@ namespace Subject42.Combat.OrbitalStation
         {
             coreFlash = 1f;
             if (coreVisual != null)
-                coreVisual.color = color;
+                authoredView.CoreHalo.color = color;
         }
 
         public void FlashLink(Vector2 from, Vector2 to, Color color, float life)

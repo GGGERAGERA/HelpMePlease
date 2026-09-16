@@ -159,11 +159,14 @@ public sealed class Subject42OrbitalPrefabTests
     [TestCase(OrbitalModuleKind.Pistol, "p_miniWeaponPistol1")]
     [TestCase(OrbitalModuleKind.LaserSword, "p_miniWeaponLaserSward1")]
     [TestCase(OrbitalModuleKind.ImpulseGun, "p_miniWeaponImpulseGun1")]
+    [TestCase(OrbitalModuleKind.ArcEmitter, "p_miniWeaponLaser1")]
     public void SourceArt_ScaleSortingAndBaseColorsPreserved(OrbitalModuleKind kind, string sourceName)
     {
         var source = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/prefabs/miniWeapons/" + sourceName + ".prefab");
         var view = Config.GetPrefab(kind).GetComponent<OrbitalModuleView>();
-        Assert.That(view.Body.localScale.x, Is.EqualTo(Config.GetScale(kind)).Within(.0001f));
+        Assert.That(PrefabUtility.GetCorrespondingObjectFromOriginalSource(view.Body.gameObject), Is.SameAs(source));
+        Assert.That(view.Body.localScale, Is.EqualTo(source.transform.localScale));
+        Assert.That(Config.GetScale(kind), Is.EqualTo(1f), "Authored art must not be resized at runtime");
         foreach (var renderer in source.GetComponentsInChildren<SpriteRenderer>(true))
         {
             string path = AnimationUtility.CalculateTransformPath(renderer.transform, source.transform);
@@ -171,7 +174,24 @@ public sealed class Subject42OrbitalPrefabTests
             Assert.That(copy.sortingLayerName, Is.EqualTo("Player"));
             Assert.That(copy.sortingOrder, Is.EqualTo(renderer.sortingOrder + Config.MountedWeaponSortingOffset));
             Assert.That(copy.color, Is.EqualTo(renderer.color), sourceName + "/" + path);
+            Assert.That(copy.sprite, Is.SameAs(renderer.sprite), path);
+            Assert.That(copy.sharedMaterial, Is.SameAs(renderer.sharedMaterial), path);
+            Assert.That(copy.transform.localScale, Is.EqualTo(renderer.transform.localScale), path);
         }
+    }
+
+    [Test]
+    public void CoreUsesAuthoredMiniWeaponAndPistolUsesAuthoredProjectile()
+    {
+        var source = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/prefabs/miniWeapons/p_miniWeaponCore1.prefab");
+        var core = Config.StationPrefab.GetComponent<OrbitalStationView>().Core;
+        var instance = PrefabUtility.GetNearestPrefabInstanceRoot(core);
+        Assert.That(instance, Is.Not.Null);
+        Assert.That(PrefabUtility.GetCorrespondingObjectFromOriginalSource(instance), Is.SameAs(source));
+        Assert.That(instance.transform.localScale, Is.EqualTo(source.transform.localScale));
+        Assert.That(instance.GetComponentsInChildren<Collider2D>(), Is.Empty);
+        Assert.That(AssetDatabase.GetAssetPath(Config.PistolProjectilePrefab),
+            Is.EqualTo("Assets/_Project/prefabs/miniWeapons/p_miniWeaponPistolBullet1.prefab"));
     }
 
     [Test]

@@ -134,9 +134,16 @@ public sealed class Subject42OrbitalGeometryTests
             for (int i = 0; i < rings.Length; i++)
             {
                 var rs = state.Rings[i];
-                state.AddMount(rs.StableRingId, out _);
-                state.UpgradeRingSpeed(rs.StableRingId);
-                state.UpgradeRingPower(rs.StableRingId);
+                int id = rs.StableRingId;
+                Assert.That(state.AddMount(id, out _), Is.True);
+                Assert.That(state.AddMount(id, out _), Is.True);
+                for (int mount = i == 0 ? 1 : 0; mount < 3; mount++)
+                    Assert.That(state.InstallModule(OrbitalModuleKind.Pistol, id, mount, out _), Is.True);
+                Assert.That(state.UpgradeRingCapacity(id), Is.True);
+                Assert.That(state.AddMount(id, out _), Is.True);
+                Assert.That(state.InstallModule(OrbitalModuleKind.Pistol, id, 3, out _), Is.True);
+                Assert.That(state.UpgradeRingSpeed(id), Is.True);
+                Assert.That(state.UpgradeRingPower(id), Is.True);
                 rings[i] = new OrbitalRingRuntime(rs, root.transform, config.VisualMaterial, config.PixelSprite, false, path);
                 Assert.That(rings[i].MountCapacity, Is.EqualTo(4));
                 Assert.That(rings[i].PowerMultiplier, Is.EqualTo(1.25f));

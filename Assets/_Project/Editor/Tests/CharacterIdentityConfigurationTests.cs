@@ -1,6 +1,8 @@
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using Subject42.Combat.OrbitalStation;
+using System.Reflection;
 
 public sealed class CharacterIdentityConfigurationTests
 {
@@ -8,6 +10,65 @@ public sealed class CharacterIdentityConfigurationTests
         "Assets/_Project/Scriptable Objects/Characters/01_Gera.asset";
     private const string VikaDataPath =
         "Assets/_Project/Scriptable Objects/Characters/03_Vika.asset";
+    private const string DimagDataPath =
+        "Assets/_Project/Scriptable Objects/Characters/02_Di-mag.asset";
+
+    [TestCase(GeraDataPath, OrbitalPathType.Circle, false)]
+    [TestCase(DimagDataPath, OrbitalPathType.FigureEight, false)]
+    [TestCase(VikaDataPath, OrbitalPathType.Custom, true)]
+    public void CharacterOwnsItsProductionPath(string assetPath, OrbitalPathType expected, bool draws)
+    {
+        var character = AssetDatabase.LoadAssetAtPath<CharacterData>(assetPath);
+        Assert.That(character.orbitalPath, Is.EqualTo(expected));
+        var manager = RunStateManager.EnsureExists();
+        var stage = ScriptableObject.CreateInstance<StageProfileData>();
+        var rule = ScriptableObject.CreateInstance<WorldRuleData>();
+        var anomaly = ScriptableObject.CreateInstance<LocalAnomalyData>();
+        try
+        {
+            manager.BeginNewRun(character, null, stage, rule, anomaly);
+            Assert.That(manager.OrbitalStationState.UsesCustomPaths, Is.EqualTo(draws));
+        }
+        finally
+        {
+            Object.DestroyImmediate(manager.gameObject);
+            Object.DestroyImmediate(stage);
+            Object.DestroyImmediate(rule);
+            Object.DestroyImmediate(anomaly);
+        }
+    }
+
+    [Test]
+    public void ProductionFacingFlipsTheVisibleCharacterWithoutFlippingStation()
+    {
+        foreach (string path in new[] { GeraDataPath, DimagDataPath, VikaDataPath })
+        {
+            var character = AssetDatabase.LoadAssetAtPath<CharacterData>(path);
+            var player = Object.Instantiate(OrbitalPresentationConfig.Active.GetPlayerPrefab(character.characterPrefab));
+            try
+            {
+                var movement = player.GetComponent<CharacterMovement2D>();
+                Assert.That(movement.VisualRoot, Is.Not.Null, path);
+                Assert.That(movement.VisualRoot.gameObject.activeInHierarchy, Is.True, path);
+                Assert.That(movement.VisualRoot.GetComponentInChildren<SpriteRenderer>(), Is.Not.Null, path);
+                movement.SetVisualRoot(movement.VisualRoot);
+                Vector3 original = movement.VisualRoot.localScale;
+                var station = player.GetComponentInChildren<OrbitalStationView>().transform;
+                Vector3 stationScale = station.lossyScale;
+                var facing = typeof(CharacterMovement2D).GetMethod("UpdateFacing", BindingFlags.Instance | BindingFlags.NonPublic);
+                foreach (float direction in new[] { 1f, -1f, 1f })
+                {
+                    facing.Invoke(movement, new object[] { direction });
+                    Assert.That(movement.VisualRoot.localScale.x, Is.EqualTo(-direction * Mathf.Abs(original.x)), path);
+                    Assert.That(movement.VisualRoot.localScale.y, Is.EqualTo(original.y), path);
+                    Assert.That(station.lossyScale, Is.EqualTo(stationScale), path);
+                }
+                Assert.That(player.GetComponentInChildren<Animator>().runtimeAnimatorController,
+                    Is.SameAs(character.characterPrefab.GetComponentInChildren<Animator>().runtimeAnimatorController), path);
+            }
+            finally { Object.DestroyImmediate(player); }
+        }
+    }
 
     [Test]
     public void CharacterAssetsMatchCanonicalGeraAndVikaVisuals()
@@ -28,7 +89,7 @@ public sealed class CharacterIdentityConfigurationTests
         Assert.That(AssetDatabase.GetAssetPath(vika.characterPrefab),
             Is.EqualTo("Assets/_Project/prefabs/players/p_Player3.prefab"));
         Assert.That(AssetDatabase.GetAssetPath(vika.portrait),
-            Is.EqualTo("Assets/_Project/art/01f2275083991207c33e47bc77865466.jpg"));
+            Is.EqualTo("Assets/_Project/art/339a1a4a-a7df-475a-9ca7-579919373785.png"));
         AssertActiveFacingVisual(vika.characterPrefab, "Vika4");
     }
 
@@ -52,9 +113,6 @@ public sealed class CharacterIdentityConfigurationTests
                     Assert.That(text, Is.Not.Empty, key);
                 }
             }
-            Assert.That(character.orbitalPath, Is.EqualTo(path == VikaDataPath
-                ? Subject42.Combat.OrbitalStation.OrbitalPathType.Custom
-                : Subject42.Combat.OrbitalStation.OrbitalPathType.Circle));
         }
         var vika = AssetDatabase.LoadAssetAtPath<CharacterData>(VikaDataPath);
         Assert.That(table.TryGet(vika.orbitalPatternKey, GameLanguage.Russian, out string pattern), Is.True);
