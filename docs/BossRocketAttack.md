@@ -69,8 +69,8 @@ watchdog also releases it if animation completion or an event never arrives.
 
 ## Quick manual check
 
-For a playable dodge arena, open `Assets/_Project/Scenes/Dev/BossPractice.unity`
-or use **Tools → Subject42 → Open Boss Practice**, then enter Play Mode.
+For a playable dodge arena, open `Assets/_Project/Dev/Labs/F1/BossPracticeLab.unity`
+or use **Tools → Subject42 → Dev → F1 Inspector → Open Boss Practice**, then enter Play Mode.
 Click Game View: WASD/arrows move, Space dashes, R restarts with full health.
 The arena uses the production player movement/health and current boss prefab,
 with no waves, orbital weapons, progression or production scene routing.
