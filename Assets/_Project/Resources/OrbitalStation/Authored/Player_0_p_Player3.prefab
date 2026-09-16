@@ -4953,7 +4953,7 @@ Transform:
   m_GameObject: {fileID: 3840695128579422125}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.47, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4969,7 +4969,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 073797afb82c5a1438f328866b10b3f0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.2D.Runtime::UnityEngine.Rendering.Universal.Light2D
   m_ComponentVersion: 2
   m_LightType: 3
@@ -5204,7 +5204,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 879dc705f86e1f84c91ba97bfffc9dfa, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Movement2D
   baseMoveSpeed: 8.07
   acceleration: 50
@@ -5215,7 +5215,7 @@ MonoBehaviour:
   dashDuration: 0.15
   dashCooldown: 3
   dashKey: 32
-  visualRoot: {fileID: 6025226023504024247}
+  visualRoot: {fileID: 2569303370909294026}
 --- !u!114 &7327690783135692322
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5226,7 +5226,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 41639b5307150ce4495a793595571eac, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   assaultEventsEnabled: 1
   firstAssaultDelay: {x: 70, y: 80}
@@ -5291,7 +5291,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b6301969cbf24ef42b10cfee1088decb, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
   maxHealth: 100000
   currentHealth: 0
@@ -5320,7 +5320,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e407d7e95e44ce44e9bc28f44e66cda2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerWhiteFlash
   flashMaterial: {fileID: 2100000, guid: 2ff410d6175258e4086acff183a82c3b, type: 2}
   flashDuration: 0.08
@@ -5431,7 +5431,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3b1f3e40fcdaaca4c9dab2f6e0e1b638, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHitSound
   audioSource: {fileID: 7005558303192425136}
   hitClips:
@@ -5447,7 +5447,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3ec9473a8c3aa7145970c887f06eb7fd, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerPickupRadius
   baseRadius: 3
 --- !u!114 &7727948012019085347
@@ -5460,7 +5460,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d290efcf0725aee43ba316960d9f43b5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombatModifiers
   runDamageMultiplier: 1
   runCritChanceBonus: 0
@@ -5475,7 +5475,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5d81fa724ea685343af8bbf9467f5815, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractor
   interactionRadius: 3
 --- !u!1001 &3517840322045705566
@@ -5540,7 +5540,7 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2731508574266798372, guid: 0701d08454880ab4db0504eed871e70a, type: 3}
   m_PrefabInstance: {fileID: 3517840322045705566}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &6025226023504024247 stripped
+--- !u!4 &2569303370909294026 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1402342349632659604, guid: 0701d08454880ab4db0504eed871e70a, type: 3}
   m_PrefabInstance: {fileID: 3517840322045705566}

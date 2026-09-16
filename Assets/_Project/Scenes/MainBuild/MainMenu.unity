@@ -273067,6 +273067,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 123838421464939449, guid: b12870e38d6d2b241a1ec166b32df667, type: 3}
+      propertyPath: m_DrawMode
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1018647574724994857, guid: b12870e38d6d2b241a1ec166b32df667, type: 3}
       propertyPath: m_Name
       value: MinigameArena_VS
@@ -273123,9 +273127,21 @@ PrefabInstance:
       propertyPath: anomalyFieldSize.x
       value: 11.01
       objectReference: {fileID: 0}
+    - target: {fileID: 7515566126898947254, guid: b12870e38d6d2b241a1ec166b32df667, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7515566126898947254, guid: b12870e38d6d2b241a1ec166b32df667, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8328962570673480061, guid: b12870e38d6d2b241a1ec166b32df667, type: 3}
       propertyPath: m_fontColor32.rgba
       value: 3434276416
+      objectReference: {fileID: 0}
+    - target: {fileID: 9160735732117798393, guid: b12870e38d6d2b241a1ec166b32df667, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -24.4992
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
