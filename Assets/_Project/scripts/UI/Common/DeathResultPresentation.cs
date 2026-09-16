@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,10 +6,8 @@ using UnityEngine.UI;
 public sealed class DeathResultPresentation : MonoBehaviour
 {
 
-    private readonly Dictionary<GameObject, bool> legacyVisibility = new();
     [SerializeField] private RectTransform window;
     [SerializeField] private Image backdrop;
-    private Color originalBackdrop;
     [SerializeField] private TextMeshProUGUI sector;
     [SerializeField] private TextMeshProUGUI time;
     [SerializeField] private TextMeshProUGUI kills;
@@ -20,8 +17,6 @@ public sealed class DeathResultPresentation : MonoBehaviour
     [SerializeField] private TextMeshProUGUI modules;
     [SerializeField] private TextMeshProUGUI core;
     [SerializeField] private TextMeshProUGUI comment;
-    [SerializeField] private GameObject[] legacyObjects;
-    [SerializeField] private bool[] legacyActive;
     [SerializeField] private Button restartButton;
     [SerializeField] private Button bunkerButton;
     [SerializeField] private Image windowImage;
@@ -50,25 +45,12 @@ public sealed class DeathResultPresentation : MonoBehaviour
             rootCanvasRect != null && modalCanvas != null && modalRaycaster != null &&
             sector != null && time != null && kills != null && level != null && gold != null &&
             rings != null && modules != null && core != null && comment != null &&
-            restartButton != null && bunkerButton != null && legacyObjects != null &&
-            legacyActive != null && legacyObjects.Length == legacyActive.Length;
+            restartButton != null && bunkerButton != null;
         if (!viewValid)
         {
             Debug.LogError("[DeathResultPresentation] Authored result references are missing.", this);
             enabled = false;
             return;
-        }
-        originalBackdrop = backdrop.color;
-        for (int i = 0; i < legacyObjects.Length; i++)
-        {
-            if (legacyObjects[i] == null)
-            {
-                Debug.LogError("[DeathResultPresentation] Authored victory region is missing.", this);
-                viewValid = false;
-                enabled = false;
-                return;
-            }
-            legacyVisibility.Add(legacyObjects[i], legacyActive[i]);
         }
         restartButton.onClick.AddListener(Restart);
         bunkerButton.onClick.AddListener(ReturnToBunker);
@@ -86,8 +68,6 @@ public sealed class DeathResultPresentation : MonoBehaviour
                 topOrder = Mathf.Max(topOrder, canvas.sortingOrder);
         // Reserve the top UI order for the software cursor.
         modalCanvas.sortingOrder = Mathf.Min(short.MaxValue - 1, topOrder + 1);
-        foreach (GameObject child in legacyVisibility.Keys)
-            if (child != null) child.SetActive(false);
         window.gameObject.SetActive(true);
         window.SetAsLastSibling();
         if (backdrop != null)
@@ -107,17 +87,6 @@ public sealed class DeathResultPresentation : MonoBehaviour
         core.text = summary.OrbitalCoreLevel.ToString();
         comment.text = AICommentGenerator.GetComment(false);
         FitToCanvas();
-    }
-
-    public void RestoreLegacyView()
-    {
-        if (!viewValid) return;
-        window.gameObject.SetActive(false);
-        modalCanvas.enabled = false;
-        modalRaycaster.enabled = false;
-        foreach (var child in legacyVisibility)
-            if (child.Key != null) child.Key.SetActive(child.Value);
-        if (backdrop != null) backdrop.color = originalBackdrop;
     }
 
     private static void Place(RectTransform rect, float x, float y, float width, float height)

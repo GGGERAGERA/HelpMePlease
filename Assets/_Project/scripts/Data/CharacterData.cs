@@ -49,7 +49,7 @@ public class CharacterData : ScriptableObject
 
     public CharacterId Id => characterId;
     public Sprite Portrait => portrait;
-    public Sprite GameplayIcon => gameplayIcon != null ? gameplayIcon : portrait;
+    public Sprite GameplayIcon => gameplayIcon;
     public GameObject ProductionPrefab => productionPrefab != null
         ? productionPrefab
         : characterPrefab;

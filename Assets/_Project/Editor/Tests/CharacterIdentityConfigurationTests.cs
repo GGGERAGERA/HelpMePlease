@@ -62,15 +62,61 @@ public sealed class CharacterIdentityConfigurationTests
             error);
     }
 
-    [Test]
-    public void CharacterSelectionModelUsesStableIdAndAuthoredIcon()
+    [TestCase(GeraDataPath)]
+    [TestCase(DimagDataPath)]
+    [TestCase(VikaDataPath)]
+    public void CharacterSelectionUsesGameplayIconOnLeftAndPortraitOnRight(string assetPath)
     {
-        CharacterData character = AssetDatabase.LoadAssetAtPath<CharacterData>(GeraDataPath);
+        CharacterData character = AssetDatabase.LoadAssetAtPath<CharacterData>(assetPath);
         var entry = BunkerSelectionSourceHub.BuildCharacterEntryForTests(character, selected: false);
 
-        Assert.That(entry.Id, Is.EqualTo(CharacterId.Gera.ToString()));
+        Assert.That(entry.Id, Is.EqualTo(character.Id.ToString()));
         Assert.That(entry.Icon, Is.SameAs(character.Portrait));
         Assert.That(entry.CharacterVisual, Is.SameAs(character.GameplayIcon));
+        Assert.That(character.GameplayIcon, Is.Not.Null);
+        Assert.That(character.Portrait, Is.Not.SameAs(character.GameplayIcon));
+
+        var root = PrefabUtility.LoadPrefabContents(
+            "Assets/_Project/prefabs/UI/Stations/BunkerSelectionWindow.prefab");
+        try
+        {
+            var window = new SerializedObject(root.GetComponent<BunkerSelectionWindow>());
+            var card = (BunkerSelectionCardView)window.FindProperty("cardPrefab").objectReferenceValue;
+            var detail = (BunkerSelectionDetailView)window.FindProperty("detailView").objectReferenceValue;
+            var icon = (UnityEngine.UI.Image)new SerializedObject(card).FindProperty("icon").objectReferenceValue;
+            var portrait = (UnityEngine.UI.Image)new SerializedObject(detail).FindProperty("portrait").objectReferenceValue;
+
+            card.Bind(entry);
+            detail.Bind(entry);
+            Assert.That(icon.sprite, Is.SameAs(character.GameplayIcon));
+            Assert.That(portrait.sprite, Is.SameAs(character.Portrait));
+
+            // A missing gameplay icon must not silently turn the left card into a portrait.
+            entry.CharacterVisual = null;
+            card.Bind(entry);
+            Assert.That(icon.sprite, Is.Null);
+            Assert.That(icon.enabled, Is.False);
+            Assert.That(portrait.sprite, Is.SameAs(character.Portrait));
+        }
+        finally { PrefabUtility.UnloadPrefabContents(root); }
+    }
+
+    [Test]
+    public void MissingGameplayIconDoesNotFallBackToPortrait()
+    {
+        var character = Object.Instantiate(AssetDatabase.LoadAssetAtPath<CharacterData>(GeraDataPath));
+        try
+        {
+            var data = new SerializedObject(character);
+            data.FindProperty("gameplayIcon").objectReferenceValue = null;
+            data.ApplyModifiedPropertiesWithoutUndo();
+            Assert.That(character.Portrait, Is.Not.Null);
+            Assert.That(character.GameplayIcon, Is.Null);
+            Assert.That(character.HasValidProductionIdentity, Is.False);
+            Assert.That(BunkerSelectionSourceHub.BuildCharacterEntryForTests(character, false).CharacterVisual,
+                Is.Null);
+        }
+        finally { Object.DestroyImmediate(character); }
     }
 
     [Test]

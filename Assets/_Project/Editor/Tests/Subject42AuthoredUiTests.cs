@@ -22,6 +22,28 @@ public sealed class Subject42AuthoredUiTests
     private const string Folder = "Assets/_Project/prefabs/UI/Authored/";
 
     [Test]
+    public void RunResultHostHasNoLegacyResultHierarchy()
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/_Project/prefabs/UI/RunResultPanel.prefab");
+        Assert.That(prefab.transform.childCount, Is.Zero,
+            "The authored death window is attached by MVP; old victory/stats/buttons must not coexist.");
+        var view = new SerializedObject(prefab.GetComponent<RunResultView>());
+        Assert.That(view.FindProperty("death").objectReferenceValue,
+            Is.SameAs(prefab.GetComponent<DeathResultPresentation>()));
+        Assert.That(view.FindProperty("titleText"), Is.Null);
+        var death = new SerializedObject(prefab.GetComponent<DeathResultPresentation>());
+        Assert.That(death.FindProperty("legacyObjects"), Is.Null);
+    }
+
+    [Test]
+    public void BunkerSummaryDoesNotOwnRunTeardown()
+    {
+        string source = File.ReadAllText("Assets/_Project/scripts/Bunker/UI/BunkerRunSummaryPresenter.cs");
+        Assert.That(source, Does.Not.Contain("ClearFinishedRunCompatibilityState"));
+    }
+
+    [Test]
     public void ProductionScenesHaveRequiredUiReferencesAndOneEventSystem()
     {
         var report = Subject42ProjectValidator.ValidateAuthoredUi();
@@ -230,7 +252,7 @@ public sealed class Subject42AuthoredUiTests
         Assert.That(((Canvas)Get(death, "modalCanvas")).overrideSorting, Is.True);
         Assert.That(((Canvas)Get(death, "modalCanvas")).sortingOrder, Is.GreaterThan(55));
         int hierarchy = result.GetComponentsInChildren<Transform>(true).Length;
-        result.Show(false);result.Show(true);result.Show(false);
+        result.ShowDeath();result.ShowDeath();result.ShowDeath();
         Assert.That(result.GetComponentsInChildren<Transform>(true).Length, Is.EqualTo(hierarchy));
         var deadStation = One<OrbitalStationRuntime>();
         var restart = (Button)Get(death, "restartButton");
@@ -240,7 +262,7 @@ public sealed class Subject42AuthoredUiTests
         Time.timeScale = 0; AssertEvents();
         Assert.That(CurrencyManager.Instance.TotalGold, Is.EqualTo(currencyBefore + summary.GoldEarned));
         // Death return button uses the same existing idempotent RunEndService.
-        result = One<RunResultView>();result.Show(false);
+        result = One<RunResultView>();result.ShowDeath();
         death = One<DeathResultPresentation>();
         PointerClick((Button)Get(death, "bunkerButton"));
         yield return Await(() => SceneManager.GetActiveScene().name == "MainMenu" && One<BunkerContext>() != null);

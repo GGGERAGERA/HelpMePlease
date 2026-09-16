@@ -237,18 +237,14 @@ public static class Subject42ProjectValidator
                     "core", "comment", "restartButton", "bunkerButton");
                 if (death != null)
                 {
-                    RequireSerializedArray(death, "legacyObjects", 1, report);
                     var data = new SerializedObject(death);
                     var modal = data.FindProperty("modalCanvas").objectReferenceValue as Canvas;
                     if (modal != null && !modal.overrideSorting)
                         report.Add(Subject42ValidationSeverity.Error, "AUTHORED_UI_MODAL_SORTING",
                             "Death result canvas must override sorting.", death);
-                    if (data.FindProperty("legacyObjects").arraySize != data.FindProperty("legacyActive").arraySize)
-                        report.Add(Subject42ValidationSeverity.Error, "AUTHORED_UI_RESULT_VISIBILITY",
-                            "Death result visibility arrays must have matching lengths.", death);
                 }
                 UiRefs(RequireSingle<RunResultView>(scene, report), report,
-                    "death", "titleText", "statsText", "aiCommentText");
+                    "death");
                 UiRefs(RequireSingle<HUDManager>(scene, report), report,
                     "tacticalMap", "lootReel", "threatPanel", "threatLevelText", "threatValueText", "threatFill");
                 UiRefs(RequireSingle<LevelModifiersApplier>(scene, report), report,

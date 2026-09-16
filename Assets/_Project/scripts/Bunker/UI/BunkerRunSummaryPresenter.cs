@@ -52,9 +52,6 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
             RunStateManager.Instance.TryConsumeLastRunSummary(out summary);
         if (summary == null && !escapeUpdated) yield break;
 
-        if (summary?.EndReason == RunEndReason.Victory)
-            RunStateManager.Instance.ClearFinishedRunCompatibilityState();
-
         if (notificationParent == null || panelTemplate == null || goldTextTemplate == null || sourceScaler == null)
         {
             Debug.LogError("[BunkerRunSummaryPresenter] Notification UI references are missing.", this);

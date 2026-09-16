@@ -29,7 +29,7 @@ public class GameOverManager : MonoBehaviour
         HUDManager.Instance?.HideLowHpVignette();
 
         if (runResultView != null)
-            runResultView.Show(false);
+            runResultView.ShowDeath();
 
         Time.timeScale = 0f;
     }
