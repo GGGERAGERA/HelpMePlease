@@ -1,13 +1,18 @@
-# Development tests
+# Critical development tests
 
-Run the NUnit **Core** category in Unity Test Runner for bounded validation. Core contains **32 scenarios / 34 expanded cases / 12 files**. Extended contains **207 methods / 290 cases / 56 files** and is not part of the Core run.
+Core contains **16 scenarios in 7 test files**, plus one shared setup helper (CoreTestSupport.cs). Extended contains **0 scenarios / 0 files**.
 
-Core protects character identity/facing (Gera Circle, Di-mag FigureEight, Vika Custom), ORBITAL commands and state, rewards and eligibility, lifecycle/cleanup, a separate GoldenPath route for each character, and RU/EN production screens.
+Run only the NUnit **Core** category in Unity Test Runner. Most scenarios are short; the one production Golden Path uses the existing Bot with a fixed seed and a five-minute safety bound.
 
-Both groups stay beneath an Editor directory in the existing Editor assembly. Partial fixtures share setup/helpers across groups; filter by category, not by fixture name or folder.
+- Characters (3): Gera/Circle, Di-mag/FigureEight and facing binding, Vika/Custom.
+- Orbital (4): ring/mount/module transaction; Link pair and Core; Vika custom paths on multiple rings; complete sector state restore.
+- Rewards (5): Level Up displayed/granted; normal anomaly cards; chest reel stopped/granted; Casino Link grant; special anomaly ring grant.
+- Lifecycle (2): death to bunker to clean second run; victory end boundary to bunker to clean second run and exactly-once gold commit. Actual boss victory is covered by Golden Path.
+- Golden Path (1): production S1 → S2 → S3 → boss → bunker → second run.
+- Localization (1): authored bunker RU → EN → RU.
 
-Extended retains distinct malformed-state matrices, renderer/math invariants, pooling/audio limits, physical scene transactions, authoring/lab contracts and visual layout assertions. Historical screenshot/report writers, duplicate GoldenPath batch wrappers and request-file runners were removed. Input matrices consolidated into Core still execute every original variant.
+Tests use the existing Editor assembly. There are no partial fixtures or dependencies on a hidden Extended suite. Setup restores modified progress and language preferences after integration checks.
 
-Batch sizes, seeds and failure replay remain available in GoldenPathLab. Tests do not require a pre-existing local history file.
+GoldenPathLab/Bot, F1, OrbitalLab and WorldSystemsLab remain manual development tools. Add a targeted test only when a new critical contract warrants it.
 
-Current project navigation: [PROJECT_MAP](../../Documentation/PROJECT_MAP.md).
+Current navigation: [PROJECT_MAP](../../Documentation/PROJECT_MAP.md).

@@ -33,7 +33,7 @@ Two release-runtime types remain in `scripts/Debug`: `ProductionVisualTuningCont
 
 ## Tests and output
 
-`Dev/Tests/Core/Editor` contains Core scenarios. Run the NUnit `Core` category for bounded validation. `Dev/Tests/Extended/Editor` retains distinct technical checks, including malformed-state and lab/authoring diagnostics. Both remain in the existing Editor assembly; no runtime test dependency or new test framework is introduced. Mixed fixtures share helpers through partial classes.
+`Dev/Tests/Core/Editor` contains 16 critical scenarios in 7 test files and one shared setup helper. Run the NUnit `Core` category. Extended has been removed (0 scenarios). There are no partial fixtures. Tests stay in the existing Editor assembly; GoldenPathLab/Bot and manual labs remain development tools.
 
 `Artifacts/GeneratedQA` is ignored, reproducible output, not project documentation. Bot latest/history/seeds required for replay remain there. Historical QA captures do not replace a current test run.
 

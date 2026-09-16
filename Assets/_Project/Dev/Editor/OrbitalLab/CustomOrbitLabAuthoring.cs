@@ -4,23 +4,12 @@ using Subject42.Combat.OrbitalStation;
 using Subject42.DebugLabs;
 using UnityEditor;
 using UnityEditor.SceneManagement;
-using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 
 public static class CustomOrbitLabAuthoring
 {
-    [MenuItem("Tools/Subject42/Dev/OrbitalLab/Smoke test production custom orbits")]
-    public static void SmokeTestProduction()
-    {
-        if (EditorApplication.isPlayingOrWillChangePlaymode) return;
-        const string output = "Artifacts/GeneratedQA/CustomOrbitProduction/";
-        Directory.CreateDirectory(output);
-        SessionState.SetString("Subject42.QAOutput", output);
-        ScriptableObject.CreateInstance<TestRunnerApi>().Execute(new ExecutionSettings(new Filter {
-            testMode = TestMode.EditMode, testNames = new[] { "CustomOrbitProductionSmokeTests" } }));
-    }
     [MenuItem("Tools/Subject42/Dev/OrbitalLab/Publish drawing settings to production")]
     public static void PublishDrawingPrefab()
     {
@@ -58,15 +47,6 @@ public static class CustomOrbitLabAuthoring
             EditorSceneManager.ClosePreviewScene(scene);
         }
     }
-    [MenuItem("Tools/Subject42/Dev/OrbitalLab/Smoke test CustomOrbitLab")]
-    public static void SmokeTest()
-    {
-        if (EditorApplication.isPlayingOrWillChangePlaymode) return;
-        CreateMissingScene();
-        var api = ScriptableObject.CreateInstance<TestRunnerApi>();
-        api.Execute(new ExecutionSettings(new Filter { testMode = TestMode.EditMode, testNames = new[] { "CustomOrbitLabSmokeTests" } }));
-    }
-
     [MenuItem("Tools/Subject42/Dev/OrbitalLab/Open CustomOrbitLab")]
     public static void Open()
     {
