@@ -71,6 +71,80 @@ public sealed class Subject42RewardProgressionTests
     }
 
     [Test]
+    public void NormalSnapshotAndChoiceHandShareDefinitions()
+    {
+        using var provider = new OrbitalRewardProvider(BodyAssets());
+        var state = OrbitalRunState.CreateDefault(42);
+        var slots = new RunItemSlots();
+        var snapshot = provider.GetEligibleNormalRewards(state, slots);
+        var hand = provider.BuildChoices(3, state, slots);
+        Assert.That(hand.Count, Is.EqualTo(3));
+        Assert.That(hand.All(snapshot.Contains), Is.True);
+        Assert.That(snapshot.Cast<OrbitalRewardData>().Any(r => r.RewardKind == OrbitalRewardKind.NewRing), Is.False);
+        Assert.That(provider.GetEligibleNormalRewards(null, slots), Is.Empty);
+    }
+
+    [TestCase(OrbitalSlotSymbol.Gun, OrbitalModuleKind.Pistol)]
+    [Category("RewardPipeline")]
+    [TestCase(OrbitalSlotSymbol.Sword, OrbitalModuleKind.LaserSword)]
+    [TestCase(OrbitalSlotSymbol.Impulse, OrbitalModuleKind.ImpulseGun)]
+    [TestCase(OrbitalSlotSymbol.Arc, OrbitalModuleKind.ArcEmitter)]
+    [TestCase(OrbitalSlotSymbol.Link, OrbitalModuleKind.LinkNode)]
+    public void PendingCasinoGrantPreservesIdentityAndPublishesOnlyCandidate(
+        OrbitalSlotSymbol symbol, OrbitalModuleKind kind)
+    {
+        var state = OrbitalRunState.CreateDefault(42);
+        string before = JsonUtility.ToJson(state);
+        Assert.That(UpgradeManager.TryGrantPendingCasinoBonus(state, symbol, out var granted), Is.True);
+        Assert.That(JsonUtility.ToJson(state), Is.EqualTo(before));
+        var added = granted.Modules.Skip(state.Modules.Count).ToArray();
+        Assert.That(added.Length, Is.EqualTo(symbol == OrbitalSlotSymbol.Link ? 2 : 1));
+        Assert.That(added.All(m => m.ModuleType == kind), Is.True);
+        Assert.That(granted.Validate(out var error), Is.True, error);
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void PendingCasinoRingUsesStateCommands(bool custom)
+    {
+        var state = OrbitalRunState.CreateDefault(42, customPaths: custom);
+        state.BeginLevelUpOpportunity(2, 1f);
+        Assert.That(UpgradeManager.TryGrantPendingCasinoBonus(state, OrbitalSlotSymbol.Ring, out var granted), Is.True);
+        Assert.That(granted.Rings.Count, Is.EqualTo(state.Rings.Count + 1));
+        Assert.That(granted.PendingCasinoRingId != 0, Is.EqualTo(custom));
+        Assert.That(granted.RingOfferMissCount, Is.Zero, "Actual ring acquisition retains the existing pity reset");
+        Assert.That(granted.LastProcessedPlayerLevel, Is.EqualTo(state.LastProcessedPlayerLevel));
+        Assert.That(granted.Validate(out var error), Is.True, error);
+    }
+
+    [Test]
+    public void RejectedPendingCasinoGrantDoesNotPublishOrMutate()
+    {
+        var state = OrbitalRunState.CreateDefault(42);
+        while (state.TryAddRing(out _, out _)) { }
+        string before = JsonUtility.ToJson(state);
+        Assert.That(UpgradeManager.TryGrantPendingCasinoBonus(state, OrbitalSlotSymbol.Ring, out var granted), Is.False);
+        Assert.That(granted, Is.Null);
+        Assert.That(JsonUtility.ToJson(state), Is.EqualTo(before));
+    }
+
+    [Test]
+    public void PresentedSnapshotDoesNotRerollWhenModuleBecomesIneligible()
+    {
+        using var provider = new OrbitalRewardProvider(BodyAssets());
+        var state = OrbitalRunState.CreateDefault(42);
+        var slots = new RunItemSlots();
+        Assert.That(state.TryAddMount(1, out _), Is.True);
+        var snapshot = provider.GetEligibleNormalRewards(state, slots);
+        var sword = snapshot.OfType<OrbitalRewardData>().Single(r => r.RewardKind == OrbitalRewardKind.LaserSword);
+        Assert.That(state.TryInstallModule(OrbitalModuleKind.Pistol, 1, 1, out _, out _), Is.True);
+        Assert.That(provider.IsEligible(sword.RewardKind, state, slots), Is.False);
+        Assert.That(snapshot.Contains(sword), Is.True, "An already presented snapshot retains reward identity");
+        Assert.That(provider.GetEligibleNormalRewards(state, slots).Contains(sword), Is.False);
+        Assert.That(sword.RewardKind, Is.EqualTo(OrbitalRewardKind.LaserSword));
+    }
+
+    [Test]
     public void LegacyMigrationPreservesBuiltMountsAndOccupancy()
     {
         var s = OrbitalRunState.CreateDefault(42);

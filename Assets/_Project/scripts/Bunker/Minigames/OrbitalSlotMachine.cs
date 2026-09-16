@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Subject42.Combat.OrbitalStation;
 using UnityEngine;
 
@@ -58,39 +57,6 @@ public static class OrbitalSlotMachine
         PlayerPrefs.Save();
     }
 
-    // The caller stages a fresh run, publishes it on success, then clears Pending.
-    // Every structural change goes through the same state API as production rewards.
-    public static bool TryApplyBonus(OrbitalRunState state, OrbitalSlotSymbol bonus)
-    {
-        if (bonus == OrbitalSlotSymbol.Ring) return state.AddRing() != null;
-        if (bonus < OrbitalSlotSymbol.Gun || bonus > OrbitalSlotSymbol.Link) return false;
-        OrbitalModuleKind kind = ModuleKind(bonus);
-        int required = bonus == OrbitalSlotSymbol.Link ? 2 : 1;
-        var mounts = new List<(int ring, int mount)>();
-        foreach (var ring in state.Rings)
-        {
-            for (int i = 0; i < ring.MountCount && mounts.Count < required; i++)
-                if (state.CanInstallModule(kind, ring.StableRingId, i, out _))
-                    mounts.Add((ring.StableRingId, i));
-        }
-        foreach (var ring in state.Rings)
-        {
-            while (mounts.Count < required)
-            {
-                if (!state.CanAddMount(ring.StableRingId, out _) &&
-                    !state.UpgradeRingCapacity(ring.StableRingId)) break;
-                int index = ring.MountCount;
-                if (!state.AddMount(ring.StableRingId, out _)) break;
-                if (state.CanInstallModule(kind, ring.StableRingId, index, out _))
-                    mounts.Add((ring.StableRingId, index));
-            }
-        }
-        if (mounts.Count != required) return false;
-        return required == 2
-            ? state.InstallLinkPair(mounts[0].ring, mounts[0].mount,
-                mounts[1].ring, mounts[1].mount, out _, out _, out _)
-            : state.InstallModule(kind, mounts[0].ring, mounts[0].mount, out _);
-    }
 
     public static OrbitalModuleKind ModuleKind(OrbitalSlotSymbol symbol) => symbol switch
     {

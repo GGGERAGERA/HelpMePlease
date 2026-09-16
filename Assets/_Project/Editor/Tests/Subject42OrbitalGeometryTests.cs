@@ -121,6 +121,24 @@ public sealed class Subject42OrbitalGeometryTests
     }
 
     [Test]
+    public void PathGeometryResolver_IsSingleSelectionBoundaryForProductionPaths()
+    {
+        var config = OrbitalPresentationConfig.Active;
+        Assert.That(OrbitalPathGeometryResolver.Default.TryResolve(
+            OrbitalPathType.Circle, config, out var circle, out string error), Is.True, error);
+        Assert.That(circle.Type, Is.EqualTo(OrbitalPathType.Circle));
+        Assert.That(OrbitalPathGeometryResolver.Default.TryResolve(
+            OrbitalPathType.FigureEight, config, out var figureEight, out error), Is.True, error);
+        Assert.That(figureEight.Type, Is.EqualTo(OrbitalPathType.FigureEight));
+        Assert.That(OrbitalPathGeometryResolver.Default.TryResolve(
+            OrbitalPathType.Custom, config, out var customBase, out error), Is.True, error);
+        Assert.That(customBase.Type, Is.EqualTo(OrbitalPathType.Circle));
+        Assert.That(OrbitalPathGeometryResolver.Default.TryResolve(
+            (OrbitalPathType)999, config, out _, out error), Is.False);
+        Assert.That(error, Does.Contain("unsupported ORBITAL path"));
+    }
+
+    [Test]
     public void EightRingsSpeedPowerCapacityAndAllocation()
     {
         var root = new GameObject("FigureEight allocation fixture");

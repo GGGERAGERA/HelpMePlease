@@ -270,16 +270,13 @@ public sealed class RunStateManager : MonoBehaviour
     {
         var bonus = OrbitalSlotMachine.Pending;
         if (bonus == OrbitalSlotSymbol.None) return;
-        var candidate = JsonUtility.FromJson<OrbitalRunState>(JsonUtility.ToJson(OrbitalStationState));
-        if (!OrbitalSlotMachine.TryApplyBonus(candidate, bonus) || !candidate.Validate(out _))
+        if (!UpgradeManager.TryGrantPendingCasinoBonus(OrbitalStationState, bonus, out var candidate))
         {
             Debug.LogError($"[OrbitalSlot] Cannot apply {bonus}; pending bonus retained.", this);
             return;
         }
         OrbitalStationState = candidate;
-        if (bonus == OrbitalSlotSymbol.Ring && candidate.UsesCustomPaths)
-            candidate.PendingCasinoRingId = candidate.Rings[candidate.Rings.Count - 1].StableRingId;
-        else OrbitalSlotMachine.ClearPending();
+        if (candidate.PendingCasinoRingId == 0) OrbitalSlotMachine.ClearPending();
     }
 
     public void CompletePendingOrbitalSlotBonus()
@@ -289,7 +286,7 @@ public sealed class RunStateManager : MonoBehaviour
         var ring = state.FindRing(state.PendingCasinoRingId);
         if (ring == null || state.IsPending(ring)) return;
         if (OrbitalSlotMachine.Pending == OrbitalSlotSymbol.Ring) OrbitalSlotMachine.ClearPending();
-        state.PendingCasinoRingId = 0;
+        state.TryClearPendingCasinoRing(out _);
     }
 
     public void SavePlayerState(GameObject player)

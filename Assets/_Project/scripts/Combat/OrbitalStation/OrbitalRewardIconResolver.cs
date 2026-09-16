@@ -26,13 +26,10 @@ namespace Subject42.Combat.OrbitalStation
 
         public static Color ModuleColor(OrbitalModuleKind kind) => Resolve(kind).Tint;
 
-        public static Icon Resolve(OrbitalRewardKind kind) => kind switch
+        public static Icon Resolve(OrbitalRewardKind kind) =>
+            OrbitalRewardProvider.GetModuleKind(kind) is OrbitalModuleKind module
+                ? Resolve(module) : kind switch
         {
-            OrbitalRewardKind.Pistol => Resolve(OrbitalModuleKind.Pistol),
-            OrbitalRewardKind.LaserSword => Resolve(OrbitalModuleKind.LaserSword),
-            OrbitalRewardKind.ImpulseGun => Resolve(OrbitalModuleKind.ImpulseGun),
-            OrbitalRewardKind.ArcEmitter => Resolve(OrbitalModuleKind.ArcEmitter),
-            OrbitalRewardKind.LinkPair => Resolve(OrbitalModuleKind.LinkNode),
             OrbitalRewardKind.ModuleDamage => Resolve(OrbitalModuleKind.Pistol),
             OrbitalRewardKind.CoreUpgrade => new Icon(OrbitalPresentationConfig.Active.CoreIcon, Color.white),
             OrbitalRewardKind.AddMount => new Icon(OrbitalPresentationConfig.Active.NewMountIcon, Color.white),

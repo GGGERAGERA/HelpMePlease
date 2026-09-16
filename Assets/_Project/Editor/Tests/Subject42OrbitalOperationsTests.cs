@@ -109,6 +109,74 @@ public sealed class Subject42OrbitalOperationsTests
         Assert.That(state.Revision, Is.EqualTo(revision + 2));
     }
 
+    [Test]
+    public void CommandApi_OwnsAllOrbitalStateMutations()
+    {
+        var state = OrbitalRunState.CreateDefault(42, customPaths: true);
+        var pendingRing = state.NextPendingRing;
+        Assert.That(state.IsPending(pendingRing), Is.True);
+        Assert.That(state.TryInstallModule(OrbitalModuleKind.LaserSword,
+            pendingRing.StableRingId, 0, out _, out string error), Is.False,
+            "default pistol already occupies mount 0");
+
+        Assert.That(CustomOrbitPath.TryRestore(new[]
+        {
+            new Vector2(0f, 1f), new Vector2(1f, 0f),
+            new Vector2(0f, -1f), new Vector2(-1f, 0f)
+        }, out var firstPath), Is.True);
+        Assert.That(state.TrySetCustomPath(pendingRing.StableRingId,
+            firstPath, 3f, out error), Is.True, error);
+        Assert.That(state.FindRing(pendingRing.StableRingId).CustomPath,
+            Is.EqualTo(firstPath.CapturePoints()));
+
+        Assert.That(state.TryAddMount(1, out error), Is.True, error);
+        Assert.That(state.TryInstallModule(OrbitalModuleKind.ImpulseGun,
+            1, 1, out var impulse, out error), Is.True, error);
+        Assert.That(state.TryUpgradeRingSpeed(1, out error), Is.True, error);
+        Assert.That(state.TryUpgradeRingDamage(1, out error), Is.True, error);
+        Assert.That(state.TryUpgradeModuleDamage(impulse.StableModuleId, out error), Is.True, error);
+        Assert.That(state.TryUpgradeCore(out error), Is.True, error);
+
+        string beforeInvalid = Snapshot(state);
+        Assert.That(state.TryInstallModule(OrbitalModuleKind.Pistol, 999, 0,
+            out _, out error), Is.False);
+        Assert.That(error, Is.Not.Null.And.Not.Empty);
+        Assert.That(Snapshot(state), Is.EqualTo(beforeInvalid));
+    }
+
+    [Test]
+    public void CommandApi_QueuesMultipleCustomRingPathsInState()
+    {
+        var state = OrbitalRunState.CreateDefault(7, customPaths: true);
+        var first = state.NextPendingRing;
+        Assert.That(state.TryAddRing(out var second, out _), Is.True);
+        Assert.That(CustomOrbitPath.TryRestore(new[]
+        {
+            new Vector2(0f, .8f), new Vector2(.8f, 0f),
+            new Vector2(0f, -.8f), new Vector2(-.8f, 0f)
+        }, out var firstPath), Is.True);
+        Assert.That(CustomOrbitPath.TryRestore(new[]
+        {
+            new Vector2(0f, 1.4f), new Vector2(1.2f, .2f),
+            new Vector2(.1f, -1.1f), new Vector2(-1.3f, -.1f)
+        }, out var secondPath), Is.True);
+
+        string beforeOutOfOrder = Snapshot(state);
+        Assert.That(state.TrySetCustomPath(second.StableRingId,
+            secondPath, 2f, out _), Is.False);
+        Assert.That(Snapshot(state), Is.EqualTo(beforeOutOfOrder));
+        Assert.That(state.TrySetCustomPath(first.StableRingId,
+            firstPath, 2f, out _), Is.True);
+        Assert.That(state.TrySetCustomPath(second.StableRingId,
+            secondPath, 2f, out _), Is.True);
+
+        Assert.That(state.FindRing(first.StableRingId).CustomPath,
+            Is.EqualTo(firstPath.CapturePoints()));
+        Assert.That(state.FindRing(second.StableRingId).CustomPath,
+            Is.EqualTo(secondPath.CapturePoints()));
+        Assert.That(state.PendingRingCount, Is.Zero);
+    }
+
     private sealed class Fixture : IDisposable
     {
         public readonly RunStateManager Manager;
@@ -276,6 +344,50 @@ public sealed class Subject42OrbitalOperationsTests
         Debug.Log("PASS2 continuity: same Pistol/Arc/Core/Ring/Combat/projectile objects; Pistol=0.37 Arc=0.81 pulse=2.25 cascade=0.07 index=0 phase=37.5 projectile active count=1; preserved through 8 commands. Projectile continues flight; next ring Tick uses new speed.");
         Object.Destroy(enemyGo);
         yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator RebuildRuntimeFromState_DoesNotMutateGameplayState()
+    {
+        yield return new EnterPlayMode();
+        using (var f = new Fixture())
+        {
+            Assert.That(f.Station.AddRing(), Is.Not.Null);
+            Assert.That(f.Station.AddMount(1, out _), Is.True);
+            Assert.That(f.Station.InstallModule(OrbitalModuleKind.LaserSword, 1, 1, out _), Is.True);
+            Assert.That(f.Station.UpgradeCore(), Is.True);
+            string before = Snapshot(f.State);
+
+            Assert.That(f.Station.RebuildRuntimeFromState(), Is.True);
+
+            Assert.That(Snapshot(f.State), Is.EqualTo(before));
+            AssertView(f);
+        }
+        yield return new ExitPlayMode();
+    }
+
+    [UnityTest]
+    public IEnumerator ModuleFactory_CoversCurrentProductionModules()
+    {
+        yield return new EnterPlayMode();
+        using (var f = new Fixture())
+        {
+            foreach (OrbitalModuleKind kind in Enum.GetValues(typeof(OrbitalModuleKind)))
+            {
+                var moduleState = new OrbitalModuleState
+                {
+                    StableModuleId = 100 + (int)kind,
+                    ModuleType = kind,
+                    StableRingId = 1,
+                    MountIndex = 0
+                };
+                Assert.That(OrbitalModuleRuntimeFactory.TryCreate(f.Station,
+                    moduleState, out var module, out string error), Is.True, error);
+                Assert.That(module.Kind, Is.EqualTo(kind));
+                module.Teardown();
+            }
+        }
+        yield return new ExitPlayMode();
     }
 
     [UnityTest]

@@ -567,7 +567,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
             string.Empty,
             2f
         );
-        UpgradeManager.Instance.ShowNumericChestRewardChoices(CompleteSite);
+        UpgradeManager.Instance.RequestNormalAnomalyChoices(CompleteSite);
     }
 
     private void HandleEventFailed(WorldEvent worldEvent)

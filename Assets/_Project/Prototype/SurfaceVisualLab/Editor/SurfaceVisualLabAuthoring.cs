@@ -40,7 +40,7 @@ public static partial class SurfaceVisualLabEditor
         var light = new GameObject("Neutral global light").AddComponent<Light2D>();
         light.lightType=Light2D.LightType.Global; light.intensity=1;
         lab.Character=AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Scriptable Objects/Characters/01_Gera.asset");
-        lab.Player=(GameObject)PrefabUtility.InstantiatePrefab(OrbitalPresentationConfig.Active.GetPlayerPrefab(lab.Character.characterPrefab));
+        lab.Player=(GameObject)PrefabUtility.InstantiatePrefab(lab.Character.ProductionPrefab);
         lab.Player.name="Production player — Gera / ORBITAL";
         lab.Player.GetComponent<EnemySpawner>().enabled=false;
         PrefabUtility.RecordPrefabInstancePropertyModifications(lab.Player.GetComponent<EnemySpawner>());

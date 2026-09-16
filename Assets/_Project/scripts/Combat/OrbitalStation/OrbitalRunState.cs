@@ -97,15 +97,24 @@ namespace Subject42.Combat.OrbitalStation
             }
         }
 
-        public bool FinalizeCustomRing(int id, CustomOrbitPath path, float maxRadius)
+        public bool TrySetCustomPath(int id, CustomOrbitPath path, float maxRadius, out string error)
         {
-            if (path == null || !CanCommit(out _) || NextPendingRing?.StableRingId != id) return false;
+            if (path == null)
+                return Rule(false, "custom path is missing", out error);
+            if (!CanCommit(out error)) return false;
+            if (NextPendingRing?.StableRingId != id)
+                return Rule(false, $"ring {id} is not the next pending custom path", out error);
             for (int i = 0; i < path.PointCount; i++)
-                if (path.GetPoint(i).sqrMagnitude > maxRadius * maxRadius) return false;
+                if (path.GetPoint(i).sqrMagnitude > maxRadius * maxRadius)
+                    return Rule(false, $"custom path exceeds radius {maxRadius}", out error);
             NextPendingRing.CustomPath = path.CapturePoints();
             Revision++;
+            error = null;
             return true;
         }
+
+        public bool FinalizeCustomRing(int id, CustomOrbitPath path, float maxRadius) =>
+            TrySetCustomPath(id, path, maxRadius, out _);
 
         // Called once when an XP opportunity is opened, never on UI refresh.
         // Count this opportunity provisionally; an actual acquisition resets it.
@@ -126,17 +135,25 @@ namespace Subject42.Combat.OrbitalStation
                 RunId = runId,
                 UsesCustomPaths = customPaths
             };
-            OrbitalRingState ring = state.AddRing();
-            state.InstallModule(OrbitalModuleKind.Pistol,
-                ring.StableRingId, 0, out _);
+            if (!state.TryAddRing(out OrbitalRingState ring, out string error))
+                throw new InvalidOperationException($"Default ORBITAL ring rejected: {error}");
+            if (!state.TryInstallModule(OrbitalModuleKind.Pistol,
+                    ring.StableRingId, 0, out _, out error))
+                throw new InvalidOperationException($"Default ORBITAL module rejected: {error}");
             return state;
         }
 
-        public OrbitalRingState AddRing()
+        public bool TryAddRing(out OrbitalRingState ring, out string error)
         {
-            if (!CanAddRing(out _)) return null;
-            return CommitAddRing();
+            ring = null;
+            if (!CanAddRing(out error)) return false;
+            ring = CommitAddRing();
+            error = null;
+            return true;
         }
+
+        public OrbitalRingState AddRing() =>
+            TryAddRing(out OrbitalRingState ring, out _) ? ring : null;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public OrbitalRingState DebugAddRingBeyondCap()
@@ -167,7 +184,7 @@ namespace Subject42.Combat.OrbitalStation
             return ring;
         }
 
-        public bool RemoveRing(int stableRingId, out string error)
+        public bool TryRemoveRing(int stableRingId, out string error)
         {
             if (!CanRemoveRing(stableRingId, out error)) return false;
             OrbitalRingState ring = FindRing(stableRingId);
@@ -179,7 +196,10 @@ namespace Subject42.Combat.OrbitalStation
             return true;
         }
 
-        public bool AddMount(int stableRingId, out string error)
+        public bool RemoveRing(int stableRingId, out string error) =>
+            TryRemoveRing(stableRingId, out error);
+
+        public bool TryAddMount(int stableRingId, out string error)
         {
             if (!CanAddMount(stableRingId, out error)) return false;
             OrbitalRingState ring = FindRing(stableRingId);
@@ -191,22 +211,29 @@ namespace Subject42.Combat.OrbitalStation
             return true;
         }
 
-        public bool UpgradeRingCapacity(int stableRingId)
+        public bool AddMount(int stableRingId, out string error) =>
+            TryAddMount(stableRingId, out error);
+
+        public bool TryIncreaseCapacity(int stableRingId, out string error)
         {
-            if (!CanUpgradeRingCapacity(stableRingId, out _)) return false;
+            if (!CanUpgradeRingCapacity(stableRingId, out error)) return false;
             FindRing(stableRingId).MountCapacity++;
             FindRing(stableRingId).VisualUpgradeLevel++;
             Revision++;
+            error = null;
             return true;
         }
 
+        public bool UpgradeRingCapacity(int stableRingId) =>
+            TryIncreaseCapacity(stableRingId, out _);
+
         public int FreeBuiltMounts => Rings.Sum(r => r.MountCount) - Modules.Count;
 
-        public bool InstallModule(OrbitalModuleKind type, int stableRingId,
-            int mountIndex, out OrbitalModuleState module)
+        public bool TryInstallModule(OrbitalModuleKind type, int stableRingId,
+            int mountIndex, out OrbitalModuleState module, out string error)
         {
             module = null;
-            if (!CanInstallModule(type, stableRingId, mountIndex, out _))
+            if (!CanInstallModule(type, stableRingId, mountIndex, out error))
                 return false;
             module = new OrbitalModuleState
             {
@@ -217,8 +244,13 @@ namespace Subject42.Combat.OrbitalStation
             };
             Modules.Add(module);
             Revision++;
+            error = null;
             return true;
         }
+
+        public bool InstallModule(OrbitalModuleKind type, int stableRingId,
+            int mountIndex, out OrbitalModuleState module) =>
+            TryInstallModule(type, stableRingId, mountIndex, out module, out _);
 
         public bool CanInstallLinkPair(int ringA, int mountA, int ringB, int mountB,
             out string error) => CanInstallModule(OrbitalModuleKind.LinkNode, ringA, mountA, out error) &&
@@ -226,7 +258,7 @@ namespace Subject42.Combat.OrbitalStation
             Rule(ringA != ringB || mountA != mountB, "Link targets must be distinct", out error) &&
             Rule(NextStableModuleId <= int.MaxValue - 2, "Link ID allocator exhausted", out error);
 
-        public bool InstallLinkPair(int ringA, int mountA, int ringB, int mountB,
+        public bool TryInstallLinkPair(int ringA, int mountA, int ringB, int mountB,
             out OrbitalModuleState first, out OrbitalModuleState second, out string error)
         {
             first = second = null;
@@ -240,6 +272,10 @@ namespace Subject42.Combat.OrbitalStation
             Revision++;
             return true;
         }
+
+        public bool InstallLinkPair(int ringA, int mountA, int ringB, int mountB,
+            out OrbitalModuleState first, out OrbitalModuleState second, out string error) =>
+            TryInstallLinkPair(ringA, mountA, ringB, mountB, out first, out second, out error);
 
         // Compatibility contract: filtered insertion order, including re-pairing after removal.
         public IEnumerable<(int First, int Second)> ResolveLinkPairs()
@@ -263,7 +299,7 @@ namespace Subject42.Combat.OrbitalStation
             return 0;
         }
 
-        public bool MoveModule(int stableModuleId, int targetRingId,
+        public bool TryMoveModule(int stableModuleId, int targetRingId,
             int targetMountIndex, out string error)
         {
             if (!CanMoveModule(stableModuleId, targetRingId, targetMountIndex, out error)) return false;
@@ -271,64 +307,119 @@ namespace Subject42.Combat.OrbitalStation
             module.StableRingId = targetRingId;
             module.MountIndex = targetMountIndex;
             Revision++;
+            error = null;
             return true;
         }
 
-        public bool RemoveModule(int stableModuleId)
+        public bool MoveModule(int stableModuleId, int targetRingId,
+            int targetMountIndex, out string error) =>
+            TryMoveModule(stableModuleId, targetRingId, targetMountIndex, out error);
+
+        public bool TryRemoveModule(int stableModuleId, out string error)
         {
-            if (!CanCommit(out _) || FindModule(stableModuleId) == null) return false;
+            if (!CanCommit(out error)) return false;
+            if (FindModule(stableModuleId) == null)
+                return Rule(false, $"module {stableModuleId} is missing", out error);
             int removed = Modules.RemoveAll(value =>
                 value.StableModuleId == stableModuleId);
             if (removed > 0)
                 Revision++;
+            error = null;
             return removed > 0;
         }
 
-        public bool UpgradeModuleDamage(int stableModuleId)
+        public bool RemoveModule(int stableModuleId) =>
+            TryRemoveModule(stableModuleId, out _);
+
+        public bool TryUpgradeModuleDamage(int stableModuleId, out string error)
         {
-            if (!CanUpgradeModuleDamage(stableModuleId, out _)) return false;
+            if (!CanUpgradeModuleDamage(stableModuleId, out error)) return false;
             OrbitalModuleState module = FindModule(stableModuleId);
             module.DamageLevel++;
             Revision++;
+            error = null;
             return true;
         }
 
-        public bool UpgradeRingSpeed(int stableRingId)
+        public bool UpgradeModuleDamage(int stableModuleId) =>
+            TryUpgradeModuleDamage(stableModuleId, out _);
+
+        public bool TryUpgradeRingSpeed(int stableRingId, out string error)
         {
-            if (!CanUpgradeRingSpeed(stableRingId, out _)) return false;
+            if (!CanUpgradeRingSpeed(stableRingId, out error)) return false;
             OrbitalRingState ring = FindRing(stableRingId);
             ring.SpeedUpgradeLevel++;
             ring.VisualUpgradeLevel++;
             Revision++;
+            error = null;
             return true;
         }
 
-        public bool UpgradeRingPower(int stableRingId)
+        public bool UpgradeRingSpeed(int stableRingId) =>
+            TryUpgradeRingSpeed(stableRingId, out _);
+
+        public bool TryUpgradeRingDamage(int stableRingId, out string error)
         {
-            if (!CanUpgradeRingPower(stableRingId, out _)) return false;
+            if (!CanUpgradeRingPower(stableRingId, out error)) return false;
             OrbitalRingState ring = FindRing(stableRingId);
             ring.PowerUpgradeLevel++;
             ring.PowerMultiplier *=
                 1f + OrbitalProgressionConfig.Default.PowerIncrement;
             ring.VisualUpgradeLevel++;
             Revision++;
+            error = null;
             return true;
         }
 
-        public bool UpgradeCore()
+        public bool UpgradeRingPower(int stableRingId) =>
+            TryUpgradeRingDamage(stableRingId, out _);
+
+        public bool TryUpgradeCore(out string error)
         {
-            if (!CanUpgradeCore(out _)) return false;
+            if (!CanUpgradeCore(out error)) return false;
             CoreState.Level++;
             CoreState.DamageMultiplier = CoreState.CooldownMultiplier = 1f;
             Revision++;
+            error = null;
             return true;
         }
 
-        public bool UpgradeLinkMatrix()
+        public bool UpgradeCore() => TryUpgradeCore(out _);
+
+        public bool TryUpgradeLinkMatrix(out string error)
         {
-            if (!CanUpgradeLinkMatrix(out _)) return false;
+            if (!CanUpgradeLinkMatrix(out error)) return false;
             CoreState.LinkMatrixUpgradeLevel++;
             Revision++;
+            error = null;
+            return true;
+        }
+
+        public bool UpgradeLinkMatrix() => TryUpgradeLinkMatrix(out _);
+
+        public bool TryMarkPendingCasinoRing(int stableRingId, out string error)
+        {
+            if (!CanCommit(out error)) return false;
+            OrbitalRingState ring = FindRing(stableRingId);
+            if (ring == null)
+                return Rule(false, $"ring {stableRingId} is missing", out error);
+            PendingCasinoRingId = stableRingId;
+            Revision++;
+            error = null;
+            return true;
+        }
+
+        public bool TryClearPendingCasinoRing(out string error)
+        {
+            if (!CanCommit(out error)) return false;
+            if (PendingCasinoRingId == 0)
+            {
+                error = null;
+                return true;
+            }
+            PendingCasinoRingId = 0;
+            Revision++;
+            error = null;
             return true;
         }
 

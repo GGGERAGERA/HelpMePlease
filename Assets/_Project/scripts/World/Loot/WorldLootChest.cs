@@ -27,7 +27,8 @@ public sealed class WorldLootChest : Interactable, ITacticalMapMarkerProvider
     [SerializeField, Min(0f)] private float claimedDestroyDelay = 0.15f;
     [SerializeField] private bool retainOpenedAfterClaim;
 
-    [Header("Reward Pool")]
+    // Retained serialized references for legacy content; production uses the gateway pool.
+    [Header("Legacy Reward Pool")]
     [SerializeField] private WorldLootRewardDefinition[] rewardPool;
     [SerializeField] private bool useNormalUpgradePool;
 
@@ -116,37 +117,15 @@ public sealed class WorldLootChest : Interactable, ITacticalMapMarkerProvider
         state = ChestState.RewardReel;
         ApplyOpenedVisual();
 
-        if (useNormalUpgradePool)
+        UpgradeManager manager = UpgradeManager.Instance;
+        if (manager != null)
         {
-            UpgradeManager manager = UpgradeManager.Instance;
-            IReadOnlyList<UpgradeData> normalRewards =
-                manager?.GetEligibleNormalRewards();
-            if (manager != null && WorldLootRewardReel.TryShow(
-                    normalRewards,
-                    transform.position,
-                    reward => manager.TryBeginDirectNormalReward(
-                        reward,
-                        HandleUpgradeCommitted),
-                    HandleUpgradeRewardAccepted))
-            {
-                return;
-            }
-        }
-        else if (WorldLootRewardReel.TryShow(
-                     rewardPool,
-                     transform.position,
-                     HandleRewardClaimed))
-        {
+            manager.RequestNormalRewardReel(transform.position,
+                HandleUpgradeRewardAccepted, HandleUpgradeCommitted);
             return;
         }
-
         WorldLootRewardReel.ReleaseOpeningReservation();
-
-        Debug.LogError(
-            $"[WorldLootChest] Reward Reel could not open for '{name}'. " +
-            "Check the configured reward pool.",
-            this
-        );
+        Debug.LogError("[WorldLootChest] Production reward gateway is unavailable.", this);
     }
 
     private void HandleRewardClaimed(WorldLootRewardDefinition reward)

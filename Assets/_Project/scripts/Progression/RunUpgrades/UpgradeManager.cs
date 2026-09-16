@@ -2,6 +2,7 @@
 using Random = BotRunSeed.RewardRandom;
 #endif
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Subject42.Combat.OrbitalStation;
 
@@ -58,6 +59,7 @@ public sealed class UpgradeManager : MonoBehaviour
     private List<UpgradeData> currentChoices;
     private bool shuttingDown;
     private bool isChoosingUpgrade;
+    private bool reelPending;
     private float previousTimeScale = 1f;
     private System.Action currentOnClosed;
     private UpgradeChoiceRequest currentRequest;
@@ -69,7 +71,7 @@ public sealed class UpgradeManager : MonoBehaviour
 
     public void BindOrbitalStation(OrbitalStationRuntime station) => orbitalStation = station;
 
-    public bool IsRewardQueueIdle => !isChoosingUpgrade && !hasCurrentRequest &&
+    public bool IsRewardQueueIdle => !isChoosingUpgrade && !hasCurrentRequest && !reelPending &&
         pendingChoices.Count == 0 && !CustomDrawingPending;
     private bool CustomDrawingPending => orbitalStation != null && orbitalStation.HasPendingCustomRings;
 
@@ -82,13 +84,18 @@ public sealed class UpgradeManager : MonoBehaviour
     public bool TryBeginDirectNormalReward(
         UpgradeData reward,
         System.Action<UpgradeData> onCommitted)
+        => reward is OrbitalRewardData normal && orbitalRewardProvider != null &&
+            orbitalRewardProvider.GetEligibleNormalRewards().Contains(normal) &&
+            TryBeginDirectReward(normal, onCommitted);
+
+    private bool TryBeginDirectReward(
+        OrbitalRewardData reward, System.Action<UpgradeData> onCommitted)
     {
         if (reward == null || shuttingDown || isChoosingUpgrade ||
-            pendingChoices.Count > 0 || CustomDrawingPending ||
-            reward is not OrbitalRewardData orbitalReward ||
+            (pendingChoices.Count > 0 && !reelPending) || CustomDrawingPending ||
             orbitalRewardProvider == null ||
-            !orbitalRewardProvider.IsEligible(orbitalReward.RewardKind) ||
-            orbitalReward.RewardKind == OrbitalRewardKind.NewRing)
+            reward.PresentationOwner != orbitalRewardProvider ||
+            !orbitalRewardProvider.IsEligible(reward.RewardKind))
         {
             return false;
         }
@@ -119,12 +126,82 @@ public sealed class UpgradeManager : MonoBehaviour
     {
         if (callback == null)
             return;
-        if (isChoosingUpgrade || pendingChoices.Count > 0 || CustomDrawingPending)
+        if (isChoosingUpgrade || reelPending || pendingChoices.Count > 0 || CustomDrawingPending)
         {
             idleCallbacks.Enqueue(callback);
             return;
         }
         callback();
+    }
+
+    public void RequestNormalRewardReel(Vector3 position,
+        System.Action<UpgradeData> onAccepted, System.Action<UpgradeData> onCommitted)
+    {
+        RunWhenRewardQueueIsIdle(() =>
+        {
+            reelPending = true;
+            previousTimeScale = Time.timeScale;
+            if (shuttingDown || !WorldLootRewardReel.TryShow(GetEligibleNormalRewards(), position,
+                    reward => TryBeginDirectNormalReward(reward, onCommitted), onAccepted,
+                    CompleteReelPresentation))
+            {
+                WorldLootRewardReel.ReleaseOpeningReservation();
+                CompleteReelPresentation();
+                Debug.LogWarning("[UpgradeManager] No eligible reel reward or reel view unavailable; no substitute granted.");
+            }
+        });
+    }
+
+    private void CompleteReelPresentation()
+    {
+        reelPending = false;
+        ResumeAfterCustomDrawing();
+    }
+
+    // BeginNewRun has no scene gateway instance yet. Publish only a fully valid grant.
+    public static bool TryGrantPendingCasinoBonus(OrbitalRunState state,
+        OrbitalSlotSymbol bonus, out OrbitalRunState granted)
+    {
+        granted = null;
+        if (state == null || !state.Validate(out _)) return false;
+        var candidate = JsonUtility.FromJson<OrbitalRunState>(JsonUtility.ToJson(state));
+        if (!TryApplyCasinoBonus(candidate, bonus) || !candidate.Validate(out _)) return false;
+        if (bonus == OrbitalSlotSymbol.Ring && candidate.UsesCustomPaths &&
+            !candidate.TryMarkPendingCasinoRing(candidate.Rings[candidate.Rings.Count - 1].StableRingId, out _))
+            return false;
+        granted = candidate;
+        return true;
+    }
+
+    private static bool TryApplyCasinoBonus(OrbitalRunState state, OrbitalSlotSymbol bonus)
+    {
+        if (bonus == OrbitalSlotSymbol.Ring)
+            return state.TryAddRing(out _, out _);
+        if (bonus < OrbitalSlotSymbol.Gun || bonus > OrbitalSlotSymbol.Link) return false;
+        OrbitalModuleKind kind = OrbitalSlotMachine.ModuleKind(bonus);
+        int required = bonus == OrbitalSlotSymbol.Link ? 2 : 1;
+        var mounts = new List<(int ring, int mount)>();
+        foreach (var ring in state.Rings)
+            for (int i = 0; i < ring.MountCount && mounts.Count < required; i++)
+                if (state.CanInstallModule(kind, ring.StableRingId, i, out _))
+                    mounts.Add((ring.StableRingId, i));
+        foreach (var ring in state.Rings)
+        {
+            while (mounts.Count < required)
+            {
+                if (!state.CanAddMount(ring.StableRingId, out _) &&
+                    !state.TryIncreaseCapacity(ring.StableRingId, out _)) break;
+                int index = ring.MountCount;
+                if (!state.TryAddMount(ring.StableRingId, out _)) break;
+                if (state.CanInstallModule(kind, ring.StableRingId, index, out _))
+                    mounts.Add((ring.StableRingId, index));
+            }
+        }
+        if (mounts.Count != required) return false;
+        return required == 2
+            ? state.TryInstallLinkPair(mounts[0].ring, mounts[0].mount,
+                mounts[1].ring, mounts[1].mount, out _, out _, out _)
+            : state.TryInstallModule(kind, mounts[0].ring, mounts[0].mount, out _, out _);
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -230,6 +307,7 @@ public sealed class UpgradeManager : MonoBehaviour
     public void CancelPendingRewards()
     {
         shuttingDown = true;
+        reelPending = false;
         if (!IsChoosingUpgrade)
         {
             currentChoices = null;
@@ -290,11 +368,10 @@ public sealed class UpgradeManager : MonoBehaviour
         // and finish this grant before allowing a queued sector transition.
         RunWhenRewardQueueIsIdle(() =>
         {
-            OrbitalStationRuntime station = orbitalStation;
-            if (station != null && station.IsInitialized && station.AddRing() != null)
-                RunMessageService.Instance?.ShowCustom("reward.panel.special",
-                    "reward.panel.newRing", 2f);
-            else
+            var ring = orbitalRewardProvider?.GetDefinition(OrbitalRewardKind.NewRing);
+            if (!TryBeginDirectReward(ring, _ =>
+                    RunMessageService.Instance?.ShowCustom("reward.panel.special", "reward.panel.newRing", 2f)))
+                // Preserve the special-site contract when a ring cannot be granted.
                 ShowUpgradeChoices();
         });
     }
@@ -358,6 +435,9 @@ public sealed class UpgradeManager : MonoBehaviour
     public void ShowNumericChestRewardChoices(System.Action onClosed) =>
         ShowNumericChestRewardChoices(choicesCount, onClosed);
 
+    public void RequestNormalAnomalyChoices(System.Action onClosed) =>
+        ShowChestRewardChoices(choicesCount, false, onClosed);
+
     private void RequestUpgradeChoices(UpgradeChoiceRequest request)
     {
         if (shuttingDown)
@@ -365,7 +445,7 @@ public sealed class UpgradeManager : MonoBehaviour
             request.OnClosed?.Invoke();
             return;
         }
-        if (isChoosingUpgrade || CustomDrawingPending)
+        if (isChoosingUpgrade || reelPending || CustomDrawingPending)
         {
             pendingChoices.Enqueue(request);
             return;
@@ -457,7 +537,8 @@ public sealed class UpgradeManager : MonoBehaviour
 
     private void SelectUpgrade(UpgradeData upgrade)
     {
-        if (!isChoosingUpgrade)
+        if (!isChoosingUpgrade || currentChoices == null || !currentChoices.Contains(upgrade) ||
+            orbitalRewardFlow != null)
             return;
 
         if (upgrade is OrbitalRewardData orbitalReward)
@@ -514,13 +595,16 @@ public sealed class UpgradeManager : MonoBehaviour
             RefreshChoicesAfterGrantFailure();
             return;
         }
-        upgradePanelView.Hide();
+        upgradePanelView?.Hide();
         orbitalRewardFlow = station.RewardFlow;
         bool started = orbitalRewardFlow.Begin(reward,
             () => CompleteGrantedReward(reward), ReturnToCurrentChoices);
         if (started) AudioService.Instance?.Play(AudioCueId.RewardSelect);
         if (!started && isChoosingUpgrade)
+        {
+            orbitalRewardFlow = null;
             RefreshChoicesAfterGrantFailure();
+        }
     }
 
     private void ReturnToCurrentChoices()
@@ -562,11 +646,12 @@ public sealed class UpgradeManager : MonoBehaviour
 
     private void RefreshChoicesAfterGrantFailure()
     {
-        if (hasCurrentRequest &&
-            TryBuildChoices(currentRequest, out List<UpgradeData> choices))
+        // Keep the presented hand. A rejected choice must never trigger a hidden reroll.
+        currentChoices?.RemoveAll(choice => choice is OrbitalRewardData orbital &&
+            !orbitalRewardProvider.IsEligible(orbital.RewardKind));
+        if (hasCurrentRequest && currentChoices != null && currentChoices.Count > 0)
         {
-            currentChoices = choices;
-            ShowChoiceRequest(currentRequest, choices);
+            ShowChoiceRequest(currentRequest, currentChoices);
             return;
         }
 
@@ -660,12 +745,13 @@ public sealed class UpgradeManager : MonoBehaviour
         currentOnClosed = null;
         onClosed?.Invoke();
 
+        if (reelPending) RestoreRewardTimeScale();
         ResumeAfterCustomDrawing();
     }
 
     public void ResumeAfterCustomDrawing()
     {
-        if (shuttingDown || isChoosingUpgrade || CustomDrawingPending) return;
+        if (shuttingDown || isChoosingUpgrade || reelPending || CustomDrawingPending) return;
         while (pendingChoices.Count > 0)
         {
             UpgradeChoiceRequest nextRequest = pendingChoices.Dequeue();
@@ -720,10 +806,10 @@ public sealed class UpgradeManager : MonoBehaviour
 
     private void InvokeIdleCallbacksIfReady()
     {
-        if (isChoosingUpgrade || pendingChoices.Count > 0 || CustomDrawingPending)
+        if (isChoosingUpgrade || reelPending || pendingChoices.Count > 0 || CustomDrawingPending)
             return;
 
-        while (idleCallbacks.Count > 0 && !isChoosingUpgrade && pendingChoices.Count == 0 && !CustomDrawingPending)
+        while (idleCallbacks.Count > 0 && !isChoosingUpgrade && !reelPending && pendingChoices.Count == 0 && !CustomDrawingPending)
             idleCallbacks.Dequeue()?.Invoke();
     }
 

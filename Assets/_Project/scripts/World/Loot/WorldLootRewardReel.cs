@@ -10,13 +10,14 @@ public sealed class WorldLootRewardReel : MonoBehaviour
 {
     private sealed class ReelReward
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         public WorldLootRewardDefinition LegacyDefinition;
+#endif
         public UpgradeData Upgrade;
         public string DisplayName;
         public Sprite Icon;
         public Color IconTint = Color.white;
         public float Weight;
-        public Func<bool> TryApply;
     }
 
     private enum ReelState
@@ -130,6 +131,8 @@ public sealed class WorldLootRewardReel : MonoBehaviour
     }
     private ReelState state;
     private Action<ReelReward> claimedCallback;
+    private Func<ReelReward, bool> applyCallback;
+    private Action closedCallback;
     private RewardCard winningCard;
     private float stateElapsed;
     private float brakeDuration;
@@ -175,6 +178,8 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         openingReserved = false;
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    // Retained only for authored-view tests and legacy labs, never production chests.
     public static bool TryShow(
         IReadOnlyList<WorldLootRewardDefinition> rewardPool,
         Vector3 chestWorldPosition,
@@ -205,19 +210,21 @@ public sealed class WorldLootRewardReel : MonoBehaviour
                 LegacyDefinition = definition,
                 DisplayName = definition.DisplayName,
                 Icon = definition.Icon,
-                Weight = definition.Weight,
-                TryApply = definition.Apply
+                Weight = definition.Weight
             });
         }
         return instance.ShowInternal(entries, chestWorldPosition,
-            reward => onClaimed?.Invoke(reward.LegacyDefinition));
+            reward => onClaimed?.Invoke(reward.LegacyDefinition),
+            reward => reward.LegacyDefinition.Apply());
     }
 
+#endif
     public static bool TryShow(
         IReadOnlyList<UpgradeData> rewardPool,
         Vector3 chestWorldPosition,
         Func<UpgradeData, bool> tryApply,
-        Action<UpgradeData> onClaimed)
+        Action<UpgradeData> onClaimed,
+        Action onClosed = null)
     {
         if ((instance != null && instance.state != ReelState.Hidden) ||
             rewardPool == null || rewardPool.Count == 0 || tryApply == null)
@@ -253,7 +260,6 @@ public sealed class WorldLootRewardReel : MonoBehaviour
                 weight = Mathf.Max(0.01f, orbital.Weight);
             }
 
-            UpgradeData captured = upgrade;
             entries.Add(new ReelReward
             {
                 Upgrade = upgrade,
@@ -261,12 +267,12 @@ public sealed class WorldLootRewardReel : MonoBehaviour
                     upgrade.upgradeName),
                 Icon = icon,
                 IconTint = iconTint,
-                Weight = weight,
-                TryApply = () => tryApply(captured)
+                Weight = weight
             });
         }
         return instance.ShowInternal(entries, chestWorldPosition,
-            reward => onClaimed?.Invoke(reward.Upgrade));
+            reward => onClaimed?.Invoke(reward.Upgrade),
+            reward => tryApply(reward.Upgrade), onClosed);
     }
 
     private void Awake()
@@ -302,7 +308,7 @@ public sealed class WorldLootRewardReel : MonoBehaviour
     private bool ShowInternal(
         IReadOnlyList<ReelReward> rewardPool,
         Vector3 chestWorldPosition,
-        Action<ReelReward> onClaimed)
+        Action<ReelReward> onClaimed, Func<ReelReward, bool> tryApply, Action onClosed = null)
     {
         rewards.Clear();
 
@@ -316,6 +322,8 @@ public sealed class WorldLootRewardReel : MonoBehaviour
             return false;
 
         claimedCallback = onClaimed;
+        applyCallback = tryApply;
+        closedCallback = onClosed;
         rewardApplied = false;
         lastStoppedUpgrade = null;
         lastClaimedUpgrade = null;
@@ -631,7 +639,7 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         ReelReward reward = winningCard.Reward;
         lastStoppedUpgrade = reward.Upgrade;
 
-        if (reward.TryApply == null || !reward.TryApply())
+        if (applyCallback == null || !applyCallback(reward))
         {
             revealText.text = LocalizationService.EnsureExists().Get("loot.error");
             statusText.text = LocalizationService.EnsureExists().Get("loot.notApplied");
@@ -850,6 +858,10 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         winningCard = null;
         observedPlayerHealth = null;
         hadObservedPlayer = false;
+        applyCallback = null;
+        Action closed = closedCallback;
+        closedCallback = null;
+        closed?.Invoke();
     }
 
     private void CloseWithoutReward()
@@ -948,5 +960,9 @@ public sealed class WorldLootRewardReel : MonoBehaviour
 
         if (instance == this)
             instance = null;
+        Action closed = closedCallback;
+        closedCallback = null;
+        applyCallback = null;
+        closed?.Invoke();
     }
 }

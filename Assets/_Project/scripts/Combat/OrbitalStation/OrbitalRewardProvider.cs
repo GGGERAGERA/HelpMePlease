@@ -35,6 +35,7 @@ namespace Subject42.Combat.OrbitalStation
         public UpgradeData BodyUpgrade;
         public float Weight;
         public bool RequiresArenaSelection;
+        public bool InNormalPool;
         internal OrbitalRewardProvider PresentationOwner;
     }
 
@@ -62,9 +63,8 @@ namespace Subject42.Combat.OrbitalStation
             RunItemSlots slots, bool offerNewRing = false)
         {
             RefreshPresentation(state);
-            List<OrbitalRewardData> pool = GetEligibleDefinitions(state, slots, demoOnly: true)
-                .Where(value => value.RewardKind != OrbitalRewardKind.NewRing)
-                .ToList();
+            List<OrbitalRewardData> pool = GetEligibleNormalRewards(state, slots)
+                .Cast<OrbitalRewardData>().ToList();
             List<UpgradeData> result = new();
             if (count > 0 && offerNewRing && state != null && state.CanAddRing(out _))
                 result.Add(definitions.Find(d => d.RewardKind == OrbitalRewardKind.NewRing));
@@ -88,13 +88,20 @@ namespace Subject42.Combat.OrbitalStation
             return result;
         }
 
-        public static bool IsDemoReward(OrbitalRewardKind kind) => kind is
-            OrbitalRewardKind.Pistol or OrbitalRewardKind.LaserSword or
-            OrbitalRewardKind.ImpulseGun or OrbitalRewardKind.ArcEmitter or
-            OrbitalRewardKind.NewRing or OrbitalRewardKind.RingPower or
-            OrbitalRewardKind.RingSpeed or OrbitalRewardKind.AddMount or
-            OrbitalRewardKind.CoreUpgrade or OrbitalRewardKind.RingCapacity or
-            OrbitalRewardKind.LinkPair or OrbitalRewardKind.MaxHealth or OrbitalRewardKind.MoveSpeed;
+        public static bool IsDemoReward(OrbitalRewardKind kind) =>
+            Enum.IsDefined(typeof(OrbitalRewardKind), kind) &&
+            kind is not (OrbitalRewardKind.ModuleDamage or OrbitalRewardKind.LinkMatrix);
+
+        // One mapping shared by eligibility, presentation and target application.
+        public static OrbitalModuleKind? GetModuleKind(OrbitalRewardKind kind) => kind switch
+        {
+            OrbitalRewardKind.Pistol => OrbitalModuleKind.Pistol,
+            OrbitalRewardKind.LaserSword => OrbitalModuleKind.LaserSword,
+            OrbitalRewardKind.ImpulseGun => OrbitalModuleKind.ImpulseGun,
+            OrbitalRewardKind.ArcEmitter => OrbitalModuleKind.ArcEmitter,
+            OrbitalRewardKind.LinkPair => OrbitalModuleKind.LinkNode,
+            _ => null
+        };
 
         public bool IsEligible(OrbitalRewardKind kind) =>
             IsEligible(kind, RunStateManager.Instance?.OrbitalStationState, RunStateManager.Instance?.ItemSlots);
@@ -115,13 +122,16 @@ namespace Subject42.Combat.OrbitalStation
             GetEligibleDefinitions(RunStateManager.Instance?.OrbitalStationState,
                 RunStateManager.Instance?.ItemSlots, demoOnly: true).Select(value => value.RewardKind).ToArray();
 
-        public IReadOnlyList<UpgradeData> GetEligibleNormalRewards()
+        public IReadOnlyList<UpgradeData> GetEligibleNormalRewards() =>
+            GetEligibleNormalRewards(RunStateManager.Instance?.OrbitalStationState,
+                RunStateManager.Instance?.ItemSlots);
+
+        public IReadOnlyList<UpgradeData> GetEligibleNormalRewards(OrbitalRunState state, RunItemSlots slots)
         {
-            OrbitalRunState state = RunStateManager.Instance?.OrbitalStationState;
             RefreshPresentation(state);
             return GetEligibleDefinitions(
                     state,
-                    RunStateManager.Instance?.ItemSlots,
+                    slots,
                     demoOnly: true)
                 .Where(value => value.RewardKind != OrbitalRewardKind.NewRing)
                 .Cast<UpgradeData>()
@@ -156,17 +166,15 @@ namespace Subject42.Combat.OrbitalStation
             for (int i = 0; i < definitions.Count; i++)
             {
                 OrbitalRewardData reward = definitions[i];
-                if (demoOnly && (!IsDemoReward(reward.RewardKind) ||
+                if (demoOnly && ((!reward.InNormalPool && reward.RewardKind != OrbitalRewardKind.NewRing) ||
                     (reward.RewardKind == OrbitalRewardKind.CoreUpgrade &&
                      state.Rings.Count < config.MinRingsForCoreOffer))) continue;
-                bool eligible = reward.RewardKind switch
+                OrbitalModuleKind? moduleKind = GetModuleKind(reward.RewardKind);
+                bool eligible = moduleKind.HasValue
+                    ? freeMounts >= (moduleKind.Value == OrbitalModuleKind.LinkNode ? 2 : 1)
+                    : reward.RewardKind switch
                 {
                     OrbitalRewardKind.NewRing => state.CanAddRing(out _),
-                    OrbitalRewardKind.Pistol => freeMounts >= 1,
-                    OrbitalRewardKind.ArcEmitter => freeMounts >= 1,
-                    OrbitalRewardKind.LaserSword => freeMounts >= 1,
-                    OrbitalRewardKind.ImpulseGun => freeMounts >= 1,
-                    OrbitalRewardKind.LinkPair => freeMounts >= 2,
                     OrbitalRewardKind.ModuleDamage => state.Modules.Any(module =>
                         state.CanUpgradeModuleDamage(module.StableModuleId, out _)),
                     OrbitalRewardKind.RingSpeed => state.Rings.Any(ring =>
@@ -195,7 +203,7 @@ namespace Subject42.Combat.OrbitalStation
         private void CreateDefinitions()
         {
             Add(OrbitalRewardKind.NewRing, "reward.newRing",
-                "reward.newRingDescription", 0f, false);
+                "reward.newRingDescription", 0f, false, normalPool: false);
             Add(OrbitalRewardKind.Pistol, "reward.gun",
                 "reward.gunDescription",
                 config.ModuleWeight, true);
@@ -213,7 +221,7 @@ namespace Subject42.Combat.OrbitalStation
                 config.LinkPairWeight, true);
             Add(OrbitalRewardKind.ModuleDamage, "reward.damage",
                 "reward.damageDescription",
-                config.ModuleWeight, true);
+                config.ModuleWeight, true, normalPool: false);
             Add(OrbitalRewardKind.RingSpeed, "reward.speed",
                 "reward.speedDescription",
                 config.RingWeight, true);
@@ -230,7 +238,7 @@ namespace Subject42.Combat.OrbitalStation
                 config.CoreWeight, false);
             Add(OrbitalRewardKind.LinkMatrix, "reward.matrix",
                 "reward.matrixDescription",
-                config.CoreWeight, false);
+                config.CoreWeight, false, normalPool: false);
             Add(OrbitalRewardKind.MaxHealth, "reward.health",
                 string.Format(LocalizationService.EnsureExists().Get("reward.healthDescription"), ProductionUpgradeProfiles.MaxHealthBonus(1), RunItemSlots.MaxItemLevel),
                 config.SubjectWeight, false, maxHealthUpgrade);
@@ -280,7 +288,7 @@ namespace Subject42.Combat.OrbitalStation
 
         private void Add(OrbitalRewardKind kind, string title,
             string description, float weight, bool arena,
-            UpgradeData bodyUpgrade = null)
+            UpgradeData bodyUpgrade = null, bool normalPool = true)
         {
             OrbitalRewardData data =
                 ScriptableObject.CreateInstance<OrbitalRewardData>();
@@ -295,6 +303,7 @@ namespace Subject42.Combat.OrbitalStation
             data.BodyUpgrade = bodyUpgrade;
             data.Weight = weight;
             data.RequiresArenaSelection = arena;
+            data.InNormalPool = normalPool;
             definitions.Add(data);
         }
 

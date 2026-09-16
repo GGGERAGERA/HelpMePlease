@@ -131,6 +131,12 @@ namespace Subject42.Combat.OrbitalStation
 
         public void Tick()
         {
+            // Keep the blade's authored transforms fixed, including during hit feedback.
+            if (kind == OrbitalModuleKind.LaserSword)
+            {
+                ApplyTint();
+                return;
+            }
             if (instance == null)
             {
                 if (pulseBody != null)

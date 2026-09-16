@@ -727,15 +727,8 @@ namespace Subject42.Combat.OrbitalStation
             kind == OrbitalRewardKind.AddMount || kind == OrbitalRewardKind.RingCapacity;
 
         private static OrbitalModuleKind ToModuleKind(OrbitalRewardKind kind) =>
-            kind switch
-            {
-                OrbitalRewardKind.Pistol => OrbitalModuleKind.Pistol,
-                OrbitalRewardKind.LaserSword => OrbitalModuleKind.LaserSword,
-                OrbitalRewardKind.ImpulseGun => OrbitalModuleKind.ImpulseGun,
-                OrbitalRewardKind.ArcEmitter => OrbitalModuleKind.ArcEmitter,
-                OrbitalRewardKind.LinkPair => OrbitalModuleKind.LinkNode,
-                _ => OrbitalModuleKind.Pistol
-            };
+            OrbitalRewardProvider.GetModuleKind(kind) ??
+            throw new ArgumentOutOfRangeException(nameof(kind), kind, "Not a module reward");
 
         private static Color ModuleColor(OrbitalModuleKind kind) => OrbitalRewardIconResolver.ModuleColor(kind);
 

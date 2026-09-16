@@ -279,24 +279,11 @@ namespace Subject42.Combat.OrbitalStation
 #endif
             }
 
-            switch (character.orbitalPath)
-            {
-                case OrbitalPathType.Circle:
-                    geometry = OrbitalPathGeometry.Circle;
-                    error = null;
-                    return true;
-                case OrbitalPathType.FigureEight:
-                    geometry = new OrbitalPathGeometry(config);
-                    error = null;
-                    return true;
-                case OrbitalPathType.Custom:
-                    geometry = OrbitalPathGeometry.Circle;
-                    error = null;
-                    return true;
-                default:
-                    error = $"invalid ORBITAL path '{character.orbitalPath}' on CharacterData '{character.name}'";
-                    return false;
-            }
+            if (OrbitalPathGeometryResolver.Default.TryResolve(
+                    character.orbitalPath, config, out geometry, out error))
+                return true;
+            error = $"{error} on CharacterData '{character.name}'";
+            return false;
         }
 
         private void Update()
@@ -525,7 +512,8 @@ namespace Subject42.Combat.OrbitalStation
 
         public OrbitalRingState AddRing()
         {
-            OrbitalRingState ring = State?.AddRing();
+            OrbitalRingState ring = State != null &&
+                State.TryAddRing(out OrbitalRingState added, out _) ? added : null;
             if (ring == null) return null;
             if (!State.IsPending(ring))
                 SyncCommitted("AddRing", ring.StableRingId, 0, () => SelectRing(CreateRingPresentation(ring, true)));
@@ -568,7 +556,8 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool ConfirmCustomRing(CustomOrbitPath path)
         {
-            if (!initialized || drawingRingId == 0 || !State.FinalizeCustomRing(drawingRingId, path, customDrawing.MaxDrawRadius)) return false;
+            if (!initialized || drawingRingId == 0 ||
+                !State.TrySetCustomPath(drawingRingId, path, customDrawing.MaxDrawRadius, out _)) return false;
             var state = State.FindRing(drawingRingId);
             SyncCommitted("FinalizeCustomRing", drawingRingId, 0, () =>
             {
@@ -635,14 +624,14 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool UpgradeRingSpeed(int stableRingId)
         {
-            if (State == null || !State.UpgradeRingSpeed(stableRingId)) return false;
+            if (State == null || !State.TryUpgradeRingSpeed(stableRingId, out _)) return false;
             SyncCommitted("RingSpeed", stableRingId, 0, () => SelectRing(RequireRing(stableRingId)));
             return true;
         }
 
         public bool UpgradeRingPower(int stableRingId)
         {
-            if (State == null || !State.UpgradeRingPower(stableRingId)) return false;
+            if (State == null || !State.TryUpgradeRingDamage(stableRingId, out _)) return false;
             SyncCommitted("RingPower", stableRingId, 0, () => SelectRing(RequireRing(stableRingId)));
             return true;
         }
@@ -665,7 +654,7 @@ namespace Subject42.Combat.OrbitalStation
                 error = "state is missing";
                 return false;
             }
-            if (!State.AddMount(stableRingId, out error))
+            if (!State.TryAddMount(stableRingId, out error))
                 return false;
             SyncCommitted("AddMount", stableRingId, 0, () =>
             {
@@ -679,21 +668,21 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool UpgradeRingCapacity(int stableRingId)
         {
-            if (State == null || !State.UpgradeRingCapacity(stableRingId)) return false;
+            if (State == null || !State.TryIncreaseCapacity(stableRingId, out _)) return false;
             SyncCommitted("RingCapacity", stableRingId, 0, () => SelectRing(RequireRing(stableRingId)));
             return true;
         }
 
         public bool UpgradeCore()
         {
-            if (State == null || !State.UpgradeCore()) return false;
+            if (State == null || !State.TryUpgradeCore(out _)) return false;
             SyncCommitted("CoreUpgrade", 0, 0, () => FlashCore(new Color(0.85f, 0.3f, 1f)));
             return true;
         }
 
         public bool UpgradeLinkMatrix()
         {
-            if (State == null || !State.UpgradeLinkMatrix())
+            if (State == null || !State.TryUpgradeLinkMatrix(out _))
                 return false;
             SyncCommitted("LinkMatrix", 0, 0, () => FlashCore(new Color(0.9f, 0.2f, 1f)));
             return true;
@@ -721,21 +710,21 @@ namespace Subject42.Combat.OrbitalStation
             int ringCount = preset == GrowthPreset.Beginning ? 1 :
                 preset == GrowthPreset.Mid ? 4 : 8;
             while (state.Rings.Count < ringCount)
-                if (state.AddRing() == null)
+                if (!state.TryAddRing(out _, out _))
                     throw new System.InvalidOperationException("Growth preset: AddRing rejected");
 
             if (ringCount > 1)
                 foreach (var ring in state.Rings)
-                    while (ring.MountCount < ring.MountCapacity) state.AddMount(ring.StableRingId, out _);
+                    while (ring.MountCount < ring.MountCapacity) state.TryAddMount(ring.StableRingId, out _);
 
             void Install(int ringOrder, int mount, OrbitalModuleKind kind)
             {
-                if (!state.InstallModule(kind, state.Rings[ringOrder].StableRingId, mount, out _))
+                if (!state.TryInstallModule(kind, state.Rings[ringOrder].StableRingId, mount, out _, out _))
                     throw new System.InvalidOperationException($"Growth preset: {kind} at {ringOrder}:{mount} rejected");
             }
             void Link(int ringA, int mountA, int ringB, int mountB)
             {
-                if (!state.InstallLinkPair(state.Rings[ringA].StableRingId, mountA,
+                if (!state.TryInstallLinkPair(state.Rings[ringA].StableRingId, mountA,
                         state.Rings[ringB].StableRingId, mountB, out _, out _, out string error))
                     throw new System.InvalidOperationException($"Growth preset: Link pair rejected: {error}");
             }
@@ -985,8 +974,7 @@ namespace Subject42.Combat.OrbitalStation
             int mountIndex, out string error)
         {
             error = "state is missing";
-            if (State == null || !State.CanInstallModule(kind, stableRingId, mountIndex, out error)) return false;
-            if (!State.InstallModule(kind, stableRingId, mountIndex, out OrbitalModuleState module)) return false;
+            if (State == null || !State.TryInstallModule(kind, stableRingId, mountIndex, out OrbitalModuleState module, out error)) return false;
             error = null;
             SyncCommitted("Install", stableRingId, module.StableModuleId, () =>
             {
@@ -1001,7 +989,7 @@ namespace Subject42.Combat.OrbitalStation
         public bool InstallLinkPair(int ringA, int mountA, int ringB, int mountB, out string error)
         {
             error = "state is missing";
-            if (State == null || !State.InstallLinkPair(ringA, mountA, ringB, mountB,
+            if (State == null || !State.TryInstallLinkPair(ringA, mountA, ringB, mountB,
                 out var first, out var second, out error)) return false;
             SyncCommitted("InstallLinkPair", ringA, first.StableModuleId, () =>
             {
@@ -1017,17 +1005,8 @@ namespace Subject42.Combat.OrbitalStation
         private bool InstallModulePresentation(OrbitalMountRuntime mount,
             OrbitalModuleState moduleState)
         {
-            OrbitalModuleKind kind = moduleState.ModuleType;
-            OrbitalModuleRuntime module = kind switch
-            {
-                OrbitalModuleKind.Pistol => new OrbitalPistolModule(this, moduleState.StableModuleId),
-                OrbitalModuleKind.LaserSword => new OrbitalLaserSwordModule(this, moduleState.StableModuleId),
-                OrbitalModuleKind.ImpulseGun => new OrbitalImpulseGunModule(this, moduleState.StableModuleId),
-                OrbitalModuleKind.ArcEmitter => new OrbitalArcEmitterModule(this, moduleState.StableModuleId),
-                OrbitalModuleKind.LinkNode => new OrbitalLinkNodeModule(this, moduleState.StableModuleId),
-                _ => null
-            };
-            if (module == null || !mount.Attach(module))
+            if (!OrbitalModuleRuntimeFactory.TryCreate(this, moduleState, out OrbitalModuleRuntime module, out _) ||
+                !mount.Attach(module))
             {
                 module?.Teardown();
                 return false;
@@ -1040,7 +1019,7 @@ namespace Subject42.Combat.OrbitalStation
             int targetMountIndex, out string error)
         {
             error = "state is missing";
-            if (State == null || !State.MoveModule(stableModuleId, targetRingId, targetMountIndex, out error)) return false;
+            if (State == null || !State.TryMoveModule(stableModuleId, targetRingId, targetMountIndex, out error)) return false;
             SyncCommitted("Move", targetRingId, stableModuleId, () =>
             {
                 OrbitalModuleRuntime module = RequireModule(stableModuleId);
@@ -1055,7 +1034,7 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool RemoveModule(int stableModuleId)
         {
-            if (State == null || !State.RemoveModule(stableModuleId)) return false;
+            if (State == null || !State.TryRemoveModule(stableModuleId, out _)) return false;
             SyncCommitted("RemoveModule", 0, stableModuleId, () => RemoveModulePresentation(RequireModule(stableModuleId)));
             return true;
         }
@@ -1075,7 +1054,7 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool UpgradeModuleDamage(int stableModuleId)
         {
-            if (State == null || !State.UpgradeModuleDamage(stableModuleId)) return false;
+            if (State == null || !State.TryUpgradeModuleDamage(stableModuleId, out _)) return false;
             SyncCommitted("ModuleUpgrade", 0, stableModuleId, () => RequireModule(stableModuleId).TriggerUpgradePresentation());
             return true;
         }
@@ -1091,7 +1070,7 @@ namespace Subject42.Combat.OrbitalStation
         public bool RemoveRing(int stableRingId, out string error)
         {
             error = "state is missing";
-            if (State == null || !State.RemoveRing(stableRingId, out error)) return false;
+            if (State == null || !State.TryRemoveRing(stableRingId, out error)) return false;
             SyncCommitted("RemoveRing", stableRingId, 0, () =>
             {
                 OrbitalRingRuntime ring = RequireRing(stableRingId);
