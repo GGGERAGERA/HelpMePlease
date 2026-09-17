@@ -15,6 +15,9 @@ public sealed class GoldenPathLab : MonoBehaviour
     public const string ScenePath = "Assets/_Project/Dev/Labs/GoldenPathLab/GoldenPathLab.unity";
     public static GoldenPathLab Current { get; private set; }
     public CharacterData Character;
+    [Tooltip("One fixed-seed run at 1x. Hides the lab overlay; F8 stops. Set Game view to 1920x1080 before starting.")]
+    public bool CaptureScreenshots;
+    public string CaptureDirectory { get; private set; }
     public float SelectedSpeed { get; private set; } = 5f;
     public bool IsBusy { get; private set; }
     public BotBatchResult DisplayedBatch => batch != null && batch.IsActive ? batch.Result : latest;
@@ -51,6 +54,10 @@ public sealed class GoldenPathLab : MonoBehaviour
     private BotBatchRunner batch;
     private BotRunSession session;
     private bool cancel;
+    private bool capturing;
+    private int captureCount;
+    private float nextCapture;
+    private string lastCaptureLabel;
     private float nextRefresh;
     private DateTime historyStamp;
     private string seedText = "48151623", notice = "Ready", lastBatchId;
@@ -154,6 +161,14 @@ public sealed class GoldenPathLab : MonoBehaviour
         if (IsBusy || BotRunSession.Current?.GetComponent<BotBatchRunner>()?.IsActive == true) return false;
         if (Character == null || Character.ProductionPrefab == null) { notice = "Assign a production CharacterData in the lab Inspector."; return false; }
         IsBusy = true; cancel = false; SelectedSpeed = speed;
+        capturing = CaptureScreenshots;
+        if (capturing)
+        {
+            count = 1; speed = SelectedSpeed = 1f;
+            captureCount = 0; nextCapture = 0; lastCaptureLabel = null;
+            CaptureDirectory = Path.Combine(Path.GetDirectoryName(HistoryPath), "Screenshots",
+                DateTime.Now.ToString("yyyyMMdd-HHmmss-fff") + "-seed-" + seed);
+        }
         StartCoroutine(ExecuteBatch(count, seed, speed));
         return true;
     }
@@ -169,10 +184,25 @@ public sealed class GoldenPathLab : MonoBehaviour
         if (!cancel && FindFirstObjectByType<BunkerRunStarter>() != null && RunSelectionManager.Instance != null)
         {
             RunSelectionManager.Instance.SelectCharacter(Character);
-            if (batch.StartGoldenPathBatch(count, BotSeedMode.Auto, seed, speed))
+            if (capturing)
             {
-                while (batch.IsActive) yield return null;
+                float readyAt = Time.realtimeSinceStartup + 1f;
+                while (!cancel && (SceneTransitionOverlay.IsTransitioning || Time.realtimeSinceStartup < readyAt)) yield return null;
+                if (!cancel) yield return CaptureFrame("bunker");
+            }
+            if (!cancel && batch.StartGoldenPathBatch(count, capturing ? BotSeedMode.Fixed : BotSeedMode.Auto, seed, speed))
+            {
+                while (batch.IsActive)
+                {
+                    string shot = session.CaptureLabel;
+                    if (capturing && captureCount < 120 && shot != null &&
+                        !SceneTransitionOverlay.IsTransitioning && !Subject42DebugMenu.IsDebugMenuOpen &&
+                        (shot != lastCaptureLabel || Time.realtimeSinceStartup >= nextCapture))
+                        yield return CaptureFrame(shot);
+                    else yield return null;
+                }
                 notice = $"Batch finished · {batch.Result.Status} · {DateTime.Now:HH:mm:ss}";
+                if (CaptureDirectory != null && capturing) notice += $" · {captureCount} PNGs: {CaptureDirectory}";
             }
             else notice = "Runner rejected the start. Check the bunker/transition state.";
         }
@@ -181,10 +211,41 @@ public sealed class GoldenPathLab : MonoBehaviour
         // Scene is intentionally absent from production Build Settings.
         yield return EditorSceneManager.LoadSceneAsyncInPlayMode(ScenePath, new LoadSceneParameters(LoadSceneMode.Single));
         IsBusy = false;
+        capturing = false;
+    }
+
+    private IEnumerator CaptureFrame(string label)
+    {
+        // Capture the completed Game view, including production UI and post-processing.
+        yield return new WaitForEndOfFrame();
+        if (cancel || Subject42DebugMenu.IsDebugMenuOpen || SceneTransitionOverlay.IsTransitioning) yield break;
+        if (label != "bunker" && session.CaptureLabel != label) yield break;
+        Texture2D frame = null;
+        try
+        {
+            Directory.CreateDirectory(CaptureDirectory);
+            frame = ScreenCapture.CaptureScreenshotAsTexture();
+            File.WriteAllBytes(Path.Combine(CaptureDirectory, $"{captureCount + 1:000}-{label}.png"), frame.EncodeToPNG());
+            captureCount++;
+            lastCaptureLabel = label;
+            nextCapture = Time.realtimeSinceStartup + 4f;
+        }
+        catch (Exception error)
+        {
+            // Recording failure must not abort or change the gameplay verification.
+            capturing = false;
+            Debug.LogWarning("[Golden Path] Screenshot recording stopped: " + error.Message);
+        }
+        finally { if (frame != null) Destroy(frame); }
     }
 
     private void Update()
     {
+        if (IsBusy && capturing && Input.GetKeyDown(KeyCode.F8))
+        {
+            cancel = true;
+            if (batch != null && batch.IsActive) batch.StopBatch();
+        }
         if (Time.realtimeSinceStartup < nextRefresh) return;
         nextRefresh = Time.realtimeSinceStartup + .5f;
         if (File.Exists(HistoryPath) && File.GetLastWriteTimeUtc(HistoryPath) != historyStamp) RefreshResults();
@@ -215,6 +276,7 @@ public sealed class GoldenPathLab : MonoBehaviour
 
     private void OnGUI()
     {
+        if (IsBusy && capturing) return;
         Styles(); GUI.depth = -10000;
         Fill(new Rect(0, 0, Screen.width, Screen.height), Background);
         Matrix4x4 old = GUI.matrix;

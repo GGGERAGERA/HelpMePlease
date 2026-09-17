@@ -16,6 +16,12 @@ public sealed partial class BotRunSession
         controller.TickGoldenPath(Result.Duration - goldenSectorTime, flow.FinalBoss, goldenEvents, station.State);
     }
     private string goldenStage;
+#if UNITY_EDITOR
+    // Read-only presentation hint for the lab recorder; never drives the run.
+    public string CaptureLabel => goldenStage != "Gameplay" ? null :
+        !rewards.IsRewardQueueIdle ? $"sector-{goldenSector}-reward" :
+        flow.FinalBoss != null ? $"sector-{goldenSector}-boss" : $"sector-{goldenSector}-combat";
+#endif
     private GoldenPathResult golden;
     private float goldenDeadline, goldenSectorTime, goldenChoiceAt, goldenCompletedAt;
     private int goldenSector, goldenRunId, rewardBodyLevel;
