@@ -7,6 +7,25 @@ public sealed class RunThreatController : MonoBehaviour
     private int appliedPresetIndex = -1;
     private ThreatTier displayedTier;
     private float nextHudRefresh;
+    private bool openingApplied;
+
+    private void OnEnable() => EnemyHealth.Spawned += ApplyMovement;
+    private void OnDisable()
+    {
+        EnemyHealth.Spawned -= ApplyMovement;
+        foreach (var enemy in EnemyHealth.ActiveInstances)
+            if (enemy != null && enemy.TryGetComponent<EnemyChaseMovement>(out var movement))
+                movement.SetThreatMovement(1f, 0f);
+    }
+
+    private void ApplyMovement(EnemyHealth enemy)
+    {
+        if (config == null || enemy == null || enemy.IsBoss ||
+            !enemy.TryGetComponent<EnemyChaseMovement>(out var movement)) return;
+        var run = RunStateManager.Instance;
+        if (run != null) movement.SetThreatMovement(config.MeleeSpeed(run.ThreatValue),
+            config.MeleeResponseSeconds(run.ThreatValue));
+    }
 
     public ThreatTier DisplayedTier => displayedTier;
     public int AppliedPresetIndex => appliedPresetIndex;
@@ -16,6 +35,7 @@ public sealed class RunThreatController : MonoBehaviour
         config = threatConfig;
         enemySpawner = spawner;
         ApplyCurrentPreset(true);
+        foreach (var enemy in EnemyHealth.ActiveInstances) ApplyMovement(enemy);
     }
 
     private void Update()
@@ -30,6 +50,7 @@ public sealed class RunThreatController : MonoBehaviour
 
         runState.AdvanceThreat(Time.deltaTime, config.ValuePerSecond);
         ApplyCurrentPreset(false);
+        foreach (var enemy in EnemyHealth.ActiveInstances) ApplyMovement(enemy);
     }
 
     private void ApplyCurrentPreset(bool force)
@@ -43,8 +64,9 @@ public sealed class RunThreatController : MonoBehaviour
             runState.ThreatValue
         );
         int presetIndex = config.GetPresetIndex(runState.ThreatValue);
+        bool opening = config.IsOpening(runState.ThreatValue, runState.ThreatElapsedTime);
 
-        if (!force && presetIndex == appliedPresetIndex)
+        if (!force && presetIndex == appliedPresetIndex && opening == openingApplied)
         {
             if (Time.unscaledTime >= nextHudRefresh)
             {
@@ -63,14 +85,15 @@ public sealed class RunThreatController : MonoBehaviour
         }
 
         appliedPresetIndex = presetIndex;
+        openingApplied = opening;
         RunThreatConfig.Preset preset = config.GetPreset(presetIndex);
 
         if (preset != null)
         {
             enemySpawner?.SetRunThreatPreset(
                 presetIndex,
-                preset.spawnIntervalMultiplier,
-                preset.maxAliveCap,
+                preset.spawnIntervalMultiplier * (opening ? config.OpeningSpawnIntervalMultiplier : 1f),
+                opening ? Mathf.Min(preset.maxAliveCap, config.OpeningAliveCap) : preset.maxAliveCap,
                 preset.batchSize
             );
         }

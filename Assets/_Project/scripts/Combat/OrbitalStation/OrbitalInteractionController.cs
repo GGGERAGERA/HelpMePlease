@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Subject42.Combat.OrbitalStation
 {
-    public enum OrbitalInteractionMode { Idle, RewardSelection, RewardFlight, RewardSecondTarget, Relocation, WorldTelekinesis, CustomDrawing }
+    public enum OrbitalInteractionMode { Idle, RewardSelection, RewardFlight, RewardSecondTarget, Relocation, CustomDrawing = 6 }
 
     // One player-local owner. Controllers retain their domain behavior and presentation.
     [DefaultExecutionOrder(-200)]
@@ -15,6 +15,10 @@ namespace Subject42.Combat.OrbitalStation
         private float previousScale;
         private float ownedScale;
         private bool ownsScale;
+        private bool ownsBulletTime;
+        private float bulletBaseScale, bulletScale, bulletBaseFixedStep;
+        private CharacterMovement2D movement;
+        public float BulletTimeBlend => ownsBulletTime ? Mathf.InverseLerp(1f, station.BulletTime.WorldTimeScale, bulletScale / bulletBaseScale) : 0f;
         private OrbitalInteractionMode beforeDraw;
         private float beforeDrawScale;
         public bool IsCustomDrawing => Mode == OrbitalInteractionMode.CustomDrawing || station != null && station.HasPendingCustomRings;
@@ -35,26 +39,66 @@ namespace Subject42.Combat.OrbitalStation
         public bool CanUseDebugPlacement => CanQueueDebugPlacement && !IsGameplayInputBlocked && consumedFrame != Time.frameCount;
         public bool CanStartRelocation => Alive && !IsGameplayInputBlocked && QueueIdle &&
             !station.IsDebugPlacementActive && Time.timeScale > 0f && consumedFrame != Time.frameCount &&
-            (IsIdle || Mode == OrbitalInteractionMode.WorldTelekinesis);
-        public bool CanStartWorldTelekinesis => Alive && !IsGameplayInputBlocked && QueueIdle &&
-            !station.IsDebugPlacementActive && Time.timeScale > 0f && consumedFrame != Time.frameCount && IsIdle &&
-            !Input.GetMouseButton(0);
-        public bool CanContinueWorldTelekinesis => Alive && !IsGameplayInputBlocked && QueueIdle &&
-            Time.timeScale > 0f && (Mode == OrbitalInteractionMode.WorldTelekinesis || CanStartWorldTelekinesis);
+            IsIdle;
         public bool CanConsumeRewardPointer => Alive && !IsGameplayInputBlocked && consumedFrame != Time.frameCount &&
             (Mode == OrbitalInteractionMode.RewardSelection || Mode == OrbitalInteractionMode.RewardSecondTarget);
-        public void Bind(OrbitalStationRuntime runtime) { station = runtime; Mode = OrbitalInteractionMode.Idle; }
+        public void Bind(OrbitalStationRuntime runtime)
+        {
+            ReleaseBulletTime();
+            station = runtime;
+            movement = station != null && station.Owner != null
+                ? station.Owner.Transform.GetComponent<CharacterMovement2D>() : null;
+            Mode = OrbitalInteractionMode.Idle;
+        }
+
+        public void TickBulletTime(bool active, float scale, float transitionSeconds, float unscaledDeltaTime)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (active || ownsBulletTime) PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
+#endif
+            // Never overwrite another time owner (pause, rewards, transition, death or reset).
+            if (!Alive || !IsIdle || !QueueIdle || IsGameplayInputBlocked || Time.timeScale <= 0f ||
+                ownsBulletTime && !Mathf.Approximately(Time.timeScale, bulletScale))
+            { ReleaseBulletTime(); return; }
+            if (!ownsBulletTime)
+            {
+                if (!active) return;
+                bulletBaseScale = bulletScale = Time.timeScale;
+                bulletBaseFixedStep = Time.fixedDeltaTime;
+                ownsBulletTime = true;
+            }
+            float target = active ? bulletBaseScale * scale : bulletBaseScale;
+            bulletScale = Mathf.MoveTowards(bulletScale, target,
+                bulletBaseScale * (1f - scale) * unscaledDeltaTime / Mathf.Max(.01f, transitionSeconds));
+            Time.timeScale = bulletScale;
+            Time.fixedDeltaTime = bulletBaseFixedStep * bulletScale / bulletBaseScale;
+            if (movement != null) movement.BulletTimeControlMultiplier = bulletBaseScale / bulletScale;
+            if (!active && Mathf.Approximately(bulletScale, bulletBaseScale)) ReleaseBulletTime();
+        }
+
+        public void ReleaseBulletTime()
+        {
+            if (!ownsBulletTime) return;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
+#endif
+            if (Mathf.Approximately(Time.timeScale, bulletScale)) Time.timeScale = bulletBaseScale;
+            Time.fixedDeltaTime = bulletBaseFixedStep;
+            if (movement != null) movement.BulletTimeControlMultiplier = 1f;
+            ownsBulletTime = false;
+            station?.BulletTime.Release();
+        }
         public void PrepareForExternalPause()
         {
+            ReleaseBulletTime();
             station?.GetComponent<OrbitalRelocationController>()?.CancelDrag("external pause");
-            station?.GetComponent<OrbitalWorldTelekinesisController>()?.CancelInteraction();
         }
         public bool BeginReward()
         {
             if (!Alive || Mode == OrbitalInteractionMode.RewardSelection || Mode == OrbitalInteractionMode.RewardFlight ||
                 Mode == OrbitalInteractionMode.RewardSecondTarget) return false;
             station.GetComponent<OrbitalRelocationController>()?.CancelDrag("reward started");
-            station.GetComponent<OrbitalWorldTelekinesisController>()?.CancelInteraction();
+            ReleaseBulletTime();
             Mode = OrbitalInteractionMode.RewardSelection;
             return true;
         }
@@ -88,7 +132,7 @@ namespace Subject42.Combat.OrbitalStation
         public bool BeginRelocation()
         {
             if (!CanStartRelocation) return false;
-            station.GetComponent<OrbitalWorldTelekinesisController>()?.CancelInteraction();
+            ReleaseBulletTime();
             Mode = OrbitalInteractionMode.Relocation;
             previousScale = Time.timeScale;
             ownedScale = Mathf.Min(previousScale, OrbitalPresentationConfig.Active.RelocationTimeScale);
@@ -105,16 +149,6 @@ namespace Subject42.Combat.OrbitalStation
             Mode = OrbitalInteractionMode.Idle;
             consumedFrame = Time.frameCount;
         }
-        public bool BeginWorldTelekinesis()
-        {
-            if (!CanStartWorldTelekinesis) return false;
-            Mode = OrbitalInteractionMode.WorldTelekinesis;
-            return true;
-        }
-        public void EndWorldTelekinesis()
-        {
-            if (Mode == OrbitalInteractionMode.WorldTelekinesis) Mode = OrbitalInteractionMode.Idle;
-        }
         // Pause calls this too: consumption remains true after cancellation in either Update order.
         public bool TryConsumeEscape()
         {
@@ -129,16 +163,15 @@ namespace Subject42.Combat.OrbitalStation
         {
             station?.RewardFlow?.CancelForSceneTransition();
             station?.GetComponent<OrbitalRelocationController>()?.CancelDrag("interaction cancelled");
-            station?.GetComponent<OrbitalWorldTelekinesisController>()?.CancelInteraction();
         }
-        private void OnDisable() { if (!IsIdle) CancelActive(); }
+        private void OnDisable() { ReleaseBulletTime(); if (!IsIdle) CancelActive(); }
 
         private void Update()
         {
-            if (!Alive) { if (!IsIdle) CancelActive(); return; }
+            if (!Alive) { ReleaseBulletTime(); if (!IsIdle) CancelActive(); return; }
             if (IsGameplayInputBlocked) return;
             if (Input.GetKeyDown(KeyCode.Escape)) { TryConsumeEscape(); return; }
-            if (Input.GetMouseButtonDown(1) && !IsIdle && Mode != OrbitalInteractionMode.WorldTelekinesis)
+            if (Input.GetMouseButtonDown(1) && !IsIdle)
             { consumedFrame = Time.frameCount; CancelActive(); }
             if (Mode == OrbitalInteractionMode.Relocation && (IsGameplayInputBlocked || !QueueIdle || Time.timeScale <= 0f))
                 station.GetComponent<OrbitalRelocationController>()?.CancelDrag("input blocked");

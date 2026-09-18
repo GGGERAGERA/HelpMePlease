@@ -120,6 +120,8 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
         requestedScene = scene;
         faulted = false;
         if (errorText != null) errorText.gameObject.SetActive(false);
+        PlayerRuntimeReference.CachedPlayer?.GetComponentInChildren<Subject42.Combat.OrbitalStation.OrbitalInteractionController>()?
+            .PrepareForExternalPause();
         previousTimeScale = Time.timeScale;
         bool loaded = false;
         returning = scene == "MainMenu";

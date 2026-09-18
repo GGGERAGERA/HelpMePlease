@@ -1351,9 +1351,21 @@ MonoBehaviour:
   - key: orbit.move.link
     ru: "УЗЕЛ СВЯЗИ"
     en: "LINK NODE"
-  - key: orbit.telekinesis
-    ru: "ПКМ — ТЕЛЕКИНЕЗ"
-    en: "RMB — TELEKINESIS"
+  - key: onboarding.movement
+    ru: "WASD — движение"
+    en: "WASD — move"
+  - key: onboarding.autoAttack
+    ru: "Оружие атакует автоматически"
+    en: "Weapons attack automatically"
+  - key: onboarding.experience
+    ru: "Собирай опыт и усиливай сборку"
+    en: "Collect XP and strengthen your build"
+  - key: onboarding.slowField
+    ru: "Удерживай ПКМ — замедлить врагов рядом"
+    en: "Hold RMB to slow nearby enemies"
+  - key: hud.slowFieldEnergy
+    ru: "ПКМ — Bullet Time: {0}%"
+    en: "RMB — Bullet Time: {0}%"
   - key: reward.panel.special
     ru: "УСИЛЕННАЯ АНОМАЛИЯ"
     en: "ENHANCED ANOMALY"

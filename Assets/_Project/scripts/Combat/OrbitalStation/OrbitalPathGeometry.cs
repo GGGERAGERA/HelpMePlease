@@ -15,15 +15,19 @@ namespace Subject42.Combat.OrbitalStation
         private readonly Vector2[] points;
         private readonly CustomOrbitPath custom;
         private readonly Vector2 customExtents;
+        private readonly float radialExtent = 1f;
+        public float MaximumRadius(float radius) => radialExtent * Scale(radius);
         public CustomOrbitPath CustomPath => custom;
 
         public OrbitalPathGeometry(CustomOrbitPath path)
         {
             Type = OrbitalPathType.Custom;
             custom = path;
+            radialExtent = 0f;
             for (int i = 0; i < path.PointCount; i++)
             {
                 var p = path.GetPoint(i);
+                radialExtent = Mathf.Max(radialExtent, p.magnitude);
                 customExtents = Vector2.Max(customExtents, new Vector2(Mathf.Abs(p.x), Mathf.Abs(p.y)));
             }
         }
@@ -36,6 +40,7 @@ namespace Subject42.Combat.OrbitalStation
             height = config.FigureEightHeight;
             spacing = config.FigureEightSpacing;
             depthRange = config.FigureEightDepthRange;
+            radialExtent = 0f;
             // Invert cumulative chord length once, then use constant-time interpolation at runtime.
             var lengths = new float[Samples + 1];
             Vector2 previous = Parametric(0f);
@@ -55,6 +60,7 @@ namespace Subject42.Combat.OrbitalStation
                 float fraction = Mathf.InverseLerp(lengths[segment - 1], lengths[segment], distance);
                 parameters[i] = (segment - 1 + fraction) * Mathf.PI * 2f / Samples;
                 points[i] = Parametric(parameters[i]);
+                radialExtent = Mathf.Max(radialExtent, points[i].magnitude);
             }
             points[Samples] = points[0];
         }

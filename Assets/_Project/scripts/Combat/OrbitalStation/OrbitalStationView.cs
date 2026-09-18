@@ -13,8 +13,7 @@ namespace Subject42.Combat.OrbitalStation
         public OrbitalInteractionPresentation Presentation;
         public OrbitalRewardFlowController Rewards;
         public OrbitalRelocationController Relocation;
-        public OrbitalWorldTelekinesisController World;
         public bool IsValid => Core != null && CoreHalo != null && CoreParticles != null && RingsRoot != null && EffectsRoot != null && InteractionRoot != null &&
-            Input != null && Presentation != null && Rewards != null && Relocation != null && World != null;
+            Input != null && Presentation != null && Presentation.HasScreenEffect && Rewards != null && Relocation != null;
     }
 }

@@ -513,15 +513,14 @@ namespace Subject42.Combat.OrbitalStation
         public bool CanUpgradeCore(out string error) => CanCommit(out error) &&
             Rule(CoreState.Level < OrbitalProgressionConfig.Default.MaxCoreLevel, "core cap reached", out error);
 
-        // Reward targeting is stricter than structural commands used by Editor/QA.
-        // Provider and arena selection share this one predicate.
+        // Ring upgrades belong to the ring, including an empty ring awaiting modules.
+        // Provider and arena selection share the same structural/cap validation.
         public bool CanTargetRingReward(OrbitalRewardKind kind, int id)
         {
-            int occupied = Modules.Count(m => m.StableRingId == id);
             return kind switch
             {
-                OrbitalRewardKind.RingPower => occupied > 0 && CanUpgradeRingPower(id, out _),
-                OrbitalRewardKind.RingSpeed => occupied > 0 && CanUpgradeRingSpeed(id, out _),
+                OrbitalRewardKind.RingPower => CanUpgradeRingPower(id, out _),
+                OrbitalRewardKind.RingSpeed => CanUpgradeRingSpeed(id, out _),
                 OrbitalRewardKind.AddMount => CanAddMount(id, out _),
                 OrbitalRewardKind.RingCapacity => CanUpgradeRingCapacity(id, out _),
                 _ => false

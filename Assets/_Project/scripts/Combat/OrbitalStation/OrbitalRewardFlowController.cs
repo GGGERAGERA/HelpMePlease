@@ -71,7 +71,17 @@ namespace Subject42.Combat.OrbitalStation
             if (!selected.RequiresArenaSelection)
                 return ApplyImmediate();
             if (IsRingReward(selected.RewardKind))
+            {
                 State = OrbitalRewardFlowState.RingSelection;
+                // Multiple owned rings always require an explicit choice, even when
+                // caps leave only one valid target. Never silently choose the first ring.
+                if (station.Rings.Count == 1 && CanUseRing(station.Rings[0]))
+                {
+                    hoveredRing = station.Rings[0];
+                    SelectRingUpgrade();
+                    if (terminal) return true;
+                }
+            }
             else if (selected.RewardKind == OrbitalRewardKind.ModuleDamage)
                 State = OrbitalRewardFlowState.ModuleSelection;
             else
@@ -450,17 +460,7 @@ namespace Subject42.Combat.OrbitalStation
                 hoveredMount = null;
                 Vector3 world = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                 Vector2 local = transform.InverseTransformPoint(world);
-                float best = 0.34f;
-                for (int i = 0; i < station.Rings.Count; i++)
-                {
-                    OrbitalRingRuntime ring = station.Rings[i];
-                    float delta = ring.Geometry.Distance(local, ring.Radius);
-                    if (delta < best && CanUseRing(ring))
-                    {
-                        best = delta;
-                        hoveredRing = ring;
-                    }
-                }
+                UpdateRingHover(local);
                 return;
             }
             if (State == OrbitalRewardFlowState.ModuleSelection)
@@ -477,6 +477,21 @@ namespace Subject42.Combat.OrbitalStation
             hoveredModule = null;
             hoveredMount = mountResolver.Resolve(station, Camera.main,
                 Input.mousePosition, hoveredMount);
+        }
+
+        private void UpdateRingHover(Vector2 local)
+        {
+            hoveredRing = null;
+            float best = 0.34f;
+            foreach (var ring in station.Rings)
+            {
+                float distance = ring.Geometry.Distance(local, ring.Radius);
+                if (distance < best && CanUseRing(ring))
+                {
+                    best = distance;
+                    hoveredRing = ring;
+                }
+            }
         }
 
         private void UpdateModulePreview()
@@ -570,12 +585,15 @@ namespace Subject42.Combat.OrbitalStation
             }
             else if (State == OrbitalRewardFlowState.RingSelection)
             {
+                station.Interaction?.SetRingSelectionFocus(true);
                 for (int r = 0; r < station.Rings.Count; r++)
                 {
                     OrbitalRingRuntime ring = station.Rings[r];
                     bool eligible = CanUseRing(ring);
+                    ring.SetSelected(false);
                     ring.SetInteractionState(eligible, ring == hoveredRing,
-                        !eligible || hoveredRing != null && ring != hoveredRing);
+                        !eligible || hoveredRing != null && ring != hoveredRing,
+                        station.Interaction.SelectionRingEmphasis, showSelectionMarkers: true);
                     for (int m = 0; m < ring.Mounts.Count; m++)
                     {
                         OrbitalMountRuntime mount = ring.Mounts[m];
@@ -599,6 +617,7 @@ namespace Subject42.Combat.OrbitalStation
 
         private void ClearArenaVisuals()
         {
+            station?.Interaction?.SetRingSelectionFocus(false);
             DestroyAddMountPreview();
             OrbitalMountInteractionPresentation.Clear(station);
             if (station != null)

@@ -40,8 +40,7 @@ namespace Subject42.Combat.OrbitalStation
 
         private void UpdateHover()
         {
-            if (station.InputOwner.Mode != OrbitalInteractionMode.Idle &&
-                station.InputOwner.Mode != OrbitalInteractionMode.WorldTelekinesis)
+            if (station.InputOwner.Mode != OrbitalInteractionMode.Idle)
                 return;
             OrbitalModuleRuntime next = CanStartInteraction()
                 ? FindModuleAt(MouseWorld(), OrbitalPresentationConfig.Active.ModuleHitRadius)

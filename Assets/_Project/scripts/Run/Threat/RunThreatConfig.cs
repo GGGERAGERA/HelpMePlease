@@ -65,6 +65,21 @@ public sealed class RunThreatConfig : ScriptableObject
 
     [SerializeField, Min(0f)] private float valuePerSecond = 0.12f;
     [SerializeField] private Preset[] presets = Array.Empty<Preset>();
+    [Header("Early run pressure")]
+    [SerializeField, Range(.5f, 1f)] private float earlyMeleeSpeed = .87f;
+    [SerializeField, Min(.01f)] private float earlyMeleeResponseSeconds = .3f;
+    [SerializeField, Min(0f)] private float openingDuration = 55f;
+    [SerializeField, Min(1f)] private float openingSpawnIntervalMultiplier = 1.3f;
+    [SerializeField, Min(1)] private int openingAliveCap = 12;
+
+    public float MeleeSpeed(float pressure) => Mathf.Lerp(earlyMeleeSpeed, 1f,
+        Mathf.InverseLerp(ThreatTierPresentation.Tier2Minimum, ThreatTierPresentation.Tier3Minimum, pressure));
+    public float MeleeResponseSeconds(float pressure) => Mathf.Lerp(earlyMeleeResponseSeconds, 0f,
+        Mathf.InverseLerp(ThreatTierPresentation.Tier2Minimum, ThreatTierPresentation.Tier3Minimum, pressure));
+    public bool IsOpening(float pressure, float elapsed) => elapsed < openingDuration &&
+        pressure < ThreatTierPresentation.Tier2Minimum;
+    public float OpeningSpawnIntervalMultiplier => openingSpawnIntervalMultiplier;
+    public int OpeningAliveCap => openingAliveCap;
 
     public float ValuePerSecond => Mathf.Max(0f, valuePerSecond);
     public int PresetCount => presets != null ? presets.Length : 0;

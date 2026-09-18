@@ -114,14 +114,6 @@ namespace Subject42.Combat.OrbitalStation
         [Min(0f)] public float MountSwitchAdvantagePixels = 4f;
         [Range(0.05f, 1f)] public float RelocationTimeScale = 0.2f;
 
-        [Header("World telekinesis")]
-        [Min(0.5f)] public float TelekinesisGrabRange = 8f;
-        [Min(0.1f)] public float TelekinesisPullSpeed = 12f;
-        [Range(0.01f, 1f)] public float TelekinesisFollowSmoothness = 0.12f;
-        [Min(0f)] public float TelekinesisThrowStrength = 1f;
-        [Min(0f)] public float TelekinesisMaxThrowSpeed = 18f;
-        [Min(0f)] public float TelekinesisThrowDrag = 3.5f;
-
         public static void Configure(OrbitalPresentationConfig config)
         {
             if (config == null) throw new System.ArgumentNullException(nameof(config));

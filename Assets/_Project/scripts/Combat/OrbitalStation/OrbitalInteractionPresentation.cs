@@ -31,12 +31,64 @@ namespace Subject42.Combat.OrbitalStation
         private Texture2D panelTexture;
         private bool bound;
         private OrbitalStationRuntime station;
+        [Header("Gameplay screen feedback")]
+        [SerializeField] private Image screenEffect;
+        [SerializeField, Range(0f, 1f)] private float selectionDim = .72f;
+        [SerializeField, Min(0f)] private float selectionClearPadding = .7f;
+        [SerializeField, Min(1f)] private float selectionRingEmphasis = 2.4f;
+        [SerializeField, Range(0f, 1f)] private float bulletTimeTint = .16f;
+        [SerializeField, Range(0f, 1f)] private float bulletTimeVignette = .45f;
+        private Material screenMaterial;
+        private Material authoredScreenMaterial;
+        private Camera gameplayCamera;
+        public bool HasScreenEffect => screenEffect != null && screenEffect.material != null;
+        public bool RingSelectionFocus { get; private set; }
+        public float SelectionRingEmphasis => selectionRingEmphasis;
+        public bool ScreenEffectVisible => screenEffect != null && screenEffect.enabled;
+
+        public void SetRingSelectionFocus(bool active)
+        {
+            RingSelectionFocus = active;
+            UpdateScreenEffect();
+        }
+
+        private void LateUpdate() => UpdateScreenEffect();
+
+        private void UpdateScreenEffect()
+        {
+            if (screenEffect == null || screenMaterial == null) return;
+            float bullet = station != null && station.InputOwner != null ? station.InputOwner.BulletTimeBlend : 0f;
+            bool visible = station != null && station.IsInitialized && !SceneTransitionOverlay.IsTransitioning &&
+                (RingSelectionFocus || bullet > 0f);
+            screenEffect.enabled = visible;
+            if (!visible) return;
+            screenMaterial.SetFloat("_Dim", RingSelectionFocus ? selectionDim : 0f);
+            screenMaterial.SetFloat("_Bullet", bullet);
+            screenMaterial.SetFloat("_Tint", bulletTimeTint);
+            screenMaterial.SetFloat("_Vignette", bulletTimeVignette);
+            screenMaterial.SetFloat("_UnscaledTime", Time.unscaledTime);
+            if (gameplayCamera != null)
+            {
+                Vector3 center = gameplayCamera.WorldToViewportPoint(station.transform.position);
+                Vector2 footprint = station.PresentationExtents;
+                float radius = Mathf.Max(station.SlowFieldRadius, Mathf.Max(footprint.x, footprint.y)) + selectionClearPadding;
+                Vector2 extents = Vector2.one * radius;
+                Vector3 edge = gameplayCamera.WorldToViewportPoint(station.transform.position + (Vector3)extents);
+                screenMaterial.SetVector("_Focus", new Vector4(center.x, center.y,
+                    Mathf.Max(.02f, Mathf.Abs(edge.x - center.x)), Mathf.Max(.02f, Mathf.Abs(edge.y - center.y))));
+            }
+        }
 
         public void Bind(OrbitalStationRuntime station)
         {
-            if (bound)
+            if (bound || screenMaterial != null)
                 Release();
             this.station = station;
+            gameplayCamera = Camera.main;
+            authoredScreenMaterial = screenEffect.material;
+            screenMaterial = new Material(authoredScreenMaterial);
+            screenEffect.material = screenMaterial;
+            screenEffect.enabled = false;
             UICrosshairFollowMouse crosshair =
                 FindFirstObjectByType<UICrosshairFollowMouse>();
             if (crosshair == null)
@@ -82,6 +134,15 @@ namespace Subject42.Combat.OrbitalStation
 
         public void Release()
         {
+            RingSelectionFocus = false;
+            if (screenEffect != null)
+            {
+                screenEffect.enabled = false;
+                if (authoredScreenMaterial != null) screenEffect.material = authoredScreenMaterial;
+            }
+            if (screenMaterial != null) Destroy(screenMaterial);
+            screenMaterial = null;
+            gameplayCamera = null;
             ClearHint();
             if (bound && cursorImage != null)
             {

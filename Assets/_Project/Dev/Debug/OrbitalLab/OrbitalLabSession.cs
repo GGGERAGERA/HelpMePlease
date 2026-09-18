@@ -245,11 +245,11 @@ public abstract class OrbitalLabSession : MonoBehaviour
     protected void DrawOrbitControls()
     {
         Heading("ORBITAL controls");
-        Row(("Compress Rings", () => { Station.RightMouseMode = OrbitalStationRuntime.RmbMode.CompressRings; Station.DebugCompressionHeld = true; }),
-            ("Expand / Release", () => Station.DebugCompressionHeld = false));
+        Row(("Bullet Time", () => { Station.RightMouseMode = OrbitalStationRuntime.RmbMode.BulletTime; Station.DebugBulletTimeHeld = true; }),
+            ("Release Bullet Time", () => Station.DebugBulletTimeHeld = false));
         Button("Reverse Direction", () => Station.DebugReverseRotation());
         Row(("Pause Rotation", () => Station.DebugRotationPaused = true), ("Resume Rotation", () => Station.DebugRotationPaused = false));
-        Text($"Compression {Station.DebugCompressionHeld} | Rotation {(Station.DebugRotationPaused ? "paused" : "running")}");
+        Text($"Bullet Time {Station.DebugBulletTimeHeld} | Rotation {(Station.DebugRotationPaused ? "paused" : "running")}");
     }
 
     protected void Button(string text, Action action)

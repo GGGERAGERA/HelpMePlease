@@ -7,6 +7,51 @@ namespace Subject42.Combat.OrbitalStation
     {
         public LineRenderer BackLine, FrontLine;
         public Transform MountsRoot;
+        [Header("Reward selection arrows — authored in Ring.prefab")]
+        [SerializeField] private Transform selectionMarkersRoot;
+        [SerializeField] private LineRenderer[] selectionMarkers;
+        [SerializeField] private Color selectionMarkerColor = new(.25f, 1f, .9f, .9f);
+        [SerializeField] private Color selectionHoverColor = new(1f, .85f, .3f, 1f);
+        [SerializeField, Min(0f)] private float selectionMarkerOffset = .22f;
+        [SerializeField, Min(0f)] private float selectionMarkerTravel = .1f;
+        [SerializeField, Min(0f)] private float selectionMarkerLapSpeed = .035f;
+        [SerializeField, Min(0f)] private float selectionMarkerPulseSpeed = 1.4f;
+        [SerializeField, Min(1f)] private float selectionMarkerHoverScale = 1.45f;
+        private bool selectionHovered;
+        private float selectionMarkerTime;
+
+        public void SetSelectionMarkers(bool visible, bool hovered)
+        {
+            selectionHovered = visible && hovered;
+            if (selectionMarkersRoot.gameObject.activeSelf == visible) return;
+            selectionMarkersRoot.gameObject.SetActive(visible);
+            selectionMarkerTime = 0f;
+        }
+
+        private void UpdateSelectionMarkers(float radius, float unscaledDeltaTime)
+        {
+            if (!selectionMarkersRoot.gameObject.activeSelf) return;
+            selectionMarkerTime += unscaledDeltaTime;
+            float pulse = .5f + .5f * Mathf.Sin(selectionMarkerTime * selectionMarkerPulseSpeed * Mathf.PI * 2f);
+            float offset = selectionMarkerOffset + (1f - pulse) * selectionMarkerTravel;
+            float scale = (selectionHovered ? selectionMarkerHoverScale : 1f) * (1f + pulse * .08f);
+            Color color = selectionHovered ? selectionHoverColor : selectionMarkerColor;
+            color.a *= Mathf.Lerp(.65f, 1f, pulse);
+            for (int i = 0; i < selectionMarkers.Length; i++)
+            {
+                float phase = Mathf.Repeat((i + .5f) / selectionMarkers.Length + selectionMarkerTime * selectionMarkerLapSpeed, 1f);
+                Vector2 point = geometry.Position(phase, radius);
+                Vector2 tangent = (geometry.Position(Mathf.Repeat(phase + .002f, 1f), radius) -
+                    geometry.Position(Mathf.Repeat(phase - .002f, 1f), radius)).normalized;
+                Vector2 outward = new(-tangent.y, tangent.x);
+                if (Vector2.Dot(outward, point) < 0f) outward = -outward;
+                var marker = selectionMarkers[i];
+                marker.transform.localPosition = point + outward * offset;
+                marker.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(outward.y, outward.x) * Mathf.Rad2Deg - 90f);
+                marker.transform.localScale = Vector3.one * scale;
+                marker.startColor = marker.endColor = color;
+            }
+        }
         private readonly Gradient frontGradient = new();
         private readonly GradientColorKey[] colorKeys = new GradientColorKey[2];
         private readonly GradientAlphaKey[] frontAlphaKeys = new GradientAlphaKey[2];
@@ -96,10 +141,13 @@ namespace Subject42.Combat.OrbitalStation
             FrontLine.SetPropertyBlock(surface);
             transitionAge = Mathf.Min(transitionAge + unscaledDeltaTime, config.RingTierTransitionDuration);
             energyTime = Mathf.Repeat(energyTime + unscaledDeltaTime * currentStyle.PulseSpeed, 1f);
+            UpdateSelectionMarkers(radius, unscaledDeltaTime);
         }
 
         public bool IsValid => BackLine != null && FrontLine != null &&
-            BackLine != FrontLine && MountsRoot != null;
+            BackLine != FrontLine && MountsRoot != null && selectionMarkersRoot != null &&
+            selectionMarkers != null && selectionMarkers.Length > 0 &&
+            System.Array.TrueForAll(selectionMarkers, marker => marker != null);
 
         // depthAware is retained for callers of the old view API; ring lines no longer split by depth.
         public void SetAppearance(float radius, float width, Color color, bool depthAware = true)

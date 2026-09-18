@@ -1,11 +1,12 @@
 using System.Collections;
 using UnityEngine;
 using TMPro;
+using Subject42.Combat.OrbitalStation;
 
 public sealed class RunMessageService : MonoBehaviour
 {
     private const float InitialLevelMessageDuration = 4.5f;
-    private const float FirstRunHintDuration = 4.5f;
+    private const float FirstRunHintDuration = 3f;
     public const string MovementHintPreferenceKey = "onboarding.mvp.movement.seen";
     public static RunMessageService Instance { get; private set; }
 
@@ -15,18 +16,39 @@ public sealed class RunMessageService : MonoBehaviour
     [SerializeField] private GameObject movementHint;
     [SerializeField] private TextMeshProUGUI movementText;
     [SerializeField] private HUDManager hud;
-    private float movementHintRemaining;
+    public const string AutoAttackHintPreferenceKey = "onboarding.mvp.autoAttack.seen";
+    public const string ExperienceHintPreferenceKey = "onboarding.mvp.experience.seen";
+    public const string SlowFieldHintPreferenceKey = "onboarding.mvp.slowField.seen";
+    private static readonly string[] PreferenceKeys = { MovementHintPreferenceKey,
+        AutoAttackHintPreferenceKey, ExperienceHintPreferenceKey, SlowFieldHintPreferenceKey };
+    private static readonly string[] HintKeys = { "onboarding.movement", "onboarding.autoAttack",
+        "onboarding.experience", "onboarding.slowField" };
+    private int hintIndex;
+    private float hintShownTime;
+    private bool hintsReady, moved, sawEnemies, gainedExperience;
+    private Vector3 movementOrigin;
+    private GameObject player;
+    private CharacterMovement2D movement;
+    private OrbitalStationRuntime station;
 
     private void Awake()
     {
         movementHint.SetActive(false);
     }
 
-    private void OnEnable() => Instance = this;
-
-    private IEnumerator Start()
+    private void OnEnable()
     {
-        if (PlayerPrefs.GetInt(MovementHintPreferenceKey, 0) != 0) yield break;
+        Instance = this;
+        hintsReady = moved = sawEnemies = gainedExperience = false;
+        hintIndex = 0;
+        hintShownTime = 0f;
+        player = null;
+        StartCoroutine(PrepareHints());
+    }
+
+    private IEnumerator PrepareHints()
+    {
+        yield return null;
         LevelAnomalyController anomalyController =
             LevelAnomalyController.Instance;
         WorldRuleController worldRuleController =
@@ -53,20 +75,55 @@ public sealed class RunMessageService : MonoBehaviour
 
         if (runState == null || runState.CurrentSector == null ||
             runState.CurrentSector.SectorNumber != RunRoute.FirstSector) yield break;
-        movementHintRemaining = FirstRunHintDuration;
+        hintsReady = true;
     }
 
     private void LateUpdate()
     {
-        bool visible = movementHintRemaining > 0f && hud.IsInformationVisible;
-        movementHint.SetActive(visible);
-        if (!visible) return;
-        movementText.text = "WASD\n" + LocalizationService.Instance.Get("hud.movement");
-        movementHintRemaining = Mathf.Max(0f, movementHintRemaining - Time.unscaledDeltaTime);
-        if (movementHintRemaining > 0f) return;
-        movementHint.SetActive(false);
-        PlayerPrefs.SetInt(MovementHintPreferenceKey, 1);
-        PlayerPrefs.Save();
+        var currentPlayer = PlayerRuntimeReference.CachedPlayer;
+        if (currentPlayer != player)
+        {
+            player = currentPlayer;
+            movement = player != null ? player.GetComponent<CharacterMovement2D>() : null;
+            station = player != null ? player.GetComponentInChildren<OrbitalStationRuntime>() : null;
+            if (player != null) movementOrigin = player.transform.position;
+        }
+        if (player != null && movement != null && movement.HasMovementInput &&
+            (player.transform.position - movementOrigin).sqrMagnitude >= .04f) moved = true;
+        sawEnemies |= EnemyHealth.ActiveInstances.Count > 0;
+        var xp = ExperienceManager.Instance;
+        gainedExperience |= xp != null && (xp.CurrentExp > 0 || xp.CurrentLevel > 1);
+
+        while (hintIndex < PreferenceKeys.Length && PlayerPrefs.GetInt(PreferenceKeys[hintIndex], 0) != 0)
+            hintIndex++;
+        bool visible = hud.IsInformationVisible;
+        bool showHint = visible && hintsReady && hintIndex < PreferenceKeys.Length &&
+            (hintIndex == 0 || hintIndex == 1 && sawEnemies || hintIndex == 2 && gainedExperience ||
+             hintIndex == 3 && station != null && station.IsInitialized && station.SlowFieldRadius > 0f);
+        if (showHint)
+        {
+            hintShownTime += Time.deltaTime;
+            bool completed = hintIndex == 0 ? moved : hintIndex == 3 ? station.SlowField.HasBeenUsed :
+                hintShownTime >= FirstRunHintDuration;
+            if (completed)
+            {
+                PlayerPrefs.SetInt(PreferenceKeys[hintIndex], 1);
+                PlayerPrefs.Save();
+                hintIndex++;
+                hintShownTime = 0f;
+                showHint = false;
+            }
+        }
+        bool showEnergy = visible && station != null && station.IsInitialized &&
+            (station.SlowField.IsActive || station.SlowField.Energy < 1f);
+        movementHint.SetActive(showHint || showEnergy);
+        if (!showHint && !showEnergy) return;
+        var localization = LocalizationService.Instance;
+        string text = showHint ? localization.Get(HintKeys[hintIndex]) : string.Empty;
+        if (showEnergy)
+            text += (showHint ? "\n" : string.Empty) + string.Format(localization.Get("hud.slowFieldEnergy"),
+                Mathf.RoundToInt(station.SlowField.Energy * 100f));
+        movementText.text = text;
     }
 
     public void Show(RunMessageType type)
@@ -113,6 +170,7 @@ public sealed class RunMessageService : MonoBehaviour
 
     private void OnDisable()
     {
+        StopAllCoroutines();
         movementHint.SetActive(false);
         if (Instance == this)
             Instance = null;

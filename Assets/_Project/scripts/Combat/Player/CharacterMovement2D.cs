@@ -61,9 +61,12 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
 
     public Transform VisualRoot => visualRoot;
     public Vector2 LastMoveDirection => lastMoveDirection;
+    public bool HasMovementInput => moveInput.sqrMagnitude > .01f;
 
     // Optional input ownership; physics, animation and status effects remain here.
     public System.Func<Vector2> MovementIntent { get; set; }
+    // Only the station's time owner compensates deliberate player locomotion.
+    public float BulletTimeControlMultiplier { get; internal set; } = 1f;
 
     public void SetVisualRoot(Transform value)
     {
@@ -260,7 +263,7 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
         currentVelocity = Vector2.MoveTowards(
             currentVelocity,
             targetVelocity,
-            rate * Time.fixedDeltaTime
+            rate * Time.fixedDeltaTime * BulletTimeControlMultiplier
         );
 
 
@@ -268,7 +271,7 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
 
         rb.MovePosition(
             rb.position +
-            (currentVelocity +
+            (currentVelocity * BulletTimeControlMultiplier +
              hitKnockbackVelocity +
              worldRuleExternalVelocity +
              anomalyExternalVelocity.Value) * Time.fixedDeltaTime
@@ -328,7 +331,7 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
 
     private void UpdateDash()
     {
-        float stepTime = Mathf.Min(Time.fixedDeltaTime, dashTimeRemaining);
+        float stepTime = Mathf.Min(Time.fixedDeltaTime * BulletTimeControlMultiplier, dashTimeRemaining);
         float dashSpeed = Mathf.Max(0.01f, dashDistance) /
             Mathf.Max(0.01f, dashDuration);
         float desiredDistance = dashSpeed * stepTime;
@@ -340,7 +343,7 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
                 rb.position +
                 dashDirection * allowedDistance +
                 (worldRuleExternalVelocity +
-                 anomalyExternalVelocity.Value) * stepTime
+                 anomalyExternalVelocity.Value) * (stepTime / BulletTimeControlMultiplier)
             );
         }
 
@@ -388,6 +391,7 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
 
     private void OnDisable()
     {
+        BulletTimeControlMultiplier = 1f;
         MovementIntent = null;
         moveInput = Vector2.zero;
         currentVelocity = Vector2.zero;

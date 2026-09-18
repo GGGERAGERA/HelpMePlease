@@ -93,6 +93,7 @@ namespace Subject42.Combat.OrbitalStation
         private bool interactionEligible;
         private bool interactionHovered;
         private bool interactionDimmed;
+        private float interactionEmphasis = 1f;
         private int coreLevel;
         private Color coreColor;
         private float coreTime;
@@ -106,10 +107,9 @@ namespace Subject42.Combat.OrbitalStation
         public OrbitalRingState State { get; }
 
         public int RingId => State.StableRingId;
-        public float RuntimeRadiusMultiplier { get; set; } = 1f;
         public int RuntimeDirectionMultiplier { get; set; } = 1;
-        public float Radius => Geometry.Type == OrbitalPathType.Custom ? RuntimeRadiusMultiplier :
-            (State.Radius + OrbitalPresentationConfig.Active.RingRadiusPadding) * RuntimeRadiusMultiplier;
+        public float Radius => Geometry.Type == OrbitalPathType.Custom ? 1f :
+            State.Radius + OrbitalPresentationConfig.Active.RingRadiusPadding;
         public float RotationSpeed => State.BaseRotationSpeed *
             Mathf.Pow(1f + OrbitalProgressionConfig.Default.SpeedIncrement,
                 State.SpeedUpgradeLevel);
@@ -153,8 +153,8 @@ namespace Subject42.Combat.OrbitalStation
                 ? 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 7f)
                 : 0f;
             float highlight = (selected ? 1f : 0f) +
-                (interactionEligible ? .5f + interactionPulse * .5f : 0f) +
-                (interactionHovered ? 1f : 0f);
+                ((interactionEligible ? .5f + interactionPulse * .5f : 0f) +
+                 (interactionHovered ? 1f : 0f)) * interactionEmphasis;
             view.UpdateTierAppearance(VisualTier, Radius * spawnScale, pulse, highlight,
                 interactionDimmed, Geometry.Type == OrbitalPathType.FigureEight || State.Order == 0, Time.unscaledDeltaTime);
             for (int i = 0; i < Mounts.Count; i++)
@@ -185,11 +185,13 @@ namespace Subject42.Combat.OrbitalStation
         }
 
         public void SetInteractionState(bool eligible, bool hovered,
-            bool dimmed = false)
+            bool dimmed = false, float emphasis = 1f, bool showSelectionMarkers = false)
         {
             interactionEligible = eligible;
             interactionHovered = eligible && hovered;
             interactionDimmed = dimmed;
+            interactionEmphasis = emphasis;
+            view.SetSelectionMarkers(showSelectionMarkers && eligible, hovered);
         }
 
         public void Teardown()

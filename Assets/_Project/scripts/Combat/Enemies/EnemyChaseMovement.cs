@@ -49,6 +49,15 @@ public class EnemyChaseMovement : EnemyMovement
     private Vector2 worldRuleExternalVelocity;
     private float stopTimer;
     private Vector2 knockbackVelocity;
+    private float threatSpeedMultiplier = 1f;
+    private float threatResponseSeconds;
+    private Vector2 chaseVelocity;
+
+    public void SetThreatMovement(float speed, float responseSeconds)
+    {
+        threatSpeedMultiplier = speed;
+        threatResponseSeconds = responseSeconds;
+    }
     private bool animatorStateInitialized;
     private bool animatorRunning;
 
@@ -166,7 +175,7 @@ public class EnemyChaseMovement : EnemyMovement
         float selectedSpeed = isRunning ? aggroSpeed : normalSpeed;
         selectedSpeed *= speedMultiplier *
             anomalySpeedMultiplier *
-            worldRuleSpeedMultiplier;
+            worldRuleSpeedMultiplier * threatSpeedMultiplier;
 
         if (animator != null &&
             hasRunParameter &&
@@ -183,7 +192,11 @@ public class EnemyChaseMovement : EnemyMovement
             knockbackDecay * Time.fixedDeltaTime
         );
 
-        Vector2 movement = direction * selectedSpeed +
+        Vector2 targetVelocity = direction * selectedSpeed;
+        chaseVelocity = threatResponseSeconds > .001f
+            ? Vector2.Lerp(chaseVelocity, targetVelocity, 1f - Mathf.Exp(-Time.fixedDeltaTime / threatResponseSeconds))
+            : targetVelocity;
+        Vector2 movement = chaseVelocity +
             knockbackVelocity +
             worldRuleExternalVelocity +
             AnomalyExternalVelocity;
@@ -228,6 +241,8 @@ public class EnemyChaseMovement : EnemyMovement
     }
     private void OnDisable()
     {
+        chaseVelocity = Vector2.zero;
+        SetThreatMovement(1f, 0f);
         assaultDestination = null;
         ResumeAfterAttack();
         SetMovementSpeed(0f);

@@ -2225,13 +2225,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             value => { visual.HaloSize = value; refreshVisuals(value); }, "0.00");
         AddSliderRow("Ring Line Alpha", visual.RingLineAlpha, 0.15f, 0.9f,
             value => { visual.RingLineAlpha = value; refreshVisuals(value); }, "0.00");
-        AddSectionTitle("WORLD TELEKINESIS", "XP pickups and ordinary breakables");
-        AddSliderRow("Throw Strength", visual.TelekinesisThrowStrength,
-            0f, 2.5f, value => visual.TelekinesisThrowStrength = value, "0.00");
-        AddSliderRow("Max Throw Speed", visual.TelekinesisMaxThrowSpeed,
-            2f, 30f, value => visual.TelekinesisMaxThrowSpeed = value, "0.0");
-        AddSliderRow("Throw Drag", visual.TelekinesisThrowDrag,
-            0f, 10f, value => visual.TelekinesisThrowDrag = value, "0.0");
         AddHint("Number keys 1-9 select a ring. Module placement closes F1 so arena clicks remain explicit.");
     }
 
@@ -3004,8 +2997,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     {
         ResolveSceneReferences();
         var rmbStation = FindFirstObjectByType<OrbitalStationRuntime>();
-        AddSectionTitle("RMB MODE", "ПКМ: удержание Compress / нажатие Repulse и Reverse");
-        string[] rmbLabels = { "Compress Rings", "Repulse", "Reverse Rotation" };
+        AddSectionTitle("RMB MODE", "ПКМ: удержание Slow Field / нажатие Repulse и Reverse");
+        string[] rmbLabels = { "Slow Field", "Repulse", "Reverse Rotation" };
         for (int i = 0; i < rmbLabels.Length; i++)
         {
             var mode = (OrbitalStationRuntime.RmbMode)i;
@@ -3513,7 +3506,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         AddRow("ALL ACTIVE XP", "NO XP AWARD", warningColor,
             "Clear XP", true, ClearDebugExperience);
         AddHint(available
-            ? "Counts are pickups, not XP values. Close F1 to test pickup / telekinesis."
+            ? "Counts are pickups, not XP values. Close F1 to test pickup."
             : "Requires a player and an enemy prefab with production XP loot.");
     }
 

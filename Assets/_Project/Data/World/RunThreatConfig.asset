@@ -13,6 +13,11 @@ MonoBehaviour:
   m_Name: RunThreatConfig
   m_EditorClassIdentifier: Assembly-CSharp::RunThreatConfig
   valuePerSecond: 0.16
+  earlyMeleeSpeed: 0.87
+  earlyMeleeResponseSeconds: 0.3
+  openingDuration: 55
+  openingSpawnIntervalMultiplier: 1.3
+  openingAliveCap: 12
   presets:
   - minimumValue: 0
     spawnIntervalMultiplier: 1.05
