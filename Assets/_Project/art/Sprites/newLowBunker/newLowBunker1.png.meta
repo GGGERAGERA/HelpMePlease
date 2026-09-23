@@ -456,28 +456,6 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: newLowBunker1_31
-      rect:
-        serializedVersion: 2
-        x: 190
-        y: 478
-        width: 20
-        height: 20
-      alignment: 9
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: ee6c9dc8cfb51414eba3bf4b0f993d0a
-      internalID: 167467868
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: newLowBunker1_33
       rect:
         serializedVersion: 2
@@ -693,28 +671,6 @@ TextureImporter:
       bones: []
       spriteID: ad00e8f1211c9804b85462019f3b0004
       internalID: -1569238410
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: newLowBunker1_48
-      rect:
-        serializedVersion: 2
-        x: 190
-        y: 462
-        width: 20
-        height: 16
-      alignment: 9
-      pivot: {x: 0.5, y: 0.625}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 9c497496b53e3a34fb5f59b0fb14b9ee
-      internalID: -804179030
       vertices: []
       indices: 
       edges: []
@@ -1468,28 +1424,6 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: newLowBunker1_69
-      rect:
-        serializedVersion: 2
-        x: 190
-        y: 446
-        width: 20
-        height: 16
-      alignment: 9
-      pivot: {x: 0.5, y: 0.625}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 51bea08bf5695594781034c9cd33302b
-      internalID: 1612580193
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: newLowBunker1_71
       rect:
         serializedVersion: 2
@@ -1819,6 +1753,72 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_31
+      rect:
+        serializedVersion: 2
+        x: 190
+        y: 478
+        width: 20
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ed2b2caafd1fcbb4dbe19db1b266787c
+      internalID: 167467868
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_48
+      rect:
+        serializedVersion: 2
+        x: 190
+        y: 464
+        width: 20
+        height: 14
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5714286}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8bd943069a0094246880233a116e02f7
+      internalID: -804179030
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_69
+      rect:
+        serializedVersion: 2
+        x: 190
+        y: 446
+        width: 20
+        height: 18
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5555556}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 40cea4e259f70c74e846b6387cdaac63
+      internalID: 1612580193
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
@@ -1833,7 +1833,9 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":1,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":2,"spriteAlignment":0,"pivotUnitMode":1,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+      - key: SpriteEditor.SliceOnImport
+        value: False
     nameFileIdTable:
       newLowBunker1_0: 6434061785631632112
       newLowBunker1_1: -1640924842
