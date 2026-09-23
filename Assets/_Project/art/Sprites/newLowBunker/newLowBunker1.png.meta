@@ -280,77 +280,11 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: newLowBunker1_11
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 480
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: eb7324f5b9d57854197dee11a7538170
-      internalID: 33308690
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: newLowBunker1_12
-      rect:
-        serializedVersion: 2
-        x: 16
-        y: 480
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 74b68bd55ec5da6438120114bff62959
-      internalID: -245004198
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: newLowBunker1_13
-      rect:
-        serializedVersion: 2
-        x: 32
-        y: 480
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: f1736268df4c49e46982892aa7b85c98
-      internalID: 1806723578
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: newLowBunker1_14
       rect:
         serializedVersion: 2
-        x: 48
-        y: 480
+        x: 224
+        y: 496
         width: 16
         height: 16
       alignment: 0
@@ -371,8 +305,8 @@ TextureImporter:
       name: newLowBunker1_15
       rect:
         serializedVersion: 2
-        x: 96
-        y: 480
+        x: 240
+        y: 496
         width: 16
         height: 16
       alignment: 0
@@ -393,8 +327,8 @@ TextureImporter:
       name: newLowBunker1_20
       rect:
         serializedVersion: 2
-        x: 0
-        y: 464
+        x: 352
+        y: 496
         width: 16
         height: 16
       alignment: 0
@@ -415,8 +349,8 @@ TextureImporter:
       name: newLowBunker1_21
       rect:
         serializedVersion: 2
-        x: 16
-        y: 464
+        x: 0
+        y: 480
         width: 16
         height: 16
       alignment: 0
@@ -437,8 +371,8 @@ TextureImporter:
       name: newLowBunker1_22
       rect:
         serializedVersion: 2
-        x: 32
-        y: 464
+        x: 16
+        y: 480
         width: 16
         height: 16
       alignment: 0
@@ -459,8 +393,8 @@ TextureImporter:
       name: newLowBunker1_27
       rect:
         serializedVersion: 2
-        x: 0
-        y: 448
+        x: 128
+        y: 480
         width: 16
         height: 16
       alignment: 0
@@ -481,8 +415,8 @@ TextureImporter:
       name: newLowBunker1_28
       rect:
         serializedVersion: 2
-        x: 16
-        y: 448
+        x: 144
+        y: 480
         width: 16
         height: 16
       alignment: 0
@@ -503,8 +437,8 @@ TextureImporter:
       name: newLowBunker1_29
       rect:
         serializedVersion: 2
-        x: 32
-        y: 448
+        x: 160
+        y: 480
         width: 16
         height: 16
       alignment: 0
@@ -522,36 +456,14 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: newLowBunker1_30
-      rect:
-        serializedVersion: 2
-        x: 48
-        y: 448
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 4d37417fc6136ee49a93610b291a9492
-      internalID: -919561281
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: newLowBunker1_31
       rect:
         serializedVersion: 2
-        x: 64
-        y: 448
-        width: 16
-        height: 16
-      alignment: 0
+        x: 190
+        y: 478
+        width: 20
+        height: 20
+      alignment: 9
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -566,33 +478,11 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: newLowBunker1_32
-      rect:
-        serializedVersion: 2
-        x: 80
-        y: 448
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 0cf97847824c6c9498341800b368a1f5
-      internalID: 1931081462
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: newLowBunker1_33
       rect:
         serializedVersion: 2
-        x: 96
-        y: 448
+        x: 224
+        y: 480
         width: 16
         height: 16
       alignment: 0
@@ -613,8 +503,8 @@ TextureImporter:
       name: newLowBunker1_38
       rect:
         serializedVersion: 2
-        x: 0
-        y: 432
+        x: 336
+        y: 480
         width: 16
         height: 16
       alignment: 0
@@ -635,8 +525,8 @@ TextureImporter:
       name: newLowBunker1_39
       rect:
         serializedVersion: 2
-        x: 32
-        y: 432
+        x: 352
+        y: 480
         width: 16
         height: 16
       alignment: 0
@@ -657,8 +547,8 @@ TextureImporter:
       name: newLowBunker1_40
       rect:
         serializedVersion: 2
-        x: 48
-        y: 432
+        x: 0
+        y: 464
         width: 16
         height: 16
       alignment: 0
@@ -679,8 +569,8 @@ TextureImporter:
       name: newLowBunker1_41
       rect:
         serializedVersion: 2
-        x: 96
-        y: 432
+        x: 16
+        y: 464
         width: 16
         height: 16
       alignment: 0
@@ -701,8 +591,8 @@ TextureImporter:
       name: newLowBunker1_42
       rect:
         serializedVersion: 2
-        x: 0
-        y: 416
+        x: 32
+        y: 464
         width: 16
         height: 16
       alignment: 0
@@ -723,8 +613,8 @@ TextureImporter:
       name: newLowBunker1_43
       rect:
         serializedVersion: 2
-        x: 16
-        y: 416
+        x: 112
+        y: 464
         width: 16
         height: 16
       alignment: 0
@@ -745,8 +635,8 @@ TextureImporter:
       name: newLowBunker1_44
       rect:
         serializedVersion: 2
-        x: 32
-        y: 416
+        x: 128
+        y: 464
         width: 16
         height: 16
       alignment: 0
@@ -767,8 +657,8 @@ TextureImporter:
       name: newLowBunker1_45
       rect:
         serializedVersion: 2
-        x: 48
-        y: 416
+        x: 144
+        y: 464
         width: 16
         height: 16
       alignment: 0
@@ -789,8 +679,8 @@ TextureImporter:
       name: newLowBunker1_46
       rect:
         serializedVersion: 2
-        x: 96
-        y: 416
+        x: 160
+        y: 464
         width: 16
         height: 16
       alignment: 0
@@ -808,37 +698,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: newLowBunker1_47
-      rect:
-        serializedVersion: 2
-        x: 48
-        y: 400
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 364ac3b63b506ef4daf1a3a1715f5985
-      internalID: -800776734
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: newLowBunker1_48
       rect:
         serializedVersion: 2
-        x: 64
-        y: 400
-        width: 16
+        x: 190
+        y: 462
+        width: 20
         height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      alignment: 9
+      pivot: {x: 0.5, y: 0.625}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -852,33 +720,11 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: newLowBunker1_49
-      rect:
-        serializedVersion: 2
-        x: 80
-        y: 400
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 7875ede42d53aa54da42f171a7514083
-      internalID: 241779330
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: newLowBunker1_50
       rect:
         serializedVersion: 2
-        x: 96
-        y: 400
+        x: 224
+        y: 464
         width: 16
         height: 16
       alignment: 0
@@ -987,8 +833,8 @@ TextureImporter:
       name: newLowBunker1_16
       rect:
         serializedVersion: 2
-        x: 112
-        y: 480
+        x: 256
+        y: 496
         width: 16
         height: 16
       alignment: 0
@@ -1009,8 +855,8 @@ TextureImporter:
       name: newLowBunker1_17
       rect:
         serializedVersion: 2
-        x: 128
-        y: 480
+        x: 288
+        y: 496
         width: 16
         height: 16
       alignment: 0
@@ -1031,8 +877,8 @@ TextureImporter:
       name: newLowBunker1_18
       rect:
         serializedVersion: 2
-        x: 144
-        y: 480
+        x: 320
+        y: 496
         width: 16
         height: 16
       alignment: 0
@@ -1053,8 +899,8 @@ TextureImporter:
       name: newLowBunker1_19
       rect:
         serializedVersion: 2
-        x: 160
-        y: 480
+        x: 336
+        y: 496
         width: 16
         height: 16
       alignment: 0
@@ -1075,8 +921,8 @@ TextureImporter:
       name: newLowBunker1_23
       rect:
         serializedVersion: 2
-        x: 112
-        y: 464
+        x: 32
+        y: 480
         width: 16
         height: 16
       alignment: 0
@@ -1097,8 +943,8 @@ TextureImporter:
       name: newLowBunker1_24
       rect:
         serializedVersion: 2
-        x: 128
-        y: 464
+        x: 48
+        y: 480
         width: 16
         height: 16
       alignment: 0
@@ -1119,8 +965,8 @@ TextureImporter:
       name: newLowBunker1_25
       rect:
         serializedVersion: 2
-        x: 144
-        y: 464
+        x: 96
+        y: 480
         width: 16
         height: 16
       alignment: 0
@@ -1141,8 +987,8 @@ TextureImporter:
       name: newLowBunker1_26
       rect:
         serializedVersion: 2
-        x: 160
-        y: 464
+        x: 112
+        y: 480
         width: 16
         height: 16
       alignment: 0
@@ -1163,8 +1009,8 @@ TextureImporter:
       name: newLowBunker1_34
       rect:
         serializedVersion: 2
-        x: 112
-        y: 448
+        x: 240
+        y: 480
         width: 16
         height: 16
       alignment: 0
@@ -1185,8 +1031,8 @@ TextureImporter:
       name: newLowBunker1_35
       rect:
         serializedVersion: 2
-        x: 128
-        y: 448
+        x: 256
+        y: 480
         width: 16
         height: 16
       alignment: 0
@@ -1207,8 +1053,8 @@ TextureImporter:
       name: newLowBunker1_36
       rect:
         serializedVersion: 2
-        x: 144
-        y: 448
+        x: 288
+        y: 480
         width: 16
         height: 16
       alignment: 0
@@ -1229,8 +1075,8 @@ TextureImporter:
       name: newLowBunker1_37
       rect:
         serializedVersion: 2
-        x: 160
-        y: 448
+        x: 320
+        y: 480
         width: 16
         height: 16
       alignment: 0
@@ -1243,6 +1089,732 @@ TextureImporter:
       bones: []
       spriteID: 48fa02b9a2af10947ad226fac9fde846
       internalID: -432556592
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_51
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 464
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 71ace8ea1bdb597469946135c30bd117
+      internalID: -414010168
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_52
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 464
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: efb3761b50bac4a4eba2f9b5528e9461
+      internalID: -1853378624
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_53
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 464
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 610c87227d5b71346933ace68a7b9514
+      internalID: 1276060911
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_54
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 464
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 422c4a6f7b5231141a958c6d1b6ca7ff
+      internalID: 1971882079
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_55
+      rect:
+        serializedVersion: 2
+        x: 336
+        y: 464
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 88b196d909b59004ebb94c1ef16a5528
+      internalID: 327252593
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_56
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 464
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 40bb61a14c66d1640885250c2350d43f
+      internalID: 2001195714
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_57
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 448
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ca16395bf83af584aaebb6b83f11da9d
+      internalID: 1604026346
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_58
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 448
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b11a9c202830efd4a9c02b9e99b16cc6
+      internalID: 1660853854
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_59
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 448
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 67196bb80f302f046baf5d278fb7abed
+      internalID: 414574840
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_60
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 448
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 66166722ae855af43834e641c77ce0fb
+      internalID: -1264754953
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_61
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 448
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7ea4d91a33ae45741b32fc14cd05073e
+      internalID: 1208516953
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_62
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 448
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 352119bb4f46a6249adae86d843b61be
+      internalID: -1339106370
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_63
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 448
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4dbfa0319c39a034bad3a7ed4e8fd5e0
+      internalID: 175952510
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_64
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 448
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 83fa80168fd78f14dbe68251a7aedd98
+      internalID: 1976471939
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_65
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 448
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9f7c5f2b44634444693de5a952aa9e48
+      internalID: 1015515418
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_66
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 448
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2a738c1ad60c7da4eaafca351e50880d
+      internalID: -892648224
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_67
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 448
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8744b9e97b13e4e43b6aef58a3ea33e0
+      internalID: 1671714986
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_69
+      rect:
+        serializedVersion: 2
+        x: 190
+        y: 446
+        width: 20
+        height: 16
+      alignment: 9
+      pivot: {x: 0.5, y: 0.625}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 51bea08bf5695594781034c9cd33302b
+      internalID: 1612580193
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_71
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 448
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7e37534d438349648a5e5ad90ed269f9
+      internalID: 72591503
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_72
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 432
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 74a6071dfe5e2d2419520237b6012ed0
+      internalID: -846683750
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_73
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 432
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 98c0c99b608c3d94b8b7c7fca7d07e13
+      internalID: -679895210
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_74
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 432
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: baf3bd302548f7049966b533cda1e673
+      internalID: 341298332
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_75
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 432
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c6ae8e29c6afa614cbfa384a8bb2f438
+      internalID: -494842684
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_79
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 432
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c749bc5e68ce2e24087b1d065dcbf4f6
+      internalID: 1403688463
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_80
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 416
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 28a2e26148e6a504499bf8979d3d2386
+      internalID: 1846618675
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_81
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 416
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: abe65b9cea8b52c49b2a5d5500042b0e
+      internalID: 1131002897
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_82
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 416
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ba84036f9fadfb74fa7b42ca15596a5e
+      internalID: -293089940
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_83
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 416
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bd0a1ac66cb837e42b885a4c3f2c43c3
+      internalID: -928547016
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_84
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 416
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7dbff787ca7c19341826cc1ac4a6e7ad
+      internalID: 1835302686
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_85
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 400
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 72f0cd3df97bb6942adfebfdfe28cf28
+      internalID: 1497216337
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_86
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 400
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b3481a3eebea45f449d92fa331e017c3
+      internalID: 332881814
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_87
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 400
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 10c4b846ec5f23d428c76a0d64209256
+      internalID: 2123960807
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newLowBunker1_88
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 400
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cbe9e59b6542b7148a2284c349643cae
+      internalID: 501244902
       vertices: []
       indices: 
       edges: []
@@ -1310,9 +1882,47 @@ TextureImporter:
       newLowBunker1_49: 241779330
       newLowBunker1_5: 153082717
       newLowBunker1_50: -1213785082
+      newLowBunker1_51: -414010168
+      newLowBunker1_52: -1853378624
+      newLowBunker1_53: 1276060911
+      newLowBunker1_54: 1971882079
+      newLowBunker1_55: 327252593
+      newLowBunker1_56: 2001195714
+      newLowBunker1_57: 1604026346
+      newLowBunker1_58: 1660853854
+      newLowBunker1_59: 414574840
       newLowBunker1_6: 1260469579
+      newLowBunker1_60: -1264754953
+      newLowBunker1_61: 1208516953
+      newLowBunker1_62: -1339106370
+      newLowBunker1_63: 175952510
+      newLowBunker1_64: 1976471939
+      newLowBunker1_65: 1015515418
+      newLowBunker1_66: -892648224
+      newLowBunker1_67: 1671714986
+      newLowBunker1_68: 1700062098
+      newLowBunker1_69: 1612580193
       newLowBunker1_7: 1086151182
+      newLowBunker1_70: -693383138
+      newLowBunker1_71: 72591503
+      newLowBunker1_72: -846683750
+      newLowBunker1_73: -679895210
+      newLowBunker1_74: 341298332
+      newLowBunker1_75: -494842684
+      newLowBunker1_76: 230464601
+      newLowBunker1_77: 1290501464
+      newLowBunker1_78: 2048143349
+      newLowBunker1_79: 1403688463
       newLowBunker1_8: 964945821
+      newLowBunker1_80: 1846618675
+      newLowBunker1_81: 1131002897
+      newLowBunker1_82: -293089940
+      newLowBunker1_83: -928547016
+      newLowBunker1_84: 1835302686
+      newLowBunker1_85: 1497216337
+      newLowBunker1_86: 332881814
+      newLowBunker1_87: 2123960807
+      newLowBunker1_88: 501244902
       newLowBunker1_9: 1045275760
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0

@@ -129,7 +129,7 @@ ScriptedImporter:
   animatedSpriteImportData:
   - name: newLowBunker1
     originalName: 
-    pivot: {x: 1.4545455, y: -3.923077}
+    pivot: {x: 0.6956522, y: -3.923077}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -137,7 +137,7 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 176
+      width: 368
       height: 104
     spriteID: dd78c2250a504d944b9edeb522a14e19
     spriteBone: []
@@ -169,7 +169,7 @@ ScriptedImporter:
       cellRect:
         x: 0
         y: 408
-        width: 176
+        width: 368
         height: 104
       spriteId: dd78c2250a504d944b9edeb522a14e19
     linkedCells: []
@@ -182,4 +182,4 @@ ScriptedImporter:
   secondarySpriteTextures: []
   spritePackingTag: 
   canvasSize: {x: 512, y: 512}
-  previousTextureSize: {x: 256, y: 128}
+  previousTextureSize: {x: 512, y: 128}
