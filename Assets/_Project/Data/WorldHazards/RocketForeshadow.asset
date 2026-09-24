@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6898de3ff6c342ceb722b5cf4bd2137a, type: 3}
+  m_Name: RocketForeshadow
+  m_EditorClassIdentifier: Assembly-CSharp::RocketHazardDefinition
+  rocketPrefab: {fileID: 6415994172789663665, guid: 703da712b72d21341ae48974468d51ca, type: 3}
+  targetPrefab: {fileID: 3431147270733573790, guid: c941bc18f7e086648bae2a23e2a87208, type: 3}
+  explosionPrefab: {fileID: 1774385019753254698, guid: f91913de896646447a357936450e42c5, type: 3}
+  warningDelay: 1.75
+  fallDuration: 0.5
+  spawnHeight: 14
+  radius: 1.5
+  damage: 10

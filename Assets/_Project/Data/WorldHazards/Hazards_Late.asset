@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56449dc639e2493dbf85fd07fe5bd8b4, type: 3}
+  m_Name: Hazards_Late
+  m_EditorClassIdentifier: Assembly-CSharp::WorldHazardPreset
+  attacks:
+  - {fileID: 11400000, guid: 68e9a19d0afb453ca67a96d1a51a8ee5, type: 2}
+  initialDelay: 20
+  interval: {x: 20, y: 30}
+  targetDistance: {x: 3.5, y: 5}
+  playerClearance: 1
+  edgeClearance: 0.75

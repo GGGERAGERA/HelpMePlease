@@ -18,6 +18,9 @@ public sealed class StageProfileData : ScriptableObject
     [Tooltip("Boss spawned when the final sector zone is reached.")]
     private GameObject bossPrefab;
 
+    [SerializeField] private WorldHazardPreset worldHazards;
+    public WorldHazardPreset WorldHazards => worldHazards;
+
     [Header("Sector Pacing")]
     [SerializeField, Min(0f)] private float exitActivationTime = 90f;
     [Tooltip("Unlock only if the first automatic Assault has never started (technical fallback).")]

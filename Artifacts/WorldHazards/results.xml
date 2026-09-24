@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="5" result="Passed" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-24 20:31:04Z" end-time="2026-09-24 20:31:07Z" duration="3,0634122">
+  <test-suite type="TestSuite" id="1000" name="Subject#42" fullname="Subject#42" runstate="Runnable" testcasecount="44" result="Passed" start-time="2026-09-24 20:31:04Z" end-time="2026-09-24 20:31:07Z" duration="3.063412" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1068" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="44" result="Passed" start-time="2026-09-24 20:31:05Z" end-time="2026-09-24 20:31:07Z" duration="2.827796" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="9336" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="1061" name="WorldHazardPlayTests" fullname="WorldHazardPlayTests" classname="WorldHazardPlayTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-24 20:31:05Z" end-time="2026-09-24 20:31:07Z" duration="2.776586" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1064" name="BossKeepsDualHandBurstsMovementRecoveryAndDisableCleanup" fullname="WorldHazardPlayTests.BossKeepsDualHandBurstsMovementRecoveryAndDisableCleanup" methodname="BossKeepsDualHandBurstsMovementRecoveryAndDisableCleanup" classname="WorldHazardPlayTests" runstate="Runnable" seed="1063776497" result="Passed" start-time="2026-09-24 20:30:05Z" end-time="2026-09-24 20:30:27Z" duration="21.557512" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+          </properties>
+        </test-case>
+        <test-case id="1063" name="ProductionSectorSchedulesSequentialStrikesAndCancelsOnStopAndRestart" fullname="WorldHazardPlayTests.ProductionSectorSchedulesSequentialStrikesAndCancelsOnStopAndRestart" methodname="ProductionSectorSchedulesSequentialStrikesAndCancelsOnStopAndRestart" classname="WorldHazardPlayTests" runstate="Runnable" seed="356535333" result="Passed" start-time="2026-09-24 20:30:27Z" end-time="2026-09-24 20:30:55Z" duration="27.954932" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+          </properties>
+          <output><![CDATA[[BunkerInteractableCollider] Interaction source=p_AnomalyTable1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_AnomalyTable1 renderers=32
+[BunkerInteractableCollider] Interaction source=p_Shelf1 (1), interactable=False, hoverable=True
+[BunkerHoverOutline] p_Shelf1 (1) renderers=30
+[BunkerInteractableCollider] Interaction source=p_bunkerUpgrade1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerUpgrade1 renderers=20
+[BunkerInteractableCollider] Interaction source=p_bunkerWeaponTable3, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerWeaponTable3 renderers=11
+[BunkerInteractableCollider] Interaction source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerPlayerShowcase 1 renderers=16
+[BunkerInteractableCollider] Interaction source=SlotMachine, interactable=True, hoverable=True
+[BunkerHoverOutline] SlotMachine renderers=55
+[BunkerInteractableCollider] SlotMachine source=SlotMachine, interactable=True, hoverable=True
+[BunkerInteractableCollider] Interaction source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerWeaponShowcase renderers=9
+[BunkerInteractableCollider] Interaction source=p_Shelf1, interactable=False, hoverable=True
+[BunkerHoverOutline] p_Shelf1 renderers=30
+[BunkerHoverOutline] Escape Terminal renderers=2
+[BunkerInteractableCollider] Interaction source=Escape Terminal, interactable=True, hoverable=True
+[BunkerInteractableCollider] Interaction source=p_BunkerGates1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_BunkerGates1 renderers=45
+[RunSelectionManager] Character selected: 01_Gera
+[RunSelectionManager] Character selected: 01_Gera
+[RunState] New run: character=01_Gera, weapon=NULL, stabilizer=NULL
+[VisualLab LOAD]
+ProjectileVisualScale=1
+TrailWidth=1
+TrailTime=1
+CameraZoom=8,087
+source=Assets/_Project/Data/World/Presentation/VisualTuningSavedValues.asset
+[TacticalMap] breakableMarkers=0
+[CharacterSpawner] Weapons found: 0
+[MetaUpgradeApplier] Loaded meta: HP=0, DMG=0, SPD=0, XP=0, GOLD=0, PICKUP=0
+[RunState] Applied to spawned player. Upgrades: 0, hasHealth: False
+[EnemySpawner] Phase 1: interval 1,50, max alive 10.
+[EnemySpawner] Level scaling: HP x1,00, speed x1,00, pressure x1,00.
+SECTOR LAYOUT
+Coverage: 96,0%
+Player: (0.00, 0.00, 0.00)
+Normal 1: center (-36.21, 29.21), size (27.58, 41.57)
+Normal 2: center (29.41, 33.14), size (41.18, 33.73)
+Normal 3: center (-6.80, 29.21), size (31.24, 41.57)
+Special ArcNode: center (20.59, -29.21), size (58.82, 41.57), distance 35,7/70,7
+Line-to-Special in Normal: 0%
+Exit: (35.54, -4.31), inside NORMAL
+Attempts: 1
+[ExplorationSector] Special Site: ELECTRIC (ProductionElectricSiteHazard).
+[Breakables] requested=6 spawned=6 visible=6 rejected=1 fallback=0 bounds=100x100
+[GoldenCoin] Awake: object='p_Case3 Visual', renderers=2, lights=2, active=True.
+[WorldLootChest] Production chest spawned in sector 1 at (17.63, -29.06).
+[PropScatter] seed=-540632, count=238/238. Safety takes priority over requested counts.
+[ExplorationSector] Sector ready: 6 Normal, 1 Special (ArcNode), 96% map coverage, 6 breakables, Exit at (35.54, -4.31).
+[SectorRuntime]
+Source=RunSector
+Sector=1
+StageProfile='StageProfile_01'
+WorldRule='WorldRule_None'
+LocalAnomaly='LocalAnomaly_Berserk'
+[TacticalMap] breakableMarkers=7
+[EnemySpawner] Spawning stopped.
+[EnemySpawner] Spawning stopped.
+[EnemySpawner] Spawning stopped.
+[EnemySpawner] Spawning stopped.
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+]]></output>
+        </test-case>
+        <test-case id="1062" name="SharedFlightWarnsDamagesOnceAndReusesAllThreeAssets" fullname="WorldHazardPlayTests.SharedFlightWarnsDamagesOnceAndReusesAllThreeAssets" methodname="SharedFlightWarnsDamagesOnceAndReusesAllThreeAssets" classname="WorldHazardPlayTests" runstate="Runnable" seed="513937262" result="Passed" start-time="2026-09-24 20:30:55Z" end-time="2026-09-24 20:31:07Z" duration="12.263853" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="1065" name="WorldHazardTests" fullname="WorldHazardTests" classname="WorldHazardTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-24 20:31:07Z" end-time="2026-09-24 20:31:07Z" duration="0.043711" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1067" name="RoutePresetsEscalateAndReuseBossAssets" fullname="WorldHazardTests.RoutePresetsEscalateAndReuseBossAssets" methodname="RoutePresetsEscalateAndReuseBossAssets" classname="WorldHazardTests" runstate="Runnable" seed="443520426" result="Passed" start-time="2026-09-24 20:31:07Z" end-time="2026-09-24 20:31:07Z" duration="0.040359" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1066" name="SharedRocketImplementationExists" fullname="WorldHazardTests.SharedRocketImplementationExists" methodname="SharedRocketImplementationExists" classname="WorldHazardTests" runstate="Runnable" seed="491377936" result="Passed" start-time="2026-09-24 20:31:07Z" end-time="2026-09-24 20:31:07Z" duration="0.000361" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Saving results to: Artifacts/StartScreen/results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

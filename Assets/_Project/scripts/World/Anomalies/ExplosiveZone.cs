@@ -671,6 +671,12 @@ internal static class ExplosionWarningVisual
             position,
             Quaternion.identity
         );
+        Configure(warning, radius, duration);
+        return warning;
+    }
+
+    public static void Configure(GameObject warning, float radius, float duration)
+    {
         float diameter = Mathf.Max(0.1f, radius) * 2f;
         warning.transform.localScale = new Vector3(diameter, diameter, 1f);
 
@@ -697,6 +703,5 @@ internal static class ExplosionWarningVisual
         }
 
         PixelWeatherParticles.Attach(warning, PixelWeatherParticles.Kind.WarningRing);
-        return warning;
     }
 }

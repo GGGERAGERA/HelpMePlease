@@ -46,7 +46,7 @@ Other controller users without a relay may ignore the event.
 
 The existing nested `p_fxRocketMuzzleFire` systems play on both `LH1Muzzle` and
 `RH1Muzzle`. `p_fxRocket1` is reused for ascent and descent without adding physics
-or a projectile script to the asset. `BossRocketAttack` moves those runtime
+or a projectile script to the asset. Shared `RocketAttackRunner` moves those pooled runtime
 instances; no new falling-rocket prefab is needed. Its particle body is emitted
 once in local simulation space so it stays attached to the moving transform.
 

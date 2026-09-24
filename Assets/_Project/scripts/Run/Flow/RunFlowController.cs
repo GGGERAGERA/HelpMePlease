@@ -23,6 +23,7 @@ public sealed class RunFlowController : MonoBehaviour
     [Header("Final Boss Phase")]
     [SerializeField] private RunBossSpawner bossSpawner;
     [SerializeField] private CharacterSpawner characterSpawner;
+    [SerializeField] private WorldHazardDirector worldHazardDirector;
 
     private EnemySpawner enemySpawner;
     private EnemyHealth finalBoss;
@@ -58,6 +59,8 @@ public sealed class RunFlowController : MonoBehaviour
         SectorElapsedTime = 0f;
         IsExitUnlocked = false;
         TutorialController.Prepare(this);
+        worldHazardDirector?.Initialize(profile != null ? profile.WorldHazards : null,
+            this, characterSpawner, GameplayAreaService.Instance);
     }
 
     private void Update()
@@ -87,6 +90,7 @@ public sealed class RunFlowController : MonoBehaviour
 
     public void StopRunGameplay()
     {
+        worldHazardDirector?.Cancel();
         AudioService.Instance?.StopAllManagedLoops();
         StopAllCoroutines();
         if (Phase != RunPhase.Victory) Phase = RunPhase.Stopped;

@@ -36,7 +36,7 @@ public sealed class BossRocketAttack : MonoBehaviour
     [SerializeField] private ParticleSystem explosionPrefab;
 
     public AttackState State { get; private set; }
-    public int PendingRocketCount => shots.Count;
+    public int PendingRocketCount => rocketRunner?.PendingCount ?? 0;
     private EnemyChaseMovement chase;
     private EnemyHealth health;
     private PlayerHealth player;
@@ -50,21 +50,7 @@ public sealed class BossRocketAttack : MonoBehaviour
     private Transform cachedTarget;
     private int handsLayer;
     private ParticleSystem[] muzzles;
-    private readonly List<Shot> shots = new();
-    private readonly List<GameObject> impactEffects = new();
-
-    private sealed class Shot
-    {
-        public float age;
-        public float delay;
-        public float duration;
-        public Vector3 target;
-        public GameObject marker;
-        public GameObject launch;
-        public GameObject falling;
-        public Vector3 launchStart;
-        public Vector3 fallStart;
-    }
+    private RocketAttackRunner rocketRunner;
 
     private void Awake()
     {
@@ -76,6 +62,7 @@ public sealed class BossRocketAttack : MonoBehaviour
         if (rightMuzzle != null) particles.AddRange(rightMuzzle.GetComponentsInChildren<ParticleSystem>(true));
         muzzles = particles.ToArray();
         StopMuzzles();
+        rocketRunner = new RocketAttackRunner(this, rocketPrefab, targetPrefab, explosionPrefab);
     }
 
     private void OnEnable()
@@ -116,10 +103,9 @@ public sealed class BossRocketAttack : MonoBehaviour
         }
         if (Time.timeScale == 0f || EnemyDebugAiFreeze.IsFrozen) return;
         if (IsBurstActive && !chase.IsAttackPaused) { CancelAttack(); return; }
-        impactEffects.RemoveAll(fx => fx == null);
         // Already-launched rockets advance independently of the animation/burst state.
-        TickRockets();
-        if (!CombatAllowed()) return;
+        rocketRunner.Tick(Time.deltaTime, RocketSpawnHeight, ExplosionRadius, ExplosionDamage, CombatAllowed);
+        if (!CombatAllowed()) { CancelAttack(); return; }
         timer -= Time.deltaTime;
         switch (State)
         {
@@ -230,82 +216,9 @@ public sealed class BossRocketAttack : MonoBehaviour
             Vector3 origin = muzzle.position;
             float minDelay = Mathf.Max(.01f, Mathf.Min(RocketFallDelayMin, RocketFallDelayMax));
             float maxDelay = Mathf.Max(minDelay, Mathf.Max(RocketFallDelayMin, RocketFallDelayMax));
-            var shot = new Shot { target = point, launchStart = origin,
-                delay = Random.Range(minDelay, maxDelay), duration = Mathf.Max(.05f, RocketFallDuration) };
-            shot.marker = ExplosionWarningVisual.Spawn(targetPrefab, point, ExplosionRadius,
-                shot.delay + shot.duration);
-            foreach (var ps in shot.marker.GetComponentsInChildren<ParticleSystem>(true))
-            {
-                ps.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
-                var main = ps.main;
-                main.startLifetime = main.duration + 0.1f;
-                main.startSpeed = 0f;
-                ps.Play(false);
-            }
-            shot.launch = SpawnRocket(origin, false);
-            shots.Add(shot);
+            rocketRunner.Launch(point, origin, Random.Range(minDelay, maxDelay),
+                Mathf.Max(.05f, RocketFallDuration), ExplosionRadius);
         }
-    }
-
-    private GameObject SpawnRocket(Vector3 position, bool falling)
-    {
-        var rocket = Instantiate(rocketPrefab, position, Quaternion.identity);
-        var ps = rocket.GetComponent<ParticleSystem>();
-        // The prefab is a particle sprite with world simulation. Attach its body to
-        // our scripted transform, emit exactly one body, and keep the authored smoke.
-        ps.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
-        var main = ps.main;
-        main.simulationSpace = ParticleSystemSimulationSpace.Local;
-        main.startSpeed = 0f;
-        main.startLifetime = 30f;
-        main.startRotation = falling ? -Mathf.PI * 0.5f : Mathf.PI * 0.5f;
-        var emission = ps.emission;
-        emission.enabled = false;
-        ps.Play(false);
-        ps.Emit(1);
-        return rocket;
-    }
-
-    private void TickRockets()
-    {
-        for (int i = shots.Count - 1; i >= 0; i--)
-        {
-            Shot shot = shots[i];
-            shot.age += Time.deltaTime;
-            float launchDuration = Mathf.Min(.35f, shot.delay);
-            if (shot.launch != null)
-            {
-                shot.launch.transform.position = shot.launchStart + Vector3.up *
-                    Mathf.Max(1f, RocketSpawnHeight) * Mathf.Clamp01(shot.age / launchDuration);
-                if (shot.age >= launchDuration) Destroy(shot.launch);
-            }
-            if (shot.age < shot.delay) continue;
-            if (shot.falling == null)
-            {
-                float spawnY = shot.target.y + Mathf.Max(1f, RocketSpawnHeight);
-                var camera = Camera.main;
-                if (camera != null && camera.orthographic)
-                    spawnY = Mathf.Max(spawnY, camera.transform.position.y + camera.orthographicSize + 2f);
-                shot.fallStart = new Vector3(shot.target.x, spawnY, shot.target.z);
-                shot.falling = SpawnRocket(shot.fallStart, true);
-            }
-            float progress = Mathf.Clamp01((shot.age - shot.delay) / shot.duration);
-            shot.falling.transform.position = Vector3.Lerp(shot.fallStart, shot.target, progress);
-            if (progress < 1f) continue;
-            shots.RemoveAt(i); // Remove before damage callbacks can cancel the ability.
-            DestroyShot(shot);
-            if (!CombatAllowed()) { CancelAttack(); return; }
-            var fx = EnemyExplosion.Detonate(shot.target, ExplosionRadius, ExplosionDamage, explosionPrefab);
-            if (fx != null) impactEffects.Add(fx.gameObject);
-            if (!CombatAllowed()) { CancelAttack(); return; }
-        }
-    }
-
-    private static void DestroyShot(Shot shot)
-    {
-        if (shot.marker != null) Destroy(shot.marker);
-        if (shot.launch != null) Destroy(shot.launch);
-        if (shot.falling != null) Destroy(shot.falling);
     }
 
     private void RestoreMovement()
@@ -322,10 +235,7 @@ public sealed class BossRocketAttack : MonoBehaviour
 
     public void CancelAttack()
     {
-        foreach (var shot in shots) DestroyShot(shot);
-        shots.Clear();
-        foreach (var fx in impactEffects) if (fx != null) Destroy(fx);
-        impactEffects.Clear();
+        rocketRunner?.Cancel();
         if (State != AttackState.Chasing && animator != null)
         {
             animator.ResetTrigger("PAttack");
@@ -339,6 +249,8 @@ public sealed class BossRocketAttack : MonoBehaviour
         State = AttackState.Chasing;
         timer = Mathf.Max(0.1f, AttackCooldown);
     }
+
+    private void OnDestroy() => rocketRunner?.Dispose();
 
     private void OnBossDied(EnemyHealth _) => CancelAttack();
     private void OnDisable()

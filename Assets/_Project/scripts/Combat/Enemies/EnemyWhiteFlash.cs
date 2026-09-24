@@ -53,6 +53,18 @@ public class EnemyWhiteFlash : MonoBehaviour
         flashWait = new WaitForSeconds(flashDuration);
     }
 
+    private void OnDisable()
+    {
+        if (flashCoroutine == null)
+            return;
+
+        // A pooled despawn can interrupt the coroutine before material restoration.
+        StopCoroutine(flashCoroutine);
+        flashCoroutine = null;
+        if (targetRenderer != null)
+            targetRenderer.sharedMaterial = originalMaterial;
+    }
+
     public void Flash()
     {
         if (targetRenderer == null)
