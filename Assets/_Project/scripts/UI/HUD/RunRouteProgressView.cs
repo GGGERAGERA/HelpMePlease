@@ -1,248 +1,59 @@
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>Projects route state into authored gameplay and selection prefabs.</summary>
 public sealed class RunRouteProgressView : MonoBehaviour
 {
-    [SerializeField] private TMP_FontAsset font;
-    [SerializeField] private Sprite pointSprite;
-    [SerializeField] private bool showPoints = true;
-
-    private readonly List<Image> points = new();
     [SerializeField] private TextMeshProUGUI sectorText;
     [SerializeField] private TextMeshProUGUI objectiveText;
-    [SerializeField] private TextMeshProUGUI optionalText;
     [SerializeField] private CanvasGroup canvasGroup;
-    private RectTransform pointsRoot;
-    private TextMeshProUGUI finalLabel;
-    private bool built;
+    [SerializeField] private GameObject specialIcon;
+    [SerializeField] private Image[] points;
+    [SerializeField] private Color currentColor;
+    [SerializeField] private Color completedColor;
+    [SerializeField] private Color futureColor;
+    private int displayedSector, displayedTotal;
+    private string displayedObjectiveKey;
+    private bool displayedSpecial;
     private void OnEnable() => LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
     private void OnDisable()
     {
         if (LocalizationService.Instance != null) LocalizationService.Instance.LanguageChanged -= RefreshLanguage;
     }
-    private void RefreshLanguage(GameLanguage language)
+    private void RefreshLanguage(GameLanguage _) => Refresh();
+    public void ShowCurrent(int sector, int total) => Show(sector, total);
+    public void ShowNext(int sector, int total) => Show(sector, total);
+    public void Hide() => canvasGroup.alpha = 0f;
+    private void Show(int sector, int total)
     {
-        if (objectiveText == null && displayedTotal > 0) Show(displayedSector, displayedTotal);
-        else if (displayedObjectiveKey != null) ShowObjective(displayedSector, displayedTotal, displayedObjectiveKey, displayedSpecial);
+        displayedSector = Mathf.Clamp(sector, 1, Mathf.Max(1, total));
+        displayedTotal = Mathf.Max(1, total);
+        canvasGroup.alpha = 1f;
+        Refresh();
     }
-    private int displayedSector, displayedTotal;
-    private string displayedObjectiveKey;
-    private bool displayedSpecial;
-    private GameLanguage displayedLanguage;
-
-    private static readonly Color Cyan =
-        new(0.12f, 0.78f, 0.9f, 1f);
-    private static readonly Color Completed =
-        new(0.12f, 0.78f, 0.9f, 0.48f);
-    private static readonly Color Future =
-        new(0.12f, 0.3f, 0.36f, 0.34f);
-
-    private void Awake()
-    {
-        if (objectiveText == null) ConfigureRootLayout();
-    }
-
-    public void ShowCurrent(int currentSector, int totalSectors)
-    {
-        Show(currentSector, totalSectors);
-    }
-
-    public void ShowNext(int nextSector, int totalSectors)
-    {
-        Show(nextSector, totalSectors);
-    }
-
-    public void Hide()
-    {
-        if (canvasGroup != null) canvasGroup.alpha = 0f;
-        else gameObject.SetActive(false);
-    }
-
     public void ShowObjective(int sector, int total, string objectiveKey, bool specialAvailable)
     {
         canvasGroup.alpha = objectiveKey == null ? 0f : 1f;
-        if (objectiveKey == null) return;
-        var localization = LocalizationService.Instance;
-        if (displayedSector == sector && displayedTotal == total && displayedObjectiveKey == objectiveKey &&
-            displayedSpecial == specialAvailable && displayedLanguage == localization.CurrentLanguage) return;
+        if (displayedSector == sector && displayedTotal == total &&
+            displayedObjectiveKey == objectiveKey && displayedSpecial == specialAvailable) return;
         displayedSector = sector;
         displayedTotal = total;
         displayedObjectiveKey = objectiveKey;
         displayedSpecial = specialAvailable;
-        displayedLanguage = localization.CurrentLanguage;
-        string heading = string.Format(localization.Get("hud.sector"), sector, total);
-        string objective = localization.Get(objectiveKey);
-        string optional = specialAvailable ? localization.Get("hud.specialOpportunity") : string.Empty;
-        sectorText.text = heading;
-        objectiveText.text = objective;
-        optionalText.text = optional;
-        optionalText.gameObject.SetActive(specialAvailable);
-        // Only content-dependent sizing belongs at runtime; all visual elements are authored.
-        float width = Mathf.Max(sectorText.preferredWidth, objectiveText.preferredWidth,
-            specialAvailable ? optionalText.preferredWidth : 0f) + 36f;
-        ((RectTransform)transform).sizeDelta = new Vector2(Mathf.Clamp(width, 220f, 480f), specialAvailable ? 122f : 72f);
+        Refresh();
     }
-
-    private void Show(int sectorNumber, int totalSectors)
+    private void Refresh()
     {
-        if (objectiveText != null) return; // Gameplay is projected by HUDManager; selection uses route points.
-        int safeTotal = Mathf.Max(1, totalSectors);
-        int safeSector = Mathf.Clamp(sectorNumber, 1, safeTotal);
-
-        displayedSector = safeSector;
-        displayedTotal = safeTotal;
-        ConfigureRootLayout();
-        Build();
-
-        gameObject.SetActive(true);
-        sectorText.text = string.Format(LocalizationService.EnsureExists().Get("hud.sector"), safeSector, safeTotal);
-
-        if (!showPoints)
-            return;
-
-        EnsurePoints(safeTotal);
-
-        for (int i = 0; i < points.Count; i++)
+        if (sectorText != null) sectorText.SetText("{0}/{1}", displayedSector, displayedTotal);
+        if (objectiveText != null) objectiveText.text = displayedObjectiveKey == null
+            ? string.Empty : LocalizationService.Instance.Get(displayedObjectiveKey);
+        if (specialIcon != null) specialIcon.SetActive(displayedSpecial);
+        for (int i = 0; i < points.Length; i++)
         {
-            Image point = points[i];
-            bool visible = i < safeTotal;
-            point.gameObject.SetActive(visible);
-
-            if (!visible)
-                continue;
-
-            point.color = i < safeSector - 1
-                ? Completed
-                : i == safeSector - 1
-                    ? Cyan
-                    : Future;
-
-            RectTransform pointRect = (RectTransform)point.transform;
-            float size = i == safeTotal - 1 ? 20f : 16f;
-            pointRect.sizeDelta = new Vector2(size, size);
+            points[i].gameObject.SetActive(i < displayedTotal);
+            points[i].color = i < displayedSector - 1 ? completedColor :
+                i == displayedSector - 1 ? currentColor : futureColor;
         }
-
-        finalLabel.text = LocalizationService.EnsureExists().Get("hud.boss");
-        finalLabel.gameObject.SetActive(true);
-    }
-
-    private void Build()
-    {
-        if (built)
-            return;
-
-        built = true;
-        sectorText = CreateText("SectorText", transform);
-        RectTransform textRect = sectorText.rectTransform;
-        textRect.anchorMin = new Vector2(0f, showPoints ? 0.58f : 0f);
-        textRect.anchorMax = new Vector2(1f, 1f);
-        textRect.offsetMin = new Vector2(12f, 0f);
-        textRect.offsetMax = new Vector2(-12f, -2f);
-        sectorText.fontSize = showPoints ? 24f : 20f;
-        sectorText.fontStyle = FontStyles.Bold;
-
-        if (!showPoints)
-            return;
-
-        GameObject pointsObject = CreateUiObject("Points", transform);
-        pointsRoot = (RectTransform)pointsObject.transform;
-        pointsRoot.anchorMin = new Vector2(0.5f, 0.5f);
-        pointsRoot.anchorMax = new Vector2(0.5f, 0.5f);
-        pointsRoot.pivot = new Vector2(0.5f, 0.5f);
-        pointsRoot.anchoredPosition = new Vector2(0f, -12f);
-        pointsRoot.sizeDelta = new Vector2(560f, 24f);
-
-        HorizontalLayoutGroup layout = pointsObject.AddComponent<HorizontalLayoutGroup>();
-        layout.childAlignment = TextAnchor.MiddleCenter;
-        layout.spacing = 34f;
-        layout.childControlWidth = false;
-        layout.childControlHeight = false;
-        layout.childForceExpandWidth = false;
-        layout.childForceExpandHeight = false;
-
-    }
-
-    private void ConfigureRootLayout()
-    {
-        if (transform is not RectTransform root)
-            return;
-
-        root.anchorMin = new Vector2(0.5f, 1f);
-        root.anchorMax = new Vector2(0.5f, 1f);
-        root.pivot = new Vector2(0.5f, 1f);
-        root.anchoredPosition = new Vector2(0f, -18f);
-        root.sizeDelta = new Vector2(260f, 44f);
-        root.localScale = Vector3.one;
-    }
-
-    private void EnsurePoints(int totalSectors)
-    {
-        while (points.Count < totalSectors)
-        {
-            GameObject pointObject = CreateUiObject(
-                $"SectorPoint_{points.Count + 1:00}",
-                pointsRoot
-            );
-            RectTransform rect = (RectTransform)pointObject.transform;
-            rect.sizeDelta = new Vector2(16f, 16f);
-
-            Image image = pointObject.AddComponent<Image>();
-            image.sprite = pointSprite;
-            image.preserveAspect = true;
-            image.raycastTarget = false;
-            points.Add(image);
-        }
-
-        Image finalPoint = points[totalSectors - 1];
-        Outline outline = finalPoint.GetComponent<Outline>();
-
-        if (outline == null)
-            outline = finalPoint.gameObject.AddComponent<Outline>();
-
-        outline.effectColor = Cyan;
-        outline.effectDistance = new Vector2(1f, -1f);
-        outline.useGraphicAlpha = false;
-
-        if (finalLabel == null)
-        {
-            finalLabel = CreateText("FinalLabel", finalPoint.transform);
-            RectTransform finalRect = finalLabel.rectTransform;
-            finalRect.anchorMin = new Vector2(0.5f, 0.5f);
-            finalRect.anchorMax = new Vector2(0.5f, 0.5f);
-            finalRect.pivot = new Vector2(0.5f, 0.5f);
-            finalRect.anchoredPosition = new Vector2(0f, -27f);
-            finalRect.sizeDelta = new Vector2(92f, 22f);
-            finalLabel.fontSize = 15f;
-            finalLabel.fontStyle = FontStyles.Bold;
-            finalLabel.color = Cyan;
-        }
-        else if (finalLabel.transform.parent != finalPoint.transform)
-        {
-            finalLabel.transform.SetParent(finalPoint.transform, false);
-        }
-    }
-
-    private TextMeshProUGUI CreateText(string objectName, Transform parent)
-    {
-        GameObject textObject = CreateUiObject(objectName, parent);
-        TextMeshProUGUI text = textObject.AddComponent<TextMeshProUGUI>();
-        text.font = font;
-        text.color = Color.white;
-        text.alignment = TextAlignmentOptions.Center;
-        text.textWrappingMode = TextWrappingModes.NoWrap;
-        text.overflowMode = TextOverflowModes.Ellipsis;
-        text.raycastTarget = false;
-        return text;
-    }
-
-    private static GameObject CreateUiObject(
-        string objectName,
-        Transform parent)
-    {
-        GameObject result = new(objectName, typeof(RectTransform));
-        result.transform.SetParent(parent, false);
-        return result;
     }
 }

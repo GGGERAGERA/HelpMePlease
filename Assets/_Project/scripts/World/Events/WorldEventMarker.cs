@@ -35,7 +35,7 @@ public class WorldEventMarker : MonoBehaviour
         if (targetCamera == null)
             targetCamera = Camera.main;
 
-        PixelEventArrow.Apply(arrowTransform);
+
         Hide();
     }
 
@@ -95,13 +95,7 @@ public class WorldEventMarker : MonoBehaviour
                 arrowImage.raycastTarget = false;
                 Outline glow = arrowTransform.GetComponent<Outline>();
 
-                if (glow == null)
-                    glow = arrowTransform.gameObject.AddComponent<Outline>();
-
-                glow.enabled = false;
-                glow.effectColor = new Color(1f, 0.9f, 0.1f, 0.55f);
-                glow.effectDistance = new Vector2(2f, -2f);
-                glow.useGraphicAlpha = true;
+                if (glow != null) glow.enabled = false;
             }
         }
 

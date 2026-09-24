@@ -9,7 +9,7 @@ public sealed class WindRuleIndicator : MonoBehaviour
     [SerializeField, Min(0f)] private float appliedHoldDuration = 0.2f;
 
     private Vector3 baseArrowScale = Vector3.one;
-    private CanvasGroup canvasGroup;
+    [SerializeField] private CanvasGroup canvasGroup;
     private float visibility;
     private float appliedHoldRemaining;
     private bool warning;
@@ -19,12 +19,7 @@ public sealed class WindRuleIndicator : MonoBehaviour
         if (arrowTransform != null)
             baseArrowScale = arrowTransform.localScale;
 
-        canvasGroup = GetComponent<CanvasGroup>();
-
-        if (canvasGroup == null)
-            canvasGroup = gameObject.AddComponent<CanvasGroup>();
-
-        canvasGroup.alpha = 0f;
+        if (canvasGroup != null) canvasGroup.alpha = 0f;
     }
 
     private void Update()

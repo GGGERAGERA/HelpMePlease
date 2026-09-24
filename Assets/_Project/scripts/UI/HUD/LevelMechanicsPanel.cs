@@ -8,6 +8,11 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
     [SerializeField] private GameObject panelRoot;
     [SerializeField] private RectTransform panelRect;
     [SerializeField] private TextMeshProUGUI contentText;
+    [SerializeField] private HudIconNumber accelerationView;
+    [SerializeField] private HudIconNumber challengeView;
+    [SerializeField] private GameObject riskIcon;
+    [SerializeField] private float noticeDuration = 4f;
+    private float noticeUntil;
 
     [Header("Mechanics")]
     [SerializeField] private WorldAccelerationRule worldAccelerationRule;
@@ -35,6 +40,7 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
 
     private void Update()
     {
+        contentText.gameObject.SetActive(Time.unscaledTime < noticeUntil);
         if (!CaptureDisplayState())
             return;
 
@@ -56,11 +62,11 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
         if (contentText.text != content)
             contentText.text = content;
 
-        if (panelRect != null)
-        {
-            float height = Mathf.Clamp(contentText.preferredHeight + 24f, 48f, 400f);
-            panelRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
-        }
+        accelerationView.gameObject.SetActive(previousWorldSeconds >= 0);
+        accelerationView.SetValue(Mathf.Max(0,previousWorldSeconds));
+        challengeView.gameObject.SetActive(previousChallengeState >= 0);
+        challengeView.SetValue(Mathf.Max(0,previousChallengeSeconds));
+        riskIcon.SetActive(previousDoubleOrLeaveState >= 0);
     }
 
     private bool CaptureDisplayState()
@@ -91,6 +97,9 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
             previousChallengeSeconds != challengeSeconds ||
             previousDoubleOrLeaveState != doubleOrLeaveState;
 
+        if (!displayStateCaptured || previousChallengeState != challengeState ||
+            previousDoubleOrLeaveState != doubleOrLeaveState || (previousWorldSeconds < 0) != (worldSeconds < 0))
+            noticeUntil = Time.unscaledTime + noticeDuration;
         displayStateCaptured = true;
         previousWorldSeconds = worldSeconds;
         previousChallengeState = challengeState;

@@ -12,7 +12,7 @@ public sealed class GameplayTargetTracker : MonoBehaviour
     [SerializeField] private Camera worldCamera;
     [SerializeField] private GameObject panel;
     [SerializeField] private RectTransform arrow;
-    [SerializeField] private TextMeshProUGUI label;
+
     [SerializeField] private TextMeshProUGUI distanceText;
     [SerializeField] private GameObject[] typeIcons;
 
@@ -22,13 +22,13 @@ public sealed class GameplayTargetTracker : MonoBehaviour
     private float selectedDistanceSquared;
     private int displayedDistance = -1;
     private TargetKind? displayedKind;
-    private GameLanguage displayedLanguage;
+
 
     public void BindPlayer(Transform target) => player = target;
 
     private void Awake()
     {
-        PixelEventArrow.Apply(arrow);
+
         panel.SetActive(false);
     }
 
@@ -69,21 +69,11 @@ public sealed class GameplayTargetTracker : MonoBehaviour
             displayedDistance = distance;
             distanceText.SetText("{0}", distance);
         }
-        var language = LocalizationService.Instance.CurrentLanguage;
-        if (displayedKind == selectedKind && displayedLanguage == language) return;
+        if (displayedKind == selectedKind) return;
         displayedKind = selectedKind;
-        displayedLanguage = language;
         for (int i = 0; i < typeIcons.Length; i++)
             typeIcons[i].SetActive(i == (int)selectedKind);
-        string key = selectedKind switch
-        {
-            TargetKind.Exit => "hud.target.exit",
-            TargetKind.SpecialAnomaly => "hud.target.special",
-            TargetKind.Event => "hud.target.event",
-            TargetKind.Container => "hud.target.container",
-            _ => "hud.target.anomaly"
-        };
-        label.text = LocalizationService.Instance.Get(key);
+
     }
 
     private void Consider(Behaviour candidate, TargetKind kind)

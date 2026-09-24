@@ -115,16 +115,8 @@ public sealed class RunMessageService : MonoBehaviour
                 showHint = false;
             }
         }
-        bool showEnergy = visible && station != null && station.IsInitialized &&
-            (station.SlowField.IsActive || station.SlowField.Energy < 1f);
-        movementHint.SetActive(showHint || showEnergy);
-        if (!showHint && !showEnergy) return;
-        var localization = LocalizationService.Instance;
-        string text = showHint ? localization.Get(HintKeys[hintIndex]) : string.Empty;
-        if (showEnergy)
-            text += (showHint ? "\n" : string.Empty) + string.Format(localization.Get("hud.slowFieldEnergy"),
-                Mathf.RoundToInt(station.SlowField.Energy * 100f));
-        movementText.text = text;
+        movementHint.SetActive(showHint);
+        if (showHint) movementText.text = LocalizationService.Instance.Get(HintKeys[hintIndex]);
     }
 
     public void Show(RunMessageType type)

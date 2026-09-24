@@ -4,52 +4,33 @@ using UnityEngine.UI;
 
 public sealed class TacticalMapHUD : MonoBehaviour
 {
-    private sealed class MarkerVisual
-    {
-        public RectTransform Rect { get; }
-        public Image Fill { get; }
-        public Outline Border { get; }
-
-        public MarkerVisual(
-            RectTransform rect,
-            Image fill,
-            Outline border)
-        {
-            Rect = rect;
-            Fill = fill;
-            Border = border;
-        }
-    }
-
-    private const float MaxMapSize = 220f;
-    private const float LegendGap = 8f;
-    private const float LegendRowHeight = 20f;
+    [SerializeField] private float MaxMapSize = 220f;
     private const float AnomalyRefreshInterval = 0.5f;
     private const float MarkerRefreshInterval = 0.1f;
 
-    private static readonly Color Cyan =
+    [SerializeField] private Color Cyan =
         new(0.12f, 0.82f, 0.92f, 0.92f);
-    private static readonly Color EventFill =
+    [SerializeField] private Color EventFill =
         new(0.1f, 0.75f, 0.86f, 0.95f);
-    private static readonly Color BreakableFill =
+    [SerializeField] private Color BreakableFill =
         new(0.96f, 0.58f, 0.14f, 0.92f);
-    private static readonly Color BreakableBorder =
+    [SerializeField] private Color BreakableBorder =
         new(1f, 0.86f, 0.42f, 1f);
-    private static readonly Color NormalSiteFill =
+    [SerializeField] private Color NormalSiteFill =
         new(0.08f, 0.68f, 0.9f, 0.2f);
-    private static readonly Color NormalSiteBorder =
+    [SerializeField] private Color NormalSiteBorder =
         new(0.18f, 0.88f, 1f, 0.95f);
-    private static readonly Color SpecialSiteFill =
+    [SerializeField] private Color SpecialSiteFill =
         new(0.72f, 0.12f, 0.95f, 0.26f);
-    private static readonly Color SpecialSiteBorder =
+    [SerializeField] private Color SpecialSiteBorder =
         new(1f, 0.28f, 0.95f, 1f);
-    private static readonly Color ExitFill =
+    [SerializeField] private Color ExitFill =
         new(0.18f, 1f, 0.42f, 0.95f);
-    private static readonly Color ExitBorder =
+    [SerializeField] private Color ExitBorder =
         new(0.62f, 1f, 0.72f, 1f);
-    private static readonly Color BossFill =
+    [SerializeField] private Color BossFill =
         new(0.95f, 0.12f, 0.08f, 0.95f);
-    private static readonly Color BossBorder =
+    [SerializeField] private Color BossBorder =
         new(1f, 0.75f, 0.1f, 1f);
 
     [SerializeField] private bool visibleByDefault = true;
@@ -61,31 +42,21 @@ public sealed class TacticalMapHUD : MonoBehaviour
     [SerializeField] private RectTransform anomalyRoot;
     [SerializeField] private RectTransform eventRoot;
     [SerializeField] private RectTransform breakableRoot;
-    [SerializeField] private RectTransform legendRoot;
-    [SerializeField] private RectTransform playerLegendRow;
-    [SerializeField] private RectTransform normalSiteLegendRow;
-    [SerializeField] private RectTransform specialSiteLegendRow;
-    [SerializeField] private RectTransform exitLegendRow;
-    [SerializeField] private RectTransform eventLegendRow;
-    [SerializeField] private RectTransform breakableLegendRow;
-    [SerializeField] private RectTransform bossLegendRow;
-    private MarkerVisual playerMarker;
-    private MarkerVisual exitMarker;
-    private MarkerVisual bossMarker;
+    [SerializeField] private TacticalMapMarker playerMarker;
+    [SerializeField] private TacticalMapMarker exitMarker;
+    [SerializeField] private TacticalMapMarker bossMarker;
     [SerializeField] private GameplayAreaService gameplayArea;
     [SerializeField] private LevelAnomalyController anomalyController;
     [SerializeField] private WorldEventSpawner eventSpawner;
+    [Header("Authored territory layer")]
+    [SerializeField] private Image[] territoryAreas;
+    [SerializeField] private Color normalAreaColor = new(.16f,.48f,.62f,.22f);
+    [SerializeField] private Color specialAreaColor = new(.48f,.28f,.65f,.25f);
     private Transform player;
     private Bounds worldBounds;
     private bool hasBounds;
     private bool isVisible;
-    private bool hasVisibleEvents;
-    private bool hasVisibleBreakables;
-    private bool hasVisibleBoss;
-    private bool hasVisibleNormalSite;
-    private bool hasVisibleSpecialSite;
-    private bool hasVisibleExit;
-    private float currentMapHeight = MaxMapSize;
+
     private float nextAnomalyRefresh;
     private float nextMarkerRefresh;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -94,9 +65,8 @@ public sealed class TacticalMapHUD : MonoBehaviour
 
     private readonly List<LevelAnomalyController.LocalAnomalyZoneGeometry>
         anomalyZones = new();
-    private readonly List<MarkerVisual> anomalyMarkers = new();
-    private readonly List<MarkerVisual> eventMarkers = new();
-    private readonly List<MarkerVisual> breakableMarkers = new();
+    private readonly List<TacticalMapMarker> eventMarkers = new();
+    private readonly List<TacticalMapMarker> breakableMarkers = new();
     private readonly List<TacticalMapMarkerDescriptor> breakableDescriptors =
         new();
 
@@ -106,9 +76,7 @@ public sealed class TacticalMapHUD : MonoBehaviour
     {
         if (mapRoot == null || mapFrame == null || projectionRoot == null ||
             anomalyRoot == null || eventRoot == null || breakableRoot == null ||
-            legendRoot == null || playerLegendRow == null || normalSiteLegendRow == null ||
-            specialSiteLegendRow == null || exitLegendRow == null || eventLegendRow == null ||
-            breakableLegendRow == null || bossLegendRow == null || gameplayArea == null ||
+            playerMarker == null || exitMarker == null || bossMarker == null || gameplayArea == null ||
             anomalyController == null || eventSpawner == null)
         {
             Debug.LogError("[TacticalMapHUD] Authored shell or scene references are missing.", this);
@@ -116,7 +84,6 @@ public sealed class TacticalMapHUD : MonoBehaviour
             if (mapRoot != null) mapRoot.gameObject.SetActive(false);
             return;
         }
-        CreateRuntimeMarkers();
         ApplyMapLayout(MaxMapSize, MaxMapSize);
         SetVisible(visibleByDefault);
     }
@@ -185,30 +152,7 @@ public sealed class TacticalMapHUD : MonoBehaviour
         }
     }
 
-    // Marker instances remain dynamic and are reused for the lifetime of this HUD.
-    private void CreateRuntimeMarkers()
-    {
-        bossMarker = CreateMarker("Boss", projectionRoot);
-        bossMarker.Rect.sizeDelta = new Vector2(10f, 10f);
-        SetMarkerStyle(bossMarker, BossFill, BossBorder);
-        bossMarker.Rect.gameObject.SetActive(false);
-
-        exitMarker = CreateMarker("Sector Exit", projectionRoot);
-        exitMarker.Rect.sizeDelta = new Vector2(10f, 10f);
-        exitMarker.Rect.localRotation = Quaternion.Euler(0f, 0f, 45f);
-        SetMarkerStyle(exitMarker, ExitFill, ExitBorder);
-        exitMarker.Rect.gameObject.SetActive(false);
-
-        playerMarker = CreateMarker("Player", projectionRoot);
-        playerMarker.Rect.sizeDelta = new Vector2(8f, 8f);
-        SetMarkerStyle(
-            playerMarker,
-            new Color(0.94f, 0.98f, 1f, 1f),
-            Cyan
-        );
-        playerMarker.Rect.SetAsLastSibling();
-
-    }
+    private void HandleBreakableMarkersChanged() { nextMarkerRefresh = 0f; }
 
     private void ResolvePlayer()
     {
@@ -251,10 +195,7 @@ public sealed class TacticalMapHUD : MonoBehaviour
 
     private void ApplyMapLayout(float mapWidth, float mapHeight)
     {
-        currentMapHeight = mapHeight;
         mapFrame.sizeDelta = new Vector2(mapWidth, mapHeight);
-        legendRoot.anchoredPosition = new Vector2(0f, -mapHeight - LegendGap);
-        RefreshLegend();
     }
 
     private void UpdatePlayerMarker()
@@ -271,89 +212,35 @@ public sealed class TacticalMapHUD : MonoBehaviour
 
     private void RefreshAnomalies()
     {
-        hasVisibleNormalSite = false;
-        hasVisibleSpecialSite = false;
-
-        if (!hasBounds)
+        foreach (var area in territoryAreas) area.gameObject.SetActive(false);
+        if (!hasBounds) return;
+        int count = 0;
+        foreach (var site in ProductionAnomalySite.ActiveSites)
         {
-            SetMarkerCount(anomalyMarkers, 0);
-            return;
+            if (site == null || !site.IsMapVisible) continue;
+            ShowTerritory(count++, site.transform.position, site.SiteSize, site.IsSpecial);
         }
-
-        IReadOnlyList<ProductionAnomalySite> productionSites =
-            ProductionAnomalySite.ActiveSites;
-        int productionMarkerCount = 0;
-
-        for (int i = 0; i < productionSites.Count; i++)
-        {
-            ProductionAnomalySite site = productionSites[i];
-
-            if (site == null || !site.IsMapVisible)
-                continue;
-
-            EnsureMarkerCount(
-                anomalyMarkers,
-                productionMarkerCount + 1,
-                "Production Site",
-                anomalyRoot
-            );
-            MarkerVisual marker = anomalyMarkers[productionMarkerCount];
-            marker.Rect.anchoredPosition = WorldToMap(
-                site.transform.position
-            );
-            marker.Rect.sizeDelta = WorldSizeToMap(site.SiteSize);
-            marker.Rect.localRotation = Quaternion.identity;
-
-            if (site.IsSpecial)
-            {
-                SetMarkerStyle(
-                    marker,
-                    SpecialSiteFill,
-                    SpecialSiteBorder
-                );
-                hasVisibleSpecialSite = true;
-            }
-            else
-            {
-                SetMarkerStyle(
-                    marker,
-                    NormalSiteFill,
-                    NormalSiteBorder
-                );
-                hasVisibleNormalSite = true;
-            }
-
-            productionMarkerCount++;
-        }
-
-        if (productionMarkerCount > 0)
-        {
-            SetMarkerCount(anomalyMarkers, productionMarkerCount);
-            return;
-        }
-
+        if (count > 0) return;
         anomalyZones.Clear();
         anomalyController?.CollectActiveLocalZones(anomalyZones);
-        EnsureMarkerCount(
-            anomalyMarkers,
-            anomalyZones.Count,
-            "Anomaly",
-            anomalyRoot
-        );
-
         for (int i = 0; i < anomalyZones.Count; i++)
         {
-            LevelAnomalyController.LocalAnomalyZoneGeometry zone =
-                anomalyZones[i];
-            MarkerVisual marker = anomalyMarkers[i];
-            marker.Rect.anchoredPosition = WorldToMap(zone.Center);
-            marker.Rect.sizeDelta = WorldSizeToMap(zone.Size);
-            marker.Rect.localRotation = Quaternion.identity;
-            GetAnomalyColors(zone.Type, out Color fill, out Color border);
-            SetMarkerStyle(marker, fill, border);
+            var zone = anomalyZones[i];
+            ShowTerritory(i, zone.Center, zone.Size, false);
         }
+    }
 
-        hasVisibleNormalSite = anomalyZones.Count > 0;
+    private void ShowTerritory(int index, Vector2 center, Vector2 size, bool special)
+    {
+        if (index >= territoryAreas.Length) return;
+        var area = territoryAreas[index];
+        area.gameObject.SetActive(true);
+        area.color = special ? specialAreaColor : normalAreaColor;
+        area.rectTransform.anchoredPosition = WorldToMap(center);
+        var mapSize = projectionRoot.rect.size;
+        area.rectTransform.sizeDelta = new Vector2(
+            size.x / worldBounds.size.x * mapSize.x,
+            size.y / worldBounds.size.y * mapSize.y);
     }
 
     private void RefreshMarkers()
@@ -381,11 +268,11 @@ public sealed class TacticalMapHUD : MonoBehaviour
                     "Event",
                     eventRoot
                 );
-                MarkerVisual marker = eventMarkers[eventCount];
+                TacticalMapMarker marker = eventMarkers[eventCount];
                 marker.Rect.anchoredPosition = WorldToMap(
                     worldEvent.transform.position
                 );
-                marker.Rect.sizeDelta = new Vector2(8f, 8f);
+                marker.Rect.sizeDelta = eventSize;
                 marker.Rect.localRotation = Quaternion.identity;
                 SetMarkerStyle(marker, EventFill, Cyan);
                 eventCount++;
@@ -398,9 +285,9 @@ public sealed class TacticalMapHUD : MonoBehaviour
             for (int i = 0; i < 2; i++)
             {
                 EnsureMarkerCount(eventMarkers, eventCount + 1, "Portal", eventRoot);
-                MarkerVisual marker = eventMarkers[eventCount++];
+                TacticalMapMarker marker = eventMarkers[eventCount++];
                 marker.Rect.anchoredPosition = WorldToMap(i == 0 ? portals.PositionA : portals.PositionB);
-                marker.Rect.sizeDelta = new Vector2(10f, 10f);
+                marker.Rect.sizeDelta = portalSize;
                 marker.Rect.localRotation = Quaternion.Euler(0f, 0f, 45f);
                 Color color = i == 0 ? ProductionPortalPair.ColorA : ProductionPortalPair.ColorB;
                 SetMarkerStyle(marker, color * new Color(1f, 1f, 1f, 0.45f), color);
@@ -430,16 +317,14 @@ public sealed class TacticalMapHUD : MonoBehaviour
 
         for (int i = 0; i < breakableDescriptors.Count; i++)
         {
-            MarkerVisual marker = breakableMarkers[i];
+            TacticalMapMarker marker = breakableMarkers[i];
             marker.Rect.anchoredPosition = WorldToMap(
                 breakableDescriptors[i].Position
             );
-            marker.Rect.sizeDelta = new Vector2(6f, 6f);
+            marker.Rect.sizeDelta = containerSize;
             marker.Rect.localRotation = Quaternion.identity;
             SetMarkerStyle(marker, BreakableFill, BreakableBorder);
         }
-
-        hasVisibleExit = false;
         exitMarker.Rect.gameObject.SetActive(false);
         IReadOnlyList<ProductionSectorExit> exits =
             ProductionSectorExit.ActiveExits;
@@ -458,9 +343,8 @@ public sealed class TacticalMapHUD : MonoBehaviour
                 );
                 exitMarker.Rect.gameObject.SetActive(true);
                 SetMarkerStyle(exitMarker,
-                    sectorExit.IsAvailable ? ExitFill : new Color(0.25f, 0.18f, 0.1f, 0.8f),
-                    sectorExit.IsAvailable ? ExitBorder : new Color(0.6f, 0.34f, 0.12f, 0.8f));
-                hasVisibleExit = true;
+                    sectorExit.IsAvailable ? ExitFill : lockedExitFill,
+                    sectorExit.IsAvailable ? ExitBorder : lockedExitBorder);
                 break;
             }
         }
@@ -475,9 +359,6 @@ public sealed class TacticalMapHUD : MonoBehaviour
                 boss.transform.position
             );
         }
-
-        hasVisibleEvents = eventCount > 0;
-        hasVisibleBreakables = breakableDescriptors.Count > 0;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (lastLoggedBreakableMarkerCount != breakableDescriptors.Count)
         {
@@ -489,8 +370,6 @@ public sealed class TacticalMapHUD : MonoBehaviour
             );
         }
 #endif
-        hasVisibleBoss = showBoss;
-        RefreshLegend();
         playerMarker?.Rect.SetAsLastSibling();
     }
 
@@ -506,74 +385,6 @@ public sealed class TacticalMapHUD : MonoBehaviour
         }
 
         return null;
-    }
-
-    private void RefreshLegend()
-    {
-        if (legendRoot == null || mapRoot == null)
-            return;
-
-        bool showLegend = hasBounds && player != null ||
-            hasVisibleNormalSite || hasVisibleSpecialSite || hasVisibleExit ||
-            hasVisibleEvents || hasVisibleBreakables || hasVisibleBoss;
-        legendRoot.gameObject.SetActive(showLegend);
-
-        int rowIndex = 0;
-        LayoutLegendRow(
-            playerLegendRow,
-            hasBounds && player != null,
-            ref rowIndex
-        );
-        LayoutLegendRow(
-            normalSiteLegendRow,
-            hasVisibleNormalSite,
-            ref rowIndex
-        );
-        LayoutLegendRow(
-            specialSiteLegendRow,
-            hasVisibleSpecialSite,
-            ref rowIndex
-        );
-        LayoutLegendRow(exitLegendRow, hasVisibleExit, ref rowIndex);
-        LayoutLegendRow(eventLegendRow, hasVisibleEvents, ref rowIndex);
-        LayoutLegendRow(
-            breakableLegendRow,
-            hasVisibleBreakables,
-            ref rowIndex
-        );
-        LayoutLegendRow(bossLegendRow, hasVisibleBoss, ref rowIndex);
-
-        float legendHeight = rowIndex * LegendRowHeight;
-        legendRoot.sizeDelta = new Vector2(MaxMapSize, legendHeight);
-        mapRoot.sizeDelta = new Vector2(
-            MaxMapSize,
-            currentMapHeight + (showLegend ? LegendGap + legendHeight : 0f)
-        );
-    }
-
-    private void HandleBreakableMarkersChanged()
-    {
-        nextMarkerRefresh = 0f;
-    }
-
-    private static void LayoutLegendRow(
-        RectTransform row,
-        bool visible,
-        ref int rowIndex)
-    {
-        if (row == null)
-            return;
-
-        row.gameObject.SetActive(visible);
-
-        if (!visible)
-            return;
-
-        row.anchoredPosition = new Vector2(
-            0f,
-            -rowIndex * LegendRowHeight
-        );
-        rowIndex++;
     }
 
     private Vector2 WorldToMap(Vector2 worldPosition)
@@ -595,24 +406,15 @@ public sealed class TacticalMapHUD : MonoBehaviour
         );
     }
 
-    private Vector2 WorldSizeToMap(Vector2 worldSize)
-    {
-        Rect rect = projectionRoot.rect;
-        return new Vector2(
-            Mathf.Max(2f, worldSize.x / worldBounds.size.x * rect.width),
-            Mathf.Max(2f, worldSize.y / worldBounds.size.y * rect.height)
-        );
-    }
-
-    private static void EnsureMarkerCount(
-        List<MarkerVisual> markers,
+    private void EnsureMarkerCount(
+        List<TacticalMapMarker> markers,
         int required,
         string prefix,
         Transform parent)
     {
         while (markers.Count < required)
         {
-            MarkerVisual marker = CreateMarker(
+            TacticalMapMarker marker = CreateMarker(
                 prefix + " " + markers.Count,
                 parent
             );
@@ -624,7 +426,7 @@ public sealed class TacticalMapHUD : MonoBehaviour
     }
 
     private static void SetMarkerCount(
-        List<MarkerVisual> markers,
+        List<TacticalMapMarker> markers,
         int activeCount)
     {
         for (int i = 0; i < markers.Count; i++)
@@ -632,7 +434,7 @@ public sealed class TacticalMapHUD : MonoBehaviour
     }
 
     private static void SetMarkerStyle(
-        MarkerVisual marker,
+        TacticalMapMarker marker,
         Color fill,
         Color border)
     {
@@ -641,54 +443,33 @@ public sealed class TacticalMapHUD : MonoBehaviour
         marker.Border.enabled = border.a > 0f;
     }
 
-    private static void GetAnomalyColors(
-        LocalAnomalyType type,
-        out Color fill,
-        out Color border)
+    private void GetAnomalyColors(LocalAnomalyType type, out Color fill, out Color border)
     {
-        border = type switch
-        {
-            LocalAnomalyType.Berserk => new Color(1f, 0.12f, 0.1f, 0.9f),
-            LocalAnomalyType.Stasis => new Color(0.12f, 0.48f, 1f, 0.9f),
-            LocalAnomalyType.ExplosiveZone =>
-                new Color(1f, 0.3f, 0.05f, 0.9f),
-            LocalAnomalyType.Gravity => new Color(0.6f, 0.22f, 1f, 0.9f),
-            LocalAnomalyType.Glitch => new Color(1f, 0.12f, 0.82f, 0.9f),
-            _ => new Color(0.2f, 0.8f, 0.9f, 0.85f)
-        };
-        fill = new Color(border.r, border.g, border.b, 0.19f);
+        int index = (int)type;
+        border = index >= 0 && index < anomalyColors.Length ? anomalyColors[index] : defaultAnomalyColor;
+        fill = border;
+        fill.a = anomalyOpacity;
     }
 
     private static bool BoundsApproximatelyEqual(Bounds left, Bounds right) =>
         (left.center - right.center).sqrMagnitude < 0.0001f &&
         (left.size - right.size).sqrMagnitude < 0.0001f;
 
-    private static MarkerVisual CreateMarker(
-        string markerName,
-        Transform parent)
+    [SerializeField] private TacticalMapMarker anomalyPrefab;
+    [SerializeField] private TacticalMapMarker eventPrefab;
+    [SerializeField] private TacticalMapMarker containerPrefab;
+    [SerializeField] private Vector2 anomalySize = new(16f, 16f);
+    [SerializeField] private Vector2 eventSize = new(16f, 16f);
+    [SerializeField] private Vector2 portalSize = new(16f, 16f);
+    [SerializeField] private Vector2 containerSize = new(12f, 12f);
+    [SerializeField] private Color lockedExitFill = new(.25f, .18f, .1f, .8f);
+    [SerializeField] private Color lockedExitBorder = new(.6f, .34f, .12f, .8f);
+    [SerializeField] private Color[] anomalyColors;
+    [SerializeField] private Color defaultAnomalyColor = new(.2f, .8f, .9f, .85f);
+    [SerializeField] private float anomalyOpacity = .19f;
+    private TacticalMapMarker CreateMarker(string markerName, Transform parent)
     {
-        RectTransform rect = CreateRect(markerName, parent);
-        rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-
-        Image image = rect.gameObject.AddComponent<Image>();
-        image.raycastTarget = false;
-
-        Outline outline = rect.gameObject.AddComponent<Outline>();
-        outline.effectDistance = new Vector2(1f, -1f);
-        outline.useGraphicAlpha = false;
-        return new MarkerVisual(rect, image, outline);
+        var prefab = parent == anomalyRoot ? anomalyPrefab : parent == breakableRoot ? containerPrefab : eventPrefab;
+        return Instantiate(prefab, parent);
     }
-
-    private static RectTransform CreateRect(
-        string objectName,
-        Transform parent)
-    {
-        GameObject gameObject = new(objectName, typeof(RectTransform));
-        gameObject.layer = 5;
-        RectTransform rect = gameObject.GetComponent<RectTransform>();
-        rect.SetParent(parent, false);
-        return rect;
-    }
-
 }

@@ -13,25 +13,28 @@ public class HUDManager : MonoBehaviour
     [Header("Health")]
     [SerializeField] private Slider healthSlider;
     [SerializeField] private TextMeshProUGUI healthText;
+    [SerializeField] private HudBar healthBar;
 
     [Header("Experience")]
     [SerializeField] private Slider experienceSlider;
     [SerializeField] private TextMeshProUGUI levelText;
     [SerializeField] private TextMeshProUGUI experienceText;
+    [SerializeField] private HudBar experienceBar;
     [SerializeField] private GameplayTargetTracker targetTracker;
 
     [Header("Stats")]
     [SerializeField] private TextMeshProUGUI killsText;
     [SerializeField] private TextMeshProUGUI currencyText;
+    [SerializeField] private HudIconNumber killsCounter;
+    [SerializeField] private HudIconNumber goldCounter;
 
     [Header("Timer")]
     [SerializeField] private TextMeshProUGUI timerText;
 
     [Header("Threat")]
     [SerializeField] private RectTransform threatPanel;
-    [SerializeField] private TextMeshProUGUI threatLevelText;
-    [SerializeField] private TextMeshProUGUI threatValueText;
-    [SerializeField] private RectTransform threatFill;
+    [SerializeField] private HudSegments threatSegments;
+    [SerializeField] private BulletTimeHudView bulletTimeView;
 
     [Header("Dash")]
     [SerializeField] private DashCooldownView dashCooldownView;
@@ -84,12 +87,11 @@ public class HUDManager : MonoBehaviour
     private void RefreshLanguage(GameLanguage language)
     {
         var localization = LocalizationService.EnsureExists();
-        if (levelText != null) levelText.text = string.Format(localization.Get("hud.level"), displayedLevel);
+        if (levelText != null) levelText.text = displayedLevel.ToString();
         if (bossNameText != null && displayedBossName != null) bossNameText.text = localization.Get(displayedBossName);
-        if (threatLevelText != null && lastDisplayedThreatTier.HasValue)
-            threatLevelText.text = string.Format(localization.Get("hud.threat"), ThreatTierPresentation.Format(lastDisplayedThreatTier.Value));
+
     }
-    private ThreatTier? lastDisplayedThreatTier;
+
     private readonly Vector3[] framingCorners = new Vector3[4];
 
     // Screen-space allowance from the existing authored HUD; never moves the player/station.
@@ -145,16 +147,14 @@ public class HUDManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
-        ConfigureIndicatorSlider(healthSlider);
-        ConfigureIndicatorSlider(experienceSlider);
-        ConfigureIndicatorSlider(bossHpSlider);
+
 
         if (bossHpPanel != null)
             bossHpPanel.SetActive(false);
 
         if (tacticalMap == null || targetTracker == null || lootReel == null || runFlow == null || pauseMenu == null ||
             informationGroup == null || interactionPrompt == null || runMessages == null ||
-            threatPanel == null || threatLevelText == null || threatValueText == null || threatFill == null)
+            threatPanel == null || threatSegments == null || bulletTimeView == null)
         {
             Debug.LogError("[HUDManager] Authored HUD or scene references are missing.", this);
             enabled = false;
@@ -269,110 +269,38 @@ public class HUDManager : MonoBehaviour
             if (seconds != lastDisplayedTimerSecond)
             {
                 lastDisplayedTimerSecond = seconds;
-                timerText.SetText("TIME: {0}:{1:00}", seconds / 60, seconds % 60);
+                timerText.SetText("{0}:{1:00}", seconds / 60, seconds % 60);
             }
         }
         // Read after gameplay Update: KillManager notifies before run stats are committed.
         SetKills(0);
     }
 
-    private static void ConfigureIndicatorSlider(Slider slider)
-    {
-        if (slider == null)
-            return;
-
-        slider.interactable = false;
-
-        Navigation navigation = slider.navigation;
-        navigation.mode = Navigation.Mode.None;
-        slider.navigation = navigation;
-    }
-
     public void SetHealth(float currentHealth, float maxHealth)
     {
-        if (healthSlider != null)
-        {
-            healthSlider.maxValue = maxHealth;
-            healthSlider.value = currentHealth;
-        }
-
-        if (healthText != null)
-        {
-            healthText.text = $"{Mathf.CeilToInt(currentHealth)} / {Mathf.CeilToInt(maxHealth)}";
-        }
+        healthBar.SetValue(currentHealth, maxHealth);
         UpdateLowHpVignette(currentHealth, maxHealth);
     }
 
     public void SetThreat(float value, ThreatTier tier)
     {
-
-        if (threatPanel == null)
-            return;
-
-        threatPanel.gameObject.SetActive(true);
-
-        float clampedValue = Mathf.Clamp(value, 0f, 100f);
-
-        if (threatLevelText != null && tier != lastDisplayedThreatTier)
-        {
-            lastDisplayedThreatTier = tier;
-            threatLevelText.text =
-                string.Format(LocalizationService.EnsureExists().Get("hud.threat"), ThreatTierPresentation.Format(tier));
-            SetRect(
-                threatLevelText.rectTransform,
-                new Vector2(0f, 0.34f),
-                Vector2.one,
-                new Vector2(10f, 0f),
-                new Vector2(-10f, -1f)
-            );
-        }
-
-        if (threatValueText != null)
-            threatValueText.gameObject.SetActive(false);
-
-        if (threatFill != null)
-        {
-            Vector2 max = threatFill.anchorMax;
-            max.x = clampedValue / 100f;
-            threatFill.anchorMax = max;
-        }
-    }
-
-    private static void SetRect(
-        RectTransform rect,
-        Vector2 anchorMin,
-        Vector2 anchorMax,
-        Vector2 offsetMin,
-        Vector2 offsetMax)
-    {
-        rect.anchorMin = anchorMin;
-        rect.anchorMax = anchorMax;
-        rect.offsetMin = offsetMin;
-        rect.offsetMax = offsetMax;
+        threatSegments.SetValue((int)tier);
     }
 
     public void SetKills(int kills)
     {
-        if (killsText != null)
-        {
-            RunStateManager runState = RunStateManager.Instance;
-            killsText.text = (runState != null
-                ? runState.GetCurrentRunKills()
-                : 0).ToString();
-        }
+        RunStateManager runState = RunStateManager.Instance;
+        killsCounter.SetValue(runState != null ? runState.GetCurrentRunKills() : 0);
     }
 
-    public void SetCurrentRunCurrency(int amount)
-    {
-        if (currencyText != null)
-            currencyText.text = amount.ToString();
-    }
+    public void SetCurrentRunCurrency(int amount) => goldCounter.SetValue(amount);
 
     public bool IsPlayerBound { get; private set; }
 
     public void BindPlayer(GameObject player)
     {
         IsPlayerBound = player != null;
+        bulletTimeView.Bind(player);
         boundPlayer = player != null ? player.GetComponent<PlayerHealth>() : null;
         interactionPrompt.Bind(player != null ? player.GetComponent<PlayerInteractor>() : null);
         CharacterMovement2D movement = player != null
@@ -403,22 +331,15 @@ public class HUDManager : MonoBehaviour
 
     public void SetExperience(int currentExp, int requiredExp, int level)
     {
-        if (experienceSlider != null)
-        {
-            experienceSlider.maxValue = requiredExp;
-            experienceSlider.value = currentExp;
-        }
+        experienceBar.SetValue(currentExp, requiredExp);
 
         if (levelText != null)
         {
             displayedLevel = level;
-            levelText.text = string.Format(LocalizationService.EnsureExists().Get("hud.level"), level);
+            levelText.text = level.ToString();
         }
 
-        if (experienceText != null)
-        {
-            experienceText.text = $"{currentExp} / {requiredExp}";
-        }
+
     }
     private void UpdateLowHpVignette(float currentHealth, float maxHealth)
     {
