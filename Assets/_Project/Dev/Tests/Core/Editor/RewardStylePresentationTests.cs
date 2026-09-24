@@ -23,6 +23,63 @@ public sealed class RewardStylePresentationTests
     [UnityTearDown] public IEnumerator Cleanup() => CoreTestSupport.CleanupPlayMode();
 
     [UnityTest]
+    public IEnumerator FourRewardTypesAndStates()
+    {
+        Application.runInBackground = true;
+        // Physical mouse position must not alter the deterministic state gallery.
+        foreach (var module in EventSystem.current.GetComponents<BaseInputModule>()) module.enabled = false;
+        EventSystem.current.enabled = false;
+        if (TutorialController.Active != null) TutorialController.Active.enabled = false;
+        LocalizationService.Instance.SetLanguage(GameLanguage.Russian);
+        Time.timeScale = 0;
+        var panel = Object.FindFirstObjectByType<UpgradePanelView>(FindObjectsInactive.Include);
+        using var provider = new OrbitalRewardProvider(UpgradeManager.Instance.AllUpgrades.ToArray());
+        var kinds = new[] { OrbitalRewardKind.Pistol, OrbitalRewardKind.CoreUpgrade,
+            OrbitalRewardKind.RingPower, OrbitalRewardKind.MoveSpeed };
+        var rewards = kinds.Select(kind => provider.GetDefinition(kind)).Cast<UpgradeData>().ToArray();
+        panel.Show(2, rewards.Take(3).ToArray(), _ => { });
+        var cards = panel.GetComponentsInChildren<UpgradeCardView>().ToList();
+        // QA-only fourth instance: production choice count and layout remain untouched.
+        var fourth = Object.Instantiate(cards[0], cards[0].transform.parent);
+        cards.Add(fourth);
+        var layout = cards[0].transform.parent.GetComponent<LayoutGroup>();
+        if (layout != null) layout.enabled = false;
+        for (int i = 0; i < cards.Count; i++)
+        {
+            var rect = (RectTransform)cards[i].transform;
+            rect.anchorMin = rect.anchorMax = new Vector2(.5f, .5f);
+            rect.anchoredPosition = new Vector2((i - 1.5f) * 340f, 0);
+            cards[i].Setup(rewards[i], _ => { });
+            Assert.That(cards[i].GetComponentsInChildren<RewardPixelPanelImage>(true), Is.Empty);
+        }
+        Directory.CreateDirectory(Output);
+        yield return new WaitForSecondsRealtime(.5f);
+        yield return Capture(panel, "types-normal");
+        var buttons = cards.Select(c => c.GetComponent<RewardCardButton>()).ToArray();
+        Assert.That(buttons[0].colors.normalColor, Is.EqualTo(buttons[1].colors.normalColor));
+        Assert.That(buttons[0].colors.normalColor.r, Is.GreaterThan(buttons[0].colors.normalColor.b));
+        Assert.That(buttons[2].colors.normalColor.b, Is.GreaterThan(buttons[2].colors.normalColor.r));
+        Assert.That(buttons[3].colors.normalColor.g, Is.GreaterThan(buttons[3].colors.normalColor.r));
+        var pointer = new PointerEventData(EventSystem.current);
+        foreach (var b in buttons) ExecuteEvents.Execute(b.gameObject, pointer, ExecuteEvents.pointerEnterHandler);
+        yield return new WaitForSecondsRealtime(.3f);
+        yield return Capture(panel, "types-hover");
+        foreach (var b in buttons)
+        {
+            ExecuteEvents.Execute(b.gameObject, pointer, ExecuteEvents.pointerExitHandler);
+            b.OnSelect(new BaseEventData(EventSystem.current));
+        }
+        yield return new WaitForSecondsRealtime(.3f);
+        yield return Capture(panel, "types-selected");
+        foreach (var b in buttons) b.interactable = false;
+        yield return new WaitForSecondsRealtime(.3f);
+        yield return Capture(panel, "types-unavailable");
+        Object.Destroy(fourth.gameObject);
+        if (layout != null) layout.enabled = true;
+        panel.Hide();
+    }
+
+    [UnityTest]
     public IEnumerator AllProductionCardsAndButtonStatesAt1080p()
     {
         Application.runInBackground = true;

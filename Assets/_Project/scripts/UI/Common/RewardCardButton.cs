@@ -5,6 +5,25 @@ using UnityEngine.UI;
 // the new frame through the same Button state. Selection and click handling are inherited.
 public sealed class RewardCardButton : Button
 {
+    [Header("Reward presentation")]
+    [SerializeField] private RewardCardVisualPreset[] visualPresets;
+    [SerializeField] private RewardCardVisualPreset fallbackPreset;
+    [SerializeField] private Image headerAccent;
+
+    public void SetReward(UpgradeData reward)
+    {
+        var preset = fallbackPreset;
+        if (reward is Subject42.Combat.OrbitalStation.OrbitalRewardData orbital && visualPresets != null)
+            foreach (var candidate in visualPresets)
+                if (candidate != null && candidate.Matches(orbital.RewardKind))
+                {
+                    preset = candidate;
+                    break;
+                }
+        if (preset != null) colors = preset.states;
+        DoStateTransition(currentSelectionState, true);
+    }
+
     protected override void DoStateTransition(SelectionState state, bool instant)
     {
         base.DoStateTransition(state, instant);
@@ -19,5 +38,8 @@ public sealed class RewardCardButton : Button
         };
         targetGraphic.CrossFadeColor(tint * colors.colorMultiplier,
             instant ? 0f : colors.fadeDuration, true, true);
+        if (headerAccent != null)
+            headerAccent.CrossFadeColor(tint * colors.colorMultiplier,
+                instant ? 0f : colors.fadeDuration, true, true);
     }
 }

@@ -39,7 +39,7 @@ public class UpgradeCardView : MonoBehaviour
     private UpgradeData currentUpgrade;
     private Action<UpgradeData> onClicked;
     private UICardHoverAnimation hoverAnimation;
-    private Image iconFrameImage;
+    [SerializeField] private Image iconFrameImage;
     private Color defaultIconFrameColor;
     private bool defaultIconFrameEnabled;
     private bool defaultRarityGlowEnabled;
@@ -117,6 +117,7 @@ public class UpgradeCardView : MonoBehaviour
         }
         else
             SetIcon(upgrade.icon, GetCategoryColor(upgrade.category));
+        if (button is RewardCardButton rewardButton) rewardButton.SetReward(upgrade);
         hoverAnimation?.RefreshRestingState();
     }
 
@@ -143,7 +144,7 @@ public class UpgradeCardView : MonoBehaviour
         if (visualDefaultsCaptured)
             return;
 
-        if (iconImage != null && iconImage.transform.parent != null)
+        if (iconFrameImage == null && iconImage != null && iconImage.transform.parent != null)
             iconFrameImage = iconImage.transform.parent.GetComponent<Image>();
 
         if (iconImage != null)

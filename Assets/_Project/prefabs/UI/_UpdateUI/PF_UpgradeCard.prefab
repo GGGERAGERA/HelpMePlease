@@ -184,18 +184,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 1508549518948619768}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 24e9ea7ebbef47a5a8f954cbfd96d580, type: 3}
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RewardPixelPanelImage
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.098039, g: 0.12549, b: 0.129412, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 373bc9e7d3734b81b2adde364bb6ca7a, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -205,11 +205,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
-  outlineOnly: 0
-  edgeColor: {r: 0.254902, g: 0.294118, b: 0.286275, a: 1}
-  corner: 8
-  stroke: 2
-  details: 1
 --- !u!1 &2263853648656873245
 GameObject:
   m_ObjectHideFlags: 0
@@ -266,18 +261,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 2263853648656873245}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 24e9ea7ebbef47a5a8f954cbfd96d580, type: 3}
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RewardPixelPanelImage
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.07451, g: 0.098039, b: 0.105882, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: d81254dc6e9d4684bd0b59faaf65d730, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -287,11 +282,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 4
-  outlineOnly: 0
-  edgeColor: {r: 0.254902, g: 0.294118, b: 0.286275, a: 1}
-  corner: 8
-  stroke: 2
-  details: 0
 --- !u!1 &2756797852564038704
 GameObject:
   m_ObjectHideFlags: 0
@@ -439,9 +429,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3718273466463032368}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 24e9ea7ebbef47a5a8f954cbfd96d580, type: 3}
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RewardPixelPanelImage
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
@@ -450,7 +440,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 8e283836e7484f828969ce1de781ce75, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -460,11 +450,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
-  outlineOnly: 1
-  edgeColor: {r: 0.254902, g: 0.294118, b: 0.286275, a: 1}
-  corner: 8
-  stroke: 2
-  details: 1
 --- !u!1 &5909777017579794544
 GameObject:
   m_ObjectHideFlags: 0
@@ -520,18 +505,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 5909777017579794544}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 24e9ea7ebbef47a5a8f954cbfd96d580, type: 3}
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RewardPixelPanelImage
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.062745, g: 0.086275, b: 0.090196, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: f67eb2557b274ebab34600667c72f5a1, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -541,11 +526,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 4
-  outlineOnly: 0
-  edgeColor: {r: 0.254902, g: 0.294118, b: 0.286275, a: 1}
-  corner: 8
-  stroke: 2
-  details: 0
 --- !u!1 &5927147698744935427
 GameObject:
   m_ObjectHideFlags: 0
@@ -913,6 +893,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8fba5a9f436943fb942f0c612f9e0a62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RewardCardButton
+  visualPresets:
+  - {fileID: 11400000, guid: 928c7bd60b42408e91208703c1127ffd, type: 2}
+  - {fileID: 11400000, guid: 878343c9ce0b486aae1a617dd758038c, type: 2}
+  - {fileID: 11400000, guid: 893960f210ed4bdcba09c7d445383f92, type: 2}
+  fallbackPreset: {fileID: 11400000, guid: 893960f210ed4bdcba09c7d445383f92, type: 2}
+  headerAccent: {fileID: 763932944442976237}
   m_Navigation:
     m_Mode: 3
     m_WrapAround: 0
@@ -971,6 +957,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeCardView
   button: {fileID: 3086174504460265763}
   backgroundImage: {fileID: 1455933384264137196}
+  iconFrameImage: {fileID: 763932944442976237}
   iconImage: {fileID: 7988888372902753732}
   titleText: {fileID: 2101410720312685313}
   descriptionText: {fileID: 5669223649467169955}
