@@ -10,6 +10,7 @@ public class WorldEventSpawner : MonoBehaviour
         WorldEventDifficulty.Standard;
 
     public event System.Action<WorldEvent> EventCompleted;
+    public event System.Action<WorldEvent> EventStarted;
     public event System.Action<WorldEvent> EventFailed;
     public IReadOnlyList<WorldEvent> SpawnedEvents => spawnedEvents;
     public IReadOnlyList<WorldEvent> EventPrefabs => eventPrefabs;
@@ -688,6 +689,7 @@ public class WorldEventSpawner : MonoBehaviour
 
     public bool CanStartEvent(WorldEvent worldEvent)
     {
+        if (TutorialController.IsActive && !TutorialController.Active.CanStartEvent(worldEvent)) return false;
         return worldEvent != null &&
             ActiveEvent == null &&
             spawnedEvents.Contains(worldEvent) &&
@@ -717,6 +719,7 @@ public class WorldEventSpawner : MonoBehaviour
         enemySpawner?.SetWorldEventSpawnPressureMultiplier(
             riskMode ? riskEventPressure : standardEventPressure
         );
+        EventStarted?.Invoke(worldEvent);
     }
 
     public bool TryStartProductionEvent(WorldEvent worldEvent)

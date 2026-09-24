@@ -38,6 +38,7 @@ public sealed class WorldLootChest : Interactable, ITacticalMapMarkerProvider
     private static readonly List<WorldLootChest> activeInstances = new();
 
     public override bool CanInteract => state == ChestState.Closed &&
+        (!TutorialController.IsActive || !TutorialController.Active.NeedsFirstWeapon) &&
         !WorldLootRewardReel.IsActive;
     public ChestState State => state;
     public IReadOnlyList<WorldLootRewardDefinition> RewardPool => rewardPool;

@@ -63,6 +63,7 @@ public class PlayerHealth : MonoBehaviour
             return false;
         isInvulnerable = true;
         float finalDamage = Mathf.Max(0f, damage) * incomingDamageMultiplier;
+        if (TutorialController.IsActive) finalDamage *= 0.2f;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         float lostHealth = Mathf.Min(Mathf.Max(0f, currentHealth), finalDamage);
 #endif

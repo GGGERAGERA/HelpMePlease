@@ -23,6 +23,7 @@ public sealed class Subject42GoldenPathTests
 
     private static IEnumerator ExerciseRoute()
     {
+        PlayerPrefs.DeleteKey(TutorialController.CompletionKey);
         yield return CoreTestSupport.LoadBunker();
         RunSelectionManager.Instance.SelectCharacter(AssetDatabase.LoadAssetAtPath<CharacterData>(
             "Assets/_Project/Data/Characters/01_Gera.asset"));
@@ -30,7 +31,11 @@ public sealed class Subject42GoldenPathTests
         var batch = session.GetComponent<BotBatchRunner>() ?? session.gameObject.AddComponent<BotBatchRunner>();
         Assert.That(batch.StartGoldenPathBatch(1, BotSeedMode.Fixed, 48151623, 5f), Is.True);
         float deadline = Time.realtimeSinceStartup + 300f;
-        while (batch.IsActive && Time.realtimeSinceStartup < deadline) yield return null;
+        while (batch.IsActive && Time.realtimeSinceStartup < deadline)
+        {
+            Assert.That(TutorialController.IsActive, Is.False, "Bot context must bypass an incomplete tutorial.");
+            yield return null;
+        }
         Assert.That(batch.IsActive, Is.False, "Golden Path exceeded five minutes.");
         Assert.That(batch.Result.Status, Is.EqualTo("Completed"), batch.Result.StopReason);
         Assert.That(batch.Result.CompletedRuns, Is.EqualTo(1));

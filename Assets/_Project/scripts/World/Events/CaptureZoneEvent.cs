@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class CaptureZoneEvent : WorldEvent
 {
+    public event System.Action PlayerEntered;
     public float CaptureRadius => captureRadius;
     public float TimeRemaining => Mathf.Max(0f, requiredHoldTime - currentHoldTime);
     public float Progress => requiredHoldTime > 0f
@@ -105,6 +106,7 @@ public class CaptureZoneEvent : WorldEvent
         bool wasInside = playerInside;
 
         playerInside = distance <= captureRadius;
+        if (!wasInside && playerInside) PlayerEntered?.Invoke();
 
         if (wasInside && !playerInside && resetProgressOnExit)
             currentHoldTime = 0f;

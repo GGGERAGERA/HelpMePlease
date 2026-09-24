@@ -21,7 +21,7 @@ public static class CoreTestSupport
 
     public static void PreservePreferences()
     {
-        var keys = new List<string> { "TOTAL_GOLD", "ORBITAL_SLOT_PENDING",
+        var keys = new List<string> { "TOTAL_GOLD", "ORBITAL_SLOT_PENDING", TutorialController.CompletionKey,
             LocalizationService.LanguagePreferenceKey, BunkerIntroController.ViewedPreferenceKey,
             MetaProgressionManager.EscapeAccessKey, MetaProgressionManager.EscapeAnnouncedAccessKey };
         foreach (string guid in AssetDatabase.FindAssets("t:UnlockableContentData"))
@@ -35,6 +35,7 @@ public static class CoreTestSupport
             { key = key, exists = PlayerPrefs.HasKey(key), value = PlayerPrefs.GetInt(key) });
         SessionState.SetString(BackupKey, JsonUtility.ToJson(saved));
         PlayerPrefs.SetInt(BunkerIntroController.ViewedPreferenceKey, 1);
+        PlayerPrefs.SetInt(TutorialController.CompletionKey, 1);
         PlayerPrefs.DeleteKey("ORBITAL_SLOT_PENDING");
     }
 

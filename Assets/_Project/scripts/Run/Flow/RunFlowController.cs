@@ -10,6 +10,8 @@ public sealed class RunFlowController : MonoBehaviour
     public static event System.Action DebugVictoryConfirmed;
 #endif
     public static RunFlowController Instance { get; private set; }
+    public event System.Action ExitUnlocked;
+    public event System.Action ExitReached;
 
     [Header("Level Choice")]
     [SerializeField] private LevelChoiceManager levelChoiceManager;
@@ -35,7 +37,7 @@ public sealed class RunFlowController : MonoBehaviour
     public float ExitMinimumTimeRemaining => sectorProfile != null
         ? Mathf.Max(0f, sectorProfile.ExitActivationTime - SectorElapsedTime) : 0f;
     public bool IsExitRecovering => enemySpawner != null && enemySpawner.IsRecoveringFromFirstAutomaticAssault;
-    private bool CanUnlockExit => sectorProfile != null &&
+    private bool CanUnlockExit => TutorialController.IsActive ? TutorialController.Active.GoalCompleted : sectorProfile != null &&
         SectorElapsedTime >= sectorProfile.ExitActivationTime &&
         ((enemySpawner != null && enemySpawner.HasRecoveredFromFirstAutomaticAssault) ||
          (SectorElapsedTime >= sectorProfile.ExitUnlockTimeout &&
@@ -55,6 +57,7 @@ public sealed class RunFlowController : MonoBehaviour
         sectorProfile = profile;
         SectorElapsedTime = 0f;
         IsExitUnlocked = false;
+        TutorialController.Prepare(this);
     }
 
     private void Update()
@@ -63,7 +66,11 @@ public sealed class RunFlowController : MonoBehaviour
         {
             SectorElapsedTime += Time.deltaTime;
             // Availability is permanent within this sector, including a timeout unlock.
-            IsExitUnlocked |= CanUnlockExit;
+            if (!IsExitUnlocked && CanUnlockExit)
+            {
+                IsExitUnlocked = true;
+                ExitUnlocked?.Invoke();
+            }
         }
     }
 
@@ -202,6 +209,7 @@ public sealed class RunFlowController : MonoBehaviour
 
         RegisterCurrentLevelCompletion();
         runState?.RegisterCompletedLevel();
+        ExitReached?.Invoke();
         return true;
     }
 

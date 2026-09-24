@@ -154,6 +154,21 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
 
         LocalAnomalyData[] normalAnomalies = BuildNormalAnomalyPool();
 
+        // Only the closest normal site is fixed for onboarding; retain the production layout.
+        int tutorialSite = -1;
+        WorldEvent tutorialEvent = null;
+        if (TutorialController.IsActive)
+        {
+            tutorialEvent = siteEvents.Find(e => e is CaptureZoneEvent);
+            Vector2 origin = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true)?.position ?? Vector3.zero;
+            float nearest = float.MaxValue;
+            for (int i = 0; i < normalPositions.Length; i++)
+            {
+                float distance = (normalPositions[i] - origin).sqrMagnitude;
+                if (distance < nearest) { nearest = distance; tutorialSite = i; }
+            }
+        }
+
         for (int i = 0; i < NormalSiteCount; i++)
         {
             GameObject siteObject = new($"Normal Anomaly Site {i + 1}");
@@ -163,13 +178,15 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
                 normalPositions[i],
                 normalSizes[i],
                 normalAnomalies[i % normalAnomalies.Length],
-                siteEvents[i % siteEvents.Count],
+                i == tutorialSite && tutorialEvent != null ? tutorialEvent : siteEvents[i % siteEvents.Count],
                 eventSpawner,
                 anomalyController,
                 exitPosition,
                 config.ExitRadius,
                 config.AnomalyTerritoryFill
             );
+            if (i == tutorialSite && tutorialEvent != null && eventSpawner.SpawnedEvents.Count > 0)
+                TutorialController.Active.ConfigureTarget(eventSpawner.SpawnedEvents[eventSpawner.SpawnedEvents.Count - 1] as CaptureZoneEvent);
         }
 
         AnomalyPowerType specialPower = SelectSpecialPower();

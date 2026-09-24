@@ -11,6 +11,7 @@ public class ExperienceManager : MonoBehaviour
     public int currentExp = 0;
 
     private int expToNextLevel;
+    private int deferredTutorialExperience;
     private float xpGainMultiplier = 1f;
     private float levelXpGainMultiplier = 1f;
     private float anomalyXpGainMultiplier = 1f;
@@ -79,6 +80,19 @@ public class ExperienceManager : MonoBehaviour
             levelXpGainMultiplier *
             anomalyXpGainMultiplier
         );
+        if (TutorialController.IsActive && TutorialController.Active.Step < TutorialStep.FirstReward)
+        {
+            int accepted = Mathf.Min(gained, Mathf.Max(0, expToNextLevel - currentExp - 1));
+            deferredTutorialExperience += gained - accepted;
+            gained = accepted;
+        }
+        else
+        {
+            gained += deferredTutorialExperience;
+            deferredTutorialExperience = 0;
+        }
+        if (TutorialController.IsActive && TutorialController.Active.Step == TutorialStep.FirstReward && currentLevel == 1)
+            gained = Mathf.Max(gained, expToNextLevel - currentExp);
         currentExp += gained;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         DebugExperienceAdded?.Invoke(gained);

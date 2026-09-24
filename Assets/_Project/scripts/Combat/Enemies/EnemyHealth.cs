@@ -412,9 +412,7 @@ public class EnemyHealth : MonoBehaviour
             : null;
     }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
     public bool HasExperienceLoot => lootPrefab != null &&
         lootPrefab.GetComponent<ExperiencePickup>() != null;
-#endif
 
 }

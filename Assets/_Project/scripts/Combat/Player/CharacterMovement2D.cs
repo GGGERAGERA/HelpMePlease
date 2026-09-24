@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
 {
+    public event System.Action<float> Travelled;
+    private Vector2 previousPhysicsPosition;
+    private bool hadMovementIntent;
     [Header("Движение")]
     [UnityEngine.Serialization.FormerlySerializedAs("speed")]
     [SerializeField] private float baseMoveSpeed = 5f;
@@ -119,6 +122,7 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
 
         if (rb != null)
         {
+            previousPhysicsPosition = rb.position;
             rb.gravityScale = 0f;
             rb.freezeRotation = true;
         }
@@ -242,6 +246,11 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
             return;
 
         // Accelerated simulations can run several physics steps per rendered frame.
+        float travelled = Vector2.Distance(previousPhysicsPosition, rb.position);
+        previousPhysicsPosition = rb.position;
+        // Measure completed physics movement; holding a wall or teleporting is not walking.
+        if (hadMovementIntent && travelled > 0f && travelled < 2f) Travelled?.Invoke(travelled);
+        hadMovementIntent = HasMovementInput;
         if (MovementIntent != null) moveInput = Vector2.ClampMagnitude(MovementIntent(), 1f);
 
         if (isDashing)

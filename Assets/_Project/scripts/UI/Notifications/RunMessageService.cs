@@ -80,6 +80,7 @@ public sealed class RunMessageService : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (TutorialController.IsActive) { movementHint.SetActive(false); return; }
         var currentPlayer = PlayerRuntimeReference.CachedPlayer;
         if (currentPlayer != player)
         {

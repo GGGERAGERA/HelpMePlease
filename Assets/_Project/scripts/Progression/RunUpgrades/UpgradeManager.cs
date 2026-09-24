@@ -42,6 +42,9 @@ public sealed class UpgradeManager : MonoBehaviour
     }
 
     public static UpgradeManager Instance { get; private set; }
+    public event System.Action<UpgradePanelView> RewardOpened;
+    public event System.Action<UpgradeData> RewardChosen;
+    public event System.Action<UpgradeData> RewardCommitted;
 
     [Header("UI")]
     [SerializeField] private UpgradePanelView upgradePanelView;
@@ -501,6 +504,16 @@ public sealed class UpgradeManager : MonoBehaviour
             return false;
         }
 
+        if (request.IsLevelUp && TutorialController.IsActive && TutorialController.Active.NeedsFirstWeapon)
+        {
+            choices = orbitalRewardProvider.GetEligibleNormalRewards().OfType<OrbitalRewardData>()
+                .Where(reward => reward.RequiresArenaSelection &&
+                    reward.RewardKind != OrbitalRewardKind.LinkPair &&
+                    OrbitalRewardProvider.GetModuleKind(reward.RewardKind).HasValue)
+                .Take(request.ChoiceCount).Cast<UpgradeData>().ToList();
+            if (choices.Count > 0) return true;
+            Debug.LogError("[Tutorial] No eligible NEW WEAPON for first reward.");
+        }
         if (request.IsLevelUp && !request.RingOfferEvaluated)
         {
             request.RingOfferEvaluated = true;
@@ -561,6 +574,7 @@ public sealed class UpgradeManager : MonoBehaviour
                 SelectUpgrade
             );
         }
+        RewardOpened?.Invoke(upgradePanelView);
     }
 
     private void SelectUpgrade(UpgradeData upgrade)
@@ -627,7 +641,11 @@ public sealed class UpgradeManager : MonoBehaviour
         orbitalRewardFlow = station.RewardFlow;
         bool started = orbitalRewardFlow.Begin(reward,
             () => CompleteGrantedReward(reward), ReturnToCurrentChoices);
-        if (started) AudioService.Instance?.Play(AudioCueId.RewardSelect);
+        if (started)
+        {
+            AudioService.Instance?.Play(AudioCueId.RewardSelect);
+            RewardChosen?.Invoke(reward);
+        }
         if (!started && isChoosingUpgrade)
         {
             orbitalRewardFlow = null;
@@ -751,6 +769,7 @@ public sealed class UpgradeManager : MonoBehaviour
 
     private void CompleteGrantedReward(UpgradeData upgrade)
     {
+        RewardCommitted?.Invoke(upgrade);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         DebugRewardCommitted?.Invoke(upgrade);
 #endif

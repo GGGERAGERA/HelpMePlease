@@ -3,6 +3,8 @@ using UnityEngine;
 public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
     IAnomalyExternalVelocity
 {
+    public static event System.Action<ExperiencePickup> Spawned;
+    public static event System.Action<ExperiencePickup> Collected;
     [Header("Experience")]
     [SerializeField] private int expValue = 10;
     [SerializeField] private ExperiencePickupVisual visual;
@@ -33,8 +35,14 @@ public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private static readonly System.Collections.Generic.HashSet<ExperiencePickup> active = new();
     public static System.Collections.Generic.IReadOnlyCollection<ExperiencePickup> DebugActive => active;
-    private void OnEnable() => active.Add(this);
 #endif
+    private void OnEnable()
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        active.Add(this);
+#endif
+        Spawned?.Invoke(this);
+    }
 
     private void Start()
     {
@@ -96,6 +104,8 @@ public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
             return;
 
         isCollected = true;
+
+        Collected?.Invoke(this);
 
         if (ExperienceManager.Instance != null)
         {

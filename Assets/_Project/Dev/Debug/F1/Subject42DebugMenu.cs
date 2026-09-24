@@ -2995,6 +2995,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private void AddRunSection()
     {
+        AddRow("Tutorial", "Сброс для следующего нового забега", mutedColor, "RESET TUTORIAL", true,
+            TutorialController.ResetCompletion);
         ResolveSceneReferences();
         var rmbStation = FindFirstObjectByType<OrbitalStationRuntime>();
         AddSectionTitle("RMB MODE", "ПКМ: удержание Slow Field / нажатие Repulse и Reverse");

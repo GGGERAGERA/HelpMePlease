@@ -144,6 +144,7 @@ public partial class EnemySpawner : MonoBehaviour
     {
         if (!spawningEnabled || Time.timeScale == 0f)
             return;
+        if (TutorialController.IsActive && !TutorialController.Active.AllowsNormalSpawning) return;
 
         if (player == null)
             player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
@@ -152,7 +153,7 @@ public partial class EnemySpawner : MonoBehaviour
             return;
 
         runTime += Time.deltaTime;
-        UpdateAssaultEvents();
+        if (!TutorialController.IsActive) UpdateAssaultEvents();
         if (!runThreatControlsPhase)
             UpdateActivePhase();
 
@@ -285,6 +286,34 @@ public partial class EnemySpawner : MonoBehaviour
     {
         spawningEnabled = true;
         Debug.Log("[EnemySpawner] Spawning resumed.");
+    }
+
+    public EnemyHealth SpawnTutorialEnemy(Vector3 origin)
+    {
+        var candidates = new List<GameObject>();
+        if (enemyPrefabs != null) candidates.AddRange(enemyPrefabs);
+        if (spawnProfile?.Phases != null)
+            foreach (var phase in spawnProfile.Phases)
+                if (phase?.enemies != null)
+                    foreach (var entry in phase.enemies) if (entry?.enemyPrefab != null) candidates.Add(entry.enemyPrefab);
+        if (spawnStages != null)
+            foreach (var stage in spawnStages) if (stage?.enemyPrefabs != null) candidates.AddRange(stage.enemyPrefabs);
+        var prefab = candidates.Find(candidate => candidate != null &&
+            candidate.GetComponent<EnemyHealth>() is { HasExperienceLoot: true } &&
+            candidate.GetComponent<EnemyChaseMovement>() != null &&
+            candidate.GetComponent<EnemyShooterMovement>() == null &&
+            candidate.GetComponent<EnemyBomberMovement>() == null &&
+            candidate.GetComponent<EyesEnemyBehaviour>() == null &&
+            candidate.GetComponent<TurretEnemyBehaviour>() == null &&
+            !(candidate.GetComponent<EnemyIdentity>()?.EnemyId ?? "").StartsWith("Elite_", System.StringComparison.OrdinalIgnoreCase));
+        var spawned = SpawnSpecificEnemyAround(prefab, origin, 5f, 7f, 4.5f);
+        var health = spawned != null ? spawned.GetComponent<EnemyHealth>() : null;
+        if (health != null)
+        {
+            health.SetRuntimeMaxHealth(2f);
+            spawned.GetComponent<EnemyMovement>()?.SetSpeedMultiplier(0.35f);
+        }
+        return health;
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -758,6 +787,7 @@ public partial class EnemySpawner : MonoBehaviour
 
     private float GetCurrentSpawnInterval()
     {
+        if (TutorialController.IsActive) return 6f;
         float interval = activePhase != null
             ? activePhase.spawnInterval / currentSpawnPressure
             : spawnInterval;
@@ -816,6 +846,7 @@ public partial class EnemySpawner : MonoBehaviour
 
     private int GetCurrentMaxAlive()
     {
+        if (TutorialController.IsActive) return 4;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (debugFixedExplorationPressure)
             return Mathf.Max(1, maxEnemies);
@@ -884,7 +915,7 @@ public partial class EnemySpawner : MonoBehaviour
         if (availableSlots <= 0)
             return;
 
-        int spawnCount = Mathf.Min(GetCurrentEnemiesPerCycle(), availableSlots);
+        int spawnCount = Mathf.Min(TutorialController.IsActive ? 1 : GetCurrentEnemiesPerCycle(), availableSlots);
 
         for (int i = 0; i < spawnCount; i++)
         {
