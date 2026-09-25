@@ -78,6 +78,12 @@ public class PauseMenuUI : MonoBehaviour
         ReleaseRunScene();
     }
 
+    public void QuitGame()
+    {
+        if (!isPaused || settingsOpen || overview.IsConfirming) return;
+        Application.Quit();
+    }
+
     public void OpenSettings()
     {
         if (!isPaused || settingsOpen || overview.IsConfirming || audioSettingsPanel == null)

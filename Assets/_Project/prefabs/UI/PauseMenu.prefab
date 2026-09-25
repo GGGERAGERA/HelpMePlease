@@ -553,3 +553,20 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 15571100044465043, guid: 0389593bea84a514588b64a16389be3c, type: 3}
   m_PrefabInstance: {fileID: 8611064359534872282}
   m_PrefabAsset: {fileID: 0}
+
+--- !u!224 &980100000000000025 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 3137006019072056082, guid: 0389593bea84a514588b64a16389be3c, type: 3}
+  m_PrefabInstance: {fileID: 8611064359534872282}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &980100000000000026 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1113098385259625059, guid: 0389593bea84a514588b64a16389be3c, type: 3}
+  m_PrefabInstance: {fileID: 8611064359534872282}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
