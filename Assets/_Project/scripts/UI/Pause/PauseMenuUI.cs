@@ -1,6 +1,5 @@
 using Subject42.Combat.OrbitalStation;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class PauseMenuUI : MonoBehaviour
 {
@@ -9,6 +8,8 @@ public class PauseMenuUI : MonoBehaviour
     [SerializeField] private PauseBuildOverview overview;
     [SerializeField] private AudioSettingsPanel audioSettingsPanel;
     [SerializeField] private CharacterSpawner characterSpawner;
+    [SerializeField] private BunkerPanelManager bunkerPanels;
+    [SerializeField] private BunkerIntroController bunkerIntro;
 
     private bool isPaused;
     private bool settingsOpen;
@@ -18,14 +19,18 @@ public class PauseMenuUI : MonoBehaviour
     internal void DebugBindRun(int id) => runId = id;
 #endif
     public bool IsPaused => isPaused;
+    private bool IsBunker => bunkerPanels != null;
+    private bool RewardsOpen => !IsBunker && UpgradeManager.Instance != null && !UpgradeManager.Instance.IsRewardQueueIdle;
+    private bool RunEnded => !IsBunker && RunStateManager.Instance != null && RunStateManager.Instance.IsRunEnded;
 
-    private OrbitalInteractionController Interaction => characterSpawner.SpawnedPlayer != null
+    private OrbitalInteractionController Interaction => characterSpawner != null && characterSpawner.SpawnedPlayer != null
         ? characterSpawner.SpawnedPlayer.GetComponentInChildren<OrbitalInteractionController>()
         : null;
 
     private void Awake()
     {
-        if (pausePanel != null && overview != null && audioSettingsPanel != null && characterSpawner != null) return;
+        if (pausePanel != null && overview != null && audioSettingsPanel != null &&
+            (IsBunker ? bunkerIntro != null : characterSpawner != null)) return;
         Debug.LogError("[PauseMenuUI] Authored overview or scene references are missing.", this);
         enabled = false;
     }
@@ -38,9 +43,11 @@ public class PauseMenuUI : MonoBehaviour
 
     private void HandleEscape()
     {
+        if (SceneTransitionOverlay.IsTransitioning || (bunkerIntro != null && bunkerIntro.IsPlaying)) return;
         if (isPaused && overview.IsConfirming) { overview.CancelConfirmation(); return; }
         if (settingsOpen) { audioSettingsPanel?.Close(); return; }
         if (isPaused) { Resume(); return; }
+        if (IsBunker && bunkerPanels.TryCloseForEscape()) return;
         var interaction = Interaction;
         if (interaction != null && interaction.TryConsumeEscape()) return;
         Pause();
@@ -49,14 +56,13 @@ public class PauseMenuUI : MonoBehaviour
     public void Pause()
     {
         if (Interaction != null && Interaction.IsCustomDrawing) return;
-        if (SceneTransitionOverlay.IsTransitioning || isPaused || (RunStateManager.Instance != null && RunStateManager.Instance.IsRunEnded)) return;
-        UpgradeManager rewards = UpgradeManager.Instance;
-        bool rewardPaused = rewards != null && !rewards.IsRewardQueueIdle;
-        if (Time.timeScale <= 0f && !rewardPaused) return;
+        if (SceneTransitionOverlay.IsTransitioning || isPaused || RunEnded || RewardsOpen ||
+            (bunkerIntro != null && bunkerIntro.IsPlaying) || (IsBunker && bunkerPanels.IsAnyPanelOpen) || Time.timeScale <= 0f) return;
 
         Interaction?.PrepareForExternalPause();
-        resumeTimeScale = rewardPaused ? rewards.TimeScaleAfterRewards : Time.timeScale;
+        resumeTimeScale = Time.timeScale;
         isPaused = true;
+        TutorialController.Active?.SetHintVisible(false);
 
         if (pausePanel != null)
             pausePanel.SetActive(true);
@@ -69,20 +75,7 @@ public class PauseMenuUI : MonoBehaviour
     public void Resume()
     {
         if (SceneTransitionOverlay.IsTransitioning || !isPaused) return;
-        overview.CancelConfirmation();
-        isPaused = false;
-
-        if (settingsOpen)
-        {
-            settingsOpen = false;
-            audioSettingsPanel?.Close();
-        }
-
-        if (pausePanel != null)
-            pausePanel.SetActive(false);
-
-        Time.timeScale = UpgradeManager.Instance != null && !UpgradeManager.Instance.IsRewardQueueIdle
-            ? 0f : resumeTimeScale;
+        ReleaseRunScene();
     }
 
     public void OpenSettings()
@@ -100,7 +93,7 @@ public class PauseMenuUI : MonoBehaviour
 
     public void MainMenu()
     {
-        if (!isPaused || settingsOpen) return;
+        if (IsBunker || !isPaused || settingsOpen) return;
         overview.AskConfirmation("pause.confirmBunker", ReturnToBunker);
     }
 
@@ -121,7 +114,7 @@ public class PauseMenuUI : MonoBehaviour
 
     public void RestartGame()
     {
-        if (!isPaused || settingsOpen) return;
+        if (IsBunker || !isPaused || settingsOpen) return;
         overview.AskConfirmation("pause.confirmRestart", RestartConfirmed);
     }
 
@@ -133,24 +126,33 @@ public class PauseMenuUI : MonoBehaviour
 
     private void OnEnable()
     {
+        if (IsBunker) return;
         var run = RunStateManager.EnsureExists();
         runId = run.RunId;
         run.RegisterSceneCleanup(ReleaseRunScene);
     }
-    private void OnDisable() => RunStateManager.Instance?.UnregisterSceneCleanup(ReleaseRunScene);
+    private void OnDisable()
+    {
+        if (!IsBunker) RunStateManager.Instance?.UnregisterSceneCleanup(ReleaseRunScene);
+        ReleaseRunScene();
+    }
 
     private void ReleaseRunScene()
     {
+        if (isPaused && !SceneTransitionOverlay.IsTransitioning && !RewardsOpen && !RunEnded)
+            Time.timeScale = resumeTimeScale;
+        bool closeSettings = settingsOpen;
         isPaused = settingsOpen = false;
         resumeTimeScale = 1f;
         overview?.CancelConfirmation();
-        audioSettingsPanel?.Close();
+        if (closeSettings) audioSettingsPanel?.Close();
         if (pausePanel != null) pausePanel.SetActive(false);
+        TutorialController.Active?.SetHintVisible(true);
     }
 
     private void UpdateLocalizedContent()
     {
-        overview.Refresh(RunStateManager.Instance);
+        if (!IsBunker) overview.Refresh(RunStateManager.Instance);
     }
 
     private void ReturnFromSettings()

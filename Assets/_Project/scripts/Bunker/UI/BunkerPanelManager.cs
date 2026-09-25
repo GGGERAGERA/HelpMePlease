@@ -62,18 +62,16 @@ public sealed class BunkerPanelManager : MonoBehaviour
 
     }
 
-    private void Update()
+    public bool TryCloseForEscape()
     {
-        if (SceneTransitionOverlay.IsTransitioning) return;
-        if (!Input.GetKeyDown(KeyCode.Escape))
-            return;
         if (audioSettingsPanel != null && audioSettingsPanel.IsOpen)
         {
             audioSettingsPanel.Close();
-            return;
+            return true;
         }
-        if (IsAnyPanelOpen)
-            CloseAll();
+        if (!IsAnyPanelOpen) return false;
+        CloseAll();
+        return true;
     }
 
     public void OpenEscapeProtocol()

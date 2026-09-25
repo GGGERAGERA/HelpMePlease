@@ -20,9 +20,6 @@ public sealed class AudioSettingsPanel : MonoBehaviour
     [Header("Display")]
     [SerializeField] private TMP_Dropdown windowModeDropdown;
 
-    [Header("Accessibility")]
-    [SerializeField] private Toggle automaticFireToggle;
-
     [Header("Navigation")]
     [SerializeField] private Button backButton;
 
@@ -96,9 +93,6 @@ public sealed class AudioSettingsPanel : MonoBehaviour
         );
         languageDropdown?.RefreshShownValue();
         RefreshWindowModes(localization.CurrentLanguage);
-        automaticFireToggle?.SetIsOnWithoutNotify(
-            WeaponControlSettings.AutomaticFireEnabled
-        );
     }
 
     private void RegisterListeners()
@@ -111,9 +105,6 @@ public sealed class AudioSettingsPanel : MonoBehaviour
         soundsSlider?.onValueChanged.AddListener(HandleSoundsChanged);
         languageDropdown?.onValueChanged.AddListener(
             HandleLanguageChanged
-        );
-        automaticFireToggle?.onValueChanged.AddListener(
-            HandleAutomaticFireChanged
         );
         backButton?.onClick.AddListener(Close);
         windowModeDropdown?.onValueChanged.AddListener(HandleWindowModeChanged);
@@ -131,9 +122,6 @@ public sealed class AudioSettingsPanel : MonoBehaviour
         soundsSlider?.onValueChanged.RemoveListener(HandleSoundsChanged);
         languageDropdown?.onValueChanged.RemoveListener(
             HandleLanguageChanged
-        );
-        automaticFireToggle?.onValueChanged.RemoveListener(
-            HandleAutomaticFireChanged
         );
         backButton?.onClick.RemoveListener(Close);
         windowModeDropdown?.onValueChanged.RemoveListener(HandleWindowModeChanged);
@@ -188,11 +176,6 @@ public sealed class AudioSettingsPanel : MonoBehaviour
             ? GameLanguage.Russian
             : GameLanguage.English;
         LocalizationService.EnsureExists().SetLanguage(language);
-    }
-
-    private static void HandleAutomaticFireChanged(bool enabled)
-    {
-        WeaponControlSettings.SetAutomaticFire(enabled);
     }
 
     private void RefreshWindowModes(GameLanguage language)

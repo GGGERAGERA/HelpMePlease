@@ -10,6 +10,9 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
 
     private BunkerInteractableCollider current;
 
+    private bool IsInputBlocked => Time.timeScale <= 0f || SceneTransitionOverlay.IsTransitioning ||
+        (Panels != null && Panels.IsAnyPanelOpen);
+
     private BunkerPanelManager Panels =>
         BunkerContext.Instance != null && BunkerContext.Instance.Panels != null
             ? BunkerContext.Instance.Panels
@@ -29,7 +32,6 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
 
     private void Update()
     {
-        if (SceneTransitionOverlay.IsTransitioning) return;
         UpdateHover();
 
         if (Input.GetMouseButtonDown(0))
@@ -38,7 +40,7 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
 
     private void UpdateHover()
     {
-        if (Panels != null && Panels.IsAnyPanelOpen)
+        if (IsInputBlocked)
         {
             current?.Hoverable?.SetHovered(false);
             current = null;
@@ -59,7 +61,7 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
 
     private void TryInteract()
     {
-        if (Panels != null && Panels.IsAnyPanelOpen)
+        if (IsInputBlocked)
             return;
 
         BunkerInteractableCollider target = RaycastInteractable();
