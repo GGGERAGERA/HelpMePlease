@@ -143,7 +143,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
             sector.EnemySpeedMultiplier,
             sector.SpawnPressureMultiplier
         );
-        worldRuleController?.Apply(sector.WorldRule);
+        if (!TutorialController.IsTutorialSector) worldRuleController?.Apply(sector.WorldRule);
         runFlowController.BindEnemySpawner(enemySpawner);
         runFlowController.InitializeSector(sector.StageProfile);
         runFlowController.ApplyLevelMechanics();
@@ -151,7 +151,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
             sector.ExperienceGainMultiplier
         );
 
-        if (RunRoute.IsExplorationSector(sector.SectorNumber))
+        if (TutorialController.IsTutorialSector || RunRoute.IsExplorationSector(sector.SectorNumber))
             ApplyExplorationSector();
     }
 

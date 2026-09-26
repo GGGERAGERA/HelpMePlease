@@ -74,6 +74,7 @@ public sealed class RunMessageService : MonoBehaviour
         RunStateManager runState = RunStateManager.Instance;
 
         if (runState == null || runState.CurrentSector == null ||
+            PlayerPrefs.GetInt(TutorialController.CompletionKey, 0) != 0 ||
             runState.CurrentSector.SectorNumber != RunRoute.FirstSector) yield break;
         hintsReady = true;
     }

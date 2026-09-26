@@ -213,7 +213,7 @@ public sealed class RunStateManager : MonoBehaviour
         CurrentSector = sector;
 
         if (sector != null)
-            CurrentLevel = Mathf.Max(1, sector.SectorNumber);
+            CurrentLevel = Mathf.Max(RunRoute.TutorialSector, sector.SectorNumber);
     }
 
     public void ClearCurrentSector()
@@ -639,6 +639,7 @@ public sealed class RunStateManager : MonoBehaviour
         }
 
         int sectorNumber = CurrentSector.SectorNumber;
+        if (sectorNumber == RunRoute.TutorialSector) return;
 
         if (lastCompletedSectorNumber == sectorNumber)
         {
@@ -852,12 +853,15 @@ public sealed class RunStateManager : MonoBehaviour
         }
 
         SetCurrentSector(new RunSector(
-            1,
+            TutorialController.NeedsTutorial ? RunRoute.TutorialSector : RunRoute.FirstSector,
             startingStageProfile,
             startingWorldRule,
             startingLocalAnomaly
         ));
     }
+
+    public RunSector CreateFirstNormalSector() => new RunSector(
+        RunRoute.FirstSector, startingStageProfile, startingWorldRule, startingLocalAnomaly);
 
     public void ClearFinishedRunCompatibilityState()
     {

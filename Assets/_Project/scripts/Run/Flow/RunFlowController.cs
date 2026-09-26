@@ -38,7 +38,8 @@ public sealed class RunFlowController : MonoBehaviour
     public float ExitMinimumTimeRemaining => sectorProfile != null
         ? Mathf.Max(0f, sectorProfile.ExitActivationTime - SectorElapsedTime) : 0f;
     public bool IsExitRecovering => enemySpawner != null && enemySpawner.IsRecoveringFromFirstAutomaticAssault;
-    private bool CanUnlockExit => TutorialController.IsActive ? TutorialController.Active.GoalCompleted : sectorProfile != null &&
+    private bool CanUnlockExit => TutorialController.IsTutorialSector
+        ? TutorialController.IsActive && TutorialController.Active.GoalCompleted : sectorProfile != null &&
         SectorElapsedTime >= sectorProfile.ExitActivationTime &&
         ((enemySpawner != null && enemySpawner.HasRecoveredFromFirstAutomaticAssault) ||
          (SectorElapsedTime >= sectorProfile.ExitUnlockTimeout &&
@@ -167,6 +168,20 @@ public sealed class RunFlowController : MonoBehaviour
             ? runState.CurrentSector.SectorNumber
             : 0;
 
+        if (sectorNumber == RunRoute.TutorialSector)
+        {
+            var transition = ResolveLevelChoiceManager();
+            if (!CanContinue || !RewardsResolved || !TutorialController.IsActive ||
+                TutorialController.Active.Step != TutorialStep.Exit ||
+                transition == null || !transition.CanLeaveTutorial) return false;
+            levelCompleted = true;
+            Phase = RunPhase.WaitingForRewards;
+            enemySpawner?.StopSpawning();
+            ExitReached?.Invoke();
+            StartCoroutine(CompleteTutorial(transition));
+            return true;
+        }
+
         if (!RunRoute.IsExplorationSector(sectorNumber))
         {
             Debug.LogWarning(
@@ -222,6 +237,16 @@ public sealed class RunFlowController : MonoBehaviour
         ResolveLevelMechanics();
         worldEventSpawner?.SetHoldPointEnabled(false);
         noDamageChallenge?.CancelChallenge();
+    }
+
+    private IEnumerator CompleteTutorial(LevelChoiceManager transition)
+    {
+        // Match the ordinary sector-choice pause; the scene transition restores time.
+        Time.timeScale = 0f;
+        RunMessageService.Instance?.ShowCustom("ОБУЧЕНИЕ ЗАВЕРШЕНО", "Sector 1", 1.5f);
+        yield return new WaitForSecondsRealtime(1.5f);
+        while (CanContinue && (!RewardsResolved || !transition.CanLeaveTutorial)) yield return null;
+        if (CanContinue) transition.LeaveTutorial();
     }
 
     private IEnumerator FinalBossRoutine()

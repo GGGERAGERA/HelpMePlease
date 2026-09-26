@@ -1,5 +1,6 @@
 public static class RunRoute
 {
+    public const int TutorialSector = 0;
     public const int FirstSector = 1;
     public const int TotalSectors = 3;
     public const int ExplorationSectorCount = TotalSectors;
@@ -7,7 +8,8 @@ public static class RunRoute
 
     public static bool HasNextSector(int sectorNumber)
     {
-        return IsExplorationSector(sectorNumber) && sectorNumber < TotalSectors;
+        return sectorNumber == TutorialSector ||
+            IsExplorationSector(sectorNumber) && sectorNumber < TotalSectors;
     }
 
     public static bool IsExplorationSector(int sectorNumber)

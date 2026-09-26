@@ -130,7 +130,7 @@ public class WorldEventSpawner : MonoBehaviour
 
     private void Update()
     {
-        if (siteControlledMode)
+        if (siteControlledMode || TutorialController.IsTutorialSector)
             return;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -689,7 +689,8 @@ public class WorldEventSpawner : MonoBehaviour
 
     public bool CanStartEvent(WorldEvent worldEvent)
     {
-        if (TutorialController.IsActive && !TutorialController.Active.CanStartEvent(worldEvent)) return false;
+        if (TutorialController.IsTutorialSector &&
+            (!TutorialController.IsActive || !TutorialController.Active.CanStartEvent(worldEvent))) return false;
         return worldEvent != null &&
             ActiveEvent == null &&
             spawnedEvents.Contains(worldEvent) &&

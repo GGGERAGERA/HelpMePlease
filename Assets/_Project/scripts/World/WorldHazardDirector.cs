@@ -44,7 +44,7 @@ public sealed class WorldHazardDirector : MonoBehaviour
         flow.isActiveAndEnabled && flow.Phase == RunPhase.NormalSector &&
         RunStateManager.Instance != null && RunStateManager.Instance.IsActiveRun(runId) &&
         player != null && player.isActiveAndEnabled && !player.IsDead &&
-        !TutorialController.IsActive && !SceneTransitionOverlay.IsTransitioning;
+        !TutorialController.IsTutorialSector && !SceneTransitionOverlay.IsTransitioning;
 
     private void Update()
     {

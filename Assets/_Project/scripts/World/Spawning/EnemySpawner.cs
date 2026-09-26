@@ -144,7 +144,7 @@ public partial class EnemySpawner : MonoBehaviour
     {
         if (!spawningEnabled || Time.timeScale == 0f)
             return;
-        if (TutorialController.IsActive && !TutorialController.Active.AllowsNormalSpawning) return;
+        if (TutorialController.IsTutorialSector) return;
 
         if (player == null)
             player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);

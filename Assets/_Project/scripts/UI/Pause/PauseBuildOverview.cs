@@ -70,10 +70,12 @@ public sealed class PauseBuildOverview : MonoBehaviour
         var localization = LocalizationService.EnsureExists();
         float time = run != null ? run.GetCurrentRunTime() : RunStatsManager.Instance?.RunTime ?? 0f;
         int kills = run != null ? run.GetCurrentRunKills() : RunStatsManager.Instance?.Kills ?? 0;
+        string sectorLabel = run?.CurrentSector?.SectorNumber == RunRoute.TutorialSector
+            ? "Обучение" : $"{run?.CurrentSector?.SectorNumber ?? 1} / {RunRoute.TotalSectors}";
         runText.text = $"{localization.Get("stats.time")}  <color=#FFFFFF>{(int)time / 60:00}:{(int)time % 60:00}</color>     " +
             $"{localization.Get("stats.kills")}  <color=#FFFFFF>{kills}</color>     " +
             $"{localization.Get("stats.level")}  <color=#FFFFFF>{ExperienceManager.Instance?.CurrentLevel ?? 1}</color>     " +
-            $"{localization.Get("pause.sector")}  <color=#FFFFFF>{run?.CurrentSector?.SectorNumber ?? 1} / {RunRoute.TotalSectors}</color>";
+            $"{localization.Get("pause.sector")}  <color=#FFFFFF>{sectorLabel}</color>";
         RefreshBuild(run?.OrbitalStationState, run?.ItemSlots);
     }
 

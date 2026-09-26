@@ -128,6 +128,8 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             return false;
 
         anomalyController.BeginSiteLayout();
+        if (TutorialController.IsTutorialSector)
+            return InitializeTutorialSector();
         eventSpawner.ConfigureSiteControlledMode(TotalSiteCount);
 
         if (!BuildLayout(
@@ -154,21 +156,6 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
 
         LocalAnomalyData[] normalAnomalies = BuildNormalAnomalyPool();
 
-        // Only the closest normal site is fixed for onboarding; retain the production layout.
-        int tutorialSite = -1;
-        WorldEvent tutorialEvent = null;
-        if (TutorialController.IsActive)
-        {
-            tutorialEvent = siteEvents.Find(e => e is CaptureZoneEvent);
-            Vector2 origin = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true)?.position ?? Vector3.zero;
-            float nearest = float.MaxValue;
-            for (int i = 0; i < normalPositions.Length; i++)
-            {
-                float distance = (normalPositions[i] - origin).sqrMagnitude;
-                if (distance < nearest) { nearest = distance; tutorialSite = i; }
-            }
-        }
-
         for (int i = 0; i < NormalSiteCount; i++)
         {
             GameObject siteObject = new($"Normal Anomaly Site {i + 1}");
@@ -178,15 +165,13 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
                 normalPositions[i],
                 normalSizes[i],
                 normalAnomalies[i % normalAnomalies.Length],
-                i == tutorialSite && tutorialEvent != null ? tutorialEvent : siteEvents[i % siteEvents.Count],
+                siteEvents[i % siteEvents.Count],
                 eventSpawner,
                 anomalyController,
                 exitPosition,
                 config.ExitRadius,
                 config.AnomalyTerritoryFill
             );
-            if (i == tutorialSite && tutorialEvent != null && eventSpawner.SpawnedEvents.Count > 0)
-                TutorialController.Active.ConfigureTarget(eventSpawner.SpawnedEvents[eventSpawner.SpawnedEvents.Count - 1] as CaptureZoneEvent);
         }
 
         AnomalyPowerType specialPower = SelectSpecialPower();
@@ -262,6 +247,44 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
     }
 
     public ProductionPortalPair PortalPair { get; private set; }
+
+    private bool InitializeTutorialSector()
+    {
+        // Reuse the authored capture event and exit, without random sites, anomalies,
+        // breakables, resources, portals or the normal pressure director.
+        eventSpawner.ConfigureSiteControlledMode(1);
+        CaptureZoneEvent capture = null;
+        foreach (var prefab in eventSpawner.EventPrefabs)
+            if (prefab is CaptureZoneEvent zone && eventSpawner.IsEventPrefabEnabled(zone))
+            { capture = zone; break; }
+        var player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
+        if (capture == null || player == null || TutorialController.Active == null)
+        {
+            Debug.LogError("[Tutorial] Capture event or player is missing.", this);
+            return false;
+        }
+
+        Vector2 origin = player.position;
+        float captureRadius = Mathf.Max(3f, eventSpawner.GetSiteEventFootprintRadius(capture));
+        Vector2 captureSize = Vector2.one * captureRadius * 2f;
+        for (int i = 0; i < 8; i++)
+        {
+            float angle = i * Mathf.PI / 4f;
+            Vector2 direction = new(Mathf.Cos(angle), Mathf.Sin(angle));
+            Vector2 eventPosition = origin + direction * (captureRadius + 7f);
+            Vector2 exitPosition = eventPosition + direction * (captureRadius + config.ExitRadius + 3f);
+            if (!IsFootprintClear(eventPosition, captureSize) ||
+                !IsFootprintClear(exitPosition, Vector2.one * config.ExitRadius * 2f)) continue;
+            if (!eventSpawner.SpawnSiteEventAt(capture, eventPosition, eventPosition,
+                    captureSize, true, out WorldEvent target)) return false;
+            TutorialController.Active.ConfigureTarget((CaptureZoneEvent)target);
+            var exit = new GameObject("Tutorial Sector Exit").AddComponent<ProductionSectorExit>();
+            exit.Initialize(exitPosition, config.ExitRadius, runFlow, config.SectorExitGlow);
+            return true;
+        }
+        Debug.LogError("[Tutorial] No clear space for the capture event and exit.", this);
+        return false;
+    }
 
     public bool SpawnPortalPair()
     {

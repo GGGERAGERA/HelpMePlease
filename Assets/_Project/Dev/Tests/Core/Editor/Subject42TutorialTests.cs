@@ -39,6 +39,8 @@ public sealed class Subject42TutorialTests
         yield return CoreTestSupport.Await(() => TutorialController.Active != null && TutorialController.Active.Player != null);
         Debug.Log("[TutorialTest] Production tutorial ready.");
         var controller = TutorialController.Active;
+        Assert.That(RunStateManager.Instance.CurrentSector.SectorNumber, Is.EqualTo(0));
+        Assert.That(RunStateManager.Instance.CompletedLevels, Is.Zero);
         Assert.That(controller, Is.Not.Null, "Fresh production sector must start TutorialController.");
         Assert.That(controller.Step, Is.EqualTo(TutorialStep.Movement));
         var seen = new List<TutorialStep> { controller.Step };
@@ -54,6 +56,10 @@ public sealed class Subject42TutorialTests
         Assert.That(UpgradeManager.Instance.IsChoosingUpgrade, Is.False);
         var player = controller.Player;
         var sector = Object.FindFirstObjectByType<ProductionExplorationSectorController>();
+        Assert.That(Object.FindFirstObjectByType<WorldEventSpawner>().SpawnedEvents.Count, Is.EqualTo(1));
+        Assert.That(ProductionAnomalySite.ActiveSites, Is.Empty);
+        Assert.That(sector.PortalPair, Is.Null);
+        Assert.That(sector.PropCount, Is.Zero);
         var earlyChest = WorldLootChestSpawner.SpawnChest(sector.Config.WorldLootChestPrefab, (Vector2)player.transform.position + Vector2.up * 4f);
         Assert.That(earlyChest.CanInteract, Is.False, "Early chest must not consume the first weapon mount.");
         earlyChest.Interact();
@@ -89,7 +95,7 @@ public sealed class Subject42TutorialTests
         Assert.That(controller.Station.RewardFlow.DebugChooseFirstValidTarget(), Is.True);
         yield return CoreTestSupport.Await(() => controller.Step == TutorialStep.SectorGoal);
         Assert.That(controller.Station.State.Modules.Count, Is.EqualTo(modules + 1));
-        Assert.That(earlyChest.CanInteract, Is.True, "Ordinary chest unlocks after tutorial placement.");
+        Assert.That(earlyChest.CanInteract, Is.False, "Level 0 must not introduce extra rewards.");
         Object.Destroy(earlyChest.gameObject);
         yield return Capture("06-sector");
         Assert.That(controller.TargetEvent, Is.Not.Null);
@@ -102,12 +108,8 @@ public sealed class Subject42TutorialTests
         while (controller.Step != TutorialStep.Exit && Time.realtimeSinceStartup < deadline) yield return null;
         Assert.That(controller.Step, Is.EqualTo(TutorialStep.Exit), "Natural Hold Zone completion must unlock exit.");
         Assert.That(RunFlowController.Instance.IsExitUnlocked, Is.True);
-        // Resolve the ordinary site reward before approaching exit.
-        if (UpgradeManager.Instance.IsChoosingUpgrade)
-        {
-            yield return ClickCard();
-            yield return RewardScenarioAssertions.FinishReward();
-        }
+        Assert.That(RunStateManager.Instance.ThreatValue, Is.Zero);
+        Assert.That(UpgradeManager.Instance.IsRewardQueueIdle, Is.True, "Capture must not introduce random rewards.");
         yield return Capture("08-exit");
         player.GetComponent<Rigidbody2D>().position = controller.FocusTarget.position;
         yield return CoreTestSupport.Await(() => PlayerPrefs.GetInt(Key, 0) == 1);
@@ -115,16 +117,18 @@ public sealed class Subject42TutorialTests
             TutorialStep.Movement, TutorialStep.FirstEnemies, TutorialStep.Experience, TutorialStep.FirstReward,
             TutorialStep.OrbitalPlacement, TutorialStep.SectorGoal, TutorialStep.FirstEvent, TutorialStep.Exit, TutorialStep.Completed }));
         Assert.That(TutorialController.IsActive, Is.False);
-        var next = Object.FindFirstObjectByType<LevelChoiceManager>();
-        yield return CoreTestSupport.Await(() => next.IsChoosing);
-        Assert.That(next.DebugSelectFirstRule(), Is.True);
-        yield return CoreTestSupport.Await(() => RunStateManager.Instance.CurrentSector.SectorNumber == 2 && !SceneTransitionOverlay.IsTransitioning);
+        yield return CoreTestSupport.Await(() => RunStateManager.Instance.CurrentSector.SectorNumber == 1 && !SceneTransitionOverlay.IsTransitioning);
+        Assert.That(RunStateManager.Instance.CompletedLevels, Is.Zero, "Tutorial is outside the three-sector route.");
+        Assert.That(ExperienceManager.Instance.CurrentLevel, Is.EqualTo(2), "Only one tutorial XP reward is granted.");
+        Assert.That(Object.FindFirstObjectByType<LevelChoiceManager>().IsChoosing, Is.False);
         Assert.That(TutorialController.Active, Is.Null, "Later sectors must not install tutorial.");
         yield return Restart();
         Assert.That(TutorialController.Active, Is.Null, "Completion must survive a new first-sector run.");
+        Assert.That(RunStateManager.Instance.CurrentSector.SectorNumber, Is.EqualTo(1));
         TutorialController.ResetCompletion();
         yield return Restart();
         Assert.That(TutorialController.Active?.Step, Is.EqualTo(TutorialStep.Movement), "RESET must re-enable the next fresh run.");
+        Assert.That(RunStateManager.Instance.CurrentSector.SectorNumber, Is.EqualTo(0));
         yield return Capture("09-reset");
     }
 

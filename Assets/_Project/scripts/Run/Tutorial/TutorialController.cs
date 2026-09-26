@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Subject42.Combat.OrbitalStation;
@@ -6,13 +7,14 @@ using UnityEngine;
 
 public enum TutorialStep { Movement, FirstEnemies, Experience, FirstReward, OrbitalPlacement, SectorGoal, FirstEvent, Exit, Completed }
 
-// Owns only first-sector guidance. Rewards, combat, capture and exit still commit in their existing owners.
+// Guides Level 0; rewards, combat, capture and transitions retain their existing owners.
 public sealed class TutorialController : MonoBehaviour
 {
     public const string CompletionKey = "Subject42.Tutorial.Completed";
     public static TutorialController Active { get; private set; }
     public static bool IsActive => Active != null && Active.isActiveAndEnabled && Active.Step != TutorialStep.Completed;
-    public static bool ShouldStart
+    public static bool IsTutorialSector => RunStateManager.Instance?.CurrentSector?.SectorNumber == RunRoute.TutorialSector;
+    public static bool NeedsTutorial
     {
         get
         {
@@ -20,11 +22,10 @@ public sealed class TutorialController : MonoBehaviour
             if (BotRunSession.Current != null && (BotRunSession.Current.BotEnabled ||
                 BotRunSession.Current.IsStarting || BotRunSession.Current.IsRunning)) return false;
 #endif
-            var run = RunStateManager.Instance;
-            return PlayerPrefs.GetInt(CompletionKey, 0) == 0 && run != null &&
-                run.IsActiveRun(run.RunId) && run.CurrentSector?.SectorNumber == RunRoute.FirstSector;
+            return PlayerPrefs.GetInt(CompletionKey, 0) == 0;
         }
     }
+    public static bool ShouldStart => IsTutorialSector && RunStateManager.Instance.IsActiveRun(RunStateManager.Instance.RunId);
 
     public TutorialStep Step { get; private set; } = TutorialStep.Movement;
     public event Action<TutorialStep> StepChanged;
@@ -32,7 +33,6 @@ public sealed class TutorialController : MonoBehaviour
     public CaptureZoneEvent TargetEvent { get; private set; }
     public bool GoalCompleted { get; private set; }
     public bool NeedsFirstWeapon => Step <= TutorialStep.OrbitalPlacement;
-    public bool AllowsNormalSpawning => Step >= TutorialStep.SectorGoal;
     public GameObject Player { get; private set; }
     public OrbitalStationRuntime Station { get; private set; }
     public UpgradePanelView RewardPanel { get; private set; }
@@ -137,18 +137,23 @@ public sealed class TutorialController : MonoBehaviour
         travelled += distance;
         if (travelled < 2.5f) return;
         SetStep(TutorialStep.FirstEnemies);
-        for (int i = 0; i < 3; i++)
+        StartCoroutine(SpawnFirstEnemies());
+    }
+
+    private IEnumerator SpawnFirstEnemies()
+    {
+        while (firstEnemies.Count < 3 && Step == TutorialStep.FirstEnemies)
         {
             var enemy = enemies.SpawnTutorialEnemy(Player.transform.position);
-            if (enemy == null) continue;
+            if (enemy == null)
+            {
+                // A temporarily blocked spawn point must not disable the tutorial.
+                yield return new WaitForSeconds(0.5f);
+                continue;
+            }
             firstEnemies.Add(enemy);
             enemy.OnDied += OnEnemyDied;
-        }
-        FocusTarget = firstEnemies.FirstOrDefault()?.transform;
-        if (FocusTarget == null)
-        {
-            Debug.LogError("[Tutorial] Could not spawn basic enemies in the gameplay area.", this);
-            enabled = false;
+            if (FocusTarget == null) FocusTarget = enemy.transform;
         }
     }
 

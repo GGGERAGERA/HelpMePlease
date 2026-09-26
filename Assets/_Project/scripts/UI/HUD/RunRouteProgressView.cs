@@ -16,6 +16,14 @@ public sealed class RunRouteProgressView : MonoBehaviour
     private int displayedSector, displayedTotal;
     private string displayedObjectiveKey;
     private bool displayedSpecial;
+    private Vector2 objectivePosition;
+    private TextAlignmentOptions objectiveAlignment;
+    private void Awake()
+    {
+        if (objectiveText == null) return;
+        objectivePosition = objectiveText.rectTransform.anchoredPosition;
+        objectiveAlignment = objectiveText.alignment;
+    }
     private void OnEnable() => LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
     private void OnDisable()
     {
@@ -27,7 +35,7 @@ public sealed class RunRouteProgressView : MonoBehaviour
     public void Hide() => canvasGroup.alpha = 0f;
     private void Show(int sector, int total)
     {
-        displayedSector = Mathf.Clamp(sector, 1, Mathf.Max(1, total));
+        displayedSector = Mathf.Clamp(sector, RunRoute.TutorialSector, Mathf.Max(1, total));
         displayedTotal = Mathf.Max(1, total);
         canvasGroup.alpha = 1f;
         Refresh();
@@ -45,13 +53,24 @@ public sealed class RunRouteProgressView : MonoBehaviour
     }
     private void Refresh()
     {
-        if (sectorText != null) sectorText.SetText("{0}/{1}", displayedSector, displayedTotal);
-        if (objectiveText != null) objectiveText.text = displayedObjectiveKey == null
-            ? string.Empty : LocalizationService.Instance.Get(displayedObjectiveKey);
+        bool tutorial = displayedSector == RunRoute.TutorialSector;
+        if (sectorText != null)
+        {
+            if (tutorial) sectorText.text = string.Empty;
+            else sectorText.SetText("{0}/{1}", displayedSector, displayedTotal);
+        }
+        if (objectiveText != null)
+        {
+            objectiveText.text = tutorial ? "Обучение" : displayedObjectiveKey == null
+                ? string.Empty : LocalizationService.Instance.Get(displayedObjectiveKey);
+            objectiveText.rectTransform.anchoredPosition = tutorial
+                ? new Vector2(0f, objectivePosition.y) : objectivePosition;
+            objectiveText.alignment = tutorial ? TextAlignmentOptions.Center : objectiveAlignment;
+        }
         if (specialIcon != null) specialIcon.SetActive(displayedSpecial);
         for (int i = 0; i < points.Length; i++)
         {
-            points[i].gameObject.SetActive(i < displayedTotal);
+            points[i].gameObject.SetActive(!tutorial && i < displayedTotal);
             points[i].color = i < displayedSector - 1 ? completedColor :
                 i == displayedSector - 1 ? currentColor : futureColor;
         }

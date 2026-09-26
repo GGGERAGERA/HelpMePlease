@@ -19,7 +19,6 @@ public sealed class TutorialOverlay : MaskableGraphic
     private bool visible;
     private TutorialStep shownStep = TutorialStep.Completed;
     private static readonly Color Highlight = new(0.4f, 1f, 0.86f, 1f);
-    private static readonly string[] Titles = { "ДВИЖЕНИЕ", "ВРАГИ", "ОПЫТ", "УСИЛЕНИЕ", "ОРБИТА", "СЕКТОР", "СОБЫТИЕ", "ВЫХОД" };
     private static readonly string[] Descriptions = {
         "WASD — двигаться. Оружие атакует автоматически.", "Не стой на месте. Держи дистанцию.",
         "Подбирай осколки опыта, чтобы получать усиления.", "Выбери одну награду для этого забега.",
@@ -75,7 +74,7 @@ public sealed class TutorialOverlay : MaskableGraphic
         if (shownStep != tutorial.Step)
         {
             shownStep = tutorial.Step;
-            caption.text = $"<b><color=#66FFDB>{Titles[(int)shownStep]}</color></b>\n{Descriptions[(int)shownStep]}";
+            caption.text = Descriptions[(int)shownStep];
         }
 
         if (tutorial.Step == TutorialStep.FirstReward && tutorial.RewardPanel != null)

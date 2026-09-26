@@ -42,7 +42,7 @@ public sealed class RunThreatController : MonoBehaviour
     {
         RunStateManager runState = RunStateManager.Instance;
 
-        if (config == null || runState == null || runState.IsRunEnded ||
+        if (TutorialController.IsTutorialSector || config == null || runState == null || runState.IsRunEnded ||
             Time.timeScale == 0f)
         {
             return;

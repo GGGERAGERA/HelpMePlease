@@ -60,6 +60,16 @@ public sealed class LevelChoiceManager : MonoBehaviour
         TryShowChoices();
     }
 
+    public bool CanLeaveTutorial => SceneTransitionOverlay.CanLoad(gameplaySceneName) &&
+        SceneTransitionOverlay.Instance != null;
+
+    public void LeaveTutorial()
+    {
+        var run = RunStateManager.Instance;
+        if (run == null || !TutorialController.IsTutorialSector) return;
+        TransitionToSector(run.CreateFirstNormalSector());
+    }
+
     public bool TryShowChoices()
     {
         RunStateManager activeRun = RunStateManager.Instance;
