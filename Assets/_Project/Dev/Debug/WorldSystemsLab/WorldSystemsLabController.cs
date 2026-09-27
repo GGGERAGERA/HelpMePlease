@@ -29,6 +29,11 @@ public sealed class WorldSystemsLabController : MonoBehaviour
     [SerializeField] private ExplorationSectorConfig explorationConfig;
     [SerializeField] private PropScatterProfile propScatterProfile;
 
+    [Header("Corridor V2 prototype only")]
+    [SerializeField] private RocketHazardDefinition corridorRocket;
+    [SerializeField] private GameObject corridorEnemy;
+    private CorridorV2Lab corridorV2;
+
     private readonly List<ProductionAnomalySite> spawnedSites = new();
     private ProductionExplorationSectorController.SiteRegion[] territoryRegions;
     private int specialTerritoryIndex;
@@ -68,6 +73,8 @@ public sealed class WorldSystemsLabController : MonoBehaviour
         worldRules.ConfigureDebugGoldenAssets(null, null);
         tacticalMap?.BindPlayer(player);
         BuildProductionProps();
+        corridorV2 = gameObject.AddComponent<CorridorV2Lab>();
+        corridorV2.Initialize(this, gameplayArea, corridorRocket, corridorEnemy);
     }
 
     private void Update()
@@ -221,8 +228,19 @@ public sealed class WorldSystemsLabController : MonoBehaviour
 
     public void ClearEvents()
     {
+        corridorV2?.Stop();
         events?.ClearAllDebugEvents();
         notice = "Events cleared";
+    }
+
+    public void PrepareCorridorV2()
+    {
+        ClearEvents();
+        ClearAnomalies();
+        ClearPortals();
+        worldRules?.Clear();
+        props?.Clear();
+        tacticalMap?.SetVisible(false);
     }
 
     public bool SpawnPortalPair()
@@ -353,7 +371,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
             panel.height - 16f
         ));
         GUILayout.Label("WORLD SYSTEMS LAB", titleStyle);
-        GUILayout.Label("Production systems · no combat runtime", noteStyle);
+        GUILayout.Label("Production systems · optional Corridor V2 test", noteStyle);
         scroll = GUILayout.BeginScrollView(scroll);
 
         Section("WORLD RULE");

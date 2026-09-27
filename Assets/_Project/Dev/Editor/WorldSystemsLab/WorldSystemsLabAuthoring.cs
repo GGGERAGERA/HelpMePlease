@@ -176,6 +176,10 @@ public static class WorldSystemsLabAuthoring
             SetObject(lab, "anomalies", anomalyController);
             SetObject(lab, "events", eventSpawner);
             SetObject(lab, "tacticalMap", map);
+            SetObject(lab, "corridorRocket", AssetDatabase.LoadAssetAtPath<RocketHazardDefinition>(
+                "Assets/_Project/Data/WorldHazards/RocketForeshadow.asset"));
+            SetObject(lab, "corridorEnemy", AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/prefabs/Enemies/p_Enemy_default.prefab"));
             SetArray(lab, "worldRuleAssets", FindWorldRules());
             SetArray(lab, "normalAnomalyAssets",
                 AssetDatabase.LoadAssetAtPath<ExplorationSectorConfig>(

@@ -62,9 +62,54 @@ Both scenes were opened in the running Editor and exercised in actual Play Mode.
 
 This lightweight scene uses the production World Rule, anomaly territory,
 World Event, portal, prop scatter, player, camera, and tactical-map code. It has
-no EnemySpawner, Threat, XP/reward flow, boss, ORBITAL, or combat HUD. The panel
+no EnemySpawner by default, Threat, XP/reward flow, boss, ORBITAL, or combat HUD. The panel
 can switch every authored World Rule, spawn/clear normal and special anomaly
 territories, spawn/clear each production Event, manage a production portal pair,
 reset the Lab, center the player, and toggle the map. Carrier Hunt is explicitly
 labelled `preview only`: it creates the real authored event and initial visual,
 but never starts or creates an enemy carrier.
+
+### Corridor V2 gameplay prototype
+
+Open `Tools > Subject42 > Dev > WorldSystemsLab > Open`, then enter Play Mode.
+The checked-in scene already contains its rocket/enemy asset references. If using
+an old local scene copy, use `Rebuild Scene` outside Play Mode. Production scenes,
+Corridor prefabs and rocket assets are unchanged.
+
+- **F5** or the top-right Start button: start/restart, teleport to START and heal
+  (also revive after a lab death). Start is immediate; no interaction or holding E.
+- **F6**: select straight / L-shaped for the next run.
+- **F7**: select 0 / 90 / 180 / 270 degrees for the next run; press F5 to apply.
+- **F8**: toggle ordinary enemies immediately. OFF clears the lab crowd.
+- **WASD / arrows**: move; **Space**: existing player dash.
+- **F1**: hide/show the original left lab panel. The V2 timer stays visible.
+- **Stop / clear**: cancel the event/rockets, clear enemies, restore arena size
+  and center the player. The original lab Reset also restores scattered props.
+
+Both fixed routes are 120 units long (about 20 seconds at the lab's 6 units/s,
+before dodging/dashing). The deadline is 25 seconds; reaching EXIT sooner ends
+successfully. Checkpoints at path distances 30, 60 and 90 are grey (inactive),
+cyan (next) or green (completed). Run within 3.5 units of each node in order.
+EXIT turns red to green only after all three. The panel shows time, HP, boundary
+hits and enemy count; the result records completion time, checkpoints and rockets.
+
+Pink anomalous boundaries have **no solid colliders**: normal enemies can enter
+anywhere. Leaving costs 12 HP with existing hit knockback, then up to 12 HP/s
+outside, subject to normal player invulnerability. Returning does not reset nodes
+or grant skipped ones. A swept check catches brief corner excursions/dashes.
+This is a penalty, not a guarantee against all shortcuts between ordered nodes.
+
+V2 reuses `WorldEvent`/`WorldEventSpawner` for lifecycle and reward suppression,
+`RocketForeshadow`/`RocketHazardDefinition.CreateAttack` (`IWorldHazardAttack`,
+`RocketAttackRunner`, existing warning/pool/explosion) for centre, two-side gap and
+left-to-right patterns, and `EnemySpawner.ConfigureDebugExplorationPressure` with
+`p_Enemy_default`/its normal chase AI. The run-only `WorldHazardDirector` is not
+started. The old moving `EvacuationCorridorEvent` remains available unchanged.
+Only while testing V2, lab arena/bounds are scaled to 160 units and unrelated
+anomalies/portals/props are cleared. Existing rewards/weapon systems are not added.
+
+Manual checks: try both layouts/rotations; run straight to EXIT before nodes;
+cut the L corner; leave and return before/after a node; dodge the centre/pair/sweep;
+watch enemies cross the pink border; restart during a warning; let time expire;
+restart after death. Assess time pressure and rocket difficulty in Play Mode.
+No automated combat/bot batches are needed for this prototype.
