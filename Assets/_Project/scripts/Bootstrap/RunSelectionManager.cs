@@ -22,6 +22,8 @@ public sealed class RunSelectionManager : MonoBehaviour
         }
 
         Instance = this;
+        if (transform.parent != null)
+            transform.SetParent(null);
         DontDestroyOnLoad(gameObject);
     }
 

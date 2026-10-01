@@ -49,13 +49,13 @@ public sealed class StartScreenController : MonoBehaviour
     public void Begin()
     {
         if (beginning || settings.IsOpen) return;
-        if (!SceneTransitionOverlay.CanLoad("MainMenu")) return;
+        if (!SceneTransitionOverlay.CanLoad(RunEndService.BunkerSceneName)) return;
         beginning = true;
         menu.interactable = false;
         AudioSettingsService.Instance?.Save();
         EventSystem.current?.SetSelectedGameObject(null);
         // Reuse the existing fade, loading and error handling instead of another startup flow.
-        SceneTransitionOverlay.Load("MainMenu");
+        SceneTransitionOverlay.Load(RunEndService.BunkerSceneName);
     }
 
     public void OpenSettings()

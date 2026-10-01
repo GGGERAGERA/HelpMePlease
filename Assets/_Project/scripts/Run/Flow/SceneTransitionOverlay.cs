@@ -126,7 +126,7 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
                 .PrepareForExternalPause();
         previousTimeScale = Time.timeScale;
         bool loaded = false;
-        returning = scene == "MainMenu";
+        returning = scene == RunEndService.BunkerSceneName;
         canvas.enabled = true;
         group.blocksRaycasts = true;
         Time.timeScale = 0f;
@@ -177,7 +177,7 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
                 spawner.SpawnedPlayer.GetComponentInChildren<OrbitalStationRuntime>() is { IsInitialized: true } &&
                 HUDManager.Instance != null && HUDManager.Instance.IsPlayerBound &&
                 camera != null && camera.target != null && camera.ControlledCamera != null;
-        return scene != "MainMenu" || (BunkerContext.Instance != null &&
+        return scene != RunEndService.BunkerSceneName || (
             bunkerLoadout != null && bunkerLoadout.IsReady &&
             camera != null && camera.target != null && camera.ControlledCamera != null);
     }
@@ -207,7 +207,7 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
 
     private void Recover(bool bunker)
     {
-        string scene = bunker ? "MainMenu" : requestedScene;
+        string scene = bunker ? RunEndService.BunkerSceneName : requestedScene;
         if (!Application.CanStreamedLevelBeLoaded(scene)) return;
         busy = false;
         if (bunker) RunEndService.RecoverToBunker();

@@ -5,7 +5,7 @@ public sealed class RunEndService : MonoBehaviour
 {
     public static RunEndService Instance { get; private set; }
 
-    [SerializeField] private string bunkerSceneName = "MainMenu";
+    public const string BunkerSceneName = "Bunker_OneRoom_Prototype";
 
     private bool isEndingRun;
     private int runId;
@@ -43,7 +43,7 @@ public sealed class RunEndService : MonoBehaviour
 
     public void CompleteRunVictory()
     {
-        if (isEndingRun || !SceneTransitionOverlay.CanLoad(bunkerSceneName))
+        if (isEndingRun || !SceneTransitionOverlay.CanLoad(BunkerSceneName))
             return;
 
         RunStateManager runState = RunStateManager.EnsureExists();
@@ -64,12 +64,12 @@ public sealed class RunEndService : MonoBehaviour
 
     private void EndRun(RunEndReason reason)
     {
-        if (isEndingRun || !SceneTransitionOverlay.CanLoad(bunkerSceneName))
+        if (isEndingRun || !SceneTransitionOverlay.CanLoad(BunkerSceneName))
             return;
         var runState = RunStateManager.Instance;
         if (runState == null || !runState.IsActiveRun(runId)) return;
 
-        SceneTransitionOverlay.Load(bunkerSceneName, () =>
+        SceneTransitionOverlay.Load(BunkerSceneName, () =>
         {
             isEndingRun = true;
             RunSummary summary = runState.EndRun(reason, runId);
@@ -100,7 +100,7 @@ public sealed class RunEndService : MonoBehaviour
     {
         var runState = RunStateManager.Instance;
         int expectedRunId = runState != null ? runState.RunId : 0;
-        SceneTransitionOverlay.Load("MainMenu",
+        SceneTransitionOverlay.Load(BunkerSceneName,
             () => runState?.EndRun(RunEndReason.ReturnedToBunker, expectedRunId));
     }
 }

@@ -3,7 +3,6 @@ using UnityEngine.SceneManagement;
 
 public sealed class AudioSceneDirector : MonoBehaviour
 {
-    private const string BunkerSceneName = "MainMenu";
     private const string RunSceneName = "MVP";
 
     private AudioService service;
@@ -46,7 +45,7 @@ public sealed class AudioSceneDirector : MonoBehaviour
 
         switch (scene.name)
         {
-            case BunkerSceneName:
+            case RunEndService.BunkerSceneName:
                 service.PlayMusic(AudioCueId.BunkerMusic);
                 service.PlayAmbience(AudioCueId.BunkerAmbience);
                 break;

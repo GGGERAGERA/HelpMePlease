@@ -30,7 +30,7 @@ public class PauseMenuUI : MonoBehaviour
     private void Awake()
     {
         if (pausePanel != null && overview != null && audioSettingsPanel != null &&
-            (IsBunker ? bunkerIntro != null : characterSpawner != null)) return;
+            (IsBunker || characterSpawner != null)) return;
         Debug.LogError("[PauseMenuUI] Authored overview or scene references are missing.", this);
         enabled = false;
     }
