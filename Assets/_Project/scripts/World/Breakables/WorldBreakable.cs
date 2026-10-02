@@ -45,15 +45,13 @@ public sealed class WorldBreakable : MonoBehaviour,
     private bool broken;
     private Coroutine hitRoutine;
     private Color[] baseColors;
-    private bool eventRewardImproved;
     private bool eventRewardNumericOnly;
 
     public bool IsBroken => broken;
     public WorldBreakableLootProfile LootProfile => lootProfile;
 
-    public void InitializeEventReward(bool improved, bool numericOnly)
+    public void InitializeEventReward(bool numericOnly)
     {
-        eventRewardImproved = improved;
         eventRewardNumericOnly = numericOnly;
     }
 
@@ -267,7 +265,7 @@ public sealed class WorldBreakable : MonoBehaviour,
         {
             upgradeManager.ShowChestRewardChoices(
                 choiceCount,
-                eventRewardImproved,
+                false,
                 null
             );
         }

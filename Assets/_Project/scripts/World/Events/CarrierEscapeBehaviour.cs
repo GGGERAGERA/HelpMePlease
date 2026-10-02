@@ -4,31 +4,20 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 public sealed class CarrierEscapeBehaviour : MonoBehaviour
 {
-    private const float RiskVisibleDuration = 4f;
-    private const float RiskHiddenDuration = 1f;
-    private const float HiddenAlphaMultiplier = 0.08f;
-
     private EnemyMovement[] movements;
     private bool[] movementWasEnabled;
     private Rigidbody2D body;
     private GameplayAreaService gameplayArea;
     private CarrierTargetMarker marker;
     private WorldEventMarker offscreenIndicator;
-    private SpriteRenderer[] renderers;
-    private Color[] originalColors;
     private Action escaped;
     private Vector2 destination;
     private float escapeSpeed;
-    private float visibilityTimer;
-    private bool riskMode;
-    private bool hidden;
     private bool running;
     private bool restored;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private bool movementWriterLogged;
 #endif
-
-    public bool IsHidden => hidden;
 
     public bool Initialize(
         EnemyMovement[] targetMovements,
@@ -37,7 +26,6 @@ public sealed class CarrierEscapeBehaviour : MonoBehaviour
         GameplayAreaService area,
         Vector2 playerPosition,
         float speed,
-        bool risky,
         Action onEscaped)
     {
         if (running)
@@ -56,19 +44,10 @@ public sealed class CarrierEscapeBehaviour : MonoBehaviour
         body = targetBody;
         gameplayArea = area;
         escapeSpeed = Mathf.Max(0.1f, speed);
-        riskMode = risky;
         escaped = onEscaped;
         destination = FindEscapeDestination(playerPosition);
         body.linearVelocity = Vector2.zero;
 
-        renderers = GetComponentsInChildren<SpriteRenderer>(true);
-        originalColors = new Color[renderers.Length];
-
-        for (int i = 0; i < renderers.Length; i++)
-            originalColors[i] = renderers[i].color;
-
-        visibilityTimer = RiskVisibleDuration;
-        hidden = false;
         restored = false;
         running = true;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -91,25 +70,6 @@ public sealed class CarrierEscapeBehaviour : MonoBehaviour
     {
         marker = targetMarker;
         offscreenIndicator = targetIndicator;
-    }
-
-    private void Update()
-    {
-        if (!running || Time.timeScale == 0f)
-            return;
-
-        if (!riskMode)
-            return;
-
-        visibilityTimer -= Time.deltaTime;
-
-        if (visibilityTimer > 0f)
-            return;
-
-        SetHidden(!hidden);
-        visibilityTimer = hidden
-            ? RiskHiddenDuration
-            : RiskVisibleDuration;
     }
 
     private void FixedUpdate()
@@ -160,7 +120,6 @@ public sealed class CarrierEscapeBehaviour : MonoBehaviour
 
         running = false;
         escaped = null;
-        RestoreVisuals();
 
         marker?.SetSuppressed(true);
         offscreenIndicator?.SetSuppressed(true);
@@ -264,41 +223,6 @@ public sealed class CarrierEscapeBehaviour : MonoBehaviour
 
         movements = null;
         movementWasEnabled = null;
-    }
-
-    private void SetHidden(bool value)
-    {
-        hidden = value;
-
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            SpriteRenderer renderer = renderers[i];
-
-            if (renderer == null)
-                continue;
-
-            Color color = originalColors[i];
-
-            if (hidden)
-                color.a *= HiddenAlphaMultiplier;
-
-            renderer.color = color;
-        }
-
-        marker?.SetSuppressed(hidden);
-        offscreenIndicator?.SetSuppressed(hidden);
-    }
-
-    private void RestoreVisuals()
-    {
-        if (renderers == null || originalColors == null)
-            return;
-
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            if (renderers[i] != null)
-                renderers[i].color = originalColors[i];
-        }
     }
 
     private void OnDisable()

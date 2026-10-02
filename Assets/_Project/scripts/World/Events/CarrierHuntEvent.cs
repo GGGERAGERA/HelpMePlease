@@ -7,10 +7,8 @@ using UnityEngine;
 public sealed class CarrierHuntEvent : WorldEvent
 {
     private const float StandardCarrierSpeedMultiplier = 0.9f;
-    private const float RiskCarrierSpeedMultiplier = 1.3f;
     private const float BaseEscapeSpeed = 2f;
     private const int StandardEscortCount = 3;
-    private const int RiskEscortCount = 5;
 
     [Header("Start")]
     [SerializeField, Min(0.1f)] private float startRadius = 2.5f;
@@ -28,12 +26,10 @@ public sealed class CarrierHuntEvent : WorldEvent
     private WorldEventMarker carrierOffscreenIndicator;
     private Vector3 rewardPosition;
     private bool hasRewardPosition;
-    private bool riskMode;
     private bool waitingForCarrier;
     private bool despawnSubscribed;
     private bool resolved;
 
-    public bool IsRiskMode => riskMode;
     public bool HasCarrier => carrier != null;
     public override Vector3 RewardPosition => hasRewardPosition
         ? rewardPosition
@@ -48,17 +44,11 @@ public sealed class CarrierHuntEvent : WorldEvent
     public override void Initialize(WorldEventSpawner spawner)
     {
         base.Initialize(spawner);
-        riskMode = false;
         waitingForCarrier = false;
         despawnSubscribed = false;
         resolved = false;
         hasRewardPosition = false;
         ShowEventMarker(transform, "event.carrier");
-    }
-
-    public override void ApplyDifficultyMultiplier(float multiplier)
-    {
-        riskMode = multiplier > 1f;
     }
 
     protected override bool CanStartFrom(Vector2 playerPosition)
@@ -199,17 +189,13 @@ public sealed class CarrierHuntEvent : WorldEvent
         Vector2 playerPosition = player != null
             ? player.position
             : selected.transform.position;
-        float speedMultiplier = riskMode
-            ? RiskCarrierSpeedMultiplier
-            : StandardCarrierSpeedMultiplier;
         bool initialized = newEscapeBehaviour.Initialize(
             movements,
             movementEnabledStates,
             body,
             gameplayArea,
             playerPosition,
-            BaseEscapeSpeed * speedMultiplier,
-            riskMode,
+            BaseEscapeSpeed * StandardCarrierSpeedMultiplier,
             HandleCarrierEscaped
         );
 
@@ -256,7 +242,7 @@ public sealed class CarrierHuntEvent : WorldEvent
 
         enemySpawner?.SpawnAdditionalWave(
             carrier.transform.position,
-            riskMode ? RiskEscortCount : StandardEscortCount,
+            StandardEscortCount,
             1.5f,
             3.5f,
             2f

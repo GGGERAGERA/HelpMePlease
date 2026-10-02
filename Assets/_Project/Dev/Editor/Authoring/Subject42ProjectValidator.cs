@@ -655,7 +655,7 @@ public static class Subject42ProjectValidator
         string[] requiredReferences =
         {
             "arenaBounds", "cameraBounds", "playerStart",
-            "ballSpawnZone", "anomalySpawnZone", "targetSpawnZone", "playerBoundary", "startZone", "hud", "cameraFollow"
+            "ballSpawnZone", "anomalySpawnZone", "targetSpawnZone", "startStation", "hud", "cameraFollow"
         };
 
         for (int i = 0; i < requiredReferences.Length; i++)
@@ -665,7 +665,6 @@ public static class Subject42ProjectValidator
                 requiredReferences[i],
                 report);
         }
-        RequireSerializedArray(football, "walls", 5, report);
         RequireSerializedArray(football, "ballSpawnPoints", 4, report);
         RequireSerializedArray(football, "balls", 4, report);
         RequireSerializedArray(football, "gates", 2, report);
@@ -679,10 +678,9 @@ public static class Subject42ProjectValidator
             RequireSerializedObject(goal, "goalFeedback", report);
             RequireSerializedObject(goal, "goalFlash", report);
         }
-        var start = arena.GetComponentInChildren<FootballStartZone>(true);
+        var start = football.StartStation;
         RequireSerializedObject(start, "minigame", report);
-        RequireSerializedObject(start, "startText", report);
-        RequireSerializedArray(start, "visualRenderers", 1, report);
+        RequireSerializedObject(start, "interactionArrow", report);
         RequireSerializedObject(arena.GetComponentInChildren<FootballMinigameHUD>(true), "goalStatsText", report);
 
     }

@@ -54,8 +54,9 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
         anomalyExternalVelocity = new();
 
     private const float DashCollisionSkin = 0.02f;
-    private readonly RaycastHit2D[] dashHits = new RaycastHit2D[8];
-    private ContactFilter2D dashContactFilter;
+    private readonly System.Collections.Generic.List<RaycastHit2D> dashHits = new(8);
+    private readonly System.Collections.Generic.List<Collider2D> dashColliders = new(2);
+    private ContactFilter2D dashContactFilter = new() { useTriggers = false };
 
     [SerializeField] private Transform visualRoot;
     private float visualRootScaleMagnitudeX = 1f;
@@ -127,10 +128,6 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
             rb.freezeRotation = true;
         }
 
-        dashContactFilter = new ContactFilter2D
-        {
-            useTriggers = false
-        };
     }
 
     void Update()
@@ -366,28 +363,23 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
 
     private float GetAllowedDashDistance(float desiredDistance)
     {
-        int hitCount = rb.Cast(
-            dashDirection,
-            dashContactFilter,
-            dashHits,
-            desiredDistance + DashCollisionSkin
-        );
-
         float allowedDistance = desiredDistance;
-
-        for (int i = 0; i < hitCount; i++)
+        rb.GetAttachedColliders(dashColliders);
+        foreach (var source in dashColliders)
         {
-            RaycastHit2D hit = dashHits[i];
-
-            if (hit.collider == null)
-                continue;
-
-            allowedDistance = Mathf.Min(
-                allowedDistance,
-                Mathf.Max(0f, hit.distance - DashCollisionSkin)
-            );
+            if (!source.enabled || source.isTrigger) continue;
+            // Queries do not resolve the target's collision overrides. Cast only
+            // physical shapes, then apply the same pair rules as normal movement.
+            int hitCount = source.Cast(dashDirection, dashContactFilter,
+                dashHits, desiredDistance + DashCollisionSkin);
+            for (int i = 0; i < hitCount; i++)
+            {
+                RaycastHit2D hit = dashHits[i];
+                if (hit.collider == null || !source.CanContact(hit.collider)) continue;
+                allowedDistance = Mathf.Min(allowedDistance,
+                    Mathf.Max(0f, hit.distance - DashCollisionSkin));
+            }
         }
-
         return allowedDistance;
     }
 

@@ -69,7 +69,6 @@ public sealed class FootballBallRuntime : MonoBehaviour, IAnomalyExternalVelocit
         body.simulated = true;
         ball.ResetBall(spawn);
         body.WakeUp();
-        owner.RestoreBallBoundary(ball);
         stillTime = 0f;
         progressTime = 0f;
         progressPosition = body.position;

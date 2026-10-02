@@ -5,7 +5,6 @@ using UnityEngine;
 public sealed class FootballMinigame : BunkerMinigame
 {
     [SerializeField] private BoxCollider2D cameraBounds;
-    [SerializeField] private Collider2D[] walls;
     [SerializeField] private Transform playerStart;
     private Rect savedCameraRect;
     private bool hasCameraSession;
@@ -27,8 +26,8 @@ public sealed class FootballMinigame : BunkerMinigame
     [SerializeField] private BoxCollider2D targetSpawnZone;
     [SerializeField] private bool showDebugZones;
     [SerializeField] private bool showLaneDebug;
-    [SerializeField] private FootballPlayerBoundary playerBoundary;
-    [SerializeField] private FootballStartZone startZone;
+    [SerializeField] private FootballStartStation startStation;
+    [SerializeField] private BunkerGateVisual entranceDoor;
     [SerializeField] private FootballMinigameHUD hud;
 
     [Header("Camera framing")]
@@ -124,6 +123,7 @@ public sealed class FootballMinigame : BunkerMinigame
     public float CameraOrthographicSize => cameraFollow != null && cameraFollow.ControlledCamera != null
         ? cameraFollow.ControlledCamera.orthographicSize : 0f;
     public bool ShowDebugZones => showDebugZones;
+    public FootballStartStation StartStation => startStation;
 
     private void Awake()
     {
@@ -132,10 +132,12 @@ public sealed class FootballMinigame : BunkerMinigame
         remainingTime = roundDuration;
         EnsureTargetSettings();
         foreach (var target in targetPool) target.ConfigureOwner(this);
-        ResetRuntimeObjects();
-        startZone?.SetAvailable(true);
-        hud?.ShowIdle(roundDuration, bestScore);
-        hud?.SetDevRecord(DevRewardClaimed);
+    }
+
+    protected override void OnEnable()
+    {
+        base.OnEnable();
+        if (Application.isPlaying) ResetGame();
     }
 
     private void Update()
@@ -222,7 +224,8 @@ public sealed class FootballMinigame : BunkerMinigame
         GoalCount = GoalScore = 0;
         hud.SetGoalStats(GoalCount, GoalScore);
         remainingTime = roundDuration;
-        startZone?.SetAvailable(false);
+        startStation.gameObject.SetActive(false);
+        entranceDoor?.Close();
         hud?.ShowRunning(roundDuration, currentScore, bestScore);
         SpawnInitialBalls();
         SpawnInitialAnomalies();
@@ -240,7 +243,9 @@ public sealed class FootballMinigame : BunkerMinigame
         ResetRuntimeObjects();
         RestoreCamera();
         AllowRestart();
-        startZone?.SetAvailable(true);
+        startStation.gameObject.SetActive(true);
+        startStation.RefreshArrow();
+        entranceDoor?.Open();
         hud?.SetDevRecord(DevRewardClaimed);
         hud?.ShowCompleted(currentScore, bestScore, newRecord, devReward);
     }
@@ -255,10 +260,19 @@ public sealed class FootballMinigame : BunkerMinigame
         RestoreCamera();
         currentScore = 0;
         GoalCount = GoalScore = 0;
-        hud.SetGoalStats(GoalCount, GoalScore);
         remainingTime = roundDuration;
-        startZone?.SetAvailable(true);
+        entranceDoor?.Open();
+        // Disabling the arena also runs during scene teardown, after services may
+        // have been destroyed. Refresh localized presentation only while active.
+        if (!isActiveAndEnabled)
+        {
+            if (startStation != null) startStation.RefreshArrow();
+            return;
+        }
+        startStation.gameObject.SetActive(true);
+        startStation.RefreshArrow();
         hud?.ShowIdle(roundDuration, bestScore);
+        hud?.SetDevRecord(DevRewardClaimed);
     }
 
     public void ToggleDebugZones()
@@ -312,7 +326,6 @@ public sealed class FootballMinigame : BunkerMinigame
 
         runtime.Configure(this, stuckDuration);
         runtime.RespawnNow(spawn);
-        RestoreBallBoundary(item);
     }
 
     private void ApplyAnomalyPolarity(float polarity)
@@ -540,16 +553,9 @@ public sealed class FootballMinigame : BunkerMinigame
         {
             DrawZone(arenaBounds, Color.white);
             DrawZone(cameraBounds, Color.yellow);
-            if (walls != null) foreach (var wall in walls) DrawZone(wall, Color.cyan);
             DrawZone(ballSpawnZone, new Color(0.2f, 1f, 0.35f, 0.8f));
             DrawZone(anomalySpawnZone, new Color(1f, 0.25f, 0.25f, 0.8f));
             DrawZone(targetSpawnZone, new Color(0.15f, 0.65f, 1f, 0.8f));
-            if (playerBoundary != null)
-            {
-                DrawZone(
-                    playerBoundary.GetComponent<Collider2D>(),
-                    new Color(1f, 0.3f, 1f, 0.95f));
-            }
         }
 
         if (showLaneDebug)
@@ -619,7 +625,6 @@ public sealed class FootballMinigame : BunkerMinigame
         if (hasCameraSession && (Screen.width != lastScreenWidth || Screen.height != lastScreenHeight))
             FrameCamera();
     }
-    public void RestoreBallBoundary(BallRollVisual item) => playerBoundary.IgnoreBall(item);
     public void ResetBall()
     {
         if (!IsRunning) return;
@@ -641,7 +646,6 @@ public sealed class FootballMinigame : BunkerMinigame
             for (int j = 0; j < count; j++) blocked |= spawnOverlaps[j].attachedRigidbody != body;
             if (blocked) continue;
             item.GetComponent<FootballBallRuntime>().RespawnNow(spawn);
-            RestoreBallBoundary(item);
             return;
         }
     }
@@ -658,6 +662,10 @@ public sealed class FootballMinigame : BunkerMinigame
         BallRollVisual.CancelActiveSlowMotion();
         StopAllCoroutines();
         RestoreCamera();
-        if (Application.isPlaying) ResetGame();
+        if (Application.isPlaying)
+        {
+            ResetGame();
+            if (hud != null) hud.Hide();
+        }
     }
 }

@@ -1,52 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<test-run id="2" testcasecount="2" result="Passed" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-17 09:52:16Z" end-time="2026-09-17 09:52:20Z" duration="4.6436566">
-  <test-suite type="TestSuite" id="1000" name="Subject#42" fullname="Subject#42" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-09-17 09:52:16Z" end-time="2026-09-17 09:52:20Z" duration="4.643657" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+<test-run id="2" testcasecount="5" result="Passed" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-02 06:32:24Z" end-time="2026-10-02 06:32:25Z" duration="0.6443257">
+  <test-suite type="TestSuite" id="1000" name="Subject#42" fullname="Subject#42" runstate="Runnable" testcasecount="49" result="Passed" start-time="2026-10-02 06:32:24Z" end-time="2026-10-02 06:32:25Z" duration="0.644326" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
     <properties>
       <property name="platform" value="EditMode" />
     </properties>
-    <test-suite type="Assembly" id="1037" name="Assembly-CSharp-Editor.dll" fullname="C:/trash/fork/helpmeplease/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-09-17 09:52:16Z" end-time="2026-09-17 09:52:20Z" duration="4.528407" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <test-suite type="Assembly" id="1076" name="Assembly-CSharp-Editor.dll" fullname="C:/trash/fork/helpmeplease/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="49" result="Passed" start-time="2026-10-02 06:32:24Z" end-time="2026-10-02 06:32:25Z" duration="0.544788" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
       <properties>
-        <property name="_PID" value="10408" />
+        <property name="_PID" value="16672" />
         <property name="_APPDOMAIN" value="Unity Child Domain" />
         <property name="platform" value="EditMode" />
         <property name="EditorOnly" value="True" />
       </properties>
-      <test-suite type="TestFixture" id="1009" name="ProductionFontTests" fullname="ProductionFontTests" classname="ProductionFontTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-17 09:52:16Z" end-time="2026-09-17 09:52:20Z" duration="4.522059" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
-        <properties>
-          <property name="Category" value="Core" />
-        </properties>
-        <test-case id="1010" name="ProductionFontContainsCyrillicAndLocalizationWithoutDynamicFallback" fullname="ProductionFontTests.ProductionFontContainsCyrillicAndLocalizationWithoutDynamicFallback" methodname="ProductionFontContainsCyrillicAndLocalizationWithoutDynamicFallback" classname="ProductionFontTests" runstate="Runnable" seed="618020042" result="Passed" start-time="2026-09-17 09:52:08Z" end-time="2026-09-17 09:52:08Z" duration="0.227859" asserts="0">
-          <properties />
-        </test-case>
-        <test-case id="1011" name="SettingsRussianEnglishRussianDoesNotChangeFontAssets" fullname="ProductionFontTests.SettingsRussianEnglishRussianDoesNotChangeFontAssets" methodname="SettingsRussianEnglishRussianDoesNotChangeFontAssets" classname="ProductionFontTests" runstate="Runnable" seed="1989632143" result="Passed" start-time="2026-09-17 09:52:08Z" end-time="2026-09-17 09:52:20Z" duration="12.139463" asserts="0">
+      <test-suite type="TestFixture" id="1009" name="CompactHudTests" fullname="CompactHudTests" classname="CompactHudTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-10-02 06:32:24Z" end-time="2026-10-02 06:32:25Z" duration="0.450356" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1014" name="ExistingButtonsRemainClickable" fullname="CompactHudTests.ExistingButtonsRemainClickable" methodname="ExistingButtonsRemainClickable" classname="CompactHudTests" runstate="Runnable" seed="6565741" result="Passed" start-time="2026-10-02 06:32:24Z" end-time="2026-10-02 06:32:24Z" duration="0.118998" asserts="0">
           <properties>
-            <property name="_JOINTYPE" value="UnityCombinatorial" />
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
-          <output><![CDATA[[BunkerInteractableCollider] Interaction source=p_bunkerUpgrade1, interactable=True, hoverable=True
-[BunkerHoverOutline] p_bunkerUpgrade1 renderers=20
-[BunkerInteractableCollider] Interaction source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
-[BunkerHoverOutline] p_bunkerPlayerShowcase 1 renderers=16
-[BunkerInteractableCollider] Interaction source=p_AnomalyTable1, interactable=True, hoverable=True
-[BunkerHoverOutline] p_AnomalyTable1 renderers=32
-[BunkerInteractableCollider] Interaction source=p_Shelf1 (1), interactable=False, hoverable=True
-[BunkerHoverOutline] p_Shelf1 (1) renderers=30
-[BunkerInteractableCollider] Interaction source=SlotMachine, interactable=True, hoverable=True
-[BunkerHoverOutline] SlotMachine renderers=55
-[BunkerInteractableCollider] SlotMachine source=SlotMachine, interactable=True, hoverable=True
-[BunkerInteractableCollider] Interaction source=p_bunkerWeaponTable3, interactable=True, hoverable=True
-[BunkerHoverOutline] p_bunkerWeaponTable3 renderers=11
-[BunkerInteractableCollider] Interaction source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
-[BunkerHoverOutline] p_bunkerWeaponShowcase renderers=9
-[BunkerInteractableCollider] Interaction source=p_Shelf1, interactable=False, hoverable=True
-[BunkerHoverOutline] p_Shelf1 renderers=30
-[BunkerHoverOutline] Escape Terminal renderers=2
-[BunkerInteractableCollider] Interaction source=Escape Terminal, interactable=True, hoverable=True
-[BunkerInteractableCollider] Interaction source=p_BunkerGates1, interactable=True, hoverable=True
-[BunkerHoverOutline] p_BunkerGates1 renderers=45
-[RunSelectionManager] Character selected: 01_Gera
-Saving results to: Artifacts/GeneratedQA/ProductionFonts\results.xml
+        </test-case>
+        <test-case id="1013" name="HudUsesAuthoredGraphicsOnly" fullname="CompactHudTests.HudUsesAuthoredGraphicsOnly" methodname="HudUsesAuthoredGraphicsOnly" classname="CompactHudTests" runstate="Runnable" seed="1659954137" result="Passed" start-time="2026-10-02 06:32:24Z" end-time="2026-10-02 06:32:24Z" duration="0.004334" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="1012" name="MechanicNoticeHidesEntirePanelAfterTimeoutAndCanShowAgain" fullname="CompactHudTests.MechanicNoticeHidesEntirePanelAfterTimeoutAndCanShowAgain" classname="CompactHudTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-02 06:32:24Z" end-time="2026-10-02 06:32:25Z" duration="0.216055" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="1010" name="MechanicNoticeHidesEntirePanelAfterTimeoutAndCanShowAgain(Completed)" fullname="CompactHudTests.MechanicNoticeHidesEntirePanelAfterTimeoutAndCanShowAgain(Completed)" methodname="MechanicNoticeHidesEntirePanelAfterTimeoutAndCanShowAgain" classname="CompactHudTests" runstate="Runnable" seed="1351645655" result="Passed" start-time="2026-10-02 06:32:24Z" end-time="2026-10-02 06:32:24Z" duration="0.151415" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1011" name="MechanicNoticeHidesEntirePanelAfterTimeoutAndCanShowAgain(Failed)" fullname="CompactHudTests.MechanicNoticeHidesEntirePanelAfterTimeoutAndCanShowAgain(Failed)" methodname="MechanicNoticeHidesEntirePanelAfterTimeoutAndCanShowAgain" classname="CompactHudTests" runstate="Runnable" seed="323418824" result="Passed" start-time="2026-10-02 06:32:24Z" end-time="2026-10-02 06:32:25Z" duration="0.061702" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="1015" name="ReusableViewsAreSavedPrefabs" fullname="CompactHudTests.ReusableViewsAreSavedPrefabs" methodname="ReusableViewsAreSavedPrefabs" classname="CompactHudTests" runstate="Runnable" seed="2042940433" result="Passed" start-time="2026-10-02 06:32:25Z" end-time="2026-10-02 06:32:25Z" duration="0.002585" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Saving results to: Artifacts/GeneratedQA/Tutorial/results.xml
 ]]></output>
         </test-case>
       </test-suite>

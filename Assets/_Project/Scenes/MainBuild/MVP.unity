@@ -140,7 +140,6 @@ GameObject:
   - component: {fileID: 46915856}
   - component: {fileID: 46915857}
   - component: {fileID: 46915858}
-  - component: {fileID: 46915859}
   - component: {fileID: 46915860}
   m_Layer: 0
   m_Name: GameManager
@@ -303,10 +302,7 @@ MonoBehaviour:
   - {fileID: 530000000000000004, guid: e47c3f95a8a34c18a619b70ec785f142, type: 3}
   - {fileID: 590000000000000004, guid: c39b42a1000000000000000000000003, type: 3}
   eventRewardContainerPrefab: {fileID: 8421000000000000002, guid: a42a1000000000000000000000000043, type: 3}
-  doubleOrLeave: {fileID: 46915859}
-  riskDifficultyMultiplier: 1.5
   standardEventPressure: 1.15
-  riskEventPressure: 1.35
   firstEventDelay: 2
   eventInterval: 5
   minDistanceFromPlayer: 7
@@ -375,18 +371,6 @@ MonoBehaviour:
   enemySpawner: {fileID: 8435074330475543443, guid: 8522b3d6a57df2648903eb77fc00ecb6, type: 3}
   duration: 5
   accelerationMultiplier: 1.5
---- !u!114 &46915859
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 46915840}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c7b81a4d295f43ad98896d617b899e14, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::DoubleOrLeave
 --- !u!1 &101118583
 GameObject:
   m_ObjectHideFlags: 0
@@ -2530,14 +2514,6 @@ PrefabInstance:
       propertyPath: gameplayArea
       value:
       objectReference: {fileID: 2147020003}
-    - target: {fileID: 3433639577711642508, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
-      propertyPath: runFlow
-      value:
-      objectReference: {fileID: 46915856}
-    - target: {fileID: 3433639577711642508, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
-      propertyPath: doubleOrLeave
-      value:
-      objectReference: {fileID: 46915859}
     - target: {fileID: 3669816306965970296, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: runFlow
       value:
@@ -2566,10 +2542,6 @@ PrefabInstance:
       propertyPath: gameplayArea
       value:
       objectReference: {fileID: 2147020003}
-    - target: {fileID: 7903291755275464461, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
-      propertyPath: doubleOrLeave
-      value:
-      objectReference: {fileID: 46915859}
     - target: {fileID: 7903291755275464461, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: noDamageChallenge
       value:

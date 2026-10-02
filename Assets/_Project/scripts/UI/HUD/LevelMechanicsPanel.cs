@@ -6,25 +6,22 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
 {
     [Header("View")]
     [SerializeField] private GameObject panelRoot;
-    [SerializeField] private RectTransform panelRect;
     [SerializeField] private TextMeshProUGUI contentText;
     [SerializeField] private HudIconNumber accelerationView;
     [SerializeField] private HudIconNumber challengeView;
-    [SerializeField] private GameObject riskIcon;
     [SerializeField] private float noticeDuration = 4f;
     private float noticeUntil;
+    private bool hasContent;
 
     [Header("Mechanics")]
     [SerializeField] private WorldAccelerationRule worldAccelerationRule;
     [SerializeField] private NoDamageChallenge noDamageChallenge;
-    [SerializeField] private DoubleOrLeave doubleOrLeave;
 
     private readonly StringBuilder textBuilder = new();
     private bool displayStateCaptured;
     private int previousWorldSeconds;
     private int previousChallengeState;
     private int previousChallengeSeconds;
-    private int previousDoubleOrLeaveState;
 
     private void OnEnable()
     {
@@ -40,19 +37,17 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
 
     private void Update()
     {
-        contentText.gameObject.SetActive(Time.unscaledTime < noticeUntil);
-        if (!CaptureDisplayState())
-            return;
+        if (CaptureDisplayState())
+            RefreshContent();
 
-        RefreshContent();
+        bool visible = hasContent && Time.unscaledTime < noticeUntil;
+        if (panelRoot.activeSelf != visible)
+            panelRoot.SetActive(visible);
     }
 
     private void RefreshContent()
     {
-        bool hasContent = BuildContent();
-
-        if (panelRoot != null && panelRoot.activeSelf != hasContent)
-            panelRoot.SetActive(hasContent);
+        hasContent = BuildContent();
 
         if (!hasContent || contentText == null)
             return;
@@ -66,7 +61,6 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
         accelerationView.SetValue(Mathf.Max(0,previousWorldSeconds));
         challengeView.gameObject.SetActive(previousChallengeState >= 0);
         challengeView.SetValue(Mathf.Max(0,previousChallengeSeconds));
-        riskIcon.SetActive(previousDoubleOrLeaveState >= 0);
     }
 
     private bool CaptureDisplayState()
@@ -85,26 +79,18 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
             noDamageChallenge.State == NoDamageChallengeState.Active
                 ? Mathf.CeilToInt(noDamageChallenge.TimeRemaining)
                 : -1;
-        int doubleOrLeaveState =
-            doubleOrLeave != null &&
-            doubleOrLeave.State != DoubleOrLeaveState.Inactive
-                ? (int)doubleOrLeave.State
-                : -1;
-
         bool changed = !displayStateCaptured ||
             previousWorldSeconds != worldSeconds ||
             previousChallengeState != challengeState ||
-            previousChallengeSeconds != challengeSeconds ||
-            previousDoubleOrLeaveState != doubleOrLeaveState;
+            previousChallengeSeconds != challengeSeconds;
 
         if (!displayStateCaptured || previousChallengeState != challengeState ||
-            previousDoubleOrLeaveState != doubleOrLeaveState || (previousWorldSeconds < 0) != (worldSeconds < 0))
+            (previousWorldSeconds < 0) != (worldSeconds < 0))
             noticeUntil = Time.unscaledTime + noticeDuration;
         displayStateCaptured = true;
         previousWorldSeconds = worldSeconds;
         previousChallengeState = challengeState;
         previousChallengeSeconds = challengeSeconds;
-        previousDoubleOrLeaveState = doubleOrLeaveState;
         return changed;
     }
 
@@ -115,7 +101,6 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
 
         AppendWorldRules(ref hasSection);
         AppendChallenges(ref hasSection);
-        AppendDoubleOrLeave(ref hasSection);
 
         return hasSection;
     }
@@ -151,28 +136,6 @@ public sealed class LevelMechanicsPanel : MonoBehaviour
         }
 
         textBuilder.AppendLine();
-    }
-
-    private void AppendDoubleOrLeave(ref bool hasSection)
-    {
-        if (doubleOrLeave == null || doubleOrLeave.State == DoubleOrLeaveState.Inactive)
-            return;
-
-        AppendHeader(ref hasSection, LocalizationService.EnsureExists().Get("mechanic.risk"));
-        textBuilder.Append("- ").Append(GetDoubleOrLeaveStateLabel());
-
-        textBuilder.AppendLine();
-    }
-
-    private string GetDoubleOrLeaveStateLabel()
-    {
-        return doubleOrLeave.State switch
-        {
-            DoubleOrLeaveState.WaitingForChallenge => LocalizationService.EnsureExists().Get("mechanic.pending"),
-            DoubleOrLeaveState.RewardGranted => LocalizationService.EnsureExists().Get("mechanic.ready"),
-            DoubleOrLeaveState.Failed => LocalizationService.EnsureExists().Get("mechanic.lost"),
-            _ => string.Empty
-        };
     }
 
     private void AppendHeader(ref bool hasSection, string title)

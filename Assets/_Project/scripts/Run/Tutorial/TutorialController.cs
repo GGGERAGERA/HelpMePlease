@@ -201,7 +201,7 @@ public sealed class TutorialController : MonoBehaviour
     private void OnZoneEntered()
     {
         if (Step == TutorialStep.SectorGoal && TargetEvent != null)
-            events.TryStartEvent(TargetEvent, WorldEventDifficulty.Standard);
+            events.TryStartProductionEvent(TargetEvent);
     }
 
     private void OnEventStarted(WorldEvent started)

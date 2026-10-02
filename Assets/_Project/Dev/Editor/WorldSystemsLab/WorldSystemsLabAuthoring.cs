@@ -158,7 +158,6 @@ public static class WorldSystemsLabAuthoring
             EditorUtility.CopySerialized(sourceSpawner, eventSpawner);
             SetObject(eventSpawner, "gameplayArea", area);
             SetObject(eventSpawner, "eventRewardContainerPrefab", null);
-            SetObject(eventSpawner, "doubleOrLeave", null);
 
             SetObject(map, "gameplayArea", area);
             SetObject(map, "anomalyController", anomalyController);

@@ -6,9 +6,6 @@ using UnityEngine;
 
 public class WorldEventSpawner : MonoBehaviour
 {
-    private const WorldEventDifficulty ProductionEventDifficulty =
-        WorldEventDifficulty.Standard;
-
     public event System.Action<WorldEvent> EventCompleted;
     public event System.Action<WorldEvent> EventStarted;
     public event System.Action<WorldEvent> EventFailed;
@@ -35,12 +32,9 @@ public class WorldEventSpawner : MonoBehaviour
     [Header("Event Prefabs")]
     [SerializeField] private WorldEvent[] eventPrefabs;
     [SerializeField] private WorldBreakable eventRewardContainerPrefab;
-    [SerializeField] private DoubleOrLeave doubleOrLeave;
-    [SerializeField, Min(1f)] private float riskDifficultyMultiplier = 1.5f;
 
     [Header("Spawn Pressure")]
     [SerializeField, Min(1f)] private float standardEventPressure = 1.15f;
-    [SerializeField, Min(1f)] private float riskEventPressure = 1.35f;
 
     [Header("Spawn Timing")]
     [SerializeField] private float firstEventDelay = 45f;
@@ -98,7 +92,6 @@ public class WorldEventSpawner : MonoBehaviour
     {
         RunStateManager.EnsureExists().RegisterSceneCleanup(ReleaseRunScene);
         EventCompleted += SpawnRewardContainer;
-        EventFailed += HandleEventFailed;
     }
 
     private void OnDisable()
@@ -107,7 +100,6 @@ public class WorldEventSpawner : MonoBehaviour
         ClearEventSpawnPressure();
         siteRewardSuppressedEvents.Clear();
         EventCompleted -= SpawnRewardContainer;
-        EventFailed -= HandleEventFailed;
     }
 
     private void ReleaseRunScene()
@@ -118,13 +110,11 @@ public class WorldEventSpawner : MonoBehaviour
         spawnedEvents.Clear();
         ActiveEvent = null;
         timer = 0f;
-        doubleOrLeave?.ResetState();
     }
 
     private void Start()
     {
         ResolveGameplayArea();
-        ResolveDoubleOrLeave();
         timer = firstEventDelay;
     }
 
@@ -666,8 +656,6 @@ public class WorldEventSpawner : MonoBehaviour
         spawnedEvents.Remove(worldEvent);
         spawnedEventCount = Mathf.Max(0, spawnedEventCount - 1);
 
-        ResolveDoubleOrLeave();
-        doubleOrLeave?.ResetState();
         worldEvent.ClearForDebug();
 
         // A debug event pauses the regular countdown. Restarting it here avoids
@@ -707,7 +695,7 @@ public class WorldEventSpawner : MonoBehaviour
         return true;
     }
 
-    public void NotifyEventStarted(WorldEvent worldEvent, bool riskMode)
+    public void NotifyEventStarted(WorldEvent worldEvent)
     {
         if (!isActiveAndEnabled ||
             worldEvent == null || ActiveEvent != worldEvent)
@@ -718,31 +706,17 @@ public class WorldEventSpawner : MonoBehaviour
         ResolveEnemySpawner();
         pressureEvent = worldEvent;
         enemySpawner?.SetWorldEventSpawnPressureMultiplier(
-            riskMode ? riskEventPressure : standardEventPressure
+            standardEventPressure
         );
         EventStarted?.Invoke(worldEvent);
     }
 
     public bool TryStartProductionEvent(WorldEvent worldEvent)
     {
-        return TryStartEvent(worldEvent, ProductionEventDifficulty);
-    }
-
-    public bool TryStartEvent(
-        WorldEvent worldEvent,
-        WorldEventDifficulty difficulty)
-    {
         if (!CanStartEvent(worldEvent))
             return false;
 
-        bool riskMode = difficulty == WorldEventDifficulty.Risk;
-
-        if (riskMode)
-            worldEvent.ApplyDifficultyMultiplier(riskDifficultyMultiplier);
-
-        ResolveDoubleOrLeave();
-        doubleOrLeave?.TrackStartedEvent(worldEvent, difficulty);
-        worldEvent.StartEvent(difficulty);
+        worldEvent.StartEvent();
         return worldEvent.IsStarted;
     }
 
@@ -750,9 +724,6 @@ public class WorldEventSpawner : MonoBehaviour
     {
         if (completedEvent == null)
             return;
-
-        bool isImproved = doubleOrLeave != null &&
-            doubleOrLeave.ResolveCompletedEvent(completedEvent);
 
         if (siteRewardSuppressedEvents.Remove(completedEvent))
             return;
@@ -778,14 +749,8 @@ public class WorldEventSpawner : MonoBehaviour
             Quaternion.identity
         );
         container.InitializeEventReward(
-            isImproved,
             numericOnly: siteControlledMode
         );
-    }
-
-    private void HandleEventFailed(WorldEvent failedEvent)
-    {
-        doubleOrLeave?.ResolveFailedEvent(failedEvent);
     }
 
     private void ResolveGameplayArea()
@@ -795,12 +760,6 @@ public class WorldEventSpawner : MonoBehaviour
 
         if (gameplayArea == null)
             gameplayArea = FindFirstObjectByType<GameplayAreaService>();
-    }
-
-    private void ResolveDoubleOrLeave()
-    {
-        if (doubleOrLeave == null)
-            doubleOrLeave = FindFirstObjectByType<DoubleOrLeave>();
     }
 
     private void ClearEventSpawnPressure(WorldEvent worldEvent = null)

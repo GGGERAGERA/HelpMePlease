@@ -41,11 +41,6 @@ public class CaptureZoneEvent : WorldEvent
         ShowEventMarker(transform, "event.capture");
     }
 
-    public override void ApplyDifficultyMultiplier(float multiplier)
-    {
-        requiredHoldTime *= Mathf.Max(1f, multiplier);
-    }
-
     private void Start()
     {
         player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);

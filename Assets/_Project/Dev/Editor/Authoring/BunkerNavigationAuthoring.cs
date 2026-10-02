@@ -22,8 +22,8 @@ public static class BunkerNavigationAuthoring
             if (rooms.Count(r => r.RoomId == id) != 1) throw new InvalidOperationException("Ambiguous room binding: " + id);
         var gate = all.Select(t => t.GetComponent<BunkerGateVisual>()).Single(c => c != null && c.gameObject.activeInHierarchy);
         var mini = all.Select(t => t.GetComponent<FootballMinigame>()).Single(c => c != null && c.gameObject.activeInHierarchy);
-        var start = mini.transform.parent.GetComponentInChildren<FootballStartZone>(true);
-        if (start == null) throw new InvalidOperationException("Football arena has no start zone.");
+        var start = mini.StartStation;
+        if (start == null) throw new InvalidOperationException("Football arena has no start station.");
         var material = AssetDatabase.LoadAssetAtPath<Material>(Folder + "/FloorLight.mat");
         if (material == null) throw new InvalidOperationException("Existing FloorLight material is missing.");
         // The base floor previously tied with props at order 0; reserve -1 for that tilemap.
@@ -56,7 +56,7 @@ public static class BunkerNavigationAuthoring
         var gateFloor = Mesh(root, material, "RunGate", new Vector2[] { new(64,-12), new(64,.2f) }, true);
         routes.Add(new BunkerNavigationView.Route { destination = "RunGate", floor = gateFloor,
             gate = gate, brightness = 1 });
-        Vector2 miniEnd = (Vector2)start.transform.position - Vector2.up * 4.8f;
+        Vector2 miniEnd = (Vector2)start.transform.position - Vector2.up * 2f;
         var miniFloor = Mesh(root, material, "MiniGame", new Vector2[] {
             new(64,-12), new(miniEnd.x-.8f,-12), new(miniEnd.x,-11.2f), miniEnd }, true);
         routes.Add(new BunkerNavigationView.Route { destination = "MiniGame", floor = miniFloor, minigame = mini, brightness = .7f });

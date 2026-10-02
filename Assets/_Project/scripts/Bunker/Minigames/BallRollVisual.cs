@@ -7,7 +7,9 @@ using UnityEngine.EventSystems;
 public class BallRollVisual : MonoBehaviour
 {
     [Header("Качение")]
-    [Tooltip("Ребёнок с 3D-мешем мяча")] public Transform visual;
+    [Tooltip("Дочерний визуал мяча: 3D-меш или плоский спрайт")] public Transform visual;
+    [Tooltip("Keep a sprite visual in the XY plane while rolling.")]
+    [SerializeField] private bool planarVisual;
     public float radius = 0.5f;
     public float rollDir = 1f;
 
@@ -329,7 +331,9 @@ public class BallRollVisual : MonoBehaviour
         float dist = delta.magnitude;
         if (dist < 0.0001f || dist > 1f) return;
 
-        Vector3 axis = new Vector3(delta.y, -delta.x, 0f).normalized * rollDir;
+        Vector3 axis = planarVisual
+            ? Vector3.forward * rollDir
+            : new Vector3(delta.y, -delta.x, 0f).normalized * rollDir;
         visual.Rotate(axis, (dist / radius) * Mathf.Rad2Deg, Space.World);
     }
 

@@ -11,7 +11,55 @@ using UnityEngine;
 
 public sealed class CompactHudTests
 {
-
+    [TestCase(NoDamageChallengeState.Completed)]
+    [TestCase(NoDamageChallengeState.Failed)]
+    public void MechanicNoticeHidesEntirePanelAfterTimeoutAndCanShowAgain(NoDamageChallengeState state)
+    {
+        const System.Reflection.BindingFlags fields = System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.NonPublic;
+        var instanceField = typeof(LocalizationService).GetField("<Instance>k__BackingField",
+            System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        var previousService = LocalizationService.Instance;
+        var services = new GameObject("Mechanic notice test services");
+        services.SetActive(false);
+        var service = services.AddComponent<LocalizationService>();
+        var serviceData = new SerializedObject(service);
+        serviceData.FindProperty("table").objectReferenceValue = AssetDatabase.LoadAssetAtPath<LocalizationTable>(
+            "Assets/_Project/Data/Localization/LocalizationTable.asset");
+        serviceData.ApplyModifiedPropertiesWithoutUndo();
+        instanceField.SetValue(null, service);
+        var root = PrefabUtility.LoadPrefabContents(CompactHudTestData.Folder + "GameplayHUD.prefab");
+        var view = root.GetComponent<LevelMechanicsPanel>();
+        void Invoke(string name) => typeof(LevelMechanicsPanel).GetMethod(name, fields).Invoke(view, null);
+        try
+        {
+            var challenge = services.AddComponent<NoDamageChallenge>();
+            typeof(NoDamageChallenge).GetField("<State>k__BackingField", fields).SetValue(challenge, state);
+            var data = new SerializedObject(view);
+            data.FindProperty("noDamageChallenge").objectReferenceValue = challenge;
+            data.ApplyModifiedPropertiesWithoutUndo();
+            var panel = (GameObject)data.FindProperty("panelRoot").objectReferenceValue;
+            Invoke("OnEnable");
+            Invoke("Update");
+            Assert.That(panel.activeSelf, Is.True, "A new result should show its explanation.");
+            typeof(LevelMechanicsPanel).GetField("noticeUntil", fields).SetValue(view, Time.unscaledTime - 1f);
+            Invoke("Update");
+            Assert.That(panel.activeSelf, Is.False, "The background must disappear with the explanation.");
+            Invoke("Update");
+            Assert.That(panel.activeSelf, Is.False, "An unchanged result must not reopen the panel.");
+            Invoke("OnDisable");
+            Invoke("OnEnable");
+            Invoke("Update");
+            Assert.That(panel.activeSelf, Is.True, "Re-entering the HUD should show current context again.");
+        }
+        finally
+        {
+            Invoke("OnDisable");
+            PrefabUtility.UnloadPrefabContents(root);
+            Object.DestroyImmediate(services);
+            instanceField.SetValue(null, previousService);
+        }
+    }
 
     [Test]
     public void HudUsesAuthoredGraphicsOnly()
