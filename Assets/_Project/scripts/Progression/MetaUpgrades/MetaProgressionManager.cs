@@ -15,6 +15,25 @@ public enum MetaUpgradeType
 public sealed class MetaProgressionManager : MonoBehaviour
 {
     public static MetaProgressionManager Instance { get; private set; }
+    public SurfaceMapService SurfaceMap { get; private set; }
+    public void ConfigureSurfaceMap(SurfaceMapDefinition definition)
+    {
+        if (SurfaceMap == null || SurfaceMap.Definition != definition)
+            SurfaceMap = new SurfaceMapService(definition);
+    }
+    private void HandleRunFinished(RunConfig config, RunEndReason reason, bool productionVictory)
+    {
+        SurfaceMap?.Content.FinishRun(config, RunStateManager.Instance.RunId, reason, productionVictory);
+        SurfaceMap?.CompleteVictory(config, reason, productionVictory);
+    }
+    private void HandleContentEvent(RunConfig config, int runId, WorldEvent source, string tag) =>
+        SurfaceMap?.Content.ObserveEvent(config, runId, source, tag);
+    private void OnDestroy()
+    {
+        RunStateManager.RunFinished -= HandleRunFinished;
+        RunStateManager.ContentEventCompleted -= HandleContentEvent;
+        if (Instance == this) Instance = null;
+    }
 
     private const int MaxUpgradeLevel = 10;
 
@@ -86,6 +105,8 @@ public sealed class MetaProgressionManager : MonoBehaviour
         }
 
         Instance = this;
+        RunStateManager.RunFinished += HandleRunFinished;
+        RunStateManager.ContentEventCompleted += HandleContentEvent;
 
         // Менеджер обязан быть корневым объектом.
         if (transform.parent != null)

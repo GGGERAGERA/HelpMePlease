@@ -8,6 +8,8 @@ public partial class EnemySpawner
     [Header("Assault Events (production prototype)")]
     [SerializeField] private bool assaultEventsEnabled = true;
     [SerializeField] private Vector2 firstAssaultDelay = new(70f, 80f);
+    [Tooltip("Automatic formations appear this many seconds before the sector exit opens.")]
+    [SerializeField] private Vector2 exitAssaultLeadTime = new(10f, 15f);
     [Tooltip("Gameplay seconds between event starts; also guarantees a cooldown after the assault window.")]
     [SerializeField] private Vector2 assaultInterval = new(110f, 130f);
     [SerializeField, Min(1f)] private float assaultDuration = 24f;
@@ -67,13 +69,16 @@ public partial class EnemySpawner
         pendingAssault = null;
         breathRemaining = recoveryRemaining = 0f;
         assaultElapsed = 0f;
-        assaultNextAt = Mathf.Max(assaultBreathDuration,
-            Mathf.Lerp(firstAssaultDelay.x, firstAssaultDelay.y, (float)assaultRandom.NextDouble()));
+        var profile = RunStateManager.Instance?.CurrentSector?.StageProfile;
+        float lead = Mathf.Lerp(Mathf.Clamp(exitAssaultLeadTime.x, 10f, 15f),
+            Mathf.Clamp(exitAssaultLeadTime.y, 10f, 15f), (float)assaultRandom.NextDouble());
+        assaultNextAt = profile != null ? Mathf.Max(0f, profile.ExitActivationTime - lead) :
+            Mathf.Max(assaultBreathDuration, Mathf.Lerp(firstAssaultDelay.x, firstAssaultDelay.y, (float)assaultRandom.NextDouble()));
     }
 
     private void EndAssault(bool completed = false)
     {
-        // Stop/reset cancels a wave; only the normal completion path satisfies the exit gate.
+        // Keep assault recovery/refill pacing independent from the exit countdown.
         if (completed && firstAutomaticAssault == FirstAutomaticAssaultProgress.Active)
             firstAutomaticAssault = FirstAutomaticAssaultProgress.Recovering;
         else if (!completed && firstAutomaticAssault != FirstAutomaticAssaultProgress.Complete)
@@ -93,8 +98,12 @@ public partial class EnemySpawner
 
     private void UpdateAssaultEvents()
     {
+        var flow = RunFlowController.Instance;
+        bool automaticWindowClosed = flow != null && flow.ExitMinimumTimeRemaining <= 10f;
+        if (automaticWindowClosed && pendingAssault.HasValue && pendingAssaultIsAutomatic)
+        { pendingAssault = null; breathRemaining = 0f; }
         if (!CanStartAssault) return;
-        assaultElapsed += Time.deltaTime;
+        assaultElapsed = flow != null ? flow.SectorElapsedTime : assaultElapsed + Time.deltaTime;
         recoveryRemaining = Mathf.Max(0f, recoveryRemaining - Time.deltaTime);
         if (firstAutomaticAssault == FirstAutomaticAssaultProgress.Recovering && recoveryRemaining <= 0f)
             firstAutomaticAssault = FirstAutomaticAssaultProgress.Complete;
@@ -119,7 +128,7 @@ public partial class EnemySpawner
             }
             return;
         }
-        if (!assaultEventsEnabled || IsAssaultActive || recoveryRemaining > 0f ||
+        if (!assaultEventsEnabled || automaticWindowClosed || IsAssaultActive || recoveryRemaining > 0f ||
             assaultElapsed < assaultNextAt - assaultBreathDuration) return;
         BeginAssaultBreath(automatic: true);
     }

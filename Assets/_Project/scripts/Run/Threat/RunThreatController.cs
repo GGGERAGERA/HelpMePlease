@@ -32,7 +32,7 @@ public sealed class RunThreatController : MonoBehaviour
 
     public void Initialize(RunThreatConfig threatConfig, EnemySpawner spawner)
     {
-        config = threatConfig;
+        config = RunStateManager.Instance?.CurrentConfig.ThreatProfile ?? threatConfig;
         enemySpawner = spawner;
         ApplyCurrentPreset(true);
         foreach (var enemy in EnemyHealth.ActiveInstances) ApplyMovement(enemy);
@@ -48,7 +48,7 @@ public sealed class RunThreatController : MonoBehaviour
             return;
         }
 
-        runState.AdvanceThreat(Time.deltaTime, config.ValuePerSecond);
+        runState.AdvanceThreat(Time.deltaTime, config.ValuePerSecond * runState.CurrentConfig.ThreatGrowth);
         ApplyCurrentPreset(false);
         foreach (var enemy in EnemyHealth.ActiveInstances) ApplyMovement(enemy);
     }

@@ -57,7 +57,7 @@ public static class CoreTestSupport
 
     public static IEnumerator LoadBunker()
     {
-        yield return SceneManager.LoadSceneAsync("MainMenu");
+        yield return SceneManager.LoadSceneAsync(RunEndService.BunkerSceneName);
         yield return Await(() => Object.FindFirstObjectByType<BunkerRunStarter>() != null &&
             !SceneTransitionOverlay.IsTransitioning);
     }

@@ -216,7 +216,7 @@ public static class Subject42ProjectValidator
                 {
                     UiRefs(RequireSingle<BunkerContext>(scene, report), report,
                         "<StationProgression>k__BackingField", "playerLoadout");
-                    RequireSingle<BunkerStationProgressionService>(scene, report);
+                    UiRefs(RequireSingle<ProductionSceneComposition>(scene, report), report, "bunkerProgression", "surfaceMap");
                     RequireSingle<BunkerPlayerLoadoutController>(scene, report);
                     UiRefs(RequireSingle<BunkerRunSummaryPresenter>(scene, report), report,
                         "notificationParent", "sourceScaler", "panelTemplate", "goldTextTemplate");
@@ -288,8 +288,9 @@ public static class Subject42ProjectValidator
     private static void ValidateBuildScenes(Subject42ValidationReport report)
     {
         EditorBuildSettingsScene[] scenes = EditorBuildSettings.scenes;
-        ValidateRequiredBuildScene(scenes, MainMenuScene, 0, report);
-        ValidateRequiredBuildScene(scenes, GameplayScene, 1, report);
+        ValidateRequiredBuildScene(scenes, "Assets/_Project/Scenes/MainBuild/StartScreen.unity", 0, report);
+        ValidateRequiredBuildScene(scenes, MainMenuScene, 1, report);
+        ValidateRequiredBuildScene(scenes, GameplayScene, 2, report);
 
         for (int i = 0; i < scenes.Length; i++)
         {
@@ -496,9 +497,11 @@ public static class Subject42ProjectValidator
             BunkerRunStarter starter = RequireSingle<BunkerRunStarter>(
                 scene, report);
             RequireSingle<CurrencyManager>(scene, report);
-            RequireSingle<UnlockProgressService>(scene, report);
+            var composition = RequireSingle<ProductionSceneComposition>(scene, report);
+            UiRefs(composition, report, "unlocks", "audio", "bunkerProgression", "surfaceMap");
+            RequireSingle<SurfaceMapView>(scene, report);
             RequireSingle<MetaProgressionManager>(scene, report);
-            RequireSingle<AudioService>(scene, report);
+
 
             if (context != null)
             {
@@ -518,7 +521,7 @@ public static class Subject42ProjectValidator
 
             if (starter != null)
             {
-                RequireSerializedObject(starter, "startingStageProfile", report);
+                RequireSerializedObject(starter, "depths", report);
                 RequireSerializedObject(starter, "startingWorldRule", report);
                 RequireSerializedObject(starter, "startingLocalAnomaly", report);
                 RequireSerializedObject(starter, "transitionCamera", report);
@@ -526,9 +529,11 @@ public static class Subject42ProjectValidator
                 RequireSerializedObject(starter, "cameraFollow", report);
                 RequireSerializedObject(starter, "playerMovement", report);
                 RequireSerializedObject(starter, "bunkerCursor", report);
-                RequireSerializedString(starter, "gameplaySceneName", report);
+                RequireSerializedObject(starter, "runGate", report);
             }
 
+            if (context != null && context.Panels != null)
+                UiRefs(context.Panels, report, "surfaceMapPanel", "selectionSources", "orbitalSlotPanel");
             FootballMinigame football = FindFirst<FootballMinigame>(scene);
             if (football != null)
                 ValidateFootball(football, report);

@@ -162,11 +162,11 @@ public sealed class PauseMenuGameplayTests
         Assert.That(pause.IsPaused, Is.True);
         pause.Resume();
         // Re-entry must bind a fresh controller and not retain paused state.
-        Assert.That(SceneTransitionOverlay.Load("MainMenu"), Is.True);
+        Assert.That(SceneTransitionOverlay.Load(RunEndService.BunkerSceneName), Is.True);
         Assert.That(SceneTransitionOverlay.IsTransitioning, Is.True);
         pause.Pause();
         Assert.That(pause.IsPaused, Is.False);
-        yield return CoreTestSupport.Await(() => SceneManager.GetActiveScene().name == "MainMenu" && !SceneTransitionOverlay.IsTransitioning);
+        yield return CoreTestSupport.Await(() => SceneManager.GetActiveScene().name == RunEndService.BunkerSceneName && !SceneTransitionOverlay.IsTransitioning);
         pause = Object.FindFirstObjectByType<PauseMenuUI>();
         pause.Pause();
         Assert.That(pause.IsPaused, Is.True);

@@ -82,6 +82,7 @@ public class WorldEventSpawner : MonoBehaviour
         maxActiveEvents = Mathf.Max(1, capacity);
     }
 
+    private readonly HashSet<WorldEvent> debugContentEvents = new();
     private WorldEvent debugEvent;
     private bool debugManualOnly;
     private readonly HashSet<WorldEvent> debugRewardSuppressedEvents =
@@ -137,7 +138,7 @@ public class WorldEventSpawner : MonoBehaviour
         if (spawnedEventCount >= maxActiveEvents)
             return;
 
-        timer -= Time.deltaTime;
+        timer -= Time.deltaTime * (RunStateManager.Instance?.CurrentConfig.EventFrequency ?? 1f);
 
         if (timer <= 0f)
         {
@@ -220,6 +221,7 @@ public class WorldEventSpawner : MonoBehaviour
 
         spawnedEvent = Instantiate(prefab, spawnPosition, Quaternion.identity);
         spawnedEvent.Initialize(this);
+        spawnedEvent.BindSource(prefab);
 
         spawnedEvents.Add(spawnedEvent);
         spawnedEventCount++;
@@ -432,6 +434,7 @@ public class WorldEventSpawner : MonoBehaviour
         spawnedEvent = Instantiate(prefab, position, Quaternion.identity);
         spawnedEvent.ConfigureSitePlacement(siteCenter, siteSize);
         spawnedEvent.Initialize(this);
+        spawnedEvent.BindSource(prefab);
         spawnedEvents.Add(spawnedEvent);
         spawnedEventCount++;
 
@@ -459,6 +462,14 @@ public class WorldEventSpawner : MonoBehaviour
 
     private WorldEvent GetNextEventPrefab()
     {
+        var config = RunStateManager.Instance?.CurrentConfig;
+        if (config != null && config != RunConfig.Default)
+        {
+            var candidates = new List<WorldEvent>();
+            foreach (var prefab in eventPrefabs)
+                if (prefab != null && SupportsEventCapabilities(prefab)) candidates.Add(prefab);
+            return RunWeightedSelection.Select(candidates, config.EventWeight, Random.value);
+        }
         for (int i = 0; i < eventPrefabs.Length; i++)
         {
             WorldEvent prefab = eventPrefabs[nextEventIndex];
@@ -500,6 +511,11 @@ public class WorldEventSpawner : MonoBehaviour
     public void NotifyEventCompleted(WorldEvent worldEvent)
     {
         ClearEventSpawnPressure(worldEvent);
+        bool eligibleContent = worldEvent != null && worldEvent.IsCompleted && !worldEvent.IsFailed;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        eligibleContent &= !debugContentEvents.Remove(worldEvent);
+#endif
+        if (eligibleContent) RunStateManager.Instance?.ReportCompletedEvent(worldEvent.SourcePrefab, worldEvent.EventTag);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (debugEvent == worldEvent)
@@ -524,6 +540,7 @@ public class WorldEventSpawner : MonoBehaviour
             debugEvent = null;
 
         debugRewardSuppressedEvents.Remove(worldEvent);
+        debugContentEvents.Remove(worldEvent);
 #endif
 
         if (ActiveEvent == worldEvent)
@@ -599,7 +616,9 @@ public class WorldEventSpawner : MonoBehaviour
 
         spawnedEvent = Instantiate(prefab, position, Quaternion.identity);
         spawnedEvent.Initialize(this);
+        spawnedEvent.BindSource(prefab);
         spawnedEvents.Add(spawnedEvent);
+        debugContentEvents.Add(spawnedEvent);
         spawnedEventCount++;
 
         if (suppressReward)
@@ -652,6 +671,7 @@ public class WorldEventSpawner : MonoBehaviour
             debugEvent = null;
 
         debugRewardSuppressedEvents.Remove(worldEvent);
+        debugContentEvents.Remove(worldEvent);
 
         spawnedEvents.Remove(worldEvent);
         spawnedEventCount = Mathf.Max(0, spawnedEventCount - 1);

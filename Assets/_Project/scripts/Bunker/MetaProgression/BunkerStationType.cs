@@ -11,5 +11,6 @@ public enum BunkerStationType
     Animation = 7,
     CustomEvent = 8,
     AnomalyStabilizer = 9,
-    EscapeProtocol = 10
+    EscapeProtocol = 10,
+    OrbitalSlot = 11
 }

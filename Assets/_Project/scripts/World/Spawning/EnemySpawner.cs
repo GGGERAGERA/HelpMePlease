@@ -1151,7 +1151,7 @@ public partial class EnemySpawner : MonoBehaviour
             EnemySpawnEntry entry = phase.enemies[i];
 
             if (CanSpawn(entry))
-                totalWeight += entry.weight;
+                totalWeight += EffectiveWeight(entry);
         }
 
         if (totalWeight <= 0f)
@@ -1166,7 +1166,7 @@ public partial class EnemySpawner : MonoBehaviour
             if (!CanSpawn(entry))
                 continue;
 
-            roll -= entry.weight;
+            roll -= EffectiveWeight(entry);
 
             if (roll <= 0f)
                 return entry.enemyPrefab;
@@ -1175,9 +1175,11 @@ public partial class EnemySpawner : MonoBehaviour
         return null;
     }
 
+    private static float EffectiveWeight(EnemySpawnEntry entry) => entry.weight * (RunStateManager.Instance?.CurrentConfig.EnemyWeight(entry.enemyPrefab) ?? 1f);
+
     private bool CanSpawn(EnemySpawnEntry entry)
     {
-        if (entry == null || entry.enemyPrefab == null || entry.weight <= 0f)
+        if (entry == null || entry.enemyPrefab == null || EffectiveWeight(entry) <= 0f)
             return false;
 
         if (currentRunLevel < Mathf.Max(1, entry.minimumRunLevel))

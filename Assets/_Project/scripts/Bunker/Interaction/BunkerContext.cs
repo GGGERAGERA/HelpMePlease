@@ -20,6 +20,7 @@ public sealed class BunkerContext : MonoBehaviour
         }
 
         Instance = this;
+        StationProgression = BunkerStationProgressionService.Instance ?? StationProgression;
         if (StationProgression == null || playerLoadout == null)
         {
             Debug.LogError("[BunkerContext] Authored progression/loadout components are missing.", this);

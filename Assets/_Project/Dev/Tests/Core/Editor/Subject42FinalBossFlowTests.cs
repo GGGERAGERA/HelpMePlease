@@ -30,7 +30,7 @@ public sealed class Subject42FinalBossFlowTests
         Assert.That(RunFlowController.Instance.Phase, Is.EqualTo(RunPhase.Stopped));
         GameOverManager.Instance.MainMenu();
         yield return CoreTestSupport.Await(() =>
-            SceneManager.GetActiveScene().name == "MainMenu" && !SceneTransitionOverlay.IsTransitioning);
+            SceneManager.GetActiveScene().name == RunEndService.BunkerSceneName && !SceneTransitionOverlay.IsTransitioning);
         Assert.That(run.IsRunEnded, Is.True);
         Assert.That(run.GetRunSummarySnapshot(RunEndReason.PlayerDied).EndReason,
             Is.EqualTo(RunEndReason.PlayerDied));
@@ -60,7 +60,7 @@ public sealed class Subject42FinalBossFlowTests
         Assert.That(payouts, Is.EqualTo(1));
         RunEndService.RecoverToBunker();
         yield return CoreTestSupport.Await(() =>
-            SceneManager.GetActiveScene().name == "MainMenu" && !SceneTransitionOverlay.IsTransitioning);
+            SceneManager.GetActiveScene().name == RunEndService.BunkerSceneName && !SceneTransitionOverlay.IsTransitioning);
         Assert.That(run.GetRunSummarySnapshot(RunEndReason.Victory), Is.SameAs(summary));
         Assert.That(CurrencyManager.Instance.TotalGold, Is.EqualTo(expectedGold));
         yield return StartAndAssertCleanSecondRun(previousRunId, previousState);
@@ -73,7 +73,7 @@ public sealed class Subject42FinalBossFlowTests
         Assert.That(starter, Is.Not.Null);
         starter.StartRun(starter.transform);
         yield return CoreTestSupport.Await(() =>
-            SceneManager.GetActiveScene().name != "MainMenu" &&
+            SceneManager.GetActiveScene().name != RunEndService.BunkerSceneName &&
             !SceneTransitionOverlay.IsTransitioning &&
             Object.FindFirstObjectByType<CharacterSpawner>()?.SpawnedPlayer != null);
         var run = RunStateManager.Instance;

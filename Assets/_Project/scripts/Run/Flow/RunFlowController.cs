@@ -39,11 +39,8 @@ public sealed class RunFlowController : MonoBehaviour
         ? Mathf.Max(0f, sectorProfile.ExitActivationTime - SectorElapsedTime) : 0f;
     public bool IsExitRecovering => enemySpawner != null && enemySpawner.IsRecoveringFromFirstAutomaticAssault;
     private bool CanUnlockExit => TutorialController.IsTutorialSector
-        ? TutorialController.IsActive && TutorialController.Active.GoalCompleted : sectorProfile != null &&
-        SectorElapsedTime >= sectorProfile.ExitActivationTime &&
-        ((enemySpawner != null && enemySpawner.HasRecoveredFromFirstAutomaticAssault) ||
-         (SectorElapsedTime >= sectorProfile.ExitUnlockTimeout &&
-          (enemySpawner == null || !enemySpawner.HasStartedFirstAutomaticAssault)));
+        ? TutorialController.IsActive && TutorialController.Active.GoalCompleted
+        : sectorProfile != null && SectorElapsedTime >= sectorProfile.ExitActivationTime;
     public RunPhase Phase { get; private set; }
     public EnemyHealth FinalBoss => finalBoss;
     public bool IsVictoryConfirmed => Phase == RunPhase.Victory;
@@ -69,7 +66,7 @@ public sealed class RunFlowController : MonoBehaviour
         if (Phase == RunPhase.NormalSector && !levelCompleted)
         {
             SectorElapsedTime += Time.deltaTime;
-            // Availability is permanent within this sector, including a timeout unlock.
+            // The countdown is the complete availability contract; waves never extend it.
             if (!IsExitUnlocked && CanUnlockExit)
             {
                 IsExitUnlocked = true;

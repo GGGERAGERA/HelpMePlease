@@ -142,9 +142,9 @@ public sealed class StartScreenPresentationTests
         Time.timeScale = previousTimeScale;
         beginButton.onClick.Invoke();
         float deadline = Time.realtimeSinceStartup + 30;
-        while (SceneManager.GetActiveScene().name != "MainMenu" && Time.realtimeSinceStartup < deadline)
+        while (SceneManager.GetActiveScene().name != RunEndService.BunkerSceneName && Time.realtimeSinceStartup < deadline)
             yield return null;
-        Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo("MainMenu"));
+        Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo(RunEndService.BunkerSceneName));
         while (SceneTransitionOverlay.IsTransitioning && Time.realtimeSinceStartup < deadline)
             yield return null;
         Assert.That(SceneTransitionOverlay.IsTransitioning, Is.False, "Loading overlay must release input");

@@ -27,7 +27,15 @@ public sealed class BunkerRunStarter : MonoBehaviour
     private BunkerNotificationManager Notifications =>
     BunkerContext.Instance != null ? BunkerContext.Instance.Notifications : null;
 
-    public void StartRun(Transform transitionTarget, int depthId = DepthCatalog.SurfaceId)
+    public SurfaceMapService SurfaceMap => MetaProgressionManager.EnsureExists().SurfaceMap;
+
+    public void StartSurfaceRun(Transform transitionTarget)
+    {
+        if (SurfaceMap == null || !SurfaceMap.TryBuildRunConfig(out RunConfig config)) return;
+        StartRun(transitionTarget, DepthCatalog.SurfaceId, config);
+    }
+
+    public void StartRun(Transform transitionTarget, int depthId = DepthCatalog.SurfaceId, RunConfig config = null)
     {
         if (isTransitioning || SceneTransitionOverlay.IsTransitioning)
             return;
@@ -71,7 +79,7 @@ public sealed class BunkerRunStarter : MonoBehaviour
             BunkerContext.Instance?.Panels?.CloseAll(false);
             AnomalyStabilizerData stabilizer = RunSelectionManager.Instance.ConsumeAnomalyStabilizer();
             RunStateManager.EnsureExists().BeginNewRun(character, null, startingStageProfile,
-                startingWorldRule, startingLocalAnomaly, stabilizer, depth.id);
+                config?.WorldRule ?? startingWorldRule, config?.LocalAnomaly ?? startingLocalAnomaly, stabilizer, depth.id, false, config);
             AudioService.Instance?.Play(AudioCueId.StartRun);
         }, t =>
         {

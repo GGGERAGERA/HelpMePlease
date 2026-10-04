@@ -10,6 +10,11 @@ public enum RunSceneCleanupPhase { Rewards, Gameplay }
 /// </summary>
 public sealed class RunStateManager : MonoBehaviour
 {
+    public static event System.Action<RunConfig, RunEndReason, bool> RunFinished;
+    public static event System.Action<RunConfig, int, WorldEvent, string> ContentEventCompleted;
+    public void ReportCompletedEvent(WorldEvent source, string tag)
+    { if (!runEnded && !developmentRun) ContentEventCompleted?.Invoke(CurrentConfig, RunId, source, tag); }
+    public RunConfig CurrentConfig { get; private set; } = RunConfig.Default;
     public event System.Action EvolutionChanged;
     public static RunStateManager Instance { get; private set; }
     public event System.Action CurrentRewardChanged;
@@ -183,12 +188,12 @@ public sealed class RunStateManager : MonoBehaviour
             runTime += stats.RunTime;
         }
 
-        return RunRewardCalculator.CalculateGold(
+        return Mathf.RoundToInt(CurrentConfig.Gold * RunRewardCalculator.CalculateGold(
             killRewardUnits,
             runTime,
             completedLevelRewardMultiplierTotal,
             endReason
-        );
+        ));
     }
 
     private bool TryGetUncommittedCurrentSceneStats(
@@ -210,6 +215,7 @@ public sealed class RunStateManager : MonoBehaviour
 
     public void SetCurrentSector(RunSector sector)
     {
+        sector?.ApplyRunConfig(CurrentConfig);
         CurrentSector = sector;
 
         if (sector != null)
@@ -302,7 +308,7 @@ public sealed class RunStateManager : MonoBehaviour
         itemSlots.Clear();
         anomalyInventory.Clear();
         evolutionState.Clear();
-        threatValue = 0f;
+        threatValue = CurrentConfig.InitialThreat;
         threatElapsedTime = 0f;
 
         ClearExperienceSnapshot();
@@ -754,6 +760,7 @@ public sealed class RunStateManager : MonoBehaviour
                         UnlockConditionType.CompleteRun, string.Empty, 1);
                 }
             }
+            RunFinished?.Invoke(CurrentConfig, reason, confirmedVictory && !developmentRun);
         }
         finally
         {
@@ -775,8 +782,9 @@ public sealed class RunStateManager : MonoBehaviour
         var stabilizer = CurrentAnomalyStabilizer;
         int depth = CurrentDepthId;
         bool dev = developmentRun;
+        var config = CurrentConfig;
         EndRun(reason, expectedRunId);
-        BeginNewRun(character, null, stage, rule, anomaly, stabilizer, depth, dev);
+        BeginNewRun(character, null, stage, rule, anomaly, stabilizer, depth, dev, config);
         return true;
     }
 
@@ -803,6 +811,7 @@ public sealed class RunStateManager : MonoBehaviour
         if (lifecycleBusy) return;
         if (isDevelopmentRun) developmentRun = true;
         if (!runEnded) EndRun(RunEndReason.ReturnedToBunker, RunId);
+        CurrentConfig = RunConfig.Default;
         CurrentDepthId = DepthCatalog.SurfaceId;
         startingStageProfile = stageProfile;
         startingWorldRule = worldRule;
@@ -818,11 +827,13 @@ public sealed class RunStateManager : MonoBehaviour
         LocalAnomalyData localAnomaly,
         AnomalyStabilizerData anomalyStabilizer,
         int depthId = DepthCatalog.SurfaceId,
-        bool isDevelopmentRun = false)
+        bool isDevelopmentRun = false,
+        RunConfig config = null)
     {
         if (lifecycleBusy) return;
         if (isDevelopmentRun) developmentRun = true;
         if (!runEnded) EndRun(RunEndReason.ReturnedToBunker, RunId);
+        CurrentConfig = config ?? RunConfig.Default;
         CurrentDepthId = depthId;
         startingStageProfile = stageProfile;
         startingWorldRule = worldRule;
@@ -892,6 +903,7 @@ public sealed class RunStateManager : MonoBehaviour
         evolutionState.Clear();
         threatValue = threatElapsedTime = 0f;
         OrbitalStationState = null;
+        CurrentConfig = RunConfig.Default;
         startingStageProfile = null;
         startingWorldRule = null;
         startingLocalAnomaly = null;

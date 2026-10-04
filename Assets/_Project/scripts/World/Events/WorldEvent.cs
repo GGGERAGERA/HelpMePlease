@@ -2,6 +2,13 @@ using UnityEngine;
 
 public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
 {
+    [SerializeField] private string eventId;
+    [SerializeField] private string eventTag;
+    public string EventId => eventId;
+    public string EventTag => eventTag;
+    public WorldEvent SourcePrefab { get; private set; }
+    public void BindSource(WorldEvent prefab) => SourcePrefab = prefab;
+
     [Header("Presentation")]
     [SerializeField] private string eventDisplayName = "WORLD EVENT";
     [SerializeField, TextArea(1, 2)] private string eventDescription;

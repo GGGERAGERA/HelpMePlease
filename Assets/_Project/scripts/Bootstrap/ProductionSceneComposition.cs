@@ -8,6 +8,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class ProductionSceneComposition : MonoBehaviour
 {
+    [SerializeField] private SurfaceMapDefinition surfaceMap;
     [SerializeField] private LocalizationService localization;
     [SerializeField] private AudioService audio;
     [SerializeField] private UnlockProgressService unlocks;
@@ -23,6 +24,7 @@ public sealed class ProductionSceneComposition : MonoBehaviour
         if (localization == null || audio == null || unlocks == null || bunkerProgression == null ||
             transition == null || orbital == null || visualPreset == null)
             throw new InvalidOperationException("ProductionSceneComposition has missing Inspector dependencies.");
+        if (surfaceMap != null) MetaProgressionManager.EnsureExists().ConfigureSurfaceMap(surfaceMap);
         OrbitalPresentationConfig.Configure(orbital);
         VisualTuningPresetStorage.Configure(visualPreset);
         AnomalyItemCatalog.Configure(anomalyItems);

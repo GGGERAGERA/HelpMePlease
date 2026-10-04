@@ -11,7 +11,8 @@ public static class PlayerLoadoutFactory
     public static void ApplyCharacterStats(
         GameObject player,
         CharacterData characterData,
-        float fallbackMoveSpeed = float.NaN)
+        float fallbackMoveSpeed = float.NaN,
+        float? moveSpeedOverride = null)
     {
         if (player == null)
             return;
@@ -30,11 +31,11 @@ public static class PlayerLoadoutFactory
             player.GetComponent<CharacterMovement2D>();
         if (movement != null)
         {
-            float baseMoveSpeed = characterData != null
+            float baseMoveSpeed = moveSpeedOverride ?? (characterData != null
                 ? characterData.moveSpeed
                 : float.IsNaN(fallbackMoveSpeed)
                     ? movement.AuthoredMoveSpeed
-                    : fallbackMoveSpeed;
+                    : fallbackMoveSpeed);
             movement.ApplyCalculatedMoveSpeed(CalculateFinalMoveSpeed(baseMoveSpeed, meta));
         }
     }

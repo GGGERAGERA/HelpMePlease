@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1915e3567dd74000a7d7f875d4d7e474, type: 3}
+  m_Name: Sector_C2
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceSectorDefinition
+  id: C2
+  displayName: C2
+  description: Risky route / Bombers / gold
+  mapPosition: {x: 300, y: 0}
+  neighbours:
+  - C1
+  parameters:
+    layoutProfile: {fileID: 11400000, guid: 553524f40dfeeed45935a6c38cb021f7, type: 2}
+    spawnProfile: {fileID: 0}
+    threatProfile: {fileID: 11400000, guid: 42a10000000000000000000000000004, type: 2}
+    worldRule: {fileID: 11400000, guid: e9ff1c9474d14fd4ea654c82fddd4155, type: 2}
+    localAnomaly: {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}
+    initialThreat: 20
+    threatGrowth: 1.3
+    enemyHealth: 1.15
+    spawnPressure: 1.25
+    experience: 1
+    gold: 1.5
+    eventFrequency: 1
+    enemyWeights:
+    - prefab: {fileID: 1432338969431510999, guid: 46ef0098ace1f0e4585348645e131dff, type: 3}
+      multiplier: 2.5
+    eventWeights: []
+    anomalyWeights: []
+    biomeId: 
+    themeId: 

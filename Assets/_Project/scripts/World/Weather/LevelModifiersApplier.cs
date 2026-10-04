@@ -167,7 +167,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         }
 
         exploration.Initialize(
-            explorationConfig,
+            RunStateManager.Instance?.CurrentConfig.LayoutProfile ?? explorationConfig,
             gameplayArea,
             enemySpawner,
             eventSpawner,

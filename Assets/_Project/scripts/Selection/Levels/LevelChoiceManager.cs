@@ -135,18 +135,19 @@ public sealed class LevelChoiceManager : MonoBehaviour
             return false;
         }
 
+        int desiredChoices = choicesCount;
         List<WorldRuleData> pool = BuildPool();
 
-        if (pool.Count < choicesCount)
+        if (pool.Count < desiredChoices)
         {
             Debug.LogError(
-                $"[LevelChoiceManager] At least {choicesCount} unique " +
+                $"[LevelChoiceManager] At least {desiredChoices} unique " +
                 $"World Rules are required, but only {pool.Count} are available."
             );
             return false;
         }
 
-        while (currentChoices.Count < choicesCount && pool.Count > 0)
+        while (currentChoices.Count < desiredChoices && pool.Count > 0)
         {
             int selectedIndex = Random.Range(0, pool.Count);
             WorldRuleData rule = pool[selectedIndex];
@@ -159,11 +160,12 @@ public sealed class LevelChoiceManager : MonoBehaviour
                 defaultLocalAnomaly
             );
 
+            option.ApplyRunConfig(runState.CurrentConfig);
             currentChoices.Add(rule);
             currentSectorOptions.Add(rule, option);
         }
 
-        if (currentChoices.Count != choicesCount)
+        if (currentChoices.Count != desiredChoices)
         {
             Debug.LogError(
                 "[LevelChoiceManager] A complete sector choice could not be built."

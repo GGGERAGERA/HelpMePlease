@@ -8,6 +8,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
     [SerializeField] private BunkerSelectionSourceHub selectionSources;
     [SerializeField] private GameObject mapPanel;
     [SerializeField] private EscapeProtocolView escapeProtocolPanel;
+    [SerializeField] private SurfaceMapView surfaceMapPanel;
 
     [Header("Panel UI")]
     [SerializeField] private AudioSettingsPanel audioSettingsPanel;
@@ -22,6 +23,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
     [SerializeField] private BunkerRunStarter runStarter;
 
     public bool IsAnyPanelOpen =>
+        (surfaceMapPanel != null && surfaceMapPanel.gameObject.activeInHierarchy) ||
         (escapeProtocolPanel != null && escapeProtocolPanel.gameObject.activeInHierarchy) ||
         (orbitalSlotPanel != null && orbitalSlotPanel.IsOpen) ||
         (selectionPanelController != null && selectionPanelController.IsOpen) ||
@@ -36,6 +38,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
         // disable the entire bunker interaction pipeline on scene load.
         selectionPanelController?.Hide();
         escapeProtocolPanel?.gameObject.SetActive(false);
+        surfaceMapPanel?.gameObject.SetActive(false);
 
         if (stationUpgradePanelPrefab != null)
         {
@@ -83,6 +86,11 @@ public sealed class BunkerPanelManager : MonoBehaviour
     public void OpenDepthSelect(Transform transitionTarget)
     {
         CloseAll(false);
+        if (surfaceMapPanel != null)
+        {
+            surfaceMapPanel.Show(runStarter.SurfaceMap, runStarter, this, transitionTarget);
+            return;
+        }
         escapeProtocolPanel.ShowDepthSelect(
             MetaProgressionManager.EnsureExists().EscapeAccess, runStarter.Depths, this, transitionTarget);
     }
@@ -146,6 +154,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
         orbitalSlotPanel?.Hide();
         selectionPanelController?.Hide();
         escapeProtocolPanel?.gameObject.SetActive(false);
+        surfaceMapPanel?.gameObject.SetActive(false);
 
         if (mapPanel != null)
             mapPanel.SetActive(false);

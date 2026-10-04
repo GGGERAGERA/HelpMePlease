@@ -5,7 +5,7 @@ public sealed class RunEndService : MonoBehaviour
 {
     public static RunEndService Instance { get; private set; }
 
-    public const string BunkerSceneName = "Bunker_OneRoom_Prototype";
+    public const string BunkerSceneName = "MainMenu";
 
     private bool isEndingRun;
     private int runId;

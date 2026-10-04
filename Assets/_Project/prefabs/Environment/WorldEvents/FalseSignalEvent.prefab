@@ -81,11 +81,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f51a1e2d8b0c4d0a9e07f4e27b6d1101, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FalseSignalEvent
+  promptText: hud.interact
+  eventId: false-signal
+  eventTag: signal
   eventDisplayName: event.signal.name
   eventDescription: event.signal.description
   allowedInSite: 1
   requiresHoldPointFeature: 0
-  promptText: hud.interact
   startRadius: 5
   lineMaterial: {fileID: 2100000, guid: dca396c6aa60fe549b61f941be335967, type: 2}
   signalPointPrefab: {fileID: 510000000000000004, guid: f51a1e2d8b0c4d0a9e07f4e27b6d1202, type: 3}
@@ -102,4 +104,10 @@ MonoBehaviour:
   maximumSpawnRadius: 6
   enemySpawner: {fileID: 0}
   ambushTurretPrefab: {fileID: 1334349216365075605, guid: 9a2217687199c7b41894a7ab9673f951, type: 3}
+  feedbackPulseDuration: 0.45
+  successFadeDuration: 0.35
+  ambushShakeDuration: 0.18
+  ambushShakeMagnitude: 0.06
+  falseSignalPulseColor: {r: 0.95, g: 0.08, b: 0.04, a: 1}
   gameplayArea: {fileID: 0}
+  debugTrapOverride: 0

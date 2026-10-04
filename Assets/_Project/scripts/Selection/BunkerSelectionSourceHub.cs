@@ -45,6 +45,13 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
         public void Confirm(string entryId) => hub.Confirm(kind, entryId);
     }
 
+    [SerializeField] private BunkerSelectionCatalog catalog;
+    private void Awake()
+    {
+        if (catalog == null) return;
+        characters = catalog.characters; weapons = catalog.weapons; upgrades = catalog.upgrades; anomalies = catalog.anomalies;
+    }
+
     [Header("Production Content")]
     [SerializeField] private CharacterData[] characters;
     [SerializeField] private WeaponData[] weapons;

@@ -164,7 +164,8 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
             replacement);
         movement?.SetVisualRoot(facingVisual);
         PlayerLoadoutFactory.ApplyCharacterStats(
-            player, character, fallbackMoveSpeed);
+            // Bunker traversal uses the authored hub speed, independently of combat character balance.
+            player, character, fallbackMoveSpeed, moveSpeedOverride: fallbackMoveSpeed);
 
     }
 

@@ -76,6 +76,10 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
                     animator.SetTrigger(animationTrigger);
                 break;
 
+            case BunkerStationType.OrbitalSlot:
+                Panels?.OpenOrbitalSlot();
+                break;
+
             case BunkerStationType.CustomEvent:
                 onInteract?.Invoke();
                 break;

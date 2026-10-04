@@ -143,7 +143,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             return false;
         }
 
-        List<WorldEvent> siteEvents = BuildSiteEventPool();
+        List<WorldEvent> siteEvents = BuildSiteEventPool(normalSizes);
 
         if (siteEvents.Count == 0)
         {
@@ -334,7 +334,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         foreach (var site in previousSites) site.RemoveForLayout();
         anomalyController.BeginSiteLayout();
         eventSpawner.ConfigureSiteControlledMode(TotalSiteCount);
-        var events = BuildSiteEventPool();
+        var events = BuildSiteEventPool(sizes);
         var anomalies = BuildNormalAnomalyPool();
         for (int i = 0; i < NormalSiteCount; i++)
             new GameObject($"Normal Anomaly Site {i + 1}").AddComponent<ProductionAnomalySite>()
@@ -1220,7 +1220,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
     }
 #endif
 
-    private List<WorldEvent> BuildSiteEventPool()
+    private List<WorldEvent> BuildSiteEventPool(Vector2[] siteSizes)
     {
         List<WorldEvent> result = new();
         IReadOnlyList<WorldEvent> prefabs = eventSpawner.EventPrefabs;
@@ -1236,6 +1236,32 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
                 result.Add(prefab);
         }
 
+        var runConfig = RunStateManager.Instance?.CurrentConfig;
+        if (runConfig != null && runConfig != RunConfig.Default && result.Count > 0)
+        {
+            var weighted = new List<WorldEvent>();
+            for (int i = 0; i < TotalSiteCount; i++)
+            {
+                var selected = RunWeightedSelection.Select(result, runConfig.EventWeight, Random.value);
+                if (selected != null) weighted.Add(selected);
+            }
+            // Required events occupy deterministic site slots before weighted content.
+            var required = runConfig.Content.GuaranteedEvents;
+            if (required.Count > TotalSiteCount) throw new System.InvalidOperationException("Too many guaranteed events for exploration sites.");
+            var slots = new List<int>();
+            for (int i = 0; i < siteSizes.Length; i++) slots.Add(i);
+            slots.Sort((a, b) => (siteSizes[b].x * siteSizes[b].y).CompareTo(siteSizes[a].x * siteSizes[a].y));
+            slots.Add(NormalSiteCount);
+            while (weighted.Count < TotalSiteCount && required.Count > 0) weighted.Add(required[0]);
+            for (int i = 0; i < required.Count; i++)
+            {
+                var prefab = required[i];
+                if (!prefab.AllowedInSite || !eventSpawner.IsEventPrefabEnabled(prefab))
+                    throw new System.InvalidOperationException("Guaranteed event is not supported by this exploration profile: " + prefab.name);
+                weighted[slots[i]] = prefab;
+            }
+            return weighted;
+        }
         Shuffle(result);
         return result;
     }
@@ -1245,6 +1271,13 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         LocalAnomalyData[] source = config.NormalAnomalies;
         LocalAnomalyData[] result = new LocalAnomalyData[source.Length];
         System.Array.Copy(source, result, source.Length);
+        var runConfig = RunStateManager.Instance?.CurrentConfig;
+        if (runConfig != null && runConfig != RunConfig.Default)
+        {
+            for (int i = 0; i < result.Length; i++)
+                result[i] = RunWeightedSelection.Select(source, runConfig.AnomalyWeight, Random.value) ?? source[i];
+            return result;
+        }
 
         for (int i = result.Length - 1; i > 0; i--)
         {

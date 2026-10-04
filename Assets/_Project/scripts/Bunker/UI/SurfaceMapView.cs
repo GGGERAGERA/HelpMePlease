@@ -1,0 +1,217 @@
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+/// <summary>Rendering and input adapter only; graph/availability/start validation belong to services.</summary>
+public sealed class SurfaceMapView : MonoBehaviour
+{
+    [SerializeField] private RectTransform graph;
+    [SerializeField] private Button nodeTemplate;
+    [SerializeField] private Image lineTemplate;
+    [SerializeField] private TMP_Text details;
+    [SerializeField] private Button startButton;
+    [SerializeField] private Button closeButton;
+    private readonly Dictionary<string, Button> nodes = new();
+    private readonly Dictionary<string, TMP_Text> markerIcons = new();
+    private readonly List<Route> routes = new();
+    private SurfaceMapService service;
+    private SurfaceMapDefinition renderedMap;
+    private BunkerRunStarter starter;
+    private BunkerPanelManager owner;
+    private Transform transitionTarget;
+    private TMP_Text selectionLabel;
+    private static readonly Color Ink = new(.025f,.055f,.08f,1f);
+    private static readonly Color Cyan = new(.34f,.85f,.94f,1f);
+    private static readonly Color Muted = new(.38f,.52f,.6f,1f);
+    private static readonly Color Complete = new(.42f,.85f,.71f,1f);
+    private sealed class Route { public string From, To; public readonly List<Image> Segments = new(); }
+
+    private void Awake()
+    {
+        nodeTemplate.gameObject.SetActive(false); lineTemplate.gameObject.SetActive(false);
+        var root = (RectTransform)transform; root.sizeDelta = new Vector2(1160,700);
+        GetComponent<Image>().color = new Color(.025f,.045f,.065f,.99f);
+        var title = transform.Find("Title").GetComponent<TMP_Text>();
+        Place(title.rectTransform,new Vector2(-130,302),new Vector2(810,44));
+        title.text = "SURFACE EXPEDITION MAP"; title.fontSize = 27; title.alignment = TextAlignmentOptions.Left; title.color = Cyan;
+        Label("Uplink",transform,new Vector2(-110,269),new Vector2(850,24),"BUNKER UPLINK  /  SECTOR TELEMETRY  /  042",13,Muted);
+        Bar(transform,new Vector2(0,247),new Vector2(1112,2),new Color(.17f,.4f,.49f));
+        Bar(transform,new Vector2(-555,301),new Vector2(5,44),Cyan);
+        var viewportObject = new GameObject("Map Viewport", typeof(RectTransform), typeof(Image), typeof(RectMask2D), typeof(SurfaceMapNavigation));
+        var viewport = (RectTransform)viewportObject.transform; viewport.SetParent(graph.parent, false);
+        Place(viewport,new Vector2(-185,-22),new Vector2(744,514));
+        viewportObject.GetComponent<Image>().color = Ink;
+        for (int x=-350;x<=350;x+=35) Bar(viewport,new Vector2(x,0),new Vector2(1,514),new Color(.1f,.25f,.3f,.26f));
+        for (int y=-245;y<=245;y+=35) Bar(viewport,new Vector2(0,y),new Vector2(744,1),new Color(.1f,.25f,.3f,.26f));
+        for (int y=-252;y<=252;y+=7) Bar(viewport,new Vector2(0,y),new Vector2(744,1),new Color(0,0,0,.09f));
+        Label("Coordinates",viewport,new Vector2(-6,235),new Vector2(700,20),"X: 000   Y: 042                                     N / SURFACE",11,Muted);
+        Label("Map caption",viewport,new Vector2(-6,-235),new Vector2(700,20),"SECTOR NETWORK                       UPLINK // STABLE",11,Muted);
+        graph.SetParent(viewport, false); graph.anchoredPosition = new Vector2(-175,-62);
+        viewportObject.GetComponent<SurfaceMapNavigation>().Configure(graph);
+        Bar(transform,new Vector2(204,-18),new Vector2(2,510),new Color(.16f,.33f,.4f));
+        var card = Bar(transform,new Vector2(391,-2),new Vector2(330,473),new Color(.038f,.074f,.099f));
+        card.transform.SetSiblingIndex(title.transform.GetSiblingIndex());
+        selectionLabel = Label("Selection",transform,new Vector2(390,211),new Vector2(306,24),"SECTOR INTELLIGENCE",14,Cyan);
+        Place(details.rectTransform,new Vector2(391,-5),new Vector2(298,386));
+        details.fontSize=16; details.color=new Color(.72f,.83f,.87f); details.lineSpacing=8; details.richText=true;
+        details.alignment=TextAlignmentOptions.TopLeft;
+        Place(startButton.GetComponent<RectTransform>(),new Vector2(391,-260),new Vector2(330,49));
+        StyleButton(startButton,"DEPLOY TO SECTOR",18,Cyan);
+        Place(closeButton.GetComponent<RectTransform>(),new Vector2(530,303),new Vector2(44,38));
+        StyleButton(closeButton,"X",18,Muted);
+        Label("Navigation hint",transform,new Vector2(-190,-307),new Vector2(732,25),"DRAG TO PAN  /  SCROLL TO ZOOM  /  SELECT A SECTOR",12,Muted);
+        Label("Terminal ID",transform,new Vector2(390,-307),new Vector2(330,25),"SUBJECT 42  //  EXPEDITION CONTROL",10,Muted);
+        startButton.onClick.AddListener(StartSelected); closeButton.onClick.AddListener(Close);
+    }
+    public void Show(SurfaceMapService mapService, BunkerRunStarter runStarter, BunkerPanelManager panelOwner, Transform target)
+    {
+        if (service != null) service.Changed -= Refresh;
+        service = mapService; starter = runStarter; owner = panelOwner; transitionTarget = target;
+        if (service == null) { Debug.LogError("Surface map service is not configured.", this); return; }
+        if (renderedMap != service.Definition) BuildGraph();
+        gameObject.SetActive(true); service.Changed += Refresh; Refresh();
+    }
+    private void OnDisable() { if (service != null) service.Changed -= Refresh; }
+    private void BuildGraph()
+    {
+        foreach (Transform child in graph)
+            if (child != nodeTemplate.transform && child != lineTemplate.transform) Destroy(child.gameObject);
+        nodes.Clear(); markerIcons.Clear(); routes.Clear(); renderedMap = service.Definition;
+        var edges = new HashSet<(string, string)>();
+        foreach (var sector in renderedMap.Sectors)
+            foreach (string neighbour in sector.Neighbours)
+            {
+                var key = string.CompareOrdinal(sector.Id, neighbour) < 0 ? (sector.Id, neighbour) : (neighbour, sector.Id);
+                if (edges.Add(key)) Line(sector.Id, neighbour, sector.MapPosition, renderedMap.Find(neighbour).MapPosition);
+            }
+        foreach (string id in renderedMap.StartingSectors) Line(null,id,renderedMap.BunkerPosition,renderedMap.Find(id).MapPosition);
+        var bunker = Node(renderedMap.BunkerPosition,"BUNKER",true); bunker.interactable = false;
+        foreach (var sector in renderedMap.Sectors)
+        {
+            string id = sector.Id; var button = Node(sector.MapPosition,id,false);
+            button.onClick.AddListener(() => service.TrySelect(id)); nodes.Add(id,button);
+            var badge = Plate("Marker badge",button.transform,new Vector2(62,29),new Vector2(29,29),Ink);
+            var label = Label("Content Marker",badge.transform,Vector2.zero,new Vector2(28,28),"",19,Cyan);
+            label.alignment=TextAlignmentOptions.Center;
+            label.gameObject.AddComponent<SurfaceMarkerPulse>(); markerIcons.Add(id,label);
+        }
+    }
+    private Button Node(Vector2 position, string label, bool bunker)
+    {
+        var button = Instantiate(nodeTemplate, graph); button.gameObject.SetActive(true); button.name=label;
+        Place((RectTransform)button.transform,position*1.15f,new Vector2(bunker?158:126,bunker?84:70));
+        var image=button.GetComponent<Image>(); image.color=Color.clear;
+        var rim=Plate("Rim",button.transform,Vector2.zero,((RectTransform)button.transform).sizeDelta,bunker?Cyan:Muted);
+        rim.transform.SetAsFirstSibling();
+        Plate("Fill",rim.transform,Vector2.zero,((RectTransform)button.transform).sizeDelta-new Vector2(4,4),Ink);
+        var text=button.GetComponentInChildren<TMP_Text>(true); text.transform.SetAsLastSibling();
+        Place(text.rectTransform,new Vector2(0,bunker?7:9),new Vector2(bunker?152:120,32));
+        text.text=label; text.fontSize=bunker?24:29; text.color=Cyan; text.alignment=TextAlignmentOptions.Center;
+        var status=Label("Status",button.transform,new Vector2(0,-21),new Vector2(bunker?150:120,18),bunker?"HOME / UPLINK":"AVAILABLE",10,Muted);
+        status.alignment=TextAlignmentOptions.Center; status.font=text.font; status.fontSharedMaterial=text.fontSharedMaterial;
+        button.transition=Selectable.Transition.ColorTint;
+        button.targetGraphic=rim;
+        var colors=button.colors; colors.normalColor=Color.white; colors.disabledColor=Color.white;
+        colors.highlightedColor=new Color(1.2f,1.2f,1.2f); colors.selectedColor=Color.white; button.colors=colors;
+        if (bunker) { Bar(button.transform,new Vector2(0,33),new Vector2(74,3),Cyan); }
+        return button;
+    }
+    private void Line(string fromId,string toId,Vector2 from, Vector2 to)
+    {
+        from*=1.15f; to*=1.15f;
+        var route=new Route { From=fromId, To=toId }; routes.Add(route);
+        var direction=(to-from).normalized; float length=Vector2.Distance(from,to);
+        float Inset(bool bunker) => Mathf.Min(Mathf.Abs(direction.x)>.001f?(bunker?82f:67f)/Mathf.Abs(direction.x):float.PositiveInfinity,
+            Mathf.Abs(direction.y)>.001f?(bunker?46f:39f)/Mathf.Abs(direction.y):float.PositiveInfinity);
+        float begin=Inset(fromId==null), end=length-Inset(false);
+        for(float distance=begin;distance<end;distance+=12f)
+        {
+            float span=Mathf.Min(7,end-distance);
+            var line=Instantiate(lineTemplate,graph); line.gameObject.SetActive(true);
+            var rect=line.rectTransform; rect.anchoredPosition=from+direction*(distance+span*.5f);
+            rect.sizeDelta=new Vector2(span,3); rect.localRotation=Quaternion.Euler(0,0,Mathf.Atan2(direction.y,direction.x)*Mathf.Rad2Deg);
+            rect.SetAsFirstSibling(); route.Segments.Add(line);
+        }
+    }
+    private void Refresh()
+    {
+        foreach (var pair in nodes)
+        {
+            var state=service.GetStatus(pair.Key); bool selected=pair.Key==service.SelectedSectorId;
+            var icon=markerIcons[pair.Key];
+            bool hasMarker=service.Content.TryGetMarker(pair.Key,out var marker)&&marker.Marker!=null;
+            icon.transform.parent.gameObject.SetActive(hasMarker);
+            if(hasMarker)
+            {
+                icon.text=marker.State==SurfaceMarkerState.Active?marker.Marker.icon:marker.Marker.revealedIcon;
+                icon.color=marker.Marker.color;
+                icon.transform.parent.GetComponent<SurfaceMapPlate>().color=Color.Lerp(Ink,marker.Marker.color,.24f);
+                icon.GetComponent<SurfaceMarkerPulse>().Pulsing=marker.Marker.pulse&&marker.State==SurfaceMarkerState.Active;
+            }
+            pair.Value.interactable=state!=SurfaceSectorStatus.Locked;
+            Color tint=selected?Cyan:state==SurfaceSectorStatus.Completed?Complete:state==SurfaceSectorStatus.Locked?new Color(.23f,.32f,.39f):new Color(.35f,.63f,.76f);
+            var rim=pair.Value.transform.Find("Rim").GetComponent<SurfaceMapPlate>(); rim.color=tint;
+            rim.transform.Find("Fill").GetComponent<SurfaceMapPlate>().color=selected?new Color(.07f,.24f,.3f):Ink;
+            pair.Value.GetComponentInChildren<TMP_Text>(true).color=state==SurfaceSectorStatus.Locked?Muted:Color.Lerp(tint,Color.white,.35f);
+            var status=pair.Value.transform.Find("Status").GetComponent<TMP_Text>();
+            status.text=selected?"SELECTED":state.ToString().ToUpperInvariant(); status.color=tint;
+        }
+        foreach(var route in routes)
+        {
+            var end=service.GetStatus(route.To); bool complete=end==SurfaceSectorStatus.Completed;
+            Color tint=complete?Complete:end==SurfaceSectorStatus.Locked?new Color(.15f,.25f,.31f):new Color(.25f,.56f,.66f);
+            if(end!=SurfaceSectorStatus.Locked&&(route.To==service.SelectedSectorId||route.From==service.SelectedSectorId)) tint=Cyan;
+            foreach(var segment in route.Segments) { segment.color=tint; segment.rectTransform.sizeDelta=new Vector2(segment.rectTransform.sizeDelta.x,complete?4:3); }
+        }
+        bool ready=service.TryBuildRunConfig(out var config);
+        startButton.interactable=ready&&!SceneTransitionOverlay.IsTransitioning&&!starter.IsTransitioning;
+        if(!ready) { selectionLabel.text="SECTOR INTELLIGENCE"; details.text="<size=24><color=#8BDDE8>AWAITING TARGET</color></size>\n\nSelect an available sector to inspect expedition telemetry.\n\n<color=#637E91>LOCKED</color>  /  Route unavailable\n<color=#8BDDE8>AVAILABLE</color>  /  Ready to deploy\n<color=#6BD9B5>COMPLETED</color>  /  Replay available"; return; }
+        var selectedSector=renderedMap.Find(config.SectorId);
+        selectionLabel.text="TARGET / "+selectedSector.Id+"  //  "+service.GetStatus(selectedSector.Id).ToString().ToUpperInvariant();
+        bool content=service.Content.TryGetMarker(config.SectorId,out var selectedMarker);
+        string heading=$"<size=27><color=#B1EDF4>SECTOR {selectedSector.Id}</color></size>\n";
+        if(content&&selectedMarker.Concealed)
+        {
+            details.text=heading+$"<color=#F0C66B>{selectedMarker.Title}</color>\n{selectedMarker.Description}\n\n"+
+                "<color=#658B9E>THREAT</color>\n???\n\n<color=#658B9E>START MODIFIER</color>\n???\n\n<color=#658B9E>REWARD</color>\n???\n\n<color=#F0C66B>MISSION / UNIDENTIFIED</color>\n???"; return;
+        }
+        string rule=config.WorldRule!=null?config.WorldRule.DisplayName:"Default";
+        string mission=content?$"{selectedMarker.Title}\n{selectedMarker.Description}":"No active objective";
+        details.text=heading+$"<size=14>{selectedSector.Description}</size>\n\n"+
+            $"<color=#658B9E>THREAT</color>\n{config.InitialThreat:0} INITIAL\n{config.ThreatGrowth:0.##}x GROWTH\n<size=14>Spawn pressure  {config.SpawnPressure:0.##}x</size>\n\n"+
+            $"<color=#658B9E>START MODIFIER</color>\n{rule}\n\n<color=#658B9E>REWARD</color>\n<color=#87DABB>XP {config.Experience:0.##}x  /  GOLD {config.Gold:0.##}x</color>\n\n"+
+            $"<color=#658B9E>MISSION</color>\n<size=14>{mission}</size>";
+    }
+    private TMP_Text Label(string name,Transform parent,Vector2 position,Vector2 size,string value,float fontSize,Color color)
+    {
+        var go=new GameObject(name,typeof(RectTransform),typeof(TextMeshProUGUI)); go.transform.SetParent(parent,false);
+        var label=go.GetComponent<TMP_Text>(); label.font=details.font; label.fontSharedMaterial=details.fontSharedMaterial;
+        Place(label.rectTransform,position,size); label.text=value; label.fontSize=fontSize; label.color=color;
+        label.raycastTarget=false; label.alignment=TextAlignmentOptions.Left; return label;
+    }
+    private static void Place(RectTransform rect,Vector2 position,Vector2 size)
+    { rect.anchorMin=rect.anchorMax=rect.pivot=new Vector2(.5f,.5f); rect.anchoredPosition=position; rect.sizeDelta=size; }
+    private static Image Bar(Transform parent,Vector2 position,Vector2 size,Color color)
+    {
+        var go=new GameObject("Terminal detail",typeof(RectTransform),typeof(Image)); go.transform.SetParent(parent,false);
+        var image=go.GetComponent<Image>(); image.color=color; image.raycastTarget=false; Place(image.rectTransform,position,size); return image;
+    }
+    private static SurfaceMapPlate Plate(string name,Transform parent,Vector2 position,Vector2 size,Color color)
+    {
+        var go=new GameObject(name,typeof(RectTransform),typeof(SurfaceMapPlate)); go.transform.SetParent(parent,false);
+        var plate=go.GetComponent<SurfaceMapPlate>(); plate.color=color; plate.raycastTarget=false; Place(plate.rectTransform,position,size); return plate;
+    }
+    private static void StyleButton(Button button,string text,float size,Color color)
+    {
+        button.GetComponent<Image>().color=new Color(.08f,.21f,.28f);
+        var label=button.GetComponentInChildren<TMP_Text>(); label.text=text; label.fontSize=size; label.color=color;
+        Place(label.rectTransform,Vector2.zero,button.GetComponent<RectTransform>().sizeDelta-new Vector2(8,0));
+    }
+    private void StartSelected() { if (service != null && isActiveAndEnabled) starter.StartSurfaceRun(transitionTarget); }
+    private void Close() => owner.CloseAll();
+}
+
+
+
+
