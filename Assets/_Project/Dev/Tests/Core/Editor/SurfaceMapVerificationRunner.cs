@@ -27,7 +27,7 @@ public static class SurfaceMapVerificationRunner
         File.Delete(request);
         var api = ScriptableObject.CreateInstance<TestRunnerApi>();
         
-        api.Execute(new ExecutionSettings(new Filter { testMode = TestMode.EditMode, testNames = requested == "bunker-fixes" ? new[] { "BunkerInteractionFixTests" } : requested == "sector-flow" ? new[] { "SurfaceSectorTransitionTests" } : markers ? new[] { "SurfaceMarkerTests", "SurfaceMarkerFlowTests" } : new[] { "SurfaceMapTests", "SurfaceMapProgressionTests", "SurfaceRunIntegrationTests", "ProductionBunkerFlowTests" } }));
+        api.Execute(new ExecutionSettings(new Filter { testMode = TestMode.EditMode, testNames = requested == "map-ux" ? new[] { "SurfaceMapUxTests" } : requested == "bunker-fixes" ? new[] { "BunkerInteractionFixTests" } : requested == "sector-flow" ? new[] { "SurfaceSectorTransitionTests" } : markers ? new[] { "SurfaceMarkerTests", "SurfaceMarkerFlowTests" } : new[] { "SurfaceMapTests", "SurfaceMapProgressionTests", "SurfaceRunIntegrationTests", "ProductionBunkerFlowTests" } }));
     }
     private sealed class Results : ICallbacks
     {

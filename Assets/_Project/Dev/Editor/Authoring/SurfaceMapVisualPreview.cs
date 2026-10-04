@@ -71,6 +71,7 @@ public static class SurfaceMapVisualPreview
             var service=new SurfaceMapService(definition,new PreviewStorage());
             service.TrySelect("C1"); view.Show(service,starter,null,null);
             Render("surface-map-visual.png");
+            view.Inspect("C2"); Render("surface-map-locked.png");
             service.TrySelect("D1"); Render("surface-map-unknown.png");
             // Render-only fixture exercises the completed/mission presentation using disposable in-memory state.
             var fixture=new SurfaceMapService(definition,new PreviewStorage(true));
