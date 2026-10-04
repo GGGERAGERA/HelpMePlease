@@ -560,7 +560,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 81c84f6fe8559ab4c92901c6345514b9, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerEventManager
 --- !u!1 &136360727
 GameObject:
@@ -838,6 +838,119 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!1001 &195125942
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 8301000000000000004}
+    m_Modifications:
+    - target: {fileID: 126207439033896775, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_Name
+      value: PF_MissionPanel
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 560
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 360
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+--- !u!114 &195125943 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1516151226451800430, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+  m_PrefabInstance: {fileID: 195125942}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c390bcda5b2a85429506be8a81d62cf, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerMissionPanel
+--- !u!224 &195125944 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 2273466682464794062, guid: 9f7a47318c7764a4d96247033aa033d0, type: 3}
+  m_PrefabInstance: {fileID: 195125942}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &249498533
 GameObject:
   m_ObjectHideFlags: 0
@@ -4028,7 +4141,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a0d851f6794714148af3409d270648dd, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerContext
   <Panels>k__BackingField: {fileID: 8301000000000000014}
   <Notifications>k__BackingField: {fileID: 504591453}
@@ -4646,7 +4759,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1df5541c41803e04ca73f43836b58ac8, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerNotificationManager
 --- !u!1 &525061481
 GameObject:
@@ -4892,7 +5005,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!224 &542591194 stripped
 RectTransform:
@@ -5328,6 +5441,66 @@ MeshRenderer:
   m_SortingOrder: 10
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1001 &710829239
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 354169765134190071, guid: 78d39a879cf508b4ca3c058f3f781717, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 11.04
+      objectReference: {fileID: 0}
+    - target: {fileID: 354169765134190071, guid: 78d39a879cf508b4ca3c058f3f781717, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.029999971
+      objectReference: {fileID: 0}
+    - target: {fileID: 354169765134190071, guid: 78d39a879cf508b4ca3c058f3f781717, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 354169765134190071, guid: 78d39a879cf508b4ca3c058f3f781717, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 354169765134190071, guid: 78d39a879cf508b4ca3c058f3f781717, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 354169765134190071, guid: 78d39a879cf508b4ca3c058f3f781717, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 354169765134190071, guid: 78d39a879cf508b4ca3c058f3f781717, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 354169765134190071, guid: 78d39a879cf508b4ca3c058f3f781717, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 354169765134190071, guid: 78d39a879cf508b4ca3c058f3f781717, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 354169765134190071, guid: 78d39a879cf508b4ca3c058f3f781717, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8804623873765569488, guid: 78d39a879cf508b4ca3c058f3f781717, type: 3}
+      propertyPath: m_Name
+      value: PF_MissionOperator
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1205482255736948720, guid: 78d39a879cf508b4ca3c058f3f781717, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
+  m_SourcePrefab: {fileID: 100100000, guid: 78d39a879cf508b4ca3c058f3f781717, type: 3}
 --- !u!1 &738419428
 GameObject:
   m_ObjectHideFlags: 0
@@ -6824,7 +6997,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 100700c6e2874353b1e7fcdc29368171, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerOrbitalSlotPanel
 --- !u!224 &1146382879 stripped
 RectTransform:
@@ -7079,7 +7252,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4aff42b224564e26b700946678420816, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::SurfaceMapView
 --- !u!224 &1178581029 stripped
 RectTransform:
@@ -18869,7 +19042,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
   m_RenderShadows: 1
   m_RequiresDepthTextureOption: 2
@@ -19267,6 +19440,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5163146152259421503, guid: b12870e38d6d2b241a1ec166b32df667, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4292935615
+      objectReference: {fileID: 0}
+    - target: {fileID: 5163146152259421503, guid: b12870e38d6d2b241a1ec166b32df667, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 7219808618289439419, guid: b12870e38d6d2b241a1ec166b32df667, type: 3}
       propertyPath: cameraFollow
       value: 
@@ -19591,7 +19772,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 073797afb82c5a1438f328866b10b3f0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.2D.Runtime::UnityEngine.Rendering.Universal.Light2D
   m_ComponentVersion: 2
   m_LightType: 4
@@ -19971,7 +20152,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7c4ab1d35d4d4efc9be7e81b529f5ae2, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerGateVisual
 --- !u!1001 &2045829382
 PrefabInstance:
@@ -20057,7 +20238,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a9418814d0cfb8546af619d2fddcd1b8, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerRunSummaryPresenter
   showDelay: 0.25
   notificationParent: {fileID: 8301000000000000004}
@@ -57162,7 +57343,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b52787624f744fca90c7e2cedd738760, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::Subject42.Bunker.Gallery.EnemyGalleryPreviewController
 --- !u!102 &8200490000000000102 stripped
 TextMesh:
@@ -57736,7 +57917,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7f24ee9e867e4d341a973e73175bf0fc, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::CameraFollow
   target: {fileID: 1905245400}
   offset: {x: 0.5, y: 1, z: -10}
@@ -57777,7 +57958,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
   m_IgnoreReversedGraphics: 1
   m_BlockingObjects: 0
@@ -57794,7 +57975,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
@@ -57850,6 +58031,7 @@ RectTransform:
   - {fileID: 77131161}
   - {fileID: 1146382879}
   - {fileID: 542591194}
+  - {fileID: 195125944}
   m_Father: {fileID: 8100420000000000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -57906,7 +58088,7 @@ MonoBehaviour:
   m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.1882353, g: 0.22745098, b: 0.28235295, a: 1}
@@ -57944,7 +58126,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1818223e4d65c584287dae8d3232edda, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::SelectionPanelController
   root: {fileID: 8301000000000000005}
   sharedSelectionWindow: {fileID: 8301000000000000012}
@@ -58741,7 +58923,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7cb56e6f72af8dd499de2035403804d3, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerSelectionWindow
 --- !u!1 &8301000000000000013
 GameObject:
@@ -58772,7 +58954,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cfa6235974e57e04d85d4e6872d038fd, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerPanelManager
   selectionPanelController: {fileID: 8301000000000000009}
   selectionSources: {fileID: 8301000000000000016}
@@ -58781,6 +58963,7 @@ MonoBehaviour:
   surfaceMapPanel: {fileID: 1178581028}
   audioSettingsPanel: {fileID: 8301000000000000022}
   orbitalSlotPanel: {fileID: 1146382878}
+  missionPanel: {fileID: 195125943}
   stationUpgradePanelPrefab: {fileID: 2926225604399824164, guid: 27a06037a1814de47ad313c276a4ba38, type: 3}
   runStarter: {fileID: 8304000000000000010}
 --- !u!4 &8301000000000000015
@@ -58808,7 +58991,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c6883390e871e764696b88720b01e77c, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerSelectionSourceHub
   catalog: {fileID: 11400000, guid: acfa0b76de24e2a4a9f91c8ac2484d4c, type: 2}
   characters:
@@ -59038,7 +59221,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c7bb8cf2a3034db28a89ce8223b1a7ea, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::AudioSettingsPanel
 --- !u!224 &8301000000000000023 stripped
 RectTransform:
@@ -59054,7 +59237,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9beaf11049b544241885ae4167cb1362, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::PauseMenuUI
 --- !u!1 &8301000000000000025
 GameObject:
@@ -59115,7 +59298,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.035, g: 0.12, b: 0.145, a: 1}
@@ -59145,7 +59328,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
   m_EffectColor: {r: 0.07, g: 0.25, b: 0.29, a: 1}
   m_EffectDistance: {x: 1, y: -1}
@@ -59160,7 +59343,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
     m_Mode: 3
@@ -59216,7 +59399,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9590b1d3ec288104b962fa62a0c9b9f8, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::UIButtonHoverSound
   hoverSound: {fileID: 0}
   volume: 0.25
@@ -59276,7 +59459,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -59368,7 +59551,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
   localizationKey: menu.quit
 --- !u!1 &8301000000000000037
@@ -59413,7 +59596,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bebf7f0d24607f340ba4b7f3cf466a27, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::CurrencyManager
 --- !u!1 &8301000000000000040
 GameObject:
@@ -59442,7 +59625,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b2d422b29277a6748ab955d410dcee4b, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::RunSelectionManager
 --- !u!4 &8301000000000000042
 Transform:
@@ -59501,7 +59684,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fab8379a32135564ba64075395b6f91b, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::MetaProgressionManager
 --- !u!1 &8301000000000000046
 GameObject:
@@ -59531,7 +59714,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4f231c4fb786f3946a6b90b886c48677, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.StandaloneInputModule
   m_SendPointerHoverToParent: 1
   m_HorizontalAxis: Horizontal
@@ -59551,7 +59734,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventSystem
   m_FirstSelected: {fileID: 0}
   m_sendNavigationEvents: 1
@@ -59614,7 +59797,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 14a79c79012fa8841ab8fcde73842418, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerCursorInteractor
   targetCamera: {fileID: 1597403883}
   interactionMask:
@@ -59631,7 +59814,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5df9b706bb2d4ea0874a38695611a933, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerCursorView
 --- !u!1001 &8301000000000000054
 PrefabInstance:
@@ -59700,7 +59883,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3af871b26d364fdfa762af3cf12313fc, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerPlayerLoadoutController
   controlledPlayerRoot: {fileID: 1905245400}
   controlledPlayerVisualRoot: {fileID: 8301000000000000070}
@@ -59798,7 +59981,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
   m_IgnoreReversedGraphics: 1
   m_BlockingObjects: 0
@@ -59815,7 +59998,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
@@ -60170,7 +60353,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7c4ab1d35d4d4efc9be7e81b529f5ae2, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerGateVisual
 --- !u!1001 &8304000000000000006
 PrefabInstance:
@@ -60203,7 +60386,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7c318385bf534632a4ca77364d081877, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::EscapeProtocolView
 --- !u!114 &8304000000000000010
 MonoBehaviour:
@@ -60215,7 +60398,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fd9f740ce7e6643489b4b2f87665f7e9, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerRunStarter
   depths: {fileID: 11400000, guid: 11d0aaa17c6b49018cff3b564a079471, type: 2}
   startingWorldRule: {fileID: 11400000, guid: f1012da158e24a20bb764c93aeee5266, type: 2}
@@ -60237,7 +60420,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 879dc705f86e1f84c91ba97bfffc9dfa, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::Movement2D
 --- !u!1 &8305000000000000000
 GameObject:
@@ -60608,3 +60791,4 @@ SceneRoots:
   - {fileID: 1119203515}
   - {fileID: 2045829382}
   - {fileID: 2049983952}
+  - {fileID: 710829239}

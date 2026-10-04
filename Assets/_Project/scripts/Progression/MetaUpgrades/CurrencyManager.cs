@@ -74,6 +74,28 @@ public class CurrencyManager : MonoBehaviour
         OnGoldUpdated?.Invoke(TotalGold);
     }
 
+    public const string GoldRewardReceiptPrefix="META_GOLD_REWARD_RECEIPT_";
+    private bool committingGoldReward;
+    public static bool HasGoldRewardReceipt(string rewardId) => PlayerPrefs.GetInt(GoldRewardReceiptPrefix+rewardId,0)==1;
+    // Stage the reward receipt, exact balance and dependent mission JSON in one save boundary.
+    // persistDependentState may only stage PlayerPrefs values; it must not flush or notify observers.
+    public bool TryGrantGoldExactOnce(string rewardId,int amount,System.Action persistDependentState)
+    {
+        if(committingGoldReward||string.IsNullOrWhiteSpace(rewardId)||amount<0||persistDependentState==null||HasGoldRewardReceipt(rewardId))return false;
+        committingGoldReward=true;
+        try
+        {
+            persistDependentState();
+            TotalGold=(int)System.Math.Min(int.MaxValue,(long)TotalGold+amount);
+            PlayerPrefs.SetInt(GoldKey,TotalGold);
+            PlayerPrefs.SetInt(GoldRewardReceiptPrefix+rewardId,1);
+            PlayerPrefs.Save();
+            OnGoldUpdated?.Invoke(TotalGold);
+            return true;
+        }
+        finally { committingGoldReward=false; }
+    }
+
     public bool SpendGold(int amount)
     {
         if (amount <= 0 || TotalGold < amount)

@@ -13,6 +13,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
     [Header("Panel UI")]
     [SerializeField] private AudioSettingsPanel audioSettingsPanel;
     [SerializeField] private BunkerOrbitalSlotPanel orbitalSlotPanel;
+    [SerializeField] private BunkerMissionPanel missionPanel;
 
     [Header("Prefab-Driven Station Panels")]
     [SerializeField] private GameObject
@@ -23,6 +24,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
     [SerializeField] private BunkerRunStarter runStarter;
 
     public bool IsAnyPanelOpen =>
+        (missionPanel != null && missionPanel.IsOpen) ||
         (surfaceMapPanel != null && surfaceMapPanel.gameObject.activeInHierarchy) ||
         (escapeProtocolPanel != null && escapeProtocolPanel.gameObject.activeInHierarchy) ||
         (orbitalSlotPanel != null && orbitalSlotPanel.IsOpen) ||
@@ -39,6 +41,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
         selectionPanelController?.Hide();
         escapeProtocolPanel?.gameObject.SetActive(false);
         surfaceMapPanel?.gameObject.SetActive(false);
+        missionPanel?.Hide();
 
         if (stationUpgradePanelPrefab != null)
         {
@@ -155,6 +158,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
         selectionPanelController?.Hide();
         escapeProtocolPanel?.gameObject.SetActive(false);
         surfaceMapPanel?.gameObject.SetActive(false);
+        missionPanel?.Hide();
 
         if (mapPanel != null)
             mapPanel.SetActive(false);
@@ -163,6 +167,12 @@ public sealed class BunkerPanelManager : MonoBehaviour
         if (audioSettingsPanel != null && audioSettingsPanel.IsOpen)
             audioSettingsPanel.Close();
 
+    }
+
+    public void OpenMission(MissionProvider provider)
+    {
+        if(missionPanel==null) { Debug.LogError("Bunker mission panel is not configured.",this); return; }
+        CloseAll(false); missionPanel.Show(provider);
     }
 
     public void OpenOrbitalSlot()

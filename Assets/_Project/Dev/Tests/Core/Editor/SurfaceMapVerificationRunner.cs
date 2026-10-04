@@ -27,7 +27,7 @@ public static class SurfaceMapVerificationRunner
         File.Delete(request);
         var api = ScriptableObject.CreateInstance<TestRunnerApi>();
         
-        api.Execute(new ExecutionSettings(new Filter { testMode = TestMode.EditMode, testNames = requested == "map-ux" ? new[] { "SurfaceMapUxTests" } : requested == "bunker-fixes" ? new[] { "BunkerInteractionFixTests" } : requested == "sector-flow" ? new[] { "SurfaceSectorTransitionTests" } : markers ? new[] { "SurfaceMarkerTests", "SurfaceMarkerFlowTests" } : new[] { "SurfaceMapTests", "SurfaceMapProgressionTests", "SurfaceRunIntegrationTests", "ProductionBunkerFlowTests" } }));
+        api.Execute(new ExecutionSettings(new Filter { testMode = TestMode.EditMode, testNames = requested == "operator-ux" ? new[] { "MissionProductionFlowTests", "MissionServiceTests.OperatorArrowIsVisibleInEditModeAndUsesStandardPrefab" } : requested == "missions" ? new[] { "MissionServiceTests", "MissionProductionFlowTests" } : requested == "map-ux" ? new[] { "SurfaceMapUxTests" } : requested == "bunker-fixes" ? new[] { "BunkerInteractionFixTests" } : requested == "sector-flow" ? new[] { "SurfaceSectorTransitionTests" } : markers ? new[] { "SurfaceMarkerTests", "SurfaceMarkerFlowTests" } : new[] { "SurfaceMapTests", "SurfaceMapProgressionTests", "SurfaceRunIntegrationTests", "ProductionBunkerFlowTests" } }));
     }
     private sealed class Results : ICallbacks
     {
@@ -39,5 +39,3 @@ public static class SurfaceMapVerificationRunner
     }
 }
 #endif
-
-

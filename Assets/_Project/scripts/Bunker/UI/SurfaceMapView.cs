@@ -79,8 +79,9 @@ public sealed class SurfaceMapView : MonoBehaviour
         if (service != null) service.Changed -= Refresh;
         service = mapService; starter = runStarter; owner = panelOwner; transitionTarget = target;
         if (service == null) { Debug.LogError("Surface map service is not configured.", this); return; }
+        gameObject.SetActive(true); // Awake initializes navigation before the first graph build.
         if (renderedMap != service.Definition) BuildGraph();
-        gameObject.SetActive(true); service.Changed += Refresh;
+        service.Changed += Refresh;
         if (!centered) { navigation.ResetView(); centered=true; }
         Refresh();
     }
@@ -212,6 +213,13 @@ public sealed class SurfaceMapView : MonoBehaviour
         string heading=$"<size=27><color=#B1EDF4>SECTOR {sector.Id}</color></size>\n<size=14>{stateSelected.ToString().ToUpperInvariant()}</size>\n\n";
         string lockedReason=stateSelected==SurfaceSectorStatus.Locked?"<color=#F0C66B>ROUTE LOCKED</color>\n"+LockedReason(inspectedId)+"\n\n":"";
         bool content=service.Content.TryGetMarker(inspectedId,out var selectedMarker);
+        if(content&&!string.IsNullOrEmpty(selectedMarker.Status))
+        {
+            string tint=ColorUtility.ToHtmlStringRGB(selectedMarker.Marker!=null?selectedMarker.Marker.color:Cyan);
+            details.text=heading+lockedReason+$"<color=#{tint}>{selectedMarker.Status}</color>\n\n<size=21>{selectedMarker.Title}</size>\n{selectedMarker.Description}\n\n"+
+                $"<color=#658B9E>OBJECTIVE</color>\n{selectedMarker.Objective}\n\n<color=#658B9E>REWARD</color>\n<color=#6BD9B5>{selectedMarker.Reward}</color>";
+            return;
+        }
         if(content&&selectedMarker.Concealed)
         {
             details.text=heading+lockedReason+$"<color=#{ColorUtility.ToHtmlStringRGB(selectedMarker.Marker!=null?selectedMarker.Marker.color:Cyan)}>{selectedMarker.Title}</color>\n{selectedMarker.Description}\n\n"+

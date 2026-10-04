@@ -16,20 +16,42 @@ public sealed class MetaProgressionManager : MonoBehaviour
 {
     public static MetaProgressionManager Instance { get; private set; }
     public SurfaceMapService SurfaceMap { get; private set; }
+    public MissionService Missions { get; private set; }
+    public void ConfigureMissions(MissionCatalog catalog)
+    {
+        if(catalog==null)return;
+        if(SurfaceMap==null)throw new InvalidOperationException("Configure Surface Map before missions.");
+        if(Missions!=null&&Missions.Catalog==catalog)return;
+        if(Missions!=null)SurfaceMap.Content.UnregisterSource(Missions);
+        Missions=new MissionService(catalog,SurfaceMap.Definition,new PlayerPrefsMissionStorage(SurfaceMap.Definition.Id));
+        SurfaceMap.Content.RegisterSource(Missions);
+    }
+    private void HandleSceneLoaded(UnityEngine.SceneManagement.Scene scene,UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        if(scene.name==RunEndService.BunkerSceneName&&(RunStateManager.Instance==null||RunStateManager.Instance.IsRunEnded))Missions?.ArriveAtBunker();
+    }
     public void ConfigureSurfaceMap(SurfaceMapDefinition definition)
     {
         if (SurfaceMap == null || SurfaceMap.Definition != definition)
-            SurfaceMap = new SurfaceMapService(definition);
+        {
+            if(Missions!=null)SurfaceMap?.Content.UnregisterSource(Missions);
+            Missions=null; SurfaceMap=new SurfaceMapService(definition);
+        }
     }
     private void HandleRunFinished(RunConfig config, RunEndReason reason, bool productionVictory)
     {
+        Missions?.FinishRun(config, RunStateManager.Instance.RunId, reason, productionVictory);
         SurfaceMap?.Content.FinishRun(config, RunStateManager.Instance.RunId, reason, productionVictory);
         SurfaceMap?.CompleteVictory(config, reason, productionVictory);
     }
-    private void HandleContentEvent(RunConfig config, int runId, WorldEvent source, string tag) =>
-        SurfaceMap?.Content.ObserveEvent(config, runId, source, tag);
+    private void HandleContentEvent(RunConfig config, int runId, WorldEvent source, string tag)
+    {
+        SurfaceMap?.Content.ObserveEvent(config,runId,source,tag);
+        Missions?.Observe(new MissionObjectiveSignal(config,runId,"CompleteEvent",source,tag));
+    }
     private void OnDestroy()
     {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= HandleSceneLoaded;
         RunStateManager.RunFinished -= HandleRunFinished;
         RunStateManager.ContentEventCompleted -= HandleContentEvent;
         if (Instance == this) Instance = null;
@@ -105,6 +127,7 @@ public sealed class MetaProgressionManager : MonoBehaviour
         }
 
         Instance = this;
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += HandleSceneLoaded;
         RunStateManager.RunFinished += HandleRunFinished;
         RunStateManager.ContentEventCompleted += HandleContentEvent;
 

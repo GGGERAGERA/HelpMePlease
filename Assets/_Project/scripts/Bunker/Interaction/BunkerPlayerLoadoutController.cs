@@ -48,6 +48,7 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
             return;
         }
 
+        PlayerRuntimeReference.Bind(player);
         activeVisual = controlledPlayerVisualRoot;
         CharacterMovement2D movement =
             player.GetComponent<CharacterMovement2D>();
@@ -68,6 +69,7 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (PlayerRuntimeReference.CachedPlayer == player) PlayerRuntimeReference.Clear();
         UnbindSelectionManager();
     }
 

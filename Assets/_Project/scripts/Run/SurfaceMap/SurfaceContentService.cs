@@ -15,9 +15,9 @@ public readonly struct SurfaceMarkerPresentation
 {
     public readonly SurfaceMarker Marker;
     public readonly SurfaceMarkerState State;
-    public readonly string Title, Description;
-    public SurfaceMarkerPresentation(SurfaceSectorContent content, SurfaceMarkerState state)
-    { Marker = content.marker; State = state; Title = content.title; Description = content.description; }
+    public readonly string Title, Description, Status, Objective, Reward;
+    public SurfaceMarkerPresentation(SurfaceSectorContent content, SurfaceMarkerState state,string status=null,string objective=null,string reward=null,string title=null,string description=null)
+    { Marker = content.marker; State = state; Title = title??content.title; Description = description??content.description; Status=status; Objective=objective; Reward=reward; }
     public bool Concealed => Marker != null && Marker.concealDetails && State == SurfaceMarkerState.Active;
 }
 
@@ -28,6 +28,12 @@ public sealed class SurfaceContentService
     private readonly SurfaceMapDefinition map;
     private readonly ISurfaceMapStorage storage;
     private readonly SurfaceContentState state;
+    private readonly List<ISurfaceContentSource> sources=new();
+    public void RegisterSource(ISurfaceContentSource source)
+    { if(source==null||sources.Contains(source))return; sources.Add(source); source.Changed+=NotifyChanged; Changed?.Invoke(); }
+    public void UnregisterSource(ISurfaceContentSource source)
+    { if(source!=null&&sources.Remove(source)) { source.Changed-=NotifyChanged; Changed?.Invoke(); } }
+    private void NotifyChanged() => Changed?.Invoke();
     private readonly HashSet<string> pending = new();
     private int pendingRunId = -1;
     private string StorageId => map.Id + ":content";
@@ -64,12 +70,18 @@ public sealed class SurfaceContentService
     public SurfaceMissionState? GetMissionState(string missionId) => state.missions.Find(r => r.missionId == missionId)?.missionState;
     public bool TryGetMarker(string sectorId, out SurfaceMarkerPresentation presentation)
     {
-        // Active assigned missions take precedence over completed/revealed static content.
-        SurfaceMissionRecord selected = null;
-        foreach (var r in state.missions)
-            if (r.targetSectorId == sectorId && (selected == null || r.missionState == SurfaceMissionState.Active)) selected = r;
-        if (selected == null) { presentation = default; return false; }
-        presentation = new SurfaceMarkerPresentation(FindContent(selected.contentId), selected.markerState); return true;
+        presentation=default; bool found=false; int best=int.MinValue;
+        foreach(var record in state.missions)
+        {
+            if(record.targetSectorId!=sectorId)continue;
+            var content=FindContent(record.contentId); if(content?.marker==null)continue;
+            int priority=record.missionState==SurfaceMissionState.Active?(record.missionId.StartsWith("sector:",StringComparison.Ordinal)?10:50):0;
+            if(priority>best) { presentation=new SurfaceMarkerPresentation(content,record.markerState); best=priority; found=true; }
+        }
+        foreach(var source in sources)
+            if(source.TryGetMarker(sectorId,out var candidate,out int priority)&&priority>best)
+            { presentation=candidate; best=priority; found=true; }
+        return found;
     }
     public RunConfig Resolve(RunConfig basis)
     {
@@ -77,6 +89,7 @@ public sealed class SurfaceContentService
         foreach (var r in state.missions)
             if (r.targetSectorId == basis.SectorId && r.missionState == SurfaceMissionState.Active)
                 active.Add((r.missionId, FindContent(r.contentId)));
+        foreach(var source in sources)active.AddRange(source.GetActiveContent(basis.SectorId));
         return RunContentResolver.Resolve(basis, active);
     }
     public void ObserveEvent(RunConfig config, int runId, WorldEvent source, string tag)

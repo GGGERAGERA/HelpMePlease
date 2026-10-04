@@ -1,40 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<test-run id="2" testcasecount="2" result="Passed" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-04 23:04:08Z" end-time="2026-10-04 23:04:26Z" duration="18,5093319">
-  <test-suite type="TestSuite" id="1000" name="Subject#42" fullname="Subject#42" runstate="Runnable" testcasecount="78" result="Passed" start-time="2026-10-04 23:04:08Z" end-time="2026-10-04 23:04:26Z" duration="18.509332" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+<test-run id="2" testcasecount="8" result="Passed" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-04 22:43:39Z" end-time="2026-10-04 22:43:59Z" duration="19,566728">
+  <test-suite type="TestSuite" id="1000" name="Subject#42" fullname="Subject#42" runstate="Runnable" testcasecount="77" result="Passed" start-time="2026-10-04 22:43:39Z" end-time="2026-10-04 22:43:59Z" duration="19.566728" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
     <properties>
       <property name="platform" value="EditMode" />
     </properties>
-    <test-suite type="Assembly" id="1117" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="78" result="Passed" start-time="2026-10-04 23:04:08Z" end-time="2026-10-04 23:04:26Z" duration="18.380348" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <test-suite type="Assembly" id="1116" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="77" result="Passed" start-time="2026-10-04 22:43:39Z" end-time="2026-10-04 22:43:59Z" duration="19.432822" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
       <properties>
         <property name="_PID" value="11860" />
         <property name="_APPDOMAIN" value="Unity Child Domain" />
         <property name="platform" value="EditMode" />
         <property name="EditorOnly" value="True" />
       </properties>
-      <test-suite type="TestFixture" id="1022" name="MissionProductionFlowTests" fullname="MissionProductionFlowTests" classname="MissionProductionFlowTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-04 23:04:08Z" end-time="2026-10-04 23:04:26Z" duration="18.352891" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1022" name="MissionProductionFlowTests" fullname="MissionProductionFlowTests" classname="MissionProductionFlowTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-04 22:43:39Z" end-time="2026-10-04 22:43:59Z" duration="19.395460" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1023" name="OperatorToEventToRealBossVictoryToTurnInAndReload" fullname="MissionProductionFlowTests.OperatorToEventToRealBossVictoryToTurnInAndReload" methodname="OperatorToEventToRealBossVictoryToTurnInAndReload" classname="MissionProductionFlowTests" runstate="Runnable" seed="1847513357" result="Passed" start-time="2026-10-04 23:03:59Z" end-time="2026-10-04 23:04:26Z" duration="27.194034" asserts="0">
+        <test-case id="1023" name="OperatorToEventToRealBossVictoryToTurnInAndReload" fullname="MissionProductionFlowTests.OperatorToEventToRealBossVictoryToTurnInAndReload" methodname="OperatorToEventToRealBossVictoryToTurnInAndReload" classname="MissionProductionFlowTests" runstate="Runnable" seed="2011097500" result="Passed" start-time="2026-10-04 22:43:30Z" end-time="2026-10-04 22:43:59Z" duration="28.348784" asserts="0">
           <properties>
             <property name="_JOINTYPE" value="UnityCombinatorial" />
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
-          <output><![CDATA[[BunkerInteractableCollider] Interaction source=PF_FootballStartStation, interactable=True, hoverable=True
-[BunkerHoverOutline] PF_FootballStartStation renderers=6
-[BunkerInteractableCollider] Interaction source=PF_EscapeProtocolStation, interactable=True, hoverable=True
+          <output><![CDATA[[BunkerInteractableCollider] Interaction source=PF_EscapeProtocolStation, interactable=True, hoverable=True
 [BunkerHoverOutline] PF_EscapeProtocolStation renderers=2
+[BunkerInteractableCollider] Interaction source=PF_RunExitDoor, interactable=True, hoverable=True
+[BunkerHoverOutline] PF_RunExitDoor renderers=46
 [BunkerInteractableCollider] Interaction source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
 [BunkerHoverOutline] p_bunkerWeaponShowcase renderers=10
 [BunkerHoverOutline] PF_MissionOperator renderers=1
 [BunkerInteractableCollider] PF_MissionOperator source=PF_MissionOperator, interactable=True, hoverable=True
+[BunkerInteractableCollider] Interaction source=PF_FootballStartStation, interactable=True, hoverable=True
+[BunkerHoverOutline] PF_FootballStartStation renderers=6
 [BunkerInteractableCollider] Interaction source=SlotMachine, interactable=True, hoverable=True
 [BunkerHoverOutline] SlotMachine renderers=55
 [BunkerInteractableCollider] SlotMachine source=SlotMachine, interactable=True, hoverable=True
-[BunkerInteractableCollider] Interaction source=PF_RunExitDoor, interactable=True, hoverable=True
-[BunkerHoverOutline] PF_RunExitDoor renderers=46
 [BunkerInteractableCollider] Interaction source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
 [BunkerHoverOutline] p_bunkerPlayerShowcase 1 renderers=16
 [RunSelectionManager] Character selected: 01_Gera
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
 There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
 There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
 There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
@@ -150,6 +156,12 @@ There are no audio listeners in the scene. Please ensure there is always one aud
 There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
 There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
 There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
 [VisualLab LOAD]
 ProjectileVisualScale=1
 TrailWidth=1
@@ -165,17 +177,17 @@ source=Assets/_Project/Data/World/Presentation/VisualTuningSavedValues.asset
 SECTOR LAYOUT
 Coverage: 96,0%
 Player: (0.00, 0.00, 0.00)
-Normal 1: center (30.12, -1.66), size (39.76, 24.40)
-Normal 2: center (5.02, 30.27), size (30.52, 39.46)
-Normal 3: center (-30.12, 33.21), size (39.76, 33.59)
-Special ArcNode: center (-19.88, -30.27), size (60.24, 39.46), distance 36,2/70,7
+Normal 1: center (3.29, -29.97), size (28.21, 40.05)
+Normal 2: center (30.41, 3.97), size (39.18, 27.84)
+Normal 3: center (-7.03, 29.97), size (35.69, 40.05)
+Special GravityOrb: center (-30.41, -20.03), size (39.18, 59.95), distance 36,4/70,7
 Line-to-Special in Normal: 0%
-Exit: (20.89, 46.63), inside NORMAL
+Exit: (-34.77, -39.36), inside SPECIAL
 Attempts: 1
-[ExplorationSector] Special Site: ELECTRIC (ProductionElectricSiteHazard).
+[ExplorationSector] Special Site: GRAVITY (GravityZone).
 [Breakables] requested=6 spawned=6 visible=6 rejected=0 fallback=0 bounds=100x100
-[PropScatter] seed=6153924, count=238/238. Safety takes priority over requested counts.
-[ExplorationSector] Sector ready: 6 Normal, 1 Special (ArcNode), 96% map coverage, 6 breakables, Exit at (20.89, 46.63).
+[PropScatter] seed=5119998, count=238/238. Safety takes priority over requested counts.
+[ExplorationSector] Sector ready: 6 Normal, 1 Special (GravityOrb), 96% map coverage, 6 breakables, Exit at (-34.77, -39.36).
 [SectorRuntime]
 Source=RunSector
 Sector=1
@@ -183,7 +195,6 @@ StageProfile='StageProfile_01'
 WorldRule='WorldRule_None'
 LocalAnomaly='LocalAnomaly_Berserk'
 [TacticalMap] breakableMarkers=6
-[RunState] Registered upgrade: upgrade.movement.upgradeName. Total: 1
 [EnemySpawner] Spawning stopped.
 [RunState] Completed sector 3. Completed levels: 1, reward total x1,00
 [UnlockProgressService] AddProgress: type=KillEnemyType, targetId=Boss_01, amount=1
@@ -196,133 +207,126 @@ LocalAnomaly='LocalAnomaly_Berserk'
 [EnemySpawner] Spawning stopped.
 [RunEndService] Returning to bunker. Gold earned: 100
 [EnemySpawner] Spawning stopped.
-[BunkerInteractableCollider] Interaction source=PF_FootballStartStation, interactable=True, hoverable=True
-[BunkerHoverOutline] PF_FootballStartStation renderers=6
-[BunkerHoverOutline] PF_MissionOperator renderers=1
-[BunkerInteractableCollider] PF_MissionOperator source=PF_MissionOperator, interactable=True, hoverable=True
 [BunkerInteractableCollider] Interaction source=PF_EscapeProtocolStation, interactable=True, hoverable=True
 [BunkerHoverOutline] PF_EscapeProtocolStation renderers=2
+[BunkerInteractableCollider] Interaction source=SlotMachine, interactable=True, hoverable=True
+[BunkerHoverOutline] SlotMachine renderers=55
+[BunkerInteractableCollider] SlotMachine source=SlotMachine, interactable=True, hoverable=True
+[BunkerHoverOutline] PF_MissionOperator renderers=1
+[BunkerInteractableCollider] PF_MissionOperator source=PF_MissionOperator, interactable=True, hoverable=True
+[BunkerInteractableCollider] Interaction source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerPlayerShowcase 1 renderers=16
 [BunkerInteractableCollider] Interaction source=PF_RunExitDoor, interactable=True, hoverable=True
 [BunkerHoverOutline] PF_RunExitDoor renderers=46
-[BunkerInteractableCollider] Interaction source=SlotMachine, interactable=True, hoverable=True
-[BunkerHoverOutline] SlotMachine renderers=55
-[BunkerInteractableCollider] SlotMachine source=SlotMachine, interactable=True, hoverable=True
-[BunkerInteractableCollider] Interaction source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
-[BunkerHoverOutline] p_bunkerWeaponShowcase renderers=10
-[BunkerInteractableCollider] Interaction source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
-[BunkerHoverOutline] p_bunkerPlayerShowcase 1 renderers=16
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
-[BunkerInteractableCollider] Interaction source=SlotMachine, interactable=True, hoverable=True
-[BunkerHoverOutline] SlotMachine renderers=55
-[BunkerInteractableCollider] SlotMachine source=SlotMachine, interactable=True, hoverable=True
-[BunkerInteractableCollider] Interaction source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
-[BunkerHoverOutline] p_bunkerWeaponShowcase renderers=10
-[BunkerInteractableCollider] Interaction source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
-[BunkerHoverOutline] p_bunkerPlayerShowcase 1 renderers=16
 [BunkerInteractableCollider] Interaction source=PF_FootballStartStation, interactable=True, hoverable=True
 [BunkerHoverOutline] PF_FootballStartStation renderers=6
+[BunkerInteractableCollider] Interaction source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerWeaponShowcase renderers=10
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+[BunkerInteractableCollider] Interaction source=PF_EscapeProtocolStation, interactable=True, hoverable=True
+[BunkerHoverOutline] PF_EscapeProtocolStation renderers=2
+[BunkerInteractableCollider] Interaction source=SlotMachine, interactable=True, hoverable=True
+[BunkerHoverOutline] SlotMachine renderers=55
+[BunkerInteractableCollider] SlotMachine source=SlotMachine, interactable=True, hoverable=True
 [BunkerHoverOutline] PF_MissionOperator renderers=1
 [BunkerInteractableCollider] PF_MissionOperator source=PF_MissionOperator, interactable=True, hoverable=True
 [BunkerInteractableCollider] Interaction source=PF_RunExitDoor, interactable=True, hoverable=True
 [BunkerHoverOutline] PF_RunExitDoor renderers=46
-[BunkerInteractableCollider] Interaction source=PF_EscapeProtocolStation, interactable=True, hoverable=True
-[BunkerHoverOutline] PF_EscapeProtocolStation renderers=2
+[BunkerInteractableCollider] Interaction source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerPlayerShowcase 1 renderers=16
+[BunkerInteractableCollider] Interaction source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerWeaponShowcase renderers=10
+[BunkerInteractableCollider] Interaction source=PF_FootballStartStation, interactable=True, hoverable=True
+[BunkerHoverOutline] PF_FootballStartStation renderers=6
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
 There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
 There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
 There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
@@ -333,9 +337,48 @@ There are no audio listeners in the scene. Please ensure there is always one aud
 ]]></output>
         </test-case>
       </test-suite>
-      <test-suite type="TestFixture" id="1024" name="MissionServiceTests" fullname="MissionServiceTests" classname="MissionServiceTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-04 23:04:26Z" end-time="2026-10-04 23:04:26Z" duration="0.019165" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1024" name="MissionServiceTests" fullname="MissionServiceTests" classname="MissionServiceTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-04 22:43:59Z" end-time="2026-10-04 22:43:59Z" duration="0.028116" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1025" name="OperatorArrowIsVisibleInEditModeAndUsesStandardPrefab" fullname="MissionServiceTests.OperatorArrowIsVisibleInEditModeAndUsesStandardPrefab" methodname="OperatorArrowIsVisibleInEditModeAndUsesStandardPrefab" classname="MissionServiceTests" runstate="Runnable" seed="841315454" result="Passed" start-time="2026-10-04 23:04:26Z" end-time="2026-10-04 23:04:26Z" duration="0.013055" asserts="0">
+        <test-suite type="ParameterizedMethod" id="1029" name="FailureDiscardsProvisionalCompletion" fullname="MissionServiceTests.FailureDiscardsProvisionalCompletion" classname="MissionServiceTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-04 22:43:59Z" end-time="2026-10-04 22:43:59Z" duration="0.009443" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-case id="1026" name="FailureDiscardsProvisionalCompletion(PlayerDied,False)" fullname="MissionServiceTests.FailureDiscardsProvisionalCompletion(PlayerDied,False)" methodname="FailureDiscardsProvisionalCompletion" classname="MissionServiceTests" runstate="Runnable" seed="2035165429" result="Passed" start-time="2026-10-04 22:43:59Z" end-time="2026-10-04 22:43:59Z" duration="0.003825" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1027" name="FailureDiscardsProvisionalCompletion(ReturnedToBunker,False)" fullname="MissionServiceTests.FailureDiscardsProvisionalCompletion(ReturnedToBunker,False)" methodname="FailureDiscardsProvisionalCompletion" classname="MissionServiceTests" runstate="Runnable" seed="2115481421" result="Passed" start-time="2026-10-04 22:43:59Z" end-time="2026-10-04 22:43:59Z" duration="0.000241" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+          <test-case id="1028" name="FailureDiscardsProvisionalCompletion(Victory,False)" fullname="MissionServiceTests.FailureDiscardsProvisionalCompletion(Victory,False)" methodname="FailureDiscardsProvisionalCompletion" classname="MissionServiceTests" runstate="Runnable" seed="1116095081" result="Passed" start-time="2026-10-04 22:43:59Z" end-time="2026-10-04 22:43:59Z" duration="0.000203" asserts="0">
+            <properties>
+              <property name="retryIteration" value="0" />
+              <property name="repeatIteration" value="0" />
+            </properties>
+          </test-case>
+        </test-suite>
+        <test-case id="1032" name="ObjectiveHandlersRestoreCommittedPartialProgressWithoutServiceChanges" fullname="MissionServiceTests.ObjectiveHandlersRestoreCommittedPartialProgressWithoutServiceChanges" methodname="ObjectiveHandlersRestoreCommittedPartialProgressWithoutServiceChanges" classname="MissionServiceTests" runstate="Runnable" seed="449939105" result="Passed" start-time="2026-10-04 22:43:59Z" end-time="2026-10-04 22:43:59Z" duration="0.005211" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1025" name="PrioritySourceDeduplicatesEventAndPreservesUnknown" fullname="MissionServiceTests.PrioritySourceDeduplicatesEventAndPreservesUnknown" methodname="PrioritySourceDeduplicatesEventAndPreservesUnknown" classname="MissionServiceTests" runstate="Runnable" seed="1402386003" result="Passed" start-time="2026-10-04 22:43:59Z" end-time="2026-10-04 22:43:59Z" duration="0.002004" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1030" name="VictoryCommitsButTurnInRequiresArrivalAndPaysExactlyOnceAcrossReload" fullname="MissionServiceTests.VictoryCommitsButTurnInRequiresArrivalAndPaysExactlyOnceAcrossReload" methodname="VictoryCommitsButTurnInRequiresArrivalAndPaysExactlyOnceAcrossReload" classname="MissionServiceTests" runstate="Runnable" seed="1226156607" result="Passed" start-time="2026-10-04 22:43:59Z" end-time="2026-10-04 22:43:59Z" duration="0.001270" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1031" name="WrongSectorSignalAndRunCannotCommit" fullname="MissionServiceTests.WrongSectorSignalAndRunCannotCommit" methodname="WrongSectorSignalAndRunCannotCommit" classname="MissionServiceTests" runstate="Runnable" seed="1403808606" result="Passed" start-time="2026-10-04 22:43:59Z" end-time="2026-10-04 22:43:59Z" duration="0.000475" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
