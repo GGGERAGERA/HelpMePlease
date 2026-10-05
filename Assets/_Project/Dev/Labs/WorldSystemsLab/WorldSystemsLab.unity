@@ -6111,7 +6111,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldEventSpawner
   eventPrefabs:
-  - {fileID: 114, guid: 607475cde93c4153994eb855547209bb, type: 3}
+  - {fileID: 7497418416046278724, guid: a96ed1c00b63a7b43ada8514ad1ad65c, type: 3}
   - {fileID: 520000000000000004, guid: f51a1e2d8b0c4d0a9e07f4e27b6d1201, type: 3}
   - {fileID: 530000000000000004, guid: e47c3f95a8a34c18a619b70ec785f142, type: 3}
   - {fileID: 590000000000000004, guid: c39b42a1000000000000000000000003, type: 3}
@@ -6274,12 +6274,13 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}
   - {fileID: 11400000, guid: f28b42a1000000000000000000000005, type: 2}
   eventPrefabs:
-  - {fileID: 114, guid: 607475cde93c4153994eb855547209bb, type: 3}
+  - {fileID: 7497418416046278724, guid: a96ed1c00b63a7b43ada8514ad1ad65c, type: 3}
   - {fileID: 520000000000000004, guid: f51a1e2d8b0c4d0a9e07f4e27b6d1201, type: 3}
   - {fileID: 530000000000000004, guid: e47c3f95a8a34c18a619b70ec785f142, type: 3}
   - {fileID: 590000000000000004, guid: c39b42a1000000000000000000000003, type: 3}
   explorationConfig: {fileID: 11400000, guid: 42a1000000000000000000000000000a, type: 2}
   propScatterProfile: {fileID: 11400000, guid: 685e6efc13ad0b846aca6d1845cbb50b, type: 2}
+  relaySupportPrefab: {fileID: 4612052548729909269, guid: 5f9d6b5987e4bc5479de3bd944c2d915, type: 3}
   orbitalCharacter: {fileID: 11400000, guid: 6aad8e558b07e8243b3b79a85aefa335, type: 2}
   corridorRocket: {fileID: 11400000, guid: 68e9a19d0afb453ca67a96d1a51a8ee5, type: 2}
   corridorEnemy: {fileID: 1432338969431510999, guid: bbeab41e755732443b4201b8641136c9, type: 3}

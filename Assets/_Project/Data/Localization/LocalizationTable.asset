@@ -1378,9 +1378,6 @@ MonoBehaviour:
   - key: reward.panel.choose
     ru: "Выберите предмет"
     en: "Select an item"
-  - key: event.capture
-    ru: "ЗАХВАТ"
-    en: "CAPTURE"
   - key: event.carrier
     ru: "ОХОТА НА НОСИТЕЛЯ"
     en: "CARRIER HUNT"
@@ -1402,9 +1399,6 @@ MonoBehaviour:
   - key: event.signal
     ru: "СИГНАЛ"
     en: "SIGNAL"
-  - key: event.enter
-    ru: "ВОЙДИТЕ"
-    en: "ENTER"
   - key: site.half
     ru: "ОСОБАЯ АНОМАЛИЯ: 1/2"
     en: "SPECIAL ANOMALY: 1/2"
@@ -1609,12 +1603,6 @@ MonoBehaviour:
   - key: event.signal.description
     ru: "Найдите настоящий источник сигнала."
     en: "Find the true signal source."
-  - key: event.capture.name
-    ru: "УДЕРЖАНИЕ ЗОНЫ"
-    en: "ZONE CAPTURE"
-  - key: event.capture.description
-    ru: "Удерживайте отмеченную область."
-    en: "Hold the marked area."
   - key: event.evacuation.name
     ru: "ЭВАКУАЦИОННЫЙ КОРИДОР"
     en: "EVACUATION CORRIDOR"
