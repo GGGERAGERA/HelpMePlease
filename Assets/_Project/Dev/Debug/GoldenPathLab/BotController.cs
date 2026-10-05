@@ -106,21 +106,18 @@ public sealed class BotController : IDisposable
         {
             if (objective == null || objective.IsFailed)
                 objective = events.SpawnedEvents.Where(e => e != null && !e.IsCompleted)
-                    .OrderBy(e => e is CaptureZoneEvent ? 0 : 1)
+                    .OrderBy(e => e is OrbitalRelayEvent ? 0 : 1)
                     .ThenBy(e => ((Vector2)e.transform.position - position).sqrMagnitude).FirstOrDefault();
             if (objective != null)
             {
                 if (objective.CanInteract) objective.Interact();
                 target = objective.transform.position;
-                if (objective is CaptureZoneEvent capture && capture.IsStarted)
+                if (objective is OrbitalRelayEvent relay && relay.IsStarted)
                 {
-                    Vector2 radial = position - (Vector2)capture.transform.position;
-                    float radius = capture.CaptureRadius * .65f;
-                    Vector2 tangent = new(-radial.y, radial.x);
-                    Vector2 desired = tangent.normalized + radial.normalized * Mathf.Clamp(radius - radial.magnitude, -1.5f, 1.5f);
-                    if (radial.sqrMagnitude < .1f) desired = Vector2.right;
-                    direction = SafeGoldenDirection(position, desired);
-                    State = "Holding capture zone while circling";
+                    Vector2 desired = OrbitalRelayBotSteering.GetDesiredMovement(relay,
+                        movement.GetComponentInChildren<OrbitalStationRuntime>(), position);
+                    direction = SafeGoldenDirection(position, desired) * desired.magnitude;
+                    State = "Orbital Relay: " + relay.Snapshot.Phase;
                     return;
                 }
                 var markers = new System.Collections.Generic.List<TacticalMapMarkerDescriptor>();
@@ -180,8 +177,8 @@ public sealed class BotController : IDisposable
                 foreach (var exit in ProductionSectorExit.ActiveExits)
                     if (exit != null && exit.IsAvailable && Vector2.Distance(future, exit.transform.position) < exit.GetComponent<CircleCollider2D>().radius + 1.5f)
                         score -= 100f;
-            if (!objectiveCompleted && objective is CaptureZoneEvent capture && capture.IsStarted)
-                score -= Mathf.Max(0f, Vector2.Distance(future, capture.transform.position) - capture.CaptureRadius * .85f) * 2f;
+            if (!objectiveCompleted && objective is OrbitalRelayEvent relay && relay.IsStarted)
+                score -= Mathf.Max(0f, Vector2.Distance(future, relay.transform.position) - relay.ArenaRadius * .9f) * 2f;
             foreach (var enemy in EnemyHealth.ActiveInstances)
             {
                 if (enemy == null || enemy.IsDead) continue;

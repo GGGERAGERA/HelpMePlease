@@ -23,7 +23,7 @@ public sealed class TutorialOverlay : MaskableGraphic
         "WASD — двигаться. Оружие атакует автоматически.", "Не стой на месте. Держи дистанцию.",
         "Подбирай осколки опыта, чтобы получать усиления.", "Выбери одну награду для этого забега.",
         "Поставь оружие на свободную точку.", "Исследуй карту, усиливайся и выполняй события.",
-        "Оставайся в зоне до заполнения шкалы.", "Сектор завершён. Иди к выходу." };
+        "", "Сектор завершён. Иди к выходу." };
 
     public static TutorialOverlay Create(TutorialController controller)
     {
@@ -74,7 +74,7 @@ public sealed class TutorialOverlay : MaskableGraphic
         if (shownStep != tutorial.Step)
         {
             shownStep = tutorial.Step;
-            caption.text = Descriptions[(int)shownStep];
+            caption.text = shownStep == TutorialStep.FirstEvent ? LocalizationService.EnsureExists().Get("tutorial.relay") : Descriptions[(int)shownStep];
         }
 
         if (tutorial.Step == TutorialStep.FirstReward && tutorial.RewardPanel != null)
@@ -101,7 +101,7 @@ public sealed class TutorialOverlay : MaskableGraphic
         {
             float radius = tutorial.Step == TutorialStep.Movement ? 58f * scale : 30f * scale;
             if (tutorial.Step == TutorialStep.FirstEvent && tutorial.TargetEvent != null && Camera.main != null)
-                radius = Mathf.Abs(Camera.main.WorldToScreenPoint(tutorial.FocusTarget.position + Vector3.right * tutorial.TargetEvent.CaptureRadius).x -
+                radius = Mathf.Abs(Camera.main.WorldToScreenPoint(tutorial.FocusTarget.position + Vector3.right * .8f).x -
                     Camera.main.WorldToScreenPoint(tutorial.FocusTarget.position).x) + 10f * scale;
             WorldHole(tutorial.FocusTarget.position, radius);
         }

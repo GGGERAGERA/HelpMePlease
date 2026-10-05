@@ -7,7 +7,7 @@ using UnityEngine;
 
 public enum TutorialStep { Movement, FirstEnemies, Experience, FirstReward, OrbitalPlacement, SectorGoal, FirstEvent, Exit, Completed }
 
-// Guides Level 0; rewards, combat, capture and transitions retain their existing owners.
+// Guides Level 0 through the ordinary combat, relay and reward owners.
 public sealed class TutorialController : MonoBehaviour
 {
     public const string CompletionKey = "Subject42.Tutorial.Completed";
@@ -30,7 +30,7 @@ public sealed class TutorialController : MonoBehaviour
     public TutorialStep Step { get; private set; } = TutorialStep.Movement;
     public event Action<TutorialStep> StepChanged;
     public Transform FocusTarget { get; private set; }
-    public CaptureZoneEvent TargetEvent { get; private set; }
+    public OrbitalRelayEvent TargetEvent { get; private set; }
     public bool GoalCompleted { get; private set; }
     public bool NeedsFirstWeapon => Step <= TutorialStep.OrbitalPlacement;
     public GameObject Player { get; private set; }
@@ -52,7 +52,13 @@ public sealed class TutorialController : MonoBehaviour
     }
     private readonly List<EnemyHealth> firstEnemies = new();
     private float travelled;
-    public void ConfigureTarget(CaptureZoneEvent target) => TargetEvent = target;
+    private Coroutine relayRetry;
+    public void ConfigureTarget(OrbitalRelayEvent target)
+    {
+        if (TargetEvent != null) TargetEvent.PlayerEntered -= OnZoneEntered;
+        TargetEvent = target;
+        if (TargetEvent != null) TargetEvent.PlayerEntered += OnZoneEntered;
+    }
 
     public static void Prepare(RunFlowController flow)
     {
@@ -79,18 +85,18 @@ public sealed class TutorialController : MonoBehaviour
         characters.CharacterSpawned += BindPlayer;
         if (characters.SpawnedPlayer != null) BindPlayer(characters.SpawnedPlayer);
         if (!enabled) return;
-        TargetEvent = TargetEvent != null ? TargetEvent : events.SpawnedEvents.OfType<CaptureZoneEvent>()
+        ConfigureTarget(TargetEvent != null ? TargetEvent : events.SpawnedEvents.OfType<OrbitalRelayEvent>()
             .OrderBy(e => ((Vector2)e.transform.position - (Vector2)(Player != null ? Player.transform.position : Vector3.zero)).sqrMagnitude)
-            .FirstOrDefault();
+            .FirstOrDefault());
         if (TargetEvent == null)
         {
-            Debug.LogError("[Tutorial] Authored Capture Zone is missing.", this);
+            Debug.LogError("[Tutorial] Authored Orbital Relay is missing.", this);
             enabled = false;
             return;
         }
-        TargetEvent.PlayerEntered += OnZoneEntered;
         events.EventStarted += OnEventStarted;
         events.EventCompleted += OnEventCompleted;
+        events.EventFailed += OnEventFailed;
         rewards.RewardOpened += OnRewardOpened;
         rewards.RewardChosen += OnRewardChosen;
         rewards.RewardCommitted += OnRewardCommitted;
@@ -213,8 +219,40 @@ public sealed class TutorialController : MonoBehaviour
     private void OnEventCompleted(WorldEvent completed)
     {
         if (completed != TargetEvent || Step != TutorialStep.FirstEvent) return;
-        GoalCompleted = true;
-        // Exit availability is published by RunFlowController on its next ordinary update.
+        rewards.RunWhenRewardQueueIsIdle(() =>
+        {
+            if (this != null && isActiveAndEnabled && TargetEvent == completed && Step == TutorialStep.FirstEvent)
+                GoalCompleted = true;
+        });
+    }
+
+    private void OnEventFailed(WorldEvent failed)
+    {
+        if (failed != TargetEvent || Step != TutorialStep.FirstEvent || relayRetry != null) return;
+        GoalCompleted = false;
+        SetStep(TutorialStep.SectorGoal);
+        RunMessageService.Instance?.ShowCustom("event.relay.failed", "event.relay.retry");
+        relayRetry = StartCoroutine(RetryRelay());
+    }
+
+    private IEnumerator RetryRelay()
+    {
+        yield return new WaitForSeconds(2f);
+        var sector = FindFirstObjectByType<ProductionExplorationSectorController>();
+        if (isActiveAndEnabled && Step == TutorialStep.SectorGoal && sector != null && sector.TryRespawnTutorialRelay(out var target))
+        {
+            ConfigureTarget(target);
+            FocusTarget = target.transform;
+        }
+        relayRetry = null;
+    }
+
+    private void LateUpdate()
+    {
+        if (TargetEvent == null || GoalCompleted || relayRetry != null) return;
+        if (Step == TutorialStep.SectorGoal && TargetEvent.IsPlayerInside) OnZoneEntered();
+        if (Step == TutorialStep.FirstEvent)
+            FocusTarget = TargetEvent.ActiveNode != null ? TargetEvent.ActiveNode.transform : TargetEvent.transform;
     }
 
     private void OnExitUnlocked()
@@ -242,13 +280,14 @@ public sealed class TutorialController : MonoBehaviour
 
     private void OnDisable()
     {
+        StopAllCoroutines(); relayRetry = null;
         if (characters != null) characters.CharacterSpawned -= BindPlayer;
         if (movement != null) movement.Travelled -= OnTravelled;
         if (TargetEvent != null) TargetEvent.PlayerEntered -= OnZoneEntered;
         foreach (var enemy in firstEnemies) if (enemy != null) enemy.OnDied -= OnEnemyDied;
         ExperiencePickup.Spawned -= OnPickupSpawned;
         ExperiencePickup.Collected -= OnPickupCollected;
-        if (events != null) { events.EventStarted -= OnEventStarted; events.EventCompleted -= OnEventCompleted; }
+        if (events != null) { events.EventStarted -= OnEventStarted; events.EventCompleted -= OnEventCompleted; events.EventFailed -= OnEventFailed; }
         if (rewards != null)
         {
             rewards.RewardOpened -= OnRewardOpened;

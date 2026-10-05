@@ -5,6 +5,33 @@ using System.Reflection;
 using System.Collections.Generic;
 public sealed class OrbitalRelayIntegrationTests
 {
+    [Test] public void TutorialAndBotConsumeProductionRelay()
+    {
+        Assert.That(typeof(TutorialController).GetProperty("TargetEvent").PropertyType, Is.EqualTo(typeof(OrbitalRelayEvent)));
+        Assert.That(typeof(ProductionExplorationSectorController).GetMethod("TryRespawnTutorialRelay"), Is.Not.Null);
+        Assert.That(typeof(BotController).Assembly.GetType("OrbitalRelayBotSteering"), Is.Not.Null);
+    }
+    [Test] public void TutorialRetryDoesNotDuplicateEntrySubscriptions()
+    {
+        var host = new GameObject("tutorial bindings");
+        var first = new GameObject("first relay"); var next = new GameObject("retry relay");
+        try
+        {
+            var tutorial = host.AddComponent<TutorialController>();
+            var a = first.AddComponent<OrbitalRelayEvent>(); var b = next.AddComponent<OrbitalRelayEvent>();
+            var entry = typeof(OrbitalRelayEvent).GetField("PlayerEntered", BindingFlags.Instance | BindingFlags.NonPublic);
+            tutorial.ConfigureTarget(a); tutorial.ConfigureTarget(a);
+            Assert.That(((System.Action)entry.GetValue(a)).GetInvocationList().Length, Is.EqualTo(1));
+            tutorial.ConfigureTarget(b);
+            Assert.That(entry.GetValue(a), Is.Null);
+            Assert.That(((System.Action)entry.GetValue(b)).GetInvocationList().Length, Is.EqualTo(1));
+            Assert.That(tutorial.GoalCompleted, Is.False);
+            typeof(TutorialController).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(tutorial, null);
+            Assert.That(entry.GetValue(b), Is.Null);
+            Assert.That(OrbitalRelayBotSteering.GetDesiredMovement(b, null, Vector2.zero), Is.EqualTo(Vector2.zero));
+        }
+        finally { Object.DestroyImmediate(host); Object.DestroyImmediate(first); Object.DestroyImmediate(next); }
+    }
     [Test] public void ScopedPressureContractExists()
     {
         Assert.That(typeof(WorldEventSpawner).GetMethod("AcquireSpawnPressure"), Is.Not.Null);
