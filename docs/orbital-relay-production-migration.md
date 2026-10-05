@@ -3,6 +3,16 @@
 Дата: 2026-10-06. Ветка: `codex/orbital-relay-production`. Исходный commit: `317e69e0`.
 Основание: утверждённые [спецификация](superpowers/specs/2026-10-06-orbital-relay-production-design.md) и [план](superpowers/plans/2026-10-06-orbital-relay-production.md).
 
+## Исправление зоны старта и размещения Node
+
+После merge в `TestByDantes` исправлен production prefab: отдельная видимая зона старта радиусом 2.5, локализованная подсказка `[E] НАЧАТЬ СОБЫТИЕ` при доступном взаимодействии, скрытые до запуска Node. После старта зона гаснет, authored Node получают случайные разнесённые позиции внутри арены. Используется существующий unlit RelayGlow material, чтобы ядра не становились чёрными при освещении MVP. Геометрия, visual/contact references остаются authored в prefab; runtime меняет только позиции и видимость.
+
+Inspector: `startArea.radius`, `nodeMinRadius` (3.5), `nodeMaxRadius` (6.5), `nodeMinSeparation` (2.5). При изменении радиуса зоны нужно согласовать её authored Outline/Fill. Tutorial реагирует на вход в эту стартовую зону; большая gameplay arena по-прежнему ограничивает orbital contact. Lab использует тот же исправленный production prefab.
+
+Проверки этого исправления: authoring 10/10, integration 10/10, runtime smoke 1/1. Runtime проверил отсутствие Node до запуска, обычный PlayerInteractor, подсказку, скрытие зоны после запуска, диапазон/разнесение случайных Node, реальный контакт, Transition/Bonus/Completed, fail/cancel/reset/unload, снятие pressure и единственную выдачу существующей reward queue. Пример smoke: 7 Bonus activations / 70 Gold. Player C#, Editor runtime и Editor scripts компилируются без ошибок. Golden Path и Batch Runner не запускались. Скриншот зоны: `Artifacts/OrbitalRelay/start-zone.png`; результаты: `entrance-authoring-results.xml`, `entrance-integration-results.xml`, `entrance-runtime-results.xml` в той же папке.
+
+Первый runtime запуск встретил ошибку общего ProductionSceneComposition после merge; после обновления импортированных dependencies она не повторилась. Код общего bootstrap и его assets этим исправлением не менялись.
+
 ## Восемь задач
 
 1. **State/config/result.** Добавлены чистая state machine, immutable validated settings и отдельный результат. Счётчики Stabilization и Bonus разделены. Combo сбрасывается при входе в Bonus; штрафов к Gold нет. Node не повторяется подряд.

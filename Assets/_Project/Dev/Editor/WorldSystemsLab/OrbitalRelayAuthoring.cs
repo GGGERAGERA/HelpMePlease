@@ -18,11 +18,70 @@ public static class OrbitalRelayAuthoring
     static OrbitalRelayAuthoring() { EditorApplication.update += Poll; }
     private static void Poll()
     {
+        const string entrance = "Artifacts/OrbitalRelay/entrance.request";
+        if (File.Exists(entrance) && !EditorApplication.isCompiling && !EditorApplication.isUpdating && !EditorApplication.isPlayingOrWillChangePlaymode)
+        {
+            File.Delete(entrance);
+            try { UpdateEntrancePrefab(); File.WriteAllText("Artifacts/OrbitalRelay/entrance-result.txt", "SUCCESS"); }
+            catch (Exception error) { File.WriteAllText("Artifacts/OrbitalRelay/entrance-result.txt", error.ToString()); Debug.LogException(error); }
+            return;
+        }
         const string request = "Artifacts/OrbitalRelay/author.request";
         if (!File.Exists(request) || EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode) return;
         File.Delete(request);
         try { CreateOrUpdateProductionAssets(); File.WriteAllText("Artifacts/OrbitalRelay/author-result.txt", "SUCCESS"); }
         catch (Exception error) { File.WriteAllText("Artifacts/OrbitalRelay/author-result.txt", error.ToString()); Debug.LogException(error); }
+    }
+    private static void AuthorEntrance(GameObject root, Material material, Sprite round, TMP_FontAsset font)
+    {
+        var relay = root.GetComponent<OrbitalRelayEvent>();
+        var arenaRoot = root.transform.Find("ArenaBounds");
+        var arena = arenaRoot.GetComponent<CircleCollider2D>();
+        if (arena == null) arena = arenaRoot.gameObject.AddComponent<CircleCollider2D>();
+        arena.radius = 9; arena.isTrigger = true;
+        var start = root.GetComponent<CircleCollider2D>();
+        if (start == null) start = root.AddComponent<CircleCollider2D>();
+        start.radius = 2.5f; start.isTrigger = true;
+        Set(relay, "arenaBounds", arena); Set(relay, "startArea", start);
+        var nodes = root.transform.Find("Nodes").gameObject;
+        nodes.SetActive(false);
+        foreach (var sprite in nodes.GetComponentsInChildren<SpriteRenderer>(true)) sprite.sharedMaterial = material;
+        var visual = root.transform.Find("StartZoneVisual");
+        if (visual == null)
+        {
+            visual = Child(root.transform, "StartZoneVisual").transform;
+            var outline = Child(visual, "Outline"); outline.transform.localScale = Vector3.one * 2.5f;
+            var line = Ring(outline, material, .06f); line.sortingLayerName = "Midground";
+            var fill = Child(visual, "Fill").AddComponent<SpriteRenderer>();
+            fill.sprite = round; fill.sharedMaterial = material; fill.color = new Color(.12f, .8f, .85f, .14f);
+            fill.sortingLayerName = "Midground"; fill.sortingOrder = 1;
+            fill.transform.localScale = Vector3.one * (5f / round.bounds.size.x);
+            var prompt = Child(visual, "StartPrompt"); prompt.transform.localPosition = new Vector3(0, 3, 0);
+            var text = prompt.AddComponent<TextMeshPro>(); text.font = font; text.fontSize = 4;
+            text.alignment = TextAlignmentOptions.Center; text.rectTransform.sizeDelta = new Vector2(9, 1.2f);
+            text.GetComponent<MeshRenderer>().sortingLayerName = "Midground";
+            text.GetComponent<MeshRenderer>().sortingOrder = 20;
+            text.text = "[E] START EVENT";
+            Set(prompt.AddComponent<LocalizedText>(), "localizationKey", "event.relay.startPrompt");
+            prompt.SetActive(false);
+        }
+        var presentation = root.GetComponent<OrbitalRelayPresentation>();
+        Set(presentation, "startZoneVisual", visual.gameObject); Set(presentation, "nodesRoot", nodes);
+        Set(presentation, "startPrompt", visual.Find("StartPrompt").gameObject);
+    }
+    public static void UpdateEntrancePrefab()
+    {
+        var root = PrefabUtility.LoadPrefabContents(PrefabPath);
+        try
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(Fx + "RelayGlow.mat");
+            var round = AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GUIDToAssetPath("ceb8225d9461f5a4bbe86004909390d0")).OfType<Sprite>().First();
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(AssetDatabase.GUIDToAssetPath("c804072f2f9246739b6050598e4bbf0d"));
+            AuthorEntrance(root, material, round, font);
+            PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+        }
+        finally { PrefabUtility.UnloadPrefabContents(root); }
+        AssetDatabase.SaveAssets(); ValidateProductionAssets();
     }
     internal static void Set(UnityEngine.Object target, string fieldName, object value)
     {
@@ -110,8 +169,7 @@ public static class OrbitalRelayAuthoring
             var relay = root.AddComponent<OrbitalRelayEvent>();
             var presentation = root.AddComponent<OrbitalRelayPresentation>();
             var pressure = root.AddComponent<WorldEventPressureModifier>();
-            Child(root.transform, "ArenaBounds");
-            var bounds = root.AddComponent<CircleCollider2D>(); bounds.radius = 9; bounds.isTrigger = true;
+            var bounds = Child(root.transform, "ArenaBounds").AddComponent<CircleCollider2D>(); bounds.radius = 9; bounds.isTrigger = true;
             Transform marker = Child(root.transform, "EventMarkerAnchor").transform;
             Transform reward = Child(root.transform, "RewardAnchor").transform;
             var nodesRoot = Child(root.transform, "Nodes"); var nodes = new OrbitalRelayNode[3];
@@ -152,6 +210,7 @@ public static class OrbitalRelayAuthoring
             Set(presentation, "transitionFx", Animate(root, transition, true)); Set(presentation, "comboFx", Animate(comboLabel.gameObject, combo, true)); Set(presentation, "urgentFx", Animate(time.gameObject, urgent, false));
             Set(relay, "config", config); Set(relay, "arenaBounds", bounds); Set(relay, "nodes", nodes); Set(relay, "presentation", presentation); Set(relay, "pressure", pressure); Set(relay, "markerAnchor", marker); Set(relay, "rewardAnchor", reward);
             Set(relay, "eventId", "orbital_relay"); Set(relay, "eventTag", "hold_zone"); Set(relay, "eventDisplayName", "event.relay.name"); Set(relay, "eventDescription", "event.relay.description"); Set(relay, "allowedInSite", true); Set(relay, "requiresHoldPointFeature", true); Set(relay, "promptText", "hud.interact");
+            AuthorEntrance(root, material, round, font);
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }

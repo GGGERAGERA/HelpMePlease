@@ -5,15 +5,33 @@ using UnityEngine;
 using System.Linq;
 public sealed class OrbitalRelayAuthoringTests
 {
-    [Test] public void ProductionArenaIsDiscoverableByExistingInteractor()
+    [Test] public void LabCompositionHasRequiredAuthoredServices()
+    {
+        var composition = AssetDatabase.LoadAssetAtPath<ProductionSceneComposition>(ProductionSceneCompositionAuthoring.PrefabPath);
+        Assert.That(composition, Is.Not.Null);
+        var serialized = new SerializedObject(composition);
+        foreach (string field in new[] { "localization", "audio", "unlocks", "bunkerProgression", "transition", "orbital", "visualPreset" })
+            Assert.That(serialized.FindProperty(field)?.objectReferenceValue, Is.Not.Null, "Lab composition dependency: " + field);
+    }
+    [Test] public void ProductionStartZoneIsDiscoverableByExistingInteractor()
     {
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(OrbitalRelayAuthoring.PrefabPath);
         var arena = prefab.GetComponentInChildren<CircleCollider2D>(true);
         var relay = prefab.GetComponent<OrbitalRelayEvent>();
         var serialized = new SerializedObject(relay);
-        arena = (CircleCollider2D)serialized.FindProperty("arenaBounds").objectReferenceValue;
+        Assert.That(serialized.FindProperty("startArea"), Is.Not.Null, "Relay requires a separate start zone.");
+        arena = (CircleCollider2D)serialized.FindProperty("startArea").objectReferenceValue;
+        Assert.That(arena.radius, Is.EqualTo(2.5f));
         Assert.That(arena.GetComponent<Interactable>(), Is.EqualTo(relay),
             "PlayerInteractor discovers Interactable on the collider object, not its parent.");
+    }
+    [Test] public void InactivePrefabShowsStartZoneAndHidesNodes()
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(OrbitalRelayAuthoring.PrefabPath);
+        Assert.That(prefab.transform.Find("StartZoneVisual"), Is.Not.Null);
+        Assert.That(prefab.transform.Find("StartZoneVisual").gameObject.activeSelf, Is.True);
+        Assert.That(prefab.transform.Find("StartZoneVisual").GetComponentsInChildren<Renderer>().Length, Is.GreaterThan(0));
+        Assert.That(prefab.transform.Find("Nodes").gameObject.activeSelf, Is.False, "Don't reveal Node locations before E.");
     }
     [Test] public void LabResultNotificationHasVisibleAuthoredAncestors()
     {
@@ -45,7 +63,7 @@ public sealed class OrbitalRelayAuthoringTests
         var root = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(OrbitalRelayAuthoring.PrefabPath));
         try
         {
-            var relay = root.GetComponent<OrbitalRelayEvent>(); var node = root.GetComponentInChildren<OrbitalRelayNode>();
+            var relay = root.GetComponent<OrbitalRelayEvent>(); var node = root.GetComponentInChildren<OrbitalRelayNode>(true);
             OrbitalRelayAuthoring.Set(relay, "nodes", new[] { node, node });
             Assert.That(relay.TryValidateConfiguration(out _), Is.False);
             OrbitalRelayAuthoring.Set(relay, "nodes", new[] { node });
@@ -58,7 +76,7 @@ public sealed class OrbitalRelayAuthoringTests
         var root = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(OrbitalRelayAuthoring.PrefabPath));
         try
         {
-            root.GetComponentInChildren<OrbitalRelayNode>().transform.localScale = new Vector3(1, 2, 1);
+            root.GetComponentInChildren<OrbitalRelayNode>(true).transform.localScale = new Vector3(1, 2, 1);
             Assert.That(root.GetComponent<OrbitalRelayEvent>().TryValidateConfiguration(out _), Is.False);
         }
         finally { Object.DestroyImmediate(root); }

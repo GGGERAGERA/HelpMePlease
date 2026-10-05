@@ -5,6 +5,7 @@ using UnityEngine.UI;
 public sealed class OrbitalRelayPresentation : MonoBehaviour
 {
     [SerializeField] private GameObject panel;
+    [SerializeField] private GameObject startZoneVisual, startPrompt, nodesRoot;
     [SerializeField] private TextMeshProUGUI phaseLabel, timeLabel, activationsLabel, goldLabel, comboLabel;
     [SerializeField] private Animator transitionFx, comboFx, urgentFx;
     [SerializeField] private Image flashOverlay;
@@ -12,16 +13,21 @@ public sealed class OrbitalRelayPresentation : MonoBehaviour
     private OrbitalRelayNode[] nodes;
     private int previousCombo;
     private OrbitalRelayPhase previousPhase;
-    public bool IsValid => panel != null && phaseLabel != null && timeLabel != null &&
+    public bool IsValid => startZoneVisual != null && startPrompt != null && nodesRoot != null && panel != null && phaseLabel != null && timeLabel != null &&
         activationsLabel != null && goldLabel != null && comboLabel != null && transitionFx != null &&
         comboFx != null && urgentFx != null && flashOverlay != null && transitionFx.runtimeAnimatorController != null;
     public void Bind(OrbitalRelaySettings settings, OrbitalRelayNode[] nodes)
     { this.settings = settings; this.nodes = nodes; previousCombo = 0; previousPhase = OrbitalRelayPhase.Inactive; }
     private static string L(string key) => LocalizationService.EnsureExists().Get(key);
+    public void ShowStartPrompt(bool visible) => startPrompt.SetActive(visible);
     public void Render(OrbitalRelaySnapshot snapshot)
     {
         if (nodes == null) return;
-        panel.SetActive(snapshot.Phase != OrbitalRelayPhase.Inactive);
+        bool inactive = snapshot.Phase == OrbitalRelayPhase.Inactive;
+        startZoneVisual.SetActive(inactive);
+        nodesRoot.SetActive(!inactive);
+        panel.SetActive(!inactive);
+        if (inactive) return;
         bool bonus = snapshot.Phase == OrbitalRelayPhase.Bonus;
         bool transition = snapshot.Phase == OrbitalRelayPhase.Transition;
         for (int i = 0; i < nodes.Length; i++) nodes[i].Apply(!transition && i == snapshot.ActiveNodeIndex, i == snapshot.ActiveNodeIndex ? snapshot.ContactProgress : 0);
@@ -55,5 +61,11 @@ public sealed class OrbitalRelayPresentation : MonoBehaviour
             string.Format(L("event.relay.activations"), result.BonusActivations) + "\n" + string.Format(L("event.relay.gold"), result.Gold) + "\n" +
             L(result.Success ? "event.relay.upgradeEarned" : "event.relay.upgradeNotEarned"), 4f);
     }
-    public void Clear() { if (panel != null) panel.SetActive(false); if (flashOverlay != null) flashOverlay.color = Color.clear; }
+    public void Clear()
+    {
+        if (panel != null) panel.SetActive(false);
+        if (startZoneVisual != null) startZoneVisual.SetActive(false);
+        if (nodesRoot != null) nodesRoot.SetActive(false);
+        if (flashOverlay != null) flashOverlay.color = Color.clear;
+    }
 }

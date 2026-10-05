@@ -199,7 +199,7 @@ public sealed class TutorialController : MonoBehaviour
     {
         if (Step != TutorialStep.OrbitalPlacement) return;
         SetStep(TutorialStep.SectorGoal, TargetEvent.transform);
-        if (TargetEvent.IsPlayerInside) OnZoneEntered();
+        if (TargetEvent.IsPlayerInStartZone) OnZoneEntered();
     }
 
     public bool CanStartEvent(WorldEvent candidate) => candidate == TargetEvent && Step >= TutorialStep.SectorGoal;
@@ -250,7 +250,7 @@ public sealed class TutorialController : MonoBehaviour
     private void LateUpdate()
     {
         if (TargetEvent == null || GoalCompleted || relayRetry != null) return;
-        if (Step == TutorialStep.SectorGoal && TargetEvent.IsPlayerInside) OnZoneEntered();
+        if (Step == TutorialStep.SectorGoal && TargetEvent.IsPlayerInStartZone) OnZoneEntered();
         if (Step == TutorialStep.FirstEvent)
             FocusTarget = TargetEvent.ActiveNode != null ? TargetEvent.ActiveNode.transform : TargetEvent.transform;
     }

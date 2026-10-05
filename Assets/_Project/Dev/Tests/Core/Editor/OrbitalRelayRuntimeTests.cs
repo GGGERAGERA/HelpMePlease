@@ -103,6 +103,17 @@ public sealed class OrbitalRelayRuntimeTests
                 .GetField("orbitalCharacter", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(lab),
                 lab.Events, null, false), Is.True);
             Assert.That(lab.Events.SpawnDebugEventAt(prefab, lab.Player.position, false, out var normalEntry), Is.True);
+            var entryCenter = lab.Player.position;
+            var initialNodes = normalEntry.GetComponentsInChildren<OrbitalRelayNode>(true);
+            var initialPositions = initialNodes.Select(node => node.transform.position).ToArray();
+            Assert.That(initialNodes.All(node => !node.gameObject.activeInHierarchy), Is.True);
+            Assert.That(normalEntry.transform.Find("StartZoneVisual").gameObject.activeInHierarchy, Is.True);
+            lab.Player.position = entryCenter + Vector3.right * 4;
+            Assert.That(normalEntry.CanInteract, Is.False, "Being inside the gameplay arena does not enter the start zone.");
+            lab.Player.position = entryCenter;
+            yield return null;
+            Assert.That(normalEntry.transform.Find("StartZoneVisual/StartPrompt").gameObject.activeInHierarchy, Is.True);
+            yield return Capture("start-zone");
             var interactor = lab.Player.GetComponent<PlayerInteractor>() ?? lab.Player.gameObject.AddComponent<PlayerInteractor>();
             Physics2D.SyncTransforms();
             typeof(PlayerInteractor).GetMethod("FindInteractable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(interactor, null);
@@ -110,6 +121,15 @@ public sealed class OrbitalRelayRuntimeTests
             normalEntry.Interact();
             Assert.That(normalEntry.IsStarted, Is.True);
             Assert.That(((OrbitalRelayEvent)normalEntry).Snapshot.Phase, Is.EqualTo(OrbitalRelayPhase.Stabilization));
+            Assert.That(normalEntry.transform.Find("StartZoneVisual").gameObject.activeInHierarchy, Is.False);
+            Assert.That(initialNodes.All(node => node.gameObject.activeInHierarchy), Is.True);
+            Assert.That(initialNodes.Where((node, index) => node.transform.position != initialPositions[index]).Any(), Is.True);
+            for (int i = 0; i < initialNodes.Length; i++)
+            {
+                Assert.That(Vector2.Distance(initialNodes[i].transform.position, entryCenter), Is.InRange(3.5f, 6.5f));
+                for (int j = 0; j < i; j++)
+                    Assert.That(Vector2.Distance(initialNodes[i].transform.position, initialNodes[j].transform.position), Is.GreaterThanOrEqualTo(2.5f));
+            }
             normalEntry.Cancel(); lab.ClearEvents(); yield return null;
             Set(lab, "relayRewardQueue", false);
             config.stabilizationDuration = .3f;
