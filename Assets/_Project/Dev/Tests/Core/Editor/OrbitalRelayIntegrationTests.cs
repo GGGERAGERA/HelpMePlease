@@ -1,0 +1,52 @@
+#if UNITY_EDITOR
+using NUnit.Framework;
+using UnityEngine;
+using System.Reflection;
+public sealed class OrbitalRelayIntegrationTests
+{
+    [Test] public void ScopedPressureContractExists()
+    {
+        Assert.That(typeof(WorldEventSpawner).GetMethod("AcquireSpawnPressure"), Is.Not.Null);
+        Assert.That(typeof(WorldEvent).GetProperty("UsesStandardSpawnPressure"), Is.Not.Null);
+    }
+    [Test] public void PressureLeaseCleanupAndStaleOwnership()
+    {
+        var host = new GameObject("pressure owner");
+        var source = new GameObject("pressure source");
+        var nextSource = new GameObject("next pressure source");
+        bool ownsRun = RunStateManager.Instance == null;
+        try
+        {
+            var spawner = host.AddComponent<WorldEventSpawner>();
+            var enemies = host.AddComponent<EnemySpawner>(); enemies.StopSpawning();
+            spawner.ConfigureDebugEnemySpawner(enemies);
+            var first = source.AddComponent<RelayPressureTestEvent>();
+            var next = nextSource.AddComponent<RelayPressureTestEvent>();
+            var active = typeof(WorldEventSpawner).GetField("<ActiveEvent>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic);
+            active.SetValue(spawner, first); spawner.NotifyEventStarted(first);
+            Assert.That(enemies.WorldEventSpawnPressureMultiplier, Is.EqualTo(1));
+            var old = spawner.AcquireSpawnPressure(first, 1.6f);
+            Assert.That(enemies.WorldEventSpawnPressureMultiplier, Is.EqualTo(1.6f));
+            spawner.NotifyEventFailed(first);
+            Assert.That(enemies.WorldEventSpawnPressureMultiplier, Is.EqualTo(1));
+            active.SetValue(spawner, next); spawner.NotifyEventStarted(next);
+            var current = spawner.AcquireSpawnPressure(next, 1.8f); old.Dispose();
+            Assert.That(enemies.WorldEventSpawnPressureMultiplier, Is.EqualTo(1.8f));
+            current.Dispose(); current.Dispose();
+            Assert.That(enemies.WorldEventSpawnPressureMultiplier, Is.EqualTo(1));
+            Assert.That(enemies.IsSpawningEnabled, Is.False);
+            var onDisable = spawner.AcquireSpawnPressure(next, 1.6f); spawner.enabled = false; typeof(WorldEventSpawner).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(spawner, null);
+            Assert.That(enemies.WorldEventSpawnPressureMultiplier, Is.EqualTo(1)); onDisable.Dispose();
+        }
+        finally
+        {
+            Object.DestroyImmediate(source); Object.DestroyImmediate(nextSource); Object.DestroyImmediate(host);
+            if (ownsRun && RunStateManager.Instance != null) Object.DestroyImmediate(RunStateManager.Instance.gameObject);
+        }
+    }
+}
+public sealed class RelayPressureTestEvent : WorldEvent
+{
+    public override bool UsesStandardSpawnPressure => false;
+}
+#endif

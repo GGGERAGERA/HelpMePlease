@@ -59,6 +59,8 @@ public class WorldEventSpawner : MonoBehaviour
     private bool holdPointEnabled;
     private EnemySpawner enemySpawner;
     private WorldEvent pressureEvent;
+    private readonly Dictionary<int, float> pressureLeases = new();
+    private int nextPressureLease;
     private readonly List<WorldEvent> spawnedEvents = new();
     private readonly HashSet<WorldEvent> warnedUnsupportedEventPrefabs = new();
     private readonly HashSet<WorldEvent> siteRewardSuppressedEvents = new();
@@ -80,6 +82,12 @@ public class WorldEventSpawner : MonoBehaviour
     public void ConfigureDebugConcurrentEventCapacity(int capacity)
     {
         maxActiveEvents = Mathf.Max(1, capacity);
+    }
+
+    public void ConfigureDebugEnemySpawner(EnemySpawner spawner)
+    {
+        ClearEventSpawnPressure();
+        enemySpawner = spawner;
     }
 
     private readonly HashSet<WorldEvent> debugContentEvents = new();
@@ -725,9 +733,7 @@ public class WorldEventSpawner : MonoBehaviour
 
         ResolveEnemySpawner();
         pressureEvent = worldEvent;
-        enemySpawner?.SetWorldEventSpawnPressureMultiplier(
-            standardEventPressure
-        );
+        ApplyEventPressure();
         EventStarted?.Invoke(worldEvent);
     }
 
@@ -787,8 +793,42 @@ public class WorldEventSpawner : MonoBehaviour
         if (worldEvent != null && pressureEvent != worldEvent)
             return;
 
+        pressureLeases.Clear();
         enemySpawner?.SetWorldEventSpawnPressureMultiplier(1f);
         pressureEvent = null;
+    }
+
+    public System.IDisposable AcquireSpawnPressure(WorldEvent source, float multiplier)
+    {
+        if (!isActiveAndEnabled || source == null || ActiveEvent != source || pressureEvent != source ||
+            float.IsNaN(multiplier) || float.IsInfinity(multiplier) || multiplier < 1f)
+            return new PressureLease(null);
+        ResolveEnemySpawner();
+        if (enemySpawner == null)
+        {
+            Debug.LogWarning("[WorldEventSpawner] No enemy pipeline for event pressure.", this);
+            return new PressureLease(null);
+        }
+        int token = ++nextPressureLease;
+        pressureLeases.Add(token, multiplier);
+        ApplyEventPressure();
+        return new PressureLease(() => {
+            if (pressureEvent == source && pressureLeases.Remove(token)) ApplyEventPressure();
+        });
+    }
+
+    private void ApplyEventPressure()
+    {
+        float multiplier = pressureEvent != null && pressureEvent.UsesStandardSpawnPressure ? standardEventPressure : 1f;
+        foreach (float value in pressureLeases.Values) multiplier *= value;
+        enemySpawner?.SetWorldEventSpawnPressureMultiplier(multiplier);
+    }
+
+    private sealed class PressureLease : System.IDisposable
+    {
+        private System.Action release;
+        public PressureLease(System.Action release) => this.release = release;
+        public void Dispose() { var action = release; release = null; action?.Invoke(); }
     }
 
     private void ResolveEnemySpawner()

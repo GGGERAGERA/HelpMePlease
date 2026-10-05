@@ -32,6 +32,7 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
     public string EventDescription => eventDescription;
     public bool AllowedInSite => allowedInSite;
     public bool RequiresHoldPointFeature => requiresHoldPointFeature;
+    public virtual bool UsesStandardSpawnPressure => true;
     public virtual Vector3 RewardPosition => transform.position;
     protected bool IsDebugCleanup => debugCleanup;
     public override bool CanInteract
