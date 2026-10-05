@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="9" result="Passed" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-05 22:33:39Z" end-time="2026-10-05 22:33:39Z" duration="0,33861">
+  <test-suite type="TestSuite" id="1000" name="Subject#42" fullname="Subject#42" runstate="Runnable" testcasecount="113" result="Passed" start-time="2026-10-05 22:33:39Z" end-time="2026-10-05 22:33:39Z" duration="0.338610" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1159" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="113" result="Passed" start-time="2026-10-05 22:33:39Z" end-time="2026-10-05 22:33:39Z" duration="0.235372" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="7008" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="1071" name="OrbitalRelayStateTests" fullname="OrbitalRelayStateTests" classname="OrbitalRelayStateTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-10-05 22:33:39Z" end-time="2026-10-05 22:33:39Z" duration="0.144448" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1074" name="BonusCountsOnlyBonusActivations" fullname="OrbitalRelayStateTests.BonusCountsOnlyBonusActivations" methodname="BonusCountsOnlyBonusActivations" classname="OrbitalRelayStateTests" runstate="Runnable" seed="249072382" result="Passed" start-time="2026-10-05 22:33:39Z" end-time="2026-10-05 22:33:39Z" duration="0.022360" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1078" name="BoundaryContactWinsBeforeTimeout" fullname="OrbitalRelayStateTests.BoundaryContactWinsBeforeTimeout" methodname="BoundaryContactWinsBeforeTimeout" classname="OrbitalRelayStateTests" runstate="Runnable" seed="383275821" result="Passed" start-time="2026-10-05 22:33:39Z" end-time="2026-10-05 22:33:39Z" duration="0.001523" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1079" name="CancelAfterQualificationAndAdministrativeDisposalDiffer" fullname="OrbitalRelayStateTests.CancelAfterQualificationAndAdministrativeDisposalDiffer" methodname="CancelAfterQualificationAndAdministrativeDisposalDiffer" classname="OrbitalRelayStateTests" runstate="Runnable" seed="1755526189" result="Passed" start-time="2026-10-05 22:33:39Z" end-time="2026-10-05 22:33:39Z" duration="0.001485" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1077" name="ComboExpiresWithoutScoreLossAndTwoNodesAlternate" fullname="OrbitalRelayStateTests.ComboExpiresWithoutScoreLossAndTwoNodesAlternate" methodname="ComboExpiresWithoutScoreLossAndTwoNodesAlternate" classname="OrbitalRelayStateTests" runstate="Runnable" seed="1143548732" result="Passed" start-time="2026-10-05 22:33:39Z" end-time="2026-10-05 22:33:39Z" duration="0.002037" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1076" name="ContactBreakAndPauseDoNotGrantProgress" fullname="OrbitalRelayStateTests.ContactBreakAndPauseDoNotGrantProgress" methodname="ContactBreakAndPauseDoNotGrantProgress" classname="OrbitalRelayStateTests" runstate="Runnable" seed="1318082306" result="Passed" start-time="2026-10-05 22:33:39Z" end-time="2026-10-05 22:33:39Z" duration="0.000886" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1080" name="InvalidSettingsAndOverflowAreSafe" fullname="OrbitalRelayStateTests.InvalidSettingsAndOverflowAreSafe" methodname="InvalidSettingsAndOverflowAreSafe" classname="OrbitalRelayStateTests" runstate="Runnable" seed="1131211355" result="Passed" start-time="2026-10-05 22:33:39Z" end-time="2026-10-05 22:33:39Z" duration="0.000488" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1072" name="ProductionStateContractExists" fullname="OrbitalRelayStateTests.ProductionStateContractExists" methodname="ProductionStateContractExists" classname="OrbitalRelayStateTests" runstate="Runnable" seed="1324894056" result="Passed" start-time="2026-10-05 22:33:39Z" end-time="2026-10-05 22:33:39Z" duration="0.004321" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1073" name="ThresholdStartsTransitionNotCompletion" fullname="OrbitalRelayStateTests.ThresholdStartsTransitionNotCompletion" methodname="ThresholdStartsTransitionNotCompletion" classname="OrbitalRelayStateTests" runstate="Runnable" seed="275552244" result="Passed" start-time="2026-10-05 22:33:39Z" end-time="2026-10-05 22:33:39Z" duration="0.001204" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1075" name="TimeoutFailsBeforeThreshold" fullname="OrbitalRelayStateTests.TimeoutFailsBeforeThreshold" methodname="TimeoutFailsBeforeThreshold" classname="OrbitalRelayStateTests" runstate="Runnable" seed="969419272" result="Passed" start-time="2026-10-05 22:33:39Z" end-time="2026-10-05 22:33:39Z" duration="0.000615" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Saving results to: Artifacts/StartScreen/results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
