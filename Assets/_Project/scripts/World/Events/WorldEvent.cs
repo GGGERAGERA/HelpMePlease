@@ -33,6 +33,9 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
     public bool AllowedInSite => allowedInSite;
     public bool RequiresHoldPointFeature => requiresHoldPointFeature;
     public virtual bool UsesStandardSpawnPressure => true;
+    public virtual WorldEventRewardResult? CompletionReward => null;
+    public virtual bool TryValidateConfiguration(out string error) { error = null; return true; }
+    public virtual void Cancel() => FailEvent();
     public virtual Vector3 RewardPosition => transform.position;
     protected bool IsDebugCleanup => debugCleanup;
     public override bool CanInteract
@@ -197,22 +200,19 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     internal void ClearForDebug()
     {
-        if (IsCompleted)
-            return;
-
-        // Mark the transient instance as terminal before Destroy so OnDestroy
-        // cannot route a debug cleanup through the regular failure lifecycle.
-        // IsFailed also keeps event-specific cleanup from playing completion
-        // presentation; no failure notification is sent to the owner.
-        IsCompleted = true;
-        IsFailed = true;
-        debugCleanup = true;
-        HideEventMarker();
-        CleanupOnce();
-        owner = null;
+        DisposeForOwnerReset();
         Destroy(gameObject);
     }
 #endif
+
+    internal void DisposeForOwnerReset()
+    {
+        if (IsCompleted) return;
+        IsCompleted = true; IsFailed = true; debugCleanup = true;
+        HideEventMarker(); CleanupOnce();
+        WorldEventSpawner eventOwner = owner; owner = null;
+        eventOwner?.ReleaseEventWithoutResult(this);
+    }
 
     private void OnDestroy()
     {

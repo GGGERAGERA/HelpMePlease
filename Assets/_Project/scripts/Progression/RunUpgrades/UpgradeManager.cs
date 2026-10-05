@@ -61,6 +61,8 @@ public sealed class UpgradeManager : MonoBehaviour
     private OrbitalStationRuntime orbitalStation;
     private List<UpgradeData> currentChoices;
     private bool shuttingDown;
+    public bool CanAcceptWorldEventReward => !shuttingDown && upgradePanelView != null &&
+        orbitalRewardProvider != null && orbitalStation != null && orbitalStation.IsInitialized;
     private bool isChoosingUpgrade;
     private bool reelPending;
     private float previousTimeScale = 1f;

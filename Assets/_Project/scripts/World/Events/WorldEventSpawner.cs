@@ -100,7 +100,7 @@ public class WorldEventSpawner : MonoBehaviour
     private void OnEnable()
     {
         RunStateManager.EnsureExists().RegisterSceneCleanup(ReleaseRunScene);
-        EventCompleted += SpawnRewardContainer;
+        EventCompleted += DispatchCompletionReward;
     }
 
     private void OnDisable()
@@ -108,14 +108,14 @@ public class WorldEventSpawner : MonoBehaviour
         RunStateManager.Instance?.UnregisterSceneCleanup(ReleaseRunScene);
         ClearEventSpawnPressure();
         siteRewardSuppressedEvents.Clear();
-        EventCompleted -= SpawnRewardContainer;
+        EventCompleted -= DispatchCompletionReward;
     }
 
     private void ReleaseRunScene()
     {
         enabled = false;
-        foreach (var worldEvent in spawnedEvents)
-            if (worldEvent != null) worldEvent.gameObject.SetActive(false);
+        foreach (var worldEvent in spawnedEvents.ToArray())
+            if (worldEvent != null) { worldEvent.DisposeForOwnerReset(); worldEvent.gameObject.SetActive(false); }
         spawnedEvents.Clear();
         ActiveEvent = null;
         timer = 0f;
@@ -227,6 +227,7 @@ public class WorldEventSpawner : MonoBehaviour
             return false;
         }
 
+        if (!ValidatePrefab(prefab)) return false;
         spawnedEvent = Instantiate(prefab, spawnPosition, Quaternion.identity);
         spawnedEvent.Initialize(this);
         spawnedEvent.BindSource(prefab);
@@ -439,6 +440,7 @@ public class WorldEventSpawner : MonoBehaviour
             return false;
         }
 
+        if (!ValidatePrefab(prefab)) return false;
         spawnedEvent = Instantiate(prefab, position, Quaternion.identity);
         spawnedEvent.ConfigureSitePlacement(siteCenter, siteSize);
         spawnedEvent.Initialize(this);
@@ -518,6 +520,7 @@ public class WorldEventSpawner : MonoBehaviour
 
     public void NotifyEventCompleted(WorldEvent worldEvent)
     {
+        if (worldEvent == null || !worldEvent.IsCompleted || worldEvent.IsFailed || !spawnedEvents.Contains(worldEvent)) return;
         ClearEventSpawnPressure(worldEvent);
         bool eligibleContent = worldEvent != null && worldEvent.IsCompleted && !worldEvent.IsFailed;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -622,6 +625,7 @@ public class WorldEventSpawner : MonoBehaviour
         if (spawnedEventCount >= maxActiveEvents)
             return false;
 
+        if (!ValidatePrefab(prefab)) return false;
         spawnedEvent = Instantiate(prefab, position, Quaternion.identity);
         spawnedEvent.Initialize(this);
         spawnedEvent.BindSource(prefab);
@@ -746,39 +750,69 @@ public class WorldEventSpawner : MonoBehaviour
         return worldEvent.IsStarted;
     }
 
-    private void SpawnRewardContainer(WorldEvent completedEvent)
+    public bool IsRewardDeliverySuppressed(WorldEvent source)
     {
-        if (completedEvent == null)
-            return;
-
-        if (siteRewardSuppressedEvents.Remove(completedEvent))
-            return;
-
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        if (debugRewardSuppressedEvents.Remove(completedEvent))
-            return;
+        return debugRewardSuppressedEvents.Contains(source);
+#else
+        return false;
 #endif
+    }
 
+    private void DispatchCompletionReward(WorldEvent completedEvent)
+    {
+        if (completedEvent == null) return;
+        bool suppressStandard = siteRewardSuppressedEvents.Remove(completedEvent);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (debugRewardSuppressedEvents.Remove(completedEvent)) return;
+#endif
+        if (completedEvent.CompletionReward is WorldEventRewardResult result)
+        {
+            CurrencyManager currency = CurrencyManager.Instance;
+            UpgradeManager upgrades = UpgradeManager.Instance;
+            if (currency == null || upgrades == null || !upgrades.CanAcceptWorldEventReward)
+            {
+                Debug.LogError("[WorldEventSpawner] Required completion reward owners are unavailable.", this);
+                return;
+            }
+            if (result.Gold > 0 && RunStateManager.Instance?.IsDevelopmentRun != true)
+                currency.AddGoldExact(result.Gold);
+            for (int i = 0; i < result.UpgradeSelections; i++)
+                upgrades.ShowChestRewardChoices(3, false, null);
+            return;
+        }
+        if (suppressStandard) return;
         if (eventRewardContainerPrefab == null)
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.LogWarning(
-                "[WorldEventSpawner] Event reward container is not assigned."
-            );
+            Debug.LogWarning("[WorldEventSpawner] Event reward container is not assigned.");
 #endif
             return;
         }
-
-        WorldBreakable container = Instantiate(
-            eventRewardContainerPrefab,
-            completedEvent.RewardPosition,
-            Quaternion.identity
-        );
-        container.InitializeEventReward(
-            numericOnly: siteControlledMode
-        );
+        WorldBreakable container = Instantiate(eventRewardContainerPrefab,
+            completedEvent.RewardPosition, Quaternion.identity);
+        container.InitializeEventReward(numericOnly: siteControlledMode);
     }
 
+    private readonly HashSet<WorldEvent> invalidEventPrefabs = new();
+    private bool ValidatePrefab(WorldEvent prefab)
+    {
+        if (prefab.TryValidateConfiguration(out string error)) return true;
+        if (invalidEventPrefabs.Add(prefab)) Debug.LogError("[WorldEventSpawner] " + error, prefab);
+        return false;
+    }
+
+    internal void ReleaseEventWithoutResult(WorldEvent worldEvent)
+    {
+        ClearEventSpawnPressure(worldEvent);
+        if (ActiveEvent == worldEvent) ActiveEvent = null;
+        if (spawnedEvents.Remove(worldEvent)) spawnedEventCount = Mathf.Max(0, spawnedEventCount - 1);
+        siteRewardSuppressedEvents.Remove(worldEvent);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        debugContentEvents.Remove(worldEvent); debugRewardSuppressedEvents.Remove(worldEvent);
+        if (debugEvent == worldEvent) debugEvent = null;
+#endif
+    }
     private void ResolveGameplayArea()
     {
         if (gameplayArea == null)
