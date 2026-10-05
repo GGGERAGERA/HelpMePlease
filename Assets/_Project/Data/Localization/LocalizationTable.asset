@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: LocalizationTable
   m_EditorClassIdentifier: Assembly-CSharp::LocalizationTable
   entries:
+  - key: bunker.cat.pet
+    ru: "Погладить"
+    en: "Pet"
   - key: settings.windowMode
     ru: "РЕЖИМ ЭКРАНА"
     en: "DISPLAY MODE"

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="9" result="Failed(Child)" total="9" passed="7" failed="2" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-05 22:54:28Z" end-time="2026-10-05 22:54:29Z" duration="0,4201216">
+  <test-suite type="TestSuite" id="1000" name="Subject#42" fullname="Subject#42" runstate="Runnable" testcasecount="114" result="Failed" site="Child" start-time="2026-10-05 22:54:28Z" end-time="2026-10-05 22:54:29Z" duration="0.420122" total="9" passed="7" failed="2" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1160" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="114" result="Failed" site="Child" start-time="2026-10-05 22:54:28Z" end-time="2026-10-05 22:54:29Z" duration="0.317440" total="9" passed="7" failed="2" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="7008" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestFixture" id="1046" name="OrbitalRelayAuthoringTests" fullname="OrbitalRelayAuthoringTests" classname="OrbitalRelayAuthoringTests" runstate="Runnable" testcasecount="9" result="Failed" site="Child" start-time="2026-10-05 22:54:28Z" end-time="2026-10-05 22:54:29Z" duration="0.225282" total="9" passed="7" failed="2" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-case id="1052" name="AuthoredPrefabHasValidReferencesAndNoDevDependencies" fullname="OrbitalRelayAuthoringTests.AuthoredPrefabHasValidReferencesAndNoDevDependencies" methodname="AuthoredPrefabHasValidReferencesAndNoDevDependencies" classname="OrbitalRelayAuthoringTests" runstate="Runnable" seed="1027225647" result="Passed" start-time="2026-10-05 22:54:29Z" end-time="2026-10-05 22:54:29Z" duration="0.068198" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1048" name="InactivePrefabShowsStartZoneAndHidesNodes" fullname="OrbitalRelayAuthoringTests.InactivePrefabShowsStartZoneAndHidesNodes" methodname="InactivePrefabShowsStartZoneAndHidesNodes" classname="OrbitalRelayAuthoringTests" runstate="Runnable" seed="79574556" result="Failed" start-time="2026-10-05 22:54:29Z" end-time="2026-10-05 22:54:29Z" duration="0.011271" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <failure>
+            <message><![CDATA[  Expected: not null
+  But was:  null
+]]></message>
+            <stack-trace><![CDATA[at OrbitalRelayAuthoringTests.InactivePrefabShowsStartZoneAndHidesNodes () [0x0000a] in D:\fork\HelpMePlease\Assets\_Project\Dev\Tests\Core\Editor\OrbitalRelayAuthoringTests.cs:23
+]]></stack-trace>
+          </failure>
+        </test-case>
+        <test-case id="1053" name="InvalidNodeCollectionIsRejected" fullname="OrbitalRelayAuthoringTests.InvalidNodeCollectionIsRejected" methodname="InvalidNodeCollectionIsRejected" classname="OrbitalRelayAuthoringTests" runstate="Runnable" seed="579752469" result="Passed" start-time="2026-10-05 22:54:29Z" end-time="2026-10-05 22:54:29Z" duration="0.006925" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1050" name="LabCatalogUsesSameProductionPrefab" fullname="OrbitalRelayAuthoringTests.LabCatalogUsesSameProductionPrefab" methodname="LabCatalogUsesSameProductionPrefab" classname="OrbitalRelayAuthoringTests" runstate="Runnable" seed="91689735" result="Passed" start-time="2026-10-05 22:54:29Z" end-time="2026-10-05 22:54:29Z" duration="0.002743" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1049" name="LabResultNotificationHasVisibleAuthoredAncestors" fullname="OrbitalRelayAuthoringTests.LabResultNotificationHasVisibleAuthoredAncestors" methodname="LabResultNotificationHasVisibleAuthoredAncestors" classname="OrbitalRelayAuthoringTests" runstate="Runnable" seed="1224860174" result="Passed" start-time="2026-10-05 22:54:29Z" end-time="2026-10-05 22:54:29Z" duration="0.013239" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1055" name="MigratedAssetsHaveNoMissingScriptOrExternalGuid" fullname="OrbitalRelayAuthoringTests.MigratedAssetsHaveNoMissingScriptOrExternalGuid" methodname="MigratedAssetsHaveNoMissingScriptOrExternalGuid" classname="OrbitalRelayAuthoringTests" runstate="Runnable" seed="800618245" result="Passed" start-time="2026-10-05 22:54:29Z" end-time="2026-10-05 22:54:29Z" duration="0.008465" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1054" name="NonuniformContactCircleRejected" fullname="OrbitalRelayAuthoringTests.NonuniformContactCircleRejected" methodname="NonuniformContactCircleRejected" classname="OrbitalRelayAuthoringTests" runstate="Runnable" seed="18349239" result="Passed" start-time="2026-10-05 22:54:29Z" end-time="2026-10-05 22:54:29Z" duration="0.002490" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1051" name="ProductionPrefabExists" fullname="OrbitalRelayAuthoringTests.ProductionPrefabExists" methodname="ProductionPrefabExists" classname="OrbitalRelayAuthoringTests" runstate="Runnable" seed="2101294470" result="Passed" start-time="2026-10-05 22:54:29Z" end-time="2026-10-05 22:54:29Z" duration="0.000193" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1047" name="ProductionStartZoneIsDiscoverableByExistingInteractor" fullname="OrbitalRelayAuthoringTests.ProductionStartZoneIsDiscoverableByExistingInteractor" methodname="ProductionStartZoneIsDiscoverableByExistingInteractor" classname="OrbitalRelayAuthoringTests" runstate="Runnable" seed="1227336641" result="Failed" start-time="2026-10-05 22:54:29Z" end-time="2026-10-05 22:54:29Z" duration="0.000847" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <failure>
+            <message><![CDATA[  Relay requires a separate start zone.
+  Expected: not null
+  But was:  null
+]]></message>
+            <stack-trace><![CDATA[at OrbitalRelayAuthoringTests.ProductionStartZoneIsDiscoverableByExistingInteractor () [0x0001e] in D:\fork\HelpMePlease\Assets\_Project\Dev\Tests\Core\Editor\OrbitalRelayAuthoringTests.cs:14
+]]></stack-trace>
+          </failure>
+          <output><![CDATA[Saving results to: Artifacts/StartScreen/results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
