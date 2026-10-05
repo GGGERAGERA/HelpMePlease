@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-05 22:11:55Z" end-time="2026-10-05 22:11:55Z" duration="0,4179442">
+  <test-suite type="TestSuite" id="1000" name="Subject#42" fullname="Subject#42" runstate="Runnable" testcasecount="111" result="Failed" site="Child" start-time="2026-10-05 22:11:55Z" end-time="2026-10-05 22:11:55Z" duration="0.417944" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1157" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="111" result="Failed" site="Child" start-time="2026-10-05 22:11:55Z" end-time="2026-10-05 22:11:55Z" duration="0.317208" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="7008" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestFixture" id="1046" name="OrbitalRelayAuthoringTests" fullname="OrbitalRelayAuthoringTests" classname="OrbitalRelayAuthoringTests" runstate="Runnable" testcasecount="7" result="Failed" site="Child" start-time="2026-10-05 22:11:55Z" end-time="2026-10-05 22:11:55Z" duration="0.213143" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-case id="1047" name="LabResultNotificationHasVisibleAuthoredAncestors" fullname="OrbitalRelayAuthoringTests.LabResultNotificationHasVisibleAuthoredAncestors" methodname="LabResultNotificationHasVisibleAuthoredAncestors" classname="OrbitalRelayAuthoringTests" runstate="Runnable" seed="772237983" result="Failed" start-time="2026-10-05 22:11:55Z" end-time="2026-10-05 22:11:55Z" duration="0.114361" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <failure>
+            <message><![CDATA[  Result is hidden by RunInformation
+  Expected: 1
+  But was:  0.0f
+]]></message>
+            <stack-trace><![CDATA[at OrbitalRelayAuthoringTests.LabResultNotificationHasVisibleAuthoredAncestors () [0x00039] in D:\fork\HelpMePlease\Assets\_Project\Dev\Tests\Core\Editor\OrbitalRelayAuthoringTests.cs:14
+]]></stack-trace>
+          </failure>
+          <output><![CDATA[Saving results to: Artifacts/StartScreen/results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

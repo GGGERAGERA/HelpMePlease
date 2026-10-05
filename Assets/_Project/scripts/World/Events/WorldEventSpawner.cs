@@ -59,6 +59,8 @@ public class WorldEventSpawner : MonoBehaviour
     private bool holdPointEnabled;
     private EnemySpawner enemySpawner;
     private WorldEvent pressureEvent;
+    private readonly Dictionary<int, float> pressureLeases = new();
+    private int nextPressureLease;
     private readonly List<WorldEvent> spawnedEvents = new();
     private readonly HashSet<WorldEvent> warnedUnsupportedEventPrefabs = new();
     private readonly HashSet<WorldEvent> siteRewardSuppressedEvents = new();
@@ -82,6 +84,12 @@ public class WorldEventSpawner : MonoBehaviour
         maxActiveEvents = Mathf.Max(1, capacity);
     }
 
+    public void ConfigureDebugEnemySpawner(EnemySpawner spawner)
+    {
+        ClearEventSpawnPressure();
+        enemySpawner = spawner;
+    }
+
     private readonly HashSet<WorldEvent> debugContentEvents = new();
     private WorldEvent debugEvent;
     private bool debugManualOnly;
@@ -92,7 +100,7 @@ public class WorldEventSpawner : MonoBehaviour
     private void OnEnable()
     {
         RunStateManager.EnsureExists().RegisterSceneCleanup(ReleaseRunScene);
-        EventCompleted += SpawnRewardContainer;
+        EventCompleted += DispatchCompletionReward;
     }
 
     private void OnDisable()
@@ -100,14 +108,14 @@ public class WorldEventSpawner : MonoBehaviour
         RunStateManager.Instance?.UnregisterSceneCleanup(ReleaseRunScene);
         ClearEventSpawnPressure();
         siteRewardSuppressedEvents.Clear();
-        EventCompleted -= SpawnRewardContainer;
+        EventCompleted -= DispatchCompletionReward;
     }
 
     private void ReleaseRunScene()
     {
         enabled = false;
-        foreach (var worldEvent in spawnedEvents)
-            if (worldEvent != null) worldEvent.gameObject.SetActive(false);
+        foreach (var worldEvent in spawnedEvents.ToArray())
+            if (worldEvent != null) { worldEvent.DisposeForOwnerReset(); worldEvent.gameObject.SetActive(false); }
         spawnedEvents.Clear();
         ActiveEvent = null;
         timer = 0f;
@@ -219,6 +227,7 @@ public class WorldEventSpawner : MonoBehaviour
             return false;
         }
 
+        if (!ValidatePrefab(prefab)) return false;
         spawnedEvent = Instantiate(prefab, spawnPosition, Quaternion.identity);
         spawnedEvent.Initialize(this);
         spawnedEvent.BindSource(prefab);
@@ -431,6 +440,7 @@ public class WorldEventSpawner : MonoBehaviour
             return false;
         }
 
+        if (!ValidatePrefab(prefab)) return false;
         spawnedEvent = Instantiate(prefab, position, Quaternion.identity);
         spawnedEvent.ConfigureSitePlacement(siteCenter, siteSize);
         spawnedEvent.Initialize(this);
@@ -510,6 +520,7 @@ public class WorldEventSpawner : MonoBehaviour
 
     public void NotifyEventCompleted(WorldEvent worldEvent)
     {
+        if (worldEvent == null || !worldEvent.IsCompleted || worldEvent.IsFailed || !spawnedEvents.Contains(worldEvent)) return;
         ClearEventSpawnPressure(worldEvent);
         bool eligibleContent = worldEvent != null && worldEvent.IsCompleted && !worldEvent.IsFailed;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -614,6 +625,7 @@ public class WorldEventSpawner : MonoBehaviour
         if (spawnedEventCount >= maxActiveEvents)
             return false;
 
+        if (!ValidatePrefab(prefab)) return false;
         spawnedEvent = Instantiate(prefab, position, Quaternion.identity);
         spawnedEvent.Initialize(this);
         spawnedEvent.BindSource(prefab);
@@ -725,9 +737,7 @@ public class WorldEventSpawner : MonoBehaviour
 
         ResolveEnemySpawner();
         pressureEvent = worldEvent;
-        enemySpawner?.SetWorldEventSpawnPressureMultiplier(
-            standardEventPressure
-        );
+        ApplyEventPressure();
         EventStarted?.Invoke(worldEvent);
     }
 
@@ -740,39 +750,69 @@ public class WorldEventSpawner : MonoBehaviour
         return worldEvent.IsStarted;
     }
 
-    private void SpawnRewardContainer(WorldEvent completedEvent)
+    public bool IsRewardDeliverySuppressed(WorldEvent source)
     {
-        if (completedEvent == null)
-            return;
-
-        if (siteRewardSuppressedEvents.Remove(completedEvent))
-            return;
-
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        if (debugRewardSuppressedEvents.Remove(completedEvent))
-            return;
+        return debugRewardSuppressedEvents.Contains(source);
+#else
+        return false;
 #endif
+    }
 
+    private void DispatchCompletionReward(WorldEvent completedEvent)
+    {
+        if (completedEvent == null) return;
+        bool suppressStandard = siteRewardSuppressedEvents.Remove(completedEvent);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (debugRewardSuppressedEvents.Remove(completedEvent)) return;
+#endif
+        if (completedEvent.CompletionReward is WorldEventRewardResult result)
+        {
+            CurrencyManager currency = CurrencyManager.Instance;
+            UpgradeManager upgrades = UpgradeManager.Instance;
+            if (currency == null || upgrades == null || !upgrades.CanAcceptWorldEventReward)
+            {
+                Debug.LogError("[WorldEventSpawner] Required completion reward owners are unavailable.", this);
+                return;
+            }
+            if (result.Gold > 0 && RunStateManager.Instance?.IsDevelopmentRun != true)
+                currency.AddGoldExact(result.Gold);
+            for (int i = 0; i < result.UpgradeSelections; i++)
+                upgrades.ShowChestRewardChoices(3, false, null);
+            return;
+        }
+        if (suppressStandard) return;
         if (eventRewardContainerPrefab == null)
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.LogWarning(
-                "[WorldEventSpawner] Event reward container is not assigned."
-            );
+            Debug.LogWarning("[WorldEventSpawner] Event reward container is not assigned.");
 #endif
             return;
         }
-
-        WorldBreakable container = Instantiate(
-            eventRewardContainerPrefab,
-            completedEvent.RewardPosition,
-            Quaternion.identity
-        );
-        container.InitializeEventReward(
-            numericOnly: siteControlledMode
-        );
+        WorldBreakable container = Instantiate(eventRewardContainerPrefab,
+            completedEvent.RewardPosition, Quaternion.identity);
+        container.InitializeEventReward(numericOnly: siteControlledMode);
     }
 
+    private readonly HashSet<WorldEvent> invalidEventPrefabs = new();
+    private bool ValidatePrefab(WorldEvent prefab)
+    {
+        if (prefab.TryValidateConfiguration(out string error)) return true;
+        if (invalidEventPrefabs.Add(prefab)) Debug.LogError("[WorldEventSpawner] " + error, prefab);
+        return false;
+    }
+
+    internal void ReleaseEventWithoutResult(WorldEvent worldEvent)
+    {
+        ClearEventSpawnPressure(worldEvent);
+        if (ActiveEvent == worldEvent) ActiveEvent = null;
+        if (spawnedEvents.Remove(worldEvent)) spawnedEventCount = Mathf.Max(0, spawnedEventCount - 1);
+        siteRewardSuppressedEvents.Remove(worldEvent);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        debugContentEvents.Remove(worldEvent); debugRewardSuppressedEvents.Remove(worldEvent);
+        if (debugEvent == worldEvent) debugEvent = null;
+#endif
+    }
     private void ResolveGameplayArea()
     {
         if (gameplayArea == null)
@@ -787,8 +827,42 @@ public class WorldEventSpawner : MonoBehaviour
         if (worldEvent != null && pressureEvent != worldEvent)
             return;
 
+        pressureLeases.Clear();
         enemySpawner?.SetWorldEventSpawnPressureMultiplier(1f);
         pressureEvent = null;
+    }
+
+    public System.IDisposable AcquireSpawnPressure(WorldEvent source, float multiplier)
+    {
+        if (!isActiveAndEnabled || source == null || ActiveEvent != source || pressureEvent != source ||
+            float.IsNaN(multiplier) || float.IsInfinity(multiplier) || multiplier < 1f)
+            return new PressureLease(null);
+        ResolveEnemySpawner();
+        if (enemySpawner == null)
+        {
+            Debug.LogWarning("[WorldEventSpawner] No enemy pipeline for event pressure.", this);
+            return new PressureLease(null);
+        }
+        int token = ++nextPressureLease;
+        pressureLeases.Add(token, multiplier);
+        ApplyEventPressure();
+        return new PressureLease(() => {
+            if (pressureEvent == source && pressureLeases.Remove(token)) ApplyEventPressure();
+        });
+    }
+
+    private void ApplyEventPressure()
+    {
+        float multiplier = pressureEvent != null && pressureEvent.UsesStandardSpawnPressure ? standardEventPressure : 1f;
+        foreach (float value in pressureLeases.Values) multiplier *= value;
+        enemySpawner?.SetWorldEventSpawnPressureMultiplier(multiplier);
+    }
+
+    private sealed class PressureLease : System.IDisposable
+    {
+        private System.Action release;
+        public PressureLease(System.Action release) => this.release = release;
+        public void Dispose() { var action = release; release = null; action?.Invoke(); }
     }
 
     private void ResolveEnemySpawner()

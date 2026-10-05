@@ -106,21 +106,18 @@ public sealed class BotController : IDisposable
         {
             if (objective == null || objective.IsFailed)
                 objective = events.SpawnedEvents.Where(e => e != null && !e.IsCompleted)
-                    .OrderBy(e => e is CaptureZoneEvent ? 0 : 1)
+                    .OrderBy(e => e is OrbitalRelayEvent ? 0 : 1)
                     .ThenBy(e => ((Vector2)e.transform.position - position).sqrMagnitude).FirstOrDefault();
             if (objective != null)
             {
                 if (objective.CanInteract) objective.Interact();
                 target = objective.transform.position;
-                if (objective is CaptureZoneEvent capture && capture.IsStarted)
+                if (objective is OrbitalRelayEvent relay && relay.IsStarted)
                 {
-                    Vector2 radial = position - (Vector2)capture.transform.position;
-                    float radius = capture.CaptureRadius * .65f;
-                    Vector2 tangent = new(-radial.y, radial.x);
-                    Vector2 desired = tangent.normalized + radial.normalized * Mathf.Clamp(radius - radial.magnitude, -1.5f, 1.5f);
-                    if (radial.sqrMagnitude < .1f) desired = Vector2.right;
-                    direction = SafeGoldenDirection(position, desired);
-                    State = "Holding capture zone while circling";
+                    Vector2 desired = OrbitalRelayBotSteering.GetDesiredMovement(relay,
+                        movement.GetComponentInChildren<OrbitalStationRuntime>(), position);
+                    direction = SafeGoldenDirection(position, desired, preserveTrackingSpeed: true);
+                    State = "Orbital Relay: " + relay.Snapshot.Phase;
                     return;
                 }
                 var markers = new System.Collections.Generic.List<TacticalMapMarkerDescriptor>();
@@ -148,19 +145,27 @@ public sealed class BotController : IDisposable
         direction = ChooseSafeHeading(position, direction);
     }
 
-    private Vector2 SafeGoldenDirection(Vector2 position, Vector2 desired)
+    private Vector2 SafeGoldenDirection(Vector2 position, Vector2 desired, bool preserveTrackingSpeed = false)
     {
         Vector2 avoidance = Vector2.zero;
+        bool safetyOverride = false;
         foreach (var enemy in EnemyHealth.ActiveInstances)
         {
             if (enemy == null || enemy.IsDead) continue;
             Vector2 away = position - (Vector2)enemy.transform.position;
+            if (away.sqrMagnitude < 100f) safetyOverride = true;
             float radius = enemy.IsBoss ? 1.2f : 4f;
             if (away.magnitude < radius) avoidance += away.normalized * Mathf.Pow(1f - away.magnitude / radius, 2) * 5f;
         }
         Vector2 edge = area.IsInsidePlayableArea(position, 8f) ? Vector2.zero
             : ((Vector2)area.PlayableArea.bounds.center - position).normalized * 3f;
-        return ChooseSafeHeading(position, desired + Vector2.ClampMagnitude(avoidance, 3f) + edge + AvoidEarlyExit(position));
+        Vector2 exitAvoidance = AvoidEarlyExit(position);
+        foreach (var projectile in goldenProjectiles)
+            if (projectile != null && projectile.isActiveAndEnabled &&
+                ((Vector2)projectile.transform.position - position).sqrMagnitude < 144f) safetyOverride = true;
+        float speed = preserveTrackingSpeed && !safetyOverride && edge == Vector2.zero && exitAvoidance == Vector2.zero
+            ? Mathf.Clamp01(desired.magnitude) : 1f;
+        return ChooseSafeHeading(position, desired + Vector2.ClampMagnitude(avoidance, 3f) + edge + exitAvoidance) * speed;
     }
 
     // Fixed set of headings and short lookahead; no search tree, world edits or combat shortcuts.
@@ -180,8 +185,8 @@ public sealed class BotController : IDisposable
                 foreach (var exit in ProductionSectorExit.ActiveExits)
                     if (exit != null && exit.IsAvailable && Vector2.Distance(future, exit.transform.position) < exit.GetComponent<CircleCollider2D>().radius + 1.5f)
                         score -= 100f;
-            if (!objectiveCompleted && objective is CaptureZoneEvent capture && capture.IsStarted)
-                score -= Mathf.Max(0f, Vector2.Distance(future, capture.transform.position) - capture.CaptureRadius * .85f) * 2f;
+            if (!objectiveCompleted && objective is OrbitalRelayEvent relay && relay.IsStarted)
+                score -= Mathf.Max(0f, Vector2.Distance(future, relay.transform.position) - relay.ArenaRadius * .9f) * 2f;
             foreach (var enemy in EnemyHealth.ActiveInstances)
             {
                 if (enemy == null || enemy.IsDead) continue;

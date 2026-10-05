@@ -570,7 +570,10 @@ public sealed class ProductionAnomalySite : MonoBehaviour
             string.Empty,
             2f
         );
-        UpgradeManager.Instance.RequestNormalAnomalyChoices(CompleteSite);
+        if (worldEvent.CompletionReward.HasValue)
+            UpgradeManager.Instance.RunWhenRewardQueueIsIdle(CompleteSite);
+        else
+            UpgradeManager.Instance.RequestNormalAnomalyChoices(CompleteSite);
     }
 
     private void HandleEventFailed(WorldEvent worldEvent)

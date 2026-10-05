@@ -247,20 +247,33 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
     }
 
     public ProductionPortalPair PortalPair { get; private set; }
+    private OrbitalRelayEvent tutorialRelayPrefab;
+    private Vector2 tutorialRelayPosition;
+    private Vector2 tutorialRelaySize;
+
+    public bool TryRespawnTutorialRelay(out OrbitalRelayEvent relay)
+    {
+        relay = null;
+        if (!TutorialController.IsTutorialSector || tutorialRelayPrefab == null || eventSpawner == null) return false;
+        if (!eventSpawner.SpawnSiteEventAt(tutorialRelayPrefab, tutorialRelayPosition, tutorialRelayPosition,
+                tutorialRelaySize, true, out WorldEvent target)) return false;
+        relay = target as OrbitalRelayEvent;
+        return relay != null;
+    }
 
     private bool InitializeTutorialSector()
     {
-        // Reuse the authored capture event and exit, without random sites, anomalies,
+        // Reuse the production relay and exit, without random sites, anomalies,
         // breakables, resources, portals or the normal pressure director.
         eventSpawner.ConfigureSiteControlledMode(1);
-        CaptureZoneEvent capture = null;
+        OrbitalRelayEvent capture = null;
         foreach (var prefab in eventSpawner.EventPrefabs)
-            if (prefab is CaptureZoneEvent zone && eventSpawner.IsEventPrefabEnabled(zone))
+            if (prefab is OrbitalRelayEvent zone && eventSpawner.IsEventPrefabEnabled(zone))
             { capture = zone; break; }
         var player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
         if (capture == null || player == null || TutorialController.Active == null)
         {
-            Debug.LogError("[Tutorial] Capture event or player is missing.", this);
+            Debug.LogError("[Tutorial] Relay event or player is missing.", this);
             return false;
         }
 
@@ -277,12 +290,13 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
                 !IsFootprintClear(exitPosition, Vector2.one * config.ExitRadius * 2f)) continue;
             if (!eventSpawner.SpawnSiteEventAt(capture, eventPosition, eventPosition,
                     captureSize, true, out WorldEvent target)) return false;
-            TutorialController.Active.ConfigureTarget((CaptureZoneEvent)target);
+            tutorialRelayPrefab = capture; tutorialRelayPosition = eventPosition; tutorialRelaySize = captureSize;
+            TutorialController.Active.ConfigureTarget((OrbitalRelayEvent)target);
             var exit = new GameObject("Tutorial Sector Exit").AddComponent<ProductionSectorExit>();
             exit.Initialize(exitPosition, config.ExitRadius, runFlow, config.SectorExitGlow);
             return true;
         }
-        Debug.LogError("[Tutorial] No clear space for the capture event and exit.", this);
+        Debug.LogError("[Tutorial] No clear space for the relay and exit.", this);
         return false;
     }
 

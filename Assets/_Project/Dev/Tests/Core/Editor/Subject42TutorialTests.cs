@@ -99,17 +99,29 @@ public sealed class Subject42TutorialTests
         Object.Destroy(earlyChest.gameObject);
         yield return Capture("06-sector");
         Assert.That(controller.TargetEvent, Is.Not.Null);
-        var zone = controller.TargetEvent;
-        // Position setup only; actual area entry, authored hold duration and completion remain production code.
-        player.GetComponent<Rigidbody2D>().position = zone.transform.position;
+        var relay = controller.TargetEvent;
+        var phases = new HashSet<OrbitalRelayPhase>();
+        relay.PhaseChanged += phase => phases.Add(phase);
+        player.GetComponent<Rigidbody2D>().position = relay.transform.position;
+        movement.MovementIntent = () => relay != null
+            ? OrbitalRelayBotSteering.GetDesiredMovement(relay, controller.Station, player.transform.position) : Vector2.zero;
         yield return CoreTestSupport.Await(() => controller.Step == TutorialStep.FirstEvent);
         yield return Capture("07-event");
         float deadline = Time.realtimeSinceStartup + 50f;
+        yield return CoreTestSupport.Await(() => UpgradeManager.Instance.IsChoosingUpgrade);
+        Assert.That(controller.GoalCompleted, Is.False, "Exit waits for the relay Upgrade queue.");
+        yield return ClickCard();
+        if (controller.Station.RewardFlow.PendingReward.HasValue)
+            Assert.That(controller.Station.RewardFlow.DebugChooseFirstValidTarget(), Is.True);
         while (controller.Step != TutorialStep.Exit && Time.realtimeSinceStartup < deadline) yield return null;
-        Assert.That(controller.Step, Is.EqualTo(TutorialStep.Exit), "Natural Hold Zone completion must unlock exit.");
+        movement.MovementIntent = () => Vector2.zero;
+        Assert.That(phases, Does.Contain(OrbitalRelayPhase.Stabilization));
+        Assert.That(phases, Does.Contain(OrbitalRelayPhase.Transition));
+        Assert.That(phases, Does.Contain(OrbitalRelayPhase.Bonus));
+        Assert.That(controller.Step, Is.EqualTo(TutorialStep.Exit), "Actual orbital contacts, Bonus and resolved Upgrade must unlock exit.");
         Assert.That(RunFlowController.Instance.IsExitUnlocked, Is.True);
         Assert.That(RunStateManager.Instance.ThreatValue, Is.Zero);
-        Assert.That(UpgradeManager.Instance.IsRewardQueueIdle, Is.True, "Capture must not introduce random rewards.");
+        Assert.That(UpgradeManager.Instance.IsRewardQueueIdle, Is.True, "Relay Upgrade must be resolved before exit.");
         yield return Capture("08-exit");
         player.GetComponent<Rigidbody2D>().position = controller.FocusTarget.position;
         yield return CoreTestSupport.Await(() => PlayerPrefs.GetInt(Key, 0) == 1);

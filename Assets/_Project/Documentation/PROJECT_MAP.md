@@ -40,3 +40,5 @@ Two release-runtime presentation types, `ProductionVisualTuningController` and `
 ## Boundaries
 
 `art/` belongs to the artist and is untouched. AudioEffects is not cleaned by reference count. Own Resources loaders and folders have been removed. Their assets live in Data, Materials and prefabs; the props guide is Documentation/ProductionSectorProps.md. `prefabs/miniWeapons` remains the authoritative miniWeapon source; `prefabs/Orbital` is unchanged. The two loose root assets moved to `Materials` and `Materials/RenderTextures`. No production gameplay or balance change is part of this cleanup.
+
+Production Hold Zone uses OrbitalRelayEvent and the authored prefabs/Environment/WorldEvents/OrbitalRelayEvent.prefab. Tutorial and WorldSystemsLab launch the same runtime/prefab. See docs/superpowers/specs/2026-10-06-orbital-relay-production-design.md for phases, queue rewards and scoped pressure.

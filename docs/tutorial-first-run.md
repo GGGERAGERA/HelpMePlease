@@ -15,11 +15,11 @@
 | XP | Новые `ExperiencePickup.Spawned` и `Collected`; callback pickup до начисления XP |
 | FIRST REWARD | Новые `UpgradeManager.RewardOpened` / `RewardChosen` после показа карточек / успешного начала существующего placement |
 | ORBITAL PLACEMENT | `UpgradeManager.RewardCommitted`, вызываемый существующим callback завершения `OrbitalRewardFlowController`; отмена возвращает тот же шаг карточек |
-| SECTOR GOAL | Указатель к назначенному Capture Zone; новый `CaptureZoneEvent.PlayerEntered` запускает обычное событие Standard |
+| SECTOR GOAL | Указатель к назначенному Orbital Relay; новый `OrbitalRelayEvent.PlayerEntered` запускает обычное событие Standard |
 | FIRST EVENT | Новый `WorldEventSpawner.EventStarted` и существующий `EventCompleted` только назначенной зоны |
 | EXIT | Новые `RunFlowController.ExitUnlocked` / `ExitReached` после реальной разблокировки / успешного принятия выхода |
 
-Level 0 создаёт одну существующую CaptureZoneEvent и штатный выход в свободных точках по фиксированному порядку направлений от старта. Обычные sites, локальные аномалии, special site, ресурсы, разрушаемые объекты, случайный сундук и порталы не создаются. World Rule и hazards не применяются; обычный спавн, случайные события и рост threat заблокированы по номеру сектора, включая паузу после completion. Зона не выдаёт дополнительную случайную награду. Выход открывается только после её завершения; основные сектора сохраняют условие таймер/штурм.
+Level 0 создаёт одну существующую OrbitalRelayEvent и штатный выход в свободных точках по фиксированному порядку направлений от старта. Обычные sites, локальные аномалии, special site, ресурсы, разрушаемые объекты, случайный сундук и порталы не создаются. World Rule и hazards не применяются; обычный спавн, случайные события и рост threat заблокированы по номеру сектора, включая паузу после completion. Relay выдаёт одну Upgrade selection через общую queue; Gold начисляется только за Bonus activations. При fail через 2 секунды запускается тот же prefab без повторения ранних шагов. Выход открывается после Bonus и разрешения награды; основные сектора сохраняют условие таймер/штурм.
 
 ## Мягкие поблажки
 
@@ -37,7 +37,7 @@ Level 0 создаёт одну существующую CaptureZoneEvent и ш�
 
 `RESET TUTORIAL`: F1 → раздел Run → **RESET TUTORIAL**, либо Unity **Tools → Subject42 → Dev → RESET TUTORIAL**. Кнопка сбрасывает только completion; затем нужно начать новый забег. Текущий забег не перезапускается скрыто.
 
-Тест `Subject42TutorialTests.AllEightStepsPersistAcrossRestartAndReset` использует production-сцены, движение через physics, автоматическое убийство, настоящий pickup, callback клика существующей карточки, штатный выбор допустимого mount и commit, естественное заполнение Capture Zone и trigger выхода. Для проверки Hold Zone и выхода тест позиционирует Rigidbody в соответствующих областях; полный маршрут пешком этим тестом не проверяется. Проверяются номер 0, отсутствие побочных sites и роста threat, одна XP-награда, отмена placement, автоматический переход в Sector 1 без зачёта завершённого сектора, новый запуск без обучения и reset с новым запуском. В каждом кадре захвата проверяется наличие геометрии overlay.
+Тест `Subject42TutorialTests.AllEightStepsPersistAcrossRestartAndReset` использует production-сцены, движение через physics, автоматическое убийство, настоящий pickup, callback клика существующей карточки, штатный выбор допустимого mount и commit, контакты орбитального оружия с активными Node, Transition и Bonus и trigger выхода. Для входа в relay и выхода тест позиционирует Rigidbody в соответствующих областях; внутри события действует movement intent через OrbitalRelayBotSteering и разрешается общая Upgrade selection; полный маршрут пешком этим тестом не проверяется. Проверяются номер 0, отсутствие побочных sites и роста threat, одна XP-награда, отмена placement, автоматический переход в Sector 1 без зачёта завершённого сектора, новый запуск без обучения и reset с новым запуском. В каждом кадре захвата проверяется наличие геометрии overlay.
 
 Проверка изменения Level 0 (26.09.2026): компиляция `Assembly-CSharp-Editor.csproj` вместе с runtime и изменённым тестом — 0 ошибок. Runtime/Play Mode и дополнительные batch-тесты не запускались по ограничению задачи. Приведённые ниже результаты от 24.09 относятся к прежнему обучению внутри Sector 1 и не подтверждают новый flow.
 
@@ -56,7 +56,7 @@ Level 0 создаёт одну существующую CaptureZoneEvent и ш�
 - `scripts/Run/Flow/RunFlowController.cs`
 - `scripts/Run/Flow/SceneTransitionOverlay.cs` — явная Unity-null проверка уничтоженного игрока перед переходом; обнаружено существующим тестом смерти и повторного запуска
 - `scripts/Run/Exploration/ProductionExplorationSectorController.cs`
-- `scripts/World/Events/CaptureZoneEvent.cs`, `WorldEventSpawner.cs`
+- `scripts/World/Events/OrbitalRelayEvent.cs`, `WorldEventSpawner.cs`
 - `scripts/World/Spawning/EnemySpawner.cs`
 - `scripts/World/Loot/WorldLootChest.cs` — запрет раннего открытия до первого placement
 - `scripts/UI/Notifications/RunMessageService.cs` — старые параллельные hints скрываются во время tutorial
@@ -67,4 +67,4 @@ Level 0 создаёт одну существующую CaptureZoneEvent и ш�
 
 ## Ограничения
 
-Зависимости — существующий CaptureZoneEvent в production-пуле, обычный chase-враг с XP loot и стандартный стартовый ORBITAL state. Удаление этих authored ресурсов требует обновить tutorial; при отсутствующих зависимостях он сообщает ошибку вместо создания заменяющих gameplay-систем. Указатель показывает направление, но не строит путь вокруг препятствий. Визуальная проверка выполняется на кадрах тестового разрешения; остальные соотношения сторон требуют отдельного ручного smoke-test.
+Зависимости — существующий OrbitalRelayEvent в production-пуле, обычный chase-враг с XP loot и стандартный стартовый ORBITAL state. Удаление этих authored ресурсов требует обновить tutorial; при отсутствующих зависимостях он сообщает ошибку вместо создания заменяющих gameplay-систем. Указатель показывает направление, но не строит путь вокруг препятствий. Визуальная проверка выполняется на кадрах тестового разрешения; остальные соотношения сторон требуют отдельного ручного smoke-test.

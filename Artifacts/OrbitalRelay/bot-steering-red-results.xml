@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-05 22:29:42Z" end-time="2026-10-05 22:29:42Z" duration="0,0851311">
+  <test-suite type="TestSuite" id="1000" name="Subject#42" fullname="Subject#42" runstate="Runnable" testcasecount="113" result="Failed" site="Child" start-time="2026-10-05 22:29:42Z" end-time="2026-10-05 22:29:42Z" duration="0.085131" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1159" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="113" result="Failed" site="Child" start-time="2026-10-05 22:29:42Z" end-time="2026-10-05 22:29:42Z" duration="0.067909" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="7008" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestFixture" id="1058" name="OrbitalRelayIntegrationTests" fullname="OrbitalRelayIntegrationTests" classname="OrbitalRelayIntegrationTests" runstate="Runnable" testcasecount="10" result="Failed" site="Child" start-time="2026-10-05 22:29:42Z" end-time="2026-10-05 22:29:42Z" duration="0.065279" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-case id="1059" name="BotEvadesNearbyThreatWithZeroTransitionTracking" fullname="OrbitalRelayIntegrationTests.BotEvadesNearbyThreatWithZeroTransitionTracking" methodname="BotEvadesNearbyThreatWithZeroTransitionTracking" classname="OrbitalRelayIntegrationTests" runstate="Runnable" seed="1729178325" result="Failed" start-time="2026-10-05 22:29:42Z" end-time="2026-10-05 22:29:42Z" duration="0.047809" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <failure>
+            <message><![CDATA[  Transition must preserve safety movement.
+  Expected: greater than 0.899999976f
+  But was:  0.0f
+]]></message>
+            <stack-trace><![CDATA[at OrbitalRelayIntegrationTests.BotEvadesNearbyThreatWithZeroTransitionTracking () [0x0019c] in D:\fork\HelpMePlease\Assets\_Project\Dev\Tests\Core\Editor\OrbitalRelayIntegrationTests.cs:30
+]]></stack-trace>
+          </failure>
+          <output><![CDATA[Saving results to: Artifacts/StartScreen/results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

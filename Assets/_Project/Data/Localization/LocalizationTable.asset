@@ -1378,9 +1378,6 @@ MonoBehaviour:
   - key: reward.panel.choose
     ru: "Выберите предмет"
     en: "Select an item"
-  - key: event.capture
-    ru: "ЗАХВАТ"
-    en: "CAPTURE"
   - key: event.carrier
     ru: "ОХОТА НА НОСИТЕЛЯ"
     en: "CARRIER HUNT"
@@ -1402,9 +1399,6 @@ MonoBehaviour:
   - key: event.signal
     ru: "СИГНАЛ"
     en: "SIGNAL"
-  - key: event.enter
-    ru: "ВОЙДИТЕ"
-    en: "ENTER"
   - key: site.half
     ru: "ОСОБАЯ АНОМАЛИЯ: 1/2"
     en: "SPECIAL ANOMALY: 1/2"
@@ -1609,12 +1603,6 @@ MonoBehaviour:
   - key: event.signal.description
     ru: "Найдите настоящий источник сигнала."
     en: "Find the true signal source."
-  - key: event.capture.name
-    ru: "УДЕРЖАНИЕ ЗОНЫ"
-    en: "ZONE CAPTURE"
-  - key: event.capture.description
-    ru: "Удерживайте отмеченную область."
-    en: "Hold the marked area."
   - key: event.evacuation.name
     ru: "ЭВАКУАЦИОННЫЙ КОРИДОР"
     en: "EVACUATION CORRIDOR"
@@ -1810,3 +1798,51 @@ MonoBehaviour:
   - key: hud.levelPrefix
     ru: "УР"
     en: "LV"
+  - key: event.relay.marker
+    ru: "ОРБИТАЛЬНОЕ РЕЛЕ"
+    en: "ORBITAL RELAY"
+  - key: event.relay.name
+    ru: "УДЕРЖАНИЕ — ОРБИТАЛЬНОЕ РЕЛЕ"
+    en: "HOLD ZONE — ORBITAL RELAY"
+  - key: event.relay.description
+    ru: "Коснитесь активных ядер орбитальным оружием. Стабилизируйте реле, затем набирайте золото в бонусной фазе."
+    en: "Touch active cores with mounted orbital weapons. Stabilize the relay, then earn Gold in the bonus phase."
+  - key: event.relay.stabilize
+    ru: "СТАБИЛИЗИРУЙТЕ"
+    en: "STABILIZE"
+  - key: event.relay.stabilized
+    ru: "СТАБИЛИЗИРОВАНО"
+    en: "STABILIZED"
+  - key: event.relay.bonus
+    ru: "БОНУСНАЯ ФАЗА"
+    en: "BONUS PHASE"
+  - key: event.relay.time
+    ru: "ВРЕМЯ: {0}"
+    en: "TIME: {0}"
+  - key: event.relay.activations
+    ru: "АКТИВАЦИИ: {0}"
+    en: "ACTIVATIONS: {0}"
+  - key: event.relay.gold
+    ru: "ЗОЛОТО: {0}"
+    en: "GOLD: {0}"
+  - key: event.relay.combo
+    ru: "КОМБО x{0}"
+    en: "COMBO x{0}"
+  - key: event.relay.failed
+    ru: "НЕУДАЧА"
+    en: "FAILED"
+  - key: event.relay.upgradeNotEarned
+    ru: "УЛУЧШЕНИЕ НЕ ЗАРАБОТАНО"
+    en: "UPGRADE: NOT EARNED"
+  - key: event.relay.upgradeEarned
+    ru: "ГАРАНТИРОВАННАЯ НАГРАДА: 1 УЛУЧШЕНИЕ"
+    en: "GUARANTEED REWARD: 1 Upgrade"
+  - key: event.relay.unavailable
+    ru: "Нужны установленное орбитальное оружие и готовая система наград."
+    en: "Mounted orbital weapons and ready reward services are required."
+  - key: event.relay.retry
+    ru: "Попробуйте снова: ведите орбитальное оружие к активному ядру. ПКМ сжимает кольца."
+    en: "Try again: guide orbital weapons to the active core. RMB compresses rings."
+  - key: tutorial.relay
+    ru: "Коснитесь активного ядра орбитальным оружием. Стабилизируйте три ядра, затем набирайте золото. ПКМ сжимает кольца."
+    en: "Touch the active core with orbital weapons. Stabilize three cores, then earn gold. RMB compresses rings."

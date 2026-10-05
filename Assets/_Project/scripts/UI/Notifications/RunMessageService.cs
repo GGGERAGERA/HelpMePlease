@@ -98,7 +98,7 @@ public sealed class RunMessageService : MonoBehaviour
 
         while (hintIndex < PreferenceKeys.Length && PlayerPrefs.GetInt(PreferenceKeys[hintIndex], 0) != 0)
             hintIndex++;
-        bool visible = hud.IsInformationVisible;
+        bool visible = hud != null && hud.IsInformationVisible;
         bool showHint = visible && hintsReady && hintIndex < PreferenceKeys.Length &&
             (hintIndex == 0 || hintIndex == 1 && sawEnemies || hintIndex == 2 && gainedExperience ||
              hintIndex == 3 && station != null && station.IsInitialized && station.SlowFieldRadius > 0f);
