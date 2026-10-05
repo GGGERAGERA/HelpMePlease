@@ -214,6 +214,7 @@ namespace Subject42.Combat.OrbitalStation
                     return;
                 }
                 initialized = true;
+                authoredView.CenterShift.Bind(this);
                 UpgradeManager.Instance?.BindOrbitalStation(this);
                 runStateManager.RegisterSceneCleanup(Teardown);
                 enabled = true;
@@ -301,6 +302,7 @@ namespace Subject42.Combat.OrbitalStation
                 return;
             }
             UpdateCustomDrawing();
+            authoredView.CenterShift.Refresh();
             if (HasPendingCustomRings) { ReleaseBulletTime(); return; }
             UpdateRightMouse(Time.unscaledDeltaTime);
             TickStation(Time.deltaTime);
@@ -836,6 +838,7 @@ namespace Subject42.Combat.OrbitalStation
             if (repulseRing != null) Destroy(repulseRing.gameObject);
             repulseRing = null;
             RewardFlow?.CancelForSceneTransition();
+            authoredView?.CenterShift?.Unbind();
             initialized = false;
             relocation?.CancelDrag("station teardown");
             Interaction?.Release();

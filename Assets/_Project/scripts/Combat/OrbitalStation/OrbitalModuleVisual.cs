@@ -104,6 +104,26 @@ namespace Subject42.Combat.OrbitalStation
             return false;
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public bool TouchesCircle(Vector2 center, float radius)
+        {
+            if (dragging || previewing) return false;
+            foreach (SpriteRenderer sprite in sprites)
+            {
+                if (sprite == null || sprite == halo || !sprite.enabled ||
+                    !sprite.gameObject.activeInHierarchy || sprite.sprite == null) continue;
+                // Test the oriented authored body rectangle, not its world AABB or mount centre.
+                Vector3 local = sprite.transform.InverseTransformPoint(new Vector3(center.x, center.y, sprite.transform.position.z));
+                Bounds bounds = sprite.localBounds;
+                Vector3 closest = new(Mathf.Clamp(local.x, bounds.min.x, bounds.max.x),
+                    Mathf.Clamp(local.y, bounds.min.y, bounds.max.y), bounds.center.z);
+                if (((Vector2)sprite.transform.TransformPoint(closest) - center).sqrMagnitude <= radius * radius)
+                    return true;
+            }
+            return false;
+        }
+#endif
+
         public void SetDragState(bool active, bool valid)
         {
             dragging = active;

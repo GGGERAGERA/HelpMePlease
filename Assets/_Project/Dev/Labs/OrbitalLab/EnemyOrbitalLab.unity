@@ -806,6 +806,13 @@ MonoBehaviour:
   - {fileID: 2513438768801038890, guid: c234c537ed1fdfe489feaf994e3dbca7, type: 3}
   - {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
   - {fileID: 1432338969431510999, guid: bbeab41e755732443b4201b8641136c9, type: 3}
+  MaximumCenterOffset: 2
+  CenterMoveSpeed: 6
+  CenterReturnSpeed: 8
+  ShowCenterMarker: 1
+  TestShooterPrefab: {fileID: 2513438768801038890, guid: 2817ae7535b24ca78e6c4e07fea3f0aa, type: 3}
+  TestShooterPosition: {x: 7, y: 0}
+  TestShooterHealth: 12
   Pattern: 0
   SelectedEnemy: 0
 --- !u!4 &1501457688

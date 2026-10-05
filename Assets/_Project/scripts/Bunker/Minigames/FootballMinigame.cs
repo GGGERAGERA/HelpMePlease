@@ -144,6 +144,13 @@ public sealed class FootballMinigame : BunkerMinigame
     {
         if (!IsRunning)
             return;
+        // Esc belongs to PauseMenuUI. Cancellation also works while paused and
+        // during ball slow motion; the existing reset owns all session cleanup.
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            CancelCurrentRound();
+            return;
+        }
         if (Time.timeScale > 0f && Input.GetKeyDown(KeyCode.R)) ResetBall();
 
         if (useRoundTimer)
@@ -220,11 +227,21 @@ public sealed class FootballMinigame : BunkerMinigame
     protected override void OnGameStarted()
     {
         BallRollVisual.CancelActiveSlowMotion();
+        // Cursor interaction can start the round from outside the room. Put the
+        // controlled bunker player inside before closing the entrance.
+        var playerBody = PlayerRuntimeReference.CachedPlayer.GetComponent<Rigidbody2D>();
+        if (!arenaBounds.OverlapPoint(playerBody.position))
+        {
+            playerBody.position = playerStart.position;
+            playerBody.transform.position = playerStart.position;
+            playerBody.linearVelocity = Vector2.zero;
+            Physics2D.SyncTransforms();
+        }
         currentScore = 0;
         GoalCount = GoalScore = 0;
         hud.SetGoalStats(GoalCount, GoalScore);
         remainingTime = roundDuration;
-        startStation.gameObject.SetActive(false);
+        startStation.SetRoundActive(true);
         entranceDoor?.Close();
         hud?.ShowRunning(roundDuration, currentScore, bestScore);
         SpawnInitialBalls();
@@ -243,10 +260,8 @@ public sealed class FootballMinigame : BunkerMinigame
         ResetRuntimeObjects();
         RestoreCamera();
         AllowRestart();
-        startStation.gameObject.SetActive(true);
-        startStation.RefreshArrow();
+        startStation.SetRoundActive(false);
         entranceDoor?.Open();
-        hud?.SetDevRecord(DevRewardClaimed);
         hud?.ShowCompleted(currentScore, bestScore, newRecord, devReward);
     }
 
@@ -269,10 +284,8 @@ public sealed class FootballMinigame : BunkerMinigame
             if (startStation != null) startStation.RefreshArrow();
             return;
         }
-        startStation.gameObject.SetActive(true);
-        startStation.RefreshArrow();
+        startStation.SetRoundActive(false);
         hud?.ShowIdle(roundDuration, bestScore);
-        hud?.SetDevRecord(DevRewardClaimed);
     }
 
     public void ToggleDebugZones()
@@ -608,7 +621,6 @@ public sealed class FootballMinigame : BunkerMinigame
             rect.y = (1f - rect.height) * .5f;
         }
         camera.rect = rect;
-        hud.SetViewport(rect);
         cameraFollow.BeginWorldBoundsFocus(this, bounds.center, bounds.size.y * .5f);
         lastScreenWidth = Screen.width;
         lastScreenHeight = Screen.height;
@@ -652,9 +664,8 @@ public sealed class FootballMinigame : BunkerMinigame
     public void OnPlayerLeftArena()
     {
         CancelCurrentRound();
-        // Completed rounds already allow a restart (Idle), but their results
-        // remain visible until the player leaves the arena.
-        hud?.Hide();
+        // Clear the last result and hide the scoreboard outside a round.
+        hud?.ShowIdle(roundDuration, bestScore);
     }
     protected override void OnDisable()
     {

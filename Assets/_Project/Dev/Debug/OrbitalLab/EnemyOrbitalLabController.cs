@@ -7,6 +7,19 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession
 {
     public const string ScenePath = "Assets/_Project/Dev/Labs/OrbitalLab/EnemyOrbitalLab.unity";
     public GameObject[] EnemyPrefabs;
+    [Header("Manual orbit center prototype (lab only)")]
+    [Min(0f)] public float MaximumCenterOffset = 2f;
+    [Min(0f)] public float CenterMoveSpeed = 6f;
+    [Min(0f)] public float CenterReturnSpeed = 8f;
+    public bool ShowCenterMarker = true;
+    [Header("Distant test shooter")]
+    public GameObject TestShooterPrefab;
+    public Vector2 TestShooterPosition = new(7f, 0f);
+    [Min(.01f)] public float TestShooterHealth = 12f;
+    private Subject42.Combat.OrbitalStation.OrbitalStationRuntime prototypeStation;
+    private OrbitalLabCenterControl centerControl;
+    private Vector2 centerOffset => centerControl?.Offset ?? Vector2.zero;
+    private SpriteRenderer centerMarker;
     public enum SpawnPattern { AroundPlayer, Line, Cluster, RandomArena }
     public SpawnPattern Pattern;
     public int SelectedEnemy;
@@ -47,9 +60,11 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession
     private void SpawnAt(int type, Vector2 position)
     {
         position = new Vector2(Mathf.Clamp(position.x, -28, 28), Mathf.Clamp(position.y, -28, 28));
-        var instance = Instantiate(EnemyPrefabs[type], position, Quaternion.identity, transform);
-        instance.name = EnemyPrefabs[type].name + " (Lab)";
+        var prefab = type < 0 ? TestShooterPrefab : EnemyPrefabs[type];
+        var instance = Instantiate(prefab, position, Quaternion.identity, transform);
+        instance.name = prefab.name + " (Lab)";
         var health = instance.GetComponent<EnemyHealth>();
+        if (type < 0) health.SetRuntimeMaxHealth(TestShooterHealth);
         // Existing debug marker preserves real AI and combat, suppresses loot/progression on death.
         var debug = instance.AddComponent<CombatFeelTestDummy>();
         debug.Initialize(null);
@@ -127,12 +142,54 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession
     protected override void Update()
     {
         base.Update();
-        if (Ready) Player.SetIncomingDamageMultiplier(PlayerInvincible ? 0f : 1f);
+        if (Ready)
+        {
+            Player.SetIncomingDamageMultiplier(PlayerInvincible ? 0f : 1f);
+            UpdateCenterPrototype();
+        }
+        else ReleaseCenterInput();
         enemies.RemoveAll(e => e == null);
+    }
+
+    private void UpdateCenterPrototype()
+    {
+        if (prototypeStation != Station)
+        {
+            centerControl?.Dispose();
+            prototypeStation = Station;
+            centerControl = new OrbitalLabCenterControl(Station, Player.transform);
+            var marker = new GameObject("ORBITAL center debug marker");
+            marker.transform.SetParent(Station.transform, false);
+            marker.transform.localScale = Vector3.one * .22f;
+            centerMarker = marker.AddComponent<SpriteRenderer>();
+            var core = Station.GetComponent<Subject42.Combat.OrbitalStation.OrbitalStationView>().Core;
+            centerMarker.sprite = core.sprite;
+            centerMarker.sharedMaterial = core.sharedMaterial;
+            centerMarker.color = Color.magenta;
+            centerMarker.sortingLayerID = core.sortingLayerID;
+            centerMarker.sortingOrder = core.sortingOrder + 100;
+            if (TestShooterPrefab != null)
+            {
+                SpawnAt(-1, TestShooterPosition);
+                layout.Add((-1, TestShooterPosition));
+            }
+        }
+
+        centerControl.Tick(MaximumCenterOffset, CenterMoveSpeed, CenterReturnSpeed);
+        centerMarker.enabled = ShowCenterMarker;
+    }
+
+    private void ReleaseCenterInput() => centerControl?.ReleaseInput();
+
+    private void OnDisable()
+    {
+        centerControl?.Dispose();
+        if (centerMarker != null) centerMarker.enabled = false;
     }
     protected override void DrawPanel()
     {
         Button("RESET LAB", ResetLab);
+        Text($"Left Shift + WASD: orbit center | offset {centerOffset.magnitude:0.00}/{MaximumCenterOffset:0.0}");
         Text($"Alive {AliveEnemies} | Speed ×{SpeedMultiplier:0.0} | AI {(EnemyDebugAiFreeze.IsFrozen ? "frozen" : "running")}");
         Text($"Player invincible: {PlayerInvincible} | Enemies: {EnemiesInvincible}");
         Text($"Player HP {Player.CurrentHealth:0}/{Player.MaxHealth:0}");

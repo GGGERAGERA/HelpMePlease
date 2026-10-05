@@ -106,8 +106,7 @@ public sealed class UpgradeManager : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
 #endif
-        FindFirstObjectByType<OrbitalInteractionController>()?
-            .PrepareForExternalPause();
+        orbitalStation?.InputOwner?.PrepareForExternalPause();
         isChoosingUpgrade = true;
         previousTimeScale = Time.timeScale;
         Time.timeScale = 0f;
@@ -409,7 +408,7 @@ public sealed class UpgradeManager : MonoBehaviour
 
     public void ShowLevelUpChoices(int playerLevel)
     {
-        FindFirstObjectByType<OrbitalInteractionController>()?.PrepareForExternalPause();
+        orbitalStation?.InputOwner?.PrepareForExternalPause();
         UpgradeChoiceRequest request = new(
                 playerLevel,
                 isLevelUp: true,
@@ -839,7 +838,7 @@ public sealed class UpgradeManager : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
 #endif
-        FindFirstObjectByType<OrbitalInteractionController>()?.PrepareForExternalPause();
+        orbitalStation?.InputOwner?.PrepareForExternalPause();
         isChoosingUpgrade = true;
         previousTimeScale = Time.timeScale;
         Time.timeScale = 0f;

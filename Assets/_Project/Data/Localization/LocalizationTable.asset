@@ -1649,11 +1649,11 @@ MonoBehaviour:
     ru: "РЕКОРД"
     en: "BEST"
   - key: football.controls
-    ru: "<b>УПРАВЛЕНИЕ</b>\n\n<b>F</b>       ДРИБЛИНГ\n\n<b>ЛКМ</b>   СИЛА УДАРА\n          ЗАЖАТЬ\n\n<b>ЛКМ</b>   УДАР\n          ОТПУСТИТЬ"
-    en: "<b>CONTROLS</b>\n\n<b>F</b>       DRIBBLE\n\n<b>LMB</b>   SHOT POWER\n          HOLD\n\n<b>LMB</b>   SHOOT\n          RELEASE"
+    ru: "Q  ВЫХОД / ОТМЕНА\nR  ВЕРНУТЬ МЯЧИ\nF  ДРИБЛИНГ\nЛКМ  ЗАЖАТЬ / ОТПУСТИТЬ"
+    en: "Q  EXIT / CANCEL\nR  RESET BALLS\nF  DRIBBLE\nLMB  HOLD / RELEASE"
   - key: football.legend
-    ru: "<b>ОЧКИ</b>\n\nБОЛЬШАЯ             <b>+2</b>\nСРЕДНЯЯ             <b>+5</b>\nМАЛЕНЬКАЯ          <b>+10</b>\nВОРОТА              <b>+20</b>"
-    en: "<b>POINTS</b>\n\nLARGE               <b>+2</b>\nMEDIUM              <b>+5</b>\nSMALL              <b>+10</b>\nGOAL               <b>+20</b>"
+    ru: "<b>+2<pos=66>+5<pos=132>+10<pos=198>+20</b>"
+    en: "<b>+2<pos=66>+5<pos=132>+10<pos=198>+20</b>"
   - key: football.reset
     ru: "СБРОС МЯЧЕЙ [R]"
     en: "RESET BALLS [R]"

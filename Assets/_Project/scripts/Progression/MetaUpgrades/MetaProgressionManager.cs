@@ -15,6 +15,18 @@ public enum MetaUpgradeType
 public sealed class MetaProgressionManager : MonoBehaviour
 {
     public static MetaProgressionManager Instance { get; private set; }
+    public const string TutorialCompletionKeyPrefix = "META_TUTORIAL_";
+    public event Action<string> TutorialCompleted;
+    public bool IsTutorialCompleted(string id) => PlayerPrefs.GetInt(TutorialCompletionKeyPrefix + id, 0) != 0;
+    public bool CompleteTutorial(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Tutorial ID is required.", nameof(id));
+        if (IsTutorialCompleted(id)) return false;
+        PlayerPrefs.SetInt(TutorialCompletionKeyPrefix + id, 1);
+        PlayerPrefs.Save();
+        TutorialCompleted?.Invoke(id);
+        return true;
+    }
     public SurfaceMapService SurfaceMap { get; private set; }
     public MissionService Missions { get; private set; }
     public void ConfigureMissions(MissionCatalog catalog)

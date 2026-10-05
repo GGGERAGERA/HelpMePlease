@@ -76,7 +76,7 @@ public sealed class MissionProductionFlowTests
         Assert.That(Physics2D.OverlapPoint(provider.transform.position,1<<provider.gameObject.layer).GetComponent<BunkerInteractableCollider>().Interactable,Is.SameAs(provider));
         provider.Interact();
         var panel=Object.FindFirstObjectByType<BunkerMissionPanel>(); Assert.That(panel.IsOpen,Is.True);
-        Read<Button>(panel,"actionButton").onClick.Invoke(); Assert.That(missions.GetState(id),Is.EqualTo(MissionState.Active)); Assert.That(arrow.gameObject.activeSelf,Is.False,"Active mission alone must not show arrow.");
+        Read<Button>(panel,"actionButton").onClick.Invoke(); Assert.That(missions.GetState(id),Is.EqualTo(MissionState.Active)); Assert.That(arrow.gameObject.activeSelf,Is.True,"Functional operators keep their station arrow while a mission is active.");
         Read<Button>(panel,"leaveButton").onClick.Invoke(); Assert.That(panel.IsOpen,Is.False);
         map.Content.TryGetMarker(definition.TargetSectorId,out var marker); Assert.That(marker.Marker.icon,Is.EqualTo("!"));
         var exit=Object.FindObjectsByType<BunkerStation>(FindObjectsSortMode.None).First(s=>Read<BunkerStationType>(s,"stationType")==BunkerStationType.StartRun);
@@ -114,7 +114,7 @@ public sealed class MissionProductionFlowTests
         ScreenCapture.CaptureScreenshot("Artifacts/Missions/mission-turn-in.png"); yield return null;
         int before=CurrencyManager.Instance.TotalGold; Read<Button>(panel,"actionButton").onClick.Invoke();
         Assert.That(CurrencyManager.Instance.TotalGold-before,Is.EqualTo(definition.Reward.Gold)); Assert.That(missions.GetState(id),Is.EqualTo(MissionState.Completed));
-        Assert.That(missions.Claim(id),Is.False); Assert.That(storage.HasClaimReceipt(id),Is.True); Assert.That(arrow.gameObject.activeSelf,Is.False,"Completed provider should have no arrow.");
+        Assert.That(missions.Claim(id),Is.False); Assert.That(storage.HasClaimReceipt(id),Is.True); Assert.That(arrow.gameObject.activeSelf,Is.True,"Functional operators keep their station arrow after completion.");
         int after=CurrencyManager.Instance.TotalGold;
         var reloaded=new MissionService(missions.Catalog,map.Definition,new PlayerPrefsMissionStorage(map.Definition.Id));
         map.Content.UnregisterSource(missions); typeof(MetaProgressionManager).GetProperty("Missions").SetValue(meta,reloaded); map.Content.RegisterSource(reloaded);

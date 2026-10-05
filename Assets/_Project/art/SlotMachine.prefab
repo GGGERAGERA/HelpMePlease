@@ -5781,6 +5781,7 @@ Transform:
   m_Children:
   - {fileID: 4011476373111425677}
   - {fileID: 1340149391711859240}
+  - {fileID: 8406100000000000002}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!210 &1155568920350449325
@@ -5898,3 +5899,25 @@ MonoBehaviour:
   boundsOutlineWidth: 0.06
   boundsOutlineColor: {r: 1, g: 1, b: 1, a: 1}
   boundsOutlineCollider: {fileID: 7616887143758829993}
+--- !u!1001 &8406100000000000001
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 2247941606788535239}
+    m_Modifications:
+    - target: {fileID: 400000, guid: 992f2e2a9ada5639a4a4728b30d2f439, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 3.5
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 992f2e2a9ada5639a4a4728b30d2f439, type: 3}
+--- !u!4 &8406100000000000002 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 400000, guid: 992f2e2a9ada5639a4a4728b30d2f439, type: 3}
+  m_PrefabInstance: {fileID: 8406100000000000001}
+  m_PrefabAsset: {fileID: 0}

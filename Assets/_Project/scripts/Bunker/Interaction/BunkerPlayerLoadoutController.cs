@@ -14,6 +14,7 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
     [SerializeField] private Transform controlledPlayerRoot;
     [SerializeField] private Transform controlledPlayerVisualRoot;
     [SerializeField] private Transform controlledPlayerFacingVisualRoot;
+    [SerializeField] private ControlOnboarding onboardingPrefab;
 
     private RunSelectionManager selection;
     private GameObject player;
@@ -54,6 +55,8 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
             player.GetComponent<CharacterMovement2D>();
         fallbackMoveSpeed = movement.AuthoredMoveSpeed;
         movement.SetVisualRoot(controlledPlayerFacingVisualRoot);
+        if (onboardingPrefab != null)
+            Instantiate(onboardingPrefab, controlledPlayerRoot.position, Quaternion.identity).Bind(movement);
         BindSelectionManager();
         ApplyCurrentSelection();
     }

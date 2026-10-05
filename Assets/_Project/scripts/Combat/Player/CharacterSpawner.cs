@@ -26,6 +26,7 @@ public class CharacterSpawner : MonoBehaviour
 
     [Header("Default weapon for direct MVP launch")]
     [SerializeField] private WeaponData defaultWeapon;
+    [SerializeField] private ControlOnboarding onboardingPrefab;
     private void Awake()
     {
         if (metaUpgradeApplier == null)
@@ -65,7 +66,10 @@ public class CharacterSpawner : MonoBehaviour
         if (RunStateManager.Instance != null)
             RunStateManager.Instance.ApplyToSpawnedPlayer(player, upgradeApplier);
 
-        OrbitalStationRuntime.Ensure(player, SpawnedCharacterData);
+        var orbital = OrbitalStationRuntime.Ensure(player, SpawnedCharacterData);
+        if (onboardingPrefab != null && orbital != null && orbital.IsInitialized)
+            Instantiate(onboardingPrefab, player.transform.position, Quaternion.identity)
+                .Bind(player.GetComponent<CharacterMovement2D>(), orbital.GetComponent<OrbitalCenterShift>());
 
         SpawnedPlayer = player;
         CharacterSpawned?.Invoke(player);

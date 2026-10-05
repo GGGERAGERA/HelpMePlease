@@ -672,7 +672,7 @@ public static class Subject42ProjectValidator
         }
         RequireSerializedArray(football, "ballSpawnPoints", 4, report);
         RequireSerializedArray(football, "balls", 4, report);
-        RequireSerializedArray(football, "gates", 2, report);
+        RequireSerializedArray(football, "gates", 3, report);
         RequireSerializedArray(football, "targetPool", 3, report);
         var arena = football.transform.parent;
         foreach (var target in arena.GetComponentsInChildren<FootballScoreZone>(true))
@@ -686,6 +686,7 @@ public static class Subject42ProjectValidator
         var start = football.StartStation;
         RequireSerializedObject(start, "minigame", report);
         RequireSerializedObject(start, "interactionArrow", report);
+        RequireSerializedArray(start, "idleMarkers", 3, report);
         RequireSerializedObject(arena.GetComponentInChildren<FootballMinigameHUD>(true), "goalStatsText", report);
 
     }

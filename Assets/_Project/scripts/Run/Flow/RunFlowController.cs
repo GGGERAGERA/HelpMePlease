@@ -360,22 +360,6 @@ public sealed class RunFlowController : MonoBehaviour
         return string.Empty;
     }
 
-    private void OpenLevelChoice()
-    {
-        LevelChoiceManager manager = ResolveLevelChoiceManager();
-
-        if (manager == null)
-        {
-            Debug.LogError(
-                "[RunFlowController] LevelChoiceManager not found."
-            );
-
-            return;
-        }
-
-        manager.ShowChoices();
-    }
-
     private LevelChoiceManager ResolveLevelChoiceManager()
     {
         if (levelChoiceManager == null)
@@ -438,8 +422,8 @@ public sealed class RunFlowController : MonoBehaviour
         if (!CanDebugOpenLevelChoice)
             return false;
 
-        OpenLevelChoice();
         LevelChoiceManager manager = ResolveLevelChoiceManager();
+        manager.ShowChoices();
         return manager != null && manager.IsChoosing;
     }
 #endif

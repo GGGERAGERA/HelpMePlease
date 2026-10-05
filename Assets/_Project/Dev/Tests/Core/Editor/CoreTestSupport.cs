@@ -24,6 +24,11 @@ public static class CoreTestSupport
         var keys = new List<string> { "TOTAL_GOLD", "ORBITAL_SLOT_PENDING", TutorialController.CompletionKey,
             LocalizationService.LanguagePreferenceKey, BunkerIntroController.ViewedPreferenceKey,
             MetaProgressionManager.EscapeAccessKey, MetaProgressionManager.EscapeAnnouncedAccessKey };
+        foreach (string guid in AssetDatabase.FindAssets("t:OnboardingStepDefinition"))
+        {
+            var step = AssetDatabase.LoadAssetAtPath<OnboardingStepDefinition>(AssetDatabase.GUIDToAssetPath(guid));
+            keys.Add(MetaProgressionManager.TutorialCompletionKeyPrefix + step.Id);
+        }
         foreach (string guid in AssetDatabase.FindAssets("t:UnlockableContentData"))
         {
             var content = AssetDatabase.LoadAssetAtPath<UnlockableContentData>(AssetDatabase.GUIDToAssetPath(guid));

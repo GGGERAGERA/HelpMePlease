@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Subject42.Combat.OrbitalStation;
 
 /// <summary>
 /// Scene-local controls for production world systems without the combat run.
@@ -33,6 +34,12 @@ public sealed class WorldSystemsLabController : MonoBehaviour
     [SerializeField] private RocketHazardDefinition corridorRocket;
     [SerializeField] private GameObject corridorEnemy;
     private CorridorV2Lab corridorV2;
+
+    [Header("Orbital Hold Zone prototype only")]
+    [SerializeField] private CharacterData orbitalCharacter;
+    private OrbitalStationRuntime orbitalStation;
+    private OrbitalLabCenterControl orbitalCenter;
+    private RunStateManager ownedOrbitalRun;
 
     private readonly List<ProductionAnomalySite> spawnedSites = new();
     private ProductionExplorationSectorController.SiteRegion[] territoryRegions;
@@ -81,6 +88,14 @@ public sealed class WorldSystemsLabController : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.F1))
             panelVisible = !panelVisible;
+        orbitalCenter?.Tick(2f, 6f, 8f);
+    }
+
+    private void OnDisable() => orbitalCenter?.Dispose();
+    private void OnDestroy()
+    {
+        orbitalCenter?.Dispose();
+        if (ownedOrbitalRun != null) Destroy(ownedOrbitalRun.gameObject);
     }
 
     public bool ApplyWorldRule(WorldRuleData rule)
@@ -206,9 +221,24 @@ public sealed class WorldSystemsLabController : MonoBehaviour
             return false;
 
         ClearEvents();
+        if (prefab is OrbitalHoldZoneEvent && orbitalStation == null)
+        {
+            bool ownsRun = RunStateManager.Instance == null;
+            RunStateManager run = RunStateManager.EnsureExists();
+            if (ownsRun) ownedOrbitalRun = run;
+            run.DebugResetOrbitalRunState();
+            orbitalStation = OrbitalStationRuntime.Ensure(player.gameObject, orbitalCharacter);
+            if (orbitalStation == null || !orbitalStation.IsInitialized)
+            {
+                notice = "ORBITAL initialization failed: see Console";
+                return false;
+            }
+            orbitalCenter = new OrbitalLabCenterControl(orbitalStation, player);
+        }
         Vector3 position = player != null
             ? player.position + new Vector3(7f, 0f, 0f)
             : new Vector3(7f, 0f, 0f);
+        if (prefab is OrbitalHoldZoneEvent) position = player.position;
         bool spawned = events.SpawnDebugEventAt(
             prefab,
             position,
@@ -218,6 +248,11 @@ public sealed class WorldSystemsLabController : MonoBehaviour
 
         if (spawned)
         {
+            if (instance is OrbitalHoldZoneEvent hold)
+            {
+                hold.Configure(player, orbitalStation);
+                hold.StartEvent();
+            }
             notice = instance is CarrierHuntEvent
                 ? "Carrier Hunt (preview only)"
                 : $"Event: {instance.EventDisplayName}";
@@ -228,6 +263,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
 
     public void ClearEvents()
     {
+        orbitalCenter?.Dispose();
         corridorV2?.Stop();
         events?.ClearAllDebugEvents();
         notice = "Events cleared";
@@ -395,6 +431,16 @@ public sealed class WorldSystemsLabController : MonoBehaviour
             ClearAnomalies();
 
         Section("EVENT");
+        if (orbitalStation != null && orbitalStation.IsInitialized)
+        {
+            GUILayout.Label("Left Shift + WASD: ORBITAL centre (release: return)", noteStyle);
+            if (events.ActiveEvent is OrbitalHoldZoneEvent hold)
+                GUILayout.Label($"Nodes {hold.CompletedNodes}/3 | {(hold.PlayerInside ? "inside" : "OUTSIDE: progress paused")}", noteStyle);
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Speed +", buttonStyle)) orbitalStation.UpgradeRingSpeed(orbitalStation.Rings[0].RingId);
+            if (GUILayout.Button("Power +", buttonStyle)) orbitalStation.UpgradeRingPower(orbitalStation.Rings[0].RingId);
+            GUILayout.EndHorizontal();
+        }
         foreach (WorldEvent prefab in eventPrefabs)
         {
             if (prefab == null)

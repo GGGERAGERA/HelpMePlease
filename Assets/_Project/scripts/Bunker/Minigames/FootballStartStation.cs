@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -8,9 +7,8 @@ public sealed class FootballStartStation : MonoBehaviour, IBunkerInteractable
 {
     [SerializeField] private FootballMinigame minigame;
     [SerializeField] private GameObject interactionArrow;
-    private readonly HashSet<Collider2D> playerContacts = new();
-
-    public bool CanInteract => isActiveAndEnabled && minigame.CanStart && playerContacts.Count > 0;
+    [SerializeField] private Transform[] idleMarkers;
+    public bool CanInteract => isActiveAndEnabled && minigame.CanStart;
     public string InteractionText => LocalizationService.Instance.Get("hud.interact");
 
     public void Interact()
@@ -18,32 +16,23 @@ public sealed class FootballStartStation : MonoBehaviour, IBunkerInteractable
         if (CanInteract) minigame.StartGame();
     }
 
-    private void OnTriggerEnter2D(Collider2D other) => TrackPlayer(other);
-    private void OnTriggerStay2D(Collider2D other) => TrackPlayer(other);
-    private void TrackPlayer(Collider2D other)
-    {
-        if (!isActiveAndEnabled || other.isTrigger ||
-            other.GetComponentInParent<CharacterMovement2D>() == null) return;
-        if (playerContacts.Add(other)) RefreshArrow();
-    }
-    private void OnTriggerExit2D(Collider2D other)
-    {
-        if (playerContacts.Remove(other)) RefreshArrow();
-    }
-    private void FixedUpdate()
-    {
-        if (playerContacts.RemoveWhere(c => c == null || !c.enabled || !c.gameObject.activeInHierarchy) > 0)
-            RefreshArrow();
-    }
+    private void OnEnable() => RefreshArrow();
     public void RefreshArrow()
     {
         // The scene may destroy the arrow before its station during teardown.
         if (interactionArrow != null) interactionArrow.SetActive(CanInteract);
     }
+    public void SetRoundActive(bool running)
+    {
+        // The station stays available to the cursor from anywhere in the bunker.
+        // Only its idle presentation hides while this round owns the room.
+        foreach (Transform marker in idleMarkers) marker.gameObject.SetActive(!running);
+        if (running) GetComponent<BunkerHoverOutline>().SetHovered(false);
+        RefreshArrow();
+    }
     private void OnDisable()
     {
         GetComponent<BunkerHoverOutline>().SetHovered(false);
-        playerContacts.Clear();
         if (interactionArrow != null) interactionArrow.SetActive(false);
     }
 }

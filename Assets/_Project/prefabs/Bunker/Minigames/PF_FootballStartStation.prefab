@@ -279,6 +279,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FootballStartStation
   minigame: {fileID: 0}
   interactionArrow: {fileID: 526363217563131195}
+  idleMarkers:
+  - {fileID: 1608937092485705818}
+  - {fileID: 8827052987758490637}
+  - {fileID: 6935079018006924241}
 --- !u!114 &5646182898626045052
 MonoBehaviour:
   m_ObjectHideFlags: 0

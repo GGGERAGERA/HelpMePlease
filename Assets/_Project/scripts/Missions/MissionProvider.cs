@@ -38,7 +38,7 @@ public sealed class MissionProvider : MonoBehaviour, IBunkerInteractable
         RefreshArrow();
     }
     private void RefreshArrow()
-    { if(interactionArrow!=null)interactionArrow.SetActive(isActiveAndEnabled&&HasActionableMission); }
+    { if(interactionArrow!=null)interactionArrow.SetActive(CanInteract); }
     private void OnDisable()
     {
         if(observedService!=null)observedService.Changed-=RefreshArrow;

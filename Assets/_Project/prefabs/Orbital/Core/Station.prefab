@@ -169,6 +169,7 @@ GameObject:
   - component: {fileID: 2945408887553899514}
   - component: {fileID: 3869391688945725135}
   - component: {fileID: 6138976453920904632}
+  - component: {fileID: 880000000000000010}
   m_Layer: 0
   m_Name: Station
   m_TagString: Untagged
@@ -235,6 +236,7 @@ MonoBehaviour:
   Input: {fileID: 7924226222186400229}
   Presentation: {fileID: 2945408887553899514}
   Rewards: {fileID: 3869391688945725135}
+  CenterShift: {fileID: 880000000000000010}
   Relocation: {fileID: 6138976453920904632}
 --- !u!114 &7924226222186400229
 MonoBehaviour:
@@ -5392,3 +5394,19 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &880000000000000010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3588729804154917386}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81a3f8f97c6a95335bf351a3b8a69213, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  maximumOffset: 2
+  moveSpeed: 6
+  returnSpeed: 8
+  modifier: 304

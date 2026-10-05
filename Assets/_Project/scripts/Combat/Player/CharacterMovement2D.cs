@@ -1,8 +1,14 @@
 using UnityEngine;
 
+// Sample/reroute input after ORBITAL interaction (-200), before station combat (0).
+[DefaultExecutionOrder(-100)]
 public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
 {
     public event System.Action<float> Travelled;
+    public event System.Action MovementInputUsed;
+    public event System.Action DashStarted;
+    // One directional consumer (e.g. ORBITAL steering), applied after the existing input source.
+    public System.Func<Vector2, Vector2> DirectionalInputFilter { get; set; }
     private Vector2 previousPhysicsPosition;
     private bool hadMovementIntent;
     [Header("Движение")]
@@ -137,6 +143,10 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
             Input.GetAxisRaw("Horizontal"),
             Input.GetAxisRaw("Vertical")
         ).normalized;
+
+        if (DirectionalInputFilter != null) moveInput = DirectionalInputFilter(moveInput);
+        if (MovementIntent == null && Time.timeScale > 0f && moveInput.sqrMagnitude > .01f)
+            MovementInputUsed?.Invoke();
 
         if (moveInput.sqrMagnitude > 0.01f)
             lastMoveDirection = moveInput;
@@ -333,6 +343,7 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
         dashCooldownRemaining = Mathf.Max(0f, dashCooldown);
         currentVelocity = Vector2.zero;
         isDashing = true;
+        DashStarted?.Invoke();
     }
 
     private void UpdateDash()

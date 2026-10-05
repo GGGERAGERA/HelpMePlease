@@ -28,7 +28,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 4.5, y: 3.2, z: 1}
+  m_LocalScale: {x: 7, y: 3.2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6018146959579614832}
@@ -168,7 +168,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 4.5, y: 3.2}
+  m_Size: {x: 7, y: 3.2}
   m_EdgeRadius: 0
 --- !u!114 &8568491029287031058
 MonoBehaviour:
@@ -186,7 +186,7 @@ MonoBehaviour:
   visualMaterial: {fileID: 2100000, guid: da16afc0f76fa2f4589257d0e8da6125, type: 2}
   visualRoot: {fileID: 7170664292608557709}
   visualRenderer: {fileID: 1646971584830183698}
-  previewSize: {x: 4.5, y: 3.2}
+  previewSize: {x: 7, y: 3.2}
   edgeWidth: 0.3
   flowSpeed: 0.65
   centerPulseSpeed: 1.1

@@ -184,7 +184,13 @@ public static class WorldSystemsLabAuthoring
                 AssetDatabase.LoadAssetAtPath<ExplorationSectorConfig>(
                     ExplorationConfig
                 ).NormalAnomalies);
-            SetArray(lab, "eventPrefabs", sourceSpawner.EventPrefabs.ToArray());
+            WorldEvent orbitalHold = AssetDatabase.LoadAssetAtPath<OrbitalHoldZoneEvent>(
+                "Assets/_Project/Dev/Labs/WorldSystemsLab/OrbitalHoldZone.prefab");
+            WorldEvent[] labEvents = sourceSpawner.EventPrefabs.Select(prefab =>
+                prefab is CaptureZoneEvent ? orbitalHold : prefab).ToArray();
+            SetArray(lab, "eventPrefabs", labEvents);
+            SetObject(lab, "orbitalCharacter", AssetDatabase.LoadAssetAtPath<CharacterData>(
+                "Assets/_Project/Data/Characters/01_Gera.asset"));
             SetObject(lab, "explorationConfig",
                 AssetDatabase.LoadAssetAtPath<ExplorationSectorConfig>(
                     ExplorationConfig
