@@ -115,7 +115,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4292935615
   m_fontColor: {r: 0.75, g: 1, b: 0.88, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -128,7 +128,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -619,18 +619,6 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: fc5a1b512ebf29e438c458b2b7971cf5, type: 2}
-    - target: {fileID: 1789518671200260347, guid: 6d0b972573c87c64c93d91d9ffbfd94a, type: 3}
-      propertyPath: m_SortingLayer
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 1789518671200260347, guid: 6d0b972573c87c64c93d91d9ffbfd94a, type: 3}
-      propertyPath: m_SortingOrder
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1789518671200260347, guid: 6d0b972573c87c64c93d91d9ffbfd94a, type: 3}
-      propertyPath: m_SortingLayerID
-      value: 733340025
-      objectReference: {fileID: 0}
     - target: {fileID: 2113602670018214531, guid: 6d0b972573c87c64c93d91d9ffbfd94a, type: 3}
       propertyPath: m_Name
       value: p_Terminal2
