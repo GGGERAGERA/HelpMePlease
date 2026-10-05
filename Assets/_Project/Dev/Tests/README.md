@@ -17,4 +17,4 @@ GoldenPathLab/Bot, F1, OrbitalLab and WorldSystemsLab remain manual development 
 
 Current navigation: [PROJECT_MAP](../../Documentation/PROJECT_MAP.md).
 
-Orbital Relay migration adds narrowly filtered OrbitalRelayStateTests, OrbitalRelayContactTests, OrbitalRelayIntegrationTests and OrbitalRelayAuthoringTests. These fixtures run by exact class/name; do not select Core or Golden Path for relay acceptance. Subject42TutorialTests uses real Node tracking, Bonus and the shared Upgrade barrier; its long full route is compile-only during this migration.
+Orbital Relay migration adds narrowly filtered OrbitalRelayStateTests, OrbitalRelayContactTests, OrbitalRelayIntegrationTests, OrbitalRelayAuthoringTests and OrbitalRelayRuntimeTests. The runtime fixture runs a bounded production-prefab flow with real movement/contact in WorldSystemsLab. These fixtures run by exact class/name; do not select Core or Golden Path for relay acceptance. Subject42TutorialTests uses real Node tracking, Bonus and the shared Upgrade barrier; its long full route is compile-only during this migration.

@@ -2302,6 +2302,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4959580776102015581}
   - component: {fileID: 7497418416046278724}
+  - component: {fileID: 1000507181386641460}
   - component: {fileID: 6314734773618460962}
   - component: {fileID: 5882293533583184789}
   - component: {fileID: 5847172068026588123}
@@ -3040,7 +3041,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7218176629911507835}
-  - component: {fileID: 1000507181386641460}
   m_Layer: 0
   m_Name: ArenaBounds
   m_TagString: Untagged
@@ -3069,7 +3069,7 @@ CircleCollider2D:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7384383372578193388}
+  m_GameObject: {fileID: 5822102088822610604}
   m_Enabled: 1
   serializedVersion: 3
   m_Density: 1

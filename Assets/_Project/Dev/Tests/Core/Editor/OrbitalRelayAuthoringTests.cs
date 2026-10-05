@@ -5,6 +5,24 @@ using UnityEngine;
 using System.Linq;
 public sealed class OrbitalRelayAuthoringTests
 {
+    [Test] public void ProductionArenaIsDiscoverableByExistingInteractor()
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(OrbitalRelayAuthoring.PrefabPath);
+        var arena = prefab.GetComponentInChildren<CircleCollider2D>(true);
+        var relay = prefab.GetComponent<OrbitalRelayEvent>();
+        var serialized = new SerializedObject(relay);
+        arena = (CircleCollider2D)serialized.FindProperty("arenaBounds").objectReferenceValue;
+        Assert.That(arena.GetComponent<Interactable>(), Is.EqualTo(relay),
+            "PlayerInteractor discovers Interactable on the collider object, not its parent.");
+    }
+    [Test] public void LabResultNotificationHasVisibleAuthoredAncestors()
+    {
+        var support = AssetDatabase.LoadAssetAtPath<GameObject>(WorldSystemsLabRelaySupportAuthoring.SupportPath);
+        var view = support.GetComponentInChildren<RunMessageService>(true).View;
+        foreach (var group in view.GetComponentsInParent<CanvasGroup>(true))
+            if (group.gameObject != view.gameObject)
+                Assert.That(group.alpha, Is.EqualTo(1), "Result is hidden by " + group.name);
+    }
     [Test] public void LabCatalogUsesSameProductionPrefab()
     {
         string scene = System.IO.File.ReadAllText(WorldSystemsLabController.ScenePath);

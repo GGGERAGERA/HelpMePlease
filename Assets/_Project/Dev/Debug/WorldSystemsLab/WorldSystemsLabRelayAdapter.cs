@@ -11,7 +11,7 @@ public sealed class WorldSystemsLabRelayAdapter : MonoBehaviour
     private CurrencyManager ownedCurrency;
     private OrbitalStationRuntime ownedStation;
     private WorldEventSpawner events;
-    private OrbitalLabCenterControl centerControl;
+    private OrbitalCenterShift centerShift;
     public OrbitalStationRuntime Station { get; private set; }
     public EnemySpawner Enemies { get; private set; }
     public bool EnableRewards { get; set; }
@@ -32,7 +32,7 @@ public sealed class WorldSystemsLabRelayAdapter : MonoBehaviour
         Station = OrbitalStationRuntime.Ensure(player.gameObject, character);
         if (ownsStation) ownedStation = Station;
         if (Station == null || !Station.IsInitialized) { Clear(); return false; }
-        centerControl = new OrbitalLabCenterControl(Station, player);
+        centerShift = Station.GetComponent<OrbitalCenterShift>();
         if (support == null) support = Instantiate(supportPrefab);
         else support.SetActive(true);
         var reward = support.GetComponentInChildren<UpgradeManager>(true);
@@ -53,7 +53,7 @@ public sealed class WorldSystemsLabRelayAdapter : MonoBehaviour
         events.EventFailed += OnTerminal;
         return true;
     }
-    private void Update() => centerControl?.Tick(2f, 6f, 8f);
+    private void Update() { if (centerShift != null) centerShift.Configure(2f, 6f, 8f); }
     private void OnTerminal(WorldEvent finished)
     {
         if (finished is OrbitalRelayEvent) Enemies?.StopDebugExplorationPressure();
@@ -67,7 +67,7 @@ public sealed class WorldSystemsLabRelayAdapter : MonoBehaviour
         }
         Enemies?.StopDebugExplorationPressure();
         Enemies?.ClearDebugSpawnedEnemies(); Enemies = null;
-        centerControl?.Dispose(); centerControl = null;
+        if (centerShift != null) centerShift.ResetOffset(); centerShift = null;
         if (pressureHost != null) { pressureHost.SetActive(false); Destroy(pressureHost); } pressureHost = null;
         if (support != null) support.SetActive(false);
         Station = null;

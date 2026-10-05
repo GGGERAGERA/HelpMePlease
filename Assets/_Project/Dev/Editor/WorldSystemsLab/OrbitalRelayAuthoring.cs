@@ -110,7 +110,8 @@ public static class OrbitalRelayAuthoring
             var relay = root.AddComponent<OrbitalRelayEvent>();
             var presentation = root.AddComponent<OrbitalRelayPresentation>();
             var pressure = root.AddComponent<WorldEventPressureModifier>();
-            var bounds = Child(root.transform, "ArenaBounds").AddComponent<CircleCollider2D>(); bounds.radius = 9; bounds.isTrigger = true;
+            Child(root.transform, "ArenaBounds");
+            var bounds = root.AddComponent<CircleCollider2D>(); bounds.radius = 9; bounds.isTrigger = true;
             Transform marker = Child(root.transform, "EventMarkerAnchor").transform;
             Transform reward = Child(root.transform, "RewardAnchor").transform;
             var nodesRoot = Child(root.transform, "Nodes"); var nodes = new OrbitalRelayNode[3];

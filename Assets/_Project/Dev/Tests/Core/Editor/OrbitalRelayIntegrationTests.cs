@@ -32,10 +32,101 @@ public sealed class OrbitalRelayIntegrationTests
         }
         finally { Object.DestroyImmediate(host); Object.DestroyImmediate(first); Object.DestroyImmediate(next); }
     }
+    [Test] public void TutorialCompletesOnlyAfterSharedRewardBarrier()
+    {
+        var host = new GameObject("tutorial barrier"); var rewardHost = new GameObject("reward barrier");
+        var target = new GameObject("completed relay");
+        try
+        {
+            var tutorial = host.AddComponent<TutorialController>(); var rewards = rewardHost.AddComponent<UpgradeManager>();
+            var relay = target.AddComponent<OrbitalRelayEvent>(); tutorial.ConfigureTarget(relay);
+            OrbitalRelayAuthoring.Set(tutorial, "rewards", rewards);
+            OrbitalRelayAuthoring.Set(tutorial, "<Step>k__BackingField", TutorialStep.FirstEvent);
+            OrbitalRelayAuthoring.Set(rewards, "isChoosingUpgrade", true);
+            typeof(TutorialController).GetMethod("OnEventCompleted", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(tutorial, new object[] { relay });
+            Assert.That(tutorial.GoalCompleted, Is.False);
+            OrbitalRelayAuthoring.Set(rewards, "isChoosingUpgrade", false);
+            typeof(UpgradeManager).GetMethod("InvokeIdleCallbacksIfReady", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(rewards, null);
+            Assert.That(tutorial.GoalCompleted, Is.True);
+            Assert.That(tutorial.Step, Is.EqualTo(TutorialStep.FirstEvent), "Exit unlock belongs to ordinary RunFlow update.");
+        }
+        finally { Object.DestroyImmediate(host); Object.DestroyImmediate(target); Object.DestroyImmediate(rewardHost); }
+    }
+    [Test] public void TutorialRespawnsRegisteredProductionPrefabAtRememberedPlacement()
+    {
+        var runHost = new GameObject("tutorial run metadata"); var host = new GameObject("tutorial placement owner");
+        var localizationHost = new GameObject("tutorial fixture localization");
+        var localizationInstance = typeof(LocalizationService).GetField("<Instance>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
+        object previousLocalization = localizationInstance.GetValue(null);
+        var instance = typeof(RunStateManager).GetField("<Instance>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
+        object previous = instance.GetValue(null);
+        OrbitalRelayEvent first = null, retry = null;
+        try
+        {
+            var localization = localizationHost.AddComponent<LocalizationService>();
+            OrbitalRelayAuthoring.Set(localization, "table", UnityEditor.AssetDatabase.LoadAssetAtPath<LocalizationTable>("Assets/_Project/Data/Localization/LocalizationTable.asset"));
+            localizationInstance.SetValue(null, localization);
+            var run = runHost.AddComponent<RunStateManager>(); instance.SetValue(null, run);
+            run.SetCurrentSector(new RunSector(RunRoute.TutorialSector, null, null, null));
+            var spawner = host.AddComponent<WorldEventSpawner>();
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<OrbitalRelayEvent>(OrbitalRelayAuthoring.PrefabPath);
+            spawner.ConfigureDebugEventPrefabs(new WorldEvent[] { prefab }); spawner.ConfigureSiteControlledMode(1);
+            var sector = host.AddComponent<ProductionExplorationSectorController>();
+            OrbitalRelayAuthoring.Set(sector, "eventSpawner", spawner);
+            OrbitalRelayAuthoring.Set(sector, "tutorialRelayPrefab", prefab);
+            OrbitalRelayAuthoring.Set(sector, "tutorialRelayPosition", new Vector2(12, 7));
+            OrbitalRelayAuthoring.Set(sector, "tutorialRelaySize", new Vector2(18, 18));
+            Assert.That(sector.TryRespawnTutorialRelay(out first), Is.True);
+            Assert.That(first.SourcePrefab, Is.SameAs(prefab));
+            typeof(WorldEvent).GetMethod("DisposeForOwnerReset", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(first, null);
+            Assert.That(sector.TryRespawnTutorialRelay(out retry), Is.True);
+            Assert.That(retry.SourcePrefab, Is.SameAs(prefab));
+            Assert.That(retry.transform.position, Is.EqualTo(new Vector3(12, 7, 0)));
+            Assert.That(retry.IsStarted, Is.False); Assert.That(retry.Snapshot.Phase, Is.EqualTo(OrbitalRelayPhase.Inactive));
+            Assert.That(spawner.SpawnedEvents.Count, Is.EqualTo(1));
+        }
+        finally
+        {
+            if (first != null) Object.DestroyImmediate(first.gameObject);
+            if (retry != null) Object.DestroyImmediate(retry.gameObject);
+            Object.DestroyImmediate(host); Object.DestroyImmediate(runHost); instance.SetValue(null, previous);
+            localizationInstance.SetValue(null, previousLocalization); Object.DestroyImmediate(localizationHost);
+        }
+    }
     [Test] public void ScopedPressureContractExists()
     {
         Assert.That(typeof(WorldEventSpawner).GetMethod("AcquireSpawnPressure"), Is.Not.Null);
         Assert.That(typeof(WorldEvent).GetProperty("UsesStandardSpawnPressure"), Is.Not.Null);
+    }
+    [Test] public void StandardPressureAndRuleMultiplierSurviveScopedModifier()
+    {
+        var host = new GameObject("ordinary event pressure"); var target = new GameObject("ordinary event");
+        bool ownsRun = RunStateManager.Instance == null;
+        try
+        {
+            var spawner = host.AddComponent<WorldEventSpawner>(); var enemies = host.AddComponent<EnemySpawner>();
+            enemies.StopSpawning(); spawner.ConfigureDebugEnemySpawner(enemies);
+            enemies.SetWorldRuleSpawnPressureMultiplier(1.4f);
+            var source = target.AddComponent<RelayRewardTestEvent>();
+            var modifier = target.AddComponent<WorldEventPressureModifier>();
+            typeof(WorldEventSpawner).GetField("<ActiveEvent>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(spawner, source);
+            spawner.NotifyEventStarted(source);
+            Assert.That(enemies.WorldEventSpawnPressureMultiplier, Is.EqualTo(1.15f));
+            modifier.SetBonusActive(spawner, source, true, 1.6f); modifier.SetBonusActive(spawner, source, true, 1.6f);
+            Assert.That(enemies.WorldEventSpawnPressureMultiplier, Is.EqualTo(1.15f * 1.6f).Within(.0001f));
+            modifier.Release(); modifier.Release();
+            Assert.That(enemies.WorldEventSpawnPressureMultiplier, Is.EqualTo(1.15f));
+            spawner.NotifyEventFailed(source);
+            Assert.That(enemies.WorldEventSpawnPressureMultiplier, Is.EqualTo(1));
+            float external = (float)typeof(EnemySpawner).GetMethod("GetExternalSpawnPressureMultiplier", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(enemies, null);
+            Assert.That(external, Is.EqualTo(1.4f).Within(.0001f));
+            Assert.That(enemies.IsSpawningEnabled, Is.False);
+        }
+        finally
+        {
+            Object.DestroyImmediate(target); Object.DestroyImmediate(host);
+            if (ownsRun && RunStateManager.Instance != null) Object.DestroyImmediate(RunStateManager.Instance.gameObject);
+        }
     }
     [Test] public void CompletionRewardContractExists() { Assert.That(typeof(WorldEvent).GetProperty("CompletionReward"), Is.Not.Null); }
     [Test] public void PreviewCompletionDispatchesOnceWithoutCurrencyOrContainer()

@@ -223,6 +223,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
             relayAdapter.EnableRewards = relayRewardQueue;
             if (!relayAdapter.Prepare(player, orbitalCharacter, events, corridorEnemy, relayEnemyPressure))
             { notice = "ORBITAL bootstrap failed: see Console"; return false; }
+            if (corridorV2 != null) corridorV2.enabled = false;
         }
         Vector3 position = player != null
             ? player.position + new Vector3(7f, 0f, 0f)
@@ -249,6 +250,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
     public void ClearEvents()
     {
         corridorV2?.Stop();
+        if (corridorV2 != null) corridorV2.enabled = true;
         events?.ClearAllDebugEvents();
         relayAdapter?.Clear();
         notice = "Events cleared";
@@ -435,7 +437,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
 
             string label = prefab is CarrierHuntEvent
                 ? "Carrier Hunt (preview only)"
-                : prefab.EventDisplayName;
+                : prefab is OrbitalRelayEvent ? LocalizationService.EnsureExists().Get(prefab.EventDisplayName) : prefab.EventDisplayName;
             if (GUILayout.Button(label, buttonStyle))
                 SpawnEvent(prefab);
         }

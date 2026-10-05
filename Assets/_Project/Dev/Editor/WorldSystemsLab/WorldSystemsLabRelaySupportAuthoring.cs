@@ -37,6 +37,8 @@ public static class WorldSystemsLabRelaySupportAuthoring
             var serialized = new SerializedObject(messages);
             var hint = (GameObject)serialized.FindProperty("movementHint").objectReferenceValue;
             Prune(hud.transform, new HashSet<Transform> { messages.transform, messages.View.transform, hint.transform });
+            foreach (var group in messages.View.GetComponentsInParent<CanvasGroup>(true))
+                if (group.gameObject != messages.View.gameObject) group.alpha = 1f;
             OrbitalRelayAuthoring.Set(messages, "hud", null);
             foreach (var component in hud.GetComponentsInChildren<MonoBehaviour>(true))
                 if (component != null && component.GetType().Assembly == typeof(WorldEvent).Assembly &&
