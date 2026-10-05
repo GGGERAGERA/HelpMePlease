@@ -5,6 +5,40 @@ using System.Reflection;
 using System.Collections.Generic;
 public sealed class OrbitalRelayIntegrationTests
 {
+    [Test] public void BotEvadesNearbyThreatWithZeroTransitionTracking()
+    {
+        var host = new GameObject("relay steering contract"); var threat = new GameObject("nearby threat");
+        var relayRoot = Object.Instantiate(UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(OrbitalRelayAuthoring.PrefabPath));
+        bool ownsRun = RunStateManager.Instance == null;
+        BotController bot = null;
+        try
+        {
+            var movement = host.AddComponent<CharacterMovement2D>();
+            var bounds = host.AddComponent<BoxCollider2D>(); bounds.size = Vector2.one * 100;
+            var area = host.AddComponent<GameplayAreaService>(); area.ConfigureDebugAreas(bounds, bounds);
+            var events = host.AddComponent<WorldEventSpawner>();
+            var enemy = threat.AddComponent<EnemyHealth>(); threat.transform.position = Vector3.right * 2;
+            typeof(EnemyHealth).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(enemy, null);
+            var relay = relayRoot.GetComponent<OrbitalRelayEvent>();
+            var state = new OrbitalRelayState(new OrbitalRelaySettings(1, 20, .6f, .75f, 15, 10, 2.5f, 1.6f), 3, p => (p + 1) % 3);
+            state.Start(); state.Tick(.6f, true);
+            typeof(OrbitalRelayEvent).GetField("state", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(relay, state);
+            typeof(WorldEvent).GetField("<IsStarted>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(relay, true);
+            bot = new BotController(movement, area);
+            typeof(BotController).GetField("objective", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(bot, relay);
+            bot.TickGoldenPath(0, null, events, null);
+            Assert.That(movement.MovementIntent().magnitude, Is.GreaterThan(.9f), "Transition must preserve safety movement.");
+            Assert.That(Vector2.Dot(movement.MovementIntent(), Vector2.left), Is.GreaterThan(0), "Move away from the real registered threat.");
+        }
+        finally
+        {
+            bot?.Dispose();
+            var enemy = threat.GetComponent<EnemyHealth>();
+            if (enemy != null) typeof(EnemyHealth).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(enemy, null);
+            Object.DestroyImmediate(threat); Object.DestroyImmediate(relayRoot); Object.DestroyImmediate(host);
+            if (ownsRun && RunStateManager.Instance != null) Object.DestroyImmediate(RunStateManager.Instance.gameObject);
+        }
+    }
     [Test] public void TutorialAndBotConsumeProductionRelay()
     {
         Assert.That(typeof(TutorialController).GetProperty("TargetEvent").PropertyType, Is.EqualTo(typeof(OrbitalRelayEvent)));

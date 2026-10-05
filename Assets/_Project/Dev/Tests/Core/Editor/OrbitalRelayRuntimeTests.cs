@@ -140,17 +140,25 @@ public sealed class OrbitalRelayRuntimeTests
             int opened = 0; UpgradeManager.Instance.RewardOpened += _ => opened++;
             movement.MovementIntent = () => relay != null ? OrbitalRelayBotSteering.GetDesiredMovement(relay, station, lab.Player.position) : Vector2.zero;
             yield return Await(() => relay.Snapshot.Phase == OrbitalRelayPhase.Transition, 15f);
+            var normalSite = BindSite(lab.Events, relay, false);
+            int containers = WorldBreakable.ActiveInstances.Count;
             result = null; relay.Finished += completed => result = completed;
             relay.Cancel(); movement.MovementIntent = () => Vector2.zero;
             Assert.That(result.Value.Success, Is.True); Assert.That(result.Value.Gold, Is.Zero);
             yield return Await(() => UpgradeManager.Instance.IsChoosingUpgrade, 3f);
             Assert.That(opened, Is.EqualTo(1));
+            Assert.That(normalSite.CompletedMainEvents, Is.EqualTo(1));
+            Assert.That(normalSite.IsCompleted, Is.False, "Normal site waits for the common reward queue.");
+            Assert.That(WorldBreakable.ActiveInstances.Count, Is.EqualTo(containers));
             lab.Events.NotifyEventCompleted(relay);
             Assert.That(opened, Is.EqualTo(1), "Duplicate/reentrant notification must not issue a second selection.");
             Assert.That(currency.TotalGold, Is.EqualTo(goldBefore), "Dev run must not persist Gold.");
             Assert.That(UpgradeManager.Instance.DebugSelectCurrentChoice(0), Is.True);
             if (station.RewardFlow.PendingReward.HasValue) Assert.That(station.RewardFlow.DebugChooseFirstValidTarget(), Is.True);
             yield return Await(() => UpgradeManager.Instance.IsRewardQueueIdle, 5f);
+            Assert.That(normalSite.IsCompleted, Is.True);
+            Assert.That(opened, Is.EqualTo(1), "Normal site must not request a second Upgrade.");
+            Object.Destroy(normalSite.gameObject);
             Assert.That(adapter.Enemies.WorldEventSpawnPressureMultiplier, Is.EqualTo(1));
             Debug.Log("[RelaySmoke] fail, mid-Bonus reset, qualified cancel and shared one-selection queue passed.");
 
@@ -174,6 +182,43 @@ public sealed class OrbitalRelayRuntimeTests
             Assert.That(UpgradeManager.Instance.DebugSelectCurrentChoice(0), Is.True);
             if (station.RewardFlow.PendingReward.HasValue) Assert.That(station.RewardFlow.DebugChooseFirstValidTarget(), Is.True);
             yield return Await(() => UpgradeManager.Instance.IsRewardQueueIdle, 5f);
+
+            // Isolated site reward contract: two terminal payloads traverse the real dispatcher/subscriber/queue.
+            int ringsBefore = station.State.Rings.Count;
+            int selectionsBefore = opened;
+            var firstSiteResult = CreateTerminalPayload(lab.Events);
+            var specialSite = BindSite(lab.Events, firstSiteResult, true);
+            lab.Events.NotifyEventCompleted(firstSiteResult);
+            Assert.That(specialSite.CompletedMainEvents, Is.EqualTo(1));
+            Assert.That(specialSite.IsCompleted, Is.False);
+            Assert.That(station.State.Rings.Count, Is.EqualTo(ringsBefore));
+            var secondSiteResult = CreateTerminalPayload(lab.Events);
+            Set(specialSite, "activeEvent", secondSiteResult);
+            lab.Events.NotifyEventCompleted(secondSiteResult);
+            lab.Events.NotifyEventCompleted(secondSiteResult);
+            Assert.That(specialSite.CompletedMainEvents, Is.EqualTo(2));
+            Assert.That(specialSite.IsCompleted, Is.True);
+            float rewardDeadline = Time.realtimeSinceStartup + 8f;
+            while (!UpgradeManager.Instance.IsRewardQueueIdle && Time.realtimeSinceStartup < rewardDeadline)
+            {
+                if (UpgradeManager.Instance.IsChoosingUpgrade && station.RewardFlow.PendingReward == null)
+                {
+                    int choice = UpgradeManager.Instance.DebugCurrentChoices.ToList().FindIndex(data =>
+                        data is OrbitalRewardData orbital && orbital.RewardKind != OrbitalRewardKind.NewRing);
+                    Assert.That(choice, Is.GreaterThanOrEqualTo(0));
+                    Assert.That(UpgradeManager.Instance.DebugSelectCurrentChoice(choice), Is.True);
+                }
+                if (station.RewardFlow.PendingReward.HasValue)
+                    Assert.That(station.RewardFlow.DebugChooseFirstValidTarget(), Is.True);
+                yield return null;
+            }
+            Assert.That(UpgradeManager.Instance.IsRewardQueueIdle, Is.True);
+            Assert.That(opened, Is.EqualTo(selectionsBefore + 2));
+            Assert.That(station.State.Rings.Count, Is.EqualTo(ringsBefore + 1), "Special site retains one extra Ring after its second event.");
+            Assert.That(WorldBreakable.ActiveInstances.Count, Is.EqualTo(containers));
+            Assert.That(station.State.Validate(out string stateError), Is.True, stateError);
+            Object.Destroy(firstSiteResult.gameObject); Object.Destroy(secondSiteResult.gameObject); Object.Destroy(specialSite.gameObject);
+            Debug.Log("[RelaySmoke] Normal site one-selection barrier and two-event special-site Ring contract passed.");
 
             lab.ClearEvents(); yield return null;
             Set(lab, "relayRewardQueue", false);
@@ -199,6 +244,20 @@ public sealed class OrbitalRelayRuntimeTests
         var original = field.GetValue(prefab);
         try { field.SetValue(prefab, config); Assert.That(lab.SpawnEvent(prefab), Is.True); return (OrbitalRelayEvent)lab.Events.ActiveEvent; }
         finally { field.SetValue(prefab, original); }
+    }
+    private static ProductionAnomalySite BindSite(WorldEventSpawner events, WorldEvent active, bool special)
+    {
+        var site = new GameObject(special ? "special site reward contract" : "normal relay site reward contract").AddComponent<ProductionAnomalySite>();
+        Set(site, "eventSpawner", events); Set(site, "activeEvent", active); Set(site, "isSpecial", special); Set(site, "initialized", true);
+        typeof(ProductionAnomalySite).GetMethod("SubscribeToEventSpawner", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(site, null);
+        return site;
+    }
+    private static RelayRewardTestEvent CreateTerminalPayload(WorldEventSpawner events)
+    {
+        var result = new GameObject("isolated site completion payload").AddComponent<RelayRewardTestEvent>();
+        typeof(WorldEvent).GetField("<IsCompleted>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(result, true);
+        ((List<WorldEvent>)typeof(WorldEventSpawner).GetField("spawnedEvents", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(events)).Add(result);
+        return result;
     }
     private static void Set(object target, string name, object value) => target.GetType().GetField(name,
         BindingFlags.Instance | BindingFlags.NonPublic).SetValue(target, value);

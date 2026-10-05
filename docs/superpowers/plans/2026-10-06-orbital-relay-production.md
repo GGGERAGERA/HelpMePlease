@@ -223,3 +223,20 @@
 ## Approval / execution handoff
 
 Both spec and plan are drafts for the user's requested joint review. Implementation starts only after approval. Recommended method: inline/native execution with `superpowers:executing-plans`; it avoids parallel edits to WorldEventSpawner, prefab references and tutorial owners. If the user explicitly selects subagents, use the corresponding skill while preserving the same staged dependency order.
+
+## Execution record — 2026-10-06
+
+User approved the spec and all eight tasks; implemented sequentially on `codex/orbital-relay-production`.
+
+- [x] Task 1: validated pure state/settings/result; State fixture 9/9.
+- [x] Task 2: mounted runtime body contact, no debug-only dependency; Contact fixture 2/2 and Player compile.
+- [x] Task 3: scoped pressure leases, lifecycle/stale ownership; Integration fixture.
+- [x] Task 4: existing currency/Upgrade queue/custom site path; Integration and bounded Runtime fixtures.
+- [x] Task 5: authored production prefab/config/FX; Authoring fixture 8/8.
+- [x] Task 6: registry/tutorial/retry/barrier/bot; Integration fixture 10/10, long tutorial compile-only.
+- [x] Task 7: same production prefab in lab; bootstrap only, legacy deletion/reference audit.
+- [x] Task 8: 30/30 targeted Unity tests; default-duration contact flow, normal Interactor entry, queue, exact Gold, normal/special-site reward contracts, fail/cancel/reset/unload; Editor and release-runtime compilation zero errors. Detailed report: [orbital-relay-production-migration.md](../../orbital-relay-production-migration.md).
+
+Named cases in the task briefs were consolidated into five exact-class fixtures rather than invoking large existing runners. State/contact use real geometry and pure timing; authoring checks assets; integration checks owners and barriers; the ~30s Runtime fixture exercises real movement/body contact and production reward owners in lab. Full tutorial/Golden Path/Batch Runner were not run. Known baseline TacticalMapHUD missing map-shell diagnostic is explicitly expected; relay migration does not alter map assets.
+
+Acceptance found and fixed: old Corridor HUD overlap in lab, destroyed center-shift access on unload, transparent result notification ancestor, and production arena collider on a child that existing PlayerInteractor could not discover. Each has a regression check; Bunker/interactor code remains unchanged. Final whole-branch review and its conclusions are recorded in the report.

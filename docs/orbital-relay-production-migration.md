@@ -12,7 +12,7 @@
 5. **Authored prefab.** Созданы production OrbitalRelayEvent prefab, config, Node/core/contact/progress/pulse/activation, transition shockwave/flash/banner, combo и urgent-timer анимации. Runtime не строит визуалы процедурно и не зависит от Dev assets. Невалидная конфигурация отклоняется до spawn bookkeeping.
 6. **Production/tutorial/bot.** Каталоги MVP, D1 и D2 переведены на новый prefab с сохранением остальных записей/весов. Tutorial после ранних combat/XP/placement шагов ведёт к Relay, стартует при входе, фокусирует активный Node и объясняет contact/RMB. Fail возвращает к SectorGoal и повторно создаёт тот же production prefab; завершение ожидает общую Upgrade queue до Exit. Bot двигает персонажа по реальным orbital body positions/velocity, не записывает progress/score. Длинный tutorial test адаптирован и скомпилирован.
 7. **Lab/legacy cleanup.** WorldSystemsLab каталог использует тот же production prefab. Adapter только создаёт station/dev-run, authored shared notification/reward UI и scene-local существующий EnemySpawner. Preview по умолчанию не выдаёт rewards; опциональная общая queue проверяется в dev-run без сохранения Gold. Отдельной lab gameplay/state/HUD копии нет. Legacy CaptureZone и lab OrbitalHoldZone удалены после перевода потребителей.
-8. **Acceptance.** Узкие Unity fixtures, полная компиляция Editor runtime/Editor scripts и Player runtime без debug defines; serialized-reference audit; bounded 30-секундная проверка реальных контактов, default Transition/Bonus, fail/reset/cancel/unload и reward queue. Golden Path, Batch Runner и полный tutorial route не запускались. Финальное независимое ревью фиксируется ниже после проверки всей ветки.
+8. **Acceptance.** Узкие Unity fixtures, полная компиляция Editor runtime/Editor scripts и Player runtime без debug defines; serialized-reference audit; bounded 30-секундная проверка реальных контактов, default Transition/Bonus, fail/reset/cancel/unload и reward queue. Golden Path, Batch Runner и полный tutorial route не запускались. Финальное независимое ревью завершено, его замечания обработаны ниже.
 
 ## Production flow и запуск
 
@@ -59,8 +59,10 @@ Stabilization: 3 успешных непрерывных контакта по 0
 
 ## Проверки и ограничения
 
-- Unity: State 9/9, Contact 2/2, Integration 9/9, Authoring 8/8, Runtime 1/1 — **29 passed, 0 failed**.
+- Unity: State 9/9, Contact 2/2, Integration 10/10, Authoring 8/8, Runtime 1/1 — **30 passed, 0 failed**.
 - Runtime: реальные module contact guards, normal Interactor entry, Stabilization/Transition/Bonus, визуально видимый result, pressure 1→1.6→1, reset mid-Bonus, qualified cancel, administrative unload; exact Gold payout при meta multiplier и duplicate notification; одна shared selection.
+- Site coverage: реальный Relay completion → production dispatcher → normal ProductionAnomalySite subscriber → общая queue; site завершается после queue idle, дополнительной selection/container нет. Для special site два terminal payload проходят тот же dispatcher/subscriber/queue: после первого Ring нет, после второго выдаётся ровно один отдельный NewRing. Payload fixtures изолируют reward contract, не подменяют gameplay smoke.
+- Bot regression: реальный зарегистрированный nearby EnemyHealth и нулевой Transition tracking intent; safety direction раньше был 0 (RED), теперь сохраняет evasive movement (GREEN). При отсутствии safety override аналоговая скорость tracking сохраняется.
 - Player runtime compile: 0 errors, 18 warnings; DefineConstants без UNITY_EDITOR/DEVELOPMENT_BUILD. Editor runtime: 0 errors, 18 warnings; Editor scripts: 0 errors, 3 warnings. Warnings не выдаются за ноль warnings.
 - `git diff --check` для Assets/docs чист; нет live CaptureZone/TouchesCircle/OrbitalHoldZone usages, старых serialized GUID references и MissingScript/external GUID в проверенных migrated assets; production prefab не имеет Dev dependencies.
 - Тесты плана консолидированы в пять узких fixtures: часть названных отдельных cases покрыта объединёнными contract/runtime checks. Полный Core/tutorial/Golden Path не выполнялись по ограничению пользователя.
@@ -74,10 +76,21 @@ Stabilization: 3 успешных непрерывных контакта по 0
 - Lab station/dev-run/support переиспользуются до destroy adapter; Clear отключает support и чистит только owned enemies. Это предотвращает deferred-destroy singleton race при immediate restart. Риск: reusable dev context дольше живёт до unload; rewards по умолчанию suppressed.
 - Test cases объединены в узкие fixtures вместо длинных/широких runners; риск: полный tutorial маршрут не проверен runtime.
 - Collider арены authored на event root для совместимости с существующим Interactor; ArenaBounds anchor сохранён. Runtime geometry/progress остаются общими, Bunker не затронут.
+- Baseline TacticalMapHUD диагностируется, но не исправляется: изменение map assets нарушило бы scope; риск — map preview остаётся с прежней ошибкой.
+- Durable reward compensation после death/unload не добавляется согласно спецификации: administrative disposal не открывает UI; риск — нет persistence незавершённой reward delivery.
+- Полный tutorial route не выполняется по ограничению пользователя, он и существующие длинные site tests адаптированы и compile-only; риск — длинные маршруты требуют отдельной ручной проверки.
+- Reviewer не запускал Unity/build/визуальную проверку повторно: review был read-only, execution evidence получен реализатором; риск — визуальная оценка не имеет независимого второго runtime-прогона.
 
 ## Финальное ревью
 
-Ожидается заключение независимого read-only reviewer; итог и исправления будут внесены перед завершением задачи.
+Одно независимое read-only ревью всей ветки `317e69e0..2fc35835`: Critical — нет. Два Important обработаны одним fix pass:
+
+1. Bot safety больше не умножается безусловно на tracking magnitude: рядом с enemy/projectile/boundary/exit сохраняется полный safety intent. Regression test RED→GREEN; Integration 10/10.
+2. Добавлено отсутствовавшее bounded site coverage нормальной и special награды через реальные production owners. Runtime 1/1 (~30 сек). Gameplay smoke использует реальные contacts; site reward contract изолируется terminal payload fixtures. Существующие ProductionAnomalyRewardFlowTests также переведены с ручного NotifyEventCompleted на реальные Relay contacts; длинный fixture не запускался.
+
+Повторный reviewer не вызывался; изменения проверены тестами и компиляцией. Deferred Minor: при отсутствии station/modules/reward owners обычный production interaction недоступен без localized explanation; diagnostics при прямом Start есть, normal interaction reason требует отдельного UI уточнения. Это не мешает штатному запуску с валидными production owners.
+
+Declined-to-judge пункты reviewer рассмотрены явно: baseline map diagnostic оставлен вне scope; durable reward compensation исключён спецификацией; полный tutorial run запрещён пользователем; execution/visual evidence проверен реализатором, reviewer занимался code/asset inspection. Риски указаны выше.
 
 ## Файлы
 
@@ -144,3 +157,5 @@ M	Assets/_Project/scripts/World/Events/WorldEvent.cs
 A	Assets/_Project/scripts/World/Events/WorldEventPressureModifier.cs
 M	Assets/_Project/scripts/World/Events/WorldEventSpawner.cs
 ```
+
+Дополнительные изменения финального fix pass: `Assets/_Project/Dev/Tests/Core/Editor/ProductionAnomalyRewardFlowTests.cs`, этот отчёт и execution record в `docs/superpowers/plans/2026-10-06-orbital-relay-production.md`. Остальные исправления финального pass находятся в уже перечисленных BotController / OrbitalRelayIntegrationTests / OrbitalRelayRuntimeTests.

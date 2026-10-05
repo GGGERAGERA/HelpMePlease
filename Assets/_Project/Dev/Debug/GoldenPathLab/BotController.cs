@@ -116,7 +116,7 @@ public sealed class BotController : IDisposable
                 {
                     Vector2 desired = OrbitalRelayBotSteering.GetDesiredMovement(relay,
                         movement.GetComponentInChildren<OrbitalStationRuntime>(), position);
-                    direction = SafeGoldenDirection(position, desired) * desired.magnitude;
+                    direction = SafeGoldenDirection(position, desired, preserveTrackingSpeed: true);
                     State = "Orbital Relay: " + relay.Snapshot.Phase;
                     return;
                 }
@@ -145,19 +145,27 @@ public sealed class BotController : IDisposable
         direction = ChooseSafeHeading(position, direction);
     }
 
-    private Vector2 SafeGoldenDirection(Vector2 position, Vector2 desired)
+    private Vector2 SafeGoldenDirection(Vector2 position, Vector2 desired, bool preserveTrackingSpeed = false)
     {
         Vector2 avoidance = Vector2.zero;
+        bool safetyOverride = false;
         foreach (var enemy in EnemyHealth.ActiveInstances)
         {
             if (enemy == null || enemy.IsDead) continue;
             Vector2 away = position - (Vector2)enemy.transform.position;
+            if (away.sqrMagnitude < 100f) safetyOverride = true;
             float radius = enemy.IsBoss ? 1.2f : 4f;
             if (away.magnitude < radius) avoidance += away.normalized * Mathf.Pow(1f - away.magnitude / radius, 2) * 5f;
         }
         Vector2 edge = area.IsInsidePlayableArea(position, 8f) ? Vector2.zero
             : ((Vector2)area.PlayableArea.bounds.center - position).normalized * 3f;
-        return ChooseSafeHeading(position, desired + Vector2.ClampMagnitude(avoidance, 3f) + edge + AvoidEarlyExit(position));
+        Vector2 exitAvoidance = AvoidEarlyExit(position);
+        foreach (var projectile in goldenProjectiles)
+            if (projectile != null && projectile.isActiveAndEnabled &&
+                ((Vector2)projectile.transform.position - position).sqrMagnitude < 144f) safetyOverride = true;
+        float speed = preserveTrackingSpeed && !safetyOverride && edge == Vector2.zero && exitAvoidance == Vector2.zero
+            ? Mathf.Clamp01(desired.magnitude) : 1f;
+        return ChooseSafeHeading(position, desired + Vector2.ClampMagnitude(avoidance, 3f) + edge + exitAvoidance) * speed;
     }
 
     // Fixed set of headings and short lookahead; no search tree, world edits or combat shortcuts.
