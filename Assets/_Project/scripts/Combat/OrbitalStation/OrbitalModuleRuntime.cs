@@ -80,12 +80,11 @@ namespace Subject42.Combat.OrbitalStation
             presentation.HitTest(world, padding) ||
             (WorldPosition - world).sqrMagnitude <= padding * padding;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
         // Mounted body contact, excluding hover halos, previews and a body being dragged.
-        public bool TouchesCircle(Vector2 center, float radius) =>
+        public bool HasBodyContact(Vector2 center, float radius) =>
             Mount != null && Visual != null && Visual.activeInHierarchy &&
-            Visual.transform.parent == Mount.Transform && presentation.TouchesCircle(center, radius);
-#endif
+            Visual.transform.parent == Mount.Transform && presentation.HasBodyContact(center, radius);
+
 
         public void SetDragValidity(bool valid) =>
             presentation.SetDragState(true, valid);
