@@ -42,7 +42,7 @@ public sealed class FootballMinigameTests
             var hud = arena.GetComponentInChildren<FootballMinigameHUD>(true);
             Assert.That(hud.GetComponent<Canvas>().renderMode, Is.EqualTo(RenderMode.WorldSpace));
             var frame = Read<BoxCollider2D>(game, "cameraBounds").bounds;
-            var panel = Read<GameObject>(hud, "panelRoot").GetComponent<RectTransform>();
+            var panel = Read<MinigameSidePanelView>(hud, "view").GetComponent<RectTransform>();
             var corners = new Vector3[4]; panel.GetWorldCorners(corners);
             Assert.That(corners.All(c => frame.Contains(new Vector3(c.x, c.y, frame.center.z))), Is.True,
                 $"The physical scoreboard must fit inside the round camera bounds: {frame}; corners {string.Join(", ", corners.Select(c => c.ToString()))}; canvas scale {hud.transform.lossyScale}.");
@@ -66,10 +66,12 @@ public sealed class FootballMinigameTests
     {
         var game = Object.FindFirstObjectByType<FootballMinigame>();
         Assert.That(game, Is.Not.Null);
-        var player = Object.FindObjectsByType<CharacterMovement2D>(FindObjectsSortMode.None).First(p => p.CompareTag("Player"));
+        // Use the same controlled bunker player as FootballMinigame, rather than
+        // the first tagged actor (the room also contains authored player previews).
+        var player = PlayerRuntimeReference.CachedPlayer.GetComponent<CharacterMovement2D>();
         var playerBody = player.GetComponent<Rigidbody2D>();
         var hud = Read<FootballMinigameHUD>(game, "hud");
-        var panel = Read<GameObject>(hud, "panelRoot");
+        var panel = Read<MinigameSidePanelView>(hud, "view").gameObject;
         Assert.That(panel.activeSelf, Is.False, "The scoreboard must be hidden outside a round.");
         var missingArrows = Object.FindObjectsByType<BunkerStation>(FindObjectsSortMode.None)
             .Where(s => s.CanInteract && !s.GetComponentsInChildren<Transform>(true)
@@ -99,7 +101,10 @@ public sealed class FootballMinigameTests
         int best = game.BestScore;
         game.StartStation.Interact();
         Assert.That(game.IsRunning, Is.True);
-        Assert.That(game.PlayBounds.Contains(player.transform.position), Is.True, "Remote start must place the player inside before the door closes.");
+        // Collider2D bounds have no depth; the player's render Z is unrelated to access.
+        var playerOnArenaPlane = new Vector3(playerBody.position.x, playerBody.position.y, game.PlayBounds.center.z);
+        Assert.That(game.PlayBounds.Contains(playerOnArenaPlane), Is.True,
+            $"Remote start must place the player inside before the door closes: player {player.transform.position}, arena {game.PlayBounds}.");
         Assert.That(panel.activeSelf, Is.True);
         Assert.That(door.IsOpen, Is.False);
         Assert.That(game.ActiveBallCount, Is.EqualTo(4));

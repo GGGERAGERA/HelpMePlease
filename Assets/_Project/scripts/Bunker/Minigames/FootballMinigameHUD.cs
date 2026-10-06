@@ -1,22 +1,22 @@
-using TMPro;
+using System.Globalization;
 using UnityEngine;
 
 public sealed class FootballMinigameHUD : MonoBehaviour
 {
-    [SerializeField] private GameObject panelRoot;
-    [SerializeField] private TMP_Text timeText;
-    [SerializeField] private TMP_Text scoreText;
-    [SerializeField] private TMP_Text bestScoreText;
-    [SerializeField] private TMP_Text resultText;
-    [SerializeField] private TMP_Text goalStatsText;
+    [SerializeField] private MinigameSidePanelView view;
 
     private int displayedGoalCount;
     private int displayedGoalPoints;
     private bool completed;
     private bool completedRecord;
     private bool completedBenchmark;
+    private bool running;
 
-    private void OnEnable() => LocalizationService.Instance.LanguageChanged += HandleLanguageChanged;
+    private void OnEnable()
+    {
+        LocalizationService.EnsureExists().LanguageChanged += HandleLanguageChanged;
+        RefreshContent();
+    }
     private void OnDisable()
     {
         if (LocalizationService.Instance != null)
@@ -24,20 +24,32 @@ public sealed class FootballMinigameHUD : MonoBehaviour
     }
     private void HandleLanguageChanged(GameLanguage language)
     {
+        RefreshContent();
+    }
+
+    private void RefreshContent()
+    {
+        var localization = LocalizationService.EnsureExists();
+        view.SetContent(localization.Get("football.panel_title"), localization.Get("football.score"),
+            localization.Get("football.best"), localization.Get("football.time"), localization.Get("football.controls"));
+        if (!completed) view.SetStatus(running ? localization.Get("football.running") : string.Empty);
+        else RefreshCompletedResult();
         SetGoalStats(displayedGoalCount, displayedGoalPoints);
-        if (completed) RefreshCompletedResult();
     }
 
     public void SetGoalStats(int count, int points)
     {
         displayedGoalCount = count;
         displayedGoalPoints = points;
-        goalStatsText.text = string.Format(LocalizationService.Instance.Get("bunker.football_goals"), count, points);
+        var localization = LocalizationService.EnsureExists();
+        view.SetExtraSection(localization.Get("football.legend"),
+            string.Format(localization.Get("bunker.football_goals"), count, points), true);
     }
 
     public void ShowIdle(float duration, int bestScore)
     {
         completed = false;
+        running = false;
         SetValues(duration, 0, bestScore);
         SetGoalStats(0, 0);
         SetResult(string.Empty);
@@ -47,9 +59,10 @@ public sealed class FootballMinigameHUD : MonoBehaviour
     public void ShowRunning(float remainingTime, int score, int bestScore)
     {
         completed = false;
+        running = true;
         SetVisible(true);
         SetValues(remainingTime, score, bestScore);
-        SetResult(string.Empty);
+        SetResult(LocalizationService.Instance.Get("football.running"));
     }
 
     public void ShowCompleted(int score, int bestScore, bool newRecord, bool devReward = false)
@@ -57,6 +70,7 @@ public sealed class FootballMinigameHUD : MonoBehaviour
         SetVisible(false);
         SetValues(0f, score, bestScore);
         completed = true;
+        running = false;
         completedRecord = newRecord;
         completedBenchmark = devReward;
         RefreshCompletedResult();
@@ -82,23 +96,17 @@ public sealed class FootballMinigameHUD : MonoBehaviour
 
     private void SetValues(float time, int score, int best)
     {
-        if (timeText != null)
-            timeText.text = $"{time:0.0}";
-        if (scoreText != null)
-            scoreText.text = score.ToString();
-        if (bestScoreText != null)
-            bestScoreText.text = best.ToString();
+        view.SetValues(time.ToString("0.0", CultureInfo.InvariantCulture),
+            score.ToString(CultureInfo.InvariantCulture), best.ToString(CultureInfo.InvariantCulture));
     }
 
     private void SetResult(string value)
     {
-        if (resultText != null)
-            resultText.text = value;
+        view.SetStatus(value);
     }
 
     private void SetVisible(bool visible)
     {
-        if (panelRoot != null && panelRoot.activeSelf != visible)
-            panelRoot.SetActive(visible);
+        view.SetVisible(visible);
     }
 }
