@@ -4,6 +4,7 @@ using System.Collections;
 public class PlayerHealth : MonoBehaviour
 {
     public event System.Action DamageTaken;
+    public event System.Action Died;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public event System.Action<float> DebugDamageApplied;
 #endif
@@ -123,6 +124,7 @@ public class PlayerHealth : MonoBehaviour
         Debug.Log("Player died");
         if (isDead) return;
         isDead = true;
+        Died?.Invoke();
         if (RunFlowController.Instance != null && !RunFlowController.Instance.IsVictoryConfirmed)
             RunFlowController.Instance.StopRunGameplay();
 

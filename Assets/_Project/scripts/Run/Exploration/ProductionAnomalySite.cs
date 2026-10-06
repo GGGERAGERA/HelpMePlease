@@ -28,6 +28,10 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 #endif
     private bool isSpecial;
     private bool completed;
+    private bool preserveEnvironment;
+    private bool environmentRetired;
+    private bool rewardPending;
+    public bool EnvironmentAlive => initialized && !environmentRetired;
     private bool initialized;
     private int completedMainEvents;
     private bool specialAssaultStarted;
@@ -51,7 +55,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
     public bool IsSpecial => isSpecial;
     public int CompletedMainEvents => completedMainEvents;
     public bool HasStartedSpecialAssault => specialAssaultStarted;
-    public bool IsMapVisible => initialized && !completed &&
+    public bool IsMapVisible => initialized && !environmentRetired &&
         isActiveAndEnabled;
     public Vector2 SiteSize => siteSize;
     public Rect TerritoryBounds => new((Vector2)transform.position - siteSize * 0.5f, siteSize);
@@ -210,18 +214,21 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     internal WorldEvent SiteEvent => activeEvent;
 
-    public void RemoveForLayout()
+    public void RemoveForLayout() => DisposeSite();
+#endif
+    public void DisposeSite()
     {
         CollapseEnvironment();
         gameObject.SetActive(false);
         if (activeEvent != null)
         {
+            activeEvent.DisposeForOwnerReset();
             activeEvent.gameObject.SetActive(false);
-            eventSpawner.ClearDebugEvent(activeEvent);
+            Destroy(activeEvent.gameObject);
         }
         Destroy(gameObject);
     }
-
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     public bool ContainsWorldPosition(Vector2 position)
     {
         Vector2 offset = position - (Vector2)transform.position;
@@ -421,7 +428,11 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 
         SubscribeToEventSpawner();
 
-        bool spawned = eventSpawner.SpawnSiteEventAt(
+        bool spawned = false;
+        for (int attempt = 0; attempt < 8 && !spawned; attempt++)
+        {
+            if (attempt > 0) eventPosition = SelectEventPosition();
+            spawned = eventSpawner.SpawnSiteEventAt(
             eventPrefab,
             eventPosition,
             transform.position,
@@ -429,6 +440,8 @@ public sealed class ProductionAnomalySite : MonoBehaviour
             suppressStandardReward: true,
             out activeEvent
         );
+
+        }
 
         if (!spawned)
         {
@@ -541,9 +554,10 @@ public sealed class ProductionAnomalySite : MonoBehaviour
     private void HandleEventCompleted(WorldEvent worldEvent)
     {
         if (this == null || worldEvent == null || !isActiveAndEnabled || completed ||
-            worldEvent != activeEvent)
+            worldEvent != activeEvent || rewardPending)
             return;
 
+        preserveEnvironment |= worldEvent.EnvironmentCompletionPolicy == SiteEnvironmentCompletionPolicy.PreserveUntilOwnerReset;
         activeEvent = null;
         completedMainEvents++;
         if (isSpecial && completedMainEvents < 2)
@@ -565,6 +579,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
             return;
         }
 
+        rewardPending = true;
         RunMessageService.Instance?.ShowCustom(
             "site.stabilized",
             string.Empty,
@@ -587,6 +602,8 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         if (worldEvent != null)
             Destroy(worldEvent.gameObject);
 
+        var actor = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
+        if (actor != null && actor.TryGetComponent<PlayerHealth>(out var health) && health.IsDead) return;
         StartCoroutine(RespawnEventAfterDelay());
     }
 
@@ -595,8 +612,11 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         do
         {
             yield return new WaitForSeconds(2f);
-            if (completed || activeEvent != null) yield break;
-        } while (!SpawnEvent() && isSpecial);
+            if (completed || rewardPending || environmentRetired || activeEvent != null) yield break;
+            var actor = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
+            if (actor == null || (actor.TryGetComponent<PlayerHealth>(out var health) && health.IsDead)) yield break;
+            eventPosition = SelectEventPosition();
+        } while (!SpawnEvent());
     }
 
     private void Update()
@@ -627,6 +647,8 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 
     private void CollapseEnvironment()
     {
+        if (environmentRetired) return;
+        environmentRetired = true;
         if (anomalyZone != null)
         {
             anomalyController?.CollapseSiteZone(anomalyZone);
@@ -652,11 +674,12 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 
     private void CompleteSite()
     {
-        if (completed)
+        if (this == null || completed || environmentRetired)
             return;
 
         completed = true;
-        CollapseEnvironment();
+        rewardPending = false;
+        if (!preserveEnvironment) CollapseEnvironment();
     }
 
     private static Color TerritoryColor(LocalAnomalyData anomaly)
@@ -675,7 +698,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (!initialized || completed)
+        if (!initialized || environmentRetired)
             return;
 
         float focus = BoundaryFocus;
@@ -726,7 +749,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 #endif
     }
 
-    private bool HasTerritoryBoundary => initialized && !completed && isActiveAndEnabled &&
+    private bool HasTerritoryBoundary => initialized && !environmentRetired && isActiveAndEnabled &&
         territoryFill != null && territoryFill.enabled;
 
     private static void RefreshTerritoryBoundaries()
@@ -825,6 +848,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         }
 
         UnsubscribeFromEventSpawner();
+        CollapseEnvironment();
 
         if (material != null)
             Destroy(material);

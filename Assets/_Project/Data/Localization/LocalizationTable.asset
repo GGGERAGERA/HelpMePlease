@@ -1384,9 +1384,6 @@ MonoBehaviour:
   - key: event.carrier
     ru: "ОХОТА НА НОСИТЕЛЯ"
     en: "CARRIER HUNT"
-  - key: event.evacuation
-    ru: "ЭВАКУАЦИЯ"
-    en: "EVACUATION"
   - key: event.false
     ru: "ЛОЖНЫЙ СИГНАЛ"
     en: "FALSE SIGNAL"
@@ -1610,8 +1607,8 @@ MonoBehaviour:
     ru: "ЭВАКУАЦИОННЫЙ КОРИДОР"
     en: "EVACUATION CORRIDOR"
   - key: event.evacuation.description
-    ru: "Двигайтесь внутри безопасного коридора."
-    en: "Stay within the safe corridor."
+    ru: "Пройдите три контрольных шлюза по порядку. После финального рывка пересеките открытый выход."
+    en: "Cross three gates in order. After the final push, cross the open exit."
   - key: boss.guardian
     ru: "СТРАЖ СЕКТОРА"
     en: "SECTOR GUARDIAN"
@@ -1858,3 +1855,15 @@ MonoBehaviour:
   - key: tutorial.relay
     ru: "Коснитесь активного ядра орбитальным оружием. Стабилизируйте три ядра, затем набирайте золото. ПКМ сжимает кольца."
     en: "Touch the active core with orbital weapons. Stabilize three cores, then earn gold. RMB compresses rings."
+  - key: event.corridor.gates
+    ru: "ШЛЮЗЫ"
+    en: "GATES"
+  - key: event.corridor.final
+    ru: "ФИНАЛЬНЫЙ РЫВОК"
+    en: "FINAL PUSH"
+  - key: event.corridor.exitLocked
+    ru: "ВЫХОД ЗАКРЫТ"
+    en: "EXIT LOCKED"
+  - key: event.corridor.exitOpen
+    ru: "ПЕРЕСЕКИТЕ ВЫХОД"
+    en: "CROSS THE EXIT"

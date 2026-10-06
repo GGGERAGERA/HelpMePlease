@@ -212,6 +212,11 @@ public sealed class TutorialController : MonoBehaviour
 
     private void OnEventStarted(WorldEvent started)
     {
+        if (started is IWorldEventObjectiveProvider provider)
+        {
+            var guidance = provider.GetObjectiveGuidance();
+            RunMessageService.Instance?.ShowCustom(guidance.TitleKey, guidance.DescriptionKey);
+        }
         if (started == TargetEvent && Step == TutorialStep.SectorGoal)
             SetStep(TutorialStep.FirstEvent, started.transform);
     }

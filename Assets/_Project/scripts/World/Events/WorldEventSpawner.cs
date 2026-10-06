@@ -65,6 +65,9 @@ public class WorldEventSpawner : MonoBehaviour
     private readonly HashSet<WorldEvent> warnedUnsupportedEventPrefabs = new();
     private readonly HashSet<WorldEvent> siteRewardSuppressedEvents = new();
     private bool siteControlledMode;
+    private Vector2 reservedExit;
+    private float reservedExitRadius;
+    public void ReserveSectorExit(Vector2 position, float radius) { reservedExit = position; reservedExitRadius = Mathf.Max(0,radius); }
     private readonly List<LevelAnomalyController.LocalAnomalyZoneGeometry>
         localAnomalyZones = new();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -117,6 +120,7 @@ public class WorldEventSpawner : MonoBehaviour
         foreach (var worldEvent in spawnedEvents.ToArray())
             if (worldEvent != null) { worldEvent.DisposeForOwnerReset(); worldEvent.gameObject.SetActive(false); }
         spawnedEvents.Clear();
+        reservedExitRadius = 0;
         ActiveEvent = null;
         timer = 0f;
     }
@@ -229,7 +233,9 @@ public class WorldEventSpawner : MonoBehaviour
 
         if (!ValidatePrefab(prefab)) return false;
         spawnedEvent = Instantiate(prefab, spawnPosition, Quaternion.identity);
+        if (!PreparePlacement(spawnedEvent)) { spawnedEvent = null; return false; }
         spawnedEvent.Initialize(this);
+        if (spawnedEvent.IsCompleted) { Destroy(spawnedEvent.gameObject); spawnedEvent = null; return false; }
         spawnedEvent.BindSource(prefab);
 
         spawnedEvents.Add(spawnedEvent);
@@ -247,6 +253,45 @@ public class WorldEventSpawner : MonoBehaviour
         );
 #endif
         return true;
+    }
+
+    private bool PreparePlacement(WorldEvent instance)
+    {
+        var context = CreatePlacementContext(instance);
+        if (instance.TryPreparePlacement(context, out string error)) return true;
+        Debug.LogWarning($"[WorldEventSpawner] Placement rejected '{instance.name}': {error}", this);
+        instance.DisposeForOwnerReset();
+        Destroy(instance.gameObject);
+        return false;
+    }
+    internal WorldEventPlacementContext CreatePlacementContext(WorldEvent instance)
+    {
+        if (gameplayArea == null) gameplayArea = GameplayAreaService.Instance;
+        Bounds bounds = gameplayArea != null && gameplayArea.PlayableArea != null ? gameplayArea.PlayableArea.bounds : default;
+        return new WorldEventPlacementContext(instance.transform.position, new Rect(bounds.min, bounds.size),
+            instance.SiteStartBounds, System.Guid.NewGuid().GetHashCode(), footprint =>
+            {
+                if (reservedExitRadius > 0 && Vector2.Distance(reservedExit,
+                    new Vector2(Mathf.Clamp(reservedExit.x,footprint.xMin,footprint.xMax),
+                    Mathf.Clamp(reservedExit.y,footprint.yMin,footprint.yMax))) < reservedExitRadius + 1) return false;
+                foreach (var hit in Physics2D.OverlapBoxAll(footprint.center, footprint.size, 0))
+                {
+                    if (hit.isTrigger || (hit.attachedRigidbody != null && hit.attachedRigidbody.bodyType != RigidbodyType2D.Static) || hit.transform.IsChildOf(instance.transform) ||
+                        hit.GetComponentInParent<PlayerHealth>() != null || hit.GetComponentInParent<EnemyHealth>() != null ||
+                        (gameplayArea != null && (hit == gameplayArea.PlayableArea || hit == gameplayArea.SpawnArea))) continue;
+                    return false;
+                }
+                foreach (var exit in ProductionSectorExit.ActiveExits)
+                {
+                    if (exit == null || !exit.IsMapVisible) continue;
+                    var trigger = exit.GetComponent<CircleCollider2D>();
+                    float radius = trigger.bounds.extents.magnitude + 1;
+                    Vector2 closest = new Vector2(Mathf.Clamp(exit.transform.position.x, footprint.xMin, footprint.xMax),
+                        Mathf.Clamp(exit.transform.position.y, footprint.yMin, footprint.yMax));
+                    if (Vector2.Distance(closest, exit.transform.position) < radius) return false;
+                }
+                return true;
+            });
     }
 
     private bool TryGetPositionInsideLocalAnomaly(
@@ -443,7 +488,9 @@ public class WorldEventSpawner : MonoBehaviour
         if (!ValidatePrefab(prefab)) return false;
         spawnedEvent = Instantiate(prefab, position, Quaternion.identity);
         spawnedEvent.ConfigureSitePlacement(siteCenter, siteSize);
+        if (!PreparePlacement(spawnedEvent)) { spawnedEvent = null; return false; }
         spawnedEvent.Initialize(this);
+        if (spawnedEvent.IsCompleted) { Destroy(spawnedEvent.gameObject); spawnedEvent = null; return false; }
         spawnedEvent.BindSource(prefab);
         spawnedEvents.Add(spawnedEvent);
         spawnedEventCount++;
@@ -598,13 +645,13 @@ public class WorldEventSpawner : MonoBehaviour
         WorldEvent prefab,
         Vector3 position,
         bool suppressReward,
-        out WorldEvent spawnedEvent)
+        out WorldEvent spawnedEvent, System.Action<WorldEvent> beforePrepare = null)
     {
         return SpawnDebugEventAtInternal(
             prefab,
             position,
             suppressReward,
-            out spawnedEvent
+            out spawnedEvent, beforePrepare
         );
     }
 
@@ -612,7 +659,7 @@ public class WorldEventSpawner : MonoBehaviour
         WorldEvent prefab,
         Vector3 position,
         bool suppressReward,
-        out WorldEvent spawnedEvent)
+        out WorldEvent spawnedEvent, System.Action<WorldEvent> beforePrepare = null)
     {
         spawnedEvent = null;
 
@@ -627,7 +674,10 @@ public class WorldEventSpawner : MonoBehaviour
 
         if (!ValidatePrefab(prefab)) return false;
         spawnedEvent = Instantiate(prefab, position, Quaternion.identity);
+        beforePrepare?.Invoke(spawnedEvent);
+        if (!PreparePlacement(spawnedEvent)) { spawnedEvent = null; return false; }
         spawnedEvent.Initialize(this);
+        if (spawnedEvent.IsCompleted) { Destroy(spawnedEvent.gameObject); spawnedEvent = null; return false; }
         spawnedEvent.BindSource(prefab);
         spawnedEvents.Add(spawnedEvent);
         debugContentEvents.Add(spawnedEvent);

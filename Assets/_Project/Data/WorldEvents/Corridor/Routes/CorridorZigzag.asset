@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c44c5dd73f414222b3378660c0a1789b, type: 3}
+  m_Name: CorridorV2Zigzag
+  m_EditorClassIdentifier:
+  preset: 2
+  startAnchor: {x: 0, y: 0}
+  checkpointEndAnchors:
+  - {x: 35, y: 0}
+  - {x: 35, y: 35}
+  - {x: 70, y: 35}
+  exitAnchor: {x: 70, y: 11}
+  referenceSegmentLength: 35
+  referenceExitSegmentLength: 24
+  checkpointInset: 2

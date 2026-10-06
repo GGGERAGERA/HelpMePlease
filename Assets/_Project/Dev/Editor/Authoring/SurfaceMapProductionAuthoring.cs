@@ -184,7 +184,7 @@ public static class SurfaceMapProductionAuthoring
                 if (branch == 1) parameters.enemyWeights = bomberPrefabs.Select(p => new RunPrefabWeight { prefab = p, multiplier = 2.5f }).ToArray();
                 if (branch == 2)
                 {
-                    parameters.eventWeights = eventPrefabs.Select(p => new RunPrefabWeight { prefab = p, multiplier = p is FalseSignalEvent ? 3f : p is EvacuationCorridorEvent ? 2f : .75f }).ToArray();
+                    parameters.eventWeights = eventPrefabs.Select(p => new RunPrefabWeight { prefab = p, multiplier = p is FalseSignalEvent ? 3f : p is CorridorEvent ? 2f : .75f }).ToArray();
                     parameters.anomalyWeights = layout.NormalAnomalies.Select(p => new RunPrefabWeight { prefab = p, multiplier = p == layout.NormalAnomalies[0] ? 3f : 1f }).ToArray();
                 }
                 Field(sector, "parameters", parameters);

@@ -112,6 +112,12 @@ public sealed class BotController : IDisposable
             {
                 if (objective.CanInteract) objective.Interact();
                 target = objective.transform.position;
+                if (objective is ICorridorNavigation corridor && objective.IsStarted)
+                {
+                    direction = CorridorBotSteering.Desired(corridor.GetNavigationSnapshot(),position);
+                    State = "Corridor: " + corridor.GetNavigationSnapshot().Phase;
+                    return;
+                }
                 if (objective is OrbitalRelayEvent relay && relay.IsStarted)
                 {
                     Vector2 desired = OrbitalRelayBotSteering.GetDesiredMovement(relay,

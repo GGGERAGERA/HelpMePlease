@@ -45,7 +45,7 @@ public sealed class OrbitalRelayRuntimeTests
         var relay = (OrbitalRelayEvent)lab.Events.ActiveEvent;
         Debug.Log("[RelaySmoke] active=" + relay);
         var adapter = lab.GetComponent<WorldSystemsLabRelayAdapter>();
-        Assert.That(lab.GetComponent<CorridorV2Lab>().enabled, Is.False, "Other prototype HUD must not cover the production Relay HUD.");
+        Assert.That(lab.GetComponent<CorridorLab>().enabled, Is.False, "Other prototype HUD must not cover the production Relay HUD.");
         var movement = lab.Player.GetComponent<CharacterMovement2D>();
         var station = adapter.Station;
         Assert.That(relay.Snapshot.Phase, Is.EqualTo(OrbitalRelayPhase.Stabilization));

@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fcec86976456314094ef0bc758fa799, type: 3}
+  m_Name: CorridorV2Kit
+  m_EditorClassIdentifier: Assembly-CSharp::CorridorV2Kit
+  straight: {fileID: 7781870065484572142, guid: 122e136c5b9a70040a9927af4f1d9361, type: 3}
+  corner: {fileID: 2729018633310370319, guid: 81d103a75fc7bf340baa8790cd79655f, type: 3}
+  cap: {fileID: 4897178055447817585, guid: 7c79b7ec31f90434db4e91fd5cad930e, type: 3}
+  gate: {fileID: 5660085115337358622, guid: fa5ec036c3923ad40967d4a197b994d2, type: 3}
+  exit: {fileID: 8143940217087011124, guid: e54b8df2fc3631f478523c97aecbf5ce, type: 3}
+  collapse: {fileID: 5672395431389109071, guid: 739e4f01c043b634694aba546cad2659, type: 3}
+  reclaimed: {fileID: 9166892018707102746, guid: 0d60a329fed21fb44bf760131b844831, type: 3}
+  hud: {fileID: 8716936725052665875, guid: 72bdee833a1353043aa93497ad345c75, type: 3}

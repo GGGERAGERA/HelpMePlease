@@ -155,13 +155,15 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         }
 
         LocalAnomalyData[] normalAnomalies = BuildNormalAnomalyPool();
+        eventSpawner.ReserveSectorExit(exitPosition, config.ExitRadius);
+        var initializedSites = new List<ProductionAnomalySite>();
 
         for (int i = 0; i < NormalSiteCount; i++)
         {
             GameObject siteObject = new($"Normal Anomaly Site {i + 1}");
             ProductionAnomalySite site =
                 siteObject.AddComponent<ProductionAnomalySite>();
-            site.InitializeNormal(
+            if (!site.InitializeNormal(
                 normalPositions[i],
                 normalSizes[i],
                 normalAnomalies[i % normalAnomalies.Length],
@@ -171,7 +173,14 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
                 exitPosition,
                 config.ExitRadius,
                 config.AnomalyTerritoryFill
-            );
+            ))
+            {
+                site.DisposeSite();
+                foreach (var previous in initializedSites) previous.DisposeSite();
+                Debug.LogError("[ExplorationSector] Required site objective could not be admitted; sector initialization rejected.");
+                return false;
+            }
+            initializedSites.Add(site);
         }
 
         AnomalyPowerType specialPower = SelectSpecialPower();
@@ -203,7 +212,8 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
                 exitPosition,
                 config.ExitRadius))
         {
-            Destroy(specialObject);
+            specialSite.DisposeSite();
+            foreach (var previous in initializedSites) previous.DisposeSite();
             return false;
         }
 
@@ -1030,6 +1040,10 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
                 hit.GetComponentInParent<ProductionSectorExit>() != null) return false;
         }
         Rect footprint = new(position - half, half * 2f);
+        var reserved = new List<Rect>();
+        foreach (var worldEvent in eventSpawner.SpawnedEvents)
+            if (worldEvent != null && !layoutIgnoredEvents.Contains(worldEvent)) worldEvent.CollectReservedFootprints(reserved);
+        if (reserved.Exists(rect => rect.Overlaps(footprint))) return false;
         foreach (var worldEvent in eventSpawner.SpawnedEvents)
             if (worldEvent != null && !layoutIgnoredEvents.Contains(worldEvent) && worldEvent.gameObject.activeInHierarchy &&
                 DistanceToRect(worldEvent.transform.position, footprint) <

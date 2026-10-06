@@ -34,6 +34,9 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
     public bool RequiresHoldPointFeature => requiresHoldPointFeature;
     public virtual bool UsesStandardSpawnPressure => true;
     public virtual WorldEventRewardResult? CompletionReward => null;
+    public virtual SiteEnvironmentCompletionPolicy EnvironmentCompletionPolicy => SiteEnvironmentCompletionPolicy.CollapseWithObjective;
+    public virtual bool TryPreparePlacement(WorldEventPlacementContext context, out string error) { error = null; return true; }
+    public virtual void CollectReservedFootprints(System.Collections.Generic.List<Rect> footprints) { }
     public virtual bool TryValidateConfiguration(out string error) { error = null; return true; }
     public virtual void Cancel() => FailEvent();
     public virtual Vector3 RewardPosition => transform.position;
@@ -76,6 +79,7 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
     }
 
     protected bool HasSitePlacementBounds => hasSitePlacementBounds;
+    internal Rect? SiteStartBounds => hasSitePlacementBounds ? new Rect(sitePlacementCenter - sitePlacementSize * .5f, sitePlacementSize) : null;
 
     protected bool IsInsideSitePlacement(
         Vector2 position,

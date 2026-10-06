@@ -36,8 +36,10 @@ public sealed class WorldSystemsLabController : MonoBehaviour
     [SerializeField] private GameObject corridorRocketPrefab;
     [SerializeField] private GameObject corridorStrikeMarker;
     [SerializeField] private ParticleSystem corridorExplosion;
-    [SerializeField] private CorridorV2Settings corridorTuning = new();
-    private CorridorV2Lab corridorV2;
+    [SerializeField] private CorridorSettings corridorTuning = new();
+    [SerializeField] private CorridorKit corridorKit;
+    [SerializeField] private CorridorEvent corridorPrefab;
+    private CorridorLab corridorV2;
 
     [Header("Production Orbital Relay bootstrap")]
     [SerializeField] private CharacterData orbitalCharacter;
@@ -84,9 +86,9 @@ public sealed class WorldSystemsLabController : MonoBehaviour
         worldRules.ConfigureDebugGoldenAssets(null, null);
         tacticalMap?.BindPlayer(player);
         BuildProductionProps();
-        corridorV2 = gameObject.AddComponent<CorridorV2Lab>();
+        corridorV2 = gameObject.AddComponent<CorridorLab>();
         corridorV2.Initialize(this, gameplayArea, corridorRocketPrefab, corridorStrikeMarker,
-            corridorExplosion, corridorEnemy, corridorTuning);
+            corridorExplosion, corridorEnemy, corridorTuning, corridorKit, corridorPrefab);
     }
 
     private void Update()
@@ -263,12 +265,22 @@ public sealed class WorldSystemsLabController : MonoBehaviour
 
     public void PrepareCorridorV2()
     {
-        ClearEvents();
-        ClearAnomalies();
-        ClearPortals();
-        worldRules?.Clear();
-        props?.Clear();
+        corridorV2?.CancelForRestart();
+        if (corridorV2 != null) corridorV2.enabled = true;
         tacticalMap?.SetVisible(false);
+    }
+    public bool SpawnIndependentStasisTerritory()
+    {
+        if (spawnedSites.Any(site => site != null && site.name == "Lab Independent Stasis Territory")) return true;
+        var data = normalAnomalyAssets.FirstOrDefault(asset => asset != null && asset.AnomalyType == LocalAnomalyType.Stasis);
+        if (data == null || !CanSpawnSite()) return false;
+        var root = new GameObject("Lab Independent Stasis Territory");
+        var site = root.AddComponent<ProductionAnomalySite>();
+        bool initialized = site.InitializeNormal(Vector2.zero, new Vector2(12, 10), data,
+            FirstSiteEvent(), events, anomalies, new Vector2(1000, 1000), .5f, explorationConfig.AnomalyTerritoryFill);
+        ClearBootstrapEvent(site);
+        if (!initialized || site.AnomalyZone == null) { site.RemoveForLayout(); return false; }
+        spawnedSites.Add(site); return true;
     }
 
     public bool SpawnPortalPair()

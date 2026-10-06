@@ -6,8 +6,8 @@ public enum TacticalMapMarkerKind
     Event,
     Objective,
     Target,
-    Corridor,
-    Breakable
+    // Value reserved for retired corridor rectangle.
+    Breakable = 4
 }
 
 public readonly struct TacticalMapMarkerDescriptor

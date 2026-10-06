@@ -64,6 +64,9 @@ internal sealed class ProductionSectorProps
                 c.GetComponentInParent<WorldBreakable>() == null && c.GetComponentInParent<EnemyHealth>() == null &&
                 c.GetComponentInParent<PlayerHealth>() == null)
                 walls.Add(c);
+        var reservedRoutes = new List<Rect>();
+        foreach (var worldEvent in Object.FindObjectsByType<WorldEvent>(FindObjectsSortMode.None))
+            worldEvent.CollectReservedFootprints(reservedRoutes);
         var entries = Profile.entries;
         var counts = new int[entries.Length];
         var sizes = new float[entries.Length];
@@ -89,6 +92,7 @@ internal sealed class ProductionSectorProps
         var bounds = area.PlayableArea.bounds;
         bool Safe(Vector2 p, float radius)
         {
+            if (reservedRoutes.Exists(rect => rect.Overlaps(new Rect(p - Vector2.one * radius,Vector2.one * radius * 2)))) return false;
             if (!area.IsInsidePlayableArea(p, radius + Mathf.Max(0, Profile.edgeClearance)) ||
                 Vector2.Distance(p, start) < radius + Mathf.Max(0, Profile.playerClearance) ||
                 Vector2.Distance(p, exit) < radius + exitRadius + Mathf.Max(0, Profile.exitClearance)) return false;

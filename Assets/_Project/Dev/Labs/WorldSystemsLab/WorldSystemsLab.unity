@@ -264,6 +264,7 @@ MonoBehaviour:
   fadeDuration: 0.35
   warningBlinkSpeed: 5
   appliedHoldDuration: 0.2
+  canvasGroup: {fileID: 0}
 --- !u!1 &41954966
 GameObject:
   m_ObjectHideFlags: 0
@@ -3921,6 +3922,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ed68f512dcb4ac198624f45218f8c02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TacticalMapHUD
+  MaxMapSize: 220
+  Cyan: {r: 0.12, g: 0.82, b: 0.92, a: 0.92}
+  EventFill: {r: 0.1, g: 0.75, b: 0.86, a: 0.95}
+  BreakableFill: {r: 0.96, g: 0.58, b: 0.14, a: 0.92}
+  BreakableBorder: {r: 1, g: 0.86, b: 0.42, a: 1}
+  NormalSiteFill: {r: 0.08, g: 0.68, b: 0.9, a: 0.2}
+  NormalSiteBorder: {r: 0.18, g: 0.88, b: 1, a: 0.95}
+  SpecialSiteFill: {r: 0.72, g: 0.12, b: 0.95, a: 0.26}
+  SpecialSiteBorder: {r: 1, g: 0.28, b: 0.95, a: 1}
+  ExitFill: {r: 0.18, g: 1, b: 0.42, a: 0.95}
+  ExitBorder: {r: 0.62, g: 1, b: 0.72, a: 1}
+  BossFill: {r: 0.95, g: 0.12, b: 0.08, a: 0.95}
+  BossBorder: {r: 1, g: 0.75, b: 0.1, a: 1}
   visibleByDefault: 1
   mapRoot: {fileID: 199502876}
   mapFrame: {fileID: 1667792681}
@@ -3928,17 +3942,27 @@ MonoBehaviour:
   anomalyRoot: {fileID: 1833123201}
   eventRoot: {fileID: 917385063}
   breakableRoot: {fileID: 767507211}
-  legendRoot: {fileID: 233350335}
-  playerLegendRow: {fileID: 1793473026}
-  normalSiteLegendRow: {fileID: 712614410}
-  specialSiteLegendRow: {fileID: 513697489}
-  exitLegendRow: {fileID: 1866802082}
-  eventLegendRow: {fileID: 1286589429}
-  breakableLegendRow: {fileID: 402423170}
-  bossLegendRow: {fileID: 0}
+  playerMarker: {fileID: 0}
+  exitMarker: {fileID: 0}
+  bossMarker: {fileID: 0}
   gameplayArea: {fileID: 1223048243}
   anomalyController: {fileID: 676399728}
   eventSpawner: {fileID: 2066529816}
+  territoryAreas: []
+  normalAreaColor: {r: 0.16, g: 0.48, b: 0.62, a: 0.22}
+  specialAreaColor: {r: 0.48, g: 0.28, b: 0.65, a: 0.25}
+  anomalyPrefab: {fileID: 0}
+  eventPrefab: {fileID: 0}
+  containerPrefab: {fileID: 0}
+  anomalySize: {x: 16, y: 16}
+  eventSize: {x: 16, y: 16}
+  portalSize: {x: 16, y: 16}
+  containerSize: {x: 12, y: 12}
+  lockedExitFill: {r: 0.25, g: 0.18, b: 0.1, a: 0.8}
+  lockedExitBorder: {r: 0.6, g: 0.34, b: 0.12, a: 0.8}
+  anomalyColors: []
+  defaultAnomalyColor: {r: 0.2, g: 0.8, b: 0.9, a: 0.85}
+  anomalyOpacity: 0.19
 --- !u!224 &1147755199
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6280,8 +6304,6 @@ MonoBehaviour:
   - {fileID: 590000000000000004, guid: c39b42a1000000000000000000000003, type: 3}
   explorationConfig: {fileID: 11400000, guid: 42a1000000000000000000000000000a, type: 2}
   propScatterProfile: {fileID: 11400000, guid: 685e6efc13ad0b846aca6d1845cbb50b, type: 2}
-  relaySupportPrefab: {fileID: 4612052548729909269, guid: 5f9d6b5987e4bc5479de3bd944c2d915, type: 3}
-  orbitalCharacter: {fileID: 11400000, guid: 6aad8e558b07e8243b3b79a85aefa335, type: 2}
   corridorRocket: {fileID: 11400000, guid: 68e9a19d0afb453ca67a96d1a51a8ee5, type: 2}
   corridorEnemy: {fileID: 1432338969431510999, guid: bbeab41e755732443b4201b8641136c9, type: 3}
   corridorRocketPrefab: {fileID: 6415994172789663665, guid: 703da712b72d21341ae48974468d51ca, type: 3}
@@ -6289,10 +6311,15 @@ MonoBehaviour:
   corridorExplosion: {fileID: 1774385019753254698, guid: f91913de896646447a357936450e42c5, type: 3}
   corridorTuning:
     font: {fileID: 11400000, guid: c804072f2f9246739b6050598e4bbf0d, type: 2}
-    routePreset: 0
-    checkpointCount: 5
+    routePreset: 3
+    routeDefinitions:
+    - {fileID: 11400000, guid: 8f1dadfa061f41979c92a4c0db8c2441, type: 2}
+    - {fileID: 11400000, guid: c903edfc878946b18a716f1e21355e11, type: 2}
+    - {fileID: 11400000, guid: de15a80c8d714c3eac796e2e45460d2e, type: 2}
+    routeSeed: 0
+    checkpointCount: 3
     corridorWidth: 8
-    segmentLength: 21
+    segmentLength: 35
     exitSegmentLength: 24
     collapseSpeed: 5
     collapseDamage: 8
@@ -6308,6 +6335,12 @@ MonoBehaviour:
     finalStrikeIntervalMultiplier: 0.75
     checkpointSfx: 92
     completionSfx: 93
+  corridorKit: {fileID: 11400000, guid: 49a1b742600515043845b44a8dec90c5, type: 2}
+  corridorPrefab: {fileID: 530000000000000004, guid: e47c3f95a8a34c18a619b70ec785f142, type: 3}
+  orbitalCharacter: {fileID: 11400000, guid: 6aad8e558b07e8243b3b79a85aefa335, type: 2}
+  relaySupportPrefab: {fileID: 4612052548729909269, guid: 5f9d6b5987e4bc5479de3bd944c2d915, type: 3}
+  relayEnemyPressure: 1
+  relayRewardQueue: 0
 --- !u!4 &2123162232
 Transform:
   m_ObjectHideFlags: 0

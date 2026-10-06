@@ -189,6 +189,19 @@ public static class WorldSystemsLabAuthoring
             corridorData.FindProperty("corridorTuning.font").objectReferenceValue =
                 AssetDatabase.LoadAssetAtPath<TMPro.TMP_FontAsset>("Assets/_Project/Fonts/Subject42 UI SDF.asset");
             corridorData.ApplyModifiedPropertiesWithoutUndo();
+            SetObject(lab, "corridorKit", AssetDatabase.LoadAssetAtPath<CorridorKit>(
+                "Assets/_Project/Data/WorldEvents/Corridor/CorridorKit.asset"));
+            corridorData.Update();
+            var definitions = corridorData.FindProperty("corridorTuning.routeDefinitions");
+            definitions.arraySize = 3;
+            string[] corridorNames = { "Straight", "L", "Zigzag" };
+            for (int routeIndex = 0; routeIndex < corridorNames.Length; routeIndex++)
+                definitions.GetArrayElementAtIndex(routeIndex).objectReferenceValue =
+                    AssetDatabase.LoadAssetAtPath<CorridorRouteDefinition>(
+                        "Assets/_Project/Data/WorldEvents/Corridor/Routes/Corridor" + corridorNames[routeIndex] + ".asset");
+            corridorData.ApplyModifiedPropertiesWithoutUndo();
+            SetObject(lab, "corridorPrefab", AssetDatabase.LoadAssetAtPath<CorridorEvent>(
+                "Assets/_Project/prefabs/Environment/WorldEvents/Corridor/PF_CorridorEvent.prefab"));
             SetArray(lab, "worldRuleAssets", FindWorldRules());
             SetArray(lab, "normalAnomalyAssets",
                 AssetDatabase.LoadAssetAtPath<ExplorationSectorConfig>(
