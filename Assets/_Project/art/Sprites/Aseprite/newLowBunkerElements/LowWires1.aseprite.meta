@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 195caadd74b256d4ea24de963f38c195
+guid: a9c47015a6a19c14dad4421941216b83
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -127,9 +127,9 @@ ScriptedImporter:
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
   animatedSpriteImportData:
-  - name: newLowBunker1
+  - name: LowWires1
     originalName: 
-    pivot: {x: 0.6956522, y: -1.1512606}
+    pivot: {x: 0.82580644, y: -0.6100629}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -137,9 +137,9 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 368
-      height: 238
-    spriteID: dd78c2250a504d944b9edeb522a14e19
+      width: 155
+      height: 159
+    spriteID: cc33e005043e8724da4d1a712fa80a58
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -153,25 +153,25 @@ ScriptedImporter:
   asepriteLayers:
   - layerIndex: 0
     uuid:
-      value0: 2007603134
+      value0: 3210687407
       value1: 0
       value2: 0
       value3: 0
     guid: 0
-    name: newLowBunker1
+    name: LowWires1
     layerFlags: 0
     layerType: 0
     blendMode: 0
     cells:
-    - name: newLowBunker1
+    - name: LowWires1
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:
         x: 0
-        y: 274
-        width: 368
-        height: 238
-      spriteId: dd78c2250a504d944b9edeb522a14e19
+        y: 97
+        width: 155
+        height: 159
+      spriteId: cc33e005043e8724da4d1a712fa80a58
     linkedCells: []
     tileCells: []
     tileSetIndex: 0
@@ -181,5 +181,5 @@ ScriptedImporter:
   generatePhysicsShape: 0
   secondarySpriteTextures: []
   spritePackingTag: 
-  canvasSize: {x: 512, y: 512}
-  previousTextureSize: {x: 512, y: 256}
+  canvasSize: {x: 256, y: 256}
+  previousTextureSize: {x: 256, y: 256}
