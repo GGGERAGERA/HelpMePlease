@@ -29,21 +29,21 @@ Shader "Subject42/Football Field"
     float2 p=floor(i.uv*count);
     float2 edge=min(p,count-1-p);
     float border=1-step(2,min(edge.x,edge.y));
-    // World-sized pixel steps keep the field crisp without a heavy debug frame.
+    // The quad is only a carrier for local, world-sized pixel effects.
     float2 fieldPoint=(p+.5-count*.5)/16;
     float radius=length(fieldPoint);
     // GravityZone advances this phase with the actual signed polarity:
     // positive moves rings inward, negative moves them outward.
-    float ring=1-step(.065,abs(frac(radius*.65+_FlowPhaseOffset)-.5));
+    float ring=(1-step(.065,abs(frac(radius*.65+_FlowPhaseOffset)-.5)))
+        *(1-step(1.35,radius));
+    float halo=1-step(.04,abs(radius-.95));
     float center=1-step(.18,radius);
     float brackets=border*(1-step(8,max(edge.x,edge.y)));
-    // The complete rectangle communicates the trigger extent at every phase.
-    // Moving rings explain polarity inside it; they never define the boundary.
-    half3 fill=lerp(_InnerColor.rgb,_EdgeColor.rgb,.18);
+    // Small corner ticks indicate trigger extent without outlining a second pitch.
+    // No rectangular fill; the room's authored floor remains fully visible.
     half3 edgeColor=lerp(_EdgeColor.rgb,half3(1,1,1),.25);
-    half3 color=lerp(fill,edgeColor,max(border,max(ring*.6,center)));
-    float alpha=max(.2,max(border*.85,max(brackets,ring*.38)));
-    return half4(color,alpha*_Fade);
+    float alpha=max(halo*.2,max(brackets*.6,max(ring*.55,center*.8)));
+    return half4(edgeColor,alpha*_Fade);
    }
    ENDHLSL
   }

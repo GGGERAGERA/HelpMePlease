@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public sealed class FootballMinigame : BunkerMinigame
 {
@@ -8,6 +9,7 @@ public sealed class FootballMinigame : BunkerMinigame
     [SerializeField] private Transform playerStart;
     private Rect savedCameraRect;
     private bool hasCameraSession;
+    private Camera framedCamera;
     private int lastScreenWidth, lastScreenHeight;
     private readonly Collider2D[] spawnOverlaps = new Collider2D[8];
     public Bounds PlayBounds => arenaBounds.bounds;
@@ -603,7 +605,12 @@ public sealed class FootballMinigame : BunkerMinigame
     {
         if (cameraFollow == null) return;
         Camera camera = cameraFollow.ControlledCamera;
-        if (!hasCameraSession) savedCameraRect = camera.rect;
+        if (!hasCameraSession)
+        {
+            savedCameraRect = camera.rect;
+            framedCamera = camera;
+            RenderPipelineManager.beginCameraRendering += ClearLetterboxTarget;
+        }
         hasCameraSession = true;
         Bounds bounds = cameraBounds.bounds;
         float arenaAspect = bounds.size.x / bounds.size.y;
@@ -627,10 +634,35 @@ public sealed class FootballMinigame : BunkerMinigame
     }
     public void RestoreCamera()
     {
-        if (!hasCameraSession || cameraFollow == null) return;
-        cameraFollow.EndWorldBoundsFocus(this);
-        cameraFollow.ControlledCamera.rect = savedCameraRect;
+        if (!hasCameraSession) return;
+        RenderPipelineManager.beginCameraRendering -= ClearLetterboxTarget;
+        cameraFollow?.EndWorldBoundsFocus(this);
+        if (framedCamera != null) framedCamera.rect = savedCameraRect;
+        framedCamera = null;
         hasCameraSession = false;
+    }
+
+    private void ClearLetterboxTarget(ScriptableRenderContext context, Camera camera)
+    {
+        if (!hasCameraSession || camera != framedCamera) return;
+        Rect viewport = camera.rect;
+        if (viewport == new Rect(0f, 0f, 1f, 1f)) return;
+
+        // URP loads the existing target outside a partial viewport. Clear the full
+        // target first so letterbox bars cannot retain the previous bunker frame.
+        var command = CommandBufferPool.Get("Football letterbox clear");
+        try
+        {
+            var target = camera.targetTexture;
+            command.SetRenderTarget(target != null
+                ? new RenderTargetIdentifier(target)
+                : new RenderTargetIdentifier(BuiltinRenderTextureType.CameraTarget));
+            command.SetViewport(new Rect(0f, 0f, target != null ? target.width : Screen.width,
+                target != null ? target.height : Screen.height));
+            command.ClearRenderTarget(false, true, Color.black);
+            context.ExecuteCommandBuffer(command);
+        }
+        finally { CommandBufferPool.Release(command); }
     }
     private void LateUpdate()
     {

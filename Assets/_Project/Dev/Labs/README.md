@@ -71,45 +71,76 @@ but never starts or creates an enemy carrier.
 
 ### Corridor V2 gameplay prototype
 
+Only `WorldSystemsLab` is changed. Production Corridor, MVP, World Event catalog,
+other events and shared rocket assets remain unchanged.
+
 Open `Tools > Subject42 > Dev > WorldSystemsLab > Open`, then enter Play Mode.
-The checked-in scene already contains its rocket/enemy asset references. If using
-an old local scene copy, use `Rebuild Scene` outside Play Mode. Production scenes,
-Corridor prefabs and rocket assets are unchanged.
+The checked-in scene includes all references; `Rebuild Scene` preserves the same defaults.
 
-- **F5** or the top-right Start button: start/restart, teleport to START and heal
-  (also revive after a lab death). Start is immediate; no interaction or holding E.
-- **F6**: select straight / L-shaped for the next run.
-- **F7**: select 0 / 90 / 180 / 270 degrees for the next run; press F5 to apply.
-- **F8**: toggle ordinary enemies immediately. OFF clears the lab crowd.
-- **WASD / arrows**: move; **Space**: existing player dash.
-- **F1**: hide/show the original left lab panel. The V2 timer stays visible.
-- **Stop / clear**: cancel the event/rockets, clear enemies, restore arena size
-  and center the player. The original lab Reset also restores scattered props.
+- **F5**: start/restart, heal/revive and teleport to START.
+- **F6**: next-run preset Straight / L / Zigzag.
+- **F7**: rotate next run 0 / 90 / 180 / 270 degrees.
+- **F8**: toggle ordinary map enemies; OFF clears the lab crowd.
+- **WASD/arrows**, **Space**: normal movement and collision-aware dash.
+- **F1**: hide/show the original left lab controls.
+- Reset through the original lab panel; completion/death also clear temporary
+  enemies, walls, visuals and pending strikes, restoring original area/bounds.
 
-Both fixed routes are 120 units long (about 20 seconds at the lab's 6 units/s,
-before dodging/dashing). The deadline is 25 seconds; reaching EXIT sooner ends
-successfully. Checkpoints at path distances 30, 60 and 90 are grey (inactive),
-cyan (next) or green (completed). Run within 3.5 units of each node in order.
-EXIT turns red to green only after all three. The panel shows time, HP, boundary
-hits and enemy count; the result records completion time, checkpoints and rockets.
+Before this pass V2 had 120-unit Straight/L routes, three fixed proximity nodes,
+visual-only damaging boundaries, three rocket patterns, a 25-second survival
+cutoff and a large debug panel. There was no collapsing rear front.
 
-Pink anomalous boundaries have **no solid colliders**: normal enemies can enter
-anywhere. Leaving costs 12 HP with existing hit knockback, then up to 12 HP/s
-outside, subject to normal player invulnerability. Returning does not reset nodes
-or grant skipped ones. A swept check catches brief corner excursions/dashes.
-This is a penalty, not a guarantee against all shortcuts between ordered nodes.
+`CorridorV2Route` now builds cardinal polyline presets from tuning. Default is
+five ordered gates, 21 units per checkpoint segment plus a 24-unit exit segment
+(129 units total). Gates are two units before bends: physically cross the NEXT
+cyan gate forwards through its central opening, with no E. Out-of-order crossings,
+reverse crossings, teleports and chords outside the route grant nothing. DONE gates
+turn green with a short pulse, camera punch and configurable SFX hook.
 
-V2 reuses `WorldEvent`/`WorldEventSpawner` for lifecycle and reward suppression,
-`RocketForeshadow`/`RocketHazardDefinition.CreateAttack` (`IWorldHazardAttack`,
-`RocketAttackRunner`, existing warning/pool/explosion) for centre, two-side gap and
-left-to-right patterns, and `EnemySpawner.ConfigureDebugExplorationPressure` with
-`p_Enemy_default`/its normal chase AI. The run-only `WorldHazardDirector` is not
-started. The old moving `EvacuationCorridorEvent` remains available unchanged.
-Only while testing V2, lab arena/bounds are scaled to 160 units and unrelated
-anomalies/portals/props are cleared. Existing rewards/weapon systems are not added.
+After the first checkpoint, a bright pulsing jagged magenta front continuously
+advances along the route. A red trail marks reclaimed space. Camping just after a
+checkpoint is unsafe too. Behind the front, periodic small damage and existing
+knockback apply; there is no invisible instant death. After the final gate, FINAL
+PUSH lasts at least 3.5 seconds, accelerating collapse and shortening strike spacing.
+EXIT changes from locked red to yellow (final) to pulsing green. Success requires
+all gates, the final phase, and physically reaching EXIT; elapsed time alone never
+completes or fails the event. Completion has a brief exit pulse/SFX/punch.
 
-Manual checks: try both layouts/rotations; run straight to EXIT before nodes;
-cut the L corner; leave and return before/after a node; dodge the centre/pair/sweep;
-watch enemies cross the pink border; restart during a warning; let time expire;
-restart after death. Assess time pressure and rocket difficulty in Play Mode.
-No automated combat/bot batches are needed for this prototype.
+Boundaries are the exposed union of segment capsules. Their EdgeCollider2D overrides
+include only the player's solid-collider layers and exclude everything else, with
+priority 100. Ordinary enemies retain their existing Enemy-layer colliders and chase
+AI, passing both ways. No global physics matrix, enemy movement or difficulty edits.
+The player's existing dash checks the same collision pair rules.
+
+`CorridorV2Strikes` uses existing `RocketAttackRunner`, warning visual, pooled rocket,
+explosion and damage. The first segment is quiet; subsequent deterministic patterns:
+
+- SINGLE: one warning ahead on the route.
+- SIDE GAP: two warnings with a safe middle passage.
+- CROSS BLOCK: adjacent warnings on alternating sides, leaving the other side free.
+- CHASE: three staggered warnings from behind towards the player's sampled position.
+
+Every strike has a warning, delay, falling rocket and impact FX; no random spam.
+Radius is limited relative to width so SIDE GAP remains passable when tuning narrows
+the route. The short impact shake only fires on impact, not throughout the event.
+
+Expand **Corridor Tuning** on `WorldSystemsLabController` in the scene Inspector.
+Parameters are snapshotted at F5; scene Inspector edits persist, Play Mode edits are
+for the next run. Core tuning: `routePreset`, `checkpointCount`, `corridorWidth`,
+`segmentLength`, `collapseSpeed`, `collapseDamage`, `strikeInterval`,
+`strikeTelegraphTime`, `finalPushDuration`, `finalCollapseMultiplier`. Also exposed:
+`exitSegmentLength`, `collapseDamageInterval`, `strikeFallTime`, `strikeDamage`,
+`strikeRadius`, `chaseSpacingTime`, `finalStrikeIntervalMultiplier`, font and SFX hooks.
+
+Prototype responsibilities are separate: settings, route/order, event lifecycle and
+pressure, presentation/walls, strike schedule, lab controls. Procedural floor/walls,
+gates/TMP labels, collapse and compact IMGUI HUD remain lab-only; the transient event
+template is registered by the existing spawner, not added to the production catalog.
+
+Targeted verification: `CorridorV2Tests` only, results/screenshots under
+`Artifacts/GeneratedQA/CorridorV2/`. Covers every preset, ordered physical gate
+crossings, locked Exit, real player/dash blocking and normal enemy chase inward/outward,
+pressure damage, all four strike telegraphs, one default-speed traversal with ordinary
+enemies, Final Push, completion/reset/death cleanup and restart. The traversal smoke
+uses additional health because deterministic steering does not dodge; assess combat
+feel manually. Golden Path, Batch Runner and standalone build are not run.

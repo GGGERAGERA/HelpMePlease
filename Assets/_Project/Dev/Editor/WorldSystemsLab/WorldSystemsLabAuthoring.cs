@@ -179,6 +179,16 @@ public static class WorldSystemsLabAuthoring
                 "Assets/_Project/Data/WorldHazards/RocketForeshadow.asset"));
             SetObject(lab, "corridorEnemy", AssetDatabase.LoadAssetAtPath<GameObject>(
                 "Assets/_Project/prefabs/Enemies/p_Enemy_default.prefab"));
+            SetObject(lab, "corridorRocketPrefab", AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/prefabs/fx/p_fxRocket1.prefab"));
+            SetObject(lab, "corridorStrikeMarker", AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/prefabs/fx/fx_BossTaget1.prefab"));
+            SetObject(lab, "corridorExplosion", AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/prefabs/fx/fx_BomberExplosion.prefab").GetComponent<ParticleSystem>());
+            var corridorData = new SerializedObject(lab);
+            corridorData.FindProperty("corridorTuning.font").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<TMPro.TMP_FontAsset>("Assets/_Project/Fonts/Subject42 UI SDF.asset");
+            corridorData.ApplyModifiedPropertiesWithoutUndo();
             SetArray(lab, "worldRuleAssets", FindWorldRules());
             SetArray(lab, "normalAnomalyAssets",
                 AssetDatabase.LoadAssetAtPath<ExplorationSectorConfig>(

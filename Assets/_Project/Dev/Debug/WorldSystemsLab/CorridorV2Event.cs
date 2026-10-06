@@ -1,246 +1,115 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System.Collections.Generic;
 using UnityEngine;
-
 // Intentionally separate from the production moving EvacuationCorridorEvent.
 public sealed class CorridorV2Event : WorldEvent
 {
-    public const float Duration = 25f;
     public CorridorV2Route Route { get; private set; }
-    public float Remaining { get; private set; } = Duration;
+    public CorridorV2Settings Settings { get; private set; }
+    public float Elapsed { get; private set; }
     public string Result { get; private set; } = "Ready";
-    public string Pattern { get; private set; } = "Centre / gap / sweep";
-    public bool Outside { get; private set; }
+    public string Pattern => strikes == null ? "Quiet first segment" : strikes.Pattern.ToString();
+    public float CollapseDistance { get; private set; }
+    public bool IsFinalPush => Route != null && Route.ExitOpen;
+    public float FinalPushRemaining { get; private set; }
+    public bool ExitReady => IsFinalPush && FinalPushRemaining <= 0;
+    public bool UnderPressure { get; private set; }
     public int BoundaryHits { get; private set; }
-    public int RocketsLaunched { get; private set; }
+    public int RocketsLaunched => strikes?.Launched ?? 0;
+    public IReadOnlyList<Collider2D> Walls => presentation.Walls;
     public System.Action<string> Finished;
-
+    public event System.Action<int> CheckpointPassed;
     private Transform player;
     private PlayerHealth health;
-    private Material material;
-    private readonly List<IWorldHazardAttack> attacks = new();
-    private readonly List<LineRenderer> nodes = new();
-    private readonly List<TextMesh> labels = new();
-    private LineRenderer exit;
+    private Rigidbody2D playerBody;
+    private CorridorV2Presentation presentation;
+    private CorridorV2Strikes strikes;
     private Vector2 previous;
-    private float damageCooldown, patternTimer = 1f, sweepTimer;
-    private int patternIndex, sweepIndex = -1;
-    private Vector2 sweepCenter, sweepSide;
+    private float damageCooldown, finishing = -1;
     private bool cleaned;
-
-    public void Configure(Transform target, bool bent, int turns, RocketHazardDefinition rocket)
+    public void Configure(Transform target, CorridorV2Settings settings, int turns,
+        GameObject rocket, GameObject marker, ParticleSystem explosion)
     {
-        player = target;
-        health = target.GetComponent<PlayerHealth>();
-        Route = new CorridorV2Route(bent, turns);
-        transform.position = Route.Vertices[0];
-        previous = player.position;
-        for (int i = 0; i < 3; i++) attacks.Add(rocket.CreateAttack(this));
-        material = new Material(Shader.Find("Sprites/Default"));
-        BuildVisuals();
+        player = target; health = target.GetComponent<PlayerHealth>(); playerBody = target.GetComponent<Rigidbody2D>();
+        Settings = settings.Snapshot(); Route = new CorridorV2Route(Settings, turns);
+        transform.position = Route.Vertices[0]; previous = PlayerPosition;
+        int playerLayers = 0;
+        foreach (var collider in player.GetComponentsInChildren<Collider2D>(true))
+            if (!collider.isTrigger) playerLayers |= 1 << collider.gameObject.layer;
+        presentation = new CorridorV2Presentation(transform, Route, playerLayers, Settings.font);
+        strikes = new CorridorV2Strikes(this, Route, Settings, rocket, marker, explosion);
+        FinalPushRemaining = Mathf.Max(0, Settings.finalPushDuration);
     }
-
-    protected override void OnEventStarted()
-    {
-        Result = "Running";
-        previous = player.position;
-    }
-
+    private Vector2 PlayerPosition => playerBody != null ? playerBody.position : (Vector2)player.position;
+    protected override void OnEventStarted() { Result = "Running"; previous = PlayerPosition; }
     private void Update()
     {
         if (!IsStarted || IsCompleted || Time.timeScale <= 0f) return;
-        if (player == null || health == null || health.IsDead)
+        if (player == null || health == null || health.IsDead) { End(false, "Player down"); return; }
+        float delta = Time.deltaTime; Elapsed += delta;
+        Vector2 position = PlayerPosition;
+        if (finishing >= 0)
         {
-            End(false, "Player down");
+            finishing -= delta; presentation.Tick(delta, CollapseDistance, true, true);
+            if (finishing <= 0) End(true, $"EXIT reached in {Elapsed:F1}s");
             return;
         }
-        Remaining = Mathf.Max(0, Remaining - Time.deltaTime);
-        if (Remaining <= 0) { End(false, "Time expired"); return; }
-
-        Vector2 position = player.position;
-        Outside = !Route.Contains(position);
-        damageCooldown -= Time.deltaTime;
-        bool crossedOutside = Route.Contains(previous) && !Route.StaysInside(previous, position);
-        if ((Outside || crossedOutside) && damageCooldown <= 0)
+        if (Route.TryAdvance(previous, position))
         {
-            Route.Project(position, out Vector2 nearest);
-            if (health.TakeDamage(12f, (position - nearest).normalized))
+            presentation.CheckpointPulse();
+            CameraShake.Instance?.Shake(.1f, .045f);
+            AudioService.Instance?.PlayAt(Settings.checkpointSfx, position);
+            CheckpointPassed?.Invoke(Route.Completed);
+            if (IsFinalPush) presentation.Refresh(ExitReady);
+        }
+        previous = position;
+        if (IsFinalPush)
+        {
+            FinalPushRemaining = Mathf.Max(0, FinalPushRemaining - delta);
+            presentation.Refresh(ExitReady);
+        }
+        if (Route.Completed > 0)
+        {
+            // Once started, the front keeps advancing; camping just beyond a gate is unsafe.
+            CollapseDistance = Mathf.Min(Route.Length, CollapseDistance + delta * Mathf.Max(.1f, Settings.collapseSpeed) *
+                (IsFinalPush ? Mathf.Max(1, Settings.finalCollapseMultiplier) : 1f));
+        }
+        float along = Route.Project(position, out _);
+        UnderPressure = Route.Completed > 0 && along <= CollapseDistance + .5f;
+        damageCooldown -= delta;
+        if (UnderPressure && Settings.collapseDamage > 0 && damageCooldown <= 0)
+        {
+            Route.Point(CollapseDistance, out Vector2 direction);
+            if (health.TakeDamage(Settings.collapseDamage, direction))
             {
-                BoundaryHits++;
-                damageCooldown = 1f;
+                BoundaryHits++; damageCooldown = Mathf.Max(.65f, Settings.collapseDamageInterval);
             }
         }
-        if (Route.TryAdvance(previous, position)) RefreshNodes();
-        previous = position;
-        if (Route.ExitOpen && !Outside &&
-            Vector2.Distance(position, Route.Point(CorridorV2Route.Length, out _)) < 2.5f)
+        if (ExitReady && Route.Contains(position) &&
+            Vector2.Distance(position, Route.Point(Route.Length, out _)) < 2f)
         {
-            End(true, $"EXIT reached in {Duration - Remaining:F1}s");
+            finishing = .45f; strikes.Cancel();
+            CameraShake.Instance?.Shake(.16f, .09f);
+            AudioService.Instance?.PlayAt(Settings.completionSfx, position);
+            presentation.Tick(delta, CollapseDistance, true, true);
             return;
         }
-        foreach (var attack in attacks)
-            attack.Tick(Time.deltaTime, () => isActiveAndEnabled && !IsCompleted && health != null && !health.IsDead);
-        UpdatePatterns();
+        strikes.Tick(delta, position, Route.Completed > 0, IsFinalPush,
+            () => isActiveAndEnabled && !IsCompleted && health != null && !health.IsDead);
+        presentation.Tick(delta, CollapseDistance, ExitReady, false);
     }
-
-    private void UpdatePatterns()
-    {
-        if (sweepIndex >= 0)
-        {
-            sweepTimer -= Time.deltaTime;
-            if (sweepTimer > 0) return;
-            Launch(sweepIndex, sweepCenter + sweepSide * ((1 - sweepIndex) * 2.5f));
-            sweepTimer = .4f;
-            if (++sweepIndex == 3) sweepIndex = -1;
-            return;
-        }
-        patternTimer -= Time.deltaTime;
-        if (patternTimer > 0 || attacks.Exists(attack => attack.IsBusy)) return;
-        float along = Route.Project(player.position, out _);
-        // Aim ahead along the polyline, including around its corner.
-        Vector2 center = Route.Point(Mathf.Min(along + 12f, 117f), out Vector2 forward);
-        Vector2 side = new(-forward.y, forward.x);
-        switch (patternIndex++ % 3)
-        {
-            case 0:
-                Pattern = "CENTRE - use either side";
-                Launch(0, center);
-                break;
-            case 1:
-                Pattern = "PAIR - safe middle gap";
-                Launch(0, center - side * 2.8f);
-                Launch(1, center + side * 2.8f);
-                break;
-            default:
-                Pattern = "SWEEP - left to right";
-                sweepCenter = center; sweepSide = side;
-                sweepIndex = 0; sweepTimer = 0;
-                break;
-        }
-        patternTimer = 3.4f;
-    }
-
-    private void Launch(int index, Vector2 position)
-    {
-        if (attacks[index].TryStart(position)) RocketsLaunched++;
-    }
-
     private void End(bool success, string message)
     {
-        Result = $"{message} | CP {Route.Completed}/3 | boundary hits {BoundaryHits} | rockets {RocketsLaunched}";
+        Result = $"{message} | CP {Route.Completed}/{Route.CheckpointCount} | pressure hits {BoundaryHits} | rockets {RocketsLaunched}";
         Finished?.Invoke(Result);
         if (success) CompleteEvent();
-        else
-        {
-            FailEvent();
-            Destroy(gameObject);
-        }
+        else { FailEvent(); Destroy(gameObject); }
     }
-
     protected override void CleanupEvent()
     {
-        if (cleaned) return;
-        cleaned = true;
-        foreach (var attack in attacks) attack.Dispose();
-        attacks.Clear();
-        // FailEvent leaves the event instance alive, but temporary borders must end.
-        foreach (Transform child in transform) child.gameObject.SetActive(false);
-        if (material != null) Destroy(material);
+        if (cleaned) return; cleaned = true;
+        strikes?.Dispose(); presentation?.Dispose();
     }
-
-    private void OnDisable()
-    {
-        foreach (var attack in attacks) attack.Cancel();
-    }
-
-    private LineRenderer Line(string name, Vector2[] points, float width, Color color, int order)
-    {
-        var item = new GameObject(name);
-        item.transform.SetParent(transform, false);
-        var line = item.AddComponent<LineRenderer>();
-        line.sharedMaterial = material;
-        line.useWorldSpace = true;
-        line.widthMultiplier = width;
-        line.startColor = line.endColor = color;
-        line.positionCount = points.Length;
-        line.sortingOrder = order;
-        line.sortingLayerName = "Midground";
-        for (int i = 0; i < points.Length; i++) line.SetPosition(i, points[i]);
-        return line;
-    }
-
-    private void Label(string text, Vector2 position)
-    {
-        var item = new GameObject(text);
-        item.transform.SetParent(transform, false);
-        item.transform.position = position;
-        var label = item.AddComponent<TextMesh>();
-        label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        label.GetComponent<MeshRenderer>().sharedMaterial = label.font.material;
-        label.text = text;
-        label.characterSize = .3f;
-        label.fontSize = 36;
-        label.anchor = TextAnchor.MiddleCenter;
-        label.GetComponent<MeshRenderer>().sortingOrder = 15;
-        label.GetComponent<MeshRenderer>().sortingLayerName = "Midground";
-        labels.Add(label);
-    }
-
-    private void BuildVisuals()
-    {
-        var fill = Line("Route floor", Route.Vertices, 8f, new Color(.08f, .24f, .3f, .6f), -5);
-        fill.numCornerVertices = fill.numCapVertices = 16;
-        // Draw only the exposed boundary of the union of segment capsules.
-        // No colliders: enemies can enter anywhere, player can emergency-exit.
-        for (int segment = 1; segment < Route.Vertices.Length; segment++)
-        {
-            Vector2 a = Route.Vertices[segment - 1], b = Route.Vertices[segment];
-            Vector2 forward = (b - a).normalized;
-            Vector2 side = new Vector2(-forward.y, forward.x) * CorridorV2Route.HalfWidth;
-            for (int sign = -1; sign <= 1; sign += 2)
-                for (float d = 0; d < Vector2.Distance(a, b); d += 1f)
-                    Border(a + forward * d + side * sign, a + forward * (d + 1f) + side * sign);
-        }
-        foreach (Vector2 vertex in Route.Vertices)
-            for (int i = 0; i < 64; i++)
-            {
-                float a = i * Mathf.PI * 2 / 64, b = (i + 1) * Mathf.PI * 2 / 64;
-                Border(vertex + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * 4,
-                    vertex + new Vector2(Mathf.Cos(b), Mathf.Sin(b)) * 4);
-            }
-        for (int i = 0; i < 3; i++)
-        {
-            Vector2 p = Route.Point(30f * (i + 1), out Vector2 forward);
-            Vector2 side = new(-forward.y, forward.x);
-            nodes.Add(Line($"CP {i + 1}", new[] { p - side * 3.5f, p + side * 3.5f }, .4f, Color.gray, 12));
-            Label($"CP {i + 1}", p + Vector2.up * 1.3f);
-        }
-        Vector2 end = Route.Point(120, out Vector2 direction);
-        Vector2 normal = new(-direction.y, direction.x);
-        exit = Line("EXIT", new[] { end - normal * 3.5f, end + normal * 3.5f }, .7f, Color.red, 12);
-        Label("EXIT LOCKED", end + Vector2.up * 1.8f);
-        RefreshNodes();
-    }
-
-    private void Border(Vector2 a, Vector2 b)
-    {
-        Vector2 middle = (a + b) * .5f;
-        Route.Project(middle, out Vector2 nearest);
-        if (Vector2.Distance(middle, nearest) < 3.97f) return;
-        Line("Anomalous boundary (12 damage)", new[] { a, b }, .16f, new Color(1f, .15f, .7f), 8);
-    }
-
-    private void RefreshNodes()
-    {
-        for (int i = 0; i < nodes.Count; i++)
-        {
-            Color color = i < Route.Completed ? Color.green : i == Route.Completed ? Color.cyan : Color.gray;
-            nodes[i].startColor = nodes[i].endColor = color;
-            labels[i].color = color;
-            labels[i].text = $"CP {i + 1}: " + (i < Route.Completed ? "DONE" : i == Route.Completed ? "NEXT" : "INACTIVE");
-        }
-        exit.startColor = exit.endColor = Route.ExitOpen ? Color.green : Color.red;
-        labels[3].text = Route.ExitOpen ? "EXIT OPEN" : "EXIT LOCKED";
-    }
+    private void OnDisable() => strikes?.Cancel();
 }
 #endif

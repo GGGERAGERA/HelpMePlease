@@ -78,6 +78,7 @@ public static class OrbitalRelayAuthoring
             var round = AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GUIDToAssetPath("ceb8225d9461f5a4bbe86004909390d0")).OfType<Sprite>().First();
             var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(AssetDatabase.GUIDToAssetPath("c804072f2f9246739b6050598e4bbf0d"));
             AuthorEntrance(root, material, round, font);
+            OrbitalRelayPresentationAuthoring.Apply(root);
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
         }
         finally { PrefabUtility.UnloadPrefabContents(root); }
@@ -191,26 +192,10 @@ public static class OrbitalRelayAuthoring
                 Set(nodes[i], "contactArea", area); Set(nodes[i], "core", core); Set(nodes[i], "activeGlow", glow);
                 Set(nodes[i], "progressFill", fill.transform); Set(nodes[i], "activation", Animate(fx, activationClip, true));
             }
-            var transitionRoot = Child(root.transform, "TransitionFX"); var shockwave = Child(transitionRoot.transform, "Shockwave");
-            Ring(shockwave, material, .08f); shockwave.transform.localScale = Vector3.zero;
-            var canvasRoot = Child(root.transform, "PresentationCanvas", true); var canvas = canvasRoot.AddComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 90;
-            var scaler = canvasRoot.AddComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1920, 1080);
-            var panel = Child(canvasRoot.transform, "RelayPanel", true); var rect = (RectTransform)panel.transform;
-            rect.anchorMin = rect.anchorMax = new Vector2(1, 1); rect.pivot = new Vector2(1, 1); rect.anchoredPosition = new Vector2(-32, -70); rect.sizeDelta = new Vector2(420, 300);
-            var background = panel.AddComponent<Image>(); background.color = new Color(.015f, .06f, .085f, .9f); background.raycastTarget = false;
-            var phase = Label(panel.transform, "Phase", -12, font, 27); var time = Label(panel.transform, "Time", -62, font, 36);
-            var score = Label(panel.transform, "Activations", -114, font, 24); var gold = Label(panel.transform, "Gold", -160, font, 24); var comboLabel = Label(panel.transform, "Combo", -212, font, 24);
-            var flash = Child(canvasRoot.transform, "Flash", true); var flashRect = (RectTransform)flash.transform;
-            flashRect.anchorMin = Vector2.zero; flashRect.anchorMax = Vector2.one; flashRect.sizeDelta = Vector2.zero;
-            var flashImage = flash.AddComponent<Image>(); flashImage.color = new Color(.3f, 1, .9f); flashImage.raycastTarget = false; flash.AddComponent<CanvasGroup>().alpha = 0;
-            var banner = Label(canvasRoot.transform, "StabilizedBanner", -420, font, 64); banner.text = "STABILIZED"; banner.rectTransform.sizeDelta = new Vector2(900, 120); banner.gameObject.AddComponent<CanvasGroup>().alpha = 0;
-            var localBanner = banner.gameObject.AddComponent<LocalizedText>(); Set(localBanner, "localizationKey", "event.relay.stabilized");
-            Set(presentation, "panel", panel); Set(presentation, "phaseLabel", phase); Set(presentation, "timeLabel", time); Set(presentation, "activationsLabel", score);
-            Set(presentation, "goldLabel", gold); Set(presentation, "comboLabel", comboLabel); Set(presentation, "flashOverlay", flashImage);
-            Set(presentation, "transitionFx", Animate(root, transition, true)); Set(presentation, "comboFx", Animate(comboLabel.gameObject, combo, true)); Set(presentation, "urgentFx", Animate(time.gameObject, urgent, false));
             Set(relay, "config", config); Set(relay, "arenaBounds", bounds); Set(relay, "nodes", nodes); Set(relay, "presentation", presentation); Set(relay, "pressure", pressure); Set(relay, "markerAnchor", marker); Set(relay, "rewardAnchor", reward);
             Set(relay, "eventId", "orbital_relay"); Set(relay, "eventTag", "hold_zone"); Set(relay, "eventDisplayName", "event.relay.name"); Set(relay, "eventDescription", "event.relay.description"); Set(relay, "allowedInSite", true); Set(relay, "requiresHoldPointFeature", true); Set(relay, "promptText", "hud.interact");
             AuthorEntrance(root, material, round, font);
+            OrbitalRelayPresentationAuthoring.Apply(root);
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
