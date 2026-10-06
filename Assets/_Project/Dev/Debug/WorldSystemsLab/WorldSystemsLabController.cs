@@ -33,6 +33,10 @@ public sealed class WorldSystemsLabController : MonoBehaviour
     [Header("Corridor V2 prototype only")]
     [SerializeField] private RocketHazardDefinition corridorRocket;
     [SerializeField] private GameObject corridorEnemy;
+    [SerializeField] private GameObject corridorRocketPrefab;
+    [SerializeField] private GameObject corridorStrikeMarker;
+    [SerializeField] private ParticleSystem corridorExplosion;
+    [SerializeField] private CorridorV2Settings corridorTuning = new();
     private CorridorV2Lab corridorV2;
 
     [Header("Production Orbital Relay bootstrap")]
@@ -81,7 +85,8 @@ public sealed class WorldSystemsLabController : MonoBehaviour
         tacticalMap?.BindPlayer(player);
         BuildProductionProps();
         corridorV2 = gameObject.AddComponent<CorridorV2Lab>();
-        corridorV2.Initialize(this, gameplayArea, corridorRocket, corridorEnemy);
+        corridorV2.Initialize(this, gameplayArea, corridorRocketPrefab, corridorStrikeMarker,
+            corridorExplosion, corridorEnemy, corridorTuning);
     }
 
     private void Update()

@@ -6,7 +6,10 @@ public sealed class CorridorV2Lab : MonoBehaviour
 {
     private WorldSystemsLabController lab;
     private GameplayAreaService area;
-    private RocketHazardDefinition rocket;
+    private GameObject rocket, marker;
+    private ParticleSystem explosion;
+    public CorridorV2Settings Tuning { get; private set; }
+    public CorridorV2Event Current => current;
     private GameObject enemyPrefab;
     private EnemySpawner enemies;
     private CorridorV2Event current;
@@ -16,14 +19,16 @@ public sealed class CorridorV2Lab : MonoBehaviour
     private bool[] spriteEnabled;
     private bool movementEnabled;
     private Vector3 areaScale, boundsScale;
-    private bool expanded, bent, crowd = true;
+    private bool expanded, crowd = true;
     private int turns;
     private string status = "F5: start Corridor V2";
 
     public void Initialize(WorldSystemsLabController owner, GameplayAreaService gameplayArea,
-        RocketHazardDefinition rocketAsset, GameObject normalEnemy)
+        GameObject rocketAsset, GameObject markerAsset, ParticleSystem explosionAsset,
+        GameObject normalEnemy, CorridorV2Settings settings)
     {
-        lab = owner; area = gameplayArea; rocket = rocketAsset; enemyPrefab = normalEnemy;
+        lab = owner; area = gameplayArea; rocket = rocketAsset; marker = markerAsset;
+        explosion = explosionAsset; enemyPrefab = normalEnemy; Tuning = settings;
         playerHealth = lab.Player.GetComponent<PlayerHealth>();
         playerSprites = lab.Player.GetComponentsInChildren<SpriteRenderer>(true);
         spriteEnabled = playerSprites.Select(sprite => sprite.enabled).ToArray();
@@ -34,7 +39,7 @@ public sealed class CorridorV2Lab : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.F6)) bent = !bent;
+        if (Input.GetKeyDown(KeyCode.F6)) Tuning.routePreset = (CorridorV2Preset)(((int)Tuning.routePreset + 1) % 3);
         if (Input.GetKeyDown(KeyCode.F7)) turns = (turns + 1) % 4;
         if (Input.GetKeyDown(KeyCode.F8)) SetCrowd(!crowd);
         if (Input.GetKeyDown(KeyCode.F5)) StartCorridor();
@@ -42,7 +47,7 @@ public sealed class CorridorV2Lab : MonoBehaviour
 
     public void StartCorridor()
     {
-        if (rocket == null || !rocket.IsConfigured || enemyPrefab == null || lab.Player == null || area == null || bounds == null)
+        if (rocket == null || marker == null || explosion == null || enemyPrefab == null || lab.Player == null || area == null || bounds == null)
         {
             status = "Missing lab references. Rebuild WorldSystemsLab from Tools menu.";
             return;
@@ -50,8 +55,11 @@ public sealed class CorridorV2Lab : MonoBehaviour
         lab.PrepareCorridorV2();
         areaScale = area.transform.localScale;
         boundsScale = bounds.localScale;
-        area.transform.localScale = areaScale * 1.6f;
-        bounds.localScale = boundsScale * 1.6f;
+        var route = new CorridorV2Route(Tuning, turns);
+        float extent = route.Vertices.Max(p => Mathf.Max(Mathf.Abs(p.x), Mathf.Abs(p.y))) + route.HalfWidth + 15f;
+        float expansion = Mathf.Max(1.6f, extent / 50f);
+        area.transform.localScale = areaScale * expansion;
+        bounds.localScale = boundsScale * expansion;
         expanded = true;
 
         // A transient template lets the existing spawner own registration,
@@ -66,7 +74,6 @@ public sealed class CorridorV2Lab : MonoBehaviour
         if (!spawned) { Stop(); status = "Event spawner rejected Corridor V2"; return; }
 
         current = (CorridorV2Event)instance;
-        var route = new CorridorV2Route(bent, turns);
         var playerBody = lab.Player.GetComponent<Rigidbody2D>();
         lab.Player.position = route.Vertices[0];
         if (playerBody != null)
@@ -83,11 +90,11 @@ public sealed class CorridorV2Lab : MonoBehaviour
         }
         else playerHealth.Heal(playerHealth.MaxHealth);
         Physics2D.SyncTransforms();
-        current.Configure(lab.Player, bent, turns, rocket);
+        current.Configure(lab.Player, Tuning, turns, rocket, marker, explosion);
         current.Finished = message =>
         {
+            Stop(); // Completion/death releases the same lab leases as an explicit reset.
             status = message;
-            enemies?.StopDebugExplorationPressure();
         };
         current.gameObject.SetActive(true);
         current.StartEvent();
@@ -97,7 +104,7 @@ public sealed class CorridorV2Lab : MonoBehaviour
             status = "Could not start event. Check the active event/tutorial state.";
             return;
         }
-        status = $"{(bent ? "L" : "Straight")} / {turns * 90} degrees / 120 units / 25s";
+        status = $"{Tuning.routePreset} / {turns * 90} degrees / {route.Length:F0} units";
         SetCrowd(crowd);
     }
 
@@ -117,7 +124,7 @@ public sealed class CorridorV2Lab : MonoBehaviour
             enemies.StopSpawning();
         }
         enemies.ResetForNewLevel();
-        enemies.ConfigureDebugExplorationPressure(new[] { enemyPrefab }, .7f, 36, 1, 9f, 15f);
+        enemies.ConfigureDebugExplorationPressure(new[] { enemyPrefab }, 1f, 24, 1, 9f, 15f);
     }
 
     public void Stop()
@@ -125,40 +132,48 @@ public sealed class CorridorV2Lab : MonoBehaviour
         if (current != null) current.Finished = null;
         // Event removal is owned by WorldSystemsLabController.ClearEvents.
         current = null;
-        enemies?.StopDebugExplorationPressure();
-        enemies?.ClearDebugSpawnedEnemies();
+        if (enemies != null)
+        {
+            enemies.StopDebugExplorationPressure();
+            enemies.ClearDebugSpawnedEnemies();
+        }
         if (expanded)
         {
-            area.transform.localScale = areaScale;
-            bounds.localScale = boundsScale;
+            if (area != null) area.transform.localScale = areaScale;
+            if (bounds != null) bounds.localScale = boundsScale;
             expanded = false;
-            lab.TeleportPlayerCenter();
+            if (lab != null && lab.Player != null && area != null) lab.TeleportPlayerCenter();
         }
         status = "Stopped / F5 to restart";
     }
 
     private void OnGUI()
     {
-        float width = Mathf.Min(355f, Screen.width * .45f);
-        GUILayout.BeginArea(new Rect(Screen.width - width - 8, 8, width, 285), GUI.skin.box);
-        GUILayout.Label("CORRIDOR V2 - GAMEPLAY PROTOTYPE");
-        GUILayout.Label($"Next run: {(bent ? "L-shaped" : "Straight")} / {turns * 90} degrees");
-        GUILayout.BeginHorizontal();
-        if (GUILayout.Button("F6: layout")) bent = !bent;
-        if (GUILayout.Button("F7: rotate")) turns = (turns + 1) % 4;
-        GUILayout.EndHorizontal();
-        if (GUILayout.Button("F5: start / restart (heal)")) StartCorridor();
-        if (GUILayout.Button($"F8: normal enemies {(crowd ? "ON" : "OFF")}")) SetCrowd(!crowd);
-        if (GUILayout.Button("Stop / clear")) lab.ClearEvents();
+        float width = Mathf.Min(310f, Screen.width * .4f);
+        bool active = current != null && current.IsStarted && !current.IsCompleted;
+        var previousFont = GUI.skin.font;
+        var previousColor = GUI.color;
+        if (Tuning.font != null && Tuning.font.sourceFontFile != null) GUI.skin.font = Tuning.font.sourceFontFile;
+        GUI.color = new Color(.45f, 1f, .9f);
+        GUILayout.BeginArea(new Rect(Screen.width - width - 8, 8, width, active ? 115 : 160), GUI.skin.box);
+        GUILayout.Label("CORRIDOR");
         if (current != null && current.IsStarted && !current.IsCompleted)
         {
-            GUILayout.Label($"TIME {current.Remaining:F1}s   CP {current.Route.Completed}/3   EXIT {(current.Route.ExitOpen ? "OPEN" : "LOCKED")}");
-            GUILayout.Label($"HP {playerHealth.CurrentHealth:F0} | boundary hits {current.BoundaryHits} | enemies {enemies?.DebugTrackedEnemyCount ?? 0}");
-            GUILayout.Label(current.Outside ? "OUTSIDE: 12 damage/sec - return to route!" : current.Pattern);
+            GUILayout.Label(current.IsFinalPush ? (current.ExitReady ? "FINAL PUSH / REACH EXIT" : "FINAL PUSH") :
+                $"CHECKPOINT {current.Route.Completed} / {current.Route.CheckpointCount}");
+            GUILayout.Label(current.UnderPressure ? "COLLAPSE: MOVE FORWARD" :
+                current.IsFinalPush ? "KEEP MOVING / REACH EXIT" : "Follow the cyan gate");
         }
-        GUILayout.Label(status, new GUIStyle(GUI.skin.label) { wordWrap = true });
-        GUILayout.Label("WASD/arrows: move. Space: dash. F1: hide left panel.");
+        else
+        {
+            GUILayout.Label($"{Tuning.routePreset} / {turns * 90} degrees / enemies {(crowd ? "ON" : "OFF")}");
+            if (GUILayout.Button("F5: start / restart")) StartCorridor();
+            GUILayout.Label(status, new GUIStyle(GUI.skin.label) { wordWrap = true });
+        }
+        GUILayout.Label("F5 restart  F6 route  F7 rotate  F8 enemies");
         GUILayout.EndArea();
+        GUI.color = previousColor;
+        GUI.skin.font = previousFont;
     }
 }
 #endif
