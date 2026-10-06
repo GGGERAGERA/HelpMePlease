@@ -25,6 +25,9 @@ public sealed class OrbitalRelayEvent : WorldEvent
     public OrbitalRelayNode ActiveNode => Snapshot.ActiveNodeIndex >= 0 && nodes != null && Snapshot.ActiveNodeIndex < nodes.Length
         ? nodes[Snapshot.ActiveNodeIndex] : null;
     public float ArenaRadius => arenaBounds != null ? arenaBounds.radius * Mathf.Abs(arenaBounds.transform.lossyScale.x) : 0;
+    // Read-only presentation data: base placement limits, not a per-node validity mask.
+    public CircleCollider2D ArenaBounds => arenaBounds;
+    public Vector2 BaseNodeSpawnRange => new(nodeMinRadius, nodeMaxRadius);
     public bool IsPlayerInside { get; private set; }
     public bool IsPlayerInStartZone { get; private set; }
     public int RequiredActivations => config != null ? config.requiredActivations : 0;
