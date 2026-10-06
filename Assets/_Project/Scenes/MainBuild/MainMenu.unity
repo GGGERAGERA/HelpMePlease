@@ -4278,6 +4278,7 @@ Transform:
   - {fileID: 882776975}
   - {fileID: 1198603358}
   - {fileID: 818562894}
+  - {fileID: 8360501568639526997}
   m_Father: {fileID: 919307881909683320}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &344973054
@@ -22367,7 +22368,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -23064,7 +23065,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5d81fa724ea685343af8bbf9467f5815, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractor
 --- !u!1 &1912144475
 GameObject:
@@ -23901,6 +23902,63 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 09577ddc68b6a3b4b9ebef82d7921d04, type: 3}
+--- !u!1001 &3436074939174816329
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 321758031}
+    m_Modifications:
+    - target: {fileID: 5589721303461435217, guid: 727d407aa6048364cb0103aafd41ada9, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5589721303461435217, guid: 727d407aa6048364cb0103aafd41ada9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 5589721303461435217, guid: 727d407aa6048364cb0103aafd41ada9, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5589721303461435217, guid: 727d407aa6048364cb0103aafd41ada9, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5589721303461435217, guid: 727d407aa6048364cb0103aafd41ada9, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5589721303461435217, guid: 727d407aa6048364cb0103aafd41ada9, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5589721303461435217, guid: 727d407aa6048364cb0103aafd41ada9, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5589721303461435217, guid: 727d407aa6048364cb0103aafd41ada9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5589721303461435217, guid: 727d407aa6048364cb0103aafd41ada9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5589721303461435217, guid: 727d407aa6048364cb0103aafd41ada9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7407812908705838558, guid: 727d407aa6048364cb0103aafd41ada9, type: 3}
+      propertyPath: m_Name
+      value: p_LowCatBed1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 727d407aa6048364cb0103aafd41ada9, type: 3}
 --- !u!1001 &6364726260107406299
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -23959,27 +24017,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5403582656595607550, guid: afa0cd39df1532c43b084e889af6dcb0, type: 3}
       propertyPath: 'walkableFloors.Array.data[0]'
-      value:
+      value: 
       objectReference: {fileID: 1390601895}
     - target: {fileID: 5403582656595607550, guid: afa0cd39df1532c43b084e889af6dcb0, type: 3}
       propertyPath: 'walkableFloors.Array.data[1]'
-      value:
+      value: 
       objectReference: {fileID: 8000430000000000003}
     - target: {fileID: 5403582656595607550, guid: afa0cd39df1532c43b084e889af6dcb0, type: 3}
       propertyPath: 'walkableFloors.Array.data[2]'
-      value:
+      value: 
       objectReference: {fileID: 8000430000000000013}
     - target: {fileID: 5403582656595607550, guid: afa0cd39df1532c43b084e889af6dcb0, type: 3}
       propertyPath: 'walkableFloors.Array.data[3]'
-      value:
+      value: 
       objectReference: {fileID: 8000430000000000023}
     - target: {fileID: 5403582656595607550, guid: afa0cd39df1532c43b084e889af6dcb0, type: 3}
       propertyPath: 'walkableFloors.Array.data[4]'
-      value:
+      value: 
       objectReference: {fileID: 8000430000000000033}
     - target: {fileID: 5403582656595607550, guid: afa0cd39df1532c43b084e889af6dcb0, type: 3}
       propertyPath: 'walkableFloors.Array.data[5]'
-      value:
+      value: 
       objectReference: {fileID: 8000430000000000043}
     - target: {fileID: 9058548550860824666, guid: afa0cd39df1532c43b084e889af6dcb0, type: 3}
       propertyPath: visualRoot
@@ -64174,7 +64232,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 218218911a6b4ec46a0fd7acc6717fda, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractionPromptUI
   playerInteractor: {fileID: 1905245401}
   promptPanel: {fileID: 1759390975}
@@ -65034,6 +65092,11 @@ PrefabInstance:
 Transform:
   m_CorrespondingSourceObject: {fileID: 100001, guid: aeaf61cfcaa6c3dc59f1e19437cedcc4, type: 3}
   m_PrefabInstance: {fileID: 8305000000000000014}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &8360501568639526997 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5589721303461435217, guid: 727d407aa6048364cb0103aafd41ada9, type: 3}
+  m_PrefabInstance: {fileID: 3436074939174816329}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8985609478199458273
 PrefabInstance:
