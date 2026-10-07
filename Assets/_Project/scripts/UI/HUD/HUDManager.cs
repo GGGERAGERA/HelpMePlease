@@ -70,6 +70,7 @@ public class HUDManager : MonoBehaviour
 
     [Header("World Event Marker")]
     [SerializeField] private WorldEventMarker worldEventMarker;
+    private WorldEvent worldEventMarkerOwner;
 
     [Header("Tactical Map")]
     [SerializeField] private TacticalMapHUD tacticalMap;
@@ -215,7 +216,7 @@ public class HUDManager : MonoBehaviour
     {
         UnbindRunSubscriptions();
         HideBossHp();
-        HideWorldEventMarker();
+        ClearWorldEventMarker();
         HideLowHpVignette();
         runMessages?.View?.HideInstant();
         enabled = false;
@@ -392,14 +393,22 @@ public class HUDManager : MonoBehaviour
             lowHpVignette.alpha = 0f;
     }
 
-    public void ShowWorldEventMarker(Transform target, string label)
+    public void ShowWorldEventMarker(WorldEvent owner, Transform target, string label)
     {
+        worldEventMarkerOwner = owner;
         if (worldEventMarker != null)
             worldEventMarker.Show(target, label);
     }
 
-    public void HideWorldEventMarker()
+    public void HideWorldEventMarker(WorldEvent owner)
     {
+        if (worldEventMarkerOwner != owner) return;
+        ClearWorldEventMarker();
+    }
+
+    private void ClearWorldEventMarker()
+    {
+        worldEventMarkerOwner = null;
         if (worldEventMarker != null)
             worldEventMarker.Hide();
     }

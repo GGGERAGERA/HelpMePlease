@@ -28,8 +28,11 @@ public class CurrencyManager : MonoBehaviour
         AddGold(1000);
     }
 
-    private void Awake()
+    private void Awake() => InitializeAuthored();
+
+    public void InitializeAuthored()
     {
+        if (Instance == this) return;
         if (Instance != null)
         {
             Destroy(gameObject);

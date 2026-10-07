@@ -8,12 +8,17 @@ public class CharacterSpawner : MonoBehaviour
     public GameObject SpawnedPlayer { get; private set; }
     public BaseWeapon PrimaryWeapon { get; private set; }
     public CharacterData SpawnedCharacterData { get; private set; }
+    public OrbitalStationRuntime Station { get; private set; }
+    public void PrepareForSceneTransition() => Station?.GetComponent<OrbitalInteractionController>()?.PrepareForExternalPause();
     public CharacterCombatType CombatType => SpawnedCharacterData != null
         ? SpawnedCharacterData.combatType
         : CharacterCombatType.AutoFire;
 
     [Header("Default character for direct MVP launch")]
     [SerializeField] private CharacterData defaultCharacter;
+    public CharacterData DefaultCharacter => defaultCharacter;
+    private HUDManager hud;
+    public void BindScene(HUDManager sceneHud) => hud = sceneHud;
 
     [Header("Spawn settings")]
     [SerializeField] private Transform spawnPoint;
@@ -27,14 +32,6 @@ public class CharacterSpawner : MonoBehaviour
     [Header("Default weapon for direct MVP launch")]
     [SerializeField] private WeaponData defaultWeapon;
     [SerializeField] private ControlOnboarding onboardingPrefab;
-    private void Awake()
-    {
-        if (metaUpgradeApplier == null)
-            metaUpgradeApplier = GetComponent<MetaUpgradeApplier>();
-
-        if (metaUpgradeApplier == null)
-            metaUpgradeApplier = FindFirstObjectByType<MetaUpgradeApplier>();
-    }
     private void Start()
     {
         if (!SceneTransitionOverlay.IsTransitioning) Time.timeScale = 1f;
@@ -46,12 +43,9 @@ public class CharacterSpawner : MonoBehaviour
 
         // Publish the spawned player before camera readiness; tag lookup cooldown uses paused game time.
         PlayerRuntimeReference.Bind(player);
-        HUDManager.Instance?.BindPlayer(player);
+        hud?.BindPlayer(player);
 
         BaseWeapon[] weapons = player.GetComponentsInChildren<BaseWeapon>(true);
-
-        if (metaUpgradeApplier == null)
-            metaUpgradeApplier = FindFirstObjectByType<MetaUpgradeApplier>();
 
         if (metaUpgradeApplier != null)
         {
@@ -67,6 +61,7 @@ public class CharacterSpawner : MonoBehaviour
             RunStateManager.Instance.ApplyToSpawnedPlayer(player, upgradeApplier);
 
         var orbital = OrbitalStationRuntime.Ensure(player, SpawnedCharacterData);
+        Station = orbital;
         if (onboardingPrefab != null && orbital != null && orbital.IsInitialized)
             Instantiate(onboardingPrefab, player.transform.position, Quaternion.identity)
                 .Bind(player.GetComponent<CharacterMovement2D>(), orbital.GetComponent<OrbitalCenterShift>());
@@ -125,7 +120,8 @@ public class CharacterSpawner : MonoBehaviour
         GameObject player = Instantiate(
             selectedCharacter.ProductionPrefab,
             spawnPosition,
-            Quaternion.identity
+            Quaternion.identity,
+            transform
         );
 
         player.tag = "Player";

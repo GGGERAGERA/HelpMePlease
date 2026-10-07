@@ -130,8 +130,11 @@ public sealed class MetaProgressionManager : MonoBehaviour
             MaxUpgradeLevel);
     }
 
-    private void Awake()
+    private void Awake() => InitializeAuthored();
+
+    public void InitializeAuthored()
     {
+        if (Instance == this) return;
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);

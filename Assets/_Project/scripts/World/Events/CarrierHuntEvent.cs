@@ -276,7 +276,6 @@ public sealed class CarrierHuntEvent : WorldEvent
 
         resolved = true;
         FailEvent();
-        Destroy(gameObject);
     }
 
     private void HandleEnemyDespawned(EnemyHealth despawnedEnemy)
@@ -289,7 +288,6 @@ public sealed class CarrierHuntEvent : WorldEvent
 
         resolved = true;
         FailEvent();
-        Destroy(gameObject);
     }
 
     protected override void CleanupEvent()

@@ -30,6 +30,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
     private bool completed;
     private bool preserveEnvironment;
     private bool environmentRetired;
+    private bool disposed;
     private bool rewardPending;
     public bool EnvironmentAlive => initialized && !environmentRetired;
     private bool initialized;
@@ -37,7 +38,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
     private bool specialAssaultStarted;
     private bool specialInstructionsShown;
     private float nextAssaultAttempt;
-    private EnemySpawner assaultSpawner;
+    private int assaultRequestId;
     private Vector2 siteSize;
     private Material material;
     private sealed class BoundarySegment
@@ -86,6 +87,8 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         {
             SubscribeToEventSpawner();
             RefreshTerritoryBoundaries();
+            if (!disposed && !completed && !rewardPending && activeEvent == null)
+                StartCoroutine(RespawnEventAfterDelay());
         }
     }
 
@@ -93,6 +96,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
     {
         UnsubscribeFromEventSpawner();
         StopAllCoroutines();
+        CancelOwnedAssault();
 
         if (activeSites.Remove(this))
         {
@@ -133,8 +137,10 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         anomalyZone = anomalyController?.SpawnSiteZone(
             anomaly,
             position,
-            size
+            size,
+            transform
         );
+        if (anomalyZone != null) anomalyZone.transform.SetParent(transform, true);
         eventPosition = SelectEventPosition();
         bool spawned = SpawnEvent();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -200,6 +206,8 @@ public sealed class ProductionAnomalySite : MonoBehaviour
             return false;
         }
 
+        if (specialEnvironment.AnomalyZone != null)
+            specialEnvironment.AnomalyZone.transform.SetParent(transform, true);
         initialized = true;
         BuildBoundary(size, new Color(0.9f, 0.3f, 0.85f, 0.9f));
 
@@ -218,15 +226,26 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 #endif
     public void DisposeSite()
     {
-        CollapseEnvironment();
+        if (disposed) return;
+        ReleaseOwnedRuntime();
         gameObject.SetActive(false);
-        if (activeEvent != null)
-        {
-            activeEvent.DisposeForOwnerReset();
-            activeEvent.gameObject.SetActive(false);
-            Destroy(activeEvent.gameObject);
-        }
         Destroy(gameObject);
+    }
+
+    private void ReleaseOwnedRuntime()
+    {
+        if (disposed) return;
+        disposed = true;
+        CancelOwnedAssault();
+        StopAllCoroutines();
+        UnsubscribeFromEventSpawner();
+        WorldEvent worldEvent = activeEvent;
+        activeEvent = null;
+        if (worldEvent != null)
+        {
+            worldEvent.DisposeForOwnerReset();
+        }
+        CollapseEnvironment();
     }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public bool ContainsWorldPosition(Vector2 position)
@@ -438,7 +457,9 @@ public sealed class ProductionAnomalySite : MonoBehaviour
             transform.position,
             siteSize,
             suppressStandardReward: true,
-            out activeEvent
+            out activeEvent,
+            transform,
+            ReleaseEventRoot
         );
 
         }
@@ -598,9 +619,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
             return;
 
         activeEvent = null;
-
-        if (worldEvent != null)
-            Destroy(worldEvent.gameObject);
+        CancelOwnedAssault();
 
         var actor = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
         if (actor != null && actor.TryGetComponent<PlayerHealth>(out var health) && health.IsDead) return;
@@ -636,14 +655,49 @@ public sealed class ProductionAnomalySite : MonoBehaviour
                 }
             }
         }
-        if (completedMainEvents != 1 || specialAssaultStarted || activeEvent == null ||
+        if (completedMainEvents != 1 || specialAssaultStarted || assaultRequestId != 0 || activeEvent == null ||
             !activeEvent.IsStarted || Time.time < nextAssaultAttempt) return;
         nextAssaultAttempt = Time.time + 1f;
-        if (assaultSpawner == null) assaultSpawner = FindFirstObjectByType<EnemySpawner>();
-        // A busy/unsafe assault window is retried; failures and event retries never duplicate a launched assault.
-        if (assaultSpawner != null && assaultSpawner.TryStartRandomSiteAssault())
-            specialAssaultStarted = true;
+        var request = eventSpawner.RequestSiteAssault(HandleAssaultResolved);
+        if (request.Status == AssaultRequestStatus.Accepted) assaultRequestId = request.RequestId;
     }
+
+    private void HandleAssaultResolved(AssaultRequestResult result)
+    {
+        if (result.RequestId != assaultRequestId) return;
+        assaultRequestId = 0;
+        if (disposed || completed) return;
+        if (result.Status == AssaultRequestStatus.Spawned && result.SpawnedCount > 0)
+            specialAssaultStarted = true;
+        else
+            nextAssaultAttempt = Time.time + 1f;
+    }
+
+    private void CancelOwnedAssault()
+    {
+        int requestId = assaultRequestId;
+        assaultRequestId = 0;
+        if (requestId != 0) eventSpawner?.CancelSiteAssault(requestId);
+    }
+
+    private void ReleaseEventRoot(WorldEvent worldEvent)
+    {
+        if (activeEvent == worldEvent) { activeEvent = null; CancelOwnedAssault(); }
+        if (worldEvent == null) return;
+        worldEvent.gameObject.SetActive(false);
+        Destroy(worldEvent.gameObject);
+    }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    // Lab adapters choose/reset objectives through the owner, without mutating site state.
+    public void ClearObjectiveForDebug()
+    {
+        var worldEvent = activeEvent;
+        activeEvent = null;
+        CancelOwnedAssault();
+        worldEvent?.DisposeForOwnerReset();
+    }
+#endif
 
     private void CollapseEnvironment()
     {
@@ -651,7 +705,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         environmentRetired = true;
         if (anomalyZone != null)
         {
-            anomalyController?.CollapseSiteZone(anomalyZone);
+            if (anomalyController != null) anomalyController.CollapseSiteZone(anomalyZone);
             anomalyZone = null;
         }
 
@@ -662,7 +716,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         }
 
         foreach (BoundarySegment segment in boundarySegments)
-            segment.Renderer.enabled = false;
+            if (segment.Renderer != null) segment.Renderer.enabled = false;
         if (territoryFill != null)
             territoryFill.enabled = false;
         RefreshTerritoryBoundaries();
@@ -674,11 +728,12 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 
     private void CompleteSite()
     {
-        if (this == null || completed || environmentRetired)
+        if (this == null || disposed || completed || environmentRetired)
             return;
 
         completed = true;
         rewardPending = false;
+        CancelOwnedAssault();
         if (!preserveEnvironment) CollapseEnvironment();
     }
 
@@ -847,8 +902,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 #endif
         }
 
-        UnsubscribeFromEventSpawner();
-        CollapseEnvironment();
+        ReleaseOwnedRuntime();
 
         if (material != null)
             Destroy(material);

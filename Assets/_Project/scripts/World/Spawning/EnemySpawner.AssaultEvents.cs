@@ -3,6 +3,17 @@ using UnityEngine;
 
 public enum AssaultEventType { BomberRush, ShooterSquad, Encirclement, Crossfire, Stampede }
 
+public enum AssaultRequestStatus { Rejected, Accepted, Spawned, Failed, Cancelled }
+
+public readonly struct AssaultRequestResult
+{
+    public AssaultRequestStatus Status { get; }
+    public int RequestId { get; }
+    public int SpawnedCount { get; }
+    public AssaultRequestResult(AssaultRequestStatus status, int requestId = 0, int spawnedCount = 0)
+    { Status = status; RequestId = requestId; SpawnedCount = spawnedCount; }
+}
+
 public partial class EnemySpawner
 {
     [Header("Assault Events (production prototype)")]
@@ -37,6 +48,8 @@ public partial class EnemySpawner
     private float assaultElapsed, assaultNextAt, assaultRemaining;
     private AssaultEventType? pendingAssault;
     private bool pendingAssaultIsAutomatic;
+    private int nextAssaultRequestId, pendingAssaultRequestId;
+    private System.Action<AssaultRequestResult> pendingAssaultResolved;
     private enum FirstAutomaticAssaultProgress { NotStarted, Active, Recovering, Complete }
     private FirstAutomaticAssaultProgress firstAutomaticAssault;
     public bool HasStartedFirstAutomaticAssault => firstAutomaticAssault != FirstAutomaticAssaultProgress.NotStarted;
@@ -66,7 +79,6 @@ public partial class EnemySpawner
     {
         EndAssault();
         firstAutomaticAssault = FirstAutomaticAssaultProgress.NotStarted;
-        pendingAssault = null;
         breathRemaining = recoveryRemaining = 0f;
         assaultElapsed = 0f;
         var profile = RunStateManager.Instance?.CurrentSector?.StageProfile;
@@ -74,6 +86,7 @@ public partial class EnemySpawner
             Mathf.Clamp(exitAssaultLeadTime.y, 10f, 15f), (float)assaultRandom.NextDouble());
         assaultNextAt = profile != null ? Mathf.Max(0f, profile.ExitActivationTime - lead) :
             Mathf.Max(assaultBreathDuration, Mathf.Lerp(firstAssaultDelay.x, firstAssaultDelay.y, (float)assaultRandom.NextDouble()));
+        CancelPendingAssault();
     }
 
     private void EndAssault(bool completed = false)
@@ -101,7 +114,7 @@ public partial class EnemySpawner
         var flow = RunFlowController.Instance;
         bool automaticWindowClosed = flow != null && flow.ExitMinimumTimeRemaining <= 10f;
         if (automaticWindowClosed && pendingAssault.HasValue && pendingAssaultIsAutomatic)
-        { pendingAssault = null; breathRemaining = 0f; }
+            CancelPendingAssault();
         if (!CanStartAssault) return;
         assaultElapsed = flow != null ? flow.SectorElapsedTime : assaultElapsed + Time.deltaTime;
         recoveryRemaining = Mathf.Max(0f, recoveryRemaining - Time.deltaTime);
@@ -119,13 +132,19 @@ public partial class EnemySpawner
             breathRemaining -= Time.deltaTime;
             if (breathRemaining > 0f) return;
             var type = pendingAssault.Value;
-            pendingAssault = null;
-            if (!TryStartAssault(type, pendingAssaultIsAutomatic))
+            bool automatic = pendingAssaultIsAutomatic;
+            int requestId = pendingAssaultRequestId;
+            var resolved = pendingAssaultResolved;
+            // Transfer the pending request to this synchronous spawn attempt.
+            // Clear its slot before spawn/configuration or result callbacks can re-enter.
+            ClearPendingAssault();
+            bool spawned = TrySpawnAssault(type, automatic, out int count);
+            if (!spawned)
             {
-                // Resume refill if geometry is blocked; retry with a fresh breath later.
                 recoveryRemaining = assaultRecoveryDuration;
                 assaultNextAt = assaultElapsed + 5f + assaultBreathDuration;
             }
+            resolved?.Invoke(new AssaultRequestResult(spawned ? AssaultRequestStatus.Spawned : AssaultRequestStatus.Failed, requestId, count));
             return;
         }
         if (!assaultEventsEnabled || automaticWindowClosed || IsAssaultActive || recoveryRemaining > 0f ||
@@ -135,15 +154,40 @@ public partial class EnemySpawner
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     // Force bypasses only warmup/cooldown, never pause/reward/transition or the single-event gate.
-    public bool ForceAssaultEvent(AssaultEventType type) => TryStartAssault(type);
+    public bool ForceAssaultEvent(AssaultEventType type) => TrySpawnAssault(type, false, out _);
 #endif
 
-    // True acknowledges ownership of the request, including its preparation window.
-    public bool TryStartRandomSiteAssault()
+    public AssaultRequestResult RequestRandomSiteAssault(System.Action<AssaultRequestResult> resolved)
     {
-        if (!CanStartAssault || IsAssaultActive || IsAssaultBreathing || recoveryRemaining > 0f) return false;
+        if (resolved == null) throw new System.ArgumentNullException(nameof(resolved));
+        if (!CanStartAssault || IsAssaultActive || IsAssaultBreathing || recoveryRemaining > 0f)
+            return new AssaultRequestResult(AssaultRequestStatus.Rejected);
         BeginAssaultBreath(automatic: false);
-        return true;
+        pendingAssaultRequestId = ++nextAssaultRequestId;
+        pendingAssaultResolved = resolved;
+        return new AssaultRequestResult(AssaultRequestStatus.Accepted, pendingAssaultRequestId);
+    }
+
+    public void CancelAssaultRequest(int requestId)
+    {
+        if (requestId != 0 && requestId == pendingAssaultRequestId) CancelPendingAssault();
+    }
+
+    private void ClearPendingAssault()
+    {
+        pendingAssault = null;
+        pendingAssaultIsAutomatic = false;
+        pendingAssaultRequestId = 0;
+        pendingAssaultResolved = null;
+        breathRemaining = 0f;
+    }
+
+    private void CancelPendingAssault()
+    {
+        int requestId = pendingAssaultRequestId;
+        var resolved = pendingAssaultResolved;
+        ClearPendingAssault();
+        resolved?.Invoke(new AssaultRequestResult(AssaultRequestStatus.Cancelled, requestId));
     }
 
     private void BeginAssaultBreath(bool automatic)
@@ -154,13 +198,14 @@ public partial class EnemySpawner
         spawnTimer = 0f;
     }
 
-    private bool TryStartAssault(AssaultEventType type, bool automatic = false)
+    private bool TrySpawnAssault(AssaultEventType type, bool automatic, out int spawnedCount)
     {
+        spawnedCount = 0;
         if (!CanStartAssault || IsAssaultActive || (int)type < 0 || (int)type > 4) return false;
         GameObject prefab = ResolveAssaultPrefab(type);
         Camera camera = Camera.main;
         ResolveGameplayArea();
-        if (prefab == null || camera == null || gameplayArea == null) return false;
+        if (prefab == null || prefab.GetComponent<EnemyHealth>() == null || camera == null || gameplayArea == null) return false;
         Vector2Int range = type switch
         {
             AssaultEventType.BomberRush => bomberRushCount,
@@ -190,14 +235,6 @@ public partial class EnemySpawner
             AssaultEventType.Crossfire => "world.message.crossfire",
             _ => "world.message.stampede"
         };
-        RunMessageService.Instance?.ShowCustom(title, string.Empty, 2.5f);
-        ActiveAssault = type;
-        assaultRemaining = Mathf.Max(1f, assaultDuration);
-        if (automatic && !HasStartedFirstAutomaticAssault)
-            firstAutomaticAssault = FirstAutomaticAssaultProgress.Active;
-        // A site wave cannot consume or postpone the sector's first automatic slot.
-        if (HasStartedFirstAutomaticAssault)
-            assaultNextAt = assaultElapsed + NextAssaultInterval();
         foreach (Vector3 position in positions)
         {
             GameObject enemy = SpawnEnemyAt(prefab, position, false);
@@ -205,6 +242,7 @@ public partial class EnemySpawner
             assaultEnemies.Add(new SpawnedEnemy { instance = enemy, movement = movement,
                 baseSpeedMultiplier = currentSpeedMultiplier * (activePhase != null ? activePhase.speedMultiplier : 1f) });
             currentAssault.Add(enemy.GetComponent<EnemyHealth>());
+            spawnedCount++;
             if (type == AssaultEventType.Stampede && movement is EnemyChaseMovement chase)
             {
                 // Parallel lanes through the player's position at launch, then normal chase resumes.
@@ -212,7 +250,16 @@ public partial class EnemySpawner
                 chase.SetAssaultDestination((Vector2)position + flow * Mathf.Max(4f, travel));
             }
         }
-        Debug.Log($"[AssaultEvents] {type}: spawned {count} production enemies.", this);
+        if (spawnedCount == 0) return false;
+        ActiveAssault = type;
+        assaultRemaining = Mathf.Max(1f, assaultDuration);
+        if (automatic && !HasStartedFirstAutomaticAssault)
+            firstAutomaticAssault = FirstAutomaticAssaultProgress.Active;
+        // A site wave cannot consume or postpone the sector's first automatic slot.
+        if (HasStartedFirstAutomaticAssault)
+            assaultNextAt = assaultElapsed + NextAssaultInterval();
+        RunMessageService.Instance?.ShowCustom(title, string.Empty, 2.5f);
+        Debug.Log($"[AssaultEvents] {type}: spawned {spawnedCount} production enemies.", this);
         return true;
     }
 

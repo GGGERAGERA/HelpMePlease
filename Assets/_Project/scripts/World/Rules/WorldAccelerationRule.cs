@@ -14,9 +14,6 @@ public sealed class WorldAccelerationRule : MonoBehaviour
         if (IsRunning)
             return;
 
-        if (enemySpawner == null || !enemySpawner.gameObject.scene.IsValid())
-            enemySpawner = FindFirstObjectByType<EnemySpawner>();
-
         if (enemySpawner == null)
         {
             Debug.LogWarning(

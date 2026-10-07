@@ -467,7 +467,6 @@ public sealed class FalseSignalEvent : WorldEvent
     private void FailFalseSignal()
     {
         FailEvent();
-        Destroy(gameObject);
     }
 
     private void FadeRemainingSignalPoints()

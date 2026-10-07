@@ -369,9 +369,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
 
     private void ClearBootstrapEvent(ProductionAnomalySite site)
     {
-        WorldEvent bootstrap = site != null ? site.SiteEvent : null;
-        if (bootstrap != null)
-            events.ClearDebugEvent(bootstrap);
+        site?.ClearObjectiveForDebug();
     }
 
     private void BuildProductionProps()

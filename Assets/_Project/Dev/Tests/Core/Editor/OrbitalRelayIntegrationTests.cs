@@ -166,6 +166,7 @@ public sealed class OrbitalRelayIntegrationTests
     [Test] public void PreviewCompletionDispatchesOnceWithoutCurrencyOrContainer()
     {
         var host = new GameObject("reward owner"); var target = new GameObject("reward target");
+        var failedTarget = new GameObject("failed reward target");
         bool ownsRun = RunStateManager.Instance == null;
         try
         {
@@ -175,14 +176,107 @@ public sealed class OrbitalRelayIntegrationTests
             var e = target.AddComponent<RelayRewardTestEvent>();
             typeof(WorldEvent).GetField("<IsCompleted>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(e, true);
             ((List<WorldEvent>)typeof(WorldEventSpawner).GetField("spawnedEvents", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(spawner)).Add(e);
+            ((Dictionary<WorldEvent, System.Action<WorldEvent>>)typeof(WorldEventSpawner).GetField("eventRootOwners", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(spawner))
+                .Add(e, value => Object.DestroyImmediate(value.gameObject));
             ((HashSet<WorldEvent>)typeof(WorldEventSpawner).GetField("debugRewardSuppressedEvents", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(spawner)).Add(e);
+            int rootReleases = 0;
+            var owners = (Dictionary<WorldEvent, System.Action<WorldEvent>>)typeof(WorldEventSpawner)
+                .GetField("eventRootOwners", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(spawner);
+            owners[e] = value => { rootReleases++; Object.DestroyImmediate(value.gameObject); };
             int notices = 0;
-            spawner.EventCompleted += completed => { notices++; spawner.NotifyEventCompleted(completed); };
+            spawner.EventCompleted += completed =>
+            {
+                Assert.That(spawner.IsRewardDeliverySuppressed(completed), Is.False,
+                    "Reward dispatch must finish before public completion, including after re-enable.");
+                notices++; spawner.NotifyEventCompleted(completed);
+                typeof(WorldEventSpawner).GetMethod("ReleaseRunScene", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(spawner, null);
+            };
+            typeof(WorldEventSpawner).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(spawner, null);
+            typeof(WorldEventSpawner).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(spawner, null);
             spawner.NotifyEventCompleted(e); spawner.NotifyEventCompleted(e);
             Assert.That(notices, Is.EqualTo(1));
+            Assert.That(rootReleases, Is.EqualTo(1), "Reentrant cleanup must preserve the in-flight root owner.");
             Assert.That(spawner.IsRewardDeliverySuppressed(e), Is.False, "Dispatcher consumed preview without opening real rewards.");
             Assert.That(spawner.SpawnedEvents, Is.Empty);
+            var failed = failedTarget.AddComponent<RelayPressureTestEvent>();
+            ((List<WorldEvent>)typeof(WorldEventSpawner).GetField("spawnedEvents", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(spawner)).Add(failed);
+            typeof(WorldEvent).GetField("<IsCompleted>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(failed, true);
+            typeof(WorldEvent).GetField("<IsFailed>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(failed, true);
+            owners.Add(failed, value => { rootReleases++; Object.DestroyImmediate(value.gameObject); });
+            int failures = 0;
+            spawner.EventFailed += value =>
+            {
+                failures++;
+                typeof(WorldEventSpawner).GetMethod("ReleaseRunScene", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(spawner, null);
+            };
+            spawner.NotifyEventFailed(failed); spawner.NotifyEventFailed(failed);
+            Assert.That(failures, Is.EqualTo(1));
+            Assert.That(rootReleases, Is.EqualTo(2), "Failure reset also preserves the in-flight root owner.");
             typeof(WorldEventSpawner).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(spawner, null);
+        }
+        finally
+        {
+            Object.DestroyImmediate(failedTarget); Object.DestroyImmediate(target); Object.DestroyImmediate(host);
+            if (ownsRun && RunStateManager.Instance != null) Object.DestroyImmediate(RunStateManager.Instance.gameObject);
+        }
+    }
+    [Test] public void OlderEventCannotHideCurrentMarker()
+    {
+        var host = new GameObject("marker HUD"); var visual = new GameObject("marker visual");
+        var first = new GameObject("first marker owner"); var second = new GameObject("second marker owner");
+        const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
+        var instance = typeof(HUDManager).GetField("<Instance>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
+        object previous = instance.GetValue(null);
+        try
+        {
+            var hud = host.AddComponent<HUDManager>(); instance.SetValue(null, hud);
+            var marker = visual.AddComponent<WorldEventMarker>();
+            typeof(HUDManager).GetField("worldEventMarker", Private).SetValue(hud, marker);
+            var a = first.AddComponent<RelayPressureTestEvent>(); var b = second.AddComponent<RelayPressureTestEvent>();
+            a.PresentMarker(first.transform); b.PresentMarker(second.transform);
+            a.ReleaseMarker();
+            Assert.That(typeof(WorldEventMarker).GetField("target", Private).GetValue(marker), Is.SameAs(second.transform));
+            b.ReleaseMarker(); b.ReleaseMarker();
+            Assert.That(typeof(WorldEventMarker).GetField("target", Private).GetValue(marker), Is.Null);
+        }
+        finally
+        {
+            Object.DestroyImmediate(first); Object.DestroyImmediate(second);
+            Object.DestroyImmediate(visual); Object.DestroyImmediate(host); instance.SetValue(null, previous);
+        }
+    }
+    [Test] public void SiteRewardSuppressionSurvivesOwnerReenable()
+    {
+        var host = new GameObject("site reward owner"); var target = new GameObject("site reward target");
+        bool ownsRun = RunStateManager.Instance == null;
+        try
+        {
+            const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
+            var spawner = host.AddComponent<WorldEventSpawner>();
+            var e = target.AddComponent<RelayPressureTestEvent>();
+            ((List<WorldEvent>)typeof(WorldEventSpawner).GetField("spawnedEvents", Private).GetValue(spawner)).Add(e);
+            ((Dictionary<WorldEvent, System.Action<WorldEvent>>)typeof(WorldEventSpawner).GetField("eventRootOwners", Private).GetValue(spawner))
+                .Add(e, value => Object.DestroyImmediate(value.gameObject));
+            var suppression = (HashSet<WorldEvent>)typeof(WorldEventSpawner).GetField("siteRewardSuppressedEvents", Private).GetValue(spawner);
+            suppression.Add(e);
+            typeof(WorldEventSpawner).GetMethod("OnDisable", Private).Invoke(spawner, null);
+            typeof(WorldEventSpawner).GetMethod("OnEnable", Private).Invoke(spawner, null);
+            Assert.That(suppression.Contains(e), Is.True, "Site suppression belongs to the event lifetime.");
+            typeof(WorldEvent).GetField("<IsCompleted>k__BackingField", Private).SetValue(e, true);
+            int rootReleases = 0;
+            var owners = (Dictionary<WorldEvent, System.Action<WorldEvent>>)typeof(WorldEventSpawner)
+                .GetField("eventRootOwners", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(spawner);
+            owners[e] = value => { rootReleases++; Object.DestroyImmediate(value.gameObject); };
+            int notices = 0;
+            spawner.EventCompleted += completed =>
+            {
+                Assert.That(suppression.Contains(completed), Is.False);
+                notices++; spawner.NotifyEventCompleted(completed);
+                typeof(WorldEventSpawner).GetMethod("ReleaseRunScene", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(spawner, null);
+            };
+            spawner.NotifyEventCompleted(e); spawner.NotifyEventCompleted(e);
+            Assert.That(notices, Is.EqualTo(1));
+            Assert.That(rootReleases, Is.EqualTo(1), "Reentrant cleanup must preserve the in-flight root owner.");
         }
         finally
         {
@@ -217,7 +311,12 @@ public sealed class OrbitalRelayIntegrationTests
             Assert.That(enemies.WorldEventSpawnPressureMultiplier, Is.EqualTo(1));
             Assert.That(enemies.IsSpawningEnabled, Is.False);
             var onDisable = spawner.AcquireSpawnPressure(next, 1.6f); spawner.enabled = false; typeof(WorldEventSpawner).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(spawner, null);
-            Assert.That(enemies.WorldEventSpawnPressureMultiplier, Is.EqualTo(1)); onDisable.Dispose();
+            Assert.That(enemies.WorldEventSpawnPressureMultiplier, Is.EqualTo(1));
+            spawner.enabled = true;
+            typeof(WorldEventSpawner).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(spawner, null);
+            Assert.That(enemies.WorldEventSpawnPressureMultiplier, Is.EqualTo(1.6f), "Re-enable restores the same event's live lease.");
+            onDisable.Dispose();
+            Assert.That(enemies.WorldEventSpawnPressureMultiplier, Is.EqualTo(1));
         }
         finally
         {
@@ -229,6 +328,8 @@ public sealed class OrbitalRelayIntegrationTests
 public sealed class RelayPressureTestEvent : WorldEvent
 {
     public override bool UsesStandardSpawnPressure => false;
+    public void PresentMarker(Transform target) => ShowEventMarker(target, "fixture marker");
+    public void ReleaseMarker() => HideEventMarker();
 }
 public sealed class RelayRewardTestEvent : WorldEvent
 {

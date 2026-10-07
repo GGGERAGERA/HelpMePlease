@@ -42,8 +42,6 @@ public static partial class SurfaceVisualLabEditor
         lab.Character=AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Data/Characters/01_Gera.asset");
         lab.Player=(GameObject)PrefabUtility.InstantiatePrefab(lab.Character.ProductionPrefab);
         lab.Player.name="Production player — Gera / ORBITAL";
-        lab.Player.GetComponent<EnemySpawner>().enabled=false;
-        PrefabUtility.RecordPrefabInstancePropertyModifications(lab.Player.GetComponent<EnemySpawner>());
         lab.Player.SetActive(false); PrefabUtility.RecordPrefabInstancePropertyModifications(lab.Player);
         var experience=new GameObject("Production experience").AddComponent<ExperienceManager>();
         experience.levelData=AssetDatabase.FindAssets("t:LevelData").Select(g=>AssetDatabase.LoadAssetAtPath<LevelData>(AssetDatabase.GUIDToAssetPath(g))).First();

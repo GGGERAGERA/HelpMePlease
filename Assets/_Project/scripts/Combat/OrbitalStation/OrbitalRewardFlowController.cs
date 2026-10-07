@@ -229,7 +229,7 @@ namespace Subject42.Combat.OrbitalStation
                 CompleteReward();
                 return;
             }
-            station.Rings.FirstOrDefault(value => value.RingId == ringId)?.Pulse();
+            station.Rings.FirstOrDefault(value => value.RingId == ringId)?.PulseVisual();
             station.FlashCore(new Color(0.35f, 0.9f, 1f));
             CompleteReward();
         }
@@ -335,7 +335,7 @@ namespace Subject42.Combat.OrbitalStation
                 {
                     AudioService.Instance?.PlayAt(AudioCueId.ModuleInstall,
                         reservedMount?.Transform != null ? reservedMount.Transform.position : station.transform.position);
-                    station.Rings.FirstOrDefault(r => r.RingId == targetRingId)?.Pulse();
+                    station.Rings.FirstOrDefault(r => r.RingId == targetRingId)?.PulseVisual();
                     station.FlashCore(reward.RewardKind == OrbitalRewardKind.LinkPair
                         ? new Color(0.85f, 0.3f, 1f) : new Color(0.35f, 0.95f, 1f));
                 }

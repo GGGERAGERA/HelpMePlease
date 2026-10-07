@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Subject42.Combat.OrbitalStation;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -120,10 +119,7 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
         requestedScene = scene;
         faulted = false;
         if (errorText != null) errorText.gameObject.SetActive(false);
-        var player = PlayerRuntimeReference.CachedPlayer;
-        if (player != null)
-            player.GetComponentInChildren<Subject42.Combat.OrbitalStation.OrbitalInteractionController>()?
-                .PrepareForExternalPause();
+        ProductionSceneComposition.Active?.PrepareForTransition();
         previousTimeScale = Time.timeScale;
         bool loaded = false;
         returning = scene == RunEndService.BunkerSceneName;
@@ -146,14 +142,11 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
             // sceneLoaded precedes Start. Allow Start, spawned components and LateUpdate.
             yield return null;
             float deadline = Time.realtimeSinceStartup + readyTimeout;
-            CharacterSpawner spawner = FindFirstObjectByType<CharacterSpawner>();
-            CameraFollow camera = FindFirstObjectByType<CameraFollow>();
-            BunkerPlayerLoadoutController bunkerLoadout = FindFirstObjectByType<BunkerPlayerLoadoutController>();
-            while (!Ready(scene, spawner, camera, bunkerLoadout) && Time.realtimeSinceStartup < deadline)
+            while (!Ready(scene) && Time.realtimeSinceStartup < deadline)
                 yield return null;
-            if (!Ready(scene, spawner, camera, bunkerLoadout))
+            if (!Ready(scene))
             {
-                Debug.LogError($"[SceneTransition] Ready timeout in '{scene}': check player, ORBITAL, HUD and camera initialization.");
+                Debug.LogError($"[SceneTransition] Ready timeout in '{scene}': scene composition did not report readiness.");
                 ShowFailure();
                 yield break;
             }
@@ -168,18 +161,11 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
         }
     }
 
-    private static bool Ready(string scene, CharacterSpawner spawner, CameraFollow camera,
-        BunkerPlayerLoadoutController bunkerLoadout)
+    private static bool Ready(string scene)
     {
-        if (SceneManager.GetActiveScene().name != scene) return false;
-        if (scene == "MVP")
-            return spawner != null && spawner.SpawnedPlayer != null &&
-                spawner.SpawnedPlayer.GetComponentInChildren<OrbitalStationRuntime>() is { IsInitialized: true } &&
-                HUDManager.Instance != null && HUDManager.Instance.IsPlayerBound &&
-                camera != null && camera.target != null && camera.ControlledCamera != null;
-        return scene != RunEndService.BunkerSceneName || (
-            bunkerLoadout != null && bunkerLoadout.IsReady &&
-            camera != null && camera.target != null && camera.ControlledCamera != null);
+        var composition = ProductionSceneComposition.Active;
+        return composition != null && composition.gameObject.scene == SceneManager.GetActiveScene() &&
+            composition.gameObject.scene.name == scene && composition.IsReady;
     }
 
     private void ShowFailure()

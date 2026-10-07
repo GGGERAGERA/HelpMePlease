@@ -177,7 +177,7 @@ namespace Subject42.Combat.OrbitalStation
         }
 
         // Visual feedback only; unlike Pulse this does not activate modules.
-        public void FlashDirectionChange() => pulse = 1f;
+        public void PulseVisual() => pulse = 1f;
 
         public void SetSelected(bool selected)
         {

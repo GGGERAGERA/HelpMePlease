@@ -167,7 +167,7 @@ public sealed class RunFlowController : MonoBehaviour
 
         if (sectorNumber == RunRoute.TutorialSector)
         {
-            var transition = ResolveLevelChoiceManager();
+            var transition = levelChoiceManager;
             if (!CanContinue || !RewardsResolved || !TutorialController.IsActive ||
                 TutorialController.Active.Step != TutorialStep.Exit ||
                 transition == null || !transition.CanLeaveTutorial) return false;
@@ -205,7 +205,7 @@ public sealed class RunFlowController : MonoBehaviour
             return true;
         }
 
-        LevelChoiceManager manager = ResolveLevelChoiceManager();
+        LevelChoiceManager manager = levelChoiceManager;
 
         if (manager == null)
         {
@@ -231,7 +231,7 @@ public sealed class RunFlowController : MonoBehaviour
 
     public void ApplyLevelMechanics()
     {
-        ResolveLevelMechanics();
+
         worldEventSpawner?.SetHoldPointEnabled(false);
         noDamageChallenge?.CancelChallenge();
     }
@@ -360,13 +360,7 @@ public sealed class RunFlowController : MonoBehaviour
         return string.Empty;
     }
 
-    private LevelChoiceManager ResolveLevelChoiceManager()
-    {
-        if (levelChoiceManager == null)
-            levelChoiceManager = FindFirstObjectByType<LevelChoiceManager>();
 
-        return levelChoiceManager;
-    }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public bool CanDebugCompleteCurrentLevel
@@ -374,7 +368,7 @@ public sealed class RunFlowController : MonoBehaviour
         get
         {
             RunStateManager runState = RunStateManager.Instance;
-            LevelChoiceManager manager = ResolveLevelChoiceManager();
+            LevelChoiceManager manager = levelChoiceManager;
 
             if (levelCompleted || Phase != RunPhase.NormalSector || runState == null ||
                 runState.CurrentSector == null)
@@ -405,7 +399,7 @@ public sealed class RunFlowController : MonoBehaviour
         get
         {
             RunStateManager runState = RunStateManager.Instance;
-            LevelChoiceManager manager = ResolveLevelChoiceManager();
+            LevelChoiceManager manager = levelChoiceManager;
             return levelCompleted &&
                 runState != null &&
                 runState.CurrentSector != null &&
@@ -422,18 +416,10 @@ public sealed class RunFlowController : MonoBehaviour
         if (!CanDebugOpenLevelChoice)
             return false;
 
-        LevelChoiceManager manager = ResolveLevelChoiceManager();
+        LevelChoiceManager manager = levelChoiceManager;
         manager.ShowChoices();
         return manager != null && manager.IsChoosing;
     }
 #endif
 
-    private void ResolveLevelMechanics()
-    {
-        if (worldEventSpawner == null)
-            worldEventSpawner = FindFirstObjectByType<WorldEventSpawner>();
-
-        if (noDamageChallenge == null)
-            noDamageChallenge = FindFirstObjectByType<NoDamageChallenge>();
-    }
 }

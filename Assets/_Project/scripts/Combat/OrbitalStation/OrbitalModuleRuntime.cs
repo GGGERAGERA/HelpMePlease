@@ -180,7 +180,7 @@ namespace Subject42.Combat.OrbitalStation
                 if (aimTarget != null)
                     AimAt(aimTarget.transform.position);
             }
-            if (Cooldown <= 0f)
+            if (deltaTime > 0f && Cooldown <= 0f)
                 ActivateCombat();
         }
 
@@ -217,7 +217,7 @@ namespace Subject42.Combat.OrbitalStation
         public override void Tick(float deltaTime)
         {
             base.Tick(deltaTime);
-            if (Cooldown <= 0f) ActivateCombat();
+            if (deltaTime > 0f && Cooldown <= 0f) ActivateCombat();
         }
 
         public override void ActivateCombat()
@@ -245,7 +245,7 @@ namespace Subject42.Combat.OrbitalStation
         public override void Tick(float deltaTime)
         {
             base.Tick(deltaTime);
-            if (Cooldown <= 0f)
+            if (deltaTime > 0f && Cooldown <= 0f)
                 ActivateCombat();
         }
 
@@ -279,7 +279,7 @@ namespace Subject42.Combat.OrbitalStation
         public override void Tick(float deltaTime)
         {
             base.Tick(deltaTime);
-            if (Cooldown <= 0f)
+            if (deltaTime > 0f && Cooldown <= 0f)
                 ActivateCombat();
         }
 

@@ -19,13 +19,23 @@ public sealed class LevelModifiersApplier : MonoBehaviour
     [SerializeField] private RunThreatController threatController;
     [SerializeField] private GameplayAreaService gameplayArea;
     [SerializeField] private WorldEventSpawner eventSpawner;
+    [SerializeField] private ProductionExplorationSectorController exploration;
+    private CharacterSpawner characters;
+    public bool IsInitialized { get; private set; }
 
-    private void Awake()
+    public void BindScene(CharacterSpawner playerOwner, EnemySpawner enemies)
     {
-#if UNITY_EDITOR
+        characters = playerOwner;
+        enemySpawner = enemies;
+        eventSpawner.BindScene(enemies, gameplayArea);
+        worldRuleController.BindEnemySpawner(enemies);
+    }
+
+    public void PrepareDirectRun(CharacterData character)
+    {
         RunStateManager runState = RunStateManager.Instance;
 
-        if (runState != null && runState.CurrentSector != null)
+        if (runState != null && runState.CurrentSector != null && runState.OrbitalStationState != null)
             return;
 
         if (devStageProfile == null ||
@@ -49,38 +59,38 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         }
 
         runState = RunStateManager.EnsureExists();
-        runState.SetCurrentSector(new RunSector(
-            1,
-            devStageProfile,
-            devWorldRule,
-            devLocalAnomaly
-        ));
+        runState.BeginNewRun(character, null, devStageProfile, devWorldRule, devLocalAnomaly, true);
 
         Debug.Log(
             "[DevRunBootstrap] Created Sector 1 for direct MVP play.",
             this
         );
-#endif
     }
 
-    private System.Collections.IEnumerator Start()
+    private void Start()
     {
-        // CharacterSpawner creates the player and the current legacy spawner during Start.
-        // Waiting one frame removes script execution-order coupling.
-        yield return null;
-
-        if (enemySpawner == null || !enemySpawner.gameObject.scene.IsValid())
-            enemySpawner = FindFirstObjectByType<EnemySpawner>();
-
-        if (runFlowController == null || anomalyController == null || worldRuleController == null ||
+        if (characters == null || enemySpawner == null || exploration == null ||
+            runFlowController == null || anomalyController == null || worldRuleController == null ||
             threatController == null || gameplayArea == null || eventSpawner == null || explorationConfig == null)
         {
             Debug.LogError("[LevelModifiersApplier] Authored scene-host references are missing.", this);
             enabled = false;
-            yield break;
+            return;
         }
+        if (characters.SpawnedPlayer != null) InitializeForPlayer(characters.SpawnedPlayer);
+        else characters.CharacterSpawned += InitializeForPlayer;
+    }
 
+    private void InitializeForPlayer(GameObject player)
+    {
+        characters.CharacterSpawned -= InitializeForPlayer;
+        worldRuleController.BindPlayer(player);
         ApplySelectedNode();
+    }
+
+    private void OnDestroy()
+    {
+        if (characters != null) characters.CharacterSpawned -= InitializeForPlayer;
     }
 
     private void ApplySelectedNode()
@@ -95,7 +105,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
 
         if (sector != null)
         {
-            ApplyCurrentSector(sector, currentLevel);
+            IsInitialized = ApplyCurrentSector(sector, currentLevel);
 
 #if UNITY_EDITOR
             LogSectorRuntime(sector);
@@ -129,7 +139,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
     }
 #endif
 
-    private void ApplyCurrentSector(
+    private bool ApplyCurrentSector(
         RunSector sector,
         int currentLevel)
     {
@@ -152,21 +162,13 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         );
 
         if (TutorialController.IsTutorialSector || RunRoute.IsExplorationSector(sector.SectorNumber))
-            ApplyExplorationSector();
+            return ApplyExplorationSector();
+        return true;
     }
 
-    private void ApplyExplorationSector()
+    private bool ApplyExplorationSector()
     {
-        ProductionExplorationSectorController exploration =
-            gameObject.GetComponent<ProductionExplorationSectorController>();
-
-        if (exploration == null)
-        {
-            exploration = gameObject.AddComponent<
-                ProductionExplorationSectorController>();
-        }
-
-        exploration.Initialize(
+        return exploration.Initialize(
             RunStateManager.Instance?.CurrentConfig.LayoutProfile ?? explorationConfig,
             gameplayArea,
             enemySpawner,

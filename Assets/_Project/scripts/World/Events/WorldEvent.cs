@@ -21,7 +21,7 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
 
     private bool cleanupPerformed;
     private bool debugCleanup;
-    private bool eventMarkerVisible;
+    private HUDManager eventMarkerHud;
     private bool hasSitePlacementBounds;
     private Vector2 sitePlacementCenter;
     private Vector2 sitePlacementSize;
@@ -64,7 +64,7 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
         IsStarted = false;
         cleanupPerformed = false;
         debugCleanup = false;
-        eventMarkerVisible = false;
+        HideEventMarker();
     }
 
     public void ConfigureSitePlacement(Vector2 center, Vector2 size)
@@ -144,17 +144,15 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
         if (hud == null)
             return;
 
-        hud.ShowWorldEventMarker(target, label);
-        eventMarkerVisible = true;
+        if (eventMarkerHud != hud) HideEventMarker();
+        hud.ShowWorldEventMarker(this, target, label);
+        eventMarkerHud = hud;
     }
 
     protected void HideEventMarker()
     {
-        if (!eventMarkerVisible)
-            return;
-
-        HUDManager.Instance?.HideWorldEventMarker();
-        eventMarkerVisible = false;
+        if (eventMarkerHud != null) eventMarkerHud.HideWorldEventMarker(this);
+        eventMarkerHud = null;
     }
 
     protected void CompleteEvent()
@@ -169,8 +167,6 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
         WorldEventSpawner eventOwner = owner;
         owner = null;
         eventOwner?.NotifyEventCompleted(this);
-
-        Destroy(gameObject);
     }
 
     protected void FailEvent()
@@ -201,13 +197,6 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
         CleanupEvent();
     }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-    internal void ClearForDebug()
-    {
-        DisposeForOwnerReset();
-        Destroy(gameObject);
-    }
-#endif
 
     internal void DisposeForOwnerReset()
     {

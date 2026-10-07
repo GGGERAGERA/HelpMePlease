@@ -92,6 +92,12 @@ public partial class EnemySpawner : MonoBehaviour
         enemyFeedbackPools = new();
 
     private Transform player;
+    private CharacterSpawner characterSpawner;
+    public void BindScene(CharacterSpawner characters, GameplayAreaService area)
+    {
+        characterSpawner = characters;
+        gameplayArea = area;
+    }
     private EnemySpawnProfile spawnProfile;
     private EnemySpawnPhase activePhase;
     private int activePhaseIndex = -1;
@@ -133,9 +139,9 @@ public partial class EnemySpawner : MonoBehaviour
 
     private void Start()
     {
-        player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
+        player = characterSpawner != null ? characterSpawner.SpawnedPlayer?.transform : PlayerRuntimeReference.CachedPlayer?.transform;
         ResolveGameplayArea();
-        CaptureBaseSettings();
+        if (!initialized) CaptureBaseSettings();
         PrewarmProjectilePools(enemyPrefabs);
         ResetAssaultEvents();
     }
@@ -147,7 +153,7 @@ public partial class EnemySpawner : MonoBehaviour
         if (TutorialController.IsTutorialSector) return;
 
         if (player == null)
-            player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
+            player = characterSpawner != null ? characterSpawner.SpawnedPlayer?.transform : PlayerRuntimeReference.CachedPlayer?.transform;
 
         if (player == null)
             return;
@@ -266,15 +272,19 @@ public partial class EnemySpawner : MonoBehaviour
     public void StopSpawning()
     {
         EndAssault();
-        pendingAssault = null;
         breathRemaining = recoveryRemaining = 0f;
         spawnTimer = 0f;
         spawningEnabled = false;
+        CancelPendingAssault();
         Debug.Log("[EnemySpawner] Spawning stopped.");
     }
 
     private void OnEnable() => RunStateManager.EnsureExists().RegisterSceneCleanup(ReleaseRunScene);
-    private void OnDisable() => RunStateManager.Instance?.UnregisterSceneCleanup(ReleaseRunScene);
+    private void OnDisable()
+    {
+        RunStateManager.Instance?.UnregisterSceneCleanup(ReleaseRunScene);
+        CancelPendingAssault();
+    }
 
     private void ReleaseRunScene()
     {
@@ -1297,8 +1307,5 @@ public partial class EnemySpawner : MonoBehaviour
     {
         if (gameplayArea == null)
             gameplayArea = GameplayAreaService.Instance;
-
-        if (gameplayArea == null)
-            gameplayArea = FindFirstObjectByType<GameplayAreaService>();
     }
 }

@@ -201,6 +201,7 @@ namespace Subject42.Combat.OrbitalStation
 
         public void Tick(float deltaTime)
         {
+            if (deltaTime <= 0f) return;
             for (int i = 0; i < projectiles.Count; i++)
             {
                 Projectile projectile = projectiles[i];

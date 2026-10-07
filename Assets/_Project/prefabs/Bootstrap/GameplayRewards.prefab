@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1427833634437654726
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3709525275511419164}
+  - component: {fileID: 1877972548285593930}
+  - component: {fileID: 5363016781904405273}
+  - component: {fileID: 2631397930831184522}
+  m_Layer: 0
+  m_Name: GameplayRewards
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3709525275511419164
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1427833634437654726}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1877972548285593930
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1427833634437654726}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a07acd6cfdf55624faae158941a726cc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ExperienceManager
+  levelData: {fileID: 11400000, guid: f62deaa6ceabb0c42b8a8cc35bce5ba2, type: 2}
+  currentLevel: 1
+  currentExp: 0
+  OnExperienceChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  OnLevelUp:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &5363016781904405273
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1427833634437654726}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a2fae2470f28fe438776cc62dc5ca11, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::UpgradeManager
+  upgradePanelView: {fileID: 0}
+  upgradeApplier: {fileID: 2631397930831184522}
+  allUpgrades:
+  - {fileID: 11400000, guid: 4d12f281773147b4f8ff7be651666ac9, type: 2}
+  - {fileID: 11400000, guid: c8db2879eddb6744f89bd449e3ce719e, type: 2}
+  - {fileID: 11400000, guid: c566c95f91fdda34db552b74fad20c48, type: 2}
+  - {fileID: 11400000, guid: 9b100000000000000000000000000001, type: 2}
+  - {fileID: 11400000, guid: 9b100000000000000000000000000002, type: 2}
+  - {fileID: 11400000, guid: a55214083a360b248bd0b37e4f66ba26, type: 2}
+  - {fileID: 11400000, guid: 9b100000000000000000000000000003, type: 2}
+  - {fileID: 11400000, guid: 9b100000000000000000000000000004, type: 2}
+  - {fileID: 11400000, guid: 7b703f110d294fa4fa7bc9adb77f4264, type: 2}
+  choicesCount: 3
+--- !u!114 &2631397930831184522
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1427833634437654726}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c33b031f509c8e439c7d748d314284a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::UpgradeApplier
+  playerTag: Player

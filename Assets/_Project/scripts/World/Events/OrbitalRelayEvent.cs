@@ -114,8 +114,7 @@ public sealed class OrbitalRelayEvent : WorldEvent
         station = player != null ? player.GetComponentInChildren<OrbitalStationRuntime>(true) : null;
     }
     private bool ReadyToStart => state != null && station != null && station.IsInitialized && station.Modules.Count > 0 &&
-        (owner != null && owner.IsRewardDeliverySuppressed(this) ||
-            CurrencyManager.Instance != null && UpgradeManager.Instance != null && UpgradeManager.Instance.CanAcceptWorldEventReward);
+        owner != null && owner.CanDispatchCompletionReward(this);
     protected override bool CanStartFrom(Vector2 position)
     {
         if (player == null || station == null) BindPlayer();
@@ -166,7 +165,7 @@ public sealed class OrbitalRelayEvent : WorldEvent
         if (IsCompleted || !state.Result.HasValue) return;
         OrbitalRelayResult result = state.Result.Value;
         pressure.Release(); presentation.ShowResult(result); Finished?.Invoke(result);
-        if (result.Success) CompleteEvent(); else { FailEvent(); Destroy(gameObject); }
+        if (result.Success) CompleteEvent(); else FailEvent();
     }
     public override void Cancel()
     {

@@ -58,6 +58,8 @@ public sealed class WorldRuleController : MonoBehaviour
     private WorldRuleData activeRule;
     private CharacterMovement2D playerMovement;
     private EnemySpawner enemySpawner;
+    public void BindEnemySpawner(EnemySpawner enemies) => enemySpawner = enemies;
+    public void BindPlayer(GameObject player) => playerMovement = player.GetComponent<CharacterMovement2D>();
     private bool enemyLifecycleSubscribed;
     private bool playerMoveSpeedApplied;
     private bool enemyMoveSpeedApplied;
@@ -337,7 +339,8 @@ public sealed class WorldRuleController : MonoBehaviour
 
     private void ResolvePlayerReferences()
     {
-        Transform player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
+        if (playerMovement != null) return;
+        Transform player = PlayerRuntimeReference.CachedPlayer?.transform;
 
         if (player == null)
             return;
@@ -370,7 +373,6 @@ public sealed class WorldRuleController : MonoBehaviour
 
     private void ApplySpawnPressure()
     {
-        ResolveEnemySpawner();
         enemySpawner?.SetWorldRuleSpawnPressureMultiplier(
             activeRule.SpawnPressureMultiplier
         );
@@ -378,14 +380,7 @@ public sealed class WorldRuleController : MonoBehaviour
 
     private void RestoreSpawnPressure()
     {
-        ResolveEnemySpawner();
         enemySpawner?.SetWorldRuleSpawnPressureMultiplier(1f);
-    }
-
-    private void ResolveEnemySpawner()
-    {
-        if (enemySpawner == null || !enemySpawner.gameObject.scene.IsValid())
-            enemySpawner = FindFirstObjectByType<EnemySpawner>();
     }
 
     private void ApplyWind()

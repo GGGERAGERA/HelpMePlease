@@ -20,7 +20,8 @@ internal static class ProductionGravitySiteDefinition
         LocalAnomalyZone zone = context.AnomalyController?.SpawnSiteZone(
             context.Config.GravityAnomaly,
             context.Position,
-            context.Size
+            context.Size,
+            context.SiteObject.transform
         );
 
         GameObject servicesHost = context.ServicesHost != null
@@ -82,7 +83,7 @@ internal sealed class ProductionGravitySiteEnvironment :
         if (anomalyZone == null)
             return;
 
-        anomalyController?.CollapseSiteZone(anomalyZone);
+        if (anomalyController != null) anomalyController.CollapseSiteZone(anomalyZone);
         anomalyZone = null;
     }
 

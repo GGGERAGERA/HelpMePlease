@@ -101,7 +101,12 @@ internal sealed class ProductionElectricSiteHazard :
     public override void StopHazard()
     {
         enabled = false;
-        Destroy(view.gameObject);
+        if (view != null)
+        {
+            view.gameObject.SetActive(false);
+            Destroy(view.gameObject);
+            view = null;
+        }
 
         Destroy(this);
     }

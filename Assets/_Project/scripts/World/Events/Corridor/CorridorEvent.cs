@@ -124,7 +124,7 @@ public sealed class CorridorEvent : WorldEvent, ICorridorNavigation, IWorldEvent
         if (IsCompleted) return;
         if (!success) State?.Terminate(CorridorPhase.Failed);
         Result = message;
-        if (success) CompleteEvent(); else { FailEvent(); Destroy(gameObject); }
+        if (success) CompleteEvent(); else FailEvent();
         Finished?.Invoke(message);
     }
     protected override void CleanupEvent()

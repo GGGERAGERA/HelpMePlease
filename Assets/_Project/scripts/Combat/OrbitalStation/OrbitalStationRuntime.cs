@@ -18,7 +18,7 @@ namespace Subject42.Combat.OrbitalStation
         public void DebugReverseRotation()
         {
             rotationSign *= -1;
-            foreach (var ring in rings) ring.FlashDirectionChange();
+            foreach (var ring in rings) ring.PulseVisual();
         }
 #endif
         [Header("Bullet Time")]
@@ -353,7 +353,7 @@ namespace Subject42.Combat.OrbitalStation
             if (pressed && RightMouseMode == RmbMode.ReverseRotation)
             {
                 rotationSign *= -1;
-                foreach (var ring in rings) ring.FlashDirectionChange();
+                foreach (var ring in rings) ring.PulseVisual();
             }
             foreach (var ring in rings)
             {
@@ -1263,7 +1263,7 @@ namespace Subject42.Combat.OrbitalStation
                 Vector2 to = second.CurrentMount.Transform.position;
                 activeLinkPairs.Add(pair);
                 UpdateLinkLine(pair, from, to);
-                if (first.RuntimeCooldown > 0f)
+                if (deltaTime <= 0f || first.RuntimeCooldown > 0f)
                     continue;
                 EnemyHealth target = Combat.FindNearest((from + to) * 0.5f, 2f);
                 if (target != null && DistanceToSegment(target.transform.position,

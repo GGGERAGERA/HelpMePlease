@@ -13,8 +13,11 @@ public sealed class RunSelectionManager : MonoBehaviour
 
     public bool IsReady => SelectedCharacter != null;
 
-    private void Awake()
+    private void Awake() => InitializeAuthored();
+
+    public void InitializeAuthored()
     {
+        if (Instance == this) return;
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);

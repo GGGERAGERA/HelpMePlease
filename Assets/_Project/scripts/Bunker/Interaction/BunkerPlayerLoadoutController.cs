@@ -17,6 +17,13 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
     [SerializeField] private ControlOnboarding onboardingPrefab;
 
     private RunSelectionManager selection;
+    private RunSelectionManager selectionOwner;
+    private BunkerSelectionSourceHub selectionSource;
+    public void BindScene(RunSelectionManager owner, BunkerSelectionSourceHub source)
+    {
+        selectionOwner = owner;
+        selectionSource = source;
+    }
     private GameObject player;
     private Transform activeVisual;
     private BaseWeapon activeWeapon;
@@ -61,15 +68,6 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
         ApplyCurrentSelection();
     }
 
-    private void Update()
-    {
-        if (selection != RunSelectionManager.Instance)
-        {
-            BindSelectionManager();
-            ApplyCurrentSelection();
-        }
-    }
-
     private void OnDestroy()
     {
         if (PlayerRuntimeReference.CachedPlayer == player) PlayerRuntimeReference.Clear();
@@ -79,7 +77,7 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
     private void BindSelectionManager()
     {
         UnbindSelectionManager();
-        selection = RunSelectionManager.Instance;
+        selection = selectionOwner;
 
         if (selection == null)
             return;
@@ -106,9 +104,7 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
         {
             // Use the station's content order and unlock rules before the first
             // interaction, rather than moving with the scene prefab's speed.
-            BunkerSelectionSourceHub source =
-                FindFirstObjectByType<BunkerSelectionSourceHub>(FindObjectsInactive.Include);
-            character = source != null ? source.GetDefaultCharacter() : null;
+            character = selectionSource != null ? selectionSource.GetDefaultCharacter() : null;
             if (character != null)
             {
                 // The subscribed handler applies the loadout exactly once.

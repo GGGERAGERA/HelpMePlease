@@ -86,7 +86,9 @@ public sealed class LevelAnomalyController : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float outsideDesaturation;
     [SerializeField, Range(0.2f, 0.35f)] private float focusTransition = 0.35f;
 
+    // Geometry registry includes transferred site zones; Clear owns only controller-created ambient zones.
     private readonly List<LocalAnomalyZone> spawnedZones = new();
+    private readonly HashSet<LocalAnomalyZone> siteOwnedZones = new();
     private readonly List<ActiveLocalZone> activeLocalZones = new();
     private readonly HashSet<EnemyHealth> claimedExplosiveDeaths = new();
 
@@ -204,6 +206,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
         // Re-enable restores discoverability without recreating cleared state.
         if (Instance == null)
             Instance = this;
+        RefreshLocalAnomalyCard();
     }
 
     private void CaptureFocusPresentationDefaults()
@@ -374,7 +377,8 @@ public sealed class LevelAnomalyController : MonoBehaviour
     public LocalAnomalyZone SpawnSiteZone(
         LocalAnomalyData data,
         Vector2 position,
-        Vector2 size)
+        Vector2 size,
+        Transform siteOwner = null)
     {
         if (data == null || data.ZonePrefab == null)
             return null;
@@ -404,6 +408,11 @@ public sealed class LevelAnomalyController : MonoBehaviour
         );
         zone.Initialize(data, this, safeSize);
         spawnedZones.Add(zone);
+        if (siteOwner != null)
+        {
+            zone.transform.SetParent(siteOwner, true);
+            siteOwnedZones.Add(zone);
+        }
         return zone;
     }
 
@@ -412,6 +421,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
         if (zone == null || !spawnedZones.Remove(zone))
             return;
 
+        siteOwnedZones.Remove(zone);
         RemoveActiveLocalZone(zone);
         RefreshLocalAnomalyCard();
         zone.Despawn();
@@ -424,6 +434,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
         displayedLocalAnomaly = null;
         localCardVisible = false;
         visual?.Clear();
+        RefreshLocalAnomalyCard();
         IsIntroComplete = true;
     }
 
@@ -504,13 +515,15 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
     private void RefreshLocalAnomalyCard()
     {
+        // Site-zone exit callbacks can arrive after the controller's scene object is destroyed.
+        if (this == null) return;
         for (int i = activeLocalZones.Count - 1; i >= 0; i--)
         {
             if (activeLocalZones[i].Source == null)
                 activeLocalZones.RemoveAt(i);
         }
 
-        if (activeLocalZones.Count == 0)
+        if (!isActiveAndEnabled || activeLocalZones.Count == 0)
         {
             visual?.Hide();
             displayedLocalAnomaly = null;
@@ -800,16 +813,16 @@ public sealed class LevelAnomalyController : MonoBehaviour
 
     private void CleanupLocalAnomalyZones()
     {
-        for (int i = 0; i < spawnedZones.Count; i++)
+        for (int i = spawnedZones.Count - 1; i >= 0; i--)
         {
             LocalAnomalyZone zone = spawnedZones[i];
-
-            if (zone != null)
-                zone.Despawn();
+            if (zone != null && siteOwnedZones.Contains(zone)) continue;
+            spawnedZones.RemoveAt(i);
+            siteOwnedZones.Remove(zone);
+            if (zone != null) zone.Despawn();
         }
-
-        spawnedZones.Clear();
-        activeLocalZones.Clear();
+        activeLocalZones.RemoveAll(value => value.Source is not LocalAnomalyZone zone ||
+            zone == null || !siteOwnedZones.Contains(zone));
         claimedExplosiveDeaths.Clear();
         CurrentCoverage = 0f;
         visual?.Hide();

@@ -80,6 +80,10 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
     private readonly HashSet<WorldEvent> layoutIgnoredEvents = new();
     private readonly List<WorldBreakable> spawnedBreakables = new();
     private readonly List<ResourceNode> resourceNodes = new();
+    private readonly List<WorldLootChest> ownedRewardChests = new();
+    private readonly List<ProductionAnomalySite> ownedSites = new();
+    private ProductionSectorExit sectorExit;
+    private OrbitalRelayEvent tutorialRelay;
     private readonly Collider2D[] breakableOverlapBuffer =
         new Collider2D[BreakableOverlapBufferSize];
 
@@ -93,8 +97,74 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
 
     private void OnDisable()
     {
+        RunStateManager.Instance?.UnregisterSceneCleanup(ReleaseRunScene);
+        ReleaseRunScene();
         if (ActiveInstance == this)
             ActiveInstance = null;
+    }
+
+    private void OnDestroy() => ReleaseRunScene();
+
+    private void ReleaseRunScene()
+    {
+        ClearOwnedSites();
+        if (tutorialRelay != null)
+        {
+            tutorialRelay.DisposeForOwnerReset();
+            tutorialRelay = null;
+        }
+        if (sectorExit != null)
+        {
+            sectorExit.gameObject.SetActive(false);
+            Destroy(sectorExit.gameObject);
+            sectorExit = null;
+        }
+        ClearResourceNodes();
+        ClearOwnedRewardChests();
+        ClearSpawnedBreakables();
+        propScatter?.Clear();
+        propScatter = null;
+        if (PortalPair != null)
+        {
+            PortalPair.gameObject.SetActive(false);
+            Destroy(PortalPair.gameObject);
+            PortalPair = null;
+        }
+        hasBreakableLayout = false;
+        tutorialRelayPrefab = null;
+        breakableNormalSitePositions = null;
+        layoutIgnoredEvents.Clear();
+    }
+
+    private void ClearOwnedSites()
+    {
+        foreach (var site in ownedSites)
+            if (site != null) site.DisposeSite();
+        ownedSites.Clear();
+    }
+
+    private void ClearOwnedRewardChests()
+    {
+        foreach (var chest in ownedRewardChests)
+            if (chest != null) { chest.gameObject.SetActive(false); Destroy(chest.gameObject); }
+        ownedRewardChests.Clear();
+    }
+
+    private void ReleaseTutorialEventRoot(WorldEvent worldEvent)
+    {
+        if (tutorialRelay == worldEvent) tutorialRelay = null;
+        if (worldEvent == null) return;
+        worldEvent.gameObject.SetActive(false);
+        Destroy(worldEvent.gameObject);
+    }
+
+    private ProductionAnomalySite CreateSite(string siteName)
+    {
+        var siteObject = new GameObject(siteName);
+        siteObject.transform.SetParent(transform, false);
+        var site = siteObject.AddComponent<ProductionAnomalySite>();
+        ownedSites.Add(site);
+        return site;
     }
 
     public bool Initialize(
@@ -105,6 +175,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         LevelAnomalyController anomalies,
         RunFlowController flow)
     {
+        ReleaseRunScene();
         RunThreatController threatController =
             gameObject.GetComponent<RunThreatController>();
 
@@ -126,6 +197,8 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
 
         if (!ValidateDependencies())
             return false;
+
+        RunStateManager.EnsureExists().RegisterSceneCleanup(ReleaseRunScene);
 
         anomalyController.BeginSiteLayout();
         if (TutorialController.IsTutorialSector)
@@ -156,13 +229,10 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
 
         LocalAnomalyData[] normalAnomalies = BuildNormalAnomalyPool();
         eventSpawner.ReserveSectorExit(exitPosition, config.ExitRadius);
-        var initializedSites = new List<ProductionAnomalySite>();
 
         for (int i = 0; i < NormalSiteCount; i++)
         {
-            GameObject siteObject = new($"Normal Anomaly Site {i + 1}");
-            ProductionAnomalySite site =
-                siteObject.AddComponent<ProductionAnomalySite>();
+            ProductionAnomalySite site = CreateSite($"Normal Anomaly Site {i + 1}");
             if (!site.InitializeNormal(
                 normalPositions[i],
                 normalSizes[i],
@@ -175,12 +245,10 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
                 config.AnomalyTerritoryFill
             ))
             {
-                site.DisposeSite();
-                foreach (var previous in initializedSites) previous.DisposeSite();
+                ReleaseRunScene();
                 Debug.LogError("[ExplorationSector] Required site objective could not be admitted; sector initialization rejected.");
                 return false;
             }
-            initializedSites.Add(site);
         }
 
         AnomalyPowerType specialPower = SelectSpecialPower();
@@ -195,11 +263,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             exitPosition
         );
 #endif
-        GameObject specialObject = new(
-            $"Special Anomaly Site - {specialPower}"
-        );
-        ProductionAnomalySite specialSite =
-            specialObject.AddComponent<ProductionAnomalySite>();
+        ProductionAnomalySite specialSite = CreateSite($"Special Anomaly Site - {specialPower}");
         if (!specialSite.InitializeSpecial(
                 specialPosition,
                 specialSize,
@@ -212,13 +276,13 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
                 exitPosition,
                 config.ExitRadius))
         {
-            specialSite.DisposeSite();
-            foreach (var previous in initializedSites) previous.DisposeSite();
+            ReleaseRunScene();
             return false;
         }
 
         GameObject exitObject = new("Sector Exit");
-        ProductionSectorExit sectorExit =
+        exitObject.transform.SetParent(transform, false);
+        sectorExit =
             exitObject.AddComponent<ProductionSectorExit>();
         sectorExit.Initialize(exitPosition, config.ExitRadius, runFlow, config.SectorExitGlow);
 
@@ -266,8 +330,9 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         relay = null;
         if (!TutorialController.IsTutorialSector || tutorialRelayPrefab == null || eventSpawner == null) return false;
         if (!eventSpawner.SpawnSiteEventAt(tutorialRelayPrefab, tutorialRelayPosition, tutorialRelayPosition,
-                tutorialRelaySize, true, out WorldEvent target)) return false;
+                tutorialRelaySize, true, out WorldEvent target, transform, ReleaseTutorialEventRoot)) return false;
         relay = target as OrbitalRelayEvent;
+        tutorialRelay = relay;
         return relay != null;
     }
 
@@ -299,10 +364,13 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             if (!IsFootprintClear(eventPosition, captureSize) ||
                 !IsFootprintClear(exitPosition, Vector2.one * config.ExitRadius * 2f)) continue;
             if (!eventSpawner.SpawnSiteEventAt(capture, eventPosition, eventPosition,
-                    captureSize, true, out WorldEvent target)) return false;
+                    captureSize, true, out WorldEvent target, transform, ReleaseTutorialEventRoot)) return false;
             tutorialRelayPrefab = capture; tutorialRelayPosition = eventPosition; tutorialRelaySize = captureSize;
+            tutorialRelay = (OrbitalRelayEvent)target;
             TutorialController.Active.ConfigureTarget((OrbitalRelayEvent)target);
             var exit = new GameObject("Tutorial Sector Exit").AddComponent<ProductionSectorExit>();
+            exit.transform.SetParent(transform, false);
+            sectorExit = exit;
             exit.Initialize(exitPosition, config.ExitRadius, runFlow, config.SectorExitGlow);
             return true;
         }
@@ -342,9 +410,9 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
     public bool RegenerateAnomalyLayout()
     {
         if (!hasBreakableLayout) return false;
-        var previousSites = new List<ProductionAnomalySite>(ProductionAnomalySite.ActiveSites);
+        var previousSites = new List<ProductionAnomalySite>(ownedSites);
         foreach (var site in previousSites)
-            if (site.SiteEvent != null) layoutIgnoredEvents.Add(site.SiteEvent);
+            if (site != null && site.SiteEvent != null) layoutIgnoredEvents.Add(site.SiteEvent);
         bool built;
         Vector2[] positions, sizes;
         Vector2 specialPosition, specialSize, exit;
@@ -355,17 +423,17 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         }
         finally { layoutIgnoredEvents.Clear(); }
         if (!built) return false;
-        foreach (var site in previousSites) site.RemoveForLayout();
+        ClearOwnedSites();
         anomalyController.BeginSiteLayout();
         eventSpawner.ConfigureSiteControlledMode(TotalSiteCount);
         var events = BuildSiteEventPool(sizes);
         var anomalies = BuildNormalAnomalyPool();
         for (int i = 0; i < NormalSiteCount; i++)
-            new GameObject($"Normal Anomaly Site {i + 1}").AddComponent<ProductionAnomalySite>()
+            CreateSite($"Normal Anomaly Site {i + 1}")
                 .InitializeNormal(positions[i], sizes[i], anomalies[i % anomalies.Length],
                     events[i % events.Count], eventSpawner, anomalyController, exit, config.ExitRadius,
                     config.AnomalyTerritoryFill);
-        bool special = new GameObject("Special Anomaly Site").AddComponent<ProductionAnomalySite>()
+        bool special = CreateSite("Special Anomaly Site")
             .InitializeSpecial(specialPosition, specialSize, SelectSpecialPower(),
                 events[NormalSiteCount % events.Count], eventSpawner, anomalyController,
                 gameObject, config, exit, config.ExitRadius);
@@ -488,6 +556,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
                 return false;
 
             chest.transform.SetParent(transform, true);
+            ownedRewardChests.Add(chest);
             if (!runState.TryMarkProductionRewardChestSpawned(sectorNumber))
             {
                 chest.gameObject.SetActive(false);
@@ -795,6 +864,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
             if (chest == null)
                 return false;
             chest.transform.SetParent(transform, true);
+            ownedRewardChests.Add(chest);
             return true;
         }
         return false;

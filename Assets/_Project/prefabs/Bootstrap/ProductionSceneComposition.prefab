@@ -42,8 +42,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 051a8ac737bba6f40bcba0472d56705b, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::ProductionSceneComposition
+  role: 0
   surfaceMap: {fileID: 11400000, guid: 3f53e34ce13d1a449b49ccf958a50461, type: 2}
   missions: {fileID: 11400000, guid: 04cda3c77a009b7459d14ceb450222e2, type: 2}
   localization: {fileID: 232913479040525401, guid: 67fe3c398428358498f0a715ce743f5e, type: 3}
@@ -64,3 +65,14 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 9d300000000000000000000000000006, type: 2}
   - {fileID: 11400000, guid: 9d300000000000000000000000000008, type: 2}
   - {fileID: 11400000, guid: 9d300000000000000000000000000002, type: 2}
+  currency: {fileID: 6007816313150871615, guid: d35b049aab2694849a3f9a29186de164, type: 3}
+  selection: {fileID: 901024673851245911, guid: ce5afc75ab51c564390846f95804eaaa, type: 3}
+  metaProgression: {fileID: 8070719194646771170, guid: 4ca8470a75ff5f341810424ead0095a4, type: 3}
+  characters: {fileID: 0}
+  enemies: {fileID: 0}
+  gameplayArea: {fileID: 0}
+  levelModifiers: {fileID: 0}
+  hud: {fileID: 0}
+  cameraFollow: {fileID: 0}
+  bunkerLoadout: {fileID: 0}
+  bunkerSelections: {fileID: 0}
