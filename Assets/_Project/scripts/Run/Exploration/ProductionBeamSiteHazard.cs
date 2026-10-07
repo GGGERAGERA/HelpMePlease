@@ -24,7 +24,7 @@ internal static class ProductionBeamSiteDefinition
             context.Size,
             context.Config.BeamEnemyDamage,
             context.Config.BeamPlayerDamage,
-            context.Config.BeamArtHooks
+            context.Config.BeamVisualPrefab
         );
         Debug.Log(
             "[ExplorationSector] Special Site: BEAM " +
@@ -75,28 +75,14 @@ internal sealed class ProductionBeamSiteHazard :
     private int patternIndex;
     private Vector2 beamStart;
     private Vector2 beamEnd;
-    private GameObject visualRoot;
-    private Material material;
-    private LineRenderer telegraph;
-    private LineRenderer glow;
-    private LineRenderer core;
-    private AnomalyArtHooks artHookRuntime;
-    private AnomalyVisualTuningValues originalVisualValues;
-    private AnomalyVisualTuningValues debugVisualValues;
-    private bool visualValuesCaptured;
-    private Color originalTelegraphColor;
-    private Color originalGlowColor;
-    private Color originalCoreColor;
-    private float originalTelegraphWidth;
-    private float originalGlowWidth;
-    private float originalCoreWidth;
+    private AnomalyBeamView view;
 
     public void Initialize(
         Vector2 siteCenter,
         Vector2 size,
         float configuredEnemyDamage,
         float configuredPlayerDamage,
-        AnomalyArtHookSet artHooks)
+        AnomalyBeamView visualPrefab)
     {
         center = siteCenter;
         halfSize = new Vector2(
@@ -105,11 +91,7 @@ internal sealed class ProductionBeamSiteHazard :
         );
         enemyDamage = Mathf.Max(0f, configuredEnemyDamage);
         playerDamage = Mathf.Max(0f, configuredPlayerDamage);
-        BuildVisuals();
-        artHookRuntime = AnomalyArtHooks.Create(
-            visualRoot.transform, artHooks, "BEAM");
-        artHookRuntime?.SetBoundarySize(size);
-        CaptureOriginalVisualValues();
+        view = Instantiate(visualPrefab, transform);
         state = HazardState.Waiting;
         stateUntil = Time.time + 0.4f;
     }
@@ -117,10 +99,7 @@ internal sealed class ProductionBeamSiteHazard :
     public override void StopHazard()
     {
         enabled = false;
-        HideHazardLines();
-
-        if (visualRoot != null)
-            Destroy(visualRoot);
+        Destroy(view.gameObject);
 
         Destroy(this);
     }
@@ -139,7 +118,7 @@ internal sealed class ProductionBeamSiteHazard :
                 FireBeam();
                 break;
             default:
-                HideHazardLines();
+                view.SetState(AnomalyBeamView.BeamState.Ending);
                 state = HazardState.Waiting;
                 stateUntil = Time.time + WaitSeconds;
                 break;
@@ -163,22 +142,15 @@ internal sealed class ProductionBeamSiteHazard :
             beamEnd = center + direction * Mathf.Min(halfSize.x, halfSize.y);
         }
 
-        artHookRuntime?.AlignPatternToWorldSegment(beamStart, beamEnd);
-        SetLine(telegraph, beamStart, beamEnd);
-        telegraph.enabled = true;
-        glow.enabled = false;
-        core.enabled = false;
+        view.SetSegment(beamStart, beamEnd, DamageHalfWidth);
+        view.SetState(AnomalyBeamView.BeamState.Telegraph);
         state = HazardState.Telegraph;
         stateUntil = Time.time + TelegraphSeconds;
     }
 
     private void FireBeam()
     {
-        telegraph.enabled = false;
-        SetLine(glow, beamStart, beamEnd);
-        SetLine(core, beamStart, beamEnd);
-        glow.enabled = true;
-        core.enabled = true;
+        view.SetState(AnomalyBeamView.BeamState.Active);
         ProductionSiteHazardUtility.ApplyLineDamage(
             beamStart,
             beamEnd,
@@ -241,197 +213,14 @@ internal sealed class ProductionBeamSiteHazard :
         return maximum >= minimum;
     }
 
-    private void BuildVisuals()
-    {
-        visualRoot = new GameObject("Beam Site Hazard Visual");
-        visualRoot.transform.SetParent(transform, false);
-        material = AnomalyPowerVisuals.CreateMaterial(
-            "Beam Site Hazard Runtime Material"
-        );
-        telegraph = CreateLine(
-            "Environmental Beam Telegraph",
-            new Color(1f, 0.12f, 0.08f, 0.75f),
-            0.18f,
-            34
-        );
-        glow = CreateLine(
-            "Environmental Beam Glow",
-            new Color(1f, 0.01f, 0.01f, 0.3f),
-            2.3f,
-            35
-        );
-        core = CreateLine(
-            "Environmental Beam Core",
-            new Color(1f, 0.32f, 0.12f, 1f),
-            1.05f,
-            36
-        );
-        HideHazardLines();
-    }
-
-    private LineRenderer CreateLine(
-        string lineName,
-        Color color,
-        float width,
-        int sortingOrder)
-    {
-        LineRenderer line = AnomalyPowerVisuals.CreateLine(
-            visualRoot.transform,
-            lineName,
-            color,
-            width,
-            2,
-            material
-        );
-        line.sortingOrder = sortingOrder;
-        return line;
-    }
-
-    private void SetLine(LineRenderer line, Vector2 start, Vector2 end)
-    {
-        float scale = visualValuesCaptured
-            ? debugVisualValues.VisualScale
-            : 1f;
-        line.SetPosition(0, ScalePoint(start, scale));
-        line.SetPosition(1, ScalePoint(end, scale));
-    }
-
     public string VisualTypeName => "BEAM";
-
-    public AnomalyVisualTuningCapabilities VisualCapabilities =>
-        AnomalyVisualTuningCapabilities.PrimaryColor |
-        AnomalyVisualTuningCapabilities.SecondaryColor |
-        AnomalyVisualTuningCapabilities.BoundaryWidth |
-        AnomalyVisualTuningCapabilities.BoundaryAlpha |
-        AnomalyVisualTuningCapabilities.InnerLineWidth |
-        AnomalyVisualTuningCapabilities.VisualScale |
-        AnomalyVisualTuningCapabilities.EdgeGlow;
-
-    public AnomalyVisualTuningValues VisualValues => debugVisualValues;
-
-    public void ApplyVisualValues(AnomalyVisualTuningValues values)
-    {
-        debugVisualValues = values;
-        debugVisualValues.PrimaryColor = ClampColor(values.PrimaryColor);
-        debugVisualValues.SecondaryColor = ClampColor(values.SecondaryColor);
-        debugVisualValues.BoundaryWidth = Mathf.Clamp(
-            values.BoundaryWidth, 0.01f, 3f);
-        debugVisualValues.BoundaryAlpha = Mathf.Clamp01(
-            values.BoundaryAlpha);
-        debugVisualValues.InnerLineWidth = Mathf.Clamp(
-            values.InnerLineWidth, 0.01f, 3f);
-        debugVisualValues.VisualScale = Mathf.Clamp(
-            values.VisualScale, 0.25f, 3f);
-        debugVisualValues.EdgeGlow = Mathf.Clamp(
-            values.EdgeGlow, 0.01f, 10f);
-
-        Color boundaryColor = debugVisualValues.SecondaryColor;
-        boundaryColor.a *= debugVisualValues.BoundaryAlpha;
-        SetLineStyle(
-            telegraph,
-            boundaryColor,
-            debugVisualValues.BoundaryWidth
-        );
-        Color glowColor = debugVisualValues.SecondaryColor;
-        glowColor.a = Mathf.Min(glowColor.a, 0.45f);
-        SetLineStyle(glow, glowColor, debugVisualValues.EdgeGlow);
-        SetLineStyle(
-            core,
-            debugVisualValues.PrimaryColor,
-            debugVisualValues.InnerLineWidth
-        );
-        SetLine(telegraph, beamStart, beamEnd);
-        SetLine(glow, beamStart, beamEnd);
-        SetLine(core, beamStart, beamEnd);
-    }
-
-    public void ResetVisualValues()
-    {
-        if (!visualValuesCaptured)
-            return;
-
-        debugVisualValues = originalVisualValues;
-        SetLineStyle(
-            telegraph,
-            originalTelegraphColor,
-            originalTelegraphWidth
-        );
-        SetLineStyle(glow, originalGlowColor, originalGlowWidth);
-        SetLineStyle(core, originalCoreColor, originalCoreWidth);
-        SetLine(telegraph, beamStart, beamEnd);
-        SetLine(glow, beamStart, beamEnd);
-        SetLine(core, beamStart, beamEnd);
-    }
-
-    private void CaptureOriginalVisualValues()
-    {
-        if (visualValuesCaptured)
-            return;
-
-        originalTelegraphColor = telegraph.startColor;
-        originalTelegraphWidth = telegraph.startWidth;
-        originalGlowColor = glow.startColor;
-        originalGlowWidth = glow.startWidth;
-        originalCoreColor = core.startColor;
-        originalCoreWidth = core.startWidth;
-        debugVisualValues = new AnomalyVisualTuningValues
-        {
-            PrimaryColor = originalCoreColor,
-            SecondaryColor = originalTelegraphColor,
-            BoundaryWidth = originalTelegraphWidth,
-            BoundaryAlpha = 1f,
-            InnerLineWidth = originalCoreWidth,
-            VisualScale = 1f,
-            EdgeGlow = originalGlowWidth
-        };
-        originalVisualValues = debugVisualValues;
-        visualValuesCaptured = true;
-    }
-
-    private Vector2 ScalePoint(Vector2 point, float scale)
-    {
-        return center + (point - center) * scale;
-    }
-
-    private static void SetLineStyle(
-        LineRenderer line,
-        Color color,
-        float width)
-    {
-        if (line == null)
-            return;
-
-        line.startColor = color;
-        line.endColor = color;
-        line.startWidth = width;
-        line.endWidth = width;
-    }
-
-    private static Color ClampColor(Color value)
-    {
-        return new Color(
-            Mathf.Clamp01(value.r),
-            Mathf.Clamp01(value.g),
-            Mathf.Clamp01(value.b),
-            Mathf.Clamp01(value.a)
-        );
-    }
-
-    private void HideHazardLines()
-    {
-        if (telegraph != null)
-            telegraph.enabled = false;
-        if (glow != null)
-            glow.enabled = false;
-        if (core != null)
-            core.enabled = false;
-    }
+    public AnomalyVisualTuningCapabilities VisualCapabilities => AnomalyBeamView.Capabilities;
+    public AnomalyVisualTuningValues VisualValues => view.VisualValues;
+    public void ApplyVisualValues(AnomalyVisualTuningValues values) => view.ApplyVisualValues(values);
+    public void ResetVisualValues() => view.ResetVisualValues();
 
     private void OnDestroy()
     {
-        if (visualRoot != null)
-            Destroy(visualRoot);
-        if (material != null)
-            Destroy(material);
+        if (view != null) Destroy(view.gameObject);
     }
 }

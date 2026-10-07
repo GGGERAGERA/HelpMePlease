@@ -41,9 +41,9 @@ public sealed class ExplorationSectorConfig : ScriptableObject
         AnomalyPowerType.RedBeam
     };
 
-    [Header("Optional Special Site Art Hooks")]
-    [SerializeField] private AnomalyArtHookSet electricArtHooks;
-    [SerializeField] private AnomalyArtHookSet beamArtHooks;
+    [Header("Special Site Presentation")]
+    [SerializeField] private AnomalyBeamView electricVisualPrefab;
+    [SerializeField] private AnomalyBeamView beamVisualPrefab;
 
     [Header("Layout")]
     [SerializeField, Range(0.85f, 0.95f)]
@@ -75,8 +75,8 @@ public sealed class ExplorationSectorConfig : ScriptableObject
     public LocalAnomalyData[] NormalAnomalies => normalAnomalies;
     public LocalAnomalyData GravityAnomaly => gravityAnomaly;
     public AnomalyPowerType[] SpecialPowerPool => specialPowerPool;
-    public AnomalyArtHookSet ElectricArtHooks => electricArtHooks;
-    public AnomalyArtHookSet BeamArtHooks => beamArtHooks;
+    public AnomalyBeamView ElectricVisualPrefab => electricVisualPrefab;
+    public AnomalyBeamView BeamVisualPrefab => beamVisualPrefab;
     public float TargetAnomalyCoverage =>
         Mathf.Clamp(targetAnomalyCoverage, 0.85f, 0.95f);
     public float EdgePadding => Mathf.Max(0f, edgePadding);

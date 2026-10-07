@@ -28,16 +28,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f28b42a1000000000000000000000005, type: 2}
   gravityAnomaly: {fileID: 11400000, guid: d17a42a1000000000000000000000006, type: 2}
   specialPowerPool: 000000000100000002000000
-  electricArtHooks:
-    boundaryAccentPrefab: {fileID: 0}
-    patternAccentPrefab: {fileID: 0}
-    centerAccentPrefab: {fileID: 0}
-    decorativeFxPrefab: {fileID: 0}
-  beamArtHooks:
-    boundaryAccentPrefab: {fileID: 0}
-    patternAccentPrefab: {fileID: 0}
-    centerAccentPrefab: {fileID: 0}
-    decorativeFxPrefab: {fileID: 0}
+  electricVisualPrefab: {fileID: 114100, guid: e3aebdf8e7ef4a9a948695f570d6b327, type: 3}
+  beamVisualPrefab: {fileID: 114100, guid: ada67a4b67564e6a9fbb46e7eb06122e, type: 3}
   targetAnomalyCoverage: 0.94
   edgePadding: 0.1
   exitRadius: 2.5

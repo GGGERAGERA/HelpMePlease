@@ -21,6 +21,94 @@ public sealed class ProductionAnomalyRewardFlowTests
     [UnityTearDown]
     public IEnumerator Cleanup() => CoreTestSupport.CleanupPlayMode();
 
+    [UnityTest, Timeout(60000)]
+    public IEnumerator SpecialBeamPresentationAndRestoredCoins()
+    {
+        var config = AssetDatabase.LoadAssetAtPath<ExplorationSectorConfig>(
+            "Assets/_Project/Data/World/ExplorationSectorConfig.asset");
+        foreach (string path in new[] { "Layout_A", "Layout_C", "Layout_D" })
+        {
+            var layout = AssetDatabase.LoadAssetAtPath<ExplorationSectorConfig>(
+                $"Assets/_Project/Data/SurfaceMap/{path}.asset");
+            Assert.That(layout.BeamVisualPrefab, Is.EqualTo(config.BeamVisualPrefab));
+            Assert.That(layout.ElectricVisualPrefab, Is.EqualTo(config.ElectricVisualPrefab));
+        }
+        var player = Object.FindFirstObjectByType<CharacterSpawner>().SpawnedPlayer;
+        var movement = player.GetComponent<CharacterMovement2D>();
+        movement.MovementIntent = () => Vector2.zero;
+        Vector2 center = player.transform.position;
+        foreach (var existing in ProductionAnomalySite.ActiveSites.Where(value => value.IsSpecial).ToArray())
+            existing.DisposeSite();
+        yield return null;
+
+        var coinPrefab = AssetDatabase.LoadAssetAtPath<GoldenCoinPickup>(
+            "Assets/_Project/prefabs/Pickups/p_coin1.prefab");
+        var coin = Object.Instantiate(coinPrefab, center + Vector2.left * 2f, Quaternion.identity);
+        coin.Initialize(player.transform, 1, 30f, 0.01f, 0f, 0f, 0.5f);
+        yield return null;
+        var coinRenderer = coin.transform.Find("Coin1").GetComponent<SpriteRenderer>();
+        Assert.That(coinRenderer.sharedMaterial.shader.name, Is.EqualTo("Sprites/Default"));
+        Assert.That(coinRenderer.sharedMaterial.shader.isSupported, Is.True);
+        Assert.That(AssetDatabase.GetAssetPath(coinRenderer.sprite), Does.EndWith("Icons3.png"));
+        Assert.That(coinRenderer.sprite.texture.filterMode, Is.EqualTo(FilterMode.Point));
+
+        foreach (var power in new[] { AnomalyPowerType.RedBeam, AnomalyPowerType.ArcNode })
+        {
+            var owner = new GameObject("Special presentation production fixture").AddComponent<ProductionAnomalySite>();
+            var spawner = Object.FindFirstObjectByType<WorldEventSpawner>();
+            spawner.ConfigureDebugConcurrentEventCapacity(16);
+            Assert.That(owner.InitializeSpecial(center, new Vector2(12f, 10f), power,
+                spawner.EventPrefabs[0], spawner, Object.FindFirstObjectByType<LevelAnomalyController>(),
+                owner.gameObject, config, center + Vector2.one * 100f, 2.5f), Is.True);
+            var view = owner.GetComponentInChildren<AnomalyBeamView>();
+            Assert.That(view, Is.Not.Null);
+            Assert.That(view.GetComponentsInChildren<LineRenderer>(), Is.Empty);
+            var hazard = owner.GetComponents<MonoBehaviour>().Single(value =>
+                value.GetType().Name is "ProductionBeamSiteHazard" or "ProductionElectricSiteHazard");
+            yield return CoreTestSupport.Await(() => view.State == AnomalyBeamView.BeamState.Telegraph);
+            hazard.enabled = false;
+            float width = power == AnomalyPowerType.RedBeam ? 1.45f : 0.8f;
+            Assert.That(view.DamageHalfWidth, Is.EqualTo(width));
+            var segment = view.transform.Find("Segment");
+            Assert.That(segment.Find("Footprint").GetComponent<SpriteRenderer>().size.y, Is.EqualTo(width * 2f));
+            Assert.That(segment.Find("Core").GetComponent<SpriteRenderer>().size.y, Is.LessThan(0.2f));
+            foreach (var renderer in view.GetComponentsInChildren<SpriteRenderer>())
+            {
+                Assert.That(renderer.sprite, Is.Not.Null, renderer.name);
+                Assert.That(renderer.sharedMaterial.shader.name, Is.EqualTo("Sprites/Default"));
+            }
+            yield return CaptureSpecialPresentation(power + "-telegraph");
+            hazard.enabled = true;
+            yield return CoreTestSupport.Await(() => view.State == AnomalyBeamView.BeamState.Active);
+            hazard.enabled = false;
+            Vector3 pulse = segment.Find("EnergyPulse1").localPosition;
+            yield return new WaitForSeconds(0.05f);
+            Assert.That(segment.Find("EnergyPulse1").localPosition, Is.Not.EqualTo(pulse));
+            yield return CaptureSpecialPresentation(power + "-active");
+            hazard.enabled = true;
+            yield return CoreTestSupport.Await(() => view.State == AnomalyBeamView.BeamState.Ending);
+            hazard.enabled = false;
+            yield return CoreTestSupport.Await(() => view.State == AnomalyBeamView.BeamState.Inactive);
+            Assert.That(view.State, Is.EqualTo(AnomalyBeamView.BeamState.Inactive));
+            Assert.That(segment.Find("Core").GetComponent<SpriteRenderer>().enabled, Is.False);
+            owner.DisposeSite();
+            yield return null;
+            Assert.That(view == null, Is.True, "Owner reset must remove all owned beam visuals.");
+        }
+        Object.Destroy(coin.gameObject);
+    }
+
+    private static IEnumerator CaptureSpecialPresentation(string name)
+    {
+        const string folder = "Artifacts/GeneratedQA/SpecialAnomalies/";
+        System.IO.Directory.CreateDirectory(folder);
+        string path = folder + name + ".png";
+        if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+        yield return new WaitForSecondsRealtime(0.3f);
+        ScreenCapture.CaptureScreenshot(path);
+        yield return CoreTestSupport.Await(() => System.IO.File.Exists(path));
+    }
+
     [UnityTest]
     public IEnumerator NormalAnomalyOpensCardsAndCompletesAfterTheDisplayedRewardIsGranted()
     {
