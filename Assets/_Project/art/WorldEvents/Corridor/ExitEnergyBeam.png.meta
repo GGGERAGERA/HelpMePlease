@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 2bb9ade7bb2a0e54381493c63e76479c
+guid: dad37ef964564a6a96d4ecf0c160efb3
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 554698159804799425
-    second: GateEmitter_0
+      213: 3425939924380320395
+    second: ExitEnergyBeam_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: GateEmitter_0
+      name: ExitEnergyBeam_0
       rect:
         serializedVersion: 2
-        x: 9
-        y: 6
-        width: 30
-        height: 22
+        x: 0
+        y: 0
+        width: 16
+        height: 8
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1c95ab4990fa2b700800000000000000
-      internalID: 554698159804799425
+      spriteID: b828486b5326b8f20800000000000000
+      internalID: 3425939924380320395
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      GateEmitter_0: 554698159804799425
+      ExitEnergyBeam_0: 3425939924380320395
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

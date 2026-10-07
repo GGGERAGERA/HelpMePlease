@@ -62,7 +62,19 @@ public sealed class CorridorSiteLifecycleTests
         Assert.That(Application.isPlaying,Is.True);
         yield return VerifyProductionSite();
     }
-    private static IEnumerator VerifyProductionSite()
+    [UnityTest,Timeout(60000)] public IEnumerator ProductionCorridorVisualClarity()
+    {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        yield return new EnterPlayMode();
+        yield return VerifyProductionSite(presentationOnly: true);
+    }
+    [UnityTest,Timeout(60000)] public IEnumerator ProductionExitPresentation()
+    {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        yield return new EnterPlayMode();
+        yield return VerifyProductionSite(exitPresentationOnly: true);
+    }
+    private static IEnumerator VerifyProductionSite(bool presentationOnly = false, bool exitPresentationOnly = false)
     {
         yield return CoreTestSupport.LoadBunker();
         Debug.Log("[Corridor QA] Bunker loaded");
@@ -115,6 +127,32 @@ public sealed class CorridorSiteLifecycleTests
         body.position=game.Route.Vertices[0]; player.transform.position=body.position; Physics2D.SyncTransforms();
         Assert.That(spawner.TryStartProductionEvent(game),Is.True);
         Assert.That(game.IsStarted,Is.True); yield return null;
+        if (exitPresentationOnly)
+        {
+            CorridorMigrationTestSupport.DriveToFinalPush(game, body);
+            Vector2 exit = game.Route.Point(game.Route.Length, out var exitForward);
+            CorridorMigrationTestSupport.Move(game, body, exit - exitForward * 3.5f);
+            Assert.That(game.ExitReady, Is.False);
+            yield return CorridorMigrationTestSupport.Capture("production-exit-energy-locked");
+            CorridorMigrationTestSupport.Call(game, "Tick", game.Settings.finalPushDuration + .02f);
+            Assert.That(game.ExitReady, Is.True);
+            yield return CorridorMigrationTestSupport.Capture("production-exit-energy-open");
+            yield break;
+        }
+        Vector2 checkpoint = game.Route.Point(game.Route.CheckpointDistance(0), out var forward);
+        CorridorMigrationTestSupport.Move(game, body, checkpoint - forward * 3.5f);
+        Assert.That(game.State.Completed, Is.Zero);
+        yield return CorridorMigrationTestSupport.Capture("production-checkpoint-active");
+        CorridorMigrationTestSupport.Move(game, body, checkpoint + forward);
+        Assert.That(game.State.Completed, Is.EqualTo(1));
+        yield return CorridorMigrationTestSupport.Capture("production-checkpoint-completed");
+        if (presentationOnly)
+        {
+            // Exercise normal production strikes; stop before the reward/Exit lifecycle checks.
+            yield return CoreTestSupport.Await(() => game.GetNavigationSnapshot().Threats.Count > 0);
+            yield return CorridorMigrationTestSupport.Capture("production-corridor-boundaries");
+            yield break;
+        }
         yield return CorridorMigrationTestSupport.Capture("production-smoke");
         CorridorMigrationTestSupport.DriveToFinalPush(game,body);
         yield return CorridorMigrationTestSupport.Capture("production-exit-locked");

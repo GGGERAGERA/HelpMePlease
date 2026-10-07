@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: dac6076d5f26e98469ca094080876295
+guid: cd27b34df5434b53b14551ab5b675efb
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -1746679750701629435
-    second: GatePylon_0
+      213: 3425939924380320395
+    second: PathFloor_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: GatePylon_0
+      name: PathFloor_0
       rect:
         serializedVersion: 2
-        x: 1
+        x: 0
         y: 0
-        width: 47
-        height: 28
+        width: 16
+        height: 128
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 500cf03650c82c7e0800000000000000
-      internalID: -1746679750701629435
+      spriteID: b828486b5326b8f20800000000000000
+      internalID: 3425939924380320395
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      GatePylon_0: -1746679750701629435
+      PathFloor_0: 3425939924380320395
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

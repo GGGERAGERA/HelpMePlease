@@ -36,7 +36,8 @@ public class InteractionPromptUI : MonoBehaviour
 
         Interactable interactable = playerInteractor.GetCurrentInteractable();
 
-        if (interactable == null || !interactable.isActiveAndEnabled || !interactable.CanInteract)
+        if (interactable == null || !interactable.isActiveAndEnabled || !interactable.CanInteract ||
+            !interactable.HasInteractionPrompt)
         {
             if (promptPanel != null)
                 promptPanel.SetActive(false);
@@ -51,9 +52,7 @@ public class InteractionPromptUI : MonoBehaviour
         }
 
         if (promptText != null)
-            promptText.text = interactable is WorldEvent
-                ? "[E] " + LocalizationService.Instance.Get("hud.interact")
-                : $"[E] {interactable.PromptText}";
+            promptText.text = $"[E] {interactable.PromptText}";
     }
 
     private void PositionPromptAbovePlayer()

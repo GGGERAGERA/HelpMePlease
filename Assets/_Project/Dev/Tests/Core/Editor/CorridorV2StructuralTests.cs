@@ -63,6 +63,39 @@ public sealed class CorridorStructuralTests
         owner.ClearEvents(); yield return null;
         Assert.That(site != null && site.AnomalyZone.FocusArea.enabled, Is.True);
     }
+    [Test] public void CheckpointPresentationHasFourVisualsAndDistinctStates()
+    {
+        var kit = AssetDatabase.LoadAssetAtPath<CorridorKit>("Assets/_Project/Data/WorldEvents/Corridor/CorridorKit.asset");
+        var gate = Object.Instantiate(kit.gate);
+        try
+        {
+            var presentation = gate.transform.Find("Presentation");
+            Assert.That(presentation.childCount, Is.EqualTo(4));
+            var arrow = presentation.Find("DirectionArrow").gameObject;
+            var beam = presentation.Find("Beam").GetComponent<SpriteRenderer>();
+            var left = presentation.Find("LeftNode").GetComponent<SpriteRenderer>();
+            var right = presentation.Find("RightNode").GetComponent<SpriteRenderer>();
+            Assert.That(beam.sharedMaterial.shader.name, Is.EqualTo("Sprites/Default"),
+                "Checkpoint energy must stay bright outside world lights.");
+            Assert.That(left.sharedMaterial, Is.EqualTo(beam.sharedMaterial));
+            Assert.That(right.sharedMaterial, Is.EqualTo(beam.sharedMaterial));
+            Assert.That(arrow.transform.localPosition.x, Is.LessThan(0), "Arrow precedes the crossing plane along local +X.");
+            var view = gate.GetComponent<CorridorNodeView>();
+            view.SetState(1);
+            Assert.That(arrow.activeSelf, Is.True);
+            Color activeBeam = beam.color;
+            view.SetState(2);
+            Assert.That(arrow.activeSelf, Is.False);
+            Assert.That(left.color.g, Is.GreaterThan(left.color.r));
+            Assert.That(right.color, Is.EqualTo(left.color));
+            Assert.That(activeBeam.maxColorComponent * activeBeam.a,
+                Is.GreaterThan(beam.color.maxColorComponent * beam.color.a * 3));
+            view.SetState(0);
+            Assert.That(arrow.activeSelf, Is.False);
+            Assert.That(beam.color.a, Is.LessThan(.3f));
+        }
+        finally { Object.DestroyImmediate(gate); }
+    }
     [Test] public void KitContainsAuthoredVisualsAndPhysics()
     {
         var kit = AssetDatabase.LoadAssetAtPath<CorridorKit>("Assets/_Project/Data/WorldEvents/Corridor/CorridorKit.asset");

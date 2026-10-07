@@ -3473,7 +3473,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 896333667088801489ce63e162e98229, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::OrbitalRelayEvent
-  promptText: hud.interact
+  promptText: ""
   eventId: orbital_relay
   eventTag: hold_zone
   eventDisplayName: event.relay.name

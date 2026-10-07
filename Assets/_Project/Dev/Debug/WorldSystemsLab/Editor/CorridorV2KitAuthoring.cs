@@ -13,7 +13,7 @@ public static class CorridorKitAuthoring
 {
     public const string Folder = "Assets/_Project/prefabs/Environment/WorldEvents/Corridor";
     private const string Request = "Artifacts/GeneratedQA/CorridorV2/build-kit.request";
-    private static Sprite pixel, front, pylon, emitter, field, rail;
+    private static Sprite pixel, front, rail;
     static CorridorKitAuthoring() => EditorApplication.update += CheckRequest;
     private static void CheckRequest()
     {
@@ -30,9 +30,6 @@ public static class CorridorKitAuthoring
         // Static pixel art is authored in Art/*.svg and exported to PNG, never sampled/generated here.
         pixel = AssetDatabase.LoadAllAssetsAtPath("Assets/_Project/art/Orbital/Pixel.png").OfType<Sprite>().First();
         front = ImportAuthoredSprite("CollapseFront");
-        pylon = ImportAuthoredSprite("GatePylon");
-        emitter = ImportAuthoredSprite("GateEmitter");
-        field = ImportAuthoredSprite("GateField");
         rail = ImportAuthoredSprite("WallRail");
         var kit = AssetDatabase.LoadAssetAtPath<CorridorKit>("Assets/_Project/Data/WorldEvents/Corridor/CorridorKit.asset");
         if (kit == null) { kit = ScriptableObject.CreateInstance<CorridorKit>(); AssetDatabase.CreateAsset(kit, "Assets/_Project/Data/WorldEvents/Corridor/CorridorKit.asset"); }
@@ -40,8 +37,8 @@ public static class CorridorKitAuthoring
         kit.corner = Save(Corner(), "PF_CorridorSegment_Corner");
         var cap = Root("End cap"); Wall(cap.transform, "Wall", Vector2.zero, new Vector2(.32f, 8));
         kit.cap = Save(cap, "PF_CorridorSegment_Cap");
-        kit.gate = Save(Node(false), "PF_CorridorGate");
-        kit.exit = Save(Node(true), "PF_CorridorExit");
+        kit.gate = Save(Checkpoint(), "PF_CorridorGate");
+        kit.exit = Save(ExitNode(), "PF_CorridorExit");
         kit.collapse = Save(Collapse(), "PF_CorridorCollapseFront");
         var reclaimed = Root("Reclaimed trail"); Sprite(reclaimed.transform, "Reclaimed floor", Vector2.zero, new Vector2(1, 8), new Color(.92f, .045f, .2f, .27f), -3);
         kit.reclaimed = Save(reclaimed, "PF_CorridorReclaimed");
@@ -88,10 +85,12 @@ public static class CorridorKitAuthoring
     {
         var go = Child(parent, name); go.transform.localPosition = position;
         var collider = go.AddComponent<BoxCollider2D>(); collider.size = size;
-        var renderer = Sprite(go.transform, "Armored energy rail", Vector2.zero, Vector2.one, Color.white, 8, rail);
-        renderer.transform.localScale = Vector3.one;
+        var renderer = Sprite(go.transform, "Presentation - Anomaly boundary rail", Vector2.zero, Vector2.one, new Color(.65f, .9f, 1, .8f), 8, rail);
+        renderer.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Orbital/Visual.mat");
+        renderer.transform.localScale = new Vector3(1, .7f, 1);
         renderer.drawMode = SpriteDrawMode.Tiled;
         renderer.size = size.x > size.y ? size : new Vector2(size.y, size.x);
+        renderer.size = new Vector2(renderer.size.x, .6f);
         if (size.y > size.x) renderer.transform.localRotation = Quaternion.Euler(0, 0, 90);
     }
     private static GameObject Straight()
@@ -99,6 +98,7 @@ public static class CorridorKitAuthoring
         var root = Root("Straight");
         Wall(root.transform, "Lower wall", new Vector2(0, -4), new Vector2(1, .32f));
         Wall(root.transform, "Upper wall", new Vector2(0, 4), new Vector2(1, .32f));
+        PathFloor(root.transform, "PathFloor", new Vector2(1, 8));
         Child(root.transform, "Center anchor"); return root;
     }
     private static GameObject Corner()
@@ -106,47 +106,51 @@ public static class CorridorKitAuthoring
         var root = Root("Corner RIGHT to UP");
         Wall(root.transform, "Bottom outer wall", new Vector2(0, -4), new Vector2(8.32f, .32f));
         Wall(root.transform, "Right outer wall", new Vector2(4, 0), new Vector2(.32f, 8.32f));
+        PathFloor(root.transform, "CornerFloor", new Vector2(8, 8));
         var incoming = Child(root.transform, "Incoming anchor"); incoming.transform.localPosition = new Vector3(-4, 0, 0);
         var outgoing = Child(root.transform, "Outgoing anchor"); outgoing.transform.localPosition = new Vector3(0, 4, 0);
         return root;
     }
-    private static GameObject Node(bool exit)
+    private static void PathFloor(Transform parent, string spriteName, Vector2 size)
+    {
+        var floor = Sprite(parent, "Presentation - Anomalous path floor", Vector2.zero, size,
+            new Color(.4f, .75f, .82f, .055f), -5, ImportAuthoredSprite(spriteName));
+        floor.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Orbital/Visual.mat");
+    }
+    private static GameObject ExitNode() => Checkpoint(exit: true);
+    private static GameObject Checkpoint(bool exit = false)
     {
         var root = Root(exit ? "Exit" : "Checkpoint");
         var gameplay = Child(root.transform, "Gameplay");
         var crossing = Child(gameplay.transform, "Trigger");
-        // The volume documents the same physical plane/opening sampled by CorridorRoute.
-        // Route order and forward-crossing validation remain authoritative, without a second trigger event.
-        var trigger = crossing.AddComponent<BoxCollider2D>(); trigger.isTrigger = true; trigger.size = new Vector2(.5f, 5.2f);
-        Child(gameplay.transform, "Crossing plane");
-        var direction = Child(gameplay.transform, "Forward +X"); direction.transform.localPosition = Vector3.right;
+        var trigger = crossing.AddComponent<BoxCollider2D>();
+        trigger.isTrigger = true; trigger.size = new Vector2(.5f, 5.2f);
+        Child(gameplay.transform, "CrossingPlane");
+        Child(gameplay.transform, "Forward").transform.localPosition = Vector3.right;
         var visual = Child(root.transform, "Presentation");
-        var left = Sprite(visual.transform, "LeftPylon", new Vector2(0, 3.3f), new Vector2(2.4f, 1.4f), Color.white, 11, pylon);
-        left.flipY = true;
-        Sprite(visual.transform, "RightPylon", new Vector2(0, -3.3f), new Vector2(2.4f, 1.4f), Color.white, 11, pylon);
-        var energy = Child(visual.transform, "EnergyField");
-        var colors = new[] { exit ? new Color(1f, .25f, .3f) : new Color(.35f, .48f, .56f),
-            exit ? new Color(1f, .72f, .22f) : new Color(.35f, .94f, 1f), new Color(.4f, .82f, .52f) };
-        var states = new GameObject[3];
-        for (int state = 0; state < 3; state++)
-        {
-            var group = Child(energy.transform, state == 0 ? (exit ? "LockedFX" : "InactiveFX") : state == 1 ? (exit ? "FinalPushFX" : "ActiveFX") : (exit ? "OpenFX" : "CompletedFX"));
-            states[state] = group;
-            for (int side = -1; side <= 1; side += 2)
-            {
-                var core = Sprite(group.transform, side > 0 ? "Left induction fork" : "Right induction fork",
-                    new Vector2(0, side * 3.3f), new Vector2(2.4f, 1.4f), colors[state], 12, emitter);
-                core.flipY = side > 0;
-            }
-            if (state > 0 || exit)
-            {
-                var color = colors[state]; color.a = state == 2 && !exit ? .16f : state == 0 ? .45f : 1f;
-                Sprite(group.transform, "Energy membrane + forward flow", Vector2.zero, new Vector2(.85f, 5.2f), color, 10, field);
-            }
-            group.SetActive(state == 0);
-        }
+        var nodeSprite = ImportAuthoredSprite("GateEnergyNode");
+        var left = Sprite(visual.transform, "LeftNode", new Vector2(0, 3.1f), new Vector2(.975f, .975f), Color.white, 12, nodeSprite);
+        var right = Sprite(visual.transform, "RightNode", new Vector2(0, -3.1f), new Vector2(.975f, .975f), Color.white, 12, nodeSprite);
+        var beam = Sprite(visual.transform, "Beam", Vector2.zero, new Vector2(.5f, 6.2f), Color.white, 10, ImportAuthoredSprite(exit ? "ExitEnergyBeam" : "GateEnergyBeam"));
+        var arrow = Sprite(visual.transform, "DirectionArrow", new Vector2(-1.55f, 0), new Vector2(1.8f, 1.35f), Color.white, 11, ImportAuthoredSprite("GateDirectionArrow"));
+        // Energy stays readable outside the player's light in production darkness/anomalies.
+        var energyMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Orbital/Visual.mat");
+        foreach (var renderer in new[] { left, right, beam, arrow }) renderer.sharedMaterial = energyMaterial;
         var view = root.AddComponent<CorridorNodeView>();
-        Bind(view, "inactive", states[0]); Bind(view, "active", states[1]); Bind(view, "completed", states[2]); Bind(view, "pulseVisual", energy.transform);
+        Bind(view, exit ? "completed" : "active", arrow.gameObject); Bind(view, "pulseVisual", visual.transform);
+        var serialized = new SerializedObject(view);
+        var renderers = serialized.FindProperty("stateVisuals"); renderers.arraySize = 3;
+        renderers.GetArrayElementAtIndex(0).objectReferenceValue = left;
+        renderers.GetArrayElementAtIndex(1).objectReferenceValue = right;
+        renderers.GetArrayElementAtIndex(2).objectReferenceValue = beam;
+        if (exit)
+        {
+            serialized.FindProperty("activeTint").colorValue = new Color(.75f, .85f, .85f, .65f);
+            serialized.FindProperty("completedTint").colorValue = Color.white;
+        }
+        serialized.FindProperty("pulseAmount").floatValue = .025f;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        view.SetState(0);
         return root;
     }
     private static GameObject Collapse()
