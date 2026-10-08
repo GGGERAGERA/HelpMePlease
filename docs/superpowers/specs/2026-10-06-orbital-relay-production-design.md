@@ -69,7 +69,7 @@ Production scripts размещаются рядом с другими Events, �
 
 `StabilizationActivations` и `BonusActivations` — разные счётчики. HUD и итоговый Gold используют только BonusActivations. Combo сбрасывается при входе в Bonus: новая независимая серия. Активный Node остаётся единственным; следующий выбирается равномерно среди коллекции кроме предыдущего, для 2 Node происходит чередование. Перед Transition выбирается следующий, но включается он только после перехода.
 
-Разрыв aggregate mounted-body contact сбрасывает local progress в 0. Несколько реально mounted modules могут непрерывно передавать контакт друг другу; drag/preview/halo/hidden/detached тела не считаются. Игрок должен находиться в authored arena bounds; выход останавливает contact, но не event timer. RMB compression и обычное orbital input ownership не изменяются.
+Разрыв aggregate mounted-body contact сбрасывает local progress в 0. Несколько реально mounted modules могут непрерывно передавать контакт друг другу; drag/preview/halo/hidden/detached тела не считаются. Игрок должен находиться в authored arena bounds; выход останавливает contact, но не event timer. RMB Bullet Time и обычное orbital input ownership не изменяются.
 
 Combo: первая активация даёт x1; последующая до истечения `comboWindow` увеличивает series; expiry сбрасывает x0; следующая начинает x1. Combo не изменяет Gold или Upgrade. Transition не съедает combo window, но Bonus начинает новую series.
 
@@ -171,7 +171,7 @@ Global Mission/Run completed-event signal and SourcePrefab reporting remain the 
 
 ## 10. Tutorial, bot и tests
 
-Tutorial's earlier movement/kill/XP/first placement steps stay intact. Target type becomes OrbitalRelayEvent. Entry into ArenaBounds at SectorGoal may still auto-start via PlayerEntered; entering is just a trigger, not progress. Once started, FocusTarget tracks ActiveNode position; text tells player to touch the glowing core with mounted weapon, reposition and use RMB compression.
+Tutorial's earlier movement/kill/XP/first placement steps stay intact. Target type becomes OrbitalRelayEvent. Entry into ArenaBounds at SectorGoal may still auto-start via PlayerEntered; entering is just a trigger, not progress. Once started, FocusTarget tracks ActiveNode position; text tells player to touch the glowing core with mounted weapon, reposition and use RMB Bullet Time.
 
 `ProductionExplorationSectorController` places the same prefab using its full collider footprint and remembers the tutorial placement. New `TryRespawnTutorialRelay(out OrbitalRelayEvent relay)` reuses that placement after failure with 2-second delay, while sector is active and no target is pending. Failed target subscriptions are detached, new target subscribed once; player does not repeat movement/XP/tutorial reward steps. Step returns to SectorGoal, then FirstEvent; no premature Exit. Bonus/transition are the same timers as production; no tutorial legacy mode, relaxed detector or instant stabilization.
 

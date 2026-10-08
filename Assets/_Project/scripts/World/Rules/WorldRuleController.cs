@@ -265,10 +265,10 @@ public sealed class WorldRuleController : MonoBehaviour
 
         if (shotKind == WeaponShotKind.Laser)
         {
-            if (Time.unscaledTime < nextLaserRevealTime)
+            if (Time.time < nextLaserRevealTime)
                 return;
 
-            nextLaserRevealTime = Time.unscaledTime +
+            nextLaserRevealTime = Time.time +
                 activeRule.DarknessLaserRevealCooldown;
         }
 

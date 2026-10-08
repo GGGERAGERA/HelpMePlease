@@ -439,7 +439,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
         var orbitalStation = relayAdapter != null ? relayAdapter.Station : null;
         if (orbitalStation != null && orbitalStation.IsInitialized)
         {
-            GUILayout.Label("WASD: move | RMB: compress rings | Left Shift + WASD: ORBITAL centre", noteStyle);
+            GUILayout.Label("WASD: move | RMB: Bullet Time | Left Shift + WASD: ORBITAL centre", noteStyle);
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Speed +", buttonStyle)) orbitalStation.UpgradeRingSpeed(orbitalStation.Rings[0].RingId);
             if (GUILayout.Button("Power +", buttonStyle)) orbitalStation.UpgradeRingPower(orbitalStation.Rings[0].RingId);

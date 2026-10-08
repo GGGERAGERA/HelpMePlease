@@ -33,8 +33,6 @@ public enum AudioCueId
     OrbitalSwordHit = 80,
     OrbitalImpulseFire = 81,
     OrbitalArcFire = 82,
-    OrbitalCompress = 90,
-    OrbitalRelease = 91,
     CorePulse = 92,
     CoreCascade = 93,
     ModuleInstall = 94,

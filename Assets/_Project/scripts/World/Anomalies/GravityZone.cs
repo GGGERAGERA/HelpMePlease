@@ -229,11 +229,11 @@ public sealed class GravityZone : LocalAnomalyZone
 
     private void Update()
     {
-        if (hasRadialColor) radialFlowPhase += Time.unscaledDeltaTime * flowSpeed * radialPolarity;
+        if (hasRadialColor) radialFlowPhase += Time.deltaTime * flowSpeed * radialPolarity;
         visualFade = Mathf.MoveTowards(
             visualFade,
             targetVisualFade,
-            Time.unscaledDeltaTime / Mathf.Max(0.01f, fadeDuration)
+            Time.deltaTime / Mathf.Max(0.01f, fadeDuration)
         );
         ApplyVisualProperties();
 
@@ -725,7 +725,7 @@ public sealed class GravityZone : LocalAnomalyZone
             visualProperties.SetFloat(FlowSpeedId, 0f);
             visualProperties.SetFloat(FlowPhaseOffsetId, radialFlowPhase);
         }
-        visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
+        visualProperties.SetFloat(VisualTimeId, Time.time);
         visualRenderer.SetPropertyBlock(visualProperties);
     }
 

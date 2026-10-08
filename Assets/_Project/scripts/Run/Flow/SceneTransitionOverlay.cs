@@ -167,11 +167,21 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
 
     private void Recover(bool bunker)
     {
-        string scene = bunker ? RunEndService.BunkerSceneName : requestedScene;
+        if (bunker) { RecoverToBunker(); return; }
+        string scene = requestedScene;
         if (!Application.CanStreamedLevelBeLoaded(scene)) return;
         busy = false;
-        if (bunker) RunEndService.RecoverToBunker();
-        else Load(scene);
+        Load(scene);
+    }
+
+    // Invalid gameplay activation may request recovery while this overlay is loading it.
+    // Release that transition before using the existing run-end recovery flow.
+    public void RecoverToBunker()
+    {
+        if (!Application.CanStreamedLevelBeLoaded(RunEndService.BunkerSceneName)) return;
+        StopAllCoroutines();
+        Release(previousTimeScale);
+        RunEndService.RecoverToBunker();
     }
 
     private IEnumerator Fade(float from, float to, float duration, Action<float> closing)

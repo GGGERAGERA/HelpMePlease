@@ -4,7 +4,7 @@ Lab scenes are isolated Editor/development tools, absent from production Build S
 
 ## ORBITAL labs
 
-`OrbitalLab/OrbitalRewardLab.unity` uses the production baseline, reward provider, real cards/placement and station state. Controls expose ordinary/random rewards, eligible direct grants, ring/mount/module operations, rotation/compression and reset. Reset cancels owned reward/presentation state and recreates the baseline.
+`OrbitalLab/OrbitalRewardLab.unity` uses the production baseline, reward provider, real cards/placement and station state. Controls expose ordinary/random rewards, eligible direct grants, ring/mount/module operations, rotation/Bullet Time and reset. Reset cancels owned reward/presentation state and recreates the baseline.
 
 `OrbitalLab/EnemyOrbitalLab.unity` uses production enemy prefabs/AI/health and player/ORBITAL systems. It provides spawn layouts, presets, AI freeze, speed/invulnerability, clear/reset and build controls. The serialized production enemy list can be refreshed from the OrbitalLab menu.
 

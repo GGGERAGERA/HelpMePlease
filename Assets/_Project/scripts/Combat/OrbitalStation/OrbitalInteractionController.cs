@@ -16,7 +16,7 @@ namespace Subject42.Combat.OrbitalStation
         private float ownedScale;
         private bool ownsScale;
         private bool ownsBulletTime;
-        private float bulletBaseScale, bulletScale, bulletBaseFixedStep;
+        private float bulletBaseScale, bulletScale, bulletBaseFixedStep, bulletFixedStep;
         private CharacterMovement2D movement;
         public float BulletTimeBlend => ownsBulletTime ? Mathf.InverseLerp(1f, station.BulletTime.WorldTimeScale, bulletScale / bulletBaseScale) : 0f;
         private OrbitalInteractionMode beforeDraw;
@@ -60,7 +60,7 @@ namespace Subject42.Combat.OrbitalStation
             Mode = OrbitalInteractionMode.Idle;
         }
 
-        public void TickBulletTime(bool active, float scale, float transitionSeconds, float unscaledDeltaTime)
+        public void TickBulletTime(bool active, BulletTimeAbility ability, float unscaledDeltaTime)
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (active || ownsBulletTime) ExternalTimeControlStarting?.Invoke();
@@ -73,15 +73,22 @@ namespace Subject42.Combat.OrbitalStation
             {
                 if (!active) return;
                 bulletBaseScale = bulletScale = Time.timeScale;
-                bulletBaseFixedStep = Time.fixedDeltaTime;
+                bulletBaseFixedStep = bulletFixedStep = Time.fixedDeltaTime;
                 ownsBulletTime = true;
             }
+            float scale = ability.WorldTimeScale;
+            float duration = active ? ability.EnterBlendDuration : ability.ExitBlendDuration;
             float target = active ? bulletBaseScale * scale : bulletBaseScale;
             bulletScale = Mathf.MoveTowards(bulletScale, target,
-                bulletBaseScale * (1f - scale) * unscaledDeltaTime / Mathf.Max(.01f, transitionSeconds));
+                bulletBaseScale * (1f - scale) * unscaledDeltaTime / duration);
             Time.timeScale = bulletScale;
-            Time.fixedDeltaTime = bulletBaseFixedStep * bulletScale / bulletBaseScale;
-            if (movement != null) movement.BulletTimeControlMultiplier = bulletBaseScale / bulletScale;
+            float worldScale = bulletScale / bulletBaseScale;
+            bulletFixedStep = bulletBaseFixedStep * worldScale;
+            Time.fixedDeltaTime = bulletFixedStep;
+            // Player locomotion still uses scaled physics time, with one relative modifier.
+            float playerScale = Mathf.Lerp(1f, ability.PlayerEffectiveTimeScale,
+                Mathf.InverseLerp(1f, scale, worldScale));
+            if (movement != null) movement.BulletTimeControlMultiplier = playerScale / worldScale;
             if (!active && Mathf.Approximately(bulletScale, bulletBaseScale)) ReleaseBulletTime();
         }
 
@@ -92,7 +99,7 @@ namespace Subject42.Combat.OrbitalStation
             ExternalTimeControlStarting?.Invoke();
 #endif
             if (Mathf.Approximately(Time.timeScale, bulletScale)) Time.timeScale = bulletBaseScale;
-            Time.fixedDeltaTime = bulletBaseFixedStep;
+            if (Mathf.Approximately(Time.fixedDeltaTime, bulletFixedStep)) Time.fixedDeltaTime = bulletBaseFixedStep;
             if (movement != null) movement.BulletTimeControlMultiplier = 1f;
             ownsBulletTime = false;
             station?.BulletTime.Release();

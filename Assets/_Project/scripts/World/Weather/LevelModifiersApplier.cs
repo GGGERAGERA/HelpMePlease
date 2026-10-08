@@ -31,12 +31,24 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         worldRuleController.BindEnemySpawner(enemies);
     }
 
-    public void PrepareDirectRun(CharacterData character)
+    public bool PrepareDirectRun(CharacterData character)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        return PrepareDirectRun(character, true);
+#else
+        return PrepareDirectRun(character, false);
+#endif
+    }
+
+    internal bool PrepareDirectRun(CharacterData character, bool allowDevelopment)
     {
         RunStateManager runState = RunStateManager.Instance;
 
         if (runState != null && runState.CurrentSector != null && runState.OrbitalStationState != null)
-            return;
+            return true;
+
+        if (!allowDevelopment)
+            return false;
 
         if (devStageProfile == null ||
             devWorldRule == null ||
@@ -46,7 +58,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
                 "[DevRunBootstrap] Direct MVP play configuration is missing.",
                 this
             );
-            return;
+            return false;
         }
 
         if (devStageProfile.SectorNumber != 1)
@@ -55,7 +67,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
                 "[DevRunBootstrap] devStageProfile must describe sector 1.",
                 this
             );
-            return;
+            return false;
         }
 
         runState = RunStateManager.EnsureExists();
@@ -65,6 +77,7 @@ public sealed class LevelModifiersApplier : MonoBehaviour
             "[DevRunBootstrap] Created Sector 1 for direct MVP play.",
             this
         );
+        return true;
     }
 
     private void Start()

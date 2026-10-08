@@ -286,30 +286,6 @@ MonoBehaviour:
     loop: 0
     category: 1
     priority: 25
-  - id: 90
-    clips:
-    - {fileID: 8300000, guid: 0353aecf3a7584944b4825daa3bdca85, type: 3}
-    volume: 0.1
-    pitchMin: 1
-    pitchMax: 1
-    spatialBlend: 0
-    cooldown: 0
-    maxSimultaneous: 1
-    loop: 1
-    category: 1
-    priority: 30
-  - id: 91
-    clips:
-    - {fileID: 8300000, guid: 177e4ab0c4a5190418064fc42dd4f780, type: 3}
-    volume: 0.34
-    pitchMin: 0.97
-    pitchMax: 1.03
-    spatialBlend: 0
-    cooldown: 0.12
-    maxSimultaneous: 1
-    loop: 0
-    category: 1
-    priority: 60
   - id: 92
     clips:
     - {fileID: 8300000, guid: 61e7f1c7145ab2b4bb9e2134f3dea46c, type: 3}

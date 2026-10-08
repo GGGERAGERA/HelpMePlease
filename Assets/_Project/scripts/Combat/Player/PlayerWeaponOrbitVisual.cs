@@ -131,7 +131,7 @@ public sealed class PlayerWeaponOrbitVisual : MonoBehaviour
         }
 
         rotationAngle = Mathf.Repeat(
-            rotationAngle + RingRotationSpeed * Time.unscaledDeltaTime,
+            rotationAngle + RingRotationSpeed * Time.deltaTime,
             360f
         );
         RefreshGeometry(true);
@@ -203,7 +203,7 @@ public sealed class PlayerWeaponOrbitVisual : MonoBehaviour
             return;
 
         float pulse = 1f - RingPulseAmount + RingPulseAmount * Mathf.Sin(
-            phase + Time.unscaledTime * Mathf.PI * 2f * RingPulseSpeed
+            phase + Time.time * Mathf.PI * 2f * RingPulseSpeed
         );
         pulse = Mathf.Max(0f, pulse);
         Color color = RingTint * (RingIntensity * pulse);

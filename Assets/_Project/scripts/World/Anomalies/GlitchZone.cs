@@ -114,7 +114,7 @@ public sealed class GlitchZone : LocalAnomalyZone
         visualFade = Mathf.MoveTowards(
             visualFade,
             targetVisualFade,
-            Time.unscaledDeltaTime / Mathf.Max(0.01f, fadeDuration)
+            Time.deltaTime / Mathf.Max(0.01f, fadeDuration)
         );
         pulseVisual = Mathf.MoveTowards(
             pulseVisual,
@@ -672,7 +672,7 @@ public sealed class GlitchZone : LocalAnomalyZone
         else
 #endif
             visualProperties.SetVector(RegionSizeId, AreaSize);
-        visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
+        visualProperties.SetFloat(VisualTimeId, Time.time);
         visualProperties.SetFloat(PulseId, pulseVisual);
         visualRenderer.SetPropertyBlock(visualProperties);
     }

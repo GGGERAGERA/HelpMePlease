@@ -157,17 +157,17 @@ namespace Subject42.Combat.OrbitalStation
             {
                 if (pulseBody != null)
                 {
-                    float fallbackScale = Time.unscaledTime < flashUntil
+                    float fallbackScale = Time.time < flashUntil
                         ? 1.14f
                         : kind == OrbitalModuleKind.LinkNode
-                            ? 1f + Mathf.Sin(Time.unscaledTime * 4.6f) * 0.12f
+                            ? 1f + Mathf.Sin(Time.time * 4.6f) * 0.12f
                             : 1f;
                     pulseBody.localScale = Vector3.one * baseScale * fallbackScale;
                 }
                 ApplyTint();
                 return;
             }
-            float feedbackScale = Time.unscaledTime < flashUntil ? 1.14f : 1f;
+            float feedbackScale = Time.time < flashUntil ? 1.14f : 1f;
             if (kind == OrbitalModuleKind.ImpulseGun)
             {
                 // Recompute feedback from the authored pose; never compound offsets.
@@ -181,7 +181,7 @@ namespace Subject42.Combat.OrbitalStation
                 instance.transform.localScale = authoredBodyScale * feedbackScale;
                 bodyFeedbackActive = feedbackScale != 1f;
             }
-            if (effectStopAt > 0f && Time.unscaledTime >= effectStopAt)
+            if (effectStopAt > 0f && Time.time >= effectStopAt)
             {
                 StopParticles();
                 if (animator != null && kind == OrbitalModuleKind.Pistol)
@@ -197,7 +197,7 @@ namespace Subject42.Combat.OrbitalStation
 
         public void Trigger()
         {
-            flashUntil = Time.unscaledTime +
+            flashUntil = Time.time +
                 (kind == OrbitalModuleKind.ImpulseGun ? 0.16f : 0.08f);
             if (animator != null && kind == OrbitalModuleKind.Pistol)
             {
@@ -212,7 +212,7 @@ namespace Subject42.Combat.OrbitalStation
                     particles[i].Clear(true);
                     particles[i].Play(true);
                 }
-            effectStopAt = Time.unscaledTime +
+            effectStopAt = Time.time +
                 (kind == OrbitalModuleKind.ImpulseGun ? 0.22f : 0.12f);
         }
 
@@ -235,7 +235,7 @@ namespace Subject42.Combat.OrbitalStation
                     color = Color.Lerp(color, dragValid
                         ? new Color(0.25f, 1f, 0.55f, color.a)
                         : new Color(1f, 0.12f, 0.18f, color.a), 0.72f);
-                else if (Time.unscaledTime < flashUntil)
+                else if (Time.time < flashUntil)
                     color = Color.Lerp(color, Color.white, 0.72f);
                 color.a *= DepthOpacity;
                 sprites[i].color = color;

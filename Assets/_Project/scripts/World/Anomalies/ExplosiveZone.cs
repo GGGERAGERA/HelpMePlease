@@ -145,7 +145,7 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         visualFade = Mathf.MoveTowards(
             visualFade,
             targetVisualFade,
-            Time.unscaledDeltaTime / Mathf.Max(0.01f, fadeDuration)
+            Time.deltaTime / Mathf.Max(0.01f, fadeDuration)
         );
         ApplyVisualProperties();
 
@@ -642,7 +642,7 @@ public sealed class ExplosiveZone : LocalAnomalyZone
             visualProperties.SetColor(InnerColorId, innerColor);
             visualProperties.SetColor(EdgeColorId, edgeColor);
         }
-        visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
+        visualProperties.SetFloat(VisualTimeId, Time.time);
         visualRenderer.SetPropertyBlock(visualProperties);
     }
 

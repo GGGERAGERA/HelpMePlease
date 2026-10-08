@@ -148,7 +148,7 @@ namespace Subject42.Combat.OrbitalStation
             coreTime += deltaTime;
             view.SetCoreEnergy(coreLevel, coreColor, pulse, coreTime);
             spawnScale = Mathf.MoveTowards(spawnScale, 1f,
-                Time.unscaledDeltaTime * 2.8f);
+                deltaTime * 2.8f);
             float interactionPulse = interactionEligible
                 ? 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 7f)
                 : 0f;
@@ -156,7 +156,7 @@ namespace Subject42.Combat.OrbitalStation
                 ((interactionEligible ? .5f + interactionPulse * .5f : 0f) +
                  (interactionHovered ? 1f : 0f)) * interactionEmphasis;
             view.UpdateTierAppearance(VisualTier, Radius * spawnScale, pulse, highlight,
-                interactionDimmed, Geometry.Type == OrbitalPathType.FigureEight || State.Order == 0, Time.unscaledDeltaTime);
+                interactionDimmed, Geometry.Type == OrbitalPathType.FigureEight || State.Order == 0, deltaTime, Time.unscaledDeltaTime);
             for (int i = 0; i < Mounts.Count; i++)
                 Mounts[i].UpdatePosition(State.CurrentPhase, Radius * spawnScale);
         }

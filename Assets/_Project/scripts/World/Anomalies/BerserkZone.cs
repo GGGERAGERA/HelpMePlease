@@ -125,7 +125,7 @@ public sealed class BerserkZone : LocalAnomalyZone
         visualFade = Mathf.MoveTowards(
             visualFade,
             targetVisualFade,
-            Time.unscaledDeltaTime / Mathf.Max(0.01f, fadeDuration)
+            Time.deltaTime / Mathf.Max(0.01f, fadeDuration)
         );
         ApplyVisualProperties();
 
@@ -480,7 +480,7 @@ public sealed class BerserkZone : LocalAnomalyZone
                 AreaSize * debugVisualValues.VisualScale);
         }
 #endif
-        visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
+        visualProperties.SetFloat(VisualTimeId, Time.time);
         visualRenderer.SetPropertyBlock(visualProperties);
     }
 

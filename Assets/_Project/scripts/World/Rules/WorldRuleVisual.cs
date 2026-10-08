@@ -274,11 +274,11 @@ public sealed class WorldRuleVisual : MonoBehaviour
 
     private void Update()
     {
-        float step = Time.unscaledDeltaTime /
+        float step = Time.deltaTime /
             Mathf.Max(0.01f, transitionDuration);
         float snowStep = snowVisualPrefab == null ? 0f :
             Mathf.Max(0.0001f, SnowPresentation.snowVisualIntensity) *
-            Time.unscaledDeltaTime /
+            Time.deltaTime /
             Mathf.Max(0.01f, activeSnowTransitionDuration);
         currentSnowIntensity = Mathf.MoveTowards(
             currentSnowIntensity,
@@ -320,7 +320,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
                     currentSnowIntensity / SnowPresentation.snowVisualIntensity
                 )
                 : 0f;
-            visualMaterial.SetFloat(VisualTimeId, Time.unscaledTime);
+            visualMaterial.SetFloat(VisualTimeId, Time.time);
             visualMaterial.SetFloat(
                 SnowIntensityId,
                 currentSnowIntensity * SnowPresentation.snowScreenOpacity *
@@ -824,7 +824,7 @@ public sealed class WorldRuleVisual : MonoBehaviour
             return;
         }
 
-        darknessRevealRemaining -= Time.unscaledDeltaTime;
+        darknessRevealRemaining -= Time.deltaTime;
 
         if (darknessRevealRemaining <= 0f)
             StopDarknessReveal();

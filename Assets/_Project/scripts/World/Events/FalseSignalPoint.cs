@@ -44,7 +44,7 @@ public sealed class FalseSignalPoint : MonoBehaviour
         {
             fadeRemaining = Mathf.Max(
                 0f,
-                fadeRemaining - Time.unscaledDeltaTime
+                fadeRemaining - Time.deltaTime
             );
             visibility = fadeRemaining / fadeDuration;
 

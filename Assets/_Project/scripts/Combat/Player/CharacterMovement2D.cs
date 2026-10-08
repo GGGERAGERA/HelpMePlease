@@ -75,8 +75,17 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
 
     // Optional input ownership; physics, animation and status effects remain here.
     public System.Func<Vector2> MovementIntent { get; set; }
-    // Only the station's time owner compensates deliberate player locomotion.
-    public float BulletTimeControlMultiplier { get; internal set; } = 1f;
+    private float bulletTimeControlMultiplier = 1f;
+    // The station's time owner supplies one modifier for locomotion, dash and its animation.
+    public float BulletTimeControlMultiplier
+    {
+        get => bulletTimeControlMultiplier;
+        internal set
+        {
+            if (animator != null) animator.speed *= value / bulletTimeControlMultiplier;
+            bulletTimeControlMultiplier = value;
+        }
+    }
 
     public void SetVisualRoot(Transform value)
     {
@@ -165,7 +174,10 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
         UpdateFacing(moveInput.x);
 
         if (animator != null)
-            animator.SetFloat("Speed", moveInput.magnitude);
+            animator.SetFloat("Speed", rb != null
+                ? Mathf.Clamp01(rb.linearVelocity.magnitude / Mathf.Max(.01f,
+                    speed * anomalySpeedMultiplier * worldRuleSpeedMultiplier * BulletTimeControlMultiplier))
+                : moveInput.magnitude);
     }
 
     private void CacheVisualRootScale()
