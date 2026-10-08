@@ -4,11 +4,10 @@ using UnityEngine;
 /// <summary>
 /// Applies the persistent selection to the bunker scene player. The bunker
 /// keeps its authored player root so camera, intro and transition references
-/// remain valid; only the selected visual and weapon are recreated.
+/// remain valid; only the selected character visual is recreated.
 /// </summary>
 public sealed class BunkerPlayerLoadoutController : MonoBehaviour
 {
-    private const string WeaponPointName = "WeaponPoint";
 
     [Header("Controlled Bunker Player")]
     [SerializeField] private Transform controlledPlayerRoot;
@@ -26,7 +25,6 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
     }
     private GameObject player;
     private Transform activeVisual;
-    private BaseWeapon activeWeapon;
     private CharacterData activeCharacter;
     private float fallbackMoveSpeed;
     public bool IsReady => player != null && selection != null && activeCharacter != null;
@@ -168,29 +166,6 @@ public sealed class BunkerPlayerLoadoutController : MonoBehaviour
             // Bunker traversal uses the authored hub speed, independently of combat character balance.
             player, character, fallbackMoveSpeed, moveSpeedOverride: fallbackMoveSpeed);
 
-    }
-
-    private void ApplyWeapon(WeaponData weapon)
-    {
-        if (player == null || weapon == null)
-            return;
-
-        if (activeWeapon != null)
-        {
-            activeWeapon.gameObject.SetActive(false);
-            Destroy(activeWeapon.gameObject);
-        }
-
-        CharacterCombatType combatType = activeCharacter != null
-            ? activeCharacter.combatType
-            : CharacterCombatType.AutoFire;
-        activeWeapon = PlayerLoadoutFactory.SpawnWeapon(
-            player,
-            weapon,
-            combatType,
-            WeaponPointName);
-
-        PlayerWeaponOrbitVisual.Ensure(player, activeWeapon);
     }
 
     private static Transform FindVisual(GameObject root)

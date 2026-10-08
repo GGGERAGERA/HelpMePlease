@@ -24,16 +24,22 @@ namespace Subject42.Combat.OrbitalStation
         public bool IsCustomDrawing => Mode == OrbitalInteractionMode.CustomDrawing || station != null && station.HasPendingCustomRings;
         public OrbitalInteractionMode Mode { get; private set; }
         public bool IsIdle => Mode == OrbitalInteractionMode.Idle;
-        public bool IsGameplayInputBlocked => IsCustomDrawing || SceneTransitionOverlay.IsTransitioning || OrbitalDevelopmentInput.IsGameplayInputBlocked
+        public bool IsGameplayInputBlocked => IsCustomDrawing || SceneTransitionOverlay.IsTransitioning
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            || DebugSuppressPlayerInput
+            || DebugSuppressPlayerInput || (DevelopmentInputBlocker?.Invoke() ?? false)
 #endif
             ;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public bool DebugSuppressPlayerInput { get; set; }
+        public System.Func<bool> DevelopmentInputBlocker { get; set; }
+        public event System.Action ExternalTimeControlStarting;
 #endif
         private bool Alive => station != null && station.IsInitialized && station.Owner != null && !station.Owner.IsDead;
-        private bool QueueIdle => UpgradeManager.Instance == null || UpgradeManager.Instance.IsRewardQueueIdle;
+        private System.Func<bool> rewardQueueIdle, rewardChoosing;
+        public bool IsRewardQueueIdle => rewardQueueIdle?.Invoke() ?? true;
+        private bool QueueIdle => IsRewardQueueIdle;
+        public void BindRewardQueue(System.Func<bool> idle, System.Func<bool> choosing)
+        { rewardQueueIdle = idle; rewardChoosing = choosing; }
         public bool CanTransition => IsIdle && QueueIdle && !IsCustomDrawing;
         public bool CanQueueDebugPlacement => IsIdle && QueueIdle;
         public bool CanUseDebugPlacement => CanQueueDebugPlacement && !IsGameplayInputBlocked && consumedFrame != Time.frameCount;
@@ -42,6 +48,9 @@ namespace Subject42.Combat.OrbitalStation
             IsIdle;
         public bool CanConsumeRewardPointer => Alive && !IsGameplayInputBlocked && consumedFrame != Time.frameCount &&
             (Mode == OrbitalInteractionMode.RewardSelection || Mode == OrbitalInteractionMode.RewardSecondTarget);
+        public Camera PointerCamera { get; private set; }
+        public void BindCamera(Camera camera) => PointerCamera = camera;
+
         public void Bind(OrbitalStationRuntime runtime)
         {
             ReleaseBulletTime();
@@ -54,7 +63,7 @@ namespace Subject42.Combat.OrbitalStation
         public void TickBulletTime(bool active, float scale, float transitionSeconds, float unscaledDeltaTime)
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (active || ownsBulletTime) PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
+            if (active || ownsBulletTime) ExternalTimeControlStarting?.Invoke();
 #endif
             // Never overwrite another time owner (pause, rewards, transition, death or reset).
             if (!Alive || !IsIdle || !QueueIdle || IsGameplayInputBlocked || Time.timeScale <= 0f ||
@@ -80,7 +89,7 @@ namespace Subject42.Combat.OrbitalStation
         {
             if (!ownsBulletTime) return;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
+            ExternalTimeControlStarting?.Invoke();
 #endif
             if (Mathf.Approximately(Time.timeScale, bulletScale)) Time.timeScale = bulletBaseScale;
             Time.fixedDeltaTime = bulletBaseFixedStep;
@@ -90,6 +99,9 @@ namespace Subject42.Combat.OrbitalStation
         }
         public void PrepareForExternalPause()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            ExternalTimeControlStarting?.Invoke();
+#endif
             ReleaseBulletTime();
             station?.GetComponent<OrbitalRelocationController>()?.CancelDrag("external pause");
         }
@@ -117,7 +129,7 @@ namespace Subject42.Combat.OrbitalStation
             beforeDrawScale = Time.timeScale;
             Mode = OrbitalInteractionMode.CustomDrawing;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
+            ExternalTimeControlStarting?.Invoke();
 #endif
             Time.timeScale = 0f;
         }
@@ -127,7 +139,7 @@ namespace Subject42.Combat.OrbitalStation
             Mode = beforeDraw;
             consumedFrame = Time.frameCount;
             if (!SceneTransitionOverlay.IsTransitioning && station?.Owner != null && !station.Owner.IsDead)
-                Time.timeScale = UpgradeManager.Instance != null && UpgradeManager.Instance.IsChoosingUpgrade ? 0f : beforeDrawScale;
+                Time.timeScale = (rewardChoosing?.Invoke() ?? false) ? 0f : beforeDrawScale;
         }
         public bool BeginRelocation()
         {

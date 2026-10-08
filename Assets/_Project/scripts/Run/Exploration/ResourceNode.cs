@@ -22,7 +22,7 @@ public sealed class ResourceNode : MonoBehaviour
     {
         player = owner;
         playerHealth = owner.GetComponent<PlayerHealth>();
-        station = FindFirstObjectByType<OrbitalStationRuntime>();
+        station = owner.GetComponentInChildren<OrbitalStationRuntime>();
         gold = Random.Range(5, 16);
         collected = false;
         openedVisual.SetActive(true);
@@ -52,8 +52,7 @@ public sealed class ResourceNode : MonoBehaviour
     private bool CanCollect => !collected && isActiveAndEnabled && player != null &&
         CurrencyManager.Instance != null && Time.timeScale > 0f &&
         playerHealth != null && !playerHealth.IsDead &&
-        !SceneTransitionOverlay.IsTransitioning && !OrbitalDevelopmentInput.IsGameplayInputBlocked &&
-        (UpgradeManager.Instance == null || UpgradeManager.Instance.IsRewardQueueIdle) &&
+        !SceneTransitionOverlay.IsTransitioning &&
         (station == null || (station.InputOwner != null &&
             station.InputOwner.CanUseDebugPlacement && !station.IsDebugPlacementActive)) &&
         Vector2.Distance(player.position, transform.position) <= Reach;

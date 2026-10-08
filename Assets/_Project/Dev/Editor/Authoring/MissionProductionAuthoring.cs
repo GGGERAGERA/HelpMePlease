@@ -111,6 +111,7 @@ public static class MissionProductionAuthoring
                 var player=(Transform)loadout.GetType().GetField("controlledPlayerRoot",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(loadout);
                 provider.transform.position=player.position+new Vector3(-3,2);
             }
+            foreach(var provider in All<MissionProvider>(scene)) Set(provider,"panelManager",manager);
             AssetDatabase.SaveAssets(); EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene);
         }
         finally { if(opened)EditorSceneManager.CloseScene(scene,true); if(prior.IsValid()&&prior.isLoaded)SceneManager.SetActiveScene(prior); }

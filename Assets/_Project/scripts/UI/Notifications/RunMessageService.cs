@@ -24,6 +24,8 @@ public sealed class RunMessageService : MonoBehaviour
     private static readonly string[] HintKeys = { "onboarding.movement", "onboarding.autoAttack",
         "onboarding.experience", "onboarding.slowField" };
     private int hintIndex;
+    private int displayedHint = -1;
+    private void InvalidateHint(GameLanguage language) => displayedHint = -1;
     private float hintShownTime;
     private bool hintsReady, moved, sawEnemies, gainedExperience;
     private Vector3 movementOrigin;
@@ -39,6 +41,8 @@ public sealed class RunMessageService : MonoBehaviour
     private void OnEnable()
     {
         Instance = this;
+        displayedHint = -1;
+        LocalizationService.Instance.LanguageChanged += InvalidateHint;
         hintsReady = moved = sawEnemies = gainedExperience = false;
         hintIndex = 0;
         hintShownTime = 0f;
@@ -81,7 +85,7 @@ public sealed class RunMessageService : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (TutorialController.IsActive) { movementHint.SetActive(false); return; }
+        if (TutorialController.IsActive) { if (movementHint.activeSelf) movementHint.SetActive(false); return; }
         var currentPlayer = PlayerRuntimeReference.CachedPlayer;
         if (currentPlayer != player)
         {
@@ -116,8 +120,12 @@ public sealed class RunMessageService : MonoBehaviour
                 showHint = false;
             }
         }
-        movementHint.SetActive(showHint);
-        if (showHint) movementText.text = LocalizationService.Instance.Get(HintKeys[hintIndex]);
+        if (movementHint.activeSelf != showHint) movementHint.SetActive(showHint);
+        if (showHint && displayedHint != hintIndex)
+        {
+            displayedHint = hintIndex;
+            movementText.text = LocalizationService.Instance.Get(HintKeys[hintIndex]);
+        }
     }
 
     public void Show(RunMessageType type)
@@ -164,6 +172,7 @@ public sealed class RunMessageService : MonoBehaviour
 
     private void OnDisable()
     {
+        if (LocalizationService.Instance != null) LocalizationService.Instance.LanguageChanged -= InvalidateHint;
         StopAllCoroutines();
         movementHint.SetActive(false);
         if (Instance == this)

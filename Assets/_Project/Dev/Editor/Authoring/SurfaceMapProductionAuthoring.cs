@@ -60,16 +60,9 @@ public static class SurfaceMapProductionAuthoring
             var starter = One<BunkerRunStarter>(bunker);
             var panels = One<BunkerPanelManager>(bunker);
             var selection = One<BunkerSelectionSourceHub>(bunker);
-            var catalog = Asset<BunkerSelectionCatalog>("Assets/_Project/Data/SurfaceMap/BunkerSelectionCatalog.asset", a =>
-            {
-                var original = One<BunkerSelectionSourceHub>(reference);
-                a.characters = Read<CharacterData[]>(original, "characters"); a.weapons = Read<WeaponData[]>(original, "weapons");
-                a.upgrades = Read<BunkerSelectionSourceHub.UpgradePresentation[]>(original, "upgrades"); a.anomalies = Read<AnomalyStabilizerData[]>(original, "anomalies");
-            });
+            var catalog = AssetDatabase.LoadAssetAtPath<BunkerSelectionCatalog>("Assets/_Project/Data/SurfaceMap/BunkerSelectionCatalog.asset");
+            if (catalog == null) throw new InvalidOperationException("Production station catalog is not authored.");
             Set(selection, "catalog", catalog);
-            // Existing adapters still expose the same content in EditMode authoring/tests.
-            Field(selection, "characters", catalog.characters); Field(selection, "weapons", catalog.weapons);
-            Field(selection, "upgrades", catalog.upgrades); Field(selection, "anomalies", catalog.anomalies);
 
             var map = CreateMap(starter);
             var compositionAsset = AssetDatabase.LoadAssetAtPath<GameObject>(ProductionSceneCompositionAuthoring.PrefabPath);
@@ -126,12 +119,13 @@ public static class SurfaceMapProductionAuthoring
             {
                 var originalStation = All<BunkerStation>(reference).First(s => Read<BunkerStationType>(s,"stationType") == BunkerStationType.EscapeProtocol);
                 var clone = Object.Instantiate(originalStation.gameObject);
-                foreach (var station in clone.GetComponentsInChildren<BunkerStation>(true)) Set(station,"panelManagerFallback",null);
+                foreach (var station in clone.GetComponentsInChildren<BunkerStation>(true)) Set(station,"panelManager",panels);
                 PrefabUtility.SaveAsPrefabAsset(clone,escapePrefab); Object.DestroyImmediate(clone);
             }
             EnsureStation(bunker, BunkerStationType.EscapeProtocol, escapePrefab, new Vector3(0f, -4f));
             EnsureOrbitalSlot(bunker, panels, canvas.transform);
             EnsureSummary(bunker, reference, canvas, font);
+            ProductionSceneCompositionAuthoring.EnsureScene(bunker);
             var football = One<FootballMinigame>(bunker);
             Set(football, "cameraFollow", One<CameraFollow>(bunker));
             if (Read<BunkerGateVisual>(football, "entranceDoor") == null)
@@ -218,20 +212,8 @@ public static class SurfaceMapProductionAuthoring
     private static void EnsureSummary(Scene scene, Scene reference, Canvas canvas, TMP_FontAsset font)
     {
         if (All<BunkerRunSummaryPresenter>(scene).Length > 0) return;
-        var original = One<BunkerRunSummaryPresenter>(reference);
-        string path = Prefabs + "PF_BunkerSummaryTemplates.prefab";
-        if (AssetDatabase.LoadAssetAtPath<GameObject>(path) == null)
-        {
-            var root = new GameObject("BunkerSummaryTemplates",typeof(RectTransform));
-            var panel = Object.Instantiate(Read<RectTransform>(original,"panelTemplate"),root.transform); panel.name = "Panel";
-            var gold = Object.Instantiate(Read<TextMeshProUGUI>(original,"goldTextTemplate"),root.transform); gold.name = "Gold";
-            panel.gameObject.SetActive(false); gold.gameObject.SetActive(false);
-            PrefabUtility.SaveAsPrefabAsset(root,path); Object.DestroyImmediate(root);
-        }
-        var templates = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(path),canvas.transform);
-        var presenter = new GameObject("BunkerRunSummaryPresenter").AddComponent<BunkerRunSummaryPresenter>(); SceneManager.MoveGameObjectToScene(presenter.gameObject,scene);
-        Set(presenter,"notificationParent",canvas.transform); Set(presenter,"sourceScaler",canvas.GetComponent<CanvasScaler>());
-        Set(presenter,"panelTemplate",templates.transform.Find("Panel")); Set(presenter,"goldTextTemplate",templates.transform.Find("Gold").GetComponent<TextMeshProUGUI>());
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/prefabs/UI/SurfaceMap/PF_BunkerRunSummary.prefab");
+        PrefabUtility.InstantiatePrefab(prefab, scene);
     }
     private static RectTransform Rect(string name, Transform parent, Vector2 position, Vector2 size)
     {
@@ -260,6 +242,7 @@ public static class SurfaceMapProductionAuthoring
         var close = Button("Close",root,new Vector2(405,285),new Vector2(70,45),"X",font);
         Set(view,"graph",graph); Set(view,"nodeTemplate",node); Set(view,"lineTemplate",line); Set(view,"details",details); Set(view,"startButton",start); Set(view,"closeButton",close);
         node.gameObject.SetActive(false); line.gameObject.SetActive(false);
+        Phase5PresentationAuthoring.AuthorMap(root.gameObject);
         PrefabUtility.SaveAsPrefabAsset(root.gameObject,path); Object.DestroyImmediate(root.gameObject);
     }
 }

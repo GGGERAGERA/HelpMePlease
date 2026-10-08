@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Subject42.Combat.OrbitalStation;
 using UnityEngine;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -97,6 +98,8 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
         instance = this;
     }
 
+    private OrbitalInteractionController inputOwner;
+
     private void OnEnable()
     {
         WeaponHitResolver.HitResolved += HandleHitResolved;
@@ -105,6 +108,8 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
     private void OnDisable()
     {
         WeaponHitResolver.HitResolved -= HandleHitResolved;
+        if (inputOwner != null) inputOwner.ExternalTimeControlStarting -= CancelHitStopForExternalTimeControl;
+        inputOwner = null;
         CancelHitStop(true);
         RestoreAllPoses();
         if (instance == this)
@@ -113,6 +118,14 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
 
     private void Update()
     {
+        var next = PlayerRuntimeReference.CachedPlayer != null
+            ? PlayerRuntimeReference.CachedPlayer.GetComponentInChildren<OrbitalInteractionController>(true) : null;
+        if (next != inputOwner)
+        {
+            if (inputOwner != null) inputOwner.ExternalTimeControlStarting -= CancelHitStopForExternalTimeControl;
+            inputOwner = next;
+            if (inputOwner != null) inputOwner.ExternalTimeControlStarting += CancelHitStopForExternalTimeControl;
+        }
         UpdateHitStop();
         rapidKillIntensity = Mathf.MoveTowards(
             rapidKillIntensity, 0f,

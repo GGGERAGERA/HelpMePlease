@@ -46,17 +46,11 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
     }
 
     [SerializeField] private BunkerSelectionCatalog catalog;
-    private void Awake()
-    {
-        if (catalog == null) return;
-        characters = catalog.characters; weapons = catalog.weapons; upgrades = catalog.upgrades; anomalies = catalog.anomalies;
-    }
-
-    [Header("Production Content")]
-    [SerializeField] private CharacterData[] characters;
-    [SerializeField] private WeaponData[] weapons;
-    [SerializeField] private UpgradePresentation[] upgrades;
-    [SerializeField] private AnomalyStabilizerData[] anomalies;
+    // The catalog owns content; adapters never copy it into scene/runtime arrays.
+    private CharacterData[] characters => catalog != null ? catalog.characters : null;
+    private WeaponData[] weapons => catalog != null ? catalog.weapons : null;
+    private UpgradePresentation[] upgrades => catalog != null ? catalog.upgrades : null;
+    private AnomalyStabilizerData[] anomalies => catalog != null ? catalog.anomalies : null;
 
     private Action changed;
     private SourceAdapter characterSource;

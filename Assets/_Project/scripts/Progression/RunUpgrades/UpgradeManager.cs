@@ -59,6 +59,7 @@ public sealed class UpgradeManager : MonoBehaviour
     private OrbitalRewardProvider orbitalRewardProvider;
     private OrbitalRewardFlowController orbitalRewardFlow;
     private OrbitalStationRuntime orbitalStation;
+    private OrbitalInteractionController boundOrbitalInput;
     private List<UpgradeData> currentChoices;
     private bool shuttingDown;
     public bool CanAcceptWorldEventReward => !shuttingDown && upgradePanelView != null &&
@@ -74,7 +75,22 @@ public sealed class UpgradeManager : MonoBehaviour
 
     public float TimeScaleAfterRewards => previousTimeScale;
 
-    public void BindOrbitalStation(OrbitalStationRuntime station) => orbitalStation = station;
+    public void BindOrbitalStation(OrbitalStationRuntime station)
+    {
+        UnbindOrbitalCapabilities();
+        orbitalStation = station;
+        if (station == null || !station.IsInitialized || !isActiveAndEnabled) return;
+        boundOrbitalInput = station.InputOwner;
+        boundOrbitalInput.BindRewardQueue(() => IsRewardQueueIdle, () => IsChoosingUpgrade);
+        station.CustomDrawingCompleted += ResumeAfterCustomDrawing;
+    }
+
+    private void UnbindOrbitalCapabilities()
+    {
+        boundOrbitalInput?.BindRewardQueue(null, null);
+        boundOrbitalInput = null;
+        if (orbitalStation != null) orbitalStation.CustomDrawingCompleted -= ResumeAfterCustomDrawing;
+    }
 
     public bool IsRewardQueueIdle => !isChoosingUpgrade && !hasCurrentRequest && !reelPending &&
         pendingChoices.Count == 0 && !CustomDrawingPending;
@@ -105,9 +121,6 @@ public sealed class UpgradeManager : MonoBehaviour
             return false;
         }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
-#endif
         orbitalStation?.InputOwner?.PrepareForExternalPause();
         isChoosingUpgrade = true;
         previousTimeScale = Time.timeScale;
@@ -306,6 +319,7 @@ public sealed class UpgradeManager : MonoBehaviour
     private void OnEnable()
     {
         shuttingDown = false;
+        BindOrbitalStation(orbitalStation);
         RunStateManager.EnsureExists().RegisterSceneCleanup(ReleaseRunScene, RunSceneCleanupPhase.Rewards);
     }
 
@@ -313,6 +327,7 @@ public sealed class UpgradeManager : MonoBehaviour
     {
         RunStateManager.Instance?.UnregisterSceneCleanup(ReleaseRunScene);
         CancelPendingRewards();
+        UnbindOrbitalCapabilities();
     }
 
     private void ReleaseRunScene()
@@ -330,7 +345,7 @@ public sealed class UpgradeManager : MonoBehaviour
             currentChoices = null;
             isChoosingUpgrade = hasCurrentRequest = reelPending = false;
             orbitalRewardFlow = null;
-            orbitalStation = null;
+            BindOrbitalStation(null);
         }
     }
 
@@ -837,9 +852,6 @@ public sealed class UpgradeManager : MonoBehaviour
     private void BeginChoiceRequest(UpgradeChoiceRequest request,
         List<UpgradeData> choices)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
-#endif
         orbitalStation?.InputOwner?.PrepareForExternalPause();
         isChoosingUpgrade = true;
         previousTimeScale = Time.timeScale;

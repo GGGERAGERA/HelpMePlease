@@ -1313,6 +1313,10 @@ PrefabInstance:
       value:
       objectReference: {fileID: 6473582633285355963}
     - target: {fileID: 8922974676419922881, guid: 6684c495e04abb649a816c9e62c910c6, type: 3}
+      propertyPath: rewards
+      value:
+      objectReference: {fileID: 46915847}
+    - target: {fileID: 8922974676419922881, guid: 6684c495e04abb649a816c9e62c910c6, type: 3}
       propertyPath: characters
       value:
       objectReference: {fileID: 46915846}
@@ -2074,6 +2078,10 @@ PrefabInstance:
       propertyPath: runResultView
       value:
       objectReference: {fileID: 1844714996}
+    - target: {fileID: 8471861960567854236, guid: ee995c505ce890345961efbaa7c1b0b0, type: 3}
+      propertyPath: worldCamera
+      value:
+      objectReference: {fileID: 1621092227}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2315,6 +2323,10 @@ PrefabInstance:
       value:
       objectReference: {fileID: 2147020003}
     - target: {fileID: 3669816306965970296, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
+      propertyPath: threat
+      value:
+      objectReference: {fileID: 5887295859745560417}
+    - target: {fileID: 3669816306965970296, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: runFlow
       value:
       objectReference: {fileID: 46915856}
@@ -2322,6 +2334,10 @@ PrefabInstance:
       propertyPath: lootReel
       value:
       objectReference: {fileID: 1006273932492797122}
+    - target: {fileID: 3669816306965970296, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
+      propertyPath: cameraShake
+      value:
+      objectReference: {fileID: 1621092230}
     - target: {fileID: 5722124322602616884, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: characterSpawner
       value:
@@ -2828,6 +2844,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ed6d393a5a9e46a46af1c69217de142e, type: 3}
+--- !u!114 &5887295859745560417 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7848084061223295378, guid: ed6d393a5a9e46a46af1c69217de142e, type: 3}
+  m_PrefabInstance: {fileID: 5887295859745560416}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42a10000000000000000000000000003, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::RunThreatController
 --- !u!212 &6014802021329322880
 SpriteRenderer:
   serializedVersion: 2

@@ -5,6 +5,8 @@ using System.Collections;
 
 public class HUDManager : MonoBehaviour
 {
+    [SerializeField] private UICrosshairFollowMouse orbitalCursor;
+    public UICrosshairFollowMouse OrbitalCursor => orbitalCursor;
     private const int ProductionSectorCount =
         RunRoute.ExplorationSectorCount;
 
@@ -47,6 +49,10 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private RunMessageService runMessages;
     [SerializeField] private CanvasGroup informationGroup;
     private PlayerHealth boundPlayer;
+    [SerializeField] private RunThreatController threat;
+    [SerializeField] private CameraShake cameraShake;
+    private EnemyHealth boundBoss;
+    private ThreatTier? lastThreatTier;
 
     public bool IsInformationVisible => boundPlayer != null && !boundPlayer.IsDead &&
         runStateManager != null && !runStateManager.IsRunEnded &&
@@ -80,9 +86,22 @@ public class HUDManager : MonoBehaviour
     private int lastDisplayedTimerSecond = int.MinValue;
     private int displayedLevel = 1;
     private string displayedBossName;
-    private void OnEnable() => LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
+    private void OnEnable()
+    {
+        LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
+        EnemyHealth.Spawned += BindBoss;
+        EnemyHealth.Despawned += ReleaseBoss;
+        if (threat != null) { threat.ThreatChanged += SetThreat; threat.TierIncreased += ShowThreatIncrease; SetThreat(threat.ThreatValue, threat.DisplayedTier); }
+        if (boundPlayer != null) { boundPlayer.HealthChanged += SetHealth; SetHealth(boundPlayer.CurrentHealth, boundPlayer.MaxHealth); }
+        foreach (var enemy in EnemyHealth.ActiveInstances) BindBoss(enemy);
+    }
     private void OnDisable()
     {
+        EnemyHealth.Spawned -= BindBoss;
+        EnemyHealth.Despawned -= ReleaseBoss;
+        if (threat != null) { threat.ThreatChanged -= SetThreat; threat.TierIncreased -= ShowThreatIncrease; }
+        if (boundPlayer != null) boundPlayer.HealthChanged -= SetHealth;
+        ReleaseBoss(boundBoss);
         if (LocalizationService.Instance != null) LocalizationService.Instance.LanguageChanged -= RefreshLanguage;
     }
     private void RefreshLanguage(GameLanguage language)
@@ -285,6 +304,8 @@ public class HUDManager : MonoBehaviour
 
     public void SetThreat(float value, ThreatTier tier)
     {
+        if (lastThreatTier == tier) return;
+        lastThreatTier = tier;
         threatSegments.SetValue((int)tier);
     }
 
@@ -302,7 +323,14 @@ public class HUDManager : MonoBehaviour
     {
         IsPlayerBound = player != null;
         bulletTimeView.Bind(player);
+        if (boundPlayer != null) boundPlayer.HealthChanged -= SetHealth;
         boundPlayer = player != null ? player.GetComponent<PlayerHealth>() : null;
+        if (boundPlayer != null)
+        {
+            if (isActiveAndEnabled) boundPlayer.HealthChanged += SetHealth;
+            SetHealth(boundPlayer.CurrentHealth, boundPlayer.MaxHealth);
+            player.GetComponent<PlayerHealthPresentation>()?.BindCamera(cameraShake);
+        }
         interactionPrompt.Bind(player != null ? player.GetComponent<PlayerInteractor>() : null);
         CharacterMovement2D movement = player != null
             ? player.GetComponent<CharacterMovement2D>()
@@ -310,6 +338,25 @@ public class HUDManager : MonoBehaviour
         dashCooldownView?.Bind(movement);
         tacticalMap?.BindPlayer(player != null ? player.transform : null);
         targetTracker.BindPlayer(player != null ? player.transform : null);
+    }
+
+    private void ShowThreatIncrease(ThreatTier tier) => runMessages.ShowCustom("run.threatIncreased", "run.pressureIncreased", 1.8f);
+    private void BindBoss(EnemyHealth enemy)
+    {
+        if (!enemy.IsBoss || enemy.IsDead || enemy.gameObject.scene != gameObject.scene) return;
+        ReleaseBoss(boundBoss);
+        boundBoss = enemy;
+        enemy.OnHealthChanged.AddListener(UpdateBossHp);
+        enemy.OnDied += ReleaseBoss;
+        ShowBossHp(enemy.BossName, enemy.CurrentHealth, enemy.MaxHealth);
+    }
+    private void ReleaseBoss(EnemyHealth enemy)
+    {
+        if (enemy == null || enemy != boundBoss) return;
+        enemy.OnHealthChanged.RemoveListener(UpdateBossHp);
+        enemy.OnDied -= ReleaseBoss;
+        boundBoss = null;
+        HideBossHp();
     }
 
     public bool IsTacticalMapVisible =>

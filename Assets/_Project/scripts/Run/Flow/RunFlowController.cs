@@ -9,6 +9,8 @@ public sealed class RunFlowController : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public static event System.Action DebugVictoryConfirmed;
 #endif
+    [SerializeField] private TutorialOverlayPresenter tutorialPresentation;
+    public TutorialOverlayPresenter TutorialPresentation => tutorialPresentation;
     public static RunFlowController Instance { get; private set; }
     public event System.Action ExitUnlocked;
     public event System.Action ExitReached;

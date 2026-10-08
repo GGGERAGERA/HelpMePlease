@@ -57,6 +57,7 @@ public sealed class PauseMenuTests
         clickTarget.transform.position = (Vector2)camera.ScreenToWorldPoint(Input.mousePosition);
         var station = clickTarget.AddComponent<BunkerStation>();
         Field(station, "stationType").SetValue(station, BunkerStationType.CharacterSelection);
+        Field(station, "panelManager").SetValue(station, panels);
         clickTarget.AddComponent<BoxCollider2D>().size = Vector2.one * 10f;
         clickTarget.AddComponent<BunkerInteractableCollider>();
         clickTarget.SetActive(true);
@@ -92,7 +93,11 @@ public sealed class PauseMenuTests
         pause.enabled = false;
         Assert.That(Time.timeScale, Is.EqualTo(.65f), "Disabling the owner must release its pause.");
         pause.enabled = true;
-        var intro = Object.FindFirstObjectByType<BunkerIntroController>();
+        // The production bunker has no intro controller; isolate its optional input gate.
+        var introHost = new GameObject("Pause intro ownership probe");
+        introHost.SetActive(false);
+        var intro = introHost.AddComponent<BunkerIntroController>();
+        Field(pause, "bunkerIntro").SetValue(pause, intro);
         Field(intro, "isRunning").SetValue(intro, true);
         pause.Pause();
         Assert.That(pause.IsPaused, Is.False, "Intro owns input.");
@@ -100,6 +105,8 @@ public sealed class PauseMenuTests
         pause.Pause();
         Assert.That(pause.IsPaused, Is.True);
         pause.Resume();
+        Field(pause, "bunkerIntro").SetValue(pause, null);
+        Object.Destroy(introHost);
     }
 
     private static FieldInfo Field(object target, string name) => target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
@@ -114,20 +121,29 @@ public sealed class PauseMenuGameplayTests
         CoreTestSupport.PreservePreferences();
         PlayerPrefs.SetInt(TutorialController.CompletionKey, 0);
     }
-    [UnitySetUp] public IEnumerator BeginRun() => CoreTestSupport.BeginRun();
+    [UnitySetUp] public IEnumerator BeginRun()
+    {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        yield return new EnterPlayMode();
+        yield return CoreTestSupport.LoadBunker();
+        PlayerPrefs.DeleteKey(TutorialController.CompletionKey);
+        RunSelectionManager.Instance.SelectCharacter(AssetDatabase.LoadAssetAtPath<CharacterData>(
+            "Assets/_Project/Data/Characters/01_Gera.asset"));
+        var starter = Object.FindFirstObjectByType<BunkerRunStarter>();
+        starter.StartRun(starter.transform);
+        yield return CoreTestSupport.Await(() => SceneManager.GetActiveScene().name == "MVP" &&
+            !SceneTransitionOverlay.IsTransitioning && TutorialController.Active?.Player != null);
+    }
     [UnityTearDown] public IEnumerator Cleanup() => CoreTestSupport.CleanupPlayMode();
 
     [UnityTest]
     public IEnumerator GameplayRewardAndHintPriority()
     {
         var pause = Object.FindFirstObjectByType<PauseMenuUI>();
-        // Install first-sector guidance in the running test scene; only its pause behavior is under test.
-        PlayerPrefs.DeleteKey(TutorialController.CompletionKey);
-        TutorialController.Prepare(RunFlowController.Instance);
-        yield return null;
+        // Use the production tutorial sector; only its pause behavior is under test.
         var tutorial = TutorialController.Active;
         Assert.That(tutorial, Is.Not.Null, $"Tutorial eligible={TutorialController.ShouldStart}, sector={RunStateManager.Instance.CurrentSector?.SectorNumber}");
-        var hint = (Canvas)Field(tutorial, "overlayCanvas").GetValue(tutorial);
+        var hint = RunFlowController.Instance.TutorialPresentation.Canvas;
         Assert.That(hint.enabled, Is.True);
         var rewards = UpgradeManager.Instance;
         Field(rewards, "isChoosingUpgrade").SetValue(rewards, true);

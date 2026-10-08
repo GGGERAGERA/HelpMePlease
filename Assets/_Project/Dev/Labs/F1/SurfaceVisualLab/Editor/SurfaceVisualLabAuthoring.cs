@@ -83,7 +83,8 @@ public static partial class SurfaceVisualLabEditor
             PrefabUtility.RecordPrefabInstancePropertyModifications(crate.transform);lab.Fixtures[i]=crate;
         }
         var effects=new System.Collections.Generic.List<ParticleSystem>();
-        foreach(var source in new[]{health.BloodHitPrefab,health.DeathFxPrefab}.Where(p=>p!=null))
+        var presentation=health.GetComponent<EnemyHealthPresentation>();
+        foreach(var source in new[]{presentation.BloodHitPrefab,presentation.DeathFxPrefab}.Where(p=>p!=null))
         {
             var effect=(GameObject)PrefabUtility.InstantiatePrefab(source);
             effect.name="Production FX sample / "+source.name;

@@ -443,7 +443,7 @@ MonoBehaviour:
   progressionEnabled: 0
   progressionStationId: 0
   runTransitionTarget: {fileID: 910000000000000010}
-  panelManagerFallback: {fileID: 0}
+  panelManager: {fileID: 0}
   animator: {fileID: 0}
   animationTrigger: Interact
   onInteract:

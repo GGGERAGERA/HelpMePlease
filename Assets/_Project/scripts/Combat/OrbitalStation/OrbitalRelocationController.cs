@@ -71,7 +71,7 @@ namespace Subject42.Combat.OrbitalStation
 
         private bool CanStartInteraction()
         {
-            return station.InputOwner.CanStartRelocation && Camera.main != null && !PointerOverInteractiveUi();
+            return station.InputOwner.CanStartRelocation && station.InputOwner.PointerCamera != null && !PointerOverInteractiveUi();
         }
 
         private void BeginDrag(OrbitalModuleRuntime module)
@@ -90,7 +90,7 @@ namespace Subject42.Combat.OrbitalStation
         private void UpdateDrag()
         {
             Vector2 world = MouseWorld();
-            targetMount = mountResolver.Resolve(station, Camera.main,
+            targetMount = mountResolver.Resolve(station, station.InputOwner.PointerCamera,
                 Input.mousePosition, targetMount);
             bool valid = targetMount != null && targetMount != sourceMount &&
                 station.State.CanMoveModule(draggedModule.StableModuleId, targetMount.Ring.RingId, targetMount.MountIndex, out _);
@@ -228,9 +228,9 @@ namespace Subject42.Combat.OrbitalStation
             return null;
         }
 
-        private static Vector2 MouseWorld()
+        private Vector2 MouseWorld()
         {
-            Vector3 point = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 point = station.InputOwner.PointerCamera.ScreenToWorldPoint(Input.mousePosition);
             return new Vector2(point.x, point.y);
         }
 

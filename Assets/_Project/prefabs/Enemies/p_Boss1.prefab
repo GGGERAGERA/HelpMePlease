@@ -841,6 +841,7 @@ GameObject:
   - component: {fileID: -8970330571610309405}
   - component: {fileID: -4685123070590477603}
   - component: {fileID: 602135892101001}
+  - component: {fileID: 3210450866403270715}
   m_Layer: 8
   m_Name: p_Boss1
   m_TagString: Enemy
@@ -988,13 +989,9 @@ MonoBehaviour:
   OnDamageTaken:
     m_PersistentCalls:
       m_Calls: []
-  damagePopupPrefab: {fileID: 9169945786982687630, guid: 93f186151a59ce24fa30dac2ce325309, type: 3}
-  popupOffset: {x: 0, y: 1, z: 0}
   lootPrefab: {fileID: 8927180452970597320, guid: 568301bd43bfcef49aa858e8372f81be, type: 3}
   lootAmount: 1
   lootScatterRadius: 0.4
-  bloodHitPrefab: {fileID: 125031105077979307, guid: eb16fb47744e2184f9a71bc456707725, type: 3}
-  deathFXPrefab: {fileID: 8928692237468947480, guid: 214f1954046dffb4ca1fe34c079e7f6e, type: 3}
   isBoss: 1
   bossName: boss.guardian
 --- !u!114 &8498786568601226095
@@ -1073,6 +1070,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossRocketAttack
   AttackCooldown: 6
+  ShotsPerBurst: 3
+  DelayBetweenShots: 0.275
   PreAttackDuration: 0.75
   StopDuration: 0.15
   RocketFallDelayMin: 0.35
@@ -1085,8 +1084,6 @@ MonoBehaviour:
   TargetPrediction: 0
   MinAttackDistance: 0
   MaxAttackDistance: 30
-  ShotsPerBurst: 3
-  DelayBetweenShots: 0.275
   TargetSpreadRadius: 3.25
   animator: {fileID: 3007696995223303618}
   leftMuzzle: {fileID: 7421145088796927726}
@@ -1094,6 +1091,24 @@ MonoBehaviour:
   rocketPrefab: {fileID: 6415994172789663665, guid: 703da712b72d21341ae48974468d51ca, type: 3}
   targetPrefab: {fileID: 3431147270733573790, guid: c941bc18f7e086648bae2a23e2a87208, type: 3}
   explosionPrefab: {fileID: 1774385019753254698, guid: f91913de896646447a357936450e42c5, type: 3}
+--- !u!114 &3210450866403270715
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8074722678228422782}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34d449dfc70f4683933dd94482763127, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHealthPresentation
+  health: {fileID: 8634306207331902935}
+  whiteFlash: {fileID: 0}
+  damagePopupPrefab: {fileID: 9169945786982687630, guid: 93f186151a59ce24fa30dac2ce325309, type: 3}
+  popupOffset: {x: 0, y: 1, z: 0}
+  bloodHitPrefab: {fileID: 125031105077979307, guid: eb16fb47744e2184f9a71bc456707725, type: 3}
+  deathFXPrefab: {fileID: 8928692237468947480, guid: 214f1954046dffb4ca1fe34c079e7f6e, type: 3}
 --- !u!1 &9142794880305064717
 GameObject:
   m_ObjectHideFlags: 0

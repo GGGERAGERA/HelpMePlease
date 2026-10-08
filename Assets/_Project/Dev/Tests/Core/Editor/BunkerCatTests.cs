@@ -31,6 +31,12 @@ public sealed class BunkerCatTests
     {
         EditorSceneManager.OpenScene("Assets/_Project/Scenes/MainBuild/StartScreen.unity");
         yield return new EnterPlayMode();
+        // Create captured runtime locals after the domain reload.
+        yield return VerifyWanderAndPet();
+    }
+
+    private static IEnumerator VerifyWanderAndPet()
+    {
         Object.FindFirstObjectByType<StartScreenController>().Begin();
         float startupDeadline = Time.realtimeSinceStartup + 8f;
         while ((UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "MainMenu" ||

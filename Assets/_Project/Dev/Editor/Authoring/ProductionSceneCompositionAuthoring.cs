@@ -40,10 +40,24 @@ public static class ProductionSceneCompositionAuthoring
         BindLocal<GameplayAreaService>("gameplayArea");
         BindLocal<LevelModifiersApplier>("levelModifiers");
         BindLocal<HUDManager>("hud");
+        BindLocal<UpgradeManager>("rewards");
         BindLocal<CameraFollow>("cameraFollow");
         BindLocal<BunkerPlayerLoadoutController>("bunkerLoadout");
         BindLocal<BunkerSelectionSourceHub>("bunkerSelections");
         serialized.ApplyModifiedPropertiesWithoutUndo();
+        if (scene.name == "MainMenu")
+        {
+            var roots = scene.GetRootGameObjects();
+            var panels = roots.SelectMany(root => root.GetComponentsInChildren<BunkerPanelManager>(true)).Single();
+            foreach (Component owner in roots.SelectMany(root => root.GetComponentsInChildren<Component>(true))
+                .Where(owner => owner is BunkerStation or BunkerCursorInteractor or PlayerInteractor or MissionProvider))
+            {
+                var bindings = new SerializedObject(owner);
+                bindings.FindProperty("panelManager").objectReferenceValue = panels;
+                bindings.ApplyModifiedPropertiesWithoutUndo();
+                PrefabUtility.RecordPrefabInstancePropertyModifications(owner);
+            }
+        }
         return composition;
 
         void BindLocal<T>(string field) where T : Component
@@ -52,7 +66,7 @@ public static class ProductionSceneCompositionAuthoring
                 .FirstOrDefault(component => component.gameObject.activeInHierarchy &&
                     (component is not Behaviour behaviour || behaviour.enabled));
             if (local != null || field is "characters" or "enemies" or "gameplayArea" or "levelModifiers" or
-                "hud" or "cameraFollow" or "bunkerLoadout" or "bunkerSelections")
+                "hud" or "rewards" or "cameraFollow" or "bunkerLoadout" or "bunkerSelections")
                 serialized.FindProperty(field).objectReferenceValue = local;
         }
     }

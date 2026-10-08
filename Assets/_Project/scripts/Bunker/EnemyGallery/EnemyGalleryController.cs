@@ -13,9 +13,9 @@ namespace Subject42.Bunker.Gallery
         {
             public string id;
             public string name;
-            public GameObject enemyPrefab;
+            public GameObject previewPrefab;
             public EnemyGalleryPreviewController.DemoKind demo;
-            [Header("Presentation assets (existing production VFX, no gameplay scripts)")]
+            [Header("Presentation assets (visual-only previews and VFX)")]
             public GameObject warningPrefab;
             public GameObject explosionPrefab;
             public GameObject projectilePrefab;

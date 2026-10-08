@@ -18,7 +18,9 @@ public class CharacterSpawner : MonoBehaviour
     [SerializeField] private CharacterData defaultCharacter;
     public CharacterData DefaultCharacter => defaultCharacter;
     private HUDManager hud;
-    public void BindScene(HUDManager sceneHud) => hud = sceneHud;
+    private UpgradeManager rewards;
+    public void BindScene(HUDManager sceneHud, UpgradeManager sceneRewards)
+    { hud = sceneHud; rewards = sceneRewards; }
 
     [Header("Spawn settings")]
     [SerializeField] private Transform spawnPoint;
@@ -62,6 +64,7 @@ public class CharacterSpawner : MonoBehaviour
 
         var orbital = OrbitalStationRuntime.Ensure(player, SpawnedCharacterData);
         Station = orbital;
+        rewards?.BindOrbitalStation(orbital);
         if (onboardingPrefab != null && orbital != null && orbital.IsInitialized)
             Instantiate(onboardingPrefab, player.transform.position, Quaternion.identity)
                 .Bind(player.GetComponent<CharacterMovement2D>(), orbital.GetComponent<OrbitalCenterShift>());
@@ -89,7 +92,10 @@ public class CharacterSpawner : MonoBehaviour
         {
             OrbitalStationRuntime station = SpawnedPlayer.GetComponentInChildren<OrbitalStationRuntime>(true);
             if (station != null) station.RebuildRuntimeFromState();
-            else OrbitalStationRuntime.Ensure(SpawnedPlayer);
+            else station = OrbitalStationRuntime.Ensure(SpawnedPlayer, SpawnedCharacterData);
+            Station = station;
+            rewards?.BindOrbitalStation(station);
+            CharacterSpawned?.Invoke(SpawnedPlayer);
         }
     }
 #endif
@@ -210,16 +216,11 @@ public class CharacterSpawner : MonoBehaviour
             return false;
         }
 
-        TelekinesisDebugPrototype prototype =
-            player.GetComponent<TelekinesisDebugPrototype>();
-        prototype?.ResetPrototype();
-
         BaseWeapon current = FindDebugPrimaryWeapon(player);
 
         if (current != null && current.weaponData == weaponData)
         {
             replacement = current;
-            prototype?.SetPrimaryWeapon(current);
             SetPrimaryWeapon(current);
             return true;
         }
@@ -247,7 +248,6 @@ public class CharacterSpawner : MonoBehaviour
             Destroy(current.gameObject);
         }
 
-        prototype?.SetPrimaryWeapon(replacement);
         SetPrimaryWeapon(replacement);
         return true;
     }

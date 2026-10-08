@@ -108,9 +108,45 @@ public sealed class OrbitUpgradeSelectionTests
         Assert.That(SelectionMarkers(second).gameObject.activeSelf, Is.True);
         station.RewardFlow.CancelForSceneTransition();
         AssertClear(station);
+        yield return VerifyPlacementCancellation(station, reward);
         Object.Destroy(reward);
         Time.timeScale = 1f;
         yield return null;
+    }
+
+    private static IEnumerator VerifyPlacementCancellation(OrbitalStationRuntime station, OrbitalRewardData reward)
+    {
+        reward.RewardKind = OrbitalRewardKind.LinkPair;
+        int committed = 0, cancelled = 0;
+        var flow = station.RewardFlow;
+        Assert.That(station.AddMount(station.Rings[1].RingId, out string mountError), Is.True, mountError);
+        var first = station.Rings[1].Mounts[0];
+        var second = station.Rings[1].Mounts[1];
+        string before = JsonUtility.ToJson(station.State);
+        Assert.That(flow.Begin(reward, () => committed++, () => cancelled++), Is.True);
+        Stage(first, false);
+        yield return CoreTestSupport.Await(() => flow.State == OrbitalRewardFlowState.SecondLinkPlacement);
+        Assert.That(JsonUtility.ToJson(station.State), Is.EqualTo(before), "The first Link endpoint remains temporary.");
+        typeof(OrbitalRewardFlowController).GetMethod("CancelToCards", Private).Invoke(flow, null);
+        yield return new WaitForSecondsRealtime(.4f);
+        Assert.That(JsonUtility.ToJson(station.State), Is.EqualTo(before));
+        Assert.That(committed, Is.Zero);
+        Assert.That(cancelled, Is.EqualTo(1));
+        Assert.That(flow.Begin(reward, () => committed++, () => cancelled++), Is.True);
+        Stage(first, false);
+        yield return CoreTestSupport.Await(() => flow.State == OrbitalRewardFlowState.SecondLinkPlacement);
+        Stage(second, true);
+        yield return CoreTestSupport.Await(() => committed == 1);
+        Assert.That(station.State.IsMountFree(first.Ring.RingId, first.MountIndex), Is.False);
+        Assert.That(station.State.IsMountFree(second.Ring.RingId, second.MountIndex), Is.False);
+        Assert.That(cancelled, Is.EqualTo(1));
+        AssertClear(station);
+
+        void Stage(OrbitalMountRuntime mount, bool secondLink)
+        {
+            typeof(OrbitalRewardFlowController).GetField("hoveredMount", Private).SetValue(flow, mount);
+            typeof(OrbitalRewardFlowController).GetMethod("ConfirmDirectMount", Private).Invoke(flow, new object[] { secondLink });
+        }
     }
 
     private static void AssertClear(OrbitalStationRuntime station)

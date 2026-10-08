@@ -7,6 +7,7 @@ public sealed class MissionProvider : MonoBehaviour, IBunkerInteractable
     [SerializeField] private string providerName="OPERATOR";
     [SerializeField] private string[] missionIds=Array.Empty<string>();
     [SerializeField] private GameObject interactionArrow;
+    [SerializeField] private BunkerPanelManager panelManager;
     private MissionService observedService;
 
     public bool HasActionableMission
@@ -65,5 +66,5 @@ public sealed class MissionProvider : MonoBehaviour, IBunkerInteractable
         return selected;
     }
     public void Interact()
-    { if(CanInteract)BunkerContext.Instance?.Panels?.OpenMission(this); }
+    { if(CanInteract)panelManager.OpenMission(this); }
 }

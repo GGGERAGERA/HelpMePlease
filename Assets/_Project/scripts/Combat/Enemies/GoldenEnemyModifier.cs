@@ -184,12 +184,13 @@ public sealed class GoldenEnemyModifier : MonoBehaviour
 
     private void ShowRewardFeedback()
     {
-        if (health == null || health.damagePopupPrefab == null)
+        var presentation = GetComponent<EnemyHealthPresentation>();
+        if (presentation == null || presentation.DamagePopupPrefab == null)
             return;
 
         GameObject popup = Instantiate(
-            health.damagePopupPrefab,
-            transform.position + health.popupOffset,
+            presentation.DamagePopupPrefab,
+            transform.position + presentation.PopupOffset,
             Quaternion.identity
         );
         DamagePopup damagePopup = popup.GetComponent<DamagePopup>();

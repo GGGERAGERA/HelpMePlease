@@ -450,7 +450,7 @@ namespace Subject42.Combat.OrbitalStation
         private void UpdateHover()
         {
             hoveredRing = null;
-            if (Camera.main == null)
+            if (station.InputOwner.PointerCamera == null)
             {
                 hoveredMount = null;
                 return;
@@ -458,7 +458,7 @@ namespace Subject42.Combat.OrbitalStation
             if (State == OrbitalRewardFlowState.RingSelection)
             {
                 hoveredMount = null;
-                Vector3 world = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                Vector3 world = station.InputOwner.PointerCamera.ScreenToWorldPoint(Input.mousePosition);
                 Vector2 local = transform.InverseTransformPoint(world);
                 UpdateRingHover(local);
                 return;
@@ -466,7 +466,7 @@ namespace Subject42.Combat.OrbitalStation
             if (State == OrbitalRewardFlowState.ModuleSelection)
             {
                 hoveredMount = null;
-                Vector2 world = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                Vector2 world = station.InputOwner.PointerCamera.ScreenToWorldPoint(Input.mousePosition);
                 hoveredModule = station.Modules
                     .Where(value => station.State.CanUpgradeModuleDamage(value.StableModuleId, out _))
                     .OrderBy(value => (value.WorldPosition - world).sqrMagnitude)
@@ -475,7 +475,7 @@ namespace Subject42.Combat.OrbitalStation
                 return;
             }
             hoveredModule = null;
-            hoveredMount = mountResolver.Resolve(station, Camera.main,
+            hoveredMount = mountResolver.Resolve(station, station.InputOwner.PointerCamera,
                 Input.mousePosition, hoveredMount);
         }
 
@@ -496,12 +496,12 @@ namespace Subject42.Combat.OrbitalStation
 
         private void UpdateModulePreview()
         {
-            if (modulePreview == null || Camera.main == null ||
+            if (modulePreview == null || station.InputOwner.PointerCamera == null ||
                 (State != OrbitalRewardFlowState.DirectMountSelection &&
                  State != OrbitalRewardFlowState.SecondLinkPlacement))
                 return;
             bool valid = CanStageMount(hoveredMount);
-            Vector3 mouse = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 mouse = station.InputOwner.PointerCamera.ScreenToWorldPoint(Input.mousePosition);
             Vector2 position = valid ? hoveredMount.Transform.position : mouse;
             modulePreview.SetWorldPosition(position);
             if (valid)
@@ -543,9 +543,9 @@ namespace Subject42.Combat.OrbitalStation
                 firstRing.Mounts[firstMountIndex].Transform == null) return;
             firstLinkPreview?.SetWorldPosition(firstRing.Mounts[firstMountIndex].Transform.position);
             firstLinkPreview?.Tick();
-            if (State != OrbitalRewardFlowState.SecondLinkPlacement || Camera.main == null) return;
+            if (State != OrbitalRewardFlowState.SecondLinkPlacement || station.InputOwner.PointerCamera == null) return;
             bool valid = CanStageMount(hoveredMount);
-            Vector3 mouse = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 mouse = station.InputOwner.PointerCamera.ScreenToWorldPoint(Input.mousePosition);
             Vector2 end = valid ? hoveredMount.Transform.position : mouse;
             if (linkPreviewLine == null)
             {

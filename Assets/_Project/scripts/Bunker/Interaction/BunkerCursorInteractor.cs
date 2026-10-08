@@ -5,18 +5,15 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
     [SerializeField] private Camera targetCamera;
     [SerializeField] private LayerMask interactionMask;
 
-    [Header("Fallback")]
-    [SerializeField] private BunkerPanelManager panelManagerFallback;
+    [Header("Panel Navigation")]
+    [SerializeField] private BunkerPanelManager panelManager;
 
     private BunkerInteractableCollider current;
 
     private bool IsInputBlocked => Time.timeScale <= 0f || SceneTransitionOverlay.IsTransitioning ||
         (Panels != null && Panels.IsAnyPanelOpen);
 
-    private BunkerPanelManager Panels =>
-        BunkerContext.Instance != null && BunkerContext.Instance.Panels != null
-            ? BunkerContext.Instance.Panels
-            : panelManagerFallback;
+    private BunkerPanelManager Panels => panelManager;
 
     private void Awake()
     {

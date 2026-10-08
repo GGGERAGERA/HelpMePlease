@@ -129,6 +129,8 @@ public sealed class CombatLabDebugController : MonoBehaviour
             return false;
         }
 
+        telekinesis = player.GetComponent<TelekinesisDebugPrototype>();
+        telekinesis?.ResetPrototype();
         if (!characterSpawner.TryReplaceDebugPrimaryWeapon(
                 player,
                 weaponData,
@@ -241,9 +243,40 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     public static bool IsDebugMenuOpen =>
         activeInstance != null && activeInstance.isOpen;
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void BindOrbitalInputBlocker() =>
-        OrbitalDevelopmentInput.DevelopmentBlocker = () => IsDebugMenuOpen;
+    private OrbitalInteractionController inputOwner;
+    private Func<bool> inputBlocker;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void BootstrapBunkerMenu()
+    {
+        SceneManager.sceneLoaded -= AttachBunkerMenu;
+        SceneManager.sceneLoaded += AttachBunkerMenu;
+        AttachBunkerMenu(SceneManager.GetActiveScene(), LoadSceneMode.Single);
+    }
+
+    private static void AttachBunkerMenu(Scene scene, LoadSceneMode mode)
+    {
+        foreach (var context in scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<BunkerContext>(true)))
+            if (context.GetComponent<Subject42DebugMenu>() == null) context.gameObject.AddComponent<Subject42DebugMenu>();
+    }
+
+    private void BindInputOwner()
+    {
+        var next = PlayerRuntimeReference.CachedPlayer != null
+            ? PlayerRuntimeReference.CachedPlayer.GetComponentInChildren<OrbitalInteractionController>(true) : null;
+        if (next == inputOwner) return;
+        ReleaseInputOwner();
+        inputOwner = next;
+        inputBlocker = () => isOpen;
+        if (inputOwner != null) inputOwner.DevelopmentInputBlocker = inputBlocker;
+    }
+
+    private void ReleaseInputOwner()
+    {
+        if (inputOwner != null && inputOwner.DevelopmentInputBlocker == inputBlocker)
+            inputOwner.DevelopmentInputBlocker = null;
+        inputOwner = null;
+    }
 
     private enum DebugTab
     {
@@ -394,6 +427,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private void Update()
     {
+        BindInputOwner();
         UpdateBotLabTelemetry();
         if (isOpen && activeXpCounter != null &&
             activeXpCounter.gameObject.activeInHierarchy &&
@@ -436,6 +470,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private void OnDisable()
     {
+        ReleaseInputOwner();
         ProductionAnomalySite.VisualTargetsChanged -=
             HandleAnomalyVisualTargetsChanged;
 

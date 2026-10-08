@@ -20,8 +20,9 @@ public sealed class SurfaceMapView : MonoBehaviour
     private BunkerRunStarter starter;
     private BunkerPanelManager owner;
     private Transform transitionTarget;
-    private TMP_Text selectionLabel;
-    private SurfaceMapNavigation navigation;
+    [SerializeField] private TMP_Text selectionLabel;
+    [SerializeField] private SurfaceMapNavigation navigation;
+    [SerializeField] private Button resetButton;
     private string inspectedId, lastSelectedId;
     private bool centered;
     private static readonly Color Locked = new(.23f,.32f,.39f);
@@ -35,44 +36,15 @@ public sealed class SurfaceMapView : MonoBehaviour
     private void Awake()
     {
         nodeTemplate.gameObject.SetActive(false); lineTemplate.gameObject.SetActive(false);
-        var root = (RectTransform)transform; root.sizeDelta = new Vector2(1160,700);
-        GetComponent<Image>().color = new Color(.025f,.045f,.065f,.99f);
-        var title = transform.Find("Title").GetComponent<TMP_Text>();
-        Place(title.rectTransform,new Vector2(-130,302),new Vector2(810,44));
-        title.text = "SURFACE EXPEDITION MAP"; title.fontSize = 27; title.alignment = TextAlignmentOptions.Left; title.color = Cyan;
-        Label("Uplink",transform,new Vector2(-110,269),new Vector2(850,24),"BUNKER UPLINK  /  SECTOR TELEMETRY  /  042",13,Muted);
-        Bar(transform,new Vector2(0,247),new Vector2(1112,2),new Color(.17f,.4f,.49f));
-        Bar(transform,new Vector2(-555,301),new Vector2(5,44),Cyan);
-        var viewportObject = new GameObject("Map Viewport", typeof(RectTransform), typeof(Image), typeof(RectMask2D), typeof(SurfaceMapNavigation));
-        var viewport = (RectTransform)viewportObject.transform; viewport.SetParent(graph.parent, false);
-        Place(viewport,new Vector2(-185,-22),new Vector2(744,514));
-        viewportObject.GetComponent<Image>().color = Ink;
-        for (int x=-350;x<=350;x+=35) Bar(viewport,new Vector2(x,0),new Vector2(1,514),new Color(.1f,.25f,.3f,.26f));
-        for (int y=-245;y<=245;y+=35) Bar(viewport,new Vector2(0,y),new Vector2(744,1),new Color(.1f,.25f,.3f,.26f));
-        for (int y=-252;y<=252;y+=7) Bar(viewport,new Vector2(0,y),new Vector2(744,1),new Color(0,0,0,.09f));
-        Label("Coordinates",viewport,new Vector2(-6,235),new Vector2(700,20),"X: 000   Y: 042                                     N / SURFACE",11,Muted);
-        Label("Map caption",viewport,new Vector2(-6,-235),new Vector2(700,20),"SECTOR NETWORK                       UPLINK // STABLE",11,Muted);
-        graph.SetParent(viewport, false); graph.anchoredPosition = new Vector2(-175,-62);
-        navigation = viewportObject.GetComponent<SurfaceMapNavigation>(); navigation.Configure(graph);
-        Bar(transform,new Vector2(204,-18),new Vector2(2,510),new Color(.16f,.33f,.4f));
-        var card = Bar(transform,new Vector2(391,-2),new Vector2(330,473),new Color(.038f,.074f,.099f));
-        card.transform.SetSiblingIndex(title.transform.GetSiblingIndex());
-        selectionLabel = Label("Selection",transform,new Vector2(390,211),new Vector2(306,24),"SECTOR INTELLIGENCE",14,Cyan);
-        Place(details.rectTransform,new Vector2(391,-5),new Vector2(298,386));
-        details.fontSize=16; details.color=new Color(.72f,.83f,.87f); details.lineSpacing=8; details.richText=true;
-        details.alignment=TextAlignmentOptions.TopLeft;
-        Place(startButton.GetComponent<RectTransform>(),new Vector2(391,-260),new Vector2(330,49));
-        StyleButton(startButton,"DEPLOY TO SECTOR",18,Cyan);
-        Place(closeButton.GetComponent<RectTransform>(),new Vector2(530,303),new Vector2(44,38));
-        StyleButton(closeButton,"X",18,Muted);
-        Label("Navigation hint",transform,new Vector2(-230,-329),new Vector2(650,20),"DRAG TO PAN / SCROLL TO ZOOM",10,Muted);
-        var legend = Label("Legend",transform,new Vector2(-190,-299),new Vector2(732,24),"<color=#57D9F0>AVAILABLE</color>  <color=#6BD9B5>COMPLETED</color>  <color=#3B5263>LOCKED</color>  <color=#FFCC4D>? UNKNOWN</color>  <color=#FFB247>! MISSION</color>",11,Muted);
-        legend.richText=true;
-        var reset=Instantiate(closeButton,transform); reset.name="Reset View";
-        Place((RectTransform)reset.transform,new Vector2(115,-329),new Vector2(134,23));
-        StyleButton(reset,"RESET VIEW",10,Muted); reset.onClick=new Button.ButtonClickedEvent(); reset.onClick.AddListener(() => navigation.ResetView());
-        Label("Terminal ID",transform,new Vector2(390,-307),new Vector2(330,25),"SUBJECT 42  //  EXPEDITION CONTROL",10,Muted);
+        navigation.Configure(graph);
+        resetButton.onClick.AddListener(ResetView);
         startButton.onClick.AddListener(StartSelected); closeButton.onClick.AddListener(Close);
+    }
+    private void ResetView() => navigation.ResetView();
+    private void OnDestroy()
+    {
+        resetButton.onClick.RemoveListener(ResetView);
+        startButton.onClick.RemoveListener(StartSelected); closeButton.onClick.RemoveListener(Close);
     }
     public void Show(SurfaceMapService mapService, BunkerRunStarter runStarter, BunkerPanelManager panelOwner, Transform target)
     {
@@ -287,12 +259,7 @@ public sealed class SurfaceMapView : MonoBehaviour
         var go=new GameObject(name,typeof(RectTransform),typeof(SurfaceMapPlate)); go.transform.SetParent(parent,false);
         var plate=go.GetComponent<SurfaceMapPlate>(); plate.color=color; plate.raycastTarget=false; Place(plate.rectTransform,position,size); return plate;
     }
-    private static void StyleButton(Button button,string text,float size,Color color)
-    {
-        button.GetComponent<Image>().color=new Color(.08f,.21f,.28f);
-        var label=button.GetComponentInChildren<TMP_Text>(); label.text=text; label.fontSize=size; label.color=color;
-        Place(label.rectTransform,Vector2.zero,button.GetComponent<RectTransform>().sizeDelta-new Vector2(8,0));
-    }
+
     private void StartSelected() { if (service != null && isActiveAndEnabled && startButton.interactable) starter.StartSurfaceRun(transitionTarget); }
     private void Close() => owner.CloseAll();
 }

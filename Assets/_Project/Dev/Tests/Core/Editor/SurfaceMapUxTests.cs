@@ -12,6 +12,7 @@ public sealed class SurfaceMapUxTests
     [Test] public void InspectionRouteAndViewStateStayInPresentation()
     {
         var asset=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/prefabs/UI/SurfaceMap/PF_SurfaceMap.prefab");
+        Assert.That(asset.transform.Find("Map Viewport"),Is.Not.Null,"Fixed map shell must be authored before Awake.");
         var root=Object.Instantiate(asset); var view=root.GetComponent<SurfaceMapView>();
         var previous=LocalizationService.Instance;
         var localization=root.AddComponent<LocalizationService>();
@@ -29,6 +30,10 @@ public sealed class SurfaceMapUxTests
             Assert.That(Read<Button>(view,"startButton").GetComponentInChildren<TMP_Text>().text,Is.EqualTo("ROUTE LOCKED"));
             Assert.That(Read<TMP_Text>(view,"details").text,Does.Contain("ROUTE LOCKED").And.Contain("Complete C1"));
             view.Inspect("D1"); Assert.That(Read<TMP_Text>(view,"details").text,Does.Contain("UNKNOWN ACTIVITY").And.Contain("???"));
+            Assert.That(service.Content.TryGetMarker("D1",out var marker),Is.True);
+            var icons=Read<System.Collections.Generic.Dictionary<string,TMP_Text>>(view,"markerIcons");
+            Assert.That(icons["D1"].text,Is.EqualTo(marker.Marker.icon));
+            Assert.That(icons["D1"].transform.parent.gameObject.activeSelf,Is.True);
             var nav=Read<SurfaceMapNavigation>(view,"navigation"); nav.Zoom(2,Vector2.zero); nav.Pan(new Vector2(80,30));
             var position=nav.Content.anchoredPosition; var zoom=nav.Content.localScale;
             root.SetActive(false); view.Show(service,null,null,null);

@@ -1052,10 +1052,12 @@ public partial class EnemySpawner : MonoBehaviour
 
     private void ConfigureEnemyFeedbackPools(EnemyHealth health)
     {
-        health.SetFeedbackPools(
-            GetEnemyFeedbackPool(health.DamagePopupPrefab),
-            GetEnemyFeedbackPool(health.BloodHitPrefab),
-            GetEnemyFeedbackPool(health.DeathFxPrefab));
+        var presentation = health.GetComponent<EnemyHealthPresentation>();
+        if (presentation == null) return;
+        presentation.SetFeedbackPools(
+            GetEnemyFeedbackPool(presentation.DamagePopupPrefab),
+            GetEnemyFeedbackPool(presentation.BloodHitPrefab),
+            GetEnemyFeedbackPool(presentation.DeathFxPrefab));
     }
 
     private SimplePrefabPool GetEnemyFeedbackPool(GameObject prefab)
@@ -1124,12 +1126,12 @@ public partial class EnemySpawner : MonoBehaviour
         if (turret != null)
             GetEnemyProjectilePool(turret.ProjectilePrefab);
 
-        EnemyHealth health = enemyPrefab.GetComponent<EnemyHealth>();
-        if (health != null)
+        EnemyHealthPresentation presentation = enemyPrefab.GetComponent<EnemyHealthPresentation>();
+        if (presentation != null)
         {
-            GetEnemyFeedbackPool(health.DamagePopupPrefab);
-            GetEnemyFeedbackPool(health.BloodHitPrefab);
-            GetEnemyFeedbackPool(health.DeathFxPrefab);
+            GetEnemyFeedbackPool(presentation.DamagePopupPrefab);
+            GetEnemyFeedbackPool(presentation.BloodHitPrefab);
+            GetEnemyFeedbackPool(presentation.DeathFxPrefab);
         }
     }
 

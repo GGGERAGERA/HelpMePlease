@@ -80,6 +80,8 @@ public sealed class Subject42OnboardingTests
         var rule = AssetDatabase.LoadAssetAtPath<WorldRuleData>("Assets/_Project/Data/World/Rules/WorldRule_None.asset");
         var anomaly = AssetDatabase.LoadAssetAtPath<LocalAnomalyData>("Assets/_Project/Data/Anomalies/LocalAnomaly_Gravity.asset");
         RunStateManager.EnsureExists().BeginNewRun(character, null, stage, rule, anomaly, true);
+        // First-run hints belong to the normal first sector, without the guided tutorial.
+        PlayerPrefs.SetInt(TutorialController.CompletionKey, 0);
         yield return SceneManager.LoadSceneAsync("MVP");
         yield return CoreTestSupport.Await(() => PlayerRuntimeReference.CachedPlayer != null && HUDManager.Instance.IsInformationVisible);
         var player = PlayerRuntimeReference.CachedPlayer;
@@ -128,7 +130,9 @@ public sealed class Subject42OnboardingTests
         Assert.That(threat.DisplayedTier, Is.EqualTo(ThreatTier.Tier2));
 
         // Reload the gameplay scene in a fresh run, retaining saved onboarding flags.
+        PlayerPrefs.SetInt(TutorialController.CompletionKey, 1);
         RunStateManager.Instance.BeginNewRun(character, null, stage, rule, anomaly, true);
+        PlayerPrefs.SetInt(TutorialController.CompletionKey, 0);
         yield return SceneManager.LoadSceneAsync("MVP");
         yield return CoreTestSupport.Await(() => HUDManager.Instance.IsInformationVisible);
         messages = RunMessageService.Instance;

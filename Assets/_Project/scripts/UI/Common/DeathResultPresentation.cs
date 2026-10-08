@@ -38,6 +38,7 @@ public sealed class DeathResultPresentation : MonoBehaviour
         comment.text = AICommentGenerator.GetComment(false);
     }
     private bool viewValid;
+    private Vector2 fittedCanvasSize;
 
     private void Awake()
     {
@@ -99,12 +100,13 @@ public sealed class DeathResultPresentation : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (viewValid && window.gameObject.activeSelf) FitToCanvas();
+        if (viewValid && window.gameObject.activeSelf && rootCanvasRect.rect.size != fittedCanvasSize) FitToCanvas();
     }
 
     private void FitToCanvas()
     {
         Vector2 available = rootCanvasRect.rect.size;
+        fittedCanvasSize = available;
         Place(window, 0f, 0f, 1000f, 840f);
         window.localScale = Vector3.one * Mathf.Min(1f,
             Mathf.Min((available.x - 48f) / 1000f, (available.y - 48f) / 840f));

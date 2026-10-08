@@ -270,7 +270,7 @@ public sealed class CombatFeelTestDummyController : MonoBehaviour
         float damage = Mathf.Max(1f, dummy.Health.MaxHealth * healthFraction);
         Vector2 direction = GetHitDirection();
         Vector2 hitPoint = dummy.transform.position;
-        dummy.Health.DebugSimulateFeedback(damage, hitPoint, critical, lethal);
+        dummy.GetComponent<EnemyHealthPresentation>().DebugSimulateFeedback(damage, hitPoint, critical, lethal);
         PhysicalCombatFeedbackRuntime.NotifySimulatedHit(new WeaponHitContext(
             null, null, dummy.Health, hitPoint, direction, damage, critical), lethal);
     }

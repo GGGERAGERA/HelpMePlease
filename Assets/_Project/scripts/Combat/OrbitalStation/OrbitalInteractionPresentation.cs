@@ -41,6 +41,8 @@ namespace Subject42.Combat.OrbitalStation
         private Material screenMaterial;
         private Material authoredScreenMaterial;
         private Camera gameplayCamera;
+        private UICrosshairFollowMouse cursorOwner;
+        private Camera cameraOwner;
         public bool HasScreenEffect => screenEffect != null && screenEffect.material != null;
         public bool RingSelectionFocus { get; private set; }
         public float SelectionRingEmphasis => selectionRingEmphasis;
@@ -84,13 +86,20 @@ namespace Subject42.Combat.OrbitalStation
             if (bound || screenMaterial != null)
                 Release();
             this.station = station;
-            gameplayCamera = Camera.main;
+            gameplayCamera = cameraOwner;
             authoredScreenMaterial = screenEffect.material;
             screenMaterial = new Material(authoredScreenMaterial);
             screenEffect.material = screenMaterial;
             screenEffect.enabled = false;
-            UICrosshairFollowMouse crosshair =
-                FindFirstObjectByType<UICrosshairFollowMouse>();
+            BindCursor(cursorOwner, cameraOwner);
+        }
+
+        public void BindCursor(UICrosshairFollowMouse crosshair, Camera camera)
+        {
+            ReleaseCursor();
+            cursorOwner = crosshair;
+            cameraOwner = gameplayCamera = camera;
+            station?.InputOwner?.BindCamera(camera);
             if (crosshair == null)
                 return;
             cursorRect = crosshair.GetComponent<RectTransform>();
@@ -144,6 +153,11 @@ namespace Subject42.Combat.OrbitalStation
             screenMaterial = null;
             gameplayCamera = null;
             ClearHint();
+            ReleaseCursor();
+        }
+
+        private void ReleaseCursor()
+        {
             if (bound && cursorImage != null)
             {
                 cursorImage.sprite = originalSprite;

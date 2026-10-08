@@ -10,7 +10,7 @@ public sealed class BunkerStationEditor : Editor
     private SerializedProperty progressionEnabled;
     private SerializedProperty progressionStationId;
     private SerializedProperty runTransitionTarget;
-    private SerializedProperty panelManagerFallback;
+    private SerializedProperty panelManager;
     private SerializedProperty animator;
     private SerializedProperty animationTrigger;
     private SerializedProperty onInteract;
@@ -23,7 +23,7 @@ public sealed class BunkerStationEditor : Editor
         progressionEnabled = serializedObject.FindProperty("progressionEnabled");
         progressionStationId = serializedObject.FindProperty("progressionStationId");
         runTransitionTarget = serializedObject.FindProperty("runTransitionTarget");
-        panelManagerFallback = serializedObject.FindProperty("panelManagerFallback");
+        panelManager = serializedObject.FindProperty("panelManager");
         animator = serializedObject.FindProperty("animator");
         animationTrigger = serializedObject.FindProperty("animationTrigger");
         onInteract = serializedObject.FindProperty("onInteract");
@@ -50,7 +50,7 @@ public sealed class BunkerStationEditor : Editor
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Fallback", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(panelManagerFallback);
+        EditorGUILayout.PropertyField(panelManager);
 
         serializedObject.ApplyModifiedProperties();
     }

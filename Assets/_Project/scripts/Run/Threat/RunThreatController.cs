@@ -6,7 +6,9 @@ public sealed class RunThreatController : MonoBehaviour
     private EnemySpawner enemySpawner;
     private int appliedPresetIndex = -1;
     private ThreatTier displayedTier;
-    private float nextHudRefresh;
+    public event System.Action<float, ThreatTier> ThreatChanged;
+    public event System.Action<ThreatTier> TierIncreased;
+    public float ThreatValue => RunStateManager.Instance != null ? RunStateManager.Instance.ThreatValue : 0f;
     private bool openingApplied;
 
     private void OnEnable() => EnemyHealth.Spawned += ApplyMovement;
@@ -68,17 +70,10 @@ public sealed class RunThreatController : MonoBehaviour
 
         if (!force && presetIndex == appliedPresetIndex && opening == openingApplied)
         {
-            if (Time.unscaledTime >= nextHudRefresh)
-            {
-                nextHudRefresh = Time.unscaledTime + 0.2f;
-                HUDManager.Instance?.SetThreat(
-                    runState.ThreatValue,
-                    currentTier
-                );
-            }
+            ThreatChanged?.Invoke(runState.ThreatValue, currentTier);
 
             if (currentTier > displayedTier)
-                ShowTierIncrease(currentTier);
+                TierIncreased?.Invoke(currentTier);
 
             displayedTier = currentTier;
             return;
@@ -98,21 +93,12 @@ public sealed class RunThreatController : MonoBehaviour
             );
         }
 
-        HUDManager.Instance?.SetThreat(runState.ThreatValue, currentTier);
-        nextHudRefresh = Time.unscaledTime + 0.2f;
+        ThreatChanged?.Invoke(runState.ThreatValue, currentTier);
 
         if (!force && currentTier > displayedTier)
-            ShowTierIncrease(currentTier);
+            TierIncreased?.Invoke(currentTier);
 
         displayedTier = currentTier;
     }
 
-    private static void ShowTierIncrease(ThreatTier tier)
-    {
-        RunMessageService.Instance?.ShowCustom(
-            "run.threatIncreased",
-            "run.pressureIncreased",
-            1.8f
-        );
-    }
 }

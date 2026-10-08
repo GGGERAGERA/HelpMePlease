@@ -45,10 +45,10 @@ public sealed class TutorialController : MonoBehaviour
     private RunFlowController flow;
     private UpgradeManager rewards;
     private ProductionSectorExit sectorExit;
-    private Canvas overlayCanvas;
+    private TutorialOverlayPresenter overlay;
     public void SetHintVisible(bool visible)
     {
-        if (overlayCanvas != null) overlayCanvas.enabled = visible;
+        if (overlay != null) overlay.SetVisible(visible);
     }
     private readonly List<EnemyHealth> firstEnemies = new();
     private float travelled;
@@ -104,7 +104,8 @@ public sealed class TutorialController : MonoBehaviour
         ExperiencePickup.Collected += OnPickupCollected;
         flow.ExitUnlocked += OnExitUnlocked;
         flow.ExitReached += OnExitReached;
-        overlayCanvas = TutorialOverlay.Create(this).canvas;
+        overlay = flow.TutorialPresentation;
+        overlay.Bind(this);
         FocusTarget = Player != null ? Player.transform : null;
     }
 
@@ -300,7 +301,7 @@ public sealed class TutorialController : MonoBehaviour
             rewards.RewardCommitted -= OnRewardCommitted;
         }
         if (flow != null) { flow.ExitUnlocked -= OnExitUnlocked; flow.ExitReached -= OnExitReached; }
-        if (overlayCanvas != null) Destroy(overlayCanvas.gameObject);
+        if (overlay != null) overlay.Bind(null);
         if (Active == this) Active = null;
     }
 }

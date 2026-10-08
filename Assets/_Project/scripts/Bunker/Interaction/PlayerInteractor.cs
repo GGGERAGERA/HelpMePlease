@@ -6,7 +6,8 @@ public class PlayerInteractor : MonoBehaviour
 
     [SerializeField] private float interactionRadius = 1.5f;
 
-    private Interactable currentInteractable;
+    [SerializeField] private BunkerPanelManager panelManager;
+    private IBunkerInteractable currentInteractable;
     private readonly Collider2D[] interactionBuffer =
         new Collider2D[InteractionBufferSize];
     private ContactFilter2D interactionFilter;
@@ -31,7 +32,8 @@ public class PlayerInteractor : MonoBehaviour
 
     private void Update()
     {
-        if (Time.timeScale <= 0f)
+        if (Time.timeScale <= 0f || SceneTransitionOverlay.IsTransitioning ||
+            (panelManager != null && panelManager.IsAnyPanelOpen))
         {
             currentInteractable = null;
             return;
@@ -84,8 +86,8 @@ public class PlayerInteractor : MonoBehaviour
             if (hit == null)
                 continue;
 
-            Interactable interactable =
-                hit.GetComponent<Interactable>();
+            IBunkerInteractable interactable = hit.TryGetComponent<BunkerInteractableCollider>(out var proxy)
+                ? proxy.Interactable : hit.GetComponent<IBunkerInteractable>();
 
             if (interactable == null || !interactable.CanInteract)
                 continue;
@@ -93,7 +95,7 @@ public class PlayerInteractor : MonoBehaviour
             float distance =
                 Vector2.Distance(
                     transform.position,
-                    interactable.transform.position
+                    hit.transform.position
                 );
 
             if (distance < closestDistance)
@@ -104,7 +106,7 @@ public class PlayerInteractor : MonoBehaviour
         }
     }
 
-    public Interactable GetCurrentInteractable()
+    public IBunkerInteractable GetCurrentInteractable()
     {
         return currentInteractable;
     }

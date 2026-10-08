@@ -5,8 +5,7 @@ using UnityEngine;
 namespace Subject42.Combat.OrbitalStation
 {
     [DisallowMultipleComponent]
-    public sealed class OrbitalStationRuntime : MonoBehaviour,
-        IOrbitalProgressionAdapter
+    public sealed class OrbitalStationRuntime : MonoBehaviour
     {
         private enum PlacementStep { None, Ring, Mount }
 
@@ -215,7 +214,6 @@ namespace Subject42.Combat.OrbitalStation
                 }
                 initialized = true;
                 authoredView.CenterShift.Bind(this);
-                UpgradeManager.Instance?.BindOrbitalStation(this);
                 runStateManager.RegisterSceneCleanup(Teardown);
                 enabled = true;
                 InputOwner.enabled = true;
@@ -482,7 +480,7 @@ namespace Subject42.Combat.OrbitalStation
                 customDrawing = Instantiate(prefab, authoredView.InteractionRoot, false);
                 customDrawing.Player = Owner.Transform.GetComponent<CharacterMovement2D>();
                 customDrawing.OrbitRoot = Owner.Transform;
-                customDrawing.DrawingCamera = Camera.main;
+                customDrawing.DrawingCamera = InputOwner.PointerCamera;
                 drawCameraRig = customDrawing.DrawingCamera.GetComponentInParent<CameraFollow>();
                 customDrawing.Confirmed += path => ConfirmCustomRing(path);
             }
@@ -522,10 +520,12 @@ namespace Subject42.Combat.OrbitalStation
             {
                 drawnInBatch = 0;
                 EndCustomDrawing();
-                UpgradeManager.Instance?.ResumeAfterCustomDrawing();
+                CustomDrawingCompleted?.Invoke();
             }
             return true;
         }
+
+        public event System.Action CustomDrawingCompleted;
 
         private void EndCustomDrawing()
         {
@@ -649,7 +649,7 @@ namespace Subject42.Combat.OrbitalStation
         public bool DebugApplyGrowthPreset(GrowthPreset preset)
         {
             if (runStateManager == null || !System.Enum.IsDefined(typeof(GrowthPreset), preset) ||
-                (UpgradeManager.Instance != null && !UpgradeManager.Instance.IsRewardQueueIdle))
+                (InputOwner != null && !InputOwner.IsRewardQueueIdle))
                 return false;
 
             Teardown();
@@ -710,8 +710,8 @@ namespace Subject42.Combat.OrbitalStation
             InstallModule(OrbitalModuleKind.LaserSword, second.StableRingId, 1, out _);
             InstallModule(OrbitalModuleKind.ImpulseGun, third.StableRingId, 0, out _);
             InstallModule(OrbitalModuleKind.ArcEmitter, third.StableRingId, 1, out _);
-            if (Camera.main != null && Camera.main.orthographic)
-                Camera.main.orthographicSize = 8.1f;
+            if (InputOwner.PointerCamera != null && InputOwner.PointerCamera.orthographic)
+                InputOwner.PointerCamera.orthographicSize = 8.1f;
         }
 
 #endif
@@ -1180,10 +1180,10 @@ namespace Subject42.Combat.OrbitalStation
                 if (Input.GetKeyDown(KeyCode.Alpha1 + i))
                     SelectRing(rings[i]);
             if (placementStep == PlacementStep.None || Time.timeScale <= 0f ||
-                !Input.GetMouseButtonDown(0) || Camera.main == null ||
+                !Input.GetMouseButtonDown(0) || InputOwner.PointerCamera == null ||
                 (InputOwner == null || !InputOwner.CanUseDebugPlacement))
                 return;
-            Vector3 world3 = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 world3 = InputOwner.PointerCamera.ScreenToWorldPoint(Input.mousePosition);
             Vector2 local = transform.InverseTransformPoint(world3);
             if (placementStep == PlacementStep.Ring)
             {

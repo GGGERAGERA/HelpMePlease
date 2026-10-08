@@ -24,20 +24,6 @@ internal static class ProductionGravitySiteDefinition
             context.SiteObject.transform
         );
 
-        GameObject servicesHost = context.ServicesHost != null
-            ? context.ServicesHost
-            : context.SiteObject;
-        GravityTrajectoryService trajectoryService =
-            servicesHost.GetComponent<GravityTrajectoryService>();
-
-        if (trajectoryService == null)
-        {
-            trajectoryService =
-                servicesHost.AddComponent<GravityTrajectoryService>();
-        }
-
-        trajectoryService.Disable();
-
         if (zone is GravityZone gravityZone)
         {
             gravityZone.ConfigureOrbit(
@@ -48,7 +34,6 @@ internal static class ProductionGravitySiteDefinition
                 0.7f,
                 0.35f
             );
-            trajectoryService.SetGravityZone(gravityZone);
         }
 
         Debug.Log(

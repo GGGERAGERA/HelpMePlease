@@ -14,8 +14,8 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
     [Header("Start Run")]
     [SerializeField] private Transform runTransitionTarget;
 
-    [Header("Fallback")]
-    [SerializeField] private BunkerPanelManager panelManagerFallback;
+    [Header("Panel Navigation")]
+    [SerializeField] private BunkerPanelManager panelManager;
 
     [Header("Animation")]
     [SerializeField] private Animator animator;
@@ -30,15 +30,12 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
     private void OnDisable() => AvailabilityChanged?.Invoke();
 
     // Serialized shop ID is reserved, but the production feature is removed.
-    public bool CanInteract => interactionEnabled &&
+    public bool CanInteract => isActiveAndEnabled && interactionEnabled &&
         stationType != BunkerStationType.None &&
         stationType != BunkerStationType.Shop;
     public string InteractionText => LocalizationService.Instance.Get(interactionText);
 
-    private BunkerPanelManager Panels =>
-        BunkerContext.Instance != null && BunkerContext.Instance.Panels != null
-            ? BunkerContext.Instance.Panels
-            : panelManagerFallback;
+    private BunkerPanelManager Panels => panelManager;
 
     public void Interact()
     {

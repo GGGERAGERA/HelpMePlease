@@ -10,7 +10,6 @@ namespace Subject42.Bunker.Gallery
 
         [SerializeField] private Transform contentRoot;
         [SerializeField] private Transform effectsRoot;
-        [SerializeField] private Transform stagingRoot;
         [SerializeField] private Material spriteMaterial;
         [SerializeField] private Vector2 modelSize = new Vector2(4.2f, 3.5f);
 
@@ -36,7 +35,7 @@ namespace Subject42.Bunker.Gallery
             StopAllCoroutines();
             contentRoot.gameObject.SetActive(false);
             // Deactivate synchronously; Destroy is deferred until the end of the frame.
-            foreach (var root in new[] { contentRoot, effectsRoot, stagingRoot })
+            foreach (var root in new[] { contentRoot, effectsRoot })
                 for (int i = root.childCount - 1; i >= 0; i--)
                 {
                     var child = root.GetChild(i).gameObject;
@@ -50,24 +49,11 @@ namespace Subject42.Bunker.Gallery
 
         private void OnDisable() => Clear();
 
-        private GameObject PrepareVisual(GameObject prefab)
+        private GameObject PrepareVisual(GameObject prefab, Transform owner)
         {
-            // Staging is authored inactive. Awake/OnEnable/Start cannot run on the source scripts.
-            var instance = Instantiate(prefab, stagingRoot, false);
+            var instance = Instantiate(prefab, owner, false);
+            instance.SetActive(false);
             instance.name = prefab.name;
-            var behaviours = instance.GetComponentsInChildren<MonoBehaviour>(true);
-            // Dependents are appended after required components in the production prefabs.
-            for (int i = behaviours.Length - 1; i >= 0; i--)
-                Destroy(behaviours[i]);
-            foreach (var body in instance.GetComponentsInChildren<Rigidbody2D>(true)) body.simulated = false;
-            foreach (var collider in instance.GetComponentsInChildren<Collider2D>(true)) collider.enabled = false;
-            foreach (var collider in instance.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
-            foreach (var source in instance.GetComponentsInChildren<AudioSource>(true)) source.enabled = false;
-            foreach (var child in instance.GetComponentsInChildren<Transform>(true))
-            {
-                child.gameObject.layer = stagingRoot.gameObject.layer;
-                child.gameObject.tag = "Untagged";
-            }
             foreach (var a in instance.GetComponentsInChildren<Animator>(true))
             {
                 a.fireEvents = false;
@@ -87,10 +73,7 @@ namespace Subject42.Bunker.Gallery
 
         private IEnumerator Present()
         {
-            avatar = PrepareVisual(entry.enemyPrefab);
-            // Wait for removal while still inactive; no combat component ever gets an Awake.
-            yield return null;
-            avatar.transform.SetParent(contentRoot, false);
+            avatar = PrepareVisual(entry.previewPrefab, contentRoot);
             avatar.transform.localPosition = Vector3.zero;
             avatar.SetActive(true);
             contentRoot.gameObject.SetActive(true);
@@ -198,9 +181,7 @@ namespace Subject42.Bunker.Gallery
         // These are presentation timelines, not projectiles: no EnemyProjectile, damage or targeting.
         private IEnumerator Fly(GameObject prefab, Vector3 from, Vector3 to, float duration)
         {
-            var visual = PrepareVisual(prefab);
-            yield return null;
-            visual.transform.SetParent(effectsRoot, false);
+            var visual = PrepareVisual(prefab, effectsRoot);
             visual.transform.position = from;
             visual.transform.localScale *= .45f;
             visual.SetActive(true);
@@ -223,9 +204,7 @@ namespace Subject42.Bunker.Gallery
 
         private IEnumerator Effect(GameObject prefab, Vector3 position, float scale, float duration, bool telegraph = false)
         {
-            var visual = PrepareVisual(prefab);
-            yield return null;
-            visual.transform.SetParent(effectsRoot, false);
+            var visual = PrepareVisual(prefab, effectsRoot);
             visual.transform.position = position;
             visual.transform.localScale = Vector3.one * scale;
             visual.SetActive(true);

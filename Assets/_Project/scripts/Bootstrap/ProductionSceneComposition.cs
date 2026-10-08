@@ -35,6 +35,7 @@ public sealed class ProductionSceneComposition : MonoBehaviour
     [SerializeField] private GameplayAreaService gameplayArea;
     [SerializeField] private LevelModifiersApplier levelModifiers;
     [SerializeField] private HUDManager hud;
+    [SerializeField] private UpgradeManager rewards;
     [SerializeField] private CameraFollow cameraFollow;
     [SerializeField] private BunkerPlayerLoadoutController bunkerLoadout;
     [SerializeField] private BunkerSelectionSourceHub bunkerSelections;
@@ -85,11 +86,11 @@ public sealed class ProductionSceneComposition : MonoBehaviour
             var owner = transition.gameObject.scene.IsValid() ? transition : Instantiate(transition);
             owner.InitializeAuthored();
         }
-        if (characters != null) characters.BindScene(hud);
+        if (characters != null) characters.BindScene(hud, rewards);
         if (role == SceneRole.Gameplay)
         {
             if (characters == null || enemies == null || levelModifiers == null || hud == null ||
-                cameraFollow == null || gameplayArea == null)
+                cameraFollow == null || gameplayArea == null || rewards == null || hud.OrbitalCursor == null)
                 throw new InvalidOperationException("Gameplay composition has missing scene bindings.");
             levelModifiers.PrepareDirectRun(characters.DefaultCharacter);
             enemies.BindScene(characters, gameplayArea);
@@ -107,6 +108,7 @@ public sealed class ProductionSceneComposition : MonoBehaviour
     private void BindGameplayPlayer(GameObject player)
     {
         cameraFollow.target = player.transform;
+        characters.Station?.Interaction?.BindCursor(hud.OrbitalCursor, cameraFollow.ControlledCamera);
     }
 
     private IEnumerator Start()

@@ -49,6 +49,7 @@ GameObject:
   - component: {fileID: 6986819420519733013}
   - component: {fileID: 330473454747600092}
   - component: {fileID: 290436255382512980}
+  - component: {fileID: 3548386245363899071}
   m_Layer: 8
   m_Name: p_Enemy
   m_TagString: Enemy
@@ -196,13 +197,9 @@ MonoBehaviour:
   OnDamageTaken:
     m_PersistentCalls:
       m_Calls: []
-  damagePopupPrefab: {fileID: 9169945786982687630, guid: 93f186151a59ce24fa30dac2ce325309, type: 3}
-  popupOffset: {x: 0, y: 1, z: 0}
   lootPrefab: {fileID: 8927180452970597320, guid: 568301bd43bfcef49aa858e8372f81be, type: 3}
   lootAmount: 1
   lootScatterRadius: 0.2
-  bloodHitPrefab: {fileID: 125031105077979307, guid: eb16fb47744e2184f9a71bc456707725, type: 3}
-  deathFXPrefab: {fileID: 8928692237468947480, guid: dce35554bd0bf694e8c080fae452ca84, type: 3}
   isBoss: 0
   bossName: boss.guardian
 --- !u!114 &5140618788807294408
@@ -281,6 +278,24 @@ MonoBehaviour:
   - {fileID: 2647908302607373971}
   fallbackEyes: {fileID: 5374844501912404505}
   eyeMaterial: {fileID: 2100000, guid: 632ebdd734287eb43913aab81237886a, type: 2}
+--- !u!114 &3548386245363899071
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1362265803452333836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34d449dfc70f4683933dd94482763127, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHealthPresentation
+  health: {fileID: 6045726002428409456}
+  whiteFlash: {fileID: 6986819420519733013}
+  damagePopupPrefab: {fileID: 9169945786982687630, guid: 93f186151a59ce24fa30dac2ce325309, type: 3}
+  popupOffset: {x: 0, y: 1, z: 0}
+  bloodHitPrefab: {fileID: 125031105077979307, guid: eb16fb47744e2184f9a71bc456707725, type: 3}
+  deathFXPrefab: {fileID: 8928692237468947480, guid: dce35554bd0bf694e8c080fae452ca84, type: 3}
 --- !u!1 &1663103727434925515
 GameObject:
   m_ObjectHideFlags: 0

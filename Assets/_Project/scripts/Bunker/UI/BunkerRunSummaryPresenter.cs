@@ -6,24 +6,18 @@ using UnityEngine.UI;
 public sealed class BunkerRunSummaryPresenter : MonoBehaviour
 {
     [SerializeField, Min(0f)] private float showDelay = 0.25f;
-    [SerializeField] private RectTransform notificationParent;
-    [SerializeField] private CanvasScaler sourceScaler;
-    [SerializeField] private RectTransform panelTemplate;
-    [SerializeField] private TextMeshProUGUI goldTextTemplate;
-
-    private RectTransform notification;
-    private CanvasGroup notificationGroup;
-    private GameObject notificationCanvas;
-    private TextMeshProUGUI displayedTitle;
-    private TextMeshProUGUI displayedGold;
-    private TextMeshProUGUI displayedExtraGold;
+    [SerializeField] private RectTransform notification;
+    [SerializeField] private CanvasGroup notificationGroup;
+    [SerializeField] private TextMeshProUGUI displayedTitle;
+    [SerializeField] private TextMeshProUGUI displayedGold;
+    [SerializeField] private TextMeshProUGUI displayedExtraGold;
     private RunSummary displayedSummary;
     private bool displayedEscapeUpdate;
 
     private void OnEnable() => LocalizationService.Instance.LanguageChanged += HandleLanguageChanged;
     private void HandleLanguageChanged(GameLanguage language)
     {
-        if (notification == null) return;
+        if (!notification.gameObject.activeSelf) return;
         string reasonKey = displayedSummary?.EndReason switch
         {
             RunEndReason.PlayerDied => "bunker.summary_interrupted",
@@ -33,7 +27,7 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
         displayedTitle.text = LocalizationService.Instance.Get(displayedEscapeUpdate ? "bunker.summary_protocol" : reasonKey);
         displayedGold.text = displayedEscapeUpdate ? LocalizationService.Instance.Get("bunker.summary_access")
             : string.Format(LocalizationService.Instance.Get("bunker.summary_gold"), displayedSummary.GoldEarned);
-        if (displayedExtraGold != null)
+        if (displayedExtraGold.gameObject.activeSelf)
             displayedExtraGold.text = string.Format(LocalizationService.Instance.Get("bunker.summary_gold"), displayedSummary.GoldEarned);
     }
 
@@ -52,46 +46,10 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
             RunStateManager.Instance.TryConsumeLastRunSummary(out summary);
         if (summary == null && !escapeUpdated) yield break;
 
-        if (notificationParent == null || panelTemplate == null || goldTextTemplate == null || sourceScaler == null)
-        {
-            Debug.LogError("[BunkerRunSummaryPresenter] Notification UI references are missing.", this);
-            yield break;
-        }
-
-        // Use the same framed header and typography as BunkerSelectionWindow's
-        // StationWindow base. Do not route post-run data into the old banner.
-        // The station-window canvas can be hidden by the bunker panel manager.
-        // Keep the transient notification independent, using its Canvas Scaler.
-        notificationCanvas = new GameObject("PostRunNotificationCanvas", typeof(RectTransform));
-        notificationCanvas.transform.SetParent(transform, false);
-        Canvas canvas = notificationCanvas.AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 1100;
-        CanvasScaler scaler = notificationCanvas.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode = sourceScaler.uiScaleMode;
-        scaler.referenceResolution = sourceScaler.referenceResolution;
-        scaler.screenMatchMode = sourceScaler.screenMatchMode;
-        scaler.matchWidthOrHeight = sourceScaler.matchWidthOrHeight;
-        scaler.referencePixelsPerUnit = sourceScaler.referencePixelsPerUnit;
-        notification = Instantiate(panelTemplate, notificationCanvas.transform);
-        notification.name = "PostRunNotification";
         notification.gameObject.SetActive(true);
-        notification.anchorMin = notification.anchorMax = new Vector2(0.5f, 1f);
-        notification.pivot = new Vector2(0.5f, 1f);
-        notification.anchoredPosition = new Vector2(0f, -24f);
+        notificationGroup.alpha = 1f;
         notification.sizeDelta = new Vector2(520f, escapeUpdated && summary != null ? 140f : 100f);
-        notification.localScale = Vector3.one;
-        LayoutElement layout = notification.GetComponent<LayoutElement>();
-        if (layout != null) layout.ignoreLayout = true;
-
-        notificationGroup = notification.gameObject.AddComponent<CanvasGroup>();
-        notificationGroup.interactable = false;
-        notificationGroup.blocksRaycasts = false;
-        foreach (Graphic graphic in notification.GetComponentsInChildren<Graphic>(true))
-            graphic.raycastTarget = false;
-
-        TextMeshProUGUI title = notification.GetComponentInChildren<TextMeshProUGUI>(true);
-        displayedTitle = title;
+        TextMeshProUGUI title = displayedTitle;
         displayedSummary = summary;
         displayedEscapeUpdate = escapeUpdated;
         string reason = summary?.EndReason switch
@@ -101,18 +59,17 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
             _ => LocalizationService.Instance.Get("bunker.summary_return")
         };
         SetLine(title, escapeUpdated ? LocalizationService.Instance.Get("bunker.summary_protocol") : reason, escapeUpdated && summary != null ? 0.8f : 0.7f);
-        TextMeshProUGUI gold = Instantiate(goldTextTemplate, notification);
-        displayedGold = gold;
+        TextMeshProUGUI gold = displayedGold;
         gold.name = "GoldEarned";
         gold.gameObject.SetActive(true);
         SetLine(gold, escapeUpdated ? LocalizationService.Instance.Get("bunker.summary_access") : string.Format(LocalizationService.Instance.Get("bunker.summary_gold"), summary.GoldEarned),
             escapeUpdated && summary != null ? 0.5f : 0.3f);
+        displayedExtraGold.gameObject.SetActive(escapeUpdated && summary != null);
         if (escapeUpdated)
         {
             if (summary != null)
             {
-                TextMeshProUGUI earned = Instantiate(goldTextTemplate, notification);
-                displayedExtraGold = earned;
+                TextMeshProUGUI earned = displayedExtraGold;
                 earned.gameObject.SetActive(true);
                 SetLine(earned, string.Format(LocalizationService.Instance.Get("bunker.summary_gold"), summary.GoldEarned), 0.2f);
             }
@@ -150,13 +107,7 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
         rect.localScale = Vector3.one;
     }
 
-    private void Hide()
-    {
-        if (notification != null) Destroy(notification.gameObject);
-        if (notificationCanvas != null) Destroy(notificationCanvas);
-        notification = null;
-        notificationCanvas = null;
-    }
+    private void Hide() => notification.gameObject.SetActive(false);
 
     private void OnDisable()
     {

@@ -34,10 +34,10 @@ public class InteractionPromptUI : MonoBehaviour
             return;
         }
 
-        Interactable interactable = playerInteractor.GetCurrentInteractable();
+        IBunkerInteractable interactable = playerInteractor.GetCurrentInteractable();
 
-        if (interactable == null || !interactable.isActiveAndEnabled || !interactable.CanInteract ||
-            !interactable.HasInteractionPrompt)
+        if (interactable == null || !interactable.CanInteract ||
+            string.IsNullOrEmpty(interactable.InteractionText))
         {
             if (promptPanel != null)
                 promptPanel.SetActive(false);
@@ -52,7 +52,7 @@ public class InteractionPromptUI : MonoBehaviour
         }
 
         if (promptText != null)
-            promptText.text = $"[E] {interactable.PromptText}";
+            promptText.text = $"[E] {interactable.InteractionText}";
     }
 
     private void PositionPromptAbovePlayer()

@@ -5,6 +5,7 @@ public class PlayerHealth : MonoBehaviour
 {
     public event System.Action DamageTaken;
     public event System.Action Died;
+    public event System.Action<float, float> HealthChanged;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public event System.Action<float> DebugDamageApplied;
 #endif
@@ -16,8 +17,6 @@ public class PlayerHealth : MonoBehaviour
     public float CurrentHealth => currentHealth;
     public float MaxHealth => maxHealth;
 
-    private PlayerWhiteFlash whiteFlash;
-    private PlayerHitSound hitSound;
     private CharacterMovement2D movement;
 
 
@@ -30,8 +29,6 @@ public class PlayerHealth : MonoBehaviour
 
     private void Awake()
     {
-        whiteFlash = GetComponent<PlayerWhiteFlash>();
-        hitSound = GetComponent<PlayerHitSound>();
         movement = GetComponent<CharacterMovement2D>();
     }
 
@@ -42,7 +39,7 @@ public class PlayerHealth : MonoBehaviour
         if (currentHealth <= 0f)
             currentHealth = maxHealth;
 
-        HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
+        HealthChanged?.Invoke(currentHealth, maxHealth);
     }
 
     private void Update()
@@ -74,19 +71,11 @@ public class PlayerHealth : MonoBehaviour
 #endif
 
         movement?.ApplyKnockback(hitDirection);
-        whiteFlash?.Flash();
 
-        if (currentHealth > 0f)
-        {
-            if (AudioService.Instance != null)
-                AudioService.Instance.PlayAt(AudioCueId.PlayerHurt, transform.position);
-            else
-                hitSound?.Play();
-        }
+
 
         //     
-        CameraShake.Instance?.Shake(0.12f, 0.08f);
-        HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
+        HealthChanged?.Invoke(currentHealth, maxHealth);
         if (currentHealth <= 0) Die();
 
         DamageTaken?.Invoke();
@@ -109,7 +98,7 @@ public class PlayerHealth : MonoBehaviour
     public void SetCurrentHealth(int value)
     {
         currentHealth = Mathf.Clamp(value, 0, maxHealth);
-        HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
+        HealthChanged?.Invoke(currentHealth, maxHealth);
     }
     public void Heal(float amount)
     {
@@ -117,25 +106,15 @@ public class PlayerHealth : MonoBehaviour
         if (currentHealth > maxHealth)
             currentHealth = maxHealth;
 
-        HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
+        HealthChanged?.Invoke(currentHealth, maxHealth);
     }
     void Die()
     {
         Debug.Log("Player died");
         if (isDead) return;
         isDead = true;
-        Died?.Invoke();
         if (RunFlowController.Instance != null && !RunFlowController.Instance.IsVictoryConfirmed)
             RunFlowController.Instance.StopRunGameplay();
-
-        AudioService.Instance?.PlayAt(
-            AudioCueId.PlayerDeath,
-            transform.position
-        );
-
-        //   
-        if (CameraShake.Instance != null)
-            CameraShake.Instance.StopAllShakes();
 
         //   
         CharacterMovement2D movement = GetComponent<CharacterMovement2D>();
@@ -143,19 +122,7 @@ public class PlayerHealth : MonoBehaviour
 
 
 
-        //    (   !)
-        SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>();
-        foreach (SpriteRenderer sr in renderers)
-        {
-            sr.enabled = false;
-        }
-
-        //      (  )
-        // gameObject.SetActive(false);
-
-        //   GameOver
-        if (GameOverManager.Instance != null)
-            GameOverManager.Instance.GameOver();
+        Died?.Invoke();
     }
 
     public void AddMaxHealth(float amount)
@@ -163,7 +130,7 @@ public class PlayerHealth : MonoBehaviour
         maxHealth += amount;
         currentHealth += amount;
 
-        HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
+        HealthChanged?.Invoke(currentHealth, maxHealth);
     }
     public void SetRunUpgradeMaxHealthBonus(float targetBonus)
     {
@@ -187,6 +154,6 @@ public class PlayerHealth : MonoBehaviour
         currentHealth = Mathf.Clamp(currentHealthValue, 1f, maxHealth);
         isDead = false;
 
-        HUDManager.Instance?.SetHealth(currentHealth, maxHealth);
+        HealthChanged?.Invoke(currentHealth, maxHealth);
     }
 }

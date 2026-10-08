@@ -44,6 +44,7 @@ public sealed class SurfaceVisualLab : MonoBehaviour
         Player.SetActive(true);
         Player.GetComponent<PlayerHealth>().SetIncomingDamageMultiplier(0);
         Station = OrbitalStationRuntime.Ensure(Player, Character);
+        Station?.Interaction?.BindCursor(UnityEngine.Object.FindFirstObjectByType<UICrosshairFollowMouse>(), Camera.main);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         Station.ApplyPresetMid();
 #endif

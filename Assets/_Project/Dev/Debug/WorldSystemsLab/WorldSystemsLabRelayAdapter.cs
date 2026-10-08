@@ -30,6 +30,7 @@ public sealed class WorldSystemsLabRelayAdapter : MonoBehaviour
         if (!run.TryGetOrbitalRunState(out _, out _)) run.DebugResetOrbitalRunState();
         bool ownsStation = player.GetComponentInChildren<OrbitalStationRuntime>(true) == null;
         Station = OrbitalStationRuntime.Ensure(player.gameObject, character);
+        Station?.Interaction?.BindCursor(UnityEngine.Object.FindFirstObjectByType<UICrosshairFollowMouse>(), Camera.main);
         if (ownsStation) ownedStation = Station;
         if (Station == null || !Station.IsInitialized) { Clear(); return false; }
         centerShift = Station.GetComponent<OrbitalCenterShift>();

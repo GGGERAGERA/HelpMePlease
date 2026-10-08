@@ -64,6 +64,11 @@ public sealed class CompactHudTests
     [Test]
     public void HudUsesAuthoredGraphicsOnly()
     {
+        foreach(string path in new[]{"scripts/Combat/Player/PlayerHealth.cs","scripts/Combat/Enemies/EnemyHealth.cs","scripts/Run/Threat/RunThreatController.cs"})
+        {
+            string source=File.ReadAllText("Assets/_Project/"+path);
+            Assert.That(source,Does.Not.Contain("HUDManager").And.Not.Contain("CameraShake").And.Not.Contain("DamagePopup"),path);
+        }
         foreach (string name in new[] { "TacticalMapHUD", "RunRouteProgressView", "LevelAnomalyView" })
         {
             string source = File.ReadAllText("Assets/_Project/scripts/UI/HUD/" + name + ".cs");
@@ -144,7 +149,25 @@ public sealed class CompactHudPlayTests
         var map = CompactHudTestData.Get<TacticalMapHUD>(hud,"tacticalMap");
         Assert.That(map.LayoutRoot.GetComponentsInChildren<TMP_Text>(true), Is.Empty);
         Directory.CreateDirectory("Artifacts/GeneratedQA/CompactHud");
-        hud.SetHealth(78,100);
+        var player=Object.FindFirstObjectByType<CharacterSpawner>().SpawnedPlayer;
+        var health=player.GetComponent<PlayerHealth>();
+        var healthBar=CompactHudTestData.Get<HudBar>(hud,"healthBar");
+        var healthSlider=CompactHudTestData.Get<Slider>(healthBar,"slider");
+        health.SetRuntimeHealth(100,78);
+        Assert.That(healthSlider.value,Is.EqualTo(78));
+        hud.BindPlayer(null); health.SetCurrentHealth(65);
+        Assert.That(healthSlider.value,Is.EqualTo(78),"Released player must not write HUD.");
+        hud.BindPlayer(player); Assert.That(healthSlider.value,Is.EqualTo(65),"Rebind snapshots current health.");
+        health.Heal(13); Assert.That(healthSlider.value,Is.EqualTo(78));
+        var bossObject=new GameObject("HUD boss probe"); bossObject.SetActive(false);
+        var boss=bossObject.AddComponent<EnemyHealth>();
+        var bossData=new SerializedObject(boss);bossData.FindProperty("isBoss").boolValue=true;bossData.ApplyModifiedPropertiesWithoutUndo();
+        bossObject.SetActive(true);boss.SetRuntimeMaxHealth(100);
+        var bossPanel=CompactHudTestData.Get<GameObject>(hud,"bossHpPanel");var bossSlider=CompactHudTestData.Get<Slider>(hud,"bossHpSlider");
+        Assert.That(bossPanel.activeSelf,Is.True);boss.TakeDamage(10,Vector2.zero);Assert.That(bossSlider.value,Is.EqualTo(90));
+        bossObject.SetActive(false);Assert.That(bossPanel.activeSelf,Is.False);
+        bossObject.SetActive(true);Assert.That(bossPanel.activeSelf,Is.True);Object.Destroy(bossObject);
+        yield return null;Assert.That(bossPanel.activeSelf,Is.False);
         ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/CompactHud/gameplay-1920x1080.png");
         yield return new WaitForSecondsRealtime(.5f);
         var station = Object.FindFirstObjectByType<Subject42.Combat.OrbitalStation.OrbitalStationRuntime>();

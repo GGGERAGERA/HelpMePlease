@@ -14,7 +14,7 @@ public sealed class StartScreenAtmosphere : MonoBehaviour
     private RectTransform background;
     private RectTransform viewport;
     private Image artwork;
-    private RawImage condensation;
+    [SerializeField] private RawImage condensation;
     private Texture2D condensationTexture;
     private Vector2 velocity;
     private Vector2 viewportSize;
@@ -102,17 +102,7 @@ public sealed class StartScreenAtmosphere : MonoBehaviour
         }
         condensationTexture.SetPixels32(pixels);
         condensationTexture.Apply(false, true);
-        var glass = new GameObject("Capsule condensation", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
-        glass.layer = gameObject.layer;
-        glass.transform.SetParent(transform, false);
-        condensation = glass.GetComponent<RawImage>();
         condensation.texture = condensationTexture;
-        condensation.raycastTarget = false;
-        condensation.color = Color.clear;
-        RectTransform rectTransform = condensation.rectTransform;
-        rectTransform.anchorMin = Vector2.zero;
-        rectTransform.anchorMax = Vector2.one;
-        rectTransform.offsetMin = rectTransform.offsetMax = Vector2.zero;
     }
 
     private static float Patch(float u, float v, float cx, float cy, float rx, float ry)
@@ -132,7 +122,6 @@ public sealed class StartScreenAtmosphere : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (condensation != null) Destroy(condensation.gameObject);
         if (condensationTexture != null) Destroy(condensationTexture);
     }
 }

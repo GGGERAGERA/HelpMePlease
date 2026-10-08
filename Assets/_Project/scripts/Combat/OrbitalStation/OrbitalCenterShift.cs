@@ -19,7 +19,7 @@ namespace Subject42.Combat.OrbitalStation
         public event Action Shifted;
         public bool CanControl => isActiveAndEnabled && station != null && station.IsInitialized &&
             station.Owner.CanControl && station.InputOwner.IsIdle && !station.InputOwner.IsGameplayInputBlocked &&
-            (UpgradeManager.Instance == null || UpgradeManager.Instance.IsRewardQueueIdle) &&
+            station.InputOwner.IsRewardQueueIdle &&
             movement != null && movement.isActiveAndEnabled && movement.MovementIntent == null &&
             Application.isFocused && Time.timeScale > 0f;
 

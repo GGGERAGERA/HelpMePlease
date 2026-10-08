@@ -22,6 +22,7 @@ public sealed class ProductionBunkerFlowTests
 
     [Test] public void ProductionScenesHaveExplicitCompositionAndListenerOwnership()
     {
+        VerifyCatalogOwnership();
         var missing = new System.Collections.Generic.List<string>();
         foreach (string name in new[] { "StartScreen", "MainMenu", "MVP" })
         {
@@ -40,12 +41,26 @@ public sealed class ProductionBunkerFlowTests
             Assert.That(prefab, Is.Not.Null, name);
             AuditReferences(name, prefab.GetComponentsInChildren<Component>(true));
         }
-        // These two inherited presentation references already fail on the unchanged
-        // source prefabs. Their UI/asset repair is outside the composition migration.
-        var existingPresentationDebt = new[] { "MainMenu/FullScreenImage/m_Sprite", "MainMenu/EnemyGalleryDisplay/spriteMaterial" };
-        foreach (string reference in missing.Intersect(existingPresentationDebt))
-            TestContext.Progress.WriteLine("Existing presentation reference debt: " + reference);
-        Assert.That(missing.Except(existingPresentationDebt), Is.Empty, "New missing references: " + string.Join("; ", missing));
+        Assert.That(missing, Is.Empty, "Missing presentation references: " + string.Join("; ", missing));
+        var gallery = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/prefabs/Bunker/EnemyGallery/EnemyGalleryTargetButton.prefab")
+            .GetComponent<Subject42.Bunker.Gallery.EnemyGalleryController>();
+        var entries = new SerializedObject(gallery).FindProperty("enemies");
+        for (int i = 0; i < entries.arraySize; i++)
+        {
+            var entry = entries.GetArrayElementAtIndex(i);
+            foreach (string field in new[] { "previewPrefab", "warningPrefab", "explosionPrefab", "projectilePrefab", "shockwavePrefab" })
+            {
+                var reference = entry.FindPropertyRelative(field);
+                if (reference == null || reference.objectReferenceValue == null) continue;
+                var visual = (GameObject)reference.objectReferenceValue;
+                Assert.That(visual.GetComponentsInChildren<MonoBehaviour>(true).Where(value => value.GetType().Name != "Light2D"),
+                    Is.Empty, $"Gallery entry {i}/{field} must be authored presentation, without gameplay components.");
+                Assert.That(visual.GetComponentsInChildren<Collider2D>(true), Is.Empty);
+                Assert.That(visual.GetComponentsInChildren<Rigidbody2D>(true), Is.Empty);
+                Assert.That(visual.GetComponentsInChildren<Collider>(true), Is.Empty);
+                Assert.That(visual.GetComponentsInChildren<AudioSource>(true), Is.Empty);
+            }
+        }
 
         void AuditReferences(string name, Component[] components)
         {
@@ -61,6 +76,22 @@ public sealed class ProductionBunkerFlowTests
         }
     }
 
+    private static void VerifyCatalogOwnership()
+    {
+        var catalog = Object.Instantiate(AssetDatabase.LoadAssetAtPath<BunkerSelectionCatalog>(
+            "Assets/_Project/Data/SurfaceMap/BunkerSelectionCatalog.asset"));
+        var host = new GameObject("catalog ownership probe");
+        try
+        {
+            var hub = host.AddComponent<BunkerSelectionSourceHub>();
+            typeof(BunkerSelectionSourceHub).GetField("catalog", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(hub, catalog);
+            typeof(BunkerSelectionSourceHub).GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic)?.Invoke(hub, null);
+            Assert.That(hub.GetDefaultCharacter(), Is.Not.Null);
+            catalog.characters = System.Array.Empty<CharacterData>();
+            Assert.That(hub.GetDefaultCharacter(), Is.Null, "Station must read the catalog, not its stale runtime copy.");
+        }
+        finally { Object.DestroyImmediate(host); Object.DestroyImmediate(catalog); }
+    }
     [UnityTest] public IEnumerator DirectStartScreenComposition()
     {
         EditorSceneManager.OpenScene("Assets/_Project/Scenes/MainBuild/StartScreen.unity");
@@ -73,6 +104,51 @@ public sealed class ProductionBunkerFlowTests
         EditorSceneManager.OpenScene("Assets/_Project/Scenes/MainBuild/MainMenu.unity");
         yield return new EnterPlayMode();
         yield return AwaitComposition(true);
+        yield return VerifyStationAndGalleryFlow();
+    }
+
+    private static IEnumerator VerifyStationAndGalleryFlow()
+    {
+        var panels = Object.FindFirstObjectByType<BunkerPanelManager>();
+        var keyboard = PlayerRuntimeReference.CachedPlayer.GetComponent<PlayerInteractor>();
+        Vector3 playerPosition = keyboard.transform.position;
+        keyboard.transform.position = Station(BunkerStationType.CharacterSelection).transform.position;
+        yield return null;
+        Assert.That(keyboard.GetCurrentInteractable(), Is.Not.Null, "The keyboard path discovers the shared contract.");
+        foreach (var kind in new[] { BunkerStationType.CharacterSelection, BunkerStationType.WeaponSelection, BunkerStationType.StartRun })
+        {
+            IBunkerInteractable station = Station(kind);
+            Assert.That(station.CanInteract, Is.True);
+            Assert.That(station.InteractionText, Is.Not.Empty);
+            station.Interact();
+            Assert.That(panels.IsAnyPanelOpen, Is.True, kind.ToString());
+            yield return null;
+            Assert.That(keyboard.GetCurrentInteractable(), Is.Null, "An open panel blocks keyboard interaction.");
+            panels.CloseAll(false);
+            yield return null;
+        }
+        keyboard.transform.position = playerPosition;
+        IBunkerInteractable mission = Object.FindFirstObjectByType<MissionProvider>();
+        mission.Interact();
+        Assert.That(panels.IsAnyPanelOpen, Is.True, "Mission provider owns its panel navigation reference.");
+        panels.CloseAll(false);
+        var gallery = Object.FindFirstObjectByType<Subject42.Bunker.Gallery.EnemyGalleryController>();
+        var preview = Read<Subject42.Bunker.Gallery.EnemyGalleryPreviewController>(gallery, "preview");
+        var entries = Read<Subject42.Bunker.Gallery.EnemyGalleryController.Entry[]>(gallery, "enemies");
+        for (int i = 0; i < entries.Length; i++)
+        {
+            gallery.GetType().GetField("currentIndex", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(gallery, i);
+            gallery.GetType().GetMethod("ShowCurrent", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(gallery, null);
+            yield return CoreTestSupport.Await(() => preview.CompletedDemoCycles > 0);
+            Assert.That(preview.CurrentPreview.GetComponentsInChildren<MonoBehaviour>(true).Where(value => value.GetType().Name != "Light2D"), Is.Empty);
+            Assert.That(preview.CurrentPreview.GetComponentsInChildren<Collider2D>(true), Is.Empty);
+        }
+        gallery.enabled = false;
+        Assert.That(preview.CurrentPreview, Is.Null);
+        gallery.enabled = true;
+        yield return null;
+        Assert.That(gallery.CurrentIndex, Is.Zero);
+        Assert.That(preview.CurrentPreview, Is.Not.Null);
     }
 
     [UnityTest] public IEnumerator DirectGameplayComposition()

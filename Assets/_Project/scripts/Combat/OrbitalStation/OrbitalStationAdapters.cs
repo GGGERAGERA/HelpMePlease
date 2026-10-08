@@ -26,27 +26,6 @@ namespace Subject42.Combat.OrbitalStation
         void Teardown();
     }
 
-    public interface IOrbitalProgressionAdapter
-    {
-        OrbitalRingState AddRing();
-        bool RemoveRing(int stableRingId, out string error);
-        void BeginModulePlacement(OrbitalModuleKind kind);
-        bool InstallModule(OrbitalModuleKind kind, int stableRingId,
-            int mountIndex, out string error);
-        bool MoveModule(int stableModuleId, int targetRingId,
-            int targetMountIndex, out string error);
-        bool RemoveModule(int stableModuleId);
-        bool UpgradeRingSpeed(int stableRingId);
-        bool UpgradeRingPower(int stableRingId);
-        bool AddMount(int stableRingId, out string error);
-        bool UpgradeRingCapacity(int stableRingId);
-        void UpgradeSelectedRingSpeed();
-        void UpgradeSelectedRingPower();
-        void AddMount();
-        bool UpgradeCore();
-        bool UpgradeLinkMatrix();
-    }
-
     public sealed class ProductionOrbitalOwnerAdapter : IOrbitalOwnerAdapter
     {
         private readonly GameObject player;
