@@ -376,7 +376,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private OrbitalStationRuntime.GrowthPreset nextOrbitalGrowthPreset;
 
     private readonly StringBuilder previewSummary = new();
-    private readonly List<CharacterData> debugCharacters = new();
     private readonly List<GameObject> debugEnemies = new();
     private string enemyDebugStatus = "Готово к ручному тесту.";
     private TextMeshProUGUI activeXpCounter;
@@ -3187,7 +3186,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         AddRow("Reset Character Station", "LV1 / INVESTED 0", warningColor,
             "RESET", true, DebugResetCharacterStation);
 
-        AddSectionTitle("CHARACTER UI", "Selection and locked-state testing");
+        AddSectionTitle("CHARACTER UI", "Current selection");
         CharacterData selectedCharacter =
             RunSelectionManager.Instance != null
                 ? RunSelectionManager.Instance.SelectedCharacter
@@ -3204,50 +3203,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
                 : "-",
             selectedCharacter != null ? successColor : mutedColor,
             null, false, null);
-        CharacterSelectionUI characterUi = FindFirstObjectByType<CharacterSelectionUI>(FindObjectsInactive.Include);
-        if (characterUi == null)
-        {
-            AddHint("Open the Character Station panel to inspect its selection controls.");
-            return;
-        }
-        AddRow("Character Selection", "AVAILABLE", successColor,
-            "REFRESH", true, () => DebugRefreshCharacterUi(characterUi));
-        debugCharacters.Clear();
-        characterUi.CollectDebugCharacters(debugCharacters);
-        for (int i = 0; i < debugCharacters.Count; i++)
-            AddCharacterDebugSelection(characterUi, debugCharacters[i]);
-    }
-
-    private void AddCharacterDebugSelection(
-        CharacterSelectionUI characterUi,
-        CharacterData character)
-    {
-        string characterName = string.IsNullOrWhiteSpace(
-            character.characterName)
-            ? "UNNAMED CHARACTER"
-            : character.characterName;
-        bool canSelect = characterUi != null &&
-            characterUi.CanDebugSelectCharacter(character);
-        string availability = canSelect ? "AVAILABLE" : "LOCKED";
-        AddRow($"Select {characterName}",
-            $"{availability} / {character.combatType}",
-            canSelect ? mutedColor : warningColor,
-            $"SELECT {characterName.ToUpperInvariant()}", canSelect,
-            () => DebugSelectCharacter(characterUi, character));
-    }
-
-    private void DebugRefreshCharacterUi(CharacterSelectionUI characterUi)
-    {
-        characterUi?.DebugRefresh();
-        RefreshCurrentTab();
-    }
-
-    private void DebugSelectCharacter(
-        CharacterSelectionUI characterUi,
-        CharacterData character)
-    {
-        characterUi?.DebugSelectCharacter(character);
-        RefreshCurrentTab();
     }
 
     private void DebugAddStationGold()

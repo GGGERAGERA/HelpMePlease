@@ -18,7 +18,6 @@ public sealed class CorridorStructuralTests
     {
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
         yield return new EnterPlayMode();
-        LogAssert.Expect(LogType.Error, "[TacticalMapHUD] Authored shell or scene references are missing.");
         EditorSceneManager.LoadSceneInPlayMode(WorldSystemsLabController.ScenePath,
             new UnityEngine.SceneManagement.LoadSceneParameters(UnityEngine.SceneManagement.LoadSceneMode.Single));
         yield return null;
@@ -40,7 +39,6 @@ public sealed class CorridorStructuralTests
     {
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
         yield return new EnterPlayMode();
-        LogAssert.Expect(LogType.Error, "[TacticalMapHUD] Authored shell or scene references are missing.");
         EditorSceneManager.LoadSceneInPlayMode(WorldSystemsLabController.ScenePath,
             new UnityEngine.SceneManagement.LoadSceneParameters(UnityEngine.SceneManagement.LoadSceneMode.Single));
         yield return null;
@@ -109,7 +107,6 @@ public sealed class CorridorStructuralTests
     }
     private static IEnumerator ExerciseGatePresentation()
     {
-        LogAssert.Expect(LogType.Error, "[TacticalMapHUD] Authored shell or scene references are missing.");
         EditorSceneManager.LoadSceneInPlayMode(WorldSystemsLabController.ScenePath,
             new UnityEngine.SceneManagement.LoadSceneParameters(UnityEngine.SceneManagement.LoadSceneMode.Single));
         yield return null;
@@ -162,7 +159,6 @@ public sealed class CorridorStructuralTests
     }
     private static IEnumerator VerifyStasisOverlap()
     {
-        LogAssert.Expect(LogType.Error, "[TacticalMapHUD] Authored shell or scene references are missing.");
         EditorSceneManager.LoadSceneInPlayMode(WorldSystemsLabController.ScenePath,
             new UnityEngine.SceneManagement.LoadSceneParameters(UnityEngine.SceneManagement.LoadSceneMode.Single));
         yield return null;
@@ -292,7 +288,6 @@ public sealed class CorridorOwnershipTests
     [UnityTearDown] public IEnumerator Cleanup() => CoreTestSupport.CleanupPlayMode();
     private static IEnumerator LoadLab()
     {
-        LogAssert.Expect(LogType.Error, "[TacticalMapHUD] Authored shell or scene references are missing.");
         EditorSceneManager.LoadSceneInPlayMode(WorldSystemsLabController.ScenePath,
             new UnityEngine.SceneManagement.LoadSceneParameters(UnityEngine.SceneManagement.LoadSceneMode.Single));
         yield return null;

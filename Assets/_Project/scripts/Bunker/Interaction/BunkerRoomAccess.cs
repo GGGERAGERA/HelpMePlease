@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Serialization;
 
 /// <summary>
 /// Switches artist-authored room objects and station access. It never creates visuals.
@@ -13,7 +12,6 @@ public sealed class BunkerRoomAccess : MonoBehaviour
     [SerializeField] private BunkerStation[] stations;
     [SerializeField] private bool defaultUnlocked;
 
-    [FormerlySerializedAs("interactionsRoot")]
     [SerializeField, HideInInspector] private GameObject legacyStationsRoot;
 
     private bool unlocked;

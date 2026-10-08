@@ -35,7 +35,7 @@ Health, collider, AI и attack наследуются. Исходные prefabs 
 плавно поворачивает свой ствол без стрельбы. Player и camera остались исходными.
 Кандидаты статические, без gameplay scripts и colliders. Sprite selections и
 материалы предпросмотра моделей хранятся вложенными объектами в одном
-`art/EnemyGalleryVisuals.asset`; отдельные файлы для них не создаются;
+`Dev/Labs/F1/EnemyGallery/EnemyGalleryVisuals.asset`; отдельные файлы для них не создаются;
 оригинальные текстуры, import settings и материалы не меняются.
 
 ## Проверка

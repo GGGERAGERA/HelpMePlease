@@ -1,44 +1,46 @@
-# Subject#42 — current project map candidate
+# Subject#42 — project map
 
-Updated for Cleanup Step 4 (2026-09-16). This is the current navigation map; older QA reports describe historical checks, not the current production contract.
+Current production and development navigation. Historical QA reports describe their own snapshots.
 
-## Production
+## Production flow
 
 Enabled build scenes, in order:
 
-1. `Assets/_Project/Scenes/MainBuild/StartScreen.unity`
-2. `Assets/_Project/Scenes/MainBuild/MainMenu.unity`
-3. `Assets/_Project/Scenes/MainBuild/MVP.unity`
+1. `Scenes/MainBuild/StartScreen.unity` — entry and settings.
+2. `Scenes/MainBuild/MainMenu.unity` — Bunker selection, progression, missions and minigames.
+3. `Scenes/MainBuild/MVP.unity` — exploration, combat, world events and rewards.
 
-`RunRoute` defines three exploration sectors. The final sector transitions to the final boss phase through `RunFlowController`; it is not a separate fifth sector. `RunStateManager` owns state across scene reloads, and `RunEndService` closes death/victory runs.
+Paths here are relative to `Assets/_Project`. `RunRoute` defines three exploration sectors; the last sector enters the final boss phase through `RunFlowController`. `RunStateManager` owns cross-scene state and run identity. `RunEndService` handles return, death and confirmed victory.
 
-CharacterData selects each production prefab: Gera — Circle, Di-mag — FigureEight, Vika — Custom. ORBITAL runtime and rewards are the current character loadout path; legacy weapon assets remain pending a separate dependency review.
+`ProductionSceneComposition` assigns typed services/configs and scene bindings before consumers run. Shared authored service prefabs are in `prefabs/Bootstrap`; readiness controls scene reveal. CharacterData selects `prefabs/Characters/Gera.prefab`, `DiMag.prefab` or `Vika.prefab` (Circle, FigureEight or Custom). `PlayerLoadoutFactory` builds the ORBITAL loadout. WeaponData and Pistol/Laser prefabs still have live consumers; they are retained.
 
-Runtime owners remain under `scripts/`: Combat/OrbitalStation, Progression, Run, World, Bunker and UI. Data assets live in `Data/`: Characters, Weapons, Upgrades, Stages, World, Anomalies, Meta and UI. The three authoritative gameplay prefabs are `prefabs/Characters/Gera.prefab`, `DiMag.prefab` and `Vika.prefab`. CharacterData has one productionPrefab reference; character visuals are embedded, with no Legacy/Production pair. Bunker composition and minigames live in `prefabs/Bunker`; world props/events/anomalies in `prefabs/Environment`. Moved assets retain their GUIDs. ProductionSceneComposition assigns typed service/config dependencies before scene consumers run; shared service prefabs live in prefabs/Bootstrap.
+## Runtime ownership
+
+| Domain | Sources and assets |
+| --- | --- |
+| Run/lifecycle | `scripts/Run`, `Data/Stages`, `Data/SurfaceMap` |
+| ORBITAL/combat | `scripts/Combat`, `prefabs/Orbital`, authoritative nested `prefabs/miniWeapons` |
+| Bunker | `scripts/Bunker`, `prefabs/Bunker`, `Data/Meta` |
+| World | `scripts/World`, `Data/World`, `Data/WorldEvents`, `prefabs/Environment` |
+| UI/progression | `scripts/UI`, `scripts/Progression`, `prefabs/UI`, `Data/UI`, `Data/Upgrades` |
+
+Production Corridor uses `Data/WorldEvents/Corridor` and `prefabs/Environment/WorldEvents/Corridor/PF_CorridorEvent.prefab`. Orbital Relay uses `prefabs/Environment/WorldEvents/OrbitalRelayEvent.prefab` and `Data/World/Events/OrbitalRelayConfig.asset`. Production, tutorial and WorldSystemsLab share these runtimes; Labs provide adapters and controls.
 
 ## Development
 
-All development domains live under `Assets/_Project/Dev/`:
+All development tools/scenes/tests live under `Dev` and are excluded from the production scene graph. Runtime tools are guarded for Editor/development builds.
 
-| Entry | Scene/tools | Purpose |
-|---|---|---|
-| F1 Inspector | `Labs/F1`; F1 in an Editor/development run | Gameplay controls, combat/visual tuning, Boss practice, Enemy gallery, surface comparisons |
-| GoldenPathLab | `Labs/GoldenPathLab/GoldenPathLab.unity` | Bot batches, seeds, replay and history |
-| OrbitalLab | `Labs/OrbitalLab` | Reward, Enemy and Custom Orbit modes in three existing scenes |
-| WorldSystemsLab | `Labs/WorldSystemsLab/WorldSystemsLab.unity` | World Rules, anomalies, events and portals |
+| Entry | Location | Purpose |
+| --- | --- | --- |
+| F1 Inspector | `Dev/Labs/F1`, F1 in Editor/development runs | Gameplay controls, combat/visual tuning and practice |
+| GoldenPathLab | `Dev/Labs/GoldenPathLab` | Opt-in bot batches, seeds, replay/history |
+| OrbitalLab | `Dev/Labs/OrbitalLab` | Reward, enemy and custom orbit scenes |
+| WorldSystemsLab | `Dev/Labs/WorldSystemsLab` | Shared world systems and event adapters |
 
-Editor commands are grouped under `Tools > Subject42 > Dev`. `Dev/Editor` contains authoring and diagnostics; `Dev/Debug` contains Editor/development runtime tools. The useful SurfaceVisualLab prototype is retained under `Dev/Labs/F1`.
+Authoring/diagnostics are in `Dev/Editor` under `Tools > Subject42 > Dev`. See [Labs](../Dev/Labs/README.md) and [tests](../Dev/Tests/README.md). `Artifacts/GeneratedQA` is ignored reproducible output.
 
-Two release-runtime presentation types, `ProductionVisualTuningController` and `VisualTuningPreset`, now live in `scripts/World/Presentation`. Prop scripts are in `scripts/World/Props`; `BallRollVisual` joins `scripts/Bunker/Minigames`.
+## Integrity boundary
 
-## Tests and output
+`ProductionBoundaryAuthoringTests` checks saved production scenes/prefabs/configs and their serialized dependency closure for Dev dependencies, broken references and missing scripts. Explicit optional nulls are accepted. `Tools/QA/Test-ProductionScriptBoundary.ps1` compiles actual Unity response files with every project Dev source removed. The project retains Unity's predefined assemblies; the final asmdef decision and verification are in `docs/phase7-cleanup.md` at repository root.
 
-`Dev/Tests/Core/Editor` contains 16 critical scenarios in 7 test files and one shared setup helper. Run the NUnit `Core` category. Extended has been removed (0 scenarios). There are no partial fixtures. Tests stay in the existing Editor assembly; GoldenPathLab/Bot and manual labs remain development tools.
-
-`Artifacts/GeneratedQA` is ignored, reproducible output, not project documentation. Bot latest/history/seeds required for replay remain there. Historical QA captures do not replace a current test run.
-
-## Boundaries
-
-`art/` belongs to the artist and is untouched. AudioEffects is not cleaned by reference count. Own Resources loaders and folders have been removed. Their assets live in Data, Materials and prefabs; the props guide is Documentation/ProductionSectorProps.md. `prefabs/miniWeapons` remains the authoritative miniWeapon source; `prefabs/Orbital` is unchanged. The two loose root assets moved to `Materials` and `Materials/RenderTextures`. No production gameplay or balance change is part of this cleanup.
-
-Production Hold Zone uses OrbitalRelayEvent and the authored prefabs/Environment/WorldEvents/OrbitalRelayEvent.prefab. Tutorial and WorldSystemsLab launch the same runtime/prefab. See docs/superpowers/specs/2026-10-06-orbital-relay-production-design.md for phases, queue rewards and scoped pressure.
+Artist libraries, audio, gameplay balance and namespaces were not broadly reorganized. Dead assets were removed only after GUID and source-consumer audit; live import roles and moved identities are preserved.

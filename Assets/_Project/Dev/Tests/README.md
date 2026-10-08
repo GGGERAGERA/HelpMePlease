@@ -1,20 +1,24 @@
-# Critical development tests
+# Development tests
 
-Core contains **16 scenarios in 7 test files**, plus one shared setup helper (CoreTestSupport.cs). Extended contains **0 scenarios / 0 files**.
+Tests live in `Core/Editor` and the predefined Editor assembly. Folder/category names are navigation, not a request to run every scenario.
 
-Run only the NUnit **Core** category in Unity Test Runner. Most scenarios are short; the one production Golden Path uses the existing Bot with a fixed seed and a five-minute safety bound.
+| Purpose | Examples |
+| --- | --- |
+| Core contracts | ORBITAL state/transactions/rewards, run identity/selection, world event state |
+| Regression/integration | Ownership, sector snapshots, cleanup, contacts, surface progression |
+| Authoring/integrity | Scene/prefab/config dependency boundary, references, routes and authored assets |
+| Dev/Lab | Guarded input/menu/settings contracts and shared runtime adapters |
 
-- Characters (3): Gera/Circle, Di-mag/FigureEight and facing binding, Vika/Custom.
-- Orbital (4): ring/mount/module transaction; Link pair and Core; Vika custom paths on multiple rings; complete sector state restore.
-- Rewards (5): Level Up displayed/granted; normal anomaly cards; chest reel stopped/granted; Casino Link grant; special anomaly ring grant.
-- Lifecycle (2): death to bunker to clean second run; victory end boundary to bunker to clean second run and exactly-once gold commit. Actual boss victory is covered by Golden Path.
-- Golden Path (1): production S1 → S2 → S3 → boss → bunker → second run.
-- Localization (1): authored bunker RU → EN → RU.
+Use exact fixture/method filters for a limited change. `Core` includes the long Golden Path and must not be used for limited cleanup acceptance. GoldenPathLab and Batch Runner are opt-in development tools.
 
-Tests use the existing Editor assembly. There are no partial fixtures or dependencies on a hidden Extended suite. Setup restores modified progress and language preferences after integration checks.
+`TutorialVerificationRunner` accepts semicolon-separated fully qualified fixture/method names in `Artifacts/GeneratedQA/Tutorial/run-tests.request`. Its callbacks save only its own run, reject empty execution and preserve failure output. Other runners own separate generated folders. Refresh/import and compilation must finish before queuing a run.
 
-GoldenPathLab/Bot, F1, OrbitalLab and WorldSystemsLab remain manual development tools. Add a targeted test only when a new critical contract warrants it.
+`ProductionBoundaryAuthoringTests` validates saved production scenes, prefabs/configs and their dependency closure. It distinguishes explicit optional nulls from missing GUID/local fileID/subasset references, includes renderers and MonoBehaviours, and preserves dirty open scenes. Fixture cases verify null acceptance, broken references and saved-scene inspection.
 
-Current navigation: [PROJECT_MAP](../../Documentation/PROJECT_MAP.md).
+`Phase7SmokeTests` has two explicit bounded scenarios: StartScreen → Bunker → Run → completed authored Relay → displayed/clicked reward → Bunker, and WorldSystemsLab shared Relay startup/owner cleanup. These are independent of bot batches. Other longer integration fixtures remain available by explicit selection.
 
-Orbital Relay migration adds narrowly filtered OrbitalRelayStateTests, OrbitalRelayContactTests, OrbitalRelayIntegrationTests, OrbitalRelayAuthoringTests and OrbitalRelayRuntimeTests. The runtime fixture runs a bounded production-prefab flow with real movement/contact in WorldSystemsLab. These fixtures run by exact class/name; do not select Core or Golden Path for relay acceptance. Subject42TutorialTests uses real Node tracking, Bonus and the shared Upgrade barrier; its long full route is compile-only during this migration.
+Shared startup/wait/preference restoration lives in `CoreTestSupport`. Tests must assert behavior or authoring contracts; private-field names, source text and fixed hierarchy counts do not constitute gameplay contracts. Add checks only for meaningful regressions.
+
+Script-only release/development validation is available through `PlayerScriptCompilationCheck`. `Tools/QA/Test-ProductionScriptBoundary.ps1` at repository root uses actual Unity response files and removes every project Dev source before recompiling. No custom asmdef routing is required.
+
+See [PROJECT_MAP](../../Documentation/PROJECT_MAP.md) and repository `docs/phase7-cleanup.md` for current acceptance results and the final assembly decision.

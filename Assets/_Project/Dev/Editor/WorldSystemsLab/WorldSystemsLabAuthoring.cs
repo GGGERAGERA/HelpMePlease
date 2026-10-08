@@ -390,6 +390,7 @@ public static class WorldSystemsLabAuthoring
             if (behaviour == null ||
                 behaviour.GetType().Assembly != typeof(WorldRuleController).Assembly ||
                 behaviour is TacticalMapHUD ||
+                behaviour is TacticalMapMarker ||
                 behaviour is WindRuleIndicator ||
                 behaviour is CondensationFogOverlay)
             {
@@ -398,14 +399,6 @@ public static class WorldSystemsLabAuthoring
 
             UnityEngine.Object.DestroyImmediate(behaviour);
         }
-
-        SerializedObject mapData = new(map);
-        RectTransform bossLegend = mapData.FindProperty("bossLegendRow")
-            .objectReferenceValue as RectTransform;
-        mapData.FindProperty("bossLegendRow").objectReferenceValue = null;
-        mapData.ApplyModifiedPropertiesWithoutUndo();
-        if (bossLegend != null)
-            UnityEngine.Object.DestroyImmediate(bossLegend.gameObject);
 
         Canvas canvas = canvasRoot.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;

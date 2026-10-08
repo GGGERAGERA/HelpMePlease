@@ -100,29 +100,6 @@ public static class Subject42ProjectValidator
     private const string GameplayScene =
         "Assets/_Project/Scenes/MainBuild/MVP.unity";
 
-    private static readonly Regex MissingScriptRegex = new(
-        @"m_Script:\s*\{fileID:\s*0(?:\s*,|\s*\})",
-        RegexOptions.Compiled);
-    private static readonly Regex ScriptGuidRegex = new(
-        @"m_Script:\s*\{fileID:\s*11500000,\s*guid:\s*([0-9a-fA-F]{32})",
-        RegexOptions.Compiled);
-    private static readonly Regex AssetGuidRegex = new(
-        @"guid:\s*([0-9a-fA-F]{32})",
-        RegexOptions.Compiled);
-
-    private static readonly HashSet<string> SerializedExtensions = new(
-        StringComparer.OrdinalIgnoreCase)
-    {
-        ".unity",
-        ".prefab",
-        ".asset",
-        ".mat",
-        ".anim",
-        ".controller",
-        ".overrideController",
-        ".playable"
-    };
-
     [MenuItem("Tools/Subject42/Dev/Authoring/Validate Project")]
     public static void ValidateProjectFromMenu()
     {
@@ -356,134 +333,9 @@ public static class Subject42ProjectValidator
             $"Required build scene is not enabled: '{requiredPath}'.");
     }
 
-    private static void ValidateSerializedReferences(
-        Subject42ValidationReport report)
+    private static void ValidateSerializedReferences(Subject42ValidationReport report)
     {
-        HashSet<string> productionPaths = GetProductionAssetPaths();
-        HashSet<string> reportedReferences = new(
-            StringComparer.OrdinalIgnoreCase);
-
-        foreach (string path in productionPaths)
-        {
-            if (!SerializedExtensions.Contains(Path.GetExtension(path)))
-                continue;
-
-            string fullPath = Path.GetFullPath(path);
-            if (!File.Exists(fullPath))
-                continue;
-
-            string text;
-
-            try
-            {
-                text = File.ReadAllText(fullPath);
-            }
-            catch (Exception exception)
-            {
-                report.Add(
-                    Subject42ValidationSeverity.Warning,
-                    "ASSET_READ_FAILED",
-                    $"Could not inspect '{path}': {exception.Message}");
-                continue;
-            }
-
-            if (MissingScriptRegex.IsMatch(text))
-            {
-                report.Add(
-                    Subject42ValidationSeverity.Error,
-                    "MISSING_SCRIPT",
-                    $"Missing MonoBehaviour script in '{path}'.",
-                    AssetDatabase.LoadMainAssetAtPath(path));
-            }
-
-            MatchCollection scriptMatches = ScriptGuidRegex.Matches(text);
-            HashSet<string> scriptGuids = new(
-                StringComparer.OrdinalIgnoreCase);
-            for (int matchIndex = 0;
-                 matchIndex < scriptMatches.Count;
-                 matchIndex++)
-            {
-                string guid = scriptMatches[matchIndex].Groups[1].Value;
-                scriptGuids.Add(guid);
-
-                // Unity serializes editor-only MaterialVersion metadata inside
-                // materials. It is irrelevant to a player build and can point
-                // at a package version that is not installed.
-                if (string.Equals(
-                        Path.GetExtension(path),
-                        ".mat",
-                        StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                string scriptPath = AssetDatabase.GUIDToAssetPath(guid);
-
-                if (!string.IsNullOrEmpty(scriptPath) &&
-                    AssetDatabase.LoadAssetAtPath<MonoScript>(scriptPath) != null)
-                {
-                    continue;
-                }
-
-                string key = $"script|{path}|{guid}";
-                if (!reportedReferences.Add(key))
-                    continue;
-
-                report.Add(
-                    Subject42ValidationSeverity.Error,
-                    "BROKEN_SCRIPT_GUID",
-                    $"'{path}' references missing script GUID {guid}.",
-                    AssetDatabase.LoadMainAssetAtPath(path));
-            }
-
-            MatchCollection assetMatches = AssetGuidRegex.Matches(text);
-            for (int matchIndex = 0;
-                 matchIndex < assetMatches.Count;
-                 matchIndex++)
-            {
-                string guid = assetMatches[matchIndex].Groups[1].Value;
-                if (IsZeroGuid(guid) ||
-                    scriptGuids.Contains(guid) ||
-                    !string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(guid)))
-                {
-                    continue;
-                }
-
-                string key = $"asset|{path}|{guid}";
-                if (!reportedReferences.Add(key))
-                    continue;
-
-                report.Add(
-                    Subject42ValidationSeverity.Warning,
-                    "BROKEN_ASSET_GUID",
-                    $"'{path}' references missing asset GUID {guid}.",
-                    AssetDatabase.LoadMainAssetAtPath(path));
-            }
-        }
-    }
-
-    private static HashSet<string> GetProductionAssetPaths()
-    {
-        HashSet<string> paths = new(StringComparer.OrdinalIgnoreCase);
-        EditorBuildSettingsScene[] scenes = EditorBuildSettings.scenes;
-
-        for (int i = 0; i < scenes.Length; i++)
-        {
-            if (!scenes[i].enabled)
-                continue;
-
-            string[] dependencies = AssetDatabase.GetDependencies(
-                scenes[i].path,
-                true);
-            for (int dependencyIndex = 0;
-                 dependencyIndex < dependencies.Length;
-                 dependencyIndex++)
-            {
-                paths.Add(dependencies[dependencyIndex]);
-            }
-        }
-
-        return paths;
+        Subject42AssetReferenceValidator.Validate(Subject42AssetReferenceValidator.GetProductionRoots(), report);
     }
 
     private static void ValidateMainMenuScene(
@@ -1244,17 +1096,6 @@ public static class Subject42ProjectValidator
         }
 
         return assets.ToArray();
-    }
-
-    private static bool IsZeroGuid(string guid)
-    {
-        for (int i = 0; i < guid.Length; i++)
-        {
-            if (guid[i] != '0')
-                return false;
-        }
-
-        return true;
     }
 
     private static bool IsTestOrLegacyPath(string path)

@@ -1,6 +1,5 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 /// <summary>Shared renderer for station and selected-item meta progression.</summary>
@@ -8,7 +7,6 @@ public class BunkerProgressionView : MonoBehaviour
 {
     private const float InvestmentRate = 180f;
 
-    [FormerlySerializedAs("stationName")]
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI levelText;
     [SerializeField] private Image[] progressSegments;
@@ -16,12 +14,9 @@ public class BunkerProgressionView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI progressText;
     [SerializeField] private TextMeshProUGUI currencyText;
     [SerializeField] private TextMeshProUGUI bonusText;
-    [FormerlySerializedAs("nextUnlockText")]
     [SerializeField] private TextMeshProUGUI contextText;
     [SerializeField] private TextMeshProUGUI stateText;
-    [FormerlySerializedAs("investButton")]
     [SerializeField] private Button upgradeButton;
-    [FormerlySerializedAs("investButtonText")]
     [SerializeField] private TextMeshProUGUI upgradeButtonText;
 
     private BunkerProgressionModel model;

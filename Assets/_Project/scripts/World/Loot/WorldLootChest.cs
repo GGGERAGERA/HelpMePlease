@@ -129,18 +129,6 @@ public sealed class WorldLootChest : Interactable, ITacticalMapMarkerProvider
         Debug.LogError("[WorldLootChest] Production reward gateway is unavailable.", this);
     }
 
-    private void HandleRewardClaimed(WorldLootRewardDefinition reward)
-    {
-        if (this == null || !isActiveAndEnabled ||
-            state != ChestState.RewardReel || reward == null)
-            return;
-
-        state = ChestState.Claimed;
-        ApplyOpenedVisual();
-        if (!retainOpenedAfterClaim)
-            StartCoroutine(DestroyAfterClaim());
-    }
-
     private void HandleUpgradeRewardAccepted(UpgradeData reward)
     {
         if (this == null || !isActiveAndEnabled ||

@@ -19,7 +19,7 @@
 
 У игрока отключён входящий урон, здоровье целей повышено для сравнения. В F6/F7 Rigidbody целей фиксирован, F8 — живой бой. Сброс пересоздаёт enemy-prefab, отменяя в том числе отложенный взрыв bomber. Сцена не заменяет существующий активный run: запускать из Edit Mode.
 
-Используются реальные `Player_0_p_Player3` через `OrbitalPresentationConfig` для Gera, новые visual roots `p_Enemy_classic/default/Shooter/Bomber`, `p_Hex1`, `p_Case1`, blood/death FX из `EnemyHealth`. ORBITAL штатным Mid preset создаёт четыре кольца и восемь модулей. Старую standalone-симуляцию OrbitalCombatLab заменяют текущая production-система и её тесты; при cleanup она удалена.
+Используются CharacterData Gera и его productionPrefab, production ORBITAL, враги `p_Enemy_classic/default/Shooter/Bomber`, XP, ящики и FX. Lab задаёт настройки сравнения через общий runtime.
 
 ## Presets
 
@@ -42,11 +42,9 @@ Lab camera: штатный URP Pixel Perfect Camera, 768×432, 32 PPU, Upscale R
 
 ## Проверка
 
-Меню `Tools → Subject42 → Dev → F1 Inspector → Surface Visual Lab` пересобирает lab и снимает 12 сравнений + живую толпу. Съёмка идёт из Play Mode gameplay camera, 768×432 → 1536×864 nearest 2×.
+Меню Tools → Subject42 → Dev → F1 Inspector → Surface Visual Lab → Build isolated scene создаёт лабораторную сцену. Для сравнения используйте текущие режимы 1–4/F5–F8; исторические captures в Artifacts/GeneratedQA/SurfaceVisualLab описывают собственный запуск.
 
-`ColdAshProductionTests` входит через настоящий бункер и MVP, проверяет движение, толпы, четыре кольца, реальные попадания, XP, ящик, event, переходы 1–3 и босса. Снимки сохраняются через `ScreenCapture.CaptureScreenshot` из production Game View с HUD. После тестового телепорта камера получает время на стабилизацию; момент боя ненадолго ставится на паузу для capture. Это не Scene View и не композит из спрайтов. Прогресс пользователя сохраняется/восстанавливается существующей test fixture.
-
-Выходные файлы: `Artifacts/GeneratedQA/SurfaceVisualLab/4-solo.png`, `4-combat.png`, `4-dense-live.png`; настоящая MVP — `Artifacts/GeneratedQA/SurfaceVisualLab/Production/01-…08-*.png`.
+Для production acceptance используйте точные test filters из Dev/Tests/README.md.
 
 ## Компактные assets
 

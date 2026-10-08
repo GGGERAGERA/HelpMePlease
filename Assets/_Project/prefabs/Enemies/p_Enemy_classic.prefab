@@ -336,30 +336,10 @@ PrefabInstance:
       propertyPath: enemyId
       value: Tupik
       objectReference: {fileID: 0}
-    - target: {fileID: 826003451788788162, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-      propertyPath: flashColor.b
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 826003451788788162, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-      propertyPath: flashColor.g
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 826003451788788162, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-      propertyPath: flashColor.r
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 826003451788788162, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-      propertyPath: flashDuration
-      value: 0.1
-      objectReference: {fileID: 0}
     - target: {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: m_Name
       value: p_Enemy_classic
       objectReference: {fileID: 0}
-    - target: {fileID: 2082517689598342890, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-      propertyPath: m_Controller
-      value: 
-      objectReference: {fileID: 9100000, guid: a00c6b57824f0e241a289f8cba2f666d, type: 2}
     - target: {fileID: 2671083716182587235, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.9
@@ -416,26 +396,6 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 2999945552720871642, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-      propertyPath: m_Controller
-      value: 
-      objectReference: {fileID: 9100000, guid: a00c6b57824f0e241a289f8cba2f666d, type: 2}
-    - target: {fileID: 4831376453459486560, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-      propertyPath: visualRoot
-      value: 
-      objectReference: {fileID: 3554662524496463098}
-    - target: {fileID: 5186840224388084680, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-      propertyPath: m_Size.x
-      value: 0.96875
-      objectReference: {fileID: 0}
-    - target: {fileID: 5186840224388084680, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 5830694933855508796, guid: e1f639c2cd1c26242a566060b6c8b961, type: 3}
-    - target: {fileID: 5186840224388084680, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-      propertyPath: m_WasSpriteAssigned
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 6045726002428409456, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: OnDamageTaken.m_PersistentCalls.m_Calls.Array.size
       value: 1
@@ -472,18 +432,6 @@ PrefabInstance:
       propertyPath: targetRenderer
       value: 
       objectReference: {fileID: 6194670626097779413}
-    - target: {fileID: 8563352013519037183, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-      propertyPath: m_Size.x
-      value: 0.96875
-      objectReference: {fileID: 0}
-    - target: {fileID: 8563352013519037183, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 5830694933855508796, guid: e1f639c2cd1c26242a566060b6c8b961, type: 3}
-    - target: {fileID: 8563352013519037183, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
-      propertyPath: m_WasSpriteAssigned
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:

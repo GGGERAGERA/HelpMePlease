@@ -21,7 +21,6 @@ namespace Subject42.Combat.OrbitalStation
         }
 #endif
         [Header("Bullet Time")]
-        [UnityEngine.Serialization.FormerlySerializedAs("slowField")]
         [SerializeField] private BulletTimeAbility bulletTime = new();
         public BulletTimeAbility BulletTime => bulletTime;
         // Existing onboarding/HUD binding; both read this same ability state.

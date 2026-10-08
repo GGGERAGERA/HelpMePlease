@@ -12,7 +12,7 @@ using Object = UnityEngine.Object;
 /// <summary>Reviewed visual selections, authored into the gallery. Never runs during gameplay.</summary>
 public static class EnemyGalleryVisualAuthoring
 {
-    const string VisualAssetsPath = "Assets/_Project/art/EnemyGalleryVisuals.asset";
+    const string VisualAssetsPath = "Assets/_Project/Dev/Labs/F1/EnemyGallery/EnemyGalleryVisuals.asset";
     sealed class Spec
     {
         public readonly string Id, Name, Path;

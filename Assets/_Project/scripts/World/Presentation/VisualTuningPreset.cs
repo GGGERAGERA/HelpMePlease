@@ -95,8 +95,6 @@ public static class VisualTuningPresetStorage
     public const int CurrentEnvironmentColorSchemaVersion = 1;
     public const string AssetPath =
         "Assets/_Project/Data/World/Presentation/VisualTuningSavedValues.asset";
-    public const string LegacyAssetPath =
-        "Assets/_Project/VisualTuningSavedValues.asset";
     private static VisualTuningPreset configuredPreset;
 
     public static void Configure(VisualTuningPreset preset)
@@ -147,26 +145,11 @@ public static class VisualTuningPresetStorage
                     AssetPath);
             if (preset == null)
             {
-                VisualTuningPreset legacy =
-                    UnityEditor.AssetDatabase.LoadAssetAtPath<VisualTuningPreset>(
-                        LegacyAssetPath);
-                if (legacy != null)
-                {
-                    string moveError = UnityEditor.AssetDatabase.MoveAsset(
-                        LegacyAssetPath, AssetPath);
-                    if (!string.IsNullOrWhiteSpace(moveError))
-                        throw new InvalidOperationException(moveError);
-                    preset = UnityEditor.AssetDatabase.LoadAssetAtPath<VisualTuningPreset>(
-                        AssetPath);
-                }
-                else
-                {
-                    preset = ScriptableObject.CreateInstance<VisualTuningPreset>();
-                    preset.name = "VisualTuningSavedValues";
-                    UnityEditor.Undo.RegisterCreatedObjectUndo(
-                        preset, "Save Visual Lab tuning preset");
-                    UnityEditor.AssetDatabase.CreateAsset(preset, AssetPath);
-                }
+                preset = ScriptableObject.CreateInstance<VisualTuningPreset>();
+                preset.name = "VisualTuningSavedValues";
+                UnityEditor.Undo.RegisterCreatedObjectUndo(
+                    preset, "Save Visual Lab tuning preset");
+                UnityEditor.AssetDatabase.CreateAsset(preset, AssetPath);
             }
 
             UnityEditor.Undo.RecordObject(

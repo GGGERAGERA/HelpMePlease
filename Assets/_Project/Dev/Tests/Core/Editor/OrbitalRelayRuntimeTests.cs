@@ -29,8 +29,6 @@ public sealed class OrbitalRelayRuntimeTests
     }
     private static IEnumerator ExerciseLab()
     {
-        // Existing lab shell predates the authored map markers; relay acceptance doesn't rewrite the map.
-        LogAssert.Expect(LogType.Error, "[TacticalMapHUD] Authored shell or scene references are missing.");
         EditorSceneManager.LoadSceneInPlayMode(WorldSystemsLabController.ScenePath,
             new UnityEngine.SceneManagement.LoadSceneParameters(UnityEngine.SceneManagement.LoadSceneMode.Single));
         yield return null;

@@ -25,21 +25,9 @@ MonoBehaviour:
   - key: settings.fullscreen
     ru: "Полный экран"
     en: "Fullscreen"
-  - key: hud.exitPacing.assault
-    ru: "ВОЛНА"
-    en: "ASSAULT"
-  - key: hud.exitPacing.recovery
-    ru: "СТАБИЛИЗАЦИЯ"
-    en: "STABILIZING"
-  - key: hud.exitPacing.open
-    ru: "ВЫХОД ОТКРЫТ"
-    en: "EXIT OPEN"
   - key: settings.audio
     ru: "ЗВУК"
     en: "AUDIO"
-  - key: settings.gameplay
-    ru: "УПРАВЛЕНИЕ"
-    en: "CONTROLS"
   - key: settings.savedHint
     ru: "Изменения сохраняются автоматически"
     en: "Changes are saved automatically"
@@ -64,24 +52,12 @@ MonoBehaviour:
   - key: settings.back
     ru: "НАЗАД"
     en: "BACK"
-  - key: settings.automaticFire
-    ru: "АВТОМАТИЧЕСКАЯ СТРЕЛЬБА"
-    en: "AUTOMATIC FIRE"
-  - key: language.russian
-    ru: "РУССКИЙ"
-    en: "RUSSIAN"
-  - key: language.english
-    ru: "АНГЛИЙСКИЙ"
-    en: "ENGLISH"
   - key: menu.start
     ru: "НАЧАТЬ"
     en: "START"
   - key: menu.settings
     ru: "НАСТРОЙКИ"
     en: "SETTINGS"
-  - key: menu.about
-    ru: "ОБ ИГРЕ"
-    en: "ABOUT"
   - key: menu.quit
     ru: "ВЫХОД"
     en: "QUIT"
@@ -100,12 +76,6 @@ MonoBehaviour:
   - key: pause.bunker
     ru: "ВЕРНУТЬСЯ В БУНКЕР"
     en: "RETURN TO BUNKER"
-  - key: result.victory
-    ru: "ПОБЕДА"
-    en: "VICTORY"
-  - key: result.defeat
-    ru: "ВЫ ПОГИБЛИ"
-    en: "YOU DIED"
   - key: result.retry
     ru: "ПОВТОРИТЬ"
     en: "RETRY"
@@ -121,15 +91,6 @@ MonoBehaviour:
   - key: stats.level
     ru: "УРОВЕНЬ"
     en: "LEVEL"
-  - key: stats.survived
-    ru: "ВЫЖИВАНИЕ"
-    en: "SURVIVED"
-  - key: stats.totalGold
-    ru: "ВСЕГО ЗОЛОТА"
-    en: "TOTAL GOLD"
-  - key: stats.runGold
-    ru: "ЗОЛОТО ЗА ЗАБЕГ"
-    en: "RUN GOLD"
   - key: pause.sector
     ru: "Сектор"
     en: "Sector"
@@ -160,15 +121,9 @@ MonoBehaviour:
   - key: pause.overview
     ru: "ОБЗОР СБОРКИ"
     en: "BUILD OVERVIEW"
-  - key: pause.esc
-    ru: "ESC — ПРОДОЛЖИТЬ"
-    en: "ESC — RESUME"
   - key: hud.sector
     ru: "СЕКТОР {0} / {1}"
     en: "SECTOR {0} / {1}"
-  - key: hud.objective.explore
-    ru: "ИССЛЕДУЙТЕ СЕКТОР"
-    en: "EXPLORE THE SECTOR"
   - key: hud.objective.exit
     ru: "ДОБЕРИТЕСЬ ДО ВЫХОДА"
     en: "REACH THE EXIT"
@@ -181,30 +136,9 @@ MonoBehaviour:
   - key: hud.objective.boss
     ru: "СТРАЖ СЕКТОРА / ЦЕЛЬ ДОСТУПА"
     en: "SECTOR GUARDIAN / ACCESS TARGET"
-  - key: hud.specialOpportunity
-    ru: "УСИЛЕННАЯ АНОМАЛИЯ\n+ НОВАЯ ОРБИТА"
-    en: "ENHANCED ANOMALY\n+ NEW ORBIT"
   - key: hud.interact
     ru: "ВЗАИМОДЕЙСТВОВАТЬ"
     en: "INTERACT"
-  - key: hud.movement
-    ru: "ДВИЖЕНИЕ"
-    en: "MOVEMENT"
-  - key: hud.target.exit
-    ru: "ВЫХОД"
-    en: "EXIT"
-  - key: hud.target.special
-    ru: "УСИЛЕННАЯ АНОМАЛИЯ"
-    en: "ENHANCED ANOMALY"
-  - key: hud.target.event
-    ru: "СОБЫТИЕ"
-    en: "EVENT"
-  - key: hud.target.container
-    ru: "КОНТЕЙНЕР"
-    en: "CONTAINER"
-  - key: hud.target.anomaly
-    ru: "АНОМАЛИЯ"
-    en: "ANOMALY"
   - key: bunker.select
     ru: "ВЫБРАТЬ"
     en: "SELECT"
@@ -448,12 +382,6 @@ MonoBehaviour:
   - key: bunker.run_choose_subject
     ru: "Выберите субъекта перед выходом."
     en: "Select a subject before deployment."
-  - key: bunker.football_enter
-    ru: "ВОЙДИТЕ В ЗОНУ ДЛЯ ЗАПУСКА"
-    en: "ENTER ZONE TO START"
-  - key: bunker.football_claimed
-    ru: "КОНТРОЛЬНЫЙ РЕКОРД ПРЕВЫШЕН"
-    en: "BENCHMARK EXCEEDED"
   - key: bunker.football_complete
     ru: "ИСПЫТАНИЕ ЗАВЕРШЕНО"
     en: "TEST COMPLETE"
@@ -574,9 +502,6 @@ MonoBehaviour:
   - key: bunker.football_benchmark
     ru: "КОНТРОЛЬНЫЙ РЕКОРД\n<size=30>{0}</size>\n<size=12>"
     en: "BENCHMARK\n<size=30>{0}</size>\n<size=12>"
-  - key: bunker.football_reward
-    ru: "НАГРАДА: +{0} ЗОЛОТА"
-    en: "REWARD: +{0} GOLD"
   - key: bunker.football_record
     ru: "ЛИЧНЫЙ РЕКОРД ОБНОВЛЁН. +{0} ЗОЛОТА"
     en: "PERSONAL RECORD UPDATED. +{0} GOLD"
@@ -661,15 +586,6 @@ MonoBehaviour:
   - key: bunker.upgrade.0.category
     ru: "ВЫЖИВАЕМОСТЬ"
     en: "SURVIVAL"
-  - key: bunker.upgrade.1.name
-    ru: "УРОН"
-    en: "DAMAGE"
-  - key: bunker.upgrade.1.description
-    ru: "Увеличивает наносимый урон."
-    en: "Increases damage dealt."
-  - key: bunker.upgrade.1.category
-    ru: "БОЕВАЯ ЭФФЕКТИВНОСТЬ"
-    en: "COMBAT"
   - key: bunker.upgrade.2.name
     ru: "СКОРОСТЬ ДВИЖЕНИЯ"
     en: "MOVEMENT SPEED"
@@ -850,36 +766,6 @@ MonoBehaviour:
   - key: character.vika.description
     ru: "ДАННЫЕ ЭКСПЕРИМЕНТА НЕПОЛНЫЕ."
     en: "EXPERIMENT DATA INCOMPLETE."
-  - key: character.details.feature
-    ru: "<color=#14D1DB><b>ОСОБЕННОСТЬ</b></color>\n{0}"
-    en: "<color=#14D1DB><b>TRAIT</b></color>\n{0}"
-  - key: character.details.description
-    ru: "<color=#14D1DB><b>ОПИСАНИЕ</b></color>\n{0}"
-    en: "<color=#14D1DB><b>DESCRIPTION</b></color>\n{0}"
-  - key: character.details.stats
-    ru: "<color=#14D1DB><b>ХАРАКТЕРИСТИКИ</b></color>\nЗДОРОВЬЕ   {0,3:0}   {1}\nСКОРОСТЬ   {2,3:0.#}   {3}"
-    en: "<color=#14D1DB><b>STATS</b></color>\nHEALTH   {0,3:0}   {1}\nSPEED   {2,3:0.#}   {3}"
-  - key: character.choose
-    ru: "ВЫБЕРИТЕ ПЕРСОНАЖА"
-    en: "CHOOSE A CHARACTER"
-  - key: character.station.title
-    ru: "СТАНЦИЯ ПЕРСОНАЖЕЙ"
-    en: "CHARACTER STATION"
-  - key: character.station.level
-    ru: "УРОВЕНЬ СТАНЦИИ {0} / {1}"
-    en: "STATION LEVEL {0} / {1}"
-  - key: character.station.gold
-    ru: "ЗОЛОТО: {0}"
-    en: "GOLD: {0}"
-  - key: character.station.max
-    ru: "МАКСИМАЛЬНЫЙ УРОВЕНЬ"
-    en: "MAXIMUM LEVEL"
-  - key: character.station.investing
-    ru: "УЛУЧШЕНИЕ..."
-    en: "UPGRADING..."
-  - key: character.station.upgrade
-    ru: "УЛУЧШИТЬ СТАНЦИЮ — {0}"
-    en: "UPGRADE STATION — {0}"
   - key: result.comment.victory
     ru: "Протокол завершён. Данные эксперимента сохранены."
     en: "Protocol complete. Experiment data saved."
@@ -1072,12 +958,6 @@ MonoBehaviour:
   - key: hud.level
     ru: "УР {0}"
     en: "LV {0}"
-  - key: hud.threat
-    ru: "УГРОЗА {0}"
-    en: "THREAT {0}"
-  - key: hud.boss
-    ru: "БОСС"
-    en: "BOSS"
   - key: pause.tier1
     ru: "БЕЛЫЙ"
     en: "WHITE"
@@ -1366,9 +1246,6 @@ MonoBehaviour:
   - key: onboarding.slowField
     ru: "Удерживай ПКМ — замедлить врагов рядом"
     en: "Hold RMB to slow nearby enemies"
-  - key: hud.slowFieldEnergy
-    ru: "ПКМ — Bullet Time: {0}%"
-    en: "RMB — Bullet Time: {0}%"
   - key: reward.panel.special
     ru: "УСИЛЕННАЯ АНОМАЛИЯ"
     en: "ENHANCED ANOMALY"
@@ -1414,9 +1291,6 @@ MonoBehaviour:
   - key: site.stabilized
     ru: "АНОМАЛИЯ СТАБИЛИЗИРОВАНА"
     en: "ANOMALY STABILIZED"
-  - key: site.reward
-    ru: "НАГРАДА ДОСТУПНА"
-    en: "STANDARD REWARD AVAILABLE"
   - key: resource.title
     ru: "РЕСУРСНЫЙ УЗЕЛ"
     en: "RESOURCE NODE"
@@ -1618,9 +1492,6 @@ MonoBehaviour:
   - key: common.closeEsc
     ru: "ЗАКРЫТЬ  [ESC]"
     en: "CLOSE  [ESC]"
-  - key: slot.open
-    ru: "ОРБИТАЛЬНЫЙ АВТОМАТ  50 ЗОЛОТА"
-    en: "ORBITAL SLOT  50 GOLD"
   - key: world.wind.label
     ru: "ВЕТЕР"
     en: "WIND"
@@ -1648,9 +1519,6 @@ MonoBehaviour:
   - key: football.legend
     ru: "<b>+2<pos=66>+5<pos=132>+10<pos=198>+20</b>"
     en: "<b>+2<pos=66>+5<pos=132>+10<pos=198>+20</b>"
-  - key: football.reset
-    ru: "СБРОС МЯЧЕЙ [R]"
-    en: "RESET BALLS [R]"
   - key: bunker.subject3
     ru: "СУБЪЕКТ №3"
     en: "SUBJECT №3"
@@ -1669,15 +1537,6 @@ MonoBehaviour:
   - key: pause.subjectHeading
     ru: "УЛУЧШЕНИЯ СУБЪЕКТА"
     en: "SUBJECT UPGRADES"
-  - key: result.analysis
-    ru: "АНАЛИЗ ЭКСПЕРИМЕНТА"
-    en: "EXPERIMENT ANALYSIS"
-  - key: about.protocol
-    ru: "СУБЪЕКТ №42\n\nОрбитальная станция активна. Исследуйте комплекс, собирайте модули и найдите выход."
-    en: "SUBJECT №42\n\nOrbital station active. Explore the facility, collect modules and find the exit."
-  - key: about.experiment
-    ru: "ДАННЫЕ ЭКСПЕРИМЕНТА\n\nУсловия каждого сектора нестабильны. Результаты испытаний сохраняются в бункере."
-    en: "EXPERIMENT DATA\n\nSector conditions are unstable. Test results are recorded in the bunker."
   - key: result.modules
     ru: "МОДУЛИ"
     en: "MODULES"
@@ -1711,27 +1570,6 @@ MonoBehaviour:
   - key: result.subjectLost
     ru: "СУБЪЕКТ УТРАЧЕН"
     en: "SUBJECT LOST"
-  - key: map.chest
-    ru: "КОНТЕЙНЕР"
-    en: "CONTAINER"
-  - key: map.event
-    ru: "ИСПЫТАНИЕ"
-    en: "TRIAL"
-  - key: map.boss
-    ru: "БОСС"
-    en: "BOSS"
-  - key: map.special
-    ru: "ОСОБАЯ АНОМАЛИЯ"
-    en: "SPECIAL ANOMALY"
-  - key: map.exit
-    ru: "ВЫХОД"
-    en: "EXIT"
-  - key: map.player
-    ru: "ИГРОК"
-    en: "PLAYER"
-  - key: map.anomaly
-    ru: "ОБЫЧНАЯ АНОМАЛИЯ"
-    en: "STANDARD ANOMALY"
   - key: loot.title
     ru: "КОНТЕЙНЕР // ДЕКОДИРОВАНИЕ"
     en: "CONTAINER // DECODING"

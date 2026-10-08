@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System;
 using UnityEngine;
 
@@ -74,3 +75,5 @@ public sealed class BunkerNavigationView : MonoBehaviour
         }
     }
 }
+
+#endif
