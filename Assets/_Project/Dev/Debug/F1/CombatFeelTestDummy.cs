@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,7 +19,7 @@ public enum CombatFeelDummyArchetype
 }
 
 [DisallowMultipleComponent]
-public sealed class CombatFeelTestDummy : MonoBehaviour
+public sealed class CombatFeelTestDummy : EnemyDebugDamagePolicy
 {
     private readonly List<Behaviour> controlledBehaviours = new();
     private readonly List<bool> originalEnabledStates = new();
@@ -29,8 +30,8 @@ public sealed class CombatFeelTestDummy : MonoBehaviour
     private Vector3 visualBaseScale;
 
     public bool IsDebugOwned => true;
-    public bool SuppressesProductionRewards => true;
-    public bool Invulnerable { get; set; } = true;
+    public override bool SuppressesProductionRewards => true;
+    public override bool Invulnerable { get; set; } = true;
     public EnemyHealth Health { get; private set; }
 
     public void Initialize(CombatFeelTestDummyController controller)
@@ -371,4 +372,6 @@ public sealed class CombatFeelTestDummyController : MonoBehaviour
     private void OnDisable() => Despawn();
     private void OnDestroy() => Despawn();
 }
+#endif
+
 #endif

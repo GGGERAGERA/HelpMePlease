@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using UnityEngine;
 
 public enum WeaponCoreType
@@ -36,3 +37,5 @@ public sealed class WeaponCoreDebugSelector : MonoBehaviour
     }
 #endif
 }
+
+#endif

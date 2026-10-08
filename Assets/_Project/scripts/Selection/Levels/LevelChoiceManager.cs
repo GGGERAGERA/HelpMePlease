@@ -2,9 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Subject42.Combat.OrbitalStation;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-using Random = BotRunSeed.RuleRandom;
-#endif
+using Random = GameplayRandom.RuleRandom;
 
 public sealed class LevelChoiceManager : MonoBehaviour
 {

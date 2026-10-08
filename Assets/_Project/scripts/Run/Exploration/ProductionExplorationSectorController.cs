@@ -1,6 +1,4 @@
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-using Random = BotRunSeed.WorldRandom;
-#endif
+using Random = GameplayRandom.WorldRandom;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -1388,13 +1386,10 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
 
     private AnomalyPowerType SelectSpecialPower()
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        if (ProductionSectorDebugController.TryGetSpecialOverride(
-                out AnomalyPowerType debugPower))
+        if (RunDevelopmentOverrides.SpecialPower is AnomalyPowerType debugPower)
         {
             return debugPower;
         }
-#endif
 
         RunStateManager runState = RunStateManager.Instance;
         if (runState != null && !runState.AnomalyInventory.IsEmpty)

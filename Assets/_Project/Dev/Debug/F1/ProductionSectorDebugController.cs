@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -143,6 +144,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         enemyOutlineWidth = 1f;
         enemyOutlineEnabled = false;
         specialOverride = SpecialOverride.Random;
+        RunDevelopmentOverrides.SpecialPower = null;
         invulnerability = false;
         EnemyDebugAiFreeze.SetFrozen(false);
     }
@@ -706,6 +708,7 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
     public void SetSpecialOverride(SpecialOverride value)
     {
         specialOverride = value;
+        RunDevelopmentOverrides.SpecialPower = TryGetSpecialOverride(out var power) ? power : null;
     }
 
     public void ResetVisualSettings()
@@ -1758,4 +1761,6 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
             Destroy(overlayTexture);
     }
 }
+#endif
+
 #endif

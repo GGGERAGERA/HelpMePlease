@@ -49,7 +49,8 @@ public sealed class SurfaceSectorTransitionTests
         var cards = Read<LevelChoiceCardView[]>(panel,"cardViews").Where(c => c.gameObject.activeInHierarchy).ToArray();
         Assert.That(cards.Length,Is.EqualTo(3)); Assert.That(cards.Select(c=>c.Rule).Distinct().Count(),Is.EqualTo(3));
         var selected = cards.First(c => c.Rule != initial); var nextRule = selected.Rule;
-        ScreenCapture.CaptureScreenshot("Artifacts/SurfaceMap/random-sector-choice.png"); yield return null;
+        System.IO.Directory.CreateDirectory("Artifacts/GeneratedQA/SurfaceMap");
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/SurfaceMap/random-sector-choice.png"); yield return null;
         Read<Button>(selected,"button").onClick.Invoke(); var confirm = Read<Button>(panel,"confirmButton"); Assert.That(confirm.interactable,Is.True); confirm.onClick.Invoke();
         yield return CoreTestSupport.Await(() => !SceneTransitionOverlay.IsTransitioning && run.CurrentSector.SectorNumber == 2 && Object.FindFirstObjectByType<OrbitalStationRuntime>() is { IsInitialized:true });
         Assert.That(run.CurrentSector.WorldRule,Is.SameAs(nextRule)); Assert.That(run.CurrentSector.WorldRule,Is.Not.SameAs(initial));

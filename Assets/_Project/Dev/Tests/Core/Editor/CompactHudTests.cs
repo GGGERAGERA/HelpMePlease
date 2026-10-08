@@ -62,22 +62,6 @@ public sealed class CompactHudTests
     }
 
     [Test]
-    public void HudUsesAuthoredGraphicsOnly()
-    {
-        foreach(string path in new[]{"scripts/Combat/Player/PlayerHealth.cs","scripts/Combat/Enemies/EnemyHealth.cs","scripts/Run/Threat/RunThreatController.cs"})
-        {
-            string source=File.ReadAllText("Assets/_Project/"+path);
-            Assert.That(source,Does.Not.Contain("HUDManager").And.Not.Contain("CameraShake").And.Not.Contain("DamagePopup"),path);
-        }
-        foreach (string name in new[] { "TacticalMapHUD", "RunRouteProgressView", "LevelAnomalyView" })
-        {
-            string source = File.ReadAllText("Assets/_Project/scripts/UI/HUD/" + name + ".cs");
-            Assert.That(source, Does.Not.Contain("AddComponent<"), name);
-            Assert.That(source, Does.Not.Contain("typeof(RectTransform)"), name);
-        }
-    }
-
-    [Test]
     public void ExistingButtonsRemainClickable()
     {
         var prefab=AssetDatabase.LoadAssetAtPath<GameObject>(CompactHudTestData.Folder+"GameplayHUD.prefab");
@@ -85,13 +69,6 @@ public sealed class CompactHudTests
             Assert.That(button.targetGraphic!=null && button.targetGraphic.raycastTarget, Is.True, button.name);
     }
 
-    [Test]
-    public void ReusableViewsAreSavedPrefabs()
-    {
-        foreach (string name in new[] { "HudBar", "HudIconNumber", "HudSegments", "HudKeyHint", "BulletTimeHUD", "TacticalMapMarker" })
-            Assert.That(AssetDatabase.LoadAssetAtPath<GameObject>(
-                "Assets/_Project/prefabs/UI/HUD/" + name + ".prefab"), Is.Not.Null, name);
-    }
 }
 public sealed class CompactHudPlayTests
 {

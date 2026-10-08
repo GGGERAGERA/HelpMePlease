@@ -1,10 +1,6 @@
 using System;
 using System.Collections.Generic;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-using RewardRandom = BotRunSeed.RewardRandom;
-#else
-using RewardRandom = UnityEngine.Random;
-#endif
+using RewardRandom = GameplayRandom.RewardRandom;
 using System.Linq;
 using UnityEngine;
 

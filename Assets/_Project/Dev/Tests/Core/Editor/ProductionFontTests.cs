@@ -20,11 +20,13 @@ public sealed class ProductionFontTests
     private const string FontPath = "Assets/_Project/Fonts/Subject42 UI SDF.asset";
     private const string Output = "Artifacts/GeneratedQA/ProductionFonts";
     private const string BaselineKey = "Subject42.FontTests.Baseline";
+    private const string RunningKey = "Subject42.FontTests.Running";
+    private const string AnyRunKey = "Subject42.Verification.AnyRunActive";
 
     static ProductionFontTests()
     {
         ScriptableObject.CreateInstance<TestRunnerApi>().RegisterCallbacks(new Results());
-        EditorApplication.delayCall += ConsumeRequest;
+        EditorApplication.update += ConsumeRequest;
         EditorApplication.playModeStateChanged += state =>
         {
             if (state == PlayModeStateChange.EnteredEditMode)
@@ -35,7 +37,7 @@ public sealed class ProductionFontTests
     private static void ConsumeRequest()
     {
         string request = Path.Combine(Output, "run-tests.request");
-        if (!File.Exists(request)) return;
+        if (!File.Exists(request) || SessionState.GetBool(AnyRunKey, false) || EditorApplication.isCompiling || EditorApplication.isUpdating) return;
         if (EditorApplication.isPlaying)
         {
             EditorApplication.isPlaying = false;
@@ -139,25 +141,44 @@ public sealed class ProductionFontTests
     [MenuItem("Tools/Subject42/Verify Production Fonts")]
     public static void Run()
     {
-        SessionState.SetBool("Subject42.FontTests.Running", true);
+        if (SessionState.GetBool(AnyRunKey, false)) return;
+        SessionState.SetBool(AnyRunKey, true);
+        SessionState.SetBool(RunningKey, true);
         SessionState.EraseString(BaselineKey);
         var api = ScriptableObject.CreateInstance<TestRunnerApi>();
-        api.Execute(new ExecutionSettings(new Filter { testMode = UnityEditor.TestTools.TestRunner.Api.TestMode.EditMode,
-            testNames = new[] { nameof(ProductionFontTests) } }));
+        try { api.Execute(new ExecutionSettings(new Filter { testMode = UnityEditor.TestTools.TestRunner.Api.TestMode.EditMode,
+            testNames = new[] { nameof(ProductionFontTests) } })); }
+        catch { SessionState.EraseBool(AnyRunKey); SessionState.EraseBool(RunningKey); throw; }
     }
 
-    private sealed class Results : ICallbacks
+    private sealed class Results : IErrorCallbacks
     {
-        public void RunStarted(ITestAdaptor testsToRun) { }
+        public void RunStarted(ITestAdaptor testsToRun) { SessionState.SetBool(AnyRunKey, true); }
         public void TestStarted(ITestAdaptor test) { }
         public void TestFinished(ITestResultAdaptor result) { }
         public void RunFinished(ITestResultAdaptor result)
         {
-            if (!SessionState.GetBool("Subject42.FontTests.Running", false)) return;
-            SessionState.EraseBool("Subject42.FontTests.Running");
+            SessionState.EraseBool(AnyRunKey);
+            if (!SessionState.GetBool(RunningKey, false)) return;
+            SessionState.EraseBool(RunningKey);
             Directory.CreateDirectory(Output);
             TestRunnerApi.SaveResultToFile(result, Path.Combine(Output, "results.xml"));
+            if (result.PassCount + result.FailCount == 0)
+            {
+                const string message = "FAIL: the request produced no passing or failing test cases. Check filter names and results.xml for skipped/inconclusive cases.";
+                File.WriteAllText(Path.Combine(Output, "run-error.txt"), message);
+                Debug.LogError(message);
+            }
+            else if (File.Exists(Path.Combine(Output, "run-error.txt"))) File.Delete(Path.Combine(Output, "run-error.txt"));
             Debug.Log($"ProductionFonts: {result.ResultState}, passed={result.PassCount}, failed={result.FailCount}");
+        }
+        public void OnError(string message)
+        {
+            SessionState.EraseBool(AnyRunKey);
+            if (!SessionState.GetBool(RunningKey, false)) return;
+            SessionState.EraseBool(RunningKey);
+            Directory.CreateDirectory(Output);
+            File.WriteAllText(Path.Combine(Output, "run-error.txt"), message);
         }
     }
 }

@@ -109,8 +109,7 @@ public sealed class RewardStylePresentationTests
             rewards.Add(Object.Instantiate(provider.GetDefinition(OrbitalRewardKind.CoreUpgrade, state)));
         }
         Directory.CreateDirectory(Output);
-        Directory.CreateDirectory("docs");
-        File.WriteAllLines("docs/reward-card-texts.ru.txt", rewards.Select(reward =>
+        File.WriteAllLines(Output + "/reward-card-texts.ru.txt", rewards.Select(reward =>
             Plain(LocalizationService.Instance.Get(reward.upgradeName)) + " — " +
             Plain(ProductionUpgradePresentation.GetCardDescription(reward))));
 

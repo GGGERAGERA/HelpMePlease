@@ -11,11 +11,11 @@ public static class SurfaceMarkerAuthoring
     static SurfaceMarkerAuthoring() => EditorApplication.update += Poll;
     static void Poll()
     {
-        const string request = "Artifacts/SurfaceMap/markers-author.request";
+        const string request = "Artifacts/GeneratedQA/SurfaceMap/markers-author.request";
         if (!File.Exists(request) || EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode) return;
         File.Delete(request);
-        try { Author(); File.WriteAllText("Artifacts/SurfaceMap/markers-author-result.txt", "SUCCESS"); }
-        catch (Exception e) { File.WriteAllText("Artifacts/SurfaceMap/markers-author-result.txt", e.ToString()); }
+        try { Author(); File.WriteAllText("Artifacts/GeneratedQA/SurfaceMap/markers-author-result.txt", "SUCCESS"); }
+        catch (Exception e) { File.WriteAllText("Artifacts/GeneratedQA/SurfaceMap/markers-author-result.txt", e.ToString()); }
     }
     [MenuItem("Tools/Subject42/Surface Map/Author Marker Demo")]
     public static void Author()

@@ -19,11 +19,11 @@ public static class OrbitalRelayPresentationAuthoring
     {
         EditorApplication.update += () =>
         {
-            const string request = "Artifacts/OrbitalRelay/Presentation/author.request";
+            const string request = "Artifacts/GeneratedQA/OrbitalRelay/Presentation/author.request";
             if (!File.Exists(request) || EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode) return;
             File.Delete(request);
-            try { UpdateProductionPrefab(); File.WriteAllText("Artifacts/OrbitalRelay/Presentation/author-result.txt", "SUCCESS"); }
-            catch (Exception e) { File.WriteAllText("Artifacts/OrbitalRelay/Presentation/author-result.txt", e.ToString()); Debug.LogException(e); }
+            try { UpdateProductionPrefab(); File.WriteAllText("Artifacts/GeneratedQA/OrbitalRelay/Presentation/author-result.txt", "SUCCESS"); }
+            catch (Exception e) { File.WriteAllText("Artifacts/GeneratedQA/OrbitalRelay/Presentation/author-result.txt", e.ToString()); Debug.LogException(e); }
         };
     }
     [MenuItem("Tools/Subject42/Dev/Orbital Relay/Author Pixel Presentation")]

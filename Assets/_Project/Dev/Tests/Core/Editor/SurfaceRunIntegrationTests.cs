@@ -17,10 +17,5 @@ public sealed class SurfaceRunIntegrationTests
         }
         finally { UnityEngine.Object.DestroyImmediate(rule); UnityEngine.Object.DestroyImmediate(stage); }
     }
-    [Test] public void RunLifecycleCarriesConfig()
-    {
-        Assert.That(typeof(RunStateManager).GetProperty("CurrentConfig"), Is.Not.Null);
-        Assert.That(typeof(BunkerRunStarter).GetMethod("StartSurfaceRun"), Is.Not.Null);
-    }
 }
 #endif

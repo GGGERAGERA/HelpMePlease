@@ -290,11 +290,7 @@ public sealed class WorldBreakable : MonoBehaviour,
             return;
 
         float roll =
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            BotRunSeed.DropRandom.value * totalWeight;
-#else
-            UnityEngine.Random.value * totalWeight;
-#endif
+            GameplayRandom.DropRandom.value * totalWeight;
         if (roll < configuredNothingWeight)
             return;
 

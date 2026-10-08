@@ -18,10 +18,7 @@ public sealed class TutorialController : MonoBehaviour
     {
         get
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (BotRunSession.Current != null && (BotRunSession.Current.BotEnabled ||
-                BotRunSession.Current.IsStarting || BotRunSession.Current.IsRunning)) return false;
-#endif
+            if (RunDevelopmentOverrides.SuppressTutorial?.Invoke() == true) return false;
             return PlayerPrefs.GetInt(CompletionKey, 0) == 0;
         }
     }

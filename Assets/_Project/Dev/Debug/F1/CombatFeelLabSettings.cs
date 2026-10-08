@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -17,83 +18,6 @@ public enum CombatFeelGroup
     Time,
     Crowd,
     Experimental
-}
-
-public enum CombatFeelParameter
-{
-    MasterIntensity,
-    DamageInfluence, MinFeedback, MaxFeedback, CritMultiplier,
-    BasicWeight, EliteWeight, BossWeight, DirectionInfluence,
-    DirectionRandomness, TangentialSpread,
-
-    ShotInputDelay, FireResponseOffset, ShotAnimationLead, ShotFxLead,
-    FireRateFeelMultiplier, CadenceVariance, BurstRhythmBias, FirstShotEmphasis,
-    WeaponKickDistance, WeaponKickDuration, WeaponReturnDuration,
-    WeaponOvershoot, WeaponSettleDuration, WeaponKickRotation,
-    WeaponKickRandomness, WeaponScalePunchX, WeaponScalePunchY,
-    PlayerVisualRecoil, PlayerVisualRecoilDuration, PlayerSquash,
-    PlayerStretch, PlayerRotationKick, PlayerReturnSpring,
-    PhysicalRecoil, PlayerRecoilVelocity, MovementDamp, MovementDampDuration,
-    MuzzleScale, MuzzleDuration, MuzzleBrightness, MuzzleRandomRotation,
-    MuzzleStretch, MuzzleSparks, MuzzleDirectionality,
-    MuzzleRingScale, MuzzleRingDuration, MuzzleRingOpacity,
-
-    ProjectileScale, ProjectileStretch, ProjectileSquash, ProjectileAlign,
-    ProjectileSpin, ProjectileGlow, ProjectileBrightness, ProjectilePulse,
-    ProjectilePulseSpeed, TrailWidth, TrailLength, TrailLifetime,
-    TrailOpacity, TrailTaper, SpeedIllusion, ForwardVisualOffset,
-    InitialStreakLength, InitialStreakLifetime,
-
-    ImpactScale, ImpactLifetime, ImpactBrightness, ImpactRotationRandomness,
-    ImpactDirectionality, ImpactRingSize, ImpactRingSpeed, ImpactRingLifetime,
-    ImpactSparks, ImpactDebris, ForwardSpray, BackSpray, SideSpray,
-    FlashStrength, FlashAttack, FlashHold, FlashRelease, BrightnessPunch,
-    SaturationPunch, ContrastPunch,
-    PopupInitialScale, PopupScalePunch, PopupRiseSpeed, PopupRiseDistance,
-    PopupLifetime, PopupFadeDelay, PopupFadeDuration, PopupHorizontalDrift,
-    PopupDriftRandomness, PopupRotation, PopupRotationRandomness,
-    CritPopupScale, CritPopupRise, CritPopupPunch, CritPopupLifetime,
-    PopupDelay,
-
-    VisualHitPush, HitPushDuration, HitReturnDuration, HitOvershoot,
-    HitSquashX, HitStretchY, HitSquashDuration, HitRestoreDuration,
-    HitRotation, HitRotationRandomness, HitRotationReturn,
-    WobbleStrength, WobbleFrequency, WobbleDamping, VisualStagger,
-    PhysicalStagger,
-
-    DeathPush, DeathRotation, DeathSquash, DeathStretch, DeathScalePunch,
-    DeathHold, DeathFlash, DeathFlashDuration, DeathFade, DeathShrink,
-    DeathExpand, DeathParticleAmount, DeathParticleScale, DeathParticleSpeed,
-    DeathParticleLifetime, DeathDirectionality, DeathRingSize, DeathRingSpeed,
-    DeathRingOpacity, GhostEnabled, GhostLifetime, GhostPush, GhostScale,
-    GhostFade, OverkillThreshold, OverkillFeedback, OverkillParticles,
-    OverkillDeathPush,
-
-    ShotShakeAmplitude, ShotShakeFrequency, ShotShakeDuration,
-    HitShakeAmplitude, HitShakeFrequency, HitShakeDuration,
-    KillShakeAmplitude, KillShakeDuration, DirectionalKickDistance,
-    DirectionalKickDuration, DirectionalReturn, DirectionalOvershoot,
-    ShotZoomPunch, HitZoomPunch, KillZoomPunch, ZoomAttack, ZoomReturn,
-    CameraSpring, CameraDamping, CameraOvershoot, TowardShot,
-    AwayFromShot, TowardHit,
-
-    ShotFreeze, ShotSlowdown, ShotSlowdownScale, ShotRecovery,
-    HitFreeze, HitSlowdown, HitSlowdownScale, HitRecovery,
-    KillFreeze, KillSlowdown, KillSlowdownScale, KillRecovery,
-    EliteTimeEmphasis, BossTimeEmphasis, LocalEnemyFreeze, GlobalFreeze,
-    FreezeBlend,
-
-    CrowdRadius, CrowdStrength, CrowdFalloff, CrowdMaxTargets,
-    CrowdFlash, CrowdWobble, KillShockwave,
-    RapidKillWindow, RapidKillGain, RapidKillMax, RapidKillDecay,
-
-    HitVignette, KillVignette, ScreenBrightness, ScreenSaturation,
-    LocalHitLight, LocalHitRadius, LocalHitIntensity, LocalHitLifetime,
-    PreFireDuration, PreFireGlow, PreFireCompression, PreFireAimEmphasis,
-
-    MouseLookAhead, LookAheadDistance, LookAheadResponse, LookAheadReturn,
-    LookAheadDeadZone, LookAheadCurve, HorizontalStrength, VerticalStrength,
-    MaxScreenFraction
 }
 
 public readonly struct CombatFeelConsumerDeclaration
@@ -685,7 +609,7 @@ public sealed class CombatFeelParameterMetadata
     }
 }
 
-public sealed class CombatFeelLabSettings
+public sealed class CombatFeelLabSettings : ICombatFeelSettings
 {
     public enum CharacterPreset { Clean, Punchy, Heavy, Arcade, Chaotic }
     public enum GroupPreset { Off, Soft, Medium, Hard, Insane }
@@ -1202,4 +1126,6 @@ public sealed class CombatFeelLabSettings
         F(CombatFeelParameter.PreFireAimEmphasis,g,"Pre-Fire Aim Emphasis",0,0,1,.2f,"Opt-in presentation hook; never applied to all weapons automatically.");
     }
 }
+#endif
+
 #endif

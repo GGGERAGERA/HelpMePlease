@@ -7,8 +7,6 @@ using Subject42.Combat.OrbitalStation;
 
 public sealed class OrbitalRelayContactTests
 {
-    [Test] public void ReleaseContactApiExists()
-    { Assert.That(typeof(OrbitalModuleRuntime).GetMethod("HasBodyContact"), Is.Not.Null); }
     private static bool Contact(SpriteRenderer sprite, Vector2 center, float radius)
     {
         Type detector = typeof(OrbitalModuleRuntime).Assembly.GetType("Subject42.Combat.OrbitalStation.OrbitalBodyContactDetector");

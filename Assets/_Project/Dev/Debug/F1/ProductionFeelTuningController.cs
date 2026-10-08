@@ -1,10 +1,11 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 [DisallowMultipleComponent]
-public sealed class ProductionFeelTuningController : MonoBehaviour
+public sealed class ProductionFeelTuningController : PhysicalCombatFeedbackTuningSource
 {
     public enum Preset
     {
@@ -55,6 +56,7 @@ public sealed class ProductionFeelTuningController : MonoBehaviour
     private float deathPunchDuration;
 
     public CombatFeelLabSettings Lab { get; } = new();
+    public override ICombatFeelSettings FeedbackSettings => Lab;
 
     public Preset CurrentPreset { get; private set; } = Preset.Production;
     public bool HasWeaponFx => weapons.Length > 0;
@@ -73,22 +75,22 @@ public sealed class ProductionFeelTuningController : MonoBehaviour
     public float Acceleration => GetMovementValues().Acceleration;
     public float Deceleration => GetMovementValues().Deceleration;
     public float CameraDamping => GetCameraDamping();
-    public bool HitStopEnabled => hitStopEnabled;
-    public float NormalHitStopDuration => normalHitStopDuration;
-    public float CritHitStopDuration => critHitStopDuration;
-    public float KillHitStopDuration => killHitStopDuration;
-    public bool EnemyHitPunchEnabled => enemyHitPunchEnabled;
-    public float EnemyPunchStrength => enemyPunchStrength;
-    public float EnemyPunchDuration => enemyPunchDuration;
-    public bool EnemyVisualKickEnabled => enemyVisualKickEnabled;
-    public float EnemyKickDistance => enemyKickDistance;
-    public float EnemyKickReturnDuration => enemyKickReturnDuration;
-    public bool WeaponVisualRecoilEnabled => weaponVisualRecoilEnabled;
-    public float WeaponRecoilDistance => weaponRecoilDistance;
-    public float WeaponRecoilReturnDuration => weaponRecoilReturnDuration;
-    public bool DeathPunchEnabled => deathPunchEnabled;
-    public float DeathPunchStrength => deathPunchStrength;
-    public float DeathPunchDuration => deathPunchDuration;
+    public override bool HitStopEnabled => hitStopEnabled;
+    public override float NormalHitStopDuration => normalHitStopDuration;
+    public override float CritHitStopDuration => critHitStopDuration;
+    public override float KillHitStopDuration => killHitStopDuration;
+    public override bool EnemyHitPunchEnabled => enemyHitPunchEnabled;
+    public override float EnemyPunchStrength => enemyPunchStrength;
+    public override float EnemyPunchDuration => enemyPunchDuration;
+    public override bool EnemyVisualKickEnabled => enemyVisualKickEnabled;
+    public override float EnemyKickDistance => enemyKickDistance;
+    public override float EnemyKickReturnDuration => enemyKickReturnDuration;
+    public override bool WeaponVisualRecoilEnabled => weaponVisualRecoilEnabled;
+    public override float WeaponRecoilDistance => weaponRecoilDistance;
+    public override float WeaponRecoilReturnDuration => weaponRecoilReturnDuration;
+    public override bool DeathPunchEnabled => deathPunchEnabled;
+    public override float DeathPunchStrength => deathPunchStrength;
+    public override float DeathPunchDuration => deathPunchDuration;
 
     public void Configure()
     {
@@ -695,4 +697,6 @@ public sealed class ProductionFeelTuningController : MonoBehaviour
         }
     }
 }
+#endif
+
 #endif

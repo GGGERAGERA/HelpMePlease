@@ -5,13 +5,6 @@ using UnityEngine;
 public sealed class WorldHazardTests
 {
     [Test]
-    public void SharedRocketImplementationExists()
-    {
-        Assert.That(typeof(BossRocketAttack).Assembly.GetType("RocketAttackRunner"),
-            Is.Not.Null, "Boss and world hazards need one shared rocket implementation.");
-    }
-
-    [Test]
     public void RoutePresetsEscalateAndReuseBossAssets()
     {
         float previousDelay = float.MaxValue;

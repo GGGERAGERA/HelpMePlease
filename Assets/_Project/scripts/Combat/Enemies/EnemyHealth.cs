@@ -1,10 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-using DropRandom = BotRunSeed.DropRandom;
-#else
-using DropRandom = UnityEngine.Random;
-#endif
+using DropRandom = GameplayRandom.DropRandom;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -123,7 +119,7 @@ public class EnemyHealth : MonoBehaviour
         OnDamageTaken?.Invoke(); // вызываем эффект урона
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        CombatFeelTestDummy testDummy = GetComponent<CombatFeelTestDummy>();
+        EnemyDebugDamagePolicy testDummy = GetComponent<EnemyDebugDamagePolicy>();
         if (testDummy != null && testDummy.Invulnerable)
         {
             currentHealth = maxHealth;
@@ -144,7 +140,7 @@ public class EnemyHealth : MonoBehaviour
         isDead = true;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        if (GetComponent<CombatFeelTestDummy>() != null)
+        if (GetComponent<EnemyDebugDamagePolicy>() is { SuppressesProductionRewards: true })
         {
             DeathFeedback?.Invoke();
             Destroy(gameObject);

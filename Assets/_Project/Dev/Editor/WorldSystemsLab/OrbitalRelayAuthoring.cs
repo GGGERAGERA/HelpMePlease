@@ -18,19 +18,19 @@ public static class OrbitalRelayAuthoring
     static OrbitalRelayAuthoring() { EditorApplication.update += Poll; }
     private static void Poll()
     {
-        const string entrance = "Artifacts/OrbitalRelay/entrance.request";
+        const string entrance = "Artifacts/GeneratedQA/OrbitalRelay/entrance.request";
         if (File.Exists(entrance) && !EditorApplication.isCompiling && !EditorApplication.isUpdating && !EditorApplication.isPlayingOrWillChangePlaymode)
         {
             File.Delete(entrance);
-            try { UpdateEntrancePrefab(); File.WriteAllText("Artifacts/OrbitalRelay/entrance-result.txt", "SUCCESS"); }
-            catch (Exception error) { File.WriteAllText("Artifacts/OrbitalRelay/entrance-result.txt", error.ToString()); Debug.LogException(error); }
+            try { UpdateEntrancePrefab(); File.WriteAllText("Artifacts/GeneratedQA/OrbitalRelay/entrance-result.txt", "SUCCESS"); }
+            catch (Exception error) { File.WriteAllText("Artifacts/GeneratedQA/OrbitalRelay/entrance-result.txt", error.ToString()); Debug.LogException(error); }
             return;
         }
-        const string request = "Artifacts/OrbitalRelay/author.request";
+        const string request = "Artifacts/GeneratedQA/OrbitalRelay/author.request";
         if (!File.Exists(request) || EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode) return;
         File.Delete(request);
-        try { CreateOrUpdateProductionAssets(); File.WriteAllText("Artifacts/OrbitalRelay/author-result.txt", "SUCCESS"); }
-        catch (Exception error) { File.WriteAllText("Artifacts/OrbitalRelay/author-result.txt", error.ToString()); Debug.LogException(error); }
+        try { CreateOrUpdateProductionAssets(); File.WriteAllText("Artifacts/GeneratedQA/OrbitalRelay/author-result.txt", "SUCCESS"); }
+        catch (Exception error) { File.WriteAllText("Artifacts/GeneratedQA/OrbitalRelay/author-result.txt", error.ToString()); Debug.LogException(error); }
     }
     private static void AuthorEntrance(GameObject root, Material material, Sprite round, TMP_FontAsset font)
     {

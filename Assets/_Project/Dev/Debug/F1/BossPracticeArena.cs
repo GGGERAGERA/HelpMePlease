@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using UnityEngine;
 
 // Local practice scene only. Uses the real movement, health and boss ability.
@@ -45,3 +46,5 @@ public sealed class BossPracticeArena : MonoBehaviour
             GUI.Label(new Rect(24, 89, 480, 25), $"Boss: {Boss.State}    Pending rockets: {Boss.PendingRocketCount}");
     }
 }
+
+#endif

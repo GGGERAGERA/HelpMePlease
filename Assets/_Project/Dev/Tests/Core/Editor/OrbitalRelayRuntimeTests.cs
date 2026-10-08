@@ -289,9 +289,9 @@ public sealed class OrbitalRelayRuntimeTests
     }
     private static IEnumerator Capture(string name)
     {
-        Directory.CreateDirectory("Artifacts/OrbitalRelay");
+        Directory.CreateDirectory("Artifacts/GeneratedQA/OrbitalRelay");
         Canvas.ForceUpdateCanvases();
-        ScreenCapture.CaptureScreenshot("Artifacts/OrbitalRelay/" + name + ".png");
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/OrbitalRelay/" + name + ".png");
         yield return null;
     }
 }

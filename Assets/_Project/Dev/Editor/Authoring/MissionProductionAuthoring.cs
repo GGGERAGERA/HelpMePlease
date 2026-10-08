@@ -19,7 +19,7 @@ public static class MissionProductionAuthoring
     public const string MissionPath="Assets/_Project/Data/Missions/MISSION_SIGNAL_TRACE.asset";
     public const string ProviderPath="Assets/_Project/prefabs/Bunker/Missions/PF_MissionOperator.prefab";
     public const string PanelPath="Assets/_Project/prefabs/Bunker/Missions/PF_MissionPanel.prefab";
-    const string Output="Artifacts/Missions";
+    const string Output="Artifacts/GeneratedQA/Missions";
     static MissionProductionAuthoring() { EditorApplication.update+=Poll; }
     static void Poll()
     {

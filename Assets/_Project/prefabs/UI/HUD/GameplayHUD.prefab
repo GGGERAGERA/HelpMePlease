@@ -4283,7 +4283,6 @@ GameObject:
   - component: {fileID: 7665113695026171199}
   - component: {fileID: 5793163650293284378}
   - component: {fileID: 7496206741147952602}
-  - component: {fileID: 8827220217766574112}
   m_Layer: 5
   m_Name: LevelAnomalySystem
   m_TagString: Untagged
@@ -4431,26 +4430,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LocalAnomalyVisual
   view: {fileID: 8755748222406575857}
---- !u!114 &8827220217766574112
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7134289563029601800}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4d7b2f19a8e64a59b0c3d4219f76e812, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Subject42DebugMenu
-  anomalyController: {fileID: 2654860671801718867}
-  enemySpawner: {fileID: 0}
-  characterSpawner: {fileID: 0}
-  upgradeManager: {fileID: 0}
-  runFlowController: {fileID: 0}
-  levelChoiceManager: {fileID: 0}
-  turretEnemyPrefab: {fileID: 1334349216365075605, guid: 9a2217687199c7b41894a7ab9673f951, type: 3}
-  eyesEnemyPrefab: {fileID: 3350373065324294653, guid: 74d98ca6a4a3cc94daabdf7b81bb7f13, type: 3}
 --- !u!1 &7360601137560401867
 GameObject:
   m_ObjectHideFlags: 0

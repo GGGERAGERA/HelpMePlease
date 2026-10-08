@@ -5146,10 +5146,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 834de95a5876c554c843d37a7abd8b88, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LaserBeamRenderer
-  coreMaterial: {fileID: 2100000, guid: 91d132427295d144ead3f3fb486918c3, type: 2}
+  coreMaterial: {fileID: 0}
   coreColor: {r: 1, g: 1, b: 1, a: 1}
   coreWidth: 0.035
-  glowMaterial: {fileID: 2100000, guid: ef6775db5138cf04a81b8df684f26731, type: 2}
+  glowMaterial: {fileID: 0}
   glowColor: {r: 0.1, g: 0.85, b: 1, a: 0.54509807}
   glowWidth: 0.18
   beamDuration: 0.1

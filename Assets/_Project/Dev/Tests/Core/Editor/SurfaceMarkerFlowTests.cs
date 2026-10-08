@@ -33,7 +33,8 @@ public sealed class SurfaceMarkerFlowTests
         station.Interact(); var view = Object.FindFirstObjectByType<SurfaceMapView>(); service.TrySelect("D1"); yield return null;
         Assert.That(Read<TMPro.TMP_Text>(view,"details").text,Is.EqualTo("UNKNOWN ACTIVITY\nSignal detected"));
         Assert.That(Object.FindFirstObjectByType<SurfaceMapNavigation>(),Is.Not.Null);
-        ScreenCapture.CaptureScreenshot("Artifacts/SurfaceMap/marker-map.png"); yield return null;
+        System.IO.Directory.CreateDirectory("Artifacts/GeneratedQA/SurfaceMap");
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/SurfaceMap/marker-map.png"); yield return null;
         Read<Button>(view,"startButton").onClick.Invoke();
         yield return CoreTestSupport.Await(() => SceneManager.GetActiveScene().name == "MVP" && !SceneTransitionOverlay.IsTransitioning && Object.FindFirstObjectByType<OrbitalStationRuntime>() is { IsInitialized:true });
         var run = RunStateManager.Instance; var config = run.CurrentConfig;

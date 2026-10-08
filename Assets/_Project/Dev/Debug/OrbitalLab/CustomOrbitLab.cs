@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using Subject42.Combat.OrbitalStation;
 using UnityEngine;
 
@@ -91,3 +92,5 @@ namespace Subject42.DebugLabs
         }
     }
 }
+
+#endif

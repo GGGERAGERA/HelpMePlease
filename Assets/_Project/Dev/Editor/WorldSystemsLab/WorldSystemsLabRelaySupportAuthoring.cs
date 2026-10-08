@@ -16,11 +16,11 @@ public static class WorldSystemsLabRelaySupportAuthoring
     static WorldSystemsLabRelaySupportAuthoring() { EditorApplication.update += Poll; }
     private static void Poll()
     {
-        const string request = "Artifacts/OrbitalRelay/lab.request";
+        const string request = "Artifacts/GeneratedQA/OrbitalRelay/lab.request";
         if (!File.Exists(request) || EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode) return;
         File.Delete(request);
-        try { CreateSupportAndPatchLab(); File.WriteAllText("Artifacts/OrbitalRelay/lab-result.txt", "SUCCESS"); }
-        catch (Exception error) { File.WriteAllText("Artifacts/OrbitalRelay/lab-result.txt", error.ToString()); Debug.LogException(error); }
+        try { CreateSupportAndPatchLab(); File.WriteAllText("Artifacts/GeneratedQA/OrbitalRelay/lab-result.txt", "SUCCESS"); }
+        catch (Exception error) { File.WriteAllText("Artifacts/GeneratedQA/OrbitalRelay/lab-result.txt", error.ToString()); Debug.LogException(error); }
     }
     public static void CreateSupportAndPatchLab()
     {

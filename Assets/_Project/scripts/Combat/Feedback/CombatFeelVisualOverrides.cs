@@ -4,7 +4,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class CombatFeelProjectileVisual : MonoBehaviour
 {
-    private CombatFeelLabSettings settings;
+    private ICombatFeelSettings settings;
     private Transform visual;
     private Vector3 basePosition;
     private Vector3 baseScale;
@@ -28,7 +28,7 @@ public sealed class CombatFeelProjectileVisual : MonoBehaviour
     public Transform DebugPresentationTransform => visual;
     public bool DebugUsesRootRendererProxy => rootRendererProxy != null;
 
-    public void Configure(CombatFeelLabSettings lab, Vector2 direction)
+    public void Configure(ICombatFeelSettings lab, Vector2 direction)
     {
         Capture();
         Restore();
@@ -248,12 +248,12 @@ public sealed class CombatFeelParticleOverride : MonoBehaviour
     private float[] lifetimes;
     private float[] emissionRates;
     private ParticleSystem.MinMaxGradient[] startColors;
-    private CombatFeelLabSettings settings;
+    private ICombatFeelSettings settings;
     private bool muzzle;
     private Vector2 direction;
     private int appliedVersion;
 
-    public void Configure(CombatFeelLabSettings settings, bool muzzle, Vector2 direction)
+    public void Configure(ICombatFeelSettings settings, bool muzzle, Vector2 direction)
     {
         if (systems == null)
             Capture();

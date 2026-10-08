@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using UnityEngine;
 
 /// <summary>Authored provenance for a static gallery exhibit; no runtime discovery or gameplay.</summary>
@@ -14,3 +15,5 @@ public sealed class EnemyGalleryCandidateMarker : MonoBehaviour
     public GameObject Label;
     public float PreviewScale = 1f;
 }
+
+#endif

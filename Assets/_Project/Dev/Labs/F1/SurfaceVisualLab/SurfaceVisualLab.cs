@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System.Collections;
 using UnityEngine;
 using Subject42.Combat.OrbitalStation;
@@ -148,3 +149,5 @@ public sealed class SurfaceVisualLab : MonoBehaviour
         if (ownedRun != null) Destroy(ownedRun.gameObject);
     }
 }
+
+#endif

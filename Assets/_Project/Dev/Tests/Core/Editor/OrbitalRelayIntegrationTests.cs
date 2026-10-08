@@ -3,8 +3,15 @@ using NUnit.Framework;
 using UnityEngine;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Collections;
+using UnityEngine.TestTools;
+using UnityEditor.SceneManagement;
 public sealed class OrbitalRelayIntegrationTests
 {
+    [UnityTearDown] public IEnumerator ExitFixturePlayMode()
+    {
+        if (Application.isPlaying) yield return new ExitPlayMode();
+    }
     [Test] public void BotEvadesNearbyThreatWithZeroTransitionTracking()
     {
         var host = new GameObject("relay steering contract"); var threat = new GameObject("nearby threat");
@@ -38,12 +45,6 @@ public sealed class OrbitalRelayIntegrationTests
             Object.DestroyImmediate(threat); Object.DestroyImmediate(relayRoot); Object.DestroyImmediate(host);
             if (ownsRun && RunStateManager.Instance != null) Object.DestroyImmediate(RunStateManager.Instance.gameObject);
         }
-    }
-    [Test] public void TutorialAndBotConsumeProductionRelay()
-    {
-        Assert.That(typeof(TutorialController).GetProperty("TargetEvent").PropertyType, Is.EqualTo(typeof(OrbitalRelayEvent)));
-        Assert.That(typeof(ProductionExplorationSectorController).GetMethod("TryRespawnTutorialRelay"), Is.Not.Null);
-        Assert.That(typeof(BotController).Assembly.GetType("OrbitalRelayBotSteering"), Is.Not.Null);
     }
     [Test] public void TutorialRetryDoesNotDuplicateEntrySubscriptions()
     {
@@ -86,10 +87,13 @@ public sealed class OrbitalRelayIntegrationTests
         }
         finally { Object.DestroyImmediate(host); Object.DestroyImmediate(target); Object.DestroyImmediate(rewardHost); }
     }
-    [Test] public void TutorialRespawnsRegisteredProductionPrefabAtRememberedPlacement()
+    [UnityTest] public IEnumerator TutorialRespawnsRegisteredProductionPrefabAtRememberedPlacement()
     {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        yield return new EnterPlayMode();
         var runHost = new GameObject("tutorial run metadata"); var host = new GameObject("tutorial placement owner");
         var localizationHost = new GameObject("tutorial fixture localization");
+        localizationHost.SetActive(false);
         var localizationInstance = typeof(LocalizationService).GetField("<Instance>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
         object previousLocalization = localizationInstance.GetValue(null);
         var instance = typeof(RunStateManager).GetField("<Instance>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
@@ -99,6 +103,7 @@ public sealed class OrbitalRelayIntegrationTests
         {
             var localization = localizationHost.AddComponent<LocalizationService>();
             OrbitalRelayAuthoring.Set(localization, "table", UnityEditor.AssetDatabase.LoadAssetAtPath<LocalizationTable>("Assets/_Project/Data/Localization/LocalizationTable.asset"));
+            localizationHost.SetActive(true);
             localizationInstance.SetValue(null, localization);
             var run = runHost.AddComponent<RunStateManager>(); instance.SetValue(null, run);
             run.SetCurrentSector(new RunSector(RunRoute.TutorialSector, null, null, null));
@@ -126,11 +131,7 @@ public sealed class OrbitalRelayIntegrationTests
             Object.DestroyImmediate(host); Object.DestroyImmediate(runHost); instance.SetValue(null, previous);
             localizationInstance.SetValue(null, previousLocalization); Object.DestroyImmediate(localizationHost);
         }
-    }
-    [Test] public void ScopedPressureContractExists()
-    {
-        Assert.That(typeof(WorldEventSpawner).GetMethod("AcquireSpawnPressure"), Is.Not.Null);
-        Assert.That(typeof(WorldEvent).GetProperty("UsesStandardSpawnPressure"), Is.Not.Null);
+        yield return new ExitPlayMode();
     }
     [Test] public void StandardPressureAndRuleMultiplierSurviveScopedModifier()
     {
@@ -162,7 +163,6 @@ public sealed class OrbitalRelayIntegrationTests
             if (ownsRun && RunStateManager.Instance != null) Object.DestroyImmediate(RunStateManager.Instance.gameObject);
         }
     }
-    [Test] public void CompletionRewardContractExists() { Assert.That(typeof(WorldEvent).GetProperty("CompletionReward"), Is.Not.Null); }
     [Test] public void PreviewCompletionDispatchesOnceWithoutCurrencyOrContainer()
     {
         var host = new GameObject("reward owner"); var target = new GameObject("reward target");

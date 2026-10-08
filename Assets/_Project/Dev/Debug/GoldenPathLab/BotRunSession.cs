@@ -37,6 +37,7 @@ public sealed partial class BotRunSession : MonoBehaviour
     private float requestedAt, startedAt, nextChoice;
     private string pendingException;
     private bool ownsSeed, ownsSpeed;
+    private Func<bool> suppressTutorial;
     private bool saveStandaloneResult = true;
     private float restoreScale = 1f;
 
@@ -48,6 +49,8 @@ public sealed partial class BotRunSession : MonoBehaviour
     private void Awake()
     {
         Current = this;
+        suppressTutorial = () => BotEnabled || IsStarting || IsRunning;
+        RunDevelopmentOverrides.SuppressTutorial = suppressTutorial;
         DontDestroyOnLoad(gameObject);
         Application.logMessageReceived += OnLog;
     }
@@ -258,6 +261,8 @@ public sealed partial class BotRunSession : MonoBehaviour
     private void OnDestroy()
     {
         Application.logMessageReceived -= OnLog;
+        if (RunDevelopmentOverrides.SuppressTutorial == suppressTutorial)
+            RunDevelopmentOverrides.SuppressTutorial = null;
         if (Current == this) Current = null;
     }
 }

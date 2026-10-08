@@ -13,7 +13,7 @@ using UnityEngine.UI;
 [InitializeOnLoad]
 public static class SurfaceMapVisualPreview
 {
-    const string Output="Artifacts/SurfaceMap";
+    const string Output="Artifacts/GeneratedQA/SurfaceMap";
     const string Prefab="Assets/_Project/prefabs/UI/SurfaceMap/PF_SurfaceMap.prefab";
     static SurfaceMapVisualPreview() { EditorApplication.update+=Poll; }
     static void Poll()

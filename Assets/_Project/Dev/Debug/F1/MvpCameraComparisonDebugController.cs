@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System.Globalization;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -80,4 +81,6 @@ public sealed class MvpCameraComparisonDebugController : MonoBehaviour
             (cameraShakeEnabled ? "ON" : "OFF"));
     }
 }
+#endif
+
 #endif

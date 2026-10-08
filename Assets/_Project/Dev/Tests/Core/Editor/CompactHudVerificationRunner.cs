@@ -7,35 +7,63 @@ using UnityEngine;
 [InitializeOnLoad]
 public static class CompactHudVerificationRunner
 {
+    private const string Output = "Artifacts/GeneratedQA/CompactHud";
+    private const string RunningKey = "CompactHudVerification.Running";
+    private const string AnyRunKey = "Subject42.Verification.AnyRunActive";
     static CompactHudVerificationRunner()
     {
         ScriptableObject.CreateInstance<TestRunnerApi>().RegisterCallbacks(new Results());
         EditorApplication.update += () =>
         {
-            const string request = "Artifacts/GeneratedQA/CompactHud/run.request";
-            if (!File.Exists(request) || EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode) return;
+            const string request = Output + "/run.request";
+            if (!File.Exists(request) || EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode || SessionState.GetBool(AnyRunKey, false)) return;
             var filter = File.ReadAllText(request).Trim();
             File.Delete(request);
             if (filter.Length == 0) Run();
-            else ScriptableObject.CreateInstance<TestRunnerApi>().Execute(
-                new ExecutionSettings(new Filter { testMode = TestMode.EditMode, testNames = new[] { filter } }));
+            else Execute(new Filter { testMode = TestMode.EditMode, testNames = new[] { filter } });
         };
     }
 
     [MenuItem("Tools/Subject42/Verify Compact HUD")]
-    public static void Run() => ScriptableObject.CreateInstance<TestRunnerApi>().Execute(
-        new ExecutionSettings(new Filter { testMode = TestMode.EditMode,
-            testNames = new[] { "CompactHudTests", "CompactHudPlayTests" } }));
+    public static void Run() => Execute(new Filter { testMode = TestMode.EditMode,
+        testNames = new[] { "CompactHudTests", "CompactHudPlayTests" } });
 
-    private sealed class Results : ICallbacks
+    private static void Execute(Filter filter)
     {
-        public void RunStarted(ITestAdaptor tests) { }
+        if (SessionState.GetBool(AnyRunKey, false)) return;
+        SessionState.SetBool(AnyRunKey, true);
+        SessionState.SetBool(RunningKey, true);
+        try { ScriptableObject.CreateInstance<TestRunnerApi>().Execute(new ExecutionSettings(filter)); }
+        catch { SessionState.EraseBool(AnyRunKey); SessionState.EraseBool(RunningKey); throw; }
+    }
+
+    private sealed class Results : IErrorCallbacks
+    {
+        public void RunStarted(ITestAdaptor tests) { SessionState.SetBool(AnyRunKey, true); }
         public void TestStarted(ITestAdaptor test) { }
         public void TestFinished(ITestResultAdaptor result) { }
         public void RunFinished(ITestResultAdaptor result)
         {
-            Directory.CreateDirectory("Artifacts/GeneratedQA/CompactHud");
-            TestRunnerApi.SaveResultToFile(result, "Artifacts/GeneratedQA/CompactHud/results.xml");
+            SessionState.EraseBool(AnyRunKey);
+            if (!SessionState.GetBool(RunningKey, false)) return;
+            SessionState.EraseBool(RunningKey);
+            Directory.CreateDirectory(Output);
+            TestRunnerApi.SaveResultToFile(result, Output + "/results.xml");
+            if (result.PassCount + result.FailCount == 0)
+            {
+                const string message = "FAIL: the request produced no passing or failing test cases. Check filter names and results.xml for skipped/inconclusive cases.";
+                File.WriteAllText(Output + "/run-error.txt", message);
+                Debug.LogError(message);
+            }
+            else if (File.Exists(Output + "/run-error.txt")) File.Delete(Output + "/run-error.txt");
+        }
+        public void OnError(string message)
+        {
+            SessionState.EraseBool(AnyRunKey);
+            if (!SessionState.GetBool(RunningKey, false)) return;
+            SessionState.EraseBool(RunningKey);
+            Directory.CreateDirectory(Output);
+            File.WriteAllText(Output + "/run-error.txt", message);
         }
     }
 }

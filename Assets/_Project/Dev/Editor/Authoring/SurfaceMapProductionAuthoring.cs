@@ -22,11 +22,11 @@ public static class SurfaceMapProductionAuthoring
     static SurfaceMapProductionAuthoring() { EditorApplication.update += Poll; }
     private static void Poll()
     {
-        const string request = "Artifacts/SurfaceMap/author.request";
+        const string request = "Artifacts/GeneratedQA/SurfaceMap/author.request";
         if (!File.Exists(request) || EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode) return;
         File.Delete(request);
-        try { Author(); File.WriteAllText("Artifacts/SurfaceMap/author-result.txt", "SUCCESS"); }
-        catch (Exception e) { File.WriteAllText("Artifacts/SurfaceMap/author-result.txt", e.ToString()); Debug.LogException(e); }
+        try { Author(); File.WriteAllText("Artifacts/GeneratedQA/SurfaceMap/author-result.txt", "SUCCESS"); }
+        catch (Exception e) { File.WriteAllText("Artifacts/GeneratedQA/SurfaceMap/author-result.txt", e.ToString()); Debug.LogException(e); }
     }
     private static T[] All<T>(Scene scene) where T : Component => scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<T>(true)).ToArray();
     private static T One<T>(Scene scene) where T : Component => All<T>(scene).Single();

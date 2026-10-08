@@ -26,7 +26,7 @@ and batch completion refresh the display automatically.
 
 The lab UI integration check completed seed `48151623` at 5× with PASS and
 verified the automatic scene return and new result row. Fixed screenshots are
-in `Artifacts/BotBatches/golden_path_lab_running.png` and
+in `Artifacts/GeneratedQA/BotBatches/golden_path_lab_running.png` and
 `golden_path_lab_after.png`; these are UI checks, not another result store.
 
 The existing `BotRunSession`, `BotController`, `BotTelemetry`, `BotRunSeed` and
@@ -59,7 +59,7 @@ with a fresh baseline, and a final return to the bunker.
 
 ## Results and failures
 
-`Artifacts/BotBatches/latest_batch.json` and `.csv` remain the current batch
+`Artifacts/GeneratedQA/BotBatches/latest_batch.json` and `.csv` remain the current batch
 artifacts. Each existing BotRunResult contains a GoldenPathResult. Completed
 Golden Path batches, including failed attempts, are also retained in the single
 `Artifacts/GeneratedQA/BotBatches/golden_path_history.json`; no per-run files are created.
@@ -180,6 +180,6 @@ they are not production fixes from this task:
 - Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Fallback.asset
 - Assets/_Project/art/mat/UI/M_UI_WorldRuleOverlay.mat
 
-Generated evidence remains in Artifacts/BotBatches/latest_batch.json, its CSV,
+Generated evidence remains in Artifacts/GeneratedQA/BotBatches/latest_batch.json, its CSV,
 golden_path_history.json and Artifacts/GeneratedQA/CorePulse/results.xml and
 progress.txt. Changes remain in the working tree on TestByDantes (0ef71209).

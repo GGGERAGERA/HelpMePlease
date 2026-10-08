@@ -114,8 +114,8 @@ public static class CharacterSelectionPrototype
         var old=RenderTexture.active; RenderTexture.active=rt;
         var shot=new Texture2D(1920,1080,TextureFormat.RGB24,false);
         shot.ReadPixels(new Rect(0,0,1920,1080),0,0); shot.Apply();
-        Directory.CreateDirectory("Artifacts/Subject42UIPrototype");
-        File.WriteAllBytes("Artifacts/Subject42UIPrototype/CharacterSelection.png",shot.EncodeToPNG());
+        Directory.CreateDirectory("Artifacts/GeneratedQA/Subject42UIPrototype");
+        File.WriteAllBytes("Artifacts/GeneratedQA/Subject42UIPrototype/CharacterSelection.png",shot.EncodeToPNG());
         RenderTexture.active=old; cam.targetTexture=null;
         Object.DestroyImmediate(shot); rt.Release(); Object.DestroyImmediate(rt);
         EditorSceneManager.CloseScene(scene,true);

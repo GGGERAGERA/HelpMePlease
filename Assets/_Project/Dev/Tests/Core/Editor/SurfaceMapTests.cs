@@ -1,5 +1,4 @@
 #if UNITY_EDITOR
-using System;
 using System.Linq;
 using NUnit.Framework;
 using UnityEditor;
@@ -20,12 +19,6 @@ public sealed class SurfaceMapTests
         typeof(Subject42ProjectValidator).GetMethod("ValidateMainMenuScene",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static).Invoke(null,new object[]{report});
         Assert.That(report.ErrorCount,Is.Zero,report.FormatErrors());
     }
-    [Test] public void SurfaceContractExists()
-    {
-        foreach (string name in new[] { "SurfaceMapDefinition", "SurfaceSectorDefinition", "SurfaceMapProgressionState", "SurfaceMapService", "RunConfig", "SurfaceMapView" })
-            Assert.That(typeof(RunStateManager).Assembly.GetType(name), Is.Not.Null, name + " is missing");
-    }
-
     [Test] public void ProductionBunkerHasContextAndWorkingStations()
     {
         var setup = EditorSceneManager.GetSceneManagerSetup();

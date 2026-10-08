@@ -222,7 +222,8 @@ public sealed class ProductionBunkerFlowTests
         Assert.That(Object.FindObjectsByType<RunSelectionManager>(FindObjectsSortMode.None).Length, Is.EqualTo(1));
         Assert.That(Object.FindObjectsByType<MetaProgressionManager>(FindObjectsSortMode.None).Length, Is.EqualTo(1));
         Assert.That(Object.FindObjectsByType<BunkerStationProgressionService>(FindObjectsSortMode.None).Length, Is.EqualTo(1));
-        UnityEngine.ScreenCapture.CaptureScreenshot("Artifacts/SurfaceMap/production-bunker.png");
+        System.IO.Directory.CreateDirectory("Artifacts/GeneratedQA/SurfaceMap");
+        UnityEngine.ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/SurfaceMap/production-bunker.png");
         foreach (var kind in new[] { BunkerStationType.CharacterSelection, BunkerStationType.WeaponSelection, BunkerStationType.Upgrade, BunkerStationType.AnomalyStabilizer })
         {
             Station(kind).Interact(); Assert.That(Object.FindFirstObjectByType<SelectionPanelController>().IsOpen, Is.True, kind.ToString()); context.Panels.CloseAll(false);
@@ -240,7 +241,8 @@ public sealed class ProductionBunkerFlowTests
         var view = Object.FindFirstObjectByType<SurfaceMapView>(); Assert.That(view, Is.Not.Null);
         Assert.That(context.Panels.IsAnyPanelOpen, Is.True); Assert.That(service.TrySelect("C1"), Is.True);
         yield return null;
-        UnityEngine.ScreenCapture.CaptureScreenshot("Artifacts/SurfaceMap/surface-map.png");
+        System.IO.Directory.CreateDirectory("Artifacts/GeneratedQA/SurfaceMap");
+        UnityEngine.ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/SurfaceMap/surface-map.png");
         yield return null;
         Read<Button>(view,"startButton").onClick.Invoke();
         yield return ReadyRun();

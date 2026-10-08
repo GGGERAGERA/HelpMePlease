@@ -107,9 +107,9 @@ public sealed class StartScreenPresentationTests
         var menu = (CanvasGroup)data.FindProperty("menu").objectReferenceValue;
         var settingsButton = (Button)data.FindProperty("settingsButton").objectReferenceValue;
         var beginButton = (Button)data.FindProperty("beginButton").objectReferenceValue;
-        System.IO.Directory.CreateDirectory("Artifacts/StartScreen");
+        System.IO.Directory.CreateDirectory("Artifacts/GeneratedQA/StartScreen");
         yield return null;
-        ScreenCapture.CaptureScreenshot("Artifacts/StartScreen/menu-clear.png");
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/StartScreen/menu-clear.png");
         yield return new WaitForSecondsRealtime(.4f);
         AssertReachable(beginButton);
         AssertReachable(settingsButton);
@@ -118,7 +118,7 @@ public sealed class StartScreenPresentationTests
         Assert.That(menu.interactable, Is.False);
         AssertWindowModeSelectionPersists(settings);
         yield return null;
-        ScreenCapture.CaptureScreenshot("Artifacts/StartScreen/menu-settings.png");
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/StartScreen/menu-settings.png");
         yield return new WaitForSecondsRealtime(.4f);
         settings.Close();
         Assert.That(menu.interactable, Is.True);
@@ -133,7 +133,7 @@ public sealed class StartScreenPresentationTests
         yield return null;
         yield return null;
         Assert.That(fog.color.a, Is.GreaterThan(.1f), "Condensation must animate even while time is paused");
-        ScreenCapture.CaptureScreenshot("Artifacts/StartScreen/menu-condensation.png");
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/StartScreen/menu-condensation.png");
         yield return new WaitForSecondsRealtime(.4f);
         nextBreath.SetValue(atmosphere, Time.unscaledTime - 10f);
         yield return null;

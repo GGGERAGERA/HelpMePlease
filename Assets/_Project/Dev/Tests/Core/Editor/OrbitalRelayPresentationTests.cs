@@ -16,7 +16,7 @@ using Object = UnityEngine.Object;
 // A single short production MVP check. No lab, bot or batch runner.
 public sealed class OrbitalRelayPresentationTests
 {
-    public const string Output = "Artifacts/OrbitalRelay/Presentation";
+    public const string Output = "Artifacts/GeneratedQA/OrbitalRelay/Presentation";
     [Serializable] private sealed class Preference { public string key; public bool exists; public int value; }
     [Serializable] private sealed class Preferences { public Preference[] values; }
     [SetUp] public void Setup() => CoreTestSupport.PreservePreferences();
@@ -136,29 +136,50 @@ public sealed class OrbitalRelayPresentationTests
 
 [InitializeOnLoad] public static class OrbitalRelayPresentationVerification
 {
+    private const string RunningKey = "RelayPresentationCheck";
+    private const string AnyRunKey = "Subject42.Verification.AnyRunActive";
     static OrbitalRelayPresentationVerification()
     {
         ScriptableObject.CreateInstance<TestRunnerApi>().RegisterCallbacks(new Results());
         EditorApplication.update += () =>
         {
             string request = OrbitalRelayPresentationTests.Output + "/check.request";
-            if (!File.Exists(request) || EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode) return;
+            if (!File.Exists(request) || EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode || SessionState.GetBool(AnyRunKey, false)) return;
             File.Delete(request);
-            SessionState.SetBool("RelayPresentationCheck", true);
-            ScriptableObject.CreateInstance<TestRunnerApi>().Execute(new ExecutionSettings(new Filter
-                { testMode = UnityEditor.TestTools.TestRunner.Api.TestMode.EditMode, testNames = new[] { nameof(OrbitalRelayPresentationTests) } }));
+            SessionState.SetBool(AnyRunKey, true);
+            SessionState.SetBool(RunningKey, true);
+            try { ScriptableObject.CreateInstance<TestRunnerApi>().Execute(new ExecutionSettings(new Filter
+                { testMode = UnityEditor.TestTools.TestRunner.Api.TestMode.EditMode, testNames = new[] { nameof(OrbitalRelayPresentationTests) } })); }
+            catch { SessionState.EraseBool(AnyRunKey); SessionState.EraseBool(RunningKey); throw; }
         };
     }
-    private sealed class Results : ICallbacks
+    private sealed class Results : IErrorCallbacks
     {
-        public void RunStarted(ITestAdaptor tests) { }
+        public void RunStarted(ITestAdaptor tests) { SessionState.SetBool(AnyRunKey, true); }
         public void TestStarted(ITestAdaptor test) { }
         public void TestFinished(ITestResultAdaptor result) { }
         public void RunFinished(ITestResultAdaptor result)
         {
-            if (!SessionState.GetBool("RelayPresentationCheck", false)) return;
-            SessionState.EraseBool("RelayPresentationCheck");
+            SessionState.EraseBool(AnyRunKey);
+            if (!SessionState.GetBool(RunningKey, false)) return;
+            SessionState.EraseBool(RunningKey);
+            Directory.CreateDirectory(OrbitalRelayPresentationTests.Output);
             TestRunnerApi.SaveResultToFile(result, OrbitalRelayPresentationTests.Output + "/results.xml");
+            if (result.PassCount + result.FailCount == 0)
+            {
+                const string message = "FAIL: the request produced no passing or failing test cases. Check filter names and results.xml for skipped/inconclusive cases.";
+                File.WriteAllText(OrbitalRelayPresentationTests.Output + "/run-error.txt", message);
+                Debug.LogError(message);
+            }
+            else if (File.Exists(OrbitalRelayPresentationTests.Output + "/run-error.txt")) File.Delete(OrbitalRelayPresentationTests.Output + "/run-error.txt");
+        }
+        public void OnError(string message)
+        {
+            SessionState.EraseBool(AnyRunKey);
+            if (!SessionState.GetBool(RunningKey, false)) return;
+            SessionState.EraseBool(RunningKey);
+            Directory.CreateDirectory(OrbitalRelayPresentationTests.Output);
+            File.WriteAllText(OrbitalRelayPresentationTests.Output + "/run-error.txt", message);
         }
     }
 }

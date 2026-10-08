@@ -82,7 +82,8 @@ public sealed class MissionProductionFlowTests
         var exit=Object.FindObjectsByType<BunkerStation>(FindObjectsSortMode.None).First(s=>Read<BunkerStationType>(s,"stationType")==BunkerStationType.StartRun);
         exit.Interact(); map.TrySelect(definition.TargetSectorId); yield return null;
         var view=Object.FindFirstObjectByType<SurfaceMapView>(); Assert.That(Read<TMP_Text>(view,"details").text,Does.Contain("ACTIVE MISSION").And.Contain("100 GOLD").And.Contain("Investigate False Signal"));
-        ScreenCapture.CaptureScreenshot("Artifacts/Missions/mission-map.png"); yield return null;
+        System.IO.Directory.CreateDirectory("Artifacts/GeneratedQA/Missions");
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/Missions/mission-map.png"); yield return null;
         Read<Button>(view,"startButton").onClick.Invoke();
         yield return CoreTestSupport.Await(()=>SceneManager.GetActiveScene().name=="MVP"&&!SceneTransitionOverlay.IsTransitioning&&Object.FindFirstObjectByType<OrbitalStationRuntime>() is { IsInitialized:true });
         var run=RunStateManager.Instance; var config=run.CurrentConfig;
@@ -111,7 +112,8 @@ public sealed class MissionProductionFlowTests
         player.position=provider.transform.position+new Vector3(0,-1); Physics2D.SyncTransforms(); Assert.That(provider.CanInteract,Is.True,"Provider must work immediately after the production return"); provider.Interact(); panel=Object.FindFirstObjectByType<BunkerMissionPanel>();
         Assert.That(panel,Is.Not.Null);
         Assert.That(Read<TMP_Text>(panel,"body").text,Does.Contain("SIGNAL TRACE COMPLETE"));
-        ScreenCapture.CaptureScreenshot("Artifacts/Missions/mission-turn-in.png"); yield return null;
+        System.IO.Directory.CreateDirectory("Artifacts/GeneratedQA/Missions");
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/Missions/mission-turn-in.png"); yield return null;
         int before=CurrencyManager.Instance.TotalGold; Read<Button>(panel,"actionButton").onClick.Invoke();
         Assert.That(CurrencyManager.Instance.TotalGold-before,Is.EqualTo(definition.Reward.Gold)); Assert.That(missions.GetState(id),Is.EqualTo(MissionState.Completed));
         Assert.That(missions.Claim(id),Is.False); Assert.That(storage.HasClaimReceipt(id),Is.True); Assert.That(arrow.gameObject.activeSelf,Is.True,"Functional operators keep their station arrow after completion.");

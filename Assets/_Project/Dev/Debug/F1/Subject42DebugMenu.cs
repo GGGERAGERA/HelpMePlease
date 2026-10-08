@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -224,6 +225,7 @@ public sealed class CombatFeelTooltipTrigger : MonoBehaviour,
 }
 #endif
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 public sealed partial class Subject42DebugMenu : MonoBehaviour
 {
     [Header("Existing scene systems")]
@@ -247,17 +249,30 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private Func<bool> inputBlocker;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void BootstrapBunkerMenu()
+    private static void BootstrapDevelopmentMenu()
     {
-        SceneManager.sceneLoaded -= AttachBunkerMenu;
-        SceneManager.sceneLoaded += AttachBunkerMenu;
-        AttachBunkerMenu(SceneManager.GetActiveScene(), LoadSceneMode.Single);
+        SceneManager.sceneLoaded -= AttachDevelopmentMenu;
+        SceneManager.sceneLoaded += AttachDevelopmentMenu;
+        SceneManager.sceneUnloaded -= RebindDevelopmentMenu;
+        SceneManager.sceneUnloaded += RebindDevelopmentMenu;
+        AttachDevelopmentMenu(SceneManager.GetActiveScene(), LoadSceneMode.Single);
     }
 
-    private static void AttachBunkerMenu(Scene scene, LoadSceneMode mode)
+    private static void AttachDevelopmentMenu(Scene scene, LoadSceneMode mode)
     {
-        foreach (var context in scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<BunkerContext>(true)))
+        if (activeInstance != null) return;
+        var roots = scene.GetRootGameObjects();
+        if (roots.SelectMany(root => root.GetComponentsInChildren<Subject42DebugMenu>(true)).Any()) return;
+        var host = roots.SelectMany(root => root.GetComponentsInChildren<HUDManager>(true)).FirstOrDefault();
+        if (host != null) { host.gameObject.AddComponent<Subject42DebugMenu>(); return; }
+        foreach (var context in roots.SelectMany(root => root.GetComponentsInChildren<BunkerContext>(true)))
             if (context.GetComponent<Subject42DebugMenu>() == null) context.gameObject.AddComponent<Subject42DebugMenu>();
+    }
+
+    private static void RebindDevelopmentMenu(Scene unloaded)
+    {
+        for (int i = 0; i < SceneManager.sceneCount && activeInstance == null; i++)
+            AttachDevelopmentMenu(SceneManager.GetSceneAt(i), LoadSceneMode.Additive);
     }
 
     private void BindInputOwner()
@@ -398,6 +413,12 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private void Awake()
     {
+        if (activeInstance != null && activeInstance != this)
+        {
+            enabled = false;
+            Destroy(this);
+            return;
+        }
         activeInstance = this;
         ResolveSceneReferences();
     }
@@ -760,6 +781,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         anomalyController ??= FindFirstObjectByType<LevelAnomalyController>();
         enemySpawner ??= FindFirstObjectByType<EnemySpawner>();
         characterSpawner ??= FindFirstObjectByType<CharacterSpawner>();
+        turretEnemyPrefab ??= enemySpawner?.FindDebugEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Turret);
+        eyesEnemyPrefab ??= enemySpawner?.FindDebugEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Eyes);
         upgradeManager ??= UpgradeManager.Instance != null
             ? UpgradeManager.Instance
             : FindFirstObjectByType<UpgradeManager>();
@@ -5488,10 +5511,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         rect.offsetMin = new Vector2(left, bottom);
         rect.offsetMax = new Vector2(-right, -top);
     }
-#else
-    private void Awake()
-    {
-        enabled = false;
-    }
 #endif
 }
+#endif
+
+#endif

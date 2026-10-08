@@ -1,6 +1,4 @@
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-using Random = BotRunSeed.EventRandom;
-#endif
+using Random = GameplayRandom.EventRandom;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;

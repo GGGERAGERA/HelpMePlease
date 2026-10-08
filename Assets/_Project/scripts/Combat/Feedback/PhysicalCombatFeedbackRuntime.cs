@@ -57,13 +57,12 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
     }
 
     private static PhysicalCombatFeedbackRuntime instance;
-    private static readonly CombatFeelLabSettings fallbackLab = new();
 
     private readonly Dictionary<int, EnemyPose> enemyPoses = new();
     private readonly Dictionary<int, WeaponPose> weaponPoses = new();
     private readonly List<int> expiredKeys = new();
 
-    private ProductionFeelTuningController tuning;
+    private PhysicalCombatFeedbackTuningSource tuning;
     private bool hitStopActive;
     private float hitStopBaseline;
     private float hitStopAppliedScale;
@@ -92,7 +91,7 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
     public static string WeaponVisualRootPolicy =>
         "first SpriteRenderer child of WeaponFxPlayer";
 
-    public void Configure(ProductionFeelTuningController owner)
+    public void Configure(PhysicalCombatFeedbackTuningSource owner)
     {
         tuning = owner;
         instance = this;
@@ -161,7 +160,7 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
     }
 
     public static float GetLabValue(CombatFeelParameter parameter) =>
-        instance != null ? instance.V(parameter) : fallbackLab.Get(parameter);
+        instance != null ? instance.V(parameter) : CombatFeelParameterDefaults.Get(parameter);
     public static bool LabAvailable => instance != null;
 
     public static void RegisterProjectile(GameObject projectile, Vector2 direction)
@@ -171,7 +170,7 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
             projectile.GetComponent<CombatFeelProjectileVisual>();
         if (visual == null)
             visual = projectile.AddComponent<CombatFeelProjectileVisual>();
-        visual.Configure(instance.tuning.Lab, direction);
+        visual.Configure(instance.tuning.FeedbackSettings, direction);
     }
 
     public static void ConfigureSpawnedEffect(
@@ -182,7 +181,7 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
             effect.GetComponent<CombatFeelParticleOverride>();
         if (modifier == null)
             modifier = effect.AddComponent<CombatFeelParticleOverride>();
-        modifier.Configure(instance.tuning.Lab, muzzle, direction);
+        modifier.Configure(instance.tuning.FeedbackSettings, muzzle, direction);
     }
 
     public static void CancelHitStopForExternalTimeControl()
@@ -264,7 +263,7 @@ public sealed class PhysicalCombatFeedbackRuntime : MonoBehaviour
     }
 
     private float V(CombatFeelParameter parameter) =>
-        tuning != null ? tuning.Lab.Get(parameter) : 0f;
+        tuning != null ? tuning.FeedbackSettings.Get(parameter) : 0f;
 
     private float GetImpactStrength(
         WeaponHitContext context,

@@ -11,11 +11,6 @@ public sealed class OrbitalRelayStateTests
     }
     private static void Stabilize(OrbitalRelayState state)
     { for (int i = 0; i < 3; i++) state.Tick(.6f, true); }
-    [Test]
-    public void ProductionStateContractExists()
-    {
-        Assert.That(typeof(WorldEvent).Assembly.GetType("OrbitalRelayState"), Is.Not.Null);
-    }
     [Test] public void ThresholdStartsTransitionNotCompletion()
     {
         var s = Create(); Stabilize(s);

@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System;
 using UnityEngine;
 
@@ -50,3 +51,5 @@ public sealed class EnemyGalleryController : MonoBehaviour
         foreach (var label in candidateLabels) label.SetActive(visible);
     }
 }
+
+#endif

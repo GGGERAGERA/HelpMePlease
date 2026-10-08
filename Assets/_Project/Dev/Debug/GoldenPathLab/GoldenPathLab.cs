@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 #if UNITY_EDITOR
 using System;
 using System.Collections;
@@ -367,4 +368,6 @@ public sealed class GoldenPathLab : MonoBehaviour
         GUI.matrix = old;
     }
 }
+#endif
+
 #endif
