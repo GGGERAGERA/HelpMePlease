@@ -67,7 +67,15 @@ public sealed class RunConfig
         Gold = Mathf.Max(.1f, p.gold); EventFrequency = Mathf.Max(.1f, p.eventFrequency);
         enemyWeights = Copy(p.enemyWeights); eventWeights = Copy(p.eventWeights); anomalyWeights = Copy(p.anomalyWeights);
     }
-    internal RunConfig WithContent(ResolvedRunContent content) => new(this, content);
+    // Preserve the unmodified snapshot so removing content also removes its scalar effects,
+    // including a zero threat multiplier which cannot be reversed by division.
+    private readonly RunConfig contentBasis;
+    internal RunConfig WithContent(ResolvedRunContent content) => new(contentBasis ?? this, content);
+    public RunConfig ValidateContentAvailability()
+    {
+        var available = Content.WithoutUnavailableEvents();
+        return ReferenceEquals(available, Content) ? this : WithContent(available);
+    }
     private RunConfig(RunConfig basis, ResolvedRunContent content)
     {
         MapId = basis.MapId; SectorId = basis.SectorId; BiomeId = basis.BiomeId; ThemeId = basis.ThemeId;
@@ -77,7 +85,7 @@ public sealed class RunConfig
         SpawnPressure = basis.SpawnPressure * content.SpawnPressure; Experience = basis.Experience * content.Experience;
         Gold = basis.Gold * content.Gold; EventFrequency = basis.EventFrequency;
         enemyWeights = basis.enemyWeights; eventWeights = basis.eventWeights; anomalyWeights = basis.anomalyWeights;
-        Content = content;
+        Content = content; contentBasis = basis;
     }
     private static RunPrefabWeight[] Copy(RunPrefabWeight[] source)
     {

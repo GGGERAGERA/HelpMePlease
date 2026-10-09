@@ -45,11 +45,12 @@ public sealed class MissionService : ISurfaceContentSource
             }
     }
     public MissionDefinition Find(string id) => id!=null&&definitions.TryGetValue(id,out var definition)?definition:null;
+    public bool IsAvailable(string id) => Find(id)?.AvailableInProduction == true;
     private MissionProgressRecord Record(string id) => state.missions.Find(r=>r!=null&&r.missionId==id);
     public MissionState GetState(string id)
     {
         var record=Record(id); if(record==null)return MissionState.Available;
-        if(record.state==MissionState.Active&&AllObjectives(Find(id),record,true))return MissionState.ObjectiveCompleted;
+        if(record.state==MissionState.Active&&IsAvailable(id)&&AllObjectives(Find(id),record,true))return MissionState.ObjectiveCompleted;
         return record.state;
     }
     public bool IsRewardClaimed(string id) => Record(id)?.rewardClaimed==true||storage.HasClaimReceipt(id);
@@ -63,7 +64,7 @@ public sealed class MissionService : ISurfaceContentSource
     }
     public bool Accept(string missionId)
     {
-        if(Find(missionId)==null||Record(missionId)!=null||storage.HasClaimReceipt(missionId))return false;
+        if(!IsAvailable(missionId)||Record(missionId)!=null||storage.HasClaimReceipt(missionId))return false;
         state.missions.Add(new MissionProgressRecord{missionId=missionId,state=MissionState.Active});
         Save(); Changed?.Invoke(); return true;
     }
@@ -72,7 +73,7 @@ public sealed class MissionService : ISurfaceContentSource
         foreach(var definition in catalog.Missions)
         {
             var record=Record(definition.MissionId);
-            if(definition.TargetSectorId!=sectorId||record?.state!=MissionState.Active)continue;
+            if(!definition.AvailableInProduction||definition.TargetSectorId!=sectorId||record?.state!=MissionState.Active)continue;
             foreach(var objective in definition.Objectives)
                 if(!record.committedObjectives.Contains(objective.Id)&&objective.RunContent!=null)
                     yield return (ObjectiveKey(definition.MissionId,objective.Id),objective.RunContent);
@@ -89,6 +90,13 @@ public sealed class MissionService : ISurfaceContentSource
         }
         if(selected==null) { presentation=default; priority=0; return false; }
         var current=GetState(selected.MissionId);
+        if (!selected.AvailableInProduction)
+        {
+            presentation=new SurfaceMarkerPresentation(selected.Presentation,SurfaceMarkerState.Active,
+                SurfaceSectorContent.UnavailableStatusKey, reward:selected.Reward.Gold+" GOLD",title:selected.Title,
+                description:SurfaceSectorContent.UnavailableDescriptionKey);
+            priority=selected.MarkerPriority; return true;
+        }
         string status=current==MissionState.ReadyToTurnIn?"READY TO TURN IN":current==MissionState.ObjectiveCompleted?"OBJECTIVE COMPLETE / EXTRACT":"ACTIVE MISSION";
         var objectiveLines=new List<string>(); foreach(var objective in selected.Objectives)objectiveLines.Add(objective.Description);
         presentation=new SurfaceMarkerPresentation(selected.Presentation,SurfaceMarkerState.Active,status,string.Join("\n",objectiveLines),selected.Reward.Gold+" GOLD",selected.Title,
@@ -103,7 +111,7 @@ public sealed class MissionService : ISurfaceContentSource
         foreach(var definition in catalog.Missions)
         {
             var record=Record(definition.MissionId);
-            if(record?.state!=MissionState.Active||definition.TargetSectorId!=signal.Config.SectorId)continue;
+            if(!definition.AvailableInProduction||record?.state!=MissionState.Active||definition.TargetSectorId!=signal.Config.SectorId)continue;
             foreach(var objective in definition.Objectives)
             {
                 string key=ObjectiveKey(definition.MissionId,objective.Id);
@@ -128,7 +136,7 @@ public sealed class MissionService : ISurfaceContentSource
             foreach(var definition in catalog.Missions)
             {
                 var record=Record(definition.MissionId);
-                if(record?.state!=MissionState.Active||definition.TargetSectorId!=config.SectorId)continue;
+                if(!definition.AvailableInProduction||record?.state!=MissionState.Active||definition.TargetSectorId!=config.SectorId)continue;
                 foreach(var objective in definition.Objectives)
                     if(provisional.TryGetValue(ObjectiveKey(definition.MissionId,objective.Id),out var handler))
                     {
@@ -147,14 +155,14 @@ public sealed class MissionService : ISurfaceContentSource
     {
         bool changed=false;
         foreach(var record in state.missions)
-            if(record!=null&&record.state==MissionState.ObjectiveCompleted&&AllObjectives(Find(record.missionId),record,false))
+            if(record!=null&&IsAvailable(record.missionId)&&record.state==MissionState.ObjectiveCompleted&&AllObjectives(Find(record.missionId),record,false))
             { record.state=MissionState.ReadyToTurnIn; changed=true; }
         if(changed) { Save(); Changed?.Invoke(); }
     }
     public bool Claim(string missionId)
     {
         var record=Record(missionId); var definition=Find(missionId);
-        if(claiming||definition==null||record?.state!=MissionState.ReadyToTurnIn||record.rewardClaimed||!AllObjectives(definition,record,false))return false;
+        if(claiming||!IsAvailable(missionId)||record?.state!=MissionState.ReadyToTurnIn||record.rewardClaimed||!AllObjectives(definition,record,false))return false;
         claiming=true;
         try
         {

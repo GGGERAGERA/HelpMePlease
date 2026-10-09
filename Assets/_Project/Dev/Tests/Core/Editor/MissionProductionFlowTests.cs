@@ -57,7 +57,18 @@ public sealed class MissionProductionFlowTests
         Object.FindFirstObjectByType<StartScreenController>().Begin();
         yield return CoreTestSupport.Await(()=>SceneManager.GetActiveScene().name==RunEndService.BunkerSceneName&&!SceneTransitionOverlay.IsTransitioning&&Object.FindFirstObjectByType<BunkerPlayerLoadoutController>() is { IsReady:true });
         var meta=MetaProgressionManager.Instance; var map=meta.SurfaceMap; var missions=meta.Missions;
-        var provider=Object.FindObjectsByType<MissionProvider>(FindObjectsSortMode.None).Single(); var definition=provider.GetMission(); string id=definition.MissionId;
+        var provider=Object.FindObjectsByType<MissionProvider>(FindObjectsSortMode.None).Single(); var definition=provider.GetMission();
+        var authored=AssetDatabase.LoadAssetAtPath<MissionDefinition>(MissionProductionAuthoring.MissionPath);
+        if(!authored.AvailableInProduction)
+        {
+            Assert.That(definition,Is.Null,"Unavailable missions are not offered.");
+            Assert.That(provider.CanInteract,Is.False);
+            Assert.That(missions.Accept(authored.MissionId),Is.False);
+            map.TrySelect(authored.TargetSectorId); Assert.That(map.TryBuildRunConfig(out var paused),Is.True);
+            Assert.That(paused.Content.GuaranteedEvents,Is.Empty); Assert.That(paused.Content.Objectives,Is.Empty);
+            yield break;
+        }
+        string id=definition.MissionId;
         Assert.That(missions.GetState(id),Is.EqualTo(MissionState.Available));
         var player=Read<Transform>(Object.FindFirstObjectByType<BunkerPlayerLoadoutController>(),"controlledPlayerRoot");
         player.position=provider.transform.position+new Vector3(20,-20); Physics2D.SyncTransforms();

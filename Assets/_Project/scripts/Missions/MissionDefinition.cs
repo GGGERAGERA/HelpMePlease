@@ -22,4 +22,13 @@ public sealed class MissionDefinition : ScriptableObject
     public MissionRewardDefinition Reward => reward;
     public SurfaceSectorContent Presentation => presentation;
     public int MarkerPriority => markerPriority;
+    public bool AvailableInProduction
+    {
+        get
+        {
+            foreach (var objective in objectives)
+                if (objective.RunContent != null && !objective.RunContent.AvailableInProduction) return false;
+            return true;
+        }
+    }
 }

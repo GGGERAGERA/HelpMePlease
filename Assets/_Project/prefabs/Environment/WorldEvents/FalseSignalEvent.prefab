@@ -88,6 +88,7 @@ MonoBehaviour:
   eventDisplayName: event.signal.name
   eventDescription: event.signal.description
   allowedInSite: 1
+  availableInProduction: 0
   requiresHoldPointFeature: 0
   signalPointPrefab: {fileID: 510000000000000004, guid: f51a1e2d8b0c4d0a9e07f4e27b6d1202, type: 3}
   startVisual: {fileID: 539288869464337436}

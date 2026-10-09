@@ -23,9 +23,10 @@ public sealed class FalseSignalPlayTests
     private static FalseSignalEvent Spawn(WorldEventSpawner events,Vector2 preferred)
     {
         var prefab=AssetDatabase.LoadAssetAtPath<FalseSignalEvent>("Assets/_Project/prefabs/Environment/WorldEvents/FalseSignalEvent.prefab");
+        events.ConfigureDebugEventPrefabs(events.EventPrefabs.ToArray());
         foreach(var offset in new[]{Vector2.zero,Vector2.right*12,Vector2.left*12,Vector2.up*12,Vector2.down*12})
         {
-            bool admitted=events.SpawnSiteEventAt(prefab,preferred+offset,preferred+offset,new Vector2(24,24),true,out var instance);
+            bool admitted=events.SpawnConcurrentDebugEventAt(prefab,preferred+offset,true,out var instance);
             if(admitted) return (FalseSignalEvent)instance;
         }
         Assert.Fail("No valid separated transmitter placement in the production scene."); return null;

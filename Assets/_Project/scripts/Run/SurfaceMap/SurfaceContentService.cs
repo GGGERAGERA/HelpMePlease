@@ -63,7 +63,7 @@ public sealed class SurfaceContentService
     }
     public bool AssignMission(string missionId, string targetSectorId, SurfaceSectorContent content)
     {
-        if (string.IsNullOrWhiteSpace(missionId) || map.Find(targetSectorId) == null || content == null || FindContent(content.id) != content ||
+        if (string.IsNullOrWhiteSpace(missionId) || map.Find(targetSectorId) == null || content == null || !content.AvailableInProduction || FindContent(content.id) != content ||
             !AddRecord(missionId, targetSectorId, content)) return false;
         Save(); Changed?.Invoke(); return true;
     }
@@ -75,8 +75,12 @@ public sealed class SurfaceContentService
         {
             if(record.targetSectorId!=sectorId)continue;
             var content=FindContent(record.contentId); if(content?.marker==null)continue;
+            if(!content.AvailableInProduction && record.missionId.StartsWith("sector:",StringComparison.Ordinal))continue;
             int priority=record.missionState==SurfaceMissionState.Active?(record.missionId.StartsWith("sector:",StringComparison.Ordinal)?10:50):0;
-            if(priority>best) { presentation=new SurfaceMarkerPresentation(content,record.markerState); best=priority; found=true; }
+            if(priority>best) { presentation=content.AvailableInProduction
+                ? new SurfaceMarkerPresentation(content,record.markerState)
+                : new SurfaceMarkerPresentation(content,record.markerState,SurfaceSectorContent.UnavailableStatusKey,
+                    description:SurfaceSectorContent.UnavailableDescriptionKey); best=priority; found=true; }
         }
         foreach(var source in sources)
             if(source.TryGetMarker(sectorId,out var candidate,out int priority)&&priority>best)
@@ -97,7 +101,8 @@ public sealed class SurfaceContentService
         if (config == null || config.MapId != map.Id) return;
         if (pendingRunId != runId) { pending.Clear(); pendingRunId = runId; }
         foreach (var objective in config.Content.Objectives)
-            if (objective.Matches(source, tag)) pending.Add(objective.Id);
+            if ((source == null || source.AvailableInProduction) &&
+                (objective.RequiredEvent == null || objective.RequiredEvent.AvailableInProduction) && objective.Matches(source, tag)) pending.Add(objective.Id);
     }
     public bool FinishRun(RunConfig config, int runId, RunEndReason reason, bool confirmedProductionVictory)
     {
@@ -106,7 +111,7 @@ public sealed class SurfaceContentService
             foreach (var objective in config.Content.Objectives)
             {
                 var r = state.missions.Find(r => r.missionId == objective.Id && r.targetSectorId == config.SectorId);
-                if (r == null || r.missionState != SurfaceMissionState.Active || !pending.Contains(objective.Id)) continue;
+                if (r == null || !FindContent(r.contentId).AvailableInProduction || r.missionState != SurfaceMissionState.Active || !pending.Contains(objective.Id)) continue;
                 r.missionState = SurfaceMissionState.Completed; r.markerState = FindContent(r.contentId).completionState; changed = true;
             }
         pending.Clear(); pendingRunId = -1;

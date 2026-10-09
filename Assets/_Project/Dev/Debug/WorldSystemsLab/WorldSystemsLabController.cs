@@ -41,6 +41,11 @@ public sealed class WorldSystemsLabController : MonoBehaviour
     [SerializeField] private CorridorEvent corridorPrefab;
     private CorridorLab corridorV2;
 
+    [Header("Rocket Storm prototype only")]
+    [SerializeField] private RocketStormLab.Settings rocketStorm = new();
+    private RocketStormLab storm;
+    public RocketStormLab RocketStorm => storm;
+
     [Header("Production Orbital Relay bootstrap")]
     [SerializeField] private CharacterData orbitalCharacter;
     [SerializeField] private GameObject relaySupportPrefab;
@@ -89,6 +94,8 @@ public sealed class WorldSystemsLabController : MonoBehaviour
         corridorV2 = gameObject.AddComponent<CorridorLab>();
         corridorV2.Initialize(this, gameplayArea, corridorRocketPrefab, corridorStrikeMarker,
             corridorExplosion, corridorEnemy, corridorTuning, corridorKit, corridorPrefab);
+        storm = gameObject.AddComponent<RocketStormLab>();
+        storm.Initialize(this, rocketStorm, corridorRocketPrefab, corridorStrikeMarker, corridorExplosion);
     }
 
     private void Update()
@@ -256,6 +263,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
 
     public void ClearEvents()
     {
+        storm?.Stop();
         corridorV2?.Stop();
         if (corridorV2 != null) corridorV2.enabled = true;
         events?.ClearAllDebugEvents();
@@ -265,9 +273,32 @@ public sealed class WorldSystemsLabController : MonoBehaviour
 
     public void PrepareCorridorV2()
     {
+        storm?.Stop();
         corridorV2?.CancelForRestart();
         if (corridorV2 != null) corridorV2.enabled = true;
         tacticalMap?.SetVisible(false);
+    }
+    public bool PrepareRocketStorm()
+    {
+        ClearEvents();
+        ClearAnomalies();
+        ClearPortals();
+        worldRules.Clear();
+        props?.Clear();
+        tacticalMap?.SetVisible(false);
+        corridorV2.enabled = false;
+        relayAdapter ??= gameObject.AddComponent<WorldSystemsLabRelayAdapter>();
+        relayAdapter.ConfigureSupport(relaySupportPrefab);
+        relayAdapter.EnableRewards = false;
+        return relayAdapter.Prepare(player, orbitalCharacter, events, corridorEnemy, false);
+    }
+    public void SetRocketStormPressure(bool enabled)
+    {
+        var enemies = relayAdapter?.Enemies;
+        if (enemies == null) return;
+        enemies.StopDebugExplorationPressure();
+        enemies.ClearDebugSpawnedEnemies();
+        if (enabled) enemies.ConfigureDebugExplorationPressure(new[] { corridorEnemy }, 3f, 4, 1, 7f, 10f);
     }
     public bool SpawnIndependentStasisTerritory()
     {
@@ -434,6 +465,10 @@ public sealed class WorldSystemsLabController : MonoBehaviour
             ClearAnomalies();
 
         Section("EVENT");
+        rocketStorm.enemyPressure = GUILayout.Toggle(rocketStorm.enemyPressure, "Rocket Storm: Enemy Pressure");
+        storm?.SetEnemyPressure(rocketStorm.enemyPressure);
+        if (GUILayout.Button("Rocket Storm / Ракетный шторм", buttonStyle)) storm.StartStorm();
+        if (storm != null) GUILayout.Label(storm.Status, noteStyle);
         relayEnemyPressure = GUILayout.Toggle(relayEnemyPressure, "Relay enemy pressure");
         relayRewardQueue = GUILayout.Toggle(relayRewardQueue, "Relay shared Upgrade queue (dev Gold suppressed)");
         var orbitalStation = relayAdapter != null ? relayAdapter.Station : null;

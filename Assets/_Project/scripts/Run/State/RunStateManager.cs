@@ -833,7 +833,7 @@ public sealed class RunStateManager : MonoBehaviour
         if (lifecycleBusy) return;
         if (isDevelopmentRun) developmentRun = true;
         if (!runEnded) EndRun(RunEndReason.ReturnedToBunker, RunId);
-        CurrentConfig = config ?? RunConfig.Default;
+        CurrentConfig = (config ?? RunConfig.Default).ValidateContentAvailability();
         CurrentDepthId = depthId;
         startingStageProfile = stageProfile;
         startingWorldRule = worldRule;

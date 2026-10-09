@@ -14,6 +14,7 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
     [SerializeField, TextArea(1, 2)] private string eventDescription;
 
     [Header("Orchestration")]
+    [SerializeField] private bool availableInProduction = true;
     [SerializeField] private bool allowedInSite;
     [SerializeField] private bool requiresHoldPointFeature;
 
@@ -31,6 +32,7 @@ public abstract class WorldEvent : Interactable, ITacticalMapMarkerProvider
     public string EventDisplayName => eventDisplayName;
     public string EventDescription => eventDescription;
     public bool AllowedInSite => allowedInSite;
+    public bool AvailableInProduction => availableInProduction;
     public bool RequiresHoldPointFeature => requiresHoldPointFeature;
     public virtual bool UsesStandardSpawnPressure => true;
     public virtual WorldEventRewardResult? CompletionReward => null;

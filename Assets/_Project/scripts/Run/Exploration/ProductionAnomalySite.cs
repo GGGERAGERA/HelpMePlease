@@ -440,7 +440,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 
     private bool SpawnEvent()
     {
-        if (eventSpawner == null || eventPrefab == null)
+        if (eventSpawner == null || !eventSpawner.IsEventPrefabEnabled(eventPrefab))
             return false;
 
         SubscribeToEventSpawner();
@@ -629,7 +629,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         do
         {
             yield return new WaitForSeconds(2f);
-            if (completed || rewardPending || environmentRetired || activeEvent != null) yield break;
+            if (completed || rewardPending || environmentRetired || activeEvent != null || eventSpawner == null || !eventSpawner.IsEventPrefabEnabled(eventPrefab)) yield break;
             var actor = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
             if (actor == null || (actor.TryGetComponent<PlayerHealth>(out var health) && health.IsDead)) yield break;
             eventPosition = SelectEventPosition();

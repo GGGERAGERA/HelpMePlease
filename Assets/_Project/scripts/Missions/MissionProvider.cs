@@ -18,7 +18,7 @@ public sealed class MissionProvider : MonoBehaviour, IBunkerInteractable
             if(service==null)return false;
             foreach(string id in missionIds)
             {
-                if(service.Find(id)==null)continue;
+                if(!service.IsAvailable(id))continue;
                 var state=service.GetState(id);
                 if(state==MissionState.Available||state==MissionState.ReadyToTurnIn)return true;
             }
@@ -50,7 +50,7 @@ public sealed class MissionProvider : MonoBehaviour, IBunkerInteractable
     public System.Collections.Generic.IReadOnlyList<string> MissionIds => missionIds;
     public string InteractionText => providerName;
     // Match ordinary bunker stations: cursor hover and interaction are not proximity-gated.
-    public bool CanInteract => isActiveAndEnabled&&MetaProgressionManager.Instance?.Missions!=null;
+    public bool CanInteract => isActiveAndEnabled&&GetMission()!=null;
     public MissionDefinition GetMission()
     {
         var service=MetaProgressionManager.Instance?.Missions;
@@ -60,6 +60,7 @@ public sealed class MissionProvider : MonoBehaviour, IBunkerInteractable
         {
             var definition=service.Find(id); if(definition==null)continue;
             var state=service.GetState(id);
+            if(state==MissionState.Available&&!service.IsAvailable(id))continue;
             int priority=state==MissionState.ReadyToTurnIn?4:state==MissionState.Available?3:state==MissionState.Active||state==MissionState.ObjectiveCompleted?2:1;
             if(priority>best) { selected=definition; best=priority; }
         }

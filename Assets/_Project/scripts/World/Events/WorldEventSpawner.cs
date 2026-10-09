@@ -529,6 +529,11 @@ public class WorldEventSpawner : MonoBehaviour
 
     public bool IsEventPrefabEnabled(WorldEvent eventPrefab)
     {
+        return eventPrefab != null && eventPrefab.AvailableInProduction && IsRegisteredEventSupported(eventPrefab);
+    }
+
+    private bool IsRegisteredEventSupported(WorldEvent eventPrefab)
+    {
         if (eventPrefab == null || eventPrefabs == null)
             return false;
 
@@ -550,7 +555,7 @@ public class WorldEventSpawner : MonoBehaviour
         {
             var candidates = new List<WorldEvent>();
             foreach (var prefab in eventPrefabs)
-                if (prefab != null && SupportsEventCapabilities(prefab)) candidates.Add(prefab);
+                if (IsEventPrefabEnabled(prefab)) candidates.Add(prefab);
             return RunWeightedSelection.Select(candidates, config.EventWeight, Random.value);
         }
         for (int i = 0; i < eventPrefabs.Length; i++)
@@ -561,7 +566,7 @@ public class WorldEventSpawner : MonoBehaviour
             if (nextEventIndex >= eventPrefabs.Length)
                 nextEventIndex = 0;
 
-            if (!SupportsEventCapabilities(prefab))
+            if (!IsEventPrefabEnabled(prefab))
                 continue;
 
             return prefab;
@@ -645,6 +650,9 @@ public class WorldEventSpawner : MonoBehaviour
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private bool IsDebugEventPrefabEnabled(WorldEvent prefab) =>
+        IsRegisteredEventSupported(prefab) && (prefab.AvailableInProduction || debugManualOnly);
+
     public bool SpawnDebugEventAt(
         WorldEvent prefab,
         Vector3 position,
@@ -654,7 +662,7 @@ public class WorldEventSpawner : MonoBehaviour
         spawnedEvent = null;
 
         if (!isActiveAndEnabled || prefab == null ||
-            !IsEventPrefabEnabled(prefab))
+            !IsDebugEventPrefabEnabled(prefab))
         {
             return false;
         }
@@ -698,7 +706,7 @@ public class WorldEventSpawner : MonoBehaviour
         spawnedEvent = null;
 
         if (!isActiveAndEnabled || prefab == null ||
-            !IsEventPrefabEnabled(prefab))
+            !IsDebugEventPrefabEnabled(prefab))
         {
             return false;
         }
@@ -727,7 +735,7 @@ public class WorldEventSpawner : MonoBehaviour
     public bool SpawnDebugEvent(WorldEvent prefab)
     {
         if (!isActiveAndEnabled || prefab == null ||
-            !IsEventPrefabEnabled(prefab))
+            !IsDebugEventPrefabEnabled(prefab))
         {
             return false;
         }
