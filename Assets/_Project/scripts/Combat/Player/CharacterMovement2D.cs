@@ -106,23 +106,28 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
     public bool IsDashReady => !isDashing && dashCooldownRemaining <= 0f;
     public KeyCode DashKey => dashKey;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-    public float DebugAcceleration => acceleration;
-    public float DebugDeceleration => deceleration;
+    public float WalkingSpeed => speed * anomalySpeedMultiplier * worldRuleSpeedMultiplier * BulletTimeControlMultiplier;
+    public float WalkingAcceleration => acceleration * BulletTimeControlMultiplier * BulletTimeControlMultiplier;
 
-    public Vector2 DebugForecastDisplacement(Vector2 intent, float seconds)
+    public Vector2 ForecastWalkingDisplacement(Vector2 intent, float seconds)
     {
         Vector2 velocity = currentVelocity;
         Vector2 displacement = Vector2.zero;
         Vector2 target = Vector2.ClampMagnitude(intent, 1f) * speed * anomalySpeedMultiplier * worldRuleSpeedMultiplier;
-        float step = seconds / 8f;
-        for (int i = 0; i < 8; i++)
+        int steps = Mathf.Max(1, Mathf.CeilToInt(seconds / Time.fixedDeltaTime));
+        float step = seconds / steps;
+        float rate = intent.sqrMagnitude > .01f ? acceleration : deceleration;
+        for (int i = 0; i < steps; i++)
         {
-            velocity = Vector2.MoveTowards(velocity, target, acceleration * step);
-            displacement += (velocity + worldRuleExternalVelocity + anomalyExternalVelocity.Value) * step;
+            velocity = Vector2.MoveTowards(velocity, target, rate * step * BulletTimeControlMultiplier);
+            displacement += (velocity * BulletTimeControlMultiplier + worldRuleExternalVelocity + anomalyExternalVelocity.Value) * step;
         }
         return displacement;
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public float DebugAcceleration => acceleration;
+    public float DebugDeceleration => deceleration;
 
     public void SetDebugAcceleration(float value) =>
         acceleration = Mathf.Max(0f, value);

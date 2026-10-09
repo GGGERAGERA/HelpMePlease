@@ -675,7 +675,7 @@ internal static class ExplosionWarningVisual
         return warning;
     }
 
-    public static void Configure(GameObject warning, float radius, float duration)
+    public static void Configure(GameObject warning, float radius, float duration, bool pixelWarnings = true)
     {
         float diameter = Mathf.Max(0.1f, radius) * 2f;
         warning.transform.localScale = new Vector3(diameter, diameter, 1f);
@@ -702,6 +702,7 @@ internal static class ExplosionWarningVisual
             renderers[i].sortingOrder = WarningSortingOrder;
         }
 
-        PixelWeatherParticles.Attach(warning, PixelWeatherParticles.Kind.WarningRing);
+        if (pixelWarnings)
+            PixelWeatherParticles.Attach(warning, PixelWeatherParticles.Kind.WarningRing);
     }
 }

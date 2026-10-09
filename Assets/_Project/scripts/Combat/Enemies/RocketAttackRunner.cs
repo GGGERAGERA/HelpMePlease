@@ -20,6 +20,7 @@ public sealed class RocketAttackRunner : IDisposable
 
     private readonly SimplePrefabPool rockets, markers, explosions;
     private readonly ParticleSystem explosionPrefab;
+    private readonly bool pixelWarnings;
     private readonly List<Shot> shots = new();
     private readonly List<Impact> impacts = new();
     private int generation;
@@ -28,13 +29,17 @@ public sealed class RocketAttackRunner : IDisposable
     public bool IsReady => !disposed && rockets != null && markers != null && explosions != null;
 
     public RocketAttackRunner(MonoBehaviour owner, GameObject rocketPrefab,
-        GameObject targetPrefab, ParticleSystem explosionPrefab)
+        GameObject targetPrefab, ParticleSystem explosionPrefab,
+        int prewarmShots = 0, int prewarmImpacts = 0, bool pixelWarnings = true)
     {
         this.explosionPrefab = explosionPrefab;
+        this.pixelWarnings = pixelWarnings;
         if (rocketPrefab == null || targetPrefab == null || explosionPrefab == null) return;
-        rockets = new SimplePrefabPool(owner, rocketPrefab, 0, 24);
-        markers = new SimplePrefabPool(owner, targetPrefab, 0, 12);
-        explosions = new SimplePrefabPool(owner, explosionPrefab.gameObject, 0, 12);
+        rockets = new SimplePrefabPool(owner, rocketPrefab, prewarmShots, Mathf.Max(24, prewarmShots));
+        markers = new SimplePrefabPool(owner, targetPrefab, prewarmShots, Mathf.Max(12, prewarmShots));
+        explosions = new SimplePrefabPool(owner, explosionPrefab.gameObject, prewarmImpacts, Mathf.Max(12, prewarmImpacts));
+        shots.Capacity = Mathf.Max(shots.Capacity, prewarmShots);
+        impacts.Capacity = Mathf.Max(impacts.Capacity, prewarmImpacts);
     }
 
     public bool Launch(Vector3 target, Vector3? origin, float delay, float duration, float radius)
@@ -43,7 +48,7 @@ public sealed class RocketAttackRunner : IDisposable
         var shot = new Shot { target = target, delay = Mathf.Max(.01f, delay),
             duration = Mathf.Max(.05f, duration), launchStart = origin ?? target };
         shot.marker = markers.Get(target, Quaternion.identity);
-        ExplosionWarningVisual.Configure(shot.marker.gameObject, radius, shot.delay + shot.duration);
+        ExplosionWarningVisual.Configure(shot.marker.gameObject, radius, shot.delay + shot.duration, pixelWarnings);
         foreach (var ps in shot.marker.GetComponentsInChildren<ParticleSystem>(true))
         {
             ps.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);

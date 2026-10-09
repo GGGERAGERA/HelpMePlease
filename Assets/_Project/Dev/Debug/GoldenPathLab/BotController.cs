@@ -183,7 +183,7 @@ public sealed class BotController : IDisposable
         {
             float angle = i * Mathf.PI / 8f;
             Vector2 candidate = new(Mathf.Cos(angle), Mathf.Sin(angle));
-            Vector2 displacement = movement.DebugForecastDisplacement(candidate, .35f);
+            Vector2 displacement = movement.ForecastWalkingDisplacement(candidate, .35f);
             Vector2 future = position + displacement;
             float score = Vector2.Dot(candidate, desired.normalized) * 2f + Vector2.Dot(candidate, direction) * .4f;
             if (!area.IsInsidePlayableArea(future, 1f)) score -= 40f;

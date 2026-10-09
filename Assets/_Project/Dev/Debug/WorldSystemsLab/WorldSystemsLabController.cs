@@ -41,8 +41,10 @@ public sealed class WorldSystemsLabController : MonoBehaviour
     [SerializeField] private CorridorEvent corridorPrefab;
     private CorridorLab corridorV2;
 
-    [Header("Rocket Storm prototype only")]
-    [SerializeField] private RocketStormLab.Settings rocketStorm = new();
+    [Header("Rocket Storm lab tuning")]
+    [SerializeField] private RocketStormEvent rocketStormPrefab;
+    [SerializeField] private RocketStormEvent.Settings rocketStorm = new();
+    [SerializeField] private bool rocketStormEnemyPressure;
     private RocketStormLab storm;
     public RocketStormLab RocketStorm => storm;
 
@@ -95,7 +97,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
         corridorV2.Initialize(this, gameplayArea, corridorRocketPrefab, corridorStrikeMarker,
             corridorExplosion, corridorEnemy, corridorTuning, corridorKit, corridorPrefab);
         storm = gameObject.AddComponent<RocketStormLab>();
-        storm.Initialize(this, rocketStorm, corridorRocketPrefab, corridorStrikeMarker, corridorExplosion);
+        storm.Initialize(this, rocketStorm, rocketStormPrefab);
     }
 
     private void Update()
@@ -465,8 +467,8 @@ public sealed class WorldSystemsLabController : MonoBehaviour
             ClearAnomalies();
 
         Section("EVENT");
-        rocketStorm.enemyPressure = GUILayout.Toggle(rocketStorm.enemyPressure, "Rocket Storm: Enemy Pressure");
-        storm?.SetEnemyPressure(rocketStorm.enemyPressure);
+        rocketStormEnemyPressure = GUILayout.Toggle(rocketStormEnemyPressure, "Rocket Storm: Enemy Pressure");
+        storm?.SetEnemyPressure(rocketStormEnemyPressure);
         if (GUILayout.Button("Rocket Storm / Ракетный шторм", buttonStyle)) storm.StartStorm();
         if (storm != null) GUILayout.Label(storm.Status, noteStyle);
         relayEnemyPressure = GUILayout.Toggle(relayEnemyPressure, "Relay enemy pressure");
