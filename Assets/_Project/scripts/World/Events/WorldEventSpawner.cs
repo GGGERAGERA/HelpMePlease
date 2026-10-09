@@ -56,6 +56,7 @@ public class WorldEventSpawner : MonoBehaviour
     private int spawnedEventCount;
     private bool holdPointEnabled;
     private EnemySpawner enemySpawner;
+    internal EnemySpawner EnemySpawner => enemySpawner;
     public void BindScene(EnemySpawner enemies, GameplayAreaService area)
     {
         enemySpawner = enemies;

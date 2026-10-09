@@ -1,177 +1,54 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Collider2D))]
-public sealed class FalseSignalPoint : MonoBehaviour
-{
-    [Header("Visual")]
-    [SerializeField] private Material lineMaterial;
-    [SerializeField] private Color color = new(1f, 0.35f, 0.1f, 0.9f);
-    [SerializeField, Min(0.1f)] private float visualRadius = 0.75f;
-    [SerializeField, Min(8)] private int segments = 32;
+public enum FalseSignalPointState { Unchecked, Scanning, Verified, Warning, Activated, Disabled }
 
+[RequireComponent(typeof(CircleCollider2D))]
+public sealed class FalseSignalPoint : Interactable
+{
+    [SerializeField] private CircleCollider2D contactArea;
+    [SerializeField] private FalseSignalPointView view;
     private FalseSignalEvent owner;
     private bool isReal;
-    private bool consumed;
-    private LineRenderer coreRing;
-    private Collider2D signalCollider;
-    private bool fading;
-    private float fadeDuration;
-    private float fadeRemaining;
-    private float visibility = 1f;
-    private bool trapWarningActive;
-    private float trapWarningElapsed;
-    private Color trapWarningColor;
-
-    public void Initialize(FalseSignalEvent eventOwner, bool realSignal)
+    private float scanDuration, elapsed;
+    private Vector2 diagnosticTarget;
+    public FalseSignalPointState State { get; private set; }
+    internal bool IsReal => isReal;
+    public bool IsValid => contactArea != null && contactArea.radius > 0 && view != null && view.IsValid;
+    public override bool CanInteract => base.CanInteract && State == FalseSignalPointState.Verified && owner != null && owner.AcceptsSignals &&
+        PlayerRuntimeReference.ResolvePlayerTransform() is Transform player && Vector2.Distance(player.position, transform.position) <= 2f;
+    public void Initialize(FalseSignalEvent eventOwner, bool realSignal, Vector2 target, float duration)
     {
-        owner = eventOwner;
-        isReal = realSignal;
-        consumed = false;
+        owner = eventOwner; isReal = realSignal; diagnosticTarget = target; scanDuration = duration;
+        State = FalseSignalPointState.Unchecked; elapsed = 0;
+        Render();
     }
-
-    private void Awake()
+    public void GetContactCircle(out Vector2 center, out float radius)
     {
-        signalCollider = GetComponent<Collider2D>();
-        BuildVisual();
+        center = contactArea.transform.TransformPoint(contactArea.offset);
+        radius = contactArea.radius * Mathf.Abs(contactArea.transform.lossyScale.x);
     }
-
+    internal void BeginScan()
+    {
+        if (State != FalseSignalPointState.Unchecked || owner == null || !owner.AcceptsSignals) return;
+        State = FalseSignalPointState.Scanning; elapsed = 0;
+        AudioService.Instance?.PlayAt(AudioCueId.CorePulse, transform.position);
+        Render();
+    }
     private void Update()
     {
-        if (trapWarningActive)
-            trapWarningElapsed += Time.deltaTime;
-
-        if (fading)
-        {
-            fadeRemaining = Mathf.Max(
-                0f,
-                fadeRemaining - Time.deltaTime
-            );
-            visibility = fadeRemaining / fadeDuration;
-
-            if (fadeRemaining <= 0f)
-            {
-                Destroy(gameObject);
-                return;
-            }
-        }
-
-        ApplyVisual();
+        if (owner == null || owner.IsCompleted || Time.deltaTime <= 0) return;
+        elapsed += Time.deltaTime;
+        if (State == FalseSignalPointState.Scanning && elapsed >= scanDuration)
+        { State = FalseSignalPointState.Verified; elapsed = 0; }
+        Render();
     }
-
-    private void OnTriggerEnter2D(Collider2D other)
+    public override void Interact()
     {
-        if (consumed || owner == null || !other.CompareTag("Player"))
-            return;
-
-        consumed = true;
-
-        if (signalCollider != null)
-            signalCollider.enabled = false;
-
-        FalseSignalEvent eventOwner = owner;
-        owner = null;
-        eventOwner.ResolveSignal(this, isReal);
+        if (!CanInteract) return;
+        State = isReal ? FalseSignalPointState.Activated : FalseSignalPointState.Warning;
+        elapsed = 0; Render(); owner.ActivateSignal(this);
     }
-
-    public void BeginTrapWarning(Color warningColor)
-    {
-        trapWarningActive = true;
-        trapWarningElapsed = 0f;
-        trapWarningColor = warningColor;
-        visibility = 1f;
-        SetVisualEnabled(true);
-    }
-
-    public void FadeOutAndDestroy(float duration)
-    {
-        if (consumed || fading)
-            return;
-
-        consumed = true;
-        fading = true;
-        fadeDuration = Mathf.Max(0.05f, duration);
-        fadeRemaining = fadeDuration;
-        owner = null;
-        transform.SetParent(null, true);
-
-        if (signalCollider != null)
-            signalCollider.enabled = false;
-    }
-
-    private void OnDestroy()
-    {
-        owner?.HandleSignalPointDestroyed(this);
-        owner = null;
-    }
-
-    private void BuildVisual()
-    {
-        if (lineMaterial == null)
-            return;
-
-        coreRing = CreateRing(visualRadius, 0.15f, 3);
-        ApplyVisual();
-    }
-
-    private LineRenderer CreateRing(
-        float radius,
-        float width,
-        int sortingOrder)
-    {
-        LineRenderer line = gameObject.AddComponent<LineRenderer>();
-        PixelEventLine.Attach(line);
-        line.sharedMaterial = lineMaterial;
-        line.useWorldSpace = false;
-        line.loop = true;
-        line.positionCount = Mathf.Max(8, segments);
-        line.startWidth = width;
-        line.endWidth = width;
-        line.sortingLayerName = "Midground";
-        line.sortingOrder = sortingOrder;
-
-        for (int i = 0; i < line.positionCount; i++)
-        {
-            float angle = i * Mathf.PI * 2f / line.positionCount;
-            line.SetPosition(
-                i,
-                new Vector3(
-                    Mathf.Cos(angle) * radius,
-                    Mathf.Sin(angle) * radius,
-                    0f
-                )
-            );
-        }
-
-        return line;
-    }
-
-    private void ApplyVisual()
-    {
-        Color coreColor = trapWarningActive
-            ? trapWarningColor
-            : color;
-
-        if (trapWarningActive)
-        {
-            float pulse = Mathf.PingPong(
-                trapWarningElapsed * 8f,
-                1f
-            );
-            coreColor.a *= Mathf.Lerp(0.3f, 1f, pulse);
-        }
-
-        coreColor.a *= visibility;
-
-        if (coreRing != null)
-        {
-            coreRing.startColor = coreColor;
-            coreRing.endColor = coreColor;
-        }
-    }
-
-    private void SetVisualEnabled(bool enabled)
-    {
-        if (coreRing != null)
-            coreRing.enabled = enabled;
-    }
+    internal void DisableSignal()
+    { State = FalseSignalPointState.Disabled; elapsed = 0; Render(); }
+    private void Render() => view.Render(State, isReal, elapsed, scanDuration, diagnosticTarget);
 }

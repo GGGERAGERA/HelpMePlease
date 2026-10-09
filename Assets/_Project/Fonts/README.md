@@ -6,6 +6,13 @@
   all Cyrillic U+0400–04FF, the original UI punctuation and the localized arrow →.
 - **Subject42 Intro SDF**: the existing PressStart2P pixel appearance for the bunker
   introduction, Static 512×512 atlas. Its only fallback is Subject42 UI SDF.
+- **Subject42 Menu Pixel**: the same Press Start 2P source, sampled at 24 pt in
+  RASTER mode. Static 512×512 bitmap atlas with Point filtering, printable ASCII
+  and the Russian alphabet including Ё/ё; no fallback or runtime atlas changes.
+  Used by StartScreen labels and the shared PixelMenuButton prefab. The title
+  sprite `art/UI/StartScreen/Subject42Title.png` is baked from this font with a
+  cold stepped tint, dark outline and pixel shadow; its import uses Point,
+  no mipmaps and no compression.
 
 Neither font depends on TMP's standard LiberationSans fallback. That unused
 standard placeholder is frozen as Static with build clearing disabled, so a

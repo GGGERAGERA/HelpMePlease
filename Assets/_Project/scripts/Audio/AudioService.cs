@@ -63,7 +63,6 @@ public sealed class AudioService : MonoBehaviour
     [Header("Configuration")]
     [SerializeField] private AudioCatalog catalog;
     [SerializeField, Min(4)] private int sfxPoolSize = 20;
-    [SerializeField, Min(0f)] private float musicCrossfadeDuration = 0.75f;
 
     [Header("Optional Mixer Groups")]
     [SerializeField] private AudioMixerGroup musicMixerGroup;
@@ -233,7 +232,7 @@ public sealed class AudioService : MonoBehaviour
         currentMusicCue = cueId;
         currentMusicSourceIndex = nextIndex;
         musicFadeRoutine = StartCoroutine(
-            CrossfadeMusic(previous, next, definition.Volume * GetCategoryVolume(AudioCategory.Music))
+            CrossfadeMusic(previous, next, definition.Volume * GetCategoryVolume(AudioCategory.Music), definition.FadeInDuration)
         );
 
         return true;
@@ -255,6 +254,14 @@ public sealed class AudioService : MonoBehaviour
         ambienceSource.Play();
         currentAmbienceCue = cueId;
         return true;
+    }
+
+    public void StopMusic()
+    {
+        if (musicFadeRoutine != null) StopCoroutine(musicFadeRoutine);
+        musicFadeRoutine = null;
+        currentMusicCue = AudioCueId.None;
+        foreach (AudioSource source in musicSources) source.Stop();
     }
 
     public void StopAmbience()
@@ -527,10 +534,10 @@ public sealed class AudioService : MonoBehaviour
     private IEnumerator CrossfadeMusic(
         AudioSource previous,
         AudioSource next,
-        float targetVolume
+        float targetVolume,
+        float duration
     )
     {
-        float duration = Mathf.Max(0f, musicCrossfadeDuration);
         float previousStartVolume = previous != null ? previous.volume : 0f;
 
         if (duration <= 0f)
@@ -697,7 +704,6 @@ public sealed class AudioService : MonoBehaviour
     private void OnValidate()
     {
         sfxPoolSize = Mathf.Max(4, sfxPoolSize);
-        musicCrossfadeDuration = Mathf.Max(0f, musicCrossfadeDuration);
     }
 #endif
 }

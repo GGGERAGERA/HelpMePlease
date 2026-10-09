@@ -1475,8 +1475,8 @@ MonoBehaviour:
     ru: "ЛОЖНЫЙ СИГНАЛ"
     en: "FALSE SIGNAL"
   - key: event.signal.description
-    ru: "Найдите настоящий источник сигнала."
-    en: "Find the true signal source."
+    ru: "Проверьте передатчики орбитальным оружием. Найдите настоящий сигнал"
+    en: "Probe the transmitters with orbital weapons. Find the true signal"
   - key: event.evacuation.name
     ru: "ЭВАКУАЦИОННЫЙ КОРИДОР"
     en: "EVACUATION CORRIDOR"
@@ -1708,3 +1708,9 @@ MonoBehaviour:
   - key: event.corridor.exitOpen
     ru: "ПЕРЕСЕКИТЕ ВЫХОД"
     en: "CROSS THE EXIT"
+  - key: event.signal.activate
+    ru: "Активировать передатчик"
+    en: "Activate transmitter"
+  - key: event.corridor.start
+    ru: "ВОЙДИТЕ В КОРИДОР"
+    en: "ENTER THE CORRIDOR"

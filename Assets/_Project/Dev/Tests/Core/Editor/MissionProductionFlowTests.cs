@@ -94,7 +94,7 @@ public sealed class MissionProductionFlowTests
         runPlayer.transform.position=worldEvent.transform.position; worldEvent.Interact();
         yield return CoreTestSupport.Await(()=>worldEvent.IsStarted);
         var real=Object.FindObjectsByType<FalseSignalPoint>(FindObjectsSortMode.None).First(p=>Read<bool>(p,"isReal"));
-        worldEvent.ResolveSignal(real,true); Assert.That(worldEvent.IsCompleted,Is.True); Assert.That(missions.GetState(id),Is.EqualTo(MissionState.ObjectiveCompleted));
+        yield return FalseSignalTestSupport.ScanAndActivate(real,runPlayer.transform); Assert.That(worldEvent.IsCompleted,Is.True); Assert.That(missions.GetState(id),Is.EqualTo(MissionState.ObjectiveCompleted));
         var storage=new PlayerPrefsMissionStorage(map.Definition.Id); var provisionalSave=JsonUtility.FromJson<MissionSaveState>(storage.Load()).missions.Single(m=>m.missionId==id);
         Assert.That(provisionalSave.state,Is.EqualTo(MissionState.Active)); Assert.That(provisionalSave.committedObjectives,Is.Empty); Assert.That(missions.Claim(id),Is.False);
         yield return CoreTestSupport.Await(()=>UpgradeManager.Instance.DebugCurrentChoices.Count>0);

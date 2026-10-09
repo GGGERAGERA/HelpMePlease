@@ -48,7 +48,7 @@ public sealed class SurfaceMarkerFlowTests
         player.transform.position = worldEvent.transform.position; worldEvent.Interact();
         yield return CoreTestSupport.Await(() => worldEvent.IsStarted);
         var realSignal = Object.FindObjectsByType<FalseSignalPoint>(FindObjectsSortMode.None).First(p => Read<bool>(p,"isReal"));
-        worldEvent.ResolveSignal(realSignal,true); Assert.That(worldEvent.IsCompleted,Is.True);
+        yield return FalseSignalTestSupport.ScanAndActivate(realSignal,player.transform); Assert.That(worldEvent.IsCompleted,Is.True);
         Assert.That(storage.values.Count,Is.Zero); service.Content.TryGetMarker("D1",out var marker); Assert.That(marker.State,Is.EqualTo(SurfaceMarkerState.Active));
         // The real site reward must be selected before the final boss can start.
         yield return CoreTestSupport.Await(() => UpgradeManager.Instance.DebugCurrentChoices.Count > 0);

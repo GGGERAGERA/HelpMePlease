@@ -7,11 +7,17 @@ public sealed class SceneTransitionView : MonoBehaviour
     [SerializeField] private Canvas canvas;
     [SerializeField] private CanvasGroup group;
     [SerializeField] private Image scan;
+    [SerializeField] private Image cinematicBlackout;
     [SerializeField] private TextMeshProUGUI errorText;
     public float Alpha => group.alpha;
+    public void SetCinematic(bool visible) => cinematicBlackout.enabled = visible;
     public void SetAlpha(float alpha) => group.alpha = alpha;
     public void SetVisible(bool visible) { canvas.enabled = visible; group.blocksRaycasts = visible; }
-    public void SetFailure(bool failed) => errorText.gameObject.SetActive(failed);
+    public void SetFailure(bool failed)
+    {
+        if (failed) SetCinematic(false);
+        errorText.gameObject.SetActive(failed);
+    }
     public void SetFailureText(string text) { if (errorText.text != text) errorText.text = text; }
     public void AnimateScan(bool returning)
     {

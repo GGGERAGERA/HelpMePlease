@@ -5,6 +5,7 @@ public enum AudioCueId
     BunkerMusic = 1,
     RunMusic = 2,
     BunkerAmbience = 3,
+    StartScreenMusic = 4,
 
     UIHover = 10,
     UIConfirm = 11,
@@ -36,5 +37,9 @@ public enum AudioCueId
     CorePulse = 92,
     CoreCascade = 93,
     ModuleInstall = 94,
-    RewardSelect = 95
+    RewardSelect = 95,
+    CapsuleGlassTap = 100,
+    // 101/102 retired: capsule unlock and vent are no longer part of the intro.
+    CapsuleBodyResonance = 103,
+    CapsuleGlassBreak = 104
 }

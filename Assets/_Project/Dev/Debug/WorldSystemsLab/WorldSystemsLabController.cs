@@ -223,7 +223,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
             return false;
 
         ClearEvents();
-        if (prefab is OrbitalRelayEvent)
+        if (prefab is OrbitalRelayEvent || prefab is FalseSignalEvent)
         {
             relayAdapter ??= gameObject.AddComponent<WorldSystemsLabRelayAdapter>();
             relayAdapter.ConfigureSupport(relaySupportPrefab);

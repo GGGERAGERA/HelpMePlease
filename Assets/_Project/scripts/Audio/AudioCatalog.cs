@@ -21,6 +21,8 @@ public sealed class AudioCueDefinition
     [SerializeField] private AudioCueId id;
     [SerializeField] private AudioClip[] clips;
     [SerializeField, Range(0f, 1f)] private float volume = 1f;
+    [Tooltip("Fade/crossfade duration when this music cue starts.")]
+    [SerializeField, Min(0f)] private float fadeInDuration = .75f;
     [SerializeField] private float pitchMin = 1f;
     [SerializeField] private float pitchMax = 1f;
     [SerializeField, Range(0f, 1f)] private float spatialBlend;
@@ -34,6 +36,7 @@ public sealed class AudioCueDefinition
 
     public AudioCueId Id => id;
     public float Volume => Mathf.Clamp01(volume);
+    public float FadeInDuration => Mathf.Max(0f, fadeInDuration);
     public float PitchMin => Mathf.Min(pitchMin, pitchMax);
     public float PitchMax => Mathf.Max(pitchMin, pitchMax);
     public float SpatialBlend => Mathf.Clamp01(spatialBlend);

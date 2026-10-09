@@ -76,6 +76,7 @@ public sealed class CorridorPresentation : System.IDisposable
         Refresh(false);
     }
     public void CheckpointPulse() { gates[state.Completed - 1].Pulse(); Refresh(false); }
+    public void StartPulse() { if (gates.Count > 0) gates[0].Pulse(); }
     public void Refresh(bool exitReady)
     {
         for (int i = 0; i < gates.Count; i++) gates[i].SetState(i < state.Completed ? 2 : i == state.Completed ? 1 : 0);

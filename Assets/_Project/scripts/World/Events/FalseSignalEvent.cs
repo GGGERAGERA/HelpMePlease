@@ -1,560 +1,190 @@
-using Random = GameplayRandom.EventRandom;
 using System.Collections;
 using System.Collections.Generic;
+using Subject42.Combat.OrbitalStation;
 using UnityEngine;
+using Random = GameplayRandom.EventRandom;
 
-[RequireComponent(typeof(Collider2D))]
+[RequireComponent(typeof(CircleCollider2D))]
 public sealed class FalseSignalEvent : WorldEvent
 {
-    private enum FalseSignalTrap
-    {
-        Ambush,
-        Blackout
-    }
-
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-    private enum DebugTrapOverride
-    {
-        Random,
-        Ambush,
-        Blackout
-    }
-#endif
-
-    private const int AmbushTurretCount = 2;
-    private const float AmbushWarningDuration = 0.5f;
-    private const float BlackoutWarningDuration = 0.4f;
-    private const float BlackoutDuration = 3f;
-    private const float BlackoutGlobalLightMultiplier = 0.15f;
-    private const float TurretMinimumSpawnRadius = 3f;
-    private const float TurretMaximumSpawnRadius = 5f;
-    private const float TurretMinimumPlayerDistance = 2f;
-    private const float TurretSpawnClearance = 0.75f;
-
-    [Header("Start")]
-    [SerializeField, Min(0.1f)] private float startRadius = 2.5f;
-    [SerializeField] private Material lineMaterial;
-
-    [Header("Signals")]
+    [Header("Authored presentation")]
     [SerializeField] private FalseSignalPoint signalPointPrefab;
-    [SerializeField, Min(3)] private int signalPointCount = 3;
-    [SerializeField, Min(0f)] private float minPointDistance = 4f;
-    [SerializeField, Min(0f)] private float maxPointDistance = 12f;
-    [SerializeField, Min(0f)] private float minPointSeparation = 4f;
-    [SerializeField, Min(0f)] private float pointEdgePadding = 1f;
-    [SerializeField, Min(1)] private int positionAttempts = 24;
-
-    [Header("Failure")]
-    [SerializeField, Min(1f)] private float timeLimit = 45f;
-
-    [Header("False Signal Wave")]
-    [SerializeField, Min(0)] private int falseSignalEnemyCount = 5;
+    [SerializeField] private GameObject startVisual;
+    [Header("Placement")]
+    [SerializeField, Min(1f)] private float minimumPointRadius = 4.5f;
+    [SerializeField, Min(1f)] private float maximumPointRadius = 6f;
+    [SerializeField, Min(1f)] private float minimumPointSeparation = 4.5f;
+    [SerializeField, Min(1)] private int placementAttempts = 32;
+    [Header("Timing")]
+    [SerializeField, Min(.1f)] private float scanDuration = 2.4f;
+    [SerializeField, Min(.1f)] private float trapWarningDuration = .65f;
+    [SerializeField, Min(.1f)] private float activationDuration = .35f;
+    [SerializeField, Min(1f)] private float timeLimit = 90f;
+    [Header("Anomaly when no existing zone covers the event")]
+    [SerializeField] private LocalAnomalyData anomaly;
+    [SerializeField] private Vector2 anomalySize = new(5, 5);
+    [Header("Bounded false activation wave")]
+    [SerializeField, Min(0)] private int falseSignalEnemyCount = 3;
     [SerializeField, Min(0f)] private float minimumEnemyDistanceFromPlayer = 4f;
     [SerializeField, Min(0f)] private float minimumSpawnRadius = 3f;
     [SerializeField, Min(0f)] private float maximumSpawnRadius = 6f;
-    [SerializeField] private EnemySpawner enemySpawner;
-    [SerializeField] private GameObject ambushTurretPrefab;
-
-    [Header("Feedback")]
-    [SerializeField, Min(0.1f)] private float feedbackPulseDuration = 0.45f;
-    [SerializeField, Min(0.05f)] private float successFadeDuration = 0.35f;
-    [SerializeField, Min(0f)] private float ambushShakeDuration = 0.18f;
-    [SerializeField, Min(0f)] private float ambushShakeMagnitude = 0.06f;
-    [SerializeField] private Color falseSignalPulseColor =
-        new(0.95f, 0.08f, 0.04f, 1f);
-
-    [Header("Scene")]
-    [SerializeField] private GameplayAreaService gameplayArea;
-
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-    [Header("Debug")]
-    [SerializeField] private DebugTrapOverride debugTrapOverride;
-#endif
 
     private readonly List<FalseSignalPoint> signalPoints = new();
-    private readonly List<GameObject> spawnedAmbushTurrets = new();
-    private readonly Dictionary<FalseSignalPoint, WorldEventMarker>
-        signalPointMarkers = new();
-    private Collider2D startCollider;
-    private LineRenderer startVisual;
-    private float timeRemaining;
-    private Vector3 rewardPosition;
-    private bool hasRewardPosition;
+    private readonly List<LevelAnomalyController.LocalAnomalyZoneGeometry> zones = new();
+    private readonly Vector3[] positions = new Vector3[3];
+    private OrbitalStationRuntime station;
+    private PlayerHealth health;
+    private LevelAnomalyController anomalies;
+    private LocalAnomalyZone ownedZone;
+    private Vector2 diagnosticTarget;
+    private int realSignalIndex;
+    private float remaining;
     private bool completionPending;
-    private WorldRuleVisual worldRuleVisual;
-    private float blackoutRemaining;
-    private bool blackoutActive;
+    private Vector3 rewardPosition;
+    public override Vector3 RewardPosition => completionPending ? rewardPosition : base.RewardPosition;
+    internal bool AcceptsSignals => IsStarted && !IsCompleted && !completionPending && health != null && !health.IsDead;
 
-    public override Vector3 RewardPosition => hasRewardPosition
-        ? rewardPosition
-        : base.RewardPosition;
-
+    public override bool TryValidateConfiguration(out string error)
+    {
+        error = "False Signal requires an authored transmitter, start visual, anomaly and finite placement/timing settings.";
+        if (signalPointPrefab == null || !signalPointPrefab.IsValid || startVisual == null || anomaly == null ||
+            minimumPointRadius <= 0 || maximumPointRadius < minimumPointRadius || minimumPointSeparation <= 1.4f ||
+            placementAttempts <= 0 || scanDuration <= 0 || trapWarningDuration <= 0 || activationDuration <= 0 || timeLimit <= scanDuration)
+            return false;
+        error = null; return true;
+    }
+    public override bool TryPreparePlacement(WorldEventPlacementContext context, out string error)
+    {
+        for (int attempt = 0; attempt < placementAttempts; attempt++)
+        {
+            float rotation = Random.Range(0f, Mathf.PI * 2);
+            bool valid = true;
+            for (int i = 0; i < positions.Length; i++)
+            {
+                float angle = rotation + i * Mathf.PI * 2 / positions.Length + Random.Range(-.15f, .15f);
+                positions[i] = context.Origin + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * Random.Range(minimumPointRadius, maximumPointRadius);
+                var footprint = new Rect((Vector2)positions[i] - Vector2.one, Vector2.one * 2);
+                if (!context.PlayableArea.Contains(footprint.min) || !context.PlayableArea.Contains(footprint.max) ||
+                    (context.SiteStartBounds.HasValue && (!context.SiteStartBounds.Value.Contains(footprint.min) ||
+                    !context.SiteStartBounds.Value.Contains(footprint.max))) || !context.IsStaticFootprintClear(footprint)) valid = false;
+                for (int j = 0; j < i; j++)
+                    if (Vector2.Distance(positions[i], positions[j]) < minimumPointSeparation) valid = false;
+            }
+            var hub = new Rect(context.Origin - anomalySize * .5f, anomalySize);
+            if (valid && context.PlayableArea.Contains(hub.min) && context.PlayableArea.Contains(hub.max) && context.IsStaticFootprintClear(hub))
+            { error = null; return true; }
+        }
+        error = "No clear, separated three-transmitter layout fits this event location."; return false;
+    }
+    public override void CollectReservedFootprints(List<Rect> footprints)
+    {
+        if (IsCompleted) return;
+        foreach (var point in positions) footprints.Add(new Rect((Vector2)point - Vector2.one, Vector2.one * 2));
+    }
     public override void Initialize(WorldEventSpawner spawner)
     {
         base.Initialize(spawner);
-        hasRewardPosition = false;
-        completionPending = false;
-        blackoutRemaining = 0f;
-        blackoutActive = false;
-        spawnedAmbushTurrets.Clear();
+        realSignalIndex = Random.Range(0, 3);
+        var player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
+        station = player != null ? player.GetComponentInChildren<OrbitalStationRuntime>(true) : null;
+        health = player != null ? player.GetComponent<PlayerHealth>() : null;
+        if (health != null) health.Died += OnPlayerDied;
         ShowEventMarker(transform, "event.false");
     }
-
-    private void Awake()
-    {
-        startCollider = GetComponent<Collider2D>();
-        BuildStartVisual();
-    }
-
-    private void Update()
-    {
-        if (!IsStarted || IsCompleted || completionPending ||
-            Time.timeScale == 0f)
-        {
-            return;
-        }
-
-        timeRemaining -= Time.deltaTime;
-
-        UpdateBlackout();
-
-        if (timeRemaining <= 0f)
-            FailFalseSignal();
-    }
-
-    protected override bool CanStartFrom(Vector2 playerPosition)
-    {
-        return Vector2.Distance(transform.position, playerPosition) <=
-            startRadius;
-    }
-
+    protected override bool CanStartFrom(Vector2 position) => health != null && !health.IsDead &&
+        station != null && station.IsInitialized && station.Modules.Count > 0 && GetComponent<CircleCollider2D>().OverlapPoint(position);
     protected override void OnEventStarted()
     {
-        if (startCollider != null)
-            startCollider.enabled = false;
-        if (startVisual != null)
-            startVisual.enabled = false;
-
-        HideEventMarker();
-        ResolveSceneReferences();
-        timeRemaining = timeLimit;
-
-        if (!SpawnSignalPoints())
+        GetComponent<CircleCollider2D>().enabled = false;
+        startVisual.SetActive(false); HideEventMarker();
+        remaining = timeLimit;
+        anomalies = LevelAnomalyController.Instance;
+        if (!BindAnomaly()) { FailEvent(); return; }
+        for (int i = 0; i < positions.Length; i++)
         {
-            FailFalseSignal();
-            return;
-        }
-
-    }
-
-    public void ResolveSignal(FalseSignalPoint signalPoint, bool isReal)
-    {
-        if (!IsStarted || IsCompleted || completionPending ||
-            signalPoint == null)
-        {
-            return;
-        }
-
-        RemoveSignalPointMarker(signalPoint);
-
-        if (!isReal)
-        {
-            FalseSignalTrap trap = ChooseFalseSignalTrap();
-            float warningDuration = trap == FalseSignalTrap.Ambush
-                ? AmbushWarningDuration
-                : BlackoutWarningDuration;
-
-            signalPoint.BeginTrapWarning(falseSignalPulseColor);
-            StartCoroutine(ResolveFalseSignalTrapAfterWarning(
-                signalPoint,
-                trap,
-                warningDuration
-            ));
-            return;
-        }
-
-        rewardPosition = signalPoint.transform.position;
-        hasRewardPosition = true;
-        signalPoints.Remove(signalPoint);
-        Destroy(signalPoint.gameObject);
-        completionPending = true;
-        FadeRemainingSignalPoints();
-        CompleteEvent();
-    }
-
-    private void SpawnAmbushTurrets(Vector3 origin)
-    {
-        if (enemySpawner == null || ambushTurretPrefab == null)
-            return;
-
-        float minimumPlayerDistance = Mathf.Max(
-            TurretMinimumPlayerDistance,
-            minimumEnemyDistanceFromPlayer
-        );
-
-        for (int i = 0; i < AmbushTurretCount; i++)
-        {
-            GameObject turret = enemySpawner.SpawnSpecificEnemyAround(
-                ambushTurretPrefab,
-                origin,
-                TurretMinimumSpawnRadius,
-                TurretMaximumSpawnRadius,
-                minimumPlayerDistance,
-                true,
-                TurretSpawnClearance
-            );
-
-            if (turret != null)
-                spawnedAmbushTurrets.Add(turret);
-        }
-    }
-
-    private IEnumerator ResolveFalseSignalTrapAfterWarning(
-        FalseSignalPoint signalPoint,
-        FalseSignalTrap trap,
-        float warningDuration)
-    {
-        yield return new WaitForSeconds(warningDuration);
-
-        if (!IsStarted || IsCompleted)
-            yield break;
-
-        Vector3 trapPosition = signalPoint != null
-            ? signalPoint.transform.position
-            : transform.position;
-
-        signalPoints.Remove(signalPoint);
-
-        if (signalPoint != null)
-            Destroy(signalPoint.gameObject);
-
-        switch (trap)
-        {
-            case FalseSignalTrap.Ambush:
-                TriggerAmbush(trapPosition);
-                break;
-
-            case FalseSignalTrap.Blackout:
-                TriggerBlackout();
-                break;
-        }
-    }
-
-    private void TriggerAmbush(Vector3 origin)
-    {
-        RunMessageService.Instance?.ShowWorldEventFeedback(
-            "event.falseTitle",
-            "event.ambush",
-            falseSignalPulseColor,
-            feedbackPulseDuration
-        );
-        CameraShake.Instance?.Shake(
-            ambushShakeDuration,
-            ambushShakeMagnitude
-        );
-        enemySpawner?.SpawnAdditionalWave(
-            origin,
-            falseSignalEnemyCount,
-            minimumSpawnRadius,
-            maximumSpawnRadius,
-            minimumEnemyDistanceFromPlayer
-        );
-        SpawnAmbushTurrets(origin);
-    }
-
-    private void TriggerBlackout()
-    {
-        RunMessageService.Instance?.ShowWorldEventFeedback(
-            "event.falseTitle",
-            "event.blackout",
-            falseSignalPulseColor,
-            feedbackPulseDuration
-        );
-
-        blackoutRemaining = BlackoutDuration;
-        blackoutActive = true;
-        worldRuleVisual?.SetBlackoutGlobalLightMultiplier(
-            this,
-            BlackoutGlobalLightMultiplier
-        );
-    }
-
-    private void UpdateBlackout()
-    {
-        if (!blackoutActive)
-            return;
-
-        blackoutRemaining = Mathf.Max(
-            0f,
-            blackoutRemaining - Time.deltaTime
-        );
-
-        if (blackoutRemaining > 0f)
-            return;
-
-        RemoveBlackoutModifier();
-    }
-
-    private void RemoveBlackoutModifier()
-    {
-        if (!blackoutActive)
-            return;
-
-        blackoutActive = false;
-        blackoutRemaining = 0f;
-        worldRuleVisual?.RemoveBlackoutGlobalLightMultiplier(this);
-    }
-
-    private FalseSignalTrap ChooseFalseSignalTrap()
-    {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        if (debugTrapOverride == DebugTrapOverride.Ambush)
-        {
-            debugTrapOverride = DebugTrapOverride.Random;
-            return FalseSignalTrap.Ambush;
-        }
-
-        if (debugTrapOverride == DebugTrapOverride.Blackout)
-        {
-            debugTrapOverride = DebugTrapOverride.Random;
-            return FalseSignalTrap.Blackout;
-        }
-#endif
-
-        return Random.value < 0.5f
-            ? FalseSignalTrap.Ambush
-            : FalseSignalTrap.Blackout;
-    }
-
-    public void HandleSignalPointDestroyed(FalseSignalPoint signalPoint)
-    {
-        if (signalPoint == null)
-            return;
-
-        signalPoints.Remove(signalPoint);
-        RemoveSignalPointMarker(signalPoint);
-    }
-
-    private bool SpawnSignalPoints()
-    {
-        if (signalPointPrefab == null || gameplayArea == null)
-            return false;
-
-        List<Vector3> positions = new();
-
-        for (int i = 0; i < signalPointCount; i++)
-        {
-            if (!TryGetSignalPosition(positions, out Vector3 position))
-                return false;
-
-            positions.Add(position);
-        }
-
-        int realSignalIndex = Random.Range(0, positions.Count);
-
-        for (int i = 0; i < positions.Count; i++)
-        {
-            FalseSignalPoint point = Instantiate(
-                signalPointPrefab,
-                positions[i],
-                Quaternion.identity,
-                transform
-            );
-            point.Initialize(this, i == realSignalIndex);
+            var point = Instantiate(signalPointPrefab, positions[i], Quaternion.identity, transform);
+            point.Initialize(this, i == realSignalIndex, diagnosticTarget, scanDuration);
             signalPoints.Add(point);
-
-            WorldEventMarker marker =
-                HUDManager.Instance?.CreateWorldEventMarker(
-                    point.transform,
-                    "event.signal"
-                );
-            signalPointMarkers[point] = marker;
         }
-
-        return true;
     }
-
-    private bool TryGetSignalPosition(
-        List<Vector3> existingPositions,
-        out Vector3 position)
+    private bool BindAnomaly()
     {
-        for (int i = 0; i < positionAttempts; i++)
+        if (anomalies == null) return false;
+        anomalies.CollectActiveLocalZones(zones);
+        // Reuse the zone that actually covers the hub; no duplicate gameplay effects.
+        foreach (var zone in zones)
         {
-            if (!gameplayArea.TryGetSpawnPosition(
-                    transform.position,
-                    minPointDistance,
-                    maxPointDistance,
-                    1,
-                    pointEdgePadding,
-                    out Vector3 candidate))
-            {
-                continue;
-            }
-
-            if (!IsInsideSitePlacement(candidate, pointEdgePadding))
-                continue;
-
-            bool separated = true;
-
-            for (int j = 0; j < existingPositions.Count; j++)
-            {
-                if (Vector2.Distance(candidate, existingPositions[j]) <
-                    minPointSeparation)
-                {
-                    separated = false;
-                    break;
-                }
-            }
-
-            if (!separated)
-                continue;
-
-            position = candidate;
+            var bounds = new Rect(zone.Center - zone.Size * .5f, zone.Size);
+            if (!bounds.Contains(transform.position)) continue;
+            diagnosticTarget = new Vector2(Mathf.Clamp(transform.position.x, bounds.xMin + .5f, bounds.xMax - .5f),
+                Mathf.Clamp(transform.position.y, bounds.yMin + .5f, bounds.yMax - .5f));
             return true;
         }
-
-        position = default;
-        return false;
+        ownedZone = anomalies.SpawnSiteZone(anomaly, transform.position, anomalySize, transform);
+        diagnosticTarget = transform.position;
+        return ownedZone != null;
     }
-
-    private void ResolveSceneReferences()
+    private void LateUpdate()
     {
-        if (gameplayArea == null)
-            gameplayArea = GameplayAreaService.Instance;
-
-        if (enemySpawner == null)
-            enemySpawner = FindFirstObjectByType<EnemySpawner>();
-
-        if (worldRuleVisual == null)
-            worldRuleVisual = FindFirstObjectByType<WorldRuleVisual>();
-    }
-
-    private void BuildStartVisual()
-    {
-        if (lineMaterial == null)
-            return;
-
-        const int Segments = 48;
-        startVisual = gameObject.AddComponent<LineRenderer>();
-        PixelEventLine.Attach(startVisual);
-        startVisual.sharedMaterial = lineMaterial;
-        startVisual.useWorldSpace = false;
-        startVisual.loop = true;
-        startVisual.positionCount = Segments;
-        startVisual.startWidth = 0.12f;
-        startVisual.endWidth = 0.12f;
-        startVisual.startColor = Color.magenta;
-        startVisual.endColor = Color.magenta;
-        startVisual.sortingLayerName = "Midground";
-        startVisual.sortingOrder = 1;
-
-        for (int i = 0; i < Segments; i++)
+        if (!AcceptsSignals || Time.deltaTime <= 0) return;
+        remaining -= Time.deltaTime;
+        if (remaining <= 0) { FailEvent(); return; }
+        if (station == null || !station.IsInitialized || station.Owner.IsDead) return;
+        foreach (var point in signalPoints)
         {
-            float angle = i * Mathf.PI * 2f / Segments;
-            startVisual.SetPosition(
-                i,
-                new Vector3(
-                    Mathf.Cos(angle) * startRadius,
-                    Mathf.Sin(angle) * startRadius,
-                    0f
-                )
-            );
+            if (point == null || point.State != FalseSignalPointState.Unchecked) continue;
+            point.GetContactCircle(out var center, out float radius);
+            foreach (var module in station.Modules)
+                if (module.HasBodyContact(center, radius)) { point.BeginScan(); break; }
         }
     }
-
-    private void FailFalseSignal()
+    internal void ActivateSignal(FalseSignalPoint point)
     {
-        FailEvent();
-    }
-
-    private void FadeRemainingSignalPoints()
-    {
-        for (int i = 0; i < signalPoints.Count; i++)
+        if (!AcceptsSignals || !signalPoints.Contains(point)) return;
+        if (point.IsReal)
         {
-            FalseSignalPoint point = signalPoints[i];
-
-            if (point == null)
-                continue;
-
-            RemoveSignalPointMarker(point);
-            point.FadeOutAndDestroy(successFadeDuration);
+            completionPending = true; rewardPosition = point.transform.position;
+            StartCoroutine(CompleteAfterActivation());
         }
-
-        signalPoints.Clear();
+        else StartCoroutine(TrapAfterWarning(point));
     }
-
+    private IEnumerator CompleteAfterActivation()
+    {
+        AudioService.Instance?.PlayAt(AudioCueId.CoreCascade, rewardPosition);
+        yield return new WaitForSeconds(activationDuration);
+        if (!IsCompleted) CompleteEvent();
+    }
+    private IEnumerator TrapAfterWarning(FalseSignalPoint point)
+    {
+        AudioService.Instance?.PlayAt(AudioCueId.CorePulse, point.transform.position);
+        yield return new WaitForSeconds(trapWarningDuration);
+        if (!AcceptsSignals || point == null) yield break;
+        point.DisableSignal();
+        owner.EnemySpawner?.SpawnAdditionalWave(point.transform.position, falseSignalEnemyCount,
+            minimumSpawnRadius, maximumSpawnRadius, minimumEnemyDistanceFromPlayer);
+        RunMessageService.Instance?.ShowWorldEventFeedback("event.falseTitle", "event.ambush", new Color(1, .2f, .1f), .45f);
+        CameraShake.Instance?.Shake(.18f, .06f);
+    }
+    private void OnPlayerDied() { if (!IsCompleted) FailEvent(); }
     protected override void CleanupEvent()
     {
         StopAllCoroutines();
-        RemoveBlackoutModifier();
-        CleanupSignalPointMarkers();
-
-        for (int i = 0; i < signalPoints.Count; i++)
-        {
-            if (signalPoints[i] != null)
-                Destroy(signalPoints[i].gameObject);
-        }
-
+        if (health != null) health.Died -= OnPlayerDied;
+        foreach (var point in signalPoints)
+            if (point != null) { point.gameObject.SetActive(false); Destroy(point.gameObject); }
         signalPoints.Clear();
-
-        if (IsDebugCleanup)
-        {
-            for (int i = 0; i < spawnedAmbushTurrets.Count; i++)
-            {
-                if (spawnedAmbushTurrets[i] != null)
-                    Destroy(spawnedAmbushTurrets[i]);
-            }
-        }
-
-        spawnedAmbushTurrets.Clear();
+        if (ownedZone != null) anomalies?.CollapseSiteZone(ownedZone);
+        ownedZone = null;
+        if (startVisual != null) startVisual.SetActive(false);
+        GetComponent<CircleCollider2D>().enabled = false;
     }
-
-    public override void CollectTacticalMapMarkers(
-        List<TacticalMapMarkerDescriptor> markers)
+    private void OnDisable() { if (!IsCompleted) DisposeForOwnerReset(); }
+    public override void CollectTacticalMapMarkers(List<TacticalMapMarkerDescriptor> result)
     {
-        base.CollectTacticalMapMarkers(markers);
-
-        if (markers == null || !IsStarted || IsCompleted)
-            return;
-
-        for (int i = 0; i < signalPoints.Count; i++)
-        {
-            FalseSignalPoint point = signalPoints[i];
-
-            if (point != null)
-            {
-                markers.Add(new TacticalMapMarkerDescriptor(
-                    TacticalMapMarkerKind.Objective,
-                    point.transform.position
-                ));
-            }
-        }
-    }
-
-    private void RemoveSignalPointMarker(FalseSignalPoint signalPoint)
-    {
-        if (!signalPointMarkers.TryGetValue(
-                signalPoint,
-                out WorldEventMarker marker))
-        {
-            return;
-        }
-
-        HUDManager.Instance?.RemoveWorldEventMarker(marker);
-        signalPointMarkers.Remove(signalPoint);
-    }
-
-    private void CleanupSignalPointMarkers()
-    {
-        foreach (WorldEventMarker marker in signalPointMarkers.Values)
-            HUDManager.Instance?.RemoveWorldEventMarker(marker);
-
-        signalPointMarkers.Clear();
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.magenta;
-        Gizmos.DrawWireSphere(transform.position, startRadius);
+        base.CollectTacticalMapMarkers(result);
+        if (result == null || !IsStarted || IsCompleted) return;
+        foreach (var point in signalPoints)
+            if (point != null && point.State != FalseSignalPointState.Disabled)
+                result.Add(new TacticalMapMarkerDescriptor(TacticalMapMarkerKind.Objective, point.transform.position));
     }
 }
