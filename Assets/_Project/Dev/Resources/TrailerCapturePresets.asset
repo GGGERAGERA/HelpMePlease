@@ -1,0 +1,147 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a49e09395cd4b6db87fc669eebcebd3, type: 3}
+  m_Name: TrailerCapturePresets
+  m_EditorClassIdentifier: Assembly-CSharp::TrailerCaptureConfig
+  rocketStormPrefab: {fileID: 7655608749632382643, guid: e999d804041b6dd478bbfcf3e074428f, type: 3}
+  worldRules:
+  - {fileID: 11400000, guid: f1012da158e24a20bb764c93aeee5266, type: 2}
+  - {fileID: 11400000, guid: c7ddfa7252bf4db2c8432a60dbbb2f33, type: 2}
+  - {fileID: 11400000, guid: a5bdb85030fd4b90a621084eb9990d11, type: 2}
+  - {fileID: 11400000, guid: d8ee0b8363c04ec3d9543b71eccc3044, type: 2}
+  - {fileID: 11400000, guid: e9ff1c9474d14fd4ea654c82fddd4155, type: 2}
+  - {fileID: 11400000, guid: b6cce96141ae4ca1b732195fcaaa1e22, type: 2}
+  - {fileID: 11400000, guid: c016d34b1d8f4fe797a9483ca0d30016, type: 2}
+  presets:
+  - shot: 0
+    label: Начальный бой
+    description: 1 кольцо · пистолет и меч · низкая угроза
+    rings: 1
+    mountsPerRing: 2
+    coreLevel: 0
+    threat: 5
+    openingEnemies: 3
+    modules:
+    - ring: 0
+      mount: 1
+      kind: 1
+  - shot: 1
+    label: Развитый билд
+    description: 3 кольца · 7 модулей · Bullet Time и смещение центра
+    rings: 3
+    mountsPerRing: 3
+    coreLevel: 1
+    threat: 25
+    openingEnemies: 5
+    modules:
+    - ring: 0
+      mount: 2
+      kind: 1
+    - ring: 1
+      mount: 1
+      kind: 2
+    - ring: 2
+      mount: 2
+      kind: 3
+    - ring: 2
+      mount: 0
+      kind: 0
+    - ring: 1
+      mount: 0
+      kind: 4
+    - ring: 2
+      mount: 1
+      kind: 4
+  - shot: 2
+    label: Насыщенный бой
+    description: 4 кольца · 8 модулей · умеренно повышенная угроза
+    rings: 4
+    mountsPerRing: 3
+    coreLevel: 2
+    threat: 50
+    openingEnemies: 8
+    modules:
+    - ring: 0
+      mount: 2
+      kind: 1
+    - ring: 1
+      mount: 1
+      kind: 2
+    - ring: 2
+      mount: 2
+      kind: 3
+    - ring: 2
+      mount: 0
+      kind: 0
+    - ring: 3
+      mount: 0
+      kind: 1
+    - ring: 1
+      mount: 0
+      kind: 4
+    - ring: 3
+      mount: 2
+      kind: 4
+  - shot: 3
+    label: Ракетное событие
+    description: 3 кольца · настоящий Rocket Storm · переход к маяку
+    rings: 3
+    mountsPerRing: 3
+    coreLevel: 1
+    threat: 15
+    openingEnemies: 2
+    modules:
+    - ring: 0
+      mount: 2
+      kind: 1
+    - ring: 1
+      mount: 1
+      kind: 2
+    - ring: 2
+      mount: 2
+      kind: 3
+    - ring: 2
+      mount: 0
+      kind: 0
+    - ring: 1
+      mount: 0
+      kind: 4
+    - ring: 2
+      mount: 1
+      kind: 4
+  - shot: 4
+    label: Босс
+    description: 3 кольца · текущий босс · обычный спавн остановлен
+    rings: 3
+    mountsPerRing: 3
+    coreLevel: 1
+    threat: 15
+    openingEnemies: 0
+    modules:
+    - ring: 0
+      mount: 2
+      kind: 1
+    - ring: 1
+      mount: 1
+      kind: 2
+    - ring: 2
+      mount: 2
+      kind: 3
+    - ring: 2
+      mount: 0
+      kind: 0
+    - ring: 1
+      mount: 0
+      kind: 4
+    - ring: 2
+      mount: 1
+      kind: 4

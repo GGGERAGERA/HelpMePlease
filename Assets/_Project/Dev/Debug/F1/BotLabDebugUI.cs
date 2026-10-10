@@ -30,23 +30,23 @@ public sealed partial class Subject42DebugMenu
         var session = BotRunSession.Current;
         var batch = session != null ? session.GetComponent<BotBatchRunner>() : null;
         bool busy = session != null && (session.IsRunning || session.IsStarting || (batch != null && batch.IsActive));
-        AddToggleRow("BOT ENABLED", session != null && session.BotEnabled, true,
+        AddToggleRow("Бот включён", session != null && session.BotEnabled, true,
             () => { var current = GetBotSession(); if (current.BotEnabled) StopBotLab(); current.SetBotEnabled(!current.BotEnabled); });
-        AddSectionTitle("Strategy: Survivor", "Один свежий сектор выбранным персонажем");
-        AddRow("Seed mode", (session?.SeedMode ?? BotSeedMode.Auto).ToString().ToUpperInvariant(), mutedColor, "AUTO/FIXED", !busy, () =>
+        AddSectionTitle("Стратегия: выживание", "Один свежий сектор выбранным персонажем");
+        AddRow("Режим seed", (session?.SeedMode ?? BotSeedMode.Auto).ToString().ToUpperInvariant(), mutedColor, "АВТО / ФИКС.", !busy, () =>
         {
             var current = GetBotSession();
             current.SeedMode = current.SeedMode == BotSeedMode.Auto ? BotSeedMode.Fixed : BotSeedMode.Auto;
             RefreshCurrentTab();
         });
         AddBotSeedInput(!busy);
-        AddRow("Simulation speed", $"{session?.SelectedSpeed ?? 1f}x", mutedColor, "1 / 5 / 10", !busy, () =>
+        AddRow("Скорость симуляции", $"{session?.SelectedSpeed ?? 1f}x", mutedColor, "1 / 5 / 10", !busy, () =>
         {
             var current = GetBotSession();
             current.SelectedSpeed = current.SelectedSpeed == 1f ? 5f : current.SelectedSpeed == 5f ? 10f : 1f;
             RefreshCurrentTab();
         });
-        AddRow("Start Bot Run", "Перезапускает первый сектор", mutedColor, "START",
+        AddRow("Запустить ран бота", "Перезапускает первый сектор", mutedColor, "ЗАПУСТИТЬ",
             !busy && characterSpawner != null && (session == null || session.CanStart), () =>
             {
                 var current = GetBotSession();
@@ -54,7 +54,7 @@ public sealed partial class Subject42DebugMenu
                 CloseMenu();
                 current.StartBotRun();
             });
-        AddRow("Replay fixed seed", "Всегда использует введённый seed", mutedColor, "RUN SEED",
+        AddRow("Повторить фиксированный seed", "Всегда использует введённый seed", mutedColor, "ПОВТОРИТЬ",
             !busy && characterSpawner != null && (session == null || session.CanStart), () =>
             {
                 var current = GetBotSession();
@@ -74,13 +74,13 @@ public sealed partial class Subject42DebugMenu
                     CloseMenu();
                     runner.StartGoldenPathBatch(count, current.SeedMode, current.FixedSeed, current.SelectedSpeed);
                 });
-        AddRow("Stop Bot", "Возвращает обычное управление", mutedColor, "STOP",
+        AddRow("Остановить бота", "Возвращает обычное управление", mutedColor, "ОСТАНОВИТЬ",
             busy, () =>
             {
                 CloseMenu();
                 StopBotLab();
             });
-        botTelemetryText = CreateText("Bot telemetry", contentRoot, "Idle", 17f,
+        botTelemetryText = CreateText("Bot telemetry", contentRoot, "Ожидание", 17f,
             TextAlignmentOptions.TopLeft, Color.white);
         botTelemetryText.gameObject.AddComponent<LayoutElement>().preferredHeight = 285f;
         RefreshBotLabTelemetry();
@@ -98,7 +98,7 @@ public sealed partial class Subject42DebugMenu
     {
         var row = CreateRect("Fixed seed", contentRoot);
         row.gameObject.AddComponent<LayoutElement>().preferredHeight = 42f;
-        var label = CreateText("Seed label", row, "Fixed Seed", 18f, TextAlignmentOptions.MidlineLeft, Color.white);
+        var label = CreateText("Seed label", row, "Фиксированный seed", 18f, TextAlignmentOptions.MidlineLeft, Color.white);
         label.rectTransform.anchorMin = Vector2.zero; label.rectTransform.anchorMax = new Vector2(.4f, 1f);
         label.rectTransform.offsetMin = new Vector2(16f, 0f); label.rectTransform.offsetMax = Vector2.zero;
         var inputRoot = CreateRect("Seed input", row);
@@ -144,7 +144,7 @@ public sealed partial class Subject42DebugMenu
     }
     private void UpdateBotLabTelemetry()
     {
-        if (!isOpen || activeTab != DebugTab.QA || Time.unscaledTime < nextBotUiRefresh) return;
+        if (!isOpen || (activeTab != DebugTab.Additional || additionalSection != 0) || Time.unscaledTime < nextBotUiRefresh) return;
         nextBotUiRefresh = Time.unscaledTime + .25f;
         RefreshBotLabTelemetry();
     }
@@ -155,12 +155,12 @@ public sealed partial class Subject42DebugMenu
         var data = session != null ? session.Result : null;
         var batch = session != null ? session.GetComponent<BotBatchRunner>() : null;
         string progress = batch != null && batch.Result != null
-            ? $"Batch {batch.Result.Status}: Run {batch.CurrentRunIndex}/{batch.Result.RequestedRuns}\nFinished: {batch.Result.CompletedRuns} · Wins: {batch.Result.SectorCompleted} · Deaths: {batch.Result.PlayerDead} · Stuck/Error: {batch.Result.StuckErrors}\n"
+            ? $"Batch {batch.Result.Status}: Run {batch.CurrentRunIndex}/{batch.Result.RequestedRuns}\nЗавершено: {batch.Result.CompletedRuns} · Побед: {batch.Result.SectorCompleted} · Смертей: {batch.Result.PlayerDead} · Застреваний/ошибок: {batch.Result.StuckErrors}\n"
             : "";
-        botTelemetryText.text = data == null ? "Bot state: Idle" :
-            progress + $"Seed: {data.Seed} · {data.SimulationSpeed}x\nBot state: {session.State}\nDuration: {data.Duration:0.0}s\nKills: {data.Kills}\n" +
-            $"Damage dealt (ORBITAL): {data.DamageDealt:0.##}\nDamage taken: {data.DamageTaken:0.##}\n" +
-            $"XP collected: {data.XPCollected}   Level: {data.Level}\nEnemies alive: {data.EnemiesAlive}\n{data.Reason}";
+        botTelemetryText.text = data == null ? "Состояние бота: Idle" :
+            progress + $"Seed: {data.Seed} · {data.SimulationSpeed}x\nСостояние бота: {session.State}\nДлительность: {data.Duration:0.0}s\nУбийств: {data.Kills}\n" +
+            $"Нанесено урона (ORBITAL): {data.DamageDealt:0.##}\nПолучено урона: {data.DamageTaken:0.##}\n" +
+            $"Собрано опыта: {data.XPCollected}   Уровень: {data.Level}\nВрагов в живых: {data.EnemiesAlive}\n{data.Reason}";
     }
 }
 #endif

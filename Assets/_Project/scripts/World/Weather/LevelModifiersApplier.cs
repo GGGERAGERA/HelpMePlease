@@ -197,4 +197,18 @@ public sealed class LevelModifiersApplier : MonoBehaviour
         return rule != null ? rule.EnemyHealthMultiplier : 1f;
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool DebugApplyCaptureWorldRule(WorldRuleData rule)
+    {
+        var run = RunStateManager.Instance;
+        if (!IsInitialized || run == null || run.IsRunEnded || worldRuleController == null || enemySpawner == null)
+            return false;
+        var sector = run.CurrentSector;
+        enemySpawner.SetLevelScaling(sector.EnemyHealthMultiplier * GetWorldRuleEnemyHealthMultiplier(rule),
+            sector.EnemySpeedMultiplier, sector.SpawnPressureMultiplier);
+        worldRuleController.Apply(rule);
+        return true;
+    }
+#endif
+
 }

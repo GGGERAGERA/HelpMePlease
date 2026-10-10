@@ -32,6 +32,10 @@ public sealed class RunThreatController : MonoBehaviour
     public ThreatTier DisplayedTier => displayedTier;
     public int AppliedPresetIndex => appliedPresetIndex;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void DebugRefreshPreset() => ApplyCurrentPreset(true);
+#endif
+
     public void Initialize(RunThreatConfig threatConfig, EnemySpawner spawner)
     {
         config = RunStateManager.Instance?.CurrentConfig.ThreatProfile ?? threatConfig;

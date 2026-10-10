@@ -247,6 +247,24 @@ public sealed class RunStateManager : MonoBehaviour
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    // Once assisted, this run cannot pay ordinary progress, even after capture reset.
+    public void DebugMarkDevelopmentRun() => developmentRun = true;
+
+    public bool DebugReplaceOrbitalState(OrbitalRunState state)
+    {
+        if (runEnded || lifecycleBusy || state == null ||
+            state.RunId != OrbitalStationState?.RunId || !state.Validate(out _)) return false;
+        developmentRun = true;
+        OrbitalStationState = state;
+        return true;
+    }
+
+    public void DebugRestoreThreat(float value, float elapsed)
+    {
+        SetThreatForDebug(value);
+        threatElapsedTime = Mathf.Max(0f, elapsed);
+    }
+
     public OrbitalRunState DebugResetOrbitalRunState()
     {
         developmentRun = true;
