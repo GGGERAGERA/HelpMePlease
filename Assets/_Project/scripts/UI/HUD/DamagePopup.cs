@@ -11,6 +11,14 @@ public class DamagePopup : MonoBehaviour
     private float timer = Lifetime;
     private float floatSpeed = 1.5f;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public static bool DebugDamageNumbersVisible { get; set; } = true;
+    private bool isDamageNumber;
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetDebugVisibility() => DebugDamageNumbersVisible = true;
+    private void LateUpdate()
+    {
+        if (text != null) text.renderer.enabled = !isDamageNumber || DebugDamageNumbersVisible;
+    }
     private Vector3 authoredScale;
     private Quaternion authoredRotation;
     private float feelLifetime = Lifetime;
@@ -42,6 +50,10 @@ public class DamagePopup : MonoBehaviour
 
     private void OnEnable()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        isDamageNumber = false;
+        if (text != null) text.renderer.enabled = true;
+#endif
         timer = Lifetime;
         if (text != null)
         {
@@ -59,6 +71,10 @@ public class DamagePopup : MonoBehaviour
 
     public void SetDamage(int damage, bool isCritical = false)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        isDamageNumber = true;
+        if (text != null) text.renderer.enabled = DebugDamageNumbersVisible;
+#endif
         if (text != null)
         {
             text.text = damage.ToString();

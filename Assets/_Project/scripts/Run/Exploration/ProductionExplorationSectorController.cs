@@ -1328,11 +1328,11 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         {
             WorldEvent prefab = prefabs[i];
 
-            if (prefab != null && prefab.AllowedInSite)
+            if (prefab != null && prefab.AllowedInSite && eventSpawner.IsEventPrefabEnabled(prefab))
                 result.Add(prefab);
         }
 
-        var runConfig = RunStateManager.Instance?.CurrentConfig;
+        var runConfig = RunStateManager.Instance?.CurrentConfig?.ValidateContentAvailability();
         if (runConfig != null && runConfig != RunConfig.Default && result.Count > 0)
         {
             var weighted = new List<WorldEvent>();
@@ -1342,7 +1342,15 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
                 if (selected != null) weighted.Add(selected);
             }
             // Required events occupy deterministic site slots before weighted content.
-            var required = runConfig.Content.GuaranteedEvents;
+            // Revalidate carried run snapshots against today's authored availability.
+            var required = new List<WorldEvent>();
+            foreach (var prefab in runConfig.Content.GuaranteedEvents)
+                if (prefab != null && prefab.AvailableInProduction) required.Add(prefab);
+            if (weighted.Count == 0 && required.Count == 0)
+            {
+                Shuffle(result);
+                return result;
+            }
             if (required.Count > TotalSiteCount) throw new System.InvalidOperationException("Too many guaranteed events for exploration sites.");
             var slots = new List<int>();
             for (int i = 0; i < siteSizes.Length; i++) slots.Add(i);
@@ -1367,7 +1375,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         LocalAnomalyData[] source = config.NormalAnomalies;
         LocalAnomalyData[] result = new LocalAnomalyData[source.Length];
         System.Array.Copy(source, result, source.Length);
-        var runConfig = RunStateManager.Instance?.CurrentConfig;
+        var runConfig = RunStateManager.Instance?.CurrentConfig?.ValidateContentAvailability();
         if (runConfig != null && runConfig != RunConfig.Default)
         {
             for (int i = 0; i < result.Length; i++)

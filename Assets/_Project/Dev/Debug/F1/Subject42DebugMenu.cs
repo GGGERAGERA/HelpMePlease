@@ -295,12 +295,13 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private enum DebugTab
     {
-        Run,
+        Shooting,
+        PlayerBuild,
+        WorldEvents,
+        Additional,
         OrbitalProduction,
-        Bunker,
         FeelTest,
-        VisualTest,
-        QA
+        VisualTest
     }
 
 
@@ -338,7 +339,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private static readonly string[] TabLabels =
     {
-        "RUN", "ORBITAL", "BUNKER", "COMBAT", "VISUAL", "QA"
+        "Съёмка", "Игрок и билд", "Мир и события", "Дополнительно",
+        "Лаборатория ORBITAL", "Боевые эффекты", "Визуальная лаборатория"
     };
 
 
@@ -362,7 +364,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private RectTransform contentRoot;
     private readonly GameObject[] tabRoots = new GameObject[TabLabels.Length];
     private readonly Image[] tabButtonImages = new Image[TabLabels.Length];
-    private DebugTab activeTab = DebugTab.Run;
+    private DebugTab activeTab = DebugTab.Shooting;
     private ProductionSectorDebugController productionSectorDebug;
     private bool isOpen;
     private bool isPreview;
@@ -437,7 +439,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             LoadVisualProductionValues();
         }
         else
-            activeTab = DebugTab.Bunker;
+            activeTab = DebugTab.Additional;
         BuildMenu();
         RefreshTab(activeTab);
         SelectTab(activeTab, false);
@@ -888,15 +890,12 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         tabBar.sizeDelta = new Vector2(0f, 54f);
 
         string[] labels = TabLabels;
-        bool bunkerAvailable = FindFirstObjectByType<BunkerRunStarter>() != null;
-        bool bunkerQaAvailable = SceneManager.GetActiveScene().name == "MainMenu" &&
-            FindFirstObjectByType<BunkerIntroController>(FindObjectsInactive.Include) != null;
-        for (int i = 0; i < labels.Length; i++)
+        for (int i = 0; i < 4; i++)
         {
             int captured = i;
             RectTransform slot = CreateRect(labels[i] + " Slot", tabBar);
-            slot.anchorMin = new Vector2((float)i / labels.Length, 0f);
-            slot.anchorMax = new Vector2((float)(i + 1) / labels.Length, 1f);
+            slot.anchorMin = new Vector2((float)i / 4, 0f);
+            slot.anchorMax = new Vector2((float)(i + 1) / 4, 1f);
             slot.offsetMin = new Vector2(3f, 3f);
             slot.offsetMax = new Vector2(-3f, -3f);
             Button button = CreateButton(
@@ -905,12 +904,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
                 () => SelectTab((DebugTab)captured),
                 100f
             );
-            DebugTab buttonTab = (DebugTab)i;
-            button.interactable = buttonTab == DebugTab.Bunker
-                ? bunkerAvailable
-                : buttonTab == DebugTab.QA
-                    ? characterSpawner != null || bunkerQaAvailable
-                    : characterSpawner != null;
+            button.interactable = true;
             Stretch(button.GetComponent<RectTransform>());
             TextMeshProUGUI tabText = button.GetComponentInChildren<TextMeshProUGUI>();
             if (tabText != null && labels.Length > 7)
@@ -927,7 +921,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
         for (int i = 0; i < labels.Length; i++)
         {
-            bool compactLab = IsRuntimeLabTab((DebugTab)i);
+            bool compactLab = true;
             tabRoots[i] = CreateTabPage(labels[i], pages, out _, compactLab);
         }
 
@@ -1025,8 +1019,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     {
         Button button = CreateButton(
             header,
-            "MENU",
-            () => SelectTab(characterSpawner != null ? DebugTab.Run : DebugTab.Bunker),
+            "МЕНЮ",
+            () => SelectTab(DebugTab.Additional),
             54f
         );
         visualBackButton = button.gameObject;
@@ -1332,38 +1326,34 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         if (!IsRuntimeLabTab(tab))
             AddTabHeading(TabLabels[(int)tab]);
 
-        bool runTab = tab == DebugTab.Run || tab == DebugTab.OrbitalProduction ||
-            tab == DebugTab.FeelTest || tab == DebugTab.VisualTest || tab == DebugTab.QA;
-        bool bunkerIntroQa = tab == DebugTab.QA &&
-            SceneManager.GetActiveScene().name == "MainMenu" &&
-            FindFirstObjectByType<BunkerIntroController>(FindObjectsInactive.Include) != null;
-        if (runTab && characterSpawner == null && !bunkerIntroQa)
+        if (IsRuntimeLabTab(tab) && characterSpawner == null)
         {
-            AddHint("Start a run from Bunker to use these tools.");
+            AddHint("Начните ран из бункера, чтобы использовать эти инструменты.");
             return;
         }
 
         switch (tab)
         {
-            case DebugTab.Run:
-                AddRunSection();
-                AddSectorFlowSection();
+            case DebugTab.Shooting:
+                AddCaptureSection();
+                break;
+            case DebugTab.PlayerBuild:
+                AddPlayerBuildSection();
+                break;
+            case DebugTab.WorldEvents:
+                AddWorldEventsSection();
+                break;
+            case DebugTab.Additional:
+                AddAdditionalSection();
                 break;
             case DebugTab.OrbitalProduction:
                 AddOrbitalProductionSection();
-                break;
-            case DebugTab.Bunker:
-                AddBunkerSection();
-                AddRoomStateRows();
                 break;
             case DebugTab.FeelTest:
                 AddInteractiveFeelLab();
                 break;
             case DebugTab.VisualTest:
                 AddInteractiveAnomalyVisualTest();
-                break;
-            case DebugTab.QA:
-                AddQaSection();
                 break;
         }
 
@@ -1391,8 +1381,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         }
         else
         {
-            menuPanel.anchorMin = new Vector2(0.07f, 0.05f);
-            menuPanel.anchorMax = new Vector2(0.93f, 0.95f);
+            menuPanel.anchorMin = new Vector2(0.24f, 0.09f);
+            menuPanel.anchorMax = new Vector2(0.76f, 0.91f);
             menuPanel.pivot = new Vector2(0.5f, 0.5f);
             menuPanel.sizeDelta = Vector2.zero;
             menuPanel.anchoredPosition = Vector2.zero;
@@ -3392,7 +3382,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         AddManualEnemyRows("БОМБЕР", ResolveEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Bomber));
         AddManualEnemyRows("EYES", eyesEnemyPrefab != null ? eyesEnemyPrefab : ResolveEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Eyes));
         AddManualEnemyRows("ТУРЕЛЬ", turretEnemyPrefab != null ? turretEnemyPrefab : ResolveEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Turret));
-        AddManualEnemyRows("БОСС", RunStateManager.Instance?.CurrentSector?.BossPrefab);
+        // Real boss fights are owned by RunFlow; raw spawning stays in BossPracticeLab.
 
         AddRow("Создано вручную",
             debugEnemies.Count > 0 ? $"Активно: {debugEnemies.Count}" : "Нет",
@@ -4956,15 +4946,15 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         RectTransform section = CreateRect(title, contentRoot);
         bool compact = IsRuntimeLabTab(activeTab);
         section.gameObject.AddComponent<LayoutElement>().preferredHeight =
-            compact ? 26f : 62f;
+            compact ? 26f : 46f;
         section.gameObject.AddComponent<Image>().color =
             new Color(accentColor.r, accentColor.g, accentColor.b, 0.18f);
         TextMeshProUGUI text = CreateText(
             "Label", section,
             compact
                 ? $"<b>{title}</b>"
-                : $"<b>{title}</b>\n<size=16><color=#A6AFBC>{subtitle}</color></size>",
-            compact ? 11f : 22f,
+                : $"<b>{title}</b>\n<size=13><color=#A6AFBC>{subtitle}</color></size>",
+            compact ? 11f : 17f,
             TextAlignmentOptions.MidlineLeft,
             Color.white
         );

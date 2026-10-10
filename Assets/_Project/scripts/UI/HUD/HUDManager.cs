@@ -12,6 +12,42 @@ public class HUDManager : MonoBehaviour
 
     public static HUDManager Instance { get; private set; }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool DebugHudVisible { get; private set; } = true;
+    private readonly System.Collections.Generic.Dictionary<Graphic, bool> captureGraphics = new();
+    private bool captureMapVisible;
+    public void DebugSetHudVisible(bool visible)
+    {
+        if (DebugHudVisible == visible) return;
+        if (!visible) captureMapVisible = tacticalMap != null && tacticalMap.IsVisible;
+        DebugHudVisible = visible;
+        if (visible)
+        {
+            foreach (var item in captureGraphics) if (item.Key != null) item.Key.enabled = item.Value;
+            captureGraphics.Clear();
+            tacticalMap?.SetVisible(captureMapVisible);
+            return;
+        }
+        // Only authored gameplay presentation; leave pause/rewards and danger markers alone.
+        Component[] views = { informationGroup, healthBar, healthSlider, healthText,
+            experienceBar, experienceSlider, experienceText, levelText, killsCounter,
+            goldCounter, killsText, currencyText, timerText, threatPanel, bulletTimeView,
+            dashCooldownView, routeProgressView, orbitalCursor, interactionPrompt,
+            runMessages != null ? runMessages.View : null, targetTracker, tacticalMap,
+            bossHpPanel != null ? bossHpPanel.transform : null, lowHpVignette };
+        foreach (var view in views)
+            if (view != null)
+                foreach (var graphic in view.GetComponentsInChildren<Graphic>(true))
+                {
+                    if (graphic.GetComponentInParent<WorldEventMarker>(true) != null) continue;
+                    if (!captureGraphics.ContainsKey(graphic)) captureGraphics.Add(graphic, graphic.enabled);
+                    graphic.enabled = false;
+                }
+        // Hide the map's presentation root too: future dynamic markers stay hidden.
+        tacticalMap?.SetVisible(false);
+    }
+#endif
+
     [Header("Health")]
     [SerializeField] private Slider healthSlider;
     [SerializeField] private TextMeshProUGUI healthText;

@@ -344,8 +344,7 @@ namespace Subject42.Combat.OrbitalStation
                 InputOwner == null || !InputOwner.IsIdle;
             bulletTime.Tick(held && RightMouseMode == RmbMode.BulletTime,
                 suspended ? 0f : deltaTime);
-            InputOwner?.TickBulletTime(bulletTime.IsActive, bulletTime.WorldTimeScale,
-                bulletTime.TransitionSeconds, deltaTime);
+            InputOwner?.TickBulletTime(bulletTime.IsActive, bulletTime, deltaTime);
             repulseCooldown = Mathf.Max(0f, repulseCooldown - gameplayDeltaTime);
             if (pressed && RightMouseMode == RmbMode.ReverseRotation)
             {
@@ -1264,9 +1263,21 @@ namespace Subject42.Combat.OrbitalStation
                 UpdateLinkLine(pair, from, to);
                 if (deltaTime <= 0f || first.RuntimeCooldown > 0f)
                     continue;
-                EnemyHealth target = Combat.FindNearest((from + to) * 0.5f, 2f);
-                if (target != null && DistanceToSegment(target.transform.position,
-                    from, to) < 0.4f)
+                const float hitWidth = 0.4f;
+                Vector2 midpoint = (from + to) * 0.5f;
+                // The adapter lends its reusable, midpoint-distance-sorted buffer.
+                // Filter the whole segment before selecting one target.
+                var candidates = Combat.FindNearestMany(midpoint,
+                    Vector2.Distance(from, to) * 0.5f + hitWidth, int.MaxValue);
+                EnemyHealth target = null;
+                foreach (var candidate in candidates)
+                {
+                    if (DistanceToSegment(candidate.transform.position, from, to) >= hitWidth)
+                        continue;
+                    target = candidate;
+                    break;
+                }
+                if (target != null)
                 {
                     float linkPower = (first.CurrentMount.Ring.PowerMultiplier +
                         second.CurrentMount.Ring.PowerMultiplier) * 0.5f;

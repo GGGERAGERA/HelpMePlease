@@ -1475,8 +1475,8 @@ MonoBehaviour:
     ru: "ЛОЖНЫЙ СИГНАЛ"
     en: "FALSE SIGNAL"
   - key: event.signal.description
-    ru: "Найдите настоящий источник сигнала."
-    en: "Find the true signal source."
+    ru: "Проверьте передатчики орбитальным оружием. Найдите настоящий сигнал"
+    en: "Probe the transmitters with orbital weapons. Find the true signal"
   - key: event.evacuation.name
     ru: "ЭВАКУАЦИОННЫЙ КОРИДОР"
     en: "EVACUATION CORRIDOR"
@@ -1691,11 +1691,11 @@ MonoBehaviour:
     ru: "Нужны установленное орбитальное оружие и готовая система наград."
     en: "Mounted orbital weapons and ready reward services are required."
   - key: event.relay.retry
-    ru: "Попробуйте снова: ведите орбитальное оружие к активному ядру. ПКМ сжимает кольца."
-    en: "Try again: guide orbital weapons to the active core. RMB compresses rings."
+    ru: "Попробуйте снова: ведите орбитальное оружие к активному ядру. Удерживайте ПКМ для замедления времени."
+    en: "Try again: guide orbital weapons to the active core. Hold RMB for Bullet Time."
   - key: tutorial.relay
-    ru: "Коснитесь активного ядра орбитальным оружием. Стабилизируйте три ядра, затем набирайте золото. ПКМ сжимает кольца."
-    en: "Touch the active core with orbital weapons. Stabilize three cores, then earn gold. RMB compresses rings."
+    ru: "Коснитесь активного ядра орбитальным оружием. Стабилизируйте три ядра, затем набирайте золото. Удерживайте ПКМ для замедления времени."
+    en: "Touch the active core with orbital weapons. Stabilize three cores, then earn gold. Hold RMB for Bullet Time."
   - key: event.corridor.gates
     ru: "ШЛЮЗЫ"
     en: "GATES"
@@ -1708,3 +1708,15 @@ MonoBehaviour:
   - key: event.corridor.exitOpen
     ru: "ПЕРЕСЕКИТЕ ВЫХОД"
     en: "CROSS THE EXIT"
+  - key: event.signal.activate
+    ru: "Активировать передатчик"
+    en: "Activate transmitter"
+  - key: event.corridor.start
+    ru: "ВОЙДИТЕ В КОРИДОР"
+    en: "ENTER THE CORRIDOR"
+  - key: content.temporarilyUnavailable
+    ru: "ВРЕМЕННО НЕДОСТУПНО"
+    en: "TEMPORARILY UNAVAILABLE"
+  - key: content.progressPaused
+    ru: "Прогресс сохранён. Задание временно приостановлено и не влияет на следующий забег."
+    en: "Progress saved. This assignment is temporarily paused and does not affect the next run."

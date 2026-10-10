@@ -106,7 +106,7 @@ namespace Subject42.Combat.OrbitalStation
 
         // Transient feedback is view-owned. Restores initialize directly from persisted progression.
         public void UpdateTierAppearance(int tier, float radius, float corePulse, float highlight,
-            bool dimmed, bool depthAware, float unscaledDeltaTime)
+            bool dimmed, bool depthAware, float gameplayDeltaTime, float interactionDeltaTime = 0f)
         {
             var config = OrbitalPresentationConfig.Active;
             if (tier != displayedTier)
@@ -139,9 +139,9 @@ namespace Subject42.Combat.OrbitalStation
             surface.SetVector(CoreId, coreEnergy);
             surface.SetColor(CoreColorId, coreColor);
             FrontLine.SetPropertyBlock(surface);
-            transitionAge = Mathf.Min(transitionAge + unscaledDeltaTime, config.RingTierTransitionDuration);
-            energyTime = Mathf.Repeat(energyTime + unscaledDeltaTime * currentStyle.PulseSpeed, 1f);
-            UpdateSelectionMarkers(radius, unscaledDeltaTime);
+            transitionAge = Mathf.Min(transitionAge + gameplayDeltaTime, config.RingTierTransitionDuration);
+            energyTime = Mathf.Repeat(energyTime + gameplayDeltaTime * currentStyle.PulseSpeed, 1f);
+            UpdateSelectionMarkers(radius, interactionDeltaTime);
         }
 
         public bool IsValid => BackLine != null && FrontLine != null &&

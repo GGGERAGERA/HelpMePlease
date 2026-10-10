@@ -114,7 +114,7 @@ public sealed class StasisZone : LocalAnomalyZone
         visualFade = Mathf.MoveTowards(
             visualFade,
             targetVisualFade,
-            Time.unscaledDeltaTime / Mathf.Max(0.01f, fadeDuration)
+            Time.deltaTime / Mathf.Max(0.01f, fadeDuration)
         );
         ApplyVisualProperties();
 
@@ -546,7 +546,7 @@ public sealed class StasisZone : LocalAnomalyZone
         else
 #endif
             visualProperties.SetVector(RegionSizeId, AreaSize);
-        visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
+        visualProperties.SetFloat(VisualTimeId, Time.time);
         visualRenderer.SetPropertyBlock(visualProperties);
     }
 

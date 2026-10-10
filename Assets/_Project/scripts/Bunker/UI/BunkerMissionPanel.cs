@@ -25,6 +25,13 @@ public sealed class BunkerMissionPanel : MonoBehaviour
         var state=service.GetState(mission.MissionId);
         string reward=mission.Reward.Gold+" GOLD";
         var actionLabel=actionButton.GetComponentInChildren<TMP_Text>();
+        if (state!=MissionState.Completed && !service.IsAvailable(mission.MissionId))
+        {
+            actionButton.gameObject.SetActive(false); actionButton.interactable=false;
+            body.text=mission.Title+"\n\n"+LocalizationService.Instance.Get(SurfaceSectorContent.UnavailableStatusKey)+
+                "\n\n"+LocalizationService.Instance.Get(SurfaceSectorContent.UnavailableDescriptionKey);
+            return;
+        }
         actionButton.gameObject.SetActive(state==MissionState.Available||state==MissionState.ReadyToTurnIn);
         actionButton.interactable=state==MissionState.Available||state==MissionState.ReadyToTurnIn;
         if(state==MissionState.Available)

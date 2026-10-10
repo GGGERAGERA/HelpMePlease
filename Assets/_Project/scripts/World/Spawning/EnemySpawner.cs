@@ -177,7 +177,11 @@ public partial class EnemySpawner : MonoBehaviour
             spawnTimer = 0f;
             return;
         }
-        spawnTimer += Time.deltaTime * NormalRefillMultiplier;
+        float refillSpeed = NormalRefillMultiplier;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        refillSpeed *= debugCaptureDensity;
+#endif
+        spawnTimer += Time.deltaTime * refillSpeed;
 
         if (spawnTimer < GetCurrentSpawnInterval())
             return;
@@ -499,6 +503,43 @@ public partial class EnemySpawner : MonoBehaviour
         }
 
         activeEnemies.Clear();
+    }
+#endif
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private float debugCaptureDensity = 1f;
+    public float DebugCaptureDensity => debugCaptureDensity;
+    public int DebugCaptureMaxAlive => GetCurrentMaxAlive();
+    public float DebugCaptureRefillInterval => GetCurrentSpawnInterval() / debugCaptureDensity;
+    public int DebugCaptureAliveCount { get { RemoveDestroyedEnemies(); return activeEnemies.Count; } }
+
+    public void DebugSetCaptureDensity(float value)
+    {
+        if (!float.IsFinite(value)) return;
+        debugCaptureDensity = Mathf.Clamp(value, .5f, 2f);
+        RemoveDestroyedEnemies();
+        // Trim only tracked ordinary spawns, without damage, kills or rewards.
+        int cap = GetCurrentMaxAlive();
+        for (int i = activeEnemies.Count - 1; i >= cap; i--)
+        {
+            var instance = activeEnemies[i].instance;
+            if (instance != null) { instance.SetActive(false); Destroy(instance); }
+            activeEnemies.RemoveAt(i);
+        }
+    }
+
+    public void DebugFillCaptureEnemies()
+    {
+        if (!spawningEnabled || TutorialController.IsActive || IsAssaultBreathing) return;
+        int budget = Mathf.Min(10, GetCurrentMaxAlive() - DebugCaptureAliveCount);
+        while (budget > 0)
+        {
+            int before = activeEnemies.Count;
+            SpawnCycle(budget);
+            int added = activeEnemies.Count - before;
+            if (added <= 0) break;
+            budget -= added;
+        }
     }
 #endif
 
@@ -857,19 +898,19 @@ public partial class EnemySpawner : MonoBehaviour
         if (TutorialController.IsActive) return 4;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (debugFixedExplorationPressure)
-            return Mathf.Max(1, maxEnemies);
+            return CaptureMaxAlive(Mathf.Max(1, maxEnemies));
 #endif
         float effectivePressure = GetEffectiveSpawnPressure();
 
         if (activePhase == null)
         {
             int legacyMinimumAlive = Mathf.Max(1, maxEnemies);
-            return Mathf.Clamp(
+            return CaptureMaxAlive(Mathf.Clamp(
                 Mathf.RoundToInt(maxEnemies *
                     GetExternalSpawnPressureMultiplier()),
                 legacyMinimumAlive,
                 Mathf.Max(legacyMinimumAlive, maxAliveLimit)
-            );
+            ));
         }
 
         int scaledMaxAlive = Mathf.RoundToInt(
@@ -884,9 +925,18 @@ public partial class EnemySpawner : MonoBehaviour
             Mathf.Max(minimumAlive, maxAliveLimit)
         );
 
-        return runThreatMaxAliveCap > 0
+        return CaptureMaxAlive(runThreatMaxAliveCap > 0
             ? Mathf.Min(result, runThreatMaxAliveCap)
-            : result;
+            : result);
+    }
+
+    private int CaptureMaxAlive(int baseline)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (!Mathf.Approximately(debugCaptureDensity, 1f))
+            return Mathf.Clamp(Mathf.RoundToInt(baseline * debugCaptureDensity), 1, Mathf.Min(40, Mathf.Max(1, maxAliveLimit)));
+#endif
+        return baseline;
     }
 
     private int GetCurrentEnemiesPerCycle()
@@ -914,7 +964,7 @@ public partial class EnemySpawner : MonoBehaviour
             : calculatedBatch;
     }
 
-    private void SpawnCycle()
+    private void SpawnCycle(int maxBatch = int.MaxValue)
     {
         RemoveDestroyedEnemies();
 
@@ -923,7 +973,7 @@ public partial class EnemySpawner : MonoBehaviour
         if (availableSlots <= 0)
             return;
 
-        int spawnCount = Mathf.Min(TutorialController.IsActive ? 1 : GetCurrentEnemiesPerCycle(), availableSlots);
+        int spawnCount = Mathf.Min(maxBatch, Mathf.Min(TutorialController.IsActive ? 1 : GetCurrentEnemiesPerCycle(), availableSlots));
 
         for (int i = 0; i < spawnCount; i++)
         {

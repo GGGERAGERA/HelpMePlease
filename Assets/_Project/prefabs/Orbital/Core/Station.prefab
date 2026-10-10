@@ -214,7 +214,9 @@ MonoBehaviour:
     capacitySeconds: 3
     rechargeSeconds: 6
     worldTimeScale: 0.4
-    transitionSeconds: 0.18
+    playerEffectiveTimeScale: 0.75
+    enterBlendDuration: 0.12
+    exitBlendDuration: 0.18
 --- !u!114 &1418594739838324375
 MonoBehaviour:
   m_ObjectHideFlags: 0

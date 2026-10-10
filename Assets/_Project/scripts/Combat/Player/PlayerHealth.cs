@@ -8,6 +8,7 @@ public class PlayerHealth : MonoBehaviour
     public event System.Action<float, float> HealthChanged;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public event System.Action<float> DebugDamageApplied;
+    public bool DebugInvulnerable { get; set; }
 #endif
 
     public float maxHealth = 100f;
@@ -55,6 +56,9 @@ public class PlayerHealth : MonoBehaviour
 
     public bool TakeDamage(float damage, Vector2 hitDirection)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (DebugInvulnerable) return false;
+#endif
         if (isDead)
             return false;
         if (isInvulnerable)

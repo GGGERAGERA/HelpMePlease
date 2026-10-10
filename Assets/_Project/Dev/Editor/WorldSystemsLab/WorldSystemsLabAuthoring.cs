@@ -200,6 +200,7 @@ public static class WorldSystemsLabAuthoring
                     AssetDatabase.LoadAssetAtPath<CorridorRouteDefinition>(
                         "Assets/_Project/Data/WorldEvents/Corridor/Routes/Corridor" + corridorNames[routeIndex] + ".asset");
             corridorData.ApplyModifiedPropertiesWithoutUndo();
+            SetObject(lab, "rocketStormPrefab", AssetDatabase.LoadAssetAtPath<RocketStormEvent>(RocketStormAuthoring.PrefabPath));
             SetObject(lab, "corridorPrefab", AssetDatabase.LoadAssetAtPath<CorridorEvent>(
                 "Assets/_Project/prefabs/Environment/WorldEvents/Corridor/PF_CorridorEvent.prefab"));
             SetArray(lab, "worldRuleAssets", FindWorldRules());

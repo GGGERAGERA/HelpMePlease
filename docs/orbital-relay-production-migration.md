@@ -35,7 +35,7 @@ Stabilization: 3 успешных непрерывных контакта по 0
 
 ## WorldSystemsLab
 
-Открыть `Assets/_Project/Dev/Labs/WorldSystemsLab/WorldSystemsLab.unity`, Play, кнопка **УДЕРЖАНИЕ — ОРБИТАЛЬНОЕ РЕЛЕ** в EVENT. Lab запускает production prefab рядом с игроком. WASD — движение; RMB — существующая compression; Left Shift+WASD — lab управление центром орбит. `Relay enemy pressure` включает scene-local backend; `Relay shared Upgrade queue` включает существующую queue/UI в dev режиме. Результат показывает общий notification service.
+Открыть `Assets/_Project/Dev/Labs/WorldSystemsLab/WorldSystemsLab.unity`, Play, кнопка **УДЕРЖАНИЕ — ОРБИТАЛЬНОЕ РЕЛЕ** в EVENT. Lab запускает production prefab рядом с игроком. WASD — движение; RMB — Bullet Time (мир 40%, движение игрока 75%); Left Shift+WASD — lab управление центром орбит. `Relay enemy pressure` включает scene-local backend; `Relay shared Upgrade queue` включает существующую queue/UI в dev режиме. Результат показывает общий notification service.
 
 Исправлены перекрытие Relay HUD старым Corridor UI (только на время Relay), lifetime center shift при unload и прозрачный родитель CanvasGroup итогового lab notification. Остальные Events не переписаны; их prefab references сохранены.
 

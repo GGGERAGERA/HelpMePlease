@@ -4,6 +4,8 @@ using UnityEngine;
 public sealed class CorridorEvent : WorldEvent, ICorridorNavigation, IWorldEventObjectiveProvider
 {
     [SerializeField] private CorridorConfig config;
+    [SerializeField] private CircleCollider2D startArea;
+    [SerializeField] private CorridorStartView startView;
     public CorridorConfig Config => config;
     public CorridorRoute Route { get; private set; }
     public CorridorSettings Settings { get; private set; }
@@ -40,7 +42,12 @@ public sealed class CorridorEvent : WorldEvent, ICorridorNavigation, IWorldEvent
     public void SetRouteInput(CorridorSettings settings, int quarterTurns)
     { if (IsStarted) return; Settings = settings.Snapshot(); turns = quarterTurns; explicitSelection = true; Route = null; }
     public override bool TryValidateConfiguration(out string error)
-    { if (config != null) return config.TryValidate(out error); error = "Missing CorridorConfig."; return false; }
+    {
+        if (startArea == null || startView == null || !startView.IsValid)
+        { error = "Missing authored Corridor start area or presentation."; return false; }
+        if (config != null) return config.TryValidate(out error);
+        error = "Missing CorridorConfig."; return false;
+    }
     public override bool TryPreparePlacement(WorldEventPlacementContext context, out string error)
     {
         if (!TryValidateConfiguration(out error)) return false;
@@ -65,11 +72,12 @@ public sealed class CorridorEvent : WorldEvent, ICorridorNavigation, IWorldEvent
         health.Died += OnPlayerDied;
         State = new CorridorRuntimeState(Route, Settings);
         collapse = new CorridorCollapse(Route, Settings);
-        ShowEventMarker(transform, "event.evacuation.name");
+        Route.Point(0, out var startDirection);
+        startView.Configure(startDirection);
     }
     private Vector2 PlayerPosition => playerBody != null ? playerBody.position : (Vector2)player.position;
     protected override bool CanStartFrom(Vector2 position) => Route != null && health != null && !health.IsDead &&
-        Vector2.Distance(position, transform.position) <= 2.5f;
+        startArea.OverlapPoint(position);
     protected override void OnEventStarted()
     {
         if (!CorridorPlacement.Admitted(Route, owner.CreatePlacementContext(this), out _)) { Cancel(); return; }
@@ -81,8 +89,17 @@ public sealed class CorridorEvent : WorldEvent, ICorridorNavigation, IWorldEvent
         presentation = new CorridorPresentation(transform, Route, mask, config.kit, State);
         strikes = new CorridorStrikes(this, Route, Settings, config.rocket, config.warning, config.explosion);
         State.Start(); Result = "Running"; previous = PlayerPosition;
+        startArea.enabled = false;
+        startView.Begin();
+        presentation.StartPulse();
+        HideEventMarker();
+        AudioService.Instance?.PlayAt(Settings.checkpointSfx, PlayerPosition);
     }
-    private void Update() => Tick(Time.deltaTime);
+    private void Update()
+    {
+        if (!IsCompleted && State != null) startView.Tick(Time.deltaTime);
+        Tick(Time.deltaTime);
+    }
     internal void Tick(float delta)
     {
         if (!IsStarted || IsCompleted || State == null || delta <= 0) return;
@@ -133,6 +150,8 @@ public sealed class CorridorEvent : WorldEvent, ICorridorNavigation, IWorldEvent
         State?.Terminate(CorridorPhase.Cancelled);
         if (health != null) health.Died -= OnPlayerDied;
         strikes?.Dispose(); presentation?.Dispose();
+        startView?.Clear();
+        if (startArea != null) startArea.enabled = false;
     }
     private void OnDisable()
     {

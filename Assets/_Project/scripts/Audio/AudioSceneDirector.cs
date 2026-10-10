@@ -6,6 +6,7 @@ public sealed class AudioSceneDirector : MonoBehaviour
     private const string RunSceneName = "MVP";
 
     private AudioService service;
+    private Scene audioScene;
 
     private void Awake()
     {
@@ -43,14 +44,30 @@ public sealed class AudioSceneDirector : MonoBehaviour
         if (service == null)
             return;
 
+        // sceneLoaded may precede this component's first Start; select once per entry.
+        if (audioScene.IsValid() && audioScene == scene) return;
+        bool leavingStartScreen = audioScene.IsValid() && audioScene.name == "StartScreen";
+        audioScene = scene;
+
         switch (scene.name)
         {
+            case "StartScreen":
+                service.StopMusic();
+                service.StopAmbience();
+                AudioSettingsService.Instance.SetMusicGain(1f);
+                service.PlayMusic(AudioCueId.StartScreenMusic);
+                break;
+
             case RunEndService.BunkerSceneName:
+                service.StopAmbience();
+                if (leavingStartScreen) service.StopMusic();
+                AudioSettingsService.Instance.SetMusicGain(1f);
                 service.PlayMusic(AudioCueId.BunkerMusic);
                 service.PlayAmbience(AudioCueId.BunkerAmbience);
                 break;
 
             case RunSceneName:
+                AudioSettingsService.Instance.SetMusicGain(1f);
                 service.PlayMusic(AudioCueId.RunMusic);
                 service.StopAmbience();
                 break;

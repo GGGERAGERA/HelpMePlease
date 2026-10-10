@@ -145,7 +145,7 @@ public sealed class ExplosiveZone : LocalAnomalyZone
         visualFade = Mathf.MoveTowards(
             visualFade,
             targetVisualFade,
-            Time.unscaledDeltaTime / Mathf.Max(0.01f, fadeDuration)
+            Time.deltaTime / Mathf.Max(0.01f, fadeDuration)
         );
         ApplyVisualProperties();
 
@@ -642,7 +642,7 @@ public sealed class ExplosiveZone : LocalAnomalyZone
             visualProperties.SetColor(InnerColorId, innerColor);
             visualProperties.SetColor(EdgeColorId, edgeColor);
         }
-        visualProperties.SetFloat(VisualTimeId, Time.unscaledTime);
+        visualProperties.SetFloat(VisualTimeId, Time.time);
         visualRenderer.SetPropertyBlock(visualProperties);
     }
 
@@ -675,7 +675,7 @@ internal static class ExplosionWarningVisual
         return warning;
     }
 
-    public static void Configure(GameObject warning, float radius, float duration)
+    public static void Configure(GameObject warning, float radius, float duration, bool pixelWarnings = true)
     {
         float diameter = Mathf.Max(0.1f, radius) * 2f;
         warning.transform.localScale = new Vector3(diameter, diameter, 1f);
@@ -702,6 +702,7 @@ internal static class ExplosionWarningVisual
             renderers[i].sortingOrder = WarningSortingOrder;
         }
 
-        PixelWeatherParticles.Attach(warning, PixelWeatherParticles.Kind.WarningRing);
+        if (pixelWarnings)
+            PixelWeatherParticles.Attach(warning, PixelWeatherParticles.Kind.WarningRing);
     }
 }

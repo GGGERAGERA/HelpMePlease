@@ -1,4 +1,4 @@
-using TMPro;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -11,13 +11,12 @@ public sealed class StartScreenController : MonoBehaviour
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button exitButton;
     [SerializeField] private AudioSettingsPanel settings;
-    [SerializeField] private TMP_Text version;
     [SerializeField] private Image signal;
+    [SerializeField] private StartScreenAtmosphere atmosphere;
     private bool beginning;
 
     private void Start()
     {
-        version.text = "v" + Application.version;
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         beginButton.Select();
@@ -35,6 +34,11 @@ public sealed class StartScreenController : MonoBehaviour
         beginButton.onClick.RemoveListener(Begin);
         settingsButton.onClick.RemoveListener(OpenSettings);
         exitButton.onClick.RemoveListener(Exit);
+        StopAllCoroutines();
+        beginning = false;
+        menu.alpha = 1f;
+        menu.interactable = menu.blocksRaycasts = true;
+        atmosphere.ResetAwakening();
     }
 
     private void Update()
@@ -52,10 +56,26 @@ public sealed class StartScreenController : MonoBehaviour
         if (!SceneTransitionOverlay.CanLoad(RunEndService.BunkerSceneName)) return;
         beginning = true;
         menu.interactable = false;
+        menu.blocksRaycasts = false;
+        menu.alpha = 0f;
         AudioSettingsService.Instance?.Save();
         EventSystem.current?.SetSelectedGameObject(null);
-        // Reuse the existing fade, loading and error handling instead of another startup flow.
-        SceneTransitionOverlay.Load(RunEndService.BunkerSceneName);
+        StartCoroutine(BeginSequence());
+    }
+
+    private IEnumerator BeginSequence()
+    {
+        yield return new WaitForSecondsRealtime(2f);
+        yield return atmosphere.PlayAwakening();
+        // Loading, readiness, fade and recovery remain owned by the shared transition.
+        if (SceneTransitionOverlay.Load(RunEndService.BunkerSceneName,
+            closing: atmosphere.FadeMenuMusic, closingDuration: atmosphere.FadeDuration,
+            afterBlack: atmosphere.PlayGlassBreak, fadeMaster: false)) yield break;
+        beginning = false;
+        menu.alpha = 1f;
+        menu.interactable = menu.blocksRaycasts = true;
+        atmosphere.ResetAwakening();
+        beginButton.Select();
     }
 
     public void OpenSettings()

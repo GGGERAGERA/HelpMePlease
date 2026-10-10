@@ -45,7 +45,7 @@ public sealed class GoldenEnemyModifier : MonoBehaviour
 
         assignmentPulseRemaining = Mathf.Max(
             0f,
-            assignmentPulseRemaining - Time.unscaledDeltaTime
+            assignmentPulseRemaining - Time.deltaTime
         );
         float duration = Mathf.Max(0.01f, assignmentPulseDuration);
         float progress = 1f - assignmentPulseRemaining / duration;
@@ -170,7 +170,7 @@ public sealed class GoldenEnemyModifier : MonoBehaviour
         {
             ParticleSystem.MainModule main = systems[i].main;
             main.loop = false;
-            main.useUnscaledTime = true;
+            main.useUnscaledTime = false;
             main.startColor = flashColor;
             lifetime = Mathf.Max(
                 lifetime,

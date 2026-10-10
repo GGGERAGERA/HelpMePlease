@@ -18,6 +18,15 @@ public static class StartScreenVerificationRunner
         {
             const string request = Output + "/run-tests.request";
             if (!File.Exists(request) || EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode || SessionState.GetBool(AnyRunKey, false)) return;
+            string stamp = File.GetLastWriteTimeUtc(request).Ticks.ToString();
+            if (SessionState.GetString("StartScreen.Tests.Request", "") != stamp)
+            {
+                SessionState.SetString("StartScreen.Tests.Request", stamp);
+                SessionState.SetFloat("StartScreen.Tests.RefreshAt", (float)EditorApplication.timeSinceStartup);
+                AssetDatabase.Refresh();
+                return;
+            }
+            if (EditorApplication.timeSinceStartup - SessionState.GetFloat("StartScreen.Tests.RefreshAt", 0f) < 3f) return;
             File.Delete(request);
             Run();
         };

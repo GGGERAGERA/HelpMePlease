@@ -3,12 +3,32 @@ using UnityEngine;
 public static class WindowModeSettings
 {
     public const string FullscreenKey = "display.fullscreen";
-    public static bool Fullscreen => PlayerPrefs.GetInt(FullscreenKey, Screen.fullScreen ? 1 : 0) != 0;
+    public static bool Fullscreen
+    {
+        get
+        {
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+            return Screen.fullScreen;
+#else
+            return PlayerPrefs.GetInt(FullscreenKey, Screen.fullScreen ? 1 : 0) != 0;
+#endif
+        }
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Restore()
     {
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+        UnityEngine.Rendering.Watermark.showDeveloperWatermark = false;
+        Debug.developerConsoleVisible = false;
+        Debug.developerConsoleEnabled = false;
+        // Capture builds start predictably, independent of a saved windowed preference.
+        // This changes the current display only, without writing a player preference.
+        Screen.SetResolution(1920, 1080, FullScreenMode.FullScreenWindow);
+        return;
+#else
         if (PlayerPrefs.HasKey(FullscreenKey)) Apply(Fullscreen);
+#endif
     }
 
     public static void SetFullscreen(bool fullscreen)

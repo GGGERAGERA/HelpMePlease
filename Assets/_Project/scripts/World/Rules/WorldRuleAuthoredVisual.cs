@@ -87,7 +87,7 @@ public sealed class WorldRuleAuthoredVisual : MonoBehaviour
         if (wetGround == null) return;
         wetGround.GetPropertyBlock(wetProperties);
         wetProperties.SetFloat("_WetGroundIntensity", wetGround.sharedMaterial.GetFloat("_WetGroundIntensity") * intensity);
-        wetProperties.SetFloat("_VisualTime", Time.unscaledTime);
+        wetProperties.SetFloat("_VisualTime", Time.time);
         wetGround.SetPropertyBlock(wetProperties);
     }
 

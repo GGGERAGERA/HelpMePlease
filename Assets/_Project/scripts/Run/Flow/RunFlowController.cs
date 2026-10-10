@@ -51,6 +51,9 @@ public sealed class RunFlowController : MonoBehaviour
 
     public void InitializeSector(StageProfileData profile)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        DebugResetFilmingBoss();
+#endif
         runId = RunStateManager.Instance.RunId;
         Phase = RunPhase.NormalSector;
         levelCompleted = false;
@@ -101,11 +104,17 @@ public sealed class RunFlowController : MonoBehaviour
     private void OnDisable()
     {
         RunStateManager.Instance?.UnregisterSceneCleanup(ReleaseRunScene);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        DebugResetFilmingBoss();
+#endif
         StopRunGameplay();
     }
 
     private void ReleaseRunScene()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        DebugResetFilmingBoss();
+#endif
         StopRunGameplay();
         Phase = RunPhase.Stopped;
         finalBoss = null;
@@ -248,7 +257,7 @@ public sealed class RunFlowController : MonoBehaviour
         if (CanContinue) transition.LeaveTutorial();
     }
 
-    private IEnumerator FinalBossRoutine()
+    private IEnumerator FinalBossRoutine(bool skipPreparation = false)
     {
         // Defer to the next frame so all callbacks from entering the zone finish
         // enqueueing rewards. Polling owns no callbacks in the reward manager.
@@ -261,7 +270,7 @@ public sealed class RunFlowController : MonoBehaviour
         AudioService.Instance?.Play(AudioCueId.BossSpawn);
         CameraShake.Instance?.Shake(2f, 0.05f);
 
-        float remaining = sectorProfile.BossPreparationDuration;
+        float remaining = skipPreparation ? 0f : sectorProfile.BossPreparationDuration;
         while (CanContinue && (remaining > 0f || !RewardsResolved))
         {
             if (RewardsResolved) remaining -= Time.deltaTime;
@@ -365,6 +374,43 @@ public sealed class RunFlowController : MonoBehaviour
 
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private bool filmingBoss;
+    private Coroutine filmingBossRoutine;
+    public bool IsFilmingBoss => filmingBoss;
+
+    public string FilmingBossUnavailableReason => !CanContinue ? "Нет активного живого игрока" :
+        TutorialController.IsTutorialSector ? "Сначала завершите обучение" :
+        !RewardsResolved ? "Закройте выбор награды или действие с орбитой" :
+        !filmingBoss && (Phase != RunPhase.NormalSector || levelCompleted) ? "Бой или переход уже начат" :
+        bossSpawner == null || !bossSpawner.CanSpawn(RunStateManager.Instance.CurrentSector) ? "Босс сектора не настроен" : null;
+
+    public bool DebugStartFilmingBoss()
+    {
+        if (FilmingBossUnavailableReason != null) return false;
+        DebugResetFilmingBoss();
+        RunStateManager.Instance.DebugMarkDevelopmentRun();
+        enemySpawner?.StopSpawning();
+        filmingBoss = true;
+        Phase = RunPhase.WaitingForRewards;
+        filmingBossRoutine = StartCoroutine(FinalBossRoutine(true));
+        return true;
+    }
+
+    public void DebugResetFilmingBoss()
+    {
+        if (!filmingBoss) return;
+        if (filmingBossRoutine != null) StopCoroutine(filmingBossRoutine);
+        filmingBossRoutine = null;
+        if (finalBoss != null)
+        {
+            finalBoss.gameObject.SetActive(false);
+            Destroy(finalBoss.gameObject);
+        }
+        finalBoss = null;
+        filmingBoss = false;
+        if (Phase != RunPhase.Victory && Phase != RunPhase.Stopped) Phase = RunPhase.NormalSector;
+    }
+
     public bool CanDebugCompleteCurrentLevel
     {
         get

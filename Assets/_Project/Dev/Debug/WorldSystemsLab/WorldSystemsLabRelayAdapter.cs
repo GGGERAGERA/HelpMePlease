@@ -57,7 +57,7 @@ public sealed class WorldSystemsLabRelayAdapter : MonoBehaviour
     private void Update() { if (centerShift != null) centerShift.Configure(2f, 6f, 8f); }
     private void OnTerminal(WorldEvent finished)
     {
-        if (finished is OrbitalRelayEvent) Enemies?.StopDebugExplorationPressure();
+        if (finished is OrbitalRelayEvent || finished is FalseSignalEvent) Enemies?.StopDebugExplorationPressure();
     }
     public void Clear()
     {

@@ -12,6 +12,7 @@ public sealed class ProductionSceneComposition : MonoBehaviour
     public enum SceneRole { ServicesOnly, StartScreen, Bunker, Gameplay }
     public static ProductionSceneComposition Active { get; private set; }
     public bool IsReady { get; private set; }
+    private bool recoverMissingRun;
     public void PrepareForTransition() => characters?.PrepareForSceneTransition();
     [SerializeField] private SceneRole role;
     [SerializeField] private SurfaceMapDefinition surfaceMap;
@@ -92,7 +93,12 @@ public sealed class ProductionSceneComposition : MonoBehaviour
             if (characters == null || enemies == null || levelModifiers == null || hud == null ||
                 cameraFollow == null || gameplayArea == null || rewards == null || hud.OrbitalCursor == null)
                 throw new InvalidOperationException("Gameplay composition has missing scene bindings.");
-            levelModifiers.PrepareDirectRun(characters.DefaultCharacter);
+            if (!levelModifiers.PrepareDirectRun(characters.DefaultCharacter))
+            {
+                characters.enabled = enemies.enabled = levelModifiers.enabled = false;
+                recoverMissingRun = true;
+                return;
+            }
             enemies.BindScene(characters, gameplayArea);
             levelModifiers.BindScene(characters, enemies);
             characters.CharacterSpawned += BindGameplayPlayer;
@@ -113,6 +119,11 @@ public sealed class ProductionSceneComposition : MonoBehaviour
 
     private IEnumerator Start()
     {
+        if (recoverMissingRun)
+        {
+            SceneTransitionOverlay.Instance.RecoverToBunker();
+            yield break;
+        }
         while (!SubsystemsReady()) yield return null;
         // Scene activation and Start callbacks finish before the transition reveals it.
         yield return null;

@@ -57,7 +57,18 @@ public sealed class MissionProductionFlowTests
         Object.FindFirstObjectByType<StartScreenController>().Begin();
         yield return CoreTestSupport.Await(()=>SceneManager.GetActiveScene().name==RunEndService.BunkerSceneName&&!SceneTransitionOverlay.IsTransitioning&&Object.FindFirstObjectByType<BunkerPlayerLoadoutController>() is { IsReady:true });
         var meta=MetaProgressionManager.Instance; var map=meta.SurfaceMap; var missions=meta.Missions;
-        var provider=Object.FindObjectsByType<MissionProvider>(FindObjectsSortMode.None).Single(); var definition=provider.GetMission(); string id=definition.MissionId;
+        var provider=Object.FindObjectsByType<MissionProvider>(FindObjectsSortMode.None).Single(); var definition=provider.GetMission();
+        var authored=AssetDatabase.LoadAssetAtPath<MissionDefinition>(MissionProductionAuthoring.MissionPath);
+        if(!authored.AvailableInProduction)
+        {
+            Assert.That(definition,Is.Null,"Unavailable missions are not offered.");
+            Assert.That(provider.CanInteract,Is.False);
+            Assert.That(missions.Accept(authored.MissionId),Is.False);
+            map.TrySelect(authored.TargetSectorId); Assert.That(map.TryBuildRunConfig(out var paused),Is.True);
+            Assert.That(paused.Content.GuaranteedEvents,Is.Empty); Assert.That(paused.Content.Objectives,Is.Empty);
+            yield break;
+        }
+        string id=definition.MissionId;
         Assert.That(missions.GetState(id),Is.EqualTo(MissionState.Available));
         var player=Read<Transform>(Object.FindFirstObjectByType<BunkerPlayerLoadoutController>(),"controlledPlayerRoot");
         player.position=provider.transform.position+new Vector3(20,-20); Physics2D.SyncTransforms();
@@ -94,7 +105,7 @@ public sealed class MissionProductionFlowTests
         runPlayer.transform.position=worldEvent.transform.position; worldEvent.Interact();
         yield return CoreTestSupport.Await(()=>worldEvent.IsStarted);
         var real=Object.FindObjectsByType<FalseSignalPoint>(FindObjectsSortMode.None).First(p=>Read<bool>(p,"isReal"));
-        worldEvent.ResolveSignal(real,true); Assert.That(worldEvent.IsCompleted,Is.True); Assert.That(missions.GetState(id),Is.EqualTo(MissionState.ObjectiveCompleted));
+        yield return FalseSignalTestSupport.ScanAndActivate(real,runPlayer.transform); Assert.That(worldEvent.IsCompleted,Is.True); Assert.That(missions.GetState(id),Is.EqualTo(MissionState.ObjectiveCompleted));
         var storage=new PlayerPrefsMissionStorage(map.Definition.Id); var provisionalSave=JsonUtility.FromJson<MissionSaveState>(storage.Load()).missions.Single(m=>m.missionId==id);
         Assert.That(provisionalSave.state,Is.EqualTo(MissionState.Active)); Assert.That(provisionalSave.committedObjectives,Is.Empty); Assert.That(missions.Claim(id),Is.False);
         yield return CoreTestSupport.Await(()=>UpgradeManager.Instance.DebugCurrentChoices.Count>0);

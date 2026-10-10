@@ -188,13 +188,13 @@ public sealed class SurfaceMapView : MonoBehaviour
         if(content&&!string.IsNullOrEmpty(selectedMarker.Status))
         {
             string tint=ColorUtility.ToHtmlStringRGB(selectedMarker.Marker!=null?selectedMarker.Marker.color:Cyan);
-            details.text=heading+lockedReason+$"<color=#{tint}>{selectedMarker.Status}</color>\n\n<size=21>{selectedMarker.Title}</size>\n{selectedMarker.Description}\n\n"+
+            details.text=heading+lockedReason+$"<color=#{tint}>{LocalizationService.Instance.Get(selectedMarker.Status)}</color>\n\n<size=21>{selectedMarker.Title}</size>\n{LocalizationService.Instance.Get(selectedMarker.Description)}\n\n"+
                 $"<color=#658B9E>OBJECTIVE</color>\n{selectedMarker.Objective}\n\n<color=#658B9E>REWARD</color>\n<color=#6BD9B5>{selectedMarker.Reward}</color>";
             return;
         }
         if(content&&selectedMarker.Concealed)
         {
-            details.text=heading+lockedReason+$"<color=#{ColorUtility.ToHtmlStringRGB(selectedMarker.Marker!=null?selectedMarker.Marker.color:Cyan)}>{selectedMarker.Title}</color>\n{selectedMarker.Description}\n\n"+
+            details.text=heading+lockedReason+$"<color=#{ColorUtility.ToHtmlStringRGB(selectedMarker.Marker!=null?selectedMarker.Marker.color:Cyan)}>{selectedMarker.Title}</color>\n{LocalizationService.Instance.Get(selectedMarker.Description)}\n\n"+
                 "<color=#658B9E>THREAT</color>       ??\n<color=#658B9E>ACTIVITY</color>     UNKNOWN\n<color=#658B9E>REWARD</color>       ???"; return;
         }
         var config=service.Content.Resolve(sector.BuildRunConfig(renderedMap.Id));

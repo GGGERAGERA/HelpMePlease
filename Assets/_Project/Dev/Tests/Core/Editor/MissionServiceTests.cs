@@ -15,7 +15,25 @@ public sealed class MissionServiceTests
     }
     const string Id="MISSION_SIGNAL_TRACE";
     static SurfaceMapDefinition Map => AssetDatabase.LoadAssetAtPath<SurfaceMapDefinition>(SurfaceMapProductionAuthoring.MapPath);
-    static MissionCatalog Catalog => AssetDatabase.LoadAssetAtPath<MissionCatalog>(MissionProductionAuthoring.CatalogPath);
+    static MissionCatalog Catalog;
+    readonly System.Collections.Generic.List<Object> fixtures=new();
+    [SetUp] public void AvailableMissionFixture()
+    {
+        // Lifecycle tests use isolated available content; production availability has its own tests.
+        Catalog=Object.Instantiate(AssetDatabase.LoadAssetAtPath<MissionCatalog>(MissionProductionAuthoring.CatalogPath)); fixtures.Add(Catalog);
+        var mission=Object.Instantiate(Catalog.Missions[0]); fixtures.Add(mission);
+        var objective=Object.Instantiate(mission.Objectives[0]); fixtures.Add(objective);
+        var content=Object.Instantiate(objective.RunContent); fixtures.Add(content);
+        content.requiredEvent=AssetDatabase.LoadAssetAtPath<OrbitalRelayEvent>("Assets/_Project/prefabs/Environment/WorldEvents/OrbitalRelayEvent.prefab");
+        CorridorMigrationTestSupport.Set(objective,"content",content);
+        CorridorMigrationTestSupport.Set(mission,"objectives",new[]{objective});
+        CorridorMigrationTestSupport.Set(Catalog,"missions",new[]{mission});
+    }
+    [TearDown] public void ClearFixtures()
+    {
+        foreach(var fixture in fixtures)Object.DestroyImmediate(fixture);
+        fixtures.Clear(); Catalog=null;
+    }
     static (MissionService mission,SurfaceMapService map,Storage storage,RunConfig config) Begin()
     {
         var storage=new Storage(); var map=new SurfaceMapService(Map,new SurfaceMarkerTests.Storage());
@@ -32,12 +50,12 @@ public sealed class MissionServiceTests
         Assert.That(arrow.gameObject.activeSelf,Is.True,"Standard arrow should be authored visible in Edit Mode.");
         Assert.That(PrefabUtility.GetCorrespondingObjectFromSource(arrow.gameObject),Is.SameAs(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/prefabs/Bunker/PF_InteractionArrow.prefab")));
     }
-    [Test] public void PrioritySourceDeduplicatesEventAndPreservesUnknown()
+    [Test] public void PrioritySourceDeduplicatesEventAndHidesUnavailableUnknown()
     {
         var flow=Begin(); Assert.That(flow.config.Content.GuaranteedEvents.Count,Is.EqualTo(1));
-        Assert.That(flow.config.Content.Objectives.Count,Is.EqualTo(2)); Assert.That(flow.config.Gold,Is.EqualTo(Map.Find("D1").BuildRunConfig(Map.Id).Gold));
+        Assert.That(flow.config.Content.Objectives.Count,Is.EqualTo(1)); Assert.That(flow.config.Gold,Is.EqualTo(Map.Find("D1").BuildRunConfig(Map.Id).Gold));
         flow.map.Content.TryGetMarker("D1",out var marker); Assert.That(marker.Marker.icon,Is.EqualTo("!")); Assert.That(marker.Status,Is.EqualTo("ACTIVE MISSION")); Assert.That(marker.Reward,Is.EqualTo("100 GOLD"));
-        flow.map.Content.UnregisterSource(flow.mission); flow.map.Content.TryGetMarker("D1",out marker); Assert.That(marker.Marker.icon,Is.EqualTo("?"));
+        flow.map.Content.UnregisterSource(flow.mission); Assert.That(flow.map.Content.TryGetMarker("D1",out marker),Is.False);
     }
     [TestCase(RunEndReason.PlayerDied,false)]
     [TestCase(RunEndReason.ReturnedToBunker,false)]

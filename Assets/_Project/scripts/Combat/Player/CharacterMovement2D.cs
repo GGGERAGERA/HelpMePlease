@@ -75,8 +75,17 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
 
     // Optional input ownership; physics, animation and status effects remain here.
     public System.Func<Vector2> MovementIntent { get; set; }
-    // Only the station's time owner compensates deliberate player locomotion.
-    public float BulletTimeControlMultiplier { get; internal set; } = 1f;
+    private float bulletTimeControlMultiplier = 1f;
+    // The station's time owner supplies one modifier for locomotion, dash and its animation.
+    public float BulletTimeControlMultiplier
+    {
+        get => bulletTimeControlMultiplier;
+        internal set
+        {
+            if (animator != null) animator.speed *= value / bulletTimeControlMultiplier;
+            bulletTimeControlMultiplier = value;
+        }
+    }
 
     public void SetVisualRoot(Transform value)
     {
@@ -97,23 +106,28 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
     public bool IsDashReady => !isDashing && dashCooldownRemaining <= 0f;
     public KeyCode DashKey => dashKey;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-    public float DebugAcceleration => acceleration;
-    public float DebugDeceleration => deceleration;
+    public float WalkingSpeed => speed * anomalySpeedMultiplier * worldRuleSpeedMultiplier * BulletTimeControlMultiplier;
+    public float WalkingAcceleration => acceleration * BulletTimeControlMultiplier * BulletTimeControlMultiplier;
 
-    public Vector2 DebugForecastDisplacement(Vector2 intent, float seconds)
+    public Vector2 ForecastWalkingDisplacement(Vector2 intent, float seconds)
     {
         Vector2 velocity = currentVelocity;
         Vector2 displacement = Vector2.zero;
         Vector2 target = Vector2.ClampMagnitude(intent, 1f) * speed * anomalySpeedMultiplier * worldRuleSpeedMultiplier;
-        float step = seconds / 8f;
-        for (int i = 0; i < 8; i++)
+        int steps = Mathf.Max(1, Mathf.CeilToInt(seconds / Time.fixedDeltaTime));
+        float step = seconds / steps;
+        float rate = intent.sqrMagnitude > .01f ? acceleration : deceleration;
+        for (int i = 0; i < steps; i++)
         {
-            velocity = Vector2.MoveTowards(velocity, target, acceleration * step);
-            displacement += (velocity + worldRuleExternalVelocity + anomalyExternalVelocity.Value) * step;
+            velocity = Vector2.MoveTowards(velocity, target, rate * step * BulletTimeControlMultiplier);
+            displacement += (velocity * BulletTimeControlMultiplier + worldRuleExternalVelocity + anomalyExternalVelocity.Value) * step;
         }
         return displacement;
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public float DebugAcceleration => acceleration;
+    public float DebugDeceleration => deceleration;
 
     public void SetDebugAcceleration(float value) =>
         acceleration = Mathf.Max(0f, value);
@@ -165,7 +179,10 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
         UpdateFacing(moveInput.x);
 
         if (animator != null)
-            animator.SetFloat("Speed", moveInput.magnitude);
+            animator.SetFloat("Speed", rb != null
+                ? Mathf.Clamp01(rb.linearVelocity.magnitude / Mathf.Max(.01f,
+                    speed * anomalySpeedMultiplier * worldRuleSpeedMultiplier * BulletTimeControlMultiplier))
+                : moveInput.magnitude);
     }
 
     private void CacheVisualRootScale()

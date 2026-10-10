@@ -31,6 +31,15 @@ public sealed class SurfaceMarkerFlowTests
         typeof(MetaProgressionManager).GetProperty("SurfaceMap").SetValue(MetaProgressionManager.Instance,service);
         var station = Object.FindObjectsByType<BunkerStation>(FindObjectsSortMode.None).First(s => Read<BunkerStationType>(s,"stationType") == BunkerStationType.StartRun);
         station.Interact(); var view = Object.FindFirstObjectByType<SurfaceMapView>(); service.TrySelect("D1"); yield return null;
+        var signal=AssetDatabase.LoadAssetAtPath<FalseSignalEvent>("Assets/_Project/prefabs/Environment/WorldEvents/FalseSignalEvent.prefab");
+        if(!signal.AvailableInProduction)
+        {
+            Assert.That(service.Content.TryGetMarker("D1",out _),Is.False);
+            Assert.That(service.TryBuildRunConfig(out var paused),Is.True);
+            Assert.That(paused.Content.GuaranteedEvents,Is.Empty); Assert.That(paused.Content.Objectives,Is.Empty);
+            Assert.That(Object.FindFirstObjectByType<SurfaceMapNavigation>(),Is.Not.Null);
+            yield break;
+        }
         Assert.That(Read<TMPro.TMP_Text>(view,"details").text,Is.EqualTo("UNKNOWN ACTIVITY\nSignal detected"));
         Assert.That(Object.FindFirstObjectByType<SurfaceMapNavigation>(),Is.Not.Null);
         System.IO.Directory.CreateDirectory("Artifacts/GeneratedQA/SurfaceMap");
@@ -48,7 +57,7 @@ public sealed class SurfaceMarkerFlowTests
         player.transform.position = worldEvent.transform.position; worldEvent.Interact();
         yield return CoreTestSupport.Await(() => worldEvent.IsStarted);
         var realSignal = Object.FindObjectsByType<FalseSignalPoint>(FindObjectsSortMode.None).First(p => Read<bool>(p,"isReal"));
-        worldEvent.ResolveSignal(realSignal,true); Assert.That(worldEvent.IsCompleted,Is.True);
+        yield return FalseSignalTestSupport.ScanAndActivate(realSignal,player.transform); Assert.That(worldEvent.IsCompleted,Is.True);
         Assert.That(storage.values.Count,Is.Zero); service.Content.TryGetMarker("D1",out var marker); Assert.That(marker.State,Is.EqualTo(SurfaceMarkerState.Active));
         // The real site reward must be selected before the final boss can start.
         yield return CoreTestSupport.Await(() => UpgradeManager.Instance.DebugCurrentChoices.Count > 0);

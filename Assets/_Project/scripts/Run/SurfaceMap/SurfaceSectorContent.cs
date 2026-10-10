@@ -3,6 +3,9 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Subject42/Surface/Sector Content")]
 public sealed class SurfaceSectorContent : ScriptableObject
 {
+    public const string UnavailableStatusKey = "content.temporarilyUnavailable";
+    public const string UnavailableDescriptionKey = "content.progressPaused";
+    public bool AvailableInProduction => requiredEvent == null || requiredEvent.AvailableInProduction;
     public string id;
     public SurfaceMarker marker;
     public string title = "UNKNOWN ACTIVITY";
