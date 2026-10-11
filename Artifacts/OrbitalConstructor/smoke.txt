@@ -1,0 +1,39 @@
+PASS: lab starts in paused editor
+PASS: training has no progression composition or automatic spawner
+PASS: preset 0: same four beams, fork and two saws
+PASS: preset excludes hooks and auxiliary combat parts
+GEOMETRY preset 0: saw radii 6,99/6,99 m; revolution 4,57 s; damage 12
+PASS: machine and guides have no blocking or damage colliders
+PASS: preset 1: same four beams, fork and two saws
+PASS: preset excludes hooks and auxiliary combat parts
+GEOMETRY preset 1: saw radii 1,84/1,84 m; revolution 2,22 s; damage 12
+PASS: machine and guides have no blocking or damage colliders
+PASS: compact geometry has smaller radii and faster cached rotation
+PASS: preset 2: same four beams, fork and two saws
+PASS: preset excludes hooks and auxiliary combat parts
+GEOMETRY preset 2: saw radii 1,84/4,92 m; revolution 2,74 s; damage 12
+PASS: machine and guides have no blocking or damage colliders
+PASS: mixed geometry has two distinct working radii
+PASS: only the actual saw disk applies one 12-damage hit
+PASS: frame and target outside disk remain unharmed
+PASS: real disk contact plays existing impact sound
+PASS: visible disk diameter agrees with damage radius
+PASS: rotation is not recalculated each frame
+PASS: per-target repeat interval still applies
+PASS: moving target into visible disk produces contact
+PASS: full far-saw revolution cannot damage dummy inside the empty inner region
+PASS: combat trajectory hints can be hidden
+PASS: combat trajectory hints can be shown
+PASS: existing melee AI freely crosses harmless frame toward player
+PASS: parent removal clears branch and recalculates speed
+PASS: manual installation remains available
+PASS: occupied socket rejected
+PASS: stationary dummy training starts at chosen distance
+PASS: dummy AI is stationary; real wave AI remains unchanged
+PASS: existing melee wave starts
+PASS: existing shooter wave starts with clean player state
+PASS: full reset clears construction, enemies, projectiles, temporary effects and contact audio
+Captured Unity camera: Artifacts/OrbitalConstructor/unity-frame.png
+PASS: no Unity runtime errors
+This smoke verifies geometry and lifecycle only; fun and balance require manual movement/combat testing.
+PASS: single Play Mode smoke, no runtime errors

@@ -10,6 +10,7 @@ public class EnemyProjectile : MonoBehaviour, IAnomalySpeedProjectile,
     private Vector2 direction;
     private float remainingLifetime;
     private PooledGameObject pooledObject;
+    private bool despawned;
     private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
     private readonly AnomalyExternalVelocityStack
         anomalyExternalVelocity = new();
@@ -20,6 +21,7 @@ public class EnemyProjectile : MonoBehaviour, IAnomalySpeedProjectile,
 
     public void Initialize(Vector2 shootDirection)
     {
+        despawned = false;
         direction = shootDirection.normalized;
         remainingLifetime = lifetime;
         anomalySpeed.Clear();
@@ -48,6 +50,7 @@ public class EnemyProjectile : MonoBehaviour, IAnomalySpeedProjectile,
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (despawned) return;
         if (!other.CompareTag("Player"))
             return;
 
@@ -100,8 +103,18 @@ public class EnemyProjectile : MonoBehaviour, IAnomalySpeedProjectile,
         anomalyExternalVelocity.Clear();
     }
 
+    // Shields use the same lifecycle as a hit or an expired projectile, including pool release.
+    public bool TryIntercept()
+    {
+        if (despawned || !isActiveAndEnabled) return false;
+        Despawn();
+        return true;
+    }
+
     private void Despawn()
     {
+        if (despawned) return;
+        despawned = true;
         if (pooledObject != null && pooledObject.Release())
             return;
 
