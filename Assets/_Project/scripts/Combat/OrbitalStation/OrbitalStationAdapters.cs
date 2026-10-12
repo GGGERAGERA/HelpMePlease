@@ -4,6 +4,16 @@ using UnityEngine;
 
 namespace Subject42.Combat.OrbitalStation
 {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    // Optional scene-local lab interception. Release gameplay has no hook or dependency on lab types.
+    public interface IOrbitalCombatLabInterceptor
+    {
+        bool HandlesContact(OrbitalModuleRuntime module);
+        void TickContacts(float deltaTime);
+        bool TryResolveDamage(EnemyHealth target, float damage, Vector2 point, out bool applied);
+        bool InterceptProjectile(EnemyHealth target, Vector2 from, Vector2 to, float damage);
+    }
+#endif
     public interface IOrbitalOwnerAdapter
     {
         Transform Transform { get; }
@@ -58,6 +68,12 @@ namespace Subject42.Combat.OrbitalStation
 
     public sealed class ProductionOrbitalCombatAdapter : IOrbitalCombatAdapter
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public static IOrbitalCombatLabInterceptor LabInterceptor { get; set; }
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetLabInterceptor() => LabInterceptor = null;
+        public void DebugClearProjectiles() { foreach (var projectile in projectiles) if (projectile.Active) Release(projectile); }
+#endif
         private sealed class Projectile
         {
             public GameObject GameObject;
@@ -145,6 +161,13 @@ namespace Subject42.Combat.OrbitalStation
             if (!IsValid(enemy))
                 return false;
             bool wasAlive = !enemy.IsDead;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (LabInterceptor != null && LabInterceptor.TryResolveDamage(enemy, damage, hitPoint, out bool applied))
+            {
+                if (applied) { Hit?.Invoke(enemy, damage); if (enemy != null && enemy.IsDead) Death?.Invoke(enemy); }
+                return applied;
+            }
+#endif
             enemy.TakeDamage(Mathf.Max(0f, damage), hitPoint);
             Hit?.Invoke(enemy, damage);
             if (wasAlive && enemy != null && enemy.IsDead)
@@ -181,6 +204,9 @@ namespace Subject42.Combat.OrbitalStation
         public void Tick(float deltaTime)
         {
             if (deltaTime <= 0f) return;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            LabInterceptor?.TickContacts(deltaTime);
+#endif
             for (int i = 0; i < projectiles.Count; i++)
             {
                 Projectile projectile = projectiles[i];
@@ -195,6 +221,10 @@ namespace Subject42.Combat.OrbitalStation
                 Vector2 target = projectile.Target.transform.position;
                 Vector2 next = Vector2.MoveTowards(position, target,
                     projectile.Speed * deltaTime);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                if (LabInterceptor != null && LabInterceptor.InterceptProjectile(projectile.Target, position, next, projectile.Damage))
+                { Release(projectile); continue; }
+#endif
                 projectile.GameObject.transform.position = next;
                 Vector2 direction = target - position;
                 if (direction.sqrMagnitude > 0.001f)

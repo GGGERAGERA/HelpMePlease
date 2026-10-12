@@ -1,0 +1,26 @@
+PASS: ordinary circular player station initialized without constructor
+PASS: no production/progression scene composition
+PASS: shield preset uses shared ring and six mounting points
+PASS: real production projectile hits armor and is released without body damage (blocks 0->1, HP 160->160, phase 0, center (0.00, 0.00), mount (1.90, 0.00, 0.00))
+PASS: production projectile damages body through open sector
+PASS: fast actual sword sweep blocks before simultaneous body hit; player module survives
+PASS: contact weapon damages exposed body from inside defensive radius
+PASS: far-contact load uses existing swords
+PASS: shooting load uses existing pistols
+PASS: two opposite hostile blade modules
+PASS: hostile blade damages player only on actual authored blade contact
+PASS: gap between blades and orbit trajectory are harmless
+PASS: three destructible satellites; body never fully invulnerable
+PASS: ordinary production shots destroy satellite permanently for encounter
+PASS: destroying node weakens body reduction
+PASS: death cleans body, orbit and all satellite health instances
+PASS: restart restores identical encounter and node health
+PASS: clear removes encounter and temporary state
+PASS: optional encounter contains elite and four ordinary enemies
+PASS: restart preserves originally spawned group despite changed next-spawn option
+PASS: new solo spawn clears prior group, retaining only elite and its own nodes
+PASS: new solo spawn clears prior group, retaining only elite and its own nodes
+PASS: new solo spawn clears prior group, retaining only elite and its own nodes
+PASS: no Unity runtime errors
+Smoke confirms mechanics only. Tactical interest and balance need manual testing.
+PASS: one Play Mode smoke; no runtime errors

@@ -223,6 +223,10 @@ namespace Subject42.Combat.OrbitalStation
         public override void ActivateCombat()
         {
             if (Mount == null) return;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            // The elite lab checks the same authored blade body along its swept orbit before resolving damage.
+            if (ProductionOrbitalCombatAdapter.LabInterceptor?.HandlesContact(this) == true) return;
+#endif
             EnemyHealth target = Combat.FindNearest(Visual.transform.position, 0.75f);
             if (target != null)
             {
