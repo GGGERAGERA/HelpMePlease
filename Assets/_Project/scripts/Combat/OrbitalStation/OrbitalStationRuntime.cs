@@ -13,6 +13,7 @@ namespace Subject42.Combat.OrbitalStation
         public RmbMode RightMouseMode { get; set; } = RmbMode.BulletTime;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public bool DebugBulletTimeHeld { get; set; }
+        public bool LabShiftBulletTime { get; set; }
         public bool DebugRotationPaused { get; set; }
         public void DebugReverseRotation()
         {
@@ -318,10 +319,16 @@ namespace Subject42.Combat.OrbitalStation
                 !IsDebugPlacementActive;
             bool held = canInput && Input.GetMouseButton(1) && !Input.GetKey(KeyCode.LeftAlt) && !Input.GetKey(KeyCode.RightAlt);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (LabShiftBulletTime)
+                held = canInput && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift));
             held |= canInput && DebugBulletTimeHeld;
 #endif
             TickRightMouse(deltaTime, held,
-                canInput && Input.GetMouseButtonDown(1));
+                canInput && Input.GetMouseButtonDown(1)
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                && !LabShiftBulletTime
+#endif
+                );
         }
 
         private void TickRightMouse(float deltaTime, bool held, bool pressed)
@@ -757,6 +764,13 @@ namespace Subject42.Combat.OrbitalStation
             line.startColor = line.endColor = color;
             flashes.Add((line, life));
         }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public void ClearLabFlashes()
+        {
+            foreach (var item in flashes) { item.line.enabled = false; idleFlashes.Push(item.line); }
+            flashes.Clear();
+        }
+#endif
 
         private LineRenderer CreateFlashLine()
         {

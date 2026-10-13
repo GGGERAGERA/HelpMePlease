@@ -19,6 +19,11 @@ namespace Subject42.Combat.OrbitalStation
                 return false;
             }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (station.Combat is ProductionOrbitalCombatAdapter adapter && adapter.LabModuleFactory != null)
+                module = adapter.LabModuleFactory(station, state);
+            if (module != null) { error = null; return true; }
+#endif
             module = state.ModuleType switch
             {
                 OrbitalModuleKind.Pistol => new OrbitalPistolModule(station, state.StableModuleId),

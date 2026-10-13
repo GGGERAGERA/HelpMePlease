@@ -8,13 +8,16 @@ public sealed class OrbitalLabCenterControl : IDisposable
 {
     private readonly OrbitalCenterShift center;
     public Vector2 Offset => center != null ? center.Offset : Vector2.zero;
-    public OrbitalLabCenterControl(OrbitalStationRuntime station, Transform player)
+    public OrbitalLabCenterControl(OrbitalStationRuntime station, Camera camera, float speedMultiplier)
     {
         center = station.GetComponent<OrbitalCenterShift>();
+        center.ConfigureLabPointerControl(camera, speedMultiplier);
+        station.LabShiftBulletTime = true;
     }
     public void Tick(float maximumOffset, float moveSpeed, float returnSpeed) =>
         center.Configure(maximumOffset, moveSpeed, returnSpeed);
-    public void ReleaseInput() => center?.ResetOffset();
+    // Unity's destroyed-object comparison is required when scene teardown retires the station first.
+    public void ReleaseInput() { if (center != null) center.ResetOffset(); }
     public void Dispose() => ReleaseInput();
 }
 #endif

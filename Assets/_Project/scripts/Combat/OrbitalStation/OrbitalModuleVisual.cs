@@ -25,6 +25,29 @@ namespace Subject42.Combat.OrbitalStation
         private bool previewing;
         private bool previewSnapped;
         private Transform pulseBody;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private bool labFeedback;
+        private Color labTint = Color.white;
+        private float labRecoil, labRecoilAt, labCharge;
+        public void ConfigureLabFeedback(Color color)
+        {
+            labFeedback = true; labTint = color;
+            if (animator != null) animator.enabled = false;
+        }
+        public void LabRecoil(float strength) { labRecoil = strength; labRecoilAt = Time.time; labCharge = 0f; Trigger(); }
+        public void LabCharge(float amount) => labCharge = Mathf.Clamp01(amount);
+        public void ResetLabFeedback()
+        {
+            labRecoil = labCharge = 0f; flashUntil = effectStopAt = 0f; StopParticles();
+            if (instance != null)
+            {
+                instance.transform.localPosition = authoredBodyPosition;
+                instance.transform.localRotation = authoredBodyRotation;
+                instance.transform.localScale = authoredBodyScale;
+            }
+            ApplyTint();
+        }
+#endif
         public float DepthOpacity { get; set; } = 1f;
 
         public GameObject GameObject => root;
@@ -147,6 +170,17 @@ namespace Subject42.Combat.OrbitalStation
 
         public void Tick()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (labFeedback && instance != null)
+            {
+                float kick = labRecoil * Mathf.Clamp01(1f - (Time.time - labRecoilAt) / .16f);
+                instance.transform.localPosition = authoredBodyPosition - Vector3.right * kick;
+                instance.transform.localRotation = authoredBodyRotation;
+                instance.transform.localScale = authoredBodyScale * (1f + labCharge * .12f);
+                if (effectStopAt > 0f && Time.time >= effectStopAt) { StopParticles(); effectStopAt = 0f; }
+                ApplyTint(); return;
+            }
+#endif
             // Keep the blade's authored transforms fixed, including during hit feedback.
             if (kind == OrbitalModuleKind.LaserSword)
             {
@@ -199,7 +233,11 @@ namespace Subject42.Combat.OrbitalStation
         {
             flashUntil = Time.time +
                 (kind == OrbitalModuleKind.ImpulseGun ? 0.16f : 0.08f);
-            if (animator != null && kind == OrbitalModuleKind.Pistol)
+            if (animator != null && kind == OrbitalModuleKind.Pistol
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                && !labFeedback
+#endif
+                )
             {
                 animator.enabled = true;
                 animator.speed = 1f;
@@ -224,6 +262,9 @@ namespace Subject42.Combat.OrbitalStation
             {
                 if (sprites[i] == null) continue;
                 Color color = spriteColors[i];
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                if (labFeedback && sprites[i] != halo) color = Color.Lerp(color, Color.Lerp(labTint, Color.white, labCharge), .65f);
+#endif
                 if (previewing)
                 {
                     if (previewSnapped)

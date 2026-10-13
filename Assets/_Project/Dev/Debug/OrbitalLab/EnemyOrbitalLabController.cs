@@ -1,17 +1,35 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System.Collections.Generic;
 using System.Linq;
+using Subject42.Combat.OrbitalStation;
 using UnityEngine;
 
-public sealed class EnemyOrbitalLabController : OrbitalLabSession
+public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalCombatLabInterceptor
 {
     public const string ScenePath = "Assets/_Project/Dev/Labs/OrbitalLab/EnemyOrbitalLab.unity";
     public GameObject[] EnemyPrefabs;
     [Header("Manual orbit center prototype (lab only)")]
-    [Min(0f)] public float MaximumCenterOffset = 2f;
+    [Min(0f)] public float MaximumCenterOffset = 6f;
     [Min(0f)] public float CenterMoveSpeed = 6f;
     [Min(0f)] public float CenterReturnSpeed = 8f;
     public bool ShowCenterMarker = true;
+    [Range(.1f, 1f)] public float SteeringSpeedMultiplier = .7f;
+    public GameObject ShieldBearerPrefab;
+    public GameObject BreakableShieldBearerPrefab, ShieldShooterPrefab, BreakableShieldShooterPrefab;
+    public GameObject PursuerPrefab;
+    public LineRenderer CenterRange;
+    public GameObject PistolProjectileVisual;
+    [Header("Lab shooting profiles (not rewards)")]
+    public EnemyOrbitalLabWeaponSettings Needle = new();
+    public EnemyOrbitalLabWeaponSettings Shotgun = EnemyOrbitalLabWeaponSettings.Shotgun();
+    public EnemyOrbitalLabWeaponSettings Spear = EnemyOrbitalLabWeaponSettings.Spear();
+    [Range(0f, .035f)] public float ShootingShakeMagnitude = .018f;
+    [Min(.15f)] public float ShootingShakeInterval = .25f;
+    private float nextShootingShake;
+    public enum ShootingBuild { Pistol, Contact, Needle, Shotgun, Spear, Mixed }
+    private ShootingBuild selectedBuild;
+    private EnemyOrbitalLabWeaponSettings installingProfile;
+    private readonly Dictionary<int, EnemyOrbitalLabWeaponSettings> weaponProfiles = new();
     [Header("Distant test shooter")]
     public GameObject TestShooterPrefab;
     public Vector2 TestShooterPosition = new(7f, 0f);
@@ -32,6 +50,120 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession
     private static readonly string[] Presets = { "STARTER", "PISTOL", "LASER SWORD", "IMPULSE", "ARC", "MIXED", "MANY RINGS" };
     private int spawnIndex;
     private int tab;
+    private int scenario;
+    public bool Paused { get; private set; }
+
+    protected override void Awake()
+    {
+        base.Awake();
+        ProductionOrbitalCombatAdapter.LabInterceptor = this;
+    }
+
+    public void StartScenario(int index)
+    {
+        scenario = Mathf.Clamp(index, 0, 5);
+        SetPaused(false);
+        ResetBuild(() =>
+        {
+            SelectShootingBuild(selectedBuild);
+            int type = scenario switch { 3 => -4, 4 => -5, 5 => -6, _ => -2 };
+            AddScenarioEnemy(type, new Vector2(scenario >= 4 ? 5f : 1.6f, 0f));
+            if (scenario == 1 || scenario == 2)
+                for (int i = 0; i < 3; i++) AddScenarioEnemy(-3, new Vector2(-3f + i * 2f, 4f));
+            if (scenario == 2) AddScenarioEnemy(-1, TestShooterPosition);
+            Notice = "Shield: front 120° / open back. Move the station behind it.";
+        });
+    }
+
+    private void AddScenarioEnemy(int type, Vector2 position)
+    { SpawnAt(type, position); layout.Add((type, position)); }
+
+    public void RestartScenario() => StartScenario(scenario);
+
+    public void SetPaused(bool value)
+    {
+        if (Paused == value) return;
+        Station?.InputOwner?.PrepareForExternalPause();
+        ReleaseCenterInput();
+        Paused = value;
+        Time.timeScale = value ? 0f : 1f;
+    }
+
+    public void SelectTestWeapon(bool contact)
+        => SelectShootingBuild(contact ? ShootingBuild.Contact : ShootingBuild.Pistol);
+
+    public void SelectShootingBuild(ShootingBuild build)
+    {
+        if (!CanEdit()) return;
+        selectedBuild = build;
+        var adapter = (ProductionOrbitalCombatAdapter)Station.Combat;
+        adapter.LabModuleFactory = CreateLabModule;
+        ClearModules();
+        weaponProfiles.Clear();
+        TargetRing = 0;
+        adapter.DebugClearProjectiles(); Station.ClearLabFlashes();
+        if (build == ShootingBuild.Contact || build == ShootingBuild.Pistol)
+            Give(build == ShootingBuild.Contact ? OrbitalRewardKind.LaserSword : OrbitalRewardKind.Pistol);
+        else
+        {
+            var profiles = build == ShootingBuild.Mixed ? new[] { Needle, Shotgun, Spear }
+                : new[] { build == ShootingBuild.Needle ? Needle : build == ShootingBuild.Shotgun ? Shotgun : Spear };
+            foreach (var profile in profiles)
+            {
+                if (Station.State.FreeBuiltMounts == 0)
+                {
+                    var ring = Station.State.Rings.FirstOrDefault(r => r.MountCount < r.MountCapacity);
+                    if (ring != null) Station.AddMount(ring.StableRingId, out _);
+                    else Station.AddRing();
+                }
+                installingProfile = profile;
+                try { Give(OrbitalRewardKind.Pistol); }
+                finally { installingProfile = null; }
+            }
+        }
+        Notice = build switch { ShootingBuild.Needle => "NEEDLE: accurate bursts / individual shield hits",
+            ShootingBuild.Shotgun => "SHOTGUN: close fan / one durability per shield per volley",
+            ShootingBuild.Spear => "SPEAR: charge / pierce bodies / stops at shields",
+            ShootingBuild.Mixed => "MIXED: needle + shotgun + spear on ordinary mounts", _ => build.ToString() };
+    }
+
+    private OrbitalModuleRuntime CreateLabModule(OrbitalStationRuntime station, OrbitalModuleState state)
+    {
+        if (state.ModuleType != OrbitalModuleKind.Pistol) return null;
+        if (installingProfile != null) weaponProfiles[state.StableModuleId] = installingProfile;
+        return weaponProfiles.TryGetValue(state.StableModuleId, out var profile)
+            ? new EnemyOrbitalLabWeapon(station, state.StableModuleId, profile, OnLabWeaponFired) : null;
+    }
+
+    private void OnLabWeaponFired(float strength)
+    {
+        if (Time.time < nextShootingShake || ShootingShakeMagnitude <= 0f) return;
+        nextShootingShake = Time.time + Mathf.Max(.15f, ShootingShakeInterval);
+        CameraShake.Instance?.Shake(.045f, ShootingShakeMagnitude * Mathf.Clamp01(strength));
+    }
+
+    public bool HandlesContact(OrbitalModuleRuntime module)
+    {
+        if (!Ready || module.Kind != OrbitalModuleKind.LaserSword || module.CurrentMount == null ||
+            module.CurrentMount.Transform.gameObject.scene != gameObject.scene) return false;
+        foreach (var enemy in enemies)
+        {
+            if (enemy == null || !enemy.TryGetComponent<EnemyOrbitalLabShield>(out var shield) || !shield.BlockContact(module)) continue;
+            module.RuntimeCooldown = OrbitalLaserSwordModule.ContactInterval;
+            module.TriggerUpgradePresentation();
+            return true;
+        }
+        return false;
+    }
+
+    public void TickContacts(float deltaTime) { }
+    public bool TryResolveDamage(EnemyHealth target, float damage, Vector2 point, out bool applied)
+    { applied = false; return false; }
+    public bool InterceptProjectile(EnemyHealth target, Vector2 from, Vector2 to, float damage, Vector2 incomingDirection)
+    {
+        return target.gameObject.scene == gameObject.scene && target.TryGetComponent<EnemyOrbitalLabShield>(out var shield) &&
+            shield.BlockProjectile(incomingDirection, to);
+    }
 
     public void Spawn(int count)
     {
@@ -60,11 +192,13 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession
     private void SpawnAt(int type, Vector2 position)
     {
         position = new Vector2(Mathf.Clamp(position.x, -28, 28), Mathf.Clamp(position.y, -28, 28));
-        var prefab = type < 0 ? TestShooterPrefab : EnemyPrefabs[type];
+        var prefab = type switch { -2 => ShieldBearerPrefab, -3 => PursuerPrefab, -4 => BreakableShieldBearerPrefab,
+            -5 => ShieldShooterPrefab, -6 => BreakableShieldShooterPrefab, -1 => TestShooterPrefab, _ => EnemyPrefabs[type] };
         var instance = Instantiate(prefab, position, Quaternion.identity, transform);
         instance.name = prefab.name + " (Lab)";
         var health = instance.GetComponent<EnemyHealth>();
-        if (type < 0) health.SetRuntimeMaxHealth(TestShooterHealth);
+        if (type == -1) health.SetRuntimeMaxHealth(TestShooterHealth);
+        if (instance.TryGetComponent<EnemyOrbitalLabShield>(out var shield)) shield.Bind(Player.transform);
         // Existing debug marker preserves real AI and combat, suppresses loot/progression on death.
         var debug = instance.AddComponent<CombatFeelTestDummy>();
         debug.Initialize(null);
@@ -92,6 +226,12 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession
 
     private void DespawnEnemies()
     {
+        (Station?.Combat as ProductionOrbitalCombatAdapter)?.DebugClearProjectiles();
+        Station?.ClearLabFlashes();
+        nextShootingShake = 0f;
+        CameraShake.Instance?.StopAllShakes();
+        if (Station != null)
+            foreach (var weapon in Station.Modules.OfType<EnemyOrbitalLabWeapon>()) weapon.ResetFiring();
         foreach (var enemy in enemies)
             if (enemy != null) { enemy.gameObject.SetActive(false); Destroy(enemy.gameObject); }
         enemies.Clear();
@@ -131,17 +271,24 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession
         }
         Notice = "Killed enemies (debug reward suppression)";
     }
-    protected override void BeforeBuildReset() => ClearEnemies();
+    protected override void BeforeBuildReset()
+    {
+        weaponProfiles.Clear();
+        SetPaused(false);
+        centerControl?.Dispose(); centerControl = null; prototypeStation = null; centerMarker = null;
+        ClearEnemies();
+    }
     public void ResetLab()
     {
         SetFrozen(false); SetSpeed(1f); SetPlayerInvincible(false); SetEnemiesInvincible(false);
         SelectedEnemy = 0; Pattern = SpawnPattern.AroundPlayer;
         ResetBuild();
     }
-    protected override void ResetSession() => ResetLab();
+    protected override void ResetSession() => RestartScenario();
     protected override void Update()
     {
         base.Update();
+        if (Ready && Input.GetKeyDown(KeyCode.P)) SetPaused(!Paused);
         if (Ready)
         {
             Player.SetIncomingDamageMultiplier(PlayerInvincible ? 0f : 1f);
@@ -157,7 +304,21 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession
         {
             centerControl?.Dispose();
             prototypeStation = Station;
-            centerControl = new OrbitalLabCenterControl(Station, Player.transform);
+            centerControl = new OrbitalLabCenterControl(Station, CameraRig.ControlledCamera, SteeringSpeedMultiplier);
+            ((ProductionOrbitalCombatAdapter)Station.Combat).ConfigureLabProjectileVisual(PistolProjectileVisual);
+            ((ProductionOrbitalCombatAdapter)Station.Combat).LabStraightProjectiles = true;
+            var adapter = (ProductionOrbitalCombatAdapter)Station.Combat;
+            adapter.LabModuleFactory = CreateLabModule;
+            adapter.PrewarmLabProjectiles(Needle.ProjectileVisual, 24);
+            adapter.PrewarmLabProjectiles(Shotgun.ProjectileVisual, 28);
+            adapter.PrewarmLabProjectiles(Spear.ProjectileVisual, 6);
+            adapter.LabBodyImpact = (point, direction, piercing) =>
+            {
+                Vector2 side = new(-direction.y, direction.x);
+                float size = piercing ? .32f : .16f;
+                Station.FlashLink(point - side * size, point + side * size, piercing ? Spear.Color : Color.white, .09f);
+                Station.FlashLink(point, point - direction * size, Color.white, .07f);
+            };
             var marker = new GameObject("ORBITAL center debug marker");
             marker.transform.SetParent(Station.transform, false);
             marker.transform.localScale = Vector3.one * .22f;
@@ -168,15 +329,20 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession
             centerMarker.color = Color.magenta;
             centerMarker.sortingLayerID = core.sortingLayerID;
             centerMarker.sortingOrder = core.sortingOrder + 100;
-            if (TestShooterPrefab != null)
-            {
-                SpawnAt(-1, TestShooterPosition);
-                layout.Add((-1, TestShooterPosition));
-            }
         }
 
         centerControl.Tick(MaximumCenterOffset, CenterMoveSpeed, CenterReturnSpeed);
         centerMarker.enabled = ShowCenterMarker;
+        if (CenterRange != null)
+        {
+            CenterRange.enabled = ShowCenterMarker;
+            for (int i = 0; i < CenterRange.positionCount; i++)
+            {
+                float angle = i * Mathf.PI * 2f / CenterRange.positionCount;
+                CenterRange.SetPosition(i, Player.transform.position +
+                    new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * MaximumCenterOffset);
+            }
+        }
     }
 
     private void ReleaseCenterInput() => centerControl?.ReleaseInput();
@@ -185,11 +351,27 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession
     {
         centerControl?.Dispose();
         if (centerMarker != null) centerMarker.enabled = false;
+        if (CenterRange != null) CenterRange.enabled = false;
+        if (ReferenceEquals(ProductionOrbitalCombatAdapter.LabInterceptor, this)) ProductionOrbitalCombatAdapter.LabInterceptor = null;
+        SetPaused(false);
     }
+    private void OnEnable() => ProductionOrbitalCombatAdapter.LabInterceptor = this;
     protected override void DrawPanel()
     {
         Button("RESET LAB", ResetLab);
-        Text($"Left Shift + WASD: orbit center | offset {centerOffset.magnitude:0.00}/{MaximumCenterOffset:0.0}");
+        Text("WASD: player · hold RMB: station → cursor · Shift: slow time · P: pause");
+        Text($"Release RMB: return to player | offset {centerOffset.magnitude:0.00}/{MaximumCenterOffset:0.0} | walk ×{SteeringSpeedMultiplier:0.0}");
+        Heading("Shield encounters");
+        Row(("MELEE / DURABLE", () => StartScenario(0)), ("MELEE / BREAKABLE", () => StartScenario(3)));
+        Row(("SHOOTER / DURABLE", () => StartScenario(4)), ("SHOOTER / BREAKABLE", () => StartScenario(5)));
+        Button("SHIELD + 3 PURSUERS", () => StartScenario(1));
+        Button("SHIELD + PURSUERS + SHOOTER", () => StartScenario(2));
+        Row(("RESTART SCENARIO", RestartScenario), ("CLEAR", ClearEnemies));
+        Row(("CONTACT: SWORD", () => SelectTestWeapon(true)), ("SHOOTING: PISTOL", () => SelectTestWeapon(false)));
+        Row(("NEEDLE", () => SelectShootingBuild(ShootingBuild.Needle)), ("SHOTGUN", () => SelectShootingBuild(ShootingBuild.Shotgun)));
+        Row(("SPEAR", () => SelectShootingBuild(ShootingBuild.Spear)), ("THREE GUNS", () => SelectShootingBuild(ShootingBuild.Mixed)));
+        Text("Needle: precise bursts | Shotgun: close fan + push | Spear: charge + line pierce");
+        Button(Paused ? "RESUME (P)" : "PAUSE (P)", () => SetPaused(!Paused));
         Text($"Alive {AliveEnemies} | Speed ×{SpeedMultiplier:0.0} | AI {(EnemyDebugAiFreeze.IsFrozen ? "frozen" : "running")}");
         Text($"Player invincible: {PlayerInvincible} | Enemies: {EnemiesInvincible}");
         Text($"Player HP {Player.CurrentHealth:0}/{Player.MaxHealth:0}");

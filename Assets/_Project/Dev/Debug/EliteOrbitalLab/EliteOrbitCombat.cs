@@ -33,7 +33,7 @@ namespace Subject42.DebugLabs.EliteOrbit
                 if (target==node.Health) { if (!node.Destroyed) { target.TakeDamage(damage,point); applied=true; } return true; }
             return false;
         }
-        public bool InterceptProjectile(EnemyHealth target,Vector2 from,Vector2 to,float damage)
+        public bool InterceptProjectile(EnemyHealth target,Vector2 from,Vector2 to,float damage,Vector2 incomingDirection)
         {
             var elite=lab.Elite;
             if (elite==null || elite.Ring==null || target==null || target.gameObject.scene!=lab.gameObject.scene) return false;

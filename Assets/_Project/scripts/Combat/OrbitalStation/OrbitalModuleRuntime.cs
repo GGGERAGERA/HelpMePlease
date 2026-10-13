@@ -133,6 +133,12 @@ namespace Subject42.Combat.OrbitalStation
             Cooldown = normalCooldown;
         }
         protected void TriggerPresentation() => presentation.Trigger();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        protected void ConfigureLabFeedback(Color color) => presentation.ConfigureLabFeedback(color);
+        protected void LabRecoil(float strength) => presentation.LabRecoil(strength);
+        protected void LabCharge(float amount) => presentation.LabCharge(amount);
+        protected void ResetLabFeedback() => presentation.ResetLabFeedback();
+#endif
         public void TriggerUpgradePresentation() => presentation.Trigger();
 
         protected void AimAt(Vector2 worldTarget)
@@ -203,6 +209,7 @@ namespace Subject42.Combat.OrbitalStation
     public sealed class OrbitalLaserSwordModule : OrbitalModuleRuntime
     {
         public const float BaseDamage = 13f;
+        public const float ContactInterval = .32f;
         public override OrbitalModuleKind Kind => OrbitalModuleKind.LaserSword;
         public OrbitalLaserSwordModule(OrbitalStationRuntime station, int stableModuleId) :
             base(station, stableModuleId, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.LaserSword)) { }
@@ -234,7 +241,7 @@ namespace Subject42.Combat.OrbitalStation
                     Visual.transform.position);
                 AudioService.Instance?.PlayAt(AudioCueId.OrbitalSwordHit, Visual.transform.position);
                 TriggerPresentation();
-                Cooldown = 0.32f;
+                Cooldown = ContactInterval;
             }
         }
     }
