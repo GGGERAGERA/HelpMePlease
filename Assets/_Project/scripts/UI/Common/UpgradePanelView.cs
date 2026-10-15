@@ -13,6 +13,7 @@ public class UpgradePanelView : MonoBehaviour
 
     [Header("Cards")]
     [SerializeField] private UpgradeCardView[] cardViews;
+    public IReadOnlyList<UpgradeCardView> CardViews => cardViews;
 
     [Header("Animation")]
     [SerializeField] private UpgradePanelAnimation panelAnimation;
@@ -92,17 +93,7 @@ public class UpgradePanelView : MonoBehaviour
         displayedTitleKey = title;
         displayedSubtitleKey = subtitle;
         RefreshLanguage(LocalizationService.EnsureExists().CurrentLanguage);
-
-        for (int i = 0; i < cardViews.Length; i++)
-        {
-            if (cardViews[i] == null)
-                continue;
-
-            if (upgrades != null && i < upgrades.Count)
-                cardViews[i].Setup(upgrades[i], onUpgradeSelected);
-            else
-                cardViews[i].gameObject.SetActive(false);
-        }
+        SetupUpgradeCards(upgrades, onUpgradeSelected);
 
         RebuildCardsLayout();
         panelAnimation?.PlayShow();
@@ -235,15 +226,15 @@ public class UpgradePanelView : MonoBehaviour
         IReadOnlyList<UpgradeData> upgrades,
         Action<UpgradeData> onUpgradeSelected)
     {
+        int sourceIndex = 0;
         for (int i = 0; i < cardViews.Length; i++)
         {
             if (cardViews[i] == null)
                 continue;
 
-            if (upgrades != null && i < upgrades.Count)
-                cardViews[i].Setup(upgrades[i], onUpgradeSelected);
-            else
-                cardViews[i].gameObject.SetActive(false);
+            while (upgrades != null && sourceIndex < upgrades.Count && upgrades[sourceIndex] == null)
+                sourceIndex++;
+            cardViews[i].Setup(upgrades != null && sourceIndex < upgrades.Count ? upgrades[sourceIndex++] : null, onUpgradeSelected);
         }
     }
 

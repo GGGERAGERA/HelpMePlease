@@ -1,0 +1,67 @@
+PASS: production flow completed within bounded wait
+PASS: production flow completed within bounded wait
+PASS: normal MVP starter: one pistol, one orbit, no lab loadout/UI
+PASS: no lab controller in production
+PASS: production flow completed within bounded wait
+PASS: XP level-up -> real card -> apply/install -> combat
+PASS: eligible real reward card: ShootingDamage
+PASS: Russian category label: ShootingDamage
+PASS: card selection/install finished: ShootingDamage
+PASS: eligible real reward card: ShootingRate
+PASS: Russian category label: ShootingRate
+PASS: card selection/install finished: ShootingRate
+PASS: eligible real reward card: ContactDamage
+PASS: Russian category label: ContactDamage
+PASS: card selection/install finished: ContactDamage
+PASS: eligible real reward card: ContactSize
+PASS: Russian category label: ContactSize
+PASS: card selection/install finished: ContactSize
+PASS: eligible real reward card: Shotgun
+PASS: Russian category label: Shotgun
+PASS: authored red weapon card: Shotgun
+PASS: card selection/install finished: Shotgun
+PASS: eligible real reward card: Sniper
+PASS: Russian category label: Sniper
+PASS: authored red weapon card: Sniper
+PASS: card selection/install finished: Sniper
+PASS: eligible real reward card: Saw
+PASS: Russian category label: Saw
+PASS: authored red weapon card: Saw
+PASS: card selection/install finished: Saw
+PASS: eligible real reward card: Pistol
+PASS: Russian category label: Pistol
+PASS: authored red weapon card: Pistol
+PASS: card selection/install finished: Pistol
+PASS: eligible real reward card: ArcEmitter
+PASS: Russian category label: ArcEmitter
+PASS: authored red weapon card: ArcEmitter
+PASS: card selection/install finished: ArcEmitter
+PASS: eligible real reward card: LinkPair
+PASS: Russian category label: LinkPair
+PASS: authored red weapon card: LinkPair
+PASS: card selection/install finished: LinkPair
+PASS: eligible real reward card: RingSpeed
+PASS: Russian category label: RingSpeed
+PASS: card selection/install finished: RingSpeed
+PASS: eligible real reward card: MaxHealth
+PASS: Russian category label: MaxHealth
+PASS: card selection/install finished: MaxHealth
+PASS: eligible real reward card: MoveSpeed
+PASS: Russian category label: MoveSpeed
+PASS: card selection/install finished: MoveSpeed
+PASS: category effects apply to subsequently acquired shooting/contact weapons
+PASS: front pistol shot blocks, consumes one of four shield points
+PASS: seven shotgun pellets consume one shield point per volley
+PASS: 120 m/s sniper crosses shield and damages body without shield wear
+PASS: four hits destroy physical shield and its visual
+PASS: pooled shield restores geometry, durability and colour
+PASS: steering reset releases temporary state
+PASS: production station restoration
+PASS: restoration preserves modules/category state
+PASS: production flow completed within bounded wait
+System.Exception: ordinary return-to-bunker releases station and time state
+  at ProductionOrbitalTransferSmoke.Check (System.Boolean pass, System.String message) [0x0001f] in D:\fork\HelpMePlease\Assets\_Project\Dev\Editor\OrbitalLab\ProductionOrbitalTransferSmoke.cs:40 
+  at ProductionOrbitalTransferSmoke+<Checks>d__18.MoveNext () [0x008e4] in D:\fork\HelpMePlease\Assets\_Project\Dev\Editor\OrbitalLab\ProductionOrbitalTransferSmoke.cs:222 
+  at ProductionOrbitalTransferSmoke.Poll () [0x00098] in D:\fork\HelpMePlease\Assets\_Project\Dev\Editor\OrbitalLab\ProductionOrbitalTransferSmoke.cs:102 
+FAIL
+Manual physical RMB+WASD/Shift input: not verified; window capture/input timed out.

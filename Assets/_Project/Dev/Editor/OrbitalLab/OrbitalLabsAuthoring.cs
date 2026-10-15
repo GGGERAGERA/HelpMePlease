@@ -21,14 +21,7 @@ public static class OrbitalLabsAuthoring
     [MenuItem("Tools/Subject42/Dev/OrbitalLab/Prepare three lab guns")]
     public static void PrepareLabGuns()
     {
-        if (EditorApplication.isPlayingOrWillChangePlaymode) return;
-        var scene = SceneManager.GetActiveScene();
-        if (scene.path != EnemyOrbitalLabController.ScenePath) scene = EditorSceneManager.OpenScene(EnemyOrbitalLabController.ScenePath);
-        var lab = scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<EnemyOrbitalLabController>(true)).Single();
-        lab.Needle.ProjectileVisual = EnsureLabShot(lab.PistolProjectileVisual, "NeedleProjectile", new Vector3(.95f, .28f, 1f), lab.Needle.Color, .09f);
-        lab.Shotgun.ProjectileVisual = EnsureLabShot(lab.PistolProjectileVisual, "ShotgunPellet", Vector3.one * .45f, lab.Shotgun.Color, .07f);
-        lab.Spear.ProjectileVisual = EnsureLabShot(lab.PistolProjectileVisual, "EnergySpear", new Vector3(2.5f, .7f, 1f), lab.Spear.Color, .14f);
-        EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene); AssetDatabase.SaveAssets();
+        EnemyOrbitalLabAuthoring.Prepare();
     }
 
     private static GameObject EnsureLabShot(GameObject source, string name, Vector3 scale, Color color, float trailTime)
@@ -62,11 +55,11 @@ public static class OrbitalLabsAuthoring
         var scene = EditorSceneManager.OpenScene(EnemyOrbitalLabController.ScenePath);
         var lab = Find<EnemyOrbitalLabController>(scene);
         lab.PistolProjectileVisual = AssetDatabase.LoadAssetAtPath<GameObject>(
-            "Assets/_Project/Dev/Labs/OrbitalLab/LegacyPistolProjectileVisual.prefab");
+            "Assets/_Project/prefabs/Orbital/BlueProjectileVisual.prefab");
         lab.PursuerPrefab = lab.EnemyPrefabs.First(p => p.GetComponent<EnemyChaseMovement>() != null);
         var config = AssetDatabase.LoadAssetAtPath<Subject42.Combat.OrbitalStation.OrbitalPresentationConfig>(
             "Assets/_Project/Data/Orbital/OrbitalPresentationConfig.asset");
-        const string prefabPath = "Assets/_Project/Dev/Labs/OrbitalLab/ShieldBearer.prefab";
+        const string prefabPath = "Assets/_Project/prefabs/Enemies/ShieldBearer.prefab";
         lab.ShieldBearerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
         if (lab.ShieldBearerPrefab == null)
         {
@@ -79,7 +72,7 @@ public static class OrbitalLabsAuthoring
             movement.FindProperty("aggroSpeed").floatValue = .85f;
             movement.FindProperty("flipVisual").boolValue = false;
             movement.ApplyModifiedPropertiesWithoutUndo();
-            var shield = enemy.AddComponent<EnemyOrbitalLabShield>();
+            var shield = enemy.AddComponent<EnemyDirectionalShield>();
             shield.ShieldPivot = new GameObject("Shield facing (player body)").transform;
             shield.ShieldPivot.SetParent(enemy.transform, false);
             shield.ShieldArc = CreateLine(shield.ShieldPivot, "Frontal shield 120 degrees", config.VisualMaterial,
@@ -100,19 +93,19 @@ public static class OrbitalLabsAuthoring
             UnityEngine.Object.DestroyImmediate(enemy);
         }
         UpgradeShieldPrefab(prefabPath, config);
-        const string shooterPath = "Assets/_Project/Dev/Labs/OrbitalLab/ShieldShooter.prefab";
+        const string shooterPath = "Assets/_Project/prefabs/Enemies/ShieldShooter.prefab";
         if (AssetDatabase.LoadAssetAtPath<GameObject>(shooterPath) == null)
         {
             var source = lab.EnemyPrefabs.First(p => p.GetComponent<EnemyShooterMovement>() != null);
             var shooter = (GameObject)PrefabUtility.InstantiatePrefab(source, scene);
             PrefabUtility.UnpackPrefabInstance(shooter, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
             shooter.name = "Lab Shield Shooter"; shooter.transform.position = Vector3.zero;
-            var shield = shooter.AddComponent<EnemyOrbitalLabShield>();
+            var shield = shooter.AddComponent<EnemyDirectionalShield>();
             shield.LocalShieldCenter = new Vector2(0f, .78f);
             shield.ShieldDistance = 1.12f;
             shield.ShieldPivot = new GameObject("Shield facing (player body)").transform;
             shield.ShieldPivot.SetParent(shooter.transform, false);
-            shield.ShieldArc = CreateLine(shield.ShieldPivot, "Frontal shield", config.VisualMaterial, EnemyOrbitalLabShield.Blue, .13f, 25, false);
+            shield.ShieldArc = CreateLine(shield.ShieldPivot, "Frontal shield", config.VisualMaterial, EnemyDirectionalShield.Blue, .13f, 25, false);
             shield.ShieldArc.useWorldSpace = false;
             var sparks = new GameObject("Blocked hit sparks"); sparks.transform.SetParent(shooter.transform, false);
             shield.BlockSparks = sparks.AddComponent<ParticleSystem>();
@@ -126,8 +119,8 @@ public static class OrbitalLabsAuthoring
         }
         UpgradeShieldPrefab(shooterPath, config);
         lab.ShieldShooterPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(shooterPath);
-        lab.BreakableShieldBearerPrefab = EnsureBreakableVariant(prefabPath, "Assets/_Project/Dev/Labs/OrbitalLab/BreakableShieldBearer.prefab", scene);
-        lab.BreakableShieldShooterPrefab = EnsureBreakableVariant(shooterPath, "Assets/_Project/Dev/Labs/OrbitalLab/BreakableShieldShooter.prefab", scene);
+        lab.BreakableShieldBearerPrefab = EnsureBreakableVariant(prefabPath, "Assets/_Project/prefabs/Enemies/BreakableShieldBearer.prefab", scene);
+        lab.BreakableShieldShooterPrefab = EnsureBreakableVariant(shooterPath, "Assets/_Project/prefabs/Enemies/BreakableShieldShooter.prefab", scene);
         if (lab.CenterRange == null)
             lab.CenterRange = CreateLine(lab.transform, "Station center maximum distance", config.VisualMaterial,
                 new Color(.7f, .4f, .9f, .35f), .025f, 64, true);
@@ -142,8 +135,8 @@ public static class OrbitalLabsAuthoring
         if (existing != null) return existing;
         var instance = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(source), scene);
         instance.name = Path.GetFileNameWithoutExtension(path);
-        var shield = instance.GetComponent<EnemyOrbitalLabShield>();
-        shield.Kind = EnemyOrbitalLabShield.ShieldKind.Breakable; shield.MaximumBlockedHits = 4;
+        var shield = instance.GetComponent<EnemyDirectionalShield>();
+        shield.Kind = EnemyDirectionalShield.ShieldKind.Breakable; shield.MaximumBlockedHits = 4;
         shield.ResetForSpawn();
         var prefab = PrefabUtility.SaveAsPrefabAsset(instance, path);
         UnityEngine.Object.DestroyImmediate(instance);
@@ -155,7 +148,7 @@ public static class OrbitalLabsAuthoring
         var root = PrefabUtility.LoadPrefabContents(path);
         try
         {
-            var shield = root.GetComponent<EnemyOrbitalLabShield>();
+            var shield = root.GetComponent<EnemyDirectionalShield>();
             var movement = new SerializedObject(root.GetComponent<EnemyMovement>());
             var visual = (Transform)movement.FindProperty("visualRoot").objectReferenceValue;
             shield.BodySorting = visual.GetComponentInChildren<UnityEngine.Rendering.SortingGroup>(true);

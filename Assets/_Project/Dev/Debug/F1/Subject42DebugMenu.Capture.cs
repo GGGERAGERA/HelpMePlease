@@ -122,8 +122,8 @@ public sealed partial class Subject42DebugMenu
             string label = kind switch
             {
                 OrbitalModuleKind.Pistol => "Пистолет",
-                OrbitalModuleKind.LaserSword => "Лазерный меч",
-                OrbitalModuleKind.ImpulseGun => "Импульсная пушка",
+                OrbitalModuleKind.Saw => "Пила",
+                OrbitalModuleKind.Shotgun => "Дробовик",
                 OrbitalModuleKind.ArcEmitter => "Дуговой излучатель",
                 _ => "Связующие узлы (пара)"
             };

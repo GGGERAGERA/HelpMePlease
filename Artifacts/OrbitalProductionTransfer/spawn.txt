@@ -1,0 +1,14 @@
+PASS: production flow completed within bounded wait
+PASS: production flow completed within bounded wait
+PASS: production composition permits shield melee at level 1 and gates shield shooter until level 2
+PASS: production composition enables shield shooter at level 2
+PASS: production initialization of BreakableShieldBearer
+PASS: production initialization of BreakableShieldBearer
+PASS: production initialization of BreakableShieldShooter
+PASS: existing per-type alive limits exclude additional shield enemies
+PASS: active sniper uses the shared large-blue projectile with a 0.02-second trail
+PASS: same pooled projectile restores authored pistol trail after sniper use
+PASS: production flow completed within bounded wait
+PASS: spawn verification exits through the normal run-end cleanup
+PASS: bounded production Play Mode smoke, no runtime errors
+Manual physical RMB+WASD/Shift input: not verified; window capture/input timed out.

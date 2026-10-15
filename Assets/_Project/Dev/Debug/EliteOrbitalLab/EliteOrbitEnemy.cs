@@ -102,7 +102,7 @@ namespace Subject42.DebugLabs.EliteOrbit
         }
         private void CreateBlade(OrbitalMountRuntime mount)
         {
-            var visual=Instantiate(OrbitalPresentationConfig.Active.LaserSwordPrefab,mount.Transform,false);
+            var visual=Instantiate(OrbitalPresentationConfig.Active.SawPrefab,mount.Transform,false);
             visual.name="Hostile contact blade"; visual.transform.localScale*=.9f;
             var view=visual.GetComponent<OrbitalModuleView>();
             view.Halo.enabled=false;
@@ -163,7 +163,7 @@ namespace Subject42.DebugLabs.EliteOrbit
             {
                 var mount=blade.transform.parent;
                 float angle=Mathf.Atan2(mount.localPosition.y,mount.localPosition.x)*Mathf.Rad2Deg;
-                blade.transform.rotation=Quaternion.Euler(0,0,angle+90+OrbitalPresentationConfig.Active.LaserSwordTangentOffset);
+                blade.transform.rotation=Quaternion.Euler(0,0,angle+90+OrbitalPresentationConfig.Active.SawTangentOffset);
             }
         }
         public bool BladeTouches(PlayerHealth player,float phase,Vector2 center)
@@ -178,7 +178,7 @@ namespace Subject42.DebugLabs.EliteOrbit
                 float angle=phase+Ring.Mounts[slot].LocalPhase;
                 Vector3 oldPosition=blade.transform.position; Quaternion oldRotation=blade.transform.rotation;
                 blade.transform.position=center+(Vector2)Ring.Geometry.PositionDegrees(angle,Preset.Radius);
-                blade.transform.rotation=Quaternion.Euler(0,0,angle+90+OrbitalPresentationConfig.Active.LaserSwordTangentOffset);
+                blade.transform.rotation=Quaternion.Euler(0,0,angle+90+OrbitalPresentationConfig.Active.SawTangentOffset);
                 bool touched=false;
                 foreach (var sprite in blade.Sprites) if (sprite!=blade.Halo && OrbitalBodyContactDetector.IntersectsCircle(sprite,playerCenter,radius)) touched=true;
                 blade.transform.SetPositionAndRotation(oldPosition,oldRotation);

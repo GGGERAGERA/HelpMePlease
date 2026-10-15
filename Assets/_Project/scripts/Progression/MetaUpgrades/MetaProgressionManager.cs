@@ -458,8 +458,9 @@ public sealed class MetaProgressionManager : MonoBehaviour
         OrbitalModuleKind[] moduleKinds =
         {
             OrbitalModuleKind.Pistol,
-            OrbitalModuleKind.LaserSword,
-            OrbitalModuleKind.ImpulseGun
+            OrbitalModuleKind.Saw,
+            OrbitalModuleKind.Shotgun,
+            OrbitalModuleKind.Sniper
         };
         for (int i = 0; i < moduleKinds.Length; i++)
         {
@@ -486,8 +487,8 @@ public sealed class MetaProgressionManager : MonoBehaviour
 
     private static bool IsMetaOrbitalModule(OrbitalModuleKind kind) =>
         kind == OrbitalModuleKind.Pistol ||
-        kind == OrbitalModuleKind.LaserSword ||
-        kind == OrbitalModuleKind.ImpulseGun;
+        kind == OrbitalModuleKind.Saw ||
+        kind == OrbitalModuleKind.Shotgun || kind == OrbitalModuleKind.Sniper;
 
     private static string GetOrbitalModuleLevelKey(
         OrbitalModuleKind kind) => OrbitalModuleLevelKeyPrefix + kind;

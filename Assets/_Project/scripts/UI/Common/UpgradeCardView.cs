@@ -33,7 +33,7 @@ public class UpgradeCardView : MonoBehaviour
     private void RefreshLanguage(GameLanguage language)
     {
         if (currentUpgrade is OrbitalRewardData orbital)
-            orbital.PresentationOwner.RefreshPresentation(RunStateManager.Instance?.OrbitalStationState);
+            orbital.PresentationOwner?.RefreshPresentation(RunStateManager.Instance?.OrbitalStationState);
         if (currentUpgrade != null) Setup(currentUpgrade, onClicked);
     }
     private UpgradeData currentUpgrade;
@@ -76,6 +76,10 @@ public class UpgradeCardView : MonoBehaviour
 
     public void Setup(UpgradeData upgrade, Action<UpgradeData> clickCallback)
     {
+        // A card can be reused after an interrupted world-reward reveal.
+        var group = GetComponent<CanvasGroup>();
+        if (group != null) { group.alpha = 1f; group.interactable = true; group.blocksRaycasts = true; }
+        if (button != null) button.interactable = upgrade != null;
         RestoreChoiceVisuals();
         currentUpgrade = upgrade;
         onClicked = clickCallback;
@@ -88,6 +92,9 @@ public class UpgradeCardView : MonoBehaviour
 
         if (upgrade == null)
         {
+            SetText(titleText, string.Empty);
+            SetText(descriptionText, string.Empty);
+            SetIcon(null, Color.white);
             gameObject.SetActive(false);
             return;
         }
@@ -97,6 +104,7 @@ public class UpgradeCardView : MonoBehaviour
         SetText(titleText, LocalizationService.EnsureExists().Get(upgrade.upgradeName));
         SetText(
             descriptionText,
+            (upgrade is OrbitalRewardData categoryReward ? OrbitalCategories.Label(categoryReward.EffectCategory) + "\n\n" : "") +
             ProductionUpgradePresentation.GetCardDescription(upgrade));
 
         SetCategory(upgrade.category);
@@ -104,8 +112,6 @@ public class UpgradeCardView : MonoBehaviour
         {
             OrbitalRewardIconResolver.Icon icon = OrbitalRewardIconResolver.Resolve(orbitalReward);
             SetIcon(icon.Sprite, icon.ImageTint);
-            if (OrbitalRewardProvider.GetModuleKind(orbitalReward.RewardKind).HasValue)
-                SetText(titleText, $"<color=#{ColorUtility.ToHtmlStringRGB(icon.Tint)}>{LocalizationService.EnsureExists().Get(orbitalReward.upgradeName)}</color>");
             if (iconImage != null)
             {
                 iconImage.type = Image.Type.Simple;
@@ -216,6 +222,10 @@ public class UpgradeCardView : MonoBehaviour
     private void SetText(TextMeshProUGUI text, string value)
     {
         if (text != null)
-            text.text = value;
+        {
+            text.enabled = true;
+            text.alpha = 1f;
+            text.text = value ?? string.Empty;
+        }
     }
 }

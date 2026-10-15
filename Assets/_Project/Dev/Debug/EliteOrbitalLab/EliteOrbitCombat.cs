@@ -20,7 +20,7 @@ namespace Subject42.DebugLabs.EliteOrbit
         private struct Pose { public Vector2 Center; public float Phase; public Vector3 Position; public Quaternion Rotation; }
         public EliteOrbitCombat(EliteOrbitalLab owner) { lab=owner; }
         public void Reset() { previous.Clear(); nextHit.Clear(); hasElitePose=false; }
-        public bool HandlesContact(OrbitalModuleRuntime module) => module.Kind==OrbitalModuleKind.LaserSword &&
+        public bool HandlesContact(OrbitalModuleRuntime module) => module.Kind==OrbitalModuleKind.Saw &&
             module.CurrentMount!=null && module.CurrentMount.Transform.gameObject.scene==lab.gameObject.scene;
         public bool TryResolveDamage(EnemyHealth target,float damage,Vector2 point,out bool applied)
         {
@@ -125,7 +125,7 @@ namespace Subject42.DebugLabs.EliteOrbit
                 foreach (var enemy in touched)
                 {
                     if (enemy==null || enemy.IsDead || (elite!=null && enemy==elite.Health && shieldBlocked) || !CanHit(module,enemy)) continue;
-                    lab.Station.Combat.ApplyDamage(enemy,OrbitalLaserSwordModule.BaseDamage*mount.Ring.PowerMultiplier,now.Position);
+                    lab.Station.Combat.ApplyDamage(enemy,OrbitalSawModule.BaseDamage*mount.Ring.PowerMultiplier,now.Position);
                     nextHit[(module,enemy)]=Time.time+.32f;
                     module.TriggerUpgradePresentation();
                 }

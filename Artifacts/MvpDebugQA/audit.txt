@@ -1,0 +1,74 @@
+Russian TEXT_OK Pistol: ПИСТОЛЕТ / ОРУЖИЕ | Автоматический дальний выстрел. | Нужна 1 свободная точка.
+ICON_OK Pistol
+Russian TEXT_OK ArcEmitter: ЛАЗЕР / ОРУЖИЕ | Разряд между врагами. | Нужна 1 свободная точка.
+ICON_OK ArcEmitter
+Russian TEXT_OK LinkPair: СВЯЗЫВАЮЩИЕСЯ ШАРИКИ / ОРУЖИЕ | Установите два узла: между ними повреждающая связь. | Нужны 2 свободные точки.
+ICON_OK LinkPair
+Russian TEXT_OK RingSpeed: СКОРОСТЬ КОЛЬЦА / Скорость вращения одной выбранной орбиты ×1,25. | Пример — Кольцо 1: ×1,00 → ×1,25
+ICON_OK RingSpeed
+Russian TEXT_OK RingPower: УРОН КОЛЬЦА / Урон оружия одной выбранной орбиты ×1,25. | Пример — Кольцо 1: ×1,00 → ×1,25
+ICON_OK RingPower
+Russian TEXT_OK AddMount: ТОЧКА УСТАНОВКИ / КОЛЬЦО | +1 построенная точка. | Кольцо 1: 1/3 → 2/3
+ICON_OK AddMount
+Russian TEXT_OK CoreUpgrade: ЯДРО I / 1 волна по орбитам каждые 7,5 с. Активирует готовое оружие по его обычным правилам.
+ICON_OK CoreUpgrade
+Russian TEXT_OK MaxHealth: МАКС. ЗДОРОВЬЕ / СУБЪЕКТ | +20 здоровья | До 3 уровней.
+ICON_OK MaxHealth
+Russian TEXT_OK MoveSpeed: СКОРОСТЬ ПЕРЕДВИЖЕНИЯ / СУБЪЕКТ | +10% базовой скорости | До 3 уровней.
+ICON_OK MoveSpeed
+Russian TEXT_OK NewRing: НОВАЯ ОРБИТА / +1 кольцо | 1 точка / ёмкость 3.
+ICON_OK NewRing
+Russian TEXT_OK RingCapacity: ЁМКОСТЬ КОЛЬЦА / КОЛЬЦО | Предел точек +1 (до 6). | Выберите кольцо.
+ICON_OK RingCapacity
+Russian TEXT_OK Sniper: Снайперка / Снаряд 120 м/с пробивает щит без расхода его прочности. Нужна 1 свободная точка.
+ICON_OK Sniper
+Russian TEXT_OK Shotgun: Дробовик / 7 дробин со скоростью 10 м/с. Щит теряет не более 1 прочности за залп. Нужна 1 свободная точка.
+ICON_OK Shotgun
+Russian TEXT_OK Saw: Пила / Вращающийся диск: урон при реальном контакте, повтор через 0,32 с. Нужна 1 свободная точка.
+ICON_OK Saw
+Russian TEXT_OK ShootingDamage: Стрелковый урон / Урон всех стрелковых оружий ×1,20, включая полученные позднее.
+ICON_OK ShootingDamage
+Russian TEXT_OK ShootingRate: Частота стрельбы / Частота всех стрелковых оружий ×1,15, включая полученные позднее.
+ICON_OK ShootingRate
+Russian TEXT_OK ContactDamage: Контактный урон / Урон пил и связей шариков ×1,20, включая полученные позднее.
+ICON_OK ContactDamage
+Russian TEXT_OK ContactSize: Размер контакта / Диаметр пил и ширина повреждающих связей ×1,15, включая будущие. Радиусы орбит прежние.
+ICON_OK ContactSize
+English TEXT_OK Pistol: PISTOL / WEAPON | Automatic ranged fire. | Requires 1 free mount.
+ICON_OK Pistol
+English TEXT_OK ArcEmitter: LASER / WEAPON | Arc between enemies. | Requires 1 free mount.
+ICON_OK ArcEmitter
+English TEXT_OK LinkPair: LINK NODES / WEAPON | Two nodes create a damaging link. | Requires 2 free mounts.
+ICON_OK LinkPair
+English TEXT_OK RingSpeed: RING SPEED / Rotation speed of one selected ring ×1.25. | Example — Ring 1: ×1,00 → ×1,25
+ICON_OK RingSpeed
+English TEXT_OK RingPower: RING DAMAGE / Weapon damage on one selected ring ×1.25. | Example — Ring 1: ×1,00 → ×1,25
+ICON_OK RingPower
+English TEXT_OK AddMount: INSTALLATION MOUNT / RING | +1 built mount. | Ring 1: 1/3 → 2/3
+ICON_OK AddMount
+English TEXT_OK CoreUpgrade: CORE I / Every 7.5 s: 1 wave activates weapons ring by ring, respecting readiness and normal weapon rules.
+ICON_OK CoreUpgrade
+English TEXT_OK MaxHealth: MAX HEALTH / SUBJECT | +20 health | Up to 3 levels.
+ICON_OK MaxHealth
+English TEXT_OK MoveSpeed: MOVEMENT SPEED / SUBJECT | +10% base speed | Up to 3 levels.
+ICON_OK MoveSpeed
+English TEXT_OK NewRing: NEW ORBIT / +1 ring | 1 mount / capacity 3.
+ICON_OK NewRing
+English TEXT_OK RingCapacity: RING CAPACITY / RING | Mount capacity +1 (up to 6). | Select a ring.
+ICON_OK RingCapacity
+English TEXT_OK Sniper: Sniper / A 120 m/s projectile bypasses shields without consuming durability. Requires 1 free mount.
+ICON_OK Sniper
+English TEXT_OK Shotgun: Shotgun / 7 pellets at 10 m/s. A shield loses at most 1 durability per volley. Requires 1 free mount.
+ICON_OK Shotgun
+English TEXT_OK Saw: Saw / Rotating disc deals damage on contact, once per 0.32 s. Requires 1 free mount.
+ICON_OK Saw
+English TEXT_OK ShootingDamage: Shooting damage / All shooting weapons deal ×1.20 damage, including weapons acquired later.
+ICON_OK ShootingDamage
+English TEXT_OK ShootingRate: Fire rate / All shooting weapons fire ×1.15 faster, including weapons acquired later.
+ICON_OK ShootingRate
+English TEXT_OK ContactDamage: Contact damage / Saws and node links deal ×1.20 damage, including weapons acquired later.
+ICON_OK ContactDamage
+English TEXT_OK ContactSize: Contact size / Saw diameter and damaging link width ×1.15, including future weapons. Ring radii stay unchanged.
+ICON_OK ContactSize
+EDIT_PASS: actual prefab resets hidden text/CanvasGroup, clears null content, compacts two cards and completes interrupted reveal
+EDIT_PASS: runtime orbit/mount/speed/power/core caps; exhausted source pool returns two real choices without placeholders

@@ -293,7 +293,7 @@ public sealed partial class BotRunSession
     {
         OrbitalRewardKind.MaxHealth when health.CurrentHealth < health.MaxHealth * .7f => 120,
         OrbitalRewardKind.NewRing => 100, OrbitalRewardKind.Pistol => 95,
-        OrbitalRewardKind.ArcEmitter => 92, OrbitalRewardKind.ImpulseGun => 90, OrbitalRewardKind.LaserSword => 85,
+        OrbitalRewardKind.ArcEmitter => 92, OrbitalRewardKind.Shotgun => 90, OrbitalRewardKind.Saw => 85,
         OrbitalRewardKind.AddMount => 80, OrbitalRewardKind.RingPower => 70, OrbitalRewardKind.ModuleDamage => 65,
         OrbitalRewardKind.CoreUpgrade => 60, OrbitalRewardKind.MaxHealth => 55, _ => 10
     } : 0;

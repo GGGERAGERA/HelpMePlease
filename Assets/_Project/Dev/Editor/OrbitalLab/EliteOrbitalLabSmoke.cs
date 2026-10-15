@@ -102,7 +102,7 @@ public static class EliteOrbitalLabSmoke
         PlayerAt(lab,new Vector2(-1.45f,0)); lab.CombatPolicy.Reset(); lab.CombatPolicy.TickContacts(.02f);
         Require(lab.Elite.Health.CurrentHealth<hp,"contact weapon damages exposed body from inside defensive radius");
         lab.SetWeapon(1); yield return .2f;
-        Require(lab.Station.Modules.All(m=>m.Kind==OrbitalModuleKind.LaserSword) && Mathf.Abs(lab.Station.Rings[0].Radius-3.25f)<.01f,"far-contact load uses existing swords");
+        Require(lab.Station.Modules.All(m=>m.Kind==OrbitalModuleKind.Saw) && Mathf.Abs(lab.Station.Rings[0].Radius-3.25f)<.01f,"far-contact load uses existing swords");
         lab.SetWeapon(2); yield return .2f;
         Require(lab.Station.Modules.All(m=>m.Kind==OrbitalModuleKind.Pistol),"shooting load uses existing pistols");
         lab.Spawn(1); yield return .2f; Fixture(lab);

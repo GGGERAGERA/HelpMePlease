@@ -2,7 +2,7 @@ using Subject42.Combat.OrbitalStation;
 using UnityEngine;
 
 // Values 1..6 are persisted; keep them stable.
-public enum OrbitalSlotSymbol { None, Gun, Sword, Impulse, Arc, Link, Ring, Gold, Skull }
+public enum OrbitalSlotSymbol { None = 0, Gun = 1, Arc = 4, Link = 5, Ring = 6, Gold = 7, Skull = 8, Saw = 9, Shotgun = 10, Sniper = 11 }
 
 public static class OrbitalSlotMachine
 {
@@ -10,7 +10,15 @@ public static class OrbitalSlotMachine
     private const string PendingKey = "ORBITAL_SLOT_PENDING";
     private static bool resolving;
 
-    public static OrbitalSlotSymbol Pending => (OrbitalSlotSymbol)PlayerPrefs.GetInt(PendingKey, 0);
+    public static OrbitalSlotSymbol Pending
+    {
+        get
+        {
+            int id = PlayerPrefs.GetInt(PendingKey, 0);
+            if (id == 2 || id == 3 || !System.Enum.IsDefined(typeof(OrbitalSlotSymbol), id)) { ClearPending(); return OrbitalSlotSymbol.None; }
+            return (OrbitalSlotSymbol)id;
+        }
+    }
     public static bool CanSpin(CurrencyManager currency) => !resolving &&
         Pending == OrbitalSlotSymbol.None && currency != null && currency.TotalGold >= Stake;
 
@@ -36,7 +44,7 @@ public static class OrbitalSlotMachine
             var a = reels[0]; var b = reels[1]; var c = reels[2];
             if (a == b && b == c)
             {
-                if (a >= OrbitalSlotSymbol.Gun && a <= OrbitalSlotSymbol.Ring)
+                if (a is OrbitalSlotSymbol.Gun or OrbitalSlotSymbol.Arc or OrbitalSlotSymbol.Link or OrbitalSlotSymbol.Ring or OrbitalSlotSymbol.Saw or OrbitalSlotSymbol.Shotgun or OrbitalSlotSymbol.Sniper)
                 {
                     PlayerPrefs.SetInt(PendingKey, (int)a);
                     PlayerPrefs.Save();
@@ -49,7 +57,14 @@ public static class OrbitalSlotMachine
         finally { resolving = false; }
     }
 
-    public static OrbitalSlotSymbol Roll() => (OrbitalSlotSymbol)Random.Range(1, 9);
+    private static readonly OrbitalSlotSymbol[] symbols = { OrbitalSlotSymbol.Gun, OrbitalSlotSymbol.Arc, OrbitalSlotSymbol.Link, OrbitalSlotSymbol.Ring, OrbitalSlotSymbol.Gold, OrbitalSlotSymbol.Skull, OrbitalSlotSymbol.Saw, OrbitalSlotSymbol.Shotgun, OrbitalSlotSymbol.Sniper };
+    public static OrbitalSlotSymbol Roll() => symbols[Random.Range(0, symbols.Length)];
+    public static System.Collections.Generic.IReadOnlyList<OrbitalSlotSymbol> Symbols => symbols;
+    public static OrbitalSlotSymbol Neighbour(OrbitalSlotSymbol symbol, int offset)
+    {
+        int index = System.Array.IndexOf(symbols, symbol);
+        return symbols[(Mathf.Max(0, index) + offset % symbols.Length + symbols.Length) % symbols.Length];
+    }
 
     public static void ClearPending()
     {
@@ -61,8 +76,9 @@ public static class OrbitalSlotMachine
     public static OrbitalModuleKind ModuleKind(OrbitalSlotSymbol symbol) => symbol switch
     {
         OrbitalSlotSymbol.Gun => OrbitalModuleKind.Pistol,
-        OrbitalSlotSymbol.Sword => OrbitalModuleKind.LaserSword,
-        OrbitalSlotSymbol.Impulse => OrbitalModuleKind.ImpulseGun,
+        OrbitalSlotSymbol.Saw => OrbitalModuleKind.Saw,
+        OrbitalSlotSymbol.Shotgun => OrbitalModuleKind.Shotgun,
+        OrbitalSlotSymbol.Sniper => OrbitalModuleKind.Sniper,
         OrbitalSlotSymbol.Arc => OrbitalModuleKind.ArcEmitter,
         OrbitalSlotSymbol.Link => OrbitalModuleKind.LinkNode,
         _ => throw new System.ArgumentOutOfRangeException(nameof(symbol))
@@ -70,12 +86,13 @@ public static class OrbitalSlotMachine
 
     public static string Label(OrbitalSlotSymbol symbol) => symbol switch
     {
-        OrbitalSlotSymbol.Sword => LocalizationService.Instance.Get("bunker.slot_sword"),
+        OrbitalSlotSymbol.Saw => "Пила",
         OrbitalSlotSymbol.Link => LocalizationService.Instance.Get("bunker.slot_link"),
         OrbitalSlotSymbol.Ring => LocalizationService.Instance.Get("bunker.slot_new_ring"),
         OrbitalSlotSymbol.None => LocalizationService.Instance.Get("bunker.slot_symbol.None"),
         OrbitalSlotSymbol.Gun => LocalizationService.Instance.Get("bunker.slot_symbol.Gun"),
-        OrbitalSlotSymbol.Impulse => LocalizationService.Instance.Get("bunker.slot_symbol.Impulse"),
+        OrbitalSlotSymbol.Shotgun => "Дробовик",
+        OrbitalSlotSymbol.Sniper => "Снайперка",
         OrbitalSlotSymbol.Arc => LocalizationService.Instance.Get("bunker.slot_symbol.Arc"),
         OrbitalSlotSymbol.Gold => LocalizationService.Instance.Get("bunker.slot_symbol.Gold"),
         OrbitalSlotSymbol.Skull => LocalizationService.Instance.Get("bunker.slot_symbol.Skull"),

@@ -76,6 +76,7 @@ public class UpgradeData : ScriptableObject
 
     [Header("Rules")]
     public UpgradeCategory category;
+    public Subject42.Combat.OrbitalStation.OrbitalUpgradeCategory EffectCategory;
     public int minPlayerLevel = 1;
 
     [Tooltip("Capabilities required from the currently equipped weapon.")]

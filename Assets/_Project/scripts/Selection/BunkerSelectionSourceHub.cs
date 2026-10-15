@@ -294,12 +294,13 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
         AddOrbitalModuleCard(model, OrbitalModuleKind.Pistol, LocalizationService.Instance.Get("bunker.module_name.pistol"),
             LocalizationService.Instance.Get("bunker.module_auto"),
             LocalizationService.Instance.Get("bunker.module_auto_desc"), progression);
-        AddOrbitalModuleCard(model, OrbitalModuleKind.LaserSword, LocalizationService.Instance.Get("bunker.module_name.laser_sword"),
+        AddOrbitalModuleCard(model, OrbitalModuleKind.Saw, "Пила",
             LocalizationService.Instance.Get("bunker.module_contact"),
             LocalizationService.Instance.Get("bunker.module_contact_desc"), progression);
-        AddOrbitalModuleCard(model, OrbitalModuleKind.ImpulseGun, LocalizationService.Instance.Get("bunker.module_name.impulse_gun"),
-            LocalizationService.Instance.Get("bunker.module_impulse"),
-            LocalizationService.Instance.Get("bunker.module_impulse_desc"), progression);
+        AddOrbitalModuleCard(model, OrbitalModuleKind.Shotgun, "Дробовик",
+            "Дробовик",
+            "7 дробин, скорость 10 м/с.", progression);
+        AddOrbitalModuleCard(model, OrbitalModuleKind.Sniper, "Снайперка", "Снайперка", "Выстрел 120 м/с, обходит щиты.", progression);
         model.SelectedId = model.Entries.Count > 0
             ? model.Entries[0].Id : null;
         FinalizeUnlockPresentation(model);
@@ -416,13 +417,17 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
                 entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.range"), "8"));
                 entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.interval"), LocalizationService.Instance.Get("bunker.interval_auto")));
                 break;
-            case OrbitalModuleKind.LaserSword:
-                entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.radius"), "0.75"));
+            case OrbitalModuleKind.Saw:
+                entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.radius"), "0.65"));
                 entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.interval"), LocalizationService.Instance.Get("bunker.interval_contact")));
                 break;
-            case OrbitalModuleKind.ImpulseGun:
-                entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.range"), "5"));
-                entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.interval"), LocalizationService.Instance.Get("bunker.interval_impulse")));
+            case OrbitalModuleKind.Shotgun:
+                entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.range"), "4.5"));
+                entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.interval"), "1.05 С"));
+                break;
+            case OrbitalModuleKind.Sniper:
+                entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.range"), "12"));
+                entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.interval"), "1.8 С"));
                 break;
         }
     }

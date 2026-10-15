@@ -32,6 +32,7 @@ namespace Subject42.Combat.OrbitalStation
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public bool DebugSuppressPlayerInput { get; set; }
         public System.Func<bool> DevelopmentInputBlocker { get; set; }
+        public void DebugConsumeExternalUiEscape() => escapeFrame = consumedFrame = Time.frameCount;
         public event System.Action ExternalTimeControlStarting;
 #endif
         private bool Alive => station != null && station.IsInitialized && station.Owner != null && !station.Owner.IsDead;

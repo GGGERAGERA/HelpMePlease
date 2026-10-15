@@ -377,6 +377,8 @@ namespace Subject42.Combat.OrbitalStation
             }
             bool applied = reward.RewardKind switch
             {
+                OrbitalRewardKind.ShootingDamage or OrbitalRewardKind.ShootingRate or
+                OrbitalRewardKind.ContactDamage or OrbitalRewardKind.ContactSize => station.State.TryUpgradeCategory(reward.RewardKind),
                 OrbitalRewardKind.NewRing => station.AddRing() != null,
                 OrbitalRewardKind.CoreUpgrade => ApplyCore(),
                 OrbitalRewardKind.LinkMatrix => station.UpgradeLinkMatrix(),
@@ -509,9 +511,7 @@ namespace Subject42.Combat.OrbitalStation
                 Vector2 radial = (Vector2)hoveredMount.Transform.position -
                     (Vector2)station.transform.position;
                 float rotation = Mathf.Atan2(radial.y, radial.x);
-                if (reward.RewardKind == OrbitalRewardKind.LaserSword)
-                    rotation = hoveredMount.Ring.Geometry.TangentRotation(hoveredMount.Ring.Phase + hoveredMount.LocalPhase)
-                        + OrbitalPresentationConfig.Active.LaserSwordTangentOffset * Mathf.Deg2Rad;
+
                 modulePreview.SetWorldRotation(rotation);
             }
             modulePreview.SetPreviewState(valid);

@@ -70,25 +70,32 @@ namespace Subject42.Combat.OrbitalStation
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public static IOrbitalCombatLabInterceptor LabInterceptor { get; set; }
-        public bool LabStraightProjectiles { get; set; }
         public Func<OrbitalStationRuntime, OrbitalModuleState, OrbitalModuleRuntime> LabModuleFactory;
-        public sealed class LabVolley
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetLabInterceptor() => LabInterceptor = null;
+#endif
+        public bool LabStraightProjectiles { get; set; } = true;
+        public sealed class ProjectileVolley
         {
             public readonly long Id;
             internal readonly HashSet<EnemyHealth> Shields = new();
             internal readonly HashSet<EnemyHealth> Pushed = new();
-            public LabVolley(long id) => Id = id;
+            public ProjectileVolley(long id) => Id = id;
         }
-        public void SpawnLabProjectile(Vector2 origin, EnemyHealth target, Vector2 direction,
-            EnemyOrbitalLabWeaponSettings settings, LabVolley volley, float damage)
+        public void SpawnWeaponProjectile(Vector2 origin, EnemyHealth target, Vector2 direction,
+            OrbitalWeaponSettings settings, ProjectileVolley volley, float damage)
         {
             Projectile shot = SpawnProjectileCore(origin, target, settings.ProjectileSpeed, damage,
                 settings.ProjectileVisual);
             if (shot == null) return;
             shot.Straight = true; shot.Target = null; shot.Position = origin; shot.Direction = direction.normalized;
-            shot.RemainingRange = settings.Range; shot.Radius = settings.ProjectileRadius;
+            shot.RemainingRange = settings.Range; shot.Radius = settings.ProjectileRadius * settings.ProjectileVisualScale;
             shot.BodiesRemaining = Mathf.Max(1, settings.BodyPierces); shot.Volley = volley;
             shot.Knockback = settings.Knockback;
+            shot.BypassShields = settings.BypassShields;
+            shot.GameObject.transform.localScale = shot.AuthoredScale * settings.ProjectileVisualScale;
+            if (settings.ProjectileTrailSeconds >= 0f)
+                foreach (var trail in shot.Trails) trail.time = settings.ProjectileTrailSeconds;
             shot.GameObject.transform.right = shot.Direction;
         }
         // Pistol targeting reaches 8 m; the legacy 0.2 m body visual is scaled by 1.4 in this lab.
@@ -96,12 +103,21 @@ namespace Subject42.Combat.OrbitalStation
         private const float LabProjectileRadius = .14f;
         private readonly List<RaycastHit2D> projectileHits = new();
         private ContactFilter2D projectileFilter = new() { useTriggers = true };
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetLabInterceptor() => LabInterceptor = null;
         public void DebugClearProjectiles() { foreach (var projectile in projectiles) if (projectile.Active) Release(projectile); }
+        public int LabActiveProjectileCount
+        {
+            get { int count = 0; foreach (var projectile in projectiles) if (projectile.Active) count++; return count; }
+        }
+        public int LabPooledProjectileCount => projectiles.Count;
         public Action<Vector2, Vector2, bool> LabBodyImpact;
         public void PrewarmLabProjectiles(GameObject prefab, int count)
-        { for (int i = 0; i < count; i++) CreateProjectile(prefab); }
+        {
+            if (prefab == null) return;
+            int existing = 0;
+            foreach (var projectile in projectiles) if (projectile.SourcePrefab == prefab) existing++;
+            // Shotgun and sniper share the blue preset; prewarming must not duplicate that pool.
+            for (int i = existing; i < count; i++) CreateProjectile(prefab);
+        }
         public void ConfigureLabProjectileVisual(GameObject visualPrefab)
         {
             if (visualPrefab == null) throw new ArgumentNullException(nameof(visualPrefab));
@@ -111,7 +127,6 @@ namespace Subject42.Combat.OrbitalStation
             projectilePrefab = visualPrefab;
             for (int i = 0; i < OrbitalPresentationConfig.Active.ProjectilePrewarmCount; i++) CreateProjectile();
         }
-#endif
         private sealed class Projectile
         {
             public GameObject GameObject;
@@ -119,18 +134,19 @@ namespace Subject42.Combat.OrbitalStation
             public float Speed;
             public float Damage;
             public bool Active;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
             public ParticleSystem[] Particles;
             public TrailRenderer[] Trails;
+            public float[] AuthoredTrailTimes;
             public bool Straight;
+            public bool BypassShields;
+            public Vector3 AuthoredScale;
             public Vector2 Position, Direction;
             public float RemainingRange;
             public float Radius, Knockback;
             public int BodiesRemaining;
-            public LabVolley Volley;
+            public ProjectileVolley Volley;
             public readonly HashSet<EnemyHealth> HitBodies = new();
             public GameObject SourcePrefab;
-#endif
         }
 
         private readonly Transform root;
@@ -160,11 +176,12 @@ namespace Subject42.Combat.OrbitalStation
             foreach (var collider in gameObject.GetComponentsInChildren<Collider2D>(true))
                 collider.enabled = false;
             var projectile = new Projectile { GameObject = gameObject };
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
             projectile.Particles = gameObject.GetComponentsInChildren<ParticleSystem>(true);
             projectile.Trails = gameObject.GetComponentsInChildren<TrailRenderer>(true);
+            projectile.AuthoredTrailTimes = new float[projectile.Trails.Length];
+            for (int i = 0; i < projectile.Trails.Length; i++) projectile.AuthoredTrailTimes[i] = projectile.Trails[i].time;
             projectile.SourcePrefab = source != null ? source : projectilePrefab;
-#endif
+            projectile.AuthoredScale = gameObject.transform.localScale;
             gameObject.SetActive(false);
             projectiles.Add(projectile);
             return projectile;
@@ -211,7 +228,9 @@ namespace Subject42.Combat.OrbitalStation
             ((Vector2)a.transform.position - nearestOrigin).sqrMagnitude.CompareTo(
                 ((Vector2)b.transform.position - nearestOrigin).sqrMagnitude);
 
-        public bool ApplyDamage(EnemyHealth enemy, float damage, Vector2 hitPoint)
+        public bool ApplyDamage(EnemyHealth enemy, float damage, Vector2 hitPoint) => ResolveDamage(enemy, damage, hitPoint, false);
+
+        private bool ResolveDamage(EnemyHealth enemy, float damage, Vector2 hitPoint, bool bodyHit)
         {
             if (!IsValid(enemy))
                 return false;
@@ -223,6 +242,8 @@ namespace Subject42.Combat.OrbitalStation
                 return applied;
             }
 #endif
+            if (!bodyHit && enemy.TryGetComponent<EnemyDirectionalShield>(out var shield) && shield.BlockBeam(hitPoint, enemy.transform.position))
+                return false;
             enemy.TakeDamage(Mathf.Max(0f, damage), hitPoint);
             Hit?.Invoke(enemy, damage);
             if (wasAlive && enemy != null && enemy.IsDead)
@@ -243,9 +264,7 @@ namespace Subject42.Combat.OrbitalStation
             for (int i = 0; i < projectiles.Count; i++)
             {
                 if (!projectiles[i].Active
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
                     && projectiles[i].SourcePrefab == (source != null ? source : projectilePrefab)
-#endif
                     )
                 {
                     projectile = projectiles[i];
@@ -261,10 +280,12 @@ namespace Subject42.Combat.OrbitalStation
             projectile.Speed = Mathf.Max(1f, speed);
             projectile.Damage = damage;
             projectile.GameObject.transform.position = origin;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
             projectile.Straight = LabStraightProjectiles;
             projectile.Radius = LabProjectileRadius; projectile.BodiesRemaining = 1;
             projectile.Knockback = 0f; projectile.Volley = null; projectile.HitBodies.Clear();
+            projectile.BypassShields = false;
+            projectile.GameObject.transform.localScale = projectile.AuthoredScale;
+            for (int i = 0; i < projectile.Trails.Length; i++) projectile.Trails[i].time = projectile.AuthoredTrailTimes[i];
             if (projectile.Straight)
             {
                 projectile.Position = origin;
@@ -278,11 +299,8 @@ namespace Subject42.Combat.OrbitalStation
                 foreach (var trail in projectile.Trails) trail.Clear();
                 foreach (var particles in projectile.Particles) particles.Clear(true);
             }
-#endif
             projectile.GameObject.SetActive(true);
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
             foreach (var particles in projectile.Particles) particles.Play(true);
-#endif
             return projectile;
         }
 
@@ -291,20 +309,18 @@ namespace Subject42.Combat.OrbitalStation
             if (deltaTime <= 0f) return;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             LabInterceptor?.TickContacts(deltaTime);
-            if (LabStraightProjectiles) Physics2D.SyncTransforms();
 #endif
+            Physics2D.SyncTransforms();
             for (int i = 0; i < projectiles.Count; i++)
             {
                 Projectile projectile = projectiles[i];
                 if (!projectile.Active)
                     continue;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 if (projectile.Straight)
                 {
                     TickStraightProjectile(projectile, deltaTime);
                     continue;
                 }
-#endif
                 if (!IsValid(projectile.Target))
                 {
                     Release(projectile);
@@ -339,7 +355,6 @@ namespace Subject42.Combat.OrbitalStation
             projectiles.Clear();
         }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
         private void TickStraightProjectile(Projectile projectile, float deltaTime)
         {
             // Stored world position prevents station/player translation from dragging an airborne shot.
@@ -355,8 +370,10 @@ namespace Subject42.Combat.OrbitalStation
                 var enemy = hit.collider.GetComponentInParent<EnemyHealth>();
                 if (!IsValid(enemy) || enemy.gameObject.scene != root.gameObject.scene) continue;
                 Vector2 point = hit.point;
-                if (enemy.TryGetComponent<EnemyOrbitalLabShield>(out var shield) && hit.collider == shield.ShieldCollider)
+                if (enemy.TryGetComponent<EnemyDirectionalShield>(out var shield) && hit.collider == shield.ShieldCollider)
                 {
+                    // Only explicitly configured lab sniper shots ignore plates. A plate is never a body.
+                    if (projectile.BypassShields) continue;
                     point = hit.collider.ClosestPoint(point);
                     bool consume = projectile.Volley == null || !projectile.Volley.Shields.Contains(enemy);
                     if (!shield.BlockProjectile(projectile.Direction, point, consume)) continue;
@@ -364,7 +381,7 @@ namespace Subject42.Combat.OrbitalStation
                     Release(projectile); return; // Includes the hit that breaks the shield.
                 }
                 if (!projectile.HitBodies.Add(enemy)) continue;
-                ApplyDamage(enemy, projectile.Damage, point);
+                ResolveDamage(enemy, projectile.Damage, point, true);
                 LabBodyImpact?.Invoke(point, projectile.Direction, projectile.BodiesRemaining > 1);
                 if (projectile.Knockback > 0f && !enemy.IsDead && enemy.TryGetComponent<EnemyChaseMovement>(out var movement) &&
                     (projectile.Volley == null || projectile.Volley.Pushed.Add(enemy)))
@@ -377,7 +394,6 @@ namespace Subject42.Combat.OrbitalStation
             projectile.RemainingRange -= distance;
             if (projectile.RemainingRange <= 0f) Release(projectile);
         }
-#endif
 
         private static bool IsValid(EnemyHealth enemy) =>
             enemy != null && enemy.isActiveAndEnabled && !enemy.IsDead;
@@ -386,12 +402,10 @@ namespace Subject42.Combat.OrbitalStation
         {
             projectile.Active = false;
             projectile.Target = null;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
             projectile.Volley = null; projectile.HitBodies.Clear();
             foreach (var trail in projectile.Trails) trail.Clear();
             foreach (var particles in projectile.Particles)
                 particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-#endif
             if (projectile.GameObject != null)
                 projectile.GameObject.SetActive(false);
         }

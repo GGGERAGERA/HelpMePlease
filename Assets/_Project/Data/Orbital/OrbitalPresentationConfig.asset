@@ -42,20 +42,21 @@ MonoBehaviour:
   CoreShakeMagnitude: 0.025
   FlashPoolCapacity: 128
   ProjectilePrewarmCount: 96
-  PistolProjectilePrefab: {fileID: 6821974247563523827, guid: 079789641f804d74b80b16bc9a7fd3a8, type: 3}
+  PistolProjectilePrefab: {fileID: 5000, guid: 2dcd05dc20a6443ca8c86af9ee4679df, type: 3}
   PistolPrefab: {fileID: 874321222499448941, guid: 061397fe35d9a524f9ac8e1c58b25f4a, type: 3}
-  LaserSwordPrefab: {fileID: 2312076188107168206, guid: 354ad5f6587b07b4ba24642a0aa52a35, type: 3}
-  ImpulseGunPrefab: {fileID: 4564007662578592406, guid: e0b02d3b73e5c424d958aba343c83a95, type: 3}
+  SawPrefab: {fileID: 4188619148358559066, guid: c7cb30b88c9e334419754f856162812a, type: 3}
+  ShotgunPrefab: {fileID: 3229308960085762355, guid: 4ff9b587760ccf243ab1a47bcf521cc9, type: 3}
+  SniperPrefab: {fileID: 7056152298501357713, guid: 3216bdf2ebdbff44bae93cf0cbca90d3, type: 3}
   ArcPrefab: {fileID: 7715781409812007907, guid: 38c8927e5d970394aa4e821a63f73ac9, type: 3}
   LinkPrefab: {fileID: 1657534402609365111, guid: a64bd75b4f740ba48be9197c1d6ae0d6, type: 3}
   PistolVisualScale: 1
-  LaserSwordVisualScale: 1
-  ImpulseVisualScale: 1
+  SawVisualScale: 1
+  ShotgunVisualScale: 1
   ArcVisualScale: 1
   LinkNodeVisualScale: 0.42
   MountedWeaponSortingOffset: 12
   RingRadiusPadding: 0.75
-  LaserSwordTangentOffset: -180
+  SawTangentOffset: -180
   FigureEightWidth: 1.4
   FigureEightHeight: 0.65
   FigureEightSpacing: 1.25

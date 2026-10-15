@@ -204,10 +204,10 @@ public abstract class OrbitalLabSession : MonoBehaviour
             var kinds = preset switch
             {
                 "PISTOL" => new[] { OrbitalRewardKind.Pistol },
-                "LASER SWORD" => new[] { OrbitalRewardKind.LaserSword },
-                "IMPULSE" => new[] { OrbitalRewardKind.ImpulseGun },
+                "SAW" => new[] { OrbitalRewardKind.Saw },
+                "SHOTGUN" => new[] { OrbitalRewardKind.Shotgun },
                 "ARC" => new[] { OrbitalRewardKind.ArcEmitter },
-                _ => new[] { OrbitalRewardKind.Pistol, OrbitalRewardKind.LaserSword, OrbitalRewardKind.ImpulseGun, OrbitalRewardKind.ArcEmitter }
+                _ => new[] { OrbitalRewardKind.Pistol, OrbitalRewardKind.Saw, OrbitalRewardKind.Shotgun, OrbitalRewardKind.ArcEmitter }
             };
             for (TargetRing = 0; TargetRing < count; TargetRing++)
             {

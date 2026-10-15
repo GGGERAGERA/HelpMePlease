@@ -34,8 +34,8 @@ public sealed class ProductionAnomalyRewardFlowTests
         var ring = station.Rings[0];
         Assert.That(station.AddMount(ring.RingId, out string error), Is.True, error);
         var mount = ring.Mounts.First(value => value.Module == null);
-        Assert.That(station.InstallModule(OrbitalModuleKind.ImpulseGun, ring.RingId, mount.MountIndex, out error), Is.True, error);
-        var impulse = station.Modules.First(value => value.Kind == OrbitalModuleKind.ImpulseGun);
+        Assert.That(station.InstallModule(OrbitalModuleKind.Shotgun, ring.RingId, mount.MountIndex, out error), Is.True, error);
+        var impulse = station.Modules.First(value => value.Kind == OrbitalModuleKind.Shotgun);
         var enemy = new GameObject("Phase 1 combat target").AddComponent<EnemyHealth>();
         enemy.SetRuntimeMaxHealth(10000f);
         enemy.transform.position = impulse.WorldPosition;

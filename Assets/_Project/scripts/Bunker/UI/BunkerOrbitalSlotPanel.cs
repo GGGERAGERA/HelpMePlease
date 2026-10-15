@@ -30,7 +30,7 @@ public sealed class BunkerOrbitalSlotPanel : MonoBehaviour
     private static readonly Color Cyan = new Color(.12f, .88f, .94f);
     private static readonly Color Violet = new Color(.72f, .38f, 1f);
     private static readonly Color IdleBorder = new Color(.12f, .36f, .42f);
-    private readonly OrbitalRewardIconResolver.Icon[] icons = new OrbitalRewardIconResolver.Icon[9];
+    private readonly OrbitalRewardIconResolver.Icon[] icons = new OrbitalRewardIconResolver.Icon[12];
     private OrbitalSlotSymbol[] result = { OrbitalSlotSymbol.Gun, OrbitalSlotSymbol.Ring, OrbitalSlotSymbol.Gold };
     private readonly float[] nextChange = new float[3];
     private readonly bool[] stopped = new bool[3];
@@ -42,8 +42,9 @@ public sealed class BunkerOrbitalSlotPanel : MonoBehaviour
 
     private void Awake()
     {
-        for (var symbol = OrbitalSlotSymbol.Gun; symbol <= OrbitalSlotSymbol.Link; symbol++)
-            icons[(int)symbol] = OrbitalRewardIconResolver.Resolve(OrbitalSlotMachine.ModuleKind(symbol));
+        foreach (var symbol in OrbitalSlotMachine.Symbols)
+            if (symbol is not (OrbitalSlotSymbol.Ring or OrbitalSlotSymbol.Gold or OrbitalSlotSymbol.Skull))
+                icons[(int)symbol] = OrbitalRewardIconResolver.Resolve(OrbitalSlotMachine.ModuleKind(symbol));
         icons[(int)OrbitalSlotSymbol.Ring] = OrbitalRewardIconResolver.Resolve(OrbitalRewardKind.NewRing);
         icons[(int)OrbitalSlotSymbol.Gold] = new OrbitalRewardIconResolver.Icon(goldIcon, Color.white);
         icons[(int)OrbitalSlotSymbol.Skull] = new OrbitalRewardIconResolver.Icon(skullIcon, Color.white);
@@ -139,7 +140,7 @@ public sealed class BunkerOrbitalSlotPanel : MonoBehaviour
                 if (elapsed >= nextChange[i])
                 {
                     // Cosmetic cycling must not consume the gameplay random stream.
-                    SetReel(i, (OrbitalSlotSymbol)(1 + (cycle++ + i * 3) % 8));
+                    SetReel(i, OrbitalSlotMachine.Symbols[(cycle++ + i * 3) % OrbitalSlotMachine.Symbols.Count]);
                     float progress = elapsed / stopAt;
                     nextChange[i] = elapsed + Mathf.Lerp(.035f, .14f, progress * progress);
                     tick = true;
@@ -252,8 +253,8 @@ public sealed class BunkerOrbitalSlotPanel : MonoBehaviour
     {
         SetIcon(reels[index], symbol, 1f);
         reels[index].rectTransform.anchoredPosition = Vector2.zero;
-        SetIcon(upperSymbols[index], (OrbitalSlotSymbol)(1 + ((int)symbol + 6) % 8), .22f);
-        SetIcon(lowerSymbols[index], (OrbitalSlotSymbol)(1 + (int)symbol % 8), .22f);
+        SetIcon(upperSymbols[index], OrbitalSlotMachine.Neighbour(symbol, -1), .22f);
+        SetIcon(lowerSymbols[index], OrbitalSlotMachine.Neighbour(symbol, 1), .22f);
         reelLabels[index].text = OrbitalSlotMachine.Label(symbol);
     }
 

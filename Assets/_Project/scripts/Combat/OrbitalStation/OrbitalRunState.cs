@@ -50,17 +50,50 @@ namespace Subject42.Combat.OrbitalStation
     [Serializable]
     public sealed class OrbitalRunState : UnityEngine.ISerializationCallbackReceiver
     {
-        public const int CurrentVersion = 2;
+        public const int CurrentVersion = 3;
 
         public int Version = CurrentVersion;
         public void OnBeforeSerialize() { }
         public void OnAfterDeserialize()
         {
-            // Version 1 built every available mount. Preserve existing occupancy on migration.
-            if (Version != 1 || Rings == null) return;
-            foreach (var ring in Rings)
-                if (ring != null) ring.MountCount = ring.MountCapacity;
+            MigrateRetiredModules();
+        }
+
+        public void MigrateRetiredModules()
+        {
+            if (Version < 1 || Version > CurrentVersion) return;
+            if (Version == 1 && Rings != null)
+                foreach (var ring in Rings) if (ring != null) ring.MountCount = ring.MountCapacity;
+            // Preserve rings, levels, allocators, valid modules and all unrelated run progress.
+            if (Modules != null) Modules.RemoveAll(m => m != null && ((int)m.ModuleType == 1 || (int)m.ModuleType == 2));
             Version = CurrentVersion;
+        }
+
+        public float ShootingDamageMultiplier = 1f;
+        public float ShootingRateMultiplier = 1f;
+        public float ContactDamageMultiplier = 1f;
+        public float ContactSizeMultiplier = 1f;
+
+        public bool CanUpgradeCategory(OrbitalRewardKind kind) => kind switch
+        {
+            OrbitalRewardKind.ShootingDamage => IsFinitePositive(ShootingDamageMultiplier * 1.2f),
+            OrbitalRewardKind.ShootingRate => IsFinitePositive(ShootingRateMultiplier * 1.15f),
+            OrbitalRewardKind.ContactDamage => IsFinitePositive(ContactDamageMultiplier * 1.2f),
+            OrbitalRewardKind.ContactSize => IsFinitePositive(ContactSizeMultiplier * 1.15f),
+            _ => false
+        };
+        public bool TryUpgradeCategory(OrbitalRewardKind kind)
+        {
+            if (!CanCommit(out _) || !CanUpgradeCategory(kind)) return false;
+            switch (kind)
+            {
+                case OrbitalRewardKind.ShootingDamage: ShootingDamageMultiplier *= 1.2f; break;
+                case OrbitalRewardKind.ShootingRate: ShootingRateMultiplier *= 1.15f; break;
+                case OrbitalRewardKind.ContactDamage: ContactDamageMultiplier *= 1.2f; break;
+                case OrbitalRewardKind.ContactSize: ContactSizeMultiplier *= 1.15f; break;
+            }
+            Revision++;
+            return true;
         }
 
         public bool IsInitialized;
@@ -496,7 +529,7 @@ namespace Subject42.Combat.OrbitalStation
             CanOccupy(ringId, mountIndex, id, out error);
 
         public bool CanUpgradeModuleDamage(int id, out string error) => CanCommit(out error) &&
-            Rule(FindModule(id) != null && FindModule(id).ModuleType != OrbitalModuleKind.LinkNode &&
+            Rule(FindModule(id) != null && OrbitalCategories.ForModule(FindModule(id).ModuleType) == OrbitalUpgradeCategory.Shooting &&
                 FindModule(id).DamageLevel < int.MaxValue, $"module {id} cannot upgrade damage", out error);
 
         public bool CanUpgradeRingSpeed(int id, out string error) => CanRemoveRing(id, out error) &&
@@ -534,6 +567,9 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool Validate(out string error)
         {
+            if (!IsFinitePositive(ShootingDamageMultiplier) || !IsFinitePositive(ShootingRateMultiplier) ||
+                !IsFinitePositive(ContactDamageMultiplier) || !IsFinitePositive(ContactSizeMultiplier))
+            { error = "invalid category multipliers"; return false; }
             if (Version != CurrentVersion)
             {
                 error = $"unsupported version {Version}";

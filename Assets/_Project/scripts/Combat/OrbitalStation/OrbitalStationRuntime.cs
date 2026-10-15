@@ -317,18 +317,11 @@ namespace Subject42.Combat.OrbitalStation
                 Time.timeScale > 0f && InputOwner != null &&
                 InputOwner.CanUseDebugPlacement && InputOwner.IsIdle &&
                 !IsDebugPlacementActive;
-            bool held = canInput && Input.GetMouseButton(1) && !Input.GetKey(KeyCode.LeftAlt) && !Input.GetKey(KeyCode.RightAlt);
+            bool held = canInput && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift));
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (LabShiftBulletTime)
-                held = canInput && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift));
             held |= canInput && DebugBulletTimeHeld;
 #endif
-            TickRightMouse(deltaTime, held,
-                canInput && Input.GetMouseButtonDown(1)
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-                && !LabShiftBulletTime
-#endif
-                );
+            TickRightMouse(deltaTime, held, false);
         }
 
         private void TickRightMouse(float deltaTime, bool held, bool pressed)
@@ -683,21 +676,21 @@ namespace Subject42.Combat.OrbitalStation
 
             if (ringCount >= 4)
             {
-                Install(0, 2, OrbitalModuleKind.LaserSword);
-                Install(1, 1, OrbitalModuleKind.ImpulseGun);
+                Install(0, 2, OrbitalModuleKind.Saw);
+                Install(1, 1, OrbitalModuleKind.Shotgun);
                 Install(2, 2, OrbitalModuleKind.ArcEmitter);
                 Install(2, 0, OrbitalModuleKind.Pistol);
-                Install(3, 0, OrbitalModuleKind.LaserSword);
+                Install(3, 0, OrbitalModuleKind.Saw);
                 Link(1, 0, 3, 2);
             }
             if (ringCount == 8)
             {
                 Install(4, 1, OrbitalModuleKind.ArcEmitter);
-                Install(4, 2, OrbitalModuleKind.ImpulseGun);
-                Install(5, 0, OrbitalModuleKind.LaserSword);
+                Install(4, 2, OrbitalModuleKind.Shotgun);
+                Install(5, 0, OrbitalModuleKind.Saw);
                 Install(6, 1, OrbitalModuleKind.Pistol);
                 Install(6, 0, OrbitalModuleKind.ArcEmitter);
-                Install(7, 2, OrbitalModuleKind.ImpulseGun);
+                Install(7, 2, OrbitalModuleKind.Shotgun);
                 Link(5, 2, 7, 1);
             }
             return RebuildRuntimeFromState();
@@ -712,8 +705,8 @@ namespace Subject42.Combat.OrbitalStation
                 while (ring.MountCount < ring.MountCapacity) AddMount(ring.RingId, out _);
             InstallModule(OrbitalModuleKind.LinkNode, rings[0].RingId, 1, out _);
             InstallModule(OrbitalModuleKind.LinkNode, second.StableRingId, 0, out _);
-            InstallModule(OrbitalModuleKind.LaserSword, second.StableRingId, 1, out _);
-            InstallModule(OrbitalModuleKind.ImpulseGun, third.StableRingId, 0, out _);
+            InstallModule(OrbitalModuleKind.Saw, second.StableRingId, 1, out _);
+            InstallModule(OrbitalModuleKind.Shotgun, third.StableRingId, 0, out _);
             InstallModule(OrbitalModuleKind.ArcEmitter, third.StableRingId, 1, out _);
             if (InputOwner.PointerCamera != null && InputOwner.PointerCamera.orthographic)
                 InputOwner.PointerCamera.orthographicSize = 8.1f;
@@ -1184,6 +1177,14 @@ namespace Subject42.Combat.OrbitalStation
             selectedRing = ring;
             selectedRing?.SetSelected(true);
         }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public bool DebugSelectExistingRing(int id)
+        {
+            var ring = rings.Find(r => r.RingId == id);
+            if (ring == null) return false;
+            SelectRing(ring); return true;
+        }
+#endif
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private void HandlePlacementInput()
@@ -1277,7 +1278,7 @@ namespace Subject42.Combat.OrbitalStation
                 UpdateLinkLine(pair, from, to);
                 if (deltaTime <= 0f || first.RuntimeCooldown > 0f)
                     continue;
-                const float hitWidth = 0.4f;
+                float hitWidth = 0.4f * State.ContactSizeMultiplier;
                 Vector2 midpoint = (from + to) * 0.5f;
                 // The adapter lends its reusable, midpoint-distance-sorted buffer.
                 // Filter the whole segment before selecting one target.
@@ -1296,7 +1297,7 @@ namespace Subject42.Combat.OrbitalStation
                     float linkPower = (first.CurrentMount.Ring.PowerMultiplier +
                         second.CurrentMount.Ring.PowerMultiplier) * 0.5f;
                     float matrixPower = 1f + State.CoreState.LinkMatrixUpgradeLevel * 0.25f;
-                    Combat.ApplyDamage(target, 5f * linkPower * matrixPower, target.transform.position);
+                    Combat.ApplyDamage(target, 5f * linkPower * matrixPower * State.ContactDamageMultiplier, from);
                     first.RuntimeCooldown = 0.55f;
                 }
             }

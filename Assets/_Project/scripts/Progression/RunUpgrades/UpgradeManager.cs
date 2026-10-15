@@ -5,7 +5,7 @@ using UnityEngine;
 using Subject42.Combat.OrbitalStation;
 
 [RequireComponent(typeof(UpgradeApplier))]
-public sealed class UpgradeManager : MonoBehaviour
+public sealed partial class UpgradeManager : MonoBehaviour
 {
     private sealed class UpgradeChoiceRequest
     {
@@ -192,7 +192,8 @@ public sealed class UpgradeManager : MonoBehaviour
     {
         if (bonus == OrbitalSlotSymbol.Ring)
             return state.TryAddRing(out _, out _);
-        if (bonus < OrbitalSlotSymbol.Gun || bonus > OrbitalSlotSymbol.Link) return false;
+        if (bonus is not (OrbitalSlotSymbol.Gun or OrbitalSlotSymbol.Arc or OrbitalSlotSymbol.Link or
+            OrbitalSlotSymbol.Saw or OrbitalSlotSymbol.Shotgun or OrbitalSlotSymbol.Sniper)) return false;
         OrbitalModuleKind kind = OrbitalSlotMachine.ModuleKind(bonus);
         int required = bonus == OrbitalSlotSymbol.Link ? 2 : 1;
         var mounts = new List<(int ring, int mount)>();
@@ -669,6 +670,9 @@ public sealed class UpgradeManager : MonoBehaviour
 
     private void ReturnToCurrentChoices()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (debugCatalogueReward) { CloseUpgradeSelection(); return; }
+#endif
         orbitalRewardFlow = null;
         if (shuttingDown || !isChoosingUpgrade)
             return;
@@ -795,6 +799,9 @@ public sealed class UpgradeManager : MonoBehaviour
 
     private void CloseUpgradeSelection()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        debugCatalogueReward = false;
+#endif
         if (upgradePanelView != null)
             upgradePanelView.Hide();
 

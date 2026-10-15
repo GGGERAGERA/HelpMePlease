@@ -27,8 +27,8 @@ namespace Subject42.Combat.OrbitalStation
             module = state.ModuleType switch
             {
                 OrbitalModuleKind.Pistol => new OrbitalPistolModule(station, state.StableModuleId),
-                OrbitalModuleKind.LaserSword => new OrbitalLaserSwordModule(station, state.StableModuleId),
-                OrbitalModuleKind.ImpulseGun => new OrbitalImpulseGunModule(station, state.StableModuleId),
+                OrbitalModuleKind.Saw => new OrbitalSawModule(station, state.StableModuleId, OrbitalPresentationConfig.Active.GetWeaponSettings(state.ModuleType)),
+                OrbitalModuleKind.Sniper or OrbitalModuleKind.Shotgun => new OrbitalProjectileModule(station, state.StableModuleId, OrbitalPresentationConfig.Active.GetWeaponSettings(state.ModuleType)),
                 OrbitalModuleKind.ArcEmitter => new OrbitalArcEmitterModule(station, state.StableModuleId),
                 OrbitalModuleKind.LinkNode => new OrbitalLinkNodeModule(station, state.StableModuleId),
                 _ => null

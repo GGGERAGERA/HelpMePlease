@@ -31,13 +31,14 @@ namespace Subject42.Combat.OrbitalStation
                 ? Resolve(module) : kind switch
         {
             OrbitalRewardKind.ModuleDamage => Resolve(OrbitalModuleKind.Pistol),
+            OrbitalRewardKind.ShootingDamage or OrbitalRewardKind.ShootingRate => Resolve(OrbitalModuleKind.Pistol),
+            OrbitalRewardKind.ContactDamage or OrbitalRewardKind.ContactSize => Resolve(OrbitalModuleKind.Saw),
             OrbitalRewardKind.CoreUpgrade => new Icon(OrbitalPresentationConfig.Active.CoreIcon, Color.white),
             OrbitalRewardKind.AddMount => new Icon(OrbitalPresentationConfig.Active.NewMountIcon, Color.white),
             OrbitalRewardKind.RingCapacity => new Icon(OrbitalPresentationConfig.Active.RingCapacityIcon, Color.white),
             OrbitalRewardKind.RingPower => new Icon(OrbitalPresentationConfig.Active.RingDamageIcon, Color.white),
             OrbitalRewardKind.RingSpeed => new Icon(OrbitalPresentationConfig.Active.RingSpeedIcon, Color.white),
             OrbitalRewardKind.NewRing => new Icon(OrbitalPresentationConfig.Active.NewRingIcon, Color.white),
-            // ART REQUIRED: no unrelated circle/ring placeholders in production cards.
             _ => new Icon(null, Color.white)
         };
 
