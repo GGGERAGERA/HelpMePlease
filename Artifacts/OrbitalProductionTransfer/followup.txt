@@ -1,0 +1,23 @@
+PASS: production flow completed within bounded wait
+PASS: production flow completed within bounded wait
+PASS: real shotgun runtime spawns seven independent 10 m/s pellets
+PASS: all seven pellets independently damage an exposed body
+PASS: real saw disk hits body and blocks immediate repeat damage
+PASS: saw repeat damage resumes after the authored interval
+PASS: saw never damages a remote body
+PASS: retained laser runtime damages its target
+PASS: retained link pair installation
+PASS: retained connecting line applies contact damage
+PASS: production center acquires the camera after CharacterSpawner wiring
+PASS: station steering filter preserves WASD movement direction
+PASS: existing slow-time ability remains active
+PASS: slow-time release restores the time owner
+PASS: existing sector-exit flow opens rule choice
+PASS: existing rule card triggers next sector
+PASS: production flow completed within bounded wait
+PASS: real next-sector transition preserves weapons/category upgrades
+PASS: production flow completed within bounded wait
+RETURN DIAGNOSTICS: timeScale=1; originalStationDestroyed=True; stations=Station@MainMenu
+PASS: ordinary return-to-bunker releases original station and time state
+PASS: bounded production Play Mode smoke, no runtime errors
+Manual physical RMB+WASD/Shift input: not verified; window capture/input timed out.

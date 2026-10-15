@@ -1,0 +1,82 @@
+PASS: lab initialized
+PASS: default mixed build fills multiple ordinary orbits
+PASS: all three explicit weapon profiles installed
+PASS: all mounted artist bodies have visible authored sprites
+PASS: all pellets and sniper shots use the existing large blue bullet with trail
+PASS: independent Inspector profiles: sniper 120 m/s, shotgun 10 m/s, original pistol 13 m/s
+PASS: pistol retains the original module's damage, cadence, range and single straight shot
+PASS: actual flight 120 m/s and per-shot trail 0,020 s; shared-pool defaults restored
+PASS: actual flight 10 m/s and per-shot trail 0,100 s; shared-pool defaults restored
+PASS: actual flight 13 m/s and per-shot trail 0,100 s; shared-pool defaults restored
+PASS: single-melee scenario uses a breakable shield with four initial hits
+PASS: legacy spear still stops at shields
+PASS: 120 m/s sniper sweeps a full 12 m frame, crosses the shield and hits the body exactly once
+PASS: fast sniper retires after one body without spending shield durability or leaving a trail
+PASS: two independent pellets from the same volley both damage exposed body
+PASS: each separate pistol bullet spends one shield durability: hit 1
+PASS: each separate pistol bullet spends one shield durability: hit 2
+PASS: each separate pistol bullet spends one shield durability: hit 3
+PASS: each separate pistol bullet spends one shield durability: hit 4
+PASS: four pistol bullets destroy the shield without damaging the body
+PASS: seven pellets spend only one durability on a breakable shield
+PASS: sniper crosses breakable shield without spending durability or duplicate damage
+PASS: saw disk is blocked by the frontal plate
+PASS: saw disk damages the exposed body
+PASS: saw respects per-target repeat interval and emits no projectiles
+PASS: applicable category upgrade: ShootingDamage
+PASS: applicable category upgrade: ShootingRate
+PASS: applicable category upgrade: ContactDamage
+PASS: applicable category upgrade: ContactSize
+PASS: applicable category upgrade: OrbitSpeed
+PASS: applicable category upgrade: MaxHealth
+PASS: applicable category upgrade: MoveSpeed
+PASS: shooting/contact/orbit/player upgrades affect their targets; contact size leaves orbit radius intact
+PASS: existing card panel offers three eligible choices
+PASS: native card selection applies and closes without leaving the scene paused
+PASS: filled valid build: Shotgun
+PASS: filled valid build: Sniper
+PASS: filled valid build: Saw
+PASS: filled valid build: Mixed
+PASS: filled valid build: Pistol
+PASS: 10 shielded + 10 ordinary enemies
+PASS: all 10 melee/shooter shields start breakable, blue, with four durability
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: all 10 shields break on hit four and emit their existing fragments
+PASS: 20 shielded + 20 ordinary enemies
+PASS: all 20 melee/shooter shields start breakable, blue, with four durability
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: damaged shield becomes red and cracked
+PASS: all 20 shields break on hit four and emit their existing fragments
+PASS: pooled blue projectile spawns
+PASS: Clear removes enemies, shots and all trail points
+PASS: Restart restores the same composition and positions with baseline upgrades
+PASS: Restart respawns every shield at full durability, blue, visible and without cracks
+PASS: repeated distant spawns reuse the pool without growing it or retaining shots (126->126, active 0)
+PASS: bounded Play Mode smoke, no runtime errors

@@ -156,13 +156,11 @@ public class Bullet : MonoBehaviour, IWeaponProjectile,
         if (hitEnemies.Contains(enemyHealth))
             return;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        if (enemyHealth.TryGetComponent<EnemyOrbitalLabShield>(out var shield) && other == shield.ShieldCollider)
+        if (enemyHealth.TryGetComponent<EnemyDirectionalShield>(out var shield) && other == shield.ShieldCollider)
         {
             if (shield.BlockProjectile(direction, other.ClosestPoint(transform.position))) Despawn();
             return;
         }
-#endif
 
         if (combatContext == null)
             combatContext = GetComponent<ProjectileCombatContext>();

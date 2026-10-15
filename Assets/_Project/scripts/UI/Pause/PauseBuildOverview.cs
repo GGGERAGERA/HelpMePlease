@@ -142,8 +142,9 @@ public sealed class PauseBuildOverview : MonoBehaviour
 
     private static string ModuleName(OrbitalModuleKind kind) => kind switch
     {
-        OrbitalModuleKind.LaserSword => LocalizationService.EnsureExists().Get("pause.sword"),
-        OrbitalModuleKind.ImpulseGun => LocalizationService.EnsureExists().Get("pause.impulse"),
+        OrbitalModuleKind.Saw => "Пила",
+        OrbitalModuleKind.Shotgun => "Дробовик",
+        OrbitalModuleKind.Sniper => "Снайперка",
         OrbitalModuleKind.ArcEmitter => LocalizationService.EnsureExists().Get("pause.arc"),
         OrbitalModuleKind.LinkNode => LocalizationService.EnsureExists().Get("pause.link"),
         _ => LocalizationService.EnsureExists().Get("pause.gun")

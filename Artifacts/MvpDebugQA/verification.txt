@@ -1,0 +1,8 @@
+Final release/development script compilation: PASS.
+All 18 active definitions: Russian + English text and icons PASS (36/36).
+One scripted Play Mode only: 100 integration assertions passed, no game runtime errors.
+That run stopped at a QA helper CanvasGroup fake-null exception, before its final reuse/cap checks. It was not rerun.
+UI reuse, interrupted reveal, null-gap compaction, caps and fewer-than-three choice checks were completed separately in Editor: PASS.
+All 18 engine-rendered card captures were visually reviewed. The shortened final core description was also rendered and reviewed in Editor.
+Physical keyboard/mouse input: not manually verified.
+Raw evidence: compile.txt, play.txt, audit-before.txt, reuse-before-world-panel-fix.txt, audit.txt.

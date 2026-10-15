@@ -236,6 +236,7 @@ public sealed class RunStateManager : MonoBehaviour
             error = "state is missing; start a run explicitly through BeginNewRun";
             return false;
         }
+        state.MigrateRetiredModules();
         return state.Validate(out error);
     }
 

@@ -1,0 +1,4 @@
+System.Exception: Null gap was not compacted
+  at MvpF1Verification.CheckCardReuseAndLimits (UpgradeData[] body, System.Collections.Generic.List`1[T] lines) [0x001d4] in D:\fork\HelpMePlease\Assets\_Project\Dev\Editor\OrbitalLab\MvpF1Verification.cs:91 
+  at MvpF1Verification.Audit () [0x0026b] in D:\fork\HelpMePlease\Assets\_Project\Dev\Editor\OrbitalLab\MvpF1Verification.cs:59 
+  at MvpF1Verification.Poll () [0x0002c] in D:\fork\HelpMePlease\Assets\_Project\Dev\Editor\OrbitalLab\MvpF1Verification.cs:26 

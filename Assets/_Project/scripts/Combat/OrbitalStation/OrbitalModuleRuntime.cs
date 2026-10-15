@@ -5,11 +5,13 @@ namespace Subject42.Combat.OrbitalStation
 {
     public enum OrbitalModuleKind
     {
-        Pistol,
-        LaserSword,
-        ImpulseGun,
-        ArcEmitter,
-        LinkNode
+        Pistol = 0,
+        // Serialized 1 and 2 are retired. Never reuse them.
+        ArcEmitter = 3,
+        LinkNode = 4,
+        Sniper = 5,
+        Shotgun = 6,
+        Saw = 7
     }
 
     public abstract class OrbitalModuleRuntime
@@ -38,18 +40,19 @@ namespace Subject42.Combat.OrbitalStation
         public static float GetBaseDamage(OrbitalModuleKind kind) => kind switch
         {
             OrbitalModuleKind.Pistol => OrbitalPistolModule.BaseDamage,
-            OrbitalModuleKind.LaserSword => OrbitalLaserSwordModule.BaseDamage,
-            OrbitalModuleKind.ImpulseGun => OrbitalImpulseGunModule.BaseDamage,
+            OrbitalModuleKind.Saw => OrbitalSawModule.BaseDamage,
+            OrbitalModuleKind.Sniper => 32f,
+            OrbitalModuleKind.Shotgun => 3.5f,
             _ => 0f
         };
 
         protected OrbitalModuleRuntime(OrbitalStationRuntime station,
-            int stableModuleId, Color color)
+            int stableModuleId, Color color, GameObject visualPrefab = null, OrbitalModuleKind? presentationKind = null)
         {
             Station = station;
             Combat = station.Combat;
             StableModuleId = stableModuleId;
-            presentation = new OrbitalModuleVisual(station, Kind, GetType().Name, color);
+            presentation = new OrbitalModuleVisual(station, presentationKind ?? Kind, GetType().Name, color, visualPrefab);
             Visual = presentation.GameObject;
         }
 
@@ -133,12 +136,10 @@ namespace Subject42.Combat.OrbitalStation
             Cooldown = normalCooldown;
         }
         protected void TriggerPresentation() => presentation.Trigger();
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        protected void ConfigureLabFeedback(Color color) => presentation.ConfigureLabFeedback(color);
-        protected void LabRecoil(float strength) => presentation.LabRecoil(strength);
-        protected void LabCharge(float amount) => presentation.LabCharge(amount);
-        protected void ResetLabFeedback() => presentation.ResetLabFeedback();
-#endif
+        protected void ConfigureWeaponFeedback(Color color, bool preserveColors = false) => presentation.ConfigureWeaponFeedback(color, preserveColors);
+        protected void WeaponRecoil(float strength) => presentation.WeaponRecoil(strength);
+        protected void WeaponCharge(float amount) => presentation.WeaponCharge(amount);
+        protected void ResetWeaponFeedback() => presentation.ResetWeaponFeedback();
         public void TriggerUpgradePresentation() => presentation.Trigger();
 
         protected void AimAt(Vector2 worldTarget)
@@ -166,119 +167,11 @@ namespace Subject42.Combat.OrbitalStation
         }
     }
 
-    public sealed class OrbitalPistolModule : OrbitalModuleRuntime
+    public sealed class OrbitalPistolModule : OrbitalProjectileModule
     {
         public const float BaseDamage = 8f;
-        public override OrbitalModuleKind Kind => OrbitalModuleKind.Pistol;
-        public OrbitalPistolModule(OrbitalStationRuntime station, int stableModuleId) :
-            base(station, stableModuleId, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.Pistol)) { }
-
-        // A turret keeps its last aim instead of inheriting the ring's spin.
-        public override void UpdateVisualRotation(float radians) { }
-
-        public override void Tick(float deltaTime)
-        {
-            base.Tick(deltaTime);
-            if (Mount != null)
-            {
-                EnemyHealth aimTarget = Combat.FindNearest(
-                    Visual.transform.position, 8f);
-                if (aimTarget != null)
-                    AimAt(aimTarget.transform.position);
-            }
-            if (deltaTime > 0f && Cooldown <= 0f)
-                ActivateCombat();
-        }
-
-        public override void ActivateCombat()
-        {
-            if (Mount == null)
-                return;
-            EnemyHealth target = Combat.FindNearest(Visual.transform.position, 8f);
-            if (target == null)
-                return;
-            AimAt(target.transform.position);
-            Combat.SpawnProjectile(Visual.transform.position, target, 13f,
-                BaseDamage * Power, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.Pistol));
-            AudioService.Instance?.PlayAt(AudioCueId.PistolShot, Visual.transform.position);
-            TriggerPresentation();
-            Cooldown = 0.55f;
-        }
-    }
-
-    public sealed class OrbitalLaserSwordModule : OrbitalModuleRuntime
-    {
-        public const float BaseDamage = 13f;
-        public const float ContactInterval = .32f;
-        public override OrbitalModuleKind Kind => OrbitalModuleKind.LaserSword;
-        public OrbitalLaserSwordModule(OrbitalStationRuntime station, int stableModuleId) :
-            base(station, stableModuleId, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.LaserSword)) { }
-
-        public override void UpdateVisualRotation(float radians)
-        {
-            if (Mount == null) return;
-            float tangent = Mount.Ring.Geometry.TangentRotation(Mount.Ring.Phase + Mount.LocalPhase);
-            base.UpdateVisualRotation(tangent + OrbitalPresentationConfig.Active.LaserSwordTangentOffset * Mathf.Deg2Rad);
-        }
-
-        public override void Tick(float deltaTime)
-        {
-            base.Tick(deltaTime);
-            if (deltaTime > 0f && Cooldown <= 0f) ActivateCombat();
-        }
-
-        public override void ActivateCombat()
-        {
-            if (Mount == null) return;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            // The elite lab checks the same authored blade body along its swept orbit before resolving damage.
-            if (ProductionOrbitalCombatAdapter.LabInterceptor?.HandlesContact(this) == true) return;
-#endif
-            EnemyHealth target = Combat.FindNearest(Visual.transform.position, 0.75f);
-            if (target != null)
-            {
-                Combat.ApplyDamage(target, BaseDamage * Power,
-                    Visual.transform.position);
-                AudioService.Instance?.PlayAt(AudioCueId.OrbitalSwordHit, Visual.transform.position);
-                TriggerPresentation();
-                Cooldown = ContactInterval;
-            }
-        }
-    }
-
-    public sealed class OrbitalImpulseGunModule : OrbitalModuleRuntime
-    {
-        public const float BaseDamage = 6f;
-        public override OrbitalModuleKind Kind => OrbitalModuleKind.ImpulseGun;
-        public OrbitalImpulseGunModule(OrbitalStationRuntime station, int stableModuleId) :
-            base(station, stableModuleId, OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.ImpulseGun)) { }
-
-        public override void Tick(float deltaTime)
-        {
-            base.Tick(deltaTime);
-            if (deltaTime > 0f && Cooldown <= 0f)
-                ActivateCombat();
-        }
-
-        public override void ActivateCombat()
-        {
-            if (Mount == null)
-                return;
-            EnemyHealth target = Combat.FindNearest(Visual.transform.position, 5f);
-            if (target == null)
-                return;
-            Vector2 direction = ((Vector2)target.transform.position -
-                (Vector2)Station.Owner.Transform.position).normalized;
-            Combat.ApplyDamage(target, BaseDamage * Power,
-                target.transform.position);
-            AudioService.Instance?.PlayAt(AudioCueId.OrbitalImpulseFire, Visual.transform.position);
-            TriggerPresentation();
-            // Movement owns knockback; its next MovePosition would replace a raw body impulse.
-            EnemyMovement movement = target.GetComponent<EnemyMovement>();
-            if (movement != null)
-                movement.ApplyKnockback(direction, 4.5f * Mount.Ring.PowerMultiplier);
-            Cooldown = 1.25f;
-        }
+        public OrbitalPistolModule(OrbitalStationRuntime station, int id) :
+            base(station, id, OrbitalPresentationConfig.Active.GetWeaponSettings(OrbitalModuleKind.Pistol)) { }
     }
 
     public sealed class OrbitalArcEmitterModule : OrbitalModuleRuntime
@@ -306,14 +199,14 @@ namespace Subject42.Combat.OrbitalStation
                 EnemyHealth target = targets[i];
                 Station.FlashLink(from, target.transform.position,
                     OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.ArcEmitter), 0.12f);
-                Combat.ApplyDamage(target, (7f - i * 1.25f) * Power,
-                    target.transform.position);
+                Combat.ApplyDamage(target, (7f - i * 1.25f) * Power * Station.State.ShootingDamageMultiplier,
+                    WorldPosition);
                 from = target.transform.position;
             }
             if (targets.Count > 0)
             {
                 AudioService.Instance?.PlayAt(AudioCueId.OrbitalArcFire, Visual.transform.position);
-                Cooldown = 1.15f;
+                Cooldown = 1.15f / Station.State.ShootingRateMultiplier;
             }
         }
     }

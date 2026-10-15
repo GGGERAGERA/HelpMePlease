@@ -28,6 +28,10 @@ PrefabInstance:
       propertyPath: touchKick
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 8352541526942022441, guid: 51905afd12bed244a9ddeb901459ea07, type: 3}
+      propertyPath: orbitWhileAiming
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3872447197860503259, guid: 51905afd12bed244a9ddeb901459ea07, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

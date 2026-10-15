@@ -199,12 +199,6 @@ MonoBehaviour:
   - key: bunker.module_contact_desc
     ru: "Наносит контактный урон противникам на траектории орбиты."
     en: "Deals contact damage to enemies along its orbit."
-  - key: bunker.module_impulse
-    ru: "ИМПУЛЬСНОЕ ОРУЖИЕ"
-    en: "IMPULSE WEAPON"
-  - key: bunker.module_impulse_desc
-    ru: "Периодический импульс наносит урон и отталкивает противников."
-    en: "Periodic pulses damage and repel enemies."
   - key: bunker.progress_unavailable
     ru: "УЛУЧШЕНИЕ НЕДОСТУПНО"
     en: "UPGRADE UNAVAILABLE"
@@ -229,9 +223,6 @@ MonoBehaviour:
   - key: bunker.interval_contact
     ru: "0.32 С"
     en: "0.32 S"
-  - key: bunker.interval_impulse
-    ru: "1.25 С"
-    en: "1.25 S"
   - key: bunker.upgrades
     ru: "УЛУЧШЕНИЯ БУНКЕРА"
     en: "BUNKER UPGRADES"
@@ -364,9 +355,6 @@ MonoBehaviour:
   - key: bunker.slot_stake_returned
     ru: "ВОЗВРАТ СТАВКИ: +50 ЗОЛОТА"
     en: "STAKE REFUNDED: +50 GOLD"
-  - key: bunker.slot_sword
-    ru: "ЛАЗЕРНЫЙ МЕЧ"
-    en: "LASER SWORD"
   - key: bunker.slot_link
     ru: "ПАРА УЗЛОВ СВЯЗИ"
     en: "LINK PAIR"
@@ -526,9 +514,6 @@ MonoBehaviour:
   - key: bunker.slot_symbol.Gun
     ru: "ОРУДИЕ"
     en: "GUN"
-  - key: bunker.slot_symbol.Impulse
-    ru: "ИМПУЛЬС"
-    en: "IMPULSE"
   - key: bunker.slot_symbol.Arc
     ru: "ДУГОВОЙ ИЗЛУЧАТЕЛЬ"
     en: "ARC EMITTER"
@@ -665,8 +650,8 @@ MonoBehaviour:
     ru: "ОРУЖЕЙНАЯ СТАНЦИЯ"
     en: "WEAPON STATION"
   - key: bunker.station_data.WeaponStation.level2
-    ru: "ЛАЗЕРНЫЙ МЕЧ"
-    en: "LASER SWORD"
+    ru: "ПИЛА"
+    en: "SAW"
   - key: bunker.station_data.UpgradeStation.name
     ru: "СТАНЦИЯ УЛУЧШЕНИЙ"
     en: "UPGRADE STATION"
@@ -718,18 +703,12 @@ MonoBehaviour:
   - key: bunker.module_name.pistol
     ru: "ПИСТОЛЕТ"
     en: "PISTOL"
-  - key: bunker.module_name.laser_sword
-    ru: "ЛАЗЕРНЫЙ МЕЧ"
-    en: "LASER SWORD"
-  - key: bunker.module_name.impulse_gun
-    ru: "ИМПУЛЬСНОЕ ОРУДИЕ"
-    en: "IMPULSE GUN"
   - key: hud.enter_room
     ru: "ВОЙТИ В ПОМЕЩЕНИЕ"
     en: "ENTER ROOM"
   - key: bunker.station_data.WeaponStation.level3
-    ru: "ИМПУЛЬСНОЕ ОРУДИЕ"
-    en: "IMPULSE GUN"
+    ru: "ДРОБОВИК"
+    en: "SHOTGUN"
   - key: boundary.warning
     ru: "ВНИМАНИЕ"
     en: "WARNING"
@@ -973,12 +952,6 @@ MonoBehaviour:
   - key: pause.matrix
     ru: "Матрица связей"
     en: "Link matrix"
-  - key: pause.sword
-    ru: "Лазерный клинок"
-    en: "Laser sword"
-  - key: pause.impulse
-    ru: "Импульсная пушка"
-    en: "Impulse gun"
   - key: pause.arc
     ru: "Дуговой излучатель"
     en: "Arc emitter"
@@ -1013,31 +986,19 @@ MonoBehaviour:
     ru: "+1 кольцо\n1 точка / ёмкость 3."
     en: "+1 ring\n1 mount / capacity 3."
   - key: reward.gun
-    ru: "ПУШКА"
-    en: "GUN"
+    ru: "ПИСТОЛЕТ"
+    en: "PISTOL"
   - key: reward.gunDescription
     ru: "ОРУЖИЕ\nАвтоматический дальний выстрел.\nНужна 1 свободная точка."
     en: "WEAPON\nAutomatic ranged fire.\nRequires 1 free mount."
-  - key: reward.sword
-    ru: "ЛАЗЕРНЫЙ КЛИНОК"
-    en: "LASER BLADE"
-  - key: reward.swordDescription
-    ru: "ОРУЖИЕ\nКонтактный режущий клинок.\nНужна 1 свободная точка."
-    en: "WEAPON\nContact cutting blade.\nRequires 1 free mount."
-  - key: reward.impulse
-    ru: "ИМПУЛЬСНАЯ ПУШКА"
-    en: "IMPULSE GUN"
-  - key: reward.impulseDescription
-    ru: "ОРУЖИЕ\nУрон и отталкивание.\nНужна 1 свободная точка."
-    en: "WEAPON\nDamage and knockback.\nRequires 1 free mount."
   - key: reward.arc
-    ru: "ДУГОВОЙ ИЗЛУЧАТЕЛЬ"
-    en: "ARC EMITTER"
+    ru: "ЛАЗЕР"
+    en: "LASER"
   - key: reward.arcDescription
     ru: "ОРУЖИЕ\nРазряд между врагами.\nНужна 1 свободная точка."
     en: "WEAPON\nArc between enemies.\nRequires 1 free mount."
   - key: reward.link
-    ru: "УЗЛЫ СВЯЗИ"
+    ru: "СВЯЗЫВАЮЩИЕСЯ ШАРИКИ"
     en: "LINK NODES"
   - key: reward.linkDescription
     ru: "ОРУЖИЕ\nУстановите два узла: между ними повреждающая связь.\nНужны 2 свободные точки."
@@ -1082,14 +1043,14 @@ MonoBehaviour:
     ru: "ЯДРО III"
     en: "CORE III"
   - key: reward.coreWave1
-    ru: "ЯДРО\n1 ВОЛНА"
-    en: "CORE\n1 WAVE"
+    ru: "1 волна по орбитам каждые 7,5 с. Активирует готовое оружие по его обычным правилам."
+    en: "Every 7.5 s: 1 wave activates weapons ring by ring, respecting readiness and normal weapon rules."
   - key: reward.coreWave2
-    ru: "ЯДРО\n2 ВОЛНЫ"
-    en: "CORE\n2 WAVES"
+    ru: "2 волны по орбитам каждые 6,5 с. Активируют готовое оружие по его обычным правилам."
+    en: "Every 6.5 s: 2 waves activate weapons ring by ring, respecting readiness and normal weapon rules."
   - key: reward.coreWave3
-    ru: "ЯДРО\n3 ВОЛНЫ"
-    en: "CORE\n3 WAVES"
+    ru: "3 волны по орбитам каждые 5,5 с. Активируют готовое оружие по его обычным правилам."
+    en: "Every 5.5 s: 3 waves activate weapons ring by ring, respecting readiness and normal weapon rules."
   - key: reward.matrix
     ru: "МАТРИЦА СВЯЗЕЙ"
     en: "LINK MATRIX"
@@ -1112,11 +1073,11 @@ MonoBehaviour:
     ru: "КОЛЬЦО\nПредел точек +1 (до 6).\n"
     en: "RING\nMount capacity +1 (up to 6).\n"
   - key: reward.powerDetail
-    ru: "КОЛЬЦО\nУрон всех модулей ×1.25.\n"
-    en: "RING\nAll module damage ×1.25.\n"
+    ru: "Урон оружия одной выбранной орбиты ×1,25.\nПример — "
+    en: "Weapon damage on one selected ring ×1.25.\nExample — "
   - key: reward.speedDetail
-    ru: "КОЛЬЦО\nСкорость движения модулей ×1.25.\n"
-    en: "RING\nModule movement speed ×1.25.\n"
+    ru: "Скорость вращения одной выбранной орбиты ×1,25.\nПример — "
+    en: "Rotation speed of one selected ring ×1.25.\nExample — "
   - key: reward.ringTarget
     ru: "Кольцо {0}: "
     en: "Ring {0}: "
@@ -1222,12 +1183,6 @@ MonoBehaviour:
   - key: orbit.move.gun
     ru: "ПУШКА"
     en: "GUN"
-  - key: orbit.move.sword
-    ru: "ЛАЗЕРНЫЙ КЛИНОК"
-    en: "LASER BLADE"
-  - key: orbit.move.impulse
-    ru: "ИМПУЛЬСНАЯ ПУШКА"
-    en: "IMPULSE GUN"
   - key: orbit.move.arc
     ru: "ДУГОВОЙ ИЗЛУЧАТЕЛЬ"
     en: "ARC EMITTER"
@@ -1244,8 +1199,8 @@ MonoBehaviour:
     ru: "Собирай опыт и усиливай сборку"
     en: "Collect XP and strengthen your build"
   - key: onboarding.slowField
-    ru: "Удерживай ПКМ — замедлить врагов рядом"
-    en: "Hold RMB to slow nearby enemies"
+    ru: "ПКМ — вести станцию к курсору; Shift — замедлить время"
+    en: "Hold RMB to steer the station; Shift slows time"
   - key: reward.panel.special
     ru: "УСИЛЕННАЯ АНОМАЛИЯ"
     en: "ENHANCED ANOMALY"
@@ -1691,11 +1646,11 @@ MonoBehaviour:
     ru: "Нужны установленное орбитальное оружие и готовая система наград."
     en: "Mounted orbital weapons and ready reward services are required."
   - key: event.relay.retry
-    ru: "Попробуйте снова: ведите орбитальное оружие к активному ядру. Удерживайте ПКМ для замедления времени."
-    en: "Try again: guide orbital weapons to the active core. Hold RMB for Bullet Time."
+    ru: "Попробуйте снова: ведите орбитальное оружие к активному ядру удержанием ПКМ. Shift — замедление времени."
+    en: "Try again: hold RMB to guide orbital weapons to the active core. Shift activates Bullet Time."
   - key: tutorial.relay
-    ru: "Коснитесь активного ядра орбитальным оружием. Стабилизируйте три ядра, затем набирайте золото. Удерживайте ПКМ для замедления времени."
-    en: "Touch the active core with orbital weapons. Stabilize three cores, then earn gold. Hold RMB for Bullet Time."
+    ru: "Коснитесь активного ядра орбитальным оружием. Стабилизируйте три ядра, затем набирайте золото. ПКМ — вести станцию; Shift — замедление времени."
+    en: "Touch the active core with orbital weapons. Stabilize three cores, then earn gold. RMB steers the station; Shift activates Bullet Time."
   - key: event.corridor.gates
     ru: "ШЛЮЗЫ"
     en: "GATES"
@@ -1717,6 +1672,48 @@ MonoBehaviour:
   - key: content.temporarilyUnavailable
     ru: "ВРЕМЕННО НЕДОСТУПНО"
     en: "TEMPORARILY UNAVAILABLE"
+  - key: reward.saw
+    ru: "Пила"
+    en: "Saw"
+  - key: reward.sawDescription
+    ru: "Вращающийся диск: урон при реальном контакте, повтор через 0,32 с. Нужна 1 свободная точка."
+    en: "Rotating disc deals damage on contact, once per 0.32 s. Requires 1 free mount."
+  - key: reward.shotgun
+    ru: "Дробовик"
+    en: "Shotgun"
+  - key: reward.shotgunDescription
+    ru: "7 дробин со скоростью 10 м/с. Щит теряет не более 1 прочности за залп. Нужна 1 свободная точка."
+    en: "7 pellets at 10 m/s. A shield loses at most 1 durability per volley. Requires 1 free mount."
+  - key: reward.sniper
+    ru: "Снайперка"
+    en: "Sniper"
+  - key: reward.sniperDescription
+    ru: "Снаряд 120 м/с пробивает щит без расхода его прочности. Нужна 1 свободная точка."
+    en: "A 120 m/s projectile bypasses shields without consuming durability. Requires 1 free mount."
+  - key: reward.shootingDamage
+    ru: "Стрелковый урон"
+    en: "Shooting damage"
+  - key: reward.shootingDamageDescription
+    ru: "Урон всех стрелковых оружий ×1,20, включая полученные позднее."
+    en: "All shooting weapons deal ×1.20 damage, including weapons acquired later."
+  - key: reward.shootingRate
+    ru: "Частота стрельбы"
+    en: "Fire rate"
+  - key: reward.shootingRateDescription
+    ru: "Частота всех стрелковых оружий ×1,15, включая полученные позднее."
+    en: "All shooting weapons fire ×1.15 faster, including weapons acquired later."
+  - key: reward.contactDamage
+    ru: "Контактный урон"
+    en: "Contact damage"
+  - key: reward.contactDamageDescription
+    ru: "Урон пил и связей шариков ×1,20, включая полученные позднее."
+    en: "Saws and node links deal ×1.20 damage, including weapons acquired later."
+  - key: reward.contactSize
+    ru: "Размер контакта"
+    en: "Contact size"
+  - key: reward.contactSizeDescription
+    ru: "Диаметр пил и ширина повреждающих связей ×1,15, включая будущие. Радиусы орбит прежние."
+    en: "Saw diameter and damaging link width ×1.15, including future weapons. Ring radii stay unchanged."
   - key: content.progressPaused
     ru: "Прогресс сохранён. Задание временно приостановлено и не влияет на следующий забег."
     en: "Progress saved. This assignment is temporarily paused and does not affect the next run."

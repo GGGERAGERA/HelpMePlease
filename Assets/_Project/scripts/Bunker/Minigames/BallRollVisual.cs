@@ -40,6 +40,9 @@ public class BallRollVisual : MonoBehaviour
     [Tooltip("Жёсткость приклейки мяча к точке ведения (больше = мгновеннее переезжает на новую сторону)")] public float dribbleStiffness = 40f;
     [Tooltip("Радиус области, в которой мяч дрожит вокруг точки ведения")] public float dribbleJitterRadius = 0.06f;
     [Tooltip("Частота дрожания")] public float dribbleJitterFreq = 10f;
+    [Tooltip("Перемещать мяч по орбите при подготовке удара (мячи галереи)")]
+    [SerializeField] private bool orbitWhileAiming;
+    [Min(1f)] public float dribbleOrbitSpeed = 360f;
 
     [Header("Зоны")]
     [Tooltip("Радиус триггера: внутри можно заряжать удар")] public float kickZoneRadius = 2f;
@@ -87,6 +90,8 @@ public class BallRollVisual : MonoBehaviour
     private Transform _kicker;
     private Rigidbody2D _kickerRb;
     private Collider2D _kickerSolid;
+    private Collider2D _ignoredPlayerSolid;
+    private bool _restorePlayerCollisionWhenClear;
     private readonly List<Collider2D> _ballSolids = new List<Collider2D>();
     private int _playerContacts;
     private Vector2 _lastKickerPos;
@@ -96,6 +101,9 @@ public class BallRollVisual : MonoBehaviour
     private bool _wasInRange;
     private bool _dribbling;
     private Vector2 _leadDir;
+    private Vector2 _dribbleOffset;
+    private Vector2 _lastDribbleKickerPos;
+    private bool _wasDribbleMoving;
     private float _chargeT;
     private float _charge01;
     private float _touchKickNext;
@@ -146,6 +154,7 @@ public class BallRollVisual : MonoBehaviour
     {
         CancelAim(true);
         if (_dribbling) StopDribble();
+        SetIgnorePlayerCollision(false, true);
         ReleaseActiveRangeBall();
         if (_ring != null) _ring.gameObject.SetActive(false);
         SetAimVisualVisible(false);
@@ -276,7 +285,6 @@ public class BallRollVisual : MonoBehaviour
                     : Mathf.Clamp01(_chargeT / chargeTime);
 
                 UpdateSlider(true);
-                DrawRay();
             }
             else
             {
@@ -317,12 +325,14 @@ public class BallRollVisual : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (_dribbling) UpdateDribble();
+        if (_restorePlayerCollisionWhenClear) SetIgnorePlayerCollision(false);
+        if (_dribbling || (orbitWhileAiming && _aiming)) UpdateDribble();
         _rb.linearVelocity = Vector2.ClampMagnitude(_rb.linearVelocity, maxSpeed);
     }
 
     void LateUpdate()
     {
+        if (_aiming) DrawRay();
         if (visual == null) return;
         Vector2 cur = transform.position;
         Vector2 delta = cur - _prev;
@@ -342,54 +352,110 @@ public class BallRollVisual : MonoBehaviour
     void StartDribble()
     {
         _dribbling = true;
-        _leadDir = ((Vector2)transform.position - (Vector2)_kicker.position).normalized;
+        CaptureDribbleOffset();
         SetIgnorePlayerCollision(true);
     }
 
     void StopDribble()
     {
         _dribbling = false;
-        SetIgnorePlayerCollision(false);
+        SetIgnorePlayerCollision(orbitWhileAiming && _aiming);
     }
 
-    void SetIgnorePlayerCollision(bool ignore)
+    void SetIgnorePlayerCollision(bool ignore, bool forceRestore = false)
     {
-        if (_kickerSolid == null) return;
+        Collider2D playerSolid = !ignore && _ignoredPlayerSolid != null
+            ? _ignoredPlayerSolid : _kickerSolid;
+        if (playerSolid == null) return;
+        // The authored orbit can overlap the player's offset foot collider.
+        // Restore this contact after separation so it cannot deflect the launch.
+        if (!ignore && !forceRestore && orbitWhileAiming)
+        {
+            foreach (var c in _ballSolids)
+                if (c != null && c.Distance(playerSolid).isOverlapped)
+                {
+                    _restorePlayerCollisionWhenClear = true;
+                    return;
+                }
+        }
         foreach (var c in _ballSolids)
-            Physics2D.IgnoreCollision(c, _kickerSolid, ignore);
+            if (c != null) Physics2D.IgnoreCollision(c, playerSolid, ignore);
+        _ignoredPlayerSolid = ignore ? playerSolid : null;
+        _restorePlayerCollisionWhenClear = false;
     }
 
     void UpdateDribble()
     {
         if (_kicker == null) { StopDribble(); return; }
 
-        // сторона переключается в тот же кадр, что и движение игрока
-        if (_kickerStep.sqrMagnitude > 1e-8f) _leadDir = _kickerStep.normalized;
-        else if (_leadDir.sqrMagnitude < 1e-4f) _leadDir = Vector2.down;
+        // Sample physics positions together, rather than reusing a render-frame delta.
+        Vector2 kickerPosition = KickerPhysicsPosition;
+        float dt = Time.fixedDeltaTime;
+        Vector2 step = kickerPosition - _lastDribbleKickerPos;
+        _lastDribbleKickerPos = kickerPosition;
+        bool moving = step.sqrMagnitude > .05f * .05f * dt * dt;
+        bool orbiting = orbitWhileAiming && _aiming;
 
-        // точка на луче движения на дистанции от пивота
-        Vector2 anchor = (Vector2)_kicker.position + _leadDir * dribbleDistance;
+        // Stop at the reached position, including when a turn is still in progress.
+        if (!moving && !orbiting && _wasDribbleMoving)
+            _dribbleOffset = _rb.position - kickerPosition;
+        _wasDribbleMoving = moving;
 
-        // «живое» дрожание вокруг точки ведения
-        float t = Time.time * dribbleJitterFreq;
-        Vector2 jitter = new Vector2(
-            Mathf.PerlinNoise(t, 7.31f) * 2f - 1f,
-            Mathf.PerlinNoise(t, 3.77f) * 2f - 1f) * dribbleJitterRadius;
-        jitter *= Mathf.Lerp(0.4f, 1f, Mathf.Clamp01(_kickerSpeed / 6f));
+        Vector2 jitter = Vector2.zero;
+        if (orbiting)
+        {
+            _leadDir = GetKickDirection();
+            Vector2 offset = _rb.position - kickerPosition;
+            float angle = offset.sqrMagnitude > 1e-6f
+                ? Mathf.Atan2(offset.y, offset.x) * Mathf.Rad2Deg
+                : Mathf.Atan2(_leadDir.y, _leadDir.x) * Mathf.Rad2Deg;
+            float targetAngle = Mathf.Atan2(_leadDir.y, _leadDir.x) * Mathf.Rad2Deg;
+            angle = Mathf.MoveTowardsAngle(angle, targetAngle, dribbleOrbitSpeed * dt);
+            float distance = Mathf.Lerp(offset.magnitude, dribbleDistance,
+                1f - Mathf.Exp(-dribbleStiffness * dt));
+            _dribbleOffset = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad),
+                Mathf.Sin(angle * Mathf.Deg2Rad)) * distance;
 
-        // приклейка: скорость мяча полностью наша
-        _rb.linearVelocity = (anchor + jitter - (Vector2)transform.position) * dribbleStiffness;
+        }
+        else if (moving)
+        {
+            // Normal dribbling keeps the original responsive movement-facing target.
+            // Only kick preparation rotates that target along an orbit.
+            _leadDir = step.normalized;
+            _dribbleOffset = _leadDir * dribbleDistance;
+            float t = Time.time * dribbleJitterFreq;
+            jitter = new Vector2(Mathf.PerlinNoise(t, 7.31f) * 2f - 1f,
+                Mathf.PerlinNoise(t, 3.77f) * 2f - 1f) * dribbleJitterRadius;
+            jitter *= Mathf.Lerp(.4f, 1f, Mathf.Clamp01(step.magnitude / dt / 6f));
+        }
+
+        // Drive the existing dynamic body; walls and other balls retain their contacts.
+        float followRate = moving && !orbiting ? dribbleStiffness : 1f / dt;
+        _rb.linearVelocity = (kickerPosition + _dribbleOffset + jitter - _rb.position) * followRate;
+    }
+
+    Vector2 KickerPhysicsPosition => _kickerRb != null
+        ? _kickerRb.position : (Vector2)_kicker.position;
+
+    void CaptureDribbleOffset()
+    {
+        _lastDribbleKickerPos = KickerPhysicsPosition;
+        _dribbleOffset = _rb.position - _lastDribbleKickerPos;
+        _wasDribbleMoving = false;
     }
 
     // ================= УДАР =================
 
     void DoKick()
     {
+        Vector2 from = _rb.position;
+        Vector2 direction = GetKickDirection();
+        bool controlledOrbit = orbitWhileAiming && (_dribbling || _aiming);
+        if (controlledOrbit) CancelAim(false);
         if (_dribbling) StopDribble();
 
-        Vector2 from = transform.position;
-        Vector2 direction = MouseWorld() - from;
-        if (direction.sqrMagnitude < 1e-6f) direction = Vector2.up;
+        // Orbital preparation must not add a sideways velocity to the shot.
+        if (controlledOrbit) _rb.linearVelocity = Vector2.zero;
 
         Kick(direction, Mathf.Lerp(minPower, maxPower, _charge01));
 
@@ -406,6 +472,12 @@ public class BallRollVisual : MonoBehaviour
         _chargeT = 0f;
         _charge01 = 0f;
 
+        if (orbitWhileAiming && _kicker != null)
+        {
+            CaptureDribbleOffset();
+            SetIgnorePlayerCollision(true);
+        }
+
         if (!_ownsSlowMotion && Time.timeScale > 0f)
         {
             _timeScaleBeforeAim = Time.timeScale;
@@ -416,6 +488,15 @@ public class BallRollVisual : MonoBehaviour
 
     void CancelAim(bool immediateTimeRestore)
     {
+        if (_aiming && orbitWhileAiming && _kicker != null)
+        {
+            CaptureDribbleOffset();
+            if (!_dribbling)
+            {
+                _rb.linearVelocity = Vector2.zero;
+                SetIgnorePlayerCollision(false);
+            }
+        }
         _aiming = false;
         UpdateSlider(false);
         SetAimVisualVisible(false);
@@ -573,15 +654,21 @@ public class BallRollVisual : MonoBehaviour
 
     Vector2 MouseWorld() => _cam.ScreenToWorldPoint(Input.mousePosition);
 
+    Vector2 GetKickDirection()
+    {
+        Vector2 origin = orbitWhileAiming && _kicker != null
+            ? KickerPhysicsPosition : _rb.position;
+        Vector2 direction = MouseWorld() - origin;
+        return direction.sqrMagnitude > 1e-6f ? direction.normalized : Vector2.up;
+    }
+
     void DrawRay()
     {
         if (_line == null || _arrowHead == null)
             return;
 
         Vector2 from = transform.position;
-        Vector2 dirV = MouseWorld() - from;
-        if (dirV.sqrMagnitude < 1e-6f) dirV = Vector2.up;
-        dirV.Normalize();
+        Vector2 dirV = GetKickDirection();
 
         float len = Mathf.Lerp(rayMinLength, rayMaxLength, _charge01);
         _line.SetPosition(0, from);

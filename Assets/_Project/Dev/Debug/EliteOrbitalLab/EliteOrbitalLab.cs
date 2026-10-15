@@ -82,7 +82,7 @@ namespace Subject42.DebugLabs.EliteOrbit
             ring.Radius=(WeaponLoad==1 ? 3.25f : 1.3f)-Presentation.RingRadiusPadding;
             ring.BaseRotationSpeed=80; ring.CurrentPhase=0;
             while (ring.MountCount<2) Station.AddMount(ring.StableRingId,out _);
-            var kind=WeaponLoad==2 ? OrbitalModuleKind.Pistol : OrbitalModuleKind.LaserSword;
+            var kind=WeaponLoad==2 ? OrbitalModuleKind.Pistol : OrbitalModuleKind.Saw;
             for (int i=0;i<2;i++) if (!Station.InstallModule(kind,ring.StableRingId,i,out var error)) Debug.LogError(error,this);
             foreach (var runtime in Station.Rings) runtime.Tick(0);
             CameraRig.target=player.transform; CameraRig.transform.position=new Vector3(0,0,-10);

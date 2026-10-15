@@ -42,8 +42,8 @@ public sealed class GoldenPathResult
             OrbitalRewardKind.RingCapacity => rings == 0 && modules == 0 && mounts == 0 &&
                 after.Rings.Sum(r => r.MountCapacity) - before.Rings.Sum(r => r.MountCapacity) == 1,
             OrbitalRewardKind.Pistol => NewModulesAre(before, after, OrbitalModuleKind.Pistol, 1),
-            OrbitalRewardKind.LaserSword => NewModulesAre(before, after, OrbitalModuleKind.LaserSword, 1),
-            OrbitalRewardKind.ImpulseGun => NewModulesAre(before, after, OrbitalModuleKind.ImpulseGun, 1),
+            OrbitalRewardKind.Saw => NewModulesAre(before, after, OrbitalModuleKind.Saw, 1),
+            OrbitalRewardKind.Shotgun => NewModulesAre(before, after, OrbitalModuleKind.Shotgun, 1),
             OrbitalRewardKind.ArcEmitter => NewModulesAre(before, after, OrbitalModuleKind.ArcEmitter, 1),
             OrbitalRewardKind.LinkPair => NewModulesAre(before, after, OrbitalModuleKind.LinkNode, 2),
             OrbitalRewardKind.RingPower => after.Rings.Sum(r => r.PowerUpgradeLevel) - before.Rings.Sum(r => r.PowerUpgradeLevel) == 1,

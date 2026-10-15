@@ -11,7 +11,7 @@ public sealed class OrbitalLabCenterControl : IDisposable
     public OrbitalLabCenterControl(OrbitalStationRuntime station, Camera camera, float speedMultiplier)
     {
         center = station.GetComponent<OrbitalCenterShift>();
-        center.ConfigureLabPointerControl(camera, speedMultiplier);
+        center.ConfigurePointerControl(camera, speedMultiplier);
         station.LabShiftBulletTime = true;
     }
     public void Tick(float maximumOffset, float moveSpeed, float returnSpeed) =>

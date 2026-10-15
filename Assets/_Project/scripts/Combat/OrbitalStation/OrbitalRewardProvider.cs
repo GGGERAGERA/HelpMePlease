@@ -8,21 +8,26 @@ namespace Subject42.Combat.OrbitalStation
 {
     public enum OrbitalRewardKind
     {
-        Pistol,
-        LaserSword,
-        ImpulseGun,
-        ArcEmitter,
-        LinkPair,
-        RingSpeed,
-        RingPower,
-        AddMount,
-        CoreUpgrade,
-        LinkMatrix,
-        MaxHealth,
-        MoveSpeed,
-        ModuleDamage,
-        NewRing,
-        RingCapacity
+        Pistol = 0,
+        ArcEmitter = 3,
+        LinkPair = 4,
+        RingSpeed = 5,
+        RingPower = 6,
+        AddMount = 7,
+        CoreUpgrade = 8,
+        LinkMatrix = 9,
+        MaxHealth = 10,
+        MoveSpeed = 11,
+        ModuleDamage = 12,
+        NewRing = 13,
+        RingCapacity = 14,
+        Sniper = 15,
+        Shotgun = 16,
+        Saw = 17,
+        ShootingDamage = 18,
+        ShootingRate = 19,
+        ContactDamage = 20,
+        ContactSize = 21
     }
 
     public sealed class OrbitalRewardData : UpgradeData
@@ -35,7 +40,7 @@ namespace Subject42.Combat.OrbitalStation
         internal OrbitalRewardProvider PresentationOwner;
     }
 
-    public sealed class OrbitalRewardProvider : IDisposable
+    public sealed partial class OrbitalRewardProvider : IDisposable
     {
         private readonly OrbitalProgressionConfig config;
         private readonly List<OrbitalRewardData> definitions = new();
@@ -92,8 +97,9 @@ namespace Subject42.Combat.OrbitalStation
         public static OrbitalModuleKind? GetModuleKind(OrbitalRewardKind kind) => kind switch
         {
             OrbitalRewardKind.Pistol => OrbitalModuleKind.Pistol,
-            OrbitalRewardKind.LaserSword => OrbitalModuleKind.LaserSword,
-            OrbitalRewardKind.ImpulseGun => OrbitalModuleKind.ImpulseGun,
+            OrbitalRewardKind.Sniper => OrbitalModuleKind.Sniper,
+            OrbitalRewardKind.Saw => OrbitalModuleKind.Saw,
+            OrbitalRewardKind.Shotgun => OrbitalModuleKind.Shotgun,
             OrbitalRewardKind.ArcEmitter => OrbitalModuleKind.ArcEmitter,
             OrbitalRewardKind.LinkPair => OrbitalModuleKind.LinkNode,
             _ => null
@@ -170,6 +176,8 @@ namespace Subject42.Combat.OrbitalStation
                     ? freeMounts >= (moduleKind.Value == OrbitalModuleKind.LinkNode ? 2 : 1)
                     : reward.RewardKind switch
                 {
+                    OrbitalRewardKind.ShootingDamage or OrbitalRewardKind.ShootingRate or
+                    OrbitalRewardKind.ContactDamage or OrbitalRewardKind.ContactSize => state.CanUpgradeCategory(reward.RewardKind),
                     OrbitalRewardKind.NewRing => state.CanAddRing(out _),
                     OrbitalRewardKind.ModuleDamage => state.Modules.Any(module =>
                         state.CanUpgradeModuleDamage(module.StableModuleId, out _)),
@@ -203,12 +211,17 @@ namespace Subject42.Combat.OrbitalStation
             Add(OrbitalRewardKind.Pistol, "reward.gun",
                 "reward.gunDescription",
                 config.ModuleWeight, true);
-            Add(OrbitalRewardKind.LaserSword, "reward.sword",
-                "reward.swordDescription",
+            Add(OrbitalRewardKind.Saw, "reward.saw",
+                "reward.sawDescription",
                 config.ModuleWeight, true);
-            Add(OrbitalRewardKind.ImpulseGun, "reward.impulse",
-                "reward.impulseDescription",
+            Add(OrbitalRewardKind.Shotgun, "reward.shotgun",
+                "reward.shotgunDescription",
                 config.ModuleWeight, true);
+            Add(OrbitalRewardKind.Sniper, "reward.sniper", "reward.sniperDescription", config.ModuleWeight, true);
+            Add(OrbitalRewardKind.ShootingDamage, "reward.shootingDamage", "reward.shootingDamageDescription", config.SubjectWeight, false);
+            Add(OrbitalRewardKind.ShootingRate, "reward.shootingRate", "reward.shootingRateDescription", config.SubjectWeight, false);
+            Add(OrbitalRewardKind.ContactDamage, "reward.contactDamage", "reward.contactDamageDescription", config.SubjectWeight, false);
+            Add(OrbitalRewardKind.ContactSize, "reward.contactSize", "reward.contactSizeDescription", config.SubjectWeight, false);
             Add(OrbitalRewardKind.ArcEmitter, "reward.arc",
                 "reward.arcDescription",
                 config.ModuleWeight, true);
@@ -295,12 +308,25 @@ namespace Subject42.Combat.OrbitalStation
             data.category = arena ? UpgradeCategory.Behavior : UpgradeCategory.Numeric;
             data.upgradeType = UpgradeType.OrbitalReward;
             data.RewardKind = kind;
+            data.EffectCategory = GetEffectCategory(kind);
             data.PresentationOwner = this;
             data.BodyUpgrade = bodyUpgrade;
             data.Weight = weight;
             data.RequiresArenaSelection = arena;
             data.InNormalPool = normalPool;
             definitions.Add(data);
+        }
+
+        public static OrbitalUpgradeCategory GetEffectCategory(OrbitalRewardKind kind)
+        {
+            if (GetModuleKind(kind) is OrbitalModuleKind module) return OrbitalCategories.ForModule(module);
+            return kind switch
+            {
+                OrbitalRewardKind.ShootingDamage or OrbitalRewardKind.ShootingRate or OrbitalRewardKind.ModuleDamage => OrbitalUpgradeCategory.Shooting,
+                OrbitalRewardKind.ContactDamage or OrbitalRewardKind.ContactSize or OrbitalRewardKind.LinkMatrix => OrbitalUpgradeCategory.Contact,
+                OrbitalRewardKind.MaxHealth or OrbitalRewardKind.MoveSpeed => OrbitalUpgradeCategory.Character,
+                _ => OrbitalUpgradeCategory.Orbits
+            };
         }
 
         private static UpgradeData Find(UpgradeData[] source, UpgradeType type)
@@ -323,8 +349,8 @@ namespace Subject42.Combat.OrbitalStation
         public static int GetRequiredWeaponStationLevel(
             OrbitalModuleKind kind) => kind switch
         {
-            OrbitalModuleKind.LaserSword => 2,
-            OrbitalModuleKind.ImpulseGun => 3,
+            OrbitalModuleKind.Saw => 2,
+            OrbitalModuleKind.Shotgun => 3,
             _ => 1
         };
     }

@@ -40,14 +40,15 @@ namespace Subject42.Combat.OrbitalStation
         { 1 => CoreCyan, 2 => CoreViolet, _ => CoreGold };
         [Header("Visual-only modules")]
         public GameObject PistolPrefab;
-        public GameObject LaserSwordPrefab;
-        public GameObject ImpulseGunPrefab;
+        public GameObject SawPrefab;
+        public GameObject ShotgunPrefab;
+        public GameObject SniperPrefab;
         public GameObject ArcPrefab, LinkPrefab;
 
         [Header("Module visual scale")]
         [Min(0.1f)] public float PistolVisualScale = 2.15f;
-        [Min(0.1f)] public float LaserSwordVisualScale = 1.85f;
-        [Min(0.1f)] public float ImpulseVisualScale = 2.15f;
+        [Min(0.1f)] public float SawVisualScale = 1.85f;
+        [Min(0.1f)] public float ShotgunVisualScale = 1f;
         [Min(0.1f)] public float ArcVisualScale = 0.46f;
         [Min(0.1f)] public float LinkNodeVisualScale = 0.42f;
         public int MountedWeaponSortingOffset = 12;
@@ -55,7 +56,7 @@ namespace Subject42.Combat.OrbitalStation
         [Header("Ring spatial presentation")]
         [Min(0f)] public float RingRadiusPadding = .75f;
         [Tooltip("The production blade points along local +Y; -180 aligns it across the path, along its normal.")]
-        public float LaserSwordTangentOffset = -180f;
+        public float SawTangentOffset = -180f;
 
         [Header("Figure-eight spatial presentation")]
         [Min(.1f)] public float FigureEightWidth = 1.4f;
@@ -167,18 +168,35 @@ namespace Subject42.Combat.OrbitalStation
         public GameObject GetPrefab(OrbitalModuleKind kind) => kind switch
         {
             OrbitalModuleKind.Pistol => PistolPrefab,
-            OrbitalModuleKind.LaserSword => LaserSwordPrefab,
-            OrbitalModuleKind.ImpulseGun => ImpulseGunPrefab,
+            OrbitalModuleKind.Saw => SawPrefab,
+            OrbitalModuleKind.Shotgun => ShotgunPrefab,
+            OrbitalModuleKind.Sniper => SniperPrefab,
             OrbitalModuleKind.ArcEmitter => ArcPrefab,
             OrbitalModuleKind.LinkNode => LinkPrefab,
             _ => null
         };
 
+        public OrbitalWeaponSettings GetWeaponSettings(OrbitalModuleKind kind)
+        {
+            var settings = kind switch
+            {
+                OrbitalModuleKind.Shotgun => OrbitalWeaponSettings.Shotgun(),
+                OrbitalModuleKind.Sniper => OrbitalWeaponSettings.Sniper(),
+                OrbitalModuleKind.Saw => OrbitalWeaponSettings.Saw(),
+                _ => OrbitalWeaponSettings.Pistol()
+            };
+            settings.Kind = kind;
+            settings.Category = OrbitalCategories.ForModule(kind);
+            settings.WeaponVisual = GetPrefab(kind);
+            settings.ProjectileVisual = PistolProjectilePrefab;
+            return settings;
+        }
+
         public float GetScale(OrbitalModuleKind kind) => kind switch
         {
             OrbitalModuleKind.Pistol => PistolVisualScale,
-            OrbitalModuleKind.LaserSword => LaserSwordVisualScale,
-            OrbitalModuleKind.ImpulseGun => ImpulseVisualScale,
+            OrbitalModuleKind.Saw => SawVisualScale,
+            OrbitalModuleKind.Shotgun => ShotgunVisualScale,
             OrbitalModuleKind.ArcEmitter => ArcVisualScale,
             OrbitalModuleKind.LinkNode => LinkNodeVisualScale,
             _ => 1f

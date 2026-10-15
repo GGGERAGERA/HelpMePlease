@@ -433,12 +433,12 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private void Start()
     {
         BindBotLabScene();
-        if (characterSpawner != null)
+        if (characterSpawner != null && !IsMvpDebugMenu)
         {
             EnsureProductionSectorDebug();
             LoadVisualProductionValues();
         }
-        else
+        else if (!IsMvpDebugMenu)
             activeTab = DebugTab.Additional;
         BuildMenu();
         RefreshTab(activeTab);
@@ -450,6 +450,12 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private void Update()
     {
         BindInputOwner();
+        if (IsMvpDebugMenu && isOpen && Input.GetKeyDown(KeyCode.Escape))
+        {
+            inputOwner?.TryConsumeEscape();
+            CloseMenu();
+            return;
+        }
         UpdateBotLabTelemetry();
         if (isOpen && activeXpCounter != null &&
             activeXpCounter.gameObject.activeInHierarchy &&
@@ -544,6 +550,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
 #endif
         ResolveSceneReferences();
+        if (IsMvpDebugMenu) upgradeManager?.DebugCancelCatalogueReward();
         FindFirstObjectByType<OrbitalInteractionController>()?.PrepareForExternalPause();
         previousTimeScale = Time.timeScale;
         previousCursorVisible = Cursor.visible;
@@ -794,7 +801,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         worldRuleVisual ??= FindFirstObjectByType<WorldRuleVisual>();
         playerOrbitVisual ??= FindFirstObjectByType<PlayerWeaponOrbitVisual>();
         cameraFollow ??= FindFirstObjectByType<CameraFollow>();
-        ApplyVisualProductionToLateTargets();
+        if (!IsMvpDebugMenu) ApplyVisualProductionToLateTargets();
 
 
     }
@@ -889,7 +896,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         tabBar.anchoredPosition = new Vector2(0f, -62f);
         tabBar.sizeDelta = new Vector2(0f, 54f);
 
-        string[] labels = TabLabels;
+        string[] labels = IsMvpDebugMenu ? MvpTabLabels : TabLabels;
         for (int i = 0; i < 4; i++)
         {
             int captured = i;
@@ -926,13 +933,13 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         }
 
         BuildVisualBackButton(header);
-        if (characterSpawner != null)
+        if (characterSpawner != null && !IsMvpDebugMenu)
         {
             BuildVisualActionBar(tabRoots[(int)DebugTab.VisualTest].transform);
             BuildFeelActionBar(tabRoots[(int)DebugTab.FeelTest].transform);
         }
 
-        BuildPreviewPanel();
+        if (!IsMvpDebugMenu) BuildPreviewPanel();
         BuildFeelTooltip();
     }
 
@@ -1270,6 +1277,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private void SelectTab(DebugTab tab, bool refresh = true)
     {
+        if (IsMvpDebugMenu && (int)tab >= MvpTabLabels.Length) return;
         activeTab = tab;
         if (isOpen)
         {
@@ -1285,7 +1293,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         for (int i = 0; i < tabRoots.Length; i++)
         {
             bool selected = i == (int)tab;
-            tabRoots[i].SetActive(selected);
+            if (tabRoots[i] != null) tabRoots[i].SetActive(selected);
 
             if (tabButtonImages[i] != null)
             {
@@ -1321,6 +1329,12 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             GameObject oldRow = contentRoot.GetChild(i).gameObject;
             oldRow.SetActive(false);
             Destroy(oldRow);
+        }
+
+        if (IsMvpDebugMenu)
+        {
+            BuildMvpTab((int)tab);
+            return;
         }
 
         if (!IsRuntimeLabTab(tab))
@@ -1369,6 +1383,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     {
         if (menuPanel == null)
             return;
+        if (IsMvpDebugMenu) { ApplyMvpViewportLayout(); return; }
 
         bool compact = IsRuntimeLabTab(activeTab);
         if (compact)
@@ -2076,8 +2091,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
                 RefreshCurrentTab();
             });
         AddOrbitalModuleRow("Add Pistol", OrbitalModuleKind.Pistol, station);
-        AddOrbitalModuleRow("Add Laser Sword", OrbitalModuleKind.LaserSword, station);
-        AddOrbitalModuleRow("Add Impulse Gun", OrbitalModuleKind.ImpulseGun, station);
+        AddOrbitalModuleRow("Add Saw", OrbitalModuleKind.Saw, station);
+        AddOrbitalModuleRow("Add Shotgun", OrbitalModuleKind.Shotgun, station);
         AddOrbitalModuleRow("Add Arc Emitter", OrbitalModuleKind.ArcEmitter, station);
         AddOrbitalModuleRow("Add Link Node", OrbitalModuleKind.LinkNode, station);
         AddRow("Selected Ring Speed", available ? "×1.25" : "NOT ACTIVE",
@@ -2250,10 +2265,10 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         AddSectionTitle("READABILITY SETTINGS", "Production config · visual only");
         AddSliderRow("Pistol Visual Scale", visual.PistolVisualScale, 0.5f, 2f,
             value => { visual.PistolVisualScale = value; refreshVisuals(value); }, "0.00");
-        AddSliderRow("Laser Sword Visual Scale", visual.LaserSwordVisualScale, 0.5f, 2f,
-            value => { visual.LaserSwordVisualScale = value; refreshVisuals(value); }, "0.00");
-        AddSliderRow("Impulse Visual Scale", visual.ImpulseVisualScale, 0.5f, 2f,
-            value => { visual.ImpulseVisualScale = value; refreshVisuals(value); }, "0.00");
+        AddSliderRow("Saw Visual Scale", visual.SawVisualScale, 0.5f, 2f,
+            value => { visual.SawVisualScale = value; refreshVisuals(value); }, "0.00");
+        AddSliderRow("Shotgun Visual Scale", visual.ShotgunVisualScale, 0.5f, 2f,
+            value => { visual.ShotgunVisualScale = value; refreshVisuals(value); }, "0.00");
         AddSliderRow("Arc Visual Scale", visual.ArcVisualScale, 0.15f, 0.8f,
             value => { visual.ArcVisualScale = value; refreshVisuals(value); }, "0.00");
         AddSliderRow("Link Node Visual Scale", visual.LinkNodeVisualScale, 0.15f, 0.8f,

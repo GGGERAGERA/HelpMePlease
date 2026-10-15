@@ -92,7 +92,7 @@ public sealed class BotController : IDisposable
         {
             Vector2 delta = (Vector2)boss.transform.position - position;
             Vector2 tangent = new(-delta.y, delta.x);
-            float swordRadius = orbital.Modules.Where(m => m.ModuleType == OrbitalModuleKind.LaserSword)
+            float swordRadius = orbital.Modules.Where(m => m.ModuleType == OrbitalModuleKind.Saw)
                 .Select(m => orbital.Rings.First(r => r.StableRingId == m.StableRingId).Radius).DefaultIfEmpty(0f).Max();
             float combatRadius = swordRadius > 0f ? Mathf.Max(2.5f, swordRadius + .25f) : 4.5f;
             Vector2 desired = delta.normalized * Mathf.Clamp((delta.magnitude - combatRadius) * 2f, -2f, 2f) + tangent.normalized;

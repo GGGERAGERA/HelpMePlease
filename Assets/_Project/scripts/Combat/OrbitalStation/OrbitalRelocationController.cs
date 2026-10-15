@@ -237,8 +237,9 @@ namespace Subject42.Combat.OrbitalStation
         internal static string DisplayName(OrbitalModuleKind kind) => kind switch
         {
             OrbitalModuleKind.Pistol => LocalizationService.EnsureExists().Get("orbit.move.gun"),
-            OrbitalModuleKind.LaserSword => LocalizationService.EnsureExists().Get("orbit.move.sword"),
-            OrbitalModuleKind.ImpulseGun => LocalizationService.EnsureExists().Get("orbit.move.impulse"),
+            OrbitalModuleKind.Saw => "Пила",
+            OrbitalModuleKind.Shotgun => "Дробовик",
+            OrbitalModuleKind.Sniper => "Снайперка",
             OrbitalModuleKind.ArcEmitter => LocalizationService.EnsureExists().Get("orbit.move.arc"),
             OrbitalModuleKind.LinkNode => LocalizationService.EnsureExists().Get("orbit.move.link"),
             _ => kind.ToString().ToUpperInvariant()

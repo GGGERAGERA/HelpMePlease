@@ -1,0 +1,4 @@
+FAIL: System.Exception: production presentation references: required Sniper presentation prefab/view is missing
+  at ProductionOrbitalTransferSmoke.Check (System.Boolean pass, System.String message) [0x0001f] in D:\fork\HelpMePlease\Assets\_Project\Dev\Editor\OrbitalLab\ProductionOrbitalTransferSmoke.cs:40 
+  at ProductionOrbitalTransferSmoke.Run () [0x000ab] in D:\fork\HelpMePlease\Assets\_Project\Dev\Editor\OrbitalLab\ProductionOrbitalTransferSmoke.cs:56 
+  at ProductionOrbitalTransferSmoke.Poll () [0x0002b] in D:\fork\HelpMePlease\Assets\_Project\Dev\Editor\OrbitalLab\ProductionOrbitalTransferSmoke.cs:90 

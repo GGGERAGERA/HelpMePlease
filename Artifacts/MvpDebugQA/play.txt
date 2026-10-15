@@ -1,0 +1,109 @@
+PASS: 18 active source definitions, no retired/lab-only rewards
+PASS: core requires two orbits
+PASS: F1 open pauses and blocks station input
+PASS: menu blocks movement directions and relocation
+PASS: menu Escape is consumed before pause handling
+PASS: F1 close restores time and input
+PASS: selected orbit capacity disables add-point button
+PASS: selected orbit capacity disables add-point button
+PASS: selected orbit capacity disables add-point button
+PASS: F1 runtime adds orbits and points on selected orbit
+PASS: pair placement begins
+PASS: first link target only stages preview
+PASS: cancel staged pair
+PASS: pair cancel leaves no module, reservation or paused queue
+PASS: F1 closes into actual installation: Pistol
+PASS: reward flow terminates and restores gameplay time
+PASS: installed runtime weapon: Pistol
+PASS: F1 closes into actual installation: ArcEmitter
+PASS: reward flow terminates and restores gameplay time
+PASS: installed runtime weapon: ArcEmitter
+PASS: F1 closes into actual installation: LinkPair
+PASS: reward flow terminates and restores gameplay time
+PASS: installed runtime weapon: LinkPair
+PASS: F1 closes into actual installation: Sniper
+PASS: reward flow terminates and restores gameplay time
+PASS: installed runtime weapon: Sniper
+PASS: F1 closes into actual installation: Shotgun
+PASS: reward flow terminates and restores gameplay time
+PASS: installed runtime weapon: Shotgun
+PASS: F1 closes into actual installation: Saw
+PASS: reward flow terminates and restores gameplay time
+PASS: installed runtime weapon: Saw
+PASS: pair requires two free points, no limit bypass
+PASS: fresh real card text/mesh/icon: NewRing
+PASS: fresh real card text/mesh/icon: Pistol
+PASS: red weapon palette: Pistol
+PASS: fresh real card text/mesh/icon: Saw
+PASS: red weapon palette: Saw
+PASS: fresh real card text/mesh/icon: Shotgun
+PASS: red weapon palette: Shotgun
+PASS: fresh real card text/mesh/icon: Sniper
+PASS: red weapon palette: Sniper
+PASS: fresh real card text/mesh/icon: ShootingDamage
+PASS: fresh real card text/mesh/icon: ShootingRate
+PASS: fresh real card text/mesh/icon: ContactDamage
+PASS: fresh real card text/mesh/icon: ContactSize
+PASS: fresh real card text/mesh/icon: ArcEmitter
+PASS: red weapon palette: ArcEmitter
+PASS: fresh real card text/mesh/icon: LinkPair
+PASS: red weapon palette: LinkPair
+PASS: fresh real card text/mesh/icon: RingSpeed
+PASS: fresh real card text/mesh/icon: RingPower
+PASS: fresh real card text/mesh/icon: AddMount
+PASS: fresh real card text/mesh/icon: RingCapacity
+PASS: fresh real card text/mesh/icon: CoreUpgrade
+PASS: fresh real card text/mesh/icon: MaxHealth
+PASS: fresh real card text/mesh/icon: MoveSpeed
+PASS: category filter: 0
+PASS: category filter: 1
+PASS: category filter: 2
+PASS: category filter: 3
+PASS: available-now filter uses real restrictions
+PASS: specific normal card offered: ShootingDamage
+PASS: one actual card, no placeholders: ShootingDamage
+PASS: reward flow terminates and restores gameplay time
+PASS: specific normal card offered: ShootingRate
+PASS: one actual card, no placeholders: ShootingRate
+PASS: reward flow terminates and restores gameplay time
+PASS: specific normal card offered: ContactDamage
+PASS: one actual card, no placeholders: ContactDamage
+PASS: reward flow terminates and restores gameplay time
+PASS: specific normal card offered: ContactSize
+PASS: one actual card, no placeholders: ContactSize
+PASS: reward flow terminates and restores gameplay time
+PASS: specific normal card offered: RingPower
+PASS: one actual card, no placeholders: RingPower
+PASS: reward flow terminates and restores gameplay time
+PASS: specific normal card offered: RingSpeed
+PASS: one actual card, no placeholders: RingSpeed
+PASS: reward flow terminates and restores gameplay time
+PASS: specific normal card offered: RingCapacity
+PASS: one actual card, no placeholders: RingCapacity
+PASS: reward flow terminates and restores gameplay time
+PASS: specific normal card offered: AddMount
+PASS: one actual card, no placeholders: AddMount
+PASS: reward flow terminates and restores gameplay time
+PASS: specific normal card offered: CoreUpgrade
+PASS: one actual card, no placeholders: CoreUpgrade
+PASS: reward flow terminates and restores gameplay time
+PASS: specific normal card offered: MaxHealth
+PASS: one actual card, no placeholders: MaxHealth
+PASS: reward flow terminates and restores gameplay time
+PASS: specific normal card offered: MoveSpeed
+PASS: one actual card, no placeholders: MoveSpeed
+PASS: reward flow terminates and restores gameplay time
+PASS: specific normal card offered: NewRing
+PASS: one actual card, no placeholders: NewRing
+PASS: reward flow terminates and restores gameplay time
+PASS: specific cards actually change category/core/orbit state
+PASS: normal random three contains only real eligible choices
+UnityEngine.MissingComponentException: There is no 'CanvasGroup' attached to the "UpgradeCard_1" game object, but a script is trying to access it.
+You probably need to add a CanvasGroup to the game object "UpgradeCard_1". Or your script needs to check if the component is attached before using it.
+  at UnityEngine.Object+MarshalledUnityObject.TryThrowEditorNullExceptionObject (UnityEngine.Object unityObj, System.String parameterName) [0x000cd] in <500f267b66d74c678b3466bfed6b3d28>:0 
+  at UnityEngine.Bindings.ThrowHelper.ThrowNullReferenceException (System.Object obj) [0x00010] in <500f267b66d74c678b3466bfed6b3d28>:0 
+  at UnityEngine.CanvasGroup.set_alpha (System.Single value) [0x00006] in <c8ed1e77a2b744f38b1b98a91bbd2049>:0 
+  at MvpF1Verification+<PlayChecks>d__25.MoveNext () [0x00de1] in D:\fork\HelpMePlease\Assets\_Project\Dev\Editor\OrbitalLab\MvpF1Verification.Play.cs:230 
+  at MvpF1Verification.PollPlay () [0x00139] in D:\fork\HelpMePlease\Assets\_Project\Dev\Editor\OrbitalLab\MvpF1Verification.Play.cs:71 
+RESULT: FAIL · failures=1, runtime errors=0
+One scripted Play Mode. Physical keyboard/mouse interaction was not verified by this runner.
