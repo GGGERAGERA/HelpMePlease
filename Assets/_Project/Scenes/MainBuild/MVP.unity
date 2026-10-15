@@ -133,7 +133,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 50b27f361106c424ba3a16bb4fed840c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterSpawner
 --- !u!114 &46915847 stripped
 MonoBehaviour:
@@ -144,7 +144,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a2fae2470f28fe438776cc62dc5ca11, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeManager
 --- !u!114 &46915852 stripped
 MonoBehaviour:
@@ -155,7 +155,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bddeb846b618d9e4f8e3f0aee017ce4a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunBossSpawner
 --- !u!114 &46915853 stripped
 MonoBehaviour:
@@ -166,7 +166,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 96ba6e89b92df4e4e88cff17519952d9, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldEventSpawner
 --- !u!114 &46915855 stripped
 MonoBehaviour:
@@ -177,7 +177,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9c33b031f509c8e439c7d748d314284a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeApplier
 --- !u!114 &46915856 stripped
 MonoBehaviour:
@@ -188,7 +188,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4b2a5f7583574e0f9585af8c234f195a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunFlowController
 --- !u!114 &46915857 stripped
 MonoBehaviour:
@@ -199,7 +199,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8d45c9af52a3412b8f3dc03e9066c711, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NoDamageChallenge
 --- !u!114 &46915858 stripped
 MonoBehaviour:
@@ -210,7 +210,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a64e17d6c3b4418690bbf5f89a5a3c20, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldAccelerationRule
 --- !u!114 &46915860 stripped
 MonoBehaviour:
@@ -221,7 +221,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5a2d4ac155cd430aa125bbc06f75e85c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldHazardDirector
 --- !u!1 &101118583
 GameObject:
@@ -649,7 +649,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3f4219d9dc82473e80f80bedc0bd6f17, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BoundaryVisualAnimator
   playerHazard: {fileID: 2147020032}
   hazardStrips:
@@ -699,7 +699,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4f231c4fb786f3946a6b90b886c48677, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.StandaloneInputModule
   m_SendPointerHoverToParent: 1
   m_HorizontalAxis: Horizontal
@@ -719,7 +719,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventSystem
   m_FirstSelected: {fileID: 0}
   m_sendNavigationEvents: 1
@@ -748,7 +748,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1da2644fdaf4896468bb61b26fc07793, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelModifiersApplier
 --- !u!1 &1448544124
 GameObject:
@@ -843,7 +843,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7f24ee9e867e4d341a973e73175bf0fc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraFollow
   target: {fileID: 0}
   offset: {x: 0, y: 0, z: -10}
@@ -915,8 +915,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 073797afb82c5a1438f328866b10b3f0, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_ComponentVersion: 2
   m_LightType: 4
   m_BlendStyleIndex: 0
@@ -987,8 +987,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_RenderShadows: 1
   m_RequiresDepthTextureOption: 2
   m_RequiresOpaqueTextureOption: 2
@@ -1105,7 +1105,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6f38c3b22297d3242a4fbcef4d030c8c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraShake
 --- !u!1 &1737853143
 GameObject:
@@ -1246,7 +1246,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cdab4ae1f5ae5ae44b6751c109826ecf, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunResultView
 --- !u!1001 &1985297949
 PrefabInstance:
@@ -1302,7 +1302,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8922974676419922881, guid: 6684c495e04abb649a816c9e62c910c6, type: 3}
       propertyPath: hud
-      value:
+      value: 
       objectReference: {fileID: 2370474437954700989}
     - target: {fileID: 8922974676419922881, guid: 6684c495e04abb649a816c9e62c910c6, type: 3}
       propertyPath: role
@@ -1310,27 +1310,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8922974676419922881, guid: 6684c495e04abb649a816c9e62c910c6, type: 3}
       propertyPath: enemies
-      value:
+      value: 
       objectReference: {fileID: 6473582633285355963}
     - target: {fileID: 8922974676419922881, guid: 6684c495e04abb649a816c9e62c910c6, type: 3}
       propertyPath: rewards
-      value:
+      value: 
       objectReference: {fileID: 46915847}
     - target: {fileID: 8922974676419922881, guid: 6684c495e04abb649a816c9e62c910c6, type: 3}
       propertyPath: characters
-      value:
+      value: 
       objectReference: {fileID: 46915846}
     - target: {fileID: 8922974676419922881, guid: 6684c495e04abb649a816c9e62c910c6, type: 3}
       propertyPath: cameraFollow
-      value:
+      value: 
       objectReference: {fileID: 1586499093}
     - target: {fileID: 8922974676419922881, guid: 6684c495e04abb649a816c9e62c910c6, type: 3}
       propertyPath: gameplayArea
-      value:
+      value: 
       objectReference: {fileID: 2147020003}
     - target: {fileID: 8922974676419922881, guid: 6684c495e04abb649a816c9e62c910c6, type: 3}
       propertyPath: levelModifiers
-      value:
+      value: 
       objectReference: {fileID: 1203821959}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1473,7 +1473,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7a100000000000000000000000000003, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelAnomalyController
 --- !u!114 &2147010006 stripped
 MonoBehaviour:
@@ -1484,7 +1484,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9d5b67e1049c45b598c261d1e9dc98a1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldRuleController
 --- !u!1 &2147020001
 GameObject:
@@ -1531,7 +1531,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2f8b2309391a4c969bab052fa18c63ce, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameplayAreaService
   playableArea: {fileID: 2147020012}
   spawnArea: {fileID: 2147020022}
@@ -1733,7 +1733,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 73411aa3c53740969db97a04fd1c47be, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerBoundaryHazard
   gameplayArea: {fileID: 2147020003}
   view: {fileID: 2147020045}
@@ -1756,7 +1756,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c7ad65131d144e2a93240b0fbb50fdae, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BoundaryHazardView
 --- !u!212 &502764787993022648
 SpriteRenderer:
@@ -1846,7 +1846,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe8a79765b1d1ad4388941ee2a8540b9, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelChoicePanelView
 --- !u!1001 &1006273932492797121
 PrefabInstance:
@@ -1978,7 +1978,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b2011e8a6bc84ae9b793e02c923af103, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldLootRewardReel
 --- !u!224 &1006273932492797123 stripped
 RectTransform:
@@ -2012,7 +2012,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 618786714273626046, guid: ee995c505ce890345961efbaa7c1b0b0, type: 3}
       propertyPath: panelView
-      value:
+      value: 
       objectReference: {fileID: 1005126886403062317}
     - target: {fileID: 1909448206988704317, guid: ee995c505ce890345961efbaa7c1b0b0, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2060,27 +2060,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3242268261055518272, guid: ee995c505ce890345961efbaa7c1b0b0, type: 3}
       propertyPath: bossSpawner
-      value:
+      value: 
       objectReference: {fileID: 46915852}
     - target: {fileID: 3242268261055518272, guid: ee995c505ce890345961efbaa7c1b0b0, type: 3}
       propertyPath: characterSpawner
-      value:
+      value: 
       objectReference: {fileID: 46915846}
     - target: {fileID: 3242268261055518272, guid: ee995c505ce890345961efbaa7c1b0b0, type: 3}
       propertyPath: worldEventSpawner
-      value:
+      value: 
       objectReference: {fileID: 46915853}
     - target: {fileID: 3242268261055518272, guid: ee995c505ce890345961efbaa7c1b0b0, type: 3}
       propertyPath: worldHazardDirector
-      value:
+      value: 
       objectReference: {fileID: 46915860}
     - target: {fileID: 5473477881699791857, guid: ee995c505ce890345961efbaa7c1b0b0, type: 3}
       propertyPath: runResultView
-      value:
+      value: 
       objectReference: {fileID: 1844714996}
     - target: {fileID: 8471861960567854236, guid: ee995c505ce890345961efbaa7c1b0b0, type: 3}
       propertyPath: worldCamera
-      value:
+      value: 
       objectReference: {fileID: 1621092227}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2316,63 +2316,71 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1624291883174038400, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: targetCamera
-      value:
+      value: 
       objectReference: {fileID: 1621092227}
     - target: {fileID: 2654860671801718867, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: gameplayArea
-      value:
+      value: 
       objectReference: {fileID: 2147020003}
     - target: {fileID: 3669816306965970296, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: threat
-      value:
+      value: 
       objectReference: {fileID: 5887295859745560417}
     - target: {fileID: 3669816306965970296, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: runFlow
-      value:
+      value: 
       objectReference: {fileID: 46915856}
     - target: {fileID: 3669816306965970296, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: lootReel
-      value:
+      value: 
       objectReference: {fileID: 1006273932492797122}
     - target: {fileID: 3669816306965970296, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: cameraShake
-      value:
+      value: 
       objectReference: {fileID: 1621092230}
     - target: {fileID: 5722124322602616884, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: characterSpawner
-      value:
+      value: 
       objectReference: {fileID: 46915846}
     - target: {fileID: 5793163650293284378, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: globalLight
-      value:
+      value: 
       objectReference: {fileID: 1615053065}
     - target: {fileID: 5793163650293284378, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: targetCamera
-      value:
+      value: 
       objectReference: {fileID: 1621092227}
     - target: {fileID: 6270753916783020371, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: eventSpawner
-      value:
+      value: 
       objectReference: {fileID: 46915853}
     - target: {fileID: 6270753916783020371, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: gameplayArea
-      value:
+      value: 
       objectReference: {fileID: 2147020003}
+    - target: {fileID: 7559437479352389190, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7559437479352389190, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7903291755275464461, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: noDamageChallenge
-      value:
+      value: 
       objectReference: {fileID: 46915857}
     - target: {fileID: 7903291755275464461, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: worldAccelerationRule
-      value:
+      value: 
       objectReference: {fileID: 46915858}
     - target: {fileID: 9150725834103100375, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: worldCamera
-      value:
+      value: 
       objectReference: {fileID: 1621092227}
     - target: {fileID: 9150725834103100375, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: eventSpawner
-      value:
+      value: 
       objectReference: {fileID: 46915853}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2388,7 +2396,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 392eff074183d444bbf517f31f9124aa, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HUDManager
 --- !u!1001 &2469755825177615253
 PrefabInstance:
@@ -2444,7 +2452,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5363016781904405273, guid: 4eb0d1ccf7a98cf49a0be0141c89348a, type: 3}
       propertyPath: upgradePanelView
-      value:
+      value: 
       objectReference: {fileID: 8325879207541808945}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2552,7 +2560,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 236803664453947053, guid: 3069e3a848c054a4d8e38f3c576c974a, type: 3}
       propertyPath: upgradeApplier
-      value:
+      value: 
       objectReference: {fileID: 46915855}
     - target: {fileID: 1723037047917753243, guid: 3069e3a848c054a4d8e38f3c576c974a, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2761,27 +2769,27 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1732168295028208574, guid: ed6d393a5a9e46a46af1c69217de142e, type: 3}
       propertyPath: enemySpawner
-      value:
+      value: 
       objectReference: {fileID: 6473582633285355963}
     - target: {fileID: 1732168295028208574, guid: ed6d393a5a9e46a46af1c69217de142e, type: 3}
       propertyPath: gameplayArea
-      value:
+      value: 
       objectReference: {fileID: 2147020003}
     - target: {fileID: 1732168295028208574, guid: ed6d393a5a9e46a46af1c69217de142e, type: 3}
       propertyPath: anomalyController
-      value:
+      value: 
       objectReference: {fileID: 2147010005}
     - target: {fileID: 1732168295028208574, guid: ed6d393a5a9e46a46af1c69217de142e, type: 3}
       propertyPath: runFlowController
-      value:
+      value: 
       objectReference: {fileID: 46915856}
     - target: {fileID: 1732168295028208574, guid: ed6d393a5a9e46a46af1c69217de142e, type: 3}
       propertyPath: worldRuleController
-      value:
+      value: 
       objectReference: {fileID: 2147010006}
     - target: {fileID: 4677640538491457717, guid: ed6d393a5a9e46a46af1c69217de142e, type: 3}
       propertyPath: gameplayArea
-      value:
+      value: 
       objectReference: {fileID: 2147020003}
     - target: {fileID: 7463624239673094297, guid: ed6d393a5a9e46a46af1c69217de142e, type: 3}
       propertyPath: m_Name
@@ -2829,7 +2837,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9050662571949949056, guid: ed6d393a5a9e46a46af1c69217de142e, type: 3}
       propertyPath: enemySpawner
-      value:
+      value: 
       objectReference: {fileID: 6473582633285355963}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2845,7 +2853,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 42a10000000000000000000000000003, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunThreatController
 --- !u!212 &6014802021329322880
 SpriteRenderer:
@@ -2952,7 +2960,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3702922414309220029, guid: 470b119c0abcf9d489161f2f217884e6, type: 3}
       propertyPath: gameplayArea
-      value:
+      value: 
       objectReference: {fileID: 2147020003}
     - target: {fileID: 4828309687935273623, guid: 470b119c0abcf9d489161f2f217884e6, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2996,7 +3004,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5811181066510073813, guid: 470b119c0abcf9d489161f2f217884e6, type: 3}
       propertyPath: gameplayArea
-      value:
+      value: 
       objectReference: {fileID: 2147020003}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3012,7 +3020,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 41639b5307150ce4495a793595571eac, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
 --- !u!4 &6692806603066602225
 Transform:
@@ -3167,7 +3175,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dfbc23b97ff0d5f4187724c34123749e, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UpgradePanelView
 --- !u!4 &8419036384942943922
 Transform:
