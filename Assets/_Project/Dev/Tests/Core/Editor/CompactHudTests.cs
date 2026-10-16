@@ -145,20 +145,41 @@ public sealed class CompactHudPlayTests
         bossObject.SetActive(false);Assert.That(bossPanel.activeSelf,Is.False);
         bossObject.SetActive(true);Assert.That(bossPanel.activeSelf,Is.True);Object.Destroy(bossObject);
         yield return null;Assert.That(bossPanel.activeSelf,Is.False);
-        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/CompactHud/gameplay-1920x1080.png");
-        yield return new WaitForSecondsRealtime(.5f);
-        var station = Object.FindFirstObjectByType<Subject42.Combat.OrbitalStation.OrbitalStationRuntime>();
-        // Drive the production ability data directly: editor OS focus must not affect HUD QA.
-        station.BulletTime.Tick(true,.66f);
-        yield return null;
-        Assert.That(station.BulletTime.Energy, Is.LessThan(1));
         var abilityView=Object.FindFirstObjectByType<BulletTimeHudView>();
-        var bar=CompactHudTestData.Get<HudBar>(abilityView,"energy");
-        var slider=CompactHudTestData.Get<Slider>(bar,"slider");
-        Assert.That(slider.normalizedValue, Is.EqualTo(station.BulletTime.Energy).Within(.05f));
-        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/CompactHud/bullet-time-1920x1080.png");
-        yield return new WaitForSecondsRealtime(.5f);
+        Assert.That(abilityView.GetComponentsInChildren<Slider>(true), Is.Empty,
+            "Pointer control is a hint, not a legacy energy meter.");
+        Assert.That(abilityView.GetComponentsInChildren<TMP_Text>(true), Is.Empty);
+        Assert.That(abilityView.raycastTarget, Is.False);
+        var spaceKey = hud.GetComponentInChildren<PixelKeyHintGraphic>();
+        Assert.That(spaceKey, Is.Not.Null);
+        Assert.That(spaceKey.raycastTarget, Is.False);
+        Assert.That(((RectTransform)abilityView.transform).anchoredPosition.x, Is.GreaterThan(230f));
+        Canvas.ForceUpdateCanvases();
+        Assert.That(abilityView.canvasRenderer.GetMesh().vertexCount, Is.GreaterThan(0));
+        var shift = player.GetComponentInChildren<Subject42.Combat.OrbitalStation.OrbitalCenterShift>();
+        const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var lateUpdate = typeof(BulletTimeHudView).GetMethod("LateUpdate", flags);
+        var held = typeof(BulletTimeHudView).GetField("pointerHeld", flags);
+        var slowActive = typeof(BulletTimeHudView).GetField("slowTimeActive", flags);
+        var advance = shift.GetType().GetMethod("AdvancePointer", flags);
+        if (Application.isFocused)
+        {
+            advance.Invoke(shift, new object[] { true, true, false, (Vector2)player.transform.position + Vector2.right, .016f });
+            lateUpdate.Invoke(abilityView, null);
+            Assert.That((bool)held.GetValue(abilityView), Is.True);
+            advance.Invoke(shift, new object[] { false, false, false, (Vector2)player.transform.position, .016f });
+            lateUpdate.Invoke(abilityView, null);
+            Assert.That((bool)held.GetValue(abilityView), Is.False);
+        }
+        var station = player.GetComponentInChildren<Subject42.Combat.OrbitalStation.OrbitalStationRuntime>();
+        station.BulletTime.Tick(true, .016f);
+        lateUpdate.Invoke(abilityView, null);
+        Assert.That((bool)slowActive.GetValue(abilityView), Is.True);
         station.BulletTime.Release();
+        lateUpdate.Invoke(abilityView, null);
+        Assert.That((bool)slowActive.GetValue(abilityView), Is.False);
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/CompactHud/orbit-control-hint.png");
+        yield return new WaitForSecondsRealtime(.5f);
     }
 
 }
