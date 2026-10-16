@@ -226,14 +226,17 @@ public class EnemyHealth : MonoBehaviour
 
     private void DropLoot()
     {
-        if (lootPrefab == null)
-            return;
-
-        for (int i = 0; i < lootAmount; i++)
+        if (lootPrefab != null)
         {
-            Vector2 randomOffset = DropRandom.insideUnitCircle * lootScatterRadius;
-            SpawnLootPickup((Vector2)transform.position + randomOffset);
+            for (int i = 0; i < lootAmount; i++)
+            {
+                Vector2 randomOffset = DropRandom.insideUnitCircle * lootScatterRadius;
+                SpawnLootPickup((Vector2)transform.position + randomOffset);
+            }
         }
+
+        if (!isBoss)
+            ExperienceManager.Instance?.TryDropRareLoot(this);
     }
 
     // Shared by enemy death and development tools; retains the authored loot prefab.

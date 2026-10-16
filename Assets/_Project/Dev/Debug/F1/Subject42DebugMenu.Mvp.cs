@@ -416,6 +416,7 @@ public sealed partial class Subject42DebugMenu
         var run = RunStateManager.Instance; var experience = ExperienceManager.Instance;
         MvpRow("Здоровье игрока", health != null ? $"{health.CurrentHealth:0}/{health.MaxHealth:0}" : "Игрок не готов", "ВОССТАНОВИТЬ", health != null && !health.IsDead, () => { health.Heal(health.MaxHealth); RefreshCurrentTab(); });
         MvpRow("Неуязвимость", health != null && health.DebugInvulnerable ? "Включена" : "Выключена", "ПЕРЕКЛЮЧИТЬ", health != null, () => { run?.DebugMarkDevelopmentRun(); health.DebugInvulnerable = !health.DebugInvulnerable; RefreshCurrentTab(); });
+        BuildMvpPickupTools();
         MvpRow("Опыт до следующего уровня", experience != null ? $"Уровень {experience.CurrentLevel} · {experience.CurrentExp}/{experience.ExpToNextLevel}" : "Система опыта не готова", "ДАТЬ ОПЫТ", MvpCanEdit && experience != null,
             () => { CloseMenu(); run.DebugMarkDevelopmentRun(); experience.AddExperience(Mathf.Max(1, experience.ExpToNextLevel - experience.CurrentExp)); });
         MvpRow("Текущий ран", $"Сектор {run?.CurrentSector?.SectorNumber} · орбит {MvpStation?.Rings.Count} · оружий {MvpStation?.Modules.Count} · угроза {run?.ThreatValue:0.0}");

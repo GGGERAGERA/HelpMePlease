@@ -522,6 +522,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private void OnDestroy()
     {
+        ReleaseTestPickups();
         ProductionAnomalySite.VisualTargetsChanged -=
             HandleAnomalyVisualTargetsChanged;
 
@@ -3519,6 +3520,10 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             return source;
         source = eyesEnemyPrefab != null
             ? eyesEnemyPrefab.GetComponent<EnemyHealth>() : null;
+        if (source != null && source.HasExperienceLoot)
+            return source;
+        source = enemySpawner?.FindDebugEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Basic)
+            ?.GetComponent<EnemyHealth>();
         return source != null && source.HasExperienceLoot ? source : null;
     }
 
@@ -3552,26 +3557,51 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             activeXpCounter.text = $"ACTIVE XP: {FindObjectsByType<ExperiencePickup>(FindObjectsSortMode.None).Length}";
     }
 
-    private void SpawnDebugExperience(int count, bool stress = false)
+    private void SpawnDebugExperience(int count, bool stress = false, bool trackForCleanup = false)
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         EnemyHealth source = ResolveExperienceLootSource();
         if (player == null || source == null)
             return;
 
+        if (trackForCleanup)
+        {
+            if (!CanUsePickupDebugTools) return;
+            PruneTestPickups();
+            RunStateManager.Instance?.DebugMarkDevelopmentRun();
+        }
+        int created = 0;
         Vector3 center = player.transform.position;
+        float minimum = trackForCleanup
+            ? Mathf.Max(4f, (player.GetComponent<PlayerPickupRadius>()?.CurrentRadius ?? 3f) + 1f) : 4f;
         for (int i = 0; i < count; i++)
         {
-            float angle = stress
-                ? (i / 5 + UnityEngine.Random.value) * (Mathf.PI * 2f / 50f)
-                : UnityEngine.Random.value * Mathf.PI * 2f;
-            float radius = stress
-                ? 4.5f + i % 5 * 1.25f + UnityEngine.Random.Range(-0.4f, 0.4f)
-                : Mathf.Sqrt(UnityEngine.Random.Range(16f, 100f));
-            source.SpawnLootPickup(center + new Vector3(
-                Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius, 0f));
+            Vector3 position;
+            if (trackForCleanup)
+            {
+                if (!TryGetTestPickupPosition(player.transform, minimum, minimum + 6f, out position)) continue;
+            }
+            else
+            {
+                float angle = stress
+                    ? (i / 5 + UnityEngine.Random.value) * (Mathf.PI * 2f / 50f)
+                    : UnityEngine.Random.value * Mathf.PI * 2f;
+                float radius = stress
+                    ? 4.5f + i % 5 * 1.25f + UnityEngine.Random.Range(-0.4f, 0.4f)
+                    : Mathf.Sqrt(UnityEngine.Random.Range(16f, 100f));
+                position = center + new Vector3(Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius, 0f);
+            }
+            var spawned = source.SpawnLootPickup(position);
+            if (spawned == null) continue;
+            created++;
+            if (trackForCleanup) testPickups.Add(spawned.GetComponent<ExperiencePickup>());
         }
         RefreshActiveXpCounter();
+        if (trackForCleanup)
+        {
+            mvpStatus = $"Создано кристаллов опыта: {created}/{count}. Закройте F1 для подбора.";
+            RefreshCurrentTab();
+        }
     }
 
     private void ClearDebugExperience()

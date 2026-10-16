@@ -8,8 +8,13 @@ public class DamagePopup : MonoBehaviour
     private PooledGameObject pooledObject;
     private Color authoredColor;
     private float authoredFontSize;
+    private int authoredSortingLayer;
+    private int authoredSortingOrder;
     private float timer = Lifetime;
     private float floatSpeed = 1.5f;
+    private bool healing;
+    private float healingRise;
+    private const float HealingLifetime = 0.8f;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public static bool DebugDamageNumbersVisible { get; set; } = true;
     private bool isDamageNumber;
@@ -41,6 +46,8 @@ public class DamagePopup : MonoBehaviour
         {
             authoredColor = text.color;
             authoredFontSize = text.fontSize;
+            authoredSortingLayer = text.renderer.sortingLayerID;
+            authoredSortingOrder = text.renderer.sortingOrder;
         }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         authoredScale = transform.localScale;
@@ -55,10 +62,13 @@ public class DamagePopup : MonoBehaviour
         if (text != null) text.renderer.enabled = true;
 #endif
         timer = Lifetime;
+        healing = false;
         if (text != null)
         {
             text.color = authoredColor;
             text.fontSize = authoredFontSize;
+            text.renderer.sortingLayerID = authoredSortingLayer;
+            text.renderer.sortingOrder = authoredSortingOrder;
         }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         transform.localScale = authoredScale;
@@ -97,8 +107,36 @@ public class DamagePopup : MonoBehaviour
         text.fontSize *= 1.15f;
     }
 
+    public void SetHealing(float amount)
+    {
+        if (text == null) return;
+        healing = true;
+        timer = HealingLifetime;
+        text.text = "+" + amount.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+        text.color = new Color(0.25f, 1f, 0.35f, 1f);
+        text.renderer.sortingLayerID = SortingLayer.NameToID("UI");
+        text.renderer.sortingOrder = 100;
+        // World-space TMP, with a rise matching 32 screen pixels at pickup time.
+        Camera camera = Camera.main;
+        Vector3 origin = camera != null ? camera.WorldToScreenPoint(transform.position) : Vector3.zero;
+        healingRise = camera != null
+            ? Vector3.Distance(camera.ScreenToWorldPoint(origin),
+                camera.ScreenToWorldPoint(origin + Vector3.up * 32f))
+            : 0.5f;
+    }
+
     private void Update()
     {
+        if (healing)
+        {
+            transform.position += Vector3.up * (healingRise / HealingLifetime * Time.deltaTime);
+            timer -= Time.deltaTime;
+            Color color = text.color;
+            color.a = Mathf.Clamp01(timer / HealingLifetime);
+            text.color = color;
+            if (timer <= 0f) Release();
+            return;
+        }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (feelActive)
         {
