@@ -132,6 +132,9 @@ public class BallRollVisual : MonoBehaviour
     public float Charge => _charge01;
     public bool InKickRange { get; private set; }
     public bool IsDribbling => _dribbling;
+    public bool IsAiming => _aiming;
+    public bool IsFreeShot { get; private set; }
+    public int ShotSequence { get; private set; }
 
     public void SetMaxPower(float v) => maxPower = Mathf.Max(minPower, v);
 
@@ -325,6 +328,8 @@ public class BallRollVisual : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (IsFreeShot && _rb.linearVelocity.sqrMagnitude < .04f)
+            IsFreeShot = false;
         if (_restorePlayerCollisionWhenClear) SetIgnorePlayerCollision(false);
         if (_dribbling || (orbitWhileAiming && _aiming)) UpdateDribble();
         _rb.linearVelocity = Vector2.ClampMagnitude(_rb.linearVelocity, maxSpeed);
@@ -351,6 +356,7 @@ public class BallRollVisual : MonoBehaviour
 
     void StartDribble()
     {
+        IsFreeShot = false;
         _dribbling = true;
         CaptureDribbleOffset();
         SetIgnorePlayerCollision(true);
@@ -465,6 +471,7 @@ public class BallRollVisual : MonoBehaviour
 
     void BeginAim()
     {
+        IsFreeShot = false;
         if (_slowMotionOwner != null && _slowMotionOwner != this)
             _slowMotionOwner.CancelAim(true);
 
@@ -559,6 +566,9 @@ public class BallRollVisual : MonoBehaviour
         if (_rb == null || visual == null) return;
         if (direction.sqrMagnitude < 1e-6f || power <= 0f) return;
 
+        IsFreeShot = true;
+        ShotSequence++;
+
         _rb.WakeUp();
         _rb.linearVelocity += direction.normalized * power;
         // A strong kick against incoming momentum must still leave a readable shot.
@@ -580,6 +590,8 @@ public class BallRollVisual : MonoBehaviour
     {
         if (spawnPoint == null)
             return;
+
+        IsFreeShot = false;
 
         CancelAim(true);
         if (_dribbling) StopDribble();

@@ -30,8 +30,11 @@ public sealed class FootballBallRuntime : MonoBehaviour, IAnomalyExternalVelocit
     }
     private void FixedUpdate()
     {
+        // External forces belong to the physical ball, including standalone labs.
+        // A controlled ball is positioned by BallRollVisual instead.
+        if (!ball.IsDribbling && !ball.IsAiming)
+            body.AddForce(anomalyVelocity.Value, ForceMode2D.Force);
         if (owner == null || !owner.IsRunning) return;
-        body.AddForce(anomalyVelocity.Value, ForceMode2D.Force);
         Bounds bounds = owner.PlayBounds;
         Vector2 p = body.position;
         // Recovery only: physical walls contain normal play.
