@@ -282,7 +282,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         if (next == inputOwner) return;
         ReleaseInputOwner();
         inputOwner = next;
-        inputBlocker = () => isOpen;
+        // A live side panel only owns Escape; pointer interactions already respect UI raycasts.
+        inputBlocker = () => isOpen && (!mvpOrbitSurfaceOpen || Input.GetKeyDown(KeyCode.Escape));
         if (inputOwner != null) inputOwner.DevelopmentInputBlocker = inputBlocker;
     }
 
@@ -450,9 +451,18 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private void Update()
     {
         BindInputOwner();
+        if (isOpen && mvpOrbitSurfaceOpen &&
+            (!MvpCanEdit || MvpStation.IsRunEnded || Time.timeScale <= 0f))
+            CloseMenu();
+        if (IsMvpDebugMenu && Input.GetKeyDown(KeyCode.F9))
+        {
+            ToggleMvpOrbitSurface();
+            return;
+        }
+        if (isOpen && mvpOrbitSurfaceOpen) ConstrainMvpOrbitSurfacePosition();
         if (IsMvpDebugMenu && isOpen && Input.GetKeyDown(KeyCode.Escape))
         {
-            inputOwner?.TryConsumeEscape();
+            inputOwner?.DebugConsumeExternalUiEscape();
             CloseMenu();
             return;
         }
@@ -516,7 +526,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             HandleAnomalyVisualTargetsChanged;
 
         if (isOpen)
-            RestoreGameState();
+            RestoreGameState(!mvpOrbitSurfaceOpen);
 
         if (menuRoot != null)
             Destroy(menuRoot);
@@ -556,6 +566,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         previousCursorVisible = Cursor.visible;
         previousCursorLockMode = Cursor.lockState;
         menuLiveSimulation = IsRuntimeLabTab(activeTab);
+        ApplyMenuViewportLayout();
         RefreshTab(activeTab);
 
         Time.timeScale = menuLiveSimulation ? previousTimeScale : 0f;
@@ -574,12 +585,13 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
         if (menuRoot != null)
             menuRoot.SetActive(false);
-        RestoreGameState();
+        RestoreGameState(!mvpOrbitSurfaceOpen);
         isOpen = false;
         isPreview = false;
+        mvpOrbitSurfaceOpen = false;
     }
 
-    private void RestoreGameState()
+    private void RestoreGameState(bool restoreTime = true)
     {
         bool productionChoiceIsOpen =
             (levelChoiceManager != null && levelChoiceManager.IsChoosing) ||
@@ -587,13 +599,15 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
         if (productionChoiceIsOpen)
         {
-            Time.timeScale = 0f;
+            if (restoreTime) Time.timeScale = 0f;
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
             return;
         }
 
-        Time.timeScale = previousTimeScale;
+        if (restoreTime) Time.timeScale = previousTimeScale;
+        else if (Time.timeScale <= 0f || SceneTransitionOverlay.IsTransitioning ||
+            RunStateManager.Instance != null && RunStateManager.Instance.IsRunEnded) return;
         Cursor.visible = previousCursorVisible;
         Cursor.lockState = previousCursorLockMode;
     }
@@ -879,6 +893,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         );
         menuTitle = title;
         Stretch(title.rectTransform, 22f, 90f);
+        if (IsMvpDebugMenu) ConfigureMvpOrbitSurfaceDrag();
 
         Button closeButton = CreateButton(header, "X", CloseMenu, 52f);
         RectTransform closeRect = closeButton.GetComponent<RectTransform>();
@@ -933,6 +948,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         }
 
         BuildVisualBackButton(header);
+        if (IsMvpDebugMenu) BuildMvpOrbitSaveFooter();
         if (characterSpawner != null && !IsMvpDebugMenu)
         {
             BuildVisualActionBar(tabRoots[(int)DebugTab.VisualTest].transform);
@@ -1027,7 +1043,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         Button button = CreateButton(
             header,
             "МЕНЮ",
-            () => SelectTab(DebugTab.Additional),
+            () => { if (mvpOrbitSurfaceOpen) ReturnFromMvpOrbitSurface(); else SelectTab(DebugTab.Additional); },
             54f
         );
         visualBackButton = button.gameObject;

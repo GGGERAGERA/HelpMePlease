@@ -147,7 +147,7 @@ public sealed class ProductionAnomalyRewardFlowTests
             Assert.That(view.DamageHalfWidth, Is.EqualTo(width));
             var segment = view.transform.Find("Segment");
             Assert.That(segment.Find("Footprint").GetComponent<SpriteRenderer>().size.y, Is.EqualTo(width * 2f));
-            Assert.That(segment.Find("Core").GetComponent<SpriteRenderer>().size.y, Is.LessThan(0.2f));
+            Assert.That(segment.Find("Core").GetComponent<SpriteRenderer>().size.y, Is.EqualTo(.21f).Within(.001f));
             foreach (var renderer in view.GetComponentsInChildren<SpriteRenderer>())
             {
                 Assert.That(renderer.sprite, Is.Not.Null, renderer.name);

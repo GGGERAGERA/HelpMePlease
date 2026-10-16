@@ -16,9 +16,9 @@ namespace Subject42.Combat.OrbitalStation
 
         public void UpdateDepth(float localY, bool depthAware = true)
         {
-            // Outer rings retain the authored weapon/marker sorting without depth grouping.
-            DepthGroup.enabled = depthAware;
-            if (!depthAware) return;
+            // Keep artist groups inside one explicit mount order even on continuous rings.
+            DepthGroup.enabled = true;
+            if (!depthAware) { DepthGroup.sortingOrder = frontSortingOrder; return; }
             DepthGroup.sortingOrder = localY > 0f ? backSortingOrder : frontSortingOrder;
         }
 

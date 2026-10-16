@@ -27,7 +27,6 @@ namespace Subject42.Combat.OrbitalStation
         public float CorePulseBrightness = 2f;
         public float CoreIdleParticleInterval = .7f;
         public float CoreChargeParticleInterval = .06f;
-        public int CoreRingSparkCount = 2;
         public float CoreHaloSize = .75f;
         public float CoreHaloPulseSize = 1.45f;
         public float CoreRayDuration = .16f;
@@ -36,6 +35,19 @@ namespace Subject42.Combat.OrbitalStation
         public int FlashPoolCapacity = 128;
         public int ProjectilePrewarmCount = 96;
         public GameObject PistolProjectilePrefab;
+        [Header("Mounted projectile presentation (body is primary, trail is decorative)")]
+        public GameObject WeaponProjectilePrefab;
+        public OrbitalWeaponSettings.ProjectileStyle PistolProjectile = new();
+        public OrbitalWeaponSettings.ProjectileStyle ShotgunProjectile = new()
+        {
+            Color = new(.3f, 1f, .25f), BodySize = new(.12f, .12f),
+            TrailSeconds = .025f, TrailWidth = .018f, TrailOpacity = .18f
+        };
+        public OrbitalWeaponSettings.ProjectileStyle SniperProjectile = new()
+        {
+            Color = new(1f, .18f, .12f), BodySize = new(.5f, .07f),
+            TrailSeconds = .012f, TrailWidth = .022f, TrailOpacity = .32f
+        };
         public Color GetCoreWaveColor(int wave) => wave switch
         { 1 => CoreCyan, 2 => CoreViolet, _ => CoreGold };
         [Header("Visual-only modules")]
@@ -89,6 +101,20 @@ namespace Subject42.Combat.OrbitalStation
         public RingTierStyle TierII = new(new Color(.04f, .65f, 1f), .82f, 1.15f, .22f, .12f, 0f, 0f);
         public RingTierStyle TierIII = new(new Color(.65f, .16f, 1f), .9f, 1.3f, .32f, .18f, .045f, .65f);
         public RingTierStyle TierIV = new(new Color(1f, .57f, .10f), 1f, 1.5f, .42f, .55f, .055f, .75f);
+        public enum RingPattern { Continuous, Dashed, Energy }
+        [System.Serializable]
+        public sealed class RingSurfaceSettings
+        {
+            [Range(0f, 2f)] public float Saturation = 1f;
+            [Range(0f, 3f)] public float Brightness = 1f;
+            [Range(0f, 3f)] public float Glow = 1f;
+            public RingPattern Pattern;
+            [Range(8, 128)] public int DashCount = 48;
+            [Range(.1f, .95f)] public float DashFill = .65f;
+            [Range(-1f, 1f)] public float PatternSpeed = .025f;
+        }
+        [Header("Orbit surface experiments — shared by all tiers")]
+        public RingSurfaceSettings RingSurface = new();
         [Min(.001f)] public float RingLineWidth = .045f;
         [Range(.25f, .5f)] public float RingTierTransitionDuration = .4f;
         [Min(0f)] public float RingUpgradeBrightness = .65f;
@@ -118,8 +144,39 @@ namespace Subject42.Combat.OrbitalStation
         public static void Configure(OrbitalPresentationConfig config)
         {
             if (config == null) throw new System.ArgumentNullException(nameof(config));
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+            if (PlayerPrefs.HasKey(RingAppearancePreferenceKey))
+            {
+                var saved = JsonUtility.FromJson<SavedRingAppearance>(PlayerPrefs.GetString(RingAppearancePreferenceKey));
+                config.RingSurface = saved.Surface;
+                config.RingLineWidth = saved.Width;
+                config.RingLineAlpha = saved.Alpha;
+            }
+#endif
             active = config;
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private const string RingAppearancePreferenceKey = "Subject42.Orbits.Appearance";
+        [System.Serializable]
+        private sealed class SavedRingAppearance
+        {
+            public RingSurfaceSettings Surface;
+            public float Width, Alpha;
+        }
+
+        public void SaveRingAppearance()
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(this);
+            UnityEditor.AssetDatabase.SaveAssetIfDirty(this);
+#else
+            PlayerPrefs.SetString(RingAppearancePreferenceKey, JsonUtility.ToJson(new SavedRingAppearance
+            { Surface = RingSurface, Width = RingLineWidth, Alpha = RingLineAlpha }));
+            PlayerPrefs.Save();
+#endif
+        }
+#endif
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetConfiguration() => active = null;
@@ -143,7 +200,8 @@ namespace Subject42.Combat.OrbitalStation
             if (StationPrefab == null || !StationPrefab.TryGetComponent<OrbitalStationView>(out var station) ||
                 !station.IsValid || StationPrefab.GetComponent<OrbitalStationRuntime>() == null ||
                 RingPrefab == null || !RingPrefab.IsValid || MountPrefab == null || !MountPrefab.IsValid ||
-                VisualMaterial == null || EnergyLinePrefab == null || CircleSprite == null || PixelSprite == null)
+                VisualMaterial == null || EnergyLinePrefab == null || CircleSprite == null || PixelSprite == null ||
+                WeaponProjectilePrefab == null)
             { error = "required authored station/ring/mount/material/sprite reference is missing"; return false; }
             foreach (OrbitalModuleKind kind in System.Enum.GetValues(typeof(OrbitalModuleKind)))
             {
@@ -188,7 +246,17 @@ namespace Subject42.Combat.OrbitalStation
             settings.Kind = kind;
             settings.Category = OrbitalCategories.ForModule(kind);
             settings.WeaponVisual = GetPrefab(kind);
-            settings.ProjectileVisual = PistolProjectilePrefab;
+            if (kind is OrbitalModuleKind.Pistol or OrbitalModuleKind.Shotgun or OrbitalModuleKind.Sniper)
+            {
+                settings.Presentation = kind switch
+                {
+                    OrbitalModuleKind.Shotgun => ShotgunProjectile,
+                    OrbitalModuleKind.Sniper => SniperProjectile,
+                    _ => PistolProjectile
+                };
+                settings.ProjectileVisual = WeaponProjectilePrefab;
+                settings.Color = settings.Presentation.Color;
+            }
             return settings;
         }
 

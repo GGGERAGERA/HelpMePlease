@@ -94,7 +94,27 @@ namespace Subject42.Combat.OrbitalStation
             shot.Knockback = settings.Knockback;
             shot.BypassShields = settings.BypassShields;
             shot.GameObject.transform.localScale = shot.AuthoredScale * settings.ProjectileVisualScale;
-            if (settings.ProjectileTrailSeconds >= 0f)
+            if (settings.Presentation != null)
+            {
+                var style = settings.Presentation;
+                shot.BodySize = style.BodySize * settings.ProjectileVisualScale;
+                shot.Color = style.Color;
+                foreach (var sprite in shot.Sprites)
+                {
+                    Vector2 size = sprite.sprite.bounds.size;
+                    sprite.transform.localScale = new Vector3(style.BodySize.x / size.x, style.BodySize.y / size.y, 1f);
+                    sprite.color = style.Color;
+                }
+                foreach (var trail in shot.Trails)
+                {
+                    trail.time = style.TrailSeconds;
+                    trail.widthMultiplier = style.TrailWidth * settings.ProjectileVisualScale;
+                    Color head = style.Color; head.a *= style.TrailOpacity;
+                    Color tail = head; tail.a = 0f;
+                    trail.startColor = head; trail.endColor = tail;
+                }
+            }
+            if (settings.Presentation == null && settings.ProjectileTrailSeconds >= 0f)
                 foreach (var trail in shot.Trails) trail.time = settings.ProjectileTrailSeconds;
             shot.GameObject.transform.right = shot.Direction;
         }
@@ -115,7 +135,7 @@ namespace Subject42.Combat.OrbitalStation
             if (prefab == null) return;
             int existing = 0;
             foreach (var projectile in projectiles) if (projectile.SourcePrefab == prefab) existing++;
-            // Shotgun and sniper share the blue preset; prewarming must not duplicate that pool.
+            // Profiles can share a visual preset; prewarming must not duplicate that pool.
             for (int i = existing; i < count; i++) CreateProjectile(prefab);
         }
         public void ConfigureLabProjectileVisual(GameObject visualPrefab)
@@ -136,6 +156,13 @@ namespace Subject42.Combat.OrbitalStation
             public bool Active;
             public ParticleSystem[] Particles;
             public TrailRenderer[] Trails;
+            public SpriteRenderer[] Sprites;
+            public Vector3[] AuthoredSpriteScales;
+            public Color[] AuthoredSpriteColors;
+            public float[] AuthoredTrailWidths;
+            public Gradient[] AuthoredTrailColors;
+            public Vector2 BodySize;
+            public Color Color;
             public float[] AuthoredTrailTimes;
             public bool Straight;
             public bool BypassShields;
@@ -159,14 +186,15 @@ namespace Subject42.Combat.OrbitalStation
 
         public event Action<EnemyHealth, float> Hit;
         public event Action<EnemyHealth> Death;
+        public Action<Vector2, Vector2, Color> ProjectileImpact;
 
         public ProductionOrbitalCombatAdapter(Transform runtimeRoot, Sprite sharedSprite)
         {
             root = runtimeRoot;
             projectilePrefab = OrbitalPresentationConfig.Active.PistolProjectilePrefab;
             nearestComparison = CompareNearestTargets;
-            for (int i = 0; i < OrbitalPresentationConfig.Active.ProjectilePrewarmCount; i++)
-                CreateProjectile();
+            PrewarmLabProjectiles(OrbitalPresentationConfig.Active.WeaponProjectilePrefab,
+                OrbitalPresentationConfig.Active.ProjectilePrewarmCount);
         }
 
         private Projectile CreateProjectile(GameObject source = null)
@@ -178,8 +206,23 @@ namespace Subject42.Combat.OrbitalStation
             var projectile = new Projectile { GameObject = gameObject };
             projectile.Particles = gameObject.GetComponentsInChildren<ParticleSystem>(true);
             projectile.Trails = gameObject.GetComponentsInChildren<TrailRenderer>(true);
+            projectile.Sprites = gameObject.GetComponentsInChildren<SpriteRenderer>(true);
+            projectile.AuthoredSpriteScales = new Vector3[projectile.Sprites.Length];
+            projectile.AuthoredSpriteColors = new Color[projectile.Sprites.Length];
+            for (int i = 0; i < projectile.Sprites.Length; i++)
+            {
+                projectile.AuthoredSpriteScales[i] = projectile.Sprites[i].transform.localScale;
+                projectile.AuthoredSpriteColors[i] = projectile.Sprites[i].color;
+            }
             projectile.AuthoredTrailTimes = new float[projectile.Trails.Length];
-            for (int i = 0; i < projectile.Trails.Length; i++) projectile.AuthoredTrailTimes[i] = projectile.Trails[i].time;
+            projectile.AuthoredTrailWidths = new float[projectile.Trails.Length];
+            projectile.AuthoredTrailColors = new Gradient[projectile.Trails.Length];
+            for (int i = 0; i < projectile.Trails.Length; i++)
+            {
+                projectile.AuthoredTrailTimes[i] = projectile.Trails[i].time;
+                projectile.AuthoredTrailWidths[i] = projectile.Trails[i].widthMultiplier;
+                projectile.AuthoredTrailColors[i] = projectile.Trails[i].colorGradient;
+            }
             projectile.SourcePrefab = source != null ? source : projectilePrefab;
             projectile.AuthoredScale = gameObject.transform.localScale;
             gameObject.SetActive(false);
@@ -284,8 +327,20 @@ namespace Subject42.Combat.OrbitalStation
             projectile.Radius = LabProjectileRadius; projectile.BodiesRemaining = 1;
             projectile.Knockback = 0f; projectile.Volley = null; projectile.HitBodies.Clear();
             projectile.BypassShields = false;
+            projectile.BodySize = Vector2.zero;
+            projectile.Color = Color.white;
             projectile.GameObject.transform.localScale = projectile.AuthoredScale;
-            for (int i = 0; i < projectile.Trails.Length; i++) projectile.Trails[i].time = projectile.AuthoredTrailTimes[i];
+            for (int i = 0; i < projectile.Sprites.Length; i++)
+            {
+                projectile.Sprites[i].transform.localScale = projectile.AuthoredSpriteScales[i];
+                projectile.Sprites[i].color = projectile.AuthoredSpriteColors[i];
+            }
+            for (int i = 0; i < projectile.Trails.Length; i++)
+            {
+                projectile.Trails[i].time = projectile.AuthoredTrailTimes[i];
+                projectile.Trails[i].widthMultiplier = projectile.AuthoredTrailWidths[i];
+                projectile.Trails[i].colorGradient = projectile.AuthoredTrailColors[i];
+            }
             if (projectile.Straight)
             {
                 projectile.Position = origin;
@@ -349,6 +404,7 @@ namespace Subject42.Combat.OrbitalStation
         {
             Hit = null;
             Death = null;
+            ProjectileImpact = null;
             for (int i = 0; i < projectiles.Count; i++)
                 if (projectiles[i].GameObject != null)
                     UnityEngine.Object.Destroy(projectiles[i].GameObject);
@@ -361,8 +417,13 @@ namespace Subject42.Combat.OrbitalStation
             Vector2 from = projectile.Position;
             float distance = Mathf.Min(projectile.Speed * deltaTime, projectile.RemainingRange);
             projectileHits.Clear();
-            Physics2D.CircleCast(from, projectile.Radius, projectile.Direction,
-                projectileFilter, projectileHits, distance);
+            if (projectile.BodySize != Vector2.zero)
+                Physics2D.CapsuleCast(from, projectile.BodySize, CapsuleDirection2D.Horizontal,
+                    Mathf.Atan2(projectile.Direction.y, projectile.Direction.x) * Mathf.Rad2Deg,
+                    projectile.Direction, projectileFilter, projectileHits, distance);
+            else
+                Physics2D.CircleCast(from, projectile.Radius, projectile.Direction,
+                    projectileFilter, projectileHits, distance);
             // Process the complete swept segment in travel order; piercing cannot skip a plate.
             projectileHits.Sort((a, b) => a.distance.CompareTo(b.distance));
             foreach (var hit in projectileHits)
@@ -372,7 +433,7 @@ namespace Subject42.Combat.OrbitalStation
                 Vector2 point = hit.point;
                 if (enemy.TryGetComponent<EnemyDirectionalShield>(out var shield) && hit.collider == shield.ShieldCollider)
                 {
-                    // Only explicitly configured lab sniper shots ignore plates. A plate is never a body.
+                    // Explicit sniper bypass ignores plates. A plate is never a body.
                     if (projectile.BypassShields) continue;
                     point = hit.collider.ClosestPoint(point);
                     bool consume = projectile.Volley == null || !projectile.Volley.Shields.Contains(enemy);
@@ -382,6 +443,7 @@ namespace Subject42.Combat.OrbitalStation
                 }
                 if (!projectile.HitBodies.Add(enemy)) continue;
                 ResolveDamage(enemy, projectile.Damage, point, true);
+                ProjectileImpact?.Invoke(point, projectile.Direction, projectile.Color);
                 LabBodyImpact?.Invoke(point, projectile.Direction, projectile.BodiesRemaining > 1);
                 if (projectile.Knockback > 0f && !enemy.IsDead && enemy.TryGetComponent<EnemyChaseMovement>(out var movement) &&
                     (projectile.Volley == null || projectile.Volley.Pushed.Add(enemy)))

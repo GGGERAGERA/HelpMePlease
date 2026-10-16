@@ -5,6 +5,18 @@ using Subject42.Combat.OrbitalStation;
 [Serializable]
 public sealed class OrbitalWeaponSettings
 {
+    [Serializable]
+    public sealed class ProjectileStyle
+    {
+        public Color Color = new(.1f, .95f, 1f);
+        [Tooltip("Full body size in metres, along/across flight. Also defines the swept hit shape.")]
+        public Vector2 BodySize = new(.24f, .16f);
+        [Min(0f)] public float TrailSeconds = .045f;
+        [Min(0f)] public float TrailWidth = .035f;
+        [Range(0f, 1f)] public float TrailOpacity = .3f;
+    }
+    // Supplied by the presentation asset; legacy/lab profiles retain their authored visuals.
+    public ProjectileStyle Presentation;
     public OrbitalUpgradeCategory Category;
     public OrbitalModuleKind Kind;
     [Tooltip("Visual-only wrapper containing the authored artist prefab.")] public GameObject WeaponVisual;

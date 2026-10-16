@@ -5,6 +5,7 @@ Shader "Subject42/Orbital Ring"
         _RingSurface ("Emission / Glow / Core Whitening", Vector) = (1, .12, .08, 0)
         _CoreEnergy ("Core idle / burst / time", Vector) = (0, 0, 0, 0)
         _CoreColor ("Transient Core color", Color) = (0, 1, 1, 1)
+        _RingPattern ("Mode / dash count / fill / speed", Vector) = (0, 48, .65, .025)
     }
     SubShader
     {
@@ -22,6 +23,7 @@ Shader "Subject42/Orbital Ring"
                 float4 _RingSurface;
                 float4 _CoreEnergy;
                 float4 _CoreColor;
+                float4 _RingPattern;
             CBUFFER_END
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; float4 color : COLOR; };
             struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; float4 color : COLOR; };
@@ -39,12 +41,19 @@ Shader "Subject42/Orbital Ring"
                 float aa = max(fwidth(distance), .001);
                 float core = 1 - smoothstep(1.0 / 3 - aa, 1.0 / 3 + aa, distance);
                 float skirt = pow(saturate(1 - distance), 2) * _RingSurface.y;
-                float alpha = saturate(core + skirt) * input.color.a;
+                float phase = input.uv.x - _CoreEnergy.z * _RingPattern.w;
+                float cell = abs(frac(phase * _RingPattern.y) - .5) * 2;
+                float patternAA = max(fwidth(cell), .001);
+                float pattern = 1;
+                if (_RingPattern.x > .5 && _RingPattern.x < 1.5)
+                    pattern = 1 - smoothstep(_RingPattern.z - patternAA, _RingPattern.z + patternAA, cell);
+                else if (_RingPattern.x > 1.5)
+                    pattern = .35 + .65 * pow(saturate(.5 + .5 * sin(phase * 18.84956)), 3);
+                float alpha = saturate(core + skirt) * input.color.a * pattern;
                 float3 color = lerp(input.color.rgb, float3(1, 1, 1), core * _RingSurface.z);
-                float travel = pow(saturate(.5 + .5 * sin(input.uv.x * 18.85 - _CoreEnergy.z * 5)), 12);
-                float overlay = _CoreEnergy.x * travel + _CoreEnergy.y * (.3 + .7 * travel);
+                float overlay = _CoreEnergy.x + _CoreEnergy.y;
                 return half4(color * _RingSurface.x + _CoreColor.rgb * overlay,
-                    saturate(alpha + overlay * skirt * .2));
+                    saturate(alpha + overlay * skirt * .2 * input.color.a * pattern));
             }
             ENDHLSL
         }

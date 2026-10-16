@@ -17,7 +17,8 @@ public sealed class AnomalyBeamView : MonoBehaviour
     [SerializeField] private SpriteRenderer[] nodes;
     [SerializeField] private float endingDuration = 0.12f;
     [SerializeField] private float pulseSpeed = 9f;
-    [SerializeField, Range(0f, 1f)] private float footprintAlpha = 0.065f;
+    [SerializeField, Range(0f, 1f)] private float footprintAlpha = 0.018f;
+    [SerializeField, Range(0f, 1f)] private float edgeAlpha = 0.12f;
     [SerializeField, Range(0f, 1f)] private float activeGlowAlpha = 0.3f;
     [SerializeField, Range(0f, 1f)] private float telegraphCoreAlpha = 0.18f;
 
@@ -117,7 +118,7 @@ public sealed class AnomalyBeamView : MonoBehaviour
         Tint(outerGlow, values.SecondaryColor, fade * (charging ? activeGlowAlpha * 0.4f : activeGlowAlpha));
         Tint(footprint, values.SecondaryColor, fade * footprintAlpha * values.BoundaryAlpha);
         foreach (var cap in footprintCaps) Tint(cap, values.SecondaryColor, fade * footprintAlpha * values.BoundaryAlpha);
-        foreach (var edge in edges) Tint(edge, values.SecondaryColor, fade * (charging ? 0.3f : 0.2f) * values.BoundaryAlpha);
+        foreach (var edge in edges) Tint(edge, values.SecondaryColor, fade * edgeAlpha * (charging ? 1f : .65f) * values.BoundaryAlpha);
         for (int i = 0; i < pulses.Length; i++)
         {
             float position = Mathf.Repeat(age * values.PatternSpeed + i * length / pulses.Length, Mathf.Max(0.01f, length));

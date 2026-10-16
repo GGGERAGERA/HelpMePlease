@@ -20,6 +20,8 @@ namespace Subject42.Combat.OrbitalStation
         private bool pointerHeld, pointerNeedsRelease;
         public bool IsPointerControlConfigured => pointerCamera != null;
         public bool IsPointerSteering => pointerHeld;
+        public float MaximumOffset => maximumOffset;
+        public Vector3 RangeCenter => station.Owner.Transform.position;
 
         public void ConfigurePointerControl(Camera camera, float speedMultiplier)
         {
@@ -72,7 +74,7 @@ namespace Subject42.Combat.OrbitalStation
         public Vector2 Offset { get; private set; }
         public event Action Shifted;
         public bool CanControl => isActiveAndEnabled && station != null && station.IsInitialized &&
-            station.Owner.CanControl && station.InputOwner.IsIdle && !station.InputOwner.IsGameplayInputBlocked &&
+            station.Owner.CanControl && !station.IsRunEnded && station.InputOwner.IsIdle && !station.InputOwner.IsGameplayInputBlocked &&
             station.InputOwner.IsRewardQueueIdle &&
             movement != null && movement.isActiveAndEnabled && movement.MovementIntent == null &&
             Application.isFocused && Time.timeScale > 0f;

@@ -121,9 +121,6 @@ public static class OrbitalLabsAuthoring
         lab.ShieldShooterPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(shooterPath);
         lab.BreakableShieldBearerPrefab = EnsureBreakableVariant(prefabPath, "Assets/_Project/prefabs/Enemies/BreakableShieldBearer.prefab", scene);
         lab.BreakableShieldShooterPrefab = EnsureBreakableVariant(shooterPath, "Assets/_Project/prefabs/Enemies/BreakableShieldShooter.prefab", scene);
-        if (lab.CenterRange == null)
-            lab.CenterRange = CreateLine(lab.transform, "Station center maximum distance", config.VisualMaterial,
-                new Color(.7f, .4f, .9f, .35f), .025f, 64, true);
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();

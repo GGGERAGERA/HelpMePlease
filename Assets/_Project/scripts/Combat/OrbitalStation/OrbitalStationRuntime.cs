@@ -52,7 +52,6 @@ namespace Subject42.Combat.OrbitalStation
         private float coreWaveAge = -1f;
         private Color coreWaveColor;
         private float coreParticleTimer;
-        private int idleSparkRing;
         private readonly Dictionary<(int First, int Second), LineRenderer> linkLines = new();
         private readonly HashSet<(int First, int Second)> activeLinkPairs = new();
         private readonly List<(int First, int Second)> resolvedLinkPairs = new();
@@ -107,6 +106,7 @@ namespace Subject42.Combat.OrbitalStation
         }
         // Transient module previews, drag and interaction lines share this authored parent.
         internal Transform RuntimeRoot => authoredView.InteractionRoot;
+        public bool IsRunEnded => runStateManager != null && runStateManager.IsRunEnded;
         internal Material VisualMaterial => lineMaterial;
         internal bool IsDebugPlacementActive => placementStep != PlacementStep.None;
         internal bool IsRelocating => relocation != null && relocation.IsDragging;
@@ -187,6 +187,12 @@ namespace Subject42.Combat.OrbitalStation
                 coreVisual.enabled = true;
                 Owner = new ProductionOrbitalOwnerAdapter(boundPlayer != null ? boundPlayer : gameObject);
                 Combat = new ProductionOrbitalCombatAdapter(authoredView.EffectsRoot, sharedSprite);
+                ((ProductionOrbitalCombatAdapter)Combat).ProjectileImpact = (point, direction, color) =>
+                {
+                    Vector2 side = new(-direction.y, direction.x);
+                    FlashLink(point - side * .09f, point + side * .09f, color, .07f);
+                    FlashLink(point, point - direction * .13f, color, .05f);
+                };
                 Core = new OrbitalCoreRuntime(State.CoreState);
                 coreWaveColor = config.GetCoreWaveColor(Mathf.Max(1, Core.Level));
                 authoredView.CoreParticles.Play();
@@ -443,12 +449,6 @@ namespace Subject42.Combat.OrbitalStation
                     bool charge = Core.Charge > 0f;
                     coreParticleTimer = charge ? config.CoreChargeParticleInterval : config.CoreIdleParticleInterval;
                     if (charge || Core.Level > 1) EmitCoreSparks(runtimeRoot.position, idle, Core.Level);
-                    if (!charge && Core.Level > 1 && rings.Count > 0)
-                    {
-                        var ring = rings[idleSparkRing++ % rings.Count];
-                        EmitCoreSparks((Vector2)runtimeRoot.position + ring.Geometry.Position(
-                            Mathf.Repeat(Time.time * .1f, 1f), ring.Radius), idle, 1);
-                    }
                 }
             }
         }
@@ -793,9 +793,6 @@ namespace Subject42.Combat.OrbitalStation
             Vector2 end = center + ring.Geometry.Position(phase, ring.Radius);
             Vector2 start = index == 0 ? center : center + rings[index - 1].Geometry.Position(phase, rings[index - 1].Radius);
             FlashLink(start, end, coreWaveColor, OrbitalPresentationConfig.Active.CoreRayDuration);
-            for (int i = 0; i < level; i++)
-                EmitCoreSparks(center + ring.Geometry.Position(phase + i / (float)level, ring.Radius),
-                    coreWaveColor, OrbitalPresentationConfig.Active.CoreRingSparkCount);
         }
 
         private void EmitCoreSparks(Vector2 position, Color color, int count)
@@ -870,7 +867,6 @@ namespace Subject42.Combat.OrbitalStation
             coreWaveAge = -1f;
             coreFlash = 0f;
             coreParticleTimer = 0f;
-            idleSparkRing = 0;
             if (authoredView != null)
             {
                 if (authoredView.CoreHalo != null) authoredView.CoreHalo.enabled = false;

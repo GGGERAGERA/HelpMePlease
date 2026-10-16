@@ -385,11 +385,11 @@ public static class ProductionOrbitalTransferSmoke
         var victim = enemies[0].GetComponent<EnemyHealth>();
         adapter.SpawnWeaponProjectile(station.transform.position, victim, Vector2.right, config.GetWeaponSettings(OrbitalModuleKind.Sniper), null, 1f);
         var trails = station.GetComponentsInChildren<TrailRenderer>().Where(t => t.GetComponentInParent<OrbitalModuleView>() == null).ToArray();
-        Check(trails.Length > 0 && trails.All(t => Mathf.Abs(t.time - .02f) < .0001f), "active sniper uses the shared large-blue projectile with a 0.02-second trail");
+        Check(trails.Length > 0 && trails.All(t => Mathf.Abs(t.time - config.SniperProjectile.TrailSeconds) < .0001f && Mathf.Abs(t.widthMultiplier - config.SniperProjectile.TrailWidth) < .0001f), "active sniper uses its narrow red projectile trail profile");
         int pool = adapter.LabPooledProjectileCount; adapter.DebugClearProjectiles();
         adapter.SpawnWeaponProjectile(station.transform.position, victim, Vector2.right, config.GetWeaponSettings(OrbitalModuleKind.Pistol), null, 1f);
         trails = station.GetComponentsInChildren<TrailRenderer>().Where(t => t.GetComponentInParent<OrbitalModuleView>() == null).ToArray();
-        Check(adapter.LabPooledProjectileCount == pool && trails.All(t => Mathf.Abs(t.time - config.PistolProjectilePrefab.GetComponentInChildren<TrailRenderer>().time) < .0001f), "same pooled projectile restores authored pistol trail after sniper use");
+        Check(adapter.LabPooledProjectileCount == pool && trails.All(t => Mathf.Abs(t.time - config.PistolProjectile.TrailSeconds) < .0001f && Mathf.Abs(t.widthMultiplier - config.PistolProjectile.TrailWidth) < .0001f), "same pooled projectile applies pistol trail profile after sniper use");
         adapter.DebugClearProjectiles();
         station.enabled = true;
         RunEndService.Instance.ReturnToBunker();

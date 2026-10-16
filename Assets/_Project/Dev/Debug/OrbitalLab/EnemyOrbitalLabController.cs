@@ -20,7 +20,6 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
     [Min(1), Tooltip("Initial durability of every enemy shield spawned by this lab.")]
     public int ShieldBlockedHits = 4;
     public GameObject PursuerPrefab;
-    public LineRenderer CenterRange;
     public GameObject PistolProjectileVisual;
     [Header("Lab shooting profiles (not rewards)")]
     public OrbitalWeaponSettings Pistol = OrbitalWeaponSettings.Pistol();
@@ -498,16 +497,6 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
 
         centerControl.Tick(MaximumCenterOffset, CenterMoveSpeed, CenterReturnSpeed);
         centerMarker.enabled = ShowCenterMarker;
-        if (CenterRange != null)
-        {
-            CenterRange.enabled = ShowCenterMarker;
-            for (int i = 0; i < CenterRange.positionCount; i++)
-            {
-                float angle = i * Mathf.PI * 2f / CenterRange.positionCount;
-                CenterRange.SetPosition(i, Player.transform.position +
-                    new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * MaximumCenterOffset);
-            }
-        }
     }
 
     private void ReleaseCenterInput() => centerControl?.ReleaseInput();
@@ -517,7 +506,6 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
         CloseUpgradeChoices();
         centerControl?.Dispose();
         if (centerMarker != null) centerMarker.enabled = false;
-        if (CenterRange != null) CenterRange.enabled = false;
         if (ReferenceEquals(ProductionOrbitalCombatAdapter.LabInterceptor, this)) ProductionOrbitalCombatAdapter.LabInterceptor = null;
         SetPaused(false);
     }

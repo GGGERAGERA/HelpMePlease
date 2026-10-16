@@ -33,6 +33,13 @@ namespace Subject42.Combat.OrbitalStation
         {
             weaponFeedback = true; weaponTint = color; preserveWeaponColors = preserveColors;
             if (animator != null) animator.enabled = false;
+            foreach (var particle in particles)
+            {
+                var main = particle.main;
+                main.startColor = color;
+                var tint = particle.colorOverLifetime;
+                tint.enabled = false;
+            }
         }
         public void WeaponRecoil(float strength) { weaponRecoil = strength; weaponRecoilAt = Time.time; weaponCharge = 0f; Trigger(); }
         public void WeaponCharge(float amount) => weaponCharge = Mathf.Clamp01(amount);

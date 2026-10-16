@@ -65,7 +65,6 @@ namespace Subject42.Combat.OrbitalStation
             // Keep the legacy prefab reference, but render one continuous closed trajectory.
             BackLine.enabled = false;
             FrontLine.loop = true;
-            FrontLine.sortingLayerID = SortingLayer.NameToID("Player");
             if (path.CustomPath != null)
             {
                 FrontLine.positionCount = path.CustomPath.PointCount;
@@ -80,6 +79,7 @@ namespace Subject42.Combat.OrbitalStation
         private static readonly int SurfaceId = Shader.PropertyToID("_RingSurface");
         private static readonly int CoreId = Shader.PropertyToID("_CoreEnergy");
         private static readonly int CoreColorId = Shader.PropertyToID("_CoreColor");
+        private static readonly int PatternId = Shader.PropertyToID("_RingPattern");
         private Vector4 coreEnergy;
         private Color coreColor;
         public void SetCoreEnergy(int level, Color color, float pulse, float time)
@@ -131,11 +131,17 @@ namespace Subject42.Combat.OrbitalStation
             float brightness = energy + burst * config.RingUpgradeBrightness +
                 (highlight + corePulse) * config.RingHighlightBrightness;
             Color color = currentStyle.BaseColor;
+            var tuning = config.RingSurface;
+            float grey = color.grayscale;
+            color.r = Mathf.Max(0f, Mathf.LerpUnclamped(grey, color.r, tuning.Saturation));
+            color.g = Mathf.Max(0f, Mathf.LerpUnclamped(grey, color.g, tuning.Saturation));
+            color.b = Mathf.Max(0f, Mathf.LerpUnclamped(grey, color.b, tuning.Saturation));
             color.a = currentStyle.Alpha * config.RingLineAlpha * (dimmed ? config.RingDimmedAlpha : 1f);
             // The mesh includes the soft skirt; the visible core remains RingLineWidth wide.
             SetAppearance(radius, config.RingLineWidth * 3f, color, depthAware);
-            surface.SetVector(SurfaceId, new Vector4(currentStyle.Emission * brightness,
-                currentStyle.Glow + burst * config.RingUpgradeGlow, currentStyle.CoreWhitening, 0f));
+            surface.SetVector(SurfaceId, new Vector4(currentStyle.Emission * brightness * tuning.Brightness,
+                (currentStyle.Glow + burst * config.RingUpgradeGlow) * tuning.Glow, currentStyle.CoreWhitening, 0f));
+            surface.SetVector(PatternId, new Vector4((int)tuning.Pattern, tuning.DashCount, tuning.DashFill, tuning.PatternSpeed));
             surface.SetVector(CoreId, coreEnergy);
             surface.SetColor(CoreColorId, coreColor);
             FrontLine.SetPropertyBlock(surface);

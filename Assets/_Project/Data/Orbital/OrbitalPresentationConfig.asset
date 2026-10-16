@@ -34,7 +34,6 @@ MonoBehaviour:
   CorePulseBrightness: 2
   CoreIdleParticleInterval: 0.7
   CoreChargeParticleInterval: 0.06
-  CoreRingSparkCount: 2
   CoreHaloSize: 0.75
   CoreHaloPulseSize: 1.45
   CoreRayDuration: 0.16
@@ -43,6 +42,25 @@ MonoBehaviour:
   FlashPoolCapacity: 128
   ProjectilePrewarmCount: 96
   PistolProjectilePrefab: {fileID: 5000, guid: 2dcd05dc20a6443ca8c86af9ee4679df, type: 3}
+  WeaponProjectilePrefab: {fileID: 1000, guid: ae751b7ba868484a96df868b1066dfc5, type: 3}
+  PistolProjectile:
+    Color: {r: 0.1, g: 0.95, b: 1, a: 1}
+    BodySize: {x: 0.24, y: 0.16}
+    TrailSeconds: 0.045
+    TrailWidth: 0.035
+    TrailOpacity: 0.3
+  ShotgunProjectile:
+    Color: {r: 0.3, g: 1, b: 0.25, a: 1}
+    BodySize: {x: 0.12, y: 0.12}
+    TrailSeconds: 0.025
+    TrailWidth: 0.018
+    TrailOpacity: 0.18
+  SniperProjectile:
+    Color: {r: 1, g: 0.18, b: 0.12, a: 1}
+    BodySize: {x: 0.5, y: 0.07}
+    TrailSeconds: 0.012
+    TrailWidth: 0.022
+    TrailOpacity: 0.32
   PistolPrefab: {fileID: 874321222499448941, guid: 061397fe35d9a524f9ac8e1c58b25f4a, type: 3}
   SawPrefab: {fileID: 4188619148358559066, guid: c7cb30b88c9e334419754f856162812a, type: 3}
   ShotgunPrefab: {fileID: 3229308960085762355, guid: 4ff9b587760ccf243ab1a47bcf521cc9, type: 3}
@@ -93,7 +111,15 @@ MonoBehaviour:
     CoreWhitening: 0.55
     PulseStrength: 0.055
     PulseSpeed: 0.75
-  RingLineWidth: 0.045
+  RingSurface:
+    Saturation: 2
+    Brightness: 1.2587487
+    Glow: 1.4173924
+    Pattern: 0
+    DashCount: 8
+    DashFill: 0.1
+    PatternSpeed: -0.3
+  RingLineWidth: 0.052031983
   RingTierTransitionDuration: 0.4
   RingUpgradeBrightness: 0.65
   RingUpgradeGlow: 0.3
@@ -104,7 +130,7 @@ MonoBehaviour:
   NormalAlpha: 0.48
   HoverAlpha: 1
   HaloSize: 0.38
-  RingLineAlpha: 0.8
+  RingLineAlpha: 0.20805885
   ModuleHitRadius: 0.16
   MountHitRadius: 0.72
   MountSelectionRadiusPixels: 26

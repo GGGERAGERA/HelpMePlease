@@ -4,6 +4,7 @@ using System.Linq;
 using Subject42.Combat.OrbitalStation;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -16,12 +17,36 @@ public sealed partial class Subject42DebugMenu
     private OrbitalRewardKind mvpPreviewKind = OrbitalRewardKind.Pistol;
     private GameObject mvpPreviewRoot;
     private string mvpStatus;
+    private string mvpRingSurfaceBackup;
+    private float mvpRingWidthBackup, mvpRingAlphaBackup;
+    private bool mvpOrbitSurfaceOpen;
+    private Vector2 mvpOrbitSurfacePosition = new(-14f, 0f);
+    private Vector2 mvpOrbitDragPointer, mvpOrbitDragPosition;
+    private RectTransform mvpOrbitSaveFooter;
+    private TextMeshProUGUI mvpOrbitSaveStatus;
     private OrbitalStationRuntime MvpStation => characterSpawner != null ? characterSpawner.Station : null;
     private bool MvpCanEdit => MvpStation != null && MvpStation.IsInitialized && !MvpStation.Owner.IsDead &&
         upgradeManager != null && upgradeManager.IsRewardQueueIdle && !SceneTransitionOverlay.IsTransitioning;
 
     private void ApplyMvpViewportLayout()
     {
+        if (mvpOrbitSurfaceOpen)
+        {
+            menuPanel.anchorMin = menuPanel.anchorMax = new Vector2(1f, .5f);
+            menuPanel.pivot = new Vector2(1f, .5f);
+            menuPanel.anchoredPosition = mvpOrbitSurfacePosition;
+            ConstrainMvpOrbitSurfacePosition();
+            menuHeader.sizeDelta = new Vector2(0f, 44f);
+            menuTitle.text = "ОРБИТЫ · LIVE"; menuTitle.fontSize = 19f;
+            Stretch(menuTitle.rectTransform, 12f, 112f);
+            menuTabBar.gameObject.SetActive(false);
+            closeButtonRect.sizeDelta = new Vector2(32f, 26f); closeButtonRect.anchoredPosition = new Vector2(-8f, 0f);
+            visualBackButton.SetActive(true);
+            mvpOrbitSaveFooter.gameObject.SetActive(true);
+            menuPages.offsetMin = new Vector2(8f, 66f); menuPages.offsetMax = new Vector2(-8f, -48f);
+            fullMenuBlockerImage.color = Color.clear; fullMenuBlockerImage.raycastTarget = false;
+            return;
+        }
         menuPanel.anchorMin = new Vector2(.045f, .045f); menuPanel.anchorMax = new Vector2(.955f, .955f);
         menuPanel.pivot = new Vector2(.5f, .5f); menuPanel.sizeDelta = Vector2.zero; menuPanel.anchoredPosition = Vector2.zero;
         menuHeader.sizeDelta = new Vector2(0f, 62f);
@@ -30,6 +55,7 @@ public sealed partial class Subject42DebugMenu
         menuTabBar.gameObject.SetActive(true);
         closeButtonRect.sizeDelta = new Vector2(52f, 40f); closeButtonRect.anchoredPosition = new Vector2(-14f, 0f);
         visualBackButton?.SetActive(false);
+        mvpOrbitSaveFooter?.gameObject.SetActive(false);
         menuPages.offsetMin = new Vector2(18f, 18f); menuPages.offsetMax = new Vector2(-18f, -120f);
         fullMenuBlockerImage.color = new Color(0f, 0f, 0f, .68f); fullMenuBlockerImage.raycastTarget = true;
     }
@@ -49,6 +75,12 @@ public sealed partial class Subject42DebugMenu
             bar.anchorMax = new Vector2(tab == 1 ? .65f : 1f, 1f);
         }
         var layout = contentRoot.GetComponent<VerticalLayoutGroup>(); layout.spacing = 8f;
+        if (mvpOrbitSurfaceOpen)
+        {
+            layout.spacing = 5f;
+            BuildMvpOrbitSurface();
+            return;
+        }
         AddSectionTitle(MvpTabLabels[tab], "WASD — движение · ПКМ — станция к курсору · Shift — замедление · F1 / Esc — закрыть меню");
         if (!string.IsNullOrEmpty(mvpStatus)) AddHint(mvpStatus);
         switch (tab)
@@ -64,21 +96,29 @@ public sealed partial class Subject42DebugMenu
     {
         RectTransform row = CreateRect(title, contentRoot);
         row.gameObject.AddComponent<Image>().color = selected ? new Color(.09f, .27f, .33f, 1f) : rowColor;
-        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 68f;
-        var text = CreateText("Содержание", row, "<b>" + title + "</b>\n<size=18>" + status + "</size>", 21f, TextAlignmentOptions.MidlineLeft, Color.white);
-        Stretch(text.rectTransform, 16f, string.IsNullOrEmpty(actionLabel) ? 16f : 175f, 5f, 5f);
+        bool compact = mvpOrbitSurfaceOpen;
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = compact ? 54f : 68f;
+        var text = CreateText("Содержание", row, "<b>" + title + $"</b>\n<size={(compact ? 11 : 18)}>" + status + "</size>", compact ? 14f : 21f, TextAlignmentOptions.MidlineLeft, Color.white);
+        Stretch(text.rectTransform, compact ? 8f : 16f, string.IsNullOrEmpty(actionLabel) ? 8f : compact ? 108f : 175f, 5f, 5f);
         text.textWrappingMode = TextWrappingModes.Normal;
         if (string.IsNullOrEmpty(actionLabel)) return;
-        var button = CreateButton(row, actionLabel, action, 150f, enabled);
+        var button = CreateButton(row, actionLabel, action, compact ? 94f : 150f, enabled);
         var rect = button.GetComponent<RectTransform>();
         rect.anchorMin = rect.anchorMax = new Vector2(1f, .5f); rect.pivot = new Vector2(1f, .5f);
-        rect.anchoredPosition = new Vector2(-12f, 0f); rect.sizeDelta = new Vector2(150f, 42f);
+        rect.anchoredPosition = new Vector2(compact ? -7f : -12f, 0f); rect.sizeDelta = compact ? new Vector2(94f, 30f) : new Vector2(150f, 42f);
+        if (compact)
+        {
+            button.GetComponentInChildren<TextMeshProUGUI>().fontSize = 12f;
+            button.navigation = new Navigation { mode = Navigation.Mode.None };
+        }
     }
 
     private void BuildMvpOrbits()
     {
         var station = MvpStation;
         if (station == null || !station.IsInitialized) { AddHint("Станция ещё не готова. Начните обычный ран из бункера."); return; }
+        MvpRow("Внешний вид орбит", "F9 · Боковая панель с живым предпросмотром", "НАСТРОИТЬ",
+            MvpCanEdit && previousTimeScale > 0f, OpenMvpOrbitSurface);
         foreach (var ring in station.Rings)
         {
             int id = ring.RingId;
@@ -103,6 +143,163 @@ public sealed partial class Subject42DebugMenu
             string reason = upgradeManager.DebugRewardUnavailableReason(kind);
             MvpRow(LocalizationService.EnsureExists().Get(data.upgradeName), reason ?? "Выберите свободную точку после закрытия меню", "УСТАНОВИТЬ", reason == null, () => BeginMvpReward(kind, true));
         }
+    }
+
+    private void OpenMvpOrbitSurface()
+    {
+        if (!isOpen || !MvpCanEdit || previousTimeScale <= 0f) return;
+        mvpOrbitSurfaceOpen = true;
+        menuLiveSimulation = true;
+        Time.timeScale = previousTimeScale;
+        ApplyMvpViewportLayout();
+        RefreshCurrentTab();
+    }
+
+    private void ToggleMvpOrbitSurface()
+    {
+        if (mvpOrbitSurfaceOpen) { CloseMenu(); return; }
+        ResolveSceneReferences();
+        if (!MvpCanEdit || MvpStation.IsRunEnded || (isOpen ? previousTimeScale : Time.timeScale) <= 0f) return;
+        if (!isOpen) OpenMenu();
+        SelectTab((DebugTab)0, false);
+        OpenMvpOrbitSurface();
+    }
+
+    private void ConfigureMvpOrbitSurfaceDrag()
+    {
+        menuTitle.raycastTarget = true;
+        var trigger = menuTitle.gameObject.AddComponent<EventTrigger>();
+        var begin = new EventTrigger.Entry { eventID = EventTriggerType.BeginDrag };
+        begin.callback.AddListener(data =>
+        {
+            var pointer = (PointerEventData)data;
+            if (!mvpOrbitSurfaceOpen || pointer.button != PointerEventData.InputButton.Left) return;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)menuPanel.parent,
+                pointer.position, pointer.pressEventCamera, out mvpOrbitDragPointer);
+            mvpOrbitDragPosition = menuPanel.anchoredPosition;
+        });
+        var drag = new EventTrigger.Entry { eventID = EventTriggerType.Drag };
+        drag.callback.AddListener(data =>
+        {
+            var pointer = (PointerEventData)data;
+            if (!mvpOrbitSurfaceOpen || pointer.button != PointerEventData.InputButton.Left) return;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)menuPanel.parent,
+                pointer.position, pointer.pressEventCamera, out var local);
+            menuPanel.anchoredPosition = mvpOrbitDragPosition + local - mvpOrbitDragPointer;
+            ConstrainMvpOrbitSurfacePosition();
+        });
+        trigger.triggers.Add(begin);
+        trigger.triggers.Add(drag);
+    }
+
+    private void ConstrainMvpOrbitSurfacePosition()
+    {
+        var viewport = ((RectTransform)menuPanel.parent).rect.size;
+        float width = Mathf.Min(420f, viewport.x - 16f);
+        float height = Mathf.Min(680f, viewport.y - 16f);
+        menuPanel.sizeDelta = new Vector2(width, height);
+        var position = menuPanel.anchoredPosition;
+        position.x = Mathf.Clamp(position.x, width - viewport.x + 8f, -8f);
+        float verticalMargin = Mathf.Max(0f, (viewport.y - height) * .5f - 8f);
+        position.y = Mathf.Clamp(position.y, -verticalMargin, verticalMargin);
+        menuPanel.anchoredPosition = mvpOrbitSurfacePosition = position;
+    }
+
+    private void ReturnFromMvpOrbitSurface()
+    {
+        mvpOrbitSurfaceOpen = false;
+        menuLiveSimulation = false;
+        Time.timeScale = 0f;
+        ApplyMvpViewportLayout();
+        RefreshCurrentTab();
+    }
+
+    private void BuildMvpOrbitSaveFooter()
+    {
+        mvpOrbitSaveFooter = CreateRect("Сохранить оформление", menuPanel);
+        mvpOrbitSaveFooter.anchorMin = Vector2.zero;
+        mvpOrbitSaveFooter.anchorMax = new Vector2(1f, 0f);
+        mvpOrbitSaveFooter.pivot = new Vector2(.5f, 0f);
+        mvpOrbitSaveFooter.sizeDelta = new Vector2(-16f, 50f);
+        mvpOrbitSaveFooter.anchoredPosition = new Vector2(0f, 8f);
+        mvpOrbitSaveFooter.gameObject.AddComponent<Image>().color = rowColor;
+        mvpOrbitSaveStatus = CreateText("Статус", mvpOrbitSaveFooter,
+            "Сохранить между запусками", 13f, TextAlignmentOptions.MidlineLeft, Color.white);
+        mvpOrbitSaveStatus.textWrappingMode = TextWrappingModes.Normal;
+        Stretch(mvpOrbitSaveStatus.rectTransform, 8f, 130f, 5f, 5f);
+        var button = CreateButton(mvpOrbitSaveFooter, "СОХРАНИТЬ", SaveMvpOrbitSurface, 114f);
+        button.navigation = new Navigation { mode = Navigation.Mode.None };
+        button.GetComponentInChildren<TextMeshProUGUI>().fontSize = 13f;
+        var rect = button.GetComponent<RectTransform>();
+        rect.anchorMin = rect.anchorMax = new Vector2(1f, .5f);
+        rect.pivot = new Vector2(1f, .5f);
+        rect.sizeDelta = new Vector2(114f, 34f);
+        rect.anchoredPosition = new Vector2(-7f, 0f);
+        mvpOrbitSaveFooter.gameObject.SetActive(false);
+    }
+
+    private void SaveMvpOrbitSurface()
+    {
+        var config = OrbitalPresentationConfig.Active;
+        config.SaveRingAppearance();
+        mvpRingSurfaceBackup = JsonUtility.ToJson(config.RingSurface);
+        mvpRingWidthBackup = config.RingLineWidth;
+        mvpRingAlphaBackup = config.RingLineAlpha;
+        mvpOrbitSaveStatus.text = "Сохранено между запусками";
+    }
+
+    private void BuildMvpOrbitSurface()
+    {
+        var config = OrbitalPresentationConfig.Active;
+        var surface = config.RingSurface;
+        if (mvpRingSurfaceBackup == null)
+        {
+            mvpRingSurfaceBackup = JsonUtility.ToJson(surface);
+            mvpRingWidthBackup = config.RingLineWidth;
+            mvpRingAlphaBackup = config.RingLineAlpha;
+        }
+        AddSectionTitle("Внешний вид орбит", "F9 / Esc — закрыть · Тяните за заголовок");
+        string pattern = surface.Pattern switch
+        {
+            OrbitalPresentationConfig.RingPattern.Dashed => "Пунктир",
+            OrbitalPresentationConfig.RingPattern.Energy => "Поток энергии",
+            _ => "Сплошная линия"
+        };
+        MvpRow("Рисунок линии", pattern, "СМЕНИТЬ", true, () =>
+        {
+            surface.Pattern = (OrbitalPresentationConfig.RingPattern)(((int)surface.Pattern + 1) % 3);
+            mvpOrbitSaveStatus.text = "Изменения не сохранены";
+            RefreshCurrentTab();
+        });
+        MvpOrbitSlider("Насыщенность", surface.Saturation, 0f, 2f, v => surface.Saturation = v);
+        MvpOrbitSlider("Прозрачность", config.RingLineAlpha, 0f, 1f, v => config.RingLineAlpha = v);
+        MvpOrbitSlider("Яркость", surface.Brightness, 0f, 3f, v => surface.Brightness = v);
+        MvpOrbitSlider("Толщина линии", config.RingLineWidth, .008f, .12f, v => config.RingLineWidth = v, "0.000");
+        MvpOrbitSlider("Свечение", surface.Glow, 0f, 3f, v => surface.Glow = v);
+        MvpOrbitSlider("Число штрихов", surface.DashCount, 8f, 128f, v => surface.DashCount = Mathf.RoundToInt(v), "0");
+        MvpOrbitSlider("Заполнение пунктира", surface.DashFill, .1f, .95f, v => surface.DashFill = v);
+        MvpOrbitSlider("Скорость рисунка", surface.PatternSpeed, -.3f, .3f, v => surface.PatternSpeed = v);
+        MvpRow("Вернуть настройки", "Последние сохранённые значения или значения при первом открытии меню", "ВЕРНУТЬ", true, () =>
+        {
+            JsonUtility.FromJsonOverwrite(mvpRingSurfaceBackup, surface);
+            config.RingLineWidth = mvpRingWidthBackup; config.RingLineAlpha = mvpRingAlphaBackup;
+            mvpOrbitSaveStatus.text = "Настройки восстановлены";
+            RefreshCurrentTab();
+        });
+    }
+
+    private void MvpOrbitSlider(string label, float value, float minimum, float maximum, Action<float> setter, string format = "0.00")
+    {
+        AddSliderRow(label, value, minimum, maximum, v =>
+        {
+            setter(v);
+            mvpOrbitSaveStatus.text = "Изменения не сохранены";
+        }, format);
+        var row = contentRoot.GetChild(contentRoot.childCount - 1);
+        if (mvpOrbitSurfaceOpen)
+            row.GetComponentInChildren<Slider>().navigation = new Navigation { mode = Navigation.Mode.None };
+        row.GetComponent<LayoutElement>().preferredHeight = mvpOrbitSurfaceOpen ? 38f : 46f;
+        foreach (var text in row.GetComponentsInChildren<TextMeshProUGUI>()) text.fontSize = mvpOrbitSurfaceOpen ? 14f : 18f;
     }
 
     private void BeginMvpReward(OrbitalRewardKind kind, bool installImmediately = false)
