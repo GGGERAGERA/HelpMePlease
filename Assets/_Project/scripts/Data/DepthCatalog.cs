@@ -20,6 +20,8 @@ public sealed class DepthCatalog : ScriptableObject
         public string gameplaySceneName;
         public StageProfileData startingStageProfile;
         [TextArea] public string description;
+        [Tooltip("Optional localized global goal for this escape stage. Leave blank until a goal is authored.")]
+        public string globalObjectiveKey;
 
         public string LocalizedName => LocalizationService.Instance.Get(displayName);
         public string LocalizedDescription => LocalizationService.Instance.Get(description);
@@ -41,6 +43,10 @@ public sealed class DepthCatalog : ScriptableObject
             if (entry.id == id) return entry;
         return null;
     }
+
+    // Escape access counts completed stages. Local missions and minigame goals
+    // deliberately do not participate in the bunker global objective.
+    public string GetGlobalObjectiveKey(int escapeAccess) => Find(escapeAccess + 1)?.globalObjectiveKey;
 
     public static string Numeral(int value) => value switch
     {

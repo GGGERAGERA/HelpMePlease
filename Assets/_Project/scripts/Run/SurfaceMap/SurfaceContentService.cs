@@ -17,7 +17,7 @@ public readonly struct SurfaceMarkerPresentation
     public readonly SurfaceMarkerState State;
     public readonly string Title, Description, Status, Objective, Reward;
     public SurfaceMarkerPresentation(SurfaceSectorContent content, SurfaceMarkerState state,string status=null,string objective=null,string reward=null,string title=null,string description=null)
-    { Marker = content.marker; State = state; Title = title??content.title; Description = description??content.description; Status=status; Objective=objective; Reward=reward; }
+    { Marker = content.marker; State = state; Title = title??content.title; Description = description??content.description; Status=status; Objective=objective; Reward=reward??content.rewardHint; }
     public bool Concealed => Marker != null && Marker.concealDetails && State == SurfaceMarkerState.Active;
 }
 

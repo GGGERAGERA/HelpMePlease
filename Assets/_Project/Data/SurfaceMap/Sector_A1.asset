@@ -13,9 +13,12 @@ MonoBehaviour:
   m_Name: Sector_A1
   m_EditorClassIdentifier: Assembly-CSharp::SurfaceSectorDefinition
   id: A1
-  displayName: A1
-  description: Safer route / experience
-  mapPosition: {x: 0, y: 110}
+  displayName: map.sector.A1
+  description: map.route.A
+  mapPosition: {x: -155, y: 55}
+  locationFamily: 1
+  requiresScan: 0
+  storySector: 0
   neighbours:
   - A2
   parameters:
@@ -36,3 +39,4 @@ MonoBehaviour:
     anomalyWeights: []
     biomeId: 
     themeId: 
+  content: []

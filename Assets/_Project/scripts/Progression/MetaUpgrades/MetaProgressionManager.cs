@@ -107,6 +107,7 @@ public sealed class MetaProgressionManager : MonoBehaviour
         if (EscapeAccess >= 1) return false;
         PlayerPrefs.SetInt(EscapeAccessKey, 1);
         PlayerPrefs.Save();
+        ProgressChanged?.Invoke();
         return true;
     }
 

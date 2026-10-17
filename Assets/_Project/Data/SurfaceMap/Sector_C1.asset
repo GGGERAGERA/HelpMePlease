@@ -13,9 +13,12 @@ MonoBehaviour:
   m_Name: Sector_C1
   m_EditorClassIdentifier: Assembly-CSharp::SurfaceSectorDefinition
   id: C1
-  displayName: C1
-  description: Risky route / Bombers / gold
-  mapPosition: {x: 150, y: 0}
+  displayName: map.sector.C1
+  description: map.route.C
+  mapPosition: {x: 155, y: 55}
+  locationFamily: 3
+  requiresScan: 0
+  storySector: 0
   neighbours:
   - C2
   parameters:
@@ -38,3 +41,4 @@ MonoBehaviour:
     anomalyWeights: []
     biomeId: 
     themeId: 
+  content: []

@@ -20,6 +20,7 @@ MonoBehaviour:
     gameplaySceneName: MVP
     startingStageProfile: {fileID: 11400000, guid: d387815bd32a4a639c4ac0f811ee3251, type: 2}
     description: bunker.depth_data.1.description
+    globalObjectiveKey: bunker.depth_data.1.objective
   - id: 2
     displayName: bunker.depth_data.2.name
     requiredAccess: 1
