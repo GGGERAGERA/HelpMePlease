@@ -52,6 +52,37 @@ public sealed class ArcadePrototypeSmokeTests
         yield return new EnterPlayMode();
         yield return PlayCabinets();
     }
+    [UnityTest] public IEnumerator CursorHighlightsAndOpensPinball()
+    {
+        EditorSceneManager.OpenScene("Assets/_Project/Scenes/MainBuild/StartScreen.unity");
+        yield return new EnterPlayMode();
+        Object.FindFirstObjectByType<StartScreenController>().Begin();
+        yield return CoreTestSupport.Await(() => UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu" &&
+            !SceneTransitionOverlay.IsTransitioning && Object.FindFirstObjectByType<BunkerPlayerLoadoutController>() is { IsReady: true });
+        yield return null;
+        var game = Object.FindFirstObjectByType<AnomalyPinball>();
+        var cursor = Object.FindFirstObjectByType<BunkerCursorInteractor>();
+        var camera = (Camera)Read(cursor, "targetCamera");
+        var proxy = game.transform.Find("ArcadeInteraction").GetComponent<BunkerInteractableCollider>();
+        var body = game.GetComponentsInChildren<SpriteRenderer>().Single(r => r.name == "Element1");
+        Physics2D.SyncTransforms();
+        foreach (float height in new[] { body.bounds.center.y, body.bounds.max.y - .2f, body.bounds.min.y + .2f })
+        {
+            var point = new Vector3(body.bounds.center.x, height);
+            camera.transform.position += point - camera.ScreenToWorldPoint(Input.mousePosition);
+            camera.transform.position = new Vector3(camera.transform.position.x, camera.transform.position.y, -10);
+            typeof(BunkerCursorInteractor).GetMethod("UpdateHover", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(cursor, null);
+            Assert.That(Read(cursor, "current"), Is.SameAs(proxy), "The visible cabinet must be selectable at its screen and controls.");
+        }
+        var hover = game.GetComponent<BunkerHoverOutline>();
+        var materials = (Material[])Read(hover, "materials");
+        var boundsOutline = (LineRenderer)Read(hover, "boundsOutlineRenderer");
+        Assert.That(materials.Any(m => m != null && m.HasProperty("_EnableOutline") && m.GetFloat("_EnableOutline") > 0) ||
+            boundsOutline != null && boundsOutline.enabled, Is.True, "Hover must have an actual visible outline.");
+        typeof(BunkerCursorInteractor).GetMethod("TryInteract", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(cursor, null);
+        Assert.That(game.IsOpen && game.IsRunning, Is.True, "Clicking the hovered cabinet must open pinball.");
+        Assert.That(Object.FindFirstObjectByType<BunkerPanelManager>().TryCloseForEscape(), Is.True);
+    }
     [Test] public void RestingFlippersAllowARealDrain()
     {
         var fixture = new GameObject("Pinball drain fixture"); fixture.SetActive(false);

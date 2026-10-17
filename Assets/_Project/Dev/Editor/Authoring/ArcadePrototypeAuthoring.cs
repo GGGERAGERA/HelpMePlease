@@ -31,11 +31,11 @@ public static class ArcadePrototypeAuthoring
         try
         {
             if (command == "setup") { Configure(); File.WriteAllText(Output + "/setup.txt", "PASS: pinball and existing red roulette table configured; poker retained but disabled."); }
-            else if (command == "smoke" || command == "roulette" || command == "bunker-roulette" || command == "pinball")
+            else if (command == "smoke" || command == "roulette" || command == "bunker-roulette" || command == "pinball" || command == "pinball-cursor")
             {
                 SessionState.SetBool(Running, true);
                 ScriptableObject.CreateInstance<TestRunnerApi>().Execute(new ExecutionSettings(new Filter
-                { testMode = TestMode.EditMode, testNames = command == "pinball" ? new[] { "ArcadePrototypeSmokeTests.ProductionPinballPlaysAndRestoresBunker", "ArcadePrototypeSmokeTests.RestingFlippersAllowARealDrain" } : command == "bunker-roulette" ? new[] { "RouletteSmokeTests", "BunkerDoorDebugTests" } : command == "roulette" ? new[] { "RouletteSmokeTests" } : new[] { "ArcadePrototypeSmokeTests", "RouletteSmokeTests" } }));
+                { testMode = TestMode.EditMode, testNames = command == "pinball-cursor" ? new[] { "ArcadePrototypeSmokeTests.CursorHighlightsAndOpensPinball" } : command == "pinball" ? new[] { "ArcadePrototypeSmokeTests.ProductionPinballPlaysAndRestoresBunker", "ArcadePrototypeSmokeTests.RestingFlippersAllowARealDrain" } : command == "bunker-roulette" ? new[] { "RouletteSmokeTests", "BunkerDoorDebugTests" } : command == "roulette" ? new[] { "RouletteSmokeTests" } : new[] { "ArcadePrototypeSmokeTests", "RouletteSmokeTests" } }));
             }
         }
         catch (Exception error) { File.WriteAllText(Output + "/error.txt", error.ToString()); Debug.LogException(error); }
@@ -88,7 +88,7 @@ public static class ArcadePrototypeAuthoring
         so = new SerializedObject(station);
         so.FindProperty("game").objectReferenceValue = game;
         so.ApplyModifiedPropertiesWithoutUndo();
-        if (root.GetComponent<BunkerHoverOutline>() == null) root.AddComponent<BunkerHoverOutline>();
+        var hover = root.GetComponent<BunkerHoverOutline>() ?? root.AddComponent<BunkerHoverOutline>();
         var trigger = root.transform.Find("ArcadeInteraction");
         if (trigger == null)
         {
@@ -106,6 +106,11 @@ public static class ArcadePrototypeAuthoring
         int layer = LayerMask.NameToLayer("BunkerInteractable");
         if (layer < 0) throw new InvalidOperationException("Existing BunkerInteractable layer is missing.");
         trigger.gameObject.layer = layer;
+        so = new SerializedObject(hover);
+        so.FindProperty("outlineMaterialFallback").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/prefabs/Bunker/mat/BunkerElements2D.mat");
+        so.FindProperty("useBoundsOutlineFallback").boolValue = true;
+        so.FindProperty("boundsOutlineCollider").objectReferenceValue = trigger.GetComponent<Collider2D>();
+        so.ApplyModifiedPropertiesWithoutUndo();
         if (root.transform.Find("ArcadeLabel") == null)
         {
             var text = new GameObject("ArcadeLabel", typeof(RectTransform), typeof(TextMeshPro)).GetComponent<TextMeshPro>();

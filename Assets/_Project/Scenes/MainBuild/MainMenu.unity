@@ -5073,6 +5073,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5517705656267815233, guid: f740febe34832d74c9ce51b83ba24ddb, type: 3}
   m_PrefabInstance: {fileID: 1119203515}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &304395601 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1743539286083387059, guid: 76ad5b8a9b0ae2743b87bf7a5824d0ec, type: 3}
+  m_PrefabInstance: {fileID: 5221617628372705134}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &321758030
 GameObject:
   m_ObjectHideFlags: 0
@@ -51579,12 +51584,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerHoverOutline
   autoFindRenderers: 1
   targetRenderers: []
-  outlineMaterialFallback: {fileID: 0}
-  useBoundsOutlineFallback: 0
+  outlineMaterialFallback: {fileID: 2100000, guid: ebd2afa346984654387e8ad510bb567f, type: 2}
+  useBoundsOutlineFallback: 1
   boundsOutlinePadding: 0.08
   boundsOutlineWidth: 0.06
   boundsOutlineColor: {r: 1, g: 1, b: 1, a: 1}
-  boundsOutlineCollider: {fileID: 0}
+  boundsOutlineCollider: {fileID: 1296144227}
 --- !u!114 &2944780751610647488
 MonoBehaviour:
   m_ObjectHideFlags: 0
