@@ -12,13 +12,22 @@ public sealed class BunkerGateVisual : MonoBehaviour
     private Bounds closedDoorBounds;
     private bool hasDoorBounds;
     private readonly HashSet<Collider2D> playerContacts = new();
+    private bool desiredOpen;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    // Runtime-only overrides: never write room unlocks or player progression.
+    private bool? debugOpen;
+    private bool? debugLocked;
+    public bool DebugHasOverride => debugOpen.HasValue || debugLocked.HasValue;
+    public bool DebugIsLocked => debugLocked ?? (!openOnPlayerProximity && !desiredOpen);
+#endif
 
     public bool IsOpen { get; private set; }
     public event System.Action AvailabilityChanged;
 
     private void OnEnable()
     {
-        if (openOnPlayerProximity) SetOpen(false);
+        if (openOnPlayerProximity) SetProximityOpen(false);
         AvailabilityChanged?.Invoke();
     }
 
@@ -49,7 +58,7 @@ public sealed class BunkerGateVisual : MonoBehaviour
     private void OnTriggerExit2D(Collider2D other)
     {
         if (openOnPlayerProximity && playerContacts.Remove(other) && playerContacts.Count == 0)
-            SetOpen(false);
+            SetProximityOpen(false);
     }
 
     private void FixedUpdate()
@@ -65,7 +74,7 @@ public sealed class BunkerGateVisual : MonoBehaviour
             float dy = Mathf.Max(0f, closedDoorBounds.min.y - body.max.y, body.min.y - closedDoorBounds.max.y);
             if (hasDoorBounds && dx * dx + dy * dy <= limit * limit) { near = true; break; }
         }
-        SetOpen(near);
+        SetProximityOpen(near);
     }
 
     private void CacheDoorBounds()
@@ -87,6 +96,26 @@ public sealed class BunkerGateVisual : MonoBehaviour
 
     public void SetOpen(bool open)
     {
+        // Story and minigame requests keep updating even while debug owns the visuals.
+        desiredOpen = open;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        ApplyOpen(debugLocked == true ? false : debugOpen ?? desiredOpen);
+#else
+        ApplyOpen(desiredOpen);
+#endif
+    }
+
+    private void SetProximityOpen(bool open)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Automatic ticks must not replace the latest external story request during an override.
+        if (DebugHasOverride) return;
+#endif
+        SetOpen(open);
+    }
+
+    private void ApplyOpen(bool open)
+    {
         bool changed = IsOpen != open;
         IsOpen = open;
 
@@ -96,6 +125,31 @@ public sealed class BunkerGateVisual : MonoBehaviour
             closedDoor.SetActive(!open);
         if (changed) AvailabilityChanged?.Invoke();
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void DebugSetOpen(bool open)
+    {
+        debugOpen = open;
+        if (open) debugLocked = false;
+        ApplyOpen(debugLocked == true ? false : open);
+        AvailabilityChanged?.Invoke();
+    }
+
+    public void DebugSetLocked(bool locked)
+    {
+        debugLocked = !locked && openOnPlayerProximity ? (bool?)null : locked;
+        ApplyOpen(locked ? false : debugOpen ?? desiredOpen);
+        AvailabilityChanged?.Invoke();
+    }
+
+    public void DebugResetOverride()
+    {
+        debugOpen = null;
+        debugLocked = null;
+        ApplyOpen(desiredOpen);
+        AvailabilityChanged?.Invoke();
+    }
+#endif
 
     public void Open() => SetOpen(true);
 

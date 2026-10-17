@@ -13,7 +13,13 @@ public sealed class ProductionSceneComposition : MonoBehaviour
     public static ProductionSceneComposition Active { get; private set; }
     public bool IsReady { get; private set; }
     private bool recoverMissingRun;
-    public void PrepareForTransition() => characters?.PrepareForSceneTransition();
+    public void PrepareForTransition()
+    {
+        // Return modal time ownership before the transition captures its resume scale.
+        if (role == SceneRole.Bunker && BunkerContext.Instance != null)
+            BunkerContext.Instance.Panels?.CloseArcadeForTransition();
+        characters?.PrepareForSceneTransition();
+    }
     [SerializeField] private SceneRole role;
     [SerializeField] private SurfaceMapDefinition surfaceMap;
     [SerializeField] private MissionCatalog missions;

@@ -39,7 +39,7 @@ public sealed class SurfaceMapUxTests
             Assert.That(fog.CoverageAt(nodes["C1"].GetComponent<RectTransform>().anchoredPosition),Is.Zero);
             var facts=root.transform.Find("Sector card").GetComponentsInChildren<TMP_Text>();
             Assert.That(System.Array.Exists(facts,label=>label.text.Contains("+50%") && label.color==SurfaceMapGlyph.Tint(SurfaceMapMeaning.Reward)),Is.True);
-            Assert.That(System.Array.Exists(facts,label=>label.text.StartsWith(localization.Get("map.risk.high")) && label.color==SurfaceMapGlyph.Tint(SurfaceMapMeaning.Danger)),Is.True);
+            Assert.That(System.Array.Exists(facts,label=>label.text.Contains("+30%") && label.text.Contains("+44%") && label.color==SurfaceMapGlyph.Tint(SurfaceMapMeaning.Danger)),Is.True,"Concrete threat and enemy HP modifiers remain visible.");
             var frontier=Read<RectTransform>(view,"graph").Find("Trail C1-C2").GetComponent<Image>();
             var hint=frontier.sprite;
             Assert.That(hint.name,Does.Contain("Hint"),"Only a short continuation may enter the unexplored area.");
@@ -61,10 +61,10 @@ public sealed class SurfaceMapUxTests
             foreach(string id in new[]{"A1","C1","D1"})
             {
                 view.Inspect(id);
-                Assert.That(nodes[id].transform.Find("Danger").gameObject.activeSelf,Is.True);
+                Assert.That(nodes[id].transform.Find("Danger"),Is.Null,"Nodes no longer carry a redundant danger indicator.");
                 Assert.That(nodes[id].transform.Find("Reward").gameObject.activeSelf,Is.True,"XP bonuses use the same reward indicator as gold bonuses.");
                 var values=root.transform.Find("Sector card").GetComponentsInChildren<TMP_Text>();
-                Assert.That(System.Array.Exists(values,label=>label.text.StartsWith(localization.Get("map.risk"),System.StringComparison.OrdinalIgnoreCase) && label.color==SurfaceMapGlyph.Tint(SurfaceMapMeaning.Danger)),Is.True);
+                Assert.That(System.Array.Exists(values,label=>label.text.Contains("Опасность") || label.text.Contains("Danger:")),Is.False);
             }
             view.Inspect("C1");
             Assert.That(SurfaceMapBriefing.RiskDrivers(goldRun),Does.Not.Contain("15"));

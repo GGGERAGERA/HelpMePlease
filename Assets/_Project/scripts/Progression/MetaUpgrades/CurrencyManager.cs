@@ -169,6 +169,25 @@ public class CurrencyManager : MonoBehaviour
         return true;
     }
 
+    // Stage a bunker's purchase/reservation/settlement in the same save boundary
+    // as its wallet change, before observers see either new state.
+    public bool TryChangeGoldExact(int delta, System.Action stageDependentState)
+    {
+        long next = (long)TotalGold + delta;
+        if (committingGoldReward || next < 0 || next > int.MaxValue || stageDependentState == null) return false;
+        committingGoldReward = true;
+        try
+        {
+            stageDependentState();
+            TotalGold = (int)next;
+            PlayerPrefs.SetInt(GoldKey, TotalGold);
+            PlayerPrefs.Save();
+        }
+        finally { committingGoldReward = false; }
+        OnGoldUpdated?.Invoke(TotalGold);
+        return true;
+    }
+
     private void SaveGold()
     {
         PlayerPrefs.SetInt(GoldKey, TotalGold);

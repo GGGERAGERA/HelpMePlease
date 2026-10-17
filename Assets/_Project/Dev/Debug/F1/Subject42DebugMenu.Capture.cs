@@ -11,44 +11,6 @@ public sealed partial class Subject42DebugMenu
     private TrailerCaptureSession CaptureSession => captureSession != null ? captureSession :
         captureSession = gameObject.GetComponent<TrailerCaptureSession>() ?? gameObject.AddComponent<TrailerCaptureSession>();
 
-    private void AddCaptureSection()
-    {
-        var session = CaptureSession;
-        AddSectionTitle("ПРЕСЕТЫ КАДРА", "Применяйте повторно; затем закройте F1 и записывайте через OBS");
-        if (session.Config == null) AddHint("Данные TrailerCapturePresets не найдены");
-        else foreach (var preset in session.Config.presets)
-        {
-            string reason = session.PresetUnavailableReason(preset);
-            AddRow(preset.label, reason ?? preset.description, reason == null ? mutedColor : warningColor,
-                "ПРИМЕНИТЬ", reason == null, () => { session.Apply(preset); BindInputOwner(); RefreshCurrentTab(); });
-        }
-        AddSectionTitle("УПРАВЛЕНИЕ СЪЁМКОЙ", "HUD и числа урона независимы; границы событий и маркеры опасности сохраняются");
-        AddCaptureControls();
-        string resetReason = session.ResetUnavailableReason;
-        AddRow("Сброс съёмочных настроек", resetReason ?? "Вернуть исходный билд, здоровье, угрозу и видимость",
-            warningColor, "СБРОСИТЬ", resetReason == null, () => { session.ResetSettings(); BindInputOwner(); RefreshCurrentTab(); });
-        AddHint(session.Status);
-    }
-
-    private void AddCaptureControls()
-    {
-        var session = CaptureSession;
-        string reason = session.UnavailableReason;
-        bool available = reason == null;
-        var player = PlayerRuntimeReference.CachedPlayer;
-        var health = player != null ? player.GetComponent<PlayerHealth>() : null;
-        AddRow("Восстановить здоровье", reason ?? $"{health.CurrentHealth:0} / {health.MaxHealth:0}",
-            mutedColor, "ВОССТАНОВИТЬ", available, () => { session.Heal(); RefreshCurrentTab(); });
-        AddCaptureToggle("Неуязвимость", health != null && health.DebugInvulnerable, reason,
-            () => session.SetInvulnerable(!health.DebugInvulnerable));
-        var hud = HUDManager.Instance;
-        AddCaptureToggle("Игровой HUD", hud != null && hud.DebugHudVisible,
-            reason ?? (hud == null ? "HUD не найден" : null), () => session.SetHudVisible(!hud.DebugHudVisible));
-        AddCaptureToggle("Числа урона", DamagePopup.DebugDamageNumbersVisible, reason,
-            () => session.SetNumbersVisible(!DamagePopup.DebugDamageNumbersVisible));
-        AddCaptureSpawnControls(reason);
-    }
-
     private void AddCaptureSpawnControls(string reason)
     {
         var session = CaptureSession;
@@ -82,7 +44,7 @@ public sealed partial class Subject42DebugMenu
 
     private void AddPlayerBuildSection()
     {
-        AddSectionTitle("ИГРОК", "Только текущий ран; состояние переключателей берётся из gameplay");
+        AddSectionTitle("Игрок", "Изменения для текущего забега");
         var session = CaptureSession;
         string reason = session.UnavailableReason;
         var player = PlayerRuntimeReference.CachedPlayer;
@@ -94,11 +56,10 @@ public sealed partial class Subject42DebugMenu
         var station = player != null ? player.GetComponentInChildren<OrbitalStationRuntime>() : null;
         AddSectionTitle("ОРБИТЫ И ОРУЖИЕ", station != null && station.IsInitialized
             ? $"Колец: {station.Rings.Count} · модулей: {station.Modules.Count} · ядро: {station.Core.Level}"
-            : "ORBITAL не готов");
-        AddHint("Билды выдаются пресетами в «Съёмка». ПКМ: Bullet Time; Shift + WASD: смещение центра орбит.");
+            : "Орбиты ещё не готовы");
         var state = station != null ? station.State : null;
         bool canAddRing = reason == null && state.Rings.Count < 4 && state.CanAddRing(out _);
-        AddRow("Добавить орбиту", reason ?? (canAddRing ? "Штатный лимит; для съёмки максимум 4 кольца" : "Достигнут лимит колец"),
+        AddRow("Добавить орбиту", reason ?? (canAddRing ? "До четырёх орбит" : "Достигнут лимит орбит"),
             mutedColor, "ДОБАВИТЬ", canAddRing, () =>
             {
                 if (session.PrepareBuildEdit()) station.AddRing();
@@ -106,7 +67,7 @@ public sealed partial class Subject42DebugMenu
             });
         int ringId = station != null && station.SelectedRing != null ? station.SelectedRing.RingId : 0;
         bool canAddMount = reason == null && ringId != 0 && state.CanAddMount(ringId, out _);
-        AddRow("Крепление на выбранной орбите", reason ?? (canAddMount ? "Добавить свободный mount" : "Выберите орбиту с запасом вместимости"),
+        AddRow("Крепление на выбранной орбите", reason ?? (canAddMount ? "Добавить место для оружия" : "Выберите орбиту с запасом вместимости"),
             mutedColor, "ДОБАВИТЬ", canAddMount, () =>
             {
                 if (session.PrepareBuildEdit()) station.AddMount();
@@ -127,7 +88,7 @@ public sealed partial class Subject42DebugMenu
                 OrbitalModuleKind.ArcEmitter => "Дуговой излучатель",
                 _ => "Связующие узлы (пара)"
             };
-            AddRow(label, reason ?? (canPlace ? "После закрытия F1 выберите орбиту и свободный mount" : "Нет совместимых свободных mounts"),
+            AddRow(label, reason ?? (canPlace ? "Закройте F1 и выберите свободное крепление" : "Нет подходящих свободных креплений"),
                 mutedColor, "УСТАНОВИТЬ", reason == null && canPlace, () =>
                 {
                     if (!session.PrepareBuildEdit()) return;
@@ -166,11 +127,11 @@ public sealed partial class Subject42DebugMenu
             AddRow(label, ruleReason ?? (selected ? "ВЫБРАНО" : rule.ShortDescription), selected ? successColor : mutedColor,
                 "ВЫБРАТЬ", ruleReason == null, () => { session.SetWorldRule(rule); RefreshCurrentTab(); });
         }
-        AddSectionTitle("УГРОЗА", "Давление обычных врагов; пресеты съёмки ограничены значением 60");
+        AddSectionTitle("Угроза", "Давление обычных врагов");
         foreach (int pressure in new[] { 0, 25, 50 })
             AddRow($"Давление {pressure}", reason ?? $"Сейчас: {RunStateManager.Instance.ThreatValue:0.0}", mutedColor,
                 "ВЫСТАВИТЬ", reason == null, () => { session.SetThreat(pressure); RefreshCurrentTab(); });
-        AddSectionTitle("СОБЫТИЯ И БОСС", "Запускаются через игровые сервисы; повторный запуск заменяет съёмочный бой");
+        AddSectionTitle("События и босс", "Повторный запуск заменяет текущий тестовый бой");
         var events = FindFirstObjectByType<WorldEventSpawner>();
         AddRow("Очистить события", reason ?? "Убрать текущие события без выдачи наград", mutedColor,
             "ОЧИСТИТЬ", reason == null && events != null, () => { session.ClearWorldEvents(); RefreshCurrentTab(); });
@@ -187,14 +148,18 @@ public sealed partial class Subject42DebugMenu
 
     private void AddAdditionalSection()
     {
-        AddSectionTitle("ДОПОЛНИТЕЛЬНЫЕ ИНСТРУМЕНТЫ", "Лабораторные команды отделены от подготовки кадров");
-        AddRow("Визуальная лаборатория", "Настройка текущих визуальных эффектов", mutedColor, "ОТКРЫТЬ",
+        if (IsProductionBunker)
+        {
+            AddBunkerProgressionSection();
+            return;
+        }
+        AddRow("Внешний вид", "Настройка визуальных эффектов", mutedColor, "ОТКРЫТЬ",
             characterSpawner != null, () => SelectTab(DebugTab.VisualTest));
-        AddRow("Боевые эффекты и манекен", "Технические проверки combat feel", mutedColor, "ОТКРЫТЬ",
+        AddRow("Боевые эффекты и манекен", "Настройка ударов и попаданий", mutedColor, "ОТКРЫТЬ",
             characterSpawner != null, () => SelectTab(DebugTab.FeelTest));
-        AddRow("Лаборатория ORBITAL", "Ручная установка модулей и проверки состояния", mutedColor, "ОТКРЫТЬ",
+        AddRow("Орбиты", "Установка модулей и проверка состояния", mutedColor, "ОТКРЫТЬ",
             characterSpawner != null, () => SelectTab(DebugTab.OrbitalProduction));
-        string[] labels = { "Bot Lab и Batch Runner", "Ручной спавн и AI", "Лаборатория опыта" };
+        string[] labels = { "Боты", "Враги", "Опыт" };
         for (int i = 0; i < labels.Length; i++)
         {
             int index = i;

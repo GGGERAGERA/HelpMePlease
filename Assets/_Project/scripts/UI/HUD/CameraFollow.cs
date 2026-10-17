@@ -5,6 +5,8 @@ using Subject42.Combat.OrbitalStation;
 
 public class CameraFollow : MonoBehaviour
 {
+    // Modal screens suspend presentation without OnDisable clearing user zoom/focus.
+    public bool IsPresentationSuspended { get; set; }
     public Transform target;
     public Vector3 offset = new Vector3(0, 0, -10);
     public float smoothSpeed = 0.125f;
@@ -126,6 +128,7 @@ public class CameraFollow : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (IsPresentationSuspended) return;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         RemoveMouseLookAheadLayer();
 #endif

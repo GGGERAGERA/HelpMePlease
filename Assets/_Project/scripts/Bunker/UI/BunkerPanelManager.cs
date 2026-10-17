@@ -19,11 +19,13 @@ public sealed class BunkerPanelManager : MonoBehaviour
     [SerializeField] private GameObject
         stationUpgradePanelPrefab;
     private BunkerStationUpgradePanel stationUpgradePanel;
+    private ArcadeMinigame activeArcade;
 
     [Header("Run")]
     [SerializeField] private BunkerRunStarter runStarter;
 
     public bool IsAnyPanelOpen =>
+        (activeArcade != null && activeArcade.IsOpen) ||
         (missionPanel != null && missionPanel.IsOpen) ||
         (surfaceMapPanel != null && surfaceMapPanel.gameObject.activeInHierarchy) ||
         (escapeProtocolPanel != null && escapeProtocolPanel.gameObject.activeInHierarchy) ||
@@ -154,6 +156,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
 
     public void CloseAll(bool playSound)
     {
+        activeArcade?.Close();
         orbitalSlotPanel?.Hide();
         selectionPanelController?.Hide();
         escapeProtocolPanel?.gameObject.SetActive(false);
@@ -168,6 +171,21 @@ public sealed class BunkerPanelManager : MonoBehaviour
             audioSettingsPanel.Close();
 
     }
+
+    public bool TryOpenArcade(ArcadeMinigame game)
+    {
+        if (game == null || activeArcade != null || SceneTransitionOverlay.IsTransitioning) return false;
+        CloseAll(false);
+        activeArcade = game;
+        return true;
+    }
+
+    public void ReleaseArcade(ArcadeMinigame game)
+    {
+        if (activeArcade == game) activeArcade = null;
+    }
+
+    public void CloseArcadeForTransition() => activeArcade?.Close();
 
     public void OpenMission(MissionProvider provider)
     {

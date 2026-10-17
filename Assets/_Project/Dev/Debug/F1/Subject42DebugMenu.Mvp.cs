@@ -37,7 +37,7 @@ public sealed partial class Subject42DebugMenu
             menuPanel.anchoredPosition = mvpOrbitSurfacePosition;
             ConstrainMvpOrbitSurfacePosition();
             menuHeader.sizeDelta = new Vector2(0f, 44f);
-            menuTitle.text = "ОРБИТЫ · LIVE"; menuTitle.fontSize = 19f;
+            menuTitle.text = "Внешний вид орбит"; menuTitle.fontSize = 19f;
             Stretch(menuTitle.rectTransform, 12f, 112f);
             menuTabBar.gameObject.SetActive(false);
             closeButtonRect.sizeDelta = new Vector2(32f, 26f); closeButtonRect.anchoredPosition = new Vector2(-8f, 0f);
@@ -50,7 +50,7 @@ public sealed partial class Subject42DebugMenu
         menuPanel.anchorMin = new Vector2(.045f, .045f); menuPanel.anchorMax = new Vector2(.955f, .955f);
         menuPanel.pivot = new Vector2(.5f, .5f); menuPanel.sizeDelta = Vector2.zero; menuPanel.anchoredPosition = Vector2.zero;
         menuHeader.sizeDelta = new Vector2(0f, 62f);
-        menuTitle.text = "ПРОВЕРКА MVP · F1"; menuTitle.fontSize = 26f;
+        menuTitle.text = "Отладка · F1"; menuTitle.fontSize = 24f;
         Stretch(menuTitle.rectTransform, 22f, 90f);
         menuTabBar.gameObject.SetActive(true);
         closeButtonRect.sizeDelta = new Vector2(52f, 40f); closeButtonRect.anchoredPosition = new Vector2(-14f, 0f);

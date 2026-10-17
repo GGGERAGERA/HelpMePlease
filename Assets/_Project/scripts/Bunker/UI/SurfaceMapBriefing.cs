@@ -8,18 +8,9 @@ public static class SurfaceMapBriefing
     public static string Format(string key, params object[] args) => LocalizationService.Instance != null
         ? string.Format(Text(key), args) : string.Join(" / ", args);
 
-    // A UI estimate, never an input to gameplay. Account for the rule actually applied on entry.
+    // Account for the rule actually applied on entry.
     public static float EntryPressure(RunConfig config) => config.SpawnPressure * (config.WorldRule != null && config.WorldRule.RuleType != WorldRuleType.None ? config.WorldRule.SpawnPressureMultiplier : 1f);
     public static float EntryHealth(RunConfig config) => config.EnemyHealth * (config.WorldRule != null ? config.WorldRule.EnemyHealthMultiplier : 1f);
-    public static bool HighRisk(RunConfig config) => EntryPressure(config) >= 1.2f || EntryHealth(config) >= 1.2f || config.ThreatGrowth >= 1.2f || config.InitialThreat >= 20f;
-
-    public static string Risk(RunConfig config)
-    {
-        if (HighRisk(config))
-            return Text("map.risk.high");
-        return Text(EntryPressure(config) < 1f && config.ThreatGrowth < 1f ? "map.risk.low" : "map.risk.medium");
-    }
-
     public static string RiskDrivers(RunConfig config)
     {
         var drivers=new List<string>();

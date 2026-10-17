@@ -209,7 +209,7 @@ public sealed class SurfaceMapView : MonoBehaviour
             var symbols=new Dictionary<SurfaceMapMeaning,SurfaceMapGlyph>();
             foreach(SurfaceMapMeaning meaning in System.Enum.GetValues(typeof(SurfaceMapMeaning)))
             {
-                if(meaning==SurfaceMapMeaning.Expedition)continue;
+                if(meaning==SurfaceMapMeaning.Expedition || meaning==SurfaceMapMeaning.Danger)continue;
                 var go=new GameObject(meaning.ToString(),typeof(RectTransform),typeof(SurfaceMapGlyph));
                 go.layer=button.gameObject.layer; go.transform.SetParent(button.transform,false);
                 Place((RectTransform)go.transform,Vector2.zero,new Vector2(18,18));
@@ -330,7 +330,6 @@ public sealed class SurfaceMapView : MonoBehaviour
         {
             bool show=!locked && (pair.Key switch
             {
-                SurfaceMapMeaning.Danger => true,
                 SurfaceMapMeaning.Reward => SurfaceMapBriefing.HasRewardBonus(config),
                 SurfaceMapMeaning.Anomaly => SurfaceMapBriefing.AnomalyBias(config).Count>0,
                 SurfaceMapMeaning.Event => hasMarker,
@@ -359,15 +358,14 @@ public sealed class SurfaceMapView : MonoBehaviour
         selectionLabel.text=L(sector.DisplayName);
         var config=service.Content.Resolve(sector.BuildRunConfig(renderedMap.Id));
         int row=0;
-        string risk=SurfaceMapBriefing.Risk(config), drivers=SurfaceMapBriefing.RiskDrivers(config);
-        AddFact(ref row,SurfaceMapMeaning.Danger,risk);
+        string drivers=SurfaceMapBriefing.RiskDrivers(config);
         AddFact(ref row,SurfaceMapMeaning.Reward,SurfaceMapBriefing.Rewards(config));
         if (sector.IsEscapeFinal)
             AddFact(ref row,SurfaceMapMeaning.Event,L(sector.FinalChallengeReady ? "escape.final.briefing" : "escape.final.unavailable"));
         if(!string.IsNullOrEmpty(drivers))AddFact(ref row,SurfaceMapMeaning.Danger,drivers);
         foreach(string bias in SurfaceMapBriefing.AnomalyBias(config))
             AddFact(ref row,SurfaceMapMeaning.Anomaly,bias);
-        string text=SurfaceMapBriefing.Risk(config)+"\n"+SurfaceMapBriefing.Rewards(config);
+        string text=SurfaceMapBriefing.Rewards(config);
         if(service.HasConcealedIntel(inspectedId))
         {
             AddFact(ref row,SurfaceMapMeaning.Event,L("map.scan_hint")); text+="\n"+L("map.scan_hint");

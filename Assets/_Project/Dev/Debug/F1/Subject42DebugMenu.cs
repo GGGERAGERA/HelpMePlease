@@ -296,7 +296,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private enum DebugTab
     {
-        Shooting,
+        Bunker,
         PlayerBuild,
         WorldEvents,
         Additional,
@@ -340,8 +340,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private static readonly string[] TabLabels =
     {
-        "Съёмка", "Игрок и билд", "Мир и события", "Дополнительно",
-        "Лаборатория ORBITAL", "Боевые эффекты", "Визуальная лаборатория"
+        "Бункер", "Игрок", "Мир", "Инструменты",
+        "Орбиты", "Боевые эффекты", "Внешний вид"
     };
 
 
@@ -365,7 +365,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private RectTransform contentRoot;
     private readonly GameObject[] tabRoots = new GameObject[TabLabels.Length];
     private readonly Image[] tabButtonImages = new Image[TabLabels.Length];
-    private DebugTab activeTab = DebugTab.Shooting;
+    private DebugTab activeTab = DebugTab.PlayerBuild;
     private ProductionSectorDebugController productionSectorDebug;
     private bool isOpen;
     private bool isPreview;
@@ -439,7 +439,11 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             EnsureProductionSectorDebug();
             LoadVisualProductionValues();
         }
-        else if (!IsMvpDebugMenu)
+        if (IsMvpDebugMenu)
+            activeTab = (DebugTab)0;
+        else if (IsProductionBunker)
+            activeTab = DebugTab.Bunker;
+        else if (characterSpawner == null)
             activeTab = DebugTab.Additional;
         BuildMenu();
         RefreshTab(activeTab);
@@ -889,7 +893,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         header.anchoredPosition = Vector2.zero;
 
         TextMeshProUGUI title = CreateText(
-            "Title", header, "SUBJECT#42 — ОТЛАДОЧНОЕ МЕНЮ", 28f,
+            "Title", header, "Отладка · F1", 24f,
             TextAlignmentOptions.MidlineLeft, Color.white
         );
         menuTitle = title;
@@ -913,17 +917,20 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         tabBar.sizeDelta = new Vector2(0f, 54f);
 
         string[] labels = IsMvpDebugMenu ? MvpTabLabels : TabLabels;
-        for (int i = 0; i < 4; i++)
+        // MVP has its own four categories on indices 0..3. Other scenes omit bunker controls.
+        int[] visibleTabs = IsMvpDebugMenu || IsProductionBunker
+            ? new[] { 0, 1, 2, 3 } : new[] { 1, 2, 3 };
+        for (int i = 0; i < visibleTabs.Length; i++)
         {
-            int captured = i;
-            RectTransform slot = CreateRect(labels[i] + " Slot", tabBar);
-            slot.anchorMin = new Vector2((float)i / 4, 0f);
-            slot.anchorMax = new Vector2((float)(i + 1) / 4, 1f);
+            int captured = visibleTabs[i];
+            RectTransform slot = CreateRect(labels[captured] + " Slot", tabBar);
+            slot.anchorMin = new Vector2((float)i / visibleTabs.Length, 0f);
+            slot.anchorMax = new Vector2((float)(i + 1) / visibleTabs.Length, 1f);
             slot.offsetMin = new Vector2(3f, 3f);
             slot.offsetMax = new Vector2(-3f, -3f);
             Button button = CreateButton(
                 slot,
-                labels[i],
+                labels[captured],
                 () => SelectTab((DebugTab)captured),
                 100f
             );
@@ -932,7 +939,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             TextMeshProUGUI tabText = button.GetComponentInChildren<TextMeshProUGUI>();
             if (tabText != null && labels.Length > 7)
                 tabText.fontSize = 12f;
-            tabButtonImages[i] = button.targetGraphic as Image;
+            tabButtonImages[captured] = button.targetGraphic as Image;
         }
 
         RectTransform pages = CreateRect("Tab Pages", panel);
@@ -944,6 +951,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
         for (int i = 0; i < labels.Length; i++)
         {
+            if (i == (int)DebugTab.Bunker && !IsMvpDebugMenu && !IsProductionBunker) continue;
             bool compactLab = true;
             tabRoots[i] = CreateTabPage(labels[i], pages, out _, compactLab);
         }
@@ -1295,6 +1303,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private void SelectTab(DebugTab tab, bool refresh = true)
     {
         if (IsMvpDebugMenu && (int)tab >= MvpTabLabels.Length) return;
+        if (!IsMvpDebugMenu && tab == DebugTab.Bunker && !IsProductionBunker) return;
         activeTab = tab;
         if (isOpen)
         {
@@ -1354,7 +1363,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             return;
         }
 
-        if (!IsRuntimeLabTab(tab))
+        if (!IsRuntimeLabTab(tab) && tab != DebugTab.Bunker)
             AddTabHeading(TabLabels[(int)tab]);
 
         if (IsRuntimeLabTab(tab) && characterSpawner == null)
@@ -1365,8 +1374,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
         switch (tab)
         {
-            case DebugTab.Shooting:
-                AddCaptureSection();
+            case DebugTab.Bunker:
+                AddBunkerSection();
                 break;
             case DebugTab.PlayerBuild:
                 AddPlayerBuildSection();
@@ -1391,8 +1400,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         if (!IsRuntimeLabTab(activeTab))
         {
             AddHint(menuLiveSimulation
-                ? "F1 закрывает меню. LIVE: симуляция продолжает работать."
-                : "F1 закрывает меню. PAUSED: симуляция остановлена.");
+                ? "F1 — закрыть · Игра продолжается"
+                : "F1 — закрыть · Пауза");
         }
     }
 
@@ -1425,13 +1434,13 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         if (menuTitle != null)
         {
             menuTitle.text = activeTab == DebugTab.VisualTest
-                ? "RUNTIME VISUAL LAB"
+                ? "Внешний вид"
                 : activeTab == DebugTab.FeelTest
-                    ? "COMBAT"
+                    ? "Боевые эффекты"
                     : activeTab == DebugTab.OrbitalProduction
-                        ? "ORBITAL"
-                        : "SUBJECT#42 — ОТЛАДОЧНОЕ МЕНЮ";
-            menuTitle.fontSize = compact ? 17f : 28f;
+                        ? "Орбиты"
+                        : "Отладка · F1";
+            menuTitle.fontSize = compact ? 17f : 24f;
             Stretch(menuTitle.rectTransform,
                 compact ? 12f : 22f,
                 compact ? 112f : 90f);
@@ -3157,29 +3166,25 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             ToggleTacticalMap);
     }
 
-    private void AddBunkerSection()
+    private void AddBunkerProgressionSection()
     {
-        if (FindFirstObjectByType<BunkerRunStarter>() == null)
-        {
-            AddHint("Bunker tools are available in MainMenu.");
-            return;
-        }
+        if (!IsProductionBunker) return;
         AddFootballMinigameSection();
 #if UNITY_EDITOR
         UnlockProgressService unlocks = UnlockProgressService.Instance;
-        AddSectionTitle("CONTENT UNLOCKS", "Persistent debug actions");
-        AddRow("Unlock all content", "PERSISTENT", warningColor, "UNLOCK ALL", unlocks != null,
+        AddSectionTitle("Открытый контент", "Эти изменения сохраняются");
+        AddRow("Открыть всё", "С сохранением", warningColor, "Открыть", unlocks != null,
             () => { unlocks.DebugUnlockAll(); RefreshCurrentTab(); });
-        AddRow("Reset content unlocks", "PERSISTENT", warningColor, "RESET UNLOCKS", unlocks != null,
+        AddRow("Сбросить открытый контент", "С сохранением", warningColor, "Сбросить", unlocks != null,
             () => { unlocks.DebugResetAll(); RefreshCurrentTab(); });
 #endif
 
         BunkerStationProgressionService service = BunkerStationProgressionService.Instance;
-        AddSectionTitle("CHARACTER STATION", "Persistent station investment");
+        AddSectionTitle("Станция персонажей", "Уровень и вложения сохраняются");
         if (service == null ||
             !service.TryGetData(BunkerStationId.Character, out BunkerStationProgressionData data))
         {
-            AddRow("Progression service", "NOT AVAILABLE", warningColor,
+            AddRow("Развитие станции", "Недоступно", warningColor,
                 null, false, null);
             return;
         }
@@ -3188,49 +3193,43 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         int cost = service.GetUpgradeCost(BunkerStationId.Character);
         int invested = service.GetInvestedGold(BunkerStationId.Character);
         int gold = CurrencyManager.Instance != null ? CurrencyManager.Instance.TotalGold : 0;
-        AddRow("Current state",
-            level >= data.MaxLevel ? $"LV{level} - MAX" : $"LV{level} - {invested}/{cost} INVESTED",
+        AddRow("Уровень станции",
+            level >= data.MaxLevel ? $"{level} · максимум" : $"{level} · вложено {invested}/{cost}",
             successColor, null, false, null);
-        AddRow("Available Gold", gold.ToString(), gold > 0 ? successColor : warningColor,
-            "+1000 GOLD", CurrencyManager.Instance != null, DebugAddStationGold);
-        AddRow("Set Character Station level", "LV1 / INVESTED 0", mutedColor,
-            "SET LV1", true, () => DebugSetCharacterLevel(1));
-        AddRow("Set Character Station level", "LV2 / INVESTED 0", mutedColor,
-            "SET LV2", true, () => DebugSetCharacterLevel(2));
-        AddRow("Set Character Station level", "LV3 / INVESTED 0", mutedColor,
-            "SET LV3", true, () => DebugSetCharacterLevel(3));
-        AddRow("Set partial investment", "0", mutedColor,
-            "SET INVESTED 0", level < data.MaxLevel,
+        AddRow("Деньги", gold.ToString(), gold > 0 ? successColor : warningColor,
+            null, false, null);
+        AddRow("Уровень 1", "Без вложений", mutedColor,
+            "Выбрать", true, () => DebugSetCharacterLevel(1));
+        AddRow("Уровень 2", "Без вложений", mutedColor,
+            "Выбрать", true, () => DebugSetCharacterLevel(2));
+        AddRow("Уровень 3", "Без вложений", mutedColor,
+            "Выбрать", true, () => DebugSetCharacterLevel(3));
+        AddRow("Убрать вложения", "0", mutedColor,
+            "Применить", level < data.MaxLevel,
             () => DebugSetCharacterInvestment(0));
-        AddRow("Set partial investment", "50% OF CURRENT COST", mutedColor,
-            "SET INVESTED 50%", level < data.MaxLevel,
+        AddRow("Вложить половину стоимости", "50%", mutedColor,
+            "Применить", level < data.MaxLevel,
             DebugSetCharacterInvestmentHalf);
-        AddRow("Reset Character Station", "LV1 / INVESTED 0", warningColor,
-            "RESET", true, DebugResetCharacterStation);
+        AddRow("Сбросить станцию", "Уровень 1, без вложений", warningColor,
+            "Сбросить", true, DebugResetCharacterStation);
 
-        AddSectionTitle("CHARACTER UI", "Current selection");
+        AddSectionTitle("Персонаж", "Текущий выбор");
         CharacterData selectedCharacter =
             RunSelectionManager.Instance != null
                 ? RunSelectionManager.Instance.SelectedCharacter
                 : null;
-        AddRow("Selected Character",
+        AddRow("Выбранный персонаж",
             selectedCharacter != null
                 ? selectedCharacter.characterName
-                : "NOT SELECTED",
+                : "Не выбран",
             selectedCharacter != null ? successColor : mutedColor,
             null, false, null);
-        AddRow("Combat Type",
+        AddRow("Тип боя",
             selectedCharacter != null
                 ? selectedCharacter.combatType.ToString()
                 : "-",
             selectedCharacter != null ? successColor : mutedColor,
             null, false, null);
-    }
-
-    private void DebugAddStationGold()
-    {
-        BunkerStationProgressionService.Instance?.DebugAddGold();
-        RefreshCurrentTab();
     }
 
     private void DebugSetCharacterLevel(int level)
@@ -3424,93 +3423,22 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     }
 
 
-    private void AddRoomStateRows()
-    {
-        if (FindFirstObjectByType<BunkerRunStarter>() == null) return;
-        AddSectionTitle("ROOM ACCESS", "Runtime only; values are not saved");
-        BunkerRoomAccess[] rooms =
-            FindObjectsByType<BunkerRoomAccess>(FindObjectsSortMode.None);
-
-        foreach (BunkerRoomId roomId in Enum.GetValues(typeof(BunkerRoomId)))
-        {
-            BunkerRoomAccess room = null;
-            for (int i = 0; i < rooms.Length; i++)
-            {
-                if (rooms[i] != null && rooms[i].RoomId == roomId)
-                {
-                    room = rooms[i];
-                    break;
-                }
-            }
-
-            if (room == null) continue;
-            string state = room.Unlocked ? "OPEN" : "CLOSED";
-            Color color = room.Unlocked ? successColor : mutedColor;
-            BunkerRoomAccess captured = room;
-            AddRow(
-                GetRoomDisplayName(roomId),
-                $"[ {state} ]",
-                color,
-                room.Unlocked ? "CLOSE" : "OPEN",
-                true,
-                () =>
-                {
-                    captured.SetUnlocked(!captured.Unlocked);
-                    RefreshCurrentTab();
-                });
-        }
-
-        AddSectionTitle("ALL ROOMS", "Bulk runtime controls");
-        AddRow("OPEN ALL", "Set every room OPEN", successColor,
-            "OPEN ALL", rooms.Length > 0, () => SetAllRooms(rooms, true));
-        AddRow("CLOSE ALL", "Set every room CLOSED", mutedColor,
-            "CLOSE ALL", rooms.Length > 0, () => SetAllRooms(rooms, false));
-        AddRow("RESET DEFAULTS", "Read defaultUnlocked from scene", accentColor,
-            "RESET DEFAULTS", rooms.Length > 0, () => ResetRoomDefaults(rooms));
-    }
-
     private void AddFootballMinigameSection()
     {
         FootballMinigame football = FindFirstObjectByType<FootballMinigame>(FindObjectsInactive.Include);
         bool available = football != null;
         if (!available) return;
-        AddSectionTitle("FOOTBALL", "Original rules / authored arena");
-        AddRow("State", available ? football.State.ToString() : "NOT FOUND", mutedColor,
-            "START", available && football.CanStart, () => { football.StartGame(); RefreshCurrentTab(); });
-        AddRow("Balls", available ? football.ActiveBallCount.ToString() : "-", mutedColor,
-            "RESET BALLS", available && football.IsRunning, () => football.ResetBall());
-        AddRow("Round", "Return to bunker", mutedColor,
-            "CANCEL", available, () => { football.ResetGame(); RefreshCurrentTab(); });
-        AddRow("Arena", available ? $"{football.ArenaWidth:0} x {football.ArenaHeight:0}" : "-", mutedColor,
-            "GIZMOS", available, () => football.ToggleDebugZones());
+        AddSectionTitle("Футбол", "Проверка мини-игры");
+        string state = football.IsRunning ? "Идёт матч" : football.CanStart ? "Готов к старту" : "Матч завершён";
+        AddRow("Матч", state, mutedColor,
+            "Начать", football.CanStart, () => { football.StartGame(); RefreshCurrentTab(); });
+        AddRow("Мячи", football.ActiveBallCount.ToString(), mutedColor,
+            "Вернуть", football.IsRunning, () => football.ResetBall());
+        AddRow("Вернуться в бункер", null, mutedColor,
+            "Завершить", true, () => { football.ResetGame(); RefreshCurrentTab(); });
+        AddRow("Границы поля", $"{football.ArenaWidth:0} × {football.ArenaHeight:0}", mutedColor,
+            "Показать", true, () => football.ToggleDebugZones());
     }
-
-    private void SetAllRooms(BunkerRoomAccess[] rooms, bool unlocked)
-    {
-        for (int i = 0; i < rooms.Length; i++)
-            rooms[i]?.SetUnlocked(unlocked);
-
-        RefreshCurrentTab();
-    }
-
-    private void ResetRoomDefaults(BunkerRoomAccess[] rooms)
-    {
-        for (int i = 0; i < rooms.Length; i++)
-            rooms[i]?.ResetToDefault();
-
-        RefreshCurrentTab();
-    }
-
-    private static string GetRoomDisplayName(BunkerRoomId roomId) => roomId switch
-    {
-        BunkerRoomId.CharacterSelection => "Character Selection",
-        BunkerRoomId.WeaponSelection => "Weapon Selection",
-        BunkerRoomId.UpgradeStation => "Upgrade Station",
-        BunkerRoomId.AnomalyStation => "Anomaly Station",
-        BunkerRoomId.FutureStation => "Future Station",
-        BunkerRoomId.SecretRoom => "Secret Room",
-        _ => roomId.ToString()
-    };
 
     private EnemyHealth ResolveExperienceLootSource()
     {
