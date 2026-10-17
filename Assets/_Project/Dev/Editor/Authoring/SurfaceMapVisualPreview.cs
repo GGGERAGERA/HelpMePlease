@@ -29,21 +29,6 @@ public static class SurfaceMapVisualPreview
     {
         if(EditorApplication.isPlayingOrWillChangePlaymode) return;
         Directory.CreateDirectory(Output);
-        // Only font/layout defaults on the map prefab. Runtime rendering also covers existing scene instances.
-        var asset=PrefabUtility.LoadPrefabContents(Prefab);
-        try
-        {
-            var pixel=AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/_Project/Fonts/Subject42 Intro SDF.asset");
-            var body=AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/_Project/Fonts/Subject42 UI SDF.asset");
-            foreach(var text in asset.GetComponentsInChildren<TMP_Text>(true))
-            {
-                text.font=text.name=="Details"?body:pixel;
-                text.fontSharedMaterial=text.font.material;
-            }
-            asset.GetComponent<RectTransform>().sizeDelta=new Vector2(1160,700);
-            PrefabUtility.SaveAsPrefabAsset(asset,Prefab);
-        }
-        finally { PrefabUtility.UnloadPrefabContents(asset); }
         var scene=EditorSceneManager.NewPreviewScene();
         RenderTexture rt=null; Texture2D image=null; var previousLocalization=LocalizationService.Instance;
         try
@@ -51,35 +36,52 @@ public static class SurfaceMapVisualPreview
             var camObject=new GameObject("Surface map preview camera",typeof(Camera)); SceneManager.MoveGameObjectToScene(camObject,scene);
             var cam=camObject.GetComponent<Camera>(); cam.scene=scene; cam.transform.position=new Vector3(0,0,-10);
             cam.clearFlags=CameraClearFlags.SolidColor; cam.backgroundColor=new Color(.012f,.021f,.034f);
-            cam.orthographic=true; cam.orthographicSize=400; cam.nearClipPlane=.1f; cam.farClipPlane=100;
-            rt=new RenderTexture(1600,1000,24); cam.targetTexture=rt;
+            cam.orthographic=true; cam.orthographicSize=540; cam.nearClipPlane=.1f; cam.farClipPlane=100;
+            rt=new RenderTexture(1920,1080,24); cam.targetTexture=rt;
             var canvasObject=new GameObject("Surface map preview canvas",typeof(RectTransform),typeof(Canvas)); SceneManager.MoveGameObjectToScene(canvasObject,scene);
             var canvas=canvasObject.GetComponent<Canvas>(); canvas.renderMode=RenderMode.ScreenSpaceCamera; canvas.worldCamera=cam; canvas.planeDistance=5;
             var scaler=canvasObject.AddComponent<CanvasScaler>(); scaler.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution=new Vector2(1280,800); scaler.screenMatchMode=CanvasScaler.ScreenMatchMode.MatchWidthOrHeight; scaler.matchWidthOrHeight=.5f;
+            scaler.referenceResolution=new Vector2(1920,1080); scaler.screenMatchMode=CanvasScaler.ScreenMatchMode.MatchWidthOrHeight; scaler.matchWidthOrHeight=.5f;
+            scaler.enabled=false; scaler.enabled=true;
             var instance=UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(Prefab),canvasObject.transform);
             var view=instance.GetComponent<SurfaceMapView>();
             typeof(SurfaceMapView).GetMethod("Awake",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(view,null);
             var starter=canvasObject.AddComponent<BunkerRunStarter>();
-            if(previousLocalization==null)
-            {
-                var localization=canvasObject.AddComponent<LocalizationService>();
-                typeof(LocalizationService).GetField("table",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(localization,AssetDatabase.LoadAssetAtPath<LocalizationTable>("Assets/_Project/Data/Localization/LocalizationTable.asset"));
-                typeof(LocalizationService).GetProperty("Instance").SetValue(null,localization);
-            }
+            var localization=canvasObject.AddComponent<LocalizationService>();
+            typeof(LocalizationService).GetField("table",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(localization,AssetDatabase.LoadAssetAtPath<LocalizationTable>("Assets/_Project/Data/Localization/LocalizationTable.asset"));
+            typeof(LocalizationService).GetProperty("CurrentLanguage").SetValue(localization,GameLanguage.Russian);
+            typeof(LocalizationService).GetProperty("Instance").SetValue(null,localization);
             var definition=AssetDatabase.LoadAssetAtPath<SurfaceMapDefinition>(SurfaceMapProductionAuthoring.MapPath);
             var service=new SurfaceMapService(definition,new PreviewStorage());
+            Canvas.ForceUpdateCanvases();
             service.TrySelect("C1"); view.Show(service,starter,null,null);
             Render("surface-map-visual.png");
+            var navigation=(SurfaceMapNavigation)new SerializedObject(view).FindProperty("navigation").objectReferenceValue;
+            navigation.Zoom(1,Vector2.zero); navigation.Pan(new Vector2(-220,100));
+            typeof(SurfaceMapView).GetMethod("LateUpdate",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(view,null);
+            Render("surface-map-panned.png"); navigation.ResetView();
             view.Inspect("C2"); Render("surface-map-locked.png");
-            service.TrySelect("D1"); Render("surface-map-unknown.png");
-            // Render-only fixture exercises the completed/mission presentation using disposable in-memory state.
+            // Disposable completed branches expose the later icons without touching player saves.
+            foreach(string first in new[]{"A1","C1","D1"})
+            {
+                service.TrySelect(first); service.TryBuildRunConfig(out var config);
+                service.CompleteVictory(config,RunEndReason.Victory,true);
+            }
+            view.Inspect("C2"); Render("surface-map-explored.png");
+            // Only disposable memory state is changed: preview reconnaissance never touches player progress.
             var fixture=new SurfaceMapService(definition,new PreviewStorage(true));
-            var mission=AssetDatabase.LoadAssetAtPath<SurfaceSectorContent>("Assets/_Project/Data/SurfaceMap/Content_SignalMission.asset");
-            fixture.Content.AssignMission("visual-preview","D2",mission); fixture.TrySelect("A2");
-            view.Show(fixture,starter,null,null); Render("surface-map-states.png");
+            fixture.TrySelect("D2");
+            view.Show(fixture,starter,null,null); Render("surface-map-unknown.png");
+            view.ScanInspected(); Render("surface-map-scanned.png");
+            // Same canvas reference and aspect ratio as the bunker, at a smaller output resolution.
+            cam.targetTexture=null; rt.Release(); UnityEngine.Object.DestroyImmediate(rt);
+            rt=new RenderTexture(1280,720,24); cam.targetTexture=rt;
+            scaler.enabled=false; scaler.enabled=true; Canvas.ForceUpdateCanvases();
+            ((SurfaceMapNavigation)new SerializedObject(view).FindProperty("navigation").objectReferenceValue).ResetView();
+            view.Inspect("C1"); Render("surface-map-720p.png");
             void Render(string name)
             {
+                foreach(var fog in instance.GetComponentsInChildren<SurfaceMapFog>(true))fog.SetVerticesDirty();
                 Canvas.ForceUpdateCanvases();
                 foreach(var text in instance.GetComponentsInChildren<TMP_Text>(true)) text.ForceMeshUpdate(true,true);
                 Canvas.ForceUpdateCanvases(); cam.Render();
@@ -98,7 +100,7 @@ public static class SurfaceMapVisualPreview
     {
         readonly bool completed;
         public PreviewStorage(bool completed=false) { this.completed=completed; }
-        public string Load(string id) => completed&&!id.EndsWith(":content")?"{\"unlocked\":[\"A1\",\"C1\",\"D1\",\"A2\"],\"completed\":[\"A1\"]}":null;
+        public string Load(string id) => completed&&!id.EndsWith(":content")?"{\"unlocked\":[\"A1\",\"C1\",\"D1\",\"D2\"],\"completed\":[\"D1\"]}":null;
         public void Save(string id,string json) { }
     }
 }

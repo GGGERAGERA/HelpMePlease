@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using NUnit.Framework;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -93,8 +94,8 @@ public sealed class FalseSignalAvailabilityTests
         foreach(var sector in map.Sectors)
         {
             var config=service.Resolve(sector.BuildRunConfig(map.Id));
-            Assert.That(config.Content.GuaranteedEvents,Is.Empty,sector.Id);
-            Assert.That(config.Content.Objectives,Is.Empty,sector.Id);
+            Assert.That(config.Content.GuaranteedEvents.OfType<FalseSignalEvent>(),Is.Empty,sector.Id);
+            Assert.That(config.Content.Objectives.Any(objective=>objective.RequiredEvent is FalseSignalEvent),Is.False,sector.Id);
             Assert.That(config.Gold,Is.EqualTo(sector.BuildRunConfig(map.Id).Gold),sector.Id);
         }
         Assert.That(service.GetMissionState("old-signal"),Is.EqualTo(SurfaceMissionState.Active));

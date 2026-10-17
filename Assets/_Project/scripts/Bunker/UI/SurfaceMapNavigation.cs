@@ -16,7 +16,7 @@ public sealed class SurfaceMapNavigation : MonoBehaviour, IBeginDragHandler, IDr
         Vector2 half=viewport.rect.size*.5f-new Vector2(20,20);
         float extentX=Mathf.Max(Mathf.Abs(bounds.xMin-home.x),Mathf.Abs(bounds.xMax-home.x));
         float extentY=Mathf.Max(Mathf.Abs(bounds.yMin-home.y),Mathf.Abs(bounds.yMax-home.y));
-        float fit=Mathf.Clamp(Mathf.Min(1,half.x/Mathf.Max(1,extentX),half.y/Mathf.Max(1,extentY)),MinZoom,MaxZoom);
+        float fit=Mathf.Clamp(Mathf.Min(half.x/Mathf.Max(1,extentX),half.y/Mathf.Max(1,extentY)),MinZoom,MaxZoom);
         Content.localScale=Vector3.one*fit; Content.anchoredPosition=-home*fit; Clamp();
     }
     public void OnBeginDrag(PointerEventData data)
@@ -45,10 +45,13 @@ public sealed class SurfaceMapNavigation : MonoBehaviour, IBeginDragHandler, IDr
     {
         if(Content==null||viewport==null)return;
         float scale=Content.localScale.x;
-        // Keep at least a node-sized strip of the network visible; works with arbitrarily large graphs.
+        // Keep the surveyed field nearby; zooming out cannot pan into an empty canvas.
         Vector2 half=viewport.rect.size*.5f, p=Content.anchoredPosition;
-        p.x=Mathf.Clamp(p.x,-half.x+80-bounds.xMax*scale,half.x-80-bounds.xMin*scale);
-        p.y=Mathf.Clamp(p.y,-half.y+65-bounds.yMax*scale,half.y-65-bounds.yMin*scale);
+        Vector2 range=new(Mathf.Max(0,bounds.width*scale*.5f-half.x)+half.x*.35f,
+            Mathf.Max(0,bounds.height*scale*.5f-half.y)+half.y*.35f);
+        Vector2 center=-bounds.center*scale;
+        p.x=Mathf.Clamp(p.x,center.x-range.x,center.x+range.x);
+        p.y=Mathf.Clamp(p.y,center.y-range.y,center.y+range.y);
         Content.anchoredPosition=p;
     }
 }

@@ -10,6 +10,8 @@ public sealed class SurfaceSectorContent : ScriptableObject
     public SurfaceMarker marker;
     public string title = "UNKNOWN ACTIVITY";
     [TextArea] public string description = "Signal detected";
+    [Tooltip("Optional localized reward summary. Describe only rewards implemented by this content.")]
+    public string rewardHint;
     public WorldEvent requiredEvent;
     public string requiredEventTag;
     public SurfaceMarkerState completionState = SurfaceMarkerState.Revealed;

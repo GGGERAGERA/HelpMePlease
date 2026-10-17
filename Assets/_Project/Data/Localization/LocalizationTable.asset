@@ -526,6 +526,12 @@ MonoBehaviour:
   - key: bunker.depth.objective
     ru: "ТЕКУЩАЯ ЦЕЛЬ\n<size=26>СТРАЖ СЕКТОРА</size>\n\nПолучите уровень доступа, чтобы открыть путь из комплекса."
     en: "CURRENT OBJECTIVE\n<size=26>SECTOR GUARDIAN</size>\n\nAcquire access to open a route out of the facility."
+  - key: bunker.hud.objective_title
+    ru: "ЦЕЛЬ"
+    en: "OBJECTIVE"
+  - key: bunker.depth_data.1.objective
+    ru: "Получите уровень доступа у Стража сектора."
+    en: "Acquire access from the Sector Guardian."
   - key: bunker.depth.acquired
     ru: "ДОСТУП {0} ПОЛУЧЕН\n\nДАЛЕЕ: {1}\nОТКРЫТО\n<size=18>НЕДОСТУПНО В ДЕМОВЕРСИИ</size>"
     en: "ACCESS {0} ACQUIRED\n\nNEXT: {1}\nUNLOCKED\n<size=18>NOT AVAILABLE IN DEMO</size>"
@@ -1717,3 +1723,168 @@ MonoBehaviour:
   - key: content.progressPaused
     ru: "Прогресс сохранён. Задание временно приостановлено и не влияет на следующий забег."
     en: "Progress saved. This assignment is temporarily paused and does not affect the next run."
+  - key: map.title
+    ru: "ЭКСПЕДИЦИИ"
+    en: "EXPEDITIONS"
+  - key: map.available
+    ru: "Доступно"
+    en: "Available"
+  - key: map.locked
+    ru: "Закрыто"
+    en: "Locked"
+  - key: map.event
+    ru: "Событие"
+    en: "Event"
+  - key: map.story
+    ru: "Сюжет"
+    en: "Story"
+  - key: map.navigation
+    ru: "Перетащить / Колесо: масштаб"
+    en: "Drag / Scroll to zoom"
+  - key: map.center
+    ru: "Центр"
+    en: "Center"
+  - key: map.threat.start
+    ru: "Старт угрозы {0}"
+    en: "Starting threat {0}"
+  - key: map.threat.growth
+    ru: "Угроза"
+    en: "Threat growth"
+  - key: map.enemy.hp
+    ru: "HP врагов"
+    en: "Enemy HP"
+  - key: map.spawn.pressure
+    ru: "Напор врагов"
+    en: "Enemy pressure"
+  - key: map.run_gold
+    ru: "Золото забега"
+    en: "Run gold"
+  - key: map.entry_experience
+    ru: "Опыт на старте"
+    en: "Entry XP"
+  - key: map.anomaly.bias
+    ru: "Чаще зоны: {0}"
+    en: "More zones: {0}"
+  - key: map.anomaly.bias.Stasis
+    ru: "Зоны стазиса чаще"
+    en: "More stasis zones"
+  - key: map.anomaly.bias.Berserk
+    ru: "Зоны берсерка чаще"
+    en: "More berserk zones"
+  - key: map.anomaly.bias.Glitch
+    ru: "Зоны глитча чаще"
+    en: "More glitch zones"
+  - key: map.anomaly
+    ru: "Аномалия: {0}"
+    en: "Anomaly: {0}"
+  - key: map.rule
+    ru: "Правило: {0}"
+    en: "Rule: {0}"
+  - key: map.initial_condition
+    ru: "На входе: {0}"
+    en: "On entry: {0}"
+  - key: map.home
+    ru: "Бункер"
+    en: "Bunker"
+  - key: map.choose
+    ru: "Выберите сектор"
+    en: "Choose a sector"
+  - key: map.route_locked
+    ru: "Путь закрыт"
+    en: "Route locked"
+  - key: map.launch
+    ru: "В путь >"
+    en: "Set out >"
+  - key: map.scan
+    ru: "Сканировать"
+    en: "Scan sector"
+  - key: map.risk
+    ru: "ОПАСНОСТЬ"
+    en: "DANGER"
+  - key: map.risk.low
+    ru: "Опасность: низкая"
+    en: "Danger: low"
+  - key: map.risk.medium
+    ru: "Опасность: средняя"
+    en: "Danger: moderate"
+  - key: map.risk.high
+    ru: "Опасность: высокая"
+    en: "Danger: high"
+  - key: map.reward
+    ru: "НАГРАДА"
+    en: "REWARD"
+  - key: map.gold
+    ru: "Золото"
+    en: "Gold"
+  - key: map.experience
+    ru: "Опыт"
+    en: "XP"
+  - key: map.events
+    ru: "События"
+    en: "Events"
+  - key: map.reward.standard
+    ru: "Золото / опыт"
+    en: "Gold / XP"
+  - key: map.feature
+    ru: "ОСОБЕННОСТЬ"
+    en: "FEATURE"
+  - key: map.feature.start_rule
+    ru: "На старте: {0}"
+    en: "At the start: {0}"
+  - key: map.feature.events
+    ru: "События встречаются чаще"
+    en: "More frequent events"
+  - key: map.feature.slow_threat
+    ru: "Угроза растёт медленнее"
+    en: "Slower threat growth"
+  - key: map.feature.more_enemies
+    ru: "Больше противников"
+    en: "More enemies"
+  - key: map.intel
+    ru: "РАЗВЕДКА"
+    en: "INTEL"
+  - key: map.scan_hint
+    ru: "Неизвестный сигнал"
+    en: "Unknown signal"
+  - key: map.scan_locked
+    ru: "Сканирование после открытия пути"
+    en: "Open the route to scan"
+  - key: map.unlock_after
+    ru: "Пройдите {0}, чтобы открыть путь"
+    en: "Complete {0} to open the route"
+  - key: map.unlock_connected
+    ru: "Пройдите соседний сектор"
+    en: "Complete a connected sector"
+  - key: map.event.relay
+    ru: "Орбитальное реле"
+    en: "Orbital relay"
+  - key: map.event.relay_reward
+    ru: "Фаза с золотом"
+    en: "Gold bonus phase"
+  - key: map.sector.A1
+    ru: "Экспедиция A1"
+    en: "Expedition A1"
+  - key: map.sector.A2
+    ru: "Экспедиция A2"
+    en: "Expedition A2"
+  - key: map.sector.C1
+    ru: "Экспедиция C1"
+    en: "Expedition C1"
+  - key: map.sector.C2
+    ru: "Экспедиция C2"
+    en: "Expedition C2"
+  - key: map.sector.D1
+    ru: "Экспедиция D1"
+    en: "Expedition D1"
+  - key: map.sector.D2
+    ru: "Экспедиция D2"
+    en: "Expedition D2"
+  - key: map.route.A
+    ru: "Спокойный маршрут"
+    en: "Safer route"
+  - key: map.route.C
+    ru: "Риск ради золота"
+    en: "Risk for gold"
+  - key: map.route.D
+    ru: "Маршрут событий"
+    en: "Event route"

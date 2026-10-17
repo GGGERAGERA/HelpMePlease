@@ -21,9 +21,10 @@ public sealed class SurfaceMapService
         string json = this.storage.Load(definition.Id);
         try { state = string.IsNullOrEmpty(json) ? new() : JsonUtility.FromJson<SurfaceMapProgressionState>(json) ?? new(); }
         catch (ArgumentException) { state = new(); }
-        state.unlocked ??= new(); state.completed ??= new();
+        state.unlocked ??= new(); state.completed ??= new(); state.scanned ??= new();
         state.unlocked.RemoveAll(id => definition.Find(id) == null);
         state.completed.RemoveAll(id => definition.Find(id) == null);
+        state.scanned.RemoveAll(id => definition.Find(id) == null);
         foreach (string id in definition.StartingSectors) Unlock(id);
         // Reconcile new links added to previously completed nodes after a content update.
         foreach (string id in state.completed) { Unlock(id); foreach (var next in definition.Find(id).Neighbours) Unlock(next); }
@@ -36,6 +37,21 @@ public sealed class SurfaceMapService
     {
         if (GetStatus(sectorId) == SurfaceSectorStatus.Locked) return false;
         SelectedSectorId = sectorId; Changed?.Invoke(); return true;
+    }
+    public bool IsScanned(string sectorId) => state.scanned.Contains(sectorId) || state.completed.Contains(sectorId);
+    public bool HasConcealedIntel(string sectorId) => !IsScanned(sectorId) &&
+        (Definition.Find(sectorId)?.RequiresScan == true ||
+         Content.TryGetMarker(sectorId, out var marker) && marker.Concealed && string.IsNullOrEmpty(marker.Status));
+    public bool CanScan(string sectorId) => GetStatus(sectorId) != SurfaceSectorStatus.Locked && HasConcealedIntel(sectorId);
+    public bool TryScan(string sectorId)
+    {
+        if (!CanScan(sectorId)) return false;
+        // Reconnaissance changes knowledge only. It never unlocks a route,
+        // completes an objective, consumes content or awards currency.
+        state.scanned.Add(sectorId);
+        storage.Save(Definition.Id, JsonUtility.ToJson(state));
+        Changed?.Invoke();
+        return true;
     }
     public bool TryBuildRunConfig(out RunConfig config)
     {

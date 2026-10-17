@@ -6,6 +6,7 @@ public sealed class SurfaceMapProgressionState
 {
     public List<string> unlocked = new();
     public List<string> completed = new();
+    public List<string> scanned = new();
 }
 
 public enum SurfaceSectorStatus { Locked, Available, Completed }

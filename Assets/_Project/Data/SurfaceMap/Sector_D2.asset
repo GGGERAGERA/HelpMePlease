@@ -13,9 +13,12 @@ MonoBehaviour:
   m_Name: Sector_D2
   m_EditorClassIdentifier: Assembly-CSharp::SurfaceSectorDefinition
   id: D2
-  displayName: D2
-  description: Events / anomaly territories
-  mapPosition: {x: 150, y: -110}
+  displayName: map.sector.D2
+  description: map.route.D
+  mapPosition: {x: 115, y: -160}
+  locationFamily: 2
+  requiresScan: 1
+  storySector: 0
   neighbours:
   - D1
   parameters:
@@ -48,3 +51,5 @@ MonoBehaviour:
       multiplier: 1
     biomeId: 
     themeId: 
+  content:
+  - {fileID: 11400000, guid: 52becdd6c14b8aa4e9db23b78c07bca7, type: 2}
