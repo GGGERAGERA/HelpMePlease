@@ -27,6 +27,65 @@ public sealed class EscapeProtocolView : MonoBehaviour
     [SerializeField] private GameObject pathLine;
     [SerializeField] private GameObject detailPanel;
 
+    [Header("Core-funded global project")]
+    [SerializeField] private GameObject legacyWindow;
+    [SerializeField] private GameObject projectWindow;
+    [SerializeField] private TMP_Text projectTitle;
+    [SerializeField] private TMP_Text projectStages;
+    [SerializeField] private TMP_Text projectProgress;
+    [SerializeField] private TMP_Text projectNext;
+    [SerializeField] private TMP_Text projectBalance;
+    [SerializeField] private Button investButton;
+    [SerializeField] private TMP_Text investLabel;
+    [SerializeField] private Button projectClose;
+    private MetaProgressionManager projectOwner;
+    private CurrencyManager projectCurrency;
+    private string displayedStageId;
+
+    public void InvestCores()
+    {
+        if (!isActiveAndEnabled || projectWindow == null || !projectWindow.activeSelf || SceneTransitionOverlay.IsTransitioning || projectOwner == null) return;
+        projectOwner.TryInvestEscapeCores(displayedStageId, int.MaxValue, out _);
+    }
+    private void RefreshProject()
+    {
+        if (projectOwner == null || projectWindow == null || !projectWindow.activeSelf) return;
+        projectTitle.text = "ESCAPE PROTOCOL";
+        var definition = projectOwner.EscapeProtocol;
+        if (definition == null) return;
+        int current = projectOwner.CurrentEscapeStage;
+        var lines = new System.Collections.Generic.List<string>();
+        for (int i = 0; i < definition.Stages.Count; i++)
+        {
+            var stage = definition.Stages[i];
+            string prefix = projectOwner.IsEscapeStageCompleted(i) ? "[V] " : i == current ? "> " : "   ";
+            string tint = i == current ? "#74DCCB" : projectOwner.IsEscapeStageCompleted(i) ? "#91AAA0" : "#818A85";
+            lines.Add($"<color={tint}>{prefix}{SurfaceMapBriefing.Format("escape.stage_title", i + 1, SurfaceMapBriefing.Text(stage.title))} ({stage.cost})</color>");
+        }
+        projectStages.text = string.Join("\n\n",lines);
+        int investedTotal = 0, costTotal = 0;
+        for (int i = 0; i < definition.Stages.Count; i++)
+        { investedTotal += projectOwner.GetEscapeInvestment(i); costTotal += definition.Stages[i].cost; }
+        projectProgress.text = SurfaceMapBriefing.Format("escape.project_progress", investedTotal, costTotal);
+        projectBalance.text = SurfaceMapBriefing.Format("escape.balance", projectCurrency != null ? projectCurrency.TotalCores : 0);
+        displayedStageId = current < definition.Stages.Count ? definition.Stages[current].id : null;
+        bool canPay = !projectOwner.EscapeProtocolFunded && !projectOwner.EscapeProtocolCompleted && projectCurrency != null && projectCurrency.TotalCores > 0;
+        investButton.interactable = canPay;
+        projectClose.GetComponentInChildren<TMP_Text>().text = SurfaceMapBriefing.Text("escape.close");
+        if (projectOwner.EscapeProtocolCompleted)
+        { projectNext.text = SurfaceMapBriefing.Text("escape.objective.completed"); investLabel.text = SurfaceMapBriefing.Text("escape.done"); }
+        else if (projectOwner.EscapeProtocolFunded)
+        { projectNext.text = SurfaceMapBriefing.Text("escape.final_open"); investLabel.text = SurfaceMapBriefing.Text("escape.funded"); }
+        else
+        {
+            var stage = definition.Stages[current];
+            projectNext.text = SurfaceMapBriefing.Format("escape.next", SurfaceMapBriefing.Text(stage.title), projectOwner.GetEscapeInvestment(current), stage.cost);
+            int amount = projectCurrency != null ? Mathf.Min(stage.cost - projectOwner.GetEscapeInvestment(current), projectCurrency.TotalCores) : 0;
+            investLabel.text = amount > 0 ? SurfaceMapBriefing.Format("escape.invest", amount) : SurfaceMapBriefing.Text("escape.need_cores");
+        }
+    }
+    private void RefreshProjectCurrency(int _) => RefreshProject();
+
     [Header("Presentation")]
     [SerializeField] private Image reachedPath;
     [SerializeField] private Image pathGlow;
@@ -65,6 +124,10 @@ public sealed class EscapeProtocolView : MonoBehaviour
         launchOwner = null;
         launchTarget = null;
         SelectedDepthId = 0;
+        if (projectWindow != null)
+        {
+            legacyWindow.SetActive(false); projectWindow.SetActive(true); gameObject.SetActive(true); RefreshProject(); return;
+        }
         SetMode(false, access);
         RefreshTerminal(access);
         gameObject.SetActive(true);
@@ -80,6 +143,7 @@ public sealed class EscapeProtocolView : MonoBehaviour
 
     public void ShowDepthSelect(int access, DepthCatalog catalog, BunkerPanelManager owner, Transform transitionTarget)
     {
+        if (projectWindow != null) { projectWindow.SetActive(false); legacyWindow.SetActive(true); }
         depths = catalog;
         launchOwner = owner;
         launchTarget = transitionTarget;
@@ -105,9 +169,20 @@ public sealed class EscapeProtocolView : MonoBehaviour
         launchOwner.StartRun(launchTarget, SelectedDepthId);
     }
 
-    private void OnEnable() => LocalizationService.Instance.LanguageChanged += HandleLanguageChanged;
+    private void OnEnable()
+    {
+        LocalizationService.Instance.LanguageChanged += HandleLanguageChanged;
+        projectOwner = MetaProgressionManager.Instance; projectCurrency = CurrencyManager.Instance;
+        if (projectOwner != null) projectOwner.ProgressChanged += RefreshProject;
+        if (projectCurrency != null) projectCurrency.OnCoresUpdated += RefreshProjectCurrency;
+        if (investButton != null) investButton.onClick.AddListener(InvestCores);
+        if (projectClose != null) projectClose.onClick.AddListener(CloseProject);
+        RefreshProject();
+    }
+    private void CloseProject() => BunkerContext.Instance?.Panels?.CloseAll();
     private void HandleLanguageChanged(GameLanguage language)
     {
+        if (projectWindow != null && projectWindow.activeSelf) { RefreshProject(); return; }
         if (depths == null) return;
         int access = MetaProgressionManager.EnsureExists().EscapeAccess;
         SetMode(launchOwner != null, access);
@@ -117,6 +192,10 @@ public sealed class EscapeProtocolView : MonoBehaviour
 
     private void OnDisable()
     {
+        if (projectOwner != null) projectOwner.ProgressChanged -= RefreshProject;
+        if (projectCurrency != null) projectCurrency.OnCoresUpdated -= RefreshProjectCurrency;
+        if (investButton != null) investButton.onClick.RemoveListener(InvestCores);
+        if (projectClose != null) projectClose.onClick.RemoveListener(CloseProject);
         if (LocalizationService.Instance != null)
             LocalizationService.Instance.LanguageChanged -= HandleLanguageChanged;
         launchOwner = null;

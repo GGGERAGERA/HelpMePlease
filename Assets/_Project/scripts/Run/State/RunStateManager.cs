@@ -13,8 +13,24 @@ public sealed class RunStateManager : MonoBehaviour
     public static event System.Action<RunConfig, RunEndReason, bool> RunFinished;
     public static event System.Action<RunConfig, int, WorldEvent, string> ContentEventCompleted;
     public void ReportCompletedEvent(WorldEvent source, string tag)
-    { if (!runEnded && !developmentRun) ContentEventCompleted?.Invoke(CurrentConfig, RunId, source, tag); }
+    {
+        if (runEnded || developmentRun) return;
+        if (CurrentConfig.IsEscapeFinal && source != null && source == CurrentConfig.RequiredFinalEvent &&
+            (string.IsNullOrEmpty(CurrentConfig.RequiredFinalEventTag) || tag == CurrentConfig.RequiredFinalEventTag))
+            FinalEventCompleted = true;
+        ContentEventCompleted?.Invoke(CurrentConfig, RunId, source, tag);
+    }
+    public bool FinalEventCompleted { get; private set; }
+    public bool FinalObjectiveSatisfied => !CurrentConfig.IsEscapeFinal || FinalEventCompleted;
     public RunConfig CurrentConfig { get; private set; } = RunConfig.Default;
+    public ExpeditionTaskRun Expedition { get; private set; }
+    // Called by the real scene-stat stream and completed-location boundary.
+    public void RefreshExpeditionProgress()
+    {
+        if (runEnded || developmentRun || TutorialController.IsTutorialSector ||
+            PlayerRuntimeReference.PlayerHealth is { IsDead: true }) return;
+        Expedition?.Observe(GetCurrentRunKills(), GetCurrentRunTime(), completedLevels);
+    }
     public event System.Action EvolutionChanged;
     public static RunStateManager Instance { get; private set; }
     public event System.Action CurrentRewardChanged;
@@ -352,6 +368,11 @@ public sealed class RunStateManager : MonoBehaviour
             ? RunStatsManager.Instance.GetInstanceID() : 0;
         runEnded = false;
         lastRunSummary = null;
+        FinalEventCompleted = false;
+        Expedition = !developmentRun && CurrentDepthId == DepthCatalog.SurfaceId &&
+            !string.IsNullOrEmpty(CurrentConfig.SectorId)
+            ? new ExpeditionTaskRun(CurrentConfig, CurrencyManager.Instance, MetaProgressionManager.Instance?.SurfaceMap)
+            : null;
 
         upgradesAppliedToCurrentScene = false;
         CreateStartingSector();
@@ -678,6 +699,7 @@ public sealed class RunStateManager : MonoBehaviour
         completedLevelRewardMultiplierTotal +=
             CurrentSector.CompletionGoldMultiplier;
         lastCompletedSectorNumber = sectorNumber;
+        RefreshExpeditionProgress();
         CurrentRewardChanged?.Invoke();
 
         Debug.Log(
@@ -744,6 +766,7 @@ public sealed class RunStateManager : MonoBehaviour
         summary.OrbitalRingCount = OrbitalStationState?.Rings.Count ?? 0;
         summary.OrbitalModuleCount = OrbitalStationState?.Modules.Count ?? 0;
         summary.OrbitalCoreLevel = OrbitalStationState?.CoreState.Level ?? 0;
+        summary.Cores = Expedition?.Snapshot;
         return summary;
     }
 
@@ -761,8 +784,9 @@ public sealed class RunStateManager : MonoBehaviour
             CommitCurrentSceneStats();
             bool confirmedVictory = reason == RunEndReason.Victory &&
                 CurrentSector != null && RunRoute.IsFinalSector(CurrentSector.SectorNumber) &&
-                RunFlowController.Instance != null && RunFlowController.Instance.IsVictoryConfirmed;
+                RunFlowController.Instance != null && RunFlowController.Instance.IsVictoryConfirmed && FinalObjectiveSatisfied;
             if (confirmedVictory) RegisterCompletedLevel();
+            Expedition?.Finish(reason, confirmedVictory && !developmentRun);
             lastRunSummary = PopulateSummaryDetails(new RunSummary(reason, completedLevels,
                 accumulatedKills, accumulatedRunTime, GetCurrentGoldReward(reason)));
 
@@ -775,6 +799,7 @@ public sealed class RunStateManager : MonoBehaviour
                 if (confirmedVictory)
                 {
                     MetaProgressionManager.EnsureExists().AcquireGuardianAccess();
+                    lastRunSummary.EscapeProtocolCompleted = MetaProgressionManager.Instance.TryCompleteEscapeProtocol(CurrentConfig, reason, true);
                     UnlockProgressService.Instance?.AddProgressByCondition(
                         UnlockConditionType.CompleteRun, string.Empty, 1);
                 }
@@ -923,6 +948,7 @@ public sealed class RunStateManager : MonoBehaviour
         threatValue = threatElapsedTime = 0f;
         OrbitalStationState = null;
         CurrentConfig = RunConfig.Default;
+        Expedition = null;
         startingStageProfile = null;
         startingWorldRule = null;
         startingLocalAnomaly = null;

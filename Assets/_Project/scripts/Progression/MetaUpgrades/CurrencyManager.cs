@@ -5,6 +5,8 @@ public class CurrencyManager : MonoBehaviour
     public static CurrencyManager Instance;
 
     private const string GoldKey = "TOTAL_GOLD";
+    public const string CoresKey = "TOTAL_CORES";
+    public const string CoreRewardReceiptPrefix = "META_CORE_REWARD_RECEIPT_";
     private const int MaxMetaUpgradeLevel = 10;
 
     private static readonly string[] MetaUpgradeLevelKeys =
@@ -19,6 +21,10 @@ public class CurrencyManager : MonoBehaviour
 
     public int TotalGold { get; private set; }
     public System.Action<int> OnGoldUpdated;
+    public int TotalCores { get; private set; }
+    public System.Action<int> OnCoresUpdated;
+    private bool committingCoreReward;
+    private bool notifyingCoreUpdates;
 
     private float goldGainMultiplier = 1f;
 
@@ -47,6 +53,59 @@ public class CurrencyManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         SanitizeMetaUpgradeLevels();
         LoadGold();
+        TotalCores = Mathf.Max(0, PlayerPrefs.GetInt(CoresKey, 0));
+    }
+
+    // Cores never use gold multipliers. Persist balance, receipt and reward breakdown
+    // together before any observer (including a death/result presenter) is notified.
+    public bool TryGrantCoresOnce(string rewardId, int amount, System.Action stageDependentState)
+    {
+        if (committingCoreReward || string.IsNullOrWhiteSpace(rewardId) || amount < 0 ||
+            stageDependentState == null || PlayerPrefs.GetInt(CoreRewardReceiptPrefix + rewardId, 0) == 1)
+            return false;
+        committingCoreReward = true;
+        try
+        {
+            stageDependentState();
+            TotalCores = (int)System.Math.Min(int.MaxValue, (long)TotalCores + amount);
+            PlayerPrefs.SetInt(CoresKey, TotalCores);
+            PlayerPrefs.SetInt(CoreRewardReceiptPrefix + rewardId, 1);
+            PlayerPrefs.Save();
+        }
+        finally { committingCoreReward = false; }
+        NotifyCoreUpdates();
+        return true;
+    }
+
+    private void NotifyCoreUpdates()
+    {
+        if (notifyingCoreUpdates) return;
+        notifyingCoreUpdates = true;
+        try
+        {
+            int published;
+            do
+            {
+                published = TotalCores;
+                OnCoresUpdated?.Invoke(published);
+            } while (published != TotalCores);
+        }
+        finally { notifyingCoreUpdates = false; }
+    }
+
+    public bool TrySpendCoresExact(int amount, System.Action stageDependentState)
+    {
+        if (committingCoreReward || amount <= 0 || amount > TotalCores || stageDependentState == null) return false;
+        committingCoreReward = true;
+        try
+        {
+            stageDependentState();
+            TotalCores -= amount;
+            PlayerPrefs.SetInt(CoresKey, TotalCores);
+            PlayerPrefs.Save();
+        }
+        finally { committingCoreReward = false; }
+        NotifyCoreUpdates(); return true;
     }
 
     public void AddGold(int amount)

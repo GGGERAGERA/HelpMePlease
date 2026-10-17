@@ -12,6 +12,7 @@ public sealed class SurfaceMapView : MonoBehaviour
     [SerializeField] private TMP_Text details;
     [SerializeField] private Button startButton;
     [SerializeField] private Button closeButton;
+    [SerializeField] private ExpeditionTaskPicker taskPicker;
     private readonly Dictionary<string, Button> nodes = new();
     private readonly Dictionary<string, SurfaceMapGlyph> markerIcons = new();
     private readonly List<Route> routes = new();
@@ -118,6 +119,7 @@ public sealed class SurfaceMapView : MonoBehaviour
     }
     private void OnDisable()
     {
+        if (taskPicker != null) taskPicker.gameObject.SetActive(false);
         if (service != null) service.Changed -= Refresh;
         if (localization != null) localization.LanguageChanged -= HandleLanguageChanged;
         if (characterSelection != null) characterSelection.CharacterSelected -= RefreshHero;
@@ -162,6 +164,7 @@ public sealed class SurfaceMapView : MonoBehaviour
                 if (edges.Add(key)) Line(sector.Id, neighbour);
             }
         foreach (string id in renderedMap.StartingSectors) Line(null,id);
+        foreach (var sector in renderedMap.Sectors) if (sector.IsEscapeFinal) Line(null,sector.Id);
         var bunker = Node("BUNKER",true);
         bunker.GetComponent<SurfaceMapNodeFeedback>().DoubleClick=ResetView;
         foreach (var sector in renderedMap.Sectors)
@@ -217,7 +220,7 @@ public sealed class SurfaceMapView : MonoBehaviour
         }
         var text=button.GetComponentInChildren<TMP_Text>(true);
         Place(text.rectTransform,new Vector2(0,bunker?-122:0),new Vector2(164,22));
-        text.text=bunker?L("map.home"):id; text.fontSize=16; text.color=bunker?Muted:new Color(.73f,.77f,.71f); text.alignment=TextAlignmentOptions.Center;
+        text.text=bunker?L("map.home"):renderedMap.Find(id).IsEscapeFinal?L("escape.final.node"):id; text.fontSize=16; text.color=bunker?Muted:new Color(.73f,.77f,.71f); text.alignment=TextAlignmentOptions.Center;
         text.textWrappingMode=TextWrappingModes.NoWrap; text.transform.SetAsLastSibling();
         var state=Label("State",button.transform,new Vector2(-48,-30),new Vector2(18,20),"V",14,Complete);
         state.alignment=TextAlignmentOptions.Center; state.gameObject.SetActive(false);
@@ -344,6 +347,7 @@ public sealed class SurfaceMapView : MonoBehaviour
         var sector=renderedMap.Find(inspectedId);
         bool locked=sector==null||service.GetStatus(inspectedId)==SurfaceSectorStatus.Locked;
         bool ready=!locked&&service.SelectedSectorId==inspectedId;
+        ready &= sector != null && sector.FinalChallengeReady;
         startButton.interactable=ready&&!SceneTransitionOverlay.IsTransitioning&&starter!=null&&!starter.IsTransitioning;
         var deployLabel=startButton.GetComponentInChildren<TMP_Text>();
         deployLabel.color=startButton.interactable?Selected:Muted;
@@ -358,6 +362,8 @@ public sealed class SurfaceMapView : MonoBehaviour
         string risk=SurfaceMapBriefing.Risk(config), drivers=SurfaceMapBriefing.RiskDrivers(config);
         AddFact(ref row,SurfaceMapMeaning.Danger,risk);
         AddFact(ref row,SurfaceMapMeaning.Reward,SurfaceMapBriefing.Rewards(config));
+        if (sector.IsEscapeFinal)
+            AddFact(ref row,SurfaceMapMeaning.Event,L(sector.FinalChallengeReady ? "escape.final.briefing" : "escape.final.unavailable"));
         if(!string.IsNullOrEmpty(drivers))AddFact(ref row,SurfaceMapMeaning.Danger,drivers);
         foreach(string bias in SurfaceMapBriefing.AnomalyBias(config))
             AddFact(ref row,SurfaceMapMeaning.Anomaly,bias);
@@ -452,6 +458,7 @@ public sealed class SurfaceMapView : MonoBehaviour
     // Presentation traversal: prefer an established route, falling back to a planned route for locked inspection.
     public List<string> FindRoute(string target)
     {
+        if (renderedMap.Find(target)?.IsEscapeFinal == true) return new List<string> { target };
         List<string> Search(bool unlockedOnly)
         {
             var parents=new Dictionary<string,string>(); var queue=new Queue<string>();
@@ -490,7 +497,11 @@ public sealed class SurfaceMapView : MonoBehaviour
     }
     private static void Place(RectTransform rect,Vector2 position,Vector2 size)
     { rect.anchorMin=rect.anchorMax=rect.pivot=new Vector2(.5f,.5f); rect.anchoredPosition=position; rect.sizeDelta=size; }
-    private void StartSelected() { if (service != null && isActiveAndEnabled && startButton.interactable) starter.StartSurfaceRun(transitionTarget); }
+    private void StartSelected()
+    {
+        if (service != null && isActiveAndEnabled && startButton.interactable)
+            taskPicker.Show(service, () => starter.StartSurfaceRun(transitionTarget));
+    }
     private void Close() { if(owner!=null)owner.CloseAll(); else gameObject.SetActive(false); }
 }
 

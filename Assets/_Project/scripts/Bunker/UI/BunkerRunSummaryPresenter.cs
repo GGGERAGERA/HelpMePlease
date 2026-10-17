@@ -11,8 +11,10 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
     [SerializeField] private TextMeshProUGUI displayedTitle;
     [SerializeField] private TextMeshProUGUI displayedGold;
     [SerializeField] private TextMeshProUGUI displayedExtraGold;
+    [SerializeField] private ExpeditionCoreSummaryView coreRewards;
     private RunSummary displayedSummary;
     private bool displayedEscapeUpdate;
+    private bool displayedProtocolCompletion;
 
     private void OnEnable() => LocalizationService.Instance.LanguageChanged += HandleLanguageChanged;
     private void HandleLanguageChanged(GameLanguage language)
@@ -24,14 +26,14 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
             RunEndReason.Victory => "bunker.summary_completed",
             _ => "bunker.summary_return"
         };
-        displayedTitle.text = LocalizationService.Instance.Get(displayedEscapeUpdate ? "bunker.summary_protocol" : reasonKey);
-        displayedGold.text = displayedEscapeUpdate ? LocalizationService.Instance.Get("bunker.summary_access")
+        displayedTitle.text = LocalizationService.Instance.Get(displayedProtocolCompletion ? "escape.objective.completed" : displayedEscapeUpdate ? "bunker.summary_protocol" : reasonKey);
+        displayedGold.text = displayedProtocolCompletion && displayedSummary == null ? LocalizationService.Instance.Get("escape.completion_message") : displayedEscapeUpdate ? LocalizationService.Instance.Get("bunker.summary_access")
             : string.Format(LocalizationService.Instance.Get("bunker.summary_gold"), displayedSummary.GoldEarned);
         if (displayedExtraGold.gameObject.activeSelf)
             displayedExtraGold.text = string.Format(LocalizationService.Instance.Get("bunker.summary_gold"), displayedSummary.GoldEarned);
     }
 
-    private const float VisibleDuration = 3f;
+    private const float VisibleDuration = 7f;
     private const float FadeDuration = 0.2f;
 
     private IEnumerator Start()
@@ -41,10 +43,11 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
 
         MetaProgressionManager meta = MetaProgressionManager.EnsureExists();
         bool escapeUpdated = meta.HasEscapeUpdate;
+        bool protocolCompleted = meta.HasEscapeProtocolCompletionUpdate;
         RunSummary summary = null;
         if (RunStateManager.Instance != null)
             RunStateManager.Instance.TryConsumeLastRunSummary(out summary);
-        if (summary == null && !escapeUpdated) yield break;
+        if (summary == null && !escapeUpdated && !protocolCompleted) yield break;
 
         notification.gameObject.SetActive(true);
         notificationGroup.alpha = 1f;
@@ -52,17 +55,18 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
         TextMeshProUGUI title = displayedTitle;
         displayedSummary = summary;
         displayedEscapeUpdate = escapeUpdated;
+        displayedProtocolCompletion = protocolCompleted;
         string reason = summary?.EndReason switch
         {
             RunEndReason.PlayerDied => LocalizationService.Instance.Get("bunker.summary_interrupted"),
             RunEndReason.Victory => LocalizationService.Instance.Get("bunker.summary_completed"),
             _ => LocalizationService.Instance.Get("bunker.summary_return")
         };
-        SetLine(title, escapeUpdated ? LocalizationService.Instance.Get("bunker.summary_protocol") : reason, escapeUpdated && summary != null ? 0.8f : 0.7f);
+        SetLine(title, protocolCompleted ? LocalizationService.Instance.Get("escape.objective.completed") : escapeUpdated ? LocalizationService.Instance.Get("bunker.summary_protocol") : reason, escapeUpdated && summary != null ? 0.8f : 0.7f);
         TextMeshProUGUI gold = displayedGold;
         gold.name = "GoldEarned";
         gold.gameObject.SetActive(true);
-        SetLine(gold, escapeUpdated ? LocalizationService.Instance.Get("bunker.summary_access") : string.Format(LocalizationService.Instance.Get("bunker.summary_gold"), summary.GoldEarned),
+        SetLine(gold, protocolCompleted && summary == null ? LocalizationService.Instance.Get("escape.completion_message") : escapeUpdated ? LocalizationService.Instance.Get("bunker.summary_access") : string.Format(LocalizationService.Instance.Get("bunker.summary_gold"), summary.GoldEarned),
             escapeUpdated && summary != null ? 0.5f : 0.3f);
         displayedExtraGold.gameObject.SetActive(escapeUpdated && summary != null);
         if (escapeUpdated)
@@ -75,6 +79,16 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
             }
             meta.AcknowledgeEscapeUpdate();
         }
+
+        if (summary?.Cores != null)
+        {
+            notification.sizeDelta = new Vector2(560f, 264f);
+            SetLine(title, title.text, .88f);
+            SetLine(gold, gold.text, .74f);
+            if (displayedExtraGold.gameObject.activeSelf) SetLine(displayedExtraGold, displayedExtraGold.text, .62f);
+        }
+        coreRewards.Show(summary?.Cores);
+        if (protocolCompleted) meta.AcknowledgeEscapeProtocolCompletion();
 
         yield return new WaitForSecondsRealtime(VisibleDuration);
         float elapsed = 0f;

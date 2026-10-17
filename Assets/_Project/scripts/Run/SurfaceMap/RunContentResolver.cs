@@ -71,6 +71,8 @@ public static class RunContentResolver
             objectives.Add(new RunContentObjective(entry.objectiveId, c.requiredEvent, c.requiredEventTag,
                 c.experienceMultiplier, c.goldMultiplier, c.threatGrowthMultiplier, c.spawnPressureMultiplier));
         }
+        if (basis.IsEscapeFinal && basis.RequiredFinalEvent != null && basis.RequiredFinalEvent.AvailableInProduction)
+            objectives.Add(new RunContentObjective("escape.final.relay", basis.RequiredFinalEvent, basis.RequiredFinalEventTag));
         return basis.WithContent(ResolvedRunContent.FromObjectives(objectives));
     }
 }

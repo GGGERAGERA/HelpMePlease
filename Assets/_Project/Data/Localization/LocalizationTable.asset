@@ -1888,3 +1888,153 @@ MonoBehaviour:
   - key: map.route.D
     ru: "Маршрут событий"
     en: "Event route"
+  - key: expedition.rewards
+    ru: "\u041F\u043E\u0431\u0435\u0434\u0430: +{0} \u2022 \u0412\u043F\u0435\u0440\u0432\u044B\u0435:
+      +{1}"
+    en: "Victory: +{0} \u2022 First clear: +{1}"
+  - key: expedition.choose_one
+    ru: "\u042F\u0434\u0440\u0430 \u0441\u043E\u0445\u0440\u0430\u043D\u044F\u0442\u0441\u044F
+      \u043F\u0440\u0438 \u0441\u043C\u0435\u0440\u0442\u0438."
+    en: Keep cores after death.
+  - key: expedition.none
+    ru: "\u0411\u0435\u0437 \u0437\u0430\u0434\u0430\u043D\u0438\u044F"
+    en: No task
+  - key: expedition.launch
+    ru: "\u0412 \u041F\u0423\u0422\u042C"
+    en: DEPLOY
+  - key: expedition.back
+    ru: "\u041D\u0410\u0417\u0410\u0414"
+    en: BACK
+  - key: expedition.completed
+    ru: "\u0417\u0430\u0434\u0430\u043D\u0438\u0435 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u043E!"
+    en: Task complete!
+  - key: expedition.task_paid
+    ru: "\u042F\u0434\u0440\u0430: +{0} \u2022 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043E"
+    en: "Cores: +{0} \u2022 saved"
+  - key: expedition.summary
+    ru: "\u0417\u0430\u0434\u0430\u043D\u0438\u0435 \xAB{0}\xBB: +{1}\n\u041F\u0440\u043E\u0445\u043E\u0436\u0434\u0435\u043D\u0438\u0435
+      \u0441\u0435\u043A\u0442\u043E\u0440\u0430: +{2}\n\u041F\u0435\u0440\u0432\u043E\u0435
+      \u043F\u0440\u043E\u0445\u043E\u0436\u0434\u0435\u043D\u0438\u0435: +{3}\n\u0412\u0441\u0435\u0433\u043E
+      \u044F\u0434\u0435\u0440: +{4}"
+    en: "Task \u201C{0}\u201D: +{1}\nSector clear: +{2}\nFirst clear: +{3}\nTotal
+      cores: +{4}"
+  - key: task.survivor.title
+    ru: "\u0412\u044B\u0436\u0438\u0432\u0448\u0438\u0439"
+    en: Survivor
+  - key: task.survivor.description
+    ru: "\u041F\u0440\u043E\u0434\u0435\u0440\u0436\u0430\u0442\u044C\u0441\u044F
+      {0} \u043C\u0438\u043D\u0443\u0442\u044B"
+    en: Survive {0} minutes
+  - key: task.survivor.progress
+    ru: "\u041C\u0438\u043D\u0443\u0442\u044B: {0}/{1}"
+    en: 'Minutes: {0}/{1}'
+  - key: task.hunter.title
+    ru: "\u041E\u0445\u043E\u0442\u043D\u0438\u043A"
+    en: Hunter
+  - key: task.hunter.description
+    ru: "\u0423\u0431\u0438\u0442\u044C {0} \u0432\u0440\u0430\u0433\u043E\u0432"
+    en: Kill {0} enemies
+  - key: task.hunter.progress
+    ru: "\u0412\u0440\u0430\u0433\u0438: {0}/{1}"
+    en: 'Enemies: {0}/{1}'
+  - key: task.traveller.title
+    ru: "\u041F\u0443\u0442\u043D\u0438\u043A"
+    en: Traveller
+  - key: task.traveller.description
+    ru: "\u041F\u0440\u043E\u0439\u0442\u0438 {0} \u043B\u043E\u043A\u0430\u0446\u0438\u0438"
+    en: Clear {0} locations
+  - key: task.traveller.progress
+    ru: "\u041B\u043E\u043A\u0430\u0446\u0438\u0438: {0}/{1}"
+    en: 'Locations: {0}/{1}'
+  - key: escape.stage.access
+    ru: "\u0412\u043E\u0441\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435
+      \u0434\u043E\u0441\u0442\u0443\u043F\u0430"
+    en: Restore access
+  - key: escape.stage.prepare
+    ru: "\u041F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u043A\u0430 \u043F\u0440\u043E\u0442\u043E\u043A\u043E\u043B\u0430"
+    en: Prepare protocol
+  - key: escape.stage.final
+    ru: "\u0424\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0439 \u0434\u043E\u043F\u0443\u0441\u043A"
+    en: Final clearance
+  - key: escape.goal.access
+    ru: "\u0412\u043E\u0441\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C
+      \u0434\u043E\u0441\u0442\u0443\u043F \u2014 {0}/{1} \u044F\u0434\u0435\u0440"
+    en: "Restore access \u2014 {0}/{1} cores"
+  - key: escape.goal.prepare
+    ru: "\u041F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u0438\u0442\u044C \u043F\u0440\u043E\u0442\u043E\u043A\u043E\u043B
+      \u2014 {0}/{1} \u044F\u0434\u0435\u0440"
+    en: "Prepare protocol \u2014 {0}/{1} cores"
+  - key: escape.goal.final
+    ru: "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0444\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0439
+      \u0441\u0435\u043A\u0442\u043E\u0440 \u2014 {0}/{1} \u044F\u0434\u0435\u0440"
+    en: "Open final sector \u2014 {0}/{1} cores"
+  - key: escape.objective.final
+    ru: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C Escape Protocol"
+    en: Complete Escape Protocol
+  - key: escape.objective.completed
+    ru: "Escape Protocol \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D"
+    en: Escape Protocol complete
+  - key: escape.project_progress
+    ru: "\u041E\u0431\u0449\u0438\u0439 \u043F\u0440\u043E\u0433\u0440\u0435\u0441\u0441:
+      {0}/{1} \u044F\u0434\u0435\u0440"
+    en: 'Project progress: {0}/{1} cores'
+  - key: escape.stage_title
+    ru: "\u042D\u0442\u0430\u043F {0} \u2014 {1}"
+    en: "Stage {0} \u2014 {1}"
+  - key: escape.next
+    ru: "{0}\n\u0412\u043B\u043E\u0436\u0435\u043D\u043E: {1}/{2} \u044F\u0434\u0435\u0440"
+    en: '{0}
+
+      Invested: {1}/{2} cores'
+  - key: escape.balance
+    ru: "\u042F\u0434\u0440\u0430: {0}"
+    en: 'Cores: {0}'
+  - key: escape.close
+    ru: "\u0417\u0410\u041A\u0420\u042B\u0422\u042C"
+    en: CLOSE
+  - key: escape.invest
+    ru: "\u0412\u041B\u041E\u0416\u0418\u0422\u042C \u042F\u0414\u0420\u0410: {0}"
+    en: 'INVEST CORES: {0}'
+  - key: escape.need_cores
+    ru: "\u041D\u0423\u0416\u041D\u042B \u042F\u0414\u0420\u0410"
+    en: CORES REQUIRED
+  - key: escape.funded
+    ru: "\u0412\u041B\u041E\u0416\u0415\u041D\u0418\u042F \u0417\u0410\u0412\u0415\u0420\u0428\u0415\u041D\u042B"
+    en: FUNDING COMPLETE
+  - key: escape.done
+    ru: "\u0417\u0410\u0412\u0415\u0420\u0428\u0415\u041D\u041E"
+    en: COMPLETE
+  - key: escape.final_open
+    ru: "\u0424\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0439 \u0441\u0435\u043A\u0442\u043E\u0440
+      \u043E\u0442\u043A\u0440\u044B\u0442 \u043D\u0430 \u043A\u0430\u0440\u0442\u0435.\n\u041F\u0440\u043E\u0439\u0434\u0438\u0442\u0435
+      \u0437\u0430\u0432\u0435\u0440\u0448\u0430\u044E\u0449\u0435\u0435 \u0438\u0441\u043F\u044B\u0442\u0430\u043D\u0438\u0435."
+    en: 'Final sector is open on the map.
+
+      Complete the final trial.'
+  - key: escape.final.node
+    ru: "\u0424\u0418\u041D\u0410\u041B"
+    en: FINAL
+  - key: escape.final.title
+    ru: "\u0424\u0438\u043D\u0430\u043B\u044C\u043D\u043E\u0435 \u0438\u0441\u043F\u044B\u0442\u0430\u043D\u0438\u0435
+      F1"
+    en: Final trial F1
+  - key: escape.final.briefing
+    ru: "\u0410\u043A\u0442\u0438\u0432\u0438\u0440\u0443\u0439\u0442\u0435 \u043E\u0440\u0431\u0438\u0442\u0430\u043B\u044C\u043D\u043E\u0435
+      \u0440\u0435\u043B\u0435.\n\u041F\u0440\u043E\u0439\u0434\u0438\u0442\u0435
+      3 \u043B\u043E\u043A\u0430\u0446\u0438\u0438 \u0438 \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435
+      \u0421\u0442\u0440\u0430\u0436\u0430."
+    en: 'Activate an Orbital Relay.
+
+      Clear 3 locations and defeat the Guardian.'
+  - key: escape.final.unavailable
+    ru: "\u0424\u0438\u043D\u0430\u043B\u044C\u043D\u043E\u0435 \u0438\u0441\u043F\u044B\u0442\u0430\u043D\u0438\u0435
+      \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u043E: \u0440\u0435\u043B\u0435
+      \u043E\u0442\u043A\u043B\u044E\u0447\u0435\u043D\u043E."
+    en: 'Final trial unavailable: Relay content is disabled.'
+  - key: escape.final.relay_objective
+    ru: "\u0410\u041A\u0422\u0418\u0412\u0418\u0420\u0423\u0419\u0422\u0415 \u0420\u0415\u041B\u0415"
+    en: ACTIVATE THE RELAY
+  - key: escape.completion_message
+    ru: "\u0424\u0438\u043D\u0430\u043B\u044C\u043D\u043E\u0435 \u0438\u0441\u043F\u044B\u0442\u0430\u043D\u0438\u0435
+      \u043F\u0440\u043E\u0439\u0434\u0435\u043D\u043E"
+    en: Final trial cleared

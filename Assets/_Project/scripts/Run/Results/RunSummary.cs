@@ -13,6 +13,8 @@ public sealed class RunSummary
     public int OrbitalRingCount;
     public int OrbitalModuleCount;
     public int OrbitalCoreLevel;
+    public ExpeditionCoreRewards Cores;
+    public bool EscapeProtocolCompleted;
 
     public RunSummary(
         RunEndReason endReason,

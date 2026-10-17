@@ -40,6 +40,10 @@ public sealed class BunkerRunStarter : MonoBehaviour
         if (isTransitioning || SceneTransitionOverlay.IsTransitioning)
             return;
 
+        if (config?.IsEscapeFinal == true && (SurfaceMap == null || config.MapId != SurfaceMap.Definition.Id ||
+            SurfaceMap.GetStatus(config.SectorId) == SurfaceSectorStatus.Locked ||
+            SurfaceMap.Definition.Find(config.SectorId) is not { IsEscapeFinal: true, FinalChallengeReady: true })) return;
+
         DepthCatalog.Entry depth = depths.Find(depthId);
         if (depth == null || depth.GetAvailability(MetaProgressionManager.EnsureExists().EscapeAccess) != DepthAvailability.Available)
             return;

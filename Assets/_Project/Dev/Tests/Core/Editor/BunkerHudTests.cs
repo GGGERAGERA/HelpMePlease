@@ -110,7 +110,7 @@ public sealed class BunkerHudTests
                 .SingleOrDefault(component => component != null && component.GetType().Name == "BunkerHudView");
             Assert.That(hud, Is.Not.Null, "The working bunker scene must contain the HUD prefab.");
             var data = new SerializedObject(hud);
-            foreach (var field in new[] { "content", "gold", "objectiveRoot", "objectiveTitle", "objectiveText", "depths", "panels", "currencyContainer" })
+            foreach (var field in new[] { "content", "gold", "cores", "objectiveRoot", "objectiveTitle", "objectiveText", "depths", "panels", "currencyContainer" })
                 Assert.That(data.FindProperty(field).objectReferenceValue, Is.Not.Null, field);
             var games = data.FindProperty("minigames");
             int sceneGames = scene.GetRootGameObjects().Sum(root => root.GetComponentsInChildren<BunkerMinigame>(true).Length);
@@ -121,7 +121,8 @@ public sealed class BunkerHudTests
             Assert.That(group.blocksRaycasts || group.interactable, Is.False);
             Assert.That(hud.GetComponentsInChildren<Graphic>(true).Any(graphic => graphic.raycastTarget), Is.False);
             Assert.That(hud.GetComponentInParent<CanvasScaler>().uiScaleMode, Is.EqualTo(CanvasScaler.ScaleMode.ScaleWithScreenSize));
-            Assert.That(hud.GetComponentsInChildren<HudIconNumber>(true).Length, Is.EqualTo(1), "No future currency placeholders.");
+            Assert.That(hud.GetComponentsInChildren<HudIconNumber>(true), Is.EquivalentTo(new[] {
+                data.FindProperty("gold").objectReferenceValue, data.FindProperty("cores").objectReferenceValue }), "Both views bind real permanent balances.");
             var text = (TMP_Text)data.FindProperty("objectiveText").objectReferenceValue;
             Assert.That(text.textWrappingMode, Is.EqualTo(TextWrappingModes.Normal));
         }

@@ -84,6 +84,7 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private InteractionPromptUI interactionPrompt;
     [SerializeField] private RunMessageService runMessages;
     [SerializeField] private CanvasGroup informationGroup;
+    [SerializeField] private ExpeditionTaskHud expeditionTaskHud;
     private PlayerHealth boundPlayer;
     [SerializeField] private RunThreatController threat;
     [SerializeField] private CameraShake cameraShake;
@@ -196,6 +197,7 @@ public class HUDManager : MonoBehaviour
         }
         ReserveSide(healthSlider, true);
         ReserveSide(threatPanel, true);
+        if (IsInformationVisible && expeditionTaskHud != null && expeditionTaskHud.HasTask) ReserveSide(expeditionTaskHud, true);
         if (tacticalMap != null) ReserveSide(tacticalMap.LayoutRoot, false);
         return safe;
     }
@@ -313,8 +315,10 @@ public class HUDManager : MonoBehaviour
             }
         }
 
+        string objective = runStateManager.CurrentConfig.IsEscapeFinal && !runStateManager.FinalObjectiveSatisfied && runFlow.Phase == RunPhase.NormalSector
+            ? "escape.final.relay_objective" : ResolveObjectiveKey(runFlow.Phase, exitAvailable);
         routeProgressView.ShowObjective(runStateManager.CurrentSector.SectorNumber,
-            ProductionSectorCount, ResolveObjectiveKey(runFlow.Phase, exitAvailable), specialAvailable);
+            ProductionSectorCount, objective, specialAvailable);
     }
 
     private void RefreshRunCounters()

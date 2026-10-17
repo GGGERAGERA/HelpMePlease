@@ -15,13 +15,14 @@ using Object = UnityEngine.Object;
 // Only shared production-scene startup, bounded waits and preference restoration.
 public static class CoreTestSupport
 {
-    [Serializable] private sealed class Preference { public string key; public bool exists; public int value; }
+    [Serializable] private sealed class Preference { public string key; public bool exists; public int value; public bool isText; public string text; }
     [Serializable] private sealed class Preferences { public List<Preference> values = new(); }
     private const string BackupKey = "Subject42.Core.Preferences";
 
     public static void PreservePreferences()
     {
-        var keys = new List<string> { "TOTAL_GOLD", "ORBITAL_SLOT_PENDING", TutorialController.CompletionKey,
+        if (!string.IsNullOrEmpty(SessionState.GetString(BackupKey, ""))) return;
+        var keys = new List<string> { "TOTAL_GOLD", CurrencyManager.CoresKey, "ORBITAL_SLOT_PENDING", TutorialController.CompletionKey,
             LocalizationService.LanguagePreferenceKey, BunkerIntroController.ViewedPreferenceKey,
             MetaProgressionManager.EscapeAccessKey, MetaProgressionManager.EscapeAnnouncedAccessKey };
         foreach (string guid in AssetDatabase.FindAssets("t:OnboardingStepDefinition"))
@@ -35,9 +36,19 @@ public static class CoreTestSupport
             keys.Add("Unlock_" + content.id);
             keys.Add("UnlockProgress_" + content.id);
         }
+        foreach (string guid in AssetDatabase.FindAssets("t:SurfaceMapDefinition"))
+        {
+            var map = AssetDatabase.LoadAssetAtPath<SurfaceMapDefinition>(AssetDatabase.GUIDToAssetPath(guid));
+            foreach (var sector in map.Sectors)
+                keys.Add(CurrencyManager.CoreRewardReceiptPrefix + "first/" + map.Id + "/" + sector.Id);
+        }
         var saved = new Preferences();
         foreach (string key in keys.Distinct()) saved.values.Add(new Preference
             { key = key, exists = PlayerPrefs.HasKey(key), value = PlayerPrefs.GetInt(key) });
+        saved.values.Add(new Preference { key = ExpeditionTaskRun.LastRewardsKey, exists = PlayerPrefs.HasKey(ExpeditionTaskRun.LastRewardsKey),
+            isText = true, text = PlayerPrefs.GetString(ExpeditionTaskRun.LastRewardsKey) });
+        saved.values.Add(new Preference { key = MetaProgressionManager.EscapeProtocolKey, exists = PlayerPrefs.HasKey(MetaProgressionManager.EscapeProtocolKey),
+            isText = true, text = PlayerPrefs.GetString(MetaProgressionManager.EscapeProtocolKey) });
         SessionState.SetString(BackupKey, JsonUtility.ToJson(saved));
         PlayerPrefs.SetInt(BunkerIntroController.ViewedPreferenceKey, 1);
         PlayerPrefs.SetInt(TutorialController.CompletionKey, 1);
@@ -93,7 +104,8 @@ public static class CoreTestSupport
         string json = SessionState.GetString(BackupKey, "");
         if (!string.IsNullOrEmpty(json))
             foreach (var value in JsonUtility.FromJson<Preferences>(json).values)
-                if (value.exists) PlayerPrefs.SetInt(value.key, value.value);
+                if (value.exists && value.isText) PlayerPrefs.SetString(value.key, value.text);
+                else if (value.exists) PlayerPrefs.SetInt(value.key, value.value);
                 else PlayerPrefs.DeleteKey(value.key);
         PlayerPrefs.Save();
         SessionState.EraseString(BackupKey);

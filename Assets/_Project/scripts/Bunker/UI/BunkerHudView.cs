@@ -7,6 +7,7 @@ public sealed class BunkerHudView : MonoBehaviour
 {
     [SerializeField] private CanvasGroup content;
     [SerializeField] private HudIconNumber gold;
+    [SerializeField] private HudIconNumber cores;
     [Tooltip("Add future currency views here only when their existing data source is available.")]
     [SerializeField] private RectTransform currencyContainer;
     [SerializeField] private GameObject objectiveRoot;
@@ -41,28 +42,32 @@ public sealed class BunkerHudView : MonoBehaviour
         }
 
         currency.OnGoldUpdated += RefreshGold;
+        currency.OnCoresUpdated += RefreshCores;
         progression.ProgressChanged += RefreshObjective;
         localization.LanguageChanged += HandleLanguageChanged;
         RefreshGold(currency.TotalGold);
+        RefreshCores(currency.TotalCores);
         RefreshObjective();
     }
 
     private void OnDisable()
     {
         if (currency != null) currency.OnGoldUpdated -= RefreshGold;
+        if (currency != null) currency.OnCoresUpdated -= RefreshCores;
         if (progression != null) progression.ProgressChanged -= RefreshObjective;
         if (localization != null) localization.LanguageChanged -= HandleLanguageChanged;
         content.alpha = 0f;
     }
 
     private void RefreshGold(int value) => gold.SetValue(value);
+    private void RefreshCores(int value) => cores.SetValue(value);
     private void HandleLanguageChanged(GameLanguage language) => RefreshObjective();
 
     private void RefreshObjective()
     {
         string key = depths.GetGlobalObjectiveKey(progression.EscapeAccess);
         bool hasGoal = !string.IsNullOrWhiteSpace(key) && localization.HasKey(key);
-        string text = hasGoal ? localization.Get(key) : string.Empty;
+        string text = progression.HasEscapeProtocol ? progression.GetEscapeObjectiveText() : hasGoal ? localization.Get(key) : string.Empty;
         objectiveRoot.SetActive(!string.IsNullOrWhiteSpace(text));
         objectiveTitle.text = localization.Get("bunker.hud.objective_title");
         objectiveText.text = text;
