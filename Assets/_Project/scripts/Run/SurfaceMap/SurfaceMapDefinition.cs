@@ -48,7 +48,8 @@ public sealed class SurfaceMapDefinition : ScriptableObject
         var queue = new Queue<string>(startingSectors);
         while (queue.Count > 0)
             foreach (var next in Find(queue.Dequeue()).Neighbours) if (reached.Add(next)) queue.Enqueue(next);
-        if (reached.Count != sectors.Length) { error = "Every sector must be reachable from a starting sector."; return false; }
+        foreach (var sector in sectors)
+            if (!reached.Contains(sector.Id) && !sector.IsEscapeFinal) { error = "Every ordinary sector must be reachable from a starting sector."; return false; }
         return true;
     }
     private static bool Contains(IReadOnlyList<string> ids, string id)

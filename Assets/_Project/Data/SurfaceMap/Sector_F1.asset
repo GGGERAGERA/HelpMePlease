@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1915e3567dd74000a7d7f875d4d7e474, type: 3}
+  m_Name: Sector_F1
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceSectorDefinition
+  id: F1
+  displayName: escape.final.title
+  description: escape.final.briefing
+  mapPosition: {x: -48, y: 260}
+  locationFamily: 2
+  requiresScan: 0
+  storySector: 1
+  escapeFinal: 1
+  requiredFinalEvent: {fileID: 7497418416046278724, guid: a96ed1c00b63a7b43ada8514ad1ad65c, type: 3}
+  requiredFinalEventTag: hold_zone
+  neighbours: []
+  parameters:
+    layoutProfile: {fileID: 11400000, guid: 52e914b95e2b5634f99c51824ab01579, type: 2}
+    spawnProfile: {fileID: 0}
+    threatProfile: {fileID: 11400000, guid: 42a10000000000000000000000000004, type: 2}
+    worldRule: {fileID: 11400000, guid: f1012da158e24a20bb764c93aeee5266, type: 2}
+    localAnomaly: {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}
+    initialThreat: 25
+    threatGrowth: 1.2
+    enemyHealth: 1
+    spawnPressure: 1.15
+    experience: 1.1
+    gold: 1
+    eventFrequency: 1.5
+    enemyWeights: []
+    eventWeights:
+    - prefab: {fileID: 7655608749632382643, guid: e999d804041b6dd478bbfcf3e074428f, type: 3}
+      multiplier: 0
+    - prefab: {fileID: 7497418416046278724, guid: a96ed1c00b63a7b43ada8514ad1ad65c, type: 3}
+      multiplier: 0.75
+    - prefab: {fileID: 530000000000000004, guid: e47c3f95a8a34c18a619b70ec785f142, type: 3}
+      multiplier: 2
+    - prefab: {fileID: 520000000000000004, guid: f51a1e2d8b0c4d0a9e07f4e27b6d1201, type: 3}
+      multiplier: 3
+    anomalyWeights:
+    - prefab: {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca002, type: 2}
+      multiplier: 3
+    - prefab: {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}
+      multiplier: 1
+    - prefab: {fileID: 11400000, guid: f28b42a1000000000000000000000005, type: 2}
+      multiplier: 1
+    biomeId: 
+    themeId: 
+  content: []
+  victoryCores: 4
+  firstClearCores: 2
+  expeditionTasks:
+  - {fileID: 11400000, guid: 3ca896d6414fe734da342983395bff71, type: 2}
+  - {fileID: 11400000, guid: 0eb94baf7ae3b4b4795c811cbb45552d, type: 2}
+  - {fileID: 11400000, guid: 78aed91dcf750984389e5fb401e8ee20, type: 2}

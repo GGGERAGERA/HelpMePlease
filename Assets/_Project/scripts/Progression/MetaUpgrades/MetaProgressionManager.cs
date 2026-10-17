@@ -12,7 +12,7 @@ public enum MetaUpgradeType
     PickupRadius
 }
 
-public sealed class MetaProgressionManager : MonoBehaviour
+public sealed partial class MetaProgressionManager : MonoBehaviour
 {
     public static MetaProgressionManager Instance { get; private set; }
     public const string TutorialCompletionKeyPrefix = "META_TUTORIAL_";
@@ -47,7 +47,7 @@ public sealed class MetaProgressionManager : MonoBehaviour
         if (SurfaceMap == null || SurfaceMap.Definition != definition)
         {
             if(Missions!=null)SurfaceMap?.Content.UnregisterSource(Missions);
-            Missions=null; SurfaceMap=new SurfaceMapService(definition);
+            Missions=null; SurfaceMap=new SurfaceMapService(definition, null, () => EscapeProtocolFunded);
         }
     }
     private void HandleRunFinished(RunConfig config, RunEndReason reason, bool productionVictory)
@@ -183,6 +183,7 @@ public sealed class MetaProgressionManager : MonoBehaviour
         GoldGainLevel = PlayerPrefs.GetInt(GoldGainLevelKey, 0);
         PickupRadiusLevel = PlayerPrefs.GetInt(PickupRadiusLevelKey, 0);
         SanitizeStoredInvestments();
+        LoadEscapeProtocol();
     }
 
     public int GetLevel(MetaUpgradeType type)

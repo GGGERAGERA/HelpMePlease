@@ -42,7 +42,8 @@ public sealed class RunFlowController : MonoBehaviour
     public bool IsExitRecovering => enemySpawner != null && enemySpawner.IsRecoveringFromFirstAutomaticAssault;
     private bool CanUnlockExit => TutorialController.IsTutorialSector
         ? TutorialController.IsActive && TutorialController.Active.GoalCompleted
-        : sectorProfile != null && SectorElapsedTime >= sectorProfile.ExitActivationTime;
+        : sectorProfile != null && SectorElapsedTime >= sectorProfile.ExitActivationTime &&
+            (!RunRoute.IsFinalSector(RunStateManager.Instance.CurrentLevel) || RunStateManager.Instance.FinalObjectiveSatisfied);
     public RunPhase Phase { get; private set; }
     public EnemyHealth FinalBoss => finalBoss;
     public bool IsVictoryConfirmed => Phase == RunPhase.Victory;
@@ -200,6 +201,7 @@ public sealed class RunFlowController : MonoBehaviour
 
         if (RunRoute.IsFinalSector(sectorNumber))
         {
+            if (!runState.FinalObjectiveSatisfied) return false;
             if (!CanContinue || bossSpawner == null || enemySpawner == null ||
                 RunEndService.Instance == null || !bossSpawner.CanSpawn(runState.CurrentSector))
             {

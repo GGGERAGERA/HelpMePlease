@@ -16,9 +16,23 @@ public sealed class SurfaceSectorDefinition : ScriptableObject
     [SerializeField] private bool requiresScan;
     [Tooltip("Enable only for authored story progression sectors.")]
     [SerializeField] private bool storySector;
+    [Header("Escape Protocol final trial")]
+    [SerializeField] private bool escapeFinal;
+    [SerializeField] private WorldEvent requiredFinalEvent;
+    [SerializeField] private string requiredFinalEventTag;
+    public bool IsEscapeFinal => escapeFinal;
+    public bool FinalChallengeReady => !escapeFinal || requiredFinalEvent != null && requiredFinalEvent.AvailableInProduction &&
+        requiredFinalEvent.AllowedInSite && requiredFinalEvent.TryValidateConfiguration(out _);
     [SerializeField] private string[] neighbours = System.Array.Empty<string>();
     [SerializeField] private RunConfigParameters parameters = new();
     [SerializeField] private SurfaceSectorContent[] content = System.Array.Empty<SurfaceSectorContent>();
+    [Header("Permanent expedition rewards")]
+    [SerializeField, Min(0)] private int victoryCores;
+    [SerializeField, Min(0)] private int firstClearCores;
+    [SerializeField] private ExpeditionTaskDefinition[] expeditionTasks = System.Array.Empty<ExpeditionTaskDefinition>();
+    public System.Collections.Generic.IReadOnlyList<ExpeditionTaskDefinition> ExpeditionTasks => expeditionTasks;
+    public int VictoryCores => Mathf.Max(0, victoryCores);
+    public int FirstClearCores => Mathf.Max(0, firstClearCores);
     public System.Collections.Generic.IReadOnlyList<SurfaceSectorContent> Content => content;
     public string Id => id;
     public string DisplayName => displayName;
@@ -41,5 +55,6 @@ public sealed class SurfaceSectorDefinition : ScriptableObject
     public bool RequiresScan => requiresScan;
     public bool IsStorySector => storySector;
     public System.Collections.Generic.IReadOnlyList<string> Neighbours => neighbours;
-    public RunConfig BuildRunConfig(string mapId) => new(mapId, id, parameters);
+    public RunConfig BuildRunConfig(string mapId, ExpeditionTaskDefinition task = null) =>
+        new(mapId, id, parameters, VictoryCores, FirstClearCores, task, escapeFinal, requiredFinalEvent, requiredFinalEventTag);
 }

@@ -23,6 +23,7 @@ public sealed class DeathResultPresentation : MonoBehaviour
     [SerializeField] private RectTransform rootCanvasRect;
     [SerializeField] private Canvas modalCanvas;
     [SerializeField] private GraphicRaycaster modalRaycaster;
+    [SerializeField] private ExpeditionCoreSummaryView coreRewards;
 
     private RunSummary displayedSummary;
     private void OnEnable() => LocalizationService.EnsureExists().LanguageChanged += RefreshLanguage;
@@ -43,7 +44,7 @@ public sealed class DeathResultPresentation : MonoBehaviour
     private void Awake()
     {
         viewValid = window != null && backdrop != null && windowImage != null &&
-            rootCanvasRect != null && modalCanvas != null && modalRaycaster != null &&
+            rootCanvasRect != null && modalCanvas != null && modalRaycaster != null && coreRewards != null &&
             sector != null && time != null && kills != null && level != null && gold != null &&
             rings != null && modules != null && core != null && comment != null &&
             restartButton != null && bunkerButton != null;
@@ -86,6 +87,7 @@ public sealed class DeathResultPresentation : MonoBehaviour
         rings.text = summary.OrbitalRingCount.ToString();
         modules.text = summary.OrbitalModuleCount.ToString();
         core.text = summary.OrbitalCoreLevel.ToString();
+        coreRewards.Show(summary.Cores);
         comment.text = AICommentGenerator.GetComment(false);
         FitToCanvas();
     }
@@ -107,9 +109,9 @@ public sealed class DeathResultPresentation : MonoBehaviour
     {
         Vector2 available = rootCanvasRect.rect.size;
         fittedCanvasSize = available;
-        Place(window, 0f, 0f, 1000f, 840f);
+        Place(window, 0f, 0f, 1000f, 1000f);
         window.localScale = Vector3.one * Mathf.Min(1f,
-            Mathf.Min((available.x - 48f) / 1000f, (available.y - 48f) / 840f));
+            Mathf.Min((available.x - 48f) / 1000f, (available.y - 48f) / 1000f));
     }
 
     // Delegate unchanged to the production flow, including its duplicate-click guards.

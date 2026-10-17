@@ -50,7 +50,7 @@ public sealed class RunEndService : MonoBehaviour
         RunSector sector = runState.CurrentSector;
 
         if (sector == null || !RunRoute.IsFinalSector(sector.SectorNumber) ||
-            RunFlowController.Instance == null || !RunFlowController.Instance.IsVictoryConfirmed)
+            RunFlowController.Instance == null || !RunFlowController.Instance.IsVictoryConfirmed || !runState.FinalObjectiveSatisfied)
         {
             Debug.LogError(
                 $"[RunEndService] Victory requires CurrentSector " +

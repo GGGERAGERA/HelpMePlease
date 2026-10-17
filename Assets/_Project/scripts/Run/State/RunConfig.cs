@@ -53,12 +53,23 @@ public sealed class RunConfig
     public float Experience { get; }
     public float Gold { get; }
     public float EventFrequency { get; }
+    public int VictoryCores { get; }
+    public int FirstClearCores { get; }
+    public ExpeditionTaskDefinition ExpeditionTask { get; }
+    public bool IsEscapeFinal { get; }
+    public WorldEvent RequiredFinalEvent { get; }
+    public string RequiredFinalEventTag { get; }
     private readonly RunPrefabWeight[] enemyWeights, eventWeights, anomalyWeights;
 
-    public RunConfig(string mapId, string sectorId, RunConfigParameters parameters)
+    public RunConfig(string mapId, string sectorId, RunConfigParameters parameters,
+        int victoryCores = 0, int firstClearCores = 0, ExpeditionTaskDefinition expeditionTask = null,
+        bool isEscapeFinal = false, WorldEvent requiredFinalEvent = null, string requiredFinalEventTag = null)
     {
         var p = parameters ?? throw new ArgumentNullException(nameof(parameters));
         MapId = mapId; SectorId = sectorId; BiomeId = p.biomeId; ThemeId = p.themeId;
+        VictoryCores = Mathf.Max(0, victoryCores); FirstClearCores = Mathf.Max(0, firstClearCores);
+        ExpeditionTask = expeditionTask;
+        IsEscapeFinal = isEscapeFinal; RequiredFinalEvent = requiredFinalEvent; RequiredFinalEventTag = requiredFinalEventTag;
         LayoutProfile = p.layoutProfile; SpawnProfile = p.spawnProfile; ThreatProfile = p.threatProfile;
         WorldRule = p.worldRule; LocalAnomaly = p.localAnomaly;
         InitialThreat = Mathf.Clamp(p.initialThreat, 0f, 100f);
@@ -86,6 +97,8 @@ public sealed class RunConfig
         Gold = basis.Gold * content.Gold; EventFrequency = basis.EventFrequency;
         enemyWeights = basis.enemyWeights; eventWeights = basis.eventWeights; anomalyWeights = basis.anomalyWeights;
         Content = content; contentBasis = basis;
+        VictoryCores = basis.VictoryCores; FirstClearCores = basis.FirstClearCores; ExpeditionTask = basis.ExpeditionTask;
+        IsEscapeFinal = basis.IsEscapeFinal; RequiredFinalEvent = basis.RequiredFinalEvent; RequiredFinalEventTag = basis.RequiredFinalEventTag;
     }
     private static RunPrefabWeight[] Copy(RunPrefabWeight[] source)
     {

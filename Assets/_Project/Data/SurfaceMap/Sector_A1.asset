@@ -40,3 +40,9 @@ MonoBehaviour:
     biomeId: 
     themeId: 
   content: []
+  victoryCores: 1
+  firstClearCores: 1
+  expeditionTasks:
+  - {fileID: 11400000, guid: 3ca896d6414fe734da342983395bff71, type: 2}
+  - {fileID: 11400000, guid: 0eb94baf7ae3b4b4795c811cbb45552d, type: 2}
+  - {fileID: 11400000, guid: 78aed91dcf750984389e5fb401e8ee20, type: 2}
