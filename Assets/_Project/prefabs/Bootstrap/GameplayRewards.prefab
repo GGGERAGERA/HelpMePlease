@@ -49,6 +49,14 @@ MonoBehaviour:
   levelData: {fileID: 11400000, guid: f62deaa6ceabb0c42b8a8cc35bce5ba2, type: 2}
   currentLevel: 1
   currentExp: 0
+  medKitPrefab: {fileID: 6893974339704631745, guid: 8399c038ec2555b458d947f84e46aac1, type: 3}
+  medKitDropChance: 0.004
+  magnetPrefab: {fileID: 7258575264046250954, guid: 356618664fdf87948857d738dae6084e, type: 3}
+  magnetDropChance: 0.0015
+  magnetDuration: 30
+  globalMagnetSpeed: 20
+  globalMagnetTravelTime: 1.5
+  healingPopupPrefab: {fileID: 4796960855316984938, guid: 93f186151a59ce24fa30dac2ce325309, type: 3}
   OnExperienceChanged:
     m_PersistentCalls:
       m_Calls: []

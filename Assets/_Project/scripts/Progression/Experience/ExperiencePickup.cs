@@ -24,6 +24,9 @@ public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
 
     private Transform player;
     private PlayerPickupRadius playerPickupRadius;
+    protected PlayerHealth PlayerHealth { get; private set; }
+    protected virtual bool GrantsExperience => true;
+    protected virtual bool CanCollect => true;
     private bool isCollected;
     private readonly AnomalySpeedMultiplierStack anomalySpeed = new();
     private readonly AnomalyExternalVelocityStack
@@ -36,15 +39,16 @@ public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
     private static readonly System.Collections.Generic.HashSet<ExperiencePickup> active = new();
     public static System.Collections.Generic.IReadOnlyCollection<ExperiencePickup> DebugActive => active;
 #endif
-    private void OnEnable()
+    protected virtual void OnEnable()
     {
+        isCollected = false;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        active.Add(this);
+        if (GrantsExperience) active.Add(this);
 #endif
-        Spawned?.Invoke(this);
+        if (GrantsExperience) Spawned?.Invoke(this);
     }
 
-    private void Start()
+    protected virtual void Start()
     {
         Transform playerObject = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
 
@@ -53,12 +57,14 @@ public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
             player = playerObject;
             playerPickupRadius =
                 playerObject.GetComponent<PlayerPickupRadius>();
+            PlayerHealth = playerObject.GetComponent<PlayerHealth>();
         }
     }
 
-    private void Update()
+    protected virtual void Update()
     {
-        if (isCollected)
+        if (isCollected || Time.deltaTime <= 0f ||
+            (PlayerHealth != null && PlayerHealth.IsDead))
             return;
 
         transform.position += (Vector3)(
@@ -74,23 +80,29 @@ public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
             currentMagnetRadius = playerPickupRadius.CurrentRadius;
 
         float distance = Vector2.Distance(transform.position, player.position);
+        ExperienceManager manager = ExperienceManager.Instance;
+        bool globalMagnet = GrantsExperience && manager != null &&
+            manager.gameObject.scene == gameObject.scene && manager.IsGlobalMagnetActive;
 
-        if (distance <= currentMagnetRadius)
+        if ((distance <= currentMagnetRadius || globalMagnet) && CanCollect)
         {
+            float speed = globalMagnet
+                ? Mathf.Max(magnetSpeed, manager.GetGlobalMagnetSpeed(distance))
+                : magnetSpeed;
             transform.position = Vector2.MoveTowards(
                 transform.position,
                 player.position,
-                magnetSpeed * anomalySpeed.Value * Time.deltaTime
+                speed * anomalySpeed.Value * Time.deltaTime
             );
         }
 
-        if (distance <= collectDistance)
+        if (Vector2.Distance(transform.position, player.position) <= collectDistance)
         {
             Collect();
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    protected virtual void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Player"))
         {
@@ -100,10 +112,18 @@ public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
 
     private void Collect()
     {
-        if (isCollected)
+        if (isCollected || Time.timeScale <= 0f ||
+            (PlayerHealth != null && PlayerHealth.IsDead) || !CanCollect)
             return;
 
         isCollected = true;
+
+        ApplyPickup();
+        Despawn();
+    }
+
+    protected virtual void ApplyPickup()
+    {
 
         Collected?.Invoke(this);
 
@@ -122,7 +142,6 @@ public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
         );
 
         visual?.PlayPickupFeedback(ExperienceManager.Instance);
-        Despawn();
     }
 
     // XP pickups currently use Instantiate/Destroy; only their feedback FX is pooled.
@@ -156,7 +175,7 @@ public class ExperiencePickup : MonoBehaviour, IAnomalySpeedPickup,
         anomalyExternalVelocity.Remove(source);
     }
 
-    private void OnDisable()
+    protected virtual void OnDisable()
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         active.Remove(this);

@@ -1,4 +1,3 @@
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,7 +5,6 @@ using UnityEngine.UI;
 public sealed class DashCooldownView : MonoBehaviour
 {
     [SerializeField] private Image cooldownFillImage;
-    [SerializeField] private TextMeshProUGUI keyText;
 
     private CharacterMovement2D movement;
 
@@ -30,14 +28,5 @@ public sealed class DashCooldownView : MonoBehaviour
         if (cooldownFillImage != null)
             cooldownFillImage.fillAmount = progress;
 
-        if (keyText != null)
-        {
-            KeyCode key = movement != null
-                ? movement.DashKey
-                : KeyCode.Space;
-            keyText.text = key == KeyCode.Space
-                ? LocalizationService.EnsureExists().Get("input.space")
-                : key.ToString().ToUpperInvariant();
-        }
     }
 }

@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 676161323003257378}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1.206, y: 1.642, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -93,6 +93,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6119930454572100901}
+  - component: {fileID: 6893974339704631745}
   m_Layer: 0
   m_Name: p_medKit1
   m_TagString: Untagged
@@ -117,6 +118,27 @@ Transform:
   - {fileID: 1448807318398585096}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6893974339704631745
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6719149739321739606}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4abda3d367779334ead8478e73809943, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::RarePickup
+  expValue: 10
+  visual: {fileID: 0}
+  magnetRadius: 3
+  magnetSpeed: 5
+  collectDistance: 0.25
+  pickupSound: {fileID: 0}
+  pickupVolume: 0.25
+  kind: 0
+  healFraction: 0.25
 --- !u!1 &9150882264160412831
 GameObject:
   m_ObjectHideFlags: 0
@@ -144,7 +166,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 3, y: 3, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6119930454572100901}
