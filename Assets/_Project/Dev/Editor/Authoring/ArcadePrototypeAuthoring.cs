@@ -31,11 +31,21 @@ public static class ArcadePrototypeAuthoring
         try
         {
             if (command == "setup") { Configure(); File.WriteAllText(Output + "/setup.txt", "PASS: pinball and existing red roulette table configured; poker retained but disabled."); }
-            else if (command == "smoke" || command == "roulette" || command == "bunker-roulette" || command == "pinball" || command == "pinball-cursor")
+            else if (command == "smoke" || command == "roulette" || command == "bunker-roulette" || command == "pinball" || command == "pinball-cursor" || command == "pinball-economy" || command == "pinball-cycle")
             {
                 SessionState.SetBool(Running, true);
+                string[] tests = command switch
+                {
+                    "pinball-economy" => new[] { "ArcadePrototypeSmokeTests.RewardsStopAfterSixCoins" },
+                    "pinball-cycle" => new[] { "ArcadePrototypeSmokeTests.ProductionPinballPlaysAndRestoresBunker" },
+                    "pinball-cursor" => new[] { "ArcadePrototypeSmokeTests.CursorHighlightsAndOpensPinball" },
+                    "pinball" => new[] { "ArcadePrototypeSmokeTests.ProductionPinballPlaysAndRestoresBunker", "ArcadePrototypeSmokeTests.CursorHighlightsAndOpensPinball", "ArcadePrototypeSmokeTests.RestingFlippersAllowARealDrain", "ArcadePrototypeSmokeTests.RewardsStopAfterSixCoins" },
+                    "bunker-roulette" => new[] { "RouletteSmokeTests", "BunkerDoorDebugTests" },
+                    "roulette" => new[] { "RouletteSmokeTests" },
+                    _ => new[] { "ArcadePrototypeSmokeTests", "RouletteSmokeTests" }
+                };
                 ScriptableObject.CreateInstance<TestRunnerApi>().Execute(new ExecutionSettings(new Filter
-                { testMode = TestMode.EditMode, testNames = command == "pinball-cursor" ? new[] { "ArcadePrototypeSmokeTests.CursorHighlightsAndOpensPinball" } : command == "pinball" ? new[] { "ArcadePrototypeSmokeTests.ProductionPinballPlaysAndRestoresBunker", "ArcadePrototypeSmokeTests.RestingFlippersAllowARealDrain" } : command == "bunker-roulette" ? new[] { "RouletteSmokeTests", "BunkerDoorDebugTests" } : command == "roulette" ? new[] { "RouletteSmokeTests" } : new[] { "ArcadePrototypeSmokeTests", "RouletteSmokeTests" } }));
+                { testMode = TestMode.EditMode, testNames = tests }));
             }
         }
         catch (Exception error) { File.WriteAllText(Output + "/error.txt", error.ToString()); Debug.LogException(error); }

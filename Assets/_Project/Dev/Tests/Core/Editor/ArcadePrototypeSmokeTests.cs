@@ -92,11 +92,36 @@ public sealed class ArcadePrototypeSmokeTests
             typeof(BunkerMinigame).GetField("<State>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(game, BunkerMinigameState.Running);
             Write(game, "paid", true); Write(game, "lives", 3); Write(game, "nextCoin", 100f);
             Write(game, "leftAngle", -18f); Write(game, "rightAngle", -18f);
-            Write(game, "ball", new Vector2(332, 100)); Write(game, "velocity", Vector2.down * 120);
+            Write(game, "ball", new Vector2(260, 100)); Write(game, "velocity", Vector2.down * 120);
             for (int i = 0; i < 240 && !game.WaitingForLaunch; i++) game.Simulate(1f / 240, false, false);
             Assert.That(game.BallsRemaining, Is.EqualTo(2), "Released flippers must leave a real drain gap.");
         }
         finally { Object.DestroyImmediate(fixture); }
+    }
+    [Test] public void RewardsStopAfterSixCoins()
+    {
+        var fixture = new GameObject("Pinball reward limit fixture"); fixture.SetActive(false);
+        var previousWallet = CurrencyManager.Instance;
+        try
+        {
+            var wallet = fixture.AddComponent<CurrencyManager>(); CurrencyManager.Instance = wallet;
+            wallet.AddGoldExact(1000);
+            var game = fixture.AddComponent<AnomalyPinball>();
+            typeof(BunkerMinigame).GetField("<State>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(game, BunkerMinigameState.Running);
+            Write(game, "paid", true); Write(game, "lives", 3);
+            var point = ((Vector2[])Read(game, "coinSpots"))[0];
+            for (int i = 0; i < 7; i++)
+            {
+                Write(game, "coinActive", true); Write(game, "coinTime", 10f); Write(game, "coinPosition", point);
+                Write(game, "ball", point); Write(game, "velocity", Vector2.zero);
+                game.Simulate(1f / 240, false, false);
+            }
+            Assert.That(wallet.TotalGold, Is.EqualTo(1060), "A paid party may return more than its entry fee, but cannot farm gold indefinitely.");
+            Write(game, "waiting", true); Write(game, "coinActive", false); Write(game, "nextCoin", .01f);
+            game.Simulate(.02f, false, false);
+            Assert.That((bool)Read(game, "coinActive"), Is.False, "The reward budget must also prevent spawning more coins.");
+        }
+        finally { CurrencyManager.Instance = previousWallet; Object.DestroyImmediate(fixture); }
     }
     private static IEnumerator PlayCabinets()
     {
@@ -137,7 +162,9 @@ public sealed class ArcadePrototypeSmokeTests
         Assert.That(Time.timeScale, Is.Zero); Assert.That(camera.IsPresentationSuspended, Is.True);
         Assert.That(modal.GetComponentsInChildren<TMPro.TMP_Text>().Any(t => t.text.Contains("SUBJECT") || t.text.Contains("ПИНБОЛ") || t.text.Contains("КОМБО") || t.text.Contains("ЦЕЛЬ")), Is.False);
         var field = modal.transform.Find("Play area/Pinball field").GetComponent<RectTransform>();
-        Assert.That(field.rect.width * field.localScale.x, Is.GreaterThan(1000));
+        Assert.That(field.rect.height * field.localScale.y, Is.GreaterThanOrEqualTo(640));
+        Assert.That(field.rect.height, Is.GreaterThan(field.rect.width), "The table should use a taller pinball layout without stretching sprites.");
+        Assert.That(field.localScale.x, Is.EqualTo(field.localScale.y));
         Capture("pinball-ready.png");
         pinball.Launch(1);
         Assert.That(wallet.TotalGold, Is.EqualTo(970));
@@ -152,6 +179,7 @@ public sealed class ArcadePrototypeSmokeTests
         Assert.That(wallet.TotalGold, Is.EqualTo(980)); Assert.That(PlayerPrefs.GetInt("TOTAL_GOLD"), Is.EqualTo(980));
         pinball.Simulate(1f / 240, false, false); Assert.That(wallet.TotalGold, Is.EqualTo(980), "The same coin cannot pay twice.");
         typeof(AnomalyPinball).GetMethod("Draw", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(pinball, null);
+        typeof(AnomalyPinball).GetMethod("RefreshStatus", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(pinball, null);
         Capture("pinball-reward.png");
         Write(pinball, "waiting", true);
         for (int i = 0; i < 490; i++) pinball.Simulate(.01f, false, false);
@@ -187,10 +215,12 @@ public sealed class ArcadePrototypeSmokeTests
         pinball.Simulate(1f / 240, false, false);
         Assert.That(pinball.Score, Is.GreaterThan(beforeBumper)); Assert.That(pinball.BallVelocity.y, Is.GreaterThan(0));
         Assert.That(wallet.TotalGold, Is.EqualTo(980), "Only gold targets award gold; normal bumpers award points.");
-        Write(pinball, "ball", new Vector2(332, -20)); Write(pinball, "velocity", Vector2.down * 50);
+        ExerciseTableMechanics(pinball, wallet);
+        int afterMechanicsGold = wallet.TotalGold;
+        Write(pinball, "ball", new Vector2(260, -20)); Write(pinball, "velocity", Vector2.down * 50);
         pinball.Simulate(1f / 240, false, false);
         Assert.That(pinball.BallsRemaining, Is.EqualTo(2));
-        pinball.Launch(1); Assert.That(wallet.TotalGold, Is.EqualTo(980), "The next ball is included in the session.");
+        pinball.Launch(1); Assert.That(wallet.TotalGold, Is.EqualTo(afterMechanicsGold), "The next ball is included in the session.");
         Vector2 launch = pinball.BallPosition;
         for (int i = 0; i < 240; i++) pinball.Simulate(1f / 240, false, false);
         Assert.That(Vector2.Distance(pinball.BallPosition, launch), Is.GreaterThan(20));
@@ -199,20 +229,22 @@ public sealed class ArcadePrototypeSmokeTests
         {
             if (pinball.WaitingForLaunch) pinball.Launch(.8f);
             var b = pinball.BallPosition;
-            pinball.Simulate(1f / 240, b.x < 332 && b.y < 110, b.x >= 332 && b.y < 110);
+            pinball.Simulate(1f / 240, b.x < 260 && b.y < 125, b.x >= 260 && b.y < 125);
             maxHeight = Mathf.Max(maxHeight, b.y);
             Assert.That(float.IsNaN(pinball.BallPosition.x), Is.False);
         }
         File.WriteAllText("Artifacts/GeneratedQA/Arcade/physics.txt", $"90s simulation: score={pinball.Score}, balls={pinball.BallsRemaining}, height={maxHeight}, state={pinball.State}, position={pinball.BallPosition}");
-        Assert.That(maxHeight, Is.GreaterThan(350));
+        Assert.That(maxHeight, Is.GreaterThan(550));
         Assert.That(pinball.Score, Is.GreaterThan(0), "A launched ball must reach the scoring field.");
         while (pinball.IsRunning)
         {
             if (pinball.WaitingForLaunch) pinball.Launch(1);
-            Write(pinball, "ball", new Vector2(332, -20));
+            Write(pinball, "bonusActive", false);
+            Write(pinball, "ball", new Vector2(260, -20));
             pinball.Simulate(1f / 240, false, false);
         }
         Assert.That(pinball.BestScore, Is.EqualTo(pinball.Score));
+        Assert.That(wallet.TotalGold, Is.LessThanOrEqualTo(1030), "A session must never award more than sixty gold.");
         int beforeReplay = wallet.TotalGold;
         pinball.Replay(); Assert.That(pinball.Score, Is.Zero); Assert.That(pinball.BallsRemaining, Is.EqualTo(3));
         Assert.That(wallet.TotalGold, Is.EqualTo(beforeReplay));
@@ -224,8 +256,111 @@ public sealed class ArcadePrototypeSmokeTests
         Assert.That(panels.IsAnyPanelOpen, Is.False);
         Time.timeScale = 1;
     }
+    private static void ExerciseTableMechanics(AnomalyPinball game, CurrencyManager wallet)
+    {
+        const float step = 1f / 240;
+        foreach (float x in new[] { 46f, 470f })
+        {
+            Write(game, "ball", new Vector2(x, 210)); Write(game, "velocity", Vector2.up * 100);
+            game.Simulate(step, false, false);
+            Assert.That(game.BallVelocity.y, Is.GreaterThanOrEqualTo(579), "Both side returns must propel an upward shot toward the upper playfield.");
+            float height = game.BallPosition.y;
+            for (int i = 0; i < 300; i++) { game.Simulate(step, false, false); height = Mathf.Max(height, game.BallPosition.y); }
+            Assert.That(height, Is.GreaterThan(580));
+        }
+        Write(game, "ball", new Vector2(115, 164)); Write(game, "velocity", new Vector2(180, -80));
+        int score = game.Score;
+        game.Simulate(step, false, false);
+        Assert.That(game.Score, Is.GreaterThan(score), "Slingshots must kick and score, rather than being decorative triangles.");
+        float angle = (float)typeof(AnomalyPinball).GetProperty("SpinnerAngle", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(game);
+        Vector2 axis = new(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
+        Vector2 normal = new(-axis.y, axis.x);
+        Write(game, "ball", new Vector2(260, 300) + axis * 20 + normal * 8); Write(game, "velocity", -normal * 150);
+        score = game.Score; game.Simulate(step, false, false);
+        Assert.That(game.Score, Is.GreaterThan(score)); Assert.That((float)Read(game, "spinnerFlash"), Is.GreaterThan(0));
+
+        void CompleteBank()
+        {
+            foreach (var target in (Vector2[])Read(game, "targets"))
+            {
+                Write(game, "ball", target + Vector2.down * 8); Write(game, "velocity", Vector2.up * 180);
+                game.Simulate(step, false, false);
+            }
+        }
+        System.Array.Clear((bool[])Read(game, "targetDown"), 0, 3);
+        CompleteBank();
+        Assert.That(game.ActiveBallCount, Is.EqualTo(2)); Assert.That(game.MultiballRemaining, Is.GreaterThan(14.9f));
+        int beforeBonusCoin = wallet.TotalGold;
+        Write(game, "coinActive", true); Write(game, "coinTime", 10f); Write(game, "coinPosition", new Vector2(260, 365));
+        Write(game, "ball", new Vector2(260, 150)); Write(game, "velocity", Vector2.zero);
+        SetExtra(game, new Vector2(260, 365), Vector2.zero);
+        game.Simulate(step, false, false);
+        Assert.That(wallet.TotalGold, Is.EqualTo(beforeBonusCoin + 10), "The second ball must collect money through the same exact-once path.");
+        var portals = (Vector2[])Read(game, "portals");
+        Write(game, "portalCooldown", 0f); Write(game, "ball", portals[0]); Write(game, "velocity", Vector2.down * 300);
+        SetExtra(game, portals[1], Vector2.down * 300);
+        game.Simulate(step, false, false);
+        Assert.That(Vector2.Distance(game.BallPosition, portals[1]), Is.LessThan(40));
+        Assert.That(Vector2.Distance(ExtraVector(game, "Position"), portals[0]), Is.LessThan(40), "Portal cooldown must be independent for each ball.");
+        Write(game, "leftAngle", -18f);
+        var tipMethod = typeof(AnomalyPinball).GetMethod("Tip", BindingFlags.Instance | BindingFlags.NonPublic);
+        Vector2 Contact(float flipperAngle)
+        {
+            Vector2 pivot = new(165, 60), tip = (Vector2)tipMethod.Invoke(game, new object[] { true, flipperAngle });
+            Vector2 edge = tip - pivot, up = new Vector2(-edge.y, edge.x).normalized;
+            return pivot + edge * .7f + up * 8;
+        }
+        Write(game, "ball", new Vector2(260, 150)); Write(game, "velocity", Vector2.zero);
+        SetExtra(game, Contact(-18), Vector2.down * 180);
+        game.Simulate(step, true, false);
+        Assert.That(ExtraVector(game, "Velocity").y, Is.GreaterThan(400), "The bonus ball must receive full flipper impulses.");
+        typeof(AnomalyPinball).GetMethod("Draw", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(game, null);
+        typeof(AnomalyPinball).GetMethod("RefreshStatus", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(game, null);
+        Capture("pinball-multiball.png");
+        Write(game, "waiting", true);
+        for (int i = 0; i < 200; i++) game.Simulate(.05f, false, false);
+        Assert.That(game.MultiballRemaining, Is.GreaterThan(4.8f));
+        for (int i = 0; i < 102; i++) game.Simulate(.05f, false, false);
+        Assert.That(game.MultiballRemaining, Is.Zero);
+        for (int i = 0; i < 62; i++) game.Simulate(.05f, false, false);
+        Assert.That(((bool[])Read(game, "targetDown")).Any(down => down), Is.False, "The target bank must rearm after the bonus.");
+        Write(game, "waiting", false);
+        CompleteBank();
+        int lives = game.BallsRemaining;
+        Write(game, "ball", new Vector2(260, -20)); Write(game, "velocity", Vector2.down * 100);
+        SetExtra(game, new Vector2(260, 365), Vector2.up * 200);
+        game.Simulate(step, false, false);
+        Assert.That(game.BallsRemaining, Is.EqualTo(lives)); Assert.That(game.ActiveBallCount, Is.EqualTo(1));
+        Assert.That(game.WaitingForLaunch, Is.False, "Losing the first multiball must promote the survivor without charging another life.");
+        foreach (float flipperAngle in new[] { -18f, 23f })
+        {
+            Write(game, "leftAngle", flipperAngle); Write(game, "ball", Contact(flipperAngle)); Write(game, "velocity", Vector2.down * 180);
+            game.Simulate(step, true, false);
+            Assert.That(game.BallVelocity.y, Is.GreaterThan(400));
+            Assert.That(game.BallVelocity.x * (flipperAngle < 0 ? 1 : -1), Is.GreaterThan(40), "Contact timing must allow different aimed shots.");
+            Assert.That(game.BallVelocity.magnitude, Is.LessThanOrEqualTo(769));
+        }
+    }
     private static object Read(object o, string name) => o.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(o);
-    private static void Write(object o, string name, object value) => o.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(o, value);
+    private static void Write(object o, string name, object value)
+    {
+        string member = name switch { "ball" => "Position", "velocity" => "Velocity", "portalCooldown" => "PortalCooldown", _ => null };
+        if (member != null)
+        {
+            var state = Read(o, "primary"); state.GetType().GetField(member).SetValue(state, value);
+        }
+        else o.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(o, value);
+    }
+    private static void SetExtra(AnomalyPinball game, Vector2 position, Vector2 velocity)
+    {
+        var state = Read(game, "secondary");
+        state.GetType().GetField("Position").SetValue(state, position); state.GetType().GetField("Velocity").SetValue(state, velocity);
+        state.GetType().GetField("PortalCooldown").SetValue(state, 0f);
+    }
+    private static Vector2 ExtraVector(AnomalyPinball game, string member)
+    {
+        var state = Read(game, "secondary"); return (Vector2)state.GetType().GetField(member).GetValue(state);
+    }
     internal static void Capture(string name, Canvas target = null, int width = 1180, int height = 760)
     {
         var canvas = target != null ? target : Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None).Single(c => c.name == "Subject42 Arcade");
