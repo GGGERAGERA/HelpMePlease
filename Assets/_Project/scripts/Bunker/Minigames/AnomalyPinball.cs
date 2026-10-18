@@ -3,151 +3,73 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public sealed class AnomalyPinball : ArcadeMinigame
+public sealed partial class AnomalyPinball : ArcadeMinigame
 {
-    private const float Step = 1f / 240f, Radius = 5f;
+    private const float Step = 1f / 240f, Radius = 5, ZoneRadius = 64, PortalRadius = 15, FlipperLength = 82;
     private const int Target = 5000;
-    public const int SessionCost = 30, CoinReward = 10;
-    private const float ZoneRadius = 78, PortalRadius = 17, FlipperLength = 100;
+    public const int SessionCost = 30, CoinReward = 10, MaxCoinRewards = 6;
     protected override string RecordKey => "BunkerAnomalyPinballBest";
     protected override string Title => "";
-    protected override Color ScreenBackdrop => new Color(.025f, .035f, .04f, .9f);
-    private readonly Vector2[] bumpers = { new(194, 350), new(474, 350), new(340, 260), new(160, 180), new(525, 175) };
-    private readonly Vector2[] zones = { new(235, 260), new(490, 245) };
-    private readonly Vector2[] portals = { new(85, 332), new(590, 260) };
-    private readonly Vector2[] portalOut = { new(.8f, -.6f), new(-.8f, .6f) };
-    private readonly Vector2[] coinSpots = { new(338, 350), new(135, 286), new(576, 350), new(340, 167), new(280, 205), new(415, 200) };
-    private readonly float[] cooldown = new float[5];
-    private readonly Image[] bumperArt = new Image[5];
-    private readonly Image[] zoneArt = new Image[2];
-    private readonly RectTransform[,] zoneMotes = new RectTransform[2, 8];
-    private readonly Image[] portalArt = new Image[2], ballIcons = new Image[3];
-    private readonly RectTransform[] trail = new RectTransform[6];
-    private readonly Vector2[] trailPoints = new Vector2[6];
-    private RectTransform board, ballArt, leftArt, rightArt, coinArt, coinTimer, spring;
-    private TMP_Text scoreText, priceText, launchText, rewardText;
-    private Button launch;
-    private Vector2 ball, velocity, coinPosition, rewardPosition;
-    private float accumulator, elapsed, comboTime, charge, stuckTime, leftAngle, rightAngle, coinTime, nextCoin, portalCooldown, portalFlash, rewardFlash;
-    private int lives, hits;
-    private bool waiting, charging, mouseLeft, mouseRight, paid, coinActive;
+    protected override Color ScreenBackdrop => new Color(.025f, .035f, .04f, .78f);
+
+    // Both balls use exactly the same contact solver and table geometry.
+    private sealed class BallState
+    {
+        public Vector2 Position, Velocity, Anchor;
+        public float PortalCooldown, RouteCooldown, ZoneTime, CellTime;
+        public void Place(Vector2 position, Vector2 velocity)
+        {
+            Position = Anchor = position; Velocity = velocity;
+            PortalCooldown = RouteCooldown = ZoneTime = CellTime = 0;
+        }
+        public void CopyFrom(BallState other)
+        {
+            Position = other.Position; Velocity = other.Velocity; Anchor = other.Anchor;
+            PortalCooldown = other.PortalCooldown; RouteCooldown = other.RouteCooldown;
+            ZoneTime = other.ZoneTime; CellTime = other.CellTime;
+        }
+    }
+    private readonly BallState primary = new(), secondary = new();
+    private readonly float[] cooldown = new float[3], slingFlash = new float[2], routeFlash = new float[2], zonePulse = new float[2];
+    private readonly bool[] targetDown = new bool[3];
+    private Vector2 coinPosition, rewardPosition;
+    private float accumulator, elapsed, comboTime, charge, leftAngle, rightAngle, coinTime, nextCoin;
+    private float portalFlash, rewardFlash, spinnerFlash, hitSoundCooldown, multiballTime, bankResetTime;
+    private int lives, hits, coinsCollected, lastCoinSpot = -1;
+    private bool waiting, charging, mouseLeft, mouseRight, paid, bonusActive;
     private AudioSource sounds;
     private AudioClip rewardClip, clickClip;
-    public Vector2 BallPosition => ball;
-    public Vector2 BallVelocity => velocity;
+
+    public Vector2 BallPosition => primary.Position;
+    public Vector2 BallVelocity => primary.Velocity;
     public int BallsRemaining => lives;
     public bool WaitingForLaunch => waiting;
-    private int Level => Mathf.Min(6, 1 + Score / 1500 + (int)(elapsed / 45));
-    private int Multiplier => Mathf.Min(5, 1 + hits / 2);
-
-    protected override void BuildChrome()
-    {
-        Box(Content, new Vector2(0, -1), new Vector2(1040, 652), new Color32(96, 74, 49, 255));
-        Box(Content, new Vector2(0, -1), new Vector2(1028, 640), new Color32(39, 43, 39, 255));
-        Status = Label(Content, "", new Vector2(-420, 344), new Vector2(260, 36), 22, Gold);
-        priceText = Label(Content, L("Партия 30", "Play 30"), new Vector2(-150, 344), new Vector2(190, 36), 20, Gold);
-        scoreText = Label(Content, "", new Vector2(100, 344), new Vector2(280, 36), 24, Color.white);
-        for (int i = 0; i < ballIcons.Length; i++)
-            ballIcons[i] = Box(Content, new Vector2(290 + i * 24, 344), Vector2.one * 15, Color.white, true);
-        Button(Content, L("Выйти", "Exit"), new Vector2(471, 344), new Vector2(100, 34), Close);
-    }
-
-    protected override void BuildGame()
-    {
-        board = Rect(Content, "Pinball field", new Vector2(0, -1), new Vector2(720, 448));
-        board.localScale = Vector3.one * 1.4f;
-        Box(board, Vector2.zero, new Vector2(720, 448), new Color32(25, 38, 38, 255));
-        // Faint screws and grooves belong to the table, rather than an instruction panel.
-        foreach (float x in new[] { 20f, 652f }) foreach (float y in new[] { 146f, 400f })
-            Box(board, Local(new Vector2(x, y)), Vector2.one * 4, new Color32(102, 109, 95, 255));
-        // All geometry uses the same board coordinates for drawing and collision.
-        WallArt(new(8, 0), new(8, 410)); WallArt(new(712, 0), new(712, 410));
-        WallArt(new(8, 410), new(44, 440)); WallArt(new(44, 440), new(676, 440));
-        WallArt(new(676, 440), new(712, 410));
-        WallArt(new(672, 0), new(672, 324));
-        WallArt(new(8, 130), new(220, 68)); WallArt(new(672, 130), new(444, 68));
-        Box(board, Local(new(332, 7)), new Vector2(180, 3), new Color32(146, 74, 60, 255));
-        for (int i = 0; i < 2; i++)
-        {
-            Color color = i == 0 ? Purple : Mint;
-            zoneArt[i] = Box(board, Local(zones[i]), Vector2.one * ZoneRadius * 2, color * new Color(1, 1, 1, .1f), true);
-            Box(board, Local(zones[i]), Vector2.one * 14, color, true);
-            Box(board, Local(zones[i]), Vector2.one * 7, Ink, true);
-            for (int j = 0; j < 8; j++)
-            {
-                var mote = Rect(board, "Field flow", Vector2.zero, Vector2.one);
-                // V-shaped particles travel in the direction of the actual radial force.
-                var a = Box(mote, new Vector2(-2, 2), new Vector2(6, 2), color).rectTransform;
-                var b = Box(mote, new Vector2(-2, -2), new Vector2(6, 2), color).rectTransform;
-                a.localEulerAngles = new Vector3(0, 0, -45); b.localEulerAngles = new Vector3(0, 0, 45);
-                zoneMotes[i, j] = mote;
-            }
-        }
-        for (int i = 0; i < bumpers.Length; i++)
-        {
-            Box(board, Local(bumpers[i]), Vector2.one * 48, Ink, true);
-            bumperArt[i] = Box(board, Local(bumpers[i]), Vector2.one * 42, Gold, true);
-            Box(board, Local(bumpers[i]), Vector2.one * 14, Ink, true);
-        }
-        for (int i = 0; i < portals.Length; i++)
-        {
-            portalArt[i] = Box(board, Local(portals[i]), Vector2.one * PortalRadius * 2, new Color32(93, 178, 237, 255), true);
-            Box(board, Local(portals[i]), Vector2.one * (PortalRadius * 2 - 6), Ink, true);
-            for (int j = 0; j < 3; j++)
-                Box(board, Local(portals[i]) + new Vector2(-5 + j * 5, 0), Vector2.one * 2, new Color32(93, 178, 237, 255));
-        }
-        coinArt = Rect(board, "Gold coin", Vector2.zero, Vector2.one * 26);
-        Box(coinArt, Vector2.zero, Vector2.one * 26, Gold, true);
-        Box(coinArt, Vector2.zero, Vector2.one * 20, new Color32(191, 123, 45, 255), true);
-        Box(coinArt, new Vector2(-3, 3), new Vector2(3, 10), new Color32(255, 238, 166, 255));
-        coinTimer = Box(coinArt, new Vector2(0, -18), new Vector2(24, 2), Gold).rectTransform;
-        leftArt = Box(board, Vector2.zero, new Vector2(FlipperLength, 10), Mint).rectTransform;
-        rightArt = Box(board, Vector2.zero, new Vector2(FlipperLength, 10), Mint).rectTransform;
-        spring = Box(board, Local(new(692, 17)), new Vector2(25, 7), Gold).rectTransform;
-        for (int i = trail.Length - 1; i >= 0; i--)
-            trail[i] = Box(board, Vector2.zero, Vector2.one * (Radius * 2 - i), new Color(1, 1, 1, .19f - i * .025f), true).rectTransform;
-        ballArt = Box(board, Vector2.zero, Vector2.one * Radius * 2, Color.white, true).rectTransform;
-        rewardText = Label(board, "+10", Vector2.zero, new Vector2(75, 28), 21, Gold);
-        launch = Button(Content, "", new Vector2(0, -348), new Vector2(360, 42), () => Launch(.65f), false);
-        launchText = launch.GetComponentInChildren<TMP_Text>();
-        var left = Button(Content, "A", new Vector2(-425, -348), new Vector2(206, 38), () => { }, false);
-        var right = Button(Content, "D", new Vector2(425, -348), new Vector2(206, 38), () => { }, false);
-        Hold(left, v => mouseLeft = v); Hold(right, v => mouseRight = v);
-        sounds = Content.gameObject.AddComponent<AudioSource>();
-        sounds.playOnAwake = false; sounds.spatialBlend = 0; sounds.ignoreListenerPause = true;
-        AudioService.Instance?.RouteExternalSource(sounds, AudioCategory.UI);
-        if (rewardClip == null) rewardClip = MakeSound(true);
-        if (clickClip == null) clickClip = MakeSound(false);
-    }
-
-    private void Hold(Button button, System.Action<bool> set)
-    {
-        var trigger = button.gameObject.AddComponent<EventTrigger>();
-        foreach (var type in new[] { EventTriggerType.PointerDown, EventTriggerType.PointerUp, EventTriggerType.PointerExit })
-        {
-            var entry = new EventTrigger.Entry { eventID = type };
-            bool pressed = type == EventTriggerType.PointerDown;
-            entry.callback.AddListener(_ => set(pressed));
-            trigger.triggers.Add(entry);
-        }
-    }
+    public int ActiveBallCount => !IsRunning || !paid || waiting ? 0 : bonusActive ? 2 : 1;
+    public float MultiballRemaining => bonusActive ? multiballTime : 0;
+    private int Level => Mathf.Min(4, 1 + Score / 6000 + (int)(elapsed / 90));
+    private int Multiplier => Mathf.Min(5, 1 + hits / 3);
+    private float SpeedLimit => 720 + Level * 12;
+    private float SpinnerAngle => elapsed * 85;
 
     protected override void BeginRound()
     {
-        lives = 3; hits = 0;
-        accumulator = elapsed = comboTime = charge = stuckTime = coinTime = nextCoin = portalCooldown = portalFlash = rewardFlash = 0;
-        mouseLeft = mouseRight = paid = coinActive = false;
-        leftAngle = rightAngle = -18;
+        lives = 3; hits = coinsCollected = 0; lastCoinSpot = -1;
+        accumulator = elapsed = comboTime = charge = coinTime = nextCoin = portalFlash = rewardFlash = spinnerFlash = hitSoundCooldown = multiballTime = bankResetTime = 0;
+        mouseLeft = mouseRight = paid = coinActive = bonusActive = false;
+        leftAngle = rightAngle = -20;
         System.Array.Clear(cooldown, 0, cooldown.Length);
+        System.Array.Clear(targetDown, 0, targetDown.Length);
+        System.Array.Clear(slingFlash, 0, slingFlash.Length);
+        System.Array.Clear(routeFlash, 0, routeFlash.Length);
+        System.Array.Clear(zonePulse, 0, zonePulse.Length);
         PrepareBall();
         Draw();
     }
 
     private void PrepareBall()
     {
-        ball = new Vector2(692, 35); velocity = Vector2.zero;
-        waiting = true; charging = false; charge = 0; hits = 0; comboTime = 0; stuckTime = 0;
-        portalCooldown = 0;
+        primary.Place(new Vector2(532, 35), Vector2.zero);
+        waiting = true; charging = false; charge = 0; hits = 0; comboTime = 0;
         ResetTrail();
     }
 
@@ -164,7 +86,7 @@ public sealed class AnomalyPinball : ArcadeMinigame
             SpawnCoin();
         }
         waiting = charging = false;
-        velocity = new Vector2(-16, Mathf.Lerp(425, 525, Mathf.Clamp01(power)));
+        primary.Velocity = new Vector2(-26, Mathf.Lerp(610, 710, Mathf.Clamp01(power)));
         charge = 0;
         Play(clickClip, .3f);
         RefreshStatus();
@@ -189,26 +111,190 @@ public sealed class AnomalyPinball : ArcadeMinigame
         Draw();
     }
 
-    protected override void ShowRoundResult(bool won, string details, bool record)
-    {
-        coinActive = false;
-        coinArt.gameObject.SetActive(false);
-        Draw();
-    }
-
-    // Small fixed substeps avoid tunnelling and make the simulation independent of
-    // frame rate and the suspended bunker's Physics2D settings.
+    // Bound every integration step, including callers outside Update.
     public void Simulate(float dt, bool left, bool right)
     {
-        if (!IsRunning) return;
+        if (!IsRunning || dt <= 0 || float.IsNaN(dt) || float.IsInfinity(dt)) return;
+        dt = Mathf.Min(dt, .1f);
+        while (dt > .000001f && IsRunning)
+        {
+            float part = Mathf.Min(Step, dt);
+            AdvanceStep(part, left, right);
+            dt -= part;
+        }
+    }
+
+    private void AdvanceStep(float dt, bool left, bool right)
+    {
         float oldLeft = leftAngle, oldRight = rightAngle;
-        leftAngle = Mathf.MoveTowards(leftAngle, left ? 28 : -18, 650 * dt);
-        rightAngle = Mathf.MoveTowards(rightAngle, right ? 28 : -18, 650 * dt);
+        leftAngle = Mathf.MoveTowards(leftAngle, left ? 38 : -20, 760 * dt);
+        rightAngle = Mathf.MoveTowards(rightAngle, right ? 38 : -20, 760 * dt);
         if (!paid) return;
         elapsed += dt;
-        portalCooldown = Mathf.Max(0, portalCooldown - dt);
+        comboTime -= dt; if (comboTime <= 0) hits = 0;
         portalFlash = Mathf.Max(0, portalFlash - dt);
         rewardFlash = Mathf.Max(0, rewardFlash - dt);
+        spinnerFlash = Mathf.Max(0, spinnerFlash - dt);
+        hitSoundCooldown = Mathf.Max(0, hitSoundCooldown - dt);
+        for (int i = 0; i < cooldown.Length; i++) cooldown[i] = Mathf.Max(0, cooldown[i] - dt);
+        for (int i = 0; i < 2; i++)
+        {
+            slingFlash[i] = Mathf.Max(0, slingFlash[i] - dt);
+            routeFlash[i] = Mathf.Max(0, routeFlash[i] - dt);
+            zonePulse[i] = Mathf.Max(0, zonePulse[i] - dt);
+        }
+        if (bonusActive)
+        {
+            multiballTime -= dt;
+            if (multiballTime <= 0) EndMultiball();
+        }
+        if (bankResetTime > 0)
+        {
+            bankResetTime -= dt;
+            if (bankResetTime <= 0) System.Array.Clear(targetDown, 0, targetDown.Length);
+        }
+        TickCoin(dt);
+        if (waiting) return;
+
+        bool mainSurvived = AdvanceBall(primary, dt, oldLeft, oldRight, left, right);
+        if (bonusActive && !AdvanceBall(secondary, dt, oldLeft, oldRight, left, right)) EndMultiball();
+        if (!mainSurvived)
+        {
+            if (bonusActive)
+            {
+                // The remaining bonus ball becomes the normal ball; no life is lost.
+                primary.CopyFrom(secondary); EndMultiball(); ResetTrail();
+            }
+            else
+            {
+                lives--;
+                if (lives == 0) Finish(Score >= Target, "");
+                else PrepareBall();
+            }
+        }
+        else if (bonusActive)
+        {
+            SeparateBalls();
+            primary.Velocity = Vector2.ClampMagnitude(primary.Velocity, SpeedLimit);
+            secondary.Velocity = Vector2.ClampMagnitude(secondary.Velocity, SpeedLimit);
+        }
+    }
+
+    private bool AdvanceBall(BallState ball, float dt, float oldLeft, float oldRight, bool left, bool right)
+    {
+        ball.PortalCooldown = Mathf.Max(0, ball.PortalCooldown - dt);
+        ball.RouteCooldown = Mathf.Max(0, ball.RouteCooldown - dt);
+        ball.Velocity += Vector2.down * (225 + Level * 9) * dt;
+        ApplyAnomalies(ball, dt);
+        ball.Velocity = Vector2.ClampMagnitude(ball.Velocity, SpeedLimit);
+        ball.Position += ball.Velocity * dt;
+        foreach (var path in rails)
+            for (int i = 1; i < path.Length; i++) HitSegment(ball, path[i - 1], path[i], 3, Vector2.zero, out _);
+        Flipper(ball, true, leftAngle, oldLeft, dt);
+        Flipper(ball, false, rightAngle, oldRight, dt);
+
+        for (int i = 0; i < bumpers.Length; i++)
+        {
+            Vector2 delta = ball.Position - bumpers[i];
+            if (delta.sqrMagnitude >= 26 * 26) continue;
+            Vector2 normal = delta.sqrMagnitude > .001f ? delta.normalized : Vector2.up;
+            ball.Position = bumpers[i] + normal * 26;
+            float approach = Vector2.Dot(ball.Velocity, normal);
+            if (approach < 0) ball.Velocity -= normal * (1.94f * approach);
+            if (cooldown[i] > 0) continue;
+            ball.Velocity += normal * 165;
+            cooldown[i] = .12f; ScoreHit(100); HitSound(.15f);
+        }
+        for (int i = 0; i < slings.Length; i++)
+        {
+            var triangle = slings[i];
+            for (int edge = 0; edge < 3; edge++)
+            {
+                if (!HitSegment(ball, triangle[edge], triangle[(edge + 1) % 3], 4, Vector2.zero, out var normal) || slingFlash[i] > 0) continue;
+                ball.Velocity += normal * 175 + Vector2.up * 65;
+                slingFlash[i] = .16f; ScoreHit(50); HitSound(.16f);
+            }
+        }
+        foreach (var post in posts)
+        {
+            Vector2 delta = ball.Position - post;
+            if (delta.sqrMagnitude >= 15 * 15) continue;
+            Vector2 normal = delta.sqrMagnitude > .001f ? delta.normalized : Vector2.up;
+            ball.Position = post + normal * 15;
+            float approach = Vector2.Dot(ball.Velocity, normal);
+            if (approach < 0) ball.Velocity -= normal * 1.94f * approach;
+        }
+
+        var rotor = new Vector2(Mathf.Cos(SpinnerAngle * Mathf.Deg2Rad), Mathf.Sin(SpinnerAngle * Mathf.Deg2Rad));
+        var nearest = spinnerCenter + rotor * Mathf.Clamp(Vector2.Dot(ball.Position - spinnerCenter, rotor), -34, 34);
+        var arm = nearest - spinnerCenter;
+        Vector2 surface = new Vector2(-arm.y, arm.x) * (85 * Mathf.Deg2Rad);
+        if (HitSegment(ball, spinnerCenter - rotor * 34, spinnerCenter + rotor * 34, 4, surface, out _) && spinnerFlash <= 0)
+        { spinnerFlash = .14f; ScoreHit(75); HitSound(.13f); }
+
+        for (int i = 0; i < targets.Length; i++)
+        {
+            if (targetDown[i] || !HitSegment(ball, targets[i] - Vector2.right * 12, targets[i] + Vector2.right * 12, 5, Vector2.zero, out _)) continue;
+            targetDown[i] = true; ScoreHit(250); HitSound(.2f);
+            if (targetDown[0] && targetDown[1] && targetDown[2])
+            {
+                Score += 1000;
+                secondary.Place(new Vector2(260, 552), new Vector2(135, -270));
+                secondary.PortalCooldown = .7f;
+                bonusActive = true; multiballTime = 15; bankResetTime = 0;
+                ResetTrail();
+                Play(rewardClip, .28f);
+            }
+        }
+        TryRoute(ball);
+        TryPortal(ball);
+        if (coinActive && (ball.Position - coinPosition).sqrMagnitude <= 18 * 18) CollectCoin();
+
+        ball.Velocity = Vector2.ClampMagnitude(ball.Velocity, SpeedLimit);
+        if ((ball.Position - ball.Anchor).sqrMagnitude > 24 * 24)
+        { ball.Anchor = ball.Position; ball.CellTime = 0; }
+        else ball.CellTime += dt;
+        // Release rare contact loops, but permit deliberate cradling on a held flipper.
+        if (ball.CellTime > 2.5f && !(ball.Position.y < 135 && (left || right)))
+        {
+            ball.Velocity = new Vector2(ball.Position.x < 260 ? 130 : -130, 280);
+            ball.CellTime = 0; ball.Anchor = ball.Position;
+        }
+        if (ball.Position.x > 516 && ball.Position.y < 22)
+        {
+            if (ball == primary && !bonusActive) { PrepareBall(); return true; }
+            return false;
+        }
+        return ball.Position.y >= -12;
+    }
+
+    private void ApplyAnomalies(BallState ball, float dt)
+    {
+        bool insidePull = false;
+        for (int i = 0; i < zones.Length; i++)
+        {
+            Vector2 delta = zones[i] - ball.Position;
+            float distance = delta.magnitude;
+            if (distance >= ZoneRadius) continue;
+            zonePulse[i] = .2f;
+            if (i == 0) insidePull = true;
+            if (distance > .01f)
+                ball.Velocity += delta / distance * ((i == 0 ? 1 : -1) * Mathf.Min(1300, 1220 + Level * 20) * (1 - distance / ZoneRadius)) * dt;
+        }
+        ball.ZoneTime = insidePull ? ball.ZoneTime + dt : 0;
+        // A long orbit is expelled rather than capturing a ball forever.
+        if (ball.ZoneTime > 1.4f)
+        {
+            Vector2 outward = ball.Position - zones[0];
+            if (outward.sqrMagnitude < .01f) outward = Vector2.up;
+            ball.Velocity += outward.normalized * 280 + Vector2.up * 120;
+            ball.ZoneTime = 0;
+        }
+    }
+
+    private void TickCoin(float dt)
+    {
+        if (coinsCollected >= MaxCoinRewards) { coinActive = false; return; }
         if (coinActive)
         {
             coinTime -= dt;
@@ -219,182 +305,129 @@ public sealed class AnomalyPinball : ArcadeMinigame
             nextCoin -= dt;
             if (nextCoin <= 0) SpawnCoin();
         }
-        if (waiting) return;
-        comboTime -= dt;
-        if (comboTime <= 0) hits = 0;
-        for (int i = 0; i < cooldown.Length; i++) cooldown[i] = Mathf.Max(0, cooldown[i] - dt);
-        velocity += Vector2.down * (205 + Level * 16) * dt;
-        for (int i = 0; i < zones.Length; i++)
-        {
-            Vector2 delta = zones[i] - ball;
-            float distance = delta.magnitude;
-            if (distance < ZoneRadius && distance > .01f)
-                velocity += delta / distance * ((i == 0 ? 1 : -1) * (1150 + Level * 55) * (1 - distance / ZoneRadius)) * dt;
-        }
-        velocity = Vector2.ClampMagnitude(velocity, 500 + Level * 28);
-        ball += velocity * dt;
-        Bounce(new(8, 0), new(8, 410)); Bounce(new(712, 0), new(712, 410));
-        Bounce(new(8, 410), new(44, 440)); Bounce(new(44, 440), new(676, 440));
-        Bounce(new(676, 440), new(712, 410)); Bounce(new(672, 0), new(672, 324));
-        Bounce(new(8, 130), new(220, 68)); Bounce(new(672, 130), new(444, 68));
-        Flipper(true, leftAngle, oldLeft, dt); Flipper(false, rightAngle, oldRight, dt);
-        for (int i = 0; i < bumpers.Length; i++)
-        {
-            Vector2 delta = ball - bumpers[i];
-            if (delta.sqrMagnitude >= 26 * 26) continue;
-            Vector2 normal = delta.sqrMagnitude > .001f ? delta.normalized : Vector2.up;
-            ball = bumpers[i] + normal * 26;
-            float approach = Vector2.Dot(velocity, normal);
-            if (approach < 0) velocity -= normal * (1.9f * approach);
-            if (cooldown[i] > 0) continue;
-            velocity += normal * (100 + Level * 12);
-            cooldown[i] = .16f;
-            hits++; comboTime = 2;
-            Score += 100 * Multiplier;
-        }
-        TryPortal();
-        if (coinActive && (ball - coinPosition).sqrMagnitude <= 18 * 18)
-        {
-            // Consume the target before wallet observers run: one hit can only pay once.
-            var wallet = CurrencyManager.Instance;
-            if (wallet != null && wallet.TryChangeGoldExact(CoinReward, () =>
-                { coinActive = false; nextCoin = 5; rewardPosition = coinPosition; rewardFlash = .8f; }))
-            {
-                Score += 250;
-                Play(rewardClip, .35f);
-            }
-        }
-        if (velocity.sqrMagnitude < 100) stuckTime += dt; else stuckTime = 0;
-        if (stuckTime > 2.5f) { velocity += new Vector2(45, 125); stuckTime = 0; }
-        // Weak launches falling back into the separated plunger lane can be retried.
-        if (ball.x > 677 && ball.y < 22) { PrepareBall(); return; }
-        if (ball.y < -12)
-        {
-            lives--;
-            if (lives == 0) Finish(Score >= Target, "");
-            else PrepareBall();
-        }
     }
-
     private void SpawnCoin()
     {
-        // Authored clear spots keep coins away from solids, portals and the plunger lane.
-        coinPosition = coinSpots[Random.Range(0, coinSpots.Length)];
+        if (coinsCollected >= MaxCoinRewards) { coinActive = false; return; }
+        int spot = Random.Range(0, coinSpots.Length);
+        if (spot == lastCoinSpot) spot = (spot + 1) % coinSpots.Length;
+        lastCoinSpot = spot; coinPosition = coinSpots[spot];
         coinTime = 10; coinActive = true;
     }
-
-    private void TryPortal()
+    private void CollectCoin()
     {
-        if (portalCooldown > 0) return;
+        var wallet = CurrencyManager.Instance;
+        if (!coinActive || coinsCollected >= MaxCoinRewards || wallet == null) return;
+        if (!wallet.TryChangeGoldExact(CoinReward, () =>
+            { coinActive = false; coinsCollected++; nextCoin = 5; rewardPosition = coinPosition; rewardFlash = .8f; })) return;
+        Score += 250; Play(rewardClip, .35f);
+    }
+    private void TryRoute(BallState ball)
+    {
+        if (ball.RouteCooldown > 0 || ball.Velocity.y <= 0 || ball.Position.y < 185 || ball.Position.y > 245) return;
+        int route = ball.Position.x is > 22 and < 70 ? 0 : ball.Position.x is > 456 and < 494 ? 1 : -1;
+        if (route < 0) return;
+        ball.Velocity = new Vector2(route == 0 ? 20 : -20, Mathf.Max(580, ball.Velocity.y));
+        ball.RouteCooldown = 1; routeFlash[route] = .7f;
+        ScoreHit(200); HitSound(.18f);
+    }
+    private void TryPortal(BallState ball)
+    {
+        if (ball.PortalCooldown > 0) return;
         for (int i = 0; i < portals.Length; i++)
         {
-            if ((ball - portals[i]).sqrMagnitude > (PortalRadius + Radius) * (PortalRadius + Radius)) continue;
+            if ((ball.Position - portals[i]).sqrMagnitude > (PortalRadius + Radius) * (PortalRadius + Radius)) continue;
             int exit = 1 - i;
-            float speed = Mathf.Clamp(velocity.magnitude, 250, 500 + Level * 28);
-            ball = portals[exit] + portalOut[exit] * (PortalRadius + Radius + 7);
-            velocity = portalOut[exit] * speed;
-            portalCooldown = .5f; portalFlash = .4f;
-            ResetTrail();
-            Play(clickClip, .2f);
+            float speed = Mathf.Clamp(ball.Velocity.magnitude, 340, SpeedLimit);
+            ball.Position = portals[exit] + portalOut[exit] * (PortalRadius + Radius + 7);
+            ball.Velocity = portalOut[exit] * speed;
+            ball.PortalCooldown = .55f; ball.ZoneTime = ball.CellTime = 0; ball.Anchor = ball.Position; portalFlash = .4f;
+            ResetTrail(); HitSound(.18f);
             return;
         }
     }
+    private void EndMultiball()
+    {
+        bonusActive = false; multiballTime = 0; bankResetTime = 3;
+    }
+    private void SeparateBalls()
+    {
+        Vector2 delta = primary.Position - secondary.Position;
+        if (delta.sqrMagnitude >= Radius * Radius * 4) return;
+        float distance = delta.magnitude;
+        Vector2 normal = distance > .001f ? delta / distance : Vector2.right;
+        Vector2 separation = normal * ((Radius * 2 - distance) * .5f);
+        primary.Position += separation; secondary.Position -= separation;
+        float approach = Vector2.Dot(primary.Velocity - secondary.Velocity, normal);
+        if (approach >= 0) return;
+        primary.Velocity -= normal * approach; secondary.Velocity += normal * approach;
+    }
+    private void ScoreHit(int points) { hits++; comboTime = 2; Score += points * Multiplier; }
 
-    private void Bounce(Vector2 a, Vector2 b, float thickness = 3)
+    private bool HitSegment(BallState ball, Vector2 a, Vector2 b, float thickness, Vector2 surface, out Vector2 normal)
     {
         Vector2 edge = b - a;
-        Vector2 nearest = a + edge * Mathf.Clamp01(Vector2.Dot(ball - a, edge) / edge.sqrMagnitude);
-        Vector2 delta = ball - nearest;
+        Vector2 nearest = a + edge * Mathf.Clamp01(Vector2.Dot(ball.Position - a, edge) / edge.sqrMagnitude);
+        Vector2 delta = ball.Position - nearest;
         float distance = delta.magnitude;
-        if (distance >= Radius + thickness) return;
-        Vector2 normal = distance > .001f ? delta / distance : new Vector2(-edge.y, edge.x).normalized;
-        ball = nearest + normal * (Radius + thickness);
-        float speed = Vector2.Dot(velocity, normal);
-        if (speed < 0) velocity -= normal * (1.85f * speed);
+        normal = distance > .001f ? delta / distance : new Vector2(-edge.y, edge.x).normalized;
+        if (distance >= Radius + thickness) return false;
+        if (distance <= .001f && Vector2.Dot(ball.Velocity - surface, normal) > 0) normal = -normal;
+        ball.Position = nearest + normal * (Radius + thickness);
+        float approach = Vector2.Dot(ball.Velocity - surface, normal);
+        if (approach >= 0) return false;
+        ball.Velocity -= normal * (1.94f * approach);
+        return true;
     }
-
     private Vector2 Tip(bool left, float angle)
     {
         float radians = angle * Mathf.Deg2Rad;
-        return new Vector2(left ? 220 : 444, 68) + new Vector2((left ? 1 : -1) * Mathf.Cos(radians), Mathf.Sin(radians)) * FlipperLength;
+        return new Vector2(left ? 165 : 355, 60) + new Vector2((left ? 1 : -1) * Mathf.Cos(radians), Mathf.Sin(radians)) * FlipperLength;
     }
-
-    private void Flipper(bool left, float angle, float oldAngle, float dt)
+    private void Flipper(BallState ball, bool left, float angle, float oldAngle, float dt)
     {
-        Vector2 pivot = new(left ? 220 : 444, 68), tip = Tip(left, angle), edge = tip - pivot;
-        float t = Mathf.Clamp01(Vector2.Dot(ball - pivot, edge) / edge.sqrMagnitude);
-        Vector2 nearest = pivot + edge * t, delta = ball - nearest;
+        Vector2 pivot = new(left ? 165 : 355, 60), tip = Tip(left, angle), edge = tip - pivot;
+        float t = Mathf.Clamp01(Vector2.Dot(ball.Position - pivot, edge) / edge.sqrMagnitude);
+        Vector2 nearest = pivot + edge * t;
+        Vector2 delta = ball.Position - nearest;
         if (delta.sqrMagnitude >= 10 * 10) return;
         Vector2 normal = delta.sqrMagnitude > .001f ? delta.normalized : Vector2.up;
         Vector2 surface = (tip - Tip(left, oldAngle)) * (t / dt);
-        ball = nearest + normal * 10;
-        float approach = Vector2.Dot(velocity - surface, normal);
-        if (approach < 0) velocity -= normal * (1.8f * approach);
+        ball.Position = nearest + normal * 10;
+        float approach = Vector2.Dot(ball.Velocity - surface, normal);
+        if (approach >= 0) return;
+        ball.Velocity -= normal * 1.94f * approach;
+        if (angle > oldAngle + .01f && normal.y > .15f && t > .08f)
+        {
+            // Early contact sends a cross-table shot; a late contact aims toward the side return.
+            float radians = angle * Mathf.Deg2Rad;
+            Vector2 aim = new((left ? -1 : 1) * Mathf.Sin(radians), Mathf.Cos(radians));
+            aim.x += (left ? 1 : -1) * (t - .5f) * .16f;
+            ball.Velocity = aim.normalized * Mathf.Max(ball.Velocity.magnitude, Mathf.Lerp(530, 710, t));
+            HitSound(.2f);
+        }
     }
 
-    private static Vector2 Local(Vector2 point) => point - new Vector2(360, 224);
-    private void WallArt(Vector2 a, Vector2 b) => Segment(Box(board, Vector2.zero, Vector2.one, Mint).rectTransform, a, b, 5);
-    private void Segment(RectTransform graphic, Vector2 a, Vector2 b, float width)
+    protected override void ShowRoundResult(bool won, string details, bool record)
     {
-        graphic.anchoredPosition = Local((a + b) * .5f);
-        graphic.sizeDelta = new Vector2(Vector2.Distance(a, b), width);
-        graphic.localEulerAngles = new Vector3(0, 0, Mathf.Atan2(b.y - a.y, b.x - a.x) * Mathf.Rad2Deg);
+        coinActive = bonusActive = false; rewardFlash = 0; multiballTime = 0;
+        Draw();
     }
-    private void Draw()
+    private void Hold(Button button, System.Action<bool> set)
     {
-        ballArt.anchoredPosition = Local(new Vector2(Mathf.Round(ball.x), Mathf.Round(ball.y)));
-        ballArt.gameObject.SetActive(IsRunning);
-        Segment(leftArt, new(220, 68), Tip(true, leftAngle), 10);
-        Segment(rightArt, new(444, 68), Tip(false, rightAngle), 10);
-        for (int i = trail.Length - 1; i >= 0; i--)
+        var trigger = button.gameObject.AddComponent<EventTrigger>();
+        foreach (var type in new[] { EventTriggerType.PointerDown, EventTriggerType.PointerUp, EventTriggerType.PointerExit })
         {
-            trail[i].gameObject.SetActive(paid && !waiting && IsRunning);
-            trail[i].anchoredPosition = Local(trailPoints[i]);
-            trailPoints[i] = i == 0 ? ball : trailPoints[i - 1];
+            var entry = new EventTrigger.Entry { eventID = type };
+            bool pressed = type == EventTriggerType.PointerDown;
+            entry.callback.AddListener(_ => set(pressed)); trigger.triggers.Add(entry);
         }
-        for (int i = 0; i < bumperArt.Length; i++) bumperArt[i].color = cooldown[i] > .08f ? Color.white : Gold;
-        for (int i = 0; i < zoneArt.Length; i++)
-        {
-            zoneArt[i].rectTransform.localScale = Vector3.one * (1 + .04f * Mathf.Sin(elapsed * 3 + i));
-            for (int j = 0; j < 8; j++)
-            {
-                float angle = (j * 45 + elapsed * (i == 0 ? 10 : -10)) * Mathf.Deg2Rad;
-                float phase = Mathf.Repeat(elapsed * .7f + j * .13f, 1);
-                float radius = Mathf.Lerp(12, ZoneRadius - 3, i == 0 ? 1 - phase : phase);
-                zoneMotes[i, j].anchoredPosition = Local(zones[i]) + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
-                zoneMotes[i, j].localEulerAngles = new Vector3(0, 0, angle * Mathf.Rad2Deg + (i == 0 ? 180 : 0));
-            }
-        }
-        for (int i = 0; i < portalArt.Length; i++)
-        {
-            portalArt[i].color = portalFlash > 0 ? Color.white : new Color32(93, 178, 237, 255);
-            portalArt[i].rectTransform.localScale = Vector3.one * (1 + .06f * Mathf.Sin(elapsed * 5));
-        }
-        coinArt.gameObject.SetActive(coinActive);
-        coinArt.anchoredPosition = Local(coinPosition);
-        coinArt.localScale = Vector3.one * (1 + .08f * Mathf.Sin(elapsed * 7));
-        coinTimer.sizeDelta = new Vector2(24 * Mathf.Clamp01(coinTime / 10), 2);
-        spring.anchoredPosition = Local(new Vector2(692, 17 - charge * 8));
-        rewardText.gameObject.SetActive(rewardFlash > 0);
-        rewardText.rectTransform.anchoredPosition = Local(rewardPosition) + Vector2.up * (20 + (1 - rewardFlash / .8f) * 24);
-        rewardText.color = new Color(1, .82f, .4f, Mathf.Clamp01(rewardFlash * 3));
     }
-    protected override void RefreshStatus()
+    private void HitSound(float volume)
     {
-        var wallet = CurrencyManager.Instance;
-        int balance = wallet != null ? wallet.TotalGold : 0;
-        Status.text = L($"Золото {balance:N0}", $"Gold {balance:N0}");
-        Status.color = rewardFlash > 0 ? Color.white : Gold;
-        priceText.color = paid && IsRunning || balance >= SessionCost ? Gold : new Color32(222, 132, 112, 255);
-        scoreText.text = L($"Очки {Score:N0}", $"Score {Score:N0}");
-        for (int i = 0; i < ballIcons.Length; i++) ballIcons[i].color = i < lives ? Color.white : new Color32(60, 72, 73, 255);
-        launch.gameObject.SetActive(waiting || !IsRunning);
-        launch.interactable = (paid && IsRunning || balance >= SessionCost) && (waiting || !IsRunning);
-        launchText.text = !IsRunning ? L("Ещё партия · 30", "Play again · 30") : paid
-            ? L("Пуск · Пробел", "Launch · Space") : L("Старт · 30 · Пробел", "Start · 30 · Space");
+        if (hitSoundCooldown > 0) return;
+        Play(clickClip, volume); hitSoundCooldown = .035f;
     }
-
-    private void ResetTrail() { for (int i = 0; i < trailPoints.Length; i++) trailPoints[i] = ball; }
     private void Play(AudioClip clip, float volume)
     {
         if (sounds == null || clip == null) return;
