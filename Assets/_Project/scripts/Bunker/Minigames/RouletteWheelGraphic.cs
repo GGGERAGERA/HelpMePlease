@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-// Only the rotating numbered ring. Labels and the ball share these exact angles.
+// The 37 colour pockets and ball use the same angles for drawing and settlement.
 [RequireComponent(typeof(CanvasRenderer))]
 public sealed class RouletteWheelGraphic : MaskableGraphic
 {

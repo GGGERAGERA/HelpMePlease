@@ -7,203 +7,201 @@ public sealed class EuropeanRoulette : ArcadeMinigame
 {
     protected override string RecordKey => null;
     protected override string Title => "";
-    protected override Color ScreenBackdrop => new Color(.025f, .035f, .04f, .88f);
     public RouletteSession Session { get; private set; }
-    public int SelectedChip { get; private set; } = 25;
+    public int SelectedColour { get; private set; } = RouletteSession.Red;
+    public int SelectedAmount { get; private set; } = 25;
     public int DisplayedBallNumber => RouletteWheelGraphic.NumberAt(wheelAngle, ballAngle);
-    private readonly Button[] betButtons = new Button[RouletteSession.BetCount];
-    private readonly Image[] frames = new Image[RouletteSession.BetCount], markers = new Image[RouletteSession.BetCount];
-    private readonly TMP_Text[] markerLabels = new TMP_Text[RouletteSession.BetCount];
-    private readonly Button[] chipButtons = new Button[4];
-    private readonly Image[] chipRims = new Image[4];
-    private readonly Color[] chipColors = { new Color32(204, 71, 75, 255), new Color32(68, 133, 210, 255), new Color32(57, 174, 123, 255), new Color32(33, 40, 51, 255) };
-    private Button spinButton, clearButton, repeatButton;
-    private TMP_Text stakeText, wheelResult, spinText;
+    private readonly Button[] colourButtons = new Button[3];
+    private readonly Image[] colourFrames = new Image[3];
+    private readonly Button[] amountButtons = new Button[5];
+    private Button spinButton;
+    private TMP_Text spinText;
+    private TMP_InputField amountInput;
     private RectTransform rotor, ballGraphic;
     private RouletteWheelGraphic wheel;
+    private CanvasGroup tableFade;
+    private GameObject stationLabel;
+    private bool labelWasActive;
     private System.Random random;
     private AudioSource sounds;
     private AudioClip placeClip, tickClip, winClip;
-    private float wheelAngle, ballAngle, wheelStart, ballStart, wheelEnd, ballEnd, elapsed, speed = 1, nextTick, noticeUntil, resultPulse;
+    private Vector2 cameraStart, tableCenter;
+    private float cameraSize, focusSize, focusTime;
+    private bool focused;
+    private float wheelAngle, ballAngle, wheelStart, ballStart, wheelEnd, ballEnd, elapsed, nextTick, resultPulse;
     private int outcome;
-    private string notice;
 
+    protected override void ConfigureScreen(Canvas canvas, CanvasScaler scaler, Image background)
+    {
+        stationLabel = transform.Find("ArcadeLabel")?.gameObject;
+        labelWasActive = stationLabel != null && stationLabel.activeSelf;
+        if (stationLabel != null) stationLabel.SetActive(false);
+        // The existing modal still owns input/pause. Only this table uses world
+        // presentation; cabinets retain their normal screen-space presentation.
+        var table = transform.Find("graphic/Table")?.GetComponent<SpriteRenderer>();
+        Bounds bounds = table != null ? table.bounds : new Bounds(transform.position + Vector3.up * 2.5f, new Vector3(6, 5));
+        tableCenter = (Vector2)bounds.center + Vector2.up * bounds.size.y * .04f;
+        float scale = bounds.size.x / 960;
+        scaler.enabled = false;
+        canvas.renderMode = RenderMode.WorldSpace;
+        canvas.worldCamera = PresentationCamera.ControlledCamera;
+        canvas.overrideSorting = true;
+        canvas.sortingLayerName = "UI";
+        var root = (RectTransform)canvas.transform;
+        root.sizeDelta = new Vector2(960, 600);
+        root.position = new Vector3(tableCenter.x, tableCenter.y, -1);
+        root.localScale = Vector3.one * scale;
+        Content.sizeDelta = root.sizeDelta;
+        background.color = Color.clear;
+        tableFade = canvas.gameObject.AddComponent<CanvasGroup>(); tableFade.alpha = 0;
+        var cam = canvas.worldCamera;
+        cameraStart = cam.transform.position; cameraSize = cam.orthographicSize;
+        focusSize = Mathf.Max(760 * scale / 2, 1180 * scale / (2 * cam.aspect));
+        focusTime = 0; focused = true;
+        PresentationCamera.BeginWorldBoundsFocus(this, cameraStart, cameraSize);
+    }
     protected override void BuildChrome()
     {
-        Box(Content, new Vector2(-5, 20), new Vector2(1054, 614), new Color32(99, 79, 55, 255));
-        Box(Content, new Vector2(-5, 20), new Vector2(1042, 602), new Color32(29, 33, 32, 255));
-        foreach (float x in new[] { -519f, 509f }) foreach (float y in new[] { -274f, 314f })
-            Box(Content, new Vector2(x, y), Vector2.one * 6, new Color32(164, 143, 109, 255));
-        Status = Label(Content, "", new Vector2(-340, 280), new Vector2(350, 40), 24, Gold);
-        stakeText = Label(Content, "", new Vector2(210, 280), new Vector2(320, 40), 20, Color.white);
-        Button(Content, L("Выйти", "Exit"), new Vector2(457, 280), new Vector2(100, 36), Close);
-        Result = Label(Content, "", new Vector2(-340, -114), new Vector2(340, 48), 20, Gold);
+        // Cover only the old betting cloth, leaving the authored red table,
+        // chairs and surrounding bunker visible around the playable surface.
+        Box(Content, Vector2.zero, new Vector2(920, 450), new Color32(78, 31, 33, 255), true);
+        Box(Content, Vector2.zero, new Vector2(900, 430), new Color32(108, 42, 44, 255), true);
+        Status = Label(Content, "", new Vector2(225, 182), new Vector2(380, 38), 24, Gold);
+        Button(Content, "Esc", new Vector2(440, 242), new Vector2(64, 32), Close, false);
     }
     protected override void BuildGame()
     {
-        // Numbers stay available, while the four familiar outside bets take priority.
-        for (int n = 1; n <= 36; n++)
-        {
-            int column = (n - 1) / 3, row = (n - 1) % 3;
-            BetCell(n, n.ToString(), new Vector2(-45 + column * 42, 71 + row * 44), new Vector2(40, 42), RouletteWheelGraphic.NumberColor(n), 21);
-        }
-        BetCell(0, "0", new Vector2(-89, 115), new Vector2(42, 130), RouletteWheelGraphic.NumberColor(0), 24);
-        int[] outside = { RouletteSession.Red, RouletteSession.Black, RouletteSession.Even, RouletteSession.Odd };
-        for (int i = 0; i < outside.Length; i++)
-        {
-            int id = outside[i];
-            Color c = id == RouletteSession.Red ? RouletteWheelGraphic.NumberColor(1) : id == RouletteSession.Black ? RouletteWheelGraphic.NumberColor(2) : Panel;
-            BetCell(id, BetName(id), new Vector2(34 + i % 2 * 263, 13 - i / 2 * 61), new Vector2(257, 52), c, 21);
-        }
-        int[] secondary = { RouletteSession.Low, RouletteSession.High, RouletteSession.FirstDozen, RouletteSession.SecondDozen, RouletteSession.ThirdDozen };
-        for (int i = 0; i < secondary.Length; i++)
-            BetCell(secondary[i], BetName(secondary[i]), new Vector2(-43 + i * 105, -104), new Vector2(101, 32), Panel, 15);
         BuildWheel();
-        for (int i = 0; i < 4; i++)
+        string[] names = { L("Красное", "Red"), L("Чёрное", "Black"), L("Зелёное", "Green") };
+        for (int i = 0; i < 3; i++)
         {
-            int amount = RouletteSession.Chips[i];
-            Vector2 position = new Vector2(-459 + i * 89, -184);
-            chipRims[i] = Box(Content, position, Vector2.one * 60, Gold, true);
-            chipButtons[i] = Button(Content, "", position, Vector2.one * 50, () => SelectChip(amount), false);
-            var body = chipButtons[i].GetComponent<Image>();
-            // Reuse the point-filtered disc sprite from the rim.
-            body.sprite = chipRims[i].sprite; body.color = chipColors[i];
-            chipButtons[i].name = "Chip " + amount;
-            chipButtons[i].transition = Selectable.Transition.None;
-            for (int j = 0; j < 4; j++)
-            {
-                var stripe = Box(chipButtons[i].transform, RouletteWheelGraphic.Polar(j * 90, 20), new Vector2(8, 4), Color.white);
-                stripe.rectTransform.localEulerAngles = new Vector3(0, 0, j * 90 - 90);
-            }
-            Label(chipButtons[i].transform, amount.ToString(), Vector2.zero, new Vector2(46, 28), 18, Color.white);
+            int colour = i;
+            Vector2 pos = new Vector2(93 + i * 132, 100);
+            colourFrames[i] = Box(Content, pos, new Vector2(126, 86), Gold);
+            var button = Button(Content, names[i] + "\n×" + RouletteSession.Multiplier(i), pos, new Vector2(118, 78), () => SelectColour(colour), false);
+            button.name = "Colour " + i;
+            button.GetComponent<Image>().color = Colour(i);
+            button.GetComponentInChildren<TMP_Text>().fontSize = 22;
+            button.transition = Selectable.Transition.None;
+            colourButtons[i] = button;
         }
-        spinButton = Button(Content, "", new Vector2(330, -220), new Vector2(264, 58), () =>
-        { if (Session.Spinning) SkipSpin(); else Spin(); });
-        spinText = spinButton.GetComponentInChildren<TMP_Text>(); spinText.fontSize = 24;
-        repeatButton = Button(Content, L("Ещё раз", "Again"), new Vector2(81, -220), new Vector2(216, 48), () =>
-        {
-            if (Session.CanRepeat) { RepeatBets(); Spin(); }
-        });
-        clearButton = Button(Content, L("Снять", "Clear"), new Vector2(-104, -220), new Vector2(128, 40), ClearBets);
+        amountButtons[0] = Button(Content, "-", new Vector2(68, -12), new Vector2(60, 52), () => SetAmount(SelectedAmount - 5), false);
+        amountButtons[1] = Button(Content, "+", new Vector2(382, -12), new Vector2(60, 52), () => SetAmount((int)Math.Min(int.MaxValue, (long)SelectedAmount + 5)), false);
+        var inputBody = Box(Content, new Vector2(225, -12), new Vector2(238, 52), Ink);
+        inputBody.raycastTarget = true;
+        amountInput = inputBody.gameObject.AddComponent<TMP_InputField>();
+        amountInput.targetGraphic = inputBody;
+        amountInput.textViewport = inputBody.rectTransform;
+        amountInput.textComponent = Label(inputBody.transform, "25", Vector2.zero, new Vector2(220, 46), 27, Gold);
+        amountInput.contentType = TMP_InputField.ContentType.IntegerNumber;
+        amountInput.characterLimit = 10;
+        amountInput.onEndEdit.AddListener(value => { if (long.TryParse(value, out long amount)) SetAmount((int)Math.Max(1, Math.Min(int.MaxValue, amount))); else RefreshStatus(); });
+        amountButtons[2] = Button(Content, "25", new Vector2(119, -80), new Vector2(94, 36), () => SetAmount(25), false);
+        amountButtons[3] = Button(Content, "100", new Vector2(225, -80), new Vector2(94, 36), () => SetAmount(100), false);
+        amountButtons[4] = Button(Content, L("Всё", "All"), new Vector2(331, -80), new Vector2(94, 36), () => SetAmount(MaximumStake()), false);
+        spinButton = Button(Content, "", new Vector2(225, -155), new Vector2(368, 58), () => { if (Session.Spinning) SkipSpin(); else Spin(); }, false);
+        spinText = spinButton.GetComponentInChildren<TMP_Text>(); spinText.fontSize = 25;
         sounds = Content.gameObject.AddComponent<AudioSource>();
         sounds.playOnAwake = false; sounds.spatialBlend = 0; sounds.ignoreListenerPause = true;
         AudioService.Instance?.RouteExternalSource(sounds, AudioCategory.UI);
         if (placeClip == null)
         {
-            placeClip = MakeSound("Roulette chip", .055f, 650, false);
+            placeClip = MakeSound("Roulette select", .055f, 650, false);
             tickClip = MakeSound("Roulette ball", .025f, 1300, false);
             winClip = MakeSound("Roulette win", .26f, 660, true);
         }
     }
-    private void BetCell(int id, string text, Vector2 position, Vector2 size, Color color, int fontSize)
-    {
-        frames[id] = Box(Content, position, size + Vector2.one * 2, new Color32(128, 155, 133, 255));
-        var button = Button(Content, text, position, size - Vector2.one * 2, () => PlaceBet(id), false);
-        button.name = "Bet " + id;
-        button.GetComponent<Image>().color = color;
-        button.GetComponentInChildren<TMP_Text>().fontSize = fontSize;
-        betButtons[id] = button;
-        markers[id] = Box(button.transform, new Vector2(size.x * .22f, -size.y * .22f), new Vector2(25, 22), Gold, true);
-        markerLabels[id] = Label(markers[id].transform, "", Vector2.zero, new Vector2(34, 22), 11, Ink);
-    }
     private void BuildWheel()
     {
-        var assembly = Rect(Content, "Wheel", new Vector2(-345, 83), Vector2.one * 414);
-        assembly.localScale = Vector3.one * .8f;
-        Vector2 center = Vector2.zero;
-        Box(assembly, center, Vector2.one * 414, new Color32(93, 65, 45, 255), true);
-        Box(assembly, center, Vector2.one * 400, new Color32(169, 136, 79, 255), true);
-        Box(assembly, center, Vector2.one * 389, Ink, true);
-        rotor = Rect(assembly, "Wheel rotor", center, Vector2.one * 376);
+        var assembly = Rect(Content, "Wheel", new Vector2(-225, 0), Vector2.one * 414);
+        Box(assembly, Vector2.zero, Vector2.one * 414, new Color32(93, 65, 45, 255), true);
+        Box(assembly, Vector2.zero, Vector2.one * 400, new Color32(169, 136, 79, 255), true);
+        Box(assembly, Vector2.zero, Vector2.one * 389, Ink, true);
+        rotor = Rect(assembly, "Wheel rotor", Vector2.zero, Vector2.one * 376);
         wheel = rotor.gameObject.AddComponent<RouletteWheelGraphic>(); wheel.raycastTarget = false;
-        for (int i = 0; i < RouletteSession.Wheel.Length; i++)
-        {
-            float angle = RouletteWheelGraphic.PocketAngle(i);
-            var text = Label(rotor, RouletteSession.Wheel[i].ToString(), RouletteWheelGraphic.Polar(angle, 166), new Vector2(30, 25), 14, Color.white);
-            text.rectTransform.localEulerAngles = new Vector3(0, 0, angle - 90);
-        }
-        Box(assembly, center, Vector2.one * 242, new Color32(52, 46, 39, 255), true);
-        Box(assembly, center, Vector2.one * 195, new Color32(102, 74, 49, 255), true);
-        Box(assembly, center, new Vector2(112, 10), Gold);
-        Box(assembly, center, new Vector2(10, 112), Gold);
-        Box(assembly, center, Vector2.one * 82, Ink, true);
-        wheelResult = Label(assembly, "", center, Vector2.one * 74, 34, Gold);
-        ballGraphic = Box(assembly, center, Vector2.one * 11, Color.white, true).rectTransform;
+        Box(assembly, Vector2.zero, Vector2.one * 242, new Color32(52, 46, 39, 255), true);
+        Box(rotor, Vector2.zero, new Vector2(180, 9), new Color32(169, 136, 79, 255));
+        Box(rotor, Vector2.zero, new Vector2(9, 180), new Color32(169, 136, 79, 255));
+        Box(assembly, Vector2.zero, Vector2.one * 128, new Color32(102, 74, 49, 255), true);
+        Box(assembly, Vector2.zero, Vector2.one * 110, Ink, true);
+        Result = Label(assembly, "", Vector2.zero, new Vector2(100, 64), 30, Gold);
+        Result.enableAutoSizing = true; Result.fontSizeMin = 14; Result.fontSizeMax = 30;
+        ballGraphic = Box(assembly, Vector2.zero, Vector2.one * 11, Color.white, true).rectTransform;
     }
     protected override void BeginRound()
     {
-        Session = new RouletteSession(CurrencyManager.Instance); random = new System.Random(); SelectedChip = 25;
+        Session = new RouletteSession(CurrencyManager.Instance); random = new System.Random();
+        SelectedAmount = Mathf.Clamp(SelectedAmount, 1, Mathf.Max(1, MaximumStake()));
         wheelAngle = 0; ballAngle = Session.LastNumber < 0 ? 90 : RouletteWheelGraphic.PocketAngle(Array.IndexOf(RouletteSession.Wheel, Session.LastNumber));
-        noticeUntil = resultPulse = 0;
-        wheel.Highlight(Session.LastNumber);
+        resultPulse = 0; wheel.Highlight(Session.LastNumber);
         DrawWheel(Session.LastNumber < 0 ? 201 : 143);
     }
-    public void SelectChip(int amount)
+    private int MaximumStake() => (int)Math.Min(Session.Balance, (int.MaxValue - (long)Session.Balance) / (RouletteSession.Multiplier(SelectedColour) - 1));
+    public void SelectColour(int colour)
     {
-        if (!IsRunning || Session.Spinning || Array.IndexOf(RouletteSession.Chips, amount) < 0) return;
-        SelectedChip = amount; Play(placeClip, .2f); RefreshStatus();
+        if (!IsOpen || !IsRunning || Session.Spinning || colour < RouletteSession.Red || colour > RouletteSession.Green) return;
+        SelectedColour = colour;
+        SelectedAmount = Mathf.Clamp(SelectedAmount, 1, Mathf.Max(1, MaximumStake()));
+        Play(placeClip, .2f); RefreshStatus();
     }
-    public void PlaceBet(int id)
+    public void SetAmount(int amount)
     {
         if (!IsOpen || !IsRunning || Session.Spinning) return;
-        if (!Session.Place(id, SelectedChip))
-        {
-            notice = L("Недостаточно денег", "Not enough money");
-            noticeUntil = Time.unscaledTime + 2;
-        }
-        else { noticeUntil = 0; Play(placeClip, .4f); }
-        RefreshStatus();
-    }
-    public void ClearBets()
-    {
-        if (!IsRunning || !Session.Clear()) return;
-        RefreshStatus();
-    }
-    public void RepeatBets()
-    {
-        if (!IsRunning || !Session.Repeat()) return;
-        Play(placeClip, .4f); RefreshStatus();
+        SelectedAmount = Mathf.Clamp(amount, 1, Mathf.Max(1, MaximumStake()));
+        Play(placeClip, .2f); RefreshStatus();
     }
     public void Spin()
     {
-        if (!IsRunning || Session.Spinning || Session.Stake == 0) return;
-        // One uniform outcome per spin; skipping and animation speed cannot reroll it.
-        outcome = random.Next(37);
-        if (!Session.StartSpin(outcome)) return;
-        wheelStart = wheelAngle; ballStart = ballAngle;
+        if (!IsRunning || Session.Spinning) return;
+        if (amountInput.isFocused && long.TryParse(amountInput.text, out long entered))
+            SetAmount((int)Math.Max(1, Math.Min(int.MaxValue, entered)));
+        // Every sector is equally likely. Animation, skipping and exit never reroll.
+        outcome = RouletteSession.Wheel[random.Next(RouletteSession.Wheel.Length)];
+        if (!Session.StartSpin(SelectedColour, SelectedAmount, outcome)) return;
+        amountInput.DeactivateInputField();
+        wheelStart = Mathf.Repeat(wheelAngle, 360); ballStart = Mathf.Repeat(ballAngle, 360);
         wheelEnd = wheelStart - 720 - (float)random.NextDouble() * 360;
         float pocket = RouletteWheelGraphic.PocketAngle(Array.IndexOf(RouletteSession.Wheel, outcome));
-        ballEnd = ballStart + 1080 + Mathf.Repeat(wheelEnd + pocket - ballStart, 360);
-        elapsed = 0; speed = 1; nextTick = 0;
-        wheel.Highlight(-1);
-        RefreshStatus();
+        ballEnd = ballStart + 1440 + Mathf.Repeat(wheelEnd + pocket - ballStart, 360);
+        elapsed = 0; nextTick = 0; resultPulse = 0;
+        wheel.Highlight(-1); RefreshStatus();
     }
-    public void Accelerate() { if (IsRunning && Session.Spinning) speed = 3; }
     public void SkipSpin()
     {
         if (!IsRunning || !Session.Spinning) return;
-        wheelAngle = wheelEnd; ballAngle = ballEnd;
-        DrawWheel(143);
+        wheelAngle = wheelEnd; ballAngle = ballEnd; DrawWheel(143);
         if (!Session.Resolve(outcome)) return;
-        resultPulse = .65f; wheel.Highlight(outcome);
+        resultPulse = .8f; wheel.Highlight(outcome);
         if (Session.LastDelta > 0) Play(winClip, .3f); else Play(placeClip, .2f);
         RefreshStatus();
     }
-    protected override void OnScreenClosing() => Session?.Close();
+    protected override void OnScreenClosing()
+    {
+        Session?.Close();
+        if (focused && PresentationCamera != null) PresentationCamera.EndWorldBoundsFocus(this);
+        if (stationLabel != null) stationLabel.SetActive(labelWasActive);
+        focused = false;
+    }
     private void OnApplicationQuit() => Session?.Close();
     protected override void Tick(float dt)
     {
+        focusTime = Mathf.Min(1, focusTime + dt / .38f);
+        float focus = Mathf.SmoothStep(0, 1, focusTime);
+        PresentationCamera.BeginWorldBoundsFocus(this, Vector2.Lerp(cameraStart, tableCenter, focus), Mathf.Lerp(cameraSize, focusSize, focus));
+        tableFade.alpha = focus;
         resultPulse = Mathf.Max(0, resultPulse - dt);
-        if (Input.GetKeyDown(KeyCode.Space)) { if (Session.Spinning) SkipSpin(); else Spin(); }
+        if (Input.GetKeyDown(KeyCode.Space) && !amountInput.isFocused) { if (Session.Spinning) SkipSpin(); else Spin(); }
         if (!Session.Spinning) return;
-        elapsed += dt * speed;
-        float t = Mathf.Clamp01(elapsed / 2.2f);
-        float eased = 1 - Mathf.Pow(1 - t, 3);
+        elapsed += dt;
+        float t = Mathf.Clamp01(elapsed / 3.2f);
+        // Integral of a smooth speed hump: start at rest, accelerate, then coast
+        // down to the exact preselected pocket without a final corrective jump.
+        float eased = t * t * t * (t * (t * 6 - 15) + 10);
         wheelAngle = Mathf.Lerp(wheelStart, wheelEnd, eased);
         ballAngle = Mathf.Lerp(ballStart, ballEnd, eased);
         DrawWheel(Mathf.Lerp(201, 143, Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.55f, .95f, t))));
         nextTick -= dt;
-        if (nextTick <= 0) { Play(tickClip, .16f); nextTick = Mathf.Lerp(.045f, .28f, t); }
+        if (nextTick <= 0) { Play(tickClip, .13f); nextTick = Mathf.Lerp(.025f, .24f, Mathf.Pow(Mathf.Abs(t * 2 - 1), 2)); }
         if (t >= 1) SkipSpin();
     }
     private void DrawWheel(float radius)
@@ -211,48 +209,26 @@ public sealed class EuropeanRoulette : ArcadeMinigame
         rotor.localEulerAngles = new Vector3(0, 0, wheelAngle);
         ballGraphic.anchoredPosition = RouletteWheelGraphic.Polar(ballAngle, radius);
     }
-    private string BetName(int id) => id <= 36 ? id.ToString() : id switch
-    {
-        RouletteSession.Red => L("КРАСНОЕ", "RED"), RouletteSession.Black => L("ЧЁРНОЕ", "BLACK"),
-        RouletteSession.Even => L("ЧЁТНОЕ", "EVEN"), RouletteSession.Odd => L("НЕЧЁТНОЕ", "ODD"),
-        RouletteSession.Low => "1-18", RouletteSession.High => "19-36",
-        RouletteSession.FirstDozen => "1-12", RouletteSession.SecondDozen => "13-24", _ => "25-36"
-    };
+    private static Color Colour(int colour) => RouletteWheelGraphic.NumberColor(colour == RouletteSession.Green ? 0 : colour == RouletteSession.Red ? 1 : 2);
     protected override void RefreshStatus()
     {
         if (Session == null) return;
         bool spinning = Session.Spinning;
-        Status.text = L($"Деньги {Session.Balance:N0}", $"Money {Session.Balance:N0}");
-        stakeText.text = L($"Ставка {Session.Stake:N0}", $"Bet {Session.Stake:N0}");
-        spinButton.interactable = spinning || Session.Stake > 0;
-        spinText.text = spinning ? L("Пропустить", "Skip") : L("Крутить", "Spin");
-        repeatButton.interactable = Session.CanRepeat && Session.Stake == 0;
-        clearButton.interactable = !spinning && Session.Stake > 0;
-        wheelResult.text = spinning ? "" : Session.LastNumber < 0 ? "" : Session.LastNumber.ToString();
-        wheelResult.color = Color.Lerp(Gold, Color.white, resultPulse * Mathf.Abs(Mathf.Sin(resultPulse * 20)));
-        for (int i = 0; i < betButtons.Length; i++)
+        Status.text = L($"Золото {Session.Balance:N0}", $"Gold {Session.Balance:N0}");
+        spinButton.interactable = spinning || Session.CanStake(SelectedColour, SelectedAmount);
+        spinText.text = spinning ? "»" : L("Крутить", "Spin");
+        amountInput.interactable = !spinning;
+        if (!amountInput.isFocused) amountInput.SetTextWithoutNotify(SelectedAmount.ToString());
+        foreach (var button in amountButtons) button.interactable = !spinning;
+        for (int i = 0; i < colourButtons.Length; i++)
         {
-            betButtons[i].interactable = !spinning;
-            bool won = !spinning && Session.LastNumber >= 0 && RouletteSession.ReturnMultiplier(i, Session.LastNumber) > 0;
-            frames[i].color = won ? Gold : new Color32(128, 155, 133, 255);
-            int amount = Session.Bet(i);
-            markers[i].gameObject.SetActive(amount > 0);
-            markerLabels[i].text = amount.ToString();
+            colourButtons[i].interactable = !spinning;
+            colourFrames[i].color = i == SelectedColour ? Gold : new Color32(65, 29, 31, 255);
         }
-        for (int i = 0; i < chipButtons.Length; i++)
-        {
-            chipButtons[i].interactable = !spinning;
-            chipRims[i].color = RouletteSession.Chips[i] == SelectedChip ? Gold : new Color32(86, 103, 107, 255);
-        }
-        Result.color = Session.LastDelta < 0 ? new Color32(222, 132, 112, 255) : Gold;
-        Result.text = Time.unscaledTime < noticeUntil ? notice : spinning ? "" : Session.LastNumber >= 0 ? LastResult() : Session.IsBroke ? L("Недостаточно денег", "Not enough money") : "";
-    }
-    private string LastResult()
-    {
-        if (Session.LastNumber < 0) return "";
-        if (Session.LastDelta > 0) return L($"Выигрыш +{Session.LastDelta}", $"Won +{Session.LastDelta}");
-        if (Session.LastDelta < 0) return L($"Потеря {-Session.LastDelta}", $"Lost {-Session.LastDelta}");
-        return L("Ставка вернулась", "Bet returned");
+        Result.text = spinning || Session.LastNumber < 0 ? "" : Session.LastDelta.ToString("+0;-0;0");
+        Result.color = Session.LastDelta > 0 ? Gold : new Color32(224, 156, 140, 255);
+        float pulse = resultPulse * Mathf.Abs(Mathf.Sin(resultPulse * 20));
+        Result.rectTransform.localScale = Vector3.one * (1 + pulse * .18f);
     }
     private void Play(AudioClip clip, float volume)
     {

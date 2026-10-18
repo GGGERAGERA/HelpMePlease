@@ -18,6 +18,7 @@ public abstract class ArcadeMinigame : BunkerMinigame
     private Sprite disc;
     private Texture2D discTexture;
     protected RectTransform Content;
+    protected CameraFollow PresentationCamera => cameraFollow;
     protected TMP_Text Status, Result;
     private Button replay;
     public bool IsOpen { get; private set; }
@@ -153,9 +154,12 @@ public abstract class ArcadeMinigame : BunkerMinigame
         Content = new GameObject("Play area", typeof(RectTransform)).GetComponent<RectTransform>();
         Content.SetParent(screen.transform, false);
         Content.sizeDelta = new Vector2(1180, 760);
+        ConfigureScreen(canvas, scaler, background);
         BuildChrome();
         BuildGame();
     }
+
+    protected virtual void ConfigureScreen(Canvas canvas, CanvasScaler scaler, Image background) { }
 
     protected virtual void BuildChrome()
     {
