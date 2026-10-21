@@ -2155,6 +2155,7 @@ GameObject:
   - component: {fileID: 329844303838528154}
   - component: {fileID: 3083762860807754955}
   - component: {fileID: 6614061269595798495}
+  - component: {fileID: 8704200000000000108}
   m_Layer: 0
   m_Name: ArcadeLabel
   m_TagString: Untagged
@@ -2702,3 +2703,16 @@ MonoBehaviour:
   boundsOutlineWidth: 0.06
   boundsOutlineColor: {r: 1, g: 1, b: 1, a: 1}
   boundsOutlineCollider: {fileID: 0}
+--- !u!114 &8704200000000000108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7753512100356523404}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: arcade.roulette

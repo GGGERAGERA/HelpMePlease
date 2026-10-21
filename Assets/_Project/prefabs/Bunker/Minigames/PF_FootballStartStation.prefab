@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6935079018006924241}
   - component: {fileID: 8823789715210029528}
   - component: {fileID: 5311575318861874360}
+  - component: {fileID: 8704200000000000109}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -688,3 +689,16 @@ SpriteRenderer:
   m_CorrespondingSourceObject: {fileID: 8687367383039405734, guid: 6d0b972573c87c64c93d91d9ffbfd94a, type: 3}
   m_PrefabInstance: {fileID: 1728330148736516146}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &8704200000000000109
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 756514236230131912}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: football.title

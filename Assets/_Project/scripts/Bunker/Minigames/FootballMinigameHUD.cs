@@ -11,6 +11,14 @@ public sealed class FootballMinigameHUD : MonoBehaviour
     private bool completedRecord;
     private bool completedBenchmark;
     private bool running;
+    private float resultRemaining;
+
+    private void Update()
+    {
+        if (!completed || resultRemaining <= 0f) return;
+        resultRemaining -= Time.unscaledDeltaTime;
+        if (resultRemaining <= 0f) Hide();
+    }
 
     private void OnEnable()
     {
@@ -31,7 +39,8 @@ public sealed class FootballMinigameHUD : MonoBehaviour
     {
         var localization = LocalizationService.EnsureExists();
         view.SetContent(localization.Get("football.panel_title"), localization.Get("football.score"),
-            localization.Get("football.best"), localization.Get("football.time"), localization.Get("football.controls"));
+            localization.Get("football.best"), localization.Get("football.time"),
+            localization.Get(completed ? "football.result_controls" : "football.controls"));
         if (!completed) view.SetStatus(running ? localization.Get("football.running") : string.Empty);
         else RefreshCompletedResult();
         SetGoalStats(displayedGoalCount, displayedGoalPoints);
@@ -50,6 +59,7 @@ public sealed class FootballMinigameHUD : MonoBehaviour
     {
         completed = false;
         running = false;
+        RefreshContent();
         SetValues(duration, 0, bestScore);
         SetGoalStats(0, 0);
         SetResult(string.Empty);
@@ -58,8 +68,10 @@ public sealed class FootballMinigameHUD : MonoBehaviour
 
     public void ShowRunning(float remainingTime, int score, int bestScore)
     {
+        bool wasCompleted = completed;
         completed = false;
         running = true;
+        if (wasCompleted) RefreshContent();
         SetVisible(true);
         SetValues(remainingTime, score, bestScore);
         SetResult(LocalizationService.Instance.Get("football.running"));
@@ -67,13 +79,14 @@ public sealed class FootballMinigameHUD : MonoBehaviour
 
     public void ShowCompleted(int score, int bestScore, bool newRecord, bool devReward = false)
     {
-        SetVisible(false);
         SetValues(0f, score, bestScore);
         completed = true;
         running = false;
         completedRecord = newRecord;
         completedBenchmark = devReward;
-        RefreshCompletedResult();
+        resultRemaining = 8f;
+        SetVisible(true);
+        RefreshContent();
     }
 
     private void RefreshCompletedResult()

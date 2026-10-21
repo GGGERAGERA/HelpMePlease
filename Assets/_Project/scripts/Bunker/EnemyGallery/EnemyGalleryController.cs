@@ -38,6 +38,7 @@ namespace Subject42.Bunker.Gallery
         private int currentIndex;
         private float feedbackRemaining;
         private Color restingColor;
+        private LocalizationService localization;
 
         public int CurrentIndex => currentIndex;
 
@@ -45,6 +46,8 @@ namespace Subject42.Bunker.Gallery
 
         private void OnEnable()
         {
+            localization = LocalizationService.EnsureExists();
+            localization.LanguageChanged += HandleLanguageChanged;
             currentIndex = 0;
             feedbackRemaining = 0f;
             buttonFace.color = restingColor;
@@ -53,6 +56,8 @@ namespace Subject42.Bunker.Gallery
 
         private void OnDisable()
         {
+            if (localization != null) localization.LanguageChanged -= HandleLanguageChanged;
+            localization = null;
             feedbackRemaining = 0f;
             buttonFace.color = restingColor;
             preview.Clear();
@@ -84,9 +89,18 @@ namespace Subject42.Bunker.Gallery
             bool hasEntry = enemies.Length > 0;
             if (hasEntry) preview.Show(enemies[currentIndex]);
             else preview.Clear();
-            enemyName.text = hasEntry ? enemies[currentIndex].name : "НЕТ ЗАПИСЕЙ";
-            description.text = hasEntry ? enemies[currentIndex].description : "";
-            funFact.text = hasEntry ? enemies[currentIndex].funFact : "";
+            RefreshText();
+        }
+
+        private void HandleLanguageChanged(GameLanguage language) => RefreshText();
+
+        private void RefreshText()
+        {
+            bool hasEntry = enemies.Length > 0;
+            var text = LocalizationService.EnsureExists();
+            enemyName.text = text.Get(hasEntry ? enemies[currentIndex].name : "gallery.empty");
+            description.text = hasEntry ? text.Get(enemies[currentIndex].description) : "";
+            funFact.text = hasEntry ? text.Get(enemies[currentIndex].funFact) : "";
             page.text = hasEntry ? $"{currentIndex + 1:00} / {enemies.Length:00}" : "00 / 00";
 
         }

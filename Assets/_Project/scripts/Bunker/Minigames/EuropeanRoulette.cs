@@ -67,7 +67,8 @@ public sealed class EuropeanRoulette : ArcadeMinigame
         Box(Content, Vector2.zero, new Vector2(920, 450), new Color32(78, 31, 33, 255), true);
         Box(Content, Vector2.zero, new Vector2(900, 430), new Color32(108, 42, 44, 255), true);
         Status = Label(Content, "", new Vector2(225, 182), new Vector2(380, 38), 24, Gold);
-        Button(Content, "Esc", new Vector2(440, 242), new Vector2(64, 32), Close, false);
+        Label(Content, L("РУЛЕТКА", "ROULETTE"), new Vector2(-225, 242), new Vector2(360, 36), 22, Gold);
+        Button(Content, L("ВЫХОД  ESC", "EXIT  ESC"), new Vector2(365, 242), new Vector2(180, 36), Close, false);
     }
     protected override void BuildGame()
     {
@@ -216,7 +217,7 @@ public sealed class EuropeanRoulette : ArcadeMinigame
         bool spinning = Session.Spinning;
         Status.text = L($"Золото {Session.Balance:N0}", $"Gold {Session.Balance:N0}");
         spinButton.interactable = spinning || Session.CanStake(SelectedColour, SelectedAmount);
-        spinText.text = spinning ? "»" : L("Крутить", "Spin");
+        spinText.text = spinning ? L("Показать результат", "Show result") : L($"Ставка · {SelectedAmount} золота", $"Bet · {SelectedAmount} gold");
         amountInput.interactable = !spinning;
         if (!amountInput.isFocused) amountInput.SetTextWithoutNotify(SelectedAmount.ToString());
         foreach (var button in amountButtons) button.interactable = !spinning;
@@ -225,7 +226,9 @@ public sealed class EuropeanRoulette : ArcadeMinigame
             colourButtons[i].interactable = !spinning;
             colourFrames[i].color = i == SelectedColour ? Gold : new Color32(65, 29, 31, 255);
         }
-        Result.text = spinning || Session.LastNumber < 0 ? "" : Session.LastDelta.ToString("+0;-0;0");
+        string winnings = Session.LastDelta.ToString("+0;-0;0");
+        Result.text = spinning || Session.LastNumber < 0 ? "" : Session.LastNumber
+            + "\n<size=16>" + L(winnings + " золота", winnings + " gold") + "</size>";
         Result.color = Session.LastDelta > 0 ? Gold : new Color32(224, 156, 140, 255);
         float pulse = resultPulse * Mathf.Abs(Mathf.Sin(resultPulse * 20));
         Result.rectTransform.localScale = Vector3.one * (1 + pulse * .18f);

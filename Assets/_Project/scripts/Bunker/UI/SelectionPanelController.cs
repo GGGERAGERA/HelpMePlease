@@ -6,6 +6,7 @@ public sealed class SelectionPanelController : MonoBehaviour
     {
         None,
         Selection,
+        Characters,
         Scenes
     }
 
@@ -13,25 +14,34 @@ public sealed class SelectionPanelController : MonoBehaviour
 
     [Header("Panels")]
     [SerializeField] private BunkerSelectionWindow sharedSelectionWindow;
+    [SerializeField] private BunkerSelectionWindow characterSelectionWindow;
     [SerializeField] private GameObject sceneSelectPanel;
 
     public bool IsOpen => root != null && root.activeInHierarchy;
 
-    public void ShowSelection(
-        IBunkerSelectionSource source,
-        BunkerPanelManager panelManager)
+    public void ShowSelection(IBunkerSelectionSource source, BunkerPanelManager panelManager)
+        => ShowSelection(source, panelManager, sharedSelectionWindow, PanelType.Selection);
+
+    public void ShowCharacters(IBunkerSelectionSource source, BunkerPanelManager panelManager)
     {
-        if (root == null || sharedSelectionWindow == null)
+        // Scenes without an authored character layout keep their existing selection view.
+        bool hasCharacterLayout = characterSelectionWindow != null;
+        ShowSelection(source, panelManager,
+            hasCharacterLayout ? characterSelectionWindow : sharedSelectionWindow,
+            hasCharacterLayout ? PanelType.Characters : PanelType.Selection);
+    }
+
+    private void ShowSelection(IBunkerSelectionSource source, BunkerPanelManager panelManager,
+        BunkerSelectionWindow window, PanelType panelType)
+    {
+        if (root == null || window == null)
         {
-            Debug.LogError(
-                "[SelectionPanelController] Shared selection window is not assigned.",
-                this);
+            Debug.LogError("[SelectionPanelController] Selection window is not assigned.", this);
             return;
         }
-
-        SetPanelStates(PanelType.Selection);
+        SetPanelStates(panelType);
         root.SetActive(true);
-        sharedSelectionWindow.Open(source, panelManager);
+        window.Open(source, panelManager);
     }
 
     public void ShowScenes() => Show(PanelType.Scenes);
@@ -70,6 +80,10 @@ public sealed class SelectionPanelController : MonoBehaviour
             sharedSelectionWindow?.CloseView();
         else if (sharedSelectionWindow != null)
             sharedSelectionWindow.gameObject.SetActive(true);
+        if (activePanel != PanelType.Characters)
+            characterSelectionWindow?.CloseView();
+        else if (characterSelectionWindow != null)
+            characterSelectionWindow.gameObject.SetActive(true);
         SetActive(sceneSelectPanel, activePanel == PanelType.Scenes);
     }
 

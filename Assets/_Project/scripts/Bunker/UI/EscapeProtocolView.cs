@@ -50,7 +50,7 @@ public sealed class EscapeProtocolView : MonoBehaviour
     private void RefreshProject()
     {
         if (projectOwner == null || projectWindow == null || !projectWindow.activeSelf) return;
-        projectTitle.text = "ESCAPE PROTOCOL";
+        projectTitle.text = SurfaceMapBriefing.Text("interaction.escape");
         var definition = projectOwner.EscapeProtocol;
         if (definition == null) return;
         int current = projectOwner.CurrentEscapeStage;
@@ -58,9 +58,12 @@ public sealed class EscapeProtocolView : MonoBehaviour
         for (int i = 0; i < definition.Stages.Count; i++)
         {
             var stage = definition.Stages[i];
-            string prefix = projectOwner.IsEscapeStageCompleted(i) ? "[V] " : i == current ? "> " : "   ";
-            string tint = i == current ? "#74DCCB" : projectOwner.IsEscapeStageCompleted(i) ? "#91AAA0" : "#818A85";
-            lines.Add($"<color={tint}>{prefix}{SurfaceMapBriefing.Format("escape.stage_title", i + 1, SurfaceMapBriefing.Text(stage.title))} ({stage.cost})</color>");
+            bool completed = projectOwner.IsEscapeStageCompleted(i);
+            string tint = i == current ? "#74DCCB" : completed ? "#91AAA0" : "#818A85";
+            string status = completed ? SurfaceMapBriefing.Text("escape.done") : i == current
+                ? SurfaceMapBriefing.Format("escape.stage_progress", projectOwner.GetEscapeInvestment(i), stage.cost)
+                : SurfaceMapBriefing.Format("escape.stage_cost", stage.cost);
+            lines.Add($"<color={tint}>{SurfaceMapBriefing.Format("escape.stage_title", i + 1, SurfaceMapBriefing.Text(stage.title))}   {status}</color>");
         }
         projectStages.text = string.Join("\n\n",lines);
         int investedTotal = 0, costTotal = 0;
@@ -72,6 +75,7 @@ public sealed class EscapeProtocolView : MonoBehaviour
         bool canPay = !projectOwner.EscapeProtocolFunded && !projectOwner.EscapeProtocolCompleted && projectCurrency != null && projectCurrency.TotalCores > 0;
         investButton.interactable = canPay;
         projectClose.GetComponentInChildren<TMP_Text>().text = SurfaceMapBriefing.Text("escape.close");
+        projectNext.gameObject.SetActive(projectOwner.EscapeProtocolFunded || projectOwner.EscapeProtocolCompleted);
         if (projectOwner.EscapeProtocolCompleted)
         { projectNext.text = SurfaceMapBriefing.Text("escape.objective.completed"); investLabel.text = SurfaceMapBriefing.Text("escape.done"); }
         else if (projectOwner.EscapeProtocolFunded)
@@ -79,7 +83,6 @@ public sealed class EscapeProtocolView : MonoBehaviour
         else
         {
             var stage = definition.Stages[current];
-            projectNext.text = SurfaceMapBriefing.Format("escape.next", SurfaceMapBriefing.Text(stage.title), projectOwner.GetEscapeInvestment(current), stage.cost);
             int amount = projectCurrency != null ? Mathf.Min(stage.cost - projectOwner.GetEscapeInvestment(current), projectCurrency.TotalCores) : 0;
             investLabel.text = amount > 0 ? SurfaceMapBriefing.Format("escape.invest", amount) : SurfaceMapBriefing.Text("escape.need_cores");
         }
@@ -126,7 +129,7 @@ public sealed class EscapeProtocolView : MonoBehaviour
         SelectedDepthId = 0;
         if (projectWindow != null)
         {
-            legacyWindow.SetActive(false); projectWindow.SetActive(true); gameObject.SetActive(true); RefreshProject(); return;
+            SetProjectMode(true); gameObject.SetActive(true); RefreshProject(); return;
         }
         SetMode(false, access);
         RefreshTerminal(access);
@@ -143,7 +146,7 @@ public sealed class EscapeProtocolView : MonoBehaviour
 
     public void ShowDepthSelect(int access, DepthCatalog catalog, BunkerPanelManager owner, Transform transitionTarget)
     {
-        if (projectWindow != null) { projectWindow.SetActive(false); legacyWindow.SetActive(true); }
+        if (projectWindow != null) SetProjectMode(false);
         depths = catalog;
         launchOwner = owner;
         launchTarget = transitionTarget;
@@ -151,6 +154,16 @@ public sealed class EscapeProtocolView : MonoBehaviour
         SelectedDepthId = depths.Entries[0].id;
         RefreshSelection(access);
         gameObject.SetActive(true);
+    }
+
+    private void SetProjectMode(bool project)
+    {
+        legacyWindow.SetActive(!project);
+        projectWindow.SetActive(project);
+        // The project has its own pixel frame; the depth selector's outer frame
+        // must not remain visible behind it. Restore it for the legacy view.
+        if (TryGetComponent<Image>(out var background)) background.enabled = !project;
+        if (TryGetComponent<Outline>(out var border)) border.enabled = !project;
     }
 
     // Locked cards remain selectable; selecting is never a launch action.

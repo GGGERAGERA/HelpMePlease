@@ -395,7 +395,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 0526b37c8e59b22469a811f0c922a939, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -439,6 +439,7 @@ GameObject:
   - component: {fileID: 8200490000000000022}
   - component: {fileID: 8200490000000000023}
   - component: {fileID: 8200490000000000024}
+  - component: {fileID: 8704200000000000101}
   m_Layer: 0
   m_Name: Description heading
   m_TagString: Untagged
@@ -543,6 +544,7 @@ GameObject:
   - component: {fileID: 8200490000000000026}
   - component: {fileID: 8200490000000000027}
   - component: {fileID: 8200490000000000028}
+  - component: {fileID: 8704200000000000102}
   m_Layer: 0
   m_Name: Fact heading
   m_TagString: Untagged
@@ -1086,3 +1088,29 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3859934635659187773}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8704200000000000101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8200490000000000021}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: gallery.description
+--- !u!114 &8704200000000000102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8200490000000000025}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: gallery.tip

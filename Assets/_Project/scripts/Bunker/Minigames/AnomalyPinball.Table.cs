@@ -43,6 +43,10 @@ public sealed partial class AnomalyPinball
 
     protected override void BuildChrome()
     {
+        Label(Content, L("ПИНБОЛ", "PINBALL"), new Vector2(-408, 284), new Vector2(270, 40), 22, Mint);
+        Label(Content, L("A / D · рычаги\nПробел · пуск", "A / D · flippers\nSpace · launch"),
+            new Vector2(-422, 206), new Vector2(270, 80), 16, Color.white);
+        Result = Label(Content, "", new Vector2(424, 50), new Vector2(260, 190), 18, Gold);
         Box(Content, new Vector2(0, -6), new Vector2(588, 664), new Color32(96, 74, 49, 255));
         Box(Content, new Vector2(0, -6), new Vector2(576, 652), new Color32(39, 43, 39, 255));
         Status = Label(Content, "", new Vector2(-385, 344), new Vector2(250, 36), 20, Gold);
@@ -50,7 +54,7 @@ public sealed partial class AnomalyPinball
         bestText = Label(Content, "", new Vector2(165, 344), new Vector2(250, 36), 19, Gold);
         for (int i = 0; i < ballIcons.Length; i++)
             ballIcons[i] = Box(Content, new Vector2(330 + i * 23, 344), Vector2.one * 14, Color.white, true);
-        Button(Content, L("Выйти", "Exit"), new Vector2(471, 344), new Vector2(100, 34), Close);
+        Button(Content, L("ВЫХОД  ESC", "EXIT  ESC"), new Vector2(471, 344), new Vector2(170, 38), Close);
     }
 
     protected override void BuildGame()
@@ -237,7 +241,7 @@ public sealed partial class AnomalyPinball
         for (int i = 0; i < ballIcons.Length; i++) ballIcons[i].color = i < lives ? Color.white : new Color32(60, 72, 73, 255);
         launch.gameObject.SetActive(waiting || !IsRunning);
         launch.interactable = (paid && IsRunning || balance >= SessionCost) && (waiting || !IsRunning);
-        launchText.text = !IsRunning ? L("Ещё партия · 30", "Play again · 30") : paid
-            ? L("Пуск · Пробел", "Launch · Space") : L("Старт · 30 · Пробел", "Start · 30 · Space");
+        launchText.text = !IsRunning ? L($"Ещё партия · {SessionCost} золота", $"Play again · {SessionCost} gold") : paid
+            ? L("Пуск · Пробел", "Launch · Space") : L($"Старт · {SessionCost} золота", $"Start · {SessionCost} gold");
     }
 }

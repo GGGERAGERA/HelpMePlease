@@ -143,25 +143,21 @@ public sealed class BunkerStationProgressionService : MonoBehaviour
         int invested = GetInvestedGold(stationId);
         int remaining = Mathf.Max(0, cost - invested);
         int amount = Mathf.Min(requestedAmount, remaining, CurrencyManager.Instance.TotalGold);
-        if (amount <= 0 || !CurrencyManager.Instance.SpendGold(amount))
-            return false;
-
-        actuallyInvested = amount;
-        invested += amount;
-        if (invested < cost)
+        int progress = invested + amount;
+        bool upgraded = progress >= cost;
+        if (amount <= 0 || !CurrencyManager.Instance.TryChangeGoldExact(-amount, () =>
         {
-            PlayerPrefs.SetInt(GetInvestedKey(stationId), invested);
-            PlayerPrefs.Save();
-            StationInvestmentChanged?.Invoke(stationId, invested);
-            return true;
-        }
-
-        int newLevel = currentLevel + 1;
-        PlayerPrefs.SetInt(GetLevelKey(stationId), newLevel);
-        PlayerPrefs.SetInt(GetInvestedKey(stationId), 0);
-        PlayerPrefs.Save();
-        StationInvestmentChanged?.Invoke(stationId, 0);
-        StationLevelChanged?.Invoke(stationId, newLevel);
+            if (upgraded)
+                PlayerPrefs.SetInt(GetLevelKey(stationId), currentLevel + 1);
+            PlayerPrefs.SetInt(GetInvestedKey(stationId), upgraded ? 0 : progress);
+        }, () =>
+        {
+            StationInvestmentChanged?.Invoke(stationId, upgraded ? 0 : progress);
+            if (upgraded)
+                StationLevelChanged?.Invoke(stationId, currentLevel + 1);
+        }))
+            return false;
+        actuallyInvested = amount;
         return true;
     }
 

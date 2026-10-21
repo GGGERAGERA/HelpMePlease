@@ -270,21 +270,21 @@ public sealed partial class MetaProgressionManager : MonoBehaviour
         int invested = GetOrbitalModuleInvestedGold(kind);
         int amount = Mathf.Min(requestedAmount, cost - invested,
             CurrencyManager.Instance.TotalGold);
-        if (amount <= 0 || !CurrencyManager.Instance.SpendGold(amount))
+        if (amount <= 0 || !CurrencyManager.Instance.TryChangeGoldExact(-amount, () =>
+        {
+            int progress = invested + amount;
+            if (progress < cost)
+            {
+                PlayerPrefs.SetInt(GetOrbitalModuleInvestmentKey(kind), progress);
+            }
+            else
+            {
+                PlayerPrefs.SetInt(GetOrbitalModuleLevelKey(kind), level + 1);
+                PlayerPrefs.SetInt(GetOrbitalModuleInvestmentKey(kind), 0);
+            }
+        }, () => ProgressChanged?.Invoke()))
             return false;
         actuallyInvested = amount;
-        invested += amount;
-        if (invested < cost)
-        {
-            PlayerPrefs.SetInt(GetOrbitalModuleInvestmentKey(kind), invested);
-        }
-        else
-        {
-            PlayerPrefs.SetInt(GetOrbitalModuleLevelKey(kind), level + 1);
-            PlayerPrefs.SetInt(GetOrbitalModuleInvestmentKey(kind), 0);
-        }
-        PlayerPrefs.Save();
-        ProgressChanged?.Invoke();
         return true;
     }
 
@@ -340,23 +340,21 @@ public sealed partial class MetaProgressionManager : MonoBehaviour
             requestedAmount,
             cost - invested,
             CurrencyManager.Instance.TotalGold);
-        if (amount <= 0 || !CurrencyManager.Instance.SpendGold(amount))
-            return false;
-
-        actuallyInvested = amount;
-        invested += amount;
-        if (invested < cost)
+        if (amount <= 0 || !CurrencyManager.Instance.TryChangeGoldExact(-amount, () =>
         {
-            PlayerPrefs.SetInt(GetInvestmentKey(type), invested);
-            PlayerPrefs.Save();
-            ProgressChanged?.Invoke();
-            return true;
-        }
-
-        SetLevel(type, level + 1);
-        PlayerPrefs.SetInt(GetInvestmentKey(type), 0);
-        PlayerPrefs.Save();
-        ProgressChanged?.Invoke();
+            int progress = invested + amount;
+            if (progress < cost)
+            {
+                PlayerPrefs.SetInt(GetInvestmentKey(type), progress);
+            }
+            else
+            {
+                SetLevel(type, level + 1);
+                PlayerPrefs.SetInt(GetInvestmentKey(type), 0);
+            }
+        }, () => ProgressChanged?.Invoke()))
+            return false;
+        actuallyInvested = amount;
         return true;
     }
 

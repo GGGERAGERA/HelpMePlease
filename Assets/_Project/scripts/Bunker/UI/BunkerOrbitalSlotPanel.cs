@@ -229,7 +229,7 @@ public sealed class BunkerOrbitalSlotPanel : MonoBehaviour
             SetIcon(pendingIcon, pending, 1f);
             pendingText.text = LocalizationService.Instance.Get("bunker.slot_pending") + RewardLabel(pending);
         }
-        hintText.text = spinning ? LocalizationService.Instance.Get("bunker.slot_sync") :
+        hintText.text = spinning ? string.Empty :
             showPending ? LocalizationService.Instance.Get("bunker.slot_begin_run") :
             currency == null || currency.TotalGold < OrbitalSlotMachine.Stake ?
                 LocalizationService.Instance.Get("bunker.slot_need_gold") : LocalizationService.Instance.Get("bunker.slot_next_run");

@@ -59,9 +59,12 @@ public sealed class BunkerSelectionWindow : MonoBehaviour
 
     public void Open(IBunkerSelectionSource newSource, BunkerPanelManager manager)
     {
+        bool sameSource = ReferenceEquals(source, newSource);
         itemProgression?.CancelInvestment();
         stationProgress?.CancelInvestment();
         UnbindSource();
+        if (!sameSource)
+            selected = null;
         source = newSource;
         panelManager = manager;
         if (source == null)
@@ -129,7 +132,9 @@ public sealed class BunkerSelectionWindow : MonoBehaviour
         string desiredId = !string.IsNullOrWhiteSpace(previousId)
             ? previousId
             : model.SelectedId;
-        selected = FindEntry(desiredId) ?? FindEntry(model.SelectedId);
+        selected = FindEntry(desiredId) ?? FindEntry(model.SelectedId)
+            ?? model.Entries.Find(entry => entry != null && !entry.Locked)
+            ?? model.Entries.Find(entry => entry != null);
         RefreshSelection();
     }
 
@@ -142,7 +147,10 @@ public sealed class BunkerSelectionWindow : MonoBehaviour
     private void RefreshSelection()
     {
         foreach (BunkerSelectionCardView card in cards)
+        {
             card.SetSelected(selected != null && card.EntryId == selected.Id);
+            card.SetEquipped(model.ShowConfirmButton && card.EntryId == model.SelectedId);
+        }
 
         if (selected == null)
         {
@@ -153,6 +161,17 @@ public sealed class BunkerSelectionWindow : MonoBehaviour
         {
             detailView?.Bind(selected);
             itemProgression?.Bind(selected.Progression);
+        }
+
+        if (selected != null)
+        {
+            bool current = selected.Id == model.SelectedId;
+            if (confirmButtonText != null)
+                confirmButtonText.color = selected.Locked
+                    ? StationPixelVisuals.MutedText : StationPixelVisuals.Window;
+            // Selection and closing are separate actions in every station.
+            if (confirmButton != null)
+                confirmButton.gameObject.SetActive(model.ShowConfirmButton && !current && !selected.Locked);
         }
 
         if (confirmButton != null)
@@ -198,6 +217,7 @@ public sealed class BunkerSelectionWindow : MonoBehaviour
             if (card == null)
                 continue;
             card.Clicked -= Select;
+            card.gameObject.SetActive(false);
             Destroy(card.gameObject);
         }
         cards.Clear();
@@ -212,6 +232,7 @@ public sealed class BunkerSelectionWindow : MonoBehaviour
             if (card == null)
                 continue;
             card.Clicked -= Select;
+            card.gameObject.SetActive(false);
             Destroy(card.gameObject);
         }
     }

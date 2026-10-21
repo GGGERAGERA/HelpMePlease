@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class BunkerProgressionView : MonoBehaviour
 {
     private const float InvestmentRate = 180f;
+    private const double InvestmentInterval = 0.1;
 
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI levelText;
@@ -18,12 +19,14 @@ public class BunkerProgressionView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI stateText;
     [SerializeField] private Button upgradeButton;
     [SerializeField] private TextMeshProUGUI upgradeButtonText;
+    [SerializeField] private bool colorStateFeedback;
 
     private BunkerProgressionModel model;
     private HoldInvestmentInput holdInput;
     private bool investing;
     private bool investedDuringPress;
-    private float accumulator;
+    private double accumulator;
+    private double investmentElapsed;
 
     protected virtual void Awake()
     {
@@ -60,19 +63,18 @@ public class BunkerProgressionView : MonoBehaviour
             StopInvestment();
             return;
         }
-        if (model.CanUpgrade == null || !model.CanUpgrade())
+        if (!CanInvestInCurrentModel())
         {
             StopInvestment();
             return;
         }
 
         accumulator += Time.deltaTime * InvestmentRate;
-        int amount = Mathf.FloorToInt(accumulator);
-        if (amount <= 0)
+        investmentElapsed += Time.deltaTime;
+        if (investmentElapsed < InvestmentInterval)
             return;
-        accumulator -= amount;
-        model.Invest?.Invoke(amount);
-        investedDuringPress = true;
+        investmentElapsed %= InvestmentInterval;
+        CommitInvestment();
     }
 
     public void Bind(BunkerProgressionModel value)
@@ -93,11 +95,13 @@ public class BunkerProgressionView : MonoBehaviour
 
         SetText(titleText, value.Title);
         SetText(levelText, $"{value.LevelPrefix} {value.Level} / {value.MaxLevel}");
-        SetText(currencyText, maxed ? null : string.Format(LocalizationService.Instance.Get("bunker.wallet"), value.AvailableCurrency));
+        SetText(currencyText, string.Format(LocalizationService.Instance.Get("bunker.wallet"), value.AvailableCurrency));
         SetText(bonusText, value.BonusText);
         SetText(contextText, value.ContextText);
         SetText(stateText, maxed ? LocalizationService.Instance.Get("bunker.max_level") : locked
             ? value.LockReason : !canUpgrade ? LocalizationService.Instance.Get("bunker.insufficient_gold") : null);
+        if (colorStateFeedback && stateText != null)
+            stateText.color = maxed ? StationPixelVisuals.Cyan : new Color(0.85f, 0.31f, 0.25f, 1f);
 
         int required = Mathf.Max(0, value.RequiredProgress);
         int progress = Mathf.Clamp(value.Progress, 0, required);
@@ -130,28 +134,54 @@ public class BunkerProgressionView : MonoBehaviour
 
     private void BeginInvestment()
     {
-        if (model == null || !model.SupportsPartialInvestment || model.CanUpgrade == null ||
-            !model.CanUpgrade())
+        if (model == null || !model.SupportsPartialInvestment || !CanInvestInCurrentModel())
             return;
         investing = true;
         investedDuringPress = false;
         accumulator = 0f;
+        investmentElapsed = 0f;
     }
 
     private void EndInvestment()
     {
-        if (investing && !investedDuringPress)
-            model?.Invest?.Invoke(1);
+        if (investing && !investedDuringPress && accumulator < 1)
+            accumulator = 1;
         StopInvestment();
     }
 
     private void StopInvestment()
     {
+        if (!investing) return;
+        // Notifications can synchronously rebind/disable this view while flushing.
         investing = false;
+        CommitInvestment();
         accumulator = 0f;
+        investmentElapsed = 0f;
+    }
+
+    private void CommitInvestment()
+    {
+        string targetId = model?.TargetId;
+        while (accumulator >= 1 && model != null && model.TargetId == targetId &&
+            model.Invest != null && CanInvestInCurrentModel())
+        {
+            var current = model;
+            int amount = Mathf.Min((int)accumulator,
+                current.RequiredProgress - current.Progress, current.AvailableCurrency);
+            if (amount <= 0) break;
+            accumulator -= amount;
+            investedDuringPress = true;
+            current.Invest(amount);
+            // A level boundary may leave gold to invest in the refreshed model.
+            // Without a refresh, its displayed cost/balance cannot be reused.
+            if (ReferenceEquals(current, model)) break;
+        }
     }
 
     public void CancelInvestment() => StopInvestment();
+
+    private bool CanInvestInCurrentModel() => model != null && !model.Locked &&
+        model.Level < model.MaxLevel && model.CanUpgrade != null && model.CanUpgrade();
 
     private void RenderSegments(float fill)
     {

@@ -39,19 +39,29 @@ public static class OrbitalSlotMachine
         resolving = true;
         try
         {
-            if (!currency.SpendGold(Stake)) return false;
-            reels = forced ?? new[] { Roll(), Roll(), Roll() };
-            var a = reels[0]; var b = reels[1]; var c = reels[2];
+            var result = forced ?? new[] { Roll(), Roll(), Roll() };
+            var a = result[0]; var b = result[1]; var c = result[2];
+            OrbitalSlotSymbol pending = OrbitalSlotSymbol.None;
+            int credit = 0;
             if (a == b && b == c)
             {
                 if (a is OrbitalSlotSymbol.Gun or OrbitalSlotSymbol.Arc or OrbitalSlotSymbol.Link or OrbitalSlotSymbol.Ring or OrbitalSlotSymbol.Saw or OrbitalSlotSymbol.Shotgun or OrbitalSlotSymbol.Sniper)
                 {
-                    PlayerPrefs.SetInt(PendingKey, (int)a);
-                    PlayerPrefs.Save();
+                    pending = a;
                 }
-                else if (a == OrbitalSlotSymbol.Gold) currency.AddGoldExact(250);
+                else if (a == OrbitalSlotSymbol.Gold) credit = 250;
             }
-            else if (a == b || a == c || b == c) currency.AddGoldExact(Stake);
+            else if (a == b || a == c || b == c) credit = Stake;
+
+            // Preserve the existing saturated payout without an intermediate debit save.
+            int delta = (int)(System.Math.Min(int.MaxValue,
+                (long)currency.TotalGold - Stake + credit) - currency.TotalGold);
+            if (!currency.TryChangeGoldExact(delta, () =>
+            {
+                if (pending != OrbitalSlotSymbol.None)
+                    PlayerPrefs.SetInt(PendingKey, (int)pending);
+            })) return false;
+            reels = result;
             return true;
         }
         finally { resolving = false; }
@@ -86,13 +96,13 @@ public static class OrbitalSlotMachine
 
     public static string Label(OrbitalSlotSymbol symbol) => symbol switch
     {
-        OrbitalSlotSymbol.Saw => "Пила",
+        OrbitalSlotSymbol.Saw => LocalizationService.Instance.Get("bunker.module_name.saw"),
         OrbitalSlotSymbol.Link => LocalizationService.Instance.Get("bunker.slot_link"),
         OrbitalSlotSymbol.Ring => LocalizationService.Instance.Get("bunker.slot_new_ring"),
         OrbitalSlotSymbol.None => LocalizationService.Instance.Get("bunker.slot_symbol.None"),
         OrbitalSlotSymbol.Gun => LocalizationService.Instance.Get("bunker.slot_symbol.Gun"),
-        OrbitalSlotSymbol.Shotgun => "Дробовик",
-        OrbitalSlotSymbol.Sniper => "Снайперка",
+        OrbitalSlotSymbol.Shotgun => LocalizationService.Instance.Get("bunker.module_name.shotgun"),
+        OrbitalSlotSymbol.Sniper => LocalizationService.Instance.Get("bunker.module_name.sniper"),
         OrbitalSlotSymbol.Arc => LocalizationService.Instance.Get("bunker.slot_symbol.Arc"),
         OrbitalSlotSymbol.Gold => LocalizationService.Instance.Get("bunker.slot_symbol.Gold"),
         OrbitalSlotSymbol.Skull => LocalizationService.Instance.Get("bunker.slot_symbol.Skull"),

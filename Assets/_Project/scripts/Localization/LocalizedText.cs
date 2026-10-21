@@ -10,11 +10,13 @@ public sealed class LocalizedText : MonoBehaviour
     [SerializeField] private string localizationKey;
 
     private TMP_Text targetText;
+    private TextMesh targetMesh;
     private LocalizationService service;
 
     private void Awake()
     {
         targetText = GetComponent<TMP_Text>();
+        targetMesh = GetComponent<TextMesh>();
     }
 
     private void OnEnable()
@@ -40,16 +42,21 @@ public sealed class LocalizedText : MonoBehaviour
 
     public void Refresh()
     {
-        if (targetText == null)
+        if (targetText == null && targetMesh == null)
+        {
             targetText = GetComponent<TMP_Text>();
+            targetMesh = GetComponent<TextMesh>();
+        }
 
         if (service == null)
             service = LocalizationService.EnsureExists();
 
-        if (targetText == null || service == null)
+        if ((targetText == null && targetMesh == null) || service == null)
             return;
 
-        targetText.text = service.Get(localizationKey);
+        string value = service.Get(localizationKey);
+        if (targetText != null) targetText.text = value;
+        else targetMesh.text = value;
 
         if (!service.HasKey(localizationKey) &&
             WarnedKeys.Add(localizationKey))

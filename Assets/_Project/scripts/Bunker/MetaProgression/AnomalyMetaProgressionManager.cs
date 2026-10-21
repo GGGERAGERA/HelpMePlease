@@ -123,23 +123,21 @@ public sealed class AnomalyMetaProgressionManager : MonoBehaviour
             requestedAmount,
             cost - invested,
             CurrencyManager.Instance.TotalGold);
-        if (amount <= 0 || !CurrencyManager.Instance.SpendGold(amount))
-            return false;
-
-        actuallyInvested = amount;
-        invested += amount;
-        if (invested < cost)
+        if (amount <= 0 || !CurrencyManager.Instance.TryChangeGoldExact(-amount, () =>
         {
-            PlayerPrefs.SetInt(GetInvestmentKey(anomaly), invested);
-            PlayerPrefs.Save();
-            ProgressChanged?.Invoke();
-            return true;
-        }
-
-        PlayerPrefs.SetInt(GetLevelKey(anomaly), level + 1);
-        PlayerPrefs.SetInt(GetInvestmentKey(anomaly), 0);
-        PlayerPrefs.Save();
-        ProgressChanged?.Invoke();
+            int progress = invested + amount;
+            if (progress < cost)
+            {
+                PlayerPrefs.SetInt(GetInvestmentKey(anomaly), progress);
+            }
+            else
+            {
+                PlayerPrefs.SetInt(GetLevelKey(anomaly), level + 1);
+                PlayerPrefs.SetInt(GetInvestmentKey(anomaly), 0);
+            }
+        }, () => ProgressChanged?.Invoke()))
+            return false;
+        actuallyInvested = amount;
         return true;
     }
 

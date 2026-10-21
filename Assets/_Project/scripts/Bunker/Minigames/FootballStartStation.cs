@@ -9,7 +9,7 @@ public sealed class FootballStartStation : MonoBehaviour, IBunkerInteractable
     [SerializeField] private GameObject interactionArrow;
     [SerializeField] private Transform[] idleMarkers;
     public bool CanInteract => isActiveAndEnabled && minigame.CanStart;
-    public string InteractionText => LocalizationService.Instance.Get("hud.interact");
+    public string InteractionText => LocalizationService.Instance.Get("football.play");
 
     public void Interact()
     {

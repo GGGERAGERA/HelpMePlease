@@ -12,6 +12,8 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
         public string Title;
         [TextArea(2, 4)] public string Description;
         public string Category;
+        public Sprite Icon;
+        public Sprite PreviewIcon;
         [Range(1, 3)] public int RequiredStationLevel = 1;
     }
 
@@ -48,7 +50,7 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
     [SerializeField] private BunkerSelectionCatalog catalog;
     // The catalog owns content; adapters never copy it into scene/runtime arrays.
     private CharacterData[] characters => catalog != null ? catalog.characters : null;
-    private WeaponData[] weapons => catalog != null ? catalog.weapons : null;
+    private BunkerSelectionCatalog.ModulePresentation[] modules => catalog != null ? catalog.modules : null;
     private UpgradePresentation[] upgrades => catalog != null ? catalog.upgrades : null;
     private AnomalyStabilizerData[] anomalies => catalog != null ? catalog.anomalies : null;
 
@@ -229,24 +231,32 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
     private BunkerSelectionWindowModel BuildCharacters()
     {
         var model = NewModel(
-            LocalizationService.Instance.Get("bunker.select_subject"),
-            LocalizationService.Instance.Get("bunker.subjects"),
+            LocalizationService.Instance.Get("bunker.characters"),
+            LocalizationService.Instance.Get("bunker.characters"),
             LocalizationService.Instance.Get("bunker.select_subject"),
             LocalizationService.Instance.Get("bunker.select"),
             BunkerStationId.Character);
         CharacterData current = RunSelectionManager.Instance?.SelectedCharacter;
         model.SelectedId = current != null ? current.Id.ToString() : null;
 
+        int subjectNumber = 0;
         AddNonNull(characters, character =>
         {
             int requiredLevel = BunkerSelectionUnlockRules.GetRequiredStationLevel(
                 character.unlockData,
                 BunkerStationId.Character);
             bool unlocked = IsUnlocked(character.unlockData);
-            var entry = BuildCharacterEntry(character, unlocked);
-            entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.health"), character.maxHealth.ToString("0")));
-            entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.speed"), character.moveSpeed.ToString("0.#")));
-            AddVisibleEntry(model, entry, requiredLevel);
+            var entry = BuildCharacterEntry(character, unlocked, ++subjectNumber);
+            if (unlocked)
+            {
+                entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.health"), character.maxHealth.ToString("0")));
+                entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.speed"), character.moveSpeed.ToString("0.#")));
+            }
+            // Future slots carry no identity, artwork, ability or stat spoilers.
+            // The same anonymous name feeds the station's next-unlock summary.
+            entry.RequiredStationLevel = requiredLevel;
+            model.Unlocks.Add(new BunkerSelectionUnlockModel(entry.DisplayName, requiredLevel));
+            model.Entries.Add(entry);
         });
         FinalizeUnlockPresentation(model);
         return model;
@@ -256,13 +266,31 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
         CharacterData character,
         bool selected)
     {
-        return BuildCharacterEntry(character, true);
+        return BuildCharacterEntry(character, true, 0);
     }
 
     private static BunkerSelectionEntryModel BuildCharacterEntry(
         CharacterData character,
-        bool unlocked)
+        bool unlocked,
+        int subjectNumber)
     {
+        if (!unlocked)
+        {
+            return new BunkerSelectionEntryModel
+            {
+                Id = character.Id.ToString(),
+                IsCharacter = true,
+                DisplayName = string.Format(LocalizationService.Instance.Get("bunker.subject.number"), subjectNumber),
+                Category = LocalizationService.Instance.Get("bunker.subject.unknown"),
+                Locked = true,
+                CanConfirm = false,
+                LockReason = character.unlockData?.condition != null &&
+                    character.unlockData.condition.type == UnlockConditionType.StationLevelRequirement
+                        ? string.Format(LocalizationService.Instance.Get("bunker.subject.station_level"),
+                            character.unlockData.condition.requiredAmount)
+                        : GetLockReason(character.unlockData)
+            };
+        }
         return new BunkerSelectionEntryModel
         {
             Id = character.Id.ToString(),
@@ -271,11 +299,15 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
             Icon = character.Portrait,
             CharacterVisual = character.GameplayIcon,
             IsCharacter = true,
-            Feature = character.LocalizedCombatTypeDescription,
+            Feature = LocalizationService.Instance.Get(character.Id switch
+            {
+                CharacterId.Gera => "bunker.subject.effect.circle",
+                CharacterId.DiMag => "bunker.subject.effect.eight",
+                CharacterId.Vika => "bunker.subject.effect.custom",
+                _ => character.traitKey
+            }),
             Description = character.LocalizedDescription,
-            Locked = !unlocked,
-            LockReason = GetLockReason(character.unlockData),
-            CanConfirm = unlocked
+            CanConfirm = true
         };
     }
 
@@ -291,16 +323,7 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
         model.ShowConfirmButton = false;
         MetaProgressionManager progression = MetaProgressionManager.EnsureExists();
         progression.ReloadFromStorage();
-        AddOrbitalModuleCard(model, OrbitalModuleKind.Pistol, LocalizationService.Instance.Get("bunker.module_name.pistol"),
-            LocalizationService.Instance.Get("bunker.module_auto"),
-            LocalizationService.Instance.Get("bunker.module_auto_desc"), progression);
-        AddOrbitalModuleCard(model, OrbitalModuleKind.Saw, "Пила",
-            LocalizationService.Instance.Get("bunker.module_contact"),
-            LocalizationService.Instance.Get("bunker.module_contact_desc"), progression);
-        AddOrbitalModuleCard(model, OrbitalModuleKind.Shotgun, "Дробовик",
-            "Дробовик",
-            "7 дробин, скорость 10 м/с.", progression);
-        AddOrbitalModuleCard(model, OrbitalModuleKind.Sniper, "Снайперка", "Снайперка", "Выстрел 120 м/с, обходит щиты.", progression);
+        AddNonNull(modules, presentation => AddOrbitalModuleCard(model, presentation, progression));
         model.SelectedId = model.Entries.Count > 0
             ? model.Entries[0].Id : null;
         FinalizeUnlockPresentation(model);
@@ -309,38 +332,40 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
 
     private static void AddOrbitalModuleCard(
         BunkerSelectionWindowModel model,
-        OrbitalModuleKind kind,
-        string displayName,
-        string role,
-        string description,
+        BunkerSelectionCatalog.ModulePresentation presentation,
         MetaProgressionManager progression)
     {
+        OrbitalModuleKind kind = presentation.Kind;
+        string displayName = LocalizationService.Instance.Get(presentation.NameKey);
         int requiredLevel = OrbitalRewardProvider
             .GetRequiredWeaponStationLevel(kind);
         model.Unlocks.Add(new BunkerSelectionUnlockModel(
             displayName, requiredLevel));
-        if (!OrbitalRewardProvider.IsModuleUnlocked(kind))
-            return;
-        Sprite icon = ResolveOrbitalModuleIcon(kind, out Color iconColor);
+        bool unlocked = OrbitalRewardProvider.IsModuleUnlocked(kind);
         var entry = new BunkerSelectionEntryModel
         {
             Id = kind.ToString(),
             DisplayName = displayName,
-            Category = role,
-            Icon = icon,
-            IconColor = iconColor,
+            Category = LocalizationService.Instance.Get(presentation.CategoryKey),
+            Icon = presentation.Icon,
             // The shared progression panel already presents the meta-damage
             // bonus. Keeping the generic feature block empty leaves the same
             // vertical space for stats and description as the other
             // progression stations.
             Feature = string.Empty,
-            Description = description,
-            Locked = false,
+            Description = LocalizationService.Instance.Get(presentation.DescriptionKey),
+            Locked = !unlocked,
+            LockReason = unlocked ? null : string.Format(LocalizationService.Instance.Get("bunker.required_station"), requiredLevel),
             CanConfirm = false,
             RequiredStationLevel = requiredLevel
         };
         entry.Progression = BuildOrbitalModuleProgression(
             progression, kind, displayName);
+        if (!unlocked)
+        {
+            entry.Progression.Locked = true;
+            entry.Progression.LockReason = entry.LockReason;
+        }
         AddOrbitalModuleStats(entry, progression, kind);
         model.Entries.Add(entry);
     }
@@ -366,11 +391,8 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
             RequiredProgress = cost,
             AvailableCurrency = CurrencyManager.Instance != null
                 ? CurrencyManager.Instance.TotalGold : 0,
-            BonusText = GetOrbitalModuleBonus(kind, progression),
-            ContextText = level >= progression.MaxLevel
-                ? string.Format(LocalizationService.Instance.Get("bunker.cap"), cap)
-                : string.Format(LocalizationService.Instance.Get("bunker.next_damage"), MetaProgressionManager.GetOrbitalModuleDamageMultiplier(level + 1)) +
-                  string.Format(LocalizationService.Instance.Get("bunker.cap"), cap),
+            BonusText = GetOrbitalModuleBonus(kind, progression) + (level >= progression.MaxLevel
+                ? string.Empty : $"  →  ×{MetaProgressionManager.GetOrbitalModuleDamageMultiplier(level + 1):0.0}"),
             Locked = capped || unavailable,
             SupportsPartialInvestment = true,
             LockReason = capped
@@ -408,8 +430,6 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
             .GetOrbitalModuleDamageMultiplier(level);
         float damage = OrbitalModuleRuntime.GetBaseDamage(kind) * multiplier;
         entry.Stats.Add(new BunkerSelectionStatModel(
-            LocalizationService.Instance.Get("bunker.level"), $"{level} / {progression.MaxLevel}"));
-        entry.Stats.Add(new BunkerSelectionStatModel(
             LocalizationService.Instance.Get("bunker.damage"), damage.ToString("0.#")));
         switch (kind)
         {
@@ -423,22 +443,13 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
                 break;
             case OrbitalModuleKind.Shotgun:
                 entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.range"), "4.5"));
-                entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.interval"), "1.05 С"));
+                entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.interval"), LocalizationService.Instance.Get("bunker.interval_shotgun")));
                 break;
             case OrbitalModuleKind.Sniper:
                 entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.range"), "12"));
-                entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.interval"), "1.8 С"));
+                entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.interval"), LocalizationService.Instance.Get("bunker.interval_sniper")));
                 break;
         }
-    }
-
-    private static Sprite ResolveOrbitalModuleIcon(
-        OrbitalModuleKind kind,
-        out Color color)
-    {
-        var presentation = OrbitalRewardIconResolver.Resolve(kind);
-        color = presentation.ImageTint;
-        return presentation.Sprite;
     }
 
     private BunkerSelectionWindowModel BuildUpgrades()
@@ -453,19 +464,18 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
             BunkerStationId.Upgrades);
         model.CloseOnConfirm = false;
 
+        model.ShowConfirmButton = false;
         AddNonNull(upgrades, presentation =>
         {
-            int level = progression.GetLevel(presentation.Type);
-            int cost = progression.GetUpgradeCost(presentation.Type);
-            bool maxed = level >= progression.MaxLevel;
             var entry = new BunkerSelectionEntryModel
             {
                 Id = presentation.Type.ToString(),
+                Icon = presentation.Icon,
+                PreviewIcon = presentation.PreviewIcon,
                 DisplayName = LocalizationService.Instance.Get(presentation.Title),
                 Category = string.IsNullOrWhiteSpace(presentation.Category)
                     ? LocalizationService.Instance.Get("bunker.meta_upgrade")
                     : LocalizationService.Instance.Get(presentation.Category),
-                Feature = GetUpgradeBonus(presentation.Type, level),
                 Description = LocalizationService.Instance.Get(presentation.Description),
                 Enabled = true,
                 CanConfirm = false
@@ -474,10 +484,6 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
                 progression,
                 presentation.Type,
                 LocalizationService.Instance.Get(presentation.Title));
-            entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.level"), $"{level} / {progression.MaxLevel}"));
-            entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.invested"), maxed
-                ? LocalizationService.Instance.Get("bunker.max")
-                : $"{progression.GetInvestedGold(presentation.Type)} / {cost}"));
             AddVisibleEntry(model, entry, presentation.RequiredStationLevel);
         });
         FinalizeUnlockPresentation(model);
@@ -506,11 +512,9 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
             var entry = new BunkerSelectionEntryModel
             {
                 Id = anomaly.Id,
+                Icon = catalog.anomalyIcon,
                 DisplayName = anomaly.DisplayName,
                 Category = LocalizationService.Instance.Get("bunker.stabilizer"),
-                Feature = GetAnomalyEffect(
-                    anomaly,
-                    progression.GetEffectValue(anomaly)),
                 Description = anomaly.Description,
                 Locked = !unlocked,
                 LockReason = unlocked
@@ -519,7 +523,6 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
                 CanConfirm = unlocked
             };
             entry.Progression = BuildAnomalyProgression(progression, anomaly, unlocked);
-            entry.Stats.Add(new BunkerSelectionStatModel(LocalizationService.Instance.Get("bunker.requirement"), string.Format(LocalizationService.Instance.Get("bunker.require_level"), anomaly.RequiredStationLevel)));
             AddVisibleEntry(model, entry, anomaly.RequiredStationLevel);
         });
         FinalizeUnlockPresentation(model);
@@ -589,8 +592,18 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
             entry.DisplayName,
             required));
         int stationLevel = model.Station != null ? model.Station.Level : 1;
-        if (BunkerSelectionUnlockRules.IsVisible(stationLevel, required))
-            model.Entries.Add(entry);
+        if (!BunkerSelectionUnlockRules.IsVisible(stationLevel, required))
+        {
+            entry.Locked = true;
+            entry.CanConfirm = false;
+            entry.LockReason = string.Format(LocalizationService.Instance.Get("bunker.required_station"), required);
+            if (entry.Progression != null)
+            {
+                entry.Progression.Locked = true;
+                entry.Progression.LockReason = entry.LockReason;
+            }
+        }
+        model.Entries.Add(entry);
     }
 
     private static void FinalizeUnlockPresentation(BunkerSelectionWindowModel model)
@@ -623,10 +636,8 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
             RequiredProgress = cost,
             AvailableCurrency = CurrencyManager.Instance != null
                 ? CurrencyManager.Instance.TotalGold : 0,
-            BonusText = GetUpgradeBonus(type, level),
-            ContextText = level >= progression.MaxLevel
-                ? string.Format(LocalizationService.Instance.Get("bunker.cap"), cap)
-                : string.Format(LocalizationService.Instance.Get("bunker.next_bonus"), GetUpgradeBonus(type, level + 1), cap),
+            BonusText = GetUpgradeBonus(type, level) + (level >= progression.MaxLevel
+                ? string.Empty : "  →  " + GetUpgradeBonus(type, level + 1)),
             Locked = capped,
             SupportsPartialInvestment = true,
             LockReason = capped
@@ -674,10 +685,8 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
             RequiredProgress = cost,
             AvailableCurrency = CurrencyManager.Instance != null
                 ? CurrencyManager.Instance.TotalGold : 0,
-            BonusText = GetAnomalyEffect(anomaly, progression.GetEffectValue(anomaly)),
-            ContextText = level >= anomaly.MaxMetaLevel
-                ? string.Format(LocalizationService.Instance.Get("bunker.cap"), cap)
-                : string.Format(LocalizationService.Instance.Get("bunker.next_anomaly"), GetAnomalyEffect(anomaly, anomaly.GetMetaEffectValue(level + 1)), cap),
+            BonusText = GetAnomalyEffect(anomaly, progression.GetEffectValue(anomaly)) + (level >= anomaly.MaxMetaLevel
+                ? string.Empty : $"  →  {anomaly.GetMetaEffectValue(level + 1):0.##}"),
             Locked = locked,
             SupportsPartialInvestment = true,
             LockReason = reason,
@@ -812,13 +821,6 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
         // or legacy display identifiers before CharacterId existed.
         return Array.Find(source, value => value != null &&
             (value.name == id || value.characterName == id));
-    }
-
-    private WeaponData FindByName(WeaponData[] source, string id)
-    {
-        if (source == null)
-            return null;
-        return Array.Find(source, value => value != null && value.name == id);
     }
 
     private AnomalyStabilizerData FindAnomaly(string id)

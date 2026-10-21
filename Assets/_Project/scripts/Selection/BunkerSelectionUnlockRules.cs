@@ -50,6 +50,6 @@ public static class BunkerSelectionUnlockRules
         }
         return names.Count == 0
             ? LocalizationService.Instance.Get("bunker.no_next_unlocks")
-            : LocalizationService.Instance.Get("bunker.next_unlocks") + string.Join("\n• ", names);
+            : LocalizationService.Instance.Get("bunker.next_unlocks") + string.Join(", ", names);
     }
 }

@@ -5114,6 +5114,7 @@ GameObject:
   - component: {fileID: 6851050094172858259}
   - component: {fileID: 8823526106083656740}
   - component: {fileID: 5970860918474973033}
+  - component: {fileID: 8704200000000000107}
   m_Layer: 5
   m_Name: SlotText (TMP)
   m_TagString: Untagged
@@ -5907,6 +5908,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2247941606788535239}
     m_Modifications:
+    - target: {fileID: 100000, guid: 992f2e2a9ada5639a4a4728b30d2f439, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 992f2e2a9ada5639a4a4728b30d2f439, type: 3}
       propertyPath: m_LocalPosition.y
       value: 3.5
@@ -5921,3 +5926,16 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 992f2e2a9ada5639a4a4728b30d2f439, type: 3}
   m_PrefabInstance: {fileID: 8406100000000000001}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &8704200000000000107
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8319583609894174643}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: slot.short_title

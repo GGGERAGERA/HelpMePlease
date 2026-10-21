@@ -160,18 +160,15 @@ public class CurrencyManager : MonoBehaviour
 
     public bool SpendGold(int amount)
     {
-        if (amount <= 0 || TotalGold < amount)
-            return false;
-
-        TotalGold -= amount;
-        SaveGold();
-        OnGoldUpdated?.Invoke(TotalGold);
-        return true;
+        return amount > 0 && TryChangeGoldExact(-amount, () => { });
     }
 
     // Stage a bunker's purchase/reservation/settlement in the same save boundary
-    // as its wallet change, before observers see either new state.
-    public bool TryChangeGoldExact(int delta, System.Action stageDependentState)
+    // as its wallet change, before observers see either new state. Staging must
+    // only update state/PlayerPrefs: no saves or notifications. Both notification
+    // paths run after the save, even if a currency observer throws.
+    public bool TryChangeGoldExact(int delta, System.Action stageDependentState,
+        System.Action notifyDependentState = null)
     {
         long next = (long)TotalGold + delta;
         if (committingGoldReward || next < 0 || next > int.MaxValue || stageDependentState == null) return false;
@@ -184,7 +181,8 @@ public class CurrencyManager : MonoBehaviour
             PlayerPrefs.Save();
         }
         finally { committingGoldReward = false; }
-        OnGoldUpdated?.Invoke(TotalGold);
+        try { OnGoldUpdated?.Invoke(TotalGold); }
+        finally { notifyDependentState?.Invoke(); }
         return true;
     }
 

@@ -8,24 +8,50 @@ public sealed class BunkerSelectionDetailView : MonoBehaviour
     [SerializeField] private GameObject contentRoot;
     [SerializeField] private TextMeshProUGUI emptyText;
     [SerializeField] private Image portrait;
+    [SerializeField] private Color lockedPortraitTint = new(0.24f, 0.29f, 0.3f, 1f);
     [SerializeField] private TextMeshProUGUI nameText;
     [SerializeField] private TextMeshProUGUI categoryText;
+    [SerializeField] private bool showCharacterCategory;
     [SerializeField] private GameObject featureBlock;
     [SerializeField] private TextMeshProUGUI featureText;
     [SerializeField] private GameObject statsBlock;
     [SerializeField] private TextMeshProUGUI statsText;
+    [SerializeField] private TextMeshProUGUI[] statValues;
+    [SerializeField] private GameObject concealedSubject;
+    [SerializeField] private Image[] subjectStatusLights;
+    [SerializeField] private Image subjectDisplayArt;
+    [SerializeField] private Image subjectGlow;
     [SerializeField] private GameObject descriptionBlock;
     [SerializeField] private TextMeshProUGUI descriptionText;
     [SerializeField] private GameObject lockBlock;
     [SerializeField] private TextMeshProUGUI lockText;
 
-    private Transform portraitParent;
-    private int portraitSibling;
-    private VerticalLayoutGroup contentLayout;
-    private LayoutElement identityLayout;
-    private float identityHeight;
-    private int originalRightPadding;
-    private bool characterLayout;
+    private string displayedSubjectId;
+    private bool displayedSubjectLocked;
+    private float selectionReaction;
+    private float unlockReaction;
+
+    private void OnDisable()
+    {
+        displayedSubjectId = null;
+        selectionReaction = unlockReaction = 0f;
+    }
+
+    private void Update()
+    {
+        selectionReaction = Mathf.MoveTowards(selectionReaction, 0f, Time.unscaledDeltaTime * 5f);
+        unlockReaction = Mathf.MoveTowards(unlockReaction, 0f, Time.unscaledDeltaTime * 2f);
+        if (subjectGlow != null)
+        {
+            float breathing = 0.07f + 0.025f * Mathf.Sin(Time.unscaledTime * 1.5f);
+            subjectGlow.color = displayedSubjectLocked
+                ? new Color(0.3f, 0.12f, 0.08f, 0.025f)
+                : new Color(0.1f, 0.72f, 0.65f, breathing + unlockReaction * 0.08f);
+        }
+        if (subjectDisplayArt != null && nameText != null)
+            nameText.color = Color.Lerp(StationPixelVisuals.Text, StationPixelVisuals.Cyan,
+                Mathf.Max(selectionReaction * 0.25f, unlockReaction * 0.45f));
+    }
 
     public void ShowEmpty(string message)
     {
@@ -47,21 +73,38 @@ public sealed class BunkerSelectionDetailView : MonoBehaviour
 
         contentRoot?.SetActive(true);
         emptyText?.gameObject.SetActive(false);
-        ApplyCharacterLayout(entry.IsCharacter);
-
+        if (entry.Id != displayedSubjectId)
+            selectionReaction = 1f;
+        else if (displayedSubjectLocked && !entry.Locked)
+            unlockReaction = 1f;
+        displayedSubjectId = entry.Id;
+        displayedSubjectLocked = entry.Locked;
+        if (subjectDisplayArt != null)
+            subjectDisplayArt.color = entry.Locked ? new Color(0.48f, 0.57f, 0.57f, 1f) : Color.white;
         SetText(nameText, entry.DisplayName);
-        SetOptional(categoryText, entry.Category);
+        SetOptional(categoryText, entry.IsCharacter && !showCharacterCategory ? null : entry.Category);
+        if (entry.IsCharacter && showCharacterCategory && categoryText != null)
+            categoryText.color = entry.Locked ? new Color(0.62f, 0.68f, 0.69f, 1f) : StationPixelVisuals.Cyan;
         SetBlock(featureBlock, featureText, entry.Feature);
-        SetBlock(descriptionBlock, descriptionText, entry.Description);
-        SetBlock(lockBlock, lockText, entry.Locked ? entry.LockReason : null);
+        SetBlock(descriptionBlock, descriptionText, entry.IsCharacter ? null : entry.Description);
+        SetBlock(lockBlock, lockText, entry.Locked && entry.Progression == null ? entry.LockReason : null);
+        if (concealedSubject != null)
+            concealedSubject.SetActive(entry.IsCharacter && entry.Locked);
+        if (subjectStatusLights != null)
+        {
+            Color state = entry.Locked ? new Color(0.85f, 0.31f, 0.25f, 1f) : StationPixelVisuals.Cyan;
+            foreach (Image light in subjectStatusLights)
+                light.color = state;
+        }
 
         if (portrait != null)
         {
-            portrait.sprite = entry.Icon;
-            portrait.enabled = entry.Icon != null;
+            portrait.sprite = entry.IsCharacter ? entry.CharacterVisual : entry.PreviewIcon != null ? entry.PreviewIcon : entry.Icon;
+            portrait.gameObject.SetActive(portrait.sprite != null);
+            portrait.enabled = portrait.sprite != null;
             portrait.preserveAspect = true;
             portrait.color = entry.Locked
-                ? StationPixelVisuals.Disabled
+                ? lockedPortraitTint
                 : entry.IconColor;
         }
 
@@ -72,6 +115,12 @@ public sealed class BunkerSelectionDetailView : MonoBehaviour
         else
         {
             statsBlock?.SetActive(true);
+            if (statValues != null && statValues.Length > 0)
+            {
+                for (int i = 0; i < statValues.Length; i++)
+                    SetOptional(statValues[i], i < entry.Stats.Count ? entry.Stats[i].Value : null);
+                return;
+            }
             var builder = new StringBuilder();
             for (int i = 0; i < entry.Stats.Count; i++)
             {
@@ -83,56 +132,6 @@ public sealed class BunkerSelectionDetailView : MonoBehaviour
             }
             SetText(statsText, builder.ToString());
         }
-    }
-
-    private void ApplyCharacterLayout(bool enabled)
-    {
-        if (portrait == null || contentRoot == null || characterLayout == enabled)
-            return;
-        if (portraitParent == null)
-        {
-            portraitParent = portrait.transform.parent;
-            portraitSibling = portrait.transform.GetSiblingIndex();
-            contentLayout = contentRoot.GetComponent<VerticalLayoutGroup>();
-            identityLayout = portraitParent.GetComponent<LayoutElement>();
-            identityHeight = identityLayout.preferredHeight;
-            originalRightPadding = contentLayout.padding.right;
-        }
-
-        characterLayout = enabled;
-        portrait.GetComponent<LayoutElement>().ignoreLayout = enabled;
-        portrait.transform.SetParent(enabled ? contentRoot.transform : portraitParent, false);
-        identityLayout.preferredHeight = enabled ? 76f : identityHeight;
-        if (enabled)
-        {
-            RectTransform rect = portrait.rectTransform;
-            rect.anchorMin = new Vector2(.5f, 0f);
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = new Vector2(8f, 24f);
-            rect.offsetMax = new Vector2(-16f, -24f);
-            UpdateCharacterPadding();
-        }
-        else
-        {
-            portrait.transform.SetSiblingIndex(portraitSibling);
-            contentLayout.padding.right = originalRightPadding;
-        }
-        LayoutRebuilder.MarkLayoutForRebuild((RectTransform)contentRoot.transform);
-    }
-
-    private void LateUpdate()
-    {
-        if (characterLayout)
-            UpdateCharacterPadding();
-    }
-
-    private void UpdateCharacterPadding()
-    {
-        int padding = Mathf.CeilToInt(((RectTransform)contentRoot.transform).rect.width * .5f) + 8;
-        if (contentLayout.padding.right == padding)
-            return;
-        contentLayout.padding.right = padding;
-        LayoutRebuilder.MarkLayoutForRebuild((RectTransform)contentRoot.transform);
     }
 
     private static void SetBlock(GameObject root, TextMeshProUGUI text, string value)

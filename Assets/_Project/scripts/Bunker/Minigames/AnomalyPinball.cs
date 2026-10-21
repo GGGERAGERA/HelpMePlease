@@ -411,6 +411,10 @@ public sealed partial class AnomalyPinball : ArcadeMinigame
     protected override void ShowRoundResult(bool won, string details, bool record)
     {
         coinActive = bonusActive = false; rewardFlash = 0; multiballTime = 0;
+        Result.text = L("ПАРТИЯ ОКОНЧЕНА", "ROUND COMPLETE")
+            + L($"\n\nОчки: {Score:N0}\nЗолото: +{coinsCollected * CoinReward}",
+                $"\n\nScore: {Score:N0}\nGold: +{coinsCollected * CoinReward}")
+            + (record ? L("\n\nНОВЫЙ РЕКОРД", "\n\nNEW RECORD") : "");
         Draw();
     }
     private void Hold(Button button, System.Action<bool> set)

@@ -1318,6 +1318,7 @@ GameObject:
   - component: {fileID: 1202027827174303705}
   - component: {fileID: 1685926785755706973}
   - component: {fileID: 5596311399071536338}
+  - component: {fileID: 8704200000000000104}
   m_Layer: 0
   m_Name: Stake
   m_TagString: Untagged
@@ -1943,6 +1944,7 @@ GameObject:
   - component: {fileID: 6624018833862077407}
   - component: {fileID: 528528159735125895}
   - component: {fileID: 3234401644611905336}
+  - component: {fileID: 8704200000000000103}
   m_Layer: 0
   m_Name: Title
   m_TagString: Untagged
@@ -2513,7 +2515,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &9108635983483652000
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4177,8 +4179,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 324, y: 333}
-  m_SizeDelta: {x: 36, y: 36}
+  m_AnchoredPosition: {x: 264, y: 333}
+  m_SizeDelta: {x: 156, y: 36}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1205454852952203482
 CanvasRenderer:
@@ -4274,6 +4276,7 @@ GameObject:
   - component: {fileID: 7387042184075024593}
   - component: {fileID: 3928621278450462253}
   - component: {fileID: 2957652944197614798}
+  - component: {fileID: 8704200000000000105}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -4850,6 +4853,7 @@ GameObject:
   - component: {fileID: 8281897067436059646}
   - component: {fileID: 1407572433401985569}
   - component: {fileID: 2541958208174078408}
+  - component: {fileID: 8704200000000000106}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -4874,7 +4878,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 30, y: 32}
+  m_SizeDelta: {x: 144, y: 32}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1407572433401985569
 CanvasRenderer:
@@ -4931,7 +4935,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 22
+  m_fontSize: 16
   m_fontSizeBase: 22
   m_fontWeight: 400
   m_enableAutoSizing: 0
@@ -5178,3 +5182,55 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
   localizationKey: slot.spin
+--- !u!114 &8704200000000000103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2855616704667397057}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: slot.title
+--- !u!114 &8704200000000000104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2303342502137908534}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: slot.stake
+--- !u!114 &8704200000000000105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7671554483183131893}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: slot.spin
+--- !u!114 &8704200000000000106
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8967156229978709581}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: arcade.exit

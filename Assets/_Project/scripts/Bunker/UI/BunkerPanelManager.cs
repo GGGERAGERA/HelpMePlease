@@ -106,7 +106,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
             return;
 
         CloseAll(false);
-        controller.ShowSelection(selectionSources?.Characters, this);
+        controller.ShowCharacters(selectionSources?.Characters, this);
     }
 
     public void OpenWeaponSelection()

@@ -167,14 +167,14 @@ MonoBehaviour:
     ru: "НЕДОСТАТОЧНО ЗОЛОТА"
     en: "INSUFFICIENT GOLD"
   - key: bunker.all_unlocked
-    ru: "ВСЕ ДОСТУПНЫЕ ОБЪЕКТЫ ОТКРЫТЫ"
-    en: "ALL AVAILABLE ITEMS UNLOCKED"
+    ru: ""
+    en: ""
   - key: bunker.no_next_unlocks
-    ru: "СЛЕДУЮЩИЙ УРОВЕНЬ: НОВЫХ ОБЪЕКТОВ НЕТ"
-    en: "NEXT LEVEL: NO NEW ITEMS"
+    ru: ""
+    en: ""
   - key: bunker.next_unlocks
-    ru: "СЛЕДУЮЩИЙ УРОВЕНЬ ОТКРОЕТ:\n• "
-    en: "NEXT LEVEL UNLOCKS:\n• "
+    ru: "ОТКРОЕТ: "
+    en: "UNLOCKS: "
   - key: bunker.health
     ru: "ЗДОРОВЬЕ"
     en: "HEALTH"
@@ -203,8 +203,8 @@ MonoBehaviour:
     ru: "УЛУЧШЕНИЕ НЕДОСТУПНО"
     en: "UPGRADE UNAVAILABLE"
   - key: bunker.upgrade_module
-    ru: "УЛУЧШИТЬ МОДУЛЬ"
-    en: "UPGRADE MODULE"
+    ru: "УЛУЧШИТЬ"
+    en: "UPGRADE"
   - key: bunker.damage
     ru: "УРОН"
     en: "DAMAGE"
@@ -220,6 +220,12 @@ MonoBehaviour:
   - key: bunker.interval_auto
     ru: "0.55 С"
     en: "0.55 S"
+  - key: bunker.interval_shotgun
+    ru: "1.05 С"
+    en: "1.05 S"
+  - key: bunker.interval_sniper
+    ru: "1.8 С"
+    en: "1.8 S"
   - key: bunker.interval_contact
     ru: "0.32 С"
     en: "0.32 S"
@@ -263,8 +269,8 @@ MonoBehaviour:
     ru: "УРОВЕНЬ СТАНЦИИ"
     en: "STATION LEVEL"
   - key: bunker.upgrade_station
-    ru: "УЛУЧШИТЬ СТАНЦИЮ"
-    en: "UPGRADE STATION"
+    ru: "УЛУЧШИТЬ"
+    en: "UPGRADE"
   - key: bunker.unlock_unavailable
     ru: "ДОСТУП НЕДОСТУПЕН"
     en: "ACCESS UNAVAILABLE"
@@ -299,11 +305,11 @@ MonoBehaviour:
     ru: "ЭФФЕКТ"
     en: "EFFECT"
   - key: bunker.slot_ready
-    ru: "СИСТЕМА ГОТОВА"
-    en: "SYSTEM READY"
+    ru: "\u0413\u041e\u0422\u041e\u0412 \u041a \u0418\u0413\u0420\u0415"
+    en: "READY TO PLAY"
   - key: bunker.slot_rules
-    ru: "3 СОВПАДЕНИЯ — НАГРАДА · 2 — ВОЗВРАТ"
-    en: "3 MATCHES — REWARD · 2 — REFUND"
+    ru: "3 \u0441\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u044f \u2014 \u043f\u0440\u0438\u0437 \u00b7 2 \u2014 \u0432\u043e\u0437\u0432\u0440\u0430\u0442\n3 \u0447\u0435\u0440\u0435\u043f\u0430 \u2014 \u0431\u0435\u0437 \u043f\u0440\u0438\u0437\u0430"
+    en: "3 matches \u2014 prize \u00b7 2 \u2014 refund\n3 skulls \u2014 no prize"
   - key: bunker.slot_spinning
     ru: "ВРАЩЕНИЕ"
     en: "SPINNING"
@@ -311,20 +317,20 @@ MonoBehaviour:
     ru: "НАГРАДА ПОЛУЧЕНА"
     en: "REWARD ACQUIRED"
   - key: bunker.slot_failure
-    ru: "НАГРАДА НЕ ВЫДАНА"
-    en: "NO REWARD ISSUED"
+    ru: "\u0411\u0415\u0417 \u0412\u042b\u0418\u0413\u0420\u042b\u0428\u0410"
+    en: "NO WIN"
   - key: bunker.slot_refund
     ru: "СТАВКА ВОЗВРАЩЕНА"
     en: "STAKE REFUNDED"
   - key: bunker.slot_no_reward
-    ru: "НАГРАДА НЕ ВЫДАНА"
-    en: "NO REWARD ISSUED"
+    ru: "\u041d\u0415\u0422 \u0421\u041e\u0412\u041f\u0410\u0414\u0415\u041d\u0418\u0419"
+    en: "NO MATCHES"
   - key: bunker.slot_skulls
-    ru: "ЧЕРЕП ×3 · НАГРАДА НЕ ВЫДАНА"
-    en: "SKULL ×3 · NO REWARD ISSUED"
+    ru: "3 \u0427\u0415\u0420\u0415\u041f\u0410 \u00b7 \u0411\u0415\u0417 \u041f\u0420\u0418\u0417\u0410"
+    en: "3 SKULLS \u00b7 NO PRIZE"
   - key: bunker.slot_retry
-    ru: "ДОСТУПЕН ПОВТОРНЫЙ ЗАПУСК"
-    en: "READY FOR ANOTHER SPIN"
+    ru: "\u041f\u041e\u041f\u0420\u041e\u0411\u0423\u0419\u0422\u0415 \u0415\u0429\u0401 \u0420\u0410\u0417"
+    en: "TRY AGAIN"
   - key: bunker.slot_50
     ru: "+50 ЗОЛОТА"
     en: "+50 GOLD"
@@ -341,8 +347,8 @@ MonoBehaviour:
     ru: "СИНХРОНИЗАЦИЯ БАРАБАНОВ…"
     en: "SYNCHRONIZING REELS…"
   - key: bunker.slot_begin_run
-    ru: "НАЧНИТЕ ВЫХОД ДЛЯ ПОВТОРНОГО ЗАПУСКА"
-    en: "START A RUN TO SPIN AGAIN"
+    ru: "\u041d\u0410\u0427\u041d\u0418\u0422\u0415 \u042d\u041a\u0421\u041f\u0415\u0414\u0418\u0426\u0418\u042e, \u0427\u0422\u041e\u0411\u042b \u0421\u042b\u0413\u0420\u0410\u0422\u042c \u0421\u041d\u041e\u0412\u0410"
+    en: "START AN EXPEDITION TO PLAY AGAIN"
   - key: bunker.slot_need_gold
     ru: "НЕДОСТАТОЧНО ЗОЛОТА — ТРЕБУЕТСЯ 50"
     en: "INSUFFICIENT GOLD — 50 REQUIRED"
@@ -371,8 +377,8 @@ MonoBehaviour:
     ru: "Выберите субъекта перед выходом."
     en: "Select a subject before deployment."
   - key: bunker.football_complete
-    ru: "ИСПЫТАНИЕ ЗАВЕРШЕНО"
-    en: "TEST COMPLETE"
+    ru: "\u0420\u0410\u0423\u041d\u0414 \u0417\u0410\u0412\u0415\u0420\u0428\u0401\u041d"
+    en: "ROUND COMPLETE"
   - key: bunker.summary_interrupted
     ru: "ЭКСПЕРИМЕНТ ПРЕРВАН"
     en: "EXPERIMENT INTERRUPTED"
@@ -410,17 +416,17 @@ MonoBehaviour:
     ru: "ТЕКУЩИЙ ЛИМИТ: {0}"
     en: "CURRENT LIMIT: {0}"
   - key: bunker.next_damage
-    ru: "СЛЕДУЮЩИЙ: УРОН ×{0:0.0}\n"
-    en: "NEXT: DAMAGE ×{0:0.0}\n"
+    ru: "ДАЛЕЕ: УРОН ×{0:0.0}"
+    en: "NEXT: DAMAGE ×{0:0.0}"
   - key: bunker.module_damage
     ru: "ПОСТОЯННЫЙ УРОН ×{0:0.0}"
     en: "PERMANENT DAMAGE ×{0:0.0}"
   - key: bunker.next_bonus
-    ru: "СЛЕДУЮЩИЙ: {0}\nТЕКУЩИЙ ЛИМИТ: {1}"
-    en: "NEXT: {0}\nCURRENT LIMIT: {1}"
+    ru: "ДАЛЕЕ: {0}"
+    en: "NEXT: {0}"
   - key: bunker.next_anomaly
-    ru: "СЛЕДУЮЩИЙ: {0}\nТЕКУЩИЙ ЛИМИТ: {1}"
-    en: "NEXT: {0}\nCURRENT LIMIT: {1}"
+    ru: "ДАЛЕЕ: {0}"
+    en: "NEXT: {0}"
   - key: bunker.required_station
     ru: "ТРЕБУЕТСЯ УРОВЕНЬ СТАНЦИИ {0}"
     en: "REQUIRES STATION LEVEL {0}"
@@ -443,23 +449,23 @@ MonoBehaviour:
     ru: "ПРОГРЕСС: {0} / {1}"
     en: "PROGRESS: {0} / {1}"
   - key: bunker.bonus_hp
-    ru: "ТЕКУЩИЙ БОНУС: +{0} ЗДОРОВЬЯ"
-    en: "CURRENT BONUS: +{0} HEALTH"
+    ru: "+{0} ЗДОРОВЬЯ"
+    en: "+{0} HEALTH"
   - key: bunker.bonus_damage
-    ru: "ТЕКУЩИЙ БОНУС: +{0}% УРОНА"
-    en: "CURRENT BONUS: +{0}% DAMAGE"
+    ru: "+{0}% УРОНА"
+    en: "+{0}% DAMAGE"
   - key: bunker.bonus_speed
-    ru: "ТЕКУЩИЙ БОНУС: +{0}% СКОРОСТИ"
-    en: "CURRENT BONUS: +{0}% SPEED"
+    ru: "+{0}% СКОРОСТИ"
+    en: "+{0}% SPEED"
   - key: bunker.bonus_xp
-    ru: "ТЕКУЩИЙ БОНУС: +{0}% ОПЫТА"
-    en: "CURRENT BONUS: +{0}% EXPERIENCE"
+    ru: "+{0}% ОПЫТА"
+    en: "+{0}% EXPERIENCE"
   - key: bunker.bonus_gold
-    ru: "ТЕКУЩИЙ БОНУС: +{0}% ЗОЛОТА"
-    en: "CURRENT BONUS: +{0}% GOLD"
+    ru: "+{0}% ЗОЛОТА"
+    en: "+{0}% GOLD"
   - key: bunker.bonus_pickup
-    ru: "ТЕКУЩИЙ БОНУС: +{0}% РАДИУСА"
-    en: "CURRENT BONUS: +{0}% RADIUS"
+    ru: "+{0}% РАДИУСА"
+    en: "+{0}% RADIUS"
   - key: bunker.wallet
     ru: "ЗОЛОТО: {0}"
     en: "GOLD: {0}"
@@ -491,11 +497,11 @@ MonoBehaviour:
     ru: "КОНТРОЛЬНЫЙ РЕКОРД\n<size=30>{0}</size>\n<size=12>"
     en: "BENCHMARK\n<size=30>{0}</size>\n<size=12>"
   - key: bunker.football_record
-    ru: "ЛИЧНЫЙ РЕКОРД ОБНОВЛЁН. +{0} ЗОЛОТА"
-    en: "PERSONAL RECORD UPDATED. +{0} GOLD"
+    ru: "НОВЫЙ РЕКОРД: +{0} ЗОЛОТА"
+    en: "NEW BEST: +{0} GOLD"
   - key: bunker.football_benchmark_reward
-    ru: "КОНТРОЛЬНЫЙ РЕКОРД ПРЕВЫШЕН\n+{0} ЗОЛОТА"
-    en: "BENCHMARK EXCEEDED\n+{0} GOLD"
+    ru: "РЕКОРД АРЕНЫ: +{0} ЗОЛОТА"
+    en: "ARENA BEST: +{0} GOLD"
   - key: bunker.summary_gold
     ru: "ПОЛУЧЕНО ЗОЛОТА: +{0}"
     en: "GOLD ACQUIRED: +{0}"
@@ -731,17 +737,17 @@ MonoBehaviour:
     ru: "Vika"
     en: "Vika"
   - key: character.pattern.circle
-    ru: "ОРБИТАЛЬНЫЙ ПАТТЕРН\nКРУГОВОЙ"
-    en: "ORBITAL PATTERN\nCIRCULAR"
+    ru: "КРУГОВАЯ ОРБИТА"
+    en: "CIRCULAR ORBIT"
   - key: character.pattern.experimental
-    ru: "ОРБИТАЛЬНЫЙ ПАТТЕРН\nЭКСПЕРИМЕНТАЛЬНЫЙ"
-    en: "ORBITAL PATTERN\nEXPERIMENTAL"
+    ru: "СВОЯ ОРБИТА"
+    en: "CUSTOM ORBIT"
   - key: character.trait.circle
-    ru: "Модули движутся вокруг субъекта по круговым орбитам."
-    en: "Modules move around the subject along circular orbits."
+    ru: "Оружие движется вокруг героя по кругу."
+    en: "Weapons orbit the character in a circle."
   - key: character.trait.custom
-    ru: "Пользователь сам формирует траекторию каждого нового кольца."
-    en: "The user defines the trajectory of each new ring."
+    ru: "Рисуйте траекторию оружия при создании новых колец."
+    en: "Draw a weapon orbit when creating a new ring."
   - key: character.gera.description
     ru: "СУБЪЕКТ С КРУГОВЫМ ОРБИТАЛЬНЫМ ПАТТЕРНОМ."
     en: "SUBJECT WITH A CIRCULAR ORBITAL PATTERN."
@@ -1406,8 +1412,8 @@ MonoBehaviour:
     ru: "ПРОТОКОЛ ВЫХОДА"
     en: "ESCAPE PROTOCOL"
   - key: interaction.depth
-    ru: "ВЫБОР ГЛУБИНЫ"
-    en: "DEPTH SELECT"
+    ru: "\u041a\u0410\u0420\u0422\u0410 \u042d\u041a\u0421\u041f\u0415\u0414\u0418\u0426\u0418\u0419"
+    en: "EXPEDITION MAP"
   - key: interaction.slot
     ru: "ОРБИТАЛЬНЫЙ АВТОМАТ — 50 ЗОЛОТА"
     en: "ORBITAL SLOT — 50 GOLD"
@@ -1418,11 +1424,11 @@ MonoBehaviour:
     ru: "ВЫБРАТЬ ПЕРСОНАЖА"
     en: "SELECT CHARACTER"
   - key: interaction.upgrade
-    ru: "УЛУЧШЕНИЯ"
-    en: "UPGRADES"
+    ru: "\u0423\u041b\u0423\u0427\u0428\u0415\u041d\u0418\u042f \u041f\u0415\u0420\u0421\u041e\u041d\u0410\u0416\u0410"
+    en: "CHARACTER UPGRADES"
   - key: interaction.module
-    ru: "ВЫБРАТЬ МОДУЛЬ"
-    en: "SELECT MODULE"
+    ru: "\u041c\u041e\u0414\u0423\u041b\u0418 \u041e\u0420\u0423\u0416\u0418\u042f"
+    en: "WEAPON MODULES"
   - key: interaction.start
     ru: "НАЧАТЬ ЗАБЕГ"
     en: "START RUN"
@@ -1460,11 +1466,11 @@ MonoBehaviour:
     ru: "ПРОБЕЛ"
     en: "SPACE"
   - key: football.panel_title
-    ru: "SUBJECT#42 / ФУТБОЛ"
-    en: "SUBJECT#42 / FOOTBALL"
+    ru: "\u0424\u0423\u0422\u0411\u041e\u041b"
+    en: "FOOTBALL"
   - key: football.running
-    ru: "СЕССИЯ АКТИВНА"
-    en: "SESSION ACTIVE"
+    ru: "\u0411\u0415\u0421\u041f\u041b\u0410\u0422\u041d\u0410\u042f \u0418\u0413\u0420\u0410"
+    en: "FREE PLAY"
   - key: football.score
     ru: "СЧЁТ"
     en: "SCORE"
@@ -1550,16 +1556,16 @@ MonoBehaviour:
     ru: "ХАРАКТЕРИСТИКИ"
     en: "STATS"
   - key: slot.stake
-    ru: "СТАВКА: 50"
-    en: "STAKE: 50"
+    ru: "\u0421\u0422\u0410\u0412\u041a\u0410: 50 \u0417\u041e\u041b\u041e\u0422\u0410"
+    en: "STAKE: 50 GOLD"
   - key: slot.title
-    ru: "ОРБИТАЛЬНЫЙ АВТОМАТ"
-    en: "ORBITAL SLOT MACHINE"
+    ru: "\u041e\u0420\u0411\u0418\u0422\u0410\u041b\u042c\u041d\u042b\u0419 \u0410\u0412\u0422\u041e\u041c\u0410\u0422"
+    en: "ORBITAL SLOT"
   - key: slot.serial
     ru: "БУНКЕР / ОРБИТАЛЬНЫЙ ТЕРМИНАЛ  •  03"
     en: "BUNKER / ORBITAL TERMINAL  •  03"
   - key: slot.spin
-    ru: "ЗАПУСК"
+    ru: "\u041a\u0420\u0423\u0422\u0418\u0422\u042c"
     en: "SPIN"
   - key: common.back
     ru: "НАЗАД"
@@ -1963,12 +1969,11 @@ MonoBehaviour:
     ru: "Escape Protocol \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D"
     en: Escape Protocol complete
   - key: escape.project_progress
-    ru: "\u041E\u0431\u0449\u0438\u0439 \u043F\u0440\u043E\u0433\u0440\u0435\u0441\u0441:
-      {0}/{1} \u044F\u0434\u0435\u0440"
-    en: 'Project progress: {0}/{1} cores'
+    ru: "\u041f\u043e\u0434\u0433\u043e\u0442\u043e\u0432\u043a\u0430: {0}/{1} \u044f\u0434\u0435\u0440"
+    en: "Preparation: {0}/{1} cores"
   - key: escape.stage_title
-    ru: "\u042D\u0442\u0430\u043F {0} \u2014 {1}"
-    en: "Stage {0} \u2014 {1}"
+    ru: "{0}. {1}"
+    en: "{0}. {1}"
   - key: escape.next
     ru: "{0}\n\u0412\u043B\u043E\u0436\u0435\u043D\u043E: {1}/{2} \u044F\u0434\u0435\u0440"
     en: '{0}
@@ -1978,8 +1983,8 @@ MonoBehaviour:
     ru: "\u042F\u0434\u0440\u0430: {0}"
     en: 'Cores: {0}'
   - key: escape.close
-    ru: "\u0417\u0410\u041A\u0420\u042B\u0422\u042C"
-    en: CLOSE
+    ru: "\u0417\u0410\u041a\u0420\u042b\u0422\u042c  ESC"
+    en: "CLOSE  ESC"
   - key: escape.invest
     ru: "\u0412\u041B\u041E\u0416\u0418\u0422\u042C \u042F\u0414\u0420\u0410: {0}"
     en: 'INVEST CORES: {0}'
@@ -2026,3 +2031,156 @@ MonoBehaviour:
     ru: "\u0424\u0438\u043D\u0430\u043B\u044C\u043D\u043E\u0435 \u0438\u0441\u043F\u044B\u0442\u0430\u043D\u0438\u0435
       \u043F\u0440\u043E\u0439\u0434\u0435\u043D\u043E"
     en: Final trial cleared
+  - key: escape.stage_progress
+    ru: "{0}/{1} \u044f\u0434\u0435\u0440"
+    en: "{0}/{1} cores"
+  - key: escape.stage_cost
+    ru: "{0} \u044f\u0434\u0435\u0440"
+    en: "{0} cores"
+  - key: bunker.module_name.saw
+    ru: "\u041f\u0438\u043b\u0430"
+    en: "Saw"
+  - key: bunker.module_name.shotgun
+    ru: "\u0414\u0440\u043e\u0431\u043e\u0432\u0438\u043a"
+    en: "Shotgun"
+  - key: bunker.module_name.sniper
+    ru: "\u0421\u043d\u0430\u0439\u043f\u0435\u0440\u043a\u0430"
+    en: "Sniper"
+  - key: bunker.module_shotgun_desc
+    ru: "\u0428\u0438\u0440\u043e\u043a\u0438\u0439 \u0437\u0430\u043b\u043f \u0434\u043b\u044f \u0431\u043b\u0438\u0436\u043d\u0435\u0433\u043e \u0431\u043e\u044f."
+    en: "A wide burst for close-range combat."
+  - key: bunker.module_sniper_desc
+    ru: "\u0414\u0430\u043b\u044c\u043d\u0438\u0439 \u0432\u044b\u0441\u0442\u0440\u0435\u043b, \u0438\u0433\u043d\u043e\u0440\u0438\u0440\u0443\u044e\u0449\u0438\u0439 \u0449\u0438\u0442\u044b."
+    en: "Long-range shots that bypass shields."
+  - key: bunker.module_spread
+    ru: "\u0417\u0410\u041b\u041f"
+    en: "SPREAD FIRE"
+  - key: football.title
+    ru: "\u0424\u0423\u0422\u0411\u041e\u041b"
+    en: "FOOTBALL"
+  - key: football.play
+    ru: "\u0424\u0423\u0422\u0411\u041e\u041b \u00b7 \u0411\u0415\u0421\u041f\u041b\u0410\u0422\u041d\u041e"
+    en: "FOOTBALL \u00b7 FREE"
+  - key: football.result_controls
+    ru: "\u0421\u043b\u0435\u0434\u0443\u044e\u0449\u0430\u044f \u043f\u0430\u0440\u0442\u0438\u044f \u2014 \u0443 \u0442\u0435\u0440\u043c\u0438\u043d\u0430\u043b\u0430"
+    en: "Start another round at the terminal"
+  - key: arcade.pinball
+    ru: "\u041f\u0418\u041d\u0411\u041e\u041b"
+    en: "PINBALL"
+  - key: arcade.roulette
+    ru: "\u0420\u0423\u041b\u0415\u0422\u041a\u0410"
+    en: "ROULETTE"
+  - key: slot.short_title
+    ru: "\u0410\u0412\u0422\u041e\u041c\u0410\u0422"
+    en: "SLOT"
+  - key: arcade.exit
+    ru: "\u0412\u042b\u0425\u041e\u0414  ESC"
+    en: "EXIT  ESC"
+  - key: gallery.title
+    ru: "\u0413\u0410\u041b\u0415\u0420\u0415\u042f \u0412\u0420\u0410\u0413\u041e\u0412"
+    en: "ENEMY GALLERY"
+  - key: gallery.switch
+    ru: "\u041f\u041e\u041f\u0410\u0414\u0418 \u041c\u042f\u0427\u041e\u041c,\n\u0427\u0422\u041e\u0411\u042b \u0421\u041c\u0415\u041d\u0418\u0422\u042c \u0412\u0420\u0410\u0413\u0410"
+    en: "HIT WITH THE BALL\nTO CHANGE ENEMY"
+  - key: gallery.controls
+    ru: "\u041b\u041a\u041c / \u041f\u0420\u041e\u0411\u0415\u041b \u2014 \u0417\u0410\u0420\u042f\u0414 \u0418 \u0423\u0414\u0410\u0420 \u00b7 F \u2014 \u0412\u0415\u0414\u0415\u041d\u0418\u0415"
+    en: "LMB / SPACE \u2014 CHARGE AND KICK \u00b7 F \u2014 DRIBBLE"
+  - key: gallery.description
+    ru: "\u041f\u041e\u0412\u0415\u0414\u0415\u041d\u0418\u0415"
+    en: "BEHAVIOUR"
+  - key: gallery.tip
+    ru: "\u0422\u0410\u041a\u0422\u0418\u041a\u0410"
+    en: "TACTICS"
+  - key: gallery.empty
+    ru: "\u041d\u0415\u0422 \u0417\u0410\u041f\u0418\u0421\u0415\u0419"
+    en: "NO ENTRIES"
+  - key: gallery.basic.name
+    ru: "\u041e\u0431\u044b\u0447\u043d\u044b\u0439"
+    en: "Grunt"
+  - key: gallery.basic.description
+    ru: "Преследует цель.\nОпасен в группе."
+    en: "Chases in melee.\nDangerous in groups."
+  - key: gallery.basic.tip
+    ru: "\u0414\u0435\u0440\u0436\u0438 \u0434\u0438\u0441\u0442\u0430\u043d\u0446\u0438\u044e."
+    en: "Keep your distance."
+  - key: gallery.elite.name
+    ru: "\u042d\u043b\u0438\u0442\u043d\u044b\u0439"
+    en: "Elite"
+  - key: gallery.elite.description
+    ru: "Больше здоровья.\nОпаснее вблизи."
+    en: "More health.\nStronger up close."
+  - key: gallery.elite.tip
+    ru: "Не давай себя\nокружить."
+    en: "Avoid getting\nsurrounded."
+  - key: gallery.bomber.name
+    ru: "\u041f\u043e\u0434\u0440\u044b\u0432\u043d\u0438\u043a"
+    en: "Bomber"
+  - key: gallery.bomber.description
+    ru: "Взрывается рядом.\nУрон по области."
+    en: "Explodes up close.\nArea damage."
+  - key: gallery.bomber.tip
+    ru: "Отойди перед\nвзрывом."
+    en: "Move away before\nthe blast."
+  - key: gallery.shooter.name
+    ru: "\u0421\u0442\u0440\u0435\u043b\u043e\u043a"
+    en: "Shooter"
+  - key: gallery.shooter.description
+    ru: "\u0410\u0442\u0430\u043a\u0443\u0435\u0442 \u0438\u0437\u0434\u0430\u043b\u0435\u043a\u0430."
+    en: "Attacks from range."
+  - key: gallery.shooter.tip
+    ru: "\u041d\u0435 \u0441\u0442\u043e\u0439 \u043d\u0430 \u043c\u0435\u0441\u0442\u0435."
+    en: "Keep moving."
+  - key: gallery.boss.name
+    ru: "\u0411\u043e\u0441\u0441"
+    en: "Boss"
+  - key: gallery.boss.description
+    ru: "Несколько атак.\nМеняет приёмы."
+    en: "Several attacks.\nChanges patterns."
+  - key: gallery.boss.tip
+    ru: "Двигайся между\nатаками."
+    en: "Move between\nattacks."
+  - key: bunker.characters
+    ru: "ПЕРСОНАЖИ"
+    en: "CHARACTERS"
+  - key: bunker.character.locked
+    ru: "ЗАКРЫТ"
+    en: "LOCKED"
+  - key: bunker.character.current
+    ru: "ВЫБРАН"
+    en: "SELECTED"
+  - key: bunker.character.available
+    ru: "ДОСТУПЕН"
+    en: "AVAILABLE"
+  - key: bunker.character.done
+    ru: "ГОТОВО"
+    en: "DONE"
+  - key: bunker.character.requires_station
+    ru: "Откроется на {0} уровне станции."
+    en: "Unlocks at station level {0}."
+  - key: bunker.subject.number
+    ru: "СУБЪЕКТ {0:00}"
+    en: "SUBJECT {0:00}"
+  - key: bunker.subject.unknown
+    ru: "НЕИЗВЕСТНО"
+    en: "UNKNOWN"
+  - key: bunker.subject.station_level
+    ru: "Уровень станции {0}"
+    en: "Station level {0}"
+  - key: bunker.subject.card_level
+    ru: "УР. {0}"
+    en: "LV. {0}"
+  - key: bunker.subject.effect.circle
+    ru: "Оружие вращается вокруг героя."
+    en: "Weapons orbit the subject."
+  - key: bunker.subject.effect.eight
+    ru: "Оружие движется по восьмёрке."
+    en: "Weapons follow a figure eight."
+  - key: bunker.subject.effect.custom
+    ru: "Траекторию оружия задаёте вы."
+    en: "You draw the weapon's path."
+  - key: character.pattern.figure_eight
+    ru: "ВОСЬМЁРКА"
+    en: "FIGURE EIGHT"
+  - key: character.trait.figure_eight
+    ru: "Оружие движется по орбите в форме восьмёрки."
+    en: "Weapons follow a figure-eight orbit."
