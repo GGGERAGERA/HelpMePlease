@@ -4,11 +4,14 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
 {
     [SerializeField] private Camera targetCamera;
     [SerializeField] private LayerMask interactionMask;
+    [SerializeField] private bool arrowsOnly;
+    private readonly Collider2D[] hits = new Collider2D[32];
 
     [Header("Panel Navigation")]
     [SerializeField] private BunkerPanelManager panelManager;
 
     private BunkerInteractableCollider current;
+    private BunkerInteractionIndicators indicators;
 
     private bool IsInputBlocked => Time.timeScale <= 0f || SceneTransitionOverlay.IsTransitioning ||
         (Panels != null && Panels.IsAnyPanelOpen);
@@ -17,6 +20,7 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
 
     private void Awake()
     {
+        indicators = GetComponent<BunkerInteractionIndicators>();
         if (targetCamera == null)
             targetCamera = Camera.main;
     }
@@ -29,13 +33,15 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
 
     private void Update()
     {
-        UpdateHover();
+        if (targetCamera == null) return;
+        Vector2 mouseWorld = targetCamera.ScreenToWorldPoint(Input.mousePosition);
+        UpdateHoverAt(mouseWorld);
 
         if (Input.GetMouseButtonDown(0))
-            TryInteract();
+            TryInteractAt(mouseWorld);
     }
 
-    private void UpdateHover()
+    public void UpdateHoverAt(Vector2 worldPosition)
     {
         if (IsInputBlocked)
         {
@@ -44,7 +50,7 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
             return;
         }
 
-        BunkerInteractableCollider next = RaycastInteractable();
+        BunkerInteractableCollider next = RaycastInteractable(worldPosition);
 
         if (next == current)
             return;
@@ -56,42 +62,50 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
         current?.Hoverable?.SetHovered(true);
     }
 
-    private void TryInteract()
+    public bool TryInteractAt(Vector2 worldPosition)
     {
         if (IsInputBlocked)
-            return;
+            return false;
 
-        BunkerInteractableCollider target = RaycastInteractable();
+        BunkerInteractableCollider target = RaycastInteractable(worldPosition);
 
         if (target == null)
-            return;
+            return false;
 
         IBunkerInteractable interactable = target.Interactable;
 
         if (interactable == null || !interactable.CanInteract)
-            return;
+            return false;
 
         interactable.Interact();
+        return true;
     }
 
-    private BunkerInteractableCollider RaycastInteractable()
+    private BunkerInteractableCollider RaycastInteractable(Vector2 worldPosition)
     {
-        if (targetCamera == null)
-            return null;
-
-        Vector2 mouseWorld = targetCamera.ScreenToWorldPoint(Input.mousePosition);
-        Collider2D hit = Physics2D.OverlapPoint(mouseWorld, interactionMask);
-
-        if (hit == null)
-            return null;
-
-        BunkerInteractableCollider target =
-            hit.GetComponent<BunkerInteractableCollider>();
-
-        return target != null &&
-            target.Interactable != null &&
-            target.Interactable.CanInteract
-                ? target
-                : null;
+        var filter = new ContactFilter2D { useTriggers = true };
+        filter.SetLayerMask(interactionMask);
+        int count = Physics2D.OverlapPoint(worldPosition, filter, hits);
+        BunkerInteractableCollider best = null;
+        float closest = float.PositiveInfinity;
+        int bestPriority = int.MaxValue;
+        for (int i = 0; i < count; i++)
+        {
+            var candidate = hits[i].GetComponent<BunkerInteractableCollider>();
+            if (candidate == null || candidate.Interactable == null || !candidate.Interactable.CanInteract) continue;
+            var arrow = candidate.GetComponent<BunkerInteractionArrow>();
+            var indicator = arrow;
+            if(indicator == null && indicators != null && candidate.Interactable is MonoBehaviour source)
+                indicators.TryGetArrow(source,out indicator);
+            // The same proximity policy applies to both the arrow and the existing body.
+            if (arrowsOnly && (indicator == null || !indicator.IsVisible || !indicator.CanInteractNow)) continue;
+            int priority = arrow != null ? 0 : 1;
+            float distance = ((Vector2)hits[i].bounds.center - worldPosition).sqrMagnitude;
+            bool nearer = distance < closest || (Mathf.Approximately(distance, closest) &&
+                (best == null || candidate.GetInstanceID() < best.GetInstanceID()));
+            if (priority < bestPriority || (priority == bestPriority && nearer))
+            { best = candidate; closest = distance; bestPriority = priority; }
+        }
+        return best;
     }
 }

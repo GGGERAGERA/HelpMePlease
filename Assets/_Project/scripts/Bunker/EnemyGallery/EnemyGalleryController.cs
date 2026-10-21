@@ -6,7 +6,7 @@ namespace Subject42.Bunker.Gallery
     /// <summary>Authored on the physical target; all display references belong to this room.</summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Collider2D))]
-    public sealed class EnemyGalleryController : MonoBehaviour
+    public sealed class EnemyGalleryController : MonoBehaviour, IBunkerInteractable
     {
         [Serializable]
         public sealed class Entry
@@ -41,6 +41,14 @@ namespace Subject42.Bunker.Gallery
         private LocalizationService localization;
 
         public int CurrentIndex => currentIndex;
+        public bool CanInteract => isActiveAndEnabled && enemies.Length > 0 && feedbackRemaining <= 0f;
+        public string InteractionText => LocalizationService.EnsureExists().Get("gallery.title");
+
+        public void Interact()
+        {
+            if (!CanInteract) return;
+            Advance();
+        }
 
         private void Awake() => restingColor = buttonFace.color;
 
@@ -77,6 +85,11 @@ namespace Subject42.Bunker.Gallery
                 !collision.rigidbody || !collision.rigidbody.TryGetComponent<BallRollVisual>(out _)) return;
             // A brief lockout also coalesces multiple ball contacts in the same physics step.
             if (feedbackRemaining > 0f || enemies.Length == 0) return;
+            Advance();
+        }
+
+        private void Advance()
+        {
             currentIndex = (currentIndex + 1) % enemies.Length;
             ShowCurrent();
             buttonFace.color = hitColor;

@@ -5,6 +5,7 @@ using UnityEngine;
 public sealed class BunkerStationLevelView : MonoBehaviour
 {
     [SerializeField] private BunkerStationId stationId;
+    [SerializeField] private bool displayWorldLabels = true;
     [SerializeField] private Vector3 indicatorOffset = new(0f, 2f, 0f);
 
     private TextMeshPro levelText;
@@ -13,12 +14,14 @@ public sealed class BunkerStationLevelView : MonoBehaviour
 
     private void Awake()
     {
+        if (!displayWorldLabels) return;
         EnsureView();
         Refresh();
     }
 
     private void OnEnable()
     {
+        if (!displayWorldLabels) return;
         LocalizationService.Instance.LanguageChanged += HandleLanguageChanged;
         BindProgression();
         Refresh();
@@ -26,6 +29,7 @@ public sealed class BunkerStationLevelView : MonoBehaviour
 
     private void Start()
     {
+        if (!displayWorldLabels) return;
         // BunkerContext may initialize after prefab OnEnable.
         BindProgression();
         Refresh();

@@ -25,6 +25,7 @@ public sealed class BunkerSelectionDetailView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI descriptionText;
     [SerializeField] private GameObject lockBlock;
     [SerializeField] private TextMeshProUGUI lockText;
+    [SerializeField] private BunkerStationItemDetail itemDetail;
 
     private string displayedSubjectId;
     private bool displayedSubjectLocked;
@@ -56,6 +57,7 @@ public sealed class BunkerSelectionDetailView : MonoBehaviour
     public void ShowEmpty(string message)
     {
         contentRoot?.SetActive(false);
+        itemDetail?.gameObject.SetActive(false);
         if (emptyText != null)
         {
             emptyText.gameObject.SetActive(true);
@@ -71,6 +73,14 @@ public sealed class BunkerSelectionDetailView : MonoBehaviour
             return;
         }
 
+        itemDetail?.gameObject.SetActive(!entry.IsCharacter);
+        if (!entry.IsCharacter && itemDetail != null)
+        {
+            contentRoot?.SetActive(false);
+            emptyText?.gameObject.SetActive(false);
+            itemDetail.Bind(entry);
+            return;
+        }
         contentRoot?.SetActive(true);
         emptyText?.gameObject.SetActive(false);
         if (entry.Id != displayedSubjectId)

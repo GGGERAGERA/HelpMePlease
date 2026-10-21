@@ -2,7 +2,8 @@ using UnityEngine;
 
 /// <summary>
 /// Serialized map of the reusable station prefab regions.
-/// The hierarchy and layout live in StationWindow.prefab.
+/// The production hierarchy lives in CharacterSelectionWindow.prefab, shared
+/// by all four stations. Its character and item content slots are composed.
 /// </summary>
 public sealed class StationUIShell : MonoBehaviour
 {

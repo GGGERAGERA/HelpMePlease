@@ -10,6 +10,7 @@ public sealed class BunkerSelectionWindow : MonoBehaviour
     [SerializeField] private TextMeshProUGUI sectionTitleText;
     [SerializeField] private RectTransform cardsRoot;
     [SerializeField] private BunkerSelectionCardView cardPrefab;
+    [SerializeField] private float itemCardHeight = 90f;
 
     [Header("Reusable Regions")]
     [SerializeField] private BunkerSelectionDetailView detailView;
@@ -27,6 +28,7 @@ public sealed class BunkerSelectionWindow : MonoBehaviour
     private BunkerSelectionWindowModel model;
     private BunkerSelectionEntryModel selected;
     private BunkerPanelManager panelManager;
+    private Vector2 authoredCardSize;
 
     public bool IsOpen => gameObject.activeInHierarchy && source != null;
 
@@ -43,6 +45,8 @@ public sealed class BunkerSelectionWindow : MonoBehaviour
 
     private void Awake()
     {
+        var grid = cardsRoot != null ? cardsRoot.GetComponent<GridLayoutGroup>() : null;
+        if (grid != null) authoredCardSize = grid.cellSize;
         backButton?.onClick.AddListener(Back);
         confirmButton?.onClick.AddListener(Confirm);
         settingsButton?.onClick.AddListener(OpenSettings);
@@ -107,6 +111,10 @@ public sealed class BunkerSelectionWindow : MonoBehaviour
         SetText(confirmButtonText, model.ConfirmText);
         stationProgress?.Bind(model.Station);
         ApplyLayout(model.CardsOnly, model.ShowConfirmButton);
+        var grid = cardsRoot != null ? cardsRoot.GetComponent<GridLayoutGroup>() : null;
+        if (grid != null && authoredCardSize.y > 0)
+            grid.cellSize = new Vector2(authoredCardSize.x,
+                model.Entries.Exists(entry => entry != null && entry.IsCharacter) ? authoredCardSize.y : itemCardHeight);
 
         for (int i = 0; i < model.Entries.Count; i++)
         {

@@ -62,24 +62,26 @@ public sealed class ArcadePrototypeSmokeTests
         yield return null;
         var game = Object.FindFirstObjectByType<AnomalyPinball>();
         var cursor = Object.FindFirstObjectByType<BunkerCursorInteractor>();
-        var camera = (Camera)Read(cursor, "targetCamera");
-        var proxy = game.transform.Find("ArcadeInteraction").GetComponent<BunkerInteractableCollider>();
-        var body = game.GetComponentsInChildren<SpriteRenderer>().Single(r => r.name == "Element1");
+        var playerBody = PlayerRuntimeReference.CachedPlayer.GetComponent<Rigidbody2D>();
+        playerBody.interpolation = RigidbodyInterpolation2D.None;
+        playerBody.position = (Vector2)game.transform.position + Vector2.down;
+        Physics2D.SyncTransforms(); yield return null; yield return null;
+        var arrow = Object.FindObjectsByType<BunkerInteractionArrow>(FindObjectsSortMode.None)
+            .Single(a=>a.Source is ArcadeGameStation && a.Source.GetComponent<AnomalyPinball>()!=null);
+        var proxy = arrow.GetComponent<BunkerInteractableCollider>();
         Physics2D.SyncTransforms();
-        foreach (float height in new[] { body.bounds.center.y, body.bounds.max.y - .2f, body.bounds.min.y + .2f })
+        var bounds=arrow.GetComponent<BoxCollider2D>().bounds;
+        foreach (float height in new[] { bounds.center.y, bounds.max.y - .05f, bounds.min.y + .05f })
         {
-            var point = new Vector3(body.bounds.center.x, height);
-            camera.transform.position += point - camera.ScreenToWorldPoint(Input.mousePosition);
-            camera.transform.position = new Vector3(camera.transform.position.x, camera.transform.position.y, -10);
-            typeof(BunkerCursorInteractor).GetMethod("UpdateHover", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(cursor, null);
-            Assert.That(Read(cursor, "current"), Is.SameAs(proxy), "The visible cabinet must be selectable at its screen and controls.");
+            cursor.UpdateHoverAt(new Vector2(bounds.center.x,height));
+            Assert.That(Read(cursor, "current"), Is.SameAs(proxy), "The visible arrow must be selectable across its hitbox.");
         }
         var hover = game.GetComponent<BunkerHoverOutline>();
         var materials = (Material[])Read(hover, "materials");
         var boundsOutline = (LineRenderer)Read(hover, "boundsOutlineRenderer");
         Assert.That(materials.Any(m => m != null && m.HasProperty("_EnableOutline") && m.GetFloat("_EnableOutline") > 0) ||
             boundsOutline != null && boundsOutline.enabled, Is.True, "Hover must have an actual visible outline.");
-        typeof(BunkerCursorInteractor).GetMethod("TryInteract", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(cursor, null);
+        Assert.That(cursor.TryInteractAt(arrow.ClickPosition),Is.True);
         Assert.That(game.IsOpen && game.IsRunning, Is.True, "Clicking the hovered cabinet must open pinball.");
         Assert.That(Object.FindFirstObjectByType<BunkerPanelManager>().TryCloseForEscape(), Is.True);
     }

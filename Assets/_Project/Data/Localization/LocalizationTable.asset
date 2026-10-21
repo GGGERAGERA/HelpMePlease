@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: LocalizationTable
   m_EditorClassIdentifier: Assembly-CSharp::LocalizationTable
   entries:
+  - key: bunker.football_coming_soon
+    ru: "В РАЗРАБОТКЕ"
+    en: "COMING SOON"
   - key: bunker.cat.pet
     ru: "Погладить"
     en: "Pet"
@@ -2184,3 +2187,30 @@ MonoBehaviour:
   - key: character.trait.figure_eight
     ru: "Оружие движется по орбите в форме восьмёрки."
     en: "Weapons follow a figure-eight orbit."
+  - key: station.module.pistol
+    ru: "ИМПУЛЬС"
+    en: "PULSE"
+  - key: station.module.sniper
+    ru: "ЛУЧ"
+    en: "BEAM"
+  - key: station.module.shotgun
+    ru: "ЗАЛП"
+    en: "BURST"
+  - key: station.module.saw
+    ru: "ПИЛА"
+    en: "SAW"
+  - key: station.effect.pistol
+    ru: "Точные выстрелы по ближайшей цели."
+    en: "Precise shots at the nearest target."
+  - key: station.effect.sniper
+    ru: "Мощный дальний выстрел."
+    en: "Powerful long range shot."
+  - key: station.effect.shotgun
+    ru: "Залп по близким целям."
+    en: "A burst at nearby targets."
+  - key: station.effect.saw
+    ru: "Контактный урон на орбите."
+    en: "Contact damage along the orbit."
+  - key: station.damage_bonus
+    ru: "УРОН ×{0:0.0}"
+    en: "DAMAGE ×{0:0.0}"

@@ -13,8 +13,7 @@ public sealed class BunkerInteractableCollider : MonoBehaviour
         if (sourceRoot == null)
             sourceRoot = transform.root.gameObject;
 
-        Interactable = sourceRoot.GetComponent<IBunkerInteractable>();
-        Hoverable = sourceRoot.GetComponent<IBunkerHoverable>();
+        ConfigureSource(sourceRoot);
 
         Collider2D col = GetComponent<Collider2D>();
         col.isTrigger = true;
@@ -27,5 +26,18 @@ public sealed class BunkerInteractableCollider : MonoBehaviour
             $"hoverable={Hoverable != null}"
         );
 #endif
+    }
+
+    public void ConfigureSource(GameObject source)
+    {
+        sourceRoot = source;
+        Interactable = sourceRoot != null ? sourceRoot.GetComponent<IBunkerInteractable>() : null;
+        Hoverable = GetComponent<IBunkerHoverable>() ?? sourceRoot?.GetComponent<IBunkerHoverable>();
+    }
+
+    private void Start()
+    {
+        if (Interactable is MonoBehaviour source)
+            BunkerInteractionIndicators.Instance?.Register(source);
     }
 }

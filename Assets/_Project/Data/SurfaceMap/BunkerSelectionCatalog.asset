@@ -16,34 +16,70 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6aad8e558b07e8243b3b79a85aefa335, type: 2}
   - {fileID: 11400000, guid: 6957f9cb24cd10646b1d8c718701e654, type: 2}
   - {fileID: 11400000, guid: 2a744b263115165479af439141435aec, type: 2}
-  weapons:
-  - {fileID: 11400000, guid: acd6c980f3b758a409e5285b329a175a, type: 2}
-  - {fileID: 11400000, guid: a0a46b236f3b65c40b5c4cc5573d7c47, type: 2}
+  modules:
+  - Kind: 0
+    NameKey: station.module.pistol
+    CategoryKey: bunker.modules
+    DescriptionKey: station.effect.pistol
+    Icon: {fileID: 21300000, guid: e41cc03555564704498529eebd8c0a63, type: 3}
+    IconColor: {r: 1, g: 1, b: 1, a: 1}
+    AccentColor: {r: 0.08, g: 0.82, b: 0.86, a: 1}
+  - Kind: 5
+    NameKey: station.module.sniper
+    CategoryKey: bunker.modules
+    DescriptionKey: station.effect.sniper
+    Icon: {fileID: 21300000, guid: f7493459378b1874c92d49e6c34389e3, type: 3}
+    IconColor: {r: 1, g: 1, b: 1, a: 1}
+    AccentColor: {r: 0.95, g: 0.25, b: 0.2, a: 1}
+  - Kind: 6
+    NameKey: station.module.shotgun
+    CategoryKey: bunker.modules
+    DescriptionKey: station.effect.shotgun
+    Icon: {fileID: 21300000, guid: aabf0a9ddcabfb0418adf301bfa40d74, type: 3}
+    IconColor: {r: 1, g: 1, b: 1, a: 1}
+    AccentColor: {r: 0.25, g: 0.9, b: 0.35, a: 1}
+  - Kind: 7
+    NameKey: station.module.saw
+    CategoryKey: bunker.modules
+    DescriptionKey: station.effect.saw
+    Icon: {fileID: 21300000, guid: a3c19d9cf9b660b4dad228ee797493c8, type: 3}
+    IconColor: {r: 1, g: 1, b: 1, a: 1}
+    AccentColor: {r: 0.65, g: 0.3, b: 1, a: 1}
   upgrades:
   - Type: 0
     Title: bunker.upgrade.0.name
     Description: bunker.upgrade.0.description
     Category: bunker.upgrade.0.category
+    Icon: {fileID: -902086654454736923, guid: 176aa56975cb5c6428dea3f05ff9103b, type: 3}
+    PreviewIcon: {fileID: -902086654454736923, guid: 176aa56975cb5c6428dea3f05ff9103b, type: 3}
     RequiredStationLevel: 1
   - Type: 2
     Title: bunker.upgrade.2.name
     Description: bunker.upgrade.2.description
     Category: bunker.upgrade.2.category
+    Icon: {fileID: 4944230376442633554, guid: 88b71fe32479c3243bff573f4562afc7, type: 3}
+    PreviewIcon: {fileID: 4944230376442633554, guid: 88b71fe32479c3243bff573f4562afc7, type: 3}
     RequiredStationLevel: 2
   - Type: 3
     Title: bunker.upgrade.3.name
     Description: bunker.upgrade.3.description
     Category: bunker.upgrade.3.category
+    Icon: {fileID: 7653998179898489512, guid: b27977966c16f39449e3895737c53ac5, type: 3}
+    PreviewIcon: {fileID: 7653998179898489512, guid: b27977966c16f39449e3895737c53ac5, type: 3}
     RequiredStationLevel: 2
   - Type: 4
     Title: bunker.upgrade.4.name
     Description: bunker.upgrade.4.description
     Category: bunker.upgrade.4.category
+    Icon: {fileID: -3988769855312385993, guid: 08a0dac55c7281b4cae44682377b49d7, type: 3}
+    PreviewIcon: {fileID: -3988769855312385993, guid: 08a0dac55c7281b4cae44682377b49d7, type: 3}
     RequiredStationLevel: 3
   - Type: 5
     Title: bunker.upgrade.5.name
     Description: bunker.upgrade.5.description
     Category: bunker.upgrade.5.category
+    Icon: {fileID: -3893141973531030841, guid: 845f988ac2a55574daaa33ad7bcaafc6, type: 3}
+    PreviewIcon: {fileID: -3893141973531030841, guid: 845f988ac2a55574daaa33ad7bcaafc6, type: 3}
     RequiredStationLevel: 3
   anomalies:
   - {fileID: 11400000, guid: 727fc95bc5924f06991e869ced69283e, type: 2}
@@ -51,3 +87,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e759f4b96f2a47ab959e335ba3b19bbb, type: 2}
   - {fileID: 11400000, guid: a372091bcdef4d808462c6d05ed7b235, type: 2}
   - {fileID: 11400000, guid: 3b31cb0d55834f13a6c4651d5ef91a12, type: 2}
+  anomalyIcon: {fileID: 2570972602406725858, guid: 12870b2f19bbdf345b6059b895fa000c, type: 3}

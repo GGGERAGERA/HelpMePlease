@@ -13,6 +13,8 @@ public sealed class BunkerSelectionCatalog : ScriptableObject
         public string CategoryKey;
         public string DescriptionKey;
         public Sprite Icon;
+        public Color IconColor = Color.white;
+        public Color AccentColor = Color.white;
     }
 
     public CharacterData[] characters;

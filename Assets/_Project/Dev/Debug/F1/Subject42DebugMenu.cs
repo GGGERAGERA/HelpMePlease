@@ -3426,7 +3426,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private void AddFootballMinigameSection()
     {
         FootballMinigame football = FindFirstObjectByType<FootballMinigame>(FindObjectsInactive.Include);
-        bool available = football != null;
+        bool available = football != null && football.isActiveAndEnabled;
         if (!available) return;
         AddSectionTitle("Футбол", "Проверка мини-игры");
         string state = football.IsRunning ? "Идёт матч" : football.CanStart ? "Готов к старту" : "Матч завершён";

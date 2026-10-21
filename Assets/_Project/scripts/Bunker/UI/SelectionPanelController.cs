@@ -19,16 +19,17 @@ public sealed class SelectionPanelController : MonoBehaviour
 
     public bool IsOpen => root != null && root.activeInHierarchy;
 
+    // Keep both serialized fields for older scene references. The approved
+    // character prefab is now the single composed window for all stations.
+    private BunkerSelectionWindow StationWindow => characterSelectionWindow != null
+        ? characterSelectionWindow : sharedSelectionWindow;
+
     public void ShowSelection(IBunkerSelectionSource source, BunkerPanelManager panelManager)
-        => ShowSelection(source, panelManager, sharedSelectionWindow, PanelType.Selection);
+        => ShowSelection(source, panelManager, StationWindow, PanelType.Selection);
 
     public void ShowCharacters(IBunkerSelectionSource source, BunkerPanelManager panelManager)
     {
-        // Scenes without an authored character layout keep their existing selection view.
-        bool hasCharacterLayout = characterSelectionWindow != null;
-        ShowSelection(source, panelManager,
-            hasCharacterLayout ? characterSelectionWindow : sharedSelectionWindow,
-            hasCharacterLayout ? PanelType.Characters : PanelType.Selection);
+        ShowSelection(source, panelManager);
     }
 
     private void ShowSelection(IBunkerSelectionSource source, BunkerPanelManager panelManager,
@@ -76,14 +77,11 @@ public sealed class SelectionPanelController : MonoBehaviour
 
     private void SetPanelStates(PanelType activePanel)
     {
-        if (activePanel != PanelType.Selection)
-            sharedSelectionWindow?.CloseView();
-        else if (sharedSelectionWindow != null)
-            sharedSelectionWindow.gameObject.SetActive(true);
-        if (activePanel != PanelType.Characters)
-            characterSelectionWindow?.CloseView();
-        else if (characterSelectionWindow != null)
-            characterSelectionWindow.gameObject.SetActive(true);
+        bool selecting = activePanel == PanelType.Selection;
+        if (sharedSelectionWindow != null && sharedSelectionWindow != StationWindow)
+            sharedSelectionWindow.CloseView();
+        if (!selecting) StationWindow?.CloseView();
+        else if (StationWindow != null) StationWindow.gameObject.SetActive(true);
         SetActive(sceneSelectPanel, activePanel == PanelType.Scenes);
     }
 

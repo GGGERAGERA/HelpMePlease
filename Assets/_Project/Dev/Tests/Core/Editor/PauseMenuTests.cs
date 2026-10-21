@@ -50,6 +50,7 @@ public sealed class PauseMenuTests
             if (button.name is "Restart" or "Bunker") Assert.That(button.gameObject.activeInHierarchy, Is.False);
         var cursor = Object.FindFirstObjectByType<BunkerCursorInteractor>();
         var mask = Field(cursor, "interactionMask").GetValue(cursor);
+        var arrowPolicy = Field(cursor, "arrowsOnly").GetValue(cursor);
         var camera = (Camera)Field(cursor, "targetCamera").GetValue(cursor);
         var clickTarget = new GameObject("Pause input regression target");
         clickTarget.SetActive(false);
@@ -63,13 +64,14 @@ public sealed class PauseMenuTests
         clickTarget.SetActive(true);
         Physics2D.SyncTransforms();
         Field(cursor, "interactionMask").SetValue(cursor, (LayerMask)(1 << 31));
-        var click = typeof(BunkerCursorInteractor).GetMethod("TryInteract", BindingFlags.Instance | BindingFlags.NonPublic);
+        // This synthetic target isolates legacy input blocking from production arrow presentation.
+        Field(cursor, "arrowsOnly").SetValue(cursor,false);
         try
         {
-            click.Invoke(cursor, null);
+            cursor.TryInteractAt(clickTarget.transform.position);
             Assert.That(panels.IsAnyPanelOpen, Is.False, "World clicks must not pass through pause.");
             pause.Resume();
-            click.Invoke(cursor, null);
+            cursor.TryInteractAt(clickTarget.transform.position);
             Assert.That(panels.IsAnyPanelOpen, Is.True, "The same station must work after resuming.");
             panels.CloseAll();
             pause.Pause();
@@ -77,6 +79,7 @@ public sealed class PauseMenuTests
         finally
         {
             Field(cursor, "interactionMask").SetValue(cursor, mask);
+            Field(cursor, "arrowsOnly").SetValue(cursor, arrowPolicy);
             Object.Destroy(clickTarget);
         }
         pause.OpenSettings();

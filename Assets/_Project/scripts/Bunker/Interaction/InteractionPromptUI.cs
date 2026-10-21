@@ -7,6 +7,7 @@ public class InteractionPromptUI : MonoBehaviour
     [SerializeField] private GameObject promptPanel;
     [SerializeField] private TextMeshProUGUI promptText;
     [SerializeField, Min(0f)] private float worldHeightOffset = 1.5f;
+    [SerializeField] private bool catOnly;
 
     private Camera targetCamera;
 
@@ -36,7 +37,7 @@ public class InteractionPromptUI : MonoBehaviour
 
         IBunkerInteractable interactable = playerInteractor.GetCurrentInteractable();
 
-        if (interactable == null || !interactable.CanInteract ||
+        if (interactable == null || !interactable.CanInteract || (catOnly && interactable is not CatPetInteractable) ||
             string.IsNullOrEmpty(interactable.InteractionText))
         {
             if (promptPanel != null)

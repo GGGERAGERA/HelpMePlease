@@ -36,6 +36,7 @@ public sealed class BunkerSelectionEntryModel
     public Sprite CharacterVisual;
     public bool IsCharacter;
     public Color IconColor = Color.white;
+    public Color AccentColor = StationPixelVisuals.Cyan;
     public string Feature;
     public string Description;
     public string LockReason;

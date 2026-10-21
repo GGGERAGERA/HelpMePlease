@@ -348,6 +348,8 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
             DisplayName = displayName,
             Category = LocalizationService.Instance.Get(presentation.CategoryKey),
             Icon = presentation.Icon,
+            IconColor = presentation.IconColor,
+            AccentColor = presentation.AccentColor,
             // The shared progression panel already presents the meta-damage
             // bonus. Keeping the generic feature block empty leaves the same
             // vertical space for stats and description as the other
@@ -417,7 +419,7 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
         MetaProgressionManager progression)
     {
         int level = progression.GetOrbitalModuleLevel(kind);
-        return string.Format(LocalizationService.Instance.Get("bunker.module_damage"), MetaProgressionManager.GetOrbitalModuleDamageMultiplier(level));
+        return string.Format(LocalizationService.Instance.Get("station.damage_bonus"), MetaProgressionManager.GetOrbitalModuleDamageMultiplier(level));
     }
 
     private static void AddOrbitalModuleStats(
@@ -472,6 +474,7 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
                 Id = presentation.Type.ToString(),
                 Icon = presentation.Icon,
                 PreviewIcon = presentation.PreviewIcon,
+                AccentColor = StationPixelVisuals.Gold,
                 DisplayName = LocalizationService.Instance.Get(presentation.Title),
                 Category = string.IsNullOrWhiteSpace(presentation.Category)
                     ? LocalizationService.Instance.Get("bunker.meta_upgrade")
@@ -513,6 +516,7 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
             {
                 Id = anomaly.Id,
                 Icon = catalog.anomalyIcon,
+                AccentColor = new Color(0.65f, 0.45f, 0.9f),
                 DisplayName = anomaly.DisplayName,
                 Category = LocalizationService.Instance.Get("bunker.stabilizer"),
                 Description = anomaly.Description,
