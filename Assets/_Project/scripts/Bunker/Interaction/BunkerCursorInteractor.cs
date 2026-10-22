@@ -97,7 +97,7 @@ public sealed class BunkerCursorInteractor : MonoBehaviour
             var indicator = arrow;
             if(indicator == null && indicators != null && candidate.Interactable is MonoBehaviour source)
                 indicators.TryGetArrow(source,out indicator);
-            // The same proximity policy applies to both the arrow and the existing body.
+            // The arrow and station body share availability; pointer input has no player-distance gate.
             if (arrowsOnly && (indicator == null || !indicator.IsVisible || !indicator.CanInteractNow)) continue;
             int priority = arrow != null ? 0 : 1;
             float distance = ((Vector2)hits[i].bounds.center - worldPosition).sqrMagnitude;

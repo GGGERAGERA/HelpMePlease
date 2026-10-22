@@ -19,7 +19,6 @@ public sealed class BunkerSelectionCardView : MonoBehaviour,
     [SerializeField] private GameObject lockedOverlay;
     [SerializeField] private TextMeshProUGUI lockedText;
     [SerializeField] private Button button;
-    [SerializeField] private Color lockedPortraitTint = new(0.24f, 0.29f, 0.3f, 1f);
     [SerializeField] private float nameInsetWithIcon = 108f;
     [SerializeField] private bool animateSelection;
 
@@ -50,20 +49,18 @@ public sealed class BunkerSelectionCardView : MonoBehaviour,
         if (value == null)
             return;
 
-        bool concealed = value.IsCharacter && value.Locked;
+        bool concealed = value.Locked;
         if (concealedSubject != null)
             concealedSubject.SetActive(concealed);
 
         if (icon != null)
         {
-            icon.sprite = value.IsCharacter ? value.CharacterVisual : value.Icon;
+            icon.sprite = concealed ? null : value.IsCharacter ? value.CharacterVisual : value.Icon;
             icon.gameObject.SetActive(icon.sprite != null);
             icon.enabled = icon.sprite != null;
             icon.rectTransform.localScale = Vector3.one;
             icon.preserveAspect = true;
-            icon.color = value.Locked
-                ? lockedPortraitTint
-                : value.IconColor;
+            icon.color = value.IconColor;
         }
 
         if (nameText != null)
@@ -72,7 +69,7 @@ public sealed class BunkerSelectionCardView : MonoBehaviour,
             inset.x = (icon != null && icon.sprite != null) || (concealed && concealedSubject != null)
                 ? nameInsetWithIcon : 16f;
             nameText.rectTransform.offsetMin = inset;
-            nameText.text = value.DisplayName;
+            nameText.text = value.PresentationName;
             nameText.color = value.Locked
                 ? StationPixelVisuals.MutedText
                 : StationPixelVisuals.Text;

@@ -7,10 +7,8 @@ public sealed class BunkerInteractionIndicators : MonoBehaviour
 {
     [SerializeField] private GameObject arrowPrefab;
     [SerializeField] private BunkerPanelManager panelManager;
-    [SerializeField, Min(1f)] private float interactionDistance = 5.5f;
     private readonly Dictionary<MonoBehaviour, BunkerInteractionArrow> arrows = new();
     public static BunkerInteractionIndicators Instance { get; private set; }
-    public float InteractionDistance => interactionDistance;
     public bool IsBlocked => !isActiveAndEnabled || Time.timeScale <= 0f ||
         SceneTransitionOverlay.IsTransitioning || (panelManager != null && panelManager.IsAnyPanelOpen);
 

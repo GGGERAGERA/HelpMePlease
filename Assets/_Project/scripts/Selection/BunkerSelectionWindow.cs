@@ -168,7 +168,7 @@ public sealed class BunkerSelectionWindow : MonoBehaviour
         else
         {
             detailView?.Bind(selected);
-            itemProgression?.Bind(selected.Progression);
+            itemProgression?.Bind(selected.Locked ? null : selected.Progression);
         }
 
         if (selected != null)

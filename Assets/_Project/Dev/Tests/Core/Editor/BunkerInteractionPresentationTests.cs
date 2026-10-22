@@ -210,16 +210,10 @@ public sealed class BunkerInteractionPresentationTests
             cursor.UpdateHoverAt(arrow.ClickPosition);
             Assert.That(arrow.IsHovered,Is.True,arrow.name+" hover");
             Assert.That(arrow.Visual.color,Is.EqualTo(Color.white));
-            Vector2 nearbyPosition=body.position;
-            Teleport(body,(Vector2)arrow.Source.transform.position+Vector2.down*(manager.InteractionDistance+2f));
-            Assert.That(cursor.TryInteractAt(arrow.ClickPosition),Is.False,"Range must be checked before the next visual update.");
-            Teleport(body,nearbyPosition);
-            var gallery=arrow.Source as Subject42.Bunker.Gallery.EnemyGalleryController;
-            int page=gallery!=null?gallery.CurrentIndex:0;
+            Teleport(body,(Vector2)arrow.Source.transform.position+Vector2.down*20f);
+            Assert.That(arrow.CanInteractNow,Is.True,"Pointer interaction must not depend on player position.");
             Assert.That(cursor.TryInteractAt(arrow.ClickPosition),Is.True,arrow.name+" click routing");
             yield return null; yield return null;
-            if(gallery!=null) Assert.That(gallery.CurrentIndex,Is.Not.EqualTo(page));
-            else
             {
                 Assert.That(panels.IsAnyPanelOpen,Is.True,arrow.name+" opens its existing interface");
                 Assert.That(arrows.All(a=>!a.IsVisible),Is.True,"All arrows hide behind modal UI.");
@@ -228,12 +222,13 @@ public sealed class BunkerInteractionPresentationTests
                 yield return null; yield return null;
                 Assert.That(arrow.IsVisible,Is.True,"Original arrow returns after closing "+arrow.Source.name);
             }
-            trace.AppendLine(BunkerInteractionAuthoring.PathOf(arrow.Source.transform)+": distance, hover, route, UI/gallery PASS");
+            trace.AppendLine(BunkerInteractionAuthoring.PathOf(arrow.Source.transform)+": unrestricted pointer hover/click, route, UI PASS");
             File.WriteAllText(BunkerInteractionAuthoring.Output+"/runtime-checks.txt",trace.ToString());
-            Teleport(body,(Vector2)arrow.Source.transform.position+Vector2.down*(manager.InteractionDistance+2f));
+            Teleport(body,(Vector2)arrow.Source.transform.position+Vector2.down*20f);
             Physics2D.SyncTransforms(); yield return null; yield return null;
-            Assert.That(arrow.IsVisible,Is.False,arrow.name+" distance exit");
-            Assert.That(cursor.TryInteractAt(arrow.ClickPosition),Is.False,"Hidden arrow must not retain a click target.");
+            Assert.That(arrow.IsVisible,Is.True,arrow.name+" remains available independently of player position");
+            cursor.UpdateHoverAt(arrow.ClickPosition);
+            Assert.That(arrow.IsHovered,Is.True,"Moving the player away must not prevent pointer hover.");
         }
         File.WriteAllText(BunkerInteractionAuthoring.Output+"/runtime-checks.txt",trace.ToString());
 
@@ -250,7 +245,7 @@ public sealed class BunkerInteractionPresentationTests
 
         // Nearby interfaces stay separate; selecting one must not leak through to another.
         Teleport(body,new Vector2(10.5f,14.5f)); yield return null; yield return null;
-        var nearby=arrows.Where(a=>a.IsVisible).ToArray();
+        var nearby=arrows.Where(a=>a.IsVisible && Vector2.Distance(a.ClickPosition,new Vector2(10.5f,14.5f))<8f).ToArray();
         Assert.That(nearby.Length,Is.GreaterThanOrEqualTo(3),"Player="+PlayerRuntimeReference.PlayerTransform.position+" Visible="+string.Join(",",nearby.Select(a=>a.name)));
         foreach(var a in nearby) foreach(var b in nearby.Where(b=>b!=a))
             Assert.That(a.GetComponent<Collider2D>().bounds.Intersects(b.GetComponent<Collider2D>().bounds),Is.False,a.name+" / "+b.name);

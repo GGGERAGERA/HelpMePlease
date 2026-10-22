@@ -13,20 +13,12 @@ public sealed class BunkerInteractionArrow : MonoBehaviour, IBunkerHoverable
     private UnityEngine.Rendering.Universal.Light2D[] lights;
     public SpriteRenderer Visual => visual;
     public Vector2 ClickPosition => hitbox.bounds.center;
-    private Collider2D[] interactionAreas;
     public MonoBehaviour Source => source;
+    // Presentation state only; this does not prove visibility in the player's rendered frame.
     public bool IsVisible => isActiveAndEnabled && visual != null && visual.enabled;
     public bool IsHovered { get; private set; }
-    public bool CanInteractNow
-    {
-        get
-        {
-            var player = PlayerRuntimeReference.PlayerTransform;
-            return isActiveAndEnabled && owner != null && !owner.IsBlocked && source != null && source.isActiveAndEnabled && target != null &&
-                target.CanInteract && player != null &&
-                DistanceTo(player.position) <= owner.InteractionDistance;
-        }
-    }
+    public bool CanInteractNow => isActiveAndEnabled && owner != null && !owner.IsBlocked &&
+        source != null && source.isActiveAndEnabled && target != null && target.CanInteract;
 
     public void Bind(BunkerInteractionIndicators indicators, MonoBehaviour behaviour)
     {
@@ -42,27 +34,9 @@ public sealed class BunkerInteractionArrow : MonoBehaviour, IBunkerHoverable
         hitbox.isTrigger = true;
         gameObject.layer = LayerMask.NameToLayer("BunkerInteractable");
         GetComponent<BunkerInteractableCollider>().ConfigureSource(source.gameObject);
-        var proxies = source.GetComponentsInChildren<BunkerInteractableCollider>(true);
-        var areas = new System.Collections.Generic.List<Collider2D>(proxies.Length);
-        foreach(var proxy in proxies)
-        {
-            var area = proxy.GetComponent<Collider2D>();
-            if(area != null && proxy.GetComponent<BunkerInteractionArrow>() == null) areas.Add(area);
-        }
-        if(areas.Count == 0 && source.TryGetComponent<Collider2D>(out var ownArea)) areas.Add(ownArea);
-        interactionAreas = areas.ToArray();
         SetHovered(false);
-        RefreshPresentation();
-    }
-
-    public float DistanceTo(Vector2 point)
-    {
-        float squared = float.PositiveInfinity;
-        if(interactionAreas != null)
-            foreach(var area in interactionAreas)
-                if(area != null && area.enabled && area.gameObject.activeInHierarchy)
-                    squared = Mathf.Min(squared,(area.ClosestPoint(point)-point).sqrMagnitude);
-        return float.IsPositiveInfinity(squared) ? Vector2.Distance(point,source.transform.position) : Mathf.Sqrt(squared);
+        // LateUpdate applies presentation after all components finish OnEnable.
+        // Toggling Light2D here can register it twice during scene/domain reload.
     }
 
     private void OnEnable()
@@ -78,8 +52,7 @@ public sealed class BunkerInteractionArrow : MonoBehaviour, IBunkerHoverable
     private void RefreshPresentation()
     {
         if(visual == null || hitbox == null) return;
-        // Saved scene instances are visible for layout authoring. Gameplay still uses
-        // live distance and modal eligibility, without relying on editor preview state.
+        // Presentation and pointer interaction share availability, independent of the player.
         bool visible = Application.IsPlaying(gameObject) ? CanInteractNow :
             source != null && source.isActiveAndEnabled;
         // Follow Visual's ORIGINAL animation without moving or scaling its hierarchy.

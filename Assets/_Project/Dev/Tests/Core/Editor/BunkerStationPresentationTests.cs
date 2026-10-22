@@ -134,7 +134,7 @@ public sealed class BunkerStationPresentationTests
         Assert.That(Read<BunkerSelectionEntryModel>(window,"selected").Id, Is.EqualTo(locked.Id));
         var item = Read<BunkerProgressionView>(window,"itemProgression");
         File.AppendAllText(BunkerStationPresentationAuthoring.Output+"/interaction-trace.txt", "item="+item+"\n");
-        Assert.That(Read<Button>(item,"upgradeButton").interactable, Is.False);
+        Assert.That(item.gameObject.activeInHierarchy, Is.False, "Locked content exposes its unlock condition, not item upgrades.");
         panels.OpenUpgrade(); yield return null;
         File.AppendAllText(BunkerStationPresentationAuthoring.Output+"/interaction-trace.txt", "upgrade opened\n");
         var target = Read<BunkerSelectionEntryModel>(window,"selected");

@@ -46,6 +46,8 @@ public sealed class BunkerSelectionEntryModel
     public int RequiredStationLevel = 1;
     public BunkerProgressionModel Progression;
     public readonly List<BunkerSelectionStatModel> Stats = new();
+
+    public string PresentationName => Locked && !IsCharacter ? "???" : DisplayName;
 }
 
 public readonly struct BunkerSelectionUnlockModel

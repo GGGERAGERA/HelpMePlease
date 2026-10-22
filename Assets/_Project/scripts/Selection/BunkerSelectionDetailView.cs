@@ -8,7 +8,6 @@ public sealed class BunkerSelectionDetailView : MonoBehaviour
     [SerializeField] private GameObject contentRoot;
     [SerializeField] private TextMeshProUGUI emptyText;
     [SerializeField] private Image portrait;
-    [SerializeField] private Color lockedPortraitTint = new(0.24f, 0.29f, 0.3f, 1f);
     [SerializeField] private TextMeshProUGUI nameText;
     [SerializeField] private TextMeshProUGUI categoryText;
     [SerializeField] private bool showCharacterCategory;
@@ -73,8 +72,9 @@ public sealed class BunkerSelectionDetailView : MonoBehaviour
             return;
         }
 
-        itemDetail?.gameObject.SetActive(!entry.IsCharacter);
-        if (!entry.IsCharacter && itemDetail != null)
+        bool showItemDetail = !entry.IsCharacter && !entry.Locked;
+        itemDetail?.gameObject.SetActive(showItemDetail);
+        if (showItemDetail && itemDetail != null)
         {
             contentRoot?.SetActive(false);
             emptyText?.gameObject.SetActive(false);
@@ -90,35 +90,42 @@ public sealed class BunkerSelectionDetailView : MonoBehaviour
         displayedSubjectId = entry.Id;
         displayedSubjectLocked = entry.Locked;
         if (subjectDisplayArt != null)
+        {
+            subjectDisplayArt.gameObject.SetActive(entry.IsCharacter);
             subjectDisplayArt.color = entry.Locked ? new Color(0.48f, 0.57f, 0.57f, 1f) : Color.white;
-        SetText(nameText, entry.DisplayName);
-        SetOptional(categoryText, entry.IsCharacter && !showCharacterCategory ? null : entry.Category);
-        if (entry.IsCharacter && showCharacterCategory && categoryText != null)
+        }
+        if (subjectGlow != null)
+            subjectGlow.gameObject.SetActive(entry.IsCharacter);
+        SetText(nameText, entry.PresentationName);
+        SetOptional(categoryText, entry.Locked ? LocalizationService.Instance.Get("bunker.subject.unknown")
+            : entry.IsCharacter && !showCharacterCategory ? null : entry.Category);
+        if (categoryText != null)
             categoryText.color = entry.Locked ? new Color(0.62f, 0.68f, 0.69f, 1f) : StationPixelVisuals.Cyan;
-        SetBlock(featureBlock, featureText, entry.Feature);
-        SetBlock(descriptionBlock, descriptionText, entry.IsCharacter ? null : entry.Description);
-        SetBlock(lockBlock, lockText, entry.Locked && entry.Progression == null ? entry.LockReason : null);
+        SetBlock(featureBlock, featureText, entry.Locked ? null : entry.Feature);
+        SetBlock(descriptionBlock, descriptionText, entry.IsCharacter || entry.Locked ? null : entry.Description);
+        SetBlock(lockBlock, lockText, entry.Locked ? entry.LockReason : null);
         if (concealedSubject != null)
-            concealedSubject.SetActive(entry.IsCharacter && entry.Locked);
+            concealedSubject.SetActive(entry.Locked);
         if (subjectStatusLights != null)
         {
             Color state = entry.Locked ? new Color(0.85f, 0.31f, 0.25f, 1f) : StationPixelVisuals.Cyan;
             foreach (Image light in subjectStatusLights)
+            {
+                light.gameObject.SetActive(entry.IsCharacter);
                 light.color = state;
+            }
         }
 
         if (portrait != null)
         {
-            portrait.sprite = entry.IsCharacter ? entry.CharacterVisual : entry.PreviewIcon != null ? entry.PreviewIcon : entry.Icon;
+            portrait.sprite = entry.Locked ? null : entry.IsCharacter ? entry.CharacterVisual : entry.PreviewIcon != null ? entry.PreviewIcon : entry.Icon;
             portrait.gameObject.SetActive(portrait.sprite != null);
             portrait.enabled = portrait.sprite != null;
             portrait.preserveAspect = true;
-            portrait.color = entry.Locked
-                ? lockedPortraitTint
-                : entry.IconColor;
+            portrait.color = entry.IconColor;
         }
 
-        if (entry.Stats.Count == 0)
+        if (entry.Locked || entry.Stats.Count == 0)
         {
             statsBlock?.SetActive(false);
         }

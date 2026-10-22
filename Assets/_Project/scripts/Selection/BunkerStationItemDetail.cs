@@ -15,13 +15,13 @@ public sealed class BunkerStationItemDetail : MonoBehaviour
     public void Bind(BunkerSelectionEntryModel entry)
     {
         title.text = entry.DisplayName;
-        title.color = entry.Locked ? StationPixelVisuals.MutedText : StationPixelVisuals.Text;
+        title.color = StationPixelVisuals.Text;
         description.text = entry.Description ?? string.Empty;
         preview.sprite = entry.PreviewIcon != null ? entry.PreviewIcon : entry.Icon;
         preview.enabled = preview.sprite != null;
         preview.preserveAspect = true;
-        preview.color = entry.Locked ? new Color(.4f, .46f, .48f) : entry.IconColor;
-        accent.color = entry.Locked ? new Color(.85f, .31f, .25f) : entry.AccentColor;
+        preview.color = entry.IconColor;
+        accent.color = entry.AccentColor;
         var text = new StringBuilder();
         foreach (var stat in entry.Stats)
         {

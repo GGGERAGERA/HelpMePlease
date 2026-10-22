@@ -97,10 +97,6 @@ public static class BunkerInteractionAuthoring
         manager.RefreshBindings();
         foreach(var arrow in All<BunkerInteractionArrow>(scene))
         {
-            // This room's status/name plates sit immediately above the selector.
-            // Place the original arrow over the button face, below those plates.
-            if(arrow.Source is Subject42.Bunker.Gallery.EnemyGalleryController)
-                arrow.transform.position = arrow.Source.transform.position + Vector3.up*1.3f;
             EditorUtility.SetDirty(arrow);
             PrefabUtility.RecordPrefabInstancePropertyModifications(arrow);
             PrefabUtility.RecordPrefabInstancePropertyModifications(arrow.gameObject);
@@ -117,7 +113,6 @@ public static class BunkerInteractionAuthoring
         var scene=SceneManager.GetSceneByPath(ScenePath);
         if(!scene.IsValid() || !scene.isLoaded) scene=EditorSceneManager.OpenScene(ScenePath,OpenSceneMode.Single);
         var manager=All<BunkerInteractionIndicators>(scene).Single();
-        Set(manager,"interactionDistance",5.5f);
         manager.RefreshBindings();
         foreach(var arrow in All<BunkerInteractionArrow>(scene))
         {
