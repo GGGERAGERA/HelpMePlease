@@ -6,6 +6,10 @@ public sealed class BunkerGateVisual : MonoBehaviour
 {
     [SerializeField] private GameObject openedDoor;
     [SerializeField] private GameObject closedDoor;
+    [SerializeField] private SpriteRenderer[] availabilityIndicators = System.Array.Empty<SpriteRenderer>();
+    [SerializeField] private Color openIndicatorColor = new(.3f, .95f, .64f, 1f);
+    [SerializeField] private Color closedIndicatorColor = new(1f, .18f, .12f, 1f);
+    [SerializeField] private bool startUnlocked = true;
     [SerializeField] private bool startOpen;
     [SerializeField] private bool openOnPlayerProximity;
     [SerializeField, Min(0f)] private float proximityDistance = .35f;
@@ -13,17 +17,37 @@ public sealed class BunkerGateVisual : MonoBehaviour
     private bool hasDoorBounds;
     private readonly HashSet<Collider2D> playerContacts = new();
     private bool desiredOpen;
+    private bool desiredUnlocked;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     // Runtime-only overrides: never write room unlocks or player progression.
     private bool? debugOpen;
     private bool? debugLocked;
     public bool DebugHasOverride => debugOpen.HasValue || debugLocked.HasValue;
-    public bool DebugIsLocked => debugLocked ?? (!openOnPlayerProximity && !desiredOpen);
+    public bool DebugIsLocked => !IsUnlocked;
 #endif
 
     public bool IsOpen { get; private set; }
+    public bool IsUnlocked { get; private set; }
     public event System.Action AvailabilityChanged;
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        UnityEditor.EditorApplication.delayCall -= ApplyAuthoredState;
+        UnityEditor.EditorApplication.delayCall += ApplyAuthoredState;
+    }
+
+    private void ApplyAuthoredState()
+    {
+        if (this != null && !UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
+        {
+            desiredUnlocked = startUnlocked;
+            desiredOpen = !openOnPlayerProximity && startOpen;
+            ApplyState();
+        }
+    }
+#endif
 
     private void OnEnable()
     {
@@ -39,6 +63,7 @@ public sealed class BunkerGateVisual : MonoBehaviour
 
     private void Awake()
     {
+        SetUnlocked(startUnlocked);
         SetOpen(!openOnPlayerProximity && startOpen);
         if (openOnPlayerProximity) CacheDoorBounds();
     }
@@ -48,7 +73,7 @@ public sealed class BunkerGateVisual : MonoBehaviour
 
     private void TrackPlayer(Collider2D other)
     {
-        if (!openOnPlayerProximity || !isActiveAndEnabled || other.isTrigger ||
+        if (!IsUnlocked || !openOnPlayerProximity || !isActiveAndEnabled || other.isTrigger ||
             other.attachedRigidbody == null || !other.attachedRigidbody.CompareTag("Player"))
             return;
 
@@ -63,7 +88,7 @@ public sealed class BunkerGateVisual : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (!openOnPlayerProximity) return;
+        if (!openOnPlayerProximity || !IsUnlocked) return;
         playerContacts.RemoveWhere(contact => contact == null || !contact.enabled || !contact.gameObject.activeInHierarchy);
         bool near = false;
         float limit = proximityDistance + (IsOpen ? .15f : 0f);
@@ -98,31 +123,50 @@ public sealed class BunkerGateVisual : MonoBehaviour
     {
         // Story and minigame requests keep updating even while debug owns the visuals.
         desiredOpen = open;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        ApplyOpen(debugLocked == true ? false : debugOpen ?? desiredOpen);
-#else
-        ApplyOpen(desiredOpen);
-#endif
+        ApplyState();
+    }
+
+    public void SetUnlocked(bool unlocked)
+    {
+        if (!unlocked || desiredUnlocked != unlocked)
+            desiredOpen = false;
+        desiredUnlocked = unlocked;
+        if (!unlocked)
+        {
+            playerContacts.Clear();
+        }
+        ApplyState();
     }
 
     private void SetProximityOpen(bool open)
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         // Automatic ticks must not replace the latest external story request during an override.
-        if (DebugHasOverride) return;
+        if (debugOpen.HasValue || debugLocked == true) return;
 #endif
         SetOpen(open);
     }
 
-    private void ApplyOpen(bool open)
+    private void ApplyState()
     {
-        bool changed = IsOpen != open;
+        bool unlocked = desiredUnlocked;
+        bool open = desiredOpen;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        unlocked = debugLocked.HasValue ? !debugLocked.Value : unlocked;
+        open = debugOpen ?? open;
+#endif
+        open &= unlocked;
+        bool changed = IsOpen != open || IsUnlocked != unlocked;
+        IsUnlocked = unlocked;
         IsOpen = open;
 
         if (openedDoor != null)
             openedDoor.SetActive(open);
         if (closedDoor != null)
             closedDoor.SetActive(!open);
+        Color indicatorColor = unlocked ? openIndicatorColor : closedIndicatorColor;
+        foreach (var indicator in availabilityIndicators)
+            indicator.color = indicatorColor;
         if (changed) AvailabilityChanged?.Invoke();
     }
 
@@ -131,14 +175,14 @@ public sealed class BunkerGateVisual : MonoBehaviour
     {
         debugOpen = open;
         if (open) debugLocked = false;
-        ApplyOpen(debugLocked == true ? false : open);
+        ApplyState();
         AvailabilityChanged?.Invoke();
     }
 
     public void DebugSetLocked(bool locked)
     {
-        debugLocked = !locked && openOnPlayerProximity ? (bool?)null : locked;
-        ApplyOpen(locked ? false : debugOpen ?? desiredOpen);
+        debugLocked = locked;
+        ApplyState();
         AvailabilityChanged?.Invoke();
     }
 
@@ -146,7 +190,7 @@ public sealed class BunkerGateVisual : MonoBehaviour
     {
         debugOpen = null;
         debugLocked = null;
-        ApplyOpen(desiredOpen);
+        ApplyState();
         AvailabilityChanged?.Invoke();
     }
 #endif

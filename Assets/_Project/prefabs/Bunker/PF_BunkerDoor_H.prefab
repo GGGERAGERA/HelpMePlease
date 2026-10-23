@@ -50,6 +50,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BunkerGateVisual
   openedDoor: {fileID: 100004}
   closedDoor: {fileID: 100006}
+  availabilityIndicators:
+  - {fileID: 100028}
+  - {fileID: 100043}
+  - {fileID: 100058}
+  - {fileID: 100064}
+  - {fileID: 100067}
+  - {fileID: 100070}
+  - {fileID: 100073}
+  - {fileID: 100076}
+  - {fileID: 100079}
+  - {fileID: 100082}
+  - {fileID: 100085}
+  - {fileID: 100088}
+  - {fileID: 100091}
+  - {fileID: 100094}
+  - {fileID: 100097}
+  openIndicatorColor: {r: 0.3, g: 0.95, b: 0.64, a: 1}
+  closedIndicatorColor: {r: 1, g: 0.18, b: 0.12, a: 1}
+  startUnlocked: 1
   startOpen: 0
   openOnPlayerProximity: 1
   proximityDistance: 0.35
