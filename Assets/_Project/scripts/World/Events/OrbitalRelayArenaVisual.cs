@@ -5,8 +5,8 @@ public sealed class OrbitalRelayArenaVisual : MonoBehaviour
 {
     [SerializeField] private OrbitalRelayEvent source;
     [SerializeField] private SpriteRenderer arenaBorder, spawnInner, spawnOuter;
-    [SerializeField] private Color arenaTint = new(.08f, .82f, .86f, .75f);
-    [SerializeField] private Color spawnTint = new(.239216f, .552941f, 1f, .28f);
+    [SerializeField] private Color arenaTint = new(.08f, .82f, .86f, .38f);
+    [SerializeField] private Color spawnTint = new(.239216f, .552941f, 1f, .08f);
     public bool IsValid => source != null && arenaBorder != null && spawnInner != null && spawnOuter != null;
     public void Show(bool visible)
     {

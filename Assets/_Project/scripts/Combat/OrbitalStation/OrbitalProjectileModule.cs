@@ -76,9 +76,10 @@ namespace Subject42.Combat.OrbitalStation
             }
             ShotsFired++;
             WeaponCharge(0f); WeaponRecoil(Settings.Recoil);
-            float size = pellets > 1 ? .42f : Settings.Kind == OrbitalModuleKind.Sniper ? .36f : .16f;
+            float size = pellets > 1 ? .42f : Settings.Kind == OrbitalModuleKind.Sniper ? .36f : .28f;
             Vector2 side = new(-direction.y, direction.x);
-            Station.FlashLink(WorldPosition, WorldPosition + direction * size, Settings.Color, .06f);
+            Station.FlashLink(WorldPosition, WorldPosition + direction * size, Settings.Color,
+                OrbitalPresentationConfig.Active.ProjectileMuzzleDuration);
             Station.FlashLink(WorldPosition - side * size * .4f, WorldPosition + side * size * .4f,
                 Color.Lerp(Settings.Color, Color.white, .25f), .045f);
             AudioService.Instance?.PlayAt(Settings.ShotSound, WorldPosition);

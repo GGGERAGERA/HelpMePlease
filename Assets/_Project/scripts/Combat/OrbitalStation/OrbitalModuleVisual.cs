@@ -29,6 +29,10 @@ namespace Subject42.Combat.OrbitalStation
         private bool preserveWeaponColors;
         private Color weaponTint = Color.white;
         private float weaponRecoil, weaponRecoilAt, weaponCharge;
+        private bool highlighted;
+        private float shotHaloUntil;
+        private readonly Vector3 authoredHaloScale;
+        private readonly Color authoredHaloColor;
         public void ConfigureWeaponFeedback(Color color, bool preserveColors = false)
         {
             weaponFeedback = true; weaponTint = color; preserveWeaponColors = preserveColors;
@@ -41,11 +45,19 @@ namespace Subject42.Combat.OrbitalStation
                 tint.enabled = false;
             }
         }
-        public void WeaponRecoil(float strength) { weaponRecoil = strength; weaponRecoilAt = Time.time; weaponCharge = 0f; Trigger(); }
+        public void WeaponRecoil(float strength)
+        {
+            weaponRecoil = strength; weaponRecoilAt = Time.time; weaponCharge = 0f;
+            shotHaloUntil = Time.time + OrbitalPresentationConfig.Active.ShotHaloDuration;
+            Trigger();
+            UpdateShotHalo();
+        }
         public void WeaponCharge(float amount) => weaponCharge = Mathf.Clamp01(amount);
         public void ResetWeaponFeedback()
         {
             weaponRecoil = weaponCharge = 0f; flashUntil = effectStopAt = 0f; StopParticles();
+            shotHaloUntil = 0f;
+            UpdateShotHalo();
             if (instance != null)
             {
                 instance.transform.localPosition = authoredBodyPosition;
@@ -94,6 +106,11 @@ namespace Subject42.Combat.OrbitalStation
             var view = root.GetComponent<OrbitalModuleView>();
             if (view == null || !view.IsValid) throw new System.InvalidOperationException($"required {kind} visual references missing");
             halo = view.Halo;
+            if (halo != null)
+            {
+                authoredHaloScale = halo.transform.localScale;
+                authoredHaloColor = halo.color;
+            }
             animator = view.Animator;
             particles = view.Particles;
             sprites = view.Sprites;
@@ -115,8 +132,26 @@ namespace Subject42.Combat.OrbitalStation
 
         public void SetHighlighted(bool value)
         {
-            if (halo != null)
-                halo.enabled = value;
+            highlighted = value;
+            UpdateShotHalo();
+        }
+
+        private void UpdateShotHalo()
+        {
+            if (halo == null) return;
+            if (previewing || dragging)
+            {
+                halo.enabled = previewing ? previewSnapped : highlighted;
+                halo.transform.localScale = authoredHaloScale;
+                return;
+            }
+            var config = OrbitalPresentationConfig.Active;
+            float pulse = Mathf.Clamp01((shotHaloUntil - Time.time) / config.ShotHaloDuration);
+            halo.enabled = highlighted || pulse > 0f;
+            halo.transform.localScale = authoredHaloScale * Mathf.Lerp(1f, config.ShotHaloScale, pulse);
+            Color color = pulse > 0f ? Color.Lerp(weaponTint, Color.white, .25f * pulse) : authoredHaloColor;
+            color.a = Mathf.Max(authoredHaloColor.a, config.ShotHaloAlpha * pulse) * DepthOpacity;
+            halo.color = color;
         }
 
         public bool HitTest(Vector2 world, float padding)
@@ -277,10 +312,15 @@ namespace Subject42.Combat.OrbitalStation
                         ? new Color(0.25f, 1f, 0.55f, color.a)
                         : new Color(1f, 0.12f, 0.18f, color.a), 0.72f);
                 else if (Time.time < flashUntil)
-                    color = Color.Lerp(color, Color.white, 0.72f);
+                    color = Color.Lerp(color, weaponFeedback
+                        ? Color.Lerp(weaponTint, Color.white, .25f)
+                        : Color.white, 0.72f);
                 color.a *= DepthOpacity;
                 sprites[i].color = color;
             }
+            // Compose after the regular sprite pass so it cannot erase shot tint,
+            // and retain the existing snapped/invalid reward-preview visibility.
+            UpdateShotHalo();
         }
 
         private void StopParticles()

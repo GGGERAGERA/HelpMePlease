@@ -17,17 +17,20 @@ public sealed class CorridorStartView : MonoBehaviour
         graphics.localRotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
         prompt.text = LocalizationService.EnsureExists().Get("event.corridor.start");
         started = false; age = 0;
+        Tick(0f, false);
     }
     public void Begin() { started = true; age = 0; prompt.gameObject.SetActive(false); }
-    public void Tick(float delta)
+    public void Tick(float delta, bool available = true)
     {
         age += delta;
-        float strength = started ? Mathf.Clamp01(1 - age / .6f) : .78f + Mathf.Sin(age * 2.3f) * .12f;
+        bool invite = !started && available;
+        if (prompt.gameObject.activeSelf != invite) prompt.gameObject.SetActive(invite);
+        float strength = started ? Mathf.Clamp01(1 - age / .6f) : invite ? .78f + Mathf.Sin(age * 2.3f) * .12f : .32f;
         area.color = new Color(1, 1, 1, strength);
-        foreach (var beacon in beacons) beacon.color = new Color(1, 1, 1, started ? Mathf.Lerp(.5f, 1, strength) : 1);
+        foreach (var beacon in beacons) beacon.color = new Color(1, 1, 1, started ? Mathf.Lerp(.5f, 1, strength) : invite ? 1f : .45f);
         for (int i = 0; i < flow.Length; i++)
         {
-            flow[i].gameObject.SetActive(!started || age < .6f);
+            flow[i].gameObject.SetActive(invite || started && age < .6f);
             flow[i].localPosition = new Vector3(-1.65f + Mathf.Repeat(age * (started ? 6 : 1.2f) + i * 1.1f, 3.3f), 0, 0);
         }
     }

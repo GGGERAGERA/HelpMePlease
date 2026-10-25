@@ -2,6 +2,10 @@
 
 Current production and development navigation. Historical QA reports describe their own snapshots.
 
+## Game design
+
+[GDD Core](Subject42_Game_Design_Bible_Core.md) is the working entry; the [full Bible](Subject42_Game_Design_Bible.md) contains the design principles and detailed contracts. Both were reconciled on 2026-10-26; see the [evidence and open gaps](../../../docs/gdd-reconciliation-2026-10-26.md). Gameplay design changes must reference the affected GDD section and update accepted decisions in the same work, per [AGENTS.md](../../../AGENTS.md).
+
 ## Production flow
 
 Enabled build scenes, in order:

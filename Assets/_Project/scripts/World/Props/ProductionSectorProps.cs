@@ -129,7 +129,12 @@ internal sealed class ProductionSectorProps
             prop.transform.localScale = Vector3.Scale(e.prefab.transform.localScale,
                 new Vector3(random.Next(2) == 0 ? -scale : scale, scale, 1));
             foreach (var r in prop.GetComponentsInChildren<SpriteRenderer>(true))
-            { r.sortingLayerName = "Background"; r.sortingOrder = -105; }
+            {
+                r.sortingLayerName = "Background"; r.sortingOrder = -105;
+                Color color = r.color;
+                color.a *= Mathf.Clamp01(Profile.opacity);
+                r.color = color;
+            }
             // Only the existing, validated visual scatter opts in. No extra props or physics.
             prop.AddComponent<AnomalyMovableProp>();
             positions.Add(best); radii.Add(radius); counts[kind]++;

@@ -46,7 +46,7 @@ namespace Subject42.Combat.OrbitalStation
 
         private readonly List<OrbitalRingRuntime> rings = new();
         private readonly List<OrbitalModuleRuntime> modules = new();
-        private readonly List<(LineRenderer line, float life)> flashes = new(128);
+        private readonly List<(LineRenderer line, float expiresAt)> flashes = new(128);
         private readonly Stack<LineRenderer> idleFlashes = new(128);
         private LineRenderer coreWave;
         private float coreWaveAge = -1f;
@@ -190,8 +190,15 @@ namespace Subject42.Combat.OrbitalStation
                 ((ProductionOrbitalCombatAdapter)Combat).ProjectileImpact = (point, direction, color) =>
                 {
                     Vector2 side = new(-direction.y, direction.x);
-                    FlashLink(point - side * .09f, point + side * .09f, color, .07f);
-                    FlashLink(point, point - direction * .13f, color, .05f);
+                    float size = config.ProjectileImpactSize;
+                    float life = config.ProjectileImpactDuration;
+                    // Use the same bounded pool without changing body or physics recoil.
+                    FlashLink(point - side * size, point + side * size, color, life);
+                    FlashLink(point - direction * size, point + direction * size * .45f, color, life);
+                    FlashLink(point, point - direction * size + side * size * .7f, color, life * .8f);
+                    FlashLink(point, point - direction * size - side * size * .7f, color, life * .8f);
+                    FlashLink(point - side * size * .3f, point + side * size * .3f,
+                        Color.Lerp(color, Color.white, .75f), life * .45f);
                 };
                 Core = new OrbitalCoreRuntime(State.CoreState);
                 coreWaveColor = config.GetCoreWaveColor(Mathf.Max(1, Core.Level));
@@ -428,7 +435,7 @@ namespace Subject42.Combat.OrbitalStation
                 modules[i].Tick(deltaTime);
             Combat.Tick(deltaTime);
             UpdateLinkNodes(deltaTime);
-            UpdateFlashes(deltaTime);
+            UpdateFlashes();
             UpdateCoreWave(deltaTime);
             coreFlash = Mathf.MoveTowards(coreFlash, 0f, deltaTime * 5f);
             if (coreVisual != null)
@@ -755,7 +762,7 @@ namespace Subject42.Combat.OrbitalStation
             line.SetPosition(0, from);
             line.SetPosition(1, to);
             line.startColor = line.endColor = color;
-            flashes.Add((line, life));
+            flashes.Add((line, Time.time + life));
         }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public void ClearLabFlashes()
@@ -1334,17 +1341,14 @@ namespace Subject42.Combat.OrbitalStation
             }
         }
 
-        private void UpdateFlashes(float deltaTime)
+        private void UpdateFlashes()
         {
             for (int i = flashes.Count - 1; i >= 0; i--)
             {
-                (LineRenderer line, float life) item = flashes[i];
-                item.life -= deltaTime;
-                if (item.life > 0f)
-                {
-                    flashes[i] = item;
-                    continue;
-                }
+                var item = flashes[i];
+                // A new impact must not lose the portion of this frame elapsed
+                // before it existed (especially a fast shot on a long frame).
+                if (Time.time < item.expiresAt) continue;
                 item.line.enabled = false;
                 idleFlashes.Push(item.line);
                 flashes.RemoveAt(i);

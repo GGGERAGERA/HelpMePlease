@@ -4035,7 +4035,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &8518162308640228624
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5186,7 +5186,7 @@ MonoBehaviour:
   gameplayArea: {fileID: 0}
   focusOverlayPrefab: {fileID: 3171778864204739942, guid: 939b8b8cd8c360f4aae54ae363209fda, type: 3}
   anomalyFocusEnabled: 1
-  outsideDarkness: 1
+  outsideDarkness: 0.28
   outsideDesaturation: 0
   focusTransition: 0.35
 --- !u!114 &7665113695026171199

@@ -18,6 +18,8 @@ public sealed class PropScatterProfile : ScriptableObject
     }
     public Entry[] entries = Array.Empty<Entry>();
     public int seed = 42073;
+    [Range(0f, 1f), Tooltip("Visual-only alpha multiplier; does not change scatter placement or count.")]
+    public float opacity = .68f;
     [Tooltip("Minima first, then weighted extras. Safety clearances always take priority.")]
     [Min(0)] public int totalCount = 238;
     [Min(.1f)] public float minDistance = 3.5f;

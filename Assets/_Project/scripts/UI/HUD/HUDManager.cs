@@ -105,6 +105,10 @@ public class HUDManager : MonoBehaviour
     [Header("Low HP")]
     [SerializeField] private CanvasGroup lowHpVignette;
     [SerializeField] private float lowHpThreshold = 0.3f;
+    [SerializeField, Min(.05f)] private float damagePulseDuration = .24f;
+    [SerializeField, Range(0f, 1f)] private float damagePulseAlpha = .45f;
+    private float lowHpBaseline;
+    private float damagePulseEndsAt;
 
     [Header("Boss HP")]
     [SerializeField] private GameObject bossHpPanel;
@@ -129,7 +133,7 @@ public class HUDManager : MonoBehaviour
         EnemyHealth.Spawned += BindBoss;
         EnemyHealth.Despawned += ReleaseBoss;
         if (threat != null) { threat.ThreatChanged += SetThreat; threat.TierIncreased += ShowThreatIncrease; SetThreat(threat.ThreatValue, threat.DisplayedTier); }
-        if (boundPlayer != null) { boundPlayer.HealthChanged += SetHealth; SetHealth(boundPlayer.CurrentHealth, boundPlayer.MaxHealth); }
+        if (boundPlayer != null) { boundPlayer.HealthChanged += SetHealth; boundPlayer.DamageTaken += PulsePlayerDamage; SetHealth(boundPlayer.CurrentHealth, boundPlayer.MaxHealth); }
         foreach (var enemy in EnemyHealth.ActiveInstances) BindBoss(enemy);
     }
     private void OnDisable()
@@ -137,7 +141,8 @@ public class HUDManager : MonoBehaviour
         EnemyHealth.Spawned -= BindBoss;
         EnemyHealth.Despawned -= ReleaseBoss;
         if (threat != null) { threat.ThreatChanged -= SetThreat; threat.TierIncreased -= ShowThreatIncrease; }
-        if (boundPlayer != null) boundPlayer.HealthChanged -= SetHealth;
+        if (boundPlayer != null) { boundPlayer.HealthChanged -= SetHealth; boundPlayer.DamageTaken -= PulsePlayerDamage; }
+        HideLowHpVignette();
         ReleaseBoss(boundBoss);
         if (LocalizationService.Instance != null) LocalizationService.Instance.LanguageChanged -= RefreshLanguage;
     }
@@ -289,6 +294,7 @@ public class HUDManager : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (damagePulseEndsAt > 0f) RefreshDamageVignette();
         informationGroup.alpha = IsInformationVisible ? 1f : 0f;
         RefreshRunCounters();
         if (runStateManager == null || runStateManager.CurrentSector == null || runFlow == null)
@@ -363,11 +369,11 @@ public class HUDManager : MonoBehaviour
     {
         IsPlayerBound = player != null;
         bulletTimeView.Bind(player);
-        if (boundPlayer != null) boundPlayer.HealthChanged -= SetHealth;
+        if (boundPlayer != null) { boundPlayer.HealthChanged -= SetHealth; boundPlayer.DamageTaken -= PulsePlayerDamage; }
         boundPlayer = player != null ? player.GetComponent<PlayerHealth>() : null;
         if (boundPlayer != null)
         {
-            if (isActiveAndEnabled) boundPlayer.HealthChanged += SetHealth;
+            if (isActiveAndEnabled) { boundPlayer.HealthChanged += SetHealth; boundPlayer.DamageTaken += PulsePlayerDamage; }
             SetHealth(boundPlayer.CurrentHealth, boundPlayer.MaxHealth);
             player.GetComponent<PlayerHealthPresentation>()?.BindCamera(cameraShake);
         }
@@ -436,16 +442,25 @@ public class HUDManager : MonoBehaviour
 
         float healthPercent = currentHealth / maxHealth;
 
-        if (healthPercent > lowHpThreshold)
-        {
-            lowHpVignette.alpha = 0f;
-            return;
-        }
-
         float danger = 1f - (healthPercent / lowHpThreshold);
-        lowHpVignette.alpha = Mathf.Lerp(0.15f, 0.55f, danger);
+        lowHpBaseline = healthPercent > lowHpThreshold ? 0f : Mathf.Lerp(0.15f, 0.55f, danger);
+        RefreshDamageVignette();
     }
 
+    private void PulsePlayerDamage()
+    {
+        if (boundPlayer == null || boundPlayer.IsDead) return;
+        damagePulseEndsAt = Time.unscaledTime + damagePulseDuration;
+        RefreshDamageVignette();
+    }
+
+    private void RefreshDamageVignette()
+    {
+        if (lowHpVignette == null) return;
+        float remaining = Mathf.Clamp01((damagePulseEndsAt - Time.unscaledTime) / damagePulseDuration);
+        lowHpVignette.alpha = Mathf.Max(lowHpBaseline, damagePulseAlpha * remaining * remaining);
+        if (remaining <= 0f) damagePulseEndsAt = 0f;
+    }
 
 
     public void ShowBossHp(string bossName, float currentHp, float maxHp)
@@ -476,6 +491,8 @@ public class HUDManager : MonoBehaviour
     }
     public void HideLowHpVignette()
     {
+        damagePulseEndsAt = 0f;
+        lowHpBaseline = 0f;
         if (lowHpVignette != null)
             lowHpVignette.alpha = 0f;
     }

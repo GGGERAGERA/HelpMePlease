@@ -29,6 +29,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
     private bool preserveEnvironment;
     private bool environmentRetired;
     private bool disposed;
+    private bool applicationClosing;
     private bool rewardPending;
     public bool EnvironmentAlive => initialized && !environmentRetired;
     private bool initialized;
@@ -71,6 +72,9 @@ public sealed class ProductionAnomalySite : MonoBehaviour
     public static IReadOnlyList<ProductionAnomalySite> ActiveSites =>
         activeSites;
 
+    // Child failure callbacks can arrive during quit before our OnDisable unsubscribes.
+    private void OnApplicationQuit() => applicationClosing = true;
+
     private void OnEnable()
     {
         if (!activeSites.Contains(this))
@@ -81,7 +85,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 #endif
         }
 
-        if (initialized)
+        if (initialized && !disposed && !applicationClosing)
         {
             SubscribeToEventSpawner();
             RefreshTerritoryBoundaries();
@@ -572,7 +576,8 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 
     private void HandleEventCompleted(WorldEvent worldEvent)
     {
-        if (this == null || worldEvent == null || !isActiveAndEnabled || completed ||
+        if (this == null || worldEvent == null || disposed || applicationClosing ||
+            !isActiveAndEnabled || !gameObject.activeInHierarchy || completed ||
             worldEvent != activeEvent || rewardPending)
             return;
 
@@ -612,7 +617,8 @@ public sealed class ProductionAnomalySite : MonoBehaviour
 
     private void HandleEventFailed(WorldEvent worldEvent)
     {
-        if (this == null || worldEvent == null || !isActiveAndEnabled || completed ||
+        if (this == null || worldEvent == null || disposed || applicationClosing ||
+            !isActiveAndEnabled || !gameObject.activeInHierarchy || completed ||
             worldEvent != activeEvent)
             return;
 
@@ -629,7 +635,8 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         do
         {
             yield return new WaitForSeconds(2f);
-            if (completed || rewardPending || environmentRetired || activeEvent != null || eventSpawner == null || !eventSpawner.IsEventPrefabEnabled(eventPrefab)) yield break;
+            if (disposed || applicationClosing || !isActiveAndEnabled || !gameObject.activeInHierarchy ||
+                completed || rewardPending || environmentRetired || activeEvent != null || eventSpawner == null || !eventSpawner.IsEventPrefabEnabled(eventPrefab)) yield break;
             var actor = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
             if (actor == null || (actor.TryGetComponent<PlayerHealth>(out var health) && health.IsDead)) yield break;
             eventPosition = SelectEventPosition();
@@ -759,7 +766,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         {
             float neighborFocus = segment.Neighbor != null ? segment.Neighbor.BoundaryFocus : 0f;
             Color color = neighborFocus > focus ? segment.Neighbor.boundaryColor : boundaryColor;
-            color.a *= Mathf.Lerp(0.55f, 1f, Mathf.Max(focus, neighborFocus));
+            color.a *= Mathf.Lerp(0.25f, 0.6f, Mathf.Max(focus, neighborFocus));
             segment.Renderer.startColor = segment.Renderer.endColor = color;
         }
     }
@@ -777,7 +784,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
         Vector2 half = size * 0.5f;
         // A quiet territory tint makes the partition readable at sector zoom-out.
         // This mesh has no collider and does not participate in anomaly effects.
-        Color fillColor = new(color.r, color.g, color.b, 0.2f);
+        Color fillColor = new(color.r, color.g, color.b, 0.07f);
         territoryMesh = new Mesh
         {
             name = "Anomaly territory fill",

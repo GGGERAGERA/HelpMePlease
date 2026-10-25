@@ -97,7 +97,7 @@ public sealed class CorridorEvent : WorldEvent, ICorridorNavigation, IWorldEvent
     }
     private void Update()
     {
-        if (!IsCompleted && State != null) startView.Tick(Time.deltaTime);
+        if (!IsCompleted && State != null) startView.Tick(Time.deltaTime, CanInteract);
         Tick(Time.deltaTime);
     }
     internal void Tick(float delta)

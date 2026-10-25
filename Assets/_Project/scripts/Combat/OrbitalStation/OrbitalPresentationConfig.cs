@@ -19,6 +19,13 @@ namespace Subject42.Combat.OrbitalStation
         [Header("Run reward icons — leave missing authored art unassigned")]
         public Sprite NewMountIcon, RingCapacityIcon, RingDamageIcon, RingSpeedIcon, NewRingIcon;
         public LineRenderer EnergyLinePrefab;
+        [Header("Cannon feedback — visual only, no contact geometry")]
+        [Min(.01f)] public float ShotHaloDuration = .12f;
+        [Range(0f, 1f)] public float ShotHaloAlpha = .62f;
+        [Min(1f)] public float ShotHaloScale = 1.16f;
+        [Min(.01f)] public float ProjectileMuzzleDuration = .10f;
+        [Min(.01f)] public float ProjectileImpactDuration = .15f;
+        [Min(.01f)] public float ProjectileImpactSize = .25f;
         [Header("Core pulse overlay")]
         public Color CoreCyan = new(.15f, .85f, 1f);
         public Color CoreViolet = new(.65f, .35f, 1f);

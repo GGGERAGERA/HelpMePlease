@@ -1,6 +1,6 @@
 # Surface Map / production bunker
 
-Production entry: `StartScreen` -> `Bunker_OneRoom_Prototype` -> `MVP` -> `Bunker_OneRoom_Prototype`. Enabled build order is StartScreen, new bunker, MVP. The old `Scenes/MainBuild/MainMenu.unity` remains unchanged and disabled as a reference/fallback; enable it explicitly for fallback builds. Runtime routing already pointed at the new bunker before this change; this integration completes the missing scene dependencies.
+Current production entry (reconciled 2026-10-26): `StartScreen` -> `MainMenu` (bunker) -> `MVP` -> `MainMenu`. Enabled build order is StartScreen, MainMenu, MVP, as saved in [EditorBuildSettings](../ProjectSettings/EditorBuildSettings.asset); [RunEndService](../Assets/_Project/scripts/Run/Flow/RunEndService.cs) routes back to MainMenu. The earlier `Bunker_OneRoom_Prototype` migration described a historical setup. See the [current project map](../Assets/_Project/Documentation/PROJECT_MAP.md) and [GDD reconciliation](gdd-reconciliation-2026-10-26.md).
 
 ## Data and flow
 `Data/SurfaceMap/SurfaceMap_MVP.asset` defines BUNKER-A1-A2, BUNKER-C1-C2 and BUNKER-D1-D2. Starting IDs are A1, C1, D1. Completed nodes are replayable. All IDs are stable and independent of asset names.

@@ -82,7 +82,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
     [Header("Production Anomaly Focus")]
     [SerializeField] private SpriteRenderer focusOverlayPrefab;
     [SerializeField] private bool anomalyFocusEnabled = true;
-    [SerializeField, Range(0f, 1f)] private float outsideDarkness = 1f;
+    [SerializeField, Range(0f, 1f)] private float outsideDarkness = 0.28f;
     [SerializeField, Range(0f, 1f)] private float outsideDesaturation;
     [SerializeField, Range(0.2f, 0.35f)] private float focusTransition = 0.35f;
 

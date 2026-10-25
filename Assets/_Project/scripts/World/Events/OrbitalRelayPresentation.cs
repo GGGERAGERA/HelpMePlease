@@ -34,8 +34,8 @@ public sealed class OrbitalRelayPresentation : MonoBehaviour
         for (int i = 0; i < nodes.Length; i++)
         {
             nodes[i].Apply(!transition && i == snapshot.ActiveNodeIndex, i == snapshot.ActiveNodeIndex ? snapshot.ContactProgress : 0);
-            if (i < spawnFeedback.Length && (started || !transition && i == snapshot.ActiveNodeIndex &&
-                (i != previousNode || previousPhase == OrbitalRelayPhase.Transition))) spawnFeedback[i].Play();
+            if (i < spawnFeedback.Length && !transition && i == snapshot.ActiveNodeIndex &&
+                (started || i != previousNode || previousPhase == OrbitalRelayPhase.Transition)) spawnFeedback[i].Play();
         }
         hud.Render(snapshot, settings);
         previousNode = snapshot.ActiveNodeIndex; previousPhase = snapshot.Phase;
@@ -43,7 +43,7 @@ public sealed class OrbitalRelayPresentation : MonoBehaviour
     public void PlayTransition()
     {
         // Local node flashes and HUD wipe; no full-screen flash or long transition tween.
-        foreach (var feedback in spawnFeedback) feedback.Play();
+        if (previousNode >= 0 && previousNode < spawnFeedback.Length) spawnFeedback[previousNode].Play();
     }
     public void ShowResult(OrbitalRelayResult result)
     {

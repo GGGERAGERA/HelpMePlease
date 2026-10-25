@@ -13,6 +13,8 @@ public sealed class EnemyHealthPresentation : MonoBehaviour
     private SimplePrefabPool damagePopupPool;
     private SimplePrefabPool bloodHitPool;
     private SimplePrefabPool deathFxPool;
+    private const float HitDuration = .2f, HitLifetime = .14f, HitSizeScale = .75f;
+    private const float CommonDeathDuration = .35f, CommonDeathLifetime = .28f, CommonDeathSizeScale = 7f / 6f;
 
     public GameObject DamagePopupPrefab => damagePopupPrefab;
     public GameObject BloodHitPrefab =>
@@ -64,13 +66,14 @@ public sealed class EnemyHealthPresentation : MonoBehaviour
     {
         if (bloodHitPrefab == null)
             return;
-        float bloodHitDestroyTime = bloodHitPrefab.main.duration;
         PooledGameObject pooledBlood = bloodHitPool?.Get(
             hitPoint,
             Quaternion.identity);
         ParticleSystem blood = pooledBlood != null
             ? pooledBlood.PrimaryParticleSystem
             : Instantiate(bloodHitPrefab, hitPoint, Quaternion.identity);
+        // This prefab is also used by props/minigames: tune only this owned instance.
+        ConfigureCompactEffect(blood, HitDuration, HitLifetime, HitSizeScale);
         if (isCritical)
         {
             var main = blood.main;
@@ -82,7 +85,7 @@ public sealed class EnemyHealthPresentation : MonoBehaviour
         }
 
         blood.Play();
-
+        float bloodHitDestroyTime = blood.main.duration;
         if (pooledBlood != null)
             pooledBlood.ReleaseAfter(bloodHitDestroyTime);
         else
@@ -125,11 +128,24 @@ public sealed class EnemyHealthPresentation : MonoBehaviour
         ParticleSystem effect = pooled != null
             ? pooled.PrimaryParticleSystem
             : Instantiate(deathFXPrefab, transform.position, Quaternion.identity);
+        if (!health.IsBoss)
+            ConfigureCompactEffect(effect, CommonDeathDuration, CommonDeathLifetime, CommonDeathSizeScale);
         float lifetime = effect.main.duration;
         effect.Play();
         if (pooled != null)
             pooled.ReleaseAfter(lifetime);
         else
             Destroy(effect.gameObject, lifetime);
+    }
+
+    private static void ConfigureCompactEffect(ParticleSystem effect, float duration, float lifetime, float sizeScale)
+    {
+        // Get/Instantiate may have started playOnAwake; duration is editable only stopped.
+        effect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        var main = effect.main;
+        main.duration = duration;
+        main.startLifetime = lifetime;
+        // The existing pool restores the authored size before every Get.
+        main.startSizeMultiplier *= sizeScale;
     }
 }

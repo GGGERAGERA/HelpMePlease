@@ -6,8 +6,6 @@ public static class RunRewardCalculator
     private const int GoldPerCompletedLevel = 100;
     private const int GoldPerMinute = 5;
 
-    private const float DeathMultiplier = 0.75f;
-
     public static int CalculateGold(
         int kills,
         float runTime,
@@ -36,9 +34,6 @@ public static class RunRewardCalculator
         );
 
         int total = killReward + timeReward + levelReward;
-
-        if (endReason == RunEndReason.PlayerDied)
-            total = Mathf.RoundToInt(total * DeathMultiplier);
 
         return Mathf.Max(0, total);
     }
