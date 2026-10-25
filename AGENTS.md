@@ -1,5 +1,10 @@
 # Subject#42 — правила работы с геймдизайном
 
+## Работа с Git
+
+- Не делать коммиты, не выполнять `git add` и не переключать ветки без прямого запроса пользователя.
+- Пользователь делает коммиты самостоятельно в Fork.
+
 ## Источники решений
 
 - Перед изменением геймдизайна прочитать [GDD Core](Assets/_Project/Documentation/Subject42_Game_Design_Bible_Core.md), затем затронутые разделы [полной Game Design Bible](Assets/_Project/Documentation/Subject42_Game_Design_Bible.md).
