@@ -10,6 +10,7 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
     // One directional consumer (e.g. ORBITAL steering), applied after the existing input source.
     public System.Func<Vector2, Vector2> DirectionalInputFilter { get; set; }
     private Vector2 previousPhysicsPosition;
+    private float measuredMovementSpeed;
     private bool hadMovementIntent;
     [Header("Движение")]
     [UnityEngine.Serialization.FormerlySerializedAs("speed")]
@@ -180,7 +181,7 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
 
         if (animator != null)
             animator.SetFloat("Speed", rb != null
-                ? Mathf.Clamp01(rb.linearVelocity.magnitude / Mathf.Max(.01f,
+                ? Mathf.Clamp01(measuredMovementSpeed / Mathf.Max(.01f,
                     speed * anomalySpeedMultiplier * worldRuleSpeedMultiplier * BulletTimeControlMultiplier))
                 : moveInput.magnitude);
     }
@@ -272,6 +273,9 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
         // Accelerated simulations can run several physics steps per rendered frame.
         float travelled = Vector2.Distance(previousPhysicsPosition, rb.position);
         previousPhysicsPosition = rb.position;
+        // MovePosition clears its temporary velocity after simulation. Animate the
+        // completed displacement instead, including collision response, not input intent.
+        measuredMovementSpeed = travelled < 2f ? travelled / Time.fixedDeltaTime : 0f;
         // Measure completed physics movement; holding a wall or teleporting is not walking.
         if (hadMovementIntent && travelled > 0f && travelled < 2f) Travelled?.Invoke(travelled);
         hadMovementIntent = HasMovementInput;
@@ -424,6 +428,8 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
         MovementIntent = null;
         moveInput = Vector2.zero;
         currentVelocity = Vector2.zero;
+        measuredMovementSpeed = 0f;
+        if (animator != null) animator.SetFloat("Speed", 0f);
         dashDirection = Vector2.zero;
         dashTimeRemaining = 0f;
         dashCooldownRemaining = 0f;

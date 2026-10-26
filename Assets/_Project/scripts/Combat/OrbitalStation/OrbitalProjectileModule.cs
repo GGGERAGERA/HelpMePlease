@@ -14,6 +14,9 @@ namespace Subject42.Combat.OrbitalStation
         
         private float chargeRemaining = -1f;
         private int burstRemaining;
+        private EnemyHealth previousAimTarget;
+        private Vector2 previousAimPosition;
+        private Vector2 estimatedTargetVelocity;
         private static long nextVolley;
         public int ShotsFired { get; private set; }
         public float DamageMultiplier => Station.State.ShootingDamageMultiplier;
@@ -34,7 +37,8 @@ namespace Subject42.Combat.OrbitalStation
         {
             base.Tick(deltaTime);
             var target = Combat.FindNearest(WorldPosition, Settings.Range);
-            if (target != null) AimAt(target.transform.position);
+            TrackAimTarget(target, deltaTime);
+            if (target != null) AimAt(WorldPosition + AimDirection(target));
             if (deltaTime <= 0f || Mount == null) return;
             if (Station.Owner.IsDead) { burstRemaining = 0; chargeRemaining = -1f; WeaponCharge(0f); return; }
             if (chargeRemaining >= 0f)
@@ -63,8 +67,8 @@ namespace Subject42.Combat.OrbitalStation
         private void Fire(EnemyHealth target)
         {
             if (burstRemaining == 0) burstRemaining = Mathf.Max(1, Settings.BurstShots);
-            Vector2 direction = ((Vector2)target.transform.position - WorldPosition).normalized;
-            AimAt(target.transform.position);
+            Vector2 direction = AimDirection(target);
+            AimAt(WorldPosition + direction);
             int pellets = Mathf.Max(1, Settings.Pellets);
             var volley = pellets > 1 ? new ProductionOrbitalCombatAdapter.ProjectileVolley(++nextVolley) : null;
             for (int i = 0; i < pellets; i++)
@@ -88,6 +92,42 @@ namespace Subject42.Combat.OrbitalStation
             else Cooldown = Mathf.Max(.05f, Settings.FireInterval / FireRateMultiplier);
         }
         public override void OnCorePulse() => ActivateCombat();
-        public void ResetFiring() { burstRemaining = 0; chargeRemaining = -1f; Cooldown = .2f; ResetWeaponFeedback(); }
+        private void TrackAimTarget(EnemyHealth target, float deltaTime)
+        {
+            if (Settings.AimLeadSeconds <= 0f) return;
+            Vector2 position = target != null ? (Vector2)target.transform.position : Vector2.zero;
+            // MovePosition enemies have transient Rigidbody velocity. Observe their
+            // displacement and smooth physics/render sampling at different frame rates.
+            estimatedTargetVelocity = target != null && target == previousAimTarget && deltaTime > 0f
+                ? Vector2.Lerp(estimatedTargetVelocity, (position - previousAimPosition) / deltaTime,
+                    1f - Mathf.Exp(-deltaTime / .08f))
+                : Vector2.zero;
+            previousAimTarget = target;
+            previousAimPosition = position;
+        }
+
+        private Vector2 AimDirection(EnemyHealth target) => EvaluateAimDirection(WorldPosition,
+            target.transform.position, target == previousAimTarget ? estimatedTargetVelocity : Vector2.zero,
+            Settings.ProjectileSpeed, Settings.AimLeadSeconds, Settings.MaxAimCorrectionDegrees);
+
+        // Correct the launch direction only. A fired projectile remains a straight
+        // physical shot: no target retention, retargeting or steering in flight.
+        public static Vector2 EvaluateAimDirection(Vector2 origin, Vector2 target, Vector2 targetVelocity,
+            float projectileSpeed, float maximumLeadSeconds, float maximumCorrectionDegrees)
+        {
+            Vector2 offset = target - origin;
+            Vector2 direct = offset.normalized;
+            if (maximumLeadSeconds <= 0f || maximumCorrectionDegrees <= 0f) return direct;
+            float lead = Mathf.Min(maximumLeadSeconds, offset.magnitude / projectileSpeed);
+            Vector2 predicted = (offset + targetVelocity * lead).normalized;
+            return Vector3.RotateTowards(direct, predicted, maximumCorrectionDegrees * Mathf.Deg2Rad, 0f);
+        }
+
+        public void ResetFiring()
+        {
+            burstRemaining = 0; chargeRemaining = -1f; Cooldown = .2f;
+            previousAimTarget = null; estimatedTargetVelocity = Vector2.zero;
+            ResetWeaponFeedback();
+        }
     }
 }

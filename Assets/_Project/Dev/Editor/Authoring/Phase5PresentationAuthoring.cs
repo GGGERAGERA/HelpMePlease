@@ -197,9 +197,11 @@ public static class Phase5PresentationAuthoring
         foreach(string guid in AssetDatabase.FindAssets("t:Prefab",new[]{"Assets/_Project/prefabs"}))
         {
             string path=AssetDatabase.GUIDToAssetPath(guid); var prefab=AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            if(prefab.GetComponent<PlayerHealth>()==null || prefab.GetComponent<PlayerHealthPresentation>()!=null)continue;
+            if(prefab.GetComponent<PlayerHealth>()==null || prefab.GetComponent<PlayerFeedbackPresentation>()!=null)continue;
             Save(path,root=>{
-                var presenter=root.AddComponent<PlayerHealthPresentation>();Set(presenter,"health",root.GetComponent<PlayerHealth>());Set(presenter,"flash",root.GetComponent<PlayerWhiteFlash>());Set(presenter,"hitSound",root.GetComponent<PlayerHitSound>());
+                var presenter=root.AddComponent<PlayerFeedbackPresentation>();Set(presenter,"health",root.GetComponent<PlayerHealth>());Set(presenter,"flash",root.GetComponent<PlayerWhiteFlash>());Set(presenter,"hitSound",root.GetComponent<PlayerHitSound>());
+                Set(presenter,"movement",root.GetComponent<CharacterMovement2D>());
+                Set(presenter,"dashEffect",AssetDatabase.LoadAssetAtPath<ParticleSystem>("Assets/_Project/prefabs/fx/PlayerDashBurst.prefab"));
                 var data=new SerializedObject(presenter);var list=data.FindProperty("renderers");var renderers=root.GetComponentsInChildren<SpriteRenderer>(true);list.arraySize=renderers.Length;for(int i=0;i<renderers.Length;i++)list.GetArrayElementAtIndex(i).objectReferenceValue=renderers[i];data.ApplyModifiedPropertiesWithoutUndo();
             });
         }

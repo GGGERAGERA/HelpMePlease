@@ -375,7 +375,7 @@ public class HUDManager : MonoBehaviour
         {
             if (isActiveAndEnabled) { boundPlayer.HealthChanged += SetHealth; boundPlayer.DamageTaken += PulsePlayerDamage; }
             SetHealth(boundPlayer.CurrentHealth, boundPlayer.MaxHealth);
-            player.GetComponent<PlayerHealthPresentation>()?.BindCamera(cameraShake);
+            player.GetComponent<PlayerFeedbackPresentation>()?.BindCamera(cameraShake);
         }
         interactionPrompt.Bind(player != null ? player.GetComponent<PlayerInteractor>() : null);
         CharacterMovement2D movement = player != null

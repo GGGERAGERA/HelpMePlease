@@ -55,7 +55,7 @@ public static class EliteOrbitalLabAuthoring
         foreach (var station in player.GetComponentsInChildren<OrbitalStationView>(true)) if (station.gameObject!=player) Object.DestroyImmediate(station.gameObject);
         foreach (var behaviour in player.GetComponentsInChildren<MonoBehaviour>(true))
             if (!(behaviour is CharacterMovement2D) && !(behaviour is PlayerHealth) && !(behaviour is PlayerWhiteFlash) &&
-                !(behaviour is PlayerHitSound) && !(behaviour is PlayerHealthPresentation) && !(behaviour is Light2D)) Object.DestroyImmediate(behaviour);
+                !(behaviour is PlayerHitSound) && !(behaviour is PlayerFeedbackPresentation) && !(behaviour is Light2D)) Object.DestroyImmediate(behaviour);
         foreach (var collider in player.GetComponentsInChildren<Collider2D>(true)) if (collider.gameObject!=player) Object.DestroyImmediate(collider);
         lab.PlayerTemplate=player;
         lab.Presets=new[]

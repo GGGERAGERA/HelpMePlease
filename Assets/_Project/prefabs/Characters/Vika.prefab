@@ -6215,8 +6215,10 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 13887751ea3346c8a28fa57cb1dfb211, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerHealthPresentation
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerFeedbackPresentation
   health: {fileID: 2422717427438589713}
+  movement: {fileID: 8009868830771437608}
+  dashEffect: {fileID: 19875214, guid: 6f48853caa3a4bbc822b67f329b9adbf, type: 3}
   flash: {fileID: 2209765555487325771}
   hitSound: {fileID: 2892277328585705665}
   renderers:

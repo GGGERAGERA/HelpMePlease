@@ -59,7 +59,7 @@ public static class OrbitalConstructorAuthoring
         // Keep movement, health and authored hit presentation; remove spawners, station, pickups and services BEFORE Awake.
         foreach (var behaviour in template.GetComponentsInChildren<MonoBehaviour>(true))
             if (!(behaviour is CharacterMovement2D) && !(behaviour is PlayerHealth) && !(behaviour is PlayerWhiteFlash) &&
-                !(behaviour is PlayerHitSound) && !(behaviour is PlayerHealthPresentation) && !(behaviour is Light2D))
+                !(behaviour is PlayerHitSound) && !(behaviour is PlayerFeedbackPresentation) && !(behaviour is Light2D))
                 Object.DestroyImmediate(behaviour);
         foreach (var collider in template.GetComponentsInChildren<Collider2D>(true))
             if (collider.gameObject!=template) Object.DestroyImmediate(collider);

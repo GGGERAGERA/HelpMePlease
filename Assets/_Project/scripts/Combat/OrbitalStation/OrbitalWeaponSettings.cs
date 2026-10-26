@@ -34,6 +34,8 @@ public sealed class OrbitalWeaponSettings
     [Min(.02f)] public float BurstInterval = .09f;
     [Min(1)] public int Pellets = 1;
     [Range(0f, 90f)] public float SpreadDegrees = 3f;
+    [Min(0f)] public float AimLeadSeconds;
+    [Range(0f, 30f)] public float MaxAimCorrectionDegrees;
     [Min(1), Tooltip("Maximum distinct bodies damaged by one projectile.")] public int BodyPierces = 1;
     [Min(0f)] public float ChargeSeconds;
     [Range(0f, 5f)] public float Knockback;
@@ -47,6 +49,7 @@ public sealed class OrbitalWeaponSettings
     {
         Damage = OrbitalPistolModule.BaseDamage, FireInterval = .55f, Range = 8f, ProjectileSpeed = 13f,
         ProjectileRadius = .14f, BurstShots = 1, Pellets = 1, SpreadDegrees = 0f,
+        AimLeadSeconds = .35f, MaxAimCorrectionDegrees = 12f,
         Color = Color.white
     };
     public static OrbitalWeaponSettings Shotgun() => new()
