@@ -47,7 +47,7 @@ public sealed class OrbitalWeaponSettings
     public float SpinDegreesPerSecond = 720f;
     public static OrbitalWeaponSettings Pistol() => new()
     {
-        Damage = OrbitalPistolModule.BaseDamage, FireInterval = .55f, Range = 8f, ProjectileSpeed = 13f,
+        Damage = OrbitalPistolModule.BaseDamage, FireInterval = .55f, Range = 8f, ProjectileSpeed = 16f,
         ProjectileRadius = .14f, BurstShots = 1, Pellets = 1, SpreadDegrees = 0f,
         AimLeadSeconds = .35f, MaxAimCorrectionDegrees = 12f,
         Color = Color.white

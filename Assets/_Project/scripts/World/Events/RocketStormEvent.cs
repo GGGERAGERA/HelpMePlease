@@ -83,14 +83,43 @@ public sealed class RocketStormEvent : WorldEvent, IWorldEventObjectiveProvider
         Vector2 size = Vector2.Min(settings.zoneSize, available.size - Vector2.one * 2f);
         if (size.x < 12f || size.y < 12f) { error = "No accessible 12 x 12 Rocket Storm area fits this territory."; return false; }
         Vector2 half = size * .5f;
-        Vector2 position = new(Mathf.Clamp(context.Origin.x, available.xMin + half.x + 1f, available.xMax - half.x - 1f),
-            Mathf.Clamp(context.Origin.y, available.yMin + half.y + 1f, available.yMax - half.y - 1f));
-        Rect candidate = new(position - half, size);
-        if (!context.IsStaticFootprintClear(candidate)) { error = "Rocket Storm survival area intersects an obstacle or reserved exit."; return false; }
+        if (!TryFindArena(context, available, size, out Rect candidate))
+        { error = "Rocket Storm survival area intersects an obstacle or reserved exit."; return false; }
+        Vector2 position = candidate.center;
         arena = candidate; center = position; halfSize = half;
         transform.position = position;
         RenderZone(false);
         error = null; return true;
+    }
+
+    private static bool TryFindArena(WorldEventPlacementContext context, Rect available, Vector2 size,
+        out Rect candidate)
+    {
+        Vector2 minimum = available.min + size * .5f + Vector2.one;
+        Vector2 maximum = available.max - size * .5f - Vector2.one;
+        Vector2 preferred = new(Mathf.Clamp(context.Origin.x, minimum.x, maximum.x),
+            Mathf.Clamp(context.Origin.y, minimum.y, maximum.y));
+        candidate = new Rect(preferred - size * .5f, size);
+        if (context.IsStaticFootprintClear(candidate)) return true;
+
+        // Search the arena's legal center domain, not beacon positions that can all clamp
+        // onto the same blocked rectangle. Include both edges and axes with no free span.
+        int columns = Mathf.Max(1, Mathf.CeilToInt(maximum.x - minimum.x));
+        int rows = Mathf.Max(1, Mathf.CeilToInt(maximum.y - minimum.y));
+        float nearest = float.PositiveInfinity;
+        for (int y = 0; y <= rows; y++)
+        for (int x = 0; x <= columns; x++)
+        {
+            Vector2 position = new(Mathf.Lerp(minimum.x, maximum.x, (float)x / columns),
+                Mathf.Lerp(minimum.y, maximum.y, (float)y / rows));
+            float distance = (position - preferred).sqrMagnitude;
+            if (distance >= nearest) continue;
+            Rect footprint = new(position - size * .5f, size);
+            if (!context.IsStaticFootprintClear(footprint)) continue;
+            candidate = footprint;
+            nearest = distance;
+        }
+        return !float.IsPositiveInfinity(nearest);
     }
 
     public override void CollectReservedFootprints(List<Rect> footprints)

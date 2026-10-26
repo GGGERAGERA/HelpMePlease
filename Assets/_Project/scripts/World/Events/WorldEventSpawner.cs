@@ -309,10 +309,13 @@ public class WorldEventSpawner : MonoBehaviour
                 {
                     if (exit == null || !exit.IsMapVisible) continue;
                     var trigger = exit.GetComponent<CircleCollider2D>();
-                    float radius = trigger.bounds.extents.magnitude + 1;
-                    Vector2 closest = new Vector2(Mathf.Clamp(exit.transform.position.x, footprint.xMin, footprint.xMax),
-                        Mathf.Clamp(exit.transform.position.y, footprint.yMin, footprint.yMax));
-                    if (Vector2.Distance(closest, exit.transform.position) < radius) return false;
+                    Vector2 exitCenter = trigger.transform.TransformPoint(trigger.offset);
+                    Vector3 scale = trigger.transform.lossyScale;
+                    // Match the reserved exit's circle and 1m clearance after its trigger is spawned.
+                    float radius = trigger.radius * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y)) + 1f;
+                    Vector2 closest = new Vector2(Mathf.Clamp(exitCenter.x, footprint.xMin, footprint.xMax),
+                        Mathf.Clamp(exitCenter.y, footprint.yMin, footprint.yMax));
+                    if (Vector2.Distance(closest, exitCenter) < radius) return false;
                 }
                 return true;
             });
