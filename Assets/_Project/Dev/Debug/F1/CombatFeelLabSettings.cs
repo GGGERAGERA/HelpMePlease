@@ -444,7 +444,7 @@ public sealed class CombatFeelParameterMetadata
         if (name.StartsWith("Impact", StringComparison.Ordinal))
             return "Выберите оружие с impact-FX и смотрите точно в точку попадания.";
         if (name.StartsWith("Popup", StringComparison.Ordinal) || name.StartsWith("CritPopup", StringComparison.Ordinal))
-            return "Смотрите на цифру урона от момента появления до полного исчезновения.";
+            return "Смотрите на цифру урона от появления до исчезновения. Значения Lab — относительная настройка поверх production-префаба: Reset сохраняет его вид; ненулевые нейтрали задают отношение, нулевые — добавку. Применяется при следующем попадании.";
         if (group is CombatFeelGroup.Target or CombatFeelGroup.Kill or CombatFeelGroup.Crowd)
             return "Смотрите на presentation root врага относительно неподвижного gameplay collider/root.";
         if (group == CombatFeelGroup.Camera)

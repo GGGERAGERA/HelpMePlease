@@ -278,7 +278,13 @@ public sealed class LevelAnomalyController : MonoBehaviour
             bounds.center.y,
             0f
         );
-        focusOverlay.transform.localScale = overlaySize;
+        // The focus window is measured in world units, while its HUD parent is scaled.
+        Vector3 parentScale = focusOverlay.transform.parent.lossyScale;
+        focusOverlay.transform.localScale = new Vector3(
+            overlaySize.x / parentScale.x,
+            overlaySize.y / parentScale.y,
+            1f
+        );
 
         focusProperties.Clear();
         focusProperties.SetFloat(FocusAmountId, focusAmount);

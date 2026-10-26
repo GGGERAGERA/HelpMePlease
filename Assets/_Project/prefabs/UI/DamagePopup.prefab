@@ -194,3 +194,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ce04f8dc530b1942b52ce9530ba0458, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DamagePopup
+  damageMaterial: {fileID: 2100000, guid: 9b4db057a0884a36a18df033532f2ff5, type: 2}
+  damageColor: {r: 1, g: 0.95, b: 0.84, a: 1}
+  criticalColor: {r: 1, g: 0.6, b: 0.16, a: 1}
+  damageFontSize: 17
+  damageCharacterSpacing: -1
+  criticalScale: 1.3
+  damageLifetime: 0.72
+  damageFadeDelay: 0.32
+  damageFadeDuration: 0.4
+  damageRiseSpeed: 1.85
+  damageGravity: 2.4
+  damageDriftRandomness: 0.38
+  damageRotationRandomness: 3
+  damageScalePunch: 0.2
+  damagePunchDuration: 0.16
+  criticalLifetime: 1.1
+  criticalRise: 1.08
+  criticalPunch: 1.2
