@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
@@ -41,7 +42,7 @@ public sealed class AudioLoopHandle
     }
 }
 
-public sealed class AudioService : MonoBehaviour
+public sealed partial class AudioService : MonoBehaviour
 {
     private sealed class PoolSlot
     {
@@ -115,6 +116,7 @@ public sealed class AudioService : MonoBehaviour
 
     private void Update()
     {
+        UpdateDebugAudioPanel();
         if (Time.timeScale <= 0f) StopAllManagedLoops();
         RefreshPool();
 
@@ -149,25 +151,30 @@ public sealed class AudioService : MonoBehaviour
     private void OnEnable() => SceneManager.sceneLoaded += HandleSceneLoaded;
     private void OnDisable()
     {
+        DisableDebugAudioPanel();
         SceneManager.sceneLoaded -= HandleSceneLoaded;
         StopAllManagedLoops();
     }
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode) => StopAllManagedLoops();
 
-    public bool Play(AudioCueId cueId)
+    public bool Play(AudioCueId cueId, [CallerMemberName] string caller = "",
+        [CallerFilePath] string callerFile = "", [CallerLineNumber] int callerLine = 0)
     {
-        return PlayInternal(cueId, transform.position, false);
+        return PlayInternal(cueId, transform.position, false, caller, callerFile, callerLine);
     }
 
-    public bool PlayAt(AudioCueId cueId, Vector3 position)
+    public bool PlayAt(AudioCueId cueId, Vector3 position, [CallerMemberName] string caller = "",
+        [CallerFilePath] string callerFile = "", [CallerLineNumber] int callerLine = 0)
     {
-        return PlayInternal(cueId, position, true);
+        return PlayInternal(cueId, position, true, caller, callerFile, callerLine);
     }
 
     public AudioLoopHandle StartLoop(
         AudioCueId cueId,
         Transform followTarget = null,
-        Vector3? position = null
+        Vector3? position = null,
+        [CallerMemberName] string caller = "", [CallerFilePath] string callerFile = "",
+        [CallerLineNumber] int callerLine = 0
     )
     {
         if (Time.timeScale <= 0f) return null;
@@ -200,10 +207,14 @@ public sealed class AudioService : MonoBehaviour
 
         slot.Source.Play();
         MarkPlayed(cueId);
+        RecordDebugPlayback(cueId, clip, definition.Category,
+            followTarget != null || position.HasValue ? sourcePosition : null,
+            caller, callerFile, callerLine, followTarget != null ? followTarget.name : null);
         return slot.Handle;
     }
 
-    public bool PlayMusic(AudioCueId cueId)
+    public bool PlayMusic(AudioCueId cueId, [CallerMemberName] string caller = "",
+        [CallerFilePath] string callerFile = "", [CallerLineNumber] int callerLine = 0)
     {
         if (currentMusicCue == cueId &&
             musicSources != null &&
@@ -234,11 +245,13 @@ public sealed class AudioService : MonoBehaviour
         musicFadeRoutine = StartCoroutine(
             CrossfadeMusic(previous, next, definition.Volume * GetCategoryVolume(AudioCategory.Music), definition.FadeInDuration)
         );
+        RecordDebugPlayback(cueId, clip, definition.Category, null, caller, callerFile, callerLine, null);
 
         return true;
     }
 
-    public bool PlayAmbience(AudioCueId cueId)
+    public bool PlayAmbience(AudioCueId cueId, [CallerMemberName] string caller = "",
+        [CallerFilePath] string callerFile = "", [CallerLineNumber] int callerLine = 0)
     {
         if (currentAmbienceCue == cueId && ambienceSource != null && ambienceSource.isPlaying)
             return true;
@@ -253,6 +266,7 @@ public sealed class AudioService : MonoBehaviour
         ambienceSource.volume = definition.Volume * GetCategoryVolume(AudioCategory.Ambience);
         ambienceSource.Play();
         currentAmbienceCue = cueId;
+        RecordDebugPlayback(cueId, clip, definition.Category, null, caller, callerFile, callerLine, null);
         return true;
     }
 
@@ -311,7 +325,9 @@ public sealed class AudioService : MonoBehaviour
         Vector3 position,
         float volume,
         AudioCategory category,
-        float spatialBlend = 0f
+        float spatialBlend = 0f,
+        [CallerMemberName] string caller = "", [CallerFilePath] string callerFile = "",
+        [CallerLineNumber] int callerLine = 0
     )
     {
         if (clip == null)
@@ -330,6 +346,7 @@ public sealed class AudioService : MonoBehaviour
         RouteExternalSource(source, category);
         source.clip = clip;
         source.Play();
+        RecordDebugPlayback(AudioCueId.None, clip, category, position, caller, callerFile, callerLine, null);
 
         Destroy(sourceObject, Mathf.Max(0.1f, clip.length + 0.1f));
         return true;
@@ -370,7 +387,8 @@ public sealed class AudioService : MonoBehaviour
         slot.Source.pitch = Mathf.Lerp(.9f, 1.12f, t);
     }
 
-    private bool PlayInternal(AudioCueId cueId, Vector3 position, bool positional)
+    private bool PlayInternal(AudioCueId cueId, Vector3 position, bool positional,
+        string caller, string callerFile, int callerLine)
     {
         if (!TryPreparePlayback(cueId, out AudioCueDefinition definition, out AudioClip clip))
             return false;
@@ -395,8 +413,27 @@ public sealed class AudioService : MonoBehaviour
 
         slot.Source.Play();
         MarkPlayed(cueId);
+        RecordDebugPlayback(cueId, clip, definition.Category, positional ? position : null,
+            caller, callerFile, callerLine, null);
         return true;
     }
+
+    // Direct AudioSource owners retain playback/lifecycle ownership. This notification is compiled out of release callers.
+    [System.Diagnostics.Conditional("UNITY_EDITOR"), System.Diagnostics.Conditional("DEVELOPMENT_BUILD")]
+    public void DebugRecordExternalPlayback(AudioClip clip, AudioCategory category,
+        Vector3? position = null, Object context = null,
+        [CallerMemberName] string caller = "", [CallerFilePath] string callerFile = "",
+        [CallerLineNumber] int callerLine = 0)
+    {
+        if (clip != null)
+            RecordDebugPlayback(AudioCueId.None, clip, category, position, caller, callerFile, callerLine,
+                context != null ? context.name : null);
+    }
+
+    partial void UpdateDebugAudioPanel();
+    partial void DisableDebugAudioPanel();
+    partial void RecordDebugPlayback(AudioCueId cueId, AudioClip clip, AudioCategory category,
+        Vector3? position, string caller, string callerFile, int callerLine, string sourceObject);
 
     private bool TryPreparePlayback(
         AudioCueId cueId,

@@ -45,7 +45,10 @@ public sealed class EscapeProtocolView : MonoBehaviour
     public void InvestCores()
     {
         if (!isActiveAndEnabled || projectWindow == null || !projectWindow.activeSelf || SceneTransitionOverlay.IsTransitioning || projectOwner == null) return;
-        projectOwner.TryInvestEscapeCores(displayedStageId, int.MaxValue, out _);
+        int stage = projectOwner.CurrentEscapeStage;
+        if (projectOwner.TryInvestEscapeCores(displayedStageId, int.MaxValue, out _))
+            AudioService.Instance?.Play(projectOwner.IsEscapeStageCompleted(stage)
+                ? AudioCueId.CoreInvestComplete : AudioCueId.CoreInvest);
     }
     private void RefreshProject()
     {

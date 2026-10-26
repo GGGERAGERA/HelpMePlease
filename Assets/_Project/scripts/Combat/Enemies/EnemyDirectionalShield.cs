@@ -177,6 +177,7 @@ public sealed class EnemyDirectionalShield : MonoBehaviour
                         startColor = i % 2 == 0 ? Red : Color.white, startLifetime = .35f, startSize3D = new Vector3(.05f, .14f, .05f) }, 1);
                 }
                 FeedbackSource.PlayOneShot(BreakSound);
+                AudioService.Instance?.DebugRecordExternalPlayback(BreakSound, AudioCategory.SFX, point, this);
             }
         }
         RefreshPresentation();

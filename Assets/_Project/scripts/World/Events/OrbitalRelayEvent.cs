@@ -148,7 +148,10 @@ public sealed class OrbitalRelayEvent : WorldEvent
         state.Tick(Time.deltaTime, contact);
         var after = Snapshot;
         if (after.StabilizationActivations + after.BonusActivations > before.StabilizationActivations + before.BonusActivations)
+        {
             nodes[before.ActiveNodeIndex].PlayActivation();
+            AudioService.Instance?.PlayAt(AudioCueId.RelayNodeActivated, nodes[before.ActiveNodeIndex].transform.position);
+        }
         ApplyPhaseChange(before.Phase);
         presentation.Render(after);
         if (state.Result.HasValue) Finish();
@@ -157,6 +160,8 @@ public sealed class OrbitalRelayEvent : WorldEvent
     {
         if (Snapshot.Phase == previous) return;
         if (Snapshot.Phase == OrbitalRelayPhase.Transition) presentation.PlayTransition();
+        if (Snapshot.Phase == OrbitalRelayPhase.Transition || Snapshot.Phase == OrbitalRelayPhase.Bonus)
+            AudioService.Instance?.PlayAt(AudioCueId.RelayPhaseChanged, transform.position);
         pressure.SetBonusActive(owner, this, Snapshot.Phase == OrbitalRelayPhase.Bonus, settings.BonusEnemyPressureMultiplier);
         PhaseChanged?.Invoke(Snapshot.Phase);
     }
@@ -164,6 +169,7 @@ public sealed class OrbitalRelayEvent : WorldEvent
     {
         if (IsCompleted || !state.Result.HasValue) return;
         OrbitalRelayResult result = state.Result.Value;
+        AudioService.Instance?.PlayAt(result.Success ? AudioCueId.RelayCompleted : AudioCueId.RelayFailed, transform.position);
         pressure.Release(); presentation.ShowResult(result); Finished?.Invoke(result);
         if (result.Success) CompleteEvent(); else FailEvent();
     }

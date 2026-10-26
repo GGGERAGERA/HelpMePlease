@@ -29,5 +29,6 @@ public class PlayerHitSound : MonoBehaviour
 
         AudioClip clip = hitClips[Random.Range(0, hitClips.Length)];
         audioSource.PlayOneShot(clip, volume);
+        AudioService.Instance?.DebugRecordExternalPlayback(clip, AudioCategory.SFX, transform.position, this);
     }
 }

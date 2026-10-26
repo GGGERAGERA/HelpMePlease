@@ -324,7 +324,8 @@ internal sealed class BomberExplosionSequence : MonoBehaviour
             return;
 
         exploded = true;
-        EnemyExplosion.Detonate(explosionPosition, radius, damage, explosionFxPrefab);
+        EnemyExplosion.Detonate(explosionPosition, radius, damage, explosionFxPrefab,
+            audioCue: AudioCueId.BomberExplosion);
 
         if (shockwaveFxPrefab != null)
         {

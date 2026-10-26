@@ -29,6 +29,7 @@ public sealed class PlayerFeedbackPresentation : MonoBehaviour
     }
     private void OnDash()
     {
+        AudioService.Instance?.PlayAt(AudioCueId.PlayerDash, transform.position);
         Vector3 direction = movement.LastMoveDirection.normalized;
         activeDashEffect = Instantiate(dashEffect,
             transform.position - direction * .2f + Vector3.up * .25f,

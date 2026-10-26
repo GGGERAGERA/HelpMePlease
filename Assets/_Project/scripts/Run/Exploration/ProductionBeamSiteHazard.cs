@@ -151,6 +151,7 @@ internal sealed class ProductionBeamSiteHazard :
         view.SetState(AnomalyBeamView.BeamState.Telegraph);
         state = HazardState.Telegraph;
         stateUntil = Time.time + TelegraphSeconds;
+        AudioService.Instance?.PlayAt(AudioCueId.BeamWarning, (beamStart + beamEnd) * .5f);
     }
 
     private void FireBeam()

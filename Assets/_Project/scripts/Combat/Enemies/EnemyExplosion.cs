@@ -6,7 +6,8 @@ internal static class EnemyExplosion
     // Enemy explosions damage players, matching Bomber's existing target policy.
     // Resolve parent health and deduplicate so compound colliders receive one hit.
     internal static ParticleSystem Detonate(Vector2 position, float radius, int damage,
-        ParticleSystem explosionPrefab, SimplePrefabPool pool = null, bool nonLethal = false)
+        ParticleSystem explosionPrefab, SimplePrefabPool pool = null, bool nonLethal = false,
+        AudioCueId audioCue = AudioCueId.Explosion)
     {
         var recipients = new HashSet<PlayerHealth>();
         var hits = new List<Collider2D>();
@@ -28,7 +29,7 @@ internal static class EnemyExplosion
             }
             health.TakeDamage(appliedDamage, (Vector2)health.transform.position - position);
         }
-        AudioService.Instance?.PlayAt(AudioCueId.Explosion, position);
+        AudioService.Instance?.PlayAt(audioCue, position);
         if (explosionPrefab == null) return null;
         var fx = pool != null ? pool.Get(position, Quaternion.identity)?.PrimaryParticleSystem :
             Object.Instantiate(explosionPrefab, position, Quaternion.identity);

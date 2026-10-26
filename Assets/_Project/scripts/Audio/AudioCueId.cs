@@ -41,5 +41,26 @@ public enum AudioCueId
     CapsuleGlassTap = 100,
     // 101/102 retired: capsule unlock and vent are no longer part of the intro.
     CapsuleBodyResonance = 103,
-    CapsuleGlassBreak = 104
+    CapsuleGlassBreak = 104,
+
+    PlayerDash = 110,
+    BulletTimeEnter = 111,
+    BulletTimeExit = 112,
+    RocketWarning = 120,
+    ElectricWarning = 121,
+    BeamWarning = 122,
+    RelayNodeActivated = 123,
+    RelayPhaseChanged = 124,
+    RelayCompleted = 125,
+    RelayFailed = 126,
+    MedkitPickup = 130,
+    MagnetPickup = 131,
+    GoldPickup = 132,
+    CoreInvest = 133,
+    CoreInvestComplete = 134,
+    LootReelStart = 140,
+    LootReelTick = 141,
+    LootReelStop = 142,
+    BomberExplosion = 143,
+    RocketExplosion = 144
 }

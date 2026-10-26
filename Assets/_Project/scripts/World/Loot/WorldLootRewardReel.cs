@@ -70,13 +70,6 @@ public sealed class WorldLootRewardReel : MonoBehaviour
     [SerializeField, Min(0.05f)] private float panelRevealDuration = 0.18f;
     [SerializeField, Min(0.05f)] private float panelCloseDuration = 0.2f;
 
-    [Header("Optional Audio")]
-    [SerializeField] private AudioSource audioSource;
-    [SerializeField] private AudioClip reelStartClip;
-    [SerializeField] private AudioClip cardTickClip;
-    [SerializeField] private AudioClip stopClip;
-    [SerializeField] private AudioClip rewardClip;
-
     private static WorldLootRewardReel instance;
     private static string lastClaimedReward;
     private static UpgradeData lastStoppedUpgrade;
@@ -506,7 +499,7 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         state = ReelState.Spinning;
         stateElapsed = 0f;
         statusText.text = LocalizationService.EnsureExists().Get("loot.sync");
-        PlayOptional(reelStartClip);
+        AudioService.Instance?.Play(AudioCueId.LootReelStart);
     }
 
     private void BeginClosing()
@@ -584,7 +577,7 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         stopButtonText.text = LocalizationService.EnsureExists().Get("loot.brake");
         statusText.text = LocalizationService.EnsureExists().Get("loot.brake");
         TriggerMarkerPulse(1.4f);
-        PlayOptional(stopClip);
+        AudioService.Instance?.Play(AudioCueId.LootReelStop);
     }
 
     private void UpdateBraking()
@@ -671,7 +664,6 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         statusText.text = LocalizationService.EnsureExists().Get("loot.received");
         state = ReelState.Result;
         stateElapsed = 0f;
-        PlayOptional(rewardClip);
         claimedCallback?.Invoke(reward);
         claimedCallback = null;
     }
@@ -710,7 +702,7 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         if (crossedMarker)
         {
             TriggerMarkerPulse();
-            PlayOptional(cardTickClip);
+            AudioService.Instance?.Play(AudioCueId.LootReelTick);
         }
 
         ShiftCards(-distance);
@@ -846,12 +838,6 @@ public sealed class WorldLootRewardReel : MonoBehaviour
             return false;
 
         return observedPlayerHealth == null || observedPlayerHealth.IsDead;
-    }
-
-    private void PlayOptional(AudioClip clip)
-    {
-        if (audioSource != null && clip != null)
-            audioSource.PlayOneShot(clip);
     }
 
     private void CloseOverlay()

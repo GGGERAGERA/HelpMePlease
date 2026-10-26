@@ -659,7 +659,11 @@ public class BallRollVisual : MonoBehaviour
             var ps = Instantiate(prefab, pos, Quaternion.identity);
             Destroy(ps.gameObject, 3f);
         }
-        if (clip != null) AudioSource.PlayClipAtPoint(clip, pos);
+        if (clip != null)
+        {
+            AudioSource.PlayClipAtPoint(clip, pos);
+            AudioService.Instance?.DebugRecordExternalPlayback(clip, AudioCategory.SFX, pos, this);
+        }
     }
 
     // ================= ЛУЧ =================

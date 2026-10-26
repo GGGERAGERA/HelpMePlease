@@ -239,6 +239,7 @@ public sealed class EuropeanRoulette : ArcadeMinigame
         AudioService.Instance?.RouteExternalSource(sounds, AudioCategory.UI);
         // Existing UI mixer owns user volume and transition fades.
         sounds.PlayOneShot(clip, volume);
+        AudioService.Instance?.DebugRecordExternalPlayback(clip, AudioCategory.UI, context: this);
     }
     private static AudioClip MakeSound(string name, float duration, float frequency, bool chord)
     {

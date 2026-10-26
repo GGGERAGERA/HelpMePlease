@@ -437,6 +437,7 @@ public sealed partial class AnomalyPinball : ArcadeMinigame
         if (sounds == null || clip == null) return;
         AudioService.Instance?.RouteExternalSource(sounds, AudioCategory.UI);
         sounds.PlayOneShot(clip, volume);
+        AudioService.Instance?.DebugRecordExternalPlayback(clip, AudioCategory.UI, context: this);
     }
     private static AudioClip MakeSound(bool reward)
     {

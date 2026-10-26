@@ -20,11 +20,13 @@ public sealed class RarePickup : ExperiencePickup
         if (kind == PickupKind.Magnet)
         {
             manager.ActivateGlobalMagnet(PlayerHealth);
+            AudioService.Instance?.PlayAt(AudioCueId.MagnetPickup, transform.position);
             return;
         }
 
         float before = PlayerHealth.CurrentHealth;
         PlayerHealth.Heal(PlayerHealth.MaxHealth * healFraction);
         manager.ShowHealing(PlayerHealth, PlayerHealth.CurrentHealth - before);
+        AudioService.Instance?.PlayAt(AudioCueId.MedkitPickup, transform.position);
     }
 }

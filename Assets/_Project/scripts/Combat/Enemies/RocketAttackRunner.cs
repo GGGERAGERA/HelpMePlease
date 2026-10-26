@@ -59,6 +59,7 @@ public sealed class RocketAttackRunner : IDisposable
         }
         if (origin.HasValue) shot.launch = SpawnRocket(origin.Value, false);
         shots.Add(shot);
+        AudioService.Instance?.PlayAt(AudioCueId.RocketWarning, target);
         return true;
     }
 
@@ -121,7 +122,8 @@ public sealed class RocketAttackRunner : IDisposable
             ReleaseShot(shot);
             if (!combatAllowed()) { Cancel(); return; }
             int beforeImpact = generation;
-            var fx = EnemyExplosion.Detonate(shot.target, radius, damage, explosionPrefab, explosions, nonLethal);
+            var fx = EnemyExplosion.Detonate(shot.target, radius, damage, explosionPrefab, explosions,
+                nonLethal, AudioCueId.RocketExplosion);
             var item = fx != null ? fx.GetComponent<PooledGameObject>() : null;
             if (generation != beforeImpact || !combatAllowed())
             {

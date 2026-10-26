@@ -671,6 +671,7 @@ public abstract class BaseWeapon : MonoBehaviour
             clip,
             weaponData.soundVolume
         );
+        AudioService.Instance?.DebugRecordExternalPlayback(clip, AudioCategory.SFX, transform.position, this);
     }
 
     public void AddDamagePercent(float percent)

@@ -406,9 +406,7 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
             Invest = amount =>
             {
                 MetaProgressionManager manager = MetaProgressionManager.EnsureExists();
-                int oldLevel = manager.GetOrbitalModuleLevel(kind);
-                if (manager.TryInvestGoldOrbitalModule(kind, amount, out _) &&
-                    manager.GetOrbitalModuleLevel(kind) > oldLevel)
+                if (manager.TryInvestGoldOrbitalModule(kind, amount, out _))
                     AudioService.Instance?.Play(AudioCueId.Purchase);
             }
         };
@@ -576,8 +574,9 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
                 BunkerStationProgressionService.Instance.CanInvest(stationId),
             Invest = amount =>
             {
-                if (BunkerStationProgressionService.Instance != null)
-                    BunkerStationProgressionService.Instance.TryInvestGold(stationId, amount, out _);
+                if (BunkerStationProgressionService.Instance != null &&
+                    BunkerStationProgressionService.Instance.TryInvestGold(stationId, amount, out _))
+                    AudioService.Instance?.Play(AudioCueId.Purchase);
             }
         };
     }
@@ -652,9 +651,7 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
             Invest = amount =>
             {
                 MetaProgressionManager manager = MetaProgressionManager.EnsureExists();
-                int oldLevel = manager.GetLevel(type);
-                if (manager.TryInvestGold(type, amount, out _) &&
-                    manager.GetLevel(type) > oldLevel)
+                if (manager.TryInvestGold(type, amount, out _))
                     AudioService.Instance?.Play(AudioCueId.Purchase);
             }
         };
@@ -700,9 +697,7 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
             {
                 AnomalyMetaProgressionManager manager =
                     AnomalyMetaProgressionManager.EnsureExists();
-                int oldLevel = manager.GetLevel(anomaly);
-                if (manager.TryInvestGold(anomaly, amount, out _) &&
-                    manager.GetLevel(anomaly) > oldLevel)
+                if (manager.TryInvestGold(anomaly, amount, out _))
                     AudioService.Instance?.Play(AudioCueId.Purchase);
             }
         };

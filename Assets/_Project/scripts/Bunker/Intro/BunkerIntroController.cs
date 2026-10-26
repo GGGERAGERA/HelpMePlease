@@ -872,6 +872,7 @@ public sealed class BunkerIntroController : MonoBehaviour
         source.clip = clip;
         source.volume = Mathf.Clamp01(volume);
         source.Play();
+        AudioService.Instance?.DebugRecordExternalPlayback(clip, AudioCategory.SFX, context: source);
     }
 
     private static void StartLoop(
@@ -887,6 +888,7 @@ public sealed class BunkerIntroController : MonoBehaviour
         source.clip = clip;
         source.volume = Mathf.Clamp01(volume);
         source.Play();
+        AudioService.Instance?.DebugRecordExternalPlayback(clip, AudioCategory.Ambience, context: source);
     }
 
     private void StopIntroAudio()

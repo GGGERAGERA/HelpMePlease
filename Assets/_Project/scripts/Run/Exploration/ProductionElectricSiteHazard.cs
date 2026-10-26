@@ -142,6 +142,7 @@ internal sealed class ProductionElectricSiteHazard :
         view.SetState(AnomalyBeamView.BeamState.Telegraph);
         state = HazardState.Telegraph;
         stateUntil = Time.time + TelegraphSeconds;
+        AudioService.Instance?.PlayAt(AudioCueId.ElectricWarning, (dischargeStart + dischargeEnd) * .5f);
     }
 
     private void FireDischarge()

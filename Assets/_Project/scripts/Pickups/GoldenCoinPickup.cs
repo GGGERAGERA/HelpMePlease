@@ -213,6 +213,7 @@ public sealed class GoldenCoinPickup : MonoBehaviour, IAnomalySpeedPickup,
 #endif
         if (RunStateManager.Instance?.IsDevelopmentRun != true)
             CurrencyManager.Instance.AddGold(value);
+        AudioService.Instance?.PlayAt(AudioCueId.GoldPickup, transform.position);
         DestroyForReason(DestructionReason.Collected);
     }
 

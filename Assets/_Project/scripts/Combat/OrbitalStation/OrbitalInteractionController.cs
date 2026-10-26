@@ -16,6 +16,7 @@ namespace Subject42.Combat.OrbitalStation
         private float ownedScale;
         private bool ownsScale;
         private bool ownsBulletTime;
+        private bool bulletTimeAudioActive;
         private float bulletBaseScale, bulletScale, bulletBaseFixedStep, bulletFixedStep;
         private CharacterMovement2D movement;
         public float BulletTimeBlend => ownsBulletTime ? Mathf.InverseLerp(1f, station.BulletTime.WorldTimeScale, bulletScale / bulletBaseScale) : 0f;
@@ -77,6 +78,12 @@ namespace Subject42.Combat.OrbitalStation
                 bulletBaseFixedStep = bulletFixedStep = Time.fixedDeltaTime;
                 ownsBulletTime = true;
             }
+            if (bulletTimeAudioActive != active)
+            {
+                bulletTimeAudioActive = active;
+                AudioService.Instance?.PlayAt(active ? AudioCueId.BulletTimeEnter : AudioCueId.BulletTimeExit,
+                    station.transform.position);
+            }
             float scale = ability.WorldTimeScale;
             float duration = active ? ability.EnterBlendDuration : ability.ExitBlendDuration;
             float target = active ? bulletBaseScale * scale : bulletBaseScale;
@@ -95,6 +102,8 @@ namespace Subject42.Combat.OrbitalStation
 
         public void ReleaseBulletTime()
         {
+            // Pause, reward selection, disable and reset release time ownership silently.
+            bulletTimeAudioActive = false;
             if (!ownsBulletTime) return;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             ExternalTimeControlStarting?.Invoke();

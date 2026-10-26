@@ -43,5 +43,6 @@ public class UISoundPlayer : MonoBehaviour
             AudioCategory.UI
         );
         audioSource.PlayOneShot(clip, volume);
+        AudioService.Instance?.DebugRecordExternalPlayback(clip, AudioCategory.UI, context: this);
     }
 }

@@ -56,6 +56,7 @@ public class MusicPlayer : MonoBehaviour
         audioSource.clip = tracks[index];
         audioSource.volume = volume;
         audioSource.Play();
+        AudioService.Instance?.DebugRecordExternalPlayback(audioSource.clip, AudioCategory.Music, context: this);
 
         PlayerPrefs.SetInt(LastTrackKey, index);
         PlayerPrefs.Save();
