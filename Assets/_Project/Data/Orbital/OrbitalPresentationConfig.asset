@@ -27,11 +27,11 @@ MonoBehaviour:
   RingSpeedIcon: {fileID: 1877856116, guid: 682eea2f9d704c04dbd54827c34d5d67, type: 3}
   NewRingIcon: {fileID: -1955852563, guid: 682eea2f9d704c04dbd54827c34d5d67, type: 3}
   EnergyLinePrefab: {fileID: 8029792597844833736, guid: db8249cd301190e488b9d6ff70d5a1e7, type: 3}
-  ShotHaloDuration: 0.12
+  ShotHaloDuration: 0.09
   ShotHaloAlpha: 0.62
   ShotHaloScale: 1.16
   ProjectileMuzzleDuration: 0.1
-  ProjectileImpactDuration: 0.15
+  ProjectileImpactDuration: 0.2
   ProjectileImpactSize: 0.25
   CoreCyan: {r: 0.15, g: 0.85, b: 1, a: 1}
   CoreViolet: {r: 0.65, g: 0.35, b: 1, a: 1}
@@ -120,7 +120,7 @@ MonoBehaviour:
   RingSurface:
     Saturation: 2
     Brightness: 1.2587487
-    Glow: 1.4173924
+    Glow: 0.9
     Pattern: 0
     DashCount: 8
     DashFill: 0.1

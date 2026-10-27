@@ -116,7 +116,7 @@ namespace Subject42.Combat.OrbitalStation
                     station.FlashLink(valid ? targetMount.Transform.position : world,
                         partner.CurrentMount.Transform.position, valid
                             ? new Color(0.85f, 0.3f, 1f, 0.58f)
-                            : new Color(1f, 0.18f, 0.22f, 0.45f), 0.05f);
+                            : new Color(1f, 0.18f, 0.22f, 0.45f), 0.05f, OrbitalFlashFamily.Relocation);
             }
             if (!Input.GetMouseButtonUp(0))
                 return;

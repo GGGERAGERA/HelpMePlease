@@ -198,7 +198,7 @@ namespace Subject42.Combat.OrbitalStation
             {
                 EnemyHealth target = targets[i];
                 Station.FlashLink(from, target.transform.position,
-                    OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.ArcEmitter), 0.12f);
+                    OrbitalRewardIconResolver.ModuleColor(OrbitalModuleKind.ArcEmitter), 0.12f, OrbitalFlashFamily.Arc);
                 Combat.ApplyDamage(target, (7f - i * 1.25f) * Power * Station.State.ShootingDamageMultiplier,
                     WorldPosition);
                 from = target.transform.position;

@@ -92,6 +92,9 @@ namespace Subject42.Combat.OrbitalStation
             shot.RemainingRange = settings.Range; shot.Radius = settings.ProjectileRadius * settings.ProjectileVisualScale;
             shot.BodiesRemaining = Mathf.Max(1, settings.BodyPierces); shot.Volley = volley;
             shot.Knockback = settings.Knockback;
+            shot.Kind = settings.Kind;
+            shot.Presentation = settings.Presentation;
+            shot.PresentationScale = settings.ProjectileVisualScale;
             shot.BypassShields = settings.BypassShields;
             shot.GameObject.transform.localScale = shot.AuthoredScale * settings.ProjectileVisualScale;
             if (settings.Presentation != null)
@@ -163,6 +166,9 @@ namespace Subject42.Combat.OrbitalStation
             public Gradient[] AuthoredTrailColors;
             public Vector2 BodySize;
             public Color Color;
+            public OrbitalModuleKind Kind;
+            public OrbitalWeaponSettings.ProjectileStyle Presentation;
+            public float PresentationScale;
             public float[] AuthoredTrailTimes;
             public bool Straight;
             public bool BypassShields;
@@ -187,6 +193,8 @@ namespace Subject42.Combat.OrbitalStation
         public event Action<EnemyHealth, float> Hit;
         public event Action<EnemyHealth> Death;
         public Action<Vector2, Vector2, Color> ProjectileImpact;
+        // Typed visual routing keeps independent weapon families; existing impact observers remain intact.
+        public Action<Vector2, Vector2, Color, OrbitalModuleKind> ProjectileVisualImpact;
 
         public ProductionOrbitalCombatAdapter(Transform runtimeRoot, Sprite sharedSprite)
         {
@@ -199,7 +207,9 @@ namespace Subject42.Combat.OrbitalStation
 
         private Projectile CreateProjectile(GameObject source = null)
         {
-            GameObject gameObject = UnityEngine.Object.Instantiate(source != null ? source : projectilePrefab, root, false);
+            GameObject sourcePrefab = source != null ? source : projectilePrefab;
+            GameObject gameObject = UnityEngine.Object.Instantiate(sourcePrefab, root, false);
+            Subject42.Visuals.LiveVisualRuntime.RegisterHierarchy(gameObject, sourcePrefab);
             // Hits remain owned by this adapter, not the authored prefab's trigger.
             foreach (var collider in gameObject.GetComponentsInChildren<Collider2D>(true))
                 collider.enabled = false;
@@ -329,6 +339,9 @@ namespace Subject42.Combat.OrbitalStation
             projectile.BypassShields = false;
             projectile.BodySize = Vector2.zero;
             projectile.Color = Color.white;
+            projectile.Kind = OrbitalModuleKind.Pistol;
+            projectile.Presentation = null;
+            projectile.PresentationScale = 1f;
             projectile.GameObject.transform.localScale = projectile.AuthoredScale;
             for (int i = 0; i < projectile.Sprites.Length; i++)
             {
@@ -371,6 +384,7 @@ namespace Subject42.Combat.OrbitalStation
                 Projectile projectile = projectiles[i];
                 if (!projectile.Active)
                     continue;
+                RefreshProjectilePresentation(projectile);
                 if (projectile.Straight)
                 {
                     TickStraightProjectile(projectile, deltaTime);
@@ -405,6 +419,7 @@ namespace Subject42.Combat.OrbitalStation
             Hit = null;
             Death = null;
             ProjectileImpact = null;
+            ProjectileVisualImpact = null;
             for (int i = 0; i < projectiles.Count; i++)
                 if (projectiles[i].GameObject != null)
                     UnityEngine.Object.Destroy(projectiles[i].GameObject);
@@ -444,6 +459,7 @@ namespace Subject42.Combat.OrbitalStation
                 if (!projectile.HitBodies.Add(enemy)) continue;
                 ResolveDamage(enemy, projectile.Damage, point, true);
                 ProjectileImpact?.Invoke(point, projectile.Direction, projectile.Color);
+                ProjectileVisualImpact?.Invoke(point, projectile.Direction, projectile.Color, projectile.Kind);
                 LabBodyImpact?.Invoke(point, projectile.Direction, projectile.BodiesRemaining > 1);
                 if (projectile.Knockback > 0f && !enemy.IsDead && enemy.TryGetComponent<EnemyChaseMovement>(out var movement) &&
                     (projectile.Volley == null || projectile.Volley.Pushed.Add(enemy)))
@@ -459,6 +475,23 @@ namespace Subject42.Combat.OrbitalStation
 
         private static bool IsValid(EnemyHealth enemy) =>
             enemy != null && enemy.isActiveAndEnabled && !enemy.IsDead;
+
+        private static void RefreshProjectilePresentation(Projectile projectile)
+        {
+            var style = projectile.Presentation;
+            if (style == null) return;
+            // BodySize, casts and travel data are captured at spawn. Live edits own color and trails only.
+            projectile.Color = style.Color;
+            foreach (var sprite in projectile.Sprites) sprite.color = style.Color;
+            foreach (var trail in projectile.Trails)
+            {
+                trail.time = style.TrailSeconds;
+                trail.widthMultiplier = style.TrailWidth * projectile.PresentationScale;
+                Color head = style.Color; head.a *= style.TrailOpacity;
+                Color tail = head; tail.a = 0f;
+                trail.startColor = head; trail.endColor = tail;
+            }
+        }
 
         private static void Release(Projectile projectile)
         {

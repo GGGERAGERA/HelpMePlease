@@ -16,6 +16,7 @@ public sealed class Subject42OrbitalOperationsTests
     public IEnumerator ProductionSniperBypassesFrontalPlateButStopsAtFirstBody()
     {
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        ProductionSceneCompositionAuthoring.EnsureScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
         yield return new EnterPlayMode();
         yield return VerifySniperShieldAndBodyLimit();
     }

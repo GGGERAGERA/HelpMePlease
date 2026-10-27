@@ -154,7 +154,11 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
     void Update()
     {
         if (SceneTransitionOverlay.IsTransitioning) { moveInput = Vector2.zero; return; }
-        moveInput = MovementIntent != null ? Vector2.ClampMagnitude(MovementIntent(), 1f) : new Vector2(
+        bool textInputOwnsKeyboard = false;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        textInputOwnsKeyboard = Subject42DebugMenu.HubBlocksKeyboardInput || Subject42.Visuals.LiveVisualStudio.BlocksKeyboardInput;
+#endif
+        moveInput = textInputOwnsKeyboard ? Vector2.zero : MovementIntent != null ? Vector2.ClampMagnitude(MovementIntent(), 1f) : new Vector2(
             Input.GetAxisRaw("Horizontal"),
             Input.GetAxisRaw("Vertical")
         ).normalized;
@@ -173,7 +177,7 @@ public class CharacterMovement2D : MonoBehaviour, IAnomalyExternalVelocity
                 dashCooldownRemaining - Time.deltaTime
             );
 
-            if (MovementIntent == null && Input.GetKeyDown(dashKey))
+            if (!textInputOwnsKeyboard && MovementIntent == null && Input.GetKeyDown(dashKey))
                 TryStartDash();
         }
 

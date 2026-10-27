@@ -82,10 +82,17 @@ namespace Subject42.Combat.OrbitalStation
             WeaponCharge(0f); WeaponRecoil(Settings.Recoil);
             float size = pellets > 1 ? .42f : Settings.Kind == OrbitalModuleKind.Sniper ? .36f : .28f;
             Vector2 side = new(-direction.y, direction.x);
-            Station.FlashLink(WorldPosition, WorldPosition + direction * size, Settings.Color,
-                OrbitalPresentationConfig.Active.ProjectileMuzzleDuration);
+            var family = Settings.Kind switch
+            {
+                OrbitalModuleKind.Shotgun => OrbitalFlashFamily.MuzzleShotgun,
+                OrbitalModuleKind.Sniper => OrbitalFlashFamily.MuzzleSniper,
+                _ => OrbitalFlashFamily.MuzzlePistol
+            };
+            Color muzzleColor = Settings.Presentation != null ? Settings.Presentation.Color : Settings.Color;
+            Station.FlashLink(WorldPosition, WorldPosition + direction * size, muzzleColor,
+                OrbitalPresentationConfig.Active.ProjectileMuzzleDuration, family);
             Station.FlashLink(WorldPosition - side * size * .4f, WorldPosition + side * size * .4f,
-                Color.Lerp(Settings.Color, Color.white, .25f), .045f);
+                Color.Lerp(muzzleColor, Color.white, .25f), .045f, family);
             AudioService.Instance?.PlayAt(Settings.ShotSound, WorldPosition);
             shotFeedback?.Invoke(Settings.Recoil / .23f);
             if (--burstRemaining > 0) Cooldown = Mathf.Max(.02f, Settings.BurstInterval / FireRateMultiplier);

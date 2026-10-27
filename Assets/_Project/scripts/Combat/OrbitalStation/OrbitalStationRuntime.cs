@@ -46,11 +46,13 @@ namespace Subject42.Combat.OrbitalStation
 
         private readonly List<OrbitalRingRuntime> rings = new();
         private readonly List<OrbitalModuleRuntime> modules = new();
-        private readonly List<(LineRenderer line, float expiresAt)> flashes = new(128);
+        private readonly List<(LineRenderer line, Color color, float startedAt, float expiresAt,
+            OrbitalFlashFamily family, float width)> flashes = new(128);
         private readonly Stack<LineRenderer> idleFlashes = new(128);
         private LineRenderer coreWave;
         private float coreWaveAge = -1f;
         private Color coreWaveColor;
+        private int coreWaveColorIndex = 1;
         private float coreParticleTimer;
         private readonly Dictionary<(int First, int Second), LineRenderer> linkLines = new();
         private readonly HashSet<(int First, int Second)> activeLinkPairs = new();
@@ -187,18 +189,26 @@ namespace Subject42.Combat.OrbitalStation
                 coreVisual.enabled = true;
                 Owner = new ProductionOrbitalOwnerAdapter(boundPlayer != null ? boundPlayer : gameObject);
                 Combat = new ProductionOrbitalCombatAdapter(authoredView.EffectsRoot, sharedSprite);
-                ((ProductionOrbitalCombatAdapter)Combat).ProjectileImpact = (point, direction, color) =>
+                ((ProductionOrbitalCombatAdapter)Combat).ProjectileVisualImpact = (point, direction, color, kind) =>
                 {
                     Vector2 side = new(-direction.y, direction.x);
                     float size = config.ProjectileImpactSize;
                     float life = config.ProjectileImpactDuration;
+                    Color strike = Color.Lerp(color, Color.white, config.ProjectileImpactWhitening);
+                    OrbitalFlashFamily family = kind switch
+                    {
+                        OrbitalModuleKind.Pistol => OrbitalFlashFamily.ImpactPistol,
+                        OrbitalModuleKind.Shotgun => OrbitalFlashFamily.ImpactShotgun,
+                        OrbitalModuleKind.Sniper => OrbitalFlashFamily.ImpactSniper,
+                        _ => OrbitalFlashFamily.Impact
+                    };
                     // Use the same bounded pool without changing body or physics recoil.
-                    FlashLink(point - side * size, point + side * size, color, life);
-                    FlashLink(point - direction * size, point + direction * size * .45f, color, life);
-                    FlashLink(point, point - direction * size + side * size * .7f, color, life * .8f);
-                    FlashLink(point, point - direction * size - side * size * .7f, color, life * .8f);
+                    FlashLink(point - side * size, point + side * size, strike, life, family);
+                    FlashLink(point - direction * size, point + direction * size * .45f, strike, life, family);
+                    FlashLink(point, point - direction * size + side * size * .7f, strike, life * .8f, family);
+                    FlashLink(point, point - direction * size - side * size * .7f, strike, life * .8f, family);
                     FlashLink(point - side * size * .3f, point + side * size * .3f,
-                        Color.Lerp(color, Color.white, .75f), life * .45f);
+                        Color.Lerp(color, Color.white, .75f), life * .45f, family);
                 };
                 Core = new OrbitalCoreRuntime(State.CoreState);
                 coreWaveColor = config.GetCoreWaveColor(Mathf.Max(1, Core.Level));
@@ -446,8 +456,9 @@ namespace Subject42.Combat.OrbitalStation
                 var config = OrbitalPresentationConfig.Active;
                 float energy = Mathf.Max(coreFlash, Core.Charge);
                 authoredView.CoreHalo.enabled = Core.Level > 0;
-                authoredView.CoreHalo.color = new Color(idle.r, idle.g, idle.b,
-                    .025f * Core.Level + .2f * energy);
+                authoredView.CoreHalo.color = new Color(idle.r * config.CoreHaloBrightness,
+                    idle.g * config.CoreHaloBrightness, idle.b * config.CoreHaloBrightness,
+                    config.CoreHaloIdleAlpha * Core.Level + config.CoreHaloChargeAlpha * energy);
                 authoredView.CoreHalo.transform.localScale = Vector3.one *
                     Mathf.Lerp(config.CoreHaloSize, config.CoreHaloPulseSize, energy);
                 coreParticleTimer -= deltaTime;
@@ -753,7 +764,8 @@ namespace Subject42.Combat.OrbitalStation
                 authoredView.CoreHalo.color = color;
         }
 
-        public void FlashLink(Vector2 from, Vector2 to, Color color, float life)
+        public void FlashLink(Vector2 from, Vector2 to, Color color, float life,
+            OrbitalFlashFamily family = OrbitalFlashFamily.Other)
         {
             if (!initialized || idleFlashes.Count == 0)
                 return;
@@ -761,8 +773,11 @@ namespace Subject42.Combat.OrbitalStation
             line.enabled = true;
             line.SetPosition(0, from);
             line.SetPosition(1, to);
-            line.startColor = line.endColor = color;
-            flashes.Add((line, Time.time + life));
+            var style = OrbitalPresentationConfig.Active.GetFlashStyle(family);
+            line.startColor = line.endColor = style.ApplyColor(color);
+            float width = OrbitalPresentationConfig.Active.EnergyLinePrefab.widthMultiplier;
+            line.widthMultiplier = width * style.Width;
+            flashes.Add((line, color, Time.time, Time.time + life, family, width));
         }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public void ClearLabFlashes()
@@ -784,6 +799,7 @@ namespace Subject42.Combat.OrbitalStation
         {
             AudioService.Instance?.PlayAt(level >= 2 ? AudioCueId.CoreCascade : AudioCueId.CorePulse, transform.position);
             coreWaveAge = 0f;
+            coreWaveColorIndex = wave;
             coreWaveColor = OrbitalPresentationConfig.Active.GetCoreWaveColor(wave);
             FlashCore(coreWaveColor);
             EmitCoreSparks(runtimeRoot.position, coreWaveColor, level * 3);
@@ -799,7 +815,8 @@ namespace Subject42.Combat.OrbitalStation
             float phase = .125f;
             Vector2 end = center + ring.Geometry.Position(phase, ring.Radius);
             Vector2 start = index == 0 ? center : center + rings[index - 1].Geometry.Position(phase, rings[index - 1].Radius);
-            FlashLink(start, end, coreWaveColor, OrbitalPresentationConfig.Active.CoreRayDuration);
+            FlashLink(start, end, coreWaveColor, OrbitalPresentationConfig.Active.CoreRayDuration,
+                OrbitalFlashFamily.CoreRay);
         }
 
         private void EmitCoreSparks(Vector2 position, Color color, int count)
@@ -811,6 +828,7 @@ namespace Subject42.Combat.OrbitalStation
         private void UpdateCoreWave(float deltaTime)
         {
             if (coreWaveAge < 0f || rings.Count == 0) { coreWave.enabled = false; return; }
+            coreWaveColor = OrbitalPresentationConfig.Active.GetCoreWaveColor(coreWaveColorIndex);
             coreWaveAge += deltaTime;
             float step = coreWaveAge / OrbitalProgressionConfig.Default.CoreRingDelay;
             int next = Mathf.FloorToInt(step);
@@ -1346,9 +1364,21 @@ namespace Subject42.Combat.OrbitalStation
             for (int i = flashes.Count - 1; i >= 0; i--)
             {
                 var item = flashes[i];
+                var config = OrbitalPresentationConfig.Active;
+                var style = config.GetFlashStyle(item.family);
+                float duration = (item.expiresAt - item.startedAt) * style.Duration;
                 // A new impact must not lose the portion of this frame elapsed
                 // before it existed (especially a fast shot on a long frame).
-                if (Time.time < item.expiresAt) continue;
+                if (duration > 0f && Time.time < item.startedAt + duration)
+                {
+                    float age = Mathf.Clamp01((Time.time - item.startedAt) / duration);
+                    Color color = style.ApplyColor(item.color);
+                    // Keep the initial strike crisp, then leave a short, quiet tail.
+                    color.a *= OrbitalFlashStyle.TailOpacity(age, config.FlashTailFade);
+                    item.line.startColor = item.line.endColor = color;
+                    item.line.widthMultiplier = item.width * style.Width;
+                    continue;
+                }
                 item.line.enabled = false;
                 idleFlashes.Push(item.line);
                 flashes.RemoveAt(i);

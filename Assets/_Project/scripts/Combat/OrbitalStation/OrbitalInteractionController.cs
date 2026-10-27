@@ -28,6 +28,12 @@ namespace Subject42.Combat.OrbitalStation
         public bool IsGameplayInputBlocked => IsCustomDrawing || SceneTransitionOverlay.IsTransitioning
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             || DebugSuppressPlayerInput || (DevelopmentInputBlocker?.Invoke() ?? false)
+            || Subject42DebugMenu.HubBlocksKeyboardInput || Subject42.Visuals.LiveVisualStudio.BlocksKeyboardInput
+#endif
+            ;
+        public bool IsGameplayPointerBlocked => IsGameplayInputBlocked
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            || Subject42DebugMenu.HubBlocksGameplayPointer || Subject42.Visuals.LiveVisualStudio.BlocksGameplayPointer
 #endif
             ;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -44,11 +50,11 @@ namespace Subject42.Combat.OrbitalStation
         { rewardQueueIdle = idle; rewardChoosing = choosing; }
         public bool CanTransition => IsIdle && QueueIdle && !IsCustomDrawing;
         public bool CanQueueDebugPlacement => IsIdle && QueueIdle;
-        public bool CanUseDebugPlacement => CanQueueDebugPlacement && !IsGameplayInputBlocked && consumedFrame != Time.frameCount;
-        public bool CanStartRelocation => Alive && !IsGameplayInputBlocked && QueueIdle &&
+        public bool CanUseDebugPlacement => CanQueueDebugPlacement && !IsGameplayPointerBlocked && consumedFrame != Time.frameCount;
+        public bool CanStartRelocation => Alive && !IsGameplayPointerBlocked && QueueIdle &&
             !station.IsDebugPlacementActive && Time.timeScale > 0f && consumedFrame != Time.frameCount &&
             IsIdle;
-        public bool CanConsumeRewardPointer => Alive && !IsGameplayInputBlocked && consumedFrame != Time.frameCount &&
+        public bool CanConsumeRewardPointer => Alive && !IsGameplayPointerBlocked && consumedFrame != Time.frameCount &&
             (Mode == OrbitalInteractionMode.RewardSelection || Mode == OrbitalInteractionMode.RewardSecondTarget);
         public Camera PointerCamera { get; private set; }
         public void BindCamera(Camera camera) => PointerCamera = camera;
@@ -68,7 +74,7 @@ namespace Subject42.Combat.OrbitalStation
             if (active || ownsBulletTime) ExternalTimeControlStarting?.Invoke();
 #endif
             // Never overwrite another time owner (pause, rewards, transition, death or reset).
-            if (!Alive || !IsIdle || !QueueIdle || IsGameplayInputBlocked || Time.timeScale <= 0f ||
+            if (!Alive || !IsIdle || !QueueIdle || IsGameplayPointerBlocked || Time.timeScale <= 0f ||
                 ownsBulletTime && !Mathf.Approximately(Time.timeScale, bulletScale))
             { ReleaseBulletTime(); return; }
             if (!ownsBulletTime)
@@ -198,7 +204,7 @@ namespace Subject42.Combat.OrbitalStation
         private void Update()
         {
             if (!Alive) { ReleaseBulletTime(); if (!IsIdle) CancelActive(); return; }
-            if (IsGameplayInputBlocked) return;
+            if (IsGameplayPointerBlocked) return;
             if (Input.GetKeyDown(KeyCode.Escape)) { TryConsumeEscape(); return; }
             if (Input.GetMouseButtonDown(1) && !IsIdle)
             { consumedFrame = Time.frameCount; CancelActive(); }

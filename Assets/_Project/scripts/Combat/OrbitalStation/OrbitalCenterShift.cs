@@ -115,7 +115,7 @@ namespace Subject42.Combat.OrbitalStation
                 Vector3 screen = Input.mousePosition;
                 screen.z = -pointerCamera.transform.position.z;
                 AdvancePointer(Input.GetMouseButtonDown(1), Input.GetMouseButton(1),
-                    EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(),
+                    station.InputOwner.IsGameplayPointerBlocked || EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(),
                     pointerCamera.ScreenToWorldPoint(screen), Time.deltaTime);
                 return direction;
             }

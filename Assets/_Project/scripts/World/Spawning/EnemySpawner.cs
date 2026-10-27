@@ -1022,6 +1022,7 @@ public partial class EnemySpawner : MonoBehaviour
             Quaternion.identity
         );
         ConfigureEnemyProjectilePool(enemy);
+        Subject42.Visuals.LiveVisualRuntime.RegisterHierarchy(enemy, selectedPrefab);
         EnemyHealth health = enemy.GetComponent<EnemyHealth>();
 
         if (health != null)

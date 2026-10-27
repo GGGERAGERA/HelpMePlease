@@ -129,6 +129,7 @@ namespace Subject42.Combat.OrbitalStation
             State = state;
             Geometry = geometry ?? OrbitalPathGeometry.Circle;
             view = Object.Instantiate(OrbitalPresentationConfig.Active.RingPrefab, root, false);
+            Subject42.Visuals.LiveVisualRuntime.RegisterHierarchy(view.gameObject, OrbitalPresentationConfig.Active.RingPrefab.gameObject);
             if (!view.IsValid) throw new System.InvalidOperationException("authored ring references missing");
             spawnScale = animateSpawn ? 0.05f : 1f;
             view.InitializeGeometry(Geometry);
@@ -238,6 +239,7 @@ namespace Subject42.Combat.OrbitalStation
             Ring = ring;
             MountIndex = index;
             view = Object.Instantiate(OrbitalPresentationConfig.Active.MountPrefab, root, false);
+            Subject42.Visuals.LiveVisualRuntime.RegisterHierarchy(view.gameObject, OrbitalPresentationConfig.Active.MountPrefab.gameObject);
             if (!view.IsValid) throw new System.InvalidOperationException("authored mount references missing");
             this.root = view.transform;
             marker = view.Marker;

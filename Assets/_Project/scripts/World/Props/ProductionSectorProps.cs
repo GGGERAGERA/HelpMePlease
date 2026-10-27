@@ -83,9 +83,15 @@ internal sealed class ProductionSectorProps
             foreach (var r in e.prefab.GetComponentsInChildren<SpriteRenderer>(true))
             {
                 if (r.sprite == null) continue;
-                var center = r.transform.TransformPoint(r.sprite.bounds.center) - e.prefab.transform.position;
-                var extent = Vector3.Scale(r.sprite.bounds.extents, r.transform.lossyScale);
-                sizes[i] = Mathf.Max(sizes[i], ((Vector2)center).magnitude + ((Vector2)extent).magnitude);
+                var spriteBounds = r.sprite.bounds;
+                for (int corner = 0; corner < 4; corner++)
+                {
+                    var point = new Vector3(
+                        (corner & 1) == 0 ? spriteBounds.min.x : spriteBounds.max.x,
+                        (corner & 2) == 0 ? spriteBounds.min.y : spriteBounds.max.y, 0f);
+                    var offset = r.transform.TransformPoint(point) - e.prefab.transform.position;
+                    sizes[i] = Mathf.Max(sizes[i], ((Vector2)offset).magnitude);
+                }
             }
             usable[i] = sizes[i] > 0;
         }
@@ -130,13 +136,13 @@ internal sealed class ProductionSectorProps
                 new Vector3(random.Next(2) == 0 ? -scale : scale, scale, 1));
             foreach (var r in prop.GetComponentsInChildren<SpriteRenderer>(true))
             {
-                r.sortingLayerName = "Background"; r.sortingOrder = -105;
                 Color color = r.color;
                 color.a *= Mathf.Clamp01(Profile.opacity);
                 r.color = color;
             }
             // Only the existing, validated visual scatter opts in. No extra props or physics.
             prop.AddComponent<AnomalyMovableProp>();
+            Subject42.Visuals.LiveVisualRuntime.RegisterHierarchy(prop, e.prefab);
             positions.Add(best); radii.Add(radius); counts[kind]++;
             return true;
         }

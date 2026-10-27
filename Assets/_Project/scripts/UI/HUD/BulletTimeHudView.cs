@@ -2,7 +2,7 @@ using Subject42.Combat.OrbitalStation;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Retains the existing HUD binding and prefab identity; now presents pointer steering.
+// Pointer steering and Bullet Time share the existing HUD binding and pixel grid.
 public sealed class BulletTimeHudView : MaskableGraphic
 {
     [SerializeField] private HUDManager hud;
@@ -13,6 +13,15 @@ public sealed class BulletTimeHudView : MaskableGraphic
     private OrbitalCenterShift centerShift;
     private bool pointerHeld;
     private bool slowTimeActive;
+    private const int ChargeWidth = 15;
+    private int chargePixels = ChargeWidth;
+
+    private static readonly string[] ChargeTrack =
+    {
+        "OOOOOOOOOOOOOOOOO", "OdddddddddddddddO",
+        "OdddddddddddddddO", "OOOOOOOOOOOOOOOOO"
+    };
+    private static readonly string[] ChargePixel = { "#", "#" };
 
     private static readonly string[] Orbit =
     {
@@ -58,9 +67,12 @@ public sealed class BulletTimeHudView : MaskableGraphic
         visibility.alpha = available && hud.IsInformationVisible ? 1f : 0f;
         bool held = available && centerShift != null && centerShift.CanControl && centerShift.IsPointerSteering;
         bool slowed = available && station.BulletTime.IsActive;
-        if (held == pointerHeld && slowed == slowTimeActive) return;
+        // Cache only display resolution; the ability remains the charge owner.
+        int charge = available ? Mathf.CeilToInt(station.BulletTime.Energy * ChargeWidth) : 0;
+        if (held == pointerHeld && slowed == slowTimeActive && charge == chargePixels) return;
         pointerHeld = held;
         slowTimeActive = slowed;
+        chargePixels = charge;
         SetVerticesDirty();
     }
 
@@ -76,15 +88,22 @@ public sealed class BulletTimeHudView : MaskableGraphic
         DrawPixels(mesh, RightArrow, 28, 4, origin, pixel);
         DrawPixels(mesh, Mouse, 10, 17, origin, pixel);
         DrawPixels(mesh, Clock, 47, 0, origin, pixel, true);
+        HudPixelGlyph.Draw(mesh, ChargeTrack, 45, 14, origin, pixel, readyColor, readyColor, color);
+        for (int i = 0; i < chargePixels; i++)
+            DrawPixels(mesh, ChargePixel, 46 + i, 15, origin, pixel, true);
         DrawPixels(mesh, ShiftKey, 45, 19, origin, pixel, true);
     }
 
     private void DrawPixels(VertexHelper mesh, string[] rows, int xOffset, int yOffset, Vector2 origin, float pixel, bool slowTime = false)
     {
-        // Runs of identical pixels share a quad. Rebuilt only for layout/tint/hold changes.
+        // Runs of identical pixels share a quad. Rebuild at pixel charge boundaries.
         var dim = new Color(readyColor.r * .55f, readyColor.g * .55f, readyColor.b * .55f, 1f);
+        Color ink = readyColor;
+        if (slowTime)
+            ink = chargePixels == 0 ? dim : chargePixels <= ChargeWidth / 3
+                ? new Color(1f, .65f, .2f, 1f) : slowTimeActive ? activeColor : readyColor;
         HudPixelGlyph.Draw(mesh, rows, xOffset, yOffset, origin, pixel,
-            slowTime && slowTimeActive ? activeColor : readyColor,
+            ink,
             pointerHeld ? activeColor : dim, color);
     }
 }

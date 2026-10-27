@@ -47,16 +47,18 @@ public sealed class RocketAttackRunner : IDisposable
         if (!IsReady) return false;
         var shot = new Shot { target = target, delay = Mathf.Max(.01f, delay),
             duration = Mathf.Max(.05f, duration), launchStart = origin ?? target };
-        shot.marker = markers.Get(target, Quaternion.identity);
-        ExplosionWarningVisual.Configure(shot.marker.gameObject, radius, shot.delay + shot.duration, pixelWarnings);
-        foreach (var ps in shot.marker.GetComponentsInChildren<ParticleSystem>(true))
+        shot.marker = markers.Get(target, Quaternion.identity, configurePresentation: item =>
         {
-            ps.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
-            var main = ps.main;
-            main.startLifetime = main.duration + .1f;
-            main.startSpeed = 0f;
-            ps.Play(false);
-        }
+            ExplosionWarningVisual.Configure(item.gameObject, radius, shot.delay + shot.duration, pixelWarnings);
+            foreach (var ps in item.GetComponentsInChildren<ParticleSystem>(true))
+            {
+                ps.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+                var main = ps.main;
+                main.startLifetime = main.duration + .1f;
+                main.startSpeed = 0f;
+            }
+        });
+        foreach (var ps in shot.marker.GetComponentsInChildren<ParticleSystem>(true)) ps.Play(false);
         if (origin.HasValue) shot.launch = SpawnRocket(origin.Value, false);
         shots.Add(shot);
         AudioService.Instance?.PlayAt(AudioCueId.RocketWarning, target);
@@ -65,16 +67,19 @@ public sealed class RocketAttackRunner : IDisposable
 
     private PooledGameObject SpawnRocket(Vector3 position, bool falling)
     {
-        var rocket = rockets.Get(position, Quaternion.identity);
+        var rocket = rockets.Get(position, Quaternion.identity, configurePresentation: item =>
+        {
+            var configured = item.PrimaryParticleSystem;
+            configured.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+            var main = configured.main;
+            main.simulationSpace = ParticleSystemSimulationSpace.Local;
+            main.startSpeed = 0f;
+            main.startLifetime = 30f;
+            main.startRotation = falling ? -Mathf.PI * .5f : Mathf.PI * .5f;
+            var emission = configured.emission;
+            emission.enabled = false;
+        });
         var ps = rocket.PrimaryParticleSystem;
-        ps.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
-        var main = ps.main;
-        main.simulationSpace = ParticleSystemSimulationSpace.Local;
-        main.startSpeed = 0f;
-        main.startLifetime = 30f;
-        main.startRotation = falling ? -Mathf.PI * .5f : Mathf.PI * .5f;
-        var emission = ps.emission;
-        emission.enabled = false;
         // Prepare clears all children; restart the authored smoke on pooled reuse too.
         ps.Play(true);
         ps.Emit(1);

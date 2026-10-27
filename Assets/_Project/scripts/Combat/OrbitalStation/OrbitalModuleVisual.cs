@@ -102,6 +102,7 @@ namespace Subject42.Combat.OrbitalStation
             GameObject prefab = visualPrefab != null ? visualPrefab : config.GetPrefab(kind);
             if (prefab == null) throw new System.InvalidOperationException($"required {kind} visual prefab missing");
             root = Object.Instantiate(prefab, station.RuntimeRoot, false);
+            Subject42.Visuals.LiveVisualRuntime.RegisterHierarchy(root, prefab);
             root.name = name + " Visual";
             var view = root.GetComponent<OrbitalModuleView>();
             if (view == null || !view.IsValid) throw new System.InvalidOperationException($"required {kind} visual references missing");
@@ -146,7 +147,8 @@ namespace Subject42.Combat.OrbitalStation
                 return;
             }
             var config = OrbitalPresentationConfig.Active;
-            float pulse = Mathf.Clamp01((shotHaloUntil - Time.time) / config.ShotHaloDuration);
+            float pulse = config.ShotHaloDuration > 0f
+                ? Mathf.Clamp01((shotHaloUntil - Time.time) / config.ShotHaloDuration) : 0f;
             halo.enabled = highlighted || pulse > 0f;
             halo.transform.localScale = authoredHaloScale * Mathf.Lerp(1f, config.ShotHaloScale, pulse);
             Color color = pulse > 0f ? Color.Lerp(weaponTint, Color.white, .25f * pulse) : authoredHaloColor;

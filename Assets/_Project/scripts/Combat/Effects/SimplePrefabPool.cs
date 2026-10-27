@@ -51,7 +51,8 @@ public sealed class SimplePrefabPool
         Vector3 position,
         Quaternion rotation,
         float scale = 1f,
-        bool useHierarchyParticleScaling = false)
+        bool useHierarchyParticleScaling = false,
+        System.Action<PooledGameObject> configurePresentation = null)
     {
         if (disposed || owner == null || prefab == null)
             return null;
@@ -61,7 +62,8 @@ public sealed class SimplePrefabPool
             position,
             rotation,
             scale,
-            useHierarchyParticleScaling);
+            useHierarchyParticleScaling,
+            configurePresentation);
         return item;
     }
 
@@ -99,6 +101,7 @@ public sealed class SimplePrefabPool
             instance.GetComponent<PooledGameObject>() ??
             instance.AddComponent<PooledGameObject>();
         item.Configure(this);
+        Subject42.Visuals.LiveVisualRuntime.RegisterHierarchy(instance, prefab);
         instance.SetActive(false);
         return item;
     }
@@ -141,6 +144,7 @@ public sealed class PooledGameObject : MonoBehaviour
     private Vector3 authoredScale;
     private ParticleSystem[] particles;
     private float[] authoredParticleSizes;
+    private ParticleSystem.MinMaxCurve[] authoredParticleLifetimes;
     private float[] authoredParticleSpeeds;
     private float[] authoredEmissionRates;
     private ParticleSystemScalingMode[] authoredParticleScalingModes;
@@ -169,6 +173,7 @@ public sealed class PooledGameObject : MonoBehaviour
         bodies = GetComponentsInChildren<Rigidbody2D>(true);
 
         authoredParticleSizes = new float[particles.Length];
+        authoredParticleLifetimes = new ParticleSystem.MinMaxCurve[particles.Length];
         authoredParticleSpeeds = new float[particles.Length];
         authoredEmissionRates = new float[particles.Length];
         authoredParticleScalingModes =
@@ -178,6 +183,7 @@ public sealed class PooledGameObject : MonoBehaviour
             ParticleSystem.MainModule main = particles[i].main;
             ParticleSystem.EmissionModule emission = particles[i].emission;
             authoredParticleSizes[i] = main.startSizeMultiplier;
+            authoredParticleLifetimes[i] = main.startLifetime;
             authoredParticleSpeeds[i] = main.startSpeedMultiplier;
             authoredEmissionRates[i] = emission.rateOverTimeMultiplier;
             authoredParticleScalingModes[i] = main.scalingMode;
@@ -207,7 +213,8 @@ public sealed class PooledGameObject : MonoBehaviour
         Vector3 position,
         Quaternion rotation,
         float scale,
-        bool useHierarchyParticleScaling)
+        bool useHierarchyParticleScaling,
+        System.Action<PooledGameObject> configurePresentation = null)
     {
         released = false;
         releaseAt = -1f;
@@ -245,6 +252,7 @@ public sealed class PooledGameObject : MonoBehaviour
             ParticleSystem.MainModule main = particle.main;
             ParticleSystem.EmissionModule emission = particle.emission;
             main.startSizeMultiplier = authoredParticleSizes[i];
+            main.startLifetime = authoredParticleLifetimes[i];
             main.startSpeedMultiplier = authoredParticleSpeeds[i];
             main.scalingMode = authoredParticleScalingModes[i];
             emission.rateOverTimeMultiplier = authoredEmissionRates[i];
@@ -255,6 +263,11 @@ public sealed class PooledGameObject : MonoBehaviour
             }
         }
 
+        // The owning presentation configures its instance before overrides and any first burst.
+        configurePresentation?.Invoke(this);
+        Subject42.Visuals.LiveVisualRuntime.CaptureConfiguredHierarchy(gameObject);
+        // Apply before activation/PlayOnAwake and the caller's synchronous Emit.
+        Subject42.Visuals.LiveVisualRuntime.ApplyHierarchy(gameObject);
         gameObject.SetActive(true);
     }
 

@@ -243,7 +243,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private static Subject42DebugMenu activeInstance;
     public static bool IsDebugMenuOpen =>
-        activeInstance != null && activeInstance.isOpen;
+        activeInstance != null && (activeInstance.isOpen || activeInstance.IsHubOpen);
 
     private OrbitalInteractionController inputOwner;
     private Func<bool> inputBlocker;
@@ -446,6 +446,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         else if (characterSpawner == null)
             activeTab = DebugTab.Additional;
         BuildMenu();
+        BuildHub();
         RefreshTab(activeTab);
         SelectTab(activeTab, false);
         if (menuRoot != null)
@@ -455,6 +456,12 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private void Update()
     {
         BindInputOwner();
+        if (IsHubOpen && Input.GetKeyDown(KeyCode.Escape))
+        {
+            inputOwner?.DebugConsumeExternalUiEscape();
+            CloseHub();
+            return;
+        }
         if (isOpen && mvpOrbitSurfaceOpen &&
             (!MvpCanEdit || MvpStation.IsRunEnded || Time.timeScale <= 0f))
             CloseMenu();
@@ -507,11 +514,12 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             return;
 
         waitingForF1Release = true;
-        SetOpen(!isOpen);
+        ToggleHub();
     }
 
     private void OnDisable()
     {
+        CloseHub();
         ReleaseInputOwner();
         ProductionAnomalySite.VisualTargetsChanged -=
             HandleAnomalyVisualTargetsChanged;
@@ -526,6 +534,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private void OnDestroy()
     {
+        DisposeHub();
         ReleaseTestPickups();
         ProductionAnomalySite.VisualTargetsChanged -=
             HandleAnomalyVisualTargetsChanged;
@@ -1409,7 +1418,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     {
         if (menuPanel == null)
             return;
-        if (IsMvpDebugMenu) { ApplyMvpViewportLayout(); return; }
+        if (IsMvpDebugMenu) { ApplyMvpViewportLayout(); HubApplyDetailsLayout(); return; }
 
         bool compact = IsRuntimeLabTab(activeTab);
         if (compact)
@@ -1474,6 +1483,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
                 : new Color(0f, 0f, 0f, 0.68f);
             fullMenuBlockerImage.raycastTarget = !compact;
         }
+        HubApplyDetailsLayout();
     }
 
     private void AddToggleRow(string label, bool enabled, bool available,

@@ -12,6 +12,291 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10eb537259104ec8a19a760a20c4852a, type: 3}
   m_Name: VisualTuningSavedValues
   m_EditorClassIdentifier: Assembly-CSharp::VisualTuningPreset
+  LiveOriginalBaseline: {fileID: 4900000, guid: 6065ca2e6b9743b88209a696d62fbb24, type: 3}
+  LiveProductionProfile: {fileID: 0}
+  LiveSpriteShader: {fileID: 4800000, guid: e7b4f96a9ebc4f2da56fbe7ef5aa4210, type: 3}
+  LiveSources:
+  - Prefab: {fileID: 6379393858897905768, guid: 04916b72c92753e4b9aa67a5c6548191, type: 3}
+    AssetPath: Assets/_Project/prefabs/Bootstrap/AudioService.prefab
+  - Prefab: {fileID: 2403078753491140306, guid: 8e88b018380e10d46969b6a21a5a5493, type: 3}
+    AssetPath: Assets/_Project/prefabs/Bootstrap/BunkerStationProgressionService.prefab
+  - Prefab: {fileID: 1293930382865108598, guid: d35b049aab2694849a3f9a29186de164, type: 3}
+    AssetPath: Assets/_Project/prefabs/Bootstrap/CurrencyManager.prefab
+  - Prefab: {fileID: 57035180022431872, guid: 470b119c0abcf9d489161f2f217884e6, type: 3}
+    AssetPath: Assets/_Project/prefabs/Bootstrap/GameplayEnemies.prefab
+  - Prefab: {fileID: 6888106619172129650, guid: 3069e3a848c054a4d8e38f3c576c974a, type: 3}
+    AssetPath: Assets/_Project/prefabs/Bootstrap/GameplayPlayer.prefab
+  - Prefab: {fileID: 1427833634437654726, guid: 4eb0d1ccf7a98cf49a0be0141c89348a, type: 3}
+    AssetPath: Assets/_Project/prefabs/Bootstrap/GameplayRewards.prefab
+  - Prefab: {fileID: 2395315760145320158, guid: ee995c505ce890345961efbaa7c1b0b0, type: 3}
+    AssetPath: Assets/_Project/prefabs/Bootstrap/GameplayRun.prefab
+  - Prefab: {fileID: 7463624239673094297, guid: ed6d393a5a9e46a46af1c69217de142e, type: 3}
+    AssetPath: Assets/_Project/prefabs/Bootstrap/GameplayWorld.prefab
+  - Prefab: {fileID: 3373077193138162729, guid: 67fe3c398428358498f0a715ce743f5e, type: 3}
+    AssetPath: Assets/_Project/prefabs/Bootstrap/LocalizationService.prefab
+  - Prefab: {fileID: 123289248797305291, guid: 4ca8470a75ff5f341810424ead0095a4, type: 3}
+    AssetPath: Assets/_Project/prefabs/Bootstrap/MetaProgressionManager.prefab
+  - Prefab: {fileID: 3921958142675405504, guid: 6684c495e04abb649a816c9e62c910c6, type: 3}
+    AssetPath: Assets/_Project/prefabs/Bootstrap/ProductionSceneComposition.prefab
+  - Prefab: {fileID: 5449437574665347703, guid: ce5afc75ab51c564390846f95804eaaa, type: 3}
+    AssetPath: Assets/_Project/prefabs/Bootstrap/RunSelectionManager.prefab
+  - Prefab: {fileID: 668491658134385506, guid: 32fcdf348ff81cd488bc6be6208de7ed, type: 3}
+    AssetPath: Assets/_Project/prefabs/Bootstrap/UnlockProgressService.prefab
+  - Prefab: {fileID: 2585143367492180035, guid: afa0cd39df1532c43b084e889af6dcb0, type: 3}
+    AssetPath: Assets/_Project/prefabs/Characters/Cat.prefab
+  - Prefab: {fileID: 6780075107756483522, guid: 586616dfa41374a43ac464cb7dcb2282, type: 3}
+    AssetPath: Assets/_Project/prefabs/Characters/DiMag.prefab
+  - Prefab: {fileID: 6095222015538505522, guid: 8522b3d6a57df2648903eb77fc00ecb6, type: 3}
+    AssetPath: Assets/_Project/prefabs/Characters/Gera.prefab
+  - Prefab: {fileID: 8899567883607463258, guid: 50fd004411bc2bc40bb6a21478296cc8, type: 3}
+    AssetPath: Assets/_Project/prefabs/Characters/Vika.prefab
+  - Prefab: {fileID: 5000, guid: 3a296e0c5130de046afe298e668ab92f, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/BreakableShieldBearer.prefab
+  - Prefab: {fileID: 5000, guid: 184cd0393c4825f43b66ee4da1318b70, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/BreakableShieldShooter.prefab
+  - Prefab: {fileID: 6808170896951083493, guid: 8843c284dc674874983f542ca501f10e, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/PreparedVariants/p_Enemy_Bomber_Alt.prefab
+  - Prefab: {fileID: 6323814776035146839, guid: eb3f925c9a377c74ab110250cb52f8a3, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/PreparedVariants/p_Enemy_Shooter_Alt.prefab
+  - Prefab: {fileID: 291855493580098199, guid: d164a61f68ef6f24fb084f2bde947c0d, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/PreparedVariants/p_Enemy_classic_Alt.prefab
+  - Prefab: {fileID: 1916633466656028844, guid: 5f24361b2dd03cc44933b41c5cc58c74, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/PreparedVariants/p_Enemy_default_Alt.prefab
+  - Prefab: {fileID: 6885503732443489488, guid: acf7c638f23d24946aad3baa04a194d4, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/ShieldBearer.prefab
+  - Prefab: {fileID: 1020306714501274726, guid: 7ed2cc874c3aec7499d16d254e83c172, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/ShieldShooter.prefab
+  - Prefab: {fileID: 6615069371387075551, guid: 225526f112a8181418b68979c36fe5c8, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/locationElements/p_EnemyTurret1 (1)
+      Variant.prefab
+  - Prefab: {fileID: 8414377102940505002, guid: 290f5dde8f8757948a35e6de0f15da66, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/locationElements/p_EnemyTurret1 (2)
+      Variant.prefab
+  - Prefab: {fileID: 8074722678228422782, guid: 8f73b608ef0309744b732a66e85e86d7, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/p_Boss1.prefab
+  - Prefab: {fileID: 8074722678228422782, guid: 4896bb707206116448950de0ae031152, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/p_Boss2.prefab
+  - Prefab: {fileID: 1362265803452333836, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/p_Enemy.prefab
+  - Prefab: {fileID: 3350373065324294653, guid: 74d98ca6a4a3cc94daabdf7b81bb7f13, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/p_EnemyEye1 Variant.prefab
+  - Prefab: {fileID: 1334349216365075605, guid: 9a2217687199c7b41894a7ab9673f951, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/p_EnemyTurret1.prefab
+  - Prefab: {fileID: 1334349216365075605, guid: 0ddb73a39a57acb48b4f4ece45b664f1, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/p_EnemyTurret2.prefab
+  - Prefab: {fileID: 1432338969431510999, guid: 46ef0098ace1f0e4585348645e131dff, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/p_Enemy_Bomber.prefab
+  - Prefab: {fileID: 1432338969431510999, guid: ce0c854ecd86acb48b0f2a3bc73717f4, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/p_Enemy_LandMine1.prefab
+  - Prefab: {fileID: 2513438768801038890, guid: c234c537ed1fdfe489feaf994e3dbca7, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/p_Enemy_Shooter.prefab
+  - Prefab: {fileID: 1432338969431510999, guid: fde4acc9bf7852b49a40018ba497395c, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/p_Enemy_Tank.prefab
+  - Prefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/p_Enemy_classic.prefab
+  - Prefab: {fileID: 1432338969431510999, guid: bbeab41e755732443b4201b8641136c9, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/p_Enemy_default.prefab
+  - Prefab: {fileID: 4860025952957023206, guid: c116eaa81fac12c488efb7849e7d977d, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/p_robot1.prefab
+  - Prefab: {fileID: 9217306478325029111, guid: 8cb53c066268ada4d826a7eeef6d8f2b, type: 3}
+    AssetPath: Assets/_Project/prefabs/Enemies/p_robot2.prefab
+  - Prefab: {fileID: 3654534448209230114, guid: b62432102c995f043a3958d72a8ede9e, type: 3}
+    AssetPath: Assets/_Project/prefabs/Environment/Props/ClickProps/p_PropsBox.prefab
+  - Prefab: {fileID: 4054196898598802901, guid: 9a695828916228c469d78d11eff1442b, type: 3}
+    AssetPath: Assets/_Project/prefabs/Environment/Props/ClickProps/p_PropsCan.prefab
+  - Prefab: {fileID: 5231355241825300175, guid: 73bc9638b7127b54a8132388a5554720, type: 3}
+    AssetPath: Assets/_Project/prefabs/Environment/Props/SectorProps/p_propBalks1.prefab
+  - Prefab: {fileID: 7581359837238470308, guid: 5330d9fe92cd65946adaf03cac4ac65f, type: 3}
+    AssetPath: Assets/_Project/prefabs/Environment/Props/SectorProps/p_propBalks2.prefab
+  - Prefab: {fileID: 6846802472151927056, guid: 9e48d25f811055341aaa1256b7f12592, type: 3}
+    AssetPath: Assets/_Project/prefabs/Environment/Props/SectorProps/p_propCan1.prefab
+  - Prefab: {fileID: 935229878985820737, guid: eb444138efc99f745bac0fe9791b13b4, type: 3}
+    AssetPath: Assets/_Project/prefabs/Environment/Props/SectorProps/p_propCan2.prefab
+  - Prefab: {fileID: 3654534448209230114, guid: d47c717d19e4db8488938ac3b32ecd76, type: 3}
+    AssetPath: Assets/_Project/prefabs/Environment/Props/SectorProps/p_propConcrete1.prefab
+  - Prefab: {fileID: 7126374022098793200, guid: e3eb1ea10278cd044987db82d404f19d, type: 3}
+    AssetPath: Assets/_Project/prefabs/Environment/Props/SectorProps/p_propRoadCup1.prefab
+  - Prefab: {fileID: 4054196898598802901, guid: 1a98c02862d42c44aa7b04a7275ef4ac, type: 3}
+    AssetPath: Assets/_Project/prefabs/Environment/Props/SectorProps/p_propRope1.prefab
+  - Prefab: {fileID: 4347968268465724665, guid: 206788ef30e88624ca0413aba6a29b74, type: 3}
+    AssetPath: Assets/_Project/prefabs/Environment/Props/SectorProps/p_propVent1.prefab
+  - Prefab: {fileID: 5440511255011642023, guid: f4510fa597f8fab4db4d6df5a962ddd8, type: 3}
+    AssetPath: Assets/_Project/prefabs/Environment/Props/SectorProps/p_propVent2.prefab
+  - Prefab: {fileID: 5000, guid: 2dcd05dc20a6443ca8c86af9ee4679df, type: 3}
+    AssetPath: Assets/_Project/prefabs/Orbital/BlueProjectileVisual.prefab
+  - Prefab: {fileID: 3588729804154917386, guid: ff2e17705544a184c937303c9ea8dcc4, type: 3}
+    AssetPath: Assets/_Project/prefabs/Orbital/Core/Station.prefab
+  - Prefab: {fileID: 8542016750317844926, guid: db8249cd301190e488b9d6ff70d5a1e7, type: 3}
+    AssetPath: Assets/_Project/prefabs/Orbital/FX/StationEnergyLine.prefab
+  - Prefab: {fileID: 7715781409812007907, guid: 38c8927e5d970394aa4e821a63f73ac9, type: 3}
+    AssetPath: Assets/_Project/prefabs/Orbital/Modules/ArcEmitterVisual.prefab
+  - Prefab: {fileID: 1657534402609365111, guid: a64bd75b4f740ba48be9197c1d6ae0d6, type: 3}
+    AssetPath: Assets/_Project/prefabs/Orbital/Modules/LinkNodeVisual.prefab
+  - Prefab: {fileID: 874321222499448941, guid: 061397fe35d9a524f9ac8e1c58b25f4a, type: 3}
+    AssetPath: Assets/_Project/prefabs/Orbital/Modules/PistolVisual.prefab
+  - Prefab: {fileID: 4188619148358559066, guid: c7cb30b88c9e334419754f856162812a, type: 3}
+    AssetPath: Assets/_Project/prefabs/Orbital/Modules/SawVisual.prefab
+  - Prefab: {fileID: 3229308960085762355, guid: 4ff9b587760ccf243ab1a47bcf521cc9, type: 3}
+    AssetPath: Assets/_Project/prefabs/Orbital/Modules/ShotgunVisual.prefab
+  - Prefab: {fileID: 7056152298501357713, guid: 3216bdf2ebdbff44bae93cf0cbca90d3, type: 3}
+    AssetPath: Assets/_Project/prefabs/Orbital/Modules/SniperVisual.prefab
+  - Prefab: {fileID: 339431107643508213, guid: 5d10b4fa34f16ad4e952e471b74e669a, type: 3}
+    AssetPath: Assets/_Project/prefabs/Orbital/Rings/CustomOrbitDrawing.prefab
+  - Prefab: {fileID: 2379824975995474547, guid: e7526e87822eb134f89574d1a62def78, type: 3}
+    AssetPath: Assets/_Project/prefabs/Orbital/Rings/Mount.prefab
+  - Prefab: {fileID: 938386988180106776, guid: d6ae1d52a5c1f604f935151e75ce217d, type: 3}
+    AssetPath: Assets/_Project/prefabs/Orbital/Rings/Ring.prefab
+  - Prefab: {fileID: 1000, guid: ae751b7ba868484a96df868b1066dfc5, type: 3}
+    AssetPath: Assets/_Project/prefabs/Orbital/WeaponProjectileVisual.prefab
+  - Prefab: {fileID: 4188297587154588541, guid: 3aa8dacf946c88e4791e363c6730928b, type: 3}
+    AssetPath: Assets/_Project/prefabs/Weapons/Pistol.prefab
+  - Prefab: {fileID: 5277647906556210592, guid: 3503e1d758ee0d44688e810fb23d1b3e, type: 3}
+    AssetPath: Assets/_Project/prefabs/Weapons/p_LaserWeapon.prefab
+  - Prefab: {fileID: 5011802583049479090, guid: 4704c9027c6932241b0910b1b8ab3fea, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/ItemSparkleRainbow.prefab
+  - Prefab: {fileID: 8686465023773490607, guid: 143dcf6195f3ad840b7e48e303938eb6, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/Laser/PF_LaserImpactFX.prefab
+  - Prefab: {fileID: 2022773980722196014, guid: fc0d1500a99bd564d9977f12f8f561fd, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/Laser/PF_LaserMuzzleFlash.prefab
+  - Prefab: {fileID: 5734474884985781241, guid: 271779233902d0443a2052d8a6cee89b, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/Laser/fx_LaserHit.prefab
+  - Prefab: {fileID: 7069684529430413584, guid: d9e86f94329e03f43bde3976d85ebb1a, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/Laser/fx_LaserMuzzle.prefab
+  - Prefab: {fileID: 190666, guid: b1c3edd041a05cd4ca859ecd6f9c01ea, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/LightningOrbSharpBlue 1.prefab
+  - Prefab: {fileID: 2817483437198940390, guid: a0f7d14547ca6cc4281f13e8d9aa8cab, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/PF_DeathExplosion.prefab
+  - Prefab: {fileID: 165672, guid: 6f48853caa3a4bbc822b67f329b9adbf, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/PlayerDashBurst.prefab
+  - Prefab: {fileID: 1888655999687276109, guid: 53cfe719ce0c261469904fde4804bb40, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/SmokeDark.prefab
+  - Prefab: {fileID: 1069526368967764396, guid: 274cfa103d85fea469f98e0606cb5dc3, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/SparkExplosionYellow2(2) Variant.prefab
+  - Prefab: {fileID: 3202391664640308774, guid: b99e88c880e52564980b2f9f1b8f3593, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/SparkExplosionYellow2.prefab
+  - Prefab: {fileID: 4490757005229476122, guid: b9f2055590ccba9409b2945d571ca3a1, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/TreasureCaseGlowRays.prefab
+  - Prefab: {fileID: 2372456964608085851, guid: 84f00a0203087e9498092e1f7f5c4526, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/WorldRules/WorldRule_Condensation_Visual.prefab
+  - Prefab: {fileID: 8687829490850667574, guid: b57cbb97984857144af7822fe523b294, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/WorldRules/WorldRule_Darkness_Visual.prefab
+  - Prefab: {fileID: 2153769393123319145, guid: 91318a296297a8344b0344241b126989, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/WorldRules/WorldRule_Golden_Visual.prefab
+  - Prefab: {fileID: 6692515648683362674, guid: 50d7bc4137228e9409cb78cd3f3c19d1, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/WorldRules/WorldRule_Rain_Visual.prefab
+  - Prefab: {fileID: 1061764540045337493, guid: 72b1ee69628db0c4f9a189d143ef6831, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/WorldRules/WorldRule_Snow_Visual.prefab
+  - Prefab: {fileID: 8993867766834086764, guid: 367cef6d868778f43bcdd9aa44cb1c7b, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/WorldRules/WorldRule_Wind_Visual.prefab
+  - Prefab: {fileID: 570582771839152279, guid: 88bf8bca3f00de040835da42e80f1727, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/fx_BasicZoneWallBlue.prefab
+  - Prefab: {fileID: 3932597101254327762, guid: f91913de896646447a357936450e42c5, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/fx_BomberExplosion.prefab
+  - Prefab: {fileID: 3431147270733573790, guid: b55be29f2b455a247af6b6c19b37afd7, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/fx_BomberExplosionRadius.prefab
+  - Prefab: {fileID: 3431147270733573790, guid: c941bc18f7e086648bae2a23e2a87208, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/fx_BossTaget1.prefab
+  - Prefab: {fileID: 1557866962218771819, guid: b8f18a3e8db90c84982afced42fab101, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/fx_ExplosionShockwave.prefab
+  - Prefab: {fileID: 4929338021496310041, guid: f20048f190ca70a488d7bb28280abe81, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/fx_Laser1.prefab
+  - Prefab: {fileID: 1540405274179283129, guid: bc64e837a78e4d946bd5da183ce19505, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/fx_Laser2.prefab
+  - Prefab: {fileID: 5832780733298168298, guid: a8519acdf6ef73b41ae1c5e4c2df7c5a, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/fx_LvlUpMine1.prefab
+  - Prefab: {fileID: 1103004854764996450, guid: 846e4de45ae2cda4a96a782918f6d4fb, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/fx_MainCameraLvlUP1.prefab
+  - Prefab: {fileID: 3936906287834159611, guid: 5229cdca77b5e05478d3e2309b50e62c, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/fx_PistolShoot2.prefab
+  - Prefab: {fileID: 5008244044055657415, guid: 85bbed4ab0a632c4c8a58e5c01e7a020, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/fx_captureZone1.prefab
+  - Prefab: {fileID: 165672, guid: 5867564f260b0ca45b4c9f9964af7b2f, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/fx_poof1.prefab
+  - Prefab: {fileID: 4840497922481007420, guid: 4464352bb5dd0234490ba7946d90c997, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/fx_slash1.prefab
+  - Prefab: {fileID: 7894825781466675311, guid: 75453eeff3a34c14383db20e454204bd, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/fx_ventSmoke1.prefab
+  - Prefab: {fileID: 4357534478187123965, guid: 8d7e135ba758a64499dd14283c8c6574, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_FxAttacked2 Variant 1.prefab
+  - Prefab: {fileID: 1225697590497564346, guid: eb16fb47744e2184f9a71bc456707725, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_FxAttacked2.prefab
+  - Prefab: {fileID: 2422985249483130201, guid: e2fbd784016920342afe91db1e5c70d9, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_FxBloodAttacked1.prefab
+  - Prefab: {fileID: 4962594856105150013, guid: c9ef6978e0aec7749ac3b55cad40bc5d, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_FxBloodAttacked2 Variant.prefab
+  - Prefab: {fileID: 8264809118761358846, guid: 59d7dc58baebeea48914a601a8fc9407, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_FxDeath1 Variant.prefab
+  - Prefab: {fileID: 6403922692318204878, guid: dce35554bd0bf694e8c080fae452ca84, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_FxDeath1.prefab
+  - Prefab: {fileID: 6403922692318204878, guid: 214f1954046dffb4ca1fe34c079e7f6e, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_FxDeathBoss1.prefab
+  - Prefab: {fileID: 6575703629447433129, guid: 4f27736fa84580840ae1ffd4d0c23018, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_PistolSleeve1.prefab
+  - Prefab: {fileID: 3439865647902123130, guid: bfcd328a84b426e41a61a444cda0e42c, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_blick1.prefab
+  - Prefab: {fileID: 8153888255074575588, guid: 6b5bb18ea1fe9ea49a73047c718aaa68, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_blick2.prefab
+  - Prefab: {fileID: 6415994172789663665, guid: 703da712b72d21341ae48974468d51ca, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_fxRocket1.prefab
+  - Prefab: {fileID: 147450, guid: 1f3cae7ad2a3fb34fbfe072ecf4b6b44, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_fxRocketMuzzleFire.prefab
+  - Prefab: {fileID: 1284970568538890, guid: 134d76a6352392144875ce25f746f178, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_fxWindlinesStormy.prefab
+  - Prefab: {fileID: 5168639507863545801, guid: f68fe90e65774ed49bbaa2cea74dcd94, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_fx_FootTrace.prefab
+  - Prefab: {fileID: 7750279661638604951, guid: 28a9b6ba0ece8a043ac7b640ac4ac22f, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_fx_HookahSmoke1.prefab
+  - Prefab: {fileID: 5193316843532077453, guid: 0e0021be84d8019499b92a2a19d08bd5, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_fx_rain2.prefab
+  - Prefab: {fileID: 551380718664416474, guid: e1e11e6161b3eb14fb0dd9b457971742, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_shadow1.prefab
+  - Prefab: {fileID: 3328804724239518044, guid: a20ffcbaa399a584186bb94797af169c, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_sleeves Variant.prefab
+  - Prefab: {fileID: 5345936536544779383, guid: 068cd71756f4a9a438db2b88becdb91f, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/p_sleeves.prefab
+  - Prefab: {fileID: 4862666318955076680, guid: e99d32ac25924e845ad0a2cd90fd56a6, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/rainFX1.prefab
+  - Prefab: {fileID: 2732887255044470663, guid: 1e886009deaf51f4486d0d684fe11822, type: 3}
+    AssetPath: Assets/_Project/prefabs/fx/snow1.prefab
+  - Prefab: {fileID: 2602756999783095975, guid: ded731cb1c4fdc449be084c9995135fb, type: 3}
+    AssetPath: Assets/_Project/prefabs/miniWeapons/p_miniWeaponCore1.prefab
+  - Prefab: {fileID: 2602756999783095975, guid: 75c7d22bdfbd2a940b6f605b6994fb0e, type: 3}
+    AssetPath: Assets/_Project/prefabs/miniWeapons/p_miniWeaponLaser1.prefab
+  - Prefab: {fileID: 2602756999783095975, guid: 25d10a8e7dac3ba4e9cfd7177cb9c050, type: 3}
+    AssetPath: Assets/_Project/prefabs/miniWeapons/p_miniWeaponPistol1.prefab
+  - Prefab: {fileID: 6821974247563523827, guid: 079789641f804d74b80b16bc9a7fd3a8, type: 3}
+    AssetPath: Assets/_Project/prefabs/miniWeapons/p_miniWeaponPistolBullet1.prefab
+  - Prefab: {fileID: 2602756999783095975, guid: ffb3aaa6818ec294192664f9493a42a7, type: 3}
+    AssetPath: Assets/_Project/prefabs/miniWeapons/p_miniWeaponSaw1.prefab
+  - Prefab: {fileID: 2602756999783095975, guid: cdd7a44d2d075cf4c9a55bf442305e4a, type: 3}
+    AssetPath: Assets/_Project/prefabs/miniWeapons/p_miniWeaponShotGun1.prefab
+  - Prefab: {fileID: 2602756999783095975, guid: 79cea3c38cb7eaf44acc22877175d2cb, type: 3}
+    AssetPath: Assets/_Project/prefabs/miniWeapons/p_miniWeaponSniper1.prefab
+  - Prefab: {fileID: 1168613123775889235, guid: 3cd5630d49123414ba68ea2d0d673765, type: 3}
+    AssetPath: Assets/_Project/prefabs/projectiles/Enemy/p_Enemy_Bullet.prefab
+  - Prefab: {fileID: 1168613123775889235, guid: c85e1d8ec23ffba47836a61f5644eb61, type: 3}
+    AssetPath: Assets/_Project/prefabs/projectiles/Player/p_Main_Bullet.prefab
+  LiveHistoricalMaterials:
+  - Material: {fileID: 2100000, guid: fa406feb433e41078e768859e07982f2, type: 2}
+    AssetPath: Assets/_Project/Materials/Orbital/Ring.mat
+  - Material: {fileID: 2100000, guid: 1800b25f5e1f7754b8d5b7d7595c0afd, type: 2}
+    AssetPath: Assets/_Project/Materials/Orbital/Visual.mat
+  - Material: {fileID: 2100000, guid: 25ff8001fb9cc304097928621a9ae533, type: 2}
+    AssetPath: Assets/_Project/art/Sprites/Environment/ColdAsh/ColdAshLit.mat
+  - Material: {fileID: 2100000, guid: 94901f11360f5314d8df58be6023cdee, type: 2}
+    AssetPath: Assets/_Project/art/Sprites/weaponFx/Materials/fxtrail.mat
+  - Material: {fileID: 2100000, guid: badf3e928dce83b4fb27a5f1ca59bfa1, type: 2}
+    AssetPath: Assets/_Project/art/Sprites/weaponFx/Materials/fxtrail2.mat
+  - Material: {fileID: 2100000, guid: 632ebdd734287eb43913aab81237886a, type: 2}
+    AssetPath: Assets/_Project/art/WorldRulePixels/DarknessUnlit.mat
+  - Material: {fileID: 2100000, guid: 4c7fd535216f4b90bf61d62e90bb160d, type: 2}
+    AssetPath: Assets/_Project/art/mat/UI/M_WorldRainWetGround.mat
+  - Material: {fileID: 2100000, guid: c2bf904374f34fd1972fb95acd727688, type: 2}
+    AssetPath: Assets/_Project/art/mat/UI/M_WorldSnowOverlay.mat
+  - Material: {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+    AssetPath: Packages/com.unity.render-pipelines.universal/Runtime/Materials/Sprite-Lit-Default.mat
+  - Material: {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+    AssetPath: Packages/com.unity.render-pipelines.universal/Runtime/Materials/Sprite-Unlit-Default.mat
   PixelEffectMaterial: {fileID: 2100000, guid: 2d2bd9307bd0494c8025742670129bf6, type: 2}
   SnowMaterial: {fileID: 2100000, guid: e5dcd80901c14e42a599933ad4480e66, type: 2}
   EnvironmentMaterial: {fileID: 2100000, guid: 11d4f34bb05f4b2e8d050aa136c08f89, type: 2}

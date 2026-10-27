@@ -68,6 +68,20 @@ public struct VisualTuningSnapshot
 [CreateAssetMenu(menuName = "Subject42/Debug/Visual Tuning Preset")]
 public sealed class VisualTuningPreset : ScriptableObject
 {
+    [Header("Live Visual Studio — explicit production profile")]
+    public TextAsset LiveOriginalBaseline;
+    public TextAsset LiveProductionProfile;
+    public Shader LiveSpriteShader;
+    public Subject42.Visuals.LiveVisualSource[] LiveSources = Array.Empty<Subject42.Visuals.LiveVisualSource>();
+    public Subject42.Visuals.LiveVisualMaterial[] LiveHistoricalMaterials = Array.Empty<Subject42.Visuals.LiveVisualMaterial>();
+
+    public Material ResolveLiveMaterial(string path)
+    {
+        foreach (var source in LiveHistoricalMaterials)
+            if (source.AssetPath == path) return source.Material;
+        return null;
+    }
+
     public Material PixelEffectMaterial;
     public Material SnowMaterial;
     public Material EnvironmentMaterial;

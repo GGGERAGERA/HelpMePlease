@@ -329,11 +329,12 @@ internal sealed class BomberExplosionSequence : MonoBehaviour
 
         if (shockwaveFxPrefab != null)
         {
-            Instantiate(
+            var shockwave = Instantiate(
                 shockwaveFxPrefab,
                 explosionPosition,
                 Quaternion.identity
             );
+            Subject42.Visuals.LiveVisualRuntime.RegisterHierarchy(shockwave, shockwaveFxPrefab);
         }
 
         if (owner != null)

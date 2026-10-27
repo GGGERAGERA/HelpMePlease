@@ -180,6 +180,63 @@ public sealed class CompactHudPlayTests
         Assert.That((bool)slowActive.GetValue(abilityView), Is.False);
         ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/CompactHud/orbit-control-hint.png");
         yield return new WaitForSecondsRealtime(.5f);
+        // Compare charge with the same inactive tint, using the real production HUD.
+        station.enabled = false;
+        health.DebugInvulnerable = true;
+        yield return new WaitForSecondsRealtime(.5f);
+        try
+        {
+            station.BulletTime.Reset();
+            yield return CaptureCharge("full");
+            var fullCharge = abilityView.canvasRenderer.GetMesh();
+            var fullVertices = fullCharge.vertices;
+            var fullColors = fullCharge.colors32;
+            station.BulletTime.Tick(true, 1.5f);
+            station.BulletTime.Release();
+            yield return CaptureCharge("half");
+            var partialCharge = abilityView.canvasRenderer.GetMesh();
+            var partialVertices = partialCharge.vertices;
+            Assert.That(partialVertices.SequenceEqual(fullVertices) &&
+                partialCharge.colors32.SequenceEqual(fullColors), Is.False,
+                "Remaining Bullet Time charge must be visible even when Shift is released.");
+            station.BulletTime.Tick(true, 1f);
+            yield return CaptureCharge("low-active");
+            station.BulletTime.Tick(true, 2f);
+            yield return CaptureCharge("empty");
+            Assert.That(abilityView.canvasRenderer.GetMesh().vertices.SequenceEqual(partialVertices), Is.False,
+                "Exhausted charge must look different from partial charge.");
+            station.BulletTime.Tick(false, 3f);
+            yield return CaptureCharge("recharging");
+            Assert.That(abilityView.canvasRenderer.GetMesh().vertices.SequenceEqual(partialVertices), Is.True,
+                "Recharging to the same energy must restore the same fill.");
+            float pausedEnergy = station.BulletTime.Energy;
+            var pause = Object.FindFirstObjectByType<PauseMenuUI>();
+            station.enabled = true;
+            pause.Pause();
+            yield return new WaitForSecondsRealtime(.2f);
+            Assert.That(station.BulletTime.Energy, Is.EqualTo(pausedEnergy));
+            pause.Resume();
+            station.enabled = false;
+            station.BulletTime.Tick(false, 3f);
+            hud.BindPlayer(null);
+            yield return null;
+            hud.BindPlayer(player);
+            yield return CaptureCharge("ready-after-rebind");
+            Assert.That(abilityView.canvasRenderer.GetMesh().vertices.SequenceEqual(fullVertices), Is.True,
+                "A re-bound HUD must snapshot the current full charge.");
+        }
+        finally
+        {
+            station.enabled = true;
+        }
+
+        IEnumerator CaptureCharge(string state)
+        {
+            lateUpdate.Invoke(abilityView, null);
+            Canvas.ForceUpdateCanvases();
+            ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/CompactHud/bullet-time-" + state + ".png");
+            yield return new WaitForSecondsRealtime(.15f);
+        }
     }
 
 }

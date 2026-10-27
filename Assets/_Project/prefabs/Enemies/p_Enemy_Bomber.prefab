@@ -682,7 +682,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6045726002428409456, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: OnDamageTaken.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
+      value:
       objectReference: {fileID: 7057463929206417358}
     - target: {fileID: 6045726002428409456, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: OnDamageTaken.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
@@ -706,7 +706,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6986819420519733013, guid: 74a9937085e79b64f9ec26d65ff96f1d, type: 3}
       propertyPath: targetRenderer
-      value: 
+      value:
       objectReference: {fileID: 4822571630239691159}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

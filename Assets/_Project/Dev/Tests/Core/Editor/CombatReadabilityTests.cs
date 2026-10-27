@@ -224,13 +224,104 @@ public sealed class CombatReadabilityTests
         yield return new EnterPlayMode();
         yield return BeginProductionRun();
         yield return CheckImpact();
+        yield return CompareCrowdWeapons();
+    }
+
+    private static IEnumerator CompareCrowdWeapons()
+    {
+        const string output = "Artifacts/GeneratedQA/WeaponFeel";
+        const string phase = "after";
+        System.IO.Directory.CreateDirectory(output);
+        var report = new System.Collections.Generic.List<string>();
+        var player = Object.FindFirstObjectByType<CharacterSpawner>().SpawnedPlayer;
+        player.GetComponent<PlayerHealth>().DebugInvulnerable = true;
+        var station = player.GetComponentInChildren<OrbitalStationRuntime>();
+        station.enabled = false;
+        foreach (var module in station.Modules.ToArray()) station.RemoveModule(module.StableModuleId);
+        var adapter = (ProductionOrbitalCombatAdapter)station.Combat;
+        var ring = station.Rings[0];
+        var mount = ring.Mounts[0];
+        var enemies = new System.Collections.Generic.List<EnemyHealth>();
+        float shotgunRetreat = 0f;
+        var tickStation = typeof(OrbitalStationRuntime).GetMethod("TickStation", BindingFlags.Instance | BindingFlags.NonPublic);
+        report.Add($"Project={System.IO.Path.GetFullPath(".")} Scene={UnityEngine.SceneManagement.SceneManager.GetActiveScene().path} Unity={Application.unityVersion} PID={System.Diagnostics.Process.GetCurrentProcess().Id}");
+        report.Add("16 production chasers, active AI; one real mounted volley; player stationary/invulnerable. Physical input not covered.");
+        foreach (var path in new[] { "scripts/Combat/Enemies/EnemyChaseMovement.cs", "scripts/Combat/OrbitalStation/OrbitalStationAdapters.cs", "scripts/Combat/OrbitalStation/OrbitalWeaponSettings.cs" })
+        {
+            using var sha = System.Security.Cryptography.SHA256.Create();
+            report.Add(path + " SHA256=" + System.BitConverter.ToString(sha.ComputeHash(System.IO.File.ReadAllBytes("Assets/_Project/" + path))).Replace("-", ""));
+        }
+        foreach (var kind in new[] { OrbitalModuleKind.Pistol, OrbitalModuleKind.Shotgun, OrbitalModuleKind.Sniper })
+        {
+            adapter.DebugClearProjectiles();
+            foreach (var enemy in EnemyHealth.ActiveInstances.ToArray()) Object.DestroyImmediate(enemy.gameObject);
+            enemies.Clear();
+            Assert.That(station.InstallModule(kind, ring.RingId, mount.MountIndex, out string error), Is.True, error);
+            var cannon = station.Modules.OfType<OrbitalProjectileModule>().Single();
+            mount.Transform.position = player.transform.position + Vector3.right * .5f;
+            for (int i = 0; i < 16; i++)
+            {
+                var actor = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/prefabs/Enemies/p_Enemy_classic.prefab"),
+                    player.transform.position + new Vector3(2.6f + i % 4 * .8f, (i / 4 - 1.5f) * .8f), Quaternion.identity);
+                enemies.Add(actor.GetComponent<EnemyHealth>());
+            }
+            yield return null;
+            foreach (var enemy in enemies) enemy.SetRuntimeMaxHealth(1000f);
+            var target = adapter.FindNearest(cannon.WorldPosition, cannon.Settings.Range);
+            Vector2 start = target.transform.position;
+            Vector2 away = (start - (Vector2)player.transform.position).normalized;
+            var targetBody = target.GetComponent<Rigidbody2D>();
+            bool impacted = false;
+            Vector2 impactPosition = start;
+            float maxOutward = 0f;
+            typeof(OrbitalModuleRuntime).GetField("Cooldown", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(cannon, 0f);
+            cannon.ActivateCombat();
+            ScreenCapture.CaptureScreenshot(output + "/crowd-" + phase + "-" + kind + "-start.png");
+            float began = Time.time;
+            bool captured = false;
+            while (Time.time - began < .4f)
+            {
+                tickStation.Invoke(station, new object[] { Time.deltaTime });
+                if (!impacted && target.CurrentHealth < 1000f)
+                { impacted = true; impactPosition = targetBody.position; }
+                if (impacted)
+                    maxOutward = Mathf.Max(maxOutward, Vector2.Dot(targetBody.position - impactPosition, away));
+                if (!captured && Time.time - began >= .25f)
+                {
+                    ScreenCapture.CaptureScreenshot(output + "/crowd-" + phase + "-" + kind + "-mid.png");
+                    captured = true;
+                }
+                yield return null;
+            }
+            float damage = enemies.Sum(e => 1000f - e.CurrentHealth);
+            int hitCount = enemies.Count(e => e.CurrentHealth < 1000f);
+            Assert.That(cannon.ShotsFired, Is.EqualTo(1), "Compare one real volley per weapon.");
+            Assert.That(hitCount, Is.GreaterThan(0));
+            if (kind == OrbitalModuleKind.Shotgun) shotgunRetreat = maxOutward;
+            report.Add($"{kind}: shots={cannon.ShotsFired} damaged={hitCount} damage={damage:F3} maxOutward={maxOutward:F4} finalOutward={Vector2.Dot((Vector2)target.transform.position - start, away):F4}");
+            ScreenCapture.CaptureScreenshot(output + "/crowd-" + phase + "-" + kind + "-end.png");
+            yield return null;
+            typeof(OrbitalModuleRuntime).GetField("Cooldown", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(cannon, 10f);
+            Vector2 recoveryStart = targetBody.position;
+            float recoverAt = Time.time;
+            while (Time.time - recoverAt < .2f)
+            { tickStation.Invoke(station, new object[] { Time.deltaTime }); yield return null; }
+            float recoveredApproach = Vector2.Dot(recoveryStart - targetBody.position, away);
+            report.Add($"{kind}: approach after impulse={recoveredApproach:F4}");
+            Assert.That(recoveredApproach, Is.GreaterThan(.15f), "Chase pressure must resume after the short impulse.");
+            station.RemoveModule(cannon.StableModuleId);
+        }
+        foreach (var enemy in enemies) Object.Destroy(enemy.gameObject);
+        System.IO.File.WriteAllLines(output + "/crowd-" + phase + ".txt", report);
+        Assert.That(shotgunRetreat, Is.GreaterThan(.15f),
+            "A close shotgun hit must visibly displace a chasing enemy, rather than only reduce its approach speed.");
     }
 
     private static IEnumerator CheckImpact()
     {
         var player = PrepareProduction();
         var station = player.GetComponentInChildren<OrbitalStationRuntime>();
-        foreach (var module in station.Modules) module.Detach();
+        foreach (var module in station.Modules.ToArray()) station.RemoveModule(module.StableModuleId);
         var adapter = (ProductionOrbitalCombatAdapter)station.Combat;
         adapter.DebugClearProjectiles();
         var enemy = Target(player.transform.position + Vector3.right * 4f);

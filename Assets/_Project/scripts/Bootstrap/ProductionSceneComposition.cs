@@ -65,6 +65,7 @@ public sealed class ProductionSceneComposition : MonoBehaviour
         }
         OrbitalPresentationConfig.Configure(orbital);
         VisualTuningPresetStorage.Configure(visualPreset);
+        Subject42.Visuals.LiveVisualRuntime.Attach(this, visualPreset);
         AnomalyItemCatalog.Configure(anomalyItems);
         EvolutionRecipeCatalog.Configure(evolutionRecipes);
 

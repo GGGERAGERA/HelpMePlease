@@ -34,6 +34,7 @@ internal static class EnemyExplosion
         var fx = pool != null ? pool.Get(position, Quaternion.identity)?.PrimaryParticleSystem :
             Object.Instantiate(explosionPrefab, position, Quaternion.identity);
         if (fx == null) return null;
+        Subject42.Visuals.LiveVisualRuntime.RegisterHierarchy(fx.gameObject, explosionPrefab.gameObject);
         fx.Play();
         if (pool == null) Object.Destroy(fx.gameObject, fx.main.duration);
         return fx;

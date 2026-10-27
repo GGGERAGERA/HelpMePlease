@@ -196,7 +196,16 @@ public class EnemyChaseMovement : EnemyMovement
         chaseVelocity = threatResponseSeconds > .001f
             ? Vector2.Lerp(chaseVelocity, targetVelocity, 1f - Mathf.Exp(-Time.fixedDeltaTime / threatResponseSeconds))
             : targetVelocity;
-        Vector2 movement = chaseVelocity +
+        Vector2 locomotion = chaseVelocity;
+        if (knockbackVelocity.sqrMagnitude > .0001f)
+        {
+            // Keep lateral steering, but let a hit displace the enemy instead of
+            // spending the impulse fighting its own pursuit for the entire decay.
+            Vector2 impulseDirection = knockbackVelocity.normalized;
+            float opposingSpeed = Vector2.Dot(locomotion, impulseDirection);
+            if (opposingSpeed < 0f) locomotion -= impulseDirection * opposingSpeed;
+        }
+        Vector2 movement = locomotion +
             knockbackVelocity +
             worldRuleExternalVelocity +
             AnomalyExternalVelocity;
@@ -241,6 +250,7 @@ public class EnemyChaseMovement : EnemyMovement
     }
     private void OnDisable()
     {
+        knockbackVelocity = Vector2.zero;
         chaseVelocity = Vector2.zero;
         SetThreatMovement(1f, 0f);
         assaultDestination = null;

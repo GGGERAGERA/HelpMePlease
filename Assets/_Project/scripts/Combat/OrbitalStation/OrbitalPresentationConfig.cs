@@ -2,11 +2,43 @@ using UnityEngine;
 
 namespace Subject42.Combat.OrbitalStation
 {
+    public enum OrbitalFlashFamily
+    {
+        Other, MuzzlePistol, MuzzleShotgun, MuzzleSniper, Impact, Arc, CoreRay, Relocation,
+        ImpactPistol, ImpactShotgun, ImpactSniper
+    }
+
+    [System.Serializable]
+    public sealed class OrbitalFlashStyle
+    {
+        public Color Tint = Color.white;
+        [Range(0f, 1f)] public float TintAmount;
+        [Min(0f)] public float Brightness = 1f;
+        [Range(0f, 1f)] public float Opacity = 1f;
+        [Min(0f)] public float Duration = 1f;
+        [Min(0f)] public float Width = 1f;
+
+        public Color ApplyColor(Color source)
+        {
+            float alpha = source.a;
+            Color color = Color.LerpUnclamped(source, Tint, TintAmount);
+            color.r *= Brightness; color.g *= Brightness; color.b *= Brightness;
+            color.a = Mathf.LerpUnclamped(alpha, Tint.a, TintAmount) * Opacity;
+            return color;
+        }
+
+        public static float TailOpacity(float normalizedAge, float fade) =>
+            1f - Mathf.Clamp01(fade) * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.25f, 1f, normalizedAge));
+    }
+
     [CreateAssetMenu(menuName = "Subject42/Orbital Presentation Config")]
     public sealed class OrbitalPresentationConfig : ScriptableObject
     {
 
         private static OrbitalPresentationConfig active;
+        private static OrbitalPresentationConfig authored;
+        public static bool IsConfigured => active != null;
+        public static int ConfigurationRevision { get; private set; }
 
         [Header("Authored composition")]
         public GameObject StationPrefab;
@@ -26,6 +58,35 @@ namespace Subject42.Combat.OrbitalStation
         [Min(.01f)] public float ProjectileMuzzleDuration = .10f;
         [Min(.01f)] public float ProjectileImpactDuration = .15f;
         [Min(.01f)] public float ProjectileImpactSize = .25f;
+        [Range(0f, 1f)] public float ProjectileImpactWhitening = .35f;
+        [Range(0f, 1f)] public float FlashTailFade = 1f;
+        [Header("FlashLink families — visual overrides, identity by default")]
+        public OrbitalFlashStyle OtherFlash = new();
+        public OrbitalFlashStyle PistolMuzzleFlash = new();
+        public OrbitalFlashStyle ShotgunMuzzleFlash = new();
+        public OrbitalFlashStyle SniperMuzzleFlash = new();
+        public OrbitalFlashStyle ImpactFlash = new();
+        public OrbitalFlashStyle PistolImpactFlash = new();
+        public OrbitalFlashStyle ShotgunImpactFlash = new();
+        public OrbitalFlashStyle SniperImpactFlash = new();
+        public OrbitalFlashStyle ArcFlash = new();
+        public OrbitalFlashStyle CoreRayFlash = new();
+        public OrbitalFlashStyle RelocationFlash = new();
+
+        public OrbitalFlashStyle GetFlashStyle(OrbitalFlashFamily family) => family switch
+        {
+            OrbitalFlashFamily.MuzzlePistol => PistolMuzzleFlash,
+            OrbitalFlashFamily.MuzzleShotgun => ShotgunMuzzleFlash,
+            OrbitalFlashFamily.MuzzleSniper => SniperMuzzleFlash,
+            OrbitalFlashFamily.Impact => ImpactFlash,
+            OrbitalFlashFamily.ImpactPistol => PistolImpactFlash,
+            OrbitalFlashFamily.ImpactShotgun => ShotgunImpactFlash,
+            OrbitalFlashFamily.ImpactSniper => SniperImpactFlash,
+            OrbitalFlashFamily.Arc => ArcFlash,
+            OrbitalFlashFamily.CoreRay => CoreRayFlash,
+            OrbitalFlashFamily.Relocation => RelocationFlash,
+            _ => OtherFlash
+        };
         [Header("Core pulse overlay")]
         public Color CoreCyan = new(.15f, .85f, 1f);
         public Color CoreViolet = new(.65f, .35f, 1f);
@@ -36,6 +97,9 @@ namespace Subject42.Combat.OrbitalStation
         public float CoreChargeParticleInterval = .06f;
         public float CoreHaloSize = .75f;
         public float CoreHaloPulseSize = 1.45f;
+        public float CoreHaloIdleAlpha = .025f;
+        public float CoreHaloChargeAlpha = .2f;
+        public float CoreHaloBrightness = 1f;
         public float CoreRayDuration = .16f;
         public float CoreShakeDuration = .08f;
         public float CoreShakeMagnitude = .025f;
@@ -151,16 +215,22 @@ namespace Subject42.Combat.OrbitalStation
         public static void Configure(OrbitalPresentationConfig config)
         {
             if (config == null) throw new System.ArgumentNullException(nameof(config));
+            // Presentation is mutable during play; the authored asset remains the explicit save destination.
+            ReleaseRuntimeConfiguration();
+            authored = config;
+            active = Instantiate(config);
+            active.name = config.name + " (Runtime)";
+            active.hideFlags = HideFlags.DontSave;
 #if DEVELOPMENT_BUILD && !UNITY_EDITOR
             if (PlayerPrefs.HasKey(RingAppearancePreferenceKey))
             {
                 var saved = JsonUtility.FromJson<SavedRingAppearance>(PlayerPrefs.GetString(RingAppearancePreferenceKey));
-                config.RingSurface = saved.Surface;
-                config.RingLineWidth = saved.Width;
-                config.RingLineAlpha = saved.Alpha;
+                active.RingSurface = saved.Surface;
+                active.RingLineWidth = saved.Width;
+                active.RingLineAlpha = saved.Alpha;
             }
 #endif
-            active = config;
+            ConfigurationRevision++;
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -175,8 +245,15 @@ namespace Subject42.Combat.OrbitalStation
         public void SaveRingAppearance()
         {
 #if UNITY_EDITOR
-            UnityEditor.EditorUtility.SetDirty(this);
-            UnityEditor.AssetDatabase.SaveAssetIfDirty(this);
+            var destination = this == active ? authored : this;
+            if (destination == null || !UnityEditor.AssetDatabase.Contains(destination))
+                throw new System.InvalidOperationException("The ring appearance has no authored save destination.");
+            UnityEditor.Undo.RecordObject(destination, "Save ORBITAL ring appearance");
+            destination.RingSurface = JsonUtility.FromJson<RingSurfaceSettings>(JsonUtility.ToJson(RingSurface));
+            destination.RingLineWidth = RingLineWidth;
+            destination.RingLineAlpha = RingLineAlpha;
+            UnityEditor.EditorUtility.SetDirty(destination);
+            UnityEditor.AssetDatabase.SaveAssetIfDirty(destination);
 #else
             PlayerPrefs.SetString(RingAppearancePreferenceKey, JsonUtility.ToJson(new SavedRingAppearance
             { Surface = RingSurface, Width = RingLineWidth, Alpha = RingLineAlpha }));
@@ -186,7 +263,20 @@ namespace Subject42.Combat.OrbitalStation
 #endif
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetConfiguration() => active = null;
+        private static void ResetConfiguration()
+        {
+            ReleaseRuntimeConfiguration();
+            authored = null;
+            ConfigurationRevision = 0;
+        }
+
+        private static void ReleaseRuntimeConfiguration()
+        {
+            if (active == null) return;
+            if (Application.isPlaying) Destroy(active);
+            else DestroyImmediate(active);
+            active = null;
+        }
 
         public static OrbitalPresentationConfig Active => active != null ? active :
             throw new System.InvalidOperationException("OrbitalPresentationConfig is not assigned by ProductionSceneComposition.");

@@ -672,6 +672,7 @@ internal static class ExplosionWarningVisual
             Quaternion.identity
         );
         Configure(warning, radius, duration);
+        Subject42.Visuals.LiveVisualRuntime.RegisterHierarchy(warning, prefab);
         return warning;
     }
 

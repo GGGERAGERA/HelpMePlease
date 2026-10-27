@@ -68,20 +68,17 @@ public sealed class EnemyHealthPresentation : MonoBehaviour
             return;
         PooledGameObject pooledBlood = bloodHitPool?.Get(
             hitPoint,
-            Quaternion.identity);
+            Quaternion.identity,
+            configurePresentation: item => ConfigureBlood(item.PrimaryParticleSystem, isCritical));
         ParticleSystem blood = pooledBlood != null
             ? pooledBlood.PrimaryParticleSystem
             : Instantiate(bloodHitPrefab, hitPoint, Quaternion.identity);
-        // This prefab is also used by props/minigames: tune only this owned instance.
-        ConfigureCompactEffect(blood, HitDuration, HitLifetime, HitSizeScale);
-        if (isCritical)
+        if (pooledBlood == null)
         {
-            var main = blood.main;
-            main.startSizeMultiplier *= 1.4f;
-            main.startSpeedMultiplier *= 1.3f;
-
-            var emission = blood.emission;
-            emission.rateOverTimeMultiplier *= 1.5f;
+            ConfigureBlood(blood, isCritical);
+            Subject42.Visuals.LiveVisualRuntime.RegisterHierarchy(blood.gameObject, bloodHitPrefab.gameObject);
+            Subject42.Visuals.LiveVisualRuntime.CaptureConfiguredHierarchy(blood.gameObject);
+            Subject42.Visuals.LiveVisualRuntime.ApplyHierarchy(blood.gameObject);
         }
 
         blood.Play();
@@ -90,6 +87,18 @@ public sealed class EnemyHealthPresentation : MonoBehaviour
             pooledBlood.ReleaseAfter(bloodHitDestroyTime);
         else
             Destroy(blood.gameObject, bloodHitDestroyTime);
+    }
+
+    private static void ConfigureBlood(ParticleSystem blood, bool isCritical)
+    {
+        // This prefab is also used by props/minigames: tune only this owned instance.
+        ConfigureCompactEffect(blood, HitDuration, HitLifetime, HitSizeScale);
+        if (!isCritical) return;
+        var main = blood.main;
+        main.startSizeMultiplier *= 1.4f;
+        main.startSpeedMultiplier *= 1.3f;
+        var emission = blood.emission;
+        emission.rateOverTimeMultiplier *= 1.5f;
     }
     void ShowDamagePopup(int damage, bool isCritical)
     {
@@ -124,18 +133,30 @@ public sealed class EnemyHealthPresentation : MonoBehaviour
         if (deathFXPrefab == null)
             return;
         PooledGameObject pooled = deathFxPool?.Get(
-            transform.position, Quaternion.identity);
+            transform.position, Quaternion.identity,
+            configurePresentation: item => ConfigureDeath(item.PrimaryParticleSystem));
         ParticleSystem effect = pooled != null
             ? pooled.PrimaryParticleSystem
             : Instantiate(deathFXPrefab, transform.position, Quaternion.identity);
-        if (!health.IsBoss)
-            ConfigureCompactEffect(effect, CommonDeathDuration, CommonDeathLifetime, CommonDeathSizeScale);
+        if (pooled == null)
+        {
+            ConfigureDeath(effect);
+            Subject42.Visuals.LiveVisualRuntime.RegisterHierarchy(effect.gameObject, deathFXPrefab.gameObject);
+            Subject42.Visuals.LiveVisualRuntime.CaptureConfiguredHierarchy(effect.gameObject);
+            Subject42.Visuals.LiveVisualRuntime.ApplyHierarchy(effect.gameObject);
+        }
         float lifetime = effect.main.duration;
         effect.Play();
         if (pooled != null)
             pooled.ReleaseAfter(lifetime);
         else
             Destroy(effect.gameObject, lifetime);
+    }
+
+    private void ConfigureDeath(ParticleSystem effect)
+    {
+        if (!health.IsBoss)
+            ConfigureCompactEffect(effect, CommonDeathDuration, CommonDeathLifetime, CommonDeathSizeScale);
     }
 
     private static void ConfigureCompactEffect(ParticleSystem effect, float duration, float lifetime, float sizeScale)

@@ -10,7 +10,7 @@ using UnityEngine.UI;
 
 public sealed partial class Subject42DebugMenu
 {
-    private bool IsMvpDebugMenu => SceneManager.GetActiveScene().name == "MVP";
+    private bool IsMvpDebugMenu => SceneManager.GetActiveScene().name == "MVP" && !hubLegacyLab;
     private static readonly string[] MvpTabLabels = { "Орбиты и оружие", "Улучшения", "Враги и события", "Игрок и ран" };
     private int mvpCategoryFilter = -1;
     private bool mvpAvailableOnly;
