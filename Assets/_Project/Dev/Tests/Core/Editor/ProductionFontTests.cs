@@ -92,6 +92,10 @@ public sealed class ProductionFontTests
             languageDropdown.value = (int)language;
             for (int frame = 0; frame < 5; frame++) yield return null;
             Canvas.ForceUpdateCanvases();
+            Assert.That(languageDropdown.captionText, Is.Not.Null, "Language dropdown must have a visible caption.");
+            Assert.That(languageDropdown.captionText.text,
+                Is.EqualTo(language == GameLanguage.Russian ? "Русский" : "English"),
+                "Language caption must match the selected language.");
             var labels = panel.GetComponentsInChildren<TMP_Text>();
             Assert.That(labels, Is.Not.Empty);
             foreach (var label in labels)
@@ -111,13 +115,16 @@ public sealed class ProductionFontTests
                     Assert.That(character.isVisible, Is.True, label.text);
                 }
             }
-            if (language == GameLanguage.Russian)
-            {
-                string text = string.Join("\n", labels.Select(label => label.text)).ToUpperInvariant();
-                foreach (string expected in new[] { "НАСТРОЙКИ", "ЗВУК", "ОБЩАЯ ГРОМКОСТЬ", "МУЗЫКА", "ЗВУКИ",
-                    "УПРАВЛЕНИЕ", "АВТОМАТИЧЕСКАЯ СТРЕЛЬБА", "ЯЗЫК", "РУССКИЙ", "РЕЖИМ ЭКРАНА", "НАЗАД" })
-                    Assert.That(text, Does.Contain(expected));
-            }
+            var service = LocalizationService.EnsureExists();
+            Assert.That(service.CurrentLanguage, Is.EqualTo(language), "Settings dropdown must switch the service language.");
+            var localized = panel.GetComponentsInChildren<LocalizedText>()
+                .Where(label => label.isActiveAndEnabled).ToArray();
+            var keys = localized.Select(label => new SerializedObject(label)
+                .FindProperty("localizationKey").stringValue).ToArray();
+            Assert.That(keys.All(key => !string.IsNullOrWhiteSpace(key) && service.HasKey(key)), Is.True);
+            Assert.That(SettingsContractMatches(keys,
+                localized.Select(label => label.GetComponent<TMP_Text>()?.text).ToArray(), service.Get),
+                Is.True, SettingsLabelDiagnostics(panel, labels));
             ScreenCapture.CaptureScreenshot(Path.Combine(Output, language + ".png"));
             for (int frame = 0; frame < 5; frame++) yield return null;
         }
@@ -127,6 +134,61 @@ public sealed class ProductionFontTests
         Assert.That(FontHashes(), Is.EqualTo(SessionState.GetString(BaselineKey, "")),
             "Opening RU/EN Settings and exiting Play Mode modified a font asset.");
         SessionState.EraseString(BaselineKey);
+    }
+
+    // Explicit authored contract, independent of the discovered components.
+    private static readonly string[] SettingsKeys =
+    {
+        "settings.audio", "settings.master", "settings.music", "settings.sounds",
+        "settings.back", "settings.backHint", "settings.system", "settings.language",
+        "settings.savedHint", "settings.title", "settings.windowMode"
+    };
+
+    private static bool SettingsContractMatches(string[] keys, string[] values, Func<string, string> translate)
+    {
+        if (keys.Length != SettingsKeys.Length || values.Length != keys.Length) return false;
+        foreach (string key in SettingsKeys)
+        {
+            if (keys.Count(candidate => candidate == key) != 1) return false;
+            int index = Array.IndexOf(keys, key);
+            if (string.IsNullOrWhiteSpace(values[index]) || values[index] != translate(key)) return false;
+        }
+        return true;
+    }
+
+    [Test]
+    public void SettingsContractRejectsMissingDuplicateAndWrongTranslation()
+    {
+        string Translation(string key) => "translated:" + key;
+        var keys = SettingsKeys.ToArray();
+        var values = keys.Select(Translation).ToArray();
+        Assert.That(SettingsContractMatches(keys, values, Translation), Is.True);
+        Assert.That(SettingsContractMatches(keys.Skip(1).ToArray(), values.Skip(1).ToArray(), Translation), Is.False);
+        var duplicate = keys.ToArray();
+        duplicate[1] = duplicate[0];
+        Assert.That(SettingsContractMatches(duplicate, duplicate.Select(Translation).ToArray(), Translation), Is.False);
+        values[0] = "wrong translation";
+        Assert.That(SettingsContractMatches(keys, values, Translation), Is.False);
+    }
+
+    private static string SettingsLabelDiagnostics(AudioSettingsPanel panel, TMP_Text[] labels)
+    {
+        string PathOf(Component component)
+        {
+            string path = component.name;
+            for (var parent = component.transform.parent; parent != null; parent = parent.parent)
+                path = parent.name + "/" + path;
+            return component.gameObject.scene.name + "/" + path;
+        }
+
+        var localized = panel.GetComponentsInChildren<LocalizedText>(true);
+        return $"Open panel {PathOf(panel)}; active TMP_Text={labels.Length}, LocalizedText including inactive={localized.Length}; " +
+            "showing at most 60 of each.\nActive TMP_Text paths:\n" +
+            string.Join("\n", labels.Where(label => label.gameObject.activeInHierarchy)
+                .Select(label => PathOf(label)).OrderBy(path => path).Take(60)) +
+            "\nLocalizedText keys:\n" + string.Join("\n", localized.OrderBy(label => PathOf(label)).Take(60)
+                .Select(label => $"{PathOf(label)} activeInHierarchy={label.gameObject.activeInHierarchy} " +
+                    $"key={new SerializedObject(label).FindProperty("localizationKey").stringValue}"));
     }
 
     private static string FontHashes()

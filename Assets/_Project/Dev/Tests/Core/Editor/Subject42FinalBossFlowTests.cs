@@ -25,6 +25,10 @@ public sealed class Subject42FinalBossFlowTests
         var health = Object.FindFirstObjectByType<CharacterSpawner>()
             .SpawnedPlayer.GetComponent<PlayerHealth>();
         Assert.That(health.TakeDamage(float.MaxValue, Vector2.zero), Is.True);
+        var hud = Object.FindFirstObjectByType<HUDManager>();
+        var healthBar = CompactHudTestData.Get<HudBar>(hud, "healthBar");
+        Assert.That(CompactHudTestData.Get<UnityEngine.UI.Slider>(healthBar, "slider").normalizedValue, Is.Zero);
+        Assert.That(CompactHudTestData.Get<TMPro.TMP_Text>(healthBar, "valueText").text.Split('/')[0], Is.EqualTo("0"));
         Assert.That(health.IsDead, Is.True);
         Assert.That(Time.timeScale, Is.Zero);
         Assert.That(RunFlowController.Instance.Phase, Is.EqualTo(RunPhase.Stopped));

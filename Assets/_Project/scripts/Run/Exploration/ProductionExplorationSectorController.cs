@@ -227,6 +227,13 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
 
         LocalAnomalyData[] normalAnomalies = BuildNormalAnomalyPool();
         eventSpawner.ReserveSectorExit(exitPosition, config.ExitRadius);
+        if (!TryAssignSiteEvents(siteEvents, normalPositions, normalSizes,
+                specialPosition, specialSize, out siteEvents, out string admissionError))
+        {
+            ReleaseRunScene();
+            Debug.LogError($"[ExplorationSector] Site event assignment rejected: exit={exitPosition:F5} radius={config.ExitRadius:F5}; " + admissionError, this);
+            return false;
+        }
 
         for (int i = 0; i < NormalSiteCount; i++)
         {
@@ -425,6 +432,13 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         anomalyController.BeginSiteLayout();
         eventSpawner.ConfigureSiteControlledMode(TotalSiteCount);
         var events = BuildSiteEventPool(sizes);
+        eventSpawner.ReserveSectorExit(exit, config.ExitRadius);
+        if (!TryAssignSiteEvents(events, positions, sizes, specialPosition, specialSize,
+                out events, out string admissionError))
+        {
+            Debug.LogError($"[ExplorationSector] Site event assignment rejected: exit={exit:F5} radius={config.ExitRadius:F5}; " + admissionError, this);
+            return false;
+        }
         var anomalies = BuildNormalAnomalyPool();
         for (int i = 0; i < NormalSiteCount; i++)
             CreateSite($"Normal Anomaly Site {i + 1}")
@@ -1315,6 +1329,84 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         );
     }
 #endif
+
+    // Preserve the selected multiset (including weighted duplicates and guarantees).
+    // Special stays fixed; only normal objectives may exchange territories.
+    private bool TryAssignSiteEvents(List<WorldEvent> pool, Vector2[] positions, Vector2[] sizes,
+        Vector2 specialPosition, Vector2 specialSize, out List<WorldEvent> assigned, out string error)
+    {
+        assigned = new List<WorldEvent>();
+        error = null;
+        if (pool.Count == 0) { error = "Selected event pool is empty."; return false; }
+        for (int i = 0; i < TotalSiteCount; i++) assigned.Add(pool[i % pool.Count]);
+        var selected = assigned.ToArray();
+        var compatible = new bool[TotalSiteCount, TotalSiteCount];
+        var rejected = new List<string>();
+        var probeRoot = new GameObject("Site admission probes");
+        probeRoot.SetActive(false);
+        try
+        {
+            for (int choice = 0; choice < TotalSiteCount; choice++)
+            {
+                // Rocket Storm searches every legal arena center independently of its beacon.
+                // Other events retain their existing origin-dependent spawn/retry contract.
+                if (selected[choice] is not RocketStormEvent)
+                {
+                    for (int slot = 0; slot < TotalSiteCount; slot++) compatible[choice, slot] = true;
+                    continue;
+                }
+                for (int slot = 0; slot < TotalSiteCount; slot++)
+                {
+                    if ((choice == NormalSiteCount) != (slot == NormalSiteCount)) continue;
+                    Vector2 position = slot < NormalSiteCount ? positions[slot] : specialPosition;
+                    Vector2 size = slot < NormalSiteCount ? sizes[slot] : specialSize;
+                    WorldEvent probe = Instantiate(selected[choice], position, Quaternion.identity, probeRoot.transform);
+                    try
+                    {
+                        probe.ConfigureSitePlacement(position, size);
+                        compatible[choice, slot] = probe.TryPreparePlacement(
+                            eventSpawner.CreatePlacementContext(probe), out string reason);
+                        if (!compatible[choice, slot])
+                            rejected.Add($"{selected[choice].name} choice={choice} slot={slot} center={position:F5} size={size:F5}: {reason}");
+                    }
+                    finally
+                    {
+                        probe.DisposeForOwnerReset();
+                        // Keep deferred-destruction probes inactive and out of physics queries.
+                        Destroy(probe.gameObject);
+                    }
+                }
+            }
+        }
+        finally { Destroy(probeRoot); }
+
+        var order = new int[TotalSiteCount];
+        var used = new bool[TotalSiteCount];
+        bool Search(int slot)
+        {
+            if (slot == TotalSiteCount) return true;
+            // Try the original assignment first to avoid unnecessary changes.
+            for (int offset = 0; offset < TotalSiteCount; offset++)
+            {
+                int choice = (slot + offset) % TotalSiteCount;
+                if (used[choice] || !compatible[choice, slot] ||
+                    ((choice == NormalSiteCount) != (slot == NormalSiteCount))) continue;
+                used[choice] = true;
+                order[slot] = choice;
+                if (Search(slot + 1)) return true;
+                used[choice] = false;
+            }
+            return false;
+        }
+        if (!Search(0))
+        {
+            error = "No permutation of selected normal objectives preserves Rocket Storm admission and fixed Special. " +
+                string.Join("; ", rejected);
+            return false;
+        }
+        for (int slot = 0; slot < TotalSiteCount; slot++) assigned[slot] = selected[order[slot]];
+        return true;
+    }
 
     private List<WorldEvent> BuildSiteEventPool(Vector2[] siteSizes)
     {

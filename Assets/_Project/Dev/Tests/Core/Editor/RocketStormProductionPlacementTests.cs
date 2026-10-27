@@ -104,6 +104,101 @@ public sealed class RocketStormProductionPlacementTests
             "Spawning the exit must retain its actual circle and 1m clearance.");
     }
 
+    [UnityTest, Timeout(90000)]
+    public IEnumerator HistoricalBlockedTerritoryReassignsSelectedPoolAndReleasesProbes()
+    {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        yield return new EnterPlayMode();
+        var host = new GameObject("Assignment fixture");
+        host.SetActive(false);
+        var sector = host.AddComponent<ProductionExplorationSectorController>();
+        var spawner = host.AddComponent<WorldEventSpawner>();
+        var areaObject = new GameObject("Assignment playable bounds");
+        var bounds = areaObject.AddComponent<BoxCollider2D>();
+        bounds.isTrigger = true;
+        bounds.size = Vector2.one * 100f;
+        var area = areaObject.AddComponent<GameplayAreaService>();
+        area.ConfigureDebugAreas(bounds, bounds);
+        typeof(WorldEventSpawner).GetField("gameplayArea", PrivateInstance).SetValue(spawner, area);
+        typeof(ProductionExplorationSectorController).GetField("eventSpawner", PrivateInstance).SetValue(sector, spawner);
+        Physics2D.SyncTransforms();
+
+        var rocket = AssetDatabase.LoadAssetAtPath<RocketStormEvent>(
+            "Assets/_Project/prefabs/Environment/WorldEvents/RocketStormEvent.prefab");
+        var relay = AssetDatabase.LoadAssetAtPath<OrbitalRelayEvent>(
+            "Assets/_Project/prefabs/Environment/WorldEvents/OrbitalRelayEvent.prefab");
+        Assert.That(rocket, Is.Not.Null);
+        Assert.That(relay, Is.Not.Null);
+        Rect blocked = Rect.MinMaxRect(-50f, -9.61182f, -10.35352f, 15.85400f);
+        var positions = new[] { blocked.center, new Vector2(20f, 20f), new Vector2(20f, -25f),
+            Vector2.zero, Vector2.zero, Vector2.zero };
+        var sizes = new[] { blocked.size, new Vector2(35f, 30f), new Vector2(35f, 30f),
+            Vector2.one * 30f, Vector2.one * 30f, Vector2.one * 30f };
+        Vector2 specialPosition = new(20f, 20f);
+        Vector2 specialSize = new(35f, 30f);
+        spawner.ReserveSectorExit(new Vector2(-27.12177f, -6.03996f), 2.5f);
+        var method = typeof(ProductionExplorationSectorController).GetMethod("TryAssignSiteEvents", PrivateInstance);
+        Assert.That(method, Is.Not.Null);
+        bool Assign(System.Collections.Generic.List<WorldEvent> pool, out WorldEvent[] assigned, out string error)
+        {
+            object[] args = { pool, positions, sizes, specialPosition, specialSize, null, null };
+            bool success = (bool)method.Invoke(sector, args);
+            assigned = ((System.Collections.Generic.List<WorldEvent>)args[5]).ToArray();
+            error = (string)args[6];
+            return success;
+        }
+
+        // Default pool repeats cyclically; weighted/guaranteed pools already contain seven slots.
+        foreach (var pool in new[] {
+            new System.Collections.Generic.List<WorldEvent> { rocket, relay, relay },
+            new System.Collections.Generic.List<WorldEvent> { rocket, rocket, relay, relay, relay, relay, rocket } })
+        {
+            var selected = Enumerable.Range(0, 7).Select(i => pool[i % pool.Count]).ToArray();
+            Assert.That(Assign(pool, out var assigned, out string error), Is.True, error);
+            Assert.That(assigned, Is.EquivalentTo(selected), "Multiplicity/guaranteed content must survive reassignment.");
+            Assert.That(assigned[6], Is.SameAs(selected[6]), "Special is fixed.");
+            Assert.That(assigned[0], Is.SameAs(relay), "The historical blocked territory cannot admit Rocket Storm.");
+            for (int slot = 0; slot < assigned.Length; slot++)
+            {
+                if (assigned[slot] != rocket) continue;
+                Vector2 position = slot < 6 ? positions[slot] : specialPosition;
+                Vector2 size = slot < 6 ? sizes[slot] : specialSize;
+                var storm = Object.Instantiate(rocket, position, Quaternion.identity, host.transform);
+                storm.ConfigureSitePlacement(position, size);
+                var context = PlacementContext(spawner, storm);
+                Assert.That(storm.TryPreparePlacement(context, out error), Is.True, $"slot={slot}: {error}");
+                var footprints = new System.Collections.Generic.List<Rect>();
+                storm.CollectReservedFootprints(footprints);
+                Assert.That(footprints, Has.Count.EqualTo(1));
+                Assert.That(footprints[0].size, Is.EqualTo(new Vector2(24f, 20f)));
+                Assert.That(context.IsStaticFootprintClear(footprints[0]), Is.True);
+                Object.Destroy(storm.gameObject);
+            }
+            Assert.That(Assign(assigned.ToList(), out var stable, out error), Is.True, error);
+            Assert.That(stable, Is.EqualTo(assigned), "An already admissible assignment stays unchanged.");
+        }
+
+        // Negative control: no replacement, skipped objective, or Special exchange can rescue this pool.
+        var allStorms = Enumerable.Repeat<WorldEvent>(rocket, 7).ToList();
+        Assert.That(Assign(allStorms, out _, out string failure), Is.False);
+        Assert.That(failure, Does.Contain("slot=0").And.Contain("reserved exit"));
+        var obstacle = new GameObject("Static admission blocker");
+        obstacle.AddComponent<BoxCollider2D>().size = Vector2.one * 100f;
+        Physics2D.SyncTransforms();
+        Assert.That(Assign(new System.Collections.Generic.List<WorldEvent> { rocket, relay, relay },
+            out _, out failure), Is.False, "A permutation must not bypass static blockers.");
+        Assert.That(failure, Does.Contain("obstacle"));
+        Object.Destroy(obstacle);
+        Assert.That(spawner.SpawnedEvents, Is.Empty, "Admission must not initialize/register runtime events.");
+        Assert.That(Object.FindObjectsByType<RocketStormEvent>(FindObjectsSortMode.None), Is.Empty,
+            "Deferred probes must remain inactive and absent from active physics/runtime discovery.");
+        yield return null;
+        Assert.That(Resources.FindObjectsOfTypeAll<RocketStormEvent>()
+            .Any(e => e != null && e.gameObject.scene.IsValid()), Is.False, "All placement probes must be destroyed.");
+        Object.Destroy(host);
+        Object.Destroy(areaObject);
+    }
+
     private static IEnumerator CaptureProductionRocket()
     {
         var storm = Object.FindFirstObjectByType<WorldEventSpawner>().SpawnedEvents.OfType<RocketStormEvent>().First();

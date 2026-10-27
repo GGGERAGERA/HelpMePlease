@@ -18,11 +18,17 @@ public sealed class Subject42TutorialTests
         CoreTestSupport.PreservePreferences();
         PlayerPrefs.DeleteKey(Key);
     }
-    [UnityTearDown] public IEnumerator Cleanup() => CoreTestSupport.CleanupPlayMode();
+    [UnityTearDown] public IEnumerator Cleanup()
+    {
+        Subject42OnboardingTests.EndPlacementDiagnostics();
+        var cleanup = CoreTestSupport.CleanupPlayMode();
+        while (cleanup.MoveNext()) yield return cleanup.Current;
+    }
     [UnityTest, Timeout(240000)] public IEnumerator AllEightStepsPersistAcrossRestartAndReset()
     {
         UnityEditor.SceneManagement.EditorSceneManager.NewScene(UnityEditor.SceneManagement.NewSceneSetup.EmptyScene);
         yield return new EnterPlayMode();
+        Subject42OnboardingTests.BeginPlacementDiagnostics("initial tutorial");
         yield return ExerciseTutorial();
     }
 
@@ -123,6 +129,7 @@ public sealed class Subject42TutorialTests
         Assert.That(RunStateManager.Instance.ThreatValue, Is.Zero);
         Assert.That(UpgradeManager.Instance.IsRewardQueueIdle, Is.True, "Relay Upgrade must be resolved before exit.");
         yield return Capture("08-exit");
+        Subject42OnboardingTests.SetPlacementPhase("transition to sector 1");
         player.GetComponent<Rigidbody2D>().position = controller.FocusTarget.position;
         yield return CoreTestSupport.Await(() => PlayerPrefs.GetInt(Key, 0) == 1);
         Assert.That(seen.Distinct().ToArray(), Is.EqualTo(new[] {
@@ -134,10 +141,12 @@ public sealed class Subject42TutorialTests
         Assert.That(ExperienceManager.Instance.CurrentLevel, Is.EqualTo(2), "Only one tutorial XP reward is granted.");
         Assert.That(Object.FindFirstObjectByType<LevelChoiceManager>().IsChoosing, Is.False);
         Assert.That(TutorialController.Active, Is.Null, "Later sectors must not install tutorial.");
+        Subject42OnboardingTests.SetPlacementPhase("completed restart");
         yield return Restart();
         Assert.That(TutorialController.Active, Is.Null, "Completion must survive a new first-sector run.");
         Assert.That(RunStateManager.Instance.CurrentSector.SectorNumber, Is.EqualTo(1));
         TutorialController.ResetCompletion();
+        Subject42OnboardingTests.SetPlacementPhase("reset restart");
         yield return Restart();
         Assert.That(TutorialController.Active?.Step, Is.EqualTo(TutorialStep.Movement), "RESET must re-enable the next fresh run.");
         Assert.That(RunStateManager.Instance.CurrentSector.SectorNumber, Is.EqualTo(0));

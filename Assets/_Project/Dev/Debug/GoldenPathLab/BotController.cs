@@ -11,6 +11,7 @@ public sealed class BotController : IDisposable
     private readonly GameplayAreaService area;
     private readonly Func<Vector2> intent;
     private Vector2 direction;
+    public Vector2 DebugLastDirection => direction;
     public string State { get; private set; } = "Surviving";
 
     public BotController(CharacterMovement2D movement, GameplayAreaService area)

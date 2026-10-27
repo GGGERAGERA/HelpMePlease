@@ -34,6 +34,9 @@ public sealed partial class BotRunSession
     private readonly HashSet<object> goldenRewardTokens = new();
     private readonly List<Transform> goldenOldObjects = new();
     private readonly List<UnityEngine.Object> goldenSceneObjects = new();
+    private string goldenInitialBunkerStations;
+    private GoldenBunkerComponentState[] goldenBunkerStations = Array.Empty<GoldenBunkerComponentState>();
+    private GoldenBunkerComponentState[] goldenBunkerRewardFlows = Array.Empty<GoldenBunkerComponentState>();
 
     public bool CanStartGoldenPath => !IsRunning && !IsStarting && !SceneTransitionOverlay.IsTransitioning &&
         (FindFirstObjectByType<BunkerRunStarter>() != null && RunSelectionManager.Instance?.SelectedCharacter != null ||
@@ -52,6 +55,8 @@ public sealed partial class BotRunSession
         goldenSector = 0;
         goldenSnapshot = rewardBefore = null;
         goldenVictory = false;
+        goldenInitialBunkerStations = null;
+        goldenBunkerStations = goldenBunkerRewardFlows = Array.Empty<GoldenBunkerComponentState>();
         goldenBosses.Clear(); goldenRewardTokens.Clear(); goldenOldObjects.Clear(); goldenSceneObjects.Clear();
         startedAt = Time.realtimeSinceStartup;
         EnemyHealth.Spawned += GoldenBossSpawned;
@@ -108,7 +113,14 @@ public sealed partial class BotRunSession
             var starter = FindFirstObjectByType<BunkerRunStarter>();
             if (starter == null) return;
             bool second = goldenStage == "Start Second Run";
-            if (!second) { BotRunSeed.Begin(Result.Seed); ownsSeed = true; }
+            if (!second)
+            {
+                goldenInitialBunkerStations = string.Join("\n", FindObjectsByType<OrbitalStationRuntime>(
+                    FindObjectsInactive.Include, FindObjectsSortMode.None).Select(DescribeGoldenObject));
+                goldenBunkerStations = CaptureGoldenBunkerStations();
+                goldenBunkerRewardFlows = CaptureGoldenBunkerRewardFlows();
+                BotRunSeed.Begin(Result.Seed); ownsSeed = true;
+            }
             spawner = null; flow = null; rewards = null; area = null;
             SetGoldenStage(second ? "Second Run Baseline" : "Sector Startup");
             starter.StartRun(starter.transform);
@@ -157,7 +169,7 @@ public sealed partial class BotRunSession
             if (!CheckGoldenObjects()) return;
             controller = new BotController(spawner.SpawnedPlayer.GetComponent<CharacterMovement2D>(), area);
             station.InputOwner.PrepareForExternalPause(); station.InputOwner.DebugSuppressPlayerInput = true;
-            telemetry = new BotTelemetry(Result, health, ExperienceManager.Instance, rewards, station.Combat);
+            telemetry = new BotTelemetry(Result, health, ExperienceManager.Instance, rewards, station.Combat, controller);
             rewards.DebugRewardCommitted += GoldenRewardCommitted;
             goldenEvents = FindFirstObjectByType<WorldEventSpawner>();
             if (goldenEvents != null) goldenEvents.EventCompleted += GoldenObjectiveCompleted;
@@ -180,17 +192,15 @@ public sealed partial class BotRunSession
             if (!GoldenCheck("Cleanup.BunkerRunState", run.IsRunEnded && run.CurrentSector == null && run.OrbitalStationState == null &&
                 run.CurrentLevel == 1 && run.CompletedLevels == 0 && run.PickedUpgrades.Count == 0 && run.AccumulatedKills == 0 && run.AccumulatedRunTime == 0,
                 "Active sector or ORBITAL state remains in bunker")) return;
-            // Bunker contains authored inactive character stations. They are not
-            // run leftovers; all tracked run objects must still be destroyed,
-            // and no active or initialized combat station may remain.
-            if (!GoldenCheck("Cleanup.SceneObjects", goldenOldObjects.All(t => t == null) && goldenSceneObjects.All(o => o == null) &&
-                !FindObjectsByType<OrbitalStationRuntime>(FindObjectsInactive.Include, FindObjectsSortMode.None)
-                    .Any(s => s.gameObject.activeInHierarchy || s.IsInitialized),
-                "Previous rings, mounts, modules or scene controllers survived")) return;
-            if (!GoldenCheck("Cleanup.RewardsAndBoss", UpgradeManager.Instance == null && RunFlowController.Instance == null &&
-                !EnemyHealth.ActiveInstances.Any(e => e != null && e.IsBoss) &&
-                !FindObjectsByType<OrbitalRewardFlowController>(FindObjectsInactive.Include, FindObjectsSortMode.None)
-                    .Any(r => r.gameObject.activeInHierarchy || r.PendingReward.HasValue),
+            // The authored bunker player also has an active but unbound station.
+            // Require the same idle baseline and destruction of every tracked run object.
+            bool sceneObjectsClean = GoldenPathResult.BunkerComponentsMatchBaseline(goldenBunkerStations,
+                CaptureGoldenBunkerStations(), goldenOldObjects.All(t => t == null) && goldenSceneObjects.All(o => o == null));
+            if (!GoldenCheck("Cleanup.SceneObjects", sceneObjectsClean,
+                sceneObjectsClean ? "Previous rings, mounts, modules or scene controllers survived" : GoldenCleanupDetails())) return;
+            if (!GoldenCheck("Cleanup.RewardsAndBoss", GoldenPathResult.BunkerComponentsMatchBaseline(goldenBunkerRewardFlows,
+                CaptureGoldenBunkerRewardFlows(), UpgradeManager.Instance == null && RunFlowController.Instance == null &&
+                !EnemyHealth.ActiveInstances.Any(e => e != null && e.IsBoss)),
                 "Reward queue, selection or boss survived scene cleanup")) return;
             golden.BunkerClean = true;
             if (goldenStage == "Victory Bunker") { SetGoldenStage("Start Second Run"); return; }
@@ -261,6 +271,53 @@ public sealed partial class BotRunSession
         }
         if (!GoldenCheck("Progression.SectorDeadline", Result.Duration - goldenSectorTime < 600f, "Sector or boss exceeded 600 simulation seconds")) return;
         controller.ObserveGoldenProjectiles();
+    }
+
+    private string DescribeGoldenObject(UnityEngine.Object obj)
+    {
+            var component = obj as Component;
+            var go = component != null ? component.gameObject : obj as GameObject;
+            var runtime = obj as OrbitalStationRuntime;
+            var path = new List<string>();
+            for (var node = go != null ? go.transform : null; node != null; node = node.parent)
+                path.Insert(0, node.name);
+            return $"name={obj.name}; type={obj.GetType().FullName}; scene={(go != null ? go.scene.name : "n/a")}; " +
+                $"activeInHierarchy={(go != null ? go.activeInHierarchy.ToString() : "n/a")}; " +
+                $"enabled={(obj is Behaviour behaviour ? behaviour.enabled.ToString() : "n/a")}; " +
+                $"IsInitialized={(runtime != null ? runtime.IsInitialized.ToString() : "n/a")}; " +
+                $"hasState={(runtime != null ? (runtime.State != null).ToString() : "n/a")}; " +
+                $"hasOwner={(runtime != null ? (runtime.Owner != null).ToString() : "n/a")}; " +
+                $"RunId={(runtime?.State != null ? runtime.State.RunId.ToString() : "n/a")}; " +
+                $"trackedObject={goldenSceneObjects.Contains(obj)}; " +
+                $"trackedTransform={(go != null && goldenOldObjects.Contains(go.transform))}; path={string.Join("/", path)}";
+    }
+
+    private static string GoldenBunkerComponentKey(Behaviour component)
+    {
+        var names = new List<string>();
+        for (var node = component.transform; node != null; node = node.parent) names.Insert(0, node.name);
+        return $"{component.gameObject.scene.name}|{component.GetType().FullName}|{string.Join("/", names)}|enabled={component.enabled}";
+    }
+
+    private static GoldenBunkerComponentState[] CaptureGoldenBunkerStations() =>
+        FindObjectsByType<OrbitalStationRuntime>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+            .Select(s => new GoldenBunkerComponentState(GoldenBunkerComponentKey(s), s.gameObject.activeInHierarchy,
+                s.IsInitialized || s.State != null || s.Owner != null || s.Core != null || s.Rings.Count != 0 || s.Modules.Count != 0)).ToArray();
+
+    private static GoldenBunkerComponentState[] CaptureGoldenBunkerRewardFlows() =>
+        FindObjectsByType<OrbitalRewardFlowController>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+            .Select(r => new GoldenBunkerComponentState(GoldenBunkerComponentKey(r) + "|state=" + r.State,
+                r.gameObject.activeInHierarchy, r.PendingReward.HasValue)).ToArray();
+
+    private string GoldenCleanupDetails()
+    {
+        var details = new List<string> { "Previous rings, mounts, modules or scene controllers survived" };
+        details.Add("initial bunker stations before first departure:\n" + (goldenInitialBunkerStations ?? "not captured"));
+        details.AddRange(goldenOldObjects.Where(t => t != null).Select(t => "tracked transform: " + DescribeGoldenObject(t)));
+        details.AddRange(goldenSceneObjects.Where(o => o != null).Select(o => "tracked object: " + DescribeGoldenObject(o)));
+        details.AddRange(FindObjectsByType<OrbitalStationRuntime>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+            .Where(s => s.gameObject.activeInHierarchy || s.IsInitialized).Select(s => "current bunker station: " + DescribeGoldenObject(s)));
+        return string.Join("\n", details);
     }
 
     private static OrbitalRunState CopyGoldenState(OrbitalRunState state) => JsonUtility.FromJson<OrbitalRunState>(JsonUtility.ToJson(state));

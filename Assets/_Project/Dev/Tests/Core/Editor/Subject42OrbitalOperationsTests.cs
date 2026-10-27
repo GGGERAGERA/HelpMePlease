@@ -3,6 +3,7 @@ using System.Linq;
 using NUnit.Framework;
 using Subject42.Combat.OrbitalStation;
 using UnityEngine;
+using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine.TestTools;
 
@@ -10,6 +11,108 @@ public sealed class Subject42OrbitalOperationsTests
 {
     [SetUp] public void PreservePreferences() => CoreTestSupport.PreservePreferences();
     [UnityTearDown] public IEnumerator Cleanup() => CoreTestSupport.CleanupPlayMode();
+
+    [Category("Core"), UnityTest]
+    public IEnumerator ProductionSniperBypassesFrontalPlateButStopsAtFirstBody()
+    {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        yield return new EnterPlayMode();
+        yield return VerifySniperShieldAndBodyLimit();
+    }
+
+    // Create all runtime locals after domain reload. No station, player, spawner or hazard
+    // exists in this scene; only the explicitly ticked adapter can deal damage.
+    private static IEnumerator VerifySniperShieldAndBodyLimit()
+    {
+        GameObject root = null, first = null, second = null;
+        ProductionOrbitalCombatAdapter adapter = null;
+        try
+        {
+            Assert.That(EnemyHealth.ActiveInstances.Count, Is.Zero, "Fixture must start without enemies.");
+            Assert.That(ProductionOrbitalCombatAdapter.LabInterceptor, Is.Null);
+            root = new GameObject("Sniper shield contract");
+            first = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/prefabs/Enemies/ShieldBearer.prefab"));
+            second = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/prefabs/Enemies/p_Enemy_classic.prefab"));
+            foreach (var enemy in new[] { first, second })
+            {
+                foreach (var movement in enemy.GetComponentsInChildren<EnemyMovement>()) movement.enabled = false;
+                foreach (var body in enemy.GetComponentsInChildren<Rigidbody2D>())
+                {
+                    body.bodyType = RigidbodyType2D.Kinematic;
+                    body.linearVelocity = Vector2.zero;
+                    body.angularVelocity = 0f;
+                }
+            }
+            yield return null; // EnemyHealth.Start must finish before setting baseline HP.
+            var shield = first.GetComponent<EnemyDirectionalShield>();
+            var firstHealth = first.GetComponent<EnemyHealth>();
+            var secondHealth = second.GetComponent<EnemyHealth>();
+            root.transform.position = shield.Center + Vector2.right * 3f;
+            shield.Bind(root.transform);
+            Vector2 direction = -shield.Forward;
+            Vector2 origin = shield.Center + shield.Forward * 3f;
+            var secondBody = second.GetComponent<Collider2D>();
+            Assert.That(secondBody, Is.Not.Null);
+            second.transform.position += (Vector3)(shield.Center + direction * 2f - (Vector2)secondBody.bounds.center);
+            Physics2D.SyncTransforms();
+
+            var sniper = OrbitalPresentationConfig.Active.GetWeaponSettings(OrbitalModuleKind.Sniper);
+            var pistol = OrbitalPresentationConfig.Active.GetWeaponSettings(OrbitalModuleKind.Pistol);
+            Assert.That(sniper.BypassShields, Is.True);
+            Assert.That(sniper.BodyPierces, Is.EqualTo(1));
+            Assert.That(pistol.BypassShields, Is.False);
+            Assert.That(shield.CanBlockProjectile(direction), Is.True);
+            // Observe actual colliders independently of the adapter's swept-shape query.
+            var hits = Physics2D.RaycastAll(origin, direction, Mathf.Min(sniper.Range, pistol.Range))
+                .OrderBy(hit => hit.distance).ToArray();
+            var plate = hits.Where(hit => hit.collider == shield.ShieldCollider).ToArray();
+            var firstBodies = hits.Where(hit => hit.collider != shield.ShieldCollider &&
+                hit.collider.GetComponentInParent<EnemyHealth>() == firstHealth).ToArray();
+            var secondBodies = hits.Where(hit => hit.collider.GetComponentInParent<EnemyHealth>() == secondHealth).ToArray();
+            Assert.That(plate.Length, Is.GreaterThan(0), "Ray must cross frontal plate.");
+            Assert.That(firstBodies.Length, Is.GreaterThan(0), "Ray must cross first body.");
+            Assert.That(secondBodies.Length, Is.GreaterThan(0), "Second body must be reachable by both weapons.");
+            Assert.That(plate[0].distance, Is.LessThan(firstBodies[0].distance));
+            Assert.That(firstBodies.Max(hit => hit.distance), Is.LessThan(secondBodies[0].distance));
+            Assert.That(secondBodies.Max(hit => hit.distance), Is.LessThan(Mathf.Min(sniper.Range, pistol.Range) - .5f));
+
+            adapter = new ProductionOrbitalCombatAdapter(root.transform, null);
+            int firstHits = 0, secondHits = 0;
+            firstHealth.HitFeedback += (_, _, _) => firstHits++;
+            secondHealth.HitFeedback += (_, _, _) => secondHits++;
+            foreach (float step in new[] { 1f / 30f, 1f / 120f })
+            foreach (var settings in new[] { sniper, pistol })
+            {
+                adapter.DebugClearProjectiles();
+                firstHealth.SetRuntimeMaxHealth(1000f);
+                secondHealth.SetRuntimeMaxHealth(1000f);
+                firstHits = secondHits = 0;
+                int blocks = shield.Blocks;
+                adapter.SpawnWeaponProjectile(origin, firstHealth, direction, settings, null, settings.Damage);
+                Assert.That(adapter.LabActiveProjectileCount, Is.EqualTo(1));
+                int frames = Mathf.CeilToInt(settings.Range / settings.ProjectileSpeed / step) + 2;
+                for (int frame = 0; frame < frames; frame++) adapter.Tick(step);
+                string context = $"{settings.Kind}, dt={step}";
+                Assert.That(adapter.LabActiveProjectileCount, Is.Zero, context);
+                bool bypass = settings == sniper;
+                Assert.That(firstHealth.CurrentHealth, Is.EqualTo(1000f - (bypass ? settings.Damage : 0f)).Within(.001f), context);
+                Assert.That(secondHealth.CurrentHealth, Is.EqualTo(1000f), context);
+                Assert.That(firstHits, Is.EqualTo(bypass ? 1 : 0), context);
+                Assert.That(secondHits, Is.Zero, context);
+                Assert.That(shield.Blocks, Is.EqualTo(blocks + (bypass ? 0 : 1)), context);
+            }
+        }
+        finally
+        {
+            adapter?.DebugClearProjectiles();
+            adapter?.Teardown();
+            if (first != null) Object.DestroyImmediate(first);
+            if (second != null) Object.DestroyImmediate(second);
+            if (root != null) Object.DestroyImmediate(root);
+        }
+    }
 
     [Category("Core"), Test]
     public void RingMountAndModuleTransactionsCommitOnceAndRejectOccupiedTargets()

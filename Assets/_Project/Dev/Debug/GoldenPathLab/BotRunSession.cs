@@ -136,7 +136,7 @@ public sealed partial class BotRunSession : MonoBehaviour
         controller = new BotController(movement, area);
         station.InputOwner.PrepareForExternalPause();
         station.InputOwner.DebugSuppressPlayerInput = true;
-        telemetry = new BotTelemetry(Result, health, ExperienceManager.Instance, rewards, station.Combat);
+        telemetry = new BotTelemetry(Result, health, ExperienceManager.Instance, rewards, station.Combat, controller);
         gameplayWatchdog = new BotProgressWatchdog();
         rewardWatchdog = new BotProgressWatchdog();
         progressPosition = movement.transform.position;

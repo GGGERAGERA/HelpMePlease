@@ -1,0 +1,17 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["action", "task", "classification", "reason", "evidence", "candidates", "testProfile", "gdd", "success", "abort"],
+  "properties": {
+    "action": { "type": "string", "enum": ["work", "stop"] },
+    "task": { "type": "string" },
+    "classification": { "type": "string", "enum": ["Production", "Experimental", "Verification"] },
+    "reason": { "type": "string" },
+    "evidence": { "type": "array", "items": { "type": "string" } },
+    "candidates": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["task", "value", "risk", "cost", "why"], "properties": { "task": { "type": "string" }, "value": { "type": "integer" }, "risk": { "type": "integer" }, "cost": { "type": "integer" }, "why": { "type": "string" } } } },
+    "testProfile": { "type": "string", "enum": ["golden-path", "onboarding", "localization", "combat", "events", "rewards", "boss", "core", "placement"] },
+    "gdd": { "type": "string" },
+    "success": { "type": "string" },
+    "abort": { "type": "string" }
+  }
+}
