@@ -71,6 +71,10 @@ namespace Subject42.Combat.OrbitalStation
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public static IOrbitalCombatLabInterceptor LabInterceptor { get; set; }
         public Func<OrbitalStationRuntime, OrbitalModuleState, OrbitalModuleRuntime> LabModuleFactory;
+        public event Action<long, int, Vector2> LabProjectileSpawned;
+        public event Action<long, float, bool, bool> LabProjectileContact;
+        public event Action<long, bool> LabProjectileEnded;
+        private long labProjectileSequence;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetLabInterceptor() => LabInterceptor = null;
 #endif
@@ -84,10 +88,25 @@ namespace Subject42.Combat.OrbitalStation
         }
         public void SpawnWeaponProjectile(Vector2 origin, EnemyHealth target, Vector2 direction,
             OrbitalWeaponSettings settings, ProjectileVolley volley, float damage)
+            => SpawnWeaponProjectileCore(origin, target, direction, settings, volley, damage, null);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public void SpawnLabDirectionalProjectile(Vector2 origin, Vector2 direction,
+            OrbitalWeaponSettings settings, ProjectileVolley volley, float damage, int weaponId = 0)
+        {
+            var shot = SpawnWeaponProjectileCore(origin, null, direction, settings, volley, damage, direction);
+            if (shot == null || weaponId == 0) return;
+            shot.LabSequence = ++labProjectileSequence;
+            LabProjectileSpawned?.Invoke(shot.LabSequence, weaponId, shot.Direction);
+        }
+#endif
+
+        private Projectile SpawnWeaponProjectileCore(Vector2 origin, EnemyHealth target, Vector2 direction,
+            OrbitalWeaponSettings settings, ProjectileVolley volley, float damage, Vector2? labDirection)
         {
             Projectile shot = SpawnProjectileCore(origin, target, settings.ProjectileSpeed, damage,
-                settings.ProjectileVisual);
-            if (shot == null) return;
+                settings.ProjectileVisual, labDirection);
+            if (shot == null) return null;
             shot.Straight = true; shot.Target = null; shot.Position = origin; shot.Direction = direction.normalized;
             shot.RemainingRange = settings.Range; shot.Radius = settings.ProjectileRadius * settings.ProjectileVisualScale;
             shot.BodiesRemaining = Mathf.Max(1, settings.BodyPierces); shot.Volley = volley;
@@ -120,13 +139,23 @@ namespace Subject42.Combat.OrbitalStation
             if (settings.Presentation == null && settings.ProjectileTrailSeconds >= 0f)
                 foreach (var trail in shot.Trails) trail.time = settings.ProjectileTrailSeconds;
             shot.GameObject.transform.right = shot.Direction;
+            return shot;
         }
         // Pistol targeting reaches 8 m; the legacy 0.2 m body visual is scaled by 1.4 in this lab.
         private const float LabProjectileRange = 8f;
         private const float LabProjectileRadius = .14f;
         private readonly List<RaycastHit2D> projectileHits = new();
         private ContactFilter2D projectileFilter = new() { useTriggers = true };
-        public void DebugClearProjectiles() { foreach (var projectile in projectiles) if (projectile.Active) Release(projectile); }
+        public void DebugClearProjectiles()
+        {
+            foreach (var projectile in projectiles) if (projectile.Active)
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                projectile.LabCancelled = true;
+#endif
+                Release(projectile);
+            }
+        }
         public int LabActiveProjectileCount
         {
             get { int count = 0; foreach (var projectile in projectiles) if (projectile.Active) count++; return count; }
@@ -152,6 +181,10 @@ namespace Subject42.Combat.OrbitalStation
         }
         private sealed class Projectile
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            public long LabSequence;
+            public bool LabCancelled;
+#endif
             public GameObject GameObject;
             public EnemyHealth Target;
             public float Speed;
@@ -309,10 +342,11 @@ namespace Subject42.Combat.OrbitalStation
             => SpawnProjectileCore(origin, target, speed, damage, null);
 
         private Projectile SpawnProjectileCore(Vector2 origin, EnemyHealth target, float speed,
-            float damage, GameObject source)
+            float damage, GameObject source, Vector2? labDirection = null)
         {
-            if (!IsValid(target))
+            if (!labDirection.HasValue && !IsValid(target))
                 return null;
+            Vector2 initialDirection = labDirection ?? ((Vector2)target.transform.position - origin);
             Projectile projectile = null;
             for (int i = 0; i < projectiles.Count; i++)
             {
@@ -329,6 +363,9 @@ namespace Subject42.Combat.OrbitalStation
                 projectile = CreateProjectile(source);
             }
             projectile.Active = true;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            projectile.LabSequence = 0; projectile.LabCancelled = false;
+#endif
             projectile.Target = target;
             projectile.Speed = Mathf.Max(1f, speed);
             projectile.Damage = damage;
@@ -357,13 +394,13 @@ namespace Subject42.Combat.OrbitalStation
             if (projectile.Straight)
             {
                 projectile.Position = origin;
-                projectile.Direction = ((Vector2)target.transform.position - origin).normalized;
+                projectile.Direction = initialDirection.normalized;
                 projectile.RemainingRange = LabProjectileRange;
                 projectile.Target = null; // A fired shot no longer owns or follows its aim target.
             }
             if (projectile.Particles.Length > 0 || projectile.Trails.Length > 0)
             {
-                projectile.GameObject.transform.right = (Vector2)target.transform.position - origin;
+                projectile.GameObject.transform.right = initialDirection;
                 foreach (var trail in projectile.Trails) trail.Clear();
                 foreach (var particles in projectile.Particles) particles.Clear(true);
             }
@@ -453,11 +490,22 @@ namespace Subject42.Combat.OrbitalStation
                     point = hit.collider.ClosestPoint(point);
                     bool consume = projectile.Volley == null || !projectile.Volley.Shields.Contains(enemy);
                     if (!shield.BlockProjectile(projectile.Direction, point, consume)) continue;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    if (projectile.LabSequence != 0) LabProjectileContact?.Invoke(projectile.LabSequence, 0f, false, true);
+#endif
                     projectile.Volley?.Shields.Add(enemy);
                     Release(projectile); return; // Includes the hit that breaks the shield.
                 }
                 if (!projectile.HitBodies.Add(enemy)) continue;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                float healthBefore = enemy.CurrentHealth;
+                bool aliveBefore = !enemy.IsDead;
+#endif
                 ResolveDamage(enemy, projectile.Damage, point, true);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                if (projectile.LabSequence != 0)
+                    LabProjectileContact?.Invoke(projectile.LabSequence, Mathf.Clamp(healthBefore - enemy.CurrentHealth, 0f, Mathf.Max(0f, healthBefore)), aliveBefore && enemy.IsDead, false);
+#endif
                 ProjectileImpact?.Invoke(point, projectile.Direction, projectile.Color);
                 ProjectileVisualImpact?.Invoke(point, projectile.Direction, projectile.Color, projectile.Kind);
                 LabBodyImpact?.Invoke(point, projectile.Direction, projectile.BodiesRemaining > 1);
@@ -493,8 +541,12 @@ namespace Subject42.Combat.OrbitalStation
             }
         }
 
-        private static void Release(Projectile projectile)
+        private void Release(Projectile projectile)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (projectile.LabSequence != 0) LabProjectileEnded?.Invoke(projectile.LabSequence, projectile.LabCancelled);
+            projectile.LabSequence = 0; projectile.LabCancelled = false;
+#endif
             projectile.Active = false;
             projectile.Target = null;
             projectile.Volley = null; projectile.HitBodies.Clear();

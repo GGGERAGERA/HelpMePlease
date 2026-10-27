@@ -29,7 +29,7 @@ public abstract class OrbitalLabSession : MonoBehaviour
     private bool ownsManager;
     private GUIStyle label, button;
     private RectTransform panelBlocker;
-    protected Rect PanelRect => new(8, 8, Mathf.Min(320, Screen.width * .32f), Mathf.Min(780, Screen.height - 16));
+    protected virtual Rect PanelRect => new(8, 8, Mathf.Min(320, Screen.width * .32f), Mathf.Min(780, Screen.height - 16));
 
     protected virtual void Awake()
     {
@@ -262,7 +262,7 @@ public abstract class OrbitalLabSession : MonoBehaviour
 
     protected abstract void DrawPanel();
     protected virtual void ResetSession() => ResetBuild();
-    private void OnGUI()
+    protected virtual void OnGUI()
     {
         if (label == null)
         {

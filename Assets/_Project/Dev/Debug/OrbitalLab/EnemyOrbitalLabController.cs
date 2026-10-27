@@ -28,7 +28,7 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
     public OrbitalWeaponSettings Spear = OrbitalWeaponSettings.Spear();
     public OrbitalWeaponSettings Sniper = OrbitalWeaponSettings.Sniper();
     public OrbitalWeaponSettings Saw = OrbitalWeaponSettings.Saw();
-    [Range(3, 8)] public int BuildRingCount = 3;
+    [Range(1, 3)] public int BuildRingCount = 3;
     [Header("Scene-local upgrade choices (existing card view)")]
     public UpgradePanelView LabUpgradePanel;
     public float ShootingDamageMultiplier => Station != null ? Station.State.ShootingDamageMultiplier : 1f;
@@ -67,13 +67,262 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
     private readonly List<EnemyHealth> enemies = new();
     private readonly List<(int type, Vector2 position)> layout = new();
     private int spawnIndex;
-    private int tab;
+
     private int scenario = 6;
     public bool Paused { get; private set; }
+    public bool FixedDirection { get; private set; } = true;
+    public OrbitalCombatV2LabControl CombatV2 { get; private set; }
+    public OrbitalCombatV2LabPlacement Placement { get; private set; }
+    public OrbitalCombatV2WeaponModules WeaponModules { get; private set; }
+    [Header("Lab-only individual weapon modules")]
+    [Range(1f, 5f)] public float ModuleRapidMultiplier = 1.5f;
+    [Range(0, 10)] public int ModulePierceBonus = 2;
+    [Range(1f, 30f)] public float ModuleMultishotAngle = 6f;
+    private bool restoringLabBuild;
+    internal bool IsRestoringLabBuild => restoringLabBuild;
+
+    public void SetFixedDirection(bool value) => FixedDirection = value;
+
+    private EnemyOrbitalLabSandboxView sandboxView;
+    public bool SandboxReady { get; private set; }
+    public EnemyOrbitalLabTelemetry Telemetry { get; private set; }
+    private string tacticalPreset, tacticalConfiguration;
+    public string TacticalPreset => tacticalPreset != null && tacticalConfiguration == Telemetry.Configuration() ? tacticalPreset : null;
+    public void BeginCombatTelemetry(string scenario) => Telemetry.Begin(scenario);
+    public string CombatTelemetryJson() => JsonUtility.ToJson(Telemetry.Snapshot(), true);
+    public void StopCombatTelemetry() => Telemetry.Stop();
+    public void ApplyTacticalPreset(string name)
+    {
+        if (name != "EVEN" && name != "GROUPED" && name != "MIXED" || !PrepareSandboxEdit()) return;
+        Telemetry.Stop();
+        bool fourPistols = Station.Modules.Count == 4 && Station.Modules.All(m => m is EnemyOrbitalLabWeapon gun &&
+            ReferenceEquals(gun.SourceProfile, Pistol) && m.CurrentMount.Ring == Station.Rings[0]);
+        if (!fourPistols || name == "MIXED") SelectWeaponModulePreset("A");
+        if (name == "MIXED")
+        {
+            var ring = Station.Rings[0];
+            var profiles = new[] { Shotgun, Sniper };
+            Shotgun.Kind = OrbitalModuleKind.Shotgun; Sniper.Kind = OrbitalModuleKind.Sniper;
+            for (int i = 0; i < profiles.Length; i++)
+            {
+                int oldId = ring.Mounts[i + 1].Module.StableModuleId;
+                Station.RemoveModule(oldId); weaponProfiles.Remove(oldId);
+                installingProfile = profiles[i];
+                try { Station.InstallModule(installingProfile.Kind, ring.RingId, i + 1, out _); }
+                finally { installingProfile = null; }
+            }
+            WeaponModules.SetModule(ring.Mounts[0].Module.StableModuleId, 0, "RAPID");
+            WeaponModules.SetModule(ring.Mounts[1].Module.StableModuleId, 0, "MULTISHOT");
+            WeaponModules.SetModule(ring.Mounts[2].Module.StableModuleId, 0, "PIERCE");
+            WeaponModules.ClearPresetLabel();
+        }
+        SandboxRingIndex = 0;
+        Placement.ApplyRingLayout(Station.Rings[0], name == "GROUPED" ? "GROUPED" : "EVEN");
+        tacticalPreset = name; tacticalConfiguration = Telemetry.Configuration();
+        SelectSandboxWeapon(Station.Rings[0].Mounts[0].Module.StableModuleId);
+        SandboxMessage = name == "MIXED" ? "Пистолеты, дробовик и снайперка с разными модулями." : "Четыре пистолета. Углы изменены, часы и модули сохранены.";
+    }
+    public int SandboxSelectedWeaponId { get; private set; }
+    public int SandboxTab { get; private set; }
+    public int SandboxRingIndex { get; private set; }
+    public string SandboxMessage { get; private set; } = "Выберите сборку, расставьте оружие и начните бой.";
+    public bool SandboxSpawning { get; private set; }
+    public const int SandboxEnemyLimit = 64;
+    private int sandboxEncounter, sandboxSequence;
+    private float sandboxSpawnTimer;
+    public OrbitalRingRuntime SandboxRing => Ready && Station.Rings.Count > 0
+        ? Station.Rings[Mathf.Clamp(SandboxRingIndex, 0, Station.Rings.Count - 1)] : null;
+    public OrbitalModuleRuntime SandboxWeapon => Station?.Modules.FirstOrDefault(m => m.StableModuleId == SandboxSelectedWeaponId);
+    public void SetSandboxTab(int value) => SandboxTab = Mathf.Clamp(value, 0, 3);
+    public void SelectSandboxRing(int index) { Placement.Cancel(); SandboxRingIndex = Mathf.Clamp(index, 0, Station.Rings.Count - 1); }
+    private bool PrepareSandboxEdit()
+    {
+        if (!Ready) return false;
+        SetPaused(true);
+        return CanEdit();
+    }
+    public void SelectSandboxWeapon(int id)
+    {
+        var weapon = Station?.Modules.FirstOrDefault(m => m.StableModuleId == id);
+        if (weapon == null) return;
+        Placement.Cancel(); SandboxSelectedWeaponId = id;
+        SandboxRingIndex = weapon.CurrentMount.Ring.State.Order;
+        WeaponModules.Select(id);
+        foreach (var mounted in Station.Modules) mounted.SetHighlighted(mounted == weapon);
+    }
+    public void MoveSandboxWeapon()
+    {
+        if (PrepareSandboxEdit() && Placement.TrySelect(SandboxSelectedWeaponId))
+            SandboxMessage = "Наведите на кольцо → ЛКМ: поставить · Esc: отмена";
+    }
+    public bool RemoveSandboxWeapon()
+    {
+        if (!PrepareSandboxEdit() || SandboxWeapon == null) return false;
+        Placement.Cancel();
+        bool removed = Station.RemoveModule(SandboxSelectedWeaponId);
+        weaponProfiles.Remove(SandboxSelectedWeaponId);
+        SandboxSelectedWeaponId = 0; WeaponModules.ClearPresetLabel();
+        SandboxMessage = "Оружие убрано. Выберите свободное кольцо и новое оружие.";
+        return removed;
+    }
+    public bool InstallSandboxWeapon(int choice)
+    {
+        if (!PrepareSandboxEdit() || choice < 0 || choice > 3 || SandboxRing == null) return false;
+        Placement.Cancel(); Placement.Synchronize();
+        var ring = SandboxRing;
+        var mount = ring.Mounts.FirstOrDefault(m => !m.Occupied);
+        if (mount == null)
+        {
+            if (ring.MountCount >= 4) { SandboxMessage = "На кольце максимум четыре пушки. Добавьте кольцо."; return false; }
+            if (ring.MountCount == ring.MountCapacity && !Station.UpgradeRingCapacity(ring.RingId)) return false;
+            if (!Station.AddMount(ring.RingId, out _)) return false;
+            mount = ring.Mounts.First(m => !m.Occupied);
+        }
+        installingProfile = new[] { Pistol, Shotgun, Sniper, Saw }[choice];
+        installingProfile.Kind = new[] { OrbitalModuleKind.Pistol, OrbitalModuleKind.Shotgun, OrbitalModuleKind.Sniper, OrbitalModuleKind.Saw }[choice];
+        try
+        {
+            if (!Station.InstallModule(installingProfile.Kind, ring.RingId, mount.MountIndex, out _)) return false;
+            Placement.Synchronize();
+            // Existing empty mounts may be close to a custom arrangement. Search a free angle
+            // before accepting the installation, without moving any other gun or clock.
+            var module = ring.Mounts[mount.MountIndex].Module;
+            if (!Placement.TrySelect(module.StableModuleId)) { Station.RemoveModule(module.StableModuleId); return false; }
+            float initial = mount.LocalPhase;
+            bool placed = false;
+            for (int step = 0; step < 720 && !placed; step++)
+            {
+                float angle = (ring.Phase + initial + step * .5f) * Mathf.Deg2Rad;
+                Placement.PreviewWorld((Vector2)Station.transform.position + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * ring.Radius);
+                if (Placement.PreviewValid) placed = Placement.Confirm();
+            }
+            if (!placed) { Placement.Cancel(); Station.RemoveModule(module.StableModuleId); SandboxMessage = "Нет места с безопасным зазором."; return false; }
+            WeaponModules.ClearPresetLabel(); SelectSandboxWeapon(module.StableModuleId);
+            SandboxMessage = "Установлено. «Переместить» — выбрать другой угол."; return true;
+        }
+        finally { installingProfile = null; }
+    }
+    public bool ChangeSandboxRings(bool add)
+    {
+        if (!PrepareSandboxEdit()) return false;
+        Placement.Cancel();
+        if (add)
+        {
+            if (Station.Rings.Count >= 3 || Station.AddRing() == null) return false;
+            SandboxRingIndex = Station.Rings.Count - 1;
+            var added = SandboxRing;
+            // Reuse a vacant ordinary radius: inner deletion must not duplicate the outer ring
+            // or push subsequent additions farther and farther outside the camera.
+            added.State.Radius = Enumerable.Range(0, 3).Select(i => 1.25f + i * .72f)
+                .First(radius => Station.Rings.All(r => r == added || Mathf.Abs(r.State.Radius - radius) > .001f));
+            FinishSandboxRingPresentation(added); Placement.Synchronize();
+        }
+        else
+        {
+            var previousOrders = Station.Rings.ToDictionary(r => r, r => r.State.Order);
+            if (Station.Rings.Count <= 1 || !Station.RemoveRing(SandboxRing.RingId, out _)) return false;
+            Placement.ReindexAfterRingRemoval(previousOrders);
+            SandboxRingIndex = Mathf.Clamp(SandboxRingIndex, 0, Station.Rings.Count - 1);
+            if (SandboxWeapon == null) SandboxSelectedWeaponId = 0;
+        }
+        BuildRingCount = Station.Rings.Count; WeaponModules.ClearPresetLabel(); return true;
+    }
+    private static void FinishSandboxRingPresentation(OrbitalRingRuntime ring)
+    {
+        // Only this ring's spawn presentation advances. No weapon/projectile/enemy tick;
+        // restore the exact angular phase before the paused editor can see the result.
+        float phase = ring.Phase;
+        ring.Tick(.36f); ring.State.CurrentPhase = phase; ring.Tick(0f);
+    }
+    public void SetSandboxRingSpeed(float speed)
+    {
+        if (!PrepareSandboxEdit() || SandboxRing == null) return;
+        SandboxRing.State.BaseRotationSpeed = Mathf.Clamp(speed, 10f, 180f) /
+            Mathf.Pow(1f + OrbitalProgressionConfig.Default.SpeedIncrement, SandboxRing.State.SpeedUpgradeLevel);
+    }
+    public void SetSandboxRingDirection(int direction)
+    { if (PrepareSandboxEdit() && SandboxRing != null) SandboxRing.State.Direction = direction < 0 ? -1 : 1; }
+    public void ApplySandboxLayout(string name)
+    {
+        if (!PrepareSandboxEdit()) return;
+        SandboxMessage = Placement.ApplyRingLayout(SandboxRing, name)
+            ? "Расположение изменено. Состав и модули сохранены." : "Не хватает места или на кольце нет оружия.";
+    }
+    public void ApplySandboxBuild(string name)
+    {
+        SelectWeaponModulePreset(name);
+        if (WeaponModules.SelectedId != 0) SelectSandboxWeapon(WeaponModules.SelectedId);
+        SandboxMessage = "Сборка готова. Раздел «Враги» — начать бой.";
+    }
+    public void SetSandboxModule(int slot, string name)
+    {
+        if (!PrepareSandboxEdit()) return;
+        WeaponModules.Select(SandboxSelectedWeaponId);
+        SandboxMessage = WeaponModules.SetModule(SandboxSelectedWeaponId, slot, name)
+            ? "Модификация применена к выбранной пушке." : "Этот модуль уже установлен или слот недоступен.";
+    }
+    public void UnlockSandboxSlot()
+    {
+        if (PrepareSandboxEdit() && WeaponModules.UnlockSecondSlot(SandboxSelectedWeaponId))
+            SandboxMessage = "Второй слот открыт.";
+    }
+    public void StartSandboxEncounter(int kind)
+    {
+        if (!Ready || kind < 1 || kind > 4) return;
+        Telemetry.Stop();
+        sandboxEncounter = kind; sandboxSequence = 0; sandboxSpawnTimer = 0f;
+        DespawnEnemies(false); layout.Clear();
+        int count = kind == 4 ? 48 : 12;
+        for (int i = 0; i < count; i++) SpawnSandboxEnemy();
+        SandboxSpawning = true;
+        BeginCombatTelemetry(kind switch { 1 => "Толпа", 2 => "Смешанная группа", 3 => "Щитоносцы", _ => "Плотный бой" });
+        SandboxMessage = "Бой подготовлен. P — продолжить, Shift — замедлить орбиты.";
+    }
+    private void SpawnSandboxEnemy()
+    {
+        if (AliveEnemies >= SandboxEnemyLimit) return;
+        int index = sandboxSequence++;
+        int shooter = System.Array.FindIndex(EnemyPrefabs, p => p != null && p.GetComponent<EnemyShooterMovement>() != null);
+        if (shooter < 0) shooter = 0;
+        int type = sandboxEncounter switch { 1 => -3, 2 => index % 4 == 0 ? shooter : -3, 3 => -4,
+            _ => index % 5 switch { 0 or 1 => -3, 2 => shooter, 3 => -4, _ => -6 } };
+        float angle = index * 137.508f * Mathf.Deg2Rad;
+        float radius = 5.5f + index % 4 * .6f;
+        SpawnAt(type, (Vector2)Player.transform.position + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius);
+    }
+    public void SetSandboxSpawning(bool active) => SandboxSpawning = active && sandboxEncounter != 0;
+    public void ClearSandboxArena()
+    { SandboxSpawning = false; DespawnEnemies(false); Telemetry.Stop(); layout.Clear(); SandboxMessage = "Арена очищена. Сборка сохранена."; }
+    public void RepeatSandboxEncounter()
+    { if (sandboxEncounter != 0) StartSandboxEncounter(sandboxEncounter); else SandboxMessage = "Сначала выберите врагов."; }
+    private void TickSandbox(bool pointerBlocked)
+    {
+        if (!Paused) Telemetry.Tick(Time.deltaTime);
+        if (!Paused && SandboxSpawning)
+        {
+            sandboxSpawnTimer -= Time.deltaTime;
+            if (sandboxSpawnTimer <= 0f)
+            {
+                sandboxSpawnTimer = 1f;
+                int count = Mathf.Min(4, (sandboxEncounter == 4 ? 48 : 12) - AliveEnemies);
+                for (int i = 0; i < count; i++) SpawnSandboxEnemy();
+            }
+        }
+        if (Paused || pointerBlocked || !Application.isFocused || Station.InputOwner.IsGameplayPointerBlocked || !Input.GetMouseButtonDown(0)) return;
+        var camera = CameraRig.ControlledCamera;
+        Vector3 pointer = Input.mousePosition; pointer.z = -camera.transform.position.z;
+        Vector2 world = camera.ScreenToWorldPoint(pointer);
+        var hit = Station.Modules.Where(m => m.HitTest(world, .08f)).OrderBy(m => Vector2.SqrMagnitude(m.WorldPosition - world)).FirstOrDefault();
+        if (hit != null) { SelectSandboxWeapon(hit.StableModuleId); SetSandboxTab(2); }
+    }
 
     protected override void Awake()
     {
         base.Awake();
+        Placement = new OrbitalCombatV2LabPlacement(this);
+        Telemetry = new EnemyOrbitalLabTelemetry(this);
+        sandboxView = new EnemyOrbitalLabSandboxView(this);
+        WeaponModules = new OrbitalCombatV2WeaponModules(this);
         ProductionOrbitalCombatAdapter.LabInterceptor = this;
     }
 
@@ -85,8 +334,10 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
     private IEnumerator LoadInitialEncounter()
     {
         while (!Ready) yield return null;
-        SelectShootingBuild(selectedBuild);
-        PopulateScenario();
+        while (Station.Rings.Count < Mathf.Clamp(BuildRingCount, 1, 3) && Station.AddRing() != null) { }
+        foreach (var ring in Station.Rings) FinishSandboxRingPresentation(ring);
+        SelectWeaponModulePreset("A");
+        ClearSandboxArena(); SetPlayerInvincible(true); SandboxReady = true;
     }
 
     public void StartScenario(int index)
@@ -95,7 +346,7 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
         SetPaused(false);
         ResetBuild(() =>
         {
-            SelectShootingBuild(selectedBuild);
+            RestoreLabBuild();
             PopulateScenario();
         });
     }
@@ -132,7 +383,7 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
         var initialLayout = layout.ToArray();
         ResetBuild(() =>
         {
-            SelectShootingBuild(selectedBuild);
+            RestoreLabBuild();
             if (initialLayout.Length == 0) PopulateScenario();
             else foreach (var entry in initialLayout) AddScenarioEnemy(entry.type, entry.position);
             Notice = "Scenario restored / upgrades reset";
@@ -143,6 +394,8 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
     {
         if (Paused == value) return;
         Station?.InputOwner?.PrepareForExternalPause();
+        CombatV2?.Suspend();
+        Placement?.Cancel();
         ReleaseCenterInput();
         Paused = value;
         Time.timeScale = value ? 0f : 1f;
@@ -154,6 +407,8 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
     public void SelectShootingBuild(ShootingBuild build)
     {
         if (!CanEdit()) return;
+        if (!restoringLabBuild) WeaponModules.BeginLoadout();
+        Placement.LeaveComparison();
         // Build callbacks run as soon as Ready becomes true, before this controller's next Update.
         // Prepare the correct blue pool before any mounted gun can fire or a caller can inspect it.
         if (prototypeStation != Station) UpdateCenterPrototype();
@@ -171,10 +426,16 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
                 ShootingBuild.Sniper => Sniper, ShootingBuild.Saw or ShootingBuild.Contact => Saw,
                 ShootingBuild.Pistol => Pistol, _ => Spear } };
         while (Station.State.Rings.Count < Mathf.Min(BuildRingCount, OrbitalProgressionConfig.Default.MaxNormalRings) && Station.AddRing() != null) { }
+        Placement.Synchronize();
         for (TargetRing = 0; TargetRing < Station.State.Rings.Count; TargetRing++)
         {
             var ring = Station.State.Rings[TargetRing];
-            while (ring.MountCount < ring.MountCapacity && Station.AddMount(ring.StableRingId, out _)) { }
+            int count = Mathf.Max(ring.MountCapacity, Placement.RememberedMountCount(ring.Order));
+            while (ring.MountCount < count)
+            {
+                if (ring.MountCount == ring.MountCapacity && !Station.UpgradeRingCapacity(ring.StableRingId)) break;
+                if (!Station.AddMount(ring.StableRingId, out _)) break;
+            }
             for (int mount = 0; mount < ring.MountCount; mount++)
             {
                 installingProfile = profiles[(TargetRing + mount) % profiles.Length];
@@ -193,11 +454,98 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
             ShootingBuild.Mixed => "MIXED: artist shotgun + sniper + saw / all ordinary mounts filled", _ => build.ToString() };
     }
 
+    private void RestoreLabBuild()
+    {
+        restoringLabBuild = true;
+        try
+        {
+            if (WeaponModules.ActivePreset != null) BuildLabPistols(WeaponModules.ActivePreset == "A" ? 4 : WeaponModules.ActivePreset == "B" ? 1 : 2);
+            else if (Placement.IsComparison) PreparePlacementComparison();
+            else SelectShootingBuild(selectedBuild);
+        }
+        finally { restoringLabBuild = false; WeaponModules.FinishRestore(); }
+        Placement.Synchronize();
+    }
+
+    private bool PreparePlacementComparison()
+    {
+        if (!CanEdit()) return false;
+        if (prototypeStation != Station) UpdateCenterPrototype();
+        var ring = Station.Rings[0];
+        if (Station.Modules.Count == 4 && Station.Modules.All(m => m is EnemyOrbitalLabWeapon gun &&
+            ReferenceEquals(gun.SourceProfile, Pistol) && m.CurrentMount?.Ring == ring)) return true;
+        if (!restoringLabBuild) WeaponModules.BeginLoadout();
+        return BuildLabPistols(4);
+    }
+
+    private bool BuildLabPistols(int count)
+    {
+        if (!CanEdit()) return false;
+        if (prototypeStation != Station) UpdateCenterPrototype();
+        var ring = Station.Rings[0];
+        Placement.Cancel();
+        ClearModules(); weaponProfiles.Clear();
+        ((ProductionOrbitalCombatAdapter)Station.Combat).LabModuleFactory = CreateLabModule;
+        while (ring.MountCount < count)
+        {
+            if (ring.MountCount == ring.MountCapacity && !Station.UpgradeRingCapacity(ring.RingId)) return false;
+            if (!Station.AddMount(ring.RingId, out _)) return false;
+        }
+        Pistol.Kind = OrbitalModuleKind.Pistol;
+        installingProfile = Pistol;
+        try
+        {
+            for (int i = 0; i < count; i++)
+                if (!Station.InstallModule(OrbitalModuleKind.Pistol, ring.RingId, i, out _)) return false;
+        }
+        finally { installingProfile = null; }
+        selectedBuild = ShootingBuild.Pistol;
+        Placement.Synchronize();
+        return true;
+    }
+
+    public void SelectWeaponModulePreset(string name)
+    {
+        if (!Ready || name != "A" && name != "B" && name != "C") return;
+        SetPaused(true); Placement.LeaveComparison(); WeaponModules.BeginPreset(name);
+        int count = name == "A" ? 4 : name == "B" ? 1 : 2;
+        if (!BuildLabPistols(count)) { Notice = "Не удалось подготовить оружие."; return; }
+        Placement.ArrangeModuleComparison(count);
+        var guns = Station.Modules.OfType<EnemyOrbitalLabWeapon>().ToArray();
+        if (name == "B")
+        {
+            WeaponModules.UnlockSecondSlot(guns[0].StableModuleId);
+            WeaponModules.SetModule(guns[0].StableModuleId, 0, "RAPID");
+            WeaponModules.SetModule(guns[0].StableModuleId, 1, "PIERCE");
+        }
+        else if (name == "C")
+        {
+            WeaponModules.SetModule(guns[0].StableModuleId, 0, "RAPID");
+            WeaponModules.SetModule(guns[1].StableModuleId, 0, "MULTISHOT");
+        }
+        WeaponModules.Select(guns[0].StableModuleId);
+    }
+
+    public void SelectPlacementPreset(string name)
+    {
+        if (!Ready || name != "EVEN" && name != "GROUPED" && name != "CUSTOM") return;
+        SetPaused(true);
+        if (!PreparePlacementComparison()) { Notice = "Не удалось подготовить 4 пистолета."; return; }
+        Placement.BeginComparison();
+        Placement.ApplyPreset(name);
+    }
+
     private OrbitalModuleRuntime CreateLabModule(OrbitalStationRuntime station, OrbitalModuleState state)
     {
         if (installingProfile != null && !weaponProfiles.ContainsKey(state.StableModuleId))
             weaponProfiles[state.StableModuleId] = installingProfile;
-        if (!weaponProfiles.TryGetValue(state.StableModuleId, out var profile)) return null;
+        if (!weaponProfiles.TryGetValue(state.StableModuleId, out var profile))
+        {
+            profile = state.ModuleType switch { OrbitalModuleKind.Pistol => Pistol, OrbitalModuleKind.Shotgun => Shotgun,
+                OrbitalModuleKind.Sniper => Sniper, OrbitalModuleKind.Saw => Saw, _ => null };
+            if (profile == null) return null;
+            weaponProfiles[state.StableModuleId] = profile;
+        }
         return profile.Category == OrbitalUpgradeCategory.Contact
             ? new EnemyOrbitalLabSaw(station, state.StableModuleId, profile, this)
             : new EnemyOrbitalLabWeapon(station, state.StableModuleId, profile, OnLabWeaponFired, this);
@@ -378,14 +726,14 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
         Notice = $"Spawned all {EnemyPrefabs.Length} production types";
     }
 
-    private void DespawnEnemies()
+    private void DespawnEnemies(bool resetWeapons = true)
     {
         (Station?.Combat as ProductionOrbitalCombatAdapter)?.DebugClearProjectiles();
         Station?.ClearLabFlashes();
         nextShootingShake = 0f;
         nextWeaponSound = 0f;
         CameraShake.Instance?.StopAllShakes();
-        if (Station != null)
+        if (Station != null && resetWeapons)
         {
             foreach (var weapon in Station.Modules.OfType<EnemyOrbitalLabWeapon>()) weapon.ResetFiring();
             foreach (var saw in Station.Modules.OfType<EnemyOrbitalLabSaw>()) saw.ResetContact();
@@ -431,6 +779,10 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
     }
     protected override void BeforeBuildReset()
     {
+        Telemetry?.Dispose(); tacticalPreset = tacticalConfiguration = null;
+        WeaponModules?.CaptureReset();
+        Placement?.Unbind();
+        CombatV2?.Dispose(); CombatV2 = null;
         CloseUpgradeChoices();
         if (Station != null) Station.State.ShootingDamageMultiplier = Station.State.ShootingRateMultiplier = Station.State.ContactDamageMultiplier = Station.State.ContactSizeMultiplier = 1f;
         SetFrozen(false); SetSpeed(1f); SetPlayerInvincible(false); SetEnemiesInvincible(false);
@@ -444,7 +796,6 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
     {
         SetFrozen(false); SetSpeed(1f); SetPlayerInvincible(false); SetEnemiesInvincible(false);
         SelectedEnemy = 0; Pattern = SpawnPattern.AroundPlayer;
-        selectedBuild = ShootingBuild.Mixed;
         StartMassEncounter(10);
     }
     protected override void ResetSession() => RestartScenario();
@@ -456,13 +807,25 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
         {
             Player.SetIncomingDamageMultiplier(PlayerInvincible ? 0f : 1f);
             UpdateCenterPrototype();
+            bool pointerBlocked = PanelVisible && PanelRect.Contains(new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y));
+            Placement.TickPointer(CameraRig.ControlledCamera, pointerBlocked || Station.InputOwner.IsGameplayPointerBlocked);
+            if (Placement.HasSelection)
+            {
+                if (SandboxSelectedWeaponId != Placement.SelectedModuleId) SetSandboxTab(2);
+                SandboxSelectedWeaponId = Placement.SelectedModuleId; WeaponModules.Select(Placement.SelectedModuleId);
+            }
+            TickSandbox(pointerBlocked);
         }
-        else ReleaseCenterInput();
+        else { ReleaseCenterInput(); CombatV2?.Suspend(); }
         enemies.RemoveAll(e => e == null);
     }
 
     private void UpdateCenterPrototype()
     {
+        if (CombatV2 == null) CombatV2 = new OrbitalCombatV2LabControl(Station);
+        Placement.Bind(Station);
+        WeaponModules.Bind(Station);
+        Telemetry.Bind((ProductionOrbitalCombatAdapter)Station.Combat, Player);
         if (prototypeStation != Station)
         {
             centerControl?.Dispose();
@@ -503,6 +866,11 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
 
     private void OnDisable()
     {
+        Telemetry?.Dispose();
+        sandboxView?.RestoreVisuals();
+        WeaponModules?.HideSpokes();
+        Placement?.Unbind();
+        CombatV2?.Dispose(); CombatV2 = null;
         CloseUpgradeChoices();
         centerControl?.Dispose();
         if (centerMarker != null) centerMarker.enabled = false;
@@ -510,61 +878,13 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
         SetPaused(false);
     }
     private void OnEnable() => ProductionOrbitalCombatAdapter.LabInterceptor = this;
-    protected override void DrawPanel()
-    {
-        Button("RESET LAB", ResetLab);
-        Text("WASD: player · hold RMB: station → cursor · Shift: slow time · P: pause");
-        Text($"Release RMB: return to player | offset {centerOffset.magnitude:0.00}/{MaximumCenterOffset:0.0} | walk ×{SteeringSpeedMultiplier:0.0}");
-        Heading("Shield encounters");
-        Row(("10 со щитами + 10 без щитов", () => StartMassEncounter(10)), ("20 со щитами + 20 без щитов", () => StartMassEncounter(20)));
-        Row(("MELEE / BREAKABLE", () => StartScenario(3)), ("SHOOTER / BREAKABLE", () => StartScenario(5)));
-        Text($"All shields: breakable / {ShieldBlockedHits} blocked hits");
-        Button("SHIELD + 3 PURSUERS", () => StartScenario(1));
-        Button("SHIELD + PURSUERS + SHOOTER", () => StartScenario(2));
-        Row(("RESTART SCENARIO", RestartScenario), ("CLEAR", ClearEnemies));
-        Row(("ТОЛЬКО ДРОБОВИКИ", () => SelectShootingBuild(ShootingBuild.Shotgun)), ("ТОЛЬКО СНАЙПЕРКИ", () => SelectShootingBuild(ShootingBuild.Sniper)));
-        Row(("ТОЛЬКО ПИЛЫ", () => SelectShootingBuild(ShootingBuild.Saw)), ("СМЕШАННАЯ", () => SelectShootingBuild(ShootingBuild.Mixed)));
-        Button("ТОЛЬКО ПИСТОЛЕТЫ", () => SelectShootingBuild(ShootingBuild.Pistol));
-        Text("Shotgun + saw: shields block | Sniper: passes shields, one body by default");
-        Button("Получить улучшение", OpenUpgradeChoices);
-        if (upgradeChoices.Count > 0) Button("ОТМЕНА ВЫБОРА", CloseUpgradeChoices);
-        Text($"Стрелковые: урон ×{ShootingDamageMultiplier:0.00}, частота ×{ShootingRateMultiplier:0.00} | Контактные: урон ×{ContactDamageMultiplier:0.00}, размер ×{ContactSizeMultiplier:0.00}");
-        Button(Paused ? "RESUME (P)" : "PAUSE (P)", () => SetPaused(!Paused));
-        Text($"Alive {AliveEnemies} | Speed ×{SpeedMultiplier:0.0} | AI {(EnemyDebugAiFreeze.IsFrozen ? "frozen" : "running")}");
-        Text($"Player invincible: {PlayerInvincible} | Enemies: {EnemiesInvincible}");
-        Text($"Player HP {Player.CurrentHealth:0}/{Player.MaxHealth:0}");
-        tab = GUILayout.Toolbar(tab, new[] { "Spawn", "AI / Health", "Build / Orbit" });
-        if (tab == 2)
-        {
-            Heading("Filled builds: use the five loadouts above");
-            DrawBuildInfo(true);
-            DrawOrbitControls(); return;
-        }
-        if (tab == 0)
-        {
-        Heading("Production enemies");
-        if (EnemyPrefabs == null || EnemyPrefabs.Length == 0) { Text("No production enemies found — refresh scene"); return; }
-        for (int i = 0; i < EnemyPrefabs.Length; i++)
-        {
-            int index = i;
-            Button((SelectedEnemy == i ? "● " : "") + EnemyPrefabs[i].name, () => SelectedEnemy = index);
-        }
-        Text("Selected: " + EnemyPrefabs[SelectedEnemy].name);
-        Pattern = (SpawnPattern)GUILayout.SelectionGrid((int)Pattern,
-            new[] { "Around Player", "Line", "Cluster", "Random Arena" }, 2);
-        Row(("SPAWN 1", () => Spawn(1)), ("SPAWN 5", () => Spawn(5)));
-        Row(("SPAWN 10", () => Spawn(10)), ("SPAWN 25", () => Spawn(25)));
-        Button("SPAWN ALL TYPES", SpawnAll);
-        Row(("CLEAR ENEMIES", ClearEnemies), ("RESET ENEMIES", ResetEnemies));
-        return;
-        }
-        Heading("AI / survivability");
-        Row(("Freeze AI", () => SetFrozen(true)), ("Resume AI", () => SetFrozen(false)));
-        Row(("Speed ×0.5", () => SetSpeed(.5f)), ("Speed ×1", () => SetSpeed(1)), ("Speed ×2", () => SetSpeed(2)));
-        Button("Invincible Player " + (PlayerInvincible ? "ON" : "OFF"), () => SetPlayerInvincible(!PlayerInvincible));
-        Button("Invincible Enemies " + (EnemiesInvincible ? "ON" : "OFF"), () => SetEnemiesInvincible(!EnemiesInvincible));
-        Row(("Heal All Enemies", HealEnemies), ("Kill All Enemies", KillEnemies));
-    }
-    protected override void OnDestroy() { EnemyDebugAiFreeze.SetFrozen(false); base.OnDestroy(); }
+    private void OnApplicationFocus(bool focused) { if (!focused) { CombatV2?.Suspend(); Placement?.Cancel(); } }
+    private void OnApplicationPause(bool paused) { if (paused) { CombatV2?.Suspend(); Placement?.Cancel(); } }
+    private void LateUpdate() { WeaponModules?.UpdateSpokes(); sandboxView?.Tick(PanelVisible, PanelRect); }
+
+    protected override Rect PanelRect => new(0, 0, Mathf.Clamp(Screen.width * .25f, 350f, 420f), Screen.height);
+    protected override void OnGUI() => sandboxView?.Draw(PanelVisible, PanelRect);
+    protected override void DrawPanel() { }
+    protected override void OnDestroy() { sandboxView?.Dispose(); EnemyDebugAiFreeze.SetFrozen(false); base.OnDestroy(); }
 }
 #endif

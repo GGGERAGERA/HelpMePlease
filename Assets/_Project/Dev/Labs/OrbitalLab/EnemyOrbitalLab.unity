@@ -1032,8 +1032,8 @@ MonoBehaviour:
   SteeringSpeedMultiplier: 0.7
   ShieldBearerPrefab: {fileID: 6885503732443489488, guid: acf7c638f23d24946aad3baa04a194d4, type: 3}
   ShieldShooterPrefab: {fileID: 1020306714501274726, guid: 7ed2cc874c3aec7499d16d254e83c172, type: 3}
-  BreakableShieldBearerPrefab: {fileID: 8338404386233507349, guid: 3a296e0c5130de046afe298e668ab92f, type: 3}
-  BreakableShieldShooterPrefab: {fileID: 2182734882934475020, guid: 184cd0393c4825f43b66ee4da1318b70, type: 3}
+  BreakableShieldBearerPrefab: {fileID: 5000, guid: 3a296e0c5130de046afe298e668ab92f, type: 3}
+  BreakableShieldShooterPrefab: {fileID: 5000, guid: 184cd0393c4825f43b66ee4da1318b70, type: 3}
   ShieldBlockedHits: 4
   PursuerPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
   PistolProjectileVisual: {fileID: 5000, guid: 2dcd05dc20a6443ca8c86af9ee4679df, type: 3}

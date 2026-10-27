@@ -108,6 +108,10 @@ namespace Subject42.Combat.OrbitalStation
 
         public int RingId => State.StableRingId;
         public int RuntimeDirectionMultiplier { get; set; } = 1;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public float LabRotationMultiplier { get; set; } = 1f;
+        public System.Func<int, float, float> LabMountPhase { get; set; }
+#endif
         public float Radius => Geometry.Type == OrbitalPathType.Custom ? 1f :
             State.Radius + OrbitalPresentationConfig.Active.RingRadiusPadding;
         public float RotationSpeed => State.BaseRotationSpeed *
@@ -143,8 +147,12 @@ namespace Subject42.Combat.OrbitalStation
 
         public void Tick(float deltaTime)
         {
+            float angularDelta = RotationSpeed * Direction * deltaTime;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            angularDelta *= LabRotationMultiplier;
+#endif
             State.CurrentPhase = Mathf.Repeat(
-                State.CurrentPhase + RotationSpeed * Direction * deltaTime, 360f);
+                State.CurrentPhase + angularDelta, 360f);
             pulse = Mathf.MoveTowards(pulse, 0f, deltaTime * 2.5f);
             coreTime += deltaTime;
             view.SetCoreEnergy(coreLevel, coreColor, pulse, coreTime);
@@ -208,7 +216,11 @@ namespace Subject42.Combat.OrbitalStation
         {
             for (int i = 0; i < Mounts.Count; i++)
             {
-                Mounts[i].SetLocalPhase(i * 360f / Mounts.Count);
+                float localPhase = i * 360f / Mounts.Count;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                if (LabMountPhase != null) localPhase = LabMountPhase(i, localPhase);
+#endif
+                Mounts[i].SetLocalPhase(localPhase);
                 Mounts[i].UpdatePosition(State.CurrentPhase, Radius * spawnScale);
             }
         }

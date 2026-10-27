@@ -21,6 +21,23 @@ namespace Subject42.Combat.OrbitalStation
         public int ShotsFired { get; private set; }
         public float DamageMultiplier => Station.State.ShootingDamageMultiplier;
         public float FireRateMultiplier => Station.State.ShootingRateMultiplier;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        protected virtual bool LabFixedDirection => false;
+        protected virtual float? LabExtraShotAngle => null;
+#endif
+        private bool UsesFixedDirection
+        {
+            get
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                return LabFixedDirection;
+#else
+                return false;
+#endif
+            }
+        }
+        private Vector2 RadialDirection => Mount == null ? Vector2.right :
+            ((Vector2)Mount.Transform.position - (Vector2)Station.transform.position).normalized;
         public OrbitalProjectileModule(OrbitalStationRuntime station, int id, OrbitalWeaponSettings settings, Action<float> shotFeedback = null)
             : base(station, id, settings.Color, settings.WeaponVisual, settings.Kind)
         {
@@ -32,25 +49,30 @@ namespace Subject42.Combat.OrbitalStation
             
             Cooldown = .1f + id % 7 * .07f;
         }
-        public override void UpdateVisualRotation(float radians) { }
+        public override void UpdateVisualRotation(float radians)
+        {
+            if (UsesFixedDirection && Mount != null) AimAt(WorldPosition + RadialDirection);
+        }
         public override void Tick(float deltaTime)
         {
             base.Tick(deltaTime);
-            var target = Combat.FindNearest(WorldPosition, Settings.Range);
-            TrackAimTarget(target, deltaTime);
-            if (target != null) AimAt(WorldPosition + AimDirection(target));
+            bool fixedDirection = UsesFixedDirection;
+            var target = fixedDirection ? null : Combat.FindNearest(WorldPosition, Settings.Range);
+            if (!fixedDirection) TrackAimTarget(target, deltaTime);
+            if (fixedDirection && Mount != null) AimAt(WorldPosition + RadialDirection);
+            else if (target != null) AimAt(WorldPosition + AimDirection(target));
             if (deltaTime <= 0f || Mount == null) return;
             if (Station.Owner.IsDead) { burstRemaining = 0; chargeRemaining = -1f; WeaponCharge(0f); return; }
             if (chargeRemaining >= 0f)
             {
-                if (target == null) { chargeRemaining = -1f; WeaponCharge(0f); return; }
+                if (target == null && !fixedDirection) { chargeRemaining = -1f; WeaponCharge(0f); return; }
                 chargeRemaining -= deltaTime;
                 WeaponCharge(1f - chargeRemaining / Mathf.Max(.001f, Settings.ChargeSeconds));
                 
                 if (chargeRemaining <= 0f) { chargeRemaining = -1f; Fire(target); }
                 return;
             }
-            if (Cooldown > 0f || target == null) return;
+            if (Cooldown > 0f || target == null && !fixedDirection) return;
             if (burstRemaining > 0) Fire(target);
             else if (Settings.ChargeSeconds > 0f) chargeRemaining = Settings.ChargeSeconds;
             else Fire(target);
@@ -59,24 +81,39 @@ namespace Subject42.Combat.OrbitalStation
         {
             // Core pulses keep the same projectile rules and never skip charging or cadence.
             if (Cooldown > 0f || chargeRemaining >= 0f) return;
-            var target = Combat.FindNearest(WorldPosition, Settings.Range);
-            if (target == null) return;
+            var target = UsesFixedDirection ? null : Combat.FindNearest(WorldPosition, Settings.Range);
+            if (target == null && !UsesFixedDirection) return;
             if (Settings.ChargeSeconds > 0f) chargeRemaining = Settings.ChargeSeconds;
             else Fire(target);
         }
         private void Fire(EnemyHealth target)
         {
             if (burstRemaining == 0) burstRemaining = Mathf.Max(1, Settings.BurstShots);
-            Vector2 direction = AimDirection(target);
+            Vector2 direction = UsesFixedDirection ? RadialDirection : AimDirection(target);
             AimAt(WorldPosition + direction);
             int pellets = Mathf.Max(1, Settings.Pellets);
-            var volley = pellets > 1 ? new ProductionOrbitalCombatAdapter.ProjectileVolley(++nextVolley) : null;
-            for (int i = 0; i < pellets; i++)
+            int projectileCount = pellets;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            float? extraAngle = LabExtraShotAngle;
+            if (extraAngle.HasValue) projectileCount++;
+#endif
+            var volley = projectileCount > 1 ? new ProductionOrbitalCombatAdapter.ProjectileVolley(++nextVolley) : null;
+            for (int i = 0; i < projectileCount; i++)
             {
-                float angle = pellets > 1 ? Mathf.Lerp(-.5f, .5f, (float)i / (pellets - 1)) * Settings.SpreadDegrees
+                float angle;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                if (extraAngle.HasValue && i == pellets) angle = extraAngle.Value;
+                else
+#endif
+                    angle = pellets > 1 ? Mathf.Lerp(-.5f, .5f, (float)i / (pellets - 1)) * Settings.SpreadDegrees
                     : ((float)spreadRandom.NextDouble() - .5f) * Settings.SpreadDegrees;
                 Vector2 flight = Quaternion.Euler(0f, 0f, angle) * direction;
-                adapter.SpawnWeaponProjectile(WorldPosition, target, flight, Settings, volley, Settings.Damage * Power * DamageMultiplier);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                if (UsesFixedDirection)
+                    adapter.SpawnLabDirectionalProjectile(WorldPosition, flight, Settings, volley, Settings.Damage * Power * DamageMultiplier, StableModuleId);
+                else
+#endif
+                    adapter.SpawnWeaponProjectile(WorldPosition, target, flight, Settings, volley, Settings.Damage * Power * DamageMultiplier);
             }
             ShotsFired++;
             WeaponCharge(0f); WeaponRecoil(Settings.Recoil);

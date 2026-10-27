@@ -96,13 +96,15 @@ public static class EnemyOrbitalLabSmoke
         yield return .6f;
         var lab = Object.FindFirstObjectByType<EnemyOrbitalLabController>();
         Require(lab != null && lab.Ready, "lab initialized");
+        // Artist/combat smoke explicitly requests its old mixed fixture; sandbox starts with four pistols.
+        lab.SelectShootingBuild(EnemyOrbitalLabController.ShootingBuild.Mixed);
         lab.SetPlayerInvincible(true);
         lab.Station.enabled = false; lab.SetFrozen(true);
         Require(lab.Station.State.Rings.Count >= 3 && lab.Station.State.FreeBuiltMounts == 0 &&
             lab.Station.Modules.Count >= 9, "default mixed build fills multiple ordinary orbits");
         Require(lab.Station.Modules.OfType<EnemyOrbitalLabSaw>().Any() &&
-            lab.Station.Modules.OfType<EnemyOrbitalLabWeapon>().Any(w => w.Settings == lab.Shotgun) &&
-            lab.Station.Modules.OfType<EnemyOrbitalLabWeapon>().Any(w => w.Settings == lab.Sniper), "all three explicit weapon profiles installed");
+            lab.Station.Modules.OfType<EnemyOrbitalLabWeapon>().Any(w => w.SourceProfile == lab.Shotgun) &&
+            lab.Station.Modules.OfType<EnemyOrbitalLabWeapon>().Any(w => w.SourceProfile == lab.Sniper), "all three explicit weapon profiles installed");
         Require(lab.Station.Modules.All(module =>
         {
             var view = module.CurrentMount.Transform.GetComponentInChildren<OrbitalModuleView>();

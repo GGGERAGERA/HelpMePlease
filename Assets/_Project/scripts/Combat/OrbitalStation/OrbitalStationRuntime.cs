@@ -14,6 +14,8 @@ namespace Subject42.Combat.OrbitalStation
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public bool DebugBulletTimeHeld { get; set; }
         public bool LabShiftBulletTime { get; set; }
+        public System.Func<float, bool, bool, bool> LabShiftInput { get; set; }
+        public System.Action LabInputSuspended { get; set; }
         public bool DebugRotationPaused { get; set; }
         public void DebugReverseRotation()
         {
@@ -340,9 +342,13 @@ namespace Subject42.Combat.OrbitalStation
                 Time.timeScale > 0f && InputOwner != null &&
                 InputOwner.CanUseDebugPlacement && InputOwner.IsIdle &&
                 !IsDebugPlacementActive;
-            bool held = canInput && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift));
+            bool rawHeld = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            held |= canInput && DebugBulletTimeHeld;
+            rawHeld |= DebugBulletTimeHeld;
+#endif
+            bool held = canInput && rawHeld;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (LabShiftInput != null) held = LabShiftInput(deltaTime, rawHeld, canInput);
 #endif
             TickRightMouse(deltaTime, held, false);
         }
@@ -858,6 +864,9 @@ namespace Subject42.Combat.OrbitalStation
                 if (item.movement != null) item.movement.RemoveAnomalyExternalVelocity(this);
             repulsedEnemies.Clear();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            LabInputSuspended?.Invoke();
+            LabShiftInput = null;
+            LabInputSuspended = null;
             DebugBulletTimeHeld = DebugRotationPaused = false;
 #endif
             rotationSign = 1;
@@ -1394,7 +1403,13 @@ namespace Subject42.Combat.OrbitalStation
             return Vector2.Distance(point, a + ab * t);
         }
 
-        private void OnDisable() => ReleaseBulletTime();
+        private void OnDisable()
+        {
+            ReleaseBulletTime();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            LabInputSuspended?.Invoke();
+#endif
+        }
 
         private void OnDestroy()
         {
