@@ -24,6 +24,18 @@ namespace Subject42.Combat.OrbitalStation
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         protected virtual bool LabFixedDirection => false;
         protected virtual float? LabExtraShotAngle => null;
+        protected virtual float LabDamageFactor => 1f;
+        protected virtual float LabRateFactor => 1f;
+        protected virtual int LabRicochets => 0;
+        protected virtual void LabOrdinaryShot() { }
+
+        // One volley through the same projectile/feedback path, without touching charge, burst or cooldown.
+        public bool FireLabExtraShot()
+        {
+            if (Mount == null || Station.Owner.IsDead || !Visual.activeInHierarchy || !UsesFixedDirection) return false;
+            EmitShot(null);
+            return true;
+        }
 #endif
         private bool UsesFixedDirection
         {
@@ -89,6 +101,19 @@ namespace Subject42.Combat.OrbitalStation
         private void Fire(EnemyHealth target)
         {
             if (burstRemaining == 0) burstRemaining = Mathf.Max(1, Settings.BurstShots);
+            EmitShot(target);
+            float rate = FireRateMultiplier;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            rate *= LabRateFactor;
+#endif
+            if (--burstRemaining > 0) Cooldown = Mathf.Max(.02f, Settings.BurstInterval / rate);
+            else Cooldown = Mathf.Max(.05f, Settings.FireInterval / rate);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            LabOrdinaryShot();
+#endif
+        }
+        private void EmitShot(EnemyHealth target)
+        {
             Vector2 direction = UsesFixedDirection ? RadialDirection : AimDirection(target);
             AimAt(WorldPosition + direction);
             int pellets = Mathf.Max(1, Settings.Pellets);
@@ -98,6 +123,10 @@ namespace Subject42.Combat.OrbitalStation
             if (extraAngle.HasValue) projectileCount++;
 #endif
             var volley = projectileCount > 1 ? new ProductionOrbitalCombatAdapter.ProjectileVolley(++nextVolley) : null;
+            float damage = Settings.Damage * Power * DamageMultiplier;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            damage *= LabDamageFactor;
+#endif
             for (int i = 0; i < projectileCount; i++)
             {
                 float angle;
@@ -110,10 +139,10 @@ namespace Subject42.Combat.OrbitalStation
                 Vector2 flight = Quaternion.Euler(0f, 0f, angle) * direction;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 if (UsesFixedDirection)
-                    adapter.SpawnLabDirectionalProjectile(WorldPosition, flight, Settings, volley, Settings.Damage * Power * DamageMultiplier, StableModuleId);
+                    adapter.SpawnLabDirectionalProjectile(WorldPosition, flight, Settings, volley, damage, StableModuleId, LabRicochets);
                 else
 #endif
-                    adapter.SpawnWeaponProjectile(WorldPosition, target, flight, Settings, volley, Settings.Damage * Power * DamageMultiplier);
+                    adapter.SpawnWeaponProjectile(WorldPosition, target, flight, Settings, volley, damage);
             }
             ShotsFired++;
             WeaponCharge(0f); WeaponRecoil(Settings.Recoil);
@@ -132,8 +161,6 @@ namespace Subject42.Combat.OrbitalStation
                 Color.Lerp(muzzleColor, Color.white, .25f), .045f, family);
             AudioService.Instance?.PlayAt(Settings.ShotSound, WorldPosition);
             shotFeedback?.Invoke(Settings.Recoil / .23f);
-            if (--burstRemaining > 0) Cooldown = Mathf.Max(.02f, Settings.BurstInterval / FireRateMultiplier);
-            else Cooldown = Mathf.Max(.05f, Settings.FireInterval / FireRateMultiplier);
         }
         public override void OnCorePulse() => ActivateCombat();
         private void TrackAimTarget(EnemyHealth target, float deltaTime)

@@ -5,7 +5,7 @@ using System.Linq;
 using Subject42.Combat.OrbitalStation;
 using UnityEngine;
 
-public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalCombatLabInterceptor
+public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalCombatLabInterceptor
 {
     public const string ScenePath = "Assets/_Project/Dev/Labs/OrbitalLab/EnemyOrbitalLab.unity";
     public GameObject[] EnemyPrefabs;
@@ -305,7 +305,7 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
         Telemetry.Stop();
         sandboxEncounter = kind; sandboxSequence = 0; sandboxSpawnTimer = 0f;
         DespawnEnemies(false); layout.Clear();
-        int count = kind == 4 ? 48 : 12;
+        int count = kind == 4 ? (SegmentedOrbit ? SegmentedEnemyDensity : 48) : 12;
         for (int i = 0; i < count; i++) SpawnSandboxEnemy();
         SandboxSpawning = true;
         BeginCombatTelemetry(kind switch { 1 => "Толпа", 2 => "Смешанная группа", 3 => "Щитоносцы", _ => "Плотный бой" });
@@ -318,7 +318,7 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
         int shooter = System.Array.FindIndex(EnemyPrefabs, p => p != null && p.GetComponent<EnemyShooterMovement>() != null);
         if (shooter < 0) shooter = 0;
         int type = sandboxEncounter switch { 1 => -3, 2 => index % 4 == 0 ? shooter : -3, 3 => -4,
-            _ => index % 5 switch { 0 or 1 => -3, 2 => shooter, 3 => -4, _ => -6 } };
+            _ => (index % 5) switch { 0 or 1 => -3, 2 => shooter, 3 => -4, _ => -6 } };
         float angle = index * 137.508f * Mathf.Deg2Rad;
         float radius = 5.5f + index % 4 * .6f;
         SpawnAt(type, (Vector2)Player.transform.position + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius);
@@ -337,11 +337,11 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
             if (sandboxSpawnTimer <= 0f)
             {
                 sandboxSpawnTimer = 1f;
-                int count = Mathf.Min(4, (sandboxEncounter == 4 ? 48 : 12) - AliveEnemies);
+                int count = Mathf.Min(4, (sandboxEncounter == 4 ? (SegmentedOrbit ? SegmentedEnemyDensity : 48) : 12) - AliveEnemies);
                 for (int i = 0; i < count; i++) SpawnSandboxEnemy();
             }
         }
-        if (Paused || pointerBlocked || !Application.isFocused || Station.InputOwner.IsGameplayPointerBlocked || !Input.GetMouseButtonDown(0)) return;
+        if (SegmentedOrbit || Paused || pointerBlocked || !Application.isFocused || Station.InputOwner.IsGameplayPointerBlocked || !Input.GetMouseButtonDown(0)) return;
         var camera = CameraRig.ControlledCamera;
         Vector3 pointer = Input.mousePosition; pointer.z = -camera.transform.position.z;
         Vector2 world = camera.ScreenToWorldPoint(pointer);
@@ -356,6 +356,8 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
         Telemetry = new EnemyOrbitalLabTelemetry(this);
         sandboxView = new EnemyOrbitalLabSandboxView(this);
         WeaponModules = new OrbitalCombatV2WeaponModules(this);
+        Segmented = new SegmentedOrbitConfiguration(this);
+        segmentedView = new SegmentedOrbitView(this);
         ProductionOrbitalCombatAdapter.LabInterceptor = this;
     }
 
@@ -431,6 +433,7 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
         Placement?.Cancel();
         ReleaseCenterInput();
         Paused = value;
+        if (SegmentedOrbit) PanelVisible = value;
         Time.timeScale = value ? 0f : 1f;
     }
 
@@ -490,6 +493,15 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
 
     private void RestoreLabBuild()
     {
+        if (SegmentedOrbit)
+        {
+            UpdateCenterPrototype();
+            WeaponModules.BeginLoadout();
+            SetPaused(true);
+            Segmented.Bind(Station);
+            SetPaused(true);
+            return;
+        }
         restoringLabBuild = true;
         try
         {
@@ -858,8 +870,10 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
     }
     protected override void BeforeBuildReset()
     {
+        Segmented?.Unbind(); segmentedView?.RestoreVisuals();
         Telemetry?.Dispose(); tacticalPreset = tacticalConfiguration = null;
-        WeaponModules?.CaptureReset();
+        if (changingExperiment) WeaponModules?.BeginLoadout();
+        else WeaponModules?.CaptureReset();
         Placement?.Unbind();
         CombatV2?.Dispose(); CombatV2 = null;
         CloseUpgradeChoices();
@@ -881,13 +895,25 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
     protected override void Update()
     {
         base.Update();
-        if (Ready && Input.GetKeyDown(KeyCode.P)) SetPaused(!Paused);
+        if (SegmentedOrbit) PanelVisible = Paused;
+        if (Ready && (Input.GetKeyDown(KeyCode.P) || SegmentedOrbit && Input.GetKeyDown(KeyCode.Tab)))
+        {
+            if (SegmentedOrbit && Paused) StartSegmentedCombat();
+            else SetPaused(!Paused);
+        }
         if (Ready)
         {
             Player.SetIncomingDamageMultiplier(PlayerInvincible ? 0f : 1f);
             UpdateCenterPrototype();
             bool pointerBlocked = PanelVisible && PanelRect.Contains(new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y));
-            Placement.TickPointer(CameraRig.ControlledCamera, pointerBlocked || Station.InputOwner.IsGameplayPointerBlocked);
+            if (SegmentedOrbit)
+            {
+                if (Input.GetKeyDown(KeyCode.Escape)) Segmented.CancelInteraction();
+                Segmented.TickManualRotation(Time.deltaTime, Input.GetKey(KeyCode.Q), Input.GetKey(KeyCode.E),
+                    Application.isFocused && Station.isActiveAndEnabled && Station.InputOwner.CanUseDebugPlacement &&
+                    !Station.IsDebugPlacementActive && Station.Owner.CanControl);
+            }
+            else Placement.TickPointer(CameraRig.ControlledCamera, pointerBlocked || Station.InputOwner.IsGameplayPointerBlocked);
             if (Placement.HasSelection)
             {
                 if (SandboxSelectedWeaponId != Placement.SelectedModuleId) SetSandboxTab(2);
@@ -902,7 +928,8 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
     private void UpdateCenterPrototype()
     {
         if (CombatV2 == null) CombatV2 = new OrbitalCombatV2LabControl(Station);
-        Placement.Bind(Station);
+        if (!SegmentedOrbit) Placement.Bind(Station);
+        CombatV2.SetBulletTime(SegmentedOrbit);
         WeaponModules.Bind(Station);
         Telemetry.Bind((ProductionOrbitalCombatAdapter)Station.Combat, Player);
         if (prototypeStation != Station)
@@ -947,6 +974,7 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
     {
         Telemetry?.Dispose();
         sandboxView?.RestoreVisuals();
+        segmentedView?.RestoreVisuals();
         WeaponModules?.HideSpokes();
         Placement?.Unbind();
         CombatV2?.Dispose(); CombatV2 = null;
@@ -959,11 +987,19 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
     private void OnEnable() => ProductionOrbitalCombatAdapter.LabInterceptor = this;
     private void OnApplicationFocus(bool focused) { if (!focused) { CombatV2?.Suspend(); Placement?.Cancel(); } }
     private void OnApplicationPause(bool paused) { if (paused) { CombatV2?.Suspend(); Placement?.Cancel(); } }
-    private void LateUpdate() { WeaponModules?.UpdateSpokes(); sandboxView?.Tick(PanelVisible, PanelRect); }
+    private void LateUpdate()
+    {
+        if (SegmentedOrbit) segmentedView?.Tick(PanelVisible, PanelRect);
+        else { WeaponModules?.UpdateSpokes(); sandboxView?.Tick(PanelVisible, PanelRect); }
+    }
 
     protected override Rect PanelRect => new(0, 0, Mathf.Clamp(Screen.width * .25f, 350f, 420f), Screen.height);
-    protected override void OnGUI() => sandboxView?.Draw(PanelVisible, PanelRect);
+    protected override void OnGUI()
+    {
+        if (SegmentedOrbit) segmentedView?.Draw(PanelVisible, PanelRect);
+        else sandboxView?.Draw(PanelVisible, PanelRect);
+    }
     protected override void DrawPanel() { }
-    protected override void OnDestroy() { sandboxView?.Dispose(); EnemyDebugAiFreeze.SetFrozen(false); base.OnDestroy(); }
+    protected override void OnDestroy() { segmentedView?.Dispose(); sandboxView?.Dispose(); EnemyDebugAiFreeze.SetFrozen(false); base.OnDestroy(); }
 }
 #endif

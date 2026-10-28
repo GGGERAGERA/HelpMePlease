@@ -86,6 +86,7 @@ public sealed class EnemyOrbitalLabSandboxView : IDisposable
             GUI.DrawTexture(panel, background);
             GUILayout.BeginArea(new Rect(18, 16, panel.width - 30, panel.height - 26));
             GUILayout.Label("ПЕСОЧНИЦА ОРБИТ", title);
+            if (GUILayout.Button("SEGMENTED ORBIT →", button)) lab.SetSegmentedOrbit(true);
             GUILayout.Label("Стрельба наружу · Shift: вращение ×0,4", small);
             GUILayout.Space(8);
             Row(() => Btn(lab.Paused ? "Продолжить · P" : "Пауза · P", () => lab.SetPaused(!lab.Paused), lab.Paused),

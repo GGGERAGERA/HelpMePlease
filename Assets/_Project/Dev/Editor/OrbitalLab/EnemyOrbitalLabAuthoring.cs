@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System.Linq;
+using System.IO;
 using Subject42.Combat.OrbitalStation;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -7,8 +8,67 @@ using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
+[InitializeOnLoad]
 public static class EnemyOrbitalLabAuthoring
 {
+    const string OpenSegmentedKey = "EnemyOrbitalLab.OpenSegmented";
+    static EnemyOrbitalLabAuthoring()
+    {
+        EditorApplication.update += CheckOpenRequest;
+        EditorApplication.playModeStateChanged += state =>
+        {
+            if (state != PlayModeStateChange.ExitingPlayMode) return;
+            EditorApplication.update -= CompleteSegmentedStart;
+            SessionState.EraseBool(OpenSegmentedKey);
+            SessionState.EraseBool(OpenSegmentedKey + ".Manual");
+        };
+        if (SessionState.GetBool(OpenSegmentedKey,false)) EditorApplication.update += CompleteSegmentedStart;
+    }
+    static void CheckOpenRequest()
+    {
+        const string request = "Artifacts/GeneratedQA/SegmentedOrbit/open.request";
+        if (EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode ||
+            SessionState.GetBool("Subject42.Verification.AnyRunActive",false) || !File.Exists(request)) return;
+        bool manual = File.ReadAllText(request).Trim() == "manual";
+        File.Delete(request);
+        if (manual) PlaySegmentedManual(); else PlaySegmented();
+    }
+    [MenuItem("Tools/Subject42/Dev/OrbitalLab/Play Manual Rotation + Skip Links")]
+    public static void PlaySegmentedManual()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+        SessionState.SetBool(OpenSegmentedKey + ".Manual",true);
+        PlaySegmented();
+    }
+    [MenuItem("Tools/Subject42/Dev/OrbitalLab/Play Segmented Orbit")]
+    public static void PlaySegmented()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+        EditorSceneManager.OpenScene(EnemyOrbitalLabController.ScenePath);
+        SessionState.SetBool(OpenSegmentedKey,true);
+        EditorApplication.EnterPlaymode();
+    }
+    static void CompleteSegmentedStart()
+    {
+        if (!EditorApplication.isPlaying) return;
+        var lab = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects()
+            .SelectMany(root => root.GetComponentsInChildren<EnemyOrbitalLabController>()).SingleOrDefault();
+        if (lab == null || !lab.Ready || !lab.SandboxReady) return;
+        if (!lab.SegmentedOrbit) { lab.SetSegmentedOrbit(true); return; }
+        if (!lab.Segmented.Bound) return;
+        if (SessionState.GetBool(OpenSegmentedKey + ".Manual",false))
+        {
+            lab.Segmented.SetMotion(SegmentedOrbitConfiguration.Motion.Manual);
+            lab.Segmented.LoadPreset("Шашечка");
+            lab.Segmented.Select(lab.Segmented.FindConnection(11,1).Id,true);
+            SessionState.EraseBool(OpenSegmentedKey + ".Manual");
+        }
+        EditorApplication.update -= CompleteSegmentedStart; SessionState.EraseBool(OpenSegmentedKey);
+        Debug.Log($"[SegmentedOrbit] Ready in {Application.dataPath}: scene={lab.gameObject.scene.path}, " +
+            $"player={lab.Player != null}, paused={lab.Paused}, levels={lab.Station.Rings.Count}, " +
+            $"segments={lab.Segmented.SegmentCount}, weapons={lab.Segmented.WeaponCount}, motion={lab.Segmented.Movement}, " +
+            $"energy={lab.Segmented.RotationEnergy}, links={lab.Segmented.LinkCount}; Tab/P starts dense combat.");
+    }
     private const string LabFolder = "Assets/_Project/Dev/Labs/OrbitalLab/";
     [MenuItem("Tools/Subject42/Dev/OrbitalLab/Prepare artist weapons")]
     public static void Prepare()

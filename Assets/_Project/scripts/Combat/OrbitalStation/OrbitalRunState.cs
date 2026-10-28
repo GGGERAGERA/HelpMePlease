@@ -50,6 +50,20 @@ namespace Subject42.Combat.OrbitalStation
     [Serializable]
     public sealed class OrbitalRunState : UnityEngine.ISerializationCallbackReceiver
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Scene-local experiments opt in per instance; never persisted or applied to production config.
+        [NonSerialized] public int LabMountLimit;
+#endif
+        private int MountLimit
+        {
+            get
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                if (LabMountLimit > 0) return LabMountLimit;
+#endif
+                return OrbitalProgressionConfig.Default.MaxMountsPerRing;
+            }
+        }
         public const int CurrentVersion = 3;
 
         public int Version = CurrentVersion;
@@ -510,13 +524,13 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool CanAddMount(int id, out string error) => CanRemoveRing(id, out error) &&
             Rule(FindRing(id).MountCount < FindRing(id).MountCapacity &&
-                FindRing(id).MountCount < OrbitalProgressionConfig.Default.MaxMountsPerRing &&
+                FindRing(id).MountCount < MountLimit &&
                 FindRing(id).MountUpgradeLevel < int.MaxValue && FindRing(id).VisualUpgradeLevel < int.MaxValue,
                 $"ring {id} reached mount capacity limit", out error);
 
         public bool CanUpgradeRingCapacity(int id, out string error) => CanRemoveRing(id, out error) &&
             Rule(FindRing(id).MountCount == FindRing(id).MountCapacity &&
-                FindRing(id).MountCapacity < OrbitalProgressionConfig.Default.MaxMountsPerRing &&
+                FindRing(id).MountCapacity < MountLimit &&
                 FindRing(id).VisualUpgradeLevel < int.MaxValue,
                 $"ring {id} must fill built mounts before expanding capacity", out error);
 
@@ -610,7 +624,7 @@ namespace Subject42.Combat.OrbitalStation
                 if (ring == null || ring.StableRingId <= 0 || ring.Order != i ||
                     ring.MountCount < 1 || ring.MountCount > ring.MountCapacity ||
                     ring.MountCapacity < 3 || ring.MountCapacity >
-                        OrbitalProgressionConfig.Default.MaxMountsPerRing ||
+                        MountLimit ||
                     !IsFinitePositive(ring.Radius) ||
                     !IsFiniteNonNegative(ring.BaseRotationSpeed) ||
                     float.IsNaN(ring.CurrentPhase) || float.IsInfinity(ring.CurrentPhase) ||
