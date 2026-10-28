@@ -84,7 +84,10 @@ namespace Subject42.Visuals
         {
             var copy = new VisualProfile { Version = Version, Name = Name, BaselineRevision = BaselineRevision };
             foreach (var value in Values) copy.Values.Add(value.Copy());
-            copy.MaterialSources.AddRange(MaterialSources ?? new List<VisualMaterialSource>());
+            if (MaterialSources != null)
+                foreach (var source in MaterialSources)
+                    copy.MaterialSources.Add(source == null ? null : new VisualMaterialSource
+                    { Target = source.Target, AssetPath = source.AssetPath, ShaderName = source.ShaderName });
             copy.Notes.AddRange(Notes ?? new List<string>());
             return copy;
         }

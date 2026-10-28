@@ -141,12 +141,26 @@ public sealed class EnemyOrbitalLabSandboxView : IDisposable
         Label(lab.SandboxSpawning ? "Спавн включён · потери пополняются" : "Спавн остановлен");
         Heading("РЕЗУЛЬТАТ БОЯ");
         var report = lab.Telemetry.Snapshot();
+        bool recording = lab.Telemetry.Recording;
+        bool completed = !recording && report.Weapons.Length > 0;
+        Label(recording ? (lab.Paused ? "Запись на паузе" : "Запись идёт")
+            : completed ? "Замер завершён" : "Замер не начат");
+        if (completed)
+            GUILayout.Label($"Показатели зафиксированы. В полёте на момент остановки: {report.Weapons.Sum(w => w.Pending)} снарядов без попадания.", small);
+        if (recording || completed)
+        {
+            Btn("Копировать JSON замера", () => GUIUtility.systemCopyBuffer = lab.CombatTelemetryJson());
+            GUILayout.Label((recording ? "JSON: текущий снимок записи." : "JSON: завершённый замер.")
+                + " Не восстанавливает сборку.", small);
+        }
         Label($"{report.Elapsed:0.0} с · убийств {report.Weapons.Sum(w => w.Kills)}");
         GUILayout.Label(report.SurvivalApplicable ? $"Получено урона: {report.DamageReceived:0.#}" : $"Выживаемость: н/д · контактов {report.PlayerImpacts}", small);
+        GUILayout.Label($"Путь: {report.DistanceTravelled:0.0} м\nМакс. смещение центра: {report.MaximumCenterOffset:0.0} м\nЗамедление орбит (Shift): {report.OrbitSlowSeconds:0.0} с", small);
+        if (report.ConfigurationChanged)
+            GUILayout.Label("Результат объединяет несколько конфигураций. Модули в строках — на момент регистрации пушки. Для отдельного сравнения повторите бой.", small);
         foreach (var row in report.Weapons)
-            GUILayout.Label($"{row.Name}: попад. {row.HitShots}, мимо {row.Misses}\nурон {row.Damage:0.#}, убийств {row.Kills}, щит {row.ShieldBlocks}, в полёте {row.Pending}", small);
-        if (report.ConfigurationChanged) GUILayout.Label("Сборка менялась в ходе этой записи.", small);
-        Btn("Завершить замер", lab.StopCombatTelemetry);
+            GUILayout.Label($"{row.Name} · ID {row.WeaponId} · {row.Modules}\nСнарядов {row.Fired} · попад. {row.HitShots} · мимо {row.Misses}\nУрон {row.Damage:0.#} · убийств {row.Kills} · щит {row.ShieldBlocks} · в полёте {row.Pending}", small);
+        if (recording) Btn("Завершить замер", lab.StopCombatTelemetry);
     }
     void RingPicker()
     {

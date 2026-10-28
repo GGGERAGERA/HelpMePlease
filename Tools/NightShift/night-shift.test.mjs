@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { cycleLoop, parseTestXml, readVerification, smokeReady, findPendingBackups, withSessionLock, workspaceFingerprint, nightVerified, runProcess } from './night-shift.mjs';
+import { cycleLoop, parseTestXml, readVerification, smokeReady, findPendingBackups, withSessionLock, workspaceFingerprint, nightVerified, runProcess, recoverySmoke, checkTaskProcess, sessionDeadline } from './night-shift.mjs';
 
 test('second decision receives actual first verification, no fixed queue', async () => {
   const seen = [];
@@ -39,7 +39,7 @@ test('infrastructure exceptions propagate, cannot create successful cycle', asyn
   await assert.rejects(cycleLoop({ maxCycles: 2, deadline: Date.now() + 10000, stopped: () => false,
     decide: async () => ({ task: 'baseline' }), work: async () => ({}), verify: async () => { throw new Error('timeout'); } }), /timeout/);
 });
-test('a compiler failure without XML is repairable evidence; missing XML infrastructure still stops', () => {
+test('compile and missing XML are failed task evidence; unrestored prefs and licensing stop', () => {
   const log = "Assets/Example.cs(4,2): error CS1061: inaccessible member\nScripts have compiler errors.";
   const outcome = { completed: true, preferencesRestored: true, unityExitCode: 1 };
   const result = readVerification(1, null, log, ['ExampleTests'], outcome);
@@ -49,8 +49,9 @@ test('a compiler failure without XML is repairable evidence; missing XML infrast
   assert.equal(result.compilerDiagnostics.length, 1);
   for (const incomplete of [null, { ...outcome, completed: false }, { ...outcome, preferencesRestored: false }, { ...outcome, unityExitCode: 0 }])
     assert.throws(() => readVerification(1, null, log, ['ExampleTests'], incomplete), /wrapper did not complete/);
-  assert.throws(() => readVerification(1, null, 'License client unavailable', ['ExampleTests'], outcome), /no results XML/);
-  assert.throws(() => readVerification(0, null, '', ['ExampleTests'], { ...outcome, unityExitCode: 0 }), /no results XML/);
+  assert.throws(() => readVerification(1, null, 'License client unavailable', ['ExampleTests'], outcome), /licensing/);
+  assert.equal(readVerification(0, null, '', ['ExampleTests'], { ...outcome, unityExitCode: 0 }).result, 'MissingXml');
+  assert.equal(readVerification(124, null, '', [], { ...outcome, timedOut: true, unityExitCode: 124 }).result, 'TestTimeout');
 });
 test('readiness requires two genuine verified cycles and Golden Path', () => {
   const row = { verification: { passed: true }, decision: { testProfile: 'golden-path' } };
@@ -122,4 +123,71 @@ test('a hanging process is killed on timeout and on STOP', async () => {
     for (const [name, options] of [['timeout', { timeoutMs: 50 }], ['stop', { timeoutMs: 10000, stopped: () => true }]])
       await assert.rejects(runProcess(process.execPath, ['-e', 'setInterval(()=>{},10000)'], { cwd: dir, prefix: path.join(dir, name), ...options }), /timeout|STOP/);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a task stop proposal cannot end the session without controller approval', async () => {
+  const worked = [];
+  const rows = await cycleLoop({ maxCycles: 3, deadline: Date.now() + 10000, stopped: () => false,
+    decide: async (_history, index) => index === 0 ? { action: 'stop', task: 'one test timed out' } : { action: 'work', task: 'independent lab work' },
+    work: async decision => { worked.push(decision.task); return {}; }, verify: async () => ({ passed: true }) });
+  assert.equal(worked.length, 2);
+  assert.equal(rows[0].verification.result, 'StopRejected');
+});
+test('recoverable child failures retain diagnostics and dispatch another task', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'night-recovery-'));
+  try {
+    const rows = await cycleLoop({ maxCycles: 2, deadline: Date.now() + 10000, stopped: () => false,
+      decide: async (_history, index) => ({ task: `work-${index}`, issueKey: `issue-${index}` }),
+      work: async (_decision, index) => {
+        const result = await runProcess(process.execPath, ['-e', `process.exit(${index === 0 ? 3 : 0})`], { cwd: dir, prefix: path.join(dir, `child-${index}`), timeoutMs: 2000 });
+        if (result.exitCode) throw Object.assign(new Error('ordinary child task failed'), { recoverable: true, result: 'WorkerFailed', details: result });
+        return result;
+      }, verify: async () => ({ passed: true, executed: 1 }) });
+    assert.equal(rows.length, 2);
+    assert.equal(rows[0].verification.passed, false);
+    assert.equal(rows[0].verification.result, 'WorkerFailed');
+    assert.equal(rows[1].verification.passed, true);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+test('two failed attempts block only their issue and independent work continues', async () => {
+  const worked = [];
+  const rows = await cycleLoop({ maxCycles: 4, deadline: Date.now() + 10000, stopped: () => false,
+    decide: async (_history, index) => ({ task: `attempt-${index}`, issueKey: index < 3 ? 'broken' : 'independent' }),
+    work: async decision => { worked.push(decision.issueKey); return {}; },
+    verify: async decision => ({ passed: decision.issueKey === 'independent', result: decision.issueKey === 'independent' ? 'Passed' : 'Failed' }) });
+  assert.deepEqual(worked, ['broken', 'broken', 'independent']);
+  assert.equal(rows[1].blocked, true);
+  assert.equal(rows[2].verification.result, 'BlockedIssue');
+  assert.equal(rows[3].verification.passed, true);
+});
+test('the final fifteen minutes prohibit normal task dispatch', async () => {
+  const rows = await cycleLoop({ maxCycles: 2, deadline: Date.now() + 14 * 60000, reserveMs: 15 * 60000, stopped: () => false,
+    decide: () => assert.fail('long task must not start in cleanup reserve') });
+  assert.equal(rows.length, 0);
+});
+test('real recovery smoke survives child exit, timeout and rejected stop with original FAILs intact', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'night-smoke-'));
+  try {
+    const rows = await recoverySmoke(dir);
+    assert.deepEqual(rows.map(r => r.verification.result), ['WorkerFailed', 'ProcessTimeout', 'StopRejected', 'ControllerProbePassed']);
+    assert.equal(fs.readFileSync(rows[3].work.stdout, 'utf8'), 'recovered');
+    assert.equal(JSON.parse(fs.readFileSync(path.join(dir, 'recovery-probe.json'))).length, 4);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+test('quota failure is fatal but an ordinary child error remains recoverable', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'night-quota-'));
+  try {
+    const stderr = path.join(dir, 'stderr.log'), output = path.join(dir, 'missing.json');
+    fs.writeFileSync(stderr, 'ordinary task error');
+    assert.throws(() => checkTaskProcess({ exitCode: 1, stderr }, output, 'Worker'), error => error.recoverable === true);
+    fs.writeFileSync(stderr, 'You have hit your usage limit');
+    assert.throws(() => checkTaskProcess({ exitCode: 1, stderr }, output, 'Worker'), error => !error.recoverable && /quota/.test(error.message));
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+test('an explicit morning cutoff shortens the original session and cannot extend its budget', () => {
+  const start = '2026-10-27T22:47:35.881Z', now = Date.parse('2026-10-27T23:00:00Z');
+  assert.equal(sessionDeadline(start, 5, '2026-10-28T06:00:00+03:00', now), Date.parse('2026-10-28T03:00:00Z'));
+  assert.equal(sessionDeadline(start, 5, '2026-10-28T08:00:00+03:00', now), Date.parse('2026-10-28T03:47:35.881Z'));
+  assert.throws(() => sessionDeadline(start, 5, 'not a date', now), /deadline/);
+  assert.throws(() => sessionDeadline(start, 5, '2026-10-27T22:00:00Z', now), /deadline/);
 });

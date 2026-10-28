@@ -49,6 +49,8 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
     private ShootingBuild selectedBuild = ShootingBuild.Mixed;
     private OrbitalWeaponSettings installingProfile;
     private readonly Dictionary<int, OrbitalWeaponSettings> weaponProfiles = new();
+    // Null means use the selected build; an empty dictionary is an intentionally empty lab loadout.
+    private Dictionary<(int ring, int mount), (OrbitalWeaponSettings profile, OrbitalModuleKind kind)> sandboxWeapons;
     [Header("Distant test shooter")]
     public GameObject TestShooterPrefab;
     public Vector2 TestShooterPosition = new(7f, 0f);
@@ -79,6 +81,8 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
     [Range(0, 10)] public int ModulePierceBonus = 2;
     [Range(1f, 30f)] public float ModuleMultishotAngle = 6f;
     private bool restoringLabBuild;
+    // Explicit sandbox choices only; never capture reward upgrades or transient rotation state.
+    private readonly Dictionary<int, (float? speed, int? direction, float? radius)> sandboxRingSettings = new();
     internal bool IsRestoringLabBuild => restoringLabBuild;
 
     public void SetFixedDirection(bool value) => FixedDirection = value;
@@ -121,6 +125,7 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
         tacticalPreset = name; tacticalConfiguration = Telemetry.Configuration();
         SelectSandboxWeapon(Station.Rings[0].Mounts[0].Module.StableModuleId);
         SandboxMessage = name == "MIXED" ? "Пистолеты, дробовик и снайперка с разными модулями." : "Четыре пистолета. Углы изменены, часы и модули сохранены.";
+        RememberSandboxWeapons();
     }
     public int SandboxSelectedWeaponId { get; private set; }
     public int SandboxTab { get; private set; }
@@ -160,7 +165,9 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
         if (!PrepareSandboxEdit() || SandboxWeapon == null) return false;
         Placement.Cancel();
         bool removed = Station.RemoveModule(SandboxSelectedWeaponId);
+        if (!removed) return false;
         weaponProfiles.Remove(SandboxSelectedWeaponId);
+        RememberSandboxWeapons();
         SandboxSelectedWeaponId = 0; WeaponModules.ClearPresetLabel();
         SandboxMessage = "Оружие убрано. Выберите свободное кольцо и новое оружие.";
         return removed;
@@ -198,6 +205,7 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
             }
             if (!placed) { Placement.Cancel(); Station.RemoveModule(module.StableModuleId); SandboxMessage = "Нет места с безопасным зазором."; return false; }
             WeaponModules.ClearPresetLabel(); SelectSandboxWeapon(module.StableModuleId);
+            RememberSandboxWeapons();
             SandboxMessage = "Установлено. «Переместить» — выбрать другой угол."; return true;
         }
         finally { installingProfile = null; }
@@ -221,11 +229,29 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
         {
             var previousOrders = Station.Rings.ToDictionary(r => r, r => r.State.Order);
             if (Station.Rings.Count <= 1 || !Station.RemoveRing(SandboxRing.RingId, out _)) return false;
+            var survivingSettings = Station.Rings
+                .Where(r => sandboxRingSettings.ContainsKey(previousOrders[r]))
+                .ToDictionary(r => r.State.Order, r => sandboxRingSettings[previousOrders[r]]);
+            sandboxRingSettings.Clear();
+            foreach (var entry in survivingSettings) sandboxRingSettings.Add(entry.Key, entry.Value);
             Placement.ReindexAfterRingRemoval(previousOrders);
             SandboxRingIndex = Mathf.Clamp(SandboxRingIndex, 0, Station.Rings.Count - 1);
             if (SandboxWeapon == null) SandboxSelectedWeaponId = 0;
         }
+        // Remember only the edited base geometry, not animated/reward-expanded runtime radii.
+        foreach (var ring in Station.Rings)
+        {
+            sandboxRingSettings.TryGetValue(ring.State.Order, out var settings);
+            sandboxRingSettings[ring.State.Order] = (settings.speed, settings.direction, ring.State.Radius);
+        }
+        RememberSandboxWeapons();
         BuildRingCount = Station.Rings.Count; WeaponModules.ClearPresetLabel(); return true;
+    }
+    private void RememberSandboxWeapons()
+    {
+        sandboxWeapons = Station.Modules.ToDictionary(
+            m => (m.CurrentMount.Ring.State.Order, m.CurrentMount.MountIndex),
+            m => (weaponProfiles[m.StableModuleId], m.Kind));
     }
     private static void FinishSandboxRingPresentation(OrbitalRingRuntime ring)
     {
@@ -239,9 +265,16 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
         if (!PrepareSandboxEdit() || SandboxRing == null) return;
         SandboxRing.State.BaseRotationSpeed = Mathf.Clamp(speed, 10f, 180f) /
             Mathf.Pow(1f + OrbitalProgressionConfig.Default.SpeedIncrement, SandboxRing.State.SpeedUpgradeLevel);
+        sandboxRingSettings.TryGetValue(SandboxRing.State.Order, out var settings);
+        sandboxRingSettings[SandboxRing.State.Order] = (SandboxRing.State.BaseRotationSpeed, settings.direction, settings.radius);
     }
     public void SetSandboxRingDirection(int direction)
-    { if (PrepareSandboxEdit() && SandboxRing != null) SandboxRing.State.Direction = direction < 0 ? -1 : 1; }
+    {
+        if (!PrepareSandboxEdit() || SandboxRing == null) return;
+        SandboxRing.State.Direction = direction < 0 ? -1 : 1;
+        sandboxRingSettings.TryGetValue(SandboxRing.State.Order, out var settings);
+        sandboxRingSettings[SandboxRing.State.Order] = (settings.speed, SandboxRing.State.Direction, settings.radius);
+    }
     public void ApplySandboxLayout(string name)
     {
         if (!PrepareSandboxEdit()) return;
@@ -407,6 +440,7 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
     public void SelectShootingBuild(ShootingBuild build)
     {
         if (!CanEdit()) return;
+        if (!restoringLabBuild) sandboxWeapons = null;
         if (!restoringLabBuild) WeaponModules.BeginLoadout();
         Placement.LeaveComparison();
         // Build callbacks run as soon as Ready becomes true, before this controller's next Update.
@@ -459,12 +493,56 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
         restoringLabBuild = true;
         try
         {
-            if (WeaponModules.ActivePreset != null) BuildLabPistols(WeaponModules.ActivePreset == "A" ? 4 : WeaponModules.ActivePreset == "B" ? 1 : 2);
+            // Preset builders only populate the first ring; create the selected ring count first.
+            while (Station.Rings.Count < Mathf.Clamp(BuildRingCount, 1, 3) && Station.AddRing() != null) { }
+            // Placement builders must validate remembered angles against the edited geometry.
+            foreach (var ring in Station.Rings)
+                if (sandboxRingSettings.TryGetValue(ring.State.Order, out var settings))
+                {
+                    if (settings.radius.HasValue) ring.State.Radius = settings.radius.Value;
+                }
+            if (sandboxWeapons != null) RestoreSandboxWeapons();
+            else if (WeaponModules.ActivePreset != null) BuildLabPistols(WeaponModules.ActivePreset == "A" ? 4 : WeaponModules.ActivePreset == "B" ? 1 : 2);
             else if (Placement.IsComparison) PreparePlacementComparison();
             else SelectShootingBuild(selectedBuild);
         }
         finally { restoringLabBuild = false; WeaponModules.FinishRestore(); }
+        foreach (var ring in Station.Rings)
+            if (sandboxRingSettings.TryGetValue(ring.State.Order, out var settings))
+            {
+                if (settings.speed.HasValue) ring.State.BaseRotationSpeed = settings.speed.Value;
+                if (settings.direction.HasValue) ring.State.Direction = settings.direction.Value;
+            }
         Placement.Synchronize();
+    }
+
+    private void RestoreSandboxWeapons()
+    {
+        if (prototypeStation != Station) UpdateCenterPrototype();
+        ClearModules(); weaponProfiles.Clear();
+        foreach (var ring in Station.Rings)
+        {
+            int count = Placement.RememberedMountCount(ring.State.Order);
+            while (ring.MountCount < count)
+            {
+                if (ring.MountCount == ring.MountCapacity && !Station.UpgradeRingCapacity(ring.RingId))
+                    throw new System.InvalidOperationException("Cannot restore lab mount capacity.");
+                if (!Station.AddMount(ring.RingId, out _))
+                    throw new System.InvalidOperationException("Cannot restore lab mount.");
+            }
+        }
+        Placement.Synchronize();
+        foreach (var entry in sandboxWeapons.OrderBy(e => e.Key.ring).ThenBy(e => e.Key.mount))
+        {
+            var ring = Station.Rings.Single(r => r.State.Order == entry.Key.ring);
+            installingProfile = entry.Value.profile;
+            try
+            {
+                if (!Station.InstallModule(entry.Value.kind, ring.RingId, entry.Key.mount, out string error))
+                    throw new System.InvalidOperationException($"Cannot restore lab weapon R{entry.Key.ring}:M{entry.Key.mount}: {error}");
+            }
+            finally { installingProfile = null; }
+        }
     }
 
     private bool PreparePlacementComparison()
@@ -481,6 +559,7 @@ public sealed class EnemyOrbitalLabController : OrbitalLabSession, IOrbitalComba
     private bool BuildLabPistols(int count)
     {
         if (!CanEdit()) return false;
+        if (!restoringLabBuild) sandboxWeapons = null;
         if (prototypeStation != Station) UpdateCenterPrototype();
         var ring = Station.Rings[0];
         Placement.Cancel();

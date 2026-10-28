@@ -26,6 +26,7 @@ namespace Subject42.Visuals
     {
         private static LiveVisualStudio instance;
         private const string Pref = "Subject42.LiveVisualStudio.";
+        private const int MaxProfileJsonCharacters = 4 * 1024 * 1024;
         private static readonly CultureInfo Invariant = CultureInfo.InvariantCulture;
         private static readonly Color Background = new(.035f, .045f, .06f, .97f);
         private static readonly Color RowColor = new(.085f, .105f, .135f, 1f);
@@ -446,9 +447,12 @@ namespace Subject42.Visuals
         }
         private void SaveProfile(bool production)
         {
-            string name = ProfileName(); Directory.CreateDirectory(ProfileDirectory);
+            string name = ProfileName();
+            string json = runtime.Export(name);
+            ValidateProfileText(json);
+            Directory.CreateDirectory(ProfileDirectory);
             string path = Path.Combine(ProfileDirectory, name + ".json");
-            string json = runtime.Export(name); File.WriteAllText(path, json);
+            File.WriteAllText(path, json);
             var verified = JsonUtility.FromJson<VisualProfile>(File.ReadAllText(path)); verified.Validate();
 #if UNITY_EDITOR
             string assetPath = "Assets/_Project/Data/World/Presentation/Profiles/" + name + ".json";
@@ -471,12 +475,31 @@ namespace Subject42.Visuals
             SetStatus("JSON сохранён: " + path + (production ? "\nДля production перенесите JSON в Editor и нажмите «Применить»." : "") + "\nInstance-настройки исключены.");
 #endif
         }
-        private void LoadProfile() => LoadJson(File.ReadAllText(Path.Combine(ProfileDirectory, ProfileName() + ".json")));
+        private void LoadProfile()
+        {
+            using var reader = new StreamReader(Path.Combine(ProfileDirectory, ProfileName() + ".json"));
+            LoadJson(ReadProfileText(reader));
+        }
+        private static string ReadProfileText(TextReader reader)
+        {
+            var text = new System.Text.StringBuilder();
+            var buffer = new char[4096];
+            while (text.Length <= MaxProfileJsonCharacters)
+            {
+                int count = reader.Read(buffer, 0, Math.Min(buffer.Length, MaxProfileJsonCharacters + 1 - text.Length));
+                if (count == 0) break;
+                text.Append(buffer, 0, count);
+            }
+            return text.ToString();
+        }
+        private static void ValidateProfileText(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json) || json.Length > MaxProfileJsonCharacters)
+                throw new ArgumentException("JSON профиля пуст или превышает 4 194 304 символа.");
+        }
         private void LoadJson(string json)
         {
-            if (string.IsNullOrWhiteSpace(json) || json.Length > 8 * 1024 * 1024)
-                throw new ArgumentException("JSON профиля пуст или превышает 8 MiB.");
-            if (string.IsNullOrEmpty(json) || json.Length > 4 * 1024 * 1024) throw new ArgumentException("JSON пуст или превышает 4 MiB.");
+            ValidateProfileText(json);
             var profile = JsonUtility.FromJson<VisualProfile>(json); if (profile == null) throw new ArgumentException("Неверный JSON профиля.");
             runtime.Load(profile); RefreshValues(); SetStatus("Загружен профиль «" + profile.Name + "».");
         }

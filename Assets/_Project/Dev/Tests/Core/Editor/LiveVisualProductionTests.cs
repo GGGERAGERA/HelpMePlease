@@ -16,7 +16,6 @@ using Object = UnityEngine.Object;
 
 public sealed class LiveVisualProductionTests
 {
-    private const string Output = "Artifacts/GeneratedQA/LiveVisualStudio-20261027";
     [SetUp] public void Preserve() => CoreTestSupport.PreservePreferences();
     [UnityTearDown] public IEnumerator Cleanup() => CoreTestSupport.CleanupPlayMode();
 
@@ -33,6 +32,9 @@ public sealed class LiveVisualProductionTests
     // Create runtime locals and captured lambdas only after the domain reload.
     private static IEnumerator VerifyProductionScenario()
     {
+        string output = Path.Combine("Artifacts/GeneratedQA/LiveVisualStudio",
+            "run-" + System.DateTime.UtcNow.ToString("yyyyMMddTHHmmssfffZ") + "-" + System.Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(output);
         yield return CoreTestSupport.LoadBunker();
         RunSelectionManager.Instance.SelectCharacter(AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Data/Characters/01_Gera.asset"));
         var starter = Object.FindFirstObjectByType<BunkerRunStarter>();
@@ -82,11 +84,10 @@ public sealed class LiveVisualProductionTests
         var collider = one.GetComponent<Collider2D>();
         var colliderBounds = collider != null ? collider.bounds.size : Vector3.zero;
         float redAlpha = ((SpriteRenderer)redTarget.Component).color.a;
-        Directory.CreateDirectory(Output);
         var debugMenu = Object.FindFirstObjectByType<Subject42DebugMenu>();
         typeof(Subject42DebugMenu).GetMethod("ToggleHub", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(debugMenu, null);
         yield return null; yield return null;
-        yield return Capture("00-debug-hub.png");
+        yield return Capture(output, "00-debug-hub.png");
         typeof(Subject42DebugMenu).GetMethod("CloseHub", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(debugMenu, null);
         LiveVisualStudio.Open();
         var studio = Object.FindFirstObjectByType<LiveVisualStudio>();
@@ -94,7 +95,7 @@ public sealed class LiveVisualProductionTests
         selected.SetValue(studio, target);
         typeof(LiveVisualStudio).GetMethod("RefreshSelection", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(studio, null);
         yield return null; yield return null;
-        yield return Capture("01-current.png");
+        yield return Capture(output, "01-current.png");
 
         runtime.BeginEdit();
         runtime.Edit("Type", target, saturation, 0);
@@ -107,10 +108,10 @@ public sealed class LiveVisualProductionTests
         Assert.That(block.GetFloat("_StudioSaturation"), Is.Zero);
         Assert.That(sprite.color.a, Is.EqualTo(.6f).Within(.001f));
         Assert.That(((SpriteRenderer)redTarget.Component).color.a, Is.EqualTo(redAlpha), "Bomber must not inherit another type's settings.");
-        yield return Capture("02-desaturated.png");
+        yield return Capture(output, "02-desaturated.png");
 
         runtime.BeginEdit(); runtime.Edit("Type", target, saturation, 4);
-        yield return Capture("03-saturated.png");
+        yield return Capture(output, "03-saturated.png");
         Assert.That(target.Group, Is.EqualTo("Враги / Обычные"));
         Assert.That(redTarget.Group, Is.Not.EqualTo(target.Group));
         runtime.BeginEdit(); runtime.Edit("Group", target, saturation, 2.5f);
@@ -145,10 +146,7 @@ public sealed class LiveVisualProductionTests
         Assert.That(psEdited.emission.rateOverTimeMultiplier, Is.EqualTo(16f));
         Assert.That(psEdited.main.startSizeMultiplier, Is.EqualTo(.4f));
         Assert.That(psEdited.main.startLifetimeMultiplier, Is.EqualTo(1.5f));
-        var particlePrefab = runtime.Preset.LiveSources.Select(s => s.Prefab).First(p => p != null && p.GetComponent<ParticleSystem>() is { } ps &&
-            ps.main.stopAction == ParticleSystemStopAction.None && !ps.main.startSize3D &&
-            ps.main.startSize.mode == ParticleSystemCurveMode.Constant && p.GetComponents<MonoBehaviour>().Length == 0);
-        Assert.That(particlePrefab.GetComponent<ParticleSystem>() != null, Is.True);
+        var particlePrefab = SelectAuthoredPoolPrefab(runtime, output);
         Debug.Log("[LiveVisualStudio QA] Pool prefab=" + particlePrefab.name + "; systems=" +
             string.Join(", ", particlePrefab.GetComponentsInChildren<ParticleSystem>(true).Select(ps => ps.name + ":" + ps.main.stopAction)) +
             "; scripts=" + string.Join(", ", particlePrefab.GetComponentsInChildren<MonoBehaviour>(true).Where(b => b != null).Select(b => b.GetType().Name)));
@@ -188,29 +186,86 @@ public sealed class LiveVisualProductionTests
         Assert.That(reused, Is.SameAs(pooled));
         Assert.That(reused.PrimaryParticleSystem.main.startSizeMultiplier, Is.EqualTo(.25f), "A real pool reuse inherits Type overrides.");
         reused.Release(); pool.Dispose();
-        yield return Capture("04-light-and-particles.png");
+        yield return Capture(output, "04-light-and-particles.png");
 
         string json = runtime.Export("QA round trip");
-        File.WriteAllText(Output + "/round-trip.json", json);
+        File.WriteAllText(Path.Combine(output, "round-trip.json"), json);
         runtime.Reset("Type");
         Assert.That(runtime.Custom.Values, Is.Empty);
-        runtime.Load(JsonUtility.FromJson<VisualProfile>(File.ReadAllText(Output + "/round-trip.json")));
+        runtime.Load(JsonUtility.FromJson<VisualProfile>(File.ReadAllText(Path.Combine(output, "round-trip.json"))));
         yield return null;
         Assert.That(sprite.color.a, Is.EqualTo(.6f).Within(.001f));
         sprite.GetPropertyBlock(block); Assert.That(block.GetFloat("_StudioSaturation"), Is.EqualTo(4));
-        runtime.SetMode(VisualComparisonMode.Original); yield return Capture("05-git-original.png");
+        runtime.SetMode(VisualComparisonMode.Original); yield return Capture(output, "05-git-original.png");
         runtime.SetMode(VisualComparisonMode.Current); yield return null;
         Assert.That(sprite.sharedMaterial, Is.SameAs(originalMaterial));
         Assert.That(sprite.color.a, Is.EqualTo(alpha.Current).Within(.001f));
-        runtime.SetMode(VisualComparisonMode.Custom); yield return Capture("06-custom-restored.png");
+        runtime.SetMode(VisualComparisonMode.Custom); yield return Capture(output, "06-custom-restored.png");
         foreach (var pair in authored) Assert.That(File.ReadAllBytes(pair.Key), Is.EqualTo(pair.Value), pair.Key + " was changed during live tuning.");
-        File.WriteAllText(Output + "/scenario.txt", "Runtime checks passed: production startup, two enemy types, saturation/HDR/contrast/alpha, new spawn and reuse, particles, Global Light 2D, JSON round trip, Original/Current/Custom, authored asset byte equality.\nPhysical input and PNG appearance require separate observation.\n");
+        File.WriteAllText(Path.Combine(output, "scenario.txt"), "Runtime checks passed: production startup, two enemy types, saturation/HDR/contrast/alpha, new spawn and reuse, particles, Global Light 2D, JSON round trip, Original/Current/Custom, authored asset byte equality.\nPhysical input and PNG appearance require separate observation.\n");
     }
 
-    private static IEnumerator Capture(string name)
+    private static GameObject SelectAuthoredPoolPrefab(LiveVisualRuntime runtime, string output)
+    {
+        // Materialize once: C# property patterns do not test Unity's overloaded null.
+        var candidates = runtime.Preset.LiveSources.Select(source => new
+        {
+            source.AssetPath,
+            Prefab = source.Prefab,
+            Root = source.Prefab != null ? source.Prefab.GetComponent<ParticleSystem>() : null
+        }).ToArray();
+        string diagnosticPath = Path.Combine(output, "pool-source.txt");
+        void Record(string message)
+        {
+            File.AppendAllText(diagnosticPath, message + "\n");
+            Debug.Log("[LiveVisualStudio QA] " + message);
+        }
+        foreach (var candidate in candidates)
+            Record("catalog=" + candidate.AssetPath + "; prefab=" + DescribeSourceObject(candidate.Prefab) +
+                "; cachedRoot=" + DescribeSourceObject(candidate.Root));
+
+        var selected = candidates.FirstOrDefault(c => PoolSafeRoot(c.Prefab, c.Root));
+        Assert.That(selected, Is.Not.Null, "No authored pool-safe root ParticleSystem; see " + diagnosticPath);
+        var loaded = AssetDatabase.LoadAssetAtPath<GameObject>(selected.AssetPath);
+        var loadedRoot = loaded != null ? loaded.GetComponent<ParticleSystem>() : null;
+        Record("selected=" + selected.AssetPath + "; loaded=" + DescribeSourceObject(loaded) +
+            "; loadedRoot=" + DescribeSourceObject(loadedRoot) +
+            "; sameManaged=" + ReferenceEquals(selected.Prefab, loaded) + "; sameUnity=" + (selected.Prefab == loaded));
+        Assert.That(loaded != null && EditorUtility.IsPersistent(loaded), Is.True,
+            "Catalog path must resolve to a persistent authored prefab; see " + diagnosticPath);
+        Assert.That(AssetDatabase.GetAssetPath(loaded), Is.EqualTo(selected.AssetPath), diagnosticPath);
+        Assert.That(PoolSafeRoot(loaded, loadedRoot), Is.True,
+            "The same authored path must satisfy every original pool suitability criterion; see " + diagnosticPath);
+        // Only replace a catalog reference when identity/persistence proves it is not the authored asset.
+        bool catalogIsAuthored = selected.Prefab == loaded && EditorUtility.IsPersistent(selected.Prefab) &&
+            AssetDatabase.GetAssetPath(selected.Prefab) == selected.AssetPath;
+        Record("useExplicitAuthoredLoad=" + !catalogIsAuthored);
+        var root = catalogIsAuthored ? selected.Root : loadedRoot;
+        Assert.That(root != null, Is.True, "Selected cached root is Unity-null; see " + diagnosticPath);
+        return catalogIsAuthored ? selected.Prefab : loaded;
+    }
+
+    private static bool PoolSafeRoot(GameObject prefab, ParticleSystem root) =>
+        prefab != null && root != null && root.main.stopAction == ParticleSystemStopAction.None &&
+        !root.main.startSize3D && root.main.startSize.mode == ParticleSystemCurveMode.Constant &&
+        prefab.GetComponents<MonoBehaviour>().Length == 0;
+
+    private static string DescribeSourceObject(Object value)
+    {
+        string identity = "managedNull=" + ReferenceEquals(value, null) + "; unityNull=" + (value == null);
+        if (!ReferenceEquals(value, null)) identity += "; id=" + value.GetInstanceID();
+        if (value == null) return identity;
+        var go = value as GameObject;
+        if (go == null && value is Component component) go = component.gameObject;
+        return identity + "; asset=" + AssetDatabase.GetAssetPath(value) + "; persistent=" + EditorUtility.IsPersistent(value) +
+            (go == null ? "" : "; scene=" + go.scene.path + "; sceneValid=" + go.scene.IsValid() +
+                "; rootComponents=" + string.Join(",", go.GetComponents<Component>().Select(c => c == null ? "<missing>" : c.GetType().Name)));
+    }
+
+    private static IEnumerator Capture(string output, string name)
     {
         yield return null;
-        string path = Path.GetFullPath(Output + "/" + name);
+        string path = Path.GetFullPath(Path.Combine(output, name));
         if (File.Exists(path)) File.Delete(path); // Only this scenario's disposable QA capture.
         ScreenCapture.CaptureScreenshot(path);
         float deadline = Time.realtimeSinceStartup + 5;

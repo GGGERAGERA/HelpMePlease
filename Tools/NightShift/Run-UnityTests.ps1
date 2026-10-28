@@ -13,6 +13,10 @@ function Restore-TaskPreferences {
     if (Get-Process Unity -ErrorAction SilentlyContinue) { throw 'Close Unity before restoring PlayerPrefs.' }
     $taskSaved = Import-Clixml -LiteralPath $taskBackup
     foreach ($taskEntry in $taskSaved) {
+        if ($taskEntry.Exists -eq $false) {
+            [Microsoft.Win32.Registry]::CurrentUser.DeleteSubKeyTree($taskEntry.Path, $false)
+            continue
+        }
         $taskKey = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey($taskEntry.Path)
         try {
             foreach ($taskName in $taskKey.GetValueNames()) {
@@ -55,7 +59,7 @@ $taskSaved = foreach ($taskPath in $taskPaths) {
             })
         } finally { $taskKey.Dispose() }
     }
-    [pscustomobject]@{ Path = $taskPath; Values = $taskValues }
+    [pscustomobject]@{ Path = $taskPath; Values = $taskValues; Exists = ($null -ne $taskKey) }
 }
 $taskSaved | Export-Clixml -LiteralPath $taskBackup
 # TMP updates shared serialized material ratios during Play Mode. Preserve the
@@ -63,6 +67,8 @@ $taskSaved | Export-Clixml -LiteralPath $taskBackup
 [IO.File]::WriteAllBytes((Join-Path $Output 'damage-font-before.bin'), [IO.File]::ReadAllBytes((Join-Path $Project 'Assets/_Project/Fonts/Subject42 Damage Numbers.mat')))
 $taskProcess = $null
 $taskExit = 1
+$taskTimedOut = $false
+$taskCancelled = $false
 try {
     $taskArgs = @('-batchmode', '-projectPath', ('"' + $Project + '"'), '-runTests', '-testPlatform', 'EditMode', '-testFilter', ('"' + $Filter + '"'), '-testResults', ('"' + (Join-Path $Output 'results.xml') + '"'), '-logFile', ('"' + (Join-Path $Output 'editor.log') + '"'))
     $taskProcess = Start-Process -FilePath $Unity -ArgumentList $taskArgs -PassThru -WindowStyle Hidden
@@ -71,19 +77,16 @@ try {
         if ([DateTime]::UtcNow -ge $taskDeadline -or (Test-Path -LiteralPath (Join-Path $Project 'Artifacts/GeneratedQA/NightShift/STOP'))) {
             Stop-Process -Id $taskProcess.Id -Force
             $taskProcess.WaitForExit()
-            throw 'Unity verification stopped or timed out; this is not a passing test result.'
+            $taskCancelled = Test-Path -LiteralPath (Join-Path $Project 'Artifacts/GeneratedQA/NightShift/STOP')
+            $taskTimedOut = -not $taskCancelled
+            break
         }
     }
-    $taskExit = $taskProcess.ExitCode
+    $taskExit = if ($taskTimedOut) { 124 } elseif ($taskCancelled) { 125 } else { $taskProcess.ExitCode }
 } finally {
     if ($null -ne $taskProcess -and -not $taskProcess.HasExited) { Stop-Process -Id $taskProcess.Id -Force; $taskProcess.WaitForExit() }
     Restore-TaskPreferences
 }
-if (Test-Path -LiteralPath (Join-Path $Output 'results.xml')) {
-    # A malformed or partial XML document must fail even if Unity returned exit zero.
-    [xml]$taskXml = Get-Content -LiteralPath (Join-Path $Output 'results.xml') -Raw -Encoding utf8
-    if ($taskXml.DocumentElement.Name -ne 'test-run') { throw 'Unexpected test result XML root.' }
-}
-[pscustomobject]@{ completed = $true; preferencesRestored = $true; unityExitCode = $taskExit } |
+[pscustomobject]@{ completed = $true; preferencesRestored = $true; unityExitCode = $taskExit; timedOut = $taskTimedOut; cancelled = $taskCancelled } |
     ConvertTo-Json | Set-Content -LiteralPath (Join-Path $Output 'wrapper-outcome.json') -Encoding utf8
 exit $taskExit
