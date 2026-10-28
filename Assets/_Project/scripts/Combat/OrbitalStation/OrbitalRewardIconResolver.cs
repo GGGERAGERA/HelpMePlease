@@ -30,10 +30,13 @@ namespace Subject42.Combat.OrbitalStation
             OrbitalRewardProvider.GetModuleKind(kind) is OrbitalModuleKind module
                 ? Resolve(module) : kind switch
         {
+            OrbitalRewardKind.DamageLink => new Icon(OrbitalPresentationConfig.Active.RingDamageIcon, Color.white),
+            OrbitalRewardKind.FireRateLink => new Icon(OrbitalPresentationConfig.Active.RingSpeedIcon, Color.white),
+            OrbitalRewardKind.ExtraShotLink => Resolve(OrbitalModuleKind.LinkNode),
+            OrbitalRewardKind.RicochetLink => new Icon(OrbitalPresentationConfig.Active.RingIcon, Color.white),
             OrbitalRewardKind.ModuleDamage => Resolve(OrbitalModuleKind.Pistol),
             OrbitalRewardKind.ShootingDamage or OrbitalRewardKind.ShootingRate => Resolve(OrbitalModuleKind.Pistol),
             OrbitalRewardKind.ContactDamage or OrbitalRewardKind.ContactSize => Resolve(OrbitalModuleKind.Saw),
-            OrbitalRewardKind.CoreUpgrade => new Icon(OrbitalPresentationConfig.Active.CoreIcon, Color.white),
             OrbitalRewardKind.AddMount => new Icon(OrbitalPresentationConfig.Active.NewMountIcon, Color.white),
             OrbitalRewardKind.RingCapacity => new Icon(OrbitalPresentationConfig.Active.RingCapacityIcon, Color.white),
             OrbitalRewardKind.RingPower => new Icon(OrbitalPresentationConfig.Active.RingDamageIcon, Color.white),

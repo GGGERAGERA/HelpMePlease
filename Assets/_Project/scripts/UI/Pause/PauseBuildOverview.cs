@@ -85,11 +85,11 @@ public sealed class PauseBuildOverview : MonoBehaviour
         displayedItems = items;
         hasBuild = true;
         var localization = LocalizationService.EnsureExists();
-        ringsTitle.text = $"{localization.Get("pause.station")}  /  {localization.Get("pause.rings")}: {state?.Rings.Count ?? 0}";
+        ringsTitle.text = $"{localization.Get("pause.station")}  /  {localization.Get("pause.rings")}: {(state == null ? 0 : state.UsesSegmentedOrbit ? state.UnlockedSegmentedLevels : state.Rings.Count)}";
         var text = new StringBuilder();
         if (state != null)
         {
-            foreach (var ring in state.Rings.OrderBy(r => r.Order))
+            foreach (var ring in state.Rings.Where(state.IsRingActive).OrderBy(r => r.Order))
             {
                 string color = ColorUtility.ToHtmlStringRGB(OrbitalPresentationConfig.Active.GetRingTier(ring.VisualTier).BaseColor);
                 string tier = ring.VisualTier switch { 1 => LocalizationService.EnsureExists().Get("pause.tier1"), 2 => LocalizationService.EnsureExists().Get("pause.tier2"), 3 => LocalizationService.EnsureExists().Get("pause.tier3"), _ => LocalizationService.EnsureExists().Get("pause.tier4") };
@@ -109,9 +109,7 @@ public sealed class PauseBuildOverview : MonoBehaviour
         text.Clear();
         if (state != null)
         {
-            if (state.CoreState.Level > 0)
-                text.AppendLine(string.Format(localization.Get("pause.coreWaves"), state.CoreState.Level));
-            AppendUpgrade(text, LocalizationService.EnsureExists().Get("pause.matrix"), state.CoreState.LinkMatrixUpgradeLevel);
+            AppendUpgrade(text, LocalizationService.EnsureExists().Get("pause.matrix"), state.LinkMatrixUpgradeLevel);
         }
         coreText.text = text.ToString().TrimEnd();
         coreSection.SetActive(text.Length > 0);

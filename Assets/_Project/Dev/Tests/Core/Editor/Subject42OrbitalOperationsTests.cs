@@ -161,10 +161,9 @@ public sealed class Subject42OrbitalOperationsTests
         Assert.That(state.FindLinkPartner(a.StableModuleId), Is.EqualTo(b.StableModuleId));
         Assert.That(state.MoveModule(a.StableModuleId, ring.StableRingId, 0, out _), Is.True);
         Assert.That(state.FindLinkPartner(a.StableModuleId), Is.EqualTo(b.StableModuleId));
-        Assert.That(state.UpgradeCore(), Is.True);
+
         Assert.That(state.UpgradeLinkMatrix(), Is.True);
-        Assert.That(state.CoreState.Level, Is.EqualTo(1));
-        Assert.That(state.CoreState.LinkMatrixUpgradeLevel, Is.EqualTo(1));
+        Assert.That(state.LinkMatrixUpgradeLevel, Is.EqualTo(1));
         Assert.That(state.RemoveModule(a.StableModuleId), Is.True);
         Assert.That(state.FindLinkPartner(b.StableModuleId), Is.Zero);
         Assert.That(state.Validate(out string error), Is.True, error);
@@ -222,7 +221,7 @@ public sealed class Subject42OrbitalOperationsTests
             Assert.That(state.UpgradeModuleDamage(arc.StableModuleId), Is.True);
             Assert.That(state.UpgradeRingPower(1), Is.True);
             Assert.That(state.UpgradeRingSpeed(second.StableRingId), Is.True);
-            Assert.That(state.UpgradeCore(), Is.True);
+
             Assert.That(state.AddMount(second.StableRingId, out _), Is.True);
             Assert.That(state.InstallLinkPair(second.StableRingId, 0, second.StableRingId, 1, out _, out _, out _), Is.True);
             Assert.That(state.UpgradeLinkMatrix(), Is.True);

@@ -72,8 +72,7 @@ public sealed class GoldenPathResult
             OrbitalRewardKind.RingPower => after.Rings.Sum(r => r.PowerUpgradeLevel) - before.Rings.Sum(r => r.PowerUpgradeLevel) == 1,
             OrbitalRewardKind.RingSpeed => after.Rings.Sum(r => r.SpeedUpgradeLevel) - before.Rings.Sum(r => r.SpeedUpgradeLevel) == 1,
             OrbitalRewardKind.ModuleDamage => after.Modules.Sum(m => m.DamageLevel) - before.Modules.Sum(m => m.DamageLevel) == 1,
-            OrbitalRewardKind.CoreUpgrade => after.CoreState.Level - before.CoreState.Level == 1,
-            OrbitalRewardKind.LinkMatrix => after.CoreState.LinkMatrixUpgradeLevel - before.CoreState.LinkMatrixUpgradeLevel == 1,
+            OrbitalRewardKind.LinkMatrix => after.LinkMatrixUpgradeLevel - before.LinkMatrixUpgradeLevel == 1,
             _ => false
         };
         return delta && after.Revision == before.Revision + 1;

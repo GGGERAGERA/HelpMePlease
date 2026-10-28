@@ -34,7 +34,7 @@ public sealed class RewardStylePresentationTests
         Time.timeScale = 0;
         var panel = Object.FindFirstObjectByType<UpgradePanelView>(FindObjectsInactive.Include);
         using var provider = new OrbitalRewardProvider(UpgradeManager.Instance.AllUpgrades.ToArray());
-        var kinds = new[] { OrbitalRewardKind.Pistol, OrbitalRewardKind.CoreUpgrade,
+        var kinds = new[] { OrbitalRewardKind.Pistol, OrbitalRewardKind.NewRing,
             OrbitalRewardKind.RingPower, OrbitalRewardKind.MoveSpeed };
         var rewards = kinds.Select(kind => provider.GetDefinition(kind)).Cast<UpgradeData>().ToArray();
         panel.Show(2, rewards.Take(3).ToArray(), _ => { });
@@ -95,7 +95,7 @@ public sealed class RewardStylePresentationTests
         var state = JsonUtility.FromJson<OrbitalRunState>(JsonUtility.ToJson(RunStateManager.Instance.OrbitalStationState));
         var rewards = new List<UpgradeData>();
         foreach (OrbitalRewardKind kind in Enum.GetValues(typeof(OrbitalRewardKind)))
-            if (OrbitalRewardProvider.IsDemoReward(kind) && kind != OrbitalRewardKind.CoreUpgrade)
+            if (OrbitalRewardProvider.IsDemoReward(kind))
             {
                 var presentationState = JsonUtility.FromJson<OrbitalRunState>(JsonUtility.ToJson(state));
                 // Capacity cards are offered only after all mounts have been built.
@@ -103,11 +103,6 @@ public sealed class RewardStylePresentationTests
                     presentationState.Rings[0].MountCount = presentationState.Rings[0].MountCapacity;
                 rewards.Add(Object.Instantiate(provider.GetDefinition(kind, presentationState)));
             }
-        for (int level = 0; level < 3; level++)
-        {
-            state.CoreState.Level = level;
-            rewards.Add(Object.Instantiate(provider.GetDefinition(OrbitalRewardKind.CoreUpgrade, state)));
-        }
         Directory.CreateDirectory(Output);
         File.WriteAllLines(Output + "/reward-card-texts.ru.txt", rewards.Select(reward =>
             Plain(LocalizationService.Instance.Get(reward.upgradeName)) + " — " +

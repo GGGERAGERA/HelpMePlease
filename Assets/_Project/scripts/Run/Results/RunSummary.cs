@@ -12,7 +12,6 @@ public sealed class RunSummary
     public int PlayerLevel = 1;
     public int OrbitalRingCount;
     public int OrbitalModuleCount;
-    public int OrbitalCoreLevel;
     public ExpeditionCoreRewards Cores;
     public bool EscapeProtocolCompleted;
 

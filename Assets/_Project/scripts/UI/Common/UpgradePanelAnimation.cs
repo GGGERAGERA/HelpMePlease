@@ -18,6 +18,22 @@ public class UpgradePanelAnimation : MonoBehaviour
         StartCoroutine(Animate());
     }
 
+    public void SetConstructorCovered(bool covered)
+    {
+        StopAllCoroutines();
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = covered ? 0f : 1f;
+            canvasGroup.interactable = canvasGroup.blocksRaycasts = !covered;
+        }
+        if (dimmerCanvasGroup != null)
+        {
+            dimmerCanvasGroup.alpha = covered ? 0f : dimmerTargetAlpha;
+            dimmerCanvasGroup.blocksRaycasts = !covered;
+        }
+        if (panel != null) panel.localScale = Vector3.one;
+    }
+
     private void SetAnimationStartState()
     {
         if (canvasGroup != null)

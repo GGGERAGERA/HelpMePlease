@@ -127,14 +127,6 @@ namespace Subject42.Combat.OrbitalStation
         }
 
         public virtual void ActivateCombat() { }
-        public virtual void OnCorePulse()
-        {
-            if (Mount == null) return;
-            float normalCooldown = Cooldown;
-            presentation.Trigger();
-            ActivateCombat();
-            Cooldown = normalCooldown;
-        }
         protected void TriggerPresentation() => presentation.Trigger();
         protected void ConfigureWeaponFeedback(Color color, bool preserveColors = false) => presentation.ConfigureWeaponFeedback(color, preserveColors);
         protected void WeaponRecoil(float strength) => presentation.WeaponRecoil(strength);

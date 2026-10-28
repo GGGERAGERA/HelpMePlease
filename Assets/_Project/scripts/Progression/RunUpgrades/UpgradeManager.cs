@@ -80,11 +80,13 @@ public sealed partial class UpgradeManager : MonoBehaviour
         if (station == null || !station.IsInitialized || !isActiveAndEnabled) return;
         boundOrbitalInput = station.InputOwner;
         boundOrbitalInput.BindRewardQueue(() => IsRewardQueueIdle, () => IsChoosingUpgrade);
+        station.Interaction.BindRewardPanel(upgradePanelView);
         station.CustomDrawingCompleted += ResumeAfterCustomDrawing;
     }
 
     private void UnbindOrbitalCapabilities()
     {
+        if (orbitalStation != null) orbitalStation.Interaction?.BindRewardPanel(null);
         boundOrbitalInput?.BindRewardQueue(null, null);
         boundOrbitalInput = null;
         if (orbitalStation != null) orbitalStation.CustomDrawingCompleted -= ResumeAfterCustomDrawing;

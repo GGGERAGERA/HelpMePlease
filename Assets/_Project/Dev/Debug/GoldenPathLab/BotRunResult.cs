@@ -56,7 +56,7 @@ public sealed class BotRunResult
         text.AppendLine("Rewards:\n" + string.Join("\n", RewardsTaken));
         if (FinalOrbital != null)
         {
-            text.AppendLine($"Final ORBITAL: rings {FinalOrbital.Rings.Count}, mounts {FinalOrbital.Rings.Sum(r => r.MountCount)}, core level {FinalOrbital.CoreState.Level}");
+            text.AppendLine($"Final ORBITAL: rings {FinalOrbital.Rings.Count}, mounts {FinalOrbital.Rings.Sum(r => r.MountCount)}");
             foreach (var group in FinalOrbital.Modules.GroupBy(m => m.ModuleType))
                 text.AppendLine($"{group.Key} x{group.Count()}");
         }

@@ -2103,7 +2103,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             ? "Arena placement: click ring, then a free mount"
             : "Runtime station is not ready");
         AddRow("Runtime", available
-                ? $"CORE {station.Core.Level} / RINGS {station.Rings.Count} / MODULES {station.Modules.Count}"
+                ? $"RINGS {station.Rings.Count} / MODULES {station.Modules.Count}"
                 : "NOT ACTIVE",
             available ? successColor : mutedColor, string.Empty, false, null);
         bool canLoadGrowth = available &&
@@ -2159,12 +2159,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
                 station.UpgradeRingCapacity(ringId);
                 RefreshCurrentTab();
             });
-        AddRow("Core I / II / III", available ? $"CORE {ToRomanLevel(station.Core.Level)}" : "NOT ACTIVE",
-            accentColor, "UP", canEdit && state.CanUpgradeCore(out _), () =>
-            {
-                station.UpgradeCore();
-                RefreshCurrentTab();
-            });
 
         RunStateManager manager = RunStateManager.Instance;
         OrbitalRunState runState = manager != null
@@ -2185,7 +2179,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         AddRow("Revision", runState?.Revision.ToString() ?? "-", mutedColor,
             string.Empty, false, null);
         AddRow("Core / Rings", runState != null
-                ? $"{runState.CoreState.Level} / {runState.Rings.Count}"
+                ? $"{runState.Rings.Count}"
                 : "-",
             mutedColor, string.Empty, false, null);
         AddRow("Mounts / Modules", runState != null
@@ -2275,8 +2269,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             OrbitalRewardKind.RingPower, rewards);
         AddOrbitalRewardDebugRow("Force New Mount Point",
             OrbitalRewardKind.AddMount, rewards);
-        AddOrbitalRewardDebugRow("Force Core I / II / III",
-            OrbitalRewardKind.CoreUpgrade, rewards);
         AddOrbitalRewardDebugRow("Force Ring Capacity",
             OrbitalRewardKind.RingCapacity, rewards);
         AddOrbitalRewardDebugRow("Force New Ring", OrbitalRewardKind.NewRing, rewards);
@@ -5194,13 +5186,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             $"Debug: {minimum:0.###}…{maximum:0.###}   Production: {production:0.###}";
     }
 
-    private static string ToRomanLevel(int level) => level switch
-    {
-        1 => "I",
-        2 => "II",
-        3 => "III",
-        _ => "—"
-    };
 
     private void AddEnemyReadabilityPresetStrip(
         ProductionSectorDebugController debug)

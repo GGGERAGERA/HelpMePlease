@@ -58,21 +58,6 @@ namespace Subject42.Visuals
                 AddTier(target, config, level, id, "PulseSpeed", "Частота пульсации", category, s => s.PulseSpeed, (s, x) => { s.PulseSpeed = x; return s; }, 20);
             }
 
-            const string core = "ORBITAL · Ядро";
-            VisualProperties.Color(target.Properties, "config.CoreCyan", "Цвет первой волны", core, () => config.CoreCyan, x => config.CoreCyan = x, 16);
-            VisualProperties.Color(target.Properties, "config.CoreViolet", "Цвет второй волны", core, () => config.CoreViolet, x => config.CoreViolet = x, 16);
-            VisualProperties.Color(target.Properties, "config.CoreGold", "Цвет третьей волны", core, () => config.CoreGold, x => config.CoreGold = x, 16);
-            Add(target, "config.CoreIdleHighlight", "Подсветка в покое", core, () => config.CoreIdleHighlight, x => config.CoreIdleHighlight = x, 0, 16);
-            Add(target, "config.CorePulseBrightness", "Яркость импульса", core, () => config.CorePulseBrightness, x => config.CorePulseBrightness = x, 0, 32);
-            Add(target, "config.CoreHaloSize", "Размер ореола", core, () => config.CoreHaloSize, x => config.CoreHaloSize = x, 0, 10);
-            Add(target, "config.CoreHaloPulseSize", "Размер ореола импульса", core, () => config.CoreHaloPulseSize, x => config.CoreHaloPulseSize = x, 0, 20);
-            Add(target, "config.CoreHaloIdleAlpha", "Alpha ореола на уровень", core, () => config.CoreHaloIdleAlpha, x => config.CoreHaloIdleAlpha = x, 0, .25f);
-            Add(target, "config.CoreHaloChargeAlpha", "Alpha заряда", core, () => config.CoreHaloChargeAlpha, x => config.CoreHaloChargeAlpha = x, 0, 1);
-            Add(target, "config.CoreHaloBrightness", "Яркость ореола", core, () => config.CoreHaloBrightness, x => config.CoreHaloBrightness = x, 0, 32);
-            Add(target, "config.CoreIdleParticleInterval", "Интервал частиц в покое", core, () => config.CoreIdleParticleInterval, x => config.CoreIdleParticleInterval = x, .005f, 10);
-            Add(target, "config.CoreChargeParticleInterval", "Интервал частиц заряда", core, () => config.CoreChargeParticleInterval, x => config.CoreChargeParticleInterval = x, .005f, 10);
-            Add(target, "config.CoreRayDuration", "Время луча", core, () => config.CoreRayDuration, x => config.CoreRayDuration = x, 0, 5);
-
             const string cannon = "ORBITAL · Оружейные эффекты";
             Add(target, "config.ShotHaloDuration", "Время ореола выстрела", cannon, () => config.ShotHaloDuration, x => config.ShotHaloDuration = x, 0, 5);
             Add(target, "config.ShotHaloAlpha", "Alpha ореола выстрела", cannon, () => config.ShotHaloAlpha, x => config.ShotHaloAlpha = x, 0, 1);
@@ -86,11 +71,11 @@ namespace Subject42.Visuals
             AddProjectile(target, "ShotgunProjectile", "Дробовик", config.ShotgunProjectile);
             AddProjectile(target, "SniperProjectile", "Снайпер", config.SniperProjectile);
             foreach (OrbitalFlashFamily family in Enum.GetValues(typeof(OrbitalFlashFamily)))
-                AddFlashFamily(target, config, family);
+                if (family != OrbitalFlashFamily.CoreRay) AddFlashFamily(target, config, family);
             foreach (var property in target.Properties)
             {
                 if (property.Id is "config.RingSurface.Pattern" or "config.RingSurface.DashCount") property.IsInteger = true;
-                if (property.Id is "config.ProjectileMuzzleDuration" or "config.ProjectileImpactDuration" or "config.CoreRayDuration")
+                if (property.Id is "config.ProjectileMuzzleDuration" or "config.ProjectileImpactDuration")
                     property.Note = "Базовое время для следующих вспышек. Активные вспышки регулирует множитель времени соответствующего семейства FlashLink.";
                 if (property.Id == "config.ShotHaloAlpha")
                     property.Note = "Пиковая alpha выстрела; существующая подсветка выбора сохраняет authored alpha как нижний предел.";
@@ -121,7 +106,6 @@ namespace Subject42.Visuals
                 OrbitalFlashFamily.ImpactSniper => "Попадание снайпера",
                 OrbitalFlashFamily.Impact => "Прочие попадания",
                 OrbitalFlashFamily.Arc => "Электрическая дуга",
-                OrbitalFlashFamily.CoreRay => "Луч ядра",
                 OrbitalFlashFamily.Relocation => "Подсказка переноса",
                 _ => "Прочие и лабораторные"
             });

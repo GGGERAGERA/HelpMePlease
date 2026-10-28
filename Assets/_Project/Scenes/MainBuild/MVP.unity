@@ -2559,6 +2559,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 1797467969}
     m_Modifications:
     - target: {fileID: 236803664453947053, guid: 3069e3a848c054a4d8e38f3c576c974a, type: 3}
+      propertyPath: segmentedOrbit
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 236803664453947053, guid: 3069e3a848c054a4d8e38f3c576c974a, type: 3}
       propertyPath: upgradeApplier
       value: 
       objectReference: {fileID: 46915855}

@@ -14,6 +14,7 @@ public class UpgradePanelView : MonoBehaviour
     [Header("Cards")]
     [SerializeField] private UpgradeCardView[] cardViews;
     public IReadOnlyList<UpgradeCardView> CardViews => cardViews;
+    public void SetConstructorCovered(bool covered) => panelAnimation.SetConstructorCovered(covered);
 
     [Header("Animation")]
     [SerializeField] private UpgradePanelAnimation panelAnimation;

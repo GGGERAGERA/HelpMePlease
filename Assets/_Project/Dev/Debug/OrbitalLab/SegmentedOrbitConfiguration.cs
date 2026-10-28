@@ -47,7 +47,7 @@ public sealed class SegmentedOrbitConfiguration
     public int MovingFrom { get; private set; } = -1;
     public int ConnectingFrom { get; private set; } = -1;
     public Link ConnectingModule { get; private set; }
-    public float RotationEnergy { get; private set; }
+    public float RotationEnergy => station != null ? station.RotationEnergy : lab.ManualRotationCapacity;
     public int Hovered { get; set; } = -1;
     public bool HoveredLink { get; set; }
     public bool Bound => station != null;
@@ -66,7 +66,6 @@ public sealed class SegmentedOrbitConfiguration
         for (int i = 0; i < Cells.Length; i++) connections.Add(new Connection(connections.Count,i,Next(i)));
         for (int i = 0; i < Cells.Length; i++) connections.Add(new Connection(connections.Count,i,Next(Next(i))));
         Links = connections.ToArray();
-        RotationEnergy = lab.ManualRotationCapacity;
         LoadPresetData(Preset);
     }
     public Cell At(int level, int position) => Cells[level * Positions + Wrap(position)];
@@ -297,19 +296,12 @@ public sealed class SegmentedOrbitConfiguration
     }
     public void TickManualRotation(float deltaTime, bool counterClockwise, bool clockwise, bool allowed)
     {
-        if (!Bound || Movement != Motion.Manual || !allowed || lab.Paused || deltaTime <= 0f) return;
-        RotationEnergy = Mathf.Clamp(RotationEnergy,0f,lab.ManualRotationCapacity);
-        if (!counterClockwise && !clockwise)
-        { RotationEnergy = Mathf.Min(lab.ManualRotationCapacity,RotationEnergy + lab.ManualRotationRecovery * deltaTime); return; }
-        if (counterClockwise == clockwise || RotationEnergy <= 0f) return;
-        float duration = lab.ManualRotationDrain > 0f ? Mathf.Min(deltaTime,RotationEnergy / lab.ManualRotationDrain) : deltaTime;
-        RotationEnergy = lab.ManualRotationDrain > 0f && RotationEnergy <= lab.ManualRotationDrain * deltaTime ?
-            0f : Mathf.Max(0f,RotationEnergy - lab.ManualRotationDrain * deltaTime);
-        float angle = lab.ManualRotationSpeed * duration * (counterClockwise ? 1f : -1f);
-        foreach (var ring in station.Rings)
-        { ring.State.CurrentPhase = Mathf.Repeat(ring.Phase + angle,360f); ring.Tick(0f); }
+        if (!Bound || Movement != Motion.Manual) return;
+        station.TickManualRotation(deltaTime, counterClockwise, clockwise, allowed && !lab.Paused,
+            lab.ManualRotationCapacity, lab.ManualRotationSpeed, lab.ManualRotationDrain, lab.ManualRotationRecovery);
     }
-    public void RefreshRotationCapacity() => RotationEnergy = Mathf.Clamp(RotationEnergy,0f,lab.ManualRotationCapacity);
+    public void RefreshRotationCapacity()
+    { if (Bound) station.State.RotationEnergy = Mathf.Clamp(RotationEnergy,0f,lab.ManualRotationCapacity); }
     public void CaptureIndividualModules()
     {
         if (!Bound) return;
@@ -344,7 +336,7 @@ public sealed class SegmentedOrbitConfiguration
             ring.Tick(.36f); ring.State.CurrentPhase = 0f; ring.Tick(0f);
         }
         ApplyMotion();
-        RotationEnergy = lab.ManualRotationCapacity;
+        station.State.RotationEnergy = lab.ManualRotationCapacity;
         foreach (var edge in Links) edge.NextExtraShot = 0f;
         for (int i = 0; i < Cells.Length; i++)
         {

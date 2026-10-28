@@ -16,9 +16,9 @@ public static class GoldenPathSummary
     {
         "Runtime.NoException", "Run.ActiveAfterStart", "Run.SectorSequence", "Run.NoSector4",
         "Run.SceneStillPresent", "Run.CompletedSectorOnce", "Progression.SectorChoiceDeadline",
-        "Orbital.StartingBaseline", "Orbital.CoreExists", "Orbital.ValidState", "Orbital.RuntimeMatchesState",
+        "Orbital.StartingBaseline", "Orbital.StationExists", "Orbital.ValidState", "Orbital.RuntimeMatchesState",
         "Orbital.StableRunId", "Orbital.RingsAndMountsPersist", "Orbital.RingUpgradesPersist",
-        "Orbital.CoreUpgradesPersist", "Orbital.ModulesNeverOverwritten",
+        "Orbital.LinkUpgradesPersist", "Orbital.ModulesNeverOverwritten",
         "Rewards.GrantedOnce", "Rewards.ChosenRewardApplied", "Rewards.DirectMountSelectionCompleted",
         "Rewards.SelectionReleased", "Rewards.TransitionOnlyWhenResolved", "Rewards.QueueDeadline",
         "Boss.AfterSector3Only", "Boss.SpawnOnceAfterSector3", "Boss.Exists", "Boss.DeathRegistered", "Boss.VictoryOnce",

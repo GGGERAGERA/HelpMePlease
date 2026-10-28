@@ -183,7 +183,6 @@ public abstract class OrbitalLabSession : MonoBehaviour
             OrbitalRewardKind.RingSpeed => Station.UpgradeRingSpeed(ring.StableRingId),
             OrbitalRewardKind.RingPower => Station.UpgradeRingPower(ring.StableRingId),
             OrbitalRewardKind.RingCapacity => Station.UpgradeRingCapacity(ring.StableRingId),
-            OrbitalRewardKind.CoreUpgrade => Station.UpgradeCore(),
             OrbitalRewardKind.LinkMatrix => Station.UpgradeLinkMatrix(),
             OrbitalRewardKind.ModuleDamage => Station.State.Modules.Any(m => Station.UpgradeModuleDamage(m.StableModuleId)),
             _ => Rewards != null && Provider.GetDefinition(kind, Station.State).BodyUpgrade != null &&
@@ -223,7 +222,7 @@ public abstract class OrbitalLabSession : MonoBehaviour
     protected void DrawBuildInfo(bool detailed)
     {
         var state = Station.State;
-        Text($"Core {state.CoreState.Level} | Rings {state.Rings.Count} | Modules {state.Modules.Count}");
+        Text($"Rings {state.Rings.Count} | Modules {state.Modules.Count}");
         Text($"Mounts {state.Rings.Sum(r => r.MountCount)} | Free {state.FreeBuiltMounts}");
         if (!detailed) return;
         foreach (var ring in state.Rings)

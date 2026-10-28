@@ -94,7 +94,6 @@ public static partial class MvpF1Verification
             if (group.alpha != 1f || !group.interactable || card.transform.localScale != Vector3.one)
                 throw new Exception("Interrupted reveal state was not restored");
             lines.Add("EDIT_PASS: actual prefab resets hidden text/CanvasGroup, clears null content, compacts two cards and completes interrupted reveal");
-            RenderCoreCard(provider.GetDefinition(OrbitalRewardKind.CoreUpgrade, state));
         }
         finally { UnityEngine.Object.DestroyImmediate(instance); }
         while (state.CanAddRing(out _)) state.AddRing();
@@ -110,7 +109,6 @@ public static partial class MvpF1Verification
             for (int mount = 0; mount < ring.MountCount; mount++)
                 if (state.CanInstallModule(OrbitalModuleKind.Pistol, ring.StableRingId, mount, out _)) state.InstallModule(OrbitalModuleKind.Pistol, ring.StableRingId, mount, out _);
         }
-        while (state.UpgradeCore()) { }
         state.ShootingDamageMultiplier = state.ShootingRateMultiplier = state.ContactDamageMultiplier = state.ContactSizeMultiplier = float.MaxValue;
         var slots = new RunItemSlots();
         var choices = provider.BuildChoices(3, state, slots);
@@ -123,43 +121,5 @@ public static partial class MvpF1Verification
         lines.Add("EDIT_PASS: runtime orbit/mount/speed/power/core caps; exhausted source pool returns two real choices without placeholders");
     }
 
-    private static void RenderCoreCard(OrbitalRewardData data)
-    {
-        var scene = UnityEditor.SceneManagement.EditorSceneManager.NewPreviewScene();
-        var canvasObject = new GameObject("Card visual audit", typeof(RectTransform), typeof(Canvas));
-        UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(canvasObject, scene);
-        var canvas = canvasObject.GetComponent<Canvas>(); canvas.renderMode = RenderMode.WorldSpace;
-        canvas.transform.position = Vector3.zero; canvas.transform.localScale = Vector3.one;
-        ((RectTransform)canvas.transform).sizeDelta = new Vector2(350f, 550f);
-        var card = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/prefabs/UI/_UpdateUI/PF_UpgradeCard.prefab"), canvas.transform, false).GetComponent<UpgradeCardView>();
-        card.Setup(data, null);
-        var rect = (RectTransform)card.transform; rect.anchorMin = rect.anchorMax = new Vector2(.5f, .5f);
-        rect.pivot = new Vector2(.5f, .5f); rect.anchoredPosition = Vector2.zero; rect.sizeDelta = new Vector2(300f, 500f); rect.localScale = Vector3.one;
-        foreach (var t in canvasObject.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = 31;
-        var cameraObject = new GameObject("Card audit camera", typeof(Camera));
-        UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(cameraObject, scene);
-        var camera = cameraObject.GetComponent<Camera>(); camera.orthographic = true; camera.orthographicSize = 275f;
-        camera.scene = scene;
-        camera.transform.position = new Vector3(0f, 0f, -10f); camera.cullingMask = 1 << 31;
-        camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = new Color(.06f, .08f, .1f);
-        var texture = new RenderTexture(350, 550, 24); var pixels = new Texture2D(350, 550, TextureFormat.RGB24, false);
-        var previous = RenderTexture.active;
-        try
-        {
-            canvas.worldCamera = camera; camera.targetTexture = texture;
-            Canvas.ForceUpdateCanvases();
-            foreach (var text in card.GetComponentsInChildren<TMPro.TextMeshProUGUI>()) text.ForceMeshUpdate();
-            camera.Render(); RenderTexture.active = texture;
-            pixels.ReadPixels(new Rect(0, 0, 350, 550), 0, 0); pixels.Apply();
-            File.WriteAllBytes(Output + "/core-card-final.png", pixels.EncodeToPNG());
-        }
-        finally
-        {
-            RenderTexture.active = previous;
-            camera.targetTexture = null;
-            UnityEngine.Object.DestroyImmediate(texture); UnityEngine.Object.DestroyImmediate(pixels);
-            UnityEditor.SceneManagement.EditorSceneManager.ClosePreviewScene(scene);
-        }
-    }
 }
 #endif

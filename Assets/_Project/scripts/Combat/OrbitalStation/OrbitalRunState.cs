@@ -5,17 +5,6 @@ using System.Linq;
 namespace Subject42.Combat.OrbitalStation
 {
     [Serializable]
-    public sealed class OrbitalCoreState
-    {
-        public int Level;
-        public float DamageMultiplier = 1f;
-        public float CooldownMultiplier = 1f;
-        public int PulseUpgradeLevel;
-        public int CascadeUpgradeLevel;
-        public int LinkMatrixUpgradeLevel;
-    }
-
-    [Serializable]
     public sealed class OrbitalRingState
     {
         public int StableRingId;
@@ -48,8 +37,32 @@ namespace Subject42.Combat.OrbitalStation
     }
 
     [Serializable]
-    public sealed class OrbitalRunState : UnityEngine.ISerializationCallbackReceiver
+    public sealed partial class OrbitalRunState : UnityEngine.ISerializationCallbackReceiver
     {
+        public const int SegmentedLevels = 3, SegmentedPositions = 12;
+        public bool UsesSegmentedOrbit;
+        public float RotationEnergy = 100f;
+
+        public bool IsRingActive(OrbitalRingState ring) => !UsesSegmentedOrbit || ring.Order < UnlockedSegmentedLevels;
+
+        // Explicit scene opt-in. Subsequent scene restores keep the same run-owned layout.
+        public void EnableSegmentedOrbit()
+        {
+            if (UsesSegmentedOrbit) return;
+            UsesSegmentedOrbit = true;
+            UsesCustomPaths = false;
+            while (Rings.Count < SegmentedLevels) CommitAddRing();
+            foreach (var ring in Rings)
+            {
+                ring.Radius = 2.4f + ring.Order * 1.2f;
+                ring.BaseRotationSpeed = 0f;
+                ring.CurrentPhase = 0f;
+                ring.PhaseOffset = ring.Order == 1 ? 15f : 0f;
+                ring.MountCount = ring.MountCapacity = SegmentedPositions;
+                ring.CustomPath = null;
+            }
+            Revision++;
+        }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         // Scene-local experiments opt in per instance; never persisted or applied to production config.
         [NonSerialized] public int LabMountLimit;
@@ -58,6 +71,7 @@ namespace Subject42.Combat.OrbitalStation
         {
             get
             {
+                if (UsesSegmentedOrbit) return SegmentedPositions;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 if (LabMountLimit > 0) return LabMountLimit;
 #endif
@@ -112,7 +126,7 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool IsInitialized;
         public int RunId;
-        public OrbitalCoreState CoreState = new();
+        public int LinkMatrixUpgradeLevel;
         public List<OrbitalRingState> Rings = new();
         public List<OrbitalModuleState> Modules = new();
         public int NextStableRingId = 1;
@@ -168,6 +182,7 @@ namespace Subject42.Combat.OrbitalStation
         public bool BeginLevelUpOpportunity(int playerLevel, float roll)
         {
             if (!MarkPlayerLevelProcessed(playerLevel)) return false;
+            if (UsesSegmentedOrbit) return false;
             bool offer = CanAddRing(out _) && roll <
                 OrbitalProgressionConfig.Default.GetRingOfferChance(RingOfferMissCount);
             if (RingOfferMissCount < int.MaxValue) RingOfferMissCount++;
@@ -194,6 +209,12 @@ namespace Subject42.Combat.OrbitalStation
         {
             ring = null;
             if (!CanAddRing(out error)) return false;
+            if (UsesSegmentedOrbit)
+            {
+                ring = Rings[UnlockedSegmentedLevels++];
+                Revision++;
+                return true;
+            }
             ring = CommitAddRing();
             error = null;
             return true;
@@ -235,6 +256,8 @@ namespace Subject42.Combat.OrbitalStation
         {
             if (!CanRemoveRing(stableRingId, out error)) return false;
             OrbitalRingState ring = FindRing(stableRingId);
+            foreach (var module in Modules.Where(m => m.StableRingId == stableRingId).ToArray())
+                ReturnSegmentedLinks(module.StableModuleId);
             Modules.RemoveAll(module => module.StableRingId == stableRingId);
             Rings.Remove(ring);
             ReorderRings();
@@ -249,6 +272,12 @@ namespace Subject42.Combat.OrbitalStation
         public bool TryAddMount(int stableRingId, out string error)
         {
             if (!CanAddMount(stableRingId, out error)) return false;
+            if (UsesSegmentedOrbit)
+            {
+                SegmentedWeaponLimit++;
+                Revision++;
+                return true;
+            }
             OrbitalRingState ring = FindRing(stableRingId);
             ring.MountCount++;
             ring.MountUpgradeLevel++;
@@ -274,7 +303,9 @@ namespace Subject42.Combat.OrbitalStation
         public bool UpgradeRingCapacity(int stableRingId) =>
             TryIncreaseCapacity(stableRingId, out _);
 
-        public int FreeBuiltMounts => Rings.Sum(r => r.MountCount) - Modules.Count;
+        public int FreeBuiltMounts => UsesSegmentedOrbit
+            ? Math.Min(SegmentedWeaponLimit - Modules.Count, Rings.Where(IsRingActive).Sum(r => r.MountCount) - Modules.Count)
+            : Rings.Sum(r => r.MountCount) - Modules.Count;
 
         public bool TryInstallModule(OrbitalModuleKind type, int stableRingId,
             int mountIndex, out OrbitalModuleState module, out string error)
@@ -302,6 +333,7 @@ namespace Subject42.Combat.OrbitalStation
         public bool CanInstallLinkPair(int ringA, int mountA, int ringB, int mountB,
             out string error) => CanInstallModule(OrbitalModuleKind.LinkNode, ringA, mountA, out error) &&
             CanInstallModule(OrbitalModuleKind.LinkNode, ringB, mountB, out error) &&
+            Rule(!UsesSegmentedOrbit || FreeBuiltMounts >= 2, "not enough weapon capacity for a pair", out error) &&
             Rule(ringA != ringB || mountA != mountB, "Link targets must be distinct", out error) &&
             Rule(NextStableModuleId <= int.MaxValue - 2, "Link ID allocator exhausted", out error);
 
@@ -367,6 +399,7 @@ namespace Subject42.Combat.OrbitalStation
             if (!CanCommit(out error)) return false;
             if (FindModule(stableModuleId) == null)
                 return Rule(false, $"module {stableModuleId} is missing", out error);
+            ReturnSegmentedLinks(stableModuleId);
             int removed = Modules.RemoveAll(value =>
                 value.StableModuleId == stableModuleId);
             if (removed > 0)
@@ -421,22 +454,12 @@ namespace Subject42.Combat.OrbitalStation
         public bool UpgradeRingPower(int stableRingId) =>
             TryUpgradeRingDamage(stableRingId, out _);
 
-        public bool TryUpgradeCore(out string error)
-        {
-            if (!CanUpgradeCore(out error)) return false;
-            CoreState.Level++;
-            CoreState.DamageMultiplier = CoreState.CooldownMultiplier = 1f;
-            Revision++;
-            error = null;
-            return true;
-        }
 
-        public bool UpgradeCore() => TryUpgradeCore(out _);
 
         public bool TryUpgradeLinkMatrix(out string error)
         {
             if (!CanUpgradeLinkMatrix(out error)) return false;
-            CoreState.LinkMatrixUpgradeLevel++;
+            LinkMatrixUpgradeLevel++;
             Revision++;
             error = null;
             return true;
@@ -513,17 +536,20 @@ namespace Subject42.Combat.OrbitalStation
         }
 
         public bool HasFreeMount(int ringId) => CanRemoveRing(ringId, out _) &&
+            IsRingActive(FindRing(ringId)) &&
             Modules.Count(m => m.StableRingId == ringId) < FindRing(ringId).MountCount;
 
         public bool CanAddRing(out string error) => CanCommit(out error) &&
-            Rule(Rings.Count < OrbitalProgressionConfig.Default.MaxNormalRings && NextStableRingId < int.MaxValue,
+            Rule(UsesSegmentedOrbit ? UnlockedSegmentedLevels < SegmentedLevels :
+                Rings.Count < OrbitalProgressionConfig.Default.MaxNormalRings && NextStableRingId < int.MaxValue,
                 "ring cap or ID limit reached", out error);
 
         public bool CanRemoveRing(int id, out string error) => CanCommit(out error) &&
             Rule(FindRing(id) != null, $"ring {id} is missing", out error);
 
         public bool CanAddMount(int id, out string error) => CanRemoveRing(id, out error) &&
-            Rule(FindRing(id).MountCount < FindRing(id).MountCapacity &&
+            Rule(UsesSegmentedOrbit ? SegmentedWeaponLimit < MaxSegmentedWeapons :
+                FindRing(id).MountCount < FindRing(id).MountCapacity &&
                 FindRing(id).MountCount < MountLimit &&
                 FindRing(id).MountUpgradeLevel < int.MaxValue && FindRing(id).VisualUpgradeLevel < int.MaxValue,
                 $"ring {id} reached mount capacity limit", out error);
@@ -547,6 +573,7 @@ namespace Subject42.Combat.OrbitalStation
                 FindModule(id).DamageLevel < int.MaxValue, $"module {id} cannot upgrade damage", out error);
 
         public bool CanUpgradeRingSpeed(int id, out string error) => CanRemoveRing(id, out error) &&
+            Rule(!UsesSegmentedOrbit, "segmented rotation is controlled manually", out error) &&
             Rule(FindRing(id).SpeedUpgradeLevel < OrbitalProgressionConfig.Default.MaxSpeedUpgradeLevel &&
                 FindRing(id).VisualUpgradeLevel < int.MaxValue,
                 $"ring {id} reached speed cap", out error);
@@ -557,13 +584,12 @@ namespace Subject42.Combat.OrbitalStation
                 IsFinitePositive(FindRing(id).PowerMultiplier * (1f + OrbitalProgressionConfig.Default.PowerIncrement)),
                 $"ring {id} reached power cap", out error);
 
-        public bool CanUpgradeCore(out string error) => CanCommit(out error) &&
-            Rule(CoreState.Level < OrbitalProgressionConfig.Default.MaxCoreLevel, "core cap reached", out error);
 
         // Ring upgrades belong to the ring, including an empty ring awaiting modules.
         // Provider and arena selection share the same structural/cap validation.
         public bool CanTargetRingReward(OrbitalRewardKind kind, int id)
         {
+            if (FindRing(id) == null || !IsRingActive(FindRing(id))) return false;
             return kind switch
             {
                 OrbitalRewardKind.RingPower => CanUpgradeRingPower(id, out _),
@@ -575,7 +601,7 @@ namespace Subject42.Combat.OrbitalStation
         }
 
         public bool CanUpgradeLinkMatrix(out string error) => CanCommit(out error) &&
-            Rule(CoreState.LinkMatrixUpgradeLevel < OrbitalProgressionConfig.Default.MaxLinkMatrixLevel &&
+            Rule(LinkMatrixUpgradeLevel < OrbitalProgressionConfig.Default.MaxLinkMatrixLevel &&
                 ResolveLinkPairs().Any(),
                 "link matrix cap reached or missing endpoints", out error);
 
@@ -594,17 +620,8 @@ namespace Subject42.Combat.OrbitalStation
                 error = "state is not initialized";
                 return false;
             }
-            if (CoreState == null || CoreState.Level < 0 ||
-                CoreState.Level > OrbitalProgressionConfig.Default.MaxCoreLevel ||
-                CoreState.PulseUpgradeLevel < 0 || CoreState.CascadeUpgradeLevel < 0 ||
-                CoreState.LinkMatrixUpgradeLevel < 0 ||
-                CoreState.LinkMatrixUpgradeLevel > OrbitalProgressionConfig.Default.MaxLinkMatrixLevel ||
-                !IsFinitePositive(CoreState.DamageMultiplier) ||
-                !IsFinitePositive(CoreState.CooldownMultiplier))
-            {
-                error = "invalid Core state";
-                return false;
-            }
+            if (LinkMatrixUpgradeLevel < 0 || LinkMatrixUpgradeLevel > OrbitalProgressionConfig.Default.MaxLinkMatrixLevel)
+                return Rule(false, "invalid link matrix level", out error);
             if (RingOfferMissCount < 0)
             {
                 error = "negative ring opportunity count";
@@ -685,6 +702,7 @@ namespace Subject42.Combat.OrbitalStation
             }
             int highestRingId = Rings.Count == 0 ? 0 :
                 Rings.Max(value => value.StableRingId);
+            if (!ValidateSegmentedInventory(moduleIds, out error)) return false;
             int highestModuleId = Modules.Count == 0 ? 0 :
                 Modules.Max(value => value.StableModuleId);
             if (NextStableRingId <= highestRingId ||
@@ -705,7 +723,7 @@ namespace Subject42.Combat.OrbitalStation
             string modules = string.Join(",", Modules.OrderBy(value => value.StableModuleId)
                 .Select(value =>
                     $"M{value.StableModuleId}:{value.ModuleType}[d{value.DamageLevel}]@R{value.StableRingId}.{value.MountIndex}"));
-            return $"ORBITAL_STATE v={Version} run={RunId} rev={Revision} sector={currentSector} playerLevel={LastProcessedPlayerLevel} core={CoreState.Level} restore={RestoreCount} rings=[{rings}] modules=[{modules}]";
+            return $"ORBITAL_STATE v={Version} run={RunId} rev={Revision} sector={currentSector} playerLevel={LastProcessedPlayerLevel} restore={RestoreCount} rings=[{rings}] modules=[{modules}]";
         }
 
         private bool CanOccupy(int ringId, int mountIndex, int ignoredModuleId,
@@ -718,6 +736,9 @@ namespace Subject42.Combat.OrbitalStation
                 error = $"ring {ringId} does not exist";
                 return false;
             }
+            if (UsesSegmentedOrbit && !IsRingActive(ring)) return Rule(false, "orbit is locked", out error);
+            if (UsesSegmentedOrbit && ignoredModuleId == 0 && Modules.Count >= SegmentedWeaponLimit)
+                return Rule(false, "global weapon limit reached", out error);
             if (mountIndex < 0 || mountIndex >= ring.MountCount)
             {
                 error = $"mount {mountIndex} outside ring {ringId} capacity";

@@ -80,8 +80,7 @@ public sealed class OrbitalRewardLabController : OrbitalLabSession
         DrawRingTarget();
         Heading("Build controls");
         Button("CLEAR MODULES", ClearModules);
-        Row(("ADD RING", () => Give(OrbitalRewardKind.NewRing)), ("ADD MOUNT", () => Give(OrbitalRewardKind.AddMount)),
-            ("CORE +1", () => Give(OrbitalRewardKind.CoreUpgrade)));
+        Row(("ADD RING", () => Give(OrbitalRewardKind.NewRing)), ("ADD MOUNT", () => Give(OrbitalRewardKind.AddMount)));
         Button("REMOVE LAST MODULE", () =>
         {
             if (CanEdit() && Station.State.Modules.Count > 0) Station.RemoveModule(Station.State.Modules.Last().StableModuleId);

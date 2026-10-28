@@ -16,6 +16,7 @@ public class CharacterSpawner : MonoBehaviour
 
     [Header("Default character for direct MVP launch")]
     [SerializeField] private CharacterData defaultCharacter;
+    [SerializeField] private bool segmentedOrbit;
     public CharacterData DefaultCharacter => defaultCharacter;
     private HUDManager hud;
     private UpgradeManager rewards;
@@ -62,7 +63,7 @@ public class CharacterSpawner : MonoBehaviour
         if (RunStateManager.Instance != null)
             RunStateManager.Instance.ApplyToSpawnedPlayer(player, upgradeApplier);
 
-        var orbital = OrbitalStationRuntime.Ensure(player, SpawnedCharacterData);
+        var orbital = OrbitalStationRuntime.Ensure(player, SpawnedCharacterData, segmentedOrbit);
         Station = orbital;
         rewards?.BindOrbitalStation(orbital);
         if (onboardingPrefab != null && orbital != null && orbital.IsInitialized)

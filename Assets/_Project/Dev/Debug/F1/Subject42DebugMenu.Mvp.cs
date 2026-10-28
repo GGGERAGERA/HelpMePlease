@@ -117,6 +117,9 @@ public sealed partial class Subject42DebugMenu
     {
         var station = MvpStation;
         if (station == null || !station.IsInitialized) { AddHint("Станция ещё не готова. Начните обычный ран из бункера."); return; }
+        if (station.UsesSegmentedOrbit)
+            MvpRow("Конструктор Segmented Orbit", "Тестовый запас оружия и четырёх модулей связей. Открывает штатный выбор награды; обычный пул не меняется.",
+                "ПРОВЕРИТЬ", MvpCanEdit, () => DebugOpenSegmentedConstructor());
         MvpRow("Внешний вид орбит", "F9 · Боковая панель с живым предпросмотром", "НАСТРОИТЬ",
             MvpCanEdit && previousTimeScale > 0f, OpenMvpOrbitSurface);
         foreach (var ring in station.Rings)
@@ -124,17 +127,21 @@ public sealed partial class Subject42DebugMenu
             int id = ring.RingId;
             int occupied = station.State.Modules.Count(m => m.StableRingId == id);
             bool selected = station.SelectedRing == ring;
+            bool unlocked = station.State.IsRingActive(ring.State);
             MvpRow($"Орбита {ring.State.Order + 1}" ,
-                $"Занято {occupied} · свободно {ring.State.MountCount - occupied} · построено {ring.State.MountCount}/{ring.State.MountCapacity}",
-                selected ? "ВЫБРАНА" : "ВЫБРАТЬ", !selected && MvpCanEdit,
+                station.UsesSegmentedOrbit ? unlocked ? $"Открыта · занято {occupied}/12 · общий лимит {station.State.SegmentedWeaponLimit}" : "Закрыта · нужна награда «Открыть орбиту»" :
+                    $"Занято {occupied} · свободно {ring.State.MountCount - occupied} · построено {ring.State.MountCount}/{ring.State.MountCapacity}",
+                selected ? "ВЫБРАНА" : "ВЫБРАТЬ", unlocked && !selected && MvpCanEdit,
                 () => { station.DebugSelectExistingRing(id); RefreshCurrentTab(); }, selected);
         }
         bool canRing = MvpCanEdit && station.State.CanAddRing(out _);
-        MvpRow("Добавить орбиту", !MvpCanEdit ? "Завершите текущую награду или установку" : canRing ? $"Орбит {station.Rings.Count}/{OrbitalProgressionConfig.Default.MaxNormalRings}" : "Достигнут предел орбит",
+        MvpRow(station.UsesSegmentedOrbit ? "Открыть орбиту" : "Добавить орбиту", !MvpCanEdit ? "Завершите текущую награду или установку" : canRing ?
+            station.UsesSegmentedOrbit ? $"Открыто {station.State.UnlockedSegmentedLevels}/3" : $"Орбит {station.Rings.Count}/{OrbitalProgressionConfig.Default.MaxNormalRings}" : "Достигнут предел орбит",
             "ДОБАВИТЬ", canRing, () => { RunStateManager.Instance.DebugMarkDevelopmentRun(); station.AddRing(); if (station.State.UsesCustomPaths) CloseMenu(); else RefreshCurrentTab(); });
         int selectedId = station.SelectedRing?.RingId ?? 0;
         bool canMount = MvpCanEdit && station.State.CanAddMount(selectedId, out _);
-        MvpRow("Добавить точку крепления", !MvpCanEdit ? "Завершите текущую награду или установку" : selectedId == 0 ? "Выберите орбиту" : canMount ? "На выбранную орбиту, в пределах её вместимости" : "Вместимость заполнена; доступное увеличение есть в «Улучшениях»",
+        MvpRow(station.UsesSegmentedOrbit ? "+1 крепление" : "Добавить точку крепления", station.UsesSegmentedOrbit ? $"Общий лимит {station.State.SegmentedWeaponLimit}/12" :
+            !MvpCanEdit ? "Завершите текущую награду или установку" : selectedId == 0 ? "Выберите орбиту" : canMount ? "На выбранную орбиту, в пределах её вместимости" : "Вместимость заполнена; доступное увеличение есть в «Улучшениях»",
             "ДОБАВИТЬ", canMount, () => { RunStateManager.Instance.DebugMarkDevelopmentRun(); station.AddMount(selectedId, out _); RefreshCurrentTab(); });
         AddSectionTitle("Добавить оружие", "Штатная установка на подсвеченные точки · Esc / ПКМ — отмена · шарики устанавливаются парой");
         foreach (var kind in new[] { OrbitalRewardKind.Pistol, OrbitalRewardKind.ArcEmitter, OrbitalRewardKind.LinkPair, OrbitalRewardKind.Sniper, OrbitalRewardKind.Shotgun, OrbitalRewardKind.Saw })
@@ -309,6 +316,17 @@ public sealed partial class Subject42DebugMenu
         CloseMenu();
         if (upgradeManager.DebugOfferCatalogueReward(kind, installImmediately)) return;
         mvpStatus = "Награда стала недоступна; состояние рана не изменено."; OpenMenu();
+    }
+
+    public bool DebugOpenSegmentedConstructor()
+    {
+        ResolveSceneReferences();
+        if (!MvpCanEdit || !MvpStation.UsesSegmentedOrbit) return false;
+        CloseMenu();
+        RunStateManager.Instance.DebugMarkDevelopmentRun();
+        MvpStation.State.DebugGrantSegmentedKit();
+        return upgradeManager.DebugForceOrbitalReward(OrbitalRewardKind.ShootingDamage) &&
+            MvpStation.Interaction.OpenConstructor();
     }
 
     private void BuildMvpCatalogue()

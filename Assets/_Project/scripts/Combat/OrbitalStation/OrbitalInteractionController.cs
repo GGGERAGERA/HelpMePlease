@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Subject42.Combat.OrbitalStation
 {
-    public enum OrbitalInteractionMode { Idle, RewardSelection, RewardFlight, RewardSecondTarget, Relocation, CustomDrawing = 6 }
+    public enum OrbitalInteractionMode { Idle, RewardSelection, RewardFlight, RewardSecondTarget, Relocation, CustomDrawing = 6, Construction }
 
     // One player-local owner. Controllers retain their domain behavior and presentation.
     [DefaultExecutionOrder(-200)]
@@ -25,6 +25,27 @@ namespace Subject42.Combat.OrbitalStation
         public bool IsCustomDrawing => Mode == OrbitalInteractionMode.CustomDrawing || station != null && station.HasPendingCustomRings;
         public OrbitalInteractionMode Mode { get; private set; }
         public bool IsIdle => Mode == OrbitalInteractionMode.Idle;
+        public bool IsConstructing => Mode == OrbitalInteractionMode.Construction;
+        public bool IsChoosingReward => rewardChoosing?.Invoke() ?? false;
+        public bool CanOpenConstructor => Alive && station.UsesSegmentedOrbit &&
+            (rewardChoosing?.Invoke() ?? false) &&
+            (IsIdle && station.RewardFlow.PendingReward == null ||
+                Mode == OrbitalInteractionMode.RewardSelection && station.RewardFlow.IsAwaitingConstructor) &&
+            !IsGameplayInputBlocked && Time.timeScale == 0f;
+        public bool CanEditConstructor => Alive && IsConstructing && (rewardChoosing?.Invoke() ?? false) &&
+            !IsGameplayInputBlocked && Time.timeScale == 0f;
+        public bool BeginConstructor()
+        {
+            if (!CanOpenConstructor) return false;
+            Mode = OrbitalInteractionMode.Construction;
+            consumedFrame = Time.frameCount;
+            return true;
+        }
+        public void EndConstructor()
+        {
+            if (IsConstructing) Mode = OrbitalInteractionMode.Idle;
+            consumedFrame = Time.frameCount;
+        }
         public bool IsGameplayInputBlocked => IsCustomDrawing || SceneTransitionOverlay.IsTransitioning
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             || DebugSuppressPlayerInput || (DevelopmentInputBlocker?.Invoke() ?? false)
@@ -51,7 +72,7 @@ namespace Subject42.Combat.OrbitalStation
         public bool CanTransition => IsIdle && QueueIdle && !IsCustomDrawing;
         public bool CanQueueDebugPlacement => IsIdle && QueueIdle;
         public bool CanUseDebugPlacement => CanQueueDebugPlacement && !IsGameplayPointerBlocked && consumedFrame != Time.frameCount;
-        public bool CanStartRelocation => Alive && !IsGameplayPointerBlocked && QueueIdle &&
+        public bool CanStartRelocation => Alive && !station.UsesSegmentedOrbit && !IsGameplayPointerBlocked && QueueIdle &&
             !station.IsDebugPlacementActive && Time.timeScale > 0f && consumedFrame != Time.frameCount &&
             IsIdle;
         public bool CanConsumeRewardPointer => Alive && !IsGameplayPointerBlocked && consumedFrame != Time.frameCount &&
@@ -196,6 +217,7 @@ namespace Subject42.Combat.OrbitalStation
         }
         private void CancelActive()
         {
+            if (IsConstructing) { station.Interaction.CloseConstructor(); return; }
             station?.RewardFlow?.CancelForSceneTransition();
             station?.GetComponent<OrbitalRelocationController>()?.CancelDrag("interaction cancelled");
         }

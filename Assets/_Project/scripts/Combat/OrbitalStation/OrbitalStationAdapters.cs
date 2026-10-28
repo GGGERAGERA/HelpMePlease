@@ -90,13 +90,20 @@ namespace Subject42.Combat.OrbitalStation
             OrbitalWeaponSettings settings, ProjectileVolley volley, float damage)
             => SpawnWeaponProjectileCore(origin, target, direction, settings, volley, damage, null);
 
+        public void SpawnDirectionalWeaponProjectile(Vector2 origin, Vector2 direction,
+            OrbitalWeaponSettings settings, ProjectileVolley volley, float damage, int ricochets = 0)
+        {
+            var shot = SpawnWeaponProjectileCore(origin, null, direction, settings, volley, damage, direction);
+            shot.RicochetsRemaining = ricochets;
+        }
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public void SpawnLabDirectionalProjectile(Vector2 origin, Vector2 direction,
             OrbitalWeaponSettings settings, ProjectileVolley volley, float damage, int weaponId = 0, int ricochets = 0)
         {
             var shot = SpawnWeaponProjectileCore(origin, null, direction, settings, volley, damage, direction);
             if (shot == null) return;
-            shot.LabRicochetsRemaining = ricochets;
+            shot.RicochetsRemaining = ricochets;
             if (weaponId == 0) return;
             shot.LabSequence = ++labProjectileSequence;
             LabProjectileSpawned?.Invoke(shot.LabSequence, weaponId, shot.Direction);
@@ -186,8 +193,8 @@ namespace Subject42.Combat.OrbitalStation
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             public long LabSequence;
             public bool LabCancelled;
-            public int LabRicochetsRemaining;
 #endif
+            public int RicochetsRemaining;
             public GameObject GameObject;
             public EnemyHealth Target;
             public float Speed;
@@ -367,8 +374,9 @@ namespace Subject42.Combat.OrbitalStation
             }
             projectile.Active = true;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            projectile.LabSequence = 0; projectile.LabCancelled = false; projectile.LabRicochetsRemaining = 0;
+            projectile.LabSequence = 0; projectile.LabCancelled = false;
 #endif
+            projectile.RicochetsRemaining = 0;
             projectile.Target = target;
             projectile.Speed = Mathf.Max(1f, speed);
             projectile.Damage = damage;
@@ -516,8 +524,7 @@ namespace Subject42.Combat.OrbitalStation
                     (projectile.Volley == null || projectile.Volley.Pushed.Add(enemy)))
                     movement.ApplyKnockback(projectile.Direction, Mathf.Clamp(projectile.Knockback, 0f, 5f));
                 --projectile.BodiesRemaining;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-                if (projectile.LabRicochetsRemaining > 0)
+                if (projectile.RicochetsRemaining > 0)
                 {
                     EnemyHealth nextTarget = null;
                     float nearest = float.PositiveInfinity;
@@ -530,7 +537,7 @@ namespace Subject42.Combat.OrbitalStation
                     }
                     if (nextTarget != null)
                     {
-                        projectile.LabRicochetsRemaining--;
+                        projectile.RicochetsRemaining--;
                         projectile.BodiesRemaining = Mathf.Max(1, projectile.BodiesRemaining);
                         projectile.Direction = ((Vector2)nextTarget.transform.position - point).normalized;
                         projectile.Position = point + projectile.Direction * .03f;
@@ -540,7 +547,6 @@ namespace Subject42.Combat.OrbitalStation
                         return; // Recast the new direction next frame; never reuse the old sweep hits.
                     }
                 }
-#endif
                 if (projectile.BodiesRemaining <= 0) { Release(projectile); return; }
             }
             projectile.Position = from + projectile.Direction * distance;

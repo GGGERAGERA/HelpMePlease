@@ -18,15 +18,6 @@ namespace Subject42.Combat.OrbitalStation
         public int MaxMountsPerRing = 6;
         public int MaxSpeedUpgradeLevel = 4;
         public int MaxPowerUpgradeLevel = 4;
-        public int MaxCoreLevel = 3;
-        public float CoreIntervalI = 7.5f;
-        public float CoreIntervalII = 6.5f;
-        public float CoreIntervalIII = 5.5f;
-        public float CoreChargeDuration = .35f;
-        public float CoreRingDelay = .12f;
-        public float CoreWaveSpacing = .35f;
-        public float GetCoreInterval(int level) => level switch
-        { 1 => CoreIntervalI, 2 => CoreIntervalII, _ => CoreIntervalIII };
         public int MaxLinkMatrixLevel = 3;
         public float SpeedIncrement = 0.25f;
         public float PowerIncrement = 0.25f;
@@ -34,8 +25,7 @@ namespace Subject42.Combat.OrbitalStation
         public float ModuleWeight = 1f;
         public float LinkPairWeight = 0.65f;
         public float RingWeight = 0.9f;
-        public float CoreWeight = 0.10f;
-        public int MinRingsForCoreOffer = 2;
+        public float LinkMatrixWeight = 0.10f;
         public float SubjectWeight = 0.8f;
 
         public float GetRingOfferChance(int missedOpportunities) =>

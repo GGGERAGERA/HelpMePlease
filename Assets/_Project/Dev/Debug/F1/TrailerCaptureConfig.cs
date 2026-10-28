@@ -20,7 +20,6 @@ public sealed class TrailerCaptureConfig : ScriptableObject
         public string description;
         [Range(1, 4)] public int rings = 1;
         [Range(1, 3)] public int mountsPerRing = 3;
-        [Range(0, 2)] public int coreLevel;
         [Range(0, 60)] public float threat;
         [Range(0, 10)] public int openingEnemies;
         public Module[] modules = Array.Empty<Module>();
@@ -31,7 +30,7 @@ public sealed class TrailerCaptureConfig : ScriptableObject
             state = null;
             error = "Пресет должен содержать 1–4 кольца и 1–3 mounts на кольцо";
             if (rings < 1 || rings > 4 || mountsPerRing < 1 || mountsPerRing > 3 ||
-                coreLevel < 0 || coreLevel > 2 || !float.IsFinite(threat) || threat < 0 || threat > 60) return false;
+                !float.IsFinite(threat) || threat < 0 || threat > 60) return false;
             var candidate = OrbitalRunState.CreateDefault(runId);
             while (candidate.Rings.Count < rings)
                 if (!candidate.TryAddRing(out _, out error)) return false;
@@ -58,8 +57,6 @@ public sealed class TrailerCaptureConfig : ScriptableObject
                 else if (!candidate.TryInstallModule(module.kind, id, module.mount, out _, out error)) return false;
             }
             if (firstLink.HasValue) { error = "Для Link Node нужна пара"; return false; }
-            for (int i = 0; i < coreLevel; i++)
-                if (!candidate.TryUpgradeCore(out error)) return false;
             if (!candidate.Validate(out error)) return false;
             state = candidate;
             return true;

@@ -55,7 +55,7 @@ public sealed partial class Subject42DebugMenu
             () => session.SetInvulnerable(!health.DebugInvulnerable));
         var station = player != null ? player.GetComponentInChildren<OrbitalStationRuntime>() : null;
         AddSectionTitle("ОРБИТЫ И ОРУЖИЕ", station != null && station.IsInitialized
-            ? $"Колец: {station.Rings.Count} · модулей: {station.Modules.Count} · ядро: {station.Core.Level}"
+            ? $"Колец: {station.Rings.Count} · модулей: {station.Modules.Count}"
             : "Орбиты ещё не готовы");
         var state = station != null ? station.State : null;
         bool canAddRing = reason == null && state.Rings.Count < 4 && state.CanAddRing(out _);

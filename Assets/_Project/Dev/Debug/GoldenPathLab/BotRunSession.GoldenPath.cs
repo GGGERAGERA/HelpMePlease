@@ -142,7 +142,7 @@ public sealed partial class BotRunSession
             {
                 var expected = OrbitalRunState.CreateDefault(station.State.RunId);
                 if (!GoldenCheck("Orbital.StartingBaseline", station.State.Rings.Count == expected.Rings.Count &&
-                    station.State.Modules.Count == expected.Modules.Count && station.State.CoreState.Level == expected.CoreState.Level &&
+                    station.State.Modules.Count == expected.Modules.Count &&
                     station.State.Rings[0].MountCount == expected.Rings[0].MountCount &&
                     station.State.Modules[0].ModuleType == expected.Modules[0].ModuleType &&
                     station.State.LastProcessedPlayerLevel == 1 && RunStateManager.Instance.CompletedLevels == 0 &&
@@ -302,7 +302,7 @@ public sealed partial class BotRunSession
     private static GoldenBunkerComponentState[] CaptureGoldenBunkerStations() =>
         FindObjectsByType<OrbitalStationRuntime>(FindObjectsInactive.Include, FindObjectsSortMode.None)
             .Select(s => new GoldenBunkerComponentState(GoldenBunkerComponentKey(s), s.gameObject.activeInHierarchy,
-                s.IsInitialized || s.State != null || s.Owner != null || s.Core != null || s.Rings.Count != 0 || s.Modules.Count != 0)).ToArray();
+                s.IsInitialized || s.State != null || s.Owner != null || s.Rings.Count != 0 || s.Modules.Count != 0)).ToArray();
 
     private static GoldenBunkerComponentState[] CaptureGoldenBunkerRewardFlows() =>
         FindObjectsByType<OrbitalRewardFlowController>(FindObjectsInactive.Include, FindObjectsSortMode.None)
@@ -329,17 +329,14 @@ public sealed partial class BotRunSession
             GoldenCheck("Orbital.RingUpgradesPersist", before.Rings.All(r => now.FindRing(r.StableRingId) is var n && n != null &&
                 n.MountCapacity >= r.MountCapacity && n.PowerMultiplier >= r.PowerMultiplier && n.PowerUpgradeLevel >= r.PowerUpgradeLevel &&
                 n.SpeedUpgradeLevel >= r.SpeedUpgradeLevel && n.MountUpgradeLevel >= r.MountUpgradeLevel && n.VisualUpgradeLevel >= r.VisualUpgradeLevel), "Ring upgrades reset") &&
-            GoldenCheck("Orbital.CoreUpgradesPersist", now.CoreState.Level >= before.CoreState.Level &&
-                now.CoreState.PulseUpgradeLevel >= before.CoreState.PulseUpgradeLevel && now.CoreState.CascadeUpgradeLevel >= before.CoreState.CascadeUpgradeLevel &&
-                now.CoreState.LinkMatrixUpgradeLevel >= before.CoreState.LinkMatrixUpgradeLevel && now.CoreState.DamageMultiplier >= before.CoreState.DamageMultiplier &&
-                now.CoreState.CooldownMultiplier <= before.CoreState.CooldownMultiplier, "Core upgrades reset") &&
+            GoldenCheck("Orbital.LinkUpgradesPersist", now.LinkMatrixUpgradeLevel >= before.LinkMatrixUpgradeLevel, "Link upgrades reset") &&
             GoldenCheck("Orbital.ModulesNeverOverwritten", before.Modules.All(m => now.FindModule(m.StableModuleId) is var n && n != null &&
                 n.ModuleType == m.ModuleType && n.StableRingId == m.StableRingId && n.MountIndex == m.MountIndex && n.DamageLevel >= m.DamageLevel), "Module removed, replaced or moved unexpectedly");
     }
 
     private bool CheckGoldenObjects()
     {
-        return GoldenCheck("Orbital.CoreExists", station.Core != null, "Core missing") &&
+        return GoldenCheck("Orbital.StationExists", station.IsInitialized, "Station missing") &&
             GoldenCheck("Orbital.ValidState", station.State.Validate(out string error), error) &&
             GoldenCheck("Orbital.RuntimeMatchesState", station.Rings.Count == station.State.Rings.Count && station.Modules.Count == station.State.Modules.Count &&
                 station.Rings.All(r => r.Mounts.Count == r.State.MountCount && r.Mounts.All(m => m.Transform != null)) &&
@@ -352,7 +349,7 @@ public sealed partial class BotRunSession
         OrbitalRewardKind.NewRing => 100, OrbitalRewardKind.Pistol => 95,
         OrbitalRewardKind.ArcEmitter => 92, OrbitalRewardKind.Shotgun => 90, OrbitalRewardKind.Saw => 85,
         OrbitalRewardKind.AddMount => 80, OrbitalRewardKind.RingPower => 70, OrbitalRewardKind.ModuleDamage => 65,
-        OrbitalRewardKind.CoreUpgrade => 60, OrbitalRewardKind.MaxHealth => 55, _ => 10
+        OrbitalRewardKind.MaxHealth => 55, _ => 10
     } : 0;
 
     private void GoldenRewardCommitted(UpgradeData reward)

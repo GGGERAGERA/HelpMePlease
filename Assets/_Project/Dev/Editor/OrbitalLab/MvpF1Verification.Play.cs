@@ -149,7 +149,6 @@ public static partial class MvpF1Verification
         station.Owner.Transform.GetComponent<PlayerHealth>().DebugInvulnerable = true;
         Object.FindFirstObjectByType<EnemySpawner>().StopSpawning();
         Check(manager.DebugRewardCatalogue.Count == 18 && manager.DebugRewardCatalogue.All(d => OrbitalRewardProvider.IsDemoReward(d.RewardKind)), "18 active source definitions, no retired/lab-only rewards");
-        Check(manager.DebugRewardUnavailableReason(OrbitalRewardKind.CoreUpgrade) != null, "core requires two orbits");
         Open(0); yield return .1f;
         Check((bool)Field(menu, "isOpen") && Time.timeScale == 0f && station.InputOwner.IsGameplayInputBlocked, "F1 open pauses and blocks station input");
         var movement = station.Owner.Transform.GetComponent<CharacterMovement2D>();
@@ -218,9 +217,9 @@ public static partial class MvpF1Verification
         Check(((RectTransform)Field(menu, "contentRoot")).GetComponentsInChildren<Button>().Count(b => b.transform.parent.name.StartsWith("Каталог ·")) == catalogue.Count(d => manager.DebugRewardUnavailableReason(d.RewardKind) == null), "available-now filter uses real restrictions");
         Call(menu, "SetOpen", false);
         var priorDamage = station.State.ShootingDamageMultiplier;
-        foreach (var kind in new[] { OrbitalRewardKind.ShootingDamage, OrbitalRewardKind.ShootingRate, OrbitalRewardKind.ContactDamage, OrbitalRewardKind.ContactSize, OrbitalRewardKind.RingPower, OrbitalRewardKind.RingSpeed, OrbitalRewardKind.RingCapacity, OrbitalRewardKind.AddMount, OrbitalRewardKind.CoreUpgrade, OrbitalRewardKind.MaxHealth, OrbitalRewardKind.MoveSpeed, OrbitalRewardKind.NewRing })
+        foreach (var kind in new[] { OrbitalRewardKind.ShootingDamage, OrbitalRewardKind.ShootingRate, OrbitalRewardKind.ContactDamage, OrbitalRewardKind.ContactSize, OrbitalRewardKind.RingPower, OrbitalRewardKind.RingSpeed, OrbitalRewardKind.RingCapacity, OrbitalRewardKind.AddMount, OrbitalRewardKind.MaxHealth, OrbitalRewardKind.MoveSpeed, OrbitalRewardKind.NewRing })
             yield return ChooseCard(kind);
-        Check(Mathf.Approximately(station.State.ShootingDamageMultiplier, priorDamage * 1.2f) && station.State.CoreState.Level == 1 && station.Rings.Count == 4, "specific cards actually change category/core/orbit state");
+        Check(Mathf.Approximately(station.State.ShootingDamageMultiplier, priorDamage * 1.2f) && station.Rings.Count == 4, "specific cards actually change category/orbit state");
         Open(1); RowButton("Случайный выбор из трёх").onClick.Invoke(); yield return .05f;
         Check(manager.DebugCurrentChoices.Count == 3 && manager.DebugCurrentChoices.All(d => d != null), "normal random three contains only real eligible choices");
         manager.DebugCancelCatalogueReward(); yield return .05f;

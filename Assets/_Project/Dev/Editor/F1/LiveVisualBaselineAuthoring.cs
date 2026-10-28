@@ -456,9 +456,8 @@ public sealed class LiveVisualBaselineAuthoring : EditorWindow
         private void ExportConfig(string path)
         {
             var config = Parse(Text(path)).First();
-            string[] scalars = { "ShotHaloDuration", "ShotHaloAlpha", "ShotHaloScale", "ProjectileMuzzleDuration", "ProjectileImpactDuration", "ProjectileImpactSize", "CoreIdleHighlight", "CorePulseBrightness", "CoreIdleParticleInterval", "CoreChargeParticleInterval", "CoreHaloSize", "CoreHaloPulseSize", "CoreRayDuration", "RingLineWidth", "RingLineAlpha", "RingUpgradeBrightness", "RingUpgradeGlow", "RingHighlightBrightness", "RingDimmedAlpha" };
+            string[] scalars = { "ShotHaloDuration", "ShotHaloAlpha", "ShotHaloScale", "ProjectileMuzzleDuration", "ProjectileImpactDuration", "ProjectileImpactSize", "RingLineWidth", "RingLineAlpha", "RingUpgradeBrightness", "RingUpgradeGlow", "RingHighlightBrightness", "RingDimmedAlpha" };
             foreach (string field in scalars) Scalar(config, field, "config:orbital", "config." + field);
-            foreach (string field in new[] { "CoreCyan", "CoreViolet", "CoreGold" }) Color(config, field, "config:orbital", "config." + field);
             foreach (string section in new[] { "PistolProjectile", "ShotgunProjectile", "SniperProjectile", "RingSurface", "TierI", "TierII", "TierIII", "TierIV" })
             {
                 string raw = Regex.Match(config.Raw, @"(?ms)^  " + section + @":\r?\n(.*?)(?=^  \S|\z)").Groups[1].Value;
@@ -489,14 +488,11 @@ public sealed class LiveVisualBaselineAuthoring : EditorWindow
             }
             if (code.Contains(".025f * Core.Level + .2f * energy"))
             {
-                Add("config:orbital", "config.CoreHaloIdleAlpha", .025f);
-                Add("config:orbital", "config.CoreHaloChargeAlpha", .2f);
-                Add("config:orbital", "config.CoreHaloBrightness", 1f);
                 Note("Core halo alpha coefficients and neutral RGB gain are extracted from a recognized historical C# expression; they do not change charge gameplay.");
             }
             if (code.Contains("public void FlashLink(Vector2 from, Vector2 to, Color color, float life)"))
             {
-                foreach (string family in new[] { "Other", "MuzzlePistol", "MuzzleShotgun", "MuzzleSniper", "Impact", "Arc", "CoreRay", "Relocation", "ImpactPistol", "ImpactShotgun", "ImpactSniper" })
+                foreach (string family in new[] { "Other", "MuzzlePistol", "MuzzleShotgun", "MuzzleSniper", "Impact", "Arc", "Relocation", "ImpactPistol", "ImpactShotgun", "ImpactSniper" })
                 {
                     string prefix = "flash." + family + ".";
                     foreach (string channel in new[] { "r", "g", "b", "a" }) Add("config:orbital", prefix + "Tint." + channel, 1f);

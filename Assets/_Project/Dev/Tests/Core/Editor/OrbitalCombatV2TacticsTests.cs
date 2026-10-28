@@ -481,7 +481,6 @@ public sealed class OrbitalCombatV2TacticsTests
                 lab.Player.StopAllCoroutines();
                 typeof(PlayerHealth).GetField("isInvulnerable", Flags).SetValue(lab.Player, false);
                 lab.Player.SetRuntimeHealth(lab.Player.MaxHealth, lab.Player.MaxHealth);
-                station.Core.Reset();
                 var expectedConstraints = twoRings && motion == "STATIC"
                     ? RigidbodyConstraints2D.FreezeAll : RigidbodyConstraints2D.FreezeRotation;
                 body.constraints = expectedConstraints;
@@ -967,7 +966,6 @@ public sealed class OrbitalCombatV2TacticsTests
                 lab.SetPaused(true); lab.ClearSandboxArena(); Call("ApplyTacticalPreset", build);
                 lab.Player.StopAllCoroutines();
                 typeof(PlayerHealth).GetField("isInvulnerable", Flags).SetValue(lab.Player, false);
-                station.Core.Reset();
                 body.position = anchor; body.linearVelocity = Vector2.zero; lab.Player.transform.position = anchor;
                 foreach (var ring in station.Rings) { ring.State.CurrentPhase = 0f; ring.Tick(0f); }
                 // Restore four distinct observed cooldowns, never align them into a volley.

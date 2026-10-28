@@ -11,7 +11,7 @@ namespace Subject42.Combat.OrbitalStation
     public enum OrbitalRewardFlowState
     {
         CardSelection, RingSelection, ModuleSelection, DirectMountSelection, ModuleFlight,
-        SecondLinkPlacement, Applying, Completed, Cancelled
+        SecondLinkPlacement, Applying, Completed, Cancelled, LinkConstruction
     }
 
     [DisallowMultipleComponent]
@@ -42,6 +42,7 @@ namespace Subject42.Combat.OrbitalStation
             OrbitalRewardFlowState.CardSelection;
         public OrbitalRewardKind? PendingReward => reward != null
             ? reward.RewardKind : null;
+        public bool IsAwaitingConstructor => !terminal && State == OrbitalRewardFlowState.LinkConstruction;
         public string CompactStatus => reward == null
             ? State.ToString() : $"{State}:{reward.RewardKind}";
         public string CompactTargetStatus => hoveredMount == null
@@ -367,6 +368,16 @@ namespace Subject42.Combat.OrbitalStation
         private bool ApplyImmediate()
         {
             State = OrbitalRewardFlowState.Applying;
+            if (OrbitalRewardProvider.GetSegmentedLinkKind(reward.RewardKind) is SegmentedLinkKind linkKind)
+            {
+                if (!station.State.TryGrantSegmentedLink(linkKind))
+                { State = OrbitalRewardFlowState.Cancelled; Clear(false); return false; }
+                committed = true;
+                State = OrbitalRewardFlowState.LinkConstruction;
+                // The grant is final even if a transition prevents opening the editor.
+                if (!station.Interaction.OpenConstructor()) CompleteReward();
+                return true;
+            }
             if (reward.RewardKind == OrbitalRewardKind.NewRing && station.State.UsesCustomPaths)
             {
                 var ring = station.AddRing();
@@ -380,7 +391,7 @@ namespace Subject42.Combat.OrbitalStation
                 OrbitalRewardKind.ShootingDamage or OrbitalRewardKind.ShootingRate or
                 OrbitalRewardKind.ContactDamage or OrbitalRewardKind.ContactSize => station.State.TryUpgradeCategory(reward.RewardKind),
                 OrbitalRewardKind.NewRing => station.AddRing() != null,
-                OrbitalRewardKind.CoreUpgrade => ApplyCore(),
+                OrbitalRewardKind.AddMount when station.UsesSegmentedOrbit => station.AddMount(station.Rings[0].RingId, out _),
                 OrbitalRewardKind.LinkMatrix => station.UpgradeLinkMatrix(),
                 _ => false
             };
@@ -395,10 +406,11 @@ namespace Subject42.Combat.OrbitalStation
             return true;
         }
 
-        private bool ApplyCore()
+        public void CompleteConstructorReward()
         {
-            return station.UpgradeCore();
+            if (IsAwaitingConstructor) CompleteReward();
         }
+
 
         private void CancelToCards()
         {
@@ -426,6 +438,7 @@ namespace Subject42.Combat.OrbitalStation
         {
             if (terminal) return;
             terminal = true;
+            if (station?.InputOwner?.IsConstructing == true) station.Interaction.CloseConstructor();
             pendingCustomRing = 0;
             flightToken++;
             station?.InputOwner?.EndReward();

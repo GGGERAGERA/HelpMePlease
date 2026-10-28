@@ -3,90 +3,12 @@ using UnityEngine;
 
 namespace Subject42.Combat.OrbitalStation
 {
-    public sealed class OrbitalCoreRuntime
-    {
-        private readonly OrbitalCoreState state;
-        private float pulseTimer;
-        private int cascadeIndex = -1;
-        private float cascadeTimer;
-        private int activationLevel;
-        private int wave;
-        private bool charging;
-        public event System.Action<int, int> WaveStarted;
-        public event System.Action<OrbitalRingRuntime, int, int> RingActivated;
-        public float Charge => charging ? 1f - Mathf.Clamp01(cascadeTimer /
-            OrbitalProgressionConfig.Default.CoreChargeDuration) : 0f;
-
-        public int Level => state.Level;
-        // Legacy API: persisted stat fields never influence production combat.
-        public float DamageMultiplier => 1f;
-        public float CooldownMultiplier => 1f;
-        public bool CascadeActive => activationLevel > 0;
-
-        public OrbitalCoreRuntime(OrbitalCoreState coreState)
-        {
-            state = coreState;
-        }
-
-        public void Tick(float deltaTime, IReadOnlyList<OrbitalRingRuntime> rings)
-        {
-            if (Level <= 0 || rings.Count == 0)
-            {
-                Reset();
-                return;
-            }
-            if (deltaTime <= 0f) return;
-            var config = OrbitalProgressionConfig.Default;
-            pulseTimer += deltaTime;
-            if (!CascadeActive)
-            {
-                if (pulseTimer < config.GetCoreInterval(Level)) return;
-                float overshoot = pulseTimer - config.GetCoreInterval(Level);
-                pulseTimer = overshoot;
-                activationLevel = Level;
-                wave = 0;
-                charging = true;
-                cascadeIndex = -1;
-                cascadeTimer = config.CoreChargeDuration - overshoot;
-            }
-            else cascadeTimer -= deltaTime;
-            while (CascadeActive && cascadeTimer <= 0f)
-            {
-                if (cascadeIndex < 0)
-                {
-                    charging = false;
-                    wave++;
-                    WaveStarted?.Invoke(activationLevel, wave);
-                    cascadeIndex = 0;
-                    cascadeTimer += config.CoreRingDelay;
-                    continue;
-                }
-                OrbitalRingRuntime ring = rings[cascadeIndex++];
-                ring.Pulse();
-                RingActivated?.Invoke(ring, activationLevel, wave);
-                if (cascadeIndex < rings.Count) cascadeTimer += config.CoreRingDelay;
-                else if (wave < activationLevel)
-                {
-                    cascadeIndex = -1;
-                    cascadeTimer += config.CoreWaveSpacing;
-                }
-                else activationLevel = 0;
-            }
-        }
-
-        public void Reset()
-        {
-            pulseTimer = 0f;
-            cascadeIndex = -1;
-            cascadeTimer = 0f;
-            activationLevel = wave = 0;
-            charging = false;
-        }
-    }
 
     public sealed class OrbitalRingRuntime
     {
         private readonly OrbitalRingView view;
+        private readonly bool segmented;
+        public bool IsActive { get; private set; }
         private float pulse;
         private float spawnScale = 1f;
         private bool selected;
@@ -94,14 +16,6 @@ namespace Subject42.Combat.OrbitalStation
         private bool interactionHovered;
         private bool interactionDimmed;
         private float interactionEmphasis = 1f;
-        private int coreLevel;
-        private Color coreColor;
-        private float coreTime;
-        public void SetCoreVisual(int level, Color color)
-        {
-            coreLevel = level;
-            coreColor = color;
-        }
 
         public OrbitalPathGeometry Geometry { get; }
         public OrbitalRingState State { get; }
@@ -128,9 +42,11 @@ namespace Subject42.Combat.OrbitalStation
 
         public OrbitalRingRuntime(OrbitalRingState state,
             Transform root, Material material, Sprite sprite,
-            bool animateSpawn = false, OrbitalPathGeometry geometry = null)
+            bool animateSpawn = false, OrbitalPathGeometry geometry = null, bool segmented = false, bool active = true)
         {
             State = state;
+            this.segmented = segmented;
+            IsActive = active;
             Geometry = geometry ?? OrbitalPathGeometry.Circle;
             view = Object.Instantiate(OrbitalPresentationConfig.Active.RingPrefab, root, false);
             Subject42.Visuals.LiveVisualRuntime.RegisterHierarchy(view.gameObject, OrbitalPresentationConfig.Active.RingPrefab.gameObject);
@@ -143,10 +59,12 @@ namespace Subject42.Combat.OrbitalStation
             for (int i = 0; i < State.MountCount; i++)
                 Mounts.Add(new OrbitalMountRuntime(this, i, view.MountsRoot, sprite));
             RebalanceMounts();
+            view.gameObject.SetActive(active);
         }
 
         public void Tick(float deltaTime)
         {
+            if (!IsActive) return;
             float angularDelta = RotationSpeed * Direction * deltaTime;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             angularDelta *= LabRotationMultiplier;
@@ -154,8 +72,6 @@ namespace Subject42.Combat.OrbitalStation
             State.CurrentPhase = Mathf.Repeat(
                 State.CurrentPhase + angularDelta, 360f);
             pulse = Mathf.MoveTowards(pulse, 0f, deltaTime * 2.5f);
-            coreTime += deltaTime;
-            view.SetCoreEnergy(coreLevel, coreColor, pulse, coreTime);
             spawnScale = Mathf.MoveTowards(spawnScale, 1f,
                 deltaTime * 2.8f);
             float interactionPulse = interactionEligible
@@ -170,6 +86,16 @@ namespace Subject42.Combat.OrbitalStation
                 Mounts[i].UpdatePosition(State.CurrentPhase, Radius * spawnScale);
         }
 
+        public void SetActive(bool active, bool constructionPreview)
+        {
+            IsActive = active;
+            bool visible = active || constructionPreview;
+            if (view.gameObject.activeSelf == visible) return;
+            view.gameObject.SetActive(visible);
+            if (visible)
+                foreach (var mount in Mounts) mount.UpdatePosition(Phase, Radius);
+        }
+
         public OrbitalMountRuntime AddMount(Transform root, Sprite sprite)
         {
             OrbitalMountRuntime mount = new(this, Mounts.Count, view.MountsRoot, sprite);
@@ -178,12 +104,6 @@ namespace Subject42.Combat.OrbitalStation
             return mount;
         }
 
-        public void Pulse()
-        {
-            pulse = 1f;
-            for (int i = 0; i < Mounts.Count; i++)
-                Mounts[i].Module?.OnCorePulse();
-        }
 
         // Visual feedback only; unlike Pulse this does not activate modules.
         public void PulseVisual() => pulse = 1f;
@@ -216,7 +136,8 @@ namespace Subject42.Combat.OrbitalStation
         {
             for (int i = 0; i < Mounts.Count; i++)
             {
-                float localPhase = i * 360f / Mounts.Count;
+                float localPhase = segmented ? OrbitalRunState.SegmentedMountAngle(State.Order, i)
+                    : i * 360f / Mounts.Count;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 if (LabMountPhase != null) localPhase = LabMountPhase(i, localPhase);
 #endif

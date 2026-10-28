@@ -77,17 +77,7 @@ namespace Subject42.Combat.OrbitalStation
                 FrontLine.SetPosition(i, path.Position(i / (float)segments, 1f) / path.Scale(1f));
         }
         private static readonly int SurfaceId = Shader.PropertyToID("_RingSurface");
-        private static readonly int CoreId = Shader.PropertyToID("_CoreEnergy");
-        private static readonly int CoreColorId = Shader.PropertyToID("_CoreColor");
         private static readonly int PatternId = Shader.PropertyToID("_RingPattern");
-        private Vector4 coreEnergy;
-        private Color coreColor;
-        public void SetCoreEnergy(int level, Color color, float pulse, float time)
-        {
-            coreEnergy = new Vector4(level * OrbitalPresentationConfig.Active.CoreIdleHighlight,
-                pulse * OrbitalPresentationConfig.Active.CorePulseBrightness, time, 0f);
-            coreColor = color;
-        }
         private MaterialPropertyBlock surface;
         private OrbitalPresentationConfig.RingTierStyle previousStyle, currentStyle;
         private int displayedTier;
@@ -142,8 +132,6 @@ namespace Subject42.Combat.OrbitalStation
             surface.SetVector(SurfaceId, new Vector4(currentStyle.Emission * brightness * tuning.Brightness,
                 (currentStyle.Glow + burst * config.RingUpgradeGlow) * tuning.Glow, currentStyle.CoreWhitening, 0f));
             surface.SetVector(PatternId, new Vector4((int)tuning.Pattern, tuning.DashCount, tuning.DashFill, tuning.PatternSpeed));
-            surface.SetVector(CoreId, coreEnergy);
-            surface.SetColor(CoreColorId, coreColor);
             FrontLine.SetPropertyBlock(surface);
             transitionAge = Mathf.Min(transitionAge + gameplayDeltaTime, config.RingTierTransitionDuration);
             energyTime = Mathf.Repeat(energyTime + gameplayDeltaTime * currentStyle.PulseSpeed, 1f);

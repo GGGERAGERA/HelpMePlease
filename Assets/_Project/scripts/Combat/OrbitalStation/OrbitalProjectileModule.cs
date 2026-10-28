@@ -19,8 +19,15 @@ namespace Subject42.Combat.OrbitalStation
         private Vector2 estimatedTargetVelocity;
         private static long nextVolley;
         public int ShotsFired { get; private set; }
-        public float DamageMultiplier => Station.State.ShootingDamageMultiplier;
-        public float FireRateMultiplier => Station.State.ShootingRateMultiplier;
+        public float DamageMultiplier => Station.State.ShootingDamageMultiplier * Station.SegmentedDamageFactor(StableModuleId);
+        public float FireRateMultiplier => Station.State.ShootingRateMultiplier * Station.SegmentedRateFactor(StableModuleId);
+        // No cooldown/burst mutation and no ordinary-shot event: extra shots cannot recurse.
+        public bool FireExtraShot()
+        {
+            if (Mount == null || Station.Owner.IsDead || !Visual.activeInHierarchy || !UsesFixedDirection) return false;
+            EmitShot(null);
+            return true;
+        }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         protected virtual bool LabFixedDirection => false;
         protected virtual float? LabExtraShotAngle => null;
@@ -30,17 +37,13 @@ namespace Subject42.Combat.OrbitalStation
         protected virtual void LabOrdinaryShot() { }
 
         // One volley through the same projectile/feedback path, without touching charge, burst or cooldown.
-        public bool FireLabExtraShot()
-        {
-            if (Mount == null || Station.Owner.IsDead || !Visual.activeInHierarchy || !UsesFixedDirection) return false;
-            EmitShot(null);
-            return true;
-        }
+        public bool FireLabExtraShot() => FireExtraShot();
 #endif
         private bool UsesFixedDirection
         {
             get
             {
+                if (Station.UsesSegmentedOrbit) return true;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 return LabFixedDirection;
 #else
@@ -91,7 +94,7 @@ namespace Subject42.Combat.OrbitalStation
         }
         public override void ActivateCombat()
         {
-            // Core pulses keep the same projectile rules and never skip charging or cadence.
+            // Activation respects the same charging and cadence as ordinary fire.
             if (Cooldown > 0f || chargeRemaining >= 0f) return;
             var target = UsesFixedDirection ? null : Combat.FindNearest(WorldPosition, Settings.Range);
             if (target == null && !UsesFixedDirection) return;
@@ -111,6 +114,7 @@ namespace Subject42.Combat.OrbitalStation
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             LabOrdinaryShot();
 #endif
+            Station.SegmentedOrdinaryShot(StableModuleId);
         }
         private void EmitShot(EnemyHealth target)
         {
@@ -138,10 +142,13 @@ namespace Subject42.Combat.OrbitalStation
                     : ((float)spreadRandom.NextDouble() - .5f) * Settings.SpreadDegrees;
                 Vector2 flight = Quaternion.Euler(0f, 0f, angle) * direction;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                if (UsesFixedDirection)
+                if (LabFixedDirection)
                     adapter.SpawnLabDirectionalProjectile(WorldPosition, flight, Settings, volley, damage, StableModuleId, LabRicochets);
                 else
 #endif
+                if (UsesFixedDirection)
+                    adapter.SpawnDirectionalWeaponProjectile(WorldPosition, flight, Settings, volley, damage, Station.SegmentedRicochets(StableModuleId));
+                else
                     adapter.SpawnWeaponProjectile(WorldPosition, target, flight, Settings, volley, damage);
             }
             ShotsFired++;
@@ -162,7 +169,6 @@ namespace Subject42.Combat.OrbitalStation
             AudioService.Instance?.PlayAt(Settings.ShotSound, WorldPosition);
             shotFeedback?.Invoke(Settings.Recoil / .23f);
         }
-        public override void OnCorePulse() => ActivateCombat();
         private void TrackAimTarget(EnemyHealth target, float deltaTime)
         {
             if (Settings.AimLeadSeconds <= 0f) return;

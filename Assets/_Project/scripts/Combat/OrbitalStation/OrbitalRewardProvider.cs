@@ -14,7 +14,7 @@ namespace Subject42.Combat.OrbitalStation
         RingSpeed = 5,
         RingPower = 6,
         AddMount = 7,
-        CoreUpgrade = 8,
+        // Serialized reward ID 8 is retired (Core I–III). Never reuse it.
         LinkMatrix = 9,
         MaxHealth = 10,
         MoveSpeed = 11,
@@ -27,7 +27,11 @@ namespace Subject42.Combat.OrbitalStation
         ShootingDamage = 18,
         ShootingRate = 19,
         ContactDamage = 20,
-        ContactSize = 21
+        ContactSize = 21,
+        DamageLink = 22,
+        FireRateLink = 23,
+        ExtraShotLink = 24,
+        RicochetLink = 25
     }
 
     public sealed class OrbitalRewardData : UpgradeData
@@ -67,7 +71,7 @@ namespace Subject42.Combat.OrbitalStation
             List<OrbitalRewardData> pool = GetEligibleNormalRewards(state, slots)
                 .Cast<OrbitalRewardData>().ToList();
             List<UpgradeData> result = new();
-            if (count > 0 && offerNewRing && state != null && state.CanAddRing(out _))
+            if (count > 0 && offerNewRing && state != null && !state.UsesSegmentedOrbit && state.CanAddRing(out _))
                 result.Add(definitions.Find(d => d.RewardKind == OrbitalRewardKind.NewRing));
             while (result.Count < count && pool.Count > 0)
             {
@@ -105,6 +109,23 @@ namespace Subject42.Combat.OrbitalStation
             _ => null
         };
 
+        public static SegmentedLinkKind? GetSegmentedLinkKind(OrbitalRewardKind kind) => kind switch
+        {
+            OrbitalRewardKind.DamageLink => SegmentedLinkKind.Damage,
+            OrbitalRewardKind.FireRateLink => SegmentedLinkKind.FireRate,
+            OrbitalRewardKind.ExtraShotLink => SegmentedLinkKind.ExtraShot,
+            OrbitalRewardKind.RicochetLink => SegmentedLinkKind.Ricochet,
+            _ => null
+        };
+
+        private static bool IsInActivePool(OrbitalRewardData reward, OrbitalRunState state)
+        {
+            if (!reward.InNormalPool && reward.RewardKind != OrbitalRewardKind.NewRing) return false;
+            if (state?.UsesSegmentedOrbit == true)
+                return reward.RewardKind is not (OrbitalRewardKind.RingSpeed or OrbitalRewardKind.RingCapacity);
+            return !GetSegmentedLinkKind(reward.RewardKind).HasValue;
+        }
+
         public bool IsEligible(OrbitalRewardKind kind) =>
             IsEligible(kind, RunStateManager.Instance?.OrbitalStationState, RunStateManager.Instance?.ItemSlots);
 
@@ -135,7 +156,7 @@ namespace Subject42.Combat.OrbitalStation
                     state,
                     slots,
                     demoOnly: true)
-                .Where(value => value.RewardKind != OrbitalRewardKind.NewRing)
+                .Where(value => value.RewardKind != OrbitalRewardKind.NewRing || state.UsesSegmentedOrbit)
                 .Cast<UpgradeData>()
                 .ToArray();
         }
@@ -168,11 +189,9 @@ namespace Subject42.Combat.OrbitalStation
             for (int i = 0; i < definitions.Count; i++)
             {
                 OrbitalRewardData reward = definitions[i];
-                if (demoOnly && ((!reward.InNormalPool && reward.RewardKind != OrbitalRewardKind.NewRing) ||
-                    (reward.RewardKind == OrbitalRewardKind.CoreUpgrade &&
-                     state.Rings.Count < config.MinRingsForCoreOffer))) continue;
+                if (demoOnly && !IsInActivePool(reward, state)) continue;
                 OrbitalModuleKind? moduleKind = GetModuleKind(reward.RewardKind);
-                bool eligible = moduleKind.HasValue
+                bool eligible = GetSegmentedLinkKind(reward.RewardKind).HasValue ? state.UsesSegmentedOrbit : moduleKind.HasValue
                     ? freeMounts >= (moduleKind.Value == OrbitalModuleKind.LinkNode ? 2 : 1)
                     : reward.RewardKind switch
                 {
@@ -189,8 +208,6 @@ namespace Subject42.Combat.OrbitalStation
                         state.CanTargetRingReward(OrbitalRewardKind.AddMount, ring.StableRingId)),
                     OrbitalRewardKind.RingCapacity => state.Rings.Any(ring =>
                         state.CanTargetRingReward(OrbitalRewardKind.RingCapacity, ring.StableRingId)),
-                    OrbitalRewardKind.CoreUpgrade =>
-                        state.CanUpgradeCore(out _),
                     OrbitalRewardKind.LinkMatrix => state.CanUpgradeLinkMatrix(out _),
                     OrbitalRewardKind.MaxHealth => CanTakeBody(
                         reward.BodyUpgrade, slots),
@@ -207,7 +224,7 @@ namespace Subject42.Combat.OrbitalStation
         private void CreateDefinitions()
         {
             Add(OrbitalRewardKind.NewRing, "reward.newRing",
-                "reward.newRingDescription", 0f, false, normalPool: false);
+                "reward.newRingDescription", config.RingWeight, false, normalPool: false);
             Add(OrbitalRewardKind.Pistol, "reward.gun",
                 "reward.gunDescription",
                 config.ModuleWeight, true);
@@ -218,6 +235,10 @@ namespace Subject42.Combat.OrbitalStation
                 "reward.shotgunDescription",
                 config.ModuleWeight, true);
             Add(OrbitalRewardKind.Sniper, "reward.sniper", "reward.sniperDescription", config.ModuleWeight, true);
+            Add(OrbitalRewardKind.DamageLink, "reward.linkDamage", "reward.linkDamageDescription", config.ModuleWeight, false);
+            Add(OrbitalRewardKind.FireRateLink, "reward.linkRate", "reward.linkRateDescription", config.ModuleWeight, false);
+            Add(OrbitalRewardKind.ExtraShotLink, "reward.linkExtra", "reward.linkExtraDescription", config.ModuleWeight, false);
+            Add(OrbitalRewardKind.RicochetLink, "reward.linkRicochet", "reward.linkRicochetDescription", config.ModuleWeight, false);
             Add(OrbitalRewardKind.ShootingDamage, "reward.shootingDamage", "reward.shootingDamageDescription", config.SubjectWeight, false);
             Add(OrbitalRewardKind.ShootingRate, "reward.shootingRate", "reward.shootingRateDescription", config.SubjectWeight, false);
             Add(OrbitalRewardKind.ContactDamage, "reward.contactDamage", "reward.contactDamageDescription", config.SubjectWeight, false);
@@ -242,12 +263,9 @@ namespace Subject42.Combat.OrbitalStation
                 config.RingWeight, true);
             Add(OrbitalRewardKind.RingCapacity, "reward.capacity",
                 "reward.capacityDescription", config.RingWeight, true);
-            Add(OrbitalRewardKind.CoreUpgrade, "reward.core1",
-                "reward.coreWave1",
-                config.CoreWeight, false);
             Add(OrbitalRewardKind.LinkMatrix, "reward.matrix",
                 "reward.matrixDescription",
-                config.CoreWeight, false, normalPool: false);
+                config.LinkMatrixWeight, false, normalPool: false);
             Add(OrbitalRewardKind.MaxHealth, "reward.health",
                 string.Format(LocalizationService.EnsureExists().Get("reward.healthDescription"), ProductionUpgradeProfiles.MaxHealthBonus(1), RunItemSlots.MaxItemLevel),
                 config.SubjectWeight, false, maxHealthUpgrade);
@@ -260,6 +278,23 @@ namespace Subject42.Combat.OrbitalStation
         {
             foreach (var definition in definitions)
             {
+                bool segmented = state?.UsesSegmentedOrbit == true;
+                if (definition.RewardKind == OrbitalRewardKind.NewRing)
+                {
+                    definition.upgradeName = segmented ? "reward.unlockOrbit" : "reward.newRing";
+                    definition.description = segmented ? "reward.unlockOrbitDescription" : "reward.newRingDescription";
+                }
+                if (definition.RewardKind == OrbitalRewardKind.AddMount)
+                {
+                    definition.upgradeName = segmented ? "reward.weaponCapacity" : "reward.mount";
+                    definition.RequiresArenaSelection = !segmented;
+                    if (segmented)
+                    {
+                        definition.description = string.Format(LocalizationService.EnsureExists().Get("reward.weaponCapacityDescription"),
+                            state.SegmentedWeaponLimit, Math.Min(OrbitalRunState.MaxSegmentedWeapons, state.SegmentedWeaponLimit + 1));
+                        continue;
+                    }
+                }
                 if (definition.RewardKind == OrbitalRewardKind.MaxHealth)
                     definition.description = string.Format(LocalizationService.EnsureExists().Get("reward.healthDescription"), ProductionUpgradeProfiles.MaxHealthBonus(1), RunItemSlots.MaxItemLevel);
                 if (definition.RewardKind == OrbitalRewardKind.MoveSpeed)
@@ -280,19 +315,7 @@ namespace Subject42.Combat.OrbitalStation
                         (ring == null ? "" : $"×{Mathf.Pow(1f + config.SpeedIncrement, ring.SpeedUpgradeLevel):0.00} → ×{Mathf.Pow(1f + config.SpeedIncrement, ring.SpeedUpgradeLevel + 1):0.00}")
                 };
             }
-            OrbitalCoreState core = state?.CoreState;
-            OrbitalRewardData reward = definitions.Find(value =>
-                value.RewardKind == OrbitalRewardKind.CoreUpgrade);
-            if (reward == null || core == null)
-                return;
-            int next = Mathf.Min(3, core.Level + 1);
-            reward.upgradeName = next switch { 1 => "reward.core1", 2 => "reward.core2", _ => "reward.core3" };
-            reward.description = next switch
-            {
-                1 => "reward.coreWave1",
-                2 => "reward.coreWave2",
-                _ => "reward.coreWave3"
-            };
+
         }
 
         private void Add(OrbitalRewardKind kind, string title,
@@ -305,7 +328,7 @@ namespace Subject42.Combat.OrbitalStation
             data.name = $"Orbital Reward {kind}";
             data.upgradeName = title;
             data.description = description;
-            data.category = arena ? UpgradeCategory.Behavior : UpgradeCategory.Numeric;
+            data.category = arena || GetSegmentedLinkKind(kind).HasValue ? UpgradeCategory.Behavior : UpgradeCategory.Numeric;
             data.upgradeType = UpgradeType.OrbitalReward;
             data.RewardKind = kind;
             data.EffectCategory = GetEffectCategory(kind);
@@ -320,6 +343,7 @@ namespace Subject42.Combat.OrbitalStation
         public static OrbitalUpgradeCategory GetEffectCategory(OrbitalRewardKind kind)
         {
             if (GetModuleKind(kind) is OrbitalModuleKind module) return OrbitalCategories.ForModule(module);
+            if (GetSegmentedLinkKind(kind).HasValue) return OrbitalUpgradeCategory.Shooting;
             return kind switch
             {
                 OrbitalRewardKind.ShootingDamage or OrbitalRewardKind.ShootingRate or OrbitalRewardKind.ModuleDamage => OrbitalUpgradeCategory.Shooting,

@@ -63,7 +63,6 @@ namespace Subject42.Combat.OrbitalStation
                 }
             }
         }
-        public override void OnCorePulse() => ActivateCombat();
         public override void Detach() { ResetContact(); base.Detach(); }
         public void ResetContact() { nextHit.Clear(); targets.Clear(); overlaps.Clear(); }
     }

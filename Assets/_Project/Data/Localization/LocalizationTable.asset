@@ -985,9 +985,6 @@ MonoBehaviour:
   - key: pause.speed
     ru: "СКОРОСТЬ"
     en: "SPEED"
-  - key: pause.coreWaves
-    ru: "ЯДРО {0} · волн импульса: {0}"
-    en: "CORE {0} · pulse waves: {0}"
   - key: pause.maxHealth
     ru: "МАКС. ЗДОРОВЬЕ"
     en: "MAX HEALTH"
@@ -997,6 +994,42 @@ MonoBehaviour:
   - key: reward.newRing
     ru: "НОВАЯ ОРБИТА"
     en: "NEW ORBIT"
+  - key: reward.unlockOrbit
+    ru: "ОТКРЫТЬ ОРБИТУ"
+    en: "UNLOCK ORBIT"
+  - key: reward.linkDamage
+    ru: "УРОН (DMG)"
+    en: "DAMAGE (DMG)"
+  - key: reward.linkDamageDescription
+    ru: "+1 модуль в запас.\nСвязь даёт пушкам +20% урона.\nУстановите сейчас или сохраните на потом."
+    en: "+1 module in reserve.\nLinked guns gain +20% damage.\nInstall now or keep for later."
+  - key: reward.linkRate
+    ru: "СКОРОСТРЕЛЬНОСТЬ (FR)"
+    en: "FIRE RATE (FR)"
+  - key: reward.linkRateDescription
+    ru: "+1 модуль в запас.\nСвязь даёт пушкам +20% скорострельности.\nУстановите сейчас или сохраните на потом."
+    en: "+1 module in reserve.\nLinked guns gain +20% fire rate.\nInstall now or keep for later."
+  - key: reward.linkExtra
+    ru: "ДОПОЛНИТЕЛЬНЫЙ ВЫСТРЕЛ (2X)"
+    en: "EXTRA SHOT (2X)"
+  - key: reward.linkExtraDescription
+    ru: "+1 модуль в запас.\nВыстрел соседа не чаще раза в 0,5 с.\nБез цепочки дополнительных выстрелов."
+    en: "+1 module in reserve.\nA neighbour fires at most once per 0.5 s.\nExtra shots never trigger a chain."
+  - key: reward.linkRicochet
+    ru: "РИКОШЕТ (RIC)"
+    en: "RICOCHET (RIC)"
+  - key: reward.linkRicochetDescription
+    ru: "+1 модуль в запас.\nСвязь даёт пушкам +1 рикошет.\nУстановите сейчас или сохраните на потом."
+    en: "+1 module in reserve.\nLinked guns gain +1 ricochet.\nInstall now or keep for later."
+  - key: reward.unlockOrbitDescription
+    ru: "Открывает следующий уровень: средний, затем внешний.\nВсего 3 уровня по 12 точек. Общий лимит оружия не меняется."
+    en: "Unlocks the next orbit: middle, then outer.\n3 levels, 12 positions each. Does not increase the shared weapon limit."
+  - key: reward.weaponCapacity
+    ru: "+1 КРЕПЛЕНИЕ"
+    en: "+1 WEAPON CAPACITY"
+  - key: reward.weaponCapacityDescription
+    ru: "Общий лимит установленного оружия: {0} → {1}.\nМаксимум 12 пушек суммарно на всех открытых орбитах."
+    en: "Shared installed weapon limit: {0} → {1}.\nUp to 12 weapons total across all unlocked orbits."
   - key: reward.newRingDescription
     ru: "+1 кольцо\n1 точка / ёмкость 3."
     en: "+1 ring\n1 mount / capacity 3."
@@ -1048,24 +1081,6 @@ MonoBehaviour:
   - key: reward.capacityDescription
     ru: "КОЛЬЦО\nПредел точек +1 (до 6).\nВыберите кольцо с полной ёмкостью."
     en: "RING\nMount capacity +1 (up to 6).\nSelect a ring at full capacity."
-  - key: reward.core1
-    ru: "ЯДРО I"
-    en: "CORE I"
-  - key: reward.core2
-    ru: "ЯДРО II"
-    en: "CORE II"
-  - key: reward.core3
-    ru: "ЯДРО III"
-    en: "CORE III"
-  - key: reward.coreWave1
-    ru: "1 волна по орбитам каждые 7,5 с. Активирует готовое оружие по его обычным правилам."
-    en: "Every 7.5 s: 1 wave activates weapons ring by ring, respecting readiness and normal weapon rules."
-  - key: reward.coreWave2
-    ru: "2 волны по орбитам каждые 6,5 с. Активируют готовое оружие по его обычным правилам."
-    en: "Every 6.5 s: 2 waves activate weapons ring by ring, respecting readiness and normal weapon rules."
-  - key: reward.coreWave3
-    ru: "3 волны по орбитам каждые 5,5 с. Активируют готовое оружие по его обычным правилам."
-    en: "Every 5.5 s: 3 waves activate weapons ring by ring, respecting readiness and normal weapon rules."
   - key: reward.matrix
     ru: "МАТРИЦА СВЯЗЕЙ"
     en: "LINK MATRIX"

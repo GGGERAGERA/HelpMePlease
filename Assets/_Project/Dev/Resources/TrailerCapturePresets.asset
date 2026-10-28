@@ -27,7 +27,6 @@ MonoBehaviour:
     description: 1 кольцо · пистолет и меч · низкая угроза
     rings: 1
     mountsPerRing: 2
-    coreLevel: 0
     threat: 5
     openingEnemies: 3
     modules:
@@ -39,7 +38,6 @@ MonoBehaviour:
     description: 3 кольца · 7 модулей · Bullet Time и смещение центра
     rings: 3
     mountsPerRing: 3
-    coreLevel: 1
     threat: 25
     openingEnemies: 5
     modules:
@@ -66,7 +64,6 @@ MonoBehaviour:
     description: 4 кольца · 8 модулей · умеренно повышенная угроза
     rings: 4
     mountsPerRing: 3
-    coreLevel: 2
     threat: 50
     openingEnemies: 8
     modules:
@@ -96,7 +93,6 @@ MonoBehaviour:
     description: 3 кольца · настоящий Rocket Storm · переход к маяку
     rings: 3
     mountsPerRing: 3
-    coreLevel: 1
     threat: 15
     openingEnemies: 2
     modules:
@@ -123,7 +119,6 @@ MonoBehaviour:
     description: 3 кольца · текущий босс · обычный спавн остановлен
     rings: 3
     mountsPerRing: 3
-    coreLevel: 1
     threat: 15
     openingEnemies: 0
     modules:

@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Subject42.Combat.OrbitalStation
 {
     [DisallowMultipleComponent]
-    public sealed class OrbitalStationRuntime : MonoBehaviour
+    public sealed partial class OrbitalStationRuntime : MonoBehaviour
     {
         private enum PlacementStep { None, Ring, Mount }
 
@@ -33,7 +33,8 @@ namespace Subject42.Combat.OrbitalStation
             get
             {
                 float radius = 0f;
-                foreach (var ring in rings) radius = Mathf.Max(radius, ring.Geometry.MaximumRadius(ring.Radius));
+                foreach (var ring in rings)
+                    if (ring.IsActive) radius = Mathf.Max(radius, ring.Geometry.MaximumRadius(ring.Radius));
                 return radius;
             }
         }
@@ -51,11 +52,6 @@ namespace Subject42.Combat.OrbitalStation
         private readonly List<(LineRenderer line, Color color, float startedAt, float expiresAt,
             OrbitalFlashFamily family, float width)> flashes = new(128);
         private readonly Stack<LineRenderer> idleFlashes = new(128);
-        private LineRenderer coreWave;
-        private float coreWaveAge = -1f;
-        private Color coreWaveColor;
-        private int coreWaveColorIndex = 1;
-        private float coreParticleTimer;
         private readonly Dictionary<(int First, int Second), LineRenderer> linkLines = new();
         private readonly HashSet<(int First, int Second)> activeLinkPairs = new();
         private readonly List<(int First, int Second)> resolvedLinkPairs = new();
@@ -68,13 +64,15 @@ namespace Subject42.Combat.OrbitalStation
         private Sprite sharedSprite;
         private Sprite sharedCircleSprite;
         private SpriteRenderer coreVisual;
-        private float coreFlash;
         private RunStateManager runStateManager;
         private PlacementStep placementStep;
         private OrbitalModuleKind pendingKind;
         private OrbitalRingRuntime placementRing;
         private OrbitalRingRuntime selectedRing;
         private bool initialized;
+        private bool segmentedOrbit;
+        public bool UsesSegmentedOrbit => State != null && State.UsesSegmentedOrbit;
+        public float RotationEnergy => State.RotationEnergy;
         private bool tearingDown;
         private bool restoreFailed;
         private OrbitalRelocationController relocation;
@@ -86,7 +84,6 @@ namespace Subject42.Combat.OrbitalStation
 
         public IOrbitalOwnerAdapter Owner { get; private set; }
         public IOrbitalCombatAdapter Combat { get; private set; }
-        public OrbitalCoreRuntime Core { get; private set; }
         public OrbitalRunState State { get; private set; }
         public OrbitalRewardFlowController RewardFlow { get; private set; }
         public OrbitalInteractionPresentation Interaction { get; private set; }
@@ -101,9 +98,10 @@ namespace Subject42.Combat.OrbitalStation
             get
             {
                 Vector2 extents = Vector2.zero;
-                foreach (var ring in rings) extents = Vector2.Max(extents, ring.Geometry.Extents(ring.Radius));
+                foreach (var ring in rings)
+                    if (ring.IsActive) extents = Vector2.Max(extents, ring.Geometry.Extents(ring.Radius));
                 foreach (var module in modules)
-                    if (module.CurrentMount != null)
+                    if (module.CurrentMount != null && module.CurrentMount.Ring.IsActive)
                         extents = Vector2.Max(extents, module.CurrentMount.Ring.Geometry.Extents(module.CurrentMount.Ring.Radius) + Vector2.one * module.PresentationReach);
                 return extents;
             }
@@ -121,7 +119,7 @@ namespace Subject42.Combat.OrbitalStation
             _ => "READY"
         };
 
-        public static OrbitalStationRuntime Ensure(GameObject player, CharacterData character = null)
+        public static OrbitalStationRuntime Ensure(GameObject player, CharacterData character = null, bool segmentedOrbit = false)
         {
             if (player == null)
                 return null;
@@ -135,6 +133,7 @@ namespace Subject42.Combat.OrbitalStation
                 if (station == null) { Debug.LogError("[OrbitalStation] authored station owner is missing", player); return null; }
             }
             station.boundPlayer = player;
+            station.segmentedOrbit = segmentedOrbit;
             if (!station.initialized) station.boundCharacter = character;
             station.Initialize();
             return station;
@@ -166,6 +165,7 @@ namespace Subject42.Combat.OrbitalStation
                 return;
             }
             State = state;
+            if (segmentedOrbit) State.EnableSegmentedOrbit();
             try
             {
                 if (!OrbitalPresentationConfig.TryGetRequired(out var config, out error))
@@ -178,7 +178,7 @@ namespace Subject42.Combat.OrbitalStation
                     FailRestore(error);
                     return;
                 }
-                Geometry = geometry;
+                Geometry = UsesSegmentedOrbit ? OrbitalPathGeometry.Circle : geometry;
                 authoredView = GetComponent<OrbitalStationView>();
                 if (authoredView == null || !authoredView.IsValid)
                 { FailRestore("required authored station references are missing"); return; }
@@ -212,18 +212,8 @@ namespace Subject42.Combat.OrbitalStation
                     FlashLink(point - side * size * .3f, point + side * size * .3f,
                         Color.Lerp(color, Color.white, .75f), life * .45f, family);
                 };
-                Core = new OrbitalCoreRuntime(State.CoreState);
-                coreWaveColor = config.GetCoreWaveColor(Mathf.Max(1, Core.Level));
                 authoredView.CoreParticles.Play();
-                Core.WaveStarted += OnCoreWave;
-                Core.RingActivated += OnCoreRing;
-                for (int i = 0; i < config.FlashPoolCapacity; i++)
-                    idleFlashes.Push(CreateFlashLine());
-                coreWave = CreateFlashLine();
-                coreWave.useWorldSpace = false;
-                coreWave.positionCount = 65;
-                for (int i = 0; i <= 64; i++)
-                    coreWave.SetPosition(i, Geometry.Position(i / 64f, 1f));
+                for (int i = 0; i < config.FlashPoolCapacity; i++) idleFlashes.Push(CreateFlashLine());
                 InputOwner = authoredView.Input;
                 InputOwner.Bind(this);
                 Interaction = authoredView.Presentation;
@@ -314,7 +304,7 @@ namespace Subject42.Combat.OrbitalStation
                 return;
             // Interface-backed adapters are intentionally scene-local and are
             // not serialized. A development hot reload must fail closed.
-            if (Owner == null || Core == null || Combat == null)
+            if (Owner == null || Combat == null)
             {
                 Teardown();
                 return;
@@ -328,6 +318,10 @@ namespace Subject42.Combat.OrbitalStation
             authoredView.CenterShift.Refresh();
             if (HasPendingCustomRings) { ReleaseBulletTime(); return; }
             UpdateRightMouse(Time.unscaledDeltaTime);
+            if (UsesSegmentedOrbit)
+                TickManualRotation(Time.deltaTime, Input.GetKey(KeyCode.Q), Input.GetKey(KeyCode.E),
+                    Application.isFocused && Owner.CanControl && !IsRunEnded && Time.timeScale > 0f &&
+                    InputOwner.IsIdle && InputOwner.CanUseDebugPlacement);
             TickStation(Time.deltaTime);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             HandlePlacementInput();
@@ -382,7 +376,7 @@ namespace Subject42.Combat.OrbitalStation
             }
             foreach (var ring in rings)
             {
-                ring.RuntimeDirectionMultiplier = rotationSign;
+                ring.RuntimeDirectionMultiplier = UsesSegmentedOrbit ? 0 : rotationSign;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 if (DebugRotationPaused) ring.RuntimeDirectionMultiplier = 0;
 #endif
@@ -441,39 +435,38 @@ namespace Subject42.Combat.OrbitalStation
 
         private void TickStation(float deltaTime)
         {
-            Core.Tick(deltaTime, rings);
             for (int i = 0; i < rings.Count; i++)
             {
-                rings[i].SetCoreVisual(Core.Level, coreWaveColor);
+                rings[i].SetActive(State.IsRingActive(rings[i].State), InputOwner.IsConstructing);
                 rings[i].Tick(deltaTime);
             }
             for (int i = 0; i < modules.Count; i++)
-                modules[i].Tick(deltaTime);
+                if (!UsesSegmentedOrbit || modules[i].CurrentMount != null && modules[i].CurrentMount.Ring.IsActive)
+                    modules[i].Tick(deltaTime);
             Combat.Tick(deltaTime);
             UpdateLinkNodes(deltaTime);
             UpdateFlashes();
-            UpdateCoreWave(deltaTime);
-            coreFlash = Mathf.MoveTowards(coreFlash, 0f, deltaTime * 5f);
-            if (coreVisual != null)
+        }
+
+        // Shared with Segmented Orbit in the lab; exhaustion stops only angular motion.
+        public void TickManualRotation(float deltaTime, bool counterClockwise, bool clockwise, bool allowed,
+            float capacity = 100f, float speed = 90f, float drain = 25f, float recovery = 12f)
+        {
+            if (!allowed || deltaTime <= 0f) return;
+            State.RotationEnergy = Mathf.Clamp(State.RotationEnergy, 0f, capacity);
+            if (!counterClockwise && !clockwise)
             {
-                // Pulse the energy effects, keeping the linked miniWeapon art at its authored size/color.
-                Color idle = Core.Level == 0 ? new Color(0.72f, 0.25f, 1f) :
-                    OrbitalPresentationConfig.Active.GetCoreWaveColor(Core.Level);
-                var config = OrbitalPresentationConfig.Active;
-                float energy = Mathf.Max(coreFlash, Core.Charge);
-                authoredView.CoreHalo.enabled = Core.Level > 0;
-                authoredView.CoreHalo.color = new Color(idle.r * config.CoreHaloBrightness,
-                    idle.g * config.CoreHaloBrightness, idle.b * config.CoreHaloBrightness,
-                    config.CoreHaloIdleAlpha * Core.Level + config.CoreHaloChargeAlpha * energy);
-                authoredView.CoreHalo.transform.localScale = Vector3.one *
-                    Mathf.Lerp(config.CoreHaloSize, config.CoreHaloPulseSize, energy);
-                coreParticleTimer -= deltaTime;
-                if (deltaTime > 0f && Core.Level > 0 && coreParticleTimer <= 0f)
-                {
-                    bool charge = Core.Charge > 0f;
-                    coreParticleTimer = charge ? config.CoreChargeParticleInterval : config.CoreIdleParticleInterval;
-                    if (charge || Core.Level > 1) EmitCoreSparks(runtimeRoot.position, idle, Core.Level);
-                }
+                State.RotationEnergy = Mathf.Min(capacity, State.RotationEnergy + recovery * deltaTime);
+                return;
+            }
+            if (counterClockwise == clockwise || State.RotationEnergy <= 0f) return;
+            float duration = drain > 0f ? Mathf.Min(deltaTime, State.RotationEnergy / drain) : deltaTime;
+            State.RotationEnergy = Mathf.Max(0f, State.RotationEnergy - drain * deltaTime);
+            float angle = speed * duration * (counterClockwise ? 1f : -1f);
+            foreach (var ring in rings)
+            {
+                ring.State.CurrentPhase = Mathf.Repeat(ring.Phase + angle, 360f);
+                ring.Tick(0f);
             }
         }
 
@@ -482,7 +475,9 @@ namespace Subject42.Combat.OrbitalStation
             OrbitalRingState ring = State != null &&
                 State.TryAddRing(out OrbitalRingState added, out _) ? added : null;
             if (ring == null) return null;
-            if (!State.IsPending(ring))
+            if (UsesSegmentedOrbit)
+                SyncCommitted("UnlockOrbit", ring.StableRingId, 0, () => SelectRing(RequireRing(ring.StableRingId)));
+            else if (!State.IsPending(ring))
                 SyncCommitted("AddRing", ring.StableRingId, 0, () => SelectRing(CreateRingPresentation(ring, true)));
             return ring;
         }
@@ -627,6 +622,7 @@ namespace Subject42.Combat.OrbitalStation
                 return false;
             SyncCommitted("AddMount", stableRingId, 0, () =>
             {
+                if (UsesSegmentedOrbit) return;
                 OrbitalRingRuntime ring = RequireRing(stableRingId);
                 if (ring.Mounts.Count != ring.State.MountCount - 1)
                     throw new System.InvalidOperationException("mount cache does not match pre-commit capacity");
@@ -642,12 +638,6 @@ namespace Subject42.Combat.OrbitalStation
             return true;
         }
 
-        public bool UpgradeCore()
-        {
-            if (State == null || !State.TryUpgradeCore(out _)) return false;
-            SyncCommitted("CoreUpgrade", 0, 0, () => FlashCore(new Color(0.85f, 0.3f, 1f)));
-            return true;
-        }
 
         public bool UpgradeLinkMatrix()
         {
@@ -765,7 +755,6 @@ namespace Subject42.Combat.OrbitalStation
 
         public void FlashCore(Color color)
         {
-            coreFlash = 1f;
             if (coreVisual != null)
                 authoredView.CoreHalo.color = color;
         }
@@ -801,50 +790,9 @@ namespace Subject42.Combat.OrbitalStation
             return line;
         }
 
-        private void OnCoreWave(int level, int wave)
-        {
-            AudioService.Instance?.PlayAt(level >= 2 ? AudioCueId.CoreCascade : AudioCueId.CorePulse, transform.position);
-            coreWaveAge = 0f;
-            coreWaveColorIndex = wave;
-            coreWaveColor = OrbitalPresentationConfig.Active.GetCoreWaveColor(wave);
-            FlashCore(coreWaveColor);
-            EmitCoreSparks(runtimeRoot.position, coreWaveColor, level * 3);
-            if ((level == 2 && wave == 1) || (level == 3 && wave == 3))
-                CameraShake.Instance?.Shake(OrbitalPresentationConfig.Active.CoreShakeDuration,
-                    OrbitalPresentationConfig.Active.CoreShakeMagnitude);
-        }
 
-        private void OnCoreRing(OrbitalRingRuntime ring, int level, int wave)
-        {
-            int index = rings.IndexOf(ring);
-            Vector2 center = runtimeRoot.position;
-            float phase = .125f;
-            Vector2 end = center + ring.Geometry.Position(phase, ring.Radius);
-            Vector2 start = index == 0 ? center : center + rings[index - 1].Geometry.Position(phase, rings[index - 1].Radius);
-            FlashLink(start, end, coreWaveColor, OrbitalPresentationConfig.Active.CoreRayDuration,
-                OrbitalFlashFamily.CoreRay);
-        }
 
-        private void EmitCoreSparks(Vector2 position, Color color, int count)
-        {
-            var emit = new ParticleSystem.EmitParams { position = position, startColor = color };
-            authoredView.CoreParticles.Emit(emit, count);
-        }
 
-        private void UpdateCoreWave(float deltaTime)
-        {
-            if (coreWaveAge < 0f || rings.Count == 0) { coreWave.enabled = false; return; }
-            coreWaveColor = OrbitalPresentationConfig.Active.GetCoreWaveColor(coreWaveColorIndex);
-            coreWaveAge += deltaTime;
-            float step = coreWaveAge / OrbitalProgressionConfig.Default.CoreRingDelay;
-            int next = Mathf.FloorToInt(step);
-            if (next >= rings.Count) { coreWaveAge = -1f; coreWave.enabled = false; return; }
-            float radius = Mathf.Lerp(next == 0 ? 0f : rings[next - 1].Radius,
-                rings[next].Radius, step - next);
-            coreWave.transform.localScale = Vector3.one * radius;
-            coreWave.startColor = coreWave.endColor = coreWaveColor;
-            coreWave.enabled = true;
-        }
 
         public OrbitalInteractionController InputOwner { get; private set; }
 
@@ -880,11 +828,6 @@ namespace Subject42.Combat.OrbitalStation
             Interaction?.Release();
             InputOwner?.Bind(null);
             InputOwner = null;
-            if (Core != null)
-            {
-                Core.WaveStarted -= OnCoreWave;
-                Core.RingActivated -= OnCoreRing;
-            }
             placementStep = PlacementStep.None;
             for (int i = 0; i < rings.Count; i++)
                 rings[i].Teardown();
@@ -896,11 +839,6 @@ namespace Subject42.Combat.OrbitalStation
                     Destroy(flashes[i].line.gameObject);
             flashes.Clear();
             while (idleFlashes.Count > 0) Destroy(idleFlashes.Pop().gameObject);
-            if (coreWave != null) Destroy(coreWave.gameObject);
-            coreWave = null;
-            coreWaveAge = -1f;
-            coreFlash = 0f;
-            coreParticleTimer = 0f;
             if (authoredView != null)
             {
                 if (authoredView.CoreHalo != null) authoredView.CoreHalo.enabled = false;
@@ -921,7 +859,6 @@ namespace Subject42.Combat.OrbitalStation
             coreVisual = null;
             Combat = null;
             Owner = null;
-            Core = null;
             RewardFlow = null;
             Interaction = null;
             relocation = null;
@@ -1100,6 +1037,7 @@ namespace Subject42.Combat.OrbitalStation
             {
                 if (!initialized) throw new System.InvalidOperationException("station presentation is not initialized");
                 sync();
+                foreach (var ring in rings) ring.SetActive(State.IsRingActive(ring.State), InputOwner.IsConstructing);
             }
             catch (System.Exception exception)
             {
@@ -1196,7 +1134,8 @@ namespace Subject42.Combat.OrbitalStation
                 geometry = new OrbitalPathGeometry(path);
             }
             OrbitalRingRuntime ring = new(ringState, authoredView.RingsRoot,
-                lineMaterial, sharedCircleSprite, animateSpawn, geometry);
+                lineMaterial, sharedCircleSprite, animateSpawn, geometry, UsesSegmentedOrbit,
+                State.IsRingActive(ringState));
             rings.Add(ring);
             return ring;
         }
@@ -1326,7 +1265,7 @@ namespace Subject42.Combat.OrbitalStation
                 {
                     float linkPower = (first.CurrentMount.Ring.PowerMultiplier +
                         second.CurrentMount.Ring.PowerMultiplier) * 0.5f;
-                    float matrixPower = 1f + State.CoreState.LinkMatrixUpgradeLevel * 0.25f;
+                    float matrixPower = 1f + State.LinkMatrixUpgradeLevel * 0.25f;
                     Combat.ApplyDamage(target, 5f * linkPower * matrixPower * State.ContactDamageMultiplier, from);
                     first.RuntimeCooldown = 0.55f;
                 }

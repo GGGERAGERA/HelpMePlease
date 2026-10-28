@@ -13,7 +13,7 @@ namespace Subject42.Combat.OrbitalStation
     }
 
     [DisallowMultipleComponent]
-    public sealed class OrbitalInteractionPresentation : MonoBehaviour
+    public sealed partial class OrbitalInteractionPresentation : MonoBehaviour
     {
         private RectTransform cursorRect;
         private Image cursorImage;
@@ -54,7 +54,7 @@ namespace Subject42.Combat.OrbitalStation
             UpdateScreenEffect();
         }
 
-        private void LateUpdate() => UpdateScreenEffect();
+        private void LateUpdate() { UpdateScreenEffect(); UpdateConstructor(); }
 
         private void UpdateScreenEffect()
         {
@@ -86,6 +86,7 @@ namespace Subject42.Combat.OrbitalStation
             if (bound || screenMaterial != null)
                 Release();
             this.station = station;
+            BindConstructor();
             gameplayCamera = cameraOwner;
             authoredScreenMaterial = screenEffect.material;
             screenMaterial = new Material(authoredScreenMaterial);
@@ -143,6 +144,7 @@ namespace Subject42.Combat.OrbitalStation
 
         public void Release()
         {
+            ReleaseConstructor();
             RingSelectionFocus = false;
             if (screenEffect != null)
             {

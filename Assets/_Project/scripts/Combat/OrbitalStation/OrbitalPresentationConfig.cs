@@ -47,7 +47,6 @@ namespace Subject42.Combat.OrbitalStation
         public CustomOrbitDrawing CustomDrawingPrefab;
         public Material VisualMaterial;
         public Sprite PixelSprite, CircleSprite, RingIcon;
-        public Sprite CoreIcon;
         [Header("Run reward icons — leave missing authored art unassigned")]
         public Sprite NewMountIcon, RingCapacityIcon, RingDamageIcon, RingSpeedIcon, NewRingIcon;
         public LineRenderer EnergyLinePrefab;
@@ -70,7 +69,6 @@ namespace Subject42.Combat.OrbitalStation
         public OrbitalFlashStyle ShotgunImpactFlash = new();
         public OrbitalFlashStyle SniperImpactFlash = new();
         public OrbitalFlashStyle ArcFlash = new();
-        public OrbitalFlashStyle CoreRayFlash = new();
         public OrbitalFlashStyle RelocationFlash = new();
 
         public OrbitalFlashStyle GetFlashStyle(OrbitalFlashFamily family) => family switch
@@ -83,26 +81,9 @@ namespace Subject42.Combat.OrbitalStation
             OrbitalFlashFamily.ImpactShotgun => ShotgunImpactFlash,
             OrbitalFlashFamily.ImpactSniper => SniperImpactFlash,
             OrbitalFlashFamily.Arc => ArcFlash,
-            OrbitalFlashFamily.CoreRay => CoreRayFlash,
             OrbitalFlashFamily.Relocation => RelocationFlash,
             _ => OtherFlash
         };
-        [Header("Core pulse overlay")]
-        public Color CoreCyan = new(.15f, .85f, 1f);
-        public Color CoreViolet = new(.65f, .35f, 1f);
-        public Color CoreGold = new(1f, .85f, .4f);
-        public float CoreIdleHighlight = .045f;
-        public float CorePulseBrightness = 2f;
-        public float CoreIdleParticleInterval = .7f;
-        public float CoreChargeParticleInterval = .06f;
-        public float CoreHaloSize = .75f;
-        public float CoreHaloPulseSize = 1.45f;
-        public float CoreHaloIdleAlpha = .025f;
-        public float CoreHaloChargeAlpha = .2f;
-        public float CoreHaloBrightness = 1f;
-        public float CoreRayDuration = .16f;
-        public float CoreShakeDuration = .08f;
-        public float CoreShakeMagnitude = .025f;
         public int FlashPoolCapacity = 128;
         public int ProjectilePrewarmCount = 96;
         public GameObject PistolProjectilePrefab;
@@ -119,8 +100,6 @@ namespace Subject42.Combat.OrbitalStation
             Color = new(1f, .18f, .12f), BodySize = new(.5f, .07f),
             TrailSeconds = .012f, TrailWidth = .022f, TrailOpacity = .32f
         };
-        public Color GetCoreWaveColor(int wave) => wave switch
-        { 1 => CoreCyan, 2 => CoreViolet, _ => CoreGold };
         [Header("Visual-only modules")]
         public GameObject PistolPrefab;
         public GameObject SawPrefab;

@@ -15,7 +15,6 @@ public sealed class DeathResultPresentation : MonoBehaviour
     [SerializeField] private TextMeshProUGUI gold;
     [SerializeField] private TextMeshProUGUI rings;
     [SerializeField] private TextMeshProUGUI modules;
-    [SerializeField] private TextMeshProUGUI core;
     [SerializeField] private TextMeshProUGUI comment;
     [SerializeField] private Button restartButton;
     [SerializeField] private Button bunkerButton;
@@ -46,7 +45,7 @@ public sealed class DeathResultPresentation : MonoBehaviour
         viewValid = window != null && backdrop != null && windowImage != null &&
             rootCanvasRect != null && modalCanvas != null && modalRaycaster != null && coreRewards != null &&
             sector != null && time != null && kills != null && level != null && gold != null &&
-            rings != null && modules != null && core != null && comment != null &&
+            rings != null && modules != null && comment != null &&
             restartButton != null && bunkerButton != null;
         if (!viewValid)
         {
@@ -86,7 +85,6 @@ public sealed class DeathResultPresentation : MonoBehaviour
         gold.text = summary.GoldEarned.ToString();
         rings.text = summary.OrbitalRingCount.ToString();
         modules.text = summary.OrbitalModuleCount.ToString();
-        core.text = summary.OrbitalCoreLevel.ToString();
         coreRewards.Show(summary.Cores);
         comment.text = AICommentGenerator.GetComment(false);
         FitToCanvas();
