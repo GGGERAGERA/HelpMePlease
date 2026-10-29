@@ -92,8 +92,14 @@ public sealed class PauseBuildOverview : MonoBehaviour
             foreach (var ring in state.Rings.Where(state.IsRingActive).OrderBy(r => r.Order))
             {
                 string color = ColorUtility.ToHtmlStringRGB(OrbitalPresentationConfig.Active.GetRingTier(ring.VisualTier).BaseColor);
-                string tier = ring.VisualTier switch { 1 => LocalizationService.EnsureExists().Get("pause.tier1"), 2 => LocalizationService.EnsureExists().Get("pause.tier2"), 3 => LocalizationService.EnsureExists().Get("pause.tier3"), _ => LocalizationService.EnsureExists().Get("pause.tier4") };
                 int occupied = state.Modules.Count(m => m.StableRingId == ring.StableRingId);
+                if (state.UsesSegmentedOrbit)
+                {
+                    text.AppendLine($"<color=#{color}>■</color>  <b>{localization.Get("pause.ring")} {ring.Order + 1}</b>");
+                    text.AppendLine($"<size=19>{localization.Get("pause.damage")} ×{ring.PowerMultiplier:0.##}    {localization.Get("pause.modules")} {occupied}/12</size>\n");
+                    continue;
+                }
+                string tier = ring.VisualTier switch { 1 => LocalizationService.EnsureExists().Get("pause.tier1"), 2 => LocalizationService.EnsureExists().Get("pause.tier2"), 3 => LocalizationService.EnsureExists().Get("pause.tier3"), _ => LocalizationService.EnsureExists().Get("pause.tier4") };
                 text.AppendLine($"<color=#{color}>■</color>  <b>{localization.Get("pause.ring")} {ring.Order + 1}</b>   <color=#{color}>{tier}</color>");
                 float speed = Mathf.Pow(1f + OrbitalProgressionConfig.Default.SpeedIncrement, ring.SpeedUpgradeLevel);
                 text.AppendLine($"<size=19>{localization.Get("pause.damage")} ×{ring.PowerMultiplier:0.##}    {localization.Get("pause.speed")} ×{speed:0.##}    {localization.Get("pause.modules")} {occupied}</size>");
@@ -106,8 +112,10 @@ public sealed class PauseBuildOverview : MonoBehaviour
             foreach (var group in state.Modules.GroupBy(m => m.ModuleType).OrderBy(g => g.Key))
                 text.AppendLine($"<color=#{ColorUtility.ToHtmlStringRGB(OrbitalRewardIconResolver.ModuleColor(group.Key))}>{ModuleName(group.Key)} ×{group.Count()}</color>");
         modulesText.text = text.Length == 0 ? localization.Get("pause.noModules") : text.ToString().TrimEnd();
+        if (state?.UsesSegmentedOrbit == true)
+            modulesText.text += $"\n{localization.Get("pause.modules")}: {state.Modules.Count}/{state.SegmentedWeaponLimit}";
         text.Clear();
-        if (state != null)
+        if (state != null && !state.UsesSegmentedOrbit)
         {
             AppendUpgrade(text, LocalizationService.EnsureExists().Get("pause.matrix"), state.LinkMatrixUpgradeLevel);
         }

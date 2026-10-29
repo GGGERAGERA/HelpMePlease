@@ -45,7 +45,7 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool IsRingActive(OrbitalRingState ring) => !UsesSegmentedOrbit || ring.Order < UnlockedSegmentedLevels;
 
-        // Explicit scene opt-in. Subsequent scene restores keep the same run-owned layout.
+        // Production bootstrap. Subsequent scene restores keep the same run-owned layout.
         public void EnableSegmentedOrbit()
         {
             if (UsesSegmentedOrbit) return;
@@ -256,8 +256,7 @@ namespace Subject42.Combat.OrbitalStation
         {
             if (!CanRemoveRing(stableRingId, out error)) return false;
             OrbitalRingState ring = FindRing(stableRingId);
-            foreach (var module in Modules.Where(m => m.StableRingId == stableRingId).ToArray())
-                ReturnSegmentedLinks(module.StableModuleId);
+            ReturnSegmentedRingModules(stableRingId);
             Modules.RemoveAll(module => module.StableRingId == stableRingId);
             Rings.Remove(ring);
             ReorderRings();
@@ -304,7 +303,8 @@ namespace Subject42.Combat.OrbitalStation
             TryIncreaseCapacity(stableRingId, out _);
 
         public int FreeBuiltMounts => UsesSegmentedOrbit
-            ? Math.Min(SegmentedWeaponLimit - Modules.Count, Rings.Where(IsRingActive).Sum(r => r.MountCount) - Modules.Count)
+            ? Math.Min(SegmentedWeaponLimit - Modules.Count, Rings.Where(IsRingActive).Sum(r =>
+                Enumerable.Range(0, r.MountCount).Count(position => IsSegmentedWeaponSlot(r.Order, position))) - Modules.Count)
             : Rings.Sum(r => r.MountCount) - Modules.Count;
 
         public bool TryInstallModule(OrbitalModuleKind type, int stableRingId,
@@ -399,7 +399,6 @@ namespace Subject42.Combat.OrbitalStation
             if (!CanCommit(out error)) return false;
             if (FindModule(stableModuleId) == null)
                 return Rule(false, $"module {stableModuleId} is missing", out error);
-            ReturnSegmentedLinks(stableModuleId);
             int removed = Modules.RemoveAll(value =>
                 value.StableModuleId == stableModuleId);
             if (removed > 0)
@@ -562,7 +561,9 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool CanInstallModule(OrbitalModuleKind kind, int ringId, int mountIndex, out string error) =>
             CanCommit(out error) && Rule(Enum.IsDefined(typeof(OrbitalModuleKind), kind) && NextStableModuleId < int.MaxValue,
-                "unknown module kind or exhausted ID allocator", out error) && CanOccupy(ringId, mountIndex, 0, out error);
+                "unknown module kind or exhausted ID allocator", out error) &&
+            Rule(!UsesSegmentedOrbit || IsSegmentedWeapon(kind), "module is not supported by Segmented Orbit", out error) &&
+            CanOccupy(ringId, mountIndex, 0, out error);
 
         public bool CanMoveModule(int id, int ringId, int mountIndex, out string error) =>
             CanCommit(out error) && Rule(FindModule(id) != null, $"module {id} is missing", out error) &&
@@ -737,6 +738,7 @@ namespace Subject42.Combat.OrbitalStation
                 return false;
             }
             if (UsesSegmentedOrbit && !IsRingActive(ring)) return Rule(false, "orbit is locked", out error);
+            if (UsesSegmentedOrbit && !IsSegmentedWeaponSlot(ring.Order, mountIndex)) return Rule(false, "Для оружия нужна синяя ячейка O.", out error);
             if (UsesSegmentedOrbit && ignoredModuleId == 0 && Modules.Count >= SegmentedWeaponLimit)
                 return Rule(false, "global weapon limit reached", out error);
             if (mountIndex < 0 || mountIndex >= ring.MountCount)

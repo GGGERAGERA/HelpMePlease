@@ -15,6 +15,7 @@ namespace Subject42.Combat.OrbitalStation
         private bool interactionEligible;
         private bool interactionHovered;
         private bool interactionDimmed;
+        private bool constructionPreview;
         private float interactionEmphasis = 1f;
 
         public OrbitalPathGeometry Geometry { get; }
@@ -27,7 +28,9 @@ namespace Subject42.Combat.OrbitalStation
         public System.Func<int, float, float> LabMountPhase { get; set; }
 #endif
         public float Radius => Geometry.Type == OrbitalPathType.Custom ? 1f :
-            State.Radius + OrbitalPresentationConfig.Active.RingRadiusPadding;
+            (State.Radius + OrbitalPresentationConfig.Active.RingRadiusPadding) *
+            (segmented && State.Order == 0 ? .55f : 1f);
+        internal bool ShowIdleMounts => !segmented || constructionPreview;
         public float RotationSpeed => State.BaseRotationSpeed *
             Mathf.Pow(1f + OrbitalProgressionConfig.Default.SpeedIncrement,
                 State.SpeedUpgradeLevel);
@@ -65,7 +68,7 @@ namespace Subject42.Combat.OrbitalStation
         public void Tick(float deltaTime)
         {
             if (!IsActive) return;
-            float angularDelta = RotationSpeed * Direction * deltaTime;
+            float angularDelta = segmented ? 0f : RotationSpeed * Direction * deltaTime;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             angularDelta *= LabRotationMultiplier;
 #endif
@@ -89,6 +92,7 @@ namespace Subject42.Combat.OrbitalStation
         public void SetActive(bool active, bool constructionPreview)
         {
             IsActive = active;
+            this.constructionPreview = constructionPreview;
             bool visible = active || constructionPreview;
             if (view.gameObject.activeSelf == visible) return;
             view.gameObject.SetActive(visible);
@@ -255,7 +259,7 @@ namespace Subject42.Combat.OrbitalStation
                     break;
             }
             marker.transform.localScale = Vector3.one * size;
-            marker.enabled = state != VisualState.Occupied;
+            marker.enabled = state != VisualState.Occupied && (Ring.ShowIdleMounts || state != VisualState.Normal);
             marker.color = color;
             halo.enabled = showHalo;
             halo.transform.localScale = Vector3.one * config.HaloSize;

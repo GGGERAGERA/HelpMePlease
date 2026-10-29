@@ -46,6 +46,8 @@ public sealed partial class UpgradeManager : MonoBehaviour
 
     [Header("UI")]
     [SerializeField] private UpgradePanelView upgradePanelView;
+    [SerializeField] private PauseMenuUI pauseMenu;
+    [SerializeField] private LevelChoiceManager levelChoices;
 
     [Header("Logic")]
     [SerializeField] private UpgradeApplier upgradeApplier;
@@ -79,7 +81,9 @@ public sealed partial class UpgradeManager : MonoBehaviour
         orbitalStation = station;
         if (station == null || !station.IsInitialized || !isActiveAndEnabled) return;
         boundOrbitalInput = station.InputOwner;
-        boundOrbitalInput.BindRewardQueue(() => IsRewardQueueIdle, () => IsChoosingUpgrade);
+        boundOrbitalInput.BindRewardQueue(() => IsRewardQueueIdle, () => IsChoosingUpgrade,
+            ResumeAfterConstructor, () => WorldLootRewardReel.IsActive ||
+                pauseMenu != null && pauseMenu.IsPaused || levelChoices != null && levelChoices.IsChoosing);
         station.Interaction.BindRewardPanel(upgradePanelView);
         station.CustomDrawingCompleted += ResumeAfterCustomDrawing;
     }
@@ -92,7 +96,8 @@ public sealed partial class UpgradeManager : MonoBehaviour
         if (orbitalStation != null) orbitalStation.CustomDrawingCompleted -= ResumeAfterCustomDrawing;
     }
 
-    public bool IsRewardQueueIdle => !isChoosingUpgrade && !hasCurrentRequest && !reelPending &&
+    private bool ConstructorOpen => boundOrbitalInput != null && boundOrbitalInput.IsConstructing;
+    public bool IsRewardQueueIdle => !ConstructorOpen && !isChoosingUpgrade && !hasCurrentRequest && !reelPending &&
         pendingChoices.Count == 0 && !CustomDrawingPending;
     private bool CustomDrawingPending => orbitalStation != null && orbitalStation.HasPendingCustomRings;
 
@@ -112,7 +117,7 @@ public sealed partial class UpgradeManager : MonoBehaviour
     private bool TryBeginDirectReward(
         OrbitalRewardData reward, System.Action<UpgradeData> onCommitted)
     {
-        if (reward == null || shuttingDown || isChoosingUpgrade ||
+        if (reward == null || shuttingDown || isChoosingUpgrade || ConstructorOpen ||
             (pendingChoices.Count > 0 && !reelPending) || CustomDrawingPending ||
             orbitalRewardProvider == null ||
             reward.PresentationOwner != orbitalRewardProvider ||
@@ -143,7 +148,7 @@ public sealed partial class UpgradeManager : MonoBehaviour
     {
         if (callback == null)
             return;
-        if (isChoosingUpgrade || reelPending || pendingChoices.Count > 0 || CustomDrawingPending)
+        if (isChoosingUpgrade || ConstructorOpen || reelPending || pendingChoices.Count > 0 || CustomDrawingPending)
         {
             idleCallbacks.Enqueue(callback);
             return;
@@ -274,7 +279,7 @@ public sealed partial class UpgradeManager : MonoBehaviour
 
     public bool DebugForceOrbitalReward(OrbitalRewardKind kind)
     {
-        if (shuttingDown || isChoosingUpgrade || orbitalRewardProvider == null ||
+        if (shuttingDown || isChoosingUpgrade || ConstructorOpen || orbitalRewardProvider == null ||
             !orbitalRewardProvider.IsEligible(kind))
             return false;
         OrbitalRewardData reward = orbitalRewardProvider.GetDefinition(kind);
@@ -493,7 +498,7 @@ public sealed partial class UpgradeManager : MonoBehaviour
             request.OnClosed?.Invoke();
             return;
         }
-        if (isChoosingUpgrade || reelPending || CustomDrawingPending)
+        if (isChoosingUpgrade || ConstructorOpen || reelPending || CustomDrawingPending)
         {
             pendingChoices.Enqueue(request);
             return;
@@ -821,7 +826,7 @@ public sealed partial class UpgradeManager : MonoBehaviour
 
     public void ResumeAfterCustomDrawing()
     {
-        if (shuttingDown || isChoosingUpgrade || reelPending || CustomDrawingPending) return;
+        if (shuttingDown || ConstructorOpen || isChoosingUpgrade || reelPending || CustomDrawingPending) return;
         while (pendingChoices.Count > 0)
         {
             UpgradeChoiceRequest nextRequest = pendingChoices.Dequeue();
@@ -849,6 +854,14 @@ public sealed partial class UpgradeManager : MonoBehaviour
         InvokeIdleCallbacksIfReady();
     }
 
+    private void ResumeAfterConstructor()
+    {
+        if (shuttingDown || Time.timeScale <= 0f || SceneTransitionOverlay.IsTransitioning ||
+            RunStateManager.Instance?.IsRunEnded == true) return;
+        previousTimeScale = Time.timeScale;
+        ResumeAfterCustomDrawing();
+    }
+
     private void RestoreRewardTimeScale()
     {
         if (CustomDrawingPending) return;
@@ -873,10 +886,10 @@ public sealed partial class UpgradeManager : MonoBehaviour
 
     private void InvokeIdleCallbacksIfReady()
     {
-        if (isChoosingUpgrade || reelPending || pendingChoices.Count > 0 || CustomDrawingPending)
+        if (isChoosingUpgrade || ConstructorOpen || reelPending || pendingChoices.Count > 0 || CustomDrawingPending)
             return;
 
-        while (idleCallbacks.Count > 0 && !isChoosingUpgrade && !reelPending && pendingChoices.Count == 0 && !CustomDrawingPending)
+        while (idleCallbacks.Count > 0 && !ConstructorOpen && !isChoosingUpgrade && !reelPending && pendingChoices.Count == 0 && !CustomDrawingPending)
             idleCallbacks.Dequeue()?.Invoke();
     }
 

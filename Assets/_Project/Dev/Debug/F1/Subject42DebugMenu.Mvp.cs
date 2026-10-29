@@ -143,8 +143,11 @@ public sealed partial class Subject42DebugMenu
         MvpRow(station.UsesSegmentedOrbit ? "+1 крепление" : "Добавить точку крепления", station.UsesSegmentedOrbit ? $"Общий лимит {station.State.SegmentedWeaponLimit}/12" :
             !MvpCanEdit ? "Завершите текущую награду или установку" : selectedId == 0 ? "Выберите орбиту" : canMount ? "На выбранную орбиту, в пределах её вместимости" : "Вместимость заполнена; доступное увеличение есть в «Улучшениях»",
             "ДОБАВИТЬ", canMount, () => { RunStateManager.Instance.DebugMarkDevelopmentRun(); station.AddMount(selectedId, out _); RefreshCurrentTab(); });
-        AddSectionTitle("Добавить оружие", "Штатная установка на подсвеченные точки · Esc / ПКМ — отмена · шарики устанавливаются парой");
-        foreach (var kind in new[] { OrbitalRewardKind.Pistol, OrbitalRewardKind.ArcEmitter, OrbitalRewardKind.LinkPair, OrbitalRewardKind.Sniper, OrbitalRewardKind.Shotgun, OrbitalRewardKind.Saw })
+        AddSectionTitle("Добавить оружие", "Штатная установка на свободные точки · Esc / ПКМ — отмена");
+        var weapons = station.UsesSegmentedOrbit
+            ? new[] { OrbitalRewardKind.Pistol, OrbitalRewardKind.Sniper, OrbitalRewardKind.Shotgun, OrbitalRewardKind.Saw }
+            : new[] { OrbitalRewardKind.Pistol, OrbitalRewardKind.ArcEmitter, OrbitalRewardKind.LinkPair, OrbitalRewardKind.Sniper, OrbitalRewardKind.Shotgun, OrbitalRewardKind.Saw };
+        foreach (var kind in weapons)
         {
             var data = upgradeManager.DebugRewardCatalogue.First(d => d.RewardKind == kind);
             string reason = upgradeManager.DebugRewardUnavailableReason(kind);

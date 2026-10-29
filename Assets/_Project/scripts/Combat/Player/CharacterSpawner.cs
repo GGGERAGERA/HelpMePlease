@@ -16,7 +16,6 @@ public class CharacterSpawner : MonoBehaviour
 
     [Header("Default character for direct MVP launch")]
     [SerializeField] private CharacterData defaultCharacter;
-    [SerializeField] private bool segmentedOrbit;
     public CharacterData DefaultCharacter => defaultCharacter;
     private HUDManager hud;
     private UpgradeManager rewards;
@@ -63,7 +62,7 @@ public class CharacterSpawner : MonoBehaviour
         if (RunStateManager.Instance != null)
             RunStateManager.Instance.ApplyToSpawnedPlayer(player, upgradeApplier);
 
-        var orbital = OrbitalStationRuntime.Ensure(player, SpawnedCharacterData, segmentedOrbit);
+        var orbital = OrbitalStationRuntime.Ensure(player, SpawnedCharacterData, segmentedOrbit: true);
         Station = orbital;
         rewards?.BindOrbitalStation(orbital);
         if (onboardingPrefab != null && orbital != null && orbital.IsInitialized)
@@ -93,7 +92,7 @@ public class CharacterSpawner : MonoBehaviour
         {
             OrbitalStationRuntime station = SpawnedPlayer.GetComponentInChildren<OrbitalStationRuntime>(true);
             if (station != null) station.RebuildRuntimeFromState();
-            else station = OrbitalStationRuntime.Ensure(SpawnedPlayer, SpawnedCharacterData);
+            else station = OrbitalStationRuntime.Ensure(SpawnedPlayer, SpawnedCharacterData, segmentedOrbit: true);
             Station = station;
             rewards?.BindOrbitalStation(station);
             CharacterSpawned?.Invoke(SpawnedPlayer);
@@ -159,23 +158,6 @@ public class CharacterSpawner : MonoBehaviour
         }
 
         return defaultCharacter;
-    }
-
-    private WeaponData GetSelectedWeapon()
-    {
-        if (RunStateManager.Instance != null &&
-            RunStateManager.Instance.SelectedWeapon != null)
-        {
-            return RunStateManager.Instance.SelectedWeapon;
-        }
-
-        if (RunSelectionManager.Instance != null &&
-            RunSelectionManager.Instance.SelectedWeapon != null)
-        {
-            return RunSelectionManager.Instance.SelectedWeapon;
-        }
-
-        return defaultWeapon;
     }
 
     private void SetPrimaryWeapon(BaseWeapon weapon)

@@ -26,6 +26,14 @@ namespace Subject42.Combat.OrbitalStation
 
         public static Color ModuleColor(OrbitalModuleKind kind) => Resolve(kind).Tint;
 
+        public static Icon Resolve(SegmentedLinkKind kind) => Resolve(kind switch
+        {
+            SegmentedLinkKind.Damage => OrbitalRewardKind.DamageLink,
+            SegmentedLinkKind.FireRate => OrbitalRewardKind.FireRateLink,
+            SegmentedLinkKind.ExtraShot => OrbitalRewardKind.ExtraShotLink,
+            _ => OrbitalRewardKind.RicochetLink
+        });
+
         public static Icon Resolve(OrbitalRewardKind kind) =>
             OrbitalRewardProvider.GetModuleKind(kind) is OrbitalModuleKind module
                 ? Resolve(module) : kind switch

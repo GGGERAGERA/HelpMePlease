@@ -1001,26 +1001,26 @@ MonoBehaviour:
     ru: "УРОН (DMG)"
     en: "DAMAGE (DMG)"
   - key: reward.linkDamageDescription
-    ru: "+1 модуль в запас.\nСвязь даёт пушкам +20% урона.\nУстановите сейчас или сохраните на потом."
-    en: "+1 module in reserve.\nLinked guns gain +20% damage.\nInstall now or keep for later."
+    ru: "+1 модуль в запас.\nЯчейка M: +20% урона соседним пушкам.\nДостаточно одной пушки."
+    en: "+1 module in reserve.\nM slot: +20% damage to adjacent guns.\nOne gun is enough."
   - key: reward.linkRate
     ru: "СКОРОСТРЕЛЬНОСТЬ (FR)"
     en: "FIRE RATE (FR)"
   - key: reward.linkRateDescription
-    ru: "+1 модуль в запас.\nСвязь даёт пушкам +20% скорострельности.\nУстановите сейчас или сохраните на потом."
-    en: "+1 module in reserve.\nLinked guns gain +20% fire rate.\nInstall now or keep for later."
+    ru: "+1 модуль в запас.\nЯчейка M: +20% темпа соседним пушкам.\nДостаточно одной пушки."
+    en: "+1 module in reserve.\nM slot: +20% fire rate to adjacent guns.\nOne gun is enough."
   - key: reward.linkExtra
     ru: "ДОПОЛНИТЕЛЬНЫЙ ВЫСТРЕЛ (2X)"
     en: "EXTRA SHOT (2X)"
   - key: reward.linkExtraDescription
-    ru: "+1 модуль в запас.\nВыстрел соседа не чаще раза в 0,5 с.\nБез цепочки дополнительных выстрелов."
-    en: "+1 module in reserve.\nA neighbour fires at most once per 0.5 s.\nExtra shots never trigger a chain."
+    ru: "+1 модуль в запас.\nM рядом с пушкой: дополнительный выстрел.\nНе чаще 0,5 с. Без цепочки."
+    en: "+1 module in reserve.\nM beside a gun: an extra shot.\nAt most once per 0.5 s. No chain."
   - key: reward.linkRicochet
     ru: "РИКОШЕТ (RIC)"
     en: "RICOCHET (RIC)"
   - key: reward.linkRicochetDescription
-    ru: "+1 модуль в запас.\nСвязь даёт пушкам +1 рикошет.\nУстановите сейчас или сохраните на потом."
-    en: "+1 module in reserve.\nLinked guns gain +1 ricochet.\nInstall now or keep for later."
+    ru: "+1 модуль в запас.\nЯчейка M: +1 рикошет соседним пушкам.\nДостаточно одной пушки."
+    en: "+1 module in reserve.\nM slot: +1 ricochet to adjacent guns.\nOne gun is enough."
   - key: reward.unlockOrbitDescription
     ru: "Открывает следующий уровень: средний, затем внешний.\nВсего 3 уровня по 12 точек. Общий лимит оружия не меняется."
     en: "Unlocks the next orbit: middle, then outer.\n3 levels, 12 positions each. Does not increase the shared weapon limit."

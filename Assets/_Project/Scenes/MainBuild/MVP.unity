@@ -2087,6 +2087,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ee995c505ce890345961efbaa7c1b0b0, type: 3}
+--- !u!114 &1659472195223044688 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 618786714273626046, guid: ee995c505ce890345961efbaa7c1b0b0, type: 3}
+  m_PrefabInstance: {fileID: 1659472195223044687}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b48d245815bfd5344b4d43797f6b2901, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelChoiceManager
 --- !u!212 &2186830364268972510
 SpriteRenderer:
   serializedVersion: 2
@@ -2398,6 +2409,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 392eff074183d444bbf517f31f9124aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HUDManager
+--- !u!114 &2370474437954700990 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5722124322602616884, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
+  m_PrefabInstance: {fileID: 2370474437954700988}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9beaf11049b544241885ae4167cb1362, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PauseMenuUI
 --- !u!1001 &2469755825177615253
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2450,6 +2472,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5363016781904405273, guid: 4eb0d1ccf7a98cf49a0be0141c89348a, type: 3}
+      propertyPath: pauseMenu
+      value: 
+      objectReference: {fileID: 2370474437954700990}
+    - target: {fileID: 5363016781904405273, guid: 4eb0d1ccf7a98cf49a0be0141c89348a, type: 3}
+      propertyPath: levelChoices
+      value: 
+      objectReference: {fileID: 1659472195223044688}
     - target: {fileID: 5363016781904405273, guid: 4eb0d1ccf7a98cf49a0be0141c89348a, type: 3}
       propertyPath: upgradePanelView
       value: 
@@ -2558,10 +2588,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1797467969}
     m_Modifications:
-    - target: {fileID: 236803664453947053, guid: 3069e3a848c054a4d8e38f3c576c974a, type: 3}
-      propertyPath: segmentedOrbit
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 236803664453947053, guid: 3069e3a848c054a4d8e38f3c576c974a, type: 3}
       propertyPath: upgradeApplier
       value: 

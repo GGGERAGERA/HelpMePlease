@@ -19,7 +19,7 @@ MonoBehaviour:
     healthMultiplier: 1
     speedMultiplier: 1
     enemies:
-    - enemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
+    - enemyPrefab: {fileID: 7836675740894620329, guid: 19016b909711d0340991169600ba81a2, type: 3}
       weight: 100
       maxAliveOfType: 10
       minimumRunLevel: 1
@@ -43,7 +43,7 @@ MonoBehaviour:
     healthMultiplier: 1
     speedMultiplier: 1
     enemies:
-    - enemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
+    - enemyPrefab: {fileID: 7836675740894620329, guid: 19016b909711d0340991169600ba81a2, type: 3}
       weight: 80
       maxAliveOfType: 12
       minimumRunLevel: 1
@@ -67,7 +67,7 @@ MonoBehaviour:
     healthMultiplier: 1
     speedMultiplier: 1
     enemies:
-    - enemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
+    - enemyPrefab: {fileID: 7836675740894620329, guid: 19016b909711d0340991169600ba81a2, type: 3}
       weight: 70
       maxAliveOfType: 14
       minimumRunLevel: 1
@@ -91,7 +91,7 @@ MonoBehaviour:
     healthMultiplier: 1
     speedMultiplier: 1
     enemies:
-    - enemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
+    - enemyPrefab: {fileID: 7836675740894620329, guid: 19016b909711d0340991169600ba81a2, type: 3}
       weight: 75
       maxAliveOfType: 15
       minimumRunLevel: 1
@@ -115,7 +115,7 @@ MonoBehaviour:
     healthMultiplier: 1
     speedMultiplier: 1
     enemies:
-    - enemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
+    - enemyPrefab: {fileID: 7836675740894620329, guid: 19016b909711d0340991169600ba81a2, type: 3}
       weight: 65
       maxAliveOfType: 17
       minimumRunLevel: 1
@@ -143,7 +143,7 @@ MonoBehaviour:
     healthMultiplier: 1
     speedMultiplier: 1
     enemies:
-    - enemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
+    - enemyPrefab: {fileID: 7836675740894620329, guid: 19016b909711d0340991169600ba81a2, type: 3}
       weight: 60
       maxAliveOfType: 20
       minimumRunLevel: 1

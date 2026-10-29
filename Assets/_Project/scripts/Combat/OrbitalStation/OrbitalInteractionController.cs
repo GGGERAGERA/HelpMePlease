@@ -15,6 +15,8 @@ namespace Subject42.Combat.OrbitalStation
         private float previousScale;
         private float ownedScale;
         private bool ownsScale;
+        private bool constructorOwnsPause;
+        private float constructorResumeScale = 1f;
         private bool ownsBulletTime;
         private bool bulletTimeAudioActive;
         private float bulletBaseScale, bulletScale, bulletBaseFixedStep, bulletFixedStep;
@@ -27,24 +29,49 @@ namespace Subject42.Combat.OrbitalStation
         public bool IsIdle => Mode == OrbitalInteractionMode.Idle;
         public bool IsConstructing => Mode == OrbitalInteractionMode.Construction;
         public bool IsChoosingReward => rewardChoosing?.Invoke() ?? false;
-        public bool CanOpenConstructor => Alive && station.UsesSegmentedOrbit &&
-            (rewardChoosing?.Invoke() ?? false) &&
-            (IsIdle && station.RewardFlow.PendingReward == null ||
-                Mode == OrbitalInteractionMode.RewardSelection && station.RewardFlow.IsAwaitingConstructor) &&
-            !IsGameplayInputBlocked && Time.timeScale == 0f;
-        public bool CanEditConstructor => Alive && IsConstructing && (rewardChoosing?.Invoke() ?? false) &&
-            !IsGameplayInputBlocked && Time.timeScale == 0f;
+        private bool ConstructorBlocked => !Alive || station.IsRunEnded || !station.Owner.CanControl ||
+            IsGameplayInputBlocked || (constructorModalBlocked?.Invoke() ?? false);
+        public bool CanOpenConstructor => !ConstructorBlocked && station.UsesSegmentedOrbit &&
+            (IsIdle && QueueIdle && station.RewardFlow.PendingReward == null && Time.timeScale > 0f ||
+                Mode == OrbitalInteractionMode.RewardSelection && IsChoosingReward &&
+                station.RewardFlow.IsAwaitingConstructor && Time.timeScale == 0f);
+        public bool CanEditConstructor => !ConstructorBlocked && IsConstructing && Time.timeScale == 0f &&
+            (constructorOwnsPause || IsChoosingReward && station.RewardFlow.IsAwaitingConstructor);
         public bool BeginConstructor()
         {
             if (!CanOpenConstructor) return false;
+            constructorOwnsPause = !IsChoosingReward;
+            if (constructorOwnsPause)
+            {
+                ReleaseBulletTime();
+                constructorResumeScale = Time.timeScale;
+                Time.timeScale = 0f;
+            }
             Mode = OrbitalInteractionMode.Construction;
             consumedFrame = Time.frameCount;
             return true;
         }
         public void EndConstructor()
         {
+            bool ownedPause = constructorOwnsPause;
+            constructorOwnsPause = false;
             if (IsConstructing) Mode = OrbitalInteractionMode.Idle;
             consumedFrame = Time.frameCount;
+            if (!ownedPause || !Alive || station.IsRunEnded || SceneTransitionOverlay.IsTransitioning ||
+                IsGameplayInputBlocked || IsChoosingReward) return;
+            if (Time.timeScale == 0f) Time.timeScale = constructorResumeScale;
+            constructorResumeScale = 1f;
+            if (Time.timeScale > 0f) constructorClosed?.Invoke();
+        }
+        public bool TryToggleConstructor()
+        {
+            if (IsConstructing)
+            {
+                if (!CanEditConstructor) return false;
+                station.Interaction.CloseConstructor();
+                return true;
+            }
+            return CanOpenConstructor && station.Interaction.OpenConstructor();
         }
         public bool IsGameplayInputBlocked => IsCustomDrawing || SceneTransitionOverlay.IsTransitioning
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -65,10 +92,16 @@ namespace Subject42.Combat.OrbitalStation
 #endif
         private bool Alive => station != null && station.IsInitialized && station.Owner != null && !station.Owner.IsDead;
         private System.Func<bool> rewardQueueIdle, rewardChoosing;
+        private System.Func<bool> constructorModalBlocked;
+        private System.Action constructorClosed;
         public bool IsRewardQueueIdle => rewardQueueIdle?.Invoke() ?? true;
         private bool QueueIdle => IsRewardQueueIdle;
-        public void BindRewardQueue(System.Func<bool> idle, System.Func<bool> choosing)
-        { rewardQueueIdle = idle; rewardChoosing = choosing; }
+        public void BindRewardQueue(System.Func<bool> idle, System.Func<bool> choosing,
+            System.Action onConstructorClosed = null, System.Func<bool> modalBlocked = null)
+        {
+            rewardQueueIdle = idle; rewardChoosing = choosing;
+            constructorClosed = onConstructorClosed; constructorModalBlocked = modalBlocked;
+        }
         public bool CanTransition => IsIdle && QueueIdle && !IsCustomDrawing;
         public bool CanQueueDebugPlacement => IsIdle && QueueIdle;
         public bool CanUseDebugPlacement => CanQueueDebugPlacement && !IsGameplayPointerBlocked && consumedFrame != Time.frameCount;
@@ -146,6 +179,7 @@ namespace Subject42.Combat.OrbitalStation
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             ExternalTimeControlStarting?.Invoke();
 #endif
+            if (IsConstructing) station.Interaction.CloseConstructor();
             ReleaseBulletTime();
             station?.GetComponent<OrbitalRelocationController>()?.CancelDrag("external pause");
         }
@@ -212,6 +246,7 @@ namespace Subject42.Combat.OrbitalStation
             if (IsGameplayInputBlocked) { escapeFrame = consumedFrame = Time.frameCount; return true; }
             if (IsIdle) return false;
             escapeFrame = consumedFrame = Time.frameCount;
+            if (IsConstructing && station.Interaction.CancelConstructorSelection()) return true;
             CancelActive();
             return true;
         }
@@ -227,6 +262,7 @@ namespace Subject42.Combat.OrbitalStation
         {
             if (!Alive) { ReleaseBulletTime(); if (!IsIdle) CancelActive(); return; }
             if (IsGameplayPointerBlocked) return;
+            if (Input.GetKeyDown(KeyCode.Tab)) { TryToggleConstructor(); return; }
             if (Input.GetKeyDown(KeyCode.Escape)) { TryConsumeEscape(); return; }
             if (Input.GetMouseButtonDown(1) && !IsIdle)
             { consumedFrame = Time.frameCount; CancelActive(); }

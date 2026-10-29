@@ -11,7 +11,7 @@ namespace Subject42.Combat.OrbitalStation
     public enum OrbitalRewardFlowState
     {
         CardSelection, RingSelection, ModuleSelection, DirectMountSelection, ModuleFlight,
-        SecondLinkPlacement, Applying, Completed, Cancelled, LinkConstruction
+        SecondLinkPlacement, Applying, Completed, Cancelled, Construction
     }
 
     [DisallowMultipleComponent]
@@ -42,7 +42,7 @@ namespace Subject42.Combat.OrbitalStation
             OrbitalRewardFlowState.CardSelection;
         public OrbitalRewardKind? PendingReward => reward != null
             ? reward.RewardKind : null;
-        public bool IsAwaitingConstructor => !terminal && State == OrbitalRewardFlowState.LinkConstruction;
+        public bool IsAwaitingConstructor => !terminal && State == OrbitalRewardFlowState.Construction;
         public string CompactStatus => reward == null
             ? State.ToString() : $"{State}:{reward.RewardKind}";
         public string CompactTargetStatus => hoveredMount == null
@@ -69,6 +69,8 @@ namespace Subject42.Combat.OrbitalStation
             hoveredMount = null;
             reservedMount = null;
             firstRingId = 0;
+            if (station.UsesSegmentedOrbit && OrbitalRewardProvider.GetModuleKind(selected.RewardKind) is OrbitalModuleKind weapon &&
+                OrbitalRunState.IsSegmentedWeapon(weapon)) return ApplyImmediate();
             if (!selected.RequiresArenaSelection)
                 return ApplyImmediate();
             if (IsRingReward(selected.RewardKind))
@@ -181,6 +183,12 @@ namespace Subject42.Combat.OrbitalStation
                     pendingCustomRing = 0;
                     CompleteReward();
                 }
+                return;
+            }
+            if (IsAwaitingConstructor)
+            {
+                // The previous window (including a reel) must finish closing first.
+                if (station != null && station.InputOwner.CanOpenConstructor) station.Interaction.OpenConstructor();
                 return;
             }
             if (reward == null || station == null || !station.IsInitialized ||
@@ -368,14 +376,19 @@ namespace Subject42.Combat.OrbitalStation
         private bool ApplyImmediate()
         {
             State = OrbitalRewardFlowState.Applying;
+            if (station.UsesSegmentedOrbit && OrbitalRewardProvider.GetModuleKind(reward.RewardKind) is OrbitalModuleKind weapon &&
+                OrbitalRunState.IsSegmentedWeapon(weapon))
+            {
+                if (!station.State.TryGrantSegmentedWeapon(weapon))
+                { State = OrbitalRewardFlowState.Cancelled; Clear(false); return false; }
+                AwaitConstructor();
+                return true;
+            }
             if (OrbitalRewardProvider.GetSegmentedLinkKind(reward.RewardKind) is SegmentedLinkKind linkKind)
             {
                 if (!station.State.TryGrantSegmentedLink(linkKind))
                 { State = OrbitalRewardFlowState.Cancelled; Clear(false); return false; }
-                committed = true;
-                State = OrbitalRewardFlowState.LinkConstruction;
-                // The grant is final even if a transition prevents opening the editor.
-                if (!station.Interaction.OpenConstructor()) CompleteReward();
+                AwaitConstructor();
                 return true;
             }
             if (reward.RewardKind == OrbitalRewardKind.NewRing && station.State.UsesCustomPaths)
@@ -402,8 +415,16 @@ namespace Subject42.Combat.OrbitalStation
                 return false;
             }
             committed = true;
-            CompleteReward();
+            if (station.UsesSegmentedOrbit && reward.RewardKind is OrbitalRewardKind.NewRing or OrbitalRewardKind.AddMount)
+                AwaitConstructor();
+            else CompleteReward();
             return true;
+        }
+
+        private void AwaitConstructor()
+        {
+            committed = true;
+            State = OrbitalRewardFlowState.Construction;
         }
 
         public void CompleteConstructorReward()

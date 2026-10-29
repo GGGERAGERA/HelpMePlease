@@ -121,10 +121,14 @@ namespace Subject42.Combat.OrbitalStation
         private static bool IsInActivePool(OrbitalRewardData reward, OrbitalRunState state)
         {
             if (!reward.InNormalPool && reward.RewardKind != OrbitalRewardKind.NewRing) return false;
-            if (state?.UsesSegmentedOrbit == true)
-                return reward.RewardKind is not (OrbitalRewardKind.RingSpeed or OrbitalRewardKind.RingCapacity);
-            return !GetSegmentedLinkKind(reward.RewardKind).HasValue;
+            return IsSupportedByState(reward.RewardKind, state);
         }
+
+        private static bool IsSupportedByState(OrbitalRewardKind kind, OrbitalRunState state) =>
+            state?.UsesSegmentedOrbit == true
+                ? kind is not (OrbitalRewardKind.RingSpeed or OrbitalRewardKind.RingCapacity or
+                    OrbitalRewardKind.ArcEmitter or OrbitalRewardKind.LinkPair or OrbitalRewardKind.LinkMatrix or OrbitalRewardKind.ModuleDamage)
+                : !GetSegmentedLinkKind(kind).HasValue;
 
         public bool IsEligible(OrbitalRewardKind kind) =>
             IsEligible(kind, RunStateManager.Instance?.OrbitalStationState, RunStateManager.Instance?.ItemSlots);
@@ -189,6 +193,7 @@ namespace Subject42.Combat.OrbitalStation
             for (int i = 0; i < definitions.Count; i++)
             {
                 OrbitalRewardData reward = definitions[i];
+                if (!IsSupportedByState(reward.RewardKind, state)) continue;
                 if (demoOnly && !IsInActivePool(reward, state)) continue;
                 OrbitalModuleKind? moduleKind = GetModuleKind(reward.RewardKind);
                 bool eligible = GetSegmentedLinkKind(reward.RewardKind).HasValue ? state.UsesSegmentedOrbit : moduleKind.HasValue

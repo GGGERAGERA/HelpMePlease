@@ -220,8 +220,8 @@ namespace Subject42.Combat.OrbitalStation
                 Interaction.Bind(this);
                 RewardFlow = authoredView.Rewards;
                 RewardFlow.Bind(this);
-                relocation = authoredView.Relocation;
-                relocation.Bind(this);
+                relocation = UsesSegmentedOrbit ? null : authoredView.Relocation;
+                relocation?.Bind(this);
                 if (!BuildPresentationFromState(out string restoreError))
                 {
                     FailRestore(restoreError);
@@ -234,7 +234,7 @@ namespace Subject42.Combat.OrbitalStation
                 InputOwner.enabled = true;
                 Interaction.enabled = true;
                 RewardFlow.enabled = true;
-                relocation.enabled = true;
+                authoredView.Relocation.enabled = !UsesSegmentedOrbit;
                 gameObject.SetActive(true);
             }
             catch (System.Exception exception)
@@ -314,7 +314,7 @@ namespace Subject42.Combat.OrbitalStation
                 Teardown();
                 return;
             }
-            UpdateCustomDrawing();
+            if (!UsesSegmentedOrbit) UpdateCustomDrawing();
             authoredView.CenterShift.Refresh();
             if (HasPendingCustomRings) { ReleaseBulletTime(); return; }
             UpdateRightMouse(Time.unscaledDeltaTime);
@@ -324,7 +324,7 @@ namespace Subject42.Combat.OrbitalStation
                     InputOwner.IsIdle && InputOwner.CanUseDebugPlacement);
             TickStation(Time.deltaTime);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            HandlePlacementInput();
+            if (!UsesSegmentedOrbit) HandlePlacementInput();
 #endif
         }
 
@@ -349,6 +349,15 @@ namespace Subject42.Combat.OrbitalStation
 
         private void TickRightMouse(float deltaTime, bool held, bool pressed)
         {
+            // Production Shift has one meaning; legacy RMB modes belong to the labs.
+            if (UsesSegmentedOrbit)
+            {
+                bool productionSuspended = Time.timeScale <= 0f || SceneTransitionOverlay.IsTransitioning ||
+                    InputOwner == null || !InputOwner.IsIdle;
+                bulletTime.Tick(held, productionSuspended ? 0f : deltaTime);
+                InputOwner?.TickBulletTime(bulletTime.IsActive, bulletTime, deltaTime);
+                return;
+            }
             float gameplayDeltaTime = deltaTime * Time.timeScale;
             for (int i = repulsedEnemies.Count - 1; i >= 0; i--)
             {
@@ -376,7 +385,7 @@ namespace Subject42.Combat.OrbitalStation
             }
             foreach (var ring in rings)
             {
-                ring.RuntimeDirectionMultiplier = UsesSegmentedOrbit ? 0 : rotationSign;
+                ring.RuntimeDirectionMultiplier = rotationSign;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 if (DebugRotationPaused) ring.RuntimeDirectionMultiplier = 0;
 #endif
@@ -444,7 +453,7 @@ namespace Subject42.Combat.OrbitalStation
                 if (!UsesSegmentedOrbit || modules[i].CurrentMount != null && modules[i].CurrentMount.Ring.IsActive)
                     modules[i].Tick(deltaTime);
             Combat.Tick(deltaTime);
-            UpdateLinkNodes(deltaTime);
+            if (!UsesSegmentedOrbit) UpdateLinkNodes(deltaTime);
             UpdateFlashes();
         }
 
@@ -664,8 +673,15 @@ namespace Subject42.Combat.OrbitalStation
                 (InputOwner != null && !InputOwner.IsRewardQueueIdle))
                 return false;
 
+            bool production = UsesSegmentedOrbit;
+            if (production && preset != GrowthPreset.Beginning) return false;
             Teardown();
             OrbitalRunState state = runStateManager.DebugResetOrbitalRunState();
+            if (production)
+            {
+                state.EnableSegmentedOrbit();
+                return RebuildRuntimeFromState();
+            }
             int ringCount = preset == GrowthPreset.Beginning ? 1 :
                 preset == GrowthPreset.Mid ? 4 : 8;
             while (state.Rings.Count < ringCount)
@@ -712,6 +728,7 @@ namespace Subject42.Combat.OrbitalStation
 
         public void ApplyReadabilityTestPreset()
         {
+            if (UsesSegmentedOrbit) return;
             ApplyPresetStart();
             OrbitalRingState second = AddRing();
             OrbitalRingState third = AddRing();

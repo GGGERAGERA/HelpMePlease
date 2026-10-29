@@ -2083,6 +2083,11 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         OrbitalStationRuntime station =
             FindFirstObjectByType<OrbitalStationRuntime>();
         bool available = station != null && station.IsInitialized;
+        if (available && station.UsesSegmentedOrbit)
+        {
+            BuildMvpOrbits();
+            return;
+        }
         OrbitalRunState state = available ? station.State : null;
         int ringId = available && station.SelectedRing != null ? station.SelectedRing.RingId : 0;
         bool canEdit = available && (upgradeManager == null || upgradeManager.IsRewardQueueIdle);
@@ -3088,20 +3093,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         AddRow("Tutorial", "Сброс для следующего нового забега", mutedColor, "RESET TUTORIAL", true,
             TutorialController.ResetCompletion);
         ResolveSceneReferences();
-        var rmbStation = FindFirstObjectByType<OrbitalStationRuntime>();
-        AddSectionTitle("RMB MODE", "ПКМ: удержание Slow Field / нажатие Repulse и Reverse");
-        string[] rmbLabels = { "Slow Field", "Repulse", "Reverse Rotation" };
-        for (int i = 0; i < rmbLabels.Length; i++)
-        {
-            var mode = (OrbitalStationRuntime.RmbMode)i;
-            bool selected = rmbStation != null && rmbStation.RightMouseMode == mode;
-            AddRow(rmbLabels[i], selected ? "ACTIVE" : "", selected ? successColor : mutedColor,
-                "SELECT", rmbStation != null, () =>
-                {
-                    if (rmbStation != null) rmbStation.RightMouseMode = mode;
-                    RefreshCurrentTab();
-                });
-        }
         RunStateManager runState = RunStateManager.Instance;
         RunSector sector = runState != null ? runState.CurrentSector : null;
         EnemyHealth boss = FindAliveBoss();
