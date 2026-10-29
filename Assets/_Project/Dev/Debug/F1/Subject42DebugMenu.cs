@@ -375,8 +375,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private float previousTimeScale;
     private bool previousCursorVisible;
     private CursorLockMode previousCursorLockMode;
-    private string lastOrbitalStateResult;
-    private OrbitalStationRuntime.GrowthPreset nextOrbitalGrowthPreset;
 
     private readonly StringBuilder previewSummary = new();
     private readonly List<GameObject> debugEnemies = new();
@@ -2080,215 +2078,15 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private void AddOrbitalProductionSection()
     {
         ResolveSceneReferences();
-        OrbitalStationRuntime station =
-            FindFirstObjectByType<OrbitalStationRuntime>();
-        bool available = station != null && station.IsInitialized;
-        if (available && station.UsesSegmentedOrbit)
-        {
-            BuildMvpOrbits();
-            return;
-        }
-        OrbitalRunState state = available ? station.State : null;
-        int ringId = available && station.SelectedRing != null ? station.SelectedRing.RingId : 0;
-        bool canEdit = available && (upgradeManager == null || upgradeManager.IsRewardQueueIdle);
-        AddSectionTitle("ORBITAL",
-            "Production runtime checks");
+        BuildMvpOrbits();
+        // The shared laboratory renderer still needs its visual controls.
+        var station = FindFirstObjectByType<OrbitalStationRuntime>();
+        if (station != null && !station.UsesSegmentedOrbit)
+            AddOrbitalReadabilitySettings(station);
+    }
 
-        CharacterSpawner spawner = FindFirstObjectByType<CharacterSpawner>();
-        bool canStart = spawner != null &&
-            (RunStateManager.Instance == null || RunStateManager.Instance.OrbitalStationState == null);
-        AddRow("Direct scene launch", canStart ? "EXPLICIT DEV NEW RUN" : "RUN EXISTS",
-            warningColor, "START", canStart, () =>
-            {
-                spawner.DebugStartDefaultRunIfMissing();
-                RefreshCurrentTab();
-            });
-
-        AddSectionTitle("STATION", available
-            ? "Arena placement: click ring, then a free mount"
-            : "Runtime station is not ready");
-        AddRow("Runtime", available
-                ? $"RINGS {station.Rings.Count} / MODULES {station.Modules.Count}"
-                : "NOT ACTIVE",
-            available ? successColor : mutedColor, string.Empty, false, null);
-        bool canLoadGrowth = available &&
-            (UpgradeManager.Instance == null || UpgradeManager.Instance.IsRewardQueueIdle);
-        AddSectionTitle("GROWTH TEST", "Explicit dev reset / production state + restore");
-        AddRow("BEGINNING", "1 RING / 1 MOUNT / CAPACITY 3 / 1 PISTOL", accentColor,
-            "LOAD", canLoadGrowth, () => LoadOrbitalGrowthPreset(station, OrbitalStationRuntime.GrowthPreset.Beginning));
-        AddRow("MID", "4 RINGS / 12 MOUNTS / 8 MODULES", accentColor,
-            "LOAD", canLoadGrowth, () => LoadOrbitalGrowthPreset(station, OrbitalStationRuntime.GrowthPreset.Mid));
-        AddRow("FINAL", "8 RINGS / 24 MOUNTS / 16 MODULES / 2 LINK PAIRS", accentColor,
-            "LOAD", canLoadGrowth, () => LoadOrbitalGrowthPreset(station, OrbitalStationRuntime.GrowthPreset.Final));
-        AddRow("BEGINNING → MID → FINAL", $"NEXT: {nextOrbitalGrowthPreset.ToString().ToUpperInvariant()}",
-            accentColor, "NEXT", canLoadGrowth, () => LoadOrbitalGrowthPreset(station, nextOrbitalGrowthPreset));
-        AddRow("Placement", available ? station.PlacementStatus : "NOT ACTIVE",
-            available && station.PlacementStatus != "READY" ? warningColor : mutedColor,
-            string.Empty, false, null);
-        AddRow("New Ring (debug beyond cap)", available ? "SELECTS NEW RING" : "NOT ACTIVE",
-            accentColor, "+RING", canEdit, () =>
-            {
-                station.DebugAddRingBeyondCap();
-                RefreshCurrentTab();
-            });
-        AddOrbitalModuleRow("Add Pistol", OrbitalModuleKind.Pistol, station);
-        AddOrbitalModuleRow("Add Saw", OrbitalModuleKind.Saw, station);
-        AddOrbitalModuleRow("Add Shotgun", OrbitalModuleKind.Shotgun, station);
-        AddOrbitalModuleRow("Add Arc Emitter", OrbitalModuleKind.ArcEmitter, station);
-        AddOrbitalModuleRow("Add Link Node", OrbitalModuleKind.LinkNode, station);
-        AddRow("Selected Ring Speed", available ? "×1.25" : "NOT ACTIVE",
-            accentColor, "UP", canEdit && state.CanUpgradeRingSpeed(ringId, out _), () =>
-            {
-                station.UpgradeSelectedRingSpeed();
-                RefreshCurrentTab();
-            });
-        AddRow("Selected Ring Damage", available ? "×1.25" : "NOT ACTIVE",
-            accentColor, "UP", canEdit && state.CanUpgradeRingPower(ringId, out _), () =>
-            {
-                station.UpgradeSelectedRingPower();
-                RefreshCurrentTab();
-            });
-        var selectedState = state?.Rings.FirstOrDefault(ring => ring.StableRingId == ringId);
-        AddRow("Selected ring mounts / capacity", selectedState != null
-                ? $"R{ringId}: {selectedState.MountCount} / {selectedState.MountCapacity}" : "SELECT A RING",
-            mutedColor, null, false, null);
-        AddRow("New Mount Point", available ? "+1 ON SELECTED RING" : "NOT ACTIVE",
-            accentColor, "+MOUNT", canEdit && state.CanAddMount(ringId, out _), () =>
-            {
-                station.AddMount();
-                RefreshCurrentTab();
-            });
-        AddRow("Ring Capacity", available ? "+1 LIMIT / BUILD MOUNTS SEPARATELY" : "NOT ACTIVE",
-            accentColor, "+CAPACITY", canEdit && state.CanUpgradeRingCapacity(ringId, out _), () =>
-            {
-                station.UpgradeRingCapacity(ringId);
-                RefreshCurrentTab();
-            });
-
-        RunStateManager manager = RunStateManager.Instance;
-        OrbitalRunState runState = manager != null
-            ? manager.OrbitalStationState
-            : null;
-        if (runState != null && !runState.Validate(out string stateError))
-        {
-            AddHint($"ORBITAL state invalid: {stateError}. Restore does not repair or reset it.");
-            return;
-        }
-        int mounts = runState != null
-            ? runState.Rings.Sum(value => value.MountCount)
-            : 0;
-        AddSectionTitle("RUN STATE", "Data owned by the current RunStateManager");
-        AddRow("Initialized", runState?.IsInitialized == true ? "YES" : "NO",
-            runState?.IsInitialized == true ? successColor : mutedColor,
-            string.Empty, false, null);
-        AddRow("Revision", runState?.Revision.ToString() ?? "-", mutedColor,
-            string.Empty, false, null);
-        AddRow("Core / Rings", runState != null
-                ? $"{runState.Rings.Count}"
-                : "-",
-            mutedColor, string.Empty, false, null);
-        AddRow("Mounts / Modules", runState != null
-                ? $"{mounts} / {runState.Modules.Count}"
-                : "-",
-            mutedColor, string.Empty, false, null);
-        AddRow("Sector / Restores", runState != null
-                ? $"{manager.CurrentSector?.SectorNumber ?? manager.CurrentLevel} / {runState.RestoreCount}"
-                : "-",
-            mutedColor, string.Empty, false, null);
-        AddRow("CAPTURE STATE", lastOrbitalStateResult ?? "PHASE IS LIVE-SYNCED",
-            mutedColor, "CAPTURE", available, () =>
-            {
-                OrbitalRunState captured = station.CaptureState();
-                lastOrbitalStateResult = captured != null
-                    ? $"REV {captured.Revision}"
-                    : "NO STATE";
-                RefreshCurrentTab();
-            });
-        AddRow("REBUILD RUNTIME FROM STATE", "NO REWARD FX", accentColor,
-            "REBUILD", canEdit, () =>
-            {
-                lastOrbitalStateResult = station.RebuildRuntimeFromState()
-                    ? "RESTORED"
-                    : "FAILED";
-                RefreshCurrentTab();
-            });
-        AddRow("VALIDATE STATE", lastOrbitalStateResult ?? "READY", mutedColor,
-            "VALIDATE", runState != null, () =>
-            {
-                bool valid = runState.Validate(out string error);
-                lastOrbitalStateResult = valid ? "VALID" : error;
-                RefreshCurrentTab();
-            });
-        AddRow("PRINT COMPACT STATE", "ONE STRUCTURED LOG", mutedColor,
-            "PRINT", runState != null, () =>
-            {
-                int sector = manager.CurrentSector?.SectorNumber ?? manager.CurrentLevel;
-                string compact = runState.ToCompactString(sector);
-                lastOrbitalStateResult = "PRINTED";
-                Debug.Log(compact, this);
-                RefreshCurrentTab();
-            });
-        AddRow("SIMULATE SECTOR RESTORE", "DESTROY/RESTORE PRESENTATION",
-            warningColor, "SIM", canEdit, () =>
-            {
-                lastOrbitalStateResult = station.SimulateSectorRestore()
-                    ? "RESTORED"
-                    : "FAILED";
-                RefreshCurrentTab();
-            });
-
-        ExperienceManager experience = ExperienceManager.Instance;
-        UpgradeManager rewards = UpgradeManager.Instance;
-        int playerLevel = experience != null ? experience.CurrentLevel : 1;
-        int freeMounts = runState != null
-            ? mounts - runState.Modules.Count
-            : 0;
-        string rewardStatus = station?.RewardFlow != null
-            ? station.RewardFlow.CompactStatus
-            : "NO FLOW";
-        AddSectionTitle("REWARD FLOW", "Production level-up provider and arena targeting");
-        AddRow("Player / Ring offer", $"LV {playerLevel} / " +
-            $"{OrbitalProgressionConfig.Default.GetRingOfferChance(runState?.RingOfferMissCount ?? 0):P0}",
-            mutedColor, string.Empty, false, null);
-        AddRow("Free Mounts", freeMounts.ToString(), mutedColor,
-            string.Empty, false, null);
-        AddRow("Pending Reward", rewardStatus,
-            rewardStatus == "CardSelection" ? mutedColor : warningColor,
-            string.Empty, false, null);
-        AddRow("Show Reward Eligibility",
-            rewards?.GetOrbitalEligibilitySummary() ?? "NO PROVIDER",
-            mutedColor, "REFRESH", rewards != null, RefreshCurrentTab);
-        AddRow("Force Level Up", "REAL EXPERIENCE FLOW", accentColor,
-            "LEVEL", available && experience != null && rewards != null && rewards.IsRewardQueueIdle, () =>
-            {
-                CloseMenu();
-                experience.AddExperience(experience.ExpToNextLevel);
-            });
-        AddOrbitalRewardDebugRow("Force Module Reward",
-            OrbitalRewardKind.Pistol, rewards);
-        AddOrbitalRewardDebugRow("Force Link Pair",
-            OrbitalRewardKind.LinkPair, rewards);
-        AddOrbitalRewardDebugRow("Force Ring Speed",
-            OrbitalRewardKind.RingSpeed, rewards);
-        AddOrbitalRewardDebugRow("Force Ring Damage",
-            OrbitalRewardKind.RingPower, rewards);
-        AddOrbitalRewardDebugRow("Force New Mount Point",
-            OrbitalRewardKind.AddMount, rewards);
-        AddOrbitalRewardDebugRow("Force Ring Capacity",
-            OrbitalRewardKind.RingCapacity, rewards);
-        AddOrbitalRewardDebugRow("Force New Ring", OrbitalRewardKind.NewRing, rewards);
-        AddRow("Reset Orbital Progression", "BASE STATION / REWARD IDLE",
-            warningColor, "RESET", available &&
-                (rewards == null || rewards.IsRewardQueueIdle), () =>
-            {
-                station.ApplyPresetStart();
-                RefreshCurrentTab();
-            });
-
-        AddSectionTitle("PRESET", "Single temporary visual QA state");
-        AddRow("READABILITY TEST", "3 RINGS / ALL MODULE VISUALS / FREE MOUNTS",
-            accentColor, "LOAD", canEdit,
-            () => { station.ApplyReadabilityTestPreset(); RefreshCurrentTab(); });
+    private void AddOrbitalReadabilitySettings(OrbitalStationRuntime station)
+    {
         OrbitalPresentationConfig visual = OrbitalPresentationConfig.Active;
         System.Action<float> refreshVisuals = _ =>
         {
@@ -2320,56 +2118,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             value => { visual.HaloSize = value; refreshVisuals(value); }, "0.00");
         AddSliderRow("Ring Line Alpha", visual.RingLineAlpha, 0.15f, 0.9f,
             value => { visual.RingLineAlpha = value; refreshVisuals(value); }, "0.00");
-        AddHint("Number keys 1-9 select a ring. Module placement closes F1 so arena clicks remain explicit.");
-    }
-
-    private void LoadOrbitalGrowthPreset(OrbitalStationRuntime station,
-        OrbitalStationRuntime.GrowthPreset preset)
-    {
-        if (station.DebugApplyGrowthPreset(preset))
-        {
-            lastOrbitalStateResult = $"GROWTH {preset.ToString().ToUpperInvariant()}";
-            nextOrbitalGrowthPreset = (OrbitalStationRuntime.GrowthPreset)(((int)preset + 1) % 3);
-            CloseMenu();
-        }
-        else
-            lastOrbitalStateResult = "GROWTH RESET UNAVAILABLE / WAIT FOR REWARD IDLE";
-        RefreshCurrentTab();
-    }
-
-    private void AddOrbitalModuleRow(string label, OrbitalModuleKind kind,
-        OrbitalStationRuntime station)
-    {
-        bool available = station != null && station.IsInitialized &&
-            station.InputOwner != null && station.InputOwner.CanQueueDebugPlacement &&
-            station.State.FreeBuiltMounts > 0 &&
-            (UpgradeManager.Instance == null || UpgradeManager.Instance.IsRewardQueueIdle);
-        AddRow(label, available ? "ARENA PLACEMENT" : "NOT ACTIVE",
-            available ? accentColor : mutedColor, "PLACE", available, () =>
-            {
-                station.BeginModulePlacement(kind);
-                CloseMenu();
-            });
-    }
-
-    private void AddOrbitalRewardDebugRow(string label,
-        OrbitalRewardKind kind, UpgradeManager rewards)
-    {
-        bool enabled;
-        using (var provider = new OrbitalRewardProvider(rewards != null ? rewards.AllUpgrades.ToArray() : null))
-            enabled = rewards != null && rewards.IsRewardQueueIdle && provider.IsEligible(kind);
-        AddRow(label, kind.ToString().ToUpperInvariant(), accentColor,
-            "FORCE", enabled, () =>
-            {
-                CloseMenu();
-                if (rewards.DebugForceOrbitalReward(kind))
-                    return;
-                else
-                {
-                    lastOrbitalStateResult = "REWARD INELIGIBLE";
-                    Debug.LogWarning($"[OrbitalRewards] Forced reward {kind} is ineligible.");
-                }
-            });
     }
 
     private void SetDebugThreatTier(ThreatTier tier)

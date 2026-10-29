@@ -26,22 +26,17 @@ namespace Subject42.Combat.OrbitalStation
 
         public static Color ModuleColor(OrbitalModuleKind kind) => Resolve(kind).Tint;
 
-        public static Icon Resolve(SegmentedLinkKind kind) => Resolve(kind switch
-        {
-            SegmentedLinkKind.Damage => OrbitalRewardKind.DamageLink,
-            SegmentedLinkKind.FireRate => OrbitalRewardKind.FireRateLink,
-            SegmentedLinkKind.ExtraShot => OrbitalRewardKind.ExtraShotLink,
-            _ => OrbitalRewardKind.RicochetLink
-        });
+        public static Icon Resolve(SegmentedLinkKind kind) =>
+            new(SegmentedModulePresentation.Icon(kind), SegmentedModulePresentation.Color(kind));
 
         public static Icon Resolve(OrbitalRewardKind kind) =>
             OrbitalRewardProvider.GetModuleKind(kind) is OrbitalModuleKind module
                 ? Resolve(module) : kind switch
         {
-            OrbitalRewardKind.DamageLink => new Icon(OrbitalPresentationConfig.Active.RingDamageIcon, Color.white),
-            OrbitalRewardKind.FireRateLink => new Icon(OrbitalPresentationConfig.Active.RingSpeedIcon, Color.white),
-            OrbitalRewardKind.ExtraShotLink => Resolve(OrbitalModuleKind.LinkNode),
-            OrbitalRewardKind.RicochetLink => new Icon(OrbitalPresentationConfig.Active.RingIcon, Color.white),
+            OrbitalRewardKind.DamageLink => Resolve(SegmentedLinkKind.Damage),
+            OrbitalRewardKind.FireRateLink => Resolve(SegmentedLinkKind.FireRate),
+            OrbitalRewardKind.ExtraShotLink => Resolve(SegmentedLinkKind.ExtraShot),
+            OrbitalRewardKind.RicochetLink => Resolve(SegmentedLinkKind.Ricochet),
             OrbitalRewardKind.ModuleDamage => Resolve(OrbitalModuleKind.Pistol),
             OrbitalRewardKind.ShootingDamage or OrbitalRewardKind.ShootingRate => Resolve(OrbitalModuleKind.Pistol),
             OrbitalRewardKind.ContactDamage or OrbitalRewardKind.ContactSize => Resolve(OrbitalModuleKind.Saw),

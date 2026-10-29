@@ -48,7 +48,6 @@ public sealed class OrbitalVisualAdapterTests
         Assert.That(config.GetFlashStyle(OrbitalFlashFamily.MuzzlePistol).ApplyColor(source).a, Is.EqualTo(.3f));
         Assert.That(config.GetFlashStyle(OrbitalFlashFamily.MuzzleShotgun).ApplyColor(source), Is.EqualTo(source));
         Assert.That(config.GetFlashStyle(OrbitalFlashFamily.Impact).ApplyColor(source), Is.EqualTo(source));
-        Assert.That(config.GetFlashStyle(OrbitalFlashFamily.CoreRay).ApplyColor(source), Is.EqualTo(source));
         var tint = config.GetFlashStyle(OrbitalFlashFamily.MuzzlePistol);
         tint.Tint = new Color(.4f, .1f, .8f, .2f);
         tint.TintAmount = 1f;

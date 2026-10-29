@@ -3,8 +3,6 @@ Shader "Subject42/Orbital Ring"
     Properties
     {
         _RingSurface ("Emission / Glow / Core Whitening", Vector) = (1, .12, .08, 0)
-        _CoreEnergy ("Core idle / burst / time", Vector) = (0, 0, 0, 0)
-        _CoreColor ("Transient Core color", Color) = (0, 1, 1, 1)
         _RingPattern ("Mode / dash count / fill / speed", Vector) = (0, 48, .65, .025)
     }
     SubShader
@@ -21,8 +19,6 @@ Shader "Subject42/Orbital Ring"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             CBUFFER_START(UnityPerMaterial)
                 float4 _RingSurface;
-                float4 _CoreEnergy;
-                float4 _CoreColor;
                 float4 _RingPattern;
             CBUFFER_END
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; float4 color : COLOR; };
@@ -41,7 +37,7 @@ Shader "Subject42/Orbital Ring"
                 float aa = max(fwidth(distance), .001);
                 float core = 1 - smoothstep(1.0 / 3 - aa, 1.0 / 3 + aa, distance);
                 float skirt = pow(saturate(1 - distance), 2) * _RingSurface.y;
-                float phase = input.uv.x - _CoreEnergy.z * _RingPattern.w;
+                float phase = input.uv.x;
                 float cell = abs(frac(phase * _RingPattern.y) - .5) * 2;
                 float patternAA = max(fwidth(cell), .001);
                 float pattern = 1;
@@ -51,9 +47,7 @@ Shader "Subject42/Orbital Ring"
                     pattern = .35 + .65 * pow(saturate(.5 + .5 * sin(phase * 18.84956)), 3);
                 float alpha = saturate(core + skirt) * input.color.a * pattern;
                 float3 color = lerp(input.color.rgb, float3(1, 1, 1), core * _RingSurface.z);
-                float overlay = _CoreEnergy.x + _CoreEnergy.y;
-                return half4(color * _RingSurface.x + _CoreColor.rgb * overlay,
-                    saturate(alpha + overlay * skirt * .2 * input.color.a * pattern));
+                return half4(color * _RingSurface.x, alpha);
             }
             ENDHLSL
         }

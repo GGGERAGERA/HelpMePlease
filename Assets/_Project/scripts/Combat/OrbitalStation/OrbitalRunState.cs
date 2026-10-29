@@ -54,7 +54,7 @@ namespace Subject42.Combat.OrbitalStation
             while (Rings.Count < SegmentedLevels) CommitAddRing();
             foreach (var ring in Rings)
             {
-                ring.Radius = 2.4f + ring.Order * 1.2f;
+                ring.Radius = SegmentedRadius(ring.Order);
                 ring.BaseRotationSpeed = 0f;
                 ring.CurrentPhase = 0f;
                 ring.PhaseOffset = ring.Order == 1 ? 15f : 0f;
@@ -554,6 +554,7 @@ namespace Subject42.Combat.OrbitalStation
                 $"ring {id} reached mount capacity limit", out error);
 
         public bool CanUpgradeRingCapacity(int id, out string error) => CanRemoveRing(id, out error) &&
+            Rule(!UsesSegmentedOrbit, "segmented slots have fixed geometry", out error) &&
             Rule(FindRing(id).MountCount == FindRing(id).MountCapacity &&
                 FindRing(id).MountCapacity < MountLimit &&
                 FindRing(id).VisualUpgradeLevel < int.MaxValue,
@@ -580,6 +581,7 @@ namespace Subject42.Combat.OrbitalStation
                 $"ring {id} reached speed cap", out error);
 
         public bool CanUpgradeRingPower(int id, out string error) => CanRemoveRing(id, out error) &&
+            Rule(!UsesSegmentedOrbit, "segmented power comes from weapons and modules", out error) &&
             Rule(FindRing(id).PowerUpgradeLevel < OrbitalProgressionConfig.Default.MaxPowerUpgradeLevel &&
                 FindRing(id).VisualUpgradeLevel < int.MaxValue &&
                 IsFinitePositive(FindRing(id).PowerMultiplier * (1f + OrbitalProgressionConfig.Default.PowerIncrement)),
@@ -602,6 +604,7 @@ namespace Subject42.Combat.OrbitalStation
         }
 
         public bool CanUpgradeLinkMatrix(out string error) => CanCommit(out error) &&
+            Rule(!UsesSegmentedOrbit, "segmented modules do not use link matrices", out error) &&
             Rule(LinkMatrixUpgradeLevel < OrbitalProgressionConfig.Default.MaxLinkMatrixLevel &&
                 ResolveLinkPairs().Any(),
                 "link matrix cap reached or missing endpoints", out error);

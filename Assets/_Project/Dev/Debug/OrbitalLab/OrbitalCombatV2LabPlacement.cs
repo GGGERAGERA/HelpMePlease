@@ -270,8 +270,7 @@ public sealed class OrbitalCombatV2LabPlacement
         var go = new GameObject(name); go.transform.SetParent(lab.transform, false);
         var line = go.AddComponent<LineRenderer>(); line.useWorldSpace = true; line.positionCount = count;
         line.sharedMaterial = station.VisualMaterial; line.startWidth = line.endWidth = .035f;
-        var core = station.GetComponent<OrbitalStationView>().Core;
-        line.sortingLayerID = core.sortingLayerID; line.sortingOrder = core.sortingOrder + 100;
+        line.sortingLayerName = "Player"; line.sortingOrder = 117;
         return line;
     }
 

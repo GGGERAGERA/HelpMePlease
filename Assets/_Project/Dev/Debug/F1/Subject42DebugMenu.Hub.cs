@@ -164,10 +164,10 @@ public sealed partial class Subject42DebugMenu
             { LiveVisualRuntime.Instance.SetMode(VisualComparisonMode.Custom); Studio(); }, () => LiveVisualRuntime.Instance != null);
         Add("run.tools", 1, "Текущий забег", "Здоровье, опыт, награды, штатный выход в бункер", () => HubOpenDetails(3, DebugTab.PlayerBuild));
         Add("run.sectors", 1, "Секторы и босс", "Штатный production flow и диагностика этапов", () => HubOpenLegacyTool(DebugTab.WorldEvents), () => characterSpawner != null);
-        Add("run.catalogue", 1, "Награды и характеристики", "Существующий каталог улучшений", () => HubOpenDetails(1, DebugTab.PlayerBuild), () => characterSpawner != null);
+        Add("run.catalogue", 1, "Награды и характеристики", "Усиления характеристик игрока и оружия", () => HubOpenDetails(1, DebugTab.PlayerBuild), () => characterSpawner != null);
         Add("run.bunker", 1, "Инструменты бункера", "Двери, станции и существующие debug API", () => HubOpenLegacyTool(DebugTab.Bunker), () => IsProductionBunker);
         Add("combat.enemies", 2, "Враги и события", "Типы врагов, ручной спавн, AI и события сектора", () => HubOpenDetails(2, DebugTab.WorldEvents), () => enemySpawner != null);
-        Add("combat.weapons", 2, "Орбиты и оружие", "Существующие инструменты станции и каталог оружия", () => HubOpenDetails(0, DebugTab.OrbitalProduction), () => characterSpawner != null);
+        Add("combat.weapons", 2, "Орбиты и оружие", "Оружие, модули связи, открытие орбит и лимит креплений", () => HubOpenDetails(0, DebugTab.OrbitalProduction), () => characterSpawner != null);
         Add("combat.feel", 2, "FEEL LAB / Combat Lab", "Сохранённые боевые лаборатории и тестовые сценарии", () => HubOpenLegacyTool(DebugTab.FeelTest), () => characterSpawner != null);
         Add("diagnostics.snapshot", 3, "Диагностический снимок", "Состояние production-систем и последние 30 записей лога", SaveHubSnapshot);
         Add("diagnostics.logs", 3, "Последние логи и исключения", "Ограниченный журнал текущего запуска", () => { hubStatusText.text = hubLogs.Count == 0 ? "С момента создания меню записей нет." : hubLogs.Last(); ShowHubLogs(); });

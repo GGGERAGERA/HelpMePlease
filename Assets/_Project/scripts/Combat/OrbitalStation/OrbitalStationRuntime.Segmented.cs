@@ -25,8 +25,37 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool RepositionWeapon(int id, int ringId, int mount, out string error)
         {
+            return TransferConstructorWeapon(id, false, ringId, mount, out error);
+        }
+
+        public bool TransferConstructorWeapon(int id, bool fromStock, int ringId, int mount, out string error)
+        {
             error = "Откройте орбитальный конструктор.";
-            return InputOwner.CanEditConstructor && MoveModule(id, ringId, mount, out error);
+            if (!InputOwner.CanEditConstructor || !State.CanTransferSegmentedWeapon(id, fromStock, ringId, mount, out error)) return false;
+            var source = fromStock ? null : modules.FirstOrDefault(gun => gun.StableModuleId == id);
+            var destination = RequireMount(ringId, mount);
+            var displaced = destination.Module;
+            var originalMount = source?.CurrentMount;
+            if (!State.TryTransferSegmentedWeapon(id, fromStock, ringId, mount, out error)) return false;
+            SyncCommitted("ConstructorTransfer", ringId, id, () =>
+            {
+                if (fromStock)
+                {
+                    if (displaced != null) RemoveModulePresentation(displaced);
+                    if (!InstallModulePresentation(destination, State.FindModule(id)))
+                        throw new System.InvalidOperationException("constructor weapon attach failed");
+                }
+                else
+                {
+                    originalMount.Detach();
+                    displaced?.CurrentMount.Detach();
+                    if (!destination.Attach(source) || displaced != null && !originalMount.Attach(displaced))
+                        throw new System.InvalidOperationException("constructor weapon swap attach failed");
+                    source.CancelPresentationDrag();
+                    displaced?.CancelPresentationDrag();
+                }
+            });
+            return IsInitialized;
         }
 
         public bool ConstructModule(SegmentedLinkKind kind, int ringId, int mount, out string error)
@@ -50,16 +79,14 @@ namespace Subject42.Combat.OrbitalStation
         internal void SegmentedOrdinaryShot(int id)
         {
             if (!UsesSegmentedOrbit) return;
+            var weapon = modules.FirstOrDefault(gun => gun.StableModuleId == id) as OrbitalProjectileModule;
+            if (weapon == null) return;
             foreach (var link in State.ActiveSegmentedLinks())
             {
-                if (link.Kind != SegmentedLinkKind.ExtraShot || UnityEngine.Time.time < link.NextExtraShot) continue;
-                var targets = State.SegmentedModuleTargets(link).ToArray();
-                if (!targets.Any(gun => gun.StableModuleId == id)) continue;
-                int targetId = targets.FirstOrDefault(gun => gun.StableModuleId != id)?.StableModuleId ?? id;
-                var neighbour = modules.FirstOrDefault(gun => gun.StableModuleId == targetId) as OrbitalProjectileModule;
-                if (neighbour == null) continue;
-                link.NextExtraShot = UnityEngine.Time.time + .5f;
-                neighbour.FireExtraShot();
+                if (link.Kind != SegmentedLinkKind.ExtraShot ||
+                    !State.SegmentedModuleTargets(link).Any(gun => gun.StableModuleId == id) ||
+                    link.NextExtraShotByWeapon.TryGetValue(id, out float nextShot) && UnityEngine.Time.time < nextShot) continue;
+                if (weapon.FireExtraShot()) link.NextExtraShotByWeapon[id] = UnityEngine.Time.time + .5f;
             }
         }
     }

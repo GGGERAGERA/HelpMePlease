@@ -56,7 +56,8 @@ namespace Subject42.Combat.OrbitalStation
             Action onCompleted, Action onCancelled)
         {
             if (selected == null || station == null ||
-                !station.IsInitialized || reward != null || !station.InputOwner.BeginReward())
+                !station.IsInitialized || reward != null ||
+                !OrbitalRewardProvider.IsSupportedByState(selected.RewardKind, station.State) || !station.InputOwner.BeginReward())
                 return false;
             sessionToken++;
             terminal = false;
@@ -187,8 +188,7 @@ namespace Subject42.Combat.OrbitalStation
             }
             if (IsAwaitingConstructor)
             {
-                // The previous window (including a reel) must finish closing first.
-                if (station != null && station.InputOwner.CanOpenConstructor) station.Interaction.OpenConstructor();
+                CompleteReward();
                 return;
             }
             if (reward == null || station == null || !station.IsInitialized ||
@@ -239,7 +239,6 @@ namespace Subject42.Combat.OrbitalStation
                 return;
             }
             station.Rings.FirstOrDefault(value => value.RingId == ringId)?.PulseVisual();
-            station.FlashCore(new Color(0.35f, 0.9f, 1f));
             CompleteReward();
         }
 
@@ -345,8 +344,6 @@ namespace Subject42.Combat.OrbitalStation
                     AudioService.Instance?.PlayAt(AudioCueId.ModuleInstall,
                         reservedMount?.Transform != null ? reservedMount.Transform.position : station.transform.position);
                     station.Rings.FirstOrDefault(r => r.RingId == targetRingId)?.PulseVisual();
-                    station.FlashCore(reward.RewardKind == OrbitalRewardKind.LinkPair
-                        ? new Color(0.85f, 0.3f, 1f) : new Color(0.35f, 0.95f, 1f));
                 }
             }
             finally { CompleteReward(); }
@@ -381,14 +378,14 @@ namespace Subject42.Combat.OrbitalStation
             {
                 if (!station.State.TryGrantSegmentedWeapon(weapon))
                 { State = OrbitalRewardFlowState.Cancelled; Clear(false); return false; }
-                AwaitConstructor();
+                CompleteReward();
                 return true;
             }
             if (OrbitalRewardProvider.GetSegmentedLinkKind(reward.RewardKind) is SegmentedLinkKind linkKind)
             {
                 if (!station.State.TryGrantSegmentedLink(linkKind))
                 { State = OrbitalRewardFlowState.Cancelled; Clear(false); return false; }
-                AwaitConstructor();
+                CompleteReward();
                 return true;
             }
             if (reward.RewardKind == OrbitalRewardKind.NewRing && station.State.UsesCustomPaths)
@@ -415,16 +412,8 @@ namespace Subject42.Combat.OrbitalStation
                 return false;
             }
             committed = true;
-            if (station.UsesSegmentedOrbit && reward.RewardKind is OrbitalRewardKind.NewRing or OrbitalRewardKind.AddMount)
-                AwaitConstructor();
-            else CompleteReward();
+            CompleteReward();
             return true;
-        }
-
-        private void AwaitConstructor()
-        {
-            committed = true;
-            State = OrbitalRewardFlowState.Construction;
         }
 
         public void CompleteConstructorReward()

@@ -63,7 +63,6 @@ namespace Subject42.Combat.OrbitalStation
         private Material lineMaterial;
         private Sprite sharedSprite;
         private Sprite sharedCircleSprite;
-        private SpriteRenderer coreVisual;
         private RunStateManager runStateManager;
         private PlacementStep placementStep;
         private OrbitalModuleKind pendingKind;
@@ -187,8 +186,6 @@ namespace Subject42.Combat.OrbitalStation
                 sharedSprite = config.PixelSprite;
                 sharedCircleSprite = config.CircleSprite;
                 lineMaterial = config.VisualMaterial;
-                coreVisual = authoredView.Core;
-                coreVisual.enabled = true;
                 Owner = new ProductionOrbitalOwnerAdapter(boundPlayer != null ? boundPlayer : gameObject);
                 Combat = new ProductionOrbitalCombatAdapter(authoredView.EffectsRoot, sharedSprite);
                 ((ProductionOrbitalCombatAdapter)Combat).ProjectileVisualImpact = (point, direction, color, kind) =>
@@ -212,7 +209,6 @@ namespace Subject42.Combat.OrbitalStation
                     FlashLink(point - side * size * .3f, point + side * size * .3f,
                         Color.Lerp(color, Color.white, .75f), life * .45f, family);
                 };
-                authoredView.CoreParticles.Play();
                 for (int i = 0; i < config.FlashPoolCapacity; i++) idleFlashes.Push(CreateFlashLine());
                 InputOwner = authoredView.Input;
                 InputOwner.Bind(this);
@@ -652,7 +648,6 @@ namespace Subject42.Combat.OrbitalStation
         {
             if (State == null || !State.TryUpgradeLinkMatrix(out _))
                 return false;
-            SyncCommitted("LinkMatrix", 0, 0, () => FlashCore(new Color(0.9f, 0.2f, 1f)));
             return true;
         }
 
@@ -770,12 +765,6 @@ namespace Subject42.Combat.OrbitalStation
         public GameObject CreateModuleVisual(string name, Color color, Vector2 scale) =>
             CreatePixelVisual(name, color, scale, 14);
 
-        public void FlashCore(Color color)
-        {
-            if (coreVisual != null)
-                authoredView.CoreHalo.color = color;
-        }
-
         public void FlashLink(Vector2 from, Vector2 to, Color color, float life,
             OrbitalFlashFamily family = OrbitalFlashFamily.Other)
         {
@@ -856,11 +845,6 @@ namespace Subject42.Combat.OrbitalStation
                     Destroy(flashes[i].line.gameObject);
             flashes.Clear();
             while (idleFlashes.Count > 0) Destroy(idleFlashes.Pop().gameObject);
-            if (authoredView != null)
-            {
-                if (authoredView.CoreHalo != null) authoredView.CoreHalo.enabled = false;
-                if (authoredView.CoreParticles != null) authoredView.CoreParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            }
             foreach (LineRenderer line in linkLines.Values)
                 if (line != null) Destroy(line.gameObject);
             linkLines.Clear();
@@ -868,12 +852,10 @@ namespace Subject42.Combat.OrbitalStation
             staleLinkPairs.Clear();
             resolvedLinkPairs.Clear();
             resolvedLinkRevision = -1;
-            if (coreVisual != null) coreVisual.enabled = false;
             runtimeRoot = null;
             lineMaterial = null;
             sharedSprite = null;
             sharedCircleSprite = null;
-            coreVisual = null;
             Combat = null;
             Owner = null;
             RewardFlow = null;

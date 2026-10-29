@@ -161,8 +161,7 @@ public sealed class OrbitalCombatV2WeaponModules
         var go = new GameObject(name); go.transform.SetParent(parent, false);
         var line = go.AddComponent<LineRenderer>(); line.useWorldSpace = true; line.positionCount = count;
         line.sharedMaterial = station.VisualMaterial; line.startWidth = line.endWidth = width;
-        var core = station.GetComponent<OrbitalStationView>().Core;
-        line.sortingLayerID = core.sortingLayerID; line.sortingOrder = core.sortingOrder + 1;
+        line.sortingLayerName = "Player"; line.sortingOrder = 18;
         return line;
     }
     private static void DestroyView(View view) { if (view.Root != null) { view.Root.SetActive(false); Object.Destroy(view.Root); } }

@@ -28,8 +28,8 @@ namespace Subject42.Combat.OrbitalStation
         public System.Func<int, float, float> LabMountPhase { get; set; }
 #endif
         public float Radius => Geometry.Type == OrbitalPathType.Custom ? 1f :
-            (State.Radius + OrbitalPresentationConfig.Active.RingRadiusPadding) *
-            (segmented && State.Order == 0 ? .55f : 1f);
+            segmented ? OrbitalRunState.SegmentedRadius(State.Order) :
+            State.Radius + OrbitalPresentationConfig.Active.RingRadiusPadding;
         internal bool ShowIdleMounts => !segmented || constructionPreview;
         public float RotationSpeed => State.BaseRotationSpeed *
             Mathf.Pow(1f + OrbitalProgressionConfig.Default.SpeedIncrement,
@@ -38,7 +38,7 @@ namespace Subject42.Combat.OrbitalStation
         public float Phase => State.CurrentPhase;
         public int MountCapacity => State.MountCapacity;
         public int MountCount => State.MountCount;
-        public float PowerMultiplier => State.PowerMultiplier;
+        public float PowerMultiplier => segmented ? 1f : State.PowerMultiplier;
         public int VisualTier => State.VisualTier;
         public Color AccentColor => view.AccentColor;
         public List<OrbitalMountRuntime> Mounts { get; } = new();
@@ -59,6 +59,7 @@ namespace Subject42.Combat.OrbitalStation
             view.InitializeTier(VisualTier);
             view.UpdateTierAppearance(VisualTier, Radius * spawnScale, 0f, 0f, false,
                 Geometry.Type == OrbitalPathType.FigureEight || State.Order == 0, 0f);
+            if (segmented) view.SetSegmentedCombatBase(Radius * spawnScale, Phase);
             for (int i = 0; i < State.MountCount; i++)
                 Mounts.Add(new OrbitalMountRuntime(this, i, view.MountsRoot, sprite));
             RebalanceMounts();
@@ -85,6 +86,11 @@ namespace Subject42.Combat.OrbitalStation
                  (interactionHovered ? 1f : 0f)) * interactionEmphasis;
             view.UpdateTierAppearance(VisualTier, Radius * spawnScale, pulse, highlight,
                 interactionDimmed, Geometry.Type == OrbitalPathType.FigureEight || State.Order == 0, deltaTime, Time.unscaledDeltaTime);
+            if (segmented)
+            {
+                if (constructionPreview) view.FrontLine.transform.localRotation = Quaternion.identity;
+                else view.SetSegmentedCombatBase(Radius * spawnScale, Phase);
+            }
             for (int i = 0; i < Mounts.Count; i++)
                 Mounts[i].UpdatePosition(State.CurrentPhase, Radius * spawnScale);
         }
@@ -93,6 +99,7 @@ namespace Subject42.Combat.OrbitalStation
         {
             IsActive = active;
             this.constructionPreview = constructionPreview;
+            view.FrontLine.enabled = active || constructionPreview;
             bool visible = active || constructionPreview;
             if (view.gameObject.activeSelf == visible) return;
             view.gameObject.SetActive(visible);

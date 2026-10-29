@@ -13,22 +13,34 @@ namespace Subject42.Combat.OrbitalStation
         [Header("Authored orbital constructor")]
         [SerializeField] private Canvas constructorCanvas;
         [SerializeField] private GameObject constructorPanel, constructorWeaponGroup, constructorModuleGroup;
-        [SerializeField] private Button constructorLauncher, constructorClose, constructorStow;
+        [SerializeField] private RectTransform constructorReserve;
+        [SerializeField] private Button constructorLauncher, constructorClose;
         [SerializeField] private Button[] constructorMounts, constructorWeapons, constructorLinks;
         [SerializeField] private OrbitalModuleKind[] constructorWeaponKinds;
         [SerializeField] private SegmentedLinkKind[] constructorModuleKinds;
         [SerializeField] private Image[] constructorSlotFrames, constructorSlotIcons;
         [SerializeField] private RectTransform[] constructorLines;
-        [SerializeField] private TextMeshProUGUI constructorStatus, constructorEmpty;
+        [SerializeField] private TextMeshProUGUI constructorEmpty;
+        [SerializeField] private string[] constructorWeaponLabels, constructorModuleLabels;
         private UpgradePanelView constructorRewardPanel;
         private readonly List<LineRenderer> constructorWorldLines = new();
-        [SerializeField] private string[] constructorWeaponLabels, constructorModuleLabels;
-        private int constructorCell = -1, constructorRevision = -1;
+        private readonly List<SpriteRenderer> constructorWorldModules = new();
+        private readonly List<RaycastResult> constructorHits = new();
+        private readonly List<Vector3> constructorArcPoints = new(64);
+        private int constructorRevision = -1, constructorDragRevision, constructorDragCell = -1, constructorDropCell = -1;
+        private OrbitalModuleState constructorDragWeapon;
+        private SegmentedLinkState constructorDragModule;
+        private SegmentedLinkKind? constructorDragModuleKind;
+        private Image constructorDragIcon;
+        private CanvasGroup constructorDragStockVisibility;
+        private TextMeshProUGUI constructorDragStockCount;
+        private string constructorDragStockText;
+        private float constructorDragStockAlpha;
+        private bool constructorDragStockRaycasts;
         private bool constructorHidReward;
-        private OrbitalModuleKind? constructorInstalling;
-        private SegmentedLinkKind? constructorInstallingModule, constructorHoverModule;
-        private string constructorMessage;
+        private bool ConstructorDragging => constructorDragWeapon != null || constructorDragModuleKind.HasValue;
         private static readonly Color ConstructorBlue = new(.23f, .65f, .95f);
+        private static readonly Color ConstructorDropCyan = new(.2f, .85f, 1f);
         private static readonly Color ConstructorGreen = new(.28f, .82f, .52f);
         private static readonly Color ConstructorAmber = new(.98f, .79f, .35f);
 
@@ -43,23 +55,19 @@ namespace Subject42.Combat.OrbitalStation
             if (!station.UsesSegmentedOrbit) return;
             BindButton(constructorLauncher, () => OpenConstructor());
             BindButton(constructorClose, CloseConstructor);
-            BindButton(constructorStow, StowConstructorSelection);
             for (int i = 0; i < constructorMounts.Length; i++)
-            { int cell = i; BindButton(constructorMounts[i], () => SelectConstructorMount(cell)); }
+            { int cell = i; BindConstructorDrag(constructorMounts[i], pointer => BeginConstructorDrag(pointer, cell)); }
             for (int i = 0; i < constructorWeapons.Length; i++)
-            { int item = i; BindButton(constructorWeapons[i], () => SelectConstructorWeapon(item)); }
+            { int item = i; BindConstructorDrag(constructorWeapons[i], pointer => BeginConstructorDrag(pointer, -1, item)); }
             for (int i = 0; i < constructorLinks.Length; i++)
-            {
-                int item = i;
-                BindButton(constructorLinks[i], () => SelectConstructorModule(item));
-                var trigger = constructorLinks[i].GetComponent<EventTrigger>();
-                trigger.triggers.Clear();
-                var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-                enter.callback.AddListener(_ => PreviewConstructorModule(constructorModuleKinds[item]));
-                var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-                exit.callback.AddListener(_ => PreviewConstructorModule(null));
-                trigger.triggers.Add(enter); trigger.triggers.Add(exit);
-            }
+            { int item = i; BindConstructorDrag(constructorLinks[i], pointer => BeginConstructorDrag(pointer, -1, -1, item)); }
+            constructorDragIcon = Instantiate(constructorSlotIcons[0], constructorCanvas.transform, false);
+            constructorDragIcon.name = "Dragged constructor item";
+            constructorDragIcon.raycastTarget = false;
+            constructorDragIcon.rectTransform.anchorMin = constructorDragIcon.rectTransform.anchorMax = new Vector2(.5f, .5f);
+            constructorDragIcon.rectTransform.pivot = new Vector2(.5f, .5f);
+            constructorDragIcon.rectTransform.sizeDelta = Vector2.one * 34f;
+            constructorDragIcon.gameObject.SetActive(false);
             constructorPanel.SetActive(false);
             constructorLauncher.gameObject.SetActive(false);
         }
@@ -68,30 +76,39 @@ namespace Subject42.Combat.OrbitalStation
         { button.onClick.RemoveAllListeners(); button.onClick.AddListener(action); }
         private static void ButtonText(Button button, string text) => button.GetComponentInChildren<TextMeshProUGUI>(true).text = text;
 
+        private void BindConstructorDrag(Button button, Action<PointerEventData> begin)
+        {
+            button.onClick.RemoveAllListeners();
+            button.navigation = new Navigation { mode = Navigation.Mode.None };
+            var trigger = button.GetComponent<EventTrigger>() ?? button.gameObject.AddComponent<EventTrigger>();
+            trigger.triggers.Clear();
+            void Add(EventTriggerType type, Action<PointerEventData> action)
+            {
+                var entry = new EventTrigger.Entry { eventID = type };
+                entry.callback.AddListener(data => action((PointerEventData)data));
+                trigger.triggers.Add(entry);
+            }
+            Add(EventTriggerType.BeginDrag, begin);
+            Add(EventTriggerType.Drag, MoveConstructorDrag);
+            Add(EventTriggerType.EndDrag, EndConstructorDrag);
+            Add(EventTriggerType.Scroll, pointer => button.GetComponentInParent<ScrollRect>()?.OnScroll(pointer));
+        }
+
         public bool OpenConstructor()
         {
             if (constructorRewardPanel == null || !station.InputOwner.BeginConstructor()) return false;
             constructorHidReward = constructorRewardPanel.gameObject.activeSelf;
             constructorRewardPanel.SetConstructorCovered(true);
             constructorPanel.SetActive(true);
-            ButtonText(constructorClose, "ПРОДОЛЖИТЬ");
             constructorLauncher.gameObject.SetActive(false);
-            constructorCell = -1;
-            ResetConstructorTool();
-            var pending = station.RewardFlow.PendingReward;
-            ConstructorMessage(!station.RewardFlow.IsAwaitingConstructor
-                ? "Выберите O для оружия или M для модуля. Можно начать и с предмета в запасе."
-                : pending == OrbitalRewardKind.NewRing ? "Орбита открыта. Выберите свободную O для оружия."
-                : pending == OrbitalRewardKind.AddMount ? "Лимит оружия увеличен. Выберите O и оружие в запасе."
-                : pending.HasValue && OrbitalRewardProvider.GetModuleKind(pending.Value).HasValue
-                    ? "Оружие в запасе. Выберите синюю O — или начните с оружия справа."
-                    : "Модуль в запасе. Выберите зелёную M рядом с пушкой — или начните с модуля справа.");
+            ResetConstructorDrag();
             RefreshConstructor();
             return true;
         }
 
         public void CloseConstructor()
         {
+            ResetConstructorDrag();
             if (station?.InputOwner != null)
             {
                 bool completesReward = station.InputOwner.IsConstructing && station.RewardFlow.IsAwaitingConstructor;
@@ -102,161 +119,163 @@ namespace Subject42.Combat.OrbitalStation
             }
             constructorHidReward = false;
             if (constructorPanel != null) constructorPanel.SetActive(false);
-            constructorCell = -1;
-            ResetConstructorTool();
         }
 
         private OrbitalMountRuntime ConstructorMount(int cell) => station.Rings[cell / OrbitalRunState.SegmentedPositions].Mounts[cell % OrbitalRunState.SegmentedPositions];
-        private OrbitalModuleRuntime ConstructorGun(int cell) => cell < 0 ? null : ConstructorMount(cell).Module;
-        private SegmentedLinkState ConstructorModule(int cell) => cell < 0 ? null :
-            station.State.SegmentedModuleAt(ConstructorMount(cell).Ring.RingId, ConstructorMount(cell).MountIndex);
+        private SegmentedLinkState ConstructorModule(int cell) => station.State.SegmentedModuleAt(ConstructorMount(cell).Ring.RingId, ConstructorMount(cell).MountIndex);
         private static bool IsWeaponCell(int cell) => OrbitalRunState.IsSegmentedWeaponSlot(cell / OrbitalRunState.SegmentedPositions, cell % OrbitalRunState.SegmentedPositions);
-        private void ResetConstructorTool()
-        { constructorInstalling = null; constructorInstallingModule = constructorHoverModule = null; constructorRevision = -1; }
-        private void ConstructorMessage(string message) { constructorMessage = message; constructorRevision = -1; }
+
+        private void BeginConstructorDrag(PointerEventData pointer, int cell, int weaponItem = -1, int moduleItem = -1)
+        {
+            if (pointer.button != PointerEventData.InputButton.Left || !station.InputOwner.CanEditConstructor) return;
+            ResetConstructorDrag();
+            var state = station.State;
+            constructorDragCell = cell;
+            if (cell >= 0)
+            {
+                if (IsWeaponCell(cell))
+                {
+                    var gun = ConstructorMount(cell).Module;
+                    constructorDragWeapon = gun == null ? null : state.FindModule(gun.StableModuleId);
+                }
+                else constructorDragModuleKind = (constructorDragModule = ConstructorModule(cell))?.Kind;
+            }
+            else if (weaponItem >= 0)
+                constructorDragWeapon = state.SegmentedWeapons.FirstOrDefault(gun => gun.ModuleType == constructorWeaponKinds[weaponItem]);
+            else if (moduleItem >= 0 && state.SegmentedLinkStock.Contains(constructorModuleKinds[moduleItem]))
+                constructorDragModuleKind = constructorModuleKinds[moduleItem];
+            if (!ConstructorDragging) return;
+            constructorDragRevision = state.Revision;
+            if (cell < 0)
+            {
+                var row = weaponItem >= 0 ? constructorWeapons[weaponItem] : constructorLinks[moduleItem];
+                constructorDragStockCount = row.GetComponentInChildren<TextMeshProUGUI>(true);
+                constructorDragStockText = constructorDragStockCount.text;
+                constructorDragStockVisibility = row.GetComponent<CanvasGroup>();
+                if (constructorDragStockVisibility == null) constructorDragStockVisibility = row.gameObject.AddComponent<CanvasGroup>();
+                constructorDragStockAlpha = constructorDragStockVisibility.alpha;
+                constructorDragStockRaycasts = constructorDragStockVisibility.blocksRaycasts;
+                int available = constructorDragWeapon != null
+                    ? state.SegmentedWeapons.Count(gun => gun.ModuleType == constructorDragWeapon.ModuleType)
+                    : state.SegmentedLinkStock.Count(kind => kind == constructorDragModuleKind.Value);
+                if (available == 1)
+                {
+                    // Keep the source active and in the layout so it retains the pointer drag.
+                    constructorDragStockVisibility.alpha = 0f;
+                    constructorDragStockVisibility.blocksRaycasts = false;
+                }
+            }
+            var icon = constructorDragWeapon != null ? OrbitalRewardIconResolver.Resolve(constructorDragWeapon.ModuleType) :
+                OrbitalRewardIconResolver.Resolve(constructorDragModuleKind.Value);
+            constructorDragIcon.sprite = icon.Sprite; constructorDragIcon.color = icon.ImageTint;
+            constructorDragIcon.gameObject.SetActive(true);
+            constructorDragIcon.transform.SetAsLastSibling();
+            MoveConstructorDrag(pointer);
+            RefreshConstructor();
+        }
+
+        private void MoveConstructorDrag(PointerEventData pointer)
+        {
+            if (!ConstructorDragging) return;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)constructorCanvas.transform,
+                pointer.position, pointer.pressEventCamera, out var position);
+            constructorDragIcon.rectTransform.anchoredPosition = position;
+            constructorDropCell = ConstructorCellUnderPointer(pointer);
+            constructorRevision = -1;
+        }
+
+        private int ConstructorCellUnderPointer(PointerEventData pointer)
+        {
+            constructorHits.Clear();
+            EventSystem.current.RaycastAll(pointer, constructorHits);
+            if (constructorHits.Count == 0) return -1;
+            var hit = constructorHits[0].gameObject.transform;
+            for (int i = 0; i < constructorMounts.Length; i++)
+                if (hit.IsChildOf(constructorMounts[i].transform)) return i;
+            return -1;
+        }
+
+        private bool CanDropConstructorItem(int cell)
+        {
+            if (!ConstructorDragging || !station.InputOwner.CanEditConstructor || cell < 0 ||
+                cell >= constructorMounts.Length || constructorDragRevision != station.State.Revision) return false;
+            var mount = ConstructorMount(cell);
+            if (constructorDragWeapon != null)
+                return IsWeaponCell(cell) && station.State.CanTransferSegmentedWeapon(constructorDragWeapon.StableModuleId,
+                    constructorDragCell < 0, mount.Ring.RingId, mount.MountIndex, out _);
+            if (IsWeaponCell(cell)) return false;
+            return constructorDragModule == null
+                ? station.State.CanInstallSegmentedModule(constructorDragModuleKind.Value, mount.Ring.RingId, mount.MountIndex, out _)
+                : station.State.CanMoveSegmentedModule(station.State.SegmentedLinks.IndexOf(constructorDragModule), mount.Ring.RingId, mount.MountIndex, out _);
+        }
+
+        private void EndConstructorDrag(PointerEventData pointer)
+        {
+            if (!ConstructorDragging || pointer.button != PointerEventData.InputButton.Left) return;
+            if (station.InputOwner.CanEditConstructor && constructorDragRevision == station.State.Revision)
+            {
+                int cell = ConstructorCellUnderPointer(pointer);
+                if (CanDropConstructorItem(cell))
+                {
+                    var mount = ConstructorMount(cell);
+                    if (constructorDragWeapon != null)
+                        station.TransferConstructorWeapon(constructorDragWeapon.StableModuleId, constructorDragCell < 0, mount.Ring.RingId, mount.MountIndex, out _);
+                    else if (constructorDragModule == null)
+                        station.ConstructModule(constructorDragModuleKind.Value, mount.Ring.RingId, mount.MountIndex, out _);
+                    else station.RepositionModule(station.State.SegmentedLinks.IndexOf(constructorDragModule), mount.Ring.RingId, mount.MountIndex, out _);
+                }
+                else if (constructorDragCell >= 0 && constructorHits.Count > 0 &&
+                    constructorHits[0].gameObject.transform.IsChildOf(constructorReserve))
+                {
+                    if (constructorDragWeapon != null) station.StowWeapon(constructorDragWeapon.StableModuleId);
+                    else station.StowModule(station.State.SegmentedLinks.IndexOf(constructorDragModule));
+                }
+            }
+            ResetConstructorDrag();
+            if (station.InputOwner.CanEditConstructor) RefreshConstructor();
+        }
+
+        private void ResetConstructorDrag()
+        {
+            if (constructorDragStockVisibility != null)
+            {
+                constructorDragStockVisibility.alpha = constructorDragStockAlpha;
+                constructorDragStockVisibility.blocksRaycasts = constructorDragStockRaycasts;
+            }
+            if (constructorDragStockCount != null) constructorDragStockCount.text = constructorDragStockText;
+            constructorDragStockVisibility = null; constructorDragStockCount = null;
+            constructorDragStockText = null;
+            constructorDragWeapon = null; constructorDragModule = null; constructorDragModuleKind = null;
+            constructorDragCell = constructorDropCell = -1; constructorRevision = -1;
+            if (constructorDragIcon != null) constructorDragIcon.gameObject.SetActive(false);
+        }
 
         public bool CancelConstructorSelection()
         {
-            if (!station.InputOwner.CanEditConstructor || constructorCell < 0 &&
-                !constructorInstalling.HasValue && !constructorInstallingModule.HasValue) return false;
-            constructorCell = -1; ResetConstructorTool();
-            ConstructorMessage("Выбор отменён. Выберите ячейку O / M или предмет справа.");
+            if (!ConstructorDragging) return false;
+            ResetConstructorDrag();
             return true;
         }
 
-        public void PreviewConstructorModule(SegmentedLinkKind? kind)
-        {
-            if (!station.InputOwner.CanEditConstructor) return;
-            constructorHoverModule = kind; constructorRevision = -1;
-        }
-
-        public bool SelectConstructorWeapon(int item)
-        {
-            if (!station.InputOwner.CanEditConstructor) return false;
-            var kind = constructorWeaponKinds[item];
-            if (!station.State.SegmentedWeapons.Any(gun => gun.ModuleType == kind)) return false;
-            ResetConstructorTool();
-            if (constructorCell >= 0 && IsWeaponCell(constructorCell) && ConstructorGun(constructorCell) == null)
-            {
-                var mount = ConstructorMount(constructorCell);
-                return ConstructorApplied(station.ConstructWeapon(kind, mount.Ring.RingId, mount.MountIndex, out string error), error);
-            }
-            constructorCell = -1; constructorInstalling = kind;
-            ConstructorMessage("Выберите подсвеченную синюю O для оружия. Esc — отмена.");
-            return true;
-        }
-
-        public bool SelectConstructorModule(int item)
-        {
-            if (!station.InputOwner.CanEditConstructor) return false;
-            var kind = constructorModuleKinds[item];
-            if (!station.State.SegmentedLinkStock.Contains(kind)) return false;
-            ResetConstructorTool();
-            if (constructorCell >= 0 && !IsWeaponCell(constructorCell))
-            {
-                var mount = ConstructorMount(constructorCell);
-                return ConstructorApplied(station.ConstructModule(kind, mount.Ring.RingId, mount.MountIndex, out string error), error);
-            }
-            constructorCell = -1; constructorInstallingModule = kind;
-            ConstructorMessage("Выберите подсвеченную зелёную M. Достаточно одной соседней стреляющей пушки.");
-            return true;
-        }
-
-        public bool SelectConstructorMount(int cell)
-        {
-            if (!station.InputOwner.CanEditConstructor || cell < 0 || cell >= constructorMounts.Length) return false;
-            var target = ConstructorMount(cell);
-            if (!station.State.IsRingActive(target.Ring.State)) return false;
-            bool weaponCell = IsWeaponCell(cell);
-            var sourceWeapon = ConstructorGun(constructorCell);
-            var sourceModule = ConstructorModule(constructorCell);
-            if (weaponCell && target.Module == null)
-            {
-                if (constructorInstalling.HasValue)
-                {
-                    int destination = cell;
-                    bool changed = station.ConstructWeapon(constructorInstalling.Value, target.Ring.RingId, target.MountIndex, out string error);
-                    if (changed) constructorCell = destination;
-                    return ConstructorApplied(changed, error);
-                }
-                if (sourceWeapon != null)
-                {
-                    bool changed = station.RepositionWeapon(sourceWeapon.StableModuleId, target.Ring.RingId, target.MountIndex, out string error);
-                    if (changed) constructorCell = cell;
-                    return ConstructorApplied(changed, error);
-                }
-            }
-            if (!weaponCell)
-            {
-                if (constructorInstallingModule.HasValue)
-                {
-                    bool changed = station.ConstructModule(constructorInstallingModule.Value, target.Ring.RingId, target.MountIndex, out string error);
-                    if (changed) constructorCell = cell;
-                    return ConstructorApplied(changed, error);
-                }
-                if (sourceModule != null && ConstructorModule(cell) == null)
-                {
-                    bool changed = station.RepositionModule(station.State.SegmentedLinks.IndexOf(sourceModule), target.Ring.RingId, target.MountIndex, out string error);
-                    if (changed) constructorCell = cell;
-                    return ConstructorApplied(changed, error);
-                }
-            }
-            ResetConstructorTool(); constructorCell = cell;
-            if (weaponCell)
-                ConstructorMessage(target.Module == null
-                    ? "Синяя O выбрана. Выберите оружие в запасе справа."
-                    : WeaponLabel(target.Module.Kind) + " установлен. Выберите свободную O для переноса или верните оружие в запас.");
-            else
-            {
-                var module = ConstructorModule(cell);
-                ConstructorMessage(module != null
-                    ? station.State.SegmentedModuleTargets(module).Any()
-                        ? ModuleLabel(module.Kind) + " работает с соседними пушками. Можно перенести в M или вернуть в запас."
-                        : ModuleLabel(module.Kind) + ": рядом нет стреляющей пушки. Модуль сохранён; его можно перенести в M."
-                    : "Зелёная M выбрана. Справа подсвечены подходящие модули. Рядом нужна хотя бы одна стреляющая пушка.");
-            }
-            return true;
-        }
-
-        private bool ConstructorApplied(bool changed, string error)
-        {
-            if (!changed) { ConstructorMessage(error); return false; }
-            ResetConstructorTool();
-            ConstructorMessage("Установлено. Предмет можно перенести или вернуть в запас.");
-            return true;
-        }
-
-        private string WeaponLabel(OrbitalModuleKind kind) => constructorWeaponLabels[Array.IndexOf(constructorWeaponKinds, kind)];
-        private string ModuleLabel(SegmentedLinkKind kind) => constructorModuleLabels[Array.IndexOf(constructorModuleKinds, kind)];
-
-        private void StowConstructorSelection()
-        {
-            var gun = ConstructorGun(constructorCell);
-            var module = ConstructorModule(constructorCell);
-            bool changed = gun != null ? station.StowWeapon(gun.StableModuleId) :
-                module != null && station.StowModule(station.State.SegmentedLinks.IndexOf(module));
-            if (!changed) return;
-            constructorCell = -1; ResetConstructorTool();
-            ConstructorMessage("Предмет возвращён в запас.");
-        }
-
-        private bool CanPlaceConstructorWeapon(OrbitalModuleKind kind, int cell)
-        {
-            var mount = ConstructorMount(cell);
-            return IsWeaponCell(cell) && station.State.CanInstallModule(kind, mount.Ring.RingId, mount.MountIndex, out _);
-        }
-        private bool CanPlaceConstructorModule(SegmentedLinkKind kind, int cell)
-        {
-            var mount = ConstructorMount(cell);
-            return !IsWeaponCell(cell) && station.State.CanInstallSegmentedModule(kind, mount.Ring.RingId, mount.MountIndex, out _);
-        }
+        private void OnApplicationFocus(bool focused)
+        { if (!focused) ResetConstructorDrag(); }
 
         private void UpdateConstructor()
         {
             if (station == null || !station.IsInitialized || !station.UsesSegmentedOrbit) return;
             constructorCanvas.gameObject.SetActive(true);
             if (station.InputOwner.IsConstructing && !station.InputOwner.CanEditConstructor) CloseConstructor();
-            constructorLauncher.gameObject.SetActive(station.InputOwner.IsChoosingReward && station.InputOwner.CanOpenConstructor && constructorRewardPanel != null);
+            bool notify = !station.InputOwner.IsChoosingReward && station.InputOwner.CanOpenConstructor &&
+                (station.State.SegmentedWeapons.Count > 0 || station.State.SegmentedLinkStock.Count > 0);
+            constructorLauncher.gameObject.SetActive(notify);
+            if (notify)
+            {
+                float pulse = .5f + .5f * Mathf.Sin(Time.unscaledTime * 2.6f);
+                constructorLauncher.transform.localScale = Vector3.one * (1f + .035f * pulse);
+                constructorLauncher.targetGraphic.color = Color.Lerp(new Color(.16f, .09f, .02f), new Color(.3f, .19f, .04f), pulse);
+                constructorLauncher.GetComponentInChildren<TextMeshProUGUI>().color = Color.Lerp(ConstructorAmber, new Color(1f, .94f, .64f), pulse);
+            }
+            if (ConstructorDragging && (constructorDragRevision != station.State.Revision || !Input.GetMouseButton(0))) ResetConstructorDrag();
             if (station.InputOwner.IsConstructing && constructorRevision != station.State.Revision) RefreshConstructor();
             UpdateConstructorWorldLinks();
         }
@@ -264,78 +283,67 @@ namespace Subject42.Combat.OrbitalStation
         private void RefreshConstructor()
         {
             var state = station.State;
-            constructorRevision = state.Revision; constructorStatus.text = constructorMessage;
-            var selectedWeapon = ConstructorGun(constructorCell);
-            var selectedModule = ConstructorModule(constructorCell);
-            var previewModule = constructorHoverModule ?? constructorInstallingModule;
+            constructorRevision = state.Revision;
             for (int i = 0; i < constructorMounts.Length; i++)
             {
                 var mount = ConstructorMount(i);
                 var module = ConstructorModule(i);
                 bool weaponCell = IsWeaponCell(i), unlocked = state.IsRingActive(mount.Ring.State);
-                bool candidate = false;
-                if (previewModule.HasValue) candidate = CanPlaceConstructorModule(previewModule.Value, i);
-                else if (constructorInstalling.HasValue) candidate = CanPlaceConstructorWeapon(constructorInstalling.Value, i);
-                else if (selectedWeapon != null && weaponCell)
-                    candidate = !mount.Occupied && state.CanMoveModule(selectedWeapon.StableModuleId, mount.Ring.RingId, mount.MountIndex, out _);
-                else if (selectedModule != null && !weaponCell)
-                    candidate = state.CanMoveSegmentedModule(state.SegmentedLinks.IndexOf(selectedModule), mount.Ring.RingId, mount.MountIndex, out _);
+                bool candidate = CanDropConstructorItem(i);
                 var typeColor = weaponCell ? ConstructorBlue : ConstructorGreen;
                 bool occupied = weaponCell ? mount.Occupied : module != null;
+                bool stockWeaponTarget = candidate && constructorDragWeapon != null && constructorDragCell < 0;
+                var targetColor = stockWeaponTarget ? occupied ? ConstructorAmber : ConstructorDropCyan : typeColor;
                 constructorMounts[i].interactable = unlocked;
                 bool dormant = module != null && !state.SegmentedModuleTargets(module).Any();
-                constructorSlotFrames[i].color = i == constructorCell ? ConstructorAmber :
-                    candidate ? Color.white : new Color(typeColor.r, typeColor.g, typeColor.b, unlocked ? occupied && !dormant ? 1f : .55f : .14f);
-                constructorMounts[i].targetGraphic.color = Color.Lerp(new Color(.025f, .045f, .075f), typeColor,
-                    unlocked ? candidate ? .45f : occupied ? .26f : .08f : .025f);
+                constructorSlotFrames[i].color = candidate ? stockWeaponTarget ? targetColor : Color.Lerp(typeColor, Color.white, .45f) :
+                    new Color(typeColor.r, typeColor.g, typeColor.b, unlocked ? occupied && !dormant ? 1f : .55f : .14f);
+                constructorMounts[i].targetGraphic.color = Color.Lerp(new Color(.025f, .045f, .075f), targetColor,
+                    unlocked ? candidate ? i == constructorDropCell ? .65f : .38f : occupied ? .26f : .08f : .025f);
                 var label = constructorMounts[i].GetComponentInChildren<TextMeshProUGUI>();
-                label.text = weaponCell ? "O" : "M";
+                label.text = occupied ? "" : weaponCell ? "O" : "M";
                 label.color = new Color(typeColor.r, typeColor.g, typeColor.b, unlocked ? 1f : .3f);
-                label.rectTransform.anchoredPosition = new Vector2(occupied ? -10f : 0f, 0f);
-                constructorSlotIcons[i].gameObject.SetActive(occupied);
+                label.rectTransform.anchoredPosition = Vector2.zero;
+                var image = constructorSlotIcons[i];
+                image.gameObject.SetActive(occupied);
                 if (occupied)
                 {
                     var icon = weaponCell ? OrbitalRewardIconResolver.Resolve(mount.Module.Kind) : OrbitalRewardIconResolver.Resolve(module.Kind);
-                    constructorSlotIcons[i].sprite = icon.Sprite; constructorSlotIcons[i].color = icon.ImageTint;
+                    image.sprite = icon.Sprite; image.color = icon.ImageTint;
+                    image.rectTransform.anchoredPosition = Vector2.zero;
+                    image.rectTransform.sizeDelta = Vector2.one * 28f;
+                    if (ConstructorDragging && i == constructorDragCell) image.color *= new Color(1f, 1f, 1f, .3f);
                 }
             }
-            bool? showWeapons = constructorCell >= 0 ? IsWeaponCell(constructorCell) :
-                constructorInstalling.HasValue ? true : constructorInstallingModule.HasValue ? false : null;
             int weaponRows = 0, moduleRows = 0;
             for (int i = 0; i < constructorWeapons.Length; i++)
             {
-                var kind = constructorWeaponKinds[i];
-                int count = state.SegmentedWeapons.Count(gun => gun.ModuleType == kind);
-                bool visible = count > 0 && showWeapons != false;
-                constructorWeapons[i].gameObject.SetActive(visible);
-                if (!visible) continue;
+                int count = state.SegmentedWeapons.Count(gun => gun.ModuleType == constructorWeaponKinds[i]);
+                constructorWeapons[i].gameObject.SetActive(count > 0);
+                if (count == 0) continue;
                 weaponRows++;
-                bool allowed = constructorCell >= 0 && IsWeaponCell(constructorCell) && ConstructorGun(constructorCell) == null
-                    ? CanPlaceConstructorWeapon(kind, constructorCell) : Enumerable.Range(0, constructorMounts.Length).Any(cell => CanPlaceConstructorWeapon(kind, cell));
-                ButtonText(constructorWeapons[i], constructorWeaponLabels[i] + "  ×" + count);
-                constructorWeapons[i].interactable = allowed;
-                constructorWeapons[i].targetGraphic.color = constructorInstalling == kind ? Color.Lerp(ConstructorBlue, Color.black, .55f) : new Color(.045f, .095f, .14f);
+                int displayedCount = count - (ConstructorDragging && constructorDragCell < 0 &&
+                    constructorDragWeapon?.ModuleType == constructorWeaponKinds[i] ? 1 : 0);
+                ButtonText(constructorWeapons[i], constructorWeaponLabels[i] + "  ×" + displayedCount);
+                constructorWeapons[i].interactable = true;
             }
             for (int i = 0; i < constructorLinks.Length; i++)
             {
-                var kind = constructorModuleKinds[i];
-                int count = state.SegmentedLinkStock.Count(value => value == kind);
-                bool visible = count > 0 && showWeapons != true;
-                constructorLinks[i].gameObject.SetActive(visible);
-                if (!visible) continue;
+                int count = state.SegmentedLinkStock.Count(value => value == constructorModuleKinds[i]);
+                constructorLinks[i].gameObject.SetActive(count > 0);
+                if (count == 0) continue;
                 moduleRows++;
-                bool allowed = constructorCell >= 0 && !IsWeaponCell(constructorCell)
-                    ? CanPlaceConstructorModule(kind, constructorCell) : Enumerable.Range(0, constructorMounts.Length).Any(cell => CanPlaceConstructorModule(kind, cell));
-                ButtonText(constructorLinks[i], constructorModuleLabels[i] + "  ×" + count);
-                constructorLinks[i].interactable = allowed;
-                constructorLinks[i].targetGraphic.color = constructorInstallingModule == kind || allowed && constructorCell >= 0
-                    ? Color.Lerp(ConstructorGreen, Color.black, .7f) : new Color(.045f, .1f, .075f);
+                int displayedCount = count - (ConstructorDragging && constructorDragCell < 0 &&
+                    constructorDragModuleKind == constructorModuleKinds[i] ? 1 : 0);
+                ButtonText(constructorLinks[i], constructorModuleLabels[i] + "  ×" + displayedCount);
+                var icon = OrbitalRewardIconResolver.Resolve(constructorModuleKinds[i]);
+                var rowIcon = constructorLinks[i].transform.Find("Item icon").GetComponent<Image>();
+                rowIcon.sprite = icon.Sprite; rowIcon.color = icon.ImageTint;
+                constructorLinks[i].interactable = true;
             }
             constructorWeaponGroup.SetActive(weaponRows > 0); constructorModuleGroup.SetActive(moduleRows > 0);
             constructorEmpty.gameObject.SetActive(weaponRows + moduleRows == 0);
-            constructorEmpty.text = showWeapons == true ? "Нет оружия в запасе.\nПолучите его в награду." :
-                showWeapons == false ? "Нет модулей в запасе.\nПолучите их в награду." : "Запас пуст.\nНовые предметы приходят с наградами.";
-            constructorStow.gameObject.SetActive(selectedWeapon != null || selectedModule != null);
+            constructorEmpty.text = "Запас пуст.";
             RefreshConstructorConnections();
         }
 
@@ -354,40 +362,106 @@ namespace Subject42.Combat.OrbitalStation
                     line.gameObject.SetActive(true); line.anchoredPosition = (from + to) * .5f;
                     line.sizeDelta = new Vector2(Vector2.Distance(from, to), 2f);
                     line.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(to.y - from.y, to.x - from.x) * Mathf.Rad2Deg);
-                    line.GetComponent<Image>().color = moduleCell == constructorCell || cell == constructorCell ? ConstructorAmber : ConstructorGreen;
+                    line.GetComponent<Image>().color = moduleCell == constructorDragCell || cell == constructorDragCell ? ConstructorAmber : SegmentedModulePresentation.LinkColor;
                 }
             }
             while (lineIndex < constructorLines.Length) constructorLines[lineIndex++].gameObject.SetActive(false);
         }
-
         private void UpdateConstructorWorldLinks()
         {
-            int lineIndex = 0;
+            const float pixel = 1f / 32f;
+            int lineIndex = 0, moduleIndex = 0;
             foreach (var module in station.State.SegmentedLinks)
             {
-                Vector3 from = station.Rings.First(r => r.RingId == module.RingId).Mounts[module.MountIndex].Transform.position;
+                var ring = station.Rings.First(r => r.RingId == module.RingId);
+                if (!ring.IsActive) continue;
+                if (moduleIndex == constructorWorldModules.Count)
+                {
+                    var created = station.CreatePixelVisual("Segmented module node", Color.white, Vector2.one, 2);
+                    created.transform.SetParent(station.RuntimeRoot, false);
+                    var marker = created.GetComponent<SpriteRenderer>();
+                    marker.sharedMaterial = station.VisualMaterial;
+                    constructorWorldModules.Add(marker);
+                }
+                var icon = OrbitalRewardIconResolver.Resolve(module.Kind);
+                var node = constructorWorldModules[moduleIndex++];
+                node.sprite = icon.Sprite;
+                Vector2 size = node.sprite.bounds.size;
+                node.transform.localScale = new Vector3(SegmentedModulePresentation.WorldSize / size.x,
+                    SegmentedModulePresentation.WorldSize / size.y, 1f);
+                node.transform.position = ring.Mounts[module.MountIndex].Transform.position;
+                node.transform.localRotation = Quaternion.identity;
+                bool active = station.State.SegmentedModuleTargets(module).Any();
+                node.color = icon.ImageTint * new Color(1f, 1f, 1f, active ? 1f : .65f);
+                node.enabled = !station.InputOwner.IsConstructing;
+                float from = OrbitalRunState.SegmentedMountAngle(ring.State.Order, module.MountIndex);
                 foreach (var target in station.State.SegmentedModuleTargets(module))
                 {
+                    float to = OrbitalRunState.SegmentedMountAngle(ring.State.Order, target.MountIndex);
+                    float arc = Mathf.DeltaAngle(from, to);
+                    int steps = Mathf.Max(2, Mathf.CeilToInt(Mathf.Abs(arc) * Mathf.Deg2Rad * ring.Radius / pixel));
+                    var rotation = Quaternion.Euler(0f, 0f, ring.Phase);
+                    Bounds nodeBounds = node.bounds;
+                    nodeBounds.Expand(pixel * 2f);
+                    constructorArcPoints.Clear();
+                    for (int step = 0; step <= steps; step++)
+                    {
+                        float distance = Mathf.Abs(arc) * Mathf.Deg2Rad * ring.Radius * step / steps;
+                        if (distance < SegmentedModulePresentation.WorldSize * .5f + pixel) continue;
+                        Vector2 point = PixelArcPoint(from + arc * step / steps, ring.Radius, pixel);
+                        Vector3 worldPoint = station.RuntimeRoot.TransformPoint(rotation * (Vector3)point);
+                        if (nodeBounds.Contains(new Vector3(worldPoint.x, worldPoint.y, nodeBounds.center.z))) continue;
+                        if (constructorArcPoints.Count > 0)
+                        {
+                            Vector2 previous = constructorArcPoints[constructorArcPoints.Count - 1];
+                            if (previous == point) continue;
+                            if (previous.x != point.x && previous.y != point.y)
+                            {
+                                Vector2 a = new(previous.x, point.y), b = new(point.x, previous.y);
+                                constructorArcPoints.Add(Mathf.Abs(a.sqrMagnitude - ring.Radius * ring.Radius) <
+                                    Mathf.Abs(b.sqrMagnitude - ring.Radius * ring.Radius) ? (Vector3)a : (Vector3)b);
+                            }
+                        }
+                        constructorArcPoints.Add(point);
+                    }
+                    if (constructorArcPoints.Count < 2) continue;
                     if (lineIndex == constructorWorldLines.Count)
                     {
                         var created = Instantiate(OrbitalPresentationConfig.Active.EnergyLinePrefab, station.RuntimeRoot, false);
-                        created.useWorldSpace = true; created.positionCount = 2; created.widthMultiplier = .035f;
+                        created.name = "Segmented O-M arc";
+                        created.useWorldSpace = false; created.widthMultiplier = 1f / 16f;
+                        created.numCapVertices = created.numCornerVertices = 0;
+                        // Mounted weapon groups are above this line, clipping its end to opaque art.
+                        created.sortingOrder = 1;
                         constructorWorldLines.Add(created);
                     }
                     var line = constructorWorldLines[lineIndex++];
-                    line.enabled = true; line.SetPosition(0, from);
-                    line.SetPosition(1, station.Modules.First(gun => gun.StableModuleId == target.StableModuleId).WorldPosition);
-                    line.startColor = line.endColor = ConstructorGreen;
+                    line.transform.localRotation = rotation;
+                    line.positionCount = constructorArcPoints.Count;
+                    for (int p = 0; p < constructorArcPoints.Count; p++) line.SetPosition(p, constructorArcPoints[p]);
+                    line.startColor = line.endColor = SegmentedModulePresentation.LinkColor;
+                    line.enabled = true;
                 }
             }
             for (int i = lineIndex; i < constructorWorldLines.Count; i++) constructorWorldLines[i].enabled = false;
+            for (int i = moduleIndex; i < constructorWorldModules.Count; i++) constructorWorldModules[i].enabled = false;
+        }
+
+        private static Vector2 PixelArcPoint(float degrees, float radius, float pixel)
+        {
+            float angle = degrees * Mathf.Deg2Rad;
+            return new Vector2(Mathf.Round(Mathf.Cos(angle) * radius / pixel) * pixel,
+                Mathf.Round(Mathf.Sin(angle) * radius / pixel) * pixel);
         }
 
         private void ReleaseConstructor()
         {
             CloseConstructor();
+            if (constructorDragIcon != null) Destroy(constructorDragIcon.gameObject);
             foreach (var line in constructorWorldLines) if (line != null) Destroy(line.gameObject);
             constructorWorldLines.Clear();
+            foreach (var node in constructorWorldModules) if (node != null) Destroy(node.gameObject);
+            constructorWorldModules.Clear();
             if (constructorCanvas != null) constructorCanvas.gameObject.SetActive(false);
         }
     }

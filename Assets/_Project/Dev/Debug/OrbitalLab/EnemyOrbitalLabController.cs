@@ -956,12 +956,11 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
             marker.transform.SetParent(Station.transform, false);
             marker.transform.localScale = Vector3.one * .22f;
             centerMarker = marker.AddComponent<SpriteRenderer>();
-            var core = Station.GetComponent<Subject42.Combat.OrbitalStation.OrbitalStationView>().Core;
-            centerMarker.sprite = core.sprite;
-            centerMarker.sharedMaterial = core.sharedMaterial;
+            centerMarker.sprite = Subject42.Combat.OrbitalStation.OrbitalPresentationConfig.Active.CircleSprite;
+            centerMarker.sharedMaterial = Station.VisualMaterial;
             centerMarker.color = Color.magenta;
-            centerMarker.sortingLayerID = core.sortingLayerID;
-            centerMarker.sortingOrder = core.sortingOrder + 100;
+            centerMarker.sortingLayerName = "Player";
+            centerMarker.sortingOrder = 117;
         }
 
         centerControl.Tick(MaximumCenterOffset, CenterMoveSpeed, CenterReturnSpeed);

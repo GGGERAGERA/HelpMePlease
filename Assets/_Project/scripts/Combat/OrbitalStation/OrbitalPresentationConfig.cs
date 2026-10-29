@@ -4,7 +4,9 @@ namespace Subject42.Combat.OrbitalStation
 {
     public enum OrbitalFlashFamily
     {
-        Other, MuzzlePistol, MuzzleShotgun, MuzzleSniper, Impact, Arc, CoreRay, Relocation,
+        Other, MuzzlePistol, MuzzleShotgun, MuzzleSniper, Impact, Arc,
+        // Serialized 6 was the removed Core ray. Keep subsequent IDs stable.
+        Relocation = 7,
         ImpactPistol, ImpactShotgun, ImpactSniper
     }
 

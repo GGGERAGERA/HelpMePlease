@@ -48,8 +48,7 @@ public sealed class SegmentedOrbitView : IDisposable
         var go = new GameObject(name); go.transform.SetParent(root.transform, false);
         var line = go.AddComponent<LineRenderer>(); line.useWorldSpace = false;
         line.sharedMaterial = lab.Station.VisualMaterial; line.positionCount = count; line.widthMultiplier = width;
-        var core = lab.Station.GetComponent<OrbitalStationView>().Core;
-        line.sortingLayerID = core.sortingLayerID; line.sortingOrder = core.sortingOrder + 2;
+        line.sortingLayerName = "Player"; line.sortingOrder = 19;
         return line;
     }
     void EnsureGeometry()

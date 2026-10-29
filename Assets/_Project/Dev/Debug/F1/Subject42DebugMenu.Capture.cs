@@ -53,60 +53,6 @@ public sealed partial class Subject42DebugMenu
             "ВОССТАНОВИТЬ", reason == null, () => { session.Heal(); RefreshCurrentTab(); });
         AddCaptureToggle("Неуязвимость", health != null && health.DebugInvulnerable, reason,
             () => session.SetInvulnerable(!health.DebugInvulnerable));
-        var station = player != null ? player.GetComponentInChildren<OrbitalStationRuntime>() : null;
-        AddSectionTitle("ОРБИТЫ И ОРУЖИЕ", station != null && station.IsInitialized
-            ? $"Колец: {station.Rings.Count} · модулей: {station.Modules.Count}"
-            : "Орбиты ещё не готовы");
-        var state = station != null ? station.State : null;
-        bool canAddRing = reason == null && state.Rings.Count < 4 && state.CanAddRing(out _);
-        AddRow("Добавить орбиту", reason ?? (canAddRing ? "До четырёх орбит" : "Достигнут лимит орбит"),
-            mutedColor, "ДОБАВИТЬ", canAddRing, () =>
-            {
-                if (session.PrepareBuildEdit()) station.AddRing();
-                RefreshCurrentTab();
-            });
-        int ringId = station != null && station.SelectedRing != null ? station.SelectedRing.RingId : 0;
-        bool canAddMount = reason == null && ringId != 0 && state.CanAddMount(ringId, out _);
-        AddRow("Крепление на выбранной орбите", reason ?? (canAddMount ? "Добавить место для оружия" : "Выберите орбиту с запасом вместимости"),
-            mutedColor, "ДОБАВИТЬ", canAddMount, () =>
-            {
-                if (session.PrepareBuildEdit()) station.AddMount();
-                RefreshCurrentTab();
-            });
-        foreach (OrbitalModuleKind kind in Enum.GetValues(typeof(OrbitalModuleKind)))
-        {
-            var mounts = state == null ? Array.Empty<(int ring, int mount)>() : state.Rings
-                .SelectMany(ring => Enumerable.Range(0, ring.MountCount).Select(mount => (ring.StableRingId, mount)))
-                .Where(slot => state.CanInstallModule(kind, slot.Item1, slot.mount, out _)).ToArray();
-            bool canPlace = mounts.Length > 0 && (kind != OrbitalModuleKind.LinkNode ||
-                mounts.Any(a => mounts.Any(b => state.CanInstallLinkPair(a.Item1, a.mount, b.Item1, b.mount, out _))));
-            string label = kind switch
-            {
-                OrbitalModuleKind.Pistol => "Пистолет",
-                OrbitalModuleKind.Saw => "Пила",
-                OrbitalModuleKind.Shotgun => "Дробовик",
-                OrbitalModuleKind.ArcEmitter => "Дуговой излучатель",
-                _ => "Связующие узлы (пара)"
-            };
-            AddRow(label, reason ?? (canPlace ? "Закройте F1 и выберите свободное крепление" : "Нет подходящих свободных креплений"),
-                mutedColor, "УСТАНОВИТЬ", reason == null && canPlace, () =>
-                {
-                    if (!session.PrepareBuildEdit()) return;
-                    station.BeginModulePlacement(kind);
-                    CloseMenu();
-                });
-        }
-        foreach (OrbitalStationRuntime.RmbMode mode in Enum.GetValues(typeof(OrbitalStationRuntime.RmbMode)))
-        {
-            string label = mode switch
-            {
-                OrbitalStationRuntime.RmbMode.BulletTime => "Поле замедления",
-                OrbitalStationRuntime.RmbMode.Repulse => "Отталкивание",
-                _ => "Смена направления вращения"
-            };
-            AddRow(label, station != null && station.RightMouseMode == mode ? "ВЫБРАНО" : reason ?? "Режим ПКМ",
-                mutedColor, "ВЫБРАТЬ", reason == null, () => { session.SetRightMouseMode(mode); RefreshCurrentTab(); });
-        }
     }
 
     private void AddWorldEventsSection()
@@ -139,9 +85,9 @@ public sealed partial class Subject42DebugMenu
             foreach (var preset in session.Config.presets)
                 if (preset.shot == TrailerCaptureConfig.Shot.RocketStorm || preset.shot == TrailerCaptureConfig.Shot.Boss)
                 {
-                    string unavailable = session.PresetUnavailableReason(preset);
+                    string unavailable = session.PresetUnavailableReason(preset, preserveBuild: true);
                     AddRow(preset.label, unavailable ?? preset.description, mutedColor, "ЗАПУСТИТЬ", unavailable == null,
-                        () => { session.Apply(preset); BindInputOwner(); RefreshCurrentTab(); });
+                        () => { session.Apply(preset, preserveBuild: true); BindInputOwner(); RefreshCurrentTab(); });
                 }
         AddHint(session.Status);
     }
@@ -157,7 +103,7 @@ public sealed partial class Subject42DebugMenu
             characterSpawner != null, () => SelectTab(DebugTab.VisualTest));
         AddRow("Боевые эффекты и манекен", "Настройка ударов и попаданий", mutedColor, "ОТКРЫТЬ",
             characterSpawner != null, () => SelectTab(DebugTab.FeelTest));
-        AddRow("Орбиты", "Установка модулей и проверка состояния", mutedColor, "ОТКРЫТЬ",
+        AddRow("Орбиты и оружие", "Оружие, модули связи и лимит креплений", mutedColor, "ОТКРЫТЬ",
             characterSpawner != null, () => SelectTab(DebugTab.OrbitalProduction));
         string[] labels = { "Боты", "Враги", "Опыт" };
         for (int i = 0; i < labels.Length; i++)

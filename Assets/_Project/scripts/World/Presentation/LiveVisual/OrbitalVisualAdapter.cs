@@ -71,7 +71,7 @@ namespace Subject42.Visuals
             AddProjectile(target, "ShotgunProjectile", "Дробовик", config.ShotgunProjectile);
             AddProjectile(target, "SniperProjectile", "Снайпер", config.SniperProjectile);
             foreach (OrbitalFlashFamily family in Enum.GetValues(typeof(OrbitalFlashFamily)))
-                if (family != OrbitalFlashFamily.CoreRay) AddFlashFamily(target, config, family);
+                AddFlashFamily(target, config, family);
             foreach (var property in target.Properties)
             {
                 if (property.Id is "config.RingSurface.Pattern" or "config.RingSurface.DashCount") property.IsInteger = true;

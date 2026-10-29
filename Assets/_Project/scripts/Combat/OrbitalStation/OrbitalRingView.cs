@@ -143,6 +143,17 @@ namespace Subject42.Combat.OrbitalStation
             selectionMarkers != null && selectionMarkers.Length > 0 &&
             System.Array.TrueForAll(selectionMarkers, marker => marker != null);
 
+        public void SetSegmentedCombatBase(float radius, float phase)
+        {
+            Color color = new(.23f, .65f, .95f, .24f);
+            // The existing ring shader exposes a core one third of the mesh width.
+            SetAppearance(radius, 3f / 32f, color);
+            FrontLine.transform.localRotation = Quaternion.Euler(0f, 0f, phase);
+            surface.SetVector(SurfaceId, new Vector4(1f, 0f, 0f, 0f));
+            surface.SetVector(PatternId, Vector4.zero);
+            FrontLine.SetPropertyBlock(surface);
+        }
+
         // depthAware is retained for callers of the old view API; ring lines no longer split by depth.
         public void SetAppearance(float radius, float width, Color color, bool depthAware = true)
         {

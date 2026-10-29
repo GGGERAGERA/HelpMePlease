@@ -64,12 +64,13 @@ public sealed class TrailerCaptureSession : MonoBehaviour
         }
     }
 
-    public string PresetUnavailableReason(TrailerCaptureConfig.Preset preset)
+    public string PresetUnavailableReason(TrailerCaptureConfig.Preset preset, bool preserveBuild = false)
     {
         string reason = UnavailableReason;
         if (reason != null) return reason;
         if (preset == null) return "Нет данных пресета";
-        if (!preset.TryBuild(RunStateManager.Instance.OrbitalStationState.RunId, out _, out string error)) return error;
+        string error;
+        if (!preserveBuild && !preset.TryBuild(RunStateManager.Instance.OrbitalStationState.RunId, out _, out error)) return error;
         if (enemies == null || !enemies.isActiveAndEnabled) return "Спавнер врагов не готов";
         if (preset.shot == TrailerCaptureConfig.Shot.Boss) return flow.FilmingBossUnavailableReason;
         if (preset.shot == TrailerCaptureConfig.Shot.RocketStorm)
@@ -106,11 +107,12 @@ public sealed class TrailerCaptureSession : MonoBehaviour
         return true;
     }
 
-    public bool Apply(TrailerCaptureConfig.Preset preset)
+    public bool Apply(TrailerCaptureConfig.Preset preset, bool preserveBuild = false)
     {
-        string reason = PresetUnavailableReason(preset);
+        string reason = PresetUnavailableReason(preset, preserveBuild);
         if (reason != null) { Status = reason; return false; }
-        if (!preset.TryBuild(RunStateManager.Instance.OrbitalStationState.RunId, out var candidate, out reason) || !Capture())
+        OrbitalRunState candidate = null;
+        if ((!preserveBuild && !preset.TryBuild(RunStateManager.Instance.OrbitalStationState.RunId, out candidate, out reason)) || !Capture())
         { Status = reason ?? "Сессия съёмки недоступна"; return false; }
         ClearOwnedEncounter();
         if (preset.shot == TrailerCaptureConfig.Shot.RocketStorm || preset.shot == TrailerCaptureConfig.Shot.Boss)
@@ -118,21 +120,24 @@ public sealed class TrailerCaptureSession : MonoBehaviour
         bool spawningBeforeApply = enemies.IsSpawningEnabled;
         enemies.StopSpawning();
         DespawnOrdinaryEnemies();
-        var previousState = run.OrbitalStationState;
-        station.Teardown();
-        if (!run.DebugReplaceOrbitalState(candidate) || !station.RebuildRuntimeFromState())
+        if (!preserveBuild)
         {
-            run.DebugReplaceOrbitalState(previousState);
-            bool restored = station.RebuildRuntimeFromState();
-            if (restored && spawningBeforeApply) enemies.ResumeSpawning();
-            Status = restored ? "Пресет не применён; предыдущий ORBITAL-билд восстановлен" : "ORBITAL не удалось восстановить; проверьте ссылки сцены";
-            return false;
+            var previousState = run.OrbitalStationState;
+            station.Teardown();
+            if (!run.DebugReplaceOrbitalState(candidate) || !station.RebuildRuntimeFromState())
+            {
+                run.DebugReplaceOrbitalState(previousState);
+                bool restored = station.RebuildRuntimeFromState();
+                if (restored && spawningBeforeApply) enemies.ResumeSpawning();
+                Status = restored ? "Пресет не применён; предыдущий ORBITAL-билд восстановлен" : "ORBITAL не удалось восстановить; проверьте ссылки сцены";
+                return false;
+            }
+            buildChanged = true;
         }
-        buildChanged = true;
         health.Heal(health.MaxHealth);
         run.SetThreatForDebug(preset.threat);
         FindFirstObjectByType<RunThreatController>()?.DebugRefreshPreset();
-        station.RightMouseMode = OrbitalStationRuntime.RmbMode.BulletTime;
+        if (!preserveBuild) station.RightMouseMode = OrbitalStationRuntime.RmbMode.BulletTime;
         if (preset.shot == TrailerCaptureConfig.Shot.Boss)
         {
             if (!flow.DebugStartFilmingBoss()) { Status = "Бой с боссом сейчас недоступен"; return false; }
@@ -194,13 +199,6 @@ public sealed class TrailerCaptureSession : MonoBehaviour
     }
 
     public void Heal() { if (Capture()) health.Heal(health.MaxHealth); }
-    public bool PrepareBuildEdit()
-    {
-        if (!Capture()) return false;
-        buildChanged = true;
-        return true;
-    }
-    public void SetRightMouseMode(OrbitalStationRuntime.RmbMode mode) { if (Capture()) station.RightMouseMode = mode; }
     public void SetInvulnerable(bool value) { if (Capture()) health.DebugInvulnerable = value; }
     public void SetHudVisible(bool value) { if (Capture()) hud?.DebugSetHudVisible(value); }
     public void SetNumbersVisible(bool value) { if (Capture()) DamagePopup.DebugDamageNumbersVisible = value; }

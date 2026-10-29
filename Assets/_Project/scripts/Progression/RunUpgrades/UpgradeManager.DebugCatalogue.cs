@@ -33,15 +33,6 @@ public sealed partial class UpgradeManager
         BeginChoiceRequest(new UpgradeChoiceRequest(ExperienceManager.Instance?.CurrentLevel ?? 1, false, 1, false, false), new List<UpgradeData> { data });
         return true;
     }
-    public bool DebugOfferRandomCatalogueChoices()
-    {
-        if (!CanAcceptWorldEventReward || !IsRewardQueueIdle) return false;
-        debugCatalogueReward = true;
-        RunStateManager.Instance?.DebugMarkDevelopmentRun();
-        ShowUpgradeChoices();
-        if (isChoosingUpgrade) return true;
-        debugCatalogueReward = false; return false;
-    }
     public bool DebugCancelCatalogueReward()
     {
         if (!debugCatalogueReward || !isChoosingUpgrade) return false;

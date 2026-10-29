@@ -12,7 +12,7 @@ namespace Subject42.Combat.OrbitalStation
     {
         public int RingId, MountIndex;
         public SegmentedLinkKind Kind;
-        [NonSerialized] public float NextExtraShot;
+        [NonSerialized] internal readonly Dictionary<int, float> NextExtraShotByWeapon = new();
     }
 
     public sealed partial class OrbitalRunState
@@ -30,6 +30,8 @@ namespace Subject42.Combat.OrbitalStation
 
         public static float SegmentedMountAngle(int level, int position) =>
             90f + (level == 1 ? 15f : 0f) + position * 30f;
+
+        public static float SegmentedRadius(int level) => 1.75f + level * 1.25f;
 
         public static bool IsSegmentedWeaponSlot(int level, int position) => level > 0 || position % 2 == 0;
 
@@ -85,8 +87,7 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool CanInstallSegmentedModule(SegmentedLinkKind kind, int ringId, int position, out string error) =>
             CanUseSegmentedModuleSlot(ringId, position, out error) &&
-            Rule(SegmentedLinkStock.Contains(kind), "Такого модуля нет в запасе.", out error) &&
-            Rule(SegmentedModuleAt(ringId, position)?.Kind != kind, "Этот модуль уже установлен в M.", out error);
+            Rule(SegmentedLinkStock.Contains(kind), "Такого модуля нет в запасе.", out error);
 
         public bool TryInstallSegmentedModule(SegmentedLinkKind kind, int ringId, int position, out string error)
         {
@@ -103,15 +104,24 @@ namespace Subject42.Combat.OrbitalStation
             return true;
         }
 
-        public bool CanMoveSegmentedModule(int index, int ringId, int position, out string error) =>
-            Rule(index >= 0 && index < SegmentedLinks.Count, "Модуль не выбран.", out error) &&
-            CanUseSegmentedModuleSlot(ringId, position, out error) &&
-            Rule(SegmentedModuleAt(ringId, position) == null, "Ячейка M занята.", out error);
+        public bool CanMoveSegmentedModule(int index, int ringId, int position, out string error)
+        {
+            if (!CanCommit(out error) || !Rule(index >= 0 && index < SegmentedLinks.Count, "Модуль не выбран.", out error) ||
+                !CanUseSegmentedModuleSlot(ringId, position, out error)) return false;
+            var source = SegmentedLinks[index];
+            var target = SegmentedModuleAt(ringId, position);
+            return Rule(source != target, "Модуль уже в этой ячейке.", out error) &&
+                (target == null || CanUseSegmentedModuleSlot(source.RingId, source.MountIndex, out error));
+        }
 
         public bool TryMoveSegmentedModule(int index, int ringId, int position, out string error)
         {
             if (!CanCommit(out error) || !CanMoveSegmentedModule(index, ringId, position, out error)) return false;
-            SegmentedLinks[index].RingId = ringId; SegmentedLinks[index].MountIndex = position;
+            var source = SegmentedLinks[index];
+            var target = SegmentedModuleAt(ringId, position);
+            if (target != null)
+            { target.RingId = source.RingId; target.MountIndex = source.MountIndex; }
+            source.RingId = ringId; source.MountIndex = position;
             Revision++;
             return true;
         }
@@ -150,6 +160,43 @@ namespace Subject42.Combat.OrbitalStation
             return true;
         }
 
+        public bool CanTransferSegmentedWeapon(int id, bool fromStock, int ringId, int mount, out string error)
+        {
+            if (!CanCommit(out error)) return false;
+            var weapon = (fromStock ? SegmentedWeapons : Modules).FirstOrDefault(gun => gun.StableModuleId == id);
+            var ring = FindRing(ringId);
+            if (!Rule(UsesSegmentedOrbit && weapon != null && IsSegmentedWeapon(weapon.ModuleType), "Оружие недоступно.", out error) ||
+                !Rule(ring != null && IsRingActive(ring) && mount >= 0 && mount < ring.MountCount &&
+                    IsSegmentedWeaponSlot(ring.Order, mount), "Выберите открытую синюю ячейку O.", out error)) return false;
+            var target = Modules.FirstOrDefault(gun => gun.StableRingId == ringId && gun.MountIndex == mount);
+            return Rule(target != weapon, "Оружие уже в этой ячейке.", out error) &&
+                Rule(!fromStock || target != null || Modules.Count < SegmentedWeaponLimit, "Достигнут лимит оружия.", out error);
+        }
+
+        public bool TryTransferSegmentedWeapon(int id, bool fromStock, int ringId, int mount, out string error)
+        {
+            if (!CanTransferSegmentedWeapon(id, fromStock, ringId, mount, out error)) return false;
+            var weapon = (fromStock ? SegmentedWeapons : Modules).First(gun => gun.StableModuleId == id);
+            var target = Modules.FirstOrDefault(gun => gun.StableRingId == ringId && gun.MountIndex == mount);
+            // Validate the whole operation first; no intermediate stock/placement is observable.
+            if (fromStock)
+            {
+                SegmentedWeapons.Remove(weapon);
+                if (target != null)
+                {
+                    Modules.Remove(target);
+                    target.StableRingId = 0; target.MountIndex = -1;
+                    SegmentedWeapons.Add(target);
+                }
+                Modules.Add(weapon);
+            }
+            else if (target != null)
+            { target.StableRingId = weapon.StableRingId; target.MountIndex = weapon.MountIndex; }
+            weapon.StableRingId = ringId; weapon.MountIndex = mount;
+            Revision++;
+            return true;
+        }
+
         public bool TryStowSegmentedWeapon(int id)
         {
             if (!UsesSegmentedOrbit || !CanCommit(out _)) return false;
@@ -183,16 +230,5 @@ namespace Subject42.Combat.OrbitalStation
                 "invalid segmented link reserve", out error);
         }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        public void DebugGrantSegmentedKit()
-        {
-            if (!UsesSegmentedOrbit) return;
-            foreach (var kind in new[] { OrbitalModuleKind.Pistol, OrbitalModuleKind.Pistol, OrbitalModuleKind.Shotgun, OrbitalModuleKind.Sniper, OrbitalModuleKind.Saw })
-                SegmentedWeapons.Add(new OrbitalModuleState { StableModuleId = NextStableModuleId++, ModuleType = kind });
-            foreach (SegmentedLinkKind kind in Enum.GetValues(typeof(SegmentedLinkKind)))
-            { SegmentedLinkStock.Add(kind); SegmentedLinkStock.Add(kind); }
-            Revision++;
-        }
-#endif
     }
 }

@@ -124,11 +124,11 @@ namespace Subject42.Combat.OrbitalStation
             return IsSupportedByState(reward.RewardKind, state);
         }
 
-        private static bool IsSupportedByState(OrbitalRewardKind kind, OrbitalRunState state) =>
-            state?.UsesSegmentedOrbit == true
-                ? kind is not (OrbitalRewardKind.RingSpeed or OrbitalRewardKind.RingCapacity or
+        internal static bool IsSupportedByState(OrbitalRewardKind kind, OrbitalRunState state) =>
+            Enum.IsDefined(typeof(OrbitalRewardKind), kind) && (state?.UsesSegmentedOrbit == true
+                ? kind is not (OrbitalRewardKind.RingSpeed or OrbitalRewardKind.RingPower or OrbitalRewardKind.RingCapacity or
                     OrbitalRewardKind.ArcEmitter or OrbitalRewardKind.LinkPair or OrbitalRewardKind.LinkMatrix or OrbitalRewardKind.ModuleDamage)
-                : !GetSegmentedLinkKind(kind).HasValue;
+                : !GetSegmentedLinkKind(kind).HasValue);
 
         public bool IsEligible(OrbitalRewardKind kind) =>
             IsEligible(kind, RunStateManager.Instance?.OrbitalStationState, RunStateManager.Instance?.ItemSlots);
