@@ -1,0 +1,54 @@
+Subject42 obsolete prototype removal - 2026-10-30
+
+Scope: remove only the audited non-Segmented Weapon Core / Telekinesis debug chain.
+No gameplay balance, saves, normal weapon stats, normal targeting or production
+configuration is intentionally changed. Subject42DebugMenu*.cs is owned by the
+parent task and was not edited by this subtask.
+
+Deleted files:
+- Assets/_Project/Dev/Debug/F1/WeaponCoreDebugSelector.cs
+- Assets/_Project/Dev/Debug/F1/WeaponCoreDebugSelector.cs.meta
+- Assets/_Project/Dev/Debug/F1/TelekinesisDebugPrototype.cs
+- Assets/_Project/Dev/Debug/F1/TelekinesisDebugPrototype.cs.meta
+
+Pruned APIs and hooks:
+- CharacterSpawner: ConfigureDebugDefaults, TryReplaceDebugPrimaryWeapon,
+  SpawnTelekinesisDebugWeapon, SpawnTelekinesisDebugWeaponClone and
+  FindDebugPrimaryWeapon. These comprised the final development-only block.
+- BaseWeapon: telekinesisDebug* fields, IsTelekinesisDebugSecondary,
+  SetTelekinesisDebugBase/Manual/ManualFire/Automatic/ExternalAutoPosition/
+  ExternalPosition/PriorityTarget, UpdateTelekinesisDebugPositionTarget,
+  UpdateTelekinesisDebugPosition/ExternalPosition and
+  CaptureTelekinesisDebugState; their development-only aiming/position branches.
+- BaseWeapon: CopyRuntimeStatsFrom and CopyRuntimeUpgradeModifiersFrom wrappers,
+  whose only callers were the removed CharacterSpawner prototype methods.
+- WeaponTargeting: telekinesisDebugPriorityTarget/UseWeaponOrigin fields,
+  SetTelekinesisDebugPriorityTarget, SetTelekinesisDebugUseWeaponOrigin,
+  ClearTelekinesisDebugOverrides, IsValidTelekinesisDebugPriorityTarget and the
+  corresponding development-only target/origin branches.
+
+Dependency evidence:
+- Repository C# searches before removal found no prototype consumers outside
+  the three modified runtime files, TelekinesisDebugPrototype and the obsolete
+  embedded CombatLabControlStyle/CombatLabDebugController in Subject42DebugMenu.
+- WeaponCoreDebugSelector script GUID 5aae0b17936d42cf99021443204121c7 and
+  TelekinesisDebugPrototype script GUID 4d359c25f7c64d8c9b5b5dd9ffae4231 had no
+  serialized asset consumers (search excluding .meta files).
+- The parent task removes CombatLabControlStyle/CombatLabDebugController from
+  Subject42DebugMenu.cs. Until that coordinated removal lands, that block is the
+  only residual C# consumer of the removed prototype types/APIs.
+- SetControlModeOverride is preserved: PlayerLoadoutFactory uses it.
+- PrimaryWeaponChanged, its invocation and SetPrimaryWeapon are preserved:
+  EvolutionRuntimeController and AnomalyCoreRuntime subscribe to the event.
+- Runtime stats implementation, diagnostic fire-context properties, normal
+  manual/automatic aiming, owner targeting and normal orbital movement remain.
+
+Verification boundary:
+- Reviewed the scoped diff and ran git diff --check (no whitespace errors).
+- Repeated C# and serialized GUID searches; residual prototype C# references
+  were limited to the parent-owned embedded controller block described above.
+- Compared each modified runtime file to HEAD after excluding existing
+  UNITY_EDITOR/DEVELOPMENT_BUILD blocks and whitespace: release source matched
+  exactly in BaseWeapon, WeaponTargeting and CharacterSpawner. This is a static
+  source comparison, not a compilation or gameplay verification.
+- No tests, Unity execution, builds, commits, staging or branch changes run.

@@ -16,6 +16,10 @@ public static class WeaponHitResolver
             context.IsCritical
         );
 
+        WeaponFxPlayer hitFx = context.SourceWeapon != null
+            ? context.SourceWeapon.GetComponent<WeaponFxPlayer>() : null;
+        hitFx?.PlayHit(context.HitPoint, context.Direction, context.IsCritical);
+
         HitResolved?.Invoke(context);
         return true;
     }

@@ -1,0 +1,21 @@
+# F1: удаление legacy и выбор вариантов оружия
+
+Основание: прямой запрос пользователя от 30.10.2026, [инвентаризация](F1_Inventory.md), проверка актуальных consumers и GUID.
+
+GDD: [§4.3 «Контроль пространства»](../../Assets/_Project/Documentation/Subject42_Game_Design_Bible.md#43-контроль-пространства), [§4.5 «Рост силы»](../../Assets/_Project/Documentation/Subject42_Game_Design_Bible.md#45-рост-силы). Изменяется debug UI: шесть независимых флагов → четыре взаимоисключающих селектора через прежние шесть setters. Боевые профили и баланс не меняются. Выбранный профиль и отсутствие установленного оружия показываются отдельно; повторное открытие читает runtime.
+
+- [x] Удалить FEEL/VisualTest builders, preview и локальный мусор из существующей F1; сохранить Studio/F9 и текущие разделы.
+- [x] Удалить FEEL registry/controller/presets/overrides и exclusive debug prototypes после аудита consumers. Нейтральное production-поведение popups/death/camera и authored weapon FX сохранить; полезный lab dummy отделить с сохранением GUID.
+- [x] Сохранить используемые VisualDirectionLab/ProductionVisualTuning/VisualTuningPreset runtime-конфиги и материалы; не оставлять FEEL ради этих dependencies.
+- [x] Общие четыре селектора в Sandbox и QA: смена варианта выключает прежний, включает новый; «Обычный» выключает только свою группу. Короткое фактическое описание, явное выделение, состояние из station.State.
+- [x] Только компиляция Editor и один короткий smoke четырёх групп/F1/Segmented projectile/popup/enemy death. Не выполнять сборки, широкие тесты или Git mutations. Оставить MVP открытой.
+
+Критерий успеха: отсутствуют legacy реализации и dangling code/GUID references; сохранённые production/lab consumers компилируются; smoke проходит. Граница: автоматический сценарий и снимки не равны физическому вводу или плейтесту.
+
+Результат: физически удалены 25 файлов, включая `.meta`; [точный перечень](deleted-files.txt). Исходный CombatFeelTestDummy заменён нейтральным LabEnemyDummy с тем же GUID; удалён его FEEL-only controller. Дополнительно удалены inline UI/preview, 11 неиспользуемых VisualTest wrappers и orphaned prototype APIs; общий AddToggleRow оставлен ботам. Каталог EnemySpawner сохранён, устаревшие имена полей и неиспользуемый FEEL setter убраны без изменения prefab-ссылок.
+
+Необходимые dependencies: Live Visual Studio/OrbitalVisualAdapter, DamagePopup/EnemyHealthPresentation/WeaponFxPlayer, обычная камера и recoil, LabEnemyDummy/EnemyDebugDamagePolicy, реальные орбитальные лаборатории и боты; ProductionSectorDebugController/ProductionVisualTuningController нужны VisualDirectionLab, VisualTuningPreset/Storage/SavedValues и материалы нужны production. Вызов authored hit FX отделён от FEEL и вызывается один раз в WeaponHitResolver после урона. Старые FEEL time/punch/ghost overlays и выключенный по умолчанию FEEL mouse-lookahead удалены; обычное camera-follow поведение сохранено. Подробности границы удаления: [FEEL](feel-removal-manifest.txt), [прототипы](prototype-removal-manifest.txt).
+
+Проверка: Unity 6000.3.13f1, Editor compile — **0 ошибок**; [свидетельство](LegacyRemovalSmoke/compiler-and-integrity.txt). Только `F1SandboxTests.WeaponModesAndSegmentedFeedback`: **1/1 PASS**, [NUnit](LegacyRemovalSmoke/results.xml), [результат](LegacyRemovalSmoke/result.txt). Проверены все шесть вариантов в четырёх группах, непосредственная замена, Normal, повторное открытие, общий runtime Sandbox/QA, stock и Development. Штатный Segmented-пистолет сам выпустил снаряды, попал дважды, вызвал popup и смерть с death FX. [Селекторы](LegacyRemovalSmoke/selectors.png), [попадание](LegacyRemovalSmoke/impact.png), [смерть](LegacyRemovalSmoke/death.png) получены из Unity и просмотрены. Первые попытки этого же smoke остановились из-за потерянного при domain reload контекста локальных callbacks; сценарий вынесен после EnterPlayMode, неуспешные XML сохранены рядом. Другие тесты и сборки не запускались.
+
+12 удалённых GUID проверены: dangling serialized references — **0**. Шесть игровых setters, баланс, геометрия, награды и сохранения не менялись. После smoke открыта активная **MVP** в Edit Mode; физический ввод не симулировался. Этот этап заменяет прежнее решение этапа 2 о сохранении FEEL/legacy visual в QA.

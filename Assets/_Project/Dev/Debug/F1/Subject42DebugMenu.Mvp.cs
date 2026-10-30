@@ -10,8 +10,8 @@ using UnityEngine.UI;
 
 public sealed partial class Subject42DebugMenu
 {
-    private bool IsMvpDebugMenu => SceneManager.GetActiveScene().name == "MVP" && !hubLegacyLab;
-    private static readonly string[] MvpTabLabels = { "Орбиты и оружие", "Улучшения", "Враги и события", "Игрок и ран" };
+    private bool IsMvpDebugMenu => SceneManager.GetActiveScene().name == "MVP" && !hubUtilityPage;
+    private static readonly string[] MvpTabLabels = { "Оружие, модули и орбиты", "Карточки и улучшения", "Враги и бой", "Мир и прогресс" };
     private int mvpCategoryFilter = -1;
     private bool mvpAvailableOnly;
     private OrbitalRewardKind mvpPreviewKind = OrbitalRewardKind.ShootingDamage;
@@ -32,6 +32,7 @@ public sealed partial class Subject42DebugMenu
     {
         if (mvpOrbitSurfaceOpen)
         {
+            hubSearchButton?.SetActive(false);
             menuPanel.anchorMin = menuPanel.anchorMax = new Vector2(1f, .5f);
             menuPanel.pivot = new Vector2(1f, .5f);
             menuPanel.anchoredPosition = mvpOrbitSurfacePosition;
@@ -42,6 +43,13 @@ public sealed partial class Subject42DebugMenu
             menuTabBar.gameObject.SetActive(false);
             closeButtonRect.sizeDelta = new Vector2(32f, 26f); closeButtonRect.anchoredPosition = new Vector2(-8f, 0f);
             visualBackButton.SetActive(true);
+            var back = visualBackButton.GetComponent<Button>();
+            back.onClick.RemoveAllListeners();
+            back.onClick.AddListener(ReturnFromMvpOrbitSurface);
+            back.GetComponentInChildren<TextMeshProUGUI>().text = "МЕНЮ";
+            var backRect = back.GetComponent<RectTransform>();
+            backRect.anchoredPosition = new Vector2(-48f, 0f);
+            backRect.sizeDelta = new Vector2(54f, 26f);
             mvpOrbitSaveFooter.gameObject.SetActive(true);
             menuPages.offsetMin = new Vector2(8f, 66f); menuPages.offsetMax = new Vector2(-8f, -48f);
             fullMenuBlockerImage.color = Color.clear; fullMenuBlockerImage.raycastTarget = false;
@@ -83,6 +91,10 @@ public sealed partial class Subject42DebugMenu
         }
         AddSectionTitle(MvpTabLabels[tab], tab == 0 ? "Предметы поступают в запас конструктора." : "F1 / Esc — закрыть меню");
         if (!string.IsNullOrEmpty(mvpStatus)) AddHint(mvpStatus);
+        if (tab <= 1)
+            SandboxRow("Каталог",
+                ("ОРУЖИЕ / МОДУЛИ / ОРБИТЫ", tab != 0, () => HubOpenDetails(0, DebugTab.OrbitalProduction)),
+                ("КАРТОЧКИ / УЛУЧШЕНИЯ", tab != 1, () => HubOpenDetails(1, DebugTab.PlayerBuild)));
         switch (tab)
         {
             case 0: BuildMvpOrbits(); break;
@@ -123,78 +135,6 @@ public sealed partial class Subject42DebugMenu
         if (station == null || !station.IsInitialized || !station.UsesSegmentedOrbit || upgradeManager == null)
         { AddHint("Segmented Orbit ещё не готова. Начните обычный ран из бункера."); return; }
         var state = station.State;
-        AddSectionTitle("Эксперимент · Development", "Меняет выбранный тип оружия этой попытки, включая будущие экземпляры. Production-прогресс не засчитывается.");
-        var activeWeaponVariants = new System.Collections.Generic.List<string>();
-        if (state.MissReturnPistolExperiment) activeWeaponVariants.Add("Возврат промаха");
-        if (state.ChargedLineSniperExperiment) activeWeaponVariants.Add("Заряженный снайпер");
-        if (state.SweepingShotgunExperiment) activeWeaponVariants.Add("Веерная очередь дробовика");
-        if (state.RamSlugShotgunExperiment) activeWeaponVariants.Add("Картечный таран");
-        if (state.PulsedSawExperiment) activeWeaponVariants.Add("Импульсная пила");
-        if (state.InertialSawExperiment) activeWeaponVariants.Add("Инерционная пила");
-        MvpRow("Активные варианты оружия", activeWeaponVariants.Count == 0 ? "Все выключены" : string.Join(" · ", activeWeaponVariants));
-        AddHint("Пистолет доступен со старта. Остальные типы получите через штатные награды ниже в запас; закройте F1 и установите оружие через Tab.");
-        bool missReturnPistol = state.MissReturnPistolExperiment;
-        MvpRow("Эксперимент: возврат промаха" + (missReturnPistol ? " · ВКЛ" : " · ВЫКЛ"),
-            "Пистолет: вместо 8 м прямо — 4 м наружу + 4 м обратно только при промахе. Линия фиксирована в мире: заведите на неё преследователей. Все пистолеты попытки; Development без production-прогресса.",
-            missReturnPistol ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ", MvpCanEdit, () =>
-            {
-                if (!MvpCanEdit || !station.DebugSetMissReturnPistolExperiment(!missReturnPistol)) return;
-                mvpStatus = "Попытка Development. Возврат промаха: раскладка, улучшения и cooldown сохранены. OFF возвращает обычный профиль будущим выстрелам; летящие заканчивают прежний путь. Новый ран — без эксперимента.";
-                RefreshCurrentTab();
-            });
-        bool chargedSniper = state.ChargedLineSniperExperiment;
-        MvpRow("Заряженный линейный Sniper" + (chargedSniper ? " · ВКЛ" : " · ВЫКЛ"),
-            "0,45 с подготовки → до 3 тел по 24 урона вместо 32 в одно. Выстройте толпу в линию; Q/E ведут направление до выпуска.",
-            chargedSniper ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ", MvpCanEdit, () =>
-            {
-                if (!MvpCanEdit || !station.DebugSetChargedLineSniperExperiment(!chargedSniper)) return;
-                mvpStatus = "Попытка Development. Эксперимент меняет все Sniper; раскладка и улучшения сохранены. Новый обычный ран — без эксперимента.";
-                RefreshCurrentTab();
-            });
-        bool sweepingShotgun = state.SweepingShotgunExperiment;
-        bool ramSlugShotgun = state.RamSlugShotgunExperiment;
-        MvpRow("Веерная очередь Shotgun" + (sweepingShotgun ? " · ВКЛ" : " · ВЫКЛ"),
-            "Вместо 7 дробин сразу: 3 залпа по 2, шаг 0,12 с, слева → центр → справа. Q/E ведут очередь; 2X — один центральный залп. Все Shotgun этой попытки; Development без production-прогресса.",
-            sweepingShotgun ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ", MvpCanEdit && (sweepingShotgun || !state.RamSlugShotgunExperiment), () =>
-            {
-                if (!MvpCanEdit || !station.DebugSetSweepingShotgunExperiment(!sweepingShotgun)) return;
-                mvpStatus = "Попытка Development. Shotgun: раскладка и улучшения сохранены; выключение возвращает обычный веер. Новый ран — без эксперимента.";
-                RefreshCurrentTab();
-            });
-        if (!sweepingShotgun && ramSlugShotgun)
-            AddHint("Веерная очередь недоступна: сначала выключите картечный таран.");
-        MvpRow("Эксперимент: картечный таран" + (ramSlugShotgun ? " · ВКЛ" : " · ВЫКЛ"),
-            "Shotgun: вместо широкого веера один медленный короткий снаряд. Урон 10, дальность 3,5 м, до трёх тел; штатное оттеснение поддерживаемых врагов, без обхода щитов. Q/E направляют линию. Development без production-прогресса.",
-            ramSlugShotgun ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ", MvpCanEdit && (ramSlugShotgun || !state.SweepingShotgunExperiment), () =>
-            {
-                if (!MvpCanEdit || !station.DebugSetRamSlugShotgunExperiment(!ramSlugShotgun)) return;
-                mvpStatus = "Попытка Development без production-прогресса. Картечный таран: установки, улучшения, cooldown и летящие снаряды сохранены. Уже начатая очередь завершается прежним профилем; будущие выстрелы используют выбранный профиль. OFF возвращает обычный Shotgun. Новый ран — без эксперимента.";
-                RefreshCurrentTab();
-            });
-        if (!ramSlugShotgun && sweepingShotgun)
-            AddHint("Картечный таран недоступен: сначала выключите веерную очередь.");
-        bool inertialSaw = state.InertialSawExperiment;
-        bool pulsedSaw = state.PulsedSawExperiment;
-        MvpRow("Импульсная пила" + (pulsedSaw ? " · ВКЛ" : " · ВЫКЛ"),
-            "0,8 с: увеличенный контакт ×1,35 и вращение; 0,4 с: обычный размер, остановка и нет урона. Подводите пилу в активное окно. Все Saw этой попытки; Development без production-прогресса.",
-            pulsedSaw ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ", MvpCanEdit && (pulsedSaw || !state.InertialSawExperiment), () =>
-            {
-                if (!MvpCanEdit || !station.DebugSetPulsedSawExperiment(!pulsedSaw)) return;
-                mvpStatus = "Попытка Development без production-прогресса. Импульсная пила: установки, улучшения и интервалы поражённых целей сохранены; выключение возвращает непрерывный контакт. Новый ран — без эксперимента.";
-                RefreshCurrentTab();
-            });
-        if (!pulsedSaw && inertialSaw)
-            AddHint("Импульсная пила недоступна: сначала выключите инерционную пилу.");
-        MvpRow("Эксперимент: инерционная пила" + (inertialSaw ? " · ВКЛ" : " · ВЫКЛ"),
-            "Контакт только при фактическом вращении установленного кольца штатным Q/E: урон ×1,5, прежние радиус и интервал. Без вращения контакта нет; расходуется существующая энергия. Первая итерация с положительным шагом времени после установки/переключения только запоминает фазу. Development без production-прогресса.",
-            inertialSaw ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ", MvpCanEdit && (inertialSaw || !state.PulsedSawExperiment), () =>
-            {
-                if (!MvpCanEdit || !station.DebugSetInertialSawExperiment(!inertialSaw)) return;
-                mvpStatus = "Попытка Development без production-прогресса. Инерционная пила: установки, улучшения и интервалы поражённых целей сохранены. Первая итерация с положительным шагом времени только запоминает фазу; OFF возвращает обычный контакт. Новый ран — без эксперимента.";
-                RefreshCurrentTab();
-            });
-        if (!inertialSaw && pulsedSaw)
-            AddHint("Инерционная пила недоступна: сначала выключите импульсную пилу.");
         AddHint("Выдача пополняет запас. Закройте карточку/F1, откройте Tab и перетащите предмет на подходящую ячейку. Установленное оружие занимает общий лимит.");
         AddSectionTitle("Оружие", "");
         foreach (var kind in new[] { OrbitalRewardKind.Pistol, OrbitalRewardKind.Sniper, OrbitalRewardKind.Shotgun, OrbitalRewardKind.Saw })
@@ -214,6 +154,74 @@ public sealed partial class Subject42DebugMenu
         AddMvpBuildReward(OrbitalRewardKind.AddMount, $"Лимит оружия: {state.SegmentedWeaponLimit}/{OrbitalRunState.MaxSegmentedWeapons}", "+1 ЛИМИТ");
         MvpRow("Внешний вид орбит", "F9", "НАСТРОИТЬ",
             MvpCanEdit && previousTimeScale > 0f, OpenMvpOrbitSurface);
+    }
+
+    private void BuildMvpWeaponExperiments(bool sandbox = false)
+    {
+        var station = MvpStation;
+        if (station == null || !station.IsInitialized || !station.UsesSegmentedOrbit)
+        { AddHint("Нужна действующая Segmented Orbit. Оружейные варианты пока недоступны."); return; }
+        var state = station.State;
+        AddSectionTitle("ВАРИАНТЫ ОРУЖИЯ", "По одному профилю на тип оружия. Эксперимент помечает попытку Development.");
+        Group("Пистолет", OrbitalModuleKind.Pistol, "Обычный", "Прямой одиночный снаряд.",
+            ("Возврат промаха", () => state.MissReturnPistolExperiment, station.DebugSetMissReturnPistolExperiment,
+                "При промахе: 4 м наружу и 4 м обратно по фиксированной мировой линии."));
+        Group("Снайперка", OrbitalModuleKind.Sniper, "Обычная", "Обычный одиночный выстрел в одну цель.",
+            ("Заряженная линия", () => state.ChargedLineSniperExperiment, station.DebugSetChargedLineSniperExperiment,
+                "Подготовка 0,45 с, затем пробитие до трёх тел. Q/E ведут линию до выпуска."));
+        Group("Дробовик", OrbitalModuleKind.Shotgun, "Обычный", "Семь дробин одним широким залпом.",
+            ("Веерная очередь", () => state.SweepingShotgunExperiment, station.DebugSetSweepingShotgunExperiment,
+                "Три залпа по две дробины через 0,12 с: слева, центр, справа. Q/E ведут очередь."),
+            ("Картечный таран", () => state.RamSlugShotgunExperiment, station.DebugSetRamSlugShotgunExperiment,
+                "Один медленный снаряд на 3,5 м, до трёх тел; щиты сохраняют защиту."));
+        Group("Пила", OrbitalModuleKind.Saw, "Обычная", "Непрерывный контакт по штатному интервалу.",
+            ("Импульсная", () => state.PulsedSawExperiment, station.DebugSetPulsedSawExperiment,
+                "0,8 с увеличенного контакта, затем 0,4 с остановки без урона."),
+            ("Инерционная", () => state.InertialSawExperiment, station.DebugSetInertialSawExperiment,
+                "Контакт только при фактическом Q/E-вращении кольца. Нужна энергия; первый шаг запоминает фазу."));
+
+        void Group(string title, OrbitalModuleKind kind, string normal, string normalDescription,
+            params (string Label, Func<bool> Active, Func<bool, bool> Set, string Description)[] modes)
+        {
+            int selected = Array.FindIndex(modes, mode => mode.Active()) + 1;
+            int installed = state.Modules.Count(module => module.ModuleType == kind);
+            string reason = sandbox ? SandboxUnavailableReason :
+                !MvpCanEdit || station.IsRunEnded ? "Нужен живой игрок и свободная очередь наград." : null;
+            var actions = new (string Label, bool Enabled, UnityEngine.Events.UnityAction Action)[modes.Length + 1];
+            for (int i = 0; i < actions.Length; i++)
+            {
+                int index = i;
+                string label = i == 0 ? normal : modes[i - 1].Label;
+                actions[i] = (label + (i == selected ? " · выбран" : ""), reason == null && i != selected, () =>
+                {
+                    if (!MvpCanEdit || station.IsRunEnded) { RefreshCurrentTab(); return; }
+                    void Apply()
+                    {
+                        // Turn off the old profile before the existing setter enables its replacement.
+                        for (int j = 0; j < modes.Length; j++)
+                            if (j + 1 != index && modes[j].Active() && !modes[j].Set(false))
+                            { mvpStatus = "Профиль не сменился: действие сейчас недоступно."; return; }
+                        if (index > 0 && !modes[index - 1].Active() && !modes[index - 1].Set(true))
+                            mvpStatus = "Выбранный профиль сейчас недоступен.";
+                        else mvpStatus = "Профиль обновлён. Установки, улучшения и летящие снаряды сохранены.";
+                    }
+                    if (sandbox) SandboxAction(Apply);
+                    else { Apply(); RefreshCurrentTab(); }
+                });
+            }
+            SandboxRow("Вариант: " + title, actions);
+            var buttons = contentRoot.GetChild(contentRoot.childCount - 1).GetComponentsInChildren<Button>();
+            var selectedButton = buttons[selected];
+            var colors = selectedButton.colors;
+            colors.disabledColor = new Color(.12f, .57f, .35f, 1f);
+            selectedButton.colors = colors;
+            string description = selected == 0 ? normalDescription : modes[selected - 1].Description;
+            string application = installed == 0 ? "Не установлен: профиль применится после установки. " : $"Установлено: {installed}. ";
+            var hint = CreateText("Описание варианта", contentRoot, reason ?? application + description, 13f,
+                TextAlignmentOptions.MidlineLeft, mutedColor);
+            hint.textWrappingMode = TextWrappingModes.Normal;
+            hint.gameObject.AddComponent<LayoutElement>().preferredHeight = 42f;
+        }
     }
 
     private void AddMvpBuildReward(OrbitalRewardKind kind, string status, string actionLabel = "ВЫДАТЬ")
@@ -249,10 +257,13 @@ public sealed partial class Subject42DebugMenu
     private void ToggleMvpOrbitSurface()
     {
         if (mvpOrbitSurfaceOpen) { CloseMenu(); return; }
+        CloseMenu();
+        CloseHub();
+        hubUtilityPage = false;
         ResolveSceneReferences();
         if (!MvpCanEdit || MvpStation.IsRunEnded || (isOpen ? previousTimeScale : Time.timeScale) <= 0f) return;
-        if (!isOpen) OpenMenu();
         SelectTab((DebugTab)0, false);
+        OpenMenu();
         OpenMvpOrbitSurface();
     }
 
@@ -302,6 +313,7 @@ public sealed partial class Subject42DebugMenu
         menuLiveSimulation = false;
         Time.timeScale = 0f;
         ApplyMvpViewportLayout();
+        HubApplyDetailsLayout();
         RefreshCurrentTab();
     }
 
@@ -474,12 +486,9 @@ public sealed partial class Subject42DebugMenu
         applyRect.anchoredPosition = new Vector2(0f, 15f); applyRect.sizeDelta = new Vector2(270f, 42f);
     }
 
-    private void BuildMvpEnemies()
+    private void BuildMvpEnemyExperiments()
     {
         bool available = enemySpawner != null;
-        MvpRow("Обычная генерация врагов", available ? enemySpawner.IsSpawningEnabled ? "Включена" : "Остановлена" : "Спавнер не готов", "ПЕРЕКЛЮЧИТЬ", available, ToggleEnemyAutoSpawn);
-        MvpRow("Поведение врагов", EnemyDebugAiFreeze.IsFrozen ? "AI заморожен" : "AI работает", "ПЕРЕКЛЮЧИТЬ", available, ToggleEnemyAiFreeze);
-        MvpRow("Убрать созданных вручную врагов", $"Учтено: {debugEnemies.Count(e => e != null)}", "УБРАТЬ", debugEnemies.Any(e => e != null), ClearDebugEnemies);
         var activeExperiments = new System.Collections.Generic.List<string>();
         if (available)
         {
@@ -770,6 +779,15 @@ public sealed partial class Subject42DebugMenu
                 }
                 SpawnDebugEnemies(flankingPrefab, "Фланговый преследователь", 1, true);
             });
+        AddHint(enemyDebugStatus);
+    }
+
+    private void BuildMvpEnemies()
+    {
+        bool available = enemySpawner != null;
+        AddEnemiesSection();
+        AddCaptureSpawnControls(CaptureSession.UnavailableReason);
+        var profile = RunStateManager.Instance?.CurrentSector?.SpawnProfile;
         if (profile != null)
             foreach (var prefab in profile.Phases.Where(p => p != null).SelectMany(p => p.enemies).Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab).Distinct())
             {
@@ -801,6 +819,13 @@ public sealed partial class Subject42DebugMenu
                         SpawnDebugEnemies(prefab, name, 1);
                     });
             }
+        AddSectionTitle("Тестовый босс", "Отдельный Development encounter; не завершение текущего сектора");
+        AddCaptureEncounter(TrailerCaptureConfig.Shot.Boss);
+        AddHint(enemyDebugStatus);
+    }
+
+    private void BuildMvpWorldEvents()
+    {
         var events = FindFirstObjectByType<WorldEventSpawner>();
         AddSectionTitle("Эксперимент: зачистка огневой группы", "Текущий сектор · default OFF · публично выключен · включение помечает попытку Development");
         MvpRow("Зачистка огневой группы", events != null && events.FireteamClearanceExperimentEnabled ? "Включено" : "Выключено",
@@ -879,6 +904,8 @@ public sealed partial class Subject42DebugMenu
         MvpRow("Завершить текущий сектор", canExit ? "Через штатный выход и выбор следующего сектора" : "Выход ещё недоступен или ран занят наградой", "ЗАВЕРШИТЬ", canExit, () => { CloseMenu(); CompleteLevel(); });
         MvpRow("Вернуться в бункер", "Штатное завершение рана и очистка временного состояния", "ВЕРНУТЬСЯ", run != null && !run.IsRunEnded && RunEndService.Instance != null && !SceneTransitionOverlay.IsTransitioning,
             () => { CloseMenu(); RunEndService.Instance.ReturnToBunker(); });
+        BuildMvpWorldEvents();
+        AddWorldEventsSection();
     }
 }
 #endif

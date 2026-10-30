@@ -22,7 +22,7 @@ Corridor shares production route definitions, kit, config, hazards and `Corridor
 
 ## UI and development boundary
 
-Production UI uses authored prefabs and scene references: StartScreen/settings, Bunker panels, HUD/tactical map, reward cards/placement, pause and results. The tactical map requires its marker components; optional references remain null only where the consumer allows them. `PhysicalCombatFeedbackRuntime`, settings contracts and visual presentation live in production. F1 menus and tuning controls live in Dev and attach only for Editor/development runs.
+Production UI uses authored prefabs and scene references: StartScreen/settings, Bunker panels, HUD/tactical map, reward cards/placement, pause and results. The tactical map requires its marker components; optional references remain null only where the consumer allows them. WeaponFxPlayer, EnemyHealthPresentation and DamagePopup own authored combat presentation; successful weapon hits dispatch their weapon FX through WeaponHitResolver. F1 menus and useful laboratory controls live in Dev and attach only for Editor/development runs.
 
 WorldSystemsLab and OrbitalLab reuse production services/assets through scene adapters; they do not own alternate gameplay implementations. GoldenPathLab and bots are opt-in Dev tools. Tests remain in the predefined Editor assembly and run by narrow fixture/method filters. Saved-asset validation and production compilation with Dev sources removed enforce the boundary.
 

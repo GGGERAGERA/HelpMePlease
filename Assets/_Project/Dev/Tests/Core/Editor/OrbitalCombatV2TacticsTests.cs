@@ -111,7 +111,7 @@ public sealed class OrbitalCombatV2TacticsTests
             var body = new GameObject("Telemetry body"); body.transform.SetParent(lab.transform);
             body.transform.position = guns[0].WorldPosition + Vector2.right * pair.Item1;
             var health = body.AddComponent<EnemyHealth>(); health.SetRuntimeMaxHealth(pair.Item2);
-            var dummy = body.AddComponent<CombatFeelTestDummy>(); dummy.Initialize(null); dummy.Invulnerable = false;
+            var dummy = body.AddComponent<LabEnemyDummy>(); dummy.Initialize(); dummy.Invulnerable = false;
             body.AddComponent<CircleCollider2D>().radius = .12f;
         }
         Physics2D.SyncTransforms(); lab.WeaponModules.SetModule(ids[0], 0, "PIERCE");
@@ -628,7 +628,7 @@ public sealed class OrbitalCombatV2TacticsTests
                         Assert.That(enemy.GetComponent<EnemyShooterMovement>() != null, Is.EqualTo(i % 4 == 0));
                         CollectionAssert.AreEquivalent(
                             prefab.GetComponents<Component>().Select(c => c.GetType().FullName),
-                            enemy.GetComponents<Component>().Where(c => !(c is CombatFeelTestDummy)).Select(c => c.GetType().FullName),
+                            enemy.GetComponents<Component>().Where(c => !(c is LabEnemyDummy)).Select(c => c.GetType().FullName),
                             "Root components must match the authored mixed encounter prefab at index " + i);
                     }
                 }
@@ -659,7 +659,7 @@ public sealed class OrbitalCombatV2TacticsTests
                         Assert.That(enemy.GetComponentInChildren<EnemyDirectionalShield>(true), Is.Null, "Pursuer must not carry a shield");
                         CollectionAssert.AreEquivalent(
                             lab.PursuerPrefab.GetComponents<Component>().Select(c => c.GetType().FullName),
-                            enemy.GetComponents<Component>().Where(c => !(c is CombatFeelTestDummy)).Select(c => c.GetType().FullName),
+                            enemy.GetComponents<Component>().Where(c => !(c is LabEnemyDummy)).Select(c => c.GetType().FullName),
                             "Root component types must match the SpawnAt(-3) prefab (apart from its lab marker)");
                     }
                 }
@@ -691,7 +691,7 @@ public sealed class OrbitalCombatV2TacticsTests
                         Assert.That(enemy.GetComponent<EnemyShooterMovement>(), Is.Null, "Shield bearer must not be replaced by a shooter");
                         CollectionAssert.AreEquivalent(
                             lab.BreakableShieldBearerPrefab.GetComponents<Component>().Select(c => c.GetType().FullName),
-                            enemy.GetComponents<Component>().Where(c => !(c is CombatFeelTestDummy)).Select(c => c.GetType().FullName),
+                            enemy.GetComponents<Component>().Where(c => !(c is LabEnemyDummy)).Select(c => c.GetType().FullName),
                             "Root component types must match the SpawnAt(-4) prefab (apart from its lab marker)");
                         var shield = enemy.GetComponent<EnemyDirectionalShield>();
                         Assert.That(shield, Is.Not.Null);
@@ -1654,7 +1654,7 @@ public sealed class OrbitalCombatV2TacticsTests
                 Call("SpawnAt", -3, target);
                 var dummy = Object.FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None).Single(e => !before.Contains(e));
                 foreach (var ai in dummy.GetComponents<EnemyMovement>()) ai.enabled = false;
-                dummy.GetComponent<CombatFeelTestDummy>().Invulnerable = true;
+                dummy.GetComponent<LabEnemyDummy>().Invulnerable = true;
                 var dummyBody = dummy.GetComponent<Rigidbody2D>();
                 Assert.That(dummyBody, Is.Not.Null);
                 dummyBody.constraints = RigidbodyConstraints2D.FreezeAll;

@@ -40,28 +40,7 @@ public sealed class EnemyHealthPresentation : MonoBehaviour
     private void OnDeath()
     {
         PresentDeath();
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        PhysicalCombatFeedbackRuntime.TryDetachDeathVisual(health);
-#endif
     }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-    public void DebugSimulateFeedback(
-        float damage,
-        Vector2 hitPoint,
-        bool isCritical,
-        bool lethal)
-    {
-        if (health.IsDead)
-            return;
-        whiteFlash?.Flash();
-        SpawnBlood(hitPoint, isCritical);
-        PlayHitSound(isCritical);
-        ShowDamagePopup(Mathf.RoundToInt(damage), isCritical);
-        health.OnDamageTaken?.Invoke();
-        if (lethal)
-            PresentDeath();
-    }
-#endif
     private void SpawnBlood(Vector2 hitPoint, bool isCritical)
     {
         if (bloodHitPrefab == null)

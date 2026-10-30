@@ -51,7 +51,7 @@ namespace Subject42.DebugLabs.EliteOrbit
         public void Initialize(EliteOrbitPreset preset)
         {
             Preset=preset;
-            var policy=GetComponent<CombatFeelTestDummy>(); policy.Initialize(null); policy.Invulnerable=false;
+            var policy=GetComponent<LabEnemyDummy>(); policy.Initialize(); policy.Invulnerable=false;
             Health.SetRuntimeMaxHealth(preset.BodyHealth);
             foreach (var movement in GetComponents<EnemyMovement>()) movement.SetSpeedMultiplier(preset.MovementMultiplier);
             orbitRoot=new GameObject("Elite ORBITAL / shared ring and mounting points").transform;
@@ -122,7 +122,7 @@ namespace Subject42.DebugLabs.EliteOrbit
             var go=new GameObject("Destructible protection satellite"); go.transform.SetParent(mount.Transform,false);
             var node=new Node { Mount=mount };
             var health=go.AddComponent<EnemyHealth>(); node.Health=health;
-            var policy=go.AddComponent<CombatFeelTestDummy>(); policy.Initialize(null); policy.Invulnerable=false;
+            var policy=go.AddComponent<LabEnemyDummy>(); policy.Initialize(); policy.Invulnerable=false;
             health.SetRuntimeMaxHealth(Preset.NodeHealth);
             var shell=Pixel("Faceted hostile node",go.transform,Vector2.zero,new Vector2(.43f,.43f),new Color(.9f,.2f,.6f)); shell.transform.localRotation=Quaternion.Euler(0,0,45);
             Pixel("Node center",go.transform,Vector2.zero,new Vector2(.19f,.19f),new Color(1,.75f,.85f));

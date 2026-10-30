@@ -21,19 +21,6 @@ public class EnemyWhiteFlash : MonoBehaviour
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public float FlashDuration => flashDuration;
-
-    public void SetFlashDuration(float value)
-    {
-        flashDuration = Mathf.Max(0f, value);
-        flashWait = new WaitForSecondsRealtime(flashDuration);
-
-        if (flashDuration <= 0f && flashCoroutine != null)
-        {
-            StopCoroutine(flashCoroutine);
-            flashCoroutine = null;
-            Restore();
-        }
-    }
 #endif
 
     public void SetRuntimeBaseMaterial(Material material)

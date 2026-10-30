@@ -1,0 +1,88 @@
+FEEL runtime removal manifest — 2026-10-30
+Workspace: D:/fork/HelpMePlease
+Scope: remove the old FEEL parameter registry, tuning controller, presets, runtime overlays and metadata; preserve authored production presentation and useful laboratories.
+
+Deletion audit, completed before deletion:
+- Searched type/symbol consumers in Assets/_Project/**/*.cs and serialized GUID consumers in Assets, ProjectSettings and Packages.
+- No serialized consumers of the seven deleted FEEL script GUIDs below were found outside their .meta files.
+- No CombatFeelSavedTuning.asset exists in Assets; the removed storage API was its only writer and had no load/bootstrap path.
+- CombatFeelLabAudit.md had no inbound Assets/docs reference. Its .meta GUID is ead3225058cf48e9b5c9338cd0730ee4.
+- The shared dummy is the exception: its GUID is serialized by Assets/_Project/Dev/Labs/OrbitalLab/EliteOrbit/OrbitalElite.prefab. Preserve that GUID and prefab component.
+
+Deleted files (entries 1–8 also delete their adjacent .meta):
+1. Assets/_Project/Dev/Debug/F1/CombatFeelLabSettings.cs
+   GUID bb958d68fdd7bbe45a49cefd31e770a5; UI/metadata/settings only, removed with old F1 FEEL UI.
+2. Assets/_Project/Dev/Debug/F1/ProductionFeelTuningController.cs
+   GUID 7da19012c4a44291b6ff7f5d42052c48; optional development tuning, previous sole owner/creator of PhysicalCombatFeedbackRuntime.
+3. Assets/_Project/Dev/Debug/F1/CombatFeelTuningPreset.cs
+   GUID 6d6d6bc512df4c2aa89f84d05e12152e; optional asset capture/storage; no production preset loader.
+4. Assets/_Project/scripts/Combat/Feedback/PhysicalCombatFeedbackRuntime.cs
+   GUID 34e68dcb814941f3a53d99ebfb365242; development-only runtime overlays and time ownership.
+5. Assets/_Project/scripts/Combat/Feedback/PhysicalCombatFeedbackTuningSource.cs
+   GUID 5630c90def324de79f3de2e9797dc9d4; removed controller/runtime adapter only.
+6. Assets/_Project/scripts/Combat/Feedback/CombatFeelVisualOverrides.cs
+   GUID a7f4195fcad82b949b49203315d0edde; development-only projectile/particle modifiers, created only by removed runtime.
+7. Assets/_Project/scripts/Combat/Feedback/CombatFeelParameter.cs
+   GUID 7f4a32ff20a04b4eb9386d453298ae6b; enum, settings interface and defaults dictionary; no replacement registry or inert stub.
+8. Assets/_Project/Documentation/CombatFeelLabAudit.md
+   Obsolete metadata/audit document for the removed UI and parameter system.
+9. Assets/_Project/scripts/Combat/Feedback.meta and its now-empty Feedback directory
+   Folder GUID 015d0662ec7b4af09e66e07937cc0538; no serialized consumers found before deletion, and no remaining files in the directory.
+
+Moved/extracted files:
+- Assets/_Project/Dev/Debug/F1/CombatFeelTestDummy.cs -> Assets/_Project/Dev/Debug/LabEnemyDummy.cs
+- Assets/_Project/Dev/Debug/F1/CombatFeelTestDummy.cs.meta -> Assets/_Project/Dev/Debug/LabEnemyDummy.cs.meta
+- Preserved GUID 66e6cb9e25ee44e6bd1bd2b23d0e792a. OrbitalElite.prefab keeps its existing component GUID and updates m_EditorClassIdentifier from Assembly-CSharp::CombatFeelTestDummy to Assembly-CSharp::LabEnemyDummy.
+- New neutral types: LabEnemyDummy and LabEnemyDummyMode { Static, NormalAi }.
+- Preserved EnemyDebugDamagePolicy, reward suppression, Invulnerable, Initialize(), ApplyMode() and MoveRoot().
+- Removed FEEL-only dummy controller, owner callback, Follow/Orbit UI controller, archetypes and simulated FEEL dispatch.
+
+Updated useful dummy consumers:
+- Assets/_Project/Dev/Debug/OrbitalLab/EnemyOrbitalLabController.cs
+- Assets/_Project/Dev/Debug/OrbitalConstructor/OrbitalConstructorLab.cs
+- Assets/_Project/Dev/Debug/EliteOrbitalLab/EliteOrbitEnemy.cs
+- Assets/_Project/Dev/Debug/EliteOrbitalLab/EliteOrbitalLab.cs
+- Assets/_Project/Dev/Editor/OrbitalLab/EliteOrbitalLabAuthoring.cs
+- Assets/_Project/Dev/Editor/OrbitalLab/EliteOrbitalLabSmoke.cs
+- Assets/_Project/Dev/Editor/OrbitalLab/OrbitalConstructorSmoke.cs
+- Assets/_Project/Dev/Tests/Core/Editor/OrbitalCombatV2TacticsTests.cs
+- Assets/_Project/Dev/Tests/Core/Editor/EnemyOrbitalLabSandboxTests.cs
+- Assets/_Project/Dev/Labs/OrbitalLab/EliteOrbit/OrbitalElite.prefab (class identifier only; GUID unchanged)
+- LiveVisualProductionTests.cs dummy references are coordinated with the parent agent, who owns that file.
+
+Removed runtime hooks:
+- WeaponFxPlayer: lab lifetime multipliers, particle overrides, fired notification and unused FEEL tuning accessors. Authored particle prefabs, lifetime fields, pooling and camera-shake fields remain.
+- ProjectileFireBehaviour: only removed PhysicalCombatFeedbackRuntime.RegisterProjectile; production/LiveVisual registration remains.
+- ProjectileWeapon: only removed additive FEEL recoil fields/API/branches. Authored recoil position, rotation, scale and pooling restoration remain.
+- ProductionVisualTuningController: only removed CombatFeelProjectileVisual rebase block; useful visual lab/current-config behavior remains.
+- EnemyHealthPresentation: removed death-visual detach hook and the unreferenced FEEL-only DebugSimulateFeedback method; compact death/blood FX, popup pooling and audio remain.
+- DamagePopup: only removed relative lab adjustment block and helper. Authored damage/critical/healing/reward motion, rendering, pooling and visibility remain.
+- CameraFollow: removed optional FEEL mouse lookahead layer; normal follow, focus, user zoom and orbital framing remain.
+- CameraShake: removed additive FEEL offset; production shake and debug suppression remain.
+- EnemyWhiteFlash: removed unreferenced FEEL-only SetFlashDuration setter; authored flash behavior and the FlashDuration getter used by production tests remain.
+- RunStateManager, BotBatchRunner, BotRunSession and BotRunSession.GoldenPath: removed calls cancelling the now-absent FEEL hit stop. Their real pause/run/seed/time ownership remains.
+- Documentation/Architecture_Overview.md: replaced the stale claim that the deleted runtime/settings live in production with the actual authored presentation and weapon-hit route.
+
+Production weapon-hit FX routing correction:
+- Existing SourceWeapon.GetComponent<WeaponFxPlayer>()?.PlayHit(hitPoint, direction, critical) dispatch moved out of removed development runtime into WeaponHitResolver.Resolve after the existing TakeDamage call and before HitResolved event.
+- Exactly one dispatch remains. It preserves real impact particles and normal/critical shake without requiring F1/FEEL. Release previously lacked this dispatch when no development runtime was present; now the same authored presentation is connected in both configurations.
+- No damage/stat/knockback/reward/save code or values changed by this extraction.
+
+Neutral baseline preserved:
+- Old no-controller fallback: MuzzleDuration=1, ImpactLifetime=1; direct authored lifetimes now used.
+- Old mouse lookahead was off (MouseLookAhead=0, LookAheadDistance=0); removal preserves that baseline.
+- Old physical feedback/death detach/projectile/particle override methods did nothing without configured development runtime; those optional layers are removed.
+- DamagePopup authored defaults stay .72s lifetime, .32s fade delay, .4s fade duration, 1.85 rise, 2.4 gravity, .38 drift randomness, 3deg rotation randomness, .2 punch/.16s punch duration; authored critical multipliers stay unchanged.
+
+Tests retained/adapted:
+- DamagePopupPresentationTests: retain real production animation, critical/healing/reward reuse and pool checks; remove only assertions/setup for deleted lab runtime/tuning.
+- DevelopmentInputContractTests: remove only obsolete RuntimeNeutralFeedbackMatchesDevelopmentAdapterDefaults metadata-parity test.
+- Useful lab tests/smoke scripts only rename dummy type/API references.
+
+Verification boundary:
+- Source-reference, GUID, file-existence and diff checks are performed for this cleanup.
+- Final source audit: all 745 C# files under Assets contain no CombatFeel/PhysicalCombatFeedback/ProductionFeelTuning/ICombatFeelSettings types; exactly one .PlayHit dispatch remains, in WeaponHitResolver.
+- Final file audit: all eight removed files and their adjacent metas are absent; old dummy paths and the empty Feedback folder/meta are absent. Dummy GUID and prefab class identifier match the extracted class.
+- Edited runtime conditional-compilation directives are balanced. Scoped git diff --check exited 0 with no output.
+- This agent did not run Unity, tests, builds or git mutations. Parent owns the requested Editor compile and one short smoke.
+- F1 UI/selector cleanup and other-agent files are outside this manifest's implementation ownership.

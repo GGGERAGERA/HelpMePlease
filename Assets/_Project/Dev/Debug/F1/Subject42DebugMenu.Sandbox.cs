@@ -18,7 +18,7 @@ public sealed partial class Subject42DebugMenu
 
     private void OpenSandbox()
     {
-        if (IsSandboxScene) HubOpenLegacyTool(DebugTab.Sandbox);
+        if (IsSandboxScene) HubOpenUtilityPage(DebugTab.Sandbox);
     }
 
     private void BuildSandbox()
@@ -57,12 +57,12 @@ public sealed partial class Subject42DebugMenu
         bool spawning = enemySpawner != null && enemySpawner.IsSpawningEnabled;
         SandboxRow("Спавн: " + (spawning ? "включён" : "остановлен"),
             (spawning ? "ОСТАНОВИТЬ" : "ВКЛЮЧИТЬ", spawnReady,
-                () => SandboxAction(() => CaptureSession.SetSpawning(!enemySpawner.IsSpawningEnabled))),
+                () => SandboxAction(() => SetEnemyAutoSpawn(!enemySpawner.IsSpawningEnabled, captureSettings: true))),
             ("ДОБАВИТЬ ВРАГОВ", spawnReady && spawning, () => SandboxAction(CaptureSession.FillEnemies)));
         SandboxRow("Плотность", Density(.5f, "×0,5"), Density(1f, "×1"), Density(1.5f, "×1,5"), Density(2f, "×2"));
         SandboxRow("AI: " + (EnemyDebugAiFreeze.IsFrozen ? "заморожен" : "работает"),
             (EnemyDebugAiFreeze.IsFrozen ? "РАЗМОРОЗИТЬ AI" : "ЗАМОРОЗИТЬ AI", ready,
-                () => SandboxAction(() => CaptureSession.SetEnemyAiFrozen(!EnemyDebugAiFreeze.IsFrozen))),
+                () => SandboxAction(() => SetEnemyAiFrozen(!EnemyDebugAiFreeze.IsFrozen, captureSettings: true))),
             ("ОЧИСТИТЬ ОБЫЧНЫХ", ready, () => SandboxAction(CaptureSession.ClearEnemies)));
         AddHint($"Живых у спавнера: {enemySpawner?.DebugCaptureAliveCount ?? 0} / {enemySpawner?.DebugCaptureMaxAlive ?? 0}. Очистка без XP и наград, босс сохраняется.");
         if (ready && spawnReason != null) AddHint(spawnReason);
@@ -75,17 +75,7 @@ public sealed partial class Subject42DebugMenu
             ("ВОССТАНОВИТЬ HP", ready && health != null && health.CurrentHealth < health.MaxHealth,
                 () => SandboxAction(CaptureSession.Heal)));
 
-        AddSectionTitle("ЭКСПЕРИМЕНТЫ ОРУЖИЯ", "Пистолет и снайпер независимы. У дробовика и пилы — по одному варианту одновременно.");
-        Experiment("Пистолет: возврат промаха", state.MissReturnPistolExperiment, station.DebugSetMissReturnPistolExperiment);
-        Experiment("Снайпер: заряженная линия", state.ChargedLineSniperExperiment, station.DebugSetChargedLineSniperExperiment);
-        Experiment("Дробовик: веерная очередь", state.SweepingShotgunExperiment, station.DebugSetSweepingShotgunExperiment,
-            state.RamSlugShotgunExperiment ? "Сначала выключите картечный таран" : null);
-        Experiment("Дробовик: картечный таран", state.RamSlugShotgunExperiment, station.DebugSetRamSlugShotgunExperiment,
-            state.SweepingShotgunExperiment ? "Сначала выключите веерную очередь" : null);
-        Experiment("Пила: импульсная", state.PulsedSawExperiment, station.DebugSetPulsedSawExperiment,
-            state.InertialSawExperiment ? "Сначала выключите инерционную пилу" : null);
-        Experiment("Пила: инерционная", state.InertialSawExperiment, station.DebugSetInertialSawExperiment,
-            state.PulsedSawExperiment ? "Сначала выключите импульсную пилу" : null);
+        BuildMvpWeaponExperiments(sandbox: true);
 
         (string, bool, UnityAction) Weapon(OrbitalRewardKind kind, string label)
         {
@@ -102,12 +92,7 @@ public sealed partial class Subject42DebugMenu
             return (label + (selected ? " (выбрано)" : ""), spawnReady && !selected,
                 () => SandboxAction(() => CaptureSession.SetSpawnDensity(value)));
         }
-        void Experiment(string label, bool enabled, Func<bool, bool> setter, string conflict = null)
-        {
-            SandboxRow(label + " · " + (enabled ? "ВКЛ" : "ВЫКЛ") + (conflict != null ? "\n" + conflict : ""),
-                (enabled ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ", ready && (enabled || conflict == null),
-                    () => SandboxAction(() => setter(!enabled))));
-        }
+
     }
 
     private void SandboxAction(Action action)
@@ -138,7 +123,7 @@ public sealed partial class Subject42DebugMenu
     private void PrepareSandboxTest()
     {
         CaptureSession.SetInvulnerable(true);
-        CaptureSession.SetSpawning(false);
+        SetEnemyAutoSpawn(false, captureSettings: true);
         if (!SandboxOpenAllOrbits()) return;
         while (MvpStation.State.SegmentedWeaponLimit < OrbitalRunState.MaxSegmentedWeapons)
             if (!SandboxGrantBuildReward(OrbitalRewardKind.AddMount)) return;
@@ -155,7 +140,7 @@ public sealed partial class Subject42DebugMenu
 
     private void StartSandboxCombat()
     {
-        CaptureSession.SetSpawning(true);
+        SetEnemyAutoSpawn(true, captureSettings: true);
         if (enemySpawner.IsSpawningEnabled) CloseMenu();
         else sandboxStatus = CaptureSession.Status;
     }

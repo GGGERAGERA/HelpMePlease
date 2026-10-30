@@ -14,10 +14,6 @@ public sealed partial class Subject42DebugMenu
     private void AddCaptureSpawnControls(string reason)
     {
         var session = CaptureSession;
-        var flow = RunFlowController.Instance;
-        AddCaptureToggle("Обычный спавн врагов", enemySpawner != null && enemySpawner.IsSpawningEnabled,
-            reason ?? (enemySpawner == null ? "Спавнер не найден" : flow != null && flow.IsFilmingBoss ? "Остановлен на время боя с боссом" : null),
-            () => session.SetSpawning(!enemySpawner.IsSpawningEnabled));
         AddRow("Очистить обычных врагов", reason ?? "Убрать без убийств, опыта и наград; босс сохраняется",
             mutedColor, "ОЧИСТИТЬ", reason == null, () => { session.ClearEnemies(); RefreshCurrentTab(); });
         string densityReason = session.SpawnDensityUnavailableReason;
@@ -59,8 +55,7 @@ public sealed partial class Subject42DebugMenu
     {
         var session = CaptureSession;
         string reason = session.UnavailableReason;
-        AddSectionTitle("МИР", "Настоящий спавн и текущая угроза");
-        AddCaptureSpawnControls(reason);
+        AddSectionTitle("МИР", "События, глобальная аномалия и текущая угроза");
         AddSectionTitle("ГЛОБАЛЬНАЯ АНОМАЛИЯ", "Одна на локацию. Смена убирает обычных врагов; новые получают штатные эффекты");
         string ruleReason = session.WorldRuleUnavailableReason;
         var activeRule = WorldRuleController.Instance != null ? WorldRuleController.Instance.ActiveRule : null;
@@ -77,19 +72,25 @@ public sealed partial class Subject42DebugMenu
         foreach (int pressure in new[] { 0, 25, 50 })
             AddRow($"Давление {pressure}", reason ?? $"Сейчас: {RunStateManager.Instance.ThreatValue:0.0}", mutedColor,
                 "ВЫСТАВИТЬ", reason == null, () => { session.SetThreat(pressure); RefreshCurrentTab(); });
-        AddSectionTitle("События и босс", "Повторный запуск заменяет текущий тестовый бой");
+        AddSectionTitle("Тестовое событие", "Повторный запуск заменяет текущий тестовый бой");
         var events = FindFirstObjectByType<WorldEventSpawner>();
         AddRow("Очистить события", reason ?? "Убрать текущие события без выдачи наград", mutedColor,
             "ОЧИСТИТЬ", reason == null && events != null, () => { session.ClearWorldEvents(); RefreshCurrentTab(); });
-        if (session.Config != null)
-            foreach (var preset in session.Config.presets)
-                if (preset.shot == TrailerCaptureConfig.Shot.RocketStorm || preset.shot == TrailerCaptureConfig.Shot.Boss)
-                {
-                    string unavailable = session.PresetUnavailableReason(preset, preserveBuild: true);
-                    AddRow(preset.label, unavailable ?? preset.description, mutedColor, "ЗАПУСТИТЬ", unavailable == null,
-                        () => { session.Apply(preset, preserveBuild: true); BindInputOwner(); RefreshCurrentTab(); });
-                }
+        AddCaptureEncounter(TrailerCaptureConfig.Shot.RocketStorm);
         AddHint(session.Status);
+    }
+
+    private void AddCaptureEncounter(TrailerCaptureConfig.Shot shot)
+    {
+        var session = CaptureSession;
+        if (session.Config == null) return;
+        foreach (var preset in session.Config.presets)
+        {
+            if (preset.shot != shot) continue;
+            string unavailable = session.PresetUnavailableReason(preset, preserveBuild: true);
+            AddRow(preset.label, unavailable ?? preset.description, mutedColor, "ЗАПУСТИТЬ", unavailable == null,
+                () => { session.Apply(preset, preserveBuild: true); BindInputOwner(); RefreshCurrentTab(); });
+        }
     }
 
     private void AddAdditionalSection()
@@ -99,24 +100,21 @@ public sealed partial class Subject42DebugMenu
             AddBunkerProgressionSection();
             return;
         }
-        AddRow("Внешний вид", "Настройка визуальных эффектов", mutedColor, "ОТКРЫТЬ",
-            characterSpawner != null, () => SelectTab(DebugTab.VisualTest));
-        AddRow("Боевые эффекты и манекен", "Настройка ударов и попаданий", mutedColor, "ОТКРЫТЬ",
-            characterSpawner != null, () => SelectTab(DebugTab.FeelTest));
-        AddRow("Орбиты и оружие", "Оружие, модули связи и лимит креплений", mutedColor, "ОТКРЫТЬ",
-            characterSpawner != null, () => SelectTab(DebugTab.OrbitalProduction));
-        string[] labels = { "Боты", "Враги", "Опыт" };
+        string[] labels = { "Боты / Golden Path", "Оружие: эксперименты", "Враги: эксперименты", "XP: визуальная лаборатория" };
         for (int i = 0; i < labels.Length; i++)
         {
             int index = i;
-            AddRow(labels[i], additionalSection == i ? "ОТКРЫТО НИЖЕ" : "Технические инструменты",
-                mutedColor, "ОТКРЫТЬ", characterSpawner != null,
+            AddOptionRow(labels[i], additionalSection == i, characterSpawner != null,
                 () => { additionalSection = index; RefreshCurrentTab(); });
         }
         if (characterSpawner == null) { AddHint("Начните ран, чтобы открыть игровые лаборатории"); return; }
-        if (additionalSection == 0) AddBotLabSection();
-        else if (additionalSection == 1) AddEnemiesSection();
-        else AddExperienceVisualLabSection();
+        switch (additionalSection)
+        {
+            case 0: AddBotLabSection(); break;
+            case 1: BuildMvpWeaponExperiments(); break;
+            case 2: BuildMvpEnemyExperiments(); break;
+            case 3: AddExperienceVisualLabSection(); break;
+        }
     }
 
     private static string CaptureWorldRuleLabel(WorldRuleType type) => type switch

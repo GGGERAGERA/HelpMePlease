@@ -66,7 +66,7 @@ public static class EliteOrbitalLabSmoke
         lab.Station.enabled=false;
         var movement=lab.Player.GetComponent<CharacterMovement2D>(); movement.enabled=false;
         lab.Player.GetComponent<Rigidbody2D>().bodyType=RigidbodyType2D.Kinematic;
-        lab.Elite.GetComponent<CombatFeelTestDummy>().ApplyMode(CombatFeelDummyMode.Static);
+        lab.Elite.GetComponent<LabEnemyDummy>().ApplyMode(LabEnemyDummyMode.Static);
         lab.Elite.transform.position=Vector3.zero; lab.Elite.DebugFreezeOrbit=true;
         lab.Elite.Ring.State.CurrentPhase=0; lab.Elite.Ring.Tick(0); Physics2D.SyncTransforms(); lab.CombatPolicy.Reset();
         PlayerAt(lab,new Vector2(-6,0));

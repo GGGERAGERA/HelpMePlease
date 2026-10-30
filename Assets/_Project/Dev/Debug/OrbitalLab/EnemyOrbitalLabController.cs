@@ -793,8 +793,8 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
             shield.Bind(Player.transform);
         }
         // Existing debug marker preserves real AI and combat, suppresses loot/progression on death.
-        var debug = instance.AddComponent<CombatFeelTestDummy>();
-        debug.Initialize(null);
+        var debug = instance.AddComponent<LabEnemyDummy>();
+        debug.Initialize();
         debug.Invulnerable = EnemiesInvincible;
         foreach (var movement in instance.GetComponents<EnemyMovement>()) movement.SetSpeedMultiplier(SpeedMultiplier);
         health.NotifySpawnConfigured();
@@ -853,7 +853,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
     public void SetEnemiesInvincible(bool value)
     {
         EnemiesInvincible = value;
-        foreach (var enemy in enemies.Where(e => e != null)) enemy.GetComponent<CombatFeelTestDummy>().Invulnerable = value;
+        foreach (var enemy in enemies.Where(e => e != null)) enemy.GetComponent<LabEnemyDummy>().Invulnerable = value;
     }
     public void HealEnemies()
     {
@@ -863,7 +863,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
     {
         foreach (var enemy in enemies.Where(e => e != null && !e.IsDead).ToArray())
         {
-            enemy.GetComponent<CombatFeelTestDummy>().Invulnerable = false;
+            enemy.GetComponent<LabEnemyDummy>().Invulnerable = false;
             enemy.TakeDamage(enemy.CurrentHealth + 1, enemy.transform.position);
         }
         Notice = "Killed enemies (debug reward suppression)";

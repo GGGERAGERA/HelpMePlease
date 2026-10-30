@@ -140,9 +140,6 @@ public sealed class RunStateManager : MonoBehaviour
         ReleaseParticipants(rewards);
         ReleaseParticipants(gameplay);
         PlayerRuntimeReference.Clear();
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
-#endif
         Time.timeScale = SceneTransitionOverlay.IsTransitioning ? 0f : 1f;
     }
 

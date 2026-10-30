@@ -190,7 +190,7 @@ namespace Subject42.DebugLabs.Constructor
             if (probe)
             {
                 probeTarget=SpawnTarget(false,new Vector2(DummyDistance,0));
-                var marker=probeTarget.GetComponent<CombatFeelTestDummy>(); marker.ApplyMode(CombatFeelDummyMode.Static); marker.Invulnerable=true;
+                var marker=probeTarget.GetComponent<LabEnemyDummy>(); marker.ApplyMode(LabEnemyDummyMode.Static); marker.Invulnerable=true;
                 probeTarget.name="Stationary training dummy (no AI / no rewards)";
                 ProbeRadius=DummyDistance; probing=true;
                 Combat.HooksEnabled=false;
@@ -215,7 +215,7 @@ namespace Subject42.DebugLabs.Constructor
         {
             var prefab=shooter ? ShooterPrefab : MeleePrefab;
             var go=Instantiate(prefab,position,Quaternion.identity,transform);
-            var marker=go.AddComponent<CombatFeelTestDummy>(); marker.Initialize(null); marker.Invulnerable=false;
+            var marker=go.AddComponent<LabEnemyDummy>(); marker.Initialize(); marker.Invulnerable=false;
             var health=go.GetComponent<EnemyHealth>(); health.SetRuntimeMaxHealth(shooter ? 28 : 32); health.NotifySpawnConfigured();
             enemies.Add(health); return health;
         }

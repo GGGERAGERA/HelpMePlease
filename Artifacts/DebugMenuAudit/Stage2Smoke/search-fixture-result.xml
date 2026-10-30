@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-30 20:07:21Z" end-time="2026-10-30 20:07:29Z" duration="8,1116941">
+  <test-suite type="TestSuite" id="1000" name="Subject#42" fullname="Subject#42" runstate="Runnable" testcasecount="431" result="Failed" site="Child" start-time="2026-10-30 20:07:21Z" end-time="2026-10-30 20:07:29Z" duration="8.111694" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1544" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="431" result="Failed" site="Child" start-time="2026-10-30 20:07:21Z" end-time="2026-10-30 20:07:29Z" duration="7.945097" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="7928" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestFixture" id="1212" name="F1SandboxTests" fullname="F1SandboxTests" classname="F1SandboxTests" runstate="Runnable" testcasecount="3" result="Failed" site="Child" start-time="2026-10-30 20:07:21Z" end-time="2026-10-30 20:07:29Z" duration="7.935643" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-case id="1213" name="NavigateF1WithoutChangingRun" fullname="F1SandboxTests.NavigateF1WithoutChangingRun" methodname="NavigateF1WithoutChangingRun" classname="F1SandboxTests" runstate="Runnable" seed="629532247" result="Failed" label="Error" start-time="2026-10-30 20:07:14Z" end-time="2026-10-30 20:07:29Z" duration="15.415149" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <failure>
+            <message><![CDATA[System.InvalidOperationException : Sequence contains no matching element]]></message>
+            <stack-trace><![CDATA[  at System.Linq.Enumerable.Single[TSource] (System.Collections.Generic.IEnumerable`1[T] source, System.Func`2[T,TResult] predicate) [0x00070] in <80564d689e48448fa2a7101993ee7201>:0 
+  at F1SandboxTests+<NavigateF1WithoutChangingRun>d__4.MoveNext () [0x005c8] in D:\fork\HelpMePlease\Assets\_Project\Dev\Tests\Core\Editor\F1SandboxTests.cs:95 
+  at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@aebcb98460c6\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44 ]]></stack-trace>
+          </failure>
+          <output><![CDATA[[BunkerInteractableCollider] Interaction source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerWeaponShowcase renderers=10
+[BunkerInteractableCollider] Interaction source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerPlayerShowcase 1 renderers=16
+[BunkerInteractableCollider] Interaction source=PF_RunExitDoor, interactable=True, hoverable=True
+[BunkerHoverOutline] PF_RunExitDoor renderers=46
+[BunkerInteractableCollider] Interaction source=PF_EscapeProtocolStation, interactable=True, hoverable=True
+[BunkerHoverOutline] PF_EscapeProtocolStation renderers=3
+[BunkerInteractableCollider] ArcadeInteraction source=p_RouletteTable1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_RouletteTable1 renderers=19
+[BunkerHoverOutline] PF_MissionOperator renderers=1
+[BunkerInteractableCollider] PF_MissionOperator source=PF_MissionOperator, interactable=True, hoverable=True
+[BunkerInteractableCollider] Interaction source=SlotMachine, interactable=True, hoverable=True
+[BunkerHoverOutline] SlotMachine renderers=56
+[BunkerInteractableCollider] SlotMachine source=SlotMachine, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=p_RouletteTable1, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=p_bunkerArkade1, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=PF_MissionOperator, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=PF_EscapeProtocolStation, interactable=True, hoverable=True
+[BunkerHoverOutline] p_PockerTable1 renderers=15
+[BunkerInteractableCollider] ArcadeInteraction source=p_bunkerArkade1, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=p_PockerTable1, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=PF_RunExitDoor, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=SlotMachine, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerArkade1 renderers=13
+[BunkerInteractableCollider] PF_InteractionArrow source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
+[RunSelectionManager] Character selected: 01_Gera
+[RunSelectionManager] Character selected: 01_Gera
+[RunState] New run: character=01_Gera, weapon=NULL, stabilizer=NULL
+[TacticalMap] breakableMarkers=0
+[CharacterSpawner] Weapons found: 0
+[MetaUpgradeApplier] Loaded meta: HP=0, DMG=0, SPD=0, XP=0, GOLD=0, PICKUP=0
+[RunState] Applied to spawned player. Upgrades: 0, hasHealth: False
+[EnemySpawner] Phase 1: interval 1,50, max alive 10.
+[EnemySpawner] Level scaling: HP x1,00, speed x1,00, pressure x1,00.
+[Corridor] admitted Random seed=-709530054 rotation=270 start=(-34.57, -19.46)
+[Corridor] admitted Random seed=-687688932 rotation=90 start=(-23.26, 10.42)
+SECTOR LAYOUT
+Coverage: 96,0%
+Player: (0.00, 0.00, 0.00)
+Normal 1: center (-32.25, -29.77), size (35.51, 40.46)
+Normal 2: center (-2.26, -29.77), size (24.46, 40.46)
+Normal 3: center (-29.98, 35.01), size (40.03, 29.97)
+Special RedBeam: center (29.98, -20.23), size (40.03, 59.54), distance 36,2/70,7
+Line-to-Special in Normal: 0%
+Exit: (-4.81, -34.37), inside NORMAL
+Attempts: 1
+[ExplorationSector] Special Site: BEAM (ProductionBeamSiteHazard).
+[WorldEventSpawner] Placement rejected 'PF_CorridorEvent(Clone)': Whole route does not fit playable bounds.
+[WorldEventSpawner] Placement rejected 'PF_CorridorEvent(Clone)': Whole route does not fit playable bounds.
+[Corridor] admitted Random seed=1219334605 rotation=0 start=(39.25, -19.86)
+[Breakables] requested=5 spawned=5 visible=5 rejected=1 fallback=0 bounds=100x100
+[PropScatter] seed=4463423, count=232/238. Safety takes priority over requested counts.
+[ExplorationSector] Sector ready: 6 Normal, 1 Special (RedBeam), 96% map coverage, 5 breakables, Exit at (-4.81, -34.37).
+[SectorRuntime]
+Source=RunSector
+Sector=1
+StageProfile='StageProfile_01'
+WorldRule='WorldRule_None'
+LocalAnomaly='LocalAnomaly_Berserk'
+[TacticalMap] breakableMarkers=5
+[EnemySpawner] Spawning stopped.
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+Saving results to: Artifacts/GeneratedQA/CompactHud/results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

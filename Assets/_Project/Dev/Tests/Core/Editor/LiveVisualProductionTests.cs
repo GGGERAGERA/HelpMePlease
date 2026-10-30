@@ -63,8 +63,8 @@ public sealed class LiveVisualProductionTests
         var one = spawner.SpawnDebugEnemyAt(classic, player.transform.position + new Vector3(3, 1));
         var red = spawner.SpawnDebugEnemyAt(bomber, player.transform.position + new Vector3(5, -2));
         Assert.That(one != null && red != null, Is.True, "Production debug spawns must return live instances.");
-        one.AddComponent<CombatFeelTestDummy>();
-        red.AddComponent<CombatFeelTestDummy>();
+        one.AddComponent<LabEnemyDummy>();
+        red.AddComponent<LabEnemyDummy>();
         foreach (var behaviour in one.GetComponents<EnemyMovement>()) behaviour.enabled = false;
         foreach (var behaviour in red.GetComponents<EnemyMovement>()) behaviour.enabled = false;
         runtime.RefreshScene();
@@ -85,7 +85,7 @@ public sealed class LiveVisualProductionTests
         var colliderBounds = collider != null ? collider.bounds.size : Vector3.zero;
         float redAlpha = ((SpriteRenderer)redTarget.Component).color.a;
         var debugMenu = Object.FindFirstObjectByType<Subject42DebugMenu>();
-        typeof(Subject42DebugMenu).GetMethod("ToggleHub", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(debugMenu, null);
+        typeof(Subject42DebugMenu).GetMethod("ShowHub", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(debugMenu, null);
         yield return null; yield return null;
         yield return Capture(output, "00-debug-hub.png");
         typeof(Subject42DebugMenu).GetMethod("CloseHub", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(debugMenu, null);
@@ -120,7 +120,7 @@ public sealed class LiveVisualProductionTests
         runtime.Undo();
         sprite.GetPropertyBlock(block); Assert.That(block.GetFloat("_StudioSaturation"), Is.EqualTo(4f));
         var newborn = spawner.SpawnDebugEnemyAt(classic, player.transform.position + new Vector3(2, -2));
-        newborn.AddComponent<CombatFeelTestDummy>();
+        newborn.AddComponent<LabEnemyDummy>();
         yield return null;
         var newbornRenderer = SelectVisibleBody(newborn, "Enemy2Simple1");
         var newTarget = runtime.Targets.Single(t => t.Component == newbornRenderer);

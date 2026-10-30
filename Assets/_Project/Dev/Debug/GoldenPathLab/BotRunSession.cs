@@ -79,7 +79,6 @@ public sealed partial class BotRunSession : MonoBehaviour
         if (!CanStart) return false;
         float requestedSpeed = speed ?? SelectedSpeed;
         if (requestedSpeed != 1f && requestedSpeed != 5f && requestedSpeed != 10f) return false;
-        PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
         restoreScale = originalScale ?? (Time.timeScale > 0f ? Time.timeScale : 1f);
         CharacterData character = spawner.SpawnedCharacterData;
         string scene = spawner.gameObject.scene.name;
@@ -225,7 +224,6 @@ public sealed partial class BotRunSession : MonoBehaviour
         if (ownsSeed) { BotRunSeed.End(); ownsSeed = false; }
         if (ownsSpeed)
         {
-            PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
             if (rewards != null && !rewards.IsRewardQueueIdle) rewards.DebugSetRewardResumeScale(restoreScale);
             Subject42DebugMenu.RestoreBotResumeScale(restoreScale);
             if (Time.timeScale > 0f && !SceneTransitionOverlay.IsTransitioning) Time.timeScale = restoreScale;

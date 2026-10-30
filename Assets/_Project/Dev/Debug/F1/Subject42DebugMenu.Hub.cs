@@ -31,7 +31,11 @@ public sealed partial class Subject42DebugMenu
     }
 
     private const string HubFavoritesKey = "Subject42.DebugHub.Favorites.v1";
-    private static readonly string[] HubCategories = { "Визуал", "Забег", "Бой и события", "Диагностика", "ПЕСОЧНИЦА" };
+    private static readonly string[] HubCategories =
+    {
+        "ПЕСОЧНИЦА", "Билд и улучшения", "Враги и бой",
+        "Мир и прогресс", "Визуал", "QA / Лаборатории"
+    };
     private readonly List<HubCommand> hubCommands = new();
     private readonly HashSet<string> hubFavorites = new(StringComparer.Ordinal);
     private readonly Queue<string> hubLogs = new();
@@ -45,8 +49,10 @@ public sealed partial class Subject42DebugMenu
     private bool hubOnlyFavorites, hubPointerHeld, hubPreviousCursorVisible;
     private CursorLockMode hubPreviousCursorLock;
     private Coroutine hubTelemetryRoutine;
-    // Legacy labs remain reachable from the new navigation in the production MVP.
-    private bool hubLegacyLab;
+    // Utility pages share the same menu shell as the indexed MVP catalogue.
+    private bool hubUtilityPage;
+    private readonly Stack<(bool IsHub, bool Legacy, DebugTab Tab, int Category)> hubHistory = new();
+    private GameObject hubSearchButton;
 
     private bool IsHubOpen => hubRoot != null && hubRoot.activeSelf;
 
@@ -67,8 +73,11 @@ public sealed partial class Subject42DebugMenu
     {
         if (hubRoot != null) return;
         foreach (string id in PlayerPrefs.GetString(HubFavoritesKey, "").Split('|'))
-            if (!string.IsNullOrEmpty(id)) hubFavorites.Add(id);
+            if (!string.IsNullOrEmpty(id))
+                hubFavorites.Add(id is "visual.original" or "visual.current" or "visual.custom" ? "visual.studio" :
+                    id == "run.sectors" ? "run.tools" : id);
         ConfigureHubCommands();
+        hubFavorites.RemoveWhere(id => hubCommands.All(command => command.Id != id));
         hubRoot = new GameObject("Subject42 Debug Hub", typeof(RectTransform), typeof(Canvas),
             typeof(CanvasScaler), typeof(GraphicRaycaster));
         var canvas = hubRoot.GetComponent<Canvas>();
@@ -83,7 +92,9 @@ public sealed partial class Subject42DebugMenu
         hubPanel.sizeDelta = new Vector2(600f, 660f);
         hubPanel.gameObject.AddComponent<Image>().color = panelColor;
         var title = CreateText("Heading", hubPanel, "Отладка · F1", 23f, TextAlignmentOptions.MidlineLeft, Color.white);
-        HubPlace(title.rectTransform, 18f, 10f, 465f, 42f);
+        HubPlace(title.rectTransform, 18f, 10f, 420f, 42f);
+        var back = CreateButton(hubPanel, "← Назад", HubGoBack, 88f);
+        HubPlace(back.GetComponent<RectTransform>(), 452f, 16f, 88f, 32f);
         var close = CreateButton(hubPanel, "×", CloseHub, 36f);
         HubPlace(close.GetComponent<RectTransform>(), 548f, 16f, 36f, 32f);
         hubTelemetry = CreateText("Telemetry", hubPanel, "", 12f, TextAlignmentOptions.MidlineLeft, mutedColor);
@@ -91,19 +102,18 @@ public sealed partial class Subject42DebugMenu
         for (int i = 0; i < HubCategories.Length; i++)
         {
             int selected = i;
-            float width = (568f - (HubCategories.Length - 1) * 4f) / HubCategories.Length;
+            const float width = 186f;
             var tab = CreateButton(hubPanel, HubCategories[i], () =>
             {
                 hubCategory = selected;
-                if (selected == HubCategories.Length - 1) OpenSandbox();
-                else RefreshHub();
-            }, width, i != HubCategories.Length - 1 || IsSandboxScene);
-            HubPlace(tab.GetComponent<RectTransform>(), 18f + i * (width + 4f), 84f, width, 36f);
+                RefreshHub();
+            }, width, i != 0 || IsSandboxScene);
+            HubPlace(tab.GetComponent<RectTransform>(), 18f + i % 3 * 190f, 84f + i / 3 * 40f, width, 36f);
             tab.GetComponentInChildren<TextMeshProUGUI>().fontSize = 14f;
             hubCategoryImages.Add(tab.targetGraphic as Image);
         }
         var searchRect = CreateRect("Command Search", hubPanel);
-        HubPlace(searchRect, 18f, 132f, 420f, 36f);
+        HubPlace(searchRect, 18f, 172f, 420f, 36f);
         searchRect.gameObject.AddComponent<Image>().color = rowColor;
         hubSearch = searchRect.gameObject.AddComponent<TMP_InputField>();
         var viewport = CreateRect("Text Area", searchRect);
@@ -120,9 +130,9 @@ public sealed partial class Subject42DebugMenu
         hubSearch.characterLimit = 128;
         hubSearch.onValueChanged.AddListener(_ => RefreshHub());
         var favorites = CreateButton(hubPanel, "Избранное", () => { hubOnlyFavorites = !hubOnlyFavorites; RefreshHub(); }, 138f);
-        HubPlace(favorites.GetComponent<RectTransform>(), 446f, 132f, 138f, 36f);
+        HubPlace(favorites.GetComponent<RectTransform>(), 446f, 172f, 138f, 36f);
         var scrollRect = CreateRect("Commands", hubPanel);
-        Stretch(scrollRect, 18f, 18f, 70f, 180f);
+        Stretch(scrollRect, 18f, 18f, 70f, 220f);
         var scroll = scrollRect.gameObject.AddComponent<ScrollRect>();
         var scrollViewport = CreateRect("Viewport", scrollRect);
         Stretch(scrollViewport);
@@ -161,38 +171,64 @@ public sealed partial class Subject42DebugMenu
             => hubCommands.Add(new HubCommand { Id = id, Category = category, Title = title,
                 Description = description, Run = run, Available = available ?? (() => true) });
         void Studio() { CloseHub(); LiveVisualStudio.Open(); }
-        Add("visual.studio", 0, "Live Visual Studio", "Выбор объекта, живые настройки и профили", Studio);
-        Add("visual.original", 0, "Сравнить: Original", "Применить поддерживаемые значения из Git-снимка", () =>
-            { LiveVisualRuntime.Instance.SetMode(VisualComparisonMode.Original); Studio(); }, () => LiveVisualRuntime.Instance != null);
-        Add("visual.current", 0, "Сравнить: Current", "Вернуть текущее исходное состояние рабочей копии", () =>
-            { LiveVisualRuntime.Instance.SetMode(VisualComparisonMode.Current); Studio(); }, () => LiveVisualRuntime.Instance != null);
-        Add("visual.custom", 0, "Настройки Custom и пресеты", "Вернуться к своим настройкам; Save / Load в студии", () =>
-            { LiveVisualRuntime.Instance.SetMode(VisualComparisonMode.Custom); Studio(); }, () => LiveVisualRuntime.Instance != null);
-        Add("run.tools", 1, "Текущий забег", "Здоровье, опыт, награды, штатный выход в бункер", () => HubOpenDetails(3, DebugTab.PlayerBuild));
-        Add("run.sectors", 1, "Секторы и босс", "Штатный production flow и диагностика этапов", () => HubOpenLegacyTool(DebugTab.WorldEvents), () => characterSpawner != null);
-        Add("run.catalogue", 1, "Награды и характеристики", "Усиления характеристик игрока и оружия", () => HubOpenDetails(1, DebugTab.PlayerBuild), () => characterSpawner != null);
-        Add("run.bunker", 1, "Инструменты бункера", "Двери, станции и существующие debug API", () => HubOpenLegacyTool(DebugTab.Bunker), () => IsProductionBunker);
-        Add("combat.enemies", 2, "Враги и события", "Типы врагов, ручной спавн, AI и события сектора", () => HubOpenDetails(2, DebugTab.WorldEvents), () => enemySpawner != null);
-        Add("combat.weapons", 2, "Орбиты и оружие", "Оружие, модули связи, открытие орбит и лимит креплений", () => HubOpenDetails(0, DebugTab.OrbitalProduction), () => characterSpawner != null);
-        Add("combat.feel", 2, "FEEL LAB / Combat Lab", "Сохранённые боевые лаборатории и тестовые сценарии", () => HubOpenLegacyTool(DebugTab.FeelTest), () => characterSpawner != null);
-        Add("diagnostics.snapshot", 3, "Диагностический снимок", "Состояние production-систем и последние 30 записей лога", SaveHubSnapshot);
-        Add("diagnostics.logs", 3, "Последние логи и исключения", "Ограниченный журнал текущего запуска", () => { hubStatusText.text = hubLogs.Count == 0 ? "С момента создания меню записей нет." : hubLogs.Last(); ShowHubLogs(); });
-        Add("diagnostics.tools", 3, "Существующие QA-инструменты", "Исходная навигация инструментов и тестов", () => HubOpenLegacyTool(DebugTab.Additional));
-        Add("sandbox.open", 4, "ПЕСОЧНИЦА", "Билд, подготовка теста, спавн и эксперименты оружия", OpenSandbox, () => IsSandboxScene);
+        Add("sandbox.open", 0, "ПЕСОЧНИЦА", "Быстрая подготовка билда и боя", OpenSandbox, () => IsSandboxScene);
+        Add("combat.weapons", 1, "Оружие, модули и орбиты", "Полный каталог Segmented: запас, открытие орбит и лимит оружия", () => HubOpenDetails(0, DebugTab.OrbitalProduction), () => characterSpawner != null);
+        Add("run.catalogue", 1, "Карточки и улучшения", "Каталог характеристик игрока и оружия, штатный выбор награды", () => HubOpenDetails(1, DebugTab.PlayerBuild), () => characterSpawner != null);
+        Add("combat.enemies", 2, "Враги и бой", "Ручной спавн, плотность, AI, специальные враги и тестовый босс", () => HubOpenDetails(2, DebugTab.WorldEvents), () => enemySpawner != null);
+        Add("run.tools", 3, "Мир и прогресс", "Здоровье, XP, pickups, события, World Rules и переходы", () => HubOpenDetails(3, DebugTab.PlayerBuild));
+        if (IsProductionBunker)
+            Add("run.bunker", 3, "Инструменты бункера", "Двери, станции и существующие debug API", () => HubOpenUtilityPage(DebugTab.Bunker));
+        Add("visual.studio", 4, "Live Visual Studio", "Живые настройки, Original / Current / Custom и пресеты", Studio, () => LiveVisualRuntime.Instance != null);
+        Add("visual.segmented", 4, "Внешний вид Segmented · F9", "Действующие настройки линий и оформления орбит", () => { CloseHub(); ToggleMvpOrbitSurface(); }, () => IsSandboxScene && MvpCanEdit);
+        Add("diagnostics.snapshot", 5, "Диагностический снимок", "Состояние production-систем и последние 30 записей лога", SaveHubSnapshot);
+        Add("diagnostics.logs", 5, "Последние логи и исключения", "Ограниченный журнал текущего запуска", ShowHubLogs);
+        Add("diagnostics.tools", 5, "Боты, эксперименты и расширенные инструменты", "Боты, Golden Path, шесть вариантов оружия, восемь экспериментов врагов и XP-лаборатория", () => HubOpenUtilityPage(DebugTab.Additional));
     }
 
     private void ToggleHub()
     {
-        if (isOpen) { CloseMenu(); hubLegacyLab = false; return; }
+        if (isOpen) { CloseMenu(); hubUtilityPage = false; return; }
         if (IsHubOpen) { CloseHub(); return; }
-        hubLegacyLab = false;
+        hubHistory.Clear();
+        if (IsSandboxScene) OpenSandbox();
+        else ShowHub();
+    }
+
+    private void ShowHub()
+    {
+        HubShowCommands(true);
+    }
+
+    private void HubShowCommands(bool remember)
+    {
+        if (remember && isOpen)
+            hubHistory.Push((false, hubUtilityPage, activeTab, hubCategory));
+        CloseMenu();
+        hubUtilityPage = false;
         BuildHub();
         ResolveSceneReferences();
+        if (IsHubOpen) { RefreshHub(); return; }
         hubPreviousCursorVisible = Cursor.visible; hubPreviousCursorLock = Cursor.lockState;
         Cursor.visible = true; Cursor.lockState = CursorLockMode.None;
         hubRoot.SetActive(true);
         RefreshHub();
-        hubTelemetryRoutine = StartCoroutine(RefreshHubTelemetry());
+        if (hubTelemetryRoutine == null) hubTelemetryRoutine = StartCoroutine(RefreshHubTelemetry());
+    }
+
+    private void HubOpenSection(int category)
+    {
+        switch (category)
+        {
+            case 0: OpenSandbox(); break;
+            case 1: HubOpenDetails(0, DebugTab.OrbitalProduction); break;
+            case 2: HubOpenDetails(2, DebugTab.WorldEvents); break;
+            case 3:
+                if (IsProductionBunker) HubOpenUtilityPage(DebugTab.Bunker);
+                else HubOpenDetails(3, DebugTab.PlayerBuild);
+                break;
+            case 4: ShowHub(); hubCategory = category; RefreshHub(); break;
+            case 5: HubOpenUtilityPage(DebugTab.Additional); break;
+        }
     }
 
     private void CloseHub()
@@ -272,44 +308,68 @@ public sealed partial class Subject42DebugMenu
 
     private void HubOpenDetails(int mvpTab, DebugTab otherTab)
     {
-        CloseHub(); hubLegacyLab = false;
-        SelectTab(IsMvpDebugMenu ? (DebugTab)mvpTab : otherTab);
-        OpenMenu();
-        HubApplyDetailsLayout();
+        int category = mvpTab <= 1 ? 1 : mvpTab;
+        HubShowDetails(false, SceneManager.GetActiveScene().name == "MVP" ? (DebugTab)mvpTab : otherTab, category);
     }
 
-    private void HubOpenLegacyTool(DebugTab tab)
+    private void HubOpenUtilityPage(DebugTab tab)
     {
-        CloseHub(); hubLegacyLab = true;
-        if (IsRuntimeLabTab(tab)) EnsureProductionSectorDebug();
-        // Additional/QA pages can navigate to any existing lab internally.
-        // Create the small page shells together; rows are still built only on demand.
+        int category = tab == DebugTab.Sandbox ? 0 : tab == DebugTab.Bunker || tab == DebugTab.WorldEvents ? 3 : 5;
+        HubShowDetails(true, tab, category);
+    }
+
+    private void HubShowDetails(bool legacy, DebugTab tab, int category, bool remember = true)
+    {
+        if (isOpen && !mvpOrbitSurfaceOpen && hubUtilityPage == legacy && activeTab == tab) return;
+        if (remember && isOpen && !mvpOrbitSurfaceOpen)
+            hubHistory.Push((false, hubUtilityPage, activeTab, hubCategory));
+        else if (remember && IsHubOpen)
+            hubHistory.Push((true, false, default, hubCategory));
+        CloseMenu();
+        CloseHub();
+        hubUtilityPage = legacy;
+        hubCategory = category;
+        // Reuse page shells; content is built only when the page is selected.
         for (int i = 0; i < TabLabels.Length; i++)
         {
             if (tabRoots[i] != null) continue;
             tabRoots[i] = CreateTabPage(TabLabels[i], menuPages, out _, true);
-            if (i == (int)DebugTab.FeelTest) BuildFeelActionBar(tabRoots[i].transform);
-            if (i == (int)DebugTab.VisualTest) BuildVisualActionBar(tabRoots[i].transform);
         }
-        SelectTab(tab);
+        SelectTab(tab, false);
         OpenMenu();
         HubApplyDetailsLayout();
+    }
+
+    private void HubGoBack()
+    {
+        if (hubHistory.Count == 0) { HubShowCommands(false); return; }
+        var page = hubHistory.Pop();
+        if (page.IsHub)
+        {
+            hubCategory = page.Category;
+            HubShowCommands(false);
+        }
+        else HubShowDetails(page.Legacy, page.Tab, page.Category, false);
     }
 
     private void HubApplyDetailsLayout()
     {
         if (!isOpen || menuPanel == null || mvpOrbitSurfaceOpen) return;
-        // These are details launched by the hub, not a second competing navigation.
-        menuTabBar.gameObject.SetActive(false);
-        menuPages.offsetMax = new Vector2(menuPages.offsetMax.x, IsRuntimeLabTab(activeTab) ? -46f : -70f);
+        menuTabBar.gameObject.SetActive(true);
+        menuPages.offsetMax = new Vector2(menuPages.offsetMax.x, -120f);
+        hubSearchButton.SetActive(true);
         visualBackButton.SetActive(true);
         var back = visualBackButton.GetComponent<Button>();
         var rect = back.GetComponent<RectTransform>();
-        rect.anchoredPosition = new Vector2(-78f, 0f);
+        rect.anchoredPosition = new Vector2(-192f, 0f);
         rect.sizeDelta = new Vector2(72f, 30f);
-        Stretch(menuTitle.rectTransform, 18f, 166f);
+        back.GetComponentInChildren<TextMeshProUGUI>().text = "НАЗАД";
+        Stretch(menuTitle.rectTransform, 18f, 278f);
         back.onClick.RemoveAllListeners();
-        back.onClick.AddListener(() => { CloseMenu(); hubLegacyLab = false; ToggleHub(); });
+        back.onClick.AddListener(HubGoBack);
+        for (int i = 0; i < HubCategories.Length; i++)
+            if (tabButtonImages[i] != null)
+                tabButtonImages[i].color = hubCategory == i ? new Color(.2f, .73f, .88f, 1f) : accentColor;
     }
 
     private void ObserveHubLog(string message, string stack, LogType type)
