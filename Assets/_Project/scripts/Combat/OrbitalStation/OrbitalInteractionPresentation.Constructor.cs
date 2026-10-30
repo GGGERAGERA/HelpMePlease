@@ -29,6 +29,7 @@ namespace Subject42.Combat.OrbitalStation
         private readonly List<Vector3> constructorArcPoints = new(64);
         private int constructorRevision = -1, constructorDragRevision, constructorDragCell = -1, constructorDropCell = -1;
         private GameLanguage constructorLanguage;
+        private float[] constructorMountRadii;
         private OrbitalModuleState constructorDragWeapon;
         private SegmentedLinkState constructorDragModule;
         private SegmentedLinkKind? constructorDragModuleKind;
@@ -56,8 +57,13 @@ namespace Subject42.Combat.OrbitalStation
             if (!station.UsesSegmentedOrbit) return;
             BindButton(constructorLauncher, () => OpenConstructor());
             BindButton(constructorClose, CloseConstructor);
+            constructorMountRadii = new float[constructorMounts.Length];
             for (int i = 0; i < constructorMounts.Length; i++)
-            { int cell = i; BindConstructorDrag(constructorMounts[i], pointer => BeginConstructorDrag(pointer, cell)); }
+            {
+                int cell = i;
+                constructorMountRadii[i] = ((RectTransform)constructorMounts[i].transform).anchoredPosition.magnitude;
+                BindConstructorDrag(constructorMounts[i], pointer => BeginConstructorDrag(pointer, cell));
+            }
             for (int i = 0; i < constructorWeapons.Length; i++)
             { int item = i; BindConstructorDrag(constructorWeapons[i], pointer => BeginConstructorDrag(pointer, -1, item)); }
             for (int i = 0; i < constructorLinks.Length; i++)
@@ -326,6 +332,8 @@ namespace Subject42.Combat.OrbitalStation
             for (int i = 0; i < constructorMounts.Length; i++)
             {
                 var mount = ConstructorMount(i);
+                ((RectTransform)constructorMounts[i].transform).anchoredPosition = mount.Ring.Geometry.PositionDegrees(
+                    mount.Ring.Phase + mount.LocalPhase, constructorMountRadii[i]);
                 var module = ConstructorModule(i);
                 bool weaponCell = IsWeaponCell(i), unlocked = state.IsRingActive(mount.Ring.State);
                 bool candidate = CanDropConstructorItem(i);

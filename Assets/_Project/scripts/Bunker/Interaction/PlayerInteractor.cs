@@ -8,6 +8,8 @@ public class PlayerInteractor : MonoBehaviour
 
     [SerializeField] private BunkerPanelManager panelManager;
     private IBunkerInteractable currentInteractable;
+    public KeyCode CurrentInteractionKey => currentInteractable is Interactable target
+        ? target.InteractionKey : KeyCode.E;
     private readonly Collider2D[] interactionBuffer =
         new Collider2D[InteractionBufferSize];
     private ContactFilter2D interactionFilter;
@@ -42,7 +44,7 @@ public class PlayerInteractor : MonoBehaviour
         FindInteractable();
 
         if (currentInteractable != null &&
-            Input.GetKeyDown(KeyCode.E))
+            Input.GetKeyDown(CurrentInteractionKey))
         {
             currentInteractable.Interact();
         }

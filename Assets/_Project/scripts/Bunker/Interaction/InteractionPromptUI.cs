@@ -53,7 +53,7 @@ public class InteractionPromptUI : MonoBehaviour
         }
 
         if (promptText != null)
-            promptText.text = $"[E] {interactable.InteractionText}";
+            promptText.text = $"[{playerInteractor.CurrentInteractionKey}] {interactable.InteractionText}";
     }
 
     private void PositionPromptAbovePlayer()

@@ -9,6 +9,7 @@ public abstract class Interactable : MonoBehaviour, IBunkerInteractable
     public string PromptText => LocalizationService.Instance.Get(promptText);
     public string InteractionText => HasInteractionPrompt ? PromptText : string.Empty;
     public virtual bool CanInteract => isActiveAndEnabled;
+    public virtual KeyCode InteractionKey => KeyCode.E;
 
     public abstract void Interact();
 }

@@ -41,6 +41,7 @@ public sealed class WorldLootChest : Interactable, ITacticalMapMarkerProvider
         !TutorialController.IsTutorialSector &&
         !WorldLootRewardReel.IsActive;
     public ChestState State => state;
+    public override KeyCode InteractionKey => KeyCode.F;
     public IReadOnlyList<WorldLootRewardDefinition> RewardPool => rewardPool;
     public static IReadOnlyList<WorldLootChest> ActiveInstances => activeInstances;
 
