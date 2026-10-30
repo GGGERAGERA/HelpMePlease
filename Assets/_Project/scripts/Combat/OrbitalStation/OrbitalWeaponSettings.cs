@@ -70,6 +70,66 @@ public sealed class OrbitalWeaponSettings
         ProjectileRadius = .14f, BurstShots = 1, SpreadDegrees = 0f, BodyPierces = 1,
         BypassShields = true, Recoil = .16f, Color = new(1f, .25f, .25f), ShotSound = AudioCueId.OrbitalArcFire
     };
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    [NonSerialized] public bool MissReturnExperiment;
+
+    public OrbitalWeaponSettings CreateRamSlugShotgunExperiment()
+    {
+        var runtime = (OrbitalWeaponSettings)MemberwiseClone();
+        if (Kind != OrbitalModuleKind.Shotgun) return runtime;
+        runtime.Pellets = 1;
+        runtime.BurstShots = 1;
+        runtime.SpreadDegrees = 0f;
+        runtime.Damage = 10f;
+        runtime.Range = 3.5f;
+        runtime.ProjectileSpeed = 7f;
+        runtime.BodyPierces = 3;
+        runtime.Knockback = 5f;
+        runtime.BypassShields = false;
+        if (Presentation != null)
+            runtime.Presentation = new ProjectileStyle
+            {
+                Color = Presentation.Color,
+                BodySize = Presentation.BodySize * 1.6f,
+                TrailSeconds = Presentation.TrailSeconds,
+                TrailWidth = Presentation.TrailWidth,
+                TrailOpacity = Presentation.TrailOpacity
+            };
+        else
+            runtime.ProjectileVisualScale *= 1.6f;
+        return runtime;
+    }
+
+    public OrbitalWeaponSettings CreateMissReturnPistolExperiment()
+    {
+        var runtime = (OrbitalWeaponSettings)MemberwiseClone();
+        // Preserve authored assets and all other scalars; never mutate the shared profile.
+        if (Kind != OrbitalModuleKind.Pistol) return runtime;
+        runtime.Range = 4f;
+        runtime.MissReturnExperiment = true;
+        return runtime;
+    }
+
+    public OrbitalWeaponSettings CreateSweepingShotgunExperiment()
+    {
+        var runtime = (OrbitalWeaponSettings)MemberwiseClone();
+        runtime.BurstShots = 3;
+        runtime.BurstInterval = .12f;
+        runtime.Pellets = 2;
+        runtime.SpreadDegrees = 12f;
+        return runtime;
+    }
+
+    // Shallow copy intentionally preserves authored visual references; only scalar combat values change.
+    public OrbitalWeaponSettings CreateChargedLineSniperExperiment()
+    {
+        var runtime = (OrbitalWeaponSettings)MemberwiseClone();
+        runtime.Damage = 24f;
+        runtime.ChargeSeconds = .45f;
+        runtime.BodyPierces = 3;
+        return runtime;
+    }
+#endif
     public static OrbitalWeaponSettings Saw() => new()
     {
         Kind = OrbitalModuleKind.Saw, Category = OrbitalUpgradeCategory.Contact, Damage = 13f, ContactRadius = .65f,

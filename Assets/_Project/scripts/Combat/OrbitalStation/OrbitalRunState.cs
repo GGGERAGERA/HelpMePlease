@@ -41,6 +41,61 @@ namespace Subject42.Combat.OrbitalStation
     {
         public const int SegmentedLevels = 3, SegmentedPositions = 12;
         public bool UsesSegmentedOrbit;
+        // Attempt-owned, serialized across sector restores; fresh runs default to false.
+        // Only Development/Editor code can opt in; public builds never apply this profile.
+        [UnityEngine.SerializeField] private bool chargedLineSniperExperiment;
+        public bool ChargedLineSniperExperiment => chargedLineSniperExperiment;
+        [UnityEngine.SerializeField] private bool sweepingShotgunExperiment;
+        public bool SweepingShotgunExperiment => sweepingShotgunExperiment;
+        [UnityEngine.SerializeField] private bool ramSlugShotgunExperiment;
+        public bool RamSlugShotgunExperiment => ramSlugShotgunExperiment;
+        [UnityEngine.SerializeField] private bool pulsedSawExperiment;
+        public bool PulsedSawExperiment => pulsedSawExperiment;
+        [UnityEngine.SerializeField] private bool inertialSawExperiment;
+        public bool InertialSawExperiment => inertialSawExperiment;
+        [UnityEngine.SerializeField] private bool missReturnPistolExperiment;
+        public bool MissReturnPistolExperiment => missReturnPistolExperiment;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        internal void SetInertialSawExperiment(bool enabled)
+        {
+            if (enabled && pulsedSawExperiment) return;
+            inertialSawExperiment = enabled;
+            Revision++;
+        }
+
+        internal void SetMissReturnPistolExperiment(bool enabled)
+        {
+            missReturnPistolExperiment = enabled;
+            Revision++;
+        }
+
+        internal void SetPulsedSawExperiment(bool enabled)
+        {
+            if (enabled && inertialSawExperiment) return;
+            pulsedSawExperiment = enabled;
+            Revision++;
+        }
+
+        internal void SetSweepingShotgunExperiment(bool enabled)
+        {
+            if (enabled && ramSlugShotgunExperiment) return;
+            sweepingShotgunExperiment = enabled;
+            Revision++;
+        }
+
+        internal void SetRamSlugShotgunExperiment(bool enabled)
+        {
+            if (enabled && sweepingShotgunExperiment) return;
+            ramSlugShotgunExperiment = enabled;
+            Revision++;
+        }
+
+        internal void SetChargedLineSniperExperiment(bool enabled)
+        {
+            chargedLineSniperExperiment = enabled;
+            Revision++;
+        }
+#endif
         public float RotationEnergy = 100f;
 
         public bool IsRingActive(OrbitalRingState ring) => !UsesSegmentedOrbit || ring.Order < UnlockedSegmentedLevels;

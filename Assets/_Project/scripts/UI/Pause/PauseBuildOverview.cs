@@ -71,7 +71,7 @@ public sealed class PauseBuildOverview : MonoBehaviour
         float time = run != null ? run.GetCurrentRunTime() : RunStatsManager.Instance?.RunTime ?? 0f;
         int kills = run != null ? run.GetCurrentRunKills() : RunStatsManager.Instance?.Kills ?? 0;
         string sectorLabel = run?.CurrentSector?.SectorNumber == RunRoute.TutorialSector
-            ? "Обучение" : $"{run?.CurrentSector?.SectorNumber ?? 1} / {RunRoute.TotalSectors}";
+            ? localization.Get("run.tutorialSectorLabel") : $"{run?.CurrentSector?.SectorNumber ?? 1} / {RunRoute.TotalSectors}";
         runText.text = $"{localization.Get("stats.time")}  <color=#FFFFFF>{(int)time / 60:00}:{(int)time % 60:00}</color>     " +
             $"{localization.Get("stats.kills")}  <color=#FFFFFF>{kills}</color>     " +
             $"{localization.Get("stats.level")}  <color=#FFFFFF>{ExperienceManager.Instance?.CurrentLevel ?? 1}</color>     " +
@@ -95,8 +95,16 @@ public sealed class PauseBuildOverview : MonoBehaviour
                 int occupied = state.Modules.Count(m => m.StableRingId == ring.StableRingId);
                 if (state.UsesSegmentedOrbit)
                 {
+                    int weaponCapacity = Enumerable.Range(0, 12).Count(position => OrbitalRunState.IsSegmentedWeaponSlot(ring.Order, position));
+                    int moduleCapacity = 12 - weaponCapacity;
+                    string occupancy = $"O: {occupied}/{weaponCapacity}";
+                    if (moduleCapacity > 0)
+                    {
+                        int installedModules = state.SegmentedLinks.Count(m => m.RingId == ring.StableRingId);
+                        occupancy += $"    M: {installedModules}/{moduleCapacity}";
+                    }
                     text.AppendLine($"<color=#{color}>■</color>  <b>{localization.Get("pause.ring")} {ring.Order + 1}</b>");
-                    text.AppendLine($"<size=19>{localization.Get("pause.damage")} ×{ring.PowerMultiplier:0.##}    {localization.Get("pause.modules")} {occupied}/12</size>\n");
+                    text.AppendLine($"<size=19>{localization.Get("pause.damage")} ×{ring.PowerMultiplier:0.##}    {localization.Get("pause.modules")} {occupancy}</size>\n");
                     continue;
                 }
                 string tier = ring.VisualTier switch { 1 => LocalizationService.EnsureExists().Get("pause.tier1"), 2 => LocalizationService.EnsureExists().Get("pause.tier2"), 3 => LocalizationService.EnsureExists().Get("pause.tier3"), _ => LocalizationService.EnsureExists().Get("pause.tier4") };
@@ -110,10 +118,13 @@ public sealed class PauseBuildOverview : MonoBehaviour
         text.Clear();
         if (state != null)
             foreach (var group in state.Modules.GroupBy(m => m.ModuleType).OrderBy(g => g.Key))
-                text.AppendLine($"<color=#{ColorUtility.ToHtmlStringRGB(OrbitalRewardIconResolver.ModuleColor(group.Key))}>{ModuleName(group.Key)} ×{group.Count()}</color>");
+                text.AppendLine($"<color=#{ColorUtility.ToHtmlStringRGB(OrbitalRewardIconResolver.ModuleColor(group.Key))}>{ModuleName(group.Key, state)} ×{group.Count()}</color>");
+        if (state?.UsesSegmentedOrbit == true)
+            foreach (var group in state.SegmentedLinks.GroupBy(m => m.Kind).OrderBy(g => g.Key))
+                text.AppendLine($"{SegmentedModuleName(group.Key)} ×{group.Count()}");
         modulesText.text = text.Length == 0 ? localization.Get("pause.noModules") : text.ToString().TrimEnd();
         if (state?.UsesSegmentedOrbit == true)
-            modulesText.text += $"\n{localization.Get("pause.modules")}: {state.Modules.Count}/{state.SegmentedWeaponLimit}";
+            modulesText.text += $"\n{localization.Get("pause.weaponLimit")}: {state.Modules.Count}/{state.SegmentedWeaponLimit}";
         text.Clear();
         if (state != null && !state.UsesSegmentedOrbit)
         {
@@ -146,15 +157,42 @@ public sealed class PauseBuildOverview : MonoBehaviour
         if (level > 0) text.AppendLine($"{name}  <color=#14D1DB>+{level}</color>");
     }
 
-    private static string ModuleName(OrbitalModuleKind kind) => kind switch
+    private static string SegmentedModuleName(SegmentedLinkKind kind)
     {
-        OrbitalModuleKind.Saw => "Пила",
-        OrbitalModuleKind.Shotgun => "Дробовик",
-        OrbitalModuleKind.Sniper => "Снайперка",
-        OrbitalModuleKind.ArcEmitter => LocalizationService.EnsureExists().Get("pause.arc"),
-        OrbitalModuleKind.LinkNode => LocalizationService.EnsureExists().Get("pause.link"),
-        _ => LocalizationService.EnsureExists().Get("pause.gun")
-    };
+        string key = kind switch
+        {
+            SegmentedLinkKind.Damage => "constructor.damageLabel",
+            SegmentedLinkKind.FireRate => "constructor.fireRateLabel",
+            SegmentedLinkKind.ExtraShot => "constructor.extraShotLabel",
+            SegmentedLinkKind.Ricochet => "constructor.ricochetLabel",
+            _ => null
+        };
+        return key == null ? kind.ToString() : LocalizationService.EnsureExists().Get(key);
+    }
+
+    private static string ModuleName(OrbitalModuleKind kind, OrbitalRunState state)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (state?.UsesSegmentedOrbit == true)
+        {
+            if (kind == OrbitalModuleKind.Pistol && state.MissReturnPistolExperiment)
+                return LocalizationService.EnsureExists().Get("reward.missReturnPistol");
+            if (kind == OrbitalModuleKind.Shotgun && state.RamSlugShotgunExperiment)
+                return LocalizationService.EnsureExists().Get("reward.ramSlugShotgun");
+            if (kind == OrbitalModuleKind.Saw && state.PulsedSawExperiment)
+                return LocalizationService.EnsureExists().Get("reward.pulsedSaw");
+        }
+#endif
+        return kind switch
+        {
+            OrbitalModuleKind.Saw => LocalizationService.EnsureExists().Get("reward.saw"),
+            OrbitalModuleKind.Shotgun => LocalizationService.EnsureExists().Get("reward.shotgun"),
+            OrbitalModuleKind.Sniper => LocalizationService.EnsureExists().Get("reward.sniper"),
+            OrbitalModuleKind.ArcEmitter => LocalizationService.EnsureExists().Get("pause.arc"),
+            OrbitalModuleKind.LinkNode => LocalizationService.EnsureExists().Get("pause.link"),
+            _ => LocalizationService.EnsureExists().Get("pause.gun")
+        };
+    }
 
     public void AskConfirmation(string key, System.Action action)
     {

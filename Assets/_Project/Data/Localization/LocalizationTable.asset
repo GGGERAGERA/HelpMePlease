@@ -13,6 +13,18 @@ MonoBehaviour:
   m_Name: LocalizationTable
   m_EditorClassIdentifier: Assembly-CSharp::LocalizationTable
   entries:
+  - key: reward.category.shooting
+    ru: "СТРЕЛКОВОЕ"
+    en: "SHOOTING"
+  - key: reward.category.contact
+    ru: "КОНТАКТНОЕ"
+    en: "CONTACT"
+  - key: reward.category.orbits
+    ru: "ОРБИТЫ"
+    en: "ORBITS"
+  - key: reward.category.character
+    ru: "ПЕРСОНАЖ"
+    en: "CHARACTER"
   - key: bunker.football_coming_soon
     ru: "В РАЗРАБОТКЕ"
     en: "COMING SOON"
@@ -94,6 +106,9 @@ MonoBehaviour:
   - key: stats.level
     ru: "УРОВЕНЬ"
     en: "LEVEL"
+  - key: run.tutorialSectorLabel
+    ru: "Обучение"
+    en: "Tutorial"
   - key: pause.sector
     ru: "Сектор"
     en: "Sector"
@@ -1001,26 +1016,26 @@ MonoBehaviour:
     ru: "УРОН (DMG)"
     en: "DAMAGE (DMG)"
   - key: reward.linkDamageDescription
-    ru: "+1 модуль в запас.\nЯчейка M: +20% урона соседним пушкам.\nДостаточно одной пушки."
-    en: "+1 module in reserve.\nM slot: +20% damage to adjacent guns.\nOne gun is enough."
+    ru: "+1 модуль в запас.\nЯчейка M: +20% урона соседним пушкам того же уровня.\nДостаточно одной пушки."
+    en: "+1 module in reserve.\nM slot: +20% damage to adjacent guns on the same level.\nOne gun is enough."
   - key: reward.linkRate
     ru: "СКОРОСТРЕЛЬНОСТЬ (FR)"
     en: "FIRE RATE (FR)"
   - key: reward.linkRateDescription
-    ru: "+1 модуль в запас.\nЯчейка M: +20% темпа соседним пушкам.\nДостаточно одной пушки."
-    en: "+1 module in reserve.\nM slot: +20% fire rate to adjacent guns.\nOne gun is enough."
+    ru: "+1 модуль в запас.\nЯчейка M: +20% темпа соседним пушкам того же уровня.\nДостаточно одной пушки."
+    en: "+1 module in reserve.\nM slot: +20% fire rate to adjacent guns on the same level.\nOne gun is enough."
   - key: reward.linkExtra
     ru: "ДОПОЛНИТЕЛЬНЫЙ ВЫСТРЕЛ (2X)"
     en: "EXTRA SHOT (2X)"
   - key: reward.linkExtraDescription
-    ru: "+1 модуль в запас.\nM рядом с пушкой: дополнительный выстрел.\nНе чаще 0,5 с. Без цепочки."
-    en: "+1 module in reserve.\nM beside a gun: an extra shot.\nAt most once per 0.5 s. No chain."
+    ru: "+1 модуль в запас.\nM: доп. выстрел соседним пушкам того же уровня; одной достаточно.\nОтдельный откат 0,5 с на пару M/пушка. Без цепочки."
+    en: "+1 module in reserve.\nM: extra shot for adjacent guns on the same level; one is enough.\nSeparate 0.5 s cooldown per M/gun pair. No chain."
   - key: reward.linkRicochet
     ru: "РИКОШЕТ (RIC)"
     en: "RICOCHET (RIC)"
   - key: reward.linkRicochetDescription
-    ru: "+1 модуль в запас.\nЯчейка M: +1 рикошет соседним пушкам.\nДостаточно одной пушки."
-    en: "+1 module in reserve.\nM slot: +1 ricochet to adjacent guns.\nOne gun is enough."
+    ru: "+1 модуль в запас.\nЯчейка M: +1 рикошет соседним пушкам того же уровня.\nДостаточно одной пушки."
+    en: "+1 module in reserve.\nM slot: +1 ricochet to adjacent guns on the same level.\nOne gun is enough."
   - key: reward.unlockOrbitDescription
     ru: "Открывает следующий уровень: средний, затем внешний.\nВсего 3 уровня по 12 точек. Общий лимит оружия не меняется."
     en: "Unlocks the next orbit: middle, then outer.\n3 levels, 12 positions each. Does not increase the shared weapon limit."
@@ -1036,9 +1051,18 @@ MonoBehaviour:
   - key: reward.gun
     ru: "ПИСТОЛЕТ"
     en: "PISTOL"
+  - key: reward.missReturnPistol
+    ru: "Возврат промаха"
+    en: "Miss Return"
+  - key: reward.missReturnPistolDescription
+    ru: "Эксперимент: вместо 8 м прямо — 4 м наружу и только при промахе 4 м обратно по фиксированной мировой линии. Заведите преследователей на обратный путь. Контакт отменяет возврат; наведения нет. В запас; закройте карточку и установите через Tab."
+    en: "Experiment: instead of 8 m straight ahead, travels 4 m outward and, only on a miss, 4 m back along a fixed world line. Lead pursuers into the return path. Contact cancels the return; no homing. Added to stock; close the card and install via Tab."
   - key: reward.gunDescription
     ru: "ОРУЖИЕ\nАвтоматический дальний выстрел.\nНужна 1 свободная точка."
     en: "WEAPON\nAutomatic ranged fire.\nRequires 1 free mount."
+  - key: reward.segmentedGunDescription
+    ru: "ОРУЖИЕ\nАвтоматический дальний выстрел.\n+1 оружие в запас. Установка через Tab в ячейку O."
+    en: "WEAPON\nAutomatic ranged fire.\n+1 weapon in reserve. Place in an O slot via Tab."
   - key: reward.arc
     ru: "ЛАЗЕР"
     en: "LASER"
@@ -1345,6 +1369,9 @@ MonoBehaviour:
   - key: pause.modules
     ru: "МОДУЛИ"
     en: "MODULES"
+  - key: pause.weaponLimit
+    ru: "Лимит оружия"
+    en: "Weapon limit"
   - key: mechanic.rules
     ru: "ПРАВИЛА СЕКТОРА"
     en: "SECTOR RULES"
@@ -1708,18 +1735,78 @@ MonoBehaviour:
   - key: reward.sawDescription
     ru: "Вращающийся диск: урон при реальном контакте, повтор через 0,32 с. Нужна 1 свободная точка."
     en: "Rotating disc deals damage on contact, once per 0.32 s. Requires 1 free mount."
+  - key: reward.segmentedSawDescription
+    ru: "Вращающийся диск: урон при реальном контакте, повтор через 0,32 с. +1 оружие в запас. Установка через Tab в ячейку O."
+    en: "Rotating disc deals damage on contact, once per 0.32 s. +1 weapon in reserve. Place in an O slot via Tab."
+  - key: reward.pulsedSaw
+    ru: "Импульсная пила"
+    en: "Pulsed Saw"
+  - key: reward.pulsedSawDescription
+    ru: "Эксперимент: 0,8 с вращения с контактным радиусом ×1,35, затем 0,4 с восстановления при обычном размере без вращения и урона. Сближайтесь в активное окно, отходите в восстановление. В запас; закройте карточку и установите через Tab."
+    en: "Experiment: 0.8 s of spinning with contact radius ×1.35, then 0.4 s of recovery at normal size with no spinning or damage. Close in during the active window; retreat during recovery. Added to stock; close the card and install via Tab."
   - key: reward.shotgun
     ru: "Дробовик"
     en: "Shotgun"
   - key: reward.shotgunDescription
     ru: "7 дробин со скоростью 10 м/с. Щит теряет не более 1 прочности за залп. Нужна 1 свободная точка."
     en: "7 pellets at 10 m/s. A shield loses at most 1 durability per volley. Requires 1 free mount."
+  - key: reward.segmentedShotgunDescription
+    ru: "7 дробин со скоростью 10 м/с. Щит теряет не более 1 прочности за залп. +1 оружие в запас. Установка через Tab в ячейку O."
+    en: "7 pellets at 10 m/s. A shield loses at most 1 durability per volley. +1 weapon in reserve. Place in an O slot via Tab."
+  - key: constructor.title
+    ru: "ОРБИТАЛЬНЫЙ КОНСТРУКТОР"
+    en: "ORBITAL CONSTRUCTOR"
+  - key: constructor.weaponsHeading
+    ru: "О  ОРУЖИЕ"
+    en: "O  WEAPONS"
+  - key: constructor.modulesHeading
+    ru: "M  МОДУЛИ"
+    en: "M  MODULES"
+  - key: constructor.upgradesButton
+    ru: "TAB — УЛУЧШЕНИЯ"
+    en: "TAB — UPGRADES"
+  - key: constructor.continueButton
+    ru: "ПРОДОЛЖИТЬ"
+    en: "CONTINUE"
+  - key: constructor.emptyStock
+    ru: "Запас пуст."
+    en: "Stock is empty."
+  - key: constructor.damageLabel
+    ru: "Урон +20%"
+    en: "Damage +20%"
+  - key: constructor.fireRateLabel
+    ru: "Темп +20%"
+    en: "Fire rate +20%"
+  - key: constructor.extraShotLabel
+    ru: "Доп. выстрел (2X)"
+    en: "Extra shot (2X)"
+  - key: constructor.ricochetLabel
+    ru: "Рикошет +1"
+    en: "Ricochet +1"
+  - key: constructor.missReturnPistolLabel
+    ru: "Пистолет: возврат"
+    en: "Pistol: return"
+  - key: constructor.pulsedSawLabel
+    ru: "Пила: импульс"
+    en: "Saw: pulse"
+  - key: constructor.ramSlugShotgunLabel
+    ru: "Дробовик: таран"
+    en: "Shotgun: ram"
+  - key: reward.ramSlugShotgun
+    ru: "Картечный таран"
+    en: "Ram Slug"
+  - key: reward.ramSlugShotgunDescription
+    ru: "Эксперимент: один короткий снаряд вместо веера. Урон 10, дальность 3,5 м, до 3 тел; оттеснение поддерживаемых целей. Щиты останавливают. В запас; закройте карточку и установите через Tab."
+    en: "Experiment: one short-range projectile replaces the spread. Damage 10, range 3.5 m, up to 3 bodies; knockback on supported targets. Shields stop it. Added to stock; close the card and install via Tab."
   - key: reward.sniper
     ru: "Снайперка"
     en: "Sniper"
   - key: reward.sniperDescription
     ru: "Снаряд 120 м/с пробивает щит без расхода его прочности. Нужна 1 свободная точка."
     en: "A 120 m/s projectile bypasses shields without consuming durability. Requires 1 free mount."
+  - key: reward.segmentedSniperDescription
+    ru: "Снаряд 120 м/с пробивает щит без расхода его прочности. +1 оружие в запас. Установка через Tab в ячейку O."
+    en: "A 120 m/s projectile bypasses shields without consuming durability. +1 weapon in reserve. Place in an O slot via Tab."
   - key: reward.shootingDamage
     ru: "Стрелковый урон"
     en: "Shooting damage"

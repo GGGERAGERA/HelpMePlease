@@ -118,6 +118,10 @@ namespace Subject42.Combat.OrbitalStation
             if (shot == null) return null;
             shot.Straight = true; shot.Target = null; shot.Position = origin; shot.Direction = direction.normalized;
             shot.RemainingRange = settings.Range; shot.Radius = settings.ProjectileRadius * settings.ProjectileVisualScale;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            shot.MissReturnPending = settings.MissReturnExperiment && settings.Kind == OrbitalModuleKind.Pistol;
+            shot.MissReturnRange = shot.MissReturnPending ? settings.Range : 0f;
+#endif
             shot.BodiesRemaining = Mathf.Max(1, settings.BodyPierces); shot.Volley = volley;
             shot.Knockback = settings.Knockback;
             shot.Kind = settings.Kind;
@@ -193,6 +197,8 @@ namespace Subject42.Combat.OrbitalStation
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             public long LabSequence;
             public bool LabCancelled;
+            public bool MissReturnPending;
+            public float MissReturnRange;
 #endif
             public int RicochetsRemaining;
             public GameObject GameObject;
@@ -256,7 +262,13 @@ namespace Subject42.Combat.OrbitalStation
             // Hits remain owned by this adapter, not the authored prefab's trigger.
             foreach (var collider in gameObject.GetComponentsInChildren<Collider2D>(true))
                 collider.enabled = false;
-            var projectile = new Projectile { GameObject = gameObject };
+            var projectile = new Projectile
+            {
+                GameObject = gameObject,
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                MissReturnPending = false, MissReturnRange = 0f,
+#endif
+            };
             projectile.Particles = gameObject.GetComponentsInChildren<ParticleSystem>(true);
             projectile.Trails = gameObject.GetComponentsInChildren<TrailRenderer>(true);
             projectile.Sprites = gameObject.GetComponentsInChildren<SpriteRenderer>(true);
@@ -375,6 +387,7 @@ namespace Subject42.Combat.OrbitalStation
             projectile.Active = true;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             projectile.LabSequence = 0; projectile.LabCancelled = false;
+            projectile.MissReturnPending = false; projectile.MissReturnRange = 0f;
 #endif
             projectile.RicochetsRemaining = 0;
             projectile.Target = target;
@@ -509,6 +522,9 @@ namespace Subject42.Combat.OrbitalStation
                 }
                 if (!projectile.HitBodies.Add(enemy)) continue;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+                // A body contact commits to the ordinary damage/pierce/RIC pipeline, even if damage is rejected.
+                projectile.MissReturnPending = false;
+                projectile.MissReturnRange = 0f;
                 float healthBefore = enemy.CurrentHealth;
                 bool aliveBefore = !enemy.IsDead;
 #endif
@@ -553,7 +569,23 @@ namespace Subject42.Combat.OrbitalStation
             projectile.GameObject.transform.position = projectile.Position;
             projectile.GameObject.transform.right = projectile.Direction;
             projectile.RemainingRange -= distance;
-            if (projectile.RemainingRange <= 0f) Release(projectile);
+            if (projectile.RemainingRange <= 0f)
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                if (projectile.MissReturnPending)
+                {
+                    projectile.MissReturnPending = false;
+                    projectile.RemainingRange = projectile.MissReturnRange;
+                    projectile.MissReturnRange = 0f;
+                    projectile.Direction = -projectile.Direction;
+                    projectile.GameObject.transform.right = projectile.Direction;
+                    // Keep world Position and the continuous trail. The return leg gets a fresh sweep next Tick;
+                    // a large deltaTime cannot reuse outward hits or skip the reverse collision check.
+                    return;
+                }
+#endif
+                Release(projectile);
+            }
         }
 
         private static bool IsValid(EnemyHealth enemy) =>
@@ -581,6 +613,7 @@ namespace Subject42.Combat.OrbitalStation
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (projectile.LabSequence != 0) LabProjectileEnded?.Invoke(projectile.LabSequence, projectile.LabCancelled);
             projectile.LabSequence = 0; projectile.LabCancelled = false;
+            projectile.MissReturnPending = false; projectile.MissReturnRange = 0f;
 #endif
             projectile.Active = false;
             projectile.Target = null;

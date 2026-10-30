@@ -7,6 +7,10 @@ namespace Subject42.Combat.OrbitalStation
     {
         public const float BaseDamage = 13f;
         public const float ContactInterval = .32f;
+        public const float PulseActiveDuration = .8f;
+        public const float PulseRecoveryDuration = .4f;
+        public const float PulseRadiusMultiplier = 1.35f;
+        public const float InertialDamageMultiplier = 1.5f;
         public override OrbitalModuleKind Kind => OrbitalModuleKind.Saw;
         public readonly OrbitalWeaponSettings Settings;
         
@@ -14,25 +18,89 @@ namespace Subject42.Combat.OrbitalStation
         private readonly HashSet<EnemyHealth> targets = new();
         private readonly Dictionary<EnemyHealth, float> nextHit = new();
         private ContactFilter2D filter = new() { useTriggers = true };
-        public float ContactRadius => Settings.ContactRadius * Station.State.ContactSizeMultiplier;
-        public float DamageMultiplier => Station.State.ContactDamageMultiplier;
+        private float pulseTime;
+        private float previousRingPhase;
+        private bool hasRingPhaseSample;
+        private bool inertialContactActive;
+        public bool InertialSawExperiment
+        {
+            get
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                return Station.UsesSegmentedOrbit && Station.State.InertialSawExperiment;
+#else
+                return false;
+#endif
+            }
+        }
+        public bool IsInertialContactActive => !InertialSawExperiment || inertialContactActive;
+        public bool PulsedSawExperiment
+        {
+            get
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                return Station.UsesSegmentedOrbit && Station.State.PulsedSawExperiment;
+#else
+                return false;
+#endif
+            }
+        }
+        public bool IsPulseContactActive => !PulsedSawExperiment || pulseTime < PulseActiveDuration;
+        private float AuthoredContactRadius => Settings.ContactRadius * Station.State.ContactSizeMultiplier;
+        public float ContactRadius => AuthoredContactRadius *
+            (PulsedSawExperiment && IsPulseContactActive ? PulseRadiusMultiplier : 1f);
+        public float DamageMultiplier => Station.State.ContactDamageMultiplier *
+            (InertialSawExperiment ? InertialDamageMultiplier : 1f);
         public int BodyHits { get; private set; }
         public OrbitalSawModule(OrbitalStationRuntime station, int id, OrbitalWeaponSettings settings) : base(station, id, settings.Color, settings.WeaponVisual)
         { Settings = settings; RefreshSize(); }
 
         public void RefreshSize() => Visual.transform.localScale = Vector3.one * (ContactRadius / .65f);
+        internal void ResetPulsePhase()
+        {
+            pulseTime = 0f;
+            RefreshSize();
+        }
+        internal void ResetInertialPhaseSample()
+        {
+            // Switching modes must not reset per-target contact intervals or module cooldown.
+            previousRingPhase = 0f;
+            hasRingPhaseSample = false;
+            inertialContactActive = false;
+        }
+        public override void Attach(OrbitalMountRuntime mount)
+        {
+            base.Attach(mount);
+            ResetPulsePhase();
+            ResetInertialPhaseSample();
+        }
         public override void UpdateVisualRotation(float radians) { }
         public override void Tick(float deltaTime)
         {
+            if (deltaTime <= 0f && InertialSawExperiment) return;
             base.Tick(deltaTime);
             if (Mount == null || Visual.transform.parent != Mount.Transform || Station.Owner.IsDead || deltaTime <= 0f) return;
+            if (InertialSawExperiment)
+            {
+                // Sample the installed ring, never input or player/world translation.
+                // A fresh attachment or mode switch needs one positive Tick before contact.
+                float phase = Mount.Ring.Phase;
+                inertialContactActive = hasRingPhaseSample &&
+                    Mathf.Abs(Mathf.DeltaAngle(previousRingPhase, phase)) > 0f;
+                previousRingPhase = phase;
+                hasRingPhaseSample = true;
+            }
+            if (PulsedSawExperiment)
+                pulseTime = Mathf.Repeat(pulseTime + deltaTime, PulseActiveDuration + PulseRecoveryDuration);
             RefreshSize();
-            Visual.transform.Rotate(0f, 0f, Settings.SpinDegreesPerSecond * deltaTime, Space.Self);
+            if (IsPulseContactActive && IsInertialContactActive)
+                Visual.transform.Rotate(0f, 0f, Settings.SpinDegreesPerSecond * deltaTime, Space.Self);
             ActivateCombat();
         }
         public override void ActivateCombat()
         {
             if (Mount == null || Visual.transform.parent != Mount.Transform || Station.Owner.IsDead || !Visual.activeInHierarchy) return;
+            if (!IsPulseContactActive || !IsInertialContactActive) return;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             // Optional lab geometry can own a swept contact; never resolve the same contact twice.
             if (ProductionOrbitalCombatAdapter.LabInterceptor?.HandlesContact(this) == true) return;
@@ -63,7 +131,8 @@ namespace Subject42.Combat.OrbitalStation
                 }
             }
         }
-        public override void Detach() { ResetContact(); base.Detach(); }
+        public override void Detach() { ResetContact(); ResetPulsePhase(); ResetInertialPhaseSample(); base.Detach(); }
+        public override void Teardown() { ResetContact(); ResetPulsePhase(); ResetInertialPhaseSample(); base.Teardown(); }
         public void ResetContact() { nextHit.Clear(); targets.Clear(); overlaps.Clear(); }
     }
 }

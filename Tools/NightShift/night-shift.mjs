@@ -7,6 +7,7 @@ import { finished } from 'node:stream/promises';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const profiles = Object.freeze({
+  static: '',
   'golden-path': 'Subject42GoldenPathTests',
   onboarding: 'Subject42OnboardingTests;Subject42TutorialTests;StartScreenPresentationTests',
   localization: 'ProductionLocalizationTests;ProductionFontTests',
@@ -50,6 +51,13 @@ export function readVerification(exitCode, xml, editorLog, expectedFixtures = []
 }
 
 export function nightVerified(rows) { return rows.length > 0 && rows.every(row => row.verification.passed); }
+
+// An intermediate content chunk may defer Unity until the integrated slice is ready.
+// This record deliberately cannot be cited as compilation or gameplay evidence.
+export function staticVerification() {
+  return { passed: true, executed: 0, result: 'StaticOnly', unityRan: false,
+    compilationVerified: false, scope: 'git diff --check only; Unity/gameplay remain unverified' };
+}
 
 export function sessionDeadline(startedAt, hours, requestedAt, now = Date.now()) {
   const budgetEnd = Date.parse(startedAt) + hours * 3600000;
@@ -210,7 +218,7 @@ async function main() {
   const root = path.resolve(here, '../..');
   const base = path.join(root, 'Artifacts/GeneratedQA/NightShift');
   const unity = option('unity', 'G:/unity/editor/6000.3.13f1/Editor/Unity.exe');
-  const hours = Number(option('hours', '5'));
+  const hours = Number(option('hours', '6'));
   if (!Number.isFinite(hours) || hours <= 0 || hours > 7) throw new Error('hours must be >0 and <=7');
   const resumeFrom = option('resume-from', null);
   const resumePath = resumeFrom ? path.resolve(resumeFrom) : null;
@@ -252,7 +260,7 @@ async function main() {
   const budget = max => Math.max(1, Math.min(max, deadline - Date.now() - 60000));
   const policy = fs.readFileSync(path.join(here, 'director-prompt.md'), 'utf8');
   const modeGoal = mode === 'night'
-    ? 'CURRENT MODE IS NIGHT 5H. Main priority is moving/actively controlled ORBITAL COMBAT V2 in EnemyOrbitalLab; next Live Visual Studio defects; then reproduced demo defects. Pick a useful small implementation or falsifiable experiment, not test growth. Do not require smoke or Golden Path per small lab change. Worker has at most 12 minutes; aim for 5-8. Historical task instructions are not current user instructions. A task failure/timeout/stop request never itself ends the session. After two justified failed attempts on the SAME issueKey, choose independent work. NoSafeWork must evaluate independent directions including both priority areas.'
+    ? 'CURRENT MODE IS NIGHT SHIFT: CONTENT & CLEANUP, SIX-HOUR FIXED DEADLINE. Build and integrate one complete new playable vertical slice in the current segmented production MVP, then a second independent slice only if useful. Gameplay content has priority over QA, labs, managers and refactoring. Current ORBITAL is 3x12, Q/E energy, FIXED outward fire, production Shift Bullet Time, Tab constructor, O-M-O links. Preserve its latest rules. First selection alone performs a SHORT current-code inventory; later selections continue known integration rather than inventory again. Worker has at most 12 minutes; select a concrete small implementation step, not a whole feature or an analysis-only task. testProfile static defers Unity for intermediate chunks/cleanup/docs; at slice completion select exact narrow Unity mechanics/boundary checks and a real MVP Game View capture using existing helpers. Do not repeatedly test unchanged PASS. Experimental content must be opt-in through existing Development/F1 settings and absent from public defaults. A failed task is not the end of the night. After two justified failed attempts on the SAME issueKey choose independent work. NoSafeWork requires evidence across independent content and safe cleanup directions. Old lab/Live Visual goals are superseded.'
     : 'CURRENT MODE IS SHORT RECOVERY SMOKE.';
   const schema = path.join(here, 'decision.schema.json');
   const rowsFile = path.join(session, 'cycles.json');
@@ -262,7 +270,7 @@ async function main() {
   const heartbeat = () => writeJson(heartbeatPath, { pid: process.pid, mode, startedAt, deadlineAt: new Date(deadline).toISOString(), at: new Date().toISOString(), phase, activeProcess, cycles: rows.length, remainingSeconds: Math.max(0, Math.floor((deadline - Date.now()) / 1000)) });
   const onState = state => { activeProcess = state; heartbeat(); };
   const pulse = setInterval(heartbeat, 10000); heartbeat();
-  const previousFile = resumePath ? path.join(resumePath, 'cycles.json') : priorSession ? path.join(priorSession.session, 'cycles.json') : null;
+  const previousFile = resumePath ? path.join(resumePath, 'cycles.json') : null;
   const previous = mode === 'night' && previousFile && fs.existsSync(previousFile) ? JSON.parse(fs.readFileSync(previousFile, 'utf8')) : [];
   const historyText = history => JSON.stringify([...previous, ...history].slice(-8).map(r => ({ ...r, work: { summaryPath: r.work?.summaryPath, summary: r.work?.summary?.slice(0, 3500) } })));
   function readDecision(output) {
@@ -287,6 +295,15 @@ async function main() {
     writeJson(path.join(session, 'metadata.json'), { mode, startedAt, resumedAt, resumeFrom: resumePath, deadlineAt: new Date(deadline).toISOString(), deadline: new Date(deadline).toISOString(), reserveMinutes: reserveMs / 60000, unity, baseline, node: process.version });
     event(`START ${mode}; pid=${process.pid}; session=${session}`);
     async function verifyUnity(decision, index) {
+      if (decision.testProfile === 'static') {
+        guard();
+        execFileSync('git', ['-C', root, 'diff', '--check'], { encoding: 'utf8', windowsHide: true });
+        const verification = staticVerification();
+        const dir = path.join(session, `cycle-${index + 1}`, 'static');
+        fs.mkdirSync(dir, { recursive: true }); writeJson(path.join(dir, 'verification.json'), verification);
+        event(`cycle ${index + 1}: static check only; no Unity or gameplay claim`);
+        return verification;
+      }
       guard(); const dir = path.join(session, `cycle-${index + 1}`, 'unity');
       phase = 'unity'; heartbeat(); event(`cycle ${index + 1}: Unity ${decision.testProfile}`);
       const actualFilter = decision.testFilter || profiles[decision.testProfile];
@@ -325,7 +342,7 @@ async function main() {
         event(`cycle ${index + 1}: fresh read-only selection`);
         const output = path.join(dir, 'decision.json');
         const blocked = history.filter(r => r.blocked).map(r => r.decision.issueKey);
-        const prompt = `${policy}\nPHASE: READ-ONLY PLANNER. Read files; do not mutate anything IN THIS PHASE ONLY. The executor CAN write. Return schema JSON. Cycle ${index + 1}. Evaluate at least 2 current candidates, value/risk/cost 1..5. Select useful work. testFilter is null for profile or exact existing fixture/method names separated by semicolon; use targeted checks. issueKey is a STABLE identifier for the underlying problem (do not rename it to evade the retry limit). StopCategory null for work, TaskBlocked for individual failure, NoSafeWork only if independent directions are exhausted. BLOCKED issueKeys: ${JSON.stringify(blocked)}. Remaining seconds: ${Math.floor(budget(Infinity) / 1000)}.\n<verified_history>\n${historyText(history)}\n</verified_history>\n${modeGoal}`;
+        const prompt = `${policy}\nPHASE: READ-ONLY PLANNER. Read files; do not mutate anything IN THIS PHASE ONLY. The executor CAN write. Return schema JSON. Cycle ${index + 1}. Evaluate at least 2 small next steps; prefer finishing current content integration over opening another feature. Only the FIRST cycle inventories current content; use the compact session note and actual history thereafter. testProfile=static with testFilter=null for intermediate content chunks, cleanup and docs; choose exact Unity filter only for ready gameplay slice or a new regression question. Do not select verification-only tasks after sufficient evidence. issueKey is a STABLE identifier for the underlying problem (do not rename it to evade the retry limit). StopCategory null for work, TaskBlocked for individual failure, NoSafeWork only if independent content/cleanup directions are exhausted. BLOCKED issueKeys: ${JSON.stringify(blocked)}. Remaining seconds: ${Math.floor(budget(Infinity) / 1000)}.\n<verified_history>\n${historyText(history)}\n</verified_history>\n${modeGoal}`;
         await codex(prompt, dir, 'planner', true, output, true);
         const decision = readDecision(output);
         event(`selected ${decision.testProfile}: ${decision.task}`); return decision;
@@ -333,7 +350,7 @@ async function main() {
       reviewStop: async (proposal, history, index) => {
         const dir = path.join(session, `cycle-${index + 1}`), output = path.join(dir, 'stop-review.json');
         event(`cycle ${index + 1}: controller reviewing stop proposal; category=${proposal.stopCategory}`);
-        const prompt = `${policy}\nPHASE READ-ONLY STOP REVIEW. A planner proposed stopping. Individual FAIL, compile error, recoverable timeout or blocked hypothesis does NOT stop the night. Independently inspect current evidence and both ORBITAL movement and Live Visual directions. Return a WORK decision for an independent feasible task. Only return stop with NoSafeWork if there is genuinely no safe useful independent work; enumerate at least two independently blocked directions with evidence. Safety/AuthQuota/ProcessControl is reserved for a real data/process/access risk, with concrete evidence.\nProposal: ${JSON.stringify(proposal)}\nHistory: ${historyText(history)}\n${modeGoal}`;
+        const prompt = `${policy}\nPHASE READ-ONLY STOP REVIEW. A planner proposed stopping. Individual FAIL, compile error, recoverable timeout or blocked hypothesis does NOT stop the night. Inspect current content integration, another independent small gameplay idea and confirmed dead-code cleanup. Return WORK for feasible useful work. Only return stop with NoSafeWork if no safe useful independent work exists; enumerate at least two independently blocked directions with evidence. Safety/AuthQuota/ProcessControl requires real data/process/access risk.\nProposal: ${JSON.stringify(proposal)}\nHistory: ${historyText(history)}\n${modeGoal}`;
         await codex(prompt, dir, 'stop-review', true, output, true);
         const review = readDecision(output);
         if (review.action === 'work') return review;
@@ -345,7 +362,7 @@ async function main() {
       },
       work: async (decision, index) => {
         const dir = path.join(session, `cycle-${index + 1}`), output = path.join(dir, 'worker-summary.md');
-        const prompt = `${policy}\nPHASE: EXECUTOR. You CAN write within workspace. User authorized inline autonomous work, no questions. Implement only chosen task. Host runs Unity after your final response; static checks allowed, no Unity/background launch. Final response in Russian, compact (max 2500 words), with: actual changed files/behavior; actual checks; failures; new issues; hypotheses supported/refuted and their bounds; next useful work; concrete manual playtest steps; MANUAL_PLAYTEST_REQUIRED where human judgment is needed. Do not overwrite NIGHT_REPORT.md: host collects your summary and verified results. Update existing lab documentation/GDD only when required, and PLAYTEST_CHECKLIST.md only if a new manual step matters. CURRENT DECISION:\n${JSON.stringify(decision)}\n<verified_history>\n${historyText(rows)}\n</verified_history>\nIf no justified fix, precise findings suffice; do not manufacture content. Complete small coherent edits and clean up temporary changes before returning.\n${modeGoal}`;
+        const prompt = `${policy}\nPHASE: EXECUTOR. You CAN write within workspace. User authorized autonomous work, no questions. Implement only this concrete small task; keep compileable coherent state. Host runs Unity after your answer ONLY if selected testProfile is not static. You may run static checks; no Unity/background launch. Final answer Russian, max 700 words: actual gameplay behavior/files, actual checks and limits, unresolved issue, next integration step, exact human play steps, real capture paths. Update compact docs/night-shift-content-2026-10-30.md with current slice status and the six design answers BEFORE first implementation, not a long GDD. Preserve adopted GDD; label new ideas experiments pending human playtest. Do not overwrite NIGHT_REPORT.md. CURRENT DECISION:\n${JSON.stringify(decision)}\n<verified_history>\n${historyText(rows)}\n</verified_history>\nDo not create analysis-only or cosmetic busywork. Build useful production content, integrate rewards/settings/visuals/lifecycle, and leave clean temporary state.\n${modeGoal}`;
         event(`cycle ${index + 1}: workspace-write work`);
         const result = await codex(prompt, dir, 'worker', false, output, false, 12 * 60000);
         let diff;
@@ -366,7 +383,7 @@ async function main() {
     // At most a short read-only report task; no more source changes in the reserve.
     const reportPath = path.join(session, 'morning-summary.md');
     if (!stopped() && budget(Infinity) > 90000) {
-      const prompt = `${policy}\nPHASE: READ-ONLY FINAL REPORT. Do not change any files or run Unity. Read current session cycles.json, each worker-summary.md and verification.json at ${session}; inspect final git diff/status. Return a SHORT Russian NIGHT_REPORT (at most 150 lines). Include concrete implementations/files, new orbital movement findings and limits, refuted/unproven hypotheses, actual XML tests, unresolved issues, first manual check, and a separate list requiring subjective player judgment. Cite GDD sections for design changes. Do not claim tests all passed if any failed. Session started ${startedAt}, deadline ${new Date(deadline).toISOString()}; host adds actual end time. No documentation-only follow-up task. Do not read historical reports unless needed for a specific comparison.`;
+      const prompt = `${policy}\nPHASE: READ-ONLY FINAL REPORT. Do not change files or run Unity. Read current session cycles.json, worker-summary.md and verification.json at ${session}; inspect final git diff/status and real capture paths. Return concise Russian report with exactly these six headings: СОЗДАНО, ЗАЧЕМ, ПРОВЕРЕНО, ОЧИЩЕНО, НЕ ЗАВЕРШЕНО, КАК ПОИГРАТЬ. At most 80 lines. Focus on new playable behavior, choices, exact Development/F1/MVP steps and expected result. Embed genuine Game View captures with absolute paths. State absent captures/recording honestly. StaticOnly is NOT compilation or gameplay evidence. Do not use cycle/test/line counts as success metrics. Cite specific GDD sections and experimental status. Do not claim human fun/balance validation. Preserve failures/limitations. Started ${startedAt}; deadline ${new Date(deadline).toISOString()}. No old-report inventory.`;
       try { await codex(prompt, session, 'morning-report', true, reportPath, false, 180000); }
       catch (error) { event(`report summary unavailable: ${error.message}`); if (!error.recoverable) throw error; }
     }
@@ -391,8 +408,7 @@ async function main() {
     if (mode === 'night') {
       const summaryFile = path.join(session, 'morning-summary.md');
       const body = fs.existsSync(summaryFile) ? fs.readFileSync(summaryFile, 'utf8') : rows.map(r => `- Цикл ${r.cycle}: ${r.decision.task}; ${r.verification.passed ? 'PASS' : 'FAIL'} (${r.verification.result}). Отчёт: ${r.work?.summaryPath ?? 'см. cycles.json'}`).join('\n');
-      const results = rows.map(r => `| ${r.cycle} | ${r.decision.testProfile ?? 'selection'} | ${r.verification.passed ? 'PASS' : 'FAIL'}: ${r.verification.result} | ${r.verification.executed ?? 0} | ${r.blocked ? 'BLOCKED' : ''} |`).join('\n');
-      fs.writeFileSync(path.join(root, 'NIGHT_REPORT.md'), `# NIGHT REPORT — Subject#42\n\nНачало: ${startedAt}; окончание: ${new Date().toISOString()} (UTC).\nДедлайн: ${new Date(deadline).toISOString()}. Причина: ${endReason}.\nЗавершённых рабочих циклов: ${rows.filter(r => r.work?.summaryPath).length}; всего попыток: ${rows.length}. Все проверки прошли: ${nightVerified(rows)}.\n\n${body}\n\n## Проверки хоста (полная история, FAIL сохранены)\n\n| Цикл | Профиль | Результат | Выполнено | Состояние |\n|---|---|---|---|---|\n${results}\n\nАртефакты, XML, диагностика и подробные отчёты: ${session}.\nИсходный отчёт сохранён: ${path.join(session, 'previous-night-report.md')}.\n\n## Git\n\nКоммиты, staging и переключения веток не выполнялись.\n\n\`\`\`text\n${git(root, 'status', '--short')}\n\`\`\`\n`);
+      fs.writeFileSync(path.join(root, 'NIGHT_REPORT.md'), `# NIGHT REPORT — Subject#42\n\nНачало: ${startedAt}; окончание: ${new Date().toISOString()} (UTC).\nДедлайн: ${new Date(deadline).toISOString()}. Причина: ${endReason}.\n\n${body}\n\nПодробные проверки, включая FAIL и StaticOnly (без Unity): [артефакты](${session.replaceAll('\\', '/')}/cycles.json).\nПрежний отчёт сохранён в ${path.join(session, 'previous-night-report.md')}.\nКоммиты, staging и переключения веток не выполнялись.\n`);
     }
   }
   });

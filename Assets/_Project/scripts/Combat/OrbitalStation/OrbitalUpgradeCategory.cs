@@ -10,10 +10,10 @@ namespace Subject42.Combat.OrbitalStation
         };
         public static string Label(OrbitalUpgradeCategory category) => category switch
         {
-            OrbitalUpgradeCategory.Shooting => "СТРЕЛКОВОЕ",
-            OrbitalUpgradeCategory.Contact => "КОНТАКТНОЕ",
-            OrbitalUpgradeCategory.Orbits => "ОРБИТЫ",
-            _ => "ПЕРСОНАЖ"
+            OrbitalUpgradeCategory.Shooting => LocalizationService.EnsureExists().Get("reward.category.shooting"),
+            OrbitalUpgradeCategory.Contact => LocalizationService.EnsureExists().Get("reward.category.contact"),
+            OrbitalUpgradeCategory.Orbits => LocalizationService.EnsureExists().Get("reward.category.orbits"),
+            _ => LocalizationService.EnsureExists().Get("reward.category.character")
         };
     }
 }

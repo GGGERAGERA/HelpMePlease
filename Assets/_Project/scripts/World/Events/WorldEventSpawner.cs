@@ -29,6 +29,9 @@ public class WorldEventSpawner : MonoBehaviour
 
     [Header("Event Prefabs")]
     [SerializeField] private WorldEvent[] eventPrefabs;
+    // Closed experiment: deliberately outside the public event pool.
+    [SerializeField] private EscortCargoEvent escortCargoEventPrefab;
+    [SerializeField] private FireteamClearanceEvent fireteamClearanceEventPrefab;
     [SerializeField] private WorldBreakable eventRewardContainerPrefab;
 
     [Header("Spawn Pressure")]
@@ -78,6 +81,138 @@ public class WorldEventSpawner : MonoBehaviour
     private readonly List<LevelAnomalyController.LocalAnomalyZoneGeometry>
         localAnomalyZones = new();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private bool CanEditFireteamClearance(out Transform player, out string status)
+    {
+        player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
+        status = null;
+        var run = RunStateManager.Instance;
+        if (!isActiveAndEnabled) status = "Спавнер событий не готов.";
+        else if (run == null) status = "RunStateManager не готов.";
+        else if (run.IsRunEnded) status = "Попытка завершена.";
+        else if (SceneTransitionOverlay.IsTransitioning) status = "Идёт переход сектора.";
+        else if (player == null || PlayerRuntimeReference.PlayerHealth == null ||
+            !player.gameObject.activeInHierarchy || PlayerRuntimeReference.PlayerHealth.IsDead)
+            status = "Нет живого игрока.";
+        else if (UpgradeManager.Instance == null || !UpgradeManager.Instance.IsRewardQueueIdle ||
+            WorldLootRewardReel.IsActive)
+            status = "Занято окно награды.";
+        else
+        {
+            var station = player.GetComponentInChildren<Subject42.Combat.OrbitalStation.OrbitalStationRuntime>();
+            var choice = FindFirstObjectByType<LevelChoiceManager>();
+            if (station == null || !station.IsInitialized || station.IsRunEnded || station.InputOwner == null || !station.InputOwner.IsIdle ||
+                (choice != null && choice.IsChoosing)) status = "Занято модальное состояние игрока.";
+        }
+        return status == null;
+    }
+
+    public bool FireteamClearanceExperimentEnabled { get; private set; }
+    public FireteamClearanceEvent FireteamClearanceExperimentInstance { get; private set; }
+
+    public bool DebugSetFireteamClearanceExperiment(bool enabled, out string status)
+    {
+        if (!CanEditFireteamClearance(out _, out status)) return false;
+        if (enabled) RunStateManager.Instance.DebugMarkDevelopmentRun();
+        FireteamClearanceExperimentEnabled = enabled;
+        if (!enabled && FireteamClearanceExperimentInstance != null)
+            ClearDebugEvent(FireteamClearanceExperimentInstance);
+        status = enabled ? "Зачистка включена; попытка Development." : "Зачистка выключена; собственная группа убрана без награды.";
+        return true;
+    }
+
+    public bool DebugSpawnFireteamClearance(out string status)
+    {
+        if (!CanEditFireteamClearance(out var player, out status)) return false;
+        if (!FireteamClearanceExperimentEnabled) { status = "Сначала включите эксперимент зачистки."; return false; }
+        if (fireteamClearanceEventPrefab == null) { status = "Prefab зачистки не подключён."; return false; }
+        if (FireteamClearanceExperimentInstance != null) { status = "Зачистка уже создана."; return false; }
+        // One closed Development instance may sit above the ordinary capacity.
+        if (spawnedEventCount > maxActiveEvents) { status = "Дополнительное место события уже занято; другие события сохранены."; return false; }
+        if (!fireteamClearanceEventPrefab.TryValidateConfiguration(out status)) return false;
+        ResolveGameplayArea();
+        if (gameplayArea == null) { status = "Игровая область не готова."; return false; }
+        RunStateManager.Instance.DebugMarkDevelopmentRun();
+        if (!TrySpawnEvent(fireteamClearanceEventPrefab, player, out var instance, allowFireteamClearance: true))
+        { status = "Нет допустимого размещения огневой группы."; return false; }
+        FireteamClearanceExperimentInstance = (FireteamClearanceEvent)instance;
+        debugContentEvents.Add(instance);
+        status = "Зачистка создана. Подойдите и начните обычной интеракцией; уничтожьте трёх стрелков за 35 с.";
+        return true;
+    }
+
+    public bool DebugClearFireteamClearance(out string status)
+    {
+        if (!CanEditFireteamClearance(out _, out status)) return false;
+        bool cleared = FireteamClearanceExperimentInstance != null && ClearDebugEvent(FireteamClearanceExperimentInstance);
+        status = cleared ? "Только зачистка и её группа убраны без награды." : "Созданной зачистки нет.";
+        return cleared;
+    }
+
+    public bool EscortCargoExperimentEnabled { get; private set; }
+    public EscortCargoEvent EscortCargoExperimentInstance { get; private set; }
+
+    private bool CanEditEscortCargo(out Transform player, out string status)
+    {
+        player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
+        status = null;
+        var run = RunStateManager.Instance;
+        if (!isActiveAndEnabled) status = "Спавнер событий не готов.";
+        else if (run == null) status = "RunStateManager не готов.";
+        else if (run.IsRunEnded) status = "Попытка завершена.";
+        else if (SceneTransitionOverlay.IsTransitioning) status = "Идёт переход сектора.";
+        else if (player == null || PlayerRuntimeReference.PlayerHealth == null ||
+            !player.gameObject.activeInHierarchy || PlayerRuntimeReference.PlayerHealth.IsDead)
+            status = "Нет живого игрока.";
+        else if (UpgradeManager.Instance == null || !UpgradeManager.Instance.IsRewardQueueIdle ||
+            WorldLootRewardReel.IsActive)
+            status = "Занято окно награды.";
+        else
+        {
+            var station = player.GetComponentInChildren<Subject42.Combat.OrbitalStation.OrbitalStationRuntime>();
+            var choice = FindFirstObjectByType<LevelChoiceManager>();
+            if (station == null || !station.IsInitialized || station.IsRunEnded || station.InputOwner == null || !station.InputOwner.IsIdle ||
+                (choice != null && choice.IsChoosing)) status = "Занято модальное состояние игрока.";
+        }
+        return status == null;
+    }
+
+    public bool DebugSetEscortCargoExperiment(bool enabled, out string status)
+    {
+        if (!CanEditEscortCargo(out _, out status)) return false;
+        if (enabled) RunStateManager.Instance.DebugMarkDevelopmentRun();
+        EscortCargoExperimentEnabled = enabled;
+        status = enabled ? "Груз включён в текущем секторе; попытка Development." :
+            "Новые создания груза выключены; существующий убирается отдельно.";
+        return true;
+    }
+
+    public bool DebugSpawnEscortCargo(out string status)
+    {
+        if (!CanEditEscortCargo(out var player, out status)) return false;
+        if (!EscortCargoExperimentEnabled) { status = "Сначала включите эксперимент груза."; return false; }
+        if (escortCargoEventPrefab == null) { status = "Prefab груза не подключён."; return false; }
+        if (EscortCargoExperimentInstance != null) { status = "Груз уже создан; уберите его отдельной кнопкой."; return false; }
+        if (spawnedEventCount >= maxActiveEvents) { status = "Достигнут штатный лимит событий; другое событие не удалено."; return false; }
+        if (!escortCargoEventPrefab.TryValidateConfiguration(out status)) return false;
+        ResolveGameplayArea();
+        if (gameplayArea == null) { status = "Игровая область не готова."; return false; }
+        RunStateManager.Instance.DebugMarkDevelopmentRun();
+        if (!TrySpawnEvent(escortCargoEventPrefab, player, out var instance))
+        { status = "Нет допустимого места/прямого маршрута груза с учётом границ, препятствий и выхода."; return false; }
+        EscortCargoExperimentInstance = (EscortCargoEvent)instance;
+        debugContentEvents.Add(instance);
+        status = "Груз создан. Подойдите и примите сопровождение обычной интеракцией.";
+        return true;
+    }
+
+    public bool DebugClearEscortCargo(out string status)
+    {
+        if (!CanEditEscortCargo(out _, out status)) return false;
+        bool cleared = EscortCargoExperimentInstance != null && ClearDebugEvent(EscortCargoExperimentInstance);
+        status = cleared ? "Только груз убран без результата и награды." : "Созданного груза нет.";
+        return cleared;
+    }
+
     public void ConfigureDebugEventPrefabs(WorldEvent[] prefabs)
     {
         eventPrefabs = prefabs ?? System.Array.Empty<WorldEvent>();
@@ -143,6 +278,10 @@ public class WorldEventSpawner : MonoBehaviour
         debugRewardSuppressedEvents.Clear();
         debugContentEvents.Clear();
         debugEvent = null;
+        FireteamClearanceExperimentEnabled = false;
+        FireteamClearanceExperimentInstance = null;
+        EscortCargoExperimentEnabled = false;
+        EscortCargoExperimentInstance = null;
 #endif
         reservedExitRadius = 0;
         ActiveEvent = null;
@@ -201,7 +340,7 @@ public class WorldEventSpawner : MonoBehaviour
     private bool TrySpawnEvent(
         WorldEvent prefab,
         Transform player,
-        out WorldEvent spawnedEvent)
+        out WorldEvent spawnedEvent, bool allowFireteamClearance = false)
     {
         spawnedEvent = null;
 
@@ -255,7 +394,26 @@ public class WorldEventSpawner : MonoBehaviour
             return false;
         }
 
-        if (!ValidatePrefab(prefab)) return false;
+        if (prefab is FireteamClearanceEvent)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (!allowFireteamClearance || prefab != fireteamClearanceEventPrefab ||
+                !FireteamClearanceExperimentEnabled || FireteamClearanceExperimentInstance != null ||
+                spawnedEventCount > maxActiveEvents || !CanEditFireteamClearance(out _, out _)) return false;
+            RunStateManager.Instance.DebugMarkDevelopmentRun();
+#else
+            return false;
+#endif
+        }
+        if (!ValidatePrefab(prefab, allowFireteamClearance)) return false;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (prefab == escortCargoEventPrefab)
+        {
+            if (!EscortCargoExperimentEnabled || spawnedEventCount >= maxActiveEvents ||
+                !CanEditEscortCargo(out _, out _)) return false;
+            RunStateManager.Instance.DebugMarkDevelopmentRun();
+        }
+#endif
         spawnedEvent = Instantiate(prefab, spawnPosition, Quaternion.identity);
         if (!PreparePlacement(spawnedEvent)) { spawnedEvent = null; return false; }
         spawnedEvent.Initialize(this);
@@ -532,7 +690,8 @@ public class WorldEventSpawner : MonoBehaviour
 
     public bool IsEventPrefabEnabled(WorldEvent eventPrefab)
     {
-        return eventPrefab != null && eventPrefab.AvailableInProduction && IsRegisteredEventSupported(eventPrefab);
+        return eventPrefab != null && !(eventPrefab is FireteamClearanceEvent) &&
+            eventPrefab.AvailableInProduction && IsRegisteredEventSupported(eventPrefab);
     }
 
     private bool IsRegisteredEventSupported(WorldEvent eventPrefab)
@@ -608,6 +767,8 @@ public class WorldEventSpawner : MonoBehaviour
         bool eligibleContent = worldEvent != null && worldEvent.IsCompleted && !worldEvent.IsFailed;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         eligibleContent &= !debugContentEvents.Remove(worldEvent);
+        if (FireteamClearanceExperimentInstance == worldEvent) FireteamClearanceExperimentInstance = null;
+        if (EscortCargoExperimentInstance == worldEvent) EscortCargoExperimentInstance = null;
 #endif
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -639,6 +800,8 @@ public class WorldEventSpawner : MonoBehaviour
 
         debugRewardSuppressedEvents.Remove(worldEvent);
         debugContentEvents.Remove(worldEvent);
+        if (FireteamClearanceExperimentInstance == worldEvent) FireteamClearanceExperimentInstance = null;
+        if (EscortCargoExperimentInstance == worldEvent) EscortCargoExperimentInstance = null;
 #endif
 
         if (ActiveEvent == worldEvent)
@@ -654,7 +817,8 @@ public class WorldEventSpawner : MonoBehaviour
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private bool IsDebugEventPrefabEnabled(WorldEvent prefab) =>
-        IsRegisteredEventSupported(prefab) && (prefab.AvailableInProduction || debugManualOnly);
+        !(prefab is FireteamClearanceEvent) && IsRegisteredEventSupported(prefab) &&
+        (prefab.AvailableInProduction || debugManualOnly);
 
     public bool SpawnDebugEventAt(
         WorldEvent prefab,
@@ -877,8 +1041,10 @@ public class WorldEventSpawner : MonoBehaviour
     }
 
     private readonly HashSet<WorldEvent> invalidEventPrefabs = new();
-    private bool ValidatePrefab(WorldEvent prefab)
+    private bool ValidatePrefab(WorldEvent prefab, bool allowFireteamClearance = false)
     {
+        // Closed content cannot enter through generic debug, site or public admission.
+        if (prefab is FireteamClearanceEvent && !allowFireteamClearance) return false;
         if (prefab.TryValidateConfiguration(out string error)) return true;
         if (invalidEventPrefabs.Add(prefab)) Debug.LogError("[WorldEventSpawner] " + error, prefab);
         return false;
@@ -892,6 +1058,8 @@ public class WorldEventSpawner : MonoBehaviour
         siteRewardSuppressedEvents.Remove(worldEvent);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         debugContentEvents.Remove(worldEvent); debugRewardSuppressedEvents.Remove(worldEvent);
+        if (FireteamClearanceExperimentInstance == worldEvent) FireteamClearanceExperimentInstance = null;
+        if (EscortCargoExperimentInstance == worldEvent) EscortCargoExperimentInstance = null;
         if (debugEvent == worldEvent) debugEvent = null;
 #endif
         ReleaseEventRoot(worldEvent);

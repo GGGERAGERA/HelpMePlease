@@ -26,6 +26,23 @@ public sealed class EnemyDirectionalShield : MonoBehaviour
     private EnemyHealth health;
     private float facing, flashUntil;
     private Vector2[] arcPoints;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private bool blockLockedExperiment;
+    private float blockLockRemaining;
+    public bool IsBlockLockedExperiment => blockLockedExperiment;
+    public float BlockLockRemaining => blockLockRemaining;
+
+    public void ConfigureBlockLockedExperiment(bool enabled)
+    {
+        if (enabled)
+        {
+            if (RunStateManager.Instance == null) return;
+            RunStateManager.Instance.DebugMarkDevelopmentRun();
+        }
+        blockLockedExperiment = enabled;
+        blockLockRemaining = 0f;
+    }
+#endif
     public int Blocks { get; private set; }
     public int RemainingBlockedHits { get; private set; }
     public bool IsBroken => Kind == ShieldKind.Breakable && RemainingBlockedHits <= 0;
@@ -42,6 +59,9 @@ public sealed class EnemyDirectionalShield : MonoBehaviour
 
     public void ResetForSpawn()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        ConfigureBlockLockedExperiment(false);
+#endif
         Blocks = 0;
         RemainingBlockedHits = Mathf.Max(1, MaximumBlockedHits);
         flashUntil = 0f;
@@ -55,6 +75,9 @@ public sealed class EnemyDirectionalShield : MonoBehaviour
     {
         playerBody = body;
         if (body == null) return;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (blockLockedExperiment && blockLockRemaining > 0f) return;
+#endif
         Vector2 direction = (Vector2)body.position - Center;
         facing = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         RefreshPresentation();
@@ -66,6 +89,15 @@ public sealed class EnemyDirectionalShield : MonoBehaviour
         if (!health.IsDead && playerBody != null && !EnemyDebugAiFreeze.IsFrozen && Application.isFocused)
         {
             Vector2 direction = (Vector2)playerBody.position - Center;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (blockLockedExperiment && blockLockRemaining > 0f)
+            {
+                if (direction.sqrMagnitude > .001f)
+                    blockLockRemaining = Mathf.Max(0f, blockLockRemaining - Time.deltaTime);
+                RefreshPresentation();
+                return;
+            }
+#endif
             if (direction.sqrMagnitude > .001f)
                 facing = Mathf.MoveTowardsAngle(facing, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg, TurnSpeed * Time.deltaTime);
         }
@@ -159,6 +191,11 @@ public sealed class EnemyDirectionalShield : MonoBehaviour
 
     private void RegisterBlock(Vector2 point, bool consumeDurability = true)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // A confirmed plate block starts one window; further hits cannot refresh it.
+        if (blockLockedExperiment && blockLockRemaining <= 0f)
+            blockLockRemaining = .9f;
+#endif
         Blocks++;
         flashUntil = Time.time + .09f;
         BlockSparks.transform.position = point;
@@ -185,6 +222,9 @@ public sealed class EnemyDirectionalShield : MonoBehaviour
 
     private void OnDisable()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        ConfigureBlockLockedExperiment(false);
+#endif
         playerBody = null;
         BlockSparks.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         BreakShards.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);

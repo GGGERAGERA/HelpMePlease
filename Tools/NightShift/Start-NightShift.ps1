@@ -1,6 +1,6 @@
 param(
     [ValidateSet('Night', 'Smoke', 'Status', 'Stop')][string]$Mode = 'Status',
-    [ValidateRange(0.01, 7)][double]$Hours = 5,
+    [ValidateRange(0.01, 7)][double]$Hours = 6,
     [string]$DeadlineAt,
     [string]$ResumeFrom,
     [string]$Unity = 'G:/unity/editor/6000.3.13f1/Editor/Unity.exe'

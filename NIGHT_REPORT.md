@@ -1,179 +1,62 @@
 # NIGHT REPORT — Subject#42
 
-Начало: 2026-10-27T22:47:35.881Z; окончание: 2026-10-28T03:00:00.019Z (UTC).
-Дедлайн: 2026-10-28T03:00:00.000Z. Причина: deadline.
-Завершённых рабочих циклов: 74; всего попыток: 75. Все проверки прошли: false.
+Начало: 2026-10-29T21:16:10.709Z; окончание: 2026-10-30T03:09:22.017Z (UTC).
+Дедлайн: 2026-10-30T03:09:22.000Z. Причина: deadline.
 
-**NIGHT_REPORT — 28.10.2026**
+## СОЗДАНО
 
-Начало: 27.10, 22:47:35.881 UTC. Прочитаны текущие cycles, worker-summary, verification и XML; проверены итоговые git status/diff. В финальной фазе файлы не менялись, Unity не запускалась.
+- **Возврат промаха:** пистолет стреляет на 4 м; после полного промаха снаряд проходит обратно 4 м по прежней линии.
+- **Картечный таран:** Shotgun выпускает один медленный короткий снаряд, поражающий до трёх тел и оттесняющий поддерживаемых врагов; щиты останавливают его.
+- **Импульсная пила:** чередует усиленный радиус контакта и паузу без урона.
+- Тактические варианты врагов: фланговый и таранный преследователи, залповый стрелок, стрелки на траверсе и с отходом, заклинивающий щит.
+- Добавлены RU/EN-тексты конструктора и карточек. Все новые игровые варианты — **эксперименты, публично выключены**, доступны через Development/F1.
 
-**Реализовано**
+## ЗАЧЕМ
 
-- `EnemyOrbitalLabController.cs`: Restart сохраняет ручной состав оружия, индивидуальные модули, пустые места и кольца, порядок радиусов, выбранные скорости и направления. Исправлены воспроизведённые потери состава и геометрии.
-- `EnemyOrbitalLabSandboxView.cs`: показаны путь, максимальный вынос центра, время Shift, WeaponId/модули, состояние записи, пояснение Pending и смешанных условий; добавлено копирование JSON.
-- `EnemyOrbitalLabTelemetry.cs`: экспорт исходной геометрии каждой пушки; обнаружение изменений эффективных параметров оружия, улучшений, радиусов, условий врагов и спавна. Исправлены применимость оценки выживаемости и независимость снимков отчёта.
-- `OrbitalCombatV2TacticsTests.cs`: добавлены контролируемые измерения движения, распределения модулей, направлений колец и переноса центра; диагностика расхождения маршрутов.
-- `LiveVisualStudio.cs`: единый лимит Save/Load — 4 194 304 символа; загрузка читает ограниченный объём. `VisualProfile.cs`: глубокое копирование MaterialSources. Адресная проверка сохранила контракт сериализации и исключения Instance.
-- Лабораторные изменения отмечены **Experimental**: [GDD §4.2 «Движение»](/D:/fork/HelpMePlease/Assets/_Project/Documentation/Subject42_Game_Design_Bible.md:195), [§4.3 «Контроль пространства»](/D:/fork/HelpMePlease/Assets/_Project/Documentation/Subject42_Game_Design_Bible.md:212), [§4.5 «Рост силы»](/D:/fork/HelpMePlease/Assets/_Project/Documentation/Subject42_Game_Design_Bible.md:242). V2 в production не переносился.
+Возвратный выстрел предлагает завести врага на обратную линию; таран — собрать тела узким направлением Q/E; пила — выбирать момент сближения. Враги предлагают менять маршрут, уклоняться поперёк атаки и использовать восстановление.
 
-**Новые результаты движения**
+Основание: [GDD §4.3 «Контроль пространства»](Assets/_Project/Documentation/Subject42_Game_Design_Bible.md#43-контроль-пространства), [§4.4 «Контроль толпы»](Assets/_Project/Documentation/Subject42_Game_Design_Bible.md#44-контроль-толпы), [§4.5 «Рост силы»](Assets/_Project/Documentation/Subject42_Game_Design_Bible.md#45-рост-силы), [§5.5 «Критерий глубины»](Assets/_Project/Documentation/Subject42_Game_Design_Bible.md#55-критерий-глубины), [§10.3 «Обязательная карточка прототипа»](Assets/_Project/Documentation/Subject42_Game_Design_Bible.md#103-обязательная-карточка-прототипа). Гипотезы записаны в [session note](docs/night-shift-content-2026-10-30.md); принятыми изменениями Bible/Core они не объявлены.
 
-- STATIC→LOOP меняет соотношение EVEN/GROUPED. Урон по сценариям: ближники **56/56→96/102**, щиты **64/56→72/72**, mixed **124/80→86/126**. Универсальный победитель не установлен.
-- Совместное/встречное вращение: mixed LOOP — **94/110** урона; против щитов — **112/104**, блоки **19/27**. Преимущество COUNTER не универсально.
-- Два MULTISHOT внутри/снаружи против щитов: **208/144** урона при CO, **200/152** при COUNTER, по 126 снарядов. Против mixed допустимый повтор дал **108/100** после первоначального FAIL.
-- RAPID внутри/снаружи: mixed **100/106**, щиты **176/136**, ближники **72/64** урона. Это отдельные наблюдения, устойчивость не доказана.
-- PIERCE против щитов: внутри **19 контактов/160 урона**, снаружи **13/104**. Против ближников в одном опыте дополнительных контактов пробивания не наблюдалось; бесполезность модуля этим не доказана.
-- Перенос центра в неподвижном геометрическом опыте дал **0→1→0 попаданий**, по четыре снаряда. Это поддерживает локальную компенсацию слепой зоны, но не пользу ПКМ при движении.
+## ПРОВЕРЕНО
 
-**Границы и гипотезы**
+Хостовые Unity-прогоны подтвердили адресные механики, lifecycle и MVP-сценарии возврата промаха, картечного тарана, импульсной пилы и перечисленных тактических врагов. Отдельно прошли MVP-проверки локализации конструктора и оружейных карточек.
 
-- Unity seed не контролирует все источники вариации: остаются instance-ID steering и частный System.Random оружия. Номинальная смена seed не доказывает независимость условий.
-- Контакты и knockback нарушали сопоставимость маршрутов. PASS после FAIL означает один допустимый повтор, а не устойчивый результат.
-- Фокус приложения ограничивает Shift и слежение щитов. Боевой эффект Shift при движении **не доказан**.
-- Потеря MIXED после Restart после ремонта **не воспроизвелась**.
-- Дробовик/MULTISHOT: сравнение внутри/снаружи не состоялось — сначала разные бюджеты **346/344**, затем разные маршруты.
-- Движущийся опыт переноса центра дважды остановился на точном сравнении fixedDeltaTime; гипотеза остаётся непроверенной.
-- Измерения бота не подтверждают выживаемость, удобство или удовольствие человека.
+Финальный `git diff --check` прошёл. Последняя локализация категорий проверена только **StaticOnly — это не компиляция и не gameplay-проверка**.
 
-**Фактические проверки**
+Осмотрены настоящие Game View кадры: видны MVP, HUD, установки и снаряды. Статичные изображения сами по себе не доказывают движение, попадания или читаемость в толпе. Видеозапись не найдена.
 
-- 75 циклов; 73 XML: суммарно **84 выполнения тестов — 53 Passed, 29 Failed, 2 Inconclusive**. Это включает повторные запуски.
-- Cycle-28/29 помечены верхним результатом Passed, но сами тесты — **Inconclusive**, успешным доказательством их считать нельзя.
-- Один CompileFailed, CS1061, исправлен; один plannerFailed. Последующие Unity-проверки выполнялись.
-- Подтверждены адресные PASS сохранения сборки/радиусов, MIXED Restart, Game View captures 1600×900, Save/Load и ограниченного чтения, копирования профиля.
-- Последние проверки: cycle-71 — копирование/сериализация профиля PASS; cycle-74 — спавн и атрибуция PASS; cycle-75 — изоляция снимков/учёт снарядов PASS.
-- `git diff --check` прошёл; есть предупреждения LF/CRLF. Полной итоговой регрессии нет.
+![Картечный таран — Game View](D:/fork/HelpMePlease/Artifacts/GeneratedQA/NightShift/RamSlugShotgun/ram-slug-directed.png)
 
-**Незакрытые проблемы**
+![Возврат промаха — Game View](D:/fork/HelpMePlease/Artifacts/GeneratedQA/NightShift/MissReturnPistol/miss-return-inbound.png)
 
-- Live Visual production/pool round-trip остаётся FAIL: ожидался `EnemyBodyReadabilityLit`, получен `M_WhiteFlash`. Исправление runtime-пула не доказано.
-- Studio destroy/cursor: последний FAIL — не очищена owning static reference; восстановление курсора целиком не подтверждено.
-- BLOCKED после повторных отказов: направление маршрута, RAPID×вращение против mixed/ближников, PIERCE×вращение против mixed, дробовик/MULTISHOT, движущийся перенос центра.
-- Финальный diff содержит 22 изменённых файла, включая Tools/NightShift и NIGHT_REPORT.md. Без стартового снимка нельзя приписать весь diff worker-циклам; эти изменения требуют отдельного различения по происхождению.
+## ОЧИЩЕНО
 
-**Первый ручной шаг и наиболее полезное продолжение**
+Упорядочены существующие элементы F1, добавлены сводки активных вариантов и подсказки «награда → запас → Tab». Удаление мёртвых assets/runtime не заявлено.
 
-EnemyOrbitalLab: mixed, GROUPED/FIXED, сопоставимый маршрут WASD — без ПКМ, с ПКМ, затем отдельно Shift ×0,4. Проверить физическое управление, читаемость сектора и возможность компенсировать слепую зону; сохранить JSON каждого прохода. Повтор заблокированных batchmode-опытов сейчас менее полезен.
+Зафиксировано расхождение со старой записью связей: M усиливает соседние стреляющие O **того же уровня**; Near/Skip/межуровневые связи не восстановлены.
 
-**Отдельно требуется субъективное решение игрока — MANUAL_PLAYTEST_REQUIRED**
+`Tools/NightShift` адаптирован родительским агентом под текущую content-миссию: заменено старое лабораторное задание, промежуточным шагам разрешён явно обозначенный StaticOnly, сохранены дедлайн и защиты. `NIGHT_REPORT.md` собран контроллером; после завершения родитель уточнил эту атрибуцию и ссылки, без изменений игрового кода.
 
-- Получается ли осознанно управлять слепыми зонами.
-- Оправдывают ли ПКМ и Shift затраты внимания.
-- Различаются ли тактические роли группировки, направлений колец и распределения модулей.
-- Помогают ли панель и JSON объяснить промахи и выбрать следующую сборку.
-- Удобны ли Save/Load, повторное открытие и восстановление Studio.
+## НЕ ЗАВЕРШЕНО
 
-Подробные протоколы и измерения: [существующий план V2](/D:/fork/HelpMePlease/docs/superpowers/plans/2026-10-27-orbital-combat-v2.md); XML и итоги — в [каталоге сессии](/D:/fork/HelpMePlease/Artifacts/GeneratedQA/NightShift/2026-10-27T22-51-43-105Z-night).
+- Charged Sniper и веерная очередь Shotgun: повторные ошибки lifecycle/MVP, успешных кадров нет.
+- Escort Cargo: повторные ошибки интеграционного сценария, успешного capture нет.
+- Fireteam Clearance: не подтверждены награда/отмена; Bomber Interceptor — граница запуска взрыва. Наличие кадров не закрывает эти ошибки.
+- Инерционная пила: компиляция восстановлена, но opt-in/MVP не прошли; успешного capture нет.
+- Отступающий преследователь: MVP-capture прошёл, отдельная механическая проверка повторно упала.
+- Сводка сборки: повторный timeout; найденные PNG не означают успешный сценарий.
+- Последние статические UI/guard-правки требуют проверки. Баланс, удобство и интерес человеком **не подтверждены: MANUAL_PLAYTEST_REQUIRED**.
 
-## Проверки хоста (полная история, FAIL сохранены)
+## КАК ПОИГРАТЬ
 
-| Цикл | Профиль | Результат | Выполнено | Состояние |
-|---|---|---|---|---|
-| 1 | orbital-tactics | FAIL: Failed(Child) | 1 |  |
-| 2 | orbital-tactics | PASS: Passed | 1 |  |
-| 3 | orbital-tactics | FAIL: Failed(Child) | 1 |  |
-| 4 | orbital-tactics | FAIL: Failed(Child) | 1 |  |
-| 5 | orbital-tactics | FAIL: Failed(Child) | 1 |  |
-| 6 | orbital-tactics | FAIL: Failed(Child) | 1 | BLOCKED |
-| 7 | live-visual | FAIL: Failed(Child) | 1 |  |
-| 8 | live-visual | FAIL: Failed(Child) | 1 | BLOCKED |
-| 9 | orbital-sandbox | PASS: Passed | 1 |  |
-| 10 | orbital-tactics | FAIL: Failed(Child) | 1 |  |
-| 11 | orbital-tactics | PASS: Passed | 1 |  |
-| 12 | orbital-tactics | PASS: Passed | 1 |  |
-| 13 | orbital-tactics | PASS: Passed | 1 |  |
-| 14 | orbital-tactics | PASS: Passed | 1 |  |
-| 15 | orbital-tactics | FAIL: Failed(Child) | 1 |  |
-| 16 | live-visual | FAIL: Failed(Child) | 6 |  |
-| 17 | live-visual | PASS: Passed | 1 |  |
-| 18 | orbital-sandbox | FAIL: Failed(Child) | 1 |  |
-| 19 | orbital-sandbox | PASS: Passed | 1 |  |
-| 20 | orbital-sandbox | PASS: Passed | 1 |  |
-| 21 | orbital-sandbox | PASS: Passed | 1 |  |
-| 22 | live-visual | PASS: Passed | 1 |  |
-| 23 | live-visual | FAIL: Failed(Child) | 7 |  |
-| 24 | live-visual | FAIL: Failed(Child) | 1 | BLOCKED |
-| 25 | orbital-sandbox | PASS: Passed | 1 |  |
-| 26 | orbital-tactics | FAIL: CompileFailed | 0 |  |
-| 27 | orbital-tactics | PASS: Passed | 1 |  |
-| 28 | orbital-tactics | FAIL: Passed | 0 |  |
-| 29 | orbital-tactics | FAIL: Passed | 0 | BLOCKED |
-| 30 | orbital-sandbox | FAIL: Failed(Child) | 1 |  |
-| 31 | orbital-sandbox | PASS: Passed | 1 |  |
-| 32 | orbital-tactics | PASS: Passed | 1 |  |
-| 33 | orbital-sandbox | FAIL: Failed(Child) | 1 |  |
-| 34 | orbital-sandbox | PASS: Passed | 1 |  |
-| 35 | orbital-tactics | PASS: Passed | 1 |  |
-| 36 | orbital-tactics | FAIL: Failed(Child) | 1 |  |
-| 37 | orbital-tactics | PASS: Passed | 1 |  |
-| 38 | orbital-tactics | FAIL: Failed(Child) | 1 |  |
-| 39 | orbital-tactics | PASS: Passed | 1 |  |
-| 40 | orbital-tactics | PASS: Passed | 1 |  |
-| 41 | orbital-tactics | PASS: Passed | 1 |  |
-| 42 | orbital-tactics | PASS: Passed | 1 |  |
-| 43 | orbital-tactics | PASS: Passed | 1 |  |
-| 44 | orbital-tactics | PASS: Passed | 1 |  |
-| 45 | orbital-tactics | PASS: Passed | 1 |  |
-| 46 | orbital-tactics | PASS: Passed | 1 |  |
-| 47 | orbital-tactics | PASS: Passed | 1 |  |
-| 48 | orbital-tactics | PASS: Passed | 1 |  |
-| 49 | orbital-tactics | PASS: Passed | 1 |  |
-| 50 | orbital-tactics | FAIL: Failed(Child) | 1 |  |
-| 51 | orbital-tactics | FAIL: Failed(Child) | 1 | BLOCKED |
-| 52 | orbital-tactics | PASS: Passed | 1 |  |
-| 53 | orbital-tactics | PASS: Passed | 1 |  |
-| 54 | orbital-tactics | FAIL: Failed(Child) | 1 |  |
-| 55 | orbital-tactics | FAIL: Failed(Child) | 1 | BLOCKED |
-| 56 | orbital-tactics | PASS: Passed | 1 |  |
-| 57 | orbital-tactics | FAIL: Failed(Child) | 1 |  |
-| 58 | orbital-tactics | FAIL: Failed(Child) | 1 | BLOCKED |
-| 59 | orbital-tactics | FAIL: Failed(Child) | 1 |  |
-| 60 | orbital-tactics | PASS: Passed | 1 |  |
-| 61 | selection | FAIL: plannerFailed | 0 |  |
-| 62 | orbital-tactics | PASS: Passed | 1 |  |
-| 63 | live-visual | PASS: Passed | 1 |  |
-| 64 | orbital-tactics | PASS: Passed | 1 |  |
-| 65 | orbital-tactics | PASS: Passed | 1 |  |
-| 66 | orbital-tactics | PASS: Passed | 1 |  |
-| 67 | orbital-tactics | PASS: Passed | 1 |  |
-| 68 | orbital-tactics | FAIL: Failed(Child) | 1 |  |
-| 69 | orbital-tactics | FAIL: Failed(Child) | 1 | BLOCKED |
-| 70 | live-visual | FAIL: Failed(Child) | 1 |  |
-| 71 | live-visual | PASS: Passed | 1 |  |
-| 72 | orbital-tactics | FAIL: Failed(Child) | 1 |  |
-| 73 | orbital-tactics | FAIL: Failed(Child) | 1 | BLOCKED |
-| 74 | orbital-sandbox | PASS: Passed | 1 |  |
-| 75 | orbital-tactics | PASS: Passed | 1 |  |
+1. В Editor/Development запустить обычный путь **бункер → MVP**, открыть **F1 → «Орбиты и оружие»**.
+2. Включить **«Эксперимент: возврат промаха»**, закрыть F1. Стартовым пистолетом промахнуться: ожидать обратный проход по фиксированной линии; попробовать завести туда преследователя.
+3. Для **«Картечного тарана»** выключить веерную очередь, включить таран, получить Shotgun через существующий каталог/награду. Закрыть карточку/F1 → **Tab → перетащить Shotgun из запаса в свободную O → закрыть Tab**. Q/E направляют короткий снаряд через группу.
+4. Для врага: **F1 → «Враги и события» → нужный эксперимент → соответствующая «+1…»**. F1 закрывается; AI должен работать. Начать с таранного преследователя: уйти поперёк зафиксированной линии и использовать восстановление.
+5. Включение помечает попытку Development: production-победа/прогресс не засчитываются, OFF эту отметку не снимает. Новый обычный ран начинается без экспериментов.
 
-Артефакты, XML, диагностика и подробные отчёты: D:\fork\HelpMePlease\Artifacts\GeneratedQA\NightShift\2026-10-27T22-51-43-105Z-night.
-Исходный отчёт сохранён: D:\fork\HelpMePlease\Artifacts\GeneratedQA\NightShift\2026-10-27T22-51-43-105Z-night\previous-night-report.md.
+Следующий конкретный шаг — человеческая проба возврата промаха с сравнением ON/OFF и проверка категорий карточек RU/EN после последней правки.
 
-## Git
-
+Подробные проверки, включая FAIL и StaticOnly (без Unity): [артефакты](D:/fork/HelpMePlease/Artifacts/GeneratedQA/NightShift/2026-10-29T21-26-23-581Z-night/cycles.json).
+Прежний отчёт сохранён в D:\fork\HelpMePlease\Artifacts\GeneratedQA\NightShift\2026-10-29T21-26-23-581Z-night\previous-night-report.md.
 Коммиты, staging и переключения веток не выполнялись.
-
-```text
-M Assets/_Project/Dev/Debug/F1/LiveVisualStudio.cs
- M Assets/_Project/Dev/Debug/OrbitalLab/EnemyOrbitalLabController.cs
- M Assets/_Project/Dev/Debug/OrbitalLab/EnemyOrbitalLabSandboxView.cs
- M Assets/_Project/Dev/Debug/OrbitalLab/EnemyOrbitalLabTelemetry.cs
- M Assets/_Project/Dev/Tests/Core/Editor/EnemyOrbitalLabSandboxTests.cs
- M Assets/_Project/Dev/Tests/Core/Editor/LiveVisualProductionTests.cs
- M Assets/_Project/Dev/Tests/Core/Editor/LiveVisualProfileTests.cs
- M Assets/_Project/Dev/Tests/Core/Editor/OrbitalCombatV2TacticsTests.cs
- M Assets/_Project/Documentation/LiveVisualStudio.md
- M Assets/_Project/Documentation/Subject42_Game_Design_Bible.md
- M Assets/_Project/scripts/World/Presentation/LiveVisual/VisualProfile.cs
- M NIGHT_REPORT.md
- M PLAYTEST_CHECKLIST.md
- M Tools/NightShift/README.md
- M Tools/NightShift/Run-UnityTests.ps1
- M Tools/NightShift/Start-NightShift.ps1
- M Tools/NightShift/decision.schema.json
- M Tools/NightShift/director-prompt.md
- M Tools/NightShift/night-shift.mjs
- M Tools/NightShift/night-shift.test.mjs
- M docs/superpowers/plans/2026-10-27-night-shift.md
- M docs/superpowers/plans/2026-10-27-orbital-combat-v2.md
-```

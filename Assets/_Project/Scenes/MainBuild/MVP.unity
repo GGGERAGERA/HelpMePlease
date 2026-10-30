@@ -2821,6 +2821,14 @@ PrefabInstance:
       propertyPath: gameplayArea
       value: 
       objectReference: {fileID: 2147020003}
+    - target: {fileID: 4677640538491457717, guid: ed6d393a5a9e46a46af1c69217de142e, type: 3}
+      propertyPath: escortCargoEventPrefab
+      value:
+      objectReference: {fileID: 520000000000000004, guid: 2df1d3f1bc1f44dcac53730d8b24e0f6, type: 3}
+    - target: {fileID: 4677640538491457717, guid: ed6d393a5a9e46a46af1c69217de142e, type: 3}
+      propertyPath: fireteamClearanceEventPrefab
+      value:
+      objectReference: {fileID: 520000000000000004, guid: 9a55b0d797934396aac283ccd787f97b, type: 3}
     - target: {fileID: 7463624239673094297, guid: ed6d393a5a9e46a46af1c69217de142e, type: 3}
       propertyPath: m_Name
       value: World

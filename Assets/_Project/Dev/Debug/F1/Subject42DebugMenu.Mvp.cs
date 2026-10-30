@@ -123,18 +123,91 @@ public sealed partial class Subject42DebugMenu
         if (station == null || !station.IsInitialized || !station.UsesSegmentedOrbit || upgradeManager == null)
         { AddHint("Segmented Orbit ещё не готова. Начните обычный ран из бункера."); return; }
         var state = station.State;
+        AddSectionTitle("Эксперимент · Development", "Меняет выбранный тип оружия этой попытки, включая будущие экземпляры. Production-прогресс не засчитывается.");
+        var activeWeaponVariants = new System.Collections.Generic.List<string>();
+        if (state.MissReturnPistolExperiment) activeWeaponVariants.Add("Возврат промаха");
+        if (state.ChargedLineSniperExperiment) activeWeaponVariants.Add("Заряженный снайпер");
+        if (state.SweepingShotgunExperiment) activeWeaponVariants.Add("Веерная очередь дробовика");
+        if (state.RamSlugShotgunExperiment) activeWeaponVariants.Add("Картечный таран");
+        if (state.PulsedSawExperiment) activeWeaponVariants.Add("Импульсная пила");
+        if (state.InertialSawExperiment) activeWeaponVariants.Add("Инерционная пила");
+        MvpRow("Активные варианты оружия", activeWeaponVariants.Count == 0 ? "Все выключены" : string.Join(" · ", activeWeaponVariants));
+        AddHint("Пистолет доступен со старта. Остальные типы получите через штатные награды ниже в запас; закройте F1 и установите оружие через Tab.");
+        bool missReturnPistol = state.MissReturnPistolExperiment;
+        MvpRow("Эксперимент: возврат промаха" + (missReturnPistol ? " · ВКЛ" : " · ВЫКЛ"),
+            "Пистолет: вместо 8 м прямо — 4 м наружу + 4 м обратно только при промахе. Линия фиксирована в мире: заведите на неё преследователей. Все пистолеты попытки; Development без production-прогресса.",
+            missReturnPistol ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ", MvpCanEdit, () =>
+            {
+                if (!MvpCanEdit || !station.DebugSetMissReturnPistolExperiment(!missReturnPistol)) return;
+                mvpStatus = "Попытка Development. Возврат промаха: раскладка, улучшения и cooldown сохранены. OFF возвращает обычный профиль будущим выстрелам; летящие заканчивают прежний путь. Новый ран — без эксперимента.";
+                RefreshCurrentTab();
+            });
+        bool chargedSniper = state.ChargedLineSniperExperiment;
+        MvpRow("Заряженный линейный Sniper" + (chargedSniper ? " · ВКЛ" : " · ВЫКЛ"),
+            "0,45 с подготовки → до 3 тел по 24 урона вместо 32 в одно. Выстройте толпу в линию; Q/E ведут направление до выпуска.",
+            chargedSniper ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ", MvpCanEdit, () =>
+            {
+                if (!MvpCanEdit || !station.DebugSetChargedLineSniperExperiment(!chargedSniper)) return;
+                mvpStatus = "Попытка Development. Эксперимент меняет все Sniper; раскладка и улучшения сохранены. Новый обычный ран — без эксперимента.";
+                RefreshCurrentTab();
+            });
+        bool sweepingShotgun = state.SweepingShotgunExperiment;
+        bool ramSlugShotgun = state.RamSlugShotgunExperiment;
+        MvpRow("Веерная очередь Shotgun" + (sweepingShotgun ? " · ВКЛ" : " · ВЫКЛ"),
+            "Вместо 7 дробин сразу: 3 залпа по 2, шаг 0,12 с, слева → центр → справа. Q/E ведут очередь; 2X — один центральный залп. Все Shotgun этой попытки; Development без production-прогресса.",
+            sweepingShotgun ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ", MvpCanEdit && (sweepingShotgun || !state.RamSlugShotgunExperiment), () =>
+            {
+                if (!MvpCanEdit || !station.DebugSetSweepingShotgunExperiment(!sweepingShotgun)) return;
+                mvpStatus = "Попытка Development. Shotgun: раскладка и улучшения сохранены; выключение возвращает обычный веер. Новый ран — без эксперимента.";
+                RefreshCurrentTab();
+            });
+        if (!sweepingShotgun && ramSlugShotgun)
+            AddHint("Веерная очередь недоступна: сначала выключите картечный таран.");
+        MvpRow("Эксперимент: картечный таран" + (ramSlugShotgun ? " · ВКЛ" : " · ВЫКЛ"),
+            "Shotgun: вместо широкого веера один медленный короткий снаряд. Урон 10, дальность 3,5 м, до трёх тел; штатное оттеснение поддерживаемых врагов, без обхода щитов. Q/E направляют линию. Development без production-прогресса.",
+            ramSlugShotgun ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ", MvpCanEdit && (ramSlugShotgun || !state.SweepingShotgunExperiment), () =>
+            {
+                if (!MvpCanEdit || !station.DebugSetRamSlugShotgunExperiment(!ramSlugShotgun)) return;
+                mvpStatus = "Попытка Development без production-прогресса. Картечный таран: установки, улучшения, cooldown и летящие снаряды сохранены. Уже начатая очередь завершается прежним профилем; будущие выстрелы используют выбранный профиль. OFF возвращает обычный Shotgun. Новый ран — без эксперимента.";
+                RefreshCurrentTab();
+            });
+        if (!ramSlugShotgun && sweepingShotgun)
+            AddHint("Картечный таран недоступен: сначала выключите веерную очередь.");
+        bool inertialSaw = state.InertialSawExperiment;
+        bool pulsedSaw = state.PulsedSawExperiment;
+        MvpRow("Импульсная пила" + (pulsedSaw ? " · ВКЛ" : " · ВЫКЛ"),
+            "0,8 с: увеличенный контакт ×1,35 и вращение; 0,4 с: обычный размер, остановка и нет урона. Подводите пилу в активное окно. Все Saw этой попытки; Development без production-прогресса.",
+            pulsedSaw ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ", MvpCanEdit && (pulsedSaw || !state.InertialSawExperiment), () =>
+            {
+                if (!MvpCanEdit || !station.DebugSetPulsedSawExperiment(!pulsedSaw)) return;
+                mvpStatus = "Попытка Development без production-прогресса. Импульсная пила: установки, улучшения и интервалы поражённых целей сохранены; выключение возвращает непрерывный контакт. Новый ран — без эксперимента.";
+                RefreshCurrentTab();
+            });
+        if (!pulsedSaw && inertialSaw)
+            AddHint("Импульсная пила недоступна: сначала выключите инерционную пилу.");
+        MvpRow("Эксперимент: инерционная пила" + (inertialSaw ? " · ВКЛ" : " · ВЫКЛ"),
+            "Контакт только при фактическом вращении установленного кольца штатным Q/E: урон ×1,5, прежние радиус и интервал. Без вращения контакта нет; расходуется существующая энергия. Первая итерация с положительным шагом времени после установки/переключения только запоминает фазу. Development без production-прогресса.",
+            inertialSaw ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ", MvpCanEdit && (inertialSaw || !state.PulsedSawExperiment), () =>
+            {
+                if (!MvpCanEdit || !station.DebugSetInertialSawExperiment(!inertialSaw)) return;
+                mvpStatus = "Попытка Development без production-прогресса. Инерционная пила: установки, улучшения и интервалы поражённых целей сохранены. Первая итерация с положительным шагом времени только запоминает фазу; OFF возвращает обычный контакт. Новый ран — без эксперимента.";
+                RefreshCurrentTab();
+            });
+        if (!inertialSaw && pulsedSaw)
+            AddHint("Инерционная пила недоступна: сначала выключите импульсную пилу.");
+        AddHint("Выдача пополняет запас. Закройте карточку/F1, откройте Tab и перетащите предмет на подходящую ячейку. Установленное оружие занимает общий лимит.");
         AddSectionTitle("Оружие", "");
         foreach (var kind in new[] { OrbitalRewardKind.Pistol, OrbitalRewardKind.Sniper, OrbitalRewardKind.Shotgun, OrbitalRewardKind.Saw })
         {
             var module = OrbitalRewardProvider.GetModuleKind(kind);
-            AddMvpBuildReward(kind, $"В запасе: {state.SegmentedWeapons.Count(w => w.ModuleType == module)}");
+            AddMvpBuildReward(kind, $"Установлено: {state.Modules.Count(w => w.ModuleType == module)} · В запасе: {state.SegmentedWeapons.Count(w => w.ModuleType == module)}");
         }
         AddSectionTitle("Модули", "");
         foreach (var kind in new[] { OrbitalRewardKind.DamageLink, OrbitalRewardKind.FireRateLink,
                      OrbitalRewardKind.ExtraShotLink, OrbitalRewardKind.RicochetLink })
         {
             var link = OrbitalRewardProvider.GetSegmentedLinkKind(kind).Value;
-            AddMvpBuildReward(kind, $"В запасе: {state.SegmentedLinkStock.Count(m => m == link)}");
+            AddMvpBuildReward(kind, $"Установлено: {state.SegmentedLinks.Count(m => m.Kind == link)} · В запасе: {state.SegmentedLinkStock.Count(m => m == link)}");
         }
         AddSectionTitle("Орбиты / крепления", "");
         AddMvpBuildReward(OrbitalRewardKind.NewRing, $"Открыто: {state.UnlockedSegmentedLevels}/{OrbitalRunState.SegmentedLevels}", "ОТКРЫТЬ");
@@ -406,16 +479,381 @@ public sealed partial class Subject42DebugMenu
         bool available = enemySpawner != null;
         MvpRow("Обычная генерация врагов", available ? enemySpawner.IsSpawningEnabled ? "Включена" : "Остановлена" : "Спавнер не готов", "ПЕРЕКЛЮЧИТЬ", available, ToggleEnemyAutoSpawn);
         MvpRow("Поведение врагов", EnemyDebugAiFreeze.IsFrozen ? "AI заморожен" : "AI работает", "ПЕРЕКЛЮЧИТЬ", available, ToggleEnemyAiFreeze);
+        MvpRow("Убрать созданных вручную врагов", $"Учтено: {debugEnemies.Count(e => e != null)}", "УБРАТЬ", debugEnemies.Any(e => e != null), ClearDebugEnemies);
+        var activeExperiments = new System.Collections.Generic.List<string>();
+        if (available)
+        {
+            if (enemySpawner.FlankingChasersExperiment) activeExperiments.Add("Фланговый преследователь");
+            if (enemySpawner.CommittedVolleyExperiment) activeExperiments.Add("Залповый стрелок");
+            if (enemySpawner.RecoilingShootersExperiment) activeExperiments.Add("Стрелок с отходом");
+            if (enemySpawner.InterceptingBombersExperiment) activeExperiments.Add("Подрывник-перехватчик");
+            if (enemySpawner.StrafingShootersExperiment) activeExperiments.Add("Стрелок на траверсе");
+            if (enemySpawner.CommittedRamExperiment) activeExperiments.Add("Таранный преследователь");
+            if (enemySpawner.WoundedRetreatExperiment) activeExperiments.Add("Отступающий преследователь");
+            if (enemySpawner.BlockLockedShieldsExperiment) activeExperiments.Add("Заклинивающий щит");
+        }
+        MvpRow("Активные эксперименты врагов", !available ? "Спавнер не готов" :
+            activeExperiments.Count == 0 ? "Все выключены" : string.Join(" · ", activeExperiments));
+        MvpRow("Эксперимент: фланговый преследователь",
+            (available && enemySpawner.FlankingChasersExperiment ? "Включён" : "Выключен") +
+            " · текущий сектор · включение необратимо помечает попытку Development",
+            "ПЕРЕКЛЮЧИТЬ", available && MvpCanEdit, () =>
+            {
+                if (!MvpCanEdit || enemySpawner == null) return;
+                enemySpawner.DebugSetFlankingChasersExperiment(!enemySpawner.FlankingChasersExperiment);
+                RefreshCurrentTab();
+            });
+        MvpRow("Правило обхода", "Каждый 4-й обычный преследователь идёт по диагонали с наклоном корпуса по движению; вблизи выпрямляется и идёт прямо. Особые враги и assault-волны исключены.");
+        MvpRow("После выключения эксперимента", "Новых назначений нет. Живые фланговые враги сразу возвращаются к обычной позе и преследованию; следующий сектор — без эксперимента.");
         var profile = RunStateManager.Instance?.CurrentSector?.SpawnProfile;
+        MvpRow("Эксперимент: залповый стрелок",
+            (available && enemySpawner.CommittedVolleyExperiment ? "Включён" : "Выключен") +
+            " · текущий сектор · Development · каждый третий обычный стрелок",
+            "ПЕРЕКЛЮЧИТЬ", available && MvpCanEdit, () =>
+            {
+                if (!MvpCanEdit || enemySpawner == null) return;
+                enemySpawner.DebugSetCommittedVolleyExperiment(!enemySpawner.CommittedVolleyExperiment);
+                RefreshCurrentTab();
+            });
+        MvpRow("Фиксированная линия", "0,6 с неподвижной подготовки → 3 выстрела через 0,15 с → 1,8 с восстановления. Уходите поперёк линии или сближайтесь после залпа. OFF отменяет залпы уже созданных стрелков.");
+        var volleyPrefab = profile?.Phases?.Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
+            .Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab)
+            .FirstOrDefault(EnemySpawner.IsCommittedVolleyEligible);
+        MvpRow("Немедленная проба залпа",
+            volleyPrefab == null ? "В профиле сектора нет подходящего обычного стрелка с отдельной моделью." :
+            "Безопасный ручной spawn; F1 закроется. Включите AI для пробы.",
+            "+1 ЗАЛПОВЫЙ", available && MvpCanEdit && enemySpawner.CommittedVolleyExperiment && volleyPrefab != null, () =>
+            {
+                if (!MvpCanEdit || enemySpawner == null || volleyPrefab == null) return;
+                var player = PlayerRuntimeReference.ResolvePlayerTransform("Player", true);
+                if (player == null) return;
+                var enemy = enemySpawner.DebugSpawnCommittedVolleyAround(volleyPrefab, player.position, out enemyDebugStatus);
+                if (enemy == null) { RefreshCurrentTab(); return; }
+                debugEnemies.Add(enemy);
+                CloseMenu();
+            });
+        bool recoilingSpawnerReady = available && enemySpawner.isActiveAndEnabled;
+        var recoilingPlayer = PlayerRuntimeReference.ResolvePlayerTransform("Player", true);
+        bool recoilingPlayerReady = recoilingPlayer != null && recoilingPlayer.gameObject.activeInHierarchy &&
+            PlayerRuntimeReference.PlayerHealth != null && !PlayerRuntimeReference.PlayerHealth.IsDead;
+        var recoilingPrefab = profile?.Phases?.Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
+            .Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab)
+            .FirstOrDefault(EnemySpawner.IsRecoilingShooterPrefabEligible);
+        MvpRow("Эксперимент: стрелок с отходом",
+            (available && enemySpawner.RecoilingShootersExperiment ? "Включён" : "Выключен") +
+            " · текущий сектор · Development · каждый четвёртый подходящий обычный стрелок",
+            "ПЕРЕКЛЮЧИТЬ", recoilingSpawnerReady && MvpCanEdit && recoilingPlayerReady &&
+            (enemySpawner.RecoilingShootersExperiment || recoilingPrefab != null), () =>
+            {
+                var player = PlayerRuntimeReference.ResolvePlayerTransform("Player", true);
+                if (!MvpCanEdit || enemySpawner == null || !enemySpawner.isActiveAndEnabled ||
+                    player == null || !player.gameObject.activeInHierarchy || PlayerRuntimeReference.PlayerHealth == null ||
+                    PlayerRuntimeReference.PlayerHealth.IsDead ||
+                    (!enemySpawner.RecoilingShootersExperiment && !EnemySpawner.IsRecoilingShooterPrefabEligible(recoilingPrefab)))
+                {
+                    enemyDebugStatus = "Для отхода нужны живой MVP, активный спавнер и подходящий prefab; OFF не требует prefab.";
+                    RefreshCurrentTab();
+                    return;
+                }
+                enemySpawner.DebugSetRecoilingShootersExperiment(!enemySpawner.RecoilingShootersExperiment);
+                enemyDebugStatus = enemySpawner.RecoilingShootersExperiment
+                    ? "Отход включён; попытка Development." : "Отход выключен; живые назначения сняты.";
+                RefreshCurrentTab();
+            });
+        MvpRow("Отход после выстрела", "После близкого одиночного выстрела: отход 0,65 с → неподвижное окно 0,65 с. Преследуйте либо смените цель. OFF возвращает обычное движение и позу; снаряды сохраняются. Залп, траверс и отход несовместимы на одном враге. Для чистой пробы выключите эксперименты «залповый стрелок» и «стрелок на траверсе»: они назначаются раньше отхода.");
+        MvpRow("Немедленная проба отхода",
+            recoilingPrefab == null ? "В профиле сектора нет подходящего стрелка с отдельной моделью; замена не создаётся." :
+            "Кнопка сразу создаёт одного стрелка с отходом, не расходуя счётчик каждого четвёртого обычного стрелка. Безопасное размещение; F1 закроется. Включите AI и сблизьтесь для пробы.",
+            "+1 С ОТХОДОМ", recoilingSpawnerReady && MvpCanEdit && recoilingPlayerReady &&
+            enemySpawner.RecoilingShootersExperiment && recoilingPrefab != null, () =>
+            {
+                var player = PlayerRuntimeReference.ResolvePlayerTransform("Player", true);
+                if (!MvpCanEdit || enemySpawner == null || !enemySpawner.isActiveAndEnabled ||
+                    !enemySpawner.RecoilingShootersExperiment ||
+                    !EnemySpawner.IsRecoilingShooterPrefabEligible(recoilingPrefab) ||
+                    player == null || !player.gameObject.activeInHierarchy || PlayerRuntimeReference.PlayerHealth == null ||
+                    PlayerRuntimeReference.PlayerHealth.IsDead)
+                {
+                    enemyDebugStatus = "Включите отход; нужны живой игрок, активный спавнер и подходящий стрелок.";
+                    RefreshCurrentTab();
+                    return;
+                }
+                var enemy = enemySpawner.DebugSpawnRecoilingShooterAround(recoilingPrefab, player.position, out enemyDebugStatus);
+                if (enemy == null) { RefreshCurrentTab(); return; }
+                debugEnemies.Add(enemy);
+                CloseMenu();
+            });
+        bool interceptingSpawnerReady = available && enemySpawner.isActiveAndEnabled;
+        var interceptingPlayer = PlayerRuntimeReference.ResolvePlayerTransform("Player", true);
+        bool interceptingPlayerReady = interceptingPlayer != null && interceptingPlayer.gameObject.activeInHierarchy &&
+            PlayerRuntimeReference.PlayerHealth != null && !PlayerRuntimeReference.PlayerHealth.IsDead;
+        var interceptingPrefab = profile?.Phases?.Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
+            .Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab)
+            .FirstOrDefault(EnemySpawner.IsInterceptingBomberPrefabEligible);
+        MvpRow("Эксперимент: подрывник-перехватчик",
+            (available && enemySpawner.InterceptingBombersExperiment ? "Включён" : "Выключен") +
+            " · текущий сектор · Development · каждый четвёртый подходящий обычный подрывник",
+            "ПЕРЕКЛЮЧИТЬ", interceptingSpawnerReady && MvpCanEdit && interceptingPlayerReady && interceptingPrefab != null, () =>
+            {
+                var player = PlayerRuntimeReference.ResolvePlayerTransform("Player", true);
+                if (!MvpCanEdit || enemySpawner == null || !enemySpawner.isActiveAndEnabled ||
+                    player == null || !player.gameObject.activeInHierarchy || PlayerRuntimeReference.PlayerHealth == null ||
+                    PlayerRuntimeReference.PlayerHealth.IsDead || !EnemySpawner.IsInterceptingBomberPrefabEligible(interceptingPrefab))
+                {
+                    enemyDebugStatus = "Для перехвата нужны живой MVP, активный спавнер и подходящий prefab.";
+                    RefreshCurrentTab();
+                    return;
+                }
+                enemySpawner.DebugSetInterceptingBombersExperiment(!enemySpawner.InterceptingBombersExperiment);
+                enemyDebugStatus = enemySpawner.InterceptingBombersExperiment
+                    ? "Перехват включён; попытка Development." : "Перехват выключен; живые назначения сняты.";
+                RefreshCurrentTab();
+            });
+        MvpRow("Упреждение движения", "Вдали подрывник идёт наперерез движению; меняйте направление. Вблизи возвращается к обычному преследованию. Штатный взрыв неизменен. OFF снимает перехват у живых врагов, не отменяя взрывы.");
+        MvpRow("Немедленная проба перехвата",
+            interceptingPrefab == null ? "В профиле сектора нет подходящего подрывника; замена не создаётся." :
+            "Безопасный ручной spawn без расхода обычной очереди назначений; F1 закроется. Включите AI для пробы.",
+            "+1 ПЕРЕХВАТЧИК", interceptingSpawnerReady && MvpCanEdit && interceptingPlayerReady &&
+            enemySpawner.InterceptingBombersExperiment && interceptingPrefab != null, () =>
+            {
+                var player = PlayerRuntimeReference.ResolvePlayerTransform("Player", true);
+                if (!MvpCanEdit || enemySpawner == null || !enemySpawner.isActiveAndEnabled ||
+                    !enemySpawner.InterceptingBombersExperiment ||
+                    !EnemySpawner.IsInterceptingBomberPrefabEligible(interceptingPrefab) ||
+                    player == null || !player.gameObject.activeInHierarchy || PlayerRuntimeReference.PlayerHealth == null ||
+                    PlayerRuntimeReference.PlayerHealth.IsDead)
+                {
+                    enemyDebugStatus = "Включите перехват; нужны живой игрок, активный спавнер и подходящий подрывник.";
+                    RefreshCurrentTab();
+                    return;
+                }
+                var enemy = enemySpawner.DebugSpawnInterceptingBomberAround(interceptingPrefab, player.position, out enemyDebugStatus);
+                if (enemy == null) { RefreshCurrentTab(); return; }
+                debugEnemies.Add(enemy);
+                CloseMenu();
+            });
+        MvpRow("Эксперимент: стрелок на траверсе",
+            (available && enemySpawner.StrafingShootersExperiment ? "Включён" : "Выключен") +
+            " · текущий сектор · Development · каждое четвёртое подходящее обычное назначение",
+            "ПЕРЕКЛЮЧИТЬ", available && MvpCanEdit, () =>
+            {
+                if (!MvpCanEdit || enemySpawner == null) return;
+                enemySpawner.DebugSetStrafingShootersExperiment(!enemySpawner.StrafingShootersExperiment);
+                RefreshCurrentTab();
+            });
+        MvpRow("Боковая одиночная стрельба", "В полосе стрельбы враг движется поперёк линии к игроку, сохраняя обычную одиночную стрельбу; вне полосы сближается или отступает. Меняйте фронт огня и маршрут. Залповый режим несовместим. OFF отменяет живые назначения.");
+        var strafingPrefab = profile?.Phases?.Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
+            .Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab)
+            .FirstOrDefault(EnemySpawner.IsStrafingShooterEligible);
+        MvpRow("Немедленная проба траверса",
+            strafingPrefab == null ? "В профиле сектора нет подходящего обычного стрелка; замена не создаётся." :
+            "Безопасный ручной spawn; F1 закроется. Включите AI для пробы.",
+            "+1 НА ТРАВЕРСЕ", available && MvpCanEdit && enemySpawner.StrafingShootersExperiment && strafingPrefab != null, () =>
+            {
+                if (!MvpCanEdit || enemySpawner == null || !enemySpawner.StrafingShootersExperiment ||
+                    strafingPrefab == null || !EnemySpawner.IsStrafingShooterEligible(strafingPrefab))
+                {
+                    enemyDebugStatus = "Включите эксперимент траверса; нужен подходящий стрелок и доступное редактирование.";
+                    RefreshCurrentTab();
+                    return;
+                }
+                var player = PlayerRuntimeReference.ResolvePlayerTransform("Player", true);
+                if (player == null)
+                {
+                    enemyDebugStatus = "Игрок не готов для пробы траверса.";
+                    RefreshCurrentTab();
+                    return;
+                }
+                var enemy = enemySpawner.DebugSpawnStrafingShooterAround(strafingPrefab, player.position, out enemyDebugStatus);
+                if (enemy == null) { RefreshCurrentTab(); return; }
+                debugEnemies.Add(enemy);
+                CloseMenu();
+            });
+        bool retreatAvailable = available && enemySpawner.isActiveAndEnabled;
+        MvpRow("Эксперимент: отступающий преследователь",
+            (retreatAvailable && enemySpawner.WoundedRetreatExperiment ? "Включён" : "Выключен") +
+            " · текущий сектор · Development · каждый четвёртый подходящий преследователь",
+            "ПЕРЕКЛЮЧИТЬ", retreatAvailable && (enemySpawner.WoundedRetreatExperiment || MvpCanEdit), () =>
+            {
+                if (enemySpawner == null || (!enemySpawner.isActiveAndEnabled && !enemySpawner.WoundedRetreatExperiment) || (!enemySpawner.WoundedRetreatExperiment && !MvpCanEdit)) return;
+                enemySpawner.DebugSetWoundedRetreatExperiment(!enemySpawner.WoundedRetreatExperiment);
+                RefreshCurrentTab();
+            });
+        MvpRow("Одноразовый отход при ранении", "При HP ≤50% один раз отходит 0,9 с по мировой линии, затем преследует. Добейте раненого или используйте брешь. Попадания/лечение не перезаряжают отход; OFF возвращает обычную позу и погоню.");
+        var retreatPrefab = profile?.Phases?.Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
+            .Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab)
+            .FirstOrDefault(EnemySpawner.IsWoundedRetreatEligible);
+        MvpRow("Немедленная проба отхода",
+            retreatPrefab == null ? "Нет подходящего обычного преследователя с безопасной отдельной моделью." :
+            "Безопасный ручной spawn; F1 закроется. Включите AI для пробы.",
+            "+1 ОТСТУПАЮЩИЙ", retreatAvailable && MvpCanEdit && enemySpawner.WoundedRetreatExperiment && retreatPrefab != null, () =>
+            {
+                if (!MvpCanEdit || enemySpawner == null || !enemySpawner.isActiveAndEnabled || retreatPrefab == null) return;
+                var player = PlayerRuntimeReference.ResolvePlayerTransform("Player", true);
+                if (player == null || PlayerRuntimeReference.ResolvePlayerHealth() is not { IsDead: false }) return;
+                var enemy = enemySpawner.DebugSpawnWoundedRetreatAround(retreatPrefab, player.position, out enemyDebugStatus);
+                if (enemy == null) { RefreshCurrentTab(); return; }
+                debugEnemies.Add(enemy);
+                CloseMenu();
+            });
+        MvpRow("Эксперимент: таранный преследователь",
+            (available && enemySpawner.CommittedRamExperiment ? "Включён" : "Выключен") +
+            " · текущий сектор · Development · каждый четвёртый подходящий преследователь",
+            "ПЕРЕКЛЮЧИТЬ", available && MvpCanEdit, () =>
+            {
+                if (!MvpCanEdit || enemySpawner == null) return;
+                enemySpawner.DebugSetCommittedRamExperiment(!enemySpawner.CommittedRamExperiment);
+                RefreshCurrentTab();
+            });
+        MvpRow("Таран по фиксированной линии", "До 5 м: 0,65 с подготовки → 0,45 с рывка → 1,2 с восстановления. Уходите поперёк линии, используйте промах. OFF отменяет цикл уже созданных врагов.");
+        var ramPrefab = profile?.Phases?.Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
+            .Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab)
+            .FirstOrDefault(EnemySpawner.IsCommittedRamEligible);
+        MvpRow("Немедленная проба тарана",
+            ramPrefab == null ? "Нет подходящего обычного преследователя с безопасной отдельной моделью." :
+            "Безопасный ручной spawn; F1 закроется. Включите AI для пробы.",
+            "+1 ТАРАННЫЙ", available && MvpCanEdit && enemySpawner.CommittedRamExperiment && ramPrefab != null, () =>
+            {
+                if (!MvpCanEdit || enemySpawner == null || ramPrefab == null) return;
+                var player = PlayerRuntimeReference.ResolvePlayerTransform("Player", true);
+                if (player == null) return;
+                var enemy = enemySpawner.DebugSpawnCommittedRamAround(ramPrefab, player.position, out enemyDebugStatus);
+                if (enemy == null) { RefreshCurrentTab(); return; }
+                debugEnemies.Add(enemy);
+                CloseMenu();
+            });
+        MvpRow("Эксперимент: заклинивающий щит",
+            (available && enemySpawner.BlockLockedShieldsExperiment ? "Включён" : "Выключен") +
+            " · текущий сектор · Development · каждый четвёртый подходящий обычный spawn",
+            "ПЕРЕКЛЮЧИТЬ", available && MvpCanEdit, () =>
+            {
+                if (!MvpCanEdit || enemySpawner == null) return;
+                enemySpawner.DebugSetBlockLockedShieldsExperiment(!enemySpawner.BlockLockedShieldsExperiment);
+                RefreshCurrentTab();
+            });
+        MvpRow("Окно обхода щита", "Реальный блок фиксирует пластину на 0,9 с; повторные блоки не продлевают окно. Затем возвращается обычное слежение. Спровоцируйте блок и обойдите пластину. OFF отменяет режим живых назначений.");
+        var blockLockedShieldPrefab = profile?.Phases?.Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
+            .Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab)
+            .FirstOrDefault(EnemySpawner.IsBlockLockedShieldPrefabEligible);
+        MvpRow("Немедленная проба щита",
+            blockLockedShieldPrefab == null ? "В профиле сектора нет подходящего обычного врага с действующим щитом; замена не создаётся." :
+            "Безопасный ручной spawn; F1 закроется. Включите AI для пробы.",
+            "+1 ЗАКЛИНИВАЮЩИЙ", available && MvpCanEdit && enemySpawner.BlockLockedShieldsExperiment && blockLockedShieldPrefab != null, () =>
+            {
+                if (!MvpCanEdit || enemySpawner == null || !enemySpawner.BlockLockedShieldsExperiment || blockLockedShieldPrefab == null) return;
+                var player = PlayerRuntimeReference.ResolvePlayerTransform("Player", true);
+                if (player == null)
+                {
+                    enemyDebugStatus = "Игрок не готов для пробы заклинивающего щита.";
+                    RefreshCurrentTab();
+                    return;
+                }
+                var enemy = enemySpawner.DebugSpawnBlockLockedShieldAround(blockLockedShieldPrefab, player.position, out enemyDebugStatus);
+                if (enemy == null) { RefreshCurrentTab(); return; }
+                debugEnemies.Add(enemy);
+                CloseMenu();
+            });
+        var flankingPrefab = profile?.Phases?.Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
+            .Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab)
+            .FirstOrDefault(EnemySpawner.IsFlankingChaserEligible);
+        MvpRow("Немедленная проба обхода",
+            flankingPrefab == null ? "В профиле сектора нет подходящего prefab; замена не создаётся." :
+            "Включите эксперимент; безопасный ручной spawn, затем F1 закроется. AI должен работать.",
+            "+1 ФЛАНГОВЫЙ", available && MvpCanEdit && enemySpawner.FlankingChasersExperiment, () =>
+            {
+                if (!MvpCanEdit) return;
+                if (flankingPrefab == null)
+                {
+                    enemyDebugStatus = "В профиле сектора нет подходящего prefab флангового преследователя.";
+                    RefreshCurrentTab();
+                    return;
+                }
+                SpawnDebugEnemies(flankingPrefab, "Фланговый преследователь", 1, true);
+            });
         if (profile != null)
             foreach (var prefab in profile.Phases.Where(p => p != null).SelectMany(p => p.enemies).Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab).Distinct())
             {
                 string name = prefab.GetComponent<EnemyDirectionalShield>() != null ? prefab.GetComponent<EnemyShooterMovement>() != null ? "Стрелок со щитом" : "Ближний щитоносец" :
                     prefab.GetComponent<EnemyShooterMovement>() != null ? "Стрелок" : prefab.GetComponent<EnemyBomberMovement>() != null ? "Подрывник" : "Обычный враг";
-                MvpRow(name, prefab.name + " · одна безопасная ручная установка через спавнер", "+1 ВРАГ", available && MvpStation != null,
-                    () => { RunStateManager.Instance.DebugMarkDevelopmentRun(); SpawnDebugEnemies(prefab, name, 1); });
+                var profilePlayer = PlayerRuntimeReference.ResolvePlayerTransform("Player", true);
+                bool profileSpawnReady = available && MvpCanEdit && enemySpawner.isActiveAndEnabled &&
+                    RunStateManager.Instance != null && RunStateManager.Instance.CurrentSector?.SpawnProfile == profile &&
+                    profilePlayer != null && profilePlayer.gameObject.activeInHierarchy &&
+                    PlayerRuntimeReference.PlayerHealth != null && !PlayerRuntimeReference.PlayerHealth.IsDead;
+                MvpRow(name, prefab.name + " · одна безопасная ручная установка через спавнер", "+1 ВРАГ", profileSpawnReady,
+                    () =>
+                    {
+                        var runState = RunStateManager.Instance;
+                        var player = PlayerRuntimeReference.ResolvePlayerTransform("Player", true);
+                        var currentProfile = runState?.CurrentSector?.SpawnProfile;
+                        bool currentPrefab = prefab != null && currentProfile?.Phases != null &&
+                            currentProfile.Phases.Where(p => p != null && p.enemies != null)
+                                .SelectMany(p => p.enemies).Any(e => e != null && e.enemyPrefab == prefab);
+                        if (!MvpCanEdit || enemySpawner == null || !enemySpawner.isActiveAndEnabled ||
+                            runState == null || !currentPrefab || player == null || !player.gameObject.activeInHierarchy ||
+                            PlayerRuntimeReference.PlayerHealth == null || PlayerRuntimeReference.PlayerHealth.IsDead)
+                        {
+                            enemyDebugStatus = "Нужны доступное редактирование, живой MVP и враг текущего профиля.";
+                            RefreshCurrentTab();
+                            return;
+                        }
+                        runState.DebugMarkDevelopmentRun();
+                        SpawnDebugEnemies(prefab, name, 1);
+                    });
             }
-        MvpRow("Убрать созданных вручную врагов", $"Учтено: {debugEnemies.Count(e => e != null)}", "УБРАТЬ", debugEnemies.Any(e => e != null), ClearDebugEnemies);
+        var events = FindFirstObjectByType<WorldEventSpawner>();
+        AddSectionTitle("Эксперимент: зачистка огневой группы", "Текущий сектор · default OFF · публично выключен · включение помечает попытку Development");
+        MvpRow("Зачистка огневой группы", events != null && events.FireteamClearanceExperimentEnabled ? "Включено" : "Выключено",
+            "ПЕРЕКЛЮЧИТЬ", MvpCanEdit && events != null && events.isActiveAndEnabled, () =>
+            {
+                if (!MvpCanEdit || events == null || !events.isActiveAndEnabled) return;
+                events.DebugSetFireteamClearanceExperiment(!events.FireteamClearanceExperimentEnabled, out enemyDebugStatus);
+                RefreshCurrentTab();
+            });
+        MvpRow("Создать огневую группу", "Один дополнительный Development-экземпляр сверх обычной вместимости. Перед стартом закончите другое активное событие. Начните обычной интеракцией: три отмеченных стрелка за 35 с; за успех — стандартная награда события.",
+            "СОЗДАТЬ ЗАЧИСТКУ", MvpCanEdit && events != null && events.isActiveAndEnabled &&
+                events.FireteamClearanceExperimentEnabled && events.FireteamClearanceExperimentInstance == null, () =>
+            {
+                if (!MvpCanEdit || events == null || !events.isActiveAndEnabled) return;
+                if (!events.FireteamClearanceExperimentEnabled || events.FireteamClearanceExperimentInstance != null)
+                {
+                    enemyDebugStatus = !events.FireteamClearanceExperimentEnabled ? "Сначала включите эксперимент зачистки." : "Зачистка уже создана.";
+                    RefreshCurrentTab();
+                    return;
+                }
+                if (events.DebugSpawnFireteamClearance(out enemyDebugStatus)) CloseMenu();
+                else RefreshCurrentTab();
+            });
+        MvpRow("Убрать только зачистку", "OFF и удаление отменяют собственное событие и его группу без награды.",
+            "УБРАТЬ ЗАЧИСТКУ", MvpCanEdit && events != null && events.isActiveAndEnabled &&
+                events.FireteamClearanceExperimentInstance != null, () =>
+            {
+                if (!MvpCanEdit || events == null || !events.isActiveAndEnabled) return;
+                events.DebugClearFireteamClearance(out enemyDebugStatus);
+                RefreshCurrentTab();
+            });
+        AddSectionTitle("Эксперимент: эвакуация груза", "Текущий сектор · публично выключен · включение помечает попытку Development");
+        MvpRow("Сопровождение груза", events != null && events.EscortCargoExperimentEnabled ? "Включено" : "Выключено",
+            "ПЕРЕКЛЮЧИТЬ", events != null && MvpCanEdit, () =>
+            {
+                if (!MvpCanEdit || events == null) return;
+                events.DebugSetEscortCargoExperiment(!events.EscortCargoExperimentEnabled, out enemyDebugStatus);
+                RefreshCurrentTab();
+            });
+        MvpRow("Создать груз", "Штатное размещение и лимит событий. После создания F1 закроется; подойдите и примите событие обычной интеракцией.",
+            "СОЗДАТЬ ГРУЗ", events != null && MvpCanEdit && events.EscortCargoExperimentEnabled, () =>
+            {
+                if (!MvpCanEdit || events == null) return;
+                if (events.DebugSpawnEscortCargo(out enemyDebugStatus)) CloseMenu();
+                else RefreshCurrentTab();
+            });
+        MvpRow("Убрать только груз", "Без результата и награды. Выключение переключателя само по себе груз не удаляет.",
+            "УБРАТЬ ГРУЗ", events != null && MvpCanEdit && events.EscortCargoExperimentInstance != null, () =>
+            {
+                if (!MvpCanEdit || events == null) return;
+                events.DebugClearEscortCargo(out enemyDebugStatus);
+                RefreshCurrentTab();
+            });
         var sector = ProductionExplorationSectorController.ActiveInstance;
         if (sector != null)
         {

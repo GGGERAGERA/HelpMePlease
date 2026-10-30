@@ -4,6 +4,82 @@ namespace Subject42.Combat.OrbitalStation
 {
     public sealed partial class OrbitalStationRuntime
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public bool DebugSetRamSlugShotgunExperiment(bool enabled)
+        {
+            if (!IsInitialized || !UsesSegmentedOrbit || Owner.IsDead || IsRunEnded ||
+                runStateManager == null || State.RamSlugShotgunExperiment == enabled ||
+                enabled && State.SweepingShotgunExperiment) return false;
+            if (enabled) runStateManager.DebugMarkDevelopmentRun();
+            State.SetRamSlugShotgunExperiment(enabled);
+            foreach (var module in modules)
+                if (module is OrbitalProjectileModule projectile && projectile.Kind == OrbitalModuleKind.Shotgun)
+                    projectile.RefreshRamSlugShotgunExperiment();
+            return true;
+        }
+
+        public bool DebugSetInertialSawExperiment(bool enabled)
+        {
+            if (!IsInitialized || !UsesSegmentedOrbit || Owner.IsDead || IsRunEnded ||
+                runStateManager == null || State.InertialSawExperiment == enabled ||
+                enabled && State.PulsedSawExperiment) return false;
+            if (enabled) runStateManager.DebugMarkDevelopmentRun();
+            State.SetInertialSawExperiment(enabled);
+            foreach (var module in modules)
+                if (module is OrbitalSawModule saw) saw.ResetInertialPhaseSample();
+            return true;
+        }
+
+        public bool DebugSetMissReturnPistolExperiment(bool enabled)
+        {
+            if (!IsInitialized || !UsesSegmentedOrbit || Owner.IsDead || IsRunEnded ||
+                runStateManager == null || State.MissReturnPistolExperiment == enabled) return false;
+            if (enabled) runStateManager.DebugMarkDevelopmentRun();
+            State.SetMissReturnPistolExperiment(enabled);
+            foreach (var module in modules)
+                if (module is OrbitalProjectileModule projectile && projectile.Kind == OrbitalModuleKind.Pistol)
+                    projectile.RefreshMissReturnPistolExperiment();
+            return true;
+        }
+
+        public bool DebugSetPulsedSawExperiment(bool enabled)
+        {
+            if (!IsInitialized || !UsesSegmentedOrbit || Owner.IsDead || IsRunEnded ||
+                runStateManager == null || State.PulsedSawExperiment == enabled ||
+                enabled && State.InertialSawExperiment) return false;
+            if (enabled) runStateManager.DebugMarkDevelopmentRun();
+            State.SetPulsedSawExperiment(enabled);
+            foreach (var module in modules)
+                if (module is OrbitalSawModule saw) saw.ResetPulsePhase();
+            return true;
+        }
+
+        public bool DebugSetSweepingShotgunExperiment(bool enabled)
+        {
+            if (!IsInitialized || !UsesSegmentedOrbit || Owner.IsDead || IsRunEnded ||
+                runStateManager == null || State.SweepingShotgunExperiment == enabled ||
+                enabled && State.RamSlugShotgunExperiment) return false;
+            if (enabled) runStateManager.DebugMarkDevelopmentRun();
+            State.SetSweepingShotgunExperiment(enabled);
+            foreach (var module in modules)
+                if (module is OrbitalProjectileModule projectile && projectile.Kind == OrbitalModuleKind.Shotgun)
+                    projectile.RefreshSweepingShotgunExperiment();
+            return true;
+        }
+
+        public bool DebugSetChargedLineSniperExperiment(bool enabled)
+        {
+            if (!IsInitialized || !UsesSegmentedOrbit || Owner.IsDead || IsRunEnded ||
+                runStateManager == null || State.ChargedLineSniperExperiment == enabled) return false;
+            // Mark before changing combat: disabling the experiment cannot restore progression eligibility.
+            if (enabled) runStateManager.DebugMarkDevelopmentRun();
+            State.SetChargedLineSniperExperiment(enabled);
+            foreach (var module in modules)
+                if (module is OrbitalProjectileModule projectile && projectile.Kind == OrbitalModuleKind.Sniper)
+                    projectile.RefreshChargedLineSniperExperiment();
+            return true;
+        }
+#endif
         public bool ConstructWeapon(OrbitalModuleKind kind, int ringId, int mount, out string error)
         {
             error = "Откройте орбитальный конструктор.";

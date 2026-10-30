@@ -4,7 +4,16 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { cycleLoop, parseTestXml, readVerification, smokeReady, findPendingBackups, withSessionLock, workspaceFingerprint, nightVerified, runProcess, recoverySmoke, checkTaskProcess, sessionDeadline } from './night-shift.mjs';
+import { cycleLoop, parseTestXml, readVerification, smokeReady, findPendingBackups, withSessionLock, workspaceFingerprint, nightVerified, runProcess, recoverySmoke, checkTaskProcess, sessionDeadline, staticVerification } from './night-shift.mjs';
+
+test('static work never invents Unity compilation, tests or gameplay evidence', () => {
+  const result = staticVerification();
+  assert.equal(result.passed, true);
+  assert.equal(result.result, 'StaticOnly');
+  assert.equal(result.executed, 0);
+  assert.equal(result.unityRan, false);
+  assert.equal(result.compilationVerified, false);
+});
 
 test('second decision receives actual first verification, no fixed queue', async () => {
   const seen = [];

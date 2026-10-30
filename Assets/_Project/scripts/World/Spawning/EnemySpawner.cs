@@ -15,6 +15,606 @@ public partial class EnemySpawner : MonoBehaviour
         new Collider2D[32];
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private bool recoilingShootersExperiment;
+    private int recoilingEligibleSpawns;
+    private readonly List<EnemyShooterMovement> recoilingShooters = new();
+    public bool RecoilingShootersExperiment => recoilingShootersExperiment;
+
+    public void DebugSetRecoilingShootersExperiment(bool enabled)
+    {
+        if (enabled)
+        {
+            if (RunStateManager.Instance == null || !isActiveAndEnabled) return;
+            RunStateManager.Instance.DebugMarkDevelopmentRun();
+        }
+        recoilingShootersExperiment = enabled;
+        if (enabled) return;
+        foreach (var shooter in recoilingShooters)
+            if (shooter != null) shooter.ConfigureRecoilingExperiment(false);
+        recoilingShooters.Clear();
+        recoilingEligibleSpawns = 0;
+    }
+
+    public static bool IsRecoilingShooterPrefabEligible(GameObject enemy) =>
+        enemy != null &&
+        enemy.GetComponent<EnemyShooterMovement>() is { HasRecoilingVisual: true } shooter &&
+        shooter.ProjectilePrefab != null &&
+        enemy.GetComponent<EnemyHealth>() is { IsBoss: false, HasExperienceLoot: true } &&
+        enemy.GetComponent<CarrierEscapeBehaviour>() == null &&
+        enemy.GetComponent<TurretEnemyBehaviour>() == null &&
+        !(enemy.GetComponent<EnemyChaseMovement>() is { HasAssaultDestination: true });
+
+    public static bool IsRecoilingShooterEligible(GameObject enemy) =>
+        IsRecoilingShooterPrefabEligible(enemy) &&
+        enemy.GetComponent<EnemyShooterMovement>() is
+            { CanUseRecoiling: true, RecoilingExperiment: false };
+
+    private bool AssignRecoilingShooter(GameObject enemy)
+    {
+        if (!recoilingShootersExperiment || RunStateManager.Instance == null ||
+            !IsRecoilingShooterEligible(enemy)) return false;
+        RunStateManager.Instance.DebugMarkDevelopmentRun();
+        var shooter = enemy.GetComponent<EnemyShooterMovement>();
+        shooter.ConfigureRecoilingExperiment(true);
+        if (!shooter.RecoilingExperiment) return false;
+        recoilingShooters.RemoveAll(item => item == null || !item.RecoilingExperiment);
+        recoilingShooters.Add(shooter);
+        return true;
+    }
+
+    private void TryAssignRecoilingShooter(GameObject enemy, bool ordinarySpawn)
+    {
+        if (!recoilingShootersExperiment || !ordinarySpawn || RunStateManager.Instance == null ||
+            !IsRecoilingShooterEligible(enemy)) return;
+        if (++recoilingEligibleSpawns % 4 == 0) AssignRecoilingShooter(enemy);
+    }
+
+    public GameObject DebugSpawnRecoilingShooterAround(GameObject prefab, Vector3 origin, out string status)
+    {
+        status = "Включите эксперимент стрелка с отходом.";
+        if (!recoilingShootersExperiment) return null;
+        status = "Нужен активный спавнер в готовом MVP.";
+        var run = RunStateManager.Instance;
+        if (!isActiveAndEnabled || !initialized || run == null || run.IsRunEnded ||
+            UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "MVP" ||
+            SceneTransitionOverlay.IsTransitioning) return null;
+        var livePlayer = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
+        status = "Нет готового живого игрока.";
+        if (livePlayer == null || !livePlayer.gameObject.activeInHierarchy ||
+            PlayerRuntimeReference.PlayerHealth == null || PlayerRuntimeReference.PlayerHealth.IsDead) return null;
+        var station = livePlayer.GetComponentInChildren<Subject42.Combat.OrbitalStation.OrbitalStationRuntime>();
+        var choice = FindFirstObjectByType<LevelChoiceManager>();
+        status = "Занято модальное состояние игрока.";
+        if (station == null || !station.IsInitialized || station.IsRunEnded ||
+            station.InputOwner == null || !station.InputOwner.IsIdle ||
+            UpgradeManager.Instance == null || !UpgradeManager.Instance.IsRewardQueueIdle ||
+            WorldLootRewardReel.IsActive || (choice != null && choice.IsChoosing)) return null;
+        status = "В профиле нужен подходящий стрелок с отдельной моделью.";
+        if (!IsRecoilingShooterPrefabEligible(prefab)) return null;
+        run.DebugMarkDevelopmentRun();
+        var enemy = SpawnSpecificEnemyAround(prefab, origin, 3f, 8f, 3f, false, .45f);
+        status = "Нет безопасного места для стрелка с отходом.";
+        if (enemy == null) return null;
+        if (!AssignRecoilingShooter(enemy))
+        {
+            Destroy(enemy);
+            status = "Созданный стрелок не готов к отходу.";
+            return null;
+        }
+        status = "Стрелок с отходом создан.";
+        return enemy;
+    }
+
+    private bool interceptingBombersExperiment;
+    private int interceptingBomberEligibleSpawns;
+    private readonly List<EnemyBomberMovement> interceptingBombers = new();
+    public bool InterceptingBombersExperiment => interceptingBombersExperiment;
+
+    public void DebugSetInterceptingBombersExperiment(bool enabled)
+    {
+        if (enabled)
+        {
+            if (RunStateManager.Instance == null) return;
+            RunStateManager.Instance.DebugMarkDevelopmentRun();
+        }
+        interceptingBombersExperiment = enabled;
+        if (!enabled)
+        {
+            foreach (var bomber in interceptingBombers)
+                if (bomber != null) bomber.ConfigureInterceptingExperiment(false);
+            interceptingBombers.Clear();
+            interceptingBomberEligibleSpawns = 0;
+        }
+    }
+
+    // Does not depend on runtime Awake state and never initializes the prefab.
+    public static bool IsInterceptingBomberPrefabEligible(GameObject enemy) =>
+        enemy != null &&
+        enemy.GetComponent<EnemyBomberMovement>() is { HasInterceptingVisual: true } &&
+        enemy.GetComponent<EnemyHealth>() is { IsBoss: false, HasExperienceLoot: true } &&
+        enemy.GetComponent<CarrierEscapeBehaviour>() == null &&
+        enemy.GetComponent<TurretEnemyBehaviour>() == null;
+
+    public static bool IsInterceptingBomberEligible(GameObject enemy) =>
+        IsInterceptingBomberPrefabEligible(enemy) &&
+        enemy.GetComponent<EnemyBomberMovement>() is
+            { CanUseIntercepting: true, InterceptingExperiment: false };
+
+    private bool AssignInterceptingBomber(GameObject enemy)
+    {
+        if (!interceptingBombersExperiment || RunStateManager.Instance == null ||
+            !IsInterceptingBomberEligible(enemy)) return false;
+        RunStateManager.Instance.DebugMarkDevelopmentRun();
+        var bomber = enemy.GetComponent<EnemyBomberMovement>();
+        bomber.ConfigureInterceptingExperiment(true);
+        if (!bomber.InterceptingExperiment) return false;
+        interceptingBombers.RemoveAll(item => item == null || !item.InterceptingExperiment);
+        interceptingBombers.Add(bomber);
+        return true;
+    }
+
+    private void TryAssignInterceptingBomber(GameObject enemy, bool ordinarySpawn)
+    {
+        if (!interceptingBombersExperiment || !ordinarySpawn ||
+            RunStateManager.Instance == null || !IsInterceptingBomberEligible(enemy)) return;
+        if (++interceptingBomberEligibleSpawns % 4 == 0) AssignInterceptingBomber(enemy);
+    }
+
+    public GameObject DebugSpawnInterceptingBomberAround(GameObject prefab, Vector3 origin, out string status)
+    {
+        status = "Включите эксперимент перехвата.";
+        if (!interceptingBombersExperiment) return null;
+        status = "Нужен активный спавнер в готовом MVP.";
+        var run = RunStateManager.Instance;
+        if (!isActiveAndEnabled || !initialized || run == null || run.IsRunEnded ||
+            UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "MVP" ||
+            SceneTransitionOverlay.IsTransitioning) return null;
+        var livePlayer = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
+        status = "Нет готового живого игрока.";
+        if (livePlayer == null || !livePlayer.gameObject.activeInHierarchy ||
+            PlayerRuntimeReference.PlayerHealth == null || PlayerRuntimeReference.PlayerHealth.IsDead) return null;
+        var station = livePlayer.GetComponentInChildren<Subject42.Combat.OrbitalStation.OrbitalStationRuntime>();
+        var choice = FindFirstObjectByType<LevelChoiceManager>();
+        status = "Занято модальное состояние игрока.";
+        if (station == null || !station.IsInitialized || station.IsRunEnded ||
+            station.InputOwner == null || !station.InputOwner.IsIdle ||
+            UpgradeManager.Instance == null || !UpgradeManager.Instance.IsRewardQueueIdle ||
+            WorldLootRewardReel.IsActive || (choice != null && choice.IsChoosing)) return null;
+        status = "В профиле нужен подходящий подрывник с отдельной моделью.";
+        if (!IsInterceptingBomberPrefabEligible(prefab)) return null;
+        run.DebugMarkDevelopmentRun();
+        var enemy = SpawnSpecificEnemyAround(prefab, origin, 3f, 8f, 3f, false, .45f);
+        status = "Нет безопасного места для подрывника-перехватчика.";
+        if (enemy == null) return null;
+        if (!AssignInterceptingBomber(enemy))
+        {
+            Destroy(enemy);
+            status = "Созданный подрывник не готов к перехвату.";
+            return null;
+        }
+        status = "Подрывник-перехватчик создан.";
+        return enemy;
+    }
+
+    private bool strafingShootersExperiment;
+    private int strafingEligibleSpawns;
+    private int strafingAssignedSpawns;
+    private readonly List<EnemyShooterMovement> strafingShooters = new();
+    public bool StrafingShootersExperiment => strafingShootersExperiment;
+
+    public void DebugSetStrafingShootersExperiment(bool enabled)
+    {
+        if (enabled)
+        {
+            if (RunStateManager.Instance == null) return;
+            RunStateManager.Instance.DebugMarkDevelopmentRun();
+        }
+        strafingShootersExperiment = enabled;
+        if (!enabled)
+        {
+            foreach (var shooter in strafingShooters)
+                if (shooter != null) shooter.ConfigureStrafingExperiment(false, false);
+            strafingShooters.Clear();
+            strafingEligibleSpawns = 0;
+            strafingAssignedSpawns = 0;
+        }
+    }
+
+    public static bool IsStrafingShooterEligible(GameObject enemy) =>
+        enemy != null &&
+        enemy.GetComponent<EnemyShooterMovement>() is { CanUseStrafing: true, StrafingExperiment: false } &&
+        enemy.GetComponent<EnemyHealth>() is { IsBoss: false, IsDead: false, HasExperienceLoot: true } &&
+        enemy.GetComponent<CarrierEscapeBehaviour>() == null &&
+        enemy.GetComponent<TurretEnemyBehaviour>() == null;
+
+    private bool AssignStrafingShooter(GameObject enemy)
+    {
+        if (!strafingShootersExperiment || RunStateManager.Instance == null ||
+            !IsStrafingShooterEligible(enemy)) return false;
+        RunStateManager.Instance.DebugMarkDevelopmentRun();
+        var shooter = enemy.GetComponent<EnemyShooterMovement>();
+        shooter.ConfigureStrafingExperiment(true, strafingAssignedSpawns % 2 == 0);
+        if (!shooter.StrafingExperiment) return false;
+        strafingAssignedSpawns++;
+        strafingShooters.RemoveAll(item => item == null);
+        strafingShooters.Add(shooter);
+        return true;
+    }
+
+    private void TryAssignStrafingShooter(GameObject enemy, bool ordinarySpawn)
+    {
+        if (!strafingShootersExperiment || !ordinarySpawn || !IsStrafingShooterEligible(enemy)) return;
+        if (++strafingEligibleSpawns % 4 == 0) AssignStrafingShooter(enemy);
+    }
+
+    public GameObject DebugSpawnStrafingShooterAround(GameObject prefab, Vector3 origin, out string status)
+    {
+        status = "Включите эксперимент траверса; нужен подходящий стрелок и Development-попытка.";
+        if (!strafingShootersExperiment || RunStateManager.Instance == null ||
+            !IsStrafingShooterEligible(prefab)) return null;
+        RunStateManager.Instance.DebugMarkDevelopmentRun();
+        var enemy = SpawnSpecificEnemyAround(prefab, origin, 3f, 8f, 3f, false, .45f);
+        status = "Нет безопасного места для стрелка на траверсе.";
+        if (enemy == null) return null;
+        if (!AssignStrafingShooter(enemy))
+        {
+            Destroy(enemy);
+            status = "Созданный стрелок не подходит для траверса.";
+            return null;
+        }
+        status = "Стрелок на траверсе создан.";
+        return enemy;
+    }
+
+    private bool blockLockedShieldsExperiment;
+    private int blockLockedShieldEligibleSpawns;
+    private readonly List<EnemyDirectionalShield> blockLockedShields = new();
+    public bool BlockLockedShieldsExperiment => blockLockedShieldsExperiment;
+
+    public void DebugSetBlockLockedShieldsExperiment(bool enabled)
+    {
+        if (enabled)
+        {
+            if (RunStateManager.Instance == null) return;
+            RunStateManager.Instance.DebugMarkDevelopmentRun();
+        }
+        blockLockedShieldsExperiment = enabled;
+        if (!enabled)
+        {
+            foreach (var shield in blockLockedShields)
+                if (shield != null) shield.ConfigureBlockLockedExperiment(false);
+            blockLockedShields.Clear();
+            blockLockedShieldEligibleSpawns = 0;
+        }
+    }
+
+    // Assets have not run OnEnable: durability/death are meaningful only on live actors.
+    public static bool IsBlockLockedShieldPrefabEligible(GameObject prefab) =>
+        HasBlockLockedShieldComponents(prefab) &&
+        prefab.GetComponent<EnemyDirectionalShield>() is var shield &&
+        (shield.Kind == EnemyDirectionalShield.ShieldKind.Durable || shield.MaximumBlockedHits > 0);
+
+    public static bool IsBlockLockedShieldEligible(GameObject enemy) =>
+        HasBlockLockedShieldComponents(enemy) &&
+        !enemy.GetComponent<EnemyDirectionalShield>().IsBroken &&
+        !enemy.GetComponent<EnemyHealth>().IsDead;
+
+    private static bool HasBlockLockedShieldComponents(GameObject enemy) =>
+        enemy != null &&
+        enemy.GetComponent<EnemyDirectionalShield>() is { enabled: true } &&
+        enemy.GetComponent<EnemyHealth>() is { IsBoss: false, HasExperienceLoot: true } &&
+        (enemy.GetComponent<EnemyChaseMovement>() is { enabled: true, HasAssaultDestination: false } ||
+         enemy.GetComponent<EnemyShooterMovement>() is { enabled: true }) &&
+        !(enemy.GetComponent<EnemyChaseMovement>() is { HasAssaultDestination: true }) &&
+        enemy.GetComponent<CarrierEscapeBehaviour>() == null &&
+        enemy.GetComponent<TurretEnemyBehaviour>() == null;
+
+    private void AssignBlockLockedShield(GameObject enemy)
+    {
+        if (RunStateManager.Instance == null || !IsBlockLockedShieldEligible(enemy)) return;
+        RunStateManager.Instance.DebugMarkDevelopmentRun();
+        var shield = enemy.GetComponent<EnemyDirectionalShield>();
+        shield.ConfigureBlockLockedExperiment(true);
+        blockLockedShields.RemoveAll(item => item == null);
+        if (!blockLockedShields.Contains(shield)) blockLockedShields.Add(shield);
+    }
+
+    private void TryAssignBlockLockedShield(GameObject enemy, bool ordinarySpawn)
+    {
+        if (!blockLockedShieldsExperiment || !ordinarySpawn || !IsBlockLockedShieldEligible(enemy)) return;
+        if (++blockLockedShieldEligibleSpawns % 4 == 0) AssignBlockLockedShield(enemy);
+    }
+
+    public GameObject DebugSpawnBlockLockedShieldAround(GameObject prefab, Vector3 origin, out string status)
+    {
+        status = "Включите эксперимент щита; нужен подходящий prefab и Development-попытка.";
+        if (!blockLockedShieldsExperiment || RunStateManager.Instance == null || !IsBlockLockedShieldPrefabEligible(prefab))
+            return null;
+        RunStateManager.Instance.DebugMarkDevelopmentRun();
+        var enemy = SpawnSpecificEnemyAround(prefab, origin, 3f, 8f, 3f, false, .45f);
+        status = "Нет безопасного места для заклинивающего щита.";
+        if (enemy == null) return null;
+        // Manual spawn does not participate in ordinary cadence.
+        AssignBlockLockedShield(enemy);
+        if (!enemy.GetComponent<EnemyDirectionalShield>().IsBlockLockedExperiment)
+        {
+            Destroy(enemy);
+            status = "Созданный враг не подходит для эксперимента щита.";
+            return null;
+        }
+        status = "Враг с заклинивающим щитом создан.";
+        return enemy;
+    }
+
+    private bool woundedRetreatExperiment;
+    private int retreatEligibleSpawns;
+    private readonly List<EnemyChaseMovement> retreatChasers = new();
+    public bool WoundedRetreatExperiment => woundedRetreatExperiment;
+
+    public void DebugSetWoundedRetreatExperiment(bool enabled)
+    {
+        if (enabled)
+        {
+            if (!isActiveAndEnabled || RunStateManager.Instance == null) return;
+            RunStateManager.Instance.DebugMarkDevelopmentRun();
+        }
+        woundedRetreatExperiment = enabled;
+        if (!enabled)
+        {
+            foreach (var chase in retreatChasers)
+                if (chase != null) chase.ConfigureWoundedRetreatExperiment(false);
+            retreatChasers.Clear();
+            retreatEligibleSpawns = 0;
+        }
+    }
+
+    public static bool IsWoundedRetreatEligible(GameObject enemy) =>
+        enemy != null && enemy.GetComponent<EnemyChaseMovement>() is
+            { CanUseWoundedRetreat: true, HasAssaultDestination: false, IsFlankingExperiment: false, IsCommittedRamExperiment: false, IsWoundedRetreatExperiment: false } &&
+        MatchesDebugArchetype(enemy, DebugEnemyArchetype.Basic) &&
+        enemy.GetComponent<EnemyHealth>() is { IsBoss: false, HasExperienceLoot: true } &&
+        enemy.GetComponent<EnemyShooterMovement>() == null &&
+        enemy.GetComponent<CarrierEscapeBehaviour>() == null &&
+        enemy.GetComponent<TurretEnemyBehaviour>() == null &&
+        enemy.GetComponent<EnemyDirectionalShield>() == null;
+
+    private void AssignWoundedRetreat(GameObject enemy)
+    {
+        if (RunStateManager.Instance == null || !IsWoundedRetreatEligible(enemy)) return;
+        RunStateManager.Instance.DebugMarkDevelopmentRun();
+        var chase = enemy.GetComponent<EnemyChaseMovement>();
+        chase.ConfigureWoundedRetreatExperiment(true);
+        retreatChasers.RemoveAll(item => item == null);
+        if (!chase.IsWoundedRetreatExperiment) return;
+        if (!retreatChasers.Contains(chase)) retreatChasers.Add(chase);
+    }
+
+    private void TryAssignWoundedRetreat(GameObject enemy, bool ordinarySpawn)
+    {
+        if (!woundedRetreatExperiment || !ordinarySpawn || !IsWoundedRetreatEligible(enemy)) return;
+        if (++retreatEligibleSpawns % 4 == 0) AssignWoundedRetreat(enemy);
+    }
+
+    public GameObject DebugSpawnWoundedRetreatAround(GameObject prefab, Vector3 origin, out string status)
+    {
+        status = "Нужны активный спавнер, живой игрок и подходящий prefab текущего профиля; включите эксперимент отхода.";
+        var playerHealth = PlayerRuntimeReference.ResolvePlayerHealth(forceLookup: true);
+        if (!isActiveAndEnabled || playerHealth == null || playerHealth.IsDead ||
+            !woundedRetreatExperiment || RunStateManager.Instance == null || !IsWoundedRetreatEligible(prefab))
+            return null;
+        bool inCurrentProfile = false;
+        if (spawnProfile?.Phases != null)
+            foreach (var phase in spawnProfile.Phases)
+                if (phase?.enemies != null)
+                    foreach (var entry in phase.enemies)
+                        if (entry?.enemyPrefab == prefab) inCurrentProfile = true;
+        if (!inCurrentProfile) return null;
+        RunStateManager.Instance.DebugMarkDevelopmentRun();
+        var enemy = SpawnSpecificEnemyAround(prefab, origin, 3f, 8f, 3f, false, .45f);
+        status = "Нет безопасного места для отступающего преследователя.";
+        if (enemy == null) return null;
+        AssignWoundedRetreat(enemy);
+        if (!enemy.GetComponent<EnemyChaseMovement>().IsWoundedRetreatExperiment)
+        {
+            Destroy(enemy);
+            status = "Созданный враг не подходит для отхода.";
+            return null;
+        }
+        status = "Отступающий преследователь создан.";
+        return enemy;
+    }
+
+    private bool committedRamExperiment;
+    private int ramEligibleSpawns;
+    private readonly List<EnemyChaseMovement> ramChasers = new();
+    public bool CommittedRamExperiment => committedRamExperiment;
+
+    public void DebugSetCommittedRamExperiment(bool enabled)
+    {
+        if (enabled)
+        {
+            if (RunStateManager.Instance == null) return;
+            RunStateManager.Instance.DebugMarkDevelopmentRun();
+        }
+        committedRamExperiment = enabled;
+        if (!enabled)
+        {
+            foreach (var chase in ramChasers)
+                if (chase != null) chase.ConfigureCommittedRamExperiment(false);
+            ramChasers.Clear();
+            ramEligibleSpawns = 0;
+        }
+    }
+
+    public static bool IsCommittedRamEligible(GameObject enemy) =>
+        enemy != null && enemy.GetComponent<EnemyChaseMovement>() is
+            { CanUseCommittedRam: true, HasAssaultDestination: false, IsFlankingExperiment: false } &&
+        MatchesDebugArchetype(enemy, DebugEnemyArchetype.Basic) &&
+        enemy.GetComponent<EnemyHealth>() is { IsBoss: false, HasExperienceLoot: true } &&
+        enemy.GetComponent<CarrierEscapeBehaviour>() == null &&
+        enemy.GetComponent<TurretEnemyBehaviour>() == null &&
+        enemy.GetComponent<EnemyDirectionalShield>() == null;
+
+    private void AssignCommittedRam(GameObject enemy)
+    {
+        if (RunStateManager.Instance == null || !IsCommittedRamEligible(enemy)) return;
+        RunStateManager.Instance.DebugMarkDevelopmentRun();
+        var chase = enemy.GetComponent<EnemyChaseMovement>();
+        chase.ConfigureCommittedRamExperiment(true);
+        ramChasers.RemoveAll(item => item == null);
+        if (!ramChasers.Contains(chase)) ramChasers.Add(chase);
+    }
+
+    private void TryAssignCommittedRam(GameObject enemy, bool ordinarySpawn)
+    {
+        if (!committedRamExperiment || !ordinarySpawn || !IsCommittedRamEligible(enemy)) return;
+        if (++ramEligibleSpawns % 4 == 0) AssignCommittedRam(enemy);
+    }
+
+    public GameObject DebugSpawnCommittedRamAround(GameObject prefab, Vector3 origin, out string status)
+    {
+        status = "Включите таранный эксперимент; нужен подходящий prefab и Development-попытка.";
+        if (!committedRamExperiment || RunStateManager.Instance == null || !IsCommittedRamEligible(prefab))
+            return null;
+        RunStateManager.Instance.DebugMarkDevelopmentRun();
+        var enemy = SpawnSpecificEnemyAround(prefab, origin, 3f, 8f, 3f, false, .45f);
+        status = "Нет безопасного места для таранного преследователя.";
+        if (enemy == null) return null;
+        AssignCommittedRam(enemy);
+        status = "Таранный преследователь создан.";
+        return enemy;
+    }
+
+    private bool committedVolleyExperiment;
+    private int volleyEligibleSpawns;
+    private readonly List<EnemyShooterMovement> volleyShooters = new();
+    public bool CommittedVolleyExperiment => committedVolleyExperiment;
+
+    public void DebugSetCommittedVolleyExperiment(bool enabled)
+    {
+        if (enabled)
+        {
+            if (RunStateManager.Instance == null) return;
+            RunStateManager.Instance.DebugMarkDevelopmentRun();
+        }
+        committedVolleyExperiment = enabled;
+        if (!enabled)
+        {
+            foreach (var shooter in volleyShooters)
+                if (shooter != null) shooter.ConfigureCommittedVolleyExperiment(false);
+            volleyShooters.Clear();
+            volleyEligibleSpawns = 0;
+        }
+    }
+
+    public static bool IsCommittedVolleyEligible(GameObject enemy) =>
+        enemy != null &&
+        enemy.GetComponent<EnemyShooterMovement>() is { CanUseCommittedVolley: true } &&
+        enemy.GetComponent<EnemyHealth>() is { IsBoss: false, HasExperienceLoot: true } &&
+        enemy.GetComponent<CarrierEscapeBehaviour>() == null &&
+        enemy.GetComponent<TurretEnemyBehaviour>() == null &&
+        enemy.GetComponent<EnemyDirectionalShield>() == null;
+
+    private void AssignCommittedVolley(GameObject enemy)
+    {
+        if (RunStateManager.Instance == null || !IsCommittedVolleyEligible(enemy)) return;
+        RunStateManager.Instance.DebugMarkDevelopmentRun();
+        var shooter = enemy.GetComponent<EnemyShooterMovement>();
+        shooter.ConfigureCommittedVolleyExperiment(true);
+        volleyShooters.RemoveAll(item => item == null);
+        volleyShooters.Add(shooter);
+    }
+
+    private void TryAssignCommittedVolley(GameObject enemy, bool ordinarySpawn)
+    {
+        if (!committedVolleyExperiment || !ordinarySpawn || !IsCommittedVolleyEligible(enemy)) return;
+        if (++volleyEligibleSpawns % 3 == 0) AssignCommittedVolley(enemy);
+    }
+
+    public GameObject DebugSpawnCommittedVolleyAround(GameObject prefab, Vector3 origin, out string status)
+    {
+        status = "Включите эксперимент залпового стрелка; нужен подходящий prefab и Development-попытка.";
+        if (!committedVolleyExperiment || RunStateManager.Instance == null ||
+            !IsCommittedVolleyEligible(prefab)) return null;
+        RunStateManager.Instance.DebugMarkDevelopmentRun();
+        var enemy = SpawnSpecificEnemyAround(prefab, origin, 3f, 8f, 3f, false, 0.45f);
+        status = "Нет безопасного места для залпового стрелка.";
+        if (enemy == null) return null;
+        AssignCommittedVolley(enemy);
+        status = "Залповый стрелок создан.";
+        return enemy;
+    }
+
+    private bool flankingChasersExperiment;
+    private int flankingEligibleSpawns;
+    private int flankingAssignedSpawns;
+    private readonly List<EnemyChaseMovement> flankingChasers = new();
+    public bool FlankingChasersExperiment => flankingChasersExperiment;
+
+    public void DebugSetFlankingChasersExperiment(bool enabled)
+    {
+        if (enabled)
+        {
+            // Never enable experimental pressure without the attempt's progress guard.
+            if (RunStateManager.Instance == null) return;
+            RunStateManager.Instance.DebugMarkDevelopmentRun();
+        }
+        flankingChasersExperiment = enabled;
+        if (!enabled)
+        {
+            foreach (var chase in flankingChasers)
+                if (chase != null) chase.ConfigureFlankingExperiment(false, false);
+            flankingChasers.Clear();
+            flankingEligibleSpawns = 0;
+            flankingAssignedSpawns = 0;
+        }
+    }
+
+    private void ResetFlankingChasersExperiment()
+    {
+        DebugSetFlankingChasersExperiment(false);
+    }
+
+    private void AssignFlankingChaser(GameObject enemy, bool clockwise)
+    {
+        var chase = enemy.GetComponent<EnemyChaseMovement>();
+        chase.ConfigureFlankingExperiment(true, clockwise);
+        flankingChasers.RemoveAll(item => item == null);
+        if (!flankingChasers.Contains(chase)) flankingChasers.Add(chase);
+    }
+
+    private void TryAssignFlankingChaser(GameObject enemy, bool ordinarySpawn)
+    {
+        if (!flankingChasersExperiment || !ordinarySpawn) return;
+        if (!IsFlankingChaserEligible(enemy)) return;
+        if (++flankingEligibleSpawns % 4 != 0) return;
+        AssignFlankingChaser(enemy, (++flankingAssignedSpawns & 1) == 0);
+    }
+
+    public static bool IsFlankingChaserEligible(GameObject enemy) =>
+        enemy != null && enemy.GetComponent<EnemyChaseMovement>() is { HasAssaultDestination: false } &&
+        MatchesDebugArchetype(enemy, DebugEnemyArchetype.Basic) &&
+        enemy.GetComponent<EnemyDirectionalShield>() == null &&
+        enemy.GetComponent<EnemyHealth>() is { HasExperienceLoot: true };
+
+    public GameObject DebugSpawnFlankingChaserAround(GameObject prefab, Vector3 origin, out string status)
+    {
+        status = "Включите эксперимент флангового преследователя.";
+        if (!flankingChasersExperiment) return null;
+        status = "RunStateManager не готов: Development-попытка недоступна.";
+        if (RunStateManager.Instance == null) return null;
+        status = "Нет подходящего prefab флангового преследователя.";
+        if (!IsFlankingChaserEligible(prefab)) return null;
+        RunStateManager.Instance.DebugMarkDevelopmentRun();
+        var enemy = SpawnSpecificEnemyAround(prefab, origin, 3f, 8f, 3f, false, 0.45f);
+        status = "Нет безопасного места для флангового преследователя.";
+        if (enemy == null) return null;
+        // Manual instances do not advance either ordinary-spawn cadence counter.
+        AssignFlankingChaser(enemy, false);
+        status = "Фланговый преследователь создан.";
+        return enemy;
+    }
+
     public enum DebugEnemyArchetype
     {
         Basic,
@@ -192,6 +792,16 @@ public partial class EnemySpawner : MonoBehaviour
 
     public void SetSpawnProfile(EnemySpawnProfile profile, int runLevel)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        DebugSetInterceptingBombersExperiment(false);
+        DebugSetStrafingShootersExperiment(false);
+        DebugSetRecoilingShootersExperiment(false);
+        DebugSetCommittedVolleyExperiment(false);
+        DebugSetCommittedRamExperiment(false);
+        DebugSetWoundedRetreatExperiment(false);
+        DebugSetBlockLockedShieldsExperiment(false);
+        ResetFlankingChasersExperiment();
+#endif
         spawnProfile = profile;
         currentRunLevel = Mathf.Max(1, runLevel);
         activePhase = null;
@@ -284,6 +894,16 @@ public partial class EnemySpawner : MonoBehaviour
     private void OnEnable() => RunStateManager.EnsureExists().RegisterSceneCleanup(ReleaseRunScene);
     private void OnDisable()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        DebugSetInterceptingBombersExperiment(false);
+        DebugSetStrafingShootersExperiment(false);
+        DebugSetRecoilingShootersExperiment(false);
+        ResetFlankingChasersExperiment();
+        DebugSetCommittedVolleyExperiment(false);
+        DebugSetCommittedRamExperiment(false);
+        DebugSetWoundedRetreatExperiment(false);
+        DebugSetBlockLockedShieldsExperiment(false);
+#endif
         RunStateManager.Instance?.UnregisterSceneCleanup(ReleaseRunScene);
         CancelPendingAssault();
     }
@@ -561,6 +1181,16 @@ public partial class EnemySpawner : MonoBehaviour
 
     public void ResetForNewLevel()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        DebugSetInterceptingBombersExperiment(false);
+        DebugSetStrafingShootersExperiment(false);
+        DebugSetRecoilingShootersExperiment(false);
+        DebugSetCommittedVolleyExperiment(false);
+        DebugSetCommittedRamExperiment(false);
+        DebugSetWoundedRetreatExperiment(false);
+        DebugSetBlockLockedShieldsExperiment(false);
+        ResetFlankingChasersExperiment();
+#endif
         ResetAssaultEvents();
         spawnTimer = 0f;
         difficultyTimer = 0f;
@@ -578,6 +1208,16 @@ public partial class EnemySpawner : MonoBehaviour
 
     public void ResetSpawner()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        DebugSetInterceptingBombersExperiment(false);
+        DebugSetStrafingShootersExperiment(false);
+        DebugSetRecoilingShootersExperiment(false);
+        DebugSetCommittedVolleyExperiment(false);
+        DebugSetCommittedRamExperiment(false);
+        DebugSetWoundedRetreatExperiment(false);
+        DebugSetBlockLockedShieldsExperiment(false);
+        ResetFlankingChasersExperiment();
+#endif
         ResetAssaultEvents();
         if (!initialized)
             CaptureBaseSettings();
@@ -634,9 +1274,35 @@ public partial class EnemySpawner : MonoBehaviour
                 break;
             }
 
-            SpawnEnemyAt(selectedPrefab, spawnPosition);
+            SpawnEnemyAtInternal(selectedPrefab, spawnPosition, true, false);
         }
     }
+
+    // Event-owned spawn: production initialization and tracking, without ordinary
+    // experiment cadence. The caller owns cancellation of the returned actor.
+    public EnemyHealth SpawnEventEnemyAt(GameObject prefab, Vector3 position,
+        float clearance, float minimumDistanceFromPlayer)
+    {
+        if (!spawningEnabled || prefab == null || !prefab.activeSelf ||
+            prefab.GetComponent<EnemyHealth>() == null ||
+            !FiniteEventValue(position.x) || !FiniteEventValue(position.y) ||
+            !FiniteEventValue(position.z) || !FiniteEventValue(clearance) || clearance <= 0f ||
+            !FiniteEventValue(minimumDistanceFromPlayer) || minimumDistanceFromPlayer < 0f)
+            return null;
+        if (gameplayArea == null) ResolveGameplayArea();
+        if (player == null)
+            player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
+        if (gameplayArea == null || player == null ||
+            !gameplayArea.IsInsidePlayableArea(position, clearance) ||
+            !gameplayArea.IsInsideSpawnArea(position, clearance) ||
+            Vector2.Distance(position, player.position) < minimumDistanceFromPlayer ||
+            !IsAdditionalWaveSpawnPositionClear(position, clearance)) return null;
+        GameObject instance = SpawnEnemyAtInternal(prefab, position, true, false, false);
+        return instance != null ? instance.GetComponent<EnemyHealth>() : null;
+    }
+
+    private static bool FiniteEventValue(float value) =>
+        !float.IsNaN(value) && !float.IsInfinity(value);
 
     private bool TryGetAdditionalWaveSpawnPosition(
         Vector3 origin,
@@ -886,10 +1552,15 @@ public partial class EnemySpawner : MonoBehaviour
             return null;
         }
 
-        return SpawnEnemyAt(
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (!countTowardSpawnLimits)
+            return SpawnDebugEnemyAt(enemyPrefab, spawnPosition);
+#endif
+        return SpawnEnemyAtInternal(
             enemyPrefab,
             spawnPosition,
-            countTowardSpawnLimits
+            countTowardSpawnLimits,
+            false
         );
     }
 
@@ -1015,6 +1686,14 @@ public partial class EnemySpawner : MonoBehaviour
         GameObject selectedPrefab,
         Vector3 spawnPosition,
         bool countTowardSpawnLimits = true)
+        => SpawnEnemyAtInternal(selectedPrefab, spawnPosition, countTowardSpawnLimits, countTowardSpawnLimits);
+
+    private GameObject SpawnEnemyAtInternal(
+        GameObject selectedPrefab,
+        Vector3 spawnPosition,
+        bool countTowardSpawnLimits,
+        bool ordinaryShieldSpawn,
+        bool allowOrdinaryExperiments = true)
     {
         GameObject enemy = Instantiate(
             selectedPrefab,
@@ -1037,6 +1716,20 @@ public partial class EnemySpawner : MonoBehaviour
         float baseEnemySpeedMultiplier = currentSpeedMultiplier * phaseSpeed;
 
         EnemyIdentity identity = enemy.GetComponent<EnemyIdentity>();
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (allowOrdinaryExperiments)
+        {
+        TryAssignFlankingChaser(enemy, countTowardSpawnLimits);
+        TryAssignCommittedRam(enemy, countTowardSpawnLimits);
+        TryAssignWoundedRetreat(enemy, countTowardSpawnLimits);
+        TryAssignCommittedVolley(enemy, countTowardSpawnLimits);
+        TryAssignStrafingShooter(enemy, ordinaryShieldSpawn);
+        TryAssignRecoilingShooter(enemy, ordinaryShieldSpawn);
+        TryAssignInterceptingBomber(enemy, ordinaryShieldSpawn);
+        TryAssignBlockLockedShield(enemy, ordinaryShieldSpawn);
+        }
+#endif
 
         if (countTowardSpawnLimits)
         {

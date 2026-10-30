@@ -31,9 +31,128 @@ public class EnemyChaseMovement : EnemyMovement
     private bool hasMovementSpeed;
     private float attackPauseRemaining;
     private Vector2? assaultDestination;
+    private bool flankingExperiment;
+    private bool flankingApproach;
+    private float flankingSide = 1f;
+    private Transform flankingVisual;
+    private Quaternion flankingAuthoredRotation;
+    private bool flankingPoseApplied;
+    public bool IsFlankingExperiment => flankingExperiment;
+    private enum RamPhase { Chasing, Preparing, Charging, Recovering }
+    private bool committedRamExperiment;
+    private RamPhase ramPhase;
+    private float ramRemaining;
+    private Vector2 ramDirection;
+    public bool IsCommittedRamExperiment => committedRamExperiment;
+    public bool CanUseCommittedRam => ResolveSafeVisual() != null;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private bool woundedRetreatExperiment;
+    private bool woundedRetreatUsed;
+    private float woundedRetreatRemaining;
+    private Vector2 woundedRetreatDirection;
+    private EnemyHealth woundedRetreatHealth;
+    public bool IsWoundedRetreatExperiment => woundedRetreatExperiment;
+    public bool CanUseWoundedRetreat => ResolveSafeVisual() != null;
+
+    public void ConfigureWoundedRetreatExperiment(bool enabled)
+    {
+        CancelWoundedRetreat();
+        woundedRetreatExperiment = enabled && !flankingExperiment &&
+            !committedRamExperiment && !HasAssaultDestination && CanUseWoundedRetreat;
+        if (woundedRetreatExperiment && woundedRetreatHealth == null)
+            woundedRetreatHealth = GetComponent<EnemyHealth>();
+        // Never rearm a living actor by toggling the experiment or healing it.
+    }
+
+    private void CancelWoundedRetreat()
+    {
+        if (woundedRetreatRemaining > 0f && flankingVisual != null)
+            flankingVisual.localRotation = flankingAuthoredRotation;
+        woundedRetreatRemaining = 0f;
+    }
+
+    private void TryBeginWoundedRetreat(Vector2 playerOffset)
+    {
+        if (!woundedRetreatExperiment || assaultDestination.HasValue) return;
+        if (!woundedRetreatUsed && woundedRetreatHealth != null &&
+            !woundedRetreatHealth.IsDead && woundedRetreatHealth.CurrentHealth > 0f &&
+            woundedRetreatHealth.MaxHealth > 0f &&
+            woundedRetreatHealth.CurrentHealth <= woundedRetreatHealth.MaxHealth * .5f)
+        {
+            woundedRetreatUsed = true;
+            woundedRetreatDirection = playerOffset.sqrMagnitude > .0001f
+                ? -playerOffset.normalized : Vector2.down;
+            woundedRetreatRemaining = .9f;
+        }
+    }
+
+    private bool TickWoundedRetreat(ref Vector2 direction)
+    {
+        if (!woundedRetreatExperiment || assaultDestination.HasValue) return false;
+        if (woundedRetreatRemaining <= 0f) return false;
+        direction = woundedRetreatDirection;
+        float localX = transform.InverseTransformDirection(woundedRetreatDirection).x;
+        flankingVisual.localRotation = flankingAuthoredRotation *
+            Quaternion.Euler(0f, 0f, -12f * (localX < 0f ? -1f : 1f));
+        woundedRetreatRemaining = Mathf.Max(0f, woundedRetreatRemaining - Time.fixedDeltaTime);
+        if (woundedRetreatRemaining <= 0f)
+            flankingVisual.localRotation = flankingAuthoredRotation;
+        return true;
+    }
+#endif
+
+    private Transform ResolveSafeVisual()
+    {
+        var candidate = visualRoot;
+        while (candidate != null && candidate != transform && candidate.parent != transform)
+            candidate = candidate.parent;
+        return candidate == null || candidate == transform ||
+            candidate.GetComponentInChildren<Collider2D>(true) != null ||
+            candidate.GetComponentInChildren<Rigidbody2D>(true) != null ? null : candidate;
+    }
+
+    public void ConfigureCommittedRamExperiment(bool enabled)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (enabled) ConfigureWoundedRetreatExperiment(false);
+#endif
+        ResetRamCycle();
+        committedRamExperiment = enabled && !flankingExperiment && CanUseCommittedRam;
+    }
+
+    private void ResetRamCycle()
+    {
+        if (committedRamExperiment && flankingVisual != null)
+            flankingVisual.localRotation = flankingAuthoredRotation;
+        if (committedRamExperiment) chaseVelocity = Vector2.zero;
+        ramPhase = RamPhase.Chasing;
+        ramRemaining = 0f;
+        ramDirection = Vector2.zero;
+    }
+
+    public void ConfigureFlankingExperiment(bool enabled, bool clockwise)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (enabled) ConfigureWoundedRetreatExperiment(false);
+#endif
+        if (enabled) ConfigureCommittedRamExperiment(false);
+        flankingExperiment = enabled;
+        flankingApproach = enabled;
+        flankingSide = clockwise ? -1f : 1f;
+        if (!enabled) RestoreFlankingPose();
+    }
     public float BaseChaseSpeed => normalSpeed;
     public bool HasAssaultDestination => assaultDestination.HasValue;
-    public void SetAssaultDestination(Vector2? destination) => assaultDestination = destination;
+    public void SetAssaultDestination(Vector2? destination)
+    {
+        assaultDestination = destination;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (destination.HasValue) ConfigureWoundedRetreatExperiment(false);
+#endif
+        if (destination.HasValue) ResetRamCycle();
+        if (destination.HasValue) RestoreFlankingPose();
+    }
     public Transform Target => player;
     public bool IsAttackPaused => attackPauseRemaining > 0f;
     public void PauseForAttack(float timeout) => attackPauseRemaining = Mathf.Max(0f, timeout);
@@ -76,6 +195,18 @@ public class EnemyChaseMovement : EnemyMovement
                     hasMovementSpeed = true;
         }
         InitializeCrowdSteering();
+        // Graphic is the existing parent of the animated sprite parts. Keep
+        // their authored animation and visualRoot's facing scale independent.
+        flankingVisual = visualRoot;
+        while (flankingVisual != null && flankingVisual.parent != transform &&
+               flankingVisual != transform)
+            flankingVisual = flankingVisual.parent;
+        if (flankingVisual == transform || (flankingVisual != null &&
+            (flankingVisual.GetComponentInChildren<Collider2D>() != null ||
+             flankingVisual.GetComponentInChildren<Rigidbody2D>() != null)))
+            flankingVisual = null;
+        if (flankingVisual != null)
+            flankingAuthoredRotation = flankingVisual.localRotation;
     }
 
     private void Start()
@@ -112,6 +243,11 @@ public class EnemyChaseMovement : EnemyMovement
             return;
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Observe the wound before hit stop; lock the world line now, but do
+        // not spend retreat time until ordinary locomotion can resume.
+        TryBeginWoundedRetreat((Vector2)player.position - rb.position);
+#endif
         if (stopTimer > 0f)
         {
             SetMovementSpeed(0f);
@@ -167,15 +303,69 @@ public class EnemyChaseMovement : EnemyMovement
         if (assaultDestination.HasValue)
             offset = assaultDestination.Value - rb.position;
         Vector2 productionDirection = offset.normalized;
+        if (flankingExperiment && !assaultDestination.HasValue)
+        {
+            if (sqrDistance <= 4f * 4f) flankingApproach = false;
+            else if (sqrDistance >= 6f * 6f) flankingApproach = true;
+            if (flankingApproach)
+            {
+                Vector2 tangent = new Vector2(-productionDirection.y, productionDirection.x) * flankingSide;
+                productionDirection = (productionDirection + tangent * .9f).normalized;
+            }
+        }
         Vector2 direction = assaultDestination.HasValue ? productionDirection :
             ApplyCrowdSteering(productionDirection, player.position, Time.fixedDeltaTime);
 
         bool isRunning = sqrDistance <= aggroDistance * aggroDistance;
 
         float selectedSpeed = isRunning ? aggroSpeed : normalSpeed;
+        bool ramControlsMovement = committedRamExperiment && !assaultDestination.HasValue;
+        if (ramControlsMovement)
+        {
+            if (ramPhase == RamPhase.Chasing && sqrDistance <= 25f && sqrDistance > .0001f)
+            {
+                ramDirection = offset.normalized;
+                ramPhase = RamPhase.Preparing;
+                ramRemaining = .65f;
+                // Tilt the safe graphic parent toward the committed world line.
+                float localX = transform.InverseTransformDirection(ramDirection).x;
+                flankingVisual.localRotation = flankingAuthoredRotation *
+                    Quaternion.Euler(0f, 0f, -20f * (localX < 0f ? -1f : 1f));
+            }
+            else if (ramPhase != RamPhase.Chasing)
+            {
+                ramRemaining -= Time.fixedDeltaTime;
+                if (ramRemaining <= 0f)
+                {
+                    if (ramPhase == RamPhase.Preparing)
+                    {
+                        ramPhase = RamPhase.Charging;
+                        ramRemaining = .45f;
+                    }
+                    else if (ramPhase == RamPhase.Charging)
+                    {
+                        ramPhase = RamPhase.Recovering;
+                        ramRemaining = 1.2f;
+                        flankingVisual.localRotation = flankingAuthoredRotation;
+                    }
+                    else ResetRamCycle();
+                }
+            }
+            if (ramPhase != RamPhase.Chasing)
+            {
+                direction = ramDirection;
+                selectedSpeed = ramPhase == RamPhase.Charging ? aggroSpeed * 1.75f : 0f;
+                isRunning = ramPhase == RamPhase.Charging;
+            }
+        }
         selectedSpeed *= speedMultiplier *
             anomalySpeedMultiplier *
             worldRuleSpeedMultiplier * threatSpeedMultiplier;
+
+        bool retreatControlsMovement = false;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        retreatControlsMovement = TickWoundedRetreat(ref direction);
+#endif
 
         if (animator != null &&
             hasRunParameter &&
@@ -193,7 +383,7 @@ public class EnemyChaseMovement : EnemyMovement
         );
 
         Vector2 targetVelocity = direction * selectedSpeed;
-        chaseVelocity = threatResponseSeconds > .001f
+        chaseVelocity = threatResponseSeconds > .001f && !retreatControlsMovement && !(ramControlsMovement && ramPhase != RamPhase.Chasing)
             ? Vector2.Lerp(chaseVelocity, targetVelocity, 1f - Mathf.Exp(-Time.fixedDeltaTime / threatResponseSeconds))
             : targetVelocity;
         Vector2 locomotion = chaseVelocity;
@@ -216,7 +406,29 @@ public class EnemyChaseMovement : EnemyMovement
         rb.MovePosition(nextPosition);
 
         if (flipVisual)
-            UpdateVisualFacing(visualRoot, direction);
+            UpdateVisualFacing(visualRoot, retreatControlsMovement ? (Vector2)player.position - rb.position : direction);
+        if (!committedRamExperiment && !retreatControlsMovement) UpdateFlankingPose(direction);
+    }
+
+    private void UpdateFlankingPose(Vector2 direction)
+    {
+        if (!flankingExperiment || !flankingApproach || assaultDestination.HasValue)
+        {
+            RestoreFlankingPose();
+            return;
+        }
+        if (flankingVisual == null) return;
+        // Absolute offset, independent of facing flips and previous frames.
+        flankingVisual.localRotation = flankingAuthoredRotation *
+            Quaternion.Euler(0f, 0f, -12f * Mathf.Clamp(direction.x, -1f, 1f));
+        flankingPoseApplied = true;
+    }
+
+    private void RestoreFlankingPose()
+    {
+        if (flankingPoseApplied && flankingVisual != null)
+            flankingVisual.localRotation = flankingAuthoredRotation;
+        flankingPoseApplied = false;
     }
 
     public override void SetSpeedMultiplier(float multiplier)
@@ -250,10 +462,16 @@ public class EnemyChaseMovement : EnemyMovement
     }
     private void OnDisable()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        ConfigureWoundedRetreatExperiment(false);
+        woundedRetreatUsed = false;
+#endif
         knockbackVelocity = Vector2.zero;
         chaseVelocity = Vector2.zero;
         SetThreatMovement(1f, 0f);
         assaultDestination = null;
+        ConfigureCommittedRamExperiment(false);
+        ConfigureFlankingExperiment(false, false);
         ResumeAfterAttack();
         SetMovementSpeed(0f);
         ReleaseCrowdSteering();

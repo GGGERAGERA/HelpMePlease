@@ -9,7 +9,7 @@
     "reason": { "type": "string" },
     "evidence": { "type": "array", "items": { "type": "string" } },
     "candidates": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["task", "value", "risk", "cost", "why"], "properties": { "task": { "type": "string" }, "value": { "type": "integer" }, "risk": { "type": "integer" }, "cost": { "type": "integer" }, "why": { "type": "string" } } } },
-    "testProfile": { "type": "string", "enum": ["golden-path", "onboarding", "localization", "combat", "events", "rewards", "boss", "core", "placement", "orbital-control", "orbital-tactics", "orbital-placement", "orbital-modules", "orbital-sandbox", "live-visual"] },
+    "testProfile": { "type": "string", "enum": ["static", "golden-path", "onboarding", "localization", "combat", "events", "rewards", "boss", "core", "placement", "orbital-control", "orbital-tactics", "orbital-placement", "orbital-modules", "orbital-sandbox", "live-visual"] },
     "testFilter": { "type": ["string", "null"] },
     "issueKey": { "type": "string" },
     "stopCategory": { "type": ["string", "null"], "enum": [null, "TaskBlocked", "NoSafeWork", "Safety", "AuthQuota", "ProcessControl"] },

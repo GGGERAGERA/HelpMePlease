@@ -41,6 +41,95 @@ public class EnemyBomberMovement : EnemyMovement
         explosiveZoneRadiusMultipliers = new();
     private BomberExplosionSequence activeExplosionSequence;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private bool interceptingExperiment;
+    private Quaternion interceptingAuthoredRotation;
+    private bool interceptingPoseCaptured;
+    private Rigidbody2D interceptingPlayerBody;
+    private Vector2 interceptingPreviousPosition;
+    private Vector2 interceptingPlayerVelocity;
+    private bool interceptingHasBaseline;
+    public bool InterceptingExperiment => interceptingExperiment;
+    // Serialized configuration only: safe to query on a prefab before Awake.
+    public bool HasInterceptingVisual => visualRoot != null &&
+        visualRoot != transform && visualRoot.IsChildOf(transform);
+    public bool CanUseIntercepting => rb != null && isActiveAndEnabled &&
+        !isExploding && HasInterceptingVisual &&
+        GetComponent<EnemyHealth>() is { IsDead: false };
+
+    public void ConfigureInterceptingExperiment(bool enabled)
+    {
+        if (enabled)
+        {
+            if (!CanUseIntercepting || RunStateManager.Instance == null) return;
+            RunStateManager.Instance.DebugMarkDevelopmentRun();
+            if (!interceptingPoseCaptured)
+            {
+                interceptingAuthoredRotation = visualRoot.localRotation;
+                interceptingPoseCaptured = true;
+            }
+        }
+        if (!enabled || !interceptingExperiment) ResetInterceptingMeasurement(enabled);
+        interceptingExperiment = enabled;
+        if (!enabled && interceptingPoseCaptured)
+        {
+            if (visualRoot != null) visualRoot.localRotation = interceptingAuthoredRotation;
+            interceptingPoseCaptured = false;
+        }
+    }
+
+    private void ResetInterceptingMeasurement(bool initializeBaseline = false)
+    {
+        interceptingPlayerBody = initializeBaseline && player != null
+            ? player.GetComponent<Rigidbody2D>() : null;
+        interceptingPreviousPosition = interceptingPlayerBody != null
+            ? interceptingPlayerBody.position : Vector2.zero;
+        interceptingPlayerVelocity = Vector2.zero;
+        interceptingHasBaseline = interceptingPlayerBody != null;
+    }
+
+    private void MeasureInterceptingPlayerMovement()
+    {
+        // Called once from each natural FixedUpdate, before scheduling this step's movement.
+        // Rigidbody2D.position is the completed simulation, irrespective of controller order.
+        var playerBody = player != null ? player.GetComponent<Rigidbody2D>() : null;
+        if (playerBody == null || !interceptingHasBaseline || interceptingPlayerBody != playerBody)
+        {
+            ResetInterceptingMeasurement(true);
+            return;
+        }
+        Vector2 displacement = playerBody.position - interceptingPreviousPosition;
+        interceptingPreviousPosition = playerBody.position;
+        // Match CharacterMovement2D: diagnostic jumps of >= 2 m are not physical velocity.
+        interceptingPlayerVelocity = displacement.sqrMagnitude < 4f && Time.fixedDeltaTime > 0f
+            ? displacement / Time.fixedDeltaTime : Vector2.zero;
+    }
+
+    private Vector2 GetInterceptingTarget(Vector2 target, Vector2 offset, Vector2 velocity)
+    {
+        if (!interceptingExperiment) return target;
+        float weight = Mathf.SmoothStep(0f, 1f,
+            Mathf.InverseLerp(triggerRadius + .5f, triggerRadius + 2f, offset.magnitude));
+        return target + Vector2.ClampMagnitude(velocity * .55f, 1.75f) * weight;
+    }
+
+    private void ApplyInterceptingPose(Vector2 offset, Vector2 lead)
+    {
+        Vector2 desired = offset + lead;
+        float tilt = offset.sqrMagnitude > .0001f && desired.sqrMagnitude > .0001f
+            ? Mathf.Clamp(Vector2.SignedAngle(offset, desired), -20f, 20f) : 0f;
+        // Always compose from the authored rotation; never accumulate rotations.
+        visualRoot.localRotation = interceptingAuthoredRotation * Quaternion.Euler(0f, 0f, tilt);
+    }
+
+    private void Update()
+    {
+        // FixedUpdate does not run during a full pause. Discard its pre-pause baseline here.
+        if (interceptingExperiment && (Time.timeScale == 0f || EnemyDebugAiFreeze.IsFrozen))
+            ResetInterceptingMeasurement();
+    }
+#endif
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -55,10 +144,18 @@ public class EnemyBomberMovement : EnemyMovement
     private void FixedUpdate()
     {
         if (Time.timeScale == 0f || isExploding)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            ResetInterceptingMeasurement();
+#endif
             return;
+        }
 
         if (EnemyDebugAiFreeze.IsFrozen)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            ResetInterceptingMeasurement();
+#endif
             knockbackVelocity = Vector2.MoveTowards(
                 knockbackVelocity,
                 Vector2.zero,
@@ -76,12 +173,26 @@ public class EnemyBomberMovement : EnemyMovement
             FindPlayer();
 
         if (player == null)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            ResetInterceptingMeasurement();
+#endif
             return;
+        }
 
         Vector2 offset = (Vector2)player.position - rb.position;
         UpdateVisualFacing(visualRoot, offset.normalized);
-        Vector2 direction = ApplyCrowdSteering(offset.normalized,
-            player.position, Time.fixedDeltaTime);
+        Vector2 target = player.position;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (interceptingExperiment)
+        {
+            MeasureInterceptingPlayerMovement();
+            target = GetInterceptingTarget(target, offset, interceptingPlayerVelocity);
+            ApplyInterceptingPose(offset, target - (Vector2)player.position);
+        }
+#endif
+        Vector2 direction = ApplyCrowdSteering((target - rb.position).normalized,
+            target, Time.fixedDeltaTime);
 
         knockbackVelocity = Vector2.MoveTowards(
             knockbackVelocity,
@@ -227,6 +338,9 @@ public class EnemyBomberMovement : EnemyMovement
 
     private void OnDisable()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        ConfigureInterceptingExperiment(false);
+#endif
         ReleaseCrowdSteering();
         explosiveZoneRadiusMultipliers.Clear();
         ClearAnomalyExternalVelocities();

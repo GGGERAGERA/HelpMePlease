@@ -28,6 +28,7 @@ namespace Subject42.Combat.OrbitalStation
         private readonly List<RaycastResult> constructorHits = new();
         private readonly List<Vector3> constructorArcPoints = new(64);
         private int constructorRevision = -1, constructorDragRevision, constructorDragCell = -1, constructorDropCell = -1;
+        private GameLanguage constructorLanguage;
         private OrbitalModuleState constructorDragWeapon;
         private SegmentedLinkState constructorDragModule;
         private SegmentedLinkKind? constructorDragModuleKind;
@@ -276,14 +277,52 @@ namespace Subject42.Combat.OrbitalStation
                 constructorLauncher.GetComponentInChildren<TextMeshProUGUI>().color = Color.Lerp(ConstructorAmber, new Color(1f, .94f, .64f), pulse);
             }
             if (ConstructorDragging && (constructorDragRevision != station.State.Revision || !Input.GetMouseButton(0))) ResetConstructorDrag();
-            if (station.InputOwner.IsConstructing && constructorRevision != station.State.Revision) RefreshConstructor();
+            if (station.InputOwner.IsConstructing && (constructorRevision != station.State.Revision ||
+                (!ConstructorDragging && constructorLanguage != LocalizationService.EnsureExists().CurrentLanguage))) RefreshConstructor();
             UpdateConstructorWorldLinks();
+        }
+
+        private string ConstructorWeaponLabel(int index)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            var state = station?.State;
+            if (state?.UsesSegmentedOrbit == true && state.RamSlugShotgunExperiment &&
+                constructorWeaponKinds[index] == OrbitalModuleKind.Shotgun)
+                return LocalizationService.EnsureExists().Get("constructor.ramSlugShotgunLabel");
+            if (state?.UsesSegmentedOrbit == true && state.MissReturnPistolExperiment &&
+                constructorWeaponKinds[index] == OrbitalModuleKind.Pistol)
+                return LocalizationService.EnsureExists().Get("constructor.missReturnPistolLabel");
+            if (state?.UsesSegmentedOrbit == true && state.PulsedSawExperiment &&
+                constructorWeaponKinds[index] == OrbitalModuleKind.Saw)
+                return LocalizationService.EnsureExists().Get("constructor.pulsedSawLabel");
+#endif
+            return constructorWeaponKinds[index] switch
+            {
+                OrbitalModuleKind.Pistol => LocalizationService.EnsureExists().Get("reward.gun"),
+                OrbitalModuleKind.Shotgun => LocalizationService.EnsureExists().Get("reward.shotgun"),
+                OrbitalModuleKind.Saw => LocalizationService.EnsureExists().Get("reward.saw"),
+                OrbitalModuleKind.Sniper => LocalizationService.EnsureExists().Get("reward.sniper"),
+                _ => constructorWeaponLabels[index]
+            };
+        }
+
+        private string ConstructorModuleLabel(int index)
+        {
+            return constructorModuleKinds[index] switch
+            {
+                SegmentedLinkKind.Damage => LocalizationService.EnsureExists().Get("constructor.damageLabel"),
+                SegmentedLinkKind.FireRate => LocalizationService.EnsureExists().Get("constructor.fireRateLabel"),
+                SegmentedLinkKind.ExtraShot => LocalizationService.EnsureExists().Get("constructor.extraShotLabel"),
+                SegmentedLinkKind.Ricochet => LocalizationService.EnsureExists().Get("constructor.ricochetLabel"),
+                _ => constructorModuleLabels[index]
+            };
         }
 
         private void RefreshConstructor()
         {
             var state = station.State;
             constructorRevision = state.Revision;
+            constructorLanguage = LocalizationService.EnsureExists().CurrentLanguage;
             for (int i = 0; i < constructorMounts.Length; i++)
             {
                 var mount = ConstructorMount(i);
@@ -324,7 +363,7 @@ namespace Subject42.Combat.OrbitalStation
                 weaponRows++;
                 int displayedCount = count - (ConstructorDragging && constructorDragCell < 0 &&
                     constructorDragWeapon?.ModuleType == constructorWeaponKinds[i] ? 1 : 0);
-                ButtonText(constructorWeapons[i], constructorWeaponLabels[i] + "  ×" + displayedCount);
+                ButtonText(constructorWeapons[i], ConstructorWeaponLabel(i) + "  ×" + displayedCount);
                 constructorWeapons[i].interactable = true;
             }
             for (int i = 0; i < constructorLinks.Length; i++)
@@ -335,7 +374,7 @@ namespace Subject42.Combat.OrbitalStation
                 moduleRows++;
                 int displayedCount = count - (ConstructorDragging && constructorDragCell < 0 &&
                     constructorDragModuleKind == constructorModuleKinds[i] ? 1 : 0);
-                ButtonText(constructorLinks[i], constructorModuleLabels[i] + "  ×" + displayedCount);
+                ButtonText(constructorLinks[i], ConstructorModuleLabel(i) + "  ×" + displayedCount);
                 var icon = OrbitalRewardIconResolver.Resolve(constructorModuleKinds[i]);
                 var rowIcon = constructorLinks[i].transform.Find("Item icon").GetComponent<Image>();
                 rowIcon.sprite = icon.Sprite; rowIcon.color = icon.ImageTint;
@@ -343,7 +382,7 @@ namespace Subject42.Combat.OrbitalStation
             }
             constructorWeaponGroup.SetActive(weaponRows > 0); constructorModuleGroup.SetActive(moduleRows > 0);
             constructorEmpty.gameObject.SetActive(weaponRows + moduleRows == 0);
-            constructorEmpty.text = "Запас пуст.";
+            constructorEmpty.text = LocalizationService.EnsureExists().Get("constructor.emptyStock");
             RefreshConstructorConnections();
         }
 

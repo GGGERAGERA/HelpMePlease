@@ -3302,8 +3302,9 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             "+10", available, () => SpawnDebugEnemies(prefab, displayName, 10));
     }
 
-    private void SpawnDebugEnemies(GameObject prefab, string displayName, int count)
+    private void SpawnDebugEnemies(GameObject prefab, string displayName, int count, bool flanking = false)
     {
+        if (flanking && !MvpCanEdit) return;
         Transform player = GameObject.FindGameObjectWithTag("Player")?.transform;
 
         if (enemySpawner == null || prefab == null || player == null)
@@ -3315,7 +3316,10 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         int spawned = 0;
         for (int i = 0; i < Mathf.Max(1, count); i++)
         {
-            GameObject enemy = enemySpawner.SpawnSpecificEnemyAround(
+            string flankingStatus = null;
+            GameObject enemy = flanking
+                ? enemySpawner.DebugSpawnFlankingChaserAround(prefab, player.position, out flankingStatus)
+                : enemySpawner.SpawnSpecificEnemyAround(
                 prefab,
                 player.position,
                 3f,
@@ -3325,6 +3329,12 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
                 0.45f
             );
 
+            if (enemy == null && flanking)
+            {
+                enemyDebugStatus = flankingStatus;
+                RefreshCurrentTab();
+                return;
+            }
             if (enemy == null)
                 continue;
 
@@ -3336,6 +3346,11 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             ? $"✓ {displayName}: создано {spawned}."
             : $"⚠ {displayName}: создано {spawned} из {count}; не хватило безопасных позиций.";
 
+        if (flanking && spawned > 0)
+        {
+            CloseMenu();
+            return;
+        }
         RefreshCurrentTab();
     }
 

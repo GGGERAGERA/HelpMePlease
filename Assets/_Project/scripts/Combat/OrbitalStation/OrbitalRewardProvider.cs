@@ -284,6 +284,44 @@ namespace Subject42.Combat.OrbitalStation
             foreach (var definition in definitions)
             {
                 bool segmented = state?.UsesSegmentedOrbit == true;
+                if (definition.RewardKind == OrbitalRewardKind.Pistol)
+                {
+                    definition.upgradeName = "reward.gun";
+                    definition.description = segmented ? "reward.segmentedGunDescription" : "reward.gunDescription";
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    if (segmented && state.MissReturnPistolExperiment)
+                    {
+                        definition.upgradeName = "reward.missReturnPistol";
+                        definition.description = "reward.missReturnPistolDescription";
+                    }
+#endif
+                }
+                if (definition.RewardKind == OrbitalRewardKind.Shotgun)
+                {
+                    definition.upgradeName = "reward.shotgun";
+                    definition.description = segmented ? "reward.segmentedShotgunDescription" : "reward.shotgunDescription";
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    if (segmented && state.RamSlugShotgunExperiment)
+                    {
+                        definition.upgradeName = "reward.ramSlugShotgun";
+                        definition.description = "reward.ramSlugShotgunDescription";
+                    }
+#endif
+                }
+                if (definition.RewardKind == OrbitalRewardKind.Saw)
+                {
+                    definition.upgradeName = "reward.saw";
+                    definition.description = segmented ? "reward.segmentedSawDescription" : "reward.sawDescription";
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    if (segmented && state.PulsedSawExperiment)
+                    {
+                        definition.upgradeName = "reward.pulsedSaw";
+                        definition.description = "reward.pulsedSawDescription";
+                    }
+#endif
+                }
+                if (definition.RewardKind == OrbitalRewardKind.Sniper)
+                    definition.description = segmented ? "reward.segmentedSniperDescription" : "reward.sniperDescription";
                 if (definition.RewardKind == OrbitalRewardKind.NewRing)
                 {
                     definition.upgradeName = segmented ? "reward.unlockOrbit" : "reward.newRing";

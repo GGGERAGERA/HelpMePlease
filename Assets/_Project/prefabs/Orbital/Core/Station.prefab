@@ -2792,6 +2792,7 @@ GameObject:
   - component: {fileID: 3628051082267939382}
   - component: {fileID: 4110424287242762783}
   - component: {fileID: 321875474369246803}
+  - component: {fileID: 980000000000000102}
   m_Layer: 5
   m_Name: Category
   m_TagString: Untagged
@@ -8375,6 +8376,7 @@ GameObject:
   - component: {fileID: 1555417617693044961}
   - component: {fileID: 10588409633477779}
   - component: {fileID: 72051567129460482}
+  - component: {fileID: 980000000000000101}
   m_Layer: 5
   m_Name: Category
   m_TagString: Untagged
@@ -9246,6 +9248,7 @@ GameObject:
   - component: {fileID: 907411047590606655}
   - component: {fileID: 8449559828479146502}
   - component: {fileID: 5107603716035466152}
+  - component: {fileID: 980000000000000103}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -22487,6 +22490,7 @@ GameObject:
   - component: {fileID: 4229041087795472069}
   - component: {fileID: 4517446657527870510}
   - component: {fileID: 5702801008369946338}
+  - component: {fileID: 980000000000000104}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -28013,6 +28017,7 @@ GameObject:
   - component: {fileID: 438890685316687328}
   - component: {fileID: 2555038131424374936}
   - component: {fileID: 1120823998358174472}
+  - component: {fileID: 980000000000000100}
   m_Layer: 5
   m_Name: Title
   m_TagString: Untagged
@@ -41601,3 +41606,68 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &980000000000000100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6158387476487643362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: constructor.title
+--- !u!114 &980000000000000101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2033033541395199801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: constructor.weaponsHeading
+--- !u!114 &980000000000000102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 747814507339974335}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: constructor.modulesHeading
+--- !u!114 &980000000000000103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2172413085321382601}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: constructor.upgradesButton
+--- !u!114 &980000000000000104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4733202691682868513}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b100000000000000000000000000004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
+  localizationKey: constructor.continueButton
