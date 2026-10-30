@@ -1,0 +1,99 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &1381567824523553015
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 677074034163971613, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_Color.b
+      value: 0.86651444
+      objectReference: {fileID: 0}
+    - target: {fileID: 677074034163971613, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 677074034163971613, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_Color.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3091274641833284724, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_Color.b
+      value: 0.6784314
+      objectReference: {fileID: 0}
+    - target: {fileID: 3091274641833284724, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_Color.g
+      value: 0.42713547
+      objectReference: {fileID: 0}
+    - target: {fileID: 3091274641833284724, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_Color.r
+      value: 0.027450986
+      objectReference: {fileID: 0}
+    - target: {fileID: 4044055001711423667, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 361973321, guid: 0f51129889a2ef342bf1d712a2e7f7fa, type: 3}
+    - target: {fileID: 5633566137220576754, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5633566137220576754, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_Color.g
+      value: 0.9539039
+      objectReference: {fileID: 0}
+    - target: {fileID: 5633566137220576754, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_Color.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6243479808509422178, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 29.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6243479808509422178, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -21
+      objectReference: {fileID: 0}
+    - target: {fileID: 6243479808509422178, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6243479808509422178, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6243479808509422178, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6243479808509422178, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6243479808509422178, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6243479808509422178, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6243479808509422178, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6243479808509422178, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8493216151223626354, guid: 607227f12993ffb49a438e923c857434, type: 3}
+      propertyPath: m_Name
+      value: p_TrophyTable1 (1) Variant
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 607227f12993ffb49a438e923c857434, type: 3}
