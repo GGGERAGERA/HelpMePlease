@@ -45,6 +45,7 @@ namespace Subject42.Combat.OrbitalStation
         private static readonly Color ConstructorDropCyan = new(.2f, .85f, 1f);
         private static readonly Color ConstructorGreen = new(.28f, .82f, .52f);
         private static readonly Color ConstructorAmber = new(.98f, .79f, .35f);
+        private static readonly Color ConstructorInactiveBridge = new(.18f, .4f, .52f);
 
         public void BindRewardPanel(UpgradePanelView panel)
         {
@@ -128,9 +129,23 @@ namespace Subject42.Combat.OrbitalStation
             if (constructorPanel != null) constructorPanel.SetActive(false);
         }
 
-        private OrbitalMountRuntime ConstructorMount(int cell) => station.Rings[cell / OrbitalRunState.SegmentedPositions].Mounts[cell % OrbitalRunState.SegmentedPositions];
+        private OrbitalMountRuntime ConstructorMount(int cell)
+        {
+            foreach (var ring in station.Rings)
+            {
+                if (cell < ring.MountCount) return ring.Mounts[cell];
+                cell -= ring.MountCount;
+            }
+            throw new ArgumentOutOfRangeException(nameof(cell));
+        }
+        private int ConstructorCell(OrbitalRingState ring, int mount) =>
+            station.Rings.Take(ring.Order).Sum(level => level.MountCount) + mount;
         private SegmentedLinkState ConstructorModule(int cell) => station.State.SegmentedModuleAt(ConstructorMount(cell).Ring.RingId, ConstructorMount(cell).MountIndex);
-        private static bool IsWeaponCell(int cell) => OrbitalRunState.IsSegmentedWeaponSlot(cell / OrbitalRunState.SegmentedPositions, cell % OrbitalRunState.SegmentedPositions);
+        private bool IsWeaponCell(int cell)
+        {
+            var mount = ConstructorMount(cell);
+            return OrbitalRunState.IsSegmentedWeaponSlot(mount.Ring.State.Order, mount.MountIndex);
+        }
 
         private void BeginConstructorDrag(PointerEventData pointer, int cell, int weaponItem = -1, int moduleItem = -1)
         {
@@ -397,23 +412,60 @@ namespace Subject42.Combat.OrbitalStation
         private void RefreshConstructorConnections()
         {
             int lineIndex = 0;
+            // Adjacent-level V2-A directions stay readable even before their items are installed.
+            for (int level = 1; level < station.Rings.Count; level++)
+            foreach (var source in station.Rings[level].Mounts)
+            {
+                if (OrbitalRunState.IsSegmentedWeaponSlot(level, source.MountIndex)) continue;
+                var target = station.Rings[level - 1].Mounts.First(mount =>
+                    OrbitalRunState.IsSegmentedWeaponSlot(level - 1, mount.MountIndex) &&
+                    Mathf.Abs(Mathf.DeltaAngle(source.LocalPhase, mount.LocalPhase)) < .01f);
+                var module = station.State.SegmentedModuleAt(source.Ring.RingId, source.MountIndex);
+                bool active = module != null && target.Module != null && station.State.SegmentedModuleTargets(module)
+                    .Any(weapon => weapon.StableModuleId == target.Module.StableModuleId);
+                SetConstructorConnection(lineIndex++, ConstructorCell(source.Ring.State, source.MountIndex),
+                    ConstructorCell(target.Ring.State, target.MountIndex),
+                    active ? SegmentedModulePresentation.LinkColor : ConstructorInactiveBridge);
+            }
             foreach (var module in station.State.SegmentedLinks)
             {
-                int moduleCell = station.State.FindRing(module.RingId).Order * OrbitalRunState.SegmentedPositions + module.MountIndex;
-                Vector2 from = constructorMounts[moduleCell].GetComponent<RectTransform>().anchoredPosition;
+                int moduleCell = ConstructorCell(station.State.FindRing(module.RingId), module.MountIndex);
                 foreach (var weapon in station.State.SegmentedModuleTargets(module))
                 {
-                    int cell = station.State.FindRing(weapon.StableRingId).Order * OrbitalRunState.SegmentedPositions + weapon.MountIndex;
-                    Vector2 to = constructorMounts[cell].GetComponent<RectTransform>().anchoredPosition;
-                    var line = constructorLines[lineIndex++];
-                    line.gameObject.SetActive(true); line.anchoredPosition = (from + to) * .5f;
-                    line.sizeDelta = new Vector2(Vector2.Distance(from, to), 2f);
-                    line.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(to.y - from.y, to.x - from.x) * Mathf.Rad2Deg);
-                    line.GetComponent<Image>().color = moduleCell == constructorDragCell || cell == constructorDragCell ? ConstructorAmber : SegmentedModulePresentation.LinkColor;
+                    if (weapon.StableRingId != module.RingId) continue;
+                    int cell = ConstructorCell(station.State.FindRing(weapon.StableRingId), weapon.MountIndex);
+                    SetConstructorConnection(lineIndex++, moduleCell, cell,
+                        moduleCell == constructorDragCell || cell == constructorDragCell ? ConstructorAmber : SegmentedModulePresentation.LinkColor);
                 }
             }
             while (lineIndex < constructorLines.Length) constructorLines[lineIndex++].gameObject.SetActive(false);
         }
+
+        private void SetConstructorConnection(int index, int sourceCell, int targetCell, Color color)
+        {
+            var source = (RectTransform)constructorMounts[sourceCell].transform;
+            var target = (RectTransform)constructorMounts[targetCell].transform;
+            Vector2 from = source.anchoredPosition, to = target.anchoredPosition;
+            if (ConstructorMount(sourceCell).Ring != ConstructorMount(targetCell).Ring)
+            {
+                Vector2 direction = (to - from).normalized;
+                from = ConstructorConnectionEdge(source, direction);
+                to = ConstructorConnectionEdge(target, -direction);
+            }
+            var line = constructorLines[index];
+            line.gameObject.SetActive(true); line.anchoredPosition = (from + to) * .5f;
+            line.sizeDelta = new Vector2(Vector2.Distance(from, to), 2f);
+            line.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(to.y - from.y, to.x - from.x) * Mathf.Rad2Deg);
+            line.GetComponent<Image>().color = color;
+        }
+
+        private static Vector2 ConstructorConnectionEdge(RectTransform cell, Vector2 direction)
+        {
+            Vector2 half = Vector2.Scale(cell.rect.size, cell.localScale) * .5f;
+            float edge = 1f / Mathf.Max(Mathf.Abs(direction.x) / half.x, Mathf.Abs(direction.y) / half.y);
+            return cell.anchoredPosition + direction * edge;
+        }
+
         private void UpdateConstructorWorldLinks()
         {
             const float pixel = 1f / 32f;
@@ -444,6 +496,8 @@ namespace Subject42.Combat.OrbitalStation
                 float from = OrbitalRunState.SegmentedMountAngle(ring.State.Order, module.MountIndex);
                 foreach (var target in station.State.SegmentedModuleTargets(module))
                 {
+                    // Cross-level effects remain visible in the constructor, without combat HUD spokes.
+                    if (target.StableRingId != ring.RingId) continue;
                     float to = OrbitalRunState.SegmentedMountAngle(ring.State.Order, target.MountIndex);
                     float arc = Mathf.DeltaAngle(from, to);
                     int steps = Mathf.Max(2, Mathf.CeilToInt(Mathf.Abs(arc) * Mathf.Deg2Rad * ring.Radius / pixel));

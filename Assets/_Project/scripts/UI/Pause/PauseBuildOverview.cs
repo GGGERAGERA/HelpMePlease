@@ -95,8 +95,8 @@ public sealed class PauseBuildOverview : MonoBehaviour
                 int occupied = state.Modules.Count(m => m.StableRingId == ring.StableRingId);
                 if (state.UsesSegmentedOrbit)
                 {
-                    int weaponCapacity = Enumerable.Range(0, 12).Count(position => OrbitalRunState.IsSegmentedWeaponSlot(ring.Order, position));
-                    int moduleCapacity = 12 - weaponCapacity;
+                    int weaponCapacity = Enumerable.Range(0, ring.MountCount).Count(position => OrbitalRunState.IsSegmentedWeaponSlot(ring.Order, position));
+                    int moduleCapacity = ring.MountCount - weaponCapacity;
                     string occupancy = $"O: {occupied}/{weaponCapacity}";
                     if (moduleCapacity > 0)
                     {

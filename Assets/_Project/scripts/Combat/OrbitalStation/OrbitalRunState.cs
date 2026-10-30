@@ -39,7 +39,7 @@ namespace Subject42.Combat.OrbitalStation
     [Serializable]
     public sealed partial class OrbitalRunState : UnityEngine.ISerializationCallbackReceiver
     {
-        public const int SegmentedLevels = 3, SegmentedPositions = 12;
+        public const int SegmentedLevels = 3;
         public bool UsesSegmentedOrbit;
         // Attempt-owned, serialized across sector restores; fresh runs default to false.
         // Only Development/Editor code can opt in; public builds never apply this profile.
@@ -112,8 +112,8 @@ namespace Subject42.Combat.OrbitalStation
                 ring.Radius = SegmentedRadius(ring.Order);
                 ring.BaseRotationSpeed = 0f;
                 ring.CurrentPhase = 0f;
-                ring.PhaseOffset = ring.Order == 1 ? 15f : 0f;
-                ring.MountCount = ring.MountCapacity = SegmentedPositions;
+                ring.PhaseOffset = ring.Order == 1 ? -45f : 0f;
+                ring.MountCount = ring.MountCapacity = SegmentedPositionCount(ring.Order);
                 ring.CustomPath = null;
             }
             Revision++;
@@ -126,14 +126,14 @@ namespace Subject42.Combat.OrbitalStation
         {
             get
             {
-                if (UsesSegmentedOrbit) return SegmentedPositions;
+                if (UsesSegmentedOrbit) return SegmentedPositionCount(SegmentedLevels - 1);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 if (LabMountLimit > 0) return LabMountLimit;
 #endif
                 return OrbitalProgressionConfig.Default.MaxMountsPerRing;
             }
         }
-        public const int CurrentVersion = 3;
+        public const int CurrentVersion = 5;
 
         public int Version = CurrentVersion;
         public void OnBeforeSerialize() { }
@@ -149,6 +149,7 @@ namespace Subject42.Combat.OrbitalStation
                 foreach (var ring in Rings) if (ring != null) ring.MountCount = ring.MountCapacity;
             // Preserve rings, levels, allocators, valid modules and all unrelated run progress.
             if (Modules != null) Modules.RemoveAll(m => m != null && ((int)m.ModuleType == 1 || (int)m.ModuleType == 2));
+            if (Version < 5) MigrateSegmentedGeometry();
             Version = CurrentVersion;
         }
 
@@ -701,6 +702,8 @@ namespace Subject42.Combat.OrbitalStation
                     ring.MountCount < 1 || ring.MountCount > ring.MountCapacity ||
                     ring.MountCapacity < 3 || ring.MountCapacity >
                         MountLimit ||
+                    UsesSegmentedOrbit && (ring.MountCount != SegmentedPositionCount(ring.Order) ||
+                        ring.MountCapacity != SegmentedPositionCount(ring.Order)) ||
                     !IsFinitePositive(ring.Radius) ||
                     !IsFiniteNonNegative(ring.BaseRotationSpeed) ||
                     float.IsNaN(ring.CurrentPhase) || float.IsInfinity(ring.CurrentPhase) ||

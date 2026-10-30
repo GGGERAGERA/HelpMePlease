@@ -28,12 +28,15 @@ namespace Subject42.Combat.OrbitalStation
         public static bool IsSegmentedWeapon(OrbitalModuleKind kind) => kind is
             OrbitalModuleKind.Pistol or OrbitalModuleKind.Shotgun or OrbitalModuleKind.Sniper or OrbitalModuleKind.Saw;
 
-        public static float SegmentedMountAngle(int level, int position) =>
-            90f + (level == 1 ? 15f : 0f) + position * 30f;
+        public static int SegmentedPositionCount(int level) => 8;
+
+        public static float SegmentedMountAngle(int level, int position) => Mathf.Repeat(
+            (level == 1 ? -45f : 0f) + position * 45f, 360f);
 
         public static float SegmentedRadius(int level) => 1.75f + level * 1.25f;
 
-        public static bool IsSegmentedWeaponSlot(int level, int position) => level > 0 || position % 2 == 0;
+        public static bool IsSegmentedWeaponSlot(int level, int position) =>
+            position >= 0 && position < SegmentedPositionCount(level) && position % 2 == 0;
 
         public SegmentedLinkState SegmentedModuleAt(int ringId, int position) =>
             SegmentedLinks.FirstOrDefault(module => module.RingId == ringId && module.MountIndex == position);
@@ -43,12 +46,22 @@ namespace Subject42.Combat.OrbitalStation
 
         private IEnumerable<OrbitalModuleState> SegmentedModuleTargets(int ringId, int position)
         {
+            var ring = FindRing(ringId);
+            if (ring == null || !IsRingActive(ring) || position < 0 || position >= ring.MountCount ||
+                IsSegmentedWeaponSlot(ring.Order, position)) yield break;
             foreach (var weapon in Modules)
             {
-                if (weapon.StableRingId != ringId || weapon.ModuleType is not
+                if (weapon.ModuleType is not
                     (OrbitalModuleKind.Pistol or OrbitalModuleKind.Shotgun or OrbitalModuleKind.Sniper)) continue;
-                int gap = Mathf.Abs(weapon.MountIndex - position);
-                if (gap == 1 || gap == SegmentedPositions - 1) yield return weapon;
+                if (weapon.StableRingId == ringId)
+                {
+                    int gap = Mathf.Abs(weapon.MountIndex - position);
+                    if (gap == 1 || gap == ring.MountCount - 1) yield return weapon;
+                }
+                else if (ring.Order > 0 && weapon.StableRingId == Rings[ring.Order - 1].StableRingId &&
+                    Mathf.Abs(Mathf.DeltaAngle(SegmentedMountAngle(ring.Order, position),
+                        SegmentedMountAngle(ring.Order - 1, weapon.MountIndex))) < .01f)
+                    yield return weapon;
             }
         }
 
@@ -80,7 +93,7 @@ namespace Subject42.Combat.OrbitalStation
         private bool CanUseSegmentedModuleSlot(int ringId, int position, out string error)
         {
             var ring = FindRing(ringId);
-            return Rule(UsesSegmentedOrbit && ring != null && IsRingActive(ring) && position >= 0 && position < SegmentedPositions &&
+            return Rule(UsesSegmentedOrbit && ring != null && IsRingActive(ring) && position >= 0 && position < ring.MountCount &&
                 !IsSegmentedWeaponSlot(ring.Order, position), "Выберите открытую зелёную ячейку M.", out error) &&
                 Rule(SegmentedModuleTargets(ringId, position).Any(), "Рядом с M нужна хотя бы одна стреляющая пушка.", out error);
         }
@@ -222,12 +235,49 @@ namespace Subject42.Combat.OrbitalStation
                     return Rule(false, "invalid segmented weapon reserve", out error);
             var slots = new HashSet<(int, int)>();
             foreach (var link in SegmentedLinks)
-                if (FindRing(link.RingId) == null || link.MountIndex < 0 || link.MountIndex >= SegmentedPositions ||
+                if (FindRing(link.RingId) == null || link.MountIndex < 0 || link.MountIndex >= FindRing(link.RingId).MountCount ||
                     IsSegmentedWeaponSlot(FindRing(link.RingId).Order, link.MountIndex) ||
                     !slots.Add((link.RingId, link.MountIndex)) || !Enum.IsDefined(typeof(SegmentedLinkKind), link.Kind))
                     return Rule(false, "invalid segmented link", out error);
             return Rule(SegmentedLinkStock.All(kind => Enum.IsDefined(typeof(SegmentedLinkKind), kind)),
                 "invalid segmented link reserve", out error);
+        }
+
+        // Retain item identities/upgrades when restoring a run authored with the old 12-slot levels.
+        private void MigrateSegmentedGeometry()
+        {
+            if (!UsesSegmentedOrbit) return;
+            foreach (var ring in Rings.Where(ring => ring.MountCount != SegmentedPositionCount(ring.Order)))
+            {
+                var occupied = new HashSet<int>();
+                foreach (var weapon in Modules.Where(gun => gun.StableRingId == ring.StableRingId).ToArray())
+                {
+                    float oldAngle = 90f + (ring.Order == 1 ? 15f : 0f) + weapon.MountIndex * 30f;
+                    int slot = Enumerable.Range(0, SegmentedPositionCount(ring.Order))
+                        .Where(index => IsSegmentedWeaponSlot(ring.Order, index) && !occupied.Contains(index))
+                        .OrderBy(index => Mathf.Abs(Mathf.DeltaAngle(oldAngle, SegmentedMountAngle(ring.Order, index))))
+                        .DefaultIfEmpty(-1).First();
+                    if (slot >= 0) { weapon.MountIndex = slot; occupied.Add(slot); }
+                    else
+                    {
+                        Modules.Remove(weapon); weapon.StableRingId = 0; weapon.MountIndex = -1;
+                        SegmentedWeapons.Add(weapon);
+                    }
+                }
+                occupied.Clear();
+                foreach (var module in SegmentedLinks.Where(module => module.RingId == ring.StableRingId).ToArray())
+                {
+                    float oldAngle = 90f + (ring.Order == 1 ? 15f : 0f) + module.MountIndex * 30f;
+                    int slot = Enumerable.Range(0, SegmentedPositionCount(ring.Order))
+                        .Where(index => !IsSegmentedWeaponSlot(ring.Order, index) && !occupied.Contains(index))
+                        .OrderBy(index => Mathf.Abs(Mathf.DeltaAngle(oldAngle, SegmentedMountAngle(ring.Order, index))))
+                        .DefaultIfEmpty(-1).First();
+                    if (slot >= 0) { module.MountIndex = slot; occupied.Add(slot); }
+                    else { SegmentedLinks.Remove(module); SegmentedLinkStock.Add(module.Kind); }
+                }
+                ring.MountCount = ring.MountCapacity = SegmentedPositionCount(ring.Order);
+                ring.PhaseOffset = ring.Order == 1 ? -45f : 0f;
+            }
         }
 
     }
